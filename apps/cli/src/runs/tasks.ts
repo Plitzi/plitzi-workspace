@@ -73,7 +73,8 @@ import type {
   RunTask,
   SharedRequest,
   TaskStart,
-  TaskState
+  TaskState,
+  TaskStatus
 } from './model';
 import type { LoadedRun, RunContext } from './run';
 import type { TaskView } from './taskStore';
@@ -302,6 +303,8 @@ export interface NextTask {
   ready: string[];
   /** Nothing is ready, and nothing ever will be for this role: every task of it is done — the agent can stop. */
   finished?: boolean;
+  /** Finished: the tasks the caller worked, and where each ended — approved, or still with the lead. */
+  worked?: { task: string; status: TaskStatus }[];
   /** What the lead said to the caller by name and it had not read. */
   messages: Message[];
   /** Tasks are ready, but the run's agents are all at work: the caller waits for a place. */
@@ -386,11 +389,17 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
               )
               .join(', ')}`;
 
+  const finished = open.length === 0 || (roles !== undefined && coming.length === 0);
+  // An agent done with the run hears how its own work ended: its copies are gone, and the run may end before it asks.
+  const worked = views
+    .filter(view => view.state.notes.some(note => note.by === ctx.agent && note.text.startsWith('Taken')))
+    .map(view => ({ task: view.task.id, status: view.state.status }));
+
   return {
     why,
     ready: [],
     messages,
-    ...(open.length === 0 || (roles !== undefined && coming.length === 0) ? { finished: true } : {})
+    ...(finished ? { finished: true, worked } : {})
   };
 };
 
@@ -399,6 +408,44 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
  * lead says something to the agent, or none ever will be (every task of it done), or `timeoutMs` passes. What an agent between tasks runs, rather than
  * stopping because nothing is ready this very moment.
  */
+/**
+ * `plitzi task next --take`: the next task, taken in the same breath. Another agent taking the one offered meanwhile is
+ * no refusal: the next ready one is tried. A task handed back as the caller's own (`yours`) is not taken again — its
+ * token is still good. One that cannot be taken for another reason is refused as `take` refuses it.
+ */
+export const takeNext = async (
+  ctx: RunContext,
+  runId: string,
+  role: string | undefined,
+  follow?: { timeoutMs: number; everyMs?: number }
+): Promise<{ next: NextTask; taken?: TakenTask }> => {
+  const started = Date.now();
+  const tried = new Set<string>();
+  for (;;) {
+    const next = follow
+      ? await followNext(ctx, runId, role, {
+          ...follow,
+          timeoutMs: Math.max(0, follow.timeoutMs - (Date.now() - started))
+        })
+      : await nextTask(ctx, runId, role);
+    if (!next.task || next.yours) {
+      return { next };
+    }
+
+    const offered = next.task;
+    try {
+      return { next, taken: await takeTask(ctx, runId, offered.id, role === undefined ? undefined : roleOf(offered)) };
+    } catch (error) {
+      // Taken by another agent meanwhile — once: a task offered again after that is held for a reason of its own.
+      if (!isRunRefusal(error) || error.code !== 'claimed' || tried.has(offered.id)) {
+        throw error;
+      }
+
+      tried.add(offered.id);
+    }
+  }
+};
+
 export const followNext = async (
   ctx: RunContext,
   runId: string,

@@ -255,6 +255,8 @@ export interface Closing {
   /** Finished: what was written into the project. Aborted: what was discarded. */
   files: string[];
   backup?: string;
+  /** Finished: who wrote it — a person, or the lead as a person allowed it then. */
+  writtenBy?: string;
 }
 
 const lines = (items: readonly string[], none: string): string[] =>
@@ -311,6 +313,7 @@ export const reportText = (report: RunReport, summary: string | undefined, closi
           '',
           closing.outcome === 'finished' ? '## Written into the project' : '## Discarded',
           '',
+          ...(closing.writtenBy ? [`Written by ${closing.writtenBy}.`, ''] : []),
           ...lines(closing.files, 'nothing'),
           ...(closing.backup ? ['', `The files as they were before: \`${closing.backup}\``] : [])
         ]

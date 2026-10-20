@@ -91,6 +91,7 @@ see [typed-sources.md](typed-sources.md).
 
 Content lives in JSON files read like any API — `apiContainer({ id: 'catalog', query: '/data/games.json', children:
 [ … ] })` — so a real endpoint later changes one `query`. `mockData` is only what the BUILDER shows. Say demo is demo.
+Records written inline (`inline-records`) move to such a file, drawn by one `list`.
 
 - **Server project:** `src/data/games.json` answers `/data/games.json`, read by the server, never served. The provider
   is `runtime: 'server'` (the page arrives with it); a browser one is refused (`server-data-in-browser`).
@@ -98,15 +99,15 @@ Content lives in JSON files read like any API — `apiContainer({ id: 'catalog',
 
 **`public/` is on the internet**, and so is everything the space's documents hold (pages, variables, attributes,
 `mockData`) and what a provider reads into a page: never a secret, a key or data only some visitors may read. A secret
-is a credential an action or a connector names; data for some visitors, or fields a page must not carry, comes from a
-server action answering only what is shown, its `access` checking who asks.
+is a credential an action or connector names; data for some visitors comes from a server action answering only what
+is shown, its `access` checking who asks.
 
 ### Live, cached, refreshed
 
-- **Live:** `refreshSeconds: 15` asks again on its own (either runtime); it pauses in a hidden tab and never
-  overlaps. Use it for queues, feeds, status boards — then mark the panel as live so the reader knows it moves.
+- **Live:** `refreshSeconds: 15` asks again on its own (either runtime), paused in a hidden tab, never overlapping:
+  queues, feeds, status boards — marked live, so the reader knows it moves.
 - **Cached:** `cache: true` (and `staleTime` seconds, 30 by default) shares an answer between providers asking the
-  same thing and across page changes.
+  same, across page changes.
 - **Refreshed by writes:** a `webHook` that is not a GET refreshes every request to its own site by default
   (`invalidateQueries: 'origin'`); a `runServerAction` refreshes everything (`'all'`). Narrow it with
   `'elements'` + `invalidateElements: ['orders']`, or stop it with `'none'`.

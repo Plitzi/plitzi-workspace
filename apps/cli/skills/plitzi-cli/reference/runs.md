@@ -6,8 +6,8 @@ checks and merges, and only **one final merge, approved by a person**, writes in
 has its exit code (below). A text written `-` is read from stdin: no shell quoting.
 
 **The team.** The **lead** (team lead and architect) plans, reviews, answers and closes. Tasks name a role (`"role":
-"designer"`; `developer` when left out); `plitzi task next --role designer --follow` waits (`--timeout 90s|8m|1h`) for
-the next one, through a stop, handing back first a task you hold that can go on.
+"designer"`; `developer` when left out); `plitzi task next --role designer --follow --take` waits (`--timeout 8m`) for the
+next one and takes it, handing back first a task you hold that can go on.
 
 ## The lead
 
@@ -40,9 +40,10 @@ the next one, through a stop, handing back first a task you hold that can go on.
    listed, estimated. `plitzi run rehearse plan.json --agents 3 --roles designer=1` plays it out as `task next` would:
    who works what when, the critical path, your review queue (`--review 5m`), files changed at once, and the length for
    each number of agents. Nothing is opened.
-4. `plitzi run open plan.json --agents 3` — backs up every file it will touch; `--agents` is how many agents may work at
-   once (usually 2–5; above 5 a person confirms) — one holding two tasks is one. `plitzi run preview` serves the run's
-   work as it goes — each approval shows in it.
+4. **Ask the person first** who applies the run at the end — they, or you: then they open it in their terminal with
+   `--lead-finishes` (or `plitzi run allow-finish` later). Never you.
+   `plitzi run open plan.json --agents 3` backs up every file it will touch; `--agents`: at once (2–5; above 5 a person
+   confirms). `plitzi run preview` serves the run's work.
 5. Start one agent per ready task (`plitzi task next --run es-launch --json`), each with a free port, and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
    file a task takes past 400 lines (ask for the split) — each said once; run it again after acting. **Talk:** answer a question (`run status` shows it) with `plitzi
@@ -60,9 +61,9 @@ the next one, through a stop, handing back first a task you hold that can go on.
    **reconciliation**: `plitzi run resolve <run> <file> --take project|run|merge|<file>`, then `plitzi run continue`.
    **The brake** stops a run whose completions keep being refused: `run status` says why; `plitzi run resume`.
 8. **Close it:** `plitzi run report` shows what the CLI saw; write the summary — what was done, what went wrong, what
-   is left — and `plitzi run report --summary summary.md`. Then `plitzi run finish` (the whole diff, checked) and tell
-   the person to run `plitzi run finish --apply` (`--keep-backup` keeps the files it overwrites). The run goes; its
-   report stays in `tmp/plitzi-reports/`. You never apply, push or publish.
+   is left — and `plitzi run report --summary summary.md`. Then `plitzi run finish` (the whole diff, checked); `--apply`
+   is the person's — or yours, if they allowed it (`--keep-backup` keeps what it overwrites). The report stays in
+   `tmp/plitzi-reports/`. Never push or publish.
 
 ## The agent
 

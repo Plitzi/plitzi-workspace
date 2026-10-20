@@ -27,6 +27,20 @@ import type { BindingCategory, ElementBinding } from '@plitzi/sdk-shared';
  *
  * `computed` holds the space's own computed values (`SpaceSpec.computed`), by name.
  */
+
+/**
+ * When the name is an element's only once a scope prefixes it — `pet-luna-care` for `care` — the source was made where
+ * no scope was: at the top of a module, outside the function a `pageFamily` body or a `scope()` calls. Said, with the
+ * two ways out.
+ */
+export const scopedHint = (name: string, ids: Iterable<string>): string => {
+  const scoped = [...ids].filter(id => id.endsWith(`-${name}`)).slice(0, 3);
+
+  return scoped.length > 0
+    ? ` In a scope it is ${scoped.map(id => `"${id}"`).join(', ')}: a \`source()\` made outside \`scope()\` — at the top of a module, outside a \`pageFamily\` body — names the bare id. Make the source inside the function that writes the scoped element, or name it in full with \`ref()\`.`
+    : '';
+};
+
 export const GLOBAL_SOURCES: readonly string[] = RUNTIME_GLOBAL_SOURCES;
 
 /** What an element inside a component can read besides its own tree: the globals, and what its instance hands in. */
@@ -65,7 +79,7 @@ export const resolveSource = (
       const inComponent = globals.includes(COMPONENT_PROPS_SOURCE);
       throw new AuthoringError(
         'binding-source-unknown',
-        `${where} binds to "${source}", but nothing ${inComponent ? 'in this component' : 'in this space'} answers to "${head}"${didYouMean(head, [...index.keys(), ...globals]) || '.'} A source names an element by its id, or one of the globals: ${globals.join(', ')}.${inComponent ? ' A component is closed: what it needs from where it is placed comes in as a prop.' : ''}`
+        `${where} binds to "${source}", but nothing ${inComponent ? 'in this component' : 'in this space'} answers to "${head}"${didYouMean(head, [...index.keys(), ...globals]) || '.'}${scopedHint(head, index.keys())} A source names an element by its id, or one of the globals: ${globals.join(', ')}.${inComponent ? ' A component is closed: what it needs from where it is placed comes in as a prop.' : ''}`
       );
     }
 
@@ -77,7 +91,7 @@ export const resolveSource = (
   if (!expected) {
     throw new AuthoringError(
       'binding-source-unknown',
-      `${where} binds to "${source}", but no element answers to the name "${ref}"${didYouMean(ref, [...index.keys()])}.`
+      `${where} binds to "${source}", but no element answers to the name "${ref}"${didYouMean(ref, [...index.keys()])}.${scopedHint(ref, index.keys())}`
     );
   }
 

@@ -56,7 +56,16 @@
   (kept for `task show`), `task show` marks read what the task told the lead, `run preview --task` says to page check
   from the copy, `task take` says to work inside the copy, and the report lists every file a task wrote. **A file a
   task takes past 400 non-blank lines** is said to the lead while it works (`run watch --until lead`), to the agent with
-  its heartbeat, and refused at `complete` until it is split.
+  its heartbeat, and refused at `complete` until it is split. **The lead may apply the run itself** when a person lets
+  it — `run open --lead-finishes` or `run allow-finish`, typed in their terminal; the lead asks before opening — still
+  with its report and the checks green on the whole result, said in the report. From the seventh run: `task next
+  --take` takes what it offers (passing one another agent took meanwhile), and says when the run is done for the agent
+  how its own tasks ended; a shell left in a removed copy is told so; `complete`'s server for the acceptance logs, and
+  says a server of the agent's own still running is the usual cause when it does not answer; `page check --expect` says
+  each expectation met, and `page check` says a short link or button label broken onto two lines (`label-wraps`) — a
+  menu one entry too long; `task show` says the files changed outside the task's own; `run plan` no longer warns of a
+  held file to a task that waits for its holder. In `@plitzi/sdk-authoring`, a source named outside the scope that
+  prefixes its element says so, with the two ways out.
 - **Pages registered by being there** (`@plitzi/sdk-authoring`, `@plitzi/sdk-shared`, `@plitzi/cli`): `pagesIn(new
   URL('./pages/', import.meta.url))` (`@plitzi/sdk-authoring/node`) loads every page of a folder — each module's default
   export, a page or a family's list, the home page first — and `PageSpec.nav` (`{ label, order }`) with `navOf(pages)`

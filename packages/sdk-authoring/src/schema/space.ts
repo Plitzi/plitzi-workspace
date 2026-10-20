@@ -36,6 +36,7 @@ import {
   groupBindings,
   hasVisibilityBinding,
   bindTemplate,
+  scopedHint,
   toBindingSpecs,
   withVisibility
 } from './bindings';
@@ -362,7 +363,11 @@ class SpaceAuthor {
         return {
           place: error.elementId ? `"${error.elementId}"` : '',
           code: error.code,
-          message: `${error.message}${error.missing ? meant(error.missing, error.wantedBy) : ''}`,
+          message: `${error.message}${error.missing ? meant(error.missing, error.wantedBy) : ''}${
+            error.code === 'UNRESOLVED_BINDING_SOURCE' && error.missing
+              ? scopedHint(error.missing, Object.keys(schema.flat))
+              : ''
+          }`,
           ...(at === undefined ? {} : { at })
         };
       });

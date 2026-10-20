@@ -15,7 +15,8 @@ import {
   notShownInPage,
   pageFor,
   renderedRowsInPage,
-  serverErrors
+  serverErrors,
+  wrappedLabelsInPage
 } from './check';
 
 const marked = (id: string): string => `[data-plitzi-el="${id}"]`;
@@ -268,5 +269,37 @@ describe('what a page check looks at again', () => {
         lists: {}
       })
     ).toEqual(['500 /fn/aiko/weather', '503 /fn/aiko/news']);
+  });
+});
+
+describe('a short label the page breaks onto two lines', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+    vi.restoreAllMocks();
+  });
+
+  it('is said with its lines — a long one, or one on one line, is not', () => {
+    document.body.innerHTML = [
+      '<a data-plitzi-el="site-nav-digest" href="/digest">This week</a>',
+      '<a data-plitzi-el="site-nav-home" href="/">Home</a>',
+      '<a data-plitzi-el="site-brand" href="/"><i class="fa-paw"></i>Pet Friends</a>',
+      '<a data-plitzi-el="home-lede" href="/about">A whole sentence that wraps as text does</a>'
+    ].join('');
+    // jsdom lays nothing out: what the browser draws is said here — two lines for the menu's squeezed label.
+    vi.spyOn(HTMLElement.prototype, 'offsetParent', 'get').mockReturnValue(document.body);
+    Object.defineProperty(Range.prototype, 'getClientRects', {
+      configurable: true,
+      value(this: Range) {
+        return (this.startContainer.textContent === 'This week' ? [0, 20] : [0]).map(top => ({ top, height: 18 }));
+      }
+    });
+
+    try {
+      expect(wrappedLabelsInPage('a[data-plitzi-el]')).toEqual([
+        { id: 'site-nav-digest', label: 'This week', lines: 2 }
+      ]);
+    } finally {
+      Reflect.deleteProperty(Range.prototype, 'getClientRects');
+    }
   });
 });

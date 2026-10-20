@@ -15,7 +15,18 @@ import { syncPreview } from './preview';
 import { answerProposal, proposeChange } from './proposals';
 import { isRunRefusal } from './refusal';
 import { buildReport, writeSummary } from './report';
-import { attachRun, checkPlanFile, loadRun, openRun, pruneRuns, purgeRun, releaseRun, resumeRun, stopRun } from './run';
+import {
+  allowLeadFinish,
+  attachRun,
+  checkPlanFile,
+  loadRun,
+  openRun,
+  pruneRuns,
+  purgeRun,
+  releaseRun,
+  resumeRun,
+  stopRun
+} from './run';
 import { showTask } from './show';
 import { askLead, messageTasks, noteRun, readInbox, tellLead } from './talk';
 import {
@@ -33,6 +44,7 @@ import {
   requestShared,
   revertTask,
   reviewTask,
+  takeNext,
   takeTask,
   taskContext,
   unblockTask,
@@ -1882,6 +1894,72 @@ describe('a team: roles, a lead who talks to the agents, and nothing left behind
     const menu = await take('agent-2', 't-menu');
     expect(menu.messages.map(message => message.text)).toEqual([plan.notes[0], 'Prices in euros, two decimals']);
     expect((await taskContext(menu.ctx, 'es-launch', 't-menu')).runNotes).toHaveLength(2);
+  });
+
+  it('takes the next task in the same breath, and tells an agent done with the run how its own work ended', async () => {
+    await open(benchPlan(), { agents: 4 });
+    const first = await takeNext(bench.agent('agent-1'), 'es-launch', undefined);
+    expect(first.taken?.task.id).toBe('t-home');
+    const second = await takeNext(bench.agent('agent-2'), 'es-launch', undefined);
+    expect(second.taken?.task.id).toBe('t-menu');
+    // Its own task handed back is not taken again: its token is still good.
+    await blockTask(
+      bench.agent('agent-1', { token: String(first.taken?.token) }),
+      'es-launch',
+      't-home',
+      'Which hours?',
+      'lead'
+    );
+    await unblockTask(lead(), 'es-launch', 't-home', '9 to 17');
+    expect(await takeNext(bench.agent('agent-1'), 'es-launch', undefined)).toMatchObject({
+      next: { yours: 'in-progress', task: { id: 't-home' } }
+    });
+    expect((await takeNext(bench.agent('agent-1'), 'es-launch', undefined)).taken).toBeUndefined();
+
+    for (const [name, task, file] of [
+      ['agent-1', 't-home', 'src/space/pages/home/hero.ts'],
+      ['agent-2', 't-menu', 'src/space/pages/menu.ts']
+    ] as const) {
+      const held = bench.agent(name, { token: String((name === 'agent-1' ? first : second).taken?.token) });
+      await writeInCopy(String((name === 'agent-1' ? first : second).taken?.work), file, 'export const done = true;\n');
+      await completeTask(held, 'es-launch', task);
+      await reviewTask(lead(), 'es-launch', task, 'approve', []);
+    }
+    await doTask('agent-3', 't-about', 'src/space/pages/about.ts', 'export const about = { done: true };\n');
+    await doTask('agent-3', 't-book', 'src/space/pages/book.ts', 'export const book = { done: true };\n');
+
+    expect(await nextTask(bench.agent('agent-1'), 'es-launch')).toMatchObject({
+      finished: true,
+      worked: [{ task: 't-home', status: 'done' }]
+    });
+  });
+
+  it('lets the lead write the run into the project only when a person allowed it — at its open or since', async () => {
+    await open();
+    await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
+    expect((await finishRun(lead(), 'es-launch', { apply: false, leavePending: true })).leadFinishes).toBe(false);
+    expect((await refusal(finishRun(lead(), 'es-launch', { apply: true, leavePending: true }))).code).toBe(
+      'person-only'
+    );
+    // The lead cannot give itself the project: a person allows it, in their terminal.
+    expect((await refusal(allowLeadFinish(lead(), 'es-launch'))).code).toBe('person-only');
+
+    expect(await allowLeadFinish(bench.person(true), 'es-launch')).toMatchObject({ leadFinishes: true, was: false });
+    const finished = await finishRun(lead(), 'es-launch', { apply: true, leavePending: true });
+    expect(finished.writtenBy).toMatch(/^the lead \(lead\), as a person allowed it at /);
+    expect(await fs.readFile(path.join(bench.root, 'src/space/pages/about.ts'), 'utf-8')).toContain('es: true');
+    expect(await fs.readFile(String(finished.report), 'utf-8')).toContain('Written by the lead (lead), as a person');
+  });
+
+  it('asks a person at the open when the lead is to finish, and opens nothing without one', async () => {
+    const file = await bench.writePlan(benchPlan());
+    expect((await refusal(openRun(lead(), file, 4, { leadFinishes: true }))).code).toBe('person-only');
+    await expect(fs.stat(runPaths(bench.root, 'es-launch').dir)).rejects.toThrow();
+
+    await openRun(bench.person(true), file, 4, { leadFinishes: true });
+    expect((await loadRun(lead(), 'es-launch')).record.leadFinishes).toEqual(expect.any(String));
+    await allowLeadFinish(bench.person(true), 'es-launch', { revoke: true });
+    expect((await loadRun(lead(), 'es-launch')).record.leadFinishes).toBeUndefined();
   });
 
   it('watches a file a task makes too long: the lead told once, the agent with its heartbeat, the complete held', async () => {

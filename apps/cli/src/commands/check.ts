@@ -152,7 +152,8 @@ export interface CheckIssue {
     | 'not-signed-in'
     | 'redirected'
     | 'page-status'
-    | 'expected-text';
+    | 'expected-text'
+    | 'label-wraps';
   message: string;
   /** The space's element it is about, by id — absent for one about the page as a whole. */
   elementId?: string;
@@ -179,6 +180,8 @@ export interface CheckReport {
   devTools: boolean;
   /** Every list, by id — fed by a provider, or its rows written out and on the page: how many it draws, how many it has. */
   lists: Record<string, ListRows>;
+  /** With `--expect`: each expectation the page met, as `<id>~<text>` — said, so a pass is seen to be checked. */
+  expected?: string[];
   /** With `--ssr`: the elements the page has once hydrated that the server's HTML did not — none of them in a server provider. */
   browserOnly?: string[];
   state?: unknown;
@@ -682,14 +685,52 @@ export const shownTextInPage = (selector: string): string | null => {
   return node instanceof HTMLElement ? node.innerText : node === null ? null : node.textContent;
 };
 
-/** Each expectation the page does not meet, as an issue: the element missing, or showing something else. */
+/**
+ * The links and buttons whose short label — three words at most — the page breaks onto more than one line: squeezed in
+ * a row with no room (a menu one entry too long), which no other check sees. In the page.
+ */
+export const wrappedLabelsInPage = (selector: string): { id: string; label: string; lines: number }[] =>
+  Array.from(document.querySelectorAll(selector)).flatMap(node => {
+    const label = node.textContent.replace(/\s+/g, ' ').trim();
+    if (label === '' || label.split(' ').length > 3 || !(node instanceof HTMLElement) || node.offsetParent === null) {
+      return [];
+    }
+
+    // The text's own boxes — never an icon's beside it, which sits at its own height — one per line it runs over.
+    const boxes: { top: number; height: number }[] = [];
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+    for (let text = walker.nextNode(); text !== null; text = walker.nextNode()) {
+      if ((text.textContent ?? '').trim() === '') {
+        continue;
+      }
+
+      const range = document.createRange();
+      range.selectNodeContents(text);
+      boxes.push(...Array.from(range.getClientRects(), rect => ({ top: rect.top, height: rect.height })));
+    }
+
+    // A new line starts more than half a line below the last: boxes of one line differ by less.
+    let lines = 0;
+    let last = -Infinity;
+    for (const box of boxes.sort((a, b) => a.top - b.top)) {
+      if (box.top - last > Math.max(box.height, 1) / 2) {
+        lines += 1;
+        last = box.top;
+      }
+    }
+
+    return lines > 1 ? [{ id: node.getAttribute('data-plitzi-el') ?? '', label, lines }] : [];
+  });
+
+/** Each expectation the page does not meet, as an issue — the element missing, or showing something else — and those it met. */
 const missedExpectations = async (
   page: BrowserPage,
   authored: Authored | undefined,
   expect: readonly Expectation[],
   width: number
-): Promise<CheckIssue[]> => {
+): Promise<{ missed: CheckIssue[]; met: string[] }> => {
   const missed: CheckIssue[] = [];
+  const met: string[] = [];
   for (const { element, text } of expect) {
     const found = await page.evaluate(shownTextInPage, selectorOf(authored, element));
     const shown = found === null ? undefined : found.replace(/\s+/g, ' ').trim();
@@ -703,10 +744,12 @@ const missedExpectations = async (
         elementId: element,
         width
       });
+    } else {
+      met.push(`${element}~${text}`);
     }
   }
 
-  return missed;
+  return { missed, met };
 };
 
 export interface ClickAsk {
@@ -1134,7 +1177,15 @@ const checkAt = async (
   // What is said of the element and the state is the page as the visitor left it: after the fill and the click, when
   // there were any — the page's own checks still read it as it loaded.
   const shown = clicked === undefined ? devTools : await readDevTools(page, { ...asked, state: true });
-  const missed = await missedExpectations(page, authored, expect, width);
+  const { missed, met } = await missedExpectations(page, authored, expect, width);
+  const wrapped: CheckIssue[] = (
+    await page.evaluate(wrappedLabelsInPage, 'a[data-plitzi-el], button[data-plitzi-el]')
+  ).map(each => ({
+    code: 'label-wraps',
+    message: `${each.id}'s label "${each.label}" breaks onto ${String(each.lines)} lines at ${String(width)} px: it is squeezed — give its row room, or let the row wrap as a whole and keep the label on one line (white-space: nowrap)`,
+    elementId: each.id,
+    width
+  }));
   const styled = asked.element === undefined ? undefined : await elementStyles(page, authored, asked.element);
   const data =
     authored && pageId && devTools.sources
@@ -1184,7 +1235,8 @@ const checkAt = async (
     ...(data?.issues ?? []).map((issue): CheckIssue => ({ ...issue, width })),
     ...(late?.issues ?? []),
     ...failedFlows,
-    ...missed
+    ...missed,
+    ...wrapped
   ];
 
   return {
@@ -1205,6 +1257,7 @@ const checkAt = async (
     failedRequests,
     devTools: devTools.available,
     lists,
+    ...(met.length > 0 ? { expected: met } : {}),
     ...(late ? { browserOnly: late.browserOnly } : {}),
     ...(!asked.state || shown.state === undefined ? {} : { state: shown.state }),
     ...(!asked.state || shown.sources === undefined ? {} : { sources: shown.sources }),
@@ -1340,6 +1393,7 @@ export const reportText = (report: CheckReport, asked: DevToolsInput): string =>
     ...(report.notFound ? ['  · sent with status 404: the page for an address that shows nothing'] : []),
     ...(report.retriedAfter ? [`  · looked at again after the server failed: ${report.retriedAfter.join(', ')}`] : []),
     ...listsText(report.lists),
+    ...(report.expected ?? []).map(each => chalk.dim(`  · expected ${each} ✓`)),
     ...browserOnlyText(report),
     ...heldText(report, asked),
     ...clickedText(report.clicked)

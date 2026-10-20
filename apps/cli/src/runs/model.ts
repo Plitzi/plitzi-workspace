@@ -142,6 +142,11 @@ export interface RunRecord {
   estimate: { tasks: number; agents: number; wallMinutes: number; totalMinutes: number };
   /** Above the threshold, who confirmed the estimate: a person, by typing the run's name. */
   confirmed?: string;
+  /**
+   * When a person let the lead write the run into the project itself — `run open --lead-finishes`, `run allow-finish`,
+   * confirmed by typing the run's name: `finish --apply` then needs no person, and still a report and green checks.
+   */
+  leadFinishes?: string;
   stopRequestedAt?: string;
   /** Why it is stopping: who stopped it, or what the brake saw. */
   stopReason?: string;
@@ -427,6 +432,7 @@ export const isRunRecord = (value: unknown): value is RunRecord =>
   isNumber(value.estimate.wallMinutes) &&
   isNumber(value.estimate.totalMinutes) &&
   optional(value.confirmed, isString) &&
+  optional(value.leadFinishes, isString) &&
   optional(value.stopRequestedAt, isString) &&
   optional(value.stopReason, isString) &&
   optional(value.forcedStopAt, isString) &&

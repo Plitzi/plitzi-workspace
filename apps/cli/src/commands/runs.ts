@@ -27,6 +27,7 @@ import { rehearsalText, rehearse } from '../runs/rehearse';
 import { buildReport, readSummary, reportText, writeSummary } from '../runs/report';
 import {
   activeRuns,
+  allowLeadFinish,
   attachRun,
   loadRun,
   checkPlanFile,
@@ -57,6 +58,7 @@ import {
   reviewTask,
   followNext,
   followWait,
+  takeNext,
   takeTask,
   taskContext,
   unblockTask,
@@ -70,7 +72,8 @@ import type { CheckStep } from '../runs/checks';
 import type { Message } from '../runs/messages';
 import type { Needs } from '../runs/model';
 import type { RemovedInputs, RunContext } from '../runs/run';
-import type { TaskContext } from '../runs/tasks';
+import type { TaskShown } from '../runs/show';
+import type { NextTask, TakenTask, TaskContext } from '../runs/tasks';
 
 /**
  * `plitzi run` and `plitzi task` (RFC 0028): several agents on one project, each in a copy of it, merged once by a
@@ -114,8 +117,20 @@ const copyTask = async (work: string): Promise<Where['copy']> => {
     : undefined;
 };
 
+/** The shell's folder — refused, saying why, when it is gone: a task's copy, removed once the task was approved. */
+const currentFolder = (): string => {
+  try {
+    return process.cwd();
+  } catch {
+    throw new RunRefusal(
+      'not-found',
+      'This shell’s folder is gone — a task’s copy is removed once the task is approved or cut. Go back to the project (cd <project>) and ask what is next: plitzi task next'
+    );
+  }
+};
+
 const whereAmI = async (): Promise<Where> => {
-  const project = await findProject(process.cwd());
+  const project = await findProject(currentFolder());
   if (!project) {
     throw new RunRefusal('not-found', 'There is no package.json here or above: run this in the project');
   }
@@ -280,6 +295,19 @@ const failedSteps = (steps: unknown): CheckStep[] =>
     ? steps.filter((step): step is CheckStep => isRecord(step) && typeof step.name === 'string')
     : [];
 
+/** A file it changed outside its own — a layout, the theme, the entry — changes every page that reads it: said so. */
+const outsideLines = (shown: TaskShown): string[] => {
+  const outside = shown.files.filter(each => !shown.task.files.includes(each.file)).map(each => each.file);
+
+  return outside.length > 0
+    ? [
+        chalk.yellow(
+          `  ⚠ Outside its own files: ${outside.join(', ')} — look at every page that reads them, not only this task's`
+        )
+      ]
+    : [];
+};
+
 /** What the lead said to a task, as the task's answer shows it: on top, so it is not missed. */
 const messageLines = (messages: readonly Message[]): string[] =>
   messages.map(message => chalk.cyan(`  ✉ ${message.from} (${message.id}): ${message.text}`));
@@ -299,7 +327,22 @@ const list = (items: readonly string[]): string => (items.length > 0 ? items.joi
 
 export interface PlanOptions extends RunCommandOptions {
   agents?: number;
+  /** `run open`: a person lets the lead write the run into the project itself. */
+  leadFinishes?: boolean;
 }
+
+export const runAllowFinish = (
+  runId: string | undefined,
+  options: RunCommandOptions & { revoke?: boolean }
+): Promise<void> =>
+  act(
+    options,
+    async ctx => allowLeadFinish(ctx, await runOf(ctx, options, runId), { revoke: options.revoke ?? false }),
+    allowed =>
+      allowed.leadFinishes
+        ? `The lead of "${allowed.runId}" may now write it into the project itself — once its report is written and the checks pass on the whole result (plitzi run finish --apply). Take it back: plitzi run allow-finish --revoke`
+        : `The lead of "${allowed.runId}" may no longer write it into the project: a person does (plitzi run finish --apply).`
+  );
 
 export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
   act(
@@ -318,7 +361,9 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
         checked.estimate.needsConfirmation
           ? chalk.yellow(`A person confirms it when it opens: ${checked.estimate.why ?? ''}`)
           : 'Opens without confirmation.',
-        `Open it: plitzi run open ${file}`
+        `Open it: plitzi run open ${file}`,
+        // The one moment a person is asked, moved to the start when they want: ask before opening, never after.
+        `Before opening, ask the person who writes it into the project at the end: they do (plitzi run finish --apply), or they let you — then they open it themselves, in their terminal: plitzi run open ${file} --lead-finishes`
       ].join('\n')
   );
 
@@ -356,7 +401,9 @@ export const runOpen = (file: string, options: PlanOptions): Promise<void> =>
   act(
     options,
     async ctx => {
-      const opened = await openRun(ctx, path.resolve(file), options.agents ?? DEFAULT_AGENTS);
+      const opened = await openRun(ctx, path.resolve(file), options.agents ?? DEFAULT_AGENTS, {
+        leadFinishes: options.leadFinishes ?? false
+      });
       await pruneRuns(ctx);
 
       return {
@@ -364,11 +411,18 @@ export const runOpen = (file: string, options: PlanOptions): Promise<void> =>
         folder: opened.paths.dir,
         tasks: opened.checked.tasks.map(task => task.id),
         backedUp: opened.backedUp,
-        estimate: opened.checked.estimate
+        estimate: opened.checked.estimate,
+        leadFinishes: options.leadFinishes ?? false
       };
     },
     opened =>
-      `Run "${opened.runId}" is open: ${String(opened.tasks.length)} tasks, ${String(opened.backedUp)} files backed up in ${opened.folder}.\nStart a task: plitzi task next --run ${opened.runId}`
+      [
+        `Run "${opened.runId}" is open: ${String(opened.tasks.length)} tasks, ${String(opened.backedUp)} files backed up in ${opened.folder}.`,
+        opened.leadFinishes
+          ? 'The lead writes it into the project at the end, as you allowed — once its report is written and the checks pass on the whole result.'
+          : `A person writes it into the project at the end (plitzi run finish --apply) — or lets the lead, in their terminal: plitzi run allow-finish ${opened.runId}`,
+        `Start a task: plitzi task next --run ${opened.runId}`
+      ].join('\n')
   );
 
 export const runState = (options: RunCommandOptions): Promise<void> =>
@@ -547,12 +601,14 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
         finished.dryRun
           ? finished.plan.conflicts.length > 0
             ? 'With --apply the run enters reconciliation: a person resolves each conflict.'
-            : 'A person writes it: plitzi run finish --apply (--keep-backup keeps the files it overwrites)'
+            : finished.leadFinishes
+              ? 'A person let the lead write it: plitzi run finish --apply (--keep-backup keeps the files it overwrites)'
+              : 'A person writes it: plitzi run finish --apply (--keep-backup keeps the files it overwrites) — or lets the lead, once: plitzi run allow-finish'
           : [
               finished.backup
                 ? `The files as they were before it: ${finished.backup} (copy one back to undo it)`
                 : 'No backup was kept: --keep-backup keeps one next time.',
-              `The run's report: ${String(finished.report)}`,
+              `Written by ${String(finished.writtenBy)}. The run's report: ${String(finished.report)}`,
               ...inputLines(finished.inputs)
             ].join('\n')
       ].join('\n')
@@ -645,24 +701,63 @@ export const runPrune = (options: RunCommandOptions): Promise<void> =>
   );
 
 export const taskNext = (
-  options: RunCommandOptions & { role?: string; follow?: boolean; timeout?: number }
+  options: RunCommandOptions & { role?: string; follow?: boolean; timeout?: number; take?: boolean }
 ): Promise<void> =>
-  act(
-    options,
-    async ctx =>
-      options.follow
-        ? followNext(ctx, await runOf(ctx, options), options.role, { timeoutMs: options.timeout ?? 30 * 60_000 })
-        : nextTask(ctx, await runOf(ctx, options), options.role),
-    next =>
-      [
-        ...messageLines(next.messages),
-        next.task
-          ? next.yours
-            ? `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : 'unblocked'}). Your token is still good: plitzi task context ${next.task.id}`
-            : `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task take ${next.task.id}`
-          : String(next.why)
-      ].join('\n')
-  );
+  options.take
+    ? act(
+        options,
+        async ctx => {
+          const runId = await runOf(ctx, options);
+          const { next, taken } = await takeNext(
+            ctx,
+            runId,
+            options.role,
+            options.follow ? { timeoutMs: options.timeout ?? 30 * 60_000 } : undefined
+          );
+
+          return { ...next, ...(taken ? { taken } : {}) };
+        },
+        answer => (answer.taken ? takenText(answer.taken) : nextText(answer))
+      )
+    : act(
+        options,
+        async ctx =>
+          options.follow
+            ? followNext(ctx, await runOf(ctx, options), options.role, { timeoutMs: options.timeout ?? 30 * 60_000 })
+            : nextTask(ctx, await runOf(ctx, options), options.role),
+        nextText
+      );
+
+const nextText = (next: NextTask): string =>
+  [
+    ...messageLines(next.messages),
+    next.task
+      ? next.yours
+        ? `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : 'unblocked'}). Your token is still good: plitzi task context ${next.task.id}`
+        : `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task take ${next.task.id}`
+      : [
+          String(next.why),
+          ...(next.worked ?? []).map(
+            each =>
+              `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'with the lead, in review' : each.status}`
+          )
+        ].join('\n')
+  ].join('\n');
+
+const takenText = (taken: TakenTask): string =>
+  [
+    chalk.bold(`Task "${taken.task.id}" is yours: ${taken.task.title}`),
+    ...messageLines(taken.messages),
+    ...taken.proposals.map(each =>
+      chalk.cyan(`  ⇄ ${each.from} proposes (${each.id}): ${each.change} — plitzi task answer ${each.id}`)
+    ),
+    `  Write only in its copy: ${taken.work}`,
+    `  Its files: ${taken.files.join(', ')}`,
+    ...(taken.resumedFrom !== undefined ? [`  Resumed from the version review ${String(taken.resumedFrom)} saw`] : []),
+    `  Run its commands in its copy — cd ${taken.work} — and they know the task: start with plitzi task context`,
+    `  Anywhere else, its token: --token ${taken.token}`,
+    '  Done: plitzi task complete, in the copy'
+  ].join('\n');
 
 export const taskTake = (taskId: string, options: RunCommandOptions & { role?: string }): Promise<void> =>
   act(
@@ -673,22 +768,7 @@ export const taskTake = (taskId: string, options: RunCommandOptions & { role?: s
 
       return { ...taken, run: runId, env: `PLITZI_TASK_TOKEN=${taken.token}` };
     },
-    taken =>
-      [
-        chalk.bold(`Task "${taken.task.id}" is yours: ${taken.task.title}`),
-        ...messageLines(taken.messages),
-        ...taken.proposals.map(each =>
-          chalk.cyan(`  ⇄ ${each.from} proposes (${each.id}): ${each.change} — plitzi task answer ${each.id}`)
-        ),
-        `  Write only in its copy: ${taken.work}`,
-        `  Its files: ${taken.files.join(', ')}`,
-        ...(taken.resumedFrom !== undefined
-          ? [`  Resumed from the version review ${String(taken.resumedFrom)} saw`]
-          : []),
-        `  Run its commands in its copy — cd ${taken.work} — and they know the task: start with plitzi task context`,
-        `  Anywhere else, its token: --token ${taken.token}`,
-        '  Done: plitzi task complete, in the copy'
-      ].join('\n')
+    takenText
   );
 
 /** The prelude every holder's command shares: the run and the task, from the token. */
@@ -1070,6 +1150,7 @@ export const taskShow = (taskId: string, options: RunCommandOptions): Promise<vo
         ...(shown.notes.length > 0 ? ['Notes', ...shown.notes.map(note => `  ${note.by}: ${note.text}`)] : []),
         ...(shown.messages.length > 0 ? ['Said', ...messageLines(shown.messages)] : []),
         `Changed (${shown.from === 'copy' ? 'its copy' : shown.from === 'run' ? 'as approved' : 'nothing yet'}): ${shown.files.length === 0 ? '—' : shown.files.map(each => `${each.file} (${each.change})`).join(', ')}`,
+        ...outsideLines(shown),
         ...shown.files.flatMap(each =>
           each.binary
             ? [`  ${each.file}: not text — not shown`]

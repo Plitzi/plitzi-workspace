@@ -51,6 +51,7 @@ import {
   taskClaim,
   taskClaims,
   taskComplete,
+  runAllowFinish,
   runAmend,
   runNote,
   taskContextCommand,
@@ -888,9 +889,23 @@ runGroup
     positiveInteger,
     DEFAULT_AGENTS
   )
+  .option(
+    '--lead-finishes',
+    'Let the lead write the run into the project itself once its report is written and the checks pass — a person confirms it in their terminal'
+  )
   .option(...AGENT_OPTION)
   .option(...JSON_OPTION)
   .action((file: string, options: PlanOptions) => runOpen(file, options));
+
+runGroup
+  .command('allow-finish')
+  .description(
+    'A person lets the lead of an open run write it into the project itself (finish --apply), once its report is written and the checks pass — --revoke takes it back'
+  )
+  .argument('[run]', 'The run — the only open one when left out')
+  .option('--revoke', 'Take it back: a person writes the run into the project')
+  .option(...JSON_OPTION)
+  .action((run: string | undefined, options: RunCommandOptions & { revoke?: boolean }) => runAllowFinish(run, options));
 
 runGroup
   .command('state')
@@ -1101,10 +1116,13 @@ taskGroup
     'Only a task for these roles, separated by commas: developer, designer, reviewer, tester, writer…'
   )
   .option('--follow', 'Wait until one is ready — or every task of the role is done (finished: true)')
+  .option('--take', 'Take it too, in the same breath: one another agent took meanwhile is passed for the next')
   .option('--timeout <duration>', 'With --follow: give up after this long, said (90s, 8m, 1h)', duration, 30 * 60_000)
   .option(...RUN_OPTION)
   .option(...JSON_OPTION)
-  .action((options: RunCommandOptions & { role?: string; follow?: boolean; timeout?: number }) => taskNext(options));
+  .action((options: RunCommandOptions & { role?: string; follow?: boolean; timeout?: number; take?: boolean }) =>
+    taskNext(options)
+  );
 
 taskGroup
   .command('take')

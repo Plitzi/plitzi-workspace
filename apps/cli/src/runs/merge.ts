@@ -214,6 +214,10 @@ export interface Finished {
   report?: string;
   /** The plan and summary it was handed: removed with it, or kept when changed since. */
   inputs?: RemovedInputs;
+  /** Written: by whom — a person, or the lead a person allowed. */
+  writtenBy?: string;
+  /** Dry run: whether the lead may write it itself, a person having allowed it. */
+  leadFinishes?: boolean;
 }
 
 /**
@@ -297,7 +301,7 @@ export const finishRun = async (
   }
 
   if (!apply) {
-    return { dryRun: true, plan, left };
+    return { dryRun: true, plan, left, leadFinishes: loaded.record.leadFinishes !== undefined };
   }
 
   // The lead closes the run: its report is written before the person writes the run into the project.
@@ -309,7 +313,13 @@ export const finishRun = async (
     );
   }
 
-  await requirePerson(ctx, runId, `write run "${runId}" into the project (${String(plan.apply.length)} files)`);
+  // A person writes it — unless one let the lead, at its open or since: then the report and the checks above are what
+  // stand between the run and the project, and the finish says who allowed it.
+  const byLead = loaded.record.leadFinishes !== undefined;
+  if (!byLead) {
+    await requirePerson(ctx, runId, `write run "${runId}" into the project (${String(plan.apply.length)} files)`);
+  }
+
   const entry = await withLock(
     loaded.paths.mergeLock,
     async () => {
@@ -340,15 +350,19 @@ export const finishRun = async (
     ? entry.files
     : Object.fromEntries(Object.entries(entry.files).filter(([file]) => overwritten.has(file)));
   const kept = Object.keys(keep).length > 0 ? await keepBackup(ctx, loaded, keep) : undefined;
+  const writtenBy = byLead
+    ? `the lead (${ctx.agent}), as a person allowed it at ${String(loaded.record.leadFinishes)}`
+    : 'a person, who confirmed it in their terminal';
   const report = await leaveReport(ctx, loaded, {
     outcome: 'finished',
     files: Object.keys(entry.files).sort(),
+    writtenBy,
     ...(kept ? { backup: kept } : {})
   });
   // Its work is in the project: the run goes, backups and all, unless a person asked to keep them. Its report stays.
   const inputs = await removeRun(ctx, loaded.paths, runId);
 
-  return { dryRun: false, plan, left, report, inputs, ...(kept ? { backup: kept } : {}) };
+  return { dryRun: false, plan, left, report, inputs, writtenBy, ...(kept ? { backup: kept } : {}) };
 };
 
 /** `plitzi run resolve`: one file of a reconciliation settled by a person — the project's, the run's, or a file of theirs. */

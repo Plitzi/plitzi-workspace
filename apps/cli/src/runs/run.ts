@@ -456,7 +456,16 @@ export const readCheckedPlan = async (
  * `plitzi run open`: the plan checked, its folder made, and every file it will touch backed up before anything is
  * touched. Above the threshold of §14, a person confirms the estimate first.
  */
-export const openRun = async (ctx: RunContext, file: string, agents: number): Promise<OpenedRun> => {
+/** What a person grants when the lead may write the run into the project: said in the words they confirm. */
+const LEAD_FINISHES =
+  'let the lead write it into the project itself, once its report is written and the checks pass on the whole result';
+
+export const openRun = async (
+  ctx: RunContext,
+  file: string,
+  agents: number,
+  { leadFinishes = false }: { leadFinishes?: boolean } = {}
+): Promise<OpenedRun> => {
   requireNoTask(ctx, 'open a run');
   if (!Number.isInteger(agents) || agents < 1) {
     throw new RunRefusal(
@@ -480,6 +489,11 @@ export const openRun = async (ctx: RunContext, file: string, agents: number): Pr
   if (checked.estimate.needsConfirmation) {
     await requirePerson(ctx, checked.runId, `open a run of ${checked.estimate.why ?? 'this size'}`);
     confirmed = ctx.now().toISOString();
+  }
+
+  // Asked before anything is made: a refusal here leaves no run half-opened.
+  if (leadFinishes) {
+    await requirePerson(ctx, checked.runId, `open run "${checked.runId}" and ${LEAD_FINISHES}`);
   }
 
   await fs.mkdir(runsDir(ctx.root), { recursive: true });
@@ -527,6 +541,7 @@ export const openRun = async (ctx: RunContext, file: string, agents: number): Pr
       totalMinutes: checked.estimate.totalMinutes
     },
     ...(confirmed ? { confirmed } : {}),
+    ...(leadFinishes ? { leadFinishes: ctx.now().toISOString() } : {}),
     brake: [],
     merges: [],
     inputs: [await inputOf(ctx, path.resolve(file))].filter(input => input !== undefined)
@@ -809,4 +824,47 @@ export const pruneRuns = async (ctx: RunContext): Promise<Pruned[]> => {
   }
 
   return pruned;
+};
+
+/**
+ * `plitzi run allow-finish`: a person lets the lead of an open run write it into the project itself — or, `--revoke`,
+ * takes that back. A person's, confirmed by typing the run's name: an agent never grants itself the project.
+ */
+export const allowLeadFinish = async (
+  ctx: RunContext,
+  runId: string,
+  { revoke = false }: { revoke?: boolean } = {}
+): Promise<{ runId: string; leadFinishes: boolean; was: boolean }> => {
+  const loaded = await loadRun(ctx, runId);
+  assertStatus(loaded, ['open', 'stopping', 'stopped'], revoke ? 'take back the lead’s finish' : 'let the lead finish');
+  const was = loaded.record.leadFinishes !== undefined;
+  if (was === !revoke) {
+    throw new RunRefusal(
+      'invalid',
+      revoke
+        ? `The lead of "${runId}" may not write it into the project already: a person does (plitzi run finish --apply)`
+        : `The lead of "${runId}" may write it into the project already, since ${String(loaded.record.leadFinishes)}`,
+      { run: runId }
+    );
+  }
+
+  await requirePerson(
+    ctx,
+    runId,
+    revoke ? `take back the lead's finish of run "${runId}"` : `${LEAD_FINISHES} (run "${runId}")`
+  );
+  const at = ctx.now().toISOString();
+  await updateRecord(ctx, loaded.paths, record => {
+    const next = { ...record };
+    if (revoke) {
+      delete next.leadFinishes;
+    } else {
+      next.leadFinishes = at;
+    }
+
+    return next;
+  });
+  await logRun(ctx, loaded.paths, { action: revoke ? 'revoke-lead-finish' : 'allow-lead-finish' });
+
+  return { runId, leadFinishes: !revoke, was };
 };

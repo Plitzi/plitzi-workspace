@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { activeOn, activeWhen, authorSpace, GLOBAL_SOURCES, resolveSource, variantFrom, withVisibility } from './index';
-import { apiContainer, list, text } from '../elements';
+import { apiContainer, list, scope, text } from '../elements';
 import { styles } from '../style';
 
 import type { SourceIndex } from './index';
@@ -225,5 +225,27 @@ describe('activeWhen', () => {
 
   it('is refused a condition that reads nothing', () => {
     expect(() => activeWhen(dot, '1 == 1')).toThrow(/\[active-when-constant\]/);
+  });
+});
+
+describe('a source named outside the scope that prefixes its element', () => {
+  it('is refused saying the element’s scoped id and the two ways out', () => {
+    const page = {
+      name: 'Luna',
+      slug: 'luna',
+      body: [
+        scope('pet-luna', () =>
+          apiContainer({
+            id: 'care',
+            query: 'https://example.com/care.json',
+            children: [text('', { id: 'note', bind: { content: 'apiContainer_care.data.note' } })]
+          })
+        )
+      ]
+    };
+
+    expect(() => authorSpace({ name: 'S', permanentUrl: 's', pages: [page] })).toThrow(
+      /In a scope it is "pet-luna-care": a `source\(\)` made outside `scope\(\)`/
+    );
   });
 });

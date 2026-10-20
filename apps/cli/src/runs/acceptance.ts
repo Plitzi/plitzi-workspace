@@ -53,7 +53,8 @@ const answering = async (url: string, ms: number): Promise<boolean> => {
 /** The copy served by its own start script on a free port, quietly: what `$PLITZI_URL` names. */
 const serveCopy = async (
   work: string,
-  root: string
+  root: string,
+  cache: string
 ): Promise<{ url: string; stop: () => void } | { problem: string }> => {
   const scripts = await scriptsOf(work);
   const name = ['start', 'start:dev'].find(each => Object.hasOwn(scripts, each));
@@ -64,10 +65,13 @@ const serveCopy = async (
 
   const port = await freePort();
   const env = (await fs.readFile(path.join(root, '.env'), 'utf-8').catch(() => undefined)) ?? '';
+  // What the server says goes to a log in the task's cache: when it does not answer, its last lines say why.
+  const logFile = path.join(cache, 'acceptance-server.log');
+  const log = await fs.open(logFile, 'w');
   const child = spawn(script, {
     cwd: work,
     shell: true,
-    stdio: 'ignore',
+    stdio: ['ignore', log.fd, log.fd],
     detached: process.platform !== 'win32',
     env: {
       ...process.env,
@@ -95,10 +99,18 @@ const serveCopy = async (
     }
   };
   const url = `http://127.0.0.1:${String(port)}`;
-  if (!(await answering(url, 60_000))) {
+  const answered = await answering(url, 60_000);
+  await log.close();
+  if (!answered) {
     stop();
+    const said = tail((await fs.readFile(logFile, 'utf-8').catch(() => '')).trim());
 
-    return { problem: `the copy's server did not answer on ${url} within a minute` };
+    return {
+      problem: [
+        `the copy's server did not answer on ${url} within a minute — a server of your own still running in the copy (npm start) is the usual cause: stop it and complete again. What it said (${logFile}):`,
+        ...said
+      ].join('\n')
+    };
   }
 
   return { url, stop };
@@ -124,7 +136,9 @@ export const checkAcceptance = async (
     return [];
   }
 
-  const served = checked.some(each => each.check.includes('PLITZI_URL')) ? await serveCopy(work, root) : undefined;
+  const served = checked.some(each => each.check.includes('PLITZI_URL'))
+    ? await serveCopy(work, root, cache)
+    : undefined;
   if (served && 'problem' in served) {
     return checked.map(each => ({ said: each.said, check: each.check, ok: false, output: [served.problem] }));
   }

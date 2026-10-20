@@ -238,6 +238,12 @@ resolving a reconciliation and continuing, answering any proposal, the summary â
 is a guard rail, not security: what holds is that whatever is written outside the flow is caught by fingerprint before
 anything is merged.
 
+**The final merge can be the lead's**, when a person says so: `run open --lead-finishes`, or `run allow-finish` on an
+open run (`--revoke` takes it back), each confirmed by typing the run's name â€” the lead asks for it before opening, and
+never grants it to itself. The record keeps when (`leadFinishes`); `finish --apply` then asks no one, and still needs
+the lead's report, a dry run's checks green on the whole result and no conflict with the project; the report says who
+wrote it.
+
 The run pins this CLI and every `@plitzi/*` installed; a change refuses every command (`version-mismatch`) until a person
 attaches, which re-pins it and cuts the tasks in hand. `plitzi upgrade --write` waits for an open run unless told
 `--with-open-runs`. A run is active on one machine; another attaches once it is released, or a person takes it over. The
