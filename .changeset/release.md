@@ -50,6 +50,11 @@
   `--timeout` takes `90s`/`8m`/`1h`, `PLITZI_JSON=1` answers every command as JSON, and a text written `-` is read from
   stdin. **`run rehearse`** plays a plan out before any agent starts — the schedule by agent and role, the critical
   path, the lead's review queue, the files several tasks change at once, and the run's length for each number of agents.
+  **`run amend`** corrects what an open run asks (titles, acceptance, notes) from the plan edited, each task told; `run
+  plan` refuses a `page check` whose text the shell would split. From the sixth real run: `task next` hands a task back
+  with what was said to it meanwhile, `complete` says each acceptance check and what the space's lint still warns of
+  (kept for `task show`), `task show` marks read what the task told the lead, `run preview --task` says to page check
+  from the copy, `task take` says to work inside the copy, and the report lists every file a task wrote.
 - **Pages registered by being there** (`@plitzi/sdk-authoring`, `@plitzi/sdk-shared`, `@plitzi/cli`): `pagesIn(new
   URL('./pages/', import.meta.url))` (`@plitzi/sdk-authoring/node`) loads every page of a folder — each module's default
   export, a page or a family's list, the home page first — and `PageSpec.nav` (`{ label, order }`) with `navOf(pages)`
@@ -59,6 +64,8 @@
   the rule both share (`pageModulesIn`, `@plitzi/sdk-shared/project`). For a project with a server: `plitzi doctor`
   says `node-in-browser` when a space authored in the browser imports `@plitzi/sdk-authoring/node`. `plitzi create`
   keeps listing the pages — one agent on a project needs no convention.
+- **`date` reads an epoch in seconds too** (`@plitzi/sdk-shared`), as the docs said and Twig's own does: below 10^11 a
+  number (or a string of digits) is seconds — `1792454400|date('Y-m-d')` was 1970-01-21 — milliseconds above.
 - **`plitzi explain` knows the template filters** (`@plitzi/cli`, `@plitzi/sdk-authoring`): `explain currency`, `--list
   filters`, from a catalogue beside the filters that a test holds whole. **`'now'|date(…)`** is the moment the page is
   rendered, and **`<`, `>`, `<=`, `>=` order strings as text** — `r.date >= '2026-10-20'` was false for every row, as

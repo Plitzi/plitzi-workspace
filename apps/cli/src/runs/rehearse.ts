@@ -82,6 +82,9 @@ const ANY = 'any';
 
 const agentsText = (count: number): string => `${String(count)} agent${count === 1 ? '' : 's'}`;
 
+/** `1 agent finishes`, `3 agents finish`. */
+const finishText = (count: number): string => `${agentsText(count)} finish${count === 1 ? 'es' : ''}`;
+
 interface Agent {
   name: string;
   role: string;
@@ -347,7 +350,7 @@ export const rehearse = (
   const finished = played.unstaffed.length + played.stranded.length === 0;
   if (finished && fewest && fewest.agents < options.agents) {
     advice.push(
-      `${agentsText(fewest.agents)} finish as soon as ${String(options.agents)} (${String(played.wallMinutes)} min): the others would wait`
+      `${finishText(fewest.agents)} as soon as ${String(options.agents)} (${String(played.wallMinutes)} min): the others would wait`
     );
   }
 
@@ -380,6 +383,17 @@ export const rehearse = (
         `${each.file} is where ${each.tasks.join(', ')} register what they make, at once: they merge line by line when each is on a line of its own — or let the pages register themselves by folder`
       )
     );
+  // Agents held to a role wait when their role has nothing ready: the same team, none held, may finish sooner.
+  if (held > 0) {
+    const free = play(tasks, { ...options, roles: {} });
+    const freeFinished = free.unstaffed.length + free.stranded.length === 0;
+    if (freeFinished && (!finished || free.wallMinutes < played.wallMinutes)) {
+      advice.push(
+        `With no agent held to a role, ${finishText(options.agents)} in ${String(free.wallMinutes)} min${finished ? ` instead of ${String(played.wallMinutes)}` : ''}: hold one to a role only when its tasks need it (--roles)`
+      );
+    }
+  }
+
   if (played.unstaffed.length > 0) {
     advice.push(
       `No agent may take ${played.unstaffed.join(', ')}: give their role an agent (--roles), or leave an agent free of a role`

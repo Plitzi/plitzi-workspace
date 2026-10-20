@@ -1,6 +1,6 @@
 import { proposalsOf } from './agreements';
 import { fingerprint, readOptional } from './files';
-import { messagesOf } from './messages';
+import { LEAD, markRead, messagesOf } from './messages';
 import { under } from './paths';
 import { RunRefusal } from './refusal';
 import { loadRun, readApproved, readBase, requireNoTask } from './run';
@@ -45,6 +45,8 @@ export interface TaskShown {
   checks: 'passed' | 'not-run' | { knownFailure: KnownFailure };
   /** Its acceptance's checks at its last `complete`. */
   accepted?: AcceptanceResult[];
+  /** What its checks passed with but still warned of. */
+  warnings?: string[];
   notes: { at: string; by: string; text: string }[];
   agreements: ProposalView[];
   unanswered: ProposalView[];
@@ -76,7 +78,7 @@ const nextFor = (task: RunTask, status: TaskStatus): string[] => {
   switch (status) {
     case 'in-review':
       return [
-        `plitzi run preview --task ${task.id}   # its pages as it went to review`,
+        `plitzi run preview --task ${task.id}   # its pages as it went to review — page check them from its copy`,
         `plitzi task review ${task.id} --approve`,
         `plitzi task review ${task.id} --changes "what to change" [--on <element>]`
       ];
@@ -142,6 +144,18 @@ export const showTask = async (ctx: RunContext, runId: string, taskId: string): 
   const mine = proposals.filter(each => each.from === taskId || each.to === taskId);
   const { knownFailure } = view.state;
 
+  const said = (await messagesOf(loaded)).filter(each => each.to === taskId || each.from === taskId);
+  // The lead reads what this task told it here — a question stays until it is answered: `run watch --until lead` and the
+  // inbox do not hand it over again.
+  await markRead(
+    loaded,
+    LEAD,
+    said
+      .filter(each => each.to === LEAD && each.fyi === true)
+      .slice(-6)
+      .map(each => each.id)
+  );
+
   return {
     task,
     status: view.state.status,
@@ -151,11 +165,12 @@ export const showTask = async (ctx: RunContext, runId: string, taskId: string): 
     files,
     checks: knownFailure ? { knownFailure } : changed.length > 0 ? 'passed' : 'not-run',
     ...(view.state.accepted ? { accepted: view.state.accepted } : {}),
+    ...(view.state.warnings ? { warnings: view.state.warnings } : {}),
     notes: view.state.notes.slice(-6),
     agreements: mine.filter(each => each.answer?.verdict === 'accept'),
     unanswered: mine.filter(each => each.answer === undefined),
     requests: (await readRequests(view.paths)).map(each => ({ file: each.file, summary: each.summary })),
-    messages: (await messagesOf(loaded)).filter(each => each.to === taskId || each.from === taskId).slice(-6),
+    messages: said.slice(-6),
     next: nextFor(task, view.state.status)
   };
 };

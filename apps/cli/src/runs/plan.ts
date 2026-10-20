@@ -188,12 +188,81 @@ export const estimate = (tasks: readonly RunTask[], agentsAsked: number): PlanEs
 const isOutsideSource = (file: string): boolean =>
   NOT_COPIED_DIRS.has(file.split('/')[0]) || file.split('/').includes('node_modules');
 
+/** A command line as a shell reads it: words split at unquoted spaces, each command of `&&`, `||`, `;` or `|` apart. */
+const shellCommands = (line: string): string[][] => {
+  const commands: string[][] = [[]];
+  let word: string | undefined;
+  let quote: string | undefined;
+  const end = (): void => {
+    if (word !== undefined) {
+      commands[commands.length - 1]?.push(word);
+      word = undefined;
+    }
+  };
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line.charAt(index);
+    if (quote !== undefined) {
+      if (char === quote) {
+        quote = undefined;
+      } else {
+        word = (word ?? '') + char;
+      }
+    } else if (char === '\x22' || char === '\x27') {
+      quote = char;
+      word = word ?? '';
+    } else if (/\s/.test(char)) {
+      end();
+    } else if (char === ';' || char === '|' || char === '&') {
+      end();
+      if (commands.at(-1)?.length !== 0) {
+        commands.push([]);
+      }
+    } else {
+      word = (word ?? '') + char;
+    }
+  }
+
+  end();
+
+  return commands.filter(command => command.length > 0);
+};
+
+/**
+ * The words a `plitzi page check` (or `page shot`) in `check` reads as pages that are no path — `week` out of
+ * `--expect digest-title~This week`, the shell having split an unquoted text: the page asked for is never there.
+ */
+const strayPages = (check: string): string[] =>
+  shellCommands(check).flatMap(words => {
+    const at = words.findIndex(
+      (word, index) => word === 'page' && (words[index + 1] === 'check' || words[index + 1] === 'shot')
+    );
+    if (at === -1 || !words.slice(0, at).some(word => word === 'plitzi' || word.endsWith('/plitzi'))) {
+      return [];
+    }
+
+    const stray: string[] = [];
+    const rest = words.slice(at + 2);
+    for (let index = 0; index < rest.length; index += 1) {
+      const word = rest[index] ?? '';
+      if (word.startsWith('-')) {
+        // A flag's value follows it, unless written `--flag=value` or another flag comes next.
+        if (!word.includes('=') && !(rest[index + 1] ?? '-').startsWith('-')) {
+          index += 1;
+        }
+      } else if (!word.startsWith('/') && !word.includes('$')) {
+        stray.push(word);
+      }
+    }
+
+    return stray;
+  });
+
 /**
  * What would make a task's acceptance unworkable, said before the run opens rather than at its `complete`: a line that
  * says nothing, a check that is no command, one that reads the credentials no agent touches, or one that asks for the
  * copy served (`$PLITZI_URL`) in a project with no start script to serve it.
  */
-const acceptanceProblems = async (root: string, task: RunPlan['tasks'][number]): Promise<string[]> => {
+export const acceptanceProblems = async (root: string, task: RunPlan['tasks'][number]): Promise<string[]> => {
   const problems: string[] = [];
   for (const each of task.acceptance) {
     const said = acceptanceText(each).trim();
@@ -211,6 +280,11 @@ const acceptanceProblems = async (root: string, task: RunPlan['tasks'][number]):
       problems.push(`Task "${task.id}": "${said}" has an empty check — give the command, or leave the line as text`);
     } else if (/(^|[\s'"/=<])\.env(\.[\w.-]+)?($|[\s'";|&>)])/.test(check) && !check.includes('.env.example')) {
       problems.push(`Task "${task.id}": the check of "${said}" reads .env, the credentials no agent touches`);
+    } else if (strayPages(check).length > 0) {
+      const stray = strayPages(check);
+      problems.push(
+        `Task "${task.id}": the check of "${said}" hands page check ${stray.map(word => `"${word}"`).join(', ')} as a page — a text with a space split by the shell: quote it (--expect "id~Two words")`
+      );
     } else if (check.includes('PLITZI_URL')) {
       const scripts = await scriptsOf(root).catch(() => ({}));
       if (!['start', 'start:dev'].some(name => Object.hasOwn(scripts, name))) {

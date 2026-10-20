@@ -138,5 +138,6 @@ export const space = { tokens, pages: await pagesIn(new URL('./pages/', import.m
     expect(staffed.scale[0]).toEqual({ agents: 1, wallMinutes: null });
     expect(staffed.scheduled).toEqual([]);
     expect(staffed.advice.join('\n')).toContain('give their role an agent');
+    expect(staffed.advice.join('\n')).toContain('With no agent held to a role, 1 agent finishes');
   });
 });

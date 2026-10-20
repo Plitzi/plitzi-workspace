@@ -66,6 +66,14 @@ describe('date — the tokens PHP uses most', () => {
   ])('%s', (format, expected) => {
     expect(processTwig(`{{ at|date('${format.replace(/\\/g, '\\\\')}', 'UTC') }}`, { at })).toBe(expected);
   });
+
+  it('reads an epoch in milliseconds or in seconds, as a number or as digits', () => {
+    const ms = Date.parse(at);
+
+    for (const epoch of [ms, ms / 1000, String(ms), String(ms / 1000)]) {
+      expect(processTwig("{{ at|date('Y-m-d H:i', 'UTC') }}", { at: epoch })).toBe('2026-10-04 18:05');
+    }
+  });
 });
 
 describe('processTwigValue', () => {

@@ -27,8 +27,8 @@ the next one, through a stop, handing back first a task you hold that can go on.
 
    **Acceptance a command can tell** is `{ said, check }`: the check runs in the task's copy at `complete`, beside the
    project's checks, and passes on exit 0 — `plitzi` in it is this CLI, `$PLITZI_URL` the copy served by its own start
-   script on a free port. `page check --expect <id>~<text>` fails when that element does not show the text. A line only a
-   reader can judge stays text. **`notes`** hold for the whole run — a trap, a convention — and reach every task with its
+   script on a free port. `page check --expect "<id>~<text>"` fails when that element does not show the text — check what a
+   page shows, not a file's text (a grep pins where the code is). Else, text. **`notes`** hold for the whole run — a trap, a convention — and reach every task with its
    brief; `plitzi run note "…"` adds one while it runs.
 
    Ids: lowercase letters, digits, `-`, `_`. What several tasks need (a component, tokens) is a task the others depend
@@ -47,7 +47,8 @@ the next one, through a stop, handing back first a task you hold that can go on.
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
    notice — each said once; run it again after acting. **Talk:** answer a question (`run status` shows it) with `plitzi
    task message t-home "…" --reply-to m3`; `task message all "…"` tells every task in hand, `task message @dev-1 "…"`
-   an agent by name, between tasks too.
+   an agent by name, between tasks too. A mistake in the plan (a check that cannot pass): edit it and `plitzi run amend
+   plan.json` — titles, acceptance, priorities, notes; each task changed is told. Its files and dependencies stay.
 6. **Review:** `plitzi task show t-home` is all of it — acceptance and what its checks answered, checks, agreements,
    notes, what was said, each file's diff; `plitzi run preview --task t-home` serves its copy. Answer what it asked,
    then `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Three rounds go to
@@ -57,7 +58,7 @@ the next one, through a stop, handing back first a task you hold that can go on.
    the changes go together line by line (the refusal says so), `--approve --overwrite` (its version wins, said, the
    other kept) or `--changes` (redo it on the project's version). A change after approval puts the finish into
    **reconciliation**: `plitzi run resolve <run> <file> --take project|run|merge|<file>`, then `plitzi run continue`.
-   **The brake** stops the run when completions keep being refused: `run status` says why; then `plitzi run resume`.
+   **The brake** stops a run whose completions keep being refused: `run status` says why; `plitzi run resume`.
 8. **Close it:** `plitzi run report` shows what the CLI saw; write the summary — what was done, what went wrong, what
    is left — and `plitzi run report --summary summary.md`. Then `plitzi run finish` (the whole diff, checked) and tell
    the person to run `plitzi run finish --apply` (`--keep-backup` keeps the files it overwrites). The run goes; its
@@ -70,11 +71,9 @@ plitzi task take t-home --run es-launch --agent writer-1 --role writer --json   
 cd <work> && plitzi task context           # the brief: acceptance and its checks, run notes, review, agreements
 ```
 
-Run inside `work`, every command knows its task, run and agent — the copy says who it is (`tmp/plitzi-task.json`).
-Anywhere else, `export PLITZI_TASK_TOKEN=<token>` or `--token`.
+Inside `work`, every command knows its task, run and agent (`tmp/plitzi-task.json`); elsewhere, `--token`.
 
-Name yourself on every command (`--agent writer-1`, or `PLITZI_AGENT`): `task next` and the agent limit know what is
-yours by it.
+Outside a copy, name yourself (`--agent writer-1`, or `PLITZI_AGENT`): `task next` and the agent limit go by it.
 
 - **Write only in `work`**, never in the project. Run the project's scripts there (`npm run author`, `npx tsc`, `npx
   eslint .`). The copy has no `node_modules` (it resolves the project's) and no `.env` — a warning about it is expected.

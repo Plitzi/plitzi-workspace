@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { amendRun } from './amend';
 import { createExclusive, writeAtomic } from './files';
 import { waitForLead } from './leadWatch';
 import { abortRun, continueRun, finishRun, resolveFile, restoreFile, showVersion } from './merge';
@@ -1731,13 +1732,16 @@ describe('a team: roles, a lead who talks to the agents, and nothing left behind
       `export const hero = ${JSON.stringify({ text: 'Hola' })};\n`
     );
     await askLead(home.ctx, 'es-launch', 't-home', 'Formal or informal?');
+    await tellLead(home.ctx, 'es-launch', 't-home', 'The hero keeps its id');
     await completeTask(home.ctx, 'es-launch', 't-home');
 
     const shown = await showTask(lead(), 'es-launch', 't-home');
+    // What it told, read here, is not handed over again; the question waits for its answer.
+    expect((await readInbox(lead(), 'es-launch')).map(message => message.text)).toEqual(['Formal or informal?']);
     expect([shown.status, shown.from, shown.checks, shown.holder]).toEqual(['in-review', 'copy', 'passed', 'agent-1']);
     expect(shown.files).toMatchObject([{ file: 'src/space/pages/home/hero.ts', change: 'changed' }]);
     expect(shown.files[0].diff).toMatch(/^\+export const hero = \{"text":"Hola"\};$/m);
-    expect(shown.messages.map(message => message.text)).toEqual(['Formal or informal?']);
+    expect(shown.messages.map(message => message.text)).toEqual(['Formal or informal?', 'The hero keeps its id']);
     expect(shown.next.join('\n')).toContain('plitzi task review t-home --approve');
     expect((await refusal(showTask(home.ctx, 'es-launch', 't-home'))).code).toBe('person-only');
   });
@@ -1805,11 +1809,11 @@ describe('a team: roles, a lead who talks to the agents, and nothing left behind
     const again = await refusal(takeTask(bench.agent('agent-1'), 'es-launch', 't-home'));
     expect(again).toMatchObject({ code: 'claimed', detail: { yours: true } });
     const next = await followNext(bench.agent('agent-1'), 'es-launch', undefined, { timeoutMs: 30, everyMs: 10 });
+    // Handed back with what was said to the task meanwhile — the answer — and not again with its next sign of life.
     expect(next).toMatchObject({ yours: 'in-progress', task: { id: 't-home' } });
+    expect(next.messages.map(each => each.text)).toEqual(['Monday to Friday, 9 to 17 UTC']);
     expect((await nextTask(bench.agent('agent-2'), 'es-launch')).task?.id).not.toBe('t-home');
-    expect((await reportProgress(home.ctx, 'es-launch', 't-home', {})).messages.map(each => each.text)).toEqual([
-      'Monday to Friday, 9 to 17 UTC'
-    ]);
+    expect((await reportProgress(home.ctx, 'es-launch', 't-home', {})).messages).toEqual([]);
   });
 
   it('the lead reaches an agent by name between tasks: next --follow wakes for it, and take hands over the rest', async () => {
@@ -1876,6 +1880,57 @@ describe('a team: roles, a lead who talks to the agents, and nothing left behind
     const menu = await take('agent-2', 't-menu');
     expect(menu.messages.map(message => message.text)).toEqual([plan.notes[0], 'Prices in euros, two decimals']);
     expect((await taskContext(menu.ctx, 'es-launch', 't-menu')).runNotes).toHaveLength(2);
+  });
+
+  it('lets the lead amend what an open run asks — told to the task — but never its shape, nor a task done', async () => {
+    const plan = benchPlan();
+    await open(plan);
+    const home = await take('agent-1', 't-home');
+    await doTask(
+      'agent-2',
+      't-about',
+      'src/space/pages/about.ts',
+      `export const about = { title: ${JSON.stringify('Sobre')} };\n`
+    );
+
+    const amended = benchPlan();
+    amended.tasks[0].acceptance = [{ said: 'The hero says Hola', check: 'grep -q Hola src/space/pages/home/hero.ts' }];
+    amended.notes = ['Spanish of Spain'];
+    const file = await bench.writePlan(amended);
+    expect(await amendRun(lead(), 'es-launch', file)).toMatchObject({
+      tasks: [{ task: 't-home', changed: ['acceptance'] }],
+      notes: ['Spanish of Spain']
+    });
+    expect((await taskContext(home.ctx, 'es-launch', 't-home')).task.acceptance).toEqual(amended.tasks[0].acceptance);
+    const told = (await reportProgress(home.ctx, 'es-launch', 't-home', {})).messages.map(message => message.text);
+    expect(told).toEqual([expect.stringContaining('The hero says Hola'), 'Spanish of Spain']);
+
+    const reshaped = benchPlan();
+    reshaped.tasks[1].files = ['src/space/pages/book.ts'];
+    reshaped.tasks[3].title = 'About, again';
+    const refused = await refusal(amendRun(lead(), 'es-launch', await bench.writePlan(reshaped)));
+    expect(refused.message).toContain('"t-menu": its files make the run');
+    expect(refused.message).toContain('"t-about" is done');
+    const again = await refusal(amendRun(lead(), 'es-launch', await bench.writePlan(amended)));
+    expect(again.message).toContain('asks nothing the run does not');
+  });
+
+  it('refuses a page check whose text the shell would split into a page', async () => {
+    const plan = benchPlan();
+    plan.tasks[0].acceptance = [
+      { said: 'Split', check: 'plitzi page check /digest --url $PLITZI_URL --expect digest-title~This week' },
+      {
+        said: 'Quoted',
+        check: 'plitzi page check /digest --url $PLITZI_URL --expect "digest-title~This week" && echo ok'
+      }
+    ];
+
+    const refusedPlan = await checkPlan(bench.root, plan, await readOwnership(bench.root), 4).catch(
+      (error: unknown) => error
+    );
+    const said = (refusedPlan as { problems: string[] }).problems.join('\n');
+    expect(said).toContain('hands page check "week" as a page');
+    expect(said).not.toContain('"Quoted" hands');
   });
 
   it('holds a task to its acceptance by the checks its plan gives: unmet, the complete is refused; met, the lead sees it', async () => {

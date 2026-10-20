@@ -216,6 +216,8 @@ export interface TaskState {
   knownFailure?: KnownFailure;
   /** Its acceptance's checks at its last `complete`: what passed, what did not. */
   accepted?: AcceptanceResult[];
+  /** What its checks passed with but still warned of at its last `complete` — the space's lint: weighed at review. */
+  warnings?: string[];
   updatedAt: string;
 }
 
@@ -487,6 +489,7 @@ export const isTaskState = (value: unknown): value is TaskState =>
       optional(failure.preexisting, (flag: unknown) => typeof flag === 'boolean') &&
       isString(failure.at)
   ) &&
+  optional(value.warnings, isStrings) &&
   optional(
     value.accepted,
     results =>

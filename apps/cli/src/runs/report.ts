@@ -122,10 +122,16 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
       rounds: view.state.round,
       estimateMinutes: task.estimateMinutes,
       ...(first ? { minutes: minutesBetween(first.at, approval?.at ?? now) } : {}),
-      files: Object.entries(approved.files)
-        .filter(([, entry]) => entry.task === task.id)
-        .map(([file]) => file)
-        .sort(),
+      // What it changed: what it completed with, and what the run holds of it — a shared file it took by turns and
+      // another task changed after it is still one it wrote.
+      files: [
+        ...new Set([
+          ...(view.state.status === 'done' ? (view.state.changed ?? []) : []),
+          ...Object.entries(approved.files)
+            .filter(([, entry]) => entry.task === task.id)
+            .map(([file]) => file)
+        ])
+      ].sort(),
       cuts: view.state.notes.filter(note => note.text.startsWith('Cut at')).length,
       ...(view.state.knownFailure
         ? { knownFailure: `${view.state.knownFailure.failing.join(', ')} failing: ${view.state.knownFailure.why}` }

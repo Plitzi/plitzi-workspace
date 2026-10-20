@@ -403,7 +403,7 @@ export interface OpenedRun {
   backedUp: number;
 }
 
-const readPlanFile = async (file: string): Promise<RunPlan> => {
+export const readPlanFile = async (file: string): Promise<RunPlan> => {
   const bytes = await readOptional(file);
   if (bytes === undefined) {
     throw new RunRefusal('not-found', `There is no plan at ${file}`);

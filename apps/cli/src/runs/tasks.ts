@@ -61,6 +61,7 @@ import type { ProposalView } from './agreements';
 import type { CheckResult } from './checks';
 import type { Message } from './messages';
 import type {
+  AcceptanceResult,
   ApprovedFile,
   ApprovedManifest,
   FileLock,
@@ -329,7 +330,15 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
   for (const view of views) {
     const { status } = view.state;
     if (view.owner?.agent === ctx.agent && (status === 'in-progress' || status === 'changes-requested')) {
-      return { task: view.task, yours: status, ready: [], messages };
+      // …with what was said to that task meanwhile — an amendment, a review's words — which it reads nowhere else first.
+      const toTask = await unreadFor(loaded, view.task.id, true);
+
+      return {
+        task: view.task,
+        yours: status,
+        ready: [],
+        messages: [...messages, ...toTask].sort((x, y) => x.at.localeCompare(y.at) || x.id.localeCompare(y.id))
+      };
     }
   }
 
@@ -1168,6 +1177,8 @@ export interface CompletedTask {
   messages: Message[];
   requests: SharedRequest[];
   checks: CheckResult;
+  /** Its acceptance's checks, as they answered — none when it has none, or the project's checks failed first. */
+  accepted: AcceptanceResult[];
   /** The task's files a person (or something else) changed in the project meanwhile: the person wins at the merge. */
   changedInProject: string[];
 }
@@ -1177,6 +1188,10 @@ export interface CompletedTask {
  * is refused, naming each; what it changed in a shared file it does not hold becomes a request — then the project's
  * checks run in the copy, and it goes to review.
  */
+/** What a check that passed still warned of, each as `<check>: <warning>`. */
+const warningsOf = (checks: CheckResult): string[] =>
+  checks.steps.flatMap(step => (step.warnings ?? []).map(warning => `${step.name}: ${warning}`));
+
 export interface CompleteOptions {
   /** Go to review although the checks fail — for a reason that weighs, with the task that fixes it. */
   knownFailure?: { why: string; fixedBy?: string };
@@ -1397,6 +1412,7 @@ export const completeTask = async (
       status: 'in-review',
       changed: changed.filter(file => !asRequests.includes(file)),
       ...(accepted.length > 0 ? { accepted } : { accepted: undefined }),
+      warnings: warningsOf(checks).length > 0 ? warningsOf(checks) : undefined,
       knownFailure: preexisting
         ? {
             why: `the run's work fails ${failing.map(step => step.name).join(', ')} the same way without this task: ${failing.flatMap(step => step.said ?? []).find(line => line.trim() !== '') ?? 'see the checks'}`,
@@ -1438,6 +1454,7 @@ export const completeTask = async (
     merged: mergedNow,
     requests,
     checks,
+    accepted,
     changedInProject,
     messages: await unreadForHolder(loaded, taskId, ctx.agent, true)
   };

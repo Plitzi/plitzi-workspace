@@ -90,6 +90,15 @@ export const unreadFor = async (loaded: LoadedRun, reader: string, mark: boolean
   return unread;
 };
 
+/** Marks `ids` read by `reader`: what it was shown elsewhere — a review packet — is not handed to it again. */
+export const markRead = async (loaded: LoadedRun, reader: string, ids: readonly string[]): Promise<void> => {
+  const read = new Set((await readJson(readFile(loaded, reader), isRead, 'the messages read')) ?? []);
+  const fresh = ids.filter(id => !read.has(id));
+  if (fresh.length > 0) {
+    await writeJson(readFile(loaded, reader), [...read, ...fresh]);
+  }
+};
+
 /**
  * What the holder of `taskId` has not read: said to the task, and to its agent by name — marked read as it is handed
  * over when `mark`.

@@ -51,6 +51,7 @@ import {
   taskClaim,
   taskClaims,
   taskComplete,
+  runAmend,
   runNote,
   taskContextCommand,
   taskShow,
@@ -913,6 +914,16 @@ runGroup
   .option(...RUN_OPTION)
   .option(...JSON_OPTION)
   .action((text: string, options: RunCommandOptions) => runNote(text, options));
+
+runGroup
+  .command('amend')
+  .description(
+    'Correct what the open run asks — a task’s title, acceptance, priority or estimate, the goal, a note more — from its plan file edited; each task changed is told'
+  )
+  .argument('<file>', 'The plan, edited: the same tasks, files and dependencies')
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((file: string, options: RunCommandOptions) => runAmend(file, options));
 
 runGroup
   .command('watch')

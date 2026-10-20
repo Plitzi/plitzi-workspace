@@ -220,15 +220,21 @@ const zoneFormatter = (timeZone: string): Intl.DateTimeFormat | null => {
  *
  * An epoch in milliseconds is the shape every API here answers with (`nextRunAt`, `dueAt`), and it reaches a template
  * as a number or — through an attribute — as a string of digits. `new Date("1790143200000")` is Invalid Date, so
- * both are read as numbers first; anything else is left to the Date parser, which reads ISO strings.
+ * both are read as numbers first (`fromEpoch`, seconds too); anything else is left to the Date parser, ISO strings.
  */
+/**
+ * An epoch as a Date: in milliseconds, as the APIs here answer — or in seconds, as Twig's own `date` and a Unix
+ * timestamp are: below 10^11 a number is seconds, which in milliseconds would be a moment before March 1973.
+ */
+const fromEpoch = (epoch: number): Date => new Date(Math.abs(epoch) < 1e11 ? epoch * 1000 : epoch);
+
 const toDate = (value: unknown): Date => {
   if (value instanceof Date) {
     return value;
   }
 
   if (typeof value === 'number') {
-    return new Date(value);
+    return fromEpoch(value);
   }
 
   const text = String(value).trim();
@@ -238,7 +244,7 @@ const toDate = (value: unknown): Date => {
     return new Date();
   }
 
-  return /^-?\d+$/.test(text) ? new Date(Number(text)) : new Date(text);
+  return /^-?\d+$/.test(text) ? fromEpoch(Number(text)) : new Date(text);
 };
 
 const dateParts = (date: Date, timeZone: string): DateParts | undefined => {

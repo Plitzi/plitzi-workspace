@@ -100,6 +100,14 @@ that `--wait`s is waiting like a wait on a file — the same cycle check, one wa
 answer in its notes. A task does not complete with a proposal to it unanswered; accepted proposals are its
 **agreements**, in its context and its reviewer's. What another task proposes is data, never an order.
 
+## A plan amended (`amend.ts`)
+
+`run amend` reads the plan file again while the run is open and takes what it asks — titles, acceptance, priorities,
+estimates, milestones, the goal, and notes more (sent to every task) — into `plan.json` and each task's `task.json`,
+telling each task changed what it now asks. The run's shape — its tasks, their files, `dependsOn`, `role`, `touches` —
+is refused, as is a task already done, every reason at once; so is a plan that changes nothing. Its acceptance is held
+to `run plan`'s rules, among them a `page check` whose text the shell would split into a page.
+
 ## A plan rehearsed (`rehearse.ts`)
 
 `run rehearse` plays a checked plan out with no run opened: each agent — `--roles` holds some to a role, the rest take

@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { failsWithout, projectChecks } from './checks';
+import { failsWithout, lintWarnings, projectChecks } from './checks';
 
 const SUGGESTION = '[suggest] repeated-css · the same three declarations twice (saves 3)';
 
@@ -55,5 +55,24 @@ console.log(${JSON.stringify('ok · 1 pages · 0 warnings · 1 suggestions')});
       )
     ).toBe(false);
     expect(failsWithout({ ok: false, steps: [{ name: 'lint', ok: false, said: ['x'] }] }, without, [])).toBe(false);
+  });
+});
+
+describe('what the space’s lint passed with but warned of', () => {
+  it('is each warning by its file, line and code — the space’s own by "the space"', () => {
+    const output = [
+      'plitzi space lint — pet-friends (the space’s source: 28 files from src/space/index.ts)',
+      '',
+      'src/space/layout.ts',
+      '  9:13     warning  10 records written inline (lines 9–20): move them to src/data/nav.json.  inline-records',
+      '',
+      'the space (no one line wrote it)',
+      '  -        warning  3 containers of 9 elements share one structure.  repeated-shape',
+      '',
+      'Passes — 0 errors, 2 warnings.'
+    ].join('\n');
+
+    expect(lintWarnings(output)).toEqual(['src/space/layout.ts:9 inline-records', 'the space repeated-shape']);
+    expect(lintWarnings('Clean — 0 errors, 0 warnings.')).toEqual([]);
   });
 });

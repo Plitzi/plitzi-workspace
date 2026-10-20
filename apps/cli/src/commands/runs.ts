@@ -11,6 +11,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { findProject } from './existingProject';
 import { durationText } from '../options';
 import { proposalsOf } from '../runs/agreements';
+import { amendRun } from '../runs/amend';
 import { projectChecks } from '../runs/checks';
 import { waitForLead } from '../runs/leadWatch';
 import { abortRun, continueRun, finishRun, resolveFile, restoreFile, showVersion } from '../runs/merge';
@@ -683,8 +684,9 @@ export const taskTake = (taskId: string, options: RunCommandOptions & { role?: s
         ...(taken.resumedFrom !== undefined
           ? [`  Resumed from the version review ${String(taken.resumedFrom)} saw`]
           : []),
-        `  Its token — every command of the task carries it: --token ${taken.token}`,
-        '  Done: plitzi task complete --token …'
+        `  Run its commands in its copy — cd ${taken.work} — and they know the task: start with plitzi task context`,
+        `  Anywhere else, its token: --token ${taken.token}`,
+        '  Done: plitzi task complete, in the copy'
       ].join('\n')
   );
 
@@ -825,7 +827,7 @@ export const taskBlock = (
       };
     },
     target =>
-      `${target.taskId} is blocked (${target.blocked.needs}): ${target.blocked.reason}. Take another ready task meanwhile; once it is unblocked, plitzi task next hands it back to you first.`
+      `${target.taskId} is blocked (${target.blocked.needs}): ${target.blocked.reason.replace(/[.\s]+$/, '')}. Take another ready task meanwhile; once it is unblocked, plitzi task next hands it back to you first.`
   );
 
 export const taskUnblock = (taskId: string, options: RunCommandOptions & { answer?: string }): Promise<void> =>
@@ -911,6 +913,16 @@ export const taskComplete = (options: RunCommandOptions & { knownFailure?: strin
             : chalk.yellow(
                 `  Checks failing, as you said (--known-failure): ${list(completed.checks.steps.filter(step => !step.ok).map(step => step.name))}`
               ),
+        ...completed.checks.steps.flatMap(step =>
+          (step.warnings ?? []).map(warning =>
+            chalk.yellow(
+              `  ⚠ ${step.name} warns: ${warning} — fix what this task brought, or tell the lead why it stays`
+            )
+          )
+        ),
+        ...completed.accepted.map(
+          each => `  ${each.ok ? '✓' : chalk.yellow('✗')} acceptance — ${each.said}  ${chalk.dim(`[${each.check}]`)}`
+        ),
         ...(completed.changedInProject.length > 0
           ? [
               chalk.yellow(
@@ -1038,6 +1050,7 @@ export const taskShow = (taskId: string, options: RunCommandOptions): Promise<vo
               `Checks: failing (${knownFailure.failing.join(', ')}) — ${knownFailure.why}${knownFailure.fixedBy ? `; ${knownFailure.fixedBy} fixes it` : ''}`
             )
           : `Checks: ${shown.checks === 'passed' ? 'passed at complete' : 'not run yet'}`,
+        ...(shown.warnings ?? []).map(warning => chalk.yellow(`  ⚠ ${warning}`)),
         ...(shown.agreements.length > 0
           ? [
               'Agreed — check it holds',
@@ -1127,6 +1140,19 @@ export const runNote = (text: string, options: RunCommandOptions): Promise<void>
     options,
     async ctx => noteRun(ctx, await runOf(ctx, options), text),
     note => `Noted for every task (${note.id}) — the ones in hand with their next command, the rest with their take.`
+  );
+
+export const runAmend = (file: string, options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => amendRun(ctx, await runOf(ctx, options), path.resolve(file)),
+    amended =>
+      [
+        `Run "${amended.runId}" amended:`,
+        ...amended.tasks.map(each => `  ${each.task}: ${each.changed.join(', ')} — told, with what it now asks`),
+        ...(amended.notes.length > 0 ? [`  ${String(amended.notes.length)} new note(s), sent to every task`] : []),
+        ...(amended.goal === undefined ? [] : [`  the goal: ${amended.goal}`])
+      ].join('\n')
   );
 
 export const spaceOverview = (options: RunCommandOptions): Promise<void> =>
@@ -1366,7 +1392,12 @@ export const runPreview = async (
     console.log(
       task === undefined
         ? `The run's work as it goes: ${preview.url} — served from ${preview.dir}; each approval shows in it. Ctrl-C stops it; it stops by itself when the run ends.`
-        : `${task} as it went to review: ${preview.url} — served from its copy. Ctrl-C stops it; it stops by itself once the task leaves review.`
+        : [
+            `${task} as it went to review: ${preview.url} — served from its copy. Ctrl-C stops it; it stops by itself once the task leaves review.`,
+            // `page check` holds a page to the space of the folder it runs in: from the project, a page this task made is
+            // not there yet and reads as not found.
+            `Check its pages from its copy, which holds them: cd ${preview.dir} && plitzi page check <path> --url ${preview.url}`
+          ].join('\n')
     );
     process.once('SIGINT', preview.stop);
     const ended = await preview.done;

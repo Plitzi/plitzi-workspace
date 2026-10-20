@@ -11,6 +11,8 @@ export interface CheckStep {
   name: string;
   ok: boolean;
   said?: string[];
+  /** What a step that passed still warns of — the space's lint: each `file:line code`, said where it is seen. */
+  warnings?: string[];
 }
 
 export interface CheckResult {
@@ -22,6 +24,28 @@ export interface CheckResult {
 
 /** How a run checks a folder: the project's scripts by default, something else under test. */
 export type CheckRunner = (dir: string, projectRoot: string) => Promise<CheckResult>;
+
+/**
+ * The warnings in what `plitzi space lint` printed, a line each: `src/space/pages/home.ts:1 file-too-long`. Read off
+ * its text, the project's script being what runs: a file's name heads its findings, each `line:column severity
+ * message code`.
+ */
+export const lintWarnings = (output: string): string[] => {
+  const found: string[] = [];
+  let heading = 'the space';
+  for (const line of output.split('\n')) {
+    const finding = /^\s+(\d+:\d+|-)\s+warning\s.*\s([a-z][a-z0-9-]+)\s*$/.exec(line);
+    if (finding) {
+      const [, at = '-', code = ''] = finding;
+      found.push(`${heading}${at === '-' ? '' : `:${at.split(':')[0] ?? ''}`} ${code}`);
+    } else if (/^\S/.test(line) && !/^(plitzi |What each|Not checked|Passes|Fails|Clean)/.test(line)) {
+      // A file's name heads its findings; the space's own findings come under "the space (no one line wrote it)".
+      heading = line.startsWith('the space') ? 'the space' : line.trim();
+    }
+  }
+
+  return found;
+};
 
 export const projectChecks: CheckRunner = async (dir, projectRoot) => {
   const steps = stepsOf(await scriptsOf(dir));
@@ -36,9 +60,11 @@ export const projectChecks: CheckRunner = async (dir, projectRoot) => {
     // way to a page that has a short one, and a run's tasks are where it is written the short way (or said why not).
     const suggestions = step.name === 'author' ? output.split('\n').filter(line => line.startsWith('[suggest] ')) : [];
     const ok = code === 0 && !step.failsOn?.test(output) && suggestions.length === 0;
+    const warnings = ok && step.name === 'lint:space' ? lintWarnings(output) : [];
     results.push({
       name: step.name,
       ok,
+      ...(warnings.length > 0 ? { warnings } : {}),
       ...(ok
         ? {}
         : {
