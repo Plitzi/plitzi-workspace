@@ -232,7 +232,11 @@ says what each field and each role the CLI knows means (`ROLES`: developer, desi
 other name is a role of the project's own), since JSON has no comments; `about` is the CLI's — never read, written as this CLI says it whenever it
 writes the file, and brought up by `plitzi upgrade` with the files, the agents left as they are. The file is formatted as the project's Prettier leaves it (`formattedJson`). `run team` lists the roles too. The file
 holds the leads' model, effort and count, and each agent — a name (`dev` is `dev-1`, `dev-2`…), the roles it takes, how many of it and the model to start it with, the
-harness's own name for it, nothing checked but that one is named. The CLI starts no agent; `run plan` says what to start
+harness's own name for it, nothing checked but that one is named — and its `options`: `designReview`, how closely a
+designer reviews another task's UI (`light`: its pages at 1440 and 390 in the default scheme, nothing it does not touch;
+`standard`, the default: both schemes and widths, its sections against the reference; `high`: every page that reads its
+files, against the run before it too), handed with each review (`DESIGN_LOOK`). A review costs what it looks at:
+velada-now's strictest took 83 steps, more than the task it reviewed. The CLI starts no agent; `run plan` says what to start
 each with — its roles, its model, the plan's tasks it takes and `task next --role <roles> --follow --take --agent
 <name>`. The team's size is how many agents work a run at once — no flag says otherwise; a project made before the starter gets
 it at its first run, with an agent for each other role its plan names, said; a team somebody emptied is refused. A task whose role nobody in the team takes

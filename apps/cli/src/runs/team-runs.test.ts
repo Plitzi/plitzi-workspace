@@ -298,6 +298,13 @@ describe('a designer’s review of the others’ UI', () => {
     expect(designer).toMatchObject({ status: 'reviewing', task: 't-menu', doing: 'reviews the UI of t-menu' });
   });
 
+  it('hands a designer its review with how closely the team asks, standard when it says nothing', async () => {
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+    expect((await takeNext(bench.agent('design-1'), 'es-launch', 'designer')).next.designReview?.precision).toBe(
+      'standard'
+    );
+  });
+
   it('comes before the lead’s: offered to one designer, approved by it, then the lead’s to approve', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
     expect(await designOf('t-menu')).toEqual({ status: 'due', round: 0 });

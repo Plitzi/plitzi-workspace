@@ -601,4 +601,8 @@ monitor` shows each as it comes, a problem in red.
       to put it right, before the work is done (velada-now's t-boxer learnt it at `complete`).
     - `run monitor`'s flow has no "sent back" stage: a task a review sent back is ready again for the agent that wrote
       it, its card marked with the round it is at — `t-boxer ↺2 dev-3`.
+    - `team.json` takes `options.designReview` — `light`, `standard` (the default) or `high` — how closely a designer
+      reviews another task's UI, handed with each review: its pages in one scheme; both schemes and widths against the
+      reference; or every page that reads its files against the run before it too. velada-now's strictest review took
+      83 steps, more than the task it reviewed.
 

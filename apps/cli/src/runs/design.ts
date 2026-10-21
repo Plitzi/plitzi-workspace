@@ -7,7 +7,7 @@ import { updateState } from './taskStore';
 import { DESIGNER, readTeam, startedAgents } from './team';
 import { isUiFile, reviewedAsUi } from './uiFiles';
 
-import type { DesignReview, RunTask, TaskState } from './model';
+import type { DesignReview, Quality, RunTask, TaskState } from './model';
 import type { LoadedRun, RunContext } from './run';
 import type { TaskView } from './taskStore';
 
@@ -41,9 +41,17 @@ export const designReviewFor = (views: readonly TaskView[], agent: string): Task
     .sort((a, b) => a.state.updatedAt.localeCompare(b.state.updatedAt))
     .at(0);
 
-/** What a designer looks at, said once — the run's skill (`runs.md`) says it whole. */
-export const DESIGN_LOOK =
-  'how it reads at 1440 and 390, in light and dark: hierarchy and spacing, the theme’s tokens rather than new values, every state (empty, long, loading, error, hover, focus), labels and words a person understands, and that it looks like the rest of the space. Against a reference, the details too: what moves (an entrance, a hover, a shine, an arrow), the sizes it measures (page shot --compare says each text’s and box’s), how each control behaves (hover, focus, what a click does), and the phone’s own layout (a carousel where the desktop has a grid). A state the data never shows, you cannot look at: say it (--note), the lead decides how it is seen';
+/**
+ * What a designer looks at, by how closely the team asks (`options.designReview`) — the run's skill (`runs.md`) says it
+ * whole. What every level holds: the hierarchy and spacing, the theme's tokens, words a person understands.
+ */
+export const DESIGN_LOOK: Record<Quality, string> = {
+  light:
+    'its pages at 1440 and 390, in the space’s default scheme: hierarchy and spacing, the theme’s tokens rather than new values, labels and words a person understands. Only what the task changed — not the pages it does not touch, not a pixel comparison',
+  standard:
+    'how it reads at 1440 and 390, in light and dark: hierarchy and spacing, the theme’s tokens rather than new values, every state (empty, long, loading, error, hover, focus), labels and words a person understands, and that it looks like the rest of the space. Against a reference, its sections (page shot --compare --clip <section>): what moves, the sizes it measures, how each control behaves, the phone’s own layout. A state the data never shows, you cannot look at: say it (--note), the lead decides how it is seen',
+  high: 'everything standard asks, on every page that reads its files — not only its own — against the reference and against the run before it (that nothing else moved), every state and control, in both schemes and widths. A state the data never shows, you cannot look at: say it (--note), the lead decides how it is seen'
+};
 
 /** Who took a task's work, by the notes its takes leave: a designer does not review its own. */
 const workedBy = (view: TaskView, agent: string): boolean =>

@@ -55,10 +55,10 @@ What the lead — team lead and software architect — does; the agents' half, t
    the finish. **`notes`** hold for the whole run;
    `plitzi run note "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB): what you learnt reading the project — every
    brief starts with it, and the few references its files need. **The team** is the project's,
-   `.plitzi/team.json` (edited by hand: `plitzi run team check`) — a developer and a designer to start, what each role does inside; grow it when the job asks
+   `.plitzi/team.json` (by hand: `plitzi run team check`) — a developer and a designer to start, each role said inside; grow it when the job asks
    (`plitzi run team set dev --count 2 --model <model>`, `… set test --roles tester`): its size is how many work at once, a role nobody takes is refused, and `run plan` says how to start each agent. A tester in it adds `<id>-tests` after each
-   developer task (`"tests": false` for none); a designer reviews the others' UI before you (`"designReview": false` in
-   the plan turns it off). Theirs is the UI/UX, as a designer; yours is the complete and strict review — code,
+   developer task (`"tests": false` for none); a designer reviews the others' UI before you (how closely: `options.designReview` there; `"designReview": false` in
+   the plan turns it off). Theirs is the UI/UX; yours is the complete, strict review — code,
    acceptance, edge cases, the page (UI approved: the code first) — and the final word, after it (or before, saying why: `--skip-design lead|no-ui`,
    as yourself: no `--agent`, or `lead`). A UI review counts only from a designer of the team, by the name it
    is started with (`design-1`). **One lead for every four agents**: a team of five or more has `lead-2`… beside you

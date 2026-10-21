@@ -123,6 +123,17 @@
         }
       }
     },
+    "options": {
+      "description": "How the team works, beside who is in it.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "designReview": {
+          "enum": ["light", "standard", "high"],
+          "description": "How closely a designer reviews another task's UI: light (its pages, 1440 and 390, the default scheme), standard (both schemes and widths, its sections against the reference \u2014 the default), high (every page that reads its files, against the run before it too). A review costs what it looks at."
+        }
+      }
+    },
     "about": {
       "type": "object",
       "description": "What the fields and roles mean, the CLI's: written fresh, never read"

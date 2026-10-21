@@ -124,12 +124,26 @@ export interface Team {
   version: 1;
   lead?: Lead;
   agents: TeamAgent[];
+  /** How the team works, beside who is in it. */
+  options?: TeamOptions;
   /**
    * What the file's fields and the roles mean, for the person who edits it (`TEAM_ABOUT`): JSON has no comments. The
    * CLI's: never read, written as this CLI says it whenever the file is written, and brought up by `plitzi upgrade`.
    */
   about?: Record<string, unknown>;
 }
+
+export interface TeamOptions {
+  /**
+   * How closely a designer reviews another task's UI (`light`, `standard`, `high`): its own pages in one scheme, or both
+   * schemes and widths against the reference, or every page that reads its files against the run before it. A review
+   * costs what it looks at — velada-now's strictest took 83 steps, more than the task it reviewed.
+   */
+  designReview?: Quality;
+}
+
+/** How closely a designer reviews when the team says nothing. */
+export const DEFAULT_DESIGN_REVIEW: Quality = 'standard';
 
 /**
  * The roles the CLI knows, and what each does in a run: a task names one (`"role"`), an agent takes some. Any other
@@ -213,7 +227,8 @@ const agentProblem = (value: unknown): string | undefined => {
 
 const isTeamAgent = (value: unknown): value is TeamAgent => agentProblem(value) === undefined;
 
-const TEAM_KEYS = ['$schema', 'version', 'lead', 'agents', 'about'];
+const TEAM_KEYS = ['$schema', 'version', 'lead', 'agents', 'options', 'about'];
+const OPTION_KEYS = ['designReview'];
 const LEAD_KEYS = ['model', 'effort', 'count'];
 const AGENT_KEYS = ['name', 'roles', 'count', 'model', 'effort'];
 
@@ -251,6 +266,17 @@ export const teamProblems = (parsed: unknown): string[] => {
       problems.push(problem);
     } else if (isRecord(each)) {
       problems.push(...unknownKeys(each, AGENT_KEYS, `"${String(each.name)}": `));
+    }
+  }
+
+  if (parsed.options !== undefined) {
+    if (!isRecord(parsed.options)) {
+      problems.push('"options" is { "designReview"?: "light" | "standard" | "high" }');
+    } else {
+      problems.push(...unknownKeys(parsed.options, OPTION_KEYS, '"options": '));
+      if (parsed.options.designReview !== undefined && !isQuality(parsed.options.designReview)) {
+        problems.push(`"options": "designReview" is ${QUALITIES.join(', ')} — how closely a designer reviews`);
+      }
     }
   }
 
@@ -304,6 +330,9 @@ export const readTeam = async (root: string): Promise<Team | undefined> => {
     version: 1,
     ...(isLeadEntry(parsed.lead) ? { lead: parsed.lead } : {}),
     agents: parsed.agents.filter(isTeamAgent),
+    ...(isRecord(parsed.options) && isQuality(parsed.options.designReview)
+      ? { options: { designReview: parsed.options.designReview } }
+      : {}),
     ...(isRecord(parsed.about) ? { about: parsed.about } : {})
   };
 };
@@ -318,6 +347,8 @@ export const TEAM_ABOUT: Record<string, unknown> = {
   agents:
     'Each agent: a name (dev is dev-1, dev-2…), the roles it takes, how many of it (count), and the model to start it with, as the harness names it (claude-sonnet-5-5 in Claude Code; any model opencode or another harness takes); left out, the default of the harness. Or a model a quality level — "model": { "standard": "claude-sonnet-5-5", "high": "claude-opus-5-5" } (light, standard, high): each level is started apart (design-1-high) for the tasks of it, so the strongest model works only what many build on. How many agents work at once is the sum of the counts.',
   roles: { ...ROLES, '<any other>': 'A role of your own: a task names it, an agent takes it.' },
+  options:
+    '"designReview": how closely a designer reviews another task\'s UI — "light" (its pages at 1440 and 390, the default scheme, nothing it does not touch), "standard" (both schemes and widths, its sections against the reference; the default), "high" (every page that reads its files, against the run before it too). A review costs what it looks at.',
   more: 'It starts small — every agent spends tokens: one developer, and a designer who reviews the UI of every other task. Grow it when a job asks: more developers (plitzi run team set dev --count 3), a tester who writes the tests of each developer task (plitzi run team set test --roles tester), a writer.'
 };
 

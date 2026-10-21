@@ -12,13 +12,13 @@ import { assertStatus, loadRun, logRun } from '../run';
 import { runChanged } from '../runChanged';
 import { tellLeftInTmp } from '../strays';
 import { isDisconnected, viewTask } from '../taskStore';
-import { DESIGNER, qualityRank, readTeam, startedAgents } from '../team';
+import { DEFAULT_DESIGN_REVIEW, DESIGNER, qualityRank, readTeam, startedAgents } from '../team';
 import { findTask, roleOf } from './common';
 import { allLocks } from './locks';
 import { takeTask } from './take';
 
 import type { Message } from '../messages';
-import type { RunTask, TaskStatus } from '../model';
+import type { Quality, RunTask, TaskStatus } from '../model';
 import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 import type { TakenTask } from './take';
@@ -53,6 +53,8 @@ export interface NextTask {
     pages: string[];
     /** Sent back since a designer last looked: what the lead's reviews asked — what this round answers. */
     asked: string[];
+    /** How closely the team asks it reviewed (`options.designReview` in team.json). */
+    precision: Quality;
   };
   /**
    * A lead's that reviews (`--role lead`): a task in review no other lead took — what it changed, where it is drawn, and
@@ -178,7 +180,8 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
         pages: await pagesOf(review.paths.work, review.state.changed ?? []),
         asked: review.state.notes
           .filter(note => /^Review \d+: /.test(note.text))
-          .map(note => `${note.by}: ${note.text}`)
+          .map(note => `${note.by}: ${note.text}`),
+        precision: (await readTeam(ctx.root).catch(() => undefined))?.options?.designReview ?? DEFAULT_DESIGN_REVIEW
       },
       ready: [],
       messages

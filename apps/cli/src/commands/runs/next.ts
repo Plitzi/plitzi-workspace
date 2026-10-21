@@ -56,7 +56,7 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>, agent: 
     ...review.asked.map(line => `  ↺ ${line}`),
     `  It changed: ${review.changed.join(', ') || 'nothing said'}`,
     `  Look at it as it went to review: plitzi task look ${review.task.id} ${review.pages.length > 0 ? review.pages.join(' ') : '<page…>   # no page of the space owns its files: name the ones it shows on'}`,
-    `  Look for ${DESIGN_LOOK} — before your first review, read ${DESIGN_READING.join(', ')}`,
+    `  Look for (${review.precision}, as the team asks — options.designReview) ${DESIGN_LOOK[review.precision]} — before your first review, read ${DESIGN_READING.join(', ')}`,
     `  Then say it: plitzi task review ${review.task.id} --approve [--note "what you saw"] | --changes "what, where, and why" [--on <element>] --agent ${agent}`
   ].join('\n');
 

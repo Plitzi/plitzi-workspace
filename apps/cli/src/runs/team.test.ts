@@ -181,7 +181,7 @@ describe('the team of a project’s runs', () => {
         extra: true
       })
     ).toEqual([
-      '"extra" is no field of it (it takes version, lead, agents, about)',
+      '"extra" is no field of it (it takes version, lead, agents, options, about)',
       '"lead": "modle" is no field of it — did you mean "model"? (it takes model, effort, count)',
       '"dev": "cuont" is no field of it — did you mean "count"? (it takes name, roles, count, model, effort)',
       '"lead" is the lead’s: give the lead its model under "lead", and the agent another name'
@@ -189,6 +189,17 @@ describe('the team of a project’s runs', () => {
     expect(teamProblems({ $schema: TEAM_SCHEMA, version: 1, agents: [{ name: 'dev', roles: ['developer'] }] })).toEqual(
       []
     );
+  });
+
+  // velada-now: a designer's strictest review took 83 steps, more than the task it reviewed — how close is the team's.
+  it('says how closely a designer reviews, and refuses a level it does not know', () => {
+    const team = { version: 1, agents: [{ name: 'design', roles: ['designer'] }] };
+
+    expect(teamProblems({ ...team, options: { designReview: 'light' } })).toEqual([]);
+    expect(teamProblems({ ...team, options: { designReview: 'pixel' } })).toEqual([
+      '"options": "designReview" is light, standard, high — how closely a designer reviews'
+    ]);
+    expect(teamProblems({ ...team, options: { designRevew: 'light' } })[0]).toContain('did you mean "designReview"?');
   });
 
   it('is described alike by the schema an editor checks it with', async () => {
@@ -204,7 +215,8 @@ describe('the team of a project’s runs', () => {
       return typeof at === 'object' && at !== null ? Object.keys(at).sort() : [];
     };
 
-    expect(props(schema, 'properties')).toEqual(['$schema', 'about', 'agents', 'lead', 'version']);
+    expect(props(schema, 'properties')).toEqual(['$schema', 'about', 'agents', 'lead', 'options', 'version']);
+    expect(props(schema, 'properties', 'options', 'properties')).toEqual(['designReview']);
     expect(props(schema, 'properties', 'lead', 'properties')).toEqual(['count', 'effort', 'model']);
     expect(props(schema, 'properties', 'agents', 'items', 'properties')).toEqual([
       'count',
