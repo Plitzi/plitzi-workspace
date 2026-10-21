@@ -256,6 +256,28 @@ describe('a project’s first run', () => {
   });
 });
 
+describe('a UI review with no designer free', () => {
+  it('is the lead’s too — said, approved with --skip-design — rather than waiting for nobody', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'] });
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+
+    // The designer between tasks would take it: the lead is not offered it.
+    expect((await nextTask(lead(), 'es-launch', 'lead')).leadReview).toBeUndefined();
+
+    // At a task of its own, it is nobody's to take but the lead's.
+    await takeTask(bench.agent('design-1'), 'es-launch', 't-about');
+    const offered = await nextTask(lead(), 'es-launch', 'lead');
+    expect(offered.leadReview).toMatchObject({ task: { id: 't-menu' } });
+    expect(offered.leadReview?.uiToo).toContain('design-1 at a task of its own');
+    // And the lead hears it, as one waiting for nobody would never be said otherwise.
+    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
+      expect.objectContaining({ kind: 'ui-waits', text: expect.stringContaining('design-1 at t-about') as unknown })
+    );
+  });
+});
+
 describe('a designer’s review of the others’ UI', () => {
   beforeEach(async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });

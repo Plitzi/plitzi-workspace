@@ -11,8 +11,9 @@ import { isRunRefusal, RunRefusal } from '../refusal';
 import { assertStatus, loadRun } from '../run';
 import { tellLeftInTmp } from '../strays';
 import { isDisconnected, viewTask } from '../taskStore';
-import { DESIGNER, qualityRank } from '../team';
+import { DESIGNER, qualityRank, readTeam, startedAgents } from '../team';
 import { findTask, roleOf } from './common';
+import { allLocks } from './locks';
 import { takeTask } from './take';
 
 import type { Message } from '../messages';
@@ -37,6 +38,8 @@ export interface NextTask {
   yours?: 'in-progress' | 'changes-requested';
   /** Handed back with changes requested: what its last review asked, by whom. */
   asked?: string[];
+  /** One the caller holds: where its copy is — the only place its work is written. */
+  work?: string;
   /**
    * A designer's, before any task: one whose UI waits for its review — looked at as it went to review (`task look`),
    * then said (`task review --approve | --changes`). What it changed, for the look.
@@ -62,6 +65,8 @@ export interface NextTask {
     asked: string[];
     /** A designer approved its UI: what it said, when it said something. */
     design?: string;
+    /** Its UI review waits for a designer and none is free: the lead's too, said how. */
+    uiToo?: string;
   };
   /** Why nothing is ready, when nothing is. */
   why?: string;
@@ -120,6 +125,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
       return {
         task: view.task,
         yours: status,
+        work: view.paths.work,
         ...(status === 'changes-requested' && asked.length > 0 ? { asked } : {}),
         ready: [],
         messages: [...messages, ...toTask].sort((x, y) => x.at.localeCompare(y.at) || x.id.localeCompare(y.id))
@@ -156,7 +162,28 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   const fits = (task: RunTask): boolean =>
     ctx.quality === undefined || qualityRank(task.quality ?? 'standard') <= qualityRank(ctx.quality);
   const above = readyTasks(loaded.tasks, states, held).filter(task => forRole(task) && !fits(task));
-  const ready = readyTasks(loaded.tasks, states, held).filter(task => forRole(task) && fits(task));
+  // A task whose file another task holds is not offered: taking it would be refused (`claimed`), and an agent refused
+  // three times stops — la-velada's integration of home/index.ts, while the task holding it was sent back.
+  const locks = await allLocks(ctx);
+  const holderOfFile = (task: RunTask): { file: string; task: string } | undefined => {
+    for (const file of task.files) {
+      const other = (locks.get(file) ?? []).find(
+        each => each.live && !(each.run === loaded.record.runId && each.task === task.id)
+      );
+      if (other) {
+        return { file, task: other.task };
+      }
+    }
+
+    return undefined;
+  };
+  const fitting = readyTasks(loaded.tasks, states, held).filter(task => forRole(task) && fits(task));
+  const ready = fitting.filter(task => holderOfFile(task) === undefined);
+  const waitingForFile = fitting.flatMap(task => {
+    const holder = holderOfFile(task);
+
+    return holder ? [{ waiting: task.id, file: holder.file, holder: holder.task }] : [];
+  });
   // A task the limit would not let this agent take is not offered: it is said, and `--follow` waits for a place.
   const atWork = new Set(
     views
@@ -175,6 +202,14 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
 
   if (ready.length > 0) {
     return { task: ready[0], ready: ready.map(task => task.id), messages };
+  }
+
+  if (ready.length === 0 && waitingForFile.length > 0) {
+    return {
+      why: `ready, but a file of each is another task's until that one is approved: ${waitingForFile.map(each => `${each.waiting} (${each.file}, held by ${each.holder})`).join(', ')} — wait for it (--follow)`,
+      ready: [],
+      messages
+    };
   }
 
   if (ready.length === 0 && above.length > 0) {
@@ -268,9 +303,23 @@ const leadNext = async (
     await markAsking(ctx, loaded);
   }
 
-  const review = leadReviewFor(views, ctx.agent);
+  // A UI review waits for a designer; with none free — each at a task of its own, or none in the team — it waits for
+  // nobody, and every review behind it with it (la-velada: seven tasks in review, the one designer redoing its own).
+  const team = await readTeam(ctx.root).catch(() => undefined);
+  const designers = (team ? startedAgents(team) : [])
+    .filter(each => each.roles.includes(DESIGNER))
+    .map(each => each.agent);
+  const busy = (agent: string): boolean =>
+    views.some(
+      view =>
+        view.owner?.agent === agent &&
+        (view.state.status === 'in-progress' || view.state.status === 'changes-requested')
+    );
+  const noDesignerFree = designers.every(busy);
+  const review = leadReviewFor(views, ctx.agent, noDesignerFree);
   if (review) {
     const approvedUi = review.state.design?.status === 'approved' ? review.state.design : undefined;
+    const uiToo = review.state.design?.status === 'due';
 
     return {
       leadReview: {
@@ -286,6 +335,11 @@ const leadNext = async (
               design:
                 review.state.notes.findLast(note => note.text.startsWith('Its UI approved by'))?.text ??
                 `its UI approved by ${approvedUi.by ?? 'a designer'}`
+            }
+          : {}),
+        ...(uiToo
+          ? {
+              uiToo: `its UI waits for a designer and none is free${designers.length > 0 ? ` (${designers.join(', ')} at a task of its own)` : ''}: review its UI too — as the original, both schemes, the phone width — and approve with --skip-design`
             }
           : {})
       },

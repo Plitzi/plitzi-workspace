@@ -338,3 +338,25 @@
   covered by a line of acceptance a command proves (`{ said, check, covers: [id] }`) or left out with its reason — `run
   plan` refuses one that is neither, and the report says who covered each. The lead's coverage was a skill's advice:
   la-velada's first run left the tier list, the live stream and a dozen pieces unsaid.
+- **The scope of an open run changes, said** (`@plitzi/cli`): `run amend` removes a task nobody took — never one taken
+  or one another waits for — and changes the inventory, checked again over what is left; the plan and its primer move
+  into the run's folder at `run open` (`inputs/`), where the lead edits them.
+- **Why a task waits is said** (`@plitzi/cli`, `@plitzi/sdk-dev-tools`, `@plitzi/sdk-shared`): a pending task names the
+  tasks it starts after, a waiting one its file, a blocked one what blocks it — in `run status`, `run monitor` and the
+  Run tab (`why` in the snapshot); the Run tab's Needs attention scrolls on its own.
+- **A run closes only once nothing needs attention** (`@plitzi/cli`): `run finish` refuses an unread message, an
+  unanswered proposal, a block, a person's step, a version to re-pin or what was left in the project's `tmp/`, each
+  said where it is resolved.
+- **An image still coming is not one that failed** (`@plitzi/sdk-authoring`): `page check` waits up to 20 s for the
+  images on their way and says one still loading apart from one that failed — under many checks at once a CDN answered
+  late, and every acceptance on a page failed on it.
+- **The run keeps moving when one piece waits** (`@plitzi/cli`): `task next` no longer offers a ready task whose file
+  another task holds (agents were refused three times and stopped) — it says whose, and `--follow` waits; when every
+  designer is at a task of its own, the UI reviews are the lead's too, and the run's view says so; a task handed back
+  names its copy; `run monitor` says who reviews each task, what else each agent holds, and how many UI reviews wait for
+  a designer.
+- **`page check` in a task's copy is held to its part** (`@plitzi/cli`): findings on elements other tasks write are
+  said apart and fail nothing (the finish checks the whole result); a link of stacked blocks (an eyebrow over a name) is
+  no longer a wrapped label.
+- **A plan's unit that is a folder** (`@plitzi/cli`): backed up as a path before it exists, it is read as no file once
+  the run makes it, and put back by going once empty — the preview's sync stopped an approval on it.

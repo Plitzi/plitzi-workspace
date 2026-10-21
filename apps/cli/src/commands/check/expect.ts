@@ -28,8 +28,19 @@ export const wrappedLabelsInPage = (selector: string): { id: string; label: stri
       return [];
     }
 
-    // The text's own boxes — never an icon's beside it, which sits at its own height — one per line it runs over.
-    const boxes: { top: number; height: number }[] = [];
+    // The text's own boxes — never an icon's beside it, which sits at its own height — grouped by the block each runs
+    // in: a card whose eyebrow and title are two blocks, stacked on purpose ("Artista anterior" over "Juanes"), is two
+    // lines of one each, not a label broken in two. Only a block whose own text runs over lines is a squeezed label.
+    const blockOf = (text: Node): Element => {
+      for (let at = text.parentElement; at && at !== node; at = at.parentElement) {
+        if (!getComputedStyle(at).display.startsWith('inline')) {
+          return at;
+        }
+      }
+
+      return node;
+    };
+    const groups = new Map<Element, { top: number; height: number }[]>();
     const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
     for (let text = walker.nextNode(); text !== null; text = walker.nextNode()) {
       if ((text.textContent ?? '').trim() === '') {
@@ -38,18 +49,27 @@ export const wrappedLabelsInPage = (selector: string): { id: string; label: stri
 
       const range = document.createRange();
       range.selectNodeContents(text);
-      boxes.push(...Array.from(range.getClientRects(), rect => ({ top: rect.top, height: rect.height })));
+      const block = blockOf(text);
+      groups.set(block, [
+        ...(groups.get(block) ?? []),
+        ...Array.from(range.getClientRects(), rect => ({ top: rect.top, height: rect.height }))
+      ]);
     }
 
     // A new line starts more than half a line below the last: boxes of one line differ by less.
-    let lines = 0;
-    let last = -Infinity;
-    for (const box of boxes.sort((a, b) => a.top - b.top)) {
-      if (box.top - last > Math.max(box.height, 1) / 2) {
-        lines += 1;
-        last = box.top;
+    const linesOf = (boxes: { top: number; height: number }[]): number => {
+      let count = 0;
+      let last = -Infinity;
+      for (const box of boxes.sort((a, b) => a.top - b.top)) {
+        if (box.top - last > Math.max(box.height, 1) / 2) {
+          count += 1;
+          last = box.top;
+        }
       }
-    }
+
+      return count;
+    };
+    const lines = Math.max(0, ...[...groups.values()].map(linesOf));
 
     return lines > 1 ? [{ id: node.getAttribute('data-plitzi-el') ?? '', label, lines }] : [];
   });

@@ -28,7 +28,7 @@ const TONE: Record<string, string> = {
 const whoOf = (task: RunSnapshotTask): string =>
   [task.agent, task.reviewer ? `reviewed by ${task.reviewer}` : undefined].filter(Boolean).join(' · ');
 
-/** One task of the run: its state, who has it, how far — and, opened, the files it writes. */
+/** One task of the run: its state, who has it, how far, why it waits — and, opened, the files it writes. */
 const RunTaskRow = ({ task }: { task: RunSnapshotTask }) => {
   const [open, setOpen] = useState(false);
   const handleToggle = useCallback(() => setOpen(was => !was), []);
@@ -49,6 +49,17 @@ const RunTaskRow = ({ task }: { task: RunSnapshotTask }) => {
         )}
         <span className="shrink-0 text-[10px] text-zinc-400">{whoOf(task)}</span>
       </button>
+      {task.why && (
+        <div
+          className={clsx(
+            'truncate px-7 pb-1 text-[10px]',
+            task.status === 'blocked' ? 'text-red-600 dark:text-red-400' : 'text-zinc-500 dark:text-zinc-400'
+          )}
+          title={task.why}
+        >
+          {task.why}
+        </div>
+      )}
       {open && (
         <div className="flex flex-col gap-0.5 px-7 pb-2 text-[11px] text-zinc-500 dark:text-zinc-400">
           <span>

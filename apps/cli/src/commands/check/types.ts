@@ -78,6 +78,8 @@ export interface CheckReport {
   issues: CheckIssue[];
   /** Owed, and hidden at this width by a breakpoint on purpose: looked at, and not a problem. */
   hiddenAtWidth: string[];
+  /** Checked in a task's copy: findings on elements other tasks write, said and failing nothing (`apart.ts`). */
+  apart?: string[];
   consoleErrors: string[];
   failedRequests: string[];
   /** Whether the page had its dev tools on, which is what flows, state and elements are read from. */

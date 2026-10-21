@@ -120,9 +120,11 @@ export const issuesOf = (expected: ElementHandle[], findings: ProbeFindings): Pa
       message: `${named(id)} is on the page but not visible: ${reason}`,
       elementId: id
     })),
-    ...findings.brokenImages.map(({ source, elementId }): PageIssue => ({
+    ...findings.brokenImages.map(({ source, elementId, loading }): PageIssue => ({
       code: 'image-not-loaded',
-      message: `an image never loaded: ${source}`,
+      message: loading
+        ? `an image was still loading after ${String(IMAGE_WAIT_MS / 1000)} s: ${source} — its server is slow, or never answers`
+        : `an image never loaded: ${source}`,
       ...about(elementId)
     })),
     ...sidewaysOf(findings.overflow),
@@ -172,6 +174,12 @@ const defaultPage = (handles: SpaceHandles): string => {
 
 const pause = (milliseconds: number): Promise<void> => new Promise(resolve => setTimeout(resolve, milliseconds));
 
+/**
+ * How long a page is waited for when all that is left is images on their way — a CDN slow under many checks at once
+ * answers them late, and an image still coming is not one that failed.
+ */
+const IMAGE_WAIT_MS = 20_000;
+
 /** Checks that need no space: what any rendered page owes, whoever wrote it. */
 export type DocumentChecks = Pick<InspectOptions, 'skip' | 'timeout'>;
 
@@ -198,13 +206,16 @@ const inspect = async (
     legibility: !skip.has('legibility')
   };
   const deadline = Date.now() + (options.timeout ?? 5000);
+  const imagesDeadline = Date.now() + Math.max(IMAGE_WAIT_MS, options.timeout ?? 5000);
   for (;;) {
     const findings = await driver.evaluate(probePage, input);
     const issues = [
       ...issuesOf(expected, findings),
       ...(skip.has('accessibility') ? [] : accessibilityIssues(await driver.evaluate(accessibilityInPage, input)))
     ];
-    if (issues.length === 0 || Date.now() >= deadline) {
+    const onlyLoading =
+      issues.length > 0 && issues.length === findings.brokenImages.filter(image => image.loading).length;
+    if (issues.length === 0 || Date.now() >= (onlyLoading ? imagesDeadline : deadline)) {
       return {
         page,
         checked: expected.length - findings.notDrawn.length,

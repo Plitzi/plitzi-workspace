@@ -10,7 +10,7 @@ import { checkPlan, PlanRefusal } from '../plan';
 import { RunRefusal } from '../refusal';
 import { keepFiles } from '../store';
 import { coLeadNames, ensureTeam, reviewsDesign, teamSize } from '../team';
-import { assertNoOtherRun, claimProject, handedInputs, releaseProject } from './claim';
+import { assertNoOtherRun, claimProject, handedInputs, releaseProject, takeInputs } from './claim';
 import { requireNoTask, requirePerson } from './context';
 import { assertStatus, loadRun, logRun, pinnedNow, readRecord, updateRecord } from './record';
 
@@ -30,6 +30,8 @@ export interface OpenedRun {
   checked: CheckedPlan;
   paths: RunPaths;
   backedUp: number;
+  /** The plan and its primer, moved into the run's folder from the project: where the lead edits them now. */
+  inputs: string[];
 }
 
 export const readPlanFile = async (file: string): Promise<RunPlan> => {
@@ -219,6 +221,12 @@ export const openRun = async (
     merges: [],
     inputs: await handedInputs(ctx, [file, primerFile(plan, file)])
   };
+  // Inside the project, they are the run's now: moved into its folder, and no longer inputs to remove after it.
+  const inputs = await takeInputs(ctx, paths, [file, primerFile(plan, file)]);
+  if (inputs.length > 0) {
+    record.inputs = [];
+  }
+
   // The plan as its lead wrote it, last: a folder with a plan and a record is a run.
   await writeJson(paths.plan, plan);
   await writeJson(paths.record, record);
@@ -230,7 +238,7 @@ export const openRun = async (
 
   await logRun(ctx, paths, { action: 'open', tasks: checked.tasks.length, backedUp: touched.length });
 
-  return { checked, paths, backedUp: touched.length };
+  return { checked, paths, backedUp: touched.length, inputs };
 };
 
 /**

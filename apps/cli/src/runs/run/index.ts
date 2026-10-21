@@ -22,7 +22,7 @@ export {
   updateRecord
 } from './record';
 export type { LoadOptions } from './record';
-export { assertNoOtherRun, handedInputs, inputOf, removeRun, withInputs } from './claim';
+export { assertNoOtherRun, handedInputs, inputOf, removeRun, takeInputs, withInputs } from './claim';
 export type { RemovedInputs } from './claim';
 export {
   MAX_PRIMER_BYTES,

@@ -2,6 +2,7 @@ import { launchBrowser, projectOrigin } from '../../browser';
 import { projectHere } from '../existingProject';
 import { fail } from '../terminal';
 import { checkAccount } from './account';
+import { keptToTask } from './apart';
 import { checkAt } from './inspect';
 import { moduleSpace, projectSpace } from './space';
 import { reportText } from './text';
@@ -68,8 +69,9 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     return;
   }
 
-  console.log(options.json ? JSON.stringify(reports) : reports.map(report => reportText(report, asked)).join('\n'));
-  if (reports.some(report => !report.ok)) {
+  const kept = await keptToTask(project.root, reports);
+  console.log(options.json ? JSON.stringify(kept) : kept.map(report => reportText(report, asked)).join('\n'));
+  if (kept.some(report => !report.ok)) {
     process.exitCode = 1;
   }
 };

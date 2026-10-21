@@ -214,7 +214,7 @@ describe('acceptance, checks and what is left behind', () => {
     expect(followed.reply).toBeUndefined();
   });
 
-  it('removes the plan and the summary it was handed with the run, unless they changed since', async () => {
+  it('removes what it was handed with the run, unless it changed since — the plan went with it from the start', async () => {
     await open();
     await doTask(
       'agent-1',
@@ -226,7 +226,8 @@ describe('acceptance, checks and what is left behind', () => {
     await bench.write('summary.md', 'changed after it was handed\n');
     const done = await finishRun(bench.person(true), 'es-launch', { apply: true, leavePending: true });
 
-    expect(done.inputs).toEqual({ removed: ['es-launch.plan.json'], kept: ['summary.md'] });
+    // The plan was the run's from its opening, in its folder: only what was handed after is removed — or kept.
+    expect(done.inputs).toEqual({ removed: [], kept: ['summary.md'] });
     expect(await bench.read('es-launch.plan.json')).toBeUndefined();
   });
 

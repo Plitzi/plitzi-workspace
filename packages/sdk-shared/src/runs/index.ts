@@ -27,6 +27,8 @@ export interface RunSnapshotTask {
   files: string[];
   step?: string;
   fraction?: number;
+  /** Why it is not moving, in a line: the tasks it starts after, the file it waits for, what blocks it and who acts. */
+  why?: string;
 }
 
 export interface RunSnapshotAgent {

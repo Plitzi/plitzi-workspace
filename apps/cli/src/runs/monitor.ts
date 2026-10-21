@@ -78,15 +78,22 @@ const doingOf = (task: TaskLine): string => {
 const agentsOf = async (ctx: RunContext, view: RunView): Promise<AgentLine[]> => {
   const team = await readTeam(ctx.root).catch(() => undefined);
   const held = new Map<string, TaskLine>();
+  const holds = new Map<string, TaskLine[]>();
   for (const task of view.tasks) {
     if (task.agent && task.status !== 'done') {
-      // An agent holds one task it writes; one in review it finished is shown only when it holds nothing else.
+      holds.set(task.agent, [...(holds.get(task.agent) ?? []), task]);
+      // An agent writes one task at a time; one in review it finished is shown only when it holds nothing else.
       const before = held.get(task.agent);
       if (!before || before.status === 'in-review') {
         held.set(task.agent, task);
       }
     }
   }
+
+  // What waits on a designer: a UI review no designer took — said on each designer, which may be at a task of its own.
+  const uiWaiting = view.tasks.filter(
+    task => task.status === 'in-review' && task.design?.status === 'due' && task.design.by === undefined
+  );
 
   const reviewing = new Map(view.tasks.flatMap(task => (task.reviewer ? [[task.reviewer, task.id] as const] : [])));
   const leadModel = team?.lead?.model === undefined ? undefined : choiceText(team.lead.model);
@@ -114,6 +121,14 @@ const agentsOf = async (ctx: RunContext, view: RunView): Promise<AgentLine[]> =>
   const agents: AgentLine[] = [...new Set([...started.keys(), ...held.keys()])].map(agent => {
     const task = held.get(agent);
     const member = started.get(agent);
+    const also = (holds.get(agent) ?? []).filter(each => each.id !== task?.id);
+    const more = [
+      ...(also.length > 0 ? [`also holds ${also.map(each => `${each.id} (${each.status})`).join(', ')}`] : []),
+      ...(member?.roles.includes('designer') && uiWaiting.length > 0
+        ? [`${String(uiWaiting.length)} UI review${uiWaiting.length === 1 ? '' : 's'} wait for a designer`]
+        : [])
+    ];
+    const tail = more.length > 0 ? ` · ${more.join(' · ')}` : '';
     const about = {
       ...(member?.model ? { model: `${member.model.model}${member.quality ? ` (${member.quality})` : ''}` } : {}),
       roles: member?.roles ?? (task ? [task.role] : [])
@@ -125,12 +140,18 @@ const agentsOf = async (ctx: RunContext, view: RunView): Promise<AgentLine[]> =>
           kind: 'agent' as const,
           status: statusOf(task),
           ...about,
-          doing: doingOf(task),
+          doing: `${doingOf(task)}${tail}`,
           task: task.id,
           ...(task.signalAt ? { signalAt: task.signalAt } : {}),
           ...(task.noSignal ? { noSignal: true } : {})
         }
-      : { agent, kind: 'agent' as const, status: 'idle' as const, ...about, doing: 'between tasks — waits for one' };
+      : {
+          agent,
+          kind: 'agent' as const,
+          status: 'idle' as const,
+          ...about,
+          doing: `between tasks — waits for one${tail}`
+        };
   });
 
   return [...leads, ...agents];

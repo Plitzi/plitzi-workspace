@@ -12,6 +12,7 @@ import { loadRun, pinnedChanges, pinnedNow, readApproved, readBase, runIds, same
 import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
+import { DESIGNER, readTeam, startedAgents } from './team';
 
 import type { DesignReview, Needs, RunRecord, TaskStatus, Waiting } from './model';
 import type { RunContext } from './run';
@@ -52,6 +53,8 @@ export interface TaskLine {
   takenAt?: string;
   /** The tasks that start when this one is done. */
   unblocks: string[];
+  /** Pending: the tasks it waits for, not approved yet — what a person reads "pending" as. */
+  waitsOn?: string[];
   milestone?: string;
   /** Its UI's review by a designer, in a run that has one. */
   design?: DesignReview;
@@ -80,6 +83,7 @@ export interface Attention {
     | 'file-too-long'
     | 'version'
     | 'left-in-tmp'
+    | 'ui-waits'
     | 'message';
   task?: string;
   /** The file it is about, when it is about one: what keeps it the same notice while its words change. */
@@ -154,13 +158,17 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   const now = ctx.now();
   const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
   const byId = new Map(views.map(view => [view.task.id, view]));
-  const tasks = views.map(view =>
-    lineOf(
+  const approvedIds = new Set(views.filter(view => view.state.status === 'done').map(view => view.task.id));
+  const tasks = views.map(view => {
+    const line = lineOf(
       view,
       now,
       loaded.tasks.filter(task => task.dependsOn.includes(view.task.id)).map(task => task.id)
-    )
-  );
+    );
+    const waitsOn = view.task.dependsOn.filter(id => !approvedIds.has(id));
+
+    return view.state.status === 'pending' && waitsOn.length > 0 ? { ...line, waitsOn } : line;
+  });
   const attention: Attention[] = [];
   const { record } = loaded;
   if (record.status === 'reconciliation') {
@@ -178,6 +186,29 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       kind: 'version',
       text: `The Plitzi version changed under the run (${pinnedChanges(record.pinned, pinned).join(', ')}): the agents wait, their work kept in their copies — a person re-pins it in their terminal: plitzi run attach ${record.runId}`,
       who: 'person'
+    });
+  }
+
+  // UI reviews nobody takes: every designer is at a task of its own — the lead's, or they wait for nobody.
+  const team = await readTeam(ctx.root).catch(() => undefined);
+  const designers = (team ? startedAgents(team) : [])
+    .filter(each => each.roles.includes(DESIGNER))
+    .map(each => each.agent);
+  const atOwn = (agent: string): string | undefined =>
+    views.find(
+      view =>
+        view.owner?.agent === agent &&
+        (view.state.status === 'in-progress' || view.state.status === 'changes-requested')
+    )?.task.id;
+  const uiWaiting = views.filter(
+    view =>
+      view.state.status === 'in-review' && view.state.design?.status === 'due' && view.state.design.by === undefined
+  );
+  if (uiWaiting.length > 0 && designers.length > 0 && designers.every(agent => atOwn(agent) !== undefined)) {
+    attention.push({
+      kind: 'ui-waits',
+      text: `${uiWaiting.map(view => view.task.id).join(', ')} wait for a UI review, and no designer is free (${designers.map(agent => `${agent} at ${String(atOwn(agent))}`).join(', ')}): review them yourself, UI included — plitzi task next --role lead --take, then --approve --skip-design`,
+      who: 'lead'
     });
   }
 
@@ -426,15 +457,17 @@ export const runText = (view: RunView): string => {
     const extra =
       task.status === 'waiting' && task.waitingFor
         ? ` · waits for ${task.waitingFor.task} ${waitingText(task.waitingFor)}`
-        : task.status === 'blocked' && task.blockedBy
-          ? ` · ${task.blockedBy.reason}`
-          : task.status === 'changes-requested'
-            ? ` · changes requested (round ${String(task.round)})`
-            : task.status === 'in-review' && task.design?.status === 'due'
-              ? ` · ${designText(task.design)}`
-              : task.status === 'in-review'
-                ? `${task.design ? ` · ${designText(task.design)}` : ''}${task.reviewer ? ` · ${task.reviewer} reviews it` : view.leads.length > 0 ? ' · no lead took it yet' : ''}`
-                : '';
+        : task.waitsOn
+          ? ` · after ${task.waitsOn.join(', ')}`
+          : task.status === 'blocked' && task.blockedBy
+            ? ` · ${task.blockedBy.reason}`
+            : task.status === 'changes-requested'
+              ? ` · changes requested (round ${String(task.round)})`
+              : task.status === 'in-review' && task.design?.status === 'due'
+                ? ` · ${designText(task.design)}`
+                : task.status === 'in-review'
+                  ? `${task.design ? ` · ${designText(task.design)}` : ''}${task.reviewer ? ` · ${task.reviewer} reviews it` : view.leads.length > 0 ? ' · no lead took it yet' : ''}`
+                  : '';
     lines.push(
       `  ${ICON[task.status]} ${task.id.padEnd(18)} ${task.role === 'developer' ? '' : `[${task.role}] `}${agent}${task.title}${step}${progress}${extra}${task.noSignal ? ' · no signal' : ''}`
     );

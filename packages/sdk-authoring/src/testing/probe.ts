@@ -24,7 +24,7 @@ export interface ProbeFindings {
   /** Owed, and hidden at this width by a breakpoint on purpose — checked at the width it shows at, not a problem. */
   byWidth: string[];
   /** Each with the element it is in, by id, when one of the space's holds it. */
-  brokenImages: { source: string; elementId?: string }[];
+  brokenImages: { source: string; elementId?: string; loading?: true }[];
   /** `elementIds`: the widest ones the space named, for a tool to point at. */
   overflow: { pixels: number; widest: string[]; elementIds: string[] } | null;
   /** A link, a control or words of the space's cut at the screen's edge — by how many pixels fall outside it. */
@@ -238,8 +238,15 @@ export function probePage(input: ProbeInput): ProbeFindings {
 
         const pending = image.loading === 'lazy' && !inSight(image);
 
+        // Asked for and not answered yet is not failed: said apart, and waited for longer than the rest.
         return !pending && (!image.complete || image.naturalWidth === 0)
-          ? [{ source: image.currentSrc || image.src || nameOf(image), ...at }]
+          ? [
+              {
+                source: image.currentSrc || image.src || nameOf(image),
+                ...at,
+                ...(image.complete ? {} : { loading: true as const })
+              }
+            ]
           : [];
       })
     : [];

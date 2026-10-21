@@ -102,6 +102,7 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
     ...(report.notFound ? ['  · sent with status 404: the page for an address that shows nothing'] : []),
     ...(report.retriedAfter ? [`  · looked at again after the server failed: ${report.retriedAfter.join(', ')}`] : []),
     ...listsText(report.lists),
+    ...(report.apart ?? []).map(each => chalk.dim(`  · another task's, not this one's: ${each}`)),
     ...(report.expected ?? []).map(each => chalk.dim(`  · expected ${each} ✓`)),
     ...browserOnlyText(report),
     ...heldText(report, asked),

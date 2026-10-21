@@ -27,6 +27,24 @@ afterEach(async () => {
 const { refusal, lead, open, take, doTask } = runSteps(() => bench);
 
 describe('the final merge', () => {
+  it('closes only once nothing needs attention — each said where it is resolved', async () => {
+    await open();
+    await doTask(
+      'agent-1',
+      't-about',
+      'src/space/pages/about.ts',
+      'export const about = { id: \'about\', title: \'Sobre\' };\n'
+    );
+    await bench.write('tmp/dev1/s.mjs', 'console.log(1);\n');
+
+    const left = await refusal(finishRun(bench.person(true), 'es-launch', { apply: false, leavePending: true }));
+    expect(left.message).toContain('still needs attention');
+    expect(left.message).toContain('tmp/dev1/');
+    expect(left.message).toContain('remove what nobody needs');
+    await fs.rm(path.join(bench.root, 'tmp/dev1'), { recursive: true });
+    expect((await finishRun(bench.person(true), 'es-launch', { apply: false, leavePending: true })).dryRun).toBe(true);
+  });
+
   it('shows the whole run as a dry run — changing nothing — and only a person writes it', async () => {
     await open();
     await doTask(

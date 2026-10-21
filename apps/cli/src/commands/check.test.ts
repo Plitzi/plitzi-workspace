@@ -288,19 +288,23 @@ describe('a short label the page breaks onto two lines', () => {
     vi.restoreAllMocks();
   });
 
-  it('is said with its lines — a long one, or one on one line, is not', () => {
+  it('is said with its lines — a long one, one on one line, or blocks stacked on purpose, is not', () => {
     document.body.innerHTML = [
       '<a data-plitzi-el="site-nav-digest" href="/digest">This week</a>',
       '<a data-plitzi-el="site-nav-home" href="/">Home</a>',
       '<a data-plitzi-el="site-brand" href="/"><i class="fa-paw"></i>Pet Friends</a>',
-      '<a data-plitzi-el="home-lede" href="/about">A whole sentence that wraps as text does</a>'
+      '<a data-plitzi-el="home-lede" href="/about">A whole sentence that wraps as text does</a>',
+      // An eyebrow over a name, two blocks stacked on purpose: two lines of one each, no label broken.
+      '<a data-plitzi-el="artist-prev-card" href="/artistas/juanes"><div>Artista anterior</div><div>Juanes</div></a>'
     ].join('');
     // jsdom lays nothing out: what the browser draws is said here — two lines for the menu's squeezed label.
     vi.spyOn(HTMLElement.prototype, 'offsetParent', 'get').mockReturnValue(document.body);
     Object.defineProperty(Range.prototype, 'getClientRects', {
       configurable: true,
       value(this: Range) {
-        return (this.startContainer.textContent === 'This week' ? [0, 20] : [0]).map(top => ({ top, height: 18 }));
+        const text = this.startContainer.textContent;
+
+        return (text === 'This week' ? [0, 20] : text === 'Juanes' ? [20] : [0]).map(top => ({ top, height: 18 }));
       }
     });
 

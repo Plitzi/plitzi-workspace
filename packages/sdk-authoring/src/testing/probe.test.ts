@@ -121,7 +121,8 @@ describe('probePage / images', () => {
     );
 
     expect(probePage({ ...input([]), images: true }).brokenImages).toEqual([
-      { source: `${window.location.origin}/in-sight.jpg` }
+      // Asked for and not answered yet: still loading, which the check waits for longer than a failure.
+      { source: `${window.location.origin}/in-sight.jpg`, loading: true }
     ]);
   });
 
@@ -155,13 +156,28 @@ describe('probePage / images nobody can see', () => {
   });
 });
 
+describe('probePage / an image that failed, and one still coming', () => {
+  it('says a failed one plainly, and one not answered yet as loading', () => {
+    document.body.innerHTML = '<img src="/failed.jpg"><img src="/coming.jpg">';
+    const [failed, coming] = [...document.querySelectorAll('img')];
+    Object.defineProperty(failed, 'complete', { value: true });
+    Object.defineProperty(failed, 'naturalWidth', { value: 0 });
+    Object.defineProperty(coming, 'complete', { value: false });
+
+    expect(probePage({ ...input([]), images: true }).brokenImages).toEqual([
+      { source: `${window.location.origin}/failed.jpg` },
+      { source: `${window.location.origin}/coming.jpg`, loading: true }
+    ]);
+  });
+});
+
 describe('probePage / which element a finding is about', () => {
   it('names the space’s element an image sits in', () => {
     document.body.innerHTML = '<figure data-plitzi-el="hero-photo"><img src="/hero.jpg"></figure>';
     Object.defineProperty(document.querySelector('img'), 'complete', { value: false });
 
     expect(probePage({ ...input([]), images: true }).brokenImages).toEqual([
-      { source: `${window.location.origin}/hero.jpg`, elementId: 'hero-photo' }
+      { source: `${window.location.origin}/hero.jpg`, elementId: 'hero-photo', loading: true }
     ]);
   });
 });

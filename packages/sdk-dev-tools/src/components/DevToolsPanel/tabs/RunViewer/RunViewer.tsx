@@ -141,14 +141,17 @@ const RunViewer = ({ snapshot }: { snapshot?: RunSnapshot }) => {
           )}
           {snapshot.attention.length > 0 && (
             <Section title="Needs attention" count={snapshot.attention.length}>
-              {snapshot.attention.map(item => (
-                <span
-                  key={item.text}
-                  className="rounded-r border-l-2 border-amber-500 bg-amber-50 px-2 py-1 text-[11px] break-words text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
-                >
-                  {item.text}
-                </span>
-              ))}
+              {/* As tall as a few notices, scrolled on its own: a long one, or many, never push the activity away. */}
+              <div className="flex max-h-48 flex-col gap-1 overflow-y-auto pr-1">
+                {snapshot.attention.map(item => (
+                  <span
+                    key={item.text}
+                    className="shrink-0 rounded-r border-l-2 border-amber-500 bg-amber-50 px-2 py-1 text-[11px] break-words text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+                  >
+                    {item.text}
+                  </span>
+                ))}
+              </div>
             </Section>
           )}
         </div>

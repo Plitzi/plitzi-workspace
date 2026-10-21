@@ -21,17 +21,22 @@ import type { TaskLine } from '../../runs/view';
  */
 
 const TASK_STATE: Record<TaskLine['status'], (task: TaskLine) => string> = {
-  pending: () => chalk.dim('· pending'),
-  ready: () => '○ ready',
+  pending: task => chalk.dim(task.waitsOn ? `· after ${task.waitsOn.join(', ')}` : '· pending'),
+  ready: () => '○ ready — free to take',
   'in-progress': task =>
     chalk.cyan(
       `▶ ${task.agent ?? ''}${task.fraction === undefined ? '' : ` ${String(Math.round(task.fraction * 100))}%`}`
     ),
   waiting: task => chalk.yellow(`… waits ${task.waitingFor?.task ?? ''}`),
-  'in-review': task => chalk.magenta(`◎ review${task.reviewer ? ` · ${task.reviewer}` : ''}`),
+  'in-review': task =>
+    chalk.magenta(
+      task.design?.status === 'due'
+        ? `◎ UI review · ${task.design.by ?? 'no designer yet'}`
+        : `◎ review · ${task.reviewer ?? 'no lead yet'}`
+    ),
   'changes-requested': task => chalk.yellow(`↺ round ${String(task.round)} · ${task.agent ?? ''}`),
   done: () => chalk.green('✓ approved'),
-  blocked: () => chalk.red('■ blocked'),
+  blocked: task => chalk.red(`■ blocked${task.blockedBy ? ` · needs ${task.blockedBy.needs}` : ''}`),
   failed: () => chalk.red('✗ failed')
 };
 
@@ -84,12 +89,18 @@ const taskRow = (task: TaskLine, selected: boolean): string =>
   `${selected ? chalk.inverse('›') : ' '} ${task.id.padEnd(18)} ${TASK_STATE[task.status](task)}`;
 
 const agentRow = (agent: AgentLine, now: Date): string =>
-  `${chalk.bold(agent.agent.padEnd(9))} ${chalk.dim(shortModel(agent.model).padEnd(11))} ${AGENT_STATE[agent.status]} ${agent.doing}${agent.signalAt ? chalk.dim(` · ${ago(agent.signalAt, now)}`) : ''}`;
+  `${chalk.bold(agent.agent.padEnd(9))} ${chalk.dim(`${shortModel(agent.model)}${agent.kind === 'agent' && agent.roles.length > 0 ? ` · ${agent.roles.join(',')}` : ''}`.padEnd(22))} ${AGENT_STATE[agent.status]} ${agent.doing}${agent.signalAt ? chalk.dim(` · ${ago(agent.signalAt, now)}`) : ''}`;
 
 const detailOf = (task: TaskLine): string[] => [
   chalk.bold(`${task.id} — ${task.title}`),
   `  ${task.status}${task.round > 0 ? ` · round ${String(task.round)}` : ''} · ${task.role} · ${String(task.estimateMinutes)} min estimated${task.spentMinutes === undefined ? '' : `, ${String(task.spentMinutes)} spent`}`,
   ...(task.step ? [`  now: ${task.step}`] : []),
+  ...(task.waitsOn
+    ? [`  starts once ${task.waitsOn.join(', ')} ${task.waitsOn.length === 1 ? 'is' : 'are'} approved`]
+    : []),
+  ...(task.waitingFor
+    ? [chalk.yellow(`  waits for ${task.waitingFor.task}${task.waitingFor.file ? `: ${task.waitingFor.file}` : ''}`)]
+    : []),
   ...(task.blockedBy ? [chalk.red(`  blocked: ${task.blockedBy.reason}`)] : []),
   ...(task.unblocks.length > 0 ? [`  then: ${task.unblocks.join(', ')}`] : []),
   ...task.files.map(file => chalk.dim(`  ${file}`))
@@ -148,7 +159,12 @@ export const monitorScreen = (
     open && view.tasks[selected] ? ['', ...detailOf(view.tasks[selected]).map(line => cell(line, width))] : [];
   const foot = [
     '',
-    chalk.dim(cell('↑↓ a task · enter opens it · q quits — it only reads: the run is worked from the terminal', width))
+    chalk.dim(
+      cell(
+        '↑↓ a task · enter opens it · q quits · "after X": starts once X is approved · ○ free to take · ■ needs someone',
+        width
+      )
+    )
   ];
   const room = Math.max(0, height - head.length - body.length - attention.length - detail.length - foot.length - 2);
   const activity =

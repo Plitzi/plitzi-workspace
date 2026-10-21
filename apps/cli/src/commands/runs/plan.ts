@@ -253,13 +253,19 @@ export const runOpen = (file: string, options: PlanOptions): Promise<void> =>
         backedUp: opened.backedUp,
         estimate: opened.checked.estimate,
         leadFinishes: options.leadFinishes ?? false,
-        leftOut: opened.checked.leftOut
+        leftOut: opened.checked.leftOut,
+        inputs: opened.inputs
       };
     },
     opened =>
       [
         `Run "${opened.runId}" is open: ${String(opened.tasks.length)} tasks, ${String(opened.backedUp)} files backed up in ${opened.folder}.`,
         ...(opened.leftOut.length > 0 ? [`Left out of it, as the plan says: ${opened.leftOut.join('; ')}`] : []),
+        ...(opened.inputs.length > 0
+          ? [
+              `The plan is the run's now, in its folder: ${opened.inputs.join(', ')} — edit it there and amend (plitzi run amend ${opened.runId} ${opened.inputs[0]}); it goes with the run`
+            ]
+          : []),
         opened.leadFinishes
           ? 'The lead writes it into the project at the end, as you allowed — once its report is written and the checks pass on the whole result.'
           : `A person writes it into the project at the end (plitzi run finish --apply) — or lets the lead, in their terminal: plitzi run allow-finish ${opened.runId}`,
@@ -285,6 +291,10 @@ export const runAmend = (runId: string | undefined, file: string, options: RunCo
         ...amended.tasks.map(each => `  ${each.task}: ${each.changed.join(', ')} — told, with what it now asks`),
         ...(amended.notes.length > 0 ? [`  ${String(amended.notes.length)} new note(s), sent to every task`] : []),
         ...(amended.goal === undefined ? [] : [`  the goal: ${amended.goal}`]),
-        ...(amended.primer ? ['  the run’s primer, written again — every task told'] : [])
+        ...(amended.primer ? ['  the run’s primer, written again — every task told'] : []),
+        ...(amended.removed
+          ? [`  out of the run, as nobody had taken them: ${amended.removed.join(', ')} — say it to the person`]
+          : []),
+        ...(amended.inventory ? ['  the inventory: what the run covers and what waits, checked again'] : [])
       ].join('\n')
   );

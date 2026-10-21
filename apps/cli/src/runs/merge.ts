@@ -26,11 +26,13 @@ import { getBlob, placeVersion, putBlob, withLock } from './store';
 import { leftInTmp } from './strays';
 import { requestsOf } from './tasks';
 import { viewTask } from './taskStore';
+import { viewRun } from './view';
 
 import type { CheckResult } from './checks';
 import type { AcceptanceAgain } from './materialise';
 import type { ApprovedManifest, MergeEntry, ReconciledFile, RunRecord } from './model';
 import type { LoadedRun, RemovedInputs, RunContext } from './run';
+import type { Attention } from './view';
 
 /** No task is in hand at the finish: what fails is the run's, and the next step is a task of the run, or a revert. */
 const FINISH_AGAIN =
@@ -80,6 +82,27 @@ const planFinish = async (ctx: RunContext, approved: ApprovedManifest): Promise<
 };
 
 /** What stops a run from finishing: tasks in hand, tasks left (without `--leave-pending`), requests not integrated. */
+/** What needs someone and keeps a run from closing: each said where it is answered — a finish never leaves one behind. */
+const OPEN_ATTENTION: Readonly<Partial<Record<Attention['kind'], string>>> = {
+  message: 'read and answer it: plitzi task inbox',
+  proposal: 'answer it, or have its task answer it',
+  blocked: 'unblock it: plitzi task unblock <task> --answer "…"',
+  person: 'a person answers it in their terminal',
+  version: 're-pin the run: plitzi run attach',
+  'left-in-tmp': 'remove what nobody needs from the project’s tmp/'
+};
+
+const assertNothingOpen = async (ctx: RunContext, runId: string): Promise<void> => {
+  const open = (await viewRun(ctx, runId)).attention.filter(item => OPEN_ATTENTION[item.kind] !== undefined);
+  if (open.length > 0) {
+    throw new RunRefusal(
+      'invalid',
+      `Run "${runId}" still needs attention — it closes once nothing does:\n${open.map(item => `  - ${item.text}\n    → ${String(OPEN_ATTENTION[item.kind])}`).join('\n')}`,
+      { attention: open.map(item => item.kind) }
+    );
+  }
+};
+
 const assertFinishable = async (loaded: LoadedRun, leavePending: boolean): Promise<string[]> => {
   const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
   const inHand = views.filter(view =>
@@ -289,6 +312,7 @@ export const finishRun = async (
 
   assertStatus(loaded, ['open', 'stopping', 'stopped'], 'finish');
   const left = await assertFinishable(loaded, leavePending);
+  await assertNothingOpen(ctx, runId);
   const approved = await readApproved(loaded.paths);
   const plan = await planFinish(ctx, approved);
   // A file changed on both sides is resolved first, dry run or not: checking the project's version of one file beside

@@ -299,25 +299,31 @@ describe('the checks of one result, run once', () => {
 });
 
 describe('what the lead handed the run', () => {
-  it('goes with it — the plan, its primer, an amendment — and the folder that held only them', async () => {
+  it('takes the plan and its primer into its folder, where the lead amends them — and removes what it was handed after', async () => {
     const plan = { ...benchPlan(), designReview: false, primer: 'primer.md' };
     await bench.write('tmp/v1/primer.md', '# What a task needs\n');
     await bench.write('tmp/v1/plan.json', JSON.stringify(plan));
     await bench.writeTeam(teamFor(plan, 4));
-    await openRun(lead(), path.join(bench.root, 'tmp/v1/plan.json'));
+    const opened = await openRun(lead(), path.join(bench.root, 'tmp/v1/plan.json'));
+    // The run's now: in its folder, and nothing of it left in the project's tmp/.
+    const inputs = path.join(runPaths(bench.root, plan.runId).dir, 'inputs');
+    expect(opened.inputs).toEqual([path.join(inputs, 'plan.json'), path.join(inputs, 'primer.md')]);
+    expect(await fs.stat(path.join(bench.root, 'tmp/v1')).catch(() => undefined)).toBeUndefined();
 
     const amended = {
       ...plan,
       tasks: plan.tasks.map(task => (task.id === 't-about' ? { ...task, title: 'Translate the about page' } : task))
     };
-    await bench.write('tmp/v1/plan.json', JSON.stringify(amended));
-    await amendRun(lead(), plan.runId, path.join(bench.root, 'tmp/v1/plan.json'));
+    await fs.writeFile(path.join(inputs, 'plan.json'), JSON.stringify(amended));
+    expect(await amendRun(lead(), plan.runId, path.join(inputs, 'plan.json'))).toMatchObject({
+      tasks: [{ task: 't-about', changed: ['title'] }]
+    });
     await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { title: "Sobre" };\n');
     await bench.write('tmp/v1/summary.md', '# Done\n');
     await writeSummary(lead(), plan.runId, 'tmp/v1/summary.md');
 
     const finished = await finishRun(bench.person(), plan.runId, { apply: true, leavePending: true });
-    expect(finished.inputs?.removed.sort()).toEqual(['tmp/v1/plan.json', 'tmp/v1/primer.md', 'tmp/v1/summary.md']);
+    expect(finished.inputs?.removed).toEqual(['tmp/v1/summary.md']);
     expect(await fs.stat(path.join(bench.root, 'tmp/v1')).catch(() => undefined)).toBeUndefined();
     expect(await fs.stat(path.join(bench.root, 'tmp')).catch(() => undefined)).toBeDefined();
   });

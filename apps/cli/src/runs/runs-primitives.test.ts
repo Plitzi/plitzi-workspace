@@ -1,9 +1,11 @@
+import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createExclusive } from './files';
+import { createExclusive, fingerprint } from './files';
 import { copyOf, runPaths, taskPaths } from './paths';
+import { placeVersion } from './store';
 import { claimFile, releaseFile, waitForFile } from './tasks';
 import { makeBench } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
@@ -31,6 +33,22 @@ describe('a folder of a task’s copy', () => {
     expect(copyOf(path.join(work, 'src'))).toEqual({ root: '/home/ana/shop', run: 'es-launch', task: 't-home' });
     expect(copyOf(runPaths('/home/ana/shop', 'es-launch').dir)).toBeUndefined();
     expect(copyOf('/home/ana/shop')).toBeUndefined();
+  });
+});
+
+describe('a unit that is a folder, backed up as a path', () => {
+  it('has no fingerprint once it is a folder, and is put back by going only once it is empty', async () => {
+    const folder = path.join(bench.root, 'src/plugins/Board');
+    await fs.mkdir(folder, { recursive: true });
+    await fs.writeFile(path.join(folder, 'index.ts'), 'export {};\n');
+    const paths = runPaths(bench.root, 'es-launch');
+
+    expect(await fingerprint(folder)).toBeNull();
+    await placeVersion(paths, folder, null);
+    expect((await fs.stat(folder)).isDirectory()).toBe(true);
+    await fs.rm(path.join(folder, 'index.ts'));
+    await placeVersion(paths, folder, null);
+    await expect(fs.access(folder)).rejects.toThrow();
   });
 });
 

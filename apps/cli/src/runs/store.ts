@@ -54,6 +54,13 @@ export const keepFiles = async (
 /** Writes the version `fingerprint` names at `file` — or removes it, for null. */
 export const placeVersion = async (run: RunPaths, file: string, fingerprint: string | null): Promise<void> => {
   if (fingerprint === null) {
+    // A folder where no file was (a unit the run made): its files are put back one by one; it goes once it is empty.
+    if ((await fs.stat(file).catch(() => undefined))?.isDirectory() === true) {
+      await fs.rmdir(file).catch(() => undefined);
+
+      return;
+    }
+
     await fs.rm(file, { force: true });
 
     return;

@@ -67,6 +67,7 @@ const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: stri
       `Review ${review.task.id} — ${review.task.title}${review.round > 0 ? ` (round ${String(review.round + 1)}: sent back before)` : ''}: yours, no other lead takes it`
     ),
     ...(review.design ? [`  ✓ ${review.design}`] : []),
+    ...(review.uiToo ? [chalk.yellow(`  ⚠ ${review.uiToo}`)] : []),
     ...review.asked.map(line => `  ↺ ${line}`),
     `  It changed: ${review.changed.join(', ') || 'nothing said'}`,
     `  What went to review, against its acceptance: plitzi task show ${review.task.id}`,
@@ -88,6 +89,7 @@ const nextText = (next: NextTask, agent: string): string =>
           ? next.yours
             ? [
                 `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : 'unblocked'}). Your token is still good: plitzi task context ${next.task.id}`,
+                ...(next.work ? [`  Its copy, the only place you write: cd ${next.work}`] : []),
                 ...(next.asked ?? []).map(line => `  ↺ ${line}`)
               ].join('\n')
             : `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task take ${next.task.id}`

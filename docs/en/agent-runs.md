@@ -74,7 +74,9 @@ sdk-server, reading `ACTIVE_RUN_FILE`), `run open` names the script and `run sta
 review, so the lead looks at the pages before approving them; the run's preview keeps a snapshot of the run beside it
 (`preview-run.json`, the shape `@plitzi/sdk-shared/runs` names) and hands its path to the project's server
 (`RUN_STATUS_ENV`), which answers it at `/__plitzi/run` — the page's dev tools show it in their **Run** tab: each task,
-who has it and who reviews it, what needs someone; no other server answers it. A run that ends (finished, aborted)
+who has it and who reviews it, why each waits (`why`: the tasks a pending one starts after, the file a waiting one
+needs, what blocks one and who acts — `run status` and `run monitor` say it too), what needs someone; no other server
+answers it. A run that ends (finished, aborted)
 stops its preview before its folder goes (`stopPreviewOf`): the record first, which the preview reads as the end, then
 the folder once it stopped — never a server left watching a folder removed under it. `run monitor` is the same run, live, for
 a person in a terminal of their own: it only reads (nothing marked read, nothing the lead is woken for touched) and
@@ -222,7 +224,10 @@ and tells the lead; and the lead, reviewing, tests the module's edges itself or 
 
 ## The designer's review (`design.ts`)
 
-With a designer in the team — or a plan that says `"designReview": true`; `false` turns it off; a stage stacked on
+When every designer is at a task of its own, a UI review waits for nobody: the lead's queue offers it too (`uiToo`:
+review its UI as well, approve with `--skip-design`), and the run's view says it (`ui-waits`), which wakes the lead.
+A ready task whose file another task holds is not offered (its take would be refused, `claimed`): `task next` says whose
+it waits for, and `--follow` waits. With a designer in the team — or a plan that says `"designReview": true`; `false` turns it off; a stage stacked on
 the run keeps the run's choice, and may only turn it on — the UI another role's
 task changes (under `src/space/`, but its data, or a plugin) is looked at by a designer before the lead: at `complete`
 its state's `design` is `due`. A designer's `task next` offers it before any task of its own (`--take` makes it theirs:
@@ -247,8 +252,11 @@ debt is not the task's.
 
 `run amend` reads the plan file again while the run is open and takes what it asks — titles, acceptance, priorities,
 estimates, milestones, the goal, and notes more (sent to every task) — into `plan.json` and each task's `task.json`,
-telling each task changed what it now asks. The run's shape — its tasks, their files, `dependsOn`, `touches` — is
-refused, as is a task already done, every reason at once; who a task is for — its `role` and `quality` — changes while
+telling each task changed what it now asks. A task nobody took leaves the run when the plan no longer has it — under
+the take's lock, refused for one taken, or one another task waits for — and the inventory may change, checked again
+over what is left (`inventoryProblems`): the scope narrows, a lead's or a person's choice, never in silence; more work
+is a stage (`run extend`). The run's shape otherwise — their files, `dependsOn`, `touches` — is refused, as is a task
+already done, every reason at once; who a task is for — its `role` and `quality` — changes while
 it is pending or ready, and is refused once an agent took it; so is a plan that changes nothing. Its acceptance is held
 to `run plan`'s rules, among them a `page check` whose text the shell would split into a page.
 
@@ -291,7 +299,9 @@ cache/checks/<tree>.json  a pass of the project's checks on one whole result, by
                      hour rather than run again (the dry run's at `finish --apply`)
 ```
 
-What the lead handed the run — the plan, the primer beside it, an amendment (`run amend`), a stage (`run extend`), the
+Inside the project, the plan and its primer are moved into the run's folder when it opens (`inputs/`, a stage's under
+`inputs/<stage>/`, `takeInputs`): the lead edits them there for `run amend`, and nothing of the run lies beside it in the
+project's `tmp/`. What the lead handed the run — the plan, the primer beside it, an amendment (`run amend`), a stage (`run extend`), the
 summary — is kept in `run.json` by path and fingerprint (`inputs`) and removed with the run while it is as the run read it,
 with the folder that held only them; one changed since is kept, and said.
 

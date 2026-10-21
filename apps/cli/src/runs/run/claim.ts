@@ -146,6 +146,36 @@ const removeInputs = async (ctx: RunContext, inputs: RunRecord['inputs']): Promi
 };
 
 /** `folder` and the ones above it, while empty — never the project's root nor its `tmp/`. */
+/**
+ * What the lead handed the run from inside the project — a plan, its primer — moved into the run's own folder
+ * (`inputs/`, or `inputs/<stage>/` for a stage), where the lead edits them for `run amend`: nothing of the run lies in
+ * the project's `tmp/` beside it, and they go with it. Files outside the project are the lead's, left where they are.
+ * Answers where each went.
+ */
+export const takeInputs = async (
+  ctx: RunContext,
+  paths: RunPaths,
+  files: readonly (string | undefined)[],
+  stage?: string
+): Promise<string[]> => {
+  const into = path.join(paths.dir, 'inputs', ...(stage ? [stage] : []));
+  const moved: string[] = [];
+  for (const file of files) {
+    const relative = file === undefined ? '..' : path.relative(ctx.root, file);
+    if (file === undefined || relative.startsWith('..') || path.isAbsolute(relative) || file.startsWith(paths.dir)) {
+      continue;
+    }
+
+    const to = path.join(into, path.basename(file));
+    await fs.mkdir(into, { recursive: true });
+    await fs.rename(file, to);
+    moved.push(to);
+    await removeEmptyFolders(ctx.root, path.dirname(file));
+  }
+
+  return moved;
+};
+
 const removeEmptyFolders = async (root: string, folder: string): Promise<void> => {
   const stops = new Set([path.resolve(root), path.resolve(root, 'tmp')]);
   for (

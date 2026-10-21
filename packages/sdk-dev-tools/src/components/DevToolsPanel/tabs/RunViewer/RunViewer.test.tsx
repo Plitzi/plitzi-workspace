@@ -23,6 +23,15 @@ const snapshot: RunSnapshot = {
       files: ['src/space/pages/home.ts']
     },
     {
+      id: 't-tier',
+      title: 'The tier list',
+      role: 'developer',
+      status: 'pending',
+      round: 0,
+      files: ['src/space/pages/tier-list.ts'],
+      why: 'starts once t-fights is approved'
+    },
+    {
       id: 't-fights',
       title: 'The fights',
       role: 'developer',
@@ -61,6 +70,8 @@ describe('the Run tab', () => {
     const titles = screen.getAllByText(/^The (home|fights)$/).map(node => node.textContent);
     expect(titles).toEqual(['The fights', 'The home']);
     expect(screen.getByText('Approved')).toBeTruthy();
+    // Why a task waits is said on its row.
+    expect(screen.getByText('starts once t-fights is approved')).toBeTruthy();
 
     // Opened, a task says the files it writes.
     fireEvent.click(screen.getByText('The fights'));

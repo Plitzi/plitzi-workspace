@@ -308,6 +308,28 @@ describe('the lead’s plan as the run goes', () => {
     await completeTask(menu.ctx, 'es-launch', 't-menu');
   });
 
+  it('takes a task nobody took out of the run — never one taken, nor one others wait for', async () => {
+    await open(benchPlan());
+    await take('agent-1', 't-home');
+
+    const without = (ids: string[]) => {
+      const plan = benchPlan();
+      plan.tasks = plan.tasks.filter(task => !ids.includes(task.id));
+
+      return bench.writePlan(plan);
+    };
+    const taken = await refusal(amendRun(lead(), 'es-launch', await without(['t-home'])));
+    expect(taken.message).toContain('"t-home" is in-progress, agent-1');
+    expect(taken.message).toContain('"t-home" is what "t-book" waits for');
+    const waited = await refusal(amendRun(lead(), 'es-launch', await without(['t-menu'])));
+    expect(waited.message).toContain('"t-menu" is what "t-book" waits for');
+
+    expect(await amendRun(lead(), 'es-launch', await without(['t-book']))).toMatchObject({ removed: ['t-book'] });
+    const run = await loadRun(lead(), 'es-launch');
+    expect(run.tasks.map(task => task.id)).not.toContain('t-book');
+    expect(run.plan.tasks.map(task => task.id)).not.toContain('t-book');
+  });
+
   it('lets the lead amend what an open run asks — told to the task — but never its shape, nor a task done', async () => {
     const plan = benchPlan();
     await open(plan);

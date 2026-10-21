@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import { readJson, writeAtomic, writeJson } from './files';
 import { coLeadsOf, requireLead } from './leads';
 import { EVERYONE, LEAD, sendMessage } from './messages';
@@ -15,6 +17,7 @@ import {
   readPlanFile,
   readPrimer,
   requireNoTask,
+  takeInputs,
   updateRecord,
   withInputs
 } from './run';
@@ -44,6 +47,8 @@ export interface Extended {
   agents?: { before: number; after: number };
   /** The leads that review the stage adds, by name: start each (`plitzi run plan` says how). */
   newLeads?: string[];
+  /** The stage's plan and primer, moved into the run's folder from the project: where the lead edits them now. */
+  inputs?: string[];
   /** `dryRun`: the stage as it would be stacked — its tasks with the CLI's, estimated — and nothing written. */
   checked?: CheckedPlan;
 }
@@ -201,12 +206,17 @@ export const extendRun = async (
   }
 
   const handed = await handedInputs(ctx, [file, primerFile(next, file)]);
+  // Inside the project, the stage's plan and primer are the run's now: in its folder, under the stage's name.
+  const inputs = await takeInputs(ctx, loaded.paths, [file, primerFile(next, file)], next.runId);
   await updateRecord(ctx, loaded.paths, record => ({
     ...record,
     agents: allowed,
     ...(leads.length > 0 ? { leads } : {}),
     // The stage's plan and its primer are the run's now: removed with it, as the plan it opened with.
-    inputs: withInputs(record.inputs, handed),
+    inputs: withInputs(
+      record.inputs,
+      handed.filter(input => !inputs.some(moved => moved.endsWith(path.basename(input.file))))
+    ),
     // The run's choice, made when it opened: a stage turns it on when it says so, never because of who is in the team.
     ...(record.designReview === true || next.designReview === true ? { designReview: true as const } : {}),
     estimate: {
@@ -231,6 +241,7 @@ export const extendRun = async (
     ...(allowed > loaded.record.agents ? { agents: { before: loaded.record.agents, after: allowed } } : {}),
     ...(leads.length > coLeadsOf(loaded.record).length
       ? { newLeads: leads.filter(each => !coLeadsOf(loaded.record).includes(each)) }
-      : {})
+      : {}),
+    ...(inputs.length > 0 ? { inputs } : {})
   };
 };

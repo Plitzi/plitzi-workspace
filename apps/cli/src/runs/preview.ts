@@ -28,6 +28,7 @@ import { scriptsOf } from '../commands/verify';
 
 import type { Monitored } from './monitor';
 import type { LoadedRun, RunContext } from './run';
+import type { TaskLine } from './view';
 import type { RunSnapshot } from '@plitzi/sdk-shared/runs';
 
 /**
@@ -42,6 +43,18 @@ const previewDir = (loaded: LoadedRun): string => path.join(loaded.paths.cache, 
 const snapshotFile = (loaded: LoadedRun): string => path.join(loaded.paths.cache, 'preview-run.json');
 
 /** The run's view, as the dev tools read it (`RunSnapshot`): what a person looking at the page wants of the run. */
+/** Why a task is not moving, said once for every surface that shows the run: what it starts after, waits for, needs. */
+const whyOf = (task: TaskLine): { why?: string } =>
+  task.waitsOn
+    ? { why: `starts once ${task.waitsOn.join(', ')} ${task.waitsOn.length === 1 ? 'is' : 'are'} approved` }
+    : task.status === 'waiting' && task.waitingFor
+      ? { why: `waits for ${task.waitingFor.task}${task.waitingFor.file ? `: ${task.waitingFor.file}` : ''}` }
+      : task.status === 'blocked' && task.blockedBy
+        ? { why: `blocked — ${task.blockedBy.reason} (needs ${task.blockedBy.needs})` }
+        : task.status === 'ready'
+          ? { why: 'free to take: the next agent at work takes it' }
+          : {};
+
 export const snapshotOf = ({ view, agents, feed }: Monitored, at: Date): RunSnapshot => ({
   runId: view.runId,
   goal: view.goal,
@@ -60,7 +73,8 @@ export const snapshotOf = ({ view, agents, feed }: Monitored, at: Date): RunSnap
     round: task.round,
     files: task.files,
     ...(task.step ? { step: task.step } : {}),
-    ...(task.fraction !== undefined ? { fraction: task.fraction } : {})
+    ...(task.fraction !== undefined ? { fraction: task.fraction } : {}),
+    ...whyOf(task)
   })),
   attention: view.attention.map(item => ({ text: item.text, who: item.who })),
   agents: agents.map(each => ({

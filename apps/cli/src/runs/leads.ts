@@ -138,12 +138,17 @@ const freeFor = (view: TaskView, agent: string): boolean =>
  * The review `task next --role lead` offers a lead: a task in review whose UI is not waiting for a designer, no other
  * lead took — the one this lead reviewed before first (it knows what it asked), then the one that waited longest.
  */
-export const leadReviewFor = (views: readonly TaskView[], agent: string): TaskView | undefined =>
+export const leadReviewFor = (
+  views: readonly TaskView[],
+  agent: string,
+  /** No designer is free: a UI review no designer took is the lead's too, rather than one that waits for nobody. */
+  uiToo = false
+): TaskView | undefined =>
   views
     .filter(
       view =>
         view.state.status === 'in-review' &&
-        view.state.design?.status !== 'due' &&
+        (view.state.design?.status !== 'due' || (uiToo && view.state.design.by === undefined)) &&
         !workedBy(view, agent) &&
         freeFor(view, agent)
     )

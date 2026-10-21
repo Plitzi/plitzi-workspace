@@ -1,4 +1,7 @@
+import fs from 'node:fs/promises';
+
 import { readOptional, writeAtomic, writeJson } from './files';
+import { inventoryProblems } from './inventory';
 import { requireLead } from './leads';
 import { EVERYONE, LEAD, sendMessage } from './messages';
 import { acceptanceText } from './model';
@@ -17,6 +20,7 @@ import {
   updateRecord,
   withInputs
 } from './run';
+import { withLock } from './store';
 import { viewTask } from './taskStore';
 
 import type { PlannedTask, RunPlan, RunTask } from './model';
@@ -25,7 +29,9 @@ import type { RunContext } from './run';
 /**
  * `plitzi run amend`: the lead corrects what a plan asks while the run is open — a task's title, acceptance, priority
  * or estimate, the goal, a note more — from the plan file edited. What makes the run's shape — which tasks there are,
- * their files, what they wait for, what they touch — stays as the run opened it: that is a new plan. Who a task is for
+ * their files, what they wait for, what they touch — stays as the run opened it, but for a task nobody took, which may
+ * leave it (less to do; its pieces of the inventory then wait, or another task covers them) — a task more is a stage
+ * (`run extend`). Who a task is for
  * — its role and quality — changes until an agent takes it, and not after: it was taken as that. A task done is not
  * asked again. Each task whose ask changed is told so, with what it now says; nothing is changed unsaid.
  *
@@ -47,6 +53,10 @@ export interface Amended {
   goal?: string;
   /** The plan's primer changed: written again, and every task told. */
   primer?: true;
+  /** Tasks nobody had taken, gone from the run: less to do, as the plan now says. */
+  removed?: string[];
+  /** The inventory changed: what the plan covers, and what it says waits. */
+  inventory?: true;
 }
 
 const SHAPE = ['files', 'dependsOn', 'touches'] as const;
@@ -74,13 +84,35 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
 
   const problems: string[] = [];
   const added = next.tasks.filter(task => !before.has(task.id)).map(task => task.id);
+  if (added.length > 0) {
+    problems.push(
+      `${added.map(id => `"${id}"`).join(', ')} the run does not have: a task more is a stage stacked on it — plitzi run extend ${runId} <its plan>`
+    );
+  }
+
+  // Less to do: a task nobody took goes, and what it covered is said waiting, or covered by another.
   const removed = stage
     ? []
-    : loaded.plan.tasks.filter(task => !next.tasks.some(each => each.id === task.id)).map(task => task.id);
-  if (added.length > 0 || removed.length > 0) {
-    problems.push(
-      `The run's tasks are the ones it opened with: ${[...added.map(id => `"${id}" added`), ...removed.map(id => `"${id}" removed`)].join(', ')}`
-    );
+    : loaded.tasks.filter(task => task.kind === 'work' && !next.tasks.some(each => each.id === task.id));
+  for (const task of removed) {
+    const view = await viewTask(loaded.paths, task);
+    if (!UNTAKEN.includes(view.state.status) || view.owner || view.state.round > 0) {
+      problems.push(
+        `Task "${task.id}" is ${view.state.status}${view.owner ? `, ${view.owner.agent}'s` : ''}: only a task nobody took leaves the run — cut it first (plitzi task reassign ${task.id}), or keep it`
+      );
+    }
+
+    const waiting = next.tasks.filter(each => each.dependsOn.includes(task.id)).map(each => each.id);
+    if (waiting.length > 0) {
+      problems.push(
+        `Task "${task.id}" is what ${waiting.map(id => `"${id}"`).join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for: remove them too, or keep it`
+      );
+    }
+  }
+
+  const inventoryChanged = !stage && !same(next.inventory, loaded.plan.inventory);
+  if (inventoryChanged || removed.length > 0) {
+    problems.push(...inventoryProblems(next));
   }
 
   const changes: { task: PlannedTask; defined: RunTask; changed: string[] }[] = [];
@@ -134,7 +166,14 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   const goal = stage || next.goal === loaded.plan.goal ? undefined : next.goal;
   const primer = await readPrimer(next, file);
   const primerChanged = primer !== undefined && primer !== (await readOptional(loaded.paths.primer))?.toString('utf-8');
-  if (changes.length === 0 && notes.length === 0 && goal === undefined && !primerChanged) {
+  if (
+    changes.length === 0 &&
+    notes.length === 0 &&
+    goal === undefined &&
+    !primerChanged &&
+    removed.length === 0 &&
+    !inventoryChanged
+  ) {
     throw new RunRefusal('invalid', `${file} asks nothing the run does not already: no task, note or goal changed`);
   }
 
@@ -153,6 +192,37 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     };
 
     await writeJson(taskPaths(loaded.paths, task.id).definition, amended);
+  }
+
+  // Under the take's lock, and looked at again there: an agent that took one meanwhile keeps it, and nothing is removed.
+  if (removed.length > 0) {
+    await withLock(
+      loaded.paths.takeLock,
+      async () => {
+        for (const task of removed) {
+          const view = await viewTask(loaded.paths, task);
+          if (!UNTAKEN.includes(view.state.status) || view.owner) {
+            throw new RunRefusal(
+              'invalid',
+              `Task "${task.id}" was taken meanwhile (${view.state.status}): the plan is not amended — keep it, or cut it first`
+            );
+          }
+        }
+
+        for (const task of removed) {
+          await fs.rm(taskPaths(loaded.paths, task.id).dir, { recursive: true, force: true });
+        }
+      },
+      { now: ctx.now }
+    );
+    await updateRecord(ctx, loaded.paths, record => ({
+      ...record,
+      estimate: {
+        ...record.estimate,
+        tasks: record.estimate.tasks - removed.length,
+        totalMinutes: record.estimate.totalMinutes - removed.reduce((sum, task) => sum + task.estimateMinutes, 0)
+      }
+    }));
   }
 
   // What the run was opened with is kept as the plan, amended: the plan the report and `run status` read. A stage's
@@ -195,7 +265,9 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     tasks: changes.map(({ task, changed }) => ({ task: task.id, changed })),
     notes,
     ...(goal === undefined ? {} : { goal }),
-    ...(primerChanged ? { primer: true as const } : {})
+    ...(primerChanged ? { primer: true as const } : {}),
+    ...(removed.length > 0 ? { removed: removed.map(task => task.id) } : {}),
+    ...(inventoryChanged ? { inventory: true as const } : {})
   };
   await logRun(ctx, loaded.paths, { action: 'amend', ...amended });
   // The amendment and its primer are the run's now: removed with it, as the plan it opened with.

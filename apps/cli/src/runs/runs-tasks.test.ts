@@ -8,7 +8,7 @@ import { DEV_SERVER_FILE } from '@plitzi/sdk-shared/project';
 
 import { freePort } from './acceptance';
 import { finishRun } from './merge';
-import { runPaths, taskPaths } from './paths';
+import { lockFile, runPaths, taskPaths } from './paths';
 import { startTaskPreview } from './preview';
 import { isRunRefusal } from './refusal';
 import { writeSummary } from './report';
@@ -253,6 +253,29 @@ export const menu = { id: 'menu', title: 'Carta', theme };
     } finally {
       own.close();
     }
+  });
+
+  it('does not offer a ready task whose file another task holds — it says whose, and an agent waits', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    // t-home holds t-about's file by turns, as a task holds a shared one it changed.
+    const lock = lockFile(taskPaths(runPaths(bench.root, 'es-launch'), 't-home'), 'src/space/pages/about.ts');
+    await fs.mkdir(path.dirname(lock), { recursive: true });
+    await fs.writeFile(
+      lock,
+      JSON.stringify({
+        runId: 'es-launch',
+        taskId: 't-home',
+        agent: 'agent-1',
+        intent: 'by turns',
+        since: new Date().toISOString(),
+        kind: 'turn'
+      })
+    );
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: "Hola" };\n');
+
+    const offered = await nextTask(bench.agent('agent-2'), 'es-launch');
+    expect(offered.task?.id).not.toBe('t-about');
   });
 
   it('tells an agent at another task that the one sent back goes first, when others wait on it', async () => {

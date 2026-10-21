@@ -80,13 +80,12 @@ What the lead — team lead and software architect — does; the agents' half, t
    shell and the components as two tasks two agents take at once — one role allowed to only one agent works them one
    after the other while every page waits. **A file other tasks import is their contract**: a task that changes what
    it exports (a component's params) changes it compatibly — a new param optional — or the plan says who follows it
-   (`run plan` names each). **Read what a task changes before you write it**: one asking for what is not
-   there (a shadow to lighten, an id per row of a list) costs a round. **And what its data shows**: a case the project's
+   (`run plan` names each). **Read what a task changes before you write it**: asking for what is not there costs a
+   round. **And what its data shows**: a case the project's
    data never reaches (a dog under two, an empty list, a failed answer) is seen by nobody — not the designer, not a page
-   spec, not you. The plan says how it is seen: a row in the data when the demo should show it, or a unit test of the
-   module that decides it — in whose task. What several tasks need is a task they depend
-   on. A new page is a file that does not exist yet: where the space loads its pages by folder (`pagesIn`, a project with
-   a server, `nav` for the menu) it touches nothing shared; otherwise it registers in the entry, one line each. A task that will change
+   spec, not you. The plan says how it is seen: a row in the data, or a unit test of the module that decides it — in
+   whose task. What several tasks need is a task they depend on. A new page is a file that does not exist yet: loaded
+   by folder (`pagesIn`) it touches nothing shared; otherwise it registers in the entry. A task that will change
    a file it does not hold says so (`"touches": ["src/space/tokens.ts"]`).
 
 3. `plitzi run plan plan.json` — refused, every reason at once (a repeated file, a cycle, an unknown task, a
@@ -104,8 +103,10 @@ What the lead — team lead and software architect — does; the agents' half, t
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
    file a task takes past 400 lines (ask for the split) — each said once; run it again after acting. **Talk:** answer a question (`run status` shows it) with `plitzi
 task message t-home "…" --reply-to m3`; `task message all "…"` tells every task in hand, `task message @dev-1 "…"`
-   an agent by name, between tasks too. A mistake in the plan (a check that cannot pass): edit it and `plitzi run amend
-plan.json` — titles, acceptance, priorities, notes; each task changed is told. Its files and dependencies stay.
+   an agent by name, between tasks too. **The scope changes while it runs** — yours to see, or the person's to ask: edit
+   the plan in the run's folder (`inputs/plan.json`) and `plitzi run amend` — acceptance, priorities, notes, the
+   inventory, a task nobody took removed (its pieces then wait, or another covers them); more work is a stage, `plitzi
+   run extend <run> next.json`. Say each change to the person.
 6. **Review against the inventory, not only the picture:** every section and piece the task's acceptance names is
    there, as the reference has it — a difference you accept is one you say (`--note`); one a visitor would see is sent
    back. Judge the version that went to review (`task show` says its round), and on a page several tasks build, only
