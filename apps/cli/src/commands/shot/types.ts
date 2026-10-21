@@ -90,6 +90,8 @@ export interface ShotReport {
   settled?: number;
   /** Pictures of this page not drawn when it was taken. */
   unloaded?: number;
+  /** Embeds from another site below the first screen: blank in a whole-page picture, which the browser draws only on screen. */
+  undrawn?: string[];
   /** Where the page sent the browser instead — a page for signed-in visitors, to the sign-in: the picture is of that. */
   sentTo?: string;
   /** With `click`: each element clicked, and the share of the picture that changed after it. */
@@ -134,6 +136,7 @@ export interface Taken {
   scheme: Scheme;
   settled: number;
   unloaded: number;
+  undrawn: string[];
   sentTo?: string;
 }
 

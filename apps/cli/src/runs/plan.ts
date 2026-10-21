@@ -10,8 +10,9 @@ import { acceptanceText } from './model';
 import { expandFiles, sharedReached } from './ownership';
 import { ID, isSecretFile, NOT_TASK_DIRS, under } from './paths';
 import { shellCommands } from './shell';
-import { DEVELOPER, roleProblems, teamSize, teamTakes, TESTER } from './team';
+import { DESIGNER, DEVELOPER, reviewsDesign, roleProblems, startedAgents, teamSize, teamTakes, TESTER } from './team';
 import { testSetupOf, withTestTasks } from './tests';
+import { reviewedAsUi } from './uiFiles';
 import { scriptsOf } from '../commands/verify';
 
 import type { Quality, RunPlan, RunTask, TaskState } from './model';
@@ -231,6 +232,32 @@ const pacedEstimate = async (
     : {};
 };
 
+/** The developers a designer keeps up with: past it, UI reviews queue, and the lead reviews them itself or they wait. */
+export const DEVELOPERS_PER_DESIGNER = 3;
+
+/**
+ * Too few designers for the UI to review, said before the run starts: la-velada's one designer beside four developers
+ * left 21 tasks' UI to the lead. A designer that develops too is counted as a designer: it reviews first.
+ */
+const designersNotice = (plan: Pick<RunPlan, 'tasks' | 'designReview'>, team: Team): string[] => {
+  if (!reviewsDesign(team, plan)) {
+    return [];
+  }
+
+  const agents = startedAgents(team);
+  const designers = agents.filter(each => each.roles.includes(DESIGNER)).length;
+  const developers = agents.filter(each => !each.roles.includes(DESIGNER) && each.roles.includes(DEVELOPER)).length;
+  const looked = plan.tasks.filter(task => reviewedAsUi(task.role, task.files)).length;
+  const needed = Math.ceil(developers / DEVELOPERS_PER_DESIGNER);
+  if (looked === 0 || designers >= needed) {
+    return [];
+  }
+
+  return [
+    `${String(looked)} tasks change what a visitor sees, and ${String(designers)} designer${designers === 1 ? '' : 's'} review${designers === 1 ? 's' : ''} the UI of ${String(developers)} developers: one for every ${String(DEVELOPERS_PER_DESIGNER)} keeps the reviews from queueing — ${String(needed)} (plitzi run team set <designer entry> --roles designer --count ${String(needed)}). Fewer, and the lead reviews the rest itself (--skip-design lead) — a task that changes nothing a visitor sees goes as code (task complete --review code)`
+  ];
+};
+
 const isOutsideSource = (file: string): boolean =>
   NOT_TASK_DIRS.has(file.split('/')[0]) || file.split('/').includes('node_modules');
 
@@ -348,6 +375,7 @@ export const checkPlan = async (
       `"${task}" gets no task of tests: ${why}. Name a test file in a task of yours for it, or say "tests": false — so that none is said, not missed`
     )
   );
+  notices.push(...designersNotice(plan, team));
   if (!ID.test(plan.runId)) {
     problems.push(`runId "${plan.runId}": a run's name is lowercase letters, digits, - and _, up to 64`);
   }

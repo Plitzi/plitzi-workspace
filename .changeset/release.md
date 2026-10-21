@@ -539,3 +539,19 @@ monitor` shows each as it comes, a problem in red.
     - An acceptance line that fails is run once more after the others: one a busy CDN failed passes then, saying it
       passed on its second run; one that fails twice is broken.
     - The runs skill stops a copy's server by its port, never with `pkill -f`.
+  - For the next run, from velada-more's report:
+    - `task review --skip-design <why>` says why the lead approves before the designer's UI review: `lead` (it looked
+      at the UI itself) or `no-ui` (nothing a visitor sees changes). The report, the audit, `run watch` and the monitor
+      say each by its reason — "UI by the lead", "no UI" — where all were "UI skipped", read as nobody looking.
+    - `run plan` says when too few designers review the UI — one for every three developers keeps the reviews from
+      queueing — and how many to start.
+    - `task complete` refuses a `space lint` warning left in a file the task changed, there before it or not.
+    - `plitzi run notice "…" --on <where>`: something wrong that no task owns, kept in the run's log, sent to the lead,
+      said by the finish and listed in the report — what the next stage starts from.
+    - `repeated-css` names `tw('sr-only')` for the visually-hidden CSS written by hand.
+    - A whole-page `page shot` loads a lazy `<iframe>` (a map, a player) before it is taken, and names one from another
+      site below the first screen: the browser draws it only on screen, so it is blank in that picture — said, with
+      `--scroll-to <id> --viewport` to see it, where it was a silent blank box (`@plitzi/sdk-authoring`'s `loadImages`).
+    - A project's pace (`run plan`) is its runs' middle task's minutes over its estimate: one clock left running no
+      longer moves it.
+

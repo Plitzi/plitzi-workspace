@@ -42,7 +42,12 @@ hands an agent the task it holds and can go on with — unblocked, or sent back 
 (`yours`), so an agent waiting for work hears it. A task sent back that others wait on, while its agent is at another,
 tells that agent it goes first (`goesFirst`, to `@<agent>`): nothing else reaches it before the task in hand is done. **The run's notes** — the plan's `notes`, and each `run note` — are
 messages to every task (`*`): each task reads every one once, with its take or its next sign of life, and `task context`
-(the brief an agent starts from) lists them beside its acceptance, what a review asked and what was agreed.
+(the brief an agent starts from) lists them beside its acceptance, what a review asked and what was agreed. **What
+nobody's task owns** — seen wrong outside the task in hand, there before the run — is `run notice "…" --on <where>`
+(`notices.ts`), by an agent with its token, a reviewer by its name, or the lead: one line of the log (`notice`), an
+agent's sent to the lead as well, said by the finish and listed in the report under "Noticed, owned by no task" —
+what the next stage starts from. la-velada's empty stats cell was seen in two runs and noted "predates this task" in a
+review each time: in no task's acceptance, it was nobody's.
 
 **More leads for a larger team** (`leads.ts`). One lead reviews for four agents (`AGENTS_PER_LEAD`): past that, tasks
 waited for its review in v12. A team of five or more has `lead-2`, `lead-3`… beside `lead` — `"lead": { "count" }` in
@@ -249,7 +254,8 @@ and tells the lead; and the lead, reviewing, tests the module's edges itself or 
 ## The designer's review (`design.ts`)
 
 When every designer is at a task of its own, a UI review waits for nobody: the lead's queue offers it too (`uiToo`:
-review its UI as well, approve with `--skip-design`), and the run's view says it (`ui-waits`), which wakes the lead.
+review its UI as well, approve with `--skip-design lead`), and the run's view says it (`ui-waits`: start another
+designer, or review it), which wakes the lead.
 A ready task whose file another task holds is not offered (its take would be refused, `claimed`): `task next` says whose
 it waits for, and `--follow` waits. With a designer in the team — or a plan that says `"designReview": true`; `false` turns it off; a stage stacked on
 the run keeps the run's choice, and may only turn it on — the UI another role's
@@ -259,8 +265,11 @@ another designer is not offered it), with what it changed, the pages it is likel
 designer runs `task look`, then `task review --approve` — the task stays in review, the lead's now — whose review is the complete and strict one, and the final word, the code above all once its UI is approved; the designer's is the UI/UX, as a
 designer — and `run watch
 --until lead` wakes the lead for it then, not before — or `--changes`, which go back to the task as the lead's would and
-count as a round. The lead's approval while it is due is refused, naming the designer, unless `--skip-design`: the state
-and the report say which. A designer does not review its own work, and is not finished while a task whose UI it may
+count as a round. The lead's approval while it is due is refused, naming the designer, unless `--skip-design <why>`
+says why — `lead` (the lead looked at its UI itself, both schemes and the phone width) or `no-ui` (it changes nothing
+a visitor sees; `task complete --review code` says it from the start) — kept as the state's `design.why` and the log's
+`designSkip`. The report, the audit, `run watch` and the monitor say each by its reason ("UI by the lead", "no UI"),
+never one "skipped": la-velada's report counted 21 UI reviews the lead made as UI nobody looked at. A designer does not review its own work, and is not finished while a task whose UI it may
 review is still to be done. A task asks the review it needs as it is sent: `task complete --review code` goes to the
 lead's code review alone (nothing a visitor sees changed), `--review ui` has its UI looked at first — by a designer,
 the lead's too when none is free — and left out, the run decides as above; the activity says which (`complete`'s
@@ -378,7 +387,9 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   and completes once it passes; it hands over what was said to the task meanwhile, which an agent that only edits
   files would otherwise read only at `complete`. What a task declares for the tasks after it — a component, a token,
   read by none yet (authoring's `unused-*` suggestions) — passes a task's checks as a warning the review sees, and fails
-  only the finish's, on the whole result (`CheckOptions.final`).
+  only the finish's, on the whole result (`CheckOptions.final`). A warning of the space's lint in a file the task
+  changed refuses `complete` (`checks-failed`) — there before it or not, a file it hands over has none; one written so
+  on purpose says it with `quiet` — where one in a file it did not change is said as there before it.
 - **Complete:** refused with a proposal to it unanswered, and with its copy gone (said as gone, with the take that
   starts it again — not as every file removed). The copy against `start.json`: a change to another task's file is
   refused (`claimed`) naming each; to a shared file, or one in no task, taken by turns when nobody holds it and a request

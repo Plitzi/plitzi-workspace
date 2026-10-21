@@ -85,7 +85,7 @@ describe('the lead’s plan as the run goes', () => {
     expect((await refusal(openWith(lead(), await bench.writePlan(plan), 4))).message).toContain('over 16');
   });
 
-  it('paces a plan by how this project’s runs went: their done tasks’ minutes over their estimates', async () => {
+  it('paces a plan by how this project’s runs went: their middle done task’s minutes over its estimate', async () => {
     const row = (task: string, minutes: number, estimate: number): string =>
       `| ${task} | developer | done | dev-1 | ${String(minutes)} / ${String(estimate)} | 1 | 0 | src/a.ts |`;
     await bench.write(
@@ -98,8 +98,9 @@ describe('the lead’s plan as the run goes', () => {
     );
 
     const checked = await checkPlan(bench.root, benchPlan(), await readOwnership(bench.root), teamFor(benchPlan(), 2));
+    // A quarter, half, a quarter, half, half: the middle one is half.
     expect(checked.estimate.paced).toEqual({
-      ratio: 0.4,
+      ratio: 0.5,
       runs: 1,
       tasks: 5,
       wallMinutes: expect.any(Number) as unknown

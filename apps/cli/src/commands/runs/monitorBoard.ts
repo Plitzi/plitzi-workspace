@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 
 import { ago, cell, hhmm, idCell, wrapped } from './monitorCells';
+import { designSkipText } from '../../runs/model';
 
 import type { AgentLine, AgentStatus, Monitored, TaskStory } from '../../runs/monitor';
 import type { TaskLine } from '../../runs/view';
@@ -127,7 +128,7 @@ const storyOf = (task: TaskLine, story: TaskStory | undefined): string[] =>
           ? [`  written by ${story.writers.join(', then ')}${story.takenAt ? ` from ${hhmm(story.takenAt)} UTC` : ''}`]
           : []),
         ...(story.design === 'skipped'
-          ? ['  its UI: the lead went first (--skip-design)']
+          ? [`  ${designSkipText(story.designSkip)}`]
           : story.design
             ? [`  its UI approved by ${story.design}`]
             : []),

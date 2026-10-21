@@ -15,6 +15,7 @@ import { viewRun } from './view';
 import { benchPlan, makeBench, teamFor, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
+import type { CheckRunner } from './checks';
 import type { Message } from './messages';
 import type { Bench } from '../tests/runProject';
 
@@ -44,6 +45,29 @@ describe('acceptance, checks and what is left behind', () => {
     await reviewTask(lead(), runId, 't-menu', 'approve', []);
     expect((await viewRun(lead(), runId)).attention.some(item => item.text.includes('for you to know'))).toBe(false);
     expect((await readInbox(lead(), runId)).map(message => message.text)).toContain('Prices come from menu.json');
+  });
+
+  // la-velada: ten warnings in files the run's tasks changed, each said at complete and none fixed.
+  it('refuses a completion that leaves a warning of the space’s lint in a file it changed — not in one it did not', async () => {
+    const runId = await open();
+    const menu = await take('agent-1', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { title: "Menú" };\n');
+    const warning =
+      (file: string): CheckRunner =>
+      () =>
+        Promise.resolve({
+          ok: true,
+          steps: [{ name: 'lint:space', ok: true, warnings: [`${file}:3 colour-not-token`] }]
+        });
+
+    const refused = await refusal(
+      completeTask({ ...menu.ctx, checks: warning('src/space/pages/menu.ts') }, runId, 't-menu')
+    );
+    expect(refused.code).toBe('checks-failed');
+    expect(refused.message).toContain('src/space/pages/menu.ts:3 colour-not-token');
+
+    await completeTask({ ...menu.ctx, checks: warning('src/space/pages/about.ts') }, runId, 't-menu');
+    expect((await viewRun(lead(), runId)).tasks.find(task => task.id === 't-menu')?.status).toBe('in-review');
   });
 
   it('refuses a page check whose text the shell would split into a page', async () => {

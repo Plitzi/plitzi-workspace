@@ -195,6 +195,24 @@ describe('a plan held to the rules', () => {
     expect(unchecked[0]).not.toContain('t-theme');
   });
 
+  // la-velada: one designer beside four developers, and 21 tasks' UI went to the lead.
+  it('says before the run that too few designers review the UI, and how many keep up', async () => {
+    const teamOf = (designers: number) => ({
+      version: 1 as const,
+      agents: [
+        { name: 'dev', roles: ['developer'], count: 4 },
+        { name: 'design', roles: ['designer'], count: designers }
+      ]
+    });
+    const notices = async (designers: number) =>
+      (await checkPlan(bench.root, benchPlan(), await readOwnership(bench.root), teamOf(designers))).notices;
+
+    expect(await notices(1)).toContainEqual(
+      expect.stringContaining('4 tasks change what a visitor sees, and 1 designer reviews the UI of 4 developers')
+    );
+    expect((await notices(2)).some(notice => notice.includes('change what a visitor sees'))).toBe(false);
+  });
+
   it('expands a root with what it owns, says what is shared, and estimates it', async () => {
     const checked = await checkPlan(bench.root, benchPlan(), await readOwnership(bench.root), teamFor(benchPlan(), 4));
 

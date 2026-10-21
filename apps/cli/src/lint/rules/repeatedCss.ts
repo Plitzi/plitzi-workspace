@@ -101,6 +101,15 @@ const declarationsOf = (ts: typeof TypeScript, node: TypeScript.ObjectLiteralExp
     : undefined;
 };
 
+/**
+ * The visually-hidden pattern — out of sight, kept for a screen reader — however it is spelled: absolute, a pixel wide,
+ * clipped. Five tasks of one run wrote it by hand, where `tw('sr-only')` is it (la-velada).
+ */
+const isVisuallyHidden = (declarations: readonly string[]): boolean =>
+  declarations.includes('position:absolute') &&
+  declarations.some(declaration => /^(width|height):1px$/.test(declaration)) &&
+  declarations.some(declaration => /^clipPath:inset\(50%\)$|^clip:rect\(0/.test(declaration));
+
 export const repeatedCss: Rule = ({ ts, files }) => {
   const copies = new Map<string, { declarations: string[]; places: SourcePlace[] }>();
   for (const source of files) {
@@ -130,7 +139,9 @@ export const repeatedCss: Rule = ({ ts, files }) => {
 
       return finding(
         'repeated-css',
-        `The same CSS (${properties.join(', ')}) is written ${String(places.length)} times — here, ${where}: make it one class, \`styles('<role>', { … })\` beside the space's other shared classes, and give it to each element — then the look is changed once, in code or in the builder.`,
+        isVisuallyHidden(declarations)
+          ? `The CSS that hides an element from the eye and keeps it for a screen reader is written ${String(places.length)} times — here, ${where}: it is Tailwind's \`sr-only\`, one class for all of them — \`styles('visually-hidden', tw('sr-only'))\` beside the space's other shared classes, given to each element.`
+          : `The same CSS (${properties.join(', ')}) is written ${String(places.length)} times — here, ${where}: make it one class, \`styles('<role>', { … })\` beside the space's other shared classes, and give it to each element — then the look is changed once, in code or in the builder.`,
         first,
         others
       );

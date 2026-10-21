@@ -7,7 +7,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { act, runOf, runSelf } from './shell';
 import { list, messageLines, outsideLines, secondRunText } from './text';
 import { answering, freePort } from '../../runs/acceptance';
-import { acceptanceText } from '../../runs/model';
+import { acceptanceText, designSkipText, isDesignSkip } from '../../runs/model';
 import { pagesOf } from '../../runs/pagesOf';
 import { runPaths, taskPaths } from '../../runs/paths';
 import { startTaskPreview } from '../../runs/preview';
@@ -226,8 +226,8 @@ export interface ReviewOptions extends RunCommandOptions {
   changes?: string;
   on?: string;
   file?: string;
-  /** Approve a task whose UI waits for a designer's review without it: said so in its state and the report. */
-  skipDesign?: boolean;
+  /** Approve a task whose UI waits for a designer's review without it, saying why: kept in its state and the report. */
+  skipDesign?: string;
   /** With --approve: what the reviewer saw and does not ask to change — kept with the task, read by the lead. */
   note?: string;
 }
@@ -242,6 +242,13 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
 
       if (options.note !== undefined && !options.approve) {
         throw new RunRefusal('invalid', '--note goes with --approve: with --changes, what to change is the note');
+      }
+
+      if (options.skipDesign !== undefined && !isDesignSkip(options.skipDesign)) {
+        throw new RunRefusal(
+          'invalid',
+          `--skip-design says why the lead approves without the designer's review: --skip-design lead (you looked at its UI yourself, as a designer would — both schemes, the phone width) or --skip-design no-ui (it changes nothing a visitor sees), not "${options.skipDesign}"`
+        );
       }
 
       if (options.overwrite && options.merge) {
@@ -268,7 +275,7 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
               }
             ],
         options.merge ? 'merge' : options.overwrite ? 'overwrite' : 'refuse',
-        { skipDesign: options.skipDesign ?? false }
+        isDesignSkip(options.skipDesign) ? { skipDesign: options.skipDesign } : {}
       );
     },
     reviewed =>
@@ -277,7 +284,7 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
         : reviewed.verdict === 'approve'
           ? [
               `${taskId} approved: ${list(reviewed.merged ?? [])} in the run's work.`,
-              ...(reviewed.design === 'skipped' ? ['  Without its UI review, as you said (--skip-design)'] : []),
+              ...(reviewed.design === 'skipped' ? [`  · ${designSkipText(reviewed.designSkip)}`] : []),
               ...((reviewed.joined ?? []).length > 0
                 ? [`  Put together with the change made in the project meanwhile: ${list(reviewed.joined ?? [])}`]
                 : []),

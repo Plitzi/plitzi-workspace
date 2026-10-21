@@ -19,7 +19,7 @@ import { at, changedInCopy, findTask, refreshCopy } from './common';
 import { allLocks, grantWaiters } from './locks';
 import { integrateWhenReady, settleRequests } from './requests';
 
-import type { ProjectChange, ReviewComment, TaskStart } from '../model';
+import type { DesignSkip, ProjectChange, ReviewComment, TaskStart } from '../model';
 import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 
@@ -45,6 +45,8 @@ export interface ReviewedTask {
   joined?: string[];
   /** A designer approved its UI — it is the lead's now — or the lead approved it without that review. */
   design?: 'approved' | 'skipped';
+  /** `skipped`: why, as the lead said it. */
+  designSkip?: DesignSkip;
   /** Written in its copy after it went to review: not part of what was reviewed, so not merged. */
   notReviewed?: string[];
   /**
@@ -151,7 +153,7 @@ export const reviewTask = async (
   verdict: 'approve' | 'changes',
   comments: ReviewComment[],
   onProjectChange: ProjectChange = 'refuse',
-  options: { skipDesign?: boolean } = {}
+  options: { skipDesign?: DesignSkip } = {}
 ): Promise<ReviewedTask> => {
   requireNoTask(ctx, 'review a task');
   const loaded = await loadRun(ctx, runId);
@@ -170,7 +172,7 @@ const decide = async (
   verdict: 'approve' | 'changes',
   comments: ReviewComment[],
   onProjectChange: ProjectChange,
-  { skipDesign = false }: { skipDesign?: boolean }
+  { skipDesign }: { skipDesign?: DesignSkip }
 ): Promise<ReviewedTask> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'review a task');
@@ -197,7 +199,7 @@ const decide = async (
     if (skipDesign) {
       throw new RunRefusal(
         'invalid',
-        `--skip-design is a lead's: ${ctx.agent} is not one. A lead approves without the UI review as itself — plitzi task review ${taskId} --approve --skip-design --agent lead`,
+        `--skip-design is a lead's: ${ctx.agent} is not one. A lead approves without the UI review as itself — plitzi task review ${taskId} --approve --skip-design lead --agent lead`,
         { task: taskId }
       );
     }
@@ -217,12 +219,13 @@ const decide = async (
     const by = view.state.design?.by;
     throw new RunRefusal(
       'invalid',
-      `Task "${taskId}"'s UI waits for ${by ?? 'a designer'}'s review${by ? '' : ' (none took it yet)'}: run watch --until lead wakes you once it is said — or approve it now without it: --skip-design`,
+      `Task "${taskId}"'s UI waits for ${by ?? 'a designer'}'s review${by ? '' : ' (none took it yet)'}: run watch --until lead wakes you once it is said — or approve it now without it, saying why: --skip-design lead (you looked at its UI yourself, as a designer would) or --skip-design no-ui (it changes nothing a visitor sees)`,
       { task: taskId, ...(by ? { designer: by } : {}) }
     );
   }
 
   const skipped = verdict === 'approve' && designDue(view.state);
+  const why = skipped ? skipDesign : undefined;
 
   // A question it asked the lead and the lead has not answered: the answer may change the work, so it comes first.
   const answered = new Set((await messagesOf(loaded)).flatMap(message => (message.replyTo ? [message.replyTo] : [])));
@@ -362,7 +365,17 @@ const decide = async (
       ...state,
       round,
       status: 'done',
-      ...(skipped ? { design: { status: 'skipped' as const, round: state.round, by: ctx.agent, at: at(ctx) } } : {})
+      ...(skipped
+        ? {
+            design: {
+              status: 'skipped' as const,
+              round: state.round,
+              by: ctx.agent,
+              at: at(ctx),
+              ...(why ? { why } : {})
+            }
+          }
+        : {})
     }),
     ctx.now
   );
@@ -375,7 +388,7 @@ const decide = async (
     round,
     merged,
     fulfilled,
-    ...(skipped ? { design: 'skipped' } : {}),
+    ...(skipped ? { design: 'skipped', ...(why ? { designSkip: why } : {}) } : {}),
     ...(skipped && view.state.design?.by ? { designBy: view.state.design.by } : {})
   });
   await fs.rm(view.paths.cache, { recursive: true, force: true });
@@ -463,7 +476,7 @@ const decide = async (
     ...(previewProblem === undefined ? {} : { previewProblem }),
     settled,
     ...(joined.length > 0 ? { joined } : {}),
-    ...(skipped ? { design: 'skipped' as const } : {}),
+    ...(skipped ? { design: 'skipped' as const, ...(why ? { designSkip: why } : {}) } : {}),
     ...(notReviewed.length > 0 ? { notReviewed } : {})
   };
 };

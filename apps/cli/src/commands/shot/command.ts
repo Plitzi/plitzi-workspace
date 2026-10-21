@@ -247,6 +247,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       out,
       ...(taken.settled > 0 ? { settled: taken.settled } : {}),
       ...(taken.unloaded > 0 ? { unloaded: taken.unloaded } : {}),
+      ...(taken.undrawn.length > 0 ? { undrawn: taken.undrawn } : {}),
       ...(taken.sentTo ? { sentTo: taken.sentTo } : {})
     };
 
@@ -378,7 +379,17 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     }
 
     if (report.unloaded) {
-      console.log(chalk.yellow(`${String(report.unloaded)} picture(s) had not loaded when the page was taken`));
+      console.log(
+        chalk.yellow(`${String(report.unloaded)} picture(s) or embed(s) had not loaded when the page was taken`)
+      );
+    }
+
+    if (report.undrawn) {
+      console.log(
+        chalk.yellow(
+          `${report.undrawn.join(', ')}: from another site, below the first screen — blank in a picture of the whole page, as the browser draws it only on screen: --scroll-to ${report.undrawn[0] ?? '<id>'} --viewport pictures it`
+        )
+      );
     }
 
     if (report.compare) {

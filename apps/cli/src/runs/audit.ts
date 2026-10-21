@@ -88,9 +88,19 @@ export const auditRun = async (loaded: LoadedRun): Promise<string[]> => {
     }
   }
 
+  // Said by why, each apart: a UI the lead looked at is not one nobody did, nor a task with no UI at all.
   const skipped = by('review').filter(entry => entry.design === 'skipped');
-  if (skipped.length > 0) {
-    findings.push(`Approved without their UI review: ${skipped.map(entry => text(entry.task)).join(', ')}`);
+  const skippedAs = (why: string | undefined) =>
+    skipped.filter(entry => (typeof entry.designSkip === 'string' ? entry.designSkip : undefined) === why);
+  for (const [why, said] of [
+    ['lead', 'Their UI reviewed by the lead, not a designer'],
+    ['no-ui', 'No UI to review, approved on their code (task complete --review code says it from the start)'],
+    [undefined, 'Approved without their designer’s UI review, the reason unsaid']
+  ] as const) {
+    const these = skippedAs(why);
+    if (these.length > 0) {
+      findings.push(`${said}: ${these.map(entry => text(entry.task)).join(', ')}`);
+    }
   }
 
   // A designer at a UI review the lead then went past: its review was wasted, and its finding went nowhere.

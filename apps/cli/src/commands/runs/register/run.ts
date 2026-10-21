@@ -32,7 +32,8 @@ import {
   runTeamCheck,
   runTeamSet,
   runTeamUnset,
-  runNote
+  runNote,
+  runNotice
 } from '..';
 import { JSON_OPTION, TOKEN_OPTION, RUN_OPTION, AGENT_OPTION } from './options';
 import { duration, FOLLOW_MS, names, positiveInteger } from '../../../options';
@@ -177,6 +178,19 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
     .action((text: string, options: RunCommandOptions) => runNote(text, options));
+
+  runGroup
+    .command('notice')
+    .description(
+      'Something wrong you saw that no task owns — outside yours, there before the run: kept for the finish and the next stage, never fixed in your task'
+    )
+    .argument('<text>', 'What is wrong — or - to read it from stdin')
+    .option('--on <where>', 'Where it is: a page, an element, a file')
+    .option(...TOKEN_OPTION)
+    .option(...RUN_OPTION)
+    .option(...AGENT_OPTION)
+    .option(...JSON_OPTION)
+    .action((text: string, options: RunCommandOptions & { on?: string }) => runNotice(text, options));
 
   runGroup
     .command('amend')

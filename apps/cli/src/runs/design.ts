@@ -4,7 +4,8 @@ import { fingerprint } from './files';
 import { RunRefusal } from './refusal';
 import { logRun } from './run';
 import { updateState } from './taskStore';
-import { DESIGNER, DEVELOPER, readTeam, startedAgents, TESTER } from './team';
+import { DESIGNER, readTeam, startedAgents } from './team';
+import { isUiFile, reviewedAsUi } from './uiFiles';
 
 import type { DesignReview, RunTask, TaskState } from './model';
 import type { LoadedRun, RunContext } from './run';
@@ -18,15 +19,9 @@ import type { TaskView } from './taskStore';
  * The lead approves after — or before, saying so (`--skip-design`), and the report shows which.
  */
 
-/** What a person sees: the space's document — pages, layouts, components, the theme — and the plugins drawn in it. */
-const UI_FILE = /^src\/(?:space|plugins)\//;
-const NOT_UI = /\.(?:test|spec)\.[cm]?[jt]sx?$|^src\/space\/data\//;
-
 /** Whether a designer reviews this task's UI: another role's work that changes what a person sees. */
 export const hasDesignReview = (task: RunTask, changed: readonly string[]): boolean =>
-  task.kind === 'work' &&
-  ![DESIGNER, TESTER].includes(task.role ?? DEVELOPER) &&
-  changed.some(file => UI_FILE.test(file) && !NOT_UI.test(file));
+  task.kind === 'work' && reviewedAsUi(task.role, changed);
 
 /** The task waits for a designer: in review, its UI not yet said — by anyone, or by `agent` once it took it. */
 export const designDue = (state: TaskState): boolean => state.status === 'in-review' && state.design?.status === 'due';
@@ -68,7 +63,7 @@ export const assertDesigner = (view: TaskView, agent: string): void => {
   if (workedBy(view, agent)) {
     throw new RunRefusal(
       'invalid',
-      `${agent} worked ${taskId}: its UI is reviewed by another designer, or the lead approves it without that review, as itself (plitzi task review ${taskId} --approve --skip-design --agent lead)`,
+      `${agent} worked ${taskId}: its UI is reviewed by another designer, or the lead approves it without that review, as itself (plitzi task review ${taskId} --approve --skip-design lead --agent lead)`,
       { task: taskId }
     );
   }
@@ -114,8 +109,6 @@ export const approveDesign = async (
   );
   await logRun(ctx, loaded.paths, { action: 'design-review', task: view.task.id, verdict: 'approve' });
 };
-
-const isUiFile = (file: string): boolean => UI_FILE.test(file) && !NOT_UI.test(file);
 
 /**
  * Its design review as it goes to review again: none in a run without one, or for a task that changes no UI; `due` —

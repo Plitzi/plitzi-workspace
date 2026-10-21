@@ -8,6 +8,7 @@ import { auditRun } from './audit';
 import { readOptional, writeAtomic } from './files';
 import { coverage } from './inventory';
 import { requireLead } from './leads';
+import { noticesOf, noticeText } from './notices';
 import { REPORTS_DIR, taskPaths } from './paths';
 import { RunRefusal } from './refusal';
 import { inputOf, loadRun, logRun, readApproved, readRunLog, requireNoTask, updateRecord } from './run';
@@ -69,6 +70,8 @@ export interface RunReport {
   problems: string[];
   /** What the run's activity shows was wrong in how it was worked (`audit.ts`): the CLI's to fix, or the team's. */
   audit: string[];
+  /** What was seen wrong that no task owned (`plitzi run notice`): where the next stage starts. */
+  noticed: string[];
 }
 
 interface LogLine {
@@ -134,7 +137,14 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
       ...(view.state.design?.status === 'approved'
         ? { design: `UI by ${view.state.design.by ?? 'a designer'}` }
         : view.state.design?.status === 'skipped'
-          ? { design: 'UI skipped' }
+          ? {
+              design:
+                view.state.design.why === 'lead'
+                  ? 'UI by the lead'
+                  : view.state.design.why === 'no-ui'
+                    ? 'no UI'
+                    : 'UI review skipped'
+            }
           : {}),
       estimateMinutes: task.estimateMinutes,
       ...(first ? { minutes: minutesBetween(first.at, approval?.at ?? now) } : {}),
@@ -265,7 +275,8 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
       .filter(merge => merge.kind === 'restore')
       .map(merge => ({ id: merge.id, files: Object.keys(merge.files) })),
     problems,
-    audit: await auditRun(loaded)
+    audit: await auditRun(loaded),
+    noticed: (await noticesOf(loaded)).map(noticeText)
   };
 };
 
@@ -294,6 +305,15 @@ export const reportText = (report: RunReport, summary: string | undefined, closi
     '',
     ...(report.leftOut.length > 0
       ? ['## Left out, as the plan said', '', ...report.leftOut.map(line => `- ${line}`), '']
+      : []),
+    ...(report.noticed.length > 0
+      ? [
+          '## Noticed, owned by no task',
+          '',
+          ...report.noticed.map(line => `- ${line}`),
+          '- — what the next stage or run starts from (plitzi run extend)',
+          ''
+        ]
       : []),
     ...(report.inventory.length > 0
       ? [

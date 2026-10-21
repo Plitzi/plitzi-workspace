@@ -161,7 +161,8 @@ export const pictureOf = async (
     png: await capture(page, how),
     scheme: await paintedScheme(page, view.scheme ?? 'light'),
     settled,
-    unloaded: pictures?.missing ?? 0,
+    unloaded: (pictures?.missing ?? 0) + (pictures?.embedsMissing ?? 0),
+    undrawn: pictures?.embedsUndrawn ?? [],
     ...(sentTo ? { sentTo } : {})
   };
 };

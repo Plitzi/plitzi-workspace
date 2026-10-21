@@ -3,6 +3,15 @@ export interface LoadedImages {
   images: number;
   /** Those still not drawn when the budget ran out — or that failed. */
   missing: number;
+  /** The embedded pages it holds (an `<iframe>`: a map, a player)… */
+  embeds: number;
+  /** …and those of them lazy that had not loaded when the budget ran out. */
+  embedsMissing: number;
+  /**
+   * The ids (or addresses) of embeds from another site below the first screen: the browser draws one only while it is
+   * on screen, so a picture of the whole page, taken from its top, has a blank box there — said, with how to see it.
+   */
+  embedsUndrawn: string[];
 }
 
 /**
@@ -14,6 +23,8 @@ export interface LoadedImages {
  * site's own (one that swaps `data-src` from an `IntersectionObserver`) and an arrival waiting to be seen react to the
  * scroll, not to an attribute — and back up; then `loading="lazy"` is made eager and the pictures are awaited, in
  * rounds while loading one turns up another (a blurred placeholder swapped for its picture), for `budgetMs` at most.
+ * A lazy `<iframe>` is made eager first and awaited too — and one from another site below the first screen is named:
+ * it loads, and still is a blank box in the picture (la-velada's venue map), which only a picture of it in view shows.
  */
 export const loadImages = async (budgetMs: number): Promise<LoadedImages> => {
   const deadline = Date.now() + budgetMs;
@@ -26,6 +37,29 @@ export const loadImages = async (budgetMs: number): Promise<LoadedImages> => {
       new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))),
       new Promise(resolve => setTimeout(resolve, 100))
     ]);
+
+  // Made eager before the walk, its load listened to first: one the walk brings near the screen loads before it is
+  // awaited, and its event would be missed. One that is not lazy loaded with the page; one with no address yet (a
+  // player that waits for its press) has nothing to load.
+  const embeds = Array.from(document.querySelectorAll('iframe'));
+  const loading = embeds
+    .filter(embed => embed.loading === 'lazy' && (embed.getAttribute('src') ?? '').trim() !== '')
+    .map(embed => {
+      const loaded = { done: false, promise: Promise.resolve() };
+      loaded.promise = new Promise<void>(resolve => {
+        embed.addEventListener(
+          'load',
+          () => {
+            loaded.done = true;
+            resolve();
+          },
+          { once: true }
+        );
+      });
+      embed.loading = 'eager';
+
+      return loaded;
+    });
 
   // The page scrolls the document, or a pane of its own: the SDK scrolls one inside `.plitzi-sdk`.
   const panes = Array.from(document.querySelectorAll('*')).filter(
@@ -59,11 +93,28 @@ export const loadImages = async (budgetMs: number): Promise<LoadedImages> => {
     await frame();
   }
 
+  await capped(Promise.all(loading.map(each => each.promise)));
+  // Read with the page at its top, as it is pictured.
+  const fold = window.innerHeight;
+  const undrawn = embeds.filter(embed => {
+    const address = (embed.getAttribute('src') ?? '').trim();
+    const foreign = address !== '' && new URL(address, location.href).origin !== location.origin;
+
+    return foreign && embed.getBoundingClientRect().top >= fold;
+  });
+
   const images = Array.from(document.images);
 
   return {
     images: images.length,
-    missing: images.filter(image => !image.complete || image.naturalWidth === 0).length
+    missing: images.filter(image => !image.complete || image.naturalWidth === 0).length,
+    embeds: embeds.length,
+    embedsMissing: loading.filter(each => !each.done).length,
+    embedsUndrawn: undrawn.map(
+      embed =>
+        embed.getAttribute('data-plitzi-el') ??
+        (embed.id === '' ? new URL(embed.src, location.href).hostname : embed.id)
+    )
   };
 };
 

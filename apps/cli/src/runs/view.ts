@@ -5,6 +5,7 @@ import { fingerprint } from './files';
 import { askingLeads } from './leads';
 import { longFileText, longFilesIn } from './longFiles';
 import { LEAD, messagesOf, unreadFor } from './messages';
+import { designSkipText } from './model';
 import { under } from './paths';
 import { chainMinutes } from './plan';
 import { previewPort } from './previewRecord';
@@ -212,7 +213,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   if (uiWaiting.length > 0 && designers.length > 0 && designers.every(agent => atOwn(agent) !== undefined)) {
     attention.push({
       kind: 'ui-waits',
-      text: `${uiWaiting.map(view => view.task.id).join(', ')} wait for a UI review, and no designer is free (${designers.map(agent => `${agent} at ${String(atOwn(agent))}`).join(', ')}): review them yourself, UI included — plitzi task next --role lead --take, then --approve --skip-design`,
+      text: `${uiWaiting.map(view => view.task.id).join(', ')} wait for a UI review, and no designer is free (${designers.map(agent => `${agent} at ${String(atOwn(agent))}`).join(', ')}): start another designer (team.json's designers) — or review them yourself, UI included (both schemes, the phone width): plitzi task next --role lead --take, then --approve --skip-design lead`,
       who: 'lead'
     });
   }
@@ -456,7 +457,7 @@ const designText = (design: DesignReview): string =>
     ? `its UI with ${design.by ?? 'a designer, not taken yet'}`
     : design.status === 'approved'
       ? `UI approved by ${design.by ?? 'a designer'}`
-      : 'UI review skipped';
+      : designSkipText(design.why);
 
 /** A run as `plitzi run watch` prints it: the run, a line per task, then what needs attention. */
 export const runText = (view: RunView): string => {

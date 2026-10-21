@@ -387,6 +387,24 @@ export const completeTask = async (
     );
   }
 
+  // A file it hands over has no warning of the space's lint, whoever wrote it: la-velada's run left ten in files its tasks
+  // changed — each said at complete, none fixed — and the finish passed with them.
+  const warned = (checks.steps.find(step => step.name === 'lint:space')?.warnings ?? []).filter(warning =>
+    changed.some(file => warning.startsWith(`${file}:`) || warning.startsWith(`${file} `))
+  );
+  if (warned.length > 0 && !knownFailure) {
+    await recordBrake(ctx, loaded, 'checks-failed', taskId);
+    throw new RunRefusal(
+      'checks-failed',
+      `Task "${taskId}" leaves warnings of the space's lint in files it changed: ${warned.join('; ')}`,
+      {
+        task: taskId,
+        steps: [{ name: 'lint:space — the files it changed', ok: false, said: warned }],
+        next: 'fix each as npx plitzi space lint says — there before the task or not, a file it hands over has none; one written so on purpose says it with quiet — and complete again'
+      }
+    );
+  }
+
   const existing = new Map((await readRequests(view.paths)).map(request => [request.file, request]));
   const requests: SharedRequest[] = [];
   for (const file of asRequests) {

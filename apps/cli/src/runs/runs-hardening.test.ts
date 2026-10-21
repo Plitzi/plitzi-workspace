@@ -233,14 +233,14 @@ describe('a UI review, by the team’s designers', () => {
     await inReview();
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
     const refused = await refusal(
-      reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: true })
+      reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'lead' })
     );
     expect(refused.message).toContain('--skip-design is a lead');
     expect(refused.message).toContain('--agent lead');
 
     expect(
-      await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: true })
-    ).toMatchObject({ verdict: 'approve', design: 'skipped' });
+      await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'lead' })
+    ).toMatchObject({ verdict: 'approve', design: 'skipped', designSkip: 'lead' });
   });
 });
 

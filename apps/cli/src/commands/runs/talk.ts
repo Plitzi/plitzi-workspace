@@ -2,6 +2,7 @@ import { act, holder, runOf, taskOf } from './shell';
 import { exchangeLines, messageLines } from './text';
 import { durationText, FOLLOW_MS } from '../../options';
 import { proposalsOf } from '../../runs/agreements';
+import { noticeRun, noticeText } from '../../runs/notices';
 import { runPaths } from '../../runs/paths';
 import { answerProposal, proposeChange } from '../../runs/proposals';
 import { RunRefusal } from '../../runs/refusal';
@@ -140,6 +141,19 @@ export const taskTell = (text: string, options: RunCommandOptions & { about?: st
         : tellLead(ctx, runId, taskOf(ctx, options.about), text);
     },
     told => `Told the lead (${told.id}): no answer is waited for — task ask when you need one.`
+  );
+
+/** `plitzi run notice`: something wrong that no task owns, kept for the finish and the next stage. */
+export const runNotice = (text: string, options: RunCommandOptions & { on?: string }): Promise<void> =>
+  act(
+    options,
+    async ctx =>
+      noticeRun(ctx, await runOf(ctx, options), text, {
+        ...(ctx.token === undefined ? {} : { task: taskOf(ctx) }),
+        ...(options.on ? { on: options.on } : {})
+      }),
+    notice =>
+      `Noticed (${noticeText(notice)}): kept in the run's log — the finish says it and the report lists it, for a stage of its own. Go on with your task: it is not yours to fix in it.`
   );
 
 export const taskMessage = (

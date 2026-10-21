@@ -362,8 +362,8 @@ export const registerTaskGroup = (program: Command): Command => {
     )
     .option('--file <file>', 'The file the change is about')
     .option(
-      '--skip-design',
-      'With --approve, a task whose UI waits for a designer’s review: approved without it, said so'
+      '--skip-design <why>',
+      'With --approve, a task whose UI waits for a designer’s review, approved without it — why: lead (you looked at its UI yourself) or no-ui (it changes nothing a visitor sees)'
     )
     .option('--note <note>', 'With --approve, what you saw and do not ask to change — kept with the task, for the lead')
     .option(...RUN_OPTION)

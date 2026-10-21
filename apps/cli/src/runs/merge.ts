@@ -6,6 +6,7 @@ import { fingerprint, readJson, readOptional, writeJson } from './files';
 import { requireLead } from './leads';
 import { acceptanceOnResult, checkVersions } from './materialise';
 import { mergeLines } from './merge3';
+import { noticesOf, noticeText } from './notices';
 import { entryOf, isMergeManifest } from './model';
 import { BACKUPS_DIR, under } from './paths';
 import { RunRefusal } from './refusal';
@@ -253,6 +254,8 @@ export interface Finished {
   leftInTmp?: string[];
   /** What the run's activity shows was wrong in how it was worked: said, never refusing — and kept in the report. */
   audit: string[];
+  /** What was seen wrong that no task owned (`plitzi run notice`): said, for the next stage. */
+  noticed: string[];
   /** Dry run: the tasks approved after the lead's summary was written — the report that closes the run is behind. */
   summaryBehind?: string[];
 }
@@ -377,7 +380,11 @@ export const finishRun = async (
   }
 
   const strays = await leftInTmp(ctx.root, loaded.record);
-  const leftThere = { ...(strays.length > 0 ? { leftInTmp: strays } : {}), audit: await auditRun(loaded) };
+  const leftThere = {
+    ...(strays.length > 0 ? { leftInTmp: strays } : {}),
+    audit: await auditRun(loaded),
+    noticed: (await noticesOf(loaded)).map(noticeText)
+  };
   const behind = await summaryBehind(loaded);
   if (!apply) {
     // Whole and checked: the activity's last word is that the run is ready, and whose step is next — once its report

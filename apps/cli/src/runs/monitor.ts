@@ -1,10 +1,12 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { LEAD, messagesOf } from './messages';
+import { designSkipText, isDesignSkip } from './model';
 import { loadRun, readRunLog, runIds } from './run';
 import { choiceText, readTeam, startedAgents } from './team';
 import { viewRun } from './view';
 
+import type { DesignSkip } from './model';
 import type { RunContext } from './run';
 import type { RunView, TaskLine } from './view';
 
@@ -109,8 +111,9 @@ export interface TaskStory {
   writers: string[];
   /** Its first take: the start of its work. */
   takenAt?: string;
-  /** The designer that approved its UI, or `skipped` when the lead went first. */
+  /** The designer that approved its UI, or `skipped` when the lead went first — and why it did. */
   design?: string;
+  designSkip?: DesignSkip;
   approvedBy?: string;
   approvedAt?: string;
   /** Rounds sent back: by a lead or a designer. */
@@ -156,6 +159,9 @@ export const storiesOf = (log: readonly Record<string, unknown>[]): Partial<Reco
       story.approvedBy = by ?? LEAD;
       if (entry.design === 'skipped') {
         story.design ??= 'skipped';
+        if (isDesignSkip(entry.designSkip)) {
+          story.designSkip = entry.designSkip;
+        }
       }
     } else if (entry.action === 'review' || (entry.action === 'design-review' && entry.verdict !== 'approve')) {
       story.sentBack += 1;
@@ -407,7 +413,7 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
       return entry.verdict === 'approve'
         ? line(
             'approved',
-            `approved ${task}${round}${entry.design === 'skipped' ? ` without its UI review${typeof entry.designBy === 'string' ? ` (${entry.designBy} had it)` : ''}` : ''}`
+            `approved ${task}${round}${entry.design === 'skipped' ? ` — ${designSkipText(isDesignSkip(entry.designSkip) ? entry.designSkip : undefined)}${typeof entry.designBy === 'string' ? ` (${entry.designBy} had it)` : ''}` : ''}`
           )
         : line('sent-back', `sent ${task} back${round}`);
     case 'handed-on':
@@ -458,6 +464,11 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
     case 'tell':
       // The message itself is in the feed, in its words: a second line saying it was sent says nothing more.
       return undefined;
+    case 'notice':
+      return line(
+        'message',
+        `noticed, owned by no task: ${textOf(entry.text)}${typeof entry.on === 'string' ? ` (on ${entry.on})` : ''}`
+      );
     case 'propose':
       return line('message', `proposed ${textOf(entry.proposal)} to ${textOf(entry.to)}`);
     case 'answer':

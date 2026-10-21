@@ -213,6 +213,17 @@ describe('repeated-css', () => {
       { file: 'src/space/b.ts', line: 1, column: 18 }
     ]);
   });
+  // la-velada: five tasks wrote the visually-hidden CSS by hand, and were told to make it "one class".
+  it('names Tailwind’s sr-only for the CSS that hides an element from the eye', async () => {
+    const hidden =
+      "{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', 'clip-path': 'inset(50%)', 'white-space': 'nowrap' }";
+    const findings = await lintFiles({
+      'src/space/index.ts': entryFor(['src/space/a.ts']),
+      'src/space/a.ts': ['a', 'b', 'c'].map(name => `export const ${name} = ${hidden};`).join('\n')
+    });
+
+    expect(findings.find(each => each.code === 'repeated-css')?.message).toContain("tw('sr-only')");
+  });
 });
 
 describe('the source’s say', () => {

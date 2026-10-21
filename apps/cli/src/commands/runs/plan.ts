@@ -150,7 +150,7 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
         ...startLines(checked.tasks, checked.team, checked.designReview),
         ...(checked.designReview
           ? [
-              'A designer reviews the UI of the others’ tasks before you: you approve each after it (or now, with --skip-design)'
+              'A designer reviews the UI of the others’ tasks before you: you approve each after it — or now, saying why: --skip-design lead (you looked at its UI yourself) or no-ui (it changes nothing a visitor sees)'
             ]
           : []),
         ...(checked.stackedOn

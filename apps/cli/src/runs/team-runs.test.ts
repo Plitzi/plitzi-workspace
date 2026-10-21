@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
+import { auditRun } from './audit';
 import { expectedIds } from './expectations';
 import { extendRun } from './extend';
 import { leadItems } from './leadWatch';
@@ -333,9 +334,9 @@ describe('a designer’s review of the others’ UI', () => {
 
     await completed('dev-2', 't-about', 'src/space/pages/about.ts');
     expect(
-      await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: true })
-    ).toMatchObject({ design: 'skipped' });
-    expect(await designOf('t-about')).toMatchObject({ status: 'skipped', by: 'lead' });
+      await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'no-ui' })
+    ).toMatchObject({ design: 'skipped', designSkip: 'no-ui' });
+    expect(await designOf('t-about')).toMatchObject({ status: 'skipped', by: 'lead', why: 'no-ui' });
   });
 
   it('says the designer’s changes as its UI review’s, and tells a designer the lead went past', async () => {
@@ -347,11 +348,16 @@ describe('a designer’s review of the others’ UI', () => {
 
     await completed('dev-2', 't-about', 'src/space/pages/about.ts');
     await takeNext(bench.agent('design-2'), 'es-launch', 'designer');
-    await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: true });
+    await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'lead' });
     expect((await log()).find(entry => entry.action === 'review' && entry.task === 't-about')).toMatchObject({
       design: 'skipped',
+      designSkip: 'lead',
       designBy: 'design-2'
     });
+    // Said as the lead's UI review, never as one nobody made.
+    expect(await auditRun(await loadRun(lead(), 'es-launch'))).toContain(
+      'Their UI reviewed by the lead, not a designer: t-about'
+    );
     const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(message => message.to === '@design-2');
     expect(told?.text).toContain('t-about is approved without its UI review');
 

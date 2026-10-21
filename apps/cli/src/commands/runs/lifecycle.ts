@@ -119,6 +119,12 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
               ...finished.audit.map(each => chalk.yellow(`    - ${each}`))
             ]
           : ['  The run’s activity shows nothing out of place']),
+        ...(finished.noticed.length > 0
+          ? [
+              '  Noticed during the run, owned by no task — what a stage of its own takes (plitzi run extend):',
+              ...finished.noticed.map(each => `    - ${each}`)
+            ]
+          : []),
         ...(finished.leftInTmp
           ? [
               chalk.yellow(

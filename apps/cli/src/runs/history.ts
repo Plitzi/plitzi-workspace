@@ -12,7 +12,10 @@ import { REPORTS_DIR } from './paths';
 export interface History {
   runs: number;
   tasks: number;
-  /** All the minutes the done tasks took, over all their estimates: below 1, they took less. */
+  /**
+   * The middle of each done task's minutes over its estimate: below 1, they took less. The middle, not the sum: one task
+   * whose clock ran on (la-velada's t-tier-list, 885 min of 75, its approval lost) outweighed thirty that took a third.
+   */
   ratio: number;
 }
 
@@ -32,9 +35,7 @@ export const readHistory = async (root: string): Promise<History | undefined> =>
     .sort()
     .slice(-MAX_REPORTS);
   let runs = 0;
-  let tasks = 0;
-  let took = 0;
-  let estimated = 0;
+  const ratios: number[] = [];
   for (const name of names) {
     const text = await fs.readFile(path.join(dir, name), 'utf-8').catch(() => '');
     const rows = text
@@ -46,11 +47,19 @@ export const readHistory = async (root: string): Promise<History | undefined> =>
     }
 
     for (const [, minutes, estimate] of rows) {
-      tasks += 1;
-      took += Number(minutes);
-      estimated += Number(estimate);
+      if (Number(estimate) > 0) {
+        ratios.push(Number(minutes) / Number(estimate));
+      }
     }
   }
 
-  return tasks >= MIN_TASKS && estimated > 0 ? { runs, tasks, ratio: took / estimated } : undefined;
+  if (ratios.length < MIN_TASKS) {
+    return undefined;
+  }
+
+  const sorted = ratios.sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  const ratio = sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
+
+  return { runs, tasks: sorted.length, ratio };
 };

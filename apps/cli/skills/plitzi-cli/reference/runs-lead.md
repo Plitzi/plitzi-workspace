@@ -59,8 +59,8 @@ What the lead — team lead and software architect — does; the agents' half, t
    (`plitzi run team set dev --count 2 --model <model>`, `… set test --roles tester`): its size is how many work at once, a role nobody takes is refused, and `run plan` says how to start each agent. A tester in it adds `<id>-tests` after each
    developer task (`"tests": false` for none); a designer reviews the others' UI before you (`"designReview": false` in
    the plan turns it off). Theirs is the UI/UX, as a designer; yours is the complete and strict review — code,
-   acceptance, edge cases, the page (UI approved: the code first) — and the final word, after it (or before, with `--skip-design`, yours: as
-   yourself — no `--agent`, or `--agent lead`). A UI review counts only from a designer of the team, by the name it
+   acceptance, edge cases, the page (UI approved: the code first) — and the final word, after it (or before, saying why: `--skip-design lead|no-ui`,
+   as yourself: no `--agent`, or `lead`). A UI review counts only from a designer of the team, by the name it
    is started with (`design-1`). **One lead for every four agents**: a team of five or more has `lead-2`… beside you
    (`run team set lead --count N`) — **not at the start**: you review, taking each review from
    the queue (`plitzi task next --role lead --take`), and `run watch --until lead` says when the reviews queue up (two
@@ -127,6 +127,6 @@ task message t-home "…" --reply-to m3`; `task message all "…"` tells every t
 status`): ask the person to run `plitzi run attach <run>` — the agents keep their work and wait. To upgrade on
    purpose, the person runs `plitzi run upgrade` — never an install under the open run.
 8. **Before you close, look at the coverage:** the finish runs each covering check on the result; look at what a
-   check cannot see (`plitzi run preview`) — what is missing is a stage (`run extend`), never found afterwards. **Close it:** write the summary (done, wrong, left) last: `plitzi run report --summary summary.md`; then `plitzi run
+   check cannot see (`plitzi run preview`) — what is missing, or nobody's (`run notice`), is a stage (`run extend`). **Close it:** write the summary (done, wrong, left) last: `plitzi run report --summary summary.md`; then `plitzi run
 finish` (the diff, checked). `--apply` is the person's, or yours if they allowed it. The next plan need not wait:
-   `plitzi run extend <run> next.json` stacks it, one finish for both. `plitzi run pending` lists what awaits applying.
+   `plitzi run extend <run> next.json` stacks it, one finish for both. `plitzi run pending`: what awaits applying.
