@@ -37,6 +37,20 @@ describe('alignPictures', () => {
     expect(drift).toEqual({ name: 'section#plans', shift: 40 });
   });
 
+  // velada-now: the original's header — dressed otherwise than the copy's — fitted a dark band far down better than its
+  // own place, and was said to have moved there.
+  it('keeps a section that differs where it is, rather than at a look-alike band far down', () => {
+    const plain = profile([...range(0, 80).map(() => [10, 10, 30]), ...range(80, 1600).map(content)]);
+    const dressed = profile([
+      ...range(0, 80).map(() => [16, 16, 36]),
+      ...range(80, 720).map(content),
+      ...range(0, 80).map(() => [11, 11, 31]),
+      ...range(800, 1600).map(content)
+    ]);
+
+    expect(alignPictures(plain, dressed, [region('header', 0, 80)]).shifts).toEqual([0]);
+  });
+
   it('names the section the drift starts at, not the main around it', () => {
     expect(alignPictures(here, there, [region('main', 100, 400), ...regions]).drift).toEqual({
       name: 'section#plans',

@@ -77,7 +77,7 @@ export const compareText = (compare: CompareReport): string[] => {
   const lines = [
     compare.section === undefined
       ? `${chalk.bold(`${String(compare.changed)}% differs`)} from ${compare.url}${compare.regions.length > 0 ? ` — ${regionsText(compare.regions)}` : ''}`
-      : `${chalk.bold(regionsText(compare.regions))} differs from ${compare.url} (the whole page ${String(compare.changed)}%; the rest below is the whole page’s)`,
+      : `${chalk.bold(regionsText(compare.regions))} differs from ${compare.url} (the whole page ${String(compare.changed)}%; its dress and texts below are its own)`,
     ...(compare.keptAt
       ? [
           chalk.dim(

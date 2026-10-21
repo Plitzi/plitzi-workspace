@@ -56,7 +56,11 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     return;
   }
 
-  const asked: CheckAsk = { state: Boolean(options.state), elements: options.element ?? [] };
+  const asked: CheckAsk = {
+    state: Boolean(options.state),
+    elements: options.element ?? [],
+    ...(options.status === undefined ? {} : { status: options.status })
+  };
   const reports = await checkRoutes(project, routes.length > 0 ? routes : ['/'], {
     widths: options.width ?? [1440, 390],
     asked,

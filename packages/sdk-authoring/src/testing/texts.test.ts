@@ -70,4 +70,18 @@ describe('compareTexts', () => {
 
     expect(comparison).toEqual({ same: 1, differ: [], onlyHere: ['Only here'], onlyThere: ['Only there'] });
   });
+
+  // design-2: "✓USA EL LOGO…" there and "Usa el logo…" here landed in onlyHere and onlyThere — never compared.
+  it('pairs the same words with a mark beside them, and says how they are written', () => {
+    const { differ, onlyHere, onlyThere } = compareTexts(
+      [text('Usa el logo sobre fondo oscuro', { y: 100 }), text('Ganador', { y: 200 })],
+      [text('✓USA EL LOGO SOBRE FONDO OSCURO', { y: 100 }), text('★ GANADOR', { y: 200 })]
+    );
+
+    expect([onlyHere, onlyThere]).toEqual([[], []]);
+    expect(differ.map(each => each.differences[0])).toEqual([
+      'written Usa el logo sobre fondo oscuro → ✓USA EL LOGO SOBRE FONDO OSCURO',
+      'written Ganador → ★ GANADOR'
+    ]);
+  });
 });

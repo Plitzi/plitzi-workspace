@@ -661,4 +661,21 @@ monitor` shows each as it comes, a problem in red.
       counted (`task show` has them): each round repeated every review before it, whole (`earlier`, `copy` in `--json`).
     - `task claim` takes several files at once (`plitzi task claim a.ts b.ts`), each by turns; and `page shot --json` at
       several widths is one object, `{ widths: [...] }`, not one line of JSON a width.
+    - `page shot --compare --clip <id>` takes any element, not only a section — a panel, a card — compared where it is,
+      its dress and the texts that differ its own (dev-1's clip of one panel listed hundreds of the page's texts).
+    - Texts are paired by their words whatever marks stand at their ends or how they are capitalised — "Usa el logo"
+      here, "✓USA EL LOGO" there, said `written … → …` — where they were each page's alone, never compared.
+    - `page check --status 404`: the page meant to be sent with that status passes — a space's page for an address
+      nothing answers, checked on purpose — and one sent otherwise fails, said. An image whose address is still a binding
+      (`{{ list.item.cutout }}`) is said once, with why — what it reads has no value: a row the data lacks, an id nobody
+      has — not one "never loaded" each.
+    - The finish runs the checks again when Plitzi was installed again, whatever its version says: they were "the same
+      result, not run again", by the Plitzi an upgrade had replaced. A still picture (`page shot`, the comparisons) ends
+      every finite animation and holds every loop at its start, the other site's and a hand-written one's too: an arrival
+      caught mid-fade read as a change. `task look` takes every width in both schemes when the team's
+      `options.designReview` is `high`.
+    - The picture comparison keeps a section where it is unless the other page truly moved it: a fit is charged for how
+      far it moves, so a section dressed otherwise on the two pages — what a comparison is for — no longer fits a
+      look-alike band far down (the original's header was "747px lower there", and the dress of the page's middle read as
+      its header's).
 

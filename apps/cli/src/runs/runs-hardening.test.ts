@@ -299,6 +299,27 @@ describe('the checks of one result, run once', () => {
   });
 });
 
+describe('the checks of a result once Plitzi changed', () => {
+  // velada-now's upgrade put new code under the same 0.38.24: its finish said the checks of "this same result, not run
+  // again" — run by the Plitzi it had replaced.
+  it('runs them again when the installed Plitzi was written again, whatever its version says', async () => {
+    const manifest = path.join(bench.root, 'node_modules', '@plitzi', 'sdk-authoring', 'package.json');
+    await fs.mkdir(path.dirname(manifest), { recursive: true });
+    await fs.writeFile(manifest, JSON.stringify({ name: '@plitzi/sdk-authoring', version: '0.38.24' }));
+    const runId = await open();
+    await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { title: "Sobre" };\n');
+    const before = bench.checked.length;
+
+    await finishRun(lead(), runId, { apply: false, leavePending: true });
+    const later = new Date(Date.now() + 60_000);
+    await fs.utimes(manifest, later, later);
+    const again = await finishRun(lead(), runId, { apply: false, leavePending: true });
+
+    expect(again.plan.checks?.reused).toBeUndefined();
+    expect(bench.checked.length - before).toBe(2);
+  });
+});
+
 describe('what the lead handed the run', () => {
   it('takes the plan and its primer into its folder, where the lead amends them — and removes what it was handed after', async () => {
     const plan = { ...benchPlan(), designReview: false, primer: 'primer.md' };

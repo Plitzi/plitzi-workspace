@@ -118,6 +118,24 @@ describe('testing/describeFindings', () => {
     ]);
   });
 
+  // la-velada's /boxeadores/ibai: an id the data has none of, and four "never loaded" for images whose address was still
+  // `{{ list_boxer-one.item.boxer.cutout }}` — read as a broken server.
+  it('says images whose address is still a binding once, with why — apart from one a server failed', () => {
+    expect(
+      describeFindings(owed, {
+        ...clean,
+        brokenImages: [
+          { source: 'http://127.0.0.1:8300/boxeadores/%7B%7B%20list.item.cutout%20%7D%7D' },
+          { source: 'http://127.0.0.1:8300/boxeadores/%7B%7B%20list.item.portrait%20%7D%7D' },
+          { source: 'https://cdn.test/logo.png' }
+        ]
+      })
+    ).toEqual([
+      "2 image address(es) still a binding — {{ list.item.cutout }}, {{ list.item.portrait }}: what they read has no value here — a row the page's data has none of (an address naming an id nobody has?), or a field it lacks",
+      'an image never loaded: https://cdn.test/logo.png'
+    ]);
+  });
+
   /** What a tool acts on (`plitzi page check --json`): the kind of problem and the element, beside the sentence. */
   it('hands each problem over as data too: its code and the element it is about', () => {
     expect(

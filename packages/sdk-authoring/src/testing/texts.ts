@@ -216,17 +216,22 @@ export const compareTexts = (
     }
   }
 
-  // The same words in other capitals are one text drawn otherwise — "Logotipo" here, "LOGOTIPO" there — not two that
-  // each page has alone.
+  // The same words in other capitals, or with a mark beside them, are one text drawn otherwise — "Logotipo" here,
+  // "LOGOTIPO" there; "Usa el logo" here, "✓USA EL LOGO" there — not two that each page has alone.
+  const wordsOf = (text: string): string =>
+    text
+      .toLocaleLowerCase()
+      .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')
+      .replace(/\s+/g, ' ');
   const byWords = new Map<string, PageText[]>();
   for (const text of [...waiting.values()].flat()) {
-    const key = text.text.toLocaleLowerCase();
+    const key = wordsOf(text.text);
     byWords.set(key, [...(byWords.get(key) ?? []), text]);
   }
 
   const onlyHere: string[] = [];
   for (const text of unpaired) {
-    const match = byWords.get(text.text.toLocaleLowerCase())?.shift();
+    const match = byWords.get(wordsOf(text.text))?.shift();
     if (match) {
       const left = waiting.get(match.text) ?? [];
       const at = left.indexOf(match);
@@ -234,7 +239,8 @@ export const compareTexts = (
         left.splice(at, 1);
       }
 
-      pair(text, match, [`case ${text.text.slice(0, 40)} → ${match.text.slice(0, 40)}`]);
+      const how = text.text.toLocaleLowerCase() === match.text.toLocaleLowerCase() ? 'case' : 'written';
+      pair(text, match, [`${how} ${text.text.slice(0, 40)} → ${match.text.slice(0, 40)}`]);
     } else {
       onlyHere.push(text.text);
     }

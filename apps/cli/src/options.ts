@@ -34,6 +34,16 @@ export const positiveInteger = (value: string): number => {
   return parsed;
 };
 
+/** An HTTP status, `404`: three digits, 100 to 599. */
+export const statusCode = (value: string): number => {
+  const parsed = Number(value.trim());
+  if (!Number.isInteger(parsed) || parsed < 100 || parsed > 599) {
+    throw new InvalidArgumentError('A status is an HTTP code, 100 to 599: --status 404.');
+  }
+
+  return parsed;
+};
+
 const UNITS = { s: 1000, m: 60_000, h: 3_600_000 } as const;
 
 const isUnit = (unit: string): unit is keyof typeof UNITS => Object.hasOwn(UNITS, unit);

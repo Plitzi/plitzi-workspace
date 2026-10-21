@@ -62,8 +62,31 @@ const treeKey = async (ctx: RunContext, versions: Record<string, string | null>)
   const placed = Object.entries(versions).sort(([a], [b]) => a.localeCompare(b));
 
   return createHash('sha256')
-    .update(JSON.stringify([prints.sort(([a], [b]) => a.localeCompare(b)), placed]))
+    .update(JSON.stringify([prints.sort(([a], [b]) => a.localeCompare(b)), placed, await toolsKey(ctx.root)]))
     .digest('hex');
+};
+
+/**
+ * The Plitzi the checks run with, as it is installed: each `@plitzi` package and when its manifest and its build were
+ * written. An install writes them again whatever the version says — velada-now's upgrade put new code under the same
+ * 0.38.24, and the finish said its checks "as they did on this same result, not run again".
+ */
+const toolsKey = async (root: string): Promise<[string, number, number][]> => {
+  const scope = path.join(root, 'node_modules', '@plitzi');
+  const names = (await fs.readdir(scope).catch(() => [])).filter(name => !name.startsWith('.')).sort();
+  const writtenAt = (file: string) =>
+    fs.stat(file).then(
+      stat => stat.mtimeMs,
+      () => 0
+    );
+
+  return Promise.all(
+    names.map(async (name): Promise<[string, number, number]> => [
+      name,
+      await writtenAt(path.join(scope, name, 'package.json')),
+      await writtenAt(path.join(scope, name, 'dist'))
+    ])
+  );
 };
 
 const parseKept = (bytes: Buffer): unknown => {

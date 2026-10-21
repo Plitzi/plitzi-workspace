@@ -19,6 +19,7 @@ import { withLock } from '../../runs/store';
 import { findingsOf, taskParts } from '../../runs/taskParts';
 import { findTask, notReviewedIn, reassignTask, revertTask, reviewTask } from '../../runs/tasks';
 import { viewTask } from '../../runs/taskStore';
+import { readTeam } from '../../runs/team';
 
 import type { RunCommandOptions } from './shell';
 import type { RunContext } from '../../runs/run';
@@ -130,6 +131,21 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               });
             }
 
+            // The desktop light and the phone dark — every width in both schemes when the team asks its reviews high
+            // (`options.designReview`): design-2 took the other two by hand, the team's standard asking for both.
+            const precision = (await readTeam(ctx.root).catch(() => undefined))?.options?.designReview;
+            const views: readonly (readonly ['1440' | '390', 'light' | 'dark'])[] =
+              precision === 'high'
+                ? [
+                    ['1440', 'light'],
+                    ['1440', 'dark'],
+                    ['390', 'light'],
+                    ['390', 'dark']
+                  ]
+                : [
+                    ['1440', 'light'],
+                    ['390', 'dark']
+                  ];
             // No page named: the pages its changes are drawn at, by the files that changed — else the home page.
             // Read off the copy served: a page the task makes is one to look at too.
             const changed = (await viewTaskOf(ctx, runId, taskId)).changed;
@@ -157,10 +173,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
             const shots: string[] = [];
             for (const route of routes) {
               for (const clip of clips.length > 0 ? clips : [undefined]) {
-                for (const [width, scheme] of [
-                  ['1440', 'light'],
-                  ['390', 'dark']
-                ] as const) {
+                for (const [width, scheme] of views) {
                   const name = `${taskId}${route === '/' ? '-home' : `-${route.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`}${clip ? `-${clip}` : ''}-${width}-${scheme}.png`;
                   const out = path.join(runPaths(ctx.root, runId).shots, name);
                   const shot = await runSelf(preview.dir, [
@@ -221,10 +234,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               }
 
               for (const route of before ? routes : []) {
-                for (const [width, scheme] of [
-                  ['1440', 'light'],
-                  ['390', 'dark']
-                ] as const) {
+                for (const [width, scheme] of views) {
                   const name = `${taskId}${route === '/' ? '-home' : `-${route.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`}-${width}-${scheme}-before.png`;
                   const shot = await runSelf(preview.dir, [
                     'page',

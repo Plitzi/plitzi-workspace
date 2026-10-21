@@ -67,6 +67,28 @@ export const capture = (page: BrowserPage, how: Framing): Promise<Uint8Array> =>
  * One page, pictured: the project's own (`origin` given — in the space's theme when one is asked for) or another site,
  * in the scheme it is told.
  */
+/**
+ * Runs in the page: every animation that ends, ended — the page as it settles — and every loop held at its start. The
+ * space's own motion is held by `MOTION_STILL_CSS`; another site's, or one written by hand, ran on: velada-now's
+ * comparisons caught the original's late arrivals mid-fade, and read them as changes (6% on an artist's page).
+ * Self-contained — it is serialised.
+ */
+const endAnimations = (): void => {
+  for (const animation of document.getAnimations()) {
+    if (animation.effect?.getComputedTiming().iterations === Infinity) {
+      animation.pause();
+      animation.currentTime = 0;
+    } else {
+      // One with no end (an endless delay, a rate of 0) cannot be finished: it is left as it is, never the picture's end.
+      try {
+        animation.finish();
+      } catch {
+        animation.pause();
+      }
+    }
+  }
+};
+
 export const pictureOf = async (
   browser: Browser,
   url: string,
@@ -153,6 +175,7 @@ export const pictureOf = async (
 
   if (view.still) {
     await page.addStyleTag({ content: MOTION_STILL_CSS });
+    await page.evaluate(endAnimations, undefined);
   }
 
   return {

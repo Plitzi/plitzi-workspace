@@ -134,6 +134,14 @@ const rowDistance = (a: RowProfile, rowA: number, b: RowProfile, rowB: number): 
 /** Two placements that differ by less than this are the same match: a blank band fits anywhere, and stays put. */
 const SAME_FIT = 1;
 
+/**
+ * What moving costs a fit, for each 100 px from where the section before it sits: a section that differs on the two
+ * pages — what a comparison is for — fits a look-alike band far away about as poorly as its own place, and the far one
+ * won (velada-now: the original's header "747px lower there", the dress of the page's middle read as its header's). A
+ * page that truly moved fits its new place far better than this costs.
+ */
+const MOVE_COST = 1;
+
 /** The fewest rows a region is compared by: a band of a page is not told by one row. */
 const SAMPLED_ROWS = 96;
 
@@ -157,7 +165,7 @@ const shiftOf = (a: RowProfile, b: RowProfile, top: number, bottom: number, near
       cost += rowDistance(a, row, b, row + shift);
     }
 
-    fits.push({ shift, cost: cost / sampled.length });
+    fits.push({ shift, cost: cost / sampled.length + (Math.abs(shift - near) / 100) * MOVE_COST });
   }
 
   if (fits.length === 0) {

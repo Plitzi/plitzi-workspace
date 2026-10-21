@@ -9,6 +9,8 @@ import type { DataIssueCode, PageIssue } from '@plitzi/sdk-authoring';
 export interface CheckOptions {
   /** `--expect <id>~<text>`: each element shows its text, or the check fails — what an acceptance can be checked by. */
   expect?: Expectation[];
+  /** `--status <code>`: the status every page checked is meant to be sent with. */
+  status?: number;
   /** `--then <path…>`: on from the page by its own links, no reload — each next page checked as the visitor reaches it. */
   then?: string[];
   /** Validated where the flag is declared (`widths` in options.ts). */
@@ -215,6 +217,8 @@ export interface Expectation {
 export interface CheckAsk {
   state: boolean;
   elements: readonly string[];
+  /** `--status 404`: the status the page is meant to be sent with — a page for an address nothing answers, checked. */
+  status?: number;
 }
 
 export interface ClickAsk {

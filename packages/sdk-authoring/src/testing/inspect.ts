@@ -90,6 +90,51 @@ const sidewaysOf = (overflow: ProbeFindings['overflow']): PageIssue[] =>
     : [];
 
 /** The findings as issues. Separate from the probe so what a failure SAYS is tested without a browser. */
+
+/** An image's address that is still a binding — `{{ list.item.cutout }}`, sent as it was written: nothing it read had it. */
+const isUnbound = (source: string): boolean => {
+  try {
+    return decodeURIComponent(source).includes('{{');
+  } catch {
+    return source.includes('{{');
+  }
+};
+
+/**
+ * The images whose address is still a binding, said once with why: what they read has no value — a row the data has
+ * none of (an address naming an id nobody has), or a field it lacks. One "never loaded" each read as a broken server
+ * (la-velada's /boxeadores/ibai: four of them).
+ */
+const unboundImages = (images: readonly { source: string; elementId?: string }[]): PageIssue[] => {
+  const bindings = [
+    ...new Set(
+      images.flatMap(image => {
+        if (!isUnbound(image.source)) {
+          return [];
+        }
+
+        let decoded = image.source;
+        try {
+          decoded = decodeURIComponent(image.source);
+        } catch {
+          // An address that is not percent-encoded is read as it is.
+        }
+
+        return [/\{\{[^}]*\}\}/.exec(decoded)?.[0] ?? decoded];
+      })
+    )
+  ];
+
+  return bindings.length === 0
+    ? []
+    : [
+        {
+          code: 'image-not-loaded',
+          message: `${String(bindings.length)} image address(es) still a binding — ${bindings.slice(0, 3).join(', ')}${bindings.length > 3 ? ', …' : ''}: what they read has no value here — a row the page's data has none of (an address naming an id nobody has?), or a field it lacks`
+        }
+      ];
+};
+
 export const issuesOf = (expected: ElementHandle[], findings: ProbeFindings): PageIssue[] => {
   if (!findings.marked && expected.length > 0) {
     return [
@@ -120,13 +165,16 @@ export const issuesOf = (expected: ElementHandle[], findings: ProbeFindings): Pa
       message: `${named(id)} is on the page but not visible: ${reason}`,
       elementId: id
     })),
-    ...findings.brokenImages.map(({ source, elementId, loading }): PageIssue => ({
-      code: 'image-not-loaded',
-      message: loading
-        ? `an image was still loading after ${String(IMAGE_WAIT_MS / 1000)} s: ${source} — its server is slow, or never answers`
-        : `an image never loaded: ${source}`,
-      ...about(elementId)
-    })),
+    ...unboundImages(findings.brokenImages),
+    ...findings.brokenImages
+      .filter(image => !isUnbound(image.source))
+      .map(({ source, elementId, loading }): PageIssue => ({
+        code: 'image-not-loaded',
+        message: loading
+          ? `an image was still loading after ${String(IMAGE_WAIT_MS / 1000)} s: ${source} — its server is slow, or never answers`
+          : `an image never loaded: ${source}`,
+        ...about(elementId)
+      })),
     ...sidewaysOf(findings.overflow),
     ...findings.cutOff.map(({ id, pixels }): PageIssue => ({
       code: 'cut-off',

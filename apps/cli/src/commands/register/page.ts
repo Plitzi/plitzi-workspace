@@ -1,6 +1,6 @@
 import { Option } from 'commander';
 
-import { expectation, fill, positiveInteger, widths } from '../../options';
+import { expectation, fill, positiveInteger, statusCode, widths } from '../../options';
 import { check } from '../check';
 import { importPage } from '../importPage';
 import { shotEach, SHOT_MOMENTS } from '../shot';
@@ -38,6 +38,12 @@ export const registerPage = (pageGroup: Command): void => {
         '--expect <id~text>',
         'The element shows this text (any case), as the page was left — or the check fails: once per element; "<path> <id~text>" for one page'
       ).argParser(expectation)
+    )
+    .addOption(
+      new Option(
+        '--status <code>',
+        'The status the page is meant to be sent with (404 for the page of an address nothing answers): any other fails'
+      ).argParser(statusCode)
     )
     .option(
       '--then <paths...>',

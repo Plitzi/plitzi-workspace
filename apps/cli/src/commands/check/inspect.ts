@@ -253,28 +253,40 @@ const inspectHere = async (
       width
     }));
   const notFoundPage = handles && pageId ? isNotFoundPage(handles.pages[pageId]) : false;
+  // Asked for a status (`--status 404`): the page sent with it is what was meant — its 404 page, on purpose — and one sent
+  // with another is the finding. velada-now's designer saw its intended 404 page marked ✗, with no way to say it.
   const statusIssues: CheckIssue[] =
-    notFoundPage && sentWith !== undefined && sentWith !== 404
-      ? [
-          {
-            code: 'page-status',
-            message: `${pathname} shows the page for an address nothing answers, sent with status ${String(sentWith)}: a crawler reads it as a page that exists — the server should send it with 404`,
-            width
-          }
-        ]
-      : sentWith !== undefined && sentWith >= 400 && sentWith !== 404
-        ? [{ code: 'page-status', message: `${pathname} was sent with status ${String(sentWith)}`, width }]
-        : // Asked for a page, the space's page for an address nothing answers came: no page of it is there. Only the
-          // address a whole-project check makes for it looks at that page on purpose.
-          notFoundPage && !pathname.endsWith(NOT_FOUND_PROBE)
-          ? [
-              {
-                code: 'no-page',
-                message: `no page of the space is at ${pathname}: its page for an address nothing answers came, with ${String(sentWith ?? 404)}${handles ? meantPage(handles, pathname) : ''}`,
-                width
-              }
-            ]
-          : [];
+    asked.status !== undefined
+      ? sentWith === asked.status
+        ? []
+        : [
+            {
+              code: 'page-status',
+              message: `${pathname} was sent with status ${String(sentWith ?? 'none')}, not the ${String(asked.status)} asked (--status)`,
+              width
+            }
+          ]
+      : notFoundPage && sentWith !== undefined && sentWith !== 404
+        ? [
+            {
+              code: 'page-status',
+              message: `${pathname} shows the page for an address nothing answers, sent with status ${String(sentWith)}: a crawler reads it as a page that exists — the server should send it with 404`,
+              width
+            }
+          ]
+        : sentWith !== undefined && sentWith >= 400 && sentWith !== 404
+          ? [{ code: 'page-status', message: `${pathname} was sent with status ${String(sentWith)}`, width }]
+          : // Asked for a page, the space's page for an address nothing answers came: no page of it is there. Only the
+            // address a whole-project check makes for it looks at that page on purpose.
+            notFoundPage && !pathname.endsWith(NOT_FOUND_PROBE)
+            ? [
+                {
+                  code: 'no-page',
+                  message: `no page of the space is at ${pathname}: its page for an address nothing answers came, with ${String(sentWith ?? 404)}${handles ? meantPage(handles, pathname) : ''}`,
+                  width
+                }
+              ]
+            : [];
   const heldBack = throttled();
   const limited = report.issues.flatMap(issue => throttledImage(issue, heldBack) ?? []);
   const issues: CheckIssue[] = [

@@ -19,7 +19,7 @@ import { compareText, compareWith, contactSheet, framesMoved, regionsText } from
 import { clickThrough, playSteps } from './steps';
 import { MOVING_PERCENT } from './types';
 
-import type { Moment, ShotOptions, ShotReport, View } from './types';
+import type { Moment, ShotOptions, ShotReport, Taken, View } from './types';
 import type { PictureDiff, PictureRegion } from '@plitzi/sdk-authoring';
 
 /**
@@ -72,6 +72,53 @@ export const shotEach = async (
   if (collect) {
     console.log(JSON.stringify({ widths: reports }));
   }
+};
+
+const matchesSection = (region: { name: string; element?: string }, section: string): boolean =>
+  region.name === section || region.name.endsWith(`#${section}`) || region.element === section;
+
+/**
+ * The element `--clip` names, as a region of the page — none when it is one of the page's sections already, a problem
+ * when the page has no such element.
+ */
+const clipRegion = async (
+  page: Taken['page'],
+  regions: readonly PictureRegion[],
+  section: string
+): Promise<{ region: PictureRegion } | { problem: string } | undefined> => {
+  if (regions.some(region => matchesSection(region, section))) {
+    return undefined;
+  }
+
+  const box = await page.evaluate((id: string) => {
+    const element = document.getElementById(id) ?? document.querySelector(`[data-plitzi-el="${CSS.escape(id)}"]`);
+    const rect = element?.getBoundingClientRect();
+
+    return element && rect && rect.width > 0 && rect.height > 0
+      ? {
+          tag: element.tagName.toLowerCase(),
+          x: rect.left + window.scrollX,
+          y: rect.top + window.scrollY,
+          width: rect.width,
+          height: rect.height
+        }
+      : undefined;
+  }, section);
+
+  return box
+    ? {
+        region: {
+          name: `${box.tag}#${section}`,
+          element: section,
+          x: box.x,
+          y: box.y,
+          width: box.width,
+          height: box.height
+        }
+      }
+    : {
+        problem: `--clip ${section}: the page has no element of that id drawn (an id, or an element's name), nor a section: ${regions.map(each => each.name).join(', ') || 'none'}`
+      };
 };
 
 export const shot = async (route: string | undefined, options: ShotOptions): Promise<void> => {
@@ -272,6 +319,19 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     await writeFile(out, taken.png);
     // The sections a diff is told by are the page's: a picture of part of it is one region, named for what it shows.
     const regions: PictureRegion[] = how.kind === 'page' ? await taken.page.evaluate(pageRegions, undefined) : [];
+    // `--clip` with `--compare` may name any element, not only a section: one inside a section is a region of its own,
+    // compared where it is — a panel of a page, a card — where only the landmarks could be named (la-velada's pills).
+    const clipped = section === undefined ? undefined : await clipRegion(taken.page, regions, section);
+    if (clipped && 'problem' in clipped) {
+      fail(clipped.problem);
+
+      return;
+    }
+
+    if (clipped) {
+      regions.push(clipped.region);
+    }
+
     const report: ShotReport = {
       path: pathname,
       width: view.width,
@@ -298,9 +358,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       if (section === undefined) {
         report.compare = compared;
       } else {
-        const kept = compared.regions.filter(
-          each => each.name === section || each.name.endsWith(`#${section}`) || each.element === section
-        );
+        const kept = compared.regions.filter(each => matchesSection(each, section));
         if (kept.length === 0) {
           fail(
             `--clip ${section} is none of the sections compared: ${compared.regions.map(each => (each.element ? `${each.name} (${each.element})` : each.name)).join(', ') || 'the page has no named section'} — name one of them, by its id or its element's`
@@ -309,7 +367,25 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
           return;
         }
 
-        report.compare = { ...compared, regions: kept, section };
+        // Its own findings, not the page's: dev-1's clip of one panel listed hundreds of the page's texts.
+        const inside = (y: number) =>
+          kept.some(region => {
+            const box = regions.find(each => each.name === region.name);
+
+            return box !== undefined && y >= box.y && y <= box.y + box.height;
+          });
+        report.compare = {
+          ...compared,
+          regions: kept,
+          decorations: compared.decorations.filter(each => matchesSection({ name: each.section }, section)),
+          texts: {
+            ...compared.texts,
+            differ: compared.texts.differ.filter(each => inside(each.y)),
+            onlyHere: [],
+            onlyThere: []
+          },
+          section
+        };
       }
     }
 

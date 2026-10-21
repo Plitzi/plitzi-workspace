@@ -22,7 +22,7 @@ describe('a comparison with another site, said', () => {
   it('leads with the one section a clip keeps, the whole page’s figure beside it', () => {
     const [first] = compareText({ ...report, section: 'hero' }).map(line => stripVTControlCharacters(line));
     expect(first).toBe(
-      'section#hero 31% differs from https://example.com/ (the whole page 12%; the rest below is the whole page’s)'
+      'section#hero 31% differs from https://example.com/ (the whole page 12%; its dress and texts below are its own)'
     );
     expect(stripVTControlCharacters(compareText(report)[0])).toBe(
       '12% differs from https://example.com/ — section#hero 31%'
