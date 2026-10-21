@@ -133,3 +133,9 @@ export const writtenAt = (spec: unknown): string | undefined => {
 
   return position ? `${position.file}:${String(position.line)}` : undefined;
 };
+
+/**
+ * Where the author's own code is calling from right now — a refusal raised as a declaration is made (`styles('card', …)`)
+ * names the line that wrote it, where one raised later names nothing: `undefined` off the author's code, in production.
+ */
+export const callSite = (): string | undefined => writtenAt(markWrittenAt({}));

@@ -4,6 +4,7 @@ import net from 'node:net';
 import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { projectMark } from '@plitzi/sdk-shared/project';
 
 import { stopTree, TREE } from './processes';
 import { runScript, scriptsOf, tail } from '../commands/verify';
@@ -80,8 +81,20 @@ export const ownServer = async (work: string): Promise<number | undefined> => {
     .then(text => JSON.parse(text) as unknown)
     .catch(() => undefined);
   const port = isRecord(value) && typeof value.port === 'number' ? value.port : undefined;
+  if (port === undefined) {
+    return undefined;
+  }
 
-  return port !== undefined && (await answering(`http://127.0.0.1:${String(port)}`, 1_000)) ? port : undefined;
+  // The copy's own, by the mark of its folder its `/health` answers with: a record left behind by a server that died
+  // names a port another copy's server may hold now, and that one is no server of this copy's.
+  const health: unknown = await fetch(`http://127.0.0.1:${String(port)}/health`, { signal: AbortSignal.timeout(1_000) })
+    .then(async (response): Promise<unknown> => response.json())
+    .catch(() => undefined);
+  if (!isRecord(health)) {
+    return undefined;
+  }
+
+  return typeof health.Instance !== 'string' || health.Instance === projectMark(work) ? port : undefined;
 };
 
 /** The copy served by its own start script on a free port, quietly: what `$PLITZI_URL` names. */
@@ -178,22 +191,35 @@ export const checkAcceptance = async (
   }
 
   const bin = await cliShim(cache);
+  const values: Record<string, string> = served
+    ? { PLITZI_URL: served.url, PLITZI_PORT: String(served.port), PORT: String(served.port) }
+    : {};
+  const run = (each: { check: string }) =>
+    runScript(work, withServedValues(each.check, values), root, { env: values, bin: [bin] });
   try {
     const results: AcceptanceResult[] = [];
     for (const each of checked) {
-      const values: Record<string, string> = served
-        ? { PLITZI_URL: served.url, PLITZI_PORT: String(served.port), PORT: String(served.port) }
-        : {};
-      const { code, output } = await runScript(work, withServedValues(each.check, values), root, {
-        env: values,
-        bin: [bin]
-      });
+      const { code, output } = await run(each);
       results.push({
         said: each.said,
         check: each.check,
         ok: code === 0,
         ...(code === 0 ? {} : { output: tail(output) })
       });
+    }
+
+    // Each line that failed, once more after the others and on its own: what a slow server failed passes now, and
+    // says it did only the second time; a broken line fails again, with what it printed then.
+    for (const [at, result] of results.entries()) {
+      if (result.ok) {
+        continue;
+      }
+
+      const { code, output } = await run(checked[at]);
+      results[at] =
+        code === 0
+          ? { said: result.said, check: result.check, ok: true, firstFailed: result.output ?? [] }
+          : { ...result, output: tail(output) };
     }
 
     return results;

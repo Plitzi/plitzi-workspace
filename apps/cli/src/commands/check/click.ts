@@ -1,6 +1,7 @@
 import { failedFlowText, readDevTools } from '@plitzi/sdk-authoring';
 
 import {
+  ANCESTORS_READ,
   listenForRefusedFieldsInPage,
   LOOK_PROPERTIES,
   lookChanges,
@@ -115,7 +116,11 @@ export const clickEffects = async (
   const looksOf = () =>
     id === undefined
       ? Promise.resolve({})
-      : page.evaluate(looksInPage, { selector: selectorOf(authored, id), properties: LOOK_PROPERTIES });
+      : page.evaluate(looksInPage, {
+          selector: selectorOf(authored, id),
+          properties: LOOK_PROPERTIES,
+          ancestors: hover ? ANCESTORS_READ : 0
+        });
   const fillAll = async (): Promise<string[] | { problem: string }> => {
     const filled: string[] = [];
     for (const field of fill) {

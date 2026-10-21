@@ -126,10 +126,53 @@ export function probePage(input: ProbeInput): ProbeFindings {
   };
 
   /** Why an element has no box, named by the node that takes it away — which is rarely the element itself. */
+  /**
+   * What makes a node that says something transparent: itself or an element around it at opacity 0 — a row whose
+   * arrival never played stays blank with every box in place. An arrival still waiting to be seen is not it (it plays
+   * when scrolled to), nor one whose animation runs or waits out its delay (it arrives in a moment), nor a node with no
+   * words, which a hover reveals on purpose (a play mark, a glow).
+   */
+  const transparentAt = (node: Element): Element | undefined => {
+    if ((node.textContent ?? '').trim() === '' && node.querySelector('a, button, input, select, textarea') === null) {
+      return undefined;
+    }
+
+    for (let at: Element | null = node; at && at !== document.body; at = at.parentElement) {
+      if (at.matches('[data-motion-on="view"]:not([data-motion-seen])')) {
+        return undefined;
+      }
+
+      // An arrival on its way — its animation running, or waiting out its delay — shows in a moment: not this.
+      // Read as a method a document may lack (a test's): the DOM's types declare it always there.
+      const animationsOf: unknown = Reflect.get(at, 'getAnimations');
+      const animations: unknown = typeof animationsOf === 'function' ? Reflect.apply(animationsOf, at, []) : [];
+      if (
+        Array.isArray(animations) &&
+        animations.some(
+          (animation: unknown) =>
+            animation instanceof Animation && (animation.playState === 'running' || animation.pending)
+        )
+      ) {
+        return undefined;
+      }
+
+      if (getComputedStyle(at).opacity === '0') {
+        return at;
+      }
+    }
+
+    return undefined;
+  };
+
   const whyHidden = (node: Element, list: boolean): string => {
     const hider = hiderOf(node);
     if (hider) {
       return `${hider.how} on ${hider.at === node ? 'itself' : nameOf(hider.at)}`;
+    }
+
+    const clear = transparentAt(node);
+    if (clear) {
+      return `it is transparent: opacity 0 on ${clear === node ? 'itself' : nameOf(clear)} — an arrival that never played?`;
     }
 
     if (list && node.childElementCount === 0) {
@@ -154,7 +197,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
 
     const box = node.getBoundingClientRect();
 
-    return box.width > 0 && box.height > 0 && getComputedStyle(node).visibility === 'visible';
+    return box.width > 0 && box.height > 0 && getComputedStyle(node).visibility === 'visible' && !transparentAt(node);
   };
 
   const missing: string[] = [];

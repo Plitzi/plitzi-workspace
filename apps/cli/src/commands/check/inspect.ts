@@ -30,6 +30,8 @@ import type { CheckAsk, CheckIssue, CheckReport, ClickAsk, Expectation } from '.
 import type { Browser, BrowserPage, ProjectView } from '../../browser';
 import type { Schema } from '@plitzi/sdk-shared';
 
+/** Under it a page is a phone's or a tablet's: laid out for a finger, with no pointer to hover with. */
+const HOVER_WIDTH = 1024;
 /**
  * One page checked at one width: opened, followed by its own links (`--then`), inspected whole, and reported.
  */
@@ -183,7 +185,19 @@ const inspectHere = async (
   const report = handles && pageId ? await inspectPage(page, handles, { page: pageId }) : await inspectDocument(page);
   // The sources always: what the bindings read is held against them. Printed only when asked.
   const devTools = await readDevTools(page, { state: true });
-  const clicked = click === undefined ? undefined : await clickEffects(page, authored, click);
+  // A phone has no pointer: a hover is looked at where one is, never failed where the element is laid out for a finger.
+  const clicked =
+    click === undefined
+      ? undefined
+      : click.hover && width < HOVER_WIDTH && click.element !== undefined
+        ? {
+            element: click.element,
+            hovered: true as const,
+            skipped: `not at ${String(width)} px — a phone has no pointer to hover with; the wider widths say it`,
+            changes: [],
+            failed: []
+          }
+        : await clickEffects(page, authored, click);
   // What is said of the element and the state is the page as the visitor left it: after the fill and the click, when
   // there were any — the page's own checks still read it as it loaded.
   const shown = clicked === undefined ? devTools : await readDevTools(page, { state: true });

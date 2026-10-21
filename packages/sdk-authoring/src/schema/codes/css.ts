@@ -77,6 +77,12 @@ export const CSS_CODES = {
     means: "a condition a class's rules cannot hold under",
     fix: '`motion-reduce`, `motion-safe`, or a container width — `container (max-width: 30rem)`, `container card (min-width: 480px)`'
   },
+  'style-part-shape': {
+    kind: 'refused',
+    means:
+      "a condition or a pseudo-element given `variants`, `ancestors` or `conditions` — it holds its selector's own `css`, its `states` and (a condition) its `pseudos`",
+    fix: "the class's own `css` under the condition — `{ 'motion-reduce': { css: { transition: 'none' } } }` drops what an ancestor's or a variant's rule would animate — or the rule under `ancestors`/`variants` at the top of the class"
+  },
   'keyframes-shape': {
     kind: 'refused',
     means: 'keyframes with a name CSS does not accept or the SDK keeps for itself, or a frame that is not an offset',

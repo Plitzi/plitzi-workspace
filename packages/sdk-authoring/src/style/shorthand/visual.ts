@@ -142,8 +142,14 @@ export const expandTransition = (value: string, out: CssProps): void => expandLa
 // the order CSS resolves them: the first unclaimed slot wins.
 const expandAnimationLayer = (layer: string, out: CssProps): void => {
   let foundDuration = false;
-  for (const token of splitTokens(layer)) {
-    if (isTimingFunction(token)) {
+  const tokens = splitTokens(layer);
+  // `none` is a fill mode and a name: the last one is the name, as a browser reads it — `animation: none` stops the
+  // animation another rule runs, where a fill mode of none left it running.
+  const lastNone = tokens.lastIndexOf('none');
+  for (const [index, token] of tokens.entries()) {
+    if (token === 'none' && index === lastNone && !out['animation-name']) {
+      out['animation-name'] = 'none';
+    } else if (isTimingFunction(token)) {
       out['animation-timing-function'] = token;
     } else if (TIME_RE.test(token)) {
       if (foundDuration) {

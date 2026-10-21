@@ -17,6 +17,7 @@ import { ambiguousShorthands, expandShorthandTraced } from './shorthand';
 import { overlaid, recordShorthands } from './shorthandOrigins';
 import { AuthoringError } from '../schema/codes';
 import { didYouMean } from '../schema/suggest';
+import { callSite } from '../schema/writtenAt';
 
 import type {
   ConditionRulesSpec,
@@ -104,9 +105,10 @@ export const css = (input: CssProps): StyleRules => {
   assertValues(rules);
   const ambiguous = ambiguousShorthands(rules).at(0);
   if (ambiguous !== undefined) {
+    const site = callSite();
     throw new AuthoringError(
       'shorthand-ambiguous',
-      `\`${ambiguous.property}: ${ambiguous.value}\` cannot be expanded into the longhands the style editor reads: what the variable holds decides which it is, and a guess painted a gradient as a colour — nothing. ${ambiguous.fix}.`
+      `${site ? `${site}: ` : ''}\`${ambiguous.property}: ${ambiguous.value}\` cannot be expanded into the longhands the style editor reads: what the variable holds decides which it is, and a guess painted a gradient as a colour — nothing. Name the longhand it is: ${ambiguous.fix}.`
     );
   }
 
@@ -282,7 +284,25 @@ const isPartSpec = (spec: PseudoSpec | ConditionSpec): spec is PseudoRulesSpec |
   return keys.length > 0 && keys.every(key => PART_KEYS.has(key));
 };
 
-const partOf = (spec: PseudoSpec | ConditionSpec): ConditionRulesSpec => (isPartSpec(spec) ? spec : { css: spec });
+/**
+ * A condition's or a pseudo-element's rules, as `{ css, states, pseudos }`. One that names a rule set's other keys is
+ * refused for what it is: read as plain CSS, `ancestors: { … }` was "not one CSS value", which says nothing of the fix.
+ */
+const partOf = (spec: PseudoSpec | ConditionSpec, where: string, allowed: readonly string[]): ConditionRulesSpec => {
+  if (isPartSpec(spec)) {
+    return spec;
+  }
+
+  const misplaced = Object.keys(spec).filter(key => RULE_SET_KEYS.has(key) && !PART_KEYS.has(key));
+  if (misplaced.length > 0) {
+    throw new AuthoringError(
+      'style-part-shape',
+      `${where} cannot hold ${misplaced.map(key => `\`${key}\``).join(', ')}: its rules are ${allowed.map(key => `\`${key}\``).join(', ')}. What a variant or an ancestor changes goes under \`variants\`/\`ancestors\` at the top of the class; to keep it still under reduced motion, give the class's own \`css\` the condition — \`conditions: { 'motion-reduce': { css: { transition: 'none', animation: 'none' } } }\` — and the change lands without moving.`
+    );
+  }
+
+  return { css: spec };
+};
 
 /**
  * Refuses what a pseudo-element would not draw: a property the browser drops there, a `content` CSS cannot read (text
@@ -339,7 +359,7 @@ const toPseudos = (pseudos: PseudosSpec | undefined): Map<StylePseudo, PartRules
       );
     }
 
-    const part = partOf(spec);
+    const part = partOf(spec, `\`pseudos.${name}\``, ['css', 'states']);
     const rules: PartRules = { base: toResponsive(part.css), states: toStates(part.states) };
     assertPseudo(name, rules);
     parts.set(name, rules);
@@ -384,7 +404,7 @@ const toConditions = (conditions: RuleSetSpec['conditions']): Map<string, Condit
       );
     }
 
-    const part = partOf(spec);
+    const part = partOf(spec, `\`conditions['${key}']\``, ['css', 'states', 'pseudos']);
     parts.set(condition, {
       base: toResponsive(part.css),
       states: toStates(part.states),

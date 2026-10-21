@@ -200,6 +200,28 @@ describe('what a hover changed', () => {
     expect(looksInPage({ selector: marked('gone'), properties: LOOK_PROPERTIES })).toEqual({});
   });
 
+  it('says a hover it did not do at a phone’s width, and why', () => {
+    expect(
+      clickedText({ element: 'cta', hovered: true, skipped: 'not at 390 px — no pointer', changes: [], failed: [] })
+    ).toEqual(['  · hovering cta: not at 390 px — no pointer']);
+  });
+
+  // The pointer over a button is over its row too: a hover the row carries (li:hover) is the row's, said as such.
+  it('reads the elements around the one hovered, and what a hover widens', () => {
+    document.body.innerHTML =
+      '<li data-plitzi-el="faq-row" style="background-color: rgb(0, 0, 0)"><button data-plitzi-el="faq-question"><span data-plitzi-el="faq-rule" style="width: 32px">—</span></button></li>';
+    const read = () => looksInPage({ selector: marked('faq-question'), properties: LOOK_PROPERTIES, ancestors: 3 });
+    const before = read();
+    document.querySelector<HTMLElement>(marked('faq-row'))?.style.setProperty('background-color', 'rgb(10, 10, 10)');
+    document.querySelector<HTMLElement>(marked('faq-rule'))?.style.setProperty('width', '48px');
+
+    expect(Object.keys(before)).toEqual(['faq-row', 'faq-question', 'faq-rule']);
+    expect(lookChanges(before, read())).toEqual([
+      'faq-row background-color: rgb(0, 0, 0) → rgb(10, 10, 10)',
+      'faq-rule width: 32px → 48px'
+    ]);
+  });
+
   it('says a hover that changed nothing, its look included', () => {
     expect(clickedText({ element: 'cta', hovered: true, changes: [], failed: [] })).toEqual([
       '  · hovering cta changed nothing: no flow ran, the page went nowhere, nothing scrolled, appeared or went, nothing was said, the state is as it was, and it and its elements look as they did'

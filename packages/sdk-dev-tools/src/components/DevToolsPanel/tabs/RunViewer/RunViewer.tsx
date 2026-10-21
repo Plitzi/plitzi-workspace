@@ -21,7 +21,6 @@ const GROUPED = new Set(GROUPS.flatMap(group => group.statuses));
 const AGENT_TONE: Record<string, string> = {
   working: 'bg-sky-500',
   reviewing: 'bg-violet-500',
-  'in-review': 'bg-violet-300',
   blocked: 'bg-amber-500',
   asking: 'bg-amber-400',
   waiting: 'bg-sky-300',

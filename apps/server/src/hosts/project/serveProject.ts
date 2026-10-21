@@ -33,7 +33,7 @@ import { watchSpace } from './watchSpace';
 import { createCloudAdapters } from '../../adapters/cloudAdapters';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
-import { freePort } from '../../core/freePort';
+import { reservePort } from '../../core/freePort';
 import { closeOnSignals } from '../../core/server/closeOnSignals';
 import { isFleetWorker } from '../../core/server/fleet/role';
 import { fleetKv } from '../../core/server/fleet/stores';
@@ -324,7 +324,9 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
   // Loopback unless told otherwise: a container publishes a port only from an address it listens on (`HOST=0.0.0.0`).
   const host = process.env.HOST ?? '127.0.0.1';
   // `PORT` set: that port, and an error if it is taken. Not set, while developing: 8080 or the next free one.
-  const port = process.env.PORT ? Number(process.env.PORT) : developing ? await freePort(8080, host) : 8080;
+  // Reserved while developing, until it answers: a run's copies start their servers at once, and each found 8080 free.
+  const reserved = !process.env.PORT && developing ? await reservePort(8080, host) : undefined;
+  const port = process.env.PORT ? Number(process.env.PORT) : (reserved?.port ?? 8080);
   const tls = serverOptions.tls ?? tlsFromEnv(root);
   // The scheme it answers on: with a certificate it serves HTTPS only, and every address it gives says so.
   const scheme = tls ? 'https' : 'http';
@@ -436,6 +438,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
 
   // Said once the port answers: a tool that waits for "pages on" — or reads `tmp/dev-server.json` — asks right away.
   await server.listen(port, host);
+  reserved?.release();
   if (speaks) {
     mkdirSync(path.join(root, PROJECT_TMP), { recursive: true });
     // The visual suite's own server records itself apart (`SERVER_RECORD_ENV`): the record a person's server wrote stays.

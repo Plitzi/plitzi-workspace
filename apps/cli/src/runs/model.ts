@@ -61,6 +61,12 @@ export interface AcceptanceResult {
   ok: boolean;
   /** The last lines it printed, when it failed. */
   output?: string[];
+  /**
+   * Passed when run again, failed the first time: the last lines it printed then. A line that asks a slow server (a CDN
+   * under load) fails one run in many; one that fails twice is broken — and one that passed only the second time says
+   * so, never passed in silence.
+   */
+  firstFailed?: string[];
 }
 
 export interface PlannedTask {
@@ -684,7 +690,8 @@ export const isTaskState = (value: unknown): value is TaskState =>
           isString(result.said) &&
           isString(result.check) &&
           typeof result.ok === 'boolean' &&
-          optional(result.output, isStrings)
+          optional(result.output, isStrings) &&
+          optional(result.firstFailed, isStrings)
       )
   ) &&
   isString(value.updatedAt);

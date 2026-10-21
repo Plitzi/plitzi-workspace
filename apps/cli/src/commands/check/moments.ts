@@ -45,23 +45,50 @@ export const LOOK_PROPERTIES: readonly string[] = [
   'transform',
   'translate',
   'scale',
-  'rotate'
+  'rotate',
+  // What a hover grows or draws: a rule widened, a corner tick enlarged, a hairline drawn by its size, a stroke thickened.
+  'width',
+  'height',
+  'max-width',
+  'background-size',
+  'background-position',
+  'stroke',
+  'stroke-width',
+  'text-shadow'
 ];
 
+/** How many elements around the one pointed at are read too: a hover the row or the card it sits in carries. */
+export const ANCESTORS_READ = 3;
+
 /**
- * How an element and each element inside it look, property by property: what a hover changes, held before and
- * after. Runs in the page, self-contained — so the properties come with it (`LOOK_PROPERTIES`).
+ * How an element, each element inside it and the few around it look, property by property: what a hover changes, held
+ * before and after — the pointer over a button is over its row too, and a hover the row carries (`li:hover`) changes
+ * the row. Runs in the page, self-contained — so the properties and the reach come with it.
  */
-export const looksInPage = ({ selector, properties }: { selector: string; properties: readonly string[] }): Looks => {
+export const looksInPage = ({
+  selector,
+  properties,
+  ancestors = 0
+}: {
+  selector: string;
+  properties: readonly string[];
+  ancestors?: number;
+}): Looks => {
   const root = document.querySelector(selector);
   if (!root) {
     return {};
   }
 
+  const around: Element[] = [];
+  for (let node = root.parentElement?.closest('[data-plitzi-el]'); node && around.length < ancestors;) {
+    around.push(node);
+    node = node.parentElement?.closest('[data-plitzi-el]');
+  }
+
   const looks: Looks = {};
-  for (const node of [root, ...Array.from(root.querySelectorAll('[data-plitzi-el]'))].slice(0, 40)) {
+  for (const node of [...around, root, ...Array.from(root.querySelectorAll('[data-plitzi-el]'))].slice(0, 40)) {
     const style = getComputedStyle(node);
-    const parent = node === root ? null : node.parentElement?.closest('[data-plitzi-el]');
+    const parent = node.parentElement?.closest('[data-plitzi-el]');
     looks[node.getAttribute('data-plitzi-el') ?? selector] = {
       ...(parent ? { parent: parent.getAttribute('data-plitzi-el') ?? '' } : {}),
       values: Object.fromEntries(properties.map(property => [property, style.getPropertyValue(property)]))

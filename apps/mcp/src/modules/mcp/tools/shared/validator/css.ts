@@ -27,7 +27,7 @@ export const checkCss = (
     ctx.errors.push({
       path: `${path}.${ambiguous.property}`,
       message: `"${ambiguous.property}: ${ambiguous.value}" cannot be expanded: what the variable holds decides which longhand it is`,
-      hint: `Name the longhand — ${ambiguous.fix}`
+      hint: `Name the longhand it is: ${ambiguous.fix}`
     });
   }
 

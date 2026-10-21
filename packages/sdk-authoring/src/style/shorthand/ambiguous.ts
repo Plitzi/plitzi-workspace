@@ -11,7 +11,7 @@ import type { CssProps } from '../types';
 export interface AmbiguousShorthand {
   property: string;
   value: string;
-  /** What to write instead, in so many words. */
+  /** What to write instead: each longhand it may be, and when — said after "Name the longhand it is:". */
   fix: string;
 }
 
@@ -40,7 +40,7 @@ export const ambiguousShorthands = (rules: CssProps): AmbiguousShorthand[] =>
           {
             property,
             value,
-            fix: `name the longhand it is: 'background-color': '${bare}' for a colour, 'background-image': '${bare}' for a gradient or a picture — a var() inside one (linear-gradient(…, ${bare})) is read as it is`
+            fix: `'background-color': '${bare}' for a colour, 'background-image': '${bare}' for a gradient or a picture — a var() inside one (linear-gradient(…, ${bare})) is read as it is`
           }
         ];
   });

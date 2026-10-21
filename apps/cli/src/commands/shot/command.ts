@@ -207,8 +207,10 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       ...(options.presence ? { presence: true } : {}),
       ...(account ? { account } : {}),
       ...(fromLoad ? { fromLoad } : {}),
-      // Frames are about what moves, so they are taken as the page plays.
-      still: !clip && !options.scrollTo && !options.viewport && (options.frames ?? 0) <= 1 && clicks.length === 0
+      // One picture shows every arrival as it ends — a part clipped or scrolled to too, whose arrivals were taken as they
+      // began, blank (la-velada's schedule rows, sent back for it). Frames, clicks and steps are about what moves, so
+      // they are taken as the page plays.
+      still: (options.frames ?? 0) <= 1 && clicks.length === 0 && steps === undefined && !fromLoad
     };
     const taken =
       where.origin === undefined
@@ -339,7 +341,9 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       );
       report.sheet = `${base}-sheet.png`;
       await writeFile(report.sheet, Buffer.from(sheet.replace(/^data:image\/png;base64,/, ''), 'base64'));
-    } else if (moments.length > 1 && (clicks.length > 0 || steps)) {
+    } else if (moments.length > 1) {
+      // Each picture after the first in a file of its own beside it — frames too: only the first was written, and it is
+      // taken before anything has moved.
       report.pictures = [];
       for (const [index, moment] of moments.slice(1).entries()) {
         const file = `${base}-${String(index + 1)}.png`;

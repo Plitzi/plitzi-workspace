@@ -78,6 +78,10 @@ export const clickedText = (clicked: ClickReport | undefined): string[] => {
     return [`  - ${clicked.hovered ? 'hover' : 'click'}: ${clicked.problem}`];
   }
 
+  if (clicked.skipped) {
+    return [`  · ${clicked.hovered ? 'hovering' : 'clicking'} ${clicked.element}: ${clicked.skipped}`];
+  }
+
   const doing =
     clicked.element === 'the fields filled'
       ? 'filling them'

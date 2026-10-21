@@ -4,13 +4,15 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { monitorScreen, wheelTarget } from './monitor';
 import { flowBoard, flowLines } from './monitorFlow';
+import { extendRun } from '../../runs/extend';
 import { groupRepeats, monitorRun } from '../../runs/monitor';
-import { askLead, messageTasks, noteRun } from '../../runs/talk';
+import { askLead, messageTasks, noteRun, tellLead } from '../../runs/talk';
 import { completeTask, reviewTask } from '../../runs/tasks';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 
 import type { Regions } from './monitor';
+import type { RunPlan } from '../../runs/model';
 import type { FeedLine } from '../../runs/monitor';
 import type { Bench } from '../../tests/runProject';
 
@@ -416,6 +418,65 @@ describe('plitzi run monitor', () => {
     const end = plain(flowBoard(data.view.tasks, 200, { depth: 8, offsets: new Map([[1, 99]]) }).lines);
     expect(end.some(line => line.includes('↑ 12') && !line.includes('more'))).toBe(true);
     expect(end.some(line => line.includes('t-page-20 '))).toBe(true);
+  });
+
+  // Its task done and in review, the agent does nothing: idle, saying what it waits for — never "in review" as if at work.
+  it('shows an agent whose task waits for its review as idle', async () => {
+    const runId = await open();
+    const menu = await take('agent-3', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { es: true };\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+
+    const agent = (await monitorRun(lead(), runId)).agents.find(each => each.agent === 'agent-3');
+    expect([agent?.status, agent?.doing]).toEqual([
+      'idle',
+      expect.stringContaining('t-menu waits for its review') as unknown
+    ]);
+  });
+
+  // `complete --note` tells the lead as it completes: one event, said on one line of the activity.
+  it('says a completion and its note on one line, and a tell said later apart', async () => {
+    const runId = await open();
+    const menu = await take('agent-3', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { es: true };\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+    await tellLead(menu.ctx, runId, 't-menu', 'Prices in euros, two decimals');
+    bench.advance(60_000);
+    await tellLead(menu.ctx, runId, 't-menu', 'One more thing');
+
+    const feed = (await monitorRun(lead(), runId)).feed.filter(line => line.task === 't-menu');
+    expect(feed.find(line => line.kind === 'complete')?.text).toBe(
+      'sent t-menu to review — “Prices in euros, two decimals”'
+    );
+    expect(feed.filter(line => line.kind === 'message').map(line => line.quote)).toEqual(['One more thing']);
+  });
+
+  // A run with stages stacked on it says the one at work: its head named the first goal alone, cut at the width.
+  it('says the stage a run is at, and its goal', async () => {
+    const runId = await open();
+    const stage: RunPlan = {
+      version: 1,
+      runId: 'es-contact',
+      goal: 'A contact page',
+      tasks: [
+        {
+          id: 't-contact',
+          title: 'A contact page',
+          files: ['src/space/pages/contact.ts'],
+          dependsOn: [],
+          priority: 'medium',
+          estimateMinutes: 10,
+          acceptance: ['The form is there']
+        }
+      ]
+    };
+    await extendRun(lead(), runId, await bench.writePlan(stage));
+
+    const data = await monitorRun(lead(), runId);
+    expect(data.stage).toEqual({ name: 'es-contact', goal: 'A contact page', of: 2 });
+    const screen = plain(monitorScreen(data, { selected: 0, open: false, width: 160, height: 50, now: bench.now() }));
+    expect(screen[0]).toContain(`RUN ${runId} · stage 2: es-contact ·`);
+    expect(screen[1]).toBe(' A contact page');
   });
 
   it('fits the terminal: every line its width, the feed cut to the rows left', async () => {

@@ -227,6 +227,26 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     };
   }
 
+  // A designer takes no task of its own while others are at work on a UI it will review: their reviews come soon, and
+  // one at a task of its own leaves every one of them to the lead (la-velada's motion stage: the designer at a fight's
+  // page for twenty minutes, nine UI reviews the lead's). Nothing coming its way, it works as any developer.
+  const reviewsComing = designer
+    ? views.filter(
+        view =>
+          view.owner !== undefined &&
+          view.owner.agent !== ctx.agent &&
+          (view.state.status === 'in-progress' || view.state.status === 'changes-requested') &&
+          hasDesignReview(view.task, [...view.task.files, ...(view.state.changed ?? [])])
+      )
+    : [];
+  if (ready.length > 0 && reviewsComing.length > 0) {
+    return {
+      why: `UI reviews are coming — ${reviewsComing.map(view => `${view.task.id} (${view.owner?.agent ?? ''})`).join(', ')} at work: a designer waits for them rather than taking a task of its own (--follow), and takes one once none is coming`,
+      ready: ready.map(task => task.id),
+      messages
+    };
+  }
+
   if (ready.length > 0) {
     return { task: ready[0], ready: ready.map(task => task.id), messages };
   }

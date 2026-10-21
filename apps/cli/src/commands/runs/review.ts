@@ -5,7 +5,7 @@ import chalk from 'chalk';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { act, runOf, runSelf } from './shell';
-import { list, messageLines, outsideLines } from './text';
+import { list, messageLines, outsideLines, secondRunText } from './text';
 import { answering, freePort } from '../../runs/acceptance';
 import { acceptanceText } from '../../runs/model';
 import { pagesOf } from '../../runs/pagesOf';
@@ -375,7 +375,7 @@ const taskShowSummary = (taskId: string, options: RunCommandOptions & { full?: b
                 const result = shown.accepted?.find(one => one.said === acceptanceText(each));
                 const mark = result ? (result.ok ? '✓' : '✗') : shown.status === 'done' ? '✓' : '☐';
 
-                return `  ${mark} ${acceptanceText(each)}${typeof each === 'string' ? '' : chalk.dim(`  [check: ${each.check}]`)}${result && !result.ok ? `\n${(result.output ?? []).map(line => `      ${line}`).join('\n')}` : ''}`;
+                return `  ${mark} ${acceptanceText(each)}${typeof each === 'string' ? '' : chalk.dim(`  [check: ${each.check}]`)}${result ? secondRunText(result) : ''}${result && !result.ok ? `\n${(result.output ?? []).map(line => `      ${line}`).join('\n')}` : ''}`;
               })
             ]
           : []),

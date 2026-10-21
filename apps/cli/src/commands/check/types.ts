@@ -146,6 +146,8 @@ export interface ClickReport {
   element: string;
   /** The pointer was put over it, not clicked: its look is what changes most. */
   hovered?: true;
+  /** Not done at this width, and why: a phone's width has no pointer to hover with. */
+  skipped?: string;
   /** The fields filled before it, each with what was put in it. */
   filled?: string[];
   /** What filling them changed by itself, before the click: a field that acts as it is typed in. */

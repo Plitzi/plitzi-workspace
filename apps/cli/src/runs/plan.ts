@@ -251,6 +251,15 @@ const strayPages = (check: string): string[] =>
     const rest = words.slice(at + 2);
     for (let index = 0; index < rest.length; index += 1) {
       const word = rest[index] ?? '';
+      // A redirection is the shell's, never a page: `2>&1`, `>out.txt` — and `> out.txt`, its target the next word.
+      if (/^(\d*|&)(>>?|<)/.test(word)) {
+        if (/^(\d*|&)(>>?|<)$/.test(word)) {
+          index += 1;
+        }
+
+        continue;
+      }
+
       if (word.startsWith('-')) {
         // A flag's value follows it, unless written `--flag=value` or another flag comes next.
         if (!word.includes('=') && !(rest[index + 1] ?? '-').startsWith('-')) {

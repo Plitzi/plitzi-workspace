@@ -75,3 +75,11 @@ export const list = (items: readonly string[]): string => (items.length > 0 ? it
 /** The estimate at this project's pace, said with what it is read from. */
 export const pacedText = (paced: NonNullable<PlanEstimate['paced']>): string =>
   `At this project's pace — its last ${String(paced.runs)} runs' ${String(paced.tasks)} tasks took ${String(Math.round(paced.ratio * 100))}% of their estimates: about ${String(paced.wallMinutes)} min`;
+
+/** An acceptance line that passed only when run again, said beside its ✓ with what failed the first time; or nothing. */
+export const secondRunText = (result: { firstFailed?: readonly string[] }): string =>
+  result.firstFailed
+    ? chalk.yellow(
+        ` — passed on its second run; the first failed${result.firstFailed.length > 0 ? `: ${result.firstFailed.at(-1) ?? ''}` : ''}`
+      )
+    : '';

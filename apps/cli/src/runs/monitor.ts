@@ -13,11 +13,13 @@ import type { RunView, TaskLine } from './view';
  * last — takes, completions, reviews and their verdicts, messages — newest first. Nothing is marked read.
  */
 
+/** How soon after its completion a note to the lead is the completion's own (`complete --note` sends it right after). */
+const NOTE_WITHIN_MS = 5000;
+
 /** Where an agent stands, at a glance. */
 export type AgentStatus =
   | 'working'
   | 'reviewing'
-  | 'in-review'
   | 'blocked'
   | 'asking'
   | 'waiting'
@@ -125,6 +127,11 @@ export interface Monitored {
   stories: Partial<Record<string, TaskStory>>;
   /** Every run of the project, this one among them: which is shown, and that there are others. */
   runs: { runId: string; status: string }[];
+  /**
+   * The stage the run is at, when stages were stacked on it (`run extend`): its name, its goal — a stage stacked before
+   * the log kept it has none, and the run's whole goal is said — and how many stages the run has, its first included.
+   */
+  stage?: { name: string; goal?: string; of: number };
 }
 
 /** Each task's story, read off the run's log once. */
@@ -165,8 +172,9 @@ const statusOf = (task: TaskLine): AgentStatus =>
     ? 'asking'
     : task.noSignal
       ? 'no-signal'
-      : task.status === 'in-review'
-        ? 'in-review'
+      : // Its task waits for a review: the agent does nothing meanwhile — idle, not at work (la-velada's monitor).
+        task.status === 'in-review'
+        ? 'idle'
         : task.status === 'blocked' || task.status === 'waiting'
           ? 'blocked'
           : 'working';
@@ -178,7 +186,7 @@ const doingOf = (task: TaskLine): string => {
 
   switch (task.status) {
     case 'in-review':
-      return `${task.id} waits for its review`;
+      return `${task.id} waits for its review — nothing in hand`;
     case 'changes-requested':
       return `redoes ${task.id} (round ${String(task.round)})`;
     case 'waiting':
@@ -519,7 +527,29 @@ export const monitorRun = async (ctx: RunContext, runId: string, feedLength = 40
       text: `${writer === undefined ? '' : `on ${message.from} `}→ ${to}${message.fyi ? ' (for you to know)' : asks ? ' (asks)' : ''}: ${quote}`
     };
   });
-  const feed = groupRepeats([...logged, ...said].sort((a, b) => b.at.localeCompare(a.at))).slice(0, feedLength);
+  // A completion's note is sent to the lead as it completes (`task complete --note`): said on the completion's line, not
+  // again as a message of its own — one event, one line.
+  const notes = new Set<FeedLine>();
+  for (const line of logged) {
+    const note =
+      line.kind === 'complete'
+        ? said.find(
+            each =>
+              each.kind === 'message' &&
+              each.task === line.task &&
+              each.to === LEAD &&
+              Math.abs(Date.parse(each.at) - Date.parse(line.at)) <= NOTE_WITHIN_MS
+          )
+        : undefined;
+    if (note?.quote !== undefined) {
+      line.text = `${line.text} — “${note.quote}”`;
+      notes.add(note);
+    }
+  }
+
+  const feed = groupRepeats(
+    [...logged, ...said.filter(each => !notes.has(each))].sort((a, b) => b.at.localeCompare(a.at))
+  ).slice(0, feedLength);
   const runs = [];
   for (const id of await runIds(ctx.root)) {
     const other = id === runId ? view : await viewRun(ctx, id).catch(() => undefined);
@@ -528,5 +558,16 @@ export const monitorRun = async (ctx: RunContext, runId: string, feedLength = 40
     }
   }
 
-  return { view, agents: await agentsOf(ctx, view, log, stories), feed, stories, runs };
+  const stacked = log.filter(entry => entry.action === 'extend' && typeof entry.stage === 'string');
+  const latest = stacked.at(-1);
+  const stage =
+    latest && typeof latest.stage === 'string'
+      ? {
+          name: latest.stage,
+          ...(typeof latest.goal === 'string' ? { goal: latest.goal } : {}),
+          of: stacked.length + 1
+        }
+      : undefined;
+
+  return { view, agents: await agentsOf(ctx, view, log, stories), feed, stories, runs, ...(stage ? { stage } : {}) };
 };

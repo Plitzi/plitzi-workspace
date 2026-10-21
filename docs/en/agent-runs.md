@@ -81,11 +81,11 @@ request it lets by) — asked everywhere, every page in debug mode logged a 404 
 stops its preview before its folder goes (`stopPreviewOf`): the record first, which the preview reads as the end, then
 the folder once it stopped — never a server left watching a folder removed under it. `run monitor` is the same run, live, for
 a person in a terminal of their own: it only reads (nothing marked read, nothing the lead is woken for touched) and
-refuses a shell with no terminal, an agent's, whose is `run watch`. It is a board for a supervisor: what needs someone on
-top; under it the run's flow, always — its kanban, each task a card in its stage from to-do to approved, with what holds
+refuses a shell with no terminal, an agent's, whose is `run watch`. It is a board for a supervisor: the run and the stage at
+work (`stage 3: velada-motion`, its goal under it — `run extend` logs each stage's), what needs someone on top; under it the run's flow, always — its kanban, each task a card in its stage from to-do to approved, with what holds
 an agent and what a review sent back (`f` hides it), a stage with more cards than it shows scrolled by the wheel over it
 (`↑ 5 · + 7 more`, `FlowColumn`, `wheelTarget`); the tasks left and the agents, each with its state — at work,
-waiting, asking the lead, stopped, done — fifteen listed at most, the rest scrolled to with ↑↓ — and the approved
+waiting, asking the lead, stopped, done, idle while its task waits for its review — fifteen listed at most, the rest scrolled to with ↑↓ — and the approved
 folded in a line naming them (`a`); last the activity in columns (time, who → whom for a message, task, what), every row
 the rest leaves, down to the terminal's foot, an event repeated in a row one line
 (×N, opened and folded with a click), paged with ← → and the wheel. It fits the terminal it is in (`monitorBoard.ts`,
@@ -187,7 +187,9 @@ the copy's state, whose kv lock the first holds; `run preview --task` follows it
 `page check --hover` on each page and one more picture at 1440, light, with the pointer over it (`page shot --steps
 "hover …"`, taken apart so a missing element loses only that picture). A copy's server is told from another copy's by
 `/health`'s `Instance`, a mark of the folder it serves (`projectMark`): copies share the project's name, and
-`page check` in one copy refuses the port another holds.
+`page check` in one copy refuses the port another holds, and `task complete` counts a server on the port as its copy's
+only when `/health` names the copy. A copy's `start:dev` without `PORT` takes a free port from 8080 and holds it while it
+starts (`reservePort`, a lock per port): two copies started at once no longer meet on the same one.
 
 Its pictures are the run's (`<run>/shots/`), and so is a `page shot` taken inside a task's copy (`<run>/shots/<task>/`):
 read by the lead while the run is open, gone with it — never left in the project's `tmp/`, which is the person's. An
@@ -385,8 +387,9 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   the project's script, run in the copy with the project's binaries: `author` first, alone, and the rest three at a
   time once it passes, every failing one printed — then the acceptance's checks (`acceptance.ts`): each `{ said, check }` line's command run in
   the copy, passing on exit 0, with `plitzi` on the path as this CLI (a shim in the task's cache) and `$PLITZI_URL` the
-  copy served by its own start script on a free port while they run; what each answered is kept in the state and shown
-  by `task show`. An unmet one refuses like a failing check — and goes to review only as a known failure. Then it goes to
+  copy served by its own start script on a free port while they run. A line that fails runs once more after the others:
+  one a busy server failed passes then and says it passed on its second run (`firstFailed`), one that fails twice is
+  unmet. What each answered is kept in the state and shown by `task show`. An unmet one refuses like a failing check — and goes to review only as a known failure. Then it goes to
   review, **its files kept as they are now** (`submitted`, by fingerprint): what the review keeps and the approval
   merges, never the copy, which its agent may go on writing — `--note` tells the lead what to look at with it. A sign of
   life of a task in review is answered as one in review. `run plan` refuses a check it could not run: empty,

@@ -254,6 +254,7 @@ export const extendRun = async (
   await logRun(ctx, loaded.paths, {
     action: 'extend',
     stage: next.runId,
+    goal: next.goal,
     added: tasks.map(task => task.id),
     ...(takenUp.length > 0 ? { takenUp } : {})
   });

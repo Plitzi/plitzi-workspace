@@ -116,7 +116,7 @@ export interface View {
   clip?: string;
   scrollTo?: string;
   viewport?: boolean;
-  /** Every declared motion held at its end: a whole page taken in one picture, never scrolled. */
+  /** Every declared motion held at its end: one picture — the whole page, a part clipped or scrolled to — not frames. */
   still: boolean;
   /** Signed in as first — on the project's own page only, never another site's. */
   account?: Account;

@@ -53,6 +53,14 @@ import type { CreateAnswers } from '../scaffold';
 
 export const UPGRADE_PARTS = ['files', 'packages', 'skills', 'migrations'] as const;
 
+/**
+ * The parts of an upgrade that change what an open run is pinned to — the packages, the machinery its copies run, the
+ * source a migration rewrites. The skills are words the agents read: brought up to the Plitzi installed, they match the
+ * run's pin, and a run's own plan asks for them so (`plitzi upgrade skills --write`).
+ */
+export const pinnedParts = (wanted: ReadonlySet<string>): string[] =>
+  UPGRADE_PARTS.filter(part => part !== 'skills' && wanted.has(part));
+
 export type UpgradePart = (typeof UPGRADE_PARTS)[number];
 
 export interface UpgradeOptions {
@@ -575,11 +583,13 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
   const origin = await readOrigin(root);
   const write = Boolean(options.write);
   const report: UpgradeReport = { version: CLI_VERSION, write };
-  // A run pins the Plitzi it opened with: its copies were made by it. Upgrading under one is a person's choice.
-  const openRuns = write ? await activeRuns(root) : [];
+  // A run pins the Plitzi it opened with: its copies were made by it. Upgrading under one is a person's choice — the
+  // skills alone change nothing it is pinned to.
+  const pinned = pinnedParts(wanted);
+  const openRuns = write && pinned.length > 0 ? await activeRuns(root) : [];
   if (openRuns.length > 0 && !options.withOpenRuns) {
     fail(
-      `Runs of agents are open in this project (${openRuns.join(', ')}), pinned to the Plitzi installed now. Finish, abort or purge them first (plitzi run state) — or upgrade anyway with --with-open-runs, and a person attaches to each after (plitzi run attach <run>), which re-pins it and starts its tasks in hand again from their reviewed versions.`
+      `Runs of agents are open in this project (${openRuns.join(', ')}), pinned to the Plitzi installed now: its ${pinned.join(', ')} would change under them. Finish, abort or purge them first (plitzi run state) — or upgrade anyway with --with-open-runs, and a person attaches to each after (plitzi run attach <run>), which re-pins it and starts its tasks in hand again from their reviewed versions. The skills alone are upgraded under an open run: plitzi upgrade skills --write.`
     );
 
     return;

@@ -509,3 +509,27 @@ describe('a designer, once it sent a task back', () => {
     expect(after.why).toContain('t-data');
   });
 });
+
+// A designer at a task of its own left every UI review to the lead: it waits for the reviews coming instead.
+describe('a designer that develops too', () => {
+  beforeEach(async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 1 });
+    await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'] });
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+  });
+
+  it('waits for the UI reviews coming rather than taking a task of its own, and takes one once none is', async () => {
+    const menu = await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
+    const waiting = await nextTask(bench.agent('design-1'), 'es-launch', 'designer,developer');
+    expect([waiting.task?.id, waiting.why]).toEqual([
+      undefined,
+      expect.stringContaining('UI reviews are coming — t-menu (dev-1) at work') as unknown
+    ]);
+
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', "export const page = { title: 't-menu' };\n");
+    await completeTask(bench.agent('dev-1', { token: menu.token }), 'es-launch', 't-menu');
+    expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer,developer')).designReview?.task.id).toBe(
+      't-menu'
+    );
+  });
+});

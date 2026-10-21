@@ -505,3 +505,37 @@ monitor` shows each as it comes, a problem in red.
   `styles()` and the MCP's style writes refuse it (`shorthand-ambiguous`, `ambiguousShorthands`), naming the longhand:
   `background-color` for a colour, `background-image` for a gradient or a picture. A var() inside a function
   (`linear-gradient(…, var(--x))`) is read as it is.
+- **What la-velada's motion stage showed** (`@plitzi/cli`, `@plitzi/sdk-authoring`, `@plitzi/sdk-mcp`,
+  `@plitzi/sdk-dev-tools`):
+  - `run monitor` keeps up with a run written to without a pause — five agents, a stage stacked: it reads at most every
+    150 ms instead of waiting for a quiet moment that never came, and a read that meets a half-written file (a plan as a
+    stage is stacked) keeps the board and reads again, where it ended the monitor. Its head says the stage at work and its
+    goal (`stage 3: velada-motion`; `run extend` logs the stage's goal).
+  - An agent whose task waits for its review is idle in `run monitor`, saying so, never "in review" as if at work.
+  - A completion's note (`task complete --note`) is said on the completion's line of the activity, not again as a message.
+  - One `page shot` shows every arrival as it ends — a part clipped or scrolled to too, whose arrivals were taken as they
+    began (blank rows) — and `--frames` writes every frame, where only the first was written.
+  - `plitzi upgrade skills --write` runs under an open run: the skills change nothing the run is pinned to, and a run's
+    own plan asks for them so.
+  - A plan's check reads a shell redirection (`2>&1`, `> out.txt`) as the shell's, never as a page of `page check`.
+  - `css({ animation: 'none' })` stops the animation: a lone `none` is the name, as a browser reads it, where it was a
+    fill mode and left the animation running.
+  - The `shorthand-ambiguous` refusal reads as one sentence in `css()` and in the MCP's hint.
+  - What la-velada's motion round ran into:
+    - `page check --hover` measures width, height, `background-size`/`-position`, `stroke`/`stroke-width` and
+      `text-shadow`, and a hover rule written on the parent (`.card:hover .photo`): it reads up to three marked
+      ancestors. Under 1024 px it says it skipped the hover, as a phone has no pointer, where it measured nothing.
+    - An element at `opacity: 0` with no animation to bring it in is not on screen to `page check` and the testing
+      probe (`@plitzi/sdk-authoring`): an arrival that never played was counted as shown.
+    - `task complete` says the lint warnings of files the task did not change as there before it, in one line, never as
+      the task's to fix; and counts a server on the port as the copy's own only when its `/health` names the copy.
+    - A designer with UI reviews coming waits for them rather than taking a developer's task.
+    - `npm run start:dev` in a task's copy takes a free port without `PORT` even when another copy starts at the same
+      moment (`@plitzi/sdk-server`: a port is held while it is taken).
+    - A `css()` refusal raised as the style is written names the line of the author's code that wrote it
+      (`src/space/styles.ts:42: \`background: var(--x)\` …`).
+    - A condition or a pseudo-element given `variants`, `ancestors` or `conditions` is refused as `style-part-shape`,
+      saying where the rule goes, where it was "`ancestors: [object Object]` is not one CSS value".
+    - An acceptance line that fails is run once more after the others: one a busy CDN failed passes then, saying it
+      passed on its second run; one that fails twice is broken.
+    - The runs skill stops a copy's server by its port, never with `pkill -f`.

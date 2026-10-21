@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 import { act, either, holder, runOf } from './shell';
-import { hhmm, list, messageLines } from './text';
+import { hhmm, list, messageLines, secondRunText } from './text';
 import { crossed, longFileText } from '../../runs/longFiles';
 import { RunRefusal } from '../../runs/refusal';
 import { tellLead } from '../../runs/talk';
@@ -109,12 +109,46 @@ export const taskCheck = (options: RunCommandOptions): Promise<void> =>
         ),
         ...checked.accepted.map(
           each =>
-            `  ${each.ok ? '✓' : chalk.yellow('✗')} acceptance — ${each.said}  ${chalk.dim(`[${each.check}]`)}${each.ok || !each.output ? '' : `\n${each.output.map(line => `      ${line}`).join('\n')}`}`
+            `  ${each.ok ? '✓' : chalk.yellow('✗')} acceptance — ${each.said}  ${chalk.dim(`[${each.check}]`)}${secondRunText(each)}${each.ok || !each.output ? '' : `\n${each.output.map(line => `      ${line}`).join('\n')}`}`
         ),
         ...checked.tooLong.map(each => chalk.yellow(`  ✗ ${each}`))
       ].join('\n'),
     checked => (checked.ok ? 0 : 1)
   );
+
+/**
+ * The checks' warnings, those on a file this task changed apart from the rest: its own to fix or to say why it stays,
+ * and the ones it found in files it never touched, said in a line — every complete of a run listed the same ones as if
+ * each task had brought them.
+ */
+export const warningLines = (
+  steps: readonly { name: string; warnings?: string[] }[],
+  changed: readonly string[]
+): string[] => {
+  const all = steps.flatMap(step => (step.warnings ?? []).map(warning => ({ step: step.name, warning })));
+  const fileOf = (warning: string): string | undefined => /^([^\s:]+\.[a-z]+)(:\d+)?\b/.exec(warning)?.[1];
+  const own = all.filter(each => {
+    const file = fileOf(each.warning);
+
+    return file === undefined || changed.includes(file);
+  });
+  const elsewhere = [...new Set(all.filter(each => !own.includes(each)).map(each => fileOf(each.warning) ?? ''))];
+
+  return [
+    ...own.map(each =>
+      chalk.yellow(
+        `  ⚠ ${each.step} warns: ${each.warning} — fix what this task brought, or tell the lead why it stays`
+      )
+    ),
+    ...(elsewhere.length > 0
+      ? [
+          chalk.dim(
+            `  · ${String(all.length - own.length)} warning(s) in files this task did not change — there before it: ${elsewhere.join(', ')}`
+          )
+        ]
+      : [])
+  ];
+};
 
 export const taskComplete = (
   options: RunCommandOptions & { knownFailure?: string; fixedBy?: string; note?: string; review?: string }
@@ -169,13 +203,7 @@ export const taskComplete = (
             : chalk.yellow(
                 `  Checks failing, as you said (--known-failure): ${list(completed.checks.steps.filter(step => !step.ok).map(step => step.name))}`
               ),
-        ...completed.checks.steps.flatMap(step =>
-          (step.warnings ?? []).map(warning =>
-            chalk.yellow(
-              `  ⚠ ${step.name} warns: ${warning} — fix what this task brought, or tell the lead why it stays`
-            )
-          )
-        ),
+        ...warningLines(completed.checks.steps, completed.changed),
         ...completed.accepted.map(
           each => `  ${each.ok ? '✓' : chalk.yellow('✗')} acceptance — ${each.said}  ${chalk.dim(`[${each.check}]`)}`
         ),

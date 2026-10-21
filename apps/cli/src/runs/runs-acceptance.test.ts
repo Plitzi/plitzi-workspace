@@ -53,7 +53,13 @@ describe('acceptance, checks and what is left behind', () => {
       {
         said: 'Quoted',
         check: 'plitzi page check /digest --url $PLITZI_URL --expect "digest-title~This week" && echo ok'
-      }
+      },
+      // A redirection is the shell's: no page.
+      {
+        said: 'Redirected',
+        check: "plitzi page check / --url $PLITZI_URL --hover cta 2>&1 | awk '/cta box-shadow/{a=1} END{exit !a}'"
+      },
+      { said: 'Spaced', check: 'plitzi page check / --url $PLITZI_URL > tmp/out.txt 2> /dev/null' }
     ];
 
     const refusedPlan = await checkPlan(bench.root, plan, await readOwnership(bench.root), teamFor(plan, 4)).catch(
@@ -62,6 +68,8 @@ describe('acceptance, checks and what is left behind', () => {
     const said = (refusedPlan as { problems: string[] }).problems.join('\n');
     expect(said).toContain('hands page check "week" as a page');
     expect(said).not.toContain('"Quoted" hands');
+    expect(said).not.toContain('"Redirected" hands');
+    expect(said).not.toContain('"Spaced" hands');
   });
 
   it('holds a task to its acceptance by the checks its plan gives: unmet, the complete is refused; met, the lead sees it', async () => {

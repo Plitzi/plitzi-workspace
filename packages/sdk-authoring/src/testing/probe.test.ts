@@ -425,3 +425,24 @@ describe('probePage / shown with a chosen child', () => {
     expect(findings.hidden.map(({ id }) => id)).toEqual(['snooze']);
   });
 });
+
+// A row whose arrival never played stays blank with every box in place: transparent, said as hidden — never "on screen".
+describe('probePage / transparent', () => {
+  it('says a text left at opacity 0 hidden, and why', () => {
+    sized(100, 20);
+    document.body.innerHTML = '<ul style="opacity: 0"><li data-plitzi-el="hour">19:00 España</li></ul>';
+
+    expect(probePage(input(['hour'])).hidden).toEqual([
+      { id: 'hour', reason: 'it is transparent: opacity 0 on <ul> — an arrival that never played?' }
+    ]);
+  });
+
+  it('leaves an arrival waiting to be seen, and a mark with no words, to the hover or the scroll', () => {
+    sized(100, 20);
+    document.body.innerHTML =
+      '<div data-motion-on="view" style="opacity: 0"><p data-plitzi-el="later">Below the fold</p></div>' +
+      '<span data-plitzi-el="play" style="opacity: 0"><svg></svg></span>';
+
+    expect(probePage(input(['later', 'play'])).hidden).toEqual([]);
+  });
+});

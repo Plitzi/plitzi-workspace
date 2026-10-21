@@ -1,3 +1,7 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { styles } from './classes';
@@ -259,6 +263,26 @@ describe('layout combinators', () => {
   });
 });
 
+// The types refuse these; what is written without them (JS, an agent's JSON) read them as CSS values, and was told
+// "`ancestors: [object Object]` is not one CSS value".
+describe('a condition or a pseudo-element given a rule set’s other keys', () => {
+  it('is refused naming the key and where its rule goes, never as a CSS value', () => {
+    expect(() =>
+      toBlocks({
+        css: { color: 'red' },
+        // @ts-expect-error -- a condition holds css, states and pseudos
+        conditions: { 'motion-reduce': { ancestors: { '.row:hover': { css: { scale: '1' } } } } }
+      })
+    ).toThrow(
+      /\[style-part-shape\] `conditions\['motion-reduce'\]` cannot hold `ancestors`: its rules are `css`, `states`, `pseudos`/
+    );
+    expect(() =>
+      // @ts-expect-error -- a pseudo-element holds css and states
+      toBlocks({ css: { color: 'red' }, pseudos: { before: { variants: { on: { content: '""' } } } } })
+    ).toThrow(/\[style-part-shape\] `pseudos\.before` cannot hold `variants`/);
+  });
+});
+
 // A gradient in a variable, written as `background`, was expanded as a colour and painted nothing.
 describe('a background whose part is a bare var()', () => {
   it('is refused, naming the longhand to write — a var() inside a gradient is read as it is', () => {
@@ -272,5 +296,30 @@ describe('a background whose part is a bare var()', () => {
     });
     expect(css({ 'background-color': 'var(--surface)' })).toEqual({ 'background-color': 'var(--surface)' });
     expect(css({ background: 'red' })).toMatchObject({ 'background-color': 'red' });
+  });
+
+  // Refused as the declaration is made: the author's line is on the stack then, and the message names it.
+  it('names the line of the author’s code that wrote it', async () => {
+    const folder = mkdtempSync(path.join(os.tmpdir(), 'css-site-'));
+    const file = path.join(folder, 'card.ts');
+    writeFileSync(
+      file,
+      [
+        `import { css } from ${JSON.stringify(path.resolve(import.meta.dirname, 'css.ts'))};`,
+        '',
+        "export const card = () => css({ background: 'var(--x)' });"
+      ].join('\n')
+    );
+    try {
+      const written: unknown = await import(file);
+      const card: unknown = typeof written === 'object' && written !== null ? Reflect.get(written, 'card') : undefined;
+      if (typeof card !== 'function') {
+        throw new Error('the fixture exports no card');
+      }
+
+      expect(() => Reflect.apply(card, undefined, [])).toThrow(/\[shorthand-ambiguous\] [^\s]*card\.ts:3: `background/);
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
   });
 });

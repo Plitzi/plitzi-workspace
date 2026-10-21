@@ -12,7 +12,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from './scaffoldRecord';
 import { writeOrigin } from './spaceOrigin';
 import { install, writeFiles } from './terminal';
-import { upgrade } from './upgrade';
+import { pinnedParts, upgrade, UPGRADE_PARTS } from './upgrade';
 import { detectManagerVersion, machineryFiles, scaffold } from '../scaffold';
 import { CLI_VERSION } from '../scaffold/project';
 
@@ -580,5 +580,14 @@ describe('plitzi upgrade', () => {
 
     expect(String(said.mock.calls.at(0)?.[0])).toContain('files, packages, skills, migrations');
     process.exitCode = undefined;
+  });
+});
+
+// A run's plan asks for its skills brought up; upgrading them was refused for the open run that asked.
+describe('what an upgrade under an open run would change', () => {
+  it('is nothing the run is pinned to for the skills alone, and the rest for the others', () => {
+    expect(pinnedParts(new Set(['skills']))).toEqual([]);
+    expect(pinnedParts(new Set(['skills', 'packages']))).toEqual(['packages']);
+    expect(pinnedParts(new Set(UPGRADE_PARTS))).toEqual(['files', 'packages', 'migrations']);
   });
 });

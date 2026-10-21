@@ -35,7 +35,6 @@ export const TASK_STATE: Record<TaskLine['status'], (task: TaskLine) => string> 
 export const AGENT_STATE: Record<AgentStatus, string> = {
   working: chalk.cyan('● working'),
   reviewing: chalk.magenta('● reviewing'),
-  'in-review': chalk.magenta('◐ in review'),
   blocked: chalk.yellow('● blocked'),
   asking: chalk.yellow('? asks the lead'),
   waiting: chalk.cyan('◌ waiting'),

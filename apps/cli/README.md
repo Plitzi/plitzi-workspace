@@ -248,9 +248,11 @@ does nothing looks like one that works until it is clicked. A click that could n
 fails the check (`--json`: `clicked: { element, filled?, changes, failed, problem? }`).
 
 `--hover <id>` puts the pointer over one element instead, and says the same of it, with what a hover changes most: how
-the element and each element inside it look — colours, shadow, transform, opacity, one line a property, said where it
-changed and not again by a child that inherits it (`home-cta background-color: rgb(…) → rgb(…)`). A hover that changed
-nothing says so. One interaction a check: `--click` or `--hover` (`--json`: `clicked: { hovered: true, … }`).
+the element, each element inside it and up to three marked elements around it look — colours, shadow, transform,
+opacity, size, `background-size`, `stroke-width`, one line a property, said where it changed and not again by a child
+that inherits it (`home-cta background-color: rgb(…) → rgb(…)`); a rule written on a parent (`.card:hover .photo`)
+shows. A hover that changed nothing says so; under 1024 px it is skipped and said so — a phone has no pointer. One
+interaction a check: `--click` or `--hover` (`--json`: `clicked: { hovered: true, skipped?, … }`).
 
 `--fill <id>=<value>`, once per field, fills a field before the click as a visitor does — typed in, an option chosen, a
 box ticked with `true` or `false` — so a form's flow is run with what it is for, not only refused empty. The id is the
@@ -263,7 +265,9 @@ the element's report says the text it shows.
 `--scheme` is the space's own theme, set as a visitor's toggle sets it (the `theme` cookie); left out, the space's
 default, and `page shot` names the file by the theme it was painted in. The dev tools' badge is hidden from both. A
 full-page `page shot` is the whole page — the pane the SDK scrolls in unrolled, every lazy picture loaded, every arrival
-waiting for the scroll shown as it ends — in `tmp/shots/` unless `--out` says where.
+waiting for the scroll shown as it ends — in `tmp/shots/` unless `--out` says where. Any one picture (a part with
+`--clip`, the screen with `--scroll-to` or `--viewport`) shows its arrivals as they end too; `--frames`, `--click` and
+`--steps` take the page as it plays, and each picture after the first is written beside it (`<name>-1.png`, …).
 
 Both load a page as one that watches its realtime channels: it hears them — a topic the server refuses is still
 reported — and says nothing on them, so nobody on the page sees it arrive, join their members or send. `--presence`

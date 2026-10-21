@@ -101,7 +101,7 @@ export const monitorScreen = (
     onRegions?: (regions: Regions) => void;
   }
 ): string[] => {
-  const { view, agents, feed, runs, stories } = data;
+  const { view, agents, feed, runs, stories, stage } = data;
   const others = runs.filter(run => run.runId !== view.runId);
   const tasks = orderedTasks(view.tasks);
   const counts = (['in-progress', 'changes-requested', 'in-review', 'waiting', 'blocked', 'ready', 'pending'] as const)
@@ -119,11 +119,12 @@ export const monitorScreen = (
   const head = [
     chalk.inverse(
       cell(
-        ` RUN ${view.runId} · ${view.status.toUpperCase()} · ${String(view.done)} of ${String(view.total)} approved${view.expectedEnd ? ` · expected end ${hhmm(view.expectedEnd)} UTC` : ''} · ${hhmm(now.toISOString())} UTC`,
+        ` RUN ${view.runId}${stage ? ` · stage ${String(stage.of)}: ${stage.name}` : ''} · ${view.status.toUpperCase()} · ${String(view.done)} of ${String(view.total)} approved${view.expectedEnd ? ` · expected end ${hhmm(view.expectedEnd)} UTC` : ''} · ${hhmm(now.toISOString())} UTC`,
         width
       )
     ),
-    ...(short ? [] : [chalk.dim(cell(` ${view.goal}`, width))]),
+    // The stage at work, when stages were stacked: what is being done now, not the run's first goal.
+    ...(short ? [] : [chalk.dim(cell(` ${stage?.goal ?? view.goal}`, width))]),
     cell(
       ` ${counts.length > 0 ? counts.join(' · ') : 'nothing at work'}${short ? chalk.dim(' · ') + preview : ''}`,
       width
@@ -432,8 +433,12 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
           return;
         }
 
-        clearTimeout(soon);
-        soon = setTimeout(() => void look(), 150);
+        // At most a read every 150 ms, never pushed back by the next change: a run written to without a pause — five
+        // agents at work, a stage stacked — was otherwise never read again until the clock's fallback.
+        soon ??= setTimeout(() => {
+          soon = undefined;
+          void look();
+        }, 150);
       });
       watched = { id, close: () => watcher.close() };
     } catch {
@@ -454,6 +459,9 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
     looking = true;
     try {
       await lookOnce();
+    } catch {
+      // Whatever a read met, the board stays up and reads again: a monitor a person watches never ends on its own.
+      setTimeout(() => void look(), 1000);
     } finally {
       looking = false;
       if (lookAgain) {
@@ -478,8 +486,12 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
         last = await monitorRun(ctx, id, Number.MAX_SAFE_INTEGER);
         selected = Math.min(selected, Math.max(0, listedTasks(last.view.tasks, showApproved).length - 1));
       } catch (error) {
+        // Read while the CLI was writing it — a plan half written as a stage is stacked: the board stays as it was and is
+        // read again in a moment. Thrown, it ended the monitor.
         if (!isRunRefusal(error)) {
-          throw error;
+          setTimeout(() => void look(), 500);
+
+          return;
         }
 
         last = undefined;

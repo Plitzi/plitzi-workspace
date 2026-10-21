@@ -313,6 +313,20 @@ describe('expandShorthand', () => {
     });
   });
   describe('animation', () => {
+    // `none` is a fill mode and a name: alone it is the name — what stops an animation another rule runs.
+    it('reads a lone none as the name, and the last of two', () => {
+      expect(expandShorthand({ animation: 'none' })).toEqual({ 'animation-name': 'none' });
+      expect(expandShorthand({ animation: '1s none none' })).toMatchObject({
+        'animation-duration': '1s',
+        'animation-fill-mode': 'none',
+        'animation-name': 'none'
+      });
+      expect(expandShorthand({ animation: 'spin 1s none' })).toMatchObject({
+        'animation-name': 'spin',
+        'animation-fill-mode': 'none'
+      });
+    });
+
     it('expands name, duration, timing-function', () => {
       const result = expandShorthand({ animation: 'fadeIn 1s ease' });
       expect(result).toEqual({

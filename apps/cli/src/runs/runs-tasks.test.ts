@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { DEV_SERVER_FILE } from '@plitzi/sdk-shared/project';
+import { DEV_SERVER_FILE, projectMark } from '@plitzi/sdk-shared/project';
 
 import { freePort } from './acceptance';
 import { materialise } from './materialise';
@@ -265,7 +265,10 @@ export const menu = { id: 'menu', title: 'Carta', theme };
   it('looks at a copy where its agent’s own server already serves it — never a second server fighting its state', async () => {
     await open();
     const home = await take('agent-1', 't-home');
-    const own = http.createServer((_request, response) => response.end('ok'));
+    // Its `/health` names the copy it serves, as a project's server does: a port left by another names another.
+    const own = http.createServer((_request, response) =>
+      response.end(JSON.stringify({ Instance: projectMark(home.work) }))
+    );
     const port = await freePort();
     await new Promise<void>(resolve => own.listen(port, '127.0.0.1', resolve));
     try {

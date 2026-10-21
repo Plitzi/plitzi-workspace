@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 import { act, runOf, taskOf } from './shell';
-import { inputLines, list } from './text';
+import { inputLines, list, secondRunText } from './text';
 import { abortRun, continueRun, finishRun, resolveFile, restoreFile } from '../../runs/merge';
 import { RunRefusal } from '../../runs/refusal';
 import { attachRun, pruneRuns, purgeRun, releaseRun, resumeRun, stopRun } from '../../runs/run';
@@ -109,6 +109,9 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
               `  Every done task's acceptance checks hold on the result too (${String(finished.plan.acceptance?.results.length ?? 0)})${finished.plan.acceptance?.reused ? ' — as on this same result before, not run again' : finished.plan.acceptance?.kept ? ` — ${String(finished.plan.acceptance.kept)} as on this same result before, the rest run again` : ''}`
             ]
           : []),
+        ...(finished.plan.acceptance?.results ?? [])
+          .filter(each => each.firstFailed)
+          .map(each => `    ${each.task}: ${each.said}${secondRunText(each)}`),
         ...(finished.left.length > 0 ? [`  Left in the plan: ${finished.left.join(', ')}`] : []),
         ...(finished.audit.length > 0
           ? [
