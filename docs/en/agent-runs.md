@@ -533,7 +533,9 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
 ## Into the project (`merge.ts`)
 
 `run finish` compares each approved file with the project: unchanged since the run knew it → written; already the same
-→ left; changed since → a conflict. The whole result is materialised (project + run) and checked first — a dry run by
+→ left; changed since → a conflict. With `--apply` the person is asked first, before any check, and every check and acceptance
+line is said as it runs (`ctx.say`, on stderr) — asked after them, a finish of 23 lines sat silent for minutes and was
+stopped as hung (velada-dress). The whole result is materialised (project + run) and checked first — a dry run by
 default, listing what is written over a change made outside — and so is what each done task was accepted on: every
 `{ said, check }` line that passed at its review runs again on the whole result, so one a later task broke (the print of
 a page another task grew) stops the finish, naming both; a pass of either on the very same result is said again within

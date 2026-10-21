@@ -59,9 +59,20 @@ describe('the final merge', () => {
     const dry = await finishRun(bench.person(true), 'es-launch', { apply: false, leavePending: true });
     expect(dry.plan.apply.map(each => each.file)).toEqual(['src/space/pages/about.ts']);
     expect(await bench.read('src/space/pages/about.ts')).toBe(before);
+    // Refused before any check runs: the person is asked first, never after minutes of checks said nothing.
+    const checkedBefore = bench.checked.length;
     expect((await refusal(finishRun(bench.person(false), 'es-launch', { apply: true, leavePending: true }))).code).toBe(
       'person-only'
     );
+    expect(bench.checked.length).toBe(checkedBefore);
+
+    // What it is at, said as it goes: the checks, then the acceptance.
+    const said: string[] = [];
+    await finishRun({ ...bench.person(true), say: line => said.push(line) }, 'es-launch', {
+      apply: false,
+      leavePending: true
+    });
+    expect(said[0]).toContain("the project's checks on the run's whole result (1 file)");
 
     const done = await finishRun(bench.person(true), 'es-launch', { apply: true, leavePending: true });
     expect(await bench.read('src/space/pages/about.ts')).toContain('Sobre nosotros');

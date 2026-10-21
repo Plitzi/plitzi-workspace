@@ -154,7 +154,11 @@ export const contextFor = async (options: RunCommandOptions): Promise<RunContext
     agent,
     ...(isQuality(quality) ? { quality } : {}),
     person: askPerson,
-    checks: projectChecks
+    checks: projectChecks,
+    // On stderr, dim: never in an answer read as JSON, nor in the one sentence a command ends with.
+    ...(options.json === true || process.env.PLITZI_JSON === '1'
+      ? {}
+      : { say: (line: string) => process.stderr.write(chalk.dim(`· ${line}\n`)) })
   };
 };
 

@@ -180,11 +180,26 @@ export const acceptanceOnResult = async (
     return { results: lines.map(line => ({ ...line, ok: true })), ...(reused ? { reused } : {}) };
   }
 
+  ctx.say?.(
+    `every done task's acceptance on the whole result: ${String(toRun.length)} line${toRun.length === 1 ? '' : 's'} to run${toRun.length < lines.length ? `, ${String(lines.length - toRun.length)} as before` : ''}…`
+  );
   const dir = await materialise(ctx, loaded, versions);
   try {
     const answered = await checkAcceptance(
       toRun.map(line => ({ said: line.said, check: line.check })),
-      { work: dir, root: ctx.root, cache: loaded.paths.cache }
+      {
+        work: dir,
+        root: ctx.root,
+        cache: loaded.paths.cache,
+        ...(ctx.say
+          ? {
+              onLine: (index: number, total: number, said: string, again: boolean) =>
+                ctx.say?.(
+                  `${again ? 'again, ' : ''}${String(index + 1)}/${String(total)} ${toRun[index]?.task ?? ''}: ${said}`
+                )
+            }
+          : {})
+      }
     );
     const ran = new Map(toRun.map((line, index) => [line, { ...answered[index], task: line.task }] as const));
     for (const [line, result] of ran) {

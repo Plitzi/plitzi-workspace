@@ -24,6 +24,11 @@ export interface RunContext {
   quality?: Quality;
   person: PersonGate;
   checks: CheckRunner;
+  /**
+   * What a long command is at, said as it goes — to a person's terminal, apart from its answer — so a minute of checks
+   * is never a command that hangs (velada-dress: `run finish --apply` ran 23 acceptance lines again, saying nothing).
+   */
+  say?: (line: string) => void;
 }
 
 export interface LoadedRun {

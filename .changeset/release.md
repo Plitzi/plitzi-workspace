@@ -767,6 +767,9 @@ monitor` shows each as it comes, a problem in red.
       velada-dress's overlay preview read "1 picture or embed had not loaded" on every shot, each waiting its budget.
     - A screen's width written as a style condition (`(max-width: 480px)`) is refused naming what says it — a value
       per breakpoint (`{ desktop, tablet, mobile, compact }`) — and a container's condition names `container-type`.
+    - `run finish --apply` asks the person first — then runs the checks and every acceptance line on the whole result,
+      saying each as it goes (`3/23 t-home: …`, on stderr) — where it asked after minutes of checks that said nothing,
+      and was stopped as hung (velada-dress). Nothing is written while a check fails, confirmed or not.
     - `run reference` keeps a page the site answers with 404 — its page for an address nothing answers, which a copy
       makes too — said, where it refused it as an error page.
     - `page shot --compare … --dress` fails where a section lacks a look the other page dresses it in — a sort of

@@ -190,7 +190,18 @@ const cliShim = async (cache: string): Promise<string> => {
 /** Every checked line of `acceptance`, run in `work`: what each answered. None checked, none run. */
 export const checkAcceptance = async (
   acceptance: readonly Acceptance[],
-  { work, root, cache }: { work: string; root: string; cache: string }
+  {
+    work,
+    root,
+    cache,
+    onLine
+  }: {
+    work: string;
+    root: string;
+    cache: string;
+    /** Each line as it starts — and again, once more after a failure: what a long check is at. */
+    onLine?: (index: number, total: number, said: string, again: boolean) => void;
+  }
 ): Promise<AcceptanceResult[]> => {
   const checked = acceptance.filter(isChecked);
   if (checked.length === 0) {
@@ -210,7 +221,8 @@ export const checkAcceptance = async (
     runScript(work, withServedValues(each.check, values), root, { env: values, bin: [bin] });
   try {
     const results: AcceptanceResult[] = [];
-    for (const each of checked) {
+    for (const [index, each] of checked.entries()) {
+      onLine?.(index, checked.length, each.said, false);
       const { code, output } = await run(each);
       results.push({
         said: each.said,
@@ -227,6 +239,7 @@ export const checkAcceptance = async (
         continue;
       }
 
+      onLine?.(at, checked.length, result.said, true);
       const { code, output } = await run(checked[at]);
       results[at] =
         code === 0

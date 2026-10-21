@@ -337,6 +337,19 @@ export const finishRun = async (
     );
   }
 
+  // Asked first, the person's word, then minutes of checks: asked after them, the person waited at a command that said
+  // nothing, and stopped it as hung (velada-dress). Nothing is written while a check fails, confirmed or not.
+  if (apply && loaded.record.leadFinishes === undefined) {
+    await requirePerson(
+      ctx,
+      runId,
+      `write run "${runId}" into the project (${String(plan.apply.length)} files) once every check passes on the result`
+    );
+  }
+
+  ctx.say?.(
+    `the project's checks on the run's whole result (${String(plan.apply.length)} file${plan.apply.length === 1 ? '' : 's'})…`
+  );
   plan.checks = await checkVersions(ctx, loaded, Object.fromEntries(plan.apply.map(each => [each.file, each.after])), {
     final: true
   });
@@ -425,12 +438,9 @@ export const finishRun = async (
     );
   }
 
-  // A person writes it — unless one let the lead, at its open or since: then the report and the checks above are what
-  // stand between the run and the project, and the finish says who allowed it.
+  // A person writes it — asked before the checks, at the top — unless one let the lead, at its open or
+  // since: then the report and the checks are what stand between the run and the project, and the finish says who.
   const byLead = loaded.record.leadFinishes !== undefined;
-  if (!byLead) {
-    await requirePerson(ctx, runId, `write run "${runId}" into the project (${String(plan.apply.length)} files)`);
-  }
 
   const entry = await withLock(
     loaded.paths.mergeLock,
