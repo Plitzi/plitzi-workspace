@@ -51,7 +51,19 @@ export const pageTexts = (limit: number): PageText[] => {
       continue;
     }
 
-    const text = element.textContent.replace(/\s+/g, ' ').trim().slice(0, 120);
+    // As a reader sees it: a heading written "Boxeadores" and drawn in capitals is "BOXEADORES", as the original that
+    // wrote it in capitals is — two pages read alike are not two different words (la-velada's comparison said so of
+    // every heading).
+    const words = element.textContent.replace(/\s+/g, ' ').trim();
+    const shown =
+      style.textTransform === 'uppercase'
+        ? words.toUpperCase()
+        : style.textTransform === 'lowercase'
+          ? words.toLowerCase()
+          : style.textTransform === 'capitalize'
+            ? words.replace(/(^|\s)(\S)/g, (_match, space: string, letter: string) => `${space}${letter.toUpperCase()}`)
+            : words;
+    const text = shown.slice(0, 120);
     texts.push({
       text,
       tag: element.tagName.toLowerCase(),
@@ -185,20 +197,46 @@ export const compareTexts = (
   }
 
   const differ: TextDifference[] = [];
-  const onlyHere: string[] = [];
+  const unpaired: PageText[] = [];
   let same = 0;
-  for (const text of [...here].sort((one, two) => one.y - two.y)) {
-    const match = waiting.get(text.text)?.shift();
-    if (!match) {
-      onlyHere.push(text.text);
-      continue;
-    }
-
-    const differences = differencesOf(text, match, shiftAt);
+  const pair = (text: PageText, match: PageText, extra: string[] = []) => {
+    const differences = [...extra, ...differencesOf(text, match, shiftAt)];
     if (differences.length === 0) {
       same += 1;
     } else {
       differ.push({ tag: text.tag, text: text.text, y: text.y, differences });
+    }
+  };
+  for (const text of [...here].sort((one, two) => one.y - two.y)) {
+    const match = waiting.get(text.text)?.shift();
+    if (match) {
+      pair(text, match);
+    } else {
+      unpaired.push(text);
+    }
+  }
+
+  // The same words in other capitals are one text drawn otherwise — "Logotipo" here, "LOGOTIPO" there — not two that
+  // each page has alone.
+  const byWords = new Map<string, PageText[]>();
+  for (const text of [...waiting.values()].flat()) {
+    const key = text.text.toLocaleLowerCase();
+    byWords.set(key, [...(byWords.get(key) ?? []), text]);
+  }
+
+  const onlyHere: string[] = [];
+  for (const text of unpaired) {
+    const match = byWords.get(text.text.toLocaleLowerCase())?.shift();
+    if (match) {
+      const left = waiting.get(match.text) ?? [];
+      const at = left.indexOf(match);
+      if (at !== -1) {
+        left.splice(at, 1);
+      }
+
+      pair(text, match, [`case ${text.text.slice(0, 40)} → ${match.text.slice(0, 40)}`]);
+    } else {
+      onlyHere.push(text.text);
     }
   }
 

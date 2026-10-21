@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import { comparePictures, pageRegions } from '@plitzi/sdk-authoring';
 
 import { dataUrl, launchBrowser, projectOrigin } from '../../browser';
+import { originHere } from '../../runs/copyServer';
 import { copyOf, runPaths } from '../../runs/paths';
 import { keptPage } from '../../runs/reference';
 import { PROJECT_TMP } from '../../scaffold/paths';
@@ -34,12 +35,29 @@ export const shotEach = async (
   options: Omit<ShotOptions, 'width'> & { width: number[] }
 ): Promise<void> => {
   const { width: all, ...rest } = options;
-  for (const each of all) {
-    const out = rest.out && all.length > 1 ? rest.out.replace(/(\.png)?$/, `-${String(each)}.png`) : rest.out;
-    await shot(route, { ...rest, width: each, ...(out ? { out } : {}) });
-    if (process.exitCode !== undefined && process.exitCode !== 0) {
-      return;
+  // In a task's copy nobody serves, the copy is served once for every width, and stopped after the last.
+  const external = route !== undefined && /^https?:\/\//.test(route);
+  const project = !external && rest.url === undefined ? await projectHere('whose page to picture') : undefined;
+  const served =
+    project && copyOf(project.root)
+      ? await originHere(project.root, project.plitzi?.kind === 'project' ? project.plitzi : undefined)
+      : undefined;
+  if (served && 'problem' in served) {
+    fail(served.problem);
+
+    return;
+  }
+
+  try {
+    for (const each of all) {
+      const out = rest.out && all.length > 1 ? rest.out.replace(/(\.png)?$/, `-${String(each)}.png`) : rest.out;
+      await shot(route, { ...rest, width: each, ...(out ? { out } : {}), ...(served ? { url: served.origin } : {}) });
+      if (process.exitCode !== undefined && process.exitCode !== 0) {
+        return;
+      }
     }
+  } finally {
+    served?.stop?.();
   }
 };
 

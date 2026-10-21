@@ -230,9 +230,10 @@ export const registerTaskGroup = (program: Command): Command => {
     .description(
       'What complete would hold your copy to — the checks, the acceptance’s commands, long files — run now; nothing changes'
     )
+    .option('--acceptance', 'Only the acceptance’s commands, the copy served for them: iterating on one line')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((options: RunCommandOptions) => taskCheck(options));
+    .action((options: RunCommandOptions & { acceptance?: boolean }) => taskCheck(options));
 
   taskGroup
     .command('complete')

@@ -26,7 +26,7 @@ The lead's half — plan, rehearse, open, review, close, stack — is [runs-lead
 
 ```bash
 plitzi task take t-home --run es-launch --agent writer-1 --role writer --json   # → token, work (its copy), files
-cd <work> && plitzi task context           # the brief: primer, acceptance and checks, notes, what to read
+cd <work> && plitzi task context --files   # the brief, your files, their data's shape, how to call what they import
 ```
 
 Inside `work`, every command knows its task, run and agent (`tmp/plitzi-task.json`); elsewhere, `--token`.
@@ -35,10 +35,11 @@ Outside a copy, name yourself (`--agent writer-1`, or `PLITZI_AGENT`): `task nex
 
 - **Write only in `work`**, never in the project. Run the project's scripts there (`npm run author`, `npx tsc`, `npx
 eslint .`). The copy has no `node_modules` (it resolves the project's) and no `.env` — a warning about it is expected.
-  **Look at your page** with the copy's own server: `npm run start:dev` in `work` (no `PORT`: it takes a free port and
-  writes it where page check looks; a save swaps the space and plugins in the open page), then `npx plitzi page check
-  /pets --width 1440,390` from `work` (no `--` with npx) — it refuses another copy's server; stop it when done, by its port (`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)`), never
-  `pkill -f`: that stops every copy's server and the person's. The copy's `tmp/` and `state/`
+  **Look at your page:** `npx plitzi page check /pets --width 1440,390` (or `page shot`) from `work` serves the copy
+  for that command and stops it after — no server to start. Iterating on one page, `npm run start:dev` in `work` keeps
+  it served (a save swaps the space in the open page); stop it by its port (`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)`),
+  never `pkill -f`, which stops every copy's server and the person's. Read a shared module only for what the brief's
+  imports do not say. The copy's `tmp/` and `state/`
   never count at `complete`, and are where what is yours beside the work goes — a script, a log, a picture; between
   tasks, `tmp/plitzi-runs/<run>/scratch/<your name>/`. Never the project's `tmp/`: it is the person's, and what is
   left there is said to the lead. Format what you write (`npx prettier --write <file>`). The copy stays where it is even
@@ -72,7 +73,8 @@ takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | 
   for changes. `agent-limit` (24) on `take`: hand back to the lead, which starts it when one goes to review.
 - **Before done:** `plitzi task check` runs what `complete` holds the copy to — the project's checks, the acceptance's
   commands, long files, no `space lint` warning in a file you changed — and changes none of your work (what the run approved, or a person changed in the project,
-  since your copy was made comes in first, as at `complete`): iterate on it, not on `complete`, whose failures count toward the run's
+  since your copy was made comes in first, as at `complete`; `--acceptance` runs only its lines, for one you are
+  fixing): iterate on it, not on `complete`, whose failures count toward the run's
   brake (enough of them, across the team, stop the run). It hands you what the lead said meanwhile: run it between
   steps, not only at the end. Something you declare for later tasks (a component, a token) that nothing reads yet is
   a warning there, not a failure.

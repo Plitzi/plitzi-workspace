@@ -42,7 +42,13 @@ hands an agent the task it holds and can go on with — unblocked, or sent back 
 (`yours`), so an agent waiting for work hears it. A task sent back that others wait on, while its agent is at another,
 tells that agent it goes first (`goesFirst`, to `@<agent>`): nothing else reaches it before the task in hand is done. **The run's notes** — the plan's `notes`, and each `run note` — are
 messages to every task (`*`): each task reads every one once, with its take or its next sign of life, and `task context`
-(the brief an agent starts from) lists them beside its acceptance, what a review asked and what was agreed. **What
+(the brief an agent starts from) lists them beside its acceptance, what a review asked and what was agreed; with
+`--files`, the task's files as they are, the shape of the data they import and how to call what they import from the
+rest of the project (`moduleApis.ts`: each imported name's signature and the first sentence of its doc, followed
+through a barrel, never its body — two of la-velada's pages import 43k characters of shared modules, said in 3k). In a
+task's copy whose own server is not running, `page check` and `page shot` serve the copy for that command and stop it
+after (`copyServer.ts`, by `serveCopy`): an agent starts no server to look at its page, where la-velada's spent 64 steps
+starting, waiting for, asking about and stopping theirs. **What
 nobody's task owns** — seen wrong outside the task in hand, there before the run — is `run notice "…" --on <where>`
 (`notices.ts`), by an agent with its token, a reviewer by its name, or the lead: one line of the log (`notice`), an
 agent's sent to the lead as well, said by the finish and listed in the report under "Noticed, owned by no task" —
@@ -394,7 +400,9 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   token is said (a token said wins — the lead reviewing from inside a copy is the lead).
 - **Check:** `task check` runs in the copy what `complete` would hold it to — the project's checks, the acceptance's
   commands, the files too long — and changes none of its work (the copy is brought up first, as for `complete`): no
-  review, no brake. An agent iterating on a fix checks with it,
+  review, no brake. `--acceptance` runs only the acceptance's commands, the copy served for them, and says the
+  project's checks were not run: la-velada's agents iterated on one failing line with the whole check each time (52 of
+  their 88 failed checks were an acceptance line). An agent iterating on a fix checks with it,
   and completes once it passes; it hands over what was said to the task meanwhile, which an agent that only edits
   files would otherwise read only at `complete`. What a task declares for the tasks after it — a component, a token,
   read by none yet (authoring's `unused-*` suggestions) — passes a task's checks as a warning the review sees, and fails

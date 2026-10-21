@@ -570,4 +570,19 @@ monitor` shows each as it comes, a problem in red.
     presets rather than keyframes of its own (la-velada wrote eight). `@plitzi/sdk-shared` validates them, the SDK's
     stylesheet plays them, the builder's Motion tab has a Curve and a Distance field, and the skills, the MCP guide,
     `plitzi explain motion` and the docs say them.
+  - Fewer steps and tokens for a run's agents, from what velada-more's spent them on:
+    - `task context --files` says how to call what the task's files import from the rest of the project — each name's
+      signature and the first sentence of its doc, through a barrel, never its body: the shared modules every agent
+      read whole (two of la-velada's pages: 43k characters, said in 3k).
+    - In a task's copy whose own server is not running, `page check` and `page shot` serve the copy for the command and
+      stop it after: no server to start, wait for, find and stop by hand (64 steps across the run).
+    - `task check --acceptance` runs only the acceptance's commands, the copy served for them: an agent fixing one line
+      no longer waits for author, lint and typecheck each time (52 of velada-more's 88 failed checks were one).
+  - `page shot --compare` reads each text as it is drawn — in the capitals its `text-transform` draws — and pairs the
+    same words in other capitals as one text whose case differs (`case Logotipo → LOGOTIPO`), where la-velada's
+    comparison listed every heading twice, once on each side (`@plitzi/sdk-authoring`'s `pageTexts`, `compareTexts`).
+    - `run reference` takes a page whose picture times out (a font that never loads) as that page's failure, asked
+      once more — it crashed the command with every page after it.
+    - `run plan` says an element a check expects and the space lacks once per check, where a check expecting four
+      texts of it said it four times.
 

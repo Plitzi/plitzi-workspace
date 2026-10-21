@@ -32,9 +32,20 @@ export interface CheckedTask {
   messages: Message[];
   /** What came into the copy first: approved since it was made, or changed in the project by a person. */
   brought?: string[];
+  /** `acceptance`: only the acceptance's commands were run — the project's checks were not, and `complete` runs them. */
+  only?: 'acceptance';
 }
 
-export const checkTask = async (ctx: RunContext, runId: string, taskId: string): Promise<CheckedTask> => {
+export const checkTask = async (
+  ctx: RunContext,
+  runId: string,
+  taskId: string,
+  /**
+   * `acceptance`: its commands alone, the copy served for them — what an agent iterating on one line runs, where the
+   * whole check ran author, lint and typecheck again each time (la-velada: 52 of 88 failed checks were acceptance).
+   */
+  { only }: { only?: 'acceptance' } = {}
+): Promise<CheckedTask> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'check a task');
   await tellLeftInTmp(ctx, loaded);
@@ -43,7 +54,8 @@ export const checkTask = async (ctx: RunContext, runId: string, taskId: string):
   const messages = await unreadForHolder(loaded, taskId, view.owner?.agent ?? ctx.agent, true);
   // Checked against the run and the project as they are now, as `complete` will be.
   const brought = await refreshCopy(ctx, loaded, view);
-  const checks = await ctx.checks(view.paths.work, ctx.root);
+  const checks: CheckResult =
+    only === 'acceptance' ? { ok: true, steps: [] } : await ctx.checks(view.paths.work, ctx.root);
   const accepted = checks.ok
     ? await checkAcceptance(task.acceptance, { work: view.paths.work, root: ctx.root, cache: view.paths.cache })
     : [];
@@ -65,5 +77,13 @@ export const checkTask = async (ctx: RunContext, runId: string, taskId: string):
         })
   });
 
-  return { ok, checks, accepted, tooLong, messages, ...(brought.length > 0 ? { brought } : {}) };
+  return {
+    ok,
+    checks,
+    accepted,
+    tooLong,
+    messages,
+    ...(brought.length > 0 ? { brought } : {}),
+    ...(only ? { only } : {})
+  };
 };

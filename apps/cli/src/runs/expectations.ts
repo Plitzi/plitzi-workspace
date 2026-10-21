@@ -84,8 +84,18 @@ export const expectationNotices = async (root: string, tasks: readonly PlannedTa
 
   const known = new Set(ids);
 
+  // Once an element a check: one that expects four texts of it is one element the space lacks, not four (la-velada).
+  const said = new Set<string>();
+
   return wanted
     .filter(expected => !known.has(expected.element))
+    .filter(expected => {
+      const key = JSON.stringify([expected.task, expected.said, expected.element, expected.path]);
+      const first = !said.has(key);
+      said.add(key);
+
+      return first;
+    })
     .map(
       expected =>
         `Task "${expected.task}": the check of "${expected.said}" expects ${expected.element}${expected.path ? ` on ${expected.path}` : ''}, which the space has no element of now${meantOnPage(expected.element, ids)} — the task makes it, or the check names the one that is there`

@@ -162,6 +162,23 @@ describe('stopping, cuts and disconnects', () => {
     expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-home')?.status).toBe('in-progress');
   });
 
+  // la-velada: 52 of 88 failed checks were an acceptance line, each run again after author, lint and typecheck.
+  it('runs the acceptance alone when asked — the project’s checks left for complete, and said', async () => {
+    const plan = benchPlan();
+    plan.tasks[0].acceptance = [{ said: 'The hero says Hola', check: 'grep -q Hola src/space/pages/home/hero.ts' }];
+    await open(plan);
+    const home = await take('agent-1', plan.tasks[0].id);
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'BROKEN Hola\n');
+    const unchecked = { ...home.ctx, checks: () => Promise.reject(new Error('the project’s checks ran')) };
+
+    expect(await checkTask(unchecked, 'es-launch', plan.tasks[0].id, { only: 'acceptance' })).toMatchObject({
+      ok: true,
+      only: 'acceptance',
+      checks: { steps: [] },
+      accepted: [{ said: 'The hero says Hola', ok: true }]
+    });
+  });
+
   it('brings into a copy what a person changed in the project since it was made — never over the task’s own work', async () => {
     await open();
     const home = await take('agent-1', 't-home');

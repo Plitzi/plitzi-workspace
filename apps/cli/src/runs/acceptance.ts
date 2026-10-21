@@ -98,15 +98,17 @@ export const ownServer = async (work: string): Promise<number | undefined> => {
 };
 
 /** The copy served by its own start script on a free port, quietly: what `$PLITZI_URL` names. */
-const serveCopy = async (
+export const serveCopy = async (
   work: string,
   root: string,
-  cache: string
+  cache: string,
+  /** What the agent does once it has put right what kept the copy from being served: `complete` by default. */
+  { again = 'complete again' }: { again?: string } = {}
 ): Promise<{ url: string; port: number; stop: () => void } | { problem: string }> => {
   const running = await ownServer(work);
   if (running !== undefined) {
     return {
-      problem: `a server of your own is running in the copy, on :${String(running)} — stop it, and complete again: complete starts the copy itself, and two servers on one copy fight over its state`
+      problem: `a server of your own is running in the copy, on :${String(running)} — stop it, and ${again}: the copy is served for it, and two servers on one copy fight over its state`
     };
   }
 
@@ -114,7 +116,7 @@ const serveCopy = async (
   const name = ['start', 'start:dev'].find(each => Object.hasOwn(scripts, each));
   const script = name === undefined ? undefined : scripts[name];
   if (!script) {
-    return { problem: 'a check names $PLITZI_URL, and the project has no start script to serve the copy with' };
+    return { problem: 'the project has no start or start:dev script to serve the copy with' };
   }
 
   const port = await freePort();
@@ -152,7 +154,7 @@ const serveCopy = async (
 
     return {
       problem: [
-        `the copy's server did not answer on ${url} within a minute — a server of your own still running in the copy (npm start) is the usual cause: stop it and complete again. What it said (${logFile}):`,
+        `the copy's server did not answer on ${url} within a minute — a server of your own still running in the copy (npm start) is the usual cause: stop it and ${again}. What it said (${logFile}):`,
         ...said
       ].join('\n')
     };

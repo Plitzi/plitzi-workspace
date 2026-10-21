@@ -35,8 +35,19 @@ const documentStatus = (): number => {
  */
 const keptOnce = async (browser: Browser, url: string, view: View): Promise<Taken | { problem: string }> => {
   for (let attempt = 0; ; attempt += 1) {
-    const taken = await pictureOf(browser, url, view);
+    // A picture the browser gave up on (a font that never loaded, a page still busy) is this page's failure, asked
+    // once more — never the end of every page after it: la-velada's original timed one out, and the command crashed.
+    const taken = await pictureOf(browser, url, view).catch(
+      (error: unknown) =>
+        ({
+          problem: `the picture was not taken: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`
+        }) as const
+    );
     if ('problem' in taken) {
+      if (attempt === 0 && taken.problem.startsWith('the picture was not taken')) {
+        continue;
+      }
+
       return taken;
     }
 

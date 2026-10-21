@@ -8,6 +8,7 @@ import { nearLimit } from './text';
 import { MAX_LINES } from '../../lint/rules/fileTooLong';
 import { namesServedCopy } from '../../runs/acceptance';
 import { acceptanceText } from '../../runs/model';
+import { importedApis } from '../../runs/moduleApis';
 import { taskContext } from '../../runs/tasks';
 import { describeData } from '../data';
 
@@ -55,7 +56,9 @@ export const taskContextCommand = (
       const target = await either(ctx, options, taskId);
       const context = await taskContext(ctx, target.runId, target.taskId);
 
-      return options.files ? { ...context, data: await filesOf(ctx.root, context) } : context;
+      return options.files
+        ? { ...context, data: await filesOf(ctx.root, context), imports: await importedApis(ctx.root, context.files) }
+        : context;
     },
     context =>
       [
@@ -69,7 +72,15 @@ export const taskContextCommand = (
                     : []
                   : [chalk.bold(`── ${each.file} (${String(each.text.split('\n').length)} lines)`), each.text.trimEnd()]
               ),
-              ...context.data.flatMap(each => [chalk.bold(`── ${each.file}, its shape`), each.shape])
+              ...context.data.flatMap(each => [chalk.bold(`── ${each.file}, its shape`), each.shape]),
+              ...(context.imports.length > 0
+                ? [
+                    chalk.bold(
+                      '── What these files import from the rest of the project — how each is called, not its body (read the file only for what this does not say):'
+                    ),
+                    ...context.imports.flatMap(each => [each.file, ...each.names.map(name => `  ${name}`)])
+                  ]
+                : [])
             ]
           : [])
       ].join('\n')

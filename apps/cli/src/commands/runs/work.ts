@@ -79,13 +79,13 @@ export const taskNote = (taskId: string | undefined, text: string, options: RunC
     () => 'Noted: whoever takes it next reads it in plitzi task context.'
   );
 
-export const taskCheck = (options: RunCommandOptions): Promise<void> =>
+export const taskCheck = (options: RunCommandOptions & { acceptance?: boolean }): Promise<void> =>
   act(
     options,
     async ctx => {
       const { runId, taskId } = await holder(ctx, options);
 
-      return checkTask(ctx, runId, taskId);
+      return checkTask(ctx, runId, taskId, options.acceptance ? { only: 'acceptance' } : {});
     },
     checked =>
       [
@@ -95,8 +95,19 @@ export const taskCheck = (options: RunCommandOptions): Promise<void> =>
               `Brought into your copy first — approved by the run, or changed in the project, since it was made: ${checked.brought.join(', ')}`
             ]
           : []),
+        ...(checked.only === 'acceptance'
+          ? [
+              chalk.dim(
+                'Its acceptance alone: the project’s checks were not run — plitzi task check runs them all, as complete will'
+              )
+            ]
+          : []),
         checked.ok
-          ? chalk.green('Your copy passes what complete holds it to: complete it when it is done')
+          ? chalk.green(
+              checked.only === 'acceptance'
+                ? 'Its acceptance holds: plitzi task check, then complete'
+                : 'Your copy passes what complete holds it to: complete it when it is done'
+            )
           : chalk.yellow(
               'Your copy does not pass yet — none of your work was changed, and nothing counted against the run:'
             ),

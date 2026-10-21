@@ -1,4 +1,5 @@
-import { launchBrowser, projectOrigin } from '../../browser';
+import { launchBrowser } from '../../browser';
+import { originHere } from '../../runs/copyServer';
 import { projectHere } from '../existingProject';
 import { fail } from '../terminal';
 import { checkAccount } from './account';
@@ -116,54 +117,58 @@ export const checkRoutes = async (
   }
 ): Promise<CheckReport[] | { problem: string }> => {
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
-  const where = await projectOrigin(project.root, plitzi, options.url);
+  const where = await originHere(project.root, plitzi, options.url);
   if ('problem' in where) {
     return where;
   }
 
-  const authored = options.space
-    ? await moduleSpace(options.space)
-    : plitzi?.source === 'local'
-      ? await projectSpace(project.root)
-      : undefined;
-  if (authored && 'problem' in authored) {
-    return authored;
-  }
-
-  const browser = await launchBrowser(project.root);
-  if ('problem' in browser) {
-    return browser;
-  }
-
   try {
-    const reports: CheckReport[] = [];
-    for (const route of routes) {
-      for (const width of options.widths) {
-        const look = () =>
-          checkAt(
-            browser,
-            where.origin,
-            route,
-            width,
-            { ...(options.scheme ? { scheme: options.scheme } : {}), presence: options.presence === true },
-            authored,
-            options.asked,
-            options.ssr,
-            options.account,
-            options.click,
-            options.expect,
-            options.then
-          );
-        const first = await look();
-        const failed = first.flatMap(serverErrors);
-        // Once, and said: a page red for a second of somebody else's outage is not one red for anything of its own.
-        const looked = failed.length > 0 ? (await look()).map(each => ({ ...each, retriedAfter: failed })) : first;
-        reports.push(...looked.map(each => ({ ...each, ...(options.scheme ? { scheme: options.scheme } : {}) })));
-      }
+    const authored = options.space
+      ? await moduleSpace(options.space)
+      : plitzi?.source === 'local'
+        ? await projectSpace(project.root)
+        : undefined;
+    if (authored && 'problem' in authored) {
+      return authored;
     }
 
-    return reports;
+    const browser = await launchBrowser(project.root);
+    if ('problem' in browser) {
+      return browser;
+    }
+
+    try {
+      const reports: CheckReport[] = [];
+      for (const route of routes) {
+        for (const width of options.widths) {
+          const look = () =>
+            checkAt(
+              browser,
+              where.origin,
+              route,
+              width,
+              { ...(options.scheme ? { scheme: options.scheme } : {}), presence: options.presence === true },
+              authored,
+              options.asked,
+              options.ssr,
+              options.account,
+              options.click,
+              options.expect,
+              options.then
+            );
+          const first = await look();
+          const failed = first.flatMap(serverErrors);
+          // Once, and said: a page red for a second of somebody else's outage is not one red for anything of its own.
+          const looked = failed.length > 0 ? (await look()).map(each => ({ ...each, retriedAfter: failed })) : first;
+          reports.push(...looked.map(each => ({ ...each, ...(options.scheme ? { scheme: options.scheme } : {}) })));
+        }
+      }
+
+      return reports;
+    } finally {
+      await browser.close();
+    }
   } finally {
-    await browser.close();
+    where.stop?.();
   }
 };

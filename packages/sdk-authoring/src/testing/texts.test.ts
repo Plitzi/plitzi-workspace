@@ -52,6 +52,16 @@ describe('compareTexts', () => {
     expect(differ.map(entry => entry.differences)).toEqual([['padding 8px 16px → 6px 12px']]);
   });
 
+  // la-velada's copy wrote "Logotipo" where its original draws "LOGOTIPO": one text in other capitals, not two.
+  it('pairs the same words in other capitals, and says their case differs', () => {
+    expect(compareTexts([text('Logotipo')], [text('LOGOTIPO')])).toMatchObject({
+      same: 0,
+      differ: [{ text: 'Logotipo', differences: ['case Logotipo → LOGOTIPO'] }],
+      onlyHere: [],
+      onlyThere: []
+    });
+  });
+
   it('leaves half a pixel of type alone, and lists the words only one page has', () => {
     const comparison = compareTexts(
       [text('Docs', { fontSize: 16.2, lineHeight: '24.3px' }), text('Only here')],
