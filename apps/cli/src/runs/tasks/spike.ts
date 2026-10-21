@@ -1,16 +1,13 @@
-import fs from 'node:fs/promises';
-
-import { LEAD, sendMessage } from '../messages';
+import { isCoLead, requireLead } from '../leads';
+import { agentAddress, LEAD, sendMessage } from '../messages';
 import { dependenciesDone } from '../plan';
 import { RunRefusal } from '../refusal';
-import { assertStatus, loadRun, logRun } from '../run';
+import { assertStatus, loadRun, logRun, requireNoTask } from '../run';
 import { isResearch } from '../spike';
-import { revokeOwner, updateState } from '../taskStore';
+import { updateState, viewTask } from '../taskStore';
 import { isWorked } from '../worked';
 import { at, findTask, holderOf } from './common';
 import { readyWhatWaited, sayIfAllDone, statesOf } from './handOn';
-import { allLocks } from './locks';
-import { holdFiles } from './take';
 
 import type { TaskStatus } from '../model';
 import type { RunContext } from '../run';
@@ -22,27 +19,24 @@ export interface Spiked {
   /** What it set out to find, or found. */
   question: string;
   finding?: Finding;
-  /** Found out, and not built by its agent now — the files another task holds, or what it waits for. */
-  released?: { reason: string };
   /** The tasks its findings made ready: research alone, done. */
   ready?: string[];
+  /** Its agent, told what was found: it goes on building. */
+  told?: string;
 }
 
 /**
- * `plitzi task spike "…"`: the task at work goes back to finding something out — its agent on it, its files still
- * its own. The activity and the monitor say what it is finding out, and it owes the same signs of life.
+ * `plitzi task spike "…"`, by the agent at work: its task needs something found out before it goes on — a lead's to
+ * find, as every spike is (an agent's model is not a lead's). The task waits in spike, its files and its agent its own,
+ * and the lead is asked; the findings come back to the agent with its next command.
  */
 export const startSpike = async (ctx: RunContext, runId: string, taskId: string, question: string): Promise<Spiked> => {
   const loaded = await loadRun(ctx, runId);
-  assertStatus(loaded, ['open', 'stopping'], 'find something out');
+  assertStatus(loaded, ['open', 'stopping'], 'ask for a spike');
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);
   if (view.state.status === 'spike') {
-    throw new RunRefusal(
-      'invalid',
-      `Task "${taskId}" is in spike already: say what you found (plitzi task spike --done "…")`,
-      { task: taskId }
-    );
+    throw new RunRefusal('invalid', `Task "${taskId}" is in spike already: a lead finds it out`, { task: taskId });
   }
 
   if (!isWorked(view.state.status)) {
@@ -62,49 +56,70 @@ export const startSpike = async (ctx: RunContext, runId: string, taskId: string,
     }),
     ctx.now
   );
+  await sendMessage(ctx, loaded, {
+    from: taskId,
+    to: LEAD,
+    text: `${taskId} needs a spike before it goes on: ${question} — find it out and say it: plitzi task spike ${taskId} --done "…"`
+  });
   await logRun(ctx, loaded.paths, { action: 'spike', task: taskId, question });
 
   return { task: taskId, status: 'spike', question };
 };
 
 /**
- * `plitzi task spike --done "…"`: what its agent found, kept with the task — in its brief and in that of every task
- * that waits for it. Research alone is done by it, and the lead told. A task that builds goes on to be built by the
- * same agent, its files held now; one whose dependencies are not done, or whose files another task holds, waits with
- * its findings, its agent free for another.
+ * `plitzi task spike <task> --done "…"`, by a lead: what it found out, kept with the task — in its brief and in that of
+ * every task that waits for it. Research alone is done by it. A task an agent moved back goes on with that agent, told;
+ * one no agent holds is ready to be built — or pending, while what it waits for is not done.
  */
 export const answerSpike = async (ctx: RunContext, runId: string, taskId: string, text: string): Promise<Spiked> => {
+  requireNoTask(ctx, 'say what a spike found');
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'say what a spike found');
+  if (!isCoLead(loaded.record, ctx.agent)) {
+    await requireLead(ctx, loaded, 'say what a spike found — a spike is a lead’s');
+  }
+
   const task = findTask(loaded, taskId);
-  const view = await holderOf(ctx, loaded, task);
+  const view = await viewTask(loaded.paths, task);
   if (view.state.status !== 'spike') {
-    throw new RunRefusal(
-      'invalid',
-      `Task "${taskId}" is ${view.state.status}, not in spike: to find something out first, plitzi task spike "what"`,
-      { task: taskId }
-    );
+    throw new RunRefusal('invalid', `Task "${taskId}" is ${view.state.status}, not in spike`, { task: taskId });
   }
 
   const question = view.state.spiking ?? task.spike ?? 'what it needed';
   const finding: Finding = { at: at(ctx), by: ctx.agent, question, text };
-  const keep = (status: TaskStatus, said: string) =>
-    updateState(
-      view.paths,
-      state => ({
-        ...state,
-        status,
-        spiking: undefined,
-        findings: [...(state.findings ?? []), finding],
-        notes: [...state.notes, { at: at(ctx), by: ctx.agent, text: said }]
-      }),
-      ctx.now
-    );
-  const logged = (status: TaskStatus) =>
-    logRun(ctx, loaded.paths, { action: 'spike-done', task: taskId, question, status });
+  const states = await statesOf(loaded);
+  const holder = view.owner?.agent;
+  const status: TaskStatus = isResearch(task)
+    ? 'done'
+    : holder
+      ? view.state.round > 0
+        ? 'changes-requested'
+        : 'in-progress'
+      : dependenciesDone(task, states)
+        ? 'ready'
+        : 'pending';
+  await updateState(
+    view.paths,
+    state => ({
+      ...state,
+      status,
+      spiking: undefined,
+      findings: [...(state.findings ?? []), finding],
+      notes: [...state.notes, { at: at(ctx), by: ctx.agent, text: `Found: ${text}` }]
+    }),
+    ctx.now
+  );
+  await logRun(ctx, loaded.paths, { action: 'spike-done', task: taskId, question, status });
+  if (holder) {
+    await sendMessage(ctx, loaded, {
+      from: LEAD,
+      to: agentAddress(holder),
+      text: `${taskId}'s spike is answered — ${question}: ${text}. Go on building it.`
+    });
+  }
 
-  if (isResearch(task)) {
-    await keep('done', `Found: ${text}`);
+  // Said by a lead that reviews, not by the lead: the lead hears what was found.
+  if (ctx.agent !== LEAD) {
     await sendMessage(ctx, loaded, {
       from: ctx.agent,
       to: LEAD,
@@ -112,49 +127,23 @@ export const answerSpike = async (ctx: RunContext, runId: string, taskId: string
       fyi: true,
       about: taskId
     });
-    await logged('done');
-    const ready = await readyWhatWaited(ctx, await loadRun(ctx, runId));
-    if (ready.length > 0) {
-      await logRun(ctx, loaded.paths, { action: 'handed-on', task: taskId, granted: [], ready });
-    }
+  }
 
+  const ready = status === 'done' ? await readyWhatWaited(ctx, await loadRun(ctx, runId)) : [];
+  if (ready.length > 0) {
+    await logRun(ctx, loaded.paths, { action: 'handed-on', task: taskId, granted: [], ready });
+  }
+
+  if (status === 'done') {
     await sayIfAllDone(ctx, runId);
-
-    return { task: taskId, status: 'done', question, finding, ready };
   }
 
-  // Back from a spike it was moved to, its files are its own still; one that began in spike holds them now.
-  const states = await statesOf(loaded);
-  const held = await fs.readdir(view.paths.locks).then(
-    files => files.length > 0,
-    () => false
-  );
-  const locks = await allLocks(ctx);
-  const taken = task.files.flatMap(file => {
-    const other = (locks.get(file) ?? []).find(each => each.live && !(each.run === runId && each.task === taskId));
-
-    return other ? [`${file} (${other.task}'s)`] : [];
-  });
-  const waitsFor = task.dependsOn.filter(id => states.get(id)?.status !== 'done');
-  if (held || (waitsFor.length === 0 && taken.length === 0)) {
-    if (!held) {
-      await holdFiles(ctx, runId, view, task);
-    }
-
-    const status: TaskStatus = view.state.round > 0 ? 'changes-requested' : 'in-progress';
-    await keep(status, `Found: ${text}`);
-    await logged(status);
-
-    return { task: taskId, status, question, finding };
-  }
-
-  // Found out, not to be built now: the findings stay with the task, the agent goes to another.
-  const reason =
-    waitsFor.length > 0 ? `it waits for ${waitsFor.join(', ')}` : `its files are another task's: ${taken.join(', ')}`;
-  await revokeOwner(view.paths);
-  const status: TaskStatus = dependenciesDone(task, states) ? 'ready' : 'pending';
-  await keep(status, `Found: ${text} — not built now: ${reason}; whoever takes it reads this`);
-  await logged(status);
-
-  return { task: taskId, status, question, finding, released: { reason } };
+  return {
+    task: taskId,
+    status,
+    question,
+    finding,
+    ...(ready.length > 0 ? { ready } : {}),
+    ...(holder ? { told: holder } : {})
+  };
 };

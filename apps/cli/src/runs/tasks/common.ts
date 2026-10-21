@@ -5,7 +5,8 @@ import { entryOf } from '../model';
 import { projectPath, under } from '../paths';
 import { RunRefusal } from '../refusal';
 import { readApproved } from '../run';
-import { placeVersion, putBlob } from '../store';
+import { mergeLines } from '../merge3';
+import { getBlob, placeVersion, putBlob } from '../store';
 import { isDisconnected, readStart, revokedTokens, tokenPrint, viewTask } from '../taskStore';
 
 import type { ApprovedManifest, RunTask, TaskStart } from '../model';
@@ -104,6 +105,43 @@ export const currentVersion = async (
 };
 
 /**
+ * A shared file the task changed, and the run changed since the copy was made: both changes put together in the copy,
+ * line by line, from where the copy started — when they meet nowhere. Answers whether it did; a clash is left for
+ * `complete` to say.
+ */
+const mergedInCopy = async (
+  ctx: RunContext,
+  loaded: LoadedRun,
+  approved: ApprovedManifest,
+  view: TaskView,
+  file: string,
+  startedFrom: string | null
+): Promise<boolean> => {
+  const current = await currentVersion(ctx, approved, file);
+  if (startedFrom === null || current.digest === null || current.digest === startedFrom) {
+    return false;
+  }
+
+  const base = await getBlob(loaded.paths, startedFrom).catch(() => undefined);
+  const ours = await readOptional(under(view.paths.work, file));
+  const theirs = current.fromProject
+    ? await readOptional(under(ctx.root, file))
+    : await getBlob(loaded.paths, current.digest).catch(() => undefined);
+  if (!base || !ours || !theirs || [base, ours, theirs].some(bytes => bytes.includes(0))) {
+    return false;
+  }
+
+  const merged = mergeLines(base.toString('utf-8'), ours.toString('utf-8'), theirs.toString('utf-8'));
+  if (!merged.ok) {
+    return false;
+  }
+
+  await fs.writeFile(under(view.paths.work, file), merged.text);
+
+  return true;
+};
+
+/**
  * Brings a task's copy up to the run: every file the run approved since the copy was made — or that `file` names — put
  * in, unless the task changed it itself; and a file of the project a person changed since, that no task's approval
  * holds and this task does not own (la-velada: the data formatted mid-run failed every older copy's checks, and braked
@@ -143,8 +181,15 @@ export const refreshCopy = async (
   for (const each of candidates) {
     const inCopy = await fingerprint(under(view.paths.work, each));
     const startedFrom = files[each] ?? null;
-    // The task's own change stays: only what it did not touch is brought, and `file` when it is asked for by name.
+    // The task's own change stays: only what it did not touch is brought, and `file` when it is asked for by name — but a
+    // shared file both it and the run changed is put together line by line now, as `complete` will: its checks run on
+    // what is merged (velada-dress: t-sponsors' theme.ts lacked the run's new token, and author failed in its copy).
     if (each !== file && inCopy !== startedFrom) {
+      if (!own.has(each) && (await mergedInCopy(ctx, loaded, approved, view, each, startedFrom))) {
+        files[each] = (await currentVersion(ctx, approved, each)).digest;
+        brought.push(each);
+      }
+
       continue;
     }
 

@@ -256,6 +256,14 @@ files import; `light` for ten minutes on one file; `standard` the rest. An agent
 stronger one. The strongest model works only what is worth it (la-velada: the designer, on the harness's own model for
 every task, spent the most).
 
+**Agents on demand** (`onDemand.ts`): a group's `min` (1 to its `count`) is how many start with the run; the rest are
+on demand (`StartedAgent.onDemand`). `run plan` says to start only the first; `run watch --until lead` tells the lead,
+role by role, when work waits — a task of its role ready, a spike nobody took, a UI review no designer is free for —
+and no running agent of it is free (`agents-needed`), naming the next one to start and its command; and an agent on
+demand that waits `ON_DEMAND_IDLE_MS` with nothing for it, and no task of its own that may come back, stops by itself,
+said in the activity — the lead starts it again when work waits. Running is read off the log (`runningAgents`): an
+agent that said something and has not stopped since. The monitor shows one not running as on demand, not as idle.
+
 ## The tester's tasks (`tests.ts`)
 
 A tester in the team gives every developer task a task of its tests, `<id>-tests`, a tester's, after it: tests written
@@ -387,29 +395,35 @@ exclusively (`wx`). Every write is a temp file renamed over the target, retried 
 version is a blob named by its fingerprint and a manifest names it, so the manifest is the one commit point: a cut leaves
 an unnamed blob, never a named half-written file.
 
-## A spike: research in the run (`spike.ts`, `tasks/spike.ts`)
+## A spike: research in the run, a lead's (`spike.ts`, `tasks/spike.ts`)
 
-Research — what the lead read before writing the plan, what an agent looks up before it builds — is work of the run,
-seen by the monitor, counted by the report, shared out among the agents: a **spike**. A task's `"spike": "what to find
-out"` starts it in `spike`, ahead of `ready` (ready is ready to build): it is offered and taken while what it waits for is
-still being built — finding out is reading — and its files are not held until it is built. Its agent reads, compares
-(`page shot --compare <original> --dress`), measures, writes nothing of the task's, and says what it found:
-`task spike --done "…"`. The findings (`TaskState.findings`) stay with the task, in its brief and in the brief of every
-task that waits for it. Then:
+Research — what the lead read before writing the plan, what an agent at work needs looked up — is work of the run, seen
+by the monitor and counted by the report: a **spike**. It decides what is built, so it is a lead's: the lead, or a lead
+that reviews, never an agent of the team (whose model is not a lead's). A task's `"spike": "what to find out"` starts
+it in `spike`, ahead of `ready` (ready is ready to build), whether or not what it waits for is done — finding out is
+reading. No agent is offered it or takes it (`take` refuses one); `run watch --until lead` says each spike waiting
+(`spikes`), and `task next --role lead` hands a lead that reviews the most urgent one no other lead took (`spikedBy`)
+when no review waits for it. The lead finds out — `page shot --compare <original> --dress`, the original's computed
+styles — and says it: `task spike <task> --done "…"`. The findings (`TaskState.findings`) stay with the task, in its
+brief and in the brief of every task that waits for it. Then:
 
-- **Research alone** — a spike and no files — is done by its findings: the lead is told (`about` the task), what waits for
-  it is made ready (`readyWhatWaited`), no review. Its acceptance is in words — what the findings answer — as a command
-  would run at a `complete` it never reaches (`run plan` refuses one).
-- **A task that builds** goes on to be built by the same agent, its files held now (`holdFiles`); one whose
-  dependencies are not done, or whose files another task holds, goes back to `pending` / `ready` with its findings, its
-  agent free for another (`released`).
+- **Research alone** — a spike and no files — is done by its findings: what waits for it is made ready
+  (`readyWhatWaited`), no review. Its acceptance is in words, as a command would run at a `complete` it never reaches
+  (`run plan` refuses one).
+- **A task no agent holds** is ready to be built — or pending while what it waits for is not done.
+- **A task an agent moved back** — `task spike "what"`, from its copy, when its work needs something found out — goes
+  on with that agent, told (`told`): it kept its files and its token throughout, and the lead was asked.
 
-An agent at work that finds it must look something up moves its task back: `task spike "what"` (`spiking`), its files
-its own throughout, and `--done` takes it on to be built. A task in spike counts as worked (`worked.ts`): it owes signs
-of life, counts toward the agents at work, and holds an agent that asks the lead. The lead's own research before a plan
-is the run's first spike: a plan of research alone — every page against the original, split among the agents — whose
-findings it turns into the work with `run extend`. `run rehearse` plays research alone without a review. The monitor
-gives spikes a column of their own (`◇ spike`) once the run has one, and the dev tools' Run tab a group (Finding out).
+A task in spike that an agent holds counts as worked (`worked.ts`): it owes signs of life and counts toward the agents at
+work. A task cut in spike stays one. The lead's own research before a plan is the run's first spike: a plan of research
+alone, whose findings it turns into the work with `run extend`. `run rehearse` plays research alone without a review.
+The monitor gives spikes a column of their own (`◇ spike`) once the run has one, and the dev tools' Run tab a group
+(Finding out).
+
+**Who is still there** (`presence.ts`): a wait is said once in the log, so the log alone cannot tell a live agent from
+one its harness stopped. Each `task next`, and each turn of its `--follow`, marks the agent present in its scratch; an
+agent between tasks with no mark for `PRESENCE_STALE_MS` shows in the monitor as `no-signal`, with the command that
+starts it again.
 
 ## A task's life (`tasks/`)
 

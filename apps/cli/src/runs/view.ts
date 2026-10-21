@@ -7,9 +7,10 @@ import { fingerprint } from './files';
 import { askingLeads } from './leads';
 import { longFileText, longFilesIn } from './longFiles';
 import { LEAD, messagesOf, unreadFor } from './messages';
+import { agentsNeeded, runningAgents } from './onDemand';
 import { under } from './paths';
 import { previewPort } from './previewRecord';
-import { loadRun, pinnedChanges, pinnedNow, readApproved, readBase, runIds, samePinned } from './run';
+import { loadRun, pinnedChanges, pinnedNow, readApproved, readBase, readRunLog, runIds, samePinned } from './run';
 import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
@@ -75,6 +76,8 @@ export interface TaskLine {
   spike?: string;
   /** How many findings its spikes left: a task the run researched. */
   found?: number;
+  /** In spike: the lead finding it out, once one took it. */
+  spikedBy?: string;
   /** At work, held on a question its agent asked the lead and nobody answered: which, in a line. */
   asking?: { id: string; text: string };
 }
@@ -99,6 +102,8 @@ export interface Attention {
     | 'ui-waits'
     | 'held-up'
     | 'slow-review'
+    | 'agents-needed'
+    | 'spikes'
     | 'message';
   task?: string;
   /** The file it is about, when it is about one: what keeps it the same notice while its words change. */
@@ -170,7 +175,8 @@ const lineOf = (view: TaskView, now: Date, unblocks: string[], urgency: Priority
   unblocks,
   ...(view.task.milestone ? { milestone: view.task.milestone } : {}),
   ...(view.state.status === 'spike' ? { spike: view.state.spiking ?? view.task.spike ?? 'what it needs' } : {}),
-  ...(view.state.findings && view.state.findings.length > 0 ? { found: view.state.findings.length } : {})
+  ...(view.state.findings && view.state.findings.length > 0 ? { found: view.state.findings.length } : {}),
+  ...(view.state.status === 'spike' && view.state.spikedBy ? { spikedBy: view.state.spikedBy.by } : {})
 });
 
 export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> => {
@@ -212,7 +218,10 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   }
 
   const team = await readTeam(ctx.root).catch(() => undefined);
-  attention.push(...bottlenecks(views, team ? startedAgents(team) : [], now));
+  const started = team ? startedAgents(team) : [];
+  attention.push(...bottlenecks(views, started, now));
+  // Agents on demand: told to the lead when work waits for one and none running is free.
+  attention.push(...agentsNeeded(views, started, runningAgents(await readRunLog(loaded.paths))));
 
   for (const file of await leftInTmp(ctx.root, record)) {
     attention.push({

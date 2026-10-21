@@ -24,12 +24,28 @@ interface Stage {
  * A task as its card names it: a task sent back by a review is ready again for the agent that wrote it, marked by the
  * round it is at — `t-boxer ↺2` — rather than in a stage of its own: it goes round the same steps again.
  */
-const nameOf = (task: TaskLine): string => {
-  const mark = urgencyMark(task).trim();
-  const id = mark ? `${mark}${task.id}` : task.id;
+const nameOf = (task: TaskLine): string =>
+  task.status === 'changes-requested' ? `${task.id} ↺${String(task.round)}` : task.id;
 
-  return task.status === 'changes-requested' ? `${id} ↺${String(task.round)}` : id;
+/** Its urgency, toned and apart from its name — `‼` red, `!` yellow — so it never reads as part of the id. */
+const markOf = (task: TaskLine): { text: string; width: number } => {
+  const mark = urgencyMark(task).trim();
+  if (!mark) {
+    return { text: '', width: 0 };
+  }
+
+  return { text: `${task.urgency === 'critical' ? chalk.red(mark) : chalk.yellow(mark)} `, width: mark.length + 1 };
 };
+
+/**
+ * Who a card is with: its agent, the lead at its spike, the designer or lead at its review — what puts it at the top
+ * of its stage, the ones nobody is on below (velada-dress: a stage's cards under its scroll were the ones being worked).
+ */
+const withSomeone = (task: TaskLine): boolean =>
+  task.agent !== undefined ||
+  task.spikedBy !== undefined ||
+  task.reviewer !== undefined ||
+  task.design?.by !== undefined;
 
 /** Where a task another waits for stands, in a word or two: what the one waiting for it waits on. */
 const standingOf = (task: TaskLine): string =>
@@ -67,7 +83,8 @@ const waitedFor = (task: TaskLine, tasks: readonly TaskLine[]): TaskLine[] => {
 
 /** Where every task stands, stage by stage: from to-do to approved, and what holds an agent back. */
 const stagesOf = (tasks: readonly TaskLine[]): Stage[] => {
-  const of = (status: TaskLine['status']) => tasks.filter(task => task.status === status);
+  const of = (status: TaskLine['status']) =>
+    tasks.filter(task => task.status === status).sort((a, b) => Number(withSomeone(b)) - Number(withSomeone(a)));
 
   return [
     // In the flow's narrow column, only whom it waits for: where each of them stands is the column it is in.
@@ -89,7 +106,8 @@ const stagesOf = (tasks: readonly TaskLine[]): Stage[] => {
             name: '◇ spike',
             tone: chalk.blue,
             tasks: of('spike').filter(task => !task.asking),
-            who: (task: TaskLine) => task.agent ?? 'free'
+            // Never "free": no agent takes a spike — the lead at it, or one is waited for.
+            who: (task: TaskLine) => task.agent ?? task.spikedBy ?? 'for a lead'
           }
         ]
       : []),
@@ -200,10 +218,12 @@ export const flowBoard = (
 
           // A name longer than its column cut in the middle, as the tasks' list cuts one: its ends tell it apart.
           const name = task ? nameOf(task) : undefined;
-          const id = name && name.length > stageWidth ? idCell(name, stageWidth).trimEnd() : name;
+          const mark = task ? markOf(task) : { text: '', width: 0 };
+          const room = stageWidth - mark.width;
+          const id = name && name.length > room ? idCell(name, room).trimEnd() : name;
           const who = task && stage.who ? stage.who(task) : '';
 
-          return task && id ? fit(`${stage.tone(id)}${who ? chalk.dim(` ${who}`) : ''}`) : fit('');
+          return task && id ? fit(`${mark.text}${stage.tone(id)}${who ? chalk.dim(` ${who}`) : ''}`) : fit('');
         }),
         '    '
       )
@@ -246,7 +266,7 @@ export const flowBoard = (
       cell(
         chalk.bold('FLOW') +
           chalk.dim(
-            '  each task left to right, from to-do to approved · ↺2 sent back, ready again for its agent at round 2 · the wheel scrolls a stage · f hides it'
+            '  each task left to right, from to-do to approved · ↺2 sent back, ready again for its agent at round 2 · ‼ ! urgent: critical, high · the wheel scrolls a stage · f hides it'
           ),
         width
       ),

@@ -105,13 +105,18 @@ export const registerRunGroup = (program: Command): Command => {
       names
     )
     .option('--count <n>', 'How many agents of it', positiveInteger)
+    .option(
+      '--min <n>',
+      'How many of them start with the run: the rest are on demand — started when work waits, stopped when none is left',
+      positiveInteger
+    )
     .option('--model <model>', 'The harness’s own name for it: claude-sonnet-5-5')
     .option('--effort <effort>', 'How hard it thinks, in the harness’s words: high')
     .option(...JSON_OPTION)
     .action(
       (
         name: string,
-        options: RunCommandOptions & { roles?: string[]; count?: number; model?: string; effort?: string }
+        options: RunCommandOptions & { roles?: string[]; count?: number; min?: number; model?: string; effort?: string }
       ) => runTeamSet(name, options)
     );
 

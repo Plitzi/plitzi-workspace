@@ -46,7 +46,8 @@ describe('a comparison with another site, said', () => {
             '::before border rgb(199, 168, 107) ×4'
           ],
           extra: [],
-          absent: []
+          absent: [],
+          absentLayers: []
         }
       ]
     }).map(line => stripVTControlCharacters(line));
@@ -67,7 +68,8 @@ describe('a comparison with another site, said', () => {
           there: { gradient: 12, glow: 2 },
           missing: [],
           extra: [],
-          absent: ['radial-gradient across the section (radial-gradient rgba(199, 168, 107, 0.16))']
+          absent: ['radial-gradient across the section (radial-gradient rgba(199, 168, 107, 0.16))'],
+          absentLayers: []
         },
         {
           section: 'section#home-sponsors',
@@ -75,7 +77,8 @@ describe('a comparison with another site, said', () => {
           there: { gradient: 1 },
           missing: [],
           extra: [],
-          absent: []
+          absent: [],
+          absentLayers: []
         }
       ])
     ).toEqual([

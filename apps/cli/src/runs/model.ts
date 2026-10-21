@@ -324,6 +324,8 @@ export interface TaskState {
   findings?: Finding[];
   /** In `spike` at its agent's say (`task spike "…"`): what it set out to find. */
   spiking?: string;
+  /** The lead finding it out, once one took it (`task next --role lead --take`): another is not offered it. */
+  spikedBy?: { by: string; at: string };
   updatedAt: string;
 }
 
@@ -602,6 +604,7 @@ export const isTaskState = (value: unknown): value is TaskState =>
   value.notes.every(isNote) &&
   optional(value.findings, (findings: unknown) => Array.isArray(findings) && findings.every(isFinding)) &&
   optional(value.spiking, isString) &&
+  optional(value.spikedBy, (by: unknown) => isRecord(by) && isString(by.by) && isString(by.at)) &&
   optional(value.changed, isStrings) &&
   optional(value.submitted, isDigests) &&
   optional(

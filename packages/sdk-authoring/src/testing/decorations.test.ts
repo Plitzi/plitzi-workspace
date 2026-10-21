@@ -15,6 +15,8 @@ const layer = (kind: PageDecoration['kind'], detail: string, y = 100): PageDecor
   kind,
   detail,
   on: 'element',
+  element: 'div.card',
+  css: `css of ${detail}`,
   x: 100,
   y,
   width: 200,
@@ -57,6 +59,40 @@ describe('pageDecorations, as a person reads them', () => {
   });
 });
 
+describe('pageDecorations, of what is drawn', () => {
+  it('reads no ornament of a pseudo-element with no size — a hover underline at rest', () => {
+    document.body.innerHTML = '<a>Link</a>';
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue(DOMRect.fromRect({ width: 100, height: 20 }));
+    const real = window.getComputedStyle.bind(window);
+    vi.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudo) => {
+      const style = real(element);
+      if (pseudo !== '::after') {
+        return style;
+      }
+
+      const drawn: Record<string, unknown> = {
+        content: '""',
+        display: 'block',
+        width: '0px',
+        height: '1px',
+        backgroundColor: 'rgb(169, 112, 255)',
+        backgroundImage: 'none',
+        boxShadow: 'none',
+        textShadow: 'none',
+        filter: 'none',
+        borderTopColor: 'rgb(0, 0, 0)',
+        getPropertyValue: () => '0px'
+      };
+
+      return new Proxy(style, {
+        get: (target, key): unknown => (typeof key === 'string' && key in drawn ? drawn[key] : Reflect.get(target, key))
+      });
+    });
+
+    expect(pageDecorations(10).filter(each => each.kind === 'ornament')).toEqual([]);
+  });
+});
+
 describe('compareDecorations', () => {
   it('says, section by section, the dress the other page has and this one lacks — and what this one adds', () => {
     const regions = [region('header#site-header', 0, 80), region('section#artist-page', 80, 900)];
@@ -84,6 +120,11 @@ describe('compareDecorations', () => {
         absent: [
           'radial-gradient (radial-gradient rgba(199, 168, 107, 0.2))',
           'box-shadow (box-shadow 60px rgba(199, 168, 107, 0.25))'
+        ],
+        absentLayers: [
+          expect.objectContaining({ css: 'css of radial-gradient rgba(199, 168, 107, 0.2)', element: 'div.card' }),
+          expect.objectContaining({ y: 300 }),
+          expect.objectContaining({ css: 'css of box-shadow 60px rgba(199, 168, 107, 0.25)' })
         ]
       }
     ]);

@@ -37,8 +37,6 @@ export interface TakenTask {
   proposals: ProposalView[];
   /** What the lead said to it and it had not read. */
   messages: Message[];
-  /** Taken in `spike`: what to find out first — then `task spike --done`, and only then is it built. */
-  spike?: string;
 }
 
 /**
@@ -77,9 +75,16 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
     throw new RunRefusal('invalid', `Task "${taskId}" is in review: take another (plitzi task next)`, { task: taskId });
   }
 
-  // Finding out is reading: a spike is taken while what the task builds on is still being built.
-  const spiking = view.state.status === 'spike';
-  if (!spiking && !dependenciesDone(task, states)) {
+  // A spike is a lead's: what is built is decided by what a lead finds out, never by the agent that builds it.
+  if (view.state.status === 'spike') {
+    throw new RunRefusal(
+      'invalid',
+      `Task "${taskId}" is in spike: a lead finds out first (${view.state.spiking ?? task.spike ?? 'what it needs'}) — take another (plitzi task next)`,
+      { task: taskId }
+    );
+  }
+
+  if (!dependenciesDone(task, states)) {
     const pending = task.dependsOn.filter(dependency => states.get(dependency)?.status !== 'done');
     throw new RunRefusal('invalid', `Task "${taskId}" waits for ${pending.join(', ')} to be done`, {
       task: taskId,
@@ -156,8 +161,7 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
 
   try {
     const locks = await allLocks(ctx);
-    // A spike writes nothing: its files are held once it is built (`task spike --done`), not while it finds out.
-    for (const file of spiking ? [] : task.files) {
+    for (const file of task.files) {
       const other = (locks.get(file) ?? []).find(held => held.live && !(held.run === runId && held.task === taskId));
       if (other) {
         throw new RunRefusal(
@@ -168,9 +172,7 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
       }
     }
 
-    if (!spiking) {
-      await holdFiles(ctx, runId, view, task);
-    }
+    await holdFiles(ctx, runId, view, task);
 
     // Its files and the shared ones as the project holds them now, kept: the base of every conflict this task can meet,
     // and of the diff of every request it makes.
@@ -228,7 +230,7 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
   } catch (error) {
     await fs.rm(view.paths.locks, { recursive: true, force: true });
     await revokeOwner(view.paths);
-    await updateState(view.paths, state => ({ ...state, status: spiking ? 'spike' : 'ready' }), ctx.now);
+    await updateState(view.paths, state => ({ ...state, status: 'ready' }), ctx.now);
     throw error;
   }
 
@@ -243,14 +245,12 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
     ...(view.reviewed ? { resumedFrom: view.reviewed.round } : {}),
     ...(replaced ? { replaced } : {}),
     proposals: unansweredTo(await proposalsOf(loaded), taskId),
-    messages: await unreadForHolder(loaded, taskId, ctx.agent, true),
-    ...(spiking ? { spike: view.state.spiking ?? task.spike ?? 'what it needs' } : {})
+    messages: await unreadForHolder(loaded, taskId, ctx.agent, true)
   };
 };
 
-/** The status a take leaves a task in: sent back stays sent back, a spike stays one, anything else is at work. */
-const takenStatus = (status: TaskStatus): TaskStatus =>
-  status === 'changes-requested' || status === 'spike' ? status : 'in-progress';
+/** The status a take leaves a task in: sent back stays sent back, anything else is at work. */
+const takenStatus = (status: TaskStatus): TaskStatus => (status === 'changes-requested' ? status : 'in-progress');
 
 /** Its own files held for it: what a task building them takes — at its take, or once its spike is answered. */
 export const holdFiles = async (ctx: RunContext, runId: string, view: TaskView, task: RunTask): Promise<void> => {

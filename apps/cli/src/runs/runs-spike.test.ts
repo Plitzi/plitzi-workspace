@@ -1,11 +1,15 @@
+import { stripVTControlCharacters } from 'node:util';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { messagesOf } from './messages';
+import { monitorRun } from './monitor';
 import { readOwnership } from './ownership';
 import { checkPlan } from './plan';
-import { loadRun } from './run';
-import { answerSpike, completeTask, nextTask, startSpike, taskContext } from './tasks';
+import { loadRun, openRun } from './run';
+import { answerSpike, nextTask, startSpike, takeNext, taskContext } from './tasks';
 import { viewRun } from './view';
+import { flowLines } from '../commands/runs/monitorFlow';
 import { benchPlan, makeBench, teamFor } from '../tests/runProject';
 import { refusal, runSteps } from '../tests/runSteps';
 
@@ -47,24 +51,19 @@ const spikedPlan = (): RunPlan => {
 };
 
 // The lead's research before a plan, and an agent's before it builds, were done outside the run: unseen by the monitor,
-// uncounted, never shared out. A spike is that research in the run.
-describe('a spike: finding out, in the run', () => {
-  it('is taken while what it waits for is still being built — and its findings wait with it', async () => {
+// uncounted, never shared out. A spike is that research in the run — a lead's, as an agent's model is not a lead's.
+describe('a spike: finding out, in the run, a lead’s', () => {
+  it('is no agent’s to take: a lead finds out, and the task is ready to be built — or waits, its findings with it', async () => {
     await open(spikedPlan());
     expect(await statusOf('t-book')).toBe('spike');
-
-    // Finding out waits for nothing: taken though t-home and t-menu are not done, none of its files held.
-    const book = await take('agent-1', 't-book');
-    expect(book.spike).toBe('which words the original uses for a booking');
-    expect(await statusOf('t-book')).toBe('spike');
-    expect(await refusal(completeTask(book.ctx, 'es-launch', 't-book'))).toMatchObject({
-      message: expect.stringContaining('say what you found first') as unknown
+    expect(await refusal(take('agent-1', 't-book'))).toMatchObject({
+      message: expect.stringContaining('is in spike: a lead finds out first') as unknown
     });
+    expect((await nextTask(bench.agent('agent-1'), 'es-launch')).task?.id).not.toBe('t-book');
 
-    // Found out, and not to be built yet: kept, its agent free.
-    const found = await answerSpike(book.ctx, 'es-launch', 't-book', 'They say "Reservar mesa", never "Reserva"');
-    expect(found).toMatchObject({ status: 'pending', released: { reason: 'it waits for t-home, t-menu' } });
-    expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-book')?.agent).toBeUndefined();
+    // Found out while what it waits for is still being built: pending, its findings kept.
+    const found = await answerSpike(lead(), 'es-launch', 't-book', 'They say "Reservar mesa", never "Reserva"');
+    expect(found).toMatchObject({ status: 'pending' });
 
     await doTask('agent-2', 't-home', 'src/space/pages/home/index.ts', 'export const home = { es: true };\n');
     await doTask('agent-3', 't-menu', 'src/space/pages/menu.ts', 'export const menu = { es: true };\n');
@@ -72,48 +71,78 @@ describe('a spike: finding out, in the run', () => {
 
     // Whoever builds it reads what was found.
     const builder = await take('agent-4', 't-book');
-    expect(builder.spike).toBeUndefined();
     expect((await taskContext(builder.ctx, 'es-launch', 't-book')).state.findings).toEqual([
       expect.objectContaining({
-        by: 'agent-1',
+        by: 'lead',
         question: 'which words the original uses for a booking',
         text: 'They say "Reservar mesa", never "Reserva"'
       })
     ]);
   });
 
-  it('ends research alone by its findings: the lead told, what waits for it ready, reading them', async () => {
+  it('ends research alone by its findings, what waits for it ready, reading them — and refuses an agent’s', async () => {
     await open(spikedPlan());
     expect(await statusOf('t-about')).toBe('pending');
+    expect(await refusal(answerSpike(bench.agent('agent-1'), 'es-launch', 's-survey', 'mine'))).toMatchObject({
+      code: 'lead-only'
+    });
 
-    const survey = await take('agent-1', 's-survey');
     expect(
-      await answerSpike(survey.ctx, 'es-launch', 's-survey', 'The original has a team grid; ours lacks it')
-    ).toMatchObject({ status: 'done', ready: ['t-about'] });
-
-    const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(message => message.about === 's-survey');
-    expect(told).toMatchObject({ to: 'lead', fyi: true, text: expect.stringContaining('team grid') as unknown });
+      await answerSpike(lead(), 'es-launch', 's-survey', 'The original has a team grid; ours lacks it')
+    ).toMatchObject({
+      status: 'done',
+      ready: ['t-about']
+    });
     const about = await take('agent-2', 't-about');
     expect(
       (await taskContext(about.ctx, 'es-launch', 't-about')).related.find(each => each.task === 's-survey')?.findings
     ).toEqual([expect.objectContaining({ text: 'The original has a team grid; ours lacks it' })]);
   });
 
-  it('takes a task at work back to finding out, and on to building it, its files its own throughout', async () => {
+  it('takes a task at work back to a spike the lead answers — its agent and files its own throughout', async () => {
     await open();
     const home = await take('agent-1', 't-home');
     await startSpike(home.ctx, 'es-launch', 't-home', 'how the original greets a visitor');
     expect(await statusOf('t-home')).toBe('spike');
-    expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-home')?.spike).toBe(
-      'how the original greets a visitor'
+    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
+      expect.objectContaining({
+        kind: 'spikes',
+        text: expect.stringContaining('t-home (how the original greets a visitor, agent-1 waits)') as unknown
+      })
     );
-    // Still its agent's: nobody else is offered it.
-    expect((await nextTask(bench.agent('agent-2'), 'es-launch')).task?.id).not.toBe('t-home');
+    const asked = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(message => message.from === 't-home');
+    expect(asked?.text).toContain('needs a spike');
 
-    expect(await answerSpike(home.ctx, 'es-launch', 't-home', '"¡Bienvenidos!", in the hero')).toMatchObject({
-      status: 'in-progress'
+    expect(await answerSpike(lead(), 'es-launch', 't-home', '"¡Bienvenidos!", in the hero')).toMatchObject({
+      status: 'in-progress',
+      told: 'agent-1'
     });
     expect((await taskContext(home.ctx, 'es-launch', 't-home')).state.findings).toHaveLength(1);
+  });
+
+  it('hands a lead that reviews a spike when no review waits — once, the other lead not offered it', async () => {
+    const plan = { ...spikedPlan(), designReview: false };
+    const file = await bench.writePlan(plan);
+    await bench.writeTeam({ ...teamFor(plan, 4), lead: { count: 3 } });
+    await openRun(lead(), file);
+    const offered = await takeNext(bench.agent('lead-2'), 'es-launch', 'lead');
+    expect(offered.next.spike).toMatchObject({
+      task: { id: 's-survey' },
+      question: 'what the original about page has that ours lacks'
+    });
+    expect((await takeNext(bench.agent('lead-3'), 'es-launch', 'lead')).next.spike?.task.id).toBe('t-book');
+    // In the flow, with the lead at it — never "free": no agent takes a spike.
+    const flow = flowLines((await viewRun(lead(), 'es-launch')).tasks, 200).map(line => stripVTControlCharacters(line));
+    expect(flow.some(line => line.includes('s-survey lead-2'))).toBe(true);
+    // On the board at its spike, never idle.
+    expect((await monitorRun(lead(), 'es-launch')).agents.find(agent => agent.agent === 'lead-2')).toMatchObject({
+      status: 'working',
+      doing: 'finds out for s-survey: what the original about page has that ours lacks',
+      task: 's-survey'
+    });
+    expect(await answerSpike(bench.agent('lead-2'), 'es-launch', 's-survey', 'A team grid')).toMatchObject({
+      status: 'done'
+    });
   });
 
   it('refuses a research with a command on its acceptance, and a task that writes nothing and finds out nothing', async () => {

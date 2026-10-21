@@ -11,7 +11,7 @@ What the lead — team lead and software architect — does; the agents' half, t
    control behaves, a size — as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
    "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
-   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`, naming sections no piece covers. **Research is a spike, in the run**: a task's `"spike": "what to find out"` is worked first, even before what it waits for is done; with no files it is research alone (acceptance in words). Open with spikes — `page shot --compare <original> --dress` on every page, among agents — then `run extend`. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
+   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`, naming sections no piece covers. **Research is a spike, in the run — a lead's** (an agent's model is not yours): a task's `"spike": "what to find out"` waits for a lead, even before what it waits for is done; no files, research alone (acceptance in words). Find out (`page shot --compare <original> --dress`), then `plitzi task spike <task> --done "…"`; many: `lead-2` takes them. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview` — who owns which file, read off the imports. A page owns the modules only
    it imports; what two pages import (the tokens, the classes, a layout, a component) is **shared**, and so is every
@@ -56,19 +56,17 @@ What the lead — team lead and software architect — does; the agents' half, t
    `plitzi run note "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB): what you learnt reading the project — every
    brief starts with it, and the few references its files need. **The team** is the project's,
    `.plitzi/team.json` (by hand: `plitzi run team check`) — a developer and a designer to start, each role said inside; grow it when the job asks
-   (`plitzi run team set dev --count 2 --model <model>`, `… set test --roles tester`): its size is how many work at once, a role nobody takes is refused, and `run plan` says how to start each agent. A tester in it adds `<id>-tests` after each
+   (`plitzi run team set dev --count 3 --min 1 --model <model>`, `… set test --roles tester`): its size is how many work at once — past `min`, on demand: `run watch` says when to start one, and it stops when idle — a role nobody takes is refused, and `run plan` says how to start each agent. A tester in it adds `<id>-tests` after each
    developer task (`"tests": false` for none); a designer reviews the others' UI before you (how closely: `options.designReview` there; `"designReview": false` in
    the plan turns it off). Theirs is the UI/UX; yours is the complete, strict review — code,
    acceptance, edge cases, the page (UI approved: the code first) — and the final word, after it (or before, saying why: `--skip-design lead|no-ui`,
-   as yourself: no `--agent`, or `lead`). A UI review counts only from a designer of the team, by the name it
-   is started with (`design-1`). **One lead for every four agents**: a team of five or more has `lead-2`… beside you
+   as yourself: no `--agent`, or `lead`). **One lead for every four agents**: a team of five or more has `lead-2`… beside you
    (`run team set lead --count N`) — **not at the start**: you review, each review from
-   the queue (`plitzi task next --role lead --take`), and `run watch --until lead` says when the reviews queue up (two
-   waiting, the oldest five minutes) and which to start. Each takes the next review no other lead took, reviews it as you
+   the queue (`plitzi task next --role lead --take`), and `run watch --until lead` says when the reviews queue up  and which to start. Each takes the next review no other lead took, reviews it as you
    would — tell them how strict you are (`@lead-2`) — and stops once the queue is empty. The rest
    is yours alone. A lead's own files go in `tmp/plitzi-runs/<run>/scratch/<name>/`, gone with the run.
 
-   **Keep a person's actions a person's in the harness**: deny the agents — not yourself, unless the person said so — `plitzi run finish --apply`, `run abort`,
+   **Keep a person's actions a person's in the harness**: deny the agents — not you, unless the person said so — `plitzi run finish --apply`, `run abort`,
    `run purge`, `run restore`, `run allow-finish`, `run stop --force` and `run attach --take-over` (Claude Code:
    `permissions.deny` in `.claude/settings.json`).
 

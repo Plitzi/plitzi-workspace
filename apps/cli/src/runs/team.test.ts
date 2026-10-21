@@ -183,7 +183,7 @@ describe('the team of a project’s runs', () => {
     ).toEqual([
       '"extra" is no field of it (it takes version, lead, agents, options, about)',
       '"lead": "modle" is no field of it — did you mean "model"? (it takes model, effort, count)',
-      '"dev": "cuont" is no field of it — did you mean "count"? (it takes name, roles, count, model, effort)',
+      '"dev": "cuont" is no field of it — did you mean "count"? (it takes name, roles, count, min, model, effort)',
       '"lead" is the lead’s: give the lead its model under "lead", and the agent another name'
     ]);
     expect(teamProblems({ $schema: TEAM_SCHEMA, version: 1, agents: [{ name: 'dev', roles: ['developer'] }] })).toEqual(
@@ -221,6 +221,7 @@ describe('the team of a project’s runs', () => {
     expect(props(schema, 'properties', 'agents', 'items', 'properties')).toEqual([
       'count',
       'effort',
+      'min',
       'model',
       'name',
       'roles'

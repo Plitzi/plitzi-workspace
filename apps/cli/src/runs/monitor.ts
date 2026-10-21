@@ -2,6 +2,8 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { designSkipText, isDesignSkip } from './designSkip';
 import { LEAD, messagesOf } from './messages';
+import { runPaths } from './paths';
+import { presentAt, PRESENCE_STALE_MS } from './presence';
 import { loadRun, readRunLog, runIds } from './run';
 import { choiceText, readTeam, startedAgents } from './team';
 import { viewRun } from './view';
@@ -319,6 +321,22 @@ const agentsOf = async (
     const lastLine = last ? lastDone(last) : undefined;
     const recent = lastAt !== undefined && now - lastAt < ACTIVE_MS && lastLine !== undefined;
     const lastTask = typeof last?.task === 'string' ? last.task : undefined;
+    // Finding out a spike it took: working, on that task — what it is at, never idle (velada-dress: the lead at
+    // t-shell's spike was nowhere on the board).
+    const spiking = at ? undefined : view.tasks.find(task => task.status === 'spike' && task.spikedBy === lead);
+    if (spiking) {
+      return {
+        agent: lead,
+        kind: lead === LEAD ? ('lead' as const) : ('co-lead' as const),
+        approved: 0,
+        status: 'working' as const,
+        ...(leadModel ? { model: leadModel } : {}),
+        roles: [lead === LEAD ? 'plans, reviews, finishes' : 'reviews'],
+        doing: `finds out for ${spiking.id}: ${spiking.spike ?? 'what it needs'}`,
+        task: spiking.id,
+        ...(typeof last?.at === 'string' ? { signalAt: last.at } : {})
+      };
+    }
 
     return {
       agent: lead,
@@ -345,7 +363,19 @@ const agentsOf = async (
     };
   });
   const started = new Map((team ? startedAgents(team) : []).map(each => [each.agent, each] as const));
-  const agents: AgentLine[] = [...new Set([...started.keys(), ...held.keys()])].map(agent => {
+  const names = [...new Set([...started.keys(), ...held.keys()])];
+  const paths = runPaths(ctx.root, view.runId);
+  const present = new Map(await Promise.all(names.map(async agent => [agent, await presentAt(paths, agent)] as const)));
+  // Between tasks and not said to have stopped: there while its follow marks it present, gone once it does not.
+  const gone = (agent: string): number | undefined => {
+    const last = lastBy.get(agent);
+    const seen = Math.max(present.get(agent) ?? 0, typeof last?.at === 'string' ? Date.parse(last.at) : 0);
+
+    return last !== undefined && last.action !== 'stops' && seen > 0 && now - seen > PRESENCE_STALE_MS
+      ? Math.round((now - seen) / 60_000)
+      : undefined;
+  };
+  const agents: AgentLine[] = names.map(agent => {
     const task = held.get(agent);
     const member = started.get(agent);
     const also = (holds.get(agent) ?? []).filter(each => each.id !== task?.id);
@@ -384,20 +414,36 @@ const agentsOf = async (
             doing: `every task approved — nothing is left for it${tail}`,
             ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
           }
-        : {
-            agent,
-            kind: 'agent' as const,
-            // Between tasks, as its last word says: waiting for work, given up on it for now, or done with the run.
-            status:
-              lastBy.get(agent)?.action === 'waiting'
-                ? ('waiting' as const)
-                : lastBy.get(agent)?.action === 'stops'
-                  ? ('stopped' as const)
-                  : ('idle' as const),
-            ...about,
-            doing: `${betweenTasks(agent, lastBy.get(agent))}${tail}`,
-            ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
-          };
+        : gone(agent) !== undefined
+          ? // Its harness stopped it, or it hangs: nothing marked it present — said, never "waiting" for good.
+            {
+              agent,
+              kind: 'agent' as const,
+              status: 'no-signal' as const,
+              ...about,
+              doing: `no sign of it for ${String(gone(agent))} min — its harness stopped it, or it hangs: start it again${member ? ` (plitzi task next --role ${member.roles.join(',')} --follow --take --agent ${agent})` : ''}${tail}`,
+              ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
+            }
+          : member?.onDemand && (lastBy.get(agent) === undefined || lastBy.get(agent)?.action === 'stops')
+            ? // On demand, and not running: nothing is wrong — it is started when work waits for it (run watch says).
+              {
+                agent,
+                kind: 'agent' as const,
+                status: lastBy.get(agent) === undefined ? ('not-started' as const) : ('stopped' as const),
+                ...about,
+                doing: `on demand — started when work waits for it${lastBy.get(agent) ? ', stopped when none was left' : ''}${tail}`,
+                ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
+              }
+            : {
+                agent,
+                kind: 'agent' as const,
+                // Between tasks: idle — a wait for work is no work, whatever its follow waits for (the line says what);
+                // stopped once it said so.
+                status: lastBy.get(agent)?.action === 'stops' ? ('stopped' as const) : ('idle' as const),
+                ...about,
+                doing: `${betweenTasks(agent, lastBy.get(agent))}${tail}`,
+                ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
+              };
   });
 
   return [...leads, ...agents];

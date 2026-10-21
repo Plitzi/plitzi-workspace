@@ -22,6 +22,10 @@ export interface PageDecoration {
   detail: string;
   /** On the element itself, or one of its pseudo-elements. */
   on: 'element' | 'before' | 'after';
+  /** The element it dresses, as a person finds it: `div.card#stats` — a lead's spike reads the original by it. */
+  element: string;
+  /** The layer as its CSS says it, whole (cut at 400 characters): what a copy writes to wear it. */
+  css: string;
 }
 
 /**
@@ -102,8 +106,9 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
   const layersOf = (
     style: CSSStyleDeclaration,
     on: PageDecoration['on']
-  ): { kind: DecorationKind; detail: string }[] => {
-    const layers: { kind: DecorationKind; detail: string }[] = [];
+  ): { kind: DecorationKind; detail: string; css: string }[] => {
+    const layers: { kind: DecorationKind; detail: string; css: string }[] = [];
+    const cut = (text: string): string => (text.length > 400 ? `${text.slice(0, 399)}…` : text);
     const image = style.backgroundImage;
     const gradients = [...image.matchAll(/(repeating-)?(linear|radial|conic)-gradient/g)];
     gradients.forEach((gradient, index) => {
@@ -111,7 +116,11 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
         image.slice(gradient.index, index + 1 < gradients.length ? gradients[index + 1].index : image.length)
       );
       if (colour !== undefined) {
-        layers.push({ kind: 'gradient', detail: `${gradient[0]} ${colour}`.trim() });
+        layers.push({
+          kind: 'gradient',
+          detail: `${gradient[0]} ${colour}`.trim(),
+          css: cut(`background-image: ${image}`)
+        });
       }
     });
 
@@ -123,7 +132,13 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
       const name = address.startsWith('data:')
         ? `${/^data:([^;,]+)/.exec(address)?.[1] ?? 'data'} in the style`
         : (address.split('/').at(-1)?.split('?')[0] ?? '');
-      layers.push({ kind: 'image', detail: `background ${name.slice(0, 60)}` });
+      layers.push({
+        kind: 'image',
+        detail: `background ${name.slice(0, 60)}`,
+        css: cut(
+          `background-image: ${address.startsWith('data:') ? `url(<${name}>)` : `url(${address})`}; background-size: ${style.backgroundSize}; background-position: ${style.backgroundPosition}`
+        )
+      });
     }
 
     for (const [property, value] of [
@@ -132,16 +147,26 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
     ] as const) {
       const colour = value === 'none' ? undefined : shownColour(value);
       if (colour !== undefined && blurOf(value) >= 12) {
-        layers.push({ kind: 'glow', detail: `${property} ${String(blurOf(value))}px ${colour}`.trim() });
+        layers.push({
+          kind: 'glow',
+          detail: `${property} ${String(blurOf(value))}px ${colour}`.trim(),
+          css: cut(`${property}: ${value}`)
+        });
       }
     }
 
     if (style.filter !== 'none' && /blur|drop-shadow/.test(style.filter)) {
-      layers.push({ kind: 'filter', detail: `filter ${style.filter.slice(0, 60)}` });
+      layers.push({
+        kind: 'filter',
+        detail: `filter ${style.filter.slice(0, 60)}`,
+        css: cut(`filter: ${style.filter}`)
+      });
     }
 
-    // A pseudo-element with a border or a fill of its own is drawn: a corner bracket, a divider's rule, a badge's dot.
-    if (on !== 'element' && layers.length === 0) {
+    // A pseudo-element with a border or a fill of its own is drawn: a corner bracket, a divider's rule, a badge's dot —
+    // unless it has no size: a hover's underline at rest (width 0) is not dress (la-velada's socials read as four dots).
+    const sized = !/^0(px)?$/.test(style.width) && !/^0(px)?$/.test(style.height);
+    if (on !== 'element' && layers.length === 0 && sized) {
       const bordered = ['Top', 'Right', 'Bottom', 'Left'].some(
         side => Number.parseFloat(style.getPropertyValue(`border-${side.toLowerCase()}-width`)) > 0
       );
@@ -149,7 +174,10 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
       if ((bordered || colour) && colour !== undefined) {
         layers.push({
           kind: 'ornament',
-          detail: `${on === 'before' ? '::before' : '::after'} ${bordered ? 'border' : 'fill'} ${colour}`.trim()
+          detail: `${on === 'before' ? '::before' : '::after'} ${bordered ? 'border' : 'fill'} ${colour}`.trim(),
+          css: cut(
+            `content: ${style.content}; position: ${style.position}; inset: ${style.top} ${style.right} ${style.bottom} ${style.left}; width: ${style.width}; height: ${style.height}; border: ${style.borderTopWidth} ${style.borderTopStyle} ${style.borderTopColor}; border-width: ${style.borderWidth}; background: ${style.backgroundColor}`
+          )
         });
       }
     }
@@ -172,13 +200,16 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
       continue;
     }
 
+    const own = element.getAttribute('data-plitzi-el');
+    const firstClass = element.classList.item(0);
     const place = {
       x: Math.round(box.left + window.scrollX),
       y: Math.round(box.top + window.scrollY),
       width: Math.round(box.width),
-      height: Math.round(box.height)
+      height: Math.round(box.height),
+      element: `${element.tagName.toLowerCase()}${firstClass ? `.${firstClass}` : ''}${element.id ? `#${element.id}` : own ? `#${own}` : ''}`
     };
-    const own = layersOf(style, 'element').map(layer => ({ ...layer, on: 'element' as const }));
+    const itself = layersOf(style, 'element').map(layer => ({ ...layer, on: 'element' as const }));
     const pseudo = (['before', 'after'] as const).flatMap(on => {
       const drawn = getComputedStyle(element, `::${on}`);
       if (drawn.content === 'none' || drawn.content === 'normal' || drawn.display === 'none') {
@@ -187,7 +218,7 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
 
       return layersOf(drawn, on).map(layer => ({ ...layer, on }));
     });
-    found.push(...[...own, ...pseudo].map(layer => ({ ...layer, ...place })));
+    found.push(...[...itself, ...pseudo].map(layer => ({ ...layer, ...place })));
   }
 
   return found.slice(0, limit);
@@ -213,6 +244,8 @@ export interface SectionDecorations {
    * ways of drawing it, a sort and a span missing do not.
    */
   absent: string[];
+  /** The other page's layers of each absent look, whole — their element and their CSS: what a spike reads. */
+  absentLayers: PageDecoration[];
 }
 
 const KINDS: readonly DecorationKind[] = ['gradient', 'glow', 'ornament', 'image', 'filter'];
@@ -259,6 +292,9 @@ const lookOf = (layer: PageDecoration, section: PictureRegion | undefined): stri
 
   return wide ? `${sort} across the section` : sort;
 };
+
+/** How many of the other page's absent layers a section keeps whole: enough for a spike, few enough to read. */
+const ABSENT_LAYERS = 12;
 
 /** How much of its section's width a layer spans to be one across it. */
 const WIDE = 0.6;
@@ -312,12 +348,14 @@ export const compareDecorations = (
     );
 
     const ourLooks = looksOf(a, here.regions, section);
-    const absent = [...looksOf(b, there.regions, section)]
-      .filter(([look]) => !ourLooks.has(look))
-      .map(([look, detail]) => `${look} (${detail})`);
+    const theirLooks = looksOf(b, there.regions, section);
+    const absentLooks = [...theirLooks.keys()].filter(look => !ourLooks.has(look));
+    const absent = absentLooks.map(look => `${look} (${theirLooks.get(look) ?? ''})`);
+    const box = there.regions.find(region => region.name === section);
+    const absentLayers = b.filter(layer => absentLooks.includes(lookOf(layer, box))).slice(0, ABSENT_LAYERS);
 
     return missing.length > 0 || extra.length > 0 || absent.length > 0
-      ? [{ section, here: countA, there: countB, missing, extra, absent }]
+      ? [{ section, here: countA, there: countB, missing, extra, absent, absentLayers }]
       : [];
   });
 };

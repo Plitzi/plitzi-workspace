@@ -94,7 +94,9 @@ const startLines = (tasks: readonly RunTask[], team: Team, designReview: boolean
 
       return work.length === 0
         ? `  ${each.agent} — nothing for its ${each.roles.join(', ')} in this plan: leave it out`
-        : `  ${each.agent} — ${each.roles.join(', ')}${each.quality ? ` at ${each.quality}` : ''} — ${each.model ? modelText(each.model) : 'the harness’s own model'} (${work.join('; ')}): plitzi task next --role ${each.roles.join(',')}${each.quality ? ` --quality ${each.quality}` : ''} --follow --take --agent ${each.agent}`;
+        : each.onDemand
+          ? `  ${each.agent} — ${each.roles.join(', ')} — on demand: not at the start — when run watch --until lead says work waits for it: plitzi task next --role ${each.roles.join(',')}${each.quality ? ` --quality ${each.quality}` : ''} --follow --take --agent ${each.agent} (it stops by itself once nothing is left for it)`
+          : `  ${each.agent} — ${each.roles.join(', ')}${each.quality ? ` at ${each.quality}` : ''} — ${each.model ? modelText(each.model) : 'the harness’s own model'} (${work.join('; ')}): plitzi task next --role ${each.roles.join(',')}${each.quality ? ` --quality ${each.quality}` : ''} --follow --take --agent ${each.agent}`;
     })
   ];
 };

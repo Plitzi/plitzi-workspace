@@ -88,6 +88,12 @@
             "maximum": 16,
             "description": "How many of it; one when left out"
           },
+          "min": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 16,
+            "description": "How many start with the run, up to its count: the rest are on demand \u2014 started when work waits for them, stopped once none is left"
+          },
           "model": {
             "oneOf": [
               {

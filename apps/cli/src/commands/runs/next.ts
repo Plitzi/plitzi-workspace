@@ -68,6 +68,18 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>, agent: 
     `  Then say it: plitzi task review ${review.task.id} --approve [--note "what you saw"] | --changes "what, where, and why" [--on <element>] --agent ${agent}`
   ].join('\n');
 
+/** A spike, as `task next --role lead` hands it to a lead: what to find out, for whom, and how to say it. */
+const spikeText = (spike: NonNullable<NextTask['spike']>, agent: string): string =>
+  [
+    chalk.blue(chalk.bold(`Spike ${spike.task.id} — ${spike.task.title}: find out ${spike.question}`)),
+    ...(spike.waits ? [`  ${spike.waits} waits for it, its files in hand`] : []),
+    ...(spike.findings > 0
+      ? [`  ${String(spike.findings)} finding(s) of it already: plitzi task context ${spike.task.id}`]
+      : []),
+    '  Compare with the original (page shot <path> --compare <original> --clip <section> --dress), read its computed styles, measure — write nothing of the task’s',
+    `  Then say it — the layers, their values, which file gets each: plitzi task spike ${spike.task.id} --done "…" --agent ${agent}`
+  ].join('\n');
+
 /** A lead's review, as `task next --role lead` hands it: the whole review `lead` would make, by this lead. */
 const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: string): string =>
   [
@@ -93,25 +105,27 @@ const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: stri
 const nextText = (next: NextTask, agent: string): string =>
   [
     ...messageLines(next.messages),
-    next.leadReview
-      ? leadReviewText(next.leadReview, agent)
-      : next.designReview
-        ? designReviewText(next.designReview, agent)
-        : next.task
-          ? next.yours
-            ? [
-                `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : next.yours === 'spike' ? 'in spike: find out what it needs, then plitzi task spike --done "…"' : 'unblocked'}). Your token is still good: plitzi task context ${next.task.id}`,
-                ...(next.work ? [`  Its copy, the only place you write: cd ${next.work}`] : []),
-                ...(next.asked ?? []).map(line => `  ↺ ${line}`)
-              ].join('\n')
-            : `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'})${next.task.spike ? `, a spike first — find out: ${next.task.spike}` : ''}. Take it: plitzi task take ${next.task.id}`
-          : [
-              String(next.why),
-              ...(next.worked ?? []).map(
-                each =>
-                  `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'with the lead, in review' : each.status}${each.finishedBy ? ` — as ${each.finishedBy} last did it, not your version` : ''}`
-              )
-            ].join('\n'),
+    next.spike
+      ? spikeText(next.spike, agent)
+      : next.leadReview
+        ? leadReviewText(next.leadReview, agent)
+        : next.designReview
+          ? designReviewText(next.designReview, agent)
+          : next.task
+            ? next.yours
+              ? [
+                  `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : next.yours === 'spike' ? 'in spike: a lead finds out what it needs — its findings come with your next command' : 'unblocked'}). Your token is still good: plitzi task context ${next.task.id}`,
+                  ...(next.work ? [`  Its copy, the only place you write: cd ${next.work}`] : []),
+                  ...(next.asked ?? []).map(line => `  ↺ ${line}`)
+                ].join('\n')
+              : `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task take ${next.task.id}`
+            : [
+                String(next.why),
+                ...(next.worked ?? []).map(
+                  each =>
+                    `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'with the lead, in review' : each.status}${each.finishedBy ? ` — as ${each.finishedBy} last did it, not your version` : ''}`
+                )
+              ].join('\n'),
     // Wherever the answer leaves an agent without a copy of a task in hand — between tasks, at a review.
     ...(next.task && !next.leadReview && !next.designReview
       ? []
@@ -130,13 +144,7 @@ const takenText = (taken: TakenTask): string =>
     ...(taken.resumedFrom !== undefined ? [`  Resumed from the version review ${String(taken.resumedFrom)} saw`] : []),
     `  Run its commands in its copy — cd ${taken.work} — and they know the task: start with plitzi task context`,
     `  Anywhere else, its token: --token ${taken.token}`,
-    ...(taken.spike
-      ? [
-          chalk.blue(
-            `  ◇ A spike first — find out: ${taken.spike}. Read, compare, measure (page shot --compare, task look); write nothing of the task's. Then: plitzi task spike --done "what you found"${taken.files.length === 0 ? ' — research alone, that is its end' : ' — and build it'}`
-          )
-        ]
-      : ['  Done: plitzi task complete, in the copy'])
+    '  Done: plitzi task complete, in the copy'
   ].join('\n');
 
 export const taskTake = (taskId: string, options: RunCommandOptions & { role?: string }): Promise<void> =>

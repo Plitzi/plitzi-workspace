@@ -9,7 +9,7 @@ import { groupRepeats, monitorRun } from '../../runs/monitor';
 import { runPaths } from '../../runs/paths';
 import { logRun } from '../../runs/run';
 import { askLead, messageTasks, noteRun, tellLead } from '../../runs/talk';
-import { completeTask, reviewTask } from '../../runs/tasks';
+import { completeTask, followNext, reviewTask } from '../../runs/tasks';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 
@@ -80,7 +80,7 @@ describe('plitzi run monitor', () => {
 
     // Urgent at a glance: t-home is high — marked in the list and on its card in the flow; approved, nothing is.
     expect(rows[0]).toMatch(/^› !t-home/);
-    expect(screen.some(line => line.includes('!t-home agent-2'))).toBe(true);
+    expect(screen.some(line => line.includes('! t-home agent-2'))).toBe(true);
     expect(rows.at(-1)).toMatch(/^ {3}t-about/);
     expect(rows.at(-1)).toMatch(/t-about\s+✓ approved · agent-1 · \d+m of \d+/);
     expect(screen.some(line => line.includes('1 at work') && line.includes('pending'))).toBe(true);
@@ -281,6 +281,24 @@ describe('plitzi run monitor', () => {
     expect(back.some(line => line.includes('sent back ('))).toBe(false);
   });
 
+  // velada-dress: agents stopped by their harness still read "working" and "waiting" — a wait is said once, and nothing
+  // told a live agent from a gone one.
+  it('says an agent between tasks is gone once nothing marked it present for a while', async () => {
+    const runId = await open();
+    await take('agent-1', 't-home');
+    await take('agent-2', 't-menu');
+    await take('agent-3', 't-about');
+    await followNext(bench.agent('agent-4'), runId, 'developer', { timeoutMs: 30, everyMs: 10 });
+    const row = async () => (await monitorRun(lead(), runId)).agents.find(agent => agent.agent === 'agent-4');
+
+    expect((await row())?.status).toBe('idle');
+    bench.advance(3 * 60_000);
+    expect(await row()).toMatchObject({
+      status: 'no-signal',
+      doing: expect.stringContaining('no sign of it for 3 min') as unknown
+    });
+  });
+
   it('says which rows the tasks and the activity take, where the wheel scrolls each', async () => {
     const runId = await open();
     await noteRun(lead(), runId, 'A note');
@@ -450,8 +468,9 @@ describe('plitzi run monitor', () => {
     });
 
     const agent = (await monitorRun(lead(), runId)).agents.find(each => each.agent === 'agent-4');
+    // Idle: a wait for work is no work — the line says what it waits for.
     expect([agent?.status, agent?.doing]).toEqual([
-      'waiting',
+      'idle',
       expect.stringMatching(/^waiting for its first task — 1 at work/)
     ]);
     expect(agent?.doing).not.toContain('t-home');

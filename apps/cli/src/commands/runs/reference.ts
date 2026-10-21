@@ -33,7 +33,11 @@ const documentStatus = (): number => {
  * original answered its fighters' list with "You are being rate limited". A site that says it is busy (429, 503) is
  * asked again, later; any other error is said.
  */
-const keptOnce = async (browser: Browser, url: string, view: View): Promise<Taken | { problem: string }> => {
+const keptOnce = async (
+  browser: Browser,
+  url: string,
+  view: View
+): Promise<(Taken & { notFound?: true }) | { problem: string }> => {
   for (let attempt = 0; ; attempt += 1) {
     // A picture the browser gave up on (a font that never loaded, a page still busy) is this page's failure, asked
     // once more — never the end of every page after it: la-velada's original timed one out, and the command crashed.
@@ -54,6 +58,12 @@ const keptOnce = async (browser: Browser, url: string, view: View): Promise<Take
     const status = await taken.page.evaluate(documentStatus, undefined);
     if (status < 400) {
       return taken;
+    }
+
+    // An address nothing answers is a page of its own — the site's 404, which a copy makes too (la-velada's "Elige a
+    // tu boxeador"): kept, and said so, never refused as an error page.
+    if (status === 404) {
+      return { ...taken, notFound: true };
     }
 
     await taken.page.close();
@@ -80,6 +90,8 @@ interface Kept {
   dir: string;
   /** Each page's headings no piece of the inventory names: what the plan may have missed. */
   unnamed: { page: string; headings: string[] }[];
+  /** Pages the site answered 404, kept as its page for an address nothing answers. */
+  notFound: string[];
 }
 
 /**
@@ -110,6 +122,7 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
       await mkdir(dir, { recursive: true });
       const kept: string[] = [];
       const failed: string[] = [];
+      const notFound: string[] = [];
       // Each page once, as a desktop reader sees it: what its sections are compared with the inventory by.
       const read: KeptPage[] = [];
       try {
@@ -132,6 +145,10 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
               if ('problem' in taken) {
                 failed.push(`${page} at ${String(width)} ${scheme}: ${taken.problem}`);
                 continue;
+              }
+
+              if (taken.notFound && width === REFERENCE_WIDTHS[0] && scheme === 'light') {
+                notFound.push(page);
               }
 
               const name = keptName(new URL(url).pathname, width, scheme);
@@ -167,12 +184,15 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
         unnamed: unnamed.reduce((sum, page) => sum + page.headings.length, 0)
       });
 
-      return { reference, kept, failed, dir, unnamed };
+      return { reference, kept, failed, dir, unnamed, notFound };
     },
     kept =>
       [
         `${kept.reference} kept as it is now: ${String(kept.kept.length)} pictures, each page at ${REFERENCE_WIDTHS.join(' and ')} px in both schemes — page shot --compare ${kept.reference} measures against them for the whole run (--live asks the site now); the run finishing removes them`,
         ...kept.failed.map(each => `  ✗ ${each}`),
+        ...kept.notFound.map(
+          each => `  · ${each}: the site answered 404 — kept as its page for an address nothing answers`
+        ),
         ...(kept.unnamed.length > 0
           ? [
               'Sections of the reference no piece of the inventory names — a piece each, covered or left out with its reason (plitzi run amend), or a stage of its own:',

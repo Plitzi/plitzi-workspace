@@ -443,7 +443,7 @@ export const taskReassign = (taskId: string, options: RunCommandOptions): Promis
     options,
     async ctx => reassignTask(ctx, await runOf(ctx, options), taskId),
     reassigned =>
-      `${taskId} is ready again${reassigned.from ? `; ${reassigned.from}'s token is revoked` : ''}. ${
+      `${taskId} is ${reassigned.status === 'spike' ? 'in spike still — a lead’s to find out' : 'ready again'}${reassigned.from ? `; ${reassigned.from}'s token is revoked` : ''}. ${
         reassigned.reviewedRound === undefined
           ? 'It was never reviewed: it starts from scratch.'
           : `It starts again from the version its review ${String(reassigned.reviewedRound)} saw.`

@@ -714,9 +714,9 @@ export const dependenciesDone = (task: RunTask, states: ReadonlyMap<string, Task
   task.dependsOn.every(dependency => states.get(dependency)?.status === 'done');
 
 /**
- * The tasks that can be taken now, best first: ready (their dependencies done, nothing blocking them, nobody on them)
- * or in spike with nobody on them — finding out waits for nothing — by urgency (`byUrgency`), then by id: the same
- * input, the same order.
+ * The tasks that can be taken now, best first: ready (their dependencies done, nothing blocking them, nobody on them),
+ * by urgency (`byUrgency`), then by id — the same input, the same order. A task in spike is no agent's to take: a lead
+ * finds out first.
  */
 export const readyTasks = (
   tasks: readonly RunTask[],
@@ -733,7 +733,7 @@ export const readyTasks = (
         return false;
       }
 
-      return status === 'spike' || ((status === 'pending' || status === 'ready') && dependenciesDone(task, states));
+      return (status === 'pending' || status === 'ready') && dependenciesDone(task, states);
     })
     .sort((a, b) => urgency(a, b) || a.id.localeCompare(b.id));
 };

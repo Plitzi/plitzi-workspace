@@ -678,20 +678,37 @@ monitor` shows each as it comes, a problem in red.
       far it moves, so a section dressed otherwise on the two pages — what a comparison is for — no longer fits a
       look-alike band far down (the original's header was "747px lower there", and the dress of the page's middle read as
       its header's).
-    - **A spike — research in the run.** A task's `"spike": "what to find out"` starts it in `spike`, ahead of `ready`:
-      taken while what it waits for is still being built (finding out is reading), its files held only once it is built.
-      Its agent finds out and says it — `plitzi task spike --done "…"` — and the findings stay with the task, in its brief
-      and in the brief of every task that waits for it. A spike with no files is research alone: done by its findings,
-      the lead told, no review, its acceptance in words. A task at work goes back to finding out with `plitzi task spike
-      "what"`. The lead's research before a plan is the run's first spike: a plan of research alone, split among the
-      agents, whose findings become the work (`run extend`). A task in spike owes signs of life and counts as at work;
-      `run monitor` gives spikes a column (`◇ spike`) once the run has one, and the agent's row says what it finds out;
-      the dev tools' Run tab groups them (Finding out) and marks the urgent tasks as the monitor does. `run rehearse`
-      plays research alone without a review.
+    - **A spike — research in the run, a lead's.** A task's `"spike": "what to find out"` starts it in `spike`, ahead of
+      `ready`, whatever it waits for: no agent of the team is offered it or takes it — what is built is decided by what
+      is found, and an agent's model is not a lead's. The lead finds out and says it — `plitzi task spike <task> --done
+      "…"` — and the findings stay with the task, in its brief and in that of every task waiting for it; the task is then
+      ready to be built (or pending). A spike with no files is research alone, done by its findings, its acceptance in
+      words. An agent at work whose task needs something found out moves it back — `plitzi task spike "what"` — keeping
+      its files; the lead is asked, and the findings come back to the agent, who goes on. `run watch --until lead` says
+      each spike waiting; `task next --role lead` hands a lead that reviews the most urgent one no other lead took. The
+      lead's research before a plan is the run's first spike. `run monitor` gives spikes a column (`◇ spike`) once the run
+      has one; the dev tools' Run tab groups them (Finding out) and marks the urgent tasks as the monitor does.
+    - `run monitor` tells a live agent between tasks from a gone one: each `task next` and each turn of its `--follow`
+      marks it present, and one with no mark for two minutes shows as `no-signal`, with the command that starts it again
+      — velada-dress's agents, stopped by their harness, still read "working" and "waiting". An agent between tasks waiting for work is
+      `idle` — a wait for work is no work — its line saying what it waits for. In the flow, each stage lists the cards someone is on
+      first — its agent, the lead at its spike, its reviewer — the rest below; a spike's card says the lead at it (or
+      "for a lead"), never "free"; the urgency mark stands apart from the id, toned, and the flow's title says it; a lead
+      at a spike shows as working on it.
+    - `run reference` keeps a page the site answers with 404 — its page for an address nothing answers, which a copy
+      makes too — said, where it refused it as an error page.
     - `page shot --compare … --dress` fails where a section lacks a look the other page dresses it in — a sort of
       layer and whether it spans the section: a warm light across a page is not the same gradient on one card — so an
       acceptance can prove a look (`--clip artist-page --dress`), against the site as the run kept it. The comparison
       says each look missing (`lacks: radial-gradient across the section (…)`); `@plitzi/sdk-authoring`'s
       `SectionDecorations` carries them (`absent`). `--dress "<look>"` checks only the looks naming it — `radial-gradient across`,
-      `shadow`, `::before`, `background image`, `filter` — so a task proves its own look in a section others dress too.
+      `shadow`, `::before`, `background image`, `filter` — so a task proves its own look in a section others dress too. Each layer is kept whole for a spike —
+      its element (`div.card#stats`) and its CSS (`element`, `css`; `absentLayers` per section) — and a pseudo-element with
+      no size (a hover's underline at rest) is not dress.
+    - **Agents on demand.** A team's group takes `min` (`plitzi run team set dev --count 3 --min 1`): that many start
+      with the run, the rest on demand — `run plan` says to start the first only; `run watch --until lead` tells the lead,
+      role by role, when work waits for one and none running is free, naming the agent to start and its command; and an
+      agent on demand with nothing for it for four minutes, and no task of its own that may come back, stops by itself,
+      said. The monitor shows one not running as on demand. `team.json`'s schema and `about` say it. A UI review is
+      asked for a designer who did not write the task: its author is never counted free for it.
 

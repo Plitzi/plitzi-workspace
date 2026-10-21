@@ -82,7 +82,8 @@ const ASK = ['title', 'acceptance', 'priority', 'estimateMinutes', 'milestone'] 
 // What a task waits for, and who it is for, change until it is taken: a lead clears a bottleneck by letting one start
 // sooner (velada-now: t-motion waited for t-boxer's third round, though it shared no file with it).
 const WHO = ['role', 'quality', 'dependsOn'] as const;
-const UNTAKEN: readonly string[] = ['pending', 'ready'];
+// A spike nobody holds is untaken too: a lead finds it out, and no agent has taken it as anything yet.
+const UNTAKEN: readonly string[] = ['pending', 'ready', 'spike'];
 
 const same = (a: unknown, b: unknown): boolean => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
@@ -154,13 +155,14 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
       continue;
     }
 
-    const { status } = (await viewTask(loaded.paths, defined)).state;
+    const viewed = await viewTask(loaded.paths, defined);
+    const { status } = viewed.state;
     if (status === 'done') {
       problems.push(`Task "${task.id}" is done: what it was asked was held already`);
       continue;
     }
 
-    if (who.length > 0 && !UNTAKEN.includes(status)) {
+    if (who.length > 0 && (!UNTAKEN.includes(status) || viewed.owner !== undefined)) {
       problems.push(
         `Task "${task.id}" is ${status}: its ${who.join(' and ')} are what an agent took it as — they change only before it is taken`
       );

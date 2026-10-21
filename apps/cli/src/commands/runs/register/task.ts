@@ -148,10 +148,14 @@ export const registerTaskGroup = (program: Command): Command => {
   taskGroup
     .command('spike')
     .description(
-      'Find something out before building: the task in hand back to spike, saying what — or --done, what was found'
+      'A spike — what to find out before building, a lead’s: the task in hand back to spike, saying what; or, as a lead, <task> --done with what was found'
     )
-    .argument('[question]', 'What to find out: "which layers make the original’s warm light"')
-    .option('--done <findings>', 'What you found: kept with the task, read by every task that waits for it')
+    .argument(
+      '[question|task]',
+      'What needs finding out ("which layers make the original’s warm light") — or, with --done, the task'
+    )
+    .option('--done <findings>', 'A lead’s: what was found — kept with the task, read by every task that waits for it')
+    .option(...AGENT_OPTION)
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)

@@ -259,7 +259,8 @@ export const cutTask = async (view: TaskView, reason: string, now: () => Date): 
     view.paths,
     state => ({
       ...state,
-      status: 'ready',
+      // A spike stays one: what it is to find out is still a lead's to find, whoever held it.
+      status: view.state.status === 'spike' ? 'spike' : 'ready',
       cutAt: { step, reason, at: now().toISOString() },
       notes: [
         ...state.notes,

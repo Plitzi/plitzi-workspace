@@ -50,7 +50,7 @@ const memberText = (member: TeamChange['before']): string =>
 
 export const runTeamSet = (
   name: string,
-  options: RunCommandOptions & { roles?: string[]; count?: number; model?: string; effort?: string }
+  options: RunCommandOptions & { roles?: string[]; count?: number; min?: number; model?: string; effort?: string }
 ): Promise<void> =>
   act(
     options,
@@ -58,6 +58,7 @@ export const runTeamSet = (
       setTeamAgent(ctx.root, name, {
         ...(options.roles ? { roles: options.roles } : {}),
         ...(options.count !== undefined ? { count: options.count } : {}),
+        ...(options.min !== undefined ? { min: options.min } : {}),
         ...(options.model ? { model: parseModelChoice(options.model) } : {}),
         ...(options.effort ? { effort: options.effort } : {})
       }),

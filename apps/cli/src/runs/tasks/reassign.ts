@@ -12,7 +12,7 @@ import { at, findTask } from './common';
 import { grantWaiters } from './locks';
 import { integrateWhenReady, settleRequests } from './requests';
 
-import type { ApprovedFile } from '../model';
+import type { ApprovedFile, TaskStatus } from '../model';
 import type { RunContext } from '../run';
 
 /**
@@ -31,6 +31,8 @@ export const reassignTask = async (
   granted: string[];
   settled: string[];
   integrations: string[];
+  /** Where it is now: ready again — or still in spike, a lead's to find out whoever held it. */
+  status: TaskStatus;
 }> => {
   requireNoTask(ctx, 'reassign a task');
   const loaded = await loadRun(ctx, runId);
@@ -67,7 +69,8 @@ export const reassignTask = async (
     released: turns,
     granted,
     settled,
-    integrations
+    integrations,
+    status: view.state.status === 'spike' ? 'spike' : 'ready'
   };
 };
 

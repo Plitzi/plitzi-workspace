@@ -4,17 +4,20 @@ import { durationText, FOLLOW_MS } from '../../options';
 import { designReviewFor, hasDesignReview, takeDesignReview } from '../design';
 import { IDLE_LEAD_MS, isCoLead, isPrincipal, LEAD_ROLE, leadReviewFor, markAsking, takeLeadReview } from '../leads';
 import { agentAddress, unreadFor } from '../messages';
+import { ON_DEMAND_IDLE_MS } from '../onDemand';
 import { pagesOf } from '../pagesOf';
 import { agentScratch, runPaths } from '../paths';
 import { readyTasks } from '../plan';
+import { markPresent } from '../presence';
 import { isRunRefusal, RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readRunLog } from '../run';
 import { runChanged } from '../runChanged';
 import { tellLeftInTmp } from '../strays';
-import { isDisconnected, viewTask } from '../taskStore';
+import { isDisconnected, updateState, viewTask } from '../taskStore';
 import { DEFAULT_DESIGN_REVIEW, DESIGNER, qualityRank, readTeam, startedAgents } from '../team';
+import { byUrgency } from '../urgency';
 import { isWorked } from '../worked';
-import { findTask, roleOf } from './common';
+import { at, findTask, roleOf } from './common';
 import { allLocks } from './locks';
 import { takeTask } from './take';
 
@@ -78,6 +81,8 @@ export interface NextTask {
     /** Its UI review waits for a designer and none is free: the lead's too, said how. */
     uiToo?: string;
   };
+  /** A lead's, with no review for it: a spike to find out — the most urgent no other lead took. */
+  spike?: { task: RunTask; question: string; waits?: string; findings: number };
   /** Why nothing is ready, when nothing is. */
   why?: string;
   ready: string[];
@@ -123,6 +128,7 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
   await tellLeftInTmp(ctx, loaded);
   const scratch = agentScratch(loaded.paths, ctx.agent);
   await fs.mkdir(scratch, { recursive: true });
+  await markPresent(loaded.paths, ctx.agent, ctx.now());
 
   const next = await nextOf(ctx, loaded, role);
   // Nothing left for it, ever: the activity says the agent stops, and why — never a silence read as a hang.
@@ -400,6 +406,25 @@ const leadNext = async (
     };
   }
 
+  // No review for it: a spike, as every spike is a lead's — the most urgent no other lead is finding out.
+  const urgency = byUrgency(loaded.tasks);
+  const spike = views
+    .filter(view => view.state.status === 'spike' && (view.state.spikedBy?.by ?? ctx.agent) === ctx.agent)
+    .sort((a, b) => urgency(a.task, b.task) || a.task.id.localeCompare(b.task.id))
+    .at(0);
+  if (spike) {
+    return {
+      spike: {
+        task: spike.task,
+        question: spike.state.spiking ?? spike.task.spike ?? 'what it needs',
+        ...(spike.owner ? { waits: spike.owner.agent } : {}),
+        findings: spike.state.findings?.length ?? 0
+      },
+      ready: [],
+      messages
+    };
+  }
+
   const open = views.filter(view => view.state.status !== 'done');
   if (open.length === 0) {
     return { why: 'every task is done: no review is left — you can stop', ready: [], messages, finished: true };
@@ -467,6 +492,18 @@ export const takeNext = async (
       continue;
     }
 
+    // A spike handed to a lead is its own from now: another lead is not offered it.
+    if (next.spike) {
+      const loaded = await loadRun(ctx, runId);
+      const view = await viewTask(loaded.paths, findTask(loaded, next.spike.task.id));
+      if (view.state.spikedBy === undefined) {
+        await updateState(view.paths, state => ({ ...state, spikedBy: { by: ctx.agent, at: at(ctx) } }), ctx.now);
+        await logRun(ctx, loaded.paths, { action: 'spike-taken', task: next.spike.task.id });
+      }
+
+      return { next };
+    }
+
     if (next.leadReview) {
       const offered = next.leadReview.task.id;
       const loaded = await loadRun(ctx, runId);
@@ -528,7 +565,7 @@ export const followNext = async (
   ctx: RunContext,
   runId: string,
   role: string | undefined,
-  { timeoutMs = FOLLOW_MS, everyMs = 10_000, idleMs = IDLE_LEAD_MS } = {}
+  { timeoutMs = FOLLOW_MS, everyMs = 10_000, idleMs = IDLE_LEAD_MS, onDemandIdleMs = ON_DEMAND_IDLE_MS } = {}
 ): Promise<NextTask> => {
   const started = Date.now();
   let saidWaiting: string | undefined;
@@ -537,6 +574,9 @@ export const followNext = async (
       ?.split(',')
       .map(each => each.trim())
       .includes(LEAD_ROLE) === true && !isPrincipal(ctx.agent);
+  // An agent on demand (past its group's `min`) stops once nothing is left for it: the lead starts it again.
+  const team = await readTeam(ctx.root).catch(() => undefined);
+  const onDemand = team ? startedAgents(team).some(each => each.agent === ctx.agent && each.onDemand) : false;
   for (;;) {
     // A run stopped — gently, by its brake, or by a person at once — goes on once resumed, and one whose Plitzi was
     // upgraded once a person re-pins it: an agent waiting for work waits through either.
@@ -556,7 +596,7 @@ export const followNext = async (
 
       throw error;
     });
-    if (next.task || next.designReview || next.leadReview || next.finished || next.messages.length > 0) {
+    if (next.task || next.designReview || next.leadReview || next.spike || next.finished || next.messages.length > 0) {
       return next;
     }
 
@@ -588,6 +628,20 @@ export const followNext = async (
     }
 
     // Its wait's end is no state of its own: it is told to wait again, and stays waiting until it takes work or stops.
+    if (onDemand && Date.now() - started >= onDemandIdleMs) {
+      // Not while a task of its own may come back to it: one in review, or blocked.
+      const loaded = await loadRun(ctx, runId);
+      const own = (await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)))).filter(
+        view => view.owner?.agent === ctx.agent && view.state.status !== 'done'
+      );
+      if (own.length === 0) {
+        const why = `nothing came for you in ${durationText(onDemandIdleMs)}: you are on demand — the lead starts you again when work waits for you`;
+        await logRun(ctx, runPaths(ctx.root, runId), { action: 'stops', why });
+
+        return { ...next, finished: true, why: `${why}. You can stop` };
+      }
+    }
+
     if (Date.now() - started >= timeoutMs) {
       // Its own task in review comes back to it if it is sent back: an agent told only "nothing came" took the wait's
       // end for the run's, and stopped — and velada-now's t-case and t-boxer came back to nobody.

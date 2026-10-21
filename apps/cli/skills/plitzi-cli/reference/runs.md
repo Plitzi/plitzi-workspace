@@ -11,7 +11,7 @@ review** beside it (`lead-2`…), started by the lead when the reviews queue up,
 queue is empty — nothing else is theirs (`lead-only`, 25). The project's team is
 `.plitzi/team.json` (`plitzi run team`): each agent's name, roles, count and model. Tasks name a role (`"role":
 "designer"`; `developer` when left out); `plitzi task next --role designer --follow --take --agent design-1` waits
-(`--timeout 8m`) for the next one and takes it, handing back first a task you hold that can go on; a wait that ends is
+(9 min, `--timeout`) for the next one and takes it, handing back first a task you hold that can go on; a wait that ends is
 no reason to stop — run it again until it says you can. Started at a
 level, say it (`--quality high`, as `run plan` gave your command): you are handed tasks of it or below.
 **A designer** reviews the others' UI/UX, as a designer, before the lead's complete review: `plitzi task look <task>` (its pages; `--click <id>` an open state, `--hover <id>` a hover, `--element <id>` the page's own; `--before` what changed beside the run before it), then `task review <task>
@@ -66,9 +66,8 @@ takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | 
   all of it again.
 - **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"`; in a long think or test run,
   `plitzi task heartbeat` every 2 minutes.
-- **A spike** — your task says `spike`, or the work needs research (`plitzi task spike "what"`): find out — read,
-  compare, measure, write nothing — then `plitzi task spike --done "what you found"`. Research alone (no files) ends
-  there; a task that builds goes on, or waits with its findings for whoever builds it.
+- **A spike** is a lead's: what is built is decided by what it finds. Your work needs something found out first:
+  `plitzi task spike "what"` — the task waits in spike, its files yours; the findings come with your next command.
 - **Blocked by something outside the plan** (a key, a decision): `plitzi task block --reason "…"` (the lead's:
   only it talks to the person), then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks
