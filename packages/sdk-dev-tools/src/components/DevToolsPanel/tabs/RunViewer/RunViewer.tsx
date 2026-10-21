@@ -23,6 +23,8 @@ const AGENT_TONE: Record<string, string> = {
   reviewing: 'bg-violet-500',
   'in-review': 'bg-violet-300',
   blocked: 'bg-amber-500',
+  asking: 'bg-amber-400',
+  waiting: 'bg-sky-300',
   'no-signal': 'bg-red-500'
 };
 

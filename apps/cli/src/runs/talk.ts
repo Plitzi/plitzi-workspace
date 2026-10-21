@@ -1,9 +1,11 @@
 import { writeJson } from './files';
 import { requireLead } from './leads';
 import { agentAddress, EVERYONE, LEAD, messagesOf, replyTo, sendMessage, unreadFor, unreadForHolder } from './messages';
+import { RunRefusal } from './refusal';
 import { assertStatus, loadRun, logRun, requireNoTask } from './run';
 import { findTask, holderOf } from './tasks';
 import { viewTask } from './taskStore';
+import { readTeam, startedAgents } from './team';
 
 import type { Message } from './messages';
 import type { RunContext } from './run';
@@ -85,6 +87,30 @@ export const tellLead = async (ctx: RunContext, runId: string, taskId: string, t
   await holderOf(ctx, loaded, findTask(loaded, taskId));
   const told = await sendMessage(ctx, loaded, { from: taskId, to: LEAD, text, fyi: true });
   await logRun(ctx, loaded.paths, { action: 'tell', task: taskId, message: told.id });
+
+  return told;
+};
+
+/**
+ * `plitzi task tell --about <task>` with no task in hand: an agent of the team that holds none — a designer between
+ * reviews — tells the lead what it found on a task, said by its own name. A review the lead decided first had nowhere to
+ * go (la-velada: design-1's finding on t-motion, refused twice).
+ */
+export const tellLeadAbout = async (ctx: RunContext, runId: string, about: string, text: string): Promise<Message> => {
+  const loaded = await loadRun(ctx, runId);
+  assertStatus(loaded, ['open', 'stopping', 'reconciliation'], 'tell the lead');
+  const task = findTask(loaded, about);
+  const team = await readTeam(ctx.root).catch(() => undefined);
+  if (!(team ? startedAgents(team) : []).some(member => member.agent === ctx.agent)) {
+    throw new RunRefusal(
+      'invalid',
+      `${ctx.agent} is no agent of the team: an agent tells the lead as itself (--agent <its name>), a task's holder with its token`,
+      { task: task.id }
+    );
+  }
+
+  const told = await sendMessage(ctx, loaded, { from: ctx.agent, to: LEAD, text: `On ${task.id}: ${text}`, fyi: true });
+  await logRun(ctx, loaded.paths, { action: 'tell', task: task.id, message: told.id });
 
   return told;
 };

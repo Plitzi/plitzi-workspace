@@ -29,12 +29,16 @@ export const auditRun = async (loaded: LoadedRun): Promise<string[]> => {
     const { state } = await viewTask(loaded.paths, task);
     const approvals = by('review', task.id).filter(entry => entry.verdict === 'approve');
     if (state.status === 'done' && approvals.length === 0) {
-      findings.push(`${task.id} is done, and no approval of it is in the activity: it was approved by a step the log missed`);
+      findings.push(
+        `${task.id} is done, and no approval of it is in the activity: it was approved by a step the log missed`
+      );
     }
 
     const failedChecks = by('check', task.id).filter(entry => entry.ok === false).length;
     if (failedChecks > MANY_CHECKS) {
-      findings.push(`${task.id}'s checks failed ${String(failedChecks)} times: the task's work, or a check it could not pass`);
+      findings.push(
+        `${task.id}'s checks failed ${String(failedChecks)} times: the task's work, or a check it could not pass`
+      );
     }
 
     // Each time it was sent, how long until a review took it: its UI's, or the lead's.
@@ -43,7 +47,10 @@ export const auditRun = async (loaded: LoadedRun): Promise<string[]> => {
         entry =>
           text(entry.at) > text(sent.at) &&
           entry.task === task.id &&
-          (entry.action === 'review' || entry.action === 'review-taken' || entry.action === 'look')
+          (entry.action === 'review' ||
+            entry.action === 'design-review' ||
+            entry.action === 'review-taken' ||
+            entry.action === 'look')
       );
       // Done with nothing after it in the log is the approval the log missed — said above, not timed.
       if (!after && state.status === 'done') {
@@ -52,7 +59,9 @@ export const auditRun = async (loaded: LoadedRun): Promise<string[]> => {
 
       const waited = (after ? Date.parse(text(after.at)) : Date.now()) - Date.parse(text(sent.at));
       if (waited > SLOW_REVIEW_MS) {
-        findings.push(`${task.id} waited ${minutes(waited)} in review before anyone looked at it (sent ${text(sent.at).slice(11, 16)} UTC)`);
+        findings.push(
+          `${task.id} waited ${minutes(waited)} in review before anyone looked at it (sent ${text(sent.at).slice(11, 16)} UTC)`
+        );
       }
     }
 
@@ -63,18 +72,38 @@ export const auditRun = async (loaded: LoadedRun): Promise<string[]> => {
       );
     }
 
-    if (state.round >= 3) {
-      findings.push(`${task.id} took ${String(state.round + 1)} rounds of review`);
+    // Sent back, by whom: its UI's review and the lead's are rounds of their own (a designer's changes were logged as
+    // a review by the designer's name before they were design reviews).
+    const changes = log.filter(
+      entry =>
+        entry.task === task.id &&
+        entry.verdict === 'changes' &&
+        (entry.action === 'review' || entry.action === 'design-review')
+    );
+    const byUi = changes.filter(entry => entry.action === 'design-review' || !text(entry.by).startsWith('lead')).length;
+    if (changes.length >= 3) {
+      findings.push(
+        `${task.id} was sent back ${String(changes.length)} times — ${String(byUi)} by its UI review, ${String(changes.length - byUi)} by the lead`
+      );
     }
   }
 
-  const skipped = by('review').filter(entry => entry.design === 'skipped').map(entry => text(entry.task));
+  const skipped = by('review').filter(entry => entry.design === 'skipped');
   if (skipped.length > 0) {
-    findings.push(`Approved without their UI review: ${skipped.join(', ')}`);
+    findings.push(`Approved without their UI review: ${skipped.map(entry => text(entry.task)).join(', ')}`);
+  }
+
+  // A designer at a UI review the lead then went past: its review was wasted, and its finding went nowhere.
+  for (const entry of skipped.filter(each => typeof each.designBy === 'string')) {
+    findings.push(
+      `${text(entry.designBy)} had taken ${text(entry.task)}'s UI review when the lead approved it without it`
+    );
   }
 
   for (const crash of by('crashed')) {
-    findings.push(`${text(crash.by)}'s command crashed at ${text(crash.at).slice(11, 16)} UTC: ${text(crash.command)} — ${text(crash.error)}`);
+    findings.push(
+      `${text(crash.by)}'s command crashed at ${text(crash.at).slice(11, 16)} UTC: ${text(crash.command)} — ${text(crash.error)}`
+    );
   }
 
   for (const failed of by('preview-sync-failed')) {

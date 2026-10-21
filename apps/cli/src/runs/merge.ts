@@ -377,6 +377,16 @@ export const finishRun = async (
   const strays = await leftInTmp(ctx.root, loaded.record);
   const leftThere = { ...(strays.length > 0 ? { leftInTmp: strays } : {}), audit: await auditRun(loaded) };
   if (!apply) {
+    // Whole and checked: the activity's last word is that the run is ready, and whose step is next.
+    if (left.length === 0 && plan.conflicts.length === 0) {
+      await logRun(ctx, loaded.paths, {
+        action: 'ready',
+        files: plan.apply.length,
+        acceptance: plan.acceptance.results.length,
+        next: `plitzi run finish ${loaded.record.runId} --apply — a person's${loaded.record.leadFinishes ? ', or the lead’s, allowed' : ''}`
+      });
+    }
+
     return { dryRun: true, plan, left, leadFinishes: loaded.record.leadFinishes !== undefined, ...leftThere };
   }
 

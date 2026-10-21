@@ -89,7 +89,12 @@ export interface NextTask {
 /** Logs `joined` the first time an agent asks the run for work — kept as the scratch folder it is given. */
 const markJoined = async (ctx: RunContext, loaded: LoadedRun): Promise<void> => {
   const scratch = agentScratch(loaded.paths, ctx.agent);
-  if (await fs.stat(scratch).then(() => true, () => false)) {
+  if (
+    await fs.stat(scratch).then(
+      () => true,
+      () => false
+    )
+  ) {
     return;
   }
 
@@ -109,7 +114,13 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
   const scratch = agentScratch(loaded.paths, ctx.agent);
   await fs.mkdir(scratch, { recursive: true });
 
-  return { ...(await nextOf(ctx, loaded, role)), scratch };
+  const next = await nextOf(ctx, loaded, role);
+  // Nothing left for it, ever: the activity says the agent stops, and why — never a silence read as a hang.
+  if (next.finished) {
+    await logRun(ctx, loaded.paths, { action: 'stops', why: next.why ?? 'nothing is left for it' });
+  }
+
+  return { ...next, scratch };
 };
 
 const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promise<Omit<NextTask, 'scratch'>> => {
@@ -476,6 +487,7 @@ export const followNext = async (
   { timeoutMs = FOLLOW_MS, everyMs = 10_000, idleMs = IDLE_LEAD_MS } = {}
 ): Promise<NextTask> => {
   const started = Date.now();
+  let saidWaiting = false;
   const idleLead =
     role
       ?.split(',')
@@ -504,9 +516,20 @@ export const followNext = async (
       return next;
     }
 
+    // Once a call: the agent waits, and the activity says for what — what is ready for others, what holds it back.
+    if (!saidWaiting) {
+      saidWaiting = true;
+      await logRun(ctx, runPaths(ctx.root, runId), { action: 'waiting', why: next.why ?? 'nothing is ready' });
+    }
+
     // A lead that reviews handed nothing for a while: the queue is empty, and waiting on costs tokens — `lead` starts it
     // again when the reviews queue up.
     if (idleLead && Date.now() - started >= idleMs) {
+      await logRun(ctx, runPaths(ctx.root, runId), {
+        action: 'stops',
+        why: `no review came for ${durationText(idleMs)}: lead starts it again when the reviews queue up`
+      });
+
       return {
         ...next,
         finished: true,
@@ -515,6 +538,12 @@ export const followNext = async (
     }
 
     if (Date.now() - started >= timeoutMs) {
+      await logRun(ctx, runPaths(ctx.root, runId), {
+        action: 'idle',
+        waited: durationText(timeoutMs),
+        why: next.why ?? 'nothing is ready'
+      });
+
       return {
         ...next,
         timedOut: true,

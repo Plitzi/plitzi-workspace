@@ -7,11 +7,12 @@ import { list, messageLines, outsideLines } from './text';
 import { answering, freePort } from '../../runs/acceptance';
 import { acceptanceText } from '../../runs/model';
 import { pagesOf } from '../../runs/pagesOf';
-import { runPaths } from '../../runs/paths';
+import { runPaths, taskPaths } from '../../runs/paths';
 import { startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
 import { loadRun, logRun } from '../../runs/run';
 import { showTask } from '../../runs/show';
+import { withLock } from '../../runs/store';
 import { findingsOf, taskParts } from '../../runs/taskParts';
 import { findTask, notReviewedIn, reassignTask, revertTask, reviewTask } from '../../runs/tasks';
 import { viewTask } from '../../runs/taskStore';
@@ -50,88 +51,97 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
     options,
     async ctx => {
       const runId = await runOf(ctx, options);
-      const preview = await startTaskPreview(ctx, runId, taskId, await freePort(), { quiet: true });
-      try {
-        if (!(await answering(preview.url, 60_000))) {
-          throw new RunRefusal('invalid', `${taskId}'s copy did not answer on ${preview.url} within a minute`, {
-            task: taskId
-          });
-        }
 
-        // No page named: the pages its changes are drawn at, by the files that changed — else the home page.
-        // Read off the copy served: a page the task makes is one to look at too.
-        const changed = (await viewTaskOf(ctx, runId, taskId)).changed;
-        const owned = paths.length > 0 ? [] : await pagesOf(preview.dir, changed);
-        // A part of a page others build too: its own elements pictured, its own findings kept — the rest is theirs.
-        const parts = await taskParts(preview.dir, changed);
-        const clips = parts && !parts.ownsRoot ? parts.tops.slice(0, PARTS_PICTURED) : [];
-        const routes = paths.length > 0 ? paths : owned.length > 0 ? owned : ['/'];
-        const check = await runSelf(preview.dir, [
-          'page',
-          'check',
-          ...routes,
-          '--width',
-          '1440,390',
-          '--url',
-          preview.url,
-          ...(options.click ? ['--click', options.click] : []),
-          ...(options.element ?? []).flatMap(id => ['--element', id])
-        ]);
-        const shots: string[] = [];
-        for (const route of routes) {
-          for (const clip of clips.length > 0 ? clips : [undefined]) {
-            for (const [width, scheme] of [
-              ['1440', 'light'],
-              ['390', 'dark']
-            ] as const) {
-              const name = `${taskId}${route === '/' ? '-home' : `-${route.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`}${clip ? `-${clip}` : ''}-${width}-${scheme}.png`;
-              const out = path.join(runPaths(ctx.root, runId).shots, name);
-              const shot = await runSelf(preview.dir, [
-                'page',
-                'shot',
-                route,
-                '--url',
-                preview.url,
-                '--width',
-                width,
-                '--scheme',
-                scheme,
-                ...(clip ? ['--clip', clip] : []),
-                '-o',
-                out
-              ]);
-              if (shot.code === 0) {
-                shots.push(out);
+      // One look of a task at a time: two served its copy at once, and the first to finish stopped the server the
+      // other was picturing — a lead's look and its designer's, on la-velada's t-home-details.
+      return withLock(
+        taskPaths(runPaths(ctx.root, runId), taskId).lookLock,
+        async () => {
+          const preview = await startTaskPreview(ctx, runId, taskId, await freePort(), { quiet: true });
+          try {
+            if (!(await answering(preview.url, 60_000))) {
+              throw new RunRefusal('invalid', `${taskId}'s copy did not answer on ${preview.url} within a minute`, {
+                task: taskId
+              });
+            }
+
+            // No page named: the pages its changes are drawn at, by the files that changed — else the home page.
+            // Read off the copy served: a page the task makes is one to look at too.
+            const changed = (await viewTaskOf(ctx, runId, taskId)).changed;
+            const owned = paths.length > 0 ? [] : await pagesOf(preview.dir, changed);
+            // A part of a page others build too: its own elements pictured, its own findings kept — the rest is theirs.
+            const parts = await taskParts(preview.dir, changed);
+            const clips = parts && !parts.ownsRoot ? parts.tops.slice(0, PARTS_PICTURED) : [];
+            const routes = paths.length > 0 ? paths : owned.length > 0 ? owned : ['/'];
+            const check = await runSelf(preview.dir, [
+              'page',
+              'check',
+              ...routes,
+              '--width',
+              '1440,390',
+              '--url',
+              preview.url,
+              ...(options.click ? ['--click', options.click] : []),
+              ...(options.element ?? []).flatMap(id => ['--element', id])
+            ]);
+            const shots: string[] = [];
+            for (const route of routes) {
+              for (const clip of clips.length > 0 ? clips : [undefined]) {
+                for (const [width, scheme] of [
+                  ['1440', 'light'],
+                  ['390', 'dark']
+                ] as const) {
+                  const name = `${taskId}${route === '/' ? '-home' : `-${route.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`}${clip ? `-${clip}` : ''}-${width}-${scheme}.png`;
+                  const out = path.join(runPaths(ctx.root, runId).shots, name);
+                  const shot = await runSelf(preview.dir, [
+                    'page',
+                    'shot',
+                    route,
+                    '--url',
+                    preview.url,
+                    '--width',
+                    width,
+                    '--scheme',
+                    scheme,
+                    ...(clip ? ['--clip', clip] : []),
+                    '-o',
+                    out
+                  ]);
+                  if (shot.code === 0) {
+                    shots.push(out);
+                  }
+                }
               }
             }
+
+            const kept = parts && !parts.ownsRoot ? findingsOf(check.output.trim(), parts) : undefined;
+
+            const notReviewed = await notReviewedIn(ctx, runId, taskId);
+            await logRun(ctx, runPaths(ctx.root, runId), {
+              action: 'look',
+              task: taskId,
+              paths: routes,
+              ok: check.code === 0,
+              ...(kept && kept.apart > 0 ? { apart: kept.apart } : {})
+            });
+
+            return {
+              task: taskId,
+              url: preview.url,
+              ok: check.code === 0,
+              check: kept?.text ?? check.output.trim(),
+              ...(kept && kept.apart > 0 ? { apart: kept.apart } : {}),
+              ...(clips.length > 0 ? { parts: clips } : {}),
+              shots,
+              ...(preview.borrowed === undefined ? {} : { borrowed: preview.borrowed }),
+              ...(notReviewed.length > 0 ? { notReviewed } : {})
+            };
+          } finally {
+            preview.stop();
           }
-        }
-
-        const kept = parts && !parts.ownsRoot ? findingsOf(check.output.trim(), parts) : undefined;
-
-        const notReviewed = await notReviewedIn(ctx, runId, taskId);
-        await logRun(ctx, runPaths(ctx.root, runId), {
-          action: 'look',
-          task: taskId,
-          paths: routes,
-          ok: check.code === 0,
-          ...(kept && kept.apart > 0 ? { apart: kept.apart } : {})
-        });
-
-        return {
-          task: taskId,
-          url: preview.url,
-          ok: check.code === 0,
-          check: kept?.text ?? check.output.trim(),
-          ...(kept && kept.apart > 0 ? { apart: kept.apart } : {}),
-          ...(clips.length > 0 ? { parts: clips } : {}),
-          shots,
-          ...(preview.borrowed === undefined ? {} : { borrowed: preview.borrowed }),
-          ...(notReviewed.length > 0 ? { notReviewed } : {})
-        };
-      } finally {
-        preview.stop();
-      }
+        },
+        { waitMs: 10 * 60_000, ttlMs: 15 * 60_000 }
+      );
     },
     looked =>
       [
@@ -226,7 +236,11 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
               ...((reviewed.granted ?? []).length > 0 ? [`  Handed on: ${list(reviewed.granted ?? [])}`] : []),
               ...((reviewed.ready ?? []).length > 0 ? [`  Ready now: ${list(reviewed.ready ?? [])}`] : []),
               ...(reviewed.previewProblem
-                ? [chalk.yellow(`  ⚠ The run's preview did not take it in: ${reviewed.previewProblem} — restart it (npm run start:preview)`)]
+                ? [
+                    chalk.yellow(
+                      `  ⚠ The run's preview did not take it in: ${reviewed.previewProblem} — restart it (npm run start:preview)`
+                    )
+                  ]
                 : []),
               ...notReviewedText(reviewed.notReviewed, 'approve')
             ].join('\n')

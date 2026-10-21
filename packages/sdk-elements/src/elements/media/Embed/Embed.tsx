@@ -1,10 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
+import { useState } from 'react';
 
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import { embeddableSrc } from './embeddableSrc';
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { RefObject } from 'react';
@@ -37,9 +39,18 @@ const Embed = ({
   const {
     settings: { previewMode }
   } = usePlitzi();
+  const { visible } = useElement();
+  // Hidden, it loads nothing — a frame hidden in CSS is loaded whatever its `loading`, so a player behind a poster loaded
+  // on every visit (la-velada's YouTube, autoplay); shown once, it keeps its page, as a video paused by hiding it would
+  // lose its place. In the builder every frame shows what it holds.
+  const [shown, setShown] = useState(visible);
+  if (visible && !shown) {
+    setShown(true);
+  }
+
   const address = embeddableSrc(src);
   const frame = {
-    src: address,
+    src: shown || !previewMode ? address : undefined,
     title,
     loading,
     referrerPolicy,

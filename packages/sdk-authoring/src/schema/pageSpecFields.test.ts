@@ -97,7 +97,7 @@ describe('a page’s seoTitle and seoDescription', () => {
 });
 
 describe('a page’s robots and structured data', () => {
-  const write = (page: Pick<PageSpec, 'robots' | 'structuredData'>, settings: Record<string, string> = {}) => () =>
+  const write = (page: Pick<PageSpec, 'robots' | 'structuredData'>, settings: Record<string, string | boolean> = {}) => () =>
     authorSpace({
       name: 'Seo',
       permanentUrl: 'seo',
@@ -129,7 +129,7 @@ describe('a page’s robots and structured data', () => {
   it('reads back as it was written, the space’s robots.txt too', () => {
     const { schema, style } = write(
       { robots: 'noindex', structuredData: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Seo' } },
-      { robotsTxt: 'User-agent: *\nAllow: /\n' }
+      { robotsTxt: 'User-agent: *\nAllow: /\n', viewTransitions: true }
     )();
     const { spec } = specFromSpace({ schema, style });
 
@@ -138,6 +138,7 @@ describe('a page’s robots and structured data', () => {
       structuredData: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Seo' }
     });
     expect(spec.settings?.robotsTxt).toBe('User-agent: *\nAllow: /\n');
+    expect(spec.settings?.viewTransitions).toBe(true);
   });
 
   it('holds the space’s robots.txt to the rules crawlers read', () => {

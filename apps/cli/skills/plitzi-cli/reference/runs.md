@@ -57,7 +57,7 @@ eslint .`). The copy has no `node_modules` (it resolves the project's) and no `.
 takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | --reject "why" | --counter "…"`.
   Answer what is proposed to you before you complete (`plitzi task proposals`); honour what was accepted.
 - **Stuck, or unsure?** `plitzi task ask "Spanish or Catalan?"` (`--follow` waits for the answer). **Something the lead
-  should know** — a finding, a choice you made, a risk — with no answer needed: `plitzi task tell "…"`. What the lead
+  should know** — a finding, a choice you made, a risk — with no answer needed: `plitzi task tell "…"` (holding no task — a reviewer — `--about <task> --agent <you>`). What the lead
   says to you arrives with your next heartbeat, progress or completion — read it; `plitzi task inbox --all` shows
   everything said to you again.
 - **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"`; during a long think or test run,

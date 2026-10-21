@@ -34,7 +34,7 @@ export interface RunSnapshotTask {
 export interface RunSnapshotAgent {
   agent: string;
   kind: 'lead' | 'co-lead' | 'agent';
-  /** working, reviewing, in-review, blocked, idle, not-started, no-signal */
+  /** working, reviewing, in-review, blocked, asking, waiting, idle, stopped, not-started, no-signal */
   status: string;
   model?: string;
   /** What it is at, in a line. */

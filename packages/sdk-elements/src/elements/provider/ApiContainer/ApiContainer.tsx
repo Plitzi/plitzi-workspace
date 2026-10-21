@@ -169,6 +169,7 @@ const ApiContainer = ({
     stale: rscStale,
     location: rscLocation,
     elementData,
+    isServerElement: rscAnswered,
     refreshing: rscRefreshing,
     refresh,
     cancel: cancelRsc
@@ -247,8 +248,12 @@ const ApiContainer = ({
    *
    * `routeParams` and `queryParams` above are what re-render this on a navigation, so the comparison is made
    * against where the visitor is now.
+   *
+   * A provider on the page being LEFT has its answer still (`useRscData` keeps it): the destination's payload,
+   * prefetched before the route changes, is no reason to unmount what is on screen — the page emptied for the moment
+   * between, and a view transition's picture of it held nothing to move (la-velada's picker).
    */
-  const rscPending = serverMode && !!rscLocation && rscLocation !== currentRscLocation();
+  const rscPending = serverMode && !!rscLocation && rscLocation !== currentRscLocation() && !rscAnswered;
 
   // A server element whose key is missing from a payload that *did* arrive failed to resolve — its provider is
   // down, misconfigured or timed out. Falling back to mock data there would dress a production outage up as

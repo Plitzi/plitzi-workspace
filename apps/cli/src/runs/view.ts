@@ -66,6 +66,8 @@ export interface TaskLine {
   signalAt?: string;
   /** In review: since when it is as it is — sent, or its UI said — what a review no lead takes has waited from. */
   since?: string;
+  /** At work, held on a question its agent asked the lead and nobody answered: which, in a line. */
+  asking?: { id: string; text: string };
 }
 
 export interface Attention {
@@ -339,6 +341,9 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
 
   // A question the lead answered is dealt with, whether or not the lead's inbox was read.
   const answered = new Set((await messagesOf(loaded)).flatMap(message => (message.replyTo ? [message.replyTo] : [])));
+  const questions = (await messagesOf(loaded)).filter(
+    message => message.to === LEAD && message.fyi !== true && !answered.has(message.id)
+  );
   (await unreadFor(loaded, LEAD, false))
     .filter(message => !answered.has(message.id))
     // Said for the lead to know by a task approved since: its history now, in the inbox — nothing to act on.
@@ -409,7 +414,14 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     total: views.length,
     milestones,
     ...(remaining.length === 0 ? {} : { expectedEnd: new Date(now.getTime() + left * 60_000).toISOString() }),
-    tasks,
+    // A task held on a question to the lead says so where its state is read, not only in the lead's inbox.
+    tasks: tasks.map(task => {
+      const question = questions.filter(message => message.from === task.id).at(-1);
+
+      return question && task.status !== 'done'
+        ? { ...task, asking: { id: question.id, text: glimpse(question.text) } }
+        : task;
+    }),
     attention,
     merges: record.merges.map(merge => ({
       id: merge.id,

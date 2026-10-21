@@ -256,9 +256,11 @@ export const registerTaskGroup = (program: Command): Command => {
     .command('tell')
     .description('Tell the lead what it should know — a finding, a choice you made, a risk — when no answer is needed')
     .argument('<text>', 'What to tell')
+    .option('--about <task>', 'The task it is about — with no task in hand (a reviewer), said by your --agent name')
+    .option(...RUN_OPTION)
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((text: string, options: RunCommandOptions) => taskTell(text, options));
+    .action((text: string, options: RunCommandOptions & { about?: string }) => taskTell(text, options));
 
   taskGroup
     .command('ask')

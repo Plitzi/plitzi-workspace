@@ -45,22 +45,24 @@ const snapshotFile = (loaded: LoadedRun): string => path.join(loaded.paths.cache
 /** The run's view, as the dev tools read it (`RunSnapshot`): what a person looking at the page wants of the run. */
 /** Why a task is not moving, said once for every surface that shows the run: what it starts after, waits for, needs. */
 const whyOf = (task: TaskLine): { why?: string } =>
-  task.waitsOn
-    ? { why: `starts once ${task.waitsOn.join(', ')} ${task.waitsOn.length === 1 ? 'is' : 'are'} approved` }
-    : task.status === 'waiting' && task.waitingFor
-      ? { why: `waits for ${task.waitingFor.task}${task.waitingFor.file ? `: ${task.waitingFor.file}` : ''}` }
-      : task.status === 'blocked' && task.blockedBy
-        ? { why: `blocked — ${task.blockedBy.reason} (needs ${task.blockedBy.needs})` }
-        : task.status === 'ready'
-          ? { why: 'free to take: the next agent at work takes it' }
-          : task.status === 'in-review'
-            ? {
-                why:
-                  task.design?.status === 'due'
-                    ? `its UI review — ${task.design.by ?? 'no designer has taken it yet'}; then the lead's`
-                    : `the lead's review — ${task.reviewer ?? 'no lead has taken it yet'}`
-              }
-            : {};
+  task.asking
+    ? { why: `waits for the lead's answer to ${task.asking.id}: ${task.asking.text}` }
+    : task.waitsOn
+      ? { why: `starts once ${task.waitsOn.join(', ')} ${task.waitsOn.length === 1 ? 'is' : 'are'} approved` }
+      : task.status === 'waiting' && task.waitingFor
+        ? { why: `waits for ${task.waitingFor.task}${task.waitingFor.file ? `: ${task.waitingFor.file}` : ''}` }
+        : task.status === 'blocked' && task.blockedBy
+          ? { why: `blocked — ${task.blockedBy.reason} (needs ${task.blockedBy.needs})` }
+          : task.status === 'ready'
+            ? { why: 'free to take: the next agent at work takes it' }
+            : task.status === 'in-review'
+              ? {
+                  why:
+                    task.design?.status === 'due'
+                      ? `its UI review — ${task.design.by ?? 'no designer has taken it yet'}; then the lead's`
+                      : `the lead's review — ${task.reviewer ?? 'no lead has taken it yet'}`
+                }
+              : {};
 
 export const snapshotOf = ({ view, agents, feed }: Monitored, at: Date): RunSnapshot => ({
   runId: view.runId,

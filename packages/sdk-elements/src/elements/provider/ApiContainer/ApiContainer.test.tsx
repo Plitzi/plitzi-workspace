@@ -10,6 +10,7 @@ import ElementContext from '../../../Element/ElementContext';
 import { elementEntry } from '../../../tests/elementTestUtils';
 
 import type { CommonState } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -76,7 +77,7 @@ describe('ApiContainer — a server provider refreshed by a write', () => {
     definition: { type: id, label: id, rootId: 'home', items, styleSelectors: { base: '' }, runtime }
   });
 
-  const renderProvider = (visible = true, refreshSeconds = 0) => {
+  const renderProvider = (visible = true, refreshSeconds = 0, children?: ReactNode) => {
     // The slice of the common state a server provider reads: the page it is on, and the payload that answered it.
     const store = createStore<CommonState>({
       schema: { pages: ['home'], flat: { home: element('home', ['orders']), orders: element('orders', [], 'server') } },
@@ -98,7 +99,9 @@ describe('ApiContainer — a server provider refreshed by a write', () => {
             }
           })}
         >
-          <ApiContainer connector="cms" resource="orders" refreshSeconds={refreshSeconds} />
+          <ApiContainer connector="cms" resource="orders" refreshSeconds={refreshSeconds}>
+            {children}
+          </ApiContainer>
         </ElementContext>
       </StoreProvider>
     );
@@ -116,6 +119,20 @@ describe('ApiContainer — a server provider refreshed by a write', () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('ids=orders');
     expect(init.cache).toBe('no-cache');
+    view.unmount();
+  });
+
+  it('keeps its children on the page being left while the next page’s payload is fetched', () => {
+    const { store, view } = renderProvider(true, 0, <span>The orders</span>);
+    expect(view.queryByText('The orders')).not.toBeNull();
+
+    // The destination's payload lands before the route changes: this page is still the one on screen.
+    act(() => {
+      store.set('rsc.location', '/fighters/alondrissa');
+      store.set('rsc.data', { fighter: { name: 'Alondrissa' } });
+    });
+
+    expect(view.queryByText('The orders')).not.toBeNull();
     view.unmount();
   });
 

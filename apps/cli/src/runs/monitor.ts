@@ -14,7 +14,17 @@ import type { RunView, TaskLine } from './view';
  */
 
 /** Where an agent stands, at a glance. */
-export type AgentStatus = 'working' | 'reviewing' | 'in-review' | 'blocked' | 'idle' | 'not-started' | 'no-signal';
+export type AgentStatus =
+  | 'working'
+  | 'reviewing'
+  | 'in-review'
+  | 'blocked'
+  | 'asking'
+  | 'waiting'
+  | 'idle'
+  | 'stopped'
+  | 'not-started'
+  | 'no-signal';
 
 export interface AgentLine {
   agent: string;
@@ -37,9 +47,26 @@ export interface AgentLine {
 export interface FeedLine {
   at: string;
   by: string;
-  /** What happened, said. */
+  /** What happened, said — whole, for a surface that shows one line of text. */
   text: string;
-  kind: 'take' | 'complete' | 'review' | 'message' | 'run' | 'problem' | 'other';
+  kind:
+    | 'take'
+    | 'complete'
+    | 'review'
+    | 'approved'
+    | 'sent-back'
+    | 'message'
+    | 'question'
+    | 'agent'
+    | 'run'
+    | 'problem'
+    | 'other';
+  /** A message's: who it is to — `lead`, a task, an agent, or every task. */
+  to?: string;
+  /** A message's words, apart from who said them to whom. */
+  quote?: string;
+  /** The task it is about, when one. */
+  task?: string;
 }
 
 /**
@@ -86,7 +113,7 @@ export const storiesOf = (log: readonly Record<string, unknown>[]): Partial<Reco
       if (story.writers.at(-1) !== by) {
         story.writers.push(by);
       }
-    } else if (entry.action === 'design-review' && by !== undefined) {
+    } else if (entry.action === 'design-review' && entry.verdict === 'approve' && by !== undefined) {
       story.design = by;
     } else if (entry.action === 'review' && entry.verdict === 'approve') {
       story.approvedAt = entry.at;
@@ -105,15 +132,21 @@ export const storiesOf = (log: readonly Record<string, unknown>[]): Partial<Reco
 };
 
 const statusOf = (task: TaskLine): AgentStatus =>
-  task.noSignal
-    ? 'no-signal'
-    : task.status === 'in-review'
-      ? 'in-review'
-      : task.status === 'blocked' || task.status === 'waiting'
-        ? 'blocked'
-        : 'working';
+  task.asking
+    ? 'asking'
+    : task.noSignal
+      ? 'no-signal'
+      : task.status === 'in-review'
+        ? 'in-review'
+        : task.status === 'blocked' || task.status === 'waiting'
+          ? 'blocked'
+          : 'working';
 
 const doingOf = (task: TaskLine): string => {
+  if (task.asking) {
+    return `${task.id} waits for the lead's answer to ${task.asking.id}: ${task.asking.text}`;
+  }
+
   switch (task.status) {
     case 'in-review':
       return `${task.id} waits for its review`;
@@ -207,7 +240,14 @@ const agentsOf = async (
       kind: lead === LEAD ? ('lead' as const) : ('co-lead' as const),
       approved: 0,
       status:
-        at || recent ? ('reviewing' as const) : lead === LEAD || asking ? ('idle' as const) : ('not-started' as const),
+        // At a review it holds, reviewing; at anything else lately (an answer, an amend, a finish), working.
+        at
+          ? ('reviewing' as const)
+          : recent
+            ? ('working' as const)
+            : lead === LEAD || asking
+              ? ('idle' as const)
+              : ('not-started' as const),
       ...(leadModel ? { model: leadModel } : {}),
       roles: [lead === LEAD ? 'plans, reviews, finishes' : 'reviews'],
       doing: at
@@ -251,7 +291,13 @@ const agentsOf = async (
       : {
           agent,
           kind: 'agent' as const,
-          status: 'idle' as const,
+          // Between tasks, as its last word says: waiting for work, given up on it for now, or done with the run.
+          status:
+            lastBy.get(agent)?.action === 'waiting'
+              ? ('waiting' as const)
+              : lastBy.get(agent)?.action === 'stops'
+                ? ('stopped' as const)
+                : ('idle' as const),
           ...about,
           doing: `between tasks${lastBy.get(agent) ? ` — last: ${lastDone(lastBy.get(agent) ?? {}) ?? ''}` : ' — not started yet'}${tail}`,
           ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
@@ -275,12 +321,12 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
   const by = textOf(entry.by);
   const task = textOf(entry.task);
   const round = typeof entry.round === 'number' ? ` (round ${String(entry.round)})` : '';
-  const line = (kind: FeedLine['kind'], text: string): FeedLine => ({ at, by, kind, text });
+  const line = (kind: FeedLine['kind'], text: string): FeedLine => ({ at, by, kind, text, ...(task ? { task } : {}) });
   switch (entry.action) {
     case 'take':
       return line('take', `took ${task}`);
     case 'joined':
-      return line('run', `joined the run${entry.quality ? ` at ${textOf(entry.quality)}` : ''}`);
+      return line('agent', `joined the run${entry.quality ? ` at ${textOf(entry.quality)}` : ''}`);
     case 'complete':
       return line('complete', `sent ${task} to review`);
     case 'check':
@@ -292,12 +338,33 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
     case 'review-taken':
       return line('review', `took the ${textOf(entry.review)} review of ${task}`);
     case 'review':
-      return line(
-        'review',
-        entry.verdict === 'approve' ? `approved ${task}${round}` : `asked for changes on ${task}${round}`
-      );
+      return entry.verdict === 'approve'
+        ? line(
+            'approved',
+            `approved ${task}${round}${entry.design === 'skipped' ? ` without its UI review${typeof entry.designBy === 'string' ? ` (${entry.designBy} had it)` : ''}` : ''}`
+          )
+        : line('sent-back', `sent ${task} back${round}`);
     case 'design-review':
-      return line('review', `approved the UI of ${task}`);
+      return entry.verdict === 'approve'
+        ? line('approved', `approved the UI of ${task}`)
+        : line('sent-back', `sent ${task}'s UI back${round}`);
+    case 'waiting':
+      return line('agent', `waits for work — ${textOf(entry.why)}`);
+    case 'idle':
+      return line('agent', `nothing came in ${textOf(entry.waited)}: idle — ${textOf(entry.why)}`);
+    case 'stops':
+      return line('agent', `stops: ${textOf(entry.why)}`);
+    case 'settle':
+      return line('run', `merged the requests that waited: ${listOf(entry.settled)}`);
+    case 'all-approved':
+      return line('run', `every task is approved (${String(entry.tasks)}) — next: ${textOf(entry.next)}`);
+    case 'ready':
+      return line(
+        'run',
+        `the run is ready: its ${String(entry.files)} files checked whole, ${String(entry.acceptance)} acceptance lines hold — next: ${textOf(entry.next)}`
+      );
+    case 'note':
+      return line('message', 'added a note for every task');
     case 'refused':
       return line(
         'problem',
@@ -363,11 +430,19 @@ export const monitorRun = async (ctx: RunContext, runId: string, feedLength = 40
     const writer = stories[message.from]?.writers.at(-1);
     const asks = message.to === LEAD && message.fyi !== true && writer !== undefined;
 
+    // To a task is to the agent writing it, said by its name with the task beside: who reads it, at a glance.
+    const holder = stories[message.to]?.writers.at(-1);
+    const to = message.to === '*' ? 'every task' : (holder ?? message.to.replace(/^@/, ''));
+    const quote = glimpse(message.text.replace(/\s+/g, ' '));
+
     return {
       at: message.at,
       by: writer ?? message.from,
-      kind: 'message',
-      text: `${writer === undefined ? '' : `on ${message.from} `}→ ${message.to === '*' ? 'every task' : message.to}${message.fyi ? ' (for you to know)' : asks ? ' (asks)' : ''}: ${glimpse(message.text.replace(/\s+/g, ' '))}`
+      kind: asks ? 'question' : 'message',
+      to,
+      quote,
+      ...(writer === undefined ? (holder === undefined ? {} : { task: message.to }) : { task: message.from }),
+      text: `${writer === undefined ? '' : `on ${message.from} `}→ ${to}${message.fyi ? ' (for you to know)' : asks ? ' (asks)' : ''}: ${quote}`
     };
   });
   const feed = [...logged, ...said].sort((a, b) => b.at.localeCompare(a.at)).slice(0, feedLength);

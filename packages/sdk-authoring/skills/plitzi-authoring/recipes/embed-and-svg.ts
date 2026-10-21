@@ -1,7 +1,9 @@
 /**
  * Something drawn elsewhere — a map, a video player — in an `embed`, and a drawing of your own in an `svg`.
  *
- * An embed says what it shows in `title`, which is what a screen reader announces, and loads lazily. An `svg` takes
+ * An embed says what it shows in `title`, which is what a screen reader announces, and loads lazily — and hidden (its
+ * `visible`, a player behind its poster) it loads nothing until it is first shown: no `src` binding to the play state
+ * is needed. An `svg` takes
  * the markup alone, checked to be an SVG and with anything that runs taken out; drawn with `currentColor`, it follows
  * the colour of its class in both themes. Without a `label` it is decoration, hidden from readers; with one it is an
  * image that says it.

@@ -1,3 +1,4 @@
+import { watch } from 'node:fs';
 import { emitKeypressEvents } from 'node:readline';
 import { stripVTControlCharacters } from 'node:util';
 
@@ -5,6 +6,7 @@ import chalk from 'chalk';
 
 import { contextFor } from './shell';
 import { monitorRun } from '../../runs/monitor';
+import { runPaths } from '../../runs/paths';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { activeRuns, runIds } from '../../runs/run';
 
@@ -24,9 +26,11 @@ const TASK_STATE: Record<TaskLine['status'], (task: TaskLine) => string> = {
   pending: task => chalk.dim(task.waitsOn ? `· after ${task.waitsOn.join(', ')}` : '· pending'),
   ready: () => '○ ready — free to take',
   'in-progress': task =>
-    chalk.cyan(
-      `▶ ${task.agent ?? ''}${task.fraction === undefined ? '' : ` ${String(Math.round(task.fraction * 100))}%`}`
-    ),
+    task.asking
+      ? chalk.yellow(`? ${task.agent ?? ''} asks the lead (${task.asking.id})`)
+      : chalk.cyan(
+          `▶ ${task.agent ?? ''}${task.fraction === undefined ? '' : ` ${String(Math.round(task.fraction * 100))}%`}`
+        ),
   waiting: task => chalk.yellow(`… waits ${task.waitingFor?.task ?? ''}`),
   'in-review': task =>
     chalk.magenta(
@@ -58,22 +62,59 @@ const AGENT_STATE: Record<AgentStatus, string> = {
   reviewing: chalk.magenta('● reviewing'),
   'in-review': chalk.magenta('◐ in review'),
   blocked: chalk.yellow('● blocked'),
+  asking: chalk.yellow('? asks the lead'),
+  waiting: chalk.cyan('◌ waiting'),
   idle: chalk.dim('○ idle'),
+  stopped: chalk.dim('◼ stopped'),
   'not-started': chalk.dim('· not started'),
   'no-signal': chalk.red('● no signal')
 };
 
-const FEED_TONE: Record<FeedLine['kind'], (text: string) => string> = {
-  take: chalk.cyan,
-  complete: chalk.blue,
-  review: chalk.magenta,
-  message: text => text,
-  run: chalk.yellow,
-  problem: chalk.red,
-  other: chalk.dim
+/** Each kind of event, at a glance: its mark and the colour of its words. */
+const FEED_LOOK: Record<FeedLine['kind'], { mark: string; tone: (text: string) => string }> = {
+  take: { mark: chalk.cyan('▶'), tone: chalk.cyan },
+  complete: { mark: chalk.blue('⇢'), tone: chalk.blue },
+  review: { mark: chalk.magenta('◎'), tone: chalk.magenta },
+  approved: { mark: chalk.green('✓'), tone: chalk.green },
+  'sent-back': { mark: chalk.yellow('↺'), tone: chalk.yellow },
+  message: { mark: '✉', tone: text => text },
+  question: { mark: chalk.yellow.bold('?'), tone: chalk.yellow },
+  agent: { mark: chalk.dim('·'), tone: chalk.dim },
+  run: { mark: chalk.bold('◆'), tone: chalk.bold },
+  problem: { mark: chalk.red('✗'), tone: chalk.red },
+  other: { mark: chalk.dim('·'), tone: chalk.dim }
+};
+
+/** One event of the activity: when, what kind, who — and to whom, for a message — and what, its words quoted. */
+const feedRow = (line: FeedLine): string => {
+  const look = FEED_LOOK[line.kind];
+  const who = line.to === undefined ? line.by : `${line.by} → ${line.to}`;
+  const what =
+    line.quote === undefined
+      ? line.text
+      : `${line.kind === 'question' ? 'asks: ' : ''}“${line.quote}”${line.task ? chalk.dim(` · ${line.task}`) : ''}`;
+
+  return `${chalk.dim(hhmm(line.at))} ${look.mark} ${chalk.bold(who.padEnd(24))} ${look.tone(what)}`;
 };
 
 const hhmm = (iso: string): string => iso.slice(11, 16);
+
+/** The attention rows shown on top: the board is for seeing it all, the full list is `run status`. */
+const ATTENTION_ROWS = 5;
+
+const FEED_WORDS: Record<FeedLine['kind'], string> = {
+  take: 'took',
+  complete: 'sent to review',
+  review: 'review',
+  approved: 'approved',
+  'sent-back': 'sent back',
+  message: 'message',
+  question: 'question',
+  agent: 'agent',
+  run: 'run',
+  problem: 'problem',
+  other: 'other'
+};
 const visible = (line: string): number => stripVTControlCharacters(line).length;
 
 /** A line cut, or padded, to `width` columns, colours kept — a longer one would wrap and push the screen down. */
@@ -118,6 +159,15 @@ export const orderedTasks = (tasks: readonly TaskLine[]): TaskLine[] =>
     .map((task, index) => ({ task, index }))
     .sort((a, b) => ORDER[a.task.status] - ORDER[b.task.status] || a.index - b.index)
     .map(({ task }) => task);
+
+/** The tasks the list shows: all of them, or — the board's default — those not approved yet, the approved said in a line. */
+export const listedTasks = (tasks: readonly TaskLine[], showApproved: boolean): TaskLine[] => {
+  const ordered = orderedTasks(tasks);
+  const left = ordered.filter(task => task.status !== 'done');
+
+  // Nothing left: the approved are all there is to see — listed, never folded into a count.
+  return showApproved || left.length === 0 ? ordered : left;
+};
 
 const ID_WIDTH = 22;
 
@@ -197,6 +247,7 @@ const detailOf = (task: TaskLine, story: TaskStory | undefined): string[] => [
   chalk.bold(`${task.id} — ${task.title}`),
   `  ${task.status}${task.round > 0 ? ` · round ${String(task.round)}` : ''} · ${task.role} · ${task.priority} · ${String(task.estimateMinutes)} min estimated${task.status !== 'done' && task.spentMinutes !== undefined ? `, ${String(task.spentMinutes)} spent` : ''}`,
   ...storyOf(task, story),
+  ...(task.asking ? [chalk.yellow(`  asks the lead (${task.asking.id}): ${task.asking.text}`)] : []),
   ...(task.step ? [`  now: ${task.step}`] : []),
   ...(task.waitsOn
     ? [`  starts once ${task.waitsOn.join(', ')} ${task.waitsOn.length === 1 ? 'is' : 'are'} approved`]
@@ -219,7 +270,28 @@ const columns = (left: string[], right: string[], leftWidth: number, rightWidth:
 /** The panel, as lines that fit `width` × `height`: the run, tasks beside agents, attention, then the feed. */
 export const monitorScreen = (
   data: Monitored,
-  { selected, open, width, height, now }: { selected: number; open: boolean; width: number; height: number; now: Date }
+  {
+    selected,
+    open,
+    width,
+    height,
+    now,
+    feedPage = 0,
+    onFeedPages,
+    showApproved = false
+  }: {
+    selected: number;
+    open: boolean;
+    width: number;
+    height: number;
+    now: Date;
+    /** Which page of the activity, newest first: 0 is the latest, each → one older. */
+    feedPage?: number;
+    /** Told how many pages the activity has at this height: what → may go up to. */
+    onFeedPages?: (pages: number) => void;
+    /** The approved tasks listed one by one too (`a`); otherwise said in one line under the rest. */
+    showApproved?: boolean;
+  }
 ): string[] => {
   const { view, agents, feed, runs, stories } = data;
   const others = runs.filter(run => run.runId !== view.runId);
@@ -228,6 +300,11 @@ export const monitorScreen = (
     .map(status => [status, tasks.filter(task => task.status === status).length] as const)
     .filter(([, count]) => count > 0)
     .map(([status, count]) => `${String(count)} ${STATUS_WORDS[status]}`);
+  const asking = tasks.filter(task => task.asking !== undefined).length;
+  if (asking > 0) {
+    counts.push(chalk.yellow(`${String(asking)} asking the lead`));
+  }
+
   const head = [
     chalk.inverse(
       cell(
@@ -245,63 +322,92 @@ export const monitorScreen = (
   ];
   const leftWidth = Math.max(30, Math.floor(width * 0.42));
   const rightWidth = Math.max(10, width - leftWidth - 3);
+  // What may need a supervisor: on top, under the run's head — the rest of the board is what is going on.
+  const attention =
+    view.attention.length === 0
+      ? [cell(chalk.green(' ✓ nothing needs anyone now'), width)]
+      : [
+          chalk.bold.yellow(` NEEDS ATTENTION (${String(view.attention.length)})`),
+          ...view.attention
+            .slice(0, ATTENTION_ROWS)
+            .map(item =>
+              cell(` ${item.who === 'person' ? chalk.red('■ you:') : chalk.yellow('⚠ lead:')} ${item.text}`, width)
+            ),
+          ...(view.attention.length > ATTENTION_ROWS
+            ? [chalk.dim(`   + ${String(view.attention.length - ATTENTION_ROWS)} more — plitzi run status`)]
+            : [])
+        ];
   // The tasks a screen has room for, the selected one in them: a run of thirty would push everything else off.
-  const room = Math.max(6, Math.floor((height - head.length) / 2) - 1);
-  const first = Math.min(Math.max(0, selected - Math.floor(room / 2)), Math.max(0, tasks.length - room));
-  const shown = tasks.slice(first, first + room);
+  const room = Math.max(6, Math.floor((height - head.length - attention.length - 1) / 2) - 1);
+  const listed = listedTasks(view.tasks, showApproved);
+  const approved = tasks.length - tasks.filter(task => task.status !== 'done').length;
+  const first = Math.min(Math.max(0, selected - Math.floor(room / 2)), Math.max(0, listed.length - room));
+  const shown = listed.slice(first, first + room);
   const body = columns(
     [
       chalk.bold(
-        `TASKS (${String(tasks.length)})${tasks.length > room ? chalk.dim(` ${String(first + 1)}–${String(first + shown.length)}`) : ''}`
-      ),
+        `TASKS (${String(tasks.length)})${listed.length > room ? chalk.dim(` ${String(first + 1)}–${String(first + shown.length)}`) : ''}`
+      ) +
+        chalk.dim(
+          `  ↑↓ choose · enter ${open ? 'closes' : 'opens'} it · a ${showApproved ? 'hides' : 'shows'} the approved`
+        ),
       ...shown.map((task, index) => taskRow(task, stories[task.id], first + index === selected, now)),
-      ...(first + shown.length < tasks.length
-        ? [chalk.dim(`  ↓ ${String(tasks.length - first - shown.length)} more`)]
+      ...(first + shown.length < listed.length
+        ? [chalk.dim(`  ↓ ${String(listed.length - first - shown.length)} more`)]
+        : []),
+      ...(listed.length < tasks.length
+        ? [
+            chalk.green(`  ✓ ${String(approved)} approved`) +
+              chalk.dim(
+                ` (a lists them): ${tasks
+                  .filter(task => task.status === 'done')
+                  .map(task => task.id)
+                  .join(', ')}`
+              )
+          ]
         : [])
     ],
     [chalk.bold(`AGENTS (${String(agents.length)})`), ...agents.map(agent => agentRow(agent, now))],
     leftWidth,
     rightWidth
   );
-  const attention =
-    view.attention.length === 0
-      ? []
-      : [
-          '',
-          chalk.bold('NEEDS ATTENTION'),
-          ...view.attention.map(item =>
-            cell(`${item.who === 'person' ? chalk.red('■') : chalk.yellow('⚠')} ${item.text}`, width)
-          )
-        ];
-  const picked = tasks.at(selected);
+  const picked = listed.at(selected);
   const detail = open && picked ? ['', ...detailOf(picked, stories[picked.id]).map(line => cell(line, width))] : [];
   const foot = [
     '',
     chalk.dim(
       cell(
-        '↑↓ a task · enter opens it · q quits · "after X": starts once X is approved · ○ free to take · ■ needs someone',
+        'q quits · ↑↓ a task · enter opens it · a the approved · ←→ the activity · "after X": starts once X is approved · ○ free to take · ■ needs someone',
         width
       )
+    ),
+    cell(
+      chalk.dim('activity: ') +
+        (['take', 'complete', 'review', 'approved', 'sent-back', 'message', 'question', 'problem', 'run'] as const)
+          .map(kind => `${FEED_LOOK[kind].mark} ${chalk.dim(FEED_WORDS[kind])}`)
+          .join('  '),
+      width
     )
   ];
-  const left = Math.max(0, height - head.length - body.length - attention.length - detail.length - foot.length - 2);
+  const left = Math.max(0, height - head.length - attention.length - 1 - body.length - detail.length - foot.length - 2);
+  const pages = left === 0 ? 1 : Math.max(1, Math.ceil(feed.length / left));
+  onFeedPages?.(pages);
+  const page = Math.min(Math.max(0, feedPage), pages - 1);
+  const firstLine = page * left;
   const activity =
     left === 0
       ? []
       : [
           '',
-          chalk.bold('ACTIVITY'),
-          ...feed
-            .slice(0, left)
-            .map(line =>
-              cell(
-                `${chalk.dim(hhmm(line.at))} ${chalk.bold(line.by.padEnd(14))} ${FEED_TONE[line.kind](line.text)}`,
-                width
-              )
-            )
+          `${chalk.bold('ACTIVITY')}${chalk.dim(
+            pages > 1
+              ? `  ${String(firstLine + 1)}–${String(Math.min(firstLine + left, feed.length))} of ${String(feed.length)} · ${page > 0 ? '← newer' : '← (newest)'} · ${page < pages - 1 ? 'older →' : '(oldest) →'}`
+              : `  ${String(feed.length)}, all shown`
+          )}`,
+          ...feed.slice(firstLine, firstLine + left).map(line => cell(feedRow(line), width))
         ];
 
-  return [...head, ...body, ...attention, ...detail, ...activity, ...foot];
+  return [...head, ...attention, '', ...body, ...detail, ...activity, ...foot];
 };
 
 /** Which run to show: the one named, else the open one, else the newest the project has. */
@@ -333,6 +439,9 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
   const ctx = await contextFor(options);
   let selected = 0;
   let open = false;
+  let feedPage = 0;
+  let feedPages = 1;
+  let showApproved = false;
   let last: Monitored | undefined;
   let note = 'Reading the run…';
 
@@ -342,23 +451,84 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
           selected,
           open,
           width: process.stdout.columns,
-          height: process.stdout.rows,
-          now: new Date()
+          // One row fewer than the terminal's: the last line written ends the screen, and a full one would scroll it.
+          height: process.stdout.rows - 1,
+          now: new Date(),
+          feedPage,
+          showApproved,
+          onFeedPages: pages => {
+            feedPages = pages;
+            feedPage = Math.min(feedPage, pages - 1);
+          }
         })
       : [note];
     // The whole screen again, from its top: what a person sees is the run as it is now, never the run scrolled by.
-    process.stdout.write(`\x1b[H\x1b[2J${lines.slice(0, process.stdout.rows - 1).join('\n')}`);
+    process.stdout.write(`\x1b[H\x1b[2J${lines.slice(0, Math.max(1, process.stdout.rows - 1)).join('\n')}`);
   };
 
+  // Live: the run's folder watched, read again the moment the CLI writes to it — a take, a review, a message, a state —
+  // and drawn again every second for the clock and the "ago"s. What a copy writes (cache/) and the blobs are no news
+  // for the board. The interval is the fallback, for an event the system did not deliver.
+  let watched: { id: string; close: () => void } | undefined;
+  let soon: ReturnType<typeof setTimeout> | undefined;
+  const follow = (id: string): void => {
+    if (watched?.id === id) {
+      return;
+    }
+
+    watched?.close();
+    try {
+      const watcher = watch(runPaths(ctx.root, id).dir, { recursive: true }, (_event, file) => {
+        const changed = file ?? '';
+        if (/(^|\/)(cache|blobs|scratch|shots)(\/|$)/.test(changed)) {
+          return;
+        }
+
+        clearTimeout(soon);
+        soon = setTimeout(() => void look(), 150);
+      });
+      watched = { id, close: () => watcher.close() };
+    } catch {
+      watched = undefined;
+    }
+  };
+  let looking = false;
+  let lookAgain = false;
+
   const look = async (): Promise<void> => {
+    // One read at a time: one asked for meanwhile runs right after, never beside it.
+    if (looking) {
+      lookAgain = true;
+
+      return;
+    }
+
+    looking = true;
+    try {
+      await lookOnce();
+    } finally {
+      looking = false;
+      if (lookAgain) {
+        lookAgain = false;
+        void look();
+      }
+    }
+  };
+
+  const lookOnce = async (): Promise<void> => {
     const id = await runToShow(ctx, runId ?? options.run);
+    if (id !== undefined) {
+      follow(id);
+    }
+
     if (id === undefined) {
       last = undefined;
       note = 'No run in this project yet — this panel shows one the moment it opens (plitzi run open). q quits.';
     } else {
       try {
-        last = await monitorRun(ctx, id);
-        selected = Math.min(selected, Math.max(0, last.view.tasks.length - 1));
+        // The whole activity: a person pages back through it (← →), from the plan to now.
+        last = await monitorRun(ctx, id, Number.MAX_SAFE_INTEGER);
+        selected = Math.min(selected, Math.max(0, listedTasks(last.view.tasks, showApproved).length - 1));
       } catch (error) {
         if (!isRunRefusal(error)) {
           throw error;
@@ -380,9 +550,13 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
     process.stdin.setRawMode(true);
     // The alternate screen, as a pager uses: the terminal's own text is back as it was once it quits.
     process.stdout.write('\x1b[?1049h\x1b[?25l');
-    const timer = setInterval(() => void look(), Math.max(1, options.interval ?? 2) * 1000);
+    const timer = setInterval(() => void look(), Math.max(1, options.interval ?? 5) * 1000);
+    const clock = setInterval(draw, 1000);
     const quit = (): void => {
       clearInterval(timer);
+      clearInterval(clock);
+      clearTimeout(soon);
+      watched?.close();
       process.stdin.setRawMode(false);
       process.stdin.pause();
       process.stdout.write('\x1b[?25h\x1b[?1049l');
@@ -395,13 +569,20 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
         return;
       }
 
-      const count = last?.view.tasks.length ?? 0;
+      const count = last ? listedTasks(last.view.tasks, showApproved).length : 0;
       if (key?.name === 'down' && count > 0) {
         selected = (selected + 1) % count;
       } else if (key?.name === 'up' && count > 0) {
         selected = (selected - 1 + count) % count;
       } else if (key?.name === 'return') {
         open = !open;
+      } else if (key?.name === 'a') {
+        showApproved = !showApproved;
+        selected = 0;
+      } else if (key?.name === 'right') {
+        feedPage = Math.min(feedPage + 1, feedPages - 1);
+      } else if (key?.name === 'left') {
+        feedPage = Math.max(0, feedPage - 1);
       }
 
       draw();

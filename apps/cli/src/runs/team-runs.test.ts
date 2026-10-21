@@ -4,9 +4,11 @@ import { amendRun } from './amend';
 import { expectedIds } from './expectations';
 import { extendRun } from './extend';
 import { leadItems } from './leadWatch';
+import { messagesOf } from './messages';
 import { taskPaths } from './paths';
 import { isRunRefusal } from './refusal';
-import { checkPlanFile, loadRun, openRun } from './run';
+import { checkPlanFile, loadRun, openRun, readRunLog } from './run';
+import { tellLeadAbout } from './talk';
 import { completeTask, nextTask, reviewTask, takeNext, takeTask, taskContext } from './tasks';
 import { readState } from './taskStore';
 import { readTeam, setTeamAgent, TEAM_FILE } from './team';
@@ -334,6 +336,31 @@ describe('a designer’s review of the others’ UI', () => {
       await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: true })
     ).toMatchObject({ design: 'skipped' });
     expect(await designOf('t-about')).toMatchObject({ status: 'skipped', by: 'lead' });
+  });
+
+  it('says the designer’s changes as its UI review’s, and tells a designer the lead went past', async () => {
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
+    await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'changes', [{ note: 'Tighter at 390' }]);
+    const log = async () => readRunLog((await loadRun(lead(), 'es-launch')).paths);
+    expect((await log()).at(-1)).toMatchObject({ action: 'design-review', verdict: 'changes', task: 't-menu' });
+
+    await completed('dev-2', 't-about', 'src/space/pages/about.ts');
+    await takeNext(bench.agent('design-2'), 'es-launch', 'designer');
+    await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: true });
+    expect((await log()).find(entry => entry.action === 'review' && entry.task === 't-about')).toMatchObject({
+      design: 'skipped',
+      designBy: 'design-2'
+    });
+    const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(message => message.to === '@design-2');
+    expect(told?.text).toContain('t-about is approved without its UI review');
+
+    // Its finding still reaches the lead, by its name, though it holds no task.
+    const said = await tellLeadAbout(bench.agent('design-2'), 'es-launch', 't-about', 'The footer wraps at 390');
+    expect(said).toMatchObject({ from: 'design-2', to: 'lead', text: 'On t-about: The footer wraps at 390' });
+    expect(await refusalOf(tellLeadAbout(bench.agent('nobody'), 'es-launch', 't-about', 'Hi'))).toContain(
+      'is no agent of the team'
+    );
   });
 
   it('lets a designer’s approval stand for a round of changes that did not touch the UI', async () => {

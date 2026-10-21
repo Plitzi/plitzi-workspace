@@ -200,7 +200,11 @@ export const registerRunGroup = (program: Command): Command => {
       'A run, live, for a person — in a terminal of its own, beside the harness: its tasks, its leads, what needs someone; it only reads'
     )
     .argument('[run]', 'The run — the only open one when left out')
-    .option('--interval <seconds>', 'How often to look (2)', positiveInteger)
+    .option(
+      '--interval <seconds>',
+      'How often it reads the run anyway (5): it follows the run live, as the CLI writes it',
+      positiveInteger
+    )
     .action((run: string | undefined, options: RunCommandOptions & { interval?: number }) => runMonitor(run, options));
 
   runGroup

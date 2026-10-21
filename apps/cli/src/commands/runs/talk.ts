@@ -5,7 +5,7 @@ import { proposalsOf } from '../../runs/agreements';
 import { answerProposal, proposeChange } from '../../runs/proposals';
 import { RunRefusal } from '../../runs/refusal';
 import { loadRun } from '../../runs/run';
-import { askLead, messageTasks, readInbox, tellLead } from '../../runs/talk';
+import { askLead, messageTasks, readInbox, tellLead, tellLeadAbout } from '../../runs/talk';
 import { followWait } from '../../runs/tasks';
 
 import type { RunCommandOptions } from './shell';
@@ -126,13 +126,16 @@ export const taskAsk = (
           : `Asked (${asked.question.id}): the answer comes with your next heartbeat, progress or completion — or stay for it with --follow.`
   );
 
-export const taskTell = (text: string, options: RunCommandOptions): Promise<void> =>
+export const taskTell = (text: string, options: RunCommandOptions & { about?: string }): Promise<void> =>
   act(
     options,
     async ctx => {
       const runId = await runOf(ctx, options);
 
-      return tellLead(ctx, runId, taskOf(ctx), text);
+      // With no task in hand, about one: a reviewer's finding, said by its name.
+      return ctx.token === undefined && options.about !== undefined
+        ? tellLeadAbout(ctx, runId, options.about, text)
+        : tellLead(ctx, runId, taskOf(ctx, options.about), text);
     },
     told => `Told the lead (${told.id}): no answer is waited for — task ask when you need one.`
   );

@@ -130,6 +130,8 @@ const styleConstants = {
   PERSPECTIVE_ORIGIN: 'perspective-origin',
   BACKFACE_VISIBILITY: 'backface-visibility',
   WILL_CHANGE: 'will-change',
+  // What a view transition between pages calls the element: the same name on both pages moves it from one to the other.
+  VIEW_TRANSITION_NAME: 'view-transition-name',
   OUTLINE_WIDTH: 'outline-width',
   OUTLINE_STYLE: 'outline-style',
   OUTLINE_COLOR: 'outline-color',
@@ -382,6 +384,7 @@ export const baseDefaultValue: Record<StyleCategory, StyleValue> = {
   [styleConstants.PERSPECTIVE_ORIGIN]: '50% 50%',
   [styleConstants.BACKFACE_VISIBILITY]: 'visible',
   [styleConstants.WILL_CHANGE]: 'auto',
+  [styleConstants.VIEW_TRANSITION_NAME]: 'none',
   [styleConstants.OUTLINE_WIDTH]: 'medium',
   [styleConstants.OUTLINE_STYLE]: 'none',
   [styleConstants.OUTLINE_COLOR]: 'currentColor',

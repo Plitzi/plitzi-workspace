@@ -10,7 +10,7 @@ import { finishRun } from './merge';
 import { readOwnership } from './ownership';
 import { runPaths } from './paths';
 import { checkPlan } from './plan';
-import { allowLeadFinish, loadRun } from './run';
+import { allowLeadFinish, loadRun, readRunLog } from './run';
 import {
   blockTask,
   completeTask,
@@ -162,6 +162,42 @@ describe('the lead’s plan as the run goes', () => {
     await finishRun(bench.person(true), 'es-launch', { apply: true, leavePending: true });
     expect(await fs.readFile(path.join(bench.root, 'src/space/pages/contact.ts'), 'utf-8')).toContain('contact');
     expect(await fs.readFile(path.join(bench.root, 'src/space/pages/about.ts'), 'utf-8')).toContain('es: true');
+  });
+
+  it('says in its activity what each agent is at between tasks, and ends saying the run is ready', async () => {
+    await open();
+    const log = async () => readRunLog((await loadRun(lead(), 'es-launch')).paths);
+    // Every task ready but one, and it waits on two: an agent with nothing it can take waits, then goes idle.
+    const held = {
+      't-home': await take('agent-1', 't-home'),
+      't-menu': await take('agent-2', 't-menu'),
+      't-about': await take('agent-3', 't-about')
+    };
+    await takeNext(bench.agent('agent-4'), 'es-launch', 'developer', { timeoutMs: 30, everyMs: 10 });
+    const waited = (await log()).filter(entry => entry.by === 'agent-4').map(entry => entry.action);
+    expect(waited).toEqual(expect.arrayContaining(['waiting', 'idle']));
+
+    const pages = {
+      't-home': 'src/space/pages/home/hero.ts',
+      't-menu': 'src/space/pages/menu.ts',
+      't-about': 'src/space/pages/about.ts'
+    } as const;
+    for (const task of ['t-home', 't-menu', 't-about'] as const) {
+      await writeInCopy(held[task].work, pages[task], `export const page = ${JSON.stringify(task)};\n`);
+      await completeTask(held[task].ctx, 'es-launch', task);
+      await reviewTask(lead(), 'es-launch', task, 'approve', []);
+    }
+
+    await doTask('agent-4', 't-book', 'src/space/pages/book.ts', 'export const book = {};\n');
+
+    expect((await log()).at(-1)).toMatchObject({ action: 'all-approved', tasks: 4 });
+    expect((await nextTask(bench.agent('agent-4'), 'es-launch', 'developer')).finished).toBe(true);
+    expect((await log()).at(-1)).toMatchObject({ action: 'stops', by: 'agent-4' });
+    await finishRun(lead(), 'es-launch', { apply: false, leavePending: true });
+    expect((await log()).at(-1)).toMatchObject({
+      action: 'ready',
+      next: expect.stringContaining('--apply') as unknown
+    });
   });
 
   it('reads a stage against the run’s work: a file the run made is no file to make', async () => {

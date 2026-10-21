@@ -30,6 +30,26 @@ describe('Embed', () => {
     expect(frame?.hasAttribute('sandbox')).toBe(false);
   });
 
+  it('loads nothing while it is hidden, and its page once it is shown — kept when it is hidden again', () => {
+    const at = (visible: boolean) => (
+      <ElementContext value={{ ...skipHocEntry(), visible }}>
+        <Embed src="https://www.youtube-nocookie.com/embed/abc?autoplay=1" title="The performance" />
+      </ElementContext>
+    );
+    const { container, rerender } = render(at(false));
+    expect(container.querySelector('iframe')?.hasAttribute('src')).toBe(false);
+
+    rerender(at(true));
+    expect(container.querySelector('iframe')?.getAttribute('src')).toBe(
+      'https://www.youtube-nocookie.com/embed/abc?autoplay=1'
+    );
+
+    rerender(at(false));
+    expect(container.querySelector('iframe')?.getAttribute('src')).toBe(
+      'https://www.youtube-nocookie.com/embed/abc?autoplay=1'
+    );
+  });
+
   it('loads only a web address or a path of the site', () => {
     expect(embeddableSrc('https://example.com')).toBe('https://example.com');
     expect(embeddableSrc('//example.com/x')).toBe('//example.com/x');

@@ -187,14 +187,16 @@ belongs to the editor.
 
 ## The plugin's stylesheet and the space's CSS
 
-A plugin's stylesheet ships in a layer below the space's (`plitzi-sdk-plugin`, written by the build): the space's
-classes and `customCss` win over it whatever their specificity, as over a built-in element's defaults. Write it as
-`.css` files the plugin imports — linked in the server's head, and read by authoring for the tokens it uses; CSS held
-in a string of TypeScript is read by nothing, and its tokens are said unused.
+A plugin's stylesheet ships in a layer below the space's (`plitzi-sdk-plugin`): the space's classes and `customCss`
+win over it whatever their specificity. Write it as
+`.css` files the plugin imports (in the server's head, its tokens seen) — never a CSS string in TypeScript.
 
 A file a library needs whole is imported as Vite imports it, and travels inside the bundle: `worker.js?raw` is its
 text (a worker, started from `URL.createObjectURL(new Blob([source]))`), `engine.wasm?inline` a data URI. Images and
 fonts a stylesheet names are carried the same way.
+
+**A plugin's link** reloads the page unless a plain click goes through the SDK: `useStore('navigation.navigate')`,
+then `event.preventDefault(); navigate(href)` — the `href` kept for new tabs.
 
 ## Components that draw into DOM they do not render
 

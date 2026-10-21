@@ -297,7 +297,14 @@ const decide = async (
       }),
       ctx.now
     );
-    await logRun(ctx, loaded.paths, { action: 'review', task: taskId, verdict, round });
+    // The designer's changes are its UI review's, as its approvals are: read apart from the lead's in the activity.
+    await logRun(
+      ctx,
+      loaded.paths,
+      byDesigner
+        ? { action: 'design-review', task: taskId, verdict, round }
+        : { action: 'review', task: taskId, verdict, round }
+    );
     const goesFirst = toPerson ? [] : await tellItGoesFirst(ctx, loaded, view);
 
     return {
@@ -400,8 +407,19 @@ const decide = async (
     fulfilled,
     granted,
     ready,
-    ...(skipped ? { design: 'skipped' } : {})
+    ...(skipped ? { design: 'skipped' } : {}),
+    ...(skipped && view.state.design?.by ? { designBy: view.state.design.by } : {})
   });
+  // A designer at its UI review learns it is decided, never finds out by a refusal (la-velada: design-1 on t-motion).
+  const designer = skipped ? view.state.design?.by : undefined;
+  if (designer) {
+    await sendMessage(ctx, refreshed, {
+      from: LEAD,
+      to: agentAddress(designer),
+      text: `${taskId} is approved without its UI review (the lead went first): drop that review — what you found still matters, tell the lead with plitzi task tell --about ${taskId} "…" --agent ${designer}`
+    });
+  }
+
   // What is connected shows as it is approved: a running preview of the run takes the approved work in now. A preview
   // that cannot take it is said, never the approval undone by it.
   const previewProblem = await syncPreview(refreshed, ctx.root).then(
@@ -415,6 +433,17 @@ const decide = async (
   const integrations = await withLock(refreshed.paths.mergeLock, () => integrateWhenReady(ctx, refreshed), {
     now: ctx.now
   });
+
+  // The last approval — no integration made by it either: every task of the run done — the activity says the run is finished and what comes next.
+  const now = await loadRun(ctx, runId);
+  const statuses = await Promise.all(now.tasks.map(async each => (await viewTask(now.paths, each)).state.status));
+  if (statuses.length > 0 && statuses.every(status => status === 'done')) {
+    await logRun(ctx, loaded.paths, {
+      action: 'all-approved',
+      tasks: now.tasks.length,
+      next: 'plitzi run finish — the dry run checks the whole result; a person applies it'
+    });
+  }
 
   const joined = Object.entries((await readApproved(loaded.paths)).files)
     .filter(([, entry]) => entry.task === taskId && entry.joined !== undefined)

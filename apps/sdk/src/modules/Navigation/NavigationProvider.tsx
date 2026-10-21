@@ -1,5 +1,5 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, use, useMemo, useRef, useEffect } from 'react';
+import { useCallback, use, useMemo, useRef, useEffect, useLayoutEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { useStoreById } from '@plitzi/nexus/react';
@@ -16,6 +16,7 @@ import { refreshRsc } from '@plitzi/sdk-shared/server';
 import { useSdkStore, useSdkStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import useScrollToHash from './useScrollToHash';
+import { browserHost, moveDrawn } from './viewTransition';
 
 import type { CommonState, NavigationStatus, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -146,6 +147,25 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   /** Which navigation is the latest: only it goes anywhere, and only it says where the page is going. */
   const latestNavigation = useRef(0);
 
+  /**
+   * The router's move, drawn as a view transition when the space asks for one (`moveDrawn`): it ends once the new
+   * location is laid out, said here.
+   */
+  const drawn = useRef<(() => void) | undefined>(undefined);
+  useLayoutEffect(() => {
+    drawn.current?.();
+    drawn.current = undefined;
+  }, [location.pathname, location.search]);
+  const goTo = useCallback(
+    (target: string) =>
+      moveDrawn(() => void navigateRef.current?.(target), {
+        asked: store.get('schema.settings.viewTransitions'),
+        host: browserHost(),
+        drawn
+      }),
+    [store]
+  );
+
   const handleNavigate = useCallback(
     (url: string, isExternal: boolean = false) => {
       if (isExternal && typeof window !== 'undefined') {
@@ -175,7 +195,7 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
        */
       if (!store.get('rsc.enabled')) {
         store.set('navigation.pendingLocation', '');
-        void navigateRef.current?.(target);
+        goTo(target);
 
         return;
       }
@@ -188,12 +208,12 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
       });
       const go = () => {
         if (latestNavigation.current === ticket) {
-          void navigateRef.current?.(target);
+          goTo(target);
         }
       };
       void Promise.race([prefetch, wait(PREFETCH_TIMEOUT_MS)]).then(go, go);
     },
-    [resolveTarget, store]
+    [goTo, resolveTarget, store]
   );
 
   const routeParamsValue = useMemo<RouteParams>(() => {

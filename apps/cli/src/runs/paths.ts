@@ -162,6 +162,8 @@ export interface TaskPaths {
   review: string;
   /** Held while a verdict is given: two leads saying one at once, one waits and reads it said. */
   reviewLock: string;
+  /** Held while a `task look` serves the task's copy: two at once stopped each other's server. */
+  lookLock: string;
   reviewed: string;
   cache: string;
   work: string;
@@ -190,6 +192,7 @@ export const taskPaths = (run: RunPaths, taskId: string): TaskPaths => {
     read: path.join(dir, 'read.json'),
     review: path.join(dir, 'review.json'),
     reviewLock: path.join(dir, 'review.lock'),
+    lookLock: path.join(dir, 'look.lock'),
     reviewed: path.join(dir, 'reviewed.json'),
     cache,
     work: path.join(cache, 'work'),

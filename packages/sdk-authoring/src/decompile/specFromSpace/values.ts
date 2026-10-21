@@ -83,6 +83,7 @@ export const SCHEMA_SETTINGS = [
   'transientState',
   'paintedState',
   'robotsTxt',
+  'viewTransitions',
   'customCss',
   'visitorRoles',
   'userProvider',

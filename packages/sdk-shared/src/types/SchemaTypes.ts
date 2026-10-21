@@ -258,6 +258,12 @@ export type Schema = {
      * page (`robots: 'noindex'`): a crawler barred from a page by this file never reads that page's own word.
      */
     robotsTxt?: string;
+    /**
+     * A move from page to page drawn as one view becoming the next (the browser's view transitions): the pages cross-fade,
+     * and an element named the same on both by CSS — `view-transition-name: fighter-portrait` — moves from where it was
+     * to where it lands. Where the browser has none, or the visitor asks for less motion, the page changes at once.
+     */
+    viewTransitions?: boolean;
     customCss: string;
     /**
      * The roles a signed-in visitor may hold in this space, each with the permissions it gives:

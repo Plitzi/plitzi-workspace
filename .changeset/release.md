@@ -383,6 +383,38 @@
   failed checks, the same refusal again and again, a crash, a brake — and say it in the report, approved or not.
 - **The lead is seen at work** (`@plitzi/cli`): `run monitor` reads the lead's state off its last action, never idle
   while it fixes a detail; each row says how long it has stood where it is, each agent its role.
+- **Moves between pages drawn as view transitions** (`@plitzi/plitzi-sdk`, `@plitzi/sdk-shared`, `@plitzi/sdk-authoring`):
+  `settings.viewTransitions: true` draws each client-side navigation as one view becoming the next — the pages
+  cross-fade, and an element named the same on both (`view-transition-name`, now a property the style engine and
+  authoring know) moves from one place to the other; it waits for the new page to be laid out (at most a second), and
+  is skipped where the browser has none or the visitor asks for less motion.
+- **A hidden embed loads nothing** (`@plitzi/sdk-elements`): an `embed` hidden by its `visible` (or an ancestor's) sets
+  no `src` until it is first shown, and keeps its page after — a frame hidden in CSS is loaded whatever its `loading`,
+  so a player behind its poster loaded (and autoplayed) on every visit. In the builder every frame shows what it holds.
+- **The activity says what each agent is at, and how the run ends** (`@plitzi/cli`, `@plitzi/sdk-dev-tools`): an agent
+  between tasks is logged waiting (and for what), idle once its wait gave up, or stopping with nothing left — shown as
+  ◌ waiting / ◼ stopped in `run monitor` and the Run tab; the last approval logs every task approved, and a whole,
+  checked dry run of the finish logs the run ready with the person's next step. The designer's changes are logged as
+  its UI review (they read as the lead's); a lead going past a UI review a designer took tells that designer, and the
+  audit says it, its rounds split by whom; `task tell --about <task>` lets an agent with no task in hand (a reviewer)
+  tell the lead; the lead is "working", not "reviewing", at anything but a review.
+- **`run monitor` follows the run live** (`@plitzi/cli`): it watches the run's folder and draws again the moment the CLI
+  writes to it — a take, a review, a message, a state (a fifth of a second, not the 2 s it polled at) — and every second
+  for its clock; `--interval` is the fallback read (5 s).
+- **`run monitor` is a board** (`@plitzi/cli`, `@plitzi/sdk-dev-tools`, `@plitzi/sdk-shared`): what needs someone on top
+  (or that nothing does), the tasks left listed and the approved folded in a line naming them (`a` lists them; listed
+  once nothing is left), each activity line
+  marked by its kind (▶ took · ⇢ sent · ✓ approved · ↺ sent back · ✉ message · ? question · ✗ problem) with its legend,
+  and a message said from whom to whom — the agent holding the task — its words quoted; a task held on a question to
+  the lead says so on its row, its agent (? asks the lead), the head and the Run tab; the legend of the keys stays on
+  screen, each area saying its own.
+- **The page being left keeps its server sections** (`@plitzi/sdk-elements`): a server provider whose page is still on
+  screen keeps its answer while the next page's payload is prefetched — it unmounted its children for that moment, and
+  a view transition's picture of the page held nothing to move.
+- **One look of a task at a time** (`@plitzi/cli`): `task look` serves a task's copy under a lock — a lead's look and
+  its designer's at once stopped each other's server, and one said nothing answered.
+- **`run monitor` pages through the whole activity** (`@plitzi/cli`): ← newer, → older, from the plan to now, the page
+  said.
 - **`run monitor` says who did what** (`@plitzi/cli`): the tasks at work first and the approved last, each approved one
   with who wrote it, its rounds and its time against its estimate (read off the log: an approved task holds no owner);
   a long id cut in the middle; the head counts the tasks by where they stand; the list scrolls with the selection; a
