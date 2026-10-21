@@ -4,6 +4,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { proposalsOf } from './agreements';
+import { auditRun } from './audit';
 import { readOptional, writeAtomic } from './files';
 import { coverage } from './inventory';
 import { requireLead } from './leads';
@@ -66,6 +67,8 @@ export interface RunReport {
   restores: { id: string; files: string[] }[];
   /** What went wrong or needs a look, read off the facts: the lead's summary says the rest. */
   problems: string[];
+  /** What the run's activity shows was wrong in how it was worked (`audit.ts`): the CLI's to fix, or the team's. */
+  audit: string[];
 }
 
 interface LogLine {
@@ -261,7 +264,8 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     restores: record.merges
       .filter(merge => merge.kind === 'restore')
       .map(merge => ({ id: merge.id, files: Object.keys(merge.files) })),
-    problems
+    problems,
+    audit: await auditRun(loaded)
   };
 };
 
@@ -305,6 +309,10 @@ export const reportText = (report: RunReport, summary: string | undefined, closi
     '## Problems',
     '',
     ...lines(report.problems, 'none found in what the CLI saw'),
+    '',
+    '## What the activity shows (audit)',
+    '',
+    ...lines(report.audit, 'nothing out of place in the run’s activity'),
     '',
     '## Tasks',
     '',

@@ -27,6 +27,10 @@ export type PageProps = {
   seoEnabled?: boolean;
   seoPageTitle?: string;
   seoPageDescription?: string;
+  /** For search engines: `noindex`, `noindex, nofollow`. */
+  seoRobots?: string;
+  /** The page's JSON-LD, each object as it is written into the head. */
+  seoStructuredData?: Record<string, unknown>[];
   /**
    * A template over the page's server providers and `navigation` that says this address shows nothing — a record that
    * is not there: the page server sends it with status 404, rendered as written. Read there only (`serverTemplates`).
@@ -101,6 +105,8 @@ const Page = ({
   seoEnabled = false,
   seoPageTitle = 'Title',
   seoPageDescription = 'Description',
+  seoRobots,
+  seoStructuredData,
   documentScroll = '',
   withheld,
   className = '',
@@ -160,7 +166,13 @@ const Page = ({
       interactionTriggers={declaration.triggers}
     >
       {seoEnabled && previewMode && ownsHead && (
-        <PageHead pageId={id} title={seoPageTitle} description={seoPageDescription} />
+        <PageHead
+          pageId={id}
+          title={seoPageTitle}
+          description={seoPageDescription}
+          {...(seoRobots ? { robots: seoRobots } : {})}
+          {...(seoStructuredData ? { structuredData: seoStructuredData } : {})}
+        />
       )}
       {/* Rendered with the page, not hoisted: it is in the HTML the server sends, and it leaves with the page. */}
       {documentScroll && ownsDocument && <style>{DOCUMENT_SCROLL_CSS[documentScroll]}</style>}

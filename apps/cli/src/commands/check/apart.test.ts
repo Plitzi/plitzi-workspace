@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { keptToParts } from './apart';
-import { answeredImage } from './inspect';
+import { answeredImage, throttledImage } from './inspect';
 
 import type { CheckReport } from './types';
 
@@ -64,5 +64,20 @@ describe('an image the browser was answered for', () => {
         answered
       )
     ).toBe(false);
+  });
+});
+
+describe('an image its host held back (429)', () => {
+  it('is the host’s limit, named apart — never the page’s failure', () => {
+    const throttled = new Set(['https://cdn.example.com/flags/es.svg']);
+    const issue = (address: string) => ({ code: 'image-not-loaded', message: `an image never loaded: ${address}` });
+
+    expect(throttledImage(issue('https://cdn.example.com/flags/es.svg'), throttled)).toBe(
+      'https://cdn.example.com/flags/es.svg'
+    );
+    expect(throttledImage(issue('https://cdn.example.com/flags/xx.svg'), throttled)).toBeUndefined();
+    expect(
+      throttledImage({ code: 'broken-link', message: 'https://cdn.example.com/flags/es.svg' }, throttled)
+    ).toBeUndefined();
   });
 });

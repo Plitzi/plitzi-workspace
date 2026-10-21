@@ -104,6 +104,18 @@ describe('lintSpace', () => {
 
       expect(seo('{{ navigation.routeParams.slug }} — Blog')).toEqual([]);
       expect(seo('{{ state.title }} — Blog')[0].message).toContain('`seoTitle` reads `state`');
+
+      const structured = (name: string) =>
+        lintSpace(
+          withChange(({ schema }) => {
+            const home = schema.flat[homeId(schema)];
+            home.attributes.seoEnabled = true;
+            home.attributes.seoStructuredData = [{ '@context': 'https://schema.org', '@type': 'Person', name }];
+          })
+        ).errors.filter(issue => issue.code === 'page-template');
+
+      expect(structured('{{ navigation.routeParams.id }}')).toEqual([]);
+      expect(structured('{{ state.name }}')[0].message).toContain('`structuredData` reads `state`');
     });
 
     it('required-message-unused', () => {

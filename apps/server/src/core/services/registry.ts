@@ -1,6 +1,7 @@
 import { actionStage } from './action';
 import { functionRoutesStage } from './functionRoutes';
 import { realtimeStage } from './realtime';
+import { robotsTxtStage } from './robotsTxt';
 import { rscStage } from './rsc';
 import { spaceDocumentStage } from './spaceDocument';
 import { notFoundStage, ssrStage } from './ssr';
@@ -58,6 +59,7 @@ export const buildPagePipeline = (
 
   if (services.ssr) {
     stages.push(spaceDocumentStage);
+    stages.push(robotsTxtStage);
   }
 
   stages.push(services.ssr ? ssrStage : notFoundStage);

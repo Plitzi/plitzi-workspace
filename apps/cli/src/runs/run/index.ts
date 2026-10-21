@@ -16,6 +16,7 @@ export {
   readApproved,
   readBase,
   readRecord,
+  readRunLog,
   readShared,
   runIds,
   samePinned,

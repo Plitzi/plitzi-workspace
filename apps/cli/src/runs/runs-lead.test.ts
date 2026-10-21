@@ -164,6 +164,68 @@ describe('the lead’s plan as the run goes', () => {
     expect(await fs.readFile(path.join(bench.root, 'src/space/pages/about.ts'), 'utf-8')).toContain('es: true');
   });
 
+  it('reads a stage against the run’s work: a file the run made is no file to make', async () => {
+    const plan = benchPlan();
+    const about = plan.tasks.find(task => task.id === 't-about');
+    about?.files.push('src/space/pages/team.ts', 'src/plugins/Badge');
+    await open(plan);
+    const held = await take('agent-1', 't-about');
+    await writeInCopy(held.work, 'src/space/pages/team.ts', 'export const team = {};\n');
+    await writeInCopy(held.work, 'src/plugins/Badge/index.ts', 'export const badge = {};\n');
+    await completeTask(held.ctx, 'es-launch', 't-about');
+    await reviewTask(lead(), 'es-launch', 't-about', 'approve', []);
+    const stage: RunPlan = {
+      version: 1,
+      runId: 'es-stage-2',
+      goal: 'Contact page',
+      tasks: [
+        {
+          id: 't-contact',
+          title: 'A contact page',
+          files: ['src/space/pages/contact.ts', 'src/space/pages/team.ts', 'src/plugins/Badge'],
+          dependsOn: [],
+          priority: 'medium',
+          estimateMinutes: 10,
+          acceptance: ['There is a contact page']
+        }
+      ]
+    };
+
+    const dry = await extendRun(lead(), 'es-launch', await bench.writePlan(stage), { dryRun: true });
+    expect(dry.checked?.created).toEqual(['src/space/pages/contact.ts']);
+  });
+
+  it('takes up a piece the run left out once a stage proves it: no longer waiting, said', async () => {
+    const plan = benchPlan();
+    plan.inventory = [
+      { id: 'contact-form', piece: 'the contact form', page: '/contact', leftOut: 'a stage of its own' }
+    ];
+    await open(plan);
+
+    const stage: RunPlan = {
+      version: 1,
+      runId: 'es-stage-2',
+      goal: 'Contact page',
+      tasks: [
+        {
+          id: 't-contact',
+          title: 'A contact page',
+          files: ['src/space/pages/contact.ts'],
+          dependsOn: [],
+          priority: 'medium',
+          estimateMinutes: 10,
+          acceptance: [{ said: 'The form is there', check: 'true', covers: ['contact-form'] }]
+        }
+      ]
+    };
+    expect(await extendRun(lead(), 'es-launch', await bench.writePlan(stage))).toMatchObject({
+      takenUp: ['contact-form']
+    });
+    expect((await loadRun(lead(), 'es-launch')).plan.inventory).toEqual([
+      { id: 'contact-form', piece: 'the contact form', page: '/contact' }
+    ]);
+  });
+
   it('lists the runs waiting to be written into the project, the ready ones first, with what applies each', async () => {
     await open();
     expect(await pendingRuns(lead())).toMatchObject([{ runId: 'es-launch', ready: false, done: 0, total: 4 }]);

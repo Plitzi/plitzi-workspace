@@ -87,9 +87,11 @@ const warnItemsOutsideAnswer = (
       .filter(transformer => transformer.action === 'twigTemplate')
       .flatMap(transformer => stringsIn(transformer.params));
     // What is read: the binding's own field, else the fields its template reads off `source`.
+    // The optional group is typed `string` but is undefined when the source names only the provider.
+    const field = match.at(2);
     const read =
-      match[2] !== undefined
-        ? [match[2]]
+      field !== undefined
+        ? [field]
         : templates.flatMap(template => [...template.matchAll(/\bsource\s*\.\s*([\w-]+)/g)].map(each => each[1]));
     if (read.some(field => ANSWER_FIELDS.includes(field))) {
       continue;

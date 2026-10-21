@@ -236,7 +236,16 @@ export const openRun = async (
     await sendMessage(ctx, opened, { from: LEAD, to: EVERYONE, text });
   }
 
-  await logRun(ctx, paths, { action: 'open', tasks: checked.tasks.length, backedUp: touched.length });
+  await logRun(ctx, paths, {
+    action: 'open',
+    tasks: checked.tasks.length,
+    taskIds: checked.tasks.map(task => task.id),
+    backedUp: touched.length,
+    agents,
+    ...(plan.inventory ? { inventory: plan.inventory.length } : {}),
+    ...(checked.leftOut.length > 0 ? { leftOut: checked.leftOut } : {}),
+    notices: checked.notices.length
+  });
 
   return { checked, paths, backedUp: touched.length, inputs };
 };

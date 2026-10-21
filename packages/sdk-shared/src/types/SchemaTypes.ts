@@ -252,6 +252,12 @@ export type Schema = {
      * `keepState`; a key cannot be both painted and transient. Top-level keys, as `setState` writes them.
      */
     paintedState?: string[];
+    /**
+     * The space's `/robots.txt`, as search engines read it: what they may crawl, and where its sitemap is. Left out, the
+     * server answers that everything may be — `User-agent: *` then `Allow: /`. A page kept out of search says it on the
+     * page (`robots: 'noindex'`): a crawler barred from a page by this file never reads that page's own word.
+     */
+    robotsTxt?: string;
     customCss: string;
     /**
      * The roles a signed-in visitor may hold in this space, each with the permissions it gives:

@@ -236,6 +236,10 @@ export const readPage = (reader: SpecReader, page: Element, index: number): Page
       : undefined;
   const seoTitle = typeof attributes.seoPageTitle === 'string' ? attributes.seoPageTitle : '';
   const seoDescription = typeof attributes.seoPageDescription === 'string' ? attributes.seoPageDescription : '';
+  const robots = typeof attributes.seoRobots === 'string' ? attributes.seoRobots : '';
+  const structuredData = Array.isArray(attributes.seoStructuredData)
+    ? attributes.seoStructuredData.filter((item): item is Record<string, unknown> => isRecord(item))
+    : [];
   const notFound = typeof attributes.notFound === 'string' ? attributes.notFound : '';
   const documentScroll = isDocumentScroll(attributes.documentScroll) ? attributes.documentScroll : undefined;
   if (!documentScroll && attributes.documentScroll !== undefined && attributes.documentScroll !== '') {
@@ -258,6 +262,8 @@ export const readPage = (reader: SpecReader, page: Element, index: number): Page
     ...(isDefault ? { isDefault: true } : index === 0 ? { isDefault: false } : {}),
     ...(seoTitle ? { seoTitle } : {}),
     ...(seoDescription ? { seoDescription } : {}),
+    ...(robots ? { robots } : {}),
+    ...(structuredData.length > 0 ? { structuredData: structuredData.length === 1 ? structuredData[0] : structuredData } : {}),
     ...(notFound ? { notFound } : {}),
     ...(documentScroll ? { documentScroll } : {}),
     ...(folder ? { folder } : {}),

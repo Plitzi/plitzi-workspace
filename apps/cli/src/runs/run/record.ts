@@ -142,6 +142,25 @@ export const updateRecord = async (
     { now: ctx.now }
   );
 
+/** The run's activity, every line it wrote, oldest first — one a line it cannot read is passed over, never a crash. */
+export const readRunLog = async (paths: RunPaths): Promise<Record<string, unknown>[]> => {
+  const text = (await readOptional(paths.log))?.toString('utf-8') ?? '';
+
+  return text.split('\n').flatMap(line => {
+    if (line.trim() === '') {
+      return [];
+    }
+
+    try {
+      const parsed: unknown = JSON.parse(line);
+
+      return isRecord(parsed) ? [parsed] : [];
+    } catch {
+      return [];
+    }
+  });
+};
+
 export const logRun = (ctx: RunContext, paths: RunPaths, entry: Record<string, unknown>): Promise<void> =>
   appendLog(paths.log, { at: ctx.now().toISOString(), by: ctx.agent, ...entry });
 

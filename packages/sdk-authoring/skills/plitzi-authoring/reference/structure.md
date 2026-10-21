@@ -97,6 +97,13 @@ the record is the answer instead: one page, as many addresses as records. Its `s
 `'{{ apiContainer_post.title }} — Blog'` — read from a provider on the page with `runtime: 'server'`, or from
 `navigation`: the server writes the head with it, so a link preview shows it. Anything else is refused (`page-template`).
 
+**For search engines**, beside the title: a page's `robots` (`'noindex'`, `'noindex, nofollow'` — left out, it is
+indexed) and its `structuredData`, schema.org's JSON-LD — `{ '@context': 'https://schema.org', '@type': 'SportsEvent',
+name, startDate, location }`, one object or a list, each text a template as `seoTitle` may be (`name: '{{
+apiContainer_boxer.name }}'` on a detail page) — both written into the head the server sends. The space's
+`/robots.txt` is `settings.robotsTxt` (`'User-agent: *\nAllow: /\n'` when left out); keep a page out of search with its
+`robots`, not a `Disallow` — a crawler barred from a page never reads its `noindex`.
+
 ## Names
 
 - **Ids:** `area-role` in kebab-case — `hm-traffic-title`, `docs-nav-docs-data`. Never the builder's positional

@@ -310,7 +310,8 @@ const replaceLiteral = (source: string, field: string, from: string, to: string)
     );
   }
 
-  return source.replace(declaration, `${field}: ${stringLiteral(to)}`);
+  // Every place the space says its own name — its JSON-LD's too — so a copy never speaks of the template it came from.
+  return source.replaceAll(declaration, `${field}: ${stringLiteral(to)}`);
 };
 
 /**

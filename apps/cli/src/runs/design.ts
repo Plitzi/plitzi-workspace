@@ -48,7 +48,7 @@ export const designReviewFor = (views: readonly TaskView[], agent: string): Task
 
 /** What a designer looks at, said once — the run's skill (`runs.md`) says it whole. */
 export const DESIGN_LOOK =
-  'how it reads at 1440 and 390, in light and dark: hierarchy and spacing, the theme’s tokens rather than new values, every state (empty, long, loading, error, focus), labels and words a person understands, and that it looks like the rest of the space. A state the data never shows, you cannot look at: say it (--note), the lead decides how it is seen';
+  'how it reads at 1440 and 390, in light and dark: hierarchy and spacing, the theme’s tokens rather than new values, every state (empty, long, loading, error, hover, focus), labels and words a person understands, and that it looks like the rest of the space. Against a reference, the details too: what moves (an entrance, a hover, a shine, an arrow), the sizes it measures (page shot --compare says each text’s and box’s), how each control behaves (hover, focus, what a click does), and the phone’s own layout (a carousel where the desktop has a grid). A state the data never shows, you cannot look at: say it (--note), the lead decides how it is seen';
 
 /** Who took a task's work, by the notes its takes leave: a designer does not review its own. */
 const workedBy = (view: TaskView, agent: string): boolean =>

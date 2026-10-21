@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import { readJson, writeAtomic, writeJson } from './files';
+import { coversOf } from './inventory';
 import { coLeadsOf, requireLead } from './leads';
 import { EVERYONE, LEAD, sendMessage } from './messages';
 import { isBaseManifest } from './model';
@@ -14,6 +15,7 @@ import {
   loadRun,
   logRun,
   primerFile,
+  readApproved,
   readPlanFile,
   readPrimer,
   requireNoTask,
@@ -49,6 +51,8 @@ export interface Extended {
   newLeads?: string[];
   /** The stage's plan and primer, moved into the run's folder from the project: where the lead edits them now. */
   inputs?: string[];
+  /** The run's pieces it had left out that the stage covers: no longer waiting, by id. */
+  takenUp?: string[];
   /** `dryRun`: the stage as it would be stacked — its tasks with the CLI's, estimated — and nothing written. */
   checked?: CheckedPlan;
 }
@@ -91,7 +95,12 @@ export const extendRun = async (
       { ...next, tasks: next.tasks.map(task => ({ ...task, dependsOn: task.dependsOn.filter(id => !known.has(id)) })) },
       await readOwnership(ctx.root),
       team,
-      new Set((loaded.plan.inventory ?? []).map(item => item.id))
+      new Set((loaded.plan.inventory ?? []).map(item => item.id)),
+      new Set(
+        Object.entries((await readApproved(loaded.paths)).files)
+          .filter(([, approved]) => approved.digest !== null)
+          .map(([file]) => file)
+      )
     );
   } catch (error) {
     if (error instanceof PlanRefusal) {
@@ -187,6 +196,11 @@ export const extendRun = async (
     }
   }
 
+  // A piece the run left out that the stage now proves is waiting no more: kept in the inventory, its reason dropped.
+  const coveredNow = new Set(next.tasks.flatMap(task => task.acceptance.flatMap(coversOf)));
+  const takenUp = (loaded.plan.inventory ?? [])
+    .filter(item => item.leftOut !== undefined && coveredNow.has(item.id))
+    .map(item => item.id);
   const plan: RunPlan = {
     ...loaded.plan,
     goal: `${loaded.plan.goal} · ${next.goal}`,
@@ -196,7 +210,14 @@ export const extendRun = async (
       ? { leftOut: [...(loaded.plan.leftOut ?? []), ...(next.leftOut ?? [])] }
       : {}),
     ...(loaded.plan.inventory || next.inventory
-      ? { inventory: [...(loaded.plan.inventory ?? []), ...(next.inventory ?? [])] }
+      ? {
+          inventory: [
+            ...(loaded.plan.inventory ?? []).map(({ leftOut, ...item }) =>
+              takenUp.includes(item.id) || leftOut === undefined ? item : { ...item, leftOut }
+            ),
+            ...(next.inventory ?? [])
+          ]
+        }
       : {}),
     ...(next.contracts ? { contracts: [...(loaded.plan.contracts ?? []), ...next.contracts] } : {})
   };
@@ -230,7 +251,12 @@ export const extendRun = async (
     await sendMessage(ctx, loaded, { from: LEAD, to: EVERYONE, text: note });
   }
 
-  await logRun(ctx, loaded.paths, { action: 'extend', stage: next.runId, added: tasks.map(task => task.id) });
+  await logRun(ctx, loaded.paths, {
+    action: 'extend',
+    stage: next.runId,
+    added: tasks.map(task => task.id),
+    ...(takenUp.length > 0 ? { takenUp } : {})
+  });
 
   return {
     runId,
@@ -242,6 +268,7 @@ export const extendRun = async (
     ...(leads.length > coLeadsOf(loaded.record).length
       ? { newLeads: leads.filter(each => !coLeadsOf(loaded.record).includes(each)) }
       : {}),
-    ...(inputs.length > 0 ? { inputs } : {})
+    ...(inputs.length > 0 ? { inputs } : {}),
+    ...(takenUp.length > 0 ? { takenUp } : {})
   };
 };

@@ -15,6 +15,12 @@
     <meta property="og:description" content="<%= locals.description %>" />
     <meta name="twitter:description" content="<%= locals.description %>" />
     <% } %>
+    <% if (locals.robots) { %>
+    <meta name="robots" content="<%= locals.robots %>" />
+    <% } %>
+    <% (locals.structuredData || []).forEach(function (json) { %>
+    <script type="application/ld+json"><%- json %></script>
+    <% }) %>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="shortcut icon" href="https://cdn.plitzi.com/resources/img/favicon.svg" />
 

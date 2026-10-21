@@ -46,7 +46,7 @@ export interface RunSnapshotEvent {
   at: string;
   by: string;
   text: string;
-  /** take, complete, review, message, run */
+  /** take, complete, review, message, run, problem (a refusal, a crash, a failed check), other */
   kind: string;
 }
 

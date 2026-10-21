@@ -105,6 +105,16 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
     ...(report.apart ?? []).map(each => chalk.dim(`  · another task's, not this one's: ${each}`)),
     ...(report.expected ?? []).map(each => chalk.dim(`  · expected ${each} ✓`)),
     ...browserOnlyText(report),
+    ...(report.throttled && report.throttled.length > 0
+      ? [
+          chalk.dim(
+            `  · held back by their host (a 429, or dropped while it sent the rest), not the page's: ${report.throttled.slice(0, 4).join(', ')}${report.throttled.length > 4 ? `, … (${String(report.throttled.length)})` : ''}`
+          )
+        ]
+      : []),
+    ...(report.fromEmbeds ?? []).map(each =>
+      chalk.dim(`  · said by a document embedded in the page, not the page: ${each}`)
+    ),
     ...heldText(report, asked),
     ...clickedText(report.clicked)
   ];

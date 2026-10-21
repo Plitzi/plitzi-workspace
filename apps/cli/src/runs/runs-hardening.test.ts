@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -446,5 +447,32 @@ describe('what a task was accepted on, at the finish', () => {
     expect(refused.code).toBe('checks-failed');
     expect(refused.message).toContain('"t-menu" was accepted on no longer holds');
     expect(refused.message).toContain('No page is late');
+  });
+
+  it('runs again only the lines that did not hold: one a host was slow on never runs the rest once more', async () => {
+    // Outside the project: a file the checks write in it would change the result they are kept for.
+    const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-kept-'));
+    const counted = path.join(outside, 'menu-checked.txt');
+    const flag = path.join(outside, 'about-ready.txt');
+    const plan = benchPlan();
+    plan.tasks = [
+      { ...plan.tasks[1], acceptance: [{ said: 'Menu checked', check: `echo x >> '${counted}'` }] },
+      { ...plan.tasks[3], dependsOn: [], acceptance: [{ said: 'About ready', check: `test -f '${flag}'` }] }
+    ];
+    const runId = await open(plan);
+    await doTask('agent-1', 't-menu', 'src/space/pages/menu.ts', 'export const menu = { title: "Menú" };\n');
+    await fs.writeFile(flag, 'ready\n');
+    await doTask('agent-2', 't-about', 'src/space/pages/about.ts', 'export const about = { title: "Sobre" };\n');
+    // Gone at the finish, as a host is slow for a moment: the line fails there, and holds again once it is back.
+    await fs.rm(flag);
+    const ranAtReview = (await fs.readFile(counted, 'utf-8')).split('\n').filter(Boolean).length;
+
+    expect((await refusal(finishRun(lead(), runId, { apply: false, leavePending: true }))).code).toBe('checks-failed');
+    await fs.writeFile(flag, 'ready\n');
+    const dry = await finishRun(lead(), runId, { apply: false, leavePending: true });
+
+    expect(dry.plan.acceptance).toMatchObject({ kept: 1 });
+    expect((await fs.readFile(counted, 'utf-8')).split('\n').filter(Boolean).length - ranAtReview).toBe(1);
+    await fs.rm(outside, { recursive: true, force: true });
   });
 });

@@ -19,7 +19,9 @@ import type { Schema, Style, StyleAncestors, StyleObject, StyleStates, StyleVari
  *   page is hydrated. A layout or a blur is heavy every time, after hydration too.
  *
  * A property that only switches (`visibility`) is not repainted per frame. Keyframes nothing runs cost nothing and are
- * not mentioned.
+ * not mentioned. An animation a class or an element's own style runs is about the elements wearing it: one each of them
+ * quiets (`quiet: ['heavy-animation']`, written that way on purpose — an original's one entrance) is left out; one
+ * `customCss` runs is about no element, and only a change says it no more.
  */
 
 type Cost = 'layout' | 'blur' | 'paint';
@@ -111,12 +113,14 @@ interface AnimationUse {
   paused: boolean;
   where: string;
   selector?: string;
+  /** The elements that wear it, for a class's or an element's own: none for `customCss`. */
+  wearers?: string[];
 }
 
 const animationUseOf = (
   declarations: [string, string][],
   keyframes: Map<string, unknown>,
-  at: { where: string; selector?: string }
+  at: { where: string; selector?: string; wearers?: string[] }
 ): AnimationUse | undefined => {
   const names = declarations
     .filter(([property]) => ANIMATION_NAMES.has(property))
@@ -204,8 +208,31 @@ const ruleSetsOf = (layer: StyleLayer, within = ''): [string, StyleObject][] => 
 ];
 
 /** The animations the style schema starts — its classes, ids and element styles, at every breakpoint. */
-const styleUsesIn = (style: Style, keyframes: Map<string, unknown>): AnimationUse[] =>
-  Object.values(style.platform)
+/** Every element of the pages and the components, each with the classes it wears in any of its slots. */
+const elementsOf = (schema: Schema) =>
+  [schema.flat, ...Object.values(schema.components).map(component => component.flat)].flatMap(flat =>
+    Object.values(flat)
+  );
+
+/** Who wears a style item: a class, the elements naming it in a slot; an element's own (`id`), that element. */
+const wearersOf = (schema: Schema): ((item: { type: string; name: string }) => string[] | undefined) => {
+  const byClass = new Map<string, string[]>();
+  for (const element of elementsOf(schema)) {
+    for (const selector of Object.values(element.definition.styleSelectors)) {
+      for (const name of selector.split(/\s+/).filter(Boolean)) {
+        byClass.set(name, [...(byClass.get(name) ?? []), element.id]);
+      }
+    }
+  }
+
+  return item =>
+    item.type === 'class' ? (byClass.get(item.name) ?? []) : item.type === 'id' ? [item.name] : undefined;
+};
+
+const styleUsesIn = (style: Style, keyframes: Map<string, unknown>, schema: Schema): AnimationUse[] => {
+  const wearers = wearersOf(schema);
+
+  return Object.values(style.platform)
     .flatMap(items => Object.values(items))
     .flatMap(item =>
       Object.entries(item.attributes).flatMap(([slot, layer]) =>
@@ -220,12 +247,14 @@ const styleUsesIn = (style: Style, keyframes: Map<string, unknown>): AnimationUs
         keyframes,
         {
           where: `${owner}${slot === 'base' ? '' : `, slot \`${slot}\``}${within}`,
-          ...(isClass && slot === 'base' ? { selector: `.${item.name}` } : {})
+          ...(isClass && slot === 'base' ? { selector: `.${item.name}` } : {}),
+          ...(wearers(item) === undefined ? {} : { wearers: wearers(item) })
         }
       );
 
       return use ? [use] : [];
     });
+};
 
 const COST_ORDER: Cost[] = ['layout', 'blur', 'paint'];
 
@@ -251,8 +280,22 @@ export const suggestMotion = (schema: Schema, style: Style): Suggestion[] => {
     return [];
   }
 
-  const { uses, hydratedGate } = cssUsesIn(segments, keyframes);
-  uses.push(...styleUsesIn(style, keyframes));
+  const { uses: written, hydratedGate } = cssUsesIn(segments, keyframes);
+  // A use every wearer of quiets is said no more; the rest are about the wearers that do not.
+  const quiet = new Set(
+    elementsOf(schema)
+      .filter(element => element.definition.quiet?.includes('heavy-animation') === true)
+      .map(element => element.id)
+  );
+  const uses = [...written, ...styleUsesIn(style, keyframes, schema)].flatMap(use => {
+    if (use.wearers === undefined || use.wearers.length === 0) {
+      return [use];
+    }
+
+    const loud = use.wearers.filter(id => !quiet.has(id));
+
+    return loud.length === 0 ? [] : [{ ...use, wearers: loud }];
+  });
 
   const heavy = [...keyframes].flatMap(([name, costs]) => {
     const named = uses.filter(use => use.names.includes(name));
@@ -284,7 +327,7 @@ export const suggestMotion = (schema: Schema, style: Style): Suggestion[] => {
   return [
     {
       code: 'heavy-animation',
-      elementIds: [],
+      elementIds: [...new Set(heavy.flatMap(({ named }) => named.flatMap(use => use.wearers ?? [])))],
       saves: 0,
       message:
         `${String(heavy.length)} animation${one ? '' : 's'} ${one ? 'animates' : 'animate'} what the ` +

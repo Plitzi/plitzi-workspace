@@ -192,6 +192,9 @@ export const runExtend = (runId: string | undefined, file: string, options: Plan
           : 'None ready yet: each waits for what it depends on.',
         ...(extended.notes > 0 ? [`  ${String(extended.notes)} note(s) sent to every task`] : []),
         ...(extended.primer ? ['  the run’s primer, written again'] : []),
+        ...(extended.takenUp
+          ? [`  covered now, no longer left out: ${extended.takenUp.join(', ')} — say it to the person`]
+          : []),
         ...(extended.agents
           ? [
               `  ${String(extended.agents.after)} agents may work at once now (${String(extended.agents.before)} before)`

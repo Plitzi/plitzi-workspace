@@ -48,10 +48,25 @@ export const PAGE_CODES = {
     means: 'a page that sends visitors it is not for to a page the space does not have',
     fix: "a page's id or slug (`''` is the home page), or a full URL"
   },
+  'robots-unknown': {
+    kind: 'refused',
+    means: "a page's `robots` with a directive no search engine reads, or none",
+    fix: "`robots: 'noindex'`, `'noindex, nofollow'` — or leave it out, and the page is indexed"
+  },
+  'robots-txt-line': {
+    kind: 'refused',
+    means: "a line of the space's `settings.robotsTxt` that no crawler reads, or one with no `User-agent`",
+    fix: "`User-agent: *` then `Allow: /`, `Disallow: /overlay` — each line `Field: value`, or a comment"
+  },
+  'structured-data-shape': {
+    kind: 'refused',
+    means: "a page's `structuredData` item with no `@context` or `@type`, or a value JSON cannot carry",
+    fix: "`structuredData: { '@context': 'https://schema.org', '@type': 'SportsEvent', name: '…' }`"
+  },
   'page-template': {
     kind: 'refused',
     means:
-      "a template in a page's `seoTitle`, `seoDescription` or `notFound` that reads what is not there when the server answers — anything but the page's `runtime: 'server'` providers and `navigation` — or cannot be read",
+      "a template in a page's `seoTitle`, `seoDescription`, `notFound` or a text of its `structuredData` that reads what is not there when the server answers — anything but the page's `runtime: 'server'` providers and `navigation` — or cannot be read",
     fix: "read the record from a provider with `runtime: 'server'` on the page or its layout — `'{{ apiContainer_post.title }} — Blog'` — or words of its own"
   },
   'declared-callback-target': {

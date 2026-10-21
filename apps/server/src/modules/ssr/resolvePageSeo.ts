@@ -1,16 +1,22 @@
-import { pageSeoText } from '@plitzi/sdk-shared/schema';
+import { jsonForScript, pageSeoText, pageStructuredData } from '@plitzi/sdk-shared/schema';
 
 import type { Element, Schema } from '@plitzi/sdk-shared';
 
 export type PageSeo = {
   title?: string;
   description?: string;
+  /** `<meta name="robots">`: whether search engines index the page and follow its links. */
+  robots?: string;
+  /** Each JSON-LD object, as the text of its `<script type="application/ld+json">` — escaped for the tag. */
+  structuredData?: string[];
 };
 
 type PageSeoAttributes = {
   seoEnabled?: boolean;
   seoPageTitle?: string;
   seoPageDescription?: string;
+  seoRobots?: string;
+  seoStructuredData?: unknown;
 };
 
 /**
@@ -27,6 +33,7 @@ type PageSeoAttributes = {
  *
  * Either may be a template over the page's server providers and the address (`pageServerContext`): a detail page says
  * the title of the record it shows, in the HTML a crawler reads. One that does not evaluate is nothing, as a blank is.
+ * So may each text of its JSON-LD (`pageStructuredData`).
  */
 export const resolvePageSeo = (
   schema: Schema | undefined,
@@ -44,9 +51,13 @@ export const resolvePageSeo = (
 
   const title = pageSeoText(page.attributes.seoPageTitle, context);
   const description = pageSeoText(page.attributes.seoPageDescription, context);
+  const robots = typeof page.attributes.seoRobots === 'string' ? page.attributes.seoRobots.trim() : '';
+  const structuredData = pageStructuredData(page.attributes.seoStructuredData, context).map(jsonForScript);
 
   return {
     ...(title ? { title } : {}),
-    ...(description ? { description } : {})
+    ...(description ? { description } : {}),
+    ...(robots ? { robots } : {}),
+    ...(structuredData.length > 0 ? { structuredData } : {})
   };
 };

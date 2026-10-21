@@ -53,7 +53,14 @@ const whyOf = (task: TaskLine): { why?: string } =>
         ? { why: `blocked — ${task.blockedBy.reason} (needs ${task.blockedBy.needs})` }
         : task.status === 'ready'
           ? { why: 'free to take: the next agent at work takes it' }
-          : {};
+          : task.status === 'in-review'
+            ? {
+                why:
+                  task.design?.status === 'due'
+                    ? `its UI review — ${task.design.by ?? 'no designer has taken it yet'}; then the lead's`
+                    : `the lead's review — ${task.reviewer ?? 'no lead has taken it yet'}`
+              }
+            : {};
 
 export const snapshotOf = ({ view, agents, feed }: Monitored, at: Date): RunSnapshot => ({
   runId: view.runId,

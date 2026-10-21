@@ -124,7 +124,7 @@ const checkName = (
   if (shortPrefix) {
     ctx.error(
       'template-short-source',
-      `${where} reads "${name}" in "${shorten(template)}". Inside a template a source is named in full — write "${shortPrefix}_${name}" where it says "${name}". (A binding's own \`source\` is completed for you; a template is read as written.)${shortPrefix === 'list' ? ` A list's row hands it in full: \`r.inTemplate.item\` (\`\${r.inTemplate.item}.id\`), never its id by hand.` : ''}`,
+      `${where} reads "${name}" in "${shorten(template)}". Inside a template a source is named in full — write "${shortPrefix}_${name}" where it says "${name}". (A binding's own \`source\` is completed for you; a template is read as written.)${shortPrefix === 'list' ? ' A list’s row hands it in full: `r.inTemplate.item` (`${r.inTemplate.item}.id`), never its id by hand.' : ''}`,
       id
     );
 

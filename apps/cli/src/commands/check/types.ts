@@ -88,6 +88,13 @@ export interface CheckReport {
   lists: Record<string, ListRows>;
   /** With `--expect`: each expectation the page met, as `<id>~<text>` — said, so a pass is seen to be checked. */
   expected?: string[];
+  /**
+   * The images their host held back — answered 429, or dropped while it answered the rest — its limit, met by checks
+   * asking at once: not the page's.
+   */
+  throttled?: string[];
+  /** Console errors of a document embedded in the page (an iframe's — a video player), by its origin: not the space's. */
+  fromEmbeds?: string[];
   /** With `--ssr`: the elements the page has once hydrated that the server's HTML did not — none of them in a server provider. */
   browserOnly?: string[];
   state?: unknown;

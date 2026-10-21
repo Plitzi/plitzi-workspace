@@ -34,7 +34,9 @@ import type { LoadedRun, RunContext } from './context';
 export const recordBrake = async (
   ctx: RunContext,
   loaded: LoadedRun,
-  kind: BrakeEvent['kind']
+  kind: BrakeEvent['kind'],
+  /** The task it is about: the run's activity says which, not only that something failed. */
+  task?: string
 ): Promise<string | undefined> => {
   let braked: string | undefined;
   await updateRecord(ctx, loaded.paths, record => {
@@ -66,7 +68,7 @@ export const recordBrake = async (
       : { ...record, brake };
   });
   // Every one, in the log: what the run's report counts, whatever the brake's window kept.
-  await logRun(ctx, loaded.paths, { action: 'event', kind });
+  await logRun(ctx, loaded.paths, { action: 'event', kind, ...(task === undefined ? {} : { task }) });
   if (braked) {
     await logRun(ctx, loaded.paths, { action: 'brake', reason: braked });
   }

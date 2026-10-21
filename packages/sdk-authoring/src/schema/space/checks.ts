@@ -194,6 +194,42 @@ export const assertElementShape = (spec: ElementSpec, path: string): void => {
   assertId(spec.id, where);
 };
 
+/** The fields of a robots.txt search engines read; anything else is a line no crawler follows. */
+const ROBOTS_TXT_FIELDS = ['user-agent', 'allow', 'disallow', 'sitemap', 'crawl-delay', 'host'];
+
+/**
+ * The space's robots.txt, held to what crawlers read: each line a comment, blank, or `Field: value` of a field they
+ * know — a line they skip is a rule that silently does nothing.
+ */
+export const assertRobotsTxt = (author: SpaceAuthor): void => {
+  const text = author.spec.settings?.robotsTxt;
+  if (text === undefined) {
+    return;
+  }
+
+  const lines = text.split('\n');
+  lines.forEach((line, index) => {
+    const bare = line.replace(/#.*$/, '').trim();
+    if (bare === '') {
+      return;
+    }
+
+    const field = /^([A-Za-z-]+)\s*:/.exec(bare)?.[1]?.toLowerCase();
+    if (field === undefined || !ROBOTS_TXT_FIELDS.includes(field)) {
+      throw new AuthoringError(
+        'robots-txt-line',
+        `settings.robotsTxt line ${String(index + 1)} ("${line.trim()}") is no rule a crawler reads: each line is \`Field: value\` of ${ROBOTS_TXT_FIELDS.join(', ')} — or a comment (#).`
+      );
+    }
+  });
+  if (!lines.some(line => /^\s*user-agent\s*:/i.test(line))) {
+    throw new AuthoringError(
+      'robots-txt-line',
+      'settings.robotsTxt names no `User-agent:`: its rules apply to nobody — start it with `User-agent: *`.'
+    );
+  }
+};
+
 /**
  * The space's computed values are written once, under `computed` — the same map in `settings` as well would leave
  * two answers to one question. What they say is `lintSpace`'s to read.

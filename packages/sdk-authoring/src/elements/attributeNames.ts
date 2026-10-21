@@ -399,6 +399,8 @@ export const elementAttributeNames = {
     'seoEnabled',
     'seoPageDescription',
     'seoPageTitle',
+    'seoRobots',
+    'seoStructuredData',
     'withheld'
   ],
   pagination: [

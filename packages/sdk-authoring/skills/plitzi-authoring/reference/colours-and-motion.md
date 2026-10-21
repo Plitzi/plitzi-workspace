@@ -44,7 +44,8 @@ the page hydrates and on a slow phone. Everything else repaints, or lays the pag
 - **`will-change`** only on the few elements about to move, never on every item of a list.
 
 `authorSpace` suggests `heavy-animation` for keyframes a class or `customCss` runs off the compositor, naming each
-property and the way out.
+property and the way out. Run on purpose (an original's one entrance), it is quieted on each element wearing the class
+(`quiet: ['heavy-animation']`); one `customCss` runs names no element.
 
 ## Colours and themes
 

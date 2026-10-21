@@ -49,7 +49,21 @@ export const checkTask = async (ctx: RunContext, runId: string, taskId: string):
     : [];
   const tooLong = (await longFilesIn(view.paths.work, ctx.root)).filter(crossed).map(longFileText);
   const ok = checks.ok && accepted.every(each => each.ok) && tooLong.length === 0;
-  await logRun(ctx, loaded.paths, { action: 'check', task: taskId, ok });
+  // What failed, by name: a run's activity says why a check did not pass, not only that it did not.
+  await logRun(ctx, loaded.paths, {
+    action: 'check',
+    task: taskId,
+    ok,
+    ...(ok
+      ? {}
+      : {
+          failed: [
+            ...checks.steps.filter(step => !step.ok).map(step => step.name),
+            ...accepted.filter(each => !each.ok).map(each => `acceptance — ${each.said}`),
+            ...tooLong
+          ]
+        })
+  });
 
   return { ok, checks, accepted, tooLong, messages, ...(brought.length > 0 ? { brought } : {}) };
 };

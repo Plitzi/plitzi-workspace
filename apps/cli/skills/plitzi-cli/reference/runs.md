@@ -15,7 +15,8 @@ queue is empty — nothing else is theirs (`lead-only`, 25). The project's team 
 level, say it (`--quality high`, as `run plan` gave your command): you are handed tasks of it or below.
 **A designer** reviews the others' UI/UX, as a designer, before the lead's complete review: `plitzi task look <task>` (its pages; `--click <id>` an open state, `--element <id>` the page's own), then `task review <task>
 --approve [--note "what you saw"] | --changes "what, where, why" --agent design-1` — hierarchy, spacing, the theme's tokens, every state (empty,
-long, error, focus), light and dark, 390, the words. **A tester** gets `<task>-tests` after each developer task: tests of
+long, error, hover, focus), light and dark, 390, the words; against a reference, its details: what moves (an entrance, a
+shine, an arrow), sizes as `--compare` measures them, what each control does, the phone's own layout. **A tester** gets `<task>-tests` after each developer task: tests of
 what its acceptance asked, both sides of each condition (a page's in `visual/<page>.spec.ts`, a module's beside it,
 `node --test`). A test the work fails is told to the lead (`task tell`), never bent to pass.
 

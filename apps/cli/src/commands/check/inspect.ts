@@ -112,6 +112,30 @@ export const answeredImage = (issue: { code: string; message: string }, answered
   return address !== undefined && answered.has(address);
 };
 
+const hostOf = (url: string): string => {
+  try {
+    return new URL(url).host;
+  } catch {
+    return '';
+  }
+};
+
+/** A console error, with the document it came from when the browser says. */
+interface ConsoleLine {
+  text: string;
+  from?: string;
+}
+
+/** The address an image issue names, when it is one the browser was told to ask again later (429). */
+export const throttledImage = (
+  issue: { code: string; message: string },
+  throttled: ReadonlySet<string>
+): string | undefined => {
+  const address = issue.code === 'image-not-loaded' ? /https?:\/\/\S+/.exec(issue.message)?.[0] : undefined;
+
+  return address !== undefined && throttled.has(address) ? address : undefined;
+};
+
 const inspectHere = async (
   page: BrowserPage,
   {
@@ -126,7 +150,8 @@ const inspectHere = async (
     sentWith,
     consoleErrors,
     failedRequests,
-    answered
+    answered,
+    throttled
   }: {
     origin: string;
     pathname: string;
@@ -138,10 +163,17 @@ const inspectHere = async (
     expect: readonly Expectation[];
     /** What the document was sent with — none for a page reached by a click, which no document was sent for. */
     sentWith: number | undefined;
-    consoleErrors: string[];
+    /** The page's console errors so far — read once the page is looked at, so what came while it was is in them. */
+    consoleErrors: () => ConsoleLine[];
     failedRequests: string[];
     /** The images the browser was answered with, by address: one of them that draws no size is loaded, not failed. */
     answered: ReadonlySet<string>;
+    /**
+     * What a host held back — answered 429 (ask again later), or dropped while it answered the page's other requests:
+     * its limit met by the checks asking at once (la-velada: the original's CDN, under a run's checks), said apart and
+     * never the page's failure. Read once the page is looked at.
+     */
+    throttled: () => ReadonlySet<string>;
   }
 ): Promise<CheckReport> => {
   const handles = authored?.handles;
@@ -229,10 +261,14 @@ const inspectHere = async (
               }
             ]
           : [];
+  const heldBack = throttled();
+  const limited = report.issues.flatMap(issue => throttledImage(issue, heldBack) ?? []);
   const issues: CheckIssue[] = [
     ...noPage,
     ...statusIssues,
-    ...report.issues.filter(issue => !answeredImage(issue, answered)).map((issue): CheckIssue => ({ ...issue, width })),
+    ...report.issues
+      .filter(issue => !answeredImage(issue, answered) && throttledImage(issue, heldBack) === undefined)
+      .map((issue): CheckIssue => ({ ...issue, width })),
     ...(data?.issues ?? []).map((issue): CheckIssue => ({ ...issue, width })),
     ...(late?.issues ?? []),
     ...failedFlows,
@@ -240,13 +276,45 @@ const inspectHere = async (
     ...wrapped
   ];
 
+  // What a document embedded in the page said (a video player's frame, by the origin of an iframe there) is that
+  // document's, not the space's: said apart, never the page's failure (la-velada: YouTube's player, a permissions
+  // policy line now and then).
+  const embeds = new Set(
+    await page.evaluate(
+      (selector: string) =>
+        Array.from(document.querySelectorAll(selector), frame => {
+          try {
+            return new URL(frame.getAttribute('src') ?? '', location.href).origin;
+          } catch {
+            return '';
+          }
+        }),
+      'iframe[src]'
+    )
+  );
+  const originOf = (url: string | undefined): string | undefined => {
+    try {
+      return url ? new URL(url).origin : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  const lines = consoleErrors();
+  const embedded = (line: ConsoleLine): boolean => {
+    const from = originOf(line.from);
+
+    return from !== undefined && from !== new URL(origin).origin && embeds.has(from);
+  };
+  const errors = lines.filter(line => !embedded(line)).map(line => line.text);
+  const fromEmbeds = lines.filter(embedded).map(line => `${originOf(line.from) ?? ''}: ${line.text}`);
+
   return {
     path: pathname,
     width,
     // A click that could not be made, or whose flow failed, is the page not doing what it is for.
     ok:
       issues.length === 0 &&
-      consoleErrors.length === 0 &&
+      errors.length === 0 &&
       failedRequests.length === 0 &&
       !clicked?.problem &&
       (clicked?.failed.length ?? 0) === 0,
@@ -254,10 +322,12 @@ const inspectHere = async (
     problems: issues.map(issue => issue.message),
     issues,
     hiddenAtWidth: report.hiddenAtWidth,
-    consoleErrors,
+    consoleErrors: errors,
     failedRequests,
     devTools: devTools.available,
     lists,
+    ...(limited.length > 0 ? { throttled: limited } : {}),
+    ...(fromEmbeds.length > 0 ? { fromEmbeds } : {}),
     ...(met.length > 0 ? { expected: met } : {}),
     ...(late ? { browserOnly: late.browserOnly } : {}),
     ...(!asked.state || shown.state === undefined ? {} : { state: shown.state }),
@@ -303,17 +373,35 @@ export const checkAt = async (
     return [unchecked({ code: 'not-signed-in', message: notSignedIn, width })];
   }
 
-  const consoleErrors: string[] = [];
+  const said: { text: string; from?: string }[] = [];
   const failedRequests: string[] = [];
   const imagesAnswered = new Set<string>();
-  page.on('pageerror', error => consoleErrors.push(error.message));
+  const throttled = new Set<string>();
+  // An image a host dropped (no answer at all) while it answered the page's other requests is that host holding back,
+  // as a 429 is; a host that answered nothing is down, or the address wrong — the page's to fix.
+  const answeredHosts = new Set<string>();
+  const dropped = new Set<string>();
+  page.on('requestfailed', request => {
+    if (request.resourceType() === 'image' && !request.url().startsWith(origin)) {
+      dropped.add(request.url());
+    }
+  });
+  const heldBack = (): ReadonlySet<string> =>
+    new Set([...throttled, ...[...dropped].filter(url => answeredHosts.has(hostOf(url)))]);
+  page.on('pageerror', error => said.push({ text: error.message }));
   const address = `${origin}${pathname}`;
   page.on('console', message => {
     // The browser's own line for the page's status — a 404 the page is sent with on purpose — is said apart, below.
     if (message.type() === 'error' && message.location().url !== address) {
-      consoleErrors.push(message.text());
+      said.push({ text: message.text(), from: message.location().url });
     }
   });
+  // The browser's line for a resource its host held back is that host's limit, said with the images it held.
+  const consoleErrors = (from = 0): ConsoleLine[] => {
+    const held = heldBack();
+
+    return said.slice(from).filter(each => each.from === undefined || !held.has(each.from));
+  };
   let sentWith: number | undefined;
   page.on('response', response => {
     // The page itself, answered with the status it is sent with: said apart from what it asked for once it loaded.
@@ -327,6 +415,12 @@ export const checkAt = async (
       imagesAnswered.add(response.url());
     }
 
+    if (response.status() === 429) {
+      throttled.add(response.url());
+    } else if (response.status() < 400) {
+      answeredHosts.add(hostOf(response.url()));
+    }
+
     if (response.status() >= 400 && response.url().startsWith(origin)) {
       failedRequests.push(`${String(response.status())} ${response.url().slice(origin.length)}`);
     }
@@ -338,7 +432,7 @@ export const checkAt = async (
     return [
       {
         ...unchecked({ code: 'no-page', message: noPageMessage(handles, pathname), width }),
-        consoleErrors,
+        consoleErrors: consoleErrors().map(each => each.text),
         failedRequests
       }
     ];
@@ -350,7 +444,7 @@ export const checkAt = async (
     return [
       {
         ...unchecked({ code: 'no-answer', message: `nothing answers at ${origin}${pathname}`, width }),
-        consoleErrors,
+        consoleErrors: consoleErrors().map(each => each.text),
         failedRequests
       }
     ];
@@ -369,7 +463,7 @@ export const checkAt = async (
             : `${pathname} sent the browser to ${landed} — what a page for signed-in visitors does: \`plitzi page check ${pathname} --as <username>\` signs in first, the password in ${CHECK_PASSWORD_ENV} in .env`,
           width
         }),
-        consoleErrors,
+        consoleErrors: consoleErrors().map(each => each.text),
         failedRequests
       }
     ];
@@ -386,15 +480,16 @@ export const checkAt = async (
       click,
       expect,
       sentWith,
-      consoleErrors,
+      consoleErrors: () => consoleErrors(),
       failedRequests,
-      answered: imagesAnswered
+      answered: imagesAnswered,
+      throttled: heldBack
     })
   ];
   // On as a visitor goes on: a click on the page's own link to each next path, no reload — what the space keeps while
   // somebody browses (a filter's choice, a session's state) is what the next page is checked with.
   for (const next of then) {
-    const errorsBefore = consoleErrors.length;
+    const errorsBefore = said.length;
     const failedBefore = failedRequests.length;
     const went = await followLink(page, origin, next);
     reports.push(
@@ -409,9 +504,10 @@ export const checkAt = async (
             click: undefined,
             expect,
             sentWith: undefined,
-            consoleErrors: consoleErrors.slice(errorsBefore),
+            consoleErrors: () => consoleErrors(errorsBefore),
             failedRequests: failedRequests.slice(failedBefore),
-            answered: imagesAnswered
+            answered: imagesAnswered,
+            throttled: heldBack
           })
         : unchecked({ code: 'no-page', message: went, width })
     );

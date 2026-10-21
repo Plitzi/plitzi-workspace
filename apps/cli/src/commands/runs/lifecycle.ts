@@ -106,10 +106,16 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
             }`,
         ...((finished.plan.acceptance?.results.length ?? 0) > 0
           ? [
-              `  Every done task's acceptance checks hold on the result too (${String(finished.plan.acceptance?.results.length ?? 0)})${finished.plan.acceptance?.reused ? ' — as on this same result before, not run again' : ''}`
+              `  Every done task's acceptance checks hold on the result too (${String(finished.plan.acceptance?.results.length ?? 0)})${finished.plan.acceptance?.reused ? ' — as on this same result before, not run again' : finished.plan.acceptance?.kept ? ` — ${String(finished.plan.acceptance.kept)} as on this same result before, the rest run again` : ''}`
             ]
           : []),
         ...(finished.left.length > 0 ? [`  Left in the plan: ${finished.left.join(', ')}`] : []),
+        ...(finished.audit.length > 0
+          ? [
+              chalk.yellow('  What the run’s activity shows (kept in its report — the CLI’s to fix, or the team’s):'),
+              ...finished.audit.map(each => chalk.yellow(`    - ${each}`))
+            ]
+          : ['  The run’s activity shows nothing out of place']),
         ...(finished.leftInTmp
           ? [
               chalk.yellow(

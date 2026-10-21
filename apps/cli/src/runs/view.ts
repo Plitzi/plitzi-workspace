@@ -55,6 +55,8 @@ export interface TaskLine {
   unblocks: string[];
   /** Pending: the tasks it waits for, not approved yet — what a person reads "pending" as. */
   waitsOn?: string[];
+  /** When it last changed: how long it has been as it is. */
+  updatedAt: string;
   milestone?: string;
   /** Its UI's review by a designer, in a run that has one. */
   design?: DesignReview;
@@ -134,6 +136,7 @@ const lineOf = (view: TaskView, now: Date, unblocks: string[]): TaskLine => ({
   ...(view.progress?.fraction !== undefined ? { fraction: view.progress.fraction } : {}),
   round: view.state.round,
   files: view.task.files,
+  updatedAt: view.state.updatedAt,
   ...(view.state.waitingFor ? { waitingFor: view.state.waitingFor } : {}),
   ...(view.state.blockedBy ? { blockedBy: view.state.blockedBy } : {}),
   estimateMinutes: view.task.estimateMinutes,

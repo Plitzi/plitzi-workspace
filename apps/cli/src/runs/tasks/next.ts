@@ -8,7 +8,7 @@ import { pagesOf } from '../pagesOf';
 import { agentScratch, runPaths } from '../paths';
 import { readyTasks } from '../plan';
 import { isRunRefusal, RunRefusal } from '../refusal';
-import { assertStatus, loadRun } from '../run';
+import { assertStatus, loadRun, logRun } from '../run';
 import { tellLeftInTmp } from '../strays';
 import { isDisconnected, viewTask } from '../taskStore';
 import { DESIGNER, qualityRank, readTeam, startedAgents } from '../team';
@@ -86,9 +86,24 @@ export interface NextTask {
 }
 
 /** `plitzi task next`: the ready task to take — highest priority, then the longest chain still to do. */
+/** Logs `joined` the first time an agent asks the run for work — kept as the scratch folder it is given. */
+const markJoined = async (ctx: RunContext, loaded: LoadedRun): Promise<void> => {
+  const scratch = agentScratch(loaded.paths, ctx.agent);
+  if (await fs.stat(scratch).then(() => true, () => false)) {
+    return;
+  }
+
+  await logRun(ctx, loaded.paths, {
+    action: 'joined',
+    ...(ctx.quality === undefined ? {} : { quality: ctx.quality })
+  });
+};
+
 export const nextTask = async (ctx: RunContext, runId: string, role?: string): Promise<NextTask> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open'], 'start a task');
+  // An agent's first ask is its arrival: the run's activity says who worked it, from when, at which level.
+  await markJoined(ctx, loaded);
   // Told before the messages are read, so an agent that left something in the project's tmp/ hears it in this answer.
   await tellLeftInTmp(ctx, loaded);
   const scratch = agentScratch(loaded.paths, ctx.agent);
@@ -401,10 +416,13 @@ export const takeNext = async (
     if (next.designReview) {
       const offered = next.designReview.task.id;
       const loaded = await loadRun(ctx, runId);
-      if (
-        tried.has(offered) ||
-        (await takeDesignReview(ctx, await viewTask(loaded.paths, findTask(loaded, offered))))
-      ) {
+      if (tried.has(offered)) {
+        return { next };
+      }
+
+      if (await takeDesignReview(ctx, await viewTask(loaded.paths, findTask(loaded, offered)))) {
+        await logRun(ctx, loaded.paths, { action: 'review-taken', task: offered, review: 'ui' });
+
         return { next };
       }
 
@@ -415,7 +433,17 @@ export const takeNext = async (
     if (next.leadReview) {
       const offered = next.leadReview.task.id;
       const loaded = await loadRun(ctx, runId);
-      if (tried.has(offered) || (await takeLeadReview(ctx, await viewTask(loaded.paths, findTask(loaded, offered))))) {
+      if (tried.has(offered)) {
+        return { next };
+      }
+
+      if (await takeLeadReview(ctx, await viewTask(loaded.paths, findTask(loaded, offered)))) {
+        await logRun(ctx, loaded.paths, {
+          action: 'review-taken',
+          task: offered,
+          review: next.leadReview.uiToo ? 'lead, UI too' : 'lead'
+        });
+
         return { next };
       }
 

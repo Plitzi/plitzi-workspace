@@ -30,6 +30,9 @@ const lede = styles('lede', { color: 'var(--muted)', margin: '8px 0px 0px' });
 export const space: SpaceSpec = {
   name: 'Empty space',
   permanentUrl: 'empty-space',
+  // What search engines may crawl, served at /robots.txt: everything. A page kept out of search says it on the page
+  // (`robots: 'noindex'`), where a crawler reads it.
+  settings: { robotsTxt: 'User-agent: *\nAllow: /\n' },
   theme: { default: 'system', schemes: ['light', 'dark'] },
   // Every colour, per scheme: elements say `var(--name)`, so the palette changes here and nowhere else. Add one when a
   // look needs it — a colour declared and read by nothing is one authoring points out (`unused-token`).
@@ -58,6 +61,8 @@ export const space: SpaceSpec = {
       name: 'Home',
       slug: '',
       layout: { id: 'site', slot: 'site-main' },
+      // What the site is, for search engines: schema.org's words, in the head the server sends.
+      structuredData: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Empty space' },
       body: [
         heading('Home', { id: 'home-title', subType: 'h1' }),
         paragraph({ id: 'home-lede', content: 'What this site is about, in a line.', class: lede })

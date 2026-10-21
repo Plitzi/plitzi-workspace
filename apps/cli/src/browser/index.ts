@@ -34,6 +34,13 @@ export interface PageMessage {
   location(): { url: string };
 }
 
+/** A request the browser got no answer to. */
+export interface FailedRequest {
+  url(): string;
+  resourceType(): string;
+  failure(): { errorText: string } | null;
+}
+
 export interface PageResponse {
   status(): number;
   url(): string;
@@ -82,6 +89,8 @@ export interface BrowserPage {
   on(event: 'pageerror', listener: (error: Error) => void): unknown;
   on(event: 'console', listener: (message: PageMessage) => void): unknown;
   on(event: 'response', listener: (response: PageResponse) => void): unknown;
+  /** A request that got no answer: why, as the browser says it (`net::ERR_TIMED_OUT`). */
+  on(event: 'requestfailed', listener: (request: FailedRequest) => void): unknown;
   /** What `openPage` follows the page's requests by, to know when it has settled. */
   on(event: SettlingEvent, listener: (request: SettlingRequest) => void): unknown;
   off(event: SettlingEvent, listener: (request: SettlingRequest) => void): unknown;

@@ -48,6 +48,26 @@ describe('plitzi run monitor', () => {
     expect(screen.some(line => line.includes('→ t-home: Use the formal voice'))).toBe(true);
   });
 
+  it('lists the work first and says who did each task, in how many rounds, and its time against its estimate', async () => {
+    const runId = await open();
+    const about = await take('agent-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', 'export const about = { title: "Sobre" };\n');
+    await completeTask(about.ctx, runId, 't-about');
+    await reviewTask(lead(), runId, 't-about', 'approve', []);
+    await take('agent-2', 't-home');
+
+    const data = await monitorRun(lead(), runId);
+    expect(data.stories['t-about']).toMatchObject({ writers: ['agent-1'], approvedBy: 'lead', sentBack: 0 });
+    const screen = plain(monitorScreen(data, { selected: 0, open: true, width: 160, height: 60, now: bench.now() }));
+    const rows = screen.filter(line => /^[ ›] t-/.test(line));
+
+    expect(rows[0]).toContain('t-home');
+    expect(rows.at(-1)).toMatch(/t-about\s+✓ approved · agent-1 · \d+m of \d+/);
+    expect(screen.some(line => line.includes('1 at work') && line.includes('pending'))).toBe(true);
+    expect(screen.some(line => line.includes('agent-1') && line.includes('✓1'))).toBe(true);
+    expect(screen.some(line => line.trim().startsWith('t-home — '))).toBe(true);
+  });
+
   it('fits the terminal: every line its width, the feed cut to the rows left', async () => {
     const data = await monitorRun(lead(), await open());
     const screen = monitorScreen(data, { selected: 0, open: true, width: 60, height: 20, now: bench.now() });

@@ -10,7 +10,7 @@ import { pagesOf } from '../../runs/pagesOf';
 import { runPaths } from '../../runs/paths';
 import { startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
-import { loadRun } from '../../runs/run';
+import { loadRun, logRun } from '../../runs/run';
 import { showTask } from '../../runs/show';
 import { findingsOf, taskParts } from '../../runs/taskParts';
 import { findTask, notReviewedIn, reassignTask, revertTask, reviewTask } from '../../runs/tasks';
@@ -110,6 +110,13 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
         const kept = parts && !parts.ownsRoot ? findingsOf(check.output.trim(), parts) : undefined;
 
         const notReviewed = await notReviewedIn(ctx, runId, taskId);
+        await logRun(ctx, runPaths(ctx.root, runId), {
+          action: 'look',
+          task: taskId,
+          paths: routes,
+          ok: check.code === 0,
+          ...(kept && kept.apart > 0 ? { apart: kept.apart } : {})
+        });
 
         return {
           task: taskId,
@@ -218,6 +225,9 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
                 : []),
               ...((reviewed.granted ?? []).length > 0 ? [`  Handed on: ${list(reviewed.granted ?? [])}`] : []),
               ...((reviewed.ready ?? []).length > 0 ? [`  Ready now: ${list(reviewed.ready ?? [])}`] : []),
+              ...(reviewed.previewProblem
+                ? [chalk.yellow(`  ⚠ The run's preview did not take it in: ${reviewed.previewProblem} — restart it (npm run start:preview)`)]
+                : []),
               ...notReviewedText(reviewed.notReviewed, 'approve')
             ].join('\n')
           : [

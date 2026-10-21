@@ -1,6 +1,7 @@
 import { resolveLayoutChain } from './layoutChain';
 import getSourceName from '../dataSource/helpers/getSourceName';
 import { passesFlagGate } from '../flags/resolveFlags';
+import { isRecord } from '../helpers/isRecord';
 import { processTwigValue } from '../helpers/twigWrapper';
 
 import type { Element, Schema } from '../types';
@@ -151,3 +152,47 @@ export const pageSeoText = (value: unknown, context: Record<string, unknown>): s
  */
 export const pageNotFound = (template: unknown, context: Record<string, unknown>): boolean =>
   typeof template === 'string' && template !== '' && processTwigValue(template, context) === true;
+
+/** A JSON-LD value with its templates evaluated: one that did not evaluate, or came back blank, is left out. */
+const resolvedJson = (value: unknown, context: Record<string, unknown>): unknown => {
+  if (typeof value === 'string') {
+    if (!TEMPLATE.test(value)) {
+      return value;
+    }
+
+    const written = processTwigValue(value, context);
+
+    return written === undefined || (typeof written === 'string' && (written.trim() === '' || TEMPLATE.test(written)))
+      ? undefined
+      : written;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(each => resolvedJson(each, context)).filter(each => each !== undefined);
+  }
+
+  if (isRecord(value)) {
+    return Object.fromEntries(
+      Object.entries(value)
+        .map(([key, each]) => [key, resolvedJson(each, context)] as const)
+        .filter(([, each]) => each !== undefined)
+    );
+  }
+
+  return value;
+};
+
+/**
+ * A page's JSON-LD as the head carries it: each object, its text templates evaluated against `pageServerContext` as the
+ * title's are — a detail page says the record it shows (`name: '{{ apiContainer_boxer.name }}'`). A field whose
+ * template does not evaluate is left out, never written with its braces.
+ */
+export const pageStructuredData = (value: unknown, context: Record<string, unknown>): Record<string, unknown>[] =>
+  (Array.isArray(value) ? value : [])
+    .filter(isRecord)
+    .map(item => resolvedJson(item, context))
+    .filter(isRecord);
+
+/** JSON in a script tag, so no value of it closes the tag: `<` is written as its escape, which JSON reads the same. */
+export const jsonForScript = (value: unknown): string => JSON.stringify(value).replace(/</g, '\\u003c');
+

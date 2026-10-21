@@ -363,3 +363,41 @@
 - **The finish checks the result with its pictures** (`@plitzi/cli`): the copy the whole result is checked in carries
   the binaries of `public/` and `vendor/`, as a task's copy does; an image the browser was answered for is loaded though
   it draws no size of its own (an SVG with only a viewBox); `task look` names a path with a query safely.
+- **The finish runs again only what did not hold** (`@plitzi/cli`): each acceptance line that passed on a result is
+  kept for it (an hour), and the next finish on the same result runs only the others — said ("N as before, the rest run
+  again"); a whole set run again for one line a CDN was slow on asked the same thousands of images once more.
+- **A page whose images come slowly still answers** (`@plitzi/sdk-authoring`): `openPage` waits for the document and
+  then for its requests to quiet, never for `load` — a CDN slow to send the images made `page check` say nothing answered
+  at all.
+- **An image its host held back is not the page's failure** (`@plitzi/cli`): an image answered 429 (ask again later),
+  or dropped with no answer while its host answered the page's other requests — a CDN's limit, met by a run's checks
+  asking at once — and the browser's console line for it are said apart
+  (`throttled`, "held back by their host") and fail nothing; la-velada's checks failed on the original's CDN. A console
+  error of a document embedded in the page (an iframe's — a video player) is said apart the same way (`fromEmbeds`).
+- **A run's activity is the whole of it** (`@plitzi/cli`): the log holds every step from `run open` (the plan, its
+  team, its estimate) to the finish — each failed check with what failed, a refusal and a crash with the command (its
+  token redacted), a look, a review taken, a UI review skipped, a brake, a preview that could not sync — and `run
+  monitor` shows each as it comes, a problem in red.
+- **A run audits itself before it closes** (`@plitzi/cli`): `run report` and `run finish` read the activity for what
+  does not add up — a task done with no approval, a review that waited over ten minutes, three rounds or more, many
+  failed checks, the same refusal again and again, a crash, a brake — and say it in the report, approved or not.
+- **The lead is seen at work** (`@plitzi/cli`): `run monitor` reads the lead's state off its last action, never idle
+  while it fixes a detail; each row says how long it has stood where it is, each agent its role.
+- **`run monitor` says who did what** (`@plitzi/cli`): the tasks at work first and the approved last, each approved one
+  with who wrote it, its rounds and its time against its estimate (read off the log: an approved task holds no owner);
+  a long id cut in the middle; the head counts the tasks by where they stand; the list scrolls with the selection; a
+  task opened says who wrote it, who approved its UI and it, and what was sent back or failed; each agent how many of
+  its tasks are approved; a task's message is said by the agent that wrote it, once.
+- **A stage takes up what the run left out** (`@plitzi/cli`): a piece the run's inventory left out that a stage's
+  acceptance covers is waiting no more — its reason dropped, said by `run extend` and in the log; a file the run's
+  approved work already holds is no longer said as one the stage makes.
+- **`heavy-animation` can be quieted** (`@plitzi/sdk-authoring`): the suggestion is about the elements wearing the
+  class (or the element's own style) that runs the animation, and is left out once each of them says `quiet:
+  ['heavy-animation']` — it named no element, so nothing quieted it, and a run's author check failed on an original's
+  one blurred entrance.
+- **JSON-LD, a page's robots and `robots.txt`** (`@plitzi/sdk-authoring`, `@plitzi/sdk-elements`,
+  `@plitzi/sdk-server`, `@plitzi/sdk-shared`): a page says `robots` (`'noindex'`, `'noindex, nofollow'`…) and
+  `structuredData` (a JSON-LD object or a list of them, each text a template over the page's server providers as its
+  title is — a detail page describes its record), written in the server's `<head>` and kept by the client's;
+  `settings.robotsTxt` is the space's `/robots.txt` — every line checked — and a space that says none lets crawlers read
+  everything, never its 404 page. `plitzi create` starts a space with both: a `robots.txt` and the home's `WebSite`.

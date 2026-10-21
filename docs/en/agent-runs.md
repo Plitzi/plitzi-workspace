@@ -409,6 +409,12 @@ its approval against its estimate, reviews, cuts, a block; every completion, ref
 off the log; overrides; requests and their integration; proposals and their answers; a reconciliation; restores — and
 derives the problems from it (a task not done or blocked, more than one review, a cut, a task over twice its estimate,
 failed checks, refusals, conflicts, overrides, unanswered proposals, the run over 1.5 times its estimate).
+**The audit** (`audit.ts`) reads the same log for what does not add up, and the report keeps it whether the run is
+approved or not, as does `run finish`'s output: a task done with no approval logged, more than six failed checks, a
+review that waited over ten minutes, three rounds or more, a UI review skipped, a crash, a preview that could not sync,
+a brake, the same refusal three times. Each is the CLI's to fix or the team's to learn from — the log holds every step
+for that reason: the plan and its team at `open`, each command refused or crashed (its line, the token redacted), each
+check with what failed, each look and review taken.
 `run report --summary <file>` keeps the lead's summary on top; the final merge is refused without it. When the
 run ends — finished, or aborted by a person — the report is left in `tmp/plitzi-reports/<run>-<time>.md`, with what was
 written or discarded and where a backup is.

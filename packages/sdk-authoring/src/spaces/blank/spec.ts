@@ -242,6 +242,9 @@ const heroActions = container({
 export const space: SpaceSpec = {
   name: 'New space',
   permanentUrl: 'new-space',
+  // What search engines may crawl, served at /robots.txt: everything. A page kept out of search says it on the page
+  // (`robots: 'noindex'`), where a crawler reads it.
+  settings: { robotsTxt: 'User-agent: *\nAllow: /\n' },
   mode: 'desktop-first',
   theme: { default: 'system', schemes: ['light', 'dark'] },
   variables,
@@ -271,6 +274,8 @@ export const space: SpaceSpec = {
       name: 'Home',
       slug: '',
       isDefault: true,
+      // What the site is, for search engines: schema.org's words, in the head the server sends.
+      structuredData: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'New space' },
       css: {
         // A glow over the top of the page, in the palette's primary, so it follows the scheme like everything else.
         'background-image': 'radial-gradient(60rem 32rem at 50% -8rem, var(--glow), transparent 70%)',

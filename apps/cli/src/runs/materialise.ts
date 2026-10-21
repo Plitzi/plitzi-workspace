@@ -125,33 +125,54 @@ export const acceptanceOnResult = async (
   loaded: LoadedRun,
   versions: Record<string, string | null>,
   lines: readonly { task: string; said: string; check: string }[]
-): Promise<{ results: AcceptanceAgain[]; reused?: string }> => {
+): Promise<{ results: AcceptanceAgain[]; reused?: string; kept?: number }> => {
   if (lines.length === 0) {
     return { results: [] };
   }
 
-  const key = createHash('sha256')
-    .update(JSON.stringify([await treeKey(ctx, versions), lines]))
-    .digest('hex');
-  const keptAt = path.join(loaded.paths.cache, 'acceptance', `${key}.json`);
-  const kept = await readOptional(keptAt);
-  const parsed: unknown = kept === undefined ? undefined : parseKept(kept);
-  if (isRecord(parsed) && typeof parsed.at === 'string' && ctx.now().getTime() - Date.parse(parsed.at) < KEPT_MS) {
-    return { results: lines.map(line => ({ ...line, ok: true })), reused: parsed.at };
+  // Kept line by line: on the same result, a line that passed has nothing new to tell, and the next finish runs only
+  // the ones that did not — a whole set run again for one line a CDN was slow on asked the CDN the same thousands of
+  // images again, and failed on another (la-velada).
+  const tree = await treeKey(ctx, versions);
+  const keptAt = (line: { check: string }) =>
+    path.join(
+      loaded.paths.cache,
+      'acceptance',
+      `${createHash('sha256')
+        .update(JSON.stringify([tree, line.check]))
+        .digest('hex')}.json`
+    );
+  const keptSince = async (line: { check: string }): Promise<string | undefined> => {
+    const kept = await readOptional(keptAt(line));
+    const parsed: unknown = kept === undefined ? undefined : parseKept(kept);
+
+    return isRecord(parsed) && typeof parsed.at === 'string' && ctx.now().getTime() - Date.parse(parsed.at) < KEPT_MS
+      ? parsed.at
+      : undefined;
+  };
+  const since = await Promise.all(lines.map(keptSince));
+  const toRun = lines.filter((_, index) => since[index] === undefined);
+  const reused = since.filter((at): at is string => at !== undefined).sort()[0];
+  if (toRun.length === 0) {
+    return { results: lines.map(line => ({ ...line, ok: true })), ...(reused ? { reused } : {}) };
   }
 
   const dir = await materialise(ctx, loaded, versions);
   try {
     const answered = await checkAcceptance(
-      lines.map(line => ({ said: line.said, check: line.check })),
+      toRun.map(line => ({ said: line.said, check: line.check })),
       { work: dir, root: ctx.root, cache: loaded.paths.cache }
     );
-    const results = answered.map((answer, index) => ({ ...answer, task: lines[index].task }));
-    if (results.every(result => result.ok)) {
-      await writeJson(keptAt, { at: ctx.now().toISOString() });
+    const ran = new Map(toRun.map((line, index) => [line, { ...answered[index], task: line.task }] as const));
+    for (const [line, result] of ran) {
+      if (result.ok) {
+        await writeJson(keptAt(line), { at: ctx.now().toISOString() });
+      }
     }
 
-    return { results };
+    const kept = lines.length - toRun.length;
+
+    return { results: lines.map(line => ran.get(line) ?? { ...line, ok: true }), ...(kept > 0 ? { kept } : {}) };
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }

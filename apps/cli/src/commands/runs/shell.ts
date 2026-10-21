@@ -200,14 +200,47 @@ export const taskOf = (ctx: RunContext, named?: string): string => {
 };
 
 /** Runs a command: its answer printed as text or JSON, a refusal as what it is and what to do next, with its exit code. */
+/** The command as it was run, a token's secret kept out: what the run's activity says was asked. */
+const commandLine = (): string =>
+  ['plitzi', ...process.argv.slice(2)]
+    .join(' ')
+    .replace(/(--token[ =])\S+/g, '$1…')
+    .replace(/\b([a-z0-9][a-z0-9_-]*\.[a-z0-9][a-z0-9_-]*)\.[0-9a-f]{48}\b/g, '$1.…');
+
+/**
+ * What went wrong in a command, written into the run's activity: every refusal and every crash, with the command that
+ * met it — the run's history is what its CLI is debugged from, and a refusal a loop of agents met twenty times, or a
+ * crash after an approval, was nowhere in it. The run is the command's, or the token's, or the project's open one.
+ */
+const logFailure = async (ctx: RunContext | undefined, options: RunCommandOptions, entry: Record<string, unknown>) => {
+  if (!ctx) {
+    return;
+  }
+
+  const fromToken = TOKEN.exec(ctx.token ?? '')?.[1];
+  const runId = options.run ?? fromToken ?? (await activeRuns(ctx.root).catch(() => [])).at(0);
+  if (runId === undefined) {
+    return;
+  }
+
+  await fs
+    .appendFile(
+      runPaths(ctx.root, runId).log,
+      `${JSON.stringify({ at: ctx.now().toISOString(), by: ctx.agent, command: commandLine(), ...entry })}\n`
+    )
+    .catch(() => undefined);
+};
+
 export const act = async <T>(
   options: RunCommandOptions,
   work: (ctx: RunContext) => Promise<T>,
   text: (result: T) => string,
   exitCode: number | ((result: T) => number) = 0
 ): Promise<void> => {
+  let context: RunContext | undefined;
   try {
     const ctx = await contextFor(options);
+    context = ctx;
     const result = await work(ctx);
     // With --json an agent reads the data, and the sentence a person would read with it: what it means, what is next.
     console.log(
@@ -221,8 +254,19 @@ export const act = async <T>(
     }
   } catch (caught) {
     if (!isRunRefusal(caught)) {
+      await logFailure(context, options, {
+        action: 'crashed',
+        error: caught instanceof Error ? `${caught.name}: ${caught.message}` : String(caught)
+      });
+
       throw caught;
     }
+
+    await logFailure(context, options, {
+      action: 'refused',
+      code: caught.code,
+      message: caught.message.slice(0, 600)
+    });
 
     // A run's file another CLI wrote, not read by this one: said as that, with the CLI to go on with.
     const root = await whereAmI()

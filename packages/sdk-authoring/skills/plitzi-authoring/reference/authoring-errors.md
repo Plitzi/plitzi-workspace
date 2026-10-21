@@ -114,7 +114,7 @@ The space is not written until these are fixed.
 | `page-route-taken` | two pages at one address for the same visitors | another slug — or `accessLevel` `'public'` on one and `'authenticated'` on the other |
 | `page-target-unknown` | a link or `navigate` to a page id that does not exist | an existing page id, or a path with its slash (`'/about'`) |
 | `page-target-url` | a URL, `mailto:` or `tel:` in a link left in page mode | `mode: 'external'` |
-| `page-template` | a template in a page's `seoTitle`, `seoDescription` or `notFound` that reads what is not there when the server answers — anything but the page's `runtime: 'server'` providers and `navigation` — or cannot be read | read the record from a provider with `runtime: 'server'` on the page or its layout — `'{{ apiContainer_post.title }} — Blog'` — or words of its own |
+| `page-template` | a template in a page's `seoTitle`, `seoDescription`, `notFound` or a text of its `structuredData` that reads what is not there when the server answers — anything but the page's `runtime: 'server'` providers and `navigation` — or cannot be read | read the record from a provider with `runtime: 'server'` on the page or its layout — `'{{ apiContainer_post.title }} — Blog'` — or words of its own |
 | `page-without-slug` | a page with no `slug` | `slug: ''` for the home page, its path for any other: `'about'`, `'blog/:slug'` |
 | `part-missing` | a compound element — a carousel, a tab container, a dropdown — without a part it renders through | the part the message names, inside it (`carousel()` writes its own track) |
 | `prop-missing` | an instance without a prop its component requires | `component('card', { props: { name: … } })`, or bind it |
@@ -125,6 +125,8 @@ The space is not written until these are fixed.
 | `props-outside-component` | `props.x` read outside a component | read the source it would have come from |
 | `quiet-unknown` | an element's `quiet` naming something that is not a suggestion's code — a problem is never quieted | the code of the suggestion it was offered: `quiet: ['repeated-shape']` |
 | `redirect-target-unknown` | a page that sends visitors it is not for to a page the space does not have | a page's id or slug (`''` is the home page), or a full URL |
+| `robots-txt-line` | a line of the space's `settings.robotsTxt` that no crawler reads, or one with no `User-agent` | `User-agent: *` then `Allow: /`, `Disallow: /overlay` — each line `Field: value`, or a comment |
+| `robots-unknown` | a page's `robots` with a directive no search engine reads, or none | `robots: 'noindex'`, `'noindex, nofollow'` — or leave it out, and the page is indexed |
 | `row-and-children` | a list with a `row` and `children` — the row is what it renders | one of the two |
 | `row-component` | a list's `row` naming a component the space does not declare, or one with no prop to take the row | a declared component with an `item` prop — or a single prop — for the row |
 | `row-outside-list` | `row` on an element that is not a list | a `list` around it |
@@ -146,6 +148,7 @@ The space is not written until these are fixed.
 | `step-name` | a step name a later step cannot read as `{{ name.field }}` | a letter first, then letters, digits, `-` and `_` |
 | `step-params` | a step param that does not exist, or a value outside its options | the params and values it lists |
 | `step-type` | a step `type` that does not exist | the step builders — `setState(…)`, `navigate(…)` — write it |
+| `structured-data-shape` | a page's `structuredData` item with no `@context` or `@type`, or a value JSON cannot carry | `structuredData: { '@context': 'https://schema.org', '@type': 'SportsEvent', name: '…' }` |
 | `style-condition-unknown` | a condition a class's rules cannot hold under | `motion-reduce`, `motion-safe`, or a container width — `container (max-width: 30rem)`, `container card (min-width: 480px)` |
 | `style-pseudo-content` | a `content` CSS cannot read — text without its quotes draws nothing — or a `before`/`after` with no `content`, which is not there at all | the text in quotes inside the string — `content: '"→"'`, `'""'` for an empty box — or a function such as `counter(step)` |
 | `style-pseudo-property` | a property the pseudo-element ignores — the browser drops it without a word | one it honours (`::selection` paints, `::marker` and `::placeholder` take text and font), or style the element |

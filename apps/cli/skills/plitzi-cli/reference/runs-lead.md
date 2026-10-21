@@ -7,7 +7,8 @@ What the lead — team lead and software architect — does; the agents' half, t
 
 0. **Inventory what the job asks, before a line of the plan.** Built after something — a site to copy, a design, a
    brief — list every page and, on each, every section and every piece a visitor would miss: a hero's logo, a live
-   video, a countdown, an interactive tool (a tier list), a page linked from the footer — as the plan's `inventory`
+   video, a countdown, an interactive tool (a tier list), a page linked from the footer, and the details: what moves
+   (an entrance, a shine, an arrow), how a control behaves, a size — as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
    "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
    piece that is neither. **What waits is said to the person before opening**: a choice they make with you. Prepare what every task reads first — the data complete with every
@@ -73,9 +74,8 @@ What the lead — team lead and software architect — does; the agents' half, t
    `run purge`, `run restore`, `run allow-finish`, `run stop --force` and `run attach --take-over` (Claude Code:
    `permissions.deny` in `.claude/settings.json`).
 
-   **Quality** (`"quality": "light" | "standard" | "high"`): `run plan` sets it where you say none — what many tasks build
-   on `high`, a one-file few minutes `light` — and, with a team model a level, says which agent starts at which. Give
-   your strongest model only to what is worth it. Ids: lowercase letters, digits, `-`, `_`; **classes and provider ids by area** (`pronosticos-card`, `topBoxers`):
+   **Quality** (`"quality": "light" | "standard" | "high"`): `run plan` sets it where you say none (what many tasks build
+   on `high`, a one-file few minutes `light`) and says which agent starts at which level. Ids: lowercase letters, digits, `-`, `_`; **classes and provider ids by area** (`pronosticos-card`, `topBoxers`):
    two tasks that name one class differently meet only at the approval. **Foundations go to different agents**: the
    shell and the components as two tasks two agents take at once — one role allowed to only one agent works them one
    after the other while every page waits. **A file other tasks import is their contract**: a task that changes what

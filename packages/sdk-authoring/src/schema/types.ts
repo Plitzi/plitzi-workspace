@@ -261,6 +261,9 @@ export interface PageNav {
   order?: number;
 }
 
+/** One JSON-LD object: `{ '@context': 'https://schema.org', '@type': 'SportsEvent', … }`. */
+export type StructuredData = Record<string, unknown>;
+
 export interface PageSpec {
   name: string;
   /** As {@link ElementSpec.id} — a page is an element, and its flows are targeted the same way. */
@@ -275,6 +278,17 @@ export interface PageSpec {
    */
   seoTitle?: string;
   seoDescription?: string;
+  /**
+   * Whether search engines index this page and follow its links — `'noindex'`, `'noindex, nofollow'` — written into the
+   * head as `<meta name="robots">`. Left out, they index it, as any page.
+   */
+  robots?: string;
+  /**
+   * What this page is about in schema.org's words, as JSON-LD — an event, an organization, a person — written into the
+   * head as `<script type="application/ld+json">`, which a search engine reads for its rich results. One object or
+   * several, each with `'@context'` and `'@type'`.
+   */
+  structuredData?: StructuredData | StructuredData[];
   /**
    * One expression over the same answers that says this address shows nothing — a record that is not there: the page is
    * sent with status 404, rendered as written. For a record read by a provider the page shares with others, in its

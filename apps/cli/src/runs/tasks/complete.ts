@@ -89,7 +89,7 @@ const mergeMoved = async (
   await writeJson(view.paths.start, { ...start, files: next, overlaid: [...overlaid].sort() });
   if (conflicts.length > 0) {
     // Counted as the conflicts at approval are: in the run's report, and by its brake.
-    await recordBrake(ctx, loaded, 'conflict');
+    await recordBrake(ctx, loaded, 'conflict', view.task.id);
     // Who changed those lines in the run: what the agent weighs before it redoes anything over approved work.
     const by = conflicts.map(each => {
       const entry = entryOf(approved.files, each.file);
@@ -241,7 +241,7 @@ export const completeTask = async (
   }
 
   if (outside.length > 0) {
-    await recordBrake(ctx, loaded, 'refused');
+    await recordBrake(ctx, loaded, 'refused', taskId);
     throw new RunRefusal(
       'claimed',
       `Task "${taskId}" changed files another task at work holds: ${outside
@@ -317,7 +317,7 @@ export const completeTask = async (
       : false;
   if (!checks.ok) {
     if (!preexisting) {
-      await recordBrake(ctx, loaded, 'checks-failed');
+      await recordBrake(ctx, loaded, 'checks-failed', taskId);
     }
 
     if (!knownFailure && !preexisting) {
@@ -353,7 +353,7 @@ export const completeTask = async (
     : [];
   const unmet = accepted.filter(result => !result.ok);
   if (unmet.length > 0 && !knownFailure) {
-    await recordBrake(ctx, loaded, 'checks-failed');
+    await recordBrake(ctx, loaded, 'checks-failed', taskId);
     throw new RunRefusal(
       'checks-failed',
       `Task "${taskId}"'s acceptance is not met: ${unmet.map(each => `"${each.said}"`).join(', ')}`,
@@ -372,7 +372,7 @@ export const completeTask = async (
   // A file it took past what is read whole is split before review: the lead never receives a 500-line file to approve.
   const tooLong = (await longFilesIn(view.paths.work, ctx.root)).filter(crossed);
   if (tooLong.length > 0 && !knownFailure) {
-    await recordBrake(ctx, loaded, 'checks-failed');
+    await recordBrake(ctx, loaded, 'checks-failed', taskId);
     throw new RunRefusal(
       'checks-failed',
       `Task "${taskId}" leaves files too long to read whole: ${tooLong.map(longFileText).join('; ')}`,
@@ -458,7 +458,7 @@ export const completeTask = async (
     }),
     ctx.now
   );
-  await recordBrake(ctx, loaded, 'completed');
+  await recordBrake(ctx, loaded, 'completed', taskId);
   await appendLog(view.paths.log, { at: at(ctx), by: ctx.agent, action: 'complete', changed, requests: asRequests });
   await logRun(ctx, loaded.paths, { action: 'complete', task: taskId, changed: changed.length, requests: asRequests });
 

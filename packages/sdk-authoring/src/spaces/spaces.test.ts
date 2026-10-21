@@ -246,6 +246,9 @@ describe('the copy handed to a project', () => {
     expect(Object.values(blankTemplateFiles({ name: 'My Site' })).join('\n')).not.toContain(
       blankSpaceSpec.permanentUrl
     );
+    // Every place it says its name — its JSON-LD for search engines too — never the template's.
+    expect(source).not.toContain(`name: '${blankSpaceSpec.name}'`);
+    expect(source).toContain("'@type': 'WebSite', name: 'My Site'");
   });
 
   /**

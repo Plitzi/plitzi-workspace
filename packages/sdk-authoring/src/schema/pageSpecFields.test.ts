@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { apiContainer, authorSpace, PAGE_SPEC_FIELDS } from '../index';
+import { apiContainer, authorSpace, PAGE_SPEC_FIELDS, specFromSpace } from '../index';
 
 import type { PageSpec } from '../index';
 
@@ -16,6 +16,8 @@ describe('PAGE_SPEC_FIELDS', () => {
       accessLevel: 'authenticated',
       seoTitle: 'About — Example',
       seoDescription: 'Who we are.',
+      robots: 'noindex, nofollow',
+      structuredData: [{ '@context': 'https://schema.org', '@type': 'Organization', name: 'Example' }],
       notFound: '{{ navigation.routeParams.slug == "gone" }}',
       documentScroll: 'locked',
       body: []
@@ -91,5 +93,56 @@ describe('a page’s seoTitle and seoDescription', () => {
     ).not.toThrow();
     expect(notFound('true')).toThrow(/which is never `true`/);
     expect(notFound('{{ not state.capsule }}')).toThrow(/`notFound` reads `state`/);
+  });
+});
+
+describe('a page’s robots and structured data', () => {
+  const write = (page: Pick<PageSpec, 'robots' | 'structuredData'>, settings: Record<string, string> = {}) => () =>
+    authorSpace({
+      name: 'Seo',
+      permanentUrl: 'seo',
+      settings,
+      pages: [{ id: 'home', name: 'Home', slug: '', ...page, body: [] }]
+    });
+
+  it('writes them for the head, the page searched as it says', () => {
+    const { schema } = write({
+      robots: 'NoIndex,  nofollow',
+      structuredData: { '@context': 'https://schema.org', '@type': 'SportsEvent', name: 'La Velada' }
+    })();
+
+    expect(schema.flat.home.attributes).toMatchObject({
+      seoEnabled: true,
+      seoRobots: 'noindex, nofollow',
+      seoStructuredData: [{ '@context': 'https://schema.org', '@type': 'SportsEvent', name: 'La Velada' }]
+    });
+  });
+
+  it('refuses a directive no search engine reads, and JSON-LD with no type or vocabulary', () => {
+    expect(write({ robots: 'noindx' })).toThrow(/\[robots-unknown\].*did you mean "noindex"/s);
+    expect(write({ structuredData: { name: 'La Velada' } })).toThrow(/\[structured-data-shape\]/);
+    expect(write({ structuredData: { '@context': 'https://schema.org', '@type': 'Event', at: new Date() } })).toThrow(
+      /what JSON cannot carry/
+    );
+  });
+
+  it('reads back as it was written, the space’s robots.txt too', () => {
+    const { schema, style } = write(
+      { robots: 'noindex', structuredData: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Seo' } },
+      { robotsTxt: 'User-agent: *\nAllow: /\n' }
+    )();
+    const { spec } = specFromSpace({ schema, style });
+
+    expect(spec.pages[0]).toMatchObject({
+      robots: 'noindex',
+      structuredData: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Seo' }
+    });
+    expect(spec.settings?.robotsTxt).toBe('User-agent: *\nAllow: /\n');
+  });
+
+  it('holds the space’s robots.txt to the rules crawlers read', () => {
+    expect(write({}, { robotsTxt: 'User-agent: *\nDisallow: /overlay\n# kept out' })).not.toThrow();
+    expect(write({}, { robotsTxt: 'User-agent: *\nDisalow: /overlay' })).toThrow(/\[robots-txt-line\].*line 2/s);
+    expect(write({}, { robotsTxt: 'Disallow: /overlay' })).toThrow(/names no `User-agent:`/);
   });
 });

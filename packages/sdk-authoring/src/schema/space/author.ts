@@ -17,6 +17,7 @@ import { writtenAt } from '../writtenAt';
 import {
   assertChannels,
   assertComputedOnce,
+  assertRobotsTxt,
   assertPaintedState,
   assertSpaceShape,
   assertTransientState,
@@ -314,6 +315,7 @@ export class SpaceAuthor {
     assertAncestorClasses(this);
 
     assertComputedOnce(this);
+    assertRobotsTxt(this);
     assertChannels(this);
     assertTransientState(this);
     assertPaintedState(this);

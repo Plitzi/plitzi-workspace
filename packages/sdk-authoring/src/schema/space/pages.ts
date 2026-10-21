@@ -9,6 +9,7 @@ import { assertPageNav, folderPrefixes, routeOf } from '../nav';
 import { didYouMean } from '../suggest';
 import { assertFlowShapes } from './checks';
 import { addElement, insert, nextId } from './elements';
+import { seoAttributes } from './seo';
 import { baseSelectorFor } from './styles';
 import { componentWhere, layoutAttributes, placeOf, undeclaredFolder } from './values';
 
@@ -150,9 +151,10 @@ export const addPage = (author: SpaceAuthor, page: PageSpec, index: number): str
       ...layoutAttributes(page.layout),
       ...(page.accessLevel ? { accessLevel: page.accessLevel } : {}),
       ...(page.access ? { access: { permissions: [...page.access.permissions] } } : {}),
-      seoEnabled: Boolean(page.seoTitle ?? page.seoDescription),
+      seoEnabled: Boolean(page.seoTitle ?? page.seoDescription ?? page.robots ?? page.structuredData),
       ...(page.seoTitle ? { seoPageTitle: page.seoTitle } : {}),
       ...(page.seoDescription ? { seoPageDescription: page.seoDescription } : {}),
+      ...seoAttributes(`Page "${page.name}"`, page),
       ...(page.notFound ? { notFound: page.notFound } : {}),
       ...(page.documentScroll ? { documentScroll: page.documentScroll } : {})
     },

@@ -10,7 +10,7 @@ export type SettlingEvent = 'request' | 'requestfinished' | 'requestfailed';
 
 /** What `openPage` needs of a page — a Playwright `Page` is one. */
 export interface SettlingPage {
-  goto(url: string, options: { waitUntil: 'load' }): Promise<unknown>;
+  goto(url: string, options: { waitUntil: 'domcontentloaded' }): Promise<unknown>;
   on(event: SettlingEvent, listener: (request: SettlingRequest) => void): unknown;
   off(event: SettlingEvent, listener: (request: SettlingRequest) => void): unknown;
   waitForTimeout(milliseconds: number): Promise<void>;
@@ -35,8 +35,8 @@ const staysOpen = (request: SettlingRequest): boolean => {
 };
 
 /**
- * Opens a page and waits until it has settled: loaded, and nothing asked for in `quietMs` — the server data, the
- * images, the plugins it fetches after the HTML.
+ * Opens a page and waits until it has settled: its document in, and nothing asked for in `quietMs` — the server data,
+ * the images, the plugins it fetches after the HTML.
  *
  * What Playwright's `networkidle` would be if it knew a page with a live channel: `networkidle` counts the channel's
  * stream, which never ends, so on any page with a `channel` it never came — and every check of that page answered
@@ -65,7 +65,9 @@ export const openPage = async (
   page.on('requestfailed', ended);
 
   try {
-    const answered = await page.goto(url, { waitUntil: 'load' }).catch(() => null);
+    // The document is what answers; its images are what the quiet below waits for, each with the time it takes. Waiting
+    // for `load` instead made a CDN slow to send them read as nothing answering at all (la-velada's home, under load).
+    const answered = await page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => null);
     if (!answered) {
       return null;
     }

@@ -35,6 +35,8 @@ export interface ReviewedTask {
   granted?: string[];
   ready?: string[];
   integrations?: string[];
+  /** Approved, and the run's preview could not take it in: why — the approval stands. */
+  previewProblem?: string;
   /** Requests of done tasks on the files it let go of, merged now — and integration tasks left with nothing to do. */
   settled?: string[];
   /** Sent to a person after the round limit. */
@@ -311,7 +313,7 @@ const decide = async (
     buildMergeIntoRun(ctx, loaded, view, start, submitted, onProjectChange, approved)
   ).catch(async (error: unknown) => {
     if (error instanceof RunRefusal && error.code === 'conflict') {
-      await recordBrake(ctx, loaded, 'conflict');
+      await recordBrake(ctx, loaded, 'conflict', taskId);
     }
 
     throw error;
@@ -388,11 +390,7 @@ const decide = async (
     });
   }
 
-  // What is connected shows as it is approved: a running preview of the run takes the approved work in now.
-  await syncPreview(refreshed, ctx.root);
-  const integrations = await withLock(refreshed.paths.mergeLock, () => integrateWhenReady(ctx, refreshed), {
-    now: ctx.now
-  });
+  // Said the moment it is so: the approval is in the run's work, whatever the steps after it meet.
   await logRun(ctx, loaded.paths, {
     action: 'review',
     task: taskId,
@@ -402,7 +400,20 @@ const decide = async (
     fulfilled,
     granted,
     ready,
-    integrations
+    ...(skipped ? { design: 'skipped' } : {})
+  });
+  // What is connected shows as it is approved: a running preview of the run takes the approved work in now. A preview
+  // that cannot take it is said, never the approval undone by it.
+  const previewProblem = await syncPreview(refreshed, ctx.root).then(
+    () => undefined,
+    (error: unknown) => (error instanceof Error ? error.message : String(error))
+  );
+  if (previewProblem !== undefined) {
+    await logRun(ctx, loaded.paths, { action: 'preview-sync-failed', task: taskId, error: previewProblem });
+  }
+
+  const integrations = await withLock(refreshed.paths.mergeLock, () => integrateWhenReady(ctx, refreshed), {
+    now: ctx.now
   });
 
   const joined = Object.entries((await readApproved(loaded.paths)).files)
@@ -416,6 +427,7 @@ const decide = async (
     granted,
     ready: [...ready, ...integrations],
     integrations,
+    ...(previewProblem === undefined ? {} : { previewProblem }),
     settled,
     ...(joined.length > 0 ? { joined } : {}),
     ...(skipped ? { design: 'skipped' as const } : {}),

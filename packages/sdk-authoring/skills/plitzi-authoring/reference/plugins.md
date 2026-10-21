@@ -188,7 +188,9 @@ belongs to the editor.
 ## The plugin's stylesheet and the space's CSS
 
 A plugin's stylesheet ships in a layer below the space's (`plitzi-sdk-plugin`, written by the build): the space's
-classes and `customCss` win over it whatever their specificity, as over a built-in element's defaults.
+classes and `customCss` win over it whatever their specificity, as over a built-in element's defaults. Write it as
+`.css` files the plugin imports — linked in the server's head, and read by authoring for the tokens it uses; CSS held
+in a string of TypeScript is read by nothing, and its tokens are said unused.
 
 A file a library needs whole is imported as Vite imports it, and travels inside the bundle: `worker.js?raw` is its
 text (a worker, started from `URL.createObjectURL(new Blob([source]))`), `engine.wasm?inline` a data URI. Images and

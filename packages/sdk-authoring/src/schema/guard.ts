@@ -69,6 +69,8 @@ export const PAGE_SPEC_KEYS = [
   'isDefault',
   'seoTitle',
   'seoDescription',
+  'robots',
+  'structuredData',
   'notFound',
   'documentScroll',
   'accessLevel',

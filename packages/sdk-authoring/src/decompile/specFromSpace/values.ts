@@ -63,6 +63,8 @@ export const PAGE_ATTRIBUTES = new Set([
   'seoEnabled',
   'seoPageTitle',
   'seoPageDescription',
+  'seoRobots',
+  'seoStructuredData',
   'notFound',
   'documentScroll',
   'enabled'
@@ -80,6 +82,7 @@ export const SCHEMA_SETTINGS = [
   'stateStorage',
   'transientState',
   'paintedState',
+  'robotsTxt',
   'customCss',
   'visitorRoles',
   'userProvider',

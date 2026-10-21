@@ -311,7 +311,9 @@ export const checkPlan = async (
   ownership: Ownership,
   team: Team,
   /** A stage's: the pieces of the run's inventory, which its lines may cover. */
-  knownInventory: ReadonlySet<string> = new Set()
+  knownInventory: ReadonlySet<string> = new Set(),
+  /** A stage's: the files the run's approved work holds that the project does not yet — made, not to make. */
+  inRunsWork: ReadonlySet<string> = new Set()
 ): Promise<CheckedPlan> => {
   const agentsAsked = teamSize(team);
   const problems: string[] = [...roleProblems(written, team), ...inventoryProblems(written, knownInventory)];
@@ -458,7 +460,9 @@ export const checkPlan = async (
 
       holder.set(file, task.id);
       byCase.set(file.toLowerCase(), { file, task: task.id });
-      if (!(await exists(under(root, file))) && !created.includes(file)) {
+      // A unit that is a folder (a plugin's) is in the run's work once a file under it is.
+      const madeByRun = inRunsWork.has(file) || [...inRunsWork].some(each => each.startsWith(`${file}/`));
+      if (!madeByRun && !(await exists(under(root, file))) && !created.includes(file)) {
         created.push(file);
       }
     }

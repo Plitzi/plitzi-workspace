@@ -5,7 +5,8 @@ import {
   hasServerElements,
   notFoundProvider,
   pageServerContext,
-  pageSeoText
+  pageSeoText,
+  pageStructuredData
 } from './serverElements';
 
 import type { Element, Schema } from '../types';
@@ -175,5 +176,51 @@ describe('pageSeoText', () => {
 
   it('never gives braces: a template that does not evaluate is nothing', () => {
     expect(pageSeoText('{{ apiContainer_capsule.title ', context)).toBeUndefined();
+  });
+});
+
+describe('pageStructuredData', () => {
+  const boxer: Element = {
+    ...element('boxer', [], 'server'),
+    definition: { ...element('boxer', [], 'server').definition, type: 'apiContainer' }
+  };
+  const context = pageServerContext(
+    [boxer],
+    { boxer: { name: 'Alondrissa', wins: 3, editions: ['V', 'VI'] } },
+    { routeParams: { id: 'alondrissa' }, queryParams: {} }
+  );
+
+  it('evaluates each text template, deep, and keeps a whole expression’s value', () => {
+    expect(
+      pageStructuredData(
+        [
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Person',
+            name: '{{ apiContainer_boxer.name }}',
+            url: 'https://example.com/boxeadores/{{ navigation.routeParams.id }}',
+            award: '{{ apiContainer_boxer.editions }}',
+            knows: [{ '@type': 'Person', name: '{{ apiContainer_boxer.name }} II' }]
+          }
+        ],
+        context
+      )
+    ).toEqual([
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: 'Alondrissa',
+        url: 'https://example.com/boxeadores/alondrissa',
+        award: ['V', 'VI'],
+        knows: [{ '@type': 'Person', name: 'Alondrissa II' }]
+      }
+    ]);
+  });
+
+  it('leaves out a field whose template does not evaluate, and what is not an object', () => {
+    expect(
+      pageStructuredData([{ '@type': 'Person', name: '{{ apiContainer_boxer.name ', alias: '{{ missing }}' }, 'x'], context)
+    ).toEqual([{ '@type': 'Person' }]);
+    expect(pageStructuredData(undefined, context)).toEqual([]);
   });
 });

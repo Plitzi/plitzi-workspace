@@ -446,6 +446,35 @@ describe('suggestions', () => {
       expect(suggestion.message).toContain('`haze` (`filter`)');
     });
 
+    it('is about the elements wearing the class, and says nothing once each of them quiets it', () => {
+      const entrance = (quieted = false) =>
+        authorSpace(
+          space(
+            [
+              page('home', [
+                container({
+                  id: 'crest',
+                  class: 'blurred',
+                  ...(quieted ? { quiet: ['heavy-animation' as const] } : {})
+                }),
+                container({
+                  id: 'title',
+                  class: 'blurred',
+                  ...(quieted ? { quiet: ['heavy-animation' as const] } : {})
+                })
+              ])
+            ],
+            {
+              classes: { blurred: { animation: 'blurred-in 900ms ease-in-out both' } },
+              customCss: '@keyframes blurred-in { from { filter: blur(5px); opacity: 0; } }'
+            }
+          )
+        ).suggestions.filter(suggestion => suggestion.code === 'heavy-animation');
+
+      expect(entrance().map(suggestion => suggestion.elementIds)).toEqual([['crest', 'title']]);
+      expect(entrance(true)).toEqual([]);
+    });
+
     it('has nothing to say about keyframes nothing runs, or ones the compositor runs alone', () => {
       expect(
         animated(

@@ -21,6 +21,34 @@ const schema = (pages: Record<string, Element>): Schema => ({
 });
 
 describe('resolvePageSeo', () => {
+  it('reads its robots and its JSON-LD, the JSON kept from closing its script tag', () => {
+    const s = schema({
+      overlay: page('overlay', {
+        seoEnabled: true,
+        seoRobots: 'noindex, nofollow',
+        seoStructuredData: [{ '@context': 'https://schema.org', '@type': 'SportsEvent', name: '</script><b>' }]
+      })
+    });
+
+    expect(resolvePageSeo(s, 'overlay')).toEqual({
+      robots: 'noindex, nofollow',
+      structuredData: ['{"@context":"https://schema.org","@type":"SportsEvent","name":"\\u003c/script>\\u003cb>"}']
+    });
+  });
+
+  it('says the record a detail page shows in its JSON-LD', () => {
+    const s = schema({
+      boxer: page('boxer', {
+        seoEnabled: true,
+        seoStructuredData: [{ '@context': 'https://schema.org', '@type': 'Person', name: '{{ apiContainer_boxer.name }}' }]
+      })
+    });
+
+    expect(resolvePageSeo(s, 'boxer', { apiContainer_boxer: { name: 'Alondrissa' } })).toEqual({
+      structuredData: ['{"@context":"https://schema.org","@type":"Person","name":"Alondrissa"}']
+    });
+  });
+
   it('reads the title and description the page declares', () => {
     const s = schema({
       home: page('home', { seoEnabled: true, seoPageTitle: 'Café Mirabel', seoPageDescription: 'A small kitchen.' })

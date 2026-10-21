@@ -168,7 +168,14 @@ const RunViewer = ({ snapshot }: { snapshot?: RunSnapshot }) => {
               <div key={`${event.at}-${event.by}-${event.text}`} className="flex gap-2 text-[11px]">
                 <span className="shrink-0 text-zinc-400">{event.at.slice(11, 16)}</span>
                 <span className="w-24 shrink-0 truncate font-medium">{event.by}</span>
-                <span className="min-w-0 grow text-zinc-600 dark:text-zinc-300">{event.text}</span>
+                <span
+                  className={clsx(
+                    'min-w-0 grow',
+                    event.kind === 'problem' ? 'text-red-600 dark:text-red-400' : 'text-zinc-600 dark:text-zinc-300'
+                  )}
+                >
+                  {event.text}
+                </span>
               </div>
             ))}
           </div>

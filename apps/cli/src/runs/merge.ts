@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { auditRun } from './audit';
 import { fingerprint, readJson, readOptional, writeJson } from './files';
 import { requireLead } from './leads';
 import { acceptanceOnResult, checkVersions } from './materialise';
@@ -16,7 +17,6 @@ import {
   readApproved,
   readBase,
   readRecord,
-  recordBrake,
   removeRun,
   requireNoTask,
   requirePerson,
@@ -59,7 +59,8 @@ export interface FinishPlan {
   overwrites: { file: string; task: string; by: string; at: string }[];
   checks?: CheckResult;
   /** Every done task's acceptance checks, run again on the whole result: what a later task may have broken. */
-  acceptance?: { results: AcceptanceAgain[]; reused?: string };
+  /** `reused`: every line held on this same result before, none run again; `kept`: how many of them, the rest run. */
+  acceptance?: { results: AcceptanceAgain[]; reused?: string; kept?: number };
 }
 
 const planFinish = async (ctx: RunContext, approved: ApprovedManifest): Promise<FinishPlan> => {
@@ -226,8 +227,6 @@ const enterReconciliation = async (
     }
   }
 
-  await recordBrake(ctx, loaded, 'conflict');
-
   return updateRecord(ctx, loaded.paths, record => ({
     ...record,
     status: 'reconciliation',
@@ -252,6 +251,8 @@ export interface Finished {
   leadFinishes?: boolean;
   /** What appeared in the project's `tmp/` during the run that is nobody's tool — left there, said (`strays.ts`). */
   leftInTmp?: string[];
+  /** What the run's activity shows was wrong in how it was worked: said, never refusing — and kept in the report. */
+  audit: string[];
 }
 
 /**
@@ -335,7 +336,6 @@ export const finishRun = async (
     final: true
   });
   if (!plan.checks.ok) {
-    await recordBrake(ctx, loaded, 'checks-failed');
     throw new RunRefusal('checks-failed', 'The project’s checks fail on the run’s whole result: nothing is written', {
       steps: plan.checks.steps.filter(step => !step.ok),
       next: FINISH_AGAIN
@@ -360,7 +360,6 @@ export const finishRun = async (
   plan.acceptance = await acceptanceOnResult(ctx, loaded, versions, lines);
   const broken = plan.acceptance.results.filter(each => !each.ok);
   if (broken.length > 0) {
-    await recordBrake(ctx, loaded, 'checks-failed');
     throw new RunRefusal(
       'checks-failed',
       `What ${[...new Set(broken.map(each => `"${each.task}"`))].join(', ')} ${broken.length === 1 ? 'was' : 'were'} accepted on no longer holds on the run's whole result — passed at its review, broken since by another task's work: ${broken.map(each => `${each.task}: ${each.said}`).join('; ')}. Nothing is written: a task of the run puts it right (plitzi run extend), or the lead reverts what broke it (plitzi task revert)`,
@@ -376,7 +375,7 @@ export const finishRun = async (
   }
 
   const strays = await leftInTmp(ctx.root, loaded.record);
-  const leftThere = strays.length > 0 ? { leftInTmp: strays } : {};
+  const leftThere = { ...(strays.length > 0 ? { leftInTmp: strays } : {}), audit: await auditRun(loaded) };
   if (!apply) {
     return { dryRun: true, plan, left, leadFinishes: loaded.record.leadFinishes !== undefined, ...leftThere };
   }

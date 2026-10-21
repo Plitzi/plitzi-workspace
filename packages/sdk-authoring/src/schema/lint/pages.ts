@@ -118,11 +118,21 @@ const PAGE_TEMPLATES = [
   ['notFound', 'notFound']
 ] as const;
 
+/** Every text a JSON-LD value holds, however deep: each may be a template the server evaluates as the title. */
+const textsIn = (value: unknown): string[] =>
+  typeof value === 'string'
+    ? [value]
+    : Array.isArray(value)
+      ? value.flatMap(textsIn)
+      : typeof value === 'object' && value !== null
+        ? Object.values(value).flatMap(textsIn)
+        : [];
+
 /** One expression, whole: what a `notFound` is, and anything else is never `true`. */
 const ONE_EXPRESSION = /^\s*\{\{[\s\S]*\}\}\s*$/;
 
 /**
- * A page's title, description and `notFound` written as templates are evaluated by the server as it answers — the head,
+ * A page's title, description, `notFound` and the texts of its JSON-LD written as templates are evaluated by the server as it answers — the head,
  * the status — and the title again in the browser over the same answers: they read only what is there by then, the
  * server providers of the page and of its layouts by their source names (`apiContainer_capsule`), and `navigation`.
  * Anything else is not there yet: the head would carry the deployment's own title, and the address would answer 200.
@@ -133,8 +143,15 @@ const checkPageTemplates = (ctx: LintContext, pageId: string, where: string): vo
     getSourceName(element.definition.type, element.id)
   );
   const readable = new Set(['navigation', ...providers]);
-  for (const [attribute, field] of PAGE_TEMPLATES) {
-    const template = page?.attributes[attribute];
+  const templates: { attribute: string; field: string; template: unknown }[] = [
+    ...PAGE_TEMPLATES.map(([attribute, field]) => ({ attribute, field, template: page?.attributes[attribute] })),
+    ...textsIn(page?.attributes.seoStructuredData).map(text => ({
+      attribute: 'seoStructuredData',
+      field: 'structuredData',
+      template: text
+    }))
+  ];
+  for (const { attribute, field, template } of templates) {
     if (attribute === 'notFound' && typeof template === 'string' && template !== '' && !ONE_EXPRESSION.test(template)) {
       ctx.error(
         'not-found-not-a-template',
