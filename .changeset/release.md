@@ -360,3 +360,6 @@
   no longer a wrapped label.
 - **A plan's unit that is a folder** (`@plitzi/cli`): backed up as a path before it exists, it is read as no file once
   the run makes it, and put back by going once empty — the preview's sync stopped an approval on it.
+- **The finish checks the result with its pictures** (`@plitzi/cli`): the copy the whole result is checked in carries
+  the binaries of `public/` and `vendor/`, as a task's copy does; an image the browser was answered for is loaded though
+  it draws no size of its own (an SVG with only a viewBox); `task look` names a path with a query safely.
