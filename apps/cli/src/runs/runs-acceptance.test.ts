@@ -186,6 +186,18 @@ describe('acceptance, checks and what is left behind', () => {
     expect(book.state.notes.at(-1)?.text).toContain('for you to fix');
   });
 
+  it('what the lead says to a task with a question open answers it, --reply-to or not', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    const asked = await askLead(home.ctx, 'es-launch', 't-home', 'Wait for t-menu, or go on?');
+    const [told] = await messageTasks(lead(), 'es-launch', 't-home', 'Go on');
+
+    expect(told.replyTo).toBe(asked.question.id);
+    expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-home')?.asking).toBeUndefined();
+    // Nothing open, nothing answered.
+    expect((await messageTasks(lead(), 'es-launch', 't-home', 'And keep the hero'))[0].replyTo).toBeUndefined();
+  });
+
   it('an agent asks the lead and the answer reaches it with its next heartbeat; the lead tells every task at once', async () => {
     await open();
     const home = await take('agent-1', 't-home');

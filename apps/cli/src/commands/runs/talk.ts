@@ -167,7 +167,7 @@ export const taskMessage = (
     sent =>
       sent.length === 0
         ? 'No task is in hand to tell.'
-        : `Said to ${sent.map(message => message.to).join(', ')}: it reaches them with their next command.`
+        : `Said to ${sent.map(message => `${message.to}${message.replyTo ? ` (answers ${message.replyTo})` : ''}`).join(', ')}: it reaches them with their next command.`
   );
 
 export const taskInbox = (

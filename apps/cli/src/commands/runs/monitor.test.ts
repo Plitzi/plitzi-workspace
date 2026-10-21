@@ -263,6 +263,13 @@ describe('plitzi run monitor', () => {
     expect(held.find(line => line.includes('pending'))).toMatch(/at work \(0\).*held \(1\)/);
     expect(held.some(line => line.includes(`t-home asks lead (${asked.question.id})`))).toBe(true);
 
+    // Sent to review with the question still open, it stands in review alone: a task is in one column at a time.
+    await writeInCopy(home.work, 'src/space/pages/home/index.ts', 'export const home = { es: true };\n');
+    await completeTask(home.ctx, runId, 't-home');
+    const sent = plain(flowLines((await monitorRun(lead(), runId)).view.tasks, 200));
+    expect(sent.find(line => line.includes('pending'))).toMatch(/held \(0\).*lead review \(2\)/);
+    expect(sent.filter(line => line.includes('t-home'))).toHaveLength(1);
+
     // Sent back by the lead: ready again, for the same agent, its name marked with the round it is at.
     await reviewTask(lead(), runId, 't-menu', 'changes', [{ note: 'Spanish prices' }]);
     const back = plain(flowLines((await monitorRun(lead(), runId)).view.tasks, 220));

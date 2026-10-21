@@ -139,9 +139,22 @@ export const messageTasks = async (
       : to.startsWith('@')
         ? [to]
         : [findTask(loaded, to).id];
+  // What the lead says to a task with a question open is its answer, said with --reply-to or not: velada-now's lead
+  // answered t-motion without it, and the monitor said for good that t-motion asked the lead.
+  const messages = await messagesOf(loaded);
+  const answered = new Set(messages.flatMap(message => (message.replyTo ? [message.replyTo] : [])));
+  const openQuestion = (target: string): string | undefined =>
+    messages
+      .filter(
+        message => message.from === target && message.to === LEAD && message.fyi !== true && !answered.has(message.id)
+      )
+      .at(-1)?.id;
   const sent: Message[] = [];
   for (const target of targets) {
-    sent.push(await sendMessage(ctx, loaded, { from: LEAD, to: target, text, ...(reply ? { replyTo: reply } : {}) }));
+    const answers = reply ?? openQuestion(target);
+    sent.push(
+      await sendMessage(ctx, loaded, { from: LEAD, to: target, text, ...(answers ? { replyTo: answers } : {}) })
+    );
   }
 
   await logRun(ctx, loaded.paths, { action: 'message', to, messages: sent.map(message => message.id) });

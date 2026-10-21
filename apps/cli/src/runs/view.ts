@@ -129,6 +129,9 @@ const waitingText = (waiting: Waiting): string =>
 
 const minutesBetween = (from: string, to: Date): number => Math.round((to.getTime() - Date.parse(from)) / 60_000);
 
+/** Past its work: in review or approved, what its agent last said of the work is history. */
+const past = (view: TaskView): boolean => view.state.status === 'in-review' || view.state.status === 'done';
+
 const lineOf = (view: TaskView, now: Date, unblocks: string[]): TaskLine => ({
   id: view.task.id,
   title: view.task.title,
@@ -137,8 +140,9 @@ const lineOf = (view: TaskView, now: Date, unblocks: string[]): TaskLine => ({
   status: view.state.status,
   priority: view.task.priority,
   ...(view.owner ? { agent: view.owner.agent } : {}),
-  ...(view.progress?.step ? { step: view.progress.step } : {}),
-  ...(view.progress?.fraction !== undefined ? { fraction: view.progress.fraction } : {}),
+  // Where its work got to, while it is worked: in review, "waiting for t-boxer before check · 85 %" was no longer true.
+  ...(view.progress?.step && !past(view) ? { step: view.progress.step } : {}),
+  ...(view.progress?.fraction !== undefined && !past(view) ? { fraction: view.progress.fraction } : {}),
   round: view.state.round,
   files: view.task.files,
   updatedAt: view.state.updatedAt,
@@ -401,7 +405,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     tasks: tasks.map(task => {
       const question = questions.filter(message => message.from === task.id).at(-1);
 
-      return question && task.status !== 'done'
+      // Only while it is worked: one sent to review is no agent's to wait on, and stood in two of the flow's columns.
+      return question && (task.status === 'in-progress' || task.status === 'changes-requested')
         ? { ...task, asking: { id: question.id, text: glimpse(question.text) } }
         : task;
     }),

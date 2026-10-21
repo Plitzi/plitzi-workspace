@@ -619,4 +619,9 @@ monitor` shows each as it comes, a problem in red.
       agents of its role have nothing to take, with the way out: amend the dependency away when they share no file,
       review that one first when they do. velada-now's t-motion waited three rounds of t-boxer's UI review it needed
       nothing from, two developers idle.
+    - What the lead says to a task with a question open answers it, `--reply-to` or not (`task message` says
+      "answers m28"); and a question holds a task only while it is worked — sent to review, it stands in review alone.
+      velada-now's lead answered t-motion without `--reply-to`: the monitor said for good that it asked the lead, and
+      drew it held and in its UI review at once. A task in review or approved no longer shows its work's last step and fraction
+      ("waiting for t-boxer's boxeador.ts before check · 85 %").
 
