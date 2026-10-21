@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import { act, runOf } from './shell';
 import { list, pacedText } from './text';
 import { amendRun } from '../../runs/amend';
+import { backlogText, openBacklog } from '../../runs/backlog';
 import { hasDesignReview } from '../../runs/design';
 import { extendRun } from '../../runs/extend';
 import { writeJson } from '../../runs/files';
@@ -39,6 +40,7 @@ import {
 import { planSkills } from '../upgrade';
 
 import type { RunCommandOptions } from './shell';
+import type { BacklogItem } from '../../runs/backlog';
 import type { RunRecord, RunTask } from '../../runs/model';
 import type { RunContext } from '../../runs/run';
 import type { Team } from '../../runs/team';
@@ -47,6 +49,20 @@ import type { Team } from '../../runs/team';
  * A run's plan: checked (`run plan`, as its next stage when a run is open), rehearsed, opened, stacked, amended and
  * noted — and the lead allowed to apply it.
  */
+
+/**
+ * What earlier runs noticed and left, said where the next is planned and opened: a run takes it up — a task of its
+ * plan, closed with `run backlog done <id>` once done — or leaves it open.
+ */
+const backlogLines = (items: readonly BacklogItem[]): string[] =>
+  items.length === 0
+    ? []
+    : [
+        chalk.yellow(
+          `The project's backlog has ${String(items.length)} open — what earlier runs noticed and left: take it up in this run, or leave it (plitzi run backlog):`
+        ),
+        ...items.map(item => `  · ${backlogText(item)}`)
+      ];
 
 export interface PlanOptions extends RunCommandOptions {
   /** `run open`: a person lets the lead write the run into the project itself. */
@@ -163,7 +179,8 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
         team,
         designReview: going?.record.designReview === true || reviewsDesign(team, plan),
         ...(going ? { stackedOn: going.runId } : {}),
-        staleSkills
+        staleSkills,
+        backlog: await openBacklog(ctx.root)
       };
     },
     checked =>
@@ -208,7 +225,8 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
               `Open it: plitzi run open ${file}`,
               // The one moment a person is asked, moved to the start when they want: ask before opening, never after.
               `Before opening, ask the person who writes it into the project at the end: they do (plitzi run finish --apply), or they let you — then they open it themselves, in their terminal: plitzi run open ${file} --lead-finishes`
-            ])
+            ]),
+        ...backlogLines(checked.backlog)
       ].join('\n')
   );
 
@@ -310,7 +328,8 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
         estimate: opened.checked.estimate,
         leadFinishes: options.leadFinishes ?? false,
         leftOut: opened.checked.leftOut,
-        inputs: opened.inputs
+        inputs: opened.inputs,
+        backlog: await openBacklog(ctx.root)
       };
     },
     opened =>
@@ -329,7 +348,8 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
         opened.tasks.length === 1 && opened.tasks[0] === SCOPE_SPIKE
           ? `Next, yours: the scope — find out what the ask takes (plitzi run reference --run ${opened.runId} --pages "…" keeps the site it copies), then end it with its tasks: plitzi task spike ${SCOPE_SPIKE} --done "what you found" --tasks <stage.json>. Agents start once there are tasks to take.`
           : `Start a task: plitzi task next --run ${opened.runId}`,
-        'Watch it in a browser as the tasks are approved: npm run start:preview (plitzi run preview, on 8300) — the project itself is untouched until the finish'
+        'Watch it in a browser as the tasks are approved: npm run start:preview (plitzi run preview, on 8300) — the project itself is untouched until the finish',
+        ...backlogLines(opened.backlog)
       ].join('\n')
   );
 

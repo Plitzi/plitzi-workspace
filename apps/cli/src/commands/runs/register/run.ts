@@ -33,6 +33,7 @@ import {
   runTeamSet,
   runTeamUnset,
   runNote,
+  runBacklog,
   runNotice,
   runReference
 } from '..';
@@ -229,6 +230,24 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
     .action((text: string, options: RunCommandOptions & { on?: string }) => runNotice(text, options));
+
+  runGroup
+    .command('backlog')
+    .description(
+      'What runs noticed and left, kept in .plitzi/backlog.json for the next run — done <id> closes one, saying how'
+    )
+    .argument('[action]', 'done, to close an item')
+    .argument('[id]', 'The item it closes: b-3')
+    .option('--note <how>', 'With done: how it was done, or why it is no longer wanted')
+    .option('--all', 'The closed items too')
+    .option(...JSON_OPTION)
+    .action(
+      (
+        action: string | undefined,
+        id: string | undefined,
+        options: RunCommandOptions & { note?: string; all?: boolean }
+      ) => runBacklog(action, id, options)
+    );
 
   runGroup
     .command('amend')

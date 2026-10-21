@@ -35,7 +35,17 @@ export { taskLook, taskReassign, taskRevert, taskReview, taskShow } from './revi
 export type { LookOptions, ReviewOptions } from './review';
 export { taskContextCommand } from './brief';
 export { spaceImpact, spaceOverview } from './space';
-export { runNotice, taskAnswer, taskAsk, taskInbox, taskMessage, taskProposals, taskPropose, taskTell } from './talk';
+export {
+  runBacklog,
+  runNotice,
+  taskAnswer,
+  taskAsk,
+  taskInbox,
+  taskMessage,
+  taskProposals,
+  taskPropose,
+  taskTell
+} from './talk';
 export type { AnswerOptions, ProposeOptions } from './talk';
 export { runReference } from './reference';
 export type { ReferenceOptions } from './reference';

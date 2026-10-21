@@ -3,8 +3,10 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { openBacklog } from './backlog';
 import { finishRun } from './merge';
 import { monitorRun } from './monitor';
+import { noticeRun } from './notices';
 import { writeSummary } from './report';
 import { loadRun, openRun, readApproved, readRunLog } from './run';
 import { getBlob } from './store';
@@ -158,5 +160,18 @@ describe('a run played whole, as velada-dress went', () => {
       leavePending: false
     });
     expect(dry.plan.apply.map(each => each.file)).toContain(THEME);
+
+    // What it noticed and left is the next run's: kept in the project's backlog as it is written into the project.
+    await noticeRun(as('lead'), runId, 'The book page has no map', { on: '/book' });
+    const applied = await finishRun(
+      bench.agent('person', { checks: authorChecks, person: () => Promise.resolve(true) }),
+      runId,
+      {
+        apply: true,
+        leavePending: false
+      }
+    );
+    expect(applied.backlog).toEqual(['b-1']);
+    expect((await openBacklog(bench.root)).map(item => item.text)).toEqual(['The book page has no map']);
   });
 });

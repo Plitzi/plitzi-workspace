@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { auditRun } from './audit';
+import { keepNotices } from './backlog';
 import { fingerprint, readJson, readOptional, writeJson } from './files';
 import { requireLead } from './leads';
 import { acceptanceOnResult, checkVersions } from './materialise';
@@ -252,6 +253,8 @@ export interface Finished {
   leadFinishes?: boolean;
   /** Dry run: the lead has not written the run's report — the step before the person's. */
   noReport?: true;
+  /** Written: what the run noticed and left, kept in the project's backlog (`.plitzi/backlog.json`) by id. */
+  backlog?: string[];
   /** What appeared in the project's `tmp/` during the run that is nobody's tool — left there, said (`strays.ts`). */
   leftInTmp?: string[];
   /** What the run's activity shows was wrong in how it was worked: said, never refusing — and kept in the report. */
@@ -487,10 +490,22 @@ export const finishRun = async (
     writtenBy,
     ...(kept ? { backup: kept } : {})
   });
+  // What it noticed and left is the next run's: kept in the project's backlog before the run goes with its log.
+  const backlog = (await keepNotices(ctx, loaded)).map(item => item.id);
   // Its work is in the project: the run goes, backups and all, unless a person asked to keep them. Its report stays.
   const inputs = await removeRun(ctx, loaded.paths, runId);
 
-  return { dryRun: false, plan, left, report, inputs, writtenBy, ...(kept ? { backup: kept } : {}), ...leftThere };
+  return {
+    dryRun: false,
+    plan,
+    left,
+    report,
+    inputs,
+    writtenBy,
+    ...(kept ? { backup: kept } : {}),
+    ...(backlog.length > 0 ? { backlog } : {}),
+    ...leftThere
+  };
 };
 
 /** `plitzi run resolve`: one file of a reconciliation settled by a person — the project's, the run's, or a file of theirs. */
@@ -618,6 +633,8 @@ export const abortRun = async (
   await requirePerson(ctx, runId, `abort run "${runId}" — nothing of it is written, and its agents' work is discarded`);
   const discarded = Object.keys((await readApproved(loaded.paths)).files).sort();
   const report = await leaveReport(ctx, loaded, { outcome: 'aborted', files: discarded });
+  // Aborted, what it noticed still stands: the next run's.
+  await keepNotices(ctx, loaded);
   const inputs = await removeRun(ctx, loaded.paths, runId);
 
   return { discarded, report, inputs };

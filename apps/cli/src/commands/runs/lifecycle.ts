@@ -2,6 +2,7 @@ import chalk from 'chalk';
 
 import { act, runOf, taskOf } from './shell';
 import { inputLines, list, secondRunText } from './text';
+import { BACKLOG_FILE } from '../../runs/backlog';
 import { abortRun, continueRun, finishRun, resolveFile, restoreFile } from '../../runs/merge';
 import { RunRefusal } from '../../runs/refusal';
 import { attachRun, pruneRuns, purgeRun, releaseRun, resumeRun, stopRun } from '../../runs/run';
@@ -156,6 +157,11 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
                     ? `The files as they were before it: ${finished.backup} (copy one back to undo it)`
                     : 'No backup was kept: --keep-backup keeps one next time.',
                   `Written by ${String(finished.writtenBy)}. The run's report: ${String(finished.report)}`,
+                  ...(finished.backlog
+                    ? [
+                        `What it noticed and left, kept for the next run in ${BACKLOG_FILE}: ${finished.backlog.join(', ')} (plitzi run backlog)`
+                      ]
+                    : []),
                   ...inputLines(finished.inputs)
                 ].join('\n')
       ].join('\n')

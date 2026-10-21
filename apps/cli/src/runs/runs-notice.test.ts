@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { closeBacklogItem, openBacklog } from './backlog';
+import { abortRun, finishRun } from './merge';
 import { noticeRun, noticesOf } from './notices';
 import { buildReport, reportText } from './report';
 import { loadRun, readRunLog } from './run';
@@ -19,7 +21,7 @@ afterEach(async () => {
   await bench.cleanup();
 });
 
-const { refusal, lead, open, take } = runSteps(() => bench);
+const { refusal, lead, open, take, doTask } = runSteps(() => bench);
 
 // la-velada: an empty cell of the stats grid, seen in two runs and noted "predates this task" in a review each time.
 describe('run notice', () => {
@@ -54,5 +56,32 @@ describe('run notice', () => {
     expect((await refusal(noticeRun(bench.agent('stranger'), runId, 'A broken link'))).message).toContain(
       'no agent of the team'
     );
+  });
+});
+
+// Carlos: what a run leaves is noted for the next — velada-polish's lead had it nowhere the next run reads.
+describe('the project’s backlog', () => {
+  it('keeps what a run noticed past the run, once, for the next run — open until one says it is done', async () => {
+    const runId = await open();
+    await noticeRun(lead(), runId, 'The FAQ pill does not name the visitor’s zone', { on: '/ #home-faq' });
+    await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
+    const finished = await finishRun(bench.person(true), runId, { apply: true, leavePending: true });
+    expect(finished.backlog).toEqual(['b-1']);
+    expect(await openBacklog(bench.root)).toEqual([
+      expect.objectContaining({ id: 'b-1', on: '/ #home-faq', from: runId, by: 'lead' })
+    ]);
+
+    // Noticed again by the next run: kept once.
+    const again = await open();
+    await noticeRun(lead(), again, 'The FAQ pill does not name the visitor’s zone', { on: '/ #home-faq' });
+    await abortRun(bench.person(true), again);
+    expect(await openBacklog(bench.root)).toHaveLength(1);
+
+    // Done, said how: closed, and kept as done.
+    expect(await closeBacklogItem(lead(), 'b-1', 'a client piece reads the zone')).toMatchObject({
+      done: { by: 'lead', note: 'a client piece reads the zone' }
+    });
+    expect(await openBacklog(bench.root)).toEqual([]);
+    expect(await refusal(closeBacklogItem(lead(), 'b-1'))).toMatchObject({ code: 'invalid' });
   });
 });

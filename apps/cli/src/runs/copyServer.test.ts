@@ -48,7 +48,7 @@ describe('originHere', () => {
     };
 
     const first = await origin();
-    expect(await (await fetch(first)).text()).toBe('the copy');
+    expect(await (await fetch(first, { signal: AbortSignal.timeout(5000) })).text()).toBe('the copy');
     // Kept: the next command reads it as it is.
     expect(await origin()).toBe(first);
 
@@ -57,11 +57,12 @@ describe('originHere', () => {
     await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { es: true };\n');
     const second = await origin();
     expect(second).not.toBe(first);
-    await expect(fetch(first)).rejects.toThrow();
+    // Bounded: a server going away may leave a request hanging, never refused.
+    await expect(fetch(first, { signal: AbortSignal.timeout(3000) })).rejects.toThrow();
 
     // What serves the copy itself stops the one kept first: one server on a copy.
     await stopKept(cache);
-    await expect(fetch(second)).rejects.toThrow();
+    await expect(fetch(second, { signal: AbortSignal.timeout(3000) })).rejects.toThrow();
   }, 60_000);
 
   it('asks nothing of a folder that is no task’s copy', async () => {

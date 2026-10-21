@@ -117,18 +117,19 @@ task message t-home "…" --reply-to m3`; `task message all "…"` tells every t
 status`): ask the person to run `plitzi run attach <run>` — the agents keep their work and wait. To upgrade on
    purpose, the person runs `plitzi run upgrade` — never an install under the open run.
 8. **Before you close, look at the coverage:** the finish runs each covering check on the result; look at what a
-   check cannot see (`plitzi run preview`) — what is missing, or nobody's (`run notice`), is a stage (`run extend`). **Close it:** write the summary (done, wrong, left) last: `plitzi run report --summary summary.md`; then `plitzi run
-finish` (the diff, checked). `--apply` is the person's, or yours if they allowed it. The next plan need not wait:
-   `plitzi run extend <run> next.json` stacks it, one finish for both. `run pending`: what awaits applying.
+   check cannot see (`plitzi run preview`) — what is missing is a stage (`run extend`), or the next run's: `run notice "…"
+   --on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run plan` and `run open` list; `run
+   backlog done <id> --note "…"` closes one. **Close it:** write the summary (done, wrong, left) last: `plitzi run report --summary summary.md`; then `plitzi run
+finish` (the diff, checked). `--apply` is the person's, or yours if they allowed it. `run pending`: what awaits it.
 
 ## Where leads went wrong
 
 - **A check you write, you run once** on the run's work before a task gets it: a 404 page is `page check … --status
   404`, a `--clip` names an id the page has. One that cannot pass costs every try of the task's.
-- **One look, one task**: a section dressed by two tasks waits on the other's files (`run plan` says it).
+- **One look, one task**: a section two tasks dress waits on the other's files.
 - **A question first**: it holds an agent — answer before your own work. `run watch` in the harness's background
   (never `&`), one at a time.
 - **Say what is so, read from its source** (the original's CSS, `task show`, the run's approved version), never from a
   copy, a class name or memory; never answer one way and tell another — a file a task holds is no one else's.
-- **The report before the finish**: `run report --summary`, then `run finish`.
+- **The report before the finish** (`run report --summary`).
 

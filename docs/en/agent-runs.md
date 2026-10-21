@@ -55,7 +55,11 @@ start each time. A watchdog of its own stops it once unused or the copy is gone;
 the copy is served for the command and stopped after. **What
 nobody's task owns** — seen wrong outside the task in hand, there before the run — is `run notice "…" --on <where>`
 (`notices.ts`), by an agent with its token, a reviewer by its name, or the lead: one line of the log (`notice`) —
-never a message to the lead, which would wake it for what is the next stage's — said by the finish and listed in the report under "Noticed, owned by no task" —
+never a message to the lead, which would wake it for what is the next stage's — said by the finish and listed in the report under "Noticed, owned by no task" — and kept past the run in the project's backlog (`backlog.ts`, `.plitzi/backlog.json`, beside the team: the
+project's, in git), as the run finishes or is aborted, one already there kept once. `run plan` and `run open` list what
+is open for the run being planned to take up; `run backlog` lists it, `run backlog done <id> --note "…"` closes one,
+saying how. A run's log goes with the run and a report is read by nobody planning the next one: velada-polish's lead
+had the next run's work nowhere the next run reads —
 what the next stage starts from. la-velada's empty stats cell was seen in two runs and noted "predates this task" in a
 review each time: in no task's acceptance, it was nobody's.
 

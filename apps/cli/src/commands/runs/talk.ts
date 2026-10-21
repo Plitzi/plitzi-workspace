@@ -2,6 +2,7 @@ import { act, holder, runOf, taskOf } from './shell';
 import { exchangeLines, messageLines } from './text';
 import { durationText, FOLLOW_MS } from '../../options';
 import { proposalsOf } from '../../runs/agreements';
+import { BACKLOG_FILE, backlogText, closeBacklogItem, openBacklog, readBacklog } from '../../runs/backlog';
 import { noticeRun, noticeText } from '../../runs/notices';
 import { runPaths } from '../../runs/paths';
 import { answerProposal, proposeChange } from '../../runs/proposals';
@@ -12,6 +13,7 @@ import { askLead, messageTasks, readInbox, tellLead, tellLeadAbout } from '../..
 import { followWait } from '../../runs/tasks';
 
 import type { RunCommandOptions } from './shell';
+import type { BacklogItem } from '../../runs/backlog';
 import type { Message } from '../../runs/messages';
 
 /**
@@ -152,8 +154,45 @@ export const runNotice = (text: string, options: RunCommandOptions & { on?: stri
         ...(ctx.token === undefined ? {} : { task: taskOf(ctx) }),
         ...(options.on ? { on: options.on } : {})
       }),
+    // Said to whoever noticed it: an agent is told to go on with its task; the lead, that the next run takes it up.
     notice =>
-      `Noticed (${noticeText(notice)}): kept in the run's log — the finish says it and the report lists it, for a stage of its own. Go on with your task: it is not yours to fix in it.`
+      `Noticed (${noticeText(notice)}): kept in the run's log — the finish says it, the report lists it, and the project's backlog (${BACKLOG_FILE}) keeps it for the next run. ${notice.task === undefined ? 'A stage of this run takes it up now (plitzi run extend), or the next run does.' : 'Go on with your task: it is not yours to fix in it.'}`
+  );
+
+/** `plitzi run backlog`: what runs noticed and left, open first — `done <id>` closes one, saying how. */
+export const runBacklog = (
+  action: string | undefined,
+  id: string | undefined,
+  options: RunCommandOptions & { note?: string; all?: boolean }
+): Promise<void> =>
+  act(
+    options,
+    async ctx => {
+      if (action === 'done') {
+        if (id === undefined) {
+          throw new RunRefusal('invalid', 'Name the item it closes: plitzi run backlog done b-3 --note "how"');
+        }
+
+        return { closed: await closeBacklogItem(ctx, id, options.note), items: await openBacklog(ctx.root) };
+      }
+
+      if (action !== undefined) {
+        throw new RunRefusal(
+          'invalid',
+          `"${action}" is no backlog action: plitzi run backlog, or plitzi run backlog done <id>`
+        );
+      }
+
+      return { items: options.all === true ? await readBacklog(ctx.root) : await openBacklog(ctx.root) };
+    },
+    ({ closed, items }: { closed?: BacklogItem; items: BacklogItem[] }) =>
+      [
+        ...(closed ? [`Closed ${closed.id}: ${closed.text}${closed.done?.note ? ` — ${closed.done.note}` : ''}`] : []),
+        items.length === 0
+          ? `Nothing open in the project's backlog (${BACKLOG_FILE}).`
+          : `The project's backlog (${BACKLOG_FILE}), ${String(items.length)} item${items.length === 1 ? '' : 's'} — a next run takes them up:`,
+        ...items.map(item => `  ${item.done ? '✓' : '·'} ${backlogText(item)}`)
+      ].join('\n')
   );
 
 export const taskMessage = (

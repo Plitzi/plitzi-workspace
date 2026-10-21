@@ -791,6 +791,9 @@ monitor` shows each as it comes, a problem in red.
       a task gets it (a 404 page, `--status 404`); one look, one task; a question before the lead's own work, `run
       watch` in the harness's background; what is so said from its source, never a copy or a class name; the report
       before the finish.
+    - The project's backlog: what a run noticed and left (`run notice "…" --on <where>`) is kept past the run in
+      `.plitzi/backlog.json` as it finishes or is aborted — once — and `run plan` and `run open` list what is open for
+      the next run to take up; `run backlog` lists it, `run backlog done <id> --note "…"` closes one.
     - `run reference` keeps a page the site answers with 404 — its page for an address nothing answers, which a copy
       makes too — said, where it refused it as an error page.
     - `page shot --compare … --dress` fails where a section lacks a look the other page dresses it in — a sort of
