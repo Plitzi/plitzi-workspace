@@ -243,13 +243,18 @@ export const registerTaskGroup = (program: Command): Command => {
     )
     .option('--fixed-by <task>', 'With --known-failure: the task that fixes what fails')
     .option(
+      '--review <kind>',
+      'The review it asks for: code (the lead’s alone — nothing a visitor sees changed) or ui (its UI by a designer, or the lead, then the code); the run decides when left out'
+    )
+    .option(
       '--note <text>',
       'What the lead should know as it reviews — a choice you made, what to look at — told with it'
     )
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((options: RunCommandOptions & { knownFailure?: string; fixedBy?: string; note?: string }) =>
-      taskComplete(options)
+    .action(
+      (options: RunCommandOptions & { knownFailure?: string; fixedBy?: string; note?: string; review?: string }) =>
+        taskComplete(options)
     );
 
   taskGroup

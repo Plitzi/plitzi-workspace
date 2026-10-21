@@ -117,7 +117,7 @@ export const taskCheck = (options: RunCommandOptions): Promise<void> =>
   );
 
 export const taskComplete = (
-  options: RunCommandOptions & { knownFailure?: string; fixedBy?: string; note?: string }
+  options: RunCommandOptions & { knownFailure?: string; fixedBy?: string; note?: string; review?: string }
 ): Promise<void> =>
   act(
     options,
@@ -127,7 +127,12 @@ export const taskComplete = (
         throw new RunRefusal('invalid', '--fixed-by goes with --known-failure "why": the task that fixes what fails');
       }
 
+      if (options.review !== undefined && options.review !== 'code' && options.review !== 'ui') {
+        throw new RunRefusal('invalid', `--review is code or ui, not "${options.review}"`);
+      }
+
       const completed = await completeTask(ctx, runId, taskId, {
+        ...(options.review === undefined ? {} : { review: options.review }),
         ...(options.knownFailure
           ? { knownFailure: { why: options.knownFailure, ...(options.fixedBy ? { fixedBy: options.fixedBy } : {}) } }
           : {})

@@ -3,6 +3,7 @@ import { requireLead } from './leads';
 import { agentAddress, EVERYONE, LEAD, messagesOf, replyTo, sendMessage, unreadFor, unreadForHolder } from './messages';
 import { RunRefusal } from './refusal';
 import { assertStatus, loadRun, logRun, requireNoTask } from './run';
+import { runChanged } from './runChanged';
 import { findTask, holderOf } from './tasks';
 import { viewTask } from './taskStore';
 import { readTeam, startedAgents } from './team';
@@ -58,7 +59,7 @@ export const askLead = async (
     }
 
     await writeJson(view.paths.progress, { ...(view.progress ?? {}), heartbeatAt: ctx.now().toISOString() });
-    await new Promise(resolve => setTimeout(resolve, everyMs));
+    await runChanged(loaded.paths.dir, everyMs);
   }
 };
 

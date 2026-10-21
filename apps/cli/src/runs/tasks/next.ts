@@ -9,6 +9,7 @@ import { agentScratch, runPaths } from '../paths';
 import { readyTasks } from '../plan';
 import { isRunRefusal, RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun } from '../run';
+import { runChanged } from '../runChanged';
 import { tellLeftInTmp } from '../strays';
 import { isDisconnected, viewTask } from '../taskStore';
 import { DESIGNER, qualityRank, readTeam, startedAgents } from '../team';
@@ -551,6 +552,6 @@ export const followNext = async (
       };
     }
 
-    await new Promise(resolve => setTimeout(resolve, everyMs));
+    await runChanged(runPaths(ctx.root, runId).dir, everyMs);
   }
 };

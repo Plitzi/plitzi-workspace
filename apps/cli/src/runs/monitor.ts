@@ -23,6 +23,7 @@ export type AgentStatus =
   | 'waiting'
   | 'idle'
   | 'stopped'
+  | 'done'
   | 'not-started'
   | 'no-signal';
 
@@ -67,7 +68,35 @@ export interface FeedLine {
   quote?: string;
   /** The task it is about, when one. */
   task?: string;
+  /** What makes two lines the same event again: a refusal of one command, a failed check of one task. */
+  group?: string;
+  /** Repeated: how many times in a row, the newest said, since the oldest. */
+  count?: number;
+  since?: string;
+  /** Repeated: each of them, newest first — what a person opens the line to read. */
+  repeats?: FeedLine[];
 }
+
+/**
+ * The activity with each event repeated in a row said once — "×6 since 09:12" — the newest's words kept: six refused
+ * finishes of one CDN's afternoon were six lines saying the same.
+ */
+export const groupRepeats = (lines: readonly FeedLine[]): FeedLine[] => {
+  const grouped: FeedLine[] = [];
+  for (const line of lines) {
+    const before = grouped.at(-1);
+    const key = (each: FeedLine) => `${each.by}|${each.kind}|${each.group ?? each.text}`;
+    if (before && key(before) === key(line)) {
+      before.repeats = [...(before.repeats ?? [{ ...before }]), line];
+      before.count = before.repeats.length;
+      before.since = line.at;
+    } else {
+      grouped.push({ ...line });
+    }
+  }
+
+  return grouped;
+};
 
 /**
  * What the log says of a task — who wrote it, who said its UI, who approved it and when: what a task approved no longer
@@ -225,7 +254,33 @@ const agentsOf = async (
 
   const reviewing = new Map(view.tasks.flatMap(task => (task.reviewer ? [[task.reviewer, task.id] as const] : [])));
   const leadModel = team?.lead?.model === undefined ? undefined : choiceText(team.lead.model);
+  // Every task approved: the leads' part is over, whatever they did last — the board says what is next, and whose.
+  const finished = view.total > 0 && view.done === view.total;
+  const readyAt = log.findLast(entry => entry.action === 'ready')?.at;
+  const changedSince = log.some(
+    entry =>
+      typeof readyAt === 'string' &&
+      typeof entry.at === 'string' &&
+      entry.at > readyAt &&
+      ['take', 'complete', 'review', 'extend', 'amend', 'revert'].includes(String(entry.action))
+  );
+  const nextStep =
+    typeof readyAt === 'string' && !changedSince
+      ? 'the run is ready — the person applies it: plitzi run finish --apply'
+      : 'every task approved — next: plitzi run finish, whose dry run checks the whole result';
   const leads: AgentLine[] = [LEAD, ...view.leads].map(lead => {
+    if (finished) {
+      return {
+        agent: lead,
+        kind: lead === LEAD ? ('lead' as const) : ('co-lead' as const),
+        approved: 0,
+        status: lead === LEAD ? ('done' as const) : ('stopped' as const),
+        ...(leadModel ? { model: leadModel } : {}),
+        roles: [lead === LEAD ? 'plans, reviews, finishes' : 'reviews'],
+        doing: lead === LEAD ? nextStep : 'nothing is left to review'
+      };
+    }
+
     const at = reviewing.get(lead);
     const asking = view.askingLeads.includes(lead);
     // Its last action: a lead reviews, amends and answers by commands, and is at it while they come.
@@ -332,7 +387,10 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
     case 'check':
       return entry.ok === true
         ? line('other', `checked ${task}: passes`)
-        : line('problem', `checked ${task}: fails — ${listOf(entry.failed) || 'see its check'}`);
+        : {
+            ...line('problem', `checked ${task}: fails — ${listOf(entry.failed) || 'see its check'}`),
+            group: `check:${task}`
+          };
     case 'look':
       return line('review', `looked at ${task} (${listOf(entry.paths)})${entry.ok === false ? ': findings' : ''}`);
     case 'review-taken':
@@ -364,12 +422,16 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
         `the run is ready: its ${String(entry.files)} files checked whole, ${String(entry.acceptance)} acceptance lines hold — next: ${textOf(entry.next)}`
       );
     case 'note':
-      return line('message', 'added a note for every task');
+      // The note itself is in the feed, in its words, to every task.
+      return undefined;
     case 'refused':
-      return line(
-        'problem',
-        `refused (${textOf(entry.code)}): ${textOf(entry.command)} — ${textOf(entry.message).slice(0, 160)}`
-      );
+      return {
+        ...line(
+          'problem',
+          `refused (${textOf(entry.code)}): ${textOf(entry.command)} — ${textOf(entry.message).slice(0, 160)}`
+        ),
+        group: `refused:${textOf(entry.code)}:${textOf(entry.command).split(' ').slice(0, 3).join(' ')}`
+      };
     case 'crashed':
       return line('problem', `crashed: ${textOf(entry.command)} — ${textOf(entry.error).slice(0, 160)}`);
     case 'preview-sync-failed':
@@ -445,7 +507,7 @@ export const monitorRun = async (ctx: RunContext, runId: string, feedLength = 40
       text: `${writer === undefined ? '' : `on ${message.from} `}→ ${to}${message.fyi ? ' (for you to know)' : asks ? ' (asks)' : ''}: ${quote}`
     };
   });
-  const feed = [...logged, ...said].sort((a, b) => b.at.localeCompare(a.at)).slice(0, feedLength);
+  const feed = groupRepeats([...logged, ...said].sort((a, b) => b.at.localeCompare(a.at))).slice(0, feedLength);
   const runs = [];
   for (const id of await runIds(ctx.root)) {
     const other = id === runId ? view : await viewRun(ctx, id).catch(() => undefined);

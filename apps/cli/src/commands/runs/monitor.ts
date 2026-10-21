@@ -1,9 +1,11 @@
 import { watch } from 'node:fs';
 import { emitKeypressEvents } from 'node:readline';
-import { stripVTControlCharacters } from 'node:util';
 
 import chalk from 'chalk';
 
+import { ago, cell, hhmm, ID_WIDTH, idCell } from './monitorCells';
+import { FEED_LOOK, FEED_WORDS, feedRow, groupKey, repeatRow, WHO_WIDTH } from './monitorFeed';
+import { flowLines } from './monitorFlow';
 import { contextFor } from './shell';
 import { monitorRun } from '../../runs/monitor';
 import { runPaths } from '../../runs/paths';
@@ -11,7 +13,7 @@ import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { activeRuns, runIds } from '../../runs/run';
 
 import type { RunCommandOptions } from './shell';
-import type { AgentLine, AgentStatus, FeedLine, Monitored, TaskStory } from '../../runs/monitor';
+import type { AgentLine, AgentStatus, Monitored, TaskStory } from '../../runs/monitor';
 import type { RunContext } from '../../runs/run';
 import type { TaskLine } from '../../runs/view';
 
@@ -66,76 +68,17 @@ const AGENT_STATE: Record<AgentStatus, string> = {
   waiting: chalk.cyan('◌ waiting'),
   idle: chalk.dim('○ idle'),
   stopped: chalk.dim('◼ stopped'),
+  done: chalk.green('✓ done'),
   'not-started': chalk.dim('· not started'),
   'no-signal': chalk.red('● no signal')
 };
 
-/** Each kind of event, at a glance: its mark and the colour of its words. */
-const FEED_LOOK: Record<FeedLine['kind'], { mark: string; tone: (text: string) => string }> = {
-  take: { mark: chalk.cyan('▶'), tone: chalk.cyan },
-  complete: { mark: chalk.blue('⇢'), tone: chalk.blue },
-  review: { mark: chalk.magenta('◎'), tone: chalk.magenta },
-  approved: { mark: chalk.green('✓'), tone: chalk.green },
-  'sent-back': { mark: chalk.yellow('↺'), tone: chalk.yellow },
-  message: { mark: '✉', tone: text => text },
-  question: { mark: chalk.yellow.bold('?'), tone: chalk.yellow },
-  agent: { mark: chalk.dim('·'), tone: chalk.dim },
-  run: { mark: chalk.bold('◆'), tone: chalk.bold },
-  problem: { mark: chalk.red('✗'), tone: chalk.red },
-  other: { mark: chalk.dim('·'), tone: chalk.dim }
-};
-
-/** One event of the activity: when, what kind, who — and to whom, for a message — and what, its words quoted. */
-const feedRow = (line: FeedLine): string => {
-  const look = FEED_LOOK[line.kind];
-  const who = line.to === undefined ? line.by : `${line.by} → ${line.to}`;
-  const what =
-    line.quote === undefined
-      ? line.text
-      : `${line.kind === 'question' ? 'asks: ' : ''}“${line.quote}”${line.task ? chalk.dim(` · ${line.task}`) : ''}`;
-
-  return `${chalk.dim(hhmm(line.at))} ${look.mark} ${chalk.bold(who.padEnd(24))} ${look.tone(what)}`;
-};
-
-const hhmm = (iso: string): string => iso.slice(11, 16);
+/** A mouse report in SGR form: the button, the column, the row, and M pressed or m released. */
+// eslint-disable-next-line no-control-regex -- a terminal's mouse report starts with ESC: it is what is matched
+const MOUSE = /\x1b\[<(\d+);(\d+);(\d+)([Mm])/g;
 
 /** The attention rows shown on top: the board is for seeing it all, the full list is `run status`. */
 const ATTENTION_ROWS = 5;
-
-const FEED_WORDS: Record<FeedLine['kind'], string> = {
-  take: 'took',
-  complete: 'sent to review',
-  review: 'review',
-  approved: 'approved',
-  'sent-back': 'sent back',
-  message: 'message',
-  question: 'question',
-  agent: 'agent',
-  run: 'run',
-  problem: 'problem',
-  other: 'other'
-};
-const visible = (line: string): number => stripVTControlCharacters(line).length;
-
-/** A line cut, or padded, to `width` columns, colours kept — a longer one would wrap and push the screen down. */
-const cell = (line: string, width: number): string => {
-  const length = visible(line);
-  if (length <= width) {
-    return line + ' '.repeat(width - length);
-  }
-
-  return `${stripVTControlCharacters(line).slice(0, Math.max(0, width - 1))}…`;
-};
-
-const ago = (iso: string | undefined, now: Date): string => {
-  if (iso === undefined) {
-    return '';
-  }
-
-  const minutes = Math.round((now.getTime() - Date.parse(iso)) / 60_000);
-
-  return minutes < 1 ? 'now' : `${String(minutes)}m ago`;
-};
 
 /** A model's short name: what the line has room for. */
 const shortModel = (model: string | undefined): string => (model ?? 'harness').replace(/^claude-/, '');
@@ -168,12 +111,6 @@ export const listedTasks = (tasks: readonly TaskLine[], showApproved: boolean): 
   // Nothing left: the approved are all there is to see — listed, never folded into a count.
   return showApproved || left.length === 0 ? ordered : left;
 };
-
-const ID_WIDTH = 22;
-
-/** An id in its column: a long one (an integration's, named by its file) cut in the middle, both ends kept. */
-const idCell = (id: string): string =>
-  id.length <= ID_WIDTH ? id.padEnd(ID_WIDTH) : `${id.slice(0, 10)}…${id.slice(-(ID_WIDTH - 11))}`;
 
 const minutesBetween = (from: string, to: string): number => Math.round((Date.parse(to) - Date.parse(from)) / 60_000);
 
@@ -278,7 +215,12 @@ export const monitorScreen = (
     now,
     feedPage = 0,
     onFeedPages,
-    showApproved = false
+    showApproved = false,
+    opened = new Set<string>(),
+    onGroupRows,
+    onGroupPages,
+    onRegions,
+    flow = false
   }: {
     selected: number;
     open: boolean;
@@ -291,6 +233,16 @@ export const monitorScreen = (
     onFeedPages?: (pages: number) => void;
     /** The approved tasks listed one by one too (`a`); otherwise said in one line under the rest. */
     showApproved?: boolean;
+    /** The groups of repeated events opened, by `groupKey`: each repeat shown under its line. */
+    opened?: ReadonlySet<string>;
+    /** Told which row of the screen is which group's line (0 the top): what a click there opens or folds. */
+    onGroupRows?: (rows: Map<number, string>) => void;
+    /** The run's flow drawn in the place of the tasks and agents (`f`). */
+    flow?: boolean;
+    /** Told which page of the activity each group's line is on: an opened group is shown on its page. */
+    onGroupPages?: (pages: Map<string, number>) => void;
+    /** Told which rows the tasks and the activity take (first, after the last; 0 the top): where the wheel scrolls what. */
+    onRegions?: (regions: { tasks: [number, number]; activity: [number, number] }) => void;
   }
 ): string[] => {
   const { view, agents, feed, runs, stories } = data;
@@ -349,7 +301,7 @@ export const monitorScreen = (
         `TASKS (${String(tasks.length)})${listed.length > room ? chalk.dim(` ${String(first + 1)}–${String(first + shown.length)}`) : ''}`
       ) +
         chalk.dim(
-          `  ↑↓ choose · enter ${open ? 'closes' : 'opens'} it · a ${showApproved ? 'hides' : 'shows'} the approved`
+          `  ↑↓ choose · enter ${open ? 'closes' : 'opens'} it${tasks.some(task => task.status !== 'done') ? ` · a ${showApproved ? 'hides' : 'shows'} the approved` : ''}`
         ),
       ...shown.map((task, index) => taskRow(task, stories[task.id], first + index === selected, now)),
       ...(first + shown.length < listed.length
@@ -372,12 +324,15 @@ export const monitorScreen = (
     rightWidth
   );
   const picked = listed.at(selected);
-  const detail = open && picked ? ['', ...detailOf(picked, stories[picked.id]).map(line => cell(line, width))] : [];
+  // The flow (`f`) in the place of the tasks and agents: where every task stands, from to-do to approved.
+  const board = flow ? flowLines(view.tasks, width) : body;
+  const detail =
+    !flow && open && picked ? ['', ...detailOf(picked, stories[picked.id]).map(line => cell(line, width))] : [];
   const foot = [
     '',
     chalk.dim(
       cell(
-        'q quits · ↑↓ a task · enter opens it · a the approved · ←→ the activity · "after X": starts once X is approved · ○ free to take · ■ needs someone',
+        'q quits · f the flow · ↑↓ a task · enter opens it · a the approved · ←→ the activity · "after X": starts once X is approved · ○ free to take · ■ needs someone',
         width
       )
     ),
@@ -389,11 +344,47 @@ export const monitorScreen = (
       width
     )
   ];
-  const left = Math.max(0, height - head.length - attention.length - 1 - body.length - detail.length - foot.length - 2);
-  const pages = left === 0 ? 1 : Math.max(1, Math.ceil(feed.length / left));
+  const left = Math.max(
+    0,
+    height - head.length - attention.length - 1 - board.length - detail.length - foot.length - 3
+  );
+  // The activity's rows: each event, and under an opened group each of its repeats.
+  type Row = { row: string; key?: string };
+  const blocks: Row[][] = feed.map(line =>
+    line.count !== undefined && opened.has(groupKey(line))
+      ? [
+          { row: feedRow(line, true), key: groupKey(line) },
+          ...(line.repeats ?? []).map(each => ({ row: repeatRow(each) }))
+        ]
+      : [{ row: feedRow(line), ...(line.count === undefined ? {} : { key: groupKey(line) }) }]
+  );
+  // Paged by event, never splitting an opened group: its repeats are on the page its line is on.
+  const pagesOf: Row[][] = [];
+  let filling: Row[] = [];
+  for (const block of left === 0 ? [] : blocks) {
+    if (filling.length > 0 && filling.length + block.length > left) {
+      pagesOf.push(filling);
+      filling = [];
+    }
+
+    filling.push(...block.slice(0, left));
+  }
+
+  if (filling.length > 0) {
+    pagesOf.push(filling);
+  }
+
+  onGroupPages?.(
+    new Map(
+      pagesOf.flatMap((each, index) => each.flatMap(row => (row.key === undefined ? [] : [[row.key, index] as const])))
+    )
+  );
+  const rows = blocks.flat();
+  const pages = Math.max(1, pagesOf.length);
   onFeedPages?.(pages);
   const page = Math.min(Math.max(0, feedPage), pages - 1);
-  const firstLine = page * left;
+  const firstLine = pagesOf.slice(0, page).reduce((sum, each) => sum + each.length, 0);
+  const shownRows = pagesOf.at(page) ?? [];
   const activity =
     left === 0
       ? []
@@ -401,13 +392,25 @@ export const monitorScreen = (
           '',
           `${chalk.bold('ACTIVITY')}${chalk.dim(
             pages > 1
-              ? `  ${String(firstLine + 1)}–${String(Math.min(firstLine + left, feed.length))} of ${String(feed.length)} · ${page > 0 ? '← newer' : '← (newest)'} · ${page < pages - 1 ? 'older →' : '(oldest) →'}`
-              : `  ${String(feed.length)}, all shown`
+              ? `  ${String(firstLine + 1)}–${String(firstLine + shownRows.length)} of ${String(rows.length)} · ${page > 0 ? '← newer' : '← (newest)'} · ${page < pages - 1 ? 'older →' : '(oldest) →'} · the wheel too`
+              : `  ${String(rows.length)}, all shown`
           )}`,
-          ...feed.slice(firstLine, firstLine + left).map(line => cell(feedRow(line), width))
+          chalk.dim(cell(`  ${'TIME'.padEnd(5)}   ${'WHO'.padEnd(WHO_WIDTH)} ${'TASK'.padEnd(ID_WIDTH)} WHAT`, width)),
+          ...shownRows.map(each => cell(each.row, width))
         ];
 
-  return [...head, ...attention, '', ...body, ...detail, ...activity, ...foot];
+  // Where each group's line lands on the screen: the rows above it, then the activity's title and column names.
+  const above = head.length + attention.length + 1 + board.length + detail.length + 3;
+  onGroupRows?.(
+    new Map(shownRows.flatMap((each, index) => (each.key === undefined ? [] : [[above + index, each.key] as const])))
+  );
+  const boardTop = head.length + attention.length + 1;
+  onRegions?.({
+    tasks: flow ? [0, 0] : [boardTop, boardTop + board.length],
+    activity: [above, above + shownRows.length]
+  });
+
+  return [...head, ...attention, '', ...board, ...detail, ...activity, ...foot];
 };
 
 /** Which run to show: the one named, else the open one, else the newest the project has. */
@@ -442,6 +445,12 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
   let feedPage = 0;
   let feedPages = 1;
   let showApproved = false;
+  let flow = false;
+  // The groups of repeated events opened by a click, and which screen row is which group's line, as last drawn.
+  const opened = new Set<string>();
+  let groupRows = new Map<number, string>();
+  let groupPages = new Map<string, number>();
+  let regions = { tasks: [0, 0], activity: [0, 0] };
   let last: Monitored | undefined;
   let note = 'Reading the run…';
 
@@ -456,14 +465,35 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
           now: new Date(),
           feedPage,
           showApproved,
+          flow,
+          opened,
+          onGroupRows: rows => {
+            groupRows = rows;
+          },
+          onGroupPages: pages => {
+            groupPages = pages;
+          },
+          onRegions: each => {
+            regions = each;
+          },
           onFeedPages: pages => {
             feedPages = pages;
             feedPage = Math.min(feedPage, pages - 1);
           }
         })
       : [note];
-    // The whole screen again, from its top: what a person sees is the run as it is now, never the run scrolled by.
-    process.stdout.write(`\x1b[H\x1b[2J${lines.slice(0, Math.max(1, process.stdout.rows - 1)).join('\n')}`);
+    // Written over from the top, each line cleared past its end and what is below cleared after — never the screen
+    // wiped first, which flickered — inside the terminal's synchronized output, drawn as one frame.
+    const shown = lines.slice(0, Math.max(1, process.stdout.rows - 1)).map(line => `${line}\x1b[K`);
+    process.stdout.write(`\x1b[?2026h\x1b[H${shown.join('\n')}\x1b[J\x1b[?2026l`);
+  };
+  // Many events in a moment — a wheel spun, a burst of writes — drawn once, at most every 16 ms.
+  let drawing: ReturnType<typeof setTimeout> | undefined;
+  const drawSoon = (): void => {
+    drawing ??= setTimeout(() => {
+      drawing = undefined;
+      draw();
+    }, 16);
   };
 
   // Live: the run's folder watched, read again the moment the CLI writes to it — a take, a review, a message, a state —
@@ -549,44 +579,92 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
     emitKeypressEvents(process.stdin);
     process.stdin.setRawMode(true);
     // The alternate screen, as a pager uses: the terminal's own text is back as it was once it quits.
-    process.stdout.write('\x1b[?1049h\x1b[?25l');
+    // The mouse too (SGR reports): a click on a group of repeated events opens or folds it, the wheel pages the activity.
+    process.stdout.write('\x1b[?1049h\x1b[?25l\x1b[?1000h\x1b[?1006h');
     const timer = setInterval(() => void look(), Math.max(1, options.interval ?? 5) * 1000);
-    const clock = setInterval(draw, 1000);
+    const clock = setInterval(drawSoon, 1000);
     const quit = (): void => {
       clearInterval(timer);
       clearInterval(clock);
       clearTimeout(soon);
+      clearTimeout(drawing);
       watched?.close();
       process.stdin.setRawMode(false);
       process.stdin.pause();
-      process.stdout.write('\x1b[?25h\x1b[?1049l');
+      process.stdout.write('\x1b[?1000l\x1b[?1006l\x1b[?25h\x1b[?1049l');
       resolve();
     };
-    process.stdin.on('keypress', (_text: string | undefined, key: { name?: string; ctrl?: boolean } | undefined) => {
-      if (key?.name === 'q' || (key?.ctrl === true && key.name === 'c')) {
-        quit();
+    process.stdin.on('data', (data: Buffer) => {
+      let changed = false;
+      for (const [, button, , row, kind] of data.toString('utf-8').matchAll(MOUSE)) {
+        const pressed = kind === 'M';
+        if (pressed && button === '0') {
+          // Rows are counted from 1 by the terminal, from 0 by the screen drawn.
+          const key = groupRows.get(Number(row) - 1);
+          if (key !== undefined) {
+            if (!opened.delete(key)) {
+              opened.add(key);
+            }
 
-        return;
+            // Opened at a page's foot, it no longer fits there: the page it is on now is the one shown.
+            draw();
+            feedPage = groupPages.get(key) ?? feedPage;
+            changed = true;
+          }
+        } else if (pressed && (button === '64' || button === '65')) {
+          // The wheel scrolls what it is over: the tasks' list moves its selection, the activity turns its pages.
+          const at = Number(row) - 1;
+          const up = button === '64';
+          const count = last ? listedTasks(last.view.tasks, showApproved).length : 0;
+          if (at >= regions.tasks[0] && at < regions.tasks[1] && count > 0) {
+            selected = up ? Math.max(0, selected - 1) : Math.min(count - 1, selected + 1);
+          } else {
+            feedPage = up ? Math.max(0, feedPage - 1) : Math.min(feedPage + 1, feedPages - 1);
+          }
+
+          changed = true;
+        }
       }
 
-      const count = last ? listedTasks(last.view.tasks, showApproved).length : 0;
-      if (key?.name === 'down' && count > 0) {
-        selected = (selected + 1) % count;
-      } else if (key?.name === 'up' && count > 0) {
-        selected = (selected - 1 + count) % count;
-      } else if (key?.name === 'return') {
-        open = !open;
-      } else if (key?.name === 'a') {
-        showApproved = !showApproved;
-        selected = 0;
-      } else if (key?.name === 'right') {
-        feedPage = Math.min(feedPage + 1, feedPages - 1);
-      } else if (key?.name === 'left') {
-        feedPage = Math.max(0, feedPage - 1);
+      if (changed) {
+        drawSoon();
       }
-
-      draw();
     });
+    process.stdin.on(
+      'keypress',
+      (_text: string | undefined, key: { name?: string; ctrl?: boolean; sequence?: string } | undefined) => {
+        // A mouse report is read above, never as keys.
+        if (key?.sequence?.includes('[<') === true) {
+          return;
+        }
+
+        if (key?.name === 'q' || (key?.ctrl === true && key.name === 'c')) {
+          quit();
+
+          return;
+        }
+
+        const count = last ? listedTasks(last.view.tasks, showApproved).length : 0;
+        if (key?.name === 'down' && count > 0) {
+          selected = (selected + 1) % count;
+        } else if (key?.name === 'up' && count > 0) {
+          selected = (selected - 1 + count) % count;
+        } else if (key?.name === 'return') {
+          open = !open;
+        } else if (key?.name === 'f') {
+          flow = !flow;
+        } else if (key?.name === 'a') {
+          showApproved = !showApproved;
+          selected = 0;
+        } else if (key?.name === 'right') {
+          feedPage = Math.min(feedPage + 1, feedPages - 1);
+        } else if (key?.name === 'left') {
+          feedPage = Math.max(0, feedPage - 1);
+        }
+
+        draw();
+      }
+    );
     process.stdout.on('resize', draw);
     void look();
   });

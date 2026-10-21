@@ -1,8 +1,10 @@
 import { readJson, writeJson } from './files';
 import { FOLLOW_MS } from '../options';
 import { REVIEW_BACKLOG_MS, UNTAKEN_REVIEW_MS } from './leads';
+import { runPaths } from './paths';
 import { isRunRefusal } from './refusal';
 import { loadRun } from './run';
+import { runChanged } from './runChanged';
 import { viewRun } from './view';
 
 import type { RunContext } from './run';
@@ -133,6 +135,6 @@ export const waitForLead = async (
       return { fresh: [], view, timedOut: true };
     }
 
-    await new Promise(resolve => setTimeout(resolve, everyMs));
+    await runChanged(runPaths(ctx.root, runId).dir, everyMs);
   }
 };

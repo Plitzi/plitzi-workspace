@@ -398,6 +398,20 @@
   its UI review (they read as the lead's); a lead going past a UI review a designer took tells that designer, and the
   audit says it, its rounds split by whom; `task tell --about <task>` lets an agent with no task in hand (a reviewer)
   tell the lead; the lead is "working", not "reviewing", at anything but a review.
+- **Hand-offs without the wait** (`@plitzi/cli`): what waits on a run — an agent's `task next --follow`, a file's wait,
+  a question's answer, the lead's `run watch --until lead`, `task inbox --follow` — wakes the moment the run's folder
+  changes, not at its next 10 s look (`runChanged`): a task sent is taken by its reviewer, an approval by the next agent,
+  at once.
+- **A task asks the review it needs** (`@plitzi/cli`): `task complete --review code` goes to the lead's code review
+  alone, said in the activity, `--review ui` has its UI looked at first — by a designer, or the lead when none is free —
+  and left out the run decides as before; a lead offered a task whose UI a designer approved is told the code is its.
+- **The run's flow** (`@plitzi/cli`): `f` in `run monitor` draws the run from to-do to approved — each stage with its
+  tasks and who holds them, what holds an agent back (■ held: blocked, waiting for a file, asking the lead, failed), the
+  review split in its UI's and the lead's, and what a review sent back (↺, apart: it goes back to the same agent).
+- **Groups open with the mouse** (`@plitzi/cli`): a click on a group of repeated events opens it, each repeat under it,
+  and folds it again — ▸ / ▾ left of its time, its repeats hanging right of its words; the wheel scrolls what it is
+  over (the tasks' selection, the activity's pages); an opened group is never split by a page. The screen is written
+  over in one synchronized frame, never wiped first, and a burst of events draws once (16 ms): it no longer flickers.
 - **`run monitor` follows the run live** (`@plitzi/cli`): it watches the run's folder and draws again the moment the CLI
   writes to it — a take, a review, a message, a state (a fifth of a second, not the 2 s it polled at) — and every second
   for its clock; `--interval` is the fallback read (5 s).
@@ -405,7 +419,9 @@
   (or that nothing does), the tasks left listed and the approved folded in a line naming them (`a` lists them; listed
   once nothing is left), each activity line
   marked by its kind (▶ took · ⇢ sent · ✓ approved · ↺ sent back · ✉ message · ? question · ✗ problem) with its legend,
-  and a message said from whom to whom — the agent holding the task — its words quoted; a task held on a question to
+  and a message said from whom to whom — the agent holding the task — its words quoted, in columns (time, who, task,
+  what — the task's empty when it is about none); an event repeated in a row is one line, ×N since when (a refused
+  finish once per pass); once every task is approved the lead is ✓ done, saying what is next and whose; a task held on a question to
   the lead says so on its row, its agent (? asks the lead), the head and the Run tab; the legend of the keys stays on
   screen, each area saying its own.
 - **The page being left keeps its server sections** (`@plitzi/sdk-elements`): a server provider whose page is still on

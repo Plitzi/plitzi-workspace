@@ -59,13 +59,13 @@ What the lead — team lead and software architect — does; the agents' half, t
    (`plitzi run team set dev --count 2 --model <model>`, `… set test --roles tester`): its size is how many work at once, a role nobody takes is refused, and `run plan` says how to start each agent. A tester in it adds `<id>-tests` after each
    developer task (`"tests": false` for none); a designer reviews the others' UI before you (`"designReview": false` in
    the plan turns it off). Theirs is the UI/UX, as a designer; yours is the complete and strict review — code,
-   acceptance, edge cases, the page — and the final word, after it (or before, with `--skip-design`, yours: as
+   acceptance, edge cases, the page (UI approved: the code first) — and the final word, after it (or before, with `--skip-design`, yours: as
    yourself — no `--agent`, or `--agent lead`). A UI review counts only from a designer of the team, by the name it
    is started with (`design-1`). **One lead for every four agents**: a team of five or more has `lead-2`… beside you
-   (`plitzi run team set lead --count N` says another number) — **not at the start**: you review, taking each review from
+   (`run team set lead --count N`) — **not at the start**: you review, taking each review from
    the queue (`plitzi task next --role lead --take`), and `run watch --until lead` says when the reviews queue up (two
    waiting, the oldest five minutes) and which to start. Each takes the next review no other lead took, reviews it as you
-   would — tell them how strict you are (a message to `@lead-2`) — and stops by itself once the queue is empty. The rest
+   would — tell them how strict you are (`@lead-2`) — and stops once the queue is empty. The rest
    is yours alone. A lead's own files (a log) go in `tmp/plitzi-runs/<run>/scratch/<name>/`, gone with the run; what
    appears in the project's `tmp/` is said to you (`left-in-tmp`): tell the agent, remove it once unneeded.
 

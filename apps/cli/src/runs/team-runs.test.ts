@@ -363,6 +363,19 @@ describe('a designer’s review of the others’ UI', () => {
     );
   });
 
+  it('asks the review its developer says: the code alone goes straight to the lead, said in the activity', async () => {
+    const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
+    await writeInCopy(taken.work, 'src/space/pages/menu.ts', 'export const page = { title: `t-menu` };\n');
+    await completeTask(bench.agent('dev-1', { token: taken.token }), 'es-launch', 't-menu', { review: 'code' });
+
+    expect(await designOf('t-menu')).toBeUndefined();
+    expect((await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [])).merged).toEqual([
+      'src/space/pages/menu.ts'
+    ]);
+    const log = await readRunLog((await loadRun(lead(), 'es-launch')).paths);
+    expect(log.find(entry => entry.action === 'complete' && entry.task === 't-menu')).toMatchObject({ review: 'code' });
+  });
+
   it('lets a designer’s approval stand for a round of changes that did not touch the UI', async () => {
     const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
     const dev = bench.agent('dev-1', { token: taken.token });

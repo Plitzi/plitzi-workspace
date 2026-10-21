@@ -71,7 +71,10 @@ const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: stri
     ...review.asked.map(line => `  ↺ ${line}`),
     `  It changed: ${review.changed.join(', ') || 'nothing said'}`,
     `  What went to review, against its acceptance: plitzi task show ${review.task.id}`,
-    `  Look at it as it went to review: plitzi task look ${review.task.id} ${review.pages.length > 0 ? review.pages.join(' ') : '<page…>'}`,
+    // Its UI said by a designer, the lead's is the code: the look is for what the code changes on a page, if anything.
+    review.design
+      ? `  Its UI is reviewed: yours is the code, the acceptance and the edge cases — look (plitzi task look ${review.task.id}) only where the code changes what a page does`
+      : `  Look at it as it went to review: plitzi task look ${review.task.id} ${review.pages.length > 0 ? review.pages.join(' ') : '<page…>'}`,
     `  Then say it: plitzi task review ${review.task.id} --approve [--note "…"] | --changes "what, where, and why" --agent ${agent}`,
     ...(isPrincipal(agent)
       ? []

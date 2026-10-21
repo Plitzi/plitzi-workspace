@@ -5,6 +5,7 @@ import { lockFile, runPaths, taskPaths, under } from '../paths';
 import { PRIORITY_RANK } from '../plan';
 import { RunRefusal } from '../refusal';
 import { activeRuns, assertStatus, loadRun, readShared, runIds } from '../run';
+import { runChanged } from '../runChanged';
 import { withLock } from '../store';
 import {
   appendLog,
@@ -440,6 +441,6 @@ export const followWait = async (
     }
 
     await writeJson(view.paths.progress, { ...(view.progress ?? {}), heartbeatAt: at(ctx) });
-    await new Promise(resolve => setTimeout(resolve, everyMs));
+    await runChanged(runPaths(ctx.root, runId).dir, everyMs);
   }
 };

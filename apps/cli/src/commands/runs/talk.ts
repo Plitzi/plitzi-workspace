@@ -2,9 +2,11 @@ import { act, holder, runOf, taskOf } from './shell';
 import { exchangeLines, messageLines } from './text';
 import { durationText, FOLLOW_MS } from '../../options';
 import { proposalsOf } from '../../runs/agreements';
+import { runPaths } from '../../runs/paths';
 import { answerProposal, proposeChange } from '../../runs/proposals';
 import { RunRefusal } from '../../runs/refusal';
 import { loadRun } from '../../runs/run';
+import { runChanged } from '../../runs/runChanged';
 import { askLead, messageTasks, readInbox, tellLead, tellLeadAbout } from '../../runs/talk';
 import { followWait } from '../../runs/tasks';
 
@@ -167,7 +169,7 @@ export const taskInbox = (
       // Stays until something is said to it — an answer to a question asked without --follow, an instruction.
       const until = Date.now() + (options.timeout ?? FOLLOW_MS);
       while (options.follow && !options.all && messages.length === 0 && Date.now() < until) {
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await runChanged(runPaths(ctx.root, runId).dir, 5000);
         messages = await read();
       }
 

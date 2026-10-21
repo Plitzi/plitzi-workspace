@@ -72,7 +72,8 @@ takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | 
   brake (enough of them, across the team, stop the run). It hands you what the lead said meanwhile: run it between
   steps, not only at the end. Something you declare for later tasks (a component, a token) that nothing reads yet is
   a warning there, not a failure.
-- **Done:** `plitzi task complete [--note "what to look at"]` — the note goes to the lead with it — compared by
+- **Done:** `plitzi task complete [--note "what to look at"] [--review code|ui]` — the note goes to the lead with it;
+  `code` when nothing a visitor sees changed (the lead's review alone), `ui` for its UI looked at first — compared by
   fingerprint, the project's checks and the acceptance's checks run in
   the copy. **A task never ends
   with failing checks** — lint, types, tests: fix them — nor with a file it took past 400 non-blank lines (your

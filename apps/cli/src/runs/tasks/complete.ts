@@ -33,6 +33,7 @@ import { textOf } from './context';
 import { activeHolder, allLocks, sharedFiles } from './locks';
 
 import type { CheckResult } from '../checks';
+import type { ReviewAsked } from '../design';
 import type { Message } from '../messages';
 import type { AcceptanceResult, FileLock, SharedRequest } from '../model';
 import type { LoadedRun, RunContext } from '../run';
@@ -141,6 +142,8 @@ const warningsOf = (checks: CheckResult): string[] =>
 export interface CompleteOptions {
   /** Go to review although the checks fail — for a reason that weighs, with the task that fixes it. */
   knownFailure?: { why: string; fixedBy?: string };
+  /** The review it asks for: the code alone, or its UI too (`ReviewAsked`); the run decides when left out. */
+  review?: ReviewAsked;
 }
 
 export const completeTask = async (
@@ -413,7 +416,7 @@ export const completeTask = async (
   }
 
   const toReview = changed.filter(file => !asRequests.includes(file));
-  const designed = await designAtComplete(loaded, view, toReview);
+  const designed = await designAtComplete(loaded, view, toReview, options.review);
   // What goes to review is kept now: the copy is the agent's to go on writing, and the lead approves what it looked at.
   const submitted = await keepFiles(loaded.paths, view.paths.work, toReview);
   await updateState(
@@ -460,7 +463,14 @@ export const completeTask = async (
   );
   await recordBrake(ctx, loaded, 'completed', taskId);
   await appendLog(view.paths.log, { at: at(ctx), by: ctx.agent, action: 'complete', changed, requests: asRequests });
-  await logRun(ctx, loaded.paths, { action: 'complete', task: taskId, changed: changed.length, requests: asRequests });
+  await logRun(ctx, loaded.paths, {
+    action: 'complete',
+    task: taskId,
+    changed: changed.length,
+    requests: asRequests,
+    // What review it went for: its UI's and the lead's, or the lead's alone.
+    review: designed.design?.status === 'due' ? 'ui' : 'code'
+  });
 
   return {
     changed,

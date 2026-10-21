@@ -122,12 +122,26 @@ const isUiFile = (file: string): boolean => UI_FILE.test(file) && !NOT_UI.test(f
  * unless a designer approved it before and its UI is byte for byte what the lead's last review saw, a round of the lead's
  * changes that did not touch it (a fix in a module): then the approval stands, and is said in its notes.
  */
+/**
+ * What review a task asks for as it is sent: `code` — the lead's, of the code and the acceptance, nothing visible to
+ * look at — or `ui` too, its UI looked at by a designer (the lead's too when no designer is free) before the lead's of
+ * the code. Left unsaid, the run decides: a run with designers reviews the UI of what changed a page.
+ */
+export type ReviewAsked = 'code' | 'ui';
+
 export const designAtComplete = async (
   loaded: LoadedRun,
   view: TaskView,
-  changed: readonly string[]
+  changed: readonly string[],
+  asked?: ReviewAsked
 ): Promise<{ design?: DesignReview; carried?: string }> => {
-  if (loaded.record.designReview !== true || !hasDesignReview(view.task, changed)) {
+  if (asked === 'code') {
+    return {
+      carried: 'Its developer asked for the code review alone: nothing it changed is to be looked at as a page'
+    };
+  }
+
+  if (asked !== 'ui' && (loaded.record.designReview !== true || !hasDesignReview(view.task, changed))) {
     return {};
   }
 
