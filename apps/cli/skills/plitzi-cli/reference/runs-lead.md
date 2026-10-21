@@ -11,7 +11,7 @@ What the lead — team lead and software architect — does; the agents' half, t
    control behaves, a size — as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
    "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
-   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`, naming sections no piece covers. **Research is a spike, yours** (no files). **Start with the scope**, `run open --spike "<ask>" --run <name>`; find out (`page shot --compare <original> --dress`) and end it with the tasks, each with what you found (`"findings"`): `task spike s-scope --done "…" --tasks <stage.json>`. Later: stack one (`run extend`); an agent's `task spike` is a block you lift with the answer (`task unblock --answer`). **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
+   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`, naming sections no piece covers. **Research is a spike, yours** (no files). **Start with the scope**, `run open --spike "<ask>" --run <name> [--reference <site>]`; find out (`page shot --compare <original> --dress`) and end it with the tasks, each with what you found (`"findings"`): `task spike s-scope --done "…" --tasks <stage.json>`. Later: stack one (`run extend`); an agent's `task spike` is a block you lift with the answer (`task unblock --answer`). **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview` — who owns which file, read off the imports. A page owns the modules only
    it imports; what two pages import (the tokens, the classes, a layout, a component) is **shared**, and so is every
@@ -47,28 +47,24 @@ What the lead — team lead and software architect — does; the agents' half, t
    }
    ```
 
-   **Acceptance a command can tell** is `{ said, check }`: the check runs in the task's copy at `complete`, beside the
-   project's checks, and passes on exit 0 — `plitzi` in it is this CLI, `$PLITZI_URL` the copy served by its own start
-   script on a free port. `page check --expect "<id>~<text>"` fails when that element does not show the text — check what a
+   **Acceptance a command can tell** is `{ said, check }`: it runs in the task's copy at `complete`, passing on exit 0 —
+   `plitzi` is this CLI, `$PLITZI_URL` the copy served. `page check --expect "<id>~<text>"` fails when that element does not show the text — check what a
    page shows, not a file's text. Else, text — and only text holds at your review alone:
    a later task can undo it unseen (`run plan` names a task with no check). A check runs again on the whole result at
    the finish. **`notes`** hold for the whole run;
    `plitzi run note "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB): what you learnt reading the project — every
    brief starts with it, and the few references its files need. **The team** is the project's,
-   `.plitzi/team.json` (by hand: `plitzi run team check`) — a developer and a designer to start, each role said inside; grow it when the job asks
-   (`plitzi run team set dev --count 3 --min 1 --model <model>`, `… set test --roles tester`): its size is how many work at once — past `min`, on demand: `run watch` says when to start one, and it stops when idle — a role nobody takes is refused, and `run plan` says how to start each agent. A tester in it adds `<id>-tests` after each
-   developer task (`"tests": false` for none); a designer reviews the others' UI before you (how closely: `options.designReview` there; `"designReview": false` in
-   the plan turns it off). Theirs is the UI/UX; yours is the complete, strict review — code,
-   acceptance, edge cases, the page (UI approved: the code first) — and the final word, after it (or before, saying why: `--skip-design lead|no-ui`,
-   as yourself: no `--agent`, or `lead`). **One lead for every four agents**: a team of five or more has `lead-2`… beside you
-   (`run team set lead --count N`) — **not at the start**: you review, each review from
-   the queue (`plitzi task next --role lead --take`), and `run watch --until lead` says when the reviews queue up  and which to start. Each takes the next review no other lead took, reviews it as you
-   would — tell them how strict you are (`@lead-2`) — and stops once the queue is empty. The rest
-   is yours alone. A lead's own files go in `tmp/plitzi-runs/<run>/scratch/<name>/`, gone with the run.
+   `.plitzi/team.json` (`plitzi run team check`) — grow it when the job asks (`plitzi run team set dev --count 3 --min 1
+   --model <model>`): its size is how many work at once; past `min`, on demand — `run watch` says when to start one, it
+   stops when idle. A tester adds `<id>-tests` after each developer task (`"tests": false` for none); a designer reviews
+   the others' UI before you (`options.designReview`; `"designReview": false` turns it off). Yours is the complete,
+   strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
+   `--skip-design lead|no-ui`). **One lead for every four agents**: `lead-2`… beside you, started when `run watch
+   --until lead` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`) and
+   answers the questions it is handed, and stops when nothing is left. A lead's own files go in `tmp/plitzi-runs/<run>/scratch/<name>/`, gone with the run.
 
-   **Keep a person's actions a person's in the harness**: deny the agents — not you, unless the person said so — `plitzi run finish --apply`, `run abort`,
-   `run purge`, `run restore`, `run allow-finish`, `run stop --force` and `run attach --take-over` (Claude Code:
-   `permissions.deny` in `.claude/settings.json`).
+   **Keep a person's actions a person's in the harness**: deny the agents `run finish --apply`, `run abort`, `run purge`,
+   `run restore`, `run allow-finish`, `run stop --force`, `run attach --take-over` (Claude Code: `permissions.deny`).
 
    **Quality** (`"quality": "light" | "standard" | "high"`): `run plan` sets it where you say none (what many tasks build
    on `high`, a one-file few minutes `light`) and says which agent starts at which level. Ids: lowercase letters, digits, `-`, `_`; **classes and provider ids by area** (`pronosticos-card`, `topBoxers`):
@@ -90,8 +86,7 @@ What the lead — team lead and software architect — does; the agents' half, t
 4. **Ask the person first** who applies the run at the end — they, or you: then they open it in their terminal with
    `--lead-finishes` (or `plitzi run allow-finish` later). Never you.
    `plitzi run open plan.json` backs up every file it will touch; as many agents at once as the team has (above 5 a
-   person confirms). Tell the person how to watch it: `npm run start:preview` serves the approved work as it goes,
-   its dev tools' Run tab saying who builds what; `plitzi run monitor` follows it live.
+   person confirms). Tell the person how to watch it: `npm run start:preview` (the approved work), `plitzi run monitor`.
 5. Start one agent per ready task (`plitzi task next --run es-launch --json`), each with a free port, and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
    file a task takes past 400 lines (ask for the split) — each said once. **Talk:** answer a question with `plitzi
@@ -104,8 +99,8 @@ task message t-home "…" --reply-to m3`; `task message all "…"` tells every t
    settle a last cosmetic round yourself, or amend away a dependency it does not need.
 6. **Review against the inventory, not only the picture:** every section and piece the task's acceptance names is
    there, as the reference has it — a difference you accept is one you say (`--note`); one a visitor would see is sent
-   back. Judge the version that went to review (`task show` says its round), and on a page several tasks build, only
-   this task's part. `plitzi task show t-home` is all of it (acceptance, checks, agreements, what was said, diffs; `<file>` after it, that file whole);
+   back. Judge the version that went to review, on a page several tasks build only its part. `plitzi task show
+   t-home` is all of it (`<file> --diff`: one file's whole diff);
    `plitzi task look t-home [--click id | --hover id] [--element id]` (a part of a page others build: its part alone) serves its copy, page checks its pages (headings, names,
    contrast; the state asked for) and pictures them light and dark. What the acceptance asks and the data does not show, you test yourself
    (a module's function, its edge cases, `node -e` in the copy) — or send it back for the test it needs. Then
@@ -125,3 +120,15 @@ status`): ask the person to run `plitzi run attach <run>` — the agents keep th
    check cannot see (`plitzi run preview`) — what is missing, or nobody's (`run notice`), is a stage (`run extend`). **Close it:** write the summary (done, wrong, left) last: `plitzi run report --summary summary.md`; then `plitzi run
 finish` (the diff, checked). `--apply` is the person's, or yours if they allowed it. The next plan need not wait:
    `plitzi run extend <run> next.json` stacks it, one finish for both. `run pending`: what awaits applying.
+
+## Where leads went wrong
+
+- **A check you write, you run once** on the run's work before a task gets it: a 404 page is `page check … --status
+  404`, a `--clip` names an id the page has. One that cannot pass costs every try of the task's.
+- **One look, one task**: a section dressed by two tasks waits on the other's files (`run plan` says it).
+- **A question first**: it holds an agent — answer before your own work. `run watch` in the harness's background
+  (never `&`), one at a time.
+- **Say what is so, read from its source** (the original's CSS, `task show`, the run's approved version), never from a
+  copy, a class name or memory; never answer one way and tell another — a file a task holds is no one else's.
+- **The report before the finish**: `run report --summary`, then `run finish`.
+

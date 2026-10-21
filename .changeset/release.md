@@ -787,6 +787,10 @@ monitor` shows each as it comes, a problem in red.
       attention is a table — for whom, what (a question, only to know, a request…), the task, its agent, what it says —
       the most pressing first; a note only to know, shown whole by `run watch`, is read there and leaves it. The
       activity says a wait by its reason alone, and an agent joined though it made its scratch folder first.
+    - The lead's skill says where leads went wrong in velada-dress and velada-polish: a check written is run once before
+      a task gets it (a 404 page, `--status 404`); one look, one task; a question before the lead's own work, `run
+      watch` in the harness's background; what is so said from its source, never a copy or a class name; the report
+      before the finish.
     - `run reference` keeps a page the site answers with 404 — its page for an address nothing answers, which a copy
       makes too — said, where it refused it as an error page.
     - `page shot --compare … --dress` fails where a section lacks a look the other page dresses it in — a sort of
