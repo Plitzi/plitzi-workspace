@@ -37,6 +37,7 @@ export interface PageMessage {
 export interface PageResponse {
   status(): number;
   url(): string;
+  headers(): Record<string, string>;
 }
 
 /** One element of a page, as `shot --clip` and `--scroll-to` reach it, and `check --click` and `--fill` use it. */

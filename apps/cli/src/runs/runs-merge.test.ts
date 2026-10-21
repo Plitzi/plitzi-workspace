@@ -33,7 +33,7 @@ describe('the final merge', () => {
       'agent-1',
       't-about',
       'src/space/pages/about.ts',
-      'export const about = { id: \'about\', title: \'Sobre\' };\n'
+      'export const about = { id: "about", title: "Sobre" };\n'
     );
     await bench.write('tmp/dev1/s.mjs', 'console.log(1);\n');
 

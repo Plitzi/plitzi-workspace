@@ -97,6 +97,21 @@ const followLink = async (page: BrowserPage, origin: string, path: string): Prom
 };
 
 /** What the page open in `page` is checked for, as it stands: what `checkAt` asks of its first page and `--then` of each next. */
+/**
+ * An image the probe calls never loaded that the browser was answered for (2xx): it loaded and draws no size of its own
+ * — an SVG with a viewBox and no width or height, a flag — which the browser reports as 0 wide (la-velada: every
+ * country flag of the schedules, failing each check of the home).
+ */
+export const answeredImage = (issue: { code: string; message: string }, answered: ReadonlySet<string>): boolean => {
+  if (issue.code !== 'image-not-loaded') {
+    return false;
+  }
+
+  const address = /https?:\/\/\S+/.exec(issue.message)?.[0];
+
+  return address !== undefined && answered.has(address);
+};
+
 const inspectHere = async (
   page: BrowserPage,
   {
@@ -110,7 +125,8 @@ const inspectHere = async (
     expect,
     sentWith,
     consoleErrors,
-    failedRequests
+    failedRequests,
+    answered
   }: {
     origin: string;
     pathname: string;
@@ -124,6 +140,8 @@ const inspectHere = async (
     sentWith: number | undefined;
     consoleErrors: string[];
     failedRequests: string[];
+    /** The images the browser was answered with, by address: one of them that draws no size is loaded, not failed. */
+    answered: ReadonlySet<string>;
   }
 ): Promise<CheckReport> => {
   const handles = authored?.handles;
@@ -214,7 +232,7 @@ const inspectHere = async (
   const issues: CheckIssue[] = [
     ...noPage,
     ...statusIssues,
-    ...report.issues.map((issue): CheckIssue => ({ ...issue, width })),
+    ...report.issues.filter(issue => !answeredImage(issue, answered)).map((issue): CheckIssue => ({ ...issue, width })),
     ...(data?.issues ?? []).map((issue): CheckIssue => ({ ...issue, width })),
     ...(late?.issues ?? []),
     ...failedFlows,
@@ -287,6 +305,7 @@ export const checkAt = async (
 
   const consoleErrors: string[] = [];
   const failedRequests: string[] = [];
+  const imagesAnswered = new Set<string>();
   page.on('pageerror', error => consoleErrors.push(error.message));
   const address = `${origin}${pathname}`;
   page.on('console', message => {
@@ -302,6 +321,10 @@ export const checkAt = async (
       sentWith = response.status();
 
       return;
+    }
+
+    if (response.status() < 300 && (response.headers()['content-type'] ?? '').startsWith('image/')) {
+      imagesAnswered.add(response.url());
     }
 
     if (response.status() >= 400 && response.url().startsWith(origin)) {
@@ -364,7 +387,8 @@ export const checkAt = async (
       expect,
       sentWith,
       consoleErrors,
-      failedRequests
+      failedRequests,
+      answered: imagesAnswered
     })
   ];
   // On as a visitor goes on: a click on the page's own link to each next path, no reload — what the space keeps while
@@ -386,7 +410,8 @@ export const checkAt = async (
             expect,
             sentWith: undefined,
             consoleErrors: consoleErrors.slice(errorsBefore),
-            failedRequests: failedRequests.slice(failedBefore)
+            failedRequests: failedRequests.slice(failedBefore),
+            answered: imagesAnswered
           })
         : unchecked({ code: 'no-page', message: went, width })
     );

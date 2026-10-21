@@ -84,7 +84,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               ['1440', 'light'],
               ['390', 'dark']
             ] as const) {
-              const name = `${taskId}${route === '/' ? '-home' : route.replaceAll('/', '-')}${clip ? `-${clip}` : ''}-${width}-${scheme}.png`;
+              const name = `${taskId}${route === '/' ? '-home' : `-${route.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`}${clip ? `-${clip}` : ''}-${width}-${scheme}.png`;
               const out = path.join(runPaths(ctx.root, runId).shots, name);
               const shot = await runSelf(preview.dir, [
                 'page',

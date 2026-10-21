@@ -5,8 +5,8 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { checkAcceptance } from './acceptance';
-import { cloneFiles, fingerprint, isCopied, projectFiles, readOptional, writeJson } from './files';
-import { under } from './paths';
+import { cloneFiles, cloneServed, fingerprint, isCopied, projectFiles, readOptional, writeJson } from './files';
+import { isSecretFile, under } from './paths';
 import { placeVersion } from './store';
 
 import type { CheckOptions, CheckResult } from './checks';
@@ -25,10 +25,18 @@ export const materialise = async (
 ): Promise<string> => {
   const dir = path.join(loaded.paths.cache, `check-${randomBytes(4).toString('hex')}`);
   const keep = new Set(Object.keys(versions));
+  const all = await projectFiles(ctx.root);
   await cloneFiles(
     ctx.root,
     dir,
-    (await projectFiles(ctx.root)).filter(file => isCopied(file, keep))
+    all.filter(file => isCopied(file, keep))
+  );
+  // The pictures the pages draw, as a task's copy has them: without them every check of a page with one failed on its
+  // 404 — la-velada's finish, on the artists' photos in public/.
+  await cloneServed(
+    ctx.root,
+    dir,
+    all.filter(file => !isSecretFile(file) && !isCopied(file, keep))
   );
   for (const [file, digest] of Object.entries(versions)) {
     await placeVersion(loaded.paths, under(dir, file), digest);

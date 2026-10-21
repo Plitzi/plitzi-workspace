@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { keptToParts } from './apart';
+import { answeredImage } from './inspect';
 
 import type { CheckReport } from './types';
 
@@ -44,5 +45,24 @@ describe('a page checked in a task’s copy', () => {
 
     expect(own.ok).toBe(false);
     expect(page.ok).toBe(false);
+  });
+});
+
+describe('an image the browser was answered for', () => {
+  it('is loaded, though it draws no size of its own — an SVG flag with only a viewBox', () => {
+    const answered = new Set(['https://cdn.example.com/flags/es.svg']);
+
+    expect(
+      answeredImage(
+        { code: 'image-not-loaded', message: 'an image never loaded: https://cdn.example.com/flags/es.svg' },
+        answered
+      )
+    ).toBe(true);
+    expect(
+      answeredImage(
+        { code: 'image-not-loaded', message: 'an image never loaded: https://cdn.example.com/flags/xx.svg' },
+        answered
+      )
+    ).toBe(false);
   });
 });

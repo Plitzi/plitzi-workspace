@@ -7,12 +7,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { DEV_SERVER_FILE } from '@plitzi/sdk-shared/project';
 
 import { freePort } from './acceptance';
+import { materialise } from './materialise';
 import { finishRun } from './merge';
 import { lockFile, runPaths, taskPaths } from './paths';
 import { startTaskPreview } from './preview';
 import { isRunRefusal } from './refusal';
 import { writeSummary } from './report';
-import { stopRun } from './run';
+import { loadRun, stopRun } from './run';
 import {
   canWrite,
   completeTask,
@@ -52,6 +53,17 @@ describe('taking a task', () => {
 
     const completed = await completeTask(held.ctx, runId, 't-home');
     expect(completed.changed).toContain('public/logo.png');
+  });
+
+  it('has the pictures it does not own in the copy the whole result is checked in too', async () => {
+    await open();
+    const checked = await materialise(lead(), await loadRun(lead(), 'es-launch'), {});
+    try {
+      expect(await readInCopy(checked, 'public/logo.png')).toContain('PNG');
+      expect(await readInCopy(checked, '.env')).toBeUndefined();
+    } finally {
+      await fs.rm(checked, { recursive: true, force: true });
+    }
   });
 
   it('locks its files and copies the project — never its credentials, never node_modules', async () => {
