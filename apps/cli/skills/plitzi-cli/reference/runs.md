@@ -36,7 +36,7 @@ Outside a copy, name yourself (`--agent writer-1`, or `PLITZI_AGENT`): `task nex
 
 - **Write only in `work`**, never in the project. Run the project's scripts there. The copy has no `node_modules` (it resolves the project's) and no `.env` — a warning about it is expected.
   **Look at your page:** `npx plitzi page check /pets --width 1440,390` (or `page shot`) from `work` serves the copy
-  for that command — no server to start. Iterating on one page, `npm run start:dev` in `work` keeps
+  (kept 3 min) — no server to start. Iterating on one page, `npm run start:dev` in `work` keeps
   it served (a save swaps the space in the open page); stop it by its port (`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)`),
   never `pkill -f` (every copy's server, and the person's). Read a shared module only for what the brief's
   imports do not say. The copy's `tmp/` and `state/`

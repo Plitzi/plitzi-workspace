@@ -208,6 +208,16 @@ export const pictureOf = async (
   const pictures = await page.evaluate(loadImages, local ? IMAGES_BUDGET_MS : REMOTE_IMAGES_BUDGET_MS);
   if (whole) {
     await page.evaluate(unrollPage, undefined);
+    // Back at its top, the document's and any pane's: the walk that loads its pictures, or a link the page followed to
+    // an anchor, left it scrolled — velada-dress's t-match pictured from mid-page, not from the hero it was about.
+    await page.evaluate(() => {
+      window.scrollTo(0, 0);
+      for (const pane of Array.from(document.querySelectorAll('*'))) {
+        if (pane.scrollTop > 0) {
+          pane.scrollTop = 0;
+        }
+      }
+    }, undefined);
   }
 
   if (view.still) {

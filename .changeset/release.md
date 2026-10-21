@@ -757,6 +757,12 @@ monitor` shows each as it comes, a problem in red.
     - A designer on demand does not stop while more UI reviews are coming than the other designers running.
     - The lead is woken for a task refused three times within twenty minutes (`refused-again`), with the codes and the
       last refusal: stuck, not unlucky — velada-dress's dev-1 was refused four times on t-heading and nobody knew.
+    - A copy served for a `page shot` or `page check` is kept three minutes for the next one — stopped by a watchdog of
+      its own once unused, served anew once the copy's `src/` changed, stopped first by `complete` and `task check` —
+      where each command started and stopped it. Every whole-page picture is taken from the page's top; `--sheet`
+      writes each step's picture beside the sheet; `task look --click/--hover` on several pages checks each with it
+      apart, where it was refused whole; a comparison with another site, asked live, is asked again when the site says
+      it is busy (429, 503), as the reference is.
     - `run reference` keeps a page the site answers with 404 — its page for an address nothing answers, which a copy
       makes too — said, where it refused it as an error page.
     - `page shot --compare … --dress` fails where a section lacks a look the other page dresses it in — a sort of

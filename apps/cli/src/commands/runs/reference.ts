@@ -9,75 +9,13 @@ import { requireLead } from '../../runs/leads';
 import { keptName, REFERENCE_WIDTHS, referencePages, unnamedSections } from '../../runs/reference';
 import { RunRefusal } from '../../runs/refusal';
 import { loadRun, logRun } from '../../runs/run';
-import { pictureOf } from '../shot/capture';
+import { pictureAnswered } from '../shot/remote';
 
 import type { RunCommandOptions } from './shell';
-import type { Browser } from '../../browser';
 import type { KeptPage } from '../../runs/reference';
-import type { Taken, View } from '../shot/types';
 
 /** How long to wait between the pages of the site kept, and before each try again of one it turned away. */
 const BETWEEN_PAGES_MS = 1500;
-const RETRY_AFTER_MS = [10_000, 30_000];
-
-/** The status the page's own document came with: what tells a page from an error a site answered in its place. */
-const documentStatus = (): number => {
-  const navigation = performance.getEntriesByType('navigation').at(0);
-  const status: unknown = navigation ? Reflect.get(navigation, 'responseStatus') : undefined;
-
-  return typeof status === 'number' ? status : 0;
-};
-
-/**
- * A page of the reference pictured once its site answers it — never its error page kept as the page: la-velada's
- * original answered its fighters' list with "You are being rate limited". A site that says it is busy (429, 503) is
- * asked again, later; any other error is said.
- */
-const keptOnce = async (
-  browser: Browser,
-  url: string,
-  view: View
-): Promise<(Taken & { notFound?: true }) | { problem: string }> => {
-  for (let attempt = 0; ; attempt += 1) {
-    // A picture the browser gave up on (a font that never loaded, a page still busy) is this page's failure, asked
-    // once more — never the end of every page after it: la-velada's original timed one out, and the command crashed.
-    const taken = await pictureOf(browser, url, view).catch(
-      (error: unknown) =>
-        ({
-          problem: `the picture was not taken: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`
-        }) as const
-    );
-    if ('problem' in taken) {
-      if (attempt === 0 && taken.problem.startsWith('the picture was not taken')) {
-        continue;
-      }
-
-      return taken;
-    }
-
-    const status = await taken.page.evaluate(documentStatus, undefined);
-    if (status < 400) {
-      return taken;
-    }
-
-    // An address nothing answers is a page of its own — the site's 404, which a copy makes too (la-velada's "Elige a
-    // tu boxeador"): kept, and said so, never refused as an error page.
-    if (status === 404) {
-      return { ...taken, notFound: true };
-    }
-
-    await taken.page.close();
-    const wait = RETRY_AFTER_MS.at(attempt);
-    if ((status !== 429 && status !== 503) || wait === undefined) {
-      return {
-        problem: `the site answered ${String(status)}${status === 429 ? ' (asked too often) — keep it again later' : ''}`
-      };
-    }
-
-    await new Promise(resolve => setTimeout(resolve, wait));
-  }
-};
-
 export interface ReferenceOptions extends RunCommandOptions {
   /** The pages to keep, by path: the plan's inventory's when left out. */
   pages?: string[];
@@ -135,7 +73,7 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
 
           for (const width of REFERENCE_WIDTHS) {
             for (const scheme of SCHEMES) {
-              const taken = await keptOnce(browser, url, {
+              const taken = await pictureAnswered(browser, url, {
                 width,
                 height: 800,
                 scheme,

@@ -115,6 +115,40 @@ export const comparedOf = (output: string): Omit<BeforeAfter, 'route' | 'width' 
   }
 };
 
+interface Checked {
+  code: number;
+  output: string;
+}
+
+/**
+ * The page check of `task look`: its pages, and the click or hover asked — one element of one page, as `page check`
+ * takes it, so with several pages each is checked with it apart (velada-dress: `task look --hover` on a task of three
+ * pages was refused whole). One browser at a time: each check opens its own.
+ */
+export const checkWithInteraction = async (
+  routes: readonly string[],
+  interaction: readonly string[],
+  checkOf: (pages: readonly string[], also: readonly string[]) => Promise<Checked>
+): Promise<Checked> => {
+  if (interaction.length === 0 || routes.length === 1) {
+    return checkOf(routes, interaction);
+  }
+
+  const all = await checkOf(routes, []);
+  const each: Checked[] = [];
+  for (const route of routes) {
+    each.push(await checkOf([route], interaction));
+  }
+
+  return {
+    code: [all, ...each].some(one => one.code !== 0) ? 1 : 0,
+    output: [
+      all.output.trim(),
+      ...each.map((one, index) => `With ${interaction.join(' ')} on ${routes[index]}:\n${one.output.trim()}`)
+    ].join('\n')
+  };
+};
+
 /** The pictures a `page shot --steps --json` took after the first: the hovered page, for a look. */
 const picturesOf = (output: string): string[] => {
   try {
@@ -185,18 +219,23 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               preview.url,
               paths.length > 0 ? paths : owned.length > 0 ? owned : ['/']
             );
-            const check = await runSelf(preview.dir, [
-              'page',
-              'check',
-              ...routes,
-              '--width',
-              '1440,390',
-              '--url',
-              preview.url,
+            const interaction = [
               ...(options.click ? ['--click', options.click] : []),
-              ...(options.hover ? ['--hover', options.hover] : []),
-              ...(options.element ?? []).flatMap(id => ['--element', id])
-            ]);
+              ...(options.hover ? ['--hover', options.hover] : [])
+            ];
+            const checkOf = (pages: readonly string[], also: readonly string[]) =>
+              runSelf(preview.dir, [
+                'page',
+                'check',
+                ...pages,
+                '--width',
+                '1440,390',
+                '--url',
+                preview.url,
+                ...also,
+                ...(options.element ?? []).flatMap(id => ['--element', id])
+              ]);
+            const check = await checkWithInteraction(routes, interaction, checkOf);
             const shots: string[] = [];
             for (const route of routes) {
               for (const clip of clips.length > 0 ? clips : [undefined]) {

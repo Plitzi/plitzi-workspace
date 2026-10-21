@@ -13,6 +13,7 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { pictureOf, readPage } from './capture';
+import { pictureAnswered } from './remote';
 import { DRIFT_PX, TEXTS_SHOWN } from './types';
 import { dataUrl, fromDataUrl } from '../../browser';
 
@@ -221,9 +222,13 @@ export const compareWith = async (
   // theme chosen as a visitor's toggle chooses it: asked as another site's, it painted its default (dark) against a
   // light page, and differed 90%.
   const local = /^(127\.0\.0\.1|localhost|\[::1\])$/.test(new URL(target).hostname);
+  // Another site is asked as the reference keeps it: again, later, when it says it is busy (429, 503) — velada-dress's
+  // original rate-limited a headless browser asked often (Cloudflare 1015), and a comparison failed on its error page.
   const live = kept
     ? undefined
-    : await pictureOf(browser, target, { ...view, scheme: taken.scheme }, local ? new URL(target).origin : undefined);
+    : local
+      ? await pictureOf(browser, target, { ...view, scheme: taken.scheme }, new URL(target).origin)
+      : await pictureAnswered(browser, target, { ...view, scheme: taken.scheme });
   if (live && 'problem' in live) {
     return live;
   }

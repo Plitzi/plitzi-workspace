@@ -46,9 +46,13 @@ messages to every task (`*`): each task reads every one once, with its take or i
 `--files`, the task's files as they are, the shape of the data they import and how to call what they import from the
 rest of the project (`moduleApis.ts`: each imported name's signature and the first sentence of its doc, followed
 through a barrel, never its body — two of la-velada's pages import 43k characters of shared modules, said in 3k). In a
-task's copy whose own server is not running, `page check` and `page shot` serve the copy for that command and stop it
-after (`copyServer.ts`, by `serveCopy`): an agent starts no server to look at its page, where la-velada's spent 64 steps
-starting, waiting for, asking about and stopping theirs. **What
+task's copy whose own server is not running, `page check` and `page shot` serve the copy (`copyServer.ts`, by
+`serveCopy`) and keep it `LINGER_MS` for the next (`lingering.ts`): an agent starts no server to look at its page, where
+la-velada's spent 64 steps starting, waiting for, asking about and stopping theirs, and pictures it again without a
+start each time. A watchdog of its own stops it once unused or the copy is gone; one written since it was served
+(`src/`) is stopped and the copy served anew — `start` does not reload — and whatever serves the copy itself
+(`complete`, `task check`) stops it first: one server on a copy. Where processes are no group to stop later (Windows),
+the copy is served for the command and stopped after. **What
 nobody's task owns** — seen wrong outside the task in hand, there before the run — is `run notice "…" --on <where>`
 (`notices.ts`), by an agent with its token, a reviewer by its name, or the lead: one line of the log (`notice`) —
 never a message to the lead, which would wake it for what is the next stage's — said by the finish and listed in the report under "Noticed, owned by no task" —

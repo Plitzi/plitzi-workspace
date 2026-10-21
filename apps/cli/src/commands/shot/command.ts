@@ -458,7 +458,8 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       };
     }
 
-    // The pictures taken after the first: on one sheet, or each in a file of its own beside it.
+    // The pictures taken after the first: on one sheet with `--sheet`, and each in a file of its own beside it always —
+    // a sheet of 1440-wide steps is too small to read one, and kept none whole (velada-dress, design-1).
     if (moments.length > 1 && options.sheet) {
       const sheet = await taken.page.evaluate(
         contactSheet,
@@ -466,7 +467,9 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       );
       report.sheet = `${base}-sheet.png`;
       await writeFile(report.sheet, Buffer.from(sheet.replace(/^data:image\/png;base64,/, ''), 'base64'));
-    } else if (moments.length > 1) {
+    }
+
+    if (moments.length > 1) {
       // Each picture after the first in a file of its own beside it — frames too: only the first was written, and it is
       // taken before anything has moved.
       report.pictures = [];

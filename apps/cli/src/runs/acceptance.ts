@@ -6,6 +6,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { projectMark } from '@plitzi/sdk-shared/project';
 
+import { stopKept } from './lingering';
 import { stopTree, TREE } from './processes';
 import { runScript, scriptsOf, tail } from '../commands/verify';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
@@ -104,7 +105,9 @@ export const serveCopy = async (
   cache: string,
   /** What the agent does once it has put right what kept the copy from being served: `complete` by default. */
   { again = 'complete again' }: { again?: string } = {}
-): Promise<{ url: string; port: number; stop: () => void } | { problem: string }> => {
+): Promise<{ url: string; port: number; stop: () => void; keep: () => number | undefined } | { problem: string }> => {
+  // Kept from a picture before: stopped — the copy is served here for this command, one server at a time on it.
+  await stopKept(cache);
   const running = await ownServer(work);
   if (running !== undefined) {
     return {
@@ -160,7 +163,14 @@ export const serveCopy = async (
     };
   }
 
-  return { url, port, stop };
+  // Kept past this command: let go of, so this process ends without it — its pid, for the watchdog that stops it.
+  const keep = (): number | undefined => {
+    child.unref();
+
+    return child.pid;
+  };
+
+  return { url, port, stop, keep };
 };
 
 /** A `plitzi` on the path that is this CLI: a check runs the version the run is worked with, not another installed. */

@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 
 import { ownServer, serveCopy } from './acceptance';
+import { canLinger, keepServer, keptServer, LINGER_MS } from './lingering';
 import { copyOf, runPaths, taskPaths } from './paths';
 import { projectOrigin } from '../browser';
 
@@ -30,19 +31,31 @@ export const originHere = async (
     return { origin: `http://127.0.0.1:${String(own)}` };
   }
 
-  const served = await serveCopy(root, copy.root, taskPaths(runPaths(copy.root, copy.run), copy.task).cache, {
-    again: 'run it again'
-  });
+  const cache = taskPaths(runPaths(copy.root, copy.run), copy.task).cache;
+  const kept = await keptServer(root, cache);
+  if (kept !== undefined) {
+    return { origin: kept };
+  }
+
+  const served = await serveCopy(root, copy.root, cache, { again: 'run it again' });
   if ('problem' in served) {
     return { problem: `Nothing of the copy's own answers, and serving it for this command failed: ${served.problem}` };
+  }
+
+  // Kept for the next picture, where processes are a group to stop later; stopped after this command elsewhere.
+  const pid = canLinger() ? served.keep() : undefined;
+  if (pid !== undefined) {
+    await keepServer(root, cache, pid, served.port);
   }
 
   // Said where it does not get in the way of an answer read as JSON.
   process.stderr.write(
     chalk.dim(
-      `· no server of the copy's answered: served on :${String(served.port)} for this command, stopped after it\n`
+      pid === undefined
+        ? `· no server of the copy's answered: served on :${String(served.port)} for this command, stopped after it\n`
+        : `· no server of the copy's answered: served on :${String(served.port)}, kept ${String(LINGER_MS / 60_000)} min for the next command\n`
     )
   );
 
-  return { origin: served.url, stop: served.stop };
+  return pid === undefined ? { origin: served.url, stop: served.stop } : { origin: served.url };
 };
