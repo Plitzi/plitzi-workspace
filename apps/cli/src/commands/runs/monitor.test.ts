@@ -7,7 +7,7 @@ import { flowLines } from './monitorFlow';
 import { groupRepeats, monitorRun } from '../../runs/monitor';
 import { askLead, messageTasks, noteRun } from '../../runs/talk';
 import { completeTask, reviewTask } from '../../runs/tasks';
-import { makeBench, writeInCopy } from '../../tests/runProject';
+import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 
 import type { FeedLine } from '../../runs/monitor';
@@ -107,8 +107,13 @@ describe('plitzi run monitor', () => {
     expect(last.find(line => line.startsWith('ACTIVITY'))).toContain('← newer');
     // Every page, one after another, is the whole activity once.
     const activityOf = (screen: string[]) =>
-      // After its title and the columns' names, before the keys and the legend.
-      screen.slice(screen.findIndex(line => line.startsWith('ACTIVITY')) + 2, -2).filter(line => line.trim() !== '');
+      // After its title and the columns' names, before the keys and the legend — as many lines as the width wraps them in.
+      screen
+        .slice(
+          screen.findIndex(line => line.startsWith('ACTIVITY')) + 2,
+          screen.findIndex(line => line.startsWith('q quits'))
+        )
+        .filter(line => line.trim() !== '');
     const shown = Array.from({ length: pages }, (_, page) => activityOf(at(page))).flat();
     expect(shown).toHaveLength(data.feed.length);
   });
@@ -276,12 +281,112 @@ describe('plitzi run monitor', () => {
       })
     );
 
-    const taskRow = screen.findIndex(line => line.includes('t-home'));
+    // Its row in the tasks' list — the flow above names it too.
+    const listTop = screen.findIndex(line => line.startsWith('TASKS'));
+    const taskRow = screen.findIndex((line, index) => index > listTop && line.includes('t-home'));
     expect(taskRow).toBeGreaterThanOrEqual(regions.tasks[0]);
     expect(taskRow).toBeLessThan(regions.tasks[1]);
     const noteRow = screen.findIndex(line => line.includes('“A note”'));
     expect(noteRow).toBeGreaterThanOrEqual(regions.activity[0]);
     expect(noteRow).toBeLessThan(regions.activity[1]);
+  });
+
+  // Not every terminal is a wide monitor: the board fits each — the flow in bands, the agents under the tasks, the keys
+  // wrapped — and the flow is always there, the kanban being what the board is for.
+  it('fits every terminal, from a laptop pane to a wide monitor, the flow always on it', async () => {
+    const runId = await open();
+    await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
+    await take('agent-2', 't-home');
+    for (const text of Array.from({ length: 20 }, (_, index) => `Note ${String(index + 1)}`)) {
+      await noteRun(lead(), runId, text);
+    }
+
+    const data = await monitorRun(lead(), runId);
+    for (const [width, height] of [
+      [60, 20],
+      [80, 24],
+      [100, 30],
+      [120, 40],
+      [160, 50],
+      [220, 60]
+    ] as const) {
+      const screen = plain(monitorScreen(data, { selected: 0, open: false, width, height, now: bench.now() }));
+      const at = `${String(width)}×${String(height)}`;
+      expect(screen.length, at).toBeLessThanOrEqual(height);
+      expect(Math.max(...screen.map(line => line.length)), at).toBeLessThanOrEqual(width);
+      expect(
+        screen.some(line => line.startsWith('FLOW')),
+        at
+      ).toBe(true);
+      for (const stage of [
+        'pending',
+        'ready',
+        'at work',
+        'held',
+        'UI review',
+        'lead review',
+        'approved',
+        'sent back'
+      ]) {
+        expect(
+          screen.some(line => line.includes(`${stage} (`)),
+          `${at}: ${stage}`
+        ).toBe(true);
+      }
+
+      expect(
+        screen.some(line => line.startsWith('TASKS')),
+        at
+      ).toBe(true);
+      expect(
+        screen.some(line => line.includes('AGENTS')),
+        at
+      ).toBe(true);
+      // The keys wrapped, never cut: the last of them is on screen whole.
+      expect(
+        screen.some(line => line.includes('←→ the activity')),
+        at
+      ).toBe(true);
+      const activity = screen.findIndex(line => line.startsWith('ACTIVITY'));
+      const keys = screen.findIndex(line => line.startsWith('q quits'));
+      // A few events from 24 rows on — a shorter terminal gives its rows to the board.
+      if (height >= 24) {
+        expect(activity, at).toBeGreaterThan(0);
+        expect(keys - activity - 3, at).toBeGreaterThanOrEqual(3);
+      }
+    }
+  });
+
+  // A long plan is scrolled through, not laid out whole: the rows it would take are the activity's.
+  it('lists fifteen tasks at most, the rest scrolled to, and gives the activity the rows left', async () => {
+    const plan = benchPlan();
+    plan.tasks = Array.from({ length: 20 }, (_, index) => ({
+      id: `t-page-${String(index + 1)}`,
+      title: `Page ${String(index + 1)}`,
+      files: [`src/space/pages/p${String(index + 1)}.ts`],
+      dependsOn: [],
+      priority: 'medium' as const,
+      estimateMinutes: 10,
+      acceptance: []
+    }));
+    const runId = await open(plan);
+    for (const text of Array.from({ length: 30 }, (_, index) => `Note ${String(index + 1)}`)) {
+      await noteRun(lead(), runId, text);
+    }
+
+    const data = await monitorRun(lead(), runId, Number.MAX_SAFE_INTEGER);
+    const at = (selected: number) =>
+      plain(monitorScreen(data, { selected, open: false, width: 200, height: 70, now: bench.now() }));
+    const screen = at(0);
+    const listTop = screen.findIndex(line => line.startsWith('TASKS'));
+    const listed = screen.slice(listTop + 1).filter(line => / t-page-\d+ /.test(line.split('│')[0] ?? ''));
+    expect(listed).toHaveLength(15);
+    expect(screen[listTop]).toContain('↓ 5 more');
+    // Scrolled: the last one chosen is in the list.
+    expect(at(19).some(line => (line.split('│')[0] ?? '').includes('t-page-20 '))).toBe(true);
+    const activity = screen.findIndex(line => line.startsWith('ACTIVITY'));
+    const keys = screen.findIndex(line => line.startsWith('q quits'));
+    expect(keys - activity - 3).toBeGreaterThan(10);
   });
 
   it('fits the terminal: every line its width, the feed cut to the rows left', async () => {

@@ -21,10 +21,44 @@ export const FEED_LOOK: Record<FeedLine['kind'], { mark: string; tone: (text: st
   other: { mark: chalk.dim('·'), tone: chalk.dim }
 };
 
+/** How wide the activity's WHO and TASK columns are: what their longest says, narrower on a narrow terminal. */
+export interface FeedColumns {
+  who: number;
+  task: number;
+}
+
+const whoOf = (line: FeedLine): string => (line.to === undefined ? line.by : `${line.by} → ${line.to}`);
+
+/**
+ * The columns the activity needs at this width: as wide as the longest who and task in it, never wider than a column
+ * may be — less on a narrow terminal, where its words need the room — nor narrower than its name.
+ */
+export const feedColumns = (lines: readonly FeedLine[], width: number): FeedColumns => {
+  const narrow = width < 110;
+  const longest = (of: (line: FeedLine) => number) => Math.max(0, ...lines.map(of));
+
+  return {
+    who: Math.min(
+      narrow ? 16 : WHO_WIDTH,
+      Math.max(
+        4,
+        longest(line => whoOf(line).length)
+      )
+    ),
+    task: Math.min(
+      narrow ? 14 : ID_WIDTH,
+      Math.max(
+        4,
+        longest(line => line.task?.length ?? 0)
+      )
+    )
+  };
+};
+
 /** One event of the activity: when, what kind, who — and to whom, for a message — and what, its words quoted. */
-export const feedRow = (line: FeedLine, opened = false): string => {
+export const feedRow = (line: FeedLine, columns: FeedColumns, opened = false): string => {
   const look = FEED_LOOK[line.kind];
-  const who = line.to === undefined ? line.by : `${line.by} → ${line.to}`;
+  const who = whoOf(line);
   const what = line.quote === undefined ? line.text : `${line.kind === 'question' ? 'asks: ' : ''}“${line.quote}”`;
 
   const again =
@@ -36,9 +70,9 @@ export const feedRow = (line: FeedLine, opened = false): string => {
   const fold = line.count === undefined ? '  ' : chalk.bold(opened ? '▾ ' : '▸ ');
 
   // The task its own column, empty when the event is about none: what happened to which task reads down the board.
-  const task = line.task === undefined ? ' '.repeat(ID_WIDTH) : chalk.cyan(idCell(line.task));
+  const task = line.task === undefined ? ' '.repeat(columns.task) : chalk.cyan(idCell(line.task, columns.task));
 
-  return `${fold}${chalk.dim(hhmm(line.at))} ${look.mark} ${chalk.bold(who.padEnd(WHO_WIDTH))} ${task} ${look.tone(what)}${again}`;
+  return `${fold}${chalk.dim(hhmm(line.at))} ${look.mark} ${chalk.bold(idCell(who, columns.who))} ${task} ${look.tone(what)}${again}`;
 };
 
 export const FEED_WORDS: Record<FeedLine['kind'], string> = {
@@ -58,12 +92,12 @@ export const FEED_WORDS: Record<FeedLine['kind'], string> = {
 export const groupKey = (line: FeedLine): string => `${line.at}|${line.by}|${line.group ?? line.text}`;
 
 /** One repeat of an opened group, under its line: its time and its own words. */
-export const repeatRow = (line: FeedLine): string =>
+export const repeatRow = (line: FeedLine, columns: FeedColumns): string =>
   // The columns of its group's line — fold, time, mark, who, task — its words a little right of the group's WHAT, as
   // what hangs from it.
   chalk.dim(
-    `  ${hhmm(line.at)} └ ${' '.repeat(WHO_WIDTH)} ${' '.repeat(ID_WIDTH)}   ${line.quote === undefined ? line.text : `“${line.quote}”`}`
+    `  ${hhmm(line.at)} └ ${' '.repeat(columns.who)} ${' '.repeat(columns.task)}   ${line.quote === undefined ? line.text : `“${line.quote}”`}`
   );
 
-/** The activity's "who" column: an agent, or who to whom for a message. */
+/** The widest the activity's "who" column is: an agent, or who to whom for a message. */
 export const WHO_WIDTH = 24;

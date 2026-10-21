@@ -473,7 +473,7 @@ plitzi task review t-home --approve        # the lead's: into the run's work, ne
 plitzi run watch --json                    # how the run goes: a line per task, what needs attention
 plitzi run watch --until lead              # ends the moment something needs the lead: run it in the background
 plitzi run preview                         # the run's work as it goes, served: each approval shows; its dev tools' Run tab
-plitzi run monitor                         # the run, live, in a terminal of your own beside the harness — it only reads
+plitzi run monitor                         # the run, live, in a terminal of your own beside the harness: its flow as a kanban, its tasks, agents and activity, fitted to the terminal — it only reads
 plitzi task show t-home                    # a task as its lead reviews it: checks, agreements, each file's diff
 plitzi task show t-home src/space/pages/home/hero.ts   # one file whole, as it went to review
 plitzi run report --summary summary.md     # the lead closes the run with its report

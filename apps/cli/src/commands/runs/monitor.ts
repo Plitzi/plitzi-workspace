@@ -3,9 +3,10 @@ import { emitKeypressEvents } from 'node:readline';
 
 import chalk from 'chalk';
 
-import { ago, cell, hhmm, ID_WIDTH, idCell } from './monitorCells';
-import { FEED_LOOK, FEED_WORDS, feedRow, groupKey, repeatRow, WHO_WIDTH } from './monitorFeed';
-import { flowLines } from './monitorFlow';
+import { bodyOf, detailOf, listedTasks, orderedTasks } from './monitorBoard';
+import { cell, hhmm, wrapped } from './monitorCells';
+import { FEED_LOOK, FEED_WORDS, feedColumns, feedRow, groupKey, repeatRow } from './monitorFeed';
+import { fittedFlow } from './monitorFlow';
 import { contextFor } from './shell';
 import { monitorRun } from '../../runs/monitor';
 import { runPaths } from '../../runs/paths';
@@ -13,7 +14,7 @@ import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { activeRuns, runIds } from '../../runs/run';
 
 import type { RunCommandOptions } from './shell';
-import type { AgentLine, AgentStatus, Monitored, TaskStory } from '../../runs/monitor';
+import type { Monitored } from '../../runs/monitor';
 import type { RunContext } from '../../runs/run';
 import type { TaskLine } from '../../runs/view';
 
@@ -23,28 +24,6 @@ import type { TaskLine } from '../../runs/view';
  * reviews and their verdicts, messages. It only reads — no message is marked read, nothing the lead is woken for is
  * touched — so the agents never notice it. A shell with no terminal (an agent's) is refused: theirs is `run watch`.
  */
-
-const TASK_STATE: Record<TaskLine['status'], (task: TaskLine) => string> = {
-  pending: task => chalk.dim(task.waitsOn ? `· after ${task.waitsOn.join(', ')}` : '· pending'),
-  ready: () => '○ ready — free to take',
-  'in-progress': task =>
-    task.asking
-      ? chalk.yellow(`? ${task.agent ?? ''} asks the lead (${task.asking.id})`)
-      : chalk.cyan(
-          `▶ ${task.agent ?? ''}${task.fraction === undefined ? '' : ` ${String(Math.round(task.fraction * 100))}%`}`
-        ),
-  waiting: task => chalk.yellow(`… waits ${task.waitingFor?.task ?? ''}`),
-  'in-review': task =>
-    chalk.magenta(
-      task.design?.status === 'due'
-        ? `◎ UI review · ${task.design.by ?? 'no designer yet'} → lead`
-        : `◎ lead review · ${task.reviewer ?? 'no lead yet'}`
-    ),
-  'changes-requested': task => chalk.yellow(`↺ round ${String(task.round)} · ${task.agent ?? ''}`),
-  done: () => chalk.green('✓ approved'),
-  blocked: task => chalk.red(`■ blocked${task.blockedBy ? ` · needs ${task.blockedBy.needs}` : ''}`),
-  failed: () => chalk.red('✗ failed')
-};
 
 /** How the head counts tasks in each state. */
 const STATUS_WORDS: Record<TaskLine['status'], string> = {
@@ -59,20 +38,6 @@ const STATUS_WORDS: Record<TaskLine['status'], string> = {
   done: 'approved'
 };
 
-const AGENT_STATE: Record<AgentStatus, string> = {
-  working: chalk.cyan('● working'),
-  reviewing: chalk.magenta('● reviewing'),
-  'in-review': chalk.magenta('◐ in review'),
-  blocked: chalk.yellow('● blocked'),
-  asking: chalk.yellow('? asks the lead'),
-  waiting: chalk.cyan('◌ waiting'),
-  idle: chalk.dim('○ idle'),
-  stopped: chalk.dim('◼ stopped'),
-  done: chalk.green('✓ done'),
-  'not-started': chalk.dim('· not started'),
-  'no-signal': chalk.red('● no signal')
-};
-
 /** A mouse report in SGR form: the button, the column, the row, and M pressed or m released. */
 // eslint-disable-next-line no-control-regex -- a terminal's mouse report starts with ESC: it is what is matched
 const MOUSE = /\x1b\[<(\d+);(\d+);(\d+)([Mm])/g;
@@ -80,131 +45,18 @@ const MOUSE = /\x1b\[<(\d+);(\d+);(\d+)([Mm])/g;
 /** The attention rows shown on top: the board is for seeing it all, the full list is `run status`. */
 const ATTENTION_ROWS = 5;
 
-/** A model's short name: what the line has room for. */
-const shortModel = (model: string | undefined): string => (model ?? 'harness').replace(/^claude-/, '');
-
-/** Where a task stands, the work first: at work, sent back, in review, waiting — then free, pending, and done last. */
-const ORDER: Record<TaskLine['status'], number> = {
-  'in-progress': 0,
-  'changes-requested': 1,
-  'in-review': 2,
-  waiting: 3,
-  blocked: 4,
-  failed: 5,
-  ready: 6,
-  pending: 7,
-  done: 8
-};
-
-/** The tasks as the panel lists them: by where each stands, the plan's order within. */
-export const orderedTasks = (tasks: readonly TaskLine[]): TaskLine[] =>
-  tasks
-    .map((task, index) => ({ task, index }))
-    .sort((a, b) => ORDER[a.task.status] - ORDER[b.task.status] || a.index - b.index)
-    .map(({ task }) => task);
-
-/** The tasks the list shows: all of them, or — the board's default — those not approved yet, the approved said in a line. */
-export const listedTasks = (tasks: readonly TaskLine[], showApproved: boolean): TaskLine[] => {
-  const ordered = orderedTasks(tasks);
-  const left = ordered.filter(task => task.status !== 'done');
-
-  // Nothing left: the approved are all there is to see — listed, never folded into a count.
-  return showApproved || left.length === 0 ? ordered : left;
-};
-
-const minutesBetween = (from: string, to: string): number => Math.round((Date.parse(to) - Date.parse(from)) / 60_000);
-
-/** A task's time against its estimate: spent while it is worked, from its first take to its approval once done. */
-const timeOf = (task: TaskLine, story: TaskStory | undefined): string => {
-  const spent =
-    task.status === 'done' && story?.takenAt && story.approvedAt
-      ? minutesBetween(story.takenAt, story.approvedAt)
-      : task.spentMinutes;
-
-  return spent === undefined ? '' : `${String(spent)}m of ${String(task.estimateMinutes)}`;
-};
-
-/** What follows a task's state on its row: who wrote it, its rounds and its time once done; how long it is as it is. */
-const rowTail = (task: TaskLine, story: TaskStory | undefined, now: Date): string => {
-  if (task.status === 'pending' || task.status === 'ready') {
-    return '';
-  }
-
-  const parts =
-    task.status === 'done'
-      ? [story?.writers.join(', ') ?? '', task.round > 1 ? `${String(task.round)} rounds` : '', timeOf(task, story)]
-      : [timeOf(task, story), `${ago(task.updatedAt, now).replace(' ago', '')} as it is`];
-
-  return chalk.dim(
-    parts
-      .filter(Boolean)
-      .map(part => ` · ${part}`)
-      .join('')
-  );
-};
-
-const taskRow = (task: TaskLine, story: TaskStory | undefined, selected: boolean, now: Date): string =>
-  `${selected ? chalk.inverse('›') : ' '} ${idCell(task.id)} ${TASK_STATE[task.status](task)}${rowTail(task, story, now)}`;
-
-const ROLE_SHORT: Record<string, string> = { developer: 'dev', designer: 'design', tester: 'test', writer: 'write' };
-
-/** An agent's row: who, its model and roles, where it stands, when last heard and what it got approved — then what it
- * does, which the screen may cut. */
-const agentRow = (agent: AgentLine, now: Date): string =>
-  `${chalk.bold(agent.agent.padEnd(9))} ${chalk.dim(`${shortModel(agent.model)}${agent.kind === 'agent' && agent.roles.length > 0 ? ` · ${agent.roles.map(role => ROLE_SHORT[role] ?? role).join('+')}` : ''}`.padEnd(20))} ${AGENT_STATE[agent.status]}${chalk.dim(`${agent.signalAt ? ` ${ago(agent.signalAt, now)}` : ''}${agent.approved > 0 ? ` · ✓${String(agent.approved)}` : ''}`)} · ${agent.doing}`;
-
-/** Who did what of a task, said in a line each: its writers, its UI's review, its approval. */
-const storyOf = (task: TaskLine, story: TaskStory | undefined): string[] =>
-  story === undefined
-    ? []
-    : [
-        ...(story.writers.length > 0
-          ? [`  written by ${story.writers.join(', then ')}${story.takenAt ? ` from ${hhmm(story.takenAt)} UTC` : ''}`]
-          : []),
-        ...(story.design === 'skipped'
-          ? ['  its UI: the lead went first (--skip-design)']
-          : story.design
-            ? [`  its UI approved by ${story.design}`]
-            : []),
-        ...(story.approvedAt
-          ? [
-              `  approved by ${story.approvedBy ?? 'lead'} at ${hhmm(story.approvedAt)} UTC${timeOf(task, story) ? ` — ${timeOf(task, story)} min` : ''}`
-            ]
-          : []),
-        ...(story.sentBack > 0 || story.failedChecks > 0
-          ? [
-              chalk.yellow(
-                `  ${[story.sentBack > 0 ? `sent back ${String(story.sentBack)}×` : '', story.failedChecks > 0 ? `${String(story.failedChecks)} failed check${story.failedChecks === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ')}`
-              )
-            ]
-          : [])
-      ];
-
-const detailOf = (task: TaskLine, story: TaskStory | undefined): string[] => [
-  chalk.bold(`${task.id} — ${task.title}`),
-  `  ${task.status}${task.round > 0 ? ` · round ${String(task.round)}` : ''} · ${task.role} · ${task.priority} · ${String(task.estimateMinutes)} min estimated${task.status !== 'done' && task.spentMinutes !== undefined ? `, ${String(task.spentMinutes)} spent` : ''}`,
-  ...storyOf(task, story),
-  ...(task.asking ? [chalk.yellow(`  asks the lead (${task.asking.id}): ${task.asking.text}`)] : []),
-  ...(task.step ? [`  now: ${task.step}`] : []),
-  ...(task.waitsOn
-    ? [`  starts once ${task.waitsOn.join(', ')} ${task.waitsOn.length === 1 ? 'is' : 'are'} approved`]
-    : []),
-  ...(task.waitingFor
-    ? [chalk.yellow(`  waits for ${task.waitingFor.task}${task.waitingFor.file ? `: ${task.waitingFor.file}` : ''}`)]
-    : []),
-  ...(task.blockedBy ? [chalk.red(`  blocked: ${task.blockedBy.reason}`)] : []),
-  ...(task.unblocks.length > 0 ? [`  then: ${task.unblocks.join(', ')}`] : []),
-  ...task.files.map(file => chalk.dim(`  ${file}`))
-];
-
-/** Two columns side by side, each its width: the tasks and the agents. */
-const columns = (left: string[], right: string[], leftWidth: number, rightWidth: number): string[] =>
-  Array.from(
-    { length: Math.max(left.length, right.length) },
-    (_, index) => `${cell(left[index] ?? '', leftWidth)} │ ${cell(right[index] ?? '', rightWidth)}`
-  );
-
-/** The panel, as lines that fit `width` × `height`: the run, tasks beside agents, attention, then the feed. */
+/** Under it the head says only the run and its counts: the goal and the preview are for a taller terminal. */
+const SHORT_HEIGHT = 32;
+/** The activity's events the board leaves room for: a fifth of it, from these to these — and then whatever it leaves. */
+const MIN_EVENTS = 3;
+const MAX_EVENTS = 10;
+/** The activity's own rows above its events: a blank, its title, its columns' names. */
+const ACTIVITY_HEAD = 3;
+/** From this height on the activity always has its few events; under it, the board takes the rows. */
+const MIN_ACTIVITY_HEIGHT = 24;
+/** The fewest rows the tasks and agents are given, whatever is left. */
+const MIN_BODY = 4;
+/** The panel, as lines that fit `width` × `height`: the run, attention, the flow, tasks and agents, then the feed. */
 export const monitorScreen = (
   data: Monitored,
   {
@@ -220,7 +72,7 @@ export const monitorScreen = (
     onGroupRows,
     onGroupPages,
     onRegions,
-    flow = false
+    flow = true
   }: {
     selected: number;
     open: boolean;
@@ -237,7 +89,7 @@ export const monitorScreen = (
     opened?: ReadonlySet<string>;
     /** Told which row of the screen is which group's line (0 the top): what a click there opens or folds. */
     onGroupRows?: (rows: Map<number, string>) => void;
-    /** The run's flow drawn in the place of the tasks and agents (`f`). */
+    /** The run's flow, the board's kanban, above the tasks and agents — `f` hides it. */
     flow?: boolean;
     /** Told which page of the activity each group's line is on: an opened group is shown on its page. */
     onGroupPages?: (pages: Map<string, number>) => void;
@@ -257,6 +109,9 @@ export const monitorScreen = (
     counts.push(chalk.yellow(`${String(asking)} asking the lead`));
   }
 
+  // A short terminal keeps the run's line and its counts; the goal and the preview are for a tall one.
+  const short = height < SHORT_HEIGHT;
+  const preview = `${view.previewPort === undefined ? chalk.dim('preview: npm run start:preview') : `preview: http://127.0.0.1:${String(view.previewPort)}`}${others.length > 0 ? chalk.dim(` · other runs: ${others.map(run => `${run.runId} (${run.status})`).join(', ')}`) : ''}`;
   const head = [
     chalk.inverse(
       cell(
@@ -264,99 +119,108 @@ export const monitorScreen = (
         width
       )
     ),
-    chalk.dim(cell(` ${view.goal}`, width)),
-    cell(` ${counts.length > 0 ? counts.join(' · ') : 'nothing at work'}`, width),
+    ...(short ? [] : [chalk.dim(cell(` ${view.goal}`, width))]),
     cell(
-      ` ${view.previewPort === undefined ? chalk.dim('preview: npm run start:preview') : `preview: http://127.0.0.1:${String(view.previewPort)}`}${others.length > 0 ? chalk.dim(` · other runs: ${others.map(run => `${run.runId} (${run.status})`).join(', ')}`) : ''}`,
+      ` ${counts.length > 0 ? counts.join(' · ') : 'nothing at work'}${short ? chalk.dim(' · ') + preview : ''}`,
       width
     ),
+    ...(short ? [] : [cell(` ${preview}`, width)]),
     ''
   ];
-  const leftWidth = Math.max(30, Math.floor(width * 0.42));
-  const rightWidth = Math.max(10, width - leftWidth - 3);
   // What may need a supervisor: on top, under the run's head — the rest of the board is what is going on.
+  const attentionRows = short ? 2 : ATTENTION_ROWS;
   const attention =
     view.attention.length === 0
       ? [cell(chalk.green(' ✓ nothing needs anyone now'), width)]
       : [
           chalk.bold.yellow(` NEEDS ATTENTION (${String(view.attention.length)})`),
           ...view.attention
-            .slice(0, ATTENTION_ROWS)
+            .slice(0, attentionRows)
             .map(item =>
               cell(` ${item.who === 'person' ? chalk.red('■ you:') : chalk.yellow('⚠ lead:')} ${item.text}`, width)
             ),
-          ...(view.attention.length > ATTENTION_ROWS
-            ? [chalk.dim(`   + ${String(view.attention.length - ATTENTION_ROWS)} more — plitzi run status`)]
+          ...(view.attention.length > attentionRows
+            ? [chalk.dim(`   + ${String(view.attention.length - attentionRows)} more — plitzi run status`)]
             : [])
         ];
-  // The tasks a screen has room for, the selected one in them: a run of thirty would push everything else off.
-  const room = Math.max(6, Math.floor((height - head.length - attention.length - 1) / 2) - 1);
-  const listed = listedTasks(view.tasks, showApproved);
-  const approved = tasks.length - tasks.filter(task => task.status !== 'done').length;
-  const first = Math.min(Math.max(0, selected - Math.floor(room / 2)), Math.max(0, listed.length - room));
-  const shown = listed.slice(first, first + room);
-  const body = columns(
+  // The keys and the activity's marks, wrapped to the width rather than cut: on a narrow terminal each still says them.
+  const keys = wrapped(
     [
-      chalk.bold(
-        `TASKS (${String(tasks.length)})${listed.length > room ? chalk.dim(` ${String(first + 1)}–${String(first + shown.length)}`) : ''}`
-      ) +
-        chalk.dim(
-          `  ↑↓ choose · enter ${open ? 'closes' : 'opens'} it${tasks.some(task => task.status !== 'done') ? ` · a ${showApproved ? 'hides' : 'shows'} the approved` : ''}`
-        ),
-      ...shown.map((task, index) => taskRow(task, stories[task.id], first + index === selected, now)),
-      ...(first + shown.length < listed.length
-        ? [chalk.dim(`  ↓ ${String(listed.length - first - shown.length)} more`)]
-        : []),
-      ...(listed.length < tasks.length
-        ? [
-            chalk.green(`  ✓ ${String(approved)} approved`) +
-              chalk.dim(
-                ` (a lists them): ${tasks
-                  .filter(task => task.status === 'done')
-                  .map(task => task.id)
-                  .join(', ')}`
-              )
-          ]
-        : [])
+      'q quits',
+      `f ${flow ? 'hides' : 'shows'} the flow`,
+      '↑↓ a task',
+      'enter opens it',
+      'a the approved',
+      '←→ the activity',
+      ...(short ? [] : ['"after X": starts once X is approved', '○ free to take', '■ needs someone'])
     ],
-    [chalk.bold(`AGENTS (${String(agents.length)})`), ...agents.map(agent => agentRow(agent, now))],
-    leftWidth,
-    rightWidth
+    width
+  ).map(line => chalk.dim(line));
+  const marks = wrapped(
+    [
+      'activity:',
+      ...(
+        ['take', 'complete', 'review', 'approved', 'sent-back', 'message', 'question', 'problem', 'run'] as const
+      ).map(kind => `${FEED_LOOK[kind].mark} ${chalk.dim(FEED_WORDS[kind])}`)
+    ],
+    width,
+    '  '
   );
+  const foot = ['', ...keys, ...marks];
+
+  // What is left under the head, the attention and the keys, shared by what matters most first: the flow — the board's
+  // kanban, where every task stands — then the tasks and agents, then the activity: a fifth or so, and every row the tasks — fifteen at most — leave.
+  const room = Math.max(0, height - head.length - attention.length - 1 - foot.length);
+  const listed = listedTasks(view.tasks, showApproved);
   const picked = listed.at(selected);
-  // The flow (`f`) in the place of the tasks and agents: where every task stands, from to-do to approved.
-  const board = flow ? flowLines(view.tasks, width) : body;
+  // A few events of the activity on any terminal of a usual height; on a shorter one it gives its rows to the board.
+  const leastActivity = height >= MIN_ACTIVITY_HEIGHT ? MIN_EVENTS + ACTIVITY_HEAD : 0;
+  // A task opened says all it can in what the board and the activity leave: its files are the last of it, cut first.
   const detail =
-    !flow && open && picked ? ['', ...detailOf(picked, stories[picked.id]).map(line => cell(line, width))] : [];
-  const foot = [
-    '',
-    chalk.dim(
-      cell(
-        'q quits · f the flow · ↑↓ a task · enter opens it · a the approved · ←→ the activity · "after X": starts once X is approved · ○ free to take · ■ needs someone',
-        width
+    open && picked
+      ? ['', ...detailOf(picked, stories[picked.id]).map(line => cell(line, width))].slice(
+          0,
+          Math.max(2, room - MIN_BODY - 3 - leastActivity)
+        )
+      : [];
+  const board = flow
+    ? fittedFlow(
+        view.tasks,
+        width,
+        Math.min(Math.round(room * 0.4), room - leastActivity - MIN_BODY - detail.length - 1),
+        !short
       )
-    ),
-    cell(
-      chalk.dim('activity: ') +
-        (['take', 'complete', 'review', 'approved', 'sent-back', 'message', 'question', 'problem', 'run'] as const)
-          .map(kind => `${FEED_LOOK[kind].mark} ${chalk.dim(FEED_WORDS[kind])}`)
-          .join('  '),
-      width
-    )
-  ];
-  const left = Math.max(
-    0,
-    height - head.length - attention.length - 1 - board.length - detail.length - foot.length - 3
+    : [];
+  const besideBoard = board.length > 0 ? 1 : 0;
+  const wanted = Math.min(MAX_EVENTS, Math.max(MIN_EVENTS, Math.round(room * 0.2))) + ACTIVITY_HEAD;
+  const bodyRoom = Math.max(
+    MIN_BODY,
+    room - board.length - besideBoard - detail.length - Math.max(leastActivity, Math.min(wanted, room - MIN_BODY))
   );
+  const { lines: body, tasks: taskRows } = bodyOf({
+    tasks,
+    listed,
+    agents,
+    stories,
+    selected,
+    open,
+    showApproved,
+    width,
+    rows: bodyRoom,
+    now
+  });
+  // Every row the board leaves — the tasks listed fifteen at most — is the activity's.
+  const left = Math.max(0, room - board.length - besideBoard - body.length - detail.length - ACTIVITY_HEAD);
   // The activity's rows: each event, and under an opened group each of its repeats.
   type Row = { row: string; key?: string };
+  const feedWidths = feedColumns([...feed, ...feed.flatMap(line => line.repeats ?? [])], width);
   const blocks: Row[][] = feed.map(line =>
     line.count !== undefined && opened.has(groupKey(line))
       ? [
-          { row: feedRow(line, true), key: groupKey(line) },
-          ...(line.repeats ?? []).map(each => ({ row: repeatRow(each) }))
+          { row: feedRow(line, feedWidths, true), key: groupKey(line) },
+          ...(line.repeats ?? []).map(each => ({ row: repeatRow(each, feedWidths) }))
         ]
-      : [{ row: feedRow(line), ...(line.count === undefined ? {} : { key: groupKey(line) }) }]
+      : [{ row: feedRow(line, feedWidths), ...(line.count === undefined ? {} : { key: groupKey(line) }) }]
   );
   // Paged by event, never splitting an opened group: its repeats are on the page its line is on.
   const pagesOf: Row[][] = [];
@@ -390,27 +254,36 @@ export const monitorScreen = (
       ? []
       : [
           '',
-          `${chalk.bold('ACTIVITY')}${chalk.dim(
-            pages > 1
-              ? `  ${String(firstLine + 1)}–${String(firstLine + shownRows.length)} of ${String(rows.length)} · ${page > 0 ? '← newer' : '← (newest)'} · ${page < pages - 1 ? 'older →' : '(oldest) →'} · the wheel too`
-              : `  ${String(rows.length)}, all shown`
-          )}`,
-          chalk.dim(cell(`  ${'TIME'.padEnd(5)}   ${'WHO'.padEnd(WHO_WIDTH)} ${'TASK'.padEnd(ID_WIDTH)} WHAT`, width)),
+          cell(
+            `${chalk.bold('ACTIVITY')}${chalk.dim(
+              pages > 1
+                ? `  ${String(firstLine + 1)}–${String(firstLine + shownRows.length)} of ${String(rows.length)} · ${page > 0 ? '← newer' : '← (newest)'} · ${page < pages - 1 ? 'older →' : '(oldest) →'} · the wheel too`
+                : `  ${String(rows.length)}, all shown`
+            )}`,
+            width
+          ),
+          chalk.dim(
+            cell(
+              `  ${'TIME'.padEnd(5)}   ${'WHO'.padEnd(feedWidths.who)} ${'TASK'.padEnd(feedWidths.task)} WHAT`,
+              width
+            )
+          ),
           ...shownRows.map(each => cell(each.row, width))
         ];
 
+  const boardTop = head.length + attention.length + 1;
+  const bodyTop = boardTop + board.length + besideBoard;
   // Where each group's line lands on the screen: the rows above it, then the activity's title and column names.
-  const above = head.length + attention.length + 1 + board.length + detail.length + 3;
+  const above = bodyTop + body.length + detail.length + ACTIVITY_HEAD;
   onGroupRows?.(
     new Map(shownRows.flatMap((each, index) => (each.key === undefined ? [] : [[above + index, each.key] as const])))
   );
-  const boardTop = head.length + attention.length + 1;
   onRegions?.({
-    tasks: flow ? [0, 0] : [boardTop, boardTop + board.length],
+    tasks: [bodyTop + taskRows[0], bodyTop + taskRows[1]],
     activity: [above, above + shownRows.length]
   });
 
-  return [...head, ...attention, '', ...board, ...detail, ...activity, ...foot];
+  return [...head, ...attention, '', ...board, ...(besideBoard ? [''] : []), ...body, ...detail, ...activity, ...foot];
 };
 
 /** Which run to show: the one named, else the open one, else the newest the project has. */
@@ -445,7 +318,8 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
   let feedPage = 0;
   let feedPages = 1;
   let showApproved = false;
-  let flow = false;
+  // The flow is the board's kanban: shown from the start, `f` hides it.
+  let flow = true;
   // The groups of repeated events opened by a click, and which screen row is which group's line, as last drawn.
   const opened = new Set<string>();
   let groupRows = new Map<number, string>();

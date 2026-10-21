@@ -485,3 +485,10 @@ monitor` shows each as it comes, a problem in red.
     findings sit above what it read, and the finish showed only `✓ at 390`.
   - `page check` reads an image another host has not answered yet, while it answered the page's other requests, as that
     host holding back — as a 429 or a drop is — not as the page's image that never loaded.
+- **`run monitor` keeps the flow on screen and fits any terminal** (`@plitzi/cli`): the run's flow is the board's
+  kanban, always shown under the attention (`f` hides it), its stages in bands on a narrow terminal and its cards fewer on
+  a short one — each stage's count in a line where not even a card fits. Fifteen tasks are listed at most, the rest
+  scrolled to with ↑↓, and the activity takes every row left down to the terminal's foot;
+  the agents go in brief under the tasks below 140 columns; the activity's columns are as wide as what they say; the keys
+  and marks wrap rather than being cut; under 24 rows the activity gives its rows to the board. Held to every size from
+  60×20 to 220×60 by a test.

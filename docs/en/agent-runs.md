@@ -82,10 +82,16 @@ stops its preview before its folder goes (`stopPreviewOf`): the record first, wh
 the folder once it stopped — never a server left watching a folder removed under it. `run monitor` is the same run, live, for
 a person in a terminal of their own: it only reads (nothing marked read, nothing the lead is woken for touched) and
 refuses a shell with no terminal, an agent's, whose is `run watch`. It is a board for a supervisor: what needs someone on
-top; the tasks left beside the agents, each with its state — at work, waiting, asking the lead, stopped, done — and the
-approved folded in a line naming them (`a`); the activity in columns (time, who → whom for a message, task, what),
-an event repeated in a row one line (×N, opened and folded with a click), paged with ← → and the wheel; `f` draws the
-run's flow, to-do to approved, with what holds an agent and what a review sent back. It watches the run's folder and
+top; under it the run's flow, always — its kanban, each task a card in its stage from to-do to approved, with what holds
+an agent and what a review sent back (`f` hides it); the tasks left and the agents, each with its state — at work,
+waiting, asking the lead, stopped, done — fifteen listed at most, the rest scrolled to with ↑↓ — and the approved
+folded in a line naming them (`a`); last the activity in columns (time, who → whom for a message, task, what), every row
+the rest leaves, down to the terminal's foot, an event repeated in a row one line
+(×N, opened and folded with a click), paged with ← → and the wheel. It fits the terminal it is in (`monitorBoard.ts`,
+`monitorFlow.ts`): the flow's stages in bands on a narrow one and its cards fewer on a short one — each stage's count in
+a line where not even a card fits — the agents in brief under the tasks under 140 columns, the activity's columns as
+wide as what they say, the keys wrapped rather than cut, and under 24 rows the activity gives its rows to the board. It
+watches the run's folder and
 draws again the moment the CLI writes to it, every second for its clock, in one synchronized frame. Everything that
 waits on a run — `task next --follow`, a file's wait, a question's answer, `run watch --until lead`, `task inbox
 --follow` — wakes the same way (`runChanged.ts`), on a change, not at its next look: a hand-off is as quick as the CLI
