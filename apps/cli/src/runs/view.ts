@@ -334,8 +334,9 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   );
   (await unreadFor(loaded, LEAD, false))
     .filter(message => !answered.has(message.id))
-    // Said for the lead to know by a task approved since: its history now, in the inbox — nothing to act on.
-    .filter(message => !(message.fyi === true && byId.get(message.from)?.state.status === 'done'))
+    // Said for the lead to know of a task approved since — by it, or by a designer about it: its history now, in the
+    // inbox — nothing to act on, and it held velada-now's finish.
+    .filter(message => !(message.fyi === true && byId.get(message.about ?? message.from)?.state.status === 'done'))
     .forEach(message =>
       attention.push({
         kind: 'message',

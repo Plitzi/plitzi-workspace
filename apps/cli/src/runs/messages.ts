@@ -40,6 +40,8 @@ export interface Message {
   replyTo?: string;
   /** Said for the lead to know, not asked: no answer is waited for. */
   fyi?: boolean;
+  /** The task it is about, said by an agent that holds none — a designer between reviews (`task tell --about`). */
+  about?: string;
 }
 
 const isMessage = (value: unknown): value is Message =>
@@ -50,7 +52,8 @@ const isMessage = (value: unknown): value is Message =>
   typeof value.text === 'string' &&
   typeof value.at === 'string' &&
   (value.replyTo === undefined || typeof value.replyTo === 'string') &&
-  (value.fyi === undefined || typeof value.fyi === 'boolean');
+  (value.fyi === undefined || typeof value.fyi === 'boolean') &&
+  (value.about === undefined || typeof value.about === 'string');
 
 const isRead = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(each => typeof each === 'string');

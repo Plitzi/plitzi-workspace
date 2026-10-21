@@ -431,7 +431,16 @@ describe('a designer’s review of the others’ UI', () => {
 
     // Its finding still reaches the lead, by its name, though it holds no task.
     const said = await tellLeadAbout(bench.agent('design-2'), 'es-launch', 't-about', 'The footer wraps at 390');
-    expect(said).toMatchObject({ from: 'design-2', to: 'lead', text: 'On t-about: The footer wraps at 390' });
+    expect(said).toMatchObject({
+      from: 'design-2',
+      to: 'lead',
+      text: 'On t-about: The footer wraps at 390',
+      about: 't-about'
+    });
+    // About a task approved already: in the inbox, its history, but nothing that holds the run's finish.
+    expect((await viewRun(lead(), 'es-launch')).attention.map(item => item.text)).not.toContainEqual(
+      expect.stringContaining('The footer wraps at 390')
+    );
     expect(await refusalOf(tellLeadAbout(bench.agent('nobody'), 'es-launch', 't-about', 'Hi'))).toContain(
       'is no agent of the team'
     );

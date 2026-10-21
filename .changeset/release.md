@@ -627,4 +627,7 @@ monitor` shows each as it comes, a problem in red.
     - `run watch` tells the lead of a review a designer or another lead took ten minutes ago and has not decided while
       the team has nothing to take, with how to chase it or decide it: velada-now's last task sat in a designer's
       review, five agents idle, and nothing said so.
+    - What a designer tells the lead about a task (`task tell --about`) says which task (`about`): once that task is
+      approved it is history in the inbox, never a notice that holds the finish — design-1's word on t-motion, approved
+      already, refused velada-now's.
 

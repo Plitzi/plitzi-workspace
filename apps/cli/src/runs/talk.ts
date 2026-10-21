@@ -110,7 +110,13 @@ export const tellLeadAbout = async (ctx: RunContext, runId: string, about: strin
     );
   }
 
-  const told = await sendMessage(ctx, loaded, { from: ctx.agent, to: LEAD, text: `On ${task.id}: ${text}`, fyi: true });
+  const told = await sendMessage(ctx, loaded, {
+    from: ctx.agent,
+    to: LEAD,
+    text: `On ${task.id}: ${text}`,
+    fyi: true,
+    about: task.id
+  });
   await logRun(ctx, loaded.paths, { action: 'tell', task: task.id, message: told.id });
 
   return told;
