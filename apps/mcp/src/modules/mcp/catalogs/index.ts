@@ -21,6 +21,7 @@ export {
   BUILTIN_ELEMENT_CALLBACKS,
   BUILTIN_GLOBAL_CALLBACKS,
   BUILTIN_UTILITIES,
+  ambiguousShorthands,
   applyBuiltinCallback,
   applyElementCallback,
   applyUtility,

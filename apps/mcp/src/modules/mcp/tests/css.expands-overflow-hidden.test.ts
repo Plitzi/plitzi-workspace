@@ -414,3 +414,34 @@ describe('MCP CSS shorthand auto-expansion', () => {
     expect(r.errors).toHaveLength(0);
   });
 });
+
+// What a bare var() holds decides the longhand: a gradient in it, expanded as a colour, painted nothing.
+describe('MCP CSS shorthand a bare var() makes ambiguous', () => {
+  it('refuses background: var(--x), naming the longhand to write — a var() inside a gradient is read as it is', () => {
+    const refused = checkBatch(
+      { operations: [{ type: 'upsertDefinition', ref: 'box', desktop: { background: 'var(--hero)' } }] },
+      buildSpace()
+    );
+    expect(refused.valid).toBe(false);
+    expect(refused.errors).toEqual([
+      expect.objectContaining({
+        path: expect.stringContaining('desktop.background') as unknown,
+        hint: expect.stringMatching(/background-image.: .var\(--hero\). for a gradient/) as unknown
+      })
+    ]);
+
+    const gradient = checkBatch(
+      {
+        operations: [
+          {
+            type: 'upsertDefinition',
+            ref: 'box',
+            desktop: { background: 'linear-gradient(90deg, transparent, var(--accent))' }
+          }
+        ]
+      },
+      buildSpace()
+    );
+    expect(gradient.errors.filter(error => error.path.includes('background'))).toHaveLength(0);
+  });
+});

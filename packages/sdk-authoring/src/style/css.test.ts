@@ -258,3 +258,19 @@ describe('layout combinators', () => {
     expect(() => column('24px', { padddding: '4px' })).toThrow(/Unknown CSS property/);
   });
 });
+
+// A gradient in a variable, written as `background`, was expanded as a colour and painted nothing.
+describe('a background whose part is a bare var()', () => {
+  it('is refused, naming the longhand to write — a var() inside a gradient is read as it is', () => {
+    expect(() => css({ background: 'var(--hero-veil)' })).toThrow(
+      /\[shorthand-ambiguous\][^]*'background-color': 'var\(--hero-veil\)' for a colour, 'background-image': 'var\(--hero-veil\)' for a gradient/
+    );
+    expect(() => css({ background: 'url(a.png) no-repeat, var(--x)' })).toThrow(/\[shorthand-ambiguous\]/);
+    expect(() => css({ background: 'center / cover var(--x)' })).toThrow(/\[shorthand-ambiguous\]/);
+    expect(css({ background: 'linear-gradient(90deg, transparent, var(--accent))' })).toMatchObject({
+      'background-image': 'linear-gradient(90deg, transparent, var(--accent))'
+    });
+    expect(css({ 'background-color': 'var(--surface)' })).toEqual({ 'background-color': 'var(--surface)' });
+    expect(css({ background: 'red' })).toMatchObject({ 'background-color': 'red' });
+  });
+});

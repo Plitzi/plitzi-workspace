@@ -1,5 +1,5 @@
 import { checkStyleVarRefs, checkVarRefs } from './context';
-import { expandShorthand, isCssProperty, suggestCssProperty } from '../../../resources';
+import { ambiguousShorthands, expandShorthand, isCssProperty, suggestCssProperty } from '../../../resources';
 
 import type { ValidationCtx } from './context';
 import type { DefinitionSlotPatch } from '../../operations';
@@ -20,6 +20,15 @@ export const checkCss = (
     if (value !== null) {
       declared[key] = value;
     }
+  }
+
+  // A shorthand whose longhands a bare var() hides is refused as authoring refuses it: expanded, it was a guess.
+  for (const ambiguous of ambiguousShorthands(declared)) {
+    ctx.errors.push({
+      path: `${path}.${ambiguous.property}`,
+      message: `"${ambiguous.property}: ${ambiguous.value}" cannot be expanded: what the variable holds decides which longhand it is`,
+      hint: `Name the longhand — ${ambiguous.fix}`
+    });
   }
 
   // Expand shorthands first (border, padding, overflow, transition…) so they validate as their longhand keys —

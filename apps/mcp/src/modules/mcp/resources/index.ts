@@ -6,6 +6,7 @@ export { resourceErrorMessage } from './canonical';
 export { RENDER_GUIDE_URI, RENDER_TYPES_URI } from './renderGuide';
 
 export {
+  ambiguousShorthands,
   buildTypeRegistry,
   cssProperties,
   cssShorthands,

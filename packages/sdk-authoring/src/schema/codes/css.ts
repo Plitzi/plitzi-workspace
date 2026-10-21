@@ -23,6 +23,12 @@ export const CSS_CODES = {
     means: 'a property in the style document the style editor cannot read back',
     fix: 'the property it suggests'
   },
+  'shorthand-ambiguous': {
+    kind: 'refused',
+    means:
+      'a shorthand one of whose parts is a bare `var(--x)` — `background: var(--surface)` — which longhand it is depends on what the variable holds',
+    fix: "the longhand it is: `'background-color': 'var(--x)'` for a colour, `'background-image'` for a gradient or a picture"
+  },
   'rule-set-mixed': {
     kind: 'refused',
     means: 'a style that writes its rules beside `states`, `variants` or `ancestors` instead of under `css`',

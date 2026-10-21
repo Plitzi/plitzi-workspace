@@ -13,7 +13,7 @@ import {
 } from '@plitzi/sdk-shared/style';
 
 import { cssNumberValue, cssPropertyName, isCssProperty, isCustomProperty, suggestCssProperty } from './properties';
-import { expandShorthandTraced } from './shorthand';
+import { ambiguousShorthands, expandShorthandTraced } from './shorthand';
 import { overlaid, recordShorthands } from './shorthandOrigins';
 import { AuthoringError } from '../schema/codes';
 import { didYouMean } from '../schema/suggest';
@@ -102,6 +102,14 @@ const normalise = (rules: CssProps): CssProps => {
 export const css = (input: CssProps): StyleRules => {
   const rules = normalise(input);
   assertValues(rules);
+  const ambiguous = ambiguousShorthands(rules).at(0);
+  if (ambiguous !== undefined) {
+    throw new AuthoringError(
+      'shorthand-ambiguous',
+      `\`${ambiguous.property}: ${ambiguous.value}\` cannot be expanded into the longhands the style editor reads: what the variable holds decides which it is, and a guess painted a gradient as a colour — nothing. ${ambiguous.fix}.`
+    );
+  }
+
   const { rules: expanded, from } = expandShorthandTraced(rules);
   recordShorthands(expanded, from);
   const unknown = Object.keys(expanded).filter(key => !isCssProperty(key) && !isCustomProperty(key));

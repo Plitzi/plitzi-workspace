@@ -23,6 +23,9 @@ import {
 
 import type { CssPatch, CssProps } from '../types';
 
+export { ambiguousShorthands } from './ambiguous';
+export type { AmbiguousShorthand } from './ambiguous';
+
 // --- Shorthand expansion ------------------------------------------------------------------------------
 
 type Expander = (key: string, value: string, out: CssProps) => void;

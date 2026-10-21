@@ -500,3 +500,8 @@ monitor` shows each as it comes, a problem in red.
 - **`run monitor` keeps a line's colours when it cuts it** (`@plitzi/cli`): a cut line was written plain — an approved
   card with a long id white in a column of green, an activity row losing its tone; its styles now run to the cut and are
   reset there. A card's id longer than its column is cut in the middle, as the tasks' list cuts one.
+- **A `background` with a bare `var(--x)` part is refused** (`@plitzi/sdk-authoring`, `@plitzi/sdk-mcp`): what the
+  variable holds decides which longhand it is, and the guess (`background-color`) painted a gradient as nothing. `css()`,
+  `styles()` and the MCP's style writes refuse it (`shorthand-ambiguous`, `ambiguousShorthands`), naming the longhand:
+  `background-color` for a colour, `background-image` for a gradient or a picture. A var() inside a function
+  (`linear-gradient(…, var(--x))`) is read as it is.

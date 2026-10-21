@@ -79,9 +79,10 @@ A plugin's type is authored the same way: `defineElement(declaration)` — see [
 
 ## CSS
 
-Write CSS as you write CSS, shorthands included — they are expanded to the longhands Plitzi's editor reads. Keys in
-kebab-case or camelCase (`paddingTop`, as a React style object), and a bare number on a length is pixels (`gap: 16`;
-`fontWeight: 800`, `opacity: 0.5` stay numbers). A property outside the vocabulary is refused.
+Write CSS as you write CSS, shorthands included — expanded to the longhands Plitzi's editor reads. Keys in
+kebab-case or camelCase (`paddingTop`), and a bare number on a length is pixels (`gap: 16`;
+`opacity: 0.5` stays a number). A property outside the vocabulary is refused, as is
+`background: 'var(--x)'`: write `background-color` or `background-image`.
 
 - `column(gap, extra?)`, `row(gap, extra?)`, `grid(columns, gap, extra?)` for the three layouts every space repeats.
 - **Breakpoints are ranges, not a cascade.** `tablet` is 48–64rem, `mobile` up to 48rem, and each inherits only from

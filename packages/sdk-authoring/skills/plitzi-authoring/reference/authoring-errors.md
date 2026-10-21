@@ -137,6 +137,7 @@ The space is not written until these are fixed.
 | `server-data-in-browser` | a provider asking for the project's own data (`/data/…`, read by its server from `src/data/` and never served) from the browser | `runtime: 'server'` on the provider: the page arrives with the data in it |
 | `server-provider-in-component` | a `runtime: 'server'` element inside a component: the page server resolves a page's and its layouts', never a component's | put the provider on the page, around the instance, and hand the component its rows as a prop |
 | `setting-misplaced` | `settings.computed` or `settings.channels` written inside `settings` | `computed` and `channels` at the top of the space |
+| `shorthand-ambiguous` | a shorthand one of whose parts is a bare `var(--x)` — `background: var(--surface)` — which longhand it is depends on what the variable holds | the longhand it is: `'background-color': 'var(--x)'` for a colour, `'background-image'` for a gradient or a picture |
 | `slot-children` | children handed to an instance outside its slots | `children: { slotName: [ … ] }`; a component with no slots takes no children |
 | `slot-not-class` | a `slots` entry that is not a class — rules written in place, or nothing — which a slot cannot wear | the rules as a `styles()` declaration, handed to the slot beside its other classes |
 | `slot-unknown` | a component slot that is not an element of its tree | the id of an element inside the component — usually an empty container |
