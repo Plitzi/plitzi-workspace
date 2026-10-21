@@ -476,6 +476,7 @@ plitzi task complete --token …             # its copy compared by fingerprint,
 plitzi task review t-home --approve        # the lead's: into the run's work, never into the project
 plitzi task review t-home --approve --skip-design lead   # before its designer's UI review, saying why: lead (you looked at it) or no-ui
 plitzi run notice "…" --on /pets            # something wrong no task owns: kept, said by the finish — the next stage's
+plitzi run reference                       # the plan's reference site kept as it is now: page shot --compare measures against it
 plitzi run watch --json                    # how the run goes: a line per task, what needs attention
 plitzi run watch --until lead              # ends the moment something needs the lead: run it in the background
 plitzi run preview                         # the run's work as it goes, served: each approval shows; its dev tools' Run tab

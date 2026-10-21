@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the cases are source code, which reads best in the other quotes */
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 

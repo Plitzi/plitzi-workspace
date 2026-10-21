@@ -135,7 +135,13 @@ piece by piece (`inventory.ts`: `{ id, piece, page?, leftOut? }`): each piece is
 a command proves (`{ said, check, covers: [id] }`) or waits with its reason, and `checkPlan` refuses one that is neither,
 a line covering a piece not listed, or an id twice — so coverage is checked at `run plan`, held at `complete` and on the
 whole result at the finish by the covering checks themselves, and listed in the report (who covered each piece, or why it
-waits). A stage's lines may cover the run's pieces. A plan with no inventory is said, not refused. It says — never refuses — a file of a task that other tasks' files import (what it exports is their contract:
+waits). A stage's lines may cover the run's pieces. A plan with no inventory is said, not refused. A plan that copies a
+site says it (`reference`, its address): once the run is open, `plitzi run reference` keeps it (`reference.ts`) — each
+page of the inventory, and its home, pictured and its words measured at 1440 and 390 in both schemes, in the run's
+`reference/` — and `page shot --compare` on that site, in the project or a task's copy, measures against what was kept
+and says when it was kept (`--live` asks the site as it is now). The site may change while the run works or after:
+la-velada's original redesigned its fighter page after the copy, and a comparison with it measured another page. The
+run finishing removes it with the rest of its folder. It says — never refuses — a file of a task that other tasks' files import (what it exports is their contract:
 change it compatibly, or say in the plan who follows it), and the tasks whose acceptance no command proves (they hold at
 their review only; a check runs at `complete` and again at the finish). A task holds its plan's files only until it is done: then a shared one among them (the entry a shell task
 split up) is requested like any other, and the rest are taken by turns. Shared files are taken **by turns** (`task

@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { z } from 'zod';
 
 import { validateActionDocument } from '@plitzi/sdk-shared/actions';

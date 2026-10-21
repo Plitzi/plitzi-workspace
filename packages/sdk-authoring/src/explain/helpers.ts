@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the entries quote code, which reads best in the other quotes */
 import { MOTION_ENTERS, MOTION_LOOPS, MOTION_TRIGGERS } from '@plitzi/sdk-shared/schema';
 
 /**

@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the messages quote code, which reads best in the other quotes */
 import { HTML_TAG_PARTS } from '@plitzi/sdk-elements/elements/declarations';
 
 import { stateAndPseudoOf } from '../../decompile/customCss';

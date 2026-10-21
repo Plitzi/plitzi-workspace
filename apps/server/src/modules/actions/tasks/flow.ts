@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- a step's description is prose, which reads best in the other quotes */
 import { onAbort } from '../../../helpers/onAbort';
 import { ActionRefusal } from '../runtime/errors';
 import { countRate } from '../runtime/rateLimit';

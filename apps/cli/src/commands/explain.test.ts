@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- what it prints quotes its own strings, and reads best in the other quotes */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { EXPLAIN_KINDS, explainList } from '@plitzi/sdk-authoring';

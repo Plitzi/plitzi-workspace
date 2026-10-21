@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { readDebugPreference, writeDebugPreference } from './debugPreference';

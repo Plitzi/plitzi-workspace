@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { expect, describe, it } from 'vitest';
 
 import { processTwig } from '../index';

@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the rows quote code, which reads best in the other quotes */
 import type { AuthoringCodeEntry } from './entry';
 
 /** Pages, folders, layouts and links. */

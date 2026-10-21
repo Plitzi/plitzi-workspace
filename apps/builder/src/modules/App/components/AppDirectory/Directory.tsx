@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Icon from '@plitzi/plitzi-ui/Icon';

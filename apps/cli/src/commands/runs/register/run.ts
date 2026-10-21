@@ -33,12 +33,20 @@ import {
   runTeamSet,
   runTeamUnset,
   runNote,
-  runNotice
+  runNotice,
+  runReference
 } from '..';
 import { JSON_OPTION, TOKEN_OPTION, RUN_OPTION, AGENT_OPTION } from './options';
 import { duration, FOLLOW_MS, names, positiveInteger } from '../../../options';
 
-import type { FinishOptions, PlanOptions, RunCommandOptions, UpgradeRunOptions, WatchRunOptions } from '..';
+import type {
+  FinishOptions,
+  PlanOptions,
+  ReferenceOptions,
+  RunCommandOptions,
+  UpgradeRunOptions,
+  WatchRunOptions
+} from '..';
 import type { Command } from 'commander';
 
 /** `plitzi run …`: its commands, registered on the program. */
@@ -178,6 +186,17 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
     .action((text: string, options: RunCommandOptions) => runNote(text, options));
+
+  runGroup
+    .command('reference')
+    .description(
+      'Keep the plan’s reference site as it is now — each page of the inventory pictured and measured at 1440 and 390, both schemes — for page shot --compare to measure against while the run works; the run finishing removes it'
+    )
+    .option('--pages <paths>', 'The pages to keep, by path, comma-separated: the inventory’s when left out', names)
+    .option(...RUN_OPTION)
+    .option(...AGENT_OPTION)
+    .option(...JSON_OPTION)
+    .action((options: ReferenceOptions) => runReference(options));
 
   runGroup
     .command('notice')

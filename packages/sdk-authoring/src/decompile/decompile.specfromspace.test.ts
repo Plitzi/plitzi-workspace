@@ -18,7 +18,6 @@ import { specToSource } from './specToSource';
 import type { SpaceDocuments, SpaceSpec } from '../schema';
 import type { StyleItem } from '@plitzi/sdk-shared';
 
-/* eslint-disable quotes */
 const card = styles('card', {
   css: { padding: '24px', 'border-radius': '12px' },
   states: { hover: { 'background-color': 'var(--accent)' } },

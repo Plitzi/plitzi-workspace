@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
 /**
  * A page per record: a card links to `/products/<slug>`, and the detail page narrows the same file to the product its
  * address names — with a message, not an empty page, when no product has that name, and status 404: the provider is

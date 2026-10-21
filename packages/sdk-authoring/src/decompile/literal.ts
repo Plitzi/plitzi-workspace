@@ -1,5 +1,3 @@
-/* eslint-disable quotes */
-
 /**
  * Values written out as TypeScript: what every decompiler here emits with, so a space and an action read back into
  * code quote, key and name things the same way.

@@ -161,7 +161,6 @@ describe('getBindingsDetails', () => {
             transformers: [
               {
                 action: 'twigTemplate',
-                // eslint-disable-next-line quotes -- the template quotes a string of its own
                 params: { template: "{{ source|default('fade-up') }} / {{ sourceTo }}" }
               }
             ]

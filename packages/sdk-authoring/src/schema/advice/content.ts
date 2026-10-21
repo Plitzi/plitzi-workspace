@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the messages quote code, which reads best in the other quotes */
 import { declaredClasses } from './declaredClasses';
 
 import type { Suggestion } from './types';

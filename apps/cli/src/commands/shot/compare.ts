@@ -10,6 +10,7 @@ import { dataUrl, fromDataUrl } from '../../browser';
 
 import type { CompareReport, RegionChange, Taken, View } from './types';
 import type { Browser } from '../../browser';
+import type { KeptPage } from '../../runs/reference';
 import type { PictureDiff, PictureRegion, TextDifference } from '@plitzi/sdk-authoring';
 
 /**
@@ -49,7 +50,14 @@ export const compareText = (compare: CompareReport): string[] => {
   const lines = [
     compare.section === undefined
       ? `${chalk.bold(`${String(compare.changed)}% differs`)} from ${compare.url}${compare.regions.length > 0 ? ` — ${regionsText(compare.regions)}` : ''}`
-      : `${chalk.bold(regionsText(compare.regions))} differs from ${compare.url} (the whole page ${String(compare.changed)}%; the rest below is the whole page’s)`
+      : `${chalk.bold(regionsText(compare.regions))} differs from ${compare.url} (the whole page ${String(compare.changed)}%; the rest below is the whole page’s)`,
+    ...(compare.keptAt
+      ? [
+          chalk.dim(
+            `  as the run kept it at ${compare.keptAt.slice(0, 16).replace('T', ' ')} UTC (plitzi run reference) — --live measures the site as it is now`
+          )
+        ]
+      : [])
   ];
   const longer = compare.heights.there - compare.heights.here;
   const drift = compare.driftFrom;
@@ -111,12 +119,23 @@ export const compareWith = async (
   target: string,
   view: View,
   regions: PictureRegion[],
-  base: string
+  base: string,
+  /** The page as the run kept it: measured against, rather than the site asked now. */
+  kept?: { png: Uint8Array; page: KeptPage }
 ): Promise<CompareReport | { problem: string }> => {
   // Their page in the theme ours was painted in: two schemes are not a difference worth reporting.
-  const theirs = await pictureOf(browser, target, { ...view, scheme: taken.scheme });
-  if ('problem' in theirs) {
-    return theirs;
+  const live = kept ? undefined : await pictureOf(browser, target, { ...view, scheme: taken.scheme });
+  if (live && 'problem' in live) {
+    return live;
+  }
+
+  const theirs = kept
+    ? { png: kept.png, texts: kept.page.texts, unloaded: kept.page.unloaded }
+    : live
+      ? { png: live.png, texts: await live.page.evaluate(pageTexts, PAGE_TEXT_LIMIT), unloaded: live.unloaded }
+      : undefined;
+  if (!theirs) {
+    return { problem: `${target} was neither kept nor asked` };
   }
 
   const diff = await comparePictures(taken.page, dataUrl(taken.png), dataUrl(theirs.png), { regions, align: true });
@@ -124,14 +143,11 @@ export const compareWith = async (
   await writeFile(`${base}-diff.png`, fromDataUrl(diff.diff));
   const rowShift = diff.rowShift ?? [];
   const shiftAt = (y: number): number => rowShift[Math.min(Math.max(0, Math.round(y)), rowShift.length - 1)] ?? 0;
-  const texts = compareTexts(
-    await taken.page.evaluate(pageTexts, PAGE_TEXT_LIMIT),
-    await theirs.page.evaluate(pageTexts, PAGE_TEXT_LIMIT),
-    shiftAt
-  );
+  const texts = compareTexts(await taken.page.evaluate(pageTexts, PAGE_TEXT_LIMIT), theirs.texts, shiftAt);
 
   return {
     url: target,
+    ...(kept ? { keptAt: kept.page.at } : {}),
     changed: diff.changed,
     heights: { here: diff.heights.a, there: diff.heights.b },
     ...(diff.driftFrom ? { driftFrom: diff.driftFrom } : {}),

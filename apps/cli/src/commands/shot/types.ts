@@ -22,6 +22,8 @@ export interface ShotOptions {
   /** Where the project is served, when not by `npm start` here: a second server of it, staging, a deploy. */
   url?: string;
   compare?: string;
+  /** With `compare`: the site as it is now, even where the run kept it (`plitzi run reference`). */
+  live?: boolean;
   frames?: number;
   every?: number;
   waitFor?: string;
@@ -62,6 +64,8 @@ export type RegionChange = { name: string; element?: string; changed: number; sh
 
 export interface CompareReport {
   url: string;
+  /** Measured against the page as the run kept it (`plitzi run reference`), when: not the site as it is now. */
+  keptAt?: string;
   changed: number;
   /** How tall each page is: two pages of different heights are compared section by section. */
   heights: { here: number; there: number };

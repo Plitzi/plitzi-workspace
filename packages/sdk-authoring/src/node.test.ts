@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the cases are source code, which reads best in the other quotes */
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';

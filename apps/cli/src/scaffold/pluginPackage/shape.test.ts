@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the generated code quotes its own strings, and reads best in the other quotes */
 import { format } from 'prettier';
 import { describe, expect, it } from 'vitest';
 

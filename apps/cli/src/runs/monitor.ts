@@ -1,12 +1,12 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { designSkipText, isDesignSkip } from './designSkip';
 import { LEAD, messagesOf } from './messages';
-import { designSkipText, isDesignSkip } from './model';
 import { loadRun, readRunLog, runIds } from './run';
 import { choiceText, readTeam, startedAgents } from './team';
 import { viewRun } from './view';
 
-import type { DesignSkip } from './model';
+import type { DesignSkip } from './designSkip';
 import type { RunContext } from './run';
 import type { RunView, TaskLine } from './view';
 

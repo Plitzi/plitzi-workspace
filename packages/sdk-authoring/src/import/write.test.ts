@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the expectations are TypeScript: prettier keeps the quotes inside them, eslint wants them single */
 import { describe, expect, it } from 'vitest';
 
 import { darkScheme, importedFiles } from './write';

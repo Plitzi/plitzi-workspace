@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -318,7 +317,9 @@ describe('a background whose part is a bare var()', () => {
         throw new Error('the fixture exports no card');
       }
 
-      expect(() => Reflect.apply(card, undefined, [])).toThrow(/\[shorthand-ambiguous\] [^\s]*card\.ts:3: `background/);
+      expect(() => {
+        Reflect.apply(card, undefined, []);
+      }).toThrow(/\[shorthand-ambiguous\] [^\s]*card\.ts:3: `background/);
     } finally {
       rmSync(folder, { recursive: true, force: true });
     }

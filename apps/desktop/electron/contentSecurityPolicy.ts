@@ -1,5 +1,3 @@
-/* eslint-disable quotes */
-
 /**
  * The Content Security Policy this window renders under.
  *

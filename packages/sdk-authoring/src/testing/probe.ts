@@ -133,7 +133,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
    * words, which a hover reveals on purpose (a play mark, a glow).
    */
   const transparentAt = (node: Element): Element | undefined => {
-    if ((node.textContent ?? '').trim() === '' && node.querySelector('a, button, input, select, textarea') === null) {
+    if (node.textContent.trim() === '' && node.querySelector('a, button, input, select, textarea') === null) {
       return undefined;
     }
 

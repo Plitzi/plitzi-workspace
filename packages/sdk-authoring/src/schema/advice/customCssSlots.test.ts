@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the cases quote code, which reads best in the other quotes */
 import { describe, expect, it } from 'vitest';
 
 import { container, formControl, markdown } from '../../elements';

@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- a driver's log quotes the source, which reads best in the other quotes */
 import { act, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

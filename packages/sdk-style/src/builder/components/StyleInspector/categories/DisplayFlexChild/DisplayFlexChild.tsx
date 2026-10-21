@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import FlexGrowRow from '@plitzi/plitzi-ui/icons/FlexGrowRow';
 import FlexNoneRow from '@plitzi/plitzi-ui/icons/FlexNoneRow';
 import FlexShrinkRow from '@plitzi/plitzi-ui/icons/FlexShrinkRow';

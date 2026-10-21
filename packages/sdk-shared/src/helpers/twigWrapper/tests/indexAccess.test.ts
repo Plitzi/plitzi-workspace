@@ -87,7 +87,6 @@ describe('processTwig / indexing a collection', () => {
  * `(rows|find(…)).title` came back as the whole row: the access after the closing parenthesis was never parsed, and
  * the only way around it was a `{% set %}` for every lookup.
  */
-/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
 describe('processTwig / reading into a group', () => {
   it('reads a key of a parenthesised expression', () => {
     expect(render("{{ (rows|find('title', 'second')).title }}")).toBe('second');
@@ -107,4 +106,3 @@ describe('processTwig / reading into a group', () => {
     expect(render("{{ (rows|find('title', 'nobody')).title }}")).toBe('');
   });
 });
-/* eslint-enable quotes */

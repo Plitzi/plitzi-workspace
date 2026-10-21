@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 import { ago, cell, hhmm, idCell, wrapped } from './monitorCells';
-import { designSkipText } from '../../runs/model';
+import { designSkipText } from '../../runs/designSkip';
 
 import type { AgentLine, AgentStatus, Monitored, TaskStory } from '../../runs/monitor';
 import type { TaskLine } from '../../runs/view';

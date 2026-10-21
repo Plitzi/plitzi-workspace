@@ -110,7 +110,6 @@ describe('resolveStepParam', () => {
       id: 'r1',
       done: true
     });
-    // eslint-disable-next-line quotes -- a template quoting its own strings reads best in the other quotes
     expect(resolveStepParam("{{ run.done ? 'yes' : 'no' }}", scope).value).toBe('yes');
   });
 

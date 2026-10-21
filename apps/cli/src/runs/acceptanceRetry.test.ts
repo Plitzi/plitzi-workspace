@@ -21,8 +21,17 @@ describe('checkAcceptance', () => {
     const work = await fs.mkdtemp(path.join(os.tmpdir(), 'acceptance-retry-'));
     folders.push(work);
     // Fails until it has run once: a file left by the first run.
-    const flaky =
-      "node -e \"const fs=require('fs');if(fs.existsSync('ran'))process.exit(0);fs.writeFileSync('ran','');console.log('timed out');process.exit(1)\"";
+    await fs.writeFile(
+      path.join(work, 'flaky.cjs'),
+      [
+        "const fs = require('node:fs');",
+        "if (fs.existsSync('ran')) process.exit(0);",
+        "fs.writeFileSync('ran', '');",
+        "console.log('timed out');",
+        'process.exit(1);'
+      ].join('\n')
+    );
+    const flaky = 'node flaky.cjs';
 
     const results = await checkAcceptance(
       [

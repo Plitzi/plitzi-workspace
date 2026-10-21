@@ -37,3 +37,5 @@ export { taskContextCommand } from './brief';
 export { spaceImpact, spaceOverview } from './space';
 export { runNotice, taskAnswer, taskAsk, taskInbox, taskMessage, taskProposals, taskPropose, taskTell } from './talk';
 export type { AnswerOptions, ProposeOptions } from './talk';
+export { runReference } from './reference';
+export type { ReferenceOptions } from './reference';

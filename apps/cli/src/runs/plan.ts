@@ -376,6 +376,12 @@ export const checkPlan = async (
     )
   );
   notices.push(...designersNotice(plan, team));
+  if (plan.reference !== undefined) {
+    notices.push(
+      `Its reference, ${plan.reference}, is kept once the run is open — plitzi run reference: each page of the inventory pictured and measured, which page shot --compare measures against for the whole run, not the site as it may change; the run finishing removes it`
+    );
+  }
+
   if (!ID.test(plan.runId)) {
     problems.push(`runId "${plan.runId}": a run's name is lowercase letters, digits, - and _, up to 64`);
   }

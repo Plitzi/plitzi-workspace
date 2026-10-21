@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the families quote their own names, and read best in the other quotes */
 /**
  * Tailwind CSS's default scales (v4.1, `theme.css`, the deprecated bare forms included), as `tw()` reads them. Copied
  * rather than imported — this package installs nothing.

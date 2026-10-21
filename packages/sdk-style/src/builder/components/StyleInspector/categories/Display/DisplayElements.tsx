@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import DisplayBlock from '@plitzi/plitzi-ui/icons/DisplayBlock';
 import DisplayFlex from '@plitzi/plitzi-ui/icons/DisplayFlex';
 import DisplayGrid from '@plitzi/plitzi-ui/icons/DisplayGrid';

@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
 /**
  * Every product, filtered by category: the select writes the choice to `state`, and the list shows only the rows
  * that match — with a count and an empty state read off the same predicate.

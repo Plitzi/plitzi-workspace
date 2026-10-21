@@ -275,7 +275,6 @@ describe('lintSpace', () => {
           guarded('auth.details.anything')
         ]);
         schema.flat.hello.attributes.content =
-          // eslint-disable-next-line quotes -- the template quotes a string of its own
           "{{ state.auth.name }} {{ theme.resolved }} {{ navigation.href }} {{ 'https://auth.acme.com' }} flags.off";
         schema.flat.row.definition.bindings = {
           attributes: [{ id: 'b1', to: 'content', source: 'state.whatever.deep' }]

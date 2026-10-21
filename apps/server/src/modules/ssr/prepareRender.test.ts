@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { describe, it, expect, vi } from 'vitest';
 
 import { prepareRender } from './prepareRender';

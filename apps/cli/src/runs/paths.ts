@@ -77,6 +77,8 @@ export interface RunPaths {
   leadsAsking: string;
   /** The pictures its reviews take (`task look`, a `page shot` in a copy): the run's, gone with it. */
   shots: string;
+  /** The plan's `reference` site as it was kept (`plitzi run reference`): what `--compare` measures against — gone with the run. */
+  reference: string;
   /** Where each agent keeps what is its own between tasks — a script, a log — by name: gone with the run. */
   scratch: string;
   cache: string;
@@ -139,6 +141,7 @@ export const runPaths = (root: string, runId: string): RunPaths => {
     leadSeen: path.join(dir, 'lead-seen.json'),
     leadsAsking: path.join(dir, 'leads-asking.json'),
     shots: path.join(dir, 'shots'),
+    reference: path.join(dir, 'reference'),
     scratch: path.join(dir, 'scratch'),
     cache,
     materialised: path.join(cache, 'run')

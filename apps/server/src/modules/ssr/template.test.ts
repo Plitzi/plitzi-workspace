@@ -136,7 +136,6 @@ describe('the SSR document / bootstrap', () => {
       bootstrap('{}', [
         { name: 'chart', keyName: 'chart', varName: 'chart', js: '/sdk-plugins/chart/index.js', props: {} }
       ])
-      // eslint-disable-next-line quotes -- the expected source quotes its own path, which reads best in the other quotes
     ).toContain("import { default as chart } from '/sdk-plugins/chart/index.js'");
   });
 
@@ -166,7 +165,6 @@ describe('the SSR document / bootstrap', () => {
     expect(html).not.toContain('/e.css" rel="stylesheet"');
     expect(html).not.toContain('import { default as editor }');
     expect(html).toContain(
-      // eslint-disable-next-line quotes -- the expected source quotes its own path, which reads best in the other quotes
       `'editor': {load: () => import('/sdk-plugins/editor/index.js'), css: "/e.css", declaration: {"version":"2.0.0","plugins":{"editorToolbar":{}}}`
     );
     expect(html).not.toContain('"</script>"');

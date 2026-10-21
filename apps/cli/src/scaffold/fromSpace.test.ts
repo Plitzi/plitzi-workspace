@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { describe, expect, it } from 'vitest';
 
 import { defineAction } from '@plitzi/sdk-authoring';

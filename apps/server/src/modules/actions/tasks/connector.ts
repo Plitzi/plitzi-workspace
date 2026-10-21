@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- a step's description is prose, which reads best in the other quotes */
 import { fetchConnectorRecords, writeConnectorRecord } from '../../connectors/engine';
 
 import type { ConnectorFilter } from '../../connectors/types';

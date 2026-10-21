@@ -554,4 +554,10 @@ monitor` shows each as it comes, a problem in red.
       `--scroll-to <id> --viewport` to see it, where it was a silent blank box (`@plitzi/sdk-authoring`'s `loadImages`).
     - A project's pace (`run plan`) is its runs' middle task's minutes over its estimate: one clock left running no
       longer moves it.
+    - A plan names the site it copies (`"reference": "https://…"`), and `plitzi run reference` keeps it once the run is
+      open — each page of the inventory pictured and its words measured at 1440 and 390, both schemes, in the run's
+      folder. `page shot --compare` on that site measures against what was kept and says when (`--live` asks the site
+      now): la-velada's original redesigned its pages after the copy. The run finishing removes it.
+  - The workspace's ESLint no longer has a `quotes` rule — Prettier's `singleQuote` writes the quotes, and the two
+    disagreed on a string holding single quotes; the `eslint-disable quotes` directives that worked around it are gone.
 

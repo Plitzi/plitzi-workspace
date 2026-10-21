@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the generated code quotes its own strings, and reads best in the other quotes */
 import { elementTriggers } from '@plitzi/sdk-authoring';
 import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring';
 

@@ -57,7 +57,6 @@ export default tsEslint.config({
     curly: 'error',
     // indent: ['warn', 2],
     'linebreak-style': ['error', 'unix'],
-    quotes: ['error', 'single'],
     'prefer-const': ['error', { destructuring: 'any', ignoreReadBeforeAssign: false }],
     // semi: ['warn', 'never'],
     'react/jsx-key': ['warn', { checkFragmentShorthand: true }],

@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the cases are declaration files, which read best in the other quotes */
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import os from 'node:os';

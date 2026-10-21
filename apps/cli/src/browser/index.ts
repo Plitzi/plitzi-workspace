@@ -82,6 +82,8 @@ export interface BrowserPage {
   context(): { addCookies(cookies: { name: string; value: string; url: string }[]): Promise<void> };
   /** Where the page is now — after any redirect the server answered with. */
   url(): string;
+  /** Closed once pictured: a run of many pages holds one at a time. */
+  close(): Promise<void>;
   /** Requests made as the page would make them, sharing its context's cookies: a sign-in here signs the page in. */
   request: {
     post(

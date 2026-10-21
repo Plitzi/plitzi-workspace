@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the assertions quote source code, which reads best in the other quotes */
 import { describe, expect, it } from 'vitest';
 
 import { CATALOG_TEMPLATE_IDENTITY, catalogTemplateFiles } from './index';

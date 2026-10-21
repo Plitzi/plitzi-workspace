@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 /**
  * Declared domains are stored and signed as full origins (`https://site.example.com`) while a request host is bare
  * (`site.example.com`), so both sides are reduced to a hostname before being compared. A non-web value still reduces

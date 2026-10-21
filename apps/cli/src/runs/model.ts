@@ -1,7 +1,10 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { isDesignSkip } from './designSkip';
+import { isDigest, isNumber, isSiteAddress, isString, isStrings, oneOf, optional } from './guards';
 import { isInventoryItem } from './inventory';
 
+import type { DesignSkip } from './designSkip';
 import type { InventoryItem } from './inventory';
 
 /**
@@ -134,6 +137,12 @@ export interface RunPlan {
    * reason — `run plan` refuses a piece that is neither (`inventory.ts`).
    */
   inventory?: InventoryItem[];
+  /**
+   * The site the run copies or follows, as its address (`https://www.example.com`): `plitzi run reference` keeps its
+   * pages as they are when the run starts, and `page shot --compare` measures against what was kept — the site may
+   * change while the run works, or after it (la-velada's original redesigned its fighter page after the copy).
+   */
+  reference?: string;
 }
 
 /** A task as the run holds it (`task.json`): the plan's, with its files expanded — or one the CLI made to integrate. */
@@ -305,26 +314,6 @@ export interface TaskState {
   updatedAt: string;
 }
 
-/**
- * Why a lead approved a task without its designer's UI review, said as it does (`--skip-design <why>`): it looked at the
- * UI itself (`lead`), or the task changes nothing a visitor sees (`no-ui`). Never "skipped" alone: read as nobody
- * looking at it, where the lead had (la-velada: 21 tasks reviewed by the lead, counted as "UI skipped").
- */
-export const DESIGN_SKIPS = ['lead', 'no-ui'] as const;
-
-export type DesignSkip = (typeof DESIGN_SKIPS)[number];
-
-export const isDesignSkip = (value: unknown): value is DesignSkip =>
-  typeof value === 'string' && (DESIGN_SKIPS as readonly string[]).includes(value);
-
-/** Why a lead approved without the designer's UI review, as every surface says it — never "skipped" alone. */
-export const designSkipText = (why: DesignSkip | undefined): string =>
-  why === 'lead'
-    ? 'its UI reviewed by the lead, not a designer (--skip-design lead)'
-    : why === 'no-ui'
-      ? 'no UI to review: it changes nothing a visitor sees (--skip-design no-ui)'
-      : 'approved without its designer’s UI review, the reason unsaid';
-
 export interface DesignReview {
   status: 'due' | 'approved' | 'skipped';
   /** The round of the work it reviews. */
@@ -458,15 +447,6 @@ export interface SharedManifest {
 export const entryOf = <T>(record: Readonly<Record<string, T>>, key: string): T | undefined =>
   Object.hasOwn(record, key) ? record[key] : undefined;
 
-const isString = (value: unknown): value is string => typeof value === 'string';
-const isNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
-const isStrings = (value: unknown): value is string[] => Array.isArray(value) && value.every(isString);
-const isDigest = (value: unknown): value is string | null => value === null || isString(value);
-const oneOf =
-  <T extends string>(values: readonly T[]) =>
-  (value: unknown): value is T =>
-    typeof value === 'string' && (values as readonly string[]).includes(value);
-const optional = (value: unknown, guard: (inner: unknown) => boolean): boolean => value === undefined || guard(value);
 const isDigests = (value: unknown): value is Record<string, string | null> =>
   isRecord(value) && Object.values(value).every(isDigest);
 
@@ -509,7 +489,8 @@ export const isRunPlan = (value: unknown): value is RunPlan =>
   optional(value.primer, isString) &&
   optional(value.designReview, flag => typeof flag === 'boolean') &&
   optional(value.leftOut, isStrings) &&
-  optional(value.inventory, items => Array.isArray(items) && items.every(isInventoryItem));
+  optional(value.inventory, items => Array.isArray(items) && items.every(isInventoryItem)) &&
+  optional(value.reference, isSiteAddress);
 
 const shown = (value: unknown): string => (value === undefined ? 'nothing' : JSON.stringify(value));
 
@@ -529,6 +510,11 @@ export const runPlanProblems = (value: unknown): string[] => {
   field(isString(value.runId), 'runId', 'the run’s name');
   field(isString(value.goal), 'goal', 'a line of what the run is for');
   field(optional(value.leftOut, isStrings), 'leftOut', 'lines of what the run does not do');
+  field(
+    optional(value.reference, isSiteAddress),
+    'reference',
+    'the address of the site it copies — https://www.example.com'
+  );
   field(
     optional(value.inventory, items => Array.isArray(items) && items.every(isInventoryItem)),
     'inventory',

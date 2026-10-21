@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import Button from '@plitzi/plitzi-ui/Button';
 import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';

@@ -1,11 +1,11 @@
 import path from 'node:path';
 
 import { proposalsOf } from './agreements';
+import { designSkipText } from './designSkip';
 import { fingerprint } from './files';
 import { askingLeads } from './leads';
 import { longFileText, longFilesIn } from './longFiles';
 import { LEAD, messagesOf, unreadFor } from './messages';
-import { designSkipText } from './model';
 import { under } from './paths';
 import { chainMinutes } from './plan';
 import { previewPort } from './previewRecord';

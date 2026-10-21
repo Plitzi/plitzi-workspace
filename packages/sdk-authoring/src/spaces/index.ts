@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { authorSpace, slugify } from '../schema';
 import blankContentSource from './blank/content.ts?raw';
 import blankNotFoundSource from './blank/notFound.ts?raw';
@@ -520,9 +519,5 @@ export const catalogTemplateFiles = ({
     [client ? 'public/data/products.json' : 'src/data/products.json']: catalogProducts
   };
 
-  // This repository's lint wants single quotes even where a template quotes its own strings; a project's does not,
-  // and would call the directive that quiets it unused.
-  return Object.fromEntries(
-    Object.entries(files).map(([path, source]) => [path, source.replace(/^\/\* eslint-disable quotes[^\n]*\*\/\n/, '')])
-  );
+  return files;
 };

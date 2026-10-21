@@ -126,7 +126,6 @@ const contentParts = (value: string): string[] | undefined => {
       continue;
     }
 
-    // eslint-disable-next-line quotes -- the quote itself: Prettier writes it unescaped, between the other quotes
     if (char === '"' || char === "'") {
       quote = char;
     } else if (char === '(') {

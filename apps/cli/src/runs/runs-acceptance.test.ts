@@ -81,7 +81,7 @@ describe('acceptance, checks and what is left behind', () => {
       // A redirection is the shell's: no page.
       {
         said: 'Redirected',
-        check: "plitzi page check / --url $PLITZI_URL --hover cta 2>&1 | awk '/cta box-shadow/{a=1} END{exit !a}'"
+        check: 'plitzi page check / --url $PLITZI_URL --hover cta 2>&1 | grep -q "cta box-shadow"'
       },
       { said: 'Spaced', check: 'plitzi page check / --url $PLITZI_URL > tmp/out.txt 2> /dev/null' }
     ];

@@ -234,7 +234,6 @@ describe('a param that is not a string', () => {
    */
   it('runs a condition and a loop, not only a name', async () => {
     const spy = await runWith({
-      // eslint-disable-next-line quotes -- a template quoting its own strings reads best in the other quotes
       flag: "{{ trig.body ? '1' : '' }}",
       loop: '{% for n in [1, 2] %}{{ n }}{% endfor %}'
     });

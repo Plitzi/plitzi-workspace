@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';

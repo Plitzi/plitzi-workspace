@@ -190,7 +190,8 @@ packages/
 - `prefer-const` enforced — never use `let` when value doesn't change
 - `no-var` enforced
 - `curly` enforced — always use braces for `if`/`else`/`for`/`while` bodies
-- `quotes`: single
+- Quotes are Prettier's (`singleQuote`): no ESLint `quotes` rule — the two disagreed on a string that holds single
+  quotes, and Prettier's choice (the fewest escapes) failed lint
 - `linebreak-style`: unix
 - Type imports: always use `import type` when importing only types
 - Import order enforced alphabetically: builtin → external → internal (`@plitzi/sdk-*`, `@pmodules/*`, `@pcomponents/*`) → parent/sibling → type

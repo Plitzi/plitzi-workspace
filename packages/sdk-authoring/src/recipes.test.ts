@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
 import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';

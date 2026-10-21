@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the messages quote code, which reads best in the other quotes */
 import { describe, expect, it } from 'vitest';
 
 import { container } from '../../elements';

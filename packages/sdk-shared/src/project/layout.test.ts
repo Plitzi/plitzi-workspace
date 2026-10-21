@@ -1,5 +1,4 @@
 // @vitest-environment node
-/* eslint-disable quotes -- the messages quote code and say what is the project's, and read best in the other quotes */
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';

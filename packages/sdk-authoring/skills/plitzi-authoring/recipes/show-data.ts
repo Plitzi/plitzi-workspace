@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
 /**
  * Show data with no backend, in a project with no server: a JSON file the browser fetches (`public/data/products.json`,
  * public), read by a provider — one card per product, a skeleton while it loads, a count, a computed value, and an

@@ -19,7 +19,8 @@ import { at, changedInCopy, findTask, refreshCopy } from './common';
 import { allLocks, grantWaiters } from './locks';
 import { integrateWhenReady, settleRequests } from './requests';
 
-import type { DesignSkip, ProjectChange, ReviewComment, TaskStart } from '../model';
+import type { DesignSkip } from '../designSkip';
+import type { ProjectChange, ReviewComment, TaskStart } from '../model';
 import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 

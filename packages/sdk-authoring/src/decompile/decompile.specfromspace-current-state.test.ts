@@ -11,7 +11,6 @@ import { specFromSpace } from './specFromSpace';
 import type { ElementSpec, PageSpec, SpaceDocuments, SpaceSpec } from '../schema';
 import type { StyleItem } from '@plitzi/sdk-shared';
 
-/* eslint-disable quotes */
 describe('specFromSpace / the current state', () => {
   it('folds the attribute a link to this page carries into the class, as its current state', () => {
     const documents = authorSpace({

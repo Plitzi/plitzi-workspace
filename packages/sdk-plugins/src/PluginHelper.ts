@@ -14,7 +14,6 @@ const getComponentDefinition = (
     const { resource, settings, type } = pluginRaw;
     const {
       definition: {
-        // eslint-disable-next-line quotes
         name = "Plitzi's Demo Plugin",
         // description = '',
         owner = 'Plitzi',

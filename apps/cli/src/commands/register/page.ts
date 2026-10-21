@@ -104,7 +104,11 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .addOption(schemeOption())
     .option('-o, --out <file>', 'Where the picture goes. tmp/shots/<page>-<width>-<scheme>.png by default')
-    .option('--compare <url>', 'Another site: the same page there, side by side, and how much differs by section')
+    .option(
+      '--compare <url>',
+      'Another site: the same page there, side by side, and how much differs by section — as the open run kept it, when it did (plitzi run reference)'
+    )
+    .option('--live', 'With --compare: the site as it is now, not as the run kept it')
     .addOption(
       new Option(
         '--frames <n>',

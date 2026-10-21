@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
 /**
  * Filter and sort a list: a select writes the chosen category to `state`, and the list is bound through a template
  * that hands over its VALUE — only the matching rows are rendered, with a count and an empty state over the same rows.

@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the expectations quote code, which reads best in the other quotes */
 import { describe, expect, it } from 'vitest';
 
 import { BUILDER_SIGNATURES } from './builders';

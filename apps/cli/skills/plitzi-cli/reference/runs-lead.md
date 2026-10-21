@@ -7,11 +7,11 @@ What the lead — team lead and software architect — does; the agents' half, t
 
 0. **Inventory what the job asks, before a line of the plan.** Built after something — a site to copy, a design, a
    brief — list every page and, on each, every section and every piece a visitor would miss: a hero's logo, a live
-   video, a countdown, an interactive tool (a tier list), a page linked from the footer, and the details: what moves
-   (an entrance, a shine, an arrow), how a control behaves, a size — as the plan's `inventory`
+   video, an interactive tool (a tier list), a page linked from the footer, and the details: what moves, how a
+   control behaves, a size — as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
    "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
-   piece that is neither. **What waits is said to the person before opening**: a choice they make with you. Prepare what every task reads first — the data complete with every
+   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`. **What waits is said to the person before opening**: a choice they make with you. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview` — who owns which file, read off the imports. A page owns the modules only
    it imports; what two pages import (the tokens, the classes, a layout, a component) is **shared**, and so is every
@@ -105,7 +105,7 @@ What the lead — team lead and software architect — does; the agents' half, t
 task message t-home "…" --reply-to m3`; `task message all "…"` tells every task in hand, `task message @dev-1 "…"`
    an agent by name, between tasks too. **The scope changes while it runs** — yours to see, or the person's to ask: edit
    the plan in the run's folder (`inputs/plan.json`) and `plitzi run amend` — acceptance, priorities, notes, the
-   inventory, a task nobody took removed (its pieces then wait, or another covers them); more work is a stage, `plitzi
+   inventory, a task nobody took removed; more work is a stage, `plitzi
    run extend <run> next.json`. Say each change to the person.
 6. **Review against the inventory, not only the picture:** every section and piece the task's acceptance names is
    there, as the reference has it — a difference you accept is one you say (`--note`); one a visitor would see is sent

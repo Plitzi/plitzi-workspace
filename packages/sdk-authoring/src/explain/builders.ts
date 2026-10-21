@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the signatures quote code, which reads best in the other quotes */
 /**
  * How a step or trigger builder is CALLED, for the ones not called with their params as one object — `delay(ms)`, not
  * `delay({ time })`. `explain` lists a step's params as the document stores them; without this, an agent writes the

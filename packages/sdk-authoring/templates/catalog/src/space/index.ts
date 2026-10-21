@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
 /**
  * The space, assembled: a file per part, so each stays short enough to read whole — the tokens, the layout every page
  * shares, the product card, and one file per page. Add a page under `pages/` and list it here.

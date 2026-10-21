@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- what the server says quotes code, and reads best in the other quotes */
 import { existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import os, { networkInterfaces } from 'node:os';

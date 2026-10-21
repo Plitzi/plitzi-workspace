@@ -532,7 +532,7 @@ describe('a designer that develops too', () => {
       expect.stringContaining('UI reviews are coming — t-menu (dev-1) at work') as unknown
     ]);
 
-    await writeInCopy(menu.work, 'src/space/pages/menu.ts', "export const page = { title: 't-menu' };\n");
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "t-menu" };\n');
     await completeTask(bench.agent('dev-1', { token: menu.token }), 'es-launch', 't-menu');
     expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer,developer')).designReview?.task.id).toBe(
       't-menu'

@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { readInbox } from './talk';
 import { noticeRun, noticesOf } from './notices';
 import { buildReport, reportText } from './report';
 import { loadRun, readRunLog } from './run';
+import { readInbox } from './talk';
 import { makeBench } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 

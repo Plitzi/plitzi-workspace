@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- a step's description is prose, which reads best in the other quotes */
 import { renderTaskParams } from './helpers';
 import { fetchOutbound } from '../../../helpers/outboundGuard';
 

@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the messages quote code, which reads best in the other quotes */
 import type { Suggestion } from './types';
 import type { Schema, Style, StyleVariableValue } from '@plitzi/sdk-shared';
 

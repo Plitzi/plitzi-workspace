@@ -389,7 +389,6 @@ describe('sources read inside a flow', () => {
   });
 });
 
-/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
 describe('sources read inside a binding template', () => {
   /** A card that joins its row to the stats around it — the lookup where the short name looked right and was not. */
   const cardReading = (template: string) => ({
@@ -500,8 +499,6 @@ describe('a template the runtime never resolves', () => {
     expect(codes(authoring.markdown("Write `{{ on ? 'a' : 'b' }}` in a binding."))).toEqual([]);
   });
 });
-
-/* eslint-enable quotes */
 
 describe('a name used twice', () => {
   // Ids are one namespace for the whole space; a helper called once per page is where it bites.

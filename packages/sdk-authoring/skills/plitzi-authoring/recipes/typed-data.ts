@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
 /**
  * Data typed by a sample of it: `source()` turns the JSON the page reads into names the editor completes and checks —
  * `site.data.hero.titel` is a type error, not an empty heading. In a project the sample is the file itself:

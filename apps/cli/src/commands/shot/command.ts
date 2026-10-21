@@ -7,6 +7,7 @@ import { comparePictures, pageRegions } from '@plitzi/sdk-authoring';
 
 import { dataUrl, launchBrowser, projectOrigin } from '../../browser';
 import { copyOf, runPaths } from '../../runs/paths';
+import { keptPage } from '../../runs/reference';
 import { PROJECT_TMP } from '../../scaffold/paths';
 import { checkAccount, CHECK_PASSWORD_ENV } from '../check';
 import { projectHere } from '../existingProject';
@@ -254,7 +255,9 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     if (options.compare) {
       const other = new URL(options.compare);
       const target = other.pathname === '/' ? new URL(pathname, other).href : other.href;
-      const compared = await compareWith(browser, taken, target, view, regions, base);
+      // Against the page as the run kept it, where it did: the site may have changed since the run began.
+      const kept = options.live ? undefined : await keptPage(project.root, target, view.width, taken.scheme);
+      const compared = await compareWith(browser, taken, target, view, regions, base, kept);
       if ('problem' in compared) {
         fail(compared.problem);
 

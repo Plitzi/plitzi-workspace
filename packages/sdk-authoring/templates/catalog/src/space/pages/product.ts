@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
 /**
  * A page per product, at `/products/<slug>`: the same file, narrowed to the product the address names — and a message,
  * not an empty page, when no product has that name.

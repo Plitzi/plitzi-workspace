@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- a CSP quotes its keywords, which reads best in the other quotes */
 import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';

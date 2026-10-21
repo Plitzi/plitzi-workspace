@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- the cases are source code, which reads best in the other quotes */
 import { describe, expect, it } from 'vitest';
 
 import { movedTo, rewritten } from './moves';

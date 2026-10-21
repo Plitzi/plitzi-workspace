@@ -1,5 +1,3 @@
-/* eslint-disable quotes */
-
 /**
  * A stylesheet read as its top-level segments, by a scanner that knows strings, comments and nesting and nothing more.
  *

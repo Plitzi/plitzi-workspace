@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { describe, expect, it, vi } from 'vitest';
 
 import { spaceDeploymentMiddleware } from './spaceDeployment';

@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import path from 'node:path';
 
 import { format } from 'prettier';

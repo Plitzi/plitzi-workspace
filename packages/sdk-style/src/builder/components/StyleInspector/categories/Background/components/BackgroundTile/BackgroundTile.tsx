@@ -1,5 +1,3 @@
-/* eslint-disable quotes */
-
 import BackgroundTileX from '@plitzi/plitzi-ui/icons/BackgroundTileX';
 import BackgroundTileXY from '@plitzi/plitzi-ui/icons/BackgroundTileXY';
 import BackgroundTileY from '@plitzi/plitzi-ui/icons/BackgroundTileY';
