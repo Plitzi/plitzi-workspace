@@ -47,9 +47,32 @@ export const materialise = async (
 
 /**
  * How long a pass is kept: the same tree passes the same checks — but a check may read the day (an age, a month's
- * total), so not for ever.
+ * total), so for the day it passed on, twelve hours at most. An hour was no unit a check reads: velada-dress's finish
+ * ran its 23 acceptance lines again two hours after its dry run on the very same result.
  */
-const KEPT_MS = 60 * 60_000;
+const KEPT_MS = 12 * 60 * 60_000;
+
+/** A pass kept at `at` still stands at `now`: within `KEPT_MS`, and on the same day (UTC). */
+const stillKept = (at: string, now: Date): boolean =>
+  now.getTime() - Date.parse(at) < KEPT_MS && at.slice(0, 10) === now.toISOString().slice(0, 10);
+
+/**
+ * The site the run copies as the run kept it (`run reference`), by each page's name and when it was kept: what an
+ * acceptance's `--compare` measures against, which a pass on the same tree was not when the reference was kept again.
+ */
+const referenceKey = async (loaded: LoadedRun): Promise<[string, number][]> => {
+  const names = (await fs.readdir(loaded.paths.reference).catch(() => [])).sort();
+
+  return Promise.all(
+    names.map(async name => [
+      name,
+      await fs.stat(path.join(loaded.paths.reference, name)).then(
+        stat => stat.mtimeMs,
+        () => 0
+      )
+    ])
+  );
+};
 
 /** The tree `versions` would make, by content: every file the copy takes, as the project holds it or as `versions` say. */
 const treeKey = async (ctx: RunContext, versions: Record<string, string | null>): Promise<string> => {
@@ -116,7 +139,7 @@ export const checkVersions = async (
   const keptAt = path.join(loaded.paths.cache, 'checks', `${key}.json`);
   const kept = await readOptional(keptAt);
   const parsed: unknown = kept === undefined ? undefined : parseKept(kept);
-  if (isKept(parsed) && ctx.now().getTime() - Date.parse(parsed.at) < KEPT_MS) {
+  if (isKept(parsed) && stillKept(parsed.at, ctx.now())) {
     return { ...parsed.result, reused: parsed.at };
   }
 
@@ -156,7 +179,9 @@ export const acceptanceOnResult = async (
   // Kept line by line: on the same result, a line that passed has nothing new to tell, and the next finish runs only
   // the ones that did not — a whole set run again for one line a CDN was slow on asked the CDN the same thousands of
   // images again, and failed on another (la-velada).
-  const tree = await treeKey(ctx, versions);
+  const tree = `${await treeKey(ctx, versions)}:${createHash('sha256')
+    .update(JSON.stringify(await referenceKey(loaded)))
+    .digest('hex')}`;
   const keptAt = (line: { check: string }) =>
     path.join(
       loaded.paths.cache,
@@ -169,9 +194,7 @@ export const acceptanceOnResult = async (
     const kept = await readOptional(keptAt(line));
     const parsed: unknown = kept === undefined ? undefined : parseKept(kept);
 
-    return isRecord(parsed) && typeof parsed.at === 'string' && ctx.now().getTime() - Date.parse(parsed.at) < KEPT_MS
-      ? parsed.at
-      : undefined;
+    return isRecord(parsed) && typeof parsed.at === 'string' && stillKept(parsed.at, ctx.now()) ? parsed.at : undefined;
   };
   const since = await Promise.all(lines.map(keptSince));
   const toRun = lines.filter((_, index) => since[index] === undefined);

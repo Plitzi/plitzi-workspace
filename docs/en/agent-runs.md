@@ -394,7 +394,7 @@ tasks/<task>/
   locks/<path>.lock  requests/<id>.json  proposals/<id>.json  answers/<proposal>.json
   cache/work/  cache/start.json  cache/progress.json  cache/log.jsonl
 cache/checks/<tree>.json  a pass of the project's checks on one whole result, by its content: said again within the
-                     hour rather than run again (the dry run's at `finish --apply`)
+                     day rather than run again (the dry run's at `finish --apply`)
 ```
 
 Inside the project, the plan and its primer are moved into the run's folder when it opens (`inputs/`, a stage's under
@@ -538,7 +538,7 @@ line is said as it runs (`ctx.say`, on stderr) — asked after them, a finish of
 stopped as hung (velada-dress). The whole result is materialised (project + run) and checked first — a dry run by
 default, listing what is written over a change made outside — and so is what each done task was accepted on: every
 `{ said, check }` line that passed at its review runs again on the whole result, so one a later task broke (the print of
-a page another task grew) stops the finish, naming both; a pass of either on the very same result is said again within
+a page another task grew) stops the finish, naming both; a pass of either on the very same result (and, for acceptance, the same kept reference) is said again within
 the hour, not run again. `--apply` with conflicts writes nothing and puts the run
 into **reconciliation**: no task starts and no merge goes in until the lead resolves each file (`--take
 project|run|<file>`; the run's or a file of its own is an override, said and kept) and continues. Without conflicts, it

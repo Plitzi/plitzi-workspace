@@ -250,6 +250,8 @@ export interface Finished {
   writtenBy?: string;
   /** Dry run: whether the lead may write it itself, a person having allowed it. */
   leadFinishes?: boolean;
+  /** Dry run: the lead has not written the run's report — the step before the person's. */
+  noReport?: true;
   /** What appeared in the project's `tmp/` during the run that is nobody's tool — left there, said (`strays.ts`). */
   leftInTmp?: string[];
   /** What the run's activity shows was wrong in how it was worked: said, never refusing — and kept in the report. */
@@ -337,6 +339,18 @@ export const finishRun = async (
     );
   }
 
+  // The lead closes the run: its report is written before the person writes the run into the project — refused at once,
+  // before the person is asked and the checks run, not after them (velada-dress: refused at the end of a long finish).
+  // A dry run says it, and is not "ready" without it: its dry run said the person's step was next, and it was not.
+  const reported = (await readSummary(loaded)) !== undefined;
+  if (apply && !reported) {
+    throw new RunRefusal(
+      'invalid',
+      `Run "${runId}" has no report yet: the lead, who closes it, writes its summary first — what it did, what went wrong, what is left (plitzi run report ${runId} --summary <file>)`,
+      { run: runId }
+    );
+  }
+
   // Asked first, the person's word, then minutes of checks: asked after them, the person waited at a command that said
   // nothing, and stopped it as hung (velada-dress). Nothing is written while a check fails, confirmed or not.
   if (apply && loaded.record.leadFinishes === undefined) {
@@ -402,7 +416,7 @@ export const finishRun = async (
   if (!apply) {
     // Whole and checked: the activity's last word is that the run is ready, and whose step is next — once its report
     // says all of it.
-    if (left.length === 0 && plan.conflicts.length === 0 && behind.length === 0) {
+    if (left.length === 0 && plan.conflicts.length === 0 && behind.length === 0 && reported) {
       await logRun(ctx, loaded.paths, {
         action: 'ready',
         files: plan.apply.length,
@@ -417,17 +431,9 @@ export const finishRun = async (
       left,
       leadFinishes: loaded.record.leadFinishes !== undefined,
       ...leftThere,
-      ...(behind.length > 0 ? { summaryBehind: behind } : {})
+      ...(behind.length > 0 ? { summaryBehind: behind } : {}),
+      ...(reported ? {} : { noReport: true as const })
     };
-  }
-
-  // The lead closes the run: its report is written before the person writes the run into the project.
-  if ((await readSummary(loaded)) === undefined) {
-    throw new RunRefusal(
-      'invalid',
-      `Run "${runId}" has no report yet: the lead, who closes it, writes its summary first — what it did, what went wrong, what is left (plitzi run report ${runId} --summary <file>)`,
-      { run: runId }
-    );
   }
 
   if (behind.length > 0) {

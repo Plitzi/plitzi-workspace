@@ -770,6 +770,12 @@ monitor` shows each as it comes, a problem in red.
     - `run finish --apply` asks the person first — then runs the checks and every acceptance line on the whole result,
       saying each as it goes (`3/23 t-home: …`, on stderr) — where it asked after minutes of checks that said nothing,
       and was stopped as hung (velada-dress). Nothing is written while a check fails, confirmed or not.
+    - A pass of the checks or of an acceptance line on one result is kept for the day it passed on (twelve hours at
+      most), not an hour: velada-dress's finish ran its 23 lines again two hours after its dry run, on the very same
+      result. An acceptance line is kept on the run's reference too: kept again, every line runs again.
+    - A run with no report is said by its dry run — the lead's step, before the person's — and is not "ready" without
+      it; `--apply` refuses it at once, before the person is asked and any check runs: velada-dress's dry run said the
+      person's step was next, and `--apply` refused only at its end.
     - `run reference` keeps a page the site answers with 404 — its page for an address nothing answers, which a copy
       makes too — said, where it refused it as an error page.
     - `page shot --compare … --dress` fails where a section lacks a look the other page dresses it in — a sort of

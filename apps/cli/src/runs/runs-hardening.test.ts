@@ -321,6 +321,26 @@ describe('the checks of one result, run once', () => {
   });
 });
 
+describe('the checks of one result, kept for the day', () => {
+  // velada-dress: the finish ran its checks again two hours after its dry run, on the very same result — an hour was no
+  // unit a check reads; a day is.
+  it('reuses a pass hours later the same day, and runs it again the next', async () => {
+    const runId = await open();
+    await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { title: "Sobre" };\n');
+    await finishRun(lead(), runId, { apply: false, leavePending: true });
+    const now = bench.now();
+    const midnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+
+    // Later the same day: as before, not run again — wherever in the day the test runs.
+    bench.advance(Math.max(0, Math.min(2 * 60 * 60_000, midnight - now.getTime() - 60_000)));
+    expect((await finishRun(lead(), runId, { apply: false, leavePending: true })).plan.checks?.reused).toBeDefined();
+
+    // The next day: run again — a check may read the day.
+    bench.advance(midnight - bench.now().getTime() + 60_000);
+    expect((await finishRun(lead(), runId, { apply: false, leavePending: true })).plan.checks?.reused).toBeUndefined();
+  });
+});
+
 describe('the checks of a result once Plitzi changed', () => {
   // velada-now's upgrade put new code under the same 0.38.24: its finish said the checks of "this same result, not run
   // again" — run by the Plitzi it had replaced.
@@ -516,6 +536,30 @@ describe('what a task was accepted on, at the finish', () => {
 
     expect(dry.plan.acceptance).toMatchObject({ kept: 1 });
     expect((await fs.readFile(counted, 'utf-8')).split('\n').filter(Boolean).length - ranAtReview).toBe(1);
+    await fs.rm(outside, { recursive: true, force: true });
+  });
+
+  // A `--compare` measures against the reference kept: kept again, a pass against the old one says nothing of the new.
+  it('runs every line again once the reference was kept again', async () => {
+    const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-kept-'));
+    const counted = path.join(outside, 'menu-checked.txt');
+    const plan = benchPlan();
+    plan.tasks = [{ ...plan.tasks[1], acceptance: [{ said: 'Menu checked', check: `echo x >> '${counted}'` }] }];
+    const runId = await open(plan);
+    await doTask('agent-1', 't-menu', 'src/space/pages/menu.ts', 'export const menu = { title: "Menú" };\n');
+    await finishRun(lead(), runId, { apply: false, leavePending: true });
+    const ran = (await fs.readFile(counted, 'utf-8')).split('\n').filter(Boolean).length;
+
+    expect(
+      (await finishRun(lead(), runId, { apply: false, leavePending: true })).plan.acceptance?.reused
+    ).toBeDefined();
+    const reference = runPaths(bench.root, runId).reference;
+    await fs.mkdir(reference, { recursive: true });
+    await fs.writeFile(path.join(reference, 'menu-1440-dark.json'), '{}\n');
+    expect(
+      (await finishRun(lead(), runId, { apply: false, leavePending: true })).plan.acceptance?.reused
+    ).toBeUndefined();
+    expect((await fs.readFile(counted, 'utf-8')).split('\n').filter(Boolean).length - ran).toBe(1);
     await fs.rm(outside, { recursive: true, force: true });
   });
 });

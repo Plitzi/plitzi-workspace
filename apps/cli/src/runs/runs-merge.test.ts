@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { writeAtomic } from './files';
 import { abortRun, continueRun, finishRun, resolveFile, restoreFile, showVersion } from './merge';
 import { BACKUPS_DIR, REPORTS_DIR, RUNS_DIR, runPaths } from './paths';
+import { readRunLog } from './run';
 import { completeTask, revertTask, reviewTask, takeTask } from './tasks';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
@@ -260,8 +261,16 @@ describe('the run’s report', () => {
 `
     );
 
+    // The dry run says it, and is not "ready" without it: velada-dress's said the person's step was next, and it was not.
+    const dry = await finishRun(lead(), 'es-launch', { apply: false, leavePending: true });
+    expect(dry.noReport).toBe(true);
+    expect((await readRunLog(runPaths(bench.root, 'es-launch'))).some(entry => entry.action === 'ready')).toBe(false);
+
+    // Refused at once — before the person is asked, before any check runs.
+    const checkedBefore = bench.checked.length;
     const refused = await refusal(finishRun(bench.person(true), 'es-launch', { apply: true, leavePending: true }));
     expect(refused.message).toContain('has no report yet');
+    expect(bench.checked.length).toBe(checkedBefore);
   });
 
   it('is left when the run ends: the summary, the problems, every task, and what was written', async () => {
