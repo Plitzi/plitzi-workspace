@@ -55,7 +55,8 @@ const keep = async (runId: string, pathname: string): Promise<void> => {
     scheme: 'dark',
     at: '2026-10-21T10:00:00.000Z',
     texts: [],
-    unloaded: 0
+    unloaded: 0,
+    decorations: []
   };
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(path.join(dir, `${name}.png`), new Uint8Array([137, 80, 78, 71]));
@@ -115,7 +116,8 @@ describe('the reference a run keeps', () => {
         { ...heading('Bizarrap'), y: 900 },
         { ...heading('Quevedo'), x: 400, y: 900 }
       ],
-      unloaded: 0
+      unloaded: 0,
+      decorations: []
     };
 
     expect(

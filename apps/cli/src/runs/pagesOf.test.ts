@@ -1,0 +1,42 @@
+import http from 'node:http';
+
+import { afterEach, describe, expect, it } from 'vitest';
+
+import { examplePaths } from './pagesOf';
+
+import type { AddressInfo } from 'node:net';
+
+const servers: http.Server[] = [];
+
+afterEach(async () => {
+  await Promise.all(servers.splice(0).map(server => new Promise(resolve => server.close(resolve))));
+});
+
+/** A site whose pages are these, each its links. */
+const site = async (pages: Partial<Record<string, string[]>>): Promise<string> => {
+  const server = http.createServer((request, response) => {
+    const links = pages[request.url ?? '/'];
+    response.writeHead(links ? 200 : 404, { 'content-type': 'text/html' });
+    response.end(links ? links.map(href => `<a href="${href}">${href}</a>`).join('') : 'not found');
+  });
+  servers.push(server);
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+
+  // Listening on a host and port, address() is an AddressInfo: its type is a union with the string a pipe answers.
+  return `http://127.0.0.1:${String((server.address() as AddressInfo).port)}`;
+};
+
+// velada-now's fighter page — `/boxeadores/:slug` — had "no page" to look at: a page with a parameter was left out.
+describe('examplePaths', () => {
+  it('opens a page with a parameter where the site links to it — its list first, then the home page', async () => {
+    const origin = await site({
+      '/': ['/', '/artistas/juanes', 'https://elsewhere.example/boxeadores/nope'],
+      '/boxeadores': ['/boxeadores', '/boxeadores/alondrissa', '/boxeadores/lit-killah']
+    });
+
+    expect(await examplePaths(origin, ['/', '/boxeadores/:slug', '/artistas/:slug', '/combates/:id'])).toEqual({
+      paths: ['/', '/boxeadores/alondrissa', '/artistas/juanes'],
+      unreached: ['/combates/:id']
+    });
+  });
+});

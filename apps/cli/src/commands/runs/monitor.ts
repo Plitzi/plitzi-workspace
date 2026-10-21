@@ -157,7 +157,9 @@ export const monitorScreen = (
       'enter opens it',
       'a the approved',
       '←→ the activity',
-      ...(short ? [] : ['"after X": starts once X is approved', '○ free to take', '■ needs someone'])
+      ...(short
+        ? []
+        : ['"after X": starts once X is approved', '○ free to take', '■ needs someone', '‼ ! urgent: critical, high'])
     ],
     width
   ).map(line => chalk.dim(line));

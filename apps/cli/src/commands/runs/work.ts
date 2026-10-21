@@ -8,7 +8,7 @@ import { tellLead } from '../../runs/talk';
 import { blockTask, checkTask, completeTask, noteTask, reportProgress, unblockTask } from '../../runs/tasks';
 
 import type { RunCommandOptions } from './shell';
-import type { Needs } from '../../runs/model';
+import type { BLOCK_NEEDS } from '../../runs/model';
 
 /**
  * A task at work: its progress, a block and its answer, a note, and its completion.
@@ -41,13 +41,13 @@ export const taskProgress = (options: RunCommandOptions & { fraction?: number; s
 
 export const taskBlock = (
   taskId: string | undefined,
-  options: RunCommandOptions & { reason: string; needs?: Needs }
+  options: RunCommandOptions & { reason: string; needs?: (typeof BLOCK_NEEDS)[number] }
 ): Promise<void> =>
   act(
     options,
     async ctx => {
       const target = await either(ctx, options, taskId);
-      const needs = options.needs ?? 'person';
+      const needs = options.needs ?? 'lead';
       await blockTask(ctx, target.runId, target.taskId, options.reason, needs);
 
       return {

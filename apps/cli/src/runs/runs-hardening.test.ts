@@ -193,7 +193,7 @@ describe('a UI review, by the team’s designers', () => {
     expect(stranger.message).toContain('chaos is no designer');
   });
 
-  it('counts the designer’s rounds and the lead’s apart: a person sees it after three of one kind', async () => {
+  it('counts the designer’s rounds and the lead’s apart: the lead decides after three of one kind', async () => {
     const held = await take('dev-1', 't-menu');
     const again = async (text: string): Promise<void> => {
       await writeInCopy(held.work, 'src/space/pages/menu.ts', `export const menu = { title: "${text}" };\n`);
@@ -213,19 +213,19 @@ describe('a UI review, by the team’s designers', () => {
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
     await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', []);
     expect(await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'One' }])).toMatchObject({
-      toPerson: false
+      toLead: false
     });
     await again('Menú 4');
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
     await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', []);
     expect(await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'Two' }])).toMatchObject({
-      toPerson: false
+      toLead: false
     });
     await again('Menú 5');
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
     await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', []);
     expect(await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'Three' }])).toMatchObject({
-      toPerson: true
+      toLead: true
     });
   });
 

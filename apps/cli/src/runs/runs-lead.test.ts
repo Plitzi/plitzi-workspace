@@ -199,15 +199,18 @@ describe('the lead’s plan as the run goes', () => {
   it('says in its activity what each agent is at between tasks, and ends saying the run is ready', async () => {
     await open();
     const log = async () => readRunLog((await loadRun(lead(), 'es-launch')).paths);
-    // Every task ready but one, and it waits on two: an agent with nothing it can take waits, then goes idle.
+    // Every task ready but one, and it waits on two: an agent with nothing it can take waits — once, said once: the wait
+    // run again after its timeout, for the same reason, is the same wait.
     const held = {
       't-home': await take('agent-1', 't-home'),
       't-menu': await take('agent-2', 't-menu'),
       't-about': await take('agent-3', 't-about')
     };
     await takeNext(bench.agent('agent-4'), 'es-launch', 'developer', { timeoutMs: 30, everyMs: 10 });
+    await takeNext(bench.agent('agent-4'), 'es-launch', 'developer', { timeoutMs: 30, everyMs: 10 });
     const waited = (await log()).filter(entry => entry.by === 'agent-4').map(entry => entry.action);
-    expect(waited).toEqual(expect.arrayContaining(['waiting', 'idle']));
+    expect(waited.filter(action => action === 'waiting')).toHaveLength(1);
+    expect(waited).not.toContain('idle');
 
     const pages = {
       't-home': 'src/space/pages/home/hero.ts',

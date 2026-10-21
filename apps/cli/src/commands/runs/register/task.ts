@@ -31,7 +31,7 @@ import {
 } from '..';
 import { JSON_OPTION, TOKEN_OPTION, RUN_OPTION, AGENT_OPTION } from './options';
 import { duration, FOLLOW_MS, fraction } from '../../../options';
-import { NEEDS } from '../../../runs/model';
+import { BLOCK_NEEDS } from '../../../runs/model';
 
 import type { AnswerOptions, LookOptions, ProposeOptions, ReviewOptions, RunCommandOptions } from '..';
 import type { Command } from 'commander';
@@ -87,11 +87,11 @@ export const registerTaskGroup = (program: Command): Command => {
 
   taskGroup
     .command('claim')
-    .description('Take a shared file by turns')
-    .argument('<file>', 'The project file')
+    .description('Take shared files by turns')
+    .argument('<files...>', 'The project files')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((file: string, options: RunCommandOptions) => taskClaim(file, options));
+    .action((files: string[], options: RunCommandOptions) => taskClaim(files, options));
 
   taskGroup
     .command('release')
@@ -149,13 +149,19 @@ export const registerTaskGroup = (program: Command): Command => {
     .description('Something outside the plan stops it — said, never waited on silently')
     .argument('[task]', 'The task — the token’s when left out')
     .requiredOption('--reason <reason>', 'What stops it: "an API key is missing"')
-    .addOption(new Option('--needs <who>', 'Who unblocks it').choices(NEEDS).default('person'))
+    .addOption(
+      new Option('--needs <who>', 'Who unblocks it: the lead (who asks the person when it must), or another task')
+        .choices(BLOCK_NEEDS)
+        .default('lead')
+    )
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
     .action(
-      (task: string | undefined, options: RunCommandOptions & { reason: string; needs?: (typeof NEEDS)[number] }) =>
-        taskBlock(task, options)
+      (
+        task: string | undefined,
+        options: RunCommandOptions & { reason: string; needs?: (typeof BLOCK_NEEDS)[number] }
+      ) => taskBlock(task, options)
     );
 
   taskGroup

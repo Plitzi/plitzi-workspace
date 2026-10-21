@@ -1,9 +1,11 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { isBrakeEvent, isCompletions } from './brake';
 import { isDesignSkip } from './designSkip';
 import { isDigest, isNumber, isSiteAddress, isString, isStrings, oneOf, optional } from './guards';
 import { isInventoryItem } from './inventory';
 
+import type { BrakeEvent } from './brake';
 import type { DesignSkip } from './designSkip';
 import type { InventoryItem } from './inventory';
 
@@ -37,6 +39,11 @@ export const RUN_STATUSES = ['open', 'stopping', 'stopped', 'reconciliation'] as
 export type RunStatus = (typeof RUN_STATUSES)[number];
 
 export const NEEDS = ['person', 'lead', 'task'] as const;
+/**
+ * Who an agent's block waits for: the lead — the one that speaks to the person, and asks them when it must — or
+ * another task. Never the person directly: nobody in the run but the lead talks to them.
+ */
+export const BLOCK_NEEDS = ['lead', 'task'] as const;
 
 /**
  * How much a task asks of the model that works it: `light` — a mechanical change; `standard` — most work; `high` — what
@@ -173,11 +180,6 @@ export interface Reconciliation {
   files: ReconciledFile[];
 }
 
-export interface BrakeEvent {
-  kind: 'completed' | 'refused' | 'checks-failed' | 'conflict';
-  at: string;
-}
-
 export interface MergeEntry {
   id: string;
   /** The run's work written into the project, or a file put back from a backup. */
@@ -224,6 +226,8 @@ export interface RunRecord {
   forcedStopAt?: string;
   reconciliation?: Reconciliation;
   brake: BrakeEvent[];
+  /** Every completion the run saw, by how it ended: its report's count, never a second log line (`completionsOf`). */
+  completions?: Record<BrakeEvent['kind'], number>;
   merges: MergeEntry[];
   /** The files the lead handed it — the plan, the summary — by project path: removed with the run when unchanged. */
   inputs: { file: string; digest: string }[];
@@ -287,7 +291,7 @@ export interface TaskState {
   designRounds?: number;
   /** What it waits for from another task: a file it holds, or its answer to a proposal. */
   waitingFor?: Waiting;
-  /** `review`: sent to a person after the round limit — who may approve it as it is, or answer it (`task unblock`). */
+  /** `review`: past the round limit, for the lead to decide — approve it as it is, or answer it (`task unblock`). */
   blockedBy?: { reason: string; needs: Needs; review?: boolean };
   cutAt?: { step: string; reason: string; at: string };
   notes: TaskNote[];
@@ -623,12 +627,8 @@ export const isRunRecord = (value: unknown): value is RunRecord =>
       reconciliation.files.every(isReconciledFile)
   ) &&
   Array.isArray(value.brake) &&
-  value.brake.every(
-    event =>
-      isRecord(event) &&
-      oneOf(['completed', 'refused', 'checks-failed', 'conflict'] as const)(event.kind) &&
-      isString(event.at)
-  ) &&
+  value.brake.every(isBrakeEvent) &&
+  optional(value.completions, isCompletions) &&
   Array.isArray(value.merges) &&
   value.merges.every(isMergeEntry) &&
   Array.isArray(value.inputs) &&

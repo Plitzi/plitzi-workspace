@@ -15,12 +15,15 @@ import {
   pinnedChanges,
   pinnedNow,
   readRecord,
+  readRunLog,
   runIds,
   samePinned,
   updateRecord
 } from './record';
+import { isBrakeKind } from '../brake';
 
-import type { BrakeEvent } from '../model';
+import type { BrakeEvent } from '../brake';
+import type { RunRecord } from '../model';
 import type { RunPaths } from '../paths';
 import type { RemovedInputs } from './claim';
 import type { LoadedRun, RunContext } from './context';
@@ -29,6 +32,28 @@ import type { LoadedRun, RunContext } from './context';
  * A run once open: its brake, stopped and resumed, attached on another machine or version, released, purged, and
  * pruned when its caches are left behind.
  */
+
+/**
+ * Every completion a run saw, by how it ended: its record's — or, for a run an older CLI opened, what that CLI wrote of
+ * them in the log as `event` lines, where they were kept before the record held them.
+ */
+export const completionsOf = (
+  record: RunRecord,
+  log: readonly { action?: unknown; kind?: unknown }[]
+): Record<BrakeEvent['kind'], number> => {
+  if (record.completions) {
+    return record.completions;
+  }
+
+  const counted = { completed: 0, refused: 0, 'checks-failed': 0, conflict: 0 };
+  for (const entry of log) {
+    if (entry.action === 'event' && isBrakeKind(entry.kind)) {
+      counted[entry.kind] += 1;
+    }
+  }
+
+  return counted;
+};
 
 /** Counts toward the automatic brake; past it, the run stops as a stop does, and says why. */
 export const recordBrake = async (
@@ -39,11 +64,14 @@ export const recordBrake = async (
   task?: string
 ): Promise<string | undefined> => {
   let braked: string | undefined;
+  const log = loaded.record.completions ? [] : await readRunLog(loaded.paths);
   await updateRecord(ctx, loaded.paths, record => {
     const since = ctx.now().getTime() - DEFAULTS.brakeWindowMs;
     const brake = [...record.brake, { kind, at: ctx.now().toISOString() }].filter(
       event => Date.parse(event.at) >= since
     );
+    const was = completionsOf(record, log);
+    const completions = { ...was, [kind]: was[kind] + 1 };
     const failures = brake.filter(event => event.kind === 'checks-failed' || event.kind === 'conflict').length;
     const refused = brake.filter(event => event.kind === 'refused').length;
     const completes = brake.filter(event => event.kind === 'completed').length;
@@ -61,16 +89,15 @@ export const recordBrake = async (
       ? {
           ...record,
           brake,
+          completions,
           status: 'stopping',
           stopRequestedAt: ctx.now().toISOString(),
           stopReason: `the automatic brake: ${braked}`
         }
-      : { ...record, brake };
+      : { ...record, brake, completions };
   });
-  // Every one, in the log: what the run's report counts, whatever the brake's window kept.
-  await logRun(ctx, loaded.paths, { action: 'event', kind, ...(task === undefined ? {} : { task }) });
   if (braked) {
-    await logRun(ctx, loaded.paths, { action: 'brake', reason: braked });
+    await logRun(ctx, loaded.paths, { action: 'brake', reason: braked, ...(task === undefined ? {} : { task }) });
   }
 
   return braked;

@@ -25,6 +25,8 @@ export type {
   PictureRegion,
   RowProfile
 } from './pictures';
+export { compareDecorations, PAGE_DECORATION_LIMIT, pageDecorations } from './decorations';
+export type { DecorationKind, PageDecoration, SectionDecorations } from './decorations';
 export { compareTexts, PAGE_TEXT_LIMIT, pageTexts } from './texts';
 export type { PageText, TextComparison, TextDifference } from './texts';
 export { inspectRenders, summariseRenders } from './renders';

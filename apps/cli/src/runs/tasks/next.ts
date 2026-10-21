@@ -8,7 +8,7 @@ import { pagesOf } from '../pagesOf';
 import { agentScratch, runPaths } from '../paths';
 import { readyTasks } from '../plan';
 import { isRunRefusal, RunRefusal } from '../refusal';
-import { assertStatus, loadRun, logRun } from '../run';
+import { assertStatus, loadRun, logRun, readRunLog } from '../run';
 import { runChanged } from '../runChanged';
 import { tellLeftInTmp } from '../strays';
 import { isDisconnected, viewTask } from '../taskStore';
@@ -51,8 +51,12 @@ export interface NextTask {
     changed: string[];
     /** Where its changes are drawn, to look at: the pages that own its files. */
     pages: string[];
-    /** Sent back since a designer last looked: what the lead's reviews asked — what this round answers. */
+    /** Sent back since a designer last looked: what the last review asked — what this round answers. */
     asked: string[];
+    /** The notes of the reviews before the last: counted, not repeated — `task show` has them whole. */
+    earlier: number;
+    /** Its copy, as it went to review: what to read its files in (`task look` serves it). */
+    copy: string;
     /** How closely the team asks it reviewed (`options.designReview` in team.json). */
     precision: Quality;
   };
@@ -66,6 +70,8 @@ export interface NextTask {
     changed: string[];
     pages: string[];
     asked: string[];
+    earlier: number;
+    copy: string;
     /** A designer approved its UI: what it said, when it said something. */
     design?: string;
     /** Its UI review waits for a designer and none is free: the lead's too, said how. */
@@ -178,9 +184,8 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
         changed: review.state.changed ?? [],
         // Read off its copy: a page the task makes (a dog added to the data) is one to look at too.
         pages: await pagesOf(review.paths.work, review.state.changed ?? []),
-        asked: review.state.notes
-          .filter(note => /^Review \d+: /.test(note.text))
-          .map(note => `${note.by}: ${note.text}`),
+        ...askedOf(review.state.notes),
+        copy: review.paths.work,
         precision: (await readTeam(ctx.root).catch(() => undefined))?.options?.designReview ?? DEFAULT_DESIGN_REVIEW
       },
       ready: [],
@@ -380,9 +385,8 @@ const leadNext = async (
         round: review.state.round,
         changed: review.state.changed ?? [],
         pages: await pagesOf(review.paths.work, review.state.changed ?? []),
-        asked: review.state.notes
-          .filter(note => /^Review \d+: /.test(note.text))
-          .map(note => `${note.by}: ${note.text}`),
+        ...askedOf(review.state.notes),
+        copy: review.paths.work,
         ...(approvedUi
           ? {
               design:
@@ -507,6 +511,24 @@ export const takeNext = async (
   }
 };
 
+/**
+ * What a task's reviews asked, as the next review is handed it: the last review's notes whole, the earlier ones counted —
+ * each round's hand-off repeated every review before it whole (velada-now's t-boxer, round 4).
+ */
+const askedOf = (notes: readonly { by: string; text: string }[]): { asked: string[]; earlier: number } => {
+  const reviews = notes.flatMap(note => {
+    const round = /^Review (\d+): /.exec(note.text)?.[1];
+
+    return round === undefined ? [] : [{ round: Number(round), line: `${note.by}: ${note.text}` }];
+  });
+  const last = Math.max(0, ...reviews.map(each => each.round));
+
+  return {
+    asked: reviews.filter(each => each.round === last).map(each => each.line),
+    earlier: reviews.filter(each => each.round !== last).length
+  };
+};
+
 export const followNext = async (
   ctx: RunContext,
   runId: string,
@@ -514,7 +536,7 @@ export const followNext = async (
   { timeoutMs = FOLLOW_MS, everyMs = 10_000, idleMs = IDLE_LEAD_MS } = {}
 ): Promise<NextTask> => {
   const started = Date.now();
-  let saidWaiting = false;
+  let saidWaiting: string | undefined;
   const idleLead =
     role
       ?.split(',')
@@ -543,10 +565,16 @@ export const followNext = async (
       return next;
     }
 
-    // Once a call: the agent waits, and the activity says for what — what is ready for others, what holds it back.
-    if (!saidWaiting) {
-      saidWaiting = true;
-      await logRun(ctx, runPaths(ctx.root, runId), { action: 'waiting', why: next.why ?? 'nothing is ready' });
+    // The agent waits, and the activity says for what — once for each reason: a wait run again after its timeout, for
+    // the same reason, is the same wait (velada-now's log held 28 "waiting" and 10 "idle" for a handful of waits).
+    const why = next.why ?? 'nothing is ready';
+    if (saidWaiting !== why) {
+      saidWaiting = why;
+      const paths = runPaths(ctx.root, runId);
+      const last = (await readRunLog(paths)).findLast(entry => entry.by === ctx.agent);
+      if (last?.action !== 'waiting' || last.why !== why) {
+        await logRun(ctx, paths, { action: 'waiting', why });
+      }
     }
 
     // A lead that reviews handed nothing for a while: the queue is empty, and waiting on costs tokens — `lead` starts it
@@ -564,12 +592,8 @@ export const followNext = async (
       };
     }
 
+    // Its wait's end is no state of its own: it is told to wait again, and stays waiting until it takes work or stops.
     if (Date.now() - started >= timeoutMs) {
-      await logRun(ctx, runPaths(ctx.root, runId), {
-        action: 'idle',
-        waited: durationText(timeoutMs),
-        why: next.why ?? 'nothing is ready'
-      });
       // Its own task in review comes back to it if it is sent back: an agent told only "nothing came" took the wait's
       // end for the run's, and stopped — and velada-now's t-case and t-boxer came back to nobody.
       const loaded = await loadRun(ctx, runId);

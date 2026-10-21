@@ -1,7 +1,7 @@
 import type { BrowserPage, Scheme } from '../../browser';
 import type { FieldFill } from '../../options';
 import type { Account } from '../check';
-import type { TextComparison } from '@plitzi/sdk-authoring';
+import type { SectionDecorations, TextComparison } from '@plitzi/sdk-authoring';
 
 /**
  * What a picture of a page is asked and answers, and the measures it is taken by.
@@ -13,6 +13,8 @@ export const SHOT_MOMENTS = ['settled', 'load'] as const;
 export type ShotMoment = (typeof SHOT_MOMENTS)[number];
 
 export interface ShotOptions {
+  /** `--json` at several widths: each width's report handed here, for one object of them all, not printed one by one. */
+  collect?: (report: ShotReport) => void;
   /** The numbers and the scheme are validated where the flags are declared (options.ts). */
   width?: number;
   height?: number;
@@ -76,6 +78,8 @@ export interface CompareReport {
   section?: string;
   /** The words both pages have, and what each does differently there. */
   texts: TextComparison;
+  /** Each section whose dress — gradients, glows, ornaments, background images — differs, and how. */
+  decorations: SectionDecorations[];
   /** Pictures the other page had not drawn when it was taken. */
   unloaded: number;
   sideBySide: string;

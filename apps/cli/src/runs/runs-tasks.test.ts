@@ -236,7 +236,7 @@ export const menu = { id: 'menu', title: 'Carta', theme };
     expect((await nextTask(lead(), 'es-launch')).ready).toEqual(['t-book', 't-about']);
   });
 
-  it('sends changes back to the same task, and after three rounds to a person', async () => {
+  it('sends changes back to the same task, and after three rounds blocks it for the lead to decide', async () => {
     await open();
     const home = await take('agent-1', 't-home');
     for (let round = 1; round <= 3; round += 1) {
@@ -249,16 +249,23 @@ export const menu = { id: 'menu', title: 'Carta', theme };
       const reviewed = await reviewTask(lead(), 'es-launch', 't-home', 'changes', [
         { note: 'shorter', element: 'hero-title' }
       ]);
-      expect(reviewed.toPerson).toBe(round === 3);
+      expect(reviewed.toLead).toBe(round === 3);
     }
 
     const view = await viewRun(lead(), 'es-launch');
     expect(view.tasks.find(task => task.id === 't-home')?.status).toBe('blocked');
-    expect(view.attention.some(item => item.kind === 'person')).toBe(true);
-
-    // The person looks at it and takes it as it is: a person's, confirmed.
-    expect((await refusal(reviewTask(lead(), 'es-launch', 't-home', 'approve', []))).code).toBe('person-only');
-    expect((await reviewTask(bench.person(true), 'es-launch', 't-home', 'approve', [])).verdict).toBe('approve');
+    // The lead's to decide — it speaks to the person, if it must — never a person's the run has none of.
+    expect(view.attention).toContainEqual(
+      expect.objectContaining({
+        kind: 'blocked',
+        who: 'lead',
+        text: expect.stringContaining('the lead decides') as unknown
+      })
+    );
+    expect((await refusal(reviewTask(bench.agent('agent-2'), 'es-launch', 't-home', 'approve', []))).code).toBe(
+      'lead-only'
+    );
+    expect((await reviewTask(lead(), 'es-launch', 't-home', 'approve', [])).verdict).toBe('approve');
     expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-home')?.status).toBe('done');
   });
 

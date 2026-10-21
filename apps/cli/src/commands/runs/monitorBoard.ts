@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-import { ago, cell, hhmm, idCell, visible, wrapped } from './monitorCells';
+import { ago, cell, hhmm, idCell, urgencyMark, visible, wrapped } from './monitorCells';
 import { waitsText } from './monitorFlow';
 import { designSkipText } from '../../runs/designSkip';
 
@@ -121,7 +121,14 @@ const taskRow = (
   selected: boolean,
   now: Date
 ): string =>
-  `${selected ? chalk.inverse('›') : ' '} ${idCell(task.id)} ${TASK_STATE[task.status](task, tasks)}${rowTail(task, story, now)}`;
+  `${selected ? chalk.inverse('›') : ' '} ${urgent(task)}${idCell(task.id)} ${TASK_STATE[task.status](task, tasks)}${rowTail(task, story, now)}`;
+
+/** The urgency mark, toned by how urgent: a critical task's red, a high one's yellow. */
+const urgent = (task: TaskLine): string => {
+  const mark = urgencyMark(task);
+
+  return task.urgency === 'critical' ? chalk.red(mark) : chalk.yellow(mark);
+};
 
 const ROLE_SHORT: Record<string, string> = { developer: 'dev', designer: 'design', tester: 'test', writer: 'write' };
 

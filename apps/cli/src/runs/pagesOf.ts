@@ -6,11 +6,13 @@ import { readOwnership } from './ownership';
  * one that owns it, read off the imports (`walkFilter.ts` is `walks.ts`'s) — a shared one's, the pages that reach it
  * (`dogFilter.ts` is drawn at /walks, /visits, /reminders) — and its address is the authored space's —
  * a page of that id, or the pages a family of that name makes (`pet.ts` → `/pets/luna`, `/pets/bruno`). A page with a
- * parameter in its address is not one to open; what matches nothing is left out rather than guessed.
+ * parameter in its address is said as its pattern (`/boxeadores/:slug`), for `examplePaths` to open by the site's own
+ * links: left out, velada-now's fighter page had "no page" to look at, and a theme's change missed every detail page.
+ * What matches nothing is left out rather than guessed.
  */
 
 const PAGES = 'src/space/pages/';
-const MAX_PAGES = 6;
+const MAX_PAGES = 8;
 
 /** `walkFilter` → `walk-filter`: a file's name as a page's id is usually written. */
 const kebab = (name: string): string => name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
@@ -49,9 +51,64 @@ export const pagesOf = async (root: string, files: readonly string[]): Promise<s
 
   const names = [...units].filter(Boolean).flatMap(name => [name, kebab(name)]);
   const paths = Object.entries(handles.pages)
-    .filter(([, page]) => page.params.length === 0 && !page.path.includes('*'))
+    .filter(([, page]) => !page.path.includes('*'))
     .filter(([id]) => names.some(name => id === name || id.startsWith(`${name}-`) || id === `${name}-page`))
     .map(([, page]) => page.path);
 
   return [...new Set(paths)].slice(0, MAX_PAGES);
+};
+
+/** A pattern's parameters, `:slug`, as what one segment of an address may be. */
+const patternOf = (route: string): RegExp =>
+  new RegExp(`^${route.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/:[A-Za-z_]\w*/g, '[^/?#]+')}/?$`);
+
+/**
+ * Routes to open, each pattern among them (`/boxeadores/:slug`) made an address the site itself links to: the first
+ * link of its list page (`/boxeadores`), or else of the home page, that fits it — a visitor's way there, with no data
+ * of the project's read. A pattern no link fits is said, never opened as it is.
+ */
+export const examplePaths = async (
+  origin: string,
+  routes: readonly string[]
+): Promise<{ paths: string[]; unreached: string[] }> => {
+  const linksOf = new Map<string, Promise<string[]>>();
+  const links = (page: string): Promise<string[]> => {
+    const known = linksOf.get(page);
+    if (known) {
+      return known;
+    }
+
+    const read = fetch(new URL(page, origin))
+      .then(answer => (answer.ok ? answer.text() : ''))
+      .then(html =>
+        [...html.matchAll(/href="([^"]+)"/g)].flatMap(match => {
+          const address = new URL(match[1], origin);
+
+          return address.origin === new URL(origin).origin ? [address.pathname] : [];
+        })
+      )
+      .catch(() => []);
+    linksOf.set(page, read);
+
+    return read;
+  };
+  const paths: string[] = [];
+  const unreached: string[] = [];
+  for (const route of routes) {
+    if (!route.includes(':')) {
+      paths.push(route);
+      continue;
+    }
+
+    const fits = patternOf(route);
+    const list = route.slice(0, route.indexOf('/:')) || '/';
+    const found = [...(await links(list)), ...(await links('/'))].find(link => fits.test(link));
+    if (found) {
+      paths.push(found);
+    } else {
+      unreached.push(route);
+    }
+  }
+
+  return { paths: [...new Set(paths)], unreached };
 };

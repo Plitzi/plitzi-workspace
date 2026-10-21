@@ -633,4 +633,32 @@ monitor` shows each as it comes, a problem in red.
     - `run monitor` on a run whose every task is approved shows every agent stopped — "every task approved — nothing is
       left for it" — whatever it said last: velada-now's dev-2 read "waiting for work" an hour after its agent had gone,
       and design-1 idle.
+    - Nobody in a run but the lead talks to the person: a task past its three review rounds is blocked for the lead to
+      decide — approve it as it is, answer it, or ask the person — where it waited for "a person" nobody in the run
+      was; and an agent's `task block` waits for the lead (the default) or another task, `--needs person` gone.
+    - `run monitor` marks how urgent each task is — `‼` critical, `!` high, its own priority or that of any task waiting
+      on it — in the task list and on its card in the flow (`!t-home`); approved, nothing. The view carries it as
+      `urgency`.
+    - `page shot --compare` (and `task look --before`, `run reference`) reads each page's dress — gradients, glows (a
+      shadow blurred 12px or more), filters, ornaments drawn by `::before`/`::after`, background images — and says, section
+      by section, what the other page has that this one lacks and what this one adds (`section#artist-page: 4 gradients,
+      3 glows → 12 gradients, 2 filters, 5 glows — add: radial-gradient rgba(199, 168, 107, 0.16); box-shadow 60px
+      rgba(199, 168, 107, 0.45)…`), before the words. The other site's dress is placed in this page's sections where the
+      pictures found each, so one that names its sections otherwise is still read section by section; transparent
+      layers (a hover's glow at rest) are not dress; colours read as `rgb()` whatever the page wrote (`color(srgb …)`,
+      `oklab(…)`). New in `@plitzi/sdk-authoring`: `pageDecorations`, `compareDecorations`. la-velada's artist page lost
+      the original's warm light, its portrait's corners and its card's halo, its predictions every fighter's glow: a
+      few percent of pixels and no text, and three reviews passed them.
+    - A run's activity is cleaner to read back: a wait is said once for each reason (velada-now's log held 28
+      "waiting" and 10 "idle" for a handful of waits) — a follow that ends and is run again is the same wait, and its
+      end is no `idle` of its own; and a completion is one line, not a second `event` beside it: the counts the report
+      and the brake read are the run's record's (`completions`), a run an older CLI opened counted from its log.
+    - `task look` opens a page with a parameter in its address (`/boxeadores/:slug`) where the site's own links go —
+      the first of its list page's, else the home page's, that fits — and says one no link reaches: left out, velada-now's
+      fighter page had "no page" to look at, and a theme's change missed every detail page. Eight pages at most, not six.
+    - A review's hand-off — a designer's (`task next`) and a lead's — says the task's copy, where its files are read,
+      and hands a designer `task look … --before` first; and it gives the last review's notes whole, the earlier rounds'
+      counted (`task show` has them): each round repeated every review before it, whole (`earlier`, `copy` in `--json`).
+    - `task claim` takes several files at once (`plitzi task claim a.ts b.ts`), each by turns; and `page shot --json` at
+      several widths is one object, `{ widths: [...] }`, not one line of JSON a width.
 

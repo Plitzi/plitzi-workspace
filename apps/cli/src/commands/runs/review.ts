@@ -9,7 +9,7 @@ import { list, messageLines, outsideLines, secondRunText } from './text';
 import { answering, freePort } from '../../runs/acceptance';
 import { designSkipText, isDesignSkip } from '../../runs/designSkip';
 import { acceptanceText } from '../../runs/model';
-import { pagesOf } from '../../runs/pagesOf';
+import { examplePaths, pagesOf } from '../../runs/pagesOf';
 import { runPaths, taskPaths } from '../../runs/paths';
 import { startBeforePreview, startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
@@ -137,7 +137,11 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
             // A part of a page others build too: its own elements pictured, its own findings kept — the rest is theirs.
             const parts = await taskParts(preview.dir, changed);
             const clips = parts && !parts.ownsRoot ? parts.tops.slice(0, PARTS_PICTURED) : [];
-            const routes = paths.length > 0 ? paths : owned.length > 0 ? owned : ['/'];
+            // A page with a parameter in its address (`/boxeadores/:slug`) is opened where the site's own links go.
+            const { paths: routes, unreached } = await examplePaths(
+              preview.url,
+              paths.length > 0 ? paths : owned.length > 0 ? owned : ['/']
+            );
             const check = await runSelf(preview.dir, [
               'page',
               'check',
@@ -263,6 +267,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               check: kept?.text ?? check.output.trim(),
               ...(kept && kept.apart > 0 ? { apart: kept.apart } : {}),
               ...(clips.length > 0 ? { parts: clips } : {}),
+              ...(unreached.length > 0 ? { unreached } : {}),
               shots,
               ...(compared.length > 0 ? { compared } : {}),
               ...(preview.borrowed === undefined ? {} : { borrowed: preview.borrowed }),
@@ -291,6 +296,13 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
           : []),
         ...(looked.parts
           ? [`Its part of the page, pictured alone: ${looked.parts.join(', ')} — the rest is other tasks'`]
+          : []),
+        ...(looked.unreached
+          ? [
+              chalk.yellow(
+                `⚠ No link of the site reaches ${list(looked.unreached)}: not looked at — name one: plitzi task look ${looked.task} <its address>`
+              )
+            ]
           : []),
         looked.check,
         ...(looked.apart ? [chalk.dim(`  · ${String(looked.apart)} finding(s) on other tasks' parts left out`)] : []),
@@ -394,8 +406,8 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
               ...notReviewedText(reviewed.notReviewed, 'approve')
             ].join('\n')
           : [
-              reviewed.toPerson
-                ? `${taskId}: ${String(reviewed.round)} rounds of changes — it goes to a person.`
+              reviewed.toLead
+                ? `${taskId}: ${String(reviewed.round)} rounds of changes — blocked for the lead to decide.`
                 : `${taskId}: changes requested (round ${String(reviewed.round)}); it goes back to the same task.`,
               ...(reviewed.goesFirst
                 ? [`  ${list(reviewed.goesFirst)} wait on it: its agent, at another task, was told it goes first`]

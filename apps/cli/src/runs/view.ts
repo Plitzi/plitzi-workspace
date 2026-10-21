@@ -14,9 +14,9 @@ import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
 import { readTeam, startedAgents } from './team';
-import { chainMinutes } from './urgency';
+import { chainMinutes, urgencies } from './urgency';
 
-import type { DesignReview, Needs, RunRecord, TaskStatus, Waiting } from './model';
+import type { DesignReview, Needs, Priority, RunRecord, TaskStatus, Waiting } from './model';
 import type { RunContext } from './run';
 import type { TaskView } from './taskStore';
 
@@ -40,6 +40,8 @@ export interface TaskLine {
   role: string;
   status: TaskStatus;
   priority: string;
+  /** How urgent it is: its own priority or that of any task waiting on it, whichever comes first (`effectiveRanks`). */
+  urgency: Priority;
   agent?: string;
   step?: string;
   fraction?: number;
@@ -133,13 +135,14 @@ const minutesBetween = (from: string, to: Date): number => Math.round((to.getTim
 /** Past its work: in review or approved, what its agent last said of the work is history. */
 const past = (view: TaskView): boolean => view.state.status === 'in-review' || view.state.status === 'done';
 
-const lineOf = (view: TaskView, now: Date, unblocks: string[]): TaskLine => ({
+const lineOf = (view: TaskView, now: Date, unblocks: string[], urgency: Priority): TaskLine => ({
   id: view.task.id,
   title: view.task.title,
   kind: view.task.kind,
   role: view.task.role ?? 'developer',
   status: view.state.status,
   priority: view.task.priority,
+  urgency,
   ...(view.owner ? { agent: view.owner.agent } : {}),
   // Where its work got to, while it is worked: in review, "waiting for t-boxer before check · 85 %" was no longer true.
   ...(view.progress?.step && !past(view) ? { step: view.progress.step } : {}),
@@ -172,11 +175,13 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
   const byId = new Map(views.map(view => [view.task.id, view]));
   const approvedIds = new Set(views.filter(view => view.state.status === 'done').map(view => view.task.id));
+  const urgency = urgencies(loaded.tasks);
   const tasks = views.map(view => {
     const line = lineOf(
       view,
       now,
-      loaded.tasks.filter(task => task.dependsOn.includes(view.task.id)).map(task => task.id)
+      loaded.tasks.filter(task => task.dependsOn.includes(view.task.id)).map(task => task.id),
+      urgency.get(view.task.id) ?? view.task.priority
     );
     const waitsOn = view.task.dependsOn.filter(id => !approvedIds.has(id));
 

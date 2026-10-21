@@ -11,7 +11,7 @@ import { activeRuns } from './run';
 
 import type { RunPlan } from './model';
 import type { Scheme } from '../browser';
-import type { PageText } from '@plitzi/sdk-authoring';
+import type { PageDecoration, PageText } from '@plitzi/sdk-authoring';
 
 /**
  * The plan's `reference` site as the run keeps it (`plitzi run reference`): each page of its inventory pictured and its
@@ -27,6 +27,8 @@ export interface KeptPage {
   texts: PageText[];
   /** Its pictures that had not loaded when it was kept: those parts compare against a hole. */
   unloaded: number;
+  /** Its dress — gradients, glows, ornaments, background images — compared section by section with a page's. */
+  decorations: PageDecoration[];
 }
 
 /** The widths a page is kept at: the desktop and the phone a review looks at. */
@@ -56,7 +58,9 @@ const isKeptPage = (value: unknown): value is KeptPage =>
   (value.scheme === 'light' || value.scheme === 'dark') &&
   isString(value.at) &&
   isPageTexts(value.texts) &&
-  isNumber(value.unloaded);
+  isNumber(value.unloaded) &&
+  Array.isArray(value.decorations) &&
+  value.decorations.every(layer => isRecord(layer) && isString(layer.kind) && isString(layer.detail));
 
 /** Where the open run that keeps `url`'s site is — the one this copy is of, or one open in the project. */
 const keepingRun = async (root: string, url: URL): Promise<{ dir: string; runId: string } | undefined> => {

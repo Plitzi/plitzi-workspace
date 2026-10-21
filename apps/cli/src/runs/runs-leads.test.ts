@@ -97,6 +97,15 @@ describe('a review, taken from one queue', () => {
     const next = await takeNext(bench.agent('lead-2'), runId, 'lead');
     expect(next.next.leadReview).toMatchObject({ task: { id: 't-menu' }, round: 1 });
     expect(next.next.leadReview?.asked.join(' ')).toContain('The title says nothing');
+    expect(next.next.leadReview?.copy).toBe(menu.work);
+
+    // A second round: its notes whole, the first round's counted — never every review again, whole.
+    await reviewTask(bench.agent('lead-2'), runId, 't-menu', 'changes', [{ note: 'Now say the season' }]);
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "La carta de otoño" };\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+    const again = await takeNext(bench.agent('lead-2'), runId, 'lead');
+    expect(again.next.leadReview).toMatchObject({ round: 2, earlier: 1 });
+    expect(again.next.leadReview?.asked).toEqual([expect.stringContaining('Now say the season')]);
   });
 
   it('serialises two verdicts on one task: the second reads it said', async () => {

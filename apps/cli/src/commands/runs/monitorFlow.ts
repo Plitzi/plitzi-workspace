@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-import { cell, idCell, wrapped } from './monitorCells';
+import { cell, idCell, urgencyMark, wrapped } from './monitorCells';
 
 import type { TaskLine } from '../../runs/view';
 
@@ -24,8 +24,12 @@ interface Stage {
  * A task as its card names it: a task sent back by a review is ready again for the agent that wrote it, marked by the
  * round it is at — `t-boxer ↺2` — rather than in a stage of its own: it goes round the same steps again.
  */
-const nameOf = (task: TaskLine): string =>
-  task.status === 'changes-requested' ? `${task.id} ↺${String(task.round)}` : task.id;
+const nameOf = (task: TaskLine): string => {
+  const mark = urgencyMark(task).trim();
+  const id = mark ? `${mark}${task.id}` : task.id;
+
+  return task.status === 'changes-requested' ? `${id} ↺${String(task.round)}` : id;
+};
 
 /** Where a task another waits for stands, in a word or two: what the one waiting for it waits on. */
 const standingOf = (task: TaskLine): string =>

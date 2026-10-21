@@ -24,16 +24,21 @@ export const taskClaims = (options: RunCommandOptions): Promise<void> =>
             .join('\n')
   );
 
-export const taskClaim = (file: string, options: RunCommandOptions): Promise<void> =>
+/** `plitzi task claim a.ts b.ts`: each file taken by turns, one after the other — a refusal stops at that file, said. */
+export const taskClaim = (files: string[], options: RunCommandOptions): Promise<void> =>
   act(
     options,
     async ctx => {
       const { runId, taskId } = await holder(ctx, options);
+      const claimed: string[] = [];
+      for (const file of files) {
+        claimed.push((await claimFile(ctx, runId, taskId, file)).file);
+      }
 
-      return claimFile(ctx, runId, taskId, file);
+      return { claimed };
     },
-    claimed =>
-      `${claimed.file} is yours by turns: your copy keeps what you wrote in it (or takes the run's version if you had not touched it), and your change goes into the run when this task is approved.`
+    ({ claimed }) =>
+      `${claimed.join(', ')} ${claimed.length === 1 ? 'is' : 'are'} yours by turns: your copy keeps what you wrote in ${claimed.length === 1 ? 'it' : 'them'} (or takes the run's version where you had not touched it), and your change goes into the run when this task is approved.`
   );
 
 export const taskRelease = (file: string, options: RunCommandOptions): Promise<void> =>

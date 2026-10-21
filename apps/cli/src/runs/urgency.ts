@@ -1,4 +1,6 @@
-import type { RunTask } from './model';
+import { PRIORITIES } from './model';
+
+import type { Priority, RunTask } from './model';
 
 /** A priority as a number to sort by: the lower, the sooner. */
 export const PRIORITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 } as const;
@@ -69,3 +71,7 @@ export const byUrgency = (tasks: readonly RunTask[]): ((a: RunTask, b: RunTask) 
     (ranks.get(a.id) ?? PRIORITY_RANK.low) - (ranks.get(b.id) ?? PRIORITY_RANK.low) ||
     (chains.get(b.id) ?? 0) - (chains.get(a.id) ?? 0);
 };
+
+/** Each task's priority as `effectiveRanks` weighs it, by name: what the monitor marks a task urgent by. */
+export const urgencies = (tasks: readonly RunTask[]): Map<string, Priority> =>
+  new Map([...effectiveRanks(tasks)].map(([id, rank]) => [id, PRIORITIES[rank] ?? 'low'] as const));

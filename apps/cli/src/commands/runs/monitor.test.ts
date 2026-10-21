@@ -76,9 +76,12 @@ describe('plitzi run monitor', () => {
     const screen = plain(
       monitorScreen(data, { selected: 0, open: true, width: 160, height: 60, now: bench.now(), showApproved: true })
     );
-    const rows = screen.filter(line => /^[ ›] t-/.test(line));
+    const rows = screen.filter(line => /^[ ›] [ !‼]t-/.test(line));
 
-    expect(rows[0]).toContain('t-home');
+    // Urgent at a glance: t-home is high — marked in the list and on its card in the flow; approved, nothing is.
+    expect(rows[0]).toMatch(/^› !t-home/);
+    expect(screen.some(line => line.includes('!t-home agent-2'))).toBe(true);
+    expect(rows.at(-1)).toMatch(/^ {3}t-about/);
     expect(rows.at(-1)).toMatch(/t-about\s+✓ approved · agent-1 · \d+m of \d+/);
     expect(screen.some(line => line.includes('1 at work') && line.includes('pending'))).toBe(true);
     expect(screen.some(line => line.includes('agent-1') && line.includes('✓1'))).toBe(true);

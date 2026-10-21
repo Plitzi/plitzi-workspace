@@ -48,16 +48,29 @@ export const shotEach = async (
     return;
   }
 
+  // `--json` at several widths is one object, `{ widths: [...] }`, as the flag says — two lines of JSON are no object.
+  const reports: ShotReport[] = [];
+  const collect = rest.json && all.length > 1 ? (report: ShotReport) => reports.push(report) : undefined;
   try {
     for (const each of all) {
       const out = rest.out && all.length > 1 ? rest.out.replace(/(\.png)?$/, `-${String(each)}.png`) : rest.out;
-      await shot(route, { ...rest, width: each, ...(out ? { out } : {}), ...(served ? { url: served.origin } : {}) });
+      await shot(route, {
+        ...rest,
+        width: each,
+        ...(out ? { out } : {}),
+        ...(served ? { url: served.origin } : {}),
+        ...(collect ? { collect } : {})
+      });
       if (process.exitCode !== undefined && process.exitCode !== 0) {
-        return;
+        break;
       }
     }
   } finally {
     served?.stop?.();
+  }
+
+  if (collect) {
+    console.log(JSON.stringify({ widths: reports }));
   }
 };
 
@@ -375,7 +388,11 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     }
 
     if (options.json) {
-      console.log(JSON.stringify(report));
+      if (options.collect) {
+        options.collect(report);
+      } else {
+        console.log(JSON.stringify(report));
+      }
 
       return;
     }

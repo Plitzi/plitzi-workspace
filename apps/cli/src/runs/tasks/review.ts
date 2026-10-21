@@ -10,7 +10,7 @@ import { taskPaths, under } from '../paths';
 import { dependenciesDone } from '../plan';
 import { syncPreview } from '../preview';
 import { RunRefusal } from '../refusal';
-import { assertStatus, loadRun, logRun, readApproved, recordBrake, requireNoTask, requirePerson } from '../run';
+import { assertStatus, loadRun, logRun, readApproved, recordBrake, requireNoTask } from '../run';
 import { keepFiles, withLock } from '../store';
 import { DEFAULTS, lockedFiles, readRequests, readStart, revokeOwner, updateState, viewTask } from '../taskStore';
 import { DESIGNER, readTeam, startedAgents, TEAM_FILE } from '../team';
@@ -40,8 +40,8 @@ export interface ReviewedTask {
   previewProblem?: string;
   /** Requests of done tasks on the files it let go of, merged now — and integration tasks left with nothing to do. */
   settled?: string[];
-  /** Sent to a person after the round limit. */
-  toPerson?: boolean;
+  /** Past the round limit: blocked for the lead to decide — the one that speaks to the person. */
+  toLead?: boolean;
   /** Its files a person changed meanwhile, put together with its change (--merge). */
   joined?: string[];
   /** A designer approved its UI — it is the lead's now — or the lead approved it without that review. */
@@ -144,7 +144,7 @@ const writtenSince = async (
 
 /**
  * `plitzi task review`: the lead's or a reviewer's verdict on a task in review. Changes go back to the same task
- * with comments, and after the round limit to a person; approval keeps its reviewed version, merges it into the run's
+ * with comments, and past the round limit blocked for the lead to decide; approval keeps its reviewed version, merges it into the run's
  * work, lets its files go to whoever waits for them, and makes ready what was waiting on it.
  */
 export const reviewTask = async (
@@ -179,15 +179,22 @@ const decide = async (
   assertStatus(loaded, ['open', 'stopping'], 'review a task');
   const task = findTask(loaded, taskId);
   const view = await viewTask(loaded.paths, task);
-  // After the round limit it went to a person, who looks at it and may approve it as it is — confirming, as a person.
-  const atPerson = view.state.status === 'blocked' && view.state.blockedBy?.review === true;
-  if (atPerson && verdict === 'approve') {
-    await requirePerson(ctx, runId, `approve task "${taskId}" after its review rounds`);
+  // Past the round limit it is the lead's to decide — the lead speaks to the person, if it must ask — never an agent's:
+  // velada-now's t-boxer waited for "a person" nobody in the run was.
+  const atLimit = view.state.status === 'blocked' && view.state.blockedBy?.review === true;
+  if (atLimit && verdict === 'approve') {
+    if (!isPrincipal(ctx.agent)) {
+      throw new RunRefusal(
+        'lead-only',
+        `Task "${taskId}" is past its review rounds: the lead decides — approves it as it is, or answers it (plitzi task unblock ${taskId} --answer "…")`,
+        { task: taskId, holder: LEAD }
+      );
+    }
   } else if (view.state.status !== 'in-review') {
     throw new RunRefusal(
       'invalid',
-      atPerson
-        ? `Task "${taskId}" went to a person after its review rounds: a person approves it as it is, or answers it (plitzi task unblock ${taskId} --answer "…")`
+      atLimit
+        ? `Task "${taskId}" is past its review rounds: the lead approves it as it is, or answers it (plitzi task unblock ${taskId} --answer "…")`
         : `Task "${taskId}" is ${view.state.status}, not in review`,
       { task: taskId }
     );
@@ -262,21 +269,21 @@ const decide = async (
     // Counted apart: the designer's rounds on its UI, and the lead's on the rest — each kind to its own limit.
     const designRounds = (view.state.designRounds ?? 0) + (byDesigner ? 1 : 0);
     const ofKind = byDesigner ? designRounds : round - designRounds;
-    const toPerson = ofKind >= DEFAULTS.reviewRounds;
+    const toLead = ofKind >= DEFAULTS.reviewRounds;
     // It redoes its work on the run as it is now: what was approved while it was in review comes into its copy.
-    const brought = toPerson ? [] : await refreshCopy(ctx, loaded, view);
+    const brought = toLead ? [] : await refreshCopy(ctx, loaded, view);
     await updateState(
       view.paths,
       state => ({
         ...state,
         round,
         ...(designRounds > 0 ? { designRounds } : {}),
-        status: toPerson ? 'blocked' : 'changes-requested',
-        ...(toPerson
+        status: toLead ? 'blocked' : 'changes-requested',
+        ...(toLead
           ? {
               blockedBy: {
-                reason: `${String(ofKind)} rounds of ${byDesigner ? 'its UI review' : 'the lead’s'} changes: a person looks at it — approves it as it is (plitzi task review ${taskId} --approve), or answers it (plitzi task unblock ${taskId} --answer "…")`,
-                needs: 'person' as const,
+                reason: `${String(ofKind)} rounds of ${byDesigner ? 'its UI review' : 'the lead’s'} changes: the lead decides — approves it as it is (plitzi task review ${taskId} --approve), settles what is left with an answer (plitzi task unblock ${taskId} --answer "…"), or asks the person`,
+                needs: 'lead' as const,
                 review: true
               }
             }
@@ -309,12 +316,12 @@ const decide = async (
         ? { action: 'design-review', task: taskId, verdict, round }
         : { action: 'review', task: taskId, verdict, round }
     );
-    const goesFirst = toPerson ? [] : await tellItGoesFirst(ctx, loaded, view);
+    const goesFirst = toLead ? [] : await tellItGoesFirst(ctx, loaded, view);
 
     return {
       verdict,
       round,
-      toPerson,
+      toLead,
       ...(notReviewed.length > 0 ? { notReviewed } : {}),
       ...(goesFirst.length > 0 ? { goesFirst } : {})
     };

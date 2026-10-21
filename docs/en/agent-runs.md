@@ -438,8 +438,10 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   life of a task in review is answered as one in review. `run plan` refuses a check it could not run: empty,
   reading `.env`, or naming `$PLITZI_URL` in a project with no start script — a lint of what the lead meant, not a
   sandbox: what holds is that a copy has no `.env` and a check's environment none of it.
-- **Review:** changes go back to the same task, and after three rounds to a person — three of the lead's, or three of
-  the designer's on its UI: counted apart, so a task with a designer is not at a person after one round of the lead's. Approval keeps the version that
+- **Review:** changes go back to the same task, and after three rounds block it for the lead to decide — three of the
+  lead's, or three of the designer's on its UI, counted apart: the lead approves it as it is, answers it (`task
+  unblock --answer`), or asks the person, since nobody else in the run talks to them. An agent's own block waits for
+  the lead or another task (`--needs lead|task`), never the person directly. Approval keeps the version that
   went to review and merges it into `approved.json`; what its copy holds otherwise — written after `complete` — is not
   merged, and said (`notReviewed`, and `task look` warns that what it serves is not what an approval merges). A UI review
   is a designer's of the team, by the name `team.json` starts it with (`design-1`); `--skip-design` is the lead's. A

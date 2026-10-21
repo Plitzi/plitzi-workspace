@@ -1,5 +1,7 @@
 import { stripVTControlCharacters } from 'node:util';
 
+import type { TaskLine } from '../../runs/view';
+
 /** The monitor's cells: a line fit to its width, a time, an id in its column. */
 
 export const hhmm = (iso: string): string => iso.slice(11, 16);
@@ -82,3 +84,10 @@ export const wrapped = (items: readonly string[], width: number, separator = ' �
 
   return [...lines, ...(line === '' ? [] : [line])].map(each => cell(each, width));
 };
+
+/**
+ * A task's urgency as a mark of one column: `‼` critical, `!` high — its own priority or that of what waits on it —
+ * blank otherwise, and once it is approved: what to look at first, in the list and in the flow alike.
+ */
+export const urgencyMark = (task: Pick<TaskLine, 'urgency' | 'status'>): string =>
+  task.status === 'done' ? ' ' : task.urgency === 'critical' ? '‼' : task.urgency === 'high' ? '!' : ' ';

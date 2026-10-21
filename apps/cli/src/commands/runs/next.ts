@@ -47,6 +47,12 @@ export const taskNext = (
         answer => nextText(answer, answer.agent)
       );
 
+/** The earlier reviews' notes, counted: the last one's are what this round answers. */
+const earlierText = (review: { earlier: number; task: { id: string } }): string[] =>
+  review.earlier > 0
+    ? [chalk.dim(`  …and ${String(review.earlier)} note(s) of earlier rounds: plitzi task show ${review.task.id}`)]
+    : [];
+
 /** A designer's review, as `task next` hands it: what to look at, what for, and how to say it. */
 const designReviewText = (review: NonNullable<NextTask['designReview']>, agent: string): string =>
   [
@@ -54,8 +60,10 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>, agent: 
       `Review ${review.task.id}'s UI — ${review.task.title}: a designer's look, before the lead's${review.round > 0 ? ` (round ${String(review.round)}: sent back since)` : ''}`
     ),
     ...review.asked.map(line => `  ↺ ${line}`),
-    `  It changed: ${review.changed.join(', ') || 'nothing said'}`,
-    `  Look at it as it went to review: plitzi task look ${review.task.id} ${review.pages.length > 0 ? review.pages.join(' ') : '<page…>   # no page of the space owns its files: name the ones it shows on'}`,
+    ...earlierText(review),
+    `  It changed: ${review.changed.join(', ') || 'nothing said'} — in its copy, ${review.copy}`,
+    // Beside the run before it, measured — its dress too — and the copy served for it: what a designer rebuilt by hand.
+    `  Look at it as it went to review, beside the run before it: plitzi task look ${review.task.id} ${review.pages.length > 0 ? review.pages.join(' ') : '<page…>'} --before${review.pages.length > 0 ? '' : '   # no page of the space owns its files: name the ones it shows on'}`,
     `  Look for (${review.precision}, as the team asks — options.designReview) ${DESIGN_LOOK[review.precision]} — before your first review, read ${DESIGN_READING.join(', ')}`,
     `  Then say it: plitzi task review ${review.task.id} --approve [--note "what you saw"] | --changes "what, where, and why" [--on <element>] --agent ${agent}`
   ].join('\n');
@@ -69,7 +77,8 @@ const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: stri
     ...(review.design ? [`  ✓ ${review.design}`] : []),
     ...(review.uiToo ? [chalk.yellow(`  ⚠ ${review.uiToo}`)] : []),
     ...review.asked.map(line => `  ↺ ${line}`),
-    `  It changed: ${review.changed.join(', ') || 'nothing said'}`,
+    ...earlierText(review),
+    `  It changed: ${review.changed.join(', ') || 'nothing said'} — in its copy, ${review.copy}`,
     `  What went to review, against its acceptance: plitzi task show ${review.task.id}`,
     // Its UI said by a designer, the lead's is the code: the look is for what the code changes on a page, if anything.
     review.design

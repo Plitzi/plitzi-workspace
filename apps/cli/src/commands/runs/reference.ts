@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { PAGE_TEXT_LIMIT, pageTexts } from '@plitzi/sdk-authoring';
+import { PAGE_DECORATION_LIMIT, PAGE_TEXT_LIMIT, pageDecorations, pageTexts } from '@plitzi/sdk-authoring';
 
 import { act, runOf } from './shell';
 import { launchBrowser, SCHEMES } from '../../browser';
@@ -141,7 +141,8 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
                 scheme,
                 at: ctx.now().toISOString(),
                 texts: await taken.page.evaluate(pageTexts, PAGE_TEXT_LIMIT),
-                unloaded: taken.unloaded
+                unloaded: taken.unloaded,
+                decorations: await taken.page.evaluate(pageDecorations, PAGE_DECORATION_LIMIT)
               };
               await writeFile(path.join(dir, `${name}.png`), taken.png);
               await writeFile(path.join(dir, `${name}.json`), JSON.stringify(record));

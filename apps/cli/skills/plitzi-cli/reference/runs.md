@@ -62,16 +62,16 @@ takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | 
   Answer what is proposed to you before you complete (`plitzi task proposals`); honour what was accepted.
 - **Stuck, or unsure?** `plitzi task ask "Spanish or Catalan?"` (`--follow` waits for the answer). **Something the lead
   should know** — a finding, a choice you made, a risk — with no answer needed: `plitzi task tell "…"` (holding no task — a reviewer — `--about <task> --agent <you>`). **Wrong, and no task's** — outside yours, there
-  before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage; never "predates this task"
-  and left. What the lead
+  before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage; never left as
+  "predates this task". What the lead
   says to you arrives with your next heartbeat, progress or completion — read it; `plitzi task inbox --all` shows
-  everything said to you again.
-- **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"`; during a long think or test run,
-  `plitzi task heartbeat` at least every 2 minutes.
-- **Blocked by something outside the plan** (a key, a decision): `plitzi task block --reason "…" --needs person|lead`,
-  then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
+  all of it again.
+- **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"`; in a long think or test run,
+  `plitzi task heartbeat` every 2 minutes.
+- **Blocked by something outside the plan** (a key, a decision): `plitzi task block --reason "…"` (the lead's:
+  only it talks to the person), then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks
-  for changes. `agent-limit` (24) on `take`: hand back to the lead, which starts it when one goes to review.
+  for changes. `agent-limit` (24) on `take`: hand back to the lead.
 - **Before done:** `plitzi task check` runs what `complete` holds the copy to — the project's checks, the acceptance's
   commands, long files, no `space lint` warning in a file you changed — and changes none of your work (what the run approved, or a person changed in the project,
   since your copy was made comes in first, as at `complete`; `--acceptance` runs only its lines, for one you are

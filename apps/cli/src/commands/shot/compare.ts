@@ -2,7 +2,15 @@ import { writeFile } from 'node:fs/promises';
 
 import chalk from 'chalk';
 
-import { comparePictures, compareTexts, PAGE_TEXT_LIMIT, pageTexts } from '@plitzi/sdk-authoring';
+import {
+  compareDecorations,
+  comparePictures,
+  compareTexts,
+  PAGE_DECORATION_LIMIT,
+  PAGE_TEXT_LIMIT,
+  pageDecorations,
+  pageTexts
+} from '@plitzi/sdk-authoring';
 
 import { pictureOf } from './capture';
 import { DRIFT_PX, TEXTS_SHOWN } from './types';
@@ -11,7 +19,13 @@ import { dataUrl, fromDataUrl } from '../../browser';
 import type { CompareReport, RegionChange, Taken, View } from './types';
 import type { Browser } from '../../browser';
 import type { KeptPage } from '../../runs/reference';
-import type { PictureDiff, PictureRegion, TextDifference } from '@plitzi/sdk-authoring';
+import type {
+  DecorationKind,
+  PictureDiff,
+  PictureRegion,
+  SectionDecorations,
+  TextDifference
+} from '@plitzi/sdk-authoring';
 
 /**
  * What moves between frames, and what differs from another site — by region and by text, measured — and a sheet
@@ -45,6 +59,19 @@ const someOf = (texts: string[]): string => {
   return `${shown.join(', ')}${texts.length > 3 ? ` (+${String(texts.length - 3)})` : ''}`;
 };
 
+const countsText = (counts: Partial<Record<DecorationKind, number>>): string => {
+  const said = Object.entries(counts).map(([kind, count]) => `${String(count)} ${kind}${count === 1 ? '' : 's'}`);
+
+  return said.length > 0 ? said.join(', ') : 'none';
+};
+
+const decorationText = (section: SectionDecorations): string =>
+  [
+    `  ${section.section}: ${countsText(section.here)} → ${countsText(section.there)}`,
+    section.missing.length > 0 ? ` — add: ${section.missing.join('; ')}` : '',
+    section.extra.length > 0 ? ` — only here: ${section.extra.join('; ')}` : ''
+  ].join('');
+
 /** What a comparison found, in the lines an agent reads before it opens a picture. */
 export const compareText = (compare: CompareReport): string[] => {
   const lines = [
@@ -71,6 +98,14 @@ export const compareText = (compare: CompareReport): string[] => {
   ].filter(Boolean);
   if (placed.length > 0) {
     lines.push(placed.join('; '));
+  }
+
+  // Before the words: a glow, a gradient or an ornament lost is what a visitor sees first, and the words never say it.
+  if (compare.decorations.length > 0) {
+    lines.push(
+      'dress (gradients, glows, ornaments, background images), by section — here → there:',
+      ...compare.decorations.map(decorationText)
+    );
   }
 
   const { texts } = compare;
@@ -136,9 +171,19 @@ export const compareWith = async (
   }
 
   const theirs = kept
-    ? { png: kept.png, texts: kept.page.texts, unloaded: kept.page.unloaded }
+    ? {
+        png: kept.png,
+        texts: kept.page.texts,
+        unloaded: kept.page.unloaded,
+        decorations: kept.page.decorations
+      }
     : live
-      ? { png: live.png, texts: await live.page.evaluate(pageTexts, PAGE_TEXT_LIMIT), unloaded: live.unloaded }
+      ? {
+          png: live.png,
+          texts: await live.page.evaluate(pageTexts, PAGE_TEXT_LIMIT),
+          unloaded: live.unloaded,
+          decorations: await live.page.evaluate(pageDecorations, PAGE_DECORATION_LIMIT)
+        }
       : undefined;
   if (!theirs) {
     return { problem: `${target} was neither kept nor asked` };
@@ -150,6 +195,16 @@ export const compareWith = async (
   const rowShift = diff.rowShift ?? [];
   const shiftAt = (y: number): number => rowShift[Math.min(Math.max(0, Math.round(y)), rowShift.length - 1)] ?? 0;
   const texts = compareTexts(await taken.page.evaluate(pageTexts, PAGE_TEXT_LIMIT), theirs.texts, shiftAt);
+  // Their dress placed in our sections, each where the pictures found it there: a site that names its sections otherwise
+  // (la-velada's original names none) is still read section by section.
+  const shifted = regions.map(region => ({
+    ...region,
+    y: region.y + (diff.regions.find(change => change.name === region.name)?.shift ?? 0)
+  }));
+  const decorations = compareDecorations(
+    { layers: await taken.page.evaluate(pageDecorations, PAGE_DECORATION_LIMIT), regions },
+    { layers: theirs.decorations, regions: shifted }
+  );
 
   return {
     url: target,
@@ -159,6 +214,7 @@ export const compareWith = async (
     ...(diff.driftFrom ? { driftFrom: diff.driftFrom } : {}),
     regions: diff.regions,
     texts,
+    decorations,
     unloaded: theirs.unloaded,
     sideBySide: `${base}-compare.png`,
     diff: `${base}-diff.png`

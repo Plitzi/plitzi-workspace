@@ -218,6 +218,7 @@ export const openRun = async (
     ...(leadFinishes ? { leadFinishes: ctx.now().toISOString() } : {}),
     ...(reviewsDesign(team, plan) ? { designReview: true as const } : {}),
     brake: [],
+    completions: { completed: 0, refused: 0, 'checks-failed': 0, conflict: 0 },
     merges: [],
     inputs: await handedInputs(ctx, [file, primerFile(plan, file)])
   };

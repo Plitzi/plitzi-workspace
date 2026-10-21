@@ -456,8 +456,6 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
         : line('sent-back', `sent ${task}'s UI back${round}`);
     case 'waiting':
       return line('agent', `waits for work — ${textOf(entry.why)}`);
-    case 'idle':
-      return line('agent', `nothing came in ${textOf(entry.waited)}: idle — ${textOf(entry.why)}`);
     case 'stops':
       return line('agent', `stops: ${textOf(entry.why)}`);
     case 'settle':
@@ -501,9 +499,6 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
       return line('run', `made ${task} for ${textOf(entry.file)}`);
     case 'summary':
       return line('run', 'wrote the run’s summary, its report’s first part');
-    case 'event':
-      // The brake's count: a refused completion is said, the rest are the lines above.
-      return entry.kind === 'refused' ? line('problem', `a completion of ${task || 'a task'} was refused`) : undefined;
     case 'message':
       // Each message is in the feed by its own words, read from the messages.
       return undefined;

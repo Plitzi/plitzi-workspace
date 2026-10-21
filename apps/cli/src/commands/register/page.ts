@@ -156,7 +156,7 @@ export const registerPage = (pageGroup: Command): void => {
       'Take part in the page’s realtime channels as a visitor does — arrive, announce, send. Otherwise it only watches them'
     )
     .option('--url <origin>', URL_OPTION)
-    .option('--json', 'One object, for a tool or an agent')
+    .option('--json', 'One object, for a tool or an agent — { widths: [...] }, one each, at several widths')
     .action((path: string | undefined, options: Omit<ShotOptions, 'width'> & { width: number[] }) =>
       shotEach(path, options)
     );

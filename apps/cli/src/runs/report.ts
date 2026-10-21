@@ -11,7 +11,7 @@ import { requireLead } from './leads';
 import { noticesOf, noticeText } from './notices';
 import { REPORTS_DIR, taskPaths } from './paths';
 import { RunRefusal } from './refusal';
-import { inputOf, loadRun, logRun, readApproved, readRunLog, requireNoTask, updateRecord } from './run';
+import { completionsOf, inputOf, loadRun, logRun, readApproved, readRunLog, requireNoTask, updateRecord } from './run';
 import { requestsOf } from './tasks';
 import { readReviewed, viewTask } from './taskStore';
 
@@ -166,12 +166,12 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     });
   }
 
-  const count = (kind: string): number => log.filter(line => line.action === 'event' && line.kind === kind).length;
+  const completions = completionsOf(loaded.record, log);
   const events = {
-    completed: count('completed'),
-    refused: count('refused'),
-    checksFailed: count('checks-failed'),
-    conflicts: count('conflict')
+    completed: completions.completed,
+    refused: completions.refused,
+    checksFailed: completions['checks-failed'],
+    conflicts: completions.conflict
   };
   const overwrites = Object.entries(approved.files).flatMap(([file, entry]) =>
     entry.overrode ? [{ file, task: entry.task, by: entry.overrode.by, at: entry.overrode.at }] : []
