@@ -472,4 +472,6 @@ monitor` shows each as it comes, a problem in red.
   `@plitzi/sdk-server`, `@plitzi/sdk-shared`): the Run tab asked `/__plitzi/run` every three seconds on every page in
   debug mode, and every server but a run's preview answered 404 — in the console each time, which failed the e2e that
   opens the dev tools. A preview's server now marks its requests (`req.ctx.runStatus`), the page that may debug is told
-  (`runStatus` in its payload, a prop down to `DevToolsContainer`'s `run`), and the tab asks only then.
+  (`runStatus` in its payload, a prop down to `DevToolsContainer`'s `run`), and the tab asks only then. The tab is
+  offered from the first run read and stays — a finished run, or a preview gone quiet, leaves the last one read — and a
+  tab kept in storage that the page does not offer (Run, QA) shows the logs instead of an empty panel.

@@ -10,7 +10,8 @@ const EVERY_MS = 3000;
 /**
  * The run of agents this page's server previews (`plitzi run preview`), as the CLI keeps it — asked for only when the
  * server said it previews one (`previews`): any other server has no run, and asking it every few seconds left a 404 in
- * the page's console each time. Without one the Run tab is not offered.
+ * the page's console each time. The Run tab is offered from the first run read, and stays: a run that finished, or a
+ * preview that stopped answering, leaves the last one read — never a tab that vanishes while it is read.
  */
 const useRunSnapshot = (previews: boolean): RunSnapshot | undefined => {
   const [snapshot, setSnapshot] = useState<RunSnapshot | undefined>();
@@ -25,8 +26,8 @@ const useRunSnapshot = (previews: boolean): RunSnapshot | undefined => {
       try {
         const response = await fetch(RUN_STATUS_PATH, { cache: 'no-store' });
         const body: unknown = response.ok ? await response.json() : undefined;
-        if (!stopped) {
-          setSnapshot(isRunSnapshot(body) ? body : undefined);
+        if (!stopped && isRunSnapshot(body)) {
+          setSnapshot(body);
         }
       } catch {
         // The server restarting (the preview swapping the run's work in): asked again on the next tick.

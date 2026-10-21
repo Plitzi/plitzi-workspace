@@ -48,6 +48,9 @@ const DevToolsPanel = ({
   const [currentPageId] = useCommonStore('navigation.currentPageId');
   const [elementSelected, setElementSelected] = useState<string | undefined>();
   const run = useRunSnapshot(previewsRun);
+  // A tab chosen where it was offered — the Run tab on a run's preview, QA over a page — and kept in storage: here, where
+  // it is not, the panel shows the logs instead, and the choice stays for the page that offers it.
+  const shownTab = (tabSelected === 'run' && run === undefined) || (tabSelected === 'qa' && !qa) ? 'logs' : tabSelected;
   const resizeHandles = useMemo<ResizeHandle[]>(() => (orientation === 'vertical' ? ['w'] : ['n']), [orientation]);
   const parentRef = useRef(
     typeof document !== 'undefined' ? (document.querySelector('.plitzi-sdk') as HTMLElement) : null
@@ -90,11 +93,11 @@ const DevToolsPanel = ({
           onChangeOrientation={onChangeOrientation}
           onCollapse={onCollapse}
           onTabSelect={onTabSelect}
-          tabSelected={tabSelected}
+          tabSelected={shownTab}
           qa={qa}
           run={run !== undefined}
         />
-        {['store', 'elements'].includes(tabSelected) && (
+        {['store', 'elements'].includes(shownTab) && (
           <DevToolsSubHeader
             elementSelected={elementSelected}
             onSelectElement={handleSelectElement}
@@ -103,7 +106,7 @@ const DevToolsPanel = ({
         )}
         <DevToolsBody
           orientation={orientation}
-          tabSelected={tabSelected}
+          tabSelected={shownTab}
           logTypeFilter={logTypeFilter}
           elementSelected={elementSelected}
           onSelectElement={handleSelectElement}
