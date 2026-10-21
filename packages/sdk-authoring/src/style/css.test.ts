@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { styles } from './classes';
 import { css, toBlocks, toResponsive } from './css';
 import { column, grid, row } from './layout';
 
@@ -125,6 +126,17 @@ describe('a style with states, variants or ancestors', () => {
     expect(() =>
       toBlocks({ desktop: { marginLeft: '10px' }, ancestors: { card: { states: { hover: { color: 'red' } } } } })
     ).toThrow(/\[rule-set-mixed\][^]*its own rules go under `css`: `\{ css: \{ desktop: … \}, ancestors: \{ … \} \}`/);
+  });
+
+  // Refused by the types too, on the key that belongs under `css` — before author runs.
+  it('is refused by styles() as it is typed', () => {
+    expect(() =>
+      // @ts-expect-error -- `color` goes under css: once a style has variants, its own rules are { css: { … } }
+      styles('mixed', { color: 'red', variants: { dark: { css: { color: 'blue' } } } })
+    ).toThrow(/\[rule-set-mixed\]/);
+    expect(styles('apart', { css: { color: 'red' }, variants: { dark: { css: { color: 'blue' } } } }).name).toBe(
+      'apart'
+    );
   });
 });
 

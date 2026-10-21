@@ -11,6 +11,11 @@
 /** A part of the page, by where it is in the picture: the landmarks a page is read by. */
 export interface PictureRegion {
   name: string;
+  /**
+   * The element of the space it is (`data-plitzi-el`), when the name says another id — a section named by its anchor
+   * (`section#combates`) is still asked for by its element's (`home-fights`).
+   */
+  element?: string;
   x: number;
   y: number;
   width: number;
@@ -34,10 +39,10 @@ export interface PictureDiffInput {
 export interface PictureDiff {
   width: number;
   height: number;
-  /** The share of pixels that differ, in percent, to one decimal. */
+  /** The share of pixels that differ, in percent, to one decimal — 0.1 at least when any pixel does. */
   changed: number;
   /** Each region's share that differs — and, compared aligned, how far down the other picture it sits (`shift`). */
-  regions: { name: string; changed: number; shift?: number }[];
+  regions: { name: string; element?: string; changed: number; shift?: number }[];
   /** Both pictures beside each other, and the differences in red over a faded copy of the first — PNG data URLs. */
   sideBySide: string;
   diff: string;
@@ -315,7 +320,9 @@ export const diffPictures = async ({ a, b, regions, tolerance, rowShift }: Pictu
 
   diffContext.putImageData(out, 0, 0);
 
-  const share = (count: number, of: number): number => (of === 0 ? 0 : Math.round((count / of) * 1000) / 10);
+  // Never 0 for a picture that differs at all: a hover's colour on one word of a whole screen rounded to "nothing changed".
+  const share = (count: number, of: number): number =>
+    of === 0 || count === 0 ? 0 : Math.max(0.1, Math.round((count / of) * 1000) / 10);
   const regionChange = regions.map(region => {
     const left = Math.max(0, Math.floor(region.x));
     const top = Math.max(0, Math.floor(region.y));
@@ -328,7 +335,11 @@ export const diffPictures = async ({ a, b, regions, tolerance, rowShift }: Pictu
       }
     }
 
-    return { name: region.name, changed: share(count, Math.max(0, right - left) * Math.max(0, bottom - top)) };
+    return {
+      name: region.name,
+      ...(region.element === undefined ? {} : { element: region.element }),
+      changed: share(count, Math.max(0, right - left) * Math.max(0, bottom - top))
+    };
   });
 
   const pair = document.createElement('canvas');
@@ -365,11 +376,13 @@ export const pageRegions = (): PictureRegion[] => {
       return [];
     }
 
-    const name = element.id || element.getAttribute('data-plitzi-el') || '';
+    const own = element.getAttribute('data-plitzi-el') ?? '';
+    const name = element.id || own;
 
     return [
       {
         name: `${element.tagName.toLowerCase()}${name ? `#${name}` : ''}`,
+        ...(own && own !== name ? { element: own } : {}),
         x: box.left + window.scrollX,
         y: box.top + window.scrollY,
         width: box.width,

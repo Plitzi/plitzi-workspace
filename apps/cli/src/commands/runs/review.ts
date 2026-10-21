@@ -2,6 +2,8 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+
 import { act, runOf, runSelf } from './shell';
 import { list, messageLines, outsideLines } from './text';
 import { answering, freePort } from '../../runs/acceptance';
@@ -11,7 +13,7 @@ import { runPaths, taskPaths } from '../../runs/paths';
 import { startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
 import { loadRun, logRun } from '../../runs/run';
-import { showTask } from '../../runs/show';
+import { FROM_TEXT, showTask, showTaskFile } from '../../runs/show';
 import { withLock } from '../../runs/store';
 import { findingsOf, taskParts } from '../../runs/taskParts';
 import { findTask, notReviewedIn, reassignTask, revertTask, reviewTask } from '../../runs/tasks';
@@ -39,9 +41,26 @@ const viewTaskOf = async (ctx: RunContext, runId: string, taskId: string): Promi
 export interface LookOptions extends RunCommandOptions {
   /** Clicked once each page settles, as `page check --click`: an open state looked at, not only the page at rest. */
   click?: string;
+  /**
+   * The pointer put over it once each page settles, as `page check --hover`: what that changes said, and the page
+   * pictured with it there — at 1440 alone, as a phone has no pointer to hover with.
+   */
+  hover?: string;
   /** Read in the page, as `page check --element`: each one's attributes, box and classes. */
   element?: string[];
 }
+
+/** The pictures a `page shot --steps --json` took after the first: the hovered page, for a look. */
+const picturesOf = (output: string): string[] => {
+  try {
+    const report: unknown = JSON.parse(output.trim().split('\n').at(-1) ?? '');
+    const pictures = isRecord(report) && Array.isArray(report.pictures) ? report.pictures : [];
+
+    return pictures.flatMap(picture => (isRecord(picture) && typeof picture.out === 'string' ? [picture.out] : []));
+  } catch {
+    return [];
+  }
+};
 
 /** How many of a task's parts of a page are pictured: a look is read by a model, and each picture costs it. */
 const PARTS_PICTURED = 3;
@@ -51,6 +70,12 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
     options,
     async ctx => {
       const runId = await runOf(ctx, options);
+      if (options.click && options.hover) {
+        throw new RunRefusal(
+          'invalid',
+          'One interaction a look: --click an element, or --hover one — two looks for both'
+        );
+      }
 
       // One look of a task at a time: two served its copy at once, and the first to finish stopped the server the
       // other was picturing — a lead's look and its designer's, on la-velada's t-home-details.
@@ -82,6 +107,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               '--url',
               preview.url,
               ...(options.click ? ['--click', options.click] : []),
+              ...(options.hover ? ['--hover', options.hover] : []),
               ...(options.element ?? []).flatMap(id => ['--element', id])
             ]);
             const shots: string[] = [];
@@ -109,6 +135,28 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
                   ]);
                   if (shot.code === 0) {
                     shots.push(out);
+                  }
+
+                  // Pictured apart: an element not on the page loses the hover's picture, not the page's at rest.
+                  if (options.hover !== undefined && scheme === 'light') {
+                    const hovered = await runSelf(preview.dir, [
+                      'page',
+                      'shot',
+                      route,
+                      '--url',
+                      preview.url,
+                      '--width',
+                      width,
+                      '--scheme',
+                      scheme,
+                      ...(clip ? ['--clip', clip] : []),
+                      '--steps',
+                      `hover ${JSON.stringify(options.hover)}; wait 600; shot hovering ${options.hover}`,
+                      '--json',
+                      '-o',
+                      out.replace(/\.png$/, '-hover.png')
+                    ]);
+                    shots.push(...(hovered.code === 0 ? picturesOf(hovered.output) : []));
                   }
                 }
               }
@@ -297,7 +345,18 @@ export const taskRevert = (taskId: string, options: RunCommandOptions & { reason
       ].join('\n')
   );
 
-export const taskShow = (taskId: string, options: RunCommandOptions & { full?: boolean }): Promise<void> =>
+/** `plitzi task show <task> <file>`: the file whole, where the diff is read from — the text alone, to read or to pipe. */
+const taskShowFile = (taskId: string, file: string, options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => showTaskFile(ctx, await runOf(ctx, options), taskId, file),
+    shown =>
+      shown.text === undefined
+        ? `${shown.file} of ${shown.task} (${FROM_TEXT[shown.from]}): ${shown.binary ? 'not text — not shown' : 'removed by it'}`
+        : shown.text
+  );
+
+const taskShowSummary = (taskId: string, options: RunCommandOptions & { full?: boolean }): Promise<void> =>
   act(
     options,
     async ctx => showTask(ctx, await runOf(ctx, options), taskId, { full: options.full ?? false }),
@@ -338,7 +397,7 @@ export const taskShow = (taskId: string, options: RunCommandOptions & { full?: b
         ...shown.requests.map(each => `  ↗ request on ${each.file}: ${each.summary}`),
         ...(shown.notes.length > 0 ? ['Notes', ...shown.notes.map(note => `  ${note.by}: ${note.text}`)] : []),
         ...(shown.messages.length > 0 ? ['Said', ...messageLines(shown.messages)] : []),
-        `Changed (${shown.from === 'submitted' ? 'as it went to review' : shown.from === 'copy' ? 'its copy' : shown.from === 'run' ? 'as approved' : 'nothing yet'}): ${shown.files.length === 0 ? '—' : shown.files.map(each => `${each.file} (${each.change})`).join(', ')}`,
+        `Changed (${FROM_TEXT[shown.from]}): ${shown.files.length === 0 ? '—' : shown.files.map(each => `${each.file} (${each.change})`).join(', ')}`,
         ...(shown.notReviewed
           ? [
               chalk.yellow(
@@ -356,3 +415,10 @@ export const taskShow = (taskId: string, options: RunCommandOptions & { full?: b
       ].join('\n');
     }
   );
+
+/** `plitzi task show`: the task as its lead reviews it — or, with a file, that file whole. */
+export const taskShow = (
+  taskId: string,
+  file: string | undefined,
+  options: RunCommandOptions & { full?: boolean }
+): Promise<void> => (file === undefined ? taskShowSummary(taskId, options) : taskShowFile(taskId, file, options));

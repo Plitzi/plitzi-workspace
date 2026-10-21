@@ -1,7 +1,7 @@
 import { toBlocks } from './css';
 import { markWrittenAt } from '../schema/writtenAt';
 
-import type { ClassList, ClassRef, ElementClassList, StyleDeclaration, StyleSpec } from './types';
+import type { ClassList, ClassRef, ElementClassList, StyleDeclaration, StyleSpec, UnmixedStyle } from './types';
 
 /**
  * A named class, declared where it is used.
@@ -22,7 +22,7 @@ import type { ClassList, ClassRef, ElementClassList, StyleDeclaration, StyleSpec
  * property is refused on this line. What a declaration MEANS — where it is collected from, what happens when one
  * name is declared twice — belongs to whoever assembles the document; this fragment only names rules.
  */
-export const styles = (name: string, rules: StyleSpec): StyleDeclaration =>
+export const styles = <S extends StyleSpec>(name: string, rules: UnmixedStyle<S>): StyleDeclaration =>
   // Marked with the line that wrote it, as an element is: two declarations of one name are told apart by where they are.
   markWrittenAt({
     name,

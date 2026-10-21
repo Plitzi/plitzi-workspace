@@ -9,6 +9,7 @@ export interface HealthIdentity {
   role: string;
   name?: string;
   version?: string;
+  instance?: string;
 }
 
 // The one health/identity payload every server answers with, so /health looks the same whether it is served by
@@ -16,7 +17,8 @@ export interface HealthIdentity {
 export const buildHealthPayload = (identity: Partial<HealthIdentity> = {}): Record<string, unknown> => ({
   Server: identity.name ?? 'SDK Server',
   Version: identity.version ? `v${identity.version}` : 'unknown',
-  role: identity.role
+  role: identity.role,
+  ...(identity.instance === undefined ? {} : { Instance: identity.instance })
 });
 
 /**

@@ -58,7 +58,7 @@ export interface ShotOptions {
  */
 export type Framing = { kind: 'page' } | { kind: 'viewport' } | { kind: 'element'; selector: string };
 
-export type RegionChange = { name: string; changed: number; shift?: number };
+export type RegionChange = { name: string; element?: string; changed: number; shift?: number };
 
 export interface CompareReport {
   url: string;

@@ -4,6 +4,7 @@
  * presses, a picture only where it is asked for, text typed into a field.
  *
  *   click <element>          a press — its name (`data-plitzi-el`), a tag or a CSS selector, inside a plugin too
+ *   hover <element>          the pointer put over it, and left there — what a hover shows, pictured by the next shot
  *   type <element> <text>    text typed into a field — an element with spaces in quotes: type ".panel textarea" hi
  *   press <key>              a key, as Playwright names it: Enter, Escape, ArrowDown…
  *   wait <ms>                time passing
@@ -17,6 +18,7 @@
 
 export type ShotStep =
   | { kind: 'click'; target: string }
+  | { kind: 'hover'; target: string }
   | { kind: 'type'; target: string; text: string }
   | { kind: 'press'; key: string }
   | { kind: 'wait'; ms: number }
@@ -24,7 +26,7 @@ export type ShotStep =
   | { kind: 'shot'; label?: string }
   | { kind: 'frames'; count: number; every: number };
 
-const STEP_NAMES = ['click', 'type', 'press', 'wait', 'wait-for', 'shot', 'frames'] as const;
+const STEP_NAMES = ['click', 'hover', 'type', 'press', 'wait', 'wait-for', 'shot', 'frames'] as const;
 
 /** The longest a script may wait in one step: a page that needs more is waiting for something else. */
 const MAX_WAIT_MS = 30_000;
@@ -46,7 +48,9 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
     .map(line => line.trim())
     .filter(line => line !== '' && !line.startsWith('#'));
   if (lines.length === 0) {
-    return { problem: '--steps has no step: click, type, press, wait, wait-for, shot or frames, separated by ";"' };
+    return {
+      problem: '--steps has no step: click, hover, type, press, wait, wait-for, shot or frames, separated by ";"'
+    };
   }
 
   const steps: ShotStep[] = [];
@@ -56,6 +60,7 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
     const argument = unquoted(rest.join(' '));
     switch (name) {
       case 'click':
+      case 'hover':
       case 'wait-for':
         if (!argument) {
           return { problem: `${at}: ${name} needs an element — its name or a CSS selector` };

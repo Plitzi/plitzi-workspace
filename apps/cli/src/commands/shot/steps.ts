@@ -59,6 +59,7 @@ export const clickThrough = async (
 const stepText = (step: ShotStep): string => {
   switch (step.kind) {
     case 'click':
+    case 'hover':
     case 'wait-for':
       return `${step.kind} ${step.target}`;
     case 'type':
@@ -97,7 +98,7 @@ export const playSteps = async (
 
   for (const [index, step] of steps.entries()) {
     try {
-      if (step.kind === 'click' || step.kind === 'type') {
+      if (step.kind === 'click' || step.kind === 'hover' || step.kind === 'type') {
         const read = await targetOn(page, step.target);
         if ('problem' in read || !read.found) {
           return {
@@ -122,6 +123,11 @@ export const playSteps = async (
             await page.locator(select).first().selectOption(step.text, { timeout: 3000 });
             continue;
           }
+        }
+
+        if (step.kind === 'hover') {
+          await page.locator(read.selector).first().hover({ timeout: 3000 });
+          continue;
         }
 
         await page.locator(read.selector).first().click({ timeout: 3000 });

@@ -300,6 +300,10 @@ export const registerTaskGroup = (program: Command): Command => {
     .argument('[paths...]', 'Its pages: those its files are drawn at when left out')
     .option('--click <id>', 'Click an element once each page settles: the state it opens, looked at too')
     .option(
+      '--hover <id>',
+      'Put the pointer over an element once each page settles: what that changes, said, and pictured at 1440'
+    )
+    .option(
       '--element <id>',
       'Read an element in the page — its attributes, box and classes — once for each',
       (id: string, before: string[] = []) => (before.includes(id) ? before : [...before, id])
@@ -325,11 +329,17 @@ export const registerTaskGroup = (program: Command): Command => {
       'A task as its lead reviews it: acceptance, checks, agreements, notes, what was said, each file’s diff, and what to run next'
     )
     .argument('<task>', 'The task')
+    .argument(
+      '[file]',
+      'One file it changed, whole — as the diff reads it: as it went to review, its copy, or approved'
+    )
     .option('--full', 'Every line of each diff — cut at 80 a file otherwise')
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string, options: RunCommandOptions & { full?: boolean }) => taskShow(task, options));
+    .action((task: string, file: string | undefined, options: RunCommandOptions & { full?: boolean }) =>
+      taskShow(task, file, options)
+    );
 
   taskGroup
     .command('review')

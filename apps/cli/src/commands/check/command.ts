@@ -41,8 +41,16 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     return;
   }
 
-  if (options.click && routes.length > 1) {
-    fail(`--click clicks one element of one page: ${String(routes.length)} were named.`);
+  if (options.click && options.hover) {
+    fail('One interaction a check: --click an element, or --hover one — two checks for both.');
+
+    return;
+  }
+
+  if ((options.click || options.hover) && routes.length > 1) {
+    fail(
+      `--${options.click ? 'click clicks' : 'hover points at'} one element of one page: ${String(routes.length)} were named.`
+    );
 
     return;
   }
@@ -55,8 +63,14 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     ...(options.scheme ? { scheme: options.scheme } : {}),
     presence: options.presence === true,
     ...(account ? { account } : {}),
-    ...(options.click || options.fill
-      ? { click: { ...(options.click ? { element: options.click } : {}), fill: options.fill ?? [] } }
+    ...(options.click || options.hover || options.fill
+      ? {
+          click: {
+            ...(options.click ? { element: options.click } : {}),
+            ...(options.hover ? { element: options.hover, hover: true } : {}),
+            fill: options.fill ?? []
+          }
+        }
       : {}),
     ...(options.expect ? { expect: options.expect } : {}),
     ...(options.then ? { then: options.then } : {}),

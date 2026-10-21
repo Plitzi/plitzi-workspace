@@ -194,6 +194,7 @@ plitzi page check /products --state --element catalog-count --element catalog-gr
 plitzi page check / --ssr                       # and what the server's HTML lacks that the hydrated page has
 plitzi page check /enterprise --click site-footer-top   # click one element: what it changed, or that nothing did
 plitzi page check / --click news-send --fill news-email=ana@example.com   # a form sent as a visitor fills it
+plitzi page check / --hover home-cta             # the pointer over one element: how it and its elements look, what appears
 plitzi page check /expenses --fill expenses-search=kibble --element expenses-lede   # what typing changed, and what it shows
 plitzi page check /studio --as maya             # a page for signed-in visitors, signed in through /auth first
 plitzi page check / --url https://staging.example.com   # the project served elsewhere: a second server, staging, a deploy
@@ -207,10 +208,12 @@ plitzi page shot /studio --width 390 --as maya   # a page for signed-in visitors
 plitzi page shot / --viewport --frames 6 --every 200 --from load --sheet   # what plays as the page arrives
 plitzi page shot / --clip machine --sheet --steps "click .gm__knob; wait 300; frames 6 150; wait-for .gm__capsule; shot opened"   # an interaction, step by step
 plitzi page shot /expenses --fill expenses-search=kibble   # a picture before and after typing in a field
+plitzi page shot / --steps "hover home-cta; wait 400; shot hovered"   # a hover, pictured
 ```
 
 Both run on the project's own Playwright against its running server (`npm start`), and refuse a port that answers as
-another project. `--url` points them at the project served anywhere else — a second server of it, staging, a deploy —
+another project — or as this one served from another folder (a run's copies share a name; `/health` says which copy
+answers by a mark of its folder, `Instance`). `--url` points them at the project served anywhere else — a second server of it, staging, a deploy —
 and `page check --space <module>` holds the pages to that space instead of the project's: what that other server
 serves, a page an agent wrote (authored in a process of its own, `authorIsolated` of `@plitzi/sdk-authoring/node`). They wait for the page to settle — loaded, then half a second with nothing asked for — counting no
 stream that stays open, so a page with a realtime `channel` is checked like any other (`openPage` of
@@ -244,6 +247,11 @@ words, and a flow that ran and succeeded with nothing on the page changed is sai
 does nothing looks like one that works until it is clicked. A click that could not be made, or a flow that failed,
 fails the check (`--json`: `clicked: { element, filled?, changes, failed, problem? }`).
 
+`--hover <id>` puts the pointer over one element instead, and says the same of it, with what a hover changes most: how
+the element and each element inside it look — colours, shadow, transform, opacity, one line a property, said where it
+changed and not again by a child that inherits it (`home-cta background-color: rgb(…) → rgb(…)`). A hover that changed
+nothing says so. One interaction a check: `--click` or `--hover` (`--json`: `clicked: { hovered: true, … }`).
+
 `--fill <id>=<value>`, once per field, fills a field before the click as a visitor does — typed in, an option chosen, a
 box ticked with `true` or `false` — so a form's flow is run with what it is for, not only refused empty. The id is the
 field's element, or one that holds that one field (a `formControl`'s wrapper); one that holds several is refused with
@@ -261,12 +269,14 @@ Both load a page as one that watches its realtime channels: it hears them — a 
 reported — and says nothing on them, so nobody on the page sees it arrive, join their members or send. `--presence`
 makes it take part as a visitor does. `--click` in `page shot` takes an element's name, a tag no element is named by
 (`textarea`) or any selector, CSS or Playwright's own (`button:has-text("Orbit")`). In `--steps`, an element with a
-space in it is quoted — `type ".panel textarea" hola` — and `type` fails when the click leaves no field focused.
+space in it is quoted — `type ".panel textarea" hola` — and `type` fails when the click leaves no field focused. `hover <element>` puts the pointer over it and leaves it
+there, for the next `shot`.
 
 `page shot --compare` writes the two pictures side by side and the differences in red. It compares each section where it
 is on the other page, so a page 400 px longer is said once, with the section the drift starts at; then it pairs the
 texts both pages have and says what each does differently there — `h1 "Learn CSS" — font-size 68px → 60px · y +19px`.
-With `--clip <section>` the report keeps that one section's difference (both pages are still compared whole).
+With `--clip <section>` the report keeps that one section's difference (both pages are still compared whole) — the
+section by its id (`combates`) or its element's (`home-fights`).
 `--frames` compares pictures taken one after another and names what moved. A project `create` writes has them as
 `npm run check` and `npm run shot`.
 
@@ -465,6 +475,7 @@ plitzi run watch --until lead              # ends the moment something needs the
 plitzi run preview                         # the run's work as it goes, served: each approval shows; its dev tools' Run tab
 plitzi run monitor                         # the run, live, in a terminal of your own beside the harness — it only reads
 plitzi task show t-home                    # a task as its lead reviews it: checks, agreements, each file's diff
+plitzi task show t-home src/space/pages/home/hero.ts   # one file whole, as it went to review
 plitzi run report --summary summary.md     # the lead closes the run with its report
 plitzi run finish                          # the whole diff and the checks on the result — then --apply, a person's
 ```

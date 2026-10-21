@@ -33,9 +33,9 @@
   report (`run report --summary`). The run then goes, backups included (`--keep-backup` keeps the files it overwrote);
   its report stays in `tmp/plitzi-reports/`. Turns and integration on shared files, reconciliation, stop, forced stop,
   reassign and attach after a cut from the last reviewed version, and a distinct exit code per refusal. With `space
-  overview` and `space impact`, and the skill's `reference/runs.md`. A team: the lead and roles per task (`task next
-  --role`, which hands an agent back its own unblocked task first), the lead and the agents talking (`task ask`, `task
-  message` to a task, all, or an agent by name, `task inbox`, `task tell` (for the lead to know, no answer waited for),
+overview` and `space impact`, and the skill's `reference/runs.md`. A team: the lead and roles per task (`task next
+--role`, which hands an agent back its own unblocked task first), the lead and the agents talking (`task ask`, `task
+message` to a task, all, or an agent by name, `task inbox`, `task tell` (for the lead to know, no answer waited for),
   `task unblock --answer`, and `run watch --until lead`, which wakes the lead once for each thing that needs it), shared
   files connected as each task is approved (taken by turns when free, merged line by line), `run preview` of the run's
   work as it goes (`--task`: a task in review, before approving it), `task show` (a task as its lead reviews it, each
@@ -51,7 +51,7 @@
   stdin. **`run rehearse`** plays a plan out before any agent starts — the schedule by agent and role, the critical
   path, the lead's review queue, the files several tasks change at once, and the run's length for each number of agents.
   **`run amend`** corrects what an open run asks (titles, acceptance, notes) from the plan edited, each task told; `run
-  plan` refuses a `page check` whose text the shell would split. From the sixth real run: `task next` hands a task back
+plan` refuses a `page check` whose text the shell would split. From the sixth real run: `task next` hands a task back
   with what was said to it meanwhile, `complete` says each acceptance check and what the space's lint still warns of
   (kept for `task show`), `task show` marks read what the task told the lead, `run preview --task` says to page check
   from the copy, `task take` says to work inside the copy, and the report lists every file a task wrote. **A file a
@@ -59,7 +59,7 @@
   its heartbeat, and refused at `complete` until it is split. **The lead may apply the run itself** when a person lets
   it — `run open --lead-finishes` or `run allow-finish`, typed in their terminal; the lead asks before opening — still
   with its report and the checks green on the whole result, said in the report. From the seventh run: `task next
-  --take` takes what it offers (passing one another agent took meanwhile), and says when the run is done for the agent
+--take` takes what it offers (passing one another agent took meanwhile), and says when the run is done for the agent
   how its own tasks ended; a shell left in a removed copy is told so; `complete`'s server for the acceptance logs, and
   says a server of the agent's own still running is the usual cause when it does not answer; `page check --expect` says
   each expectation met, and `page check` says a short link or button label broken onto two lines (`label-wraps`) — a
@@ -118,9 +118,9 @@
 - **A disclosure, natively** (`@plitzi/sdk-elements`): `container({ subType: 'details' })` with a `summary` first, and
   `open` to start open — the browser's own, no state, announced as one.
 - **Buttons and textareas take the page's font** (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`): `font-family:
-  inherit` in their base style, the declaration and the stylesheet alike.
+inherit` in their base style, the declaration and the stylesheet alike.
 - **Pages registered by being there** (`@plitzi/sdk-authoring`, `@plitzi/sdk-shared`, `@plitzi/cli`): `pagesIn(new
-  URL('./pages/', import.meta.url))` (`@plitzi/sdk-authoring/node`) loads every page of a folder — each module's default
+URL('./pages/', import.meta.url))` (`@plitzi/sdk-authoring/node`) loads every page of a folder — each module's default
   export, a page or a family's list, the home page first — and `PageSpec.nav` (`{ label, order }`) with `navOf(pages)`
   gives a layout its menu, `current: 'section'` for a page with others under it; `nav` is authoring only, and one it
   cannot list is refused (`page-nav-invalid`). A new page is then a file of its own: no line in the entry, none in the
@@ -136,7 +136,7 @@
 - **`date` reads an epoch in seconds too** (`@plitzi/sdk-shared`), as the docs said and Twig's own does: below 10^11 a
   number (or a string of digits) is seconds — `1792454400|date('Y-m-d')` was 1970-01-21 — milliseconds above.
 - **`plitzi explain` knows the template filters** (`@plitzi/cli`, `@plitzi/sdk-authoring`): `explain currency`, `--list
-  filters`, from a catalogue beside the filters that a test holds whole. **`'now'|date(…)`** is the moment the page is
+filters`, from a catalogue beside the filters that a test holds whole. **`'now'|date(…)`** is the moment the page is
   rendered, and **`<`, `>`, `<=`, `>=` order strings as text** — `r.date >= '2026-10-20'` was false for every row, as
   both sides were turned into numbers; numbers and numeric strings still by value; **`replace({' ': ''})`**, Twig's map
   form, replaces each key by its value instead of leaving the text as it was (`@plitzi/sdk-shared`). A field read off a
@@ -162,7 +162,7 @@
   from the template. And **`--fill` works without `--click`**: what typing in a field changes, as a search box does; with a click, what
   the filling changed by itself is said apart. `--element` and `--state` read the page as the interaction left it.
 - **`plitzi explain` knows a server action's steps** (`@plitzi/cli`, `@plitzi/sdk-server`): `explain list.put`, `--list
-  tasks` — what each does, what it answers and its params, read from the `@plitzi/sdk-server` the project installed, the
+tasks` — what each does, what it answers and its params, read from the `@plitzi/sdk-server` the project installed, the
   catalogue the builder draws them from. The twenty steps that had no description have one.
 - **`repeated-shape` tells forms apart by their fields** (`@plitzi/sdk-authoring`): an element's `subType` is part of
   what it is — a date field is no number field, an `h2` no `h3` — so two forms asking for different fields are no longer
@@ -189,7 +189,7 @@
   - a message too long to scan is cut in `run status` and `run watch`, whole in the inbox; a developer task that gets no
     task of tests is said, with why; `run team set` asked for what the team already is says so, and is no refusal;
   - the rounds before a person looks at a task are counted apart for the designer's UI review and the lead's; `task
-    show` of a task in review shows what went to review; a task that accepted an agreement is told when the task it
+show` of a task in review shows what went to review; a task that accepted an agreement is told when the task it
     agreed with is approved; `task look` of a shared file looks at the pages that use it;
   - **the finish runs every done task's acceptance checks again on the whole result**: one a later task broke (in
     pet-friends v12, the summary that grew past the printed sheet another task fitted it to) stops it, naming both;
@@ -223,7 +223,7 @@
   planning, amending, stages, notes, unblocking, reassigning, reverting, reconciling, the summary and the finish are
   `lead`'s, refused to them and to every agent of the team (`lead-only`, exit 25). **They are started only when the
   reviews queue up**: `lead` reviews every task until two wait and the oldest waited five minutes — then `run watch
-  --until lead` names the lead to start — and one handed nothing for ten minutes is told it can stop, so a lead never
+--until lead` names the lead to start — and one handed nothing for ten minutes is told it can stop, so a lead never
   waits on tokens for reviews it is not handed. While one runs, `lead` is woken for a review only after it waited two
   minutes untaken. Two verdicts on one task are given one at a time.
 - **A verdict is a lead's** (`@plitzi/cli`): an agent of the team giving a review without its task's token — a developer,
@@ -249,7 +249,7 @@
   whenever the CLI writes the file, and brought up by `plitzi upgrade` (files), the agents and leads left as the project
   has them; before, a project kept the words of the CLI that created it (no lead count).
 - **Words where a format goes are said as content** (`@plitzi/sdk-authoring`): `from` with `as: 'Pip has no weighing
-  yet'` was refused as a format nobody declared, offering to declare one; it now says `as` is a format's name or a
+yet'` was refused as a format nobody declared, offering to declare one; it now says `as` is a format's name or a
   template, and that words an element always shows are its `content`, with no `from`.
 - **A link to a URL is never a page path** (`@plitzi/sdk-elements`, `@plitzi/sdk-authoring`): a link whose address
   has a scheme — `https:`, `mailto:`, `tel:` — is followed as written in any mode; a bound `{{ item.url }}` left in
@@ -278,7 +278,7 @@
 - **The CLI's part of a project is one folder, `.plitzi/`** (`@plitzi/cli`, `@plitzi/sdk-shared`, `@plitzi/sdk-server`):
   what authors the space, the compiler options, the README and what the CLI records lived in `plitzi/` and `.plitzi/`;
   they are `.plitzi/` now. A project laid out before is said by `plitzi doctor` (`older-layout`) and moved by `doctor
-  --fix`, its scripts and `tsconfig*.json` following; `upgrade` asks for it first. A run's copies carry `.plitzi/` now —
+--fix`, its scripts and `tsconfig*.json` following; `upgrade` asks for it first. A run's copies carry `.plitzi/` now —
   what a task's checks author with — and no task writes it: `complete` refuses a change there.
 - **Careful leads** (`@plitzi/cli`): a plan says what the run leaves out (`leftOut`), shown at `run plan` and `run open`
   and kept in the report — and `run plan` says when it says nothing. The lead's skill starts with an inventory of what
@@ -286,7 +286,7 @@
   foundations to different agents, names classes and providers by area, reviews against the inventory and checks the
   coverage before closing — what la-velada's copy missed.
 - **A model a quality level** (`@plitzi/cli`): a plan's task says `quality` (`light`, `standard`, `high`) — set by `run
-  plan` where it says none, with why: what many tasks build on is `high`, a one-file few minutes `light`. A team agent's
+plan` where it says none, with why: what many tasks build on is `high`, a one-file few minutes `light`. A team agent's
   `model` may be one a level (`{ "standard": "…", "high": "…" }`, `team set --model standard=…,high=…`), each level
   started apart and `run plan` saying whose tasks are whose; an agent started at a level (`task next --quality`) is
   handed tasks of it or below and told what waits above. The schema and `run team check` know both forms.
@@ -299,7 +299,7 @@
   parts — the home's stubs and missing h1 were each part's "failures"; fewer, smaller pictures for every reviewer.
 - **What the run's agents asked for** (`@plitzi/cli`): every command that waits waits 9 minutes when not told —
   under the 10 a harness gives one command (`task next --follow` at 30 lost its answer to the background); `task show
-  --full` prints every line of each diff; `run preview --task` serves a task's copy while it is worked too, for its
+--full` prints every line of each diff; `run preview --task` serves a task's copy while it is worked too, for its
   agent to look at its own pages without a server of its own in the copy; `page shot https://…` pictures another site
   as anyone sees it (the original a copy is made after), and one slow to wake is asked twice and said as slow, not as
   nothing answering.
@@ -336,7 +336,7 @@
   only then the run's folder — removed under it, the server's own watch restarted it in a folder gone (`uv_cwd`).
 - **A plan lists the job piece by piece** (`@plitzi/cli`): `inventory: [{ id, piece, page, leftOut? }]`, each piece
   covered by a line of acceptance a command proves (`{ said, check, covers: [id] }`) or left out with its reason — `run
-  plan` refuses one that is neither, and the report says who covered each. The lead's coverage was a skill's advice:
+plan` refuses one that is neither, and the report says who covered each. The lead's coverage was a skill's advice:
   la-velada's first run left the tier list, the live stream and a dozen pieces unsaid.
 - **The scope of an open run changes, said** (`@plitzi/cli`): `run amend` removes a task nobody took — never one taken
   or one another waits for — and changes the inventory, checked again over what is left; the plan and its primer move
@@ -377,7 +377,7 @@
 - **A run's activity is the whole of it** (`@plitzi/cli`): the log holds every step from `run open` (the plan, its
   team, its estimate) to the finish — each failed check with what failed, a refusal and a crash with the command (its
   token redacted), a look, a review taken, a UI review skipped, a brake, a preview that could not sync — and `run
-  monitor` shows each as it comes, a problem in red.
+monitor` shows each as it comes, a problem in red.
 - **A run audits itself before it closes** (`@plitzi/cli`): `run report` and `run finish` read the activity for what
   does not add up — a task done with no approval, a review that waited over ten minutes, three rounds or more, many
   failed checks, the same refusal again and again, a crash, a brake — and say it in the report, approved or not.
@@ -441,7 +441,7 @@
   approved work already holds is no longer said as one the stage makes.
 - **`heavy-animation` can be quieted** (`@plitzi/sdk-authoring`): the suggestion is about the elements wearing the
   class (or the element's own style) that runs the animation, and is left out once each of them says `quiet:
-  ['heavy-animation']` — it named no element, so nothing quieted it, and a run's author check failed on an original's
+['heavy-animation']` — it named no element, so nothing quieted it, and a run's author check failed on an original's
   one blurred entrance.
 - **JSON-LD, a page's robots and `robots.txt`** (`@plitzi/sdk-authoring`, `@plitzi/sdk-elements`,
   `@plitzi/sdk-server`, `@plitzi/sdk-shared`): a page says `robots` (`'noindex'`, `'noindex, nofollow'`…) and
@@ -449,3 +449,22 @@
   title is — a detail page describes its record), written in the server's `<head>` and kept by the client's;
   `settings.robotsTxt` is the space's `/robots.txt` — every line checked — and a space that says none lets crawlers read
   everything, never its 404 page. `plitzi create` starts a space with both: a `robots.txt` and the home's `WebSite`.
+- **What a run's agents tripped on in the CLI** (`@plitzi/cli`, `@plitzi/sdk-server`, `@plitzi/sdk-shared`,
+  `@plitzi/sdk-authoring`):
+  - Playwright's `test-results/` and `playwright-report/` are ignored by a new project's `.gitignore`, Prettier and
+    ESLint: a run's `complete` no longer fails its format check on them.
+  - A project's `/health` answers which copy of it serves (`Instance`, `projectMark` of `@plitzi/sdk-shared/project`: a
+    hash of its folder, no path said), and `page check`/`page shot` refuse a port that answers with this project served
+    from another folder — a run's copies share the name, and one whose port another copy held measured that one, in
+    silence. `SSRHealthConfig.instance` says it for any server.
+  - `page check --hover <id>` and `task look --hover <id>`: the pointer over an element, and what it changed — how it and
+    its elements look (colours, shadow, transform, opacity), what appeared, the flows it ran — or that nothing did; `look`
+    pictures it at 1440. `page shot --steps` has a `hover <element>` step.
+  - `task show <task> <file>`: one file of a task whole, read from where its diff is — as it went to review, its copy, or
+    as approved.
+  - `page shot --compare --clip <section>` takes the section's element id as well as its DOM id (`PictureRegion.element`).
+  - `comparePictures` never rounds a difference to 0: a hover's colour on one word of a whole screen was said as
+    "nothing changed"; any pixel that differs is 0.1% at least.
+  - `styles()` refuses in its types a style that writes its rules beside `states`, `variants`, `ancestors`… — on the key
+    that belongs under `css`, as `author`'s `rule-set-mixed` does (`UnmixedStyle`).
+  - The runs skill serves a copy with `npm run start:dev` and no `PORT`: a free port, written where `page check` looks.

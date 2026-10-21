@@ -17,6 +17,7 @@ import {
   PROJECT_STATE,
   PROJECT_NOTES,
   PROJECT_TMP,
+  TEST_OUTPUTS,
   TLS_CERT_FILE,
   TLS_KEY_FILE,
   TSCONFIG_BASE
@@ -306,7 +307,7 @@ const YARN_IGNORES = '\n.yarn/*\n!.yarn/patches\n!.yarn/plugins\n!.yarn/releases
  * the CLI records about it, and is committed — a clone without it could not pull, push or upgrade.
  */
 export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
-  `node_modules\n${BUILD_DIR}\n.env\n${PROJECT_TMP}\n${mode === 'server' ? `${PROJECT_STATE}\n` : ''}${packageManager === 'yarn' ? YARN_IGNORES : ''}`;
+  `node_modules\n${BUILD_DIR}\n.env\n${PROJECT_TMP}\n${TEST_OUTPUTS.join('\n')}\n${mode === 'server' ? `${PROJECT_STATE}\n` : ''}${packageManager === 'yarn' ? YARN_IGNORES : ''}`;
 
 const startLine = ({ mode, packageManager, source }: CreateAnswers): string =>
   mode === 'server'

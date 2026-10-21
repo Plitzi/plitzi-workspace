@@ -55,4 +55,15 @@ describe('a new project', () => {
       });
     }
   }
+
+  it('leaves Playwright’s leftovers to nobody: not formatted, not linted, not committed', () => {
+    const files = scaffold(answers({ mode: 'server', template: 'blank' }));
+    const ignored = ignoredBy(files['.prettierignore']);
+
+    for (const leftover of ['test-results/.last-run.json', 'playwright-report/index.html']) {
+      expect(ignored(leftover)).toBe(true);
+    }
+    expect(files['.gitignore']).toContain('test-results');
+    expect(files['eslint.config.mjs']).toContain("'playwright-report'");
+  });
 });

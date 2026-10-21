@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { existsSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 
@@ -68,3 +69,10 @@ export const projectModule = (root: string, entry: string, script: string | unde
     compiled ? path.join(BUILD_DIR, path.relative(SOURCE_DIR, entry)).replace(/\.tsx?$/, '.js') : entry
   );
 };
+
+/**
+ * Which copy of a project a folder is, in a few letters: the same for every process run there, another for its copy in
+ * another folder — two copies of one project answer `/health` with the same name, and a tool reaching a port tells its
+ * own copy from another's by this. The folder is hashed, so a server open to its network does not say where it is.
+ */
+export const projectMark = (root: string): string => createHash('sha256').update(real(root)).digest('hex').slice(0, 12);

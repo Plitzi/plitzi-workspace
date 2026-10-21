@@ -4,7 +4,7 @@ import { waitForLead } from './leadWatch';
 import { abortRun } from './merge';
 import { startTaskPreview } from './preview';
 import { resumeRun, stopRun } from './run';
-import { showTask } from './show';
+import { showTask, showTaskFile } from './show';
 import { askLead, messageTasks, noteRun, readInbox, tellLead } from './talk';
 import {
   blockTask,
@@ -152,6 +152,28 @@ describe('a team: roles, waiting for work, and a lead who talks to the agents', 
     expect(shown.messages.map(message => message.text)).toEqual(['Formal or informal?', 'The hero keeps its id']);
     expect(shown.next.join('\n')).toContain('plitzi task review t-home --approve');
     expect((await refusal(showTask(home.ctx, 'es-launch', 't-home'))).code).toBe('person-only');
+  });
+
+  // Past a diff's 80 lines, or around a change: the file whole, as it went to review — while its copy goes on.
+  it('shows one file of a task whole, as it went to review, and refuses a file it did not change', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: "Hola" };\n');
+    await completeTask(home.ctx, 'es-launch', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: "later" };\n');
+
+    expect(await showTaskFile(lead(), 'es-launch', 't-home', './src/space/pages/home/hero.ts')).toEqual({
+      task: 't-home',
+      file: 'src/space/pages/home/hero.ts',
+      from: 'submitted',
+      change: 'changed',
+      text: 'export const hero = { text: "Hola" };\n'
+    });
+    const refused = await refusal(showTaskFile(lead(), 'es-launch', 't-home', 'src/main.ts'));
+    expect([refused.code, refused.message]).toEqual([
+      'not-found',
+      't-home did not change src/main.ts: its changed files are src/space/pages/home/hero.ts'
+    ]);
   });
 
   it('the lead looks at a task in review in its copy, served until it is neither worked nor in review', async () => {

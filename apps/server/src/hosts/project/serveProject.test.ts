@@ -6,6 +6,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { projectMark } from '@plitzi/sdk-shared/project';
+
 import { serveProject } from './serveProject';
 import { LIVE_PAGES_PATH } from '../../core/http/stages/livePages';
 import { unusedPort } from '../../core/unusedPort';
@@ -311,7 +313,10 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     expect(page.status).toBe(200);
     expect(await page.text()).toContain('<title>authored at boot</title>');
     expect(await (await fetch(`${running.url}/hello.txt`)).text()).toBe('hello from public\n');
-    expect(await (await fetch(`${running.url}/health`)).json()).toMatchObject({ Server: 'shop' });
+    expect(await (await fetch(`${running.url}/health`)).json()).toMatchObject({
+      Server: 'shop',
+      Instance: projectMark(root)
+    });
     expect(JSON.parse(await fs.readFile(path.join(root, 'tmp/dev-server.json'), 'utf-8'))).toEqual({
       name: 'shop',
       port: Number(process.env.PORT),

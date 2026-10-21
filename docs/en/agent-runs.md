@@ -80,9 +80,19 @@ answers it. A run that ends (finished, aborted)
 stops its preview before its folder goes (`stopPreviewOf`): the record first, which the preview reads as the end, then
 the folder once it stopped — never a server left watching a folder removed under it. `run monitor` is the same run, live, for
 a person in a terminal of their own: it only reads (nothing marked read, nothing the lead is woken for touched) and
-refuses a shell with no terminal, an agent's, whose is `run watch`. `task show` (`show.ts`) gathers the rest of a review —
+refuses a shell with no terminal, an agent's, whose is `run watch`. It is a board for a supervisor: what needs someone on
+top; the tasks left beside the agents, each with its state — at work, waiting, asking the lead, stopped, done — and the
+approved folded in a line naming them (`a`); the activity in columns (time, who → whom for a message, task, what),
+an event repeated in a row one line (×N, opened and folded with a click), paged with ← → and the wheel; `f` draws the
+run's flow, to-do to approved, with what holds an agent and what a review sent back. It watches the run's folder and
+draws again the moment the CLI writes to it, every second for its clock, in one synchronized frame. Everything that
+waits on a run — `task next --follow`, a file's wait, a question's answer, `run watch --until lead`, `task inbox
+--follow` — wakes the same way (`runChanged.ts`), on a change, not at its next look: a hand-off is as quick as the CLI
+writing it. The activity says what each agent is at between tasks (`waiting`, `idle`, `stops`), that every task is
+approved (`all-approved`) and, at a whole and checked dry run of the finish, that the run is ready and whose step is
+next (`ready`). `task show` (`show.ts`) gathers the rest of a review —
 acceptance, checks, agreements, notes, what was said, each file's diff against where the copy started, the commands that
-act on it.
+act on it; `task show <task> <file>` is one of those files whole, read from where the diff is (`showTaskFile`).
 
 **No task ends with failing checks**: `complete` refuses. `--known-failure "why" --fixed-by <task>` takes it to review
 anyway — said in the review, `run status` and the report, and to the task that fixes it; the final merge still needs
@@ -165,7 +175,11 @@ the elements its files write): its pictures clipped to its outermost elements (a
 node), and the page check's findings on other tasks' parts set apart and counted — a stub of theirs is no finding of
 its. A whole page, layout or component of its own is pictured whole, as before. A copy its agent's own server still
 serves (its `tmp/dev-server.json` answers) is looked at there and left running — a second server would not start on
-the copy's state, whose kv lock the first holds; `run preview --task` follows it the same way.
+the copy's state, whose kv lock the first holds; `run preview --task` follows it the same way. `--hover <id>` is
+`page check --hover` on each page and one more picture at 1440, light, with the pointer over it (`page shot --steps
+"hover …"`, taken apart so a missing element loses only that picture). A copy's server is told from another copy's by
+`/health`'s `Instance`, a mark of the folder it serves (`projectMark`): copies share the project's name, and
+`page check` in one copy refuses the port another holds.
 
 Its pictures are the run's (`<run>/shots/`), and so is a `page shot` taken inside a task's copy (`<run>/shots/<task>/`):
 read by the lead while the run is open, gone with it — never left in the project's `tmp/`, which is the person's. An
@@ -232,12 +246,17 @@ the run keeps the run's choice, and may only turn it on — the UI another role'
 task changes (under `src/space/`, but its data, or a plugin) is looked at by a designer before the lead: at `complete`
 its state's `design` is `due`. A designer's `task next` offers it before any task of its own (`--take` makes it theirs:
 another designer is not offered it), with what it changed, the pages it is likely drawn at and what to look for; the
-designer runs `task look`, then `task review --approve` — the task stays in review, the lead's now — whose review is the complete and strict one, and the final word; the designer's is the UI/UX, as a
+designer runs `task look`, then `task review --approve` — the task stays in review, the lead's now — whose review is the complete and strict one, and the final word, the code above all once its UI is approved; the designer's is the UI/UX, as a
 designer — and `run watch
 --until lead` wakes the lead for it then, not before — or `--changes`, which go back to the task as the lead's would and
 count as a round. The lead's approval while it is due is refused, naming the designer, unless `--skip-design`: the state
 and the report say which. A designer does not review its own work, and is not finished while a task whose UI it may
-review is still to be done.
+review is still to be done. A task asks the review it needs as it is sent: `task complete --review code` goes to the
+lead's code review alone (nothing a visitor sees changed), `--review ui` has its UI looked at first — by a designer,
+the lead's too when none is free — and left out, the run decides as above; the activity says which (`complete`'s
+`review`). The designer's changes are logged as its UI review (`design-review`, `changes`), apart from the lead's; a lead
+going past a UI review a designer took tells that designer, who still tells the lead what it found with `task tell
+--about <task>` — the way any agent holding no task does.
 
 ## Files read whole (`longFiles.ts`)
 
@@ -411,8 +430,10 @@ derives the problems from it (a task not done or blocked, more than one review, 
 failed checks, refusals, conflicts, overrides, unanswered proposals, the run over 1.5 times its estimate).
 **The audit** (`audit.ts`) reads the same log for what does not add up, and the report keeps it whether the run is
 approved or not, as does `run finish`'s output: a task done with no approval logged, more than six failed checks, a
-review that waited over ten minutes, three rounds or more, a UI review skipped, a crash, a preview that could not sync,
-a brake, the same refusal three times. Each is the CLI's to fix or the team's to learn from — the log holds every step
+review that waited over ten minutes, sent back three times or more (by its UI review and by the lead, counted apart), a
+UI review skipped — and a designer that had it when the lead went past —, a crash, a preview that could not sync, a
+brake, the same refusal three times. The finish keeps each acceptance line that held on a result for an hour: run again
+on the same result, it runs only the others. Each is the CLI's to fix or the team's to learn from — the log holds every step
 for that reason: the plan and its team at `open`, each command refused or crashed (its line, the token redacted), each
 check with what failed, each look and review taken.
 `run report --summary <file>` keeps the lead's summary on top; the final merge is refused without it. When the

@@ -18,6 +18,7 @@ import {
   RUNTIME_BUNDLE,
   RUNTIME_ENTRY,
   SERVER_RECORD_ENV,
+  projectMark,
   projectModule,
   projectRoot
 } from '@plitzi/sdk-shared/project';
@@ -391,7 +392,8 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
     return keptKv;
   });
 
-  // `name` is what `/health` answers with, and `tmp/dev-server.json` records: how a tool knows it reached THIS project.
+  // `name` is what `/health` answers with, and `tmp/dev-server.json` records: how a tool knows it reached THIS project —
+  // and `instance`, which copy of it: a run's copies share the name, and one on a port another copy holds reached that.
   const server = createServer(
     {
       // What went wrong and nothing else: `npm start -- --verbose` adds a line for every request.
@@ -402,7 +404,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
       port,
       devMode: serverOptions.devMode ?? developing,
       livePages: serverOptions.livePages ?? serverOptions.devMode ?? developing,
-      health: { name },
+      health: { name, instance: projectMark(root) },
       adapters,
       plugins: plugins.sources,
       publicDir: path.join(root, PUBLIC_DIR),

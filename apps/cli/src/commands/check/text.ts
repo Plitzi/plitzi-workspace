@@ -65,31 +65,36 @@ const browserOnlyText = (report: CheckReport): string[] =>
       ]
     : [];
 
-/** What a click changed, a line each — or that it changed nothing, which is the line a broken button gets. */
+/**
+ * What a click or a hover changed, a line each — or that it changed nothing, which is the line a broken button gets, and
+ * a hover with no effect.
+ */
 export const clickedText = (clicked: ClickReport | undefined): string[] => {
   if (!clicked) {
     return [];
   }
 
   if (clicked.problem) {
-    return [`  - click: ${clicked.problem}`];
+    return [`  - ${clicked.hovered ? 'hover' : 'click'}: ${clicked.problem}`];
   }
+
+  const doing =
+    clicked.element === 'the fields filled'
+      ? 'filling them'
+      : `${clicked.hovered ? 'hovering' : 'clicking'} ${clicked.element}`;
+  const nothing = `no flow ran, the page went nowhere, nothing scrolled, appeared or went, nothing was said, ${clicked.hovered ? 'the state is as it was, and it and its elements look as they did' : 'and the state is as it was'}`;
 
   return [
     ...(clicked.filled ? [`  · filled ${clicked.filled.join(', ')}`] : []),
     ...(clicked.fillChanges ? ['  · filling them:', ...clicked.fillChanges.map(change => `      ${change}`)] : []),
     ...(clicked.changes.length === 0
-      ? [
-          `  · ${clicked.element === 'the fields filled' ? 'filling them' : `clicking ${clicked.element}`} changed nothing${clicked.fillChanges ? ' more than the filling did' : ': no flow ran, the page went nowhere, nothing scrolled, appeared or went, nothing was said, and the state is as it was'}`
-        ]
+      ? [`  · ${doing} changed nothing${clicked.fillChanges ? ' more than the filling did' : `: ${nothing}`}`]
       : [
-          `  · ${clicked.element === 'the fields filled' ? 'filling them' : `clicking ${clicked.element}`}:`,
+          `  · ${doing}:`,
           ...clicked.changes.map(change => `      ${change}`),
           // A flow that ran and succeeded is not a page that changed: when only flows are said, that is said too.
           ...(clicked.changes.every(change => change.startsWith('ran '))
-            ? [
-                '      — and nothing on the page changed: the page went nowhere, nothing scrolled, appeared or went, nothing was said, and the state is as it was'
-              ]
+            ? [`      — and nothing on the page changed: ${nothing.replace('no flow ran, ', '')}`]
             : [])
         ]),
     ...clicked.failed.map(flow => `  - ${flow}`)

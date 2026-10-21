@@ -127,6 +127,24 @@ export interface AncestorSpec {
 /** A selector's rules in either shape: plain CSS, or CSS with its states and variants beside it. */
 export type StyleSpec = CssSpec | RuleSetSpec;
 
+/** The keys of a rule set's object form: none is a CSS property. */
+type RuleSetKey = keyof RuleSetSpec;
+
+/**
+ * A style that writes its own rules beside a rule set's keys — `{ color, variants }` — refused on the key that belongs
+ * under `css`, as `author` refuses it (`rule-set-mixed`). Plain CSS's index signature lets the union take it otherwise:
+ * `color` is a key of one of its shapes, and the object reads as the other.
+ */
+export type UnmixedStyle<S> = [Extract<keyof S, RuleSetKey>] extends [never]
+  ? S
+  : [Exclude<keyof S, RuleSetKey>] extends [never]
+    ? S
+    : {
+        [K in keyof S]: K extends RuleSetKey
+          ? S[K]
+          : `goes under css: once a style has ${Extract<keyof S, RuleSetKey> & string}, its own rules are { css: { … } }`;
+      };
+
 /** A selector's whole block per breakpoint, as it reaches the document. */
 export type ResponsiveBlock = Partial<Record<DisplayMode, StyleBlock>>;
 

@@ -1,5 +1,5 @@
 import { MACHINERY } from './machinery';
-import { PROJECT_TMP } from './paths';
+import { PROJECT_TMP, TEST_OUTPUTS } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -31,8 +31,8 @@ const prettierrc = (): string =>
     2
   )}\n`;
 
-/** What a project writes that is nobody's to format or lint: its builds, and everything it writes for itself. */
-export const PROJECT_OUTPUTS = ['dist', PROJECT_TMP];
+/** What a project writes that is nobody's to format or lint: its builds, its tests' leftovers, what it writes for itself. */
+export const PROJECT_OUTPUTS = ['dist', PROJECT_TMP, ...TEST_OUTPUTS];
 
 /**
  * What a project serves as it came, so neither the formatter nor the lint touches it: `public/`, and `vendor/` — the

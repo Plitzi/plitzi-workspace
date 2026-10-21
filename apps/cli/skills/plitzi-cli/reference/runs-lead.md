@@ -110,10 +110,9 @@ task message t-home "…" --reply-to m3`; `task message all "…"` tells every t
 6. **Review against the inventory, not only the picture:** every section and piece the task's acceptance names is
    there, as the reference has it — a difference you accept is one you say (`--note`); one a visitor would see is sent
    back. Judge the version that went to review (`task show` says its round), and on a page several tasks build, only
-   this task's part. `plitzi task show t-home` is all of it (acceptance, checks, agreements, what was said, diffs);
-   `plitzi task look t-home [--click id] [--element id]` (a part of a page others build: its part alone) serves its copy, page checks its pages (headings, names,
-   contrast included; an open state, an element as the page has it) and pictures
-   them light and dark — one command. What the acceptance asks and the data does not show, you test yourself
+   this task's part. `plitzi task show t-home` is all of it (acceptance, checks, agreements, what was said, diffs; `<file>` after it, that file whole);
+   `plitzi task look t-home [--click id | --hover id] [--element id]` (a part of a page others build: its part alone) serves its copy, page checks its pages (headings, names,
+   contrast; the state asked for) and pictures them light and dark — one command. What the acceptance asks and the data does not show, you test yourself
    (a module's function with the edge cases, as `node -e` from the copy) — or send it back for the test it needs. Then
    `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Three rounds of yours —
    or three of the designer's, counted apart — go to a person. A `--known-failure` says why and which task fixes it — weigh that. The approval merges what went to review,

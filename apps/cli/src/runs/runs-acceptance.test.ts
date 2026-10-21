@@ -15,6 +15,7 @@ import { viewRun } from './view';
 import { benchPlan, makeBench, teamFor, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
+import type { Message } from './messages';
 import type { Bench } from '../tests/runProject';
 
 /** A task held to its acceptance and its checks — and what the run leaves behind. */
@@ -194,9 +195,14 @@ describe('acceptance, checks and what is left behind', () => {
       timeoutMs: 2000,
       everyMs: 10
     });
-    await new Promise(resolve => setTimeout(resolve, 30));
-    const question = (await readInbox(lead(), 'es-launch')).find(message => message.text === 'Anything else?');
-    await messageTasks(lead(), 'es-launch', 't-menu', 'No', question?.id);
+    // Answered once it is asked: a fixed wait was too short under the whole suite's load, and the reply named nothing.
+    let question: Message | undefined;
+    while (!question) {
+      await new Promise(resolve => setTimeout(resolve, 10));
+      question = (await readInbox(lead(), 'es-launch')).find(message => message.text === 'Anything else?');
+    }
+
+    await messageTasks(lead(), 'es-launch', 't-menu', 'No', question.id);
     const answered = await asking;
     expect([answered.reply?.text, answered.messages.map(message => message.text)]).toEqual([
       'No',

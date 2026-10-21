@@ -23,6 +23,11 @@ export interface CheckOptions {
   ssr?: boolean;
   /** One element clicked, by its id, once the page has settled: what changed because of it, or that nothing did. */
   click?: string;
+  /**
+   * One element with the pointer over it, by its id, once the page has settled: what that changed — its own look and its
+   * elements', what appeared, the flows it ran — or that nothing did.
+   */
+  hover?: string;
   /** Fields filled before the click, as a visitor types in them: what a form's flow is sent. */
   fill?: FieldFill[];
   /**
@@ -139,6 +144,8 @@ export interface PageMoment {
 /** What a click changed — each kind of change, said; none at all is said too. */
 export interface ClickReport {
   element: string;
+  /** The pointer was put over it, not clicked: its look is what changes most. */
+  hovered?: true;
   /** The fields filled before it, each with what was put in it. */
   filled?: string[];
   /** What filling them changed by itself, before the click: a field that acts as it is typed in. */
@@ -211,4 +218,6 @@ export interface CheckAsk {
 export interface ClickAsk {
   element?: string;
   fill: readonly FieldFill[];
+  /** The pointer put over the element, not a click on it. */
+  hover?: true;
 }

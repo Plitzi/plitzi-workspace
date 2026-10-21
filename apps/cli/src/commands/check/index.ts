@@ -32,7 +32,15 @@ export { CHECK_PASSWORD_ENV, CHECK_USER_ENV, checkAccount, sentElsewhere, signIn
 export type { Account } from './account';
 export { notShownInPage, pageFor, staticPaths } from './space';
 export { contestedStylesInPage, contestedText, inertText } from './styles';
-export { listenForRefusedFieldsInPage, momentChanges, pageMomentInPage, refusedFieldsInPage } from './moments';
+export {
+  listenForRefusedFieldsInPage,
+  LOOK_PROPERTIES,
+  lookChanges,
+  looksInPage,
+  momentChanges,
+  pageMomentInPage,
+  refusedFieldsInPage
+} from './moments';
 export { meantOnPage, shownTextInPage, wrappedLabelsInPage } from './expect';
 export { listText, renderedRowsInPage } from './lists';
 export { clickedText, reportText } from './text';

@@ -261,10 +261,12 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       if (section === undefined) {
         report.compare = compared;
       } else {
-        const kept = compared.regions.filter(each => each.name === section || each.name.endsWith(`#${section}`));
+        const kept = compared.regions.filter(
+          each => each.name === section || each.name.endsWith(`#${section}`) || each.element === section
+        );
         if (kept.length === 0) {
           fail(
-            `--clip ${section} is none of the sections compared: ${compared.regions.map(each => each.name).join(', ') || 'the page has no named section'} — name one of them`
+            `--clip ${section} is none of the sections compared: ${compared.regions.map(each => (each.element ? `${each.name} (${each.element})` : each.name)).join(', ') || 'the page has no named section'} — name one of them, by its id or its element's`
           );
 
           return;

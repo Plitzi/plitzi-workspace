@@ -29,6 +29,10 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .option('--ssr', 'Also the HTML the server sent against the hydrated page: what a server provider sent late')
     .option('--click <id>', 'Click one element once the page settles, and say what it changed — or that nothing did')
+    .option(
+      '--hover <id>',
+      'Put the pointer over one element once the page settles, and say what it changed — its look and its elements’, what appeared — or that nothing did'
+    )
     .addOption(
       new Option(
         '--expect <id~text>',
@@ -136,7 +140,7 @@ export const registerPage = (pageGroup: Command): void => {
     .option('--sheet', 'Every picture taken — before, after each click, each frame — on one contact sheet')
     .option(
       '--steps <script>',
-      'An interaction, step by step: "click <el>; type <el> <text>; press <key>; wait <ms>; wait-for <el>; shot [label]; frames <n> [ms]" — or @file with one per line'
+      'An interaction, step by step: "click <el>; hover <el>; type <el> <text>; press <key>; wait <ms>; wait-for <el>; shot [label]; frames <n> [ms]" — or @file with one per line'
     )
     .option('--reduced-motion', 'As a visitor who asked for less motion')
     .option(

@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { checkProjectRoot, projectModule, projectRoot } from './root';
+import { checkProjectRoot, projectMark, projectModule, projectRoot } from './root';
 
 let folder: string;
 
@@ -105,5 +105,21 @@ describe('where a module of the project’s source is, in the form the process r
       path.join(root, 'src/space/index.ts')
     );
     expect(projectModule(root, 'src/space/index.ts', undefined)).toBe(path.join(root, 'src/space/index.ts'));
+  });
+});
+
+describe('projectMark', () => {
+  it('is one copy of a project wherever it is reached from, and another for its copy in another folder', () => {
+    const copy = fs.mkdtempSync(path.join(os.tmpdir(), 'plitzi-project-copy-'));
+    const linked = path.join(copy, 'linked');
+    fs.symlinkSync(folder, linked);
+
+    expect(projectMark(folder)).toMatch(/^[0-9a-f]{12}$/);
+    expect(projectMark(linked)).toBe(projectMark(folder));
+    expect(projectMark(`${folder}/`)).toBe(projectMark(folder));
+    expect(projectMark(copy)).not.toBe(projectMark(folder));
+    // The folder is not said: a server open to its network names no path.
+    expect(projectMark(folder)).not.toContain(path.basename(folder));
+    fs.rmSync(copy, { recursive: true, force: true });
   });
 });

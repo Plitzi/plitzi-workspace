@@ -31,6 +31,79 @@ export const pageMomentInPage = (): PageMoment => {
   };
 };
 
+/** What a pointer over an element changes in its look, most often — a hover's colours, its lift, its shadow. */
+export const LOOK_PROPERTIES: readonly string[] = [
+  'color',
+  'background-color',
+  'background-image',
+  'border-color',
+  'outline-color',
+  'box-shadow',
+  'text-decoration-line',
+  'opacity',
+  'filter',
+  'transform',
+  'translate',
+  'scale',
+  'rotate'
+];
+
+/**
+ * How an element and each element inside it look, property by property: what a hover changes, held before and
+ * after. Runs in the page, self-contained — so the properties come with it (`LOOK_PROPERTIES`).
+ */
+export const looksInPage = ({ selector, properties }: { selector: string; properties: readonly string[] }): Looks => {
+  const root = document.querySelector(selector);
+  if (!root) {
+    return {};
+  }
+
+  const looks: Looks = {};
+  for (const node of [root, ...Array.from(root.querySelectorAll('[data-plitzi-el]'))].slice(0, 40)) {
+    const style = getComputedStyle(node);
+    const parent = node === root ? null : node.parentElement?.closest('[data-plitzi-el]');
+    looks[node.getAttribute('data-plitzi-el') ?? selector] = {
+      ...(parent ? { parent: parent.getAttribute('data-plitzi-el') ?? '' } : {}),
+      values: Object.fromEntries(properties.map(property => [property, style.getPropertyValue(property)]))
+    };
+  }
+
+  return looks;
+};
+
+/** How each element looks, by id, with the element it sits in — what it inherits a colour from. */
+export type Looks = Record<string, { parent?: string; values: Record<string, string> }>;
+
+/** The properties drawn in the text's colour unless set: a border that follows a hover's colour is that colour. */
+const FOLLOWS_COLOR = new Set(['border-color', 'outline-color']);
+
+/**
+ * What changed in how the elements look, in words: `title color: rgb(…) → rgb(…)`, one line per property — said where
+ * it changed, not again by what follows it: an element that inherits its colour, a border drawn in the text's.
+ */
+export const lookChanges = (before: Looks, after: Looks): string[] => {
+  const valueIn = (looks: Looks, id: string | undefined, property: string): string | undefined =>
+    id !== undefined && Object.hasOwn(looks, id) && Object.hasOwn(looks[id].values, property)
+      ? looks[id].values[property]
+      : undefined;
+  const changed = (id: string | undefined, property: string): string | undefined => {
+    const from = valueIn(before, id, property);
+    const to = valueIn(after, id, property);
+
+    return from === undefined || to === undefined || from === to ? undefined : `${from} → ${to}`;
+  };
+
+  return Object.entries(after).flatMap(([id, look]) =>
+    Object.keys(look.values).flatMap(property => {
+      const change = changed(id, property);
+      const inherited = property === 'color' && change !== undefined && change === changed(look.parent, property);
+      const followed = FOLLOWS_COLOR.has(property) && change !== undefined && change === changed(id, 'color');
+
+      return change === undefined || inherited || followed ? [] : [`${id} ${property}: ${change}`];
+    })
+  );
+};
+
 /** Starts noting each field the browser refuses — `invalid`, fired as a form is submitted. Runs in the page. */
 export const listenForRefusedFieldsInPage = (): void => {
   const noted: string[] = [];

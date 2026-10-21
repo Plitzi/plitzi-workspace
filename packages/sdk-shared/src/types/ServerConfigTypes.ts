@@ -203,6 +203,11 @@ export type SSRHealthConfig = {
   version?: string;
   role?: string;
   /**
+   * Which of the servers that answer with this name this one is — a project's copy in another folder, a replica —
+   * answered as `Instance`: a tool reaching a port tells the server it meant from another of the same name by it.
+   */
+  instance?: string;
+  /**
    * Live state, read on every probe and merged over the payload — the stores this process depends on, a queue
    * depth, whatever only this deployment can know. Returning `healthy: false` answers **503**, which is what turns
    * the endpoint from a liveness check into a readiness one: an orchestrator stops routing to a replica whose

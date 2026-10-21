@@ -73,3 +73,9 @@ export const VISUAL_OUTPUT = `${PROJECT_TMP}/visual`;
  */
 export const TLS_CERT_FILE = `${PROJECT_TMP}/tls/cert.pem`;
 export const TLS_KEY_FILE = `${PROJECT_TMP}/tls/key.pem`;
+
+/**
+ * What Playwright writes where its config is not read — a spec run from elsewhere, an agent's own invocation: its last
+ * run and its report. The config sends them to `tmp/`; left anywhere else, the format check failed on them (la-velada).
+ */
+export const TEST_OUTPUTS = ['test-results', 'playwright-report'];

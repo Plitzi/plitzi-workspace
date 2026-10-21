@@ -127,12 +127,13 @@ describe('what stays the lead’s', () => {
   it('refuses a lead that reviews the plan, the notes and a reassignment', async () => {
     const { runId } = await twoInReview();
     const file = await bench.writePlan({ ...benchPlan(), designReview: false });
+    // One at a time, each awaited as it starts: begun together, a refusal not yet awaited went unhandled.
     for (const work of [
-      amendRun(bench.agent('lead-2'), runId, file),
-      noteRun(bench.agent('lead-2'), runId, 'Use the formal voice'),
-      reassignTask(bench.agent('lead-2'), runId, 't-book')
+      () => amendRun(bench.agent('lead-2'), runId, file),
+      () => noteRun(bench.agent('lead-2'), runId, 'Use the formal voice'),
+      () => reassignTask(bench.agent('lead-2'), runId, 't-book')
     ]) {
-      const refused = await refusal(work);
+      const refused = await refusal(work());
       expect(refused.code).toBe('lead-only');
     }
   });

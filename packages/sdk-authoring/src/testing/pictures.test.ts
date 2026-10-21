@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+// @vitest-environment jsdom
+import { describe, expect, it, vi } from 'vitest';
 
-import { alignPictures } from './pictures';
+import { alignPictures, pageRegions } from './pictures';
 
 import type { PictureRegion, RowProfile } from './pictures';
 
@@ -75,5 +76,22 @@ describe('alignPictures', () => {
 
     expect(shifts).toEqual([0, 0, 0, 0]);
     expect(drift).toBeUndefined();
+  });
+});
+
+describe('pageRegions', () => {
+  // A section named by its anchor is still the space's element: `--clip home-fights` finds `section#combates`.
+  it('names each section by its id, with the element of the space it is when that is another', () => {
+    document.body.innerHTML =
+      '<main data-plitzi-el="home"><section id="combates" data-plitzi-el="home-fights"></section><section data-plitzi-el="home-faq"></section></main><footer id="footer" data-plitzi-el="footer"></footer>';
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 100, 50));
+
+    expect(pageRegions().map(({ name, element }) => ({ name, element }))).toEqual([
+      { name: 'main#home', element: undefined },
+      { name: 'section#combates', element: 'home-fights' },
+      { name: 'section#home-faq', element: undefined },
+      { name: 'footer#footer', element: undefined }
+    ]);
+    vi.restoreAllMocks();
   });
 });

@@ -13,7 +13,7 @@ queue is empty — nothing else is theirs (`lead-only`, 25). The project's team 
 "designer"`; `developer` when left out); `plitzi task next --role designer --follow --take --agent design-1` waits
 (`--timeout 8m`) for the next one and takes it, handing back first a task you hold that can go on. Started at a
 level, say it (`--quality high`, as `run plan` gave your command): you are handed tasks of it or below.
-**A designer** reviews the others' UI/UX, as a designer, before the lead's complete review: `plitzi task look <task>` (its pages; `--click <id>` an open state, `--element <id>` the page's own), then `task review <task>
+**A designer** reviews the others' UI/UX, as a designer, before the lead's complete review: `plitzi task look <task>` (its pages; `--click <id>` an open state, `--hover <id>` a hover, `--element <id>` the page's own), then `task review <task>
 --approve [--note "what you saw"] | --changes "what, where, why" --agent design-1` — hierarchy, spacing, the theme's tokens, every state (empty,
 long, error, hover, focus), light and dark, 390, the words; against a reference, its details: what moves (an entrance, a
 shine, an arrow), sizes as `--compare` measures them, what each control does, the phone's own layout. **A tester** gets `<task>-tests` after each developer task: tests of
@@ -35,8 +35,9 @@ Outside a copy, name yourself (`--agent writer-1`, or `PLITZI_AGENT`): `task nex
 
 - **Write only in `work`**, never in the project. Run the project's scripts there (`npm run author`, `npx tsc`, `npx
 eslint .`). The copy has no `node_modules` (it resolves the project's) and no `.env` — a warning about it is expected.
-  **Look at your page** with the copy's own server: `PORT=8201 npm start` in `work`, then `npx plitzi page check /pets
---width 1440,390 --url http://127.0.0.1:8201` (no `--` with npx); stop it when done. The copy's `tmp/` and `state/`
+  **Look at your page** with the copy's own server: `npm run start:dev` in `work` (no `PORT`: it takes a free port and
+  writes it where page check looks; a save swaps the space and plugins in the open page), then `npx plitzi page check
+  /pets --width 1440,390` from `work` (no `--` with npx) — it refuses another copy's server; stop it when done. The copy's `tmp/` and `state/`
   never count at `complete`, and are where what is yours beside the work goes — a script, a log, a picture; between
   tasks, `tmp/plitzi-runs/<run>/scratch/<your name>/`. Never the project's `tmp/`: it is the person's, and what is
   left there is said to the lead. Format what you write (`npx prettier --write <file>`). The copy stays where it is even

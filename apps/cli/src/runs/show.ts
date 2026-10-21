@@ -80,6 +80,47 @@ const versionOf = async (loaded: LoadedRun, root: string, file: string, digest: 
   });
 };
 
+/**
+ * Where a task's changes are read from (`TaskShown['from']`), and each file's two versions: where its work started, and
+ * what it holds there — what the diff of `task show` is between, and what `task show <task> <file>` prints whole.
+ */
+const versionsOf = async (loaded: LoadedRun, root: string, task: RunTask) => {
+  const view = await viewTask(loaded.paths, task);
+  // A copy is read only while someone holds the task: a cut task's is left behind, never to be merged.
+  const start = view.owner ? await readStart(view.paths) : undefined;
+  const approved = (await readApproved(loaded.paths)).files;
+  const changed = view.state.changed ?? [];
+  const submitted = view.state.status === 'in-review' ? view.state.submitted : undefined;
+  const from: TaskShown['from'] = submitted ? 'submitted' : start ? 'copy' : changed.length > 0 ? 'run' : 'none';
+  // Without a copy, what it changed is read against what the run started from: the project as the run copied it.
+  const base = start ? undefined : (await readBase(loaded.paths)).files;
+  const versions = async (file: string): Promise<{ before?: Buffer; after?: Buffer }> => {
+    const before = await versionOf(
+      loaded,
+      root,
+      file,
+      start ? start.files[file] : base && Object.hasOwn(base, file) ? base[file] : undefined
+    );
+    const after = submitted
+      ? await versionOf(loaded, root, file, Object.hasOwn(submitted, file) ? submitted[file] : undefined)
+      : from === 'copy'
+        ? await readOptional(under(view.paths.work, file))
+        : await versionOf(loaded, root, file, Object.hasOwn(approved, file) ? approved[file].digest : undefined);
+
+    return { ...(before ? { before } : {}), ...(after ? { after } : {}) };
+  };
+
+  return { view, changed, submitted, from, versions };
+};
+
+/** How each source a task's files are read from is said. */
+export const FROM_TEXT: Record<TaskShown['from'], string> = {
+  submitted: 'as it went to review',
+  copy: 'its copy',
+  run: 'as approved',
+  none: 'nothing yet'
+};
+
 const nextFor = (task: RunTask, status: TaskStatus, design?: DesignReview): string[] => {
   switch (status) {
     case 'in-review':
@@ -118,28 +159,10 @@ export const showTask = async (
     throw new RunRefusal('not-found', `Run "${runId}" has no task "${taskId}"`, { task: taskId });
   }
 
-  const view = await viewTask(loaded.paths, task);
-  // A copy is read only while someone holds the task: a cut task's is left behind, never to be merged.
-  const start = view.owner ? await readStart(view.paths) : undefined;
-  const approved = (await readApproved(loaded.paths)).files;
-  const changed = view.state.changed ?? [];
-  const submitted = view.state.status === 'in-review' ? view.state.submitted : undefined;
-  const from: TaskShown['from'] = submitted ? 'submitted' : start ? 'copy' : changed.length > 0 ? 'run' : 'none';
+  const { view, changed, submitted, from, versions } = await versionsOf(loaded, ctx.root, task);
   const files: ShownFile[] = [];
-  // Without a copy, what it changed is read against what the run started from: the project as the run copied it.
-  const base = start ? undefined : (await readBase(loaded.paths)).files;
   for (const file of changed) {
-    const before = await versionOf(
-      loaded,
-      ctx.root,
-      file,
-      start ? start.files[file] : base && Object.hasOwn(base, file) ? base[file] : undefined
-    );
-    const after = submitted
-      ? await versionOf(loaded, ctx.root, file, Object.hasOwn(submitted, file) ? submitted[file] : undefined)
-      : from === 'copy'
-        ? await readOptional(under(view.paths.work, file))
-        : await versionOf(loaded, ctx.root, file, Object.hasOwn(approved, file) ? approved[file].digest : undefined);
+    const { before, after } = await versions(file);
     const change: ShownFile['change'] =
       before === undefined && after !== undefined ? 'added' : after === undefined ? 'removed' : 'changed';
     const a = textOf(before) ?? (before === undefined ? '' : undefined);
@@ -193,5 +216,65 @@ export const showTask = async (
     requests: (await readRequests(view.paths)).map(each => ({ file: each.file, summary: each.summary })),
     messages: said.slice(-6),
     next: nextFor(task, view.state.status, view.state.design)
+  };
+};
+
+export interface TaskFileShown {
+  task: string;
+  file: string;
+  from: TaskShown['from'];
+  change: ShownFile['change'];
+  /** The file whole, as the task holds it; none for one it removes, or one that is not text. */
+  text?: string;
+  binary?: boolean;
+}
+
+/**
+ * One file of a task whole, read from where `task show` reads its diff — as it went to review, its copy, or as
+ * approved: what a reviewer reads past the 80 lines of a diff, or around a change, without going into the copy.
+ */
+export const showTaskFile = async (
+  ctx: RunContext,
+  runId: string,
+  taskId: string,
+  file: string
+): Promise<TaskFileShown> => {
+  requireNoTask(ctx, 'show a task as its lead');
+  const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
+  const task = loaded.tasks.find(each => each.id === taskId);
+  if (!task) {
+    throw new RunRefusal('not-found', `Run "${runId}" has no task "${taskId}"`, { task: taskId });
+  }
+
+  const { changed, from, versions } = await versionsOf(loaded, ctx.root, task);
+  const named = file.replace(/^\.\//, '');
+  if (!changed.includes(named)) {
+    throw new RunRefusal(
+      'not-found',
+      changed.length === 0
+        ? `${taskId} changed no file yet: there is nothing of it to show`
+        : `${taskId} did not change ${named}: its changed files are ${changed.join(', ')}`,
+      {
+        task: taskId,
+        next:
+          changed.length === 0
+            ? `plitzi task show ${taskId} says what it changes, once it has completed or its copy has some`
+            : `name one of its changed files, as written there — or read ${named} in the project, which the task left as it was`
+      }
+    );
+  }
+
+  const { before, after } = await versions(named);
+  const change: ShownFile['change'] =
+    before === undefined && after !== undefined ? 'added' : after === undefined ? 'removed' : 'changed';
+  const text = textOf(after);
+
+  return {
+    task: taskId,
+    file: named,
+    from,
+    change,
+    ...(text === undefined ? {} : { text }),
+    ...(after !== undefined && text === undefined ? { binary: true } : {})
   };
 };

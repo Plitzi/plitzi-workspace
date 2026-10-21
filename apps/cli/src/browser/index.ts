@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 
 import { HIDE_DEV_TOOLS_CSS } from '@plitzi/sdk-shared/devTools';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { projectMark } from '@plitzi/sdk-shared/project';
 import { OBSERVER_COOKIE_NAME } from '@plitzi/sdk-shared/realtime';
 import { THEME_COOKIE_NAME } from '@plitzi/sdk-shared/theme';
 
@@ -54,6 +55,8 @@ export interface PageElement {
   /** How many elements the selector finds: none is an element not on the page. */
   count(): Promise<number>;
   click(options: { timeout: number }): Promise<void>;
+  /** The pointer put over it, and left there: what a hover shows. */
+  hover(options: { timeout: number }): Promise<void>;
   /** The elements inside it the selector finds. */
   locator(selector: string): { first(): PageElement };
   /** A function run in the page on the element itself. */
@@ -242,21 +245,30 @@ export const projectOrigin = async (
   const where = new URL(server.url ?? 'http://127.0.0.1');
   where.port = String(process.env.PORT ?? server.port ?? (project?.mode === 'client' ? 5173 : 8080));
   const { origin, port } = where;
-  if (!server.name) {
+  // Vite has no /health: a client project that recorded no name is not asked one.
+  if (project?.mode === 'client' && !server.name) {
     return { origin };
   }
 
   const health = await readHealth(origin);
   const answered = isRecord(health) && typeof health.Server === 'string' ? health.Server : '';
-  if (answered !== server.name) {
+  // Which copy answers: a run's copies share the name, and a server whose port another copy held left that one there.
+  const instance = isRecord(health) && typeof health.Instance === 'string' ? health.Instance : undefined;
+  if (instance !== undefined && instance !== projectMark(root)) {
     return {
-      problem: answered
-        ? `Port ${port} answers as "${answered}", not this project ("${server.name}"). Start it: npm start`
-        : `Nothing of this project answers on port ${port}. Start it: npm start`
+      problem: `Port ${port} answers with ${answered ? `"${answered}"` : 'a project'} served from another folder, not this one${process.env.PORT ? ` (PORT=${process.env.PORT})` : ''}: this project's own server is not on it. Start it on a free port — npm start without PORT takes the next free one and writes it to ${DEV_SERVER_FILE}, where this looks`
     };
   }
 
-  return { origin };
+  if (!server.name || answered === server.name) {
+    return { origin };
+  }
+
+  return {
+    problem: answered
+      ? `Port ${port} answers as "${answered}", not this project ("${server.name}"). Start it: npm start`
+      : `Nothing of this project answers on port ${port}. Start it: npm start`
+  };
 };
 
 /** A picture as a data URL, which is how a page in the browser is handed one to read. */

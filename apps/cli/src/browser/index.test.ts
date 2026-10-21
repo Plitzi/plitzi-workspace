@@ -4,6 +4,8 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { projectMark } from '@plitzi/sdk-shared/project';
+
 import { projectOrigin } from './index';
 
 const projectAt = async (recorded?: { port: number; name: string }): Promise<string> => {
@@ -17,7 +19,7 @@ const projectAt = async (recorded?: { port: number; name: string }): Promise<str
 };
 
 const answering = (body: unknown) =>
-  vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify(body), { status: 200 }));
+  vi.fn<typeof fetch>(() => Promise.resolve(new Response(JSON.stringify(body), { status: 200 })));
 
 describe('projectOrigin', () => {
   afterEach(() => {
@@ -39,6 +41,26 @@ describe('projectOrigin', () => {
     expect(await projectOrigin(await projectAt({ port: 8081, name: 'shop' }), undefined)).toEqual({
       problem: 'Port 8081 answers as "blog", not this project ("shop"). Start it: npm start'
     });
+  });
+
+  // A run's copies share the name: the server of a copy whose port another copy held left that copy's there.
+  it('refuses a copy of this project served from another folder, record or none', async () => {
+    vi.stubGlobal('fetch', answering({ Server: 'shop', Instance: projectMark(os.tmpdir()) }));
+    vi.stubEnv('PORT', '8231');
+
+    const refused = {
+      problem:
+        'Port 8231 answers with "shop" served from another folder, not this one (PORT=8231): this project\'s own server is not on it. Start it on a free port — npm start without PORT takes the next free one and writes it to tmp/dev-server.json, where this looks'
+    };
+    expect(await projectOrigin(await projectAt({ port: 8231, name: 'shop' }), undefined)).toEqual(refused);
+    expect(await projectOrigin(await projectAt(), undefined)).toEqual(refused);
+  });
+
+  it('is its own copy, answering with this folder', async () => {
+    const root = await projectAt({ port: 8081, name: 'shop' });
+    vi.stubGlobal('fetch', answering({ Server: 'shop', Instance: projectMark(root) }));
+
+    expect(await projectOrigin(root, undefined)).toEqual({ origin: 'http://127.0.0.1:8081' });
   });
 
   // Vite has no /health: a project that recorded no name is not asked one.

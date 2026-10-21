@@ -1,6 +1,14 @@
 import { failedFlowText, readDevTools } from '@plitzi/sdk-authoring';
 
-import { listenForRefusedFieldsInPage, momentChanges, pageMomentInPage, refusedFieldsInPage } from './moments';
+import {
+  listenForRefusedFieldsInPage,
+  LOOK_PROPERTIES,
+  lookChanges,
+  looksInPage,
+  momentChanges,
+  pageMomentInPage,
+  refusedFieldsInPage
+} from './moments';
 
 import type { Authored } from './space';
 import type { ClickAsk, ClickReport } from './types';
@@ -8,7 +16,8 @@ import type { BrowserPage } from '../../browser';
 import type { FieldFill } from '../../options';
 
 /**
- * `--click` and `--fill`: an element clicked, a field filled as a visitor would, and what it changed.
+ * `--click`, `--hover` and `--fill`: an element clicked or pointed at, a field filled as a visitor would, and what it
+ * changed.
  */
 
 export const selectorOf = (authored: Authored | undefined, id: string): string =>
@@ -94,14 +103,19 @@ const fillField = async (
 export const clickEffects = async (
   page: BrowserPage,
   authored: Authored | undefined,
-  { element: id, fill }: ClickAsk
+  { element: id, fill, hover }: ClickAsk
 ): Promise<ClickReport> => {
   const label = id ?? 'the fields filled';
+  const verb = hover ? 'hovered' : 'clicked';
   const target = id === undefined ? undefined : page.locator(selectorOf(authored, id)).first();
   if (target && (await target.count()) === 0) {
     return { element: label, problem: `no element ${label} is on this page`, changes: [], failed: [] };
   }
 
+  const looksOf = () =>
+    id === undefined
+      ? Promise.resolve({})
+      : page.evaluate(looksInPage, { selector: selectorOf(authored, id), properties: LOOK_PROPERTIES });
   const fillAll = async (): Promise<string[] | { problem: string }> => {
     const filled: string[] = [];
     for (const field of fill) {
@@ -157,13 +171,14 @@ export const clickEffects = async (
   const before = await page.evaluate(pageMomentInPage, undefined);
   await page.evaluate(listenForRefusedFieldsInPage, undefined);
   const ran = new Set(tools.flows.map(flow => `${flow.at}|${flow.trigger}|${String(flow.on)}`));
+  const looked = await looksOf();
   if (target) {
     try {
-      await target.click({ timeout: 3000 });
+      await (hover ? target.hover({ timeout: 3000 }) : target.click({ timeout: 3000 }));
     } catch (error) {
       const reason = error instanceof Error ? error.message.split('\n')[0] : String(error);
 
-      return { element: label, problem: `${label} could not be clicked: ${reason}`, changes: [], failed: [] };
+      return { element: label, problem: `${label} could not be ${verb}: ${reason}`, changes: [], failed: [] };
     }
   } else {
     const done = await fillAll();
@@ -174,8 +189,9 @@ export const clickEffects = async (
     filled = done;
   }
 
-  // Time for what it set off to land: a flow's steps, a smooth scroll, a page it went to.
+  // Time for what it set off to land: a flow's steps, a smooth scroll, a page it went to, a hover's transition.
   await page.waitForTimeout(1200);
+  const looks = hover ? lookChanges(looked, await looksOf()) : [];
   const toolsAfter = await readDevTools(page, { state: true });
   const after = await page.evaluate(pageMomentInPage, undefined);
   const refused = await page.evaluate(refusedFieldsInPage, undefined);
@@ -183,6 +199,7 @@ export const clickEffects = async (
 
   return {
     element: label,
+    ...(hover ? { hovered: true } : {}),
     ...(filled.length > 0 ? { filled } : {}),
     ...(fillChanges.length > 0 ? { fillChanges } : {}),
     changes: [
@@ -193,6 +210,7 @@ export const clickEffects = async (
       // The browser's own refusal — a required field left empty — draws a bubble no element of the page holds, and
       // stops the submit before any flow runs: without this line it reads as a button that does nothing.
       ...refused.map(field => `the browser held the form back: ${field}`),
+      ...looks,
       ...momentChanges(before, after, { before: tools.state, after: toolsAfter.state })
     ],
     failed: flows.filter(flow => flow.status === 'failed').map(failedFlowText)

@@ -11,6 +11,9 @@ import {
   contestedText,
   inertText,
   listText,
+  LOOK_PROPERTIES,
+  lookChanges,
+  looksInPage,
   momentChanges,
   notShownInPage,
   pageFor,
@@ -177,6 +180,33 @@ describe('what a click changed', () => {
       '  · clicking send:',
       '      state.newsSubscribed: unset → true'
     ]);
+  });
+});
+
+// A hover changes how things look far more often than what is on the page: its colours, its lift, its shadow.
+describe('what a hover changed', () => {
+  it('reads how an element and the elements inside it look, and says each property that changed', () => {
+    document.body.innerHTML =
+      '<a data-plitzi-el="cta" style="color: rgb(0, 0, 0)"><span data-plitzi-el="cta-arrow" style="opacity: 0.5">→</span></a>';
+    const before = looksInPage({ selector: marked('cta'), properties: LOOK_PROPERTIES });
+    document.querySelector<HTMLElement>(marked('cta'))?.style.setProperty('color', 'rgb(255, 0, 0)');
+    document.querySelector<HTMLElement>(marked('cta-arrow'))?.style.setProperty('opacity', '1');
+
+    expect(Object.keys(before)).toEqual(['cta', 'cta-arrow']);
+    expect(lookChanges(before, looksInPage({ selector: marked('cta'), properties: LOOK_PROPERTIES }))).toEqual([
+      'cta color: rgb(0, 0, 0) → rgb(255, 0, 0)',
+      'cta-arrow opacity: 0.5 → 1'
+    ]);
+    expect(looksInPage({ selector: marked('gone'), properties: LOOK_PROPERTIES })).toEqual({});
+  });
+
+  it('says a hover that changed nothing, its look included', () => {
+    expect(clickedText({ element: 'cta', hovered: true, changes: [], failed: [] })).toEqual([
+      '  · hovering cta changed nothing: no flow ran, the page went nowhere, nothing scrolled, appeared or went, nothing was said, the state is as it was, and it and its elements look as they did'
+    ]);
+    expect(
+      clickedText({ element: 'cta', hovered: true, problem: 'no element cta is on this page', changes: [], failed: [] })
+    ).toEqual(['  - hover: no element cta is on this page']);
   });
 });
 
