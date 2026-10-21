@@ -1,11 +1,11 @@
 import fs from 'node:fs/promises';
 
 import { fingerprint, projectFiles, readOptional, writeJson } from '../files';
+import { mergeLines } from '../merge3';
 import { entryOf } from '../model';
 import { projectPath, under } from '../paths';
 import { RunRefusal } from '../refusal';
 import { readApproved } from '../run';
-import { mergeLines } from '../merge3';
 import { getBlob, placeVersion, putBlob } from '../store';
 import { isDisconnected, readStart, revokedTokens, tokenPrint, viewTask } from '../taskStore';
 

@@ -710,5 +710,10 @@ monitor` shows each as it comes, a problem in red.
       role by role, when work waits for one and none running is free, naming the agent to start and its command; and an
       agent on demand with nothing for it for four minutes, and no task of its own that may come back, stops by itself,
       said. The monitor shows one not running as on demand. `team.json`'s schema and `about` say it. A UI review is
-      asked for a designer who did not write the task: its author is never counted free for it.
+      asked for a designer who did not write the task: its author is never counted free for it. A designer, held for the UI
+      reviews while others work, is never counted a free developer, nor asked for one.
+    - A shared file both a task and the run changed is put together in the task's copy, line by line, when the copy is
+      brought up to the run (`task check`, `task next`, a review): its checks run on both changes, where they met only at
+      `complete` — velada-dress's t-sponsors lacked the token the run's approved header read, and its author failed.
+      A clash is left for `complete` to say.
 

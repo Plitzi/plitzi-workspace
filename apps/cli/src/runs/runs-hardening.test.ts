@@ -16,6 +16,7 @@ import { tellLead } from './talk';
 import { readInbox } from './talk';
 import {
   canWrite,
+  checkTask,
   completeTask,
   notReviewedIn,
   reassignTask,
@@ -127,6 +128,27 @@ describe('a shared file, by turns', () => {
 
     expect(both.flatMap(each => each.claimed)).toEqual(['src/space/tokens.ts']);
     expect(both.flatMap(each => each.requests.map(request => request.file))).toEqual(['src/space/tokens.ts']);
+  });
+});
+
+describe('a shared file both a task and the run changed', () => {
+  // velada-dress: t-sponsors' theme.ts lacked the token the run's newly approved header read, and author failed in its
+  // copy — the two were only put together at complete.
+  it('is put together in the copy as it is brought up to the run: its checks run on both changes', async () => {
+    const runId = await open();
+    const menu = await take('agent-1', 't-menu');
+    const about = await take('agent-2', 't-about');
+    const theme = await fs.readFile(path.join(bench.root, 'src/space/theme.ts'), 'utf-8');
+    await writeInCopy(about.work, 'src/space/theme.ts', `// The about page's tokens too.\n${theme}`);
+    await writeInCopy(menu.work, 'src/space/theme.ts', `${theme}export const menuHalo = '#c7a86b';\n`);
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { title: "Menú" };\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+    await reviewTask(lead(), runId, 't-menu', 'approve', []);
+
+    await checkTask(about.ctx, runId, 't-about');
+    const merged = await fs.readFile(path.join(about.work, 'src/space/theme.ts'), 'utf-8');
+    expect(merged).toContain("// The about page's tokens too.");
+    expect(merged).toContain("export const menuHalo = '#c7a86b';");
   });
 });
 
