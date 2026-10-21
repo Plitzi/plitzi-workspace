@@ -17,7 +17,7 @@ import {
   writeJson
 } from './files';
 import { monitorRun } from './monitor';
-import { under } from './paths';
+import { taskPaths, under } from './paths';
 import { alive, isPreview, previewPort, previewRecord } from './previewRecord';
 import { stopTree } from './processes';
 import { RunRefusal } from './refusal';
@@ -249,6 +249,17 @@ export const startPreview = async (ctx: RunContext, runId: string, port: number)
   }
 
   const dir = previewDir(loaded);
+  await approvedCopy(ctx, loaded, dir);
+  await writeSnapshot(ctx, loaded);
+  const served = await serve(ctx, loaded, dir, port, undefined, { snapshot: true });
+  await writeJson(previewRecord(loaded.paths), { pid: process.pid, port });
+  void served.done.then(() => fs.rm(previewRecord(loaded.paths), { force: true })).catch(() => undefined);
+
+  return { ...served, dir };
+};
+
+/** The project with the run's approved work in it, made at `dir` afresh: what `run preview` serves. */
+const approvedCopy = async (ctx: RunContext, loaded: LoadedRun, dir: string): Promise<void> => {
   await fs.rm(dir, { recursive: true, force: true });
   const approved = (await readApproved(loaded.paths)).files;
   const keep = new Set(Object.keys(approved));
@@ -266,13 +277,29 @@ export const startPreview = async (ctx: RunContext, runId: string, port: number)
     await fs.mkdir(path.dirname(under(dir, file)), { recursive: true });
     await fs.copyFile(under(ctx.root, file), under(dir, file), fs.constants.COPYFILE_FICLONE);
   }
+};
 
-  await writeSnapshot(ctx, loaded);
-  const served = await serve(ctx, loaded, dir, port, undefined, { snapshot: true });
-  await writeJson(previewRecord(loaded.paths), { pid: process.pid, port });
-  void served.done.then(() => fs.rm(previewRecord(loaded.paths), { force: true })).catch(() => undefined);
+/**
+ * The run as it is without `taskId` — its approved work — served on `port` for a look that compares the task's copy
+ * with what it changes: what a designer built by hand, a folder copied and two servers started, to say what the task
+ * moved and that nothing else did (velada-now's design-1, twenty steps a review). In the task's cache: gone with it.
+ */
+export const startBeforePreview = async (
+  ctx: RunContext,
+  runId: string,
+  taskId: string,
+  port: number
+): Promise<Omit<Preview, 'dir'>> => {
+  const loaded = await loadRun(ctx, runId, { anyVersion: true });
+  const task = loaded.tasks.find(each => each.id === taskId);
+  if (!task) {
+    throw new RunRefusal('not-found', `Run "${runId}" has no task "${taskId}"`, { task: taskId });
+  }
 
-  return { ...served, dir };
+  const dir = path.join(taskPaths(loaded.paths, taskId).cache, 'before');
+  await approvedCopy(ctx, loaded, dir);
+
+  return serve(ctx, loaded, dir, port, undefined, { quiet: true });
 };
 
 /** Where a task's copy is worth serving: being worked — its agent looking at its own pages — or in review. */

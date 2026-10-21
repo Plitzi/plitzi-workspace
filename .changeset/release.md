@@ -605,4 +605,10 @@ monitor` shows each as it comes, a problem in red.
       reviews another task's UI, handed with each review: its pages in one scheme; both schemes and widths against the
       reference; or every page that reads its files against the run before it too. velada-now's strictest review took
       83 steps, more than the task it reviewed.
+    - `task look <task> --before`: each of its pages beside the run before it — its approved work, served for the look
+      — and what changed, section by section ("nothing changed", or "5% differs — section#resources-page 7%"): what the
+      task moved and that nothing else did, in one command, where velada-now's designer copied a folder and started two
+      servers by hand. A comparison with a server on this machine opens it as the project, in the scheme asked.
+    - A developer whose task is in review is never told it can stop — one sent back comes back to it — and a wait that
+      ends says so ("Do not stop: t-case, yours, is in review"): velada-now's t-case and t-boxer came back to nobody.
 

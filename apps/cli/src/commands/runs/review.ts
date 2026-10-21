@@ -11,7 +11,7 @@ import { designSkipText, isDesignSkip } from '../../runs/designSkip';
 import { acceptanceText } from '../../runs/model';
 import { pagesOf } from '../../runs/pagesOf';
 import { runPaths, taskPaths } from '../../runs/paths';
-import { startTaskPreview } from '../../runs/preview';
+import { startBeforePreview, startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
 import { loadRun, logRun } from '../../runs/run';
 import { FROM_TEXT, showTask, showTaskFile } from '../../runs/show';
@@ -49,7 +49,46 @@ export interface LookOptions extends RunCommandOptions {
   hover?: string;
   /** Read in the page, as `page check --element`: each one's attributes, box and classes. */
   element?: string[];
+  /** Each page set beside the run before the task — its approved work — and what changed, section by section. */
+  before?: boolean;
 }
+
+/** One page of a look beside the run before the task: how much differs, and in which sections. */
+interface BeforeAfter {
+  route: string;
+  width: string;
+  scheme: string;
+  changed?: number;
+  sections: string[];
+  sideBySide?: string;
+  problem?: string;
+}
+
+/** What `page shot --compare --json` answered: how much differs, by section, and where the pictures went. */
+const comparedOf = (output: string): Omit<BeforeAfter, 'route' | 'width' | 'scheme'> => {
+  const at = output.indexOf('{');
+  try {
+    const answer: unknown = at === -1 ? undefined : JSON.parse(output.slice(at));
+    const compare = isRecord(answer) && isRecord(answer.compare) ? answer.compare : undefined;
+    if (!compare) {
+      return { sections: [], problem: output.trim().split('\n').at(-1) ?? 'no comparison' };
+    }
+
+    const regions = Array.isArray(compare.regions) ? compare.regions : [];
+
+    return {
+      ...(typeof compare.changed === 'number' ? { changed: compare.changed } : {}),
+      sections: regions.flatMap(region =>
+        isRecord(region) && typeof region.name === 'string' && typeof region.changed === 'number' && region.changed > 0
+          ? [`${region.name} ${String(region.changed)}%`]
+          : []
+      ),
+      ...(typeof compare.sideBySide === 'string' ? { sideBySide: compare.sideBySide } : {})
+    };
+  } catch {
+    return { sections: [], problem: 'the comparison could not be read' };
+  }
+};
 
 /** The pictures a `page shot --steps --json` took after the first: the hovered page, for a look. */
 const picturesOf = (output: string): string[] => {
@@ -163,6 +202,49 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               }
             }
 
+            // Beside the run before it: what the task moved, section by section — and that nothing else did.
+            const before = options.before ? await startBeforePreview(ctx, runId, taskId, await freePort()) : undefined;
+            const compared: BeforeAfter[] = [];
+            try {
+              if (before && !(await answering(before.url, 60_000))) {
+                throw new RunRefusal(
+                  'invalid',
+                  `The run before ${taskId} did not answer on ${before.url} within a minute`,
+                  {
+                    task: taskId
+                  }
+                );
+              }
+
+              for (const route of before ? routes : []) {
+                for (const [width, scheme] of [
+                  ['1440', 'light'],
+                  ['390', 'dark']
+                ] as const) {
+                  const name = `${taskId}${route === '/' ? '-home' : `-${route.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`}-${width}-${scheme}-before.png`;
+                  const shot = await runSelf(preview.dir, [
+                    'page',
+                    'shot',
+                    route,
+                    '--url',
+                    preview.url,
+                    '--compare',
+                    before?.url ?? '',
+                    '--width',
+                    width,
+                    '--scheme',
+                    scheme,
+                    '--json',
+                    '-o',
+                    path.join(runPaths(ctx.root, runId).shots, name)
+                  ]);
+                  compared.push({ route, width, scheme, ...comparedOf(shot.output) });
+                }
+              }
+            } finally {
+              before?.stop();
+            }
+
             const kept = parts && !parts.ownsRoot ? findingsOf(check.output.trim(), parts) : undefined;
 
             const notReviewed = await notReviewedIn(ctx, runId, taskId);
@@ -182,6 +264,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               ...(kept && kept.apart > 0 ? { apart: kept.apart } : {}),
               ...(clips.length > 0 ? { parts: clips } : {}),
               shots,
+              ...(compared.length > 0 ? { compared } : {}),
               ...(preview.borrowed === undefined ? {} : { borrowed: preview.borrowed }),
               ...(notReviewed.length > 0 ? { notReviewed } : {})
             };
@@ -214,6 +297,16 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
         ...(looked.shots.length > 0
           ? ['Pictures:', ...looked.shots.map(each => `  ${each}`)]
           : ['No picture could be taken.']),
+        ...(looked.compared
+          ? [
+              'Beside the run before it (its approved work, without this task):',
+              ...looked.compared.map(each =>
+                each.problem
+                  ? chalk.yellow(`  ${each.route} at ${each.width} ${each.scheme}: ${each.problem}`)
+                  : `  ${each.route} at ${each.width} ${each.scheme}: ${each.changed === 0 || each.sections.length === 0 ? 'nothing changed' : `${String(each.changed ?? 0)}% differs — ${each.sections.join(', ')}`}${each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
+              )
+            ]
+          : []),
         `Then: plitzi task review ${looked.task} --approve | --changes "…"`
       ].join('\n')
   );

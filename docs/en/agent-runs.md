@@ -200,7 +200,11 @@ it sees the same, and no other project's runs.
 
 `task look <task> [paths…]` serves a task's copy as it went to review, runs this CLI's `page check` from the copy at
 1440 and 390 and `page shot` light at 1440 and dark at 390 for each path, each a child process, and stops the server:
-the review a lead made by hand in four or five commands, while every agent waited. A task that writes a part of a page
+the review a lead made by hand in four or five commands, while every agent waited. `--before` sets each page beside the run before the
+task — its approved work, made in the task's cache and served for the look (`startBeforePreview`) — by `page shot
+--compare`, and says what changed, section by section, or that nothing did: what the task moved, and that nothing else
+did, where velada-now's designer copied a folder and started two servers by hand for every review. A server on this
+machine is compared as the project, its scheme chosen as a visitor's toggle chooses it. A task that writes a part of a page
 others build too — a section of the home — is looked at as that part (`taskParts.ts`, off the copy's own authoring:
 the elements its files write): its pictures clipped to its outermost elements (a provider's children, as it draws no
 node), and the page check's findings on other tasks' parts set apart and counted — a stub of theirs is no finding of

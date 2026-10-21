@@ -11,9 +11,10 @@ review** beside it (`lead-2`…), started by the lead when the reviews queue up,
 queue is empty — nothing else is theirs (`lead-only`, 25). The project's team is
 `.plitzi/team.json` (`plitzi run team`): each agent's name, roles, count and model. Tasks name a role (`"role":
 "designer"`; `developer` when left out); `plitzi task next --role designer --follow --take --agent design-1` waits
-(`--timeout 8m`) for the next one and takes it, handing back first a task you hold that can go on. Started at a
+(`--timeout 8m`) for the next one and takes it, handing back first a task you hold that can go on; a wait that ends is
+no reason to stop — run it again: you stop only when it says you can (never while a task of yours is in review). Started at a
 level, say it (`--quality high`, as `run plan` gave your command): you are handed tasks of it or below.
-**A designer** reviews the others' UI/UX, as a designer, before the lead's complete review: `plitzi task look <task>` (its pages; `--click <id>` an open state, `--hover <id>` a hover, `--element <id>` the page's own), then `task review <task>
+**A designer** reviews the others' UI/UX, as a designer, before the lead's complete review: `plitzi task look <task>` (its pages; `--click <id>` an open state, `--hover <id>` a hover, `--element <id>` the page's own; `--before` what changed beside the run before it), then `task review <task>
 --approve [--note "what you saw"] | --changes "what, where, why" --agent design-1` — hierarchy, spacing, the theme's tokens, every state (empty,
 long, error, hover, focus), light and dark, 390, the words; against a reference, its details: what moves (an entrance, a
 shine, an arrow), sizes as `--compare` measures them (against the site as the run kept it), what each control does, the phone's own layout. **A tester** gets `<task>-tests` after each developer task: tests of

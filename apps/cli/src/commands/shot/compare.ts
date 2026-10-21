@@ -123,8 +123,14 @@ export const compareWith = async (
   /** The page as the run kept it: measured against, rather than the site asked now. */
   kept?: { png: Uint8Array; page: KeptPage }
 ): Promise<CompareReport | { problem: string }> => {
-  // Their page in the theme ours was painted in: two schemes are not a difference worth reporting.
-  const live = kept ? undefined : await pictureOf(browser, target, { ...view, scheme: taken.scheme });
+  // Their page in the theme ours was painted in: two schemes are not a difference worth reporting. One served on this
+  // machine is the project's own — the run before a task (`task look --before`) — and is opened as the project is, its
+  // theme chosen as a visitor's toggle chooses it: asked as another site's, it painted its default (dark) against a
+  // light page, and differed 90%.
+  const local = /^(127\.0\.0\.1|localhost|\[::1\])$/.test(new URL(target).hostname);
+  const live = kept
+    ? undefined
+    : await pictureOf(browser, target, { ...view, scheme: taken.scheme }, local ? new URL(target).origin : undefined);
   if (live && 'problem' in live) {
     return live;
   }

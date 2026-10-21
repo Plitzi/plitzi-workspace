@@ -309,6 +309,10 @@ export const registerTaskGroup = (program: Command): Command => {
       'Read an element in the page — its attributes, box and classes — once for each',
       (id: string, before: string[] = []) => (before.includes(id) ? before : [...before, id])
     )
+    .option(
+      '--before',
+      'Each page beside the run before the task — its approved work — and what changed, section by section: what it moved, and that nothing else did'
+    )
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
     .action((task: string, paths: string[], options: LookOptions) => taskLook(task, paths, options));

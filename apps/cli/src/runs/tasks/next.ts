@@ -306,7 +306,10 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
                 )
                 .join(', ')}`;
 
-  const finished = open.length === 0 || (roles !== undefined && coming.length === 0 && toReview.length === 0);
+  // Never while a task of its own is in review: one sent back comes back to it, and nobody else redoes it.
+  const ownInReview = views.some(view => view.owner?.agent === ctx.agent && view.state.status === 'in-review');
+  const finished =
+    !ownInReview && (open.length === 0 || (roles !== undefined && coming.length === 0 && toReview.length === 0));
   // An agent done with the run hears how its own work ended: its copies are gone, and the run may end before it asks.
   const worked = views
     .filter(view => view.state.notes.some(note => note.by === ctx.agent && note.text.startsWith('Taken')))
@@ -567,11 +570,17 @@ export const followNext = async (
         waited: durationText(timeoutMs),
         why: next.why ?? 'nothing is ready'
       });
+      // Its own task in review comes back to it if it is sent back: an agent told only "nothing came" took the wait's
+      // end for the run's, and stopped — and velada-now's t-case and t-boxer came back to nobody.
+      const loaded = await loadRun(ctx, runId);
+      const inReview = (await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task))))
+        .filter(view => view.owner?.agent === ctx.agent && view.state.status === 'in-review')
+        .map(view => view.task.id);
 
       return {
         ...next,
         timedOut: true,
-        why: `waited ${durationText(timeoutMs)} and nothing came for you: ${next.why ?? 'nothing is ready'} — run it again to go on waiting`
+        why: `waited ${durationText(timeoutMs)} and nothing came for you: ${next.why ?? 'nothing is ready'} — run it again to go on waiting${inReview.length > 0 ? `. Do not stop: ${inReview.join(', ')}, yours, ${inReview.length === 1 ? 'is' : 'are'} in review and come${inReview.length === 1 ? 's' : ''} back to you if sent back — you stop only when task next says you can` : ''}`
       };
     }
 

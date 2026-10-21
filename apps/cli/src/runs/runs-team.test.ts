@@ -38,6 +38,23 @@ afterEach(async () => {
 const { refusal, lead, open, take, doTask } = runSteps(() => bench);
 
 describe('a team: roles, waiting for work, and a lead who talks to the agents', () => {
+  // velada-now: two developers took the end of a wait for the run's, and stopped — their tasks came back to nobody.
+  it('tells an agent whose task is in review not to stop when its wait ends', async () => {
+    await open();
+    const menu = await take('agent-1', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { es: true };\n');
+    await completeTask(menu.ctx, 'es-launch', 't-menu');
+
+    // Nothing of its role left for others, and still not done: what it sent may come back.
+    expect((await nextTask(bench.agent('agent-1'), 'es-launch', 'designer')).finished).toBeUndefined();
+    // Nothing ready for it a while: the wait ends — saying its task in review is why not to stop.
+    await take('agent-2', 't-home');
+    await take('agent-3', 't-about');
+    const waited = await followNext(bench.agent('agent-1'), 'es-launch', 'developer', { timeoutMs: 30, everyMs: 10 });
+    expect(waited.timedOut).toBe(true);
+    expect(waited.why).toContain('Do not stop: t-menu, yours, is in review');
+  });
+
   it('gives each role its tasks: next picks for the role, and take refuses another role’s', async () => {
     const plan = benchPlan();
     plan.tasks[1].role = 'designer';
