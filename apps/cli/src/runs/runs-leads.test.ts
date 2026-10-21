@@ -2,8 +2,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
 import { leadItems } from './leadWatch';
-import { openRun } from './run';
-import { noteRun } from './talk';
+import { messagesOf } from './messages';
+import { monitorRun } from './monitor';
+import { loadRun, openRun } from './run';
+import { askLead, messageTasks, noteRun } from './talk';
 import { completeTask, followNext, reassignTask, reviewTask, takeNext } from './tasks';
 import { coLeadNames, leadCount, setTeamAgent } from './team';
 import { viewRun } from './view';
@@ -196,6 +198,71 @@ describe('a lead that reviews, started when the reviews queue up', () => {
     const idle = await followNext(bench.agent('lead-2'), runId, 'lead', { timeoutMs: 60_000, everyMs: 1, idleMs: 0 });
     expect(idle).toMatchObject({ finished: true });
     expect(idle.why).toContain('you can stop');
+  });
+
+  // velada-dress: lead-2 waited through the run's last task and its integration, the lead there for both.
+  it('stops at once when what is left is for the other leads — no review waiting', async () => {
+    const { runId } = await twoInReview();
+    const first = (await takeNext(bench.agent('lead-2'), runId, 'lead')).next.leadReview?.task.id ?? '';
+    await reviewTask(bench.agent('lead-2'), runId, first, 'approve', []);
+    // One review still waits: not spare yet.
+    expect(
+      (await followNext(bench.agent('lead-2'), runId, 'lead', { timeoutMs: 0, everyMs: 1, idleMs: 60_000 })).finished
+    ).not.toBe(true);
+    const second = (await takeNext(bench.agent('lead-3'), runId, 'lead')).next.leadReview?.task.id ?? '';
+    await reviewTask(bench.agent('lead-3'), runId, second, 'approve', []);
+
+    const spare = await followNext(bench.agent('lead-2'), runId, 'lead', {
+      timeoutMs: 60_000,
+      everyMs: 1,
+      idleMs: 60_000
+    });
+    expect(spare).toMatchObject({ finished: true });
+    expect(spare.why).toContain('2 tasks left (t-book, t-about) for 2 other leads');
+  });
+});
+
+// velada-dress: the agents waited a median 7.8 minutes for the lead's answers, lead-2 idle beside it.
+describe('a question to the lead, answered by a lead that reviews', () => {
+  it('is handed to one lead that reviews when no review waits, the lead told what it said — and woken only if it waits', async () => {
+    const { runId } = await twoInReview();
+    await reviewTask(lead(), runId, 't-menu', 'approve', []);
+    await reviewTask(lead(), runId, 't-home', 'approve', []);
+    const about = await take('agent-3', 't-about');
+    const asked = await askLead(about.ctx, runId, 't-about', 'Is "Sobre nosotros" the title, or "Quiénes somos"?');
+
+    const handed = await takeNext(bench.agent('lead-2'), runId, 'lead');
+    expect(handed.next.question).toMatchObject({ id: asked.question.id, task: 't-about', agent: 'agent-3' });
+    expect((await takeNext(bench.agent('lead-3'), runId, 'lead')).next.question).toBeUndefined();
+    // Taken, it is lead-2's: the lead is not woken for it while lead-2 is at it.
+    expect((await viewRun(lead(), runId)).attention.some(item => item.text.includes(asked.question.id))).toBe(false);
+    expect((await monitorRun(lead(), runId)).agents.find(agent => agent.agent === 'lead-2')).toMatchObject({
+      status: 'working',
+      task: 't-about'
+    });
+
+    await messageTasks(bench.agent('lead-2'), runId, 't-about', '"Quiénes somos", as the original', asked.question.id);
+    const told = (await messagesOf(await loadRun(lead(), runId))).find(each => each.to === 'lead' && each.fyi === true);
+    expect(told?.text).toContain(`lead-2 answered t-about's ${asked.question.id}: "Quiénes somos", as the original`);
+  });
+
+  it('wakes the lead for a question a lead that reviews took and left unanswered', async () => {
+    const { runId } = await twoInReview();
+    await reviewTask(lead(), runId, 't-menu', 'approve', []);
+    await reviewTask(lead(), runId, 't-home', 'approve', []);
+    const about = await take('agent-3', 't-about');
+    const asked = await askLead(about.ctx, runId, 't-about', 'Spanish or Catalan?');
+    await takeNext(bench.agent('lead-2'), runId, 'lead');
+    bench.advance(3 * 60_000);
+
+    expect((await viewRun(lead(), runId)).attention).toContainEqual(
+      expect.objectContaining({
+        kind: 'message',
+        text: expect.stringContaining(
+          `(${asked.question.id}): Spanish or Catalan? — lead-2 took it and has not answered`
+        ) as unknown
+      })
+    );
   });
 });
 

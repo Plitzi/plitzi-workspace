@@ -112,33 +112,46 @@ const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: stri
     `  Then say it: plitzi task review ${review.task.id} --approve [--note "…"] | --changes "what, where, and why" --agent ${agent}`,
     ...(isPrincipal(agent)
       ? []
-      : ['  Its questions, the plan and the finish are lead’s: what you find beyond the task, tell lead'])
+      : ['  The plan, the person and the finish are lead’s: what you find beyond the task, tell lead'])
+  ].join('\n');
+
+/** A question to the lead, as `task next --role lead` hands it to a lead that reviews: what to answer, and how. */
+const questionText = (question: NonNullable<NextTask['question']>, agent: string): string =>
+  [
+    chalk.bold(
+      `Question ${question.id} from ${question.task}${question.agent ? ` (${question.agent})` : ''}: ${question.text}`
+    ),
+    `  ${question.agent ?? 'its agent'} waits for it. Answer what the code, the plan, the brief or the original answers — read them first (plitzi task show ${question.task})`,
+    `  Then: plitzi task message ${question.task} "…" --reply-to ${question.id} --agent ${agent}`,
+    '  A choice for the person, or a change of plan, is lead’s: leave it — lead is woken for it if it is not answered in 2 min'
   ].join('\n');
 
 const nextText = (next: NextTask, agent: string): string =>
   [
     ...messageLines(next.messages),
-    next.spike
-      ? spikeText(next.spike, agent)
-      : next.leadReview
-        ? leadReviewText(next.leadReview, agent)
-        : next.designReview
-          ? designReviewText(next.designReview, agent)
-          : next.task
-            ? next.yours
-              ? [
-                  `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : 'unblocked'}). Your token is still good: plitzi task context ${next.task.id}`,
-                  ...(next.work ? [`  Its copy, the only place you write: cd ${next.work}`] : []),
-                  ...(next.asked ?? []).map(line => `  ↺ ${line}`)
-                ].join('\n')
-              : `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task take ${next.task.id}`
-            : [
-                String(next.why),
-                ...(next.worked ?? []).map(
-                  each =>
-                    `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'with the lead, in review' : each.status}${each.finishedBy ? ` — as ${each.finishedBy} last did it, not your version` : ''}`
-                )
-              ].join('\n'),
+    next.question
+      ? questionText(next.question, agent)
+      : next.spike
+        ? spikeText(next.spike, agent)
+        : next.leadReview
+          ? leadReviewText(next.leadReview, agent)
+          : next.designReview
+            ? designReviewText(next.designReview, agent)
+            : next.task
+              ? next.yours
+                ? [
+                    `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : 'unblocked'}). Your token is still good: plitzi task context ${next.task.id}`,
+                    ...(next.work ? [`  Its copy, the only place you write: cd ${next.work}`] : []),
+                    ...(next.asked ?? []).map(line => `  ↺ ${line}`)
+                  ].join('\n')
+                : `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task take ${next.task.id}`
+              : [
+                  String(next.why),
+                  ...(next.worked ?? []).map(
+                    each =>
+                      `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'with the lead, in review' : each.status}${each.finishedBy ? ` — as ${each.finishedBy} last did it, not your version` : ''}`
+                  )
+                ].join('\n'),
     // Wherever the answer leaves an agent without a copy of a task in hand — between tasks, at a review.
     ...(next.task && !next.leadReview && !next.designReview
       ? []

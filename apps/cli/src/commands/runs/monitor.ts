@@ -109,7 +109,7 @@ export const monitorScreen = (
     .map(status => [status, tasks.filter(task => task.status === status).length] as const)
     .filter(([, count]) => count > 0)
     .map(([status, count]) => `${String(count)} ${STATUS_WORDS[status]}`);
-  const asking = tasks.filter(task => task.asking !== undefined).length;
+  const asking = tasks.filter(task => task.asking !== undefined && task.asking.answered !== true).length;
   if (asking > 0) {
     counts.push(chalk.yellow(`${String(asking)} asking the lead`));
   }

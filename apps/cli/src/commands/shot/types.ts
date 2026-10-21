@@ -158,8 +158,14 @@ export interface Taken {
 /** A region moves when more than this share of it changed between two frames: below is anti-aliasing and carets. */
 export const MOVING_PERCENT = 0.5;
 
-/** How long a whole page waits for its pictures before it is taken anyway. */
+/** How long a page waits for its pictures before it is taken anyway. */
 export const IMAGES_BUDGET_MS = 8000;
+
+/**
+ * …and another site, whose pictures come from its CDN: a reference taken before its footer photo loaded told a spike
+ * the original had none (velada-dress).
+ */
+export const REMOTE_IMAGES_BUDGET_MS = 20_000;
 
 /** How many texts that differ are written out; `--json` has every one. */
 export const TEXTS_SHOWN = 12;

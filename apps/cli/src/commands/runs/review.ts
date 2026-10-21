@@ -61,21 +61,31 @@ interface BeforeAfter {
   scheme: string;
   changed?: number;
   sections: string[];
+  /**
+   * The sections whose dress the task changed — a layer added, or one taken away — in a few words: a soft light is a
+   * few levels a pixel, under the picture comparison's tolerance, and read "0.1% differs" where a page's light was
+   * new (velada-dress, /artistas).
+   */
+  dress: string[];
   sideBySide?: string;
   problem?: string;
 }
 
 /** What `page shot --compare --json` answered: how much differs, by section, and where the pictures went. */
-const comparedOf = (output: string): Omit<BeforeAfter, 'route' | 'width' | 'scheme'> => {
+export const comparedOf = (output: string): Omit<BeforeAfter, 'route' | 'width' | 'scheme'> => {
   const at = output.indexOf('{');
   try {
     const answer: unknown = at === -1 ? undefined : JSON.parse(output.slice(at));
     const compare = isRecord(answer) && isRecord(answer.compare) ? answer.compare : undefined;
     if (!compare) {
-      return { sections: [], problem: output.trim().split('\n').at(-1) ?? 'no comparison' };
+      return { sections: [], dress: [], problem: output.trim().split('\n').at(-1) ?? 'no comparison' };
     }
 
     const regions = Array.isArray(compare.regions) ? compare.regions : [];
+    const decorations = Array.isArray(compare.decorations) ? compare.decorations : [];
+    // Here is the task's page, there the run before it: what is only here it added, what is only there it took away.
+    const listOf = (value: unknown): string[] =>
+      Array.isArray(value) ? value.filter((each): each is string => typeof each === 'string') : [];
 
     return {
       ...(typeof compare.changed === 'number' ? { changed: compare.changed } : {}),
@@ -84,10 +94,24 @@ const comparedOf = (output: string): Omit<BeforeAfter, 'route' | 'width' | 'sche
           ? [`${region.name} ${String(region.changed)}%`]
           : []
       ),
+      dress: decorations.flatMap(section => {
+        if (!isRecord(section) || typeof section.section !== 'string') {
+          return [];
+        }
+
+        const added = listOf(section.extra);
+        const gone = [...listOf(section.absent), ...listOf(section.missing)];
+
+        return added.length > 0 || gone.length > 0
+          ? [
+              `${section.section}${added.length > 0 ? ` + ${added.join('; ')}` : ''}${gone.length > 0 ? ` − ${gone.join('; ')}` : ''}`
+            ]
+          : [];
+      }),
       ...(typeof compare.sideBySide === 'string' ? { sideBySide: compare.sideBySide } : {})
     };
   } catch {
-    return { sections: [], problem: 'the comparison could not be read' };
+    return { sections: [], dress: [], problem: 'the comparison could not be read' };
   }
 };
 
@@ -152,7 +176,10 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
             const owned = paths.length > 0 ? [] : await pagesOf(preview.dir, changed);
             // A part of a page others build too: its own elements pictured, its own findings kept — the rest is theirs.
             const parts = await taskParts(preview.dir, changed);
-            const clips = parts && !parts.ownsRoot ? parts.tops.slice(0, PARTS_PICTURED) : [];
+            // More parts than are pictured apart: the page whole, never the first three of them — velada-dress's t-home
+            // changed six sections, and the sede, info and faq went unseen.
+            const many = parts !== undefined && !parts.ownsRoot && parts.tops.length > PARTS_PICTURED;
+            const clips = parts && !parts.ownsRoot && !many ? parts.tops : [];
             // A page with a parameter in its address (`/boxeadores/:slug`) is opened where the site's own links go.
             const { paths: routes, unreached } = await examplePaths(
               preview.url,
@@ -277,6 +304,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               check: kept?.text ?? check.output.trim(),
               ...(kept && kept.apart > 0 ? { apart: kept.apart } : {}),
               ...(clips.length > 0 ? { parts: clips } : {}),
+              ...(many ? { wholeFor: parts.tops } : {}),
               ...(unreached.length > 0 ? { unreached } : {}),
               shots,
               ...(compared.length > 0 ? { compared } : {}),
@@ -307,6 +335,9 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
         ...(looked.parts
           ? [`Its part of the page, pictured alone: ${looked.parts.join(', ')} — the rest is other tasks'`]
           : []),
+        ...(looked.wholeFor
+          ? [`Its parts — ${looked.wholeFor.join(', ')} — pictured with the page whole: too many to picture apart`]
+          : []),
         ...(looked.unreached
           ? [
               chalk.yellow(
@@ -325,7 +356,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               ...looked.compared.map(each =>
                 each.problem
                   ? chalk.yellow(`  ${each.route} at ${each.width} ${each.scheme}: ${each.problem}`)
-                  : `  ${each.route} at ${each.width} ${each.scheme}: ${each.changed === 0 || each.sections.length === 0 ? 'nothing changed' : `${String(each.changed ?? 0)}% differs — ${each.sections.join(', ')}`}${each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
+                  : `  ${each.route} at ${each.width} ${each.scheme}: ${(each.changed === 0 || each.sections.length === 0) && each.dress.length === 0 ? 'nothing changed' : `${String(each.changed ?? 0)}% differs${each.sections.length > 0 ? ` — ${each.sections.join(', ')}` : ''}${each.dress.length > 0 ? ` · its dress: ${each.dress.join(' · ')}` : ''}`}${each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
               )
             ]
           : []),
@@ -479,14 +510,16 @@ export const taskRevert = (taskId: string, options: RunCommandOptions & { reason
   );
 
 /** `plitzi task show <task> <file>`: the file whole, where the diff is read from — the text alone, to read or to pipe. */
-const taskShowFile = (taskId: string, file: string, options: RunCommandOptions): Promise<void> =>
+const taskShowFile = (taskId: string, file: string, options: RunCommandOptions & { diff?: boolean }): Promise<void> =>
   act(
     options,
     async ctx => showTaskFile(ctx, await runOf(ctx, options), taskId, file),
     shown =>
-      shown.text === undefined
-        ? `${shown.file} of ${shown.task} (${FROM_TEXT[shown.from]}): ${shown.binary ? 'not text — not shown' : 'removed by it'}`
-        : shown.text
+      options.diff === true
+        ? (shown.diff ?? `${shown.file} of ${shown.task}: not text — no diff`)
+        : shown.text === undefined
+          ? `${shown.file} of ${shown.task} (${FROM_TEXT[shown.from]}): ${shown.binary ? 'not text — not shown' : 'removed by it'}`
+          : shown.text
   );
 
 const taskShowSummary = (taskId: string, options: RunCommandOptions & { full?: boolean }): Promise<void> =>
@@ -553,5 +586,5 @@ const taskShowSummary = (taskId: string, options: RunCommandOptions & { full?: b
 export const taskShow = (
   taskId: string,
   file: string | undefined,
-  options: RunCommandOptions & { full?: boolean }
+  options: RunCommandOptions & { full?: boolean; diff?: boolean }
 ): Promise<void> => (file === undefined ? taskShowSummary(taskId, options) : taskShowFile(taskId, file, options));

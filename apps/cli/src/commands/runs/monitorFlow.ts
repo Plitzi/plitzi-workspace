@@ -135,7 +135,9 @@ const stagesOf = (tasks: readonly TaskLine[]): Stage[] => {
       ],
       who: task =>
         task.asking
-          ? `asks lead (${task.asking.id})`
+          ? task.asking.answered
+            ? `answered (${task.asking.id})`
+            : `asks lead (${task.asking.id})`
           : task.parkedFor
             ? `${task.agent ?? ''} at ${task.parkedFor}`
             : task.status === 'blocked'

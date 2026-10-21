@@ -46,7 +46,11 @@ const snapshotFile = (loaded: LoadedRun): string => path.join(loaded.paths.cache
 /** Why a task is not moving, said once for every surface that shows the run: what it starts after, waits for, needs. */
 const whyOf = (task: TaskLine): { why?: string } =>
   task.asking
-    ? { why: `waits for the lead's answer to ${task.asking.id}: ${task.asking.text}` }
+    ? {
+        why: task.asking.answered
+          ? `answered (${task.asking.id}): its agent takes it up with its next command`
+          : `waits for the lead's answer to ${task.asking.id}: ${task.asking.text}`
+      }
     : task.waitsOn
       ? { why: `starts once ${task.waitsOn.join(', ')} ${task.waitsOn.length === 1 ? 'is' : 'are'} approved` }
       : task.status === 'waiting' && task.waitingFor

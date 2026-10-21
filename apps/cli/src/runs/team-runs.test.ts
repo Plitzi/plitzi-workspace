@@ -11,9 +11,9 @@ import { taskPaths } from './paths';
 import { isRunRefusal } from './refusal';
 import { checkPlanFile, loadRun, openRun, readRunLog } from './run';
 import { tellLeadAbout } from './talk';
-import { completeTask, followNext, nextTask, reviewTask, takeNext, takeTask, taskContext } from './tasks';
+import { completeTask, nextTask, reviewTask, takeNext, takeTask, taskContext } from './tasks';
 import { readState } from './taskStore';
-import { readTeam, setTeamAgent, startedAgents, TEAM_FILE } from './team';
+import { readTeam, setTeamAgent, TEAM_FILE } from './team';
 import { testFilesFor } from './tests';
 import { viewRun } from './view';
 import { meantOnPage } from '../commands/check';
@@ -330,77 +330,6 @@ describe('a task held behind one in review', () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
 
     expect((await viewRun(lead(), 'es-launch')).attention.map(item => item.kind)).not.toContain('held-up');
-  });
-});
-
-describe('agents on demand', () => {
-  // A team spends the tokens of the agents its work asks for: past `min`, an agent starts when work waits for it, and
-  // stops once none is left.
-  it('tells the lead which to start when work waits and none running is free — and lets one with nothing stop', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 1 });
-    const team = await readTeam(bench.root);
-    expect(team ? startedAgents(team).map(each => [each.agent, each.onDemand ?? false]) : []).toEqual([
-      ['dev-1', false],
-      ['dev-2', true]
-    ]);
-    await openRun(lead(), await bench.writePlan(benchPlan()));
-
-    // Nobody running: the one that starts with the run first.
-    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
-      expect.objectContaining({
-        kind: 'agents-needed',
-        text: expect.stringContaining('none running is free: start dev-1 — plitzi task next') as unknown
-      })
-    );
-
-    // dev-1 at t-home; t-menu and t-about wait, and no developer running is free.
-    await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
-    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
-      expect.objectContaining({
-        kind: 'agents-needed',
-        text: expect.stringContaining(
-          'wait for a developer, and none running is free: start dev-2, on demand'
-        ) as unknown
-      })
-    );
-
-    // Started, and handed nothing it may take for a while — every ready task taken, t-book waiting — it stops, said.
-    await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
-    await takeTask(bench.agent('dev-1'), 'es-launch', 't-about');
-    const stopped = await followNext(bench.agent('dev-2'), 'es-launch', 'developer', {
-      timeoutMs: 2000,
-      everyMs: 10,
-      onDemandIdleMs: 30
-    });
-    expect(stopped).toMatchObject({ finished: true, why: expect.stringContaining('you are on demand') as unknown });
-  });
-
-  // velada-dress: design-1 wrote t-shell, and was counted free for its UI review — design-2, on demand, never asked for.
-  it('asks for another designer for a UI review its author cannot make', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
-    await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'], count: 2, min: 1 });
-    const plan = benchPlan();
-    plan.tasks[3].role = 'designer';
-    await openRun(lead(), await bench.writePlan(plan));
-    // Its designer asks for its UI to be looked at: by another designer.
-    const about = await takeTask(bench.agent('design-1'), 'es-launch', 't-about');
-    await writeInCopy(about.work, 'src/space/pages/about.ts', 'export const page = { title: `t-about` };\n');
-    await completeTask(bench.agent('design-1', { token: about.token }), 'es-launch', 't-about', { review: 'ui' });
-
-    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
-      expect.objectContaining({
-        kind: 'agents-needed',
-        text: expect.stringContaining(
-          'the UI of t-about waits for a designer, and none running is free: start design-2'
-        ) as unknown
-      })
-    );
-  });
-
-  it('refuses a min past its count', async () => {
-    expect(await refusalOf(setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 3 }))).toContain(
-      'its min — how many start with the run — is a whole number from 1 to its count (2)'
-    );
   });
 });
 

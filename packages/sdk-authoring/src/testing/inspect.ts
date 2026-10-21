@@ -166,15 +166,7 @@ export const issuesOf = (expected: ElementHandle[], findings: ProbeFindings): Pa
       elementId: id
     })),
     ...unboundImages(findings.brokenImages),
-    ...findings.brokenImages
-      .filter(image => !isUnbound(image.source))
-      .map(({ source, elementId, loading }): PageIssue => ({
-        code: 'image-not-loaded',
-        message: loading
-          ? `an image was still loading after ${String(IMAGE_WAIT_MS / 1000)} s: ${source} — its server is slow, or never answers`
-          : `an image never loaded: ${source}`,
-        ...about(elementId)
-      })),
+    ...unloadedImages(findings.brokenImages.filter(image => !isUnbound(image.source))),
     ...sidewaysOf(findings.overflow),
     ...findings.cutOff.map(({ id, pixels }): PageIssue => ({
       code: 'cut-off',
@@ -187,6 +179,47 @@ export const issuesOf = (expected: ElementHandle[], findings: ProbeFindings): Pa
       ...about(elementId)
     }))
   ];
+};
+
+/** Past this many from one server, the images that did not load are one finding: its server, how many, a few of them. */
+const IMAGES_APART = 3;
+
+/**
+ * The images that did not load, each a finding — or, past `IMAGES_APART` from one server, one for that server: a page of
+ * twenty fighters on a slow CDN buried the rest of its check under twenty lines (velada-dress, t-404).
+ */
+const unloadedImages = (images: readonly { source: string; elementId?: string; loading?: boolean }[]): PageIssue[] => {
+  const hostOf = (source: string): string => {
+    try {
+      return new URL(source).host;
+    } catch {
+      return '';
+    }
+  };
+  const byHost = new Map<string, typeof images>();
+  for (const image of images) {
+    byHost.set(hostOf(image.source), [...(byHost.get(hostOf(image.source)) ?? []), image]);
+  }
+
+  return [...byHost].flatMap(([host, some]): PageIssue[] =>
+    some.length > IMAGES_APART && host !== ''
+      ? [
+          {
+            code: 'image-not-loaded',
+            message: `${String(some.length)} images from ${host} did not load (${some
+              .slice(0, IMAGES_APART)
+              .map(image => image.source.split('/').at(-1) ?? image.source)
+              .join(', ')}, …) — its server is slow, refuses this browser, or never answers`
+          }
+        ]
+      : some.map(({ source, elementId, loading }): PageIssue => ({
+          code: 'image-not-loaded',
+          message: loading
+            ? `an image was still loading after ${String(IMAGE_WAIT_MS / 1000)} s: ${source} — its server is slow, or never answers`
+            : `an image never loaded: ${source}`,
+          ...about(elementId)
+        }))
+  );
 };
 
 /** What a screen reader would meet, as issues: a heading out of order, a control with no name. */

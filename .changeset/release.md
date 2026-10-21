@@ -723,6 +723,32 @@ monitor` shows each as it comes, a problem in red.
       cut-out, was approved over the faces. A reference kept before reads neither: keep it again (`run reference`).
     - Two changes put together line by line take no addition twice: what the other side added elsewhere is left out
       of the change, the rest kept — tasks that added the tokens the run then got elsewhere declared every key twice.
+    - An agent on demand is offered a ready task only past what the team's base agents of its roles — there and at
+      nothing — take: the base goes first, the rest on demand when it is needed. A lead that reviews stops after four
+      minutes with no review, and at once when no review waits and the tasks left are no more than the other leads
+      (velada-dress: lead-2 waited through the run's last task). A question the lead answered holds its task until its
+      agent has the answer, at its next command — which puts it at work again, said in the activity.
+    - Every `page shot` loads the page's lazy pictures first — a `--clip` too, not only the whole page — and waits
+      longer for another site's (20 s): velada-dress's reference was taken before the original's footer photo loaded,
+      and a spike concluded it had none.
+    - A lead that reviews answers questions too: with no review for it, `task next --role lead` hands it the oldest
+      question to the lead no other lead took — what the code or the plan answers — and the lead hears what it said,
+      woken for the question only once it waited two minutes unanswered (velada-dress: a median 7.8 minutes per answer).
+      A message to a task answers its one open question; with two open it asks `--reply-to`, and one to `all` answers
+      none.
+    - `run plan` says two tasks that prove the dress of one section (`page shot … --clip <section> --dress`): one look
+      split across two waits on the other's files through its review (velada-dress's t-heading, fifty minutes).
+    - `page shot --compare --clip` writes the comparison's pictures of that section alone — ours where it is, theirs
+      where the alignment found it — not the whole page. The dress report says a section's layers and the looks there
+      none here has ("none here of: …", what `--dress` fails on); what is more of there, drawn another way here, is in
+      `--json` only.
+    - `task look` pictures the page whole when a task has more parts than it pictures apart, never the first three;
+      `--before` says the dress a task added and took away beside the pixels, where a soft light read "0.1% differs".
+      `task show <task> <file> --diff` prints that file's whole diff from where the task started. Images one server did
+      not load are one finding past three, not a line each.
+    - `--steps` takes `scroll <element>`; `task next --follow` waits 8 minutes, not 9; a wait is logged once per reason,
+      not per the tasks it names; an unused token is said as fine when a later task reads it; a copy's missing `.env`
+      is no known failure's reason.
     - `run reference` keeps a page the site answers with 404 — its page for an address nothing answers, which a copy
       makes too — said, where it refused it as an error page.
     - `page shot --compare … --dress` fails where a section lacks a look the other page dresses it in — a sort of

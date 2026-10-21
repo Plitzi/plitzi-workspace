@@ -1,5 +1,6 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { answering, openQuestions } from './answering';
 import { designSkipText, isDesignSkip } from './designSkip';
 import { LEAD, messagesOf } from './messages';
 import { runPaths } from './paths';
@@ -177,7 +178,7 @@ export const storiesOf = (log: readonly Record<string, unknown>[]): Partial<Reco
 };
 
 const statusOf = (task: TaskLine): AgentStatus =>
-  task.asking
+  task.asking && !task.asking.answered
     ? 'asking'
     : task.noSignal
       ? 'no-signal'
@@ -190,7 +191,9 @@ const statusOf = (task: TaskLine): AgentStatus =>
 
 const doingOf = (task: TaskLine): string => {
   if (task.asking) {
-    return `${task.id} waits for the lead's answer to ${task.asking.id}: ${task.asking.text}`;
+    return task.asking.answered
+      ? `${task.id}: the lead answered ${task.asking.id} — its next command takes it up`
+      : `${task.id} waits for the lead's answer to ${task.asking.id}: ${task.asking.text}`;
   }
 
   switch (task.status) {
@@ -305,6 +308,9 @@ const agentsOf = async (
     typeof readyAt === 'string' && !changedSince
       ? 'the run is ready — the person applies it: plitzi run finish --apply'
       : 'every task approved — next: plitzi run finish, whose dry run checks the whole result';
+  const loadedRun = await loadRun(ctx, view.runId, { anyMachine: true, anyVersion: true });
+  const taken = await answering(loadedRun);
+  const questions = await openQuestions(loadedRun);
   const leads: AgentLine[] = [LEAD, ...view.leads].map(lead => {
     if (finished) {
       return {
@@ -328,6 +334,23 @@ const agentsOf = async (
     // Finding out a spike it took: working, on that task — what it is at, never idle (velada-dress: the lead at
     // t-shell's spike was nowhere on the board).
     const spiking = at ? undefined : view.tasks.find(task => task.status === 'spike' && task.spikedBy === lead);
+    // Answering a question it took: working, on the task that asked — the board names it there too, held on it.
+    const question =
+      at || spiking ? undefined : questions.find(each => Object.hasOwn(taken, each.id) && taken[each.id].by === lead);
+    if (question) {
+      return {
+        agent: lead,
+        kind: lead === LEAD ? ('lead' as const) : ('co-lead' as const),
+        approved: 0,
+        status: 'working' as const,
+        ...(leadModel ? { model: leadModel } : {}),
+        roles: [lead === LEAD ? 'plans, reviews, finishes' : 'reviews'],
+        doing: `answers ${question.from}'s ${question.id}: ${glimpse(question.text, 80)}`,
+        task: question.from,
+        ...(typeof last?.at === 'string' ? { signalAt: last.at } : {})
+      };
+    }
+
     if (spiking) {
       return {
         agent: lead,
@@ -516,6 +539,10 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
         : line('sent-back', `sent ${task}'s UI back${round}`);
     case 'waiting':
       return line('agent', `waits for work — ${textOf(entry.why)}`);
+    case 'resumes':
+      return line('agent', `goes on with ${textOf(entry.task)} — ${textOf(entry.question)} answered`);
+    case 'question-taken':
+      return line('agent', `answers ${textOf(entry.task)}'s ${textOf(entry.message)}`);
     case 'stops':
       return line('agent', `stops: ${textOf(entry.why)}`);
     case 'settle':

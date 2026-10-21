@@ -193,7 +193,10 @@ describe('acceptance, checks and what is left behind', () => {
     const [told] = await messageTasks(lead(), 'es-launch', 't-home', 'Go on');
 
     expect(told.replyTo).toBe(asked.question.id);
-    expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-home')?.asking).toBeUndefined();
+    // Answered: held only until its agent has the answer.
+    expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-home')?.asking).toMatchObject({
+      answered: true
+    });
     // Nothing open, nothing answered.
     expect((await messageTasks(lead(), 'es-launch', 't-home', 'And keep the hero'))[0].replyTo).toBeUndefined();
   });

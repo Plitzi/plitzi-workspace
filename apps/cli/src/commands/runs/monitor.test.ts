@@ -168,8 +168,11 @@ describe('plitzi run monitor', () => {
     expect(held.some(line => line.includes('agent-1') && line.includes('? asks the lead'))).toBe(true);
     expect(held[2]).toContain('1 asking the lead');
 
+    // Answered, it waits for its agent to have the answer — no longer asking.
     await messageTasks(lead(), runId, 't-home', 'Spanish', asked.question.id);
-    expect((await screenOf()).some(line => line.includes('asks the lead'))).toBe(false);
+    const answered = await screenOf();
+    expect(answered.some(line => line.includes('asks the lead'))).toBe(false);
+    expect(answered.some(line => line.includes(`has the lead's answer to read (${asked.question.id})`))).toBe(true);
   });
 
   it('says an event repeated in a row once, how many times and since when — and the lead done once all is approved', async () => {
@@ -279,6 +282,23 @@ describe('plitzi run monitor', () => {
     expect(back.find(line => line.includes('pending'))).toMatch(/ready \(0\).*at work \(1\)/);
     expect(back.some(line => line.includes('t-menu ↺1 agent-3'))).toBe(true);
     expect(back.some(line => line.includes('sent back ('))).toBe(false);
+  });
+
+  // velada-dress: the lead answered t-fights, and nothing on the board moved until dev-1 had completed it — an answer is
+  // taken up by its agent, and that is what puts the task at work again.
+  it('holds an answered task until its agent has the answer, then says it goes on', async () => {
+    const runId = await open();
+    const home = await take('agent-1', 't-home');
+    const asked = await askLead(home.ctx, runId, 't-home', 'Spanish or Catalan?');
+    await messageTasks(lead(), runId, 't-home', 'Spanish', asked.question.id);
+
+    const answered = plain(flowLines((await monitorRun(lead(), runId)).view.tasks, 220));
+    expect(answered.some(line => line.includes(`t-home answered (${asked.question.id})`))).toBe(true);
+
+    await reportProgress(home.ctx, runId, 't-home', { step: 'the hero' });
+    const { view, feed } = await monitorRun(lead(), runId);
+    expect(plain(flowLines(view.tasks, 220)).some(line => line.includes('t-home agent-1'))).toBe(true);
+    expect(feed.map(line => line.text)).toContainEqual(`goes on with t-home — ${asked.question.id} answered`);
   });
 
   // velada-dress: dev-2 stood "ready" with t-home, sent back, and "at work" with t-overlay at once — one agent, two

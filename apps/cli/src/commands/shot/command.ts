@@ -15,7 +15,15 @@ import { projectHere } from '../existingProject';
 import { parseSteps } from '../shotSteps';
 import { fail } from '../terminal';
 import { capture, pictureOf, readPage } from './capture';
-import { compareText, compareWith, contactSheet, framesMoved, missingDress, regionsText } from './compare';
+import {
+  compareText,
+  compareWith,
+  contactSheet,
+  cropToSection,
+  framesMoved,
+  missingDress,
+  regionsText
+} from './compare';
 import { clickThrough, playSteps } from './steps';
 import { MOVING_PERCENT } from './types';
 
@@ -365,6 +373,12 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
           );
 
           return;
+        }
+
+        // Its pictures, the section's: ours where it is, theirs where the alignment found it.
+        const box = regions.find(each => matchesSection(each, section));
+        if (box) {
+          await cropToSection(taken.page, compared, box, kept.find(each => matchesSection(each, section))?.shift ?? 0);
         }
 
         // Its own findings, not the page's: dev-1's clip of one panel listed hundreds of the page's texts.

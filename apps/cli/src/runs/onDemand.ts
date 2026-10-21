@@ -94,3 +94,38 @@ export const agentsNeeded = (
     ];
   });
 };
+
+/**
+ * The agents that start with the run, of `agent`'s roles, there and at nothing — what a task ready is theirs first:
+ * an agent on demand is for the work the team's base cannot take, never before it (Carlos: "siempre comienza con el
+ * agente base, y luego on-demand si es requerido, si este está libre"). A designer counts only for a designer.
+ */
+export const freeBaseAgents = (
+  views: readonly TaskView[],
+  started: readonly StartedAgent[],
+  running: ReadonlySet<string>,
+  present: ReadonlySet<string>,
+  agent: string,
+  roles: readonly string[]
+): string[] => {
+  const busy = new Set(
+    views.flatMap(view => [
+      ...(view.owner && isWorked(view.state.status) ? [view.owner.agent] : []),
+      ...(view.state.design?.status === 'due' && view.state.design.by ? [view.state.design.by] : [])
+    ])
+  );
+  const designer = roles.includes('designer');
+
+  return started
+    .filter(
+      each =>
+        each.agent !== agent &&
+        each.onDemand !== true &&
+        each.roles.some(role => roles.includes(role)) &&
+        (designer || !each.roles.includes('designer')) &&
+        running.has(each.agent) &&
+        present.has(each.agent) &&
+        !busy.has(each.agent)
+    )
+    .map(each => each.agent);
+};

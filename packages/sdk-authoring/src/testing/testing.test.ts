@@ -137,6 +137,20 @@ describe('testing/describeFindings', () => {
   });
 
   /** What a tool acts on (`plitzi page check --json`): the kind of problem and the element, beside the sentence. */
+  // velada-dress: twenty fighters' photos from a slow CDN buried t-404's check under twenty lines.
+  it('says the images one server did not load as one finding past a few, each one apart below that', () => {
+    const fighters = Array.from({ length: 5 }, (_, index) => ({ source: `https://cdn.test/f${String(index)}.webp` }));
+    const said = issuesOf(owed, {
+      ...clean,
+      brokenImages: [...fighters, { source: 'https://other.test/logo.png' }]
+    }).map(issue => issue.message);
+
+    expect(said).toEqual([
+      expect.stringContaining('5 images from cdn.test did not load (f0.webp, f1.webp, f2.webp, …)') as unknown,
+      'an image never loaded: https://other.test/logo.png'
+    ]);
+  });
+
   it('hands each problem over as data too: its code and the element it is about', () => {
     expect(
       issuesOf(owed, {

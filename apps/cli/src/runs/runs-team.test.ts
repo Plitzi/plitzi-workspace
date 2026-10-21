@@ -184,7 +184,9 @@ describe('a team: roles, waiting for work, and a lead who talks to the agents', 
       file: 'src/space/pages/home/hero.ts',
       from: 'submitted',
       change: 'changed',
-      text: 'export const hero = { text: "Hola" };\n'
+      text: 'export const hero = { text: "Hola" };\n',
+      // Its own change, from where its work started: never what another task had approved since.
+      diff: expect.stringContaining('+export const hero = { text: "Hola" };') as unknown
     });
     const refused = await refusal(showTaskFile(lead(), 'es-launch', 't-home', 'src/main.ts'));
     expect([refused.code, refused.message]).toEqual([

@@ -7,11 +7,11 @@ has its exit code (below). A text written `-` is read from stdin: no shell quoti
 
 **The team.** The **lead** (team lead and architect) plans, reviews, answers and closes; past four agents, **leads that
 review** beside it (`lead-2`…), started by the lead when the reviews queue up, wait with `plitzi task next --role lead
---follow --take --agent lead-2`, review what they are handed as the lead would, as strictly, and stop when it says the
-queue is empty — nothing else is theirs (`lead-only`, 25). The project's team is
-`.plitzi/team.json` (`plitzi run team`): each agent's name, roles, count and model. Tasks name a role (`"role":
+--follow --take --agent lead-2`, review what they are handed as the lead would, as strictly, answer the questions it
+hands them the code or plan answers, and stop when it says so — the rest is the lead's (`lead-only`, 25). The project's team is
+`.plitzi/team.json` (`plitzi run team`): each agent's name, roles, count, model. Tasks name a role (`"role":
 "designer"`; `developer` when left out); `plitzi task next --role designer --follow --take --agent design-1` waits
-(9 min, `--timeout`) for the next one and takes it, handing back first a task you hold that can go on; a wait that ends is
+(8 min, `--timeout`) for the next one and takes it, handing back first a task you hold that can go on; a wait that ends is
 no reason to stop — run it again until it says you can. Started at a
 level, say it (`--quality high`, as `run plan` gave your command): you are handed tasks of it or below.
 **A designer** reviews the others' UI/UX, as a designer, before the lead's complete review: `plitzi task look <task>` (its pages; `--click <id>` an open state, `--hover <id>` a hover, `--element <id>` the page's own; `--before` what changed beside the run before it), then `task review <task>
@@ -36,13 +36,13 @@ Outside a copy, name yourself (`--agent writer-1`, or `PLITZI_AGENT`): `task nex
 
 - **Write only in `work`**, never in the project. Run the project's scripts there. The copy has no `node_modules` (it resolves the project's) and no `.env` — a warning about it is expected.
   **Look at your page:** `npx plitzi page check /pets --width 1440,390` (or `page shot`) from `work` serves the copy
-  for that command and stops it after — no server to start. Iterating on one page, `npm run start:dev` in `work` keeps
+  for that command — no server to start. Iterating on one page, `npm run start:dev` in `work` keeps
   it served (a save swaps the space in the open page); stop it by its port (`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)`),
-  never `pkill -f`, which stops every copy's server and the person's. Read a shared module only for what the brief's
+  never `pkill -f` (every copy's server, and the person's). Read a shared module only for what the brief's
   imports do not say. The copy's `tmp/` and `state/`
   never count at `complete`, and are where what is yours beside the work goes — a script, a log, a picture; between
   tasks, `tmp/plitzi-runs/<run>/scratch/<your name>/`. Never the project's `tmp/`: it is the person's, and what is
-  left there is said to the lead. Format what you write (`npx prettier --write <file>`).
+  left there is said to the lead. Format your files (`npx prettier --write <file>`).
 - **Only your files.** A file another task at work holds is refused at `complete`, naming it — `plitzi task discard
 <file>` puts it back (and brings the run's version of any file); propose the change to that task instead. **Name
   what you declare by your part** — classes and provider ids (`hero-title`, `fightsList`), never `title`: another
@@ -57,7 +57,7 @@ Outside a copy, name yourself (`--agent writer-1`, or `PLITZI_AGENT`): `task nex
   your copy was made.
 - **Agree with another task** when your work needs a change in its files: `plitzi task propose t-menu --change "the card
 takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | --reject "why" | --counter "…"`.
-  Answer what is proposed to you before you complete (`plitzi task proposals`); honour what was accepted.
+  Answer what is proposed to you before you complete (`plitzi task proposals`); honour what you accepted.
 - **Stuck, or unsure?** `plitzi task ask "Spanish or Catalan?"` (`--follow` waits for the answer). **Something the lead
   should know** — a finding, a choice you made, a risk — with no answer needed: `plitzi task tell "…"` (holding no task — a reviewer — `--about <task> --agent <you>`). **Wrong, and no task's** — outside yours, there
   before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage; never left as

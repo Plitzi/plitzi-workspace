@@ -7,10 +7,10 @@ import { proposalsOf, unansweredTo } from '../agreements';
 import { failsWithout } from '../checks';
 import { designAtComplete } from '../design';
 import { createExclusive, exists, fingerprint, readOptional, writeAtomic, writeJson } from '../files';
+import { handOver } from '../handOver';
 import { crossed, longFilesIn, longFileText } from '../longFiles';
 import { checkVersions } from '../materialise';
 import { mergeLines } from '../merge3';
-import { unreadForHolder } from '../messages';
 import { entryOf } from '../model';
 import { lockFile, NOT_TASK_DIRS, taskPaths, under } from '../paths';
 import { RunRefusal } from '../refusal';
@@ -131,10 +131,11 @@ export interface CompletedTask {
 }
 
 /**
- * `plitzi task complete`: the copy compared with where it started, by fingerprint — what it changed outside its files
- * is refused, naming each; what it changed in a shared file it does not hold becomes a request — then the project's
- * checks run in the copy, and it goes to review.
+ * A line a check prints that says nothing of what failed: a copy's missing `.env`, expected (runs.md) — velada-dress's
+ * t-predictions went to review failing "the same way without this task: .env not found".
  */
+const NOTICE = /\.env not found|Continuing without it/;
+
 /** What a check that passed still warned of, each as `<check>: <warning>`. */
 const warningsOf = (checks: CheckResult): string[] =>
   checks.steps.flatMap(step => (step.warnings ?? []).map(warning => `${step.name}: ${warning}`));
@@ -146,6 +147,11 @@ export interface CompleteOptions {
   review?: ReviewAsked;
 }
 
+/**
+ * `plitzi task complete`: the copy compared with where it started, by fingerprint — what it changed outside its files
+ * is refused, naming each; what it changed in a shared file it does not hold becomes a request — then the project's
+ * checks run in the copy, and it goes to review.
+ */
 export const completeTask = async (
   ctx: RunContext,
   runId: string,
@@ -429,7 +435,7 @@ export const completeTask = async (
       warnings: warningsOf(checks).length > 0 ? warningsOf(checks) : undefined,
       knownFailure: preexisting
         ? {
-            why: `the run's work fails ${failing.map(step => step.name).join(', ')} the same way without this task: ${failing.flatMap(step => step.said ?? []).find(line => line.trim() !== '') ?? 'see the checks'}`,
+            why: `the run's work fails ${failing.map(step => step.name).join(', ')} the same way without this task: ${failing.flatMap(step => step.said ?? []).find(line => line.trim() !== '' && !NOTICE.test(line)) ?? 'see the checks'}`,
             failing: failing.map(step => step.name),
             preexisting: true,
             at: at(ctx)
@@ -478,7 +484,7 @@ export const completeTask = async (
     checks,
     accepted,
     changedInProject,
-    messages: await unreadForHolder(loaded, taskId, ctx.agent, true)
+    messages: await handOver(ctx, loaded, taskId, ctx.agent)
   };
 };
 

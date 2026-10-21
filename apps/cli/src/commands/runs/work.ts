@@ -151,9 +151,13 @@ export const warningLines = (
   const elsewhere = [...new Set(all.filter(each => !own.includes(each)).map(each => fileOf(each.warning) ?? ''))];
 
   return [
+    // A token declared and read nowhere yet is what a task declares for a later one: as the skill says, no failure —
+    // said so, not as something to fix (velada-dress: design-1 read the two as contradicting each other).
     ...own.map(each =>
       chalk.yellow(
-        `  ⚠ ${each.step} warns: ${each.warning} — fix what this task brought, or tell the lead why it stays`
+        /unused-token/.test(each.warning)
+          ? `  ⚠ ${each.step} warns: ${each.warning} — fine if a later task reads it: say which in your --note`
+          : `  ⚠ ${each.step} warns: ${each.warning} — fix what this task brought, or tell the lead why it stays`
       )
     ),
     ...(elsewhere.length > 0

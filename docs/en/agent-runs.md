@@ -61,8 +61,13 @@ waited for its review in v12. A team of five or more has `lead-2`, `lead-3`… b
 and one queue, no lead with agents of its own — **started only when the reviews queue up**, since one waiting for
 reviews it is never handed spends tokens on nothing: `lead` reviews every task, taking each from the queue (`task next
 --role lead --take`), until two wait and the oldest waited five minutes (`REVIEW_BACKLOG_MS`) — then `run watch --until
-lead` names the one to start; one handed nothing for ten minutes (`IDLE_LEAD_MS`) is told it can stop, and a lead that
-asked within the last minute (`leads-asking.json`) is running. A lead that reviews waits with `task next --role lead --follow --take`,
+lead` names the one to start; one handed nothing for four minutes (`IDLE_LEAD_MS`) is told it can stop — at once when no review waits and the tasks left are no more than the other leads, who review one each (`spareLead`), and a lead that
+asked within the last minute (`leads-asking.json`) is running. A lead that reviews answers questions too (`answering.ts`):
+with no review for it, `task next --role lead` hands it the oldest question to the lead no other lead took
+(`answering.json`) — what the code, the plan or the original answers; a choice for the person or a change of plan it
+leaves — and `lead` hears what it said (an fyi), woken for the question only once it waited `UNTAKEN_REVIEW_MS`
+unanswered. A message to a task answers its one open question; with two open it is refused until `--reply-to` says
+which, and one to `all` answers none (velada-dress: a note to every task marked a question answered). A lead that reviews waits with `task next --role lead --follow --take`,
 which offers it a task in review no other lead took (`TaskState.reviewer`, for the round) — one it sent back first, then
 the one that waited longest — and reviews it as `lead` would, as strictly; a review another lead took is refused to it
 (`claimed`). Everything else — planning, amending, stacking a stage, answering, notes to every task, unblocking,
@@ -272,7 +277,9 @@ on demand (`StartedAgent.onDemand`). `run plan` says to start only the first; `r
 role by role, when work waits — a task of its role ready, a UI review no designer is free for —
 and no running agent of it is free (`agents-needed`), naming the next one to start and its command; and an agent on
 demand that waits `ON_DEMAND_IDLE_MS` with nothing for it, and no task of its own that may come back, stops by itself,
-said in the activity — the lead starts it again when work waits. Running is read off the log (`runningAgents`): an
+said in the activity — the lead starts it again when work waits. **The base goes first** (`freeBaseAgents`): a task ready is offered to an agent on demand only past what the
+team's base agents of its roles — there (marked present) and at nothing — take; with them free, it is told so and
+waits. Running is read off the log (`runningAgents`): an
 agent that said something and has not stopped since. The monitor shows one not running as on demand, not as idle.
 
 ## The tester's tasks (`tests.ts`)
@@ -436,6 +443,10 @@ one it is refused), or, when it changes the work, stacks the tasks it makes.
 
 `run rehearse` plays research alone without a review. The monitor gives spikes a column of their own (`◇ spike`) once
 the run has one, with the lead at it, and the dev tools' Run tab a group (Finding out).
+
+**An answer is taken up** (`handOver.ts`): a question the lead answered holds its task until its agent has the answer —
+at its next command, whatever it is — and that is what puts it at work again, said in the activity ("goes on with
+t-fights — m99 answered"); until then the board says it is answered, not asking.
 
 **Who is still there** (`presence.ts`): a wait is said once in the log, so the log alone cannot tell a live agent from
 one its harness stopped. Each `task next`, and each turn of its `--follow`, marks the agent present in its scratch; an
@@ -629,3 +640,10 @@ in `src/tests/runSteps.ts`: a seeded project (`src/tests/runProject.ts`), script
 a person who confirms or not, checks that fail on `BROKEN` — no model and no network, so every run is the same run.
 `apps/cli/src/commands/runs.test.ts` runs the CLI as processes: the exit codes, the token through the environment, a
 person's action from a shell with no terminal, and a command run from inside a task's copy.
+
+**A run played whole** (`runs-flow.test.ts`): one story, agent by agent, as a real run went — the base agent and one
+on demand, a shared file held while another task's request on it is approved, a question a lead that reviews answers
+and its agent takes up, the reviews, the finish — with a simulated `author` (a page reading a token its theme does not
+declare fails), so the rules meet where no test of one of them looks. velada-dress's failures were each rule right
+alone and wrong together. **A change to how a run behaves adds its step to the story** — beside its own unit test — and
+a run's post-mortem adds what it found there.

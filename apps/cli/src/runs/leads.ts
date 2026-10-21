@@ -17,7 +17,8 @@ import type { TaskView } from './taskStore';
  * review it is never handed spends tokens on nothing. `lead` reviews every task while none of them runs; once two wait
  * and the oldest waited `REVIEW_BACKLOG_MS`, `run watch --until lead` says to start one. A review is taken from one queue
  * (`task next --role lead`), so two leads never review one task; with one of them running, `lead` is woken only for a
- * review none took within `UNTAKEN_REVIEW_MS`; and one handed nothing for `IDLE_LEAD_MS` is told to stop.
+ * review none took within `UNTAKEN_REVIEW_MS`; and one handed nothing for `IDLE_LEAD_MS` is told to stop — at once
+ * when no review waits and the tasks left are no more than the other leads, who review one each (`spareLead`).
  */
 
 /** The `--role` a lead that reviews waits with: `task next --role lead`. */
@@ -29,8 +30,15 @@ export const UNTAKEN_REVIEW_MS = 2 * 60_000;
 /** How long the oldest of two reviews waits for `lead` before it is told to start a lead that reviews beside it. */
 export const REVIEW_BACKLOG_MS = 5 * 60_000;
 
-/** How long a lead that reviews waits with nothing handed to it before it is told to stop: the queue is empty. */
-export const IDLE_LEAD_MS = 10 * 60_000;
+/** How long a lead that reviews waits with nothing handed to it before it is told to stop: as long as an agent on demand. */
+export const IDLE_LEAD_MS = 4 * 60_000;
+
+/**
+ * A lead that reviews is spare when the tasks not approved yet are no more than the other leads running: each reviews
+ * one at a time, and what is left is theirs (velada-dress: lead-2 waiting through the run's last task and its
+ * integration, the lead there for both).
+ */
+export const spareLead = (open: number, otherLeads: number): boolean => open <= otherLeads;
 
 /** A lead that reviews asked within this is running: at `--follow` it asks every few seconds. */
 const ASKING_MS = 60_000;

@@ -69,7 +69,8 @@ export const duration = (value: string): number => {
  * the ten minutes a harness gives one command (Claude Code's), so the agent hears it end rather than losing it to the
  * background — and runs it again to go on waiting.
  */
-export const FOLLOW_MS = 9 * 60_000;
+// Eight, not nine: a minute of margin for the command's own start and end (velada-dress's agents set --timeout 8m).
+export const FOLLOW_MS = 8 * 60_000;
 
 export const durationText = (ms: number): string => {
   const seconds = Math.round(ms / 1000);

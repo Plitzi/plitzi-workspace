@@ -60,6 +60,7 @@ const stepText = (step: ShotStep): string => {
   switch (step.kind) {
     case 'click':
     case 'hover':
+    case 'scroll':
     case 'wait-for':
       return `${step.kind} ${step.target}`;
     case 'type':
@@ -98,7 +99,7 @@ export const playSteps = async (
 
   for (const [index, step] of steps.entries()) {
     try {
-      if (step.kind === 'click' || step.kind === 'hover' || step.kind === 'type') {
+      if (step.kind === 'click' || step.kind === 'hover' || step.kind === 'scroll' || step.kind === 'type') {
         const read = await targetOn(page, step.target);
         if ('problem' in read || !read.found) {
           return {
@@ -127,6 +128,12 @@ export const playSteps = async (
 
         if (step.kind === 'hover') {
           await page.locator(read.selector).first().hover({ timeout: 3000 });
+          continue;
+        }
+
+        // Brought into view as a reader scrolling to it would: a hover was how design-1 reached the footer.
+        if (step.kind === 'scroll') {
+          await page.locator(read.selector).first().scrollIntoViewIfNeeded({ timeout: 3000 });
           continue;
         }
 

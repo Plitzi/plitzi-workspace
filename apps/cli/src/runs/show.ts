@@ -226,6 +226,8 @@ export interface TaskFileShown {
   change: ShownFile['change'];
   /** The file whole, as the task holds it; none for one it removes, or one that is not text. */
   text?: string;
+  /** Its whole diff, from where the task's work started: the task's own change, never another's approved since. */
+  diff?: string;
   binary?: boolean;
 }
 
@@ -268,6 +270,8 @@ export const showTaskFile = async (
   const change: ShownFile['change'] =
     before === undefined && after !== undefined ? 'added' : after === undefined ? 'removed' : 'changed';
   const text = textOf(after);
+  const was = textOf(before) ?? (before === undefined ? '' : undefined);
+  const now = text ?? (after === undefined ? '' : undefined);
 
   return {
     task: taskId,
@@ -275,6 +279,7 @@ export const showTaskFile = async (
     from,
     change,
     ...(text === undefined ? {} : { text }),
+    ...(was !== undefined && now !== undefined ? { diff: unifiedDiff(named, was, now) } : {}),
     ...(after !== undefined && text === undefined ? { binary: true } : {})
   };
 };

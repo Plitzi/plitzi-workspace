@@ -3,7 +3,7 @@ import { MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema';
 
 import { openProjectPage, paintedScheme, withoutDevTools } from '../../browser';
 import { sentElsewhere, signInAs } from '../check';
-import { BARE, IMAGES_BUDGET_MS, WAITING_FOR_SCROLL } from './types';
+import { BARE, IMAGES_BUDGET_MS, REMOTE_IMAGES_BUDGET_MS, WAITING_FOR_SCROLL } from './types';
 
 import type { Framing, Taken, View } from './types';
 import type { Browser, BrowserPage } from '../../browser';
@@ -199,11 +199,13 @@ export const pictureOf = async (
   const settled = view.still
     ? await page.evaluate((selector: string) => document.querySelectorAll(selector).length, WAITING_FOR_SCROLL)
     : 0;
-  // A whole page is taken without scrolling: a lazy picture below the fold would be a hole, and an arrival waiting
-  // for the scroll would be one too. Loaded, unrolled (the SDK scrolls a pane of its own, which a full-page picture
-  // cannot extend) and held at its end, the page is what a reader scrolling down ends up seeing.
+  // A page is taken without scrolling: a lazy picture below the fold would be a hole, and an arrival waiting for the
+  // scroll would be one too — in a clip as in the whole page (velada-dress: a section's photo, lazy, read as none).
+  // Loaded, unrolled (the SDK scrolls a pane of its own, which a full-page picture cannot extend) and held at its end,
+  // the page is what a reader scrolling down ends up seeing.
   const whole = how.kind === 'page';
-  const pictures = whole ? await page.evaluate(loadImages, IMAGES_BUDGET_MS) : undefined;
+  const local = /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:|\/|$)/.test(page.url());
+  const pictures = await page.evaluate(loadImages, local ? IMAGES_BUDGET_MS : REMOTE_IMAGES_BUDGET_MS);
   if (whole) {
     await page.evaluate(unrollPage, undefined);
   }
@@ -219,8 +221,8 @@ export const pictureOf = async (
     png: await capture(page, how),
     scheme: await paintedScheme(page, view.scheme ?? 'light'),
     settled,
-    unloaded: (pictures?.missing ?? 0) + (pictures?.embedsMissing ?? 0),
-    undrawn: pictures?.embedsUndrawn ?? [],
+    unloaded: pictures.missing + pictures.embedsMissing,
+    undrawn: pictures.embedsUndrawn,
     ...(sentTo ? { sentTo } : {})
   };
 };

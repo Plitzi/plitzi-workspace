@@ -1,14 +1,26 @@
 import fs from 'node:fs/promises';
 
 import { durationText, FOLLOW_MS } from '../../options';
+import { questionFor, takeQuestion } from '../answering';
 import { designReviewFor, hasDesignReview, takeDesignReview } from '../design';
-import { IDLE_LEAD_MS, isCoLead, isPrincipal, LEAD_ROLE, leadReviewFor, markAsking, takeLeadReview } from '../leads';
-import { agentAddress, unreadFor } from '../messages';
-import { ON_DEMAND_IDLE_MS } from '../onDemand';
+import { handOver } from '../handOver';
+import {
+  coLeadsOf,
+  IDLE_LEAD_MS,
+  isCoLead,
+  isPrincipal,
+  LEAD_ROLE,
+  leadReviewFor,
+  markAsking,
+  spareLead,
+  takeLeadReview
+} from '../leads';
+import { agentAddress, LEAD, unreadFor } from '../messages';
+import { freeBaseAgents, ON_DEMAND_IDLE_MS, runningAgents } from '../onDemand';
 import { pagesOf } from '../pagesOf';
 import { agentScratch, runPaths } from '../paths';
 import { readyTasks } from '../plan';
-import { markPresent } from '../presence';
+import { markPresent, PRESENCE_STALE_MS, presentAt } from '../presence';
 import { isRunRefusal, RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readRunLog } from '../run';
 import { runChanged } from '../runChanged';
@@ -85,6 +97,8 @@ export interface NextTask {
     /** Its UI review waits for a designer and none is free: the lead's too, said how. */
     uiToo?: string;
   };
+  /** A lead that reviews, with no review for it: a question to the lead to answer — the oldest no other lead took. */
+  question?: { id: string; task: string; text: string; agent?: string };
   /** A lead's, with no review for it: a spike to find out — the most urgent no other lead took. */
   spike?: { task: RunTask; question: string; findings: number };
   /** Why nothing is ready, when nothing is. */
@@ -143,6 +157,39 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
   return { ...next, scratch };
 };
 
+/** For an agent on demand: the team's base agents of its roles, there and free — ready work is theirs first. */
+const baseFirst = async (
+  ctx: RunContext,
+  loaded: LoadedRun,
+  views: readonly TaskView[],
+  roles: readonly string[] | undefined
+): Promise<string[]> => {
+  const team = await readTeam(ctx.root).catch(() => undefined);
+  const started = team ? startedAgents(team) : [];
+  const me = started.find(each => each.agent === ctx.agent);
+  if (me?.onDemand !== true) {
+    return [];
+  }
+
+  const now = ctx.now().getTime();
+  const present = new Set<string>();
+  for (const each of started) {
+    const seen = await presentAt(loaded.paths, each.agent);
+    if (seen !== undefined && now - seen <= PRESENCE_STALE_MS) {
+      present.add(each.agent);
+    }
+  }
+
+  return freeBaseAgents(
+    views,
+    started,
+    runningAgents(await readRunLog(loaded.paths)),
+    present,
+    ctx.agent,
+    roles ?? me.roles
+  );
+};
+
 const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promise<Omit<NextTask, 'scratch'>> => {
   const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
   const states = new Map(views.map(view => [view.task.id, view.state]));
@@ -161,7 +208,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     const { status } = view.state;
     if (view.owner?.agent === ctx.agent && isWorked(status)) {
       // …with what was said to that task meanwhile — an amendment, a review's words — which it reads nowhere else first.
-      const toTask = await unreadFor(loaded, view.task.id, true);
+      const toTask = await handOver(ctx, loaded, view.task.id, ctx.agent);
 
       // Sent back: what its last review asked, said where it is handed back — not only in the brief.
       const asked = view.state.notes
@@ -265,8 +312,18 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     };
   }
 
+  // On demand, the base of its roles goes first: what ready tasks its free agents take are not offered here.
+  const base = ready.length > 0 ? await baseFirst(ctx, loaded, views, roles) : [];
+  if (ready.length > 0 && base.length >= ready.length) {
+    return {
+      why: `${ready.map(task => task.id).join(', ')} ready, for ${base.join(', ')}, free and of the team's base: you are on demand — you take what they cannot (--follow)`,
+      ready: ready.map(task => task.id),
+      messages
+    };
+  }
+
   if (ready.length > 0) {
-    return { task: ready[0], ready: ready.map(task => task.id), messages };
+    return { task: ready[base.length], ready: ready.map(task => task.id), messages };
   }
 
   if (ready.length === 0 && waitingForFile.length > 0) {
@@ -412,7 +469,20 @@ const leadNext = async (
     };
   }
 
-  // No review for it: a spike, as every spike is a lead's — the most urgent no other lead is finding out.
+  // No review for it: a question to the lead, which holds an agent — the oldest no other lead took. The lead's own
+  // is the lead's to answer: it does not ask itself.
+  const question = isPrincipal(ctx.agent) ? undefined : await questionFor(ctx, loaded);
+  if (question) {
+    const asker = views.find(view => view.task.id === question.from)?.owner?.agent;
+
+    return {
+      question: { id: question.id, task: question.from, text: question.text, ...(asker ? { agent: asker } : {}) },
+      ready: [],
+      messages
+    };
+  }
+
+  // No question either: a spike, as every spike is a lead's — the most urgent no other lead is finding out.
   const urgency = byUrgency(loaded.tasks);
   const spike = views
     .filter(view => view.state.status === 'spike' && (view.state.spikedBy?.by ?? ctx.agent) === ctx.agent)
@@ -497,6 +567,19 @@ export const takeNext = async (
       continue;
     }
 
+    // A question handed to a lead is its own to answer from now: another lead is not offered it.
+    if (next.question) {
+      const loaded = await loadRun(ctx, runId);
+      await takeQuestion(ctx, loaded, next.question.id);
+      await logRun(ctx, loaded.paths, {
+        action: 'question-taken',
+        task: next.question.task,
+        message: next.question.id
+      });
+
+      return { next };
+    }
+
     // A spike handed to a lead is its own from now: another lead is not offered it.
     if (next.spike) {
       const loaded = await loadRun(ctx, runId);
@@ -546,6 +629,22 @@ export const takeNext = async (
       tried.add(offered.id);
     }
   }
+};
+
+/** A wait's reason, without what it names: `nothing is ready` of `nothing is ready: t-home in-progress (dev-1), …`. */
+const reasonOf = (why: string): string => why.split(/[:—]/)[0]?.trim() ?? why;
+
+/** Why a lead that reviews is spare now, if it is: what is left — none of it in review — is for the other leads. */
+const spareNow = async (ctx: RunContext, runId: string): Promise<string | undefined> => {
+  const loaded = await loadRun(ctx, runId);
+  const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
+  const open = views.filter(view => view.state.status !== 'done');
+  const others = [LEAD, ...coLeadsOf(loaded.record)].filter(lead => lead !== ctx.agent).length;
+  if (open.some(view => view.state.status === 'in-review') || !spareLead(open.length, others)) {
+    return undefined;
+  }
+
+  return `${String(open.length)} task${open.length === 1 ? '' : 's'} left (${open.map(view => view.task.id).join(', ') || 'none'}) for ${String(others)} other lead${others === 1 ? '' : 's'}: no review is yours to wait for`;
 };
 
 /**
@@ -605,35 +704,41 @@ export const followNext = async (
 
       throw error;
     });
-    if (next.task || next.designReview || next.leadReview || next.spike || next.finished || next.messages.length > 0) {
+    if (
+      next.task ||
+      next.designReview ||
+      next.leadReview ||
+      next.question ||
+      next.spike ||
+      next.finished ||
+      next.messages.length > 0
+    ) {
       return next;
     }
 
     // The agent waits, and the activity says for what — once for each reason: a wait run again after its timeout, for
     // the same reason, is the same wait (velada-now's log held 28 "waiting" and 10 "idle" for a handful of waits).
+    // By its reason, not its words: the tasks a reason names change as the run goes, and each change was a line
+    // (velada-dress: 118 "waiting" in a log of 505, for a handful of waits).
     const why = next.why ?? 'nothing is ready';
-    if (saidWaiting !== why) {
-      saidWaiting = why;
+    const reason = reasonOf(why);
+    if (saidWaiting !== reason) {
+      saidWaiting = reason;
       const paths = runPaths(ctx.root, runId);
       const last = (await readRunLog(paths)).findLast(entry => entry.by === ctx.agent);
-      if (last?.action !== 'waiting' || last.why !== why) {
+      if (last?.action !== 'waiting' || reasonOf(String(last.why)) !== reason) {
         await logRun(ctx, paths, { action: 'waiting', why });
       }
     }
 
-    // A lead that reviews handed nothing for a while: the queue is empty, and waiting on costs tokens — `lead` starts it
-    // again when the reviews queue up.
-    if (idleLead && Date.now() - started >= idleMs) {
-      await logRun(ctx, runPaths(ctx.root, runId), {
-        action: 'stops',
-        why: `no review came for ${durationText(idleMs)}: lead starts it again when the reviews queue up`
-      });
+    // A lead that reviews handed nothing for a while, or spare — what is left the other leads review: waiting on costs
+    // tokens, and `lead` starts it again when the reviews queue up.
+    const spare = idleLead ? await spareNow(ctx, runId) : undefined;
+    if (idleLead && (spare !== undefined || Date.now() - started >= idleMs)) {
+      const why = spare ?? `no review came for ${durationText(idleMs)}: lead starts it again when the reviews queue up`;
+      await logRun(ctx, runPaths(ctx.root, runId), { action: 'stops', why });
 
-      return {
-        ...next,
-        finished: true,
-        why: `no review came for ${durationText(idleMs)}: you can stop — lead starts you again when the reviews queue up`
-      };
+      return { ...next, finished: true, why: `${why} — you can stop` };
     }
 
     // Its wait's end is no state of its own: it is told to wait again, and stays waiting until it takes work or stops.

@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 
 import chalk from 'chalk';
 
@@ -65,13 +65,13 @@ const countsText = (counts: Partial<Record<DecorationKind, number>>): string => 
   return said.length > 0 ? said.join(', ') : 'none';
 };
 
+/**
+ * A section's dress, in one line: how many layers of each kind on either page, and the looks it has none of — what
+ * `--dress` fails on. The layers there are more of, or here only, are in `--json` (`missing`, `extra`): listed here
+ * they named looks the page already had, drawn another way, and read as what to add (velada-dress).
+ */
 const decorationText = (section: SectionDecorations): string =>
-  [
-    `  ${section.section}: ${countsText(section.here)} → ${countsText(section.there)}`,
-    section.absent.length > 0 ? ` — lacks: ${section.absent.join('; ')}` : '',
-    section.missing.length > 0 ? ` — add: ${section.missing.join('; ')}` : '',
-    section.extra.length > 0 ? ` — only here: ${section.extra.join('; ')}` : ''
-  ].join('');
+  `  ${section.section}: ${countsText(section.here)} → ${countsText(section.there)}${section.absent.length > 0 ? ` — none here of: ${section.absent.join('; ')}` : ''}`;
 
 /** What a comparison found, in the lines an agent reads before it opens a picture. */
 export const compareText = (compare: CompareReport): string[] => {
@@ -104,7 +104,7 @@ export const compareText = (compare: CompareReport): string[] => {
   // Before the words: a glow, a gradient or an ornament lost is what a visitor sees first, and the words never say it.
   if (compare.decorations.length > 0) {
     lines.push(
-      'dress (gradients, glows, ornaments, background images), by section — here → there:',
+      'dress (gradients, glows, ornaments, background images), by section — layers here → there, and the looks there none here has (what --dress fails on; --json lists every layer):',
       ...compare.decorations.map(decorationText)
     );
   }
@@ -146,6 +146,63 @@ export const compareText = (compare: CompareReport): string[] => {
   lines.push(chalk.dim(`${compare.sideBySide}\n${compare.diff}`));
 
   return lines;
+};
+
+/** How much of the page around a clipped section its pictures keep, above and below: where it starts and ends shows. */
+const CLIP_MARGIN = 40;
+
+/**
+ * The comparison's pictures cut to one section: ours where it is, theirs where the alignment found it — what a `--clip`
+ * asks of a comparison. They were the whole page, 12,000 px tall, and every designer cropped them by hand (velada-dress).
+ */
+export const cropToSection = async (
+  page: Taken['page'],
+  files: { sideBySide: string; diff: string },
+  box: { y: number; height: number },
+  shift: number
+): Promise<void> => {
+  const read = async (file: string): Promise<string> =>
+    `data:image/png;base64,${(await readFile(file)).toString('base64')}`;
+  const cut = await page.evaluate(
+    async ({ pair, diff, top, height, theirs }) => {
+      const load = (source: string): Promise<HTMLImageElement> =>
+        new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error('a picture of the comparison did not load'));
+          image.src = source;
+        });
+      const [whole, marked] = await Promise.all([load(pair), load(diff)]);
+      const width = whole.width / 2;
+      const canvas = (w: number): [HTMLCanvasElement, CanvasRenderingContext2D] => {
+        const made = document.createElement('canvas');
+        made.width = w;
+        made.height = height;
+        const context = made.getContext('2d');
+        if (!context) {
+          throw new Error('no 2D canvas in this page');
+        }
+
+        return [made, context];
+      };
+      const [both, bothContext] = canvas(width * 2);
+      bothContext.drawImage(whole, 0, top, width, height, 0, 0, width, height);
+      bothContext.drawImage(whole, width, Math.max(0, top + theirs), width, height, width, 0, width, height);
+      const [only, onlyContext] = canvas(marked.width);
+      onlyContext.drawImage(marked, 0, top, marked.width, height, 0, 0, marked.width, height);
+
+      return { pair: both.toDataURL('image/png'), diff: only.toDataURL('image/png') };
+    },
+    {
+      pair: await read(files.sideBySide),
+      diff: await read(files.diff),
+      top: Math.max(0, Math.round(box.y) - CLIP_MARGIN),
+      height: Math.round(box.height) + CLIP_MARGIN * 2,
+      theirs: Math.round(shift)
+    }
+  );
+  await writeFile(files.sideBySide, fromDataUrl(cut.pair));
+  await writeFile(files.diff, fromDataUrl(cut.diff));
 };
 
 /** The other site beside this page: section by section where each one is, and the words both have, measured. */

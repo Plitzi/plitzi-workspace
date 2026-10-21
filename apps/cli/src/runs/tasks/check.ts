@@ -1,6 +1,6 @@
 import { checkAcceptance } from '../acceptance';
+import { handOver } from '../handOver';
 import { crossed, longFilesIn, longFileText } from '../longFiles';
-import { unreadForHolder } from '../messages';
 import { assertStatus, loadRun, logRun } from '../run';
 import { tellLeftInTmp } from '../strays';
 import { changedInCopy, findTask, holderOf, refreshCopy } from './common';
@@ -55,7 +55,7 @@ export const checkTask = async (
   await tellLeftInTmp(ctx, loaded);
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);
-  const messages = await unreadForHolder(loaded, taskId, view.owner?.agent ?? ctx.agent, true);
+  const messages = await handOver(ctx, loaded, taskId, view.owner?.agent ?? ctx.agent);
   // Checked against the run and the project as they are now, as `complete` will be.
   const brought = await refreshCopy(ctx, loaded, view);
   const checks: CheckResult =

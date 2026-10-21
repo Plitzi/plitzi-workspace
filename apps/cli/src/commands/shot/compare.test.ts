@@ -52,10 +52,11 @@ describe('a comparison with another site, said', () => {
       ]
     }).map(line => stripVTControlCharacters(line));
 
-    expect(lines[1]).toBe('dress (gradients, glows, ornaments, background images), by section — here → there:');
-    expect(lines[2]).toBe(
-      '  section#artist-page: none → 2 gradients, 1 glow, 4 ornaments — add: radial-gradient rgba(199, 168, 107, 0.2) ×2; box-shadow 60px rgba(199, 168, 107, 0.25); ::before border rgb(199, 168, 107) ×4'
+    expect(lines[1]).toBe(
+      'dress (gradients, glows, ornaments, background images), by section — layers here → there, and the looks there none here has (what --dress fails on; --json lists every layer):'
     );
+    // What there is more of, drawn another way here, is no line to act on: --json has it.
+    expect(lines[2]).toBe('  section#artist-page: none → 2 gradients, 1 glow, 4 ornaments');
   });
 
   // An acceptance proves a look by `--dress`: a look wholly absent fails, two ways of drawing one look do not.

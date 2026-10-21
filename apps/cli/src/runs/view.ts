@@ -1,10 +1,11 @@
 import path from 'node:path';
 
 import { proposalsOf } from './agreements';
+import { answering } from './answering';
 import { bottlenecks } from './bottlenecks';
 import { designSkipText } from './designSkip';
 import { fingerprint } from './files';
-import { askingLeads } from './leads';
+import { askingLeads, UNTAKEN_REVIEW_MS } from './leads';
 import { longFileText, longFilesIn } from './longFiles';
 import { LEAD, messagesOf, unreadFor } from './messages';
 import { agentsNeeded, runningAgents } from './onDemand';
@@ -84,7 +85,7 @@ export interface TaskLine {
    */
   parkedFor?: string;
   /** At work, held on a question its agent asked the lead and nobody answered: which, in a line. */
-  asking?: { id: string; text: string };
+  asking?: { id: string; text: string; answered?: true };
 }
 
 export interface Attention {
@@ -384,11 +385,16 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
 
   // A question the lead answered is dealt with, whether or not the lead's inbox was read.
   const answered = new Set((await messagesOf(loaded)).flatMap(message => (message.replyTo ? [message.replyTo] : [])));
-  const questions = (await messagesOf(loaded)).filter(
-    message => message.to === LEAD && message.fyi !== true && !answered.has(message.id)
-  );
+  const all = await messagesOf(loaded);
+  const asked = all.filter(message => message.to === LEAD && message.fyi !== true);
+  // A question a lead that reviews took is its to answer: the lead is told of it only once it waited unanswered.
+  const taken = await answering(loaded);
+  const answeringNow = (message: { id: string; fyi?: boolean }): boolean =>
+    message.fyi !== true &&
+    Object.hasOwn(taken, message.id) &&
+    now.getTime() - Date.parse(taken[message.id].at) < UNTAKEN_REVIEW_MS;
   (await unreadFor(loaded, LEAD, false))
-    .filter(message => !answered.has(message.id))
+    .filter(message => !answered.has(message.id) && !answeringNow(message))
     // Said for the lead to know of a task approved since — by it, or by a designer about it: its history now, in the
     // inbox — nothing to act on, and it held velada-now's finish.
     .filter(message => !(message.fyi === true && byId.get(message.about ?? message.from)?.state.status === 'done'))
@@ -398,7 +404,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
         task: message.from,
         text: message.fyi
           ? `${message.from} says (${message.id}), for you to know: ${glimpse(message.text)} — read: plitzi task inbox`
-          : `${message.from} asks (${message.id}): ${glimpse(message.text)} — answer: plitzi task message ${message.from} "…" --reply-to ${message.id}`,
+          : `${message.from} asks (${message.id}): ${glimpse(message.text)}${Object.hasOwn(taken, message.id) ? ` — ${taken[message.id].by} took it and has not answered` : ''} — answer: plitzi task message ${message.from} "…" --reply-to ${message.id}`,
         who: 'lead'
       })
     );
@@ -460,14 +466,27 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     ...(remaining.length === 0 ? {} : { expectedEnd: new Date(now.getTime() + left * 60_000).toISOString() }),
     // A task held on a question to the lead says so where its state is read, not only in the lead's inbox.
     tasks: parked(
-      tasks.map(task => {
-        const question = questions.filter(message => message.from === task.id).at(-1);
+      await Promise.all(
+        tasks.map(async task => {
+          // Only while it is worked: one sent to review is no agent's to wait on, and stood in two of the flow's columns.
+          const question = isWorked(task.status) ? asked.filter(message => message.from === task.id).at(-1) : undefined;
+          if (!question) {
+            return task;
+          }
 
-        // Only while it is worked: one sent to review is no agent's to wait on, and stood in two of the flow's columns.
-        return question && isWorked(task.status)
-          ? { ...task, asking: { id: question.id, text: glimpse(question.text) } }
-          : task;
-      }),
+          // Answered, it is held until its agent has the answer — at its next command, which takes it up again.
+          const reply = all.find(message => message.replyTo === question.id);
+          const unread = reply ? (await unreadFor(loaded, task.id, false)).some(each => each.id === reply.id) : false;
+          if (reply && !unread) {
+            return task;
+          }
+
+          return {
+            ...task,
+            asking: { id: question.id, text: glimpse(question.text), ...(reply ? { answered: true as const } : {}) }
+          };
+        })
+      ),
       views
     ),
     attention,

@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { proposalsOf, unansweredTo } from '../agreements';
 import { cloneFiles, cloneServed, createExclusive, isCopied, projectFiles, writeJson } from '../files';
-import { unreadForHolder } from '../messages';
+import { handOver } from '../handOver';
 import { COPY_TASK_FILE, isSecretFile, lockFile, under } from '../paths';
 import { dependenciesDone } from '../plan';
 import { RunRefusal } from '../refusal';
@@ -245,7 +245,7 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
     ...(view.reviewed ? { resumedFrom: view.reviewed.round } : {}),
     ...(replaced ? { replaced } : {}),
     proposals: unansweredTo(await proposalsOf(loaded), taskId),
-    messages: await unreadForHolder(loaded, taskId, ctx.agent, true)
+    messages: await handOver(ctx, loaded, taskId, ctx.agent)
   };
 };
 

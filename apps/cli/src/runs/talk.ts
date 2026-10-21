@@ -1,6 +1,7 @@
 import { writeJson } from './files';
+import { handOver } from './handOver';
 import { requireLead } from './leads';
-import { agentAddress, EVERYONE, LEAD, messagesOf, replyTo, sendMessage, unreadFor, unreadForHolder } from './messages';
+import { agentAddress, EVERYONE, LEAD, messagesOf, replyTo, sendMessage, unreadFor } from './messages';
 import { RunRefusal } from './refusal';
 import { assertStatus, loadRun, logRun, requireNoTask } from './run';
 import { runChanged } from './runChanged';
@@ -49,7 +50,7 @@ export const askLead = async (
     const reply = await replyTo(await loadRun(ctx, runId), question);
     if (reply) {
       // Everything marked read is handed over: a message is never read for the agent without reaching it.
-      const unread = await unreadFor(loaded, taskId, true);
+      const unread = await handOver(ctx, loaded, taskId, ctx.agent);
 
       return { question, reply, messages: unread.filter(message => message.id !== reply.id) };
     }
@@ -145,25 +146,45 @@ export const messageTasks = async (
       : to.startsWith('@')
         ? [to]
         : [findTask(loaded, to).id];
-  // What the lead says to a task with a question open is its answer, said with --reply-to or not: velada-now's lead
-  // answered t-motion without it, and the monitor said for good that t-motion asked the lead.
+  // What the lead says to a task with its one question open is its answer, said with --reply-to or not: velada-now's lead
+  // answered t-motion without it, and the monitor said for good that t-motion asked the lead. Said to every task, it
+  // answers none — velada-dress: a note to all marked t-artists' question answered — and with two open, it says which.
   const messages = await messagesOf(loaded);
   const answered = new Set(messages.flatMap(message => (message.replyTo ? [message.replyTo] : [])));
-  const openQuestion = (target: string): string | undefined =>
+  const openQuestions = (target: string): string[] =>
     messages
       .filter(
         message => message.from === target && message.to === LEAD && message.fyi !== true && !answered.has(message.id)
       )
-      .at(-1)?.id;
+      .map(message => message.id);
+  const open = reply === undefined && to !== 'all' && !to.startsWith('@') ? openQuestions(targets[0] ?? '') : [];
+  if (open.length > 1) {
+    throw new RunRefusal(
+      'invalid',
+      `${to} has ${String(open.length)} questions open (${open.join(', ')}): say which this answers — --reply-to ${open.at(-1) ?? ''}`
+    );
+  }
+
   const sent: Message[] = [];
   for (const target of targets) {
-    const answers = reply ?? openQuestion(target);
+    const answers = reply ?? open[0];
     sent.push(
       await sendMessage(ctx, loaded, { from: LEAD, to: target, text, ...(answers ? { replyTo: answers } : {}) })
     );
   }
 
   await logRun(ctx, loaded.paths, { action: 'message', to, messages: sent.map(message => message.id) });
+  // Answered by a lead that reviews: the lead hears what was said for it, as of a spike's findings.
+  const answeredNow = sent.filter(message => message.replyTo !== undefined);
+  if (ctx.agent !== LEAD && answeredNow.length > 0) {
+    await sendMessage(ctx, loaded, {
+      from: ctx.agent,
+      to: LEAD,
+      text: `${ctx.agent} answered ${answeredNow.map(message => `${message.to}'s ${message.replyTo ?? ''}`).join(', ')}: ${text}`,
+      fyi: true,
+      about: answeredNow[0].to
+    });
+  }
 
   return sent;
 };
@@ -191,5 +212,5 @@ export const readInbox = async (ctx: RunContext, runId: string, taskId?: string,
     );
   }
 
-  return unreadForHolder(loaded, taskId, ctx.agent, true);
+  return handOver(ctx, loaded, taskId, ctx.agent);
 };

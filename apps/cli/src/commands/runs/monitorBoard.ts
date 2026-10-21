@@ -26,7 +26,11 @@ export const TASK_STATE: Record<TaskLine['status'], (task: TaskLine, tasks: read
   // Its agent at another of its tasks: said, in the tone of what is held — one task at a time an agent.
   'in-progress': task =>
     task.asking
-      ? chalk.yellow(`? ${task.agent ?? ''} asks the lead (${task.asking.id})`)
+      ? chalk.yellow(
+          task.asking.answered
+            ? `? ${task.agent ?? ''} has the lead's answer to read (${task.asking.id})`
+            : `? ${task.agent ?? ''} asks the lead (${task.asking.id})`
+        )
       : task.parkedFor
         ? chalk.yellow(`‖ ${task.agent ?? ''} at ${task.parkedFor} first`)
         : chalk.cyan(
@@ -204,7 +208,15 @@ export const detailOf = (task: TaskLine, story: TaskStory | undefined): string[]
   chalk.bold(`${task.id} — ${task.title}`),
   `  ${task.status}${task.round > 0 ? ` · round ${String(task.round)}` : ''} · ${task.role} · ${task.priority} · ${String(task.estimateMinutes)} min estimated${task.status !== 'done' && task.spentMinutes !== undefined ? `, ${String(task.spentMinutes)} spent` : ''}`,
   ...storyOf(task, story),
-  ...(task.asking ? [chalk.yellow(`  asks the lead (${task.asking.id}): ${task.asking.text}`)] : []),
+  ...(task.asking
+    ? [
+        chalk.yellow(
+          task.asking.answered
+            ? `  the lead answered ${task.asking.id} — ${task.agent ?? 'its agent'} has it with its next command`
+            : `  asks the lead (${task.asking.id}): ${task.asking.text}`
+        )
+      ]
+    : []),
   ...(task.step ? [`  now: ${task.step}`] : []),
   ...(task.waitsOn
     ? [`  starts once ${task.waitsOn.join(', ')} ${task.waitsOn.length === 1 ? 'is' : 'are'} approved`]

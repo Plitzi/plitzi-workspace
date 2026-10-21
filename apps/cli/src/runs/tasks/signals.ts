@@ -1,7 +1,8 @@
 import { writeJson } from '../files';
+import { handOver } from '../handOver';
 import { requireLead } from '../leads';
 import { longFilesIn } from '../longFiles';
-import { LEAD, sendMessage, unreadForHolder } from '../messages';
+import { LEAD, sendMessage } from '../messages';
 import { RunRefusal } from '../refusal';
 import { loadRun, logRun, requireNoTask } from '../run';
 import { tellLeftInTmp } from '../strays';
@@ -70,7 +71,7 @@ export const reportProgress = async (
         }),
     quietAfter: new Date(now + noSignalAfter(task)).toISOString(),
     takenAfter: new Date(now + noSignalAfter(task) + DEFAULTS.lockAfterSignalMs).toISOString(),
-    messages: await unreadForHolder(loaded, taskId, ctx.agent, true),
+    messages: await handOver(ctx, loaded, taskId, ctx.agent),
     longFiles: await longFilesIn(view.paths.work, ctx.root)
   };
 };

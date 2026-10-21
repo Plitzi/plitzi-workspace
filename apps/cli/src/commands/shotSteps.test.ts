@@ -3,6 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { parseSteps } from './shotSteps';
 
 describe('page shot --steps', () => {
+  it('reads a scroll to an element: the footer brought into view, as a reader would', () => {
+    expect(parseSteps('scroll site-footer; shot footer', 500)).toEqual([
+      { kind: 'scroll', target: 'site-footer' },
+      { kind: 'shot', label: 'footer' }
+    ]);
+  });
+
   it('reads every step, separated by ";" or a new line, with the notes left out', () => {
     expect(
       parseSteps(
@@ -37,7 +44,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   it('says which step is wrong, and what the steps are', () => {
     expect(parseSteps('click a; tap b', 500)).toEqual({
       problem:
-        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, type, press, wait, wait-for, shot, frames'
+        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, press, wait, wait-for, shot, frames'
     });
     expect(parseSteps('wait soon', 500)).toEqual({
       problem: 'step 1 ("wait soon"): "soon" is not a whole number from 1 to 30000'
@@ -47,7 +54,8 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
         'step 1 ("type title"): type needs an element and the text — type <element> <text>, type ".panel textarea" hi'
     });
     expect(parseSteps('# only a note', 500)).toEqual({
-      problem: '--steps has no step: click, hover, type, press, wait, wait-for, shot or frames, separated by ";"'
+      problem:
+        '--steps has no step: click, hover, scroll, type, press, wait, wait-for, shot or frames, separated by ";"'
     });
   });
 });
