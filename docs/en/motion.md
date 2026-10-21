@@ -37,6 +37,17 @@ canvas** in the tab) plays it from the start — the space's own `[data-hydrated
 the published page does: loops running, arrivals played as they come into view. Over MCP, `motion` is a field of `upsertElement` and
 `patchElement`; `npx plitzi explain motion` lists every preset. Anything the presets do not cover is CSS, by the practices below.
 
+## Between pages
+
+`settings.viewTransitions: true` draws each move between pages as a view transition: the pages cross-fade, and an
+element whose class says the same `view-transition-name` on both pages moves from one to the other (the skill's
+`colours-and-motion.md` is how a space asks for it). The SDK's navigation does it in `moveDrawn`
+(`apps/sdk/src/modules/Navigation/viewTransition.ts`): the destination's server data is prefetched first, with the
+page being left still drawn — a server provider keeps its answer meanwhile, so the old view's snapshot is whole — then
+`document.startViewTransition` runs the router's move, and its callback waits until the new location is laid out
+(`VIEW_TRANSITION_WAIT_MS` at most), as React draws the route in a transition of its own. No view transitions in the
+browser, or reduced motion asked for: the move is made at once.
+
 ## Why some animations are cheap
 
 A browser draws a frame in three steps: **layout** (where every box goes), **paint** (the pixels of each layer) and

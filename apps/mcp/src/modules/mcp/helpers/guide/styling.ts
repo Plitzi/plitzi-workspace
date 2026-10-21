@@ -30,6 +30,9 @@ export const stylingGuide = `## Styling (crosses both schemas)
     definition set.
   - Comma-separated layers are kept per longhand: \`transition: opacity 200ms, transform 300ms\` →
     \`transition-property: opacity, transform\` + \`transition-duration: 200ms, 300ms\`.
+  - A \`background\` with a bare \`var(--x)\` part is refused: what the variable holds decides the longhand —
+    \`background-color\` for a colour, \`background-image\` for a gradient or a picture. A var() inside one
+    (\`linear-gradient(…, var(--x))\`) is read as it is.
   - In a **patch**, a shorthand replaces the longhands it controls (\`padding: 8px\` overwrites a previous
     \`padding-left\`), and \`"border": null\` removes all twelve border longhands.
 - **Flex layout is not a \`flex\` value**: set \`display: flex\` **plus** \`flex-direction\`, \`align-items\`,
