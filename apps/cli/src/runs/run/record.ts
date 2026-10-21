@@ -24,13 +24,22 @@ export const pinnedNow = async (root: string, cli: string): Promise<Pinned> => {
   const scope = path.join(root, 'node_modules', '@plitzi');
   const names = await fs.readdir(scope).catch(() => []);
   const packages: Record<string, string> = {};
-  for (const name of names.sort()) {
+  // A name with a dot first is npm's, never a package: the folder it stages one in while it installs (`.cli-4Vu260qW`)
+  // — read then, the run was told Plitzi changed under it, every package "none", and its agents stopped.
+  for (const name of names.filter(each => !each.startsWith('.')).sort()) {
     const bytes = await readOptional(path.join(scope, name, 'package.json'));
     if (bytes === undefined) {
       continue;
     }
 
-    const manifest: unknown = JSON.parse(bytes.toString('utf-8'));
+    let manifest: unknown;
+    try {
+      manifest = JSON.parse(bytes.toString('utf-8'));
+    } catch {
+      // Half written, as an install writes it: no version to pin yet.
+      continue;
+    }
+
     if (isRecord(manifest) && typeof manifest.version === 'string') {
       packages[`@plitzi/${name}`] = manifest.version;
     }

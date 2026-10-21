@@ -1,5 +1,4 @@
 import { isCoLead, isPrincipal } from './leads';
-import { LEAD, sendMessage } from './messages';
 import { RunRefusal } from './refusal';
 import { assertStatus, loadRun, logRun, readRunLog } from './run';
 import { findTask, holderOf } from './tasks';
@@ -60,16 +59,9 @@ export const noticeRun = async (
     ...(on ? { on } : {}),
     ...(task ? { task } : {})
   });
-  // An agent's reaches the lead too: it plans the next stage, and hears it now rather than at the finish.
-  if (!isPrincipal(ctx.agent) && !isCoLead(loaded.record, ctx.agent)) {
-    await sendMessage(ctx, loaded, {
-      from: task ?? ctx.agent,
-      to: LEAD,
-      text: `Noticed, owned by no task: ${noticeText(notice)}`,
-      fyi: true
-    });
-  }
-
+  // Never sent to the lead as a message: it is for the next stage, not for now, and each woke the lead that waits on the
+  // run for what needs it (velada-now: two designers' notices, two wake-ups with nothing to do). The activity shows it,
+  // the finish says it and the report lists it.
   return notice;
 };
 

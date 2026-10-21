@@ -3,7 +3,9 @@ import { crossed, longFilesIn, longFileText } from '../longFiles';
 import { unreadForHolder } from '../messages';
 import { assertStatus, loadRun, logRun } from '../run';
 import { tellLeftInTmp } from '../strays';
-import { findTask, holderOf, refreshCopy } from './common';
+import { changedInCopy, findTask, holderOf, refreshCopy } from './common';
+import { whoseChanges } from './complete';
+import { readStart } from '../taskStore';
 
 import type { CheckResult } from '../checks';
 import type { Message } from '../messages';
@@ -34,6 +36,8 @@ export interface CheckedTask {
   brought?: string[];
   /** `acceptance`: only the acceptance's commands were run — the project's checks were not, and `complete` runs them. */
   only?: 'acceptance';
+  /** Files it changed that another task at work holds: `complete` refuses them — said now, before the work is done. */
+  othersFiles?: { file: string; holder: string }[];
 }
 
 export const checkTask = async (
@@ -60,7 +64,11 @@ export const checkTask = async (
     ? await checkAcceptance(task.acceptance, { work: view.paths.work, root: ctx.root, cache: view.paths.cache })
     : [];
   const tooLong = (await longFilesIn(view.paths.work, ctx.root)).filter(crossed).map(longFileText);
-  const ok = checks.ok && accepted.every(each => each.ok) && tooLong.length === 0;
+  const started = await readStart(view.paths);
+  const { outside } = started
+    ? await whoseChanges(loaded, view, await changedInCopy(view, started), started)
+    : { outside: [] };
+  const ok = checks.ok && accepted.every(each => each.ok) && tooLong.length === 0 && outside.length === 0;
   // What failed, by name: a run's activity says why a check did not pass, not only that it did not.
   await logRun(ctx, loaded.paths, {
     action: 'check',
@@ -72,7 +80,8 @@ export const checkTask = async (
           failed: [
             ...checks.steps.filter(step => !step.ok).map(step => step.name),
             ...accepted.filter(each => !each.ok).map(each => `acceptance — ${each.said}`),
-            ...tooLong
+            ...tooLong,
+            ...outside.map(each => `${each.file} is ${each.holder}'s`)
           ]
         })
   });
@@ -84,6 +93,7 @@ export const checkTask = async (
     tooLong,
     messages,
     ...(brought.length > 0 ? { brought } : {}),
-    ...(only ? { only } : {})
+    ...(only ? { only } : {}),
+    ...(outside.length > 0 ? { othersFiles: outside } : {})
   };
 };

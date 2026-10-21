@@ -39,10 +39,8 @@ describe('run notice', () => {
       { by: 'lead', text: 'The footer’s legal line wraps at 390' }
     ]);
     expect((await readRunLog(loaded.paths)).filter(entry => entry.action === 'notice')).toHaveLength(2);
-    // The agent's reaches the lead now; the lead's own is not sent to itself.
-    expect((await readInbox(lead(), runId)).map(message => message.text)).toEqual([
-      'Noticed, owned by no task: The stats grid leaves an empty cell at 1440 (on /boxeadores/:id) — agent-1, at t-menu'
-    ]);
+    // For the next stage, not for now: nothing is sent to the lead, which a message would wake.
+    expect(await readInbox(lead(), runId)).toEqual([]);
 
     const text = reportText(await buildReport(lead(), loaded), undefined);
     expect(text).toContain('## Noticed, owned by no task');

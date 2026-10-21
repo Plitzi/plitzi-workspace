@@ -178,9 +178,9 @@ const statusOf = (task: TaskLine): AgentStatus =>
     ? 'asking'
     : task.noSignal
       ? 'no-signal'
-      : // Its task waits for a review: the agent does nothing meanwhile — idle, not at work (la-velada's monitor).
+      : // Held at review only by the designer at its UI review (`assignee`): what it is at.
         task.status === 'in-review'
-        ? 'idle'
+        ? 'reviewing'
         : task.status === 'blocked' || task.status === 'waiting'
           ? 'blocked'
           : 'working';
@@ -192,7 +192,7 @@ const doingOf = (task: TaskLine): string => {
 
   switch (task.status) {
     case 'in-review':
-      return `${task.id} waits for its review — nothing in hand`;
+      return `reviews the UI of ${task.id}`;
     case 'changes-requested':
       return `redoes ${task.id} (round ${String(task.round)})`;
     case 'waiting':
@@ -248,20 +248,33 @@ const agentsOf = async (
 
   const now = ctx.now().getTime();
   const team = await readTeam(ctx.root).catch(() => undefined);
+  // A task is whoever is at it: its writer while it is written or sent back, its designer while it waits on that one's
+  // UI review — and, at the lead's review, the lead's (its row says so). Its writer is free once it went to review.
+  const assignee = (task: TaskLine): string | undefined =>
+    task.status === 'in-review' ? (task.design?.status === 'due' ? task.design.by : undefined) : task.agent;
   const held = new Map<string, TaskLine>();
   const holds = new Map<string, TaskLine[]>();
   for (const task of view.tasks) {
-    if (task.agent && task.status !== 'done') {
-      holds.set(task.agent, [...(holds.get(task.agent) ?? []), task]);
-      // An agent writes one task at a time; one in review it finished is shown only when it holds nothing else.
-      const before = held.get(task.agent);
-      if (!before || before.status === 'in-review') {
-        held.set(task.agent, task);
-      }
+    const holder = assignee(task);
+    if (holder && task.status !== 'done') {
+      holds.set(holder, [...(holds.get(holder) ?? []), task]);
+      held.set(holder, held.get(holder) ?? task);
     }
   }
 
   // What waits on a designer: a UI review no designer took — said on each designer, which may be at a task of its own.
+  // Waiting, in a few words — how the run stands, not the list of every task (the activity says that): its line is one
+  // row of the panel, and a designer waiting for its first review showed the whole of the waiting's reason there.
+  const atWork = view.tasks.filter(task => task.status === 'in-progress' || task.status === 'changes-requested').length;
+  const pending = view.tasks.filter(task => task.status === 'pending').length;
+  const standing = [`${String(atWork)} at work`, ...(pending > 0 ? [`${String(pending)} pending`] : [])].join(', ');
+  const tookAny = new Set(
+    log.flatMap(entry => (entry.action === 'take' && typeof entry.by === 'string' ? [entry.by] : []))
+  );
+  const betweenTasks = (agent: string, last: Record<string, unknown> | undefined): string =>
+    last?.action === 'waiting'
+      ? `${tookAny.has(agent) ? 'waiting for work' : 'waiting for its first task'} — ${standing}`
+      : `between tasks${last ? ` — last: ${lastDone(last) ?? ''}` : ' — not started yet'}`;
   const uiWaiting = view.tasks.filter(
     task => task.status === 'in-review' && task.design?.status === 'due' && task.design.by === undefined
   );
@@ -368,7 +381,7 @@ const agentsOf = async (
                 ? ('stopped' as const)
                 : ('idle' as const),
           ...about,
-          doing: `between tasks${lastBy.get(agent) ? ` — last: ${lastDone(lastBy.get(agent) ?? {}) ?? ''}` : ' — not started yet'}${tail}`,
+          doing: `${betweenTasks(agent, lastBy.get(agent))}${tail}`,
           ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
         };
   });

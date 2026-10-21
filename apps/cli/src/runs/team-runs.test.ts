@@ -6,6 +6,7 @@ import { expectedIds } from './expectations';
 import { extendRun } from './extend';
 import { leadItems } from './leadWatch';
 import { messagesOf } from './messages';
+import { monitorRun } from './monitor';
 import { taskPaths } from './paths';
 import { isRunRefusal } from './refusal';
 import { checkPlanFile, loadRun, openRun, readRunLog } from './run';
@@ -286,6 +287,15 @@ describe('a designer’s review of the others’ UI', () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
     await setTeamAgent(bench.root, 'design', { roles: ['designer'], count: 2 });
     await openRun(lead(), await bench.writePlan(benchPlan()));
+  });
+
+  // la-velada: design-1 reviewed t-lint's UI, and the monitor said it was idle — the flow said otherwise.
+  it('shows a designer at the UI review it took as reviewing, in the monitor', async () => {
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
+
+    const designer = (await monitorRun(lead(), 'es-launch')).agents.find(agent => agent.agent === 'design-1');
+    expect(designer).toMatchObject({ status: 'reviewing', task: 't-menu', doing: 'reviews the UI of t-menu' });
   });
 
   it('comes before the lead’s: offered to one designer, approved by it, then the lead’s to approve', async () => {

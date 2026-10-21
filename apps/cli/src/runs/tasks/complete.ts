@@ -35,7 +35,7 @@ import { activeHolder, allLocks, sharedFiles } from './locks';
 import type { CheckResult } from '../checks';
 import type { ReviewAsked } from '../design';
 import type { Message } from '../messages';
-import type { AcceptanceResult, FileLock, SharedRequest } from '../model';
+import type { AcceptanceResult, FileLock, SharedRequest, TaskStart } from '../model';
 import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 
@@ -219,29 +219,7 @@ export const completeTask = async (
     );
   }
 
-  const held = await lockedFiles(view.paths);
-  const shared = await sharedFiles(loaded);
-  const outside: { file: string; holder: string }[] = [];
-  const asRequests: string[] = [];
-  // A folder's placeholder goes once the task puts a file in it: the .gitkeep of a folder it writes into is its to remove.
-  const ownFolders = new Set(
-    changed.filter(file => held.has(file) || task.files.includes(file)).map(file => path.posix.dirname(file))
-  );
-  for (const file of changed) {
-    if (held.has(file) || (path.posix.basename(file) === '.gitkeep' && ownFolders.has(path.posix.dirname(file)))) {
-      continue;
-    }
-
-    // A file no task at work holds — shared, a done task's, or in no task of the plan — is taken by turns as the task
-    // completes when it is free (the same an agent gets from `task claim`), and requested when it is not. A new file
-    // nobody names is the task's.
-    const planned = await activeHolder(loaded, file);
-    if (planned && planned.id !== taskId) {
-      outside.push({ file, holder: planned.id });
-    } else if (shared.has(file) || Object.hasOwn(started.files, file)) {
-      asRequests.push(file);
-    }
-  }
+  const { outside, asRequests } = await whoseChanges(loaded, view, changed, started);
 
   if (outside.length > 0) {
     await recordBrake(ctx, loaded, 'refused', taskId);
@@ -291,6 +269,7 @@ export const completeTask = async (
   );
 
   // The run's version of a file it changed moved since its copy was made: the two changes are put together line by line.
+  const held = await lockedFiles(view.paths);
   const mergedNow = await mergeMoved(ctx, loaded, view, [
     ...changed.filter(file => held.has(file) || task.files.includes(file)),
     ...claimedNow
@@ -513,4 +492,43 @@ export const discardFile = async (ctx: RunContext, runId: string, taskId: string
   const view = await holderOf(ctx, loaded, task);
 
   return refreshCopy(ctx, loaded, view, cleanPath(ctx.root, file));
+};
+
+/**
+ * What the task changed that is not its own: a file another task at work holds (`outside`, which `complete` refuses),
+ * and a shared one or one in no task it takes by turns or requests (`asRequests`). `task check` says the first before
+ * the work is done: la-velada's t-boxer learnt it changed t-lint's `theme.ts` only at `complete`.
+ */
+export const whoseChanges = async (
+  loaded: LoadedRun,
+  view: TaskView,
+  changed: readonly string[],
+  started: TaskStart
+): Promise<{ outside: { file: string; holder: string }[]; asRequests: string[] }> => {
+  const { task } = view;
+  const held = await lockedFiles(view.paths);
+  const shared = await sharedFiles(loaded);
+  const outside: { file: string; holder: string }[] = [];
+  const asRequests: string[] = [];
+  // A folder's placeholder goes once the task puts a file in it: the .gitkeep of a folder it writes into is its to remove.
+  const ownFolders = new Set(
+    changed.filter(file => held.has(file) || task.files.includes(file)).map(file => path.posix.dirname(file))
+  );
+  for (const file of changed) {
+    if (held.has(file) || (path.posix.basename(file) === '.gitkeep' && ownFolders.has(path.posix.dirname(file)))) {
+      continue;
+    }
+
+    // A file no task at work holds — shared, a done task's, or in no task of the plan — is taken by turns as the task
+    // completes when it is free (the same an agent gets from `task claim`), and requested when it is not. A new file
+    // nobody names is the task's.
+    const planned = await activeHolder(loaded, file);
+    if (planned && planned.id !== task.id) {
+      outside.push({ file, holder: planned.id });
+    } else if (shared.has(file) || Object.hasOwn(started.files, file)) {
+      asRequests.push(file);
+    }
+  }
+
+  return { outside, asRequests };
 };

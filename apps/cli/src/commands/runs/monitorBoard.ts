@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 
-import { ago, cell, hhmm, idCell, wrapped } from './monitorCells';
+import { ago, cell, hhmm, idCell, visible, wrapped } from './monitorCells';
+import { waitsText } from './monitorFlow';
 import { designSkipText } from '../../runs/designSkip';
 
 import type { AgentLine, AgentStatus, Monitored, TaskStory } from '../../runs/monitor';
@@ -11,8 +12,12 @@ import type { TaskLine } from '../../runs/view';
  * one under the other on a narrow terminal.
  */
 
-export const TASK_STATE: Record<TaskLine['status'], (task: TaskLine) => string> = {
-  pending: task => chalk.dim(task.waitsOn ? `· after ${task.waitsOn.join(', ')}` : '· pending'),
+export const TASK_STATE: Record<TaskLine['status'], (task: TaskLine, tasks: readonly TaskLine[]) => string> = {
+  pending: (task, tasks) => {
+    const waits = waitsText(task, tasks);
+
+    return chalk.dim(`· pending${waits ? ` — ${waits}` : ''}`);
+  },
   ready: () => '○ ready — free to take',
   'in-progress': task =>
     task.asking
@@ -109,15 +114,44 @@ const rowTail = (task: TaskLine, story: TaskStory | undefined, now: Date): strin
   );
 };
 
-const taskRow = (task: TaskLine, story: TaskStory | undefined, selected: boolean, now: Date): string =>
-  `${selected ? chalk.inverse('›') : ' '} ${idCell(task.id)} ${TASK_STATE[task.status](task)}${rowTail(task, story, now)}`;
+const taskRow = (
+  task: TaskLine,
+  tasks: readonly TaskLine[],
+  story: TaskStory | undefined,
+  selected: boolean,
+  now: Date
+): string =>
+  `${selected ? chalk.inverse('›') : ' '} ${idCell(task.id)} ${TASK_STATE[task.status](task, tasks)}${rowTail(task, story, now)}`;
 
 const ROLE_SHORT: Record<string, string> = { developer: 'dev', designer: 'design', tester: 'test', writer: 'write' };
 
-/** An agent's row: who, its model and roles, where it stands, when last heard and what it got approved — then what it
- * does, which the screen may cut. */
-const agentRow = (agent: AgentLine, now: Date): string =>
-  `${chalk.bold(agent.agent.padEnd(9))} ${chalk.dim(`${shortModel(agent.model)}${agent.kind === 'agent' && agent.roles.length > 0 ? ` · ${agent.roles.map(role => ROLE_SHORT[role] ?? role).join('+')}` : ''}`.padEnd(20))} ${AGENT_STATE[agent.status]}${chalk.dim(`${agent.signalAt ? ` ${ago(agent.signalAt, now)}` : ''}${agent.approved > 0 ? ` · ✓${String(agent.approved)}` : ''}`)} · ${agent.doing}`;
+/** What an agent's row says in each column but the last: who, its model and roles, where it stands, when last heard. */
+const agentCells = (agent: AgentLine, now: Date): [string, string, string, string] => [
+  chalk.bold(agent.agent),
+  chalk.dim(
+    `${shortModel(agent.model)}${agent.kind === 'agent' && agent.roles.length > 0 ? ` · ${agent.roles.map(role => ROLE_SHORT[role] ?? role).join('+')}` : ''}`
+  ),
+  AGENT_STATE[agent.status],
+  chalk.dim(
+    `${agent.signalAt ? ago(agent.signalAt, now) : ''}${agent.approved > 0 ? ` · ✓${String(agent.approved)}` : ''}`
+  )
+];
+
+/**
+ * The agents' rows, in columns: each as wide as its widest on these rows, so what each agent does starts where every
+ * other's does — names, models and states of different lengths left them ragged, and the panel hard to read down.
+ * What it does comes last, which the screen may cut.
+ */
+const agentRowsOf = (agents: readonly AgentLine[], now: Date): string[] => {
+  const cells = agents.map(agent => agentCells(agent, now));
+  const widths = [0, 1, 2, 3].map(column => Math.max(0, ...cells.map(row => visible(row[column] ?? ''))));
+
+  return agents.map((agent, index) => {
+    const row = cells[index] ?? agentCells(agent, now);
+
+    return `${row.map((text, column) => cell(text, widths[column] ?? 0)).join('  ')}  ${agent.doing}`;
+  });
+};
 
 /** Who did what of a task, said in a line each: its writers, its UI's review, its approval. */
 const storyOf = (task: TaskLine, story: TaskStory | undefined): string[] =>
@@ -228,7 +262,7 @@ export const bodyOf = ({
       chalk.dim(
         `  ↑↓ choose · enter ${open ? 'closes' : 'opens'} it${tasks.some(task => task.status !== 'done') ? ` · a ${showApproved ? 'hides' : 'shows'} the approved` : ''}${below > 0 ? ` · ↓ ${String(below)} more` : ''}`
       ),
-    ...shown.map((task, index) => taskRow(task, stories[task.id], first + index === selected, now)),
+    ...shown.map((task, index) => taskRow(task, tasks, stories[task.id], first + index === selected, now)),
     ...(folded
       ? [
           chalk.green(`  ✓ ${String(approved)} approved`) +
@@ -263,7 +297,7 @@ export const bodyOf = ({
   const fitting = agents.length <= rows - 1 ? agents : agents.slice(0, Math.max(0, rows - 2));
   const agentLines = [
     chalk.bold(`AGENTS (${String(agents.length)})`),
-    ...fitting.map(agent => agentRow(agent, now)),
+    ...agentRowsOf(fitting, now),
     ...(fitting.length < agents.length ? [chalk.dim(`  + ${String(agents.length - fitting.length)} more`)] : [])
   ];
   const leftWidth = Math.max(30, Math.floor(width * 0.42));

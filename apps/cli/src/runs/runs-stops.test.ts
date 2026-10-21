@@ -162,6 +162,19 @@ describe('stopping, cuts and disconnects', () => {
     expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-home')?.status).toBe('in-progress');
   });
 
+  // la-velada: t-boxer changed t-lint's theme.ts, and learnt it only at complete, after all its work.
+  it('says at check a file it changed that another task at work holds — what complete would refuse', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    await take('agent-2', 't-menu');
+    await writeInCopy(home.work, 'src/space/pages/menu.ts', 'export const menu = { es: true };\n');
+
+    expect(await checkTask(home.ctx, 'es-launch', 't-home')).toMatchObject({
+      ok: false,
+      othersFiles: [{ file: 'src/space/pages/menu.ts', holder: 't-menu' }]
+    });
+  });
+
   // la-velada: 52 of 88 failed checks were an acceptance line, each run again after author, lint and typecheck.
   it('runs the acceptance alone when asked — the project’s checks left for complete, and said', async () => {
     const plan = benchPlan();

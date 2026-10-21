@@ -122,7 +122,12 @@ export const taskCheck = (options: RunCommandOptions & { acceptance?: boolean })
           each =>
             `  ${each.ok ? '✓' : chalk.yellow('✗')} acceptance — ${each.said}  ${chalk.dim(`[${each.check}]`)}${secondRunText(each)}${each.ok || !each.output ? '' : `\n${each.output.map(line => `      ${line}`).join('\n')}`}`
         ),
-        ...checked.tooLong.map(each => chalk.yellow(`  ✗ ${each}`))
+        ...checked.tooLong.map(each => chalk.yellow(`  ✗ ${each}`)),
+        ...(checked.othersFiles ?? []).map(each =>
+          chalk.yellow(
+            `  ✗ ${each.file} is ${each.holder}'s, at work — complete refuses it: put it back (plitzi task discard ${each.file}) and propose the change to ${each.holder} (plitzi task propose ${each.holder} --change "…"), or wait for it (plitzi task wait ${each.file})`
+          )
+        )
       ].join('\n'),
     checked => (checked.ok ? 0 : 1)
   );

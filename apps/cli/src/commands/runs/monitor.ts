@@ -193,7 +193,6 @@ export const monitorScreen = (
         view.tasks,
         width,
         Math.min(Math.round(room * 0.4), room - leastActivity - MIN_BODY - detail.length - 1),
-        !short,
         flowOffsets
       )
     : { lines: [], columns: [] };

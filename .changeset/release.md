@@ -546,7 +546,7 @@ monitor` shows each as it comes, a problem in red.
     - `run plan` says when too few designers review the UI — one for every three developers keeps the reviews from
       queueing — and how many to start.
     - `task complete` refuses a `space lint` warning left in a file the task changed, there before it or not.
-    - `plitzi run notice "…" --on <where>`: something wrong that no task owns, kept in the run's log, sent to the lead,
+    - `plitzi run notice "…" --on <where>`: something wrong that no task owns, kept in the run's log — never a message that wakes the lead —
       said by the finish and listed in the report — what the next stage starts from.
     - `repeated-css` names `tw('sr-only')` for the visually-hidden CSS written by hand.
     - A whole-page `page shot` loads a lazy `<iframe>` (a map, a player) before it is taken, and names one from another
@@ -585,4 +585,20 @@ monitor` shows each as it comes, a problem in red.
       once more — it crashed the command with every page after it.
     - `run plan` says an element a check expects and the space lacks once per check, where a check expecting four
       texts of it said it four times.
+    - `run monitor` says an agent waiting for work in a few words — "waiting for its first task — 3 at work, 1
+      pending" — where its row showed the whole reason of its wait, every task and its status.
+    - `run monitor` lays the agents out in columns — name, model and roles, state, when last heard — each as wide as its
+      widest, so what each agent does starts where every other's does.
+    - A run reads the `@plitzi` packages installed without npm's staging folders (`.cli-4Vu260qW`) or a manifest half
+      written: read during an install, it said Plitzi changed under the run, every package "none".
+    - `run monitor` says what a pending task waits for: on its row, each task it follows and where that one stands —
+      "after t-boxer (UI review), t-lint (lead review)" — and in the flow, `t-motion ← t-boxer, t-case, t-lint`. A
+      task pending while what it followed waited for one designer looked stuck for no reason.
+    - `run monitor`: a task in review is its reviewer's — the designer at its UI review shows "reviewing · reviews the
+      UI of t-lint", the lead its final review — and the agent that wrote it is free (idle, "sent t-lint to review"),
+      where the designer showed idle while the flow said it reviewed.
+    - `task check` says a file the copy changed that another task at work holds — what `complete` refuses — with how
+      to put it right, before the work is done (velada-now's t-boxer learnt it at `complete`).
+    - `run monitor`'s flow has no "sent back" stage: a task a review sent back is ready again for the agent that wrote
+      it, its card marked with the round it is at — `t-boxer ↺2 dev-3`.
 

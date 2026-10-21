@@ -50,8 +50,8 @@ task's copy whose own server is not running, `page check` and `page shot` serve 
 after (`copyServer.ts`, by `serveCopy`): an agent starts no server to look at its page, where la-velada's spent 64 steps
 starting, waiting for, asking about and stopping theirs. **What
 nobody's task owns** — seen wrong outside the task in hand, there before the run — is `run notice "…" --on <where>`
-(`notices.ts`), by an agent with its token, a reviewer by its name, or the lead: one line of the log (`notice`), an
-agent's sent to the lead as well, said by the finish and listed in the report under "Noticed, owned by no task" —
+(`notices.ts`), by an agent with its token, a reviewer by its name, or the lead: one line of the log (`notice`) —
+never a message to the lead, which would wake it for what is the next stage's — said by the finish and listed in the report under "Noticed, owned by no task" —
 what the next stage starts from. la-velada's empty stats cell was seen in two runs and noted "predates this task" in a
 review each time: in no task's acceptance, it was nobody's.
 
@@ -94,7 +94,8 @@ the folder once it stopped — never a server left watching a folder removed und
 a person in a terminal of their own: it only reads (nothing marked read, nothing the lead is woken for touched) and
 refuses a shell with no terminal, an agent's, whose is `run watch`. It is a board for a supervisor: the run and the stage at
 work (`stage 3: velada-motion`, its goal under it — `run extend` logs each stage's), what needs someone on top; under it the run's flow, always — its kanban, each task a card in its stage from to-do to approved, with what holds
-an agent and what a review sent back (`f` hides it), a stage with more cards than it shows scrolled by the wheel over it
+an agent; a task a review sent back is ready again for its agent, its card marked with the round it is at (`t-boxer ↺2`),
+never a stage apart — a pending task's card says whom it follows (`t-motion ← t-boxer, t-lint`) (`f` hides it), a stage with more cards than it shows scrolled by the wheel over it
 (`↑ 5 · + 7 more`, `FlowColumn`, `wheelTarget`); the tasks left and the agents, each with its state — at work,
 waiting, asking the lead, stopped, done, idle while its task waits for its review — fifteen listed at most, the rest scrolled to with ↑↓ — and the approved
 folded in a line naming them (`a`); last the activity in columns (time, who → whom for a message, task, what), every row

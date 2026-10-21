@@ -8,7 +8,7 @@ import type { TaskLine } from '../../runs/view';
 const MIN_STAGE = 19;
 /** The widest: past it a stage's cards are no easier to read, and the row is only longer. */
 const MAX_STAGE = 30;
-/** What goes between two stages: an arrow to the next step, or a bar before one that is no step after it. */
+/** What goes between two stages: an arrow to the next step. */
 const GAP = 4;
 /** What starts each band: the arrow a band carried on from the one above starts with, the first's a blank as wide. */
 const LEAD = 2;
@@ -18,17 +18,72 @@ interface Stage {
   tone: (text: string) => string;
   tasks: TaskLine[];
   who?: (task: TaskLine) => string;
-  /** Not a step after the one before it: drawn past a bar, not an arrow. */
-  apart?: boolean;
 }
 
-/** Where every task stands, stage by stage: from to-do to approved, what holds an agent back, and what is sent back. */
+/**
+ * A task as its card names it: a task sent back by a review is ready again for the agent that wrote it, marked by the
+ * round it is at — `t-boxer ↺2` — rather than in a stage of its own: it goes round the same steps again.
+ */
+const nameOf = (task: TaskLine): string =>
+  task.status === 'changes-requested' ? `${task.id} ↺${String(task.round)}` : task.id;
+
+/** Where a task another waits for stands, in a word or two: what the one waiting for it waits on. */
+const standingOf = (task: TaskLine): string =>
+  task.status === 'in-review'
+    ? task.design?.status === 'due'
+      ? 'UI review'
+      : 'lead review'
+    : task.status === 'in-progress'
+      ? 'at work'
+      : task.status === 'changes-requested'
+        ? 'sent back'
+        : task.status;
+
+/**
+ * What a pending task waits for: each task it follows that is not approved yet, and where that one stands — "after
+ * t-boxer (UI review), t-lint (lead review)". Its tasks at review were a pending task's whole reason, and nothing on
+ * the screen said so (la-velada: t-motion pending while the three it followed waited for one designer).
+ */
+export const waitsText = (task: TaskLine, tasks: readonly TaskLine[]): string => {
+  const left = waitedFor(task, tasks).map(other => `${other.id} (${standingOf(other)})`);
+
+  return left.length > 0 ? `after ${left.join(', ')}` : '';
+};
+
+/** The tasks `task` follows that are not approved yet. */
+const waitedFor = (task: TaskLine, tasks: readonly TaskLine[]): TaskLine[] => {
+  const byId = new Map(tasks.map(each => [each.id, each] as const));
+
+  return (task.waitsOn ?? []).flatMap(id => {
+    const other = byId.get(id);
+
+    return other && other.status !== 'done' ? [other] : [];
+  });
+};
+
+/** Where every task stands, stage by stage: from to-do to approved, and what holds an agent back. */
 const stagesOf = (tasks: readonly TaskLine[]): Stage[] => {
   const of = (status: TaskLine['status']) => tasks.filter(task => task.status === status);
 
   return [
-    { name: '· pending', tone: chalk.dim, tasks: of('pending') },
-    { name: '○ ready', tone: text => text, tasks: of('ready') },
+    // In the flow's narrow column, only whom it waits for: where each of them stands is the column it is in.
+    {
+      name: '· pending',
+      tone: chalk.dim,
+      tasks: of('pending'),
+      who: task => {
+        const left = waitedFor(task, tasks).map(other => other.id);
+
+        return left.length > 0 ? `← ${left.join(', ')}` : '';
+      }
+    },
+    // Sent back by a review, ready again — for the agent that wrote it, whose name it says.
+    {
+      name: '○ ready',
+      tone: text => text,
+      tasks: [...of('changes-requested').filter(task => !task.asking), ...of('ready')],
+      who: task => (task.status === 'changes-requested' ? (task.agent ?? '') : '')
+    },
     {
       name: '▶ at work',
       tone: chalk.cyan,
@@ -61,15 +116,7 @@ const stagesOf = (tasks: readonly TaskLine[]): Stage[] => {
       tasks: of('in-review').filter(task => task.design?.status !== 'due'),
       who: task => task.reviewer ?? 'no lead yet'
     },
-    { name: '✓ approved', tone: chalk.green, tasks: of('done') },
-    // Sent back by a review: no step toward approved, but back to the work of the same agent — set apart.
-    {
-      name: '↺ sent back',
-      tone: chalk.yellow,
-      tasks: of('changes-requested').filter(task => !task.asking),
-      who: task => `${task.agent ?? ''} r${String(task.round)}`,
-      apart: true
-    }
+    { name: '✓ approved', tone: chalk.green, tasks: of('done') }
   ];
 };
 
@@ -101,18 +148,13 @@ export interface FlowBoard {
 export const flowBoard = (
   tasks: readonly TaskLine[],
   width: number,
-  {
-    depth = 8,
-    note = true,
-    offsets = new Map<number, number>()
-  }: { depth?: number; note?: boolean; offsets?: ReadonlyMap<number, number> } = {}
+  { depth = 8, offsets = new Map<number, number>() }: { depth?: number; offsets?: ReadonlyMap<number, number> } = {}
 ): FlowBoard => {
   const stages = stagesOf(tasks);
   const perBand = stagesPerBand(width - LEAD, stages.length);
   const stageWidth = Math.min(MAX_STAGE, Math.floor((width - LEAD - GAP * (perBand - 1)) / perBand));
   const fit = (text: string) => cell(text, stageWidth);
   const arrow = chalk.dim(' ─▶ ');
-  const bar = chalk.dim('  │ ');
   const bands = Array.from({ length: Math.ceil(stages.length / perBand) }, (_, index) =>
     stages.slice(index * perBand, (index + 1) * perBand)
   );
@@ -121,14 +163,14 @@ export const flowBoard = (
   let top = 1;
 
   const bandLines = (band: Stage[], index: number): string[] => {
-    // Each stage after the first, past an arrow — or a bar, for one that is no step after the one before it. A band
-    // that goes on from the one above starts with an arrow of its own: the flow reads on.
-    const joined = (cells: string[], edge: (stage: Stage) => string) =>
-      cells.map((each, at) => (at === 0 ? each : `${edge(band[at])}${each}`)).join('');
+    // Each stage after the first, past an arrow. A band that goes on from the one above starts with an arrow of its
+    // own: the flow reads on.
+    const joined = (cells: string[], edge: string) =>
+      cells.map((each, at) => (at === 0 ? each : `${edge}${each}`)).join('');
     const lead = index === 0 ? ' '.repeat(LEAD) : chalk.dim('▶ ');
     const head = joined(
       band.map(stage => fit(stage.tone(chalk.bold(`${stage.name} (${String(stage.tasks.length)})`)))),
-      stage => (stage.apart ? bar : arrow)
+      arrow
     );
     const deepest = Math.min(depth, Math.max(0, ...band.map(stage => stage.tasks.length)));
     // How far down each stage's cards are scrolled: never past its last card.
@@ -140,12 +182,14 @@ export const flowBoard = (
         band.map((stage, at) => {
           const task = stage.tasks.at(from[at] + row);
 
-          // An id longer than its column cut in the middle, as the tasks' list cuts one: its ends tell it apart.
-          const id = task && task.id.length > stageWidth ? idCell(task.id, stageWidth).trimEnd() : task?.id;
+          // A name longer than its column cut in the middle, as the tasks' list cuts one: its ends tell it apart.
+          const name = task ? nameOf(task) : undefined;
+          const id = name && name.length > stageWidth ? idCell(name, stageWidth).trimEnd() : name;
+          const who = task && stage.who ? stage.who(task) : '';
 
-          return task && id ? fit(`${stage.tone(id)}${stage.who ? chalk.dim(` ${stage.who(task)}`) : ''}`) : fit('');
+          return task && id ? fit(`${stage.tone(id)}${who ? chalk.dim(` ${who}`) : ''}`) : fit('');
         }),
-        stage => (stage.apart ? bar : '    ')
+        '    '
       )
     );
     const more = band.some(stage => stage.tasks.length > deepest)
@@ -161,7 +205,7 @@ export const flowBoard = (
                     .join(' · ')
                 );
               }),
-              stage => (stage.apart ? bar : '    ')
+              '    '
             )
           )
         ]
@@ -185,20 +229,12 @@ export const flowBoard = (
     lines: [
       cell(
         chalk.bold('FLOW') +
-          chalk.dim('  each task left to right, from to-do to approved · the wheel scrolls a stage · f hides it'),
+          chalk.dim(
+            '  each task left to right, from to-do to approved · ↺2 sent back, ready again for its agent at round 2 · the wheel scrolls a stage · f hides it'
+          ),
         width
       ),
-      ...bands.flatMap(bandLines),
-      ...(note
-        ? [
-            cell(
-              chalk.dim(
-                '  ↺ sent back: to the same agent, who redoes it on the approved — another takes it if it goes silent'
-              ),
-              width
-            )
-          ]
-        : [])
+      ...bands.flatMap(bandLines)
     ],
     columns
   };
@@ -208,7 +244,7 @@ export const flowBoard = (
 export const flowLines = (
   tasks: readonly TaskLine[],
   width: number,
-  options: { depth?: number; note?: boolean; offsets?: ReadonlyMap<number, number> } = {}
+  options: { depth?: number; offsets?: ReadonlyMap<number, number> } = {}
 ): string[] => flowBoard(tasks, width, options).lines;
 
 /**
@@ -226,22 +262,19 @@ const countsOnly = (tasks: readonly TaskLine[], width: number): string[] =>
   );
 
 /**
- * The flow as deep as `rows` lets it be: its stages' cards cut to fewer a stage, then its note left out — and, where not
- * even a card a stage fits, each stage's count in a line or two: the kanban is what the board is for, never left out.
+ * The flow as deep as `rows` lets it be: its stages' cards cut to fewer a stage — and, where not even a card a stage
+ * fits, each stage's count in a line or two: the kanban is what the board is for, never left out.
  */
 export const fittedFlow = (
   tasks: readonly TaskLine[],
   width: number,
   rows: number,
-  note: boolean,
   offsets: ReadonlyMap<number, number> = new Map()
 ): FlowBoard => {
-  for (const withNote of note ? [true, false] : [false]) {
-    for (let depth = 8; depth >= 1; depth -= 1) {
-      const board = flowBoard(tasks, width, { depth, note: withNote, offsets });
-      if (board.lines.length <= rows) {
-        return board;
-      }
+  for (let depth = 8; depth >= 1; depth -= 1) {
+    const board = flowBoard(tasks, width, { depth, offsets });
+    if (board.lines.length <= rows) {
+      return board;
     }
   }
 

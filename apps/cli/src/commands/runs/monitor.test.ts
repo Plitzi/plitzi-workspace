@@ -6,6 +6,8 @@ import { monitorScreen, wheelTarget } from './monitor';
 import { flowBoard, flowLines } from './monitorFlow';
 import { extendRun } from '../../runs/extend';
 import { groupRepeats, monitorRun } from '../../runs/monitor';
+import { runPaths } from '../../runs/paths';
+import { logRun } from '../../runs/run';
 import { askLead, messageTasks, noteRun, tellLead } from '../../runs/talk';
 import { completeTask, reviewTask } from '../../runs/tasks';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
@@ -240,7 +242,7 @@ describe('plitzi run monitor', () => {
     expect(repeats.every(line => line.indexOf('“The CDN') === unfolded[row].indexOf('“The CDN') + 2)).toBe(true);
   });
 
-  it('draws the run as a flow, each task in its stage, the review split and what is sent back', async () => {
+  it('draws the run as a flow, each task in its stage, the review split, and one sent back ready again', async () => {
     const runId = await open();
     await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
     const home = await take('agent-2', 't-home');
@@ -254,7 +256,6 @@ describe('plitzi run monitor', () => {
       /pending \(1\).*ready \(0\).*at work \(1\).*held \(0\).*UI review \(0\).*lead review \(1\).*approved \(1\)/
     );
     expect(flow.some(line => line.includes('t-home agent-2') && line.includes('t-menu no lead yet'))).toBe(true);
-    expect(flow.some(line => line.includes('sent back (0)'))).toBe(true);
 
     // A question to the lead holds its agent: the task is held, saying why, and no longer at work.
     const asked = await askLead(home.ctx, runId, 't-home', 'Spanish or Catalan?');
@@ -262,11 +263,12 @@ describe('plitzi run monitor', () => {
     expect(held.find(line => line.includes('pending'))).toMatch(/at work \(0\).*held \(1\)/);
     expect(held.some(line => line.includes(`t-home asks lead (${asked.question.id})`))).toBe(true);
 
-    // Sent back by the lead: to the same agent, said apart from the steps, with its round.
+    // Sent back by the lead: ready again, for the same agent, its name marked with the round it is at.
     await reviewTask(lead(), runId, 't-menu', 'changes', [{ note: 'Spanish prices' }]);
     const back = plain(flowLines((await monitorRun(lead(), runId)).view.tasks, 220));
-    expect(back.find(line => line.includes('pending'))).toMatch(/approved \(1\)\s+│ ↺ sent back \(1\)/);
-    expect(back.some(line => line.includes('t-menu agent-3 r1'))).toBe(true);
+    expect(back.find(line => line.includes('pending'))).toMatch(/ready \(1\)/);
+    expect(back.some(line => line.includes('t-menu ↺1 agent-3'))).toBe(true);
+    expect(back.some(line => line.includes('sent back ('))).toBe(false);
   });
 
   it('says which rows the tasks and the activity take, where the wheel scrolls each', async () => {
@@ -335,16 +337,7 @@ describe('plitzi run monitor', () => {
         screen.some(line => line.startsWith('FLOW')),
         at
       ).toBe(true);
-      for (const stage of [
-        'pending',
-        'ready',
-        'at work',
-        'held',
-        'UI review',
-        'lead review',
-        'approved',
-        'sent back'
-      ]) {
+      for (const stage of ['pending', 'ready', 'at work', 'held', 'UI review', 'lead review', 'approved']) {
         expect(
           screen.some(line => line.includes(`${stage} (`)),
           `${at}: ${stage}`
@@ -412,26 +405,83 @@ describe('plitzi run monitor', () => {
     expect(plain(ready.lines).some(line => line.includes('+ 12 more'))).toBe(true);
     const scrolled = plain(flowBoard(data.view.tasks, 200, { depth: 8, offsets: new Map([[1, 5]]) }).lines);
     expect(scrolled.some(line => line.includes('↑ 5 · + 7 more'))).toBe(true);
-    expect(scrolled.some(line => line.includes('t-page-6 '))).toBe(true);
-    expect(scrolled.some(line => line.includes('t-page-1 '))).toBe(false);
+    expect(scrolled.some(line => / t-page-6(\s|$)/.test(line))).toBe(true);
+    expect(scrolled.some(line => / t-page-1(\s|$)/.test(line))).toBe(false);
     // Never past its last card, however far it is asked.
     const end = plain(flowBoard(data.view.tasks, 200, { depth: 8, offsets: new Map([[1, 99]]) }).lines);
     expect(end.some(line => line.includes('↑ 12') && !line.includes('more'))).toBe(true);
-    expect(end.some(line => line.includes('t-page-20 '))).toBe(true);
+    expect(end.some(line => / t-page-20(\s|$)/.test(line))).toBe(true);
   });
 
-  // Its task done and in review, the agent does nothing: idle, saying what it waits for — never "in review" as if at work.
-  it('shows an agent whose task waits for its review as idle', async () => {
+  // Its task in review is its reviewer's: the agent that wrote it is free — idle, saying it sent it — never "in review"
+  // as if at work.
+  it('shows an agent whose task waits for its review as idle, the task its reviewer’s', async () => {
     const runId = await open();
     const menu = await take('agent-3', 't-menu');
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { es: true };\n');
     await completeTask(menu.ctx, runId, 't-menu');
 
     const agent = (await monitorRun(lead(), runId)).agents.find(each => each.agent === 'agent-3');
-    expect([agent?.status, agent?.doing]).toEqual([
+    expect([agent?.status, agent?.doing, agent?.task]).toEqual([
       'idle',
-      expect.stringContaining('t-menu waits for its review') as unknown
+      expect.stringContaining('sent t-menu to review') as unknown,
+      undefined
     ]);
+  });
+
+  // la-velada: a designer waiting for its first review showed the whole reason of the wait on its row — every task and
+  // its status; the activity says that, the row says how the run stands.
+  it('says an agent waiting for its first task in a few words, not the list of every task', async () => {
+    const runId = await open();
+    await take('agent-3', 't-menu');
+    await logRun(bench.agent('agent-4'), runPaths(bench.root, runId), {
+      action: 'waiting',
+      why: 'nothing is ready: t-menu in-progress (agent-3), t-home pending (waits for t-menu), t-about pending (waits for t-menu)'
+    });
+
+    const agent = (await monitorRun(lead(), runId)).agents.find(each => each.agent === 'agent-4');
+    expect([agent?.status, agent?.doing]).toEqual([
+      'waiting',
+      expect.stringMatching(/^waiting for its first task — 1 at work/)
+    ]);
+    expect(agent?.doing).not.toContain('t-home');
+  });
+
+  // la-velada: t-motion sat pending while the three it followed waited for one designer — nothing on screen said so.
+  it('says what a pending task waits for, and where each of those stands, on its row and in the flow', async () => {
+    const runId = await open();
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: "Hola" };\n');
+    await completeTask(home.ctx, runId, 't-home');
+    const data = await monitorRun(lead(), runId);
+    const waiting = data.view.tasks.find(task => task.status === 'pending' && task.waitsOn?.includes('t-home'));
+    if (!waiting) {
+      throw new Error('the bench plan has a task after t-home');
+    }
+
+    const screen = plain(monitorScreen(data, { selected: 0, open: false, width: 220, height: 60, now: bench.now() }));
+    expect(
+      screen.some(line => line.includes(waiting.id) && line.includes('· pending — after t-home (lead review)'))
+    ).toBe(true);
+    expect(plain(flowLines(data.view.tasks, 220)).some(line => line.includes(`${waiting.id} ← t-home`))).toBe(true);
+  });
+
+  // Names, models and states of different lengths left the agents' rows ragged: what each does started anywhere.
+  it('lays the agents out in columns, what each does starting where every other’s does', async () => {
+    const runId = await open();
+    await take('agent-3', 't-menu');
+    const data = await monitorRun(lead(), runId);
+    const screen = plain(
+      monitorScreen(data, { selected: 0, open: false, width: 220, height: 60, now: bench.now(), showApproved: true })
+    );
+    const starts = data.agents.map(agent => {
+      const line = screen.find(each => each.includes(` ${agent.agent} `) && each.includes(agent.doing.slice(0, 20)));
+
+      return line ? line.indexOf(agent.doing.slice(0, 20), line.indexOf(` ${agent.agent} `)) : -1;
+    });
+
+    expect(starts.every(start => start > 0)).toBe(true);
+    expect(new Set(starts).size).toBe(1);
   });
 
   // `complete --note` tells the lead as it completes: one event, said on one line of the activity.
