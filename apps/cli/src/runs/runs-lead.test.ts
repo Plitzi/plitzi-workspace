@@ -85,6 +85,36 @@ describe('the lead’s plan as the run goes', () => {
     expect((await refusal(openWith(lead(), await bench.writePlan(plan), 4))).message).toContain('over 16');
   });
 
+  // velada-now: t-motion waited for t-boxer's third round though it shared no file with it — and amend refused to let
+  // it start: what a task waits for was the run's shape.
+  it('lets the lead change what a task nobody took waits for — never into a circle', async () => {
+    const plan = benchPlan();
+    await open(plan);
+    const book = plan.tasks.find(task => task.dependsOn.length > 1);
+    if (!book) {
+      throw new Error('the bench plan has a task after two');
+    }
+
+    const sooner = {
+      ...plan,
+      tasks: plan.tasks.map(task => (task.id === book.id ? { ...task, dependsOn: [book.dependsOn[0]] } : task))
+    };
+    expect(await amendRun(lead(), 'es-launch', await bench.writePlan(sooner))).toMatchObject({
+      tasks: [{ task: book.id, changed: ['dependsOn'] }]
+    });
+    expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === book.id)?.waitsOn).toEqual([
+      book.dependsOn[0]
+    ]);
+
+    const circle = {
+      ...sooner,
+      tasks: sooner.tasks.map(task => (task.id === book.dependsOn[0] ? { ...task, dependsOn: [book.id] } : task))
+    };
+    expect((await refusal(amendRun(lead(), 'es-launch', await bench.writePlan(circle)))).message).toContain(
+      'would wait for itself'
+    );
+  });
+
   it('paces a plan by how this project’s runs went: their middle done task’s minutes over its estimate', async () => {
     const row = (task: string, minutes: number, estimate: number): string =>
       `| ${task} | developer | done | dev-1 | ${String(minutes)} / ${String(estimate)} | 1 | 0 | src/a.ts |`;

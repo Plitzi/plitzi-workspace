@@ -6,6 +6,7 @@ import { logRun } from './run';
 import { updateState } from './taskStore';
 import { DESIGNER, readTeam, startedAgents } from './team';
 import { isUiFile, reviewedAsUi } from './uiFiles';
+import { byUrgency } from './urgency';
 
 import type { DesignReview, Quality, RunTask, TaskState } from './model';
 import type { LoadedRun, RunContext } from './run';
@@ -28,18 +29,22 @@ export const designDue = (state: TaskState): boolean => state.status === 'in-rev
 
 /**
  * The review a designer is offered by `task next`: one due, not one it worked itself, not one another designer took —
- * the one that waited longest, which holds the rest back.
+ * the most urgent first (`byUrgency`: what other tasks wait on goes before what nobody does), then the one that waited
+ * longest.
  */
-export const designReviewFor = (views: readonly TaskView[], agent: string): TaskView | undefined =>
-  views
+export const designReviewFor = (views: readonly TaskView[], agent: string): TaskView | undefined => {
+  const urgency = byUrgency(views.map(view => view.task));
+
+  return views
     .filter(
       view =>
         designDue(view.state) &&
         view.owner?.agent !== agent &&
         (view.state.design?.by === undefined || view.state.design.by === agent)
     )
-    .sort((a, b) => a.state.updatedAt.localeCompare(b.state.updatedAt))
+    .sort((a, b) => urgency(a.task, b.task) || a.state.updatedAt.localeCompare(b.state.updatedAt))
     .at(0);
+};
 
 /**
  * What a designer looks at, by how closely the team asks (`options.designReview`) — the run's skill (`runs.md`) says it

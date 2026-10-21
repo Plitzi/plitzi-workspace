@@ -1,6 +1,6 @@
 import { inPageFolder } from './ownership';
-import { chainMinutes, PRIORITY_RANK } from './plan';
 import { roleOf } from './tasks';
+import { byUrgency, chainMinutes } from './urgency';
 
 import type { RunTask } from './model';
 import type { Ownership } from './ownership';
@@ -114,11 +114,8 @@ const teamOf = (agents: number, roles: Readonly<Record<string, number>>): Agent[
 
 /** One play of the plan: events in order — a task completed, a review ended — and every free agent given work between. */
 const play = (tasks: readonly RunTask[], options: RehearsalOptions): Played => {
-  const chains = chainMinutes(tasks);
-  const order = (a: RunTask, b: RunTask): number =>
-    PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] ||
-    (chains.get(b.id) ?? 0) - (chains.get(a.id) ?? 0) ||
-    a.id.localeCompare(b.id);
+  const urgency = byUrgency(tasks);
+  const order = (a: RunTask, b: RunTask): number => urgency(a, b) || a.id.localeCompare(b.id);
   const team = teamOf(options.agents, options.roles ?? {});
   const approvedAt = new Map<string, number>();
   const readyAt = new Map<string, number>();

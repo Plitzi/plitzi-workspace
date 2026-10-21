@@ -5,6 +5,7 @@ import { LEAD } from './messages';
 import { RunRefusal } from './refusal';
 import { updateState } from './taskStore';
 import { readTeam, startedAgents } from './team';
+import { byUrgency } from './urgency';
 
 import type { RunRecord } from './model';
 import type { LoadedRun, RunContext } from './run/context';
@@ -136,15 +137,18 @@ const freeFor = (view: TaskView, agent: string): boolean =>
 
 /**
  * The review `task next --role lead` offers a lead: a task in review whose UI is not waiting for a designer, no other
- * lead took — the one this lead reviewed before first (it knows what it asked), then the one that waited longest.
+ * lead took — the one this lead reviewed before first (it knows what it asked), then the most urgent (`byUrgency`), then
+ * the one that waited longest.
  */
 export const leadReviewFor = (
   views: readonly TaskView[],
   agent: string,
   /** No designer is free: a UI review no designer took is the lead's too, rather than one that waits for nobody. */
   uiToo = false
-): TaskView | undefined =>
-  views
+): TaskView | undefined => {
+  const urgency = byUrgency(views.map(view => view.task));
+
+  return views
     .filter(
       view =>
         view.state.status === 'in-review' &&
@@ -156,9 +160,10 @@ export const leadReviewFor = (
       const mine = (view: TaskView): number =>
         view.state.notes.some(note => note.by === agent && /^Review \d+: /.test(note.text)) ? 0 : 1;
 
-      return mine(a) - mine(b) || a.state.updatedAt.localeCompare(b.state.updatedAt);
+      return mine(a) - mine(b) || urgency(a.task, b.task) || a.state.updatedAt.localeCompare(b.state.updatedAt);
     })
     .at(0);
+};
 
 /** Takes the review offered: false when another lead took it first. */
 export const takeLeadReview = async (ctx: RunContext, view: TaskView): Promise<boolean> => {

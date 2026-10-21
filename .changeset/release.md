@@ -611,4 +611,12 @@ monitor` shows each as it comes, a problem in red.
       servers by hand. A comparison with a server on this machine opens it as the project, in the scheme asked.
     - A developer whose task is in review is never told it can stop — one sent back comes back to it — and a wait that
       ends says so ("Do not stop: t-case, yours, is in review"): velada-now's t-case and t-boxer came back to nobody.
+    - Tasks are taken, and reviewed, by urgency: a task's own priority or the highest of the tasks that wait on it,
+      however far down — a low task a high one waits for goes first — then the longest chain still to do. `task next`,
+      `run rehearse`, the designers' and the leads' queues read the same order.
+    - `run amend` changes what a task nobody took waits for (`dependsOn`) — refused for an unknown task, itself, or a
+      circle — and `run watch` tells the lead when a pending task is held behind ones in review or sent back while
+      agents of its role have nothing to take, with the way out: amend the dependency away when they share no file,
+      review that one first when they do. velada-now's t-motion waited three rounds of t-boxer's UI review it needed
+      nothing from, two developers idle.
 

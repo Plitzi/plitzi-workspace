@@ -26,13 +26,31 @@ import { viewTask } from './taskStore';
 import type { PlannedTask, RunPlan, RunTask } from './model';
 import type { RunContext } from './run';
 
+/** What keeps `task`'s new dependencies from holding: one the run has not, itself, or a circle back to it. */
+const dependsOnProblems = (task: PlannedTask, inRun: readonly RunTask[], planned: readonly PlannedTask[]): string[] => {
+  const ids = new Set(inRun.map(each => each.id));
+  const unknown = task.dependsOn.filter(id => !ids.has(id) || id === task.id);
+  if (unknown.length > 0) {
+    return [
+      `Task "${task.id}" would wait for ${unknown.map(id => `"${id}"`).join(', ')}: a task of the run, not itself`
+    ];
+  }
+
+  const waitsFor = new Map(inRun.map(each => [each.id, each.dependsOn] as const));
+  planned.forEach(each => waitsFor.set(each.id, each.dependsOn));
+  const reaches = (from: string, seen: Set<string>): boolean =>
+    (waitsFor.get(from) ?? []).some(id => id === task.id || (!seen.has(id) && reaches(id, seen.add(id))));
+
+  return reaches(task.id, new Set()) ? [`Task "${task.id}" would wait for itself, through what it waits for`] : [];
+};
+
 /**
  * `plitzi run amend`: the lead corrects what a plan asks while the run is open — a task's title, acceptance, priority
  * or estimate, the goal, a note more — from the plan file edited. What makes the run's shape — which tasks there are,
- * their files, what they wait for, what they touch — stays as the run opened it, but for a task nobody took, which may
+ * their files, what they touch — stays as the run opened it, but for a task nobody took, which may
  * leave it (less to do; its pieces of the inventory then wait, or another task covers them) — a task more is a stage
  * (`run extend`). Who a task is for
- * — its role and quality — changes until an agent takes it, and not after: it was taken as that. A task done is not
+ * — its role and quality — and what it waits for change until an agent takes it, and not after: it was taken as that. A task done is not
  * asked again. Each task whose ask changed is told so, with what it now says; nothing is changed unsaid.
  *
  * A run with stages stacked on it (`run extend`) is amended from either: its own plan, or a stage's as it was stacked —
@@ -59,9 +77,11 @@ export interface Amended {
   inventory?: true;
 }
 
-const SHAPE = ['files', 'dependsOn', 'touches'] as const;
+const SHAPE = ['files', 'touches'] as const;
 const ASK = ['title', 'acceptance', 'priority', 'estimateMinutes', 'milestone'] as const;
-const WHO = ['role', 'quality'] as const;
+// What a task waits for, and who it is for, change until it is taken: a lead clears a bottleneck by letting one start
+// sooner (velada-now: t-motion waited for t-boxer's third round, though it shared no file with it).
+const WHO = ['role', 'quality', 'dependsOn'] as const;
 const UNTAKEN: readonly string[] = ['pending', 'ready'];
 
 const same = (a: unknown, b: unknown): boolean => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
@@ -147,6 +167,10 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
       continue;
     }
 
+    if (!same(task.dependsOn, was.dependsOn)) {
+      problems.push(...dependsOnProblems(task, loaded.tasks, next.tasks));
+    }
+
     problems.push(...(await acceptanceProblems(ctx.root, task)));
     changes.push({ task, defined, changed: [...changed] });
   }
@@ -186,6 +210,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
       acceptance: task.acceptance,
       priority: task.priority,
       estimateMinutes: task.estimateMinutes,
+      dependsOn: task.dependsOn,
       ...(task.role === undefined ? {} : { role: task.role }),
       ...(task.quality === undefined ? {} : { quality: task.quality }),
       ...(task.milestone === undefined ? {} : { milestone: task.milestone })

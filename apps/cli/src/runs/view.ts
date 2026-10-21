@@ -1,19 +1,20 @@
 import path from 'node:path';
 
 import { proposalsOf } from './agreements';
+import { bottlenecks } from './bottlenecks';
 import { designSkipText } from './designSkip';
 import { fingerprint } from './files';
 import { askingLeads } from './leads';
 import { longFileText, longFilesIn } from './longFiles';
 import { LEAD, messagesOf, unreadFor } from './messages';
 import { under } from './paths';
-import { chainMinutes } from './plan';
 import { previewPort } from './previewRecord';
 import { loadRun, pinnedChanges, pinnedNow, readApproved, readBase, runIds, samePinned } from './run';
 import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
-import { DESIGNER, readTeam, startedAgents } from './team';
+import { readTeam, startedAgents } from './team';
+import { chainMinutes } from './urgency';
 
 import type { DesignReview, Needs, RunRecord, TaskStatus, Waiting } from './model';
 import type { RunContext } from './run';
@@ -89,6 +90,7 @@ export interface Attention {
     | 'version'
     | 'left-in-tmp'
     | 'ui-waits'
+    | 'held-up'
     | 'message';
   task?: string;
   /** The file it is about, when it is about one: what keeps it the same notice while its words change. */
@@ -195,28 +197,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     });
   }
 
-  // UI reviews nobody takes: every designer is at a task of its own — the lead's, or they wait for nobody.
   const team = await readTeam(ctx.root).catch(() => undefined);
-  const designers = (team ? startedAgents(team) : [])
-    .filter(each => each.roles.includes(DESIGNER))
-    .map(each => each.agent);
-  const atOwn = (agent: string): string | undefined =>
-    views.find(
-      view =>
-        view.owner?.agent === agent &&
-        (view.state.status === 'in-progress' || view.state.status === 'changes-requested')
-    )?.task.id;
-  const uiWaiting = views.filter(
-    view =>
-      view.state.status === 'in-review' && view.state.design?.status === 'due' && view.state.design.by === undefined
-  );
-  if (uiWaiting.length > 0 && designers.length > 0 && designers.every(agent => atOwn(agent) !== undefined)) {
-    attention.push({
-      kind: 'ui-waits',
-      text: `${uiWaiting.map(view => view.task.id).join(', ')} wait for a UI review, and no designer is free (${designers.map(agent => `${agent} at ${String(atOwn(agent))}`).join(', ')}): start another designer (team.json's designers) — or review them yourself, UI included (both schemes, the phone width): plitzi task next --role lead --take, then --approve --skip-design lead`,
-      who: 'lead'
-    });
-  }
+  attention.push(...bottlenecks(views, team ? startedAgents(team) : []));
 
   for (const file of await leftInTmp(ctx.root, record)) {
     attention.push({

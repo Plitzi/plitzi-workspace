@@ -319,15 +319,18 @@ estimates, milestones, the goal, and notes more (sent to every task) — into `p
 telling each task changed what it now asks. A task nobody took leaves the run when the plan no longer has it — under
 the take's lock, refused for one taken, or one another task waits for — and the inventory may change, checked again
 over what is left (`inventoryProblems`): the scope narrows, a lead's or a person's choice, never in silence; more work
-is a stage (`run extend`). The run's shape otherwise — their files, `dependsOn`, `touches` — is refused, as is a task
-already done, every reason at once; who a task is for — its `role` and `quality` — changes while
-it is pending or ready, and is refused once an agent took it; so is a plan that changes nothing. Its acceptance is held
+is a stage (`run extend`). The run's shape otherwise — their files, `touches` — is refused, as is a task already done,
+every reason at once; who a task is for and when — its `role`, `quality` and `dependsOn` — changes while it is pending
+or ready, and is refused once an agent took it, as is a `dependsOn` on a task the run lacks, on itself, or in a circle
+(`dependsOnProblems`): the lead's way to free a task held behind one it needs nothing from, which `run watch` says
+(`held-up`: a pending task whose every remaining dependency is past its work — in review, sent back, blocked — while
+agents of its role have nothing to take; whether they share a file decides what it suggests); so is a plan that changes nothing. Its acceptance is held
 to `run plan`'s rules, among them a `page check` whose text the shell would split into a page.
 
 ## A plan rehearsed (`rehearse.ts`)
 
 `run rehearse` plays a checked plan out with no run opened: each agent — `--roles` holds some to a role, the rest take
-any — takes the best ready task it may, in `task next`'s order (priority, then the longest chain still to do, then id);
+any — takes the best ready task it may, in `task next`'s order (urgency — its own priority or the highest of the tasks that wait on it, however far down — then the longest chain still to do, then id);
 a task takes its estimate, then waits for the lead, who reviews one at a time (`--review`); what depends on it is ready
 once it is approved. It answers the schedule, each agent's idle time, the critical path, the reviews' queue, what was
 ready before an agent could take it, and the files changed by tasks at work at the same time — one holding a file

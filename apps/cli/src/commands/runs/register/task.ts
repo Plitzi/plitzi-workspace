@@ -46,7 +46,9 @@ export const registerTaskGroup = (program: Command): Command => {
 
   taskGroup
     .command('next')
-    .description('The ready task to take: highest priority, then the longest chain still to do')
+    .description(
+      'The ready task to take: the most urgent — its priority or the highest of what waits on it — then the longest chain still to do'
+    )
     .option(
       '--role <roles>',
       'Only a task for these roles, separated by commas: developer, designer, reviewer, tester, writer…'

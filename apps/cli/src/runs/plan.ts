@@ -13,6 +13,7 @@ import { shellCommands } from './shell';
 import { DESIGNER, DEVELOPER, reviewsDesign, roleProblems, startedAgents, teamSize, teamTakes, TESTER } from './team';
 import { testSetupOf, withTestTasks } from './tests';
 import { reviewedAsUi } from './uiFiles';
+import { byUrgency, chainMinutes } from './urgency';
 import { scriptsOf } from '../commands/verify';
 
 import type { Quality, RunPlan, RunTask, TaskState } from './model';
@@ -67,8 +68,6 @@ export interface CheckedPlan {
   /** What the plan says it leaves out: said to the person before opening. */
   leftOut: string[];
 }
-
-export const PRIORITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 } as const;
 
 /** Above either, a person confirms the estimate before the run opens. */
 export const CONFIRM_ABOVE = { agents: 5, wallMinutes: 120 } as const;
@@ -140,31 +139,6 @@ export const findCycle = (tasks: readonly { id: string; dependsOn: readonly stri
   }
 
   return undefined;
-};
-
-/** The longest chain of estimates that starts at each task: what is left of the critical path from it. */
-export const chainMinutes = (tasks: readonly RunTask[]): Map<string, number> => {
-  const byId = new Map(tasks.map(task => [task.id, task]));
-  const dependants = new Map<string, string[]>();
-  tasks.forEach(task =>
-    task.dependsOn.forEach(dependency => dependants.set(dependency, [...(dependants.get(dependency) ?? []), task.id]))
-  );
-  const memo = new Map<string, number>();
-  const chain = (id: string): number => {
-    const known = memo.get(id);
-    if (known !== undefined) {
-      return known;
-    }
-
-    const own = byId.get(id)?.estimateMinutes ?? 0;
-    const after = Math.max(0, ...(dependants.get(id) ?? []).map(chain));
-    memo.set(id, own + after);
-
-    return own + after;
-  };
-  tasks.forEach(task => chain(task.id));
-
-  return memo;
 };
 
 /** How many tasks can run at once at most: the widest level of the dependency graph. */
@@ -726,14 +700,14 @@ export const dependenciesDone = (task: RunTask, states: ReadonlyMap<string, Task
 
 /**
  * The tasks that can be taken now, best first: ready (their dependencies done, nothing blocking them, nobody on them),
- * by priority, then the one that starts the longest chain still to do, then by id — the same input, the same order.
+ * by urgency (`byUrgency`), then by id — the same input, the same order.
  */
 export const readyTasks = (
   tasks: readonly RunTask[],
   states: ReadonlyMap<string, TaskState>,
   held: ReadonlySet<string>
 ): RunTask[] => {
-  const chains = chainMinutes(tasks);
+  const urgency = byUrgency(tasks);
 
   return tasks
     .filter(task => {
@@ -741,10 +715,5 @@ export const readyTasks = (
 
       return (status === 'pending' || status === 'ready') && !held.has(task.id) && dependenciesDone(task, states);
     })
-    .sort(
-      (a, b) =>
-        PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] ||
-        (chains.get(b.id) ?? 0) - (chains.get(a.id) ?? 0) ||
-        a.id.localeCompare(b.id)
-    );
+    .sort((a, b) => urgency(a, b) || a.id.localeCompare(b.id));
 };

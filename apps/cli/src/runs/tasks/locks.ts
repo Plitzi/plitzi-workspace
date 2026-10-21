@@ -2,7 +2,6 @@ import fs from 'node:fs/promises';
 
 import { createExclusive, fingerprint, writeJson } from '../files';
 import { lockFile, runPaths, taskPaths, under } from '../paths';
-import { PRIORITY_RANK } from '../plan';
 import { RunRefusal } from '../refusal';
 import { activeRuns, assertStatus, loadRun, readShared, runIds } from '../run';
 import { runChanged } from '../runChanged';
@@ -17,6 +16,7 @@ import {
   updateState,
   viewTask
 } from '../taskStore';
+import { PRIORITY_RANK } from '../urgency';
 import { at, cleanPath, findTask, holderOf, refreshCopy } from './common';
 
 import type { FileLock, RunTask, TaskState } from '../model';

@@ -88,7 +88,7 @@ export interface NextTask {
   timedOut?: true;
 }
 
-/** `plitzi task next`: the ready task to take — highest priority, then the longest chain still to do. */
+/** `plitzi task next`: the ready task to take — the most urgent (its priority, or the highest of what waits on it), then the longest chain still to do. */
 /** Logs `joined` the first time an agent asks the run for work — kept as the scratch folder it is given. */
 const markJoined = async (ctx: RunContext, loaded: LoadedRun): Promise<void> => {
   const scratch = agentScratch(loaded.paths, ctx.agent);

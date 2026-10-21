@@ -282,6 +282,35 @@ describe('a UI review with no designer free', () => {
   });
 });
 
+describe('a task held behind one in review', () => {
+  it('tells the lead while agents of its role have nothing to take — and how to free it', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.filter(task => task.id === 't-menu' || task.id === 't-book');
+    plan.tasks[1].dependsOn = ['t-menu'];
+    await openRun(lead(), await bench.writePlan(plan));
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+
+    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
+      expect.objectContaining({
+        kind: 'held-up',
+        task: 't-book',
+        text: expect.stringMatching(
+          /t-book waits for t-menu \(.* review\) while dev-1, dev-2 are free: they share no file/
+        ) as unknown
+      })
+    );
+  });
+
+  it('says nothing while they have a ready task to take', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+
+    expect((await viewRun(lead(), 'es-launch')).attention.map(item => item.kind)).not.toContain('held-up');
+  });
+});
+
 describe('a designer’s review of the others’ UI', () => {
   beforeEach(async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });

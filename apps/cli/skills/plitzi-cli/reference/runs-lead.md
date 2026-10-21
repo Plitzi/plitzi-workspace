@@ -16,8 +16,8 @@ What the lead — team lead and software architect — does; the agents' half, t
 1. **Map the space:** `plitzi space overview` — who owns which file, read off the imports. A page owns the modules only
    it imports; what two pages import (the tokens, the classes, a layout, a component) is **shared**, and so is every
    entry (`src/space/index.ts`). `plitzi space impact <file>` — what depends on a file.
-2. **Write the plan** (JSON, anywhere — best outside the project, or in its `tmp/`: the run removes it, its primer, an
-   amendment, a stage and the summary with itself when they are as it read them, and the folder that held only them):
+2. **Write the plan** (JSON, best in the project's `tmp/`: the run removes it and its other inputs with itself, unless
+   changed since):
 
    ```json
    {
@@ -50,7 +50,7 @@ What the lead — team lead and software architect — does; the agents' half, t
    **Acceptance a command can tell** is `{ said, check }`: the check runs in the task's copy at `complete`, beside the
    project's checks, and passes on exit 0 — `plitzi` in it is this CLI, `$PLITZI_URL` the copy served by its own start
    script on a free port. `page check --expect "<id>~<text>"` fails when that element does not show the text — check what a
-   page shows, not a file's text (a grep pins where the code is). Else, text — and only text holds at your review alone:
+   page shows, not a file's text. Else, text — and only text holds at your review alone:
    a later task can undo it unseen (`run plan` names a task with no check). A check runs again on the whole result at
    the finish. **`notes`** hold for the whole run;
    `plitzi run note "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB): what you learnt reading the project — every
@@ -82,14 +82,12 @@ What the lead — team lead and software architect — does; the agents' half, t
    it exports (a component's params) changes it compatibly — a new param optional — or the plan says who follows it
    (`run plan` names each). **Read what a task changes before you write it**: asking for what is not there costs a
    round. **And what its data shows**: a case the project's
-   data never reaches (a dog under two, an empty list, a failed answer) is seen by nobody — not the designer, not a page
-   spec, not you. The plan says how it is seen: a row in the data, or a unit test of the module that decides it — in
+   data never reaches (a dog under two, an empty list, a failed answer) is seen by nobody. The plan says how it is seen: a row in the data, or a unit test of the module that decides it — in
    whose task. What several tasks need is a task they depend on. A new page is a file that does not exist yet: loaded
    by folder (`pagesIn`) it touches nothing shared; otherwise it registers in the entry. A task that will change
    a file it does not hold says so (`"touches": ["src/space/tokens.ts"]`).
 
-3. `plitzi run plan plan.json` — refused, every reason at once (a repeated file, a cycle, an unknown task, a
-   path outside the source, a check it cannot run, another run going); otherwise expanded, shared files and overlaps
+3. `plitzi run plan plan.json` — refused, every reason at once; otherwise expanded, shared files and overlaps
    listed, estimated — and the skills said when they are older than the CLI (`plitzi upgrade skills --write` first). `plitzi run rehearse plan.json` plays it out with the team as `task next` would:
    who works what when, the critical path, your review queue (`--review 5m`), files changed at once, and the length for
    each number of agents. Nothing is opened.
@@ -97,22 +95,23 @@ What the lead — team lead and software architect — does; the agents' half, t
    `--lead-finishes` (or `plitzi run allow-finish` later). Never you.
    `plitzi run open plan.json` backs up every file it will touch; as many agents at once as the team has (above 5 a
    person confirms). Tell the person how to watch it: `npm run start:preview` (`plitzi run preview`) serves the run's
-   approved work as it goes, its dev tools' Run tab saying who builds what — their own `start:dev` shows the project
-   untouched until the finish — and `plitzi run monitor`, in a terminal of their own, follows the whole run live.
+   approved work as it goes, its dev tools' Run tab saying who builds what — and `plitzi run monitor`, in a terminal of their own, follows the whole run live.
 5. Start one agent per ready task (`plitzi task next --run es-launch --json`), each with a free port, and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
-   file a task takes past 400 lines (ask for the split) — each said once. **Talk:** answer a question (`run status` shows it) with `plitzi
+   file a task takes past 400 lines (ask for the split) — each said once. **Talk:** answer a question with `plitzi
 task message t-home "…" --reply-to m3`; `task message all "…"` tells every task in hand, `task message @dev-1 "…"`
    an agent by name, between tasks too. **The scope changes while it runs** — yours to see, or the person's to ask: edit
    the plan in the run's folder (`inputs/plan.json`) and `plitzi run amend` — acceptance, priorities, notes, the
-   inventory, a task nobody took removed; more work is a stage, `plitzi
-   run extend <run> next.json`; say each to the person.
+   inventory, what a task nobody took waits for (`dependsOn`), one removed; more work is a stage, `plitzi
+   run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — a task
+   held behind one in review is said: review that one first, settle a last cosmetic round yourself, or amend away a
+   dependency it does not need.
 6. **Review against the inventory, not only the picture:** every section and piece the task's acceptance names is
    there, as the reference has it — a difference you accept is one you say (`--note`); one a visitor would see is sent
    back. Judge the version that went to review (`task show` says its round), and on a page several tasks build, only
    this task's part. `plitzi task show t-home` is all of it (acceptance, checks, agreements, what was said, diffs; `<file>` after it, that file whole);
    `plitzi task look t-home [--click id | --hover id] [--element id]` (a part of a page others build: its part alone) serves its copy, page checks its pages (headings, names,
-   contrast; the state asked for) and pictures them light and dark — one command. What the acceptance asks and the data does not show, you test yourself
+   contrast; the state asked for) and pictures them light and dark. What the acceptance asks and the data does not show, you test yourself
    (a module's function with the edge cases, as `node -e` from the copy) — or send it back for the test it needs. Then
    `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Three rounds of yours —
    or three of the designer's, counted apart — go to a person. A `--known-failure` says why and which task fixes it — weigh that. The approval merges what went to review,
