@@ -560,4 +560,7 @@ monitor` shows each as it comes, a problem in red.
       now): la-velada's original redesigned its pages after the copy. The run finishing removes it.
   - The workspace's ESLint no longer has a `quotes` rule — Prettier's `singleQuote` writes the quotes, and the two
     disagreed on a string holding single quotes; the `eslint-disable quotes` directives that worked around it are gone.
+  - A task's copy served for a look (`task look`, `run preview --task`) is stopped whole on Linux too: its server was the
+    shell's child there (`sh` is dash), and stopping the shell alone left it listening — under the CI, the CLI's test
+    worker waited on it until the job's six hours ran out.
 

@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 
 import type { ChildProcess } from 'node:child_process';
 
@@ -14,23 +14,59 @@ import type { ChildProcess } from 'node:child_process';
 export const TREE = { detached: process.platform !== 'win32' } as const;
 
 /**
- * Stops `child` and everything under it: its process group when it was spawned with `TREE`, or on Windows — where
- * killing the shell leaves the server it started, and there are no groups — its tree. Gone already: nothing.
+ * Every process under `pid`, read off the system's process table (`ps`): what a shell started, and what that started.
+ * Nothing where there is no `ps` to ask.
  */
-export const stopTree = (child: ChildProcess, { group = false }: { group?: boolean } = {}): void => {
-  try {
-    if (child.pid === undefined) {
-      return;
-    }
+export const descendantsOf = (pid: number): number[] => {
+  const table = spawnSync('ps', ['-A', '-o', 'pid=,ppid='], { encoding: 'utf-8' });
+  if (table.status !== 0) {
+    return [];
+  }
 
-    if (process.platform === 'win32') {
-      spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
-    } else if (group) {
-      process.kill(-child.pid, 'SIGTERM');
-    } else {
-      child.kill('SIGTERM');
+  const children = new Map<number, number[]>();
+  for (const line of table.stdout.split('\n')) {
+    const [child, parent] = line.trim().split(/\s+/).map(Number);
+    if (Number.isInteger(child) && Number.isInteger(parent)) {
+      children.set(parent, [...(children.get(parent) ?? []), child]);
     }
+  }
+
+  const found: number[] = [];
+  for (const queue = [pid]; queue.length > 0;) {
+    for (const child of children.get(queue.shift() ?? 0) ?? []) {
+      found.push(child);
+      queue.push(child);
+    }
+  }
+
+  return found;
+};
+
+const quietly = (pid: number): void => {
+  try {
+    process.kill(pid, 'SIGTERM');
   } catch {
     // Already gone.
+  }
+};
+
+/**
+ * Stops `child` and everything under it: its process group when it was spawned with `TREE`; on Windows, its tree; and
+ * otherwise each process it started, then itself — a shell that runs its command as a child (Linux's `sh`) left the
+ * server listening once the shell alone was stopped. Gone already: nothing.
+ */
+export const stopTree = (child: ChildProcess, { group = false }: { group?: boolean } = {}): void => {
+  const { pid } = child;
+  if (pid === undefined) {
+    return;
+  }
+
+  if (process.platform === 'win32') {
+    spawn('taskkill', ['/pid', String(pid), '/T', '/F'], { stdio: 'ignore' });
+  } else if (group) {
+    quietly(-pid);
+  } else {
+    descendantsOf(pid).reverse().forEach(quietly);
+    quietly(pid);
   }
 };
