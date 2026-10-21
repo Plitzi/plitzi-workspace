@@ -393,7 +393,7 @@ const toConditions = (conditions: RuleSetSpec['conditions']): Map<string, Condit
     if (!condition) {
       throw new AuthoringError(
         'style-condition-unknown',
-        `Unknown condition "${key}"${didYouMean(key, STYLE_MOTION_CONDITIONS)}. A class's rules can hold under ${STYLE_MOTION_CONDITIONS.map(name => `\`${name}\``).join(', ')}, or a container's width — \`container (max-width: 30rem)\`, \`container card (min-width: 480px)\` (min-width, max-width or both joined by \`and\`, in px, rem, em or ch).`
+        `Unknown condition "${key}"${didYouMean(key, STYLE_MOTION_CONDITIONS)}. A class's rules can hold under ${STYLE_MOTION_CONDITIONS.map(name => `\`${name}\``).join(', ')}, or a container's width — \`container (max-width: 30rem)\`, \`container card (min-width: 480px)\` (min-width, max-width or both joined by \`and\`, in px, rem, em or ch), its container saying it is one (\`container-type: inline-size\`)${/^\(?\s*(max|min)-width/.test(key) ? `. The screen's width is no condition: a value per breakpoint is — \`{ desktop: …, ${[...BREAKPOINTS.slice(1), 'compact'].map(name => `${name}: …`).join(', ')} }\`` : ''}.`
       );
     }
 

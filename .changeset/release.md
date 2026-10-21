@@ -763,6 +763,10 @@ monitor` shows each as it comes, a problem in red.
       writes each step's picture beside the sheet; `task look --click/--hover` on several pages checks each with it
       apart, where it was refused whole; a comparison with another site, asked live, is asked again when the site says
       it is busy (429, 503), as the reference is.
+    - An embed of the page's own site loaded before anything listened counts as loaded, and no picture waits for it:
+      velada-dress's overlay preview read "1 picture or embed had not loaded" on every shot, each waiting its budget.
+    - A screen's width written as a style condition (`(max-width: 480px)`) is refused naming what says it — a value
+      per breakpoint (`{ desktop, tablet, mobile, compact }`) — and a container's condition names `container-type`.
     - `run reference` keeps a page the site answers with 404 — its page for an address nothing answers, which a copy
       makes too — said, where it refused it as an error page.
     - `page shot --compare … --dress` fails where a section lacks a look the other page dresses it in — a sort of

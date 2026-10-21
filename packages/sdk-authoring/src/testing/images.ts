@@ -42,10 +42,23 @@ export const loadImages = async (budgetMs: number): Promise<LoadedImages> => {
   // awaited, and its event would be missed. One that is not lazy loaded with the page; one with no address yet (a
   // player that waits for its press) has nothing to load.
   const embeds = Array.from(document.querySelectorAll('iframe'));
+  // Loaded already, before any listener: its `load` came and went — one of this site's says so of itself; another
+  // site's cannot be read, and is waited for (velada-dress: the overlay's own preview, loaded, "had not loaded").
+  const complete = (embed: HTMLIFrameElement): boolean => {
+    try {
+      return embed.contentDocument?.readyState === 'complete' && embed.contentDocument.URL !== 'about:blank';
+    } catch {
+      return false;
+    }
+  };
   const loading = embeds
     .filter(embed => embed.loading === 'lazy' && (embed.getAttribute('src') ?? '').trim() !== '')
     .map(embed => {
-      const loaded = { done: false, promise: Promise.resolve() };
+      const loaded = { embed, done: complete(embed), promise: Promise.resolve() };
+      if (loaded.done) {
+        return loaded;
+      }
+
       loaded.promise = new Promise<void>(resolve => {
         embed.addEventListener(
           'load',
@@ -109,7 +122,7 @@ export const loadImages = async (budgetMs: number): Promise<LoadedImages> => {
     images: images.length,
     missing: images.filter(image => !image.complete || image.naturalWidth === 0).length,
     embeds: embeds.length,
-    embedsMissing: loading.filter(each => !each.done).length,
+    embedsMissing: loading.filter(each => !each.done && !complete(each.embed)).length,
     embedsUndrawn: undrawn.map(
       embed =>
         embed.getAttribute('data-plitzi-el') ??

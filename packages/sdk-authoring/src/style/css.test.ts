@@ -214,6 +214,10 @@ describe('a style with pseudo-elements, conditions and its parent', () => {
     expect(() => toBlocks({ conditions: { 'container (width: 30rem)': { opacity: '1' } } })).toThrow(
       /min-width, max-width/
     );
+    // velada-dress: dev-2 wrote the screen's width as a condition, and found the breakpoints by trying.
+    expect(() => toBlocks({ conditions: { '(max-width: 480px)': { opacity: '1' } } })).toThrow(
+      /The screen's width is no condition: a value per breakpoint is — `\{ desktop: …, tablet: …, mobile: …, compact: … \}`/
+    );
     expect(() =>
       toBlocks({
         conditions: {
