@@ -302,6 +302,28 @@ describe('a task held behind one in review', () => {
     );
   });
 
+  it('tells the lead of a review taken long ago while nobody has work — and how to decide it', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.filter(task => task.id === 't-menu');
+    await openRun(lead(), await bench.writePlan(plan));
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
+    const kinds = async () => (await viewRun(lead(), 'es-launch')).attention.map(item => item.kind);
+
+    expect(await kinds()).not.toContain('slow-review');
+    bench.advance(11 * 60_000);
+    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
+      expect.objectContaining({
+        kind: 'slow-review',
+        text: expect.stringContaining(
+          "design-1 has had t-menu's UI review 11 min while dev-1 has nothing to take"
+        ) as unknown
+      })
+    );
+  });
+
   it('says nothing while they have a ready task to take', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
     await openRun(lead(), await bench.writePlan(benchPlan()));

@@ -324,7 +324,8 @@ every reason at once; who a task is for and when — its `role`, `quality` and `
 or ready, and is refused once an agent took it, as is a `dependsOn` on a task the run lacks, on itself, or in a circle
 (`dependsOnProblems`): the lead's way to free a task held behind one it needs nothing from, which `run watch` says
 (`held-up`: a pending task whose every remaining dependency is past its work — in review, sent back, blocked — while
-agents of its role have nothing to take; whether they share a file decides what it suggests); so is a plan that changes nothing. Its acceptance is held
+agents of its role have nothing to take; whether they share a file decides what it suggests — and `slow-review`, a
+review a designer or another lead took ten minutes ago and has not decided while the team has nothing to take); so is a plan that changes nothing. Its acceptance is held
 to `run plan`'s rules, among them a `page check` whose text the shell would split into a page.
 
 ## A plan rehearsed (`rehearse.ts`)

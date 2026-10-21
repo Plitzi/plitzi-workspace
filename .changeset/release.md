@@ -624,4 +624,7 @@ monitor` shows each as it comes, a problem in red.
       velada-now's lead answered t-motion without `--reply-to`: the monitor said for good that it asked the lead, and
       drew it held and in its UI review at once. A task in review or approved no longer shows its work's last step and fraction
       ("waiting for t-boxer's boxeador.ts before check · 85 %").
+    - `run watch` tells the lead of a review a designer or another lead took ten minutes ago and has not decided while
+      the team has nothing to take, with how to chase it or decide it: velada-now's last task sat in a designer's
+      review, five agents idle, and nothing said so.
 

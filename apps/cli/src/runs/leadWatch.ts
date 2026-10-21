@@ -31,7 +31,7 @@ export interface LeadNews {
 }
 
 // What says how long something has lasted changes its words every minute: it is the same notice all the same.
-const TIMED = new Set<Attention['kind']>(['no-signal', 'long-wait', 'long-task', 'stopping']);
+const TIMED = new Set<Attention['kind']>(['no-signal', 'long-wait', 'long-task', 'stopping', 'slow-review']);
 
 /** A review no lead took this round, by how long it has waited. */
 const untaken = (view: RunView, now: Date): { task: RunView['tasks'][number]; waited: number }[] =>

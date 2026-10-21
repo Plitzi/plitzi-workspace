@@ -91,6 +91,7 @@ export interface Attention {
     | 'left-in-tmp'
     | 'ui-waits'
     | 'held-up'
+    | 'slow-review'
     | 'message';
   task?: string;
   /** The file it is about, when it is about one: what keeps it the same notice while its words change. */
@@ -202,7 +203,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   }
 
   const team = await readTeam(ctx.root).catch(() => undefined);
-  attention.push(...bottlenecks(views, team ? startedAgents(team) : []));
+  attention.push(...bottlenecks(views, team ? startedAgents(team) : [], now));
 
   for (const file of await leftInTmp(ctx.root, record)) {
     attention.push({

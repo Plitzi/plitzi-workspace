@@ -104,8 +104,8 @@ task message t-home "…" --reply-to m3`; `task message all "…"` tells every t
    the plan in the run's folder (`inputs/plan.json`) and `plitzi run amend` — acceptance, priorities, notes, the
    inventory, what a task nobody took waits for (`dependsOn`), one removed; more work is a stage, `plitzi
    run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — a task
-   held behind one in review is said: review that one first, settle a last cosmetic round yourself, or amend away a
-   dependency it does not need.
+   held behind one in review, or a review dragging while others have nothing, is said: chase or decide that review,
+   settle a last cosmetic round yourself, or amend away a dependency it does not need.
 6. **Review against the inventory, not only the picture:** every section and piece the task's acceptance names is
    there, as the reference has it — a difference you accept is one you say (`--note`); one a visitor would see is sent
    back. Judge the version that went to review (`task show` says its round), and on a page several tasks build, only
@@ -121,7 +121,7 @@ task message t-home "…" --reply-to m3`; `task message all "…"` tells every t
    the changes go together line by line (the refusal says so), `--approve --overwrite` (its version wins, said, the
    other kept) or `--changes` (redo it on the project's version). A change after approval puts the finish into
    **reconciliation**: `plitzi run resolve <run> <file> --take project|run|merge|<file>`, then `plitzi run continue`.
-   **The brake** stops a run whose completions keep being refused: `run status` says why; `plitzi run resume`. Agents
+   **The brake** stops a run whose completions keep being refused; `plitzi run resume`. Agents
    iterate with `task check`, which it does not count. **Plitzi upgraded mid-run** (`version-mismatch`, said in `run
 status`): ask the person to run `plitzi run attach <run>` — the agents keep their work and wait. To upgrade on
    purpose, the person runs `plitzi run upgrade` — never an install under the open run.
