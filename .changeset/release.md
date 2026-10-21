@@ -749,6 +749,14 @@ monitor` shows each as it comes, a problem in red.
     - `--steps` takes `scroll <element>`; `task next --follow` waits 8 minutes, not 9; a wait is logged once per reason,
       not per the tasks it names; an unused token is said as fine when a later task reads it; a copy's missing `.env`
       is no known failure's reason.
+    - A task waiting for a file completes too, leaving the file's queue: a `task wait` that ran out left velada-dress's
+      t-heading waiting, and nothing let it complete. A refusal for another task's held file names the lead as the
+      way out when that task said no.
+    - What a task's token may not do is the lead's: refused `lead-only` (25, tell the lead), never `person-only` (17),
+      which sent an agent to ask a person it has none of.
+    - A designer on demand does not stop while more UI reviews are coming than the other designers running.
+    - The lead is woken for a task refused three times within twenty minutes (`refused-again`), with the codes and the
+      last refusal: stuck, not unlucky — velada-dress's dev-1 was refused four times on t-heading and nobody knew.
     - `run reference` keeps a page the site answers with 404 — its page for an address nothing answers, which a copy
       makes too — said, where it refused it as an error page.
     - `page shot --compare … --dress` fails where a section lacks a look the other page dresses it in — a sort of

@@ -47,9 +47,16 @@ export const requirePerson = async (ctx: RunContext, runId: string, action: stri
   }
 };
 
-/** The lead's or a person's: refused with a task's token — a task does not approve, stop or reassign. */
+/**
+ * The lead's or a person's: refused with a task's token — a task does not approve, stop or reassign. A task's token is the agent's, and what it may not do is the lead's to do or to ask the person for: `lead-only`, the
+ * agent told to tell it — never `person-only`, which sent an agent to ask a person it has none of (velada-dress: dev-1,
+ * answering its own spike).
+ */
 export const requireNoTask = (ctx: RunContext, action: string): void => {
   if (ctx.token !== undefined) {
-    throw new RunRefusal('person-only', `A task's token cannot ${action}: the lead or a person does.`);
+    throw new RunRefusal(
+      'lead-only',
+      `A task's token cannot ${action}: that is the lead's — tell it what you have (plitzi task tell "…"), and go on with your part.`
+    );
   }
 };

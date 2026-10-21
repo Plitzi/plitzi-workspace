@@ -4,23 +4,13 @@ import { durationText, FOLLOW_MS } from '../../options';
 import { questionFor, takeQuestion } from '../answering';
 import { designReviewFor, hasDesignReview, takeDesignReview } from '../design';
 import { handOver } from '../handOver';
-import {
-  coLeadsOf,
-  IDLE_LEAD_MS,
-  isCoLead,
-  isPrincipal,
-  LEAD_ROLE,
-  leadReviewFor,
-  markAsking,
-  spareLead,
-  takeLeadReview
-} from '../leads';
-import { agentAddress, LEAD, unreadFor } from '../messages';
-import { freeBaseAgents, ON_DEMAND_IDLE_MS, runningAgents } from '../onDemand';
+import { IDLE_LEAD_MS, isCoLead, isPrincipal, LEAD_ROLE, leadReviewFor, markAsking, takeLeadReview } from '../leads';
+import { agentAddress, unreadFor } from '../messages';
+import { ON_DEMAND_IDLE_MS } from '../onDemand';
 import { pagesOf } from '../pagesOf';
 import { agentScratch, runPaths } from '../paths';
 import { readyTasks } from '../plan';
-import { markPresent, PRESENCE_STALE_MS, presentAt } from '../presence';
+import { markPresent } from '../presence';
 import { isRunRefusal, RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readRunLog } from '../run';
 import { runChanged } from '../runChanged';
@@ -31,6 +21,7 @@ import { byUrgency } from '../urgency';
 import { isWorked } from '../worked';
 import { at, findTask, roleOf } from './common';
 import { allLocks } from './locks';
+import { baseFirst, reasonOf, spareNow, uiReviewsComing } from './nextRules';
 import { changesBlock } from './review';
 import { takeTask } from './take';
 
@@ -155,39 +146,6 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
   }
 
   return { ...next, scratch };
-};
-
-/** For an agent on demand: the team's base agents of its roles, there and free — ready work is theirs first. */
-const baseFirst = async (
-  ctx: RunContext,
-  loaded: LoadedRun,
-  views: readonly TaskView[],
-  roles: readonly string[] | undefined
-): Promise<string[]> => {
-  const team = await readTeam(ctx.root).catch(() => undefined);
-  const started = team ? startedAgents(team) : [];
-  const me = started.find(each => each.agent === ctx.agent);
-  if (me?.onDemand !== true) {
-    return [];
-  }
-
-  const now = ctx.now().getTime();
-  const present = new Set<string>();
-  for (const each of started) {
-    const seen = await presentAt(loaded.paths, each.agent);
-    if (seen !== undefined && now - seen <= PRESENCE_STALE_MS) {
-      present.add(each.agent);
-    }
-  }
-
-  return freeBaseAgents(
-    views,
-    started,
-    runningAgents(await readRunLog(loaded.paths)),
-    present,
-    ctx.agent,
-    roles ?? me.roles
-  );
 };
 
 const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promise<Omit<NextTask, 'scratch'>> => {
@@ -631,22 +589,6 @@ export const takeNext = async (
   }
 };
 
-/** A wait's reason, without what it names: `nothing is ready` of `nothing is ready: t-home in-progress (dev-1), …`. */
-const reasonOf = (why: string): string => why.split(/[:—]/)[0]?.trim() ?? why;
-
-/** Why a lead that reviews is spare now, if it is: what is left — none of it in review — is for the other leads. */
-const spareNow = async (ctx: RunContext, runId: string): Promise<string | undefined> => {
-  const loaded = await loadRun(ctx, runId);
-  const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
-  const open = views.filter(view => view.state.status !== 'done');
-  const others = [LEAD, ...coLeadsOf(loaded.record)].filter(lead => lead !== ctx.agent).length;
-  if (open.some(view => view.state.status === 'in-review') || !spareLead(open.length, others)) {
-    return undefined;
-  }
-
-  return `${String(open.length)} task${open.length === 1 ? '' : 's'} left (${open.map(view => view.task.id).join(', ') || 'none'}) for ${String(others)} other lead${others === 1 ? '' : 's'}: no review is yours to wait for`;
-};
-
 /**
  * What a task's reviews asked, as the next review is handed it: the last review's notes whole, the earlier ones counted —
  * each round's hand-off repeated every review before it whole (velada-now's t-boxer, round 4).
@@ -681,6 +623,11 @@ export const followNext = async (
   // An agent on demand (past its group's `min`) stops once nothing is left for it: the lead starts it again.
   const team = await readTeam(ctx.root).catch(() => undefined);
   const onDemand = team ? startedAgents(team).some(each => each.agent === ctx.agent && each.onDemand) : false;
+  const designerHere =
+    role
+      ?.split(',')
+      .map(each => each.trim())
+      .includes(DESIGNER) === true;
   for (;;) {
     // A run stopped — gently, by its brake, or by a person at once — goes on once resumed, and one whose Plitzi was
     // upgraded once a person re-pins it: an agent waiting for work waits through either.
@@ -743,12 +690,14 @@ export const followNext = async (
 
     // Its wait's end is no state of its own: it is told to wait again, and stays waiting until it takes work or stops.
     if (onDemand && Date.now() - started >= onDemandIdleMs) {
-      // Not while a task of its own may come back to it: one in review, or blocked.
+      // Not while a task of its own may come back to it: one in review, or blocked — nor, a designer, while more UI
+      // reviews are coming than the other designers running (velada-dress: design-2 stopped at 20:18 with four on
+      // their way, and was started again for them).
       const loaded = await loadRun(ctx, runId);
-      const own = (await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)))).filter(
-        view => view.owner?.agent === ctx.agent && view.state.status !== 'done'
-      );
-      if (own.length === 0) {
+      const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
+      const own = views.filter(view => view.owner?.agent === ctx.agent && view.state.status !== 'done');
+      const coming = designerHere ? await uiReviewsComing(ctx, loaded, views) : 0;
+      if (own.length === 0 && coming === 0) {
         const why = `nothing came for you in ${durationText(onDemandIdleMs)}: you are on demand — the lead starts you again when work waits for you`;
         await logRun(ctx, runPaths(ctx.root, runId), { action: 'stops', why });
 

@@ -222,6 +222,21 @@ export const theme = { card: { color: tokens.ink }, ${key}: {} };
     expect(merged).toContain('export const home = {};');
   });
 
+  // velada-dress: dev-1's wait for sponsors.ts ran out, t-heading stayed waiting, and no complete was let through.
+  it('completes a task that waited for a file and does without it, out of the queue', async () => {
+    await open();
+    const holder = await take('agent-1', 't-home');
+    await claimFile(holder.ctx, 'es-launch', 't-home', 'src/space/theme.ts');
+    const menu = await take('agent-2', 't-menu');
+    await waitForFile(menu.ctx, 'es-launch', 't-menu', 'src/space/theme.ts');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { es: true };\n');
+
+    await completeTask(menu.ctx, 'es-launch', 't-menu');
+    const line = (await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-menu');
+    expect(line?.status).toBe('in-review');
+    expect(line).not.toHaveProperty('waitingFor');
+  });
+
   it('a blocking request makes its integration task at once, and the task waits only for it', async () => {
     await open();
     const home = await take('agent-1', 't-home');

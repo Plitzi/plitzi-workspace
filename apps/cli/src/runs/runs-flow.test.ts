@@ -9,7 +9,17 @@ import { writeSummary } from './report';
 import { loadRun, openRun, readApproved, readRunLog } from './run';
 import { getBlob } from './store';
 import { askLead, messageTasks } from './talk';
-import { checkTask, claimFile, completeTask, followNext, nextTask, reviewTask, takeNext, takeTask } from './tasks';
+import {
+  checkTask,
+  claimFile,
+  completeTask,
+  followNext,
+  nextTask,
+  reviewTask,
+  takeNext,
+  takeTask,
+  waitForFile
+} from './tasks';
 import { viewRun } from './view';
 import { benchPlan, makeBench, readInCopy, writeInCopy } from '../tests/runProject';
 
@@ -97,6 +107,13 @@ describe('a run played whole, as velada-dress went', () => {
       "declare('menu-glow')"
     );
 
+    // dev-2, at t-about, waits for the theme t-home holds — and does without it: it completes, out of the queue.
+    const about = await takeTask(as('dev-2'), runId, 't-about');
+    await waitForFile(as('dev-2', about.token), runId, 't-about', THEME);
+    await writeInCopy(about.work, 'src/space/pages/about.ts', "export const page = { title: 't-about' };\n");
+    await completeTask(as('dev-2', about.token), runId, 't-about');
+    await reviewTask(as('lead'), runId, 't-about', 'approve', []);
+
     // dev-1 asks; lead-2, with no review waiting, is handed the question and answers it — the lead told.
     const asked = await askLead(as('dev-1', home.token), runId, 't-home', 'Bienvenidos or Bienvenida?');
     expect((await takeNext(as('lead-2'), runId, 'lead')).next.question?.id).toBe(asked.question.id);
@@ -126,10 +143,7 @@ describe('a run played whole, as velada-dress went', () => {
     const reviewed = await takeNext(as('lead-2'), runId, 'lead');
     expect(reviewed.next.leadReview?.task.id).toBe('t-home');
     await reviewTask(as('lead-2'), runId, 't-home', 'approve', []);
-    for (const [agent, taskId, file] of [
-      ['dev-1', 't-about', 'src/space/pages/about.ts'],
-      ['dev-2', 't-book', 'src/space/pages/book.ts']
-    ] as const) {
+    for (const [agent, taskId, file] of [['dev-2', 't-book', 'src/space/pages/book.ts']] as const) {
       const taken = await takeTask(as(agent), runId, taskId);
       await writeInCopy(taken.work, file, `export const page = { title: '${taskId}' };\n`);
       await completeTask(as(agent, taken.token), runId, taskId);

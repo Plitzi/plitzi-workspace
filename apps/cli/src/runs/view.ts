@@ -11,6 +11,7 @@ import { LEAD, messagesOf, unreadFor } from './messages';
 import { agentsNeeded, runningAgents } from './onDemand';
 import { under } from './paths';
 import { previewPort } from './previewRecord';
+import { refusedAgain } from './refusedAgain';
 import { loadRun, pinnedChanges, pinnedNow, readApproved, readBase, readRunLog, runIds, samePinned } from './run';
 import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
@@ -109,6 +110,7 @@ export interface Attention {
     | 'held-up'
     | 'slow-review'
     | 'agents-needed'
+    | 'refused-again'
     | 'spikes'
     | 'message';
   task?: string;
@@ -259,7 +261,9 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   const started = team ? startedAgents(team) : [];
   attention.push(...bottlenecks(views, started, now));
   // Agents on demand: told to the lead when work waits for one and none running is free.
-  attention.push(...agentsNeeded(views, started, runningAgents(await readRunLog(loaded.paths))));
+  const log = await readRunLog(loaded.paths);
+  attention.push(...agentsNeeded(views, started, runningAgents(log)));
+  attention.push(...refusedAgain(log, now));
 
   for (const file of await leftInTmp(ctx.root, record)) {
     attention.push({

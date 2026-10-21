@@ -168,7 +168,7 @@ describe('a team: roles, waiting for work, and a lead who talks to the agents', 
     expect(shown.files[0].diff).toMatch(/^\+export const hero = \{"text":"Hola"\};$/m);
     expect(shown.messages.map(message => message.text)).toEqual(['Formal or informal?', 'The hero keeps its id']);
     expect(shown.next.join('\n')).toContain('plitzi task review t-home --approve');
-    expect((await refusal(showTask(home.ctx, 'es-launch', 't-home'))).code).toBe('person-only');
+    expect((await refusal(showTask(home.ctx, 'es-launch', 't-home'))).code).toBe('lead-only');
   });
 
   // Past a diff's 80 lines, or around a change: the file whole, as it went to review — while its copy goes on.

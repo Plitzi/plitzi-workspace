@@ -205,11 +205,12 @@ describe('writing only what is one’s own', () => {
     await open();
     const home = await take('agent-1', 't-home');
 
+    // From a task's token, the lead's to do or to ask for: the agent tells it — no person is its to ask.
     expect((await refusal(finishRun(home.ctx, 'es-launch', { apply: true, leavePending: true }))).code).toBe(
-      'person-only'
+      'lead-only'
     );
     expect((await refusal(stopRun(lead(), 'es-launch', true))).code).toBe('person-only');
-    expect((await refusal(reviewTask(home.ctx, 'es-launch', 't-home', 'approve', []))).code).toBe('person-only');
+    expect((await refusal(reviewTask(home.ctx, 'es-launch', 't-home', 'approve', []))).code).toBe('lead-only');
   });
 });
 

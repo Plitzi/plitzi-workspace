@@ -163,7 +163,10 @@ export const completeTask = async (
   await tellLeftInTmp(ctx, loaded);
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);
-  if (!['in-progress', 'changes-requested'].includes(view.state.status)) {
+  // A task waiting for a file completes too, leaving its queue: what it waited for it does without — and a change to that
+  // file still in its copy is refused below, naming it (velada-dress: dev-1's `task wait` ran out, t-heading stayed
+  // waiting, and nothing let it complete).
+  if (!['in-progress', 'changes-requested', 'waiting'].includes(view.state.status)) {
     throw new RunRefusal('invalid', `Task "${taskId}" is ${view.state.status}: only a task in progress completes`, {
       task: taskId
     });
@@ -235,7 +238,7 @@ export const completeTask = async (
         .map(each => `${each.file} (task "${each.holder}"'s)`)
         .join(
           ', '
-        )}. Put each back in your copy (plitzi task discard <file>) and propose the change to its task (plitzi task propose <task> --change …), or wait for it (plitzi task wait <file>).`,
+        )}. Put each back in your copy (plitzi task discard <file>) and propose the change to its task (plitzi task propose <task> --change …), or wait for it (plitzi task wait <file>) — or, if your work needs it there and its task said no, tell the lead (plitzi task tell "…"): it decides.`,
       {
         task: taskId,
         files: outside.map(each => each.file),
@@ -427,6 +430,7 @@ export const completeTask = async (
     state => ({
       ...state,
       status: 'in-review',
+      waitingFor: undefined,
       changed: toReview,
       submitted,
       // A designer looks at its UI before the lead, each round its UI changed: what it changed is what is looked at.

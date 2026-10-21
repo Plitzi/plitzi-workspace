@@ -119,6 +119,23 @@ describe('agents on demand', () => {
     expect((await nextTask(bench.agent('dev-2'), 'es-launch', 'developer')).task?.id).toBe(ready[0]);
   });
 
+  // velada-dress: design-2, on demand, stopped at 20:18 with four UI reviews on their way, and was started again for them.
+  it('keeps a designer on demand while more UI reviews are coming than the other designers running', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
+    await setTeamAgent(bench.root, 'design', { roles: ['designer'], count: 2, min: 1 });
+    await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: true }));
+    await followNext(bench.agent('design-1'), 'es-launch', 'designer', { timeoutMs: 0, everyMs: 10 });
+    await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
+    await takeTask(bench.agent('dev-2'), 'es-launch', 't-menu');
+
+    const kept = await followNext(bench.agent('design-2'), 'es-launch', 'designer', {
+      timeoutMs: 200,
+      everyMs: 10,
+      onDemandIdleMs: 30
+    });
+    expect(kept.finished).not.toBe(true);
+  });
+
   it('refuses a min past its count', async () => {
     expect(await refusalOf(setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 3 }))).toContain(
       'its min — how many start with the run — is a whole number from 1 to its count (2)'
