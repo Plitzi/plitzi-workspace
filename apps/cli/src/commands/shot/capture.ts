@@ -41,7 +41,8 @@ export const readPage = async <R, A>(
   } catch (error) {
     if (navigated(error)) {
       throw new Error(
-        `The page kept reloading while it was read (${page.url()}): its server reloads it as the space changes — read it again once it is still`
+        `The page kept reloading while it was read (${page.url()}): its server reloads it as the space changes — read it again once it is still`,
+        { cause: error }
       );
     }
 
