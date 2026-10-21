@@ -630,4 +630,7 @@ monitor` shows each as it comes, a problem in red.
     - What a designer tells the lead about a task (`task tell --about`) says which task (`about`): once that task is
       approved it is history in the inbox, never a notice that holds the finish — design-1's word on t-motion, approved
       already, refused velada-now's.
+    - `run monitor` on a run whose every task is approved shows every agent stopped — "every task approved — nothing is
+      left for it" — whatever it said last: velada-now's dev-2 read "waiting for work" an hour after its agent had gone,
+      and design-1 idle.
 

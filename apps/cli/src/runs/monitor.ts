@@ -370,20 +370,31 @@ const agentsOf = async (
           ...(task.signalAt ? { signalAt: task.signalAt } : {}),
           ...(task.noSignal ? { noSignal: true } : {})
         }
-      : {
-          agent,
-          kind: 'agent' as const,
-          // Between tasks, as its last word says: waiting for work, given up on it for now, or done with the run.
-          status:
-            lastBy.get(agent)?.action === 'waiting'
-              ? ('waiting' as const)
-              : lastBy.get(agent)?.action === 'stops'
-                ? ('stopped' as const)
-                : ('idle' as const),
-          ...about,
-          doing: `${betweenTasks(agent, lastBy.get(agent))}${tail}`,
-          ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
-        };
+      : finished
+        ? // Every task approved: nothing is left for any agent, whatever it said last — velada-now's dev-2 showed
+          // "waiting for work" an hour after its agent had gone, design-1 idle.
+          {
+            agent,
+            kind: 'agent' as const,
+            status: 'stopped' as const,
+            ...about,
+            doing: `every task approved — nothing is left for it${tail}`,
+            ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
+          }
+        : {
+            agent,
+            kind: 'agent' as const,
+            // Between tasks, as its last word says: waiting for work, given up on it for now, or done with the run.
+            status:
+              lastBy.get(agent)?.action === 'waiting'
+                ? ('waiting' as const)
+                : lastBy.get(agent)?.action === 'stops'
+                  ? ('stopped' as const)
+                  : ('idle' as const),
+            ...about,
+            doing: `${betweenTasks(agent, lastBy.get(agent))}${tail}`,
+            ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
+          };
   });
 
   return [...leads, ...agents];

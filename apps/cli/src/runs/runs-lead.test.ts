@@ -7,6 +7,7 @@ import { amendRun } from './amend';
 import { extendRun } from './extend';
 import { waitForLead } from './leadWatch';
 import { finishRun } from './merge';
+import { monitorRun } from './monitor';
 import { readOwnership } from './ownership';
 import { runPaths } from './paths';
 import { checkPlan } from './plan';
@@ -235,6 +236,12 @@ describe('the lead’s plan as the run goes', () => {
       action: 'ready',
       next: expect.stringContaining('--apply') as unknown
     });
+    // Every task approved: no agent waits or idles on the monitor, whatever it said last (agent-4 waited before).
+    const agents = (await monitorRun(lead(), 'es-launch')).agents.filter(agent => agent.kind === 'agent');
+    expect(agents.length).toBeGreaterThan(0);
+    expect(agents.map(agent => [agent.status, agent.doing])).toEqual(
+      agents.map(() => ['stopped', 'every task approved — nothing is left for it'])
+    );
   });
 
   it('reads a stage against the run’s work: a file the run made is no file to make', async () => {
