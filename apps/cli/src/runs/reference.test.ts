@@ -3,8 +3,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { runPlanProblems } from './model';
 import { runPaths } from './paths';
+import { runPlanProblems } from './planProblems';
 import { keptName, keptPage, referencePages, unnamedSections } from './reference';
 import { benchPlan, makeBench } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';

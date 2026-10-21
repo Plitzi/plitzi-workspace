@@ -4,6 +4,7 @@ import {
   taskAnswer,
   taskAsk,
   taskBlock,
+  taskSpike,
   taskClaim,
   taskCheck,
   taskClaims,
@@ -143,6 +144,20 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
     .action((options: RunCommandOptions) => taskProgress(options));
+
+  taskGroup
+    .command('spike')
+    .description(
+      'Find something out before building: the task in hand back to spike, saying what — or --done, what was found'
+    )
+    .argument('[question]', 'What to find out: "which layers make the original’s warm light"')
+    .option('--done <findings>', 'What you found: kept with the task, read by every task that waits for it')
+    .option(...TOKEN_OPTION)
+    .option(...RUN_OPTION)
+    .option(...JSON_OPTION)
+    .action((question: string | undefined, options: RunCommandOptions & { done?: string }) =>
+      taskSpike(question, options)
+    );
 
   taskGroup
     .command('block')

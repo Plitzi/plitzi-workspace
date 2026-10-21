@@ -15,7 +15,7 @@ import { projectHere } from '../existingProject';
 import { parseSteps } from '../shotSteps';
 import { fail } from '../terminal';
 import { capture, pictureOf } from './capture';
-import { compareText, compareWith, contactSheet, framesMoved, regionsText } from './compare';
+import { compareText, compareWith, contactSheet, framesMoved, missingDress, regionsText } from './compare';
 import { clickThrough, playSteps } from './steps';
 import { MOVING_PERCENT } from './types';
 
@@ -463,6 +463,22 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       }
     }
 
+    // `--dress`: a section with none of a kind of dress the other page has fails the picture — an acceptance's line.
+    if (options.dress !== undefined && options.dress !== false && report.compare) {
+      const named = typeof options.dress === 'string' ? options.dress : undefined;
+      const missing = missingDress(report.compare.decorations).filter(
+        line => named === undefined || line.includes(named)
+      );
+      if (missing.length > 0) {
+        report.dressMissing = missing;
+        process.exitCode = 1;
+      }
+    } else if (options.dress !== undefined && options.dress !== false) {
+      fail('--dress says what a comparison found: give it --compare <the other page>');
+
+      return;
+    }
+
     if (options.json) {
       if (options.collect) {
         options.collect(report);
@@ -508,6 +524,23 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
 
     if (report.compare) {
       console.log(compareText(report.compare).join('\n'));
+    }
+
+    if (report.dressMissing) {
+      console.log(
+        chalk.red(
+          [
+            `✗ --dress: dressed otherwise than ${options.compare ?? 'the other page'}`,
+            ...report.dressMissing.map(line => `  ${line}`)
+          ].join('\n')
+        )
+      );
+    } else if (options.dress !== undefined && options.dress !== false) {
+      console.log(
+        chalk.green(
+          `✓ --dress: every look${typeof options.dress === 'string' ? ` naming "${options.dress}"` : ''} the other page dresses it in, this one has`
+        )
+      );
     }
 
     for (const { label, changed } of report.steps ?? []) {

@@ -11,7 +11,7 @@ What the lead — team lead and software architect — does; the agents' half, t
    control behaves, a size — as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
    "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
-   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`, naming sections no piece covers — and `page shot <page> --compare <its original>` on every page, not only the run's, says the dress (glows, gradients, ornaments) each lacks: what an earlier run left is an inventory piece too. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
+   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`, naming sections no piece covers. **Research is a spike, in the run**: a task's `"spike": "what to find out"` is worked first, even before what it waits for is done; with no files it is research alone (acceptance in words). Open with spikes — `page shot --compare <original> --dress` on every page, among agents — then `run extend`. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview` — who owns which file, read off the imports. A page owns the modules only
    it imports; what two pages import (the tokens, the classes, a layout, a component) is **shared**, and so is every
@@ -62,7 +62,7 @@ What the lead — team lead and software architect — does; the agents' half, t
    acceptance, edge cases, the page (UI approved: the code first) — and the final word, after it (or before, saying why: `--skip-design lead|no-ui`,
    as yourself: no `--agent`, or `lead`). A UI review counts only from a designer of the team, by the name it
    is started with (`design-1`). **One lead for every four agents**: a team of five or more has `lead-2`… beside you
-   (`run team set lead --count N`) — **not at the start**: you review, taking each review from
+   (`run team set lead --count N`) — **not at the start**: you review, each review from
    the queue (`plitzi task next --role lead --take`), and `run watch --until lead` says when the reviews queue up (two
    waiting, the oldest five minutes) and which to start. Each takes the next review no other lead took, reviews it as you
    would — tell them how strict you are (`@lead-2`) — and stops once the queue is empty. The rest
@@ -87,8 +87,8 @@ What the lead — team lead and software architect — does; the agents' half, t
 
 3. `plitzi run plan plan.json` — refused, every reason at once; otherwise expanded, shared files and overlaps
    listed, estimated — and the skills said when they are older than the CLI (`plitzi upgrade skills --write` first). `plitzi run rehearse plan.json` plays it out with the team as `task next` would:
-   who works what when, the critical path, your review queue (`--review 5m`), files changed at once, and the length for
-   each number of agents. Nothing is opened.
+   who works what when, the critical path, your review queue (`--review 5m`), files changed at once, the length for
+   each team size.
 4. **Ask the person first** who applies the run at the end — they, or you: then they open it in their terminal with
    `--lead-finishes` (or `plitzi run allow-finish` later). Never you.
    `plitzi run open plan.json` backs up every file it will touch; as many agents at once as the team has (above 5 a
@@ -110,16 +110,16 @@ task message t-home "…" --reply-to m3`; `task message all "…"` tells every t
    this task's part. `plitzi task show t-home` is all of it (acceptance, checks, agreements, what was said, diffs; `<file>` after it, that file whole);
    `plitzi task look t-home [--click id | --hover id] [--element id]` (a part of a page others build: its part alone) serves its copy, page checks its pages (headings, names,
    contrast; the state asked for) and pictures them light and dark. What the acceptance asks and the data does not show, you test yourself
-   (a module's function with its edge cases, `node -e` in the copy) — or send it back for the test it needs. Then
+   (a module's function, its edge cases, `node -e` in the copy) — or send it back for the test it needs. Then
    `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Three rounds of yours —
    or three of the designer's, counted apart — are yours: approve as it is, answer, or ask the person. A `--known-failure` says why and which task fixes it — weigh that. The approval merges what went to review,
    not the copy as it is: `look` and the approval warn of anything written in it since — ask why, or send it back.
-   Two tasks that made one file are refused at the second approval: send it back to build on the run's.
+   Two tasks that made one file: the second approval is refused — send it back.
 7. **Someone changed a file while the agent worked on it** → the approval stops, naming it: `--approve --merge` when
    the changes go together line by line (the refusal says so), `--approve --overwrite` (its version wins, said, the
    other kept) or `--changes` (redo it on the project's version). A change after approval puts the finish into
    **reconciliation**: `plitzi run resolve <run> <file> --take project|run|merge|<file>`, then `plitzi run continue`.
-   **The brake** stops a run whose completions keep being refused; `plitzi run resume`. Agents
+   **The brake** stops a run whose completions keep failing; `run resume`. Agents
    iterate with `task check`, which it does not count. **Plitzi upgraded mid-run** (`version-mismatch`, said in `run
 status`): ask the person to run `plitzi run attach <run>` — the agents keep their work and wait. To upgrade on
    purpose, the person runs `plitzi run upgrade` — never an install under the open run.

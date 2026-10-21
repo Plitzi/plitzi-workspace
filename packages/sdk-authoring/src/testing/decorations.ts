@@ -206,6 +206,13 @@ export interface SectionDecorations {
   missing: string[];
   /** Layers here of a kind the other page has fewer of — what this page adds. */
   extra: string[];
+  /**
+   * Each look the other page dresses the section in and this one has none of: a layer's sort (`radial-gradient`,
+   * `text-shadow`, `::before`) and whether it spans the section — a warm light across a page is not the gradient of
+   * one card in it. With one of each, in a few words. What a look's absence is, by sort: counts differ between two
+   * ways of drawing it, a sort and a span missing do not.
+   */
+  absent: string[];
 }
 
 const KINDS: readonly DecorationKind[] = ['gradient', 'glow', 'ornament', 'image', 'filter'];
@@ -240,6 +247,22 @@ const detailsOf = (layers: readonly PageDecoration[], kind: DecorationKind): str
   return [...times].map(([detail, count]) => (count > 1 ? `${detail} ×${String(count)}` : detail));
 };
 
+/** A layer's look: its sort, and `wide` when it spans most of its section — what one look is matched by. */
+const lookOf = (layer: PageDecoration, section: PictureRegion | undefined): string => {
+  const sort =
+    layer.kind === 'gradient' || layer.kind === 'glow' || layer.kind === 'ornament'
+      ? (layer.detail.split(' ')[0] ?? layer.kind)
+      : layer.kind === 'filter'
+        ? `filter ${/blur|drop-shadow/.exec(layer.detail)?.[0] ?? ''}`.trim()
+        : 'background image';
+  const wide = section !== undefined && layer.width >= section.width * WIDE;
+
+  return wide ? `${sort} across the section` : sort;
+};
+
+/** How much of its section's width a layer spans to be one across it. */
+const WIDE = 0.6;
+
 /** How many details a section's difference names: the rest is its counts. */
 const DETAILS = 3;
 
@@ -260,6 +283,18 @@ export const compareDecorations = (
 
     return sections;
   };
+  const looksOf = (layers: readonly PageDecoration[], regions: readonly PictureRegion[], section: string) => {
+    const box = regions.find(region => region.name === section);
+    const looks = new Map<string, string>();
+    for (const layer of layers) {
+      const look = lookOf(layer, box);
+      if (!looks.has(look)) {
+        looks.set(look, layer.detail);
+      }
+    }
+
+    return looks;
+  };
   const ours = bySection(here);
   const theirs = bySection(there);
   const names = [...new Set([...ours.keys(), ...theirs.keys()])];
@@ -276,6 +311,13 @@ export const compareDecorations = (
       detailsOf(a, kind).slice(0, DETAILS)
     );
 
-    return missing.length > 0 || extra.length > 0 ? [{ section, here: countA, there: countB, missing, extra }] : [];
+    const ourLooks = looksOf(a, here.regions, section);
+    const absent = [...looksOf(b, there.regions, section)]
+      .filter(([look]) => !ourLooks.has(look))
+      .map(([look, detail]) => `${look} (${detail})`);
+
+    return missing.length > 0 || extra.length > 0 || absent.length > 0
+      ? [{ section, here: countA, there: countB, missing, extra, absent }]
+      : [];
   });
 };

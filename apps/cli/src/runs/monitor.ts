@@ -5,6 +5,7 @@ import { LEAD, messagesOf } from './messages';
 import { loadRun, readRunLog, runIds } from './run';
 import { choiceText, readTeam, startedAgents } from './team';
 import { viewRun } from './view';
+import { isWorked } from './worked';
 
 import type { DesignSkip } from './designSkip';
 import type { RunContext } from './run';
@@ -195,6 +196,8 @@ const doingOf = (task: TaskLine): string => {
       return `reviews the UI of ${task.id}`;
     case 'changes-requested':
       return `redoes ${task.id} (round ${String(task.round)})`;
+    case 'spike':
+      return `finds out for ${task.id}: ${task.spike ?? 'what it needs'}`;
     case 'waiting':
       return `${task.id} waits for ${task.waitingFor?.task ?? 'another task'}`;
     case 'blocked':
@@ -265,7 +268,7 @@ const agentsOf = async (
   // What waits on a designer: a UI review no designer took — said on each designer, which may be at a task of its own.
   // Waiting, in a few words — how the run stands, not the list of every task (the activity says that): its line is one
   // row of the panel, and a designer waiting for its first review showed the whole of the waiting's reason there.
-  const atWork = view.tasks.filter(task => task.status === 'in-progress' || task.status === 'changes-requested').length;
+  const atWork = view.tasks.filter(task => isWorked(task.status)).length;
   const pending = view.tasks.filter(task => task.status === 'pending').length;
   const standing = [`${String(atWork)} at work`, ...(pending > 0 ? [`${String(pending)} pending`] : [])].join(', ');
   const tookAny = new Set(
@@ -418,6 +421,13 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
   switch (entry.action) {
     case 'take':
       return line('take', `took ${task}`);
+    case 'spike':
+      return line('agent', `went back to finding out for ${task}: ${textOf(entry.question)}`);
+    case 'spike-done':
+      return line(
+        entry.status === 'done' ? 'approved' : 'agent',
+        `found out for ${task} (${textOf(entry.question)}) — ${entry.status === 'done' ? 'research alone: done' : entry.status === 'pending' || entry.status === 'ready' ? `kept, not built now (${textOf(entry.status)})` : 'building it now'}`
+      );
     case 'joined':
       return line('agent', `joined the run${entry.quality ? ` at ${textOf(entry.quality)}` : ''}`);
     case 'complete':

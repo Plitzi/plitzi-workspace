@@ -11,13 +11,15 @@ import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readApproved } from '../run';
 import { keepFiles, placeVersion, withLock } from '../store';
 import { appendLog, cutTask, locksExpired, readOwner, revokeOwner, updateState, viewTask } from '../taskStore';
+import { isWorked } from '../worked';
 import { at, findTask, roleOf } from './common';
 import { allLocks, sharedFiles } from './locks';
 
 import type { ProposalView } from '../agreements';
 import type { Message } from '../messages';
-import type { FileLock, RunTask, TaskStart } from '../model';
+import type { FileLock, RunTask, TaskStart, TaskStatus } from '../model';
 import type { RunContext } from '../run';
+import type { TaskView } from '../taskStore';
 
 /**
  * `plitzi task take`: a task taken — its owner created exclusively, its files locked, its copy of the project made.
@@ -35,6 +37,8 @@ export interface TakenTask {
   proposals: ProposalView[];
   /** What the lead said to it and it had not read. */
   messages: Message[];
+  /** Taken in `spike`: what to find out first — then `task spike --done`, and only then is it built. */
+  spike?: string;
 }
 
 /**
@@ -73,7 +77,9 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
     throw new RunRefusal('invalid', `Task "${taskId}" is in review: take another (plitzi task next)`, { task: taskId });
   }
 
-  if (!dependenciesDone(task, states)) {
+  // Finding out is reading: a spike is taken while what the task builds on is still being built.
+  const spiking = view.state.status === 'spike';
+  if (!spiking && !dependenciesDone(task, states)) {
     const pending = task.dependsOn.filter(dependency => states.get(dependency)?.status !== 'done');
     throw new RunRefusal('invalid', `Task "${taskId}" waits for ${pending.join(', ')} to be done`, {
       task: taskId,
@@ -120,10 +126,7 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
     loaded.paths.takeLock,
     async () => {
       const working = (await Promise.all(loaded.tasks.map(each => viewTask(loaded.paths, each)))).filter(
-        each =>
-          each.task.id !== taskId &&
-          each.owner !== undefined &&
-          (each.state.status === 'in-progress' || each.state.status === 'changes-requested')
+        each => each.task.id !== taskId && each.owner !== undefined && isWorked(each.state.status)
       );
       // The limit is on agents, not tasks: one that holds two — its own sent back while it works another — is one, and
       // taking one more adds no agent.
@@ -146,18 +149,15 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
       }
 
       // Counted as at work from now, before its copy is made: the next take under the lock sees it.
-      await updateState(
-        view.paths,
-        state => ({ ...state, status: state.status === 'changes-requested' ? 'changes-requested' : 'in-progress' }),
-        ctx.now
-      );
+      await updateState(view.paths, state => ({ ...state, status: takenStatus(state.status) }), ctx.now);
     },
     { now: ctx.now }
   );
 
   try {
     const locks = await allLocks(ctx);
-    for (const file of task.files) {
+    // A spike writes nothing: its files are held once it is built (`task spike --done`), not while it finds out.
+    for (const file of spiking ? [] : task.files) {
       const other = (locks.get(file) ?? []).find(held => held.live && !(held.run === runId && held.task === taskId));
       if (other) {
         throw new RunRefusal(
@@ -168,9 +168,8 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
       }
     }
 
-    for (const file of task.files) {
-      const lock: FileLock = { runId, taskId, agent: ctx.agent, intent: task.title, since: at(ctx), kind: 'own' };
-      await writeJson(lockFile(view.paths, file), lock);
+    if (!spiking) {
+      await holdFiles(ctx, runId, view, task);
     }
 
     // Its files and the shared ones as the project holds them now, kept: the base of every conflict this task can meet,
@@ -217,7 +216,7 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
       view.paths,
       state => ({
         ...state,
-        status: state.status === 'changes-requested' ? 'changes-requested' : 'in-progress',
+        status: takenStatus(state.status),
         cutAt: undefined,
         notes: [
           ...state.notes,
@@ -229,7 +228,7 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
   } catch (error) {
     await fs.rm(view.paths.locks, { recursive: true, force: true });
     await revokeOwner(view.paths);
-    await updateState(view.paths, state => ({ ...state, status: 'ready' }), ctx.now);
+    await updateState(view.paths, state => ({ ...state, status: spiking ? 'spike' : 'ready' }), ctx.now);
     throw error;
   }
 
@@ -244,6 +243,26 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
     ...(view.reviewed ? { resumedFrom: view.reviewed.round } : {}),
     ...(replaced ? { replaced } : {}),
     proposals: unansweredTo(await proposalsOf(loaded), taskId),
-    messages: await unreadForHolder(loaded, taskId, ctx.agent, true)
+    messages: await unreadForHolder(loaded, taskId, ctx.agent, true),
+    ...(spiking ? { spike: view.state.spiking ?? task.spike ?? 'what it needs' } : {})
   };
+};
+
+/** The status a take leaves a task in: sent back stays sent back, a spike stays one, anything else is at work. */
+const takenStatus = (status: TaskStatus): TaskStatus =>
+  status === 'changes-requested' || status === 'spike' ? status : 'in-progress';
+
+/** Its own files held for it: what a task building them takes — at its take, or once its spike is answered. */
+export const holdFiles = async (ctx: RunContext, runId: string, view: TaskView, task: RunTask): Promise<void> => {
+  for (const file of task.files) {
+    const lock: FileLock = {
+      runId,
+      taskId: task.id,
+      agent: ctx.agent,
+      intent: task.title,
+      since: at(ctx),
+      kind: 'own'
+    };
+    await writeJson(lockFile(view.paths, file), lock);
+  }
 };

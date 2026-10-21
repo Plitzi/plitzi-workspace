@@ -2,7 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { compareText } from './compare';
+import { compareText, missingDress } from './compare';
 
 import type { CompareReport } from './types';
 
@@ -45,7 +45,8 @@ describe('a comparison with another site, said', () => {
             'box-shadow 60px rgba(199, 168, 107, 0.25)',
             '::before border rgb(199, 168, 107) ×4'
           ],
-          extra: []
+          extra: [],
+          absent: []
         }
       ]
     }).map(line => stripVTControlCharacters(line));
@@ -54,5 +55,31 @@ describe('a comparison with another site, said', () => {
     expect(lines[2]).toBe(
       '  section#artist-page: none → 2 gradients, 1 glow, 4 ornaments — add: radial-gradient rgba(199, 168, 107, 0.2) ×2; box-shadow 60px rgba(199, 168, 107, 0.25); ::before border rgb(199, 168, 107) ×4'
     );
+  });
+
+  // An acceptance proves a look by `--dress`: a look wholly absent fails, two ways of drawing one look do not.
+  it('says each look a section lacks', () => {
+    expect(
+      missingDress([
+        {
+          section: 'section#artist-page',
+          here: { gradient: 4 },
+          there: { gradient: 12, glow: 2 },
+          missing: [],
+          extra: [],
+          absent: ['radial-gradient across the section (radial-gradient rgba(199, 168, 107, 0.16))']
+        },
+        {
+          section: 'section#home-sponsors',
+          here: { gradient: 96 },
+          there: { gradient: 1 },
+          missing: [],
+          extra: [],
+          absent: []
+        }
+      ])
+    ).toEqual([
+      'section#artist-page lacks radial-gradient across the section (radial-gradient rgba(199, 168, 107, 0.16))'
+    ]);
   });
 });

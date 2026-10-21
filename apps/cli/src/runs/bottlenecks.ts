@@ -1,5 +1,6 @@
 import { LEAD } from './messages';
 import { DESIGNER, DEVELOPER } from './team';
+import { isWorked } from './worked';
 
 import type { TaskView } from './taskStore';
 import type { StartedAgent } from './team';
@@ -31,11 +32,7 @@ export const bottlenecks = (views: readonly TaskView[], started: readonly Starte
   // UI reviews nobody takes: every designer is at a task of its own — the lead's, or they wait for nobody.
   const designers = started.filter(each => each.roles.includes(DESIGNER)).map(each => each.agent);
   const atOwn = (agent: string): string | undefined =>
-    views.find(
-      view =>
-        view.owner?.agent === agent &&
-        (view.state.status === 'in-progress' || view.state.status === 'changes-requested')
-    )?.task.id;
+    views.find(view => view.owner?.agent === agent && isWorked(view.state.status))?.task.id;
   const uiWaiting = views.filter(
     view =>
       view.state.status === 'in-review' && view.state.design?.status === 'due' && view.state.design.by === undefined

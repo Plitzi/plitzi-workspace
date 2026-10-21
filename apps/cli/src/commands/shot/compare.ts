@@ -68,6 +68,7 @@ const countsText = (counts: Partial<Record<DecorationKind, number>>): string => 
 const decorationText = (section: SectionDecorations): string =>
   [
     `  ${section.section}: ${countsText(section.here)} → ${countsText(section.there)}`,
+    section.absent.length > 0 ? ` — lacks: ${section.absent.join('; ')}` : '',
     section.missing.length > 0 ? ` — add: ${section.missing.join('; ')}` : '',
     section.extra.length > 0 ? ` — only here: ${section.extra.join('; ')}` : ''
   ].join('');
@@ -266,3 +267,11 @@ export function contactSheet(cells: { label: string; src: string }[]): Promise<s
     return canvas.toDataURL('image/png');
   });
 }
+
+/**
+ * Each look a section has none of where the other page dresses it so — a light across it, a glow, its ornaments: what
+ * `--dress` fails on. Counts differ between two ways of drawing one look (corner brackets as gradients here, a frame
+ * there); a sort and a span wholly absent is what a visitor sees missing.
+ */
+export const missingDress = (decorations: readonly SectionDecorations[]): string[] =>
+  decorations.flatMap(section => section.absent.map(look => `${section.section} lacks ${look}`));

@@ -15,6 +15,7 @@ import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
 import { readTeam, startedAgents } from './team';
 import { chainMinutes, urgencies } from './urgency';
+import { isWorked } from './worked';
 
 import type { DesignReview, Needs, Priority, RunRecord, TaskStatus, Waiting } from './model';
 import type { RunContext } from './run';
@@ -70,6 +71,10 @@ export interface TaskLine {
   signalAt?: string;
   /** In review: since when it is as it is — sent, or its UI said — what a review no lead takes has waited from. */
   since?: string;
+  /** In spike: what it is finding out — the plan's spike, or the one its agent moved it back for. */
+  spike?: string;
+  /** How many findings its spikes left: a task the run researched. */
+  found?: number;
   /** At work, held on a question its agent asked the lead and nobody answered: which, in a line. */
   asking?: { id: string; text: string };
 }
@@ -154,10 +159,7 @@ const lineOf = (view: TaskView, now: Date, unblocks: string[], urgency: Priority
   ...(view.state.blockedBy ? { blockedBy: view.state.blockedBy } : {}),
   estimateMinutes: view.task.estimateMinutes,
   ...(view.owner ? { spentMinutes: minutesBetween(view.owner.takenAt, now) } : {}),
-  noSignal:
-    view.owner !== undefined &&
-    (view.state.status === 'in-progress' || view.state.status === 'changes-requested') &&
-    isDisconnected(view.task, view.signalAt, now),
+  noSignal: view.owner !== undefined && isWorked(view.state.status) && isDisconnected(view.task, view.signalAt, now),
   ...(view.owner ? { takenAt: view.owner.takenAt } : {}),
   ...(view.state.design ? { design: view.state.design } : {}),
   ...(view.state.status === 'in-review' && view.state.reviewer?.round === view.state.round
@@ -166,7 +168,9 @@ const lineOf = (view: TaskView, now: Date, unblocks: string[], urgency: Priority
   ...(view.state.status === 'in-review' ? { since: view.state.updatedAt } : {}),
   ...(view.owner && view.signalAt !== undefined ? { signalAt: new Date(view.signalAt).toISOString() } : {}),
   unblocks,
-  ...(view.task.milestone ? { milestone: view.task.milestone } : {})
+  ...(view.task.milestone ? { milestone: view.task.milestone } : {}),
+  ...(view.state.status === 'spike' ? { spike: view.state.spiking ?? view.task.spike ?? 'what it needs' } : {}),
+  ...(view.state.findings && view.state.findings.length > 0 ? { found: view.state.findings.length } : {})
 });
 
 export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> => {
@@ -283,7 +287,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     }
 
     // A file a task is making too long to read whole: the lead asks for the split while it is still cheap.
-    if (view.owner && (view.state.status === 'in-progress' || view.state.status === 'changes-requested')) {
+    if (view.owner && isWorked(view.state.status)) {
       for (const long of await longFilesIn(view.paths.work, ctx.root)) {
         attention.push({
           kind: 'file-too-long',
@@ -413,7 +417,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       const question = questions.filter(message => message.from === task.id).at(-1);
 
       // Only while it is worked: one sent to review is no agent's to wait on, and stood in two of the flow's columns.
-      return question && (task.status === 'in-progress' || task.status === 'changes-requested')
+      return question && isWorked(task.status)
         ? { ...task, asking: { id: question.id, text: glimpse(question.text) } }
         : task;
     }),
@@ -433,6 +437,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
 
 const ICON: Record<TaskStatus, string> = {
   pending: '·',
+  spike: '◇',
   ready: '○',
   'in-progress': '▶',
   waiting: '…',

@@ -26,6 +26,11 @@ export interface ShotOptions {
   compare?: string;
   /** With `compare`: the site as it is now, even where the run kept it (`plitzi run reference`). */
   live?: boolean;
+  /**
+   * With `compare`: fail where a section lacks a look the other page dresses it in — an acceptance's check; a text, only
+   * the looks that name it (`radial-gradient across`, `shadow`, `::before`, `background image`, `filter`).
+   */
+  dress?: boolean | string;
   frames?: number;
   every?: number;
   waitFor?: string;
@@ -87,6 +92,8 @@ export interface CompareReport {
 }
 
 export interface ShotReport {
+  /** `--dress`: each kind of dress a section lacks that the other page has — the check failed by them. */
+  dressMissing?: string[];
   path: string;
   width: number;
   /** The theme the page was painted in. */

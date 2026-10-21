@@ -115,6 +115,10 @@ export const registerPage = (pageGroup: Command): void => {
       'Another site: the same page there, side by side, and how much differs by section — as the open run kept it, when it did (plitzi run reference)'
     )
     .option('--live', 'With --compare: the site as it is now, not as the run kept it')
+    .option(
+      '--dress [look]',
+      'With --compare: fail where a section (or the --clip one) lacks a look the other page dresses it in — a gradient across it, a shadow, an ornament, a filter, a background image; a text, only the looks naming it ("radial-gradient across", shadow, ::before)'
+    )
     .addOption(
       new Option(
         '--frames <n>',

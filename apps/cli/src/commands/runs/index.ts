@@ -29,7 +29,7 @@ export {
 } from './lifecycle';
 export type { FinishOptions } from './lifecycle';
 export { taskNext, taskTake } from './next';
-export { taskClaim, taskClaims, taskDiscard, taskRelease, taskRequest, taskWait } from './files';
+export { taskClaim, taskClaims, taskDiscard, taskRelease, taskRequest, taskSpike, taskWait } from './files';
 export { taskBlock, taskCheck, taskComplete, taskNote, taskProgress, taskUnblock } from './work';
 export { taskLook, taskReassign, taskRevert, taskReview, taskShow } from './review';
 export type { LookOptions, ReviewOptions } from './review';

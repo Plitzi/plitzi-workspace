@@ -81,6 +81,18 @@ const stagesOf = (tasks: readonly TaskLine[]): Stage[] => {
         return left.length > 0 ? `← ${left.join(', ')}` : '';
       }
     },
+    // Finding something out before it is built: whoever is on it, or free to take — research waits for nothing. A run
+    // that researched nothing has no column for it.
+    ...(tasks.some(task => task.status === 'spike' || task.found !== undefined)
+      ? [
+          {
+            name: '◇ spike',
+            tone: chalk.blue,
+            tasks: of('spike').filter(task => !task.asking),
+            who: (task: TaskLine) => task.agent ?? 'free'
+          }
+        ]
+      : []),
     // Sent back by a review, ready again — for the agent that wrote it, whose name it says.
     {
       name: '○ ready',

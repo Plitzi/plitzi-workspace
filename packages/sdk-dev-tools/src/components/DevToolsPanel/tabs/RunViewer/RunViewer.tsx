@@ -11,6 +11,7 @@ const hhmm = (iso: string): string => `${iso.slice(11, 16)} UTC`;
 /** The tasks by where they stand, in the order a person reads a run: what moves first, the approved — done — last. */
 const GROUPS: { label: string; statuses: string[] }[] = [
   { label: 'At work', statuses: ['in-progress', 'changes-requested', 'waiting'] },
+  { label: 'Finding out', statuses: ['spike'] },
   { label: 'In review', statuses: ['in-review'] },
   { label: 'Blocked', statuses: ['blocked', 'failed'] },
   { label: 'To do', statuses: ['ready', 'pending'] },

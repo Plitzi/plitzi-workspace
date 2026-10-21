@@ -100,11 +100,11 @@ const nextText = (next: NextTask, agent: string): string =>
         : next.task
           ? next.yours
             ? [
-                `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : 'unblocked'}). Your token is still good: plitzi task context ${next.task.id}`,
+                `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : next.yours === 'spike' ? 'in spike: find out what it needs, then plitzi task spike --done "…"' : 'unblocked'}). Your token is still good: plitzi task context ${next.task.id}`,
                 ...(next.work ? [`  Its copy, the only place you write: cd ${next.work}`] : []),
                 ...(next.asked ?? []).map(line => `  ↺ ${line}`)
               ].join('\n')
-            : `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task take ${next.task.id}`
+            : `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'})${next.task.spike ? `, a spike first — find out: ${next.task.spike}` : ''}. Take it: plitzi task take ${next.task.id}`
           : [
               String(next.why),
               ...(next.worked ?? []).map(
@@ -130,7 +130,13 @@ const takenText = (taken: TakenTask): string =>
     ...(taken.resumedFrom !== undefined ? [`  Resumed from the version review ${String(taken.resumedFrom)} saw`] : []),
     `  Run its commands in its copy — cd ${taken.work} — and they know the task: start with plitzi task context`,
     `  Anywhere else, its token: --token ${taken.token}`,
-    '  Done: plitzi task complete, in the copy'
+    ...(taken.spike
+      ? [
+          chalk.blue(
+            `  ◇ A spike first — find out: ${taken.spike}. Read, compare, measure (page shot --compare, task look); write nothing of the task's. Then: plitzi task spike --done "what you found"${taken.files.length === 0 ? ' — research alone, that is its end' : ' — and build it'}`
+          )
+        ]
+      : ['  Done: plitzi task complete, in the copy'])
   ].join('\n');
 
 export const taskTake = (taskId: string, options: RunCommandOptions & { role?: string }): Promise<void> =>

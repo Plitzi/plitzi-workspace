@@ -29,6 +29,10 @@ export interface RunSnapshotTask {
   fraction?: number;
   /** Why it is not moving, in a line: the tasks it starts after, the file it waits for, what blocks it and who acts. */
   why?: string;
+  /** How urgent: its priority, or that of any task waiting on it — `critical` and `high` are marked. */
+  urgency?: string;
+  /** How many findings its spikes left: what the run found out before building it. */
+  found?: number;
 }
 
 export interface RunSnapshotAgent {

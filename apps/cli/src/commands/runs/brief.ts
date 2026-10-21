@@ -13,6 +13,7 @@ import { taskContext } from '../../runs/tasks';
 import { describeData } from '../data';
 
 import type { RunCommandOptions } from './shell';
+import type { Finding } from '../../runs/spike';
 import type { TaskContext } from '../../runs/tasks';
 
 /**
@@ -90,6 +91,9 @@ export const taskContextCommand = (
  * A task in a page an agent reads before it starts: what is asked, what holds for the whole run, what was decided with
  * others, what a review asked — and only where the rest is (`--json`: every file's text, every related task's notes).
  */
+const findingsText = (title: string, findings: readonly Finding[]): string[] =>
+  findings.length > 0 ? [title, ...findings.map(each => `  ◇ ${each.question} — ${each.text} (${each.by})`)] : [];
+
 const briefOf = (context: TaskContext): string => {
   const { task, state } = context;
   const files = context.files.map(file => `${file.file}${file.toCreate ? ' (to create)' : ''}`);
@@ -112,6 +116,18 @@ const briefOf = (context: TaskContext): string => {
     `Its files: ${files.join(', ')}${task.touches && task.touches.length > 0 ? ` · it will touch: ${task.touches.join(', ')}` : ''}`,
     // What the work needs beyond them is not refused: it is said how it goes in.
     '  A file beyond these the work needs: change it in your copy — it goes in by turns at complete when nobody holds it (plitzi task claim <file> holds it while you work; one another task holds becomes a request)',
+    // What it is to find out, before anything is built — and what was found already: by it, and by what it waits for.
+    ...(state.status === 'spike'
+      ? [
+          chalk.blue(
+            `◇ In spike — find out first: ${state.spiking ?? task.spike ?? 'what it needs'}. Read, compare, measure; write nothing of the task's; then plitzi task spike --done "what you found"`
+          )
+        ]
+      : []),
+    ...findingsText(`What ${task.id}'s spikes found`, state.findings ?? []),
+    ...context.related.flatMap(each =>
+      findingsText(`What ${each.task} found — read it before you build`, each.findings ?? [])
+    ),
     ...(task.acceptance.length > 0
       ? [
           'Acceptance — a line with a check is run at complete; run it yourself in your copy first',

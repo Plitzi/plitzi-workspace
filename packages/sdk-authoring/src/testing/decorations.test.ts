@@ -80,8 +80,23 @@ describe('compareDecorations', () => {
         here: {},
         there: { gradient: 2, glow: 1 },
         missing: ['radial-gradient rgba(199, 168, 107, 0.2) ×2', 'box-shadow 60px rgba(199, 168, 107, 0.25)'],
-        extra: []
+        extra: [],
+        absent: [
+          'radial-gradient (radial-gradient rgba(199, 168, 107, 0.2))',
+          'box-shadow (box-shadow 60px rgba(199, 168, 107, 0.25))'
+        ]
       }
+    ]);
+  });
+
+  // la-velada's artist page had a gold radial gradient — on one card — where the original's lit the whole page.
+  it('tells a light across the section from the same gradient on one card in it', () => {
+    const regions = [region('section#artist-page', 0, 1000)];
+    const card = layer('gradient', 'radial-gradient rgba(199, 168, 107, 0.18)');
+    const light = { ...layer('gradient', 'radial-gradient rgba(199, 168, 107, 0.16)'), x: 0, width: 1440, height: 900 };
+
+    expect(compareDecorations({ layers: [card], regions }, { layers: [card, light], regions })[0]?.absent).toEqual([
+      'radial-gradient across the section (radial-gradient rgba(199, 168, 107, 0.16))'
     ]);
   });
 });

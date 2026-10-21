@@ -4,10 +4,10 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { abortRun } from './merge';
-import { runPlanProblems } from './model';
 import { readOwnership } from './ownership';
 import { RUNS_DIR, runPaths } from './paths';
 import { checkPlan, findCycle, PlanRefusal } from './plan';
+import { runPlanProblems } from './planProblems';
 import { isRunRefusal } from './refusal';
 import { loadRun } from './run';
 import { completeTask, nextTask, takeTask } from './tasks';

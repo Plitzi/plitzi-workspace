@@ -1,4 +1,5 @@
 import { inPageFolder } from './ownership';
+import { isResearch } from './spike';
 import { roleOf } from './tasks';
 import { byUrgency, chainMinutes } from './urgency';
 
@@ -124,6 +125,7 @@ const play = (tasks: readonly RunTask[], options: RehearsalOptions): Played => {
   // What came in for review, in the order it came, and the one the lead is on.
   const queue: RehearsedTask[] = [];
   let reviewing: RehearsedTask | undefined;
+  const researching: RehearsedTask[] = [];
   const staffed = (task: RunTask): boolean => team.some(agent => agent.role === ANY || agent.role === roleOf(task));
   const unstaffed = tasks.filter(task => !staffed(task)).map(task => task.id);
   let leadBusy = 0;
@@ -145,6 +147,13 @@ const play = (tasks: readonly RunTask[], options: RehearsalOptions): Played => {
       if (reviewing && reviewing.approved <= now) {
         approvedAt.set(reviewing.task, reviewing.approved);
         reviewing = undefined;
+        markReady();
+        changed = true;
+      }
+
+      // Research alone is done by its findings, no review: what waits for it is ready once they are said.
+      for (const done of researching.filter(each => each.complete <= now && !approvedAt.has(each.task))) {
+        approvedAt.set(done.task, done.complete);
         markReady();
         changed = true;
       }
@@ -184,8 +193,13 @@ const play = (tasks: readonly RunTask[], options: RehearsalOptions): Played => {
           waitedForReview: 0
         };
         scheduled.push(played);
-        queue.push(played);
-        queue.sort((a, b) => a.complete - b.complete || a.task.localeCompare(b.task));
+        if (isResearch(next)) {
+          played.approved = played.complete;
+          researching.push(played);
+        } else {
+          queue.push(played);
+          queue.sort((a, b) => a.complete - b.complete || a.task.localeCompare(b.task));
+        }
         agent.freeAt = played.complete;
         agent.busy += next.estimateMinutes;
         agent.tasks.push(next.id);

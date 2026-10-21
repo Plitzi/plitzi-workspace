@@ -1,13 +1,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { readyWhatWaited, sayIfAllDone, statesOf } from './handOn';
 import { proposalsOf } from '../agreements';
 import { approveDesign, assertDesigner, designDue } from '../design';
 import { exists, fingerprint, writeJson } from '../files';
 import { assertReviewingLead, isCoLead, isPrincipal } from '../leads';
 import { agentAddress, LEAD, messagesOf, sendMessage } from '../messages';
 import { taskPaths, under } from '../paths';
-import { dependenciesDone } from '../plan';
 import { syncPreview } from '../preview';
 import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readApproved, recordBrake, requireNoTask } from '../run';
@@ -404,18 +404,8 @@ const decide = async (
   const refreshed = await loadRun(ctx, runId);
   const granted = await grantWaiters(ctx, refreshed, released);
   const settled = await settleRequests(ctx, refreshed, released);
-  const states = new Map(
-    await Promise.all(
-      refreshed.tasks.map(async each => [each.id, (await viewTask(refreshed.paths, each)).state] as const)
-    )
-  );
-  const ready: string[] = [];
-  for (const each of refreshed.tasks) {
-    if (states.get(each.id)?.status === 'pending' && dependenciesDone(each, states)) {
-      await updateState(taskPaths(refreshed.paths, each.id), state => ({ ...state, status: 'ready' }), ctx.now);
-      ready.push(each.id);
-    }
-  }
+  const ready = await readyWhatWaited(ctx, refreshed);
+  const states = await statesOf(refreshed);
 
   // What another task agreed with this one may wait on this one's work: it is in the run's now — said to each, so an
   // agreement accepted before it could be applied is applied, not forgotten.
@@ -459,16 +449,8 @@ const decide = async (
     now: ctx.now
   });
 
-  // The last approval — no integration made by it either: every task of the run done — the activity says the run is finished and what comes next.
-  const now = await loadRun(ctx, runId);
-  const statuses = await Promise.all(now.tasks.map(async each => (await viewTask(now.paths, each)).state.status));
-  if (statuses.length > 0 && statuses.every(status => status === 'done')) {
-    await logRun(ctx, loaded.paths, {
-      action: 'all-approved',
-      tasks: now.tasks.length,
-      next: 'plitzi run finish — the dry run checks the whole result; a person applies it'
-    });
-  }
+  // The last approval — no integration made by it either: every task of the run done.
+  await sayIfAllDone(ctx, runId);
 
   const joined = Object.entries((await readApproved(loaded.paths)).files)
     .filter(([, entry]) => entry.task === taskId && entry.joined !== undefined)

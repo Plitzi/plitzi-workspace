@@ -18,6 +18,10 @@ export const TASK_STATE: Record<TaskLine['status'], (task: TaskLine, tasks: read
 
     return chalk.dim(`· pending${waits ? ` — ${waits}` : ''}`);
   },
+  spike: task =>
+    chalk.blue(
+      `◇ spike${task.agent ? ` · ${task.agent} finds out` : ' — free to take: to find out'}${task.spike ? ` ${task.spike}` : ''}`
+    ),
   ready: () => '○ ready — free to take',
   'in-progress': task =>
     task.asking
@@ -57,14 +61,15 @@ const shortModel = (model: string | undefined): string => (model ?? 'harness').r
 /** Where a task stands, the work first: at work, sent back, in review, waiting — then free, pending, and done last. */
 const ORDER: Record<TaskLine['status'], number> = {
   'in-progress': 0,
-  'changes-requested': 1,
-  'in-review': 2,
-  waiting: 3,
-  blocked: 4,
-  failed: 5,
-  ready: 6,
-  pending: 7,
-  done: 8
+  spike: 1,
+  'changes-requested': 2,
+  'in-review': 3,
+  waiting: 4,
+  blocked: 5,
+  failed: 6,
+  ready: 7,
+  pending: 8,
+  done: 9
 };
 
 /** The tasks as the panel lists them: by where each stands, the plan's order within. */

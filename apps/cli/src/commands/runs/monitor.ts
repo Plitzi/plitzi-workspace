@@ -29,6 +29,7 @@ import type { TaskLine } from '../../runs/view';
 /** How the head counts tasks in each state. */
 const STATUS_WORDS: Record<TaskLine['status'], string> = {
   'in-progress': 'at work',
+  spike: 'in spike',
   'changes-requested': 'sent back',
   'in-review': 'in review',
   waiting: 'waiting',

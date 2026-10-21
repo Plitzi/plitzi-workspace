@@ -4,10 +4,12 @@ import { isBrakeEvent, isCompletions } from './brake';
 import { isDesignSkip } from './designSkip';
 import { isDigest, isNumber, isSiteAddress, isString, isStrings, oneOf, optional } from './guards';
 import { isInventoryItem } from './inventory';
+import { isFinding } from './spike';
 
 import type { BrakeEvent } from './brake';
 import type { DesignSkip } from './designSkip';
 import type { InventoryItem } from './inventory';
+import type { Finding } from './spike';
 
 /**
  * What each file of a run holds, with the guard every read is held to. Every time is ISO 8601 in UTC.
@@ -23,6 +25,7 @@ export type Priority = (typeof PRIORITIES)[number];
 
 export const TASK_STATUSES = [
   'pending',
+  'spike',
   'ready',
   'in-progress',
   'waiting',
@@ -106,6 +109,8 @@ export interface PlannedTask {
    * tests (`<id>-tests`, after it) unless it says this, or the plan has a tester's task that waits for it already.
    */
   tests?: false;
+  /** What to find out before it is built (`spike.ts`): it starts in `spike`; with no files, it is research alone. */
+  spike?: string;
 }
 
 export interface Contract {
@@ -315,6 +320,10 @@ export interface TaskState {
   design?: DesignReview;
   /** The lead that took this round's review from the queue (`task next --role lead`): another lead is not offered it. */
   reviewer?: { by: string; round: number; at: string };
+  /** What its spikes found out, oldest first: in its brief, and in the brief of every task that waits for it. */
+  findings?: Finding[];
+  /** In `spike` at its agent's say (`task spike "…"`): what it set out to find. */
+  spiking?: string;
   updatedAt: string;
 }
 
@@ -459,7 +468,7 @@ export const isTaskStatus = oneOf(TASK_STATUSES);
 const isRunStatus = oneOf(RUN_STATUSES);
 const isNeeds = oneOf(NEEDS);
 
-const isAcceptance = (line: unknown): line is Acceptance =>
+export const isAcceptance = (line: unknown): line is Acceptance =>
   isString(line) || (isRecord(line) && isString(line.said) && isString(line.check) && optional(line.covers, isStrings));
 
 export const isPlannedTask = (value: unknown): value is PlannedTask =>
@@ -476,7 +485,8 @@ export const isPlannedTask = (value: unknown): value is PlannedTask =>
   optional(value.role, isString) &&
   optional(value.quality, oneOf(QUALITIES)) &&
   optional(value.touches, isStrings) &&
-  optional(value.tests, flag => flag === false);
+  optional(value.tests, flag => flag === false) &&
+  optional(value.spike, isString);
 
 const isContract = (value: unknown): value is Contract =>
   isRecord(value) && isString(value.resource) && isString(value.owner) && isString(value.note);
@@ -495,78 +505,6 @@ export const isRunPlan = (value: unknown): value is RunPlan =>
   optional(value.leftOut, isStrings) &&
   optional(value.inventory, items => Array.isArray(items) && items.every(isInventoryItem)) &&
   optional(value.reference, isSiteAddress);
-
-const shown = (value: unknown): string => (value === undefined ? 'nothing' : JSON.stringify(value));
-
-/** What keeps `value` from being a plan, field by field — each said with what it should hold. Empty for a plan. */
-export const runPlanProblems = (value: unknown): string[] => {
-  if (!isRecord(value)) {
-    return ['the file holds no object'];
-  }
-
-  const problems: string[] = [];
-  const field = (ok: boolean, name: string, should: string): void => {
-    if (!ok) {
-      problems.push(`${name}: ${should}, not ${shown(value[name])}`);
-    }
-  };
-  field(value.version === 1, 'version', '1');
-  field(isString(value.runId), 'runId', 'the run’s name');
-  field(isString(value.goal), 'goal', 'a line of what the run is for');
-  field(optional(value.leftOut, isStrings), 'leftOut', 'lines of what the run does not do');
-  field(
-    optional(value.reference, isSiteAddress),
-    'reference',
-    'the address of the site it copies — https://www.example.com'
-  );
-  field(
-    optional(value.inventory, items => Array.isArray(items) && items.every(isInventoryItem)),
-    'inventory',
-    'pieces, each { id, piece, page?, leftOut? }'
-  );
-  if (!Array.isArray(value.tasks)) {
-    problems.push('tasks: a list of tasks');
-
-    return problems;
-  }
-
-  value.tasks.forEach((each: unknown, index) => {
-    const at = `tasks[${String(index)}]${isRecord(each) && isString(each.id) ? ` ("${each.id}")` : ''}`;
-    if (!isRecord(each)) {
-      problems.push(`${at}: an object`);
-
-      return;
-    }
-
-    const check = (ok: boolean, name: string, should: string): void => {
-      if (!ok) {
-        problems.push(`${at}.${name}: ${should}, not ${shown(each[name])}`);
-      }
-    };
-    check(isString(each.id), 'id', 'its name');
-    check(isString(each.title), 'title', 'a line');
-    check(isStrings(each.files), 'files', 'the paths it writes');
-    check(isStrings(each.dependsOn), 'dependsOn', 'the ids it waits for ([] for none)');
-    check(isPriority(each.priority), 'priority', PRIORITIES.join(', '));
-    check(isNumber(each.estimateMinutes), 'estimateMinutes', 'minutes, a number');
-    check(
-      Array.isArray(each.acceptance) && each.acceptance.every(isAcceptance),
-      'acceptance',
-      'lines, each a sentence or { said, check, covers? } — a line that covers a piece of the inventory is one a command checks'
-    );
-    check(optional(each.role, isString), 'role', 'a role’s name');
-    check(optional(each.quality, oneOf(QUALITIES)), 'quality', 'light, standard or high');
-    check(optional(each.milestone, isString), 'milestone', 'a name');
-    check(optional(each.touches, isStrings), 'touches', 'paths');
-    check(
-      optional(each.tests, flag => flag === false),
-      'tests',
-      'false, or left out'
-    );
-  });
-
-  return problems;
-};
 
 export const isRunTask = (value: unknown): value is RunTask =>
   isPlannedTask(value) &&
@@ -662,6 +600,8 @@ export const isTaskState = (value: unknown): value is TaskState =>
   optional(value.cutAt, cut => isRecord(cut) && isString(cut.step) && isString(cut.reason) && isString(cut.at)) &&
   Array.isArray(value.notes) &&
   value.notes.every(isNote) &&
+  optional(value.findings, (findings: unknown) => Array.isArray(findings) && findings.every(isFinding)) &&
+  optional(value.spiking, isString) &&
   optional(value.changed, isStrings) &&
   optional(value.submitted, isDigests) &&
   optional(

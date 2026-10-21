@@ -387,6 +387,30 @@ exclusively (`wx`). Every write is a temp file renamed over the target, retried 
 version is a blob named by its fingerprint and a manifest names it, so the manifest is the one commit point: a cut leaves
 an unnamed blob, never a named half-written file.
 
+## A spike: research in the run (`spike.ts`, `tasks/spike.ts`)
+
+Research — what the lead read before writing the plan, what an agent looks up before it builds — is work of the run,
+seen by the monitor, counted by the report, shared out among the agents: a **spike**. A task's `"spike": "what to find
+out"` starts it in `spike`, ahead of `ready` (ready is ready to build): it is offered and taken while what it waits for is
+still being built — finding out is reading — and its files are not held until it is built. Its agent reads, compares
+(`page shot --compare <original> --dress`), measures, writes nothing of the task's, and says what it found:
+`task spike --done "…"`. The findings (`TaskState.findings`) stay with the task, in its brief and in the brief of every
+task that waits for it. Then:
+
+- **Research alone** — a spike and no files — is done by its findings: the lead is told (`about` the task), what waits for
+  it is made ready (`readyWhatWaited`), no review. Its acceptance is in words — what the findings answer — as a command
+  would run at a `complete` it never reaches (`run plan` refuses one).
+- **A task that builds** goes on to be built by the same agent, its files held now (`holdFiles`); one whose
+  dependencies are not done, or whose files another task holds, goes back to `pending` / `ready` with its findings, its
+  agent free for another (`released`).
+
+An agent at work that finds it must look something up moves its task back: `task spike "what"` (`spiking`), its files
+its own throughout, and `--done` takes it on to be built. A task in spike counts as worked (`worked.ts`): it owes signs
+of life, counts toward the agents at work, and holds an agent that asks the lead. The lead's own research before a plan
+is the run's first spike: a plan of research alone — every page against the original, split among the agents — whose
+findings it turns into the work with `run extend`. `run rehearse` plays research alone without a review. The monitor
+gives spikes a column of their own (`◇ spike`) once the run has one, and the dev tools' Run tab a group (Finding out).
+
 ## A task's life (`tasks/`)
 
 One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`), its files and turns

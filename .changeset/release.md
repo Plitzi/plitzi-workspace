@@ -678,4 +678,20 @@ monitor` shows each as it comes, a problem in red.
       far it moves, so a section dressed otherwise on the two pages — what a comparison is for — no longer fits a
       look-alike band far down (the original's header was "747px lower there", and the dress of the page's middle read as
       its header's).
+    - **A spike — research in the run.** A task's `"spike": "what to find out"` starts it in `spike`, ahead of `ready`:
+      taken while what it waits for is still being built (finding out is reading), its files held only once it is built.
+      Its agent finds out and says it — `plitzi task spike --done "…"` — and the findings stay with the task, in its brief
+      and in the brief of every task that waits for it. A spike with no files is research alone: done by its findings,
+      the lead told, no review, its acceptance in words. A task at work goes back to finding out with `plitzi task spike
+      "what"`. The lead's research before a plan is the run's first spike: a plan of research alone, split among the
+      agents, whose findings become the work (`run extend`). A task in spike owes signs of life and counts as at work;
+      `run monitor` gives spikes a column (`◇ spike`) once the run has one, and the agent's row says what it finds out;
+      the dev tools' Run tab groups them (Finding out) and marks the urgent tasks as the monitor does. `run rehearse`
+      plays research alone without a review.
+    - `page shot --compare … --dress` fails where a section lacks a look the other page dresses it in — a sort of
+      layer and whether it spans the section: a warm light across a page is not the same gradient on one card — so an
+      acceptance can prove a look (`--clip artist-page --dress`), against the site as the run kept it. The comparison
+      says each look missing (`lacks: radial-gradient across the section (…)`); `@plitzi/sdk-authoring`'s
+      `SectionDecorations` carries them (`absent`). `--dress "<look>"` checks only the looks naming it — `radial-gradient across`,
+      `shadow`, `::before`, `background image`, `filter` — so a task proves its own look in a section others dress too.
 

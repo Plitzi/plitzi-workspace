@@ -23,6 +23,7 @@ import {
   updateRecord,
   withInputs
 } from './run';
+import { startingStatus } from './spike';
 import { keepFiles } from './store';
 import { viewTask } from './taskStore';
 import { coLeadNames, ensureTeam, teamSize } from './team';
@@ -186,12 +187,12 @@ export const extendRun = async (
     const paths = taskPaths(loaded.paths, task.id);
     await writeJson(paths.definition, task);
     await writeJson(paths.state, {
-      status: isReady(task) ? 'ready' : 'pending',
+      status: startingStatus(task, isReady(task)),
       round: 0,
       notes: [],
       updatedAt: at
     } satisfies TaskState);
-    if (isReady(task)) {
+    if (startingStatus(task, isReady(task)) !== 'pending') {
       ready.push(task.id);
     }
   }

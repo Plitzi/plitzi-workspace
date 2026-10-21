@@ -3,11 +3,13 @@ import path from 'node:path';
 
 import { readOptional, writeAtomic, writeJson } from '../files';
 import { EVERYONE, LEAD, sendMessage } from '../messages';
-import { isRunPlan, runPlanProblems } from '../model';
+import { isRunPlan } from '../model';
 import { readOwnership } from '../ownership';
 import { runPaths, runsDir, taskPaths } from '../paths';
 import { checkPlan, PlanRefusal } from '../plan';
+import { runPlanProblems } from '../planProblems';
 import { RunRefusal } from '../refusal';
+import { startingStatus } from '../spike';
 import { keepFiles } from '../store';
 import { coLeadNames, ensureTeam, reviewsDesign, teamSize } from '../team';
 import { assertNoOtherRun, claimProject, handedInputs, releaseProject, takeInputs } from './claim';
@@ -192,7 +194,7 @@ export const openRun = async (
     const taskFiles = taskPaths(paths, task.id);
     await writeJson(taskFiles.definition, task);
     await writeJson(taskFiles.state, {
-      status: task.dependsOn.length === 0 ? 'ready' : 'pending',
+      status: startingStatus(task, task.dependsOn.length === 0),
       round: 0,
       notes: [],
       updatedAt: at

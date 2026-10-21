@@ -1,7 +1,17 @@
 import { act, holder, runOf } from './shell';
 import { durationText, FOLLOW_MS } from '../../options';
 import { RunRefusal } from '../../runs/refusal';
-import { claimFile, claims, discardFile, releaseFile, requestShared, followWait, waitForFile } from '../../runs/tasks';
+import {
+  answerSpike,
+  claimFile,
+  claims,
+  discardFile,
+  releaseFile,
+  requestShared,
+  startSpike,
+  followWait,
+  waitForFile
+} from '../../runs/tasks';
 
 import type { RunCommandOptions } from './shell';
 
@@ -124,4 +134,39 @@ export const taskRequest = (
       requested.integration
         ? `Requested, blocking: ${requested.integration} makes it, and this task waits for it. Take another ready task meanwhile.`
         : `Requested: change it in your copy as you need it; one integration task applies every request on ${requested.request.file} together.`
+  );
+
+/**
+ * `plitzi task spike "…"`: the task in hand goes back to finding something out; `--done "…"`: what was found — research
+ * alone ends there, a task that builds goes on to be built (or waits, its findings kept).
+ */
+export const taskSpike = (
+  question: string | undefined,
+  options: RunCommandOptions & { done?: string }
+): Promise<void> =>
+  act(
+    options,
+    async ctx => {
+      const { runId, taskId } = await holder(ctx, options);
+      if (options.done !== undefined) {
+        return answerSpike(ctx, runId, taskId, options.done);
+      }
+
+      if (question === undefined || question.trim() === '') {
+        throw new RunRefusal(
+          'invalid',
+          'Say what to find out — plitzi task spike "which layers make the original\'s light" — or what you found: --done "…"'
+        );
+      }
+
+      return startSpike(ctx, runId, taskId, question);
+    },
+    spiked =>
+      spiked.finding === undefined
+        ? `${spiked.task} is in spike: find out ${spiked.question} — read, compare, measure; write nothing of the task's — then plitzi task spike --done "what you found".`
+        : spiked.status === 'done'
+          ? `${spiked.task} is done: research alone, its findings with the lead and with every task that waits for it.${spiked.ready && spiked.ready.length > 0 ? ` Ready now: ${spiked.ready.join(', ')}.` : ''} Take another: plitzi task next`
+          : spiked.released
+            ? `${spiked.task}'s findings are kept — not built now: ${spiked.released.reason}. Whoever takes it reads them; take another: plitzi task next`
+            : `${spiked.task} is yours to build now (${spiked.status}), its files held — what you found is in its brief (plitzi task context).`
   );

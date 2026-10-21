@@ -13,6 +13,7 @@ import { runChanged } from '../runChanged';
 import { tellLeftInTmp } from '../strays';
 import { isDisconnected, viewTask } from '../taskStore';
 import { DEFAULT_DESIGN_REVIEW, DESIGNER, qualityRank, readTeam, startedAgents } from '../team';
+import { isWorked } from '../worked';
 import { findTask, roleOf } from './common';
 import { allLocks } from './locks';
 import { takeTask } from './take';
@@ -36,7 +37,7 @@ export interface NextTask {
    * The task is one the caller already holds and can go on with — a block lifted, changes requested: no take, its token
    * is still good.
    */
-  yours?: 'in-progress' | 'changes-requested';
+  yours?: 'in-progress' | 'changes-requested' | 'spike';
   /** Handed back with changes requested: what its last review asked, by whom. */
   asked?: string[];
   /** One the caller holds: where its copy is — the only place its work is written. */
@@ -148,7 +149,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   // this is how it hears that its blocked task was unblocked, or that its review asked for changes.
   for (const view of views) {
     const { status } = view.state;
-    if (view.owner?.agent === ctx.agent && (status === 'in-progress' || status === 'changes-requested')) {
+    if (view.owner?.agent === ctx.agent && isWorked(status)) {
       // …with what was said to that task meanwhile — an amendment, a review's words — which it reads nowhere else first.
       const toTask = await unreadFor(loaded, view.task.id, true);
 
@@ -221,9 +222,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   });
   // A task the limit would not let this agent take is not offered: it is said, and `--follow` waits for a place.
   const atWork = new Set(
-    views
-      .filter(view => view.owner && (view.state.status === 'in-progress' || view.state.status === 'changes-requested'))
-      .map(view => view.owner?.agent)
+    views.filter(view => view.owner && isWorked(view.state.status)).map(view => view.owner?.agent)
   );
   const full = !atWork.has(ctx.agent) && atWork.size >= loaded.record.agents;
   if (ready.length > 0 && full) {
@@ -243,7 +242,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
         view =>
           view.owner !== undefined &&
           view.owner.agent !== ctx.agent &&
-          (view.state.status === 'in-progress' || view.state.status === 'changes-requested') &&
+          isWorked(view.state.status) &&
           hasDesignReview(view.task, [...view.task.files, ...(view.state.changed ?? [])])
       )
     : [];
@@ -368,11 +367,7 @@ const leadNext = async (
     .filter(each => each.roles.includes(DESIGNER))
     .map(each => each.agent);
   const busy = (agent: string): boolean =>
-    views.some(
-      view =>
-        view.owner?.agent === agent &&
-        (view.state.status === 'in-progress' || view.state.status === 'changes-requested')
-    );
+    views.some(view => view.owner?.agent === agent && isWorked(view.state.status));
   const noDesignerFree = designers.every(busy);
   const review = leadReviewFor(views, ctx.agent, noDesignerFree);
   if (review) {

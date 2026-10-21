@@ -14,6 +14,7 @@ import { currentVersion, findTask } from './common';
 import type { ProposalView } from '../agreements';
 import type { ReviewComment, RunTask, TaskState } from '../model';
 import type { LoadedRun, RunContext } from '../run';
+import type { Finding } from '../spike';
 import type { TaskView } from '../taskStore';
 
 /**
@@ -35,6 +36,8 @@ export interface TaskContext {
     notes: string[];
     /** A task it waits for: what it was asked, and what its reviews asked on top — what a tester writes its tests from. */
     asked?: { acceptance: string[]; reviews: string[] };
+    /** What its spikes found out: research a task builds on, said where it is built. */
+    findings?: Finding[];
   }[];
   contracts: { resource: string; owner: string; note: string }[];
   /** What it was proposed and proposed, and what it agreed to with other tasks — what its review checks too. */
@@ -126,6 +129,7 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
       status: other.state.status,
       changed: other.state.changed ?? [],
       notes: lastNotes(other),
+      ...(other.state.findings && other.state.findings.length > 0 ? { findings: other.state.findings } : {}),
       ...(task.dependsOn.includes(id)
         ? {
             asked: {

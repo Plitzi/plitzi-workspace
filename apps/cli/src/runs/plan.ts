@@ -10,6 +10,7 @@ import { acceptanceText } from './model';
 import { expandFiles, sharedReached } from './ownership';
 import { ID, isSecretFile, NOT_TASK_DIRS, under } from './paths';
 import { shellCommands } from './shell';
+import { isResearch } from './spike';
 import { DESIGNER, DEVELOPER, reviewsDesign, roleProblems, startedAgents, teamSize, teamTakes, TESTER } from './team';
 import { testSetupOf, withTestTasks } from './tests';
 import { reviewedAsUi } from './uiFiles';
@@ -379,8 +380,22 @@ export const checkPlan = async (
       problems.push(`Task "${task.id}": its estimate is in minutes, more than 0`);
     }
 
-    if (task.files.length === 0) {
-      problems.push(`Task "${task.id}" writes no file: name what it writes`);
+    // Research alone writes nothing: a task with a spike and no files is done by its findings.
+    if (task.files.length === 0 && task.spike === undefined) {
+      problems.push(
+        `Task "${task.id}" writes no file: name what it writes — or, research alone, what it finds out ("spike": "…")`
+      );
+    }
+
+    if (task.spike?.trim() === '') {
+      problems.push(`Task "${task.id}": its spike says what to find out — it is empty`);
+    }
+
+    // Research alone never completes: its findings end it, and a command on its acceptance would never run.
+    if (isResearch(task) && task.acceptance.some(each => typeof each !== 'string')) {
+      problems.push(
+        `Task "${task.id}" is research alone (a spike, no files): its acceptance is what its findings answer, in words — a check runs at complete, which it never reaches`
+      );
     }
 
     if (task.role !== undefined && !ID.test(task.role)) {
@@ -699,8 +714,9 @@ export const dependenciesDone = (task: RunTask, states: ReadonlyMap<string, Task
   task.dependsOn.every(dependency => states.get(dependency)?.status === 'done');
 
 /**
- * The tasks that can be taken now, best first: ready (their dependencies done, nothing blocking them, nobody on them),
- * by urgency (`byUrgency`), then by id — the same input, the same order.
+ * The tasks that can be taken now, best first: ready (their dependencies done, nothing blocking them, nobody on them)
+ * or in spike with nobody on them — finding out waits for nothing — by urgency (`byUrgency`), then by id: the same
+ * input, the same order.
  */
 export const readyTasks = (
   tasks: readonly RunTask[],
@@ -713,7 +729,11 @@ export const readyTasks = (
     .filter(task => {
       const status = states.get(task.id)?.status ?? 'pending';
 
-      return (status === 'pending' || status === 'ready') && !held.has(task.id) && dependenciesDone(task, states);
+      if (held.has(task.id)) {
+        return false;
+      }
+
+      return status === 'spike' || ((status === 'pending' || status === 'ready') && dependenciesDone(task, states));
     })
     .sort((a, b) => urgency(a, b) || a.id.localeCompare(b.id));
 };
