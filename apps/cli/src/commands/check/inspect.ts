@@ -381,13 +381,23 @@ export const checkAt = async (
   // as a 429 is; a host that answered nothing is down, or the address wrong — the page's to fix.
   const answeredHosts = new Set<string>();
   const dropped = new Set<string>();
+  // …and so is one it still has not answered when the page is looked at, a host that answered the rest stalling it:
+  // neither a 429 nor a drop, and read as the page's own image that never loaded (la-velada's CDN, under a finish).
+  const pending = new Set<string>();
+  const elsewhere = (url: string, type: string): boolean => type === 'image' && !url.startsWith(origin);
+  page.on('request', request => {
+    if (elsewhere(request.url(), request.resourceType())) {
+      pending.add(request.url());
+    }
+  });
   page.on('requestfailed', request => {
-    if (request.resourceType() === 'image' && !request.url().startsWith(origin)) {
+    pending.delete(request.url());
+    if (elsewhere(request.url(), request.resourceType())) {
       dropped.add(request.url());
     }
   });
   const heldBack = (): ReadonlySet<string> =>
-    new Set([...throttled, ...[...dropped].filter(url => answeredHosts.has(hostOf(url)))]);
+    new Set([...throttled, ...[...dropped, ...pending].filter(url => answeredHosts.has(hostOf(url)))]);
   page.on('pageerror', error => said.push({ text: error.message }));
   const address = `${origin}${pathname}`;
   page.on('console', message => {
@@ -404,6 +414,7 @@ export const checkAt = async (
   };
   let sentWith: number | undefined;
   page.on('response', response => {
+    pending.delete(response.url());
     // The page itself, answered with the status it is sent with: said apart from what it asked for once it loaded.
     if (sentWith === undefined && response.url() === address) {
       sentWith = response.status();

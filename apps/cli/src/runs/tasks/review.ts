@@ -366,6 +366,18 @@ const decide = async (
     }),
     ctx.now
   );
+  // Said the moment it is so: the approval is in the run's work, whatever the steps after it meet — written last, one
+  // that failed after it left an approval the log never had (la-velada: t-tier-list, approved and nowhere in the log).
+  await logRun(ctx, loaded.paths, {
+    action: 'review',
+    task: taskId,
+    verdict,
+    round,
+    merged,
+    fulfilled,
+    ...(skipped ? { design: 'skipped' } : {}),
+    ...(skipped && view.state.design?.by ? { designBy: view.state.design.by } : {})
+  });
   await fs.rm(view.paths.cache, { recursive: true, force: true });
 
   const refreshed = await loadRun(ctx, runId);
@@ -397,19 +409,11 @@ const decide = async (
     });
   }
 
-  // Said the moment it is so: the approval is in the run's work, whatever the steps after it meet.
-  await logRun(ctx, loaded.paths, {
-    action: 'review',
-    task: taskId,
-    verdict,
-    round,
-    merged,
-    fulfilled,
-    granted,
-    ready,
-    ...(skipped ? { design: 'skipped' } : {}),
-    ...(skipped && view.state.design?.by ? { designBy: view.state.design.by } : {})
-  });
+  // What the approval let go: the files handed to the tasks waiting for them, and the tasks it made ready.
+  if (granted.length > 0 || ready.length > 0) {
+    await logRun(ctx, loaded.paths, { action: 'handed-on', task: taskId, granted, ready });
+  }
+
   // A designer at its UI review learns it is decided, never finds out by a refusal (la-velada: design-1 on t-motion).
   const designer = skipped ? view.state.design?.by : undefined;
   if (designer) {

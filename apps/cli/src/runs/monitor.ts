@@ -402,6 +402,16 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
             `approved ${task}${round}${entry.design === 'skipped' ? ` without its UI review${typeof entry.designBy === 'string' ? ` (${entry.designBy} had it)` : ''}` : ''}`
           )
         : line('sent-back', `sent ${task} back${round}`);
+    case 'handed-on':
+      return line(
+        'run',
+        [
+          ...(Array.isArray(entry.granted) && entry.granted.length > 0
+            ? [`${task}'s files handed to ${listOf(entry.granted)}`]
+            : []),
+          ...(Array.isArray(entry.ready) && entry.ready.length > 0 ? [`ready now: ${listOf(entry.ready)}`] : [])
+        ].join(' · ')
+      );
     case 'design-review':
       return entry.verdict === 'approve'
         ? line('approved', `approved the UI of ${task}`)
@@ -446,6 +456,8 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
       return line('message', `answered ${textOf(entry.proposal)}: ${textOf(entry.verdict)}`);
     case 'integration':
       return line('run', `made ${task} for ${textOf(entry.file)}`);
+    case 'summary':
+      return line('run', 'wrote the run’s summary, its report’s first part');
     case 'event':
       // The brake's count: a refused completion is said, the rest are the lines above.
       return entry.kind === 'refused' ? line('problem', `a completion of ${task || 'a task'} was refused`) : undefined;

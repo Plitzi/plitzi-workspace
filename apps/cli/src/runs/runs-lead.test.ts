@@ -188,6 +188,12 @@ describe('the lead’s plan as the run goes', () => {
       await reviewTask(lead(), 'es-launch', task, 'approve', []);
     }
 
+    // The approval is written the moment it is made, and what it let go after it: an approval whose next steps failed
+    // was in the run's work and nowhere in the log.
+    const menu = (await log()).filter(entry => entry.task === 't-menu' && entry.by === 'lead');
+    expect(menu.map(entry => entry.action)).toEqual(['review', 'handed-on']);
+    expect(menu[1]).toMatchObject({ granted: [], ready: ['t-book'] });
+
     await doTask('agent-4', 't-book', 'src/space/pages/book.ts', 'export const book = {};\n');
 
     expect((await log()).at(-1)).toMatchObject({ action: 'all-approved', tasks: 4 });

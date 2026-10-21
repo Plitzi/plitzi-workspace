@@ -123,19 +123,28 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
               )
             ]
           : []),
-        finished.dryRun
-          ? finished.plan.conflicts.length > 0
-            ? 'With --apply the run enters reconciliation: a person resolves each conflict.'
-            : finished.leadFinishes
-              ? 'A person let the lead write it: plitzi run finish --apply (--keep-backup keeps the files it overwrites)'
-              : 'A person writes it: plitzi run finish --apply (--keep-backup keeps the files it overwrites) — or lets the lead, once: plitzi run allow-finish'
-          : [
-              finished.backup
-                ? `The files as they were before it: ${finished.backup} (copy one back to undo it)`
-                : 'No backup was kept: --keep-backup keeps one next time.',
-              `Written by ${String(finished.writtenBy)}. The run's report: ${String(finished.report)}`,
-              ...inputLines(finished.inputs)
-            ].join('\n')
+        ...(finished.summaryBehind
+          ? [
+              chalk.yellow(
+                `  ⚠ The lead's summary was written before ${list(finished.summaryBehind)} ${finished.summaryBehind.length === 1 ? 'was' : 'were'} approved: it says nothing of them, or says it wrong`
+              )
+            ]
+          : []),
+        finished.dryRun && finished.summaryBehind
+          ? 'Next, the lead: the summary again, saying all of the run (plitzi run report --summary <file>) — --apply refuses until then'
+          : finished.dryRun
+            ? finished.plan.conflicts.length > 0
+              ? 'With --apply the run enters reconciliation: a person resolves each conflict.'
+              : finished.leadFinishes
+                ? 'A person let the lead write it: plitzi run finish --apply (--keep-backup keeps the files it overwrites)'
+                : 'A person writes it: plitzi run finish --apply (--keep-backup keeps the files it overwrites) — or lets the lead, once: plitzi run allow-finish'
+            : [
+                finished.backup
+                  ? `The files as they were before it: ${finished.backup} (copy one back to undo it)`
+                  : 'No backup was kept: --keep-backup keeps one next time.',
+                `Written by ${String(finished.writtenBy)}. The run's report: ${String(finished.report)}`,
+                ...inputLines(finished.inputs)
+              ].join('\n')
       ].join('\n')
   );
 

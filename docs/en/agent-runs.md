@@ -437,7 +437,12 @@ brake, the same refusal three times. The finish keeps each acceptance line that 
 on the same result, it runs only the others. Each is the CLI's to fix or the team's to learn from — the log holds every step
 for that reason: the plan and its team at `open`, each command refused or crashed (its line, the token redacted), each
 check with what failed, each look and review taken.
-`run report --summary <file>` keeps the lead's summary on top; the final merge is refused without it. When the
+`run report --summary <file>` keeps the lead's summary on top (logged as `summary`); the final merge is refused without
+it, and refused with one written before a task was approved (`summaryBehind`, `report.ts`: its `summary` line against each
+done task's reviewed version — a run from before that line by the file's time): the dry run says which tasks and is not
+`ready` until it is written again. An approval is logged the moment its task is done (`review`), and what it let go
+after — files handed on, tasks made ready — on a line of its own (`handed-on`): written last, one whose next steps
+failed was in the run's work and nowhere in the log. When the
 run ends — finished, or aborted by a person — the report is left in `tmp/plitzi-reports/<run>-<time>.md`, with what was
 written or discarded and where a backup is.
 

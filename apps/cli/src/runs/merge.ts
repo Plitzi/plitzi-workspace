@@ -9,7 +9,7 @@ import { mergeLines } from './merge3';
 import { entryOf, isMergeManifest } from './model';
 import { BACKUPS_DIR, under } from './paths';
 import { RunRefusal } from './refusal';
-import { leaveReport, readSummary } from './report';
+import { leaveReport, readSummary, summaryBehind } from './report';
 import {
   assertStatus,
   loadRun,
@@ -253,6 +253,8 @@ export interface Finished {
   leftInTmp?: string[];
   /** What the run's activity shows was wrong in how it was worked: said, never refusing — and kept in the report. */
   audit: string[];
+  /** Dry run: the tasks approved after the lead's summary was written — the report that closes the run is behind. */
+  summaryBehind?: string[];
 }
 
 /**
@@ -376,9 +378,11 @@ export const finishRun = async (
 
   const strays = await leftInTmp(ctx.root, loaded.record);
   const leftThere = { ...(strays.length > 0 ? { leftInTmp: strays } : {}), audit: await auditRun(loaded) };
+  const behind = await summaryBehind(loaded);
   if (!apply) {
-    // Whole and checked: the activity's last word is that the run is ready, and whose step is next.
-    if (left.length === 0 && plan.conflicts.length === 0) {
+    // Whole and checked: the activity's last word is that the run is ready, and whose step is next — once its report
+    // says all of it.
+    if (left.length === 0 && plan.conflicts.length === 0 && behind.length === 0) {
       await logRun(ctx, loaded.paths, {
         action: 'ready',
         files: plan.apply.length,
@@ -387,7 +391,14 @@ export const finishRun = async (
       });
     }
 
-    return { dryRun: true, plan, left, leadFinishes: loaded.record.leadFinishes !== undefined, ...leftThere };
+    return {
+      dryRun: true,
+      plan,
+      left,
+      leadFinishes: loaded.record.leadFinishes !== undefined,
+      ...leftThere,
+      ...(behind.length > 0 ? { summaryBehind: behind } : {})
+    };
   }
 
   // The lead closes the run: its report is written before the person writes the run into the project.
@@ -396,6 +407,14 @@ export const finishRun = async (
       'invalid',
       `Run "${runId}" has no report yet: the lead, who closes it, writes its summary first — what it did, what went wrong, what is left (plitzi run report ${runId} --summary <file>)`,
       { run: runId }
+    );
+  }
+
+  if (behind.length > 0) {
+    throw new RunRefusal(
+      'invalid',
+      `Run "${runId}"'s report was written before ${behind.join(', ')} ${behind.length === 1 ? 'was' : 'were'} approved: it says nothing of ${behind.length === 1 ? 'it' : 'them'}, or says it wrong. The lead writes the summary again (plitzi run report ${runId} --summary <file>)`,
+      { run: runId, tasks: behind }
     );
   }
 

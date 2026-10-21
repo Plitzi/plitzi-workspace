@@ -2,7 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { stepsOf, verifyText } from './verify';
+import { stepsOf, tail, verifyText } from './verify';
 
 describe('what verify says of the pages for signed-in visitors', () => {
   const pages = { schemes: ['light' as const], passing: 12, failing: [], unchecked: ['/studio', '/write'] };
@@ -47,5 +47,26 @@ describe('the steps verify runs', () => {
 
   it('runs no tests for a project with no test script', () => {
     expect(stepsOf({ lint: 'eslint .' }).map(step => step.name)).toEqual(['lint']);
+  });
+});
+
+// The run's finish said a line failed and showed only what passed: the failure was above its last 15 lines.
+describe('what a failed step says', () => {
+  it('keeps the lines that say what failed, in their place, and as much of the end as fits', () => {
+    const output = [
+      '✗ / at 1440 px — 3 issues',
+      '  - an image never loaded: https://cdn.example.com/a.webp',
+      ...Array.from({ length: 20 }, (_, index) => `  · read ${String(index)}`),
+      '✓ / at 390 px — nothing wrong'
+    ].join('\n');
+
+    const said = tail(output);
+    expect(said).toHaveLength(15);
+    expect(said.slice(0, 2)).toEqual([
+      '✗ / at 1440 px — 3 issues',
+      '  - an image never loaded: https://cdn.example.com/a.webp'
+    ]);
+    expect(said.at(-1)).toBe('✓ / at 390 px — nothing wrong');
+    expect(tail('one\n\ntwo')).toEqual(['one', 'two']);
   });
 });

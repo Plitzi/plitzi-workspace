@@ -127,6 +127,6 @@ task message t-home "…" --reply-to m3`; `task message all "…"` tells every t
 status`): ask the person to run `plitzi run attach <run>` — the agents keep their work and wait. To upgrade on
    purpose, the person runs `plitzi run upgrade` — never an install under the open run.
 8. **Before you close, look at the coverage:** the finish runs each covering check on the result; look at what a
-   check cannot see (`plitzi run preview`) — what is missing is a stage (`run extend`), never found afterwards. **Close it:** write the summary (done, wrong, left): `plitzi run report --summary summary.md`; then `plitzi run
+   check cannot see (`plitzi run preview`) — what is missing is a stage (`run extend`), never found afterwards. **Close it:** write the summary (done, wrong, left) last: `plitzi run report --summary summary.md`; then `plitzi run
 finish` (the diff, checked). `--apply` is the person's, or yours if they allowed it. The next plan need not wait:
    `plitzi run extend <run> next.json` stacks it, one finish for both. `plitzi run pending` lists what awaits applying.

@@ -95,13 +95,30 @@ export const runScript = (
     child.on('close', code => resolve({ code: code ?? 1, output }));
   });
 
-/** A step's output, as much as says why it failed: its last lines that hold anything. */
-export const tail = (output: string): string[] =>
-  output
+/** A line that says what failed: a check's `✗` and its `- ` findings, a test's `FAIL`/`×`, a compiler's `error`. */
+const FAILING = /^\s*(✗|✘|×|- |FAIL\b)|\berror\b|Error:/;
+
+/**
+ * A step's output, as much as says why it failed: its lines that hold anything, the last `TAIL` of them — and, cut, the
+ * ones that say what failed first, in their place. A page check says its failure above what it read (`·` lines): its
+ * last lines alone were what passed (`✓ / at 390 px`), and the failure at 1440 was cut.
+ */
+export const tail = (output: string): string[] => {
+  const lines = output
     .split('\n')
     .map(line => line.trimEnd())
-    .filter(line => line.trim() !== '')
-    .slice(-TAIL);
+    .filter(line => line.trim() !== '');
+  if (lines.length <= TAIL) {
+    return lines;
+  }
+
+  const kept = new Set(lines.flatMap((line, index) => (FAILING.test(line) ? [index] : [])).slice(0, TAIL));
+  for (let index = lines.length - 1; index >= 0 && kept.size < TAIL; index -= 1) {
+    kept.add(index);
+  }
+
+  return [...kept].sort((a, b) => a - b).map(index => lines[index]);
+};
 
 export const scriptsOf = async (root: string): Promise<Record<string, string>> => {
   const parsed: unknown = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf-8'));

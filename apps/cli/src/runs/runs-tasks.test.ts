@@ -137,9 +137,21 @@ describe('taking a task', () => {
         await completeTask(held.ctx, 'eight', task.id);
       })
     );
+    bench.advance(60_000);
     for (const task of plan.tasks) {
       await reviewTask(lead(), 'eight', task.id, 'approve', []);
     }
+
+    // A report written before the approvals says nothing of them: the dry run says so, and is not ready; --apply refuses.
+    const dry = await finishRun(lead(), 'eight', { apply: false, leavePending: false });
+    expect(dry.summaryBehind).toHaveLength(8);
+    const refused = await refusal(finishRun(bench.person(true), 'eight', { apply: true, leavePending: false }));
+    expect([refused.code, refused.message]).toEqual([
+      'invalid',
+      expect.stringContaining('report was written before t1, t2, t3, t4, t5, t6, t7, t8 were approved') as unknown
+    ]);
+    await writeSummary(lead(), 'eight', 'summary.md');
+    expect((await finishRun(lead(), 'eight', { apply: false, leavePending: false })).summaryBehind).toBeUndefined();
 
     await finishRun(bench.person(true), 'eight', { apply: true, leavePending: false });
     for (let n = 1; n <= 8; n += 1) {

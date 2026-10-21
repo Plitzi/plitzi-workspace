@@ -475,3 +475,13 @@ monitor` shows each as it comes, a problem in red.
   (`runStatus` in its payload, a prop down to `DevToolsContainer`'s `run`), and the tab asks only then. The tab is
   offered from the first run read and stays — a finished run, or a preview gone quiet, leaves the last one read — and a
   tab kept in storage that the page does not offer (Run, QA) shows the logs instead of an empty panel.
+- **What velada-more's log showed wrong** (`@plitzi/cli`):
+  - A run's report written before a task was approved is behind: `run finish`'s dry run names the tasks it misses and is
+    not `ready`, and `--apply` refuses until the lead writes the summary again (`run report --summary` is logged as
+    `summary`; la-velada's said the morph was left out — written before t-morph was approved).
+  - An approval is logged the moment its task is done, and what it let go after on a line of its own (`handed-on`):
+    logged last, an approval whose next steps failed was in the run's work and nowhere in the log (t-tier-list).
+  - A failed step keeps the lines that say what failed when its output is cut: a page check's `✗ … at 1440` and its
+    findings sit above what it read, and the finish showed only `✓ at 390`.
+  - `page check` reads an image another host has not answered yet, while it answered the page's other requests, as that
+    host holding back — as a 429 or a drop is — not as the page's image that never loaded.

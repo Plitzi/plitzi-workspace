@@ -8,11 +8,11 @@ import { auditRun } from './audit';
 import { readOptional, writeAtomic } from './files';
 import { coverage } from './inventory';
 import { requireLead } from './leads';
-import { REPORTS_DIR } from './paths';
+import { REPORTS_DIR, taskPaths } from './paths';
 import { RunRefusal } from './refusal';
-import { inputOf, loadRun, readApproved, requireNoTask, updateRecord } from './run';
+import { inputOf, loadRun, logRun, readApproved, readRunLog, requireNoTask, updateRecord } from './run';
 import { requestsOf } from './tasks';
-import { viewTask } from './taskStore';
+import { readReviewed, viewTask } from './taskStore';
 
 import type { LoadedRun, RunContext } from './run';
 
@@ -372,6 +372,7 @@ export const writeSummary = async (ctx: RunContext, runId: string, file: string)
   }
 
   await writeAtomic(loaded.paths.summary, text);
+  await logRun(ctx, loaded.paths, { action: 'summary' });
   const input = await inputOf(ctx, path.resolve(ctx.root, file));
   if (input) {
     await updateRecord(ctx, loaded.paths, record => ({
@@ -383,6 +384,33 @@ export const writeSummary = async (ctx: RunContext, runId: string, file: string)
 
 export const readSummary = async (loaded: LoadedRun): Promise<string | undefined> =>
   (await readOptional(loaded.paths.summary))?.toString('utf-8');
+
+/**
+ * The tasks approved after the lead's summary was written: what the report says nothing of — or says wrong (la-velada:
+ * "the morph is left out", written before t-morph was approved). When it was written is its `summary` entry in the log;
+ * a run whose summary came before that entry was kept is read by its file's time, the same clock its approvals have.
+ */
+export const summaryBehind = async (loaded: LoadedRun): Promise<string[]> => {
+  const written =
+    (await readRunLog(loaded.paths)).findLast(entry => entry.action === 'summary')?.at ??
+    (await fs.stat(loaded.paths.summary).catch(() => undefined))?.mtime.toISOString();
+  if (typeof written !== 'string') {
+    return [];
+  }
+
+  // A done task's reviewed version is the one approved: when it was is when the task was.
+  const approved = await Promise.all(
+    loaded.tasks.map(async task => ({
+      id: task.id,
+      at:
+        (await viewTask(loaded.paths, task)).state.status === 'done'
+          ? (await readReviewed(taskPaths(loaded.paths, task.id)))?.at
+          : undefined
+    }))
+  );
+
+  return approved.flatMap(each => (each.at !== undefined && each.at > written ? [each.id] : []));
+};
 
 /** Leaves the report of a run that ends, out of the run: `tmp/plitzi-reports/<run>-<time>.md`. */
 export const leaveReport = async (ctx: RunContext, loaded: LoadedRun, closing: Closing): Promise<string> => {
