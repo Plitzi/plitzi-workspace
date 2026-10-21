@@ -585,11 +585,15 @@ export const followNext = async (
   for (;;) {
     // A run stopped — gently, by its brake, or by a person at once — goes on once resumed, and one whose Plitzi was
     // upgraded once a person re-pins it: an agent waiting for work waits through either.
-    const next = await nextTask(ctx, runId, role).catch((error: unknown): NextTask => {
+    const next = await nextTask(ctx, runId, role).catch(async (error: unknown): Promise<NextTask> => {
       if (
         isRunRefusal(error) &&
         (error.code === 'stopping' || error.code === 'forced-stop' || error.code === 'version-mismatch')
       ) {
+        // Waiting for the run to go on is being there: unmarked, the monitor showed design-1 gone while the brake held
+        // the run (velada-dress) — `nextTask` refuses before it marks.
+        await markPresent(runPaths(ctx.root, runId), ctx.agent, ctx.now());
+
         return {
           ready: [],
           messages: [],

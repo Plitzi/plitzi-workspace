@@ -278,10 +278,13 @@ const agentsOf = async (
   const tookAny = new Set(
     log.flatMap(entry => (entry.action === 'take' && typeof entry.by === 'string' ? [entry.by] : []))
   );
+  // A run stopped holds everyone: said so, never "waiting for work" while work is there (velada-dress: the brake).
   const betweenTasks = (agent: string, last: Record<string, unknown> | undefined): string =>
-    last?.action === 'waiting'
-      ? `${tookAny.has(agent) ? 'waiting for work' : 'waiting for its first task'} — ${standing}`
-      : `between tasks${last ? ` — last: ${lastDone(last) ?? ''}` : ' — not started yet'}`;
+    view.status !== 'open'
+      ? `waits for the run to go on — it is ${view.status}${view.status === 'stopping' ? ': plitzi run resume' : ''}`
+      : last?.action === 'waiting'
+        ? `${tookAny.has(agent) ? 'waiting for work' : 'waiting for its first task'} — ${standing}`
+        : `between tasks${last ? ` — last: ${lastDone(last) ?? ''}` : ' — not started yet'}`;
   const uiWaiting = view.tasks.filter(
     task => task.status === 'in-review' && task.design?.status === 'due' && task.design.by === undefined
   );
@@ -517,6 +520,11 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
       return line('agent', `stops: ${textOf(entry.why)}`);
     case 'settle':
       return line('run', `merged the requests that waited: ${listOf(entry.settled)}`);
+    case 'settle-failed':
+      return line(
+        'run',
+        `could not merge the requests that waited: ${listOf(entry.requests)} — ${textOf(entry.reason)}`
+      );
     case 'all-approved':
       return line('run', `every task is approved (${String(entry.tasks)}) — next: ${textOf(entry.next)}`);
     case 'ready':

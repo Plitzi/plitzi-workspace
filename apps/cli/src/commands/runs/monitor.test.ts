@@ -7,7 +7,7 @@ import { flowBoard, flowLines } from './monitorFlow';
 import { extendRun } from '../../runs/extend';
 import { groupRepeats, monitorRun } from '../../runs/monitor';
 import { runPaths } from '../../runs/paths';
-import { logRun } from '../../runs/run';
+import { logRun, stopRun } from '../../runs/run';
 import { askLead, messageTasks, noteRun, tellLead } from '../../runs/talk';
 import { completeTask, followNext, reportProgress, reviewTask } from '../../runs/tasks';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
@@ -317,6 +317,18 @@ describe('plitzi run monitor', () => {
     expect(await row()).toMatchObject({
       status: 'no-signal',
       doing: expect.stringContaining('no sign of it for 3 min') as unknown
+    });
+  });
+
+  // velada-dress: the brake stopped the run and design-1, waiting for it to go on, read "no signal" — gone, it was not.
+  it('keeps an agent waiting through a stopped run present, its row saying what it waits for', async () => {
+    const runId = await open();
+    await stopRun(lead(), runId, false, 'the brake');
+    bench.advance(3 * 60_000);
+    await followNext(bench.agent('agent-4'), runId, 'developer', { timeoutMs: 30, everyMs: 10 });
+    expect((await monitorRun(lead(), runId)).agents.find(agent => agent.agent === 'agent-4')).toMatchObject({
+      status: 'idle',
+      doing: expect.stringContaining('waits for the run to go on — it is stopping') as unknown
     });
   });
 

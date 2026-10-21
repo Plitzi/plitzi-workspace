@@ -139,6 +139,62 @@ const joinAdditions = (run: Hunk, mine: Hunk, baseLines: readonly string[]): Hun
 
 export type Merged = { ok: true; text: string } | { ok: false; conflicts: number; reason: string };
 
+/**
+ * A change with what the other side added too, somewhere else, taken out of what it writes: each run of two lines or more — not all
+ * punctuation — the base has nowhere and the other version holds whole. Put in twice it is a key declared twice
+ * (velada-dress: the tokens tasks added in their copies by the lead's word, and the requests that added them after
+ * another entry). Answers the hunk left, `undefined` for an addition with nothing of its own left.
+ */
+const withoutAddedAlready = (hunk: Hunk, base: readonly string[], theirs: readonly string[]): Hunk | undefined => {
+  if (hunk.lines.length > MAX_ADDED) {
+    return hunk;
+  }
+
+  const meaningful = (line: string): boolean => /[\p{L}\p{N}]/u.test(line);
+  const at = (lines: readonly string[], block: readonly string[]): boolean => {
+    for (let from = 0; from + block.length <= lines.length; from += 1) {
+      if (block.every((line, index) => lines[from + index] === line)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+  const left: string[] = [];
+  let index = 0;
+  while (index < hunk.lines.length) {
+    // The longest run from here the other side added: two lines at least, one of them more than punctuation.
+    let length = 0;
+    for (let end = index + 2; end <= hunk.lines.length; end += 1) {
+      const block = hunk.lines.slice(index, end);
+      if (!at(theirs, block)) {
+        break;
+      }
+
+      if (block.some(meaningful) && !at(base, block)) {
+        length = end - index;
+      }
+    }
+
+    if (length > 0) {
+      index += length;
+    } else {
+      left.push(hunk.lines[index]);
+      index += 1;
+    }
+  }
+
+  if (left.length === hunk.lines.length) {
+    return hunk;
+  }
+
+  // What it took out of the base still goes; an addition with nothing of its own left is none.
+  return hunk.start === hunk.end && left.every(line => line.trim() === '') ? undefined : { ...hunk, lines: left };
+};
+
+/** The most lines of a change read for what the other side added too: past it, merged as it is. */
+const MAX_ADDED = 400;
+
 export const mergeLines = (base: string, ours: string, theirs: string): Merged => {
   if (ours === theirs || base === theirs) {
     return { ok: true, text: ours };
@@ -157,8 +213,12 @@ export const mergeLines = (base: string, ours: string, theirs: string): Merged =
 
   let conflicts = 0;
   const kept: { hunk: Hunk; order: number }[] = run.map(hunk => ({ hunk, order: 0 }));
-  for (const hunk of mine) {
-    if (run.some(other => sameHunk(other, hunk))) {
+  const theirLines = theirs.split('\n');
+  for (const whole of mine) {
+    const hunk = run.some(other => sameHunk(other, whole))
+      ? undefined
+      : withoutAddedAlready(whole, baseLines, theirLines);
+    if (!hunk) {
       continue;
     }
 

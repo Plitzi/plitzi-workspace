@@ -15,6 +15,40 @@ import type { Browser, BrowserPage } from '../../browser';
 /** A bare word: an element's name — letters, digits, `-` and `_`, as an id is written — or else a tag (`textarea`). */
 const namedBy = (target: string): string => `[data-plitzi-el="${target}"]`;
 
+/**
+ * A reading of the page, once more when the page navigated under it: a project served with its watch reloads the page
+ * when its space changes — a run's preview at each approval (velada-dress: `page shot --compare` died with "Execution
+ * context was destroyed"). Twice, it is refused as what it is.
+ */
+export const readPage = async <R, A>(
+  page: Pick<BrowserPage, 'evaluate' | 'waitForLoadState' | 'url'>,
+  read: (input: A) => R | Promise<R>,
+  input: A
+): Promise<R> => {
+  const navigated = (error: unknown): boolean =>
+    error instanceof Error && /Execution context was destroyed|navigation/i.test(error.message);
+  try {
+    return await page.evaluate(read, input);
+  } catch (error) {
+    if (!navigated(error)) {
+      throw error;
+    }
+  }
+
+  await page.waitForLoadState('load');
+  try {
+    return await page.evaluate(read, input);
+  } catch (error) {
+    if (navigated(error)) {
+      throw new Error(
+        `The page kept reloading while it was read (${page.url()}): its server reloads it as the space changes — read it again once it is still`
+      );
+    }
+
+    throw error;
+  }
+};
+
 /** What a wait waits for: an element by name or, a bare word naming none, a tag — whichever shows first. */
 export const awaited = (target: string): string => (BARE.test(target) ? `${namedBy(target)}, ${target}` : target);
 

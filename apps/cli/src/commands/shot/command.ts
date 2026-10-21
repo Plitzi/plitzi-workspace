@@ -14,7 +14,7 @@ import { checkAccount, CHECK_PASSWORD_ENV } from '../check';
 import { projectHere } from '../existingProject';
 import { parseSteps } from '../shotSteps';
 import { fail } from '../terminal';
-import { capture, pictureOf } from './capture';
+import { capture, pictureOf, readPage } from './capture';
 import { compareText, compareWith, contactSheet, framesMoved, missingDress, regionsText } from './compare';
 import { clickThrough, playSteps } from './steps';
 import { MOVING_PERCENT } from './types';
@@ -318,7 +318,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     await mkdir(path.dirname(out), { recursive: true });
     await writeFile(out, taken.png);
     // The sections a diff is told by are the page's: a picture of part of it is one region, named for what it shows.
-    const regions: PictureRegion[] = how.kind === 'page' ? await taken.page.evaluate(pageRegions, undefined) : [];
+    const regions: PictureRegion[] = how.kind === 'page' ? await readPage(taken.page, pageRegions, undefined) : [];
     // `--clip` with `--compare` may name any element, not only a section: one inside a section is a region of its own,
     // compared where it is — a panel of a page, a card — where only the landmarks could be named (la-velada's pills).
     const clipped = section === undefined ? undefined : await clipRegion(taken.page, regions, section);

@@ -12,7 +12,7 @@ import {
   pageTexts
 } from '@plitzi/sdk-authoring';
 
-import { pictureOf } from './capture';
+import { pictureOf, readPage } from './capture';
 import { DRIFT_PX, TEXTS_SHOWN } from './types';
 import { dataUrl, fromDataUrl } from '../../browser';
 
@@ -181,9 +181,9 @@ export const compareWith = async (
     : live
       ? {
           png: live.png,
-          texts: await live.page.evaluate(pageTexts, PAGE_TEXT_LIMIT),
+          texts: await readPage(live.page, pageTexts, PAGE_TEXT_LIMIT),
           unloaded: live.unloaded,
-          decorations: await live.page.evaluate(pageDecorations, PAGE_DECORATION_LIMIT)
+          decorations: await readPage(live.page, pageDecorations, PAGE_DECORATION_LIMIT)
         }
       : undefined;
   if (!theirs) {
@@ -195,7 +195,7 @@ export const compareWith = async (
   await writeFile(`${base}-diff.png`, fromDataUrl(diff.diff));
   const rowShift = diff.rowShift ?? [];
   const shiftAt = (y: number): number => rowShift[Math.min(Math.max(0, Math.round(y)), rowShift.length - 1)] ?? 0;
-  const texts = compareTexts(await taken.page.evaluate(pageTexts, PAGE_TEXT_LIMIT), theirs.texts, shiftAt);
+  const texts = compareTexts(await readPage(taken.page, pageTexts, PAGE_TEXT_LIMIT), theirs.texts, shiftAt);
   // Their dress placed in our sections, each where the pictures found it there: a site that names its sections otherwise
   // (la-velada's original names none) is still read section by section.
   const shifted = regions.map(region => ({
@@ -203,7 +203,7 @@ export const compareWith = async (
     y: region.y + (diff.regions.find(change => change.name === region.name)?.shift ?? 0)
   }));
   const decorations = compareDecorations(
-    { layers: await taken.page.evaluate(pageDecorations, PAGE_DECORATION_LIMIT), regions },
+    { layers: await readPage(taken.page, pageDecorations, PAGE_DECORATION_LIMIT), regions },
     { layers: theirs.decorations, regions: shifted }
   );
 

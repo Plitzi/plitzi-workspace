@@ -3,7 +3,8 @@
  * ornaments drawn by `::before`/`::after`, the images a background carries — read on two pages and compared by section.
  * A comparison of pixels says a soft glow as a few percent spread over a section, and one of texts never sees it:
  * la-velada's artist page lost the original's warm light, its portrait's corners and its card's halo, and three reviews
- * passed it.
+ * passed it. Each layer over a picture says whether it is painted over or under it: a fighter's spotlight is the
+ * original's behind the cut-out, and over the face it is another look (velada-dress: t-predictions, approved so).
  */
 
 import type { PictureRegion } from './pictures';
@@ -26,12 +27,16 @@ export interface PageDecoration {
   element: string;
   /** The layer as its CSS says it, whole (cut at 400 characters): what a copy writes to wear it. */
   css: string;
+  /** Over half of a picture of the page's own (a photo, a video): whether it is painted over that picture or under it. */
+  stack?: 'over' | 'under';
 }
 
 /**
- * Runs in the page: every gradient, glow (a shadow blurred 12px or more), filter, background image and ornament (a
- * pseudo-element drawn with a border or a background) of what is drawn, its element's box beside it. Skips the dev
- * tools' own chrome and what a visitor cannot see. Self-contained — it is serialised.
+ * Runs in the page: every gradient, glow (a shadow blurred 12px or more), filter, background image — in the CSS, or a
+ * decorative picture laid behind or over a section (`alt=""` or hidden, absolutely placed: velada-dress's footer photo
+ * was nobody's dress, and went) — and ornament (a pseudo-element drawn with a border or a background) of what is drawn,
+ * its element's box beside it, and whether it is over or under the picture it covers. Skips the dev tools' own chrome
+ * and what a visitor cannot see. Self-contained — it is serialised.
  */
 export const pageDecorations = (limit: number): PageDecoration[] => {
   const found: PageDecoration[] = [];
@@ -194,6 +199,112 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
     return layers;
   };
 
+  // A picture laid as a backdrop — said nothing of (`alt=""`, hidden) and placed out of the flow, itself or its
+  // <picture> — is dress; one with words, or in the flow, is a picture of the page's own.
+  const placed = (element: Element): boolean => ['absolute', 'fixed'].includes(getComputedStyle(element).position);
+  const isBackdrop = (element: Element): boolean =>
+    element.tagName === 'IMG' &&
+    (element.getAttribute('alt') === '' || element.closest('[aria-hidden="true"], [role="presentation"]') !== null) &&
+    (placed(element) || (element.parentElement?.tagName === 'PICTURE' && placed(element.parentElement)));
+  // What a layer is painted over or under: any photo or video drawn — a backdrop's too, as a copy may mark a fighter's
+  // cut-out decorative where the original names it (velada-dress).
+  const pictures = Array.from(document.body.querySelectorAll('img, video'))
+    .map(element => ({ element, box: element.getBoundingClientRect() }))
+    .filter(({ element, box }) => box.width > 0 && box.height > 0 && getComputedStyle(element).visibility !== 'hidden');
+  // Where an element stands in its parent's painting, as CSS orders it: its z-index when it sets one — placed, or an item
+  // of a flex or grid — 0 when placed without one, below those when in the flow.
+  const levelOf = (element: Element, style: CSSStyleDeclaration = getComputedStyle(element)): number => {
+    const parent = element.parentElement ? getComputedStyle(element.parentElement).display : '';
+    const item = /flex|grid/.test(parent);
+    const z = Number.parseInt(style.zIndex, 10);
+    if (!Number.isNaN(z) && (style.position !== 'static' || item)) {
+      return z;
+    }
+
+    return style.position !== 'static' ? 0 : -0.5;
+  };
+  // The level an element paints at within `top`'s children: the outermost level set on its way up to that child.
+  const levelUnder = (element: Element, top: Element): number => {
+    let level = levelOf(element);
+    for (let at = element.parentElement; at && at !== top; at = at.parentElement) {
+      const style = getComputedStyle(at);
+      const forms =
+        (style.position !== 'static' && style.zIndex !== 'auto') ||
+        Number(style.opacity) < 1 ||
+        style.transform !== 'none' ||
+        style.filter !== 'none' ||
+        style.isolation === 'isolate' ||
+        style.mixBlendMode !== 'normal';
+      // Inside a stacking context its own level counts no more: the context's does.
+      level = forms ? levelOf(at, style) : Math.max(level, levelOf(at, style));
+    }
+
+    return level;
+  };
+  // Whether the layer `on` an element is painted over `picture`: by the levels where their ways part, then the order.
+  const over = (element: Element, on: PageDecoration['on'], picture: Element): boolean => {
+    if (element.contains(picture)) {
+      // Its own background and shadow are under what it holds; a pseudo-element by its level, ::after after the rest.
+      if (on === 'element') {
+        return false;
+      }
+
+      const level = levelOf(element, getComputedStyle(element, `::${on}`));
+      const theirs = levelUnder(picture, element);
+
+      return level === theirs ? on === 'after' : level > theirs;
+    }
+
+    let common: Element | null = element.parentElement;
+    while (common && !common.contains(picture)) {
+      common = common.parentElement;
+    }
+
+    if (!common) {
+      return false;
+    }
+
+    const childOf = (node: Element): Element => {
+      let at = node;
+      while (at.parentElement && at.parentElement !== common) {
+        at = at.parentElement;
+      }
+
+      return at;
+    };
+    const mine =
+      on === 'element'
+        ? levelUnder(element, common)
+        : Math.max(levelUnder(element, common), levelOf(element, getComputedStyle(element, `::${on}`)));
+    const theirs = levelUnder(picture, common);
+    if (mine !== theirs) {
+      return mine > theirs;
+    }
+
+    // At one level, what comes later in the page is painted later.
+    return Boolean(childOf(picture).compareDocumentPosition(childOf(element)) & Node.DOCUMENT_POSITION_FOLLOWING);
+  };
+  // The picture a layer covers most — over half of it — and whether the layer is painted over it.
+  const stackOf = (element: Element, on: PageDecoration['on'], box: DOMRect): 'over' | 'under' | undefined => {
+    const covered = pictures
+      // Its own background is always under what it holds: said of nothing — only a pseudo-element's order tells.
+      .filter(picture => picture.element !== element && (on !== 'element' || !element.contains(picture.element)))
+      .map(picture => {
+        const width = Math.min(box.right, picture.box.right) - Math.max(box.left, picture.box.left);
+        const height = Math.min(box.bottom, picture.box.bottom) - Math.max(box.top, picture.box.top);
+
+        return {
+          picture,
+          share: width > 0 && height > 0 ? (width * height) / (picture.box.width * picture.box.height) : 0
+        };
+      })
+      .filter(each => each.share > 0.5)
+      .sort((a, b) => b.share - a.share)
+      .at(0);
+
+    return covered ? (over(element, on, covered.picture.element) ? 'over' : 'under') : undefined;
+  };
+
   for (const element of Array.from(document.body.querySelectorAll('*'))) {
     if (found.length >= limit) {
       break;
@@ -218,7 +329,16 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
       height: Math.round(box.height),
       element: `${element.tagName.toLowerCase()}${firstClass ? `.${firstClass}` : ''}${element.id ? `#${element.id}` : own ? `#${own}` : ''}`
     };
-    const itself = layersOf(style, 'element').map(layer => ({ ...layer, on: 'element' as const }));
+    const backdrop = isBackdrop(element)
+      ? [
+          {
+            kind: 'image' as const,
+            detail: `backdrop ${(element.getAttribute('src') ?? '').split('/').at(-1)?.split('?')[0]?.slice(0, 60) ?? ''}`,
+            css: `<img src="${element.getAttribute('src') ?? ''}">; object-fit: ${style.objectFit}; object-position: ${style.objectPosition}; opacity: ${style.opacity}`
+          }
+        ]
+      : [];
+    const itself = [...backdrop, ...layersOf(style, 'element')].map(layer => ({ ...layer, on: 'element' as const }));
     const pseudo = (['before', 'after'] as const).flatMap(on => {
       const drawn = getComputedStyle(element, `::${on}`);
       if (drawn.content === 'none' || drawn.content === 'normal' || drawn.display === 'none') {
@@ -227,7 +347,15 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
 
       return layersOf(drawn, on).map(layer => ({ ...layer, on }));
     });
-    found.push(...[...itself, ...pseudo].map(layer => ({ ...layer, ...place })));
+    found.push(
+      ...[...itself, ...pseudo].map(layer => {
+        // A light, a veil, a frame: what is drawn over a photo or behind it — a shadow or a filter is the element's own.
+        const stack =
+          layer.kind === 'gradient' || layer.kind === 'ornament' ? stackOf(element, layer.on, box) : undefined;
+
+        return { ...layer, ...place, ...(stack ? { stack } : {}) };
+      })
+    );
   }
 
   return found.slice(0, limit);
@@ -298,8 +426,9 @@ const lookOf = (layer: PageDecoration, section: PictureRegion | undefined): stri
         ? `filter ${/blur|drop-shadow/.exec(layer.detail)?.[0] ?? ''}`.trim()
         : 'background image';
   const wide = section !== undefined && layer.width >= section.width * WIDE;
+  const stacked = layer.stack ? ` ${layer.stack} a picture` : '';
 
-  return wide ? `${sort} across the section` : sort;
+  return `${sort}${wide ? ' across the section' : ''}${stacked}`;
 };
 
 /** How many of the other page's absent layers a section keeps whole: enough for a spike, few enough to read. */

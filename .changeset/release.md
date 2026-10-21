@@ -713,6 +713,16 @@ monitor` shows each as it comes, a problem in red.
     - `task next` tells a reviewer — designer or lead — when it hands its last round: changes asked now block the task
       for the lead, said before, never found out after (velada-dress: design-2's third round on t-overlay). An approval
       says which of its requests went in, and which did not and why.
+    - An agent waiting through a stopped run — its brake, a person's stop, an upgrade — is marked present, and its row
+      says it waits for the run to go on (`plitzi run resume`): velada-dress's design-1 read "no signal" while the brake
+      held the run. The activity says when the requests that waited could not be merged, and why.
+    - `page shot --compare … --dress` sees two looks it missed: a decorative picture laid behind a section (`alt=""` or
+      hidden, absolutely placed — the original's footer photo, which a task dropped and no check saw) is that section's
+      background image; and a light, veil or frame over a photo says whether it is painted over it or under it, by
+      CSS's stacking (`radial-gradient under a picture`) — the predictions' spotlight, the original's behind each
+      cut-out, was approved over the faces. A reference kept before reads neither: keep it again (`run reference`).
+    - Two changes put together line by line take no addition twice: what the other side added elsewhere is left out
+      of the change, the rest kept — tasks that added the tokens the run then got elsewhere declared every key twice.
     - `run reference` keeps a page the site answers with 404 — its page for an address nothing answers, which a copy
       makes too — said, where it refused it as an error page.
     - `page shot --compare … --dress` fails where a section lacks a look the other page dresses it in — a sort of

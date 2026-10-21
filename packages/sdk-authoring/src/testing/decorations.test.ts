@@ -102,6 +102,34 @@ describe('pageDecorations, of filters that do something', () => {
   });
 });
 
+// velada-dress: the footer's photo, a decorative <picture>, was nobody's dress and went; and the fighters' spotlight,
+// the original's behind each cut-out, was painted over the faces — both passed every --dress check.
+describe('pageDecorations, of pictures', () => {
+  it('reads a decorative picture laid behind a section as its background — never a picture of the page’s own', () => {
+    document.body.innerHTML = [
+      '<footer><picture aria-hidden="true" style="position: absolute"><img alt="" src="https://cdn.example.com/hero-bg/background-2048.webp?v=2"></picture></footer>',
+      '<div><img alt="IlloJuan" src="https://cdn.example.com/illojuan.webp" style="position: absolute"></div>',
+      '<p><img alt="" src="https://cdn.example.com/inline.webp"></p>'
+    ].join('');
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue(DOMRect.fromRect({ width: 100, height: 20 }));
+
+    expect(pageDecorations(10).map(each => [each.kind, each.detail])).toEqual([
+      ['image', 'backdrop background-2048.webp']
+    ]);
+  });
+
+  it('says whether a light over a photo is painted over it or under it, as CSS stacks them', () => {
+    const side = (spot: number, photo: number) =>
+      `<div style="display: grid"><img alt="IlloJuan" src="a.webp" style="position: absolute; z-index: ${String(photo)}"><span style="position: absolute; z-index: ${String(spot)}; background-image: radial-gradient(circle, rgba(199, 168, 107, 0.52), transparent)"></span></div>`;
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue(DOMRect.fromRect({ width: 100, height: 20 }));
+
+    document.body.innerHTML = side(0, 1);
+    expect(pageDecorations(10)).toEqual([expect.objectContaining({ kind: 'gradient', stack: 'under' })]);
+    document.body.innerHTML = side(1, 0);
+    expect(pageDecorations(10)).toEqual([expect.objectContaining({ kind: 'gradient', stack: 'over' })]);
+  });
+});
+
 describe('compareDecorations', () => {
   it('says, section by section, the dress the other page has and this one lacks — and what this one adds', () => {
     const regions = [region('header#site-header', 0, 80), region('section#artist-page', 80, 900)];
@@ -148,5 +176,17 @@ describe('compareDecorations', () => {
     expect(compareDecorations({ layers: [card], regions }, { layers: [card, light], regions })[0]?.absent).toEqual([
       'radial-gradient across the section (radial-gradient rgba(199, 168, 107, 0.16))'
     ]);
+  });
+
+  it('tells a light behind a photo from the same light over it', () => {
+    const regions = [region('section#predictions-page', 0, 1000)];
+    const spot = layer('gradient', 'radial-gradient rgba(199, 168, 107, 0.52)');
+
+    expect(
+      compareDecorations(
+        { layers: [{ ...spot, stack: 'over' }], regions },
+        { layers: [{ ...spot, stack: 'under' }], regions }
+      )[0]?.absent
+    ).toEqual(['radial-gradient under a picture (radial-gradient rgba(199, 168, 107, 0.52))']);
   });
 });
