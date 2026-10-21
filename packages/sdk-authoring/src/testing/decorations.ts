@@ -35,6 +35,13 @@ export interface PageDecoration {
  */
 export const pageDecorations = (limit: number): PageDecoration[] => {
   const found: PageDecoration[] = [];
+  // Every function of the filter a blur of nothing: no effect at all.
+  const isInert = (filter: string): boolean =>
+    filter
+      .replace(/(rgba?|color|oklab|oklch)\([^)]*\)/gi, '')
+      .split(/\)\s*/)
+      .filter(part => part.trim() !== '')
+      .every(part => /^\s*blur\(\s*0(px)?\s*$/.test(part));
   const COLOUR = /(rgba?\([^)]*\)|color\([^)]*\)|oklab\([^)]*\)|oklch\([^)]*\)|#[0-9a-f]{3,8}\b)/gi;
   const alphaOf = (colour: string): number => {
     const alpha = /\/\s*([\d.]+)(%?)\s*\)$/.exec(colour) ?? /^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)(%?)\)$/.exec(colour);
@@ -155,7 +162,9 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
       }
     }
 
-    if (style.filter !== 'none' && /blur|drop-shadow/.test(style.filter)) {
+    // A filter that does nothing is no dress: `blur(0px)` is an arrival's blurred fade at rest (velada-dress: a check
+    // asked a page for it).
+    if (style.filter !== 'none' && /blur|drop-shadow/.test(style.filter) && !isInert(style.filter)) {
       layers.push({
         kind: 'filter',
         detail: `filter ${style.filter.slice(0, 60)}`,
@@ -312,7 +321,8 @@ export const compareDecorations = (
 ): SectionDecorations[] => {
   const bySection = (page: typeof here) => {
     const sections = new Map<string, PageDecoration[]>();
-    for (const layer of page.layers) {
+    // A filter that does nothing, as a page read before it was left out says it: no dress.
+    for (const layer of page.layers.filter(each => !/^filter blur\(0(px)?\)$/.test(each.detail))) {
       const section = sectionOf(layer, page.regions) ?? 'page';
       sections.set(section, [...(sections.get(section) ?? []), layer]);
     }

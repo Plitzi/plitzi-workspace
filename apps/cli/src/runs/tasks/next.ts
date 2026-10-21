@@ -19,6 +19,7 @@ import { byUrgency } from '../urgency';
 import { isWorked } from '../worked';
 import { at, findTask, roleOf } from './common';
 import { allLocks } from './locks';
+import { changesBlock } from './review';
 import { takeTask } from './take';
 
 import type { Message } from '../messages';
@@ -40,7 +41,7 @@ export interface NextTask {
    * The task is one the caller already holds and can go on with — a block lifted, changes requested: no take, its token
    * is still good.
    */
-  yours?: 'in-progress' | 'changes-requested' | 'spike';
+  yours?: 'in-progress' | 'changes-requested';
   /** Handed back with changes requested: what its last review asked, by whom. */
   asked?: string[];
   /** One the caller holds: where its copy is — the only place its work is written. */
@@ -52,6 +53,8 @@ export interface NextTask {
   designReview?: {
     task: RunTask;
     round: number;
+    /** Its last round of this kind: changes asked now block it for the lead to decide. */
+    lastRound?: true;
     changed: string[];
     /** Where its changes are drawn, to look at: the pages that own its files. */
     pages: string[];
@@ -71,6 +74,7 @@ export interface NextTask {
   leadReview?: {
     task: RunTask;
     round: number;
+    lastRound?: true;
     changed: string[];
     pages: string[];
     asked: string[];
@@ -82,7 +86,7 @@ export interface NextTask {
     uiToo?: string;
   };
   /** A lead's, with no review for it: a spike to find out — the most urgent no other lead took. */
-  spike?: { task: RunTask; question: string; waits?: string; findings: number };
+  spike?: { task: RunTask; question: string; findings: number };
   /** Why nothing is ready, when nothing is. */
   why?: string;
   ready: string[];
@@ -192,6 +196,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
         // Read off its copy: a page the task makes (a dog added to the data) is one to look at too.
         pages: await pagesOf(review.paths.work, review.state.changed ?? []),
         ...askedOf(review.state.notes),
+        ...(changesBlock(review.state, true) ? { lastRound: true } : {}),
         copy: review.paths.work,
         precision: (await readTeam(ctx.root).catch(() => undefined))?.options?.designReview ?? DEFAULT_DESIGN_REVIEW
       },
@@ -387,6 +392,7 @@ const leadNext = async (
         changed: review.state.changed ?? [],
         pages: await pagesOf(review.paths.work, review.state.changed ?? []),
         ...askedOf(review.state.notes),
+        ...(changesBlock(review.state, false) ? { lastRound: true } : {}),
         copy: review.paths.work,
         ...(approvedUi
           ? {
@@ -416,8 +422,7 @@ const leadNext = async (
     return {
       spike: {
         task: spike.task,
-        question: spike.state.spiking ?? spike.task.spike ?? 'what it needs',
-        ...(spike.owner ? { waits: spike.owner.agent } : {}),
+        question: spike.task.spike ?? 'what it needs',
         findings: spike.state.findings?.length ?? 0
       },
       ready: [],

@@ -53,20 +53,22 @@ const whyOf = (task: TaskLine): { why?: string } =>
         ? { why: `waits for ${task.waitingFor.task}${task.waitingFor.file ? `: ${task.waitingFor.file}` : ''}` }
         : task.status === 'blocked' && task.blockedBy
           ? { why: `blocked — ${task.blockedBy.reason} (needs ${task.blockedBy.needs})` }
-          : task.status === 'spike'
-            ? {
-                why: `${task.agent ? `${task.agent} finds out` : 'free to take — find out'}: ${task.spike ?? 'what it needs'}`
-              }
-            : task.status === 'ready'
-              ? { why: 'free to take: the next agent at work takes it' }
-              : task.status === 'in-review'
-                ? {
-                    why:
-                      task.design?.status === 'due'
-                        ? `its UI review — ${task.design.by ?? 'no designer has taken it yet'}; then the lead's`
-                        : `the lead's review — ${task.reviewer ?? 'no lead has taken it yet'}`
-                  }
-                : {};
+          : task.parkedFor
+            ? { why: `${task.agent ?? 'its agent'} is at ${task.parkedFor} first — one task at a time` }
+            : task.status === 'spike'
+              ? {
+                  why: `${task.spikedBy ? `${task.spikedBy} finds out` : 'for a lead to find out'}: ${task.spike ?? 'what it needs'}`
+                }
+              : task.status === 'ready'
+                ? { why: 'free to take: the next agent at work takes it' }
+                : task.status === 'in-review'
+                  ? {
+                      why:
+                        task.design?.status === 'due'
+                          ? `its UI review — ${task.design.by ?? 'no designer has taken it yet'}; then the lead's`
+                          : `the lead's review — ${task.reviewer ?? 'no lead has taken it yet'}`
+                    }
+                  : {};
 
 export const snapshotOf = ({ view, agents, feed }: Monitored, at: Date): RunSnapshot => ({
   runId: view.runId,

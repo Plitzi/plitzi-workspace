@@ -71,7 +71,8 @@ export const runPlanProblems = (value: unknown): string[] => {
       'tests',
       'false, or left out'
     );
-    check(optional(each.spike, isString), 'spike', 'what to find out before it is built, in words');
+    check(optional(each.spike, isString), 'spike', 'what to find out, in words — a research task, no files');
+    check(optional(each.findings, isString), 'findings', 'what its spike found for it, in words');
   });
 
   return problems;

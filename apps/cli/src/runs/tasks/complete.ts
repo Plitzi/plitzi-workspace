@@ -15,7 +15,6 @@ import { entryOf } from '../model';
 import { lockFile, NOT_TASK_DIRS, taskPaths, under } from '../paths';
 import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readApproved, readBase, recordBrake } from '../run';
-import { isResearch } from '../spike';
 import { keepFiles, putBlob, withLock } from '../store';
 import { tellLeftInTmp } from '../strays';
 import {
@@ -158,14 +157,6 @@ export const completeTask = async (
   await tellLeftInTmp(ctx, loaded);
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);
-  if (view.state.status === 'spike') {
-    throw new RunRefusal(
-      'invalid',
-      `Task "${taskId}" is in spike: say what you found first (plitzi task spike --done "…")${isResearch(task) ? ' — research alone, that is its end' : ', then build it and complete'}`,
-      { task: taskId }
-    );
-  }
-
   if (!['in-progress', 'changes-requested'].includes(view.state.status)) {
     throw new RunRefusal('invalid', `Task "${taskId}" is ${view.state.status}: only a task in progress completes`, {
       task: taskId

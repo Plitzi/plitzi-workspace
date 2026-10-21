@@ -404,6 +404,16 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
               ...((reviewed.joined ?? []).length > 0
                 ? [`  Put together with the change made in the project meanwhile: ${list(reviewed.joined ?? [])}`]
                 : []),
+              ...((reviewed.fulfilled ?? []).length > 0
+                ? [`  Its requests went in: ${list(reviewed.fulfilled ?? [])} — a holder's copy brings them`]
+                : []),
+              ...(reviewed.unmerged
+                ? [
+                    chalk.yellow(
+                      `  ⚠ Its request on ${list(reviewed.unmerged.files)} did not go in — ${reviewed.unmerged.reason}: an integration task applies it`
+                    )
+                  ]
+                : []),
               ...((reviewed.granted ?? []).length > 0 ? [`  Handed on: ${list(reviewed.granted ?? [])}`] : []),
               ...((reviewed.ready ?? []).length > 0 ? [`  Ready now: ${list(reviewed.ready ?? [])}`] : []),
               ...(reviewed.previewProblem
@@ -443,7 +453,7 @@ export const taskReassign = (taskId: string, options: RunCommandOptions): Promis
     options,
     async ctx => reassignTask(ctx, await runOf(ctx, options), taskId),
     reassigned =>
-      `${taskId} is ${reassigned.status === 'spike' ? 'in spike still — a lead’s to find out' : 'ready again'}${reassigned.from ? `; ${reassigned.from}'s token is revoked` : ''}. ${
+      `${taskId} is ready again${reassigned.from ? `; ${reassigned.from}'s token is revoked` : ''}. ${
         reassigned.reviewedRound === undefined
           ? 'It was never reviewed: it starts from scratch.'
           : `It starts again from the version its review ${String(reassigned.reviewedRound)} saw.`

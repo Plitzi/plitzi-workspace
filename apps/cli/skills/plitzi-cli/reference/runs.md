@@ -66,8 +66,9 @@ takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | 
   all of it again.
 - **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"`; in a long think or test run,
   `plitzi task heartbeat` every 2 minutes.
-- **A spike** is a lead's: what is built is decided by what it finds. Your work needs something found out first:
-  `plitzi task spike "what"` — the task waits in spike, its files yours; the findings come with your next command.
+- **A spike** is a lead's: what is built is decided by what it finds — your brief has what was found for your task.
+  Your work needs something found out first: `plitzi task spike "what"` — blocked on the lead, its files yours; the
+  answer comes back with the task (`task next`), take another meanwhile.
 - **Blocked by something outside the plan** (a key, a decision): `plitzi task block --reason "…"` (the lead's:
   only it talks to the person), then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks

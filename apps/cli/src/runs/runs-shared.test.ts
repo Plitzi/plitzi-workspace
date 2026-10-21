@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { finishRun } from './merge';
-import { claimFile, completeTask, reassignTask, requestShared, reviewTask, taskContext, waitForFile } from './tasks';
+import { loadRun, readApproved } from './run';
+import { checkTask, claimFile, completeTask, requestShared, reviewTask, taskContext, waitForFile } from './tasks';
 import { viewRun } from './view';
 import { makeBench, readInCopy, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
@@ -197,22 +198,28 @@ export const theme = { card: { color: tokens.ink }, ${key}: {} };
     expect(refused.message).toContain('src/space/pages/home/hero.ts (task "t-home"');
   });
 
-  it('a task reassigned lets go of what it held by turns: the request waiting on it is merged then', async () => {
+  // velada-dress: t-sponsors approved with its tokens a request on the theme t-home held — the run's work read tokens it
+  // lacked, and every task's check failed on them until nobody could complete.
+  it('merges a request at its approval though another task holds the file — the holder’s copy brings it', async () => {
     await open();
-    const ghost = await take('agent-ghost', 't-home');
-    await claimFile(ghost.ctx, 'es-launch', 't-home', 'src/space/theme.ts');
+    const holder = await take('agent-1', 't-home');
+    await claimFile(holder.ctx, 'es-launch', 't-home', 'src/space/theme.ts');
     const menu = await take('agent-2', 't-menu');
     const theme = (await readInCopy(menu.work, 'src/space/theme.ts')) ?? '';
     await writeInCopy(menu.work, 'src/space/theme.ts', `${theme}export const price = {};\n`);
     expect((await completeTask(menu.ctx, 'es-launch', 't-menu')).requests.map(each => each.file)).toEqual([
       'src/space/theme.ts'
     ]);
-    await reviewTask(lead(), 'es-launch', 't-menu', 'approve', []);
-
-    const cut = await reassignTask(lead(), 'es-launch', 't-home');
-    expect(cut).toMatchObject({ released: ['src/space/theme.ts'], settled: ['t-menu/src-space-theme-ts'] });
-    const dry = await finishRun(bench.person(true), 'es-launch', { apply: false, leavePending: true });
-    expect(dry.plan.apply.map(each => each.file)).toContain('src/space/theme.ts');
+    expect((await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [])).verdict).toBe('approve');
+    const run = await loadRun(lead(), 'es-launch');
+    expect((await readApproved(run.paths)).files['src/space/theme.ts']).toMatchObject({ task: 't-menu' });
+    // Its holder goes on with the run's version under its own change.
+    const mine = (await readInCopy(holder.work, 'src/space/theme.ts')) ?? '';
+    await writeInCopy(holder.work, 'src/space/theme.ts', `export const home = {};\n${mine}`);
+    await checkTask(holder.ctx, 'es-launch', 't-home');
+    const merged = (await readInCopy(holder.work, 'src/space/theme.ts')) ?? '';
+    expect(merged).toContain('export const price = {};');
+    expect(merged).toContain('export const home = {};');
   });
 
   it('a blocking request makes its integration task at once, and the task waits only for it', async () => {

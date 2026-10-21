@@ -94,8 +94,12 @@ the folder once it stopped — never a server left watching a folder removed und
 a person in a terminal of their own: it only reads (nothing marked read, nothing the lead is woken for touched) and
 refuses a shell with no terminal, an agent's, whose is `run watch`. It is a board for a supervisor: the run and the stage at
 work (`stage 3: velada-motion`, its goal under it — `run extend` logs each stage's), what needs someone on top; under it the run's flow, always — its kanban, each task a card in its stage from to-do to approved, with what holds
-an agent; a task a review sent back is ready again for its agent, its card marked with the round it is at (`t-boxer ↺2`),
-never a stage apart — a pending task's card says whom it follows (`t-motion ← t-boxer, t-lint`) (`f` hides it), a stage with more cards than it shows scrolled by the wheel over it
+an agent; a task a review sent back is at work again with its agent, its card marked with the round it is at
+(`t-boxer ↺2`), never a stage apart. An agent is at one task at a time — the one it last did something on itself (taken,
+a heartbeat, a write: `TaskView.workedAt`, never a review that sent it back); the others it holds are held for it
+(`parkedFor`: `t-home dev-2 at t-overlay`), so an agent is never on two cards of the flow at once. A lead is "reviewing"
+or "finds out" only at a review or a spike a card names it on; what it did lately with nothing in hand is its last, idle
+— a pending task's card says whom it follows (`t-motion ← t-boxer, t-lint`) (`f` hides it), a stage with more cards than it shows scrolled by the wheel over it
 (`↑ 5 · + 7 more`, `FlowColumn`, `wheelTarget`); the tasks left and the agents, each with its state — at work,
 waiting, asking the lead, stopped, done, idle while its task waits for its review — fifteen listed at most, the rest scrolled to with ↑↓ — and the approved
 folded in a line naming them (`a`); last the activity in columns (time, who → whom for a message, task, what), every row
@@ -159,8 +163,15 @@ their review only; a check runs at `complete` and again at the finish). A task h
 split up) is requested like any other, and the rest are taken by turns. Shared files are taken **by turns** (`task
 claim`, `task wait`: a `turn` lock, handed to the next waiter by priority when the holder is approved, with the approved
 version put into its copy) or, when several tasks want one at once, changed in each copy as a **request** — whatever a
-task changed in a shared file it does not hold becomes one at `complete`, its version kept. When every task that
-requested a change on a file is approved, the CLI makes one integration task over it, depending on all of them; `task
+task changed in a shared file it does not hold becomes one at `complete`, its version kept. **A request goes in when its
+task is approved**, held by another task or not, when it merges line by line with the run's version
+(`buildRequestsMerge`: all of the task's together, checked once) — the holder's copy brings it at its next refresh. Its
+approved files read what it adds, and a run whose work reads what it lacks fails every task's checks (velada-dress:
+t-sponsors and t-predictions approved, their tokens waiting on the theme t-home held — every check failed on them, and
+when t-home let go, each request alone failed the checks for want of the other's). A file let go of settles the approved
+tasks' requests on it together (`settleRequests`); what does not go in is said in the log (`unmerged`,
+`settle-failed`), and as soon as one requester is approved the CLI makes one integration task over the requests of the
+approved ones (`integrateWhenReady`) — a request of a task still at work joins it, or the next, once approved; `task
 context` hands it each request's diff against the run's version — each request's diff from the version its task started
 from to the one it asks for. A request on a file its task then held by turns and merged itself is fulfilled when that
 task is approved: no integration task is made for it. A blocking request makes its integration task at once and the
@@ -258,7 +269,7 @@ every task, spent the most).
 
 **Agents on demand** (`onDemand.ts`): a group's `min` (1 to its `count`) is how many start with the run; the rest are
 on demand (`StartedAgent.onDemand`). `run plan` says to start only the first; `run watch --until lead` tells the lead,
-role by role, when work waits — a task of its role ready, a spike nobody took, a UI review no designer is free for —
+role by role, when work waits — a task of its role ready, a UI review no designer is free for —
 and no running agent of it is free (`agents-needed`), naming the next one to start and its command; and an agent on
 demand that waits `ON_DEMAND_IDLE_MS` with nothing for it, and no task of its own that may come back, stops by itself,
 said in the activity — the lead starts it again when work waits. Running is read off the log (`runningAgents`): an
@@ -397,28 +408,34 @@ an unnamed blob, never a named half-written file.
 
 ## A spike: research in the run, a lead's (`spike.ts`, `tasks/spike.ts`)
 
-Research — what the lead read before writing the plan, what an agent at work needs looked up — is work of the run, seen
-by the monitor and counted by the report: a **spike**. It decides what is built, so it is a lead's: the lead, or a lead
-that reviews, never an agent of the team (whose model is not a lead's). A task's `"spike": "what to find out"` starts
-it in `spike`, ahead of `ready` (ready is ready to build), whether or not what it waits for is done — finding out is
-reading. No agent is offered it or takes it (`take` refuses one); `run watch --until lead` says each spike waiting
-(`spikes`), and `task next --role lead` hands a lead that reviews the most urgent one no other lead took (`spikedBy`)
-when no review waits for it. The lead finds out — `page shot --compare <original> --dress`, the original's computed
-styles — and says it: `task spike <task> --done "…"`. The findings (`TaskState.findings`) stay with the task, in its
-brief and in the brief of every task that waits for it. Then:
+Research — what the lead reads to know what the work is — is work of the run, seen by the monitor and counted by the
+report: a **spike**. It decides what is built, so it is a lead's: the lead, or a lead that reviews, never an agent of the
+team (whose model is not a lead's). A spike is research alone: a task with `"spike": "what to find out"` and no files
+(`run plan` refuses one with files), whose acceptance is in words — a command would run at a `complete` it never reaches.
 
-- **Research alone** — a spike and no files — is done by its findings: what waits for it is made ready
-  (`readyWhatWaited`), no review. Its acceptance is in words, as a command would run at a `complete` it never reaches
-  (`run plan` refuses one).
-- **A task no agent holds** is ready to be built — or pending while what it waits for is not done.
-- **A task an agent moved back** — `task spike "what"`, from its copy, when its work needs something found out — goes
-  on with that agent, told (`told`): it kept its files and its token throughout, and the lead was asked.
+**A run starts with one: its scope.** As any project does: the lead scopes the person's ask, and the work flows from
+there. `plitzi run open --spike "<the ask>" --run <name>` opens the run on it alone (`scopePlan`: one critical spike,
+`s-scope`, the plan written in the project's `tmp/` and moved into the run as any plan is). The lead finds out —
+`page shot --compare <original> --dress`, the original's computed styles, the project — and ends it with its result,
+the tasks: `plitzi task spike s-scope --done "what was found" --tasks <stage.json>`. The stage is stacked as
+`run extend` stacks one (refused, it leaves the spike open), and each task carries what was found for it (`"findings"`,
+kept as the run's `TaskState.findings` from its first state, `startingState`): whoever builds it reads it in its brief,
+rather than a spike per task — found out by one, built by another, each read twice.
 
-A task in spike that an agent holds counts as worked (`worked.ts`): it owes signs of life and counts toward the agents at
-work. A task cut in spike stays one. The lead's own research before a plan is the run's first spike: a plan of research
-alone, whose findings it turns into the work with `run extend`. `run rehearse` plays research alone without a review.
-The monitor gives spikes a column of their own (`◇ spike`) once the run has one, and the dev tools' Run tab a group
-(Finding out).
+**Later spikes are the lead's to open**, when the work asks for one: a research task stacked with `run extend`, ended the
+same way. It starts in `spike`, ahead of `ready` (ready is ready to build), whether or not what it waits for is done —
+finding out is reading. No agent is offered it or takes it (`take` refuses one); `run watch --until lead` says each spike
+waiting (`spikes`), and `task next --role lead` hands a lead that reviews the most urgent one no other lead took
+(`spikedBy`) when no review waits for it. Its findings go into the brief of every task that waits for it, made ready by
+it (`readyWhatWaited`), no review.
+
+**An agent whose task needs something found out** says so — `task spike "what"`, from its copy — and the task is
+blocked on the lead (`blockedBy.spike`), its files and token its own; the agent takes other work meanwhile. The lead
+finds out and lifts the block with the answer, kept as the task's finding (`task unblock <task> --answer "…"`; without
+one it is refused), or, when it changes the work, stacks the tasks it makes.
+
+`run rehearse` plays research alone without a review. The monitor gives spikes a column of their own (`◇ spike`) once
+the run has one, with the lead at it, and the dev tools' Run tab a group (Finding out).
 
 **Who is still there** (`presence.ts`): a wait is said once in the log, so the log alone cannot tell a live agent from
 one its harness stopped. Each `task next`, and each turn of its `--follow`, marks the agent present in its scratch; an

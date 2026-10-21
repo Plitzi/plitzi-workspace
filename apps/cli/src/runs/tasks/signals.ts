@@ -118,6 +118,15 @@ export const unblockTask = async (
     throw new RunRefusal('invalid', `Task "${taskId}" is not blocked, it is ${view.state.status}`, { task: taskId });
   }
 
+  const spike = view.state.blockedBy?.spike;
+  if (spike !== undefined && answer === undefined) {
+    throw new RunRefusal(
+      'invalid',
+      `${taskId} needs a spike — ${spike}: lift it with what you found — plitzi task unblock ${taskId} --answer "…" — kept as its finding`,
+      { task: taskId }
+    );
+  }
+
   const said =
     answer === undefined ? undefined : await sendMessage(ctx, loaded, { from: LEAD, to: taskId, text: answer });
   await logRun(ctx, loaded.paths, {
@@ -136,6 +145,11 @@ export const unblockTask = async (
       ...state,
       status: view.owner ? (state.round > 0 ? 'changes-requested' : 'in-progress') : 'ready',
       blockedBy: undefined,
+      ...(spike !== undefined && answer !== undefined
+        ? {
+            findings: [...(state.findings ?? []), { at: at(ctx), by: ctx.agent, question: spike, text: answer }]
+          }
+        : {}),
       notes: [
         ...state.notes,
         { at: at(ctx), by: ctx.agent, text: answer === undefined ? 'Unblocked' : `Unblocked: ${answer}` },

@@ -116,7 +116,7 @@ describe('what the first real runs taught', () => {
     expect(context.requests[0].diff).not.toMatch(/^-import/m);
   });
 
-  it('a request on a file another task holds by turns waits for it, and goes in when that task lets go of it', async () => {
+  it('a request on a file another task holds by turns goes in at its approval, and the holder merges over it', async () => {
     await bench.write(
       'src/space/index.ts',
       `import { home } from './pages/home/index.ts';
@@ -161,11 +161,14 @@ export const space = {
     }
 
     await completeTask(b.ctx, 'shell-run', 't-b');
-    expect((await reviewTask(lead(), 'shell-run', 't-b', 'approve', [])).integrations).toEqual([]);
+    // Its page is registered in the run's entry at once: approved work never reads what the run lacks.
+    expect(await reviewTask(lead(), 'shell-run', 't-b', 'approve', [])).toMatchObject({
+      integrations: [],
+      fulfilled: ['src/space/index.ts']
+    });
     await completeTask(a.ctx, 'shell-run', 't-a');
-    const approved = await reviewTask(lead(), 'shell-run', 't-a', 'approve', []);
+    await reviewTask(lead(), 'shell-run', 't-a', 'approve', []);
 
-    expect(approved.settled).toEqual(['t-b/src-space-index-ts']);
     const index = (await showVersion(bench.person(), 'shell-run', 'src/space/index.ts', 'run'))?.toString() ?? '';
     expect(index).toMatch(/import \{ a \}/);
     expect(index).toMatch(/import \{ b \}/);

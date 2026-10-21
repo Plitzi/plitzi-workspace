@@ -21,8 +21,8 @@ interface Stage {
 }
 
 /**
- * A task as its card names it: a task sent back by a review is ready again for the agent that wrote it, marked by the
- * round it is at — `t-boxer ↺2` — rather than in a stage of its own: it goes round the same steps again.
+ * A task as its card names it: a task sent back by a review is at work again with the agent that wrote it, marked by
+ * the round it is at — `t-boxer ↺2` — rather than in a stage of its own: it goes round the same steps again.
  */
 const nameOf = (task: TaskLine): string =>
   task.status === 'changes-requested' ? `${task.id} ↺${String(task.round)}` : task.id;
@@ -105,38 +105,44 @@ const stagesOf = (tasks: readonly TaskLine[]): Stage[] => {
           {
             name: '◇ spike',
             tone: chalk.blue,
-            tasks: of('spike').filter(task => !task.asking),
+            tasks: of('spike'),
             // Never "free": no agent takes a spike — the lead at it, or one is waited for.
-            who: (task: TaskLine) => task.agent ?? task.spikedBy ?? 'for a lead'
+            who: (task: TaskLine) => task.spikedBy ?? 'for a lead'
           }
         ]
       : []),
-    // Sent back by a review, ready again — for the agent that wrote it, whose name it says.
-    {
-      name: '○ ready',
-      tone: text => text,
-      tasks: [...of('changes-requested').filter(task => !task.asking), ...of('ready')],
-      who: task => (task.status === 'changes-requested' ? (task.agent ?? '') : '')
-    },
+    // Free to take: no agent's yet — a task sent back is its writer's, at work or held.
+    { name: '○ ready', tone: text => text, tasks: of('ready') },
+    // One card an agent: the task it is at — written, or again after a review sent it back (↺). The others it holds
+    // wait for it, held (velada-dress: dev-2 "ready" with t-home and "at work" with t-overlay at once).
     {
       name: '▶ at work',
       tone: chalk.cyan,
-      tasks: of('in-progress').filter(task => !task.asking),
+      tasks: [...of('in-progress'), ...of('changes-requested')].filter(task => !task.asking && !task.parkedFor),
       who: task => task.agent ?? ''
     },
-    // What holds an agent back: a block, a file another task has, a question to the lead, a failure.
+    // What holds an agent back: a block, a file another task has, a question to the lead, its agent at another task,
+    // a failure.
     {
       name: '■ held',
       tone: chalk.yellow,
-      tasks: [...of('blocked'), ...of('waiting'), ...tasks.filter(task => task.asking), ...of('failed')],
+      tasks: [
+        ...of('blocked'),
+        ...of('waiting'),
+        ...tasks.filter(task => task.asking),
+        ...tasks.filter(task => task.parkedFor),
+        ...of('failed')
+      ],
       who: task =>
         task.asking
           ? `asks lead (${task.asking.id})`
-          : task.status === 'blocked'
-            ? `blocked: needs ${task.blockedBy?.needs ?? 'someone'}`
-            : task.status === 'waiting'
-              ? `waits ${task.waitingFor?.task ?? 'a file'}`
-              : 'failed'
+          : task.parkedFor
+            ? `${task.agent ?? ''} at ${task.parkedFor}`
+            : task.status === 'blocked'
+              ? `blocked: needs ${task.blockedBy?.needs ?? 'someone'}`
+              : task.status === 'waiting'
+                ? `waits ${task.waitingFor?.task ?? 'a file'}`
+                : 'failed'
     },
     {
       name: '◎ UI review',
@@ -266,7 +272,7 @@ export const flowBoard = (
       cell(
         chalk.bold('FLOW') +
           chalk.dim(
-            '  each task left to right, from to-do to approved · ↺2 sent back, ready again for its agent at round 2 · ‼ ! urgent: critical, high · the wheel scrolls a stage · f hides it'
+            '  each task left to right, from to-do to approved · ↺2 sent back, at work again at round 2 · ‼ critical, ! high (its own or a task’s waiting on it) · the wheel scrolls a stage · f hides it'
           ),
         width
       ),

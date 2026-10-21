@@ -67,6 +67,11 @@ export interface TaskView {
   requests: SharedRequest[];
   /** The last sign of life of whoever holds it, in ms since the epoch. */
   signalAt?: number;
+  /**
+   * The last its holder did on it — taken, a heartbeat, a write — and not what others did to it (a review sending it
+   * back): of an agent's tasks, the one it is at.
+   */
+  workedAt?: number;
 }
 
 export const readTask = async (run: RunPaths, taskId: string): Promise<RunTask | undefined> =>
@@ -183,25 +188,26 @@ export const requestId = (file: string): string => file.replace(/[^a-zA-Z0-9]+/g
 export const writeRequest = (task: TaskPaths, request: SharedRequest): Promise<void> =>
   writeJson(path.join(task.requests, `${request.id}.json`), request);
 
-/** The last sign of life of whoever holds a task: its commands, its progress and heartbeats, its writes in its copy. */
+/**
+ * The last sign of life of whoever holds a task — its commands, its progress and heartbeats, its writes in its copy —
+ * and, apart, the last of its own doing alone (`workedAt`).
+ */
 export const signalOf = async (
   task: RunTask,
   paths: TaskPaths,
   state: TaskState,
   owner: TaskOwner | undefined,
   progress: TaskProgress | undefined
-): Promise<number | undefined> => {
+): Promise<{ signalAt: number; workedAt: number } | undefined> => {
   if (!owner) {
     return undefined;
   }
 
   const written = await newestWrite(paths.work, task.files);
-  const times = [Date.parse(owner.takenAt), Date.parse(state.updatedAt), written ?? 0];
-  if (progress) {
-    times.push(Date.parse(progress.heartbeatAt));
-  }
+  const own = [Date.parse(owner.takenAt), written ?? 0, ...(progress ? [Date.parse(progress.heartbeatAt)] : [])];
+  const latest = (times: number[]) => Math.max(...times.filter(time => Number.isFinite(time)));
 
-  return Math.max(...times.filter(time => Number.isFinite(time)));
+  return { signalAt: latest([...own, Date.parse(state.updatedAt)]), workedAt: latest(own) };
 };
 
 /** How long a task can go without a signal before it counts as disconnected. */
@@ -222,7 +228,7 @@ export const viewTask = async (run: RunPaths, task: RunTask): Promise<TaskView> 
   const progress = await readProgress(paths);
   const review = await readReview(paths);
   const reviewed = await readReviewed(paths);
-  const signalAt = await signalOf(task, paths, state, owner, progress);
+  const signal = await signalOf(task, paths, state, owner, progress);
 
   return {
     task,
@@ -234,7 +240,7 @@ export const viewTask = async (run: RunPaths, task: RunTask): Promise<TaskView> 
     ...(reviewed ? { reviewed } : {}),
     locks: await readLocks(paths),
     requests: await readRequests(paths),
-    ...(signalAt !== undefined ? { signalAt } : {})
+    ...(signal ?? {})
   };
 };
 
@@ -259,8 +265,7 @@ export const cutTask = async (view: TaskView, reason: string, now: () => Date): 
     view.paths,
     state => ({
       ...state,
-      // A spike stays one: what it is to find out is still a lead's to find, whoever held it.
-      status: view.state.status === 'spike' ? 'spike' : 'ready',
+      status: 'ready',
       cutAt: { step, reason, at: now().toISOString() },
       notes: [
         ...state.notes,

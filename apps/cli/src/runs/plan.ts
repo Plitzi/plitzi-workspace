@@ -387,6 +387,14 @@ export const checkPlan = async (
       );
     }
 
+    // A spike is research, a lead's, whose result is tasks — never a step of a task to build: one a task would make
+    // hundreds of them. What the scope found for a task is its `findings`.
+    if (task.files.length > 0 && task.spike !== undefined) {
+      problems.push(
+        `Task "${task.id}" writes files and has a spike: a spike is research alone (no files), whose result is the tasks — give this one what was found as "findings"`
+      );
+    }
+
     if (task.spike?.trim() === '') {
       problems.push(`Task "${task.id}": its spike says what to find out — it is empty`);
     }

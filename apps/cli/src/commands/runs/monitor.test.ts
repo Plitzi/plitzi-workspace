@@ -9,7 +9,7 @@ import { groupRepeats, monitorRun } from '../../runs/monitor';
 import { runPaths } from '../../runs/paths';
 import { logRun } from '../../runs/run';
 import { askLead, messageTasks, noteRun, tellLead } from '../../runs/talk';
-import { completeTask, followNext, reviewTask } from '../../runs/tasks';
+import { completeTask, followNext, reportProgress, reviewTask } from '../../runs/tasks';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 
@@ -245,7 +245,7 @@ describe('plitzi run monitor', () => {
     expect(repeats.every(line => line.indexOf('“The CDN') === unfolded[row].indexOf('“The CDN') + 2)).toBe(true);
   });
 
-  it('draws the run as a flow, each task in its stage, the review split, and one sent back ready again', async () => {
+  it('draws the run as a flow, each task in its stage, the review split, and one sent back at work again', async () => {
     const runId = await open();
     await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
     const home = await take('agent-2', 't-home');
@@ -273,12 +273,33 @@ describe('plitzi run monitor', () => {
     expect(sent.find(line => line.includes('pending'))).toMatch(/held \(0\).*lead review \(2\)/);
     expect(sent.filter(line => line.includes('t-home'))).toHaveLength(1);
 
-    // Sent back by the lead: ready again, for the same agent, its name marked with the round it is at.
+    // Sent back by the lead: at work again, its agent's — never "ready", free to take — marked with its round.
     await reviewTask(lead(), runId, 't-menu', 'changes', [{ note: 'Spanish prices' }]);
     const back = plain(flowLines((await monitorRun(lead(), runId)).view.tasks, 220));
-    expect(back.find(line => line.includes('pending'))).toMatch(/ready \(1\)/);
+    expect(back.find(line => line.includes('pending'))).toMatch(/ready \(0\).*at work \(1\)/);
     expect(back.some(line => line.includes('t-menu ↺1 agent-3'))).toBe(true);
     expect(back.some(line => line.includes('sent back ('))).toBe(false);
+  });
+
+  // velada-dress: dev-2 stood "ready" with t-home, sent back, and "at work" with t-overlay at once — one agent, two
+  // cards, and no telling which it was at.
+  it('shows an agent at one task at a time: the one it last worked on, the others held for it', async () => {
+    const runId = await open();
+    const home = await take('agent-1', 't-home');
+    bench.advance(60_000);
+    await take('agent-1', 't-menu');
+    bench.advance(60_000);
+    await reportProgress(home.ctx, runId, 't-home', { step: 'the hero' });
+
+    const { view, agents } = await monitorRun(lead(), runId);
+    const flow = plain(flowLines(view.tasks, 220));
+    expect(flow.find(line => line.includes('pending'))).toMatch(/at work \(1\).*held \(1\)/);
+    expect(flow.some(line => line.includes('t-home agent-1'))).toBe(true);
+    expect(flow.some(line => line.includes('t-menu agent-1 at t-home'))).toBe(true);
+    expect(agents.find(agent => agent.agent === 'agent-1')).toMatchObject({
+      task: 't-home',
+      doing: expect.stringContaining('also holds t-menu (in-progress)') as unknown
+    });
   });
 
   // velada-dress: agents stopped by their harness still read "working" and "waiting" — a wait is said once, and nothing

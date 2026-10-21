@@ -137,12 +137,13 @@ export const taskRequest = (
   );
 
 /**
- * `plitzi task spike "…"`, by the agent at work: its task needs something found out — a lead's to find. `plitzi task
- * spike <task> --done "…"`, by a lead: what it found — research alone ends there; a task goes on to be built.
+ * `plitzi task spike "…"`, by the agent at work: its task needs something found out — a lead's to find, the task
+ * blocked on it. `plitzi task spike <task> --done "…" [--tasks <stage.json>]`, by a lead: what a spike found, and the
+ * tasks it makes.
  */
 export const taskSpike = (
   argument: string | undefined,
-  options: RunCommandOptions & { done?: string }
+  options: RunCommandOptions & { done?: string; tasks?: string }
 ): Promise<void> =>
   act(
     options,
@@ -150,10 +151,14 @@ export const taskSpike = (
       if (options.done !== undefined) {
         const runId = await runOf(ctx, options);
         if (argument === undefined) {
-          throw new RunRefusal('invalid', 'Name the task whose spike you answer: plitzi task spike t-home --done "…"');
+          throw new RunRefusal('invalid', 'Name the spike you answer: plitzi task spike s-scope --done "…"');
         }
 
-        return answerSpike(ctx, runId, argument, options.done);
+        return answerSpike(ctx, runId, argument, options.done, options.tasks ? { tasks: options.tasks } : {});
+      }
+
+      if (options.tasks !== undefined) {
+        throw new RunRefusal('invalid', '--tasks is a lead’s, with --done: the tasks the spike it answers makes');
       }
 
       const { runId, taskId } = await holder(ctx, options);
@@ -168,10 +173,6 @@ export const taskSpike = (
     },
     spiked =>
       spiked.finding === undefined
-        ? `${spiked.task} is in spike: a lead finds out ${spiked.question}. Its files stay yours; what is found comes with your next command (plitzi task next --follow) — wait, or go on with what does not need it.`
-        : spiked.status === 'done'
-          ? `${spiked.task} is done: research alone, its findings with every task that waits for it.${spiked.ready && spiked.ready.length > 0 ? ` Ready now: ${spiked.ready.join(', ')}.` : ''}`
-          : spiked.told
-            ? `${spiked.task}'s spike is answered: ${spiked.told} is told, and goes on building it.`
-            : `${spiked.task}'s spike is answered: ${spiked.status === 'ready' ? 'ready to be built' : 'pending, until what it waits for is done'} — whoever builds it reads the findings.`
+        ? `${spiked.task} is blocked on the lead, who finds out ${spiked.question}. Its files stay yours; the answer comes with your next command (plitzi task next --follow hands the task back) — meanwhile take another task, or go on with what does not need it.`
+        : `${spiked.task} is done: its findings go with every task that waits for it.${spiked.added ? ` It made ${spiked.added.join(', ')}.` : ''}${spiked.ready && spiked.ready.length > 0 ? ` Ready now: ${spiked.ready.join(', ')}.` : ''}`
   );

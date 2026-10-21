@@ -11,7 +11,7 @@ What the lead — team lead and software architect — does; the agents' half, t
    control behaves, a size — as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
    "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
-   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`, naming sections no piece covers. **Research is a spike, in the run — a lead's** (an agent's model is not yours): a task's `"spike": "what to find out"` waits for a lead, even before what it waits for is done; no files, research alone (acceptance in words). Find out (`page shot --compare <original> --dress`), then `plitzi task spike <task> --done "…"`; many: `lead-2` takes them. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
+   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`, naming sections no piece covers. **Research is a spike, yours** (no files). **Start with the scope**, `run open --spike "<ask>" --run <name>`; find out (`page shot --compare <original> --dress`) and end it with the tasks, each with what you found (`"findings"`): `task spike s-scope --done "…" --tasks <stage.json>`. Later: stack one (`run extend`); an agent's `task spike` is a block you lift with the answer (`task unblock --answer`). **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview` — who owns which file, read off the imports. A page owns the modules only
    it imports; what two pages import (the tokens, the classes, a layout, a component) is **shared**, and so is every
@@ -90,8 +90,8 @@ What the lead — team lead and software architect — does; the agents' half, t
 4. **Ask the person first** who applies the run at the end — they, or you: then they open it in their terminal with
    `--lead-finishes` (or `plitzi run allow-finish` later). Never you.
    `plitzi run open plan.json` backs up every file it will touch; as many agents at once as the team has (above 5 a
-   person confirms). Tell the person how to watch it: `npm run start:preview` (`plitzi run preview`) serves the run's
-   approved work as it goes, its dev tools' Run tab saying who builds what — and `plitzi run monitor` follows it live.
+   person confirms). Tell the person how to watch it: `npm run start:preview` serves the approved work as it goes,
+   its dev tools' Run tab saying who builds what; `plitzi run monitor` follows it live.
 5. Start one agent per ready task (`plitzi task next --run es-launch --json`), each with a free port, and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
    file a task takes past 400 lines (ask for the split) — each said once. **Talk:** answer a question with `plitzi

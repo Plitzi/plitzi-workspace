@@ -79,7 +79,7 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
   if (view.state.status === 'spike') {
     throw new RunRefusal(
       'invalid',
-      `Task "${taskId}" is in spike: a lead finds out first (${view.state.spiking ?? task.spike ?? 'what it needs'}) — take another (plitzi task next)`,
+      `Task "${taskId}" is in spike: a lead finds out first (${task.spike ?? 'what it needs'}) — take another (plitzi task next)`,
       { task: taskId }
     );
   }

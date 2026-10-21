@@ -198,8 +198,6 @@ const doingOf = (task: TaskLine): string => {
       return `reviews the UI of ${task.id}`;
     case 'changes-requested':
       return `redoes ${task.id} (round ${String(task.round)})`;
-    case 'spike':
-      return `finds out for ${task.id}: ${task.spike ?? 'what it needs'}`;
     case 'waiting':
       return `${task.id} waits for ${task.waitingFor?.task ?? 'another task'}`;
     case 'blocked':
@@ -226,7 +224,7 @@ const lastDone = (entry: Record<string, unknown>): string | undefined => {
   }
 };
 
-/** How recent an agent's last action is to be "at it" — a lead reviews by commands, between which it holds nothing. */
+/** How recent a lead that reviews must have done something to count as started: idle, not waiting to be started. */
 const ACTIVE_MS = 3 * 60_000;
 
 /** Every agent: the team's, the leads — what each is at, from the tasks they hold and the reviews they took. */
@@ -263,7 +261,11 @@ const agentsOf = async (
     const holder = assignee(task);
     if (holder && task.status !== 'done') {
       holds.set(holder, [...(holds.get(holder) ?? []), task]);
-      held.set(holder, held.get(holder) ?? task);
+      // The one it is at, of its tasks at work: the others wait for it (`parkedFor`) — its row says the one the flow does.
+      const was = held.get(holder);
+      if (!was || (was.parkedFor !== undefined && task.parkedFor === undefined)) {
+        held.set(holder, task);
+      }
     }
   }
 
@@ -320,7 +322,6 @@ const agentsOf = async (
     const lastAt = typeof last?.at === 'string' ? Date.parse(last.at) : undefined;
     const lastLine = last ? lastDone(last) : undefined;
     const recent = lastAt !== undefined && now - lastAt < ACTIVE_MS && lastLine !== undefined;
-    const lastTask = typeof last?.task === 'string' ? last.task : undefined;
     // Finding out a spike it took: working, on that task — what it is at, never idle (velada-dress: the lead at
     // t-shell's spike was nowhere on the board).
     const spiking = at ? undefined : view.tasks.find(task => task.status === 'spike' && task.spikedBy === lead);
@@ -342,23 +343,19 @@ const agentsOf = async (
       agent: lead,
       kind: lead === LEAD ? ('lead' as const) : ('co-lead' as const),
       approved: 0,
-      status:
-        // At a review it holds, reviewing; at anything else lately (an answer, an amend, a finish), working.
-        at
-          ? ('reviewing' as const)
-          : recent
-            ? ('working' as const)
-            : lead === LEAD || asking
-              ? ('idle' as const)
-              : ('not-started' as const),
+      // Reviewing only at a review it holds: what it did lately with nothing in hand (a look, an answer, an amend) is
+      // its last, never "working" — the board showed a lead at work that no task or card named (velada-dress).
+      status: at
+        ? ('reviewing' as const)
+        : lead === LEAD || asking || recent
+          ? ('idle' as const)
+          : ('not-started' as const),
       ...(leadModel ? { model: leadModel } : {}),
       roles: [lead === LEAD ? 'plans, reviews, finishes' : 'reviews'],
       doing: at
         ? `reviews ${at}`
-        : recent
-          ? lastLine
-          : `${lead === LEAD ? 'plans, answers, reviews what no lead took' : asking ? 'waits for a review' : 'reviews when they queue up'}${lastLine ? ` · last: ${lastLine}` : ''}`,
-      ...(at ? { task: at } : lastTask && recent ? { task: lastTask } : {}),
+        : `${lead === LEAD ? 'plans, answers, reviews what no lead took' : asking ? 'waits for a review' : 'reviews when they queue up'}${lastLine ? ` · last: ${lastLine}` : ''}`,
+      ...(at ? { task: at } : {}),
       ...(typeof last?.at === 'string' ? { signalAt: last.at } : {})
     };
   });
@@ -380,7 +377,11 @@ const agentsOf = async (
     const member = started.get(agent);
     const also = (holds.get(agent) ?? []).filter(each => each.id !== task?.id);
     const more = [
-      ...(also.length > 0 ? [`also holds ${also.map(each => `${each.id} (${each.status})`).join(', ')}`] : []),
+      ...(also.length > 0
+        ? [
+            `also holds ${also.map(each => `${each.id} (${each.status === 'changes-requested' ? `sent back, round ${String(each.round)}` : each.status})`).join(', ')}`
+          ]
+        : []),
       ...(member?.roles.includes('designer') && uiWaiting.length > 0
         ? [`${String(uiWaiting.length)} UI review${uiWaiting.length === 1 ? '' : 's'} wait for a designer`]
         : [])

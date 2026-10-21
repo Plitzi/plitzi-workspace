@@ -120,7 +120,7 @@ const briefOf = (context: TaskContext): string => {
     ...(state.status === 'spike'
       ? [
           chalk.blue(
-            `◇ In spike — find out first: ${state.spiking ?? task.spike ?? 'what it needs'}. Read, compare, measure; write nothing of the task's; then plitzi task spike --done "what you found"`
+            `◇ A spike — find out: ${task.spike ?? 'what it needs'}. Read, compare, measure; write nothing; then say what you found and its result, the tasks it makes, each with its "findings": plitzi task spike ${task.id} --done "…" --tasks <stage.json>`
           )
         ]
       : []),

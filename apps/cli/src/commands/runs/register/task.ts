@@ -148,18 +148,22 @@ export const registerTaskGroup = (program: Command): Command => {
   taskGroup
     .command('spike')
     .description(
-      'A spike — what to find out before building, a lead’s: the task in hand back to spike, saying what; or, as a lead, <task> --done with what was found'
+      'A spike — finding out before building, a lead’s: the task in hand blocked on the lead, saying what; or, as a lead, <spike> --done with what was found, and --tasks with the tasks it makes'
     )
     .argument(
       '[question|task]',
-      'What needs finding out ("which layers make the original’s warm light") — or, with --done, the task'
+      'What needs finding out ("which layers make the original’s warm light") — or, with --done, the spike'
     )
-    .option('--done <findings>', 'A lead’s: what was found — kept with the task, read by every task that waits for it')
+    .option('--done <findings>', 'A lead’s: what was found — kept with the spike, read by every task that waits for it')
+    .option(
+      '--tasks <stage.json>',
+      'With --done: its result, the tasks it makes — a stage, as `run extend` takes, each task with its "findings"'
+    )
     .option(...AGENT_OPTION)
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((question: string | undefined, options: RunCommandOptions & { done?: string }) =>
+    .action((question: string | undefined, options: RunCommandOptions & { done?: string; tasks?: string }) =>
       taskSpike(question, options)
     );
 

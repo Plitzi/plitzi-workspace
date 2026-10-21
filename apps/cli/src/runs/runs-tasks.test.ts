@@ -24,6 +24,8 @@ import {
   reviewTask,
   takeTask
 } from './tasks';
+import { changesBlock } from './tasks/review';
+import { viewTask } from './taskStore';
 import { viewRun } from './view';
 import { benchPlan, makeBench, readInCopy, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
@@ -246,6 +248,14 @@ export const menu = { id: 'menu', title: 'Carta', theme };
         `export const hero = { text: 'v${String(round)}' };\n`
       );
       await completeTask(home.ctx, 'es-launch', 't-home');
+      // Said to the reviewer before it asks: its last round's changes block the task (velada-dress: design-2 found out after).
+      const loaded = await loadRun(lead(), 'es-launch');
+      const task = loaded.tasks.find(each => each.id === 't-home');
+      if (!task) {
+        throw new Error('the run has no t-home');
+      }
+
+      expect(changesBlock((await viewTask(loaded.paths, task)).state, false)).toBe(round === 3);
       const reviewed = await reviewTask(lead(), 'es-launch', 't-home', 'changes', [
         { note: 'shorter', element: 'hero-title' }
       ]);

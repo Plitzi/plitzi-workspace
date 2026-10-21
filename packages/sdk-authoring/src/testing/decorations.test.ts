@@ -93,6 +93,15 @@ describe('pageDecorations, of what is drawn', () => {
   });
 });
 
+describe('pageDecorations, of filters that do something', () => {
+  it('reads no blur(0px): an arrival at rest is no dress', () => {
+    document.body.innerHTML = '<div style="filter: blur(0px)"></div><div style="filter: blur(20px)"></div>';
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue(DOMRect.fromRect({ width: 100, height: 20 }));
+
+    expect(pageDecorations(10).map(each => each.detail)).toEqual(['filter blur(20px)']);
+  });
+});
+
 describe('compareDecorations', () => {
   it('says, section by section, the dress the other page has and this one lacks — and what this one adds', () => {
     const regions = [region('header#site-header', 0, 80), region('section#artist-page', 80, 900)];

@@ -1,13 +1,13 @@
+import { extendRun } from '../extend';
 import { isCoLead, requireLead } from '../leads';
-import { agentAddress, LEAD, sendMessage } from '../messages';
-import { dependenciesDone } from '../plan';
+import { LEAD, sendMessage } from '../messages';
 import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, requireNoTask } from '../run';
 import { isResearch } from '../spike';
 import { updateState, viewTask } from '../taskStore';
 import { isWorked } from '../worked';
 import { at, findTask, holderOf } from './common';
-import { readyWhatWaited, sayIfAllDone, statesOf } from './handOn';
+import { readyWhatWaited, sayIfAllDone } from './handOn';
 
 import type { TaskStatus } from '../model';
 import type { RunContext } from '../run';
@@ -19,59 +19,62 @@ export interface Spiked {
   /** What it set out to find, or found. */
   question: string;
   finding?: Finding;
-  /** The tasks its findings made ready: research alone, done. */
+  /** The tasks it made — its result, stacked on the run — by id. */
+  added?: string[];
+  /** The tasks it left ready: those it made, and those that waited for it. */
   ready?: string[];
-  /** Its agent, told what was found: it goes on building. */
-  told?: string;
 }
 
 /**
- * `plitzi task spike "…"`, by the agent at work: its task needs something found out before it goes on — a lead's to
- * find, as every spike is (an agent's model is not a lead's). The task waits in spike, its files and its agent its own,
- * and the lead is asked; the findings come back to the agent with its next command.
+ * `plitzi task spike "…"`, by the agent at work: its task needs something found out before it goes on — and finding out
+ * is a lead's (an agent's model is not a lead's). The task is blocked on the lead, saying what, its files and agent its
+ * own; the lead finds it out and lifts the block with the answer — a finding of the task's — or, when it changes the
+ * work, stacks the tasks it makes (`run extend`).
  */
 export const startSpike = async (ctx: RunContext, runId: string, taskId: string, question: string): Promise<Spiked> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'ask for a spike');
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);
-  if (view.state.status === 'spike') {
-    throw new RunRefusal('invalid', `Task "${taskId}" is in spike already: a lead finds it out`, { task: taskId });
-  }
-
   if (!isWorked(view.state.status)) {
-    throw new RunRefusal('invalid', `Task "${taskId}" is ${view.state.status}: a task at work goes back to spike`, {
+    throw new RunRefusal('invalid', `Task "${taskId}" is ${view.state.status}: a task at work asks for a spike`, {
       task: taskId
     });
   }
 
-  const back = view.state.status;
   await updateState(
     view.paths,
     state => ({
       ...state,
-      status: 'spike',
-      spiking: question,
-      notes: [...state.notes, { at: at(ctx), by: ctx.agent, text: `Spike (from ${back}): ${question}` }]
+      status: 'blocked',
+      blockedBy: { reason: `needs a spike: ${question}`, needs: 'lead', spike: question },
+      notes: [...state.notes, { at: at(ctx), by: ctx.agent, text: `Needs a spike: ${question}` }]
     }),
     ctx.now
   );
   await sendMessage(ctx, loaded, {
     from: taskId,
     to: LEAD,
-    text: `${taskId} needs a spike before it goes on: ${question} — find it out and say it: plitzi task spike ${taskId} --done "…"`
+    text: `${taskId} needs a spike before it goes on: ${question} — find it out and lift its block with what you found: plitzi task unblock ${taskId} --answer "…" (kept as its finding); if it changes the work, stack the tasks it makes: plitzi run extend <stage.json>`
   });
   await logRun(ctx, loaded.paths, { action: 'spike', task: taskId, question });
 
-  return { task: taskId, status: 'spike', question };
+  return { task: taskId, status: 'blocked', question };
 };
 
 /**
- * `plitzi task spike <task> --done "…"`, by a lead: what it found out, kept with the task — in its brief and in that of
- * every task that waits for it. Research alone is done by it. A task an agent moved back goes on with that agent, told;
- * one no agent holds is ready to be built — or pending, while what it waits for is not done.
+ * `plitzi task spike <task> --done "…" [--tasks <stage.json>]`, by a lead: what a spike found out — research alone,
+ * done by it, its findings in the brief of every task that waits for it — and its result: the tasks it makes, stacked on
+ * the run as a stage, each with what was found for it (`findings`). The run's scope spike ends this way, and the work
+ * flows from it.
  */
-export const answerSpike = async (ctx: RunContext, runId: string, taskId: string, text: string): Promise<Spiked> => {
+export const answerSpike = async (
+  ctx: RunContext,
+  runId: string,
+  taskId: string,
+  text: string,
+  { tasks }: { tasks?: string } = {}
+): Promise<Spiked> => {
   requireNoTask(ctx, 'say what a spike found');
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'say what a spike found');
@@ -81,42 +84,35 @@ export const answerSpike = async (ctx: RunContext, runId: string, taskId: string
 
   const task = findTask(loaded, taskId);
   const view = await viewTask(loaded.paths, task);
-  if (view.state.status !== 'spike') {
-    throw new RunRefusal('invalid', `Task "${taskId}" is ${view.state.status}, not in spike`, { task: taskId });
+  if (view.state.status !== 'spike' || !isResearch(task)) {
+    throw new RunRefusal(
+      'invalid',
+      `Task "${taskId}" is ${view.state.status}, not a spike: an agent's task that needs one is blocked on the lead — lift it with what you found (plitzi task unblock ${taskId} --answer "…")`,
+      { task: taskId }
+    );
   }
 
-  const question = view.state.spiking ?? task.spike ?? 'what it needed';
+  // Its result first: a stage refused leaves the spike open, nothing said done that made nothing.
+  const stacked = tasks === undefined ? undefined : await extendRun(ctx, runId, tasks);
+  const question = task.spike ?? 'what it needed';
   const finding: Finding = { at: at(ctx), by: ctx.agent, question, text };
-  const states = await statesOf(loaded);
-  const holder = view.owner?.agent;
-  const status: TaskStatus = isResearch(task)
-    ? 'done'
-    : holder
-      ? view.state.round > 0
-        ? 'changes-requested'
-        : 'in-progress'
-      : dependenciesDone(task, states)
-        ? 'ready'
-        : 'pending';
   await updateState(
     view.paths,
     state => ({
       ...state,
-      status,
-      spiking: undefined,
+      status: 'done',
       findings: [...(state.findings ?? []), finding],
       notes: [...state.notes, { at: at(ctx), by: ctx.agent, text: `Found: ${text}` }]
     }),
     ctx.now
   );
-  await logRun(ctx, loaded.paths, { action: 'spike-done', task: taskId, question, status });
-  if (holder) {
-    await sendMessage(ctx, loaded, {
-      from: LEAD,
-      to: agentAddress(holder),
-      text: `${taskId}'s spike is answered — ${question}: ${text}. Go on building it.`
-    });
-  }
+  await logRun(ctx, loaded.paths, {
+    action: 'spike-done',
+    task: taskId,
+    question,
+    status: 'done',
+    ...(stacked ? { added: stacked.added } : {})
+  });
 
   // Said by a lead that reviews, not by the lead: the lead hears what was found.
   if (ctx.agent !== LEAD) {
@@ -129,21 +125,20 @@ export const answerSpike = async (ctx: RunContext, runId: string, taskId: string
     });
   }
 
-  const ready = status === 'done' ? await readyWhatWaited(ctx, await loadRun(ctx, runId)) : [];
-  if (ready.length > 0) {
-    await logRun(ctx, loaded.paths, { action: 'handed-on', task: taskId, granted: [], ready });
+  const waited = await readyWhatWaited(ctx, await loadRun(ctx, runId));
+  if (waited.length > 0) {
+    await logRun(ctx, loaded.paths, { action: 'handed-on', task: taskId, granted: [], ready: waited });
   }
 
-  if (status === 'done') {
-    await sayIfAllDone(ctx, runId);
-  }
+  await sayIfAllDone(ctx, runId);
+  const ready = [...(stacked?.ready ?? []), ...waited];
 
   return {
     task: taskId,
-    status,
+    status: 'done',
     question,
     finding,
-    ...(ready.length > 0 ? { ready } : {}),
-    ...(holder ? { told: holder } : {})
+    ...(stacked ? { added: stacked.added } : {}),
+    ...(ready.length > 0 ? { ready } : {})
   };
 };

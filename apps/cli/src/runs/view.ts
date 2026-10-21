@@ -72,12 +72,17 @@ export interface TaskLine {
   signalAt?: string;
   /** In review: since when it is as it is — sent, or its UI said — what a review no lead takes has waited from. */
   since?: string;
-  /** In spike: what it is finding out — the plan's spike, or the one its agent moved it back for. */
+  /** In spike: what it is finding out. */
   spike?: string;
   /** How many findings its spikes left: a task the run researched. */
   found?: number;
   /** In spike: the lead finding it out, once one took it. */
   spikedBy?: string;
+  /**
+   * At work, while its agent is at another of the tasks it holds — one at a time: that one. A task sent back while its
+   * agent wrote the next one was on the board twice, its agent "ready" and "at work" at once (velada-dress).
+   */
+  parkedFor?: string;
   /** At work, held on a question its agent asked the lead and nobody answered: which, in a line. */
   asking?: { id: string; text: string };
 }
@@ -174,10 +179,42 @@ const lineOf = (view: TaskView, now: Date, unblocks: string[], urgency: Priority
   ...(view.owner && view.signalAt !== undefined ? { signalAt: new Date(view.signalAt).toISOString() } : {}),
   unblocks,
   ...(view.task.milestone ? { milestone: view.task.milestone } : {}),
-  ...(view.state.status === 'spike' ? { spike: view.state.spiking ?? view.task.spike ?? 'what it needs' } : {}),
+  ...(view.state.status === 'spike' ? { spike: view.task.spike ?? 'what it needs' } : {}),
   ...(view.state.findings && view.state.findings.length > 0 ? { found: view.state.findings.length } : {}),
   ...(view.state.status === 'spike' && view.state.spikedBy ? { spikedBy: view.state.spikedBy.by } : {})
 });
+
+/**
+ * Written or written again, nothing asked: what an agent can be at, of the tasks in hand — one waiting, blocked or on a
+ * question to the lead is held, not at work.
+ */
+const isAtWork = (line: TaskLine): boolean =>
+  (line.status === 'in-progress' || line.status === 'changes-requested') && !line.asking;
+
+/** The task each agent is at, of those it holds at work: the one it last did something on itself. */
+const agentsAt = (lines: readonly TaskLine[], views: readonly TaskView[]): Map<string, string> => {
+  const workedAt = new Map(views.map(view => [view.task.id, view.workedAt ?? 0] as const));
+  const at = new Map<string, TaskLine>();
+  for (const line of lines.filter(isAtWork)) {
+    const was = line.agent === undefined ? undefined : at.get(line.agent);
+    if (line.agent !== undefined && (!was || (workedAt.get(line.id) ?? 0) > (workedAt.get(was.id) ?? 0))) {
+      at.set(line.agent, line);
+    }
+  }
+
+  return new Map([...at].map(([agent, line]) => [agent, line.id] as const));
+};
+
+/** Each agent's tasks at work but the one it is at, said to wait for that one (`parkedFor`). */
+const parked = (lines: readonly TaskLine[], views: readonly TaskView[]): TaskLine[] => {
+  const atOf = agentsAt(lines, views);
+
+  return lines.map(line => {
+    const at = line.agent === undefined ? undefined : atOf.get(line.agent);
+
+    return at !== undefined && at !== line.id && isAtWork(line) ? { ...line, parkedFor: at } : line;
+  });
+};
 
 export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> => {
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
@@ -422,14 +459,17 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     milestones,
     ...(remaining.length === 0 ? {} : { expectedEnd: new Date(now.getTime() + left * 60_000).toISOString() }),
     // A task held on a question to the lead says so where its state is read, not only in the lead's inbox.
-    tasks: tasks.map(task => {
-      const question = questions.filter(message => message.from === task.id).at(-1);
+    tasks: parked(
+      tasks.map(task => {
+        const question = questions.filter(message => message.from === task.id).at(-1);
 
-      // Only while it is worked: one sent to review is no agent's to wait on, and stood in two of the flow's columns.
-      return question && isWorked(task.status)
-        ? { ...task, asking: { id: question.id, text: glimpse(question.text) } }
-        : task;
-    }),
+        // Only while it is worked: one sent to review is no agent's to wait on, and stood in two of the flow's columns.
+        return question && isWorked(task.status)
+          ? { ...task, asking: { id: question.id, text: glimpse(question.text) } }
+          : task;
+      }),
+      views
+    ),
     attention,
     merges: record.merges.map(merge => ({
       id: merge.id,

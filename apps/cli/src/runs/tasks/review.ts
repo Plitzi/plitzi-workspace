@@ -14,13 +14,13 @@ import { assertStatus, loadRun, logRun, readApproved, recordBrake, requireNoTask
 import { keepFiles, withLock } from '../store';
 import { DEFAULTS, lockedFiles, readRequests, readStart, revokeOwner, updateState, viewTask } from '../taskStore';
 import { DESIGNER, readTeam, startedAgents, TEAM_FILE } from '../team';
-import { buildMergeIntoRun, buildRequestMerge, changeApproved } from './approve';
+import { buildMergeIntoRun, buildRequestsMerge, changeApproved } from './approve';
 import { at, changedInCopy, findTask, refreshCopy } from './common';
-import { allLocks, grantWaiters } from './locks';
+import { grantWaiters } from './locks';
 import { integrateWhenReady, settleRequests } from './requests';
 
 import type { DesignSkip } from '../designSkip';
-import type { ProjectChange, ReviewComment, TaskStart } from '../model';
+import type { ProjectChange, ReviewComment, TaskStart, TaskState } from '../model';
 import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 
@@ -40,6 +40,9 @@ export interface ReviewedTask {
   previewProblem?: string;
   /** Requests of done tasks on the files it let go of, merged now — and integration tasks left with nothing to do. */
   settled?: string[];
+  /** Approved: the shared files its requests went into — another task's held or not — and those that did not, and why. */
+  fulfilled?: string[];
+  unmerged?: { files: string[]; reason: string };
   /** Past the round limit: blocked for the lead to decide — the one that speaks to the person. */
   toLead?: boolean;
   /** Its files a person changed meanwhile, put together with its change (--merge). */
@@ -140,6 +143,17 @@ const writtenSince = async (
   }
 
   return [...late].sort();
+};
+
+/**
+ * Whether asking for changes now blocks the task for the lead: its rounds of this kind — the designer's on its UI, the
+ * lead's on the rest — at their limit with this one. Said to the reviewer before it asks (`task next`), never found out
+ * after (velada-dress: design-2's third round on t-overlay).
+ */
+export const changesBlock = (state: Pick<TaskState, 'round' | 'designRounds'>, byDesigner: boolean): boolean => {
+  const designRounds = state.designRounds ?? 0;
+
+  return (byDesigner ? designRounds + 1 : state.round + 1 - designRounds) >= DEFAULTS.reviewRounds;
 };
 
 /**
@@ -269,7 +283,7 @@ const decide = async (
     // Counted apart: the designer's rounds on its UI, and the lead's on the rest — each kind to its own limit.
     const designRounds = (view.state.designRounds ?? 0) + (byDesigner ? 1 : 0);
     const ofKind = byDesigner ? designRounds : round - designRounds;
-    const toLead = ofKind >= DEFAULTS.reviewRounds;
+    const toLead = changesBlock(view.state, byDesigner);
     // It redoes its work on the run as it is now: what was approved while it was in review comes into its copy.
     const brought = toLead ? [] : await refreshCopy(ctx, loaded, view);
     await updateState(
@@ -345,24 +359,41 @@ const decide = async (
   }
 
   const merged = Object.keys(submitted);
-  // What it asked for on a file it then held and merged itself is done; what it asked for on a file now free goes in too
-  // when it merges line by line with the run's version. Only what neither can do waits for an integration task.
-  const locksNow = await allLocks(ctx);
+  // What it asked for on a file it then held and merged itself is done; what it asked for on any other goes in now, held
+  // by another task or not, when it merges line by line with the run's version — its approved files read it, and a run
+  // whose work reads what it lacks fails every task's checks (velada-dress: t-sponsors approved, its tokens waiting on
+  // t-home). The holder's copy brings it in at its next refresh. Only what does not merge waits for an integration task.
+  const requests = await readRequests(view.paths);
+  const own = requests.filter(request => merged.includes(request.file));
+  const asked = requests.filter(request => !merged.includes(request.file));
+  const went =
+    asked.length === 0
+      ? undefined
+      : await changeApproved(ctx, loaded, approved =>
+          buildRequestsMerge(
+            ctx,
+            loaded,
+            asked.map(request => ({ view, request })),
+            approved
+          )
+        );
+  const wentIn = went !== undefined && !('failed' in went) ? (went.requests ?? []) : [];
   const fulfilled: string[] = [];
-  for (const request of await readRequests(view.paths)) {
-    const free = !(locksNow.get(request.file) ?? []).some(
-      each => each.live && !(each.run === runId && each.task === taskId)
-    );
-    const went =
-      !merged.includes(request.file) && free
-        ? await changeApproved(ctx, loaded, approved => buildRequestMerge(ctx, loaded, view, request, approved))
-        : undefined;
-    const done = merged.includes(request.file) || (went !== undefined && !('failed' in went));
-    if (done) {
+  for (const request of requests) {
+    if (own.includes(request) || wentIn.includes(`${taskId}/${request.id}`)) {
       await fs.rm(path.join(view.paths.requests, `${request.id}.json`), { force: true });
       fulfilled.push(request.file);
     }
   }
+
+  const unmergedFiles = asked.filter(request => !fulfilled.includes(request.file)).map(request => request.file);
+  const unmerged =
+    unmergedFiles.length > 0
+      ? {
+          files: unmergedFiles,
+          reason: went && 'failed' in went ? 'the checks failed with it' : 'it does not merge line by line'
+        }
+      : undefined;
 
   const released = [...(await lockedFiles(view.paths)).keys()];
   await fs.rm(view.paths.locks, { recursive: true, force: true });
@@ -396,6 +427,8 @@ const decide = async (
     round,
     merged,
     fulfilled,
+    // Nothing silent: a request that did not go in, and why — its integration task applies it.
+    ...(unmerged ? { unmerged } : {}),
     ...(skipped ? { design: 'skipped', ...(why ? { designSkip: why } : {}) } : {}),
     ...(skipped && view.state.design?.by ? { designBy: view.state.design.by } : {})
   });
@@ -465,6 +498,8 @@ const decide = async (
     integrations,
     ...(previewProblem === undefined ? {} : { previewProblem }),
     settled,
+    fulfilled,
+    ...(unmerged ? { unmerged } : {}),
     ...(joined.length > 0 ? { joined } : {}),
     ...(skipped ? { design: 'skipped' as const, ...(why ? { designSkip: why } : {}) } : {}),
     ...(notReviewed.length > 0 ? { notReviewed } : {})

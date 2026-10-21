@@ -112,7 +112,7 @@ export const bottlenecks = (views: readonly TaskView[], started: readonly Starte
   if (spikes.length > 0) {
     found.push({
       kind: 'spikes',
-      text: `${spikes.map(view => `${view.task.id} (${view.state.spiking ?? view.task.spike ?? 'what it needs'}${view.owner ? `, ${view.owner.agent} waits` : ''})`).join('; ')} ${spikes.length === 1 ? 'is' : 'are'} in spike, a lead's to find out: compare, measure, then plitzi task spike <task> --done "what was found"${spikes.length > 2 ? ' — several: a lead that reviews takes them too (plitzi task next --role lead --follow --take --agent lead-2)' : ''}`,
+      text: `${spikes.map(view => `${view.task.id} (${view.task.spike ?? 'what it needs'})`).join('; ')} ${spikes.length === 1 ? 'is' : 'are'} in spike, a lead's to find out: compare, measure, then plitzi task spike <spike> --done "what was found" --tasks <stage.json>${spikes.length > 2 ? ' — several: a lead that reviews takes them too (plitzi task next --role lead --follow --take --agent lead-2)' : ''}`,
       who: 'lead'
     });
   }

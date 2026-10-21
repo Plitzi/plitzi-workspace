@@ -7,7 +7,9 @@ import { list, pacedText } from './text';
 import { amendRun } from '../../runs/amend';
 import { hasDesignReview } from '../../runs/design';
 import { extendRun } from '../../runs/extend';
+import { writeJson } from '../../runs/files';
 import { atPace } from '../../runs/plan';
+import { RunRefusal } from '../../runs/refusal';
 import { rehearsalText, rehearse } from '../../runs/rehearse';
 import {
   activeRuns,
@@ -19,6 +21,7 @@ import {
   readCheckedPlan,
   readPlanFile
 } from '../../runs/run';
+import { scopePlan } from '../../runs/spike';
 import { noteRun } from '../../runs/talk';
 import { roleOf } from '../../runs/tasks';
 import {
@@ -48,7 +51,42 @@ import type { Team } from '../../runs/team';
 export interface PlanOptions extends RunCommandOptions {
   /** `run open`: a person lets the lead write the run into the project itself. */
   leadFinishes?: boolean;
+  /** `run open`: the person's ask, with no plan — the run opens on one spike, its scope, the lead's. */
+  spike?: string;
 }
+
+/**
+ * The plan `run open` opens: the file named — or, with `--spike`, one written for the ask in the project's `tmp/`,
+ * moved into the run's folder as any plan is: the scope, the run's first spike, whose result is its tasks.
+ */
+const planToOpen = async (ctx: RunContext, file: string | undefined, options: PlanOptions): Promise<string> => {
+  if (options.spike === undefined) {
+    if (file === undefined) {
+      throw new RunRefusal(
+        'invalid',
+        'Name the plan — plitzi run open <plan.json> — or open the run on the ask alone: plitzi run open --spike "…" --run <name>'
+      );
+    }
+
+    return path.resolve(file);
+  }
+
+  if (file !== undefined) {
+    throw new RunRefusal(
+      'invalid',
+      `A plan or a spike: ${file} is a plan already — --spike opens a run on the ask alone, its scope the first task`
+    );
+  }
+
+  if (options.run === undefined || options.spike.trim() === '') {
+    throw new RunRefusal('invalid', 'Say the ask and name the run: plitzi run open --spike "…" --run es-launch');
+  }
+
+  const written = path.join(ctx.root, 'tmp', `${options.run}.plan.json`);
+  await writeJson(written, scopePlan(options.run, options.spike.trim()));
+
+  return written;
+};
 
 export const runAllowFinish = (
   runId: string | undefined,
@@ -242,11 +280,11 @@ export const runRehearse = (file: string, options: PlanOptions & { review?: numb
       ].join('\n')
   );
 
-export const runOpen = (file: string, options: PlanOptions): Promise<void> =>
+export const runOpen = (file: string | undefined, options: PlanOptions): Promise<void> =>
   act(
     options,
     async ctx => {
-      const opened = await openRun(ctx, path.resolve(file), {
+      const opened = await openRun(ctx, await planToOpen(ctx, file, options), {
         leadFinishes: options.leadFinishes ?? false
       });
       await pruneRuns(ctx);

@@ -23,6 +23,14 @@ interface Built {
   next: ApprovedManifest;
   /** Files put together line by line with the run's newer version: what the checks look at before it goes in. */
   merged: string[];
+  /** Of the requests it was built from, those that went in, as `<task>/<request>`: the rest did not merge line by line. */
+  requests?: string[];
+}
+
+/** A request of a task's on a shared file: what a build of requests merges. */
+export interface Asked {
+  view: TaskView;
+  request: SharedRequest;
 }
 
 export const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -218,51 +226,54 @@ export const buildMergeIntoRun = async (
 };
 
 /**
- * A request's change as the run's next manifest, for a file nobody holds: the version it asked for, merged line by line
- * with the run's version now. Undefined when the two touch the same lines — then an integration task applies it.
+ * Requests on shared files as the run's next manifest, together: each put together line by line with what the run holds
+ * — and with the ones before it — so their checks run once over all of them. Apart, two approved tasks' requests on one
+ * file each failed the checks for want of the other's (velada-dress: t-sponsors' and t-predictions' tokens, neither
+ * ever merged, every task's check failing on both). One that does not merge is left out, said by `requests`.
  */
-export const buildRequestMerge = async (
+export const buildRequestsMerge = async (
   ctx: RunContext,
   loaded: LoadedRun,
-  view: TaskView,
-  request: SharedRequest,
+  asked: readonly Asked[],
   approved: ApprovedManifest
 ): Promise<Built | undefined> => {
-  if (request.wanted === null || request.wanted === request.base) {
-    return undefined;
-  }
+  let files = approved.files;
+  const merged = new Set<string>();
+  const went: string[] = [];
+  for (const { view, request } of asked) {
+    if (request.wanted === null || request.wanted === request.base) {
+      continue;
+    }
 
-  const entry = entryOf(approved.files, request.file);
-  const current = entry ? entry.digest : await fingerprint(under(ctx.root, request.file));
-  if (current === null) {
-    return undefined;
-  }
+    const entry = entryOf(files, request.file);
+    const current = entry ? entry.digest : await fingerprint(under(ctx.root, request.file));
+    if (current === null) {
+      continue;
+    }
 
-  const result = mergeLines(
-    request.base === null ? '' : await textOf(loaded, ctx, request.base, request.file),
-    await textOf(loaded, ctx, request.wanted, request.file),
-    await textOf(loaded, ctx, current, request.file)
-  );
-  if (!result.ok) {
-    return undefined;
-  }
+    const result = mergeLines(
+      request.base === null ? '' : await textOf(loaded, ctx, request.base, request.file),
+      await textOf(loaded, ctx, request.wanted, request.file),
+      await textOf(loaded, ctx, current, request.file)
+    );
+    if (!result.ok) {
+      continue;
+    }
 
-  const digest = await putBlob(loaded.paths, Buffer.from(result.text));
-
-  return {
-    next: {
-      ...approved,
-      files: {
-        ...approved.files,
-        [request.file]: {
-          digest,
-          base: entry ? entry.base : current,
-          task: view.task.id,
-          at: at(ctx),
-          ...(entry ? { previous: entry } : {})
-        }
+    const digest = await putBlob(loaded.paths, Buffer.from(result.text));
+    files = {
+      ...files,
+      [request.file]: {
+        digest,
+        base: entry ? entry.base : current,
+        task: view.task.id,
+        at: at(ctx),
+        ...(entry ? { previous: entry } : {})
       }
-    },
-    merged: [request.file]
-  };
+    };
+    merged.add(request.file);
+    went.push(`${view.task.id}/${request.id}`);
+  }
+
+  return went.length === 0 ? undefined : { next: { ...approved, files }, merged: [...merged], requests: went };
 };

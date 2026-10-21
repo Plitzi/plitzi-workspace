@@ -2,11 +2,13 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { isString } from './guards';
 
+import type { TaskState } from './model';
+
 /**
- * A task's spike: what it is to find out before it is ready to build — the part of the work that is research, done in
- * the run, by an agent, where the lead did it alone outside it. A task with one starts in `spike`; one with no files is
- * research alone, done once its findings are said. An agent at work that finds it must look something up moves its
- * task back to `spike`, and on once it knows.
+ * A spike: research in the run, a lead's — what the lead read before writing a plan, done where the monitor sees it.
+ * A task with no files and a question (`"spike"`); its result is the run's next tasks, each with what was found for it
+ * (`findings`). A run opens on one — the person's ask, its scope (`scopePlan`) — and every task flows from it; a spike
+ * later is the lead's to open, when the work asks for one.
  */
 
 /** What an agent found out, said by `task spike --done`. */
@@ -25,10 +27,43 @@ export const isFinding = (value: unknown): value is Finding =>
 export const isResearch = (task: { spike?: string; files: readonly string[] }): boolean =>
   task.spike !== undefined && task.files.length === 0;
 
-/** A task's status before anyone starts it: its spike first, if it has one not answered — else ready or pending. */
-export const startingStatus = (
-  task: { spike?: string; dependsOn: readonly string[] },
+/**
+ * A task's state before anyone starts it, as the run opens or a stage is stacked: a spike from the start, else ready or
+ * pending on what it waits for — with what the spike that made it found for it, kept as the run's findings.
+ */
+export const startingState = (
+  task: { spike?: string; files: readonly string[]; findings?: string },
   dependenciesDone: boolean,
-  findings: readonly Finding[] = []
-): 'spike' | 'ready' | 'pending' =>
-  task.spike !== undefined && findings.length === 0 ? 'spike' : dependenciesDone ? 'ready' : 'pending';
+  at: string
+): TaskState => ({
+  status: isResearch(task) ? 'spike' : dependenciesDone ? 'ready' : 'pending',
+  round: 0,
+  notes: [],
+  updatedAt: at,
+  ...(task.findings === undefined ? {} : { findings: [{ at, by: 'lead', question: 'its spike', text: task.findings }] })
+});
+
+/** The id of a run's first spike: its scope. */
+export const SCOPE_SPIKE = 's-scope';
+
+/**
+ * A run on the person's ask alone: its plan one spike — the scope, the lead's — whose result is the tasks (`plitzi run
+ * open --spike "…"`). As any project starts: the lead scopes it, and the work flows from there.
+ */
+export const scopePlan = (runId: string, ask: string) => ({
+  version: 1 as const,
+  runId,
+  goal: ask,
+  tasks: [
+    {
+      id: SCOPE_SPIKE,
+      title: 'The scope: what the ask takes, as the run’s tasks',
+      files: [],
+      dependsOn: [],
+      priority: 'critical' as const,
+      estimateMinutes: 30,
+      acceptance: ['Its result is the run’s tasks, each with what was found for it'],
+      spike: ask
+    }
+  ]
+});

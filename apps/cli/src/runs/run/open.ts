@@ -9,14 +9,14 @@ import { runPaths, runsDir, taskPaths } from '../paths';
 import { checkPlan, PlanRefusal } from '../plan';
 import { runPlanProblems } from '../planProblems';
 import { RunRefusal } from '../refusal';
-import { startingStatus } from '../spike';
+import { startingState } from '../spike';
 import { keepFiles } from '../store';
 import { coLeadNames, ensureTeam, reviewsDesign, teamSize } from '../team';
 import { assertNoOtherRun, claimProject, handedInputs, releaseProject, takeInputs } from './claim';
 import { requireNoTask, requirePerson } from './context';
 import { assertStatus, loadRun, logRun, pinnedNow, readRecord, updateRecord } from './record';
 
-import type { ApprovedManifest, BaseManifest, RunPlan, RunRecord, SharedManifest, TaskState } from '../model';
+import type { ApprovedManifest, BaseManifest, RunPlan, RunRecord, SharedManifest } from '../model';
 import type { Ownership } from '../ownership';
 import type { RunPaths } from '../paths';
 import type { CheckedPlan } from '../plan';
@@ -193,12 +193,7 @@ export const openRun = async (
   for (const task of checked.tasks) {
     const taskFiles = taskPaths(paths, task.id);
     await writeJson(taskFiles.definition, task);
-    await writeJson(taskFiles.state, {
-      status: startingStatus(task, task.dependsOn.length === 0),
-      round: 0,
-      notes: [],
-      updatedAt: at
-    } satisfies TaskState);
+    await writeJson(taskFiles.state, startingState(task, task.dependsOn.length === 0, at));
   }
 
   const record: RunRecord = {

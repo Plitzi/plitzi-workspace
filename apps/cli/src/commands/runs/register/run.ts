@@ -146,16 +146,21 @@ export const registerRunGroup = (program: Command): Command => {
   runGroup
     .command('open')
     .description(
-      'Open a run from a plan: its folder, every file it touches backed up — a person confirms above the threshold'
+      'Open a run from a plan: its folder, every file it touches backed up — a person confirms above the threshold. Or on the ask alone (--spike): one spike, the scope, whose result is the tasks'
     )
-    .argument('<file>', 'The plan')
+    .argument('[file]', 'The plan — left out with --spike')
+    .option(
+      '--spike <ask>',
+      'The person’s ask, with no plan: the run opens on its scope, a lead’s spike that ends with the tasks (plitzi task spike s-scope --done "…" --tasks <stage.json>)'
+    )
+    .option('--run <name>', 'With --spike: the run’s name')
     .option(
       '--lead-finishes',
       'Let the lead write the run into the project itself once its report is written and the checks pass — a person confirms it in their terminal'
     )
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
-    .action((file: string, options: PlanOptions) => runOpen(file, options));
+    .action((file: string | undefined, options: PlanOptions) => runOpen(file, options));
 
   runGroup
     .command('allow-finish')

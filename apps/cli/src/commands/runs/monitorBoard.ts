@@ -20,15 +20,18 @@ export const TASK_STATE: Record<TaskLine['status'], (task: TaskLine, tasks: read
   },
   spike: task =>
     chalk.blue(
-      `◇ spike${task.agent ? ` · ${task.agent} finds out` : ' — free to take: to find out'}${task.spike ? ` ${task.spike}` : ''}`
+      `◇ spike · ${task.spikedBy ? `${task.spikedBy} finds out` : 'for a lead'}${task.spike ? `: ${task.spike}` : ''}`
     ),
   ready: () => '○ ready — free to take',
+  // Its agent at another of its tasks: said, in the tone of what is held — one task at a time an agent.
   'in-progress': task =>
     task.asking
       ? chalk.yellow(`? ${task.agent ?? ''} asks the lead (${task.asking.id})`)
-      : chalk.cyan(
-          `▶ ${task.agent ?? ''}${task.fraction === undefined ? '' : ` ${String(Math.round(task.fraction * 100))}%`}`
-        ),
+      : task.parkedFor
+        ? chalk.yellow(`‖ ${task.agent ?? ''} at ${task.parkedFor} first`)
+        : chalk.cyan(
+            `▶ ${task.agent ?? ''}${task.fraction === undefined ? '' : ` ${String(Math.round(task.fraction * 100))}%`}`
+          ),
   waiting: task => chalk.yellow(`… waits ${task.waitingFor?.task ?? ''}`),
   'in-review': task =>
     chalk.magenta(
@@ -36,7 +39,12 @@ export const TASK_STATE: Record<TaskLine['status'], (task: TaskLine, tasks: read
         ? `◎ UI review · ${task.design.by ?? 'no designer yet'} → lead`
         : `◎ lead review · ${task.reviewer ?? 'no lead yet'}`
     ),
-  'changes-requested': task => chalk.yellow(`↺ round ${String(task.round)} · ${task.agent ?? ''}`),
+  'changes-requested': task =>
+    chalk.yellow(
+      task.parkedFor
+        ? `‖ ${task.agent ?? ''} at ${task.parkedFor} first · round ${String(task.round)}`
+        : `↺ round ${String(task.round)} · ${task.agent ?? ''}`
+    ),
   done: () => chalk.green('✓ approved'),
   blocked: task => chalk.red(`■ blocked${task.blockedBy ? ` · needs ${task.blockedBy.needs}` : ''}`),
   failed: () => chalk.red('✗ failed')

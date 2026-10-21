@@ -678,16 +678,24 @@ monitor` shows each as it comes, a problem in red.
       far it moves, so a section dressed otherwise on the two pages — what a comparison is for — no longer fits a
       look-alike band far down (the original's header was "747px lower there", and the dress of the page's middle read as
       its header's).
-    - **A spike — research in the run, a lead's.** A task's `"spike": "what to find out"` starts it in `spike`, ahead of
-      `ready`, whatever it waits for: no agent of the team is offered it or takes it — what is built is decided by what
-      is found, and an agent's model is not a lead's. The lead finds out and says it — `plitzi task spike <task> --done
-      "…"` — and the findings stay with the task, in its brief and in that of every task waiting for it; the task is then
-      ready to be built (or pending). A spike with no files is research alone, done by its findings, its acceptance in
-      words. An agent at work whose task needs something found out moves it back — `plitzi task spike "what"` — keeping
-      its files; the lead is asked, and the findings come back to the agent, who goes on. `run watch --until lead` says
-      each spike waiting; `task next --role lead` hands a lead that reviews the most urgent one no other lead took. The
-      lead's research before a plan is the run's first spike. `run monitor` gives spikes a column (`◇ spike`) once the run
-      has one; the dev tools' Run tab groups them (Finding out) and marks the urgent tasks as the monitor does.
+    - **A spike — research in the run, a lead's.** A task with `"spike": "what to find out"` and no files (`run plan`
+      refuses one with files) is research, ahead of `ready`, whatever it waits for: no agent of the team is offered it or
+      takes it — what is built is decided by what is found, and an agent's model is not a lead's. **A run starts with
+      one, its scope**: `plitzi run open --spike "<the ask>" --run <name>` opens it on the person's ask alone, and the
+      lead ends it with its result, the tasks — `plitzi task spike s-scope --done "…" --tasks <stage.json>`, stacked as
+      `run extend` stacks a stage (refused, the spike stays open), each task with what was found for it (`"findings"`, in
+      its brief) — so whoever finds out is whoever writes it down for the builder, not a spike per task. Later spikes
+      are the lead's to stack; their findings go into the brief of every task waiting for them, made ready. An agent at
+      work whose task needs something found out says so — `plitzi task spike "what"` — and the task is blocked on the
+      lead, its files its own; `task unblock <task> --answer "…"` lifts it, the answer kept as its finding (refused
+      without one). `run watch --until lead` says each spike waiting; `task next --role lead` hands a lead that reviews
+      the most urgent one no other lead took. `run monitor` gives spikes a column (`◇ spike`) once the run has one; the
+      dev tools' Run tab groups them (Finding out) and marks the urgent tasks as the monitor does.
+    - `run monitor` shows an agent at one task at a time — the one it last did something on itself — and the others it
+      holds as held for it (`t-home dev-2 at t-overlay`): velada-dress showed dev-2 "ready" with t-home, sent back, and
+      "at work" with t-overlay at once. A task a review sent back is at work again with its agent (`t-boxer ↺2`), never
+      "ready", which is free to take. A lead is reviewing, or finding out, only at a review or a spike its card names;
+      what it did lately with nothing in hand is its last line, idle — never "working" on nothing the board shows.
     - `run monitor` tells a live agent between tasks from a gone one: each `task next` and each turn of its `--follow`
       marks it present, and one with no mark for two minutes shows as `no-signal`, with the command that starts it again
       — velada-dress's agents, stopped by their harness, still read "working" and "waiting". An agent between tasks waiting for work is
@@ -695,6 +703,16 @@ monitor` shows each as it comes, a problem in red.
       first — its agent, the lead at its spike, its reviewer — the rest below; a spike's card says the lead at it (or
       "for a lead"), never "free"; the urgency mark stands apart from the id, toned, and the flow's title says it; a lead
       at a spike shows as working on it.
+    - **A request on a shared file goes in when its task is approved**, as the skill said, held by another task or not,
+      when it merges line by line with the run's version — all of the task's requests together, checked once; the
+      holder's copy brings it at its next refresh. velada-dress deadlocked on it: t-sponsors and t-predictions approved
+      with their tokens a request on the theme t-home held, the run's work reading tokens it lacked, every task's author
+      check failing on them; when t-home let go, each request alone failed the checks for want of the other's, and
+      nothing said so. A file let go of now settles its approved requests together, what does not go in is said in the
+      log, and the integration task for the approved ones is made at once, not once every task asking is approved.
+    - `task next` tells a reviewer — designer or lead — when it hands its last round: changes asked now block the task
+      for the lead, said before, never found out after (velada-dress: design-2's third round on t-overlay). An approval
+      says which of its requests went in, and which did not and why.
     - `run reference` keeps a page the site answers with 404 — its page for an address nothing answers, which a copy
       makes too — said, where it refused it as an error page.
     - `page shot --compare … --dress` fails where a section lacks a look the other page dresses it in — a sort of

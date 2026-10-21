@@ -109,8 +109,10 @@ export interface PlannedTask {
    * tests (`<id>-tests`, after it) unless it says this, or the plan has a tester's task that waits for it already.
    */
   tests?: false;
-  /** What to find out before it is built (`spike.ts`): it starts in `spike`; with no files, it is research alone. */
+  /** A spike's (no files): what to find out — a lead's research, whose result is the run's next tasks (`spike.ts`). */
   spike?: string;
+  /** A task to build: what the spike that made it found for it — in its brief from the start. */
+  findings?: string;
 }
 
 export interface Contract {
@@ -297,7 +299,8 @@ export interface TaskState {
   /** What it waits for from another task: a file it holds, or its answer to a proposal. */
   waitingFor?: Waiting;
   /** `review`: past the round limit, for the lead to decide — approve it as it is, or answer it (`task unblock`). */
-  blockedBy?: { reason: string; needs: Needs; review?: boolean };
+  /** `spike`: what its agent asked found out first — the lead's answer, lifting it, is the task's finding. */
+  blockedBy?: { reason: string; needs: Needs; review?: boolean; spike?: string };
   cutAt?: { step: string; reason: string; at: string };
   notes: TaskNote[];
   /** What it changed, as of its last `complete`: by project path. */
@@ -322,8 +325,6 @@ export interface TaskState {
   reviewer?: { by: string; round: number; at: string };
   /** What its spikes found out, oldest first: in its brief, and in the brief of every task that waits for it. */
   findings?: Finding[];
-  /** In `spike` at its agent's say (`task spike "…"`): what it set out to find. */
-  spiking?: string;
   /** The lead finding it out, once one took it (`task next --role lead --take`): another is not offered it. */
   spikedBy?: { by: string; at: string };
   updatedAt: string;
@@ -488,7 +489,8 @@ export const isPlannedTask = (value: unknown): value is PlannedTask =>
   optional(value.quality, oneOf(QUALITIES)) &&
   optional(value.touches, isStrings) &&
   optional(value.tests, flag => flag === false) &&
-  optional(value.spike, isString);
+  optional(value.spike, isString) &&
+  optional(value.findings, isString);
 
 const isContract = (value: unknown): value is Contract =>
   isRecord(value) && isString(value.resource) && isString(value.owner) && isString(value.note);
@@ -597,13 +599,13 @@ export const isTaskState = (value: unknown): value is TaskState =>
       isRecord(blocked) &&
       isString(blocked.reason) &&
       isNeeds(blocked.needs) &&
-      optional(blocked.review, (flag: unknown) => typeof flag === 'boolean')
+      optional(blocked.review, (flag: unknown) => typeof flag === 'boolean') &&
+      optional(blocked.spike, isString)
   ) &&
   optional(value.cutAt, cut => isRecord(cut) && isString(cut.step) && isString(cut.reason) && isString(cut.at)) &&
   Array.isArray(value.notes) &&
   value.notes.every(isNote) &&
   optional(value.findings, (findings: unknown) => Array.isArray(findings) && findings.every(isFinding)) &&
-  optional(value.spiking, isString) &&
   optional(value.spikedBy, (by: unknown) => isRecord(by) && isString(by.by) && isString(by.at)) &&
   optional(value.changed, isStrings) &&
   optional(value.submitted, isDigests) &&

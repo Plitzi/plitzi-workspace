@@ -7,13 +7,14 @@ import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun } from '../run';
 import { putBlob, withLock } from '../store';
 import { readRequests, readStart, requestId, updateState, viewTask, writeRequest } from '../taskStore';
-import { buildRequestMerge, changeApproved } from './approve';
+import { buildRequestsMerge, changeApproved } from './approve';
 import { at, cleanPath, findTask, holderOf } from './common';
 import { activeHolder, allLocks, sharedFiles } from './locks';
 
 import type { RunTask, SharedRequest, TaskState } from '../model';
 import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
+import type { Asked } from './approve';
 
 /**
  * A change to a file another task holds: a request, applied when its holder is approved — or by an integration task, one
@@ -230,7 +231,11 @@ export const requestsOf = async (
   return all;
 };
 
-/** When every task that asked for a change in a shared file is approved, one integration task applies them all. */
+/**
+ * What approved tasks asked for on a shared file and did not go in, applied by one integration task — made as soon as
+ * one is approved, not once every task asking is: an approved task's work reads its request, and the run's work waiting
+ * for the rest read what it lacked. A request of a task still at work joins it, or the next one, once that is approved.
+ */
 export const integrateWhenReady = async (ctx: RunContext, loaded: LoadedRun): Promise<string[]> => {
   const made: string[] = [];
   const all = (await requestsOf(loaded)).filter(each => each.integratedBy === undefined);
@@ -238,12 +243,18 @@ export const integrateWhenReady = async (ctx: RunContext, loaded: LoadedRun): Pr
   all.forEach(each => byFile.set(each.request.file, [...(byFile.get(each.request.file) ?? []), each]));
   const locks = await allLocks(ctx);
   for (const [file, requests] of byFile) {
-    const requesters = [...new Set(requests.map(each => each.task))];
-    const states = await Promise.all(requesters.map(id => viewTask(loaded.paths, findTask(loaded, id))));
+    const approved = [];
+    for (const each of requests) {
+      if ((await viewTask(loaded.paths, findTask(loaded, each.task))).state.status === 'done') {
+        approved.push(each);
+      }
+    }
+
+    const requesters = [...new Set(approved.map(each => each.task))];
     // A file another task holds by turns waits for it: once it lets go, its requests are merged then, and only what
     // does not merge is integrated.
     const held = (locks.get(file) ?? []).some(each => each.live && !requesters.includes(each.task));
-    if (held || !states.every(view => view.state.status === 'done')) {
+    if (held || approved.length === 0) {
       continue;
     }
 
@@ -252,7 +263,7 @@ export const integrateWhenReady = async (ctx: RunContext, loaded: LoadedRun): Pr
         ctx,
         loaded,
         file,
-        requests.map(each => `${each.task}/${each.request.id}`),
+        approved.map(each => `${each.task}/${each.request.id}`),
         requesters
       )
     );
@@ -271,24 +282,42 @@ export const settleRequests = async (
   loaded: LoadedRun,
   files: readonly string[]
 ): Promise<string[]> => {
-  const settled: string[] = [];
+  const asked: Asked[] = [];
   for (const each of await requestsOf(loaded)) {
     if (!files.includes(each.request.file) || each.integrated) {
       continue;
     }
 
     const requester = await viewTask(loaded.paths, findTask(loaded, each.task));
-    if (requester.state.status !== 'done') {
-      continue;
+    if (requester.state.status === 'done') {
+      asked.push({ view: requester, request: each.request });
     }
+  }
 
-    const went = await changeApproved(ctx, loaded, approved =>
-      buildRequestMerge(ctx, loaded, requester, each.request, approved)
-    );
-    if (went !== undefined && !('failed' in went)) {
-      await fs.rm(path.join(requester.paths.requests, `${each.request.id}.json`), { force: true });
-      settled.push(`${each.task}/${each.request.id}`);
+  // Together: each approved task's code reads what its request adds, so one alone fails the checks for want of another's.
+  const went =
+    asked.length === 0
+      ? undefined
+      : await changeApproved(ctx, loaded, approved => buildRequestsMerge(ctx, loaded, asked, approved));
+  const wentIn = went !== undefined && !('failed' in went) ? (went.requests ?? []) : [];
+  const settled: string[] = [];
+  for (const { view, request } of asked) {
+    if (wentIn.includes(`${view.task.id}/${request.id}`)) {
+      await fs.rm(path.join(view.paths.requests, `${request.id}.json`), { force: true });
+      settled.push(`${view.task.id}/${request.id}`);
     }
+  }
+
+  // Nothing silent: what an approved task asked for and did not go in is said — its integration task applies it.
+  const unsettled = asked
+    .map(({ view, request }) => `${view.task.id}/${request.id}`)
+    .filter(key => !settled.includes(key));
+  if (unsettled.length > 0) {
+    await logRun(ctx, loaded.paths, {
+      action: 'settle-failed',
+      requests: unsettled,
+      reason: went && 'failed' in went ? 'the checks failed with them' : 'they do not merge line by line'
+    });
   }
 
   if (settled.length === 0) {
