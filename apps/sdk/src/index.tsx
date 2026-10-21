@@ -351,6 +351,8 @@ export type PlitziSdkProps = {
   debugMode?: boolean;
   /** What the server ran to build this page, for the dev-tools. Only ever sent to a page allowed to debug them. */
   actionRuns?: ActionRunSummary[];
+  /** Set by a server that previews a run of agents, for a page allowed to debug: the dev tools' Run tab asks for it. */
+  runStatus?: boolean;
   /**
    * The feature flags this embedding decides, by name: `{ newCheckout: true }`. Above whatever the space and the server
    * rendering it say, below a tester with the dev tools. Only for flags the space declares — anything else is ignored,

@@ -64,6 +64,11 @@ export type DevToolsContainerProps = {
    * of it.
    */
   qa?: boolean;
+  /**
+   * The page's server previews a run of agents (`plitzi run preview`): the Run tab asks it for the run. Said by the
+   * server, never guessed — asked of a server with none, it answers 404 every few seconds in the page's console.
+   */
+  run?: boolean;
 };
 
 const DevToolsContainer = ({
@@ -75,6 +80,7 @@ const DevToolsContainer = ({
   renderMode = 'default',
   scroll = 'container',
   qa = false,
+  run = false,
   devToolsStyle = '',
   devToolsStyleLink = '',
   devToolsIconsLink = ''
@@ -159,6 +165,7 @@ const DevToolsContainer = ({
       onChangeOrientation={handleChangeOrientation}
       pageRef={pageRef}
       qa={qa}
+      run={run}
     />
   );
   const overlay = isSelected && hydrated && (

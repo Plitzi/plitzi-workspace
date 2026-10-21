@@ -468,3 +468,8 @@ monitor` shows each as it comes, a problem in red.
   - `styles()` refuses in its types a style that writes its rules beside `states`, `variants`, `ancestors`… — on the key
     that belongs under `css`, as `author`'s `rule-set-mixed` does (`UnmixedStyle`).
   - The runs skill serves a copy with `npm run start:dev` and no `PORT`: a free port, written where `page check` looks.
+- **The dev tools ask for a run only where there is one** (`@plitzi/sdk-dev-tools`, `@plitzi/plitzi-sdk`,
+  `@plitzi/sdk-server`, `@plitzi/sdk-shared`): the Run tab asked `/__plitzi/run` every three seconds on every page in
+  debug mode, and every server but a run's preview answered 404 — in the console each time, which failed the e2e that
+  opens the dev tools. A preview's server now marks its requests (`req.ctx.runStatus`), the page that may debug is told
+  (`runStatus` in its payload, a prop down to `DevToolsContainer`'s `run`), and the tab asks only then.

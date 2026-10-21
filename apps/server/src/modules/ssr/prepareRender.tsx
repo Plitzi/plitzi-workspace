@@ -278,6 +278,8 @@ export const prepareRender = async (
    * this request's.
    */
   const actionRuns = debugAuthorized && req.ctx.actionRuns?.length ? req.ctx.actionRuns : undefined;
+  // A run of agents this server previews, for the dev tools' Run tab: asked for only where there is one.
+  const runStatus = debugAuthorized && req.ctx.runStatus === true;
 
   // What the metering adapter decided for this page (see SSRAdapters.pageView). `firstViewCounted` is forced on
   // whatever the adapter returned: this render was already counted server-side, so the browser reporting the
@@ -363,6 +365,7 @@ export const prepareRender = async (
       ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
       ...(overQuota ? { overQuota } : {}),
       ...(actionRuns ? { actionRuns } : {}),
+      ...(runStatus ? { runStatus } : {}),
       ...(serverFlags ? { serverFlags } : {}),
       ...(forcedFlags ? { forcedFlags } : {})
     },

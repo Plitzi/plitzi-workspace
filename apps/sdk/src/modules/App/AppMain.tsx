@@ -65,6 +65,8 @@ export type AppMainProps = {
   serverFlags?: Record<string, boolean>;
   /** The flags a tester forced, already settled against whether this page may debug. */
   forcedFlags?: Record<string, boolean>;
+  /** The rendering server previews a run of agents: the dev tools' Run tab asks it for the run. */
+  runStatus?: boolean;
   /** What the embedding application hands this space — see `PlitziSdkProps`. */
   hostData?: Record<string, unknown>;
   /** What it is willing to be asked to do — see `PlitziSdkProps`. */
@@ -95,6 +97,7 @@ const AppMain = ({
   previewMode = true,
   debugMode = false,
   overQuota = false,
+  runStatus = false,
   analytics,
   onInitEventBridge,
   hostData,
@@ -208,6 +211,7 @@ const AppMain = ({
                         renderMode="shadow"
                         scroll="document"
                         qa
+                        run={runStatus}
                         innerClassName={clsx({ flex: renderMode === 'iframe' })}
                       >
                         <Sdk sdkStylePath={styleUrl ? styleUrl : sdkStylePath} server={server} {...sdkProps} />

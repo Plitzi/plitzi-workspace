@@ -76,7 +76,8 @@ review, so the lead looks at the pages before approving them; the run's preview 
 (`RUN_STATUS_ENV`), which answers it at `/__plitzi/run` — the page's dev tools show it in their **Run** tab: each task,
 who has it and who reviews it, why each waits (`why`: the tasks a pending one starts after, the file a waiting one
 needs, what blocks one and who acts — `run status` and `run monitor` say it too), what needs someone; no other server
-answers it. A run that ends (finished, aborted)
+answers it, so the tab asks only a page its server marked (`runStatus` in the payload, set by `runStatusStage` on each
+request it lets by) — asked everywhere, every page in debug mode logged a 404 every three seconds. A run that ends (finished, aborted)
 stops its preview before its folder goes (`stopPreviewOf`): the record first, which the preview reads as the end, then
 the folder once it stopped — never a server left watching a folder removed under it. `run monitor` is the same run, live, for
 a person in a terminal of their own: it only reads (nothing marked read, nothing the lead is woken for touched) and

@@ -29,6 +29,8 @@ export type DevToolsPanelProps = {
   onChangeOrientation?: (orientation: Orientation) => void;
   /** Whether the QA tab is offered. */
   qa?: boolean;
+  /** Whether the page's server previews a run: the Run tab asks it for the run only then. */
+  run?: boolean;
 };
 
 const DevToolsPanel = ({
@@ -39,12 +41,13 @@ const DevToolsPanel = ({
   onCollapse,
   onTabSelect,
   onChangeOrientation,
-  qa = false
+  qa = false,
+  run: previewsRun = false
 }: DevToolsPanelProps) => {
   const [size, setSize] = useStorage('plitzi-sdk.dev-tools.size', { width: 500, height: 200 });
   const [currentPageId] = useCommonStore('navigation.currentPageId');
   const [elementSelected, setElementSelected] = useState<string | undefined>();
-  const run = useRunSnapshot();
+  const run = useRunSnapshot(previewsRun);
   const resizeHandles = useMemo<ResizeHandle[]>(() => (orientation === 'vertical' ? ['w'] : ['n']), [orientation]);
   const parentRef = useRef(
     typeof document !== 'undefined' ? (document.querySelector('.plitzi-sdk') as HTMLElement) : null

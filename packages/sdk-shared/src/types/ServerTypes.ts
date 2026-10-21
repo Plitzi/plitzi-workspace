@@ -346,6 +346,11 @@ export type SSRContext = {
    */
   actionRuns?: ActionRunSummary[];
   /**
+   * This server previews a run of agents and answers its snapshot at `RUN_STATUS_PATH` (`plitzi run preview`): said to a
+   * page that may debug, so its dev tools ask for the run — and no other page's ask a server that has none.
+   */
+  runStatus?: true;
+  /**
    * What a refresh of server data asked for beside the page's own address (`/_rsc?location=…&q=…`): a provider's
    * `input`, a page window. What the provider asks for this time, so it wins over the `input` the element was saved
    * with — the query string of the page does not.

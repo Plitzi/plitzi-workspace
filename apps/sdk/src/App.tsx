@@ -108,6 +108,8 @@ export type AppProps = {
    * the cookie the dev tools write — so the page hydrates drawn the way the server drew it.
    */
   forcedFlags?: Record<string, boolean>;
+  /** The rendering server previews a run of agents — see `PlitziSdkProps`. */
+  runStatus?: boolean;
   onInitStateManager?: (instance: RuntimeStateInstance) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
 };

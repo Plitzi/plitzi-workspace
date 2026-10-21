@@ -8,14 +8,15 @@ import type { RunSnapshot } from '@plitzi/sdk-shared/runs';
 const EVERY_MS = 3000;
 
 /**
- * The run of agents this page's server previews (`plitzi run preview`), as the CLI keeps it — none on any other
- * server: a project's own `start:dev` or a deployment answers 404, and the Run tab is not offered.
+ * The run of agents this page's server previews (`plitzi run preview`), as the CLI keeps it — asked for only when the
+ * server said it previews one (`previews`): any other server has no run, and asking it every few seconds left a 404 in
+ * the page's console each time. Without one the Run tab is not offered.
  */
-const useRunSnapshot = (): RunSnapshot | undefined => {
+const useRunSnapshot = (previews: boolean): RunSnapshot | undefined => {
   const [snapshot, setSnapshot] = useState<RunSnapshot | undefined>();
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    if (!previews || typeof window === 'undefined') {
       return undefined;
     }
 
@@ -38,7 +39,7 @@ const useRunSnapshot = (): RunSnapshot | undefined => {
       stopped = true;
       window.clearInterval(timer);
     };
-  }, []);
+  }, [previews]);
 
   return snapshot;
 };
