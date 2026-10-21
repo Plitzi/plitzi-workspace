@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { stripVTControlCharacters } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -58,7 +60,10 @@ describe('plitzi run monitor', () => {
     expect(
       screen.some(line => line.includes('agent-2') && line.includes('● working') && line.includes('writes t-home'))
     ).toBe(true);
-    expect(screen.some(line => line.includes('agent-3') && line.includes('○ idle'))).toBe(true);
+    // Of the team, never started: not idle — nothing of it has run (velada-polish).
+    expect(screen.some(line => line.includes('agent-3') && line.includes('not started'))).toBe(true);
+    // Whether each starts with the run, in a column of its own (Carlos): the team's base here.
+    expect(screen.some(line => /agent-2\s+base\s/.test(line))).toBe(true);
     expect(screen.some(line => line.includes('lead') && line.includes('approved t-about'))).toBe(true);
     expect(screen.some(line => /lead → agent-2\s+t-home\s+“Use the formal voice”/.test(line))).toBe(true);
   });
@@ -268,6 +273,10 @@ describe('plitzi run monitor', () => {
     const held = plain(flowLines((await monitorRun(lead(), runId)).view.tasks, 200));
     expect(held.find(line => line.includes('pending'))).toMatch(/at work \(0\).*held \(1\)/);
     expect(held.some(line => line.includes(`t-home asks lead (${asked.question.id})`))).toBe(true);
+    // The lead's row says what waits on it, not idle (velada-polish: dev-3 kept waiting, the lead "idle").
+    expect((await monitorRun(lead(), runId)).agents.find(agent => agent.agent === 'lead')?.doing).toBe(
+      `1 question waits for you: t-home's ${asked.question.id}`
+    );
 
     // Sent to review with the question still open, it stands in review alone: a task is in one column at a time.
     await writeInCopy(home.work, 'src/space/pages/home/index.ts', 'export const home = { es: true };\n');
@@ -338,6 +347,18 @@ describe('plitzi run monitor', () => {
       status: 'no-signal',
       doing: expect.stringContaining('no sign of it for 3 min') as unknown
     });
+  });
+
+  // velada-polish: design-1 made its scratch folder first, for its crops, and never "joined"; its wait filled a row.
+  it('says an agent joined though its scratch was there first, and a wait by its reason alone', async () => {
+    const runId = await open();
+    await fs.mkdir(path.join(runPaths(bench.root, runId).dir, 'scratch', 'agent-4'), { recursive: true });
+    await take('agent-1', 't-home');
+    await followNext(bench.agent('agent-4'), runId, 'developer', { timeoutMs: 0, everyMs: 10 });
+    const { feed } = await monitorRun(lead(), runId);
+    expect(feed.some(line => line.by === 'agent-4' && line.text.includes('joined'))).toBe(true);
+    const wait = feed.find(line => line.by === 'agent-4' && line.text.startsWith('waits for work'));
+    expect(wait?.text.length ?? 0).toBeLessThan(80);
   });
 
   // velada-dress: the brake stopped the run and design-1, waiting for it to go on, read "no signal" — gone, it was not.

@@ -3,6 +3,7 @@ import { emitKeypressEvents } from 'node:readline';
 
 import chalk from 'chalk';
 
+import { attentionLines } from './monitorAttention';
 import { bodyOf, detailOf, listedTasks, orderedTasks } from './monitorBoard';
 import { cell, hhmm, wrapped } from './monitorCells';
 import { FEED_LOOK, FEED_WORDS, feedColumns, feedRow, groupKey, repeatRow } from './monitorFeed';
@@ -140,11 +141,7 @@ export const monitorScreen = (
       ? [cell(chalk.green(' ✓ nothing needs anyone now'), width)]
       : [
           chalk.bold.yellow(` NEEDS ATTENTION (${String(view.attention.length)})`),
-          ...view.attention
-            .slice(0, attentionRows)
-            .map(item =>
-              cell(` ${item.who === 'person' ? chalk.red('■ you:') : chalk.yellow('⚠ lead:')} ${item.text}`, width)
-            ),
+          ...attentionLines(view, width, attentionRows),
           ...(view.attention.length > attentionRows
             ? [chalk.dim(`   + ${String(view.attention.length - attentionRows)} more — plitzi run status`)]
             : [])

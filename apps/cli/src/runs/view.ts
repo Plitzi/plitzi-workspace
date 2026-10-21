@@ -116,6 +116,9 @@ export interface Attention {
   task?: string;
   /** The file it is about, when it is about one: what keeps it the same notice while its words change. */
   file?: string;
+  /** A message to the lead: its id — and whether it is only to know, read once `run watch` showed it. */
+  message?: string;
+  fyi?: true;
   text: string;
   /** Who acts on it. */
   who: Needs;
@@ -406,6 +409,9 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       attention.push({
         kind: 'message',
         task: message.from,
+        message: message.id,
+        ...(message.fyi === true ? { fyi: true as const } : {}),
+        // A glimpse here; whole in `run watch`, where showing it reads it — and it is gone from here.
         text: message.fyi
           ? `${message.from} says (${message.id}), for you to know: ${glimpse(message.text)} — read: plitzi task inbox`
           : `${message.from} asks (${message.id}): ${glimpse(message.text)}${Object.hasOwn(taken, message.id) ? ` — ${taken[message.id].by} took it and has not answered` : ''} — answer: plitzi task message ${message.from} "…" --reply-to ${message.id}`,

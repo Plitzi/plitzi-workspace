@@ -21,7 +21,7 @@ import {
   readCheckedPlan,
   readPlanFile
 } from '../../runs/run';
-import { scopePlan } from '../../runs/spike';
+import { SCOPE_SPIKE, scopePlan } from '../../runs/spike';
 import { noteRun } from '../../runs/talk';
 import { roleOf } from '../../runs/tasks';
 import {
@@ -53,6 +53,10 @@ export interface PlanOptions extends RunCommandOptions {
   leadFinishes?: boolean;
   /** `run open`: the person's ask, with no plan — the run opens on one spike, its scope, the lead's. */
   spike?: string;
+  /** `run open --spike`: the site the run copies, as a plan's `reference` says it. */
+  reference?: string;
+  /** `run open`: why the run opens though the project fails its own checks — told to every task. */
+  despiteChecks?: string;
 }
 
 /**
@@ -83,7 +87,7 @@ const planToOpen = async (ctx: RunContext, file: string | undefined, options: Pl
   }
 
   const written = path.join(ctx.root, 'tmp', `${options.run}.plan.json`);
-  await writeJson(written, scopePlan(options.run, options.spike.trim()));
+  await writeJson(written, scopePlan(options.run, options.spike.trim(), options.reference));
 
   return written;
 };
@@ -220,13 +224,21 @@ const openRunOf = async (ctx: RunContext): Promise<{ runId: string; record: RunR
   return undefined;
 };
 
-export const runExtend = (runId: string | undefined, file: string, options: PlanOptions): Promise<void> =>
+export const runExtend = (
+  runId: string | undefined,
+  file: string,
+  options: PlanOptions & { dryRun?: boolean }
+): Promise<void> =>
   act(
     options,
-    async ctx => extendRun(ctx, await runOf(ctx, options, runId), path.resolve(file)),
+    async ctx =>
+      extendRun(ctx, await runOf(ctx, options, runId), path.resolve(file), { dryRun: options.dryRun ?? false }),
     extended =>
       [
-        `Stacked on "${extended.runId}": ${extended.added.join(', ')} — written into the project with the rest, in one finish.`,
+        // A stage looked at before it is stacked — velada-polish's lead had no way but stacking it.
+        extended.checked
+          ? `Checked, nothing stacked on "${extended.runId}": ${extended.added.join(', ')} would be added — run it again without --dry-run to stack them.`
+          : `Stacked on "${extended.runId}": ${extended.added.join(', ')} — written into the project with the rest, in one finish.`,
         extended.ready.length > 0
           ? `Ready now: ${extended.ready.join(', ')}`
           : 'None ready yet: each waits for what it depends on.',
@@ -285,7 +297,8 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
     options,
     async ctx => {
       const opened = await openRun(ctx, await planToOpen(ctx, file, options), {
-        leadFinishes: options.leadFinishes ?? false
+        leadFinishes: options.leadFinishes ?? false,
+        ...(options.despiteChecks === undefined ? {} : { despiteChecks: options.despiteChecks })
       });
       await pruneRuns(ctx);
 
@@ -302,7 +315,7 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
     },
     opened =>
       [
-        `Run "${opened.runId}" is open: ${String(opened.tasks.length)} tasks, ${String(opened.backedUp)} files backed up in ${opened.folder}.`,
+        `Run "${opened.runId}" is open: ${String(opened.tasks.length)} task${opened.tasks.length === 1 ? '' : 's'}, ${String(opened.backedUp)} files backed up in ${opened.folder}.`,
         ...(opened.leftOut.length > 0 ? [`Left out of it, as the plan says: ${opened.leftOut.join('; ')}`] : []),
         ...(opened.inputs.length > 0
           ? [
@@ -312,7 +325,10 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
         opened.leadFinishes
           ? 'The lead writes it into the project at the end, as you allowed — once its report is written and the checks pass on the whole result.'
           : `A person writes it into the project at the end (plitzi run finish --apply) — or lets the lead, in their terminal: plitzi run allow-finish ${opened.runId}`,
-        `Start a task: plitzi task next --run ${opened.runId}`,
+        // On its scope alone, the next step is the lead's, not an agent's: there is nothing to take until it ends.
+        opened.tasks.length === 1 && opened.tasks[0] === SCOPE_SPIKE
+          ? `Next, yours: the scope — find out what the ask takes (plitzi run reference --run ${opened.runId} --pages "…" keeps the site it copies), then end it with its tasks: plitzi task spike ${SCOPE_SPIKE} --done "what you found" --tasks <stage.json>. Agents start once there are tasks to take.`
+          : `Start a task: plitzi task next --run ${opened.runId}`,
         'Watch it in a browser as the tasks are approved: npm run start:preview (plitzi run preview, on 8300) — the project itself is untouched until the finish'
       ].join('\n')
   );
@@ -334,6 +350,9 @@ export const runAmend = (runId: string | undefined, file: string, options: RunCo
         ...amended.tasks.map(each => `  ${each.task}: ${each.changed.join(', ')} — told, with what it now asks`),
         ...(amended.notes.length > 0 ? [`  ${String(amended.notes.length)} new note(s), sent to every task`] : []),
         ...(amended.goal === undefined ? [] : [`  the goal: ${amended.goal}`]),
+        ...(amended.reference === undefined
+          ? []
+          : [`  the site it copies: ${amended.reference} — keep it: plitzi run reference --run ${amended.runId}`]),
         ...(amended.primer ? ['  the run’s primer, written again — every task told'] : []),
         ...(amended.removed
           ? [`  out of the run, as nobody had taken them: ${amended.removed.join(', ')} — say it to the person`]

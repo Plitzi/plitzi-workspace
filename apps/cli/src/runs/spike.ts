@@ -50,10 +50,11 @@ export const SCOPE_SPIKE = 's-scope';
  * A run on the person's ask alone: its plan one spike — the scope, the lead's — whose result is the tasks (`plitzi run
  * open --spike "…"`). As any project starts: the lead scopes it, and the work flows from there.
  */
-export const scopePlan = (runId: string, ask: string) => ({
+export const scopePlan = (runId: string, ask: string, reference?: string) => ({
   version: 1 as const,
   runId,
   goal: ask,
+  ...(reference === undefined ? {} : { reference }),
   tasks: [
     {
       id: SCOPE_SPIKE,

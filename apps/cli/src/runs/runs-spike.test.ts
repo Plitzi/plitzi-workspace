@@ -2,6 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { amendRun } from './amend';
 import { messagesOf } from './messages';
 import { monitorRun } from './monitor';
 import { readOwnership } from './ownership';
@@ -67,6 +68,11 @@ describe('a spike: finding out, in the run, a lead’s', () => {
   it('opens a run on the ask as its scope, whose result is the tasks — each with what was found for it', async () => {
     await open(scopePlan('es-launch', ASK));
     expect(await statusOf(SCOPE_SPIKE)).toBe('spike');
+    // The lead's from the open: at it on the board, never idle (velada-polish: the monitor said the lead was idle).
+    expect((await monitorRun(lead(), 'es-launch')).agents.find(agent => agent.agent === 'lead')).toMatchObject({
+      status: 'working',
+      task: SCOPE_SPIKE
+    });
     expect(await refusal(take('agent-1', SCOPE_SPIKE))).toMatchObject({
       message: expect.stringContaining('is in spike: a lead finds out first') as unknown
     });
@@ -93,6 +99,17 @@ describe('a spike: finding out, in the run, a lead’s', () => {
 
     // Whoever builds it reads what the scope found for it.
     expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-book')?.found).toBe(1);
+  });
+
+  // velada-polish: a run opened on its scope had no reference, and the amend that named it said nothing changed.
+  it('takes the site the run copies at the open, and by an amend once open', async () => {
+    await open(scopePlan('es-launch', ASK, 'https://www.example.com'));
+    expect((await loadRun(lead(), 'es-launch')).plan.reference).toBe('https://www.example.com');
+    const plan = { ...(await loadRun(lead(), 'es-launch')).plan, reference: 'https://www.example.org' };
+    expect(await amendRun(lead(), 'es-launch', await bench.writePlan(plan))).toMatchObject({
+      reference: 'https://www.example.org'
+    });
+    expect((await loadRun(lead(), 'es-launch')).plan.reference).toBe('https://www.example.org');
   });
 
   it('ends research alone by its findings, what waits for it ready, reading them — and refuses an agent’s', async () => {

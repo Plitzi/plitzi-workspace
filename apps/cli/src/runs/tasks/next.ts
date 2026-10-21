@@ -1,8 +1,10 @@
 import fs from 'node:fs/promises';
+import path from 'node:path';
 
 import { durationText, FOLLOW_MS } from '../../options';
 import { questionFor, takeQuestion } from '../answering';
 import { designReviewFor, hasDesignReview, takeDesignReview } from '../design';
+import { createExclusive } from '../files';
 import { handOver } from '../handOver';
 import { IDLE_LEAD_MS, isCoLead, isPrincipal, LEAD_ROLE, leadReviewFor, markAsking, takeLeadReview } from '../leads';
 import { agentAddress, unreadFor } from '../messages';
@@ -112,13 +114,11 @@ export interface NextTask {
 /** `plitzi task next`: the ready task to take — the most urgent (its priority, or the highest of what waits on it), then the longest chain still to do. */
 /** Logs `joined` the first time an agent asks the run for work — kept as the scratch folder it is given. */
 const markJoined = async (ctx: RunContext, loaded: LoadedRun): Promise<void> => {
-  const scratch = agentScratch(loaded.paths, ctx.agent);
-  if (
-    await fs.stat(scratch).then(
-      () => true,
-      () => false
-    )
-  ) {
+  // By a mark of its own, made once: the scratch folder an agent made itself first — for its crops — read as an arrival
+  // already said (velada-polish: design-1 never "joined" the run).
+  const mark = path.join(agentScratch(loaded.paths, ctx.agent), '.joined');
+  await fs.mkdir(path.dirname(mark), { recursive: true });
+  if (!(await createExclusive(mark, ctx.now().toISOString()))) {
     return;
   }
 

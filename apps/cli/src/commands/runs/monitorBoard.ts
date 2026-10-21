@@ -150,8 +150,10 @@ const urgent = (task: TaskLine): string => {
 const ROLE_SHORT: Record<string, string> = { developer: 'dev', designer: 'design', tester: 'test', writer: 'write' };
 
 /** What an agent's row says in each column but the last: who, its model and roles, where it stands, when last heard. */
-const agentCells = (agent: AgentLine, now: Date): [string, string, string, string] => [
+const agentCells = (agent: AgentLine, now: Date): [string, string, string, string, string] => [
   chalk.bold(agent.agent),
+  // Whether it starts with the run or only when work waits for it: base, on demand — the lead, the lead.
+  chalk.dim(agent.kind === 'lead' ? 'lead' : agent.onDemand ? 'on demand' : 'base'),
   chalk.dim(
     `${shortModel(agent.model)}${agent.kind === 'agent' && agent.roles.length > 0 ? ` · ${agent.roles.map(role => ROLE_SHORT[role] ?? role).join('+')}` : ''}`
   ),
@@ -166,14 +168,20 @@ const agentCells = (agent: AgentLine, now: Date): [string, string, string, strin
  * other's does — names, models and states of different lengths left them ragged, and the panel hard to read down.
  * What it does comes last, which the screen may cut.
  */
+/** How much of what an agent does its row says. */
+const DOING_SHOWN = 110;
+
 const agentRowsOf = (agents: readonly AgentLine[], now: Date): string[] => {
   const cells = agents.map(agent => agentCells(agent, now));
-  const widths = [0, 1, 2, 3].map(column => Math.max(0, ...cells.map(row => visible(row[column] ?? ''))));
+  const widths = [0, 1, 2, 3, 4].map(column => Math.max(0, ...cells.map(row => visible(row[column] ?? ''))));
 
   return agents.map((agent, index) => {
     const row = cells[index] ?? agentCells(agent, now);
+    // A line, never a paragraph: a question quoted whole filled the panel (velada-polish's dev-3, 352 characters) —
+    // the task's own detail has all of it.
+    const doing = agent.doing.length > DOING_SHOWN ? `${agent.doing.slice(0, DOING_SHOWN - 1)}…` : agent.doing;
 
-    return `${row.map((text, column) => cell(text, widths[column] ?? 0)).join('  ')}  ${agent.doing}`;
+    return `${row.map((text, column) => cell(text, widths[column] ?? 0)).join('  ')}  ${doing}`;
   });
 };
 

@@ -73,6 +73,8 @@ export interface Amended {
   primer?: true;
   /** Tasks nobody had taken, gone from the run: less to do, as the plan now says. */
   removed?: string[];
+  /** The site the run copies, as the plan now says it: what `run reference` keeps. */
+  reference?: string;
   /** The inventory changed: what the plan covers, and what it says waits. */
   inventory?: true;
 }
@@ -192,15 +194,22 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   const goal = stage || next.goal === loaded.plan.goal ? undefined : next.goal;
   const primer = await readPrimer(next, file);
   const primerChanged = primer !== undefined && primer !== (await readOptional(loaded.paths.primer))?.toString('utf-8');
+  // The site the run copies, set or changed: a run opened on its scope alone has none until the lead names it
+  // (velada-polish: `run reference` refused, and the amend said nothing changed).
+  const reference = !stage && next.reference !== loaded.plan.reference ? next.reference : undefined;
   if (
     changes.length === 0 &&
     notes.length === 0 &&
     goal === undefined &&
     !primerChanged &&
     removed.length === 0 &&
-    !inventoryChanged
+    !inventoryChanged &&
+    reference === undefined
   ) {
-    throw new RunRefusal('invalid', `${file} asks nothing the run does not already: no task, note or goal changed`);
+    throw new RunRefusal(
+      'invalid',
+      `${file} asks nothing the run does not already: no task, note, goal, primer, inventory or reference changed`
+    );
   }
 
   for (const { task, defined } of changes) {
@@ -294,7 +303,8 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     ...(goal === undefined ? {} : { goal }),
     ...(primerChanged ? { primer: true as const } : {}),
     ...(removed.length > 0 ? { removed: removed.map(task => task.id) } : {}),
-    ...(inventoryChanged ? { inventory: true as const } : {})
+    ...(inventoryChanged ? { inventory: true as const } : {}),
+    ...(reference === undefined ? {} : { reference })
   };
   await logRun(ctx, loaded.paths, { action: 'amend', ...amended });
   // The amendment and its primer are the run's now: removed with it, as the plan it opened with.

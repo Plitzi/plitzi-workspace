@@ -9,7 +9,7 @@ import { runPaths, runsDir, taskPaths } from '../paths';
 import { checkPlan, PlanRefusal } from '../plan';
 import { runPlanProblems } from '../planProblems';
 import { RunRefusal } from '../refusal';
-import { startingState } from '../spike';
+import { SCOPE_SPIKE, startingState } from '../spike';
 import { keepFiles } from '../store';
 import { coLeadNames, ensureTeam, reviewsDesign, teamSize } from '../team';
 import { assertNoOtherRun, claimProject, handedInputs, releaseProject, takeInputs } from './claim';
@@ -140,7 +140,7 @@ const LEAD_FINISHES =
 export const openRun = async (
   ctx: RunContext,
   file: string,
-  { leadFinishes = false }: { leadFinishes?: boolean } = {}
+  { leadFinishes = false, despiteChecks }: { leadFinishes?: boolean; despiteChecks?: string } = {}
 ): Promise<OpenedRun> => {
   requireNoTask(ctx, 'open a run');
   const plan = await readPlanFile(file);
@@ -153,6 +153,23 @@ export const openRun = async (
       'invalid',
       `There is a run "${checked.runId}" already: attach to it (plitzi run attach ${checked.runId}), or a person purges it`,
       { run: checked.runId }
+    );
+  }
+
+  // The project's own checks, before any agent works: a failure there meets every task's check in its copy, and spends
+  // its tries on what no task did (Carlos: the lead sees lint and types clean before the agents begin). Opened despite
+  // them only said why — logged, and told to every task.
+  const before = await ctx.checks(ctx.root, ctx.root);
+  if (!before.ok && despiteChecks === undefined) {
+    throw new RunRefusal(
+      'checks-failed',
+      `The project fails its own checks before the run (${before.steps
+        .filter(step => !step.ok)
+        .map(step => step.name)
+        .join(
+          ', '
+        )}): every task would meet them in its copy. Fix them first — or open it despite them, saying why: --despite-checks "…"`,
+      { steps: before.steps.filter(step => !step.ok) }
     );
   }
 
@@ -193,7 +210,10 @@ export const openRun = async (
   for (const task of checked.tasks) {
     const taskFiles = taskPaths(paths, task.id);
     await writeJson(taskFiles.definition, task);
-    await writeJson(taskFiles.state, startingState(task, task.dependsOn.length === 0, at));
+    // The scope is the lead's from the open — no lead takes it from a queue: unowned, the monitor showed the lead idle
+    // while it scoped the run (velada-polish).
+    const state = startingState(task, task.dependsOn.length === 0, at);
+    await writeJson(taskFiles.state, task.id === SCOPE_SPIKE ? { ...state, spikedBy: { by: LEAD, at } } : state);
   }
 
   const record: RunRecord = {
@@ -234,6 +254,15 @@ export const openRun = async (
     await sendMessage(ctx, opened, { from: LEAD, to: EVERYONE, text });
   }
 
+  const failing = before.steps.filter(step => !step.ok).map(step => step.name);
+  if (failing.length > 0 && despiteChecks !== undefined) {
+    await sendMessage(ctx, opened, {
+      from: LEAD,
+      to: EVERYONE,
+      text: `The project failed ${failing.join(', ')} before the run, and it was opened despite it: ${despiteChecks}. A failure of these the run had from the start is none of yours — complete with --known-failure, naming it`
+    });
+  }
+
   await logRun(ctx, paths, {
     action: 'open',
     tasks: checked.tasks.length,
@@ -242,7 +271,8 @@ export const openRun = async (
     agents,
     ...(plan.inventory ? { inventory: plan.inventory.length } : {}),
     ...(checked.leftOut.length > 0 ? { leftOut: checked.leftOut } : {}),
-    notices: checked.notices.length
+    notices: checked.notices.length,
+    ...(failing.length > 0 ? { failingBefore: failing, despiteChecks } : {})
   });
 
   return { checked, paths, backedUp: touched.length, inputs };

@@ -776,6 +776,17 @@ monitor` shows each as it comes, a problem in red.
     - A run with no report is said by its dry run — the lead's step, before the person's — and is not "ready" without
       it; `--apply` refuses it at once, before the person is asked and any check runs: velada-dress's dry run said the
       person's step was next, and `--apply` refused only at its end.
+    - A run opened on its scope (`run open --spike`) gives the scope to the lead at once — the monitor shows it at
+      work, not idle — takes the site it copies (`--reference`), says the lead's step next (the scope, ended with its
+      tasks) rather than an agent's, and `run amend` sets or changes the run's reference. `run extend --dry-run`
+      checks a stage and stacks nothing. An agent of the team's base never started reads "not started", not idle.
+    - `run open` runs the project's own checks first and refuses a project that fails them — every task would meet
+      them in its copy — unless opened `--despite-checks "why"`, told to every task.
+    - `run monitor`'s agents say whether each starts with the run (base) or when work waits for it (on demand), cut what
+      each does to a line, and the lead's row names the questions waiting for it rather than "idle". What needs
+      attention is a table — for whom, what (a question, only to know, a request…), the task, its agent, what it says —
+      the most pressing first; a note only to know, shown whole by `run watch`, is read there and leaves it. The
+      activity says a wait by its reason alone, and an agent joined though it made its scratch folder first.
     - `run reference` keeps a page the site answers with 404 — its page for an address nothing answers, which a copy
       makes too — said, where it refused it as an error page.
     - `page shot --compare … --dress` fails where a section lacks a look the other page dresses it in — a sort of

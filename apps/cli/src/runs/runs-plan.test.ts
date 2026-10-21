@@ -4,12 +4,13 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { abortRun } from './merge';
+import { EVERYONE, messagesOf } from './messages';
 import { readOwnership } from './ownership';
 import { RUNS_DIR, runPaths } from './paths';
 import { checkPlan, findCycle, PlanRefusal } from './plan';
 import { runPlanProblems } from './planProblems';
 import { isRunRefusal } from './refusal';
-import { loadRun } from './run';
+import { loadRun, openRun } from './run';
 import { completeTask, nextTask, takeTask } from './tasks';
 import { benchPlan, makeBench, teamFor, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
@@ -359,5 +360,23 @@ describe('how many agents at once', () => {
   it('above 5 agents a person confirms', async () => {
     const file = await bench.writePlan(benchPlan());
     expect((await refusal(openWith(lead(), file, 6))).code).toBe('person-only');
+  });
+});
+
+// Carlos: the lead sees lint and types clean before the agents begin — a failure there meets every task's check.
+describe('a run opened on a project that fails its own checks', () => {
+  it('is refused, naming the checks — and opened despite them only said why, told to every task', async () => {
+    await bench.write('src/space/pages/broken.ts', 'BROKEN\n');
+    const file = await bench.writePlan({ ...benchPlan(), designReview: false });
+    await bench.writeTeam(teamFor(benchPlan(), 2));
+    const refused = await refusal(openRun(lead(), file));
+    expect(refused.code).toBe('checks-failed');
+    expect(refused.message).toContain('The project fails its own checks before the run (author)');
+
+    await openRun(lead(), file, { despiteChecks: 'a page the person is still writing' });
+    const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(each => each.to === EVERYONE);
+    expect(told?.text).toContain(
+      'The project failed author before the run, and it was opened despite it: a page the person is still writing'
+    );
   });
 });

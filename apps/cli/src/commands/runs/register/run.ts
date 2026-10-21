@@ -74,8 +74,9 @@ export const registerRunGroup = (program: Command): Command => {
     )
     .argument('<run-or-file>', 'The open run — or, alone, the next plan: the run is then the one open')
     .argument('[file]', 'The next plan')
+    .option('--dry-run', 'Check the stage against the run as it is — its tasks, what is ready — and stack nothing')
     .option(...JSON_OPTION)
-    .action((first: string, file: string | undefined, options: PlanOptions) =>
+    .action((first: string, file: string | undefined, options: PlanOptions & { dryRun?: boolean }) =>
       file === undefined ? runExtend(undefined, first, options) : runExtend(first, file, options)
     );
 
@@ -154,6 +155,14 @@ export const registerRunGroup = (program: Command): Command => {
       'The person’s ask, with no plan: the run opens on its scope, a lead’s spike that ends with the tasks (plitzi task spike s-scope --done "…" --tasks <stage.json>)'
     )
     .option('--run <name>', 'With --spike: the run’s name')
+    .option(
+      '--despite-checks <why>',
+      'Open it though the project fails its own checks — why, told to every task (it is refused otherwise)'
+    )
+    .option(
+      '--reference <site>',
+      'With --spike: the site the run copies — https://www.example.com — kept by run reference'
+    )
     .option(
       '--lead-finishes',
       'Let the lead write the run into the project itself once its report is written and the checks pass — a person confirms it in their terminal'

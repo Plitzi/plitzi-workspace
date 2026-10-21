@@ -12,6 +12,7 @@ import { readOwnership } from './ownership';
 import { runPaths } from './paths';
 import { checkPlan } from './plan';
 import { allowLeadFinish, loadRun, readRunLog } from './run';
+import { tellLead } from './talk';
 import {
   blockTask,
   completeTask,
@@ -324,6 +325,18 @@ describe('the lead’s plan as the run goes', () => {
     expect(await pendingRuns(lead())).toMatchObject([
       { runId: 'es-launch', ready: true, leadFinishes: false, apply: 'npx plitzi run finish es-launch --apply' }
     ]);
+  });
+
+  // Carlos: what the lead looked at is gone from what needs it — a note only to know, shown whole, is read.
+  it('shows a note only to know whole in the watch, and reads it: it needs the lead no more', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    const note = `The hero now reads in Spanish. ${'And more. '.repeat(40)}`;
+    await tellLead(home.ctx, 'es-launch', 't-home', note);
+
+    const woke = await waitForLead(lead(), 'es-launch', { timeoutMs: 20, everyMs: 10 });
+    expect(woke.fresh.map(item => item.text)).toContainEqual(expect.stringContaining(note.trim()));
+    expect((await viewRun(lead(), 'es-launch')).attention.some(item => item.kind === 'message')).toBe(false);
   });
 
   it('wakes the lead for a task done again after a revert, and never calls a task in review silent', async () => {

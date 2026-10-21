@@ -1,6 +1,7 @@
 import { readJson, writeJson } from './files';
 import { FOLLOW_MS } from '../options';
 import { REVIEW_BACKLOG_MS, UNTAKEN_REVIEW_MS } from './leads';
+import { LEAD, markRead, messagesOf } from './messages';
 import { runPaths } from './paths';
 import { isRunRefusal } from './refusal';
 import { loadRun } from './run';
@@ -19,6 +20,8 @@ import type { Attention, RunView } from './view';
 export interface LeadItem {
   key: string;
   text: string;
+  /** A message only to know: its id — shown whole in `run watch`, and read by it. */
+  message?: string;
 }
 
 export interface LeadNews {
@@ -102,7 +105,8 @@ export const leadItems = (view: RunView, now: Date): LeadItem[] => {
           : item.file === undefined
             ? `${item.kind}:${item.task ?? ''}:${item.text}`
             : `${item.kind}:${item.task ?? ''}:${item.file}`,
-        text: item.text
+        text: item.text,
+        ...(item.fyi && item.message ? { message: item.message } : {})
       }))
   ];
 };
@@ -134,6 +138,21 @@ export const waitForLead = async (
     const fresh = leadItems(view, ctx.now()).filter(item => !seen.has(item.key));
     if (fresh.length > 0) {
       await writeJson(seenFile, [...seen, ...fresh.map(item => item.key)]);
+      // What is only to know, shown whole here, is read: it leaves what needs the lead (Carlos: what was looked at
+      // stays no longer).
+      const known = view.attention.flatMap(item => (item.fyi && item.message ? [item.message] : []));
+      if (known.length > 0) {
+        const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
+        await markRead(loaded, LEAD, known);
+        // Shown whole, as it is read: the inbox is no step after it.
+        const whole = new Map((await messagesOf(loaded)).map(message => [message.id, message] as const));
+        for (const item of fresh) {
+          const message = item.message === undefined ? undefined : whole.get(item.message);
+          if (message) {
+            item.text = `${message.from} says (${message.id}), for you to know: ${message.text}`;
+          }
+        }
+      }
 
       return { fresh, view };
     }

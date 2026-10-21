@@ -1,11 +1,13 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { doingOf, statusOf } from './agentDoing';
 import { answering, openQuestions } from './answering';
 import { designSkipText, isDesignSkip } from './designSkip';
 import { LEAD, messagesOf } from './messages';
 import { runPaths } from './paths';
 import { presentAt, PRESENCE_STALE_MS } from './presence';
 import { loadRun, readRunLog, runIds } from './run';
+import { reasonOf } from './tasks/nextRules';
 import { choiceText, readTeam, startedAgents } from './team';
 import { viewRun } from './view';
 import { isWorked } from './worked';
@@ -51,6 +53,8 @@ export interface AgentLine {
   noSignal?: boolean;
   /** The tasks it wrote that are approved. */
   approved: number;
+  /** Started only when work waits for it — past its group's `min`, or a lead that reviews — not with the run. */
+  onDemand?: true;
 }
 
 export interface FeedLine {
@@ -177,39 +181,6 @@ export const storiesOf = (log: readonly Record<string, unknown>[]): Partial<Reco
   return stories;
 };
 
-const statusOf = (task: TaskLine): AgentStatus =>
-  task.asking && !task.asking.answered
-    ? 'asking'
-    : task.noSignal
-      ? 'no-signal'
-      : // Held at review only by the designer at its UI review (`assignee`): what it is at.
-        task.status === 'in-review'
-        ? 'reviewing'
-        : task.status === 'blocked' || task.status === 'waiting'
-          ? 'blocked'
-          : 'working';
-
-const doingOf = (task: TaskLine): string => {
-  if (task.asking) {
-    return task.asking.answered
-      ? `${task.id}: the lead answered ${task.asking.id} — its next command takes it up`
-      : `${task.id} waits for the lead's answer to ${task.asking.id}: ${task.asking.text}`;
-  }
-
-  switch (task.status) {
-    case 'in-review':
-      return `reviews the UI of ${task.id}`;
-    case 'changes-requested':
-      return `redoes ${task.id} (round ${String(task.round)})`;
-    case 'waiting':
-      return `${task.id} waits for ${task.waitingFor?.task ?? 'another task'}`;
-    case 'blocked':
-      return `${task.id} blocked`;
-    default:
-      return `writes ${task.id}${task.step ? ` — ${task.step}` : ''}`;
-  }
-};
-
 /**
  * What an agent last did, in its row's words: the feed's line — or, for a message, that it wrote one, which the feed says
  * by its own words. Nothing for what says nothing of the agent (the brake's count).
@@ -311,11 +282,13 @@ const agentsOf = async (
   const loadedRun = await loadRun(ctx, view.runId, { anyMachine: true, anyVersion: true });
   const taken = await answering(loadedRun);
   const questions = await openQuestions(loadedRun);
+  const unanswered = questions.filter(each => !Object.hasOwn(taken, each.id));
   const leads: AgentLine[] = [LEAD, ...view.leads].map(lead => {
     if (finished) {
       return {
         agent: lead,
         kind: lead === LEAD ? ('lead' as const) : ('co-lead' as const),
+        ...(lead === LEAD ? {} : { onDemand: true as const }),
         approved: 0,
         status: lead === LEAD ? ('done' as const) : ('stopped' as const),
         ...(leadModel ? { model: leadModel } : {}),
@@ -341,6 +314,7 @@ const agentsOf = async (
       return {
         agent: lead,
         kind: lead === LEAD ? ('lead' as const) : ('co-lead' as const),
+        ...(lead === LEAD ? {} : { onDemand: true as const }),
         approved: 0,
         status: 'working' as const,
         ...(leadModel ? { model: leadModel } : {}),
@@ -355,6 +329,7 @@ const agentsOf = async (
       return {
         agent: lead,
         kind: lead === LEAD ? ('lead' as const) : ('co-lead' as const),
+        ...(lead === LEAD ? {} : { onDemand: true as const }),
         approved: 0,
         status: 'working' as const,
         ...(leadModel ? { model: leadModel } : {}),
@@ -368,6 +343,7 @@ const agentsOf = async (
     return {
       agent: lead,
       kind: lead === LEAD ? ('lead' as const) : ('co-lead' as const),
+      ...(lead === LEAD ? {} : { onDemand: true as const }),
       approved: 0,
       // Reviewing only at a review it holds: what it did lately with nothing in hand (a look, an answer, an amend) is
       // its last, never "working" — the board showed a lead at work that no task or card named (velada-dress).
@@ -380,7 +356,10 @@ const agentsOf = async (
       roles: [lead === LEAD ? 'plans, reviews, finishes' : 'reviews'],
       doing: at
         ? `reviews ${at}`
-        : `${lead === LEAD ? 'plans, answers, reviews what no lead took' : asking ? 'waits for a review' : 'reviews when they queue up'}${lastLine ? ` · last: ${lastLine}` : ''}`,
+        : // A question no lead took waits on the lead: said on its row, not "idle" over an agent kept waiting.
+          lead === LEAD && unanswered.length > 0
+          ? `${String(unanswered.length)} question${unanswered.length === 1 ? '' : 's'} wait${unanswered.length === 1 ? 's' : ''} for you: ${unanswered.map(each => `${each.from}'s ${each.id}`).join(', ')}`
+          : `${lead === LEAD ? 'plans, answers, reviews what no lead took' : asking ? 'waits for a review' : 'reviews when they queue up'}${lastLine ? ` · last: ${lastLine}` : ''}`,
       ...(at ? { task: at } : {}),
       ...(typeof last?.at === 'string' ? { signalAt: last.at } : {})
     };
@@ -414,6 +393,7 @@ const agentsOf = async (
     ];
     const tail = more.length > 0 ? ` · ${more.join(' · ')}` : '';
     const about = {
+      ...(member?.onDemand === true ? { onDemand: true as const } : {}),
       approved: approvedBy.get(agent) ?? 0,
       ...(member?.model ? { model: `${member.model.model}${member.quality ? ` (${member.quality})` : ''}` } : {}),
       roles: member?.roles ?? (task ? [task.role] : [])
@@ -461,16 +441,26 @@ const agentsOf = async (
                 doing: `on demand — started when work waits for it${lastBy.get(agent) ? ', stopped when none was left' : ''}${tail}`,
                 ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
               }
-            : {
-                agent,
-                kind: 'agent' as const,
-                // Between tasks: idle — a wait for work is no work, whatever its follow waits for (the line says what);
-                // stopped once it said so.
-                status: lastBy.get(agent)?.action === 'stops' ? ('stopped' as const) : ('idle' as const),
-                ...about,
-                doing: `${betweenTasks(agent, lastBy.get(agent))}${tail}`,
-                ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
-              };
+            : lastBy.get(agent) === undefined && present.get(agent) === undefined
+              ? // Of the team's base and never started: not idle — nothing of it has run (velada-polish's dev-1 and
+                // design-1 read idle before either was started).
+                {
+                  agent,
+                  kind: 'agent' as const,
+                  status: 'not-started' as const,
+                  ...about,
+                  doing: `starts with the run — ${member ? `plitzi task next --role ${member.roles.join(',')}${member.quality ? ` --quality ${member.quality}` : ''} --follow --take --agent ${agent}` : 'not started yet'}${tail}`
+                }
+              : {
+                  agent,
+                  kind: 'agent' as const,
+                  // Between tasks: idle — a wait for work is no work, whatever its follow waits for (the line says what);
+                  // stopped once it said so.
+                  status: lastBy.get(agent)?.action === 'stops' ? ('stopped' as const) : ('idle' as const),
+                  ...about,
+                  doing: `${betweenTasks(agent, lastBy.get(agent))}${tail}`,
+                  ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
+                };
   });
 
   return [...leads, ...agents];
@@ -537,8 +527,9 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
       return entry.verdict === 'approve'
         ? line('approved', `approved the UI of ${task}`)
         : line('sent-back', `sent ${task}'s UI back${round}`);
+    // Its reason alone — what it waits for is said to the agent at length, and filled a row of the activity.
     case 'waiting':
-      return line('agent', `waits for work — ${textOf(entry.why)}`);
+      return line('agent', `waits for work — ${reasonOf(textOf(entry.why))}`);
     case 'resumes':
       return line('agent', `goes on with ${textOf(entry.task)} — ${textOf(entry.question)} answered`);
     case 'question-taken':
