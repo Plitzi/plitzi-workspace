@@ -492,3 +492,11 @@ monitor` shows each as it comes, a problem in red.
   the agents go in brief under the tasks below 140 columns; the activity's columns are as wide as what they say; the keys
   and marks wrap rather than being cut; under 24 rows the activity gives its rows to the board. Held to every size from
   60×20 to 220×60 by a test.
+- **`run monitor`'s wheel scrolls only what it is over** (`@plitzi/cli`): the tasks' list, or the activity's pages — its
+  title and columns too — and nothing over the flow, the head or the keys, where it turned the activity's pages.
+- **A stage of `run monitor`'s flow scrolls with the wheel over it** (`@plitzi/cli`): the cards it has no room for
+  (`+ 13 more` under approved) are scrolled to in its column, what is above and below said (`↑ 5 · + 8 more`), never past
+  its last card.
+- **`run monitor` keeps a line's colours when it cuts it** (`@plitzi/cli`): a cut line was written plain — an approved
+  card with a long id white in a column of green, an activity row losing its tone; its styles now run to the cut and are
+  reset there. A card's id longer than its column is cut in the middle, as the tasks' list cuts one.

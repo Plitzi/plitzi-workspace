@@ -83,7 +83,8 @@ the folder once it stopped — never a server left watching a folder removed und
 a person in a terminal of their own: it only reads (nothing marked read, nothing the lead is woken for touched) and
 refuses a shell with no terminal, an agent's, whose is `run watch`. It is a board for a supervisor: what needs someone on
 top; under it the run's flow, always — its kanban, each task a card in its stage from to-do to approved, with what holds
-an agent and what a review sent back (`f` hides it); the tasks left and the agents, each with its state — at work,
+an agent and what a review sent back (`f` hides it), a stage with more cards than it shows scrolled by the wheel over it
+(`↑ 5 · + 7 more`, `FlowColumn`, `wheelTarget`); the tasks left and the agents, each with its state — at work,
 waiting, asking the lead, stopped, done — fifteen listed at most, the rest scrolled to with ↑↓ — and the approved
 folded in a line naming them (`a`); last the activity in columns (time, who → whom for a message, task, what), every row
 the rest leaves, down to the terminal's foot, an event repeated in a row one line

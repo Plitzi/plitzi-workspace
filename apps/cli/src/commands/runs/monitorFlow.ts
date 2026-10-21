@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-import { cell, wrapped } from './monitorCells';
+import { cell, idCell, wrapped } from './monitorCells';
 
 import type { TaskLine } from '../../runs/view';
 
@@ -77,17 +77,36 @@ const stagesOf = (tasks: readonly TaskLine[]): Stage[] => {
 const stagesPerBand = (width: number, stages: number): number =>
   Math.min(stages, Math.max(1, Math.floor((width + GAP) / (MIN_STAGE + GAP))));
 
+/** Where a stage's column is in the flow's lines — its rows and its columns — and how far down its cards may go. */
+export interface FlowColumn {
+  stage: number;
+  rows: [number, number];
+  cols: [number, number];
+  /** The furthest its cards scroll: its tasks past the ones shown. */
+  max: number;
+}
+
+/** The flow drawn, and where each of its stages' columns is: what the wheel over one scrolls. */
+export interface FlowBoard {
+  lines: string[];
+  columns: FlowColumn[];
+}
+
 /**
  * The run as a flow, from to-do to approved — the board's kanban: each stage with how many tasks stand in it and which,
  * what holds an agent back, the review split in its UI's and the lead's, and what is sent back. Drawn to the width: the
  * stages in one band on a wide screen, in bands one under the other on a narrow one; `depth` cards a stage at most, the
- * rest counted.
+ * rest counted — and scrolled to, a stage at a time, by `offsets` (by stage, as `columns` says them).
  */
-export const flowLines = (
+export const flowBoard = (
   tasks: readonly TaskLine[],
   width: number,
-  { depth = 8, note = true }: { depth?: number; note?: boolean } = {}
-): string[] => {
+  {
+    depth = 8,
+    note = true,
+    offsets = new Map<number, number>()
+  }: { depth?: number; note?: boolean; offsets?: ReadonlyMap<number, number> } = {}
+): FlowBoard => {
   const stages = stagesOf(tasks);
   const perBand = stagesPerBand(width - LEAD, stages.length);
   const stageWidth = Math.min(MAX_STAGE, Math.floor((width - LEAD - GAP * (perBand - 1)) / perBand));
@@ -97,6 +116,9 @@ export const flowLines = (
   const bands = Array.from({ length: Math.ceil(stages.length / perBand) }, (_, index) =>
     stages.slice(index * perBand, (index + 1) * perBand)
   );
+  const columns: FlowColumn[] = [];
+  // The flow's title is its first line: each band's lines are counted after it.
+  let top = 1;
 
   const bandLines = (band: Stage[], index: number): string[] => {
     // Each stage after the first, past an arrow — or a bar, for one that is no step after the one before it. A band
@@ -109,12 +131,19 @@ export const flowLines = (
       stage => (stage.apart ? bar : arrow)
     );
     const deepest = Math.min(depth, Math.max(0, ...band.map(stage => stage.tasks.length)));
+    // How far down each stage's cards are scrolled: never past its last card.
+    const from = band.map((stage, at) =>
+      Math.min(offsets.get(index * perBand + at) ?? 0, Math.max(0, stage.tasks.length - deepest))
+    );
     const rows = Array.from({ length: deepest }, (_, row) =>
       joined(
-        band.map(stage => {
-          const task = stage.tasks.at(row);
+        band.map((stage, at) => {
+          const task = stage.tasks.at(from[at] + row);
 
-          return task ? fit(`${stage.tone(task.id)}${stage.who ? chalk.dim(` ${stage.who(task)}`) : ''}`) : fit('');
+          // An id longer than its column cut in the middle, as the tasks' list cuts one: its ends tell it apart.
+          const id = task && task.id.length > stageWidth ? idCell(task.id, stageWidth).trimEnd() : task?.id;
+
+          return task && id ? fit(`${stage.tone(id)}${stage.who ? chalk.dim(` ${stage.who(task)}`) : ''}`) : fit('');
         }),
         stage => (stage.apart ? bar : '    ')
       )
@@ -123,35 +152,64 @@ export const flowLines = (
       ? [
           chalk.dim(
             joined(
-              band.map(stage =>
-                fit(stage.tasks.length > deepest ? `+ ${String(stage.tasks.length - deepest)} more` : '')
-              ),
+              band.map((stage, at) => {
+                const below = stage.tasks.length - deepest - from[at];
+
+                return fit(
+                  [from[at] > 0 ? `↑ ${String(from[at])}` : '', below > 0 ? `+ ${String(below)} more` : '']
+                    .filter(Boolean)
+                    .join(' · ')
+                );
+              }),
               stage => (stage.apart ? bar : '    ')
             )
           )
         ]
       : [];
+    const lines = [`${lead}${head}`, ...[...rows, ...more].map(row => `${' '.repeat(LEAD)}${row}`)];
+    band.forEach((stage, at) => {
+      const left = LEAD + at * (stageWidth + GAP);
+      columns.push({
+        stage: index * perBand + at,
+        rows: [top, top + lines.length],
+        cols: [left, left + stageWidth],
+        max: Math.max(0, stage.tasks.length - deepest)
+      });
+    });
+    top += lines.length;
 
-    return [`${lead}${head}`, ...[...rows, ...more].map(row => `${' '.repeat(LEAD)}${row}`)].map(line =>
-      cell(line, width)
-    );
+    return lines.map(line => cell(line, width));
   };
 
-  return [
-    cell(chalk.bold('FLOW') + chalk.dim('  each task left to right, from to-do to approved · f hides it'), width),
-    ...bands.flatMap(bandLines),
-    ...(note
-      ? [
-          cell(
-            chalk.dim(
-              '  ↺ sent back: to the same agent, who redoes it on the approved — another takes it if it goes silent'
-            ),
-            width
-          )
-        ]
-      : [])
-  ];
+  return {
+    lines: [
+      cell(
+        chalk.bold('FLOW') +
+          chalk.dim('  each task left to right, from to-do to approved · the wheel scrolls a stage · f hides it'),
+        width
+      ),
+      ...bands.flatMap(bandLines),
+      ...(note
+        ? [
+            cell(
+              chalk.dim(
+                '  ↺ sent back: to the same agent, who redoes it on the approved — another takes it if it goes silent'
+              ),
+              width
+            )
+          ]
+        : [])
+    ],
+    columns
+  };
 };
+
+/** The flow's lines alone, as `flowBoard` draws them. */
+export const flowLines = (
+  tasks: readonly TaskLine[],
+  width: number,
+  options: { depth?: number; note?: boolean; offsets?: ReadonlyMap<number, number> } = {}
+): string[] => flowBoard(tasks, width, options).lines;
 
 /**
  * The flow in a line or two, for a terminal too short for its cards: each stage and how many tasks stand in it — the
@@ -171,15 +229,21 @@ const countsOnly = (tasks: readonly TaskLine[], width: number): string[] =>
  * The flow as deep as `rows` lets it be: its stages' cards cut to fewer a stage, then its note left out — and, where not
  * even a card a stage fits, each stage's count in a line or two: the kanban is what the board is for, never left out.
  */
-export const fittedFlow = (tasks: readonly TaskLine[], width: number, rows: number, note: boolean): string[] => {
+export const fittedFlow = (
+  tasks: readonly TaskLine[],
+  width: number,
+  rows: number,
+  note: boolean,
+  offsets: ReadonlyMap<number, number> = new Map()
+): FlowBoard => {
   for (const withNote of note ? [true, false] : [false]) {
     for (let depth = 8; depth >= 1; depth -= 1) {
-      const lines = flowLines(tasks, width, { depth, note: withNote });
-      if (lines.length <= rows) {
-        return lines;
+      const board = flowBoard(tasks, width, { depth, note: withNote, offsets });
+      if (board.lines.length <= rows) {
+        return board;
       }
     }
   }
 
-  return countsOnly(tasks, width);
+  return { lines: countsOnly(tasks, width), columns: [] };
 };

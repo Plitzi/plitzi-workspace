@@ -219,7 +219,10 @@ describe('pageStructuredData', () => {
 
   it('leaves out a field whose template does not evaluate, and what is not an object', () => {
     expect(
-      pageStructuredData([{ '@type': 'Person', name: '{{ apiContainer_boxer.name ', alias: '{{ missing }}' }, 'x'], context)
+      pageStructuredData(
+        [{ '@type': 'Person', name: '{{ apiContainer_boxer.name ', alias: '{{ missing }}' }, 'x'],
+        context
+      )
     ).toEqual([{ '@type': 'Person' }]);
     expect(pageStructuredData(undefined, context)).toEqual([]);
   });

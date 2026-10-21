@@ -56,7 +56,7 @@ export const PAGE_CODES = {
   'robots-txt-line': {
     kind: 'refused',
     means: "a line of the space's `settings.robotsTxt` that no crawler reads, or one with no `User-agent`",
-    fix: "`User-agent: *` then `Allow: /`, `Disallow: /overlay` — each line `Field: value`, or a comment"
+    fix: '`User-agent: *` then `Allow: /`, `Disallow: /overlay` — each line `Field: value`, or a comment'
   },
   'structured-data-shape': {
     kind: 'refused',

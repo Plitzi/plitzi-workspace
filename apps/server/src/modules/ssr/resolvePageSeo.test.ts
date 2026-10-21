@@ -40,7 +40,9 @@ describe('resolvePageSeo', () => {
     const s = schema({
       boxer: page('boxer', {
         seoEnabled: true,
-        seoStructuredData: [{ '@context': 'https://schema.org', '@type': 'Person', name: '{{ apiContainer_boxer.name }}' }]
+        seoStructuredData: [
+          { '@context': 'https://schema.org', '@type': 'Person', name: '{{ apiContainer_boxer.name }}' }
+        ]
       })
     });
 

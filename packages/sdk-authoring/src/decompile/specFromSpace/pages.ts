@@ -263,7 +263,9 @@ export const readPage = (reader: SpecReader, page: Element, index: number): Page
     ...(seoTitle ? { seoTitle } : {}),
     ...(seoDescription ? { seoDescription } : {}),
     ...(robots ? { robots } : {}),
-    ...(structuredData.length > 0 ? { structuredData: structuredData.length === 1 ? structuredData[0] : structuredData } : {}),
+    ...(structuredData.length > 0
+      ? { structuredData: structuredData.length === 1 ? structuredData[0] : structuredData }
+      : {}),
     ...(notFound ? { notFound } : {}),
     ...(documentScroll ? { documentScroll } : {}),
     ...(folder ? { folder } : {}),

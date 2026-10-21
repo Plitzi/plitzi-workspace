@@ -37,7 +37,10 @@ export const robotsOf = (where: string, robots: string): string => {
     .map(each => each.trim().toLowerCase())
     .filter(Boolean);
   if (directives.length === 0) {
-    throw new AuthoringError('robots-unknown', `${where}'s robots is empty: leave it out, or say what it is — 'noindex'.`);
+    throw new AuthoringError(
+      'robots-unknown',
+      `${where}'s robots is empty: leave it out, or say what it is — 'noindex'.`
+    );
   }
 
   for (const directive of directives) {
@@ -103,7 +106,5 @@ export const structuredDataOf = (where: string, data: StructuredData | Structure
 /** The page's head attributes, as the document holds them: nothing for a page that says neither. */
 export const seoAttributes = (where: string, page: Pick<PageSpec, 'robots' | 'structuredData'>) => ({
   ...(page.robots === undefined ? {} : { seoRobots: robotsOf(where, page.robots) }),
-  ...(page.structuredData === undefined
-    ? {}
-    : { seoStructuredData: structuredDataOf(where, page.structuredData) })
+  ...(page.structuredData === undefined ? {} : { seoStructuredData: structuredDataOf(where, page.structuredData) })
 });

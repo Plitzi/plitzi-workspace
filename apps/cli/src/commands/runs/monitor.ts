@@ -13,6 +13,7 @@ import { runPaths } from '../../runs/paths';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { activeRuns, runIds } from '../../runs/run';
 
+import type { FlowColumn } from './monitorFlow';
 import type { RunCommandOptions } from './shell';
 import type { Monitored } from '../../runs/monitor';
 import type { RunContext } from '../../runs/run';
@@ -72,7 +73,8 @@ export const monitorScreen = (
     onGroupRows,
     onGroupPages,
     onRegions,
-    flow = true
+    flow = true,
+    flowOffsets = new Map<number, number>()
   }: {
     selected: number;
     open: boolean;
@@ -91,10 +93,12 @@ export const monitorScreen = (
     onGroupRows?: (rows: Map<number, string>) => void;
     /** The run's flow, the board's kanban, above the tasks and agents — `f` hides it. */
     flow?: boolean;
+    /** How far down each of the flow's stages is scrolled, by stage (`FlowColumn.stage`). */
+    flowOffsets?: ReadonlyMap<number, number>;
     /** Told which page of the activity each group's line is on: an opened group is shown on its page. */
     onGroupPages?: (pages: Map<string, number>) => void;
     /** Told which rows the tasks and the activity take (first, after the last; 0 the top): where the wheel scrolls what. */
-    onRegions?: (regions: { tasks: [number, number]; activity: [number, number] }) => void;
+    onRegions?: (regions: Regions) => void;
   }
 ): string[] => {
   const { view, agents, feed, runs, stories } = data;
@@ -183,14 +187,16 @@ export const monitorScreen = (
           Math.max(2, room - MIN_BODY - 3 - leastActivity)
         )
       : [];
-  const board = flow
+  const flowBoard = flow
     ? fittedFlow(
         view.tasks,
         width,
         Math.min(Math.round(room * 0.4), room - leastActivity - MIN_BODY - detail.length - 1),
-        !short
+        !short,
+        flowOffsets
       )
-    : [];
+    : { lines: [], columns: [] };
+  const board = flowBoard.lines;
   const besideBoard = board.length > 0 ? 1 : 0;
   const wanted = Math.min(MAX_EVENTS, Math.max(MIN_EVENTS, Math.round(room * 0.2))) + ACTIVITY_HEAD;
   const bodyRoom = Math.max(
@@ -279,11 +285,46 @@ export const monitorScreen = (
     new Map(shownRows.flatMap((each, index) => (each.key === undefined ? [] : [[above + index, each.key] as const])))
   );
   onRegions?.({
+    flow: flowBoard.columns.map(column => ({
+      ...column,
+      rows: [boardTop + column.rows[0], boardTop + column.rows[1]] as [number, number]
+    })),
     tasks: [bodyTop + taskRows[0], bodyTop + taskRows[1]],
-    activity: [above, above + shownRows.length]
+    // Its title and its columns' names too: the wheel turns its pages anywhere over it.
+    activity: [above - (ACTIVITY_HEAD - 1), above + shownRows.length]
   });
 
   return [...head, ...attention, '', ...board, ...(besideBoard ? [''] : []), ...body, ...detail, ...activity, ...foot];
+};
+
+/** Where on the screen the wheel scrolls something (rows and columns from 0): each of the flow's stages, the tasks, the activity. */
+export interface Regions {
+  flow: FlowColumn[];
+  tasks: [number, number];
+  activity: [number, number];
+}
+
+/**
+ * What the wheel scrolls at a row and column of the screen: a stage of the flow — its cards — the tasks' list, or the
+ * activity's pages; nothing over the rest (the head, the keys), which once turned the activity's pages under the flow.
+ */
+export const wheelTarget = (
+  row: number,
+  column: number,
+  regions: Regions
+): { stage: FlowColumn } | 'tasks' | 'activity' | undefined => {
+  const stage = regions.flow.find(
+    each => row >= each.rows[0] && row < each.rows[1] && column >= each.cols[0] && column < each.cols[1]
+  );
+  if (stage) {
+    return { stage };
+  }
+
+  return row >= regions.tasks[0] && row < regions.tasks[1]
+    ? 'tasks'
+    : row >= regions.activity[0] && row < regions.activity[1]
+      ? 'activity'
+      : undefined;
 };
 
 /** Which run to show: the one named, else the open one, else the newest the project has. */
@@ -324,7 +365,9 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
   const opened = new Set<string>();
   let groupRows = new Map<number, string>();
   let groupPages = new Map<string, number>();
-  let regions = { tasks: [0, 0], activity: [0, 0] };
+  let regions: Regions = { flow: [], tasks: [0, 0], activity: [0, 0] };
+  // How far down each of the flow's stages the wheel scrolled its cards.
+  const flowOffsets = new Map<number, number>();
   let last: Monitored | undefined;
   let note = 'Reading the run…';
 
@@ -340,6 +383,7 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
           feedPage,
           showApproved,
           flow,
+          flowOffsets,
           opened,
           onGroupRows: rows => {
             groupRows = rows;
@@ -470,7 +514,7 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
     };
     process.stdin.on('data', (data: Buffer) => {
       let changed = false;
-      for (const [, button, , row, kind] of data.toString('utf-8').matchAll(MOUSE)) {
+      for (const [, button, column, row, kind] of data.toString('utf-8').matchAll(MOUSE)) {
         const pressed = kind === 'M';
         if (pressed && button === '0') {
           // Rows are counted from 1 by the terminal, from 0 by the screen drawn.
@@ -486,13 +530,18 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
             changed = true;
           }
         } else if (pressed && (button === '64' || button === '65')) {
-          // The wheel scrolls what it is over: the tasks' list moves its selection, the activity turns its pages.
+          // The wheel scrolls what it is over: a stage of the flow its cards, the tasks' list its selection, the
+          // activity its pages.
           const at = Number(row) - 1;
           const up = button === '64';
           const count = last ? listedTasks(last.view.tasks, showApproved).length : 0;
-          if (at >= regions.tasks[0] && at < regions.tasks[1] && count > 0) {
+          const over = wheelTarget(at, Number(column) - 1, regions);
+          if (typeof over === 'object') {
+            const now = flowOffsets.get(over.stage.stage) ?? 0;
+            flowOffsets.set(over.stage.stage, Math.min(over.stage.max, Math.max(0, now + (up ? -1 : 1))));
+          } else if (over === 'tasks' && count > 0) {
             selected = up ? Math.max(0, selected - 1) : Math.min(count - 1, selected + 1);
-          } else {
+          } else if (over === 'activity') {
             feedPage = up ? Math.max(0, feedPage - 1) : Math.min(feedPage + 1, feedPages - 1);
           }
 

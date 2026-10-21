@@ -69,9 +69,7 @@ const Settings = ({ subType = 'div', label = '', decorative = false, open = fals
         onChange={handleChangeDecorative}
         size="xs"
       />
-      {subType === 'details' && (
-        <Checkbox checked={open} label="Open at start" onChange={handleChangeOpen} size="xs" />
-      )}
+      {subType === 'details' && <Checkbox checked={open} label="Open at start" onChange={handleChangeOpen} size="xs" />}
     </div>
   );
 };

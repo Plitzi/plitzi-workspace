@@ -97,13 +97,15 @@ describe('a page’s seoTitle and seoDescription', () => {
 });
 
 describe('a page’s robots and structured data', () => {
-  const write = (page: Pick<PageSpec, 'robots' | 'structuredData'>, settings: Record<string, string | boolean> = {}) => () =>
-    authorSpace({
-      name: 'Seo',
-      permanentUrl: 'seo',
-      settings,
-      pages: [{ id: 'home', name: 'Home', slug: '', ...page, body: [] }]
-    });
+  const write =
+    (page: Pick<PageSpec, 'robots' | 'structuredData'>, settings: Record<string, string | boolean> = {}) =>
+    () =>
+      authorSpace({
+        name: 'Seo',
+        permanentUrl: 'seo',
+        settings,
+        pages: [{ id: 'home', name: 'Home', slug: '', ...page, body: [] }]
+      });
 
   it('writes them for the head, the page searched as it says', () => {
     const { schema } = write({

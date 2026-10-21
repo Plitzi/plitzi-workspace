@@ -2,14 +2,15 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { monitorScreen } from './monitor';
-import { flowLines } from './monitorFlow';
+import { monitorScreen, wheelTarget } from './monitor';
+import { flowBoard, flowLines } from './monitorFlow';
 import { groupRepeats, monitorRun } from '../../runs/monitor';
 import { askLead, messageTasks, noteRun } from '../../runs/talk';
 import { completeTask, reviewTask } from '../../runs/tasks';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 
+import type { Regions } from './monitor';
 import type { FeedLine } from '../../runs/monitor';
 import type { Bench } from '../../tests/runProject';
 
@@ -269,7 +270,7 @@ describe('plitzi run monitor', () => {
   it('says which rows the tasks and the activity take, where the wheel scrolls each', async () => {
     const runId = await open();
     await noteRun(lead(), runId, 'A note');
-    let regions = { tasks: [0, 0], activity: [0, 0] };
+    let regions: Regions = { flow: [], tasks: [0, 0], activity: [0, 0] };
     const screen = plain(
       monitorScreen(await monitorRun(lead(), runId), {
         selected: 0,
@@ -289,6 +290,20 @@ describe('plitzi run monitor', () => {
     const noteRow = screen.findIndex(line => line.includes('“A note”'));
     expect(noteRow).toBeGreaterThanOrEqual(regions.activity[0]);
     expect(noteRow).toBeLessThan(regions.activity[1]);
+
+    // Over a stage of the flow the wheel scrolls its cards — never the activity's pages under it; over its title, nothing.
+    const flowRow = screen.findIndex(line => line.startsWith('FLOW'));
+    expect(wheelTarget(flowRow, 3, regions)).toBeUndefined();
+    expect(wheelTarget(flowRow + 1, 3, regions)).toMatchObject({ stage: { stage: 0 } });
+    expect(wheelTarget(taskRow, 3, regions)).toBe('tasks');
+    expect(
+      wheelTarget(
+        screen.findIndex(line => line.startsWith('ACTIVITY')),
+        3,
+        regions
+      )
+    ).toBe('activity');
+    expect(wheelTarget(noteRow, 3, regions)).toBe('activity');
   });
 
   // Not every terminal is a wide monitor: the board fits each — the flow in bands, the agents under the tasks, the keys
@@ -387,6 +402,20 @@ describe('plitzi run monitor', () => {
     const activity = screen.findIndex(line => line.startsWith('ACTIVITY'));
     const keys = screen.findIndex(line => line.startsWith('q quits'));
     expect(keys - activity - 3).toBeGreaterThan(10);
+
+    // A stage with more cards than it shows is scrolled by the wheel over it: what is above and below it is counted.
+    const ready = flowBoard(data.view.tasks, 200, { depth: 8 });
+    const column = ready.columns.find(each => each.stage === 1);
+    expect(column?.max).toBe(12);
+    expect(plain(ready.lines).some(line => line.includes('+ 12 more'))).toBe(true);
+    const scrolled = plain(flowBoard(data.view.tasks, 200, { depth: 8, offsets: new Map([[1, 5]]) }).lines);
+    expect(scrolled.some(line => line.includes('↑ 5 · + 7 more'))).toBe(true);
+    expect(scrolled.some(line => line.includes('t-page-6 '))).toBe(true);
+    expect(scrolled.some(line => line.includes('t-page-1 '))).toBe(false);
+    // Never past its last card, however far it is asked.
+    const end = plain(flowBoard(data.view.tasks, 200, { depth: 8, offsets: new Map([[1, 99]]) }).lines);
+    expect(end.some(line => line.includes('↑ 12') && !line.includes('more'))).toBe(true);
+    expect(end.some(line => line.includes('t-page-20 '))).toBe(true);
   });
 
   it('fits the terminal: every line its width, the feed cut to the rows left', async () => {

@@ -6,14 +6,41 @@ export const hhmm = (iso: string): string => iso.slice(11, 16);
 
 export const visible = (line: string): number => stripVTControlCharacters(line).length;
 
-/** A line cut, or padded, to `width` columns, colours kept — a longer one would wrap and push the screen down. */
+/** A colour or style sequence (SGR), as `chalk` writes them: kept whole when a line is cut. */
+// eslint-disable-next-line no-control-regex -- a style sequence starts with ESC: it is what is matched
+const STYLE = /^\x1b\[[0-9;]*m/;
+
+/**
+ * A line cut, or padded, to `width` columns, colours kept — a longer one would wrap and push the screen down. Cut, its
+ * styles go on to where it ends and are reset there: a card cut short is still its stage's colour, never plain.
+ */
 export const cell = (line: string, width: number): string => {
   const length = visible(line);
   if (length <= width) {
     return line + ' '.repeat(width - length);
   }
 
-  return `${stripVTControlCharacters(line).slice(0, Math.max(0, width - 1))}…`;
+  const room = Math.max(0, width - 1);
+  let kept = '';
+  let shown = 0;
+  let styled = false;
+  for (let at = 0; at < line.length && shown < room;) {
+    const style = STYLE.exec(line.slice(at))?.[0];
+    if (style !== undefined) {
+      kept += style;
+      styled = true;
+      at += style.length;
+      continue;
+    }
+
+    // A character whole — a pair of surrogates never split — counted as `visible` counts it.
+    const char = String.fromCodePoint(line.codePointAt(at) ?? 0);
+    kept += char;
+    shown += char.length;
+    at += char.length;
+  }
+
+  return `${kept}…${styled ? '\x1b[0m' : ''}`;
 };
 
 export const ago = (iso: string | undefined, now: Date): string => {

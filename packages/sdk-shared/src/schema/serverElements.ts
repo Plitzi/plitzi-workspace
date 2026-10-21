@@ -195,4 +195,3 @@ export const pageStructuredData = (value: unknown, context: Record<string, unkno
 
 /** JSON in a script tag, so no value of it closes the tag: `<` is written as its escape, which JSON reads the same. */
 export const jsonForScript = (value: unknown): string => JSON.stringify(value).replace(/</g, '\\u003c');
-
