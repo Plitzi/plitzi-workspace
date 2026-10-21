@@ -3,7 +3,7 @@ import { MOTION_ENTERS, MOTION_LOOPS } from '@plitzi/sdk-authoring';
 /** Good practice: motion, accessibility and semantics. */
 export const practiceGuide = `## Motion — good practices
 A preset first: an element's \`motion\` field (\`upsertElement\`/\`patchElement\`) —
-\`{ "enter": "fade-up", "on": "view" }\`, \`"stagger": 60\` for its children one by one, \`"loop": "float"\` — is
+\`{ "enter": "fade-up", "on": "view" }\`, \`"stagger": 60\` for its children one by one, \`"easing"\`/\`"distance"\` (px) for a reference's own curve and travel, \`"loop": "float"\` — is
 played by the SDK, cheap and stilled for reduced motion. \`on\`: \`load\` (default), \`view\` (once, the first time it
 comes into view, then it stays) or \`scroll\` (follows the scroll both ways — it fades back out as the reader scrolls
 up past it; only for an effect that is about the scroll itself). Enters: ${MOTION_ENTERS.join(', ')}; loops:

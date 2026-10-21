@@ -95,3 +95,69 @@ export const keptPage = async (
 
   return isKeptPage(page) && png ? { png: new Uint8Array(png), page, runId: run.runId } : undefined;
 };
+
+/** How far apart two headings' tops may be and still sit on one row. */
+const ROW_PX = 4;
+
+/** A text as two spellings of it compare: lower case, no accents, one space between words. */
+const comparable = (text: string): string =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+/** Whether a piece of the inventory names a heading: says it whole, or every word of it longer than two letters. */
+const names = (piece: string, heading: string): boolean => {
+  const said = comparable(piece);
+  const words = comparable(heading)
+    .split(' ')
+    .filter(word => word.length > 2);
+
+  return said.includes(comparable(heading)) || (words.length > 0 && words.every(word => said.includes(word)));
+};
+
+/**
+ * Each kept page's headings — its sections, as a reader names them — that no piece of the inventory names, on that
+ * page or on none (the shell's): what the plan may have missed. la-velada's lead left three pieces of the artist page
+ * out of the inventory, found only at review.
+ */
+export const unnamedSections = (
+  kept: readonly KeptPage[],
+  inventory: NonNullable<RunPlan['inventory']>
+): { page: string; headings: string[] }[] =>
+  kept.flatMap(page => {
+    const pathname = new URL(page.url).pathname;
+    const pieces = inventory.filter(item => item.page === undefined || item.page === pathname).map(item => item.piece);
+    // A section's heading, as a reader sees it: an h1 or h2 that is drawn — not one kept for screen readers alone (a
+    // pixel wide), nor the h3s inside a section (an FAQ's questions, a list's episodes). Each once, however spelled.
+    // Nor a card's title: one side by side with another like it — the same tag and size on the same row — is a grid's,
+    // as the fighters' names on a list of them; a section's heading has its row to itself.
+    const drawn = page.texts.filter(text => /^h[12]$/i.test(text.tag) && text.width > 1 && text.height > 1);
+    const beside = (text: PageText): boolean =>
+      drawn.some(
+        other =>
+          other !== text &&
+          other.tag === text.tag &&
+          other.fontSize === text.fontSize &&
+          Math.abs(other.y - text.y) <= ROW_PX
+      );
+    const seen = new Set<string>();
+    const headings = drawn
+      .filter(text => !beside(text))
+      .map(text => text.text.trim())
+      .filter(heading => {
+        const key = comparable(heading);
+        if (key === '' || seen.has(key)) {
+          return false;
+        }
+
+        seen.add(key);
+
+        return true;
+      })
+      .filter(heading => !pieces.some(piece => names(piece, heading)));
+
+    return headings.length > 0 ? [{ page: pathname, headings }] : [];
+  });

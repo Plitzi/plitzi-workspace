@@ -1,9 +1,14 @@
 import { InvalidArgumentError } from 'commander';
 import { describe, expect, it } from 'vitest';
 
-import { count, duration, durationText, expectation, fill, positiveInteger, width, widths } from './options';
+import { count, duration, durationText, expectation, fill, pagePaths, positiveInteger, width, widths } from './options';
 
 describe('options', () => {
+  it('reads pages by path, each once, and refuses one that is not a path', () => {
+    expect(pagePaths('/, /boxeadores,/')).toEqual(['/', '/boxeadores']);
+    expect(() => pagePaths('boxeadores')).toThrow(InvalidArgumentError);
+  });
+
   it('reads widths in the order given, each once', () => {
     expect(widths('1440, 390,1440')).toEqual([1440, 390]);
     expect(width('768')).toBe(768);

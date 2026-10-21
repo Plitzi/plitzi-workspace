@@ -14,48 +14,100 @@
 // name: its frames, from where it starts through any it passes on the way. It ends where the element is.
 $enters: (
   'fade': (
-    '0%': (opacity: 0)
+    '0%': (
+      opacity: 0
+    )
   ),
   'fade-up': (
-    '0%': (opacity: 0, translate: 0 24px)
+    '0%': (
+      opacity: 0,
+      translate: 0 24px
+    )
   ),
   'fade-down': (
-    '0%': (opacity: 0, translate: 0 -24px)
+    '0%': (
+      opacity: 0,
+      translate: 0 -24px
+    )
   ),
   'slide-left': (
-    '0%': (opacity: 0, translate: 32px 0)
+    '0%': (
+      opacity: 0,
+      translate: 32px 0
+    )
   ),
   'slide-right': (
-    '0%': (opacity: 0, translate: -32px 0)
+    '0%': (
+      opacity: 0,
+      translate: -32px 0
+    )
   ),
   'slide-up': (
-    '0%': (opacity: 0, translate: 0 72px)
+    '0%': (
+      opacity: 0,
+      translate: 0 72px
+    )
   ),
   'scale': (
-    '0%': (opacity: 0, scale: 0.94)
+    '0%': (
+      opacity: 0,
+      scale: 0.94
+    )
   ),
   'zoom-in': (
-    '0%': (opacity: 0, scale: 0.6)
+    '0%': (
+      opacity: 0,
+      scale: 0.6
+    )
   ),
   'zoom-out': (
-    '0%': (opacity: 0, scale: 1.25)
+    '0%': (
+      opacity: 0,
+      scale: 1.25
+    )
   ),
   'pop': (
-    '0%': (opacity: 0, scale: 0.5),
-    '55%': (opacity: 1, scale: 1.08),
-    '78%': (scale: 0.97)
+    '0%': (
+      opacity: 0,
+      scale: 0.5
+    ),
+    '55%': (
+      opacity: 1,
+      scale: 1.08
+    ),
+    '78%': (
+      scale: 0.97
+    )
   ),
   'bounce-in': (
-    '0%': (opacity: 0, translate: 0 -64px),
-    '55%': (opacity: 1, translate: 0 10px),
-    '75%': (translate: 0 -5px),
-    '90%': (translate: 0 2px)
+    '0%': (
+      opacity: 0,
+      translate: 0 -64px
+    ),
+    '55%': (
+      opacity: 1,
+      translate: 0 10px
+    ),
+    '75%': (
+      translate: 0 -5px
+    ),
+    '90%': (
+      translate: 0 2px
+    )
   ),
   'tilt': (
-    '0%': (opacity: 0, translate: 0 32px, rotate: -6deg)
+    '0%': (
+      opacity: 0,
+      translate: 0 32px,
+      rotate: -6deg
+    )
   ),
   'spin-in': (
-    '0%': (opacity: 0, scale: 0.4, rotate: -180deg)
+    '0%': (
+      opacity: 0,
+      scale: 0.4,
+      rotate: -180deg
+    )
   )
 );
 
@@ -141,6 +193,21 @@ $loops: (
   )
 );
 
+// A frame's `translate`, each length scaled by the element's `distance` (`--plitzi-motion-travel`, its share of the
+// preset's own travel): `travelled` in sdk-shared, which this mirrors.
+@function travelled($translate) {
+  $lengths: ();
+  @each $length in $translate {
+    @if $length == 0 {
+      $lengths: list.append($lengths, 0, space);
+    } @else {
+      $lengths: list.append($lengths, calc(var(--plitzi-motion-travel, 1) * #{$length}), space);
+    }
+  }
+
+  @return $lengths;
+}
+
 // The most children `stagger` times one by one; the rest arrive with the last of them.
 $stagger-children: 24;
 
@@ -163,7 +230,11 @@ $moving: '[data-motion-enter], [data-motion-stagger] > *, [data-motion-loop]';
       @each $at, $frame in $frames {
         #{$at} {
           @each $property, $value in $frame {
-            #{$property}: $value;
+            @if $property == translate {
+              #{$property}: travelled($value);
+            } @else {
+              #{$property}: $value;
+            }
           }
         }
       }
@@ -194,7 +265,8 @@ $moving: '[data-motion-enter], [data-motion-stagger] > *, [data-motion-loop]';
   #{$moving} {
     animation-name: var(--plitzi-motion-enter, none), var(--plitzi-motion-loop, none);
     animation-duration: var(--plitzi-motion-duration, 600ms), var(--plitzi-motion-loop-period, 6s);
-    animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1), var(--plitzi-motion-loop-easing, ease-in-out);
+    animation-timing-function:
+      var(--plitzi-motion-easing, cubic-bezier(0.2, 0.7, 0.2, 1)), var(--plitzi-motion-loop-easing, ease-in-out);
     animation-delay: var(--plitzi-motion-delay, 0ms), 0ms;
     animation-iteration-count: 1, infinite;
     animation-fill-mode: both, none;
@@ -218,8 +290,7 @@ $moving: '[data-motion-enter], [data-motion-stagger] > *, [data-motion-loop]';
 
   [data-motion-stagger] > * {
     animation-delay:
-      calc(var(--plitzi-motion-delay, 0ms) + var(--plitzi-motion-index, 0) * var(--plitzi-motion-stagger, 0ms)),
-      0ms;
+      calc(var(--plitzi-motion-delay, 0ms) + var(--plitzi-motion-index, 0) * var(--plitzi-motion-stagger, 0ms)), 0ms;
   }
 
   // Once, as it comes into view: held at its start until the SDK has seen the element on screen

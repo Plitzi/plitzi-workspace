@@ -70,12 +70,74 @@ export interface ElementMotion {
   stagger?: number;
   /** Keeps moving after it arrived. */
   loop?: MotionLoop;
+  /**
+   * The curve it arrives along, as CSS says one — `ease-in-out`, `cubic-bezier(0.4, 0, 0.2, 1)`, `steps(4)` — for a
+   * copy whose arrivals must be the original's (`MOTION_ENTER_EASING` when left out).
+   */
+  easing?: string;
+  /**
+   * How far it travels to arrive, in px, for an arrival that travels (`MOTION_ENTER_TRAVEL`): `fade-up` rises 24 px
+   * unless this says 20.
+   */
+  distance?: number;
 }
 
 /** How long an arrival takes when it does not say, and the curve every arrival follows: quick out, gentle in. */
 export const MOTION_DEFAULT_DURATION = 600;
 
 export const MOTION_ENTER_EASING = 'cubic-bezier(0.2, 0.7, 0.2, 1)';
+
+/** The curves CSS names: `easing` is one, or a `cubic-bezier(…)`, or `steps(…)`. */
+export const MOTION_EASING_KEYWORDS = ['ease', 'ease-in', 'ease-out', 'ease-in-out', 'linear'] as const;
+
+const NUMBER = '-?(?:\\d+\\.?\\d*|\\.\\d+)';
+const CUBIC_BEZIER = new RegExp(
+  `^cubic-bezier\\(\\s*(${NUMBER})\\s*,\\s*(${NUMBER})\\s*,\\s*(${NUMBER})\\s*,\\s*(${NUMBER})\\s*\\)$`
+);
+const STEPS = /^steps\(\s*[1-9]\d*\s*(?:,\s*(?:jump-start|jump-end|jump-none|jump-both|start|end)\s*)?\)$/;
+
+/** Whether `value` is a curve an arrival can follow: a keyword, a `cubic-bezier` whose x values are 0 to 1, `steps`. */
+export const isMotionEasing = (value: unknown): value is string => {
+  if (typeof value !== 'string') {
+    return false;
+  }
+
+  const curve = value.trim();
+  if ((MOTION_EASING_KEYWORDS as readonly string[]).includes(curve) || STEPS.test(curve)) {
+    return true;
+  }
+
+  const bezier = CUBIC_BEZIER.exec(curve);
+
+  return bezier !== null && [bezier[1], bezier[3]].every(x => Number(x) >= 0 && Number(x) <= 1);
+};
+
+/**
+ * How far each arrival that travels goes, in px — what `distance` replaces. An arrival that grows, zooms or only fades
+ * travels nowhere, and takes no distance.
+ */
+export const MOTION_ENTER_TRAVEL: Partial<Record<MotionEnter, number>> = {
+  'fade-up': 24,
+  'fade-down': 24,
+  'slide-left': 32,
+  'slide-right': 32,
+  'slide-up': 72,
+  'bounce-in': 64,
+  tilt: 32
+};
+
+/** The farthest an arrival may travel: past it, it is a page that jumps, not one that arrives. */
+export const MOTION_MAX_DISTANCE = 400;
+
+/** What a `distance` scales a preset's travel by: the custom property its frames multiply every length by. */
+export const MOTION_TRAVEL_PROPERTY = '--plitzi-motion-travel';
+
+/** A frame's `translate` as the stylesheet plays it: each length scaled by the element's `distance`, if it says one. */
+export const travelled = (translate: string): string =>
+  translate
+    .split(/\s+/)
+    .map(length => (length === '0' ? length : `calc(var(${MOTION_TRAVEL_PROPERTY}, 1) * ${length})`))
+    .join(' ');
 
 /**
  * One frame of an arrival, `at` a percentage of its duration. It moves the individual `translate`, `scale` and `rotate`
@@ -194,7 +256,7 @@ export const MOTION_MAX_MS = 10_000;
 const isOneOf = <T extends string>(list: readonly T[], value: unknown): value is T =>
   typeof value === 'string' && (list as readonly string[]).includes(value);
 
-const KEYS = new Set(['enter', 'on', 'duration', 'delay', 'stagger', 'loop']);
+const KEYS = new Set(['enter', 'on', 'duration', 'delay', 'stagger', 'loop', 'easing', 'distance']);
 
 /** What is wrong with a value given as an element's `motion`, one sentence each — empty when it is one. */
 export const motionProblems = (value: unknown): string[] => {
@@ -205,7 +267,7 @@ export const motionProblems = (value: unknown): string[] => {
   const problems: string[] = [];
   for (const key of Object.keys(value)) {
     if (!KEYS.has(key)) {
-      problems.push(`motion has no "${key}" — it takes enter, on, duration, delay, stagger and loop`);
+      problems.push(`motion has no "${key}" — it takes enter, on, duration, delay, stagger, loop, easing and distance`);
     }
   }
 
@@ -226,6 +288,33 @@ export const motionProblems = (value: unknown): string[] => {
     if (ms !== undefined && (typeof ms !== 'number' || !Number.isFinite(ms) || ms < 0 || ms > MOTION_MAX_MS)) {
       problems.push(`motion.${key} is a number of ms from 0 to ${String(MOTION_MAX_MS)}`);
     }
+  }
+
+  if (value.easing !== undefined && !isMotionEasing(value.easing)) {
+    problems.push(
+      `motion.easing is a curve CSS names: ${MOTION_EASING_KEYWORDS.join(', ')}, cubic-bezier(x1, y1, x2, y2) with x from 0 to 1, or steps(n)`
+    );
+  }
+
+  if (value.distance !== undefined) {
+    const enter = isOneOf(MOTION_ENTERS, value.enter) ? value.enter : undefined;
+    const travels = Object.keys(MOTION_ENTER_TRAVEL).join(', ');
+    if (
+      typeof value.distance !== 'number' ||
+      !Number.isFinite(value.distance) ||
+      value.distance < 0 ||
+      value.distance > MOTION_MAX_DISTANCE
+    ) {
+      problems.push(`motion.distance is how far it travels, a number of px from 0 to ${String(MOTION_MAX_DISTANCE)}`);
+    } else if (enter === undefined || MOTION_ENTER_TRAVEL[enter] === undefined) {
+      problems.push(
+        `motion.distance is how far an arrival travels — ${travels} do; ${enter ?? 'an element with no enter'} does not`
+      );
+    }
+  }
+
+  if (value.easing !== undefined && value.enter === undefined) {
+    problems.push('motion.easing is the curve of its `enter`: give it one');
   }
 
   if (value.enter === undefined && value.loop === undefined) {
@@ -273,6 +362,15 @@ export const motionAttributes = (
 
   if (motion.stagger !== undefined) {
     style['--plitzi-motion-stagger'] = `${String(motion.stagger)}ms`;
+  }
+
+  if (motion.easing !== undefined) {
+    style['--plitzi-motion-easing'] = motion.easing.trim();
+  }
+
+  const travel = motion.enter ? MOTION_ENTER_TRAVEL[motion.enter] : undefined;
+  if (motion.distance !== undefined && travel !== undefined) {
+    style[MOTION_TRAVEL_PROPERTY] = String(Math.round((motion.distance / travel) * 10_000) / 10_000);
   }
 
   return { attributes, style };

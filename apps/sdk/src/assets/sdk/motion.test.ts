@@ -10,7 +10,8 @@ import {
   MOTION_ENTER_FRAMES,
   MOTION_ENTERS,
   MOTION_LOOP_FRAMES,
-  MOTION_LOOPS
+  MOTION_LOOPS,
+  travelled
 } from '@plitzi/sdk-shared/schema';
 
 const css = compileString('@use "motion"; @include motion.styles;', {
@@ -31,7 +32,9 @@ describe('_motion.scss', () => {
   it.each(MOTION_ENTERS)('plays the %s arrival through the frames sdk-shared says', name => {
     const frames = MOTION_ENTER_FRAMES[name].map(({ at, ...frame }) => {
       const declarations = Object.entries(frame)
-        .map(([property, value]) => `${property}: ${String(value)};`)
+        .map(
+          ([property, value]) => `${property}: ${property === 'translate' ? travelled(String(value)) : String(value)};`
+        )
         .join(' ');
 
       return `${String(at)}% { ${declarations} }`;
@@ -56,7 +59,7 @@ describe('_motion.scss', () => {
 
   it('times an arrival with the default and the curve sdk-shared says', () => {
     expect(css).toContain(`var(--plitzi-motion-duration, ${String(MOTION_DEFAULT_DURATION)}ms)`);
-    expect(css).toContain(MOTION_ENTER_EASING);
+    expect(css).toContain(`var(--plitzi-motion-easing, ${MOTION_ENTER_EASING})`);
   });
 
   it('holds an arrival waiting to be seen until it is, and ties only `scroll` to the scroll', () => {

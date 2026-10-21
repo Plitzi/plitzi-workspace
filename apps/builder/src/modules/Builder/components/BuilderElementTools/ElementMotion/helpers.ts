@@ -2,6 +2,7 @@ import {
   MOTION_DEFAULT_DURATION,
   MOTION_ENTER_EASING,
   MOTION_ENTER_FRAMES,
+  MOTION_ENTER_TRAVEL,
   MOTION_ENTERS,
   MOTION_LOOP_FRAMES,
   MOTION_LOOPS
@@ -11,8 +12,11 @@ import type { ElementMotion, MotionEnter, MotionLoop, MotionTrigger } from '@pli
 
 export type Timing = 'duration' | 'delay' | 'stagger';
 
-/** What the fields hold while typed: the presets as chosen, the timings as written. */
-export type Draft = { enter: string; on: string; loop: string } & Record<Timing, string>;
+/** What the fields hold while typed: the presets as chosen, the timings, the curve and the distance as written. */
+export type Draft = { enter: string; on: string; loop: string; easing: string; distance: string } & Record<
+  Timing,
+  string
+>;
 
 export type PresetKind = 'enter' | 'loop';
 
@@ -83,7 +87,9 @@ export const draftOf = (motion: ElementMotion | undefined): Draft => ({
   loop: motion?.loop ?? '',
   duration: motion?.duration === undefined ? '' : String(motion.duration),
   delay: motion?.delay === undefined ? '' : String(motion.delay),
-  stagger: motion?.stagger === undefined ? '' : String(motion.stagger)
+  stagger: motion?.stagger === undefined ? '' : String(motion.stagger),
+  easing: motion?.easing ?? '',
+  distance: motion?.distance === undefined ? '' : String(motion.distance)
 });
 
 /** The draft as a motion: the fields left empty are left out, and `on` only beside an arrival it times. */
@@ -95,7 +101,15 @@ export const motionOf = (draft: Draft): Record<string, unknown> => {
     ['duration', timing(draft.duration)],
     ['delay', timing(draft.delay)],
     ['stagger', timing(draft.stagger)],
-    ['loop', draft.loop || undefined]
+    ['loop', draft.loop || undefined],
+    ['easing', draft.enter && draft.easing.trim() !== '' ? draft.easing.trim() : undefined],
+    // Kept only while the arrival travels: one changed to a zoom or a fade has no distance to go.
+    [
+      'distance',
+      MOTION_ENTERS.some(name => name === draft.enter && MOTION_ENTER_TRAVEL[name] !== undefined)
+        ? timing(draft.distance)
+        : undefined
+    ]
   ];
 
   return Object.fromEntries(entries.filter(([, value]) => value !== undefined));
@@ -108,7 +122,9 @@ export const describeMotion = (motion: ElementMotion): string => {
   const sentences: string[] = [];
   if (motion.enter) {
     const subject = motion.stagger === undefined ? 'It' : 'Each child';
-    const parts = [`${subject} ${ENTER_COPY[motion.enter].phrase}`];
+    const parts = [
+      `${subject} ${ENTER_COPY[motion.enter].phrase}${motion.distance === undefined ? '' : ` (${String(motion.distance)} px)`}`
+    ];
     if (motion.stagger !== undefined) {
       parts.push(motion.on === 'scroll' ? 'one after another' : `one after another, ${ms(motion.stagger)} apart`);
     }
@@ -116,6 +132,10 @@ export const describeMotion = (motion: ElementMotion): string => {
     parts.push(TRIGGER_PHRASE[motion.on ?? 'load']);
     if (motion.on !== 'scroll') {
       const timing = [`over ${ms(motion.duration ?? MOTION_DEFAULT_DURATION)}`];
+      if (motion.easing) {
+        timing.push(`along ${motion.easing}`);
+      }
+
       if (motion.delay) {
         timing.push(`after waiting ${ms(motion.delay)}`);
       }

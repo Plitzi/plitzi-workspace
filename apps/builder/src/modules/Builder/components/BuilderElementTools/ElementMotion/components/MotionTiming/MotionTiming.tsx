@@ -2,7 +2,13 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import { useCallback, useId } from 'react';
 
-import { MOTION_DEFAULT_DURATION, MOTION_TRIGGERS } from '@plitzi/sdk-shared/schema';
+import {
+  MOTION_DEFAULT_DURATION,
+  MOTION_ENTER_EASING,
+  MOTION_ENTER_TRAVEL,
+  MOTION_ENTERS,
+  MOTION_TRIGGERS
+} from '@plitzi/sdk-shared/schema';
 
 import MotionTriggerOption from './components/MotionTriggerOption';
 import { DEFAULT_STAGGER, TRIGGER_COPY } from '../../helpers';
@@ -28,6 +34,11 @@ const MotionTiming = ({ draft, canHoldItems, onChange }: MotionTimingProps) => {
   const handleDuration = useCallback((value: string) => onChange('duration', value), [onChange]);
   const handleDelay = useCallback((value: string) => onChange('delay', value), [onChange]);
   const handleStagger = useCallback((value: string) => onChange('stagger', value), [onChange]);
+  const handleEasing = useCallback((value: string) => onChange('easing', value), [onChange]);
+  const handleDistance = useCallback((value: string) => onChange('distance', value), [onChange]);
+  const enter = MOTION_ENTERS.find(name => name === draft.enter);
+  // Only an arrival that travels has a distance to change: one that grows or fades has none.
+  const travel = enter ? MOTION_ENTER_TRAVEL[enter] : undefined;
   const handleStaggered = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => onChange('stagger', event.target.checked ? String(DEFAULT_STAGGER) : ''),
     [onChange]
@@ -77,6 +88,17 @@ const MotionTiming = ({ draft, canHoldItems, onChange }: MotionTimingProps) => {
           value={draft.delay}
           onChange={handleDelay}
         />
+        {travel !== undefined && (
+          <Input
+            size="xs"
+            type="number"
+            min={0}
+            label="Distance (px)"
+            placeholder={String(travel)}
+            value={draft.distance}
+            onChange={handleDistance}
+          />
+        )}
         {canHoldItems && staggered && trigger !== 'scroll' && (
           <Input
             size="xs"
@@ -89,6 +111,7 @@ const MotionTiming = ({ draft, canHoldItems, onChange }: MotionTimingProps) => {
           />
         )}
       </div>
+      <Input size="xs" label="Curve" placeholder={MOTION_ENTER_EASING} value={draft.easing} onChange={handleEasing} />
       {canHoldItems && (
         <div className="flex flex-col gap-1">
           <Switch size="xs" label="Children arrive one by one" checked={staggered} onChange={handleStaggered} />

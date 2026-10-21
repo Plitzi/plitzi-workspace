@@ -96,6 +96,20 @@ export const names = (value: string): string[] => {
   return [...new Set(each)];
 };
 
+/** Pages by path, comma-separated — `/,/boxeadores` — each starting with `/`. */
+export const pagePaths = (value: string): string[] => {
+  const each = value
+    .split(',')
+    .map(part => part.trim())
+    .filter(Boolean);
+  const wrong = each.filter(part => !part.startsWith('/'));
+  if (each.length === 0 || wrong.length > 0) {
+    throw new InvalidArgumentError(`"${value}": pages by path, comma-separated — /,/menu (each starts with /).`);
+  }
+
+  return [...new Set(each)];
+};
+
 /** A share between 0 and 1: how far along a task is. */
 export const fraction = (value: string): number => {
   const parsed = Number(value.trim());

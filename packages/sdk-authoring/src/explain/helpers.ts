@@ -80,8 +80,8 @@ export const AUTHORING_HELPERS: Readonly<Record<string, HelperEntry>> = {
 
 /** `motion`, an element's field: what it takes, from the presets the SDK plays. */
 export const MOTION_ENTRY: HelperEntry = {
-  signature: `motion: { enter?: ${MOTION_ENTERS.map(name => `'${name}'`).join(' | ')}; on?: ${MOTION_TRIGGERS.map(name => `'${name}'`).join(' | ')}; duration?; delay?; stagger?; loop?: ${MOTION_LOOPS.map(name => `'${name}'`).join(' | ')} }`,
+  signature: `motion: { enter?: ${MOTION_ENTERS.map(name => `'${name}'`).join(' | ')}; on?: ${MOTION_TRIGGERS.map(name => `'${name}'`).join(' | ')}; duration?; delay?; stagger?; easing?; distance?; loop?: ${MOTION_LOOPS.map(name => `'${name}'`).join(' | ')} }`,
   summary:
-    "How an element arrives and whether it keeps moving, played by the SDK's stylesheet and stilled for reduced motion. `on: 'view'` plays once as it comes into view; `on: 'scroll'` follows the scroll both ways.",
+    "How an element arrives and whether it keeps moving, played by the SDK's stylesheet and stilled for reduced motion. `on: 'view'` plays once as it comes into view; `on: 'scroll'` follows the scroll both ways. `easing` (a CSS curve) and `distance` (px, for one that travels) make it an original's, value for value.",
   example: "container({ motion: { enter: 'fade-up', on: 'view', stagger: 60 }, children })"
 };

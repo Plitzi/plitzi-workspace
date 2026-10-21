@@ -37,7 +37,7 @@ import {
   runReference
 } from '..';
 import { JSON_OPTION, TOKEN_OPTION, RUN_OPTION, AGENT_OPTION } from './options';
-import { duration, FOLLOW_MS, names, positiveInteger } from '../../../options';
+import { duration, FOLLOW_MS, names, pagePaths, positiveInteger } from '../../../options';
 
 import type {
   FinishOptions,
@@ -192,7 +192,7 @@ export const registerRunGroup = (program: Command): Command => {
     .description(
       'Keep the plan’s reference site as it is now — each page of the inventory pictured and measured at 1440 and 390, both schemes — for page shot --compare to measure against while the run works; the run finishing removes it'
     )
-    .option('--pages <paths>', 'The pages to keep, by path, comma-separated: the inventory’s when left out', names)
+    .option('--pages <paths>', 'The pages to keep, by path, comma-separated: the inventory’s when left out', pagePaths)
     .option(...RUN_OPTION)
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)

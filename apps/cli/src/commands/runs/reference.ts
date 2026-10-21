@@ -6,13 +6,56 @@ import { PAGE_TEXT_LIMIT, pageTexts } from '@plitzi/sdk-authoring';
 import { act, runOf } from './shell';
 import { launchBrowser, SCHEMES } from '../../browser';
 import { requireLead } from '../../runs/leads';
-import { keptName, REFERENCE_WIDTHS, referencePages } from '../../runs/reference';
+import { keptName, REFERENCE_WIDTHS, referencePages, unnamedSections } from '../../runs/reference';
 import { RunRefusal } from '../../runs/refusal';
 import { loadRun, logRun } from '../../runs/run';
 import { pictureOf } from '../shot/capture';
 
 import type { RunCommandOptions } from './shell';
+import type { Browser } from '../../browser';
 import type { KeptPage } from '../../runs/reference';
+import type { Taken, View } from '../shot/types';
+
+/** How long to wait between the pages of the site kept, and before each try again of one it turned away. */
+const BETWEEN_PAGES_MS = 1500;
+const RETRY_AFTER_MS = [10_000, 30_000];
+
+/** The status the page's own document came with: what tells a page from an error a site answered in its place. */
+const documentStatus = (): number => {
+  const navigation = performance.getEntriesByType('navigation').at(0);
+  const status: unknown = navigation ? Reflect.get(navigation, 'responseStatus') : undefined;
+
+  return typeof status === 'number' ? status : 0;
+};
+
+/**
+ * A page of the reference pictured once its site answers it — never its error page kept as the page: la-velada's
+ * original answered its fighters' list with "You are being rate limited". A site that says it is busy (429, 503) is
+ * asked again, later; any other error is said.
+ */
+const keptOnce = async (browser: Browser, url: string, view: View): Promise<Taken | { problem: string }> => {
+  for (let attempt = 0; ; attempt += 1) {
+    const taken = await pictureOf(browser, url, view);
+    if ('problem' in taken) {
+      return taken;
+    }
+
+    const status = await taken.page.evaluate(documentStatus, undefined);
+    if (status < 400) {
+      return taken;
+    }
+
+    await taken.page.close();
+    const wait = RETRY_AFTER_MS.at(attempt);
+    if ((status !== 429 && status !== 503) || wait === undefined) {
+      return {
+        problem: `the site answered ${String(status)}${status === 429 ? ' (asked too often) — keep it again later' : ''}`
+      };
+    }
+
+    await new Promise(resolve => setTimeout(resolve, wait));
+  }
+};
 
 export interface ReferenceOptions extends RunCommandOptions {
   /** The pages to keep, by path: the plan's inventory's when left out. */
@@ -24,6 +67,8 @@ interface Kept {
   kept: string[];
   failed: string[];
   dir: string;
+  /** Each page's headings no piece of the inventory names: what the plan may have missed. */
+  unnamed: { page: string; headings: string[] }[];
 }
 
 /**
@@ -54,12 +99,19 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
       await mkdir(dir, { recursive: true });
       const kept: string[] = [];
       const failed: string[] = [];
+      // Each page once, as a desktop reader sees it: what its sections are compared with the inventory by.
+      const read: KeptPage[] = [];
       try {
-        for (const page of options.pages ?? referencePages(loaded.plan)) {
+        for (const [index, page] of (options.pages ?? referencePages(loaded.plan)).entries()) {
           const url = new URL(page, reference).href;
+          // A moment between pages: a site that limits how often it is asked answered the second one with its limit.
+          if (index > 0) {
+            await new Promise(resolve => setTimeout(resolve, BETWEEN_PAGES_MS));
+          }
+
           for (const width of REFERENCE_WIDTHS) {
             for (const scheme of SCHEMES) {
-              const taken = await pictureOf(browser, url, {
+              const taken = await keptOnce(browser, url, {
                 width,
                 height: 800,
                 scheme,
@@ -84,6 +136,9 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
               await writeFile(path.join(dir, `${name}.json`), JSON.stringify(record));
               await taken.page.close();
               kept.push(name);
+              if (width === REFERENCE_WIDTHS[0] && scheme === 'light') {
+                read.push(record);
+              }
             }
           }
         }
@@ -91,14 +146,27 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
         await browser.close();
       }
 
-      await logRun(ctx, loaded.paths, { action: 'reference', reference, kept: kept.length, failed: failed.length });
+      const unnamed = loaded.plan.inventory ? unnamedSections(read, loaded.plan.inventory) : [];
+      await logRun(ctx, loaded.paths, {
+        action: 'reference',
+        reference,
+        kept: kept.length,
+        failed: failed.length,
+        unnamed: unnamed.reduce((sum, page) => sum + page.headings.length, 0)
+      });
 
-      return { reference, kept, failed, dir };
+      return { reference, kept, failed, dir, unnamed };
     },
     kept =>
       [
         `${kept.reference} kept as it is now: ${String(kept.kept.length)} pictures, each page at ${REFERENCE_WIDTHS.join(' and ')} px in both schemes — page shot --compare ${kept.reference} measures against them for the whole run (--live asks the site now); the run finishing removes them`,
-        ...kept.failed.map(each => `  ✗ ${each}`)
+        ...kept.failed.map(each => `  ✗ ${each}`),
+        ...(kept.unnamed.length > 0
+          ? [
+              'Sections of the reference no piece of the inventory names — a piece each, covered or left out with its reason (plitzi run amend), or a stage of its own:',
+              ...kept.unnamed.map(page => `  ${page.page}: ${page.headings.map(heading => `"${heading}"`).join(', ')}`)
+            ]
+          : [])
       ].join('\n'),
     kept => (kept.failed.length > 0 ? 1 : 0)
   );

@@ -504,6 +504,12 @@ Academy lessons are seeds, and fail there first (`docs/en/releases.md` § Publis
 - Whole-app renders (desktop) take `{ timeout: 10_000 }`.
 - `e2e/mock/graphql.ts` answers `true` to unknown operations: a new query the builder reads on boot needs a handler.
 - `--repeat-each` on specs whose `beforeAll` runs a skip-mode action needs `--workers=1`.
+- A process a test starts through a shell (`spawn(cmd, { shell: true })`) is the shell's CHILD on Linux — `sh` is dash,
+  which does not exec into the command as macOS's does: `child.kill()` leaves it running, and the CI's vitest worker
+  that holds its output never ends (the CLI's job hung six hours). Stop it with `stopTree` (`apps/cli/src/runs/processes.ts`),
+  or spawn with `TREE` and stop the group. Vitest's `Timeout terminating forks worker for <file>` names the file.
+- Lint is the package's `yarn lint`, never `eslint <files>` from a script: a file-by-file run printed nothing where the
+  package's found eight errors.
 
 ## Documentation — one owner per fact
 

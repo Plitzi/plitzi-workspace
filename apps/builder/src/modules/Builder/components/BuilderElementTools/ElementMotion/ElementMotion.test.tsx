@@ -58,6 +58,26 @@ describe('ElementMotion', () => {
     expect(replayMotion).toHaveBeenCalled();
   });
 
+  // A copy whose arrivals must be its original's: its curve, and how far each rises.
+  it('takes the curve of an arrival, and how far one that travels goes — none for one that does not', () => {
+    const { onUpdate } = mount({ motion: { enter: 'fade-up' } });
+    type('Curve', 'ease-in-out');
+    type('Distance (px)', '20');
+
+    expect(onUpdate).toHaveBeenLastCalledWith(
+      'motion',
+      { enter: 'fade-up', easing: 'ease-in-out', distance: 20 },
+      true
+    );
+    expect(summary().textContent).toBe(
+      'It rises into place (20 px), as the page loads, over 600 ms, along ease-in-out.'
+    );
+
+    choose('Arrives', 'Zoom in');
+    expect(screen.queryByLabelText('Distance (px)')).toBeNull();
+    expect(onUpdate).toHaveBeenLastCalledWith('motion', { enter: 'zoom-in', easing: 'ease-in-out' }, true);
+  });
+
   it('plays an arrival once as it comes into view, with its timing', () => {
     const { onUpdate } = mount({ motion: { enter: 'fade' } });
     choose('Plays', 'In view');

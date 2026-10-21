@@ -558,9 +558,16 @@ monitor` shows each as it comes, a problem in red.
       open — each page of the inventory pictured and its words measured at 1440 and 390, both schemes, in the run's
       folder. `page shot --compare` on that site measures against what was kept and says when (`--live` asks the site
       now): la-velada's original redesigned its pages after the copy. The run finishing removes it.
+      Keeping it names each page's section headings no piece of the inventory covers — what the plan may have missed —
+      and never keeps a page the site answered with an error (a 429 or 503 is asked again later).
   - The workspace's ESLint no longer has a `quotes` rule — Prettier's `singleQuote` writes the quotes, and the two
     disagreed on a string holding single quotes; the `eslint-disable quotes` directives that worked around it are gone.
   - A task's copy served for a look (`task look`, `run preview --task`) is stopped whole on Linux too: its server was the
     shell's child there (`sh` is dash), and stopping the shell alone left it listening — under the CI, the CLI's test
     worker waited on it until the job's six hours ran out.
+  - An element's `motion` takes `easing` (a CSS curve: a keyword, `cubic-bezier(…)`, `steps(…)`) and `distance` (px, for
+    an arrival that travels — `fade-up` rises 24 unless it says 20), so a copy plays its original's arrivals with the
+    presets rather than keyframes of its own (la-velada wrote eight). `@plitzi/sdk-shared` validates them, the SDK's
+    stylesheet plays them, the builder's Motion tab has a Curve and a Distance field, and the skills, the MCP guide,
+    `plitzi explain motion` and the docs say them.
 

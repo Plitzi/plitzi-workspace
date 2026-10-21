@@ -139,7 +139,12 @@ waits). A stage's lines may cover the run's pieces. A plan with no inventory is 
 site says it (`reference`, its address): once the run is open, `plitzi run reference` keeps it (`reference.ts`) — each
 page of the inventory, and its home, pictured and its words measured at 1440 and 390 in both schemes, in the run's
 `reference/` — and `page shot --compare` on that site, in the project or a task's copy, measures against what was kept
-and says when it was kept (`--live` asks the site as it is now). The site may change while the run works or after:
+and says when it was kept (`--live` asks the site as it is now). A page the site answers with an error is never kept
+as the page — a 429 or a 503 is asked again 10 s and 30 s later, the pages a moment apart (la-velada's original
+answered its fighters' list with "You are being rate limited"). Keeping it says, too, each page's section headings no
+piece of the inventory names (`unnamedSections`: an h1 or h2 drawn, not a card's title beside others like it, words
+compared without accents or case) — what the plan may have
+missed, for `run amend` or a stage: la-velada's lead left three pieces of the artist page out, found only at review. The site may change while the run works or after:
 la-velada's original redesigned its fighter page after the copy, and a comparison with it measured another page. The
 run finishing removes it with the rest of its folder. It says — never refuses — a file of a task that other tasks' files import (what it exports is their contract:
 change it compatibly, or say in the plan who follows it), and the tasks whose acceptance no command proves (they hold at
