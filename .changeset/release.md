@@ -866,3 +866,9 @@ monitor` shows each as it comes, a problem in red.
       another page's, each property that differs — the values the designers measured with scripts of their own.
     - `task check --fix` runs the project's eslint and prettier on the task's changed files first, and a check failing
       on lint or format says so; a task's holder reads its own task with `task show`.
+- **Four wordings and wakes velada-polish showed** (`@plitzi/cli`, `@plitzi/sdk-authoring`): `--dress` and a
+  comparison's dress name the element of ours where the other page wears a look this one lacks (`absentOn`); a task
+  handed back to its own agent is said as it is — unblocked by the lead, or held all along — never "unblocked" for one
+  never blocked, and `complete` says plainly that `task next` hands a held task first; a `--follow` that ends says one
+  rule — the wait ended, not the work: run it again, stop only on "You can stop"; a request of a task not approved yet
+  is in no one's attention, and `run watch --until lead` is not woken for it.

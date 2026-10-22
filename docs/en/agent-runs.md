@@ -233,7 +233,9 @@ project's, held to what the project changed: motion reduced, and every picture f
 side by a square of a colour its address gives it (`standIns`), so the same picture is the same on both and another one
 differs (velada-polish: a busy CDN's 429s made 21–31% "differs" at 390, and the same look said 7%, then 0%). The page's
 own picture of a comparison is `-after.png`, beside the run before in `-after-compare.png`. Its dress is compared detail
-by detail: what there are fewer of, by how many — a kind counted whole listed details still there as lost. `--width`,
+by detail: what there are fewer of, by how many — a kind counted whole listed details still there as lost — and a look
+this page lacks is said on the element of ours where the other page wears it (`absentOn`: the named element drawn at
+that place of the section — "lacks box-shadow … — at ours: match-result"), here and in `--dress`'s failure. `--width`,
 `--scheme` (each width in each) and `--status` (a not-found page, `--status 404`) are `page shot`'s and `page check`'s.
 A server of the look that stops under it is said, with why and its last lines (`preview-server.log`,
 `before-server.log` in the task's cache): what failed after is no finding of the task's. A task that writes a part of a page
@@ -519,7 +521,13 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   told, by name, to go on with the task it is at — and takes it, its copy made again from the version that went to
   review (`handed-off` in the activity). Until then, the waiting agent's answer says when it is its. velada-polish's
   dev-1 held four tasks, two sent back at once: t-match-bars's changes waited ten minutes for it while dev-2 and dev-3
-  had nothing, and stopped. A task's holder reads its own with `task show` (its token's task: another's is the lead's). `--acceptance` runs only the acceptance's commands, the copy served for them, and says the
+  had nothing, and stopped. A task's holder reads its own with `task show` (its token's task: another's is the lead's).
+- **Handed back, and why:** a task its own agent holds comes back with `task next` first, said as it is — changes
+  requested, unblocked by the lead, or held all along (`back`): one held while another was worked was said "unblocked"
+  right after `complete` told the agent to take no other step. A `--follow` that ends says one rule whatever the agent
+  holds: the wait ended, not the work — run it again; only "You can stop" stops it (and a task of its in review comes
+  back to it if sent back). A request of a task not approved yet is in no one's attention — it goes in with the
+  approval — so `run watch --until lead` is not woken for it; one left once its task is approved is. `--acceptance` runs only the acceptance's commands, the copy served for them, and says the
   project's checks were not run: la-velada's agents iterated on one failing line with the whole check each time (52 of
   their 88 failed checks were an acceptance line). An agent iterating on a fix checks with it,
   and completes once it passes; it hands over what was said to the task meanwhile, which an agent that only edits
