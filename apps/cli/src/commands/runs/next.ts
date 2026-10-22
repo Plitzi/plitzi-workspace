@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import chalk from 'chalk';
 
 import { act, runOf } from './shell';
@@ -6,6 +8,7 @@ import { FOLLOW_MS } from '../../options';
 import { DESIGN_LOOK } from '../../runs/design';
 import { isPrincipal } from '../../runs/leads';
 import { acceptanceText } from '../../runs/model';
+import { copyOf } from '../../runs/paths';
 import { DESIGN_READING } from '../../runs/reading';
 import { nextTask, followNext, takeNext, takeTask } from '../../runs/tasks';
 
@@ -192,6 +195,17 @@ const nextText = (next: NextTask, agent: string): string =>
       : [chalk.dim(`  What is yours beside the work (a script, a log): ${next.scratch} — never the project's tmp/`)])
   ].join('\n');
 
+/** The project's own `plitzi`, by its whole path — what a command from the copy calls fastest (npx adds ~0.2 s). */
+const binLine = (work: string): string[] => {
+  const root = copyOf(work)?.root;
+
+  return root
+    ? [
+        `  The quickest plitzi, from anywhere: ${path.join(root, 'node_modules', '.bin', 'plitzi')} (npx adds ~0.2 s a call)`
+      ]
+    : [];
+};
+
 const takenText = (taken: TakenTask): string =>
   [
     chalk.bold(`Task "${taken.task.id}" is yours: ${taken.task.title}`),
@@ -203,6 +217,7 @@ const takenText = (taken: TakenTask): string =>
     `  Its files: ${taken.files.join(', ')}`,
     ...(taken.resumedFrom !== undefined ? [`  Resumed from the version review ${String(taken.resumedFrom)} saw`] : []),
     `  Run its commands in its copy — cd ${taken.work} — with your token, and they know the task: start with plitzi task context`,
+    ...binLine(taken.work),
     '  Done: plitzi task complete, in the copy'
   ].join('\n');
 

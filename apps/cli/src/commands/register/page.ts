@@ -144,6 +144,15 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .requiredOption('--url <origin>', 'The server read: the task’s copy')
     .requiredOption('--than <origin>', 'The server it is held to: the run before it')
+    .option(
+      '--except <elements>',
+      'Elements left out, comma-separated — a task’s own parts: that nothing else moved is what is read',
+      (value: string) =>
+        value
+          .split(',')
+          .map(each => each.trim())
+          .filter(Boolean)
+    )
     .addOption(new Option('--width <px>', 'The viewport width').argParser(width).default(1440, '1440'))
     .addOption(schemeOption())
     .option('--json', 'One object, for a tool or an agent')

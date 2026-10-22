@@ -1,4 +1,5 @@
-import { checkAcceptance } from '../acceptance';
+import { checkedStill, checkKey, keepChecked } from './checked';
+import { checkAcceptance, letGo, serveForAcceptance } from '../acceptance';
 import { handOver } from '../handOver';
 import { crossed, longFilesIn, longFileText } from '../longFiles';
 import { assertStatus, loadRun, logRun } from '../run';
@@ -41,6 +42,8 @@ export interface CheckedTask {
   othersFiles?: { file: string; holder: string }[];
   /** `--fix`: the project's linter and formatter ran on its files first — which they rewrote, and which ran. */
   fixed?: { fixed: string[]; ran: string[] };
+  /** Passed at this time, nothing changed since: the result said again, not run (`--fresh` runs it). */
+  checkedAt?: string;
 }
 
 export const checkTask = async (
@@ -51,7 +54,7 @@ export const checkTask = async (
    * `acceptance`: its commands alone, the copy served for them — what an agent iterating on one line runs, where the
    * whole check ran author, lint and typecheck again each time (la-velada: 52 of 88 failed checks were acceptance).
    */
-  { only, fix = false }: { only?: 'acceptance'; fix?: boolean } = {}
+  { only, fix = false, fresh = false }: { only?: 'acceptance'; fix?: boolean; fresh?: boolean } = {}
 ): Promise<CheckedTask> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'check a task');
@@ -64,14 +67,33 @@ export const checkTask = async (
   const started = await readStart(view.paths);
   const mine = started ? await changedInCopy(view, started) : [];
   const fixed = fix ? await fixChanged(view.paths.work, ctx.root, mine) : undefined;
-  const checks: CheckResult =
-    only === 'acceptance' ? { ok: true, steps: [] } : await ctx.checks(view.paths.work, ctx.root);
-  const accepted = checks.ok
-    ? await checkAcceptance(task.acceptance, { work: view.paths.work, root: ctx.root, cache: view.paths.cache })
-    : [];
+  // Checked already, passing, and nothing changed since: said, not run again — `--fresh` runs it whatever.
+  const before =
+    only === undefined && !fresh && fixed === undefined && started
+      ? await checkedStill(view.paths, await checkKey(loaded, view.paths, task, mine), ctx.now())
+      : undefined;
+  // The copy served for the acceptance while the project's checks run: what came after them, beside them.
+  const where = { work: view.paths.work, root: ctx.root, cache: view.paths.cache };
+  const serving = before ? undefined : serveForAcceptance(task.acceptance, where);
+  let accepted: Awaited<ReturnType<typeof checkAcceptance>> = before?.accepted ?? [];
+  let checks: CheckResult = before?.checks ?? { ok: true, steps: [] };
+  try {
+    if (!before) {
+      checks = only === 'acceptance' ? checks : await ctx.checks(view.paths.work, ctx.root);
+      accepted = checks.ok ? await checkAcceptance(task.acceptance, { ...where, ...(serving ? { serving } : {}) }) : [];
+    }
+  } finally {
+    await letGo(serving);
+  }
+
   const tooLong = (await longFilesIn(view.paths.work, ctx.root)).filter(crossed).map(longFileText);
   const { outside } = started ? await whoseChanges(loaded, view, mine, started) : { outside: [] };
   const ok = checks.ok && accepted.every(each => each.ok) && tooLong.length === 0 && outside.length === 0;
+  // Passed whole: kept for the complete that follows, which does not run it all again while nothing changes.
+  if (ok && only === undefined && started) {
+    const key = await checkKey(loaded, view.paths, task, await changedInCopy(view, started));
+    await keepChecked(view.paths, key, { checks, accepted }, ctx.now());
+  }
   // What failed, by name: a run's activity says why a check did not pass, not only that it did not.
   await logRun(ctx, loaded.paths, {
     action: 'check',
@@ -98,6 +120,7 @@ export const checkTask = async (
     ...(brought.length > 0 ? { brought } : {}),
     ...(only ? { only } : {}),
     ...(outside.length > 0 ? { othersFiles: outside } : {}),
-    ...(fixed ? { fixed } : {})
+    ...(fixed ? { fixed } : {}),
+    ...(before ? { checkedAt: before.at } : {})
   };
 };

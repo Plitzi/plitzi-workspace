@@ -79,7 +79,9 @@ export const taskNote = (taskId: string | undefined, text: string, options: RunC
     () => 'Noted: whoever takes it next reads it in plitzi task context.'
   );
 
-export const taskCheck = (options: RunCommandOptions & { acceptance?: boolean; fix?: boolean }): Promise<void> =>
+export const taskCheck = (
+  options: RunCommandOptions & { acceptance?: boolean; fix?: boolean; fresh?: boolean }
+): Promise<void> =>
   act(
     options,
     async ctx => {
@@ -87,7 +89,8 @@ export const taskCheck = (options: RunCommandOptions & { acceptance?: boolean; f
 
       return checkTask(ctx, runId, taskId, {
         ...(options.acceptance ? { only: 'acceptance' as const } : {}),
-        ...(options.fix ? { fix: true } : {})
+        ...(options.fix ? { fix: true } : {}),
+        ...(options.fresh ? { fresh: true } : {})
       });
     },
     checked =>
@@ -116,7 +119,9 @@ export const taskCheck = (options: RunCommandOptions & { acceptance?: boolean; f
           ? chalk.green(
               checked.only === 'acceptance'
                 ? 'Its acceptance holds: plitzi task check, then complete'
-                : 'Your copy passes what complete holds it to: complete it when it is done'
+                : checked.checkedAt
+                  ? `Your copy passes — as it did at ${checked.checkedAt.slice(11, 16)} UTC: nothing changed since, so nothing ran again (--fresh runs it). Complete it when it is done`
+                  : 'Your copy passes what complete holds it to: complete it when it is done'
             )
           : chalk.yellow(
               checked.fixed
@@ -240,7 +245,7 @@ export const taskComplete = (
         completed.checks.none
           ? chalk.yellow(`  Not checked: ${completed.checks.none}`)
           : completed.checks.ok
-            ? `  Checks passed: ${list(completed.checks.steps.map(step => step.name))}`
+            ? `  Checks passed: ${list(completed.checks.steps.map(step => step.name))}${completed.checkedAt ? ` — as task check passed them at ${completed.checkedAt.slice(11, 16)} UTC, nothing changed since: not run again` : ''}`
             : chalk.yellow(
                 `  Checks failing, as you said (--known-failure): ${list(completed.checks.steps.filter(step => !step.ok).map(step => step.name))}`
               ),

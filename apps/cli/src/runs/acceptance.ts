@@ -173,6 +173,27 @@ export const serveCopy = async (
   return { url, port, stop, keep };
 };
 
+/** The copy being served for a task's acceptance — started early, beside the project's checks. */
+export type Serving = ReturnType<typeof serveCopy>;
+
+/**
+ * The copy served for `acceptance` from now, while the project's checks run — its start was a few seconds after them
+ * on every check and complete; none when no line names the served copy.
+ */
+export const serveForAcceptance = (
+  acceptance: readonly Acceptance[],
+  { work, root, cache }: { work: string; root: string; cache: string }
+): Serving | undefined =>
+  acceptance.filter(isChecked).some(each => namesServedCopy(each.check)) ? serveCopy(work, root, cache) : undefined;
+
+/** A copy served early and not used — the checks failed first, or a refusal came: stopped. */
+export const letGo = async (serving: Serving | undefined): Promise<void> => {
+  const served = await serving;
+  if (served && !('problem' in served)) {
+    served.stop();
+  }
+};
+
 /** A `plitzi` on the path that is this CLI: a check runs the version the run is worked with, not another installed. */
 const cliShim = async (cache: string): Promise<string> => {
   const dir = path.join(cache, 'acceptance-bin');
@@ -194,11 +215,14 @@ export const checkAcceptance = async (
     work,
     root,
     cache,
-    onLine
+    onLine,
+    serving
   }: {
     work: string;
     root: string;
     cache: string;
+    /** The copy already being served (`serveForAcceptance`): used, rather than started now. */
+    serving?: Serving;
     /** Each line as it starts — and again, once more after a failure: what a long check is at. */
     onLine?: (index: number, total: number, said: string, again: boolean) => void;
   }
@@ -208,7 +232,9 @@ export const checkAcceptance = async (
     return [];
   }
 
-  const served = checked.some(each => namesServedCopy(each.check)) ? await serveCopy(work, root, cache) : undefined;
+  const served = checked.some(each => namesServedCopy(each.check))
+    ? await (serving ?? serveCopy(work, root, cache))
+    : undefined;
   if (served && 'problem' in served) {
     return checked.map(each => ({ said: each.said, check: each.check, ok: false, output: [served.problem] }));
   }

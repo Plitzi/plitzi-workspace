@@ -20,4 +20,19 @@ describe('page same', () => {
     expect(lines).toHaveLength(2);
     expect(lines[1]).toMatch(/^span \| vs \| VS \|/);
   });
+
+  // A task's parts are compared alone; what is read is that nothing else moved.
+  it('leaves a task’s parts out, and still finds what changed outside them', () => {
+    Element.prototype.getClientRects = () => [new DOMRect(0, 0, 10, 10)] as unknown as DOMRectList;
+    const page = (faq: string, footer: string) =>
+      `<main><section data-plitzi-el="home-faq"><h2 data-plitzi-el="home-faq-title">${faq}</h2></section><footer data-plitzi-el="site-footer" style="color: ${footer}">©</footer></main>`;
+
+    document.body.innerHTML = page('Preguntas frecuentes', 'rgb(1, 2, 3)');
+    const before = drawing(['home-faq']);
+    document.body.innerHTML = page('Preguntas y respuestas', 'rgb(1, 2, 3)');
+    expect(firstDifference(drawing(['home-faq']), before)).toBeUndefined();
+
+    document.body.innerHTML = page('Preguntas y respuestas', 'rgb(9, 9, 9)');
+    expect(firstDifference(drawing(['home-faq']), before)?.here).toMatch(/^footer \| site-footer \| © \|/);
+  });
 });

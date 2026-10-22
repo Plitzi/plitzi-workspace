@@ -349,6 +349,16 @@ the lead's too when none is free — and left out, the run decides as above; the
 going past a UI review a designer took tells that designer, who still tells the lead what it found with `task tell
 --about <task>` — the way any agent holding no task does.
 
+**What runs once is not run twice.** A passing `task check` is kept under a key — the task's changed files, the run's
+approved work, its acceptance, the CLI (`tasks/checked.ts`) — for 30 minutes: a `task check` or `task complete` with the
+key unchanged says the result again rather than running it (`--fresh` runs it); the copy is served for the acceptance
+while the project's checks run (`serveForAcceptance`), and let go however they end. A look at a task with parts of its
+own compares each part alone beside the run before it (`compareLocalPart`, no page aligned), and reads that nothing
+else moved with `page same --except <its parts>` — the sanity run's look went from 50 s to 25 s, its complete from 8.5 s
+to 0.35 s. `plitzi` starts through `dist/bin.js`, which turns on Node's compile cache first (a start ~30% shorter), and
+`task take` prints the project's own `node_modules/.bin/plitzi` (npx adds ~0.2 s a call). `PLITZI_TIMING=1` makes every
+command the CLI runs of itself say how long it took.
+
 **A look reads both schemes.** Its `page check` runs with `--themes`: each page read in light and dark at its first
 width, and a ground the same in both under a text that follows the theme and reads under 3:1 on it in one of them
 fails it (`fixed-ground`, `commands/check/themes.ts`) — velada-fidelity's judges' rows were grey bars with a gold count

@@ -290,6 +290,9 @@ before a task — both sides are held to what the project changed: motion reduce
 for by a colour their address gives them.
 `--timezone <IANA>` (both) opens the page as a visitor in that zone: its clock and `Intl` read there.
 
+`page same … --except <elements>` leaves those out — a task's own parts — and reads positions from each element's parent,
+so a part that grew does not move what follows it: what is read is that nothing else moved.
+
 `page check --themes` reads each page in light and in dark too, and fails a ground the same in both under a text whose
 colour follows the theme and, in one of them, reads under 3:1 on it (`fixed-ground`): a fixed colour where a theme
 token belongs. A look at a task checks with it.

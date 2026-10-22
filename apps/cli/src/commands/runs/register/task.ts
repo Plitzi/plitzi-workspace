@@ -266,9 +266,10 @@ export const registerTaskGroup = (program: Command): Command => {
       '--fix',
       'First, what the project’s linter and formatter fix by themselves (eslint --fix, prettier --write), on your changed files alone'
     )
+    .option('--fresh', 'Run it all, though it passed already and nothing changed since')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((options: RunCommandOptions & { acceptance?: boolean }) => taskCheck(options));
+    .action((options: RunCommandOptions & { acceptance?: boolean; fresh?: boolean }) => taskCheck(options));
 
   taskGroup
     .command('complete')

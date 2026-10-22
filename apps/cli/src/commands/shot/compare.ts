@@ -227,6 +227,51 @@ const TALL_PAGE_PX = 4000;
 /** How many changed sections of a tall page are cut apart: the ones that changed most. */
 const SECTIONS_CUT = 4;
 
+/**
+ * One part of this page beside the same part of another server of the project — the run before a task — each pictured
+ * alone, by the element both have: no page aligned, no words read. A look at a task compares the parts it built; that
+ * nothing else moved is read, not pictured (`page same`). The whole-page comparison was 17 s a view of a 50 s look.
+ */
+export const compareLocalPart = async (
+  browser: Browser,
+  taken: Taken,
+  target: string,
+  view: View,
+  part: string,
+  base: string
+): Promise<CompareReport | { problem: string }> => {
+  const theirs = await pictureOf(
+    browser,
+    target,
+    { ...view, scheme: taken.scheme, clip: part },
+    new URL(target).origin
+  );
+  if ('problem' in theirs) {
+    return theirs;
+  }
+
+  try {
+    const diff = await comparePictures(taken.page, dataUrl(taken.png), dataUrl(theirs.png));
+    await writeFile(`${base}-compare.png`, fromDataUrl(diff.sideBySide));
+    await writeFile(`${base}-diff.png`, fromDataUrl(diff.diff));
+
+    return {
+      url: target,
+      changed: diff.changed,
+      heights: { here: diff.heights.a, there: diff.heights.b },
+      regions: [{ name: part, element: part, changed: diff.changed }],
+      section: part,
+      texts: { same: 0, differ: [], onlyHere: [], onlyThere: [] },
+      decorations: [],
+      unloaded: theirs.unloaded,
+      sideBySide: `${base}-compare.png`,
+      diff: `${base}-diff.png`
+    };
+  } finally {
+    await theirs.page.close();
+  }
+};
+
 /** The other site beside this page: section by section where each one is, and the words both have, measured. */
 export const compareWith = async (
   browser: Browser,

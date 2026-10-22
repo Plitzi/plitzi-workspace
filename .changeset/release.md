@@ -924,3 +924,7 @@ theirs"`) at every width in one call and one browser, reads the other page witho
 - **A ground fixed under the theme's text is found** (`@plitzi/cli`): `page check --themes` reads each page in light and
   dark, and fails a ground the same in both under a text that follows the theme and reads under 3:1 on it in one of
   them; a look at a task checks with it. A hydration error's elements and `page same` are tested in a DOM.
+- **Faster where agents wait** (`@plitzi/cli`): a passing `task check` stands for the next check or complete while
+  nothing changed (`--fresh` runs it again); the acceptance's server starts beside the checks; a look compares a task's
+  parts alone and reads the rest with `page same --except`; `plitzi` starts with Node's compile cache (`dist/bin.js`);
+  `task take` names the project's own `plitzi` (npx adds ~0.2 s a call); `PLITZI_TIMING=1` times the CLI's own children.

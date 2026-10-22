@@ -17,6 +17,7 @@ import { fail } from '../terminal';
 import { capture, pictureOf, readPage } from './capture';
 import {
   compareText,
+  compareLocalPart,
   compareWith,
   contactSheet,
   cropToSection,
@@ -280,10 +281,12 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
 
   // Beside another site, a clip is the section of the report kept: both pages are compared whole, section by section —
   // the other site has none of this page's names to be clipped to.
-  const section = options.compare ? options.clip : undefined;
-  const clip = options.compare ? undefined : options.clip;
   const besideLocal =
     options.compare !== undefined && /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:|\/|$)/.test(options.compare);
+  // Beside the project's own other server, a part is the same element on both: pictured alone each side (`compareLocalPart`).
+  const localPart = besideLocal && options.clip !== undefined;
+  const section = options.compare && !localPart ? options.clip : undefined;
+  const clip = options.compare && !localPart ? undefined : options.clip;
 
   try {
     const pathname = route ?? '/';
@@ -365,7 +368,10 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       const target = other.pathname === '/' ? new URL(pathname, other).href : other.href;
       // Against the page as the run kept it, where it did: the site may have changed since the run began.
       const kept = options.live ? undefined : await keptPage(project.root, target, view.width, taken.scheme);
-      const compared = await compareWith(browser, taken, target, view, regions, base, kept);
+      const compared =
+        localPart && options.clip !== undefined
+          ? await compareLocalPart(browser, taken, target, view, options.clip, base)
+          : await compareWith(browser, taken, target, view, regions, base, kept);
       if ('problem' in compared) {
         fail(compared.problem);
 

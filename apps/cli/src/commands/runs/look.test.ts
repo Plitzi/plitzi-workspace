@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkWithInteraction, comparedOf, samePaths, viewsAsked } from './review';
+import { checkWithInteraction, comparedOf, samePaths, viewsAsked } from './lookParts';
 
 // velada-dress: /artistas's new light read "0.1% differs" beside the run before it — a soft light is under the
 // pictures' tolerance; its dress is not.

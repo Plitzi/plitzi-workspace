@@ -22,6 +22,8 @@ export interface SameOptions {
   than: string;
   width?: number;
   scheme?: Scheme;
+  /** Elements left out — a task's own parts, which it changed: that nothing else moved is what is read. */
+  except?: string[];
   json?: boolean;
 }
 
@@ -35,9 +37,26 @@ export interface Sameness {
 }
 
 /** Every element drawn, a line each: its tag, its name, its words, its box, and what a reader sees of its style. */
-export const drawing = (): string[] =>
-  Array.from(document.querySelectorAll('body *'))
-    .filter(node => node.getClientRects().length > 0)
+export const drawing = (except: readonly string[] = []): string[] => {
+  const left = except.map(id => `[data-plitzi-el="${id}"]`);
+  const inPart = (node: Element): boolean => left.some(selector => node.closest(selector) !== null);
+  const holdsPart = (node: Element): boolean => left.some(selector => node.querySelector(selector) !== null);
+  // Where it is, from its parent's top: a part that grew moves what follows it down the page, never within its own
+  // parent — save under the parent that holds the part, where only its size is read.
+  const placed = (node: Element, box: DOMRect): string => {
+    const parent = node.parentElement;
+    const size = [box.width, box.height].map(Math.round).join('x');
+    if (!parent || holdsPart(parent)) {
+      return `${String(Math.round(box.x))},·,${size}`;
+    }
+
+    const from = parent.getBoundingClientRect();
+
+    return `${String(Math.round(box.x - from.x))},${String(Math.round(box.y - from.y))},${size}`;
+  };
+
+  return Array.from(document.querySelectorAll('body *'))
+    .filter(node => node.getClientRects().length > 0 && !inPart(node))
     .map(node => {
       const box = node.getBoundingClientRect();
       const style = getComputedStyle(node);
@@ -47,7 +66,8 @@ export const drawing = (): string[] =>
         node.tagName.toLowerCase(),
         node.getAttribute('data-plitzi-el') ?? '',
         words,
-        [box.x, box.y + window.scrollY, box.width, box.height].map(Math.round).join(','),
+        // What holds a part left out grows with it: its box is not read, its style still is.
+        holdsPart(node) ? '' : placed(node, box),
         style.color,
         style.backgroundColor,
         style.backgroundImage.replace(/url\([^)]*\)/g, 'url()').slice(0, 200),
@@ -71,12 +91,13 @@ export const drawing = (): string[] =>
         })
       ].join(' | ');
     });
+};
 
 const readOn = async (
   browser: Browser,
   origin: string,
   path: string,
-  view: { width: number; scheme?: Scheme }
+  view: { width: number; scheme?: Scheme; except: readonly string[] }
 ): Promise<string[]> => {
   const page = await openProjectPage(browser, origin, {
     width: view.width,
@@ -89,7 +110,7 @@ const readOn = async (
     await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
     await page.evaluate(() => document.fonts.ready.then(() => undefined), undefined);
 
-    return await page.evaluate(drawing, undefined);
+    return await page.evaluate(drawing, view.except);
   } finally {
     await page.close();
   }
@@ -114,9 +135,13 @@ export const firstDifference = (
 export const samePages = async (
   browser: Browser,
   paths: readonly string[],
-  options: Pick<SameOptions, 'url' | 'than' | 'width' | 'scheme'>
+  options: Pick<SameOptions, 'url' | 'than' | 'width' | 'scheme' | 'except'>
 ): Promise<Sameness[]> => {
-  const view = { width: options.width ?? 1440, ...(options.scheme ? { scheme: options.scheme } : {}) };
+  const view = {
+    width: options.width ?? 1440,
+    except: options.except ?? [],
+    ...(options.scheme ? { scheme: options.scheme } : {})
+  };
   const read: Sameness[] = [];
   for (const path of paths) {
     try {

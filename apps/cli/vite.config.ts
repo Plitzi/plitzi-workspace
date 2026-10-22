@@ -17,7 +17,7 @@ const testConditions = process.env.VITEST ? [SOURCE_CONDITION, ...defaultServerC
  * A command, not a library.
  *
  * So there are no type declarations to emit and no consumer to keep an export surface stable for: what ships is one
- * executable file with a shebang, and `bin` in the manifest points at it. `commander` and `chalk` stay external —
+ * executable file with a shebang (`index.js`), started by a small one (`bin.js`) that `bin` in the manifest points at. `commander` and `chalk` stay external —
  * they are the package's own dependencies, and bundling them would ship two copies to anyone who has them already.
  */
 export default defineConfig({
@@ -25,10 +25,11 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     target: 'node20',
-    lib: { entry: './src/index.ts', formats: ['es'] },
+    // `bin` turns the compile cache on before the CLI's code is read; `index` is the CLI.
+    lib: { entry: { bin: './src/bin.ts', index: './src/index.ts' }, formats: ['es'] },
     rollupOptions: {
       external: ['chalk', 'commander', 'esbuild', 'fflate', '@plitzi/sdk-authoring', /^node:/],
-      output: { entryFileNames: 'index.js', banner: '#!/usr/bin/env node' }
+      output: { entryFileNames: '[name].js', banner: '#!/usr/bin/env node' }
     },
     minify: false,
     sourcemap: false

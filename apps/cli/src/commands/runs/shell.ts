@@ -416,9 +416,14 @@ export const act = async <T>(
   }
 };
 
-/** This CLI as a child process, in `cwd`: what a lead's one command runs several of, each as it would by hand. */
-export const runSelf = (cwd: string, args: string[]): Promise<{ code: number; output: string }> =>
-  new Promise(resolve => {
+/**
+ * This CLI as a child process, in `cwd`: what a lead's one command runs several of, each as it would by hand. With
+ * `PLITZI_TIMING=1` each says how long it took, on stderr: where a slow command spends its time.
+ */
+export const runSelf = (cwd: string, args: string[]): Promise<{ code: number; output: string }> => {
+  const started = Date.now();
+
+  return new Promise<{ code: number; output: string }>(resolve => {
     const child = spawn(process.execPath, [process.argv[1], ...args], {
       cwd,
       env: { ...process.env, [USAGE_OFF]: '1' }
@@ -427,7 +432,14 @@ export const runSelf = (cwd: string, args: string[]): Promise<{ code: number; ou
     child.stdout.on('data', (chunk: Buffer) => (output += chunk.toString()));
     child.stderr.on('data', (chunk: Buffer) => (output += chunk.toString()));
     child.on('close', code => resolve({ code: code ?? 1, output }));
+  }).then(done => {
+    if (process.env.PLITZI_TIMING === '1') {
+      process.stderr.write(chalk.dim(`· ${String(Date.now() - started)} ms: plitzi ${args.join(' ').slice(0, 120)}\n`));
+    }
+
+    return done;
   });
+};
 
 /** The prelude every holder's command shares: the run and the task, from the token. */
 export const holder = async (

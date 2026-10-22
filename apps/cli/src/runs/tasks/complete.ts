@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { unifiedDiff } from '../../fix/diff';
-import { checkAcceptance } from '../acceptance';
+import { checkAcceptance, letGo, serveForAcceptance } from '../acceptance';
 import { proposalsOf, unansweredTo } from '../agreements';
 import { failsWithout } from '../checks';
 import { designAtComplete } from '../design';
@@ -28,6 +28,7 @@ import {
   writeRequest
 } from '../taskStore';
 import { digestsOf, escapeRegExp } from './approve';
+import { checkedStill, checkKey } from './checked';
 import { at, changedInCopy, cleanPath, findTask, holderOf, refreshCopy } from './common';
 import { textOf } from './context';
 import { activeHolder, allLocks, sharedFiles } from './locks';
@@ -128,6 +129,8 @@ export interface CompletedTask {
   accepted: AcceptanceResult[];
   /** The task's files a person (or something else) changed in the project meanwhile: the person wins at the merge. */
   changedInProject: string[];
+  /** When `task check` passed them, the checks taken from it: nothing changed since, so not run again. */
+  checkedAt?: string;
 }
 
 /**
@@ -295,53 +298,67 @@ export const completeTask = async (
     );
   }
 
-  const checks = await ctx.checks(view.paths.work, ctx.root);
-  const failing = checks.steps.filter(step => !step.ok);
-  // What fails in the copy may not be the task's: a person's edit in the project, or another task's approved work, that
-  // fails the checks reaches every copy. Checked against the run's work without this task before it is refused.
-  const preexisting =
-    !checks.ok && !knownFailure
-      ? failsWithout(checks, await checkVersions(ctx, loaded, digestsOf(await readApproved(loaded.paths))), [
-          `${view.paths.work}${path.sep}`,
-          new RegExp(`${escapeRegExp(path.join(loaded.paths.cache, 'check-'))}[0-9a-f]+${escapeRegExp(path.sep)}`, 'g')
-        ])
-      : false;
-  if (!checks.ok) {
-    if (!preexisting) {
-      await recordBrake(ctx, loaded, 'checks-failed', taskId);
+  // What `task check` passed, on these very files and this run, stands: not run again (`checked.ts`).
+  const kept = await checkedStill(view.paths, await checkKey(loaded, view.paths, task, changed), ctx.now());
+  // The copy served for the acceptance while the project's checks run; let go whatever ends them (a refusal too).
+  const where = { work: view.paths.work, root: ctx.root, cache: view.paths.cache };
+  const serving = kept ? undefined : serveForAcceptance(task.acceptance, where);
+  const { checks, failing, preexisting, accepted } = await (async () => {
+    const checks = kept?.checks ?? (await ctx.checks(view.paths.work, ctx.root));
+    const failing = checks.steps.filter(step => !step.ok);
+    // What fails in the copy may not be the task's: a person's edit in the project, or another task's approved work, that
+    // fails the checks reaches every copy. Checked against the run's work without this task before it is refused.
+    const preexisting =
+      !checks.ok && !knownFailure
+        ? failsWithout(checks, await checkVersions(ctx, loaded, digestsOf(await readApproved(loaded.paths))), [
+            `${view.paths.work}${path.sep}`,
+            new RegExp(
+              `${escapeRegExp(path.join(loaded.paths.cache, 'check-'))}[0-9a-f]+${escapeRegExp(path.sep)}`,
+              'g'
+            )
+          ])
+        : false;
+    if (!checks.ok) {
+      if (!preexisting) {
+        await recordBrake(ctx, loaded, 'checks-failed', taskId);
+      }
+
+      if (!knownFailure && !preexisting) {
+        throw new RunRefusal('checks-failed', `The project's checks fail in task "${taskId}"'s copy`, {
+          task: taskId,
+          steps: failing,
+          next: 'fix what fails and complete again — or, for a reason that weighs, complete --known-failure "why" --fixed-by <task>'
+        });
+      }
+
+      if (fixer && knownFailure) {
+        await updateState(
+          taskPaths(loaded.paths, fixer.id),
+          state => ({
+            ...state,
+            notes: [
+              ...state.notes,
+              {
+                at: at(ctx),
+                by: 'plitzi',
+                text: `"${taskId}" went to review with failing checks (${failing.map(step => step.name).join(', ')}) for you to fix: ${knownFailure.why}`
+              }
+            ]
+          }),
+          ctx.now
+        );
+      }
     }
 
-    if (!knownFailure && !preexisting) {
-      throw new RunRefusal('checks-failed', `The project's checks fail in task "${taskId}"'s copy`, {
-        task: taskId,
-        steps: failing,
-        next: 'fix what fails and complete again — or, for a reason that weighs, complete --known-failure "why" --fixed-by <task>'
-      });
-    }
+    // What the task was asked, held by the commands its plan gives — once the project's checks pass, in the same copy.
+    const accepted = kept
+      ? kept.accepted
+      : checks.ok
+        ? await checkAcceptance(task.acceptance, { ...where, ...(serving ? { serving } : {}) })
+        : [];
 
-    if (fixer && knownFailure) {
-      await updateState(
-        taskPaths(loaded.paths, fixer.id),
-        state => ({
-          ...state,
-          notes: [
-            ...state.notes,
-            {
-              at: at(ctx),
-              by: 'plitzi',
-              text: `"${taskId}" went to review with failing checks (${failing.map(step => step.name).join(', ')}) for you to fix: ${knownFailure.why}`
-            }
-          ]
-        }),
-        ctx.now
-      );
-    }
-  }
-
-  // What the task was asked, held by the commands its plan gives — once the project's checks pass, in the same copy.
-  const accepted = checks.ok
-    ? await checkAcceptance(task.acceptance, { work: view.paths.work, root: ctx.root, cache: view.paths.cache })
-    : [];
+    return { checks, failing, preexisting, accepted };
+  })().finally(() => letGo(serving));
   const unmet = accepted.filter(result => !result.ok);
   if (unmet.length > 0 && !knownFailure) {
     await recordBrake(ctx, loaded, 'checks-failed', taskId);
@@ -488,6 +505,7 @@ export const completeTask = async (
     checks,
     accepted,
     changedInProject,
+    ...(kept ? { checkedAt: kept.at } : {}),
     messages: await handOver(ctx, loaded, taskId, ctx.agent)
   };
 };

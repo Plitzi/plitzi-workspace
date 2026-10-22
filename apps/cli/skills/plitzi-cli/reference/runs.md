@@ -28,6 +28,8 @@ cd <work> && plitzi task context --files   # the brief, your files, their data's
 ```
 
 Inside `work`, a command knows its task and run (`tmp/plitzi-task.json`) — never who you are.
+`plitzi` is the project's `node_modules/.bin/plitzi` — by its whole path from a task's copy, as `task take` prints it;
+`npx plitzi` works too, ~0.2 s slower a call, which a run's hundreds of calls add up.
 
 **Your token is who you are.** Your first command names you (`--agent design-1`) and answers your token
 (`<run>.@design-1.<secret>`) and the whole path it is kept at: pass it on **every** command after, in a task's copy too
