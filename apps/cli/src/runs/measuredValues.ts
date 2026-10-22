@@ -28,7 +28,7 @@ export const unmeasuredNotices = (tasks: readonly PlannedTask[], reference: stri
     }
 
     return [
-      `Task "${task.id}" names values (${values.slice(0, 5).join(', ')}${values.length > 5 ? ', …' : ''}) no check of it measures against ${reference}: measure them first and hold them to it — plitzi page measure <path> <element> --compare ${reference} --there "<selector>" --same <properties> — or its review finds the guess`
+      `Task "${task.id}" names values (${values.slice(0, 5).join(', ')}${values.length > 5 ? ', …' : ''}) no check of it measures against ${reference}: measure them first and hold them to it — plitzi page measure <path> "<element> => <selector>" … --compare ${reference} --width 390,1440 --same <properties> — or its review finds the guess`
     ];
   });
 };

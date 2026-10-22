@@ -6,7 +6,6 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { createExclusive, readJson, writeAtomic } from './files';
 import { LEAD } from './messages';
-import { agentScratch, RUNS_DIR } from './paths';
 import { RunRefusal } from './refusal';
 import { readRecord } from './run/record';
 import { readTeam, startedAgents } from './team';
@@ -34,14 +33,18 @@ export const UNNAMED = 'unnamed';
 /** Names no agent takes: a person is one at a terminal, and the others are what the CLI calls a caller it cannot name. */
 const RESERVED = new Set(['person', 'agent', UNNAMED]);
 
-/** What a caller brings to say who it is, read before the run is known. */
+/**
+ * What a caller brings to say who it is, read before the run is known. Only an agent's own token says who: a task's
+ * says which task — its copy's, for its holder — and a token said that is neither, or empty, is none (velada-fidelity:
+ * `--token "$(cat …)"` read from the wrong folder came in empty, ran as "agent" and took a task).
+ */
 export type Claim =
   /** An agent's own token, with the name it said, if it said one. */
   | { kind: 'agent'; token: string; said?: string }
-  /** A task's token — said, or its copy's — and whose it is, by the task's owner. */
-  | { kind: 'task'; holder?: string; said?: string; fallback: string }
   /** A name said alone: an agent's first command, or one refused for want of its token. */
   | { kind: 'name'; said: string }
+  /** A token said that is no agent's: a task's, or nothing that parses. */
+  | { kind: 'malformed'; task: boolean }
   /** A person, at a terminal of their own. */
   | { kind: 'person' }
   | { kind: 'none' };
@@ -63,8 +66,11 @@ const isIdentity = (value: unknown): value is Identity =>
 
 const identityFile = (paths: RunPaths, agent: string): string => path.join(paths.identities, `${agent}.json`);
 
+/** Where an agent's token is kept for it, under a run's scratch folder (`RunPaths.scratch`). */
+const tokenIn = (scratch: string, agent: string): string => path.join(scratch, agent, 'token');
+
 /** Where an agent's token is kept for it: its own scratch folder, read back after a harness forgot it. */
-export const tokenFile = (paths: RunPaths, agent: string): string => path.join(agentScratch(paths, agent), 'token');
+export const tokenFile = (paths: RunPaths, agent: string): string => tokenIn(paths.scratch, agent);
 
 const digestOf = (secret: string): string => createHash('sha256').update(secret).digest('hex');
 
@@ -145,8 +151,8 @@ const proveToken = async (paths: RunPaths, runId: string, token: string): Promis
 };
 
 /**
- * Who calls, on `runId`, proved: an agent by its token, a task by its token's owner, a person by their terminal — and a
- * name said alone only the first time, when it is made a token. Refused otherwise, saying what to pass.
+ * Who calls, on `runId`, proved: an agent by its token, a person by their terminal — and a name said alone only the first
+ * time, when it is made a token. Refused otherwise, saying what to pass: never a name the CLI makes up.
  */
 export const identify = async (
   root: string,
@@ -162,7 +168,16 @@ export const identify = async (
   if (claim.kind === 'none') {
     throw new RunRefusal(
       'identity',
-      `Who is calling? Pass your token (--token): your first command on run "${runId}" printed it, and it is kept in its scratch/<you>/token. A newcomer names itself once (--agent <name>) and is given one`
+      `Who is calling? Pass your token (--token), inside a task's copy too: your first command on run "${runId}" printed it, and it is kept in ${tokenFile(paths, '<you>')}. A newcomer names itself once (--agent <name>) and is given one`
+    );
+  }
+
+  if (claim.kind === 'malformed') {
+    throw new RunRefusal(
+      'identity',
+      claim.task
+        ? `A task's token says which task, not who calls: pass your own (--token), as your first command on run "${runId}" printed it — kept in ${tokenFile(paths, '<you>')} — and work in the task's copy, which says the task`
+        : `That is no agent's token: <run>.@<agent>.<secret>, as your first command printed it — kept in ${tokenFile(paths, '<you>')}`
     );
   }
 
@@ -179,23 +194,6 @@ export const identify = async (
     }
 
     return { agent };
-  }
-
-  if (claim.kind === 'task') {
-    if (claim.holder === undefined) {
-      return { agent: claim.fallback };
-    }
-
-    // A task's copy is its holder's: another working in it — the lead reviewing — says so with its own token.
-    if (claim.said !== undefined && claim.said !== claim.holder) {
-      throw new RunRefusal(
-        'identity',
-        `This task's token is ${claim.holder}'s: to act here as ${claim.said}, pass ${claim.said}'s own token (--token)`,
-        { agent: claim.holder }
-      );
-    }
-
-    return { agent: claim.holder };
   }
 
   const name = claim.said;
@@ -241,11 +239,12 @@ export const identifiedAgents = async (paths: RunPaths): Promise<string[]> =>
     .sort();
 
 /**
- * How a command started from the project names `agent`: by its name the first time; after, by its token, read from
- * where it is kept — a stopped agent started again under its name alone is refused.
+ * How a command names `agent`: by its name the first time; after, by its token, read from where it is kept — by its
+ * whole path, so it reads the same from a task's copy as from the project (a path from the project's root read nothing
+ * in a copy, and an empty token was what let a caller in unnamed).
  */
-export const callerFlag = (runId: string, agent: string, identified: readonly string[]): string =>
-  identified.includes(agent) ? `--token "$(cat ${RUNS_DIR}/${runId}/scratch/${agent}/token)"` : `--agent ${agent}`;
+export const callerFlag = (scratch: string, agent: string, identified: readonly string[]): string =>
+  identified.includes(agent) ? `--token "$(cat ${tokenIn(scratch, agent)})"` : `--agent ${agent}`;
 
 /**
  * The roles `agent` asks work of, held to its team's: a developer that says `--role designer` takes no UI review, and

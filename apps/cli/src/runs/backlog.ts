@@ -79,7 +79,12 @@ export const keepNotices = async (ctx: RunContext, loaded: LoadedRun): Promise<B
 };
 
 /** `plitzi run backlog done <id>`: an item closed, saying how — no item is closed silently. */
-export const closeBacklogItem = async (ctx: RunContext, id: string, note?: string): Promise<BacklogItem> => {
+export const closeBacklogItem = async (
+  ctx: RunContext,
+  id: string,
+  by: string,
+  note?: string
+): Promise<BacklogItem> => {
   const items = await readBacklog(ctx.root);
   const item = items.find(each => each.id === id);
   if (!item) {
@@ -100,7 +105,7 @@ export const closeBacklogItem = async (ctx: RunContext, id: string, note?: strin
 
   const closed: BacklogItem = {
     ...item,
-    done: { at: ctx.now().toISOString(), by: ctx.agent, ...(note ? { note } : {}) }
+    done: { at: ctx.now().toISOString(), by, ...(note ? { note } : {}) }
   };
   await writeJson(path.join(ctx.root, BACKLOG_FILE), {
     version: 1,

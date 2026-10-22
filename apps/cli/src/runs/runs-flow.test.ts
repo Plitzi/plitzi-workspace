@@ -23,6 +23,7 @@ import {
   reportProgress,
   reviewTask,
   takeNext,
+  reassignTask,
   takeTask,
   unblockTask,
   waitForFile
@@ -273,6 +274,76 @@ describe('a task sent back while its agent is at another', () => {
     bench.advance(HAND_OFF_AFTER_MS);
 
     expect((await nextTask(as('dev-2'), runId, 'developer')).handOff).toBeUndefined();
+  });
+});
+
+// velada-fidelity: dev-1 took t-faq-zone as "agent" (an empty token), and its rework went back to no one. A task is its
+// holder's: another agent holding its copy's token acts on nothing of it, and the holder acts on it as itself.
+describe('a task held by its holder alone', () => {
+  it('refuses another agent the task, its copy’s token in hand, and keeps the work and the log the holder’s', async () => {
+    const plan = { ...benchPlan(), designReview: false };
+    await bench.writeTeam({ version: 1, agents: [{ name: 'dev', roles: ['developer'], count: 2 }] });
+    await openRun(as('lead'), await bench.writePlan(plan));
+    const home = await takeTask(as('dev-1'), plan.runId, 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/index.ts', "export const home = { title: 'Hola' };\n");
+
+    await expect(completeTask(as('dev-2', home.token), plan.runId, 't-home')).rejects.toMatchObject({
+      code: 'identity',
+      message: expect.stringContaining('Task "t-home" is dev-1\'s, not dev-2\'s') as unknown
+    });
+    await expect(reportProgress(as('dev-2', home.token), plan.runId, 't-home', {})).rejects.toMatchObject({
+      code: 'identity'
+    });
+
+    await completeTask(as('dev-1', home.token), plan.runId, 't-home');
+    const log = await readRunLog((await loadRun(as('lead'), plan.runId)).paths);
+    expect(log.filter(entry => entry.task === 't-home').map(entry => entry.by)).not.toContain('dev-2');
+    expect(log.some(entry => entry.by === 'agent')).toBe(false);
+  });
+});
+
+// The lead takes a task back from an agent at any time, says why, and decides where it goes (Carlos, velada-fidelity).
+describe('a task the lead takes back', () => {
+  it('goes to the agent it is handed to — no other — or to the lead itself; its agent is told why', async () => {
+    const plan = { ...benchPlan(), designReview: false };
+    await bench.writeTeam({ version: 1, agents: [{ name: 'dev', roles: ['developer'], count: 3 }] });
+    await openRun(as('lead'), await bench.writePlan(plan));
+    const menu = await takeTask(as('dev-1'), plan.runId, 't-menu');
+
+    await expect(reassignTask(as('lead'), plan.runId, 't-menu', { to: 'design-9' })).rejects.toMatchObject({
+      code: 'invalid',
+      message: expect.stringContaining('no agent of the team') as unknown
+    });
+    expect((await reassignTask(as('lead'), plan.runId, 't-menu', { to: 'dev-3', reason: 'off the brief' })).to).toBe(
+      'dev-3'
+    );
+
+    const told = (await nextTask(as('dev-1'), plan.runId, 'developer')).messages.map(message => message.text).join(' ');
+    expect(told).toContain('t-menu was taken back by lead: off the brief — it is not yours now; it goes to dev-3');
+    await expect(reportProgress(as('dev-1', menu.token), plan.runId, 't-menu', {})).rejects.toMatchObject({
+      code: 'reassigned'
+    });
+    expect((await nextTask(as('dev-2'), plan.runId, 'developer')).task?.id).not.toBe('t-menu');
+    await expect(takeTask(as('dev-2'), plan.runId, 't-menu')).rejects.toMatchObject({ code: 'claimed' });
+    expect(await nextTask(as('dev-3'), plan.runId, 'developer')).toMatchObject({
+      task: { id: 't-menu' },
+      handedBy: { by: 'lead', reason: 'off the brief' }
+    });
+    const handed = await takeTask(as('dev-3'), plan.runId, 't-menu');
+
+    const mine = await reassignTask(as('lead'), plan.runId, 't-menu', { to: 'lead', reason: 'I finish it' });
+    expect(mine.taken?.work).toBeDefined();
+    expect(mine.from).toBe('dev-3');
+    await expect(reportProgress(as('dev-3', handed.token), plan.runId, 't-menu', {})).rejects.toMatchObject({
+      code: 'reassigned'
+    });
+    const log = await readRunLog((await loadRun(as('lead'), plan.runId)).paths);
+    expect(log.filter(entry => entry.action === 'reassign').map(entry => [entry.from, entry.to, entry.reason])).toEqual(
+      [
+        ['dev-1', 'dev-3', 'off the brief'],
+        ['dev-3', 'lead', 'I finish it']
+      ]
+    );
   });
 });
 

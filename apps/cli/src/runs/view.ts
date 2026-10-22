@@ -108,6 +108,7 @@ export interface Attention {
     | 'version'
     | 'left-in-tmp'
     | 'ui-waits'
+    | 'ui-queued'
     | 'held-up'
     | 'slow-review'
     | 'agents-needed'
@@ -148,6 +149,10 @@ export interface RunView {
   previewPort?: number;
   /** The agents with a token on the run: started again by it, never by their name (`identity.ts`). */
   identified: string[];
+  /** The run's scratch folder, whole: where each agent's token is kept (`RunPaths.scratch`). */
+  scratch: string;
+  /** Opened on a plan written before it: the lead's research is in no record of the run — the monitor says so. */
+  scopedBefore?: true;
 }
 
 /** What a wait is on: a file, or an answer to a proposal. */
@@ -269,7 +274,13 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   // Agents on demand: told to the lead when work waits for one and none running is free.
   const log = await readRunLog(loaded.paths);
   const identified = await identifiedAgents(loaded.paths);
-  attention.push(...agentsNeeded(views, started, runningAgents(log), { runId, identified }));
+  attention.push(
+    ...agentsNeeded(views, started, runningAgents(log), {
+      identified,
+      scratch: loaded.paths.scratch,
+      openFor: now.getTime() - Date.parse(record.openedAt)
+    })
+  );
   attention.push(...refusedAgain(log, now));
 
   for (const file of await leftInTmp(ctx.root, record)) {
@@ -519,7 +530,9 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     leads: record.leads ?? [],
     askingLeads: await askingLeads(loaded, now),
     ...(port === undefined ? {} : { previewPort: port }),
-    identified
+    identified,
+    scratch: loaded.paths.scratch,
+    ...(log.some(entry => entry.action === 'open' && entry.scoped === 'before') ? { scopedBefore: true as const } : {})
   };
 };
 

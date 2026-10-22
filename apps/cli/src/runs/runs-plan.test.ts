@@ -212,6 +212,21 @@ describe('a plan held to the rules', () => {
       expect.stringContaining('4 tasks change what a visitor sees, and 1 designer reviews the UI of 4 developers')
     );
     expect((await notices(2)).some(notice => notice.includes('change what a visitor sees'))).toBe(false);
+
+    // velada-fidelity: in a copy of a site each review measures every value — one designer for each developer.
+    const copying = async (designers: number) =>
+      (
+        await checkPlan(
+          bench.root,
+          { ...benchPlan(), reference: 'https://www.example.com' },
+          await readOwnership(bench.root),
+          teamOf(designers)
+        )
+      ).notices;
+    expect(await copying(2)).toContainEqual(
+      expect.stringContaining('one for every 1 in a copy of a site, each review measuring it against the original')
+    );
+    expect((await copying(4)).some(notice => notice.includes('change what a visitor sees'))).toBe(false);
   });
 
   it('expands a root with what it owns, says what is shared, and estimates it', async () => {

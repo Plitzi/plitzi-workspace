@@ -1,9 +1,13 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { AGENT_TOKEN } from './identity';
 import { activeRunFile, COPY_TASK_FILE, copyOf, runPaths } from './paths';
+
+import type { Command } from 'commander';
 
 /**
  * What each command of a run cost the agent that ran it — what it printed, which the agent reads as tokens, how long it
@@ -52,6 +56,37 @@ const readJsonSync = (file: string): unknown => {
   }
 };
 
+/** The token a command was given (`--token`, `PLITZI_TOKEN`), whatever the command: what its cost is counted as. */
+const tokenSaid = (args: readonly string[]): string | undefined => {
+  const at = args.findIndex(arg => arg === '--token' || arg.startsWith('--token='));
+  const said = at < 0 ? process.env.PLITZI_TOKEN : args[at].startsWith('--token=') ? args[at].slice(8) : args[at + 1];
+
+  return said?.trim() || undefined;
+};
+
+/**
+ * Who an agent's token says ran a command no run's context proved — `page measure`, `page shot`, `lint` — checked
+ * against the digest its run keeps, so a cost is never counted as another's: velada-fidelity's designer measured for
+ * minutes and none of it was in the usage, every line "unnamed" or missing.
+ */
+const tokenCaller = (cwd: string, args: readonly string[]): { runDir: string; by: string } | undefined => {
+  const [, run, agent, secret] = AGENT_TOKEN.exec(tokenSaid(args) ?? '') ?? [];
+  if (!run || !agent || !secret) {
+    return undefined;
+  }
+
+  const root = copyOf(cwd)?.root ?? cwd;
+  const paths = runPaths(root, run);
+  const identity = readJsonSync(path.join(paths.identities, `${agent}.json`));
+  const kept =
+    isRecord(identity) && typeof identity.digest === 'string' ? Buffer.from(identity.digest, 'hex') : undefined;
+  const given = createHash('sha256').update(secret).digest();
+
+  return kept && kept.length === given.length && timingSafeEqual(kept, given)
+    ? { runDir: paths.dir, by: agent }
+    : undefined;
+};
+
 /** Where a command not proved by a run's context belongs: the copy it ran in, or the project's open run, unnamed. */
 const runOfFolder = (cwd: string): { runDir: string; by: string } | undefined => {
   const copy = copyOf(cwd);
@@ -76,8 +111,9 @@ const runOfFolder = (cwd: string): { runDir: string; by: string } | undefined =>
  * command outside a run is nobody's cost to count. Never fails the command: a usage line not written is only not kept.
  */
 export const startUsage = (args: readonly string[], cwd: string, now: () => number = Date.now): void => {
-  // A command another command of the CLI runs (`task look`'s page checks and shots) is read by that one, not an agent.
-  if (process.env[USAGE_OFF] === '1') {
+  // A command another command of the CLI runs (`task look`'s page checks and shots) is read by that one, not an agent;
+  // one at a terminal by a person — `run monitor` redrawn for an hour was 2.6M "tokens" no agent read.
+  if (process.env[USAGE_OFF] === '1' || process.stdout.isTTY) {
     return;
   }
 
@@ -94,7 +130,10 @@ export const startUsage = (args: readonly string[], cwd: string, now: () => numb
   }
 
   process.once('exit', code => {
-    const where = caller.runDir && caller.by ? { runDir: caller.runDir, by: caller.by } : runOfFolder(cwd);
+    const where =
+      caller.runDir && caller.by
+        ? { runDir: caller.runDir, by: caller.by }
+        : (tokenCaller(cwd, args) ?? runOfFolder(cwd));
     // A run gone — finished, aborted — is never made again by its last command's line.
     if (!where || !existsSync(where.runDir)) {
       return;
@@ -142,5 +181,22 @@ export const readUsage = (runDir: string): UsageLine[] => {
       });
   } catch {
     return [];
+  }
+};
+
+/**
+ * Every command takes `--token`, not only a run's: the protocol is to pass it on each, and `page measure --token` was
+ * refused as an unknown option (velada-fidelity's designer). A command that is no run's reads it for its cost alone.
+ */
+export const acceptTokenEverywhere = (command: Command): void => {
+  for (const sub of command.commands) {
+    if (sub.commands.length > 0) {
+      acceptTokenEverywhere(sub);
+    } else if (!sub.options.some(option => option.long === '--token')) {
+      sub.option(
+        '--token <token>',
+        'Your token, in a run: what this command cost is counted as yours (or PLITZI_TOKEN)'
+      );
+    }
   }
 };

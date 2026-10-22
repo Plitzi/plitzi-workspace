@@ -6,6 +6,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { createExclusive, fingerprint, readOptional } from '../files';
 import { activeRunFile, runPaths } from '../paths';
 import { stopPreviewOf } from '../previewRecord';
+import { stopListenersUnder } from '../processes';
 import { RunRefusal } from '../refusal';
 import { activeRuns, readRecord } from './record';
 
@@ -109,12 +110,16 @@ export const releaseProject = async (root: string, runId: string): Promise<void>
 export const removeRun = async (ctx: RunContext, paths: RunPaths, runId: string): Promise<RemovedInputs> => {
   const inputs = (await readRecord(paths).catch(() => undefined))?.inputs ?? [];
   await stopPreviewOf(paths);
+  // What its agents started in their copies and left listening: stopped before the folders go from under them.
+  const servers = stopListenersUnder(paths.dir).map(
+    server => `:${String(server.port)} (${path.relative(paths.dir, server.cwd) || '.'})`
+  );
   await fs.rm(paths.dir, { recursive: true, force: true });
   await releaseProject(ctx.root, runId);
   // The runs' folder with the last of them: the project's tmp/ as the run found it. Another run in it, it stays.
   await fs.rmdir(path.dirname(paths.dir)).catch(() => undefined);
 
-  return removeInputs(ctx, inputs);
+  return { ...(await removeInputs(ctx, inputs)), servers };
 };
 
 export interface RemovedInputs {
@@ -122,13 +127,15 @@ export interface RemovedInputs {
   removed: string[];
   /** …or kept, changed since the run read them: the lead's to keep or remove. */
   kept: string[];
+  /** The servers left listening in its folders, stopped: `:49342 (tasks/t-vs-medal/cache/work)`. */
+  servers: string[];
 }
 
 /**
  * What the lead handed the run, removed with it when it is as the run read it — and the folders that held only them:
  * no plan, primer or amendment is left lying in the project.
  */
-const removeInputs = async (ctx: RunContext, inputs: RunRecord['inputs']): Promise<RemovedInputs> => {
+const removeInputs = async (ctx: RunContext, inputs: RunRecord['inputs']): Promise<Omit<RemovedInputs, 'servers'>> => {
   const removed: string[] = [];
   const kept: string[] = [];
   for (const input of inputs) {

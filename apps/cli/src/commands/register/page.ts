@@ -4,12 +4,14 @@ import { expectation, fill, positiveInteger, statusCode, timeZone, width, widths
 import { check } from '../check';
 import { importPage } from '../importPage';
 import { measure, sameProperties } from '../measure';
+import { pageSame } from '../same';
 import { shotEach, SHOT_MOMENTS } from '../shot';
 import { API_OPTION, DRY_RUN_OPTION, schemeOption, URL_OPTION, widthsOption } from './options';
 
 import type { CheckOptions } from '../check';
 import type { ImportOptions } from '../importPage';
 import type { MeasureOptions } from '../measure';
+import type { SameOptions } from '../same';
 import type { ShotOptions } from '../shot';
 import type { Command } from 'commander';
 
@@ -102,26 +104,46 @@ export const registerPage = (pageGroup: Command): void => {
   pageGroup
     .command('measure')
     .argument('<path>', 'The page: /combates')
-    .argument('<element>', 'Its element: a name, an id, or any selector')
-    .description(
-      'An element’s computed styles — type, colours, borders, radii, shadows, size, spacing — and, with --compare, beside another page’s'
+    .argument(
+      '<elements...>',
+      'Its elements, each by its id (fight-card-vs), #its-id or any selector — and, with --compare, the other page’s after "=>": "fight-card-vs => .vs-medal". All measured in one call'
     )
-    .option('--compare <url>', 'Another page — the site a copy is made after — whose element is measured beside it')
-    .option('--there <selector>', 'That page’s element, by any selector: the same name when left out')
+    .description(
+      'Elements’ computed styles — type, colours, borders, radii, shadows, size, spacing, motion, their ::before/::after — and, with --compare, beside another page’s: every element and width in one call'
+    )
+    .option('--compare <url>', 'Another page — the site a copy is made after — whose elements are measured beside them')
+    .option('--there <selector>', 'With one element: the other page’s, by any selector (or write it "ours => theirs")')
     .addOption(
       new Option(
         '--same <properties>',
-        'Fail unless these are as the other page’s — font-size,border (shorthands: border, font, size): an acceptance’s line, measured'
+        'Fail unless these are as the other page’s — font-size,border,before:background-image (shorthands: border, font, size): an acceptance’s line, measured'
       ).argParser(sameProperties)
     )
-    .addOption(new Option('--width <px>', 'The viewport width').argParser(width).default(1440, '1440'))
+    .addOption(widthsOption('The viewport widths, separated by commas: every element measured at each', [1440]))
     .addOption(schemeOption())
     .addOption(
       new Option('--timezone <zone>', 'The visitor’s time zone (IANA): the machine’s when left out').argParser(timeZone)
     )
+    .option(
+      '--fresh',
+      'Read the other page again, not what an earlier call kept of it (kept 6 h: a reference does not change within a run)'
+    )
     .option('--url <origin>', URL_OPTION)
     .option('--json', 'One object, for a tool or an agent')
-    .action((route: string, element: string, options: MeasureOptions) => measure(route, element, options));
+    .action((route: string, elements: string[], options: MeasureOptions) => measure(route, elements, options));
+
+  pageGroup
+    .command('same')
+    .argument('[paths...]', 'The pages: /about /writers. The home page when left out')
+    .description(
+      'Whether pages draw the same on two servers of the project — every element on screen, its box and its style read, not pictured: the run before a task and its copy'
+    )
+    .requiredOption('--url <origin>', 'The server read: the task’s copy')
+    .requiredOption('--than <origin>', 'The server it is held to: the run before it')
+    .addOption(new Option('--width <px>', 'The viewport width').argParser(width).default(1440, '1440'))
+    .addOption(schemeOption())
+    .option('--json', 'One object, for a tool or an agent')
+    .action((paths: string[], options: SameOptions) => pageSame(paths, options));
 
   pageGroup
     .command('shot')

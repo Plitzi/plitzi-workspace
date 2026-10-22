@@ -894,3 +894,30 @@ discard` takes several files, and says which went back when one of them is refus
   (`node-too-old`) and warns of one behind its line's security release (`node-unpatched`, with the patch to install). A project an older CLI made keeps the `engines` it wrote (`>=22.18`): the doctor says it
   (`engines-behind`) and `doctor --fix` raises it.
   `undici` is `^8.12.3` (its advisories of October 14–15, 2026), the transitive copies on their patched lines.
+- **Who calls a run is proved by its own token, in a task's copy too** (`@plitzi/cli`): a copy says the task, never who
+  — no token, an empty one (a `$(cat …)` that read nothing), a task's or one that is no agent's are refused
+  (`identity`, 26), and the CLI makes up no name: velada-fidelity's `--token ""` ran as "agent", took a task, and its
+  rework waited for no one. A holder's step is held to the task's owner; a started agent is named by its token's whole
+  path; `PLITZI_TOKEN` replaces `PLITZI_TASK_TOKEN`. Every command takes `--token` — a page measured is counted as the
+  agent's — and a command at a person's terminal is no agent's cost.
+- **The lead decides where a task goes, and reviews have their time** (`@plitzi/cli`): `task reassign <task> --reason
+"…" --to <agent>|lead` tells the agent why, stops the servers it left in the copy, and hands the task to one agent
+  (offered to it first, refused to the rest) or to the lead, who takes it. A UI review taken is its designer's 8
+  minutes, then another designer's or the lead's (the first told, its late verdict refused); one queued 5 minutes is
+  the lead's; `--changes … --skip-design lead` keeps the next round's UI review the lead's. A designer's rounds ask what
+  the task's title and acceptance cover — the rest is a notice — and its brief shows the task's checks as they ran.
+- **The CLI's own tools are fast, and measured** (`@plitzi/cli`): `page measure` takes every element (`"ours =>
+theirs"`) at every width in one call and one browser, reads the other page without a picture and keeps it 6 h
+  (`--fresh`), reads `::before`/`::after`, transform and transition, waits for hydration, says inherited differences
+  apart and `#name` finds an element — velada-fidelity's 108 s for six readings are 35 s cold, 3 s warm. `page same`
+  reads whether pages draw the same on two servers, and a look pictures only the shared file's pages that differ.
+  `run reference` takes a site of one scheme once a picture and says its progress. The report says each command's time
+  and median against its budget, and the agents' minutes inside the CLI; the bench keeps them.
+- **What a run leaves, it stops; what it says, it says whole** (`@plitzi/cli`): finishing, aborting or purging a run
+  stops the servers left listening in its copies; `run backlog done` works with no run open; `run open` with a plan
+  says it was scoped before the run (and the monitor shows it); a base agent gets 2 minutes to join before the lead is
+  told to start it; every last answer says "You can stop"; a refusal names its fix; a hydration error names the
+  elements drawn otherwise; a third party's images held back are its limit; `page shot --click … --clip …` pictures
+  what the click opened, and a tall comparison is cut section by section; a look says its browser's time zone
+  (`--timezone`); `run plan` says a check reading elements written outside its task's files, and asks one designer
+  per developer in a copy of a site.

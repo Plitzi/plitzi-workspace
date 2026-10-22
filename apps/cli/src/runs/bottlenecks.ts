@@ -1,3 +1,4 @@
+import { REVIEW_QUEUE_MS, REVIEW_TIMEOUT_MS } from './design';
 import { LEAD } from './messages';
 import { DESIGNER, DEVELOPER } from './team';
 import { isWorked } from './worked';
@@ -5,9 +6,6 @@ import { isWorked } from './worked';
 import type { TaskView } from './taskStore';
 import type { StartedAgent } from './team';
 import type { Attention } from './view';
-
-/** A review taken this long and not decided, while nobody else has work, is the lead's to chase. */
-const LONG_REVIEW_MINUTES = 10;
 
 /** Where a task another waits for is held past its work — in a review, sent back, blocked — or nothing while it is worked. */
 const heldIn = (view: TaskView): string | undefined =>
@@ -37,6 +35,18 @@ export const bottlenecks = (views: readonly TaskView[], started: readonly Starte
     view =>
       view.state.status === 'in-review' && view.state.design?.status === 'due' && view.state.design.by === undefined
   );
+  // One waiting past the queue's time is the lead's to review now, free designer or not: the run's time is its tasks'.
+  const queued = uiWaiting.filter(
+    view => now.getTime() - Date.parse(view.state.design?.since ?? view.state.updatedAt) >= REVIEW_QUEUE_MS
+  );
+  if (queued.length > 0) {
+    found.push({
+      kind: 'ui-queued',
+      text: `${queued.map(view => `${view.task.id} (${String(Math.round((now.getTime() - Date.parse(view.state.design?.since ?? view.state.updatedAt)) / 60_000))} min)`).join(', ')} ${queued.length === 1 ? 'has' : 'have'} waited past ${String(REVIEW_QUEUE_MS / 60_000)} min for a UI review nobody took: review ${queued.length === 1 ? 'it' : 'them'} yourself now, UI included (both schemes, the phone width) — plitzi task look ${queued[0].task.id}, then plitzi task review ${queued[0].task.id} --approve --skip-design lead | --changes "…"`,
+      who: 'lead'
+    });
+  }
+
   if (uiWaiting.length > 0 && designers.length > 0 && designers.every(agent => atOwn(agent) !== undefined)) {
     found.push({
       kind: 'ui-waits',
@@ -94,15 +104,20 @@ export const bottlenecks = (views: readonly TaskView[], started: readonly Starte
         : reviewer?.round === view.state.round && reviewer.by !== LEAD
           ? { by: reviewer.by, at: reviewer.at, what: 'review' }
           : undefined;
-    const minutes = taken ? Math.round((now.getTime() - Date.parse(taken.at)) / 60_000) : 0;
-    if (!taken || minutes < LONG_REVIEW_MINUTES || idleAll.length === 0) {
+    const held = taken ? now.getTime() - Date.parse(taken.at) : 0;
+    // Past the review's time it is no longer its reviewer's, idle team or not; under it, only while others sit free.
+    const past = held >= REVIEW_TIMEOUT_MS;
+    if (!taken || (!past && (held < REVIEW_TIMEOUT_MS / 2 || idleAll.length === 0))) {
       continue;
     }
 
+    const minutes = Math.round(held / 60_000);
     found.push({
       kind: 'slow-review',
       task: view.task.id,
-      text: `${taken.by} has had ${view.task.id}'s ${taken.what} ${String(minutes)} min while ${idleAll.join(', ')} ${idleAll.length === 1 ? 'has' : 'have'} nothing to take: ask where it stands and for a decision now (plitzi task message @${taken.by} "…") — or decide it yourself: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design lead' : ''} | --changes "…"`,
+      text: past
+        ? `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min, past the ${String(REVIEW_TIMEOUT_MS / 60_000)} a review is its reviewer's: ${taken.what === 'UI review' ? 'the next designer free takes it — or ' : ''}decide it yourself now: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design lead' : ''} | --changes "…"`
+        : `${taken.by} has had ${view.task.id}'s ${taken.what} ${String(minutes)} min while ${idleAll.join(', ')} ${idleAll.length === 1 ? 'has' : 'have'} nothing to take: ask where it stands and for a decision now (plitzi task message @${taken.by} "…") — or decide it yourself: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design lead' : ''} | --changes "…"`,
       who: 'lead'
     });
   }

@@ -5,16 +5,14 @@ What the lead does; the agents' half, the refusals and their exit codes are
 
 ## The lead
 
-0. **Inventory what the job asks, before a line of the plan.** Built after something — a site to copy, a design, a
-   brief — list every page, section and piece a visitor would miss — a logo, a live video, a tool, a footer's page,
-   what moves, how a control behaves, a size — as the plan's `inventory`
+0. **Inventory what the job asks, before a line of the plan.** Built after something — a site, a design, a brief —
+   list every page, section and piece a visitor would miss (a logo, what moves, a control, a size) as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
 "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
    piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`, naming sections no piece covers. **Research is a spike, yours** (no files). **Start with the scope**, `run open --spike "<ask>" --run <name> [--reference <site>]`; find out (`page shot --compare <original> --dress`, `page measure`) and end it with the tasks, each with what you found (`"findings"`): `task spike s-scope --done "…" --tasks <stage.json>`. Later: stack one (`run extend`); an agent's `task spike` is a block you lift with the answer (`task unblock --answer`). **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
-1. **Map the space:** `plitzi space overview` — who owns which file, read off the imports. A page owns the modules only
-   it imports; what two pages import (the tokens, the classes, a layout, a component) is **shared**, and so is every
-   entry (`src/space/index.ts`). `plitzi space impact <file>` — what depends on a file.
+1. **Map the space:** `plitzi space overview` — who owns which file. A page owns the modules only it imports; what two
+   pages import (tokens, classes, a layout, a component) is **shared**, and so is every entry. `plitzi space impact <file>` — what depends on a file.
 2. **Write the plan** (JSON, best in the project's `tmp/`: the run removes it and its other inputs with itself, unless
    changed since):
 
@@ -58,7 +56,8 @@ What the lead does; the agents' half, the refusals and their exit codes are
    first start). A tester adds `<id>-tests` after each developer task (`"tests": false` for none); a designer reviews
    the others' UI before you (`options.designReview`; `"designReview": false` turns it off). Yours is the complete,
    strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
-   `--skip-design lead|no-ui`). **One lead for every four agents**: `lead-2`… beside you, started when `run watch
+   `--skip-design lead|no-ui`; with `--changes`, `lead` keeps the next round's UI yours). A UI review held 8 min, or
+   queued 5, is yours: decide it. Take a task back any time: `task reassign <task> --reason "…" --to <agent>|lead`. **One lead for every four agents**: `lead-2`… beside you, started when `run watch
 --until lead` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`) and
    answers the questions it is handed, and stops when nothing is left. A lead's own files go in `tmp/plitzi-runs/<run>/scratch/<name>/`, gone with the run.
 
@@ -121,17 +120,17 @@ backlog done <id> --note "…"` closes one. **Close it:** write the summary (don
 
 - **A check you write, you run once** on the run's work first: a 404 page is `page check … --status 404`, a `--clip`
   names an id the page has. One that cannot pass costs every try of the task's.
-- **One look, one task**: two tasks dressing one section wait on each other.
+- **One look, one task**; its files are where its elements are built.
 - **A question first**: it holds an agent — answer before your own work. `run watch` in the harness's background
   (never `&`), one at a time.
 - **Say what is so, read from its source** (the original's CSS, `task show`, the run's approved version), never from a
   copy, a class name or memory; never answer one way and tell another — a file a task holds is no one else's.
-- **A value is measured, never typed**: in the scope, `plitzi page measure <path> <el> --compare <reference> --there
-"<sel>"` for each piece's sizes, type and colours; its acceptance holds them (`--same font-size,border`).
-- **Don't fix the CLI mid-run**: note what the tools did wrong (`run notice`), fix it after — debugging it held a
-  review 16 minutes.
+- **A value is measured, never typed**: in the scope, `plitzi page measure <path> "<el> => <sel>" … --compare
+<reference> --width 390,1440` (`::before`/`::after` too) for each piece; one line of its acceptance holds them
+  (`--same font-size,border,before:opacity`).
+- **A line of yours found wrong is amended** (`plitzi run amend`), never left red.
+- **Don't fix the CLI mid-run**: note it (`run notice`), fix it after.
 - **Look where it changed**: a fix for light in light, one for the phone at 390 (`task look --scheme light --width
 390`) — the look's default is light at 1440 and dark at 390.
 - **A round trimmed is said**: what it leaves goes to the backlog (`run notice`), never into one more round.
-- **The report before the finish** (`run report --summary --tokens …`); the dry finish is yours, `--apply` the
-  person's unless they allowed you (`--lead-finishes`) — never run it on your own.
+- **The report before the finish**; `--apply` is the person's unless they allowed you — never on your own.

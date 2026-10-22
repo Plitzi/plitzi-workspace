@@ -27,12 +27,12 @@ plitzi task take t-home --run es-launch --agent writer-1 --role writer --json   
 cd <work> && plitzi task context --files   # the brief, your files, their data's shape, how to call what they import
 ```
 
-Inside `work`, every command knows its task, run and agent (`tmp/plitzi-task.json`).
+Inside `work`, a command knows its task and run (`tmp/plitzi-task.json`) — never who you are.
 
 **Your token is who you are.** Your first command names you (`--agent design-1`) and answers your token
-(`<run>.@design-1.<secret>`, kept in the run's `scratch/design-1/token`): pass it on every command after (`--token …`).
-Your name alone, your token under another's name, a name or a role not the team's: refused (`identity`, 26). Lost it (a new
-context)? `--token "$(cat tmp/plitzi-runs/<run>/scratch/<you>/token)"`.
+(`<run>.@design-1.<secret>`) and the whole path it is kept at: pass it on **every** command after, in a task's copy too
+(`--token "$(cat <that path>)"`). No token, an empty one (a `$(cat …)` that read nothing), a task's, your name alone, your
+token under another's name, a name or a role not the team's: refused (`identity`, 26).
 
 - **Write only in `work`**, never in the project. Run the project's scripts there. The copy has no `node_modules` (it resolves the project's) and no `.env` — a warning about it is expected.
   **Look at your page:** `npx plitzi page check /pets --width 1440,390` (or `page shot`) from `work` serves the copy
@@ -47,8 +47,9 @@ context)? `--token "$(cat tmp/plitzi-runs/<run>/scratch/<you>/token)"`.
   task's of the same name with other rules meets yours only at the review (`class-conflict`), a round lost.
 - **Any other file** — shared (the entry, the theme, a layout), a done task's, or in no task: change it in your copy. At
   `complete`, if nobody holds it, it is yours by turns and goes into the run with you; if the run changed it meanwhile,
-  the two changes are put together line by line. Held by another, your change becomes a request (`plitzi task request
-<file> --summary "why"`), merged when you are approved. To hold it while
+  the two changes are put together line by line. Shared and held by another, your change becomes a request (`plitzi task
+request <file> --summary "why"`), merged when you are approved; **another task's own file**: wait for it, your change
+kept (`plitzi task wait <file> --follow`: it is yours once that task is approved), or propose the change to it. To hold it while
   you work: `plitzi task claim <file>`; answered `claimed` with `turn: "wait"` → `plitzi task wait <file>` and go on
   meanwhile (`--follow` to stay until it is yours). A file handed on to you arrives with what the run approved since
   your copy was made.
@@ -88,7 +89,8 @@ takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | 
 ## When an agent dies, and undoing
 
 `plitzi run attach <run>` picks a run up; a task whose copy is gone starts again from its last reviewed version.
-`plitzi task reassign <task>` cuts a task with no signal (its old token: `reassigned`). `plitzi run stop` lets the
+The lead takes a task back at any time — `plitzi task reassign <task> --reason "…" [--to <agent>|lead]`: you are told
+why on your next command, and stop (`reassigned`, 12); one handed to you comes first in your `task next`. `plitzi run stop` lets the
 tasks in hand finish; `run resume`. Before the final merge, `plitzi task revert <task> --reason "…"` takes a task's work
 out (what was built on it waits again), and `plitzi run restore <run> <file>` puts a file back from the backup. A person's: `stop --force`, `finish --apply`, `abort`
 (writes nothing, leaves the report), `purge`.

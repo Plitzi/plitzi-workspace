@@ -49,7 +49,8 @@ describe('plitzi run monitor', () => {
       monitorScreen(data, { selected: 0, open: false, width: 160, height: 60, now: bench.now(), showApproved: true })
     );
 
-    expect(screen[0]).toContain(`RUN ${runId} · OPEN · 1 of 4 approved`);
+    // Opened on a plan written before it: said, never a silently missing spike column.
+    expect(screen[0]).toContain(`RUN ${runId} · scoped before the run · OPEN · 1 of 4 approved`);
     // The board's default: what is left listed, the approved said in a line.
     expect(
       plain(monitorScreen(data, { selected: 0, open: false, width: 160, height: 60, now: bench.now() })).some(line =>

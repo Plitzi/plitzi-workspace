@@ -76,13 +76,20 @@ describe('who calls a run’s command, proved', () => {
     expect(await who({ kind: 'person' })).toEqual({ agent: 'person' });
   });
 
-  it('names a task’s caller by its token’s owner, and refuses another name on it', async () => {
-    expect(await who({ kind: 'task', holder: 'dev-1', fallback: 'agent' })).toEqual({ agent: 'dev-1' });
-    await expect(who({ kind: 'task', holder: 'dev-1', said: 'lead', fallback: 'agent' })).rejects.toMatchObject({
-      message: expect.stringContaining("This task's token is dev-1's") as unknown
+  it('never names a caller by a task’s token, nor by one that is no agent’s — it makes up no name', async () => {
+    // velada-fidelity: an empty `--token` read from the wrong folder ran as "agent" and took a task.
+    await expect(who({ kind: 'malformed', task: true })).rejects.toMatchObject({
+      code: 'identity',
+      message: expect.stringContaining("A task's token says which task, not who calls") as unknown
     });
-    // A token nobody holds now — cut, reassigned — is refused by the step it asks for; named as it was.
-    expect(await who({ kind: 'task', said: 'lead', fallback: 'dev-2' })).toEqual({ agent: 'dev-2' });
+    await expect(who({ kind: 'malformed', task: false })).rejects.toMatchObject({
+      code: 'identity',
+      message: expect.stringContaining("That is no agent's token") as unknown
+    });
+    await expect(who({ kind: 'name', said: 'agent' })).rejects.toMatchObject({ code: 'identity' });
+    await expect(who({ kind: 'none' })).rejects.toMatchObject({
+      message: expect.stringContaining(tokenFile(paths(), '<you>')) as unknown
+    });
   });
 
   it('takes only the team’s names, and holds each to its roles', async () => {
@@ -102,7 +109,9 @@ describe('who calls a run’s command, proved', () => {
   });
 
   it('says how to start an agent again: by its name the first time, by its kept token after', () => {
-    expect(callerFlag(RUN, 'dev-2', [])).toBe('--agent dev-2');
-    expect(callerFlag(RUN, 'dev-2', ['dev-2'])).toBe('--token "$(cat tmp/plitzi-runs/es-launch/scratch/dev-2/token)"');
+    expect(callerFlag(paths().scratch, 'dev-2', [])).toBe('--agent dev-2');
+    // By its whole path: the same from a task's copy as from the project.
+    expect(callerFlag(paths().scratch, 'dev-2', ['dev-2'])).toBe(`--token "$(cat ${tokenFile(paths(), 'dev-2')})"`);
+    expect(tokenFile(paths(), 'dev-2')).toBe(`${bench.root}/tmp/plitzi-runs/es-launch/scratch/dev-2/token`);
   });
 });

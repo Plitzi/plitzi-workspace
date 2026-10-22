@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import { fingerprint } from './files';
+import { agentAddress, LEAD, sendMessage } from './messages';
 import { RunRefusal } from './refusal';
 import { logRun } from './run';
 import { updateState } from './taskStore';
@@ -47,7 +48,9 @@ export const designReviewFor = (views: readonly TaskView[], agent: string, now: 
       view =>
         designDue(view.state) &&
         view.owner?.agent !== agent &&
-        (view.state.design?.by === undefined || view.state.design.by === agent) &&
+        (view.state.design?.by === undefined ||
+          view.state.design.by === agent ||
+          timedOut(view.state.design, now) !== undefined) &&
         !anothers(view)
     )
     .sort(
@@ -61,6 +64,27 @@ export const designReviewFor = (views: readonly TaskView[], agent: string, now: 
 
 /** How long a sent-back task's UI waits for the designer who said its round before, before another is offered it. */
 export const SAME_DESIGNER_MS = 3 * 60_000;
+
+/**
+ * How long a UI review is its designer's once taken: past it, another designer takes it, or the lead decides it — the
+ * designer told. velada-fidelity's design-1 held one 16 min, and a task waited 18 min queued behind it: the run's time
+ * went to one agent's review while the developers sat free.
+ */
+export const REVIEW_TIMEOUT_MS = 8 * 60_000;
+
+/** How long a UI review due waits untaken before the lead is told to review it itself. */
+export const REVIEW_QUEUE_MS = 5 * 60_000;
+
+/** The minutes a taken review is past its time, if it is: none while it is in time, or untaken. */
+export const timedOut = (design: DesignReview | undefined, now: number): number | undefined => {
+  if (design?.status !== 'due' || design.by === undefined || design.at === undefined) {
+    return undefined;
+  }
+
+  const held = now - Date.parse(design.at);
+
+  return held > REVIEW_TIMEOUT_MS ? Math.round(held / 60_000) : undefined;
+};
 
 /**
  * What a designer looks at, by how closely the team asks (`options.designReview`) — the run's skill (`runs.md`) says it
@@ -83,10 +107,11 @@ export const assertDesigner = (view: TaskView, agent: string): void => {
   const taskId = view.task.id;
   const { design } = view.state;
   if (design?.by !== undefined && design.by !== agent) {
-    throw new RunRefusal('claimed', `${design.by} reviews ${taskId}'s UI: it is theirs to say`, {
-      task: taskId,
-      holder: design.by
-    });
+    throw new RunRefusal(
+      'claimed',
+      `${design.by} reviews ${taskId}'s UI: it is theirs to say — a review taken is its designer's for ${String(REVIEW_TIMEOUT_MS / 60_000)} min, and one held past it goes to another. What you found, say for the next run: plitzi run notice "…" --on <element>`,
+      { task: taskId, holder: design.by }
+    );
   }
 
   if (workedBy(view, agent)) {
@@ -98,18 +123,32 @@ export const assertDesigner = (view: TaskView, agent: string): void => {
   }
 };
 
-/** `task next --take`, for a designer: the review it was offered, its own — false when another designer took it first. */
-export const takeDesignReview = async (ctx: RunContext, view: TaskView): Promise<boolean> => {
+/**
+ * `task next --take`, for a designer: the review it was offered, its own — false when another designer took it first.
+ * One another designer held past its time is taken from it: who it was is said back, for it to be told.
+ */
+export const takeDesignReview = async (
+  ctx: RunContext,
+  view: TaskView
+): Promise<{ taken: boolean; from?: string; minutes?: number }> => {
+  const now = ctx.now().getTime();
+  const before = view.state.design?.by;
+  const late = timedOut(view.state.design, now);
   const after = await updateState(
     view.paths,
     state =>
-      designDue(state) && state.design?.by === undefined && state.design
+      designDue(state) &&
+      state.design &&
+      (state.design.by === undefined || state.design.by === ctx.agent || timedOut(state.design, now) !== undefined)
         ? { ...state, design: { ...state.design, by: ctx.agent, at: ctx.now().toISOString() } }
         : state,
     ctx.now
   );
+  const taken = after.design?.by === ctx.agent;
 
-  return after.design?.by === ctx.agent;
+  return taken && before !== undefined && before !== ctx.agent && late !== undefined
+    ? { taken, from: before, minutes: late }
+    : { taken };
 };
 
 /**
@@ -168,6 +207,15 @@ export const designAtComplete = async (
     return {};
   }
 
+  // The lead sent it back saying its next look is the lead's own: no designer is offered it.
+  const reserved = view.state.design?.reserved;
+  if (reserved !== undefined) {
+    return {
+      design: { status: 'skipped', round: view.state.round, why: 'lead', by: reserved },
+      carried: `Its UI review this round is ${reserved}'s, as ${reserved} said sending it back: it comes to ${reserved} alone`
+    };
+  }
+
   // A designer does not review its own work: with no other in the team, the review would wait for no one.
   const team = await readTeam(loaded.paths.root);
   const holder = view.owner?.agent;
@@ -205,4 +253,35 @@ export const designAtComplete = async (
       since: new Date(now).toISOString()
     }
   };
+};
+
+/**
+ * A review offered to a designer, taken as its own — and logged; one another designer held past its time is taken from
+ * it, and that one is told on its next command. False when another designer took it first.
+ */
+export const takeOfferedReview = async (ctx: RunContext, loaded: LoadedRun, view: TaskView): Promise<boolean> => {
+  const took = await takeDesignReview(ctx, view);
+  if (!took.taken) {
+    return false;
+  }
+
+  if (took.from !== undefined) {
+    await sendMessage(ctx, loaded, {
+      from: LEAD,
+      to: agentAddress(took.from),
+      text: `${view.task.id}'s UI review went to ${ctx.agent}: you held it ${String(took.minutes)} min, past the ${String(REVIEW_TIMEOUT_MS / 60_000)} a review is a designer's — it is not yours now. What you found, say for the next run: plitzi run notice "…"`
+    });
+    await logRun(ctx, loaded.paths, {
+      action: 'review-timed-out',
+      task: view.task.id,
+      review: 'ui',
+      from: took.from,
+      to: ctx.agent,
+      minutes: took.minutes
+    });
+  }
+
+  await logRun(ctx, loaded.paths, { action: 'review-taken', task: view.task.id, review: 'ui' });
+
+  return true;
 };

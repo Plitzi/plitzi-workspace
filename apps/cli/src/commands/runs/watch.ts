@@ -44,7 +44,7 @@ export const runState = (options: RunCommandOptions): Promise<void> =>
         : runs
             .map(
               run =>
-                `${run.runId}: ${run.status}, ${String(run.done)} of ${String(run.total)} tasks done${run.activeOn ? ` on ${run.activeOn}` : ', released'}${run.attention > 0 ? `, ${String(run.attention)} needing attention` : ''}`
+                `${run.runId}: ${run.status}, ${String(run.done)} of ${String(run.total)} tasks done${run.activeOn ? ` on ${run.activeOn}` : ', released'}${run.attention > 0 ? `, ${String(run.attention)} needing attention` : ''} — each task, its agent and the files it holds: plitzi run status ${run.runId} (or plitzi task claims)`
             )
             .join('\n')
   );

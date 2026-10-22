@@ -1,4 +1,4 @@
-import { act, holder, runOf, taskOf } from './shell';
+import { act, holder, projectCaller, runOf, taskOf } from './shell';
 import { exchangeLines, messageLines } from './text';
 import { durationText, FOLLOW_MS } from '../../options';
 import { proposalsOf } from '../../runs/agreements';
@@ -175,7 +175,10 @@ export const runBacklog = (
           throw new RunRefusal('invalid', 'Name the item it closes: plitzi run backlog done b-3 --note "how"');
         }
 
-        return { closed: await closeBacklogItem(ctx, id, options.note), items: await openBacklog(ctx.root) };
+        return {
+          closed: await closeBacklogItem(ctx, id, await projectCaller(ctx, options), options.note),
+          items: await openBacklog(ctx.root)
+        };
       }
 
       if (action !== undefined) {

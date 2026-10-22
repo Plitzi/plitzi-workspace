@@ -67,7 +67,15 @@ export interface ShotOptions {
  * What a picture holds: the whole page (with its sections, which a diff is reported by), what the screen shows, or one
  * element. Every picture of one run — the first, a compared one, each frame — is taken the same way.
  */
-export type Framing = { kind: 'page' } | { kind: 'viewport' } | { kind: 'element'; selector: string };
+/**
+ * How a picture is framed. An element's clip a click or a step opens (an FAQ's answer) is found as each picture is taken
+ * (`later`): before the click it is not on the page, and the shot said "not on" (velada-fidelity's design-1).
+ */
+export type Framing =
+  | { kind: 'page' }
+  | { kind: 'viewport' }
+  | { kind: 'element'; selector: string }
+  | { kind: 'element-later'; target: string };
 
 export type RegionChange = { name: string; element?: string; changed: number; shift?: number };
 
@@ -96,6 +104,11 @@ export interface CompareReport {
   unloaded: number;
   sideBySide: string;
   diff: string;
+  /**
+   * A page too tall to read side by side whole: each section that changed most, cut from it, both sides — velada-
+   * fidelity's look wrote a 780×13779 picture whose top was no section at all.
+   */
+  sections?: string[];
 }
 
 export interface ShotReport {
@@ -117,7 +130,8 @@ export interface ShotReport {
   /** Where the page sent the browser instead — a page for signed-in visitors, to the sign-in: the picture is of that. */
   sentTo?: string;
   /** With `click`: each element clicked, and the share of the picture that changed after it. */
-  clicked?: { target: string; changed: number }[];
+  /** Each click, what it changed — or that it opened the clip, pictured alone after it (`opened`). */
+  clicked?: { target: string; changed: number; opened?: true }[];
   /** With `steps`: each picture the script took, and the share of it that changed since the one before. */
   steps?: { label: string; changed: number }[];
   /** The pictures after the first, each with what it shows — or, with `sheet`, the one sheet that holds them all. */
@@ -156,6 +170,8 @@ export interface View {
   standIns?: boolean;
   /** The visitor's time zone (IANA): the page as one there sees its hours — the machine's when left out. */
   timezone?: string;
+  /** Clicks or steps follow: a clip not on the page yet is one they open, found as each picture is taken. */
+  clipLater?: boolean;
 }
 
 export interface Taken {

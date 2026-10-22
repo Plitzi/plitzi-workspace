@@ -64,15 +64,17 @@ export const flowText = (metrics: RunMetrics): string[] => {
     '',
     `${String(cost.calls)} commands printed ≈${tokensText(cost.readTokens)} tokens to the agents${cost.tokens === undefined ? ' — the harness’s own count was not said (plitzi run report --tokens agent=count,…)' : `; the harness counted ${tokensText(cost.tokens)} in all`}.`,
     '',
+    `The agents spent ${String(cost.cliMinutes)} min inside the CLI's commands, waits left out — every second there is theirs times their calls.`,
+    '',
     ...(cost.byCommand.length > 0
       ? [
-          '| Command | Calls | Read (≈tokens) | Each |',
-          '| --- | --- | --- | --- |',
+          '| Command | Calls | Time (s) | Median call (s) | Read (≈tokens) | Each |',
+          '| --- | --- | --- | --- | --- | --- |',
           ...cost.byCommand
             .slice(0, 12)
             .map(
               each =>
-                `| ${each.command} | ${String(each.calls)} | ${tokensText(each.readTokens)} | ${tokensText(Math.round(each.readTokens / each.calls))} |`
+                `| ${each.command} | ${String(each.calls)} | ${String(each.seconds)} | ${String(each.medianSeconds)}${each.overBudget === undefined ? '' : ` ⚠ over ${String(each.overBudget)}`} | ${tokensText(each.readTokens)} | ${tokensText(Math.round(each.readTokens / each.calls))} |`
             ),
           ''
         ]

@@ -6,6 +6,7 @@ import { proposalsOf, unansweredTo } from '../agreements';
 import { cloneFiles, cloneServed, createExclusive, isCopied, projectFiles, writeJson } from '../files';
 import { handOver } from '../handOver';
 import { assertRoles } from '../identity';
+import { isPrincipal } from '../leads';
 import { COPY_TASK_FILE, isSecretFile, lockFile, under } from '../paths';
 import { dependenciesDone } from '../plan';
 import { RunRefusal } from '../refusal';
@@ -92,6 +93,20 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
       task: taskId,
       dependsOn: pending
     });
+  }
+
+  // Handed by the lead to one agent: no other takes it — the lead's word, not a race.
+  const handTo = view.state.handTo;
+  if (handTo && handTo.agent !== ctx.agent && !isPrincipal(ctx.agent)) {
+    throw new RunRefusal(
+      'claimed',
+      `Task "${taskId}" is handed to ${handTo.agent} by ${handTo.by}: take another (plitzi task next)`,
+      {
+        task: taskId,
+        holder: handTo.agent,
+        next: 'take the next one: plitzi task next'
+      }
+    );
   }
 
   if (view.state.status === 'blocked') {
@@ -222,6 +237,7 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
         ...state,
         status: takenStatus(state.status),
         cutAt: undefined,
+        handTo: undefined,
         notes: [
           ...state.notes,
           { at: at(ctx), by: ctx.agent, text: replaced ? `Taken over from ${replaced}, who had no signal` : 'Taken' }

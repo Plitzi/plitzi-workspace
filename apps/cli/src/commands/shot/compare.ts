@@ -146,6 +146,11 @@ export const compareText = (compare: CompareReport): string[] => {
   }
 
   lines.push(chalk.dim(`${compare.sideBySide}\n${compare.diff}`));
+  if (compare.sections) {
+    lines.push(
+      `The page is tall: the sections that changed most, each ours beside theirs — ${compare.sections.join(', ')}`
+    );
+  }
 
   return lines;
 };
@@ -162,7 +167,9 @@ export const cropToSection = async (
   /** The comparison's pictures, and the page's own (`-o`): a clip's picture is its section, never the whole page. */
   files: { sideBySide: string; diff: string; own: string },
   box: { y: number; height: number },
-  shift: number
+  shift: number,
+  /** Where the cut pair is written: over the whole one when left out. */
+  pairTo: string = files.sideBySide
 ): Promise<void> => {
   const read = async (file: string): Promise<string> =>
     `data:image/png;base64,${(await readFile(file)).toString('base64')}`;
@@ -207,10 +214,18 @@ export const cropToSection = async (
       theirs: Math.round(shift)
     }
   );
-  await writeFile(files.sideBySide, fromDataUrl(cut.pair));
-  await writeFile(files.diff, fromDataUrl(cut.diff));
-  await writeFile(files.own, fromDataUrl(cut.own));
+  await writeFile(pairTo, fromDataUrl(cut.pair));
+  if (pairTo === files.sideBySide) {
+    await writeFile(files.diff, fromDataUrl(cut.diff));
+    await writeFile(files.own, fromDataUrl(cut.own));
+  }
 };
+
+/** Past this height a page's side-by-side is read section by section, not whole. */
+const TALL_PAGE_PX = 4000;
+
+/** How many changed sections of a tall page are cut apart: the ones that changed most. */
+const SECTIONS_CUT = 4;
 
 /** The other site beside this page: section by section where each one is, and the words both have, measured. */
 export const compareWith = async (
@@ -296,9 +311,33 @@ export const compareWith = async (
     })
   );
 
+  // Too tall to read whole: the sections that changed most, each cut apart, ours beside theirs.
+  const sections: string[] = [];
+  if (Math.max(diff.heights.a, diff.heights.b) > TALL_PAGE_PX) {
+    const most = diff.regions
+      .filter(change => change.changed > 0)
+      .sort((a, b) => b.changed - a.changed)
+      .slice(0, SECTIONS_CUT);
+    for (const change of most) {
+      const box = regions.find(region => region.name === change.name);
+      if (box) {
+        const out = `${base}-compare-${change.name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}.png`;
+        await cropToSection(
+          taken.page,
+          { sideBySide: `${base}-compare.png`, diff: `${base}-diff.png`, own: `${base}-compare.png` },
+          box,
+          change.shift ?? 0,
+          out
+        );
+        sections.push(out);
+      }
+    }
+  }
+
   return {
     url: target,
     ...(kept ? { keptAt: kept.page.at } : {}),
+    ...(sections.length > 0 ? { sections } : {}),
     changed: diff.changed,
     heights: { here: diff.heights.a, there: diff.heights.b },
     ...(diff.driftFrom ? { driftFrom: diff.driftFrom } : {}),

@@ -34,7 +34,9 @@ describe('the bench of a project’s runs', () => {
     ]);
 
     expect(text[0]).toContain('| Run | Done | Worked (min) | Min / task | Rounds / task | Checks failed |');
-    expect(text[2]).toBe('| velada-polish | 7/7 | 50 | 7.1 | 2 | 44% | 6 (0) | 3.6 | — | 6 | 31 | 0 | 182k | — | 2 |');
+    expect(text[2]).toBe(
+      '| velada-polish | 7/7 | 50 | 7.1 | 2 | 44% | 6 (0) | 3.6 | — | 6 | 31 | 0 | 182k | — | 2 | — | — |'
+    );
     expect(text[3]).toContain('| velada-next | 7/7 | 50 | 7.1 | 1.2 | 20% |');
   });
 

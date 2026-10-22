@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { durationText, FOLLOW_MS } from '../../options';
 import { questionFor, takeQuestion } from '../answering';
-import { designReviewFor, hasDesignReview, takeDesignReview } from '../design';
+import { designReviewFor, hasDesignReview, takeOfferedReview } from '../design';
 import { createExclusive } from '../files';
 import { handOver } from '../handOver';
 import { assertRoles } from '../identity';
@@ -25,12 +25,12 @@ import { byUrgency } from '../urgency';
 import { isWorked } from '../worked';
 import { at, findTask, roleOf } from './common';
 import { allLocks } from './locks';
-import { baseFirst, reasonOf, spareNow, uiReviewsComing } from './nextRules';
+import { askedOf, baseFirst, lastAsked, reasonOf, spareNow, uiReviewsComing } from './nextRules';
 import { changesBlock } from './review';
 import { takeTask } from './take';
 
 import type { Message } from '../messages';
-import type { Quality, RunTask, TaskStatus } from '../model';
+import type { AcceptanceResult, Quality, RunTask, TaskStatus } from '../model';
 import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 import type { TakenTask } from './take';
@@ -61,6 +61,8 @@ export interface NextTask {
    * A designer's, before any task: one whose UI waits for its review — looked at as it went to review (`task look`),
    * then said (`task review --approve | --changes`). What it changed, for the look.
    */
+  /** Handed to this agent by the lead when it took it back from another (`task reassign --to`), and why. */
+  handedBy?: { by: string; reason?: string };
   designReview?: {
     task: RunTask;
     round: number;
@@ -79,6 +81,8 @@ export interface NextTask {
     copy: string;
     /** How closely the team asks it reviewed (`options.designReview` in team.json). */
     precision: Quality;
+    /** Its acceptance's checks at its `complete`: what is measured already — the review starts from what differs. */
+    accepted: AcceptanceResult[];
   };
   /**
    * A lead's that reviews (`--role lead`): a task in review no other lead took — what it changed, where it is drawn, and
@@ -222,6 +226,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
           : {}),
         ...(changesBlock(review.state, true) ? { lastRound: true } : {}),
         copy: review.paths.work,
+        accepted: review.state.accepted ?? [],
         precision: (await readTeam(ctx.root).catch(() => undefined))?.options?.designReview ?? DEFAULT_DESIGN_REVIEW
       },
       ready: [],
@@ -248,8 +253,24 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
 
     return undefined;
   };
-  const fitting = readyTasks(loaded.tasks, states, held).filter(task => forRole(task) && fits(task));
+  // A task the lead handed to one agent is that agent's alone, and comes first to it.
+  const handedTo = (task: RunTask): string | undefined => states.get(task.id)?.handTo?.agent;
+  const fitting = readyTasks(loaded.tasks, states, held)
+    .filter(task => forRole(task) && fits(task) && (handedTo(task) === undefined || handedTo(task) === ctx.agent))
+    .sort((a, b) => Number(handedTo(b) === ctx.agent) - Number(handedTo(a) === ctx.agent));
   const ready = fitting.filter(task => holderOfFile(task) === undefined);
+  const handed = ready.find(task => handedTo(task) === ctx.agent);
+  if (handed) {
+    const to = states.get(handed.id)?.handTo;
+
+    return {
+      task: handed,
+      ready: ready.map(task => task.id),
+      messages,
+      ...(to ? { handedBy: { by: to.by, ...(to.reason ? { reason: to.reason } : {}) } } : {})
+    };
+  }
+
   const waitingForFile = fitting.flatMap(task => {
     const holder = holderOfFile(task);
 
@@ -364,9 +385,11 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
                         ? ` (waits for ${view.task.dependsOn.filter(dependency => states.get(dependency)?.status !== 'done').join(', ')})`
                         : ''
                     }${
-                      view.owner
-                        ? ` (${view.owner.agent}${isDisconnected(view.task, view.signalAt, ctx.now()) ? ', no signal — the lead may reassign it' : ''})`
-                        : ''
+                      view.owner?.agent === ctx.agent && view.state.status === 'in-review'
+                        ? ' (yours: sent back, it comes to you here)'
+                        : view.owner
+                          ? ` (${view.owner.agent}${isDisconnected(view.task, view.signalAt, ctx.now()) ? ', no signal — the lead may reassign it' : ''})`
+                          : ''
                     }`
                 )
                 .join(', ')}${later}`;
@@ -391,10 +414,13 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
 
   return {
     // Finished, it says so: what is ready for other roles is no reason to wait.
+    // Every answer that ends an agent's part says the skills' words (velada-fidelity's agents waited for them).
     why:
       finished && roles !== undefined && open.length > 0
         ? `${loaded.tasks.some(forRole) ? `no task is left for a ${String(role)}: every one is done` : `no task in this run is a ${String(role)}'s`} — what is left is for others (${others.map(task => task.id).join(', ') || 'in their hands'}). You can stop`
-        : why,
+        : finished && roles !== undefined
+          ? `${why} — the lead's to finish. You can stop`
+          : why,
     ready: [],
     messages,
     ...(finished ? { finished: true, worked } : {})
@@ -495,7 +521,7 @@ const leadNext = async (
 
   const open = views.filter(view => view.state.status !== 'done');
   if (open.length === 0) {
-    return { why: 'every task is done: no review is left — you can stop', ready: [], messages, finished: true };
+    return { why: 'every task is done: no review is left. You can stop', ready: [], messages, finished: true };
   }
 
   const taken = views.filter(
@@ -550,9 +576,7 @@ export const takeNext = async (
         return { next };
       }
 
-      if (await takeDesignReview(ctx, await viewTask(loaded.paths, findTask(loaded, offered)))) {
-        await logRun(ctx, loaded.paths, { action: 'review-taken', task: offered, review: 'ui' });
-
+      if (await takeOfferedReview(ctx, loaded, await viewTask(loaded.paths, findTask(loaded, offered)))) {
         return { next };
       }
 
@@ -626,30 +650,6 @@ export const takeNext = async (
       tried.add(offered.id);
     }
   }
-};
-
-/** What a sent-back task's last review asked, by whom: handed with it, to its agent or to the one taking it over. */
-const lastAsked = (view: TaskView): string[] =>
-  view.state.notes
-    .filter(note => note.text.startsWith(`Review ${String(view.state.round)}: `))
-    .map(note => `${note.by}: ${note.text.slice(`Review ${String(view.state.round)}: `.length)}`);
-
-/**
- * What a task's reviews asked, as the next review is handed it: the last review's notes whole, the earlier ones counted —
- * each round's hand-off repeated every review before it whole (velada-now's t-boxer, round 4).
- */
-const askedOf = (notes: readonly { by: string; text: string }[]): { asked: string[]; earlier: number } => {
-  const reviews = notes.flatMap(note => {
-    const round = /^Review (\d+): /.exec(note.text)?.[1];
-
-    return round === undefined ? [] : [{ round: Number(round), line: `${note.by}: ${note.text}` }];
-  });
-  const last = Math.max(0, ...reviews.map(each => each.round));
-
-  return {
-    asked: reviews.filter(each => each.round === last).map(each => each.line),
-    earlier: reviews.filter(each => each.round !== last).length
-  };
 };
 
 export const followNext = async (
@@ -730,7 +730,7 @@ export const followNext = async (
       const why = spare ?? `no review came for ${durationText(idleMs)}: lead starts it again when the reviews queue up`;
       await logRun(ctx, runPaths(ctx.root, runId), { action: 'stops', why });
 
-      return { ...next, finished: true, why: `${why} — you can stop` };
+      return { ...next, finished: true, why: `${why}. You can stop` };
     }
 
     // Its wait's end is no state of its own: it is told to wait again, and stays waiting until it takes work or stops.

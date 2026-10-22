@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { namesServedCopy } from './acceptance';
+import { elementFileNotices } from './elementFiles';
 import { expectationNotices, notFoundNotices } from './expectations';
 import { exists } from './files';
 import { readHistory } from './history';
@@ -213,10 +214,17 @@ const pacedEstimate = async (
 export const DEVELOPERS_PER_DESIGNER = 3;
 
 /**
+ * …and in a copy of a site (`reference`), where each review measures every value against it: one each. velada-fidelity's
+ * two developers built four tasks in 22 minutes, and its one designer's reviews — 6 to 16 minutes each — held the run
+ * another hour.
+ */
+export const DEVELOPERS_PER_DESIGNER_COPYING = 1;
+
+/**
  * Too few designers for the UI to review, said before the run starts: la-velada's one designer beside four developers
  * left 21 tasks' UI to the lead. A designer that develops too is counted as a designer: it reviews first.
  */
-const designersNotice = (plan: Pick<RunPlan, 'tasks' | 'designReview'>, team: Team): string[] => {
+const designersNotice = (plan: Pick<RunPlan, 'tasks' | 'designReview' | 'reference'>, team: Team): string[] => {
   if (!reviewsDesign(team, plan)) {
     return [];
   }
@@ -225,13 +233,14 @@ const designersNotice = (plan: Pick<RunPlan, 'tasks' | 'designReview'>, team: Te
   const designers = agents.filter(each => each.roles.includes(DESIGNER)).length;
   const developers = agents.filter(each => !each.roles.includes(DESIGNER) && each.roles.includes(DEVELOPER)).length;
   const looked = plan.tasks.filter(task => reviewedAsUi(task.role, task.files)).length;
-  const needed = Math.ceil(developers / DEVELOPERS_PER_DESIGNER);
+  const perDesigner = plan.reference === undefined ? DEVELOPERS_PER_DESIGNER : DEVELOPERS_PER_DESIGNER_COPYING;
+  const needed = Math.min(Math.ceil(developers / perDesigner), looked);
   if (looked === 0 || designers >= needed) {
     return [];
   }
 
   return [
-    `${String(looked)} tasks change what a visitor sees, and ${String(designers)} designer${designers === 1 ? '' : 's'} review${designers === 1 ? 's' : ''} the UI of ${String(developers)} developers: one for every ${String(DEVELOPERS_PER_DESIGNER)} keeps the reviews from queueing — ${String(needed)} (plitzi run team set <designer entry> --roles designer --count ${String(needed)}). Fewer, and the lead reviews the rest itself (--skip-design lead) — a task that changes nothing a visitor sees goes as code (task complete --review code)`
+    `${String(looked)} tasks change what a visitor sees, and ${String(designers)} designer${designers === 1 ? '' : 's'} review${designers === 1 ? 's' : ''} the UI of ${String(developers)} developers: one for every ${String(perDesigner)}${plan.reference === undefined ? '' : ' in a copy of a site, each review measuring it against the original,'} keeps the reviews from queueing — ${String(needed)} (plitzi run team set <designer entry> --roles designer --count ${String(needed)}). Fewer, and the lead reviews the rest itself (--skip-design lead) — a task that changes nothing a visitor sees goes as code (task complete --review code)`
   ];
 };
 
@@ -596,6 +605,7 @@ export const checkPlan = async (
   created.forEach(file => notices.push(`${file} does not exist yet: the run makes it`));
   notices.push(...(await expectationNotices(root, plan.tasks)), ...(await notFoundNotices(root, plan.tasks)));
   notices.push(...sharedLookNotices(plan.tasks), ...unmeasuredNotices(plan.tasks, plan.reference));
+  notices.push(...(await elementFileNotices(root, plan.tasks)));
   // What reads a task's file and is in no task: changed under it, never by it — the lead's to plan, or to leave.
   const planned = new Set(tasks.flatMap(task => task.files));
   // One line a file a task changes — a data file read by every page is one notice, not one an importer.

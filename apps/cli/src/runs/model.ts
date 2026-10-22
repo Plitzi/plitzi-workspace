@@ -327,6 +327,11 @@ export interface TaskState {
   findings?: Finding[];
   /** The lead finding it out, once one took it (`task next --role lead --take`): another is not offered it. */
   spikedBy?: { by: string; at: string };
+  /**
+   * The agent the lead handed it to when it took it back (`task reassign --to <agent>`): offered to that one first, and
+   * taken by no other — until it takes it.
+   */
+  handTo?: { agent: string; by: string; at: string; reason?: string };
   updatedAt: string;
 }
 
@@ -344,6 +349,12 @@ export interface DesignReview {
    * brought asks of its own, and cost a round (velada-polish's t-match-bars).
    */
   before?: string;
+  /**
+   * The lead that sent it back saying it reviews the next round's UI itself (`--changes … --skip-design lead`): that
+   * round comes to the lead, never to a designer (velada-fidelity's t-result-card went to design-1 after the lead said
+   * it was its own, and the lead took it from under it).
+   */
+  reserved?: string;
   /** When it came due: what the wait for the designer before is counted from. */
   since?: string;
 }
@@ -614,6 +625,11 @@ export const isTaskState = (value: unknown): value is TaskState =>
   value.notes.every(isNote) &&
   optional(value.findings, (findings: unknown) => Array.isArray(findings) && findings.every(isFinding)) &&
   optional(value.spikedBy, (by: unknown) => isRecord(by) && isString(by.by) && isString(by.at)) &&
+  optional(
+    value.handTo,
+    (to: unknown) =>
+      isRecord(to) && isString(to.agent) && isString(to.by) && isString(to.at) && optional(to.reason, isString)
+  ) &&
   optional(value.changed, isStrings) &&
   optional(value.submitted, isDigests) &&
   optional(
@@ -637,7 +653,8 @@ export const isTaskState = (value: unknown): value is TaskState =>
       optional(design.at, isString) &&
       optional(design.why, isDesignSkip) &&
       optional(design.before, isString) &&
-      optional(design.since, isString)
+      optional(design.since, isString) &&
+      optional(design.reserved, isString)
   ) &&
   optional(
     value.reviewer,

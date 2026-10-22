@@ -272,6 +272,8 @@ export const openRun = async (
     ...(plan.inventory ? { inventory: plan.inventory.length } : {}),
     ...(checked.leftOut.length > 0 ? { leftOut: checked.leftOut } : {}),
     notices: checked.notices.length,
+    // Opened on a plan written before it, the lead's research is in no record of the run: said, and shown as such.
+    ...(checked.tasks.some(task => task.spike !== undefined) ? {} : { scoped: 'before' }),
     ...(failing.length > 0 ? { failingBefore: failing, despiteChecks } : {})
   });
 

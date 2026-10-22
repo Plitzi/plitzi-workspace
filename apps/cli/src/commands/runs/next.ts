@@ -5,6 +5,7 @@ import { messageLines } from './text';
 import { FOLLOW_MS } from '../../options';
 import { DESIGN_LOOK } from '../../runs/design';
 import { isPrincipal } from '../../runs/leads';
+import { acceptanceText } from '../../runs/model';
 import { DESIGN_READING } from '../../runs/reading';
 import { nextTask, followNext, takeNext, takeTask } from '../../runs/tasks';
 
@@ -73,6 +74,11 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>): string
     // Beside the run before it, measured — its dress too — and the copy served for it: what a designer rebuilt by hand.
     `  Look at it as it went to review, beside the run before it: plitzi task look ${review.task.id} ${review.pages.length > 0 ? review.pages.join(' ') : '<page…>'} --before${review.pages.length > 0 ? '' : '   # no page of the space owns its files: name the ones it shows on'}`,
     `  Look for (${review.precision}, as the team asks — options.designReview) ${DESIGN_LOOK[review.precision]} — before your first review, read ${DESIGN_READING.join(', ')}`,
+    `  Send it back only for what its title and acceptance cover — anything beyond it is plitzi run notice "…", never a round: ${review.task.acceptance.map(acceptanceText).join(' · ')}`,
+    // What its own checks measured at complete: the review starts from what fails, not by measuring all of it again.
+    ...review.accepted.map(
+      result => `    ${result.ok ? chalk.green('✓') : chalk.red('✗')} ${result.said}  ${chalk.dim(`[${result.check}]`)}`
+    ),
     ...(review.lastRound
       ? [
           chalk.yellow(
@@ -165,7 +171,14 @@ const nextText = (next: NextTask, agent: string): string =>
                   ].join('\n')
                 : next.handOff
                   ? [...handOffLines(next), '  Take it over: plitzi task next --take'].join('\n')
-                  : `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task take ${next.task.id}`
+                  : [
+                      `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task take ${next.task.id}`,
+                      ...(next.handedBy
+                        ? [
+                            `  Handed to you by ${next.handedBy.by}, taken back from another${next.handedBy.reason ? `: ${next.handedBy.reason}` : ''} — no other agent takes it`
+                          ]
+                        : [])
+                    ].join('\n')
               : [
                   String(next.why),
                   ...(next.worked ?? []).map(
@@ -189,8 +202,7 @@ const takenText = (taken: TakenTask): string =>
     `  Write only in its copy: ${taken.work} — what is yours beside the work (a script, a log, a picture) in its tmp/, never the project's`,
     `  Its files: ${taken.files.join(', ')}`,
     ...(taken.resumedFrom !== undefined ? [`  Resumed from the version review ${String(taken.resumedFrom)} saw`] : []),
-    `  Run its commands in its copy — cd ${taken.work} — and they know the task: start with plitzi task context`,
-    `  Anywhere else, its token: --token ${taken.token}`,
+    `  Run its commands in its copy — cd ${taken.work} — with your token, and they know the task: start with plitzi task context`,
     '  Done: plitzi task complete, in the copy'
   ].join('\n');
 
@@ -201,7 +213,7 @@ export const taskTake = (taskId: string, options: RunCommandOptions & { role?: s
       const runId = await runOf(ctx, options);
       const taken = await takeTask(ctx, runId, taskId, options.role);
 
-      return { ...taken, run: runId, env: `PLITZI_TASK_TOKEN=${taken.token}` };
+      return { ...taken, run: runId };
     },
     takenText
   );

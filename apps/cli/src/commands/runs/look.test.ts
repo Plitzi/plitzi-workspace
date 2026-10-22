@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkWithInteraction, comparedOf, viewsAsked } from './review';
+import { checkWithInteraction, comparedOf, samePaths, viewsAsked } from './review';
 
 // velada-dress: /artistas's new light read "0.1% differs" beside the run before it — a soft light is under the
 // pictures' tolerance; its dress is not.
@@ -68,5 +68,23 @@ describe('task look --width and --scheme', () => {
   it('refuses what is no width or no scheme', () => {
     expect(() => viewsAsked({ width: 'wide' })).toThrow('widths in px');
     expect(() => viewsAsked({ scheme: 'sepia' })).toThrow('light, dark, or both');
+  });
+});
+
+// velada-fidelity: a look pictured nine pages a shared file reached, for two tokens added — 204 s.
+describe('the pages a look reads the same on both servers', () => {
+  it('are the ones page same said draw the same — none from an answer it cannot read', () => {
+    expect(
+      samePaths(
+        `· starting\n${JSON.stringify({
+          pages: [
+            { path: '/', same: true },
+            { path: '/combates', same: false },
+            { path: '/artistas', same: true }
+          ]
+        })}`
+      )
+    ).toEqual(['/', '/artistas']);
+    expect(samePaths('Refused (invalid): nothing answers')).toEqual([]);
   });
 });

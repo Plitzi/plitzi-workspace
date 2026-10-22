@@ -121,7 +121,7 @@ export const monitorScreen = (
   const head = [
     chalk.inverse(
       cell(
-        ` RUN ${view.runId}${stage ? ` · stage ${String(stage.of)}: ${stage.name}` : ''} · ${view.status.toUpperCase()} · ${String(view.done)} of ${String(view.total)} approved${view.expectedEnd ? ` · expected end ${hhmm(view.expectedEnd)} UTC` : ''} · ${hhmm(now.toISOString())} UTC`,
+        ` RUN ${view.runId}${stage ? ` · stage ${String(stage.of)}: ${stage.name}` : ''}${view.scopedBefore ? ' · scoped before the run' : ''} · ${view.status.toUpperCase()} · ${String(view.done)} of ${String(view.total)} approved${view.expectedEnd ? ` · expected end ${hhmm(view.expectedEnd)} UTC` : ''} · ${hhmm(now.toISOString())} UTC`,
         width
       )
     ),

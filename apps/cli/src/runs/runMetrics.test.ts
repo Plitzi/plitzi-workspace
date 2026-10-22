@@ -89,7 +89,19 @@ describe('a run measured from its records', () => {
     expect(metrics.questions).toEqual({ asked: 1, answered: 1, waits: [0.5] });
     expect(metrics.cost.repeated).toEqual([{ by: 'dev-1', command: 'plitzi task check', times: 3, within: 0.4 }]);
     expect(metrics.cost).toMatchObject({ calls: 4, readTokens: 6000, tokens: 208_061 });
-    expect(metrics.cost.byCommand[0]).toEqual({ command: 'task check', calls: 3, readTokens: 3000 });
+    expect(metrics.cost.byCommand.find(each => each.command === 'task check')).toEqual({
+      command: 'task check',
+      calls: 3,
+      readTokens: 3000,
+      seconds: 27,
+      medianSeconds: 9
+    });
+  });
+
+  // Carlos: every second an agent spends inside the CLI is multiplied by agents and calls — measured, against a budget.
+  it('says the time spent inside the CLI by command, the slowest first, and a median past its budget', () => {
+    expect(metrics.cost.byCommand[0]).toMatchObject({ command: 'task look', seconds: 90, overBudget: 60 });
+    expect(metrics.cost.cliMinutes).toBe(2);
   });
 
   it('names a command by what it is, not what it is about', () => {

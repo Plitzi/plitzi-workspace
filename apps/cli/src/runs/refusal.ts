@@ -38,8 +38,8 @@ const NEXT_STEP: Record<RefusalCode, string> = {
   'person-only': 'ask a person to run it in their own terminal',
   conflict:
     'the lead decides, from what the message offers; a task takes the run’s version (plitzi task discard <file>) and redoes its change on it; never write conflict markers',
-  'checks-failed': 'fix what the output names, then complete again',
-  invalid: 'fix what the output names',
+  'checks-failed': 'fix each step marked ✗ below, then complete again (plitzi task check runs them without completing)',
+  invalid: 'do what the refusal above says, then run the command again',
   'not-found': 'check the name: plitzi run state lists the runs and their tasks',
   'other-machine':
     'the run is active on another machine: release it there (plitzi run release), or a person takes it over',

@@ -10,6 +10,12 @@ import type { Framing, Moment, Taken } from './types';
  * An interaction pictured step by step: clicks, waits, frames and shots, as `--steps` writes them.
  */
 
+/** A PNG's width and height, read off its header: two pictures of different framing are not compared share by share. */
+const sizeOf = (png: Uint8Array): string =>
+  png.length < 24
+    ? ''
+    : `${String(new DataView(png.buffer, png.byteOffset).getUint32(16))}x${String(new DataView(png.buffer, png.byteOffset).getUint32(20))}`;
+
 /**
  * Each element clicked in turn, and the page pictured after it — `frames` pictures `every` ms apart, or one. What a
  * click changed is measured against the picture before it: nothing at all is said, as a click that did nothing.
@@ -19,9 +25,11 @@ export const clickThrough = async (
   how: Framing,
   clicks: readonly string[],
   { frames, every }: { frames: number; every: number }
-): Promise<{ moments: Moment[]; clicked: { target: string; changed: number }[] } | { problem: string }> => {
+): Promise<
+  { moments: Moment[]; clicked: { target: string; changed: number; opened?: true }[] } | { problem: string }
+> => {
   const moments: Moment[] = [{ label: 'before', png: taken.png }];
-  const clicked: { target: string; changed: number }[] = [];
+  const clicked: { target: string; changed: number; opened?: true }[] = [];
   for (const target of clicks) {
     const read = await targetOn(taken.page, target);
     if ('problem' in read) {
@@ -49,7 +57,12 @@ export const clickThrough = async (
     }
 
     const after = moments[moments.length - 1].png;
-    clicked.push({ target, changed: (await comparePictures(taken.page, dataUrl(before), dataUrl(after))).changed });
+    // A clip the click opened is pictured alone after it, the page before it: no share of one picture to say — opened.
+    clicked.push(
+      sizeOf(before) === sizeOf(after)
+        ? { target, changed: (await comparePictures(taken.page, dataUrl(before), dataUrl(after))).changed }
+        : { target, changed: 100, opened: true }
+    );
   }
 
   return { moments, clicked };

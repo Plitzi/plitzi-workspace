@@ -80,6 +80,19 @@ describe('an image its host held back (429)', () => {
       throttledImage({ code: 'broken-link', message: 'https://cdn.example.com/flags/es.svg' }, throttled)
     ).toBeUndefined();
   });
+
+  // velada-fidelity: "64 images from cdn.infolavelada.com did not load" names no address, and failed every check.
+  it('is the host’s too when its images are said together, and it held back any of them', () => {
+    const grouped = (host: string) => ({
+      code: 'image-not-loaded',
+      message: `64 images from ${host} did not load (illojuan-640.webp, es.svg, thegrefg-640.webp, …) — its server is slow, refuses this browser, or never answers`
+    });
+
+    expect(throttledImage(grouped('cdn.example.com'), new Set(['https://cdn.example.com/flags/es.svg']))).toBe(
+      'cdn.example.com'
+    );
+    expect(throttledImage(grouped('cdn.example.com'), new Set(['https://other.example.com/a.png']))).toBeUndefined();
+  });
 });
 
 // velada-polish: a CDN rate-limiting every request — connections reset, never answered — failed dev-1's checks three

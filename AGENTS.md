@@ -510,6 +510,10 @@ Academy lessons are seeds, and fail there first (`docs/en/releases.md` § Publis
   or spawn with `TREE` and stop the group. Vitest's `Timeout terminating forks worker for <file>` names the file.
 - Lint is the package's `yarn lint`, never `eslint <files>` from a script: a file-by-file run printed nothing where the
   package's found eight errors.
+- The CLI run from its source (`node --import tsx apps/cli/src/index.ts …`) breaks a function handed to
+  `page.evaluate` that declares a named function inside (`const load = () => …`): tsx wraps it in `__name`, which the
+  page has not (`ReferenceError: __name is not defined`). Try anything a browser runs with the built CLI
+  (`yarn build:dev`, `node apps/cli/dist/index.js …`).
 
 ## Documentation — one owner per fact
 

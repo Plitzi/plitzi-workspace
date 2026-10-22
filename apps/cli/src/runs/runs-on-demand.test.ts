@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { STARTING_MS } from './onDemand';
 import { isRunRefusal } from './refusal';
 import { openRun } from './run';
 import { completeTask, followNext, nextTask, takeTask } from './tasks';
@@ -45,7 +46,9 @@ describe('agents on demand', () => {
     ]);
     await openRun(lead(), await bench.writePlan(benchPlan()));
 
-    // Nobody running: the one that starts with the run first.
+    // Nobody running: the one that starts with the run first — once it had time to join, never the moment it opens.
+    expect((await viewRun(lead(), 'es-launch')).attention.map(item => item.kind)).not.toContain('agents-needed');
+    bench.advance(STARTING_MS);
     expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
       expect.objectContaining({
         kind: 'agents-needed',

@@ -36,6 +36,9 @@ export interface BenchLine {
   tokensPerTask?: number;
   /** Calls one agent made again and again (`runMetrics.ts`'s repeated). */
   repeated: number;
+  /** Minutes the agents spent inside the CLI, waits left out — and how many commands ran past their budget. */
+  cliMinutes?: number;
+  overBudget?: number;
 }
 
 const median = (values: readonly number[]): number | undefined => {
@@ -85,7 +88,9 @@ export const benchOf = (report: RunReport, cli: string): BenchLine => {
           tokens: metrics.cost.tokens,
           ...(done > 0 ? { tokensPerTask: Math.round(metrics.cost.tokens / done) } : {})
         }),
-    repeated: metrics.cost.repeated.length
+    repeated: metrics.cost.repeated.length,
+    cliMinutes: metrics.cost.cliMinutes,
+    overBudget: metrics.cost.byCommand.filter(each => each.overBudget !== undefined).length
   };
 };
 
@@ -125,10 +130,10 @@ export const benchText = (lines: readonly BenchLine[]): string[] =>
   lines.length === 0
     ? ['No run of this project was measured yet: each report keeps its run’s measures beside it.']
     : [
-        '| Run | Done | Worked (min) | Min / task | Rounds / task | Checks failed | Refused (identity) | UI wait | Lead wait | Rework wait | Agents waited | Handed off | Read | Tokens / task | Repeated |',
-        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+        '| Run | Done | Worked (min) | Min / task | Rounds / task | Checks failed | Refused (identity) | UI wait | Lead wait | Rework wait | Agents waited | Handed off | Read | Tokens / task | Repeated | In the CLI (min) | Over budget |',
+        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
         ...lines.map(
           line =>
-            `| ${line.runId} | ${String(line.done)}/${String(line.tasks)} | ${cell(line.workMinutes)} | ${cell(line.minutesPerTask)} | ${String(line.roundsPerTask)} | ${String(line.checksFailedPct)}% | ${String(line.refusals)} (${String(line.identityRefusals)}) | ${cell(line.uiWaitMedian)} | ${cell(line.leadWaitMedian)} | ${cell(line.reworkWaitMedian)} | ${String(line.agentsWaited)} | ${String(line.handOffs)} | ${tokens(line.readTokens)} | ${tokens(line.tokensPerTask)} | ${String(line.repeated)} |`
+            `| ${line.runId} | ${String(line.done)}/${String(line.tasks)} | ${cell(line.workMinutes)} | ${cell(line.minutesPerTask)} | ${String(line.roundsPerTask)} | ${String(line.checksFailedPct)}% | ${String(line.refusals)} (${String(line.identityRefusals)}) | ${cell(line.uiWaitMedian)} | ${cell(line.leadWaitMedian)} | ${cell(line.reworkWaitMedian)} | ${String(line.agentsWaited)} | ${String(line.handOffs)} | ${tokens(line.readTokens)} | ${tokens(line.tokensPerTask)} | ${String(line.repeated)} | ${cell(line.cliMinutes)} | ${cell(line.overBudget)} |`
         )
       ];

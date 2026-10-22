@@ -64,7 +64,10 @@ export const inputLines = (inputs: RemovedInputs | undefined): string[] => [
   ...(inputs && inputs.removed.length > 0
     ? [`Removed with the run, as you handed them: ${inputs.removed.join(', ')}`]
     : []),
-  ...(inputs && inputs.kept.length > 0 ? [`Kept — changed since the run read them: ${inputs.kept.join(', ')}`] : [])
+  ...(inputs && inputs.kept.length > 0 ? [`Kept — changed since the run read them: ${inputs.kept.join(', ')}`] : []),
+  ...(inputs && inputs.servers.length > 0
+    ? [`Stopped, left listening in its copies: ${inputs.servers.join(', ')}`]
+    : [])
 ];
 
 /** A time as the run says one: hours and minutes, in UTC. */

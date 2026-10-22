@@ -34,7 +34,7 @@ const plitzi = (
     const child = execFile(
       process.execPath,
       ['--import', TSX, CLI, ...args, ...(json ? ['--json'] : [])],
-      { cwd, env: { ...process.env, PLITZI_TASK_TOKEN: '', PLITZI_JSON: '', ...env }, timeout: 60_000 },
+      { cwd, env: { ...process.env, PLITZI_TOKEN: '', PLITZI_AGENT: '', PLITZI_JSON: '', ...env }, timeout: 60_000 },
       (error, stdout) => {
         const last = stdout.trim().split('\n').at(-1) ?? '{}';
         let json: Record<string, unknown> = {};
@@ -60,6 +60,10 @@ beforeEach(async () => {
   });
 });
 
+/** An agent's token, as its first command kept it: what each of its commands after passes. */
+const tokenOf = async (agent: string): Promise<string> =>
+  (await bench.read(`tmp/plitzi-runs/es-launch/scratch/${agent}/token`))?.trim() ?? '';
+
 /** The run opened, and the lead's token it answered: what every lead's command passes. */
 const openRun = async (): Promise<string> => {
   const opened = await plitzi(bench.root, ['run', 'open', await bench.writePlan(benchPlan())]);
@@ -73,7 +77,7 @@ afterEach(async () => {
 });
 
 describe('plitzi run and plitzi task, as processes', () => {
-  it('opens a run, hands out a token, refuses a second taker with 10, and completes with the token alone', async () => {
+  it('opens a run, hands out a token, refuses a second taker with 10, and completes in the copy with its own token', async () => {
     const plan = await bench.writePlan(benchPlan());
 
     expect((await plitzi(bench.root, ['run', 'plan', plan])).json).toMatchObject({ runId: 'es-launch' });
@@ -81,7 +85,6 @@ describe('plitzi run and plitzi task, as processes', () => {
 
     const taken = await plitzi(bench.root, ['task', 'take', 't-about', '--agent', 'dev-1']);
     expect(taken.code).toBe(0);
-    const token = String(taken.json.token);
     const work = String(taken.json.work);
 
     const second = await plitzi(bench.root, ['task', 'take', 't-about', '--agent', 'dev-2']);
@@ -95,7 +98,7 @@ describe('plitzi run and plitzi task, as processes', () => {
 `
     );
     // From inside its own copy, which has a package.json of its own: the project is still the one it belongs to.
-    const completed = await plitzi(work, ['task', 'complete'], { PLITZI_TASK_TOKEN: token });
+    const completed = await plitzi(work, ['task', 'complete'], { PLITZI_TOKEN: await tokenOf('dev-1') });
     expect(completed.code).toBe(0);
     expect(completed.json).toMatchObject({ changed: ['src/space/pages/about.ts'] });
   }, 120_000);
@@ -108,7 +111,7 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect(finish.code).toBe(REFUSAL_EXIT_CODES['person-only']);
 
     expect((await plitzi(bench.root, ['task', 'reassign', 't-about', '--token', lead])).code).toBe(0);
-    const stale = await plitzi(bench.root, ['task', 'heartbeat'], { PLITZI_TASK_TOKEN: String(taken.json.token) });
+    const stale = await plitzi(String(taken.json.work), ['task', 'heartbeat', '--token', await tokenOf('dev-1')]);
     expect(stale.code).toBe(REFUSAL_EXIT_CODES.reassigned);
   }, 120_000);
 
@@ -131,7 +134,12 @@ describe('plitzi run and plitzi task, as processes', () => {
     await openRun();
     const taken = await plitzi(bench.root, ['task', 'take', 't-about', '--agent', 'dev-1']);
 
-    const brief = await plitzi(String(taken.json.work), ['task', 'context', '--files'], {}, { json: false });
+    const brief = await plitzi(
+      String(taken.json.work),
+      ['task', 'context', '--files', '--token', await tokenOf('dev-1')],
+      {},
+      { json: false }
+    );
     const said = String(brief.json.stdout);
     expect(said).toContain('── src/space/pages/about.ts (4 lines)');
     expect(said).toContain('../../data/menu.json');
@@ -142,30 +150,28 @@ describe('plitzi run and plitzi task, as processes', () => {
     const lead = await openRun();
     const taken = await plitzi(bench.root, ['task', 'take', 't-about', '--agent', 'dev-1']);
     const work = String(taken.json.work);
+    const dev = { PLITZI_TOKEN: await tokenOf('dev-1') };
 
-    // No token, no run, no agent said: the copy says who it is.
-    const context = await plitzi(work, ['task', 'context']);
+    // Its token says who; the copy says which task — no task, no run said.
+    const context = await plitzi(work, ['task', 'context'], dev);
     expect(context).toMatchObject({ code: 0 });
     expect(context.json).toMatchObject({ task: { id: 't-about' } });
 
-    const told = await plitzi(
-      work,
-      ['task', 'tell', '-'],
-      {},
-      { input: 'The "about" page keeps its "id": it is linked.' }
-    );
+    const told = await plitzi(work, ['task', 'tell', '-'], dev, {
+      input: 'The "about" page keeps its "id": it is linked.'
+    });
     expect(told.code).toBe(0);
     const inbox = await plitzi(
       bench.root,
       ['task', 'inbox'],
-      { PLITZI_JSON: '1', PLITZI_TASK_TOKEN: lead },
+      { PLITZI_JSON: '1', PLITZI_TOKEN: lead },
       { json: false }
     );
     expect(inbox.json).toMatchObject({
       messages: [{ from: 't-about', text: 'The "about" page keeps its "id": it is linked.' }]
     });
 
-    const asked = await plitzi(work, ['task', 'ask', 'Which title?', '--follow', '--timeout', '2s']);
+    const asked = await plitzi(work, ['task', 'ask', 'Which title?', '--follow', '--timeout', '2s'], dev);
     expect(asked.json).toMatchObject({ said: expect.stringContaining('no answer yet after 2 s') as unknown });
   }, 120_000);
 
@@ -209,6 +215,49 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect(log).not.toContain(lead.split('.').at(-1) ?? '');
   }, 120_000);
 
+  // velada-fidelity: `--token "$(cat …)"` read from the wrong folder came in empty and ran as "agent" — it joined, took a
+  // task, and the rework sent back to "agent" sat with no one. No token, an empty one, a task's: who calls is unproved.
+  it('refuses every caller its own token does not prove — in a task’s copy too — and never makes up a name', async () => {
+    await openRun();
+    const taken = await plitzi(bench.root, ['task', 'take', 't-about', '--agent', 'dev-1']);
+    const work = String(taken.json.work);
+    await plitzi(bench.root, ['task', 'next', '--agent', 'dev-2', '--role', 'developer']);
+
+    for (const [cwd, args, env] of [
+      [work, ['task', 'context'], {}],
+      [work, ['task', 'complete', '--token', ''], {}],
+      [bench.root, ['task', 'next', '--take', '--role', 'developer', '--token', ''], {}],
+      [work, ['task', 'heartbeat', '--token', String(taken.json.token)], {}],
+      [bench.root, ['task', 'next', '--take', '--role', 'developer', '--token', 'not-a-token'], {}]
+    ] as const) {
+      expect((await plitzi(cwd, [...args], env)).code).toBe(REFUSAL_EXIT_CODES.identity);
+    }
+
+    // Another agent's token in dev-1's copy is not given dev-1's task.
+    const foreign = await plitzi(work, ['task', 'complete', '--token', await tokenOf('dev-2')]);
+    expect(foreign.code).not.toBe(0);
+    expect(await bench.read('tmp/plitzi-runs/es-launch/scratch/agent/token')).toBeUndefined();
+    const log = (await bench.read('tmp/plitzi-runs/es-launch/log.jsonl')) ?? '';
+    expect(log).not.toContain('"by":"agent"');
+  }, 120_000);
+
+  // velada-fidelity: closing an item once its run had finished crashed — the caller read before any run proved it.
+  it('closes a backlog item with no run open, saying who it can: unnamed off a terminal', async () => {
+    await bench.write(
+      '.plitzi/backlog.json',
+      JSON.stringify({
+        version: 1,
+        items: [
+          { id: 'b-1', text: 'A CLI defect', from: 'velada-fidelity', by: 'lead', at: '2026-10-22T15:00:00.000Z' }
+        ]
+      })
+    );
+
+    const closed = await plitzi(bench.root, ['run', 'backlog', 'done', 'b-1', '--note', 'the CLI’s']);
+    expect(closed.code).toBe(0);
+    expect(closed.json).toMatchObject({ closed: { id: 'b-1', done: { by: 'unnamed', note: 'the CLI’s' } } });
+  }, 120_000);
+
   // velada-polish's dev-1 expected several files and met "too many arguments".
   it('puts several files of a copy back in one discard, and says them', async () => {
     await openRun();
@@ -217,12 +266,11 @@ describe('plitzi run and plitzi task, as processes', () => {
     await writeInCopy(work, 'src/space/pages/home/index.ts', 'export const home = { title: "Tmp" };\n');
     await writeInCopy(work, 'src/space/pages/home/hero.ts', 'export const hero = { title: "Tmp" };\n');
 
-    const discarded = await plitzi(work, [
-      'task',
-      'discard',
-      'src/space/pages/home/index.ts',
-      'src/space/pages/home/hero.ts'
-    ]);
+    const discarded = await plitzi(
+      work,
+      ['task', 'discard', 'src/space/pages/home/index.ts', 'src/space/pages/home/hero.ts'],
+      { PLITZI_TOKEN: await tokenOf('dev-1') }
+    );
     expect(discarded.code).toBe(0);
     expect(discarded.json).toMatchObject({ files: ['src/space/pages/home/index.ts', 'src/space/pages/home/hero.ts'] });
   }, 120_000);
@@ -233,16 +281,22 @@ describe('plitzi run and plitzi task, as processes', () => {
     const taken = await plitzi(bench.root, ['task', 'take', 't-home', '--agent', 'dev-1']);
     const work = String(taken.json.work);
 
-    expect((await plitzi(work, ['task', 'show', 't-home'])).code).toBe(0);
-    expect((await plitzi(work, ['task', 'show', 't-about'])).code).toBe(REFUSAL_EXIT_CODES['lead-only']);
+    const dev = { PLITZI_TOKEN: await tokenOf('dev-1') };
+    expect((await plitzi(work, ['task', 'show', 't-home'], dev)).code).toBe(0);
+    expect((await plitzi(work, ['task', 'show', 't-about'], dev)).code).toBe(REFUSAL_EXIT_CODES['lead-only']);
   }, 120_000);
 
   // What each command printed is what its agent read: the run's cost, kept a line a command — secrets out.
   it('keeps what each command of a run printed, by whom — and nothing of a command outside a run', async () => {
     const lead = await openRun();
     const taken = await plitzi(bench.root, ['task', 'take', 't-about', '--agent', 'dev-1']);
-    await plitzi(String(taken.json.work), ['task', 'context']);
+    const dev = await tokenOf('dev-1');
+    await plitzi(String(taken.json.work), ['task', 'context', '--token', dev]);
     await plitzi(bench.root, ['run', 'status', '--token', lead]);
+    // A command that is no run's — a page measured — counted as the agent its token proves; a forged one is not it.
+    await plitzi(bench.root, ['page', 'measure', '--help', '--token', dev], {}, { json: false });
+    const forged = dev.replace(/.$/, last => (last === '0' ? '1' : '0'));
+    await plitzi(bench.root, ['page', 'shot', '--help', '--token', forged], {}, { json: false });
 
     const usage = ((await bench.read('tmp/plitzi-runs/es-launch/usage.jsonl')) ?? '')
       .split('\n')
@@ -253,7 +307,9 @@ describe('plitzi run and plitzi task, as processes', () => {
         ['lead', 'run open'],
         ['dev-1', 'task take'],
         ['dev-1', 'task context'],
-        ['lead', 'run status']
+        ['lead', 'run status'],
+        ['dev-1', 'page measure'],
+        ['unnamed', 'page shot']
       ])
     );
     expect(usage.every(line => line.chars > 0)).toBe(true);

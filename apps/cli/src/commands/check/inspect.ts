@@ -135,14 +135,78 @@ interface ConsoleLine {
   from?: string;
 }
 
-/** The address an image issue names, when it is one the browser was told to ask again later (429). */
+/**
+ * The address an image issue names, when it is one the browser was told to ask again later (429) — or, for the images
+ * of one other host said together ("64 images from cdn… did not load"), that host, when it held any of them back: the
+ * finding names no address, and velada-fidelity's checks failed on a third party's busy CDN, then passed on a rerun.
+ */
 export const throttledImage = (
   issue: { code: string; message: string },
   throttled: ReadonlySet<string>
 ): string | undefined => {
-  const address = issue.code === 'image-not-loaded' ? /https?:\/\/\S+/.exec(issue.message)?.[0] : undefined;
+  if (issue.code !== 'image-not-loaded') {
+    return undefined;
+  }
 
-  return address !== undefined && throttled.has(address) ? address : undefined;
+  const address = /https?:\/\/\S+/.exec(issue.message)?.[0];
+  if (address !== undefined) {
+    return throttled.has(address) ? address : undefined;
+  }
+
+  const host = /^\d+ images from (\S+) did not load/.exec(issue.message)?.[1];
+
+  return host !== undefined && [...throttled].some(url => hostOf(url) === host) ? host : undefined;
+};
+
+/** React's word for a page whose server markup the browser drew otherwise: its message, or its minified number. */
+const HYDRATION = /hydrat|Minified React error #(418|423|425)/i;
+
+/**
+ * A hydration error, said with the elements whose text the server and the browser drew differently — React names none
+ * in a build (velada-fidelity: "Hydration failed" for the hero's time, found by reading the diff). The server's HTML is
+ * asked again as the page is (its cookies), and each named element's text set beside the page's now.
+ */
+const namedHydration = async (page: BrowserPage, address: string, errors: readonly string[]): Promise<string[]> => {
+  if (!errors.some(error => HYDRATION.test(error))) {
+    return [...errors];
+  }
+
+  const html = await page.request
+    .get(address)
+    .then(answer => answer.text())
+    .catch(() => undefined);
+  const differ =
+    html === undefined
+      ? []
+      : await page
+          .evaluate((served: string) => {
+            const before = new DOMParser().parseFromString(served, 'text/html');
+            const text = (node: Element | null): string => (node?.textContent ?? '').replace(/\s+/g, ' ').trim();
+
+            return Array.from(document.querySelectorAll('[data-plitzi-el]')).flatMap(node => {
+              const id = node.getAttribute('data-plitzi-el') ?? '';
+              const there = before.querySelector(`[data-plitzi-el="${CSS.escape(id)}"]`);
+              // The innermost that differ: a parent differs because its child does.
+              const inner = Array.from(node.querySelectorAll('[data-plitzi-el]')).some(child => {
+                const childId = child.getAttribute('data-plitzi-el') ?? '';
+
+                return text(child) !== text(before.querySelector(`[data-plitzi-el="${CSS.escape(childId)}"]`));
+              });
+
+              return there && !inner && text(there) !== text(node)
+                ? [
+                    `${id} ("${text(there).slice(0, 40)}" from the server → "${text(node).slice(0, 40)}" in the browser)`
+                  ]
+                : [];
+            });
+          }, html)
+          .catch(() => []);
+
+  return errors.map(error =>
+    HYDRATION.test(error) && differ.length > 0
+      ? `${error} — drawn otherwise by the server and the browser: ${differ.slice(0, 5).join('; ')}${differ.length > 5 ? `; ${String(differ.length - 5)} more` : ''}. A text the browser computes (a visitor's time, its zone) is drawn after hydration, never on the server`
+      : error
+  );
 };
 
 const inspectHere = async (
@@ -338,7 +402,11 @@ const inspectHere = async (
 
     return from !== undefined && from !== new URL(origin).origin && embeds.has(from);
   };
-  const errors = lines.filter(line => !embedded(line)).map(line => line.text);
+  const errors = await namedHydration(
+    page,
+    `${origin}${pathname}`,
+    lines.filter(line => !embedded(line)).map(line => line.text)
+  );
   const fromEmbeds = lines.filter(embedded).map(line => `${originOf(line.from) ?? ''}: ${line.text}`);
 
   return {

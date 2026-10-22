@@ -54,6 +54,8 @@ export interface PageElement {
   scrollIntoViewIfNeeded(options?: { timeout: number }): Promise<void>;
   /** How many elements the selector finds: none is an element not on the page. */
   count(): Promise<number>;
+  /** Whether it is drawn: on the page and not hidden — what a picture of it needs. */
+  isVisible(): Promise<boolean>;
   click(options: { timeout: number }): Promise<void>;
   /** The pointer put over it, and left there: what a hover shows. */
   hover(options: { timeout: number }): Promise<void>;
@@ -101,6 +103,7 @@ export interface BrowserPage {
       url: string,
       options: { data: Record<string, string> }
     ): Promise<{ ok(): boolean; status(): number; text(): Promise<string> }>;
+    get(url: string): Promise<{ ok(): boolean; status(): number; text(): Promise<string> }>;
   };
   on(event: 'pageerror', listener: (error: Error) => void): unknown;
   on(event: 'console', listener: (message: PageMessage) => void): unknown;
@@ -282,7 +285,7 @@ export const projectOrigin = async (
   return {
     problem: answered
       ? `Port ${port} answers as "${answered}", not this project ("${server.name}"). Start it: npm start`
-      : `Nothing of this project answers on port ${port}. Start it: npm start`
+      : `Nothing of this project answers on port ${port}${server.port !== undefined && process.env.PORT === undefined ? ` — where its last npm start served (${DEV_SERVER_FILE})` : ''}. Start it: npm start — wherever it serves, it writes it there and this finds it`
   };
 };
 

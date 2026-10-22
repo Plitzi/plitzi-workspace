@@ -78,10 +78,10 @@ describe('the project’s backlog', () => {
     expect(await openBacklog(bench.root)).toHaveLength(1);
 
     // Done, said how: closed, and kept as done.
-    expect(await closeBacklogItem(lead(), 'b-1', 'a client piece reads the zone')).toMatchObject({
+    expect(await closeBacklogItem(lead(), 'b-1', 'lead', 'a client piece reads the zone')).toMatchObject({
       done: { by: 'lead', note: 'a client piece reads the zone' }
     });
     expect(await openBacklog(bench.root)).toEqual([]);
-    expect(await refusal(closeBacklogItem(lead(), 'b-1'))).toMatchObject({ code: 'invalid' });
+    expect(await refusal(closeBacklogItem(lead(), 'b-1', 'lead'))).toMatchObject({ code: 'invalid' });
   });
 });

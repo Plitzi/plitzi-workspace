@@ -70,3 +70,51 @@ export const stopTree = (child: ChildProcess, { group = false }: { group?: boole
     quietly(pid);
   }
 };
+
+/** What `lsof -F` says of each process, by its field letter: `p` its pid, `n` a name (an address, a folder). */
+const lsofFields = (args: readonly string[]): { pid: number; names: string[] }[] => {
+  const read = spawnSync('lsof', [...args], { encoding: 'utf-8' });
+  const found: { pid: number; names: string[] }[] = [];
+  for (const line of (read.stdout as string | null)?.split('\n') ?? []) {
+    if (line.startsWith('p')) {
+      found.push({ pid: Number(line.slice(1)), names: [] });
+    } else if (line.startsWith('n')) {
+      found.at(-1)?.names.push(line.slice(1));
+    }
+  }
+
+  return found;
+};
+
+/**
+ * The servers listening from inside `dir` — what an agent started in a task's copy (`npm start`) and left running: a
+ * run's copies removed under them (velada-fidelity's finish), they listened on with no folder, no one's to stop. Read
+ * off `lsof`: nothing where there is none (Windows).
+ */
+export const listenersUnder = (dir: string): { pid: number; port: number; cwd: string }[] => {
+  if (process.platform === 'win32') {
+    return [];
+  }
+
+  return lsofFields(['-nP', '-iTCP', '-sTCP:LISTEN', '-Fpn']).flatMap(({ pid, names }) => {
+    const port = Number(names.at(0)?.split(':').at(-1));
+    const cwd = lsofFields(['-a', '-p', String(pid), '-d', 'cwd', '-Fn'])
+      .at(0)
+      ?.names.at(0);
+
+    return Number.isInteger(port) && cwd !== undefined && (cwd === dir || cwd.startsWith(`${dir}/`))
+      ? [{ pid, port, cwd }]
+      : [];
+  });
+};
+
+/** Stops each server listening from inside `dir`, and what it started: said back as what was stopped. */
+export const stopListenersUnder = (dir: string): { pid: number; port: number; cwd: string }[] => {
+  const listening = listenersUnder(dir);
+  for (const { pid } of listening) {
+    descendantsOf(pid).forEach(quietly);
+    quietly(pid);
+  }
+
+  return listening;
+};

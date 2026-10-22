@@ -47,7 +47,7 @@ export const holderOf = async (ctx: RunContext, loaded: LoadedRun, task: RunTask
   if (ctx.token === undefined) {
     throw new RunRefusal(
       'invalid',
-      `This is the command of whoever holds task "${task.id}": pass its token (--token, or PLITZI_TASK_TOKEN)`,
+      `This is the command of whoever holds task "${task.id}": run it in its copy, with your own token (--token)`,
       { task: task.id }
     );
   }
@@ -81,6 +81,15 @@ export const holderOf = async (ctx: RunContext, loaded: LoadedRun, task: RunTask
         : `Task "${task.id}" is no longer yours: it was reassigned or cut${view.owner ? `, and ${view.owner.agent} holds it now` : ''}`,
       { task: task.id, ...(view.owner ? { holder: view.owner.agent } : {}) }
     );
+  }
+
+  // The copy says the task to its holder alone (`contextFor`); held here too, so no caller acts on a task it did not
+  // take — a person at its terminal excepted.
+  if (ctx.agent !== 'person' && view.owner.agent !== ctx.agent) {
+    throw new RunRefusal('identity', `Task "${task.id}" is ${view.owner.agent}'s, not ${ctx.agent}'s`, {
+      task: task.id,
+      agent: view.owner.agent
+    });
   }
 
   return view;

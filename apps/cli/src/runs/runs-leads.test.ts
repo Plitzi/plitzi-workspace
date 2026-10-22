@@ -197,7 +197,7 @@ describe('a lead that reviews, started when the reviews queue up', () => {
 
     const idle = await followNext(bench.agent('lead-2'), runId, 'lead', { timeoutMs: 60_000, everyMs: 1, idleMs: 0 });
     expect(idle).toMatchObject({ finished: true });
-    expect(idle.why).toContain('you can stop');
+    expect(idle.why).toContain('You can stop');
   });
 
   // velada-dress: lead-2 waited through the run's last task and its integration, the lead there for both.

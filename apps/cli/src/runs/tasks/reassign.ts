@@ -4,26 +4,41 @@ import { writeJson } from '../files';
 import { requireLead } from '../leads';
 import { AGENT, agentAddress, LEAD, sendMessage } from '../messages';
 import { syncPreview } from '../preview';
+import { stopListenersUnder } from '../processes';
 import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readApproved, requireNoTask } from '../run';
 import { withLock } from '../store';
 import { cutTask, lockedFiles, updateState, viewTask } from '../taskStore';
-import { at, findTask } from './common';
+import { readTeam, startedAgents } from '../team';
+import { at, findTask, roleOf } from './common';
 import { grantWaiters } from './locks';
 import { integrateWhenReady, settleRequests } from './requests';
+import { takeTask } from './take';
 
-import type { ApprovedFile } from '../model';
+import type { TakenTask } from './take';
+import type { ApprovedFile, RunTask } from '../model';
 import type { RunContext } from '../run';
 
 /**
  * A task taken back: reassigned — cut, for another to take — or reverted, its work taken out of the run.
  */
 
-/** `plitzi task reassign`: the lead or a person cuts a task — its holder's token revoked — for another to take. */
+/** What `task reassign` is told: why, and to whom — an agent of the team, or the lead itself (`lead`). */
+export interface ReassignAsked {
+  reason?: string;
+  to?: string;
+}
+
+/**
+ * `plitzi task reassign`: the lead or a person takes a task back from its agent — its holder's token revoked, told why
+ * on its next command, the servers it left in the copy stopped — for another to take: anyone, the agent it is handed to
+ * (`--to dev-2`), or the lead itself (`--to lead`, taken now, a copy of its own).
+ */
 export const reassignTask = async (
   ctx: RunContext,
   runId: string,
-  taskId: string
+  taskId: string,
+  asked: ReassignAsked = {}
 ): Promise<{
   from?: string;
   reviewedRound?: number;
@@ -31,6 +46,9 @@ export const reassignTask = async (
   granted: string[];
   settled: string[];
   integrations: string[];
+  servers: string[];
+  to?: string;
+  taken?: TakenTask;
 }> => {
   requireNoTask(ctx, 'reassign a task');
   const loaded = await loadRun(ctx, runId);
@@ -41,34 +59,103 @@ export const reassignTask = async (
     throw new RunRefusal('invalid', `Task "${taskId}" is done: revert it instead (plitzi task revert ${taskId})`);
   }
 
+  // Whom it goes to is checked before anything is cut: a refusal leaves the task with its agent.
+  const lead = asked.to === LEAD || asked.to === ctx.agent ? ctx.agent : undefined;
+  const to = asked.to !== undefined && lead === undefined ? await handable(ctx, asked.to, task) : undefined;
+
   // What it held by turns is let go with it — handed to whoever waits, its requests merged — not left until its locks
   // run out half an hour after its agent went quiet.
   const turns = [...(await lockedFiles(view.paths))].filter(([, lock]) => lock.kind === 'turn').map(([file]) => file);
-  await cutTask(view, `reassigned by ${ctx.agent}`, ctx.now);
+  // What its agent left listening in the copy goes with it: a server of a copy no one holds is no one's to stop.
+  const servers = stopListenersUnder(view.paths.work).map(server => `:${String(server.port)}`);
+  await cutTask(view, `reassigned by ${ctx.agent}${asked.reason ? `: ${asked.reason}` : ''}`, ctx.now);
+  if (to !== undefined) {
+    await updateState(
+      view.paths,
+      state => ({
+        ...state,
+        handTo: {
+          agent: to,
+          by: ctx.agent,
+          at: ctx.now().toISOString(),
+          ...(asked.reason ? { reason: asked.reason } : {})
+        }
+      }),
+      ctx.now
+    );
+  }
+
   const refreshed = await loadRun(ctx, runId);
   const granted = await grantWaiters(ctx, refreshed, turns);
   const settled = await settleRequests(ctx, refreshed, turns);
   const integrations = await withLock(refreshed.paths.mergeLock, () => integrateWhenReady(ctx, refreshed), {
     now: ctx.now
   });
+  const from = view.owner?.agent;
+  // Its agent learns it with its next command, and why — never only by a refusal of a token cut (velada-fidelity).
+  if (from !== undefined && from !== ctx.agent) {
+    await sendMessage(ctx, refreshed, {
+      from: LEAD,
+      to: agentAddress(from),
+      text: `${taskId} was taken back by ${ctx.agent}${asked.reason ? `: ${asked.reason}` : ''} — it is not yours now${to ? `; it goes to ${to}` : lead ? `; ${lead} takes it` : ''}. Stop working in its copy: plitzi task next`
+    });
+  }
+
   await logRun(ctx, loaded.paths, {
     action: 'reassign',
     task: taskId,
-    from: view.owner?.agent,
+    from,
+    ...(asked.reason ? { reason: asked.reason } : {}),
+    ...(to ? { to } : lead ? { to: lead } : {}),
     released: turns,
     granted,
     settled,
-    integrations
+    integrations,
+    servers
   });
+  const taken = lead === undefined ? undefined : await takeTask(ctx, runId, taskId);
 
   return {
-    ...(view.owner ? { from: view.owner.agent } : {}),
+    ...(from ? { from } : {}),
     ...(view.reviewed ? { reviewedRound: view.reviewed.round } : {}),
     released: turns,
     granted,
     settled,
-    integrations
+    integrations,
+    servers,
+    ...(to ? { to } : lead ? { to: lead } : {}),
+    ...(taken ? { taken } : {})
   };
+};
+
+/** The agent a task may be handed to: one of the team, of the task's role — refused, naming who may, otherwise. */
+const handable = async (ctx: RunContext, agent: string, task: RunTask): Promise<string> => {
+  const team = await readTeam(ctx.root).catch(() => undefined);
+  const members = team ? startedAgents(team) : [];
+  const member = members.find(each => each.agent === agent);
+  const role = roleOf(task);
+  if (!member) {
+    throw new RunRefusal(
+      'invalid',
+      `${agent} is no agent of the team: hand ${task.id} to one of ${members.map(each => each.agent).join(', ') || 'the team (team.json)'}, or take it yourself (--to lead)`,
+      { task: task.id }
+    );
+  }
+
+  if (!member.roles.includes(role)) {
+    throw new RunRefusal(
+      'invalid',
+      `${agent} is a ${member.roles.join(', ')}, and ${task.id} a ${role}'s: hand it to ${
+        members
+          .filter(each => each.roles.includes(role))
+          .map(each => each.agent)
+          .join(', ') || 'no one of the team'
+      }`,
+      { task: task.id, role }
+    );
+  }
+
+  return agent;
 };
 
 /**

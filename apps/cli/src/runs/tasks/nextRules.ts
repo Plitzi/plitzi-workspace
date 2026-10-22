@@ -89,3 +89,27 @@ export const spareNow = async (ctx: RunContext, runId: string): Promise<string |
 
   return `${String(open.length)} task${open.length === 1 ? '' : 's'} left (${open.map(view => view.task.id).join(', ') || 'none'}) for ${String(others)} other lead${others === 1 ? '' : 's'}: no review is yours to wait for`;
 };
+
+/** What a sent-back task's last review asked, by whom: handed with it, to its agent or to the one taking it over. */
+export const lastAsked = (view: TaskView): string[] =>
+  view.state.notes
+    .filter(note => note.text.startsWith(`Review ${String(view.state.round)}: `))
+    .map(note => `${note.by}: ${note.text.slice(`Review ${String(view.state.round)}: `.length)}`);
+
+/**
+ * What a task's reviews asked, as the next review is handed it: the last review's notes whole, the earlier ones counted —
+ * each round's hand-off repeated every review before it whole (velada-now's t-boxer, round 4).
+ */
+export const askedOf = (notes: readonly { by: string; text: string }[]): { asked: string[]; earlier: number } => {
+  const reviews = notes.flatMap(note => {
+    const round = /^Review (\d+): /.exec(note.text)?.[1];
+
+    return round === undefined ? [] : [{ round: Number(round), line: `${note.by}: ${note.text}` }];
+  });
+  const last = Math.max(0, ...reviews.map(each => each.round));
+
+  return {
+    asked: reviews.filter(each => each.round === last).map(each => each.line),
+    earlier: reviews.filter(each => each.round !== last).length
+  };
+};

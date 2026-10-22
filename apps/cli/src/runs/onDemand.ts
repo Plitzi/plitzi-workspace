@@ -14,6 +14,9 @@ import type { Attention } from './view';
 /** How long an agent on demand waits with nothing for it before it is told to stop: the lead starts it again. */
 export const ON_DEMAND_IDLE_MS = 4 * 60_000;
 
+/** How long an agent that starts with the run is given to join before the lead is told to start it. */
+export const STARTING_MS = 2 * 60_000;
+
 /** Who of the team is running now, by the run's log: any agent that said something and has not stopped since. */
 export const runningAgents = (log: readonly Record<string, unknown>[]): Set<string> => {
   const last = new Map<string, unknown>();
@@ -34,7 +37,7 @@ export const agentsNeeded = (
   views: readonly TaskView[],
   started: readonly StartedAgent[],
   running: ReadonlySet<string>,
-  run: { runId: string; identified: readonly string[] }
+  run: { identified: readonly string[]; scratch: string; openFor: number }
 ): Attention[] => {
   const busy = new Set(
     views.flatMap(view => [
@@ -81,7 +84,9 @@ export const agentsNeeded = (
       each =>
         ofRole(each) && !running.has(each.agent) && !asked.has(each.agent) && (each.onDemand === true || !anyRunning)
     );
-    if (waiting.length === 0 || !next) {
+    // One that starts with the run is being started as the run opens: asked for only once it had time to join —
+    // velada-fidelity's watch said "start dev-1" the moment the lead had started it.
+    if (waiting.length === 0 || !next || (!next.onDemand && run.openFor < STARTING_MS)) {
       return [];
     }
 
@@ -90,7 +95,7 @@ export const agentsNeeded = (
     return [
       {
         kind: 'agents-needed' as const,
-        text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — plitzi task next --role ${next.roles.join(',')}${next.quality ? ` --quality ${next.quality}` : ''} --follow --take ${callerFlag(run.runId, next.agent, run.identified)}${next.onDemand ? ' (it stops by itself once nothing is left for it)' : ''}`,
+        text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — plitzi task next --role ${next.roles.join(',')}${next.quality ? ` --quality ${next.quality}` : ''} --follow --take ${callerFlag(run.scratch, next.agent, run.identified)}${next.onDemand ? ' (it stops by itself once nothing is left for it)' : ''}`,
         who: 'lead' as const
       }
     ];

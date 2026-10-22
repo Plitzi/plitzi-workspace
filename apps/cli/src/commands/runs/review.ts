@@ -5,19 +5,18 @@ import chalk from 'chalk';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { act, runOf, runSelf } from './shell';
-import { list, messageLines, outsideLines, secondRunText } from './text';
+import { list } from './text';
 import { answering, freePort } from '../../runs/acceptance';
 import { designSkipText, isDesignSkip } from '../../runs/designSkip';
-import { acceptanceText } from '../../runs/model';
+import { readOwnership } from '../../runs/ownership';
 import { examplePaths, pagesOf } from '../../runs/pagesOf';
 import { runPaths, taskPaths } from '../../runs/paths';
 import { startBeforePreview, startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
 import { loadRun, logRun } from '../../runs/run';
-import { FROM_TEXT, showTask, showTaskFile } from '../../runs/show';
 import { withLock } from '../../runs/store';
 import { findingsOf, taskParts } from '../../runs/taskParts';
-import { findTask, notReviewedIn, reassignTask, revertTask, reviewTask } from '../../runs/tasks';
+import { findTask, notReviewedIn, reviewTask } from '../../runs/tasks';
 import { viewTask } from '../../runs/taskStore';
 import { readTeam } from '../../runs/team';
 
@@ -50,6 +49,8 @@ const viewTaskOf = async (
 export interface LookOptions extends RunCommandOptions {
   /** Clicked once each page settles, as `page check --click`: an open state looked at, not only the page at rest. */
   click?: string;
+  /** The visitor's time zone (IANA) every page is read in: the machine's when left out. */
+  timezone?: string;
   /**
    * The pointer put over it once each page settles, as `page check --hover`: what that changes said, and the page
    * pictured with it there — at 1440 alone, as a phone has no pointer to hover with.
@@ -149,6 +150,21 @@ interface Checked {
  * takes it, so with several pages each is checked with it apart (velada-dress: `task look --hover` on a task of three
  * pages was refused whole). One browser at a time: each check opens its own.
  */
+/** The pages `page same --json` read the same on both servers: what a look leaves unpictured. */
+export const samePaths = (output: string): string[] => {
+  const line = output.trim().split('\n').at(-1) ?? '';
+  try {
+    const read: unknown = JSON.parse(line);
+    const pages = isRecord(read) && Array.isArray(read.pages) ? (read.pages as unknown[]) : [];
+
+    return pages.flatMap(page =>
+      isRecord(page) && page.same === true && typeof page.path === 'string' ? [page.path] : []
+    );
+  } catch {
+    return [];
+  }
+};
+
 export const checkWithInteraction = async (
   routes: readonly string[],
   interaction: readonly string[],
@@ -233,6 +249,8 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
         taskPaths(runPaths(ctx.root, runId), taskId).lookLock,
         async () => {
           const preview = await startTaskPreview(ctx, runId, taskId, await freePort(), { quiet: true });
+          // The run before it, once started: stopped with the copy's server whatever ends the look.
+          const stops: (() => void)[] = [];
           try {
             if (!(await answering(preview.url, 60_000))) {
               throw new RunRefusal('invalid', `${taskId}'s copy did not answer on ${preview.url} within a minute`, {
@@ -277,10 +295,63 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               preview.url,
               paths.length > 0 ? paths : owned.length > 0 ? owned : ['/']
             );
+            // Every page read in one visitor's zone: the machine's, unless said — and said under the pictures either way.
+            const zone = options.timezone ? ['--timezone', options.timezone] : [];
             const interaction = [
               ...(options.click ? ['--click', options.click] : []),
               ...(options.hover ? ['--hover', options.hover] : [])
             ];
+            // Beside the run before it: what the task moved, section by section — and that nothing else did. Started first:
+            // the pages a shared file of it reaches are read on both before any is pictured.
+            const before =
+              (options.before ?? designing)
+                ? await startBeforePreview(ctx, runId, taskId, await freePort())
+                : undefined;
+            if (before) {
+              stops.push(() => {
+                before.stop();
+              });
+            }
+
+            if (before && !(await answering(before.url, 60_000))) {
+              throw new RunRefusal(
+                'invalid',
+                `The run before ${taskId} did not answer on ${before.url} within a minute`,
+                {
+                  task: taskId
+                }
+              );
+            }
+
+            // A page only a shared file of it reaches, drawn the same as the run before it — every element, box and style
+            // read on both — is not pictured: velada-fidelity's look pictured nine pages for two tokens added (204 s).
+            const unchanged = new Set<string>();
+            if (before && paths.length === 0) {
+              const ownership = await readOwnership(preview.dir);
+              const direct = await pagesOf(
+                preview.dir,
+                changed.filter(file => ownership.ownerOf.has(file))
+              );
+              const { paths: reachedOnly } = await examplePaths(
+                preview.url,
+                owned.filter(page => !direct.includes(page))
+              );
+              if (reachedOnly.length > 0) {
+                const same = await runSelf(preview.dir, [
+                  'page',
+                  'same',
+                  ...reachedOnly,
+                  '--url',
+                  preview.url,
+                  '--than',
+                  before.url,
+                  '--json'
+                ]);
+                samePaths(same.output).forEach(page => unchanged.add(page));
+              }
+            }
+
+            const pictured = routes.filter(route => !unchanged.has(route));
             const checkOf = (pages: readonly string[], also: readonly string[]) =>
               runSelf(preview.dir, [
                 'page',
@@ -290,13 +361,14 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
                 [...new Set(views.map(([width]) => width))].join(','),
                 '--url',
                 preview.url,
+                ...zone,
                 ...(options.status === undefined ? [] : ['--status', String(options.status)]),
                 ...also,
                 ...(options.element ?? []).flatMap(id => ['--element', id])
               ]);
             const check = await checkWithInteraction(routes, interaction, checkOf);
             const shots: string[] = [];
-            for (const route of routes) {
+            for (const route of pictured) {
               for (const clip of clips.length > 0 ? clips : [undefined]) {
                 for (const [width, scheme] of views) {
                   const name = `${taskId}${route === '/' ? '-home' : `-${route.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`}${clip ? `-${clip}` : ''}-${width}-${scheme}.png`;
@@ -307,6 +379,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
                     route,
                     '--url',
                     preview.url,
+                    ...zone,
                     '--width',
                     width,
                     '--scheme',
@@ -327,6 +400,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
                       route,
                       '--url',
                       preview.url,
+                      ...zone,
                       '--width',
                       width,
                       '--scheme',
@@ -344,25 +418,10 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               }
             }
 
-            // Beside the run before it: what the task moved, section by section — and that nothing else did.
-            const before =
-              (options.before ?? designing)
-                ? await startBeforePreview(ctx, runId, taskId, await freePort())
-                : undefined;
             const compared: BeforeAfter[] = [];
             const stoppedUnder: string[] = [];
             try {
-              if (before && !(await answering(before.url, 60_000))) {
-                throw new RunRefusal(
-                  'invalid',
-                  `The run before ${taskId} did not answer on ${before.url} within a minute`,
-                  {
-                    task: taskId
-                  }
-                );
-              }
-
-              for (const route of before ? routes : []) {
+              for (const route of before ? pictured : []) {
                 for (const [width, scheme] of views) {
                   // Named for what it is — the page after the task, set beside the run before it in `-after-compare.png`:
                   // `-before.png` was the after picture (velada-polish's design-1, the same md5 as the look's own).
@@ -373,6 +432,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
                     route,
                     '--url',
                     preview.url,
+                    ...zone,
                     '--compare',
                     before?.url ?? '',
                     '--width',
@@ -417,6 +477,8 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               ...(many ? { wholeFor: parts.tops } : {}),
               ...(unreached.length > 0 ? { unreached } : {}),
               shots,
+              ...(unchanged.size > 0 ? { unchanged: [...unchanged] } : {}),
+              timezone: options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
               ...(compared.length > 0 ? { compared } : {}),
               ...(preview.borrowed === undefined ? {} : { borrowed: preview.borrowed }),
               ...(stoppedUnder.length > 0 ? { stoppedUnder } : {}),
@@ -424,6 +486,9 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               ...(notReviewed.length > 0 ? { notReviewed } : {})
             };
           } finally {
+            stops.forEach(stop => {
+              stop();
+            });
             preview.stop();
           }
         },
@@ -467,8 +532,18 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
           : []),
         looked.check,
         ...(looked.apart ? [chalk.dim(`  · ${String(looked.apart)} finding(s) on other tasks' parts left out`)] : []),
+        ...(looked.unchanged
+          ? [
+              chalk.dim(
+                `Drawn the same as the run before it — every element, box and style read on both, so not pictured: ${list(looked.unchanged)} (a shared file of it reaches them; plitzi task look ${looked.task} <page> pictures one anyway)`
+              )
+            ]
+          : []),
         ...(looked.shots.length > 0
-          ? ['Pictures:', ...looked.shots.map(each => `  ${each}`)]
+          ? [
+              `Pictures — a browser in ${looked.timezone}, its language en-US (--timezone for another zone):`,
+              ...looked.shots.map(each => `  ${each}`)
+            ]
           : ['No picture could be taken.']),
         ...(looked.compared
           ? [
@@ -598,113 +673,3 @@ const notReviewedText = (files: readonly string[] | undefined, verdict: 'approve
         }`
       ]
     : [];
-
-export const taskReassign = (taskId: string, options: RunCommandOptions): Promise<void> =>
-  act(
-    options,
-    async ctx => reassignTask(ctx, await runOf(ctx, options), taskId),
-    reassigned =>
-      `${taskId} is ready again${reassigned.from ? `; ${reassigned.from}'s token is revoked` : ''}. ${
-        reassigned.reviewedRound === undefined
-          ? 'It was never reviewed: it starts from scratch.'
-          : `It starts again from the version its review ${String(reassigned.reviewedRound)} saw.`
-      } What its agent started in the copy — its own server — is not the CLI's to stop: stop it.${
-        reassigned.released.length > 0
-          ? ` Let go of what it held by turns: ${reassigned.released.join(', ')}${reassigned.granted.length > 0 ? ` — to ${reassigned.granted.join(', ')}` : ''}${reassigned.settled.length > 0 ? `; merged: ${reassigned.settled.join(', ')}` : ''}${reassigned.integrations.length > 0 ? `; to integrate: ${reassigned.integrations.join(', ')}` : ''}.`
-          : ''
-      }`
-  );
-
-export const taskRevert = (taskId: string, options: RunCommandOptions & { reason?: string }): Promise<void> =>
-  act(
-    options,
-    async ctx => revertTask(ctx, await runOf(ctx, options), taskId, options.reason),
-    reverted =>
-      [
-        `${taskId} reverted in the run's work: ${list(reverted.reverted)}.`,
-        ...(reverted.kept.length > 0
-          ? [`  Not reverted — another task changed them since: ${reverted.kept.join(', ')}`]
-          : []),
-        ...(reverted.dependants.length > 0 ? [`  Built on it: ${reverted.dependants.join(', ')} — check them`] : [])
-      ].join('\n')
-  );
-
-/** `plitzi task show <task> <file>`: the file whole, where the diff is read from — the text alone, to read or to pipe. */
-const taskShowFile = (taskId: string, file: string, options: RunCommandOptions & { diff?: boolean }): Promise<void> =>
-  act(
-    options,
-    async ctx => showTaskFile(ctx, await runOf(ctx, options), taskId, file),
-    shown =>
-      options.diff === true
-        ? (shown.diff ?? `${shown.file} of ${shown.task}: not text — no diff`)
-        : shown.text === undefined
-          ? `${shown.file} of ${shown.task} (${FROM_TEXT[shown.from]}): ${shown.binary ? 'not text — not shown' : 'removed by it'}`
-          : shown.text
-  );
-
-const taskShowSummary = (taskId: string, options: RunCommandOptions & { full?: boolean }): Promise<void> =>
-  act(
-    options,
-    async ctx => showTask(ctx, await runOf(ctx, options), taskId, { full: options.full ?? false }),
-    shown => {
-      const { knownFailure } = typeof shown.checks === 'object' ? shown.checks : { knownFailure: undefined };
-
-      return [
-        chalk.bold(
-          `${shown.task.id} — ${shown.task.title} · ${shown.status}${shown.round > 0 ? `, round ${String(shown.round)}` : ''}${shown.holder ? ` · ${shown.holder}` : ''}`
-        ),
-        `  ${shown.task.role ?? 'developer'} · its files: ${shown.task.files.join(', ')}`,
-        ...(shown.task.acceptance.length > 0
-          ? [
-              'Acceptance',
-              ...shown.task.acceptance.map(each => {
-                const result = shown.accepted?.find(one => one.said === acceptanceText(each));
-                const mark = result ? (result.ok ? '✓' : '✗') : shown.status === 'done' ? '✓' : '☐';
-
-                return `  ${mark} ${acceptanceText(each)}${typeof each === 'string' ? '' : chalk.dim(`  [check: ${each.check}]`)}${result ? secondRunText(result) : ''}${result && !result.ok ? `\n${(result.output ?? []).map(line => `      ${line}`).join('\n')}` : ''}`;
-              })
-            ]
-          : []),
-        knownFailure
-          ? chalk.yellow(
-              `Checks: failing (${knownFailure.failing.join(', ')}) — ${knownFailure.why}${knownFailure.fixedBy ? `; ${knownFailure.fixedBy} fixes it` : ''}`
-            )
-          : `Checks: ${shown.checks === 'passed' ? 'passed at complete' : 'not run yet'}`,
-        ...(shown.warnings ?? []).map(warning => chalk.yellow(`  ⚠ ${warning}`)),
-        ...(shown.agreements.length > 0
-          ? [
-              'Agreed — check it holds',
-              ...shown.agreements.map(each => `  ⇄ ${each.from} → ${each.to}: ${each.change}`)
-            ]
-          : []),
-        ...shown.unanswered.map(each =>
-          chalk.yellow(`  ⇄ unanswered ${each.id}: ${each.from} → ${each.to}: ${each.change}`)
-        ),
-        ...shown.requests.map(each => `  ↗ request on ${each.file}: ${each.summary}`),
-        ...(shown.notes.length > 0 ? ['Notes', ...shown.notes.map(note => `  ${note.by}: ${note.text}`)] : []),
-        ...(shown.messages.length > 0 ? ['Said', ...messageLines(shown.messages)] : []),
-        `Changed (${FROM_TEXT[shown.from]}): ${shown.files.length === 0 ? '—' : shown.files.map(each => `${each.file} (${each.change})`).join(', ')}`,
-        ...(shown.notReviewed
-          ? [
-              chalk.yellow(
-                `  ⚠ Its copy holds what did not go to review: ${list(shown.notReviewed)} — not shown, never merged`
-              )
-            ]
-          : []),
-        ...outsideLines(shown),
-        ...shown.files.flatMap(each =>
-          each.binary
-            ? [`  ${each.file}: not text — not shown`]
-            : [each.diff ?? '', ...(each.more ? [`  … ${String(each.more)} more lines (--full shows them)`] : [])]
-        ),
-        ...(shown.next.length > 0 ? ['Next', ...shown.next.map(each => `  ${each}`)] : [])
-      ].join('\n');
-    }
-  );
-
-/** `plitzi task show`: the task as its lead reviews it — or, with a file, that file whole. */
-export const taskShow = (
-  taskId: string,
-  file: string | undefined,
-  options: RunCommandOptions & { full?: boolean; diff?: boolean }
-): Promise<void> => (file === undefined ? taskShowSummary(taskId, options) : taskShowFile(taskId, file, options));

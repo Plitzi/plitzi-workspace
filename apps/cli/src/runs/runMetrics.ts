@@ -72,10 +72,53 @@ export interface RunMetrics {
     readTokens: number;
     /** The harness's tokens, every agent's the lead said. */
     tokens?: number;
-    byCommand: { command: string; calls: number; readTokens: number }[];
+    byCommand: {
+      command: string;
+      calls: number;
+      readTokens: number;
+      /** The seconds its calls took, together, and one call's median: agent time spent inside the CLI. */
+      seconds: number;
+      medianSeconds: number;
+      /** Over its budget (`CLI_BUDGET_S`): its median call is slower than the CLI holds itself to. */
+      overBudget?: number;
+    }[];
     repeated: RepeatedCall[];
+    /** Minutes the agents spent inside the CLI's commands, waits left out: every second there is multiplied by them. */
+    cliMinutes: number;
   };
 }
+
+/**
+ * What one call of a command may take, in seconds — every second an agent spends in the CLI is multiplied by agents and
+ * calls (Carlos, velada-fidelity: ~150 page measures at 18 s each). A command whose median is past its budget is said in
+ * the report, and counted in the bench.
+ */
+export const CLI_BUDGET_S: Record<string, number> = {
+  'task next': 2,
+  'task take': 15,
+  'task context': 3,
+  'task show': 3,
+  'task tell': 2,
+  'task ask': 2,
+  'task message': 2,
+  'task inbox': 2,
+  'task progress': 2,
+  'task heartbeat': 2,
+  'task review': 10,
+  'task check': 30,
+  'task complete': 45,
+  'task look': 60,
+  'page measure': 8,
+  'page check': 20,
+  'page shot': 20,
+  'run state': 2,
+  'run status': 3,
+  'run notice': 2
+};
+
+/** A call that waits by design — for work, an answer, the lead's next item — is no time the CLI took. */
+const waitsByDesign = (command: string): boolean =>
+  /\s--follow\b|^plitzi run (watch|monitor)\b|^plitzi task wait\b/.test(command);
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '');
 const texts = (value: unknown): string[] =>
@@ -335,11 +378,15 @@ export const runMetrics = (input: {
     return answer ? [minutes(at(entry), answer.at)] : [];
   });
   const allApproved = log.findLast(entry => entry.action === 'all-approved');
-  const byCommand = new Map<string, { calls: number; chars: number }>();
+  const byCommand = new Map<string, { calls: number; chars: number; ms: number[] }>();
   for (const line of usage) {
     const name = commandName(line.command);
-    const was = byCommand.get(name) ?? { calls: 0, chars: 0 };
-    byCommand.set(name, { calls: was.calls + 1, chars: was.chars + line.chars });
+    const was = byCommand.get(name) ?? { calls: 0, chars: 0, ms: [] };
+    byCommand.set(name, {
+      calls: was.calls + 1,
+      chars: was.chars + line.chars,
+      ms: waitsByDesign(line.command) ? was.ms : [...was.ms, line.ms]
+    });
   }
 
   const tokens = Object.values(input.tokens);
@@ -363,9 +410,24 @@ export const runMetrics = (input: {
       readTokens: Math.round(usage.reduce((sum, line) => sum + line.chars, 0) / 4),
       ...(tokens.length > 0 ? { tokens: tokens.reduce((sum, each) => sum + each, 0) } : {}),
       byCommand: [...byCommand]
-        .map(([command, each]) => ({ command, calls: each.calls, readTokens: Math.round(each.chars / 4) }))
-        .sort((a, b) => b.readTokens - a.readTokens),
-      repeated: repeatedCalls(usage)
+        .map(([command, each]) => {
+          const medianSeconds = Math.round((median(each.ms) ?? 0) / 100) / 10;
+          const budget = Object.hasOwn(CLI_BUDGET_S, command) ? CLI_BUDGET_S[command] : undefined;
+
+          return {
+            command,
+            calls: each.calls,
+            readTokens: Math.round(each.chars / 4),
+            seconds: Math.round(each.ms.reduce((sum, ms) => sum + ms, 0) / 1000),
+            medianSeconds,
+            ...(budget !== undefined && medianSeconds > budget ? { overBudget: budget } : {})
+          };
+        })
+        .sort((a, b) => b.seconds - a.seconds || b.readTokens - a.readTokens),
+      repeated: repeatedCalls(usage),
+      cliMinutes:
+        Math.round(usage.filter(line => !waitsByDesign(line.command)).reduce((sum, line) => sum + line.ms, 0) / 6000) /
+        10
     }
   };
 };

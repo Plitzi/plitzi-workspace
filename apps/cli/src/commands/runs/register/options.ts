@@ -3,7 +3,7 @@ import type { Command } from 'commander';
 export const JSON_OPTION = ['--json', 'One object, for a tool or an agent'] as const;
 export const TOKEN_OPTION = [
   '--token <token>',
-  'Who you are: your own token, as your first command on the run printed it, or a task’s, as plitzi task take answered it (or PLITZI_TASK_TOKEN)'
+  'Who you are: your own token, as your first command on the run printed it — on every command, inside a task’s copy too (or PLITZI_TOKEN)'
 ] as const;
 export const RUN_OPTION = [
   '--run <run>',

@@ -280,7 +280,7 @@ describe('acceptance, checks and what is left behind', () => {
     const done = await finishRun(bench.person(true), 'es-launch', { apply: true, leavePending: true });
 
     // The plan was the run's from its opening, in its folder: only what was handed after is removed — or kept.
-    expect(done.inputs).toEqual({ removed: [], kept: ['summary.md'] });
+    expect(done.inputs).toEqual({ removed: [], kept: ['summary.md'], servers: [] });
     expect(await bench.read('es-launch.plan.json')).toBeUndefined();
   });
 

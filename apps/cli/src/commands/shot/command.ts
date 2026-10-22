@@ -296,7 +296,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       reducedMotion: options.reducedMotion === true || besideLocal,
       ...(besideLocal ? { standIns: true } : {}),
       ...(options.waitFor ? { waitFor: options.waitFor } : {}),
-      ...(clip ? { clip } : {}),
+      ...(clip ? { clip, ...(clicks.length > 0 || steps !== undefined ? { clipLater: true } : {}) } : {}),
       ...(options.scrollTo ? { scrollTo: options.scrollTo } : {}),
       ...(options.viewport ? { viewport: true } : {}),
       ...(options.presence ? { presence: true } : {}),
@@ -588,11 +588,13 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       );
     }
 
-    for (const { target, changed } of report.clicked ?? []) {
+    for (const { target, changed, opened } of report.clicked ?? []) {
       console.log(
-        changed > 0
-          ? `clicked ${target}: ${String(changed)}% of the picture changed`
-          : chalk.yellow(`clicked ${target}: nothing changed — the click did nothing to see`)
+        opened
+          ? `clicked ${target}: it opened ${String(options.clip)}, pictured alone after it`
+          : changed > 0
+            ? `clicked ${target}: ${String(changed)}% of the picture changed`
+            : chalk.yellow(`clicked ${target}: nothing changed — the click did nothing to see`)
       );
     }
 

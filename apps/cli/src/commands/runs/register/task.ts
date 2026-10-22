@@ -31,7 +31,7 @@ import {
   taskWait
 } from '..';
 import { JSON_OPTION, TOKEN_OPTION, RUN_OPTION, AGENT_OPTION } from './options';
-import { duration, FOLLOW_MS, fraction } from '../../../options';
+import { duration, FOLLOW_MS, fraction, timeZone } from '../../../options';
 import { BLOCK_NEEDS } from '../../../runs/model';
 
 import type { AnswerOptions, LookOptions, ProposeOptions, ReviewOptions, RunCommandOptions } from '..';
@@ -355,6 +355,12 @@ export const registerTaskGroup = (program: Command): Command => {
       Number
     )
     .option('--width <px>', 'The widths looked at, comma-separated (1440,390 when left out)')
+    .addOption(
+      new Option(
+        '--timezone <zone>',
+        'The visitor’s time zone (IANA) its pages are read in: the machine’s when left out'
+      ).argParser(timeZone)
+    )
     .option(
       '--scheme <schemes>',
       'light, dark, or light,dark: each width in each (light at 1440, dark at 390 when left out)'
@@ -418,7 +424,7 @@ export const registerTaskGroup = (program: Command): Command => {
     .option('--file <file>', 'The file the change is about')
     .option(
       '--skip-design <why>',
-      'With --approve, a task whose UI waits for a designer’s review, approved without it — why: lead (you looked at its UI yourself) or no-ui (it changes nothing a visitor sees)'
+      'With --approve, a task whose UI waits for a designer’s review, approved without it — why: lead (you looked at its UI yourself) or no-ui (it changes nothing a visitor sees). With --changes, lead: its next round’s UI review is yours, offered to no designer'
     )
     .option('--note <note>', 'With --approve, what you saw and do not ask to change — kept with the task, for the lead')
     .option(...RUN_OPTION)
@@ -428,11 +434,20 @@ export const registerTaskGroup = (program: Command): Command => {
 
   taskGroup
     .command('reassign')
-    .description('Cut a task — its holder’s token revoked — for another to take from its last reviewed version')
+    .description(
+      'Take a task back from its agent — its token revoked, told why — for another to take from its last reviewed version: anyone, one agent (--to dev-2), or you (--to lead)'
+    )
     .argument('<task>', 'The task')
+    .option('--reason <why>', 'Why: said to the agent it is taken from, and kept in its notes and the log')
+    .option(
+      '--to <agent>',
+      'Who takes it: an agent of the team of its role — or lead, taken by you now, a copy of your own'
+    )
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string, options: RunCommandOptions) => taskReassign(task, options));
+    .action((task: string, options: RunCommandOptions & { reason?: string; to?: string }) =>
+      taskReassign(task, options)
+    );
 
   taskGroup
     .command('revert')

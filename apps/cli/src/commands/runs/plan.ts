@@ -362,6 +362,13 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
           ? 'The lead writes it into the project at the end, as you allowed — once its report is written and the checks pass on the whole result.'
           : `A person writes it into the project at the end (plitzi run finish --apply) — or lets the lead, in their terminal: plitzi run allow-finish ${opened.runId}`,
         // On its scope alone, the next step is the lead's, not an agent's: there is nothing to take until it ends.
+        ...(opened.tasks.includes(SCOPE_SPIKE)
+          ? []
+          : [
+              chalk.yellow(
+                'Scoped before the run: what was found out to write this plan is in no record of it — not in the monitor, the report or the bench. A run scoped inside it opens on the ask: plitzi run open --spike "…" --run <name>'
+              )
+            ]),
         opened.tasks.length === 1 && opened.tasks[0] === SCOPE_SPIKE
           ? `Next, yours: the scope — find out what the ask takes (plitzi run reference --run ${opened.runId} --pages "…" keeps the site it copies), then end it with its tasks: plitzi task spike ${SCOPE_SPIKE} --done "what you found" --tasks <stage.json>. Agents start once there are tasks to take.`
           : `Start a task: plitzi task next --run ${opened.runId}`,

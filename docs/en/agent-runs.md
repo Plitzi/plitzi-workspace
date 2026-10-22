@@ -349,6 +349,22 @@ the lead's too when none is free — and left out, the run decides as above; the
 going past a UI review a designer took tells that designer, who still tells the lead what it found with `task tell
 --about <task>` — the way any agent holding no task does.
 
+**A look pictures what can differ.** The pages a task's own files are drawn at are pictured; the ones only a shared
+file of it reaches (the theme, a component) are first read on both servers with `page same` — every element, box,
+style and pseudo-element — and only those that differ are pictured, the rest said as "drawn the same as the run before
+it" (velada-fidelity: nine pages pictured, 204 s, for two tokens added). A page named on the command is pictured
+whatever it reads.
+
+**A review has its time** (velada-fidelity: design-1 held one 16 min, a task queued 18 min behind it, both developers
+free). A UI review taken is its designer's for `REVIEW_TIMEOUT_MS` (8 min): past it, `task next --take` hands it to
+another designer — the first told on its next command (`review-timed-out` in the log), and its verdict after refused as
+`claimed`, saying to keep what it found for the next run (`run notice`) — and `run watch` tells the lead, idle team or
+not, to decide it (`slow-review`; under the limit, only while others sit free, from half of it). One due nobody takes
+for `REVIEW_QUEUE_MS` (5 min) is the lead's to review now (`ui-queued`). A lead that sends a task back with `--changes
+… --skip-design lead` keeps its next round's UI review (`design.reserved`): that round comes due to the lead alone,
+`skipped` by `lead` — never offered to a designer (velada-fidelity's t-result-card went to design-1 after the lead said
+it was its own); a designer reviewing the round it sent back is told its review ended.
+
 **A round sent back goes to the designer who said the one before** (`design.before`, kept as the round comes due with
 its time, `since`): offered to it first, and to another designer only past `SAME_DESIGNER_MS` (3 min) — velada-polish's
 t-match-bars had design-2's first round and design-1's second, which brought asks of its own and cost a round. Another
@@ -356,9 +372,13 @@ designer taking it is told so in its brief: check what the round before asked, a
 rest is a notice for the next run. A designer's `task look` of the UI it reviews is set beside the run before it
 (`--before`) unless it says `--no-before`, and names the pages its changes are drawn at that were not looked at — a
 shared file's: velada-polish's design-2 looked at /combates twice, and the home its card change broke was the lead's to
-find. The values a review asks for are measured, not guessed: `plitzi page measure <path> <element> --compare <url>
---there "<selector>"` reads an element's computed styles — type, colours, borders, radii, shadows, size, spacing — and
-the other page's element's, and says each property that differs; the designers of velada-polish wrote Playwright
+find. The values a review asks for are measured, not guessed: `plitzi page measure <path> "<ours> => <theirs>" …
+--compare <url> --width 390,1440` reads elements' computed styles — type, colours, borders, radii, shadows, size,
+spacing, motion, and what their `::before`/`::after` draw (velada's VS fill was there, unseen, and the plan asked it
+away) — and the other page's elements', and says each property that differs, what both inherit from their parent said
+apart. Every element at every width is one call, in one browser, the other page read without a picture and kept 6 h
+(`tmp/plitzi-cache/measure`, `--fresh` reads it again): velada-fidelity's ~150 calls of one element at ~18 s each were
+most of its developers' time; the designers of velada-polish wrote Playwright
 scripts of their own, and read the original's CSS by curl, for each one. `--same <properties>` (`font-size,border`;
 shorthands `border`, `font`, `size`) fails unless those are as the other page's — the other page asked as a site is,
 again when it says it is busy — so an acceptance holds a value to the reference rather than to the lead's guess, and
@@ -580,6 +600,14 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   take it. A cut — reassign, forced stop, a copy gone — revokes the token; the copy stays where it is until the task is
   taken again (a command running in it does not lose its folder), and the next taker starts from its last reviewed
   version, never from what was written since.
+- **The lead takes a task back at any time** (`task reassign <task> [--reason "…"] [--to <agent>|lead]`): its agent is
+  told why on its next command, the servers it left listening in the copy are stopped, and it goes to anyone, to the
+  agent it is handed to (`state.handTo`: offered to that one first by `task next`, and refused to every other at `take`
+  — an agent of the team of its role, else refused before anything is cut), or to the lead, who takes it then, a copy of
+  its own. The log keeps who, from whom, to whom and why (`reassign`).
+- **A run gone stops what its agents left listening**: `finish`, `abort` and `purge` stop every server whose folder is
+  in the run's (`stopListenersUnder`, read off `lsof`) and say so — velada-fidelity's copies' servers listened on after
+  the finish removed their folders. A kept server's watchdog stops it once its record is gone with the run.
 
 ## Into the project (`merge.ts`)
 
@@ -657,14 +685,18 @@ velada-polish's design-2 ran `task look` with no `--agent` and the run's log has
   <name>` said once — and printed to it then; the lead's is made by `run open` and printed with it. The run keeps each
   one's digest (`identities/<agent>.json`), never the token; the agent's copy is in its scratch folder
   (`scratch/<agent>/token`), read back by a harness that forgot it.
-- Each command after passes it (`--token`, or `PLITZI_TASK_TOKEN`; a task's token does the same, and a copy's is its
-  holder's). Refused (`identity`, 26): a name that has a token said without it, a token under another's name or of
-  another run, a name not of the project's team (`team.json`: its agents, `lead`, its co-leads), `person` from a shell
-  (a person is a terminal), and a caller that says nothing — except the readings anyone may ask (`run status`, `run
-  report`, `task claims`, `task proposals`, `run can-write`: a hook or a script, `unnamed`).
+- Each command after passes it (`--token`, or `PLITZI_TOKEN`), in a task's copy too: the copy says which task — to its
+  holder's token alone, or a person at its terminal — never who calls, and a task's own token (`<run>.<task>.<secret>`)
+  says no one. Refused (`identity`, 26): no token, an empty one, a task's, one that is no agent's, a name that has a
+  token said without it, a token under another's name or of another run, a name not of the project's team (`team.json`:
+  its agents, `lead`, its co-leads), `person` from a shell (a person is a terminal) — except the readings anyone may ask
+  (`run status`, `run report`, `task claims`, `task proposals`, `run can-write`: a hook or a script, `unnamed`). The CLI
+  makes up no name: velada-fidelity's `--token "$(cat …)"`, read from the wrong folder, came in empty and ran as
+  "agent" — it took a task, and the rework sent back to "agent" sat with no one. A holder's step is held to the task's
+  owner too (`holderOf`): another agent with its copy's token acts on nothing of it.
 - An agent's roles are its team's: `task next --role` and `task take` refuse a role it was not started as.
-- What tells an agent to start one again (`run monitor`, `run watch`) names it by its kept token once it has one:
-  `--token "$(cat tmp/plitzi-runs/<run>/scratch/<agent>/token)"`.
+- What tells an agent to start one again (`run monitor`, `run watch`) names it by its kept token once it has one, by
+  its whole path — the same from a task's copy as from the project: `--token "$(cat <project>/tmp/plitzi-runs/<run>/scratch/<agent>/token)"`.
 
 With who calls proved, the lead's guards hold by name: `requireLead`, `requirePrincipal` and a verdict's guard let in
 `lead` and a person (and, for a verdict, a lead that reviews), and refuse every other — an agent of no team included,

@@ -430,7 +430,7 @@ const agentsOf = async (
               kind: 'agent' as const,
               status: 'no-signal' as const,
               ...about,
-              doing: `no sign of it for ${String(gone(agent))} min — its harness stopped it, or it hangs: start it again${member ? ` (plitzi task next --role ${member.roles.join(',')} --follow --take ${callerFlag(view.runId, agent, identified)})` : ''}${tail}`,
+              doing: `no sign of it for ${String(gone(agent))} min — its harness stopped it, or it hangs: start it again${member ? ` (plitzi task next --role ${member.roles.join(',')} --follow --take ${callerFlag(paths.scratch, agent, identified)})` : ''}${tail}`,
               ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
             }
           : member?.onDemand && (lastBy.get(agent) === undefined || lastBy.get(agent)?.action === 'stops')
@@ -451,7 +451,7 @@ const agentsOf = async (
                   kind: 'agent' as const,
                   status: 'not-started' as const,
                   ...about,
-                  doing: `starts with the run — ${member ? `plitzi task next --role ${member.roles.join(',')}${member.quality ? ` --quality ${member.quality}` : ''} --follow --take ${callerFlag(view.runId, agent, identified)}` : 'not started yet'}${tail}`
+                  doing: `starts with the run — ${member ? `plitzi task next --role ${member.roles.join(',')}${member.quality ? ` --quality ${member.quality}` : ''} --follow --take ${callerFlag(paths.scratch, agent, identified)}` : 'not started yet'}${tail}`
                 }
               : {
                   agent,

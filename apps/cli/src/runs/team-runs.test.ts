@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
 import { auditRun } from './audit';
-import { SAME_DESIGNER_MS } from './design';
+import { REVIEW_TIMEOUT_MS, SAME_DESIGNER_MS } from './design';
 import { expectedIds } from './expectations';
 import { extendRun } from './extend';
 import { leadItems } from './leadWatch';
@@ -314,13 +314,21 @@ describe('a task held behind one in review', () => {
     const kinds = async () => (await viewRun(lead(), 'es-launch')).attention.map(item => item.kind);
 
     expect(await kinds()).not.toContain('slow-review');
-    bench.advance(11 * 60_000);
+    bench.advance(5 * 60_000);
     expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
       expect.objectContaining({
         kind: 'slow-review',
         text: expect.stringContaining(
-          "design-1 has had t-menu's UI review 11 min while dev-1 has nothing to take"
+          "design-1 has had t-menu's UI review 5 min while dev-1 has nothing to take"
         ) as unknown
+      })
+    );
+    // Past the review's time it is no longer the designer's: said so, idle team or not.
+    bench.advance(6 * 60_000);
+    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
+      expect.objectContaining({
+        kind: 'slow-review',
+        text: expect.stringContaining("design-1 has held t-menu's UI review 11 min, past the 8") as unknown
       })
     );
   });
@@ -514,6 +522,51 @@ describe('a designer’s review of the others’ UI', () => {
     bench.advance(SAME_DESIGNER_MS);
     const other = (await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).designReview;
     expect(other).toMatchObject({ task: { id: 't-menu' }, before: 'design-1' });
+  });
+
+  // velada-fidelity: design-1 held t-prediction-card's review 16 min, t-result-card queued 18 min behind it.
+  it('takes a review held past its time from its designer — another takes it, the first is told and refused after', async () => {
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
+    expect((await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).designReview).toBeUndefined();
+
+    bench.advance(REVIEW_TIMEOUT_MS + 60_000);
+    const { next } = await takeNext(bench.agent('design-2'), 'es-launch', 'designer');
+    expect(next.designReview?.task.id).toBe('t-menu');
+    expect(await designOf('t-menu')).toMatchObject({ status: 'due', by: 'design-2' });
+    const loaded = await loadRun(lead(), 'es-launch');
+    expect((await readRunLog(loaded.paths)).find(entry => entry.action === 'review-timed-out')).toMatchObject({
+      task: 't-menu',
+      from: 'design-1',
+      to: 'design-2',
+      minutes: 9
+    });
+    const told = (await messagesOf(loaded)).find(message => message.to === '@design-1');
+    expect(told?.text).toContain("t-menu's UI review went to design-2: you held it 9 min");
+    expect(await refusalOf(reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', []))).toContain(
+      'design-2 reviews t-menu'
+    );
+  });
+
+  // velada-fidelity: the lead said t-result-card's next round was its own; the CLI handed it to design-1 all the same.
+  it('keeps a round the lead sent back as its own the lead’s: no designer is offered it, and one at it is told', async () => {
+    const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
+    const dev = bench.agent('dev-1', { token: taken.token });
+    await writeInCopy(taken.work, 'src/space/pages/menu.ts', "export const menu = { title: 'Menu' };\n");
+    await completeTask(dev, 'es-launch', 't-menu');
+    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
+
+    await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'Light rows' }], 'refuse', {
+      skipDesign: 'lead'
+    });
+    const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(message => message.to === '@design-1');
+    expect(told?.text).toContain('lead sent t-menu back while you reviewed its UI');
+
+    await writeInCopy(taken.work, 'src/space/pages/menu.ts', "export const menu = { title: 'Menú' };\n");
+    await completeTask(dev, 'es-launch', 't-menu');
+    expect(await designOf('t-menu')).toMatchObject({ status: 'skipped', why: 'lead', by: 'lead' });
+    expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer')).designReview).toBeUndefined();
+    expect(await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [])).toMatchObject({ verdict: 'approve' });
   });
 
   it('hands the lead what the designer saw with its approval, and the agent what the lead asked with its task', async () => {

@@ -36,7 +36,7 @@ import { doctor } from './doctor';
 import { feedback } from './feedback';
 import { lint } from './lint';
 import { count, positiveInteger } from './options';
-import { startUsage } from './runs/usage';
+import { acceptTokenEverywhere, startUsage } from './runs/usage';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
 import { FUNCTIONS_DIR } from './scaffold/paths';
 import { CLI_VERSION } from './scaffold/project';
@@ -554,6 +554,7 @@ vars
 registerPage(pageGroup);
 registerElement(elementGroup);
 registerRuns(program, spaceGroup);
+acceptTokenEverywhere(program);
 
 // A command asked for at the top that is one of a group's — `plitzi push` — answered with where it is, not only that it
 // is unknown: read off the commands themselves, so it says the truth of this CLI and nothing has to be kept in step.

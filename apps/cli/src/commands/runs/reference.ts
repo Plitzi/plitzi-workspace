@@ -1,10 +1,16 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { PAGE_DECORATION_LIMIT, PAGE_TEXT_LIMIT, pageDecorations, pageTexts } from '@plitzi/sdk-authoring';
+import {
+  comparePictures,
+  PAGE_DECORATION_LIMIT,
+  PAGE_TEXT_LIMIT,
+  pageDecorations,
+  pageTexts
+} from '@plitzi/sdk-authoring';
 
 import { act, runOf } from './shell';
-import { launchBrowser, SCHEMES } from '../../browser';
+import { dataUrl, launchBrowser, SCHEMES } from '../../browser';
 import { requireLead } from '../../runs/leads';
 import { keptName, REFERENCE_WIDTHS, referencePages, unnamedSections } from '../../runs/reference';
 import { RunRefusal } from '../../runs/refusal';
@@ -30,6 +36,8 @@ interface Kept {
   unnamed: { page: string; headings: string[] }[];
   /** Pages the site answered 404, kept as its page for an address nothing answers. */
   notFound: string[];
+  /** The site paints the same in both schemes: each picture taken once, kept under both. */
+  oneScheme?: true;
 }
 
 /**
@@ -63,8 +71,13 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
       const notFound: string[] = [];
       // Each page once, as a desktop reader sees it: what its sections are compared with the inventory by.
       const read: KeptPage[] = [];
+      // A site that paints the same in both schemes has one: once its first page says so, each picture is taken once and
+      // kept under both names — velada-fidelity's original has no light scheme, and a quarter of 111 s went to it.
+      let oneScheme: boolean | undefined;
+      const pages = options.pages ?? referencePages(loaded.plan);
+      const total = pages.length * REFERENCE_WIDTHS.length * SCHEMES.length;
       try {
-        for (const [index, page] of (options.pages ?? referencePages(loaded.plan)).entries()) {
+        for (const [index, page] of pages.entries()) {
           const url = new URL(page, reference).href;
           // A moment between pages: a site that limits how often it is asked answered the second one with its limit.
           if (index > 0) {
@@ -72,7 +85,19 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
           }
 
           for (const width of REFERENCE_WIDTHS) {
+            let first: { png: Uint8Array; record: KeptPage } | undefined;
             for (const scheme of SCHEMES) {
+              const name = keptName(new URL(url).pathname, width, scheme);
+              if (first && oneScheme === true) {
+                await writeFile(path.join(dir, `${name}.png`), first.png);
+                await writeFile(path.join(dir, `${name}.json`), JSON.stringify({ ...first.record, scheme }));
+                kept.push(name);
+                ctx.say?.(
+                  `kept ${page} at ${String(width)} ${scheme} — the same as ${first.record.scheme} (${String(kept.length)}/${String(total)})`
+                );
+                continue;
+              }
+
               const taken = await pictureAnswered(browser, url, {
                 width,
                 height: 800,
@@ -89,7 +114,6 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
                 notFound.push(page);
               }
 
-              const name = keptName(new URL(url).pathname, width, scheme);
               const record: KeptPage = {
                 url,
                 width,
@@ -99,10 +123,17 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
                 unloaded: taken.unloaded,
                 decorations: await taken.page.evaluate(pageDecorations, PAGE_DECORATION_LIMIT)
               };
+              // The first page's two schemes, set side by side: alike, the site has one, and the rest is taken once.
+              if (first && oneScheme === undefined) {
+                oneScheme = (await comparePictures(taken.page, dataUrl(first.png), dataUrl(taken.png))).changed < 0.5;
+              }
+
               await writeFile(path.join(dir, `${name}.png`), taken.png);
               await writeFile(path.join(dir, `${name}.json`), JSON.stringify(record));
               await taken.page.close();
               kept.push(name);
+              first ??= { png: taken.png, record };
+              ctx.say?.(`kept ${page} at ${String(width)} ${scheme} (${String(kept.length)}/${String(total)})`);
               if (width === REFERENCE_WIDTHS[0] && scheme === 'light') {
                 read.push(record);
               }
@@ -122,11 +153,11 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
         unnamed: unnamed.reduce((sum, page) => sum + page.headings.length, 0)
       });
 
-      return { reference, kept, failed, dir, unnamed, notFound };
+      return { reference, kept, failed, dir, unnamed, notFound, ...(oneScheme === true ? { oneScheme } : {}) };
     },
     kept =>
       [
-        `${kept.reference} kept as it is now: ${String(kept.kept.length)} pictures, each page at ${REFERENCE_WIDTHS.join(' and ')} px in both schemes — page shot --compare ${kept.reference} measures against them for the whole run (--live asks the site now); the run finishing removes them`,
+        `${kept.reference} kept as it is now: ${String(kept.kept.length)} pictures, each page at ${REFERENCE_WIDTHS.join(' and ')} px in both schemes${kept.oneScheme ? ' — it paints one scheme alike in both, so each was taken once' : ''} — page shot --compare ${kept.reference} measures against them for the whole run (--live asks the site now); the run finishing removes them`,
         ...kept.failed.map(each => `  ✗ ${each}`),
         ...kept.notFound.map(
           each => `  · ${each}: the site answered 404 — kept as its page for an address nothing answers`

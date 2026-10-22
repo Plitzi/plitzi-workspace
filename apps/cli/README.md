@@ -290,13 +290,20 @@ before a task — both sides are held to what the project changed: motion reduce
 for by a colour their address gives them.
 `--timezone <IANA>` (both) opens the page as a visitor in that zone: its clock and `Intl` read there.
 
-`page measure <path> <element> [--compare <url>] [--there <selector>]` reads an element's computed styles — its type
-(family, size, weight, line height, tracking, case), colours, background, each border, radius, shadows, opacity,
-padding, margin, gap, size — and, beside another page, the other's element (`--there`, by any selector: the same name
-when left out): each property that differs, here → there, then the ones they share in a line. What a review asks of a
-copy in values, where a picture comparison says only that it differs. `--same font-size,border` (shorthands `border`,
-`font`, `size`) fails unless those are as the other page's: an acceptance's line that holds a copy to its reference.
-`--width`, `--scheme`, `--timezone`, `--url`, `--json`, as `page shot`.
+`page same [paths…] --url <origin> --than <origin>` says whether pages draw the same on two servers of the project —
+every element on screen, its box, the style a reader sees and what its `::before`/`::after` draw, read, not pictured —
+and, where not, the first element that differs; exit 1 then. A look at a task reads with it the pages only a shared
+file of the task reaches, against the run before it, and pictures only those that differ.
+
+`page measure <path> <element…> [--compare <url>]` reads elements' computed styles — type (family, size, weight, line
+height, tracking, case), colours, background, each border, radius, shadows, opacity, padding, margin, gap, size,
+transform, transition, and what `::before`/`::after` draw — and, beside another page, the other's elements (each
+`"ours => theirs"`, by any selector, `#an-element-id` too; the same name when left out; `--there` for one): each property
+that differs, here → there, what both inherit from their parent said apart, then the ones they share in a line. Every
+element at every width (`--width 390,1440`) is one call in one browser; the other page is read without a picture and
+kept 6 h (`--fresh` reads it again). `--same font-size,border,before:opacity` (shorthands `border`, `font`, `size`)
+fails unless those are as the other page's: an acceptance's line that holds a copy to its reference. `--scheme`,
+`--timezone`, `--url`, `--json`, as `page shot`; the page is read once the space has hydrated.
 `--frames` compares pictures taken one after another and names what moved. A project `create` writes has them as
 `npm run check` and `npm run shot`.
 
@@ -486,7 +493,7 @@ plitzi run team                            # who works the runs: .plitzi/team.js
 plitzi run plan plan.json                  # a plan the lead wrote, held to the rules and estimated
 plitzi run open plan.json                  # its folder, every file it touches backed up — and the lead's token, printed
 plitzi task next --role designer --agent design-1   # an agent's first command names it, and answers its own token
-plitzi task take t-home --token <yours> --json      # its files locked, its copy, the task's token
+plitzi task take t-home --token <yours> --json      # its files locked, its copy (which says the task, to you alone)
 plitzi task propose t-menu --change "…"    # ask another task to agree to a change; task answer accepts or counters
 plitzi task check --token …                # what complete holds the copy to, run now: nothing changes (--fix: lint and format first)
 plitzi task complete --token …             # its copy compared by fingerprint, the project's checks run in it
@@ -573,8 +580,9 @@ restore`, `run allow-finish`, `run stop --force`, `run attach --take-over` — i
   the harness died, on another machine, or after an upgrade. `run stop` lets the tasks in hand finish.
 - **Who calls is proved by a token**, never by a name typed: each agent's (`<run>.@<agent>.<secret>`) is made at its
   first command (`--agent <name>`, said once) and kept in `tmp/plitzi-runs/<run>/scratch/<agent>/token`; the lead's is
-  printed by `run open`. Every command after passes it (`--token`): a name that has one said without it, a token under
-  another's name, a name or a role not of the team, and a command that says nothing are refused (26) — but the readings
+  printed by `run open`. Every command after passes it (`--token`), in a task's copy too — the copy says the task, not
+  who: no token, an empty one, a task's, a name that has one said without it, a token under another's name, a name or a
+  role not of the team are refused (26) — but the readings
   anyone may ask (`run status`, `run report`, `run can-write`). What is the lead's is the lead's by its token, and a
   message to a task goes out in the lead's voice, so it is a lead's too. A guard rail against an agent's mistake, not a
   wall: an agent with a shell can read another's token file.

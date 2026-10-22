@@ -41,6 +41,7 @@ const TIMED = new Set<Attention['kind']>([
   'long-task',
   'stopping',
   'slow-review',
+  'ui-queued',
   'refused-again'
 ]);
 
@@ -76,7 +77,7 @@ export const leadItems = (view: RunView, now: Date): LeadItem[] => {
       ? [
           {
             key: `leads-needed:${waiting[0].task.id}:${String(waiting[0].task.round)}`,
-            text: `${String(waiting.length)} reviews wait, the oldest (${waiting[0].task.id}) ${minutes(waiting[0].waited)} min: start a lead that reviews beside you — plitzi task next --role lead --follow --take ${callerFlag(view.runId, idle[0], view.identified)} — it stops by itself once the queue is empty`
+            text: `${String(waiting.length)} reviews wait, the oldest (${waiting[0].task.id}) ${minutes(waiting[0].waited)} min: start a lead that reviews beside you — plitzi task next --role lead --follow --take ${callerFlag(view.scratch, idle[0], view.identified)} — it stops by itself once the queue is empty`
           }
         ]
       : []),

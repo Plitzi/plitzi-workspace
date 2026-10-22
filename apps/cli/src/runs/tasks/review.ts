@@ -214,6 +214,12 @@ const decide = async (
     );
   }
 
+  // A UI review another designer holds now — its own timed out, or the lead's — is refused as that first, naming why:
+  // what the lead said meanwhile is no reason to say the verdict again.
+  if (designDue(view.state) && !isPrincipal(ctx.agent) && !isCoLead(loaded.record, ctx.agent)) {
+    assertDesigner(view, ctx.agent);
+  }
+
   // What the lead said to a reviewer while it reviewed is read before its verdict, not after: design-1's round on
   // t-match-bars went out before the lead's "only the bars this round" reached it (velada-polish). Handed over here,
   // read; said again, the verdict goes.
@@ -223,7 +229,11 @@ const decide = async (
       throw new RunRefusal(
         'invalid',
         `The lead said this to you while you reviewed — read it before your verdict on ${taskId}, then say it again with it in mind:\n${meanwhile.map(message => `  ${message.id}: ${message.text}`).join('\n')}`,
-        { task: taskId, messages: meanwhile.map(message => message.id) }
+        {
+          task: taskId,
+          messages: meanwhile.map(message => message.id),
+          next: `read ${meanwhile.map(message => message.id).join(', ')} above — it is marked read now — then say your verdict on ${taskId} again with it in mind`
+        }
       );
     }
   }
@@ -263,6 +273,18 @@ const decide = async (
   const skipped = verdict === 'approve' && designDue(view.state);
   const why = skipped ? skipDesign : undefined;
 
+  // The lead sent back a task a designer was reviewing: its review ends now, and it is told — never left to say a
+  // verdict that is refused (velada-fidelity: design-1's of t-result-card was turned away, naming nothing). An approval
+  // tells it once the approval is in (below).
+  const cut = verdict === 'changes' && !byDesigner && designDue(view.state) ? view.state.design?.by : undefined;
+  if (cut !== undefined && cut !== ctx.agent) {
+    await sendMessage(ctx, loaded, {
+      from: LEAD,
+      to: agentAddress(cut),
+      text: `${ctx.agent} sent ${taskId} back while you reviewed its UI: your review of this round ends — what you found still matters, tell the lead with plitzi task tell --about ${taskId} "…" --token <yours>`
+    });
+  }
+
   // A question it asked the lead and the lead has not answered: the answer may change the work, so it comes first.
   const answered = new Set((await messagesOf(loaded)).flatMap(message => (message.replyTo ? [message.replyTo] : [])));
   const open = (await messagesOf(loaded)).filter(
@@ -300,12 +322,17 @@ const decide = async (
     const toLead = changesBlock(view.state, byDesigner);
     // It redoes its work on the run as it is now: what was approved while it was in review comes into its copy.
     const brought = toLead ? [] : await refreshCopy(ctx, loaded, view);
+    // The lead says the next round's UI review is its own: it comes to it, never offered to a designer.
+    const reserving = !byDesigner && skipDesign === 'lead';
     await updateState(
       view.paths,
       state => ({
         ...state,
         round,
         ...(designRounds > 0 ? { designRounds } : {}),
+        ...(reserving
+          ? { design: { ...(state.design ?? { status: 'skipped' as const, round: state.round }), reserved: ctx.agent } }
+          : {}),
         status: toLead ? 'blocked' : 'changes-requested',
         ...(toLead
           ? {

@@ -89,7 +89,17 @@ export const targetOn = async (
     }
 
     if (!BARE.test(target)) {
-      return { selector: target, found: await found(target) };
+      if (await found(target)) {
+        return { selector: target, found: true };
+      }
+
+      // `#home-fights-main > …`: an element's name written as an id, where the page has none by that id — the name is
+      // what a person reads in the builder and in a report (velada-fidelity's design-1 met "not on" for each).
+      const byName = target.replace(/#([A-Za-z_][\w-]*)/g, (_match, name: string) => namedBy(name));
+
+      return byName !== target && (await found(byName))
+        ? { selector: byName, found: true }
+        : { selector: target, found: false };
     }
 
     // A bare word: an element's name, a tag — or an id, as a section's anchor is (`--clip combates`).
@@ -115,9 +125,16 @@ const framing = (view: { viewport?: boolean; scrollTo?: string }, clip?: string)
   return view.viewport || view.scrollTo ? { kind: 'viewport' } : { kind: 'page' };
 };
 
-export const capture = (page: BrowserPage, how: Framing): Promise<Uint8Array> => {
+export const capture = async (page: BrowserPage, how: Framing): Promise<Uint8Array> => {
   if (how.kind === 'element') {
     return page.locator(how.selector).first().screenshot();
+  }
+
+  if (how.kind === 'element-later') {
+    const read = await targetOn(page, how.target);
+    const shown = !('problem' in read) && read.found && (await page.locator(read.selector).first().isVisible());
+
+    return shown ? page.locator(read.selector).first().screenshot() : page.screenshot({ fullPage: false });
   }
 
   return page.screenshot({ fullPage: how.kind === 'page' });
@@ -224,21 +241,40 @@ export const pictureOf = async (
 
   /** The element a target names, once it is there: what it is scrolled to, or pictured alone. */
   const shown: Record<string, string> = {};
+  let later: string | undefined;
   for (const target of [view.scrollTo, view.clip]) {
     if (target === undefined) {
       continue;
     }
 
-    const there = await page.waitForSelector(awaited(target), { timeout: 10_000 }).catch(() => null);
+    // A clip a click opens is not there yet: found as each picture after it is taken.
+    const wait = view.clipLater === true && target === view.clip ? 1_500 : 10_000;
+    const there = await page.waitForSelector(awaited(target), { timeout: wait }).catch(() => null);
     const read = there ? await targetOn(page, target) : undefined;
-    if (!read || 'problem' in read || !read.found) {
+    // On the page and hidden — an answer a click opens — is not there to picture yet either.
+    const hidden =
+      view.clipLater === true &&
+      target === view.clip &&
+      read !== undefined &&
+      !('problem' in read) &&
+      read.found &&
+      !(await page.locator(read.selector).first().isVisible());
+    if (!read || 'problem' in read || !read.found || hidden) {
+      if (view.clipLater === true && target === view.clip) {
+        later = target;
+        continue;
+      }
+
       return { problem: `${target} is not on ${url}.` };
     }
 
     shown[target] = read.selector;
   }
 
-  const how = framing(view, view.clip === undefined ? undefined : shown[view.clip]);
+  const how: Framing =
+    later !== undefined
+      ? { kind: 'element-later', target: later }
+      : framing(view, view.clip === undefined ? undefined : shown[view.clip]);
 
   await withoutDevTools(page);
   // Counted before the walk below, which shows every one of them.
