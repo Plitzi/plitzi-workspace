@@ -255,6 +255,6 @@ export const taskComplete = (
               )
             ]
           : []),
-        '  Take no other step on it until the review: plitzi task next for another.'
+        '  Nothing more on it until its review comes back: plitzi task next hands you what is next — a task you hold first.'
       ].join('\n')
   );

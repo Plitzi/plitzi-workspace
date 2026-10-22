@@ -235,7 +235,7 @@ export const taskInbox = (
         ? options.all
           ? 'Nothing was said yet.'
           : waited
-            ? 'Nothing was said within the wait: run it again to go on waiting.'
+            ? 'Nothing was said within the wait — your question stays open: run it again to wait on, or go on with what does not need the answer.'
             : 'Nothing unread (--all shows every message, read or not; --follow waits for one).'
         : (options.all ? exchangeLines(messages, taskId) : messageLines(messages)).join('\n')
   );

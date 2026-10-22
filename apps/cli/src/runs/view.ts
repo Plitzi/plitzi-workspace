@@ -423,7 +423,12 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       })
     );
 
-  const pending = (await requestsOf(loaded)).filter(each => !each.integrated && each.integratedBy === undefined);
+  // A request of a task not approved yet is no one's to act on: it goes in with the approval (velada-polish's lead was
+  // woken for t-match-bars's theme request while it was in review). One left after its approval is.
+  const approvedTasks = new Set(views.filter(view => view.state.status === 'done').map(view => view.task.id));
+  const pending = (await requestsOf(loaded)).filter(
+    each => !each.integrated && each.integratedBy === undefined && approvedTasks.has(each.task)
+  );
   // What a request waits for: the task holding its file by turns — merged once that one lets go — or nothing yet.
   const locks = await allLocks(ctx);
   pending.forEach(each => {

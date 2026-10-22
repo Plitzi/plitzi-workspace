@@ -159,7 +159,7 @@ const nextText = (next: NextTask, agent: string): string =>
             : next.task
               ? next.yours
                 ? [
-                    `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : 'unblocked'}). Your token is still good: plitzi task context ${next.task.id}`,
+                    `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : next.back === 'unblocked' ? 'unblocked by the lead' : 'still in progress: you hold it — go on with it before anything new'}). Your token is still good: plitzi task context ${next.task.id}`,
                     ...(next.work ? [`  Its copy, the only place you write: cd ${next.work}`] : []),
                     ...(next.asked ?? []).map(line => `  ↺ ${line}`)
                   ].join('\n')

@@ -72,7 +72,7 @@ const countsText = (counts: Partial<Record<DecorationKind, number>>): string => 
  * they named looks the page already had, drawn another way, and read as what to add (velada-dress).
  */
 const decorationText = (section: SectionDecorations): string =>
-  `  ${section.section}: ${countsText(section.here)} → ${countsText(section.there)}${section.absent.length > 0 ? ` — none here of: ${section.absent.join('; ')}` : ''}`;
+  `  ${section.section}: ${countsText(section.here)} → ${countsText(section.there)}${section.absent.length > 0 ? ` — none here of: ${section.absent.map(look => (section.absentOn?.[look] ? `${look} at ours: ${section.absentOn[look]}` : look)).join('; ')}` : ''}`;
 
 /** What a comparison found, in the lines an agent reads before it opens a picture. */
 export const compareText = (compare: CompareReport): string[] => {
@@ -270,9 +270,30 @@ export const compareWith = async (
     ...region,
     y: region.y + (diff.regions.find(change => change.name === region.name)?.shift ?? 0)
   }));
-  const decorations = compareDecorations(
+  const compared = compareDecorations(
     { layers: await readPage(taken.page, pageDecorations, PAGE_DECORATION_LIMIT), regions },
     { layers: theirs.decorations, regions: shifted }
+  );
+  // Each look this page lacks, said on the element of ours where the other page wears it: what to dress.
+  const decorations = await Promise.all(
+    compared.map(async section => {
+      const shift = diff.regions.find(change => change.name === section.section)?.shift ?? 0;
+      const on: Record<string, string> = {};
+      for (const look of section.absent) {
+        const layer = section.absentLayers.find(each => look.endsWith(`(${each.detail})`));
+        const ours = layer
+          ? await readPage(taken.page, elementAt, {
+              x: layer.x + layer.width / 2,
+              y: layer.y - shift + layer.height / 2
+            })
+          : undefined;
+        if (ours) {
+          on[look] = ours;
+        }
+      }
+
+      return Object.keys(on).length > 0 ? { ...section, absentOn: on } : section;
+    })
   );
 
   return {
@@ -342,4 +363,30 @@ export function contactSheet(cells: { label: string; src: string }[]): Promise<s
  * there); a sort and a span wholly absent is what a visitor sees missing.
  */
 export const missingDress = (decorations: readonly SectionDecorations[]): string[] =>
-  decorations.flatMap(section => section.absent.map(look => `${section.section} lacks ${look}`));
+  decorations.flatMap(section =>
+    section.absent.map(
+      look =>
+        `${section.section} lacks ${look}${section.absentOn?.[look] ? ` — at ours: ${section.absentOn[look]}` : ''}`
+    )
+  );
+
+/**
+ * Runs in the page: the named element (`data-plitzi-el`) drawn at a point of the whole page, the innermost — the page
+ * scrolled to it and back. Self-contained — it is serialised.
+ */
+export function elementAt({ x, y }: { x: number; y: number }): string | undefined {
+  const was = window.scrollY;
+  window.scrollTo(0, Math.max(0, y - window.innerHeight / 2));
+  try {
+    for (const node of document.elementsFromPoint(x, y - window.scrollY)) {
+      const named = node.closest('[data-plitzi-el]')?.getAttribute('data-plitzi-el');
+      if (named) {
+        return named;
+      }
+    }
+
+    return undefined;
+  } finally {
+    window.scrollTo(0, was);
+  }
+}

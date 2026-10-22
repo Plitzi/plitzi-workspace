@@ -54,7 +54,8 @@ describe('a team: roles, waiting for work, and a lead who talks to the agents', 
     await take('agent-3', 't-about');
     const waited = await followNext(bench.agent('agent-1'), 'es-launch', 'developer', { timeoutMs: 30, everyMs: 10 });
     expect(waited.timedOut).toBe(true);
-    expect(waited.why).toContain('Do not stop: t-menu, yours, is in review');
+    expect(waited.why).toContain('Your wait ended, not your work: run the same command again');
+    expect(waited.why).toContain('t-menu, yours, is in review, and comes back to you if sent back');
   });
 
   it('gives each role its tasks: next picks for the role, and take refuses another role’s', async () => {

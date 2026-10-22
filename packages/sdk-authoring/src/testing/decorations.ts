@@ -383,6 +383,11 @@ export interface SectionDecorations {
   absent: string[];
   /** The other page's layers of each absent look, whole — their element and their CSS: what a spike reads. */
   absentLayers: PageDecoration[];
+  /**
+   * Of each absent look, the element of this page where the other page wears it — by its name, found at the same place
+   * of the section: the one to dress (velada-dress: "lacks radial-gradient" said what, never on which element).
+   */
+  absentOn?: Record<string, string>;
 }
 
 const KINDS: readonly DecorationKind[] = ['gradient', 'glow', 'ornament', 'image', 'filter'];

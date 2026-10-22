@@ -13,6 +13,7 @@ import { loadRun, openRun, readApproved, readRunLog } from './run';
 import { getBlob } from './store';
 import { askLead, messageTasks } from './talk';
 import {
+  blockTask,
   checkTask,
   claimFile,
   completeTask,
@@ -22,6 +23,7 @@ import {
   reviewTask,
   takeNext,
   takeTask,
+  unblockTask,
   waitForFile
 } from './tasks';
 import { HAND_OFF_AFTER_MS } from './tasks/handOff';
@@ -117,6 +119,9 @@ describe('a run played whole, as velada-dress went', () => {
     expect((await completeTask(as('dev-2', menu.token), runId, 't-menu')).requests.map(each => each.file)).toEqual([
       THEME
     ]);
+
+    // In review, its request is no one's to act on yet: the lead is not woken for it — it goes in with the approval.
+    expect((await viewRun(as('lead'), runId)).attention.some(item => item.kind === 'request')).toBe(false);
 
     // Approved, its request goes in though t-home holds the theme: the run's work never reads what it lacks.
     expect((await reviewTask(as('lead'), runId, 't-menu', 'approve', [])).fulfilled).toEqual([THEME]);
@@ -254,5 +259,26 @@ describe('a task sent back while its agent is at another', () => {
     bench.advance(HAND_OFF_AFTER_MS);
 
     expect((await nextTask(as('dev-2'), runId, 'developer')).handOff).toBeUndefined();
+  });
+});
+
+// velada-polish: right after a `complete` told an agent to take no other step, `task next` handed back the task it held
+// "unblocked" — never blocked: it was held all along.
+describe('a task handed back to its own agent', () => {
+  it('says it is held all along, or unblocked by the lead, as it is', async () => {
+    const plan = { ...benchPlan(), designReview: false };
+    await openRun(as('lead'), await bench.writePlan(plan));
+    const home = await takeTask(as('dev-1'), plan.runId, 't-home');
+    expect(await nextTask(as('dev-1'), plan.runId, 'developer')).toMatchObject({
+      task: { id: 't-home' },
+      back: 'held'
+    });
+
+    await blockTask(as('dev-1', home.token), plan.runId, 't-home', 'Which greeting?', 'lead');
+    await unblockTask(as('lead'), plan.runId, 't-home', 'Bienvenidos');
+    expect(await nextTask(as('dev-1'), plan.runId, 'developer')).toMatchObject({
+      task: { id: 't-home' },
+      back: 'unblocked'
+    });
   });
 });

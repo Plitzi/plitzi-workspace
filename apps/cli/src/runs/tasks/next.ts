@@ -51,6 +51,8 @@ export interface NextTask {
   yours?: 'in-progress' | 'changes-requested';
   /** Handed back with changes requested: what its last review asked, by whom. */
   asked?: string[];
+  /** In progress and the caller's: lifted from a block by the lead, or held all along — the one to go on with first. */
+  back?: 'unblocked' | 'held';
   /** A task sent back whose agent is at another, handed to the caller: whose it was, and where that agent is. */
   handOff?: { from: string; at: string };
   /** One the caller holds: where its copy is — the only place its work is written. */
@@ -177,10 +179,19 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
 
       // Sent back: what its last review asked, said where it is handed back — not only in the brief.
       const asked = lastAsked(view);
+      // Why it comes back, as it is: lifted by the lead, or never let go — one held while another was worked was said
+      // "unblocked" right after a `complete` told it to take no other step (velada-polish).
+      const back =
+        status === 'changes-requested'
+          ? undefined
+          : view.state.notes.at(-1)?.text.startsWith('Unblocked') === true
+            ? ('unblocked' as const)
+            : ('held' as const);
 
       return {
         task: view.task,
         yours: status,
+        ...(back ? { back } : {}),
         work: view.paths.work,
         ...(status === 'changes-requested' && asked.length > 0 ? { asked } : {}),
         ready: [],
@@ -750,7 +761,9 @@ export const followNext = async (
       return {
         ...next,
         timedOut: true,
-        why: `waited ${durationText(timeoutMs)} and nothing came for you: ${next.why ?? 'nothing is ready'} — run it again to go on waiting${inReview.length > 0 ? `. Do not stop: ${inReview.join(', ')}, yours, ${inReview.length === 1 ? 'is' : 'are'} in review and come${inReview.length === 1 ? 's' : ''} back to you if sent back — you stop only when task next says you can` : ''}`
+        // One rule, always said: a wait that ends is never the work's end — "run it again" alone, with nothing of the
+        // agent's in review, read as leave to stop.
+        why: `waited ${durationText(timeoutMs)}, nothing came for you yet (${next.why ?? 'nothing is ready'}). Your wait ended, not your work: run the same command again — you stop only when task next says "You can stop"${inReview.length > 0 ? `; ${inReview.join(', ')}, yours, ${inReview.length === 1 ? 'is' : 'are'} in review, and come${inReview.length === 1 ? 's' : ''} back to you if sent back` : ''}`
       };
     }
 

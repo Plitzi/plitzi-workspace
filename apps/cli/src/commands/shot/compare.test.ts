@@ -96,4 +96,23 @@ describe('a comparison with another site, said', () => {
       'section#artist-page lacks radial-gradient across the section (radial-gradient rgba(199, 168, 107, 0.16))'
     ]);
   });
+
+  // velada-dress/-polish: "lacks radial-gradient" said what, never on which of our elements — a developer looked for it.
+  it('says the element of ours where the other page wears a look this one lacks', () => {
+    const look = 'box-shadow (box-shadow 48px rgba(199, 168, 107, 0.1))';
+    expect(
+      missingDress([
+        {
+          section: 'section#match-page',
+          here: {},
+          there: { glow: 1 },
+          missing: [],
+          extra: [],
+          absent: [look],
+          absentLayers: [],
+          absentOn: { [look]: 'match-result' }
+        }
+      ])
+    ).toEqual([`section#match-page lacks ${look} — at ours: match-result`]);
+  });
 });
