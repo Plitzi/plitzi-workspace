@@ -359,7 +359,14 @@ shared file's: velada-polish's design-2 looked at /combates twice, and the home 
 find. The values a review asks for are measured, not guessed: `plitzi page measure <path> <element> --compare <url>
 --there "<selector>"` reads an element's computed styles — type, colours, borders, radii, shadows, size, spacing — and
 the other page's element's, and says each property that differs; the designers of velada-polish wrote Playwright
-scripts of their own, and read the original's CSS by curl, for each one.
+scripts of their own, and read the original's CSS by curl, for each one. `--same <properties>` (`font-size,border`;
+shorthands `border`, `font`, `size`) fails unless those are as the other page's — the other page asked as a site is,
+again when it says it is busy — so an acceptance holds a value to the reference rather than to the lead's guess, and
+`run plan` says a task of a copy (`reference`) whose acceptance names values (a length, a colour) no check of it
+measures (`measuredValues.ts`): velada-polish's VS sizes were written 2.35/2.75/3.35rem, the original's 3em, and a round
+went to finding it out. A stage stacked — `run extend`, or the scope's tasks — says its plan's notices too, which only a
+dry run said. What the designer reads is its own half of the run, `runs-designer.md` (`DESIGN_READING`), handed with its
+first review; the developers' `runs.md` points to it in a line.
 
 ## Files read whole (`longFiles.ts`)
 

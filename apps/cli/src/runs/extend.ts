@@ -3,6 +3,7 @@ import path from 'node:path';
 import { readJson, writeAtomic, writeJson } from './files';
 import { coversOf } from './inventory';
 import { coLeadsOf, requireLead } from './leads';
+import { unmeasuredNotices } from './measuredValues';
 import { EVERYONE, LEAD, sendMessage } from './messages';
 import { isBaseManifest } from './model';
 import { readOwnership } from './ownership';
@@ -56,6 +57,8 @@ export interface Extended {
   takenUp?: string[];
   /** `dryRun`: the stage as it would be stacked — its tasks with the CLI's, estimated — and nothing written. */
   checked?: CheckedPlan;
+  /** What its check says and refuses nothing for: said when it is stacked too — a stage's said only by a dry run once. */
+  notices?: string[];
 }
 
 export const extendRun = async (
@@ -109,6 +112,11 @@ export const extendRun = async (
     } else {
       throw error;
     }
+  }
+
+  // A stage copies the run's site unless it names its own: what its values are measured against.
+  if (checked && next.reference === undefined) {
+    checked.notices.push(...unmeasuredNotices(next.tasks, loaded.plan.reference));
   }
 
   const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
@@ -267,6 +275,7 @@ export const extendRun = async (
       ? { newLeads: leads.filter(each => !coLeadsOf(loaded.record).includes(each)) }
       : {}),
     ...(inputs.length > 0 ? { inputs } : {}),
-    ...(takenUp.length > 0 ? { takenUp } : {})
+    ...(takenUp.length > 0 ? { takenUp } : {}),
+    ...(checked.notices.length > 0 ? { notices: checked.notices } : {})
   };
 };

@@ -196,5 +196,8 @@ export const taskSpike = (
     spiked =>
       spiked.finding === undefined
         ? `${spiked.task} is blocked on the lead, who finds out ${spiked.question}. Its files stay yours; the answer comes with your next command (plitzi task next --follow hands the task back) — meanwhile take another task, or go on with what does not need it.`
-        : `${spiked.task} is done: its findings go with every task that waits for it.${spiked.added ? ` It made ${spiked.added.join(', ')}.` : ''}${spiked.ready && spiked.ready.length > 0 ? ` Ready now: ${spiked.ready.join(', ')}.` : ''}`
+        : [
+            `${spiked.task} is done: its findings go with every task that waits for it.${spiked.added ? ` It made ${spiked.added.join(', ')}.` : ''}${spiked.ready && spiked.ready.length > 0 ? ` Ready now: ${spiked.ready.join(', ')}.` : ''}`,
+            ...(spiked.notices ?? []).map(notice => `  · ${notice}`)
+          ].join('\n')
   );

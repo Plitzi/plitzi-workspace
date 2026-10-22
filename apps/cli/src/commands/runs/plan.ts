@@ -276,7 +276,8 @@ export const runExtend = (
           ? [
               `  ${extended.newLeads.join(', ')} review beside you now: start each — plitzi task next --role lead --follow --take --agent <name>`
             ]
-          : [])
+          : []),
+        ...(extended.notices ?? extended.checked?.notices ?? []).map(notice => `  · ${notice}`)
       ].join('\n')
   );
 

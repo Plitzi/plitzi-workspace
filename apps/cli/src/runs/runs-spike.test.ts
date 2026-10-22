@@ -102,6 +102,18 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-book')?.found).toBe(1);
   });
 
+  // velada-polish: the scope's tasks named the VS sizes as the lead guessed them, and a stage stacked said no notice.
+  it('says, as the scope stacks its tasks, the values none of their checks measures against the site', async () => {
+    await open(scopePlan('es-launch', ASK, 'https://www.example.com'));
+    const stage = scoped();
+    stage.tasks[0].acceptance = ['The hero title is 48px'];
+
+    const done = await answerSpike(lead(), 'es-launch', SCOPE_SPIKE, 'The hero is larger there', {
+      tasks: await bench.writePlan(stage)
+    });
+    expect(done.notices?.join(' ')).toContain(`Task "${stage.tasks[0].id}" names values (48px)`);
+  });
+
   // velada-polish: a run opened on its scope had no reference, and the amend that named it said nothing changed.
   it('takes the site the run copies at the open, and by an amend once open', async () => {
     await open(scopePlan('es-launch', ASK, 'https://www.example.com'));

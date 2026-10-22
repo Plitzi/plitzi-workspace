@@ -23,6 +23,8 @@ export interface Spiked {
   added?: string[];
   /** The tasks it left ready: those it made, and those that waited for it. */
   ready?: string[];
+  /** What the check of the tasks it made says and refuses nothing for: a value no check measures, an id not there. */
+  notices?: string[];
 }
 
 /**
@@ -139,6 +141,7 @@ export const answerSpike = async (
     question,
     finding,
     ...(stacked ? { added: stacked.added } : {}),
-    ...(ready.length > 0 ? { ready } : {})
+    ...(ready.length > 0 ? { ready } : {}),
+    ...(stacked?.notices ? { notices: stacked.notices } : {})
   };
 };

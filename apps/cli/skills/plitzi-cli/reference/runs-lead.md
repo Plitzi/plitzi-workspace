@@ -10,7 +10,7 @@ What the lead — team lead and software architect — does; the agents' half, t
    video, an interactive tool (a tier list), a page linked from the footer, and the details: what moves, how a
    control behaves, a size — as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
-   "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
+"page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
    piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`, naming sections no piece covers. **Research is a spike, yours** (no files). **Start with the scope**, `run open --spike "<ask>" --run <name> [--reference <site>]`; find out (`page shot --compare <original> --dress`) and end it with the tasks, each with what you found (`"findings"`): `task spike s-scope --done "…" --tasks <stage.json>`. Later: stack one (`run extend`); an agent's `task spike` is a block you lift with the answer (`task unblock --answer`). **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview` — who owns which file, read off the imports. A page owns the modules only
@@ -60,11 +60,11 @@ What the lead — team lead and software architect — does; the agents' half, t
    the others' UI before you (`options.designReview`; `"designReview": false` turns it off). Yours is the complete,
    strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
    `--skip-design lead|no-ui`). **One lead for every four agents**: `lead-2`… beside you, started when `run watch
-   --until lead` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`) and
+--until lead` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`) and
    answers the questions it is handed, and stops when nothing is left. A lead's own files go in `tmp/plitzi-runs/<run>/scratch/<name>/`, gone with the run.
 
    **Keep a person's actions a person's in the harness**: deny the agents `run finish --apply`, `run abort`, `run purge`,
-   `run restore`, `run allow-finish`, `run stop --force`, `run attach --take-over` (Claude Code: `permissions.deny`).
+   `run restore`, `run allow-finish`, `run stop --force`, `run attach --take-over`.
 
    **Quality** (`"quality": "light" | "standard" | "high"`): `run plan` sets it where you say none. Ids: lowercase letters, digits, `-`, `_`; **classes and provider ids by area** (`pronosticos-card`, `topBoxers`):
    two tasks that name one class differently meet only at the approval. **Foundations go to different agents**: the
@@ -85,7 +85,8 @@ What the lead — team lead and software architect — does; the agents' half, t
 4. **Ask the person first** who applies the run at the end — they, or you: then they open it in their terminal with
    `--lead-finishes` (or `plitzi run allow-finish` later). Never you.
    `plitzi run open plan.json` backs up every file it will touch, and prints **your token**: pass it on every command
-   after (`--token …`; kept in the run's `scratch/lead/token`) — `lead` said alone is refused. Tell the person how to watch it: `npm run start:preview` (the approved work), `plitzi run monitor`.
+   after (`--token …`; kept in the run's `scratch/lead/token`). Tell the person how to watch it: `npm run start:preview`,
+   `plitzi run monitor`.
 5. Start one agent per ready task (`plitzi task next --run es-launch --json`), each with a free port, and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
    file a task takes past 400 lines (ask for the split) — each said once. **Talk:** answer a question with `plitzi
@@ -93,42 +94,43 @@ task message t-home "…" --reply-to m3`; `task message all "…"` tells every t
    an agent by name, between tasks too. **The scope changes while it runs** — yours to see, or the person's to ask: edit
    the plan in the run's folder (`inputs/plan.json`) and `plitzi run amend` — acceptance, priorities, notes, the
    inventory, what a task nobody took waits for (`dependsOn`), one removed; more work is a stage, `plitzi
-   run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — a task
-   held behind one in review, or a review dragging while others have nothing, is said: chase or decide that review,
-   settle a last cosmetic round yourself, or amend away a dependency it does not need.
+run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — chase
+   or decide a review that drags, settle a last cosmetic round yourself, amend away a dependency it does not need.
 6. **Review against the inventory, not only the picture:** every section and piece the task's acceptance names is
    there, as the reference has it — a difference you accept is one you say (`--note`); one a visitor would see is sent
    back. Judge the version that went to review, on a page several tasks build only its part. `plitzi task show
-   t-home` is all of it (`<file> --diff`: one file's whole diff);
+t-home` is all of it (`<file> --diff`: one file's whole diff);
    `plitzi task look t-home [--click id | --hover id] [--element id]` (a part of a page others build: its part alone) serves its copy, page checks its pages (headings, names,
    contrast; the state asked for) and pictures them light and dark. What the acceptance asks and the data does not show, you test yourself
    (a module's function, its edge cases, `node -e` in the copy) — or send it back for the test it needs. Then
    `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Three rounds of yours —
-   or three of the designer's, counted apart — are yours: approve as it is, answer, or ask the person. A `--known-failure` says why and which task fixes it — weigh that. The approval merges what went to review,
-   not the copy as it is: `look` and the approval warn of anything written in it since — ask why, or send it back.
-   Two tasks that made one file: the second approval is refused — send it back.
+   or three of the designer's — are yours: approve as it is, answer, or ask the person. A `--known-failure` says why and
+   which task fixes it — weigh that. The approval merges what went to review, not the copy as it is.
 7. **Someone changed a file while the agent worked on it** → the approval stops, naming it: `--approve --merge` when
    the changes go together line by line (the refusal says so), `--approve --overwrite` (its version wins, said, the
    other kept) or `--changes` (redo it on the project's version). A change after approval puts the finish into
    **reconciliation**: `plitzi run resolve <run> <file> --take project|run|merge|<file>`, then `plitzi run continue`.
-   **The brake** stops a run whose completions keep failing; `run resume`. Agents
-   iterate with `task check`, which it does not count. **Plitzi upgraded mid-run** (`version-mismatch`, said in `run
+   **The brake** stops a run whose completions keep failing; `run resume`. **Plitzi upgraded mid-run** (`version-mismatch`, said in `run
 status`): ask the person to run `plitzi run attach <run>` — the agents keep their work and wait. To upgrade on
    purpose, the person runs `plitzi run upgrade` — never an install under the open run.
 8. **Before you close, look at the coverage:** the finish runs each covering check on the result; look at what a
    check cannot see (`plitzi run preview`) — what is missing is a stage (`run extend`), or the next run's: `run notice "…"
-   --on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run plan` and `run open` list; `run
-   backlog done <id> --note "…"` closes one. **Close it:** write the summary (done, wrong, left) last: `plitzi run report --summary summary.md`; then `plitzi run
+--on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run plan` and `run open` list; `run
+backlog done <id> --note "…"` closes one. **Close it:** write the summary (done, wrong, left) last: `plitzi run report --summary summary.md`; then `plitzi run
 finish` (the diff, checked). `--apply` is the person's, or yours if they allowed it. `run pending`: what awaits it.
 
 ## Where leads went wrong
 
 - **A check you write, you run once** on the run's work before a task gets it: a 404 page is `page check … --status
-  404`, a `--clip` names an id the page has. One that cannot pass costs every try of the task's.
+404`, a `--clip` names an id the page has. One that cannot pass costs every try of the task's.
 - **One look, one task**: a section two tasks dress waits on the other's files.
 - **A question first**: it holds an agent — answer before your own work. `run watch` in the harness's background
   (never `&`), one at a time.
 - **Say what is so, read from its source** (the original's CSS, `task show`, the run's approved version), never from a
   copy, a class name or memory; never answer one way and tell another — a file a task holds is no one else's.
+- **A value is measured, never typed**: in the scope, `plitzi page measure <path> <el> --compare <reference> --there
+"<selector>"` for each piece's sizes, type and colours, and its acceptance holds them (`--same font-size,border`);
+  `run plan` says a value no check measures.
+- **Lead, don't fix the CLI mid-run**: what the tools did wrong, note it (`run notice`) and fix it after — a lead
+  debugging the CLI left a review held 16 minutes.
 - **The report before the finish** (`run report --summary`).
-

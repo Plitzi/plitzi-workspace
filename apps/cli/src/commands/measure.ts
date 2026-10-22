@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { InvalidArgumentError } from 'commander';
 
 import { openPage } from '@plitzi/sdk-authoring';
 
@@ -6,6 +7,7 @@ import { launchBrowser, openProjectPage } from '../browser';
 import { projectHere } from './existingProject';
 import { originHere } from '../runs/copyServer';
 import { targetOn } from './shot/capture';
+import { pictureAnswered } from './shot/remote';
 import { fail } from './terminal';
 
 import type { Browser, BrowserPage, Scheme } from '../browser';
@@ -62,6 +64,11 @@ export interface MeasureOptions {
   compare?: string;
   /** That page's element, by any selector: the element's own name when left out. */
   there?: string;
+  /**
+   * The properties that must be the same as the other page's — `font-size,border` — or the command fails: what an
+   * acceptance proves a value by, measured, never typed from a guess (velada-polish's VS sizes were the lead's guess).
+   */
+  same?: string[];
   json?: boolean;
 }
 
@@ -130,16 +137,45 @@ export const measuredText = (here: Measured, there?: Measured, url?: string): st
   ].join('\n');
 };
 
-const otherPage = async (browser: Browser, url: string, options: MeasureOptions): Promise<BrowserPage> => {
-  const page = await browser.newPage({
-    viewport: { width: options.width ?? 1440, height: 900 },
-    colorScheme: options.scheme ?? 'light',
-    reducedMotion: 'reduce',
-    ...(options.timezone ? { timezoneId: options.timezone } : {})
-  });
-  await openPage(page, url);
+/** Shorthands `--same` takes for the properties they stand for: a border is its four sides, a type its six. */
+const GROUPS: Record<string, readonly string[]> = {
+  border: ['border-top', 'border-right', 'border-bottom', 'border-left'],
+  font: ['font-family', 'font-size', 'font-weight', 'line-height', 'letter-spacing', 'text-transform'],
+  size: ['width', 'height']
+};
 
-  return page;
+/** `--same`'s list, each a property measured or a shorthand of them — refused, naming the rest, when one is neither. */
+export const sameProperties = (value: string): string[] => {
+  const asked = value
+    .split(',')
+    .map(each => each.trim())
+    .filter(Boolean);
+  const unknown = asked.filter(each => !Object.hasOwn(GROUPS, each) && !MEASURED.some(property => property === each));
+  if (unknown.length > 0 || asked.length === 0) {
+    throw new InvalidArgumentError(
+      `--same takes what is measured — ${MEASURED.join(', ')} — or ${Object.keys(GROUPS).join(', ')}${unknown.length > 0 ? `: not ${unknown.join(', ')}` : ''}`
+    );
+  }
+
+  return [...new Set(asked.flatMap(each => GROUPS[each] ?? [each]))];
+};
+
+/** The other page, asked as a site is — again, a moment later, when it says it is busy (429, 503) — and open. */
+const otherPage = async (
+  browser: Browser,
+  url: string,
+  options: MeasureOptions
+): Promise<BrowserPage | { problem: string }> => {
+  const taken = await pictureAnswered(browser, url, {
+    width: options.width ?? 1440,
+    height: 900,
+    ...(options.scheme ? { scheme: options.scheme } : {}),
+    reducedMotion: true,
+    still: true,
+    ...(options.timezone ? { timezone: options.timezone } : {})
+  });
+
+  return 'problem' in taken ? taken : taken.page;
 };
 
 export const measure = async (route: string, element: string, options: MeasureOptions): Promise<void> => {
@@ -185,23 +221,54 @@ export const measure = async (route: string, element: string, options: MeasureOp
         ? new URL(route, options.compare).href
         : options.compare
       : undefined;
-    const there = target
-      ? await measureOn(await otherPage(browser, target, options), options.there ?? element)
-      : undefined;
+    if (options.same && !target) {
+      fail('--same holds properties to another page: give it --compare <that page>');
+
+      return;
+    }
+
+    const other = target ? await otherPage(browser, target, options) : undefined;
+    if (other && 'problem' in other) {
+      fail(other.problem);
+
+      return;
+    }
+
+    const there = other ? await measureOn(other, options.there ?? element) : undefined;
     if (there && 'problem' in there) {
       fail(`${there.problem}${options.there ? '' : ' — name its element there by a selector: --there "<selector>"'}`);
 
       return;
     }
 
+    // `--same`: each property asked that differs fails the command — an acceptance's line, said by what differs.
+    const unlike =
+      there && options.same
+        ? differences(here, there).differ.filter(each => options.same?.includes(each.property))
+        : [];
     console.log(
       options.json
         ? JSON.stringify({
             here,
-            ...(there ? { there, url: target, ...differences(here, there) } : {})
+            ...(there ? { there, url: target, ...differences(here, there) } : {}),
+            ...(options.same ? { same: options.same, unlike } : {})
           })
-        : measuredText(here, there, target)
+        : [
+            measuredText(here, there, target),
+            ...(options.same
+              ? [
+                  unlike.length > 0
+                    ? chalk.red(
+                        `✗ --same: ${unlike.map(each => `${each.property} ${each.here} → ${each.there}`).join('; ')}`
+                      )
+                    : chalk.green(`✓ --same: ${options.same.join(', ')} as the other page's`)
+                ]
+              : [])
+          ].join('\n')
     );
+    if (unlike.length > 0) {
+      process.exitCode = 1;
+    }
   } finally {
     await browser.close();
     where.stop?.();

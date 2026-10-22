@@ -2,7 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { differences, MEASURED, measuredText, measureOn } from './measure';
+import { differences, MEASURED, measuredText, measureOn, sameProperties } from './measure';
 
 import type { Measured } from './measure';
 
@@ -37,5 +37,18 @@ describe('page measure', () => {
     } as unknown as Parameters<typeof measureOn>[0];
 
     expect(await measureOn(page, 'vs-medal')).toEqual({ problem: 'vs-medal is not on http://127.0.0.1:8080/combates' });
+  });
+
+  // velada-polish: the VS sizes in the acceptance were the lead's guess; a line that measures them proves them.
+  it('takes the properties an acceptance holds to the other page, shorthands opened, and refuses what is not measured', () => {
+    expect(sameProperties('font-size, border')).toEqual([
+      'font-size',
+      'border-top',
+      'border-right',
+      'border-bottom',
+      'border-left'
+    ]);
+    expect(sameProperties('font')).toContain('letter-spacing');
+    expect(() => sameProperties('font-size,glow')).toThrow('not glow');
   });
 });

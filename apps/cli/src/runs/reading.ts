@@ -35,8 +35,12 @@ const READING: readonly { matches: (file: string) => boolean; read: readonly str
   { matches: file => /\.(test|spec)\.[cm]?ts$/.test(file), read: [`${AUTHORING}/reference/testing.md`] }
 ];
 
-/** What a designer reads once, before its first review of the others' UI: what a reviewer looks for, and why. */
+/**
+ * What a designer reads once, before its first review of the others' UI: its half of the run — how it looks, measures
+ * and says it — then what a reviewer looks for, and why.
+ */
 export const DESIGN_READING = [
+  `${CLI}/reference/runs-designer.md`,
   `${AUTHORING}/reference/review-checklist.md`,
   `${AUTHORING}/reference/colours-and-motion.md`,
   `${AUTHORING}/reference/accessibility.md`

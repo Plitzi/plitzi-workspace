@@ -291,8 +291,9 @@ for by a colour their address gives them.
 (family, size, weight, line height, tracking, case), colours, background, each border, radius, shadows, opacity,
 padding, margin, gap, size — and, beside another page, the other's element (`--there`, by any selector: the same name
 when left out): each property that differs, here → there, then the ones they share in a line. What a review asks of a
-copy in values, where a picture comparison says only that it differs. `--width`, `--scheme`, `--timezone`, `--url`,
-`--json`, as `page shot`.
+copy in values, where a picture comparison says only that it differs. `--same font-size,border` (shorthands `border`,
+`font`, `size`) fails unless those are as the other page's: an acceptance's line that holds a copy to its reference.
+`--width`, `--scheme`, `--timezone`, `--url`, `--json`, as `page shot`.
 `--frames` compares pictures taken one after another and names what moved. A project `create` writes has them as
 `npm run check` and `npm run shot`.
 

@@ -872,3 +872,9 @@ monitor` shows each as it comes, a problem in red.
   never blocked, and `complete` says plainly that `task next` hands a held task first; a `--follow` that ends says one
   rule — the wait ended, not the work: run it again, stop only on "You can stop"; a request of a task not approved yet
   is in no one's attention, and `run watch --until lead` is not woken for it.
+- **A copy's values measured, never guessed** (`@plitzi/cli`): `page measure --same <properties>` (shorthands
+  `border`, `font`, `size`) fails unless they are as the other page's — asked again when it says it is busy — an
+  acceptance's line that holds a copy to its reference; `run plan` says a task of a copy whose acceptance names values
+  no check of it measures; a stage stacked (`run extend`, a scope's tasks) says its plan's notices, which only a dry run
+  did. The designer's half of a run is a reference of its own, `runs-designer.md`, handed with its first review; the
+  lead's says to measure in the scope and to note, not fix, what the CLI does wrong mid-run.

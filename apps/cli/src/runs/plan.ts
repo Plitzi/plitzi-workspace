@@ -7,6 +7,7 @@ import { exists } from './files';
 import { readHistory } from './history';
 import { inventoryLeftOut, inventoryProblems } from './inventory';
 import { sharedLookNotices } from './lookNotices';
+import { unmeasuredNotices } from './measuredValues';
 import { acceptanceText } from './model';
 import { expandFiles, sharedReached } from './ownership';
 import { ID, isSecretFile, NOT_TASK_DIRS, under } from './paths';
@@ -594,7 +595,7 @@ export const checkPlan = async (
     );
   created.forEach(file => notices.push(`${file} does not exist yet: the run makes it`));
   notices.push(...(await expectationNotices(root, plan.tasks)), ...(await notFoundNotices(root, plan.tasks)));
-  notices.push(...sharedLookNotices(plan.tasks));
+  notices.push(...sharedLookNotices(plan.tasks), ...unmeasuredNotices(plan.tasks, plan.reference));
   // What reads a task's file and is in no task: changed under it, never by it — the lead's to plan, or to leave.
   const planned = new Set(tasks.flatMap(task => task.files));
   // One line a file a task changes — a data file read by every page is one notice, not one an importer.

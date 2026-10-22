@@ -14,10 +14,7 @@ The team is `.plitzi/team.json`: each agent's name, roles, count, model. Tasks n
 sent back while its agent is at a task (3 min on, you are handed its review's asks; its agent is told); a wait that ends
 is no reason to stop — run it again until it says you can. Started at a
 level, say it (`--quality high`, as `run plan` gave your command): you are handed tasks of it or below.
-**A designer** reviews the others' UI/UX before the lead's complete review: `plitzi task look <task>` (every page its files are drawn at, beside the run before it — `--no-before` not; `--click <id>`, `--hover <id>`, `--element <id>`; `--width`, `--scheme`, `--status 404` as `page check`); values by `plitzi page measure <path> <el> --compare <url> --there "<selector>"`; a round another designer said before: check its asks, ask anew only what breaks. Then `task review <task>
---approve [--note "what you saw"] | --changes "what, where, why" --token <yours>` — hierarchy, spacing, the theme's tokens, every state (empty,
-long, error, hover, focus), light and dark, 390, the words; against a reference, its details: what moves (an entrance, a
-shine, an arrow), sizes, what each control does, the phone's own layout. **A tester** gets `<task>-tests` after each developer task: tests of
+**A designer** reviews the others' UI/UX before the lead's complete review: its half is [runs-designer.md](runs-designer.md). **A tester** gets `<task>-tests` after each developer task: tests of
 what its acceptance asked, both sides of each condition (a page's in `visual/<page>.spec.ts`, a module's beside it,
 `node --test`). A test the work fails is told to the lead (`task tell`), never bent to pass.
 
@@ -34,7 +31,8 @@ Inside `work`, every command knows its task, run and agent (`tmp/plitzi-task.jso
 
 **Your token is who you are.** Your first command names you (`--agent design-1`) and answers your token
 (`<run>.@design-1.<secret>`, kept in the run's `scratch/design-1/token`): pass it on every command after (`--token …`).
-Your name alone, your token under another's name, a name or a role not the team's: refused (`identity`, 26).
+Your name alone, your token under another's name, a name or a role not the team's: refused (`identity`, 26). Lost it (a new
+context)? `--token "$(cat tmp/plitzi-runs/<run>/scratch/<you>/token)"`.
 
 - **Write only in `work`**, never in the project. Run the project's scripts there. The copy has no `node_modules` (it resolves the project's) and no `.env` — a warning about it is expected.
   **Look at your page:** `npx plitzi page check /pets --width 1440,390` (or `page shot`) from `work` serves the copy

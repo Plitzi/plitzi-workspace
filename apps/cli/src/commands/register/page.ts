@@ -3,7 +3,7 @@ import { Option } from 'commander';
 import { expectation, fill, positiveInteger, statusCode, timeZone, width, widths } from '../../options';
 import { check } from '../check';
 import { importPage } from '../importPage';
-import { measure } from '../measure';
+import { measure, sameProperties } from '../measure';
 import { shotEach, SHOT_MOMENTS } from '../shot';
 import { API_OPTION, DRY_RUN_OPTION, schemeOption, URL_OPTION, widthsOption } from './options';
 
@@ -108,6 +108,12 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .option('--compare <url>', 'Another page — the site a copy is made after — whose element is measured beside it')
     .option('--there <selector>', 'That page’s element, by any selector: the same name when left out')
+    .addOption(
+      new Option(
+        '--same <properties>',
+        'Fail unless these are as the other page’s — font-size,border (shorthands: border, font, size): an acceptance’s line, measured'
+      ).argParser(sameProperties)
+    )
     .addOption(new Option('--width <px>', 'The viewport width').argParser(width).default(1440, '1440'))
     .addOption(schemeOption())
     .addOption(
