@@ -891,5 +891,6 @@ discard` takes several files, and says which went back when one of them is refus
   `^24.22.1 || >=26.12.1`: Node 24, the LTS the platform runs, from Node's security release of October 20–21, 2026,
   where `>=22.18` let Node 22 and releases with known CVEs run a server. A project on Node 22 is to move to 24. CI runs
   the repo's `.nvmrc` (24.22.1). `plitzi doctor` reads a range of several (`||`), refuses a Node before 24
-  (`node-too-old`) and warns of one behind its line's security release (`node-unpatched`, with the patch to install).
+  (`node-too-old`) and warns of one behind its line's security release (`node-unpatched`, with the patch to install). A project an older CLI made keeps the `engines` it wrote (`>=22.18`): the doctor says it
+  (`engines-behind`) and `doctor --fix` raises it.
   `undici` is `^8.12.3` (its advisories of October 14–15, 2026), the transitive copies on their patched lines.

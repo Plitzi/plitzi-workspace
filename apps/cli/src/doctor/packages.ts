@@ -170,6 +170,27 @@ const manifestChecks = (context: DoctorContext): Finding[] => {
     );
   }
 
+  // One an older CLI wrote — `>=22.18` — lets a Node the project no longer runs on install it: raised to the range.
+  if (typeof engines === 'string' && engines !== NODE_ENGINES.node) {
+    findings.push(
+      say.warning(
+        'engines-behind',
+        `package.json says Node ${engines}: the project runs on ${NODE_ENGINES.node} — Node 24 at least, with its security fixes.`,
+        {
+          file: 'package.json',
+          fix: `Set "engines": { "node": "${NODE_ENGINES.node}" } in package.json.`,
+          repair: editManifest(
+            context.root,
+            `sets "engines": { "node": "${NODE_ENGINES.node}" } in package.json`,
+            manifest => {
+              manifest.engines = { ...(isRecord(manifest.engines) ? manifest.engines : {}), ...NODE_ENGINES };
+            }
+          )
+        }
+      )
+    );
+  }
+
   findings.push(...nodeFindings(process.versions.node));
 
   return findings;

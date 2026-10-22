@@ -12,6 +12,7 @@ import { doctor } from '.';
 import { nodeFindings } from './packages';
 import create from '../commands/create';
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from '../commands/scaffoldRecord';
+import { NODE_ENGINES } from '../scaffold/project';
 
 import type { DoctorOptions, DoctorReport } from '.';
 
@@ -144,6 +145,19 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     expect(report.ok).toBe(true);
     expect(process.exitCode).toBeUndefined();
     expect(report.areas.every(area => area.status === 'ok')).toBe(true);
+  });
+
+  // la-velada, made by an older CLI, still said `>=22.18`: nothing told it, and it let Node 22 install it.
+  it('raises engines an older CLI wrote to the range, with --fix', async () => {
+    await write(
+      'package.json',
+      `${JSON.stringify({ ...(await manifest()), engines: { node: '>=22.18' } }, null, 2)}\n`
+    );
+
+    expect(codes(await run())).toContain('engines-behind');
+    await run({ fix: true });
+    expect((await manifest()).engines).toEqual(NODE_ENGINES);
+    expect(codes(await run())).not.toContain('engines-behind');
   });
 
   it('says what Node would refuse to run, which the typecheck lets through', async () => {

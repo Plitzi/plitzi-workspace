@@ -51,4 +51,33 @@ describe('page measure', () => {
     expect(sameProperties('font')).toContain('letter-spacing');
     expect(() => sameProperties('font-size,glow')).toThrow('not glow');
   });
+
+  // velada's first measures: Cinzel with another fallback, borders of no width, one gold in two notations — noise.
+  it('reads one look written two ways as the same: the font asked first, a side of no width, one colour', () => {
+    const here = measured({
+      'font-family': 'Cinzel, Georgia, serif',
+      color: 'rgb(199, 168, 107)',
+      'border-top': '0px solid rgb(244, 228, 201)',
+      'font-size': '9.808px'
+    });
+    const there = measured({
+      'font-family': '"Cinzel", "Cinzel Fallback", system-ui',
+      color: 'color(srgb 0.780392 0.658824 0.419608)',
+      'border-top': '0px solid color(srgb 0.8 0.69 0.47 / 0.88)',
+      'font-size': '14.7536px'
+    });
+
+    expect(differences(here, there).differ.map(each => each.property)).toEqual(['font-size']);
+
+    // Tailwind's oklab gold is the theme's gold.
+    const tailwind = measured({
+      'font-family': 'Cinzel',
+      'background-color': 'oklab(0.745428 0.00989413 0.0865543 / 0.05)'
+    });
+    const ours = measured({
+      'font-family': 'Cinzel',
+      'background-color': 'color(srgb 0.780392 0.658824 0.419608 / 0.05)'
+    });
+    expect(differences(ours, tailwind).differ).toEqual([]);
+  });
 });

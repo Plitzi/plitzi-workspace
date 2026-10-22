@@ -103,18 +103,80 @@ export const measureOn = async (page: BrowserPage, target: string): Promise<Meas
   };
 };
 
+/** A colour written as CSS Color 4 writes it — `color(srgb 0.78 0.66 0.42 / 0.5)` — as `rgb()`: one colour, one way. */
+const SRGB = /color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)/g;
+
+const channel = (value: string): string => String(Math.round(Number(value) * 255));
+
+/** `oklab(L a b / alpha)` — what Tailwind writes a colour as — the same colour in sRGB channels (Björn Ottosson's). */
+const OKLAB = /oklab\(([-\d.]+) ([-\d.]+) ([-\d.]+)(?: \/ ([\d.]+))?\)/g;
+
+const fromOklab = (lightness: number, a: number, b: number): [number, number, number] => {
+  const l = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const m = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const s = (lightness - 0.0894841775 * a - 1.291485548 * b) ** 3;
+  const gamma = (linear: number): number =>
+    Math.round(
+      Math.min(1, Math.max(0, linear <= 0.0031308 ? 12.92 * linear : 1.055 * linear ** (1 / 2.4) - 0.055)) * 255
+    );
+
+  return [
+    gamma(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
+    gamma(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
+    gamma(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s)
+  ];
+};
+
+const rgbText = ([r, g, b]: [number, number, number], alpha?: string): string =>
+  alpha === undefined || Number(alpha) === 1
+    ? `rgb(${String(r)}, ${String(g)}, ${String(b)})`
+    : `rgba(${String(r)}, ${String(g)}, ${String(b)}, ${String(Math.round(Number(alpha) * 100) / 100)})`;
+
+/**
+ * A computed value as it is compared: its colours in one notation, its numbers to two decimals — what a browser writes
+ * two ways for one look (velada's gold read `rgb(199, 168, 107)` on one page and `color(srgb 0.78 0.66 0.42)` on the
+ * other) is no difference to ask a developer for.
+ */
+const comparable = (property: string, value: string): string => {
+  const colours = value
+    .replace(SRGB, (_match, r: string, g: string, b: string, alpha?: string) =>
+      rgbText([Number(channel(r)), Number(channel(g)), Number(channel(b))], alpha)
+    )
+    .replace(OKLAB, (_match, lightness: string, a: string, b: string, alpha?: string) =>
+      rgbText(fromOklab(Number(lightness), Number(a), Number(b)), alpha)
+    )
+    .replace(/rgba\((\d+), (\d+), (\d+), 1\)/g, 'rgb($1, $2, $3)');
+  const numbers = colours.replace(/(\d+\.\d+)/g, number => String(Math.round(Number(number) * 100) / 100));
+  // A font is the one it asks for first: the fallbacks after it are what a machine without it shows.
+  if (property === 'font-family') {
+    return (numbers.split(',')[0] ?? '').replace(/["']/g, '').trim().toLowerCase();
+  }
+
+  // A side with no width draws nothing, whatever its style and colour (its colour follows the text's).
+  if (property.startsWith('border-') && /^0px\b/.test(numbers)) {
+    return 'none';
+  }
+
+  return numbers;
+};
+
 /** The properties that differ — here, there — and those the two share: what is read first, and what is said in a line. */
 export const differences = (
   here: Measured,
   there: Measured
-): { differ: { property: string; here: string; there: string }[]; same: string[] } => ({
-  differ: MEASURED.filter(property => here.styles[property] !== there.styles[property]).map(property => ({
-    property,
-    here: here.styles[property] ?? '',
-    there: there.styles[property] ?? ''
-  })),
-  same: MEASURED.filter(property => here.styles[property] === there.styles[property])
-});
+): { differ: { property: string; here: string; there: string }[]; same: string[] } => {
+  const alike = (property: string): boolean =>
+    comparable(property, here.styles[property] ?? '') === comparable(property, there.styles[property] ?? '');
+
+  return {
+    differ: MEASURED.filter(property => !alike(property)).map(property => ({
+      property,
+      here: here.styles[property] ?? '',
+      there: there.styles[property] ?? ''
+    })),
+    same: MEASURED.filter(alike)
+  };
+};
 
 const named = (each: Measured): string => `${each.tag}${each.text ? ` "${each.text}"` : ''}`;
 
