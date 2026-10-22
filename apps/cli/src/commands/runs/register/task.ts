@@ -31,18 +31,54 @@ import {
   taskWait
 } from '..';
 import { JSON_OPTION, TOKEN_OPTION, RUN_OPTION, AGENT_OPTION } from './options';
+import { groupHelp } from './run';
 import { duration, FOLLOW_MS, fraction, timeZone } from '../../../options';
 import { BLOCK_NEEDS } from '../../../runs/model';
 
 import type { AnswerOptions, LookOptions, ProposeOptions, ReviewOptions, RunCommandOptions } from '..';
 import type { Command } from 'commander';
 
+/** Each command of `plitzi task`, by who runs it: an agent at its task, or the lead reviewing them. */
+const TASK_HELP: readonly { heading: string; commands: readonly string[] }[] = [
+  {
+    heading: 'Every agent, at its task:',
+    commands: [
+      'next',
+      'take',
+      'context',
+      'check',
+      'complete',
+      'progress',
+      'heartbeat',
+      'ask',
+      'tell',
+      'inbox',
+      'claim',
+      'claims',
+      'wait',
+      'release',
+      'request',
+      'discard',
+      'propose',
+      'answer',
+      'proposals',
+      'block',
+      'spike',
+      'note'
+    ]
+  },
+  {
+    heading: "Reviewing — the lead's and its co-leads', and a designer's look:",
+    commands: ['look', 'show', 'review', 'reassign', 'revert', 'unblock', 'message']
+  }
+];
+
 /** `plitzi task …`: its commands, registered on the program. */
 export const registerTaskGroup = (program: Command): Command => {
   const taskGroup = program
     .command('task')
     .description(
-      'A task of a run: taken, worked in its copy, completed, reviewed — and what it shares with the others'
+      'Multi-agent: a task of a run, as its agent works it — taken, worked in its copy, completed, reviewed. Only inside a run'
     );
 
   taskGroup
@@ -480,6 +516,15 @@ export const registerTaskGroup = (program: Command): Command => {
     .action((task: string | undefined, options: RunCommandOptions & { files?: boolean }) =>
       taskContextCommand(task, options)
     );
+
+  groupHelp(taskGroup, TASK_HELP);
+  taskGroup.addHelpText(
+    'after',
+    `
+Multi-agent mode: what an agent of a run uses at its task — started by plitzi run agent <name>, whose prompt says
+its first command (task next … --agent <name>) and the token it passes on every command after. A job of your own is
+done in the project itself, never with these. The protocol: .claude/skills/plitzi-cli/reference/runs.md`
+  );
 
   return taskGroup;
 };

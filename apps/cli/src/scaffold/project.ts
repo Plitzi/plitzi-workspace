@@ -556,7 +556,15 @@ ${local ? `- To change an element, ask where it is written — ${code('npx plitz
 - Inside a template a source is spelled in full (${code('apiContainer_stats')}); an attribute only resolves ${code('{{ name|filter }}')}.
 - Colours are tokens with light and dark values; times carry an explicit zone and say it.
 - Go through ${code('.claude/skills/plitzi-authoring/reference/review-checklist.md')} before calling a change done.
-`;
+${
+  local
+    ? `
+## Alone, or a team of agents
+
+What the person asks, you do yourself, in this project — every command above is for that. A team of agents is for a job big enough to split, and only when the person asks for one — "with a team", "several agents", "in parallel", "subagents", "multi-agent", in any language ("con un equipo de agentes") — or agrees when you propose it: ${code('npx plitzi run start "<the ask>"')} checks the project, opens the run and says each step — you become its lead, each agent is started with ${code('npx plitzi run agent <name> --launch')}, and the person applies the result (${code('npx plitzi run finish --apply')}). The ${code('run')} and ${code('task')} commands are the team's alone: never use them on a job of your own. How a run works: ${code('.claude/skills/plitzi-cli/reference/runs-lead.md')}.
+`
+    : ''
+}`;
 };
 
 /**

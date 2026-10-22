@@ -351,6 +351,14 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   }
 
   console.log(chalk.dim(`New to Plitzi? The Academy goes from your first page to your own server: ${ACADEMY_URL}`));
+  // Your agent works the project itself; a team of agents is a mode to ask for, said once here where one starts.
+  if (source === 'local') {
+    console.log(
+      chalk.dim(
+        'Ask your agent for what you want — it works this project itself. A job big enough for a team of agents: ask it for one, or run plitzi run start "<what you want>".'
+      )
+    );
+  }
 
   if (exported) {
     const { version } = exported;

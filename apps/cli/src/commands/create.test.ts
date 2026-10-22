@@ -451,6 +451,11 @@ describe('the scaffold', () => {
     expect(cloud['AGENTS.md']).not.toContain('lint:space');
     expect(JSON.parse(local['package.json'])).toMatchObject({ scripts: { 'lint:space': 'plitzi space lint' } });
     expect(JSON.parse(cloud['package.json'])).not.toHaveProperty(['scripts', 'lint:space']);
+    // The job is the agent's own by default; a team of agents is asked for, and its commands are the team's alone.
+    expect(local['AGENTS.md']).toContain('## Alone, or a team of agents');
+    expect(local['AGENTS.md']).toContain('npx plitzi run start "<the ask>"');
+    expect(local['AGENTS.md']).toContain('never use them on a job of your own');
+    expect(cloud['AGENTS.md']).not.toContain('a team of agents');
   });
 
   /** The three facts that cost the most to find out, and the files that cost the most to read for nothing. */

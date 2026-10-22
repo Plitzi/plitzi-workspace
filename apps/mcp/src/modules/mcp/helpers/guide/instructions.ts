@@ -38,6 +38,8 @@ export const serverInstructions =
   'through its accessibility tree, so every control needs words and clicks go on buttons and links — see ' +
   'Accessibility in plitzi://guide, and plitzi_look (its accessibility outline, the default view) to check. ' +
   'On a space people edit too, plitzi_activity says — and waits for — what they changed since you last looked. ' +
+  'A job for a team of agents is never several agents on one space here: it is done on a project (plitzi create ' +
+  '--from, then plitzi run start) and pushed once. ' +
   'Separately, to SHOW the user a small self-contained widget (offline, no space or backend) instead of editing ' +
   'the space — a card, hero, pricing table, a visual answer — use plitzi_render; read plitzi://render/guide for it.';
 

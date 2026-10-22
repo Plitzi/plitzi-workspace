@@ -1,4 +1,6 @@
-# A team of agents on one project: `plitzi run` and `plitzi task`
+# A team of agents on one project (multi-agent): `plitzi run` and `plitzi task`
+
+**Multi-agent only**: inside a run you were started in. A job of your own is done in the project, never with these.
 
 A large job split across a team of agents, none touching the person's project: each task works in a **copy**, the CLI
 checks and merges, and only **one final merge, approved by a person**, writes into it. One run at a time per project.
@@ -23,13 +25,12 @@ The lead's half — plan, rehearse, open, review, close, stack — is [runs-lead
 ## The agent
 
 ```bash
-plitzi task take t-home --run es-launch --agent writer-1 --role writer --json   # → token, work (its copy), files
 cd <work> && plitzi task context   # the brief, its files' data and imports (--files: the files, whole)
 ```
 
 Inside `work`, a command knows its task and run (`tmp/plitzi-task.json`) — never who you are.
 `plitzi` is the project's `node_modules/.bin/plitzi` — by its whole path from a task's copy, as `task take` prints it;
-`npx plitzi` works too, ~0.2 s slower a call, which a run's hundreds of calls add up.
+`npx plitzi` is ~0.2 s slower a call.
 
 **Your token is who you are.** Your first command names you (`--agent design-1`) and answers your token
 (`<run>.@design-1.<secret>`) and the whole path it is kept at: pass it on **every** command after, in a task's copy too
@@ -55,7 +56,7 @@ token under another's name, a name or a role not the team's: refused (`identity`
   `complete`, if nobody holds it, it is yours by turns and goes into the run with you; if the run changed it meanwhile,
   the two changes are put together line by line. Shared and held by another, your change becomes a request (`plitzi task
 request <file> --summary "why"`), merged when you are approved; **another task's own file**: wait for it, your change
-kept (`plitzi task wait <file> --follow`: it is yours once that task is approved), or propose the change to it. To hold it while
+  kept (`plitzi task wait <file> --follow`: it is yours once that task is approved), or propose the change to it. To hold it while
   you work: `plitzi task claim <file>`; answered `claimed` with `turn: "wait"` → `plitzi task wait <file>` and go on
   meanwhile (`--follow` to stay until it is yours). A file handed on to you arrives with what the run approved since
   your copy was made.

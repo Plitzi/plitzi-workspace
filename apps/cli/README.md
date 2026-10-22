@@ -11,6 +11,20 @@ npx @plitzi/cli plugin pack                    # a plugin built, and zipped the 
 npx @plitzi/cli plugin upload                  # that zip, on the space you work in, and installed there
 ```
 
+## Alone, or a team of agents
+
+Everything here is for one agent — or you — working a project: ask your agent for what you want, and it uses these
+commands itself. A **team of agents** — multi-agent mode: several agents, or subagents, working in parallel — is for a
+job big enough to split, and only when someone asks for one: the `run` and `task` commands are the team's alone, grouped apart in `plitzi --help`.
+
+```bash
+npx @plitzi/cli create my-site                 # first: a project — then ask your agent for what you want
+plitzi run start "Translate the site into Catalan"   # a team: the project checked, the run opened on its scope
+plitzi run agent dev-1 --launch --harness claude     # each agent started — or its prompt alone, for a subagent
+plitzi run monitor                             # follow it, in a terminal of yours
+plitzi run finish --apply                      # yours: the team's work into the project, once you read its report
+```
+
 ## What every command does the same way
 
 - **The answer goes to stdout; everything else to stderr** — errors, and the prompts on the way (sign in, open this
@@ -517,7 +531,14 @@ saying so. `--limit <n>` caps a page (100 at most).
 It is the platform's `GET /spaces/:spaceId/activity?after=&wait=&limit=&mine=`, under `spaceView` — what the MCP's
 `plitzi_activity` reads too.
 
-## `run` and `task`
+## `run` and `task` — multi-agent
+
+A team of agents on one project, only when one is asked for. `plitzi run start "<the ask>"` is how one starts: it checks
+what a run needs — a space in the project's code, the project's Chromium, the harness asked for — opens the run on its
+scope (the lead's spike) and says each step after it. `plitzi run agent <name>` writes an agent's prompt in the run's
+scratch and prints the command that starts it headless in Claude Code, Codex or opencode; `--launch --harness <it>`
+starts it now, its output beside its prompt. `plitzi run --help` and `plitzi task --help` group their commands by who
+runs them — you, the lead, every agent.
 
 ```bash
 plitzi space overview                      # who owns which file, read off the imports; what is shared

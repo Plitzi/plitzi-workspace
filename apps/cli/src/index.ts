@@ -20,6 +20,7 @@ import { registerElement } from './commands/register/element';
 import { API_OPTION, DRY_RUN_OPTION } from './commands/register/options';
 import { registerPage } from './commands/register/page';
 import { registerRuns } from './commands/runs/register';
+import { groupHelp } from './commands/runs/register/run';
 import {
   powerRuntime,
   pushRuntime,
@@ -554,6 +555,50 @@ vars
 registerPage(pageGroup);
 registerElement(elementGroup);
 registerRuns(program, spaceGroup);
+
+// What a person new to Plitzi reads first: the commands that make and change a project, those of Plitzi's cloud, and
+// apart — never in the way of the rest — the multi-agent ones, which only a team of agents asked for uses.
+groupHelp(program, [
+  {
+    heading: 'Make and change a project — what an agent uses by default:',
+    commands: [
+      'create',
+      'space',
+      'page',
+      'element',
+      'plugin',
+      'data',
+      'verify',
+      'doctor',
+      'explain',
+      'upgrade',
+      'skills',
+      'cert'
+    ]
+  },
+  {
+    heading: 'On Plitzi — an account, a space kept there, its server code:',
+    commands: ['login', 'logout', 'whoami', 'functions', 'runtime', 'source', 'feedback']
+  },
+  {
+    heading: 'Multi-agent — a team of agents on one project, only when one is asked for (plitzi run start "…"):',
+    commands: ['run', 'task']
+  }
+]);
+program.addHelpText(
+  'after',
+  `
+New to it? Make a project, then ask your agent for what you want — it works the project with the commands above:
+  npx @plitzi/cli create my-site     a project that renders a space, its skills for your agent in .claude/skills/
+  npm start                          serve it
+  npx plitzi verify                  left passing: author, lints, types, tests, format, every page
+
+Alone, or a team of agents (multi-agent mode): your agent works alone by default. A team — several agents, in
+parallel, each task in a copy of the project — is for a job big enough to split, and only when you ask for one:
+  plitzi run start "<what you want>"   checked, opened on its scope; plitzi run --help says every step after
+
+Docs: https://docs.plitzi.com — a team of agents: https://docs.plitzi.com/guides/team`
+);
 acceptTokenEverywhere(program);
 
 // A command asked for at the top that is one of a group's — `plitzi push` — answered with where it is, not only that it

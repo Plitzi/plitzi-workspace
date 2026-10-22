@@ -38,6 +38,8 @@ import {
   runNotice,
   runReference
 } from '..';
+import { runAgent } from '../agent';
+import { runStart } from '../start';
 import { JSON_OPTION, TOKEN_OPTION, RUN_OPTION, AGENT_OPTION } from './options';
 import { duration, FOLLOW_MS, names, pagePaths, positiveInteger } from '../../../options';
 
@@ -49,15 +51,95 @@ import type {
   UpgradeRunOptions,
   WatchRunOptions
 } from '..';
+import type { AgentOptions } from '../agent';
+import type { StartOptions } from '../start';
 import type { Command } from 'commander';
+
+/**
+ * Each command of `plitzi run`, by who runs it: a person new to it reads the four or five that are theirs first, not
+ * thirty-five in the order they were written.
+ */
+const RUN_HELP: readonly { heading: string; commands: readonly string[] }[] = [
+  {
+    heading: 'Start and follow a run — you, or the agent you ask:',
+    commands: ['start', 'agent', 'monitor', 'watch', 'status', 'state', 'preview', 'pending', 'team']
+  },
+  {
+    heading: 'Yours alone — what writes into the project, or throws work away:',
+    commands: ['finish', 'allow-finish', 'abort', 'restore', 'purge', 'resolve', 'continue', 'upgrade']
+  },
+  {
+    heading: "The lead's — the agent that plans, reviews and closes:",
+    commands: [
+      'open',
+      'plan',
+      'rehearse',
+      'extend',
+      'amend',
+      'reference',
+      'note',
+      'notice',
+      'backlog',
+      'report',
+      'bench',
+      'stop',
+      'resume',
+      'show',
+      'can-write',
+      'attach',
+      'release',
+      'prune'
+    ]
+  }
+];
+
+/** Puts each command under its heading in `run --help`: one left out of the table goes under the last. */
+export const groupHelp = (group: Command, table: readonly { heading: string; commands: readonly string[] }[]): void => {
+  for (const command of group.commands) {
+    const heading = table.find(each => each.commands.includes(command.name()))?.heading ?? table.at(-1)?.heading;
+    if (heading) {
+      command.helpGroup(heading);
+    }
+  }
+};
 
 /** `plitzi run …`: its commands, registered on the program. */
 export const registerRunGroup = (program: Command): Command => {
   const runGroup = program
     .command('run')
     .description(
-      'Several agents on one project: a plan of tasks over disjoint files, each in a copy, merged once by a person'
+      'Multi-agent: a team of agents — several, in parallel — on one project, tasks in copies of it merged once by you. Only when asked for a team (plitzi run start "…")'
     );
+
+  runGroup
+    .command('start')
+    .description(
+      'A team of agents on the project, from one command: what it needs checked, the run opened on its scope, and every step after it said'
+    )
+    .argument('<ask>', 'What the team is to do: "Translate the site into Catalan"')
+    .option('--run <name>', 'The run’s name (the ask’s first words when left out)')
+    .option('--reference <site>', 'The site the run copies — https://www.example.com — kept for --compare')
+    .option('--harness <harness>', 'Where its agents start: claude, codex or opencode — checked to be installed')
+    .option(
+      '--despite-checks <why>',
+      'Open it though the project fails its own checks — why, told to every task (it is refused otherwise)'
+    )
+    .option(...AGENT_OPTION)
+    .option(...JSON_OPTION)
+    .action((ask: string, options: StartOptions) => runStart(ask, options));
+
+  runGroup
+    .command('agent')
+    .description(
+      'An agent of the team started: its prompt, and the command that starts it headless — --launch starts it now'
+    )
+    .argument('<name>', 'The agent, as the team names it (dev-1, design-1, lead-2) — or lead')
+    .option('--launch', 'Start it now, in the background: its output kept beside its prompt, in the run’s scratch')
+    .option('--harness <harness>', 'With --launch: claude, codex or opencode (the one installed, when only one is)')
+    .option(...TOKEN_OPTION)
+    .option(...RUN_OPTION)
+    .option(...JSON_OPTION)
+    .action((name: string, options: AgentOptions) => runAgent(name, options));
 
   runGroup
     .command('plan')
@@ -476,6 +558,20 @@ export const registerRunGroup = (program: Command): Command => {
     .description('Remove the caches of a run idle for 8 hours — never its backups or its approved work')
     .option(...JSON_OPTION)
     .action((options: RunCommandOptions) => runPrune(options));
+
+  groupHelp(runGroup, RUN_HELP);
+  runGroup.addHelpText(
+    'after',
+    `
+A run, from the ask to your project — multi-agent mode, only when you ask for a team:
+  1. plitzi run start "<what you want>"   the project checked, the run opened on its scope (your agent is its lead)
+  2. the lead scopes it: what the job takes, written as tasks, each with how it is checked
+  3. plitzi run agent <name> --launch --harness claude|codex|opencode   each agent of .plitzi/team.json started
+  4. plitzi run monitor                  follow it; npm run start:preview serves the approved work as it grows
+  5. plitzi run finish --apply           yours: the work into the project once you read the lead's report
+     plitzi run abort                    yours: the run ended, nothing written — it leaves no trace
+Nothing touches the project before step 5. The guide: https://docs.plitzi.com/guides/team`
+  );
 
   return runGroup;
 };

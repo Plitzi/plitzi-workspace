@@ -1,0 +1,90 @@
+import chalk from 'chalk';
+
+import { onPath } from './agent';
+import { runOpen } from './plan';
+import { launchBrowser } from '../../browser';
+import { HARNESSES, isHarness } from '../../runs/agentPrompt';
+import { readTeam, startedAgents } from '../../runs/team';
+import { projectHere } from '../existingProject';
+import { fail } from '../terminal';
+
+import type { PlanOptions } from './plan';
+
+/**
+ * `plitzi run start "<the ask>"`: a team of agents on the project, from one command — what is needed checked first
+ * (a space in the project's code, a browser to check pages with, the harness asked for), the run opened on its scope,
+ * and every step after it said: the scope, the team started (`run agent`), following it, the person's final merge.
+ * Opening a run took a plan, a team, a token and a prompt for each agent, each read about apart.
+ */
+
+export interface StartOptions extends PlanOptions {
+  harness?: string;
+}
+
+/** What a run needs before it opens, each said with its fix: none, when the project is ready. */
+const notReady = async (harness: string | undefined): Promise<string[] | undefined> => {
+  const project = await projectHere('to start a run in');
+  if (!project) {
+    return undefined;
+  }
+
+  const problems: string[] = [];
+  if (project.plitzi?.kind !== 'project' || project.plitzi.source !== 'local') {
+    problems.push(
+      'A run works a project whose space is its code (src/space/): this is none — `npx @plitzi/cli create` makes one, and `create --from <space>` brings a space on Plitzi into one'
+    );
+  }
+
+  // Every task's check and look opens its pages in the project's Chromium: missing, each would fail on it.
+  const browser = await launchBrowser(project.root);
+  if ('problem' in browser) {
+    problems.push(`${browser.problem} — every task's checks open its pages in it`);
+  } else {
+    await browser.close();
+  }
+
+  if (harness !== undefined) {
+    if (!isHarness(harness)) {
+      problems.push(`--harness ${harness}: one of ${HARNESSES.join(', ')}`);
+    } else if (!(await onPath(harness))) {
+      problems.push(
+        `--harness ${harness}: \`${harness}\` is not on this machine's PATH — install it, or start the agents yourself`
+      );
+    }
+  }
+
+  return problems;
+};
+
+export const runStart = async (ask: string, options: StartOptions): Promise<void> => {
+  const problems = await notReady(options.harness);
+  if (problems === undefined) {
+    return;
+  }
+
+  if (problems.length > 0) {
+    fail(['Not ready for a run yet:', ...problems.map(each => `  - ${each}`)].join('\n'));
+
+    return;
+  }
+
+  await runOpen(undefined, { ...options, spike: ask });
+  if (process.exitCode === 1 || options.json === true) {
+    return;
+  }
+
+  const project = await projectHere('to start a run in');
+  const team = project ? await readTeam(project.root) : undefined;
+  const base = team ? startedAgents(team).filter(each => each.onDemand !== true) : [];
+  const harness = options.harness ?? '<claude|codex|opencode>';
+  console.log(
+    [
+      '',
+      chalk.bold('What happens now — a team of agents, you the person who applies its work:'),
+      "  1. The scope is the lead's: it finds out what the ask takes and ends it with the tasks (the lead is the agent you asked — or give one its prompt: plitzi run agent lead).",
+      `  2. The team, once there are tasks: ${base.map(each => `plitzi run agent ${each.agent} --launch --harness ${harness}`).join(' · ') || 'plitzi run agent <name> --launch'} — the lead starts more on demand when run watch says so.`,
+      '  3. Follow it: plitzi run monitor in a terminal of yours; the approved work as it goes: npm run start:preview.',
+      '  4. The end: the lead writes the report and the dry finish; you read it and apply it — plitzi run finish --apply. Nothing touches the project before it; plitzi run abort leaves no trace.'
+    ].join('\n')
+  );
+};

@@ -7,8 +7,10 @@ README and the `plitzi-cli` skill (`reference/runs.md`, every agent's; `referenc
 
 ## The line
 
-Plitzi provides the tools; the harness orchestrates. The CLI never runs an agent, picks a model or interprets a goal: the
-lead writes the plan, starts the subagents, reviews them and closes the run with its report. The CLI reserves
+Plitzi provides the tools; the harness orchestrates. The CLI never decides what an agent does, chooses its model or
+interprets a goal: the lead writes the plan, reviews the tasks and closes the run with its report. It starts an agent
+only when asked to (`run agent <name> --launch --harness <it>`), in the harness named, with the model the team gives
+it, and that agent then works by the run's commands like any other. The CLI reserves
 files, gives each task a copy, checks, merges, keeps backups and shows progress. Nothing of it reaches the platform: a
 space on Plitzi is pulled, worked on as a project and pushed once ([a space as a project](./projects-from-spaces.md)),
 so the server never receives many agents writing at once, and the MCP, the builder and the server have no part in it.
@@ -26,6 +28,20 @@ exclusively when a run opens, decides between two opening at once. A claim with 
 how many agents work at once — its team's size, above 5 a person confirms: `task take` counts the agents
 holding a task in progress — one holding two is one, and a take by one of them adds none — and takes one under the run's
 `take.lock`, so two takes never pass the limit together (`agent-limit`).
+
+## Starting one (`commands/runs/start.ts`, `commands/runs/agent.ts`, `runs/agentPrompt.ts`)
+
+A team is a mode asked for, never the default: an agent asked for something works the project itself, and the CLI's
+skill, the project's `AGENTS.md` and `plitzi --help` (the `run` and `task` commands grouped apart, as multi-agent) all
+say so. `plitzi run start "<the ask>"` is the one way in: it checks what a run needs before it opens — a project whose
+space is its code, the project's Chromium (every task's check opens pages in it), the harness asked for on the PATH —
+then opens it as `run open --spike` does, and says each step after: the scope, the team, following it, the person's
+merge. `plitzi run agent <name>` writes the agent's prompt (`agentPrompt`: who it is, its first command, its token
+file, the skills to read, the rules no agent breaks) in its scratch, and prints the line that starts it headless in
+Claude Code (`claude -p … --permission-mode acceptEdits --allowedTools …`), Codex (`codex exec --full-auto`) or
+opencode (`opencode run`, its model as provider/model); `--launch` starts it detached, its output in
+`scratch/<agent>/agent.log` and its pid in `agent.json`. `run watch`'s `agents-needed` names that command. Every run
+before had its lead write each agent's prompt by hand — a page each, and nothing a person new to it could start.
 
 ## The lead and the agents
 

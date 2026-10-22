@@ -52,7 +52,7 @@ describe('agents on demand', () => {
     expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
       expect.objectContaining({
         kind: 'agents-needed',
-        text: expect.stringContaining('none running is free: start dev-1 — plitzi task next') as unknown
+        text: expect.stringContaining('none running is free: start dev-1 — plitzi run agent dev-1 --launch') as unknown
       })
     );
 

@@ -111,7 +111,7 @@ export const agentsNeeded = (
     return [
       {
         kind: 'agents-needed' as const,
-        text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — plitzi task next --role ${next.roles.join(',')}${next.quality ? ` --quality ${next.quality}` : ''} --follow --take ${callerFlag(run.scratch, next.agent, run.identified)}${next.onDemand ? ` (it stops by itself once nothing is left for it; its start — the skills and its brief — costs about a small task, worth it for ${String(TASKS_PER_AGENT)} or more waiting)` : ''}`,
+        text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — plitzi run agent ${next.agent} --launch --harness <yours> (its prompt alone: plitzi run agent ${next.agent}; by hand: plitzi task next --role ${next.roles.join(',')}${next.quality ? ` --quality ${next.quality}` : ''} --follow --take ${callerFlag(run.scratch, next.agent, run.identified)})${next.onDemand ? ` — it stops by itself once nothing is left for it; its start costs about a small task, worth it for ${String(TASKS_PER_AGENT)} or more waiting` : ''}`,
         who: 'lead' as const
       }
     ];

@@ -24,8 +24,9 @@ const WORKSPACE_ONLY = /(?:^|[\s`(])(?:docs\/(?:en|rfc)\/|examples\/|plitzi-work
 const tokensOf = (text: string): number => Math.ceil(text.length / 4);
 
 const budgetOf = (path: string): number | undefined => {
+  // Room for a first-timer's way in — the project made, served, changed, checked — beside the rules and the routes.
   if (path.endsWith('/SKILL.md')) {
-    return 1500;
+    return 1800;
   }
 
   if (path.endsWith('/CHEATSHEET.md')) {
@@ -34,6 +35,12 @@ const budgetOf = (path: string): number | undefined => {
 
   if (path.endsWith('/authoring-errors.md')) {
     return undefined;
+  }
+
+  // The lead's half is read once a run, by the strongest model of it, and what it gets wrong — a scope measured short,
+  // a line nothing proves — is paid in every task's round (velada-shell: three of five rounds were the scope's).
+  if (path.endsWith('/runs-lead.md')) {
+    return 4500;
   }
 
   if (path.includes('/reference/')) {

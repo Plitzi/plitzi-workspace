@@ -1,7 +1,8 @@
 # Leading a team of agents: the lead's half of `plitzi run`
 
-What the lead does; the agents' half, the refusals and their exit codes are
-[runs.md](runs.md), which every agent reads. The lead reads both.
+What the lead does; the agents' half, refusals and exit codes: [runs.md](runs.md) — read both. **Start**, when the
+person asked for a team:
+`plitzi run start "<the ask>"`; then `plitzi run agent <name> --launch` each agent.
 
 ## The lead
 
@@ -9,7 +10,7 @@ What the lead does; the agents' half, the refusals and their exit codes are
    list every page, section and piece a visitor would miss (a logo, what moves, a control, a size) as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
 "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
-   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`, naming sections no piece covers. **Research is a spike, yours** (no files). **Start with the scope**, `run open --spike "<ask>" --run <name> [--reference <site>]`; find out (`page shot --compare <original> --dress`, `page measure`) and end it with the tasks, each with what you found (`"findings"`): `task spike s-scope --done "…" --tasks <stage.json>`. Later: stack one (`run extend`); an agent's `task spike` is a block you lift with the answer (`task unblock --answer`). **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
+   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`, naming sections no piece covers. **Research is a spike, yours** (no files). **Start with the scope** (`run start` opens on it); find out (`page shot --compare <original> --dress`, `page measure`) and end it with the tasks, each with what you found (`"findings"`): `task spike s-scope --done "…" --tasks <stage.json>`. Later: stack one (`run extend`); an agent's `task spike` is a block you lift with the answer (`task unblock --answer`). **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview` — who owns which file. A page owns the modules only it imports; what two
    pages import (tokens, classes, a layout, a component) is **shared**, and so is every entry. `plitzi space impact <file>` — what depends on a file.
@@ -81,10 +82,9 @@ What the lead does; the agents' half, the refusals and their exit codes are
    who works what when, the critical path, your review queue.
 4. **Ask the person first** who applies the run at the end — they, or you: then they open it in their terminal with
    `--lead-finishes` (or `plitzi run allow-finish` later). Never you.
-   `plitzi run open plan.json` backs up every file it will touch, and prints **your token**: pass it on every command
-   after (`--token …`; kept in the run's `scratch/lead/token`). Tell the person how to watch it: `npm run start:preview`,
-   `plitzi run monitor`.
-5. Start one agent per ready task (`plitzi task next --run es-launch --json`), each with a free port, and follow:
+   `plitzi run open plan.json` backs up every file it touches and prints **your token** (`scratch/lead/token`): pass it
+   on every command after. Tell the person how to watch it: `plitzi run monitor`, and the approved work as it goes: `npm run start:preview`.
+5. Start each agent: `plitzi run agent <name> --launch` (alone: its prompt, for a subagent), and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
    file a task takes past 400 lines (ask for the split) — each said once. **Talk:** answer a question with `plitzi
 task message t-home "…" --reply-to m3`; `task message all "…"` tells every task in hand, `task message @dev-1 "…"`
@@ -128,6 +128,17 @@ backlog done <id> --note "…"` closes one. **Close it:** write the summary (don
 - **A value is measured, never typed**: scoping, `plitzi page measure <path> "<el> => <sel>" … --compare
 <reference> --width 390,1440` (`--hover`: a state) each piece — whole, its box too, both widths, held by one
   acceptance line (`--same …`); "one class holds it" once grepped. A stage may be its `tasks` alone.
+- **The scope, before it ends** — most rounds of a run are its: (1) each element measured whole — its box (height,
+  padding), its pseudo-elements, a hover — at 390 and 1440, never only the property the ask names; (2) where a value
+  is written, grepped, before a finding says "one class holds it" (a copy beside it is a round lost); (3) each line of
+  the acceptance run once on the run's work as it is — it fails for the value, never for a selector that finds nothing
+  (exit 0 already: it holds nothing, or say it guards); (4) a line for each width the ask covers.
+- **The team the work is worth**: `run plan` says when it is too big — start the agents it starts with, and one on
+  demand only when `run watch` asks (it counts the work waiting). Started by `run agent`, never prompts of your own.
+- **A round that asks for code alone** (a refactor, one source for a value): `--changes "…" --skip-design lead`, the
+  next round's UI yours — never a designer's review offered, then decided past it.
+- **Your files** — a stage, a summary — in your scratch (`tmp/plitzi-runs/<run>/scratch/lead/`), never the project's
+  `tmp/`, where the agents are told of strays.
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red.
 - **Don't fix the CLI mid-run**: note it (`run notice`), fix it after.
 - **Look where it changed**: a fix for light in light, one for the phone at 390 (`task look --scheme light --width 390`).

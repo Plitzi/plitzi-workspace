@@ -968,3 +968,14 @@ theirs"`) at every width in one call and one browser, reads the other page witho
   files looks at the pages its acceptance checks. A stage may be its `tasks` alone; its team's size, and `run watch`'s
   ask for an agent on demand, are held to the work open, as `run plan` counts it; the lead's plans and stages in tmp/
   are no stray; the agent's own server written to since it started is said.
+- **Plitzi for a first-timer, alone or with a team** (`@plitzi/cli`, `@plitzi/sdk-mcp`): an agent works the project
+  itself by default, and a team of agents is a mode asked for — said by the CLI's skill, the project's `AGENTS.md`,
+  `create`'s last words and `plitzi --help`, which groups its commands (making a project, Plitzi's cloud, and
+  multi-agent apart; `run --help` and `task --help` by who runs each), and says how to start: `plitzi --help` ends
+  with a first project and when a team is worth asking for, `run --help` with a run's five steps, from the ask to applying it. The
+  skill and the project's `AGENTS.md` know the ways a team is asked for ("several agents", "in parallel", "subagents",
+  "multi-agent", in any language), and the skill walks an agent through a person new to Plitzi. `plitzi run start "<the ask>"` checks what a run
+  needs — a space in the project's code, its Chromium, the harness asked — opens it on its scope and says every step;
+  `plitzi run agent <name>` writes an agent's prompt and the line that starts it headless in Claude Code, Codex or
+  opencode, and `--launch` starts it (`run watch` names it when an agent is needed). The lead's half of the skill has
+  the scope's checks a run's rounds came from, and the MCP's instructions say a team works a project, never a space.
