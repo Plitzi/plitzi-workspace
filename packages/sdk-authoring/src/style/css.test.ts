@@ -8,6 +8,8 @@ import { styles } from './classes';
 import { css, toBlocks, toResponsive } from './css';
 import { column, grid, row } from './layout';
 
+import type { StyleSpec } from './types';
+
 describe('css', () => {
   it('expands shorthands the style editor has no control for', () => {
     expect(css({ padding: '96px 24px' })).toEqual({
@@ -233,6 +235,17 @@ describe('a style with pseudo-elements, conditions and its parent', () => {
 
     expect(blocks.desktop?.ancestors).toEqual({ '>': { states: { expanded: { transform: 'rotate(180deg)' } } } });
     expect(() => toBlocks({ ancestors: { '> .card': { css: { color: 'red' } } } })).toThrow(/\[ancestor-not-class\]/);
+  });
+
+  // velada-backlog: `ancestors: { card: { pseudos: … } }` passed author and lint, and its CSS was never emitted.
+  it('refuses what an ancestor or a state cannot hold, naming where it goes, rather than dropping it', () => {
+    // The types refuse these two — a project's spread, or its JavaScript, gets past them: cast to reach the guard.
+    const pseudoInAncestor = { ancestors: { card: { pseudos: { before: { opacity: '1' } } } } };
+    expect(() => toBlocks(pseudoInAncestor as StyleSpec)).toThrow(/\[ancestor-shape\][\s\S]*--fill-opacity/);
+    const pseudoInState = { ancestors: { card: { states: { hover: { pseudos: { before: { opacity: '1' } } } } } } };
+    expect(() => toBlocks(pseudoInState as StyleSpec)).toThrow(/\[state-shape\][\s\S]*pseudos: \{ before: \{ states/);
+    // …and this one they take: a state is CSS by its type, and `variants: {}` reads as a property.
+    expect(() => toBlocks({ css: { color: 'red' }, states: { hover: { variants: {} } } })).toThrow(/\[state-shape\]/);
   });
 });
 

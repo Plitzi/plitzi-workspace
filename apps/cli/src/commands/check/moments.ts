@@ -89,9 +89,25 @@ export const looksInPage = ({
   for (const node of [...around, root, ...Array.from(root.querySelectorAll('[data-plitzi-el]'))].slice(0, 40)) {
     const style = getComputedStyle(node);
     const parent = node.parentElement?.closest('[data-plitzi-el]');
+    // What it draws on ::before/::after, and the custom properties it holds: velada-backlog's medal faded its fill in on
+    // a pseudo-element, by a custom property its card's hover set — and the look said the hover changed nothing.
+    const drawn = ['before', 'after'].flatMap(pseudo => {
+      const pseudoStyle = getComputedStyle(node, `::${pseudo}`);
+
+      return pseudoStyle.content === 'none' || pseudoStyle.content === 'normal'
+        ? []
+        : properties.map(property => [`${pseudo}:${property}`, pseudoStyle.getPropertyValue(property)] as const);
+    });
+    const custom = Array.from(style)
+      .filter(property => property.startsWith('--'))
+      .map(property => [property, style.getPropertyValue(property).trim()] as const);
     looks[node.getAttribute('data-plitzi-el') ?? selector] = {
       ...(parent ? { parent: parent.getAttribute('data-plitzi-el') ?? '' } : {}),
-      values: Object.fromEntries(properties.map(property => [property, style.getPropertyValue(property)]))
+      values: Object.fromEntries([
+        ...properties.map(property => [property, style.getPropertyValue(property)] as const),
+        ...drawn,
+        ...custom
+      ])
     };
   }
 
@@ -123,7 +139,11 @@ export const lookChanges = (before: Looks, after: Looks): string[] => {
   return Object.entries(after).flatMap(([id, look]) =>
     Object.keys(look.values).flatMap(property => {
       const change = changed(id, property);
-      const inherited = property === 'color' && change !== undefined && change === changed(look.parent, property);
+      // A colour, or a custom property, its parent changed the same way: said there, where it changed.
+      const inherited =
+        (property === 'color' || property.startsWith('--')) &&
+        change !== undefined &&
+        change === changed(look.parent, property);
       const followed = FOLLOWS_COLOR.has(property) && change !== undefined && change === changed(id, 'color');
 
       return change === undefined || inherited || followed ? [] : [`${id} ${property}: ${change}`];

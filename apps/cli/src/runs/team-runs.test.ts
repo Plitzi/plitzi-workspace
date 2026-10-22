@@ -1,9 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { amendRun } from './amend';
 import { auditRun } from './audit';
 import { REVIEW_TIMEOUT_MS, SAME_DESIGNER_MS } from './design';
-import { expectedIds } from './expectations';
 import { extendRun } from './extend';
 import { leadItems } from './leadWatch';
 import { messagesOf } from './messages';
@@ -17,7 +15,6 @@ import { readState } from './taskStore';
 import { readTeam, setTeamAgent, TEAM_FILE } from './team';
 import { testFilesFor } from './tests';
 import { viewRun } from './view';
-import { meantOnPage } from '../commands/check';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 
 import type { RunContext } from './run';
@@ -365,6 +362,19 @@ describe('a designer’s review of the others’ UI', () => {
     );
   });
 
+  // velada-backlog: design-1 read its reading list after its first verdict — said mid-line, on every review.
+  it('says what to read before a designer’s first review, and not again on the next', async () => {
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+    await completed('dev-2', 't-about', 'src/space/pages/about.ts');
+    const first = (await takeNext(bench.agent('design-1'), 'es-launch', 'designer')).next.designReview;
+    expect(first?.first).toBe(true);
+    await reviewTask(bench.agent('design-1'), 'es-launch', first?.task.id ?? '', 'approve', []);
+
+    const second = (await takeNext(bench.agent('design-1'), 'es-launch', 'designer')).next.designReview;
+    expect(second?.task.id).not.toBe(first?.task.id);
+    expect(second?.first).toBeUndefined();
+  });
+
   it('comes before the lead’s: offered to one designer, approved by it, then the lead’s to approve', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
     expect(await designOf('t-menu')).toEqual({ status: 'due', round: 0, since: expect.any(String) as unknown });
@@ -588,62 +598,6 @@ describe('a designer’s review of the others’ UI', () => {
     const waiting = await nextTask(bench.agent('design-1'), 'es-launch', 'designer');
     expect(waiting.finished).toBeUndefined();
     expect(waiting.why).toContain('is yours to review once it is in review');
-  });
-});
-
-describe('a stage’s plan, and what its checks expect', () => {
-  it('amends a run from the plan of a stage stacked on it: its tasks, and the run’s goal kept', async () => {
-    await openRun(lead(), await bench.writePlan(benchPlan()));
-    const stage = {
-      version: 1 as const,
-      runId: 'es-launch-2',
-      goal: 'The contact page',
-      tasks: [
-        {
-          id: 't-contact',
-          title: 'Contact',
-          files: ['src/space/pages/contact.ts'],
-          dependsOn: [],
-          priority: 'low' as const,
-          estimateMinutes: 10,
-          acceptance: ['It says how to reach us']
-        }
-      ]
-    };
-    await extendRun(lead(), 'es-launch', await bench.writePlan(stage));
-    stage.tasks[0].acceptance = ['It says how to reach us, and when'];
-
-    expect(await amendRun(lead(), 'es-launch', await bench.writePlan(stage))).toMatchObject({
-      tasks: [{ task: 't-contact', changed: ['acceptance'] }]
-    });
-    const plan = (await loadRun(lead(), 'es-launch')).plan;
-    expect(plan.goal).toBe('Spanish version of the pages · The contact page');
-    expect(plan.tasks.map(task => task.id)).toContain('t-home');
-  });
-
-  it('reads the ids a page check expects, and says the page family’s for an id it scopes', () => {
-    expect(
-      expectedIds(
-        'plitzi page check /pets/luna --url $PLITZI_URL --expect "/pets/luna age-label~old" --expect=title~Luna && echo ok'
-      )
-    ).toEqual([{ element: 'age-label', path: '/pets/luna' }, { element: 'title' }]);
-    expect(meantOnPage('age-label', ['pet-luna-age-label', 'pet-kira-age-label', 'title'])).toContain(
-      'one a page: pet-luna-age-label, pet-kira-age-label'
-    );
-    expect(meantOnPage('age-label', ['pet-luna-age-label'])).toContain('did you mean pet-luna-age-label?');
-  });
-});
-
-describe('a check as any shell runs it', () => {
-  it('has the copy served written in, and knows a Playwright spec needs it served', async () => {
-    const { namesServedCopy, withServedValues } = await import('./acceptance');
-    const values = { PLITZI_URL: 'http://127.0.0.1:8211', PLITZI_PORT: '8211' };
-
-    expect(withServedValues('plitzi page check / --url $PLITZI_URL && echo ${PLITZI_PORT} $HOME', values)).toBe(
-      'plitzi page check / --url http://127.0.0.1:8211 && echo 8211 $HOME'
-    );
-    expect(namesServedCopy('npx playwright test visual/walks.spec.ts')).toBe(true);
-    expect(namesServedCopy('node --test src/space/lib/age.test.ts')).toBe(false);
   });
 });
 

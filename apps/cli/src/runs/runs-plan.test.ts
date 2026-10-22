@@ -205,11 +205,23 @@ describe('a plan held to the rules', () => {
         { name: 'design', roles: ['designer'], count: designers }
       ]
     });
+    // Work enough for the team — three rounds of the bench's tasks — so that its size is not what is said.
+    const big = {
+      ...benchPlan(),
+      tasks: [0, 1, 2].flatMap(round =>
+        benchPlan().tasks.map(task => ({
+          ...task,
+          id: `${task.id}-${String(round)}`,
+          files: task.files.map(file => file.replace('src/space/pages/', `src/space/pages/round-${String(round)}/`)),
+          dependsOn: task.dependsOn.map(id => `${id}-${String(round)}`)
+        }))
+      )
+    };
     const notices = async (designers: number) =>
-      (await checkPlan(bench.root, benchPlan(), await readOwnership(bench.root), teamOf(designers))).notices;
+      (await checkPlan(bench.root, big, await readOwnership(bench.root), teamOf(designers))).notices;
 
     expect(await notices(1)).toContainEqual(
-      expect.stringContaining('4 tasks change what a visitor sees, and 1 designer reviews the UI of 4 developers')
+      expect.stringContaining('12 tasks change what a visitor sees, and 1 designer reviews the UI of 4 developers')
     );
     expect((await notices(2)).some(notice => notice.includes('change what a visitor sees'))).toBe(false);
 
@@ -218,7 +230,7 @@ describe('a plan held to the rules', () => {
       (
         await checkPlan(
           bench.root,
-          { ...benchPlan(), reference: 'https://www.example.com' },
+          { ...big, reference: 'https://www.example.com' },
           await readOwnership(bench.root),
           teamOf(designers)
         )
@@ -227,6 +239,21 @@ describe('a plan held to the rules', () => {
       expect.stringContaining('one for every 1 in a copy of a site, each review measuring it against the original')
     );
     expect((await copying(4)).some(notice => notice.includes('change what a visitor sees'))).toBe(false);
+  });
+
+  // velada-backlog: three tasks of a few values for two developers and a designer — dev-2's 62k tokens on one task.
+  it('says before the run that the team is too big for the work, rather than asking it for more designers', async () => {
+    const team = {
+      version: 1 as const,
+      agents: [
+        { name: 'dev', roles: ['developer'], count: 4 },
+        { name: 'design', roles: ['designer'] }
+      ]
+    };
+    const { notices } = await checkPlan(bench.root, benchPlan(), await readOwnership(bench.root), team);
+
+    expect(notices).toContainEqual(expect.stringContaining('4 tasks for 5 agents: each agent starts by reading'));
+    expect(notices.some(notice => notice.includes('change what a visitor sees'))).toBe(false);
   });
 
   it('expands a root with what it owns, says what is shared, and estimates it', async () => {

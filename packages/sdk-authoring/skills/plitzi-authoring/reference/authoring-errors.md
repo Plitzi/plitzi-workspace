@@ -28,6 +28,7 @@ The space is not written until these are fixed.
 | `action-without-steps` | an action with no steps | the steps it runs |
 | `active-when-constant` | an `activeWhen` condition that reads nothing — always or never true | name what it depends on: `'{{ list_dots.index == state.slide }}'` |
 | `ancestor-not-class` | an ancestor condition keyed by something that is neither a class name nor `'>'` (the parent) | `[card.name]` for a `styles()` declaration, or `'>'` for the parent whatever it wears |
+| `ancestor-shape` | an ancestor condition given keys other than `css`, `states` and `variants` — `pseudos` above all: an ancestor's rules reach the element, never its `::before`/`::after`, and the key was dropped | a custom property the ancestor's state sets — `ancestors: { [card.name]: { states: { hover: { '--fill-opacity': '1' } } } }` — read by the class's own pseudo-element: `pseudos: { before: { css: { opacity: 'var(--fill-opacity, 0.6)' } } }` |
 | `anchor-duplicate` | one anchor on two elements of the same page (layouts included) | rename all but one |
 | `anchor-in-row` | a link to an anchor drawn in a list’s rows — each row’s is named after its row, so the link lands at the top | link to one row’s (`hash: 'answer-<row key>'`), the list’s own anchor, or one outside it |
 | `anchor-invalid` | an `anchor` or a link's `hash` that is not lowercase letters, digits and `-` | `anchor: 'plans'`, `hash: 'plans'` — no `#` |
@@ -145,6 +146,7 @@ The space is not written until these are fixed.
 | `source-name-missing` | a source named by nothing — most often a field read off a list row that has no types | write the row's field as text (`${r.item}.field`), or give the list `items` a typed source's path |
 | `state-key-list` | `settings.transientState` / `paintedState` that is not a list of top-level state keys | `transientState: ['demoStep']` — a dotted path names its top key |
 | `state-painted-and-transient` | a state key both painted (kept for the server) and transient (never kept) | remove it from one of the two |
+| `state-shape` | a state given a rule set's keys (`pseudos`, `variants`, `ancestors`…): a state holds plain CSS | a pseudo-element's state goes under the pseudo-element — `pseudos: { before: { states: { hover: { opacity: '1' } } } }`; an ancestor's, under `ancestors` |
 | `step-duplicate` | two steps with one name in a flow or an action | a name each |
 | `step-name` | a step name a later step cannot read as `{{ name.field }}` | a letter first, then letters, digits, `-` and `_` |
 | `step-params` | a step param that does not exist, or a value outside its options | the params and values it lists |

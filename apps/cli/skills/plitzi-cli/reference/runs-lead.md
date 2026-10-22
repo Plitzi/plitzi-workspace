@@ -98,7 +98,7 @@ run extend <run> next.json`; say each to the person. **You manage it:** no agent
    back. Judge the version that went to review, on a page several tasks build only its part. `plitzi task show
 t-home` is all of it (`<file> --diff`: one file's whole diff);
    `plitzi task look t-home --before` serves its copy, checks and pictures its pages beside the run before (its options:
-   [runs-designer.md](runs-designer.md)). What the acceptance asks and the data does not show, you test yourself
+   [runs-designer.md](runs-designer.md)) — once: after the designer's, unchanged, it says that look again; code is `task show`. What the acceptance asks and the data does not show, you test yourself
    (a module's function, its edge cases, `node -e` in the copy) — or send it back for the test it needs. Then
    `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Three rounds of yours —
    or three of the designer's — are yours: approve as it is, answer, or ask the person. A `--known-failure` says why and
@@ -126,11 +126,10 @@ backlog done <id> --note "…"` closes one. **Close it:** write the summary (don
 - **Say what is so, read from its source** (the original's CSS, `task show`, the run's approved version), never from a
   copy, a class name or memory; never answer one way and tell another — a file a task holds is no one else's.
 - **A value is measured, never typed**: in the scope, `plitzi page measure <path> "<el> => <sel>" … --compare
-<reference> --width 390,1440` (`::before`/`::after` too) for each piece; one line of its acceptance holds them
-  (`--same font-size,border,before:opacity`).
+<reference> --width 390,1440` (`--hover` for a state) for each piece — the whole element, not the one property
+  asked; one acceptance line holds them (`--same …`).
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red.
 - **Don't fix the CLI mid-run**: note it (`run notice`), fix it after.
-- **Look where it changed**: a fix for light in light, one for the phone at 390 (`task look --scheme light --width
-390`) — the look's default is light at 1440 and dark at 390.
+- **Look where it changed**: a fix for light in light, one for the phone at 390 (`task look --scheme light --width 390`).
 - **A round trimmed is said**: what it leaves goes to the backlog (`run notice`), never into one more round.
 - **The report before the finish**; `--apply` is the person's unless they allowed you — never on your own.

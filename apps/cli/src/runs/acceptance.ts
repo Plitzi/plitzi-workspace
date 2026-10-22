@@ -6,6 +6,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { projectMark } from '@plitzi/sdk-shared/project';
 
+import { inTurns } from './inTurns';
 import { stopKept } from './lingering';
 import { stopTree, TREE } from './processes';
 import { runScript, scriptsOf, tail } from '../commands/verify';
@@ -209,6 +210,9 @@ const cliShim = async (cache: string): Promise<string> => {
 };
 
 /** Every checked line of `acceptance`, run in `work`: what each answered. None checked, none run. */
+/** How many acceptance lines run at once on one served copy: each a browser, as a look's commands are. */
+const ACCEPTANCE_AT_ONCE = 2;
+
 export const checkAcceptance = async (
   acceptance: readonly Acceptance[],
   {
@@ -246,17 +250,22 @@ export const checkAcceptance = async (
   const run = (each: { check: string }) =>
     runScript(work, withServedValues(each.check, values), root, { env: values, bin: [bin] });
   try {
-    const results: AcceptanceResult[] = [];
-    for (const [index, each] of checked.entries()) {
-      onLine?.(index, checked.length, each.said, false);
-      const { code, output } = await run(each);
-      results.push({
-        said: each.said,
-        check: each.check,
-        ok: code === 0,
-        ...(code === 0 ? {} : { output: tail(output) })
-      });
-    }
+    // Two at a time: velada-backlog's t-body-type ran a measure, then a check of four pages, one after the other — 11 s
+    // of its 18 s check, each line a browser of its own the other did not wait on.
+    const results: AcceptanceResult[] = await inTurns(
+      checked.map((each, index) => async () => {
+        onLine?.(index, checked.length, each.said, false);
+        const { code, output } = await run(each);
+
+        return {
+          said: each.said,
+          check: each.check,
+          ok: code === 0,
+          ...(code === 0 ? {} : { output: tail(output) })
+        };
+      }),
+      ACCEPTANCE_AT_ONCE
+    );
 
     // Each line that failed, once more after the others and on its own: what a slow server failed passes now, and
     // says it did only the second time; a broken line fails again, with what it printed then.

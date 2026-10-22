@@ -83,6 +83,8 @@ export interface NextTask {
     precision: Quality;
     /** Its acceptance's checks at its `complete`: what is measured already — the review starts from what differs. */
     accepted: AcceptanceResult[];
+    /** This designer's first review of the run: what to read before it is said first, on a line of its own. */
+    first?: true;
   };
   /**
    * A lead's that reviews (`--role lead`): a task in review no other lead took — what it changed, where it is drawn, and
@@ -227,6 +229,10 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
         ...(changesBlock(review.state, true) ? { lastRound: true } : {}),
         copy: review.paths.work,
         accepted: review.state.accepted ?? [],
+        ...(views.some(each => each.task.id !== review.task.id && each.state.design?.by === ctx.agent) ||
+        review.state.design?.before === ctx.agent
+          ? {}
+          : { first: true as const }),
         precision: (await readTeam(ctx.root).catch(() => undefined))?.options?.designReview ?? DEFAULT_DESIGN_REVIEW
       },
       ready: [],

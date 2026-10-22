@@ -61,7 +61,20 @@ const spaceSources = async (root: string): Promise<Map<string, string>> => {
   );
 };
 
-/** Each task whose checks read an element written in none of its files: where it is written, to give it the file. */
+/** The space's files a source imports by a relative path, as its file names are kept: `../mediaCommon.ts` from faq.ts. */
+const importsOf = (file: string, text: string, files: ReadonlySet<string>): string[] =>
+  [...text.matchAll(/\bfrom\s+['"](\.{1,2}\/[^'"]+)['"]/g)].flatMap(([, specifier]) => {
+    const base = path.posix.join(path.posix.dirname(file), specifier);
+    const found = [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`].find(each => files.has(each));
+
+    return found ? [found] : [];
+  });
+
+/**
+ * Each task whose checks read an element written in none of its files, nor in a file that imports one of them: where
+ * it is written, to give it the file. A helper or a token the element's file imports is the task's way to it —
+ * velada-backlog's t-body-type changed the FAQ's answers through `fore()`, in a file of its own, and was told otherwise.
+ */
 export const elementFileNotices = async (root: string, tasks: readonly PlannedTask[]): Promise<string[]> => {
   const asked = tasks.map(task => ({
     task,
@@ -74,6 +87,7 @@ export const elementFileNotices = async (root: string, tasks: readonly PlannedTa
   }
 
   const sources = await spaceSources(root);
+  const names = new Set(sources.keys());
   const writtenIn = (element: string): string[] =>
     [...sources].flatMap(([file, text]) =>
       new RegExp(`\\bid:\\s*['"\`]${element.replace(/[-]/g, '\\-')}['"\`]`).test(text) ? [file] : []
@@ -83,9 +97,11 @@ export const elementFileNotices = async (root: string, tasks: readonly PlannedTa
     const elsewhere = elements.flatMap(element => {
       const files = writtenIn(element);
 
-      return files.length > 0 && !files.some(file => task.files.includes(file))
-        ? [`${element} (${files.join(', ')})`]
-        : [];
+      const reached = (file: string): boolean =>
+        task.files.includes(file) ||
+        importsOf(file, sources.get(file) ?? '', names).some(imported => task.files.includes(imported));
+
+      return files.length > 0 && !files.some(reached) ? [`${element} (${files.join(', ')})`] : [];
     });
 
     return elsewhere.length > 0

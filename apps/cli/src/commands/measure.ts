@@ -8,7 +8,7 @@ import { InvalidArgumentError } from 'commander';
 import { openPage } from '@plitzi/sdk-authoring';
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
-import { launchBrowser, openProjectPage } from '../browser';
+import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
 import { projectHere } from './existingProject';
 import { originHere } from '../runs/copyServer';
 import { targetOn } from './shot/capture';
@@ -101,6 +101,11 @@ export interface Measured {
   styles: Record<string, string>;
   /** The properties it holds as its parent does: inherited, not its own. */
   inherited: string[];
+  /**
+   * The space's root, when the document's `body` or `html` was measured on a page of a space: the type and colours a
+   * space gives are on it — velada-backlog's `body` read Times 400 and the noscript's words.
+   */
+  spaceRoot?: string;
 }
 
 export interface MeasureOptions {
@@ -119,8 +124,63 @@ export interface MeasureOptions {
   same?: string[];
   /** The other page read again, never from what was kept of it. */
   fresh?: boolean;
+  /**
+   * An element hovered, or focused, on both pages before the rest is measured — `fight-card => .fight-card`: what a
+   * state changes, held by `--same` as the rest is (velada-backlog's medal fade could only be read by hand).
+   */
+  hover?: string;
+  focus?: string;
   json?: boolean;
 }
+
+/** The state both pages are measured in: an element of each hovered or focused first. */
+export interface StateAsked {
+  kind: 'hover' | 'focus';
+  pair: Pair;
+}
+
+/** The longest a state's transitions are waited for: a fade is a fraction of a second, an endless spin never ends. */
+const SETTLE_MS = 3000;
+
+/** Puts the page in the state asked — the element hovered or focused — and waits for what it starts to finish. */
+export const putIn = async (
+  page: BrowserPage,
+  state: StateAsked,
+  target: string
+): Promise<{ problem: string } | undefined> => {
+  const found = await targetOn(page, target);
+  if ('problem' in found) {
+    return found;
+  }
+
+  if (!found.found) {
+    return { problem: `No element ${target} to ${state.kind} on ${page.url()}` };
+  }
+
+  const element = page.locator(found.selector).first();
+  try {
+    await (state.kind === 'hover' ? element.hover({ timeout: 5000 }) : element.focus({ timeout: 5000 }));
+  } catch (error) {
+    return {
+      problem: `${target} could not be ${state.kind === 'hover' ? 'hovered' : 'focused'} on ${page.url()}: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`
+    };
+  }
+  await page.evaluate(
+    (most: number) =>
+      Promise.race([
+        Promise.all(
+          document
+            .getAnimations()
+            .filter(animation => animation.effect?.getTiming().iterations !== Infinity)
+            .map(animation => animation.finished.catch(() => undefined))
+        ),
+        new Promise(resolve => setTimeout(resolve, most))
+      ]).then(() => undefined),
+    SETTLE_MS
+  );
+
+  return undefined;
+};
 
 /** One element asked: ours, and the other page's — `ours => theirs`, or the same name there. */
 interface Pair {
@@ -137,6 +197,25 @@ export const pairOf = (asked: string): Pair => {
   return { here, there: there === '' ? here : there };
 };
 
+/**
+ * What to write instead of a name not on the page: the same name the other way — an element's id written as a class
+ * (`.home-faq-answer-text`, velada-backlog's design-1), a class as an id — when that way finds it; how to name one else.
+ */
+const otherSpelling = async (page: BrowserPage, target: string): Promise<string> => {
+  const name = /^[.#]?([A-Za-z_][\w-]*)$/.exec(target)?.[1];
+  const ways = name === undefined ? [] : [name, `.${name}`].filter(way => way !== target);
+  for (const way of ways) {
+    const other = await targetOn(page, way);
+    if (!('problem' in other) && other.found) {
+      return way === name
+        ? `${name} is an element's id here: write it without the dot`
+        : `${name} is a class here, no element's id: write it .${name}`;
+    }
+  }
+
+  return `name it by its element's id (fight-card-vs), #its-id, or any selector (.vs-medal, [data-plitzi-el="…"] > span)`;
+};
+
 /** One element of an open page, measured — or why it could not be. */
 export const measureOn = async (page: BrowserPage, target: string): Promise<Measured | { problem: string }> => {
   const found = await targetOn(page, target);
@@ -145,9 +224,7 @@ export const measureOn = async (page: BrowserPage, target: string): Promise<Meas
   }
 
   if (!found.found) {
-    return {
-      problem: `No element ${target} on ${page.url()} — name it by its element's id (fight-card-vs), #its-id, or any selector (.vs-medal, [data-plitzi-el="…"] > span)`
-    };
+    return { problem: `No element ${target} on ${page.url()} — ${await otherSpelling(page, target)}` };
   }
 
   return {
@@ -185,8 +262,12 @@ export const measureOn = async (page: BrowserPage, target: string): Promise<Meas
             }
           }
 
+          const tag = node.tagName.toLowerCase();
+          const root = tag === 'body' || tag === 'html' ? document.querySelector('[data-plitzi-el]') : null;
+
           return {
-            tag: node.tagName.toLowerCase(),
+            tag,
+            ...(root ? { spaceRoot: root.getAttribute('data-plitzi-el') ?? '' } : {}),
             text: node.textContent.replace(/\s+/g, ' ').trim().slice(0, 60),
             styles,
             inherited: parent
@@ -315,10 +396,21 @@ export const differences = (here: Measured, there: Measured): { differ: Differen
 
 const named = (each: Measured): string => `${each.tag}${each.text ? ` "${each.text}"` : ''} (${each.selector})`;
 
+/** A document's body measured on a space's page: where the space's own type is, to measure instead. */
+const rootNote = (here: Measured): string[] =>
+  here.spaceRoot
+    ? [
+        chalk.dim(
+          `  ${here.tag} is the document's: the space dresses its root, ${here.spaceRoot} — measure it, "${here.spaceRoot} => ${here.tag}"`
+        )
+      ]
+    : [];
+
 export const measuredText = (here: Measured, there?: Measured, url?: string): string => {
   if (!there) {
     return [
       chalk.bold(named(here)),
+      ...rootNote(here),
       ...Object.entries(here.styles).map(
         ([property, value]) =>
           `  ${property.padEnd(22)} ${value}${here.inherited.includes(property) ? chalk.dim('  (inherited)') : ''}`
@@ -332,6 +424,7 @@ export const measuredText = (here: Measured, there?: Measured, url?: string): st
 
   return [
     chalk.bold(`${named(here)} here → ${named(there)} on ${url ?? 'the other page'}`),
+    ...rootNote(here),
     ...(differ.length === 0 ? ['  every property measured is the same'] : []),
     ...own.map(each => `  ${chalk.yellow('≠')} ${each.property.padEnd(22)} ${each.here}  →  ${each.there}`),
     // What the page's type gives every element: said once, so what this element itself does differently is read first.
@@ -432,7 +525,7 @@ const ourPage = async (browser: Browser, origin: string, route: string, view: Vi
     ...(view.scheme ? { scheme: view.scheme } : {}),
     ...(view.timezone ? { timezone: view.timezone } : {})
   });
-  await openPage(page, `${origin}${route}`);
+  await openPage(page, `${origin}${route}`, { quietMs: PROJECT_QUIET_MS });
   // A text the browser rewrites after hydration (a visitor's time, read in its zone) read before it was the server's:
   // velada-fidelity's hero read "19:00H CEST" once, "11:00H GMT-6" after. A page with no space root has no wait.
   await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
@@ -445,6 +538,7 @@ interface ViewAsked {
   width: number;
   scheme?: Scheme;
   timezone?: string;
+  state?: StateAsked;
 }
 
 /** Every pair, at one width: ours on one page, the others' kept or read on one page of the other site. */
@@ -458,12 +552,20 @@ const readAt = async (
   now: number
 ): Promise<Reading[]> => {
   const page = await ourPage(browser, where.origin, where.route, view);
-  const ours = await Promise.all(pairs.map(pair => measureOn(page, pair.here)));
+  const notPut = view.state ? await putIn(page, view.state, view.state.pair.here) : undefined;
+  const ours = notPut ? pairs.map(() => notPut) : await Promise.all(pairs.map(pair => measureOn(page, pair.here)));
   await page.close();
 
   const { target } = where;
   const keys = pairs.map(pair =>
-    keptFile(root, { url: target, width: view.width, scheme: view.scheme, timezone: view.timezone, there: pair.there })
+    keptFile(root, {
+      url: target,
+      width: view.width,
+      scheme: view.scheme,
+      timezone: view.timezone,
+      there: pair.there,
+      ...(view.state ? { state: view.state.kind, of: view.state.pair.there } : {})
+    })
   );
   const kept = target && !options.fresh ? await Promise.all(keys.map(file => readKept(file, now))) : [];
   const theirs: (Measured | { problem: string } | undefined)[] = pairs.map((_pair, index) => kept[index]?.measured);
@@ -476,8 +578,10 @@ const readAt = async (
       ...(view.scheme ? { scheme: view.scheme } : {}),
       ...(view.timezone ? { timezone: view.timezone } : {})
     });
+    const otherNotPut =
+      view.state && !('problem' in other) ? await putIn(other.page, view.state, view.state.pair.there) : undefined;
     for (const index of missing) {
-      const read = 'problem' in other ? other : await measureOn(other.page, pairs[index].there);
+      const read = 'problem' in other ? other : (otherNotPut ?? (await measureOn(other.page, pairs[index].there)));
       theirs[index] = read;
       if (!('problem' in read)) {
         await fs.mkdir(path.dirname(keys[index]), { recursive: true });
@@ -558,6 +662,16 @@ export const measure = async (route: string, elements: string[], options: Measur
     pairs[0] = { here: pairs[0].here, there: options.there };
   }
 
+  if (options.hover !== undefined && options.focus !== undefined) {
+    fail('One state at a time: --hover or --focus');
+
+    return;
+  }
+
+  const asked = options.hover ?? options.focus;
+  const state: StateAsked | undefined =
+    asked === undefined ? undefined : { kind: options.hover !== undefined ? 'hover' : 'focus', pair: pairOf(asked) };
+
   const target = options.compare
     ? new URL(options.compare).pathname === '/'
       ? new URL(route, options.compare).href
@@ -598,7 +712,8 @@ export const measure = async (route: string, elements: string[], options: Measur
           {
             width,
             ...(options.scheme ? { scheme: options.scheme } : {}),
-            ...(options.timezone ? { timezone: options.timezone } : {})
+            ...(options.timezone ? { timezone: options.timezone } : {}),
+            ...(state ? { state } : {})
           },
           options,
           now
@@ -614,6 +729,7 @@ export const measure = async (route: string, elements: string[], options: Measur
       options.json
         ? JSON.stringify({
             url: target,
+            ...(state ? { state: { [state.kind]: state.pair } } : {}),
             readings: readings.map(reading => ({
               ...reading,
               ...(reading.there && !('problem' in reading.there) && !('problem' in reading.here)
@@ -622,14 +738,21 @@ export const measure = async (route: string, elements: string[], options: Measur
             })),
             ...(options.same ? { same: options.same } : {})
           })
-        : widths
-            .flatMap(width => [
+        : [
+            ...(state
+              ? [
+                  chalk.dim(
+                    `Read with ${state.pair.here} ${state.kind === 'hover' ? 'hovered' : 'focused'}${target ? ` (there: ${state.pair.there})` : ''}, its transitions finished`
+                  )
+                ]
+              : []),
+            ...widths.flatMap(width => [
               ...(widths.length > 1 ? [chalk.bold.underline(`At ${String(width)} px`)] : []),
               ...readings
                 .filter(reading => reading.width === width)
                 .map(reading => readingText(reading, target, options.same, now))
             ])
-            .join('\n')
+          ].join('\n')
     );
     if (failed) {
       process.exitCode = 1;

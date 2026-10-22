@@ -1,6 +1,5 @@
 import { spawn } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
-import { createServer } from 'node:http';
 import os from 'node:os';
 
 import { postForm, requestJson } from './http';
@@ -99,10 +98,14 @@ const FAILED_PAGE = page('Sign-in failed', 'That did not complete. Go back to yo
  * On 127.0.0.1 explicitly rather than every interface: a server on `0.0.0.0` is reachable from the network, and what
  * it holds is an authorization code. `state` tells this flow's answer from anything else that reaches the port.
  */
-const awaitCode = (
+const awaitCode = async (
   state: string
-): Promise<{ close: () => Promise<void>; port: number; code: Promise<string | undefined> }> =>
-  new Promise(resolve => {
+): Promise<{ close: () => Promise<void>; port: number; code: Promise<string | undefined> }> => {
+  // Imported here, at sign-in alone: `node:http` imported as a module reads all it exports, Node's fetch with them —
+  // 5 ms of every command's start (`plitzi task next`'s too), for the one that signs in.
+  const { createServer } = await import('node:http');
+
+  return new Promise(resolve => {
     let settle: (value: string | undefined) => void = () => undefined;
     const code = new Promise<string | undefined>(done => {
       settle = done;
@@ -134,6 +137,7 @@ const awaitCode = (
       resolve({ close, port: (server.address() as AddressInfo).port, code });
     });
   });
+};
 
 /**
  * The person's own browser, at `url`. Printed as well by the caller: over SSH, or with no browser at all, the link is

@@ -10,6 +10,7 @@ import { projectMark } from '@plitzi/sdk-shared/project';
 import { OBSERVER_COOKIE_NAME } from '@plitzi/sdk-shared/realtime';
 import { THEME_COOKIE_NAME } from '@plitzi/sdk-shared/theme';
 
+import { keepStatic, staticCacheDir } from './staticCache';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
 
 import type { PlitziProject } from '../commands/existingProject';
@@ -59,6 +60,8 @@ export interface PageElement {
   click(options: { timeout: number }): Promise<void>;
   /** The pointer put over it, and left there: what a hover shows. */
   hover(options: { timeout: number }): Promise<void>;
+  /** Focus put on it, as a keyboard leaves it: what `:focus-visible` shows. */
+  focus(options: { timeout: number }): Promise<void>;
   /** The elements inside it the selector finds. */
   locator(selector: string): { first(): PageElement };
   /** A function run in the page on the element itself. */
@@ -70,9 +73,18 @@ export interface PageElement {
 
 /** A request the page made, held by `route`: answered here, or let through as it was. */
 export interface PageRoute {
-  request(): { resourceType(): string; url(): string };
-  fulfill(response: { status: number; contentType: string; body: string }): Promise<void>;
+  request(): { resourceType(): string; url(): string; method(): string };
+  fulfill(response: {
+    status: number;
+    contentType?: string;
+    headers?: Record<string, string>;
+    body: string | Uint8Array;
+  }): Promise<void>;
   continue(): Promise<void>;
+  /** On to the handler registered before this one — or the network, past the first. */
+  fallback(): Promise<void>;
+  /** The request made now, as the page would make it: its answer, to answer the page with. */
+  fetch(): Promise<{ status(): number; headers(): Record<string, string>; body(): Promise<Uint8Array> }>;
 }
 
 export interface BrowserPage {
@@ -89,6 +101,8 @@ export interface BrowserPage {
   keyboard: { press(key: string): Promise<void>; type(text: string): Promise<void> };
   /** A stylesheet added to the page as it is now: what a capture leaves out or holds still. */
   addStyleTag(options: { content: string }): Promise<unknown>;
+  /** A function run in each document the page opens, before its own scripts. */
+  addInitScript<A>(script: (input: A) => void, input: A): Promise<void>;
   /** The browser context the page lives in — its cookies, set before the page is asked for. */
   context(): { addCookies(cookies: { name: string; value: string; url: string }[]): Promise<void> };
   /** Where the page is now — after any redirect the server answered with. */
@@ -137,12 +151,31 @@ const isChromium = (value: unknown): value is Chromium => isRecord(value) && typ
 const propertyOf = (value: unknown, key: string): unknown =>
   (typeof value === 'object' || typeof value === 'function') && value !== null ? Reflect.get(value, key) : undefined;
 
+/**
+ * How long a page of the project's own server waits with no request open before it is read: half of `openPage`'s 500,
+ * for another site. Four of la-velada's pages at two widths read the same, cold and warm, five times each, at 500, 250
+ * and 150 — 5.9 s at 500, 3.9 s at 250. Its other sites' files come from the kept ones (`staticCache.ts`) at once.
+ */
+export const PROJECT_QUIET_MS = 250;
+
+/** The project each browser was launched for: where the pages it opens keep what other sites send them. */
+const launchedFor = new WeakMap<Browser, string>();
+
 /** The project's `@playwright/test`'s Chromium, launched — or why there is none. */
 export const launchBrowser = async (root: string): Promise<Browser | { problem: string }> => {
   let loaded: unknown;
   try {
     const resolved = createRequire(path.join(root, 'package.json')).resolve('@playwright/test');
-    loaded = await import(pathToFileURL(resolved).href);
+    // Its core, where it has one beside it: the browser alone, not the test runner around it — 20 ms of each command
+    // that opens a page. Resolved from the runner's own place, as a package manager that hoists nothing keeps it.
+    const core = (() => {
+      try {
+        return createRequire(resolved).resolve('playwright-core');
+      } catch {
+        return resolved;
+      }
+    })();
+    loaded = await import(pathToFileURL(core).href);
   } catch {
     return { problem: 'This project has no @playwright/test installed: npm install -D @playwright/test' };
   }
@@ -157,7 +190,10 @@ export const launchBrowser = async (root: string): Promise<Browser | { problem: 
   }
 
   try {
-    return await chromium.launch();
+    const browser = await chromium.launch();
+    launchedFor.set(browser, root);
+
+    return browser;
   } catch (error) {
     return {
       problem: `Chromium did not start (${error instanceof Error ? error.message.split('\n')[0] : String(error)}): npx playwright install chromium`
@@ -310,6 +346,25 @@ export interface ProjectView {
   timezone?: string;
 }
 
+/** What `page` asks other sites than `own` for, kept on disk for the project's next browsers (`staticCache.ts`). */
+const keepOthers = async (browser: Browser, page: BrowserPage, own?: string): Promise<void> => {
+  const root = launchedFor.get(browser);
+  if (root !== undefined) {
+    await keepStatic(page, staticCacheDir(root), own);
+  }
+};
+
+/** Another site's page — a reference, a page to import — whose pictures, fonts and styles are kept for the next look. */
+export const openOtherPage = async (
+  browser: Browser,
+  options: Parameters<Browser['newPage']>[0]
+): Promise<BrowserPage> => {
+  const page = await browser.newPage(options);
+  await Promise.all([keepOthers(browser, page), withoutDevTools(page)]);
+
+  return page;
+};
+
 /**
  * A page for the project's own server, in the theme asked for. The machine's preference alone is not enough: a space
  * whose default is dark paints dark whatever the machine prefers, as it would for any visitor. So a scheme asked for
@@ -324,6 +379,7 @@ export const openProjectPage = async (browser: Browser, origin: string, view: Pr
     ignoreHTTPSErrors: isLocalTls(origin),
     ...(view.timezone ? { timezoneId: view.timezone } : {})
   });
+  await Promise.all([keepOthers(browser, page, origin), withoutDevTools(page)]);
   await page
     .context()
     .addCookies([
@@ -348,6 +404,34 @@ export const paintedScheme = (page: BrowserPage, machine: Scheme): Promise<Schem
     return classList.contains('light') ? 'light' : prefers;
   }, machine);
 
-/** The page as a visitor sees it: the dev tools' own chrome — the badge, the panel — left out of whatever is looked at. */
-export const withoutDevTools = (page: BrowserPage): Promise<unknown> =>
-  page.addStyleTag({ content: HIDE_DEV_TOOLS_CSS });
+/**
+ * The page as a visitor sees it: the dev tools' own chrome — the badge, the panel — left out of whatever is looked at,
+ * from the document's first paint: never drawn, rather than drawn and taken away once the page has loaded, every style
+ * of it computed again. Self-contained — it runs in the page, before any of its scripts.
+ */
+const hideDevToolsInPage = (css: string): void => {
+  const add = (root: Element): void => {
+    const style = document.createElement('style');
+    style.textContent = css;
+    root.appendChild(style);
+  };
+  // Read by query, which may find none: as an init script runs, the document can have no root yet — whatever the
+  // types say of `documentElement`.
+  const root = document.querySelector('html');
+  if (root) {
+    add(root);
+
+    return;
+  }
+
+  new MutationObserver((_records, observer) => {
+    const arrived = document.querySelector('html');
+    if (arrived) {
+      observer.disconnect();
+      add(arrived);
+    }
+  }).observe(document, { childList: true });
+};
+
+const withoutDevTools = (page: BrowserPage): Promise<void> =>
+  page.addInitScript(hideDevToolsInPage, HIDE_DEV_TOOLS_CSS);

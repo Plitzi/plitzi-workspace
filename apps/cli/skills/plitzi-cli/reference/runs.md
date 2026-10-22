@@ -24,7 +24,7 @@ The lead's half — plan, rehearse, open, review, close, stack — is [runs-lead
 
 ```bash
 plitzi task take t-home --run es-launch --agent writer-1 --role writer --json   # → token, work (its copy), files
-cd <work> && plitzi task context --files   # the brief, your files, their data's shape, how to call what they import
+cd <work> && plitzi task context   # the brief, its files' data and imports (--files: the files, whole)
 ```
 
 Inside `work`, a command knows its task and run (`tmp/plitzi-task.json`) — never who you are.
@@ -36,13 +36,16 @@ Inside `work`, a command knows its task and run (`tmp/plitzi-task.json`) — nev
 (`--token "$(cat <that path>)"`). No token, an empty one (a `$(cat …)` that read nothing), a task's, your name alone, your
 token under another's name, a name or a role not the team's: refused (`identity`, 26).
 
-- **Write only in `work`**, never in the project. Run the project's scripts there. The copy has no `node_modules` (it resolves the project's) and no `.env` — a warning about it is expected.
-  **Look at your page:** `npx plitzi page check /pets --width 1440,390` (or `page shot`) from `work` serves the copy
-  (kept 3 min). Iterating on one page, `npm run start:dev` in `work` keeps
-  it served; stop it by its port (`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)`),
-  never `pkill -f`. Read a shared module only for what the brief's imports do not say. The copy's `tmp/` and `state/`
-  never count at `complete`, and are where what is yours beside the work goes — a script, a log, a picture; between
-  tasks, `tmp/plitzi-runs/<run>/scratch/<your name>/`. Never the project's `tmp/`: it is the person's. Format your files (`npx prettier --write`).
+- **Write only in `work`**, never in the project; run the project's scripts there (no `node_modules` nor `.env` of its
+  own — the warning is expected). `plitzi page check /pets --width 1440,390` from `work` serves the copy (kept 3 min);
+  a server of your own there is stopped by its port (`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)`), never `pkill -f`. What
+  is yours beside the work — a script, a log, a picture — goes in the copy's `tmp/`; between tasks,
+  `tmp/plitzi-runs/<run>/scratch/<your name>/`; never the project's `tmp/`.
+- **Spend the heavy commands well — a run makes hundreds.** `task check`, `task look`, `page check|shot|measure` take
+  3–10 s each; `task next|context|show|inbox|tell` a tenth. Change a batch, then check once — never after every edit;
+  one acceptance line: `task check --acceptance`. Asked again with nothing changed, a check or a look says its last
+  answer (`--fresh` runs it anew), and `complete` right after a passing check takes it. Every element and width in one
+  `page measure` call (`--hover <el>` for a state); a picture only for what a check cannot tell.
 - **Only your files.** A file another task at work holds is refused at `complete`, naming it — `plitzi task discard
 <file>` puts it back (and brings the run's version of any file); propose the change to that task instead. **Name
   what you declare by your part** — classes and provider ids (`hero-title`, `fightsList`), never `title`: another
@@ -72,11 +75,10 @@ takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | 
   only it talks to the person), then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks
   for changes. `agent-limit` (24) on `take`: hand back to the lead.
-- **Before done:** `plitzi task check` (`--fix`: the project's eslint and prettier fix your files first) runs what `complete` holds the copy to — the project's checks, the acceptance's
-  commands, long files, no `space lint` warning in a file you changed (what the run approved since your copy was made
-  comes in first; `--acceptance` runs only its lines): iterate on it, not on `complete`, whose failures count toward
-  the run's brake. It hands you what the lead said meanwhile: run it between
-  steps, not only at the end. What you declare for later tasks, unread yet, is a warning.
+- **Before done:** `plitzi task check` (`--fix`: eslint and prettier fix your files first) runs what `complete` holds
+  the copy to — the project's checks, the acceptance's commands, long files, no `space lint` warning in a file you
+  changed: iterate on it, not on `complete`, whose failures count toward the run's brake. It hands you what the lead
+  said meanwhile. What you declare for later tasks, unread yet, is a warning.
 - **Done:** `plitzi task complete [--note "what to look at"] [--review code|ui]` — the note goes to the lead with it;
   `code` when nothing a visitor sees changed (the lead's review alone), `ui` for its UI looked at first — the project's
   checks and the acceptance's run in the copy. **A task never ends

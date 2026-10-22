@@ -335,6 +335,10 @@ export const registerTaskGroup = (program: Command): Command => {
     )
     .argument('<task>', 'The task in review')
     .argument('[paths...]', 'Its pages: those its files are drawn at when left out')
+    .option(
+      '--fresh',
+      'Look anew, though it was looked at as asked and nothing changed since (it says that look again)'
+    )
     .option('--click <id>', 'Click an element once each page settles: the state it opens, looked at too')
     .option(
       '--hover <id>',
@@ -466,7 +470,10 @@ export const registerTaskGroup = (program: Command): Command => {
       'A task’s brief: what is asked, what holds for the whole run, what a review asked, what was agreed — --json for its files and diffs too'
     )
     .argument('[task]', 'The task — the token’s when left out')
-    .option('--files', 'Its files as they are, and the shape of the data they import, in the same answer')
+    .option(
+      '--files',
+      'Its files as they are, whole, in the same answer — for a harness with no reader of its own: one that reads a file before editing it reads each twice'
+    )
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)

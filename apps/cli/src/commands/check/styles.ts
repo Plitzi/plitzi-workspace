@@ -194,9 +194,22 @@ export const elementStyles = async (
     return { unread: 'the space could not be authored here, so its classes are unknown' };
   }
 
+  const classesOf = (one: SchemaElement): string[] =>
+    Object.values(one.definition.styleSelectors).flatMap(names => names.split(/\s+/).filter(Boolean));
   const handle = Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id] : undefined;
   const element = Object.hasOwn(authored.schema.flat, id) ? authored.schema.flat[id] : undefined;
   if (!handle || !element) {
+    // A class, found on the page by it: velada-backlog's `--element fight-card-vs` was found, then said no element —
+    // with the advice for a component's part, which it was not.
+    const wearing = Object.values(authored.schema.flat).filter(one => classesOf(one).includes(id));
+    if (wearing.length > 0) {
+      const named = wearing.slice(0, 5).map(one => one.id);
+
+      return {
+        unread: `${id} is a class, not an element — worn by ${named.join(', ')}${wearing.length > named.length ? ` and ${String(wearing.length - named.length)} more` : ''}: name one of them`
+      };
+    }
+
     const near = nearIds(Object.keys(authored.schema.flat), id);
 
     return {
@@ -204,8 +217,6 @@ export const elementStyles = async (
     };
   }
 
-  const classesOf = (one: SchemaElement): string[] =>
-    Object.values(one.definition.styleSelectors).flatMap(names => names.split(/\s+/).filter(Boolean));
   const classes = classesOf(element);
   const read = await page.evaluate(contestedStylesInPage, { selector: handle.selector, classes });
   if (!read) {

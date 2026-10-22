@@ -11,10 +11,13 @@ too.
   `--scheme` for others; `--status 404` for a not-found page), beside the run before it: what the task moved, and that
   nothing else did (`--no-before` leaves that out). `--click <id>` an open state, `--hover <id>` a hover,
   `--element <id>` its attributes and styles. A page it says you did not look at reads a file the task changed: look
-  at it.
+  at it. **One look a round** (~8 s): it checks both schemes, pictures the task's parts beside the run before it and
+  reads that nothing else moved — asked again with nothing changed, it says the same (`--fresh` looks anew). Then
+  measure only what it, or the task's checks, show differs.
 - **Measure, never guess — in one call:** `plitzi page measure <path> "<ours> => <theirs>" … --compare <url> --width
 390,1440` measures every element at every width in one browser, the reference kept 6 h (`--fresh` reads it again),
-  their `::before`/`::after` too: each property that differs, here → there, what both inherit said apart. Ask for those
+  their `::before`/`::after` too: each property that differs, here → there, what both inherit said apart; a state with
+  `--hover|--focus "<ours> => <theirs>"` (a card's hover, its medal measured). Ask for those
   values with **one** line that proves them all — the same command with `--same font-size,border,before:opacity`. `page shot --compare <url> --clip <section> --dress` says what a section wears and
   this one lacks, on which of our elements.
 - **What to look for:** hierarchy and spacing, the theme's tokens rather than new values, every state (empty, long,

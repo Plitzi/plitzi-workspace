@@ -140,7 +140,9 @@ describe('the scaffold', () => {
     expect(client.dependencies['@plitzi/plitzi-sdk']).toBeTruthy();
     expect(client.scripts.start).toBe('vite');
     // One line per type error, which an agent reads whole, rather than a framed excerpt of each.
-    expect(client.scripts.typecheck).toBe('tsc -p tsconfig.json --noEmit --pretty false');
+    expect(client.scripts.typecheck).toBe(
+      'tsc -p tsconfig.json --noEmit --pretty false --incremental --tsBuildInfoFile tmp/plitzi-cache/checks/tsc.tsbuildinfo'
+    );
   });
 
   /** The loop the client mode exists for: a save updates the page without reloading it. */
@@ -329,8 +331,9 @@ describe('the scaffold', () => {
       devDependencies: Record<string, string>;
     };
 
-    expect(scripts.lint).toBe('eslint .');
-    expect(scripts.format).toBe('prettier --write .');
+    // Each keeping what it read, in tmp/: a check run again reads only what changed.
+    expect(scripts.lint).toBe('eslint . --cache --cache-location tmp/plitzi-cache/checks/eslint.json');
+    expect(scripts.format).toBe('prettier --write . --cache --cache-location tmp/plitzi-cache/checks/prettier.json');
     expect(devDependencies.prettier).toBeTruthy();
     expect(devDependencies['typescript-eslint']).toBeTruthy();
     // Last in the config, so it can switch off the stylistic rules the earlier entries turned on.

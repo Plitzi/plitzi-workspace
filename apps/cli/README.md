@@ -253,8 +253,9 @@ fails the check (`--json`: `clicked: { element, filled?, changes, failed, proble
 `--hover <id>` puts the pointer over one element instead, and says the same of it, with what a hover changes most: how
 the element, each element inside it and up to three marked elements around it look — colours, shadow, transform,
 opacity, size, `background-size`, `stroke-width`, one line a property, said where it changed and not again by a child
-that inherits it (`home-cta background-color: rgb(…) → rgb(…)`); a rule written on a parent (`.card:hover .photo`)
-shows. A hover that changed nothing says so; under 1024 px it is skipped and said so — a phone has no pointer. One
+that inherits it (`home-cta background-color: rgb(…) → rgb(…)`), what their `::before`/`::after` draw and the custom
+properties they hold (`vs before:opacity: 0.6 → 1`, `vs --fill: 0.6 → 1`); a rule written on a parent (`.card:hover
+.photo`) shows. A hover that changed nothing says so; under 1024 px it is skipped and said so — a phone has no pointer. One
 interaction a check: `--click` or `--hover` (`--json`: `clicked: { hovered: true, skipped?, … }`).
 
 `--fill <id>=<value>`, once per field, fills a field before the click as a visitor does — typed in, an option chosen, a
@@ -293,6 +294,19 @@ for by a colour their address gives them.
 `page same … --except <elements>` leaves those out — a task's own parts — and reads positions from each element's parent,
 so a part that grew does not move what follows it: what is read is that nothing else moved.
 
+`page check --stand-ins` answers every picture of another site with a colour of its own: a check of what the project
+changed, not of a third party's CDN (a look's check uses it).
+
+What every page the CLI opens asks other sites for — pictures, fonts, styles, media, never a page or an API's answer —
+is kept on disk for 6 h (`tmp/plitzi-cache/http`, the project's, from a task's copy too), and the space a check is held
+to is kept by the files it is authored from (`tmp/plitzi-cache/authored`): each command opens a browser of its own with
+no cache, and la-velada's home asked a CDN, YouTube and Google Fonts for 63 files on every load. A check reads two
+pages at a time, each at its widths at once, and waits 250 ms of quiet on the project's own pages (500 on another
+site's) — four of la-velada's pages at two widths, 8.4 s before, 3.1 s. A project's `typecheck`, `lint` and `format`
+keep what they read in `tmp/plitzi-cache/checks` (`--incremental`, `--cache`) and read again only what changed: a
+check run again in the same copy (lint 3.7 s → 0.5 s). A project whose scripts an older CLI wrote is told so by
+`plitzi doctor` (`script-outdated`), and `plitzi upgrade packages --write` brings them up to these.
+
 `page check --themes` reads each page in light and in dark too, and fails a ground the same in both under a text whose
 colour follows the theme and, in one of them, reads under 3:1 on it (`fixed-ground`): a fixed colour where a theme
 token belongs. A look at a task checks with it.
@@ -309,7 +323,9 @@ transform, transition, and what `::before`/`::after` draw — and, beside anothe
 that differs, here → there, what both inherit from their parent said apart, then the ones they share in a line. Every
 element at every width (`--width 390,1440`) is one call in one browser; the other page is read without a picture and
 kept 6 h (`--fresh` reads it again). `--same font-size,border,before:opacity` (shorthands `border`, `font`, `size`)
-fails unless those are as the other page's: an acceptance's line that holds a copy to its reference. `--scheme`,
+fails unless those are as the other page's: an acceptance's line that holds a copy to its reference. `--hover` or
+`--focus "<ours> => <theirs>"` puts both pages in that state first, its transitions finished: what a hover changes,
+held by `--same` as the rest is. `--scheme`,
 `--timezone`, `--url`, `--json`, as `page shot`; the page is read once the space has hydrated.
 `--frames` compares pictures taken one after another and names what moved. A project `create` writes has them as
 `npm run check` and `npm run shot`.

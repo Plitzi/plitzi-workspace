@@ -1,11 +1,12 @@
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { parseEnv } from 'node:util';
 
 import { RUN_STATUS_ENV } from '@plitzi/sdk-shared/runs';
 
-import { answering, ownServer } from './acceptance';
+import { answering, ownServer, serveCopy } from './acceptance';
 import {
   cloneFiles,
   fingerprint,
@@ -16,7 +17,7 @@ import {
   writeAtomic,
   writeJson
 } from './files';
-import { keptServer, markPreviewed, touchKept, unmarkPreviewed } from './lingering';
+import { canLinger, keepServer, keptServer, markPreviewed, touchKept, unmarkPreviewed } from './lingering';
 import { monitorRun } from './monitor';
 import { taskPaths, under } from './paths';
 import { alive, isPreview, previewPort, previewRecord } from './previewRecord';
@@ -24,6 +25,7 @@ import { stopTree } from './processes';
 import { RunRefusal } from './refusal';
 import { loadRun, readApproved, readBase, readRecord, requireNoTask } from './run';
 import { placeVersion } from './store';
+import { digestsOf } from './tasks/approve';
 import { viewTask } from './taskStore';
 import { scriptsOf, tail } from '../commands/verify';
 
@@ -340,9 +342,41 @@ export const startBeforePreview = async (
 
   const { cache } = taskPaths(loaded.paths, taskId);
   const dir = path.join(cache, 'before');
-  await approvedCopy(ctx, loaded, dir);
+  // The run before it is the same until something is approved: served once, kept for the next look — the designer's,
+  // then the lead's — rather than copied and started again each time (2 s of every look).
+  const keptIn = path.join(cache, 'before-kept');
+  await fs.mkdir(keptIn, { recursive: true });
+  const approvedNow = createHash('sha256')
+    .update(JSON.stringify(digestsOf(await readApproved(loaded.paths))))
+    .digest('hex');
+  const approvedFile = path.join(keptIn, 'approved');
+  const kept =
+    (await readOptional(approvedFile))?.toString('utf-8') === approvedNow ? await keptServer(dir, keptIn) : undefined;
+  if (kept !== undefined) {
+    const keptPort = Number(new URL(kept).port);
 
-  return serve(ctx, loaded, dir, port, undefined, { quiet: true, log: path.join(cache, 'before-server.log') });
+    return { ...borrow(kept, () => touchKept(keptIn, keptPort)), borrowed: { port: keptPort, by: 'kept' } };
+  }
+
+  await approvedCopy(ctx, loaded, dir);
+  await fs.writeFile(approvedFile, approvedNow);
+  if (!canLinger()) {
+    return serve(ctx, loaded, dir, port, undefined, { quiet: true, log: path.join(cache, 'before-server.log') });
+  }
+
+  const served = await serveCopy(dir, ctx.root, keptIn, { again: 'look again' });
+  if ('problem' in served) {
+    throw new RunRefusal('invalid', `The run before ${taskId} could not be served: ${served.problem}`, {
+      task: taskId
+    });
+  }
+
+  const pid = served.keep();
+  if (pid !== undefined) {
+    await keepServer(dir, keptIn, pid, served.port);
+  }
+
+  return { ...borrow(served.url, () => touchKept(keptIn, served.port)), borrowed: { port: served.port, by: 'kept' } };
 };
 
 /** Where a task's copy is worth serving: being worked — its agent looking at its own pages — or in review. */

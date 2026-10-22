@@ -108,4 +108,18 @@ describe('pageRegions', () => {
     ]);
     vi.restoreAllMocks();
   });
+
+  // velada-backlog: a heading component's four copies were one name — its change said of one, pictured of another.
+  it('numbers the copies of a part after the first, so each is told apart', () => {
+    document.body.innerHTML =
+      '<main data-plitzi-el="match"><header data-plitzi-el="match-heading-root"></header><header data-plitzi-el="match-heading-root"></header></main>';
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 100, 50));
+
+    expect(pageRegions().map(({ name }) => name)).toEqual([
+      'main#match',
+      'header#match-heading-root',
+      'header#match-heading-root:2'
+    ]);
+    vi.restoreAllMocks();
+  });
 });

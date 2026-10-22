@@ -22,7 +22,8 @@ import {
   serverProviderOf
 } from './space';
 import { elementStyles } from './styles';
-import { openProjectPage, withoutDevTools } from '../../browser';
+import { openProjectPage, PROJECT_QUIET_MS } from '../../browser';
+import { standInPictures } from '../shot/capture';
 
 import type { Account } from './account';
 import type { Authored } from './space';
@@ -252,8 +253,6 @@ const inspectHere = async (
   }
 ): Promise<CheckReport> => {
   const handles = authored?.handles;
-  // What is checked is the page: the dev tools' badge sits over it and is no part of it.
-  await withoutDevTools(page);
   const pageId = handles ? pageFor(handles, pathname) : undefined;
   const report = handles && pageId ? await inspectPage(page, handles, { page: pageId }) : await inspectDocument(page);
   // The sources always: what the bindings read is held against them. Printed only when asked.
@@ -446,7 +445,8 @@ export const checkAt = async (
   origin: string,
   pathname: string,
   width: number,
-  view: Pick<ProjectView, 'scheme' | 'presence' | 'timezone'>,
+  /** `standIns`: another site's pictures stood in for — a look's check, about what the task changed, not their CDN. */
+  view: Pick<ProjectView, 'scheme' | 'presence' | 'timezone'> & { standIns?: boolean },
   authored: Authored | undefined,
   asked: CheckAsk,
   ssr: boolean,
@@ -456,7 +456,12 @@ export const checkAt = async (
   then: readonly string[] = []
 ): Promise<CheckReport[]> => {
   const handles = authored?.handles;
-  const page = await openProjectPage(browser, origin, { width, height: 900, ...view });
+  const { standIns, ...asView } = view;
+  const page = await openProjectPage(browser, origin, { width, height: 900, ...asView });
+  if (standIns) {
+    await standInPictures(page, origin);
+  }
+
   /** A report of a page that could not be looked at — nothing answered, no sign-in, sent elsewhere. */
   const unchecked = (issue: CheckIssue): CheckReport => ({
     path: pathname,
@@ -556,7 +561,7 @@ export const checkAt = async (
   }
 
   // Settled, not `networkidle`: a page with a live channel keeps its stream open, and never idles.
-  const answered = await openPage(page, `${origin}${pathname}`);
+  const answered = await openPage(page, `${origin}${pathname}`, { quietMs: PROJECT_QUIET_MS });
   if (!answered) {
     return [
       {

@@ -235,10 +235,23 @@ const toStates = (states: StatesSpec | undefined): Map<string, ResponsiveStyle> 
     );
   }
 
+  // Read as CSS, `hover: { pseudos: … }` was "not one CSS value" — which says nothing of where the rule goes.
+  for (const [state, rules] of Object.entries(states ?? {})) {
+    const misplaced = Object.keys(rules).filter(key => RULE_SET_KEYS.has(key));
+    if (misplaced.length > 0) {
+      throw new AuthoringError(
+        'state-shape',
+        `The state "${state}" holds ${misplaced.map(key => `\`${key}\``).join(', ')}: a state is plain CSS. A pseudo-element's state goes under the pseudo-element — \`pseudos: { before: { states: { ${state}: { opacity: '1' } } } }\` — and what an ancestor's state changes, under \`ancestors\`.`
+      );
+    }
+  }
+
   return new Map(Object.entries(states ?? {}).map(([state, rules]) => [state, toResponsive(rules)]));
 };
 
 const CLASS_NAME = /^-?[_a-zA-Z][\w-]*$/;
+
+const ANCESTOR_KEYS = new Set(['css', 'states', 'variants']);
 
 const toAncestors = (ancestors: RuleSetSpec['ancestors']) =>
   Object.entries(ancestors ?? {}).map(([name, ancestor]) => {
@@ -246,6 +259,17 @@ const toAncestors = (ancestors: RuleSetSpec['ancestors']) =>
       throw new AuthoringError(
         'ancestor-not-class',
         `The ancestor "${name}" is not a class name. An ancestor condition is keyed by a class that ancestor wears — \`[card.name]\` for a \`styles()\` declaration — or by \`'>'\` for the parent, whatever it wears.`
+      );
+    }
+
+    // Only these three are an ancestor's: anything else — `pseudos` was velada-backlog's — was dropped without a word.
+    const misplaced = Object.keys(ancestor).filter(key => !ANCESTOR_KEYS.has(key));
+    if (misplaced.length > 0) {
+      throw new AuthoringError(
+        'ancestor-shape',
+        misplaced.includes('pseudos')
+          ? `The ancestor "${name}" holds \`pseudos\`: an ancestor's rules reach the element, never its ::before or ::after. Let the ancestor's state set a custom property — \`ancestors: { '${name}': { states: { hover: { '--fill-opacity': '1' } } } }\` — and the class's own pseudo-element read it: \`pseudos: { before: { css: { opacity: 'var(--fill-opacity, 0.6)' } } }\`.`
+          : `The ancestor "${name}" holds ${misplaced.map(key => `\`${key}\``).join(', ')}: an ancestor condition is \`css\`, \`states\` and \`variants\`.`
       );
     }
 

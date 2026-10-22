@@ -26,6 +26,10 @@ export const registerPage = (pageGroup: Command): void => {
     .addOption(widthsOption('The widths to check it at, separated by commas', [1440, 390]))
     .addOption(schemeOption())
     .option(
+      '--stand-ins',
+      'Another site’s pictures stood in for, each by a colour of its own: a check of what the project changed, not of a third party’s CDN'
+    )
+    .option(
       '--themes',
       'Also each page in light and in dark: a ground the same in both under a text whose colour follows the theme — one scheme reads it on the wrong ground'
     )
@@ -117,6 +121,11 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .option('--compare <url>', 'Another page — the site a copy is made after — whose elements are measured beside them')
     .option('--there <selector>', 'With one element: the other page’s, by any selector (or write it "ours => theirs")')
+    .option(
+      '--hover <element>',
+      'Hover an element on both pages first — "fight-card => .fight-card" — and measure the rest as it leaves them, its transitions finished'
+    )
+    .option('--focus <element>', 'Focus an element on both pages first, as --hover does')
     .addOption(
       new Option(
         '--same <properties>',

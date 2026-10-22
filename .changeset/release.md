@@ -928,3 +928,29 @@ theirs"`) at every width in one call and one browser, reads the other page witho
   nothing changed (`--fresh` runs it again); the acceptance's server starts beside the checks; a look compares a task's
   parts alone and reads the rest with `page same --except`; `plitzi` starts with Node's compile cache (`dist/bin.js`);
   `task take` names the project's own `plitzi` (npx adds ~0.2 s a call); `PLITZI_TIMING=1` times the CLI's own children.
+- **A look in the time of a check, and agents that spend the heavy commands well** (`@plitzi/cli`): `task look` runs its
+  check, its parts' comparisons and the reading of the rest at once (three at a time), stands in for another site's
+  pictures (`page check --stand-ins`), keeps the run before it served while nothing is approved, and says a look asked
+  again with nothing changed (`--fresh` looks anew) — 50.5 s to 7.5 s, 0.1 s repeated. The skills say what costs
+  seconds and what a tenth, and to check a batch once, look once a round, and measure in one call.
+- **What velada-backlog's agents met, fixed** (`@plitzi/cli`, `@plitzi/sdk-authoring`): `task next --take` from the copy
+  of a task just completed takes the next one (a guard of the days a task's token was who one was refused it "without
+  a token"). An ancestor's `pseudos` — dropped without a word, its CSS never emitted — is refused (`ancestor-shape`),
+  saying the way that works (a custom property the ancestor's state sets, read by the class's own pseudo-element), and
+  a state holding a rule set's keys is refused for what it is (`state-shape`). `page measure --hover|--focus "<ours> =>
+<theirs>"` measures both pages in that state, its transitions waited for; `page check --hover` (and a look) says what
+  `::before`/`::after` and custom properties change. A comparison numbers a component part's copies
+  (`header#match-heading-root:2`), each said and pictured as itself, not as the first. A task's acceptance lines run two
+  at a time (t-body-type's 10.7 s → 8.6 s). `task context` gives its files' sizes, data and imports and leaves the
+  files themselves to `--files` (57 KB → 3.5 KB for seven files). `run plan` says a team too big for its work instead of
+  asking it for more designers, and reads an element reached through a file of the task (an import) as the task's; a
+  designer's first review says what to read first, on a line of its own; `--element` on a class says it is one and who
+  wears it; `page measure` says an id written as a class (and the other way), and of `body` the space's root to measure.
+- **The CLI's pages in half the time** (`@plitzi/cli`): what each page asks other sites for — pictures, fonts, styles,
+  media — is kept on disk for 6 h (`tmp/plitzi-cache/http`, the project's, every task's copy reading it), where each
+  command's browser had no cache and fetched la-velada's 63 third-party files on every load; a check reads two pages at
+  a time and waits 250 ms of quiet on the project's own pages; the space it is held to is kept by the files it is
+  authored from (`tmp/plitzi-cache/authored`), and authored while the browser starts; the browser is Playwright's core,
+  the dev tools hidden from the first paint, and `node:http` imported only to sign in — four of la-velada's pages at two
+  widths, 8.4 s to 3.1 s, the same report. A new project's `typecheck`, `lint` and `format` keep what they read
+  (`tmp/plitzi-cache/checks`): a check run again reads only what changed (lint 3.7 s → 0.5 s).

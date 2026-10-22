@@ -1,6 +1,7 @@
 import { openPage } from '@plitzi/sdk-authoring';
 
 import { pictureOf } from './capture';
+import { openOtherPage } from '../../browser';
 
 import type { Taken, View } from './types';
 import type { Browser, BrowserPage } from '../../browser';
@@ -81,7 +82,7 @@ export const pageAnswered = (
   view: Pick<View, 'width' | 'height' | 'scheme' | 'reducedMotion' | 'timezone'>
 ): Promise<({ page: BrowserPage } & { notFound?: true }) | { problem: string }> =>
   whenAnswered(async () => {
-    const page = await browser.newPage({
+    const page = await openOtherPage(browser, {
       viewport: { width: view.width, height: view.height },
       colorScheme: view.scheme ?? 'light',
       reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference',

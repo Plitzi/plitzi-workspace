@@ -2,7 +2,7 @@ import chalk from 'chalk';
 
 import { openPage } from '@plitzi/sdk-authoring';
 
-import { launchBrowser, openProjectPage } from '../browser';
+import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
 import { projectHere } from './existingProject';
 import { fail } from './terminal';
 
@@ -106,7 +106,7 @@ const readOn = async (
     ...(view.scheme ? { scheme: view.scheme } : {})
   });
   try {
-    await openPage(page, `${origin}${path}`);
+    await openPage(page, `${origin}${path}`, { quietMs: PROJECT_QUIET_MS });
     await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
     await page.evaluate(() => document.fonts.ready.then(() => undefined), undefined);
 

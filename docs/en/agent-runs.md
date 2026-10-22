@@ -42,10 +42,12 @@ hands an agent the task it holds and can go on with — unblocked, or sent back 
 (`yours`), so an agent waiting for work hears it. A task sent back that others wait on, while its agent is at another,
 tells that agent it goes first (`goesFirst`, to `@<agent>`): nothing else reaches it before the task in hand is done. **The run's notes** — the plan's `notes`, and each `run note` — are
 messages to every task (`*`): each task reads every one once, with its take or its next sign of life, and `task context`
-(the brief an agent starts from) lists them beside its acceptance, what a review asked and what was agreed; with
-`--files`, the task's files as they are, the shape of the data they import and how to call what they import from the
-rest of the project (`moduleApis.ts`: each imported name's signature and the first sentence of its doc, followed
-through a barrel, never its body — two of la-velada's pages import 43k characters of shared modules, said in 3k). In a
+(the brief an agent starts from) lists them beside its acceptance, what a review asked and what was agreed, with its
+files' sizes, the shape of the data they import and how to call what they import from the rest of the project
+(`moduleApis.ts`: each imported name's signature and the first sentence of its doc, followed through a barrel, never
+its body — two of la-velada's pages import 43k characters of shared modules, said in 3k); `--files` adds the files as
+they are, for a harness with no reader of its own — one that reads a file before it edits it read each twice
+(velada-backlog's t-body-type: 57 KB with them, 3.5 KB without). In a
 task's copy whose own server is not running, `page check` and `page shot` serve the copy (`copyServer.ts`, by
 `serveCopy`) and keep it `LINGER_MS` for the next (`lingering.ts`): an agent starts no server to look at its page, where
 la-velada's spent 64 steps starting, waiting for, asking about and stopping theirs, and pictures it again without a
@@ -354,8 +356,13 @@ approved work, its acceptance, the CLI (`tasks/checked.ts`) — for 30 minutes: 
 key unchanged says the result again rather than running it (`--fresh` runs it); the copy is served for the acceptance
 while the project's checks run (`serveForAcceptance`), and let go however they end. A look at a task with parts of its
 own compares each part alone beside the run before it (`compareLocalPart`, no page aligned), and reads that nothing
-else moved with `page same --except <its parts>` — the sanity run's look went from 50 s to 25 s, its complete from 8.5 s
-to 0.35 s. `plitzi` starts through `dist/bin.js`, which turns on Node's compile cache first (a start ~30% shorter), and
+else moved with `page same --except <its parts>` (positions read from each element's parent, so a part that grew moves
+nothing). Its check, its parts' comparisons and that reading run at once, three at a time (`inTurns`); its check stands
+in for another site's pictures (`page check --stand-ins`: a look is of the task's change, not a third party's CDN,
+which throttled a look's pages and failed them now and then); the run before it is served once and kept while nothing
+is approved (`startBeforePreview`, `before-kept/`); and a look asked again, the task, the run and the ask unchanged,
+says that look again (`looked.json`, 30 min; `--fresh` looks anew). The sanity run's look went from 50.5 s to 7.5 s, and
+to 0.1 s asked again; its complete from 8.5 s to 0.35 s. `plitzi` starts through `dist/bin.js`, which turns on Node's compile cache first (a start ~30% shorter), and
 `task take` prints the project's own `node_modules/.bin/plitzi` (npx adds ~0.2 s a call). `PLITZI_TIMING=1` makes every
 command the CLI runs of itself say how long it took.
 
@@ -390,7 +397,8 @@ shared file's: velada-polish's design-2 looked at /combates twice, and the home 
 find. The values a review asks for are measured, not guessed: `plitzi page measure <path> "<ours> => <theirs>" …
 --compare <url> --width 390,1440` reads elements' computed styles — type, colours, borders, radii, shadows, size,
 spacing, motion, and what their `::before`/`::after` draw (velada's VS fill was there, unseen, and the plan asked it
-away) — and the other page's elements', and says each property that differs, what both inherit from their parent said
+away) — in a state too, an element hovered or focused on both pages first (`--hover "<ours> => <theirs>"`, its
+transitions waited for) — and the other page's elements', and says each property that differs, what both inherit from their parent said
 apart. Every element at every width is one call, in one browser, the other page read without a picture and kept 6 h
 (`tmp/plitzi-cache/measure`, `--fresh` reads it again): velada-fidelity's ~150 calls of one element at ~18 s each were
 most of its developers' time; the designers of velada-polish wrote Playwright

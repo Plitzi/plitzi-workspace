@@ -17,7 +17,8 @@ import type { Finding } from '../../runs/spike';
 import type { TaskContext } from '../../runs/tasks';
 
 /**
- * `plitzi task context`: the brief, in text — with `--files`, the task's files and the shape of the data they import.
+ * `plitzi task context`: the brief, in text — the shape of the data its files import and how what they import is called;
+ * with `--files`, the files themselves too.
  */
 
 /** A JSON file a module imports (`import pets from '../../data/pets.json' with …`), by its project path. */
@@ -27,8 +28,8 @@ const dataImports = (file: string, text: string): string[] =>
   );
 
 /**
- * With `--files`: what an agent reads before it writes, in the same answer — each of its files as it is, and the shape
- * of each JSON file they import (as `plitzi data describe` says it): the cold start's `cat`s, in one call.
+ * The shape of each JSON file a task's files import (as `plitzi data describe` says it) — and, with `--files`, the
+ * files as they are: the cold start's `cat`s, in one call, for a harness that has no reader of its own.
  */
 const filesOf = async (root: string, context: TaskContext): Promise<{ file: string; shape: string }[]> => {
   const data = [...new Set(context.files.flatMap(each => (each.text ? dataImports(each.file, each.text) : [])))].sort();
@@ -57,31 +58,34 @@ export const taskContextCommand = (
       const target = await either(ctx, options, taskId);
       const context = await taskContext(ctx, target.runId, target.taskId);
 
-      return options.files
-        ? { ...context, data: await filesOf(ctx.root, context), imports: await importedApis(ctx.root, context.files) }
-        : context;
+      return {
+        ...context,
+        whole: options.files === true,
+        data: await filesOf(ctx.root, context),
+        imports: await importedApis(ctx.root, context.files)
+      };
     },
+    // The files themselves only with --files: an agent reads the ones it changes with its own reader — one that must
+    // read a file before it edits it read each twice. velada-backlog's t-body-type: 57 KB with them, 3.5 KB without.
     context =>
       [
         briefOf(context),
-        ...('data' in context
+        ...(context.whole
+          ? context.files.flatMap(each =>
+              each.text === undefined
+                ? each.toCreate
+                  ? [chalk.bold(`── ${each.file} — to create`)]
+                  : []
+                : [chalk.bold(`── ${each.file} (${String(each.text.split('\n').length)} lines)`), each.text.trimEnd()]
+            )
+          : []),
+        ...context.data.flatMap(each => [chalk.bold(`── ${each.file}, its shape`), each.shape]),
+        ...(context.imports.length > 0
           ? [
-              ...context.files.flatMap(each =>
-                each.text === undefined
-                  ? each.toCreate
-                    ? [chalk.bold(`── ${each.file} — to create`)]
-                    : []
-                  : [chalk.bold(`── ${each.file} (${String(each.text.split('\n').length)} lines)`), each.text.trimEnd()]
+              chalk.bold(
+                '── What these files import from the rest of the project — how each is called, not its body (read the file only for what this does not say):'
               ),
-              ...context.data.flatMap(each => [chalk.bold(`── ${each.file}, its shape`), each.shape]),
-              ...(context.imports.length > 0
-                ? [
-                    chalk.bold(
-                      '── What these files import from the rest of the project — how each is called, not its body (read the file only for what this does not say):'
-                    ),
-                    ...context.imports.flatMap(each => [each.file, ...each.names.map(name => `  ${name}`)])
-                  ]
-                : [])
+              ...context.imports.flatMap(each => [each.file, ...each.names.map(name => `  ${name}`)])
             ]
           : [])
       ].join('\n')
@@ -96,7 +100,10 @@ const findingsText = (title: string, findings: readonly Finding[]): string[] =>
 
 const briefOf = (context: TaskContext): string => {
   const { task, state } = context;
-  const files = context.files.map(file => `${file.file}${file.toCreate ? ' (to create)' : ''}`);
+  const files = context.files.map(
+    file =>
+      `${file.file}${file.toCreate ? ' (to create)' : file.text === undefined ? '' : ` (${String(file.text.split('\n').length)} lines)`}`
+  );
   const comments = context.review?.verdict === 'changes' ? context.review.comments : [];
   const notesShown = state.notes.filter(
     note => !(comments.length > 0 && note.text.startsWith(`Review ${String(context.review?.round ?? 0)}: `))

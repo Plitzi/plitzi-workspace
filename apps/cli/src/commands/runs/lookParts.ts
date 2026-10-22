@@ -1,9 +1,21 @@
+import { createHash } from 'node:crypto';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+import chalk from 'chalk';
+
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { writeJson } from '../../runs/files';
 import { RunRefusal } from '../../runs/refusal';
+import { loadRun } from '../../runs/run';
+import { findTask } from '../../runs/tasks';
+import { checkKey } from '../../runs/tasks/checked';
+import { viewTask } from '../../runs/taskStore';
 
 import type { LookOptions } from './review';
 import type { Preview } from '../../runs/preview';
+import type { RunContext } from '../../runs/run';
 
 /** One page of a look beside the run before the task: how much differs, and in which sections. */
 export interface BeforeAfter {
@@ -178,4 +190,69 @@ export const viewsAsked = (
   }
 
   return widths.split(',').flatMap(width => valid.map(scheme => [width, scheme] as [string, 'light' | 'dark']));
+};
+
+/**
+ * With `PLITZI_TIMING=1`, each phase of a look said with how long it took, on stderr: where a look spends its time —
+ * velada-fidelity's looks took 50 s, and nothing said which part.
+ */
+export const phases = (): ((what: string) => void) => {
+  let last = Date.now();
+
+  return what => {
+    if (process.env.PLITZI_TIMING === '1') {
+      process.stderr.write(chalk.dim(`· ${String(Date.now() - last)} ms: ${what}\n`));
+    }
+
+    last = Date.now();
+  };
+};
+
+/** How many of a look's commands run at once — each a browser: enough to overlap, few enough not to starve the servers. */
+export const LOOK_AT_ONCE = 3;
+
+/** How long a look stands for the same look asked again, nothing changed. */
+export const LOOKED_FOR_MS = 30 * 60_000;
+
+/** What a look depends on: the task's files as they are, the run's approved work, its ask — and what the look asks. */
+export const lookKey = async (
+  ctx: RunContext,
+  runId: string,
+  taskId: string,
+  asked: Record<string, unknown>
+): Promise<string> => {
+  const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
+  const task = findTask(loaded, taskId);
+  const { state, paths } = await viewTask(loaded.paths, task);
+  const checked = await checkKey(loaded, paths, task, state.changed ?? []);
+
+  return createHash('sha256')
+    .update(JSON.stringify({ checked, status: state.status, round: state.round, asked }))
+    .digest('hex');
+};
+
+const lookedFile = (cache: string): string => path.join(cache, 'looked.json');
+
+/** A look said, kept under its key: what is said again while nothing changes. */
+export const keepLook = (cache: string, key: string, text: string, now: Date): Promise<void> =>
+  writeJson(lookedFile(cache), { at: now.toISOString(), key, text });
+
+/** The look that still stands for `key`, when one does. */
+export const keptLook = async (
+  cache: string,
+  key: string,
+  now: Date
+): Promise<{ at: string; text: string } | undefined> => {
+  const read: unknown = await fs
+    .readFile(lookedFile(cache), 'utf-8')
+    .then(text => JSON.parse(text) as unknown)
+    .catch(() => undefined);
+
+  return isRecord(read) &&
+    read.key === key &&
+    typeof read.at === 'string' &&
+    typeof read.text === 'string' &&
+    now.getTime() - Date.parse(read.at) < LOOKED_FOR_MS
+    ? { at: read.at, text: read.text }
+    : undefined;
 };

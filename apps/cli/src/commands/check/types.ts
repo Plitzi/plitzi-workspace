@@ -11,6 +11,8 @@ export interface CheckOptions {
   expect?: Expectation[];
   /** `--themes`: each page read in light and dark too — a ground that does not follow the theme under text that does. */
   themes?: boolean;
+  /** `--stand-ins`: another site's pictures stood in for — what a look checks is the task's change, not their CDN. */
+  standIns?: boolean;
   /** `--status <code>`: the status every page checked is meant to be sent with. */
   status?: number;
   /** `--then <path…>`: on from the page by its own links, no reload — each next page checked as the visitor reaches it. */

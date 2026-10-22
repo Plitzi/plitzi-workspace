@@ -43,6 +43,17 @@ export const CSS_CODES = {
     means: "an ancestor condition keyed by something that is neither a class name nor `'>'` (the parent)",
     fix: "`[card.name]` for a `styles()` declaration, or `'>'` for the parent whatever it wears"
   },
+  'ancestor-shape': {
+    kind: 'refused',
+    means:
+      "an ancestor condition given keys other than `css`, `states` and `variants` — `pseudos` above all: an ancestor's rules reach the element, never its `::before`/`::after`, and the key was dropped",
+    fix: "a custom property the ancestor's state sets — `ancestors: { [card.name]: { states: { hover: { '--fill-opacity': '1' } } } }` — read by the class's own pseudo-element: `pseudos: { before: { css: { opacity: 'var(--fill-opacity, 0.6)' } } }`"
+  },
+  'state-shape': {
+    kind: 'refused',
+    means: "a state given a rule set's keys (`pseudos`, `variants`, `ancestors`…): a state holds plain CSS",
+    fix: "a pseudo-element's state goes under the pseudo-element — `pseudos: { before: { states: { hover: { opacity: '1' } } } }`; an ancestor's, under `ancestors`"
+  },
   'focus-on-field-box': {
     kind: 'warned',
     means:

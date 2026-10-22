@@ -44,13 +44,11 @@ export interface TakenTask {
 /**
  * `plitzi task take`: the task's owner made exclusively — of two at once, the first wins and the other is told to take
  * the next — its files locked, and its copy made: the project, the run's approved work over it, and the task's last
- * reviewed version if it was cut.
+ * reviewed version if it was cut. Who takes it is the caller's own token; the copy it is run from, a task done, says nothing
+ * here — velada-backlog's dev-1, completing t-body-type and asking for the next from its copy, was refused "without a
+ * token" by a guard of the days a task's token was who one was.
  */
 export const takeTask = async (ctx: RunContext, runId: string, taskId: string, role?: string): Promise<TakenTask> => {
-  if (ctx.token !== undefined) {
-    throw new RunRefusal('invalid', 'Take a task without a token: the token is what taking it gives');
-  }
-
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open'], 'start a task');
   const task = findTask(loaded, taskId);

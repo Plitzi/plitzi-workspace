@@ -9,12 +9,18 @@ import {
   picturesOf,
   samePaths,
   stoppedText,
+  keepLook,
+  keptLook,
+  lookKey,
+  LOOK_AT_ONCE,
+  phases,
   viewsAsked
 } from './lookParts';
 import { act, runOf, runSelf } from './shell';
 import { list } from './text';
 import { answering, freePort } from '../../runs/acceptance';
 import { designSkipText, isDesignSkip } from '../../runs/designSkip';
+import { inTurns } from '../../runs/inTurns';
 import { readOwnership } from '../../runs/ownership';
 import { examplePaths, pagesOf } from '../../runs/pagesOf';
 import { runPaths, taskPaths } from '../../runs/paths';
@@ -54,6 +60,8 @@ const viewTaskOf = async (
 };
 
 export interface LookOptions extends RunCommandOptions {
+  /** Looked at anew, though it was looked at already as asked and nothing changed since. */
+  fresh?: boolean;
   /** Clicked once each page settles, as `page check --click`: an open state looked at, not only the page at rest. */
   click?: string;
   /** The visitor's time zone (IANA) every page is read in: the machine's when left out. */
@@ -78,174 +86,167 @@ export interface LookOptions extends RunCommandOptions {
 /** How many of a task's parts of a page are pictured: a look is read by a model, and each picture costs it. */
 const PARTS_PICTURED = 3;
 
-export const taskLook = (taskId: string, paths: string[], options: LookOptions): Promise<void> =>
-  act(
-    options,
-    async ctx => {
-      const runId = await runOf(ctx, options);
-      if (options.click && options.hover) {
-        throw new RunRefusal(
-          'invalid',
-          'One interaction a look: --click an element, or --hover one — two looks for both'
+/** The look itself, once its task is locked: its copy served, checked, pictured and set beside the run before it. */
+const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[], options: LookOptions) =>
+  // One look of a task at a time: two served its copy at once, and the first to finish stopped the server the
+  // other was picturing — a lead's look and its designer's, on la-velada's t-home-details.
+  withLock(
+    taskPaths(runPaths(ctx.root, runId), taskId).lookLock,
+    async () => {
+      const mark = phases();
+      const preview = await startTaskPreview(ctx, runId, taskId, await freePort(), { quiet: true });
+      // The run before it, once started: stopped with the copy's server whatever ends the look.
+      const stops: (() => void)[] = [];
+      try {
+        if (!(await answering(preview.url, 60_000))) {
+          throw new RunRefusal('invalid', `${taskId}'s copy did not answer on ${preview.url} within a minute`, {
+            task: taskId
+          });
+        }
+
+        mark('its copy served');
+
+        // The desktop light and the phone dark — every width in both schemes when the team asks its reviews high
+        // (`options.designReview`): design-2 took the other two by hand, the team's standard asking for both.
+        const precision = (await readTeam(ctx.root).catch(() => undefined))?.options?.designReview;
+        const asked = viewsAsked(options);
+        const views: readonly (readonly [string, 'light' | 'dark'])[] = asked
+          ? asked
+          : precision === 'high'
+            ? [
+                ['1440', 'light'],
+                ['1440', 'dark'],
+                ['390', 'light'],
+                ['390', 'dark']
+              ]
+            : [
+                ['1440', 'light'],
+                ['390', 'dark']
+              ];
+        // No page named: the pages its changes are drawn at, by the files that changed — else the home page.
+        // Read off the copy served: a page the task makes is one to look at too.
+        const { changed, designing } = await viewTaskOf(ctx, runId, taskId);
+        // Every page its changes are drawn at — a shared file's too: named pages are looked at, and the others
+        // said (velada-polish: design-2 looked at /combates twice, and the home its card change broke was the lead's
+        // to find).
+        const drawnAt = await pagesOf(preview.dir, changed);
+        const owned = paths.length > 0 ? [] : drawnAt;
+        const notLooked = paths.length > 0 ? drawnAt.filter(page => !paths.includes(page)) : [];
+        // A part of a page others build too: its own elements pictured, its own findings kept — the rest is theirs.
+        const parts = await taskParts(preview.dir, changed);
+        // More parts than are pictured apart: the page whole, never the first three of them — velada-dress's t-home
+        // changed six sections, and the sede, info and faq went unseen.
+        const many = parts !== undefined && !parts.ownsRoot && parts.tops.length > PARTS_PICTURED;
+        const clips = parts && !parts.ownsRoot && !many ? parts.tops : [];
+        // A page with a parameter in its address (`/boxeadores/:slug`) is opened where the site's own links go.
+        const { paths: routes, unreached } = await examplePaths(
+          preview.url,
+          paths.length > 0 ? paths : owned.length > 0 ? owned : ['/']
         );
-      }
+        // Every page read in one visitor's zone: the machine's, unless said — and said under the pictures either way.
+        const zone = options.timezone ? ['--timezone', options.timezone] : [];
+        const interaction = [
+          ...(options.click ? ['--click', options.click] : []),
+          ...(options.hover ? ['--hover', options.hover] : [])
+        ];
+        // Beside the run before it: what the task moved, section by section — and that nothing else did. Started first:
+        // the pages a shared file of it reaches are read on both before any is pictured.
+        const before =
+          (options.before ?? designing) ? await startBeforePreview(ctx, runId, taskId, await freePort()) : undefined;
+        if (before) {
+          stops.push(() => {
+            before.stop();
+          });
+        }
 
-      // One look of a task at a time: two served its copy at once, and the first to finish stopped the server the
-      // other was picturing — a lead's look and its designer's, on la-velada's t-home-details.
-      return withLock(
-        taskPaths(runPaths(ctx.root, runId), taskId).lookLock,
-        async () => {
-          const preview = await startTaskPreview(ctx, runId, taskId, await freePort(), { quiet: true });
-          // The run before it, once started: stopped with the copy's server whatever ends the look.
-          const stops: (() => void)[] = [];
-          try {
-            if (!(await answering(preview.url, 60_000))) {
-              throw new RunRefusal('invalid', `${taskId}'s copy did not answer on ${preview.url} within a minute`, {
-                task: taskId
-              });
-            }
+        if (before && !(await answering(before.url, 60_000))) {
+          mark('the run before it, not served');
+          throw new RunRefusal('invalid', `The run before ${taskId} did not answer on ${before.url} within a minute`, {
+            task: taskId
+          });
+        }
 
-            // The desktop light and the phone dark — every width in both schemes when the team asks its reviews high
-            // (`options.designReview`): design-2 took the other two by hand, the team's standard asking for both.
-            const precision = (await readTeam(ctx.root).catch(() => undefined))?.options?.designReview;
-            const asked = viewsAsked(options);
-            const views: readonly (readonly [string, 'light' | 'dark'])[] = asked
-              ? asked
-              : precision === 'high'
-                ? [
-                    ['1440', 'light'],
-                    ['1440', 'dark'],
-                    ['390', 'light'],
-                    ['390', 'dark']
-                  ]
-                : [
-                    ['1440', 'light'],
-                    ['390', 'dark']
-                  ];
-            // No page named: the pages its changes are drawn at, by the files that changed — else the home page.
-            // Read off the copy served: a page the task makes is one to look at too.
-            const { changed, designing } = await viewTaskOf(ctx, runId, taskId);
-            // Every page its changes are drawn at — a shared file's too: named pages are looked at, and the others
-            // said (velada-polish: design-2 looked at /combates twice, and the home its card change broke was the lead's
-            // to find).
-            const drawnAt = await pagesOf(preview.dir, changed);
-            const owned = paths.length > 0 ? [] : drawnAt;
-            const notLooked = paths.length > 0 ? drawnAt.filter(page => !paths.includes(page)) : [];
-            // A part of a page others build too: its own elements pictured, its own findings kept — the rest is theirs.
-            const parts = await taskParts(preview.dir, changed);
-            // More parts than are pictured apart: the page whole, never the first three of them — velada-dress's t-home
-            // changed six sections, and the sede, info and faq went unseen.
-            const many = parts !== undefined && !parts.ownsRoot && parts.tops.length > PARTS_PICTURED;
-            const clips = parts && !parts.ownsRoot && !many ? parts.tops : [];
-            // A page with a parameter in its address (`/boxeadores/:slug`) is opened where the site's own links go.
-            const { paths: routes, unreached } = await examplePaths(
+        // A page only a shared file of it reaches, drawn the same as the run before it — every element, box and style
+        // read on both — is not pictured: velada-fidelity's look pictured nine pages for two tokens added (204 s).
+        const unchanged = new Set<string>();
+        if (before && paths.length === 0) {
+          const ownership = await readOwnership(preview.dir);
+          const direct = await pagesOf(
+            preview.dir,
+            changed.filter(file => ownership.ownerOf.has(file))
+          );
+          const { paths: reachedOnly } = await examplePaths(
+            preview.url,
+            owned.filter(page => !direct.includes(page))
+          );
+          if (reachedOnly.length > 0) {
+            const same = await runSelf(preview.dir, [
+              'page',
+              'same',
+              ...reachedOnly,
+              '--url',
               preview.url,
-              paths.length > 0 ? paths : owned.length > 0 ? owned : ['/']
-            );
-            // Every page read in one visitor's zone: the machine's, unless said — and said under the pictures either way.
-            const zone = options.timezone ? ['--timezone', options.timezone] : [];
-            const interaction = [
-              ...(options.click ? ['--click', options.click] : []),
-              ...(options.hover ? ['--hover', options.hover] : [])
-            ];
-            // Beside the run before it: what the task moved, section by section — and that nothing else did. Started first:
-            // the pages a shared file of it reaches are read on both before any is pictured.
-            const before =
-              (options.before ?? designing)
-                ? await startBeforePreview(ctx, runId, taskId, await freePort())
-                : undefined;
-            if (before) {
-              stops.push(() => {
-                before.stop();
-              });
-            }
+              '--than',
+              before.url,
+              '--json'
+            ]);
+            samePaths(same.output).forEach(page => unchanged.add(page));
+          }
+        }
 
-            if (before && !(await answering(before.url, 60_000))) {
-              throw new RunRefusal(
-                'invalid',
-                `The run before ${taskId} did not answer on ${before.url} within a minute`,
-                {
-                  task: taskId
-                }
-              );
-            }
-
-            // A page only a shared file of it reaches, drawn the same as the run before it — every element, box and style
-            // read on both — is not pictured: velada-fidelity's look pictured nine pages for two tokens added (204 s).
-            const unchanged = new Set<string>();
-            if (before && paths.length === 0) {
-              const ownership = await readOwnership(preview.dir);
-              const direct = await pagesOf(
-                preview.dir,
-                changed.filter(file => ownership.ownerOf.has(file))
-              );
-              const { paths: reachedOnly } = await examplePaths(
-                preview.url,
-                owned.filter(page => !direct.includes(page))
-              );
-              if (reachedOnly.length > 0) {
-                const same = await runSelf(preview.dir, [
-                  'page',
-                  'same',
-                  ...reachedOnly,
-                  '--url',
-                  preview.url,
-                  '--than',
-                  before.url,
-                  '--json'
-                ]);
-                samePaths(same.output).forEach(page => unchanged.add(page));
-              }
-            }
-
-            const pictured = routes.filter(route => !unchanged.has(route));
-            const checkOf = (pages: readonly string[], also: readonly string[]) =>
-              runSelf(preview.dir, [
+        mark('the run before it served, the pages its shared files reach read');
+        const pictured = routes.filter(route => !unchanged.has(route));
+        const checkOf = (pages: readonly string[], also: readonly string[]) =>
+          runSelf(preview.dir, [
+            'page',
+            'check',
+            ...pages,
+            '--width',
+            [...new Set(views.map(([width]) => width))].join(','),
+            // Light and dark read too: a ground fixed under the theme's text (velada-fidelity's judges' rows).
+            '--themes',
+            // Another site's pictures stood in for: a look is of the task's change — a third party's CDN, throttling a
+            // look's pages at once, held the check up to its budget, and failed it now and then.
+            '--stand-ins',
+            '--url',
+            preview.url,
+            ...zone,
+            ...(options.status === undefined ? [] : ['--status', String(options.status)]),
+            ...also,
+            ...(options.element ?? []).flatMap(id => ['--element', id])
+          ]);
+        // Its pages checked, its pictures taken and set beside the run before it, and the rest of each page read —
+        // at once, a few at a time: each is a page or two in a browser of its own, and one after another they were
+        // most of a look (the sanity run: 25 s, 22 of them waiting in turn).
+        const partsBeside = before !== undefined && clips.length > 0;
+        const named = (route: string, clip: string | undefined, width: string, scheme: string, after = false) =>
+          path.join(
+            runPaths(ctx.root, runId).shots,
+            `${taskId}${route === '/' ? '-home' : `-${route.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`}${clip ? `-${clip}` : ''}-${width}-${scheme}${after ? '-after' : ''}.png`
+          );
+        const own = (partsBeside ? [] : pictured).flatMap(route =>
+          (clips.length > 0 ? clips : [undefined]).flatMap(clip =>
+            views.map(([width, scheme]) => async (): Promise<string[]> => {
+              const out = named(route, clip, width, scheme);
+              const shot = await runSelf(preview.dir, [
                 'page',
-                'check',
-                ...pages,
-                '--width',
-                [...new Set(views.map(([width]) => width))].join(','),
-                // Light and dark read too: a ground fixed under the theme's text (velada-fidelity's judges' rows).
-                '--themes',
+                'shot',
+                route,
                 '--url',
                 preview.url,
                 ...zone,
-                ...(options.status === undefined ? [] : ['--status', String(options.status)]),
-                ...also,
-                ...(options.element ?? []).flatMap(id => ['--element', id])
+                '--width',
+                width,
+                '--scheme',
+                scheme,
+                ...(clip ? ['--clip', clip] : []),
+                '-o',
+                out
               ]);
-            const check = await checkWithInteraction(routes, interaction, checkOf);
-            const shots: string[] = [];
-            // Its parts beside the run before it: each compared part is its own picture too — none taken twice.
-            const partsBeside = before !== undefined && clips.length > 0;
-            for (const route of partsBeside ? [] : pictured) {
-              for (const clip of clips.length > 0 ? clips : [undefined]) {
-                for (const [width, scheme] of views) {
-                  const name = `${taskId}${route === '/' ? '-home' : `-${route.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`}${clip ? `-${clip}` : ''}-${width}-${scheme}.png`;
-                  const out = path.join(runPaths(ctx.root, runId).shots, name);
-                  const shot = await runSelf(preview.dir, [
-                    'page',
-                    'shot',
-                    route,
-                    '--url',
-                    preview.url,
-                    ...zone,
-                    '--width',
-                    width,
-                    '--scheme',
-                    scheme,
-                    ...(clip ? ['--clip', clip] : []),
-                    '-o',
-                    out
-                  ]);
-                  if (shot.code === 0) {
-                    shots.push(out);
-                  }
-
-                  // Pictured apart: an element not on the page loses the hover's picture, not the page's at rest.
-                  if (options.hover !== undefined && scheme === 'light') {
-                    const hovered = await runSelf(preview.dir, [
+              // Pictured apart: an element not on the page loses the hover's picture, not the page's at rest.
+              const hovered =
+                options.hover !== undefined && scheme === 'light'
+                  ? await runSelf(preview.dir, [
                       'page',
                       'shot',
                       route,
@@ -262,188 +263,247 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
                       '--json',
                       '-o',
                       out.replace(/\.png$/, '-hover.png')
-                    ]);
-                    shots.push(...(hovered.code === 0 ? picturesOf(hovered.output) : []));
-                  }
-                }
-              }
-            }
+                    ])
+                  : undefined;
 
-            const compared: BeforeAfter[] = [];
-            const stoppedUnder: string[] = [];
-            const movedElsewhere: { route: string; here: string; there: string }[] = [];
-            try {
-              for (const route of before ? pictured : []) {
-                for (const clip of partsBeside ? clips : [undefined]) {
-                  for (const [width, scheme] of views) {
-                    // Named for what it is — the page after the task, set beside the run before it in `-after-compare.png`:
-                    // `-before.png` was the after picture (velada-polish's design-1, the same md5 as the look's own).
-                    const name = `${taskId}${route === '/' ? '-home' : `-${route.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`}${clip ? `-${clip}` : ''}-${width}-${scheme}-after.png`;
-                    const out = path.join(runPaths(ctx.root, runId).shots, name);
-                    const shot = await runSelf(preview.dir, [
-                      'page',
-                      'shot',
-                      route,
-                      '--url',
-                      preview.url,
-                      ...zone,
-                      '--compare',
-                      before?.url ?? '',
-                      ...(clip ? ['--clip', clip] : []),
-                      '--width',
-                      width,
-                      '--scheme',
-                      scheme,
-                      '--json',
-                      '-o',
-                      out
-                    ]);
-                    compared.push({ route, width, scheme, ...comparedOf(shot.output) });
-                    if (clip && shot.code === 0) {
-                      shots.push(out);
-                    }
-                  }
-                }
+              return [
+                ...(shot.code === 0 ? [out] : []),
+                ...(hovered && hovered.code === 0 ? picturesOf(hovered.output) : [])
+              ];
+            })
+          )
+        );
+        // Beside the run before it: its parts alone when it has some (each its own picture too), else the page.
+        const beside = (before ? pictured : []).flatMap(route =>
+          (partsBeside ? clips : [undefined]).flatMap(clip =>
+            views.map(([width, scheme]) => async () => {
+              // Named for what it is — the page after the task, set beside the run before it in `-after-compare.png`:
+              // `-before.png` was the after picture (velada-polish's design-1, the same md5 as the look's own).
+              const out = named(route, clip, width, scheme, true);
+              const shot = await runSelf(preview.dir, [
+                'page',
+                'shot',
+                route,
+                '--url',
+                preview.url,
+                ...zone,
+                '--compare',
+                before?.url ?? '',
+                ...(clip ? ['--clip', clip] : []),
+                '--width',
+                width,
+                '--scheme',
+                scheme,
+                '--json',
+                '-o',
+                out
+              ]);
 
-                // Its parts compared alone: that nothing else of the page moved is read, not pictured (`page same`).
-                if (partsBeside) {
-                  const rest = await runSelf(preview.dir, [
-                    'page',
-                    'same',
-                    route,
-                    '--url',
-                    preview.url,
-                    '--than',
-                    before.url,
-                    '--except',
-                    clips.join(','),
-                    '--json'
-                  ]);
-                  const differs = elsewhereOf(rest.output);
-                  if (differs) {
-                    movedElsewhere.push({ route, ...differs });
-                  }
-                }
-              }
-            } finally {
-              // Stopped under the look, it is said with why, before this look stops it: a picture that failed for it
-              // is no finding of the task's (velada-polish: every picture failed, the servers' output thrown away).
-              stoppedUnder.push(
-                ...stoppedText("its copy's server", preview),
-                ...stoppedText('the run before it', before)
-              );
-              before?.stop();
-            }
+              return {
+                compared: { route, width, scheme, ...comparedOf(shot.output) },
+                ...(clip && shot.code === 0 ? { shot: out } : {})
+              };
+            })
+          )
+        );
+        // Its parts compared alone: that nothing else of the page moved is read, not pictured (`page same`).
+        const rest = partsBeside
+          ? pictured.map(route => async () => {
+              const read = await runSelf(preview.dir, [
+                'page',
+                'same',
+                route,
+                '--url',
+                preview.url,
+                '--than',
+                before.url,
+                '--except',
+                clips.join(','),
+                '--json'
+              ]);
+              const differs = elsewhereOf(read.output);
 
-            const kept = parts && !parts.ownsRoot ? findingsOf(check.output.trim(), parts) : undefined;
+              return differs ? { route, ...differs } : undefined;
+            })
+          : [];
+        const stoppedUnder: string[] = [];
+        let check: { code: number; output: string };
+        let shots: string[];
+        let compared: BeforeAfter[];
+        let movedElsewhere: { route: string; here: string; there: string }[];
+        try {
+          const [checked, pictures, set, read] = await Promise.all([
+            checkWithInteraction(routes, interaction, checkOf),
+            inTurns(own, LOOK_AT_ONCE),
+            inTurns(beside, LOOK_AT_ONCE),
+            inTurns(rest, LOOK_AT_ONCE)
+          ]);
+          check = checked;
+          shots = [...pictures.flat(), ...set.flatMap(each => (each.shot ? [each.shot] : []))];
+          compared = set.map(each => each.compared);
+          movedElsewhere = read.flatMap(each => (each ? [each] : []));
+        } finally {
+          // Stopped under the look, it is said with why, before this look stops it: a picture that failed for it
+          // is no finding of the task's (velada-polish: every picture failed, the servers' output thrown away).
+          stoppedUnder.push(...stoppedText("its copy's server", preview), ...stoppedText('the run before it', before));
+          before?.stop();
+        }
 
-            const notReviewed = await notReviewedIn(ctx, runId, taskId);
-            await logRun(ctx, runPaths(ctx.root, runId), {
-              action: 'look',
-              task: taskId,
-              paths: routes,
-              ok: check.code === 0,
-              ...(kept && kept.apart > 0 ? { apart: kept.apart } : {})
-            });
+        mark('checked, pictured and set beside the run before it, at once');
+        const kept = parts && !parts.ownsRoot ? findingsOf(check.output.trim(), parts) : undefined;
 
-            return {
-              task: taskId,
-              url: preview.url,
-              ok: check.code === 0,
-              check: kept?.text ?? check.output.trim(),
-              ...(kept && kept.apart > 0 ? { apart: kept.apart } : {}),
-              ...(clips.length > 0 ? { parts: clips } : {}),
-              ...(many ? { wholeFor: parts.tops } : {}),
-              ...(unreached.length > 0 ? { unreached } : {}),
-              shots,
-              ...(unchanged.size > 0 ? { unchanged: [...unchanged] } : {}),
-              ...(movedElsewhere.length > 0 ? { movedElsewhere } : {}),
-              timezone: options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
-              ...(compared.length > 0 ? { compared } : {}),
-              ...(preview.borrowed === undefined ? {} : { borrowed: preview.borrowed }),
-              ...(stoppedUnder.length > 0 ? { stoppedUnder } : {}),
-              ...(notLooked.length > 0 ? { notLooked } : {}),
-              ...(notReviewed.length > 0 ? { notReviewed } : {})
-            };
-          } finally {
-            stops.forEach(stop => {
-              stop();
-            });
-            preview.stop();
-          }
-        },
-        { waitMs: 10 * 60_000, ttlMs: 15 * 60_000 }
-      );
+        const notReviewed = await notReviewedIn(ctx, runId, taskId);
+        await logRun(ctx, runPaths(ctx.root, runId), {
+          action: 'look',
+          task: taskId,
+          paths: routes,
+          ok: check.code === 0,
+          ...(kept && kept.apart > 0 ? { apart: kept.apart } : {})
+        });
+
+        return {
+          task: taskId,
+          url: preview.url,
+          ok: check.code === 0,
+          check: kept?.text ?? check.output.trim(),
+          ...(kept && kept.apart > 0 ? { apart: kept.apart } : {}),
+          ...(clips.length > 0 ? { parts: clips } : {}),
+          ...(many ? { wholeFor: parts.tops } : {}),
+          ...(unreached.length > 0 ? { unreached } : {}),
+          shots,
+          ...(unchanged.size > 0 ? { unchanged: [...unchanged] } : {}),
+          ...(movedElsewhere.length > 0 ? { movedElsewhere } : {}),
+          timezone: options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+          ...(compared.length > 0 ? { compared } : {}),
+          ...(preview.borrowed === undefined ? {} : { borrowed: preview.borrowed }),
+          ...(stoppedUnder.length > 0 ? { stoppedUnder } : {}),
+          ...(notLooked.length > 0 ? { notLooked } : {}),
+          ...(notReviewed.length > 0 ? { notReviewed } : {})
+        };
+      } finally {
+        stops.forEach(stop => {
+          stop();
+        });
+        preview.stop();
+      }
     },
-    looked =>
-      [
-        chalk.bold(
-          looked.borrowed === undefined
-            ? `${looked.task}, as it went to review (served from its copy, now stopped):`
-            : `${looked.task}, as its copy is now — served by ${looked.borrowed.by === 'agent' ? "its agent's own server" : 'the server a picture of it kept'} on :${String(looked.borrowed.port)}, left running (it holds the copy's state):`
-        ),
-        ...(looked.stoppedUnder ?? []).map(line => chalk.yellow(`⚠ ${line}`)),
-        ...(looked.notLooked
-          ? [
-              chalk.yellow(
-                `⚠ Its changes are drawn at ${list(looked.notLooked)} too — a file it changed is read there — not looked at: plitzi task look ${looked.task}${looked.notLooked.map(page => ` ${page}`).join('')} --before`
-              )
-            ]
-          : []),
-        ...(looked.notReviewed
-          ? [
-              chalk.yellow(
-                `⚠ Its copy changed after it went to review: ${list(looked.notReviewed)} — what is served is not what an approval merges (that is what went to review). Ask it why (plitzi task message ${looked.task} "…"), or send it back (--changes) to complete again`
-              )
-            ]
-          : []),
-        ...(looked.parts
-          ? [`Its part of the page, pictured alone: ${looked.parts.join(', ')} — the rest is other tasks'`]
-          : []),
-        ...(looked.wholeFor
-          ? [`Its parts — ${looked.wholeFor.join(', ')} — pictured with the page whole: too many to picture apart`]
-          : []),
-        ...(looked.unreached
-          ? [
-              chalk.yellow(
-                `⚠ No link of the site reaches ${list(looked.unreached)}: not looked at — name one: plitzi task look ${looked.task} <its address>`
-              )
-            ]
-          : []),
-        looked.check,
-        ...(looked.apart ? [chalk.dim(`  · ${String(looked.apart)} finding(s) on other tasks' parts left out`)] : []),
-        ...(looked.movedElsewhere
-          ? looked.movedElsewhere.map(each =>
-              chalk.yellow(
-                `⚠ ${each.route} moved outside its parts too — the first element that differs from the run before it: ${each.here}\n    before: ${each.there}`
-              )
-            )
-          : []),
-        ...(looked.unchanged
-          ? [
-              chalk.dim(
-                `Drawn the same as the run before it — every element, box and style read on both, so not pictured: ${list(looked.unchanged)} (a shared file of it reaches them; plitzi task look ${looked.task} <page> pictures one anyway)`
-              )
-            ]
-          : []),
-        ...(looked.shots.length > 0
-          ? [
-              `Pictures — a browser in ${looked.timezone}, its language en-US (--timezone for another zone):`,
-              ...looked.shots.map(each => `  ${each}`)
-            ]
-          : ['No picture could be taken.']),
-        ...(looked.compared
-          ? [
-              "Beside the run before it (its approved work, without this task) — motion reduced and another site's pictures stood in for on both sides, so only what the project changed differs; each side by side (after | before) in its -after-compare.png:",
-              ...looked.compared.map(each =>
-                each.problem
-                  ? chalk.yellow(`  ${each.route} at ${each.width} ${each.scheme}: ${each.problem}`)
-                  : `  ${each.route} at ${each.width} ${each.scheme}: ${(each.changed === 0 || each.sections.length === 0) && each.dress.length === 0 ? 'nothing changed' : `${String(each.changed ?? 0)}% differs${each.sections.length > 0 ? ` — ${each.sections.join(', ')}` : ''}${each.dress.length > 0 ? ` · its dress: ${each.dress.join(' · ')}` : ''}`}${each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
-              )
-            ]
-          : []),
-        `Then: plitzi task review ${looked.task} --approve | --changes "…"`
-      ].join('\n')
+    { waitMs: 10 * 60_000, ttlMs: 15 * 60_000 }
+  );
+
+type Looked = Awaited<ReturnType<typeof lookAt>>;
+
+/** What a look says. */
+const lookText = (looked: Looked): string =>
+  [
+    chalk.bold(
+      looked.borrowed === undefined
+        ? `${looked.task}, as it went to review (served from its copy, now stopped):`
+        : `${looked.task}, as its copy is now — served by ${looked.borrowed.by === 'agent' ? "its agent's own server" : 'the server a picture of it kept'} on :${String(looked.borrowed.port)}, left running (it holds the copy's state):`
+    ),
+    ...(looked.stoppedUnder ?? []).map(line => chalk.yellow(`⚠ ${line}`)),
+    ...(looked.notLooked
+      ? [
+          chalk.yellow(
+            `⚠ Its changes are drawn at ${list(looked.notLooked)} too — a file it changed is read there — not looked at: plitzi task look ${looked.task}${looked.notLooked.map(page => ` ${page}`).join('')} --before`
+          )
+        ]
+      : []),
+    ...(looked.notReviewed
+      ? [
+          chalk.yellow(
+            `⚠ Its copy changed after it went to review: ${list(looked.notReviewed)} — what is served is not what an approval merges (that is what went to review). Ask it why (plitzi task message ${looked.task} "…"), or send it back (--changes) to complete again`
+          )
+        ]
+      : []),
+    ...(looked.parts
+      ? [`Its part of the page, pictured alone: ${looked.parts.join(', ')} — the rest is other tasks'`]
+      : []),
+    ...(looked.wholeFor
+      ? [`Its parts — ${looked.wholeFor.join(', ')} — pictured with the page whole: too many to picture apart`]
+      : []),
+    ...(looked.unreached
+      ? [
+          chalk.yellow(
+            `⚠ No link of the site reaches ${list(looked.unreached)}: not looked at — name one: plitzi task look ${looked.task} <its address>`
+          )
+        ]
+      : []),
+    looked.check,
+    ...(looked.apart ? [chalk.dim(`  · ${String(looked.apart)} finding(s) on other tasks' parts left out`)] : []),
+    ...(looked.movedElsewhere
+      ? looked.movedElsewhere.map(each =>
+          chalk.yellow(
+            `⚠ ${each.route} moved outside its parts too — the first element that differs from the run before it: ${each.here}\n    before: ${each.there}`
+          )
+        )
+      : []),
+    ...(looked.unchanged
+      ? [
+          chalk.dim(
+            `Drawn the same as the run before it — every element, box and style read on both, so not pictured: ${list(looked.unchanged)} (a shared file of it reaches them; plitzi task look ${looked.task} <page> pictures one anyway)`
+          )
+        ]
+      : []),
+    ...(looked.shots.length > 0
+      ? [
+          `Pictures — a browser in ${looked.timezone}, its language en-US (--timezone for another zone):`,
+          ...looked.shots.map(each => `  ${each}`)
+        ]
+      : ['No picture could be taken.']),
+    ...(looked.compared
+      ? [
+          "Beside the run before it (its approved work, without this task) — motion reduced and another site's pictures stood in for on both sides, so only what the project changed differs; each side by side (after | before) in its -after-compare.png:",
+          ...looked.compared.map(each =>
+            each.problem
+              ? chalk.yellow(`  ${each.route} at ${each.width} ${each.scheme}: ${each.problem}`)
+              : `  ${each.route} at ${each.width} ${each.scheme}: ${(each.changed === 0 || each.sections.length === 0) && each.dress.length === 0 ? 'nothing changed' : `${String(each.changed ?? 0)}% differs${each.sections.length > 0 ? ` — ${each.sections.join(', ')}` : ''}${each.dress.length > 0 ? ` · its dress: ${each.dress.join(' · ')}` : ''}`}${each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
+          )
+        ]
+      : []),
+    `Then: plitzi task review ${looked.task} --approve | --changes "…"`
+  ].join('\n');
+
+export const taskLook = (taskId: string, paths: string[], options: LookOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => {
+      const runId = await runOf(ctx, options);
+      if (options.click && options.hover) {
+        throw new RunRefusal(
+          'invalid',
+          'One interaction a look: --click an element, or --hover one — two looks for both'
+        );
+      }
+
+      // Looked at already, as asked now, and nothing changed since — the task, the run's approved work: said again, not
+      // looked at again (--fresh looks). A lead looking after the designer, an agent looking twice, paid 8 s each.
+      const { cache } = taskPaths(runPaths(ctx.root, runId), taskId);
+      const key = await lookKey(ctx, runId, taskId, {
+        paths,
+        ...options,
+        fresh: undefined,
+        json: undefined,
+        token: undefined
+      });
+      const before = options.fresh ? undefined : await keptLook(cache, key, ctx.now());
+      if (before) {
+        return { kind: 'again' as const, again: before };
+      }
+
+      const looked = await lookAt(ctx, runId, taskId, paths, options);
+      await keepLook(cache, key, lookText(looked), ctx.now());
+
+      return { kind: 'looked' as const, looked };
+    },
+    answer =>
+      answer.kind === 'again'
+        ? [
+            chalk.dim(
+              `As looked at ${answer.again.at.slice(11, 16)} UTC — the task, the run's approved work and what you asked are as they were, so this is that look again (--fresh looks anew):`
+            ),
+            answer.again.text
+          ].join('\n')
+        : lookText(answer.looked)
   );
 
 export interface ReviewOptions extends RunCommandOptions {

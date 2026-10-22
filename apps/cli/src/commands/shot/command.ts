@@ -311,6 +311,16 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       // they are taken as the page plays.
       still: (options.frames ?? 0) <= 1 && clicks.length === 0 && steps === undefined && !fromLoad
     };
+    // The run before it, its part, pictured while ours is — its scheme said, nothing waits for ours to be painted.
+    const otherPart =
+      localPart && options.compare && options.scheme && options.clip
+        ? (() => {
+            const other = new URL(options.compare);
+            const target = other.pathname === '/' ? new URL(pathname, other).href : other.href;
+
+            return pictureOf(browser, target, { ...view, clip: options.clip }, other.origin);
+          })()
+        : undefined;
     const taken =
       where.origin === undefined
         ? await pictureOf(browser, pathname, view)
@@ -370,7 +380,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       const kept = options.live ? undefined : await keptPage(project.root, target, view.width, taken.scheme);
       const compared =
         localPart && options.clip !== undefined
-          ? await compareLocalPart(browser, taken, target, view, options.clip, base)
+          ? await compareLocalPart(browser, taken, target, view, options.clip, base, otherPart)
           : await compareWith(browser, taken, target, view, regions, base, kept);
       if ('problem' in compared) {
         fail(compared.problem);

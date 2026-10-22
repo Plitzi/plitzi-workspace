@@ -64,6 +64,11 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>): string
     chalk.bold(
       `Review ${review.task.id}'s UI — ${review.task.title}: a designer's look, before the lead's${review.round > 0 ? ` (round ${String(review.round)}: sent back since)` : ''}`
     ),
+    // Said first, on its own, on the first review alone: in the middle of a line, every time, velada-backlog's design-1
+    // read it after its first verdict.
+    ...(review.first
+      ? [chalk.yellow(`  Your first review: read these first, whole — ${DESIGN_READING.join(', ')}`)]
+      : []),
     ...review.asked.map(line => `  ↺ ${line}`),
     ...(review.before
       ? [
@@ -76,7 +81,7 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>): string
     `  It changed: ${review.changed.join(', ') || 'nothing said'} — in its copy, ${review.copy}`,
     // Beside the run before it, measured — its dress too — and the copy served for it: what a designer rebuilt by hand.
     `  Look at it as it went to review, beside the run before it: plitzi task look ${review.task.id} ${review.pages.length > 0 ? review.pages.join(' ') : '<page…>'} --before${review.pages.length > 0 ? '' : '   # no page of the space owns its files: name the ones it shows on'}`,
-    `  Look for (${review.precision}, as the team asks — options.designReview) ${DESIGN_LOOK[review.precision]} — before your first review, read ${DESIGN_READING.join(', ')}`,
+    `  Look for (${review.precision}, as the team asks — options.designReview) ${DESIGN_LOOK[review.precision]}`,
     `  Send it back only for what its title and acceptance cover — anything beyond it is plitzi run notice "…", never a round: ${review.task.acceptance.map(acceptanceText).join(' · ')}`,
     // What its own checks measured at complete: the review starts from what fails, not by measuring all of it again.
     ...review.accepted.map(

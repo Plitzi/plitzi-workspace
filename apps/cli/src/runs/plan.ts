@@ -14,9 +14,9 @@ import { expandFiles, sharedReached } from './ownership';
 import { ID, isSecretFile, NOT_TASK_DIRS, under } from './paths';
 import { shellCommands } from './shell';
 import { isResearch } from './spike';
-import { DESIGNER, DEVELOPER, reviewsDesign, roleProblems, startedAgents, teamSize, teamTakes, TESTER } from './team';
+import { DEVELOPER, roleProblems, teamSize, teamTakes, TESTER } from './team';
+import { teamNotices } from './teamNotices';
 import { testSetupOf, withTestTasks } from './tests';
-import { reviewedAsUi } from './uiFiles';
 import { byUrgency, chainMinutes } from './urgency';
 import { scriptsOf } from '../commands/verify';
 
@@ -210,40 +210,6 @@ const pacedEstimate = async (
     : {};
 };
 
-/** The developers a designer keeps up with: past it, UI reviews queue, and the lead reviews them itself or they wait. */
-export const DEVELOPERS_PER_DESIGNER = 3;
-
-/**
- * …and in a copy of a site (`reference`), where each review measures every value against it: one each. velada-fidelity's
- * two developers built four tasks in 22 minutes, and its one designer's reviews — 6 to 16 minutes each — held the run
- * another hour.
- */
-export const DEVELOPERS_PER_DESIGNER_COPYING = 1;
-
-/**
- * Too few designers for the UI to review, said before the run starts: la-velada's one designer beside four developers
- * left 21 tasks' UI to the lead. A designer that develops too is counted as a designer: it reviews first.
- */
-const designersNotice = (plan: Pick<RunPlan, 'tasks' | 'designReview' | 'reference'>, team: Team): string[] => {
-  if (!reviewsDesign(team, plan)) {
-    return [];
-  }
-
-  const agents = startedAgents(team);
-  const designers = agents.filter(each => each.roles.includes(DESIGNER)).length;
-  const developers = agents.filter(each => !each.roles.includes(DESIGNER) && each.roles.includes(DEVELOPER)).length;
-  const looked = plan.tasks.filter(task => reviewedAsUi(task.role, task.files)).length;
-  const perDesigner = plan.reference === undefined ? DEVELOPERS_PER_DESIGNER : DEVELOPERS_PER_DESIGNER_COPYING;
-  const needed = Math.min(Math.ceil(developers / perDesigner), looked);
-  if (looked === 0 || designers >= needed) {
-    return [];
-  }
-
-  return [
-    `${String(looked)} tasks change what a visitor sees, and ${String(designers)} designer${designers === 1 ? '' : 's'} review${designers === 1 ? 's' : ''} the UI of ${String(developers)} developers: one for every ${String(perDesigner)}${plan.reference === undefined ? '' : ' in a copy of a site, each review measuring it against the original,'} keeps the reviews from queueing — ${String(needed)} (plitzi run team set <designer entry> --roles designer --count ${String(needed)}). Fewer, and the lead reviews the rest itself (--skip-design lead) — a task that changes nothing a visitor sees goes as code (task complete --review code)`
-  ];
-};
-
 const isOutsideSource = (file: string): boolean =>
   NOT_TASK_DIRS.has(file.split('/')[0]) || file.split('/').includes('node_modules');
 
@@ -361,7 +327,7 @@ export const checkPlan = async (
       `"${task}" gets no task of tests: ${why}. Name a test file in a task of yours for it, or say "tests": false — so that none is said, not missed`
     )
   );
-  notices.push(...designersNotice(plan, team));
+  notices.push(...teamNotices(plan, team));
   if (plan.reference !== undefined) {
     notices.push(
       `Its reference, ${plan.reference}, is kept once the run is open — plitzi run reference: each page of the inventory pictured and measured, which page shot --compare measures against for the whole run, not the site as it may change; the run finishing removes it`

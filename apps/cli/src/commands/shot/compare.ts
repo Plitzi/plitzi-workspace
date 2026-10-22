@@ -238,14 +238,13 @@ export const compareLocalPart = async (
   target: string,
   view: View,
   part: string,
-  base: string
+  base: string,
+  /** Theirs, being pictured already — beside ours, when its scheme was said. */
+  early?: Promise<Taken | { problem: string }>
 ): Promise<CompareReport | { problem: string }> => {
-  const theirs = await pictureOf(
-    browser,
-    target,
-    { ...view, scheme: taken.scheme, clip: part },
-    new URL(target).origin
-  );
+  const theirs =
+    (await early) ??
+    (await pictureOf(browser, target, { ...view, scheme: taken.scheme, clip: part }, new URL(target).origin));
   if ('problem' in theirs) {
     return theirs;
   }

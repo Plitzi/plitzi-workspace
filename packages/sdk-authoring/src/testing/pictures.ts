@@ -375,9 +375,21 @@ export const diffPictures = async ({ a, b, regions, tolerance, rowShift }: Pictu
 /**
  * Runs in the page that was pictured: its parts, where they are on the full page — its landmarks (header, nav, main,
  * footer, each section and aside), or, on a page that has none, the named blocks right inside the page. Each named by
- * its tag and its id or element name (`section#plans`, `div#hero`). Self-contained — it is serialised.
+ * its tag and its id or element name (`section#plans`, `div#hero`); a component's part, the same name in each of its
+ * copies, by its place after the first (`header#match-heading-root:2`) — one name for four headings said one's change
+ * and pictured another (velada-backlog). Self-contained — it is serialised.
  */
 export const pageRegions = (): PictureRegion[] => {
+  const numbered = (regions: PictureRegion[]): PictureRegion[] => {
+    const seen = new Map<string, number>();
+
+    return regions.map(region => {
+      const place = (seen.get(region.name) ?? 0) + 1;
+      seen.set(region.name, place);
+
+      return place === 1 ? region : { ...region, name: `${region.name}:${String(place)}` };
+    });
+  };
   const regionOf = (element: Element): PictureRegion[] => {
     const box = element.getBoundingClientRect();
     if (box.width === 0 || box.height === 0) {
@@ -402,7 +414,7 @@ export const pageRegions = (): PictureRegion[] => {
     regionOf
   );
   if (landmarks.length > 0) {
-    return landmarks;
+    return numbered(landmarks);
   }
 
   // The outermost named element is the page; the blocks it is made of are the named ones whose nearest named ancestor
@@ -410,9 +422,11 @@ export const pageRegions = (): PictureRegion[] => {
   const named = Array.from(document.querySelectorAll('[data-plitzi-el]'));
   const page = named.at(0);
 
-  return named
-    .filter(element => element !== page && element.parentElement?.closest('[data-plitzi-el]') === page)
-    .flatMap(regionOf);
+  return numbered(
+    named
+      .filter(element => element !== page && element.parentElement?.closest('[data-plitzi-el]') === page)
+      .flatMap(regionOf)
+  );
 };
 
 export interface CompareOptions {

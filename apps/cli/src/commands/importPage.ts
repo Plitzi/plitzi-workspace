@@ -11,7 +11,7 @@ import { filesUnder } from './filesUnder';
 import { projectFormatter } from './projectFormatter';
 import { siteOwnership } from './siteOwnership';
 import { fail } from './terminal';
-import { launchBrowser } from '../browser';
+import { launchBrowser, openOtherPage } from '../browser';
 
 import type { DryRunOptions } from './dryRun';
 import type { OwnershipOptions } from './siteOwnership';
@@ -62,7 +62,7 @@ const measure = async (
   scheme: Scheme,
   read: ImportColourSample[] = []
 ): Promise<{ probe: ImportProbe; screen: Uint8Array } | { problem: string }> => {
-  const page = await browser.newPage({
+  const page = await openOtherPage(browser, {
     viewport: { width, height: 900 },
     colorScheme: scheme,
     reducedMotion: 'reduce'

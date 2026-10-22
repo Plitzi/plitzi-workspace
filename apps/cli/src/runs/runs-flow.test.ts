@@ -300,6 +300,19 @@ describe('a task held by its holder alone', () => {
     expect(log.filter(entry => entry.task === 't-home').map(entry => entry.by)).not.toContain('dev-2');
     expect(log.some(entry => entry.by === 'agent')).toBe(false);
   });
+  it('takes the next task from the copy of the one it completed: the copy says its task, never who takes', async () => {
+    const plan = { ...benchPlan(), designReview: false };
+    await bench.writeTeam({ version: 1, agents: [{ name: 'dev', roles: ['developer'], count: 2 }] });
+    await openRun(as('lead'), await bench.writePlan(plan));
+    const home = await takeTask(as('dev-1'), plan.runId, 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/index.ts', "export const home = { title: 'Hola' };\n");
+    await completeTask(as('dev-1', home.token), plan.runId, 't-home');
+
+    const { taken } = await takeNext(as('dev-1', home.token), plan.runId, 'developer');
+
+    expect(taken?.task.id).toBe('t-menu');
+    expect(taken?.token).not.toBe(home.token);
+  });
 });
 
 // The lead takes a task back from an agent at any time, says why, and decides where it goes (Carlos, velada-fidelity).

@@ -2,7 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { differences, MEASURED, measuredText, measureOn, pairOf, sameProperties } from './measure';
+import { differences, MEASURED, measuredText, measureOn, pairOf, putIn, sameProperties } from './measure';
 
 import type { Measured } from './measure';
 
@@ -42,6 +42,83 @@ describe('page measure', () => {
     expect(await measureOn(page, 'vs-medal')).toEqual({
       problem: expect.stringContaining('No element vs-medal on http://127.0.0.1:8080/combates — name it by') as unknown
     });
+  });
+
+  // velada-backlog: the medal's fill fades in on its card's hover — measured by hand, with a script of design-1's own.
+  it('puts a page in the state asked before measuring — hovered or focused, its transitions waited for — or says why not', async () => {
+    const acts: string[] = [];
+    const stand = (count: number, act: () => Promise<void>) =>
+      // A stand-in of a page: what putIn reads of one — its address, the element found, the state put, the wait.
+      ({
+        url: () => 'http://127.0.0.1:8080/combates',
+        locator: () => ({
+          first: () => ({
+            count: () => Promise.resolve(count),
+            hover: () => act().then(() => acts.push('hover')),
+            focus: () => act().then(() => acts.push('focus'))
+          })
+        }),
+        evaluate: () => Promise.resolve(acts.push('settled'))
+      }) as unknown as Parameters<typeof putIn>[0];
+    const state = { kind: 'hover' as const, pair: pairOf('fight-card => .fight-card') };
+
+    expect(
+      await putIn(
+        stand(1, () => Promise.resolve()),
+        state,
+        'fight-card'
+      )
+    ).toBeUndefined();
+    expect(acts).toEqual(['hover', 'settled']);
+    expect(
+      await putIn(
+        stand(0, () => Promise.resolve()),
+        state,
+        'fight-card'
+      )
+    ).toEqual({
+      problem: 'No element fight-card to hover on http://127.0.0.1:8080/combates'
+    });
+    expect(
+      await putIn(
+        stand(1, () => Promise.reject(new Error('Timeout 5000ms exceeded.\n  waiting for…'))),
+        { ...state, kind: 'focus' },
+        'fight-card'
+      )
+    ).toEqual({
+      problem: 'fight-card could not be focused on http://127.0.0.1:8080/combates: Timeout 5000ms exceeded.'
+    });
+  });
+
+  // velada-backlog: design-1 measured `.home-faq-answer-text` — the element's id, written as a class — and was told
+  // only "No element".
+  it('says the other way to write a name the page has that way: an id without its dot, a class with one', async () => {
+    const having = (...present: string[]) =>
+      // A stand-in of a page: its address, and how many elements each selector finds.
+      ({
+        url: () => 'http://127.0.0.1:8080/',
+        locator: (selector: string) => ({
+          first: () => ({ count: () => Promise.resolve(present.includes(selector) ? 1 : 0) })
+        })
+      }) as unknown as Parameters<typeof measureOn>[0];
+
+    expect(await measureOn(having('[data-plitzi-el="home-faq-answer-text"]'), '.home-faq-answer-text')).toEqual({
+      problem:
+        "No element .home-faq-answer-text on http://127.0.0.1:8080/ — home-faq-answer-text is an element's id here: write it without the dot"
+    });
+    expect(await measureOn(having('.faq-answer-body'), 'faq-answer-body')).toEqual({
+      problem:
+        "No element faq-answer-body on http://127.0.0.1:8080/ — faq-answer-body is a class here, no element's id: write it .faq-answer-body"
+    });
+  });
+
+  // velada-backlog: `body` on our side read Times 400 and the noscript's words — the space's type is on its root.
+  it("says, of a document's body measured on a space's page, the root to measure instead", () => {
+    const body = { ...measured({}, ''), tag: 'body', selector: 'body', spaceRoot: 'shell-root' };
+
+    expect(stripVTControlCharacters(measuredText(body, measured({}, '')))).toContain(
+      'body is the document\'s: the space dresses its root, shell-root — measure it, "shell-root => body"'
+    );
   });
 
   // velada-polish: the VS sizes in the acceptance were the lead's guess; a line that measures them proves them.

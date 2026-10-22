@@ -1,6 +1,7 @@
 import { themeIssues } from './themes';
 import { launchBrowser } from '../../browser';
 import { originHere } from '../../runs/copyServer';
+import { inTurns } from '../../runs/inTurns';
 import { projectHere } from '../existingProject';
 import { fail } from '../terminal';
 import { checkAccount } from './account';
@@ -83,7 +84,8 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     ...(options.then ? { then: options.then } : {}),
     ...(options.url ? { url: options.url } : {}),
     ...(options.space ? { space: options.space } : {}),
-    ...(options.themes ? { themes: true } : {})
+    ...(options.themes ? { themes: true } : {}),
+    ...(options.standIns ? { standIns: true } : {})
   });
   if ('problem' in reports) {
     fail(reports.problem);
@@ -103,6 +105,12 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
  * `verify` for every page that has no parameter in its path. A project the server does not answer for, or with no
  * browser, is a problem said once rather than a report per page.
  */
+/**
+ * How many pages a check reads at once, each with its widths and schemes at once: four of la-velada's pages at two
+ * widths took 6.9 s one by one, 4.2 s two at a time — and no less three or four at a time, the project's server busy.
+ */
+const ROUTES_AT_ONCE = 2;
+
 export const checkRoutes = async (
   project: { root: string; plitzi?: ExistingProject['plitzi'] },
   routes: readonly string[],
@@ -124,6 +132,8 @@ export const checkRoutes = async (
     space?: string;
     /** Each page read in light and in dark too: a ground that does not follow the theme under a text that does. */
     themes?: boolean;
+    /** Another site's pictures stood in for: a look's check is about what a task changed, not a third party's CDN. */
+    standIns?: boolean;
   }
 ): Promise<CheckReport[] | { problem: string }> => {
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
@@ -133,61 +143,86 @@ export const checkRoutes = async (
   }
 
   try {
-    const authored = options.space
-      ? await moduleSpace(options.space)
-      : plitzi?.source === 'local'
-        ? await projectSpace(project.root)
-        : undefined;
+    // The space authored while the browser starts: neither waits on the other (0.5 s and 0.3 s, one after the other).
+    const [authored, browser] = await Promise.all([
+      options.space
+        ? moduleSpace(options.space)
+        : plitzi?.source === 'local'
+          ? projectSpace(project.root)
+          : Promise.resolve(undefined),
+      launchBrowser(project.root)
+    ]);
     if (authored && 'problem' in authored) {
+      if (!('problem' in browser)) {
+        await browser.close();
+      }
+
       return authored;
     }
 
-    const browser = await launchBrowser(project.root);
     if ('problem' in browser) {
       return browser;
     }
 
     try {
-      const reports: CheckReport[] = [];
-      for (const route of routes) {
-        for (const width of options.widths) {
-          const look = () =>
-            checkAt(
-              browser,
-              where.origin,
-              route,
-              width,
-              {
-                ...(options.scheme ? { scheme: options.scheme } : {}),
-                presence: options.presence === true,
-                ...(options.timezone ? { timezone: options.timezone } : {})
-              },
-              authored,
-              options.asked,
-              options.ssr,
-              options.account,
-              options.click,
-              options.expect,
-              options.then
-            );
-          const first = await look();
-          const failed = first.flatMap(serverErrors);
-          // Once, and said: a page red for a second of somebody else's outage is not one red for anything of its own.
-          const looked = failed.length > 0 ? (await look()).map(each => ({ ...each, retriedAfter: failed })) : first;
-          reports.push(...looked.map(each => ({ ...each, ...(options.scheme ? { scheme: options.scheme } : {}) })));
-        }
+      // Each width of a page, and its two schemes, read at once — each its own page of the browser: in turn, a look's
+      // check of one page at two widths, with its schemes, took 7 s of a 10 s look.
+      const checkRoute = async (route: string): Promise<CheckReport[]> => {
+        const look = (width: number) => () =>
+          checkAt(
+            browser,
+            where.origin,
+            route,
+            width,
+            {
+              ...(options.scheme ? { scheme: options.scheme } : {}),
+              presence: options.presence === true,
+              ...(options.timezone ? { timezone: options.timezone } : {}),
+              ...(options.standIns ? { standIns: true } : {})
+            },
+            authored,
+            options.asked,
+            options.ssr,
+            options.account,
+            options.click,
+            options.expect,
+            options.then
+          );
+        const [read, themed] = await Promise.all([
+          Promise.all(
+            options.widths.map(async width => {
+              const first = await look(width)();
+              const failed = first.flatMap(serverErrors);
 
-        // Light and dark, once a page, at its first width: said on its first report, failing it.
-        const themed = options.themes ? await themeIssues(browser, where.origin, route, options.widths[0] ?? 1440) : [];
-        const first = reports.find(each => each.path === route);
+              // Once, and said: a page red for a second of somebody else's outage is not one red for anything of its own.
+              return failed.length > 0 ? (await look(width)()).map(each => ({ ...each, retriedAfter: failed })) : first;
+            })
+          ),
+          // Light and dark, once a page, at its first width: said on its first report, failing it.
+          options.themes
+            ? themeIssues(browser, where.origin, route, options.widths[0] ?? 1440, {
+                standIns: options.standIns === true
+              })
+            : Promise.resolve([])
+        ]);
+        const looked = read.flat().map(each => ({ ...each, ...(options.scheme ? { scheme: options.scheme } : {}) }));
+        const first = looked.at(0);
         if (first && themed.length > 0) {
           first.issues.push(...themed);
           first.problems.push(...themed.map(issue => issue.message));
           first.ok = false;
         }
-      }
 
-      return reports;
+        return looked;
+      };
+
+      // A few pages at once too, their reports in the order asked: one by one, t-body-type's four took 6.4 s.
+      return (
+        await inTurns(
+          routes.map(route => () => checkRoute(route)),
+          ROUTES_AT_ONCE
+        )
+      ).flat();
     } finally {
       await browser.close();
     }

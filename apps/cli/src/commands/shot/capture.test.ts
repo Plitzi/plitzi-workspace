@@ -68,6 +68,16 @@ describe('finding what a picture is aimed at', () => {
     expect(awaited('section#home-sponsors')).toBe('section#home-sponsors, section[data-plitzi-el="home-sponsors"]');
   });
 
+  // velada-backlog: four copies of one heading were one region's name; the second's change pictured the first.
+  it('finds a copy of a component’s part by its place, as a comparison numbers it', async () => {
+    expect(
+      await targetOn(having('header[data-plitzi-el="match-heading-root"] >> nth=1'), 'header#match-heading-root:2')
+    ).toEqual({ selector: 'header[data-plitzi-el="match-heading-root"] >> nth=1', found: true });
+    expect(awaited('header#match-heading-root:2')).toBe(
+      'header#match-heading-root, header[data-plitzi-el="match-heading-root"]'
+    );
+  });
+
   it('finds a bare word as an element’s name, a tag, or an id — never an id CSS cannot read', async () => {
     expect(await targetOn(having('#combates'), 'combates')).toEqual({ selector: '#combates', found: true });
     expect(await targetOn(having(), 'combates')).toEqual({ selector: '[data-plitzi-el="combates"]', found: false });

@@ -1,6 +1,7 @@
 import { openPage } from '@plitzi/sdk-authoring';
 
-import { openProjectPage } from '../../browser';
+import { openProjectPage, PROJECT_QUIET_MS } from '../../browser';
+import { standInPictures } from '../shot/capture';
 
 import type { CheckIssue } from './types';
 import type { Browser } from '../../browser';
@@ -187,12 +188,17 @@ export const themeIssues = async (
   browser: Browser,
   origin: string,
   route: string,
-  width: number
+  width: number,
+  { standIns = false }: { standIns?: boolean } = {}
 ): Promise<CheckIssue[]> => {
   const read = async (scheme: 'light' | 'dark'): Promise<TextGround[]> => {
     const page = await openProjectPage(browser, origin, { width, height: 900, reducedMotion: true, scheme });
+    if (standIns) {
+      await standInPictures(page, origin);
+    }
+
     try {
-      await openPage(page, `${origin}${route}`);
+      await openPage(page, `${origin}${route}`, { quietMs: PROJECT_QUIET_MS });
       await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
 
       return await page.evaluate(textGrounds, undefined);

@@ -1,6 +1,7 @@
 import { authorSpace, closest } from '@plitzi/sdk-authoring';
 import { authorIsolated } from '@plitzi/sdk-authoring/node';
 
+import { authoredKey, keepAuthored, keptAuthored } from './authoredCache';
 import { SCHEMES } from '../../browser';
 import { loadProjectSpace } from '../projectSpace';
 
@@ -21,6 +22,12 @@ export type Authored = { handles: SpaceHandles; schema: Schema; schemes: Scheme[
 
 /** The space the project declares, authored. Only for one written here. */
 export const projectSpace = async (root: string): Promise<Authored | { problem: string }> => {
+  const key = await authoredKey(root);
+  const kept = await keptAuthored(root, key);
+  if (kept) {
+    return kept;
+  }
+
   const project = await loadProjectSpace(root);
   if ('problem' in project) {
     return { problem: `${project.problem} There is nothing to check the page against.` };
@@ -29,8 +36,11 @@ export const projectSpace = async (root: string): Promise<Authored | { problem: 
   try {
     const { handles, schema, style } = authorSpace(project.space, project.authoring);
     const schemes = SCHEMES.filter(scheme => style.theme.schemes.includes(scheme));
+    const authored = { handles, schema, schemes };
+    // Kept by what it was authored from — a check that cannot keep it still has it.
+    await keepAuthored(root, key, authored).catch(() => undefined);
 
-    return { handles, schema, schemes };
+    return authored;
   } catch (error) {
     return {
       problem: `The space does not author — npm run author says why: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`

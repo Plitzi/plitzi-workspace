@@ -137,6 +137,9 @@ const watchPaths = ({ source, fromSpace, runtime }: CreateAnswers): string =>
     .map(watched => `--watch-path=${watched}`)
     .join(' ');
 
+/** Where the project's checks keep what they read, to read again only what changed: in tmp/, never committed. */
+const CHECKS_CACHE = `${PROJECT_TMP}/plitzi-cache/checks`;
+
 /**
  * What `start` means, which is the whole difference between the two modes.
  *
@@ -193,10 +196,12 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
     ...(source === 'local' ? { author: mode === 'server' ? nodeWithEnv(AUTHOR_FILE) : `node ${AUTHOR_FILE}` } : {}),
     // How the space's source is written — its files, data, tokens, repeats — eslint's way; `lint` is the code's.
     ...(source === 'local' ? { 'lint:space': 'plitzi space lint' } : {}),
-    // One line per error — file(line,col) and the message — rather than a framed excerpt of each.
-    typecheck: 'tsc -p tsconfig.json --noEmit --pretty false',
-    lint: 'eslint .',
-    format: 'prettier --write .',
+    // One line per error — file(line,col) and the message — rather than a framed excerpt of each. Each of the three
+    // keeps what it read in tmp/ and reads again only what changed: la-velada's lint, run twice, 3.7 s then 0.5 s —
+    // and a run's task checks its copy again and again.
+    typecheck: `tsc -p tsconfig.json --noEmit --pretty false --incremental --tsBuildInfoFile ${CHECKS_CACHE}/tsc.tsbuildinfo`,
+    lint: `eslint . --cache --cache-location ${CHECKS_CACHE}/eslint.json`,
+    format: `prettier --write . --cache --cache-location ${CHECKS_CACHE}/prettier.json`,
     visual: 'playwright test',
     // The CLI's, on the project's own Playwright: a picture of a page, and whether a page is whole — in text.
     shot: 'plitzi page shot',

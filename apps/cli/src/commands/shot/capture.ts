@@ -1,7 +1,7 @@
 import { loadImages, openPage, unrollPage } from '@plitzi/sdk-authoring';
 import { MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema';
 
-import { openProjectPage, paintedScheme, withoutDevTools } from '../../browser';
+import { openOtherPage, openProjectPage, paintedScheme, PROJECT_QUIET_MS } from '../../browser';
 import { sentElsewhere, signInAs } from '../check';
 import { BARE, IMAGES_BUDGET_MS, REMOTE_IMAGES_BUDGET_MS, WAITING_FOR_SCROLL } from './types';
 
@@ -19,7 +19,7 @@ const namedBy = (target: string): string => `[data-plitzi-el="${target}"]`;
 const idOf = (target: string): string[] => (/^[A-Za-z_]/.test(target) ? [`#${target}`] : []);
 
 /** A section as a comparison's report names it: its tag, and its id or its element's name. */
-const REGION = /^([a-z][a-z0-9]*)#([\w-]+)$/;
+const REGION = /^([a-z][a-z0-9]*)#([\w-]+)(?::(\d+))?$/;
 
 /**
  * A reading of the page, once more when the page navigated under it: a project served with its watch reloads the page
@@ -60,7 +60,8 @@ export const readPage = async <R, A>(
 export const awaited = (target: string): string => {
   const region = REGION.exec(target);
   if (region) {
-    return `${target}, ${region[1]}${namedBy(region[2])}`;
+    // A copy's place (`:2`) is no CSS: waited for as the part, whose copies a page draws together.
+    return `${region[1]}#${region[2]}, ${region[1]}${namedBy(region[2])}`;
   }
 
   return BARE.test(target) ? [namedBy(target), target, ...idOf(target)].join(', ') : target;
@@ -82,10 +83,16 @@ export const targetOn = async (
     // either the same way, and `--scroll-to` answered "not on" for the name it printed (velada-polish's design-1).
     const region = REGION.exec(target);
     if (region) {
-      const [, tag, name] = region;
-      const named = `${tag}${namedBy(name)}`;
+      const [, tag, name, place] = region;
+      // `header#match-heading-root:2`: the second copy of a component's part, as a comparison numbers them.
+      // An optional group is undefined when absent, whatever its type says: read as truthy, never compared.
+      const nth = place ? ` >> nth=${String(Number(place) - 1)}` : '';
+      const asWritten = `${tag}#${name}${nth}`;
+      const named = `${tag}${namedBy(name)}${nth}`;
 
-      return (await found(target)) ? { selector: target, found: true } : { selector: named, found: await found(named) };
+      return (await found(asWritten))
+        ? { selector: asWritten, found: true }
+        : { selector: named, found: await found(named) };
     }
 
     if (!BARE.test(target)) {
@@ -177,13 +184,13 @@ export const standIn = (url: string): string => {
 };
 
 /** Every picture from another site than `origin`, answered by its stand-in (`View.standIns`). */
-const standInPictures = (page: BrowserPage, origin: string): Promise<void> =>
+export const standInPictures = (page: BrowserPage, origin: string): Promise<void> =>
   page.route(
     url => url.origin !== origin,
     async route =>
       route.request().resourceType() === 'image'
         ? route.fulfill({ status: 200, contentType: 'image/svg+xml', body: standIn(route.request().url()) })
-        : route.continue()
+        : route.fallback()
   );
 
 export const pictureOf = async (
@@ -194,7 +201,7 @@ export const pictureOf = async (
 ): Promise<Taken | { problem: string }> => {
   const page = origin
     ? await openProjectPage(browser, origin, view)
-    : await browser.newPage({
+    : await openOtherPage(browser, {
         viewport: { width: view.width, height: view.height },
         colorScheme: view.scheme ?? 'light',
         reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference',
@@ -212,7 +219,9 @@ export const pictureOf = async (
   // Settled, not `networkidle`: a page with a live channel keeps its stream open, and never idles. From the load, the
   // first picture is taken once the HTML is in — what plays as the page arrives has ended by the time it settles.
   const open = (): Promise<unknown> =>
-    view.fromLoad ? page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => null) : openPage(page, url);
+    view.fromLoad
+      ? page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => null)
+      : openPage(page, url, origin ? { quietMs: PROJECT_QUIET_MS } : {});
   // Another site may be slow to wake (a cold CDN): asked again once before it is said not to answer.
   const answered = (await open()) ?? (origin ? null : await open());
   if (!answered) {
@@ -276,7 +285,6 @@ export const pictureOf = async (
       ? { kind: 'element-later', target: later }
       : framing(view, view.clip === undefined ? undefined : shown[view.clip]);
 
-  await withoutDevTools(page);
   // Counted before the walk below, which shows every one of them.
   const settled = view.still
     ? await page.evaluate((selector: string) => document.querySelectorAll(selector).length, WAITING_FOR_SCROLL)

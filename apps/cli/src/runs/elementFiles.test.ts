@@ -53,4 +53,17 @@ describe('the elements a task’s checks read', () => {
       await elementFileNotices(bench.root, [task(['src/space/match/styles.ts', 'src/space/pages/combate.ts'], check)])
     ).toEqual([]);
   });
+
+  // velada-backlog: t-body-type measured the FAQ's answers, written in faq.ts, and changed them through fore() — its own.
+  it('say nothing of an element whose file imports one of the task’s: that import is the task’s way to it', async () => {
+    await bench.write(
+      'src/space/pages/home/faq.ts',
+      "import { fore } from './mediaCommon';\nexport const faq = { id: 'home-faq-answer-text', color: fore(75) };\n"
+    );
+    await bench.write('src/space/pages/home/mediaCommon.ts', 'export const fore = (n: number) => String(n);\n');
+    const check = 'plitzi page measure / "home-faq-answer-text => .faq-answer-body" --compare https://o.example';
+
+    expect(await elementFileNotices(bench.root, [task(['src/space/pages/home/mediaCommon.ts'], check)])).toEqual([]);
+    expect(await elementFileNotices(bench.root, [task(['src/space/theme.ts'], check)])).toHaveLength(1);
+  });
 });
