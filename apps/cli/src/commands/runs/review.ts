@@ -35,10 +35,16 @@ import type { RunContext } from '../../runs/run';
  * by hand in four or five, between every agent's completion and its approval: the wait every agent idles through.
  */
 /** What a task changed, as of its last `complete`. */
-const viewTaskOf = async (ctx: RunContext, runId: string, taskId: string): Promise<{ changed: string[] }> => {
+const viewTaskOf = async (
+  ctx: RunContext,
+  runId: string,
+  taskId: string
+): Promise<{ changed: string[]; designing: boolean }> => {
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
+  const { state } = await viewTask(loaded.paths, findTask(loaded, taskId));
 
-  return { changed: (await viewTask(loaded.paths, findTask(loaded, taskId))).state.changed ?? [] };
+  // The caller is the designer whose UI review it is: its look is set beside the run before it unless it says not.
+  return { changed: state.changed ?? [], designing: state.design?.status === 'due' && state.design.by === ctx.agent };
 };
 
 export interface LookOptions extends RunCommandOptions {
@@ -253,8 +259,13 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
                   ];
             // No page named: the pages its changes are drawn at, by the files that changed — else the home page.
             // Read off the copy served: a page the task makes is one to look at too.
-            const changed = (await viewTaskOf(ctx, runId, taskId)).changed;
-            const owned = paths.length > 0 ? [] : await pagesOf(preview.dir, changed);
+            const { changed, designing } = await viewTaskOf(ctx, runId, taskId);
+            // Every page its changes are drawn at — a shared file's too: named pages are looked at, and the others
+            // said (velada-polish: design-2 looked at /combates twice, and the home its card change broke was the lead's
+            // to find).
+            const drawnAt = await pagesOf(preview.dir, changed);
+            const owned = paths.length > 0 ? [] : drawnAt;
+            const notLooked = paths.length > 0 ? drawnAt.filter(page => !paths.includes(page)) : [];
             // A part of a page others build too: its own elements pictured, its own findings kept — the rest is theirs.
             const parts = await taskParts(preview.dir, changed);
             // More parts than are pictured apart: the page whole, never the first three of them — velada-dress's t-home
@@ -334,7 +345,10 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
             }
 
             // Beside the run before it: what the task moved, section by section — and that nothing else did.
-            const before = options.before ? await startBeforePreview(ctx, runId, taskId, await freePort()) : undefined;
+            const before =
+              (options.before ?? designing)
+                ? await startBeforePreview(ctx, runId, taskId, await freePort())
+                : undefined;
             const compared: BeforeAfter[] = [];
             const stoppedUnder: string[] = [];
             try {
@@ -406,6 +420,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               ...(compared.length > 0 ? { compared } : {}),
               ...(preview.borrowed === undefined ? {} : { borrowed: preview.borrowed }),
               ...(stoppedUnder.length > 0 ? { stoppedUnder } : {}),
+              ...(notLooked.length > 0 ? { notLooked } : {}),
               ...(notReviewed.length > 0 ? { notReviewed } : {})
             };
           } finally {
@@ -423,6 +438,13 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
             : `${looked.task}, as its copy is now — served by ${looked.borrowed.by === 'agent' ? "its agent's own server" : 'the server a picture of it kept'} on :${String(looked.borrowed.port)}, left running (it holds the copy's state):`
         ),
         ...(looked.stoppedUnder ?? []).map(line => chalk.yellow(`⚠ ${line}`)),
+        ...(looked.notLooked
+          ? [
+              chalk.yellow(
+                `⚠ Its changes are drawn at ${list(looked.notLooked)} too — a file it changed is read there — not looked at: plitzi task look ${looked.task}${looked.notLooked.map(page => ` ${page}`).join('')} --before`
+              )
+            ]
+          : []),
         ...(looked.notReviewed
           ? [
               chalk.yellow(

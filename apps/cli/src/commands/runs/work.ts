@@ -79,13 +79,16 @@ export const taskNote = (taskId: string | undefined, text: string, options: RunC
     () => 'Noted: whoever takes it next reads it in plitzi task context.'
   );
 
-export const taskCheck = (options: RunCommandOptions & { acceptance?: boolean }): Promise<void> =>
+export const taskCheck = (options: RunCommandOptions & { acceptance?: boolean; fix?: boolean }): Promise<void> =>
   act(
     options,
     async ctx => {
       const { runId, taskId } = await holder(ctx, options);
 
-      return checkTask(ctx, runId, taskId, options.acceptance ? { only: 'acceptance' } : {});
+      return checkTask(ctx, runId, taskId, {
+        ...(options.acceptance ? { only: 'acceptance' as const } : {}),
+        ...(options.fix ? { fix: true } : {})
+      });
     },
     checked =>
       [
@@ -93,6 +96,13 @@ export const taskCheck = (options: RunCommandOptions & { acceptance?: boolean })
         ...(checked.brought
           ? [
               `Brought into your copy first — approved by the run, or changed in the project, since it was made: ${checked.brought.join(', ')}`
+            ]
+          : []),
+        ...(checked.fixed
+          ? [
+              checked.fixed.ran.length === 0
+                ? chalk.dim('--fix: the project has no eslint lint script nor prettier format script to fix with')
+                : `Fixed first by ${checked.fixed.ran.join(' and ')}: ${checked.fixed.fixed.length > 0 ? checked.fixed.fixed.join(', ') : 'nothing to fix'}`
             ]
           : []),
         ...(checked.only === 'acceptance'
@@ -109,7 +119,9 @@ export const taskCheck = (options: RunCommandOptions & { acceptance?: boolean })
                 : 'Your copy passes what complete holds it to: complete it when it is done'
             )
           : chalk.yellow(
-              'Your copy does not pass yet — none of your work was changed, and nothing counted against the run:'
+              checked.fixed
+                ? 'Your copy does not pass yet — only what --fix said was changed, and nothing counted against the run:'
+                : 'Your copy does not pass yet — none of your work was changed, and nothing counted against the run:'
             ),
         ...checked.checks.steps.map(
           step =>
@@ -118,6 +130,15 @@ export const taskCheck = (options: RunCommandOptions & { acceptance?: boolean })
         ...checked.checks.steps.flatMap(step =>
           (step.warnings ?? []).map(warning => chalk.yellow(`  ⚠ ${step.name} warns: ${warning}`))
         ),
+        // What the project's linter and formatter fix by themselves is no round of thought: said, with how.
+        ...(!checked.fixed &&
+        checked.checks.steps.some(step => !step.ok && (step.name === 'lint' || step.name === 'format'))
+          ? [
+              chalk.dim(
+                '  What lint and format fix by themselves: plitzi task check --fix runs them on your files first, then checks'
+              )
+            ]
+          : []),
         ...checked.accepted.map(
           each =>
             `  ${each.ok ? '✓' : chalk.yellow('✗')} acceptance — ${each.said}  ${chalk.dim(`[${each.check}]`)}${secondRunText(each)}${each.ok || !each.output ? '' : `\n${each.output.map(line => `      ${line}`).join('\n')}`}`

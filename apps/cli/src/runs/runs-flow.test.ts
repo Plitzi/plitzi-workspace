@@ -18,11 +18,13 @@ import {
   completeTask,
   followNext,
   nextTask,
+  reportProgress,
   reviewTask,
   takeNext,
   takeTask,
   waitForFile
 } from './tasks';
+import { HAND_OFF_AFTER_MS } from './tasks/handOff';
 import { viewRun } from './view';
 import { benchPlan, makeBench, readInCopy, writeInCopy } from '../tests/runProject';
 
@@ -190,5 +192,67 @@ describe('a run played whole, as velada-dress went', () => {
     );
     expect(applied.backlog).toEqual(['b-1']);
     expect((await openBacklog(bench.root)).map(item => item.text)).toEqual(['The book page has no map']);
+  });
+});
+
+// velada-polish: dev-1 held four tasks; t-match-bars's changes waited ten minutes for it while dev-2 and dev-3 had
+// nothing, and stopped.
+describe('a task sent back while its agent is at another', () => {
+  const twoDevs = async (): Promise<string> => {
+    const plan = { ...benchPlan(), designReview: false };
+    await bench.writeTeam({ version: 1, agents: [{ name: 'dev', roles: ['developer'], count: 3 }] });
+    await openRun(as('lead'), await bench.writePlan(plan));
+    const home = await takeTask(as('dev-1'), plan.runId, 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/index.ts', "export const home = { title: 'Hola' };\n");
+    await completeTask(as('dev-1', home.token), plan.runId, 't-home');
+    bench.advance(10_000);
+    const menu = await takeTask(as('dev-1'), plan.runId, 't-menu');
+    bench.advance(10_000);
+    await reportProgress(as('dev-1', menu.token), plan.runId, 't-menu', { step: 'the menu' });
+    bench.advance(10_000);
+    await reviewTask(as('lead'), plan.runId, 't-home', 'changes', [{ note: 'Bienvenidos, not Hola' }]);
+
+    return home.token;
+  };
+
+  it('goes to a free agent of its role once it waited, its review with it — and its agent is told', async () => {
+    const oldToken = await twoDevs();
+    const runId = benchPlan().runId;
+    // Nothing new for dev-3 — t-about taken, t-book waits for the others — only the rework that waits.
+    await takeTask(as('dev-2'), runId, 't-about');
+
+    const early = await nextTask(as('dev-3'), runId, 'developer');
+    expect(early.handOff).toBeUndefined();
+    expect(early.why).toContain("t-home's changes wait for dev-1 (at t-menu)");
+
+    bench.advance(HAND_OFF_AFTER_MS);
+    const next = await nextTask(as('dev-3'), runId, 'developer');
+    expect(next).toMatchObject({ task: { id: 't-home' }, handOff: { from: 'dev-1', at: 't-menu' } });
+    expect(next.asked?.join(' ')).toContain('Bienvenidos, not Hola');
+
+    const { taken } = await takeNext(as('dev-3'), runId, 'developer');
+    expect(taken?.task.id).toBe('t-home');
+    const loaded = await loadRun(as('lead'), runId);
+    expect((await readRunLog(loaded.paths)).find(entry => entry.action === 'handed-off')).toMatchObject({
+      task: 't-home',
+      from: 'dev-1',
+      to: 'dev-3'
+    });
+    expect((await nextTask(as('dev-1'), runId, 'developer')).messages.map(message => message.text).join(' ')).toContain(
+      "t-home's changes went to dev-3"
+    );
+    await expect(reportProgress(as('dev-1', oldToken), runId, 't-home', {})).rejects.toMatchObject({
+      code: 'reassigned'
+    });
+  });
+
+  it('stays its agent’s once it took it up again', async () => {
+    const token = await twoDevs();
+    const runId = benchPlan().runId;
+    bench.advance(10_000);
+    await reportProgress(as('dev-1', token), runId, 't-home', { step: 'Bienvenidos' });
+    bench.advance(HAND_OFF_AFTER_MS);
+
+    expect((await nextTask(as('dev-2'), runId, 'developer')).handOff).toBeUndefined();
   });
 });

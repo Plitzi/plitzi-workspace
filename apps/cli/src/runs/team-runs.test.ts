@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
 import { auditRun } from './audit';
+import { SAME_DESIGNER_MS } from './design';
 import { expectedIds } from './expectations';
 import { extendRun } from './extend';
 import { leadItems } from './leadWatch';
@@ -358,7 +359,7 @@ describe('a designer’s review of the others’ UI', () => {
 
   it('comes before the lead’s: offered to one designer, approved by it, then the lead’s to approve', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
-    expect(await designOf('t-menu')).toEqual({ status: 'due', round: 0 });
+    expect(await designOf('t-menu')).toEqual({ status: 'due', round: 0, since: expect.any(String) as unknown });
 
     // The lead does not approve before it — unless it says so — and is not woken for it.
     expect(await refusalOf(reviewTask(lead(), 'es-launch', 't-menu', 'approve', []))).toContain('--skip-design');
@@ -487,7 +488,32 @@ describe('a designer’s review of the others’ UI', () => {
       `export const menu = { title: ${JSON.stringify('Carta')} };\n`
     );
     await completeTask(dev, 'es-launch', 't-menu');
-    expect(await designOf('t-menu')).toEqual({ status: 'due', round: 2 });
+    // Its UI changed: due again — first for the designer who said the round before.
+    expect(await designOf('t-menu')).toEqual({
+      status: 'due',
+      round: 2,
+      before: 'design-1',
+      since: expect.any(String) as unknown
+    });
+  });
+
+  // velada-polish: design-2 said t-match-bars's first round, design-1 its second — with asks of its own, a round more.
+  it('offers a round sent back to the designer who said the one before, and another only past a wait', async () => {
+    const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
+    const dev = bench.agent('dev-1', { token: taken.token });
+    await writeInCopy(taken.work, 'src/space/pages/menu.ts', "export const menu = { title: 'Menu' };\n");
+    await completeTask(dev, 'es-launch', 't-menu');
+    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
+    await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'changes', [{ note: 'Tighter at 390' }]);
+    await writeInCopy(taken.work, 'src/space/pages/menu.ts', "export const menu = { title: 'Menú' };\n");
+    await completeTask(dev, 'es-launch', 't-menu');
+
+    expect((await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).designReview).toBeUndefined();
+    expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer')).designReview?.task.id).toBe('t-menu');
+
+    bench.advance(SAME_DESIGNER_MS);
+    const other = (await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).designReview;
+    expect(other).toMatchObject({ task: { id: 't-menu' }, before: 'design-1' });
   });
 
   it('hands the lead what the designer saw with its approval, and the agent what the lead asked with its task', async () => {

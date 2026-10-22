@@ -339,6 +339,13 @@ export interface DesignReview {
   at?: string;
   /** `skipped`: why the lead approved it without the designer's review. */
   why?: DesignSkip;
+  /**
+   * The designer who said the round before: offered this one first, and the rest only past a wait — another designer
+   * brought asks of its own, and cost a round (velada-polish's t-match-bars).
+   */
+  before?: string;
+  /** When it came due: what the wait for the designer before is counted from. */
+  since?: string;
 }
 
 /** `owner.json`: who holds the task. Created exclusively — the first take wins — and removed to revoke it. */
@@ -628,7 +635,9 @@ export const isTaskState = (value: unknown): value is TaskState =>
       isNumber(design.round) &&
       optional(design.by, isString) &&
       optional(design.at, isString) &&
-      optional(design.why, isDesignSkip)
+      optional(design.why, isDesignSkip) &&
+      optional(design.before, isString) &&
+      optional(design.since, isString)
   ) &&
   optional(
     value.reviewer,

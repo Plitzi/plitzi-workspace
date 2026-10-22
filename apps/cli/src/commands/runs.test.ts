@@ -226,4 +226,14 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect(discarded.code).toBe(0);
     expect(discarded.json).toMatchObject({ files: ['src/space/pages/home/index.ts', 'src/space/pages/home/hero.ts'] });
   }, 120_000);
+
+  // velada-polish's dev-2 was refused its own task's diff: what it did is its own to read; another's is the lead's.
+  it('shows a task to its holder from its copy, and refuses another task to it', async () => {
+    await openRun();
+    const taken = await plitzi(bench.root, ['task', 'take', 't-home', '--agent', 'dev-1']);
+    const work = String(taken.json.work);
+
+    expect((await plitzi(work, ['task', 'show', 't-home'])).code).toBe(0);
+    expect((await plitzi(work, ['task', 'show', 't-about'])).code).toBe(REFUSAL_EXIT_CODES['lead-only']);
+  }, 120_000);
 });

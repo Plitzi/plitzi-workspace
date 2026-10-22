@@ -422,7 +422,7 @@ export const completeTask = async (
   }
 
   const toReview = changed.filter(file => !asRequests.includes(file));
-  const designed = await designAtComplete(loaded, view, toReview, options.review);
+  const designed = await designAtComplete(loaded, view, toReview, options.review, ctx.now().getTime());
   // What goes to review is kept now: the copy is the agent's to go on writing, and the lead approves what it looked at.
   const submitted = await keepFiles(loaded.paths, view.paths.work, toReview);
   await updateState(

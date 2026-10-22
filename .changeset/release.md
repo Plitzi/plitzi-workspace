@@ -853,3 +853,16 @@ monitor` shows each as it comes, a problem in red.
     - `run plan` says a check of an address no page answers (the not-found page, sent with 404) that says no `--status`;
       the finish's audit reads a spike ended by what it found as ended, not as an approval the log missed; `task
       discard` takes several files, and says which went back when one of them is refused.
+- **What velada-polish's flow showed** (`@plitzi/cli`):
+    - A task sent back while its agent is at another one waits 3 minutes for it; past that, a free agent of its role
+      is handed it by `task next` — with what its review asked — and `--take` cuts the first agent's token (told, by
+      name) and takes it, its copy made again from the version that went to review (`handed-off`). A waiting agent is
+      told when it will be its. t-match-bars's changes waited ten minutes for dev-1 while two developers had nothing.
+    - A round of UI sent back is offered first to the designer who said the one before, another only after 3 minutes,
+      told to check what was asked and ask anew only what is broken: a second designer's own asks cost a round.
+    - A designer's `task look` of the UI it reviews is beside the run before it unless `--no-before`, and a look that
+      names its pages says the others its changes are drawn at — a shared file's — that it did not look at.
+    - `plitzi page measure <path> <element> --compare <url> --there <selector>`: an element's computed styles beside
+      another page's, each property that differs — the values the designers measured with scripts of their own.
+    - `task check --fix` runs the project's eslint and prettier on the task's changed files first, and a check failing
+      on lint or format says so; a task's holder reads its own task with `task show`.

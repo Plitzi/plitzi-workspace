@@ -7,6 +7,7 @@ import { designReviewFor, hasDesignReview, takeDesignReview } from '../design';
 import { createExclusive } from '../files';
 import { handOver } from '../handOver';
 import { assertRoles } from '../identity';
+import { handOffRework, reworkFor, reworksWaiting } from './handOff';
 import { IDLE_LEAD_MS, isCoLead, isPrincipal, LEAD_ROLE, leadReviewFor, markAsking, takeLeadReview } from '../leads';
 import { agentAddress, unreadFor } from '../messages';
 import { ON_DEMAND_IDLE_MS } from '../onDemand';
@@ -50,6 +51,8 @@ export interface NextTask {
   yours?: 'in-progress' | 'changes-requested';
   /** Handed back with changes requested: what its last review asked, by whom. */
   asked?: string[];
+  /** A task sent back whose agent is at another, handed to the caller: whose it was, and where that agent is. */
+  handOff?: { from: string; at: string };
   /** One the caller holds: where its copy is — the only place its work is written. */
   work?: string;
   /**
@@ -68,6 +71,8 @@ export interface NextTask {
     asked: string[];
     /** The notes of the reviews before the last: counted, not repeated — `task show` has them whole. */
     earlier: number;
+    /** Another designer said the round before: this round checks what it asked, and asks anew only what is broken. */
+    before?: string;
     /** Its copy, as it went to review: what to read its files in (`task look` serves it). */
     copy: string;
     /** How closely the team asks it reviewed (`options.designReview` in team.json). */
@@ -171,9 +176,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
       const toTask = await handOver(ctx, loaded, view.task.id, ctx.agent);
 
       // Sent back: what its last review asked, said where it is handed back — not only in the brief.
-      const asked = view.state.notes
-        .filter(note => note.text.startsWith(`Review ${String(view.state.round)}: `))
-        .map(note => `${note.by}: ${note.text.slice(`Review ${String(view.state.round)}: `.length)}`);
+      const asked = lastAsked(view);
 
       return {
         task: view.task,
@@ -193,7 +196,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
 
   // A review holds back a task already done, and the lead: a designer's comes before anything new.
   const designer = loaded.record.designReview === true && roles?.includes(DESIGNER) === true;
-  const review = designer ? designReviewFor(views, ctx.agent) : undefined;
+  const review = designer ? designReviewFor(views, ctx.agent, ctx.now().getTime()) : undefined;
   if (review) {
     return {
       designReview: {
@@ -203,6 +206,9 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
         // Read off its copy: a page the task makes (a dog added to the data) is one to look at too.
         pages: await pagesOf(review.paths.work, review.state.changed ?? []),
         ...askedOf(review.state.notes),
+        ...(review.state.design?.before !== undefined && review.state.design.before !== ctx.agent
+          ? { before: review.state.design.before }
+          : {}),
         ...(changesBlock(review.state, true) ? { lastRound: true } : {}),
         copy: review.paths.work,
         precision: (await readTeam(ctx.root).catch(() => undefined))?.options?.designReview ?? DEFAULT_DESIGN_REVIEW
@@ -286,6 +292,18 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     return { task: ready[base.length], ready: ready.map(task => task.id), messages };
   }
 
+  // Nothing new: a task sent back while its agent is at another, past a wait, is this agent's to take over.
+  const rework = reworkFor(reworksWaiting(views, ctx.agent, roles), ctx.now().getTime());
+  if (rework.now) {
+    return {
+      task: rework.now.view.task,
+      handOff: { from: rework.now.from, at: rework.now.at },
+      asked: lastAsked(rework.now.view),
+      ready: [],
+      messages
+    };
+  }
+
   if (ready.length === 0 && waitingForFile.length > 0) {
     return {
       why: `ready, but a file of each is another task's until that one is approved: ${waitingForFile.map(each => `${each.waiting} (${each.file}, held by ${each.holder})`).join(', ')} — wait for it (--follow)`,
@@ -314,6 +332,10 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
           hasDesignReview(view.task, [...view.task.files, ...(view.state.changed ?? [])])
       )
     : [];
+  // A rework that waits for its agent, said with when it is this agent's: nothing ready is not nothing coming.
+  const later = rework.later
+    ? ` — ${rework.later.rework.view.task.id}'s changes wait for ${rework.later.rework.from} (at ${rework.later.rework.at}): yours at ${new Date(rework.later.at).toISOString().slice(11, 16)} UTC if it is not back at it`
+    : '';
   const why =
     roles !== undefined && coming.length === 0 && toReview.length > 0
       ? `no task is left for a ${String(role)} to work: the UI of ${toReview.map(view => `${view.task.id} (${view.state.status})`).join(', ')} is yours to review once it is in review — wait for it (--follow)`
@@ -336,7 +358,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
                         : ''
                     }`
                 )
-                .join(', ')}`;
+                .join(', ')}${later}`;
 
   // Never while a task of its own is in review: one sent back comes back to it, and nobody else redoes it.
   const ownInReview = views.some(view => view.owner?.agent === ctx.agent && view.state.status === 'in-review');
@@ -579,6 +601,10 @@ export const takeNext = async (
 
     const offered = next.task;
     try {
+      if (next.handOff) {
+        await handOffRework(ctx, runId, offered.id, next.handOff.from);
+      }
+
       return { next, taken: await takeTask(ctx, runId, offered.id, role === undefined ? undefined : roleOf(offered)) };
     } catch (error) {
       // Taken by another agent meanwhile — once: a task offered again after that is held for a reason of its own.
@@ -590,6 +616,12 @@ export const takeNext = async (
     }
   }
 };
+
+/** What a sent-back task's last review asked, by whom: handed with it, to its agent or to the one taking it over. */
+const lastAsked = (view: TaskView): string[] =>
+  view.state.notes
+    .filter(note => note.text.startsWith(`Review ${String(view.state.round)}: `))
+    .map(note => `${note.by}: ${note.text.slice(`Review ${String(view.state.round)}: `.length)}`);
 
 /**
  * What a task's reviews asked, as the next review is handed it: the last review's notes whole, the earlier ones counted —

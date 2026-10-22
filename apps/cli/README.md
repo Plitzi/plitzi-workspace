@@ -279,8 +279,20 @@ there, for the next `shot`.
 `page shot --compare` writes the two pictures side by side and the differences in red. It compares each section where it
 is on the other page, so a page 400 px longer is said once, with the section the drift starts at; then it pairs the
 texts both pages have and says what each does differently there — `h1 "Learn CSS" — font-size 68px → 60px · y +19px`.
-With `--clip <section>` the report keeps that one section's difference (both pages are still compared whole) — the
-section by its id (`combates`) or its element's (`home-fights`).
+With `--clip <section>` the report keeps that one section's difference (both pages are still compared whole), and the
+picture `-o` writes is that section — the section by its id (`combates`), its element's (`home-fights`) or as the
+report names it (`section#home-fights`); a section that lined up with a part of the other page that is not it (90% or
+more differs, or farther than a screen) is said, never read as its figure. Beside a page of this machine — the run
+before a task — both sides are held to what the project changed: motion reduced, and another site's pictures stood in
+for by a colour their address gives them.
+`--timezone <IANA>` (both) opens the page as a visitor in that zone: its clock and `Intl` read there.
+
+`page measure <path> <element> [--compare <url>] [--there <selector>]` reads an element's computed styles — its type
+(family, size, weight, line height, tracking, case), colours, background, each border, radius, shadows, opacity,
+padding, margin, gap, size — and, beside another page, the other's element (`--there`, by any selector: the same name
+when left out): each property that differs, here → there, then the ones they share in a line. What a review asks of a
+copy in values, where a picture comparison says only that it differs. `--width`, `--scheme`, `--timezone`, `--url`,
+`--json`, as `page shot`.
 `--frames` compares pictures taken one after another and names what moved. A project `create` writes has them as
 `npm run check` and `npm run shot`.
 
@@ -468,13 +480,14 @@ It is the platform's `GET /spaces/:spaceId/activity?after=&wait=&limit=&mine=`, 
 plitzi space overview                      # who owns which file, read off the imports; what is shared
 plitzi run team                            # who works the runs: .plitzi/team.json, the agents, their roles and models
 plitzi run plan plan.json                  # a plan the lead wrote, held to the rules and estimated
-plitzi run open plan.json                  # its folder, every file it touches backed up; as many at once as the team
-plitzi task take t-home --json             # a subagent's: its files locked, its copy, its token
+plitzi run open plan.json                  # its folder, every file it touches backed up — and the lead's token, printed
+plitzi task next --role designer --agent design-1   # an agent's first command names it, and answers its own token
+plitzi task take t-home --token <yours> --json      # its files locked, its copy, the task's token
 plitzi task propose t-menu --change "…"    # ask another task to agree to a change; task answer accepts or counters
-plitzi task check --token …                # what complete holds the copy to, run now: nothing changes
+plitzi task check --token …                # what complete holds the copy to, run now: nothing changes (--fix: lint and format first)
 plitzi task complete --token …             # its copy compared by fingerprint, the project's checks run in it
-plitzi task review t-home --approve        # the lead's: into the run's work, never into the project
-plitzi task review t-home --approve --skip-design lead   # before its designer's UI review, saying why: lead (you looked at it) or no-ui
+plitzi task review t-home --approve --token <lead's>   # the lead's: into the run's work, never into the project
+plitzi task review t-home --approve --skip-design lead --token <lead's>   # before its UI review, saying why: lead or no-ui
 plitzi run notice "…" --on /pets            # something wrong no task owns: kept, said by the finish — the next stage's
 plitzi run reference                       # the plan's reference site kept as it is now: page shot --compare measures against it
 plitzi run watch --json                    # how the run goes: a line per task, what needs attention
@@ -506,7 +519,8 @@ lead`) and do nothing else; tasks name the role that
   agents talk while they work: `task ask` (an agent's question, on top of `run status`), `task message
 <task|all|@agent>` (the lead's word, handed to the agent with its next heartbeat, progress or completion), `task
 inbox`. A block lifted carries its answer (`task unblock --answer`), and `task next` hands an agent back the task it
-  holds first.
+  holds first — and a free agent a task sent back while its own agent is at another (after 3 minutes; that agent is
+  told). A round of UI sent back goes to the designer who said the one before, another only after a wait.
 - **Connected as it goes:** a shared file a task changed is its by turns at `complete` when nobody holds it, and merged
   line by line when the run moved meanwhile; `run preview` — the project's `npm run start:preview` — serves the run's
   work as each task is approved, and `run preview --task` a task in review, before it is. Your own `start:dev` serves
@@ -552,10 +566,18 @@ restore`, `run allow-finish`, `run stop --force`, `run attach --take-over` — i
 - **Cuts:** a task with no signal (15 minutes without a write, progress or heartbeat) can be reassigned; one taken again
   starts from its last reviewed version — what was written since is never resumed. `run attach` picks a run up after
   the harness died, on another machine, or after an upgrade. `run stop` lets the tasks in hand finish.
+- **Who calls is proved by a token**, never by a name typed: each agent's (`<run>.@<agent>.<secret>`) is made at its
+  first command (`--agent <name>`, said once) and kept in `tmp/plitzi-runs/<run>/scratch/<agent>/token`; the lead's is
+  printed by `run open`. Every command after passes it (`--token`): a name that has one said without it, a token under
+  another's name, a name or a role not of the team, and a command that says nothing are refused (26) — but the readings
+  anyone may ask (`run status`, `run report`, `run can-write`). What is the lead's is the lead's by its token, and a
+  message to a task goes out in the lead's voice, so it is a lead's too. A guard rail against an agent's mistake, not a
+  wall: an agent with a shell can read another's token file.
 - **No git needed:** the run keeps its own backups while it lasts, and the CLI never commits.
 - Every command answers `--json` and exits with a code per refusal: 10 claimed, 11 waiting, 12 reassigned, 13 version
   mismatch, 14 stopping, 15 forced stop, 16 reconciliation, 17 a person's, 18 conflict, 19 checks failed, 20 invalid,
-  21 not found, 22 another machine, 23 another run, 24 the agent limit, 25 the lead's alone.
+  21 not found, 22 another machine, 23 another run, 24 the agent limit, 25 the lead's alone, 26 not who you said
+  (pass your own token).
 
 ## `page import`
 

@@ -146,13 +146,24 @@ const nextFor = (task: RunTask, status: TaskStatus, design?: DesignReview): stri
   }
 };
 
+/**
+ * The lead's view of a task — or its own holder's, with its token: read only, and what it did is its own to read
+ * (velada-polish's dev-2 was refused its own task's diff). Another task's stays the lead's.
+ */
+const requireShowable = (ctx: RunContext, taskId: string): void => {
+  const own = ctx.token?.split('.')[1];
+  if (own !== taskId) {
+    requireNoTask(ctx, `show ${taskId} — a task's token shows its own task (plitzi task show ${own ?? '<yours>'})`);
+  }
+};
+
 export const showTask = async (
   ctx: RunContext,
   runId: string,
   taskId: string,
   { full = false }: { full?: boolean } = {}
 ): Promise<TaskShown> => {
-  requireNoTask(ctx, 'show a task as its lead');
+  requireShowable(ctx, taskId);
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = loaded.tasks.find(each => each.id === taskId);
   if (!task) {
@@ -241,7 +252,7 @@ export const showTaskFile = async (
   taskId: string,
   file: string
 ): Promise<TaskFileShown> => {
-  requireNoTask(ctx, 'show a task as its lead');
+  requireShowable(ctx, taskId);
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = loaded.tasks.find(each => each.id === taskId);
   if (!task) {

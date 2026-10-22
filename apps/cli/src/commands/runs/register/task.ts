@@ -259,9 +259,13 @@ export const registerTaskGroup = (program: Command): Command => {
   taskGroup
     .command('check')
     .description(
-      'What complete would hold your copy to — the checks, the acceptance’s commands, long files — run now; nothing changes'
+      'What complete would hold your copy to — the checks, the acceptance’s commands, long files — run now; nothing changes (but --fix)'
     )
     .option('--acceptance', 'Only the acceptance’s commands, the copy served for them: iterating on one line')
+    .option(
+      '--fix',
+      'First, what the project’s linter and formatter fix by themselves (eslint --fix, prettier --write), on your changed files alone'
+    )
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
     .action((options: RunCommandOptions & { acceptance?: boolean }) => taskCheck(options));
@@ -342,8 +346,9 @@ export const registerTaskGroup = (program: Command): Command => {
     )
     .option(
       '--before',
-      'Each page beside the run before the task — its approved work — and what changed, section by section: what it moved, and that nothing else did'
+      'Each page beside the run before the task — its approved work — and what changed, section by section: what it moved, and that nothing else did (a designer’s look of the UI it reviews does it unless --no-before)'
     )
+    .option('--no-before', 'Not beside the run before it: the designer’s look of the UI it reviews, as it is alone')
     .option(
       '--status <code>',
       'The status its pages are sent with — 404 for a not-found page — as page check --status',

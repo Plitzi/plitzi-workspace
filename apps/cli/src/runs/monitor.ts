@@ -534,6 +534,11 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
       return line('agent', `waits for work — ${reasonOf(textOf(entry.why))}`);
     case 'resumes':
       return line('agent', `goes on with ${textOf(entry.task)} — ${textOf(entry.question)} answered`);
+    case 'handed-off':
+      return line(
+        'agent',
+        `takes over ${textOf(entry.task)}'s changes from ${textOf(entry.from)}, who is at ${textOf(entry.at)}`
+      );
     case 'question-taken':
       return line('agent', `answers ${textOf(entry.task)}'s ${textOf(entry.message)}`);
     case 'stops':

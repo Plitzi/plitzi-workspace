@@ -5,6 +5,7 @@ import { assertStatus, loadRun, logRun } from '../run';
 import { tellLeftInTmp } from '../strays';
 import { changedInCopy, findTask, holderOf, refreshCopy } from './common';
 import { whoseChanges } from './complete';
+import { fixChanged } from './fix';
 import { readStart } from '../taskStore';
 
 import type { CheckResult } from '../checks';
@@ -38,6 +39,8 @@ export interface CheckedTask {
   only?: 'acceptance';
   /** Files it changed that another task at work holds: `complete` refuses them — said now, before the work is done. */
   othersFiles?: { file: string; holder: string }[];
+  /** `--fix`: the project's linter and formatter ran on its files first — which they rewrote, and which ran. */
+  fixed?: { fixed: string[]; ran: string[] };
 }
 
 export const checkTask = async (
@@ -48,7 +51,7 @@ export const checkTask = async (
    * `acceptance`: its commands alone, the copy served for them — what an agent iterating on one line runs, where the
    * whole check ran author, lint and typecheck again each time (la-velada: 52 of 88 failed checks were acceptance).
    */
-  { only }: { only?: 'acceptance' } = {}
+  { only, fix = false }: { only?: 'acceptance'; fix?: boolean } = {}
 ): Promise<CheckedTask> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'check a task');
@@ -58,16 +61,16 @@ export const checkTask = async (
   const messages = await handOver(ctx, loaded, taskId, view.owner?.agent ?? ctx.agent);
   // Checked against the run and the project as they are now, as `complete` will be.
   const brought = await refreshCopy(ctx, loaded, view);
+  const started = await readStart(view.paths);
+  const mine = started ? await changedInCopy(view, started) : [];
+  const fixed = fix ? await fixChanged(view.paths.work, ctx.root, mine) : undefined;
   const checks: CheckResult =
     only === 'acceptance' ? { ok: true, steps: [] } : await ctx.checks(view.paths.work, ctx.root);
   const accepted = checks.ok
     ? await checkAcceptance(task.acceptance, { work: view.paths.work, root: ctx.root, cache: view.paths.cache })
     : [];
   const tooLong = (await longFilesIn(view.paths.work, ctx.root)).filter(crossed).map(longFileText);
-  const started = await readStart(view.paths);
-  const { outside } = started
-    ? await whoseChanges(loaded, view, await changedInCopy(view, started), started)
-    : { outside: [] };
+  const { outside } = started ? await whoseChanges(loaded, view, mine, started) : { outside: [] };
   const ok = checks.ok && accepted.every(each => each.ok) && tooLong.length === 0 && outside.length === 0;
   // What failed, by name: a run's activity says why a check did not pass, not only that it did not.
   await logRun(ctx, loaded.paths, {
@@ -94,6 +97,7 @@ export const checkTask = async (
     messages,
     ...(brought.length > 0 ? { brought } : {}),
     ...(only ? { only } : {}),
-    ...(outside.length > 0 ? { othersFiles: outside } : {})
+    ...(outside.length > 0 ? { othersFiles: outside } : {}),
+    ...(fixed ? { fixed } : {})
   };
 };

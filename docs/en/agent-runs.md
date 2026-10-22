@@ -347,6 +347,18 @@ the lead's too when none is free — and left out, the run decides as above; the
 going past a UI review a designer took tells that designer, who still tells the lead what it found with `task tell
 --about <task>` — the way any agent holding no task does.
 
+**A round sent back goes to the designer who said the one before** (`design.before`, kept as the round comes due with
+its time, `since`): offered to it first, and to another designer only past `SAME_DESIGNER_MS` (3 min) — velada-polish's
+t-match-bars had design-2's first round and design-1's second, which brought asks of its own and cost a round. Another
+designer taking it is told so in its brief: check what the round before asked, and ask anew only what is broken — the
+rest is a notice for the next run. A designer's `task look` of the UI it reviews is set beside the run before it
+(`--before`) unless it says `--no-before`, and names the pages its changes are drawn at that were not looked at — a
+shared file's: velada-polish's design-2 looked at /combates twice, and the home its card change broke was the lead's to
+find. The values a review asks for are measured, not guessed: `plitzi page measure <path> <element> --compare <url>
+--there "<selector>"` reads an element's computed styles — type, colours, borders, radii, shadows, size, spacing — and
+the other page's element's, and says each property that differs; the designers of velada-polish wrote Playwright
+scripts of their own, and read the original's CSS by curl, for each one.
+
 ## Files read whole (`longFiles.ts`)
 
 A file past the space lint's `file-too-long` line (`MAX_LINES`, 400 lines that say something) is one nobody reads at
@@ -497,7 +509,17 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   token is said (a token said wins — the lead reviewing from inside a copy is the lead).
 - **Check:** `task check` runs in the copy what `complete` would hold it to — the project's checks, the acceptance's
   commands, the files too long — and changes none of its work (the copy is brought up first, as for `complete`): no
-  review, no brake. `--acceptance` runs only the acceptance's commands, the copy served for them, and says the
+  review, no brake. `--fix` first runs the project's own linter and formatter on the files the task changed alone
+  (`eslint --fix` when its `lint` script is eslint's, `prettier --write --ignore-unknown` when its `format` is
+  prettier's: `fix.ts`), and says what they rewrote; a check that fails on lint or format without it says `--fix` —
+  velada-polish's dev-1 ran three checks in twenty seconds, twice, on what a `--fix` writes.
+- **A rework handed over** (`handOff.ts`): a task sent back while its agent is at another one of its own — nothing
+  done on it since the verdict — waits `HAND_OFF_AFTER_MS` (3 min) for that agent; past it, a free agent of its role
+  asking `task next` is handed it (`handOff`, with what its review asked), and `--take` cuts the first agent's token —
+  told, by name, to go on with the task it is at — and takes it, its copy made again from the version that went to
+  review (`handed-off` in the activity). Until then, the waiting agent's answer says when it is its. velada-polish's
+  dev-1 held four tasks, two sent back at once: t-match-bars's changes waited ten minutes for it while dev-2 and dev-3
+  had nothing, and stopped. A task's holder reads its own with `task show` (its token's task: another's is the lead's). `--acceptance` runs only the acceptance's commands, the copy served for them, and says the
   project's checks were not run: la-velada's agents iterated on one failing line with the whole check each time (52 of
   their 88 failed checks were an acceptance line). An agent iterating on a fix checks with it,
   and completes once it passes; it hands over what was said to the task meanwhile, which an agent that only edits

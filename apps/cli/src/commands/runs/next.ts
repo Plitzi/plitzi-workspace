@@ -32,7 +32,8 @@ export const taskNext = (
 
           return { ...next, agent: ctx.agent, ...(taken ? { taken } : {}) };
         },
-        answer => (answer.taken ? takenText(answer.taken) : nextText(answer, answer.agent))
+        answer =>
+          answer.taken ? [...handOffLines(answer), takenText(answer.taken)].join('\n') : nextText(answer, answer.agent)
       )
     : act(
         options,
@@ -60,6 +61,13 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>): string
       `Review ${review.task.id}'s UI — ${review.task.title}: a designer's look, before the lead's${review.round > 0 ? ` (round ${String(review.round)}: sent back since)` : ''}`
     ),
     ...review.asked.map(line => `  ↺ ${line}`),
+    ...(review.before
+      ? [
+          chalk.yellow(
+            `  The round before was ${review.before}'s: check that what it asked is done, and ask anew only what is broken — anything else you would change is the next run's (plitzi run notice "…"), not another round`
+          )
+        ]
+      : []),
     ...earlierText(review),
     `  It changed: ${review.changed.join(', ') || 'nothing said'} — in its copy, ${review.copy}`,
     // Beside the run before it, measured — its dress too — and the copy served for it: what a designer rebuilt by hand.
@@ -126,6 +134,17 @@ const questionText = (question: NonNullable<NextTask['question']>): string =>
     '  A choice for the person, or a change of plan, is lead’s: leave it — lead is woken for it if it is not answered in 2 min'
   ].join('\n');
 
+/** A rework taken over: whose it was, and what its review asked — what this agent's round answers. */
+const handOffLines = (next: NextTask): string[] =>
+  next.handOff && next.task
+    ? [
+        chalk.bold(
+          `${next.task.id}'s changes, taken over from ${next.handOff.from} (at ${next.handOff.at}, it waited): its copy is the version that went to review — redo what its review asked`
+        ),
+        ...(next.asked ?? []).map(line => `  ↺ ${line}`)
+      ]
+    : [];
+
 const nextText = (next: NextTask, agent: string): string =>
   [
     ...messageLines(next.messages),
@@ -144,7 +163,9 @@ const nextText = (next: NextTask, agent: string): string =>
                     ...(next.work ? [`  Its copy, the only place you write: cd ${next.work}`] : []),
                     ...(next.asked ?? []).map(line => `  ↺ ${line}`)
                   ].join('\n')
-                : `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task take ${next.task.id}`
+                : next.handOff
+                  ? [...handOffLines(next), '  Take it over: plitzi task next --take'].join('\n')
+                  : `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task take ${next.task.id}`
               : [
                   String(next.why),
                   ...(next.worked ?? []).map(

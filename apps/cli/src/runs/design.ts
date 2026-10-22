@@ -32,19 +32,35 @@ export const designDue = (state: TaskState): boolean => state.status === 'in-rev
  * the most urgent first (`byUrgency`: what other tasks wait on goes before what nobody does), then the one that waited
  * longest.
  */
-export const designReviewFor = (views: readonly TaskView[], agent: string): TaskView | undefined => {
+export const designReviewFor = (views: readonly TaskView[], agent: string, now: number): TaskView | undefined => {
   const urgency = byUrgency(views.map(view => view.task));
+  // A round the designer before said is its own first; another's once it waited for that one past `SAME_DESIGNER_MS`.
+  const mine = (view: TaskView): boolean => view.state.design?.before === agent;
+  const anothers = (view: TaskView): boolean => {
+    const { before, since } = view.state.design ?? {};
+
+    return before !== undefined && before !== agent && now - Date.parse(since ?? '') < SAME_DESIGNER_MS;
+  };
 
   return views
     .filter(
       view =>
         designDue(view.state) &&
         view.owner?.agent !== agent &&
-        (view.state.design?.by === undefined || view.state.design.by === agent)
+        (view.state.design?.by === undefined || view.state.design.by === agent) &&
+        !anothers(view)
     )
-    .sort((a, b) => urgency(a.task, b.task) || a.state.updatedAt.localeCompare(b.state.updatedAt))
+    .sort(
+      (a, b) =>
+        Number(mine(b)) - Number(mine(a)) ||
+        urgency(a.task, b.task) ||
+        a.state.updatedAt.localeCompare(b.state.updatedAt)
+    )
     .at(0);
 };
+
+/** How long a sent-back task's UI waits for the designer who said its round before, before another is offered it. */
+export const SAME_DESIGNER_MS = 3 * 60_000;
 
 /**
  * What a designer looks at, by how closely the team asks (`options.designReview`) — the run's skill (`runs.md`) says it
@@ -139,7 +155,8 @@ export const designAtComplete = async (
   loaded: LoadedRun,
   view: TaskView,
   changed: readonly string[],
-  asked?: ReviewAsked
+  asked?: ReviewAsked,
+  now: number = Date.now()
 ): Promise<{ design?: DesignReview; carried?: string }> => {
   if (asked === 'code') {
     return {
@@ -180,5 +197,12 @@ export const designAtComplete = async (
     }
   }
 
-  return { design: { status: 'due', round: view.state.round } };
+  return {
+    design: {
+      status: 'due',
+      round: view.state.round,
+      ...(design?.by === undefined ? {} : { before: design.by }),
+      since: new Date(now).toISOString()
+    }
+  };
 };

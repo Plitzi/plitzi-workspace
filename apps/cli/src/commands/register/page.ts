@@ -1,13 +1,15 @@
 import { Option } from 'commander';
 
-import { expectation, fill, positiveInteger, statusCode, timeZone, widths } from '../../options';
+import { expectation, fill, positiveInteger, statusCode, timeZone, width, widths } from '../../options';
 import { check } from '../check';
 import { importPage } from '../importPage';
+import { measure } from '../measure';
 import { shotEach, SHOT_MOMENTS } from '../shot';
 import { API_OPTION, DRY_RUN_OPTION, schemeOption, URL_OPTION, widthsOption } from './options';
 
 import type { CheckOptions } from '../check';
 import type { ImportOptions } from '../importPage';
+import type { MeasureOptions } from '../measure';
 import type { ShotOptions } from '../shot';
 import type { Command } from 'commander';
 
@@ -96,6 +98,24 @@ export const registerPage = (pageGroup: Command): void => {
     .option(...API_OPTION)
     .option(...DRY_RUN_OPTION)
     .action((url: string, options: ImportOptions) => importPage(url, options));
+
+  pageGroup
+    .command('measure')
+    .argument('<path>', 'The page: /combates')
+    .argument('<element>', 'Its element: a name, an id, or any selector')
+    .description(
+      'An element’s computed styles — type, colours, borders, radii, shadows, size, spacing — and, with --compare, beside another page’s'
+    )
+    .option('--compare <url>', 'Another page — the site a copy is made after — whose element is measured beside it')
+    .option('--there <selector>', 'That page’s element, by any selector: the same name when left out')
+    .addOption(new Option('--width <px>', 'The viewport width').argParser(width).default(1440, '1440'))
+    .addOption(schemeOption())
+    .addOption(
+      new Option('--timezone <zone>', 'The visitor’s time zone (IANA): the machine’s when left out').argParser(timeZone)
+    )
+    .option('--url <origin>', URL_OPTION)
+    .option('--json', 'One object, for a tool or an agent')
+    .action((route: string, element: string, options: MeasureOptions) => measure(route, element, options));
 
   pageGroup
     .command('shot')
