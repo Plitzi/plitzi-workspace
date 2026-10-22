@@ -93,7 +93,9 @@ export const taskProposals = (options: RunCommandOptions): Promise<void> =>
   act(
     options,
     async ctx => {
-      const all = await proposalsOf(await loadRun(ctx, await runOf(ctx, options), { anyVersion: true }));
+      const all = await proposalsOf(
+        await loadRun(ctx, await runOf(ctx, options, undefined, { anyone: true }), { anyVersion: true })
+      );
       const mine = ctx.token ? taskOf(ctx) : undefined;
 
       return mine ? all.filter(each => each.to === mine || each.from === mine) : all;

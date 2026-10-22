@@ -146,3 +146,44 @@ export const stopKept = async (cache: string): Promise<void> => {
     await new Promise(resolve => setTimeout(resolve, 250));
   }
 };
+
+/** The kept server's use marked now, while a command borrows it: its watchdog stops it only once nobody does. */
+export const touchKept = async (cache: string, port: number): Promise<void> => {
+  const kept = await readKept(cache);
+  if (kept?.port === port) {
+    await fs.writeFile(fileOf(cache), JSON.stringify({ ...kept, usedAt: new Date().toISOString() }));
+  }
+};
+
+const previewedFile = (cache: string): string => path.join(cache, 'previewed.json');
+
+/**
+ * A copy served by a preview (`task look`, `run preview --task`), said where a picture asks for the copy's server: one
+ * started beside it holds the copy's state (its kv) against the other's, and one of them fails — velada-polish's lead
+ * look pictured nothing.
+ */
+export const markPreviewed = (cache: string, port: number): Promise<void> =>
+  fs.writeFile(previewedFile(cache), JSON.stringify({ port, pid: process.pid }));
+
+export const unmarkPreviewed = (cache: string): Promise<void> => fs.rm(previewedFile(cache), { force: true });
+
+/** The copy's preview, answering as this copy's: its address — or none. */
+export const previewedServer = async (work: string, cache: string): Promise<string | undefined> => {
+  const value: unknown = await fs
+    .readFile(previewedFile(cache), 'utf-8')
+    .then(text => JSON.parse(text) as unknown)
+    .catch(() => undefined);
+  if (!isRecord(value) || typeof value.port !== 'number') {
+    return undefined;
+  }
+
+  const health: unknown = await fetch(`http://127.0.0.1:${String(value.port)}/health`, {
+    signal: AbortSignal.timeout(1_000)
+  })
+    .then(async (response): Promise<unknown> => response.json())
+    .catch(() => undefined);
+
+  return isRecord(health) && (typeof health.Instance !== 'string' || health.Instance === projectMark(work))
+    ? `http://127.0.0.1:${String(value.port)}`
+    : undefined;
+};

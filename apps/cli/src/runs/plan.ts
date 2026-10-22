@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { namesServedCopy } from './acceptance';
-import { expectationNotices } from './expectations';
+import { expectationNotices, notFoundNotices } from './expectations';
 import { exists } from './files';
 import { readHistory } from './history';
 import { inventoryLeftOut, inventoryProblems } from './inventory';
@@ -593,7 +593,7 @@ export const checkPlan = async (
       )
     );
   created.forEach(file => notices.push(`${file} does not exist yet: the run makes it`));
-  notices.push(...(await expectationNotices(root, plan.tasks)));
+  notices.push(...(await expectationNotices(root, plan.tasks)), ...(await notFoundNotices(root, plan.tasks)));
   notices.push(...sharedLookNotices(plan.tasks));
   // What reads a task's file and is in no task: changed under it, never by it — the lead's to plan, or to leave.
   const planned = new Set(tasks.flatMap(task => task.files));

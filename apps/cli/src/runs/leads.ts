@@ -79,28 +79,45 @@ const teamAgents = async (root: string): Promise<string[]> => {
 };
 
 /**
- * `lead`'s, or a person's: refused to a lead that reviews and to an agent of the team — planning, answering, reassigning
- * and finishing are one lead's, or two would do them twice.
+ * `lead`'s, or a person's: refused to a lead that reviews, to an agent of the team and to any other — planning,
+ * answering, reassigning and finishing are one lead's, or two would do them twice.
  */
 export const requireLead = async (ctx: RunContext, loaded: LoadedRun, action: string): Promise<void> => {
-  if (isCoLead(loaded.record, ctx.agent)) {
-    throw new RunRefusal(
-      'lead-only',
-      `${ctx.agent} reviews; to ${action} is lead's: tell it what you found, and go on with your reviews`,
-      { holder: LEAD }
-    );
+  if (isPrincipal(ctx.agent)) {
+    return;
   }
 
-  if (!isPrincipal(ctx.agent) && (await teamAgents(ctx.root)).includes(ctx.agent)) {
-    throw new RunRefusal('lead-only', `${ctx.agent} is an agent of the team; to ${action} is the lead's`, {
-      holder: LEAD
-    });
-  }
+  // Who calls is proved (`identity.ts`): any other is refused, named — a name of no team is no way in either.
+  throw new RunRefusal(
+    'lead-only',
+    isCoLead(loaded.record, ctx.agent)
+      ? `${ctx.agent} reviews; to ${action} is lead's: tell it what you found, and go on with your reviews`
+      : (await teamAgents(ctx.root)).includes(ctx.agent)
+        ? `${ctx.agent} is an agent of the team; to ${action} is the lead's`
+        : `${ctx.agent} is not the lead; to ${action} is the lead's`,
+    { holder: LEAD }
+  );
 };
 
 /**
- * A lead's verdict on a task — `lead`, a lead that reviews, a person: an agent of the team is refused, a designer
- * included once the task's UI is said (its verdict is on the UI, and only while it waits for one).
+ * A lead's — `lead`, a lead that reviews, a person — and no other's: what goes out in the lead's voice (`task message`
+ * is from the lead), so a designer or an agent of the team never speaks as it.
+ */
+export const requireALead = (ctx: RunContext, loaded: LoadedRun, action: string): void => {
+  if (isPrincipal(ctx.agent) || isCoLead(loaded.record, ctx.agent)) {
+    return;
+  }
+
+  throw new RunRefusal(
+    'lead-only',
+    `${ctx.agent} cannot ${action}: it goes out in the lead's voice — tell the lead (plitzi task tell --about <task> "…"), and it says it`,
+    { holder: LEAD }
+  );
+};
+
+/**
+ * A lead's verdict on a task — `lead`, a lead that reviews, a person: any other is refused, a designer included once
+ * the task's UI is said (its verdict is on the UI, and only while it waits for one).
  */
 export const assertReviewingLead = async (ctx: RunContext, loaded: LoadedRun, view: TaskView): Promise<void> => {
   if (isPrincipal(ctx.agent) || isCoLead(loaded.record, ctx.agent)) {
@@ -121,16 +138,14 @@ export const assertReviewingLead = async (ctx: RunContext, loaded: LoadedRun, vi
     return;
   }
 
-  if ((await teamAgents(ctx.root)).includes(ctx.agent)) {
-    const leads = [LEAD, ...coLeadsOf(loaded.record)].join(', ');
-    throw new RunRefusal(
-      'lead-only',
-      `${ctx.agent} is an agent of the team: a lead says whether ${view.task.id} is done (${leads})${
-        view.state.design?.status === 'due' ? '' : ` — its UI review is ${view.state.design ? 'said' : 'not asked'}`
-      }`,
-      { task: view.task.id, holder: LEAD }
-    );
-  }
+  const leads = [LEAD, ...coLeadsOf(loaded.record)].join(', ');
+  throw new RunRefusal(
+    'lead-only',
+    `${ctx.agent} is ${(await teamAgents(ctx.root)).includes(ctx.agent) ? 'an agent of the team' : 'no lead of this run'}: a lead says whether ${view.task.id} is done (${leads})${
+      view.state.design?.status === 'due' ? '' : ` — its UI review is ${view.state.design ? 'said' : 'not asked'}`
+    }`,
+    { task: view.task.id, holder: LEAD }
+  );
 };
 
 /** Who took a task's work, by the notes its takes leave. */

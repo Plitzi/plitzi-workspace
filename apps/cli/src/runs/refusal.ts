@@ -18,7 +18,8 @@ export const REFUSAL_EXIT_CODES = {
   'other-machine': 22,
   'another-run': 23,
   'agent-limit': 24,
-  'lead-only': 25
+  'lead-only': 25,
+  identity: 26
 } as const;
 
 export type RefusalCode = keyof typeof REFUSAL_EXIT_CODES;
@@ -45,7 +46,9 @@ const NEXT_STEP: Record<RefusalCode, string> = {
   'another-run': 'one run at a time: finish or abort the open one first (plitzi run status)',
   'agent-limit':
     'hand back to the lead: this task waits until one of the agents at work has nothing in progress (plitzi run status)',
-  'lead-only': 'it is the lead’s (lead) to do: leave it to it, and go on with your own part'
+  'lead-only': 'it is the lead’s (lead) to do: leave it to it, and go on with your own part',
+  identity:
+    'pass your own token (--token): the one your first command on the run printed, kept in its scratch/<you>/token — never another’s'
 };
 
 export interface RefusalDetail {

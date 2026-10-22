@@ -54,9 +54,9 @@ What the lead — team lead and software architect — does; the agents' half, t
    the finish. **`notes`** hold for the whole run;
    `plitzi run note "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB): what you learnt reading the project — every
    brief starts with it, and the few references its files need. **The team** is the project's,
-   `.plitzi/team.json` (`plitzi run team check`) — grow it when the job asks (`plitzi run team set dev --count 3 --min 1
-   --model <model>`): its size is how many work at once; past `min`, on demand — `run watch` says when to start one, it
-   stops when idle. A tester adds `<id>-tests` after each developer task (`"tests": false` for none); a designer reviews
+   `.plitzi/team.json` — grow it when the job asks (`plitzi run team set dev --count 3 --min 1 --model <model>`): its
+   size is how many work at once; past `min`, on demand — `run watch` says when to start one (by its token, after its
+   first start). A tester adds `<id>-tests` after each developer task (`"tests": false` for none); a designer reviews
    the others' UI before you (`options.designReview`; `"designReview": false` turns it off). Yours is the complete,
    strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
    `--skip-design lead|no-ui`). **One lead for every four agents**: `lead-2`… beside you, started when `run watch
@@ -66,8 +66,7 @@ What the lead — team lead and software architect — does; the agents' half, t
    **Keep a person's actions a person's in the harness**: deny the agents `run finish --apply`, `run abort`, `run purge`,
    `run restore`, `run allow-finish`, `run stop --force`, `run attach --take-over` (Claude Code: `permissions.deny`).
 
-   **Quality** (`"quality": "light" | "standard" | "high"`): `run plan` sets it where you say none (what many tasks build
-   on `high`, a one-file few minutes `light`) and says which agent starts at which level. Ids: lowercase letters, digits, `-`, `_`; **classes and provider ids by area** (`pronosticos-card`, `topBoxers`):
+   **Quality** (`"quality": "light" | "standard" | "high"`): `run plan` sets it where you say none. Ids: lowercase letters, digits, `-`, `_`; **classes and provider ids by area** (`pronosticos-card`, `topBoxers`):
    two tasks that name one class differently meet only at the approval. **Foundations go to different agents**: the
    shell and the components as two tasks two agents take at once — one role allowed to only one agent works them one
    after the other while every page waits. **A file other tasks import is their contract**: a task that changes what
@@ -85,8 +84,8 @@ What the lead — team lead and software architect — does; the agents' half, t
    each team size.
 4. **Ask the person first** who applies the run at the end — they, or you: then they open it in their terminal with
    `--lead-finishes` (or `plitzi run allow-finish` later). Never you.
-   `plitzi run open plan.json` backs up every file it will touch; as many agents at once as the team has (above 5 a
-   person confirms). Tell the person how to watch it: `npm run start:preview` (the approved work), `plitzi run monitor`.
+   `plitzi run open plan.json` backs up every file it will touch, and prints **your token**: pass it on every command
+   after (`--token …`; kept in the run's `scratch/lead/token`) — `lead` said alone is refused. Tell the person how to watch it: `npm run start:preview` (the approved work), `plitzi run monitor`.
 5. Start one agent per ready task (`plitzi task next --run es-launch --json`), each with a free port, and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
    file a task takes past 400 lines (ask for the split) — each said once. **Talk:** answer a question with `plitzi

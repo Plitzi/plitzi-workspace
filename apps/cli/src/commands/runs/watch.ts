@@ -49,7 +49,7 @@ export const runState = (options: RunCommandOptions): Promise<void> =>
   );
 
 export const runStatus = (runId: string | undefined, options: RunCommandOptions): Promise<void> =>
-  act(options, async ctx => viewRun(ctx, await runOf(ctx, options, runId)), runText);
+  act(options, async ctx => viewRun(ctx, await runOf(ctx, options, runId, { anyone: true })), runText);
 
 export interface WatchRunOptions extends RunCommandOptions {
   interval?: number;
@@ -151,7 +151,7 @@ export const runReport = (
   act(
     options,
     async ctx => {
-      const id = await runOf(ctx, options, runId);
+      const id = await runOf(ctx, options, runId, { anyone: options.summary === undefined });
       if (options.summary) {
         await writeSummary(ctx, id, options.summary);
       }
@@ -192,7 +192,7 @@ export const runPreview = async (
         : [
             preview.borrowed === undefined
               ? `${task}'s copy: ${preview.url} — as it went to review, or as its agent writes it. Ctrl-C stops it; it stops by itself once the task is neither worked nor in review.`
-              : `${task}'s copy: ${preview.url} — its agent's own server, on :${String(preview.borrowed)}, serves it already (it holds the copy's state): followed there, never stopped from here.`,
+              : `${task}'s copy: ${preview.url} — ${preview.borrowed.by === 'agent' ? "its agent's own server" : 'the server a picture of it kept'}, on :${String(preview.borrowed.port)}, serves it already (it holds the copy's state): followed there, never stopped from here.`,
             // `page check` holds a page to the space of the folder it runs in: from the project, a page this task made is
             // not there yet and reads as not found.
             `Check its pages from its copy, which holds them: cd ${preview.dir} && plitzi page check <path> --url ${preview.url}`

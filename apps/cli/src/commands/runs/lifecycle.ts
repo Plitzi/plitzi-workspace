@@ -209,7 +209,7 @@ export const runRestore = (
 export const runAttach = (runId: string, options: RunCommandOptions & { takeOver?: boolean }): Promise<void> =>
   act(
     options,
-    ctx => attachRun(ctx, runId, options.takeOver ?? false),
+    async ctx => attachRun(ctx, await runOf(ctx, options, runId), options.takeOver ?? false),
     attached =>
       `Attached to "${runId}"${attached.tookOver ? ', taken over from the other machine' : ''}${attached.repinned ? ', re-pinned to the Plitzi installed now' : ''}. Cut: ${list(attached.cut)}.${attached.kept.length > 0 ? ` Kept in their agents' hands, told to go on: ${attached.kept.join(', ')}.` : ''}\nGo on: plitzi run status ${runId}`
   );
@@ -217,7 +217,7 @@ export const runAttach = (runId: string, options: RunCommandOptions & { takeOver
 export const runRelease = (runId: string, options: RunCommandOptions): Promise<void> =>
   act(
     options,
-    ctx => releaseRun(ctx, runId),
+    async ctx => releaseRun(ctx, await runOf(ctx, options, runId)),
     () => `Released: another machine can attach to "${runId}".`
   );
 

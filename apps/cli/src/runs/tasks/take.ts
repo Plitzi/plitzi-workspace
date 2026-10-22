@@ -5,6 +5,7 @@ import path from 'node:path';
 import { proposalsOf, unansweredTo } from '../agreements';
 import { cloneFiles, cloneServed, createExclusive, isCopied, projectFiles, writeJson } from '../files';
 import { handOver } from '../handOver';
+import { assertRoles } from '../identity';
 import { COPY_TASK_FILE, isSecretFile, lockFile, under } from '../paths';
 import { dependenciesDone } from '../plan';
 import { RunRefusal } from '../refusal';
@@ -63,6 +64,7 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
     );
   }
 
+  await assertRoles(ctx.root, ctx.agent, [roleOf(task)]);
   let view = await viewTask(loaded.paths, task);
   const states = new Map(
     await Promise.all(loaded.tasks.map(async each => [each.id, (await viewTask(loaded.paths, each)).state] as const))

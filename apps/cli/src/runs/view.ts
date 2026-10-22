@@ -5,6 +5,7 @@ import { answering } from './answering';
 import { bottlenecks } from './bottlenecks';
 import { designSkipText } from './designSkip';
 import { fingerprint } from './files';
+import { identifiedAgents } from './identity';
 import { askingLeads, UNTAKEN_REVIEW_MS } from './leads';
 import { longFileText, longFilesIn } from './longFiles';
 import { LEAD, messagesOf, unreadFor } from './messages';
@@ -145,6 +146,8 @@ export interface RunView {
   askingLeads: string[];
   /** Where the run's approved work is served while a preview serves it (`run preview`, `npm run start:preview`). */
   previewPort?: number;
+  /** The agents with a token on the run: started again by it, never by their name (`identity.ts`). */
+  identified: string[];
 }
 
 /** What a wait is on: a file, or an answer to a proposal. */
@@ -265,7 +268,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   attention.push(...bottlenecks(views, started, now));
   // Agents on demand: told to the lead when work waits for one and none running is free.
   const log = await readRunLog(loaded.paths);
-  attention.push(...agentsNeeded(views, started, runningAgents(log)));
+  const identified = await identifiedAgents(loaded.paths);
+  attention.push(...agentsNeeded(views, started, runningAgents(log), { runId, identified }));
   attention.push(...refusedAgain(log, now));
 
   for (const file of await leftInTmp(ctx.root, record)) {
@@ -509,7 +513,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     approvedFiles: Object.keys(approved.files).length,
     leads: record.leads ?? [],
     askingLeads: await askingLeads(loaded, now),
-    ...(port === undefined ? {} : { previewPort: port })
+    ...(port === undefined ? {} : { previewPort: port }),
+    identified
   };
 };
 

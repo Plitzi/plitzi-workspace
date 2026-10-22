@@ -14,8 +14,8 @@ hands them the code or plan answers, and stop when it says so — the rest is th
 (8 min, `--timeout`) for the next one and takes it, handing back first a task you hold that can go on; a wait that ends is
 no reason to stop — run it again until it says you can. Started at a
 level, say it (`--quality high`, as `run plan` gave your command): you are handed tasks of it or below.
-**A designer** reviews the others' UI/UX, as a designer, before the lead's complete review: `plitzi task look <task>` (its pages; `--click <id>` an open state, `--hover <id>` a hover, `--element <id>` the page's own; `--before` what changed beside the run before it), then `task review <task>
---approve [--note "what you saw"] | --changes "what, where, why" --agent design-1` — hierarchy, spacing, the theme's tokens, every state (empty,
+**A designer** reviews the others' UI/UX, as a designer, before the lead's complete review: `plitzi task look <task>` (its pages; `--click <id>` an open state, `--hover <id>` a hover, `--element <id>` the page's own; `--before` what changed beside the run before it; `--width`, `--scheme`, `--status 404` as `page check`), then `task review <task>
+--approve [--note "what you saw"] | --changes "what, where, why" --token <yours>` — hierarchy, spacing, the theme's tokens, every state (empty,
 long, error, hover, focus), light and dark, 390, the words; against a reference, its details: what moves (an entrance, a
 shine, an arrow), sizes as `--compare` measures them, what each control does, the phone's own layout. **A tester** gets `<task>-tests` after each developer task: tests of
 what its acceptance asked, both sides of each condition (a page's in `visual/<page>.spec.ts`, a module's beside it,
@@ -30,19 +30,19 @@ plitzi task take t-home --run es-launch --agent writer-1 --role writer --json   
 cd <work> && plitzi task context --files   # the brief, your files, their data's shape, how to call what they import
 ```
 
-Inside `work`, every command knows its task, run and agent (`tmp/plitzi-task.json`); elsewhere, `--token`.
+Inside `work`, every command knows its task, run and agent (`tmp/plitzi-task.json`).
 
-Outside a copy, name yourself (`--agent writer-1`, or `PLITZI_AGENT`): `task next` and the agent limit go by it.
+**Your token is who you are.** Your first command names you (`--agent design-1`) and answers your token
+(`<run>.@design-1.<secret>`, kept in the run's `scratch/design-1/token`): pass it on every command after (`--token …`).
+Your name alone, your token under another's name, a name or a role not the team's: refused (`identity`, 26).
 
 - **Write only in `work`**, never in the project. Run the project's scripts there. The copy has no `node_modules` (it resolves the project's) and no `.env` — a warning about it is expected.
   **Look at your page:** `npx plitzi page check /pets --width 1440,390` (or `page shot`) from `work` serves the copy
-  (kept 3 min) — no server to start. Iterating on one page, `npm run start:dev` in `work` keeps
-  it served (a save swaps the space in the open page); stop it by its port (`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)`),
-  never `pkill -f` (every copy's server, and the person's). Read a shared module only for what the brief's
-  imports do not say. The copy's `tmp/` and `state/`
+  (kept 3 min). Iterating on one page, `npm run start:dev` in `work` keeps
+  it served; stop it by its port (`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)`),
+  never `pkill -f`. Read a shared module only for what the brief's imports do not say. The copy's `tmp/` and `state/`
   never count at `complete`, and are where what is yours beside the work goes — a script, a log, a picture; between
-  tasks, `tmp/plitzi-runs/<run>/scratch/<your name>/`. Never the project's `tmp/`: it is the person's, and what is
-  left there is said to the lead. Format your files (`npx prettier --write <file>`).
+  tasks, `tmp/plitzi-runs/<run>/scratch/<your name>/`. Never the project's `tmp/`: it is the person's. Format your files (`npx prettier --write`).
 - **Only your files.** A file another task at work holds is refused at `complete`, naming it — `plitzi task discard
 <file>` puts it back (and brings the run's version of any file); propose the change to that task instead. **Name
   what you declare by your part** — classes and provider ids (`hero-title`, `fightsList`), never `title`: another
@@ -50,8 +50,7 @@ Outside a copy, name yourself (`--agent writer-1`, or `PLITZI_AGENT`): `task nex
 - **Any other file** — shared (the entry, the theme, a layout), a done task's, or in no task: change it in your copy. At
   `complete`, if nobody holds it, it is yours by turns and goes into the run with you; if the run changed it meanwhile,
   the two changes are put together line by line. Held by another, your change becomes a request (`plitzi task request
-<file> --summary "why"`), merged when you are approved or applied by an integration task — one a file: what is asked
-  while it waits joins it, and until it is taken the file stays shared, taken by turns like any other. To hold it while
+<file> --summary "why"`), merged when you are approved. To hold it while
   you work: `plitzi task claim <file>`; answered `claimed` with `turn: "wait"` → `plitzi task wait <file>` and go on
   meanwhile (`--follow` to stay until it is yours). A file handed on to you arrives with what the run approved since
   your copy was made.
@@ -59,9 +58,8 @@ Outside a copy, name yourself (`--agent writer-1`, or `PLITZI_AGENT`): `task nex
 takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | --reject "why" | --counter "…"`.
   Answer what is proposed to you before you complete (`plitzi task proposals`); honour what you accepted.
 - **Stuck, or unsure?** `plitzi task ask "Spanish or Catalan?"` (`--follow` waits for the answer). **Something the lead
-  should know** — a finding, a choice you made, a risk — with no answer needed: `plitzi task tell "…"` (holding no task — a reviewer — `--about <task> --agent <you>`). **Wrong, and no task's** — outside yours, there
-  before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage; never left as
-  "predates this task". What the lead
+  should know** — a finding, a choice you made, a risk — with no answer needed: `plitzi task tell "…"` (holding no task — a reviewer — `--about <task> --token <yours>`). **Wrong, and no task's** — outside yours, there
+  before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage. What the lead
   says to you arrives with your next heartbeat, progress or completion — read it; `plitzi task inbox --all` shows
   all of it again.
 - **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"`; in a long think or test run,
@@ -78,11 +76,10 @@ takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | 
   since your copy was made comes in first, as at `complete`; `--acceptance` runs only its lines, for one you are
   fixing): iterate on it, not on `complete`, whose failures count toward the run's
   brake (enough of them, across the team, stop the run). It hands you what the lead said meanwhile: run it between
-  steps, not only at the end.What you declare for later tasks, unread yet, is a warning, not a failure.
+  steps, not only at the end. What you declare for later tasks, unread yet, is a warning.
 - **Done:** `plitzi task complete [--note "what to look at"] [--review code|ui]` — the note goes to the lead with it;
-  `code` when nothing a visitor sees changed (the lead's review alone), `ui` for its UI looked at first — compared by
-  fingerprint, the project's checks and the acceptance's checks run in
-  the copy. **A task never ends
+  `code` when nothing a visitor sees changed (the lead's review alone), `ui` for its UI looked at first — the project's
+  checks and the acceptance's run in the copy. **A task never ends
   with failing checks** — lint, types, tests: fix them — nor with a file it took past 400 non-blank lines (your
   heartbeat says so first): split it. Only for a reason that weighs, said: `plitzi task complete
 --known-failure "why" --fixed-by <task>`. A check that fails the same way without your change (a person's edit,
@@ -116,5 +113,6 @@ out (what was built on it waits again), and `plitzi run restore <run> <file>` pu
 | 23 / 24      | `another-run` / `agent-limit`             | one run at a time / hand back to the lead                                                        |
 | 20 / 21 / 22 | `invalid` / `not-found` / `other-machine` | read the message                                                                                 |
 | 25           | `lead-only`                               | it is `lead`'s: tell it, and go on with your part                                                |
+| 26           | `identity`                                | pass your own token (`--token`), never another's                                                 |
 
 Any hook or editor can ask before writing: `plitzi run can-write <file>` (exit 10 with the holder).

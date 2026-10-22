@@ -1,6 +1,6 @@
 import { writeJson } from './files';
 import { handOver } from './handOver';
-import { requireLead } from './leads';
+import { requireALead, requireLead } from './leads';
 import { agentAddress, EVERYONE, LEAD, messagesOf, replyTo, sendMessage, unreadFor } from './messages';
 import { RunRefusal } from './refusal';
 import { assertStatus, loadRun, logRun, requireNoTask } from './run';
@@ -106,7 +106,7 @@ export const tellLeadAbout = async (ctx: RunContext, runId: string, about: strin
   if (!(team ? startedAgents(team) : []).some(member => member.agent === ctx.agent)) {
     throw new RunRefusal(
       'invalid',
-      `${ctx.agent} is no agent of the team: an agent tells the lead as itself (--agent <its name>), a task's holder with its token`,
+      `${ctx.agent} is no agent of the team: an agent tells the lead as itself, with its own token (--token), a task's holder with its token`,
       { task: task.id }
     );
   }
@@ -137,6 +137,7 @@ export const messageTasks = async (
 ): Promise<Message[]> => {
   requireNoTask(ctx, 'message a task');
   const loaded = await loadRun(ctx, runId);
+  requireALead(ctx, loaded, 'message a task');
   const inHand = await Promise.all(
     loaded.tasks.map(async task => ({ task, view: await viewTask(loaded.paths, task) }))
   );

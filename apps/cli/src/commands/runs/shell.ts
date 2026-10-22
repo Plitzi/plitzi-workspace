@@ -12,6 +12,8 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { failedSteps } from './text';
 import { projectChecks } from '../../runs/checks';
 import { writtenByAnother } from '../../runs/compat';
+import { AGENT_TOKEN, identify, issuedText, UNNAMED } from '../../runs/identity';
+import { LEAD } from '../../runs/messages';
 import { COPY_TASK_FILE, copyOf, runPaths, taskPaths } from '../../runs/paths';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { activeRuns } from '../../runs/run';
@@ -20,6 +22,7 @@ import { isQuality } from '../../runs/team';
 import { CLI_VERSION } from '../../scaffold/project';
 import { findProject } from '../existingProject';
 
+import type { Claim } from '../../runs/identity';
 import type { RunContext } from '../../runs/run';
 
 /**
@@ -124,34 +127,79 @@ const holderName = async (root: string, token: string): Promise<string | undefin
   return owner?.token === token ? owner.agent : undefined;
 };
 
+/** What a context's caller said of itself, until the run is known and it is proved (`runOf`). */
+const unproved = new WeakMap<RunContext, { claim: Claim; prove: (agent: string) => void }>();
+
+/** What the caller brought: its own token, a task's, a name, a terminal — or nothing. */
+const claimOf = async (
+  root: string,
+  said: { own?: string; token?: string; name?: string; fallback: string }
+): Promise<Claim> => {
+  const { own, token, name } = said;
+  if (own !== undefined) {
+    return { kind: 'agent', token: own, ...(name === undefined ? {} : { said: name }) };
+  }
+
+  if (token !== undefined) {
+    const holder = await holderName(root, token);
+
+    return {
+      kind: 'task',
+      ...(holder === undefined ? {} : { holder }),
+      ...(name === undefined ? {} : { said: name }),
+      fallback: said.fallback
+    };
+  }
+
+  if (name !== undefined) {
+    return { kind: 'name', said: name };
+  }
+
+  return process.stdin.isTTY ? { kind: 'person' } : { kind: 'none' };
+};
+
 /**
- * Who runs a command, and as which task: the token said (`--token`, `PLITZI_TASK_TOKEN`), or — run in a task's copy —
- * the copy's own, so an agent at work in it says neither. A token said wins over the copy's: the lead reviewing from
- * inside one is the lead.
+ * Who runs a command, and as which task: an agent by its own token (`--token`, `PLITZI_TASK_TOKEN`), a task by its
+ * token — said, or its copy's, so an agent at work in it says neither — and a person by their terminal. A name said
+ * alone is proved once the run is known (`runOf`): its first time, it is made a token. Read before that, `agent` is a
+ * bug of the CLI's, never a guess — a guess was the lead.
  */
 export const contextFor = async (options: RunCommandOptions): Promise<RunContext> => {
   const { root, copy } = await whereAmI();
   // An empty variable is none said: a shell that cleared it, not a token.
   const said = options.token ?? (process.env.PLITZI_TASK_TOKEN === '' ? undefined : process.env.PLITZI_TASK_TOKEN);
-  const token = said ?? copy?.token;
+  const own = said !== undefined && AGENT_TOKEN.test(said) ? said : undefined;
+  const ownName = own === undefined ? undefined : AGENT_TOKEN.exec(own)?.[2];
+  const name = options.agent ?? (process.env.PLITZI_AGENT === '' ? undefined : process.env.PLITZI_AGENT);
+  // The copy's token is its holder's task: kept for that holder's own token, never for another's — the lead reviewing
+  // from inside a copy is the lead, holding no task.
+  const token = own === undefined ? (said ?? copy?.token) : ownName === copy?.agent ? copy?.token : undefined;
   const quality = options.quality ?? process.env.PLITZI_QUALITY;
   if (quality !== undefined && quality !== '' && !isQuality(quality)) {
     throw new RunRefusal('invalid', `"${quality}" is no quality: light, standard or high (--quality, PLITZI_QUALITY)`);
   }
 
-  const agent =
-    options.agent ??
-    process.env.PLITZI_AGENT ??
-    (token ? ((await holderName(root, token)) ?? (said ? 'agent' : copy?.agent)) : undefined) ??
-    (process.stdin.isTTY ? 'person' : 'lead');
+  const claim = await claimOf(root, {
+    own,
+    token,
+    name,
+    fallback: said === undefined ? (copy?.agent ?? 'agent') : 'agent'
+  });
 
-  return {
+  let agent: string | undefined;
+  const ctx: RunContext = {
     root,
     now: () => new Date(),
     machine: os.hostname(),
     cli: CLI_VERSION,
     ...(token ? { token } : {}),
-    agent,
+    get agent(): string {
+      if (agent === undefined) {
+        throw new Error('A run command read who calls before it was proved (runOf): a bug of the CLI');
+      }
+
+      return agent;
+    },
     ...(isQuality(quality) ? { quality } : {}),
     person: askPerson,
     checks: projectChecks,
@@ -160,10 +208,95 @@ export const contextFor = async (options: RunCommandOptions): Promise<RunContext
       ? {}
       : { say: (line: string) => process.stderr.write(chalk.dim(`· ${line}\n`)) })
   };
+  unproved.set(ctx, {
+    claim,
+    prove: proved => {
+      agent = proved;
+    }
+  });
+  if (claim.kind === 'person') {
+    agent = 'person';
+    unproved.delete(ctx);
+  }
+
+  return ctx;
+};
+
+/** What is proved without the run named: a token says its own run. */
+const proveByToken = async (ctx: RunContext): Promise<void> => {
+  const claim = unproved.get(ctx)?.claim;
+  const run =
+    claim?.kind === 'agent'
+      ? AGENT_TOKEN.exec(claim.token)?.[1]
+      : claim?.kind === 'task' && ctx.token
+        ? TOKEN.exec(ctx.token)?.[1]
+        : undefined;
+  if (run !== undefined) {
+    await prove(ctx, run);
+  }
+};
+
+/** Proves who calls `ctx` on `runId`, once: a token made at an agent's first command is said to it, on stderr. */
+const prove = async (ctx: RunContext, runId: string, anyone = false): Promise<void> => {
+  const pending = unproved.get(ctx);
+  if (!pending) {
+    return;
+  }
+
+  const identified =
+    anyone && pending.claim.kind === 'none'
+      ? { agent: UNNAMED }
+      : await identify(ctx.root, runPaths(ctx.root, runId), runId, pending.claim, ctx.now());
+  pending.prove(identified.agent);
+  unproved.delete(ctx);
+  if (identified.issued) {
+    process.stderr.write(`${chalk.bold(issuedText(runId, identified.agent, identified.issued))}\n`);
+  }
+};
+
+/**
+ * Who opens a run: the lead — or a person at a terminal, for the lead they start — and never an agent of its team. The
+ * lead's token is made with the run (`run open`), so no one after takes its name.
+ */
+export const opener = (ctx: RunContext): void => {
+  const pending = unproved.get(ctx);
+  if (!pending) {
+    return;
+  }
+
+  const { claim } = pending;
+  if (claim.kind === 'name' && claim.said !== LEAD) {
+    throw new RunRefusal('lead-only', `${claim.said} opens no run: the lead does (or a person, at their terminal)`, {
+      holder: LEAD
+    });
+  }
+
+  pending.prove(LEAD);
+  unproved.delete(ctx);
+};
+
+/** Who `ctx` was said to be, proved or not: what a refusal met before the proof is logged as. */
+const saidBy = (ctx: RunContext): string => {
+  const claim = unproved.get(ctx)?.claim;
+
+  return claim === undefined ? ctx.agent : claim.kind === 'name' ? claim.said : UNNAMED;
 };
 
 /** The run a command is about: the token's, the one named, or the project's only active run. */
-export const runOf = async (ctx: RunContext, options: RunCommandOptions, named?: string): Promise<string> => {
+export const runOf = async (
+  ctx: RunContext,
+  options: RunCommandOptions,
+  named?: string,
+  /** A reading anyone may ask — a hook, a script: one who says nothing is `unnamed`, and no lead's step lets it in. */
+  { anyone = false }: { anyone?: boolean } = {}
+): Promise<string> => {
+  const runId = await runNamed(ctx, options, named);
+  await prove(ctx, runId, anyone);
+
+  return runId;
+};
+
+const runNamed = async (ctx: RunContext, options: RunCommandOptions, named?: string): Promise<string> => {
   const fromToken = ctx.token ? TOKEN.exec(ctx.token)?.[1] : undefined;
   const runId = named ?? options.run ?? fromToken ?? process.env.PLITZI_RUN;
   if (runId) {
@@ -209,7 +342,8 @@ const commandLine = (): string =>
   ['plitzi', ...process.argv.slice(2)]
     .join(' ')
     .replace(/(--token[ =])\S+/g, '$1…')
-    .replace(/\b([a-z0-9][a-z0-9_-]*\.[a-z0-9][a-z0-9_-]*)\.[0-9a-f]{48}\b/g, '$1.…');
+    .replace(/\b([a-z0-9][a-z0-9_-]*\.[a-z0-9][a-z0-9_-]*)\.[0-9a-f]{48}\b/g, '$1.…')
+    .replace(/\b([a-z0-9][a-z0-9_-]*\.@[a-z0-9][a-z0-9_-]*)\.[0-9a-f]{32}\b/g, '$1.…');
 
 /**
  * What went wrong in a command, written into the run's activity: every refusal and every crash, with the command that
@@ -221,7 +355,9 @@ const logFailure = async (ctx: RunContext | undefined, options: RunCommandOption
     return;
   }
 
-  const fromToken = TOKEN.exec(ctx.token ?? '')?.[1];
+  const claim = unproved.get(ctx)?.claim;
+  const fromToken =
+    TOKEN.exec(ctx.token ?? '')?.[1] ?? (claim?.kind === 'agent' ? AGENT_TOKEN.exec(claim.token)?.[1] : undefined);
   const runId = options.run ?? fromToken ?? (await activeRuns(ctx.root).catch(() => [])).at(0);
   if (runId === undefined) {
     return;
@@ -230,7 +366,7 @@ const logFailure = async (ctx: RunContext | undefined, options: RunCommandOption
   await fs
     .appendFile(
       runPaths(ctx.root, runId).log,
-      `${JSON.stringify({ at: ctx.now().toISOString(), by: ctx.agent, command: commandLine(), ...entry })}\n`
+      `${JSON.stringify({ at: ctx.now().toISOString(), by: saidBy(ctx), command: commandLine(), ...entry })}\n`
     )
     .catch(() => undefined);
 };
@@ -245,6 +381,7 @@ export const act = async <T>(
   try {
     const ctx = await contextFor(options);
     context = ctx;
+    await proveByToken(ctx);
     const result = await work(ctx);
     // With --json an agent reads the data, and the sentence a person would read with it: what it means, what is next.
     console.log(

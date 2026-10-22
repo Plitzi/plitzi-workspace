@@ -22,6 +22,7 @@ import { viewTask } from '../../runs/taskStore';
 import { readTeam } from '../../runs/team';
 
 import type { RunCommandOptions } from './shell';
+import type { Preview } from '../../runs/preview';
 import type { RunContext } from '../../runs/run';
 
 /**
@@ -52,6 +53,12 @@ export interface LookOptions extends RunCommandOptions {
   element?: string[];
   /** Each page set beside the run before the task — its approved work — and what changed, section by section. */
   before?: boolean;
+  /** The status its pages are meant to be sent with, as `page check --status`: a 404 page looked at as one. */
+  status?: number;
+  /** The widths looked at and pictured, in place of 1440 and 390 — `page shot`'s, so the two are said the same. */
+  width?: string;
+  /** The schemes pictured at each width, in place of light at 1440 and dark at 390. */
+  scheme?: string;
 }
 
 /** One page of a look beside the run before the task: how much differs, and in which sections. */
@@ -70,6 +77,17 @@ interface BeforeAfter {
   sideBySide?: string;
   problem?: string;
 }
+
+/** A look's server that stopped while it looked — why, and its last lines — or nothing while it serves. */
+export const stoppedText = (what: string, served: Pick<Preview, 'stopped'> | undefined): string[] => {
+  const stopped = served?.stopped();
+
+  return stopped
+    ? [
+        `${what} stopped while it was looked at (${stopped.why}): what failed after is no finding of the task's${stopped.said.length > 0 ? ` — it said last: ${stopped.said.join(' | ')}` : ''}`
+      ]
+    : [];
+};
 
 /** What `page shot --compare --json` answered: how much differs, by section, and where the pictures went. */
 export const comparedOf = (output: string): Omit<BeforeAfter, 'route' | 'width' | 'scheme'> => {
@@ -161,6 +179,33 @@ const picturesOf = (output: string): string[] => {
   }
 };
 
+const WIDTHS = /^\d{3,4}(,\d{3,4})*$/;
+
+/**
+ * The widths and schemes asked for (`--width 1440,768`, `--scheme light,dark`): each width in each scheme — none asked,
+ * the team's. Refused when they are not widths or schemes, never pictured on a guess.
+ */
+export const viewsAsked = (
+  options: Pick<LookOptions, 'width' | 'scheme'>
+): [string, 'light' | 'dark'][] | undefined => {
+  if (options.width === undefined && options.scheme === undefined) {
+    return undefined;
+  }
+
+  const widths = options.width ?? '1440,390';
+  if (!WIDTHS.test(widths)) {
+    throw new RunRefusal('invalid', `--width ${widths}: widths in px, separated by commas (1440,390)`);
+  }
+
+  const schemes = (options.scheme ?? 'light,dark').split(',').map(each => each.trim());
+  const valid = schemes.filter((each): each is 'light' | 'dark' => each === 'light' || each === 'dark');
+  if (valid.length !== schemes.length || valid.length === 0) {
+    throw new RunRefusal('invalid', `--scheme ${options.scheme ?? ''}: light, dark, or both (light,dark)`);
+  }
+
+  return widths.split(',').flatMap(width => valid.map(scheme => [width, scheme] as [string, 'light' | 'dark']));
+};
+
 /** How many of a task's parts of a page are pictured: a look is read by a model, and each picture costs it. */
 const PARTS_PICTURED = 3;
 
@@ -192,8 +237,10 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
             // The desktop light and the phone dark — every width in both schemes when the team asks its reviews high
             // (`options.designReview`): design-2 took the other two by hand, the team's standard asking for both.
             const precision = (await readTeam(ctx.root).catch(() => undefined))?.options?.designReview;
-            const views: readonly (readonly ['1440' | '390', 'light' | 'dark'])[] =
-              precision === 'high'
+            const asked = viewsAsked(options);
+            const views: readonly (readonly [string, 'light' | 'dark'])[] = asked
+              ? asked
+              : precision === 'high'
                 ? [
                     ['1440', 'light'],
                     ['1440', 'dark'],
@@ -229,9 +276,10 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
                 'check',
                 ...pages,
                 '--width',
-                '1440,390',
+                [...new Set(views.map(([width]) => width))].join(','),
                 '--url',
                 preview.url,
+                ...(options.status === undefined ? [] : ['--status', String(options.status)]),
                 ...also,
                 ...(options.element ?? []).flatMap(id => ['--element', id])
               ]);
@@ -288,6 +336,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
             // Beside the run before it: what the task moved, section by section — and that nothing else did.
             const before = options.before ? await startBeforePreview(ctx, runId, taskId, await freePort()) : undefined;
             const compared: BeforeAfter[] = [];
+            const stoppedUnder: string[] = [];
             try {
               if (before && !(await answering(before.url, 60_000))) {
                 throw new RunRefusal(
@@ -301,7 +350,9 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
 
               for (const route of before ? routes : []) {
                 for (const [width, scheme] of views) {
-                  const name = `${taskId}${route === '/' ? '-home' : `-${route.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`}-${width}-${scheme}-before.png`;
+                  // Named for what it is — the page after the task, set beside the run before it in `-after-compare.png`:
+                  // `-before.png` was the after picture (velada-polish's design-1, the same md5 as the look's own).
+                  const name = `${taskId}${route === '/' ? '-home' : `-${route.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`}-${width}-${scheme}-after.png`;
                   const shot = await runSelf(preview.dir, [
                     'page',
                     'shot',
@@ -322,6 +373,12 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
                 }
               }
             } finally {
+              // Stopped under the look, it is said with why, before this look stops it: a picture that failed for it
+              // is no finding of the task's (velada-polish: every picture failed, the servers' output thrown away).
+              stoppedUnder.push(
+                ...stoppedText("its copy's server", preview),
+                ...stoppedText('the run before it', before)
+              );
               before?.stop();
             }
 
@@ -348,6 +405,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               shots,
               ...(compared.length > 0 ? { compared } : {}),
               ...(preview.borrowed === undefined ? {} : { borrowed: preview.borrowed }),
+              ...(stoppedUnder.length > 0 ? { stoppedUnder } : {}),
               ...(notReviewed.length > 0 ? { notReviewed } : {})
             };
           } finally {
@@ -362,8 +420,9 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
         chalk.bold(
           looked.borrowed === undefined
             ? `${looked.task}, as it went to review (served from its copy, now stopped):`
-            : `${looked.task}, as its copy is now — served by its agent's own server on :${String(looked.borrowed)}, left running (it holds the copy's state):`
+            : `${looked.task}, as its copy is now — served by ${looked.borrowed.by === 'agent' ? "its agent's own server" : 'the server a picture of it kept'} on :${String(looked.borrowed.port)}, left running (it holds the copy's state):`
         ),
+        ...(looked.stoppedUnder ?? []).map(line => chalk.yellow(`⚠ ${line}`)),
         ...(looked.notReviewed
           ? [
               chalk.yellow(
@@ -391,7 +450,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
           : ['No picture could be taken.']),
         ...(looked.compared
           ? [
-              'Beside the run before it (its approved work, without this task):',
+              "Beside the run before it (its approved work, without this task) — motion reduced and another site's pictures stood in for on both sides, so only what the project changed differs; each side by side (after | before) in its -after-compare.png:",
               ...looked.compared.map(each =>
                 each.problem
                   ? chalk.yellow(`  ${each.route} at ${each.width} ${each.scheme}: ${each.problem}`)

@@ -816,3 +816,40 @@ monitor` shows each as it comes, a problem in red.
       `complete` — velada-dress's t-sponsors lacked the token the run's approved header read, and its author failed.
       A clash is left for `complete` to say.
 
+- **Who calls a run's command is proved by a token** (`@plitzi/cli`): a name was anyone's to type, and none said, from a
+  shell with no terminal, was the lead — velada-polish's design-2 ran `task look` unnamed and was logged as the lead.
+  Every agent of a run has a token of its own (`<run>.@<agent>.<secret>`), made at its first command (`--agent <name>`
+  said once) and kept in its scratch folder; the lead's is made by `run open` and printed with it. Each command after
+  passes it (`--token`, on every run and task command now): a name that has one said without it, a token under
+  another's name, a name not of the team, `person` from a shell and a caller that says nothing are refused
+  (`identity`, exit 26) — but for the readings anyone may ask (`run status`, `run report`, `task claims`, `task
+  proposals`, `run can-write`). An agent's roles are its team's (`task next --role`, `task take`). The lead's guards hold
+  by name now: `lead` or a person, and a lead that reviews for a verdict — never an agent of no team, which a name let
+  through — and `task message`, in the lead's voice, is a lead's. `run monitor` and `run watch` start an agent again by
+  its kept token.
+- **What velada-polish's look and its agents met in the CLI** (`@plitzi/cli`, `@plitzi/sdk-authoring`):
+    - A `task look` serves a copy through the server a `page shot` kept on it, its use marked while it is followed, and
+      a copy a look serves is said (`previewed.json`), so a picture in it goes through that server: two servers on one
+      copy fought over its state, and the lead's look pictured nothing. A look's quiet servers write to logs in the
+      task's cache, and one that stops under the look is said with why and its last lines.
+    - `task look --before` holds both sides to what the project changed — motion reduced, another site's pictures
+      stood in for on each side by a colour their address gives — where a busy CDN's 429s made 21–31% "differs" and the
+      same look said 7%, then 0%. Its own picture is `-after.png` (`-before.png` was the after). The dress is compared
+      detail by detail (`@plitzi/sdk-authoring`): what there are fewer of, by how many — not every detail of a kind
+      whose count changed, kept ones read as lost.
+    - `task look --width`, `--scheme` and `--status`, as `page shot` and `page check`; `page shot` and `page check
+      --timezone <IANA>`, a visitor elsewhere.
+    - `page check --element` says why an element's styles cannot be read — not authored (a component's part, with the
+      ids near it), not on the page at this width — where it said "not on the page" of one that was.
+    - `--clip`/`--scroll-to` find a section as a comparison's report names it (`section#home-sponsors`: its id, or its
+      element's name) and a bare id (`--clip combates`); `--scroll-to … --viewport` scrolls once the pictures are loaded,
+      where it pictured the top; `--compare --clip` writes the section, not the page, to `-o`, and says when the section
+      lined up with something else (90% or more differs, or farther than a screen) — a reference with no such section,
+      or no light scheme.
+    - `page check` counts an image a host let go — timed out, reset, closed, never answered, a 503 — as the host's, not
+      the page's: a CDN rate-limiting every request failed a developer's checks three times, a rerun passing.
+    - A reviewer's verdict is refused once while the lead said something to it it has not read, which the refusal hands
+      it: design-1's round went out before the lead's "only the bars this round" reached it.
+    - `run plan` says a check of an address no page answers (the not-found page, sent with 404) that says no `--status`;
+      the finish's audit reads a spike ended by what it found as ended, not as an approval the log missed; `task
+      discard` takes several files, and says which went back when one of them is refused.

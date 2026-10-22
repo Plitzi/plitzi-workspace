@@ -6,6 +6,7 @@ import { questionFor, takeQuestion } from '../answering';
 import { designReviewFor, hasDesignReview, takeDesignReview } from '../design';
 import { createExclusive } from '../files';
 import { handOver } from '../handOver';
+import { assertRoles } from '../identity';
 import { IDLE_LEAD_MS, isCoLead, isPrincipal, LEAD_ROLE, leadReviewFor, markAsking, takeLeadReview } from '../leads';
 import { agentAddress, unreadFor } from '../messages';
 import { ON_DEMAND_IDLE_MS } from '../onDemand';
@@ -157,6 +158,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     ?.split(',')
     .map(each => each.trim())
     .filter(Boolean);
+  await assertRoles(ctx.root, ctx.agent, roles ?? []);
   const forRole = (task: RunTask): boolean => roles === undefined || roles.includes(roleOf(task));
   // What the lead said to this agent by name — between tasks, there is nowhere else for it to arrive.
   const messages = await unreadFor(loaded, agentAddress(ctx.agent), true);
@@ -377,7 +379,7 @@ const leadNext = async (
   if (!isCoLead(record, ctx.agent) && !isPrincipal(ctx.agent)) {
     throw new RunRefusal(
       'invalid',
-      `${ctx.agent} is no lead of this run: its leads are lead${(record.leads ?? []).map(each => `, ${each}`).join('')} — a lead that reviews waits with plitzi task next --role lead --agent <its name>`
+      `${ctx.agent} is no lead of this run: its leads are lead${(record.leads ?? []).map(each => `, ${each}`).join('')} — a lead that reviews waits with plitzi task next --role lead --agent <its name> — its first command; its token after`
     );
   }
 

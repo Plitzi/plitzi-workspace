@@ -66,6 +66,13 @@ export interface PageElement {
   selectOption(value: string, options: { timeout: number }): Promise<unknown>;
 }
 
+/** A request the page made, held by `route`: answered here, or let through as it was. */
+export interface PageRoute {
+  request(): { resourceType(): string; url(): string };
+  fulfill(response: { status: number; contentType: string; body: string }): Promise<void>;
+  continue(): Promise<void>;
+}
+
 export interface BrowserPage {
   goto(url: string, options: { waitUntil: 'load' | 'domcontentloaded' | 'networkidle' }): Promise<unknown>;
   screenshot(options: { fullPage: boolean }): Promise<Uint8Array>;
@@ -84,6 +91,8 @@ export interface BrowserPage {
   context(): { addCookies(cookies: { name: string; value: string; url: string }[]): Promise<void> };
   /** Where the page is now — after any redirect the server answered with. */
   url(): string;
+  /** What the page asks for, answered here first: a picture of another site stood in for, the rest let through. */
+  route(matcher: (url: URL) => boolean, handler: (route: PageRoute) => Promise<void>): Promise<void>;
   /** Closed once pictured: a run of many pages holds one at a time. */
   close(): Promise<void>;
   /** Requests made as the page would make them, sharing its context's cookies: a sign-in here signs the page in. */
@@ -109,6 +118,8 @@ export interface Browser {
     colorScheme: Scheme;
     reducedMotion: 'reduce' | 'no-preference';
     ignoreHTTPSErrors?: boolean;
+    /** The visitor's time zone (IANA), the browser's clock and `Intl` read in: the machine's when left out. */
+    timezoneId?: string;
   }): Promise<BrowserPage>;
   close(): Promise<void>;
 }
@@ -292,6 +303,8 @@ export interface ProjectView {
    * watches them — `OBSERVER_COOKIE_NAME` — so a check is never somebody walking into a room people are in.
    */
   presence?: boolean;
+  /** The visitor's time zone (IANA, `America/Mexico_City`): a page that writes the visitor's hour, read as theirs. */
+  timezone?: string;
 }
 
 /**
@@ -305,7 +318,8 @@ export const openProjectPage = async (browser: Browser, origin: string, view: Pr
     viewport: { width: view.width, height: view.height },
     colorScheme: view.scheme ?? 'light',
     reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference',
-    ignoreHTTPSErrors: isLocalTls(origin)
+    ignoreHTTPSErrors: isLocalTls(origin),
+    ...(view.timezone ? { timezoneId: view.timezone } : {})
   });
   await page
     .context()

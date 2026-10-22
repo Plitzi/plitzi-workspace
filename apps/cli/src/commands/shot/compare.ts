@@ -86,7 +86,8 @@ export const compareText = (compare: CompareReport): string[] => {
             `  as the run kept it at ${compare.keptAt.slice(0, 16).replace('T', ' ')} UTC (plitzi run reference) — --live measures the site as it is now`
           )
         ]
-      : [])
+      : []),
+    ...(compare.misaligned ? [chalk.yellow(`⚠ ${compare.misaligned}`)] : [])
   ];
   const longer = compare.heights.there - compare.heights.here;
   const drift = compare.driftFrom;
@@ -158,14 +159,15 @@ const CLIP_MARGIN = 40;
  */
 export const cropToSection = async (
   page: Taken['page'],
-  files: { sideBySide: string; diff: string },
+  /** The comparison's pictures, and the page's own (`-o`): a clip's picture is its section, never the whole page. */
+  files: { sideBySide: string; diff: string; own: string },
   box: { y: number; height: number },
   shift: number
 ): Promise<void> => {
   const read = async (file: string): Promise<string> =>
     `data:image/png;base64,${(await readFile(file)).toString('base64')}`;
   const cut = await page.evaluate(
-    async ({ pair, diff, top, height, theirs }) => {
+    async ({ pair, diff, own, top, height, theirs }) => {
       const load = (source: string): Promise<HTMLImageElement> =>
         new Promise((resolve, reject) => {
           const image = new Image();
@@ -173,7 +175,7 @@ export const cropToSection = async (
           image.onerror = () => reject(new Error('a picture of the comparison did not load'));
           image.src = source;
         });
-      const [whole, marked] = await Promise.all([load(pair), load(diff)]);
+      const [whole, marked, ours] = await Promise.all([load(pair), load(diff), load(own)]);
       const width = whole.width / 2;
       const canvas = (w: number): [HTMLCanvasElement, CanvasRenderingContext2D] => {
         const made = document.createElement('canvas');
@@ -191,12 +193,15 @@ export const cropToSection = async (
       bothContext.drawImage(whole, width, Math.max(0, top + theirs), width, height, width, 0, width, height);
       const [only, onlyContext] = canvas(marked.width);
       onlyContext.drawImage(marked, 0, top, marked.width, height, 0, 0, marked.width, height);
+      const [mine, mineContext] = canvas(ours.width);
+      mineContext.drawImage(ours, 0, top, ours.width, height, 0, 0, ours.width, height);
 
-      return { pair: both.toDataURL('image/png'), diff: only.toDataURL('image/png') };
+      return { pair: both.toDataURL('image/png'), diff: only.toDataURL('image/png'), own: mine.toDataURL('image/png') };
     },
     {
       pair: await read(files.sideBySide),
       diff: await read(files.diff),
+      own: await read(files.own),
       top: Math.max(0, Math.round(box.y) - CLIP_MARGIN),
       height: Math.round(box.height) + CLIP_MARGIN * 2,
       theirs: Math.round(shift)
@@ -204,6 +209,7 @@ export const cropToSection = async (
   );
   await writeFile(files.sideBySide, fromDataUrl(cut.pair));
   await writeFile(files.diff, fromDataUrl(cut.diff));
+  await writeFile(files.own, fromDataUrl(cut.own));
 };
 
 /** The other site beside this page: section by section where each one is, and the words both have, measured. */

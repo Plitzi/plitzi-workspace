@@ -38,6 +38,9 @@ import type { PictureDiff, PictureRegion } from '@plitzi/sdk-authoring';
  * `plitzi page shot --width 1440,390`: a picture at each width, one after another — each named by its width, `--out`
  * too (`home.png` becomes `home-1440.png`, `home-390.png`) so one never writes over another.
  */
+/** How much of a clipped section differs before it is said to be lined up with something else: a section redone stays under. */
+const MISALIGNED_PERCENT = 90;
+
 export const shotEach = async (
   route: string | undefined,
   options: Omit<ShotOptions, 'width'> & { width: number[] }
@@ -279,6 +282,8 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   // the other site has none of this page's names to be clipped to.
   const section = options.compare ? options.clip : undefined;
   const clip = options.compare ? undefined : options.clip;
+  const besideLocal =
+    options.compare !== undefined && /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:|\/|$)/.test(options.compare);
 
   try {
     const pathname = route ?? '/';
@@ -286,12 +291,16 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       width: options.width ?? 1280,
       height: options.height ?? 800,
       ...(options.scheme ? { scheme: options.scheme } : {}),
-      reducedMotion: options.reducedMotion === true,
+      // Beside a page of this machine — the run before a task — both sides held to what the project changed: motion
+      // reduced and another site's pictures stood in for, on each (velada-polish: the same look 7%, then 0%).
+      reducedMotion: options.reducedMotion === true || besideLocal,
+      ...(besideLocal ? { standIns: true } : {}),
       ...(options.waitFor ? { waitFor: options.waitFor } : {}),
       ...(clip ? { clip } : {}),
       ...(options.scrollTo ? { scrollTo: options.scrollTo } : {}),
       ...(options.viewport ? { viewport: true } : {}),
       ...(options.presence ? { presence: true } : {}),
+      ...(options.timezone ? { timezone: options.timezone } : {}),
       ...(account ? { account } : {}),
       ...(fromLoad ? { fromLoad } : {}),
       // One picture shows every arrival as it ends — a part clipped or scrolled to too, whose arrivals were taken as they
@@ -378,7 +387,12 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
         // Its pictures, the section's: ours where it is, theirs where the alignment found it.
         const box = regions.find(each => matchesSection(each, section));
         if (box) {
-          await cropToSection(taken.page, compared, box, kept.find(each => matchesSection(each, section))?.shift ?? 0);
+          await cropToSection(
+            taken.page,
+            { ...compared, own: out },
+            box,
+            kept.find(each => matchesSection(each, section))?.shift ?? 0
+          );
         }
 
         // Its own findings, not the page's: dev-1's clip of one panel listed hundreds of the page's texts.
@@ -388,8 +402,14 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
 
             return box !== undefined && y >= box.y && y <= box.y + box.height;
           });
+        const found = kept.find(each => matchesSection(each, section));
+        const misaligned =
+          found && (found.changed >= MISALIGNED_PERCENT || Math.abs(found.shift ?? 0) > view.height)
+            ? `${section} lined up with a part of ${target} that is not it (${String(found.changed)}% differs${found.shift ? `, ${String(Math.abs(found.shift))}px ${found.shift > 0 ? 'lower' : 'higher'}` : ''}): the other page has no such section${view.scheme === undefined ? '' : `, or no ${view.scheme} scheme`} — compare ${view.scheme === 'light' ? 'in dark (--scheme dark)' : 'the page whole'}, or picture that page alone (plitzi page shot ${target})`
+            : undefined;
         report.compare = {
           ...compared,
+          ...(misaligned ? { misaligned } : {}),
           regions: kept,
           decorations: compared.decorations.filter(each => matchesSection({ name: each.section }, section)),
           texts: {

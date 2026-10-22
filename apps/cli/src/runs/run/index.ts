@@ -4,7 +4,7 @@
  * holds it, the Plitzi version changed under it — so no command has to remember to.
  */
 
-export { requireNoTask, requirePerson } from './context';
+export { requireNoTask, requirePerson, requirePrincipal } from './context';
 export type { LoadedRun, PersonGate, RunContext } from './context';
 export {
   activeRuns,

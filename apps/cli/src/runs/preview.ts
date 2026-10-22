@@ -16,6 +16,7 @@ import {
   writeAtomic,
   writeJson
 } from './files';
+import { keptServer, markPreviewed, touchKept, unmarkPreviewed } from './lingering';
 import { monitorRun } from './monitor';
 import { taskPaths, under } from './paths';
 import { alive, isPreview, previewPort, previewRecord } from './previewRecord';
@@ -24,7 +25,7 @@ import { RunRefusal } from './refusal';
 import { loadRun, readApproved, readBase, readRecord, requireNoTask } from './run';
 import { placeVersion } from './store';
 import { viewTask } from './taskStore';
-import { scriptsOf } from '../commands/verify';
+import { scriptsOf, tail } from '../commands/verify';
 
 import type { Monitored } from './monitor';
 import type { LoadedRun, RunContext } from './run';
@@ -160,8 +161,13 @@ export interface Preview {
   /** Ends when the run ends, the server stops, or the caller stops it: what it ended with. */
   done: Promise<{ code: number; why: string }>;
   stop: () => void;
-  /** A task's copy already served by its agent's own server, on this port: looked at there, never started again. */
-  borrowed?: number;
+  /**
+   * A task's copy already served, on this port: by its agent's own server, or by the one a picture of it kept — looked
+   * at there, never started again.
+   */
+  borrowed?: { port: number; by: 'agent' | 'kept' };
+  /** Once it stopped, why — and what the server said last, when it wrote to a log: none while it serves. */
+  stopped: () => { why: string; said: string[] } | undefined;
 }
 
 /**
@@ -174,7 +180,16 @@ const serve = async (
   dir: string,
   port: number,
   ended: () => Promise<string | undefined> = () => Promise.resolve(undefined),
-  { quiet = false, snapshot = false }: { quiet?: boolean; snapshot?: boolean } = {}
+  {
+    quiet = false,
+    snapshot = false,
+    log
+  }: {
+    quiet?: boolean;
+    snapshot?: boolean;
+    /** Where a quiet server's output goes: what says why, when it stops under a look (velada-polish: silent). */
+    log?: string;
+  } = {}
 ): Promise<Omit<Preview, 'dir'>> => {
   const scripts = await scriptsOf(dir);
   const script = scripts['start:dev'] ? 'start:dev' : scripts.start ? 'start' : undefined;
@@ -183,11 +198,13 @@ const serve = async (
   }
 
   const env = (await readOptional(path.join(ctx.root, '.env')))?.toString('utf-8');
+  const logged = quiet && log !== undefined ? await fs.open(log, 'w') : undefined;
   const child = spawn(scripts[script], {
     cwd: dir,
     shell: true,
-    // Quiet for a command that says its own findings (`task look`): the server's start lines are not its answer.
-    stdio: quiet ? 'ignore' : 'inherit',
+    // Quiet for a command that says its own findings (`task look`): the server's start lines are not its answer — kept
+    // in its log, for when it stops.
+    stdio: logged ? ['ignore', logged.fd, logged.fd] : quiet ? 'ignore' : 'inherit',
     env: {
       ...process.env,
       ...(env ? parseEnv(env) : {}),
@@ -197,7 +214,9 @@ const serve = async (
     }
   });
 
+  void logged?.close();
   let why: string | undefined;
+  let exited: { why: string; said: string[] } | undefined;
   const stop = (): void => {
     why ??= 'the preview stopped: it was asked to';
     stopTree(child);
@@ -219,18 +238,28 @@ const serve = async (
     }, 2000);
     child.on('exit', code => {
       clearInterval(watch);
-      resolve(why === undefined ? { code: code ?? 1, why: `the server stopped (${String(code)})` } : { code: 0, why });
+      const ended =
+        why === undefined ? { code: code ?? 1, why: `the server stopped (${String(code)})` } : { code: 0, why };
+      void (log === undefined ? Promise.resolve('') : fs.readFile(log, 'utf-8').catch(() => '')).then(text => {
+        exited = { why: ended.why, said: tail(text.trim()) };
+        resolve(ended);
+      });
     });
   });
 
-  return { url: `http://127.0.0.1:${String(port)}`, done, stop };
+  return { url: `http://127.0.0.1:${String(port)}`, done, stop, stopped: () => exited };
 };
 
-/** A server someone else runs, followed until it stops answering or the caller is done with it: never stopped. */
-const borrow = (url: string): Omit<Preview, 'dir'> => {
+/**
+ * A server someone else runs, followed until it stops answering or the caller is done with it: never stopped — and a
+ * kept one's use marked while it is followed (`touch`), so its watchdog does not stop it under a look.
+ */
+const borrow = (url: string, touch?: () => Promise<void>): Omit<Preview, 'dir'> => {
   let release: (why: string) => void = () => undefined;
+  let ended: { why: string; said: string[] } | undefined;
   const done = new Promise<{ code: number; why: string }>(resolve => {
     const watch = setInterval(() => {
+      void touch?.().catch(() => undefined);
       void answering(url, 1_000).then(up => {
         if (!up) {
           release('the server it was served by stopped');
@@ -239,11 +268,12 @@ const borrow = (url: string): Omit<Preview, 'dir'> => {
     }, 2000);
     release = why => {
       clearInterval(watch);
+      ended ??= { why, said: [] };
       resolve({ code: 0, why });
     };
   });
 
-  return { url, done, stop: () => release('the preview stopped: it was asked to') };
+  return { url, done, stop: () => release('the preview stopped: it was asked to'), stopped: () => ended };
 };
 
 /** `plitzi run preview`: the run's work served on `port`, kept up to date until the run ends. */
@@ -308,10 +338,11 @@ export const startBeforePreview = async (
     throw new RunRefusal('not-found', `Run "${runId}" has no task "${taskId}"`, { task: taskId });
   }
 
-  const dir = path.join(taskPaths(loaded.paths, taskId).cache, 'before');
+  const { cache } = taskPaths(loaded.paths, taskId);
+  const dir = path.join(cache, 'before');
   await approvedCopy(ctx, loaded, dir);
 
-  return serve(ctx, loaded, dir, port, undefined, { quiet: true });
+  return serve(ctx, loaded, dir, port, undefined, { quiet: true, log: path.join(cache, 'before-server.log') });
 };
 
 /** Where a task's copy is worth serving: being worked — its agent looking at its own pages — or in review. */
@@ -348,7 +379,25 @@ export const startTaskPreview = async (
   // looked at where it is, and left as it was.
   const running = await ownServer(view.paths.work);
   if (running !== undefined) {
-    return { ...borrow(`http://127.0.0.1:${String(running)}`), dir: view.paths.work, borrowed: running };
+    return {
+      ...borrow(`http://127.0.0.1:${String(running)}`),
+      dir: view.paths.work,
+      borrowed: { port: running, by: 'agent' }
+    };
+  }
+
+  // One a picture of the copy kept (`lingering.ts`) serves it already: a second server beside it would fight it over
+  // the copy's state, and one of them fail — velada-polish's lead look pictured nothing. Followed, its use marked.
+  const { cache } = taskPaths(loaded.paths, taskId);
+  const kept = await keptServer(view.paths.work, cache);
+  if (kept !== undefined) {
+    const keptPort = Number(new URL(kept).port);
+
+    return {
+      ...borrow(kept, () => touchKept(cache, keptPort)),
+      dir: view.paths.work,
+      borrowed: { port: keptPort, by: 'kept' }
+    };
   }
 
   const served = await serve(
@@ -361,8 +410,11 @@ export const startTaskPreview = async (
 
       return SERVED_STATUSES.includes(now) ? undefined : `the preview stopped: ${taskId} is ${now} now`;
     },
-    options
+    { ...options, log: path.join(cache, 'preview-server.log') }
   );
+  // Said where a picture in the copy asks for its server: it uses this one, never starts a second.
+  await markPreviewed(cache, port);
+  void served.done.then(() => unmarkPreviewed(cache)).catch(() => undefined);
 
   return { ...served, dir: view.paths.work };
 };

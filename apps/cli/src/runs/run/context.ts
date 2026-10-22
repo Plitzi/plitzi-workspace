@@ -1,3 +1,4 @@
+import { LEAD } from '../messages';
 import { RunRefusal } from '../refusal';
 
 import type { CheckRunner } from '../checks';
@@ -62,6 +63,23 @@ export const requireNoTask = (ctx: RunContext, action: string): void => {
     throw new RunRefusal(
       'lead-only',
       `A task's token cannot ${action}: that is the lead's — tell it what you have (plitzi task tell "…"), and go on with your part.`
+    );
+  }
+};
+
+/**
+ * `lead`'s, or a person's, by who calls — proved (`identity.ts`), so a name is no way in: an agent of the run holding
+ * no task, a designer or a co-lead, is refused as a task's token is.
+ */
+export const requirePrincipal = (ctx: RunContext, action: string): void => {
+  requireNoTask(ctx, action);
+  if (ctx.agent !== LEAD && ctx.agent !== 'person') {
+    throw new RunRefusal(
+      'lead-only',
+      `${ctx.agent} cannot ${action}: that is the lead's — tell it what you have (plitzi task tell "…")`,
+      {
+        holder: LEAD
+      }
     );
   }
 };

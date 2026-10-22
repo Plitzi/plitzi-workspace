@@ -12,7 +12,7 @@ import { checkPlan, PlanRefusal } from './plan';
 import { answerProposal, proposeChange } from './proposals';
 import { writeSummary } from './report';
 import { checkPlanFile, openRun } from './run';
-import { tellLead } from './talk';
+import { messageTasks, tellLead } from './talk';
 import { readInbox } from './talk';
 import {
   canWrite,
@@ -251,6 +251,22 @@ describe('a UI review, by the team’s designers', () => {
     });
   });
 
+  // velada-polish: design-1's round went out before the lead's "only the bars this round" reached it.
+  it('hands a designer what the lead said while it reviewed, before its verdict goes', async () => {
+    await inReview();
+    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
+    await messageTasks(lead(), 'es-launch', '@design-1', 'Only the title this round');
+
+    const first = await refusal(
+      reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'changes', [{ note: 'Tighter at 390' }])
+    );
+    expect(first.message).toContain('Only the title this round');
+    // Read now: said again, the verdict goes.
+    expect(
+      await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', [{ note: 'The title holds' }])
+    ).toMatchObject({ design: 'approved' });
+  });
+
   it('keeps --skip-design the lead’s, and says how the lead runs it', async () => {
     await inReview();
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
@@ -258,7 +274,7 @@ describe('a UI review, by the team’s designers', () => {
       reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'lead' })
     );
     expect(refused.message).toContain('--skip-design is a lead');
-    expect(refused.message).toContain('--agent lead');
+    expect(refused.message).toContain("--token <the lead's>");
 
     expect(
       await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'lead' })

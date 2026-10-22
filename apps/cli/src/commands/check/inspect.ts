@@ -122,6 +122,13 @@ const hostOf = (url: string): string => {
   }
 };
 
+/**
+ * How a browser says a host let a request go — timed out, reset, closed, answered nothing: a busy host's, not a wrong
+ * address's (a name that does not resolve, a 404) — which stays the page's to fix.
+ */
+export const HOST_TROUBLE =
+  /ERR_(TIMED_OUT|CONNECTION_(RESET|CLOSED|TIMED_OUT)|EMPTY_RESPONSE|HTTP2_\w+|QUIC_\w+|NETWORK_CHANGED)/;
+
 /** A console error, with the document it came from when the browser says. */
 interface ConsoleLine {
   text: string;
@@ -369,7 +376,7 @@ export const checkAt = async (
   origin: string,
   pathname: string,
   width: number,
-  view: Pick<ProjectView, 'scheme' | 'presence'>,
+  view: Pick<ProjectView, 'scheme' | 'presence' | 'timezone'>,
   authored: Authored | undefined,
   asked: CheckAsk,
   ssr: boolean,
@@ -404,9 +411,12 @@ export const checkAt = async (
   const imagesAnswered = new Set<string>();
   const throttled = new Set<string>();
   // An image a host dropped (no answer at all) while it answered the page's other requests is that host holding back,
-  // as a 429 is; a host that answered nothing is down, or the address wrong — the page's to fix.
+  // as a 429 is; a host that answered nothing is down, or the address wrong — the page's to fix. But a host that let the
+  // connection go, or never answered (`HOST_TROUBLE`, or still pending), is busy whatever else it answered: a CDN
+  // rate-limiting every request failed dev-1's checks three times in velada-polish, and a rerun passed.
   const answeredHosts = new Set<string>();
   const dropped = new Set<string>();
+  const busy = new Set<string>();
   // …and so is one it still has not answered when the page is looked at, a host that answered the rest stalling it:
   // neither a 429 nor a drop, and read as the page's own image that never loaded (la-velada's CDN, under a finish).
   const pending = new Set<string>();
@@ -419,11 +429,11 @@ export const checkAt = async (
   page.on('requestfailed', request => {
     pending.delete(request.url());
     if (elsewhere(request.url(), request.resourceType())) {
-      dropped.add(request.url());
+      (HOST_TROUBLE.test(request.failure()?.errorText ?? '') ? busy : dropped).add(request.url());
     }
   });
   const heldBack = (): ReadonlySet<string> =>
-    new Set([...throttled, ...[...dropped, ...pending].filter(url => answeredHosts.has(hostOf(url)))]);
+    new Set([...throttled, ...busy, ...pending, ...[...dropped].filter(url => answeredHosts.has(hostOf(url)))]);
   page.on('pageerror', error => said.push({ text: error.message }));
   const address = `${origin}${pathname}`;
   page.on('console', message => {
@@ -452,7 +462,7 @@ export const checkAt = async (
       imagesAnswered.add(response.url());
     }
 
-    if (response.status() === 429) {
+    if (response.status() === 429 || response.status() === 503) {
       throttled.add(response.url());
     } else if (response.status() < 400) {
       answeredHosts.add(hostOf(response.url()));

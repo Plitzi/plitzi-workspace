@@ -3,6 +3,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { doingOf, statusOf } from './agentDoing';
 import { answering, openQuestions } from './answering';
 import { designSkipText, isDesignSkip } from './designSkip';
+import { callerFlag, identifiedAgents } from './identity';
 import { LEAD, messagesOf } from './messages';
 import { runPaths } from './paths';
 import { presentAt, PRESENCE_STALE_MS } from './presence';
@@ -367,6 +368,7 @@ const agentsOf = async (
   const started = new Map((team ? startedAgents(team) : []).map(each => [each.agent, each] as const));
   const names = [...new Set([...started.keys(), ...held.keys()])];
   const paths = runPaths(ctx.root, view.runId);
+  const identified = await identifiedAgents(paths);
   const present = new Map(await Promise.all(names.map(async agent => [agent, await presentAt(paths, agent)] as const)));
   // Between tasks and not said to have stopped: there while its follow marks it present, gone once it does not.
   const gone = (agent: string): number | undefined => {
@@ -428,7 +430,7 @@ const agentsOf = async (
               kind: 'agent' as const,
               status: 'no-signal' as const,
               ...about,
-              doing: `no sign of it for ${String(gone(agent))} min — its harness stopped it, or it hangs: start it again${member ? ` (plitzi task next --role ${member.roles.join(',')} --follow --take --agent ${agent})` : ''}${tail}`,
+              doing: `no sign of it for ${String(gone(agent))} min — its harness stopped it, or it hangs: start it again${member ? ` (plitzi task next --role ${member.roles.join(',')} --follow --take ${callerFlag(view.runId, agent, identified)})` : ''}${tail}`,
               ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
             }
           : member?.onDemand && (lastBy.get(agent) === undefined || lastBy.get(agent)?.action === 'stops')
@@ -449,7 +451,7 @@ const agentsOf = async (
                   kind: 'agent' as const,
                   status: 'not-started' as const,
                   ...about,
-                  doing: `starts with the run — ${member ? `plitzi task next --role ${member.roles.join(',')}${member.quality ? ` --quality ${member.quality}` : ''} --follow --take --agent ${agent}` : 'not started yet'}${tail}`
+                  doing: `starts with the run — ${member ? `plitzi task next --role ${member.roles.join(',')}${member.quality ? ` --quality ${member.quality}` : ''} --follow --take ${callerFlag(view.runId, agent, identified)}` : 'not started yet'}${tail}`
                 }
               : {
                   agent,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { readPage } from './capture';
+import { awaited, readPage, standIn, targetOn } from './capture';
 
 import type { BrowserPage } from '../../browser';
 
@@ -43,5 +43,44 @@ describe('reading a page that reloads under it', () => {
     await expect(readPage(reloading(2), (n: number) => n, 1)).rejects.toThrow(
       'The page kept reloading while it was read'
     );
+  });
+});
+
+/** A page that has exactly `present`'s selectors. */
+const having = (...present: string[]) => ({
+  locator: (selector: string) => ({
+    first: () => ({ count: () => Promise.resolve(present.includes(selector) ? 1 : 0) })
+  })
+});
+
+// velada-polish: the report named `section#home-sponsors` (its element's name, not an id), and `--scroll-to` said it was
+// not on the page; `--clip combates`, an anchor's id, the same.
+describe('finding what a picture is aimed at', () => {
+  it('finds a section as a comparison names it: by its id, or by its element’s name', async () => {
+    expect(await targetOn(having('section#home-sponsors'), 'section#home-sponsors')).toEqual({
+      selector: 'section#home-sponsors',
+      found: true
+    });
+    expect(await targetOn(having('section[data-plitzi-el="home-sponsors"]'), 'section#home-sponsors')).toEqual({
+      selector: 'section[data-plitzi-el="home-sponsors"]',
+      found: true
+    });
+    expect(awaited('section#home-sponsors')).toBe('section#home-sponsors, section[data-plitzi-el="home-sponsors"]');
+  });
+
+  it('finds a bare word as an element’s name, a tag, or an id — never an id CSS cannot read', async () => {
+    expect(await targetOn(having('#combates'), 'combates')).toEqual({ selector: '#combates', found: true });
+    expect(await targetOn(having(), 'combates')).toEqual({ selector: '[data-plitzi-el="combates"]', found: false });
+    expect(awaited('combates')).toBe('[data-plitzi-el="combates"], combates, #combates');
+    expect(awaited('404')).toBe('[data-plitzi-el="404"], 404');
+  });
+});
+
+describe('another site’s pictures, stood in for beside the run before', () => {
+  it('gives one picture one colour, and another picture another', () => {
+    const hero = 'https://cdn.example.com/hero.webp';
+    expect(standIn(hero)).toBe(standIn(hero));
+    expect(standIn(hero)).not.toBe(standIn('https://cdn.example.com/footer.webp'));
+    expect(standIn(hero)).toMatch(/^<svg [^>]*width="64" height="64"/);
   });
 });

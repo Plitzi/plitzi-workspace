@@ -1,6 +1,7 @@
 import { act, holder, runOf } from './shell';
+import { list } from './text';
 import { durationText, FOLLOW_MS } from '../../options';
-import { RunRefusal } from '../../runs/refusal';
+import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import {
   answerSpike,
   claimFile,
@@ -22,7 +23,7 @@ import type { RunCommandOptions } from './shell';
 export const taskClaims = (options: RunCommandOptions): Promise<void> =>
   act(
     options,
-    async ctx => claims(ctx, await runOf(ctx, options)),
+    async ctx => claims(ctx, await runOf(ctx, options, undefined, { anyone: true })),
     found =>
       found.length === 0
         ? 'No file is locked.'
@@ -100,16 +101,37 @@ export const taskWait = (
     waited => (waited.granted || options.follow ? 0 : 11)
   );
 
-export const taskDiscard = (file: string, options: RunCommandOptions): Promise<void> =>
+/** `plitzi task discard <files...>`: each put back in turn — dev-1 discarded one at a time, a command each (velada-polish). */
+export const taskDiscard = (files: string[], options: RunCommandOptions): Promise<void> =>
   act(
     options,
     async ctx => {
       const { runId, taskId } = await holder(ctx, options);
+      const brought = new Set<string>();
+      const done: string[] = [];
+      for (const file of files) {
+        try {
+          for (const each of await discardFile(ctx, runId, taskId, file)) {
+            brought.add(each);
+          }
+        } catch (error) {
+          // What went back before it stays back: said with the refusal, never a list read as all or nothing.
+          throw isRunRefusal(error) && done.length > 0
+            ? new RunRefusal(
+                error.code,
+                `${list(done)} put back to the run's version; then ${file}: ${error.message}`,
+                error.detail
+              )
+            : error;
+        }
 
-      return { file, brought: await discardFile(ctx, runId, taskId, file) };
+        done.push(file);
+      }
+
+      return { files, brought: [...brought].filter(each => !files.includes(each)).sort() };
     },
     discarded =>
-      `${discarded.file} in your copy is the run's version now, and your copy starts from it.${discarded.brought.filter(each => each !== discarded.file).length > 0 ? ` Also brought in, approved since your copy was made: ${discarded.brought.filter(each => each !== discarded.file).join(', ')}` : ''}`
+      `${list(discarded.files)} in your copy ${discarded.files.length === 1 ? 'is' : 'are'} the run's version now, and your copy starts from ${discarded.files.length === 1 ? 'it' : 'them'}.${discarded.brought.length > 0 ? ` Also brought in, approved since your copy was made: ${discarded.brought.join(', ')}` : ''}`
   );
 
 export const taskRequest = (

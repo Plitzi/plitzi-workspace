@@ -2,13 +2,15 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
-import { act, runOf } from './shell';
+import { act, opener, runOf } from './shell';
 import { list, pacedText } from './text';
 import { amendRun } from '../../runs/amend';
 import { backlogText, openBacklog } from '../../runs/backlog';
 import { hasDesignReview } from '../../runs/design';
 import { extendRun } from '../../runs/extend';
 import { writeJson } from '../../runs/files';
+import { issueToken } from '../../runs/identity';
+import { LEAD } from '../../runs/messages';
 import { atPace } from '../../runs/plan';
 import { RunRefusal } from '../../runs/refusal';
 import { rehearsalText, rehearse } from '../../runs/rehearse';
@@ -314,11 +316,17 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
   act(
     options,
     async ctx => {
+      opener(ctx);
       const opened = await openRun(ctx, await planToOpen(ctx, file, options), {
         leadFinishes: options.leadFinishes ?? false,
         ...(options.despiteChecks === undefined ? {} : { despiteChecks: options.despiteChecks })
       });
       await pruneRuns(ctx);
+      // Made with the run, so no one after takes the lead's name: the lead passes it on every command.
+      const lead = await issueToken(opened.paths, opened.checked.runId, LEAD, ctx.now());
+      if (!lead) {
+        throw new Error(`Run "${opened.checked.runId}" opened with a lead's token already made: a bug of the CLI`);
+      }
 
       return {
         runId: opened.checked.runId,
@@ -329,12 +337,17 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
         leadFinishes: options.leadFinishes ?? false,
         leftOut: opened.checked.leftOut,
         inputs: opened.inputs,
-        backlog: await openBacklog(ctx.root)
+        backlog: await openBacklog(ctx.root),
+        leadToken: lead.token,
+        leadTokenFile: lead.file
       };
     },
     opened =>
       [
         `Run "${opened.runId}" is open: ${String(opened.tasks.length)} task${opened.tasks.length === 1 ? '' : 's'}, ${String(opened.backedUp)} files backed up in ${opened.folder}.`,
+        chalk.bold(
+          `The lead's token: ${opened.leadToken} — the lead passes it on every command of the run (--token ${opened.leadToken}); a command as lead without it is refused. Kept in ${opened.leadTokenFile}`
+        ),
         ...(opened.leftOut.length > 0 ? [`Left out of it, as the plan says: ${opened.leftOut.join('; ')}`] : []),
         ...(opened.inputs.length > 0
           ? [

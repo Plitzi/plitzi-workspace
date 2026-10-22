@@ -44,6 +44,18 @@ export const statusCode = (value: string): number => {
   return parsed;
 };
 
+/** A time zone the browser knows (IANA): refused here, by name, rather than by the browser mid-check. */
+export const timeZone = (value: string): string => {
+  const zone = value.trim();
+  try {
+    Intl.DateTimeFormat('en', { timeZone: zone });
+  } catch {
+    throw new InvalidArgumentError(`"${zone}" is no time zone: an IANA name, --timezone America/Mexico_City.`);
+  }
+
+  return zone;
+};
+
 const UNITS = { s: 1000, m: 60_000, h: 3_600_000 } as const;
 
 const isUnit = (unit: string): unit is keyof typeof UNITS => Object.hasOwn(UNITS, unit);

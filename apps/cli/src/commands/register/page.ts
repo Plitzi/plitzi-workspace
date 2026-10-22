@@ -1,6 +1,6 @@
 import { Option } from 'commander';
 
-import { expectation, fill, positiveInteger, statusCode, widths } from '../../options';
+import { expectation, fill, positiveInteger, statusCode, timeZone, widths } from '../../options';
 import { check } from '../check';
 import { importPage } from '../importPage';
 import { shotEach, SHOT_MOMENTS } from '../shot';
@@ -58,6 +58,12 @@ export const registerPage = (pageGroup: Command): void => {
     .option(
       '--as <username>',
       'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env'
+    )
+    .addOption(
+      new Option(
+        '--timezone <zone>',
+        'The visitor’s time zone (IANA: America/Mexico_City): the page as someone there sees its hours — the machine’s when left out'
+      ).argParser(timeZone)
     )
     .option(
       '--presence',
@@ -160,6 +166,12 @@ export const registerPage = (pageGroup: Command): void => {
     .option(
       '--as <username>',
       'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env'
+    )
+    .addOption(
+      new Option(
+        '--timezone <zone>',
+        'The visitor’s time zone (IANA: America/Mexico_City): the page as someone there sees its hours — the machine’s when left out'
+      ).argParser(timeZone)
     )
     .option(
       '--presence',

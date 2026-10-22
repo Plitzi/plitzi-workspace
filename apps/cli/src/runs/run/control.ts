@@ -6,7 +6,7 @@ import { runPaths, taskPaths } from '../paths';
 import { RunRefusal } from '../refusal';
 import { brakeFailuresFor, cutTask, DEFAULTS, readTasks, viewTask } from '../taskStore';
 import { removeRun } from './claim';
-import { requireNoTask, requirePerson } from './context';
+import { requirePerson, requirePrincipal } from './context';
 import { LEAD, sendMessage } from '../messages';
 import {
   assertStatus,
@@ -124,7 +124,7 @@ export const stopRun = async (
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping', 'stopped'], 'stop');
   if (!force) {
-    requireNoTask(ctx, 'stop a run');
+    requirePrincipal(ctx, 'stop a run');
     await updateRecord(ctx, loaded.paths, record => ({
       ...record,
       status: 'stopping',
@@ -162,7 +162,7 @@ export const stopRun = async (
 
 /** `plitzi run resume`: a stopped or stopping run open again. */
 export const resumeRun = async (ctx: RunContext, runId: string): Promise<void> => {
-  requireNoTask(ctx, 'resume a run');
+  requirePrincipal(ctx, 'resume a run');
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['stopping', 'stopped'], 'resume');
   // What made it stop is weighed and done with: the brake judges what happens from here, not again what it saw.
@@ -190,7 +190,7 @@ export const attachRun = async (
   runId: string,
   takeOver: boolean
 ): Promise<{ cut: string[]; kept: string[]; repinned: boolean; tookOver: boolean }> => {
-  requireNoTask(ctx, 'attach to a run');
+  requirePrincipal(ctx, 'attach to a run');
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const elsewhere = loaded.record.activeOn.machine !== '' && loaded.record.activeOn.machine !== ctx.machine;
   if (elsewhere && !takeOver) {
@@ -253,7 +253,7 @@ export const attachRun = async (
 
 /** `plitzi run release`: this machine lets the run go, so another can attach to it. */
 export const releaseRun = async (ctx: RunContext, runId: string): Promise<void> => {
-  requireNoTask(ctx, 'release a run');
+  requirePrincipal(ctx, 'release a run');
   const loaded = await loadRun(ctx, runId);
   await updateRecord(ctx, loaded.paths, record => ({
     ...record,

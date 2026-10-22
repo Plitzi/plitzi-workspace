@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 import { ownServer, serveCopy } from './acceptance';
-import { canLinger, keepServer, keptServer, LINGER_MS } from './lingering';
+import { canLinger, keepServer, keptServer, LINGER_MS, previewedServer } from './lingering';
 import { copyOf, runPaths, taskPaths } from './paths';
 import { projectOrigin } from '../browser';
 
@@ -32,6 +32,12 @@ export const originHere = async (
   }
 
   const cache = taskPaths(runPaths(copy.root, copy.run), copy.task).cache;
+  // A look or a preview serving the copy: it is the copy's server while it runs — a second beside it fights it.
+  const previewed = await previewedServer(root, cache);
+  if (previewed !== undefined) {
+    return { origin: previewed };
+  }
+
   const kept = await keptServer(root, cache);
   if (kept !== undefined) {
     return { origin: kept };

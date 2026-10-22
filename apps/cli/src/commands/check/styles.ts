@@ -172,20 +172,36 @@ export const inertText = (inert: ElementStyles['inert'], width: number, wornBy: 
       `${className} changes nothing on it at rest at ${String(width)} px: each of the ${String(properties)} ${properties === 1 ? 'property' : 'properties'} it sets stays as it is without it (a hover or another width may still need it). To drop it here, take it off this element’s \`class\`; ${othersWearing(className, wornBy)}.`
   );
 
-/** The contested styles of the element asked for, by its handle's selector and the classes the space gives it. */
+/** The ids of the space nearest `id`: a part of a component is named by its instance, and a typo by what it meant. */
+const nearIds = (ids: readonly string[], id: string): string[] =>
+  ids
+    .filter(
+      each => each !== id && (each.includes(id) || id.includes(each) || each.endsWith(id.split('-').at(-1) ?? id))
+    )
+    .slice(0, 5);
+
+/**
+ * The contested styles of the element asked for, by its handle's selector and the classes the space gives it — or why
+ * they cannot be read, as it is: one answer for three reasons said "is not on the page" of an element that was
+ * (velada-polish's design-2: a component's part, read in the page, its styles "not on the page").
+ */
 export const elementStyles = async (
   page: BrowserPage,
   authored: Authored | undefined,
   id: string
-): Promise<ElementStyles | null> => {
+): Promise<ElementStyles | { unread: string }> => {
   if (!authored) {
-    return null;
+    return { unread: 'the space could not be authored here, so its classes are unknown' };
   }
 
   const handle = Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id] : undefined;
   const element = Object.hasOwn(authored.schema.flat, id) ? authored.schema.flat[id] : undefined;
   if (!handle || !element) {
-    return null;
+    const near = nearIds(Object.keys(authored.schema.flat), id);
+
+    return {
+      unread: `${id} is no element of the space as authored — a component's part is named by its instance's id${near.length > 0 ? `; near it: ${near.join(', ')}` : ''}`
+    };
   }
 
   const classesOf = (one: SchemaElement): string[] =>
@@ -193,7 +209,7 @@ export const elementStyles = async (
   const classes = classesOf(element);
   const read = await page.evaluate(contestedStylesInPage, { selector: handle.selector, classes });
   if (!read) {
-    return null;
+    return { unread: `${id} is not on the page at this width` };
   }
 
   const others = Object.values(authored.schema.flat).filter(one => one.id !== id);

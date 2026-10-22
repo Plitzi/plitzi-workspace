@@ -52,6 +52,8 @@ export interface ShotOptions {
   as?: string;
   /** Taking part in the page's channels — arriving, announcing itself — as a visitor does, so the others see it. */
   presence?: boolean;
+  /** `--timezone <IANA>`: the visitor's time zone, the browser's clock read in — the machine's when left out. */
+  timezone?: string;
   /** When the first picture is taken: once the page settles (the default), or as soon as its HTML is in. */
   from?: ShotMoment;
   /** A script of steps played on the page (`shotSteps.ts`), or `@file` holding one. */
@@ -81,6 +83,11 @@ export interface CompareReport {
   regions: RegionChange[];
   /** `--clip` with `--compare`: the one section the regions were kept to — the rest of the report is the whole page's. */
   section?: string;
+  /**
+   * That section lined up with a part of the other page that is not it: what its numbers measure is something else —
+   * said, never a "99.5% differs" read as the section's (velada-polish: sponsors against the original's hero).
+   */
+  misaligned?: string;
   /** The words both pages have, and what each does differently there. */
   texts: TextComparison;
   /** Each section whose dress — gradients, glows, ornaments, background images — differs, and how. */
@@ -141,6 +148,14 @@ export interface View {
   presence?: boolean;
   /** The first picture taken as soon as the HTML is in, not once the page settles: what plays while it loads. */
   fromLoad?: boolean;
+  /**
+   * Another site's pictures stood in for, each by one of its own colour: two pages of the project set side by side
+   * (`--compare` with the run before a task) differ only by what the project changed, never by which of a busy CDN's
+   * pictures loaded on which side (velada-polish: 21–31% "differs" at 390, from 429s).
+   */
+  standIns?: boolean;
+  /** The visitor's time zone (IANA): the page as one there sees its hours — the machine's when left out. */
+  timezone?: string;
 }
 
 export interface Taken {

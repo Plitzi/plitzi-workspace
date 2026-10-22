@@ -67,6 +67,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     ssr: Boolean(options.ssr),
     ...(options.scheme ? { scheme: options.scheme } : {}),
     presence: options.presence === true,
+    ...(options.timezone ? { timezone: options.timezone } : {}),
     ...(account ? { account } : {}),
     ...(options.click || options.hover || options.fill
       ? {
@@ -110,6 +111,7 @@ export const checkRoutes = async (
     scheme?: Scheme;
     /** Taking part in the page's channels, as a visitor does — otherwise it only watches them. */
     presence?: boolean;
+    timezone?: string;
     account?: Account;
     click?: ClickAsk;
     expect?: Expectation[];
@@ -151,7 +153,11 @@ export const checkRoutes = async (
               where.origin,
               route,
               width,
-              { ...(options.scheme ? { scheme: options.scheme } : {}), presence: options.presence === true },
+              {
+                ...(options.scheme ? { scheme: options.scheme } : {}),
+                presence: options.presence === true,
+                ...(options.timezone ? { timezone: options.timezone } : {})
+              },
               authored,
               options.asked,
               options.ssr,

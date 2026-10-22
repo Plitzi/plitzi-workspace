@@ -291,7 +291,9 @@ describe('versions, machines and caches', () => {
     const upgraded = bench.agent('agent-2', { cli: '0.0.1-bench' });
 
     expect((await refusal(nextTask(upgraded, 'es-launch'))).code).toBe('version-mismatch');
-    expect((await refusal(attachRun(upgraded, 'es-launch', false))).code).toBe('person-only');
+    // An agent attaches nothing; the lead, with no terminal, asks the person to.
+    expect((await refusal(attachRun(upgraded, 'es-launch', false))).code).toBe('lead-only');
+    expect((await refusal(attachRun({ ...lead(), cli: '0.0.1-bench' }, 'es-launch', false))).code).toBe('person-only');
     const attached = await attachRun({ ...bench.person(true), cli: '0.0.1-bench' }, 'es-launch', false);
     // An upgrade on this machine loses no work: the task in hand keeps its copy and its agent, and is told so.
     expect(attached).toMatchObject({ repinned: true, cut: [], kept: ['t-home'] });
@@ -305,7 +307,7 @@ describe('versions, machines and caches', () => {
 
   it('is active on one machine: another attaches once it is released, or a person takes it over', async () => {
     await open();
-    const elsewhere = bench.agent('coordinator-2', { machine: 'laptop' });
+    const elsewhere = bench.agent('lead', { machine: 'laptop' });
 
     expect((await refusal(nextTask(elsewhere, 'es-launch'))).code).toBe('other-machine');
     expect((await refusal(attachRun(elsewhere, 'es-launch', false))).code).toBe('other-machine');

@@ -3,6 +3,7 @@ import { stripVTControlCharacters } from 'node:util';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
+import { auditRun } from './audit';
 import { messagesOf } from './messages';
 import { monitorRun } from './monitor';
 import { readOwnership } from './ownership';
@@ -129,6 +130,8 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     expect(
       (await taskContext(about.ctx, 'es-launch', 't-about')).related.find(each => each.task === 's-survey')?.findings
     ).toEqual([expect.objectContaining({ text: 'The original has a team grid; ours lacks it' })]);
+    // Ended by what it found, not approved: no step the audit reads as missed (velada-polish's s-scope).
+    expect((await auditRun(await loadRun(lead(), 'es-launch'))).join(' ')).not.toContain('s-survey is done');
   });
 
   it('blocks a task whose agent needs something found out on the lead, whose answer is its finding', async () => {

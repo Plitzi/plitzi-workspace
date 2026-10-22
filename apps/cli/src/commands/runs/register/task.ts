@@ -123,11 +123,11 @@ export const registerTaskGroup = (program: Command): Command => {
 
   taskGroup
     .command('discard')
-    .description('Put a file of your copy back to the run’s version now, and start from it')
-    .argument('<file>', 'The project file')
+    .description('Put files of your copy back to the run’s version now, and start from them')
+    .argument('<files...>', 'The project files')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((file: string, options: RunCommandOptions) => taskDiscard(file, options));
+    .action((files: string[], options: RunCommandOptions) => taskDiscard(files, options));
 
   taskGroup
     .command('progress')
@@ -343,6 +343,16 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(
       '--before',
       'Each page beside the run before the task — its approved work — and what changed, section by section: what it moved, and that nothing else did'
+    )
+    .option(
+      '--status <code>',
+      'The status its pages are sent with — 404 for a not-found page — as page check --status',
+      Number
+    )
+    .option('--width <px>', 'The widths looked at, comma-separated (1440,390 when left out)')
+    .option(
+      '--scheme <schemes>',
+      'light, dark, or light,dark: each width in each (light at 1440, dark at 390 when left out)'
     )
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)

@@ -81,6 +81,8 @@ export interface RunPaths {
   reference: string;
   /** Where each agent keeps what is its own between tasks — a script, a log — by name: gone with the run. */
   scratch: string;
+  /** Each agent's identity — its token's digest — by name: what proves who calls (`identity.ts`). */
+  identities: string;
   cache: string;
   materialised: string;
 }
@@ -143,6 +145,7 @@ export const runPaths = (root: string, runId: string): RunPaths => {
     shots: path.join(dir, 'shots'),
     reference: path.join(dir, 'reference'),
     scratch: path.join(dir, 'scratch'),
+    identities: path.join(dir, 'identities'),
     cache,
     materialised: path.join(cache, 'run')
   };

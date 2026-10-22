@@ -15,6 +15,12 @@ import type { Browser, BrowserPage } from '../../browser';
 /** A bare word: an element's name — letters, digits, `-` and `_`, as an id is written — or else a tag (`textarea`). */
 const namedBy = (target: string): string => `[data-plitzi-el="${target}"]`;
 
+/** A bare word as an id selector, where CSS reads it as one: never one that starts with a digit. */
+const idOf = (target: string): string[] => (/^[A-Za-z_]/.test(target) ? [`#${target}`] : []);
+
+/** A section as a comparison's report names it: its tag, and its id or its element's name. */
+const REGION = /^([a-z][a-z0-9]*)#([\w-]+)$/;
+
 /**
  * A reading of the page, once more when the page navigated under it: a project served with its watch reloads the page
  * when its space changes — a run's preview at each approval (velada-dress: `page shot --compare` died with "Execution
@@ -51,7 +57,14 @@ export const readPage = async <R, A>(
 };
 
 /** What a wait waits for: an element by name or, a bare word naming none, a tag — whichever shows first. */
-export const awaited = (target: string): string => (BARE.test(target) ? `${namedBy(target)}, ${target}` : target);
+export const awaited = (target: string): string => {
+  const region = REGION.exec(target);
+  if (region) {
+    return `${target}, ${region[1]}${namedBy(region[2])}`;
+  }
+
+  return BARE.test(target) ? [namedBy(target), target, ...idOf(target)].join(', ') : target;
+};
 
 /**
  * A target found on the page: an element's name, a tag no element is named by (`textarea`), or a selector — CSS or
@@ -60,21 +73,33 @@ export const awaited = (target: string): string => (BARE.test(target) ? `${named
  * uncaught throw ended the command with a stack trace.
  */
 export const targetOn = async (
-  page: BrowserPage,
+  page: { locator(selector: string): { first(): { count(): Promise<number> } } },
   target: string
 ): Promise<{ selector: string; found: boolean } | { problem: string }> => {
   try {
+    const found = async (selector: string): Promise<boolean> => (await page.locator(selector).first().count()) > 0;
+    // A section as a comparison names it, `section#home-sponsors`: its id, or its element's name — the report writes
+    // either the same way, and `--scroll-to` answered "not on" for the name it printed (velada-polish's design-1).
+    const region = REGION.exec(target);
+    if (region) {
+      const [, tag, name] = region;
+      const named = `${tag}${namedBy(name)}`;
+
+      return (await found(target)) ? { selector: target, found: true } : { selector: named, found: await found(named) };
+    }
+
     if (!BARE.test(target)) {
-      return { selector: target, found: (await page.locator(target).first().count()) > 0 };
+      return { selector: target, found: await found(target) };
     }
 
-    if ((await page.locator(namedBy(target)).first().count()) > 0) {
-      return { selector: namedBy(target), found: true };
+    // A bare word: an element's name, a tag — or an id, as a section's anchor is (`--clip combates`).
+    for (const selector of [namedBy(target), target, ...idOf(target)]) {
+      if (await found(selector)) {
+        return { selector, found: true };
+      }
     }
 
-    return (await page.locator(target).first().count()) > 0
-      ? { selector: target, found: true }
-      : { selector: namedBy(target), found: false };
+    return { selector: namedBy(target), found: false };
   } catch (error) {
     return {
       problem: `${target} is neither an element's name nor a selector the page can read: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`
@@ -124,6 +149,26 @@ const endAnimations = (): void => {
   }
 };
 
+/** One colour a picture's address always gets: the same picture the same on both sides, another one another. */
+export const standIn = (url: string): string => {
+  let hue = 7;
+  for (let index = 0; index < url.length; index += 1) {
+    hue = (hue * 31 + url.charCodeAt(index)) % 360;
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="hsl(${String(hue)} 35% 55%)"/></svg>`;
+};
+
+/** Every picture from another site than `origin`, answered by its stand-in (`View.standIns`). */
+const standInPictures = (page: BrowserPage, origin: string): Promise<void> =>
+  page.route(
+    url => url.origin !== origin,
+    async route =>
+      route.request().resourceType() === 'image'
+        ? route.fulfill({ status: 200, contentType: 'image/svg+xml', body: standIn(route.request().url()) })
+        : route.continue()
+  );
+
 export const pictureOf = async (
   browser: Browser,
   url: string,
@@ -135,8 +180,13 @@ export const pictureOf = async (
     : await browser.newPage({
         viewport: { width: view.width, height: view.height },
         colorScheme: view.scheme ?? 'light',
-        reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference'
+        reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference',
+        ...(view.timezone ? { timezoneId: view.timezone } : {})
       });
+  if (view.standIns && origin) {
+    await standInPictures(page, origin);
+  }
+
   const notSignedIn = origin && view.account && (await signInAs(page, origin, view.account));
   if (notSignedIn) {
     return { problem: `--as ${notSignedIn}.` };
@@ -188,10 +238,6 @@ export const pictureOf = async (
     shown[target] = read.selector;
   }
 
-  if (view.scrollTo) {
-    await page.locator(shown[view.scrollTo]).first().scrollIntoViewIfNeeded();
-  }
-
   const how = framing(view, view.clip === undefined ? undefined : shown[view.clip]);
 
   await withoutDevTools(page);
@@ -218,6 +264,12 @@ export const pictureOf = async (
         }
       }
     }, undefined);
+  }
+
+  // Scrolled to once its pictures are loaded: the walk that loads them leaves the page where it ended, and the
+  // viewport pictured the top (velada-polish's design-1, `--scroll-to … --viewport`).
+  if (view.scrollTo) {
+    await page.locator(shown[view.scrollTo]).first().scrollIntoViewIfNeeded();
   }
 
   if (view.still) {

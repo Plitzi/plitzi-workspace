@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkWithInteraction, comparedOf } from './review';
+import { checkWithInteraction, comparedOf, viewsAsked } from './review';
 
 // velada-dress: /artistas's new light read "0.1% differs" beside the run before it — a soft light is under the
 // pictures' tolerance; its dress is not.
@@ -47,5 +47,26 @@ describe('task look, a hover or a click on several pages', () => {
 
     expect(asked).toEqual(['/ /menu', '/ --hover menu-link', '/menu --hover menu-link']);
     expect(checked.output).toContain('With --hover menu-link on /menu:\nchecked /menu');
+  });
+});
+
+// velada-polish's design-2: `page shot` had --width and --scheme, `task look` neither — a look at 768, or light at 390,
+// was a page shot by hand.
+describe('task look --width and --scheme', () => {
+  it('pictures each width in each scheme asked, and none asked is the team’s', () => {
+    expect(viewsAsked({})).toBeUndefined();
+    expect(viewsAsked({ width: '768' })).toEqual([
+      ['768', 'light'],
+      ['768', 'dark']
+    ]);
+    expect(viewsAsked({ scheme: 'light' })).toEqual([
+      ['1440', 'light'],
+      ['390', 'light']
+    ]);
+  });
+
+  it('refuses what is no width or no scheme', () => {
+    expect(() => viewsAsked({ width: 'wide' })).toThrow('widths in px');
+    expect(() => viewsAsked({ scheme: 'sepia' })).toThrow('light, dark, or both');
   });
 });

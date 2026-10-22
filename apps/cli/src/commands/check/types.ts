@@ -39,6 +39,8 @@ export interface CheckOptions {
   as?: string;
   /** Taking part in the page's channels — arriving, announcing itself, sending — as a visitor does. */
   presence?: boolean;
+  /** `--timezone <IANA>`: the visitor's time zone, the browser's clock read in — the machine's when left out. */
+  timezone?: string;
   /**
    * Where the project is served, when not by `npm start` here: a second server of it, staging, a deploy. Its pages are
    * still checked against what the project authors.
@@ -96,8 +98,8 @@ export interface CheckReport {
   /** With `--expect`: each expectation the page met, as `<id>~<text>` — said, so a pass is seen to be checked. */
   expected?: string[];
   /**
-   * The images their host held back — answered 429, or dropped while it answered the rest — its limit, met by checks
-   * asking at once: not the page's.
+   * The images their host held back — answered 429 or 503, a connection let go or never answered, or dropped while it
+   * answered the rest — its limit, met by checks asking at once: not the page's.
    */
   throttled?: string[];
   /** Console errors of a document embedded in the page (an iframe's — a video player), by its origin: not the space's. */
@@ -110,7 +112,7 @@ export interface CheckReport {
    * With `--element`, by id: what each reads and holds, as the dev tools have it, and how its classes meet on it at rest
    * at this width — `styles: null` when it is not on the page.
    */
-  elements?: Record<string, { read: unknown; styles: ElementStyles | null }>;
+  elements?: Record<string, { read: unknown; styles: ElementStyles | { unread: string } }>;
   /** With `--click`: what clicking the element changed. */
   clicked?: ClickReport;
   /**

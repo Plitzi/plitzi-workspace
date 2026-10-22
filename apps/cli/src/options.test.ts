@@ -1,7 +1,18 @@
 import { InvalidArgumentError } from 'commander';
 import { describe, expect, it } from 'vitest';
 
-import { count, duration, durationText, expectation, fill, pagePaths, positiveInteger, width, widths } from './options';
+import {
+  count,
+  duration,
+  durationText,
+  expectation,
+  fill,
+  pagePaths,
+  positiveInteger,
+  timeZone,
+  width,
+  widths
+} from './options';
 
 describe('options', () => {
   it('reads pages by path, each once, and refuses one that is not a path', () => {
@@ -67,5 +78,11 @@ describe('options', () => {
       { element: 'faq-title', text: 'Questions asked', path: '/faq' }
     ]);
     expect(() => expectation('/faq', undefined)).toThrow(InvalidArgumentError);
+  });
+
+  // velada-polish's design-2 could not test a visitor elsewhere: the server and the browser both read the machine's zone.
+  it('takes a time zone the browser knows, and refuses one it does not, by name', () => {
+    expect(timeZone(' America/Mexico_City ')).toBe('America/Mexico_City');
+    expect(() => timeZone('Mars/Olympus')).toThrow('"Mars/Olympus" is no time zone');
   });
 });

@@ -41,7 +41,7 @@ export const noticeRun = async (
     if (!(team ? startedAgents(team) : []).some(member => member.agent === ctx.agent)) {
       throw new RunRefusal(
         'invalid',
-        `${ctx.agent} is no agent of the team: an agent notices as itself (--agent <its name>), a task's holder with its token`
+        `${ctx.agent} is no agent of the team: an agent notices as itself, with its own token (--token), a task's holder with its token`
       );
     }
   }

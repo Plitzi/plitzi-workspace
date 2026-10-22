@@ -19,6 +19,16 @@ const report: CompareReport = {
 };
 
 describe('a comparison with another site, said', () => {
+  // velada-polish: sponsors in light against an original with no light scheme — 99.5%, 2526px off — read as the section's.
+  it('says a clipped section lined up with something else, before its figures are read', () => {
+    const lines = compareText({
+      ...report,
+      section: 'hero',
+      misaligned: 'hero lined up with a part of x that is not it'
+    }).map(line => stripVTControlCharacters(line));
+    expect(lines[1]).toBe('⚠ hero lined up with a part of x that is not it');
+  });
+
   it('leads with the one section a clip keeps, the whole page’s figure beside it', () => {
     const [first] = compareText({ ...report, section: 'hero' }).map(line => stripVTControlCharacters(line));
     expect(first).toBe(

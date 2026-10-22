@@ -3,13 +3,16 @@ import type { Command } from 'commander';
 export const JSON_OPTION = ['--json', 'One object, for a tool or an agent'] as const;
 export const TOKEN_OPTION = [
   '--token <token>',
-  'The task’s token plitzi task take answered (or PLITZI_TASK_TOKEN)'
+  'Who you are: your own token, as your first command on the run printed it, or a task’s, as plitzi task take answered it (or PLITZI_TASK_TOKEN)'
 ] as const;
 export const RUN_OPTION = [
   '--run <run>',
   'The run, when the token does not say it and more than one is open (or PLITZI_RUN)'
 ] as const;
-export const AGENT_OPTION = ['--agent <name>', 'Who is calling, for the run’s log (or PLITZI_AGENT)'] as const;
+export const AGENT_OPTION = [
+  '--agent <name>',
+  'Your name, said once — your first command on the run, which answers your token — then your token says it (or PLITZI_AGENT)'
+] as const;
 
 /** What was piped in, read once: the text a `-` stands for. */
 let piped: Promise<string> | undefined;
@@ -57,6 +60,10 @@ export const sharedOptions = (groups: readonly Command[]): void => {
     for (const command of group.commands) {
       if (!command.options.some(option => option.long === '--agent')) {
         command.option(...AGENT_OPTION);
+      }
+
+      if (!command.options.some(option => option.long === '--token')) {
+        command.option(...TOKEN_OPTION);
       }
 
       const first = command.registeredArguments.at(0);

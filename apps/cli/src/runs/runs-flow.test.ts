@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { openBacklog } from './backlog';
+import { identify } from './identity';
 import { finishRun } from './merge';
 import { monitorRun } from './monitor';
 import { noticeRun } from './notices';
@@ -85,6 +86,20 @@ describe('a run played whole, as velada-dress went', () => {
     await openRun(as('lead'), await bench.writePlan(plan));
     const runId = plan.runId;
 
+    // Who calls is proved: dev-1's name is its token's once given — said again alone, or that token under the lead's
+    // name, refused (velada-polish: design-2, unnamed, was logged as the lead).
+    const { paths } = await loadRun(as('lead'), runId);
+    const dev1 = await identify(bench.root, paths, runId, { kind: 'name', said: 'dev-1' }, new Date());
+    expect(dev1.issued?.token).toMatch(/^es-launch\.@dev-1\.[0-9a-f]{32}$/);
+    await expect(identify(bench.root, paths, runId, { kind: 'name', said: 'dev-1' }, new Date())).rejects.toMatchObject(
+      {
+        code: 'identity'
+      }
+    );
+    await expect(
+      identify(bench.root, paths, runId, { kind: 'agent', token: dev1.issued?.token ?? '', said: 'lead' }, new Date())
+    ).rejects.toMatchObject({ code: 'identity' });
+
     // The base first: dev-1 there and free, dev-2 — on demand — is handed what dev-1 cannot take.
     await followNext(as('dev-1'), runId, 'developer', { timeoutMs: 0, everyMs: 10 });
     const ready = (await nextTask(as('dev-1'), runId, 'developer')).ready;
@@ -120,6 +135,8 @@ describe('a run played whole, as velada-dress went', () => {
     const asked = await askLead(as('dev-1', home.token), runId, 't-home', 'Bienvenidos or Bienvenida?');
     expect((await takeNext(as('lead-2'), runId, 'lead')).next.question?.id).toBe(asked.question.id);
     await messageTasks(as('lead-2'), runId, 't-home', 'Bienvenidos', asked.question.id);
+    // A message goes out in the lead's voice: dev-2, proved, is no lead — refused, never sent as the lead.
+    await expect(messageTasks(as('dev-2'), runId, 't-home', 'Bienvenida')).rejects.toMatchObject({ code: 'lead-only' });
     expect((await viewRun(as('lead'), runId)).tasks.find(task => task.id === 't-home')?.asking).toMatchObject({
       answered: true
     });

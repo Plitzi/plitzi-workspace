@@ -6,7 +6,7 @@ import { proposalsOf } from '../agreements';
 import { approveDesign, assertDesigner, designDue } from '../design';
 import { exists, fingerprint, writeJson } from '../files';
 import { assertReviewingLead, isCoLead, isPrincipal } from '../leads';
-import { agentAddress, LEAD, messagesOf, sendMessage } from '../messages';
+import { agentAddress, LEAD, messagesOf, sendMessage, unreadFor } from '../messages';
 import { taskPaths, under } from '../paths';
 import { syncPreview } from '../preview';
 import { RunRefusal } from '../refusal';
@@ -107,7 +107,7 @@ const assertTeamDesigner = async (ctx: RunContext, taskId: string): Promise<void
       'invalid',
       `${ctx.agent} is no designer of the team (${TEAM_FILE}): ${
         designers.length > 0 ? designers.map(each => each.agent).join(', ') : 'none of its agents'
-      } or the lead review ${taskId}'s UI — the lead, as itself: plitzi task review ${taskId} --approve --agent lead`,
+      } or the lead review ${taskId}'s UI — the lead, as itself: plitzi task review ${taskId} --approve --token <the lead's>`,
       { task: taskId, designers: designers.map(each => each.agent) }
     );
   }
@@ -214,6 +214,20 @@ const decide = async (
     );
   }
 
+  // What the lead said to a reviewer while it reviewed is read before its verdict, not after: design-1's round on
+  // t-match-bars went out before the lead's "only the bars this round" reached it (velada-polish). Handed over here,
+  // read; said again, the verdict goes.
+  if (!isPrincipal(ctx.agent)) {
+    const meanwhile = (await unreadFor(loaded, agentAddress(ctx.agent), true)).filter(message => message.from === LEAD);
+    if (meanwhile.length > 0) {
+      throw new RunRefusal(
+        'invalid',
+        `The lead said this to you while you reviewed — read it before your verdict on ${taskId}, then say it again with it in mind:\n${meanwhile.map(message => `  ${message.id}: ${message.text}`).join('\n')}`,
+        { task: taskId, messages: meanwhile.map(message => message.id) }
+      );
+    }
+  }
+
   // Its UI waits for a designer: an agent's verdict is the designer's; the lead's approval waits for it, or says it skips.
   const asLead = isPrincipal(ctx.agent) || isCoLead(loaded.record, ctx.agent);
   const byDesigner = designDue(view.state) && !asLead;
@@ -221,7 +235,7 @@ const decide = async (
     if (skipDesign) {
       throw new RunRefusal(
         'invalid',
-        `--skip-design is a lead's: ${ctx.agent} is not one. A lead approves without the UI review as itself — plitzi task review ${taskId} --approve --skip-design lead --agent lead`,
+        `--skip-design is a lead's: ${ctx.agent} is not one. A lead approves without the UI review as itself — plitzi task review ${taskId} --approve --skip-design lead --token <the lead's>`,
         { task: taskId }
       );
     }
@@ -464,7 +478,7 @@ const decide = async (
     await sendMessage(ctx, refreshed, {
       from: LEAD,
       to: agentAddress(designer),
-      text: `${taskId} is approved without its UI review (the lead went first): drop that review — what you found still matters, tell the lead with plitzi task tell --about ${taskId} "…" --agent ${designer}`
+      text: `${taskId} is approved without its UI review (the lead went first): drop that review — what you found still matters, tell the lead with plitzi task tell --about ${taskId} "…" --token <yours>`
     });
   }
 

@@ -2,7 +2,7 @@ import { authorSpace } from '@plitzi/sdk-authoring';
 
 import { acceptanceText } from './model';
 import { shellCommands } from './shell';
-import { meantOnPage } from '../commands/check';
+import { isNotFoundPage, meantOnPage, pageFor } from '../commands/check';
 import { loadProjectSpace } from '../commands/projectSpace';
 
 import type { PlannedTask } from './model';
@@ -99,5 +99,64 @@ export const expectationNotices = async (root: string, tasks: readonly PlannedTa
     .map(
       expected =>
         `Task "${expected.task}": the check of "${expected.said}" expects ${expected.element}${expected.path ? ` on ${expected.path}` : ''}, which the space has no element of now${meantOnPage(expected.element, ids)} — the task makes it, or the check names the one that is there`
+    );
+};
+
+/** The addresses a check's `page check` commands ask — those before any flag — and whether they say a status. */
+export const checkedPaths = (check: string): { paths: string[]; status: boolean }[] =>
+  shellCommands(check).flatMap(words => {
+    const at = words.findIndex((word, index) => word === 'page' && words[index + 1] === 'check');
+    if (at === -1) {
+      return [];
+    }
+
+    const rest = words.slice(at + 2);
+    const flag = rest.findIndex(word => word.startsWith('-'));
+
+    return [
+      {
+        paths: (flag === -1 ? rest : rest.slice(0, flag)).filter(word => word.startsWith('/')),
+        status: rest.some(word => word === '--status' || word.startsWith('--status='))
+      }
+    ];
+  });
+
+/** Whether no page of the space answers `path` but its not-found page: sent with 404. */
+export const fallsToNotFound = (handles: SpaceHandles, path: string): boolean => {
+  const page = pageFor(handles, path);
+
+  return page === undefined || (Object.hasOwn(handles.pages, page) && isNotFoundPage(handles.pages[page]));
+};
+
+/**
+ * Each check of the plan that asks an address no page of the space answers — it falls to the not-found page, sent with
+ * 404 — and says no `--status`: it fails on the status, whatever the page shows (velada-polish's lead wrote one, and
+ * dev-3 asked why the acceptance could not pass). A notice: the task may make the page.
+ */
+export const notFoundNotices = async (root: string, tasks: readonly PlannedTask[]): Promise<string[]> => {
+  const asked = tasks.flatMap(task =>
+    task.acceptance.flatMap(each =>
+      typeof each === 'string'
+        ? []
+        : checkedPaths(each.check)
+            .filter(command => !command.status)
+            .flatMap(command => command.paths.filter(path => !/[${]/.test(path)))
+            .map(path => ({ task: task.id, said: acceptanceText(each), path }))
+    )
+  );
+  if (asked.length === 0) {
+    return [];
+  }
+
+  const handles = await authoredHandles(root);
+  if (!handles) {
+    return [];
+  }
+
+  return asked
+    .filter(({ path }) => fallsToNotFound(handles, path))
+    .map(
+      ({ task, said, path }) =>
+        `Task "${task}": the check of "${said}" asks ${path}, which no page of the space answers — it falls to the not-found page, sent with 404: say --status 404, or the check fails on the status (unless the task makes that page)`
     );
 };

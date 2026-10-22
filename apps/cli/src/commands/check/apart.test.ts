@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { keptToParts } from './apart';
-import { answeredImage, throttledImage } from './inspect';
+import { answeredImage, HOST_TROUBLE, throttledImage } from './inspect';
 
 import type { CheckReport } from './types';
 
@@ -79,5 +79,22 @@ describe('an image its host held back (429)', () => {
     expect(
       throttledImage({ code: 'broken-link', message: 'https://cdn.example.com/flags/es.svg' }, throttled)
     ).toBeUndefined();
+  });
+});
+
+// velada-polish: a CDN rate-limiting every request — connections reset, never answered — failed dev-1's checks three
+// times, and a rerun passed: a busy host's, never the page's. A name that resolves to nothing stays the page's.
+describe('a host that lets an image go', () => {
+  it('is busy when it times out, resets or closes — and the page’s when its name resolves to nothing', () => {
+    for (const said of [
+      'net::ERR_TIMED_OUT',
+      'net::ERR_CONNECTION_RESET',
+      'net::ERR_EMPTY_RESPONSE',
+      'net::ERR_HTTP2_PROTOCOL_ERROR'
+    ]) {
+      expect(HOST_TROUBLE.test(said)).toBe(true);
+    }
+
+    expect(HOST_TROUBLE.test('net::ERR_NAME_NOT_RESOLVED')).toBe(false);
   });
 });

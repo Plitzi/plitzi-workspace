@@ -228,13 +228,23 @@ the review a lead made by hand in four or five commands, while every agent waite
 task — its approved work, made in the task's cache and served for the look (`startBeforePreview`) — by `page shot
 --compare`, and says what changed, section by section, or that nothing did: what the task moved, and that nothing else
 did, where velada-now's designer copied a folder and started two servers by hand for every review. A server on this
-machine is compared as the project, its scheme chosen as a visitor's toggle chooses it. A task that writes a part of a page
+machine is compared as the project, its scheme chosen as a visitor's toggle chooses it — and, both sides being the
+project's, held to what the project changed: motion reduced, and every picture from another site stood in for on each
+side by a square of a colour its address gives it (`standIns`), so the same picture is the same on both and another one
+differs (velada-polish: a busy CDN's 429s made 21–31% "differs" at 390, and the same look said 7%, then 0%). The page's
+own picture of a comparison is `-after.png`, beside the run before in `-after-compare.png`. Its dress is compared detail
+by detail: what there are fewer of, by how many — a kind counted whole listed details still there as lost. `--width`,
+`--scheme` (each width in each) and `--status` (a not-found page, `--status 404`) are `page shot`'s and `page check`'s.
+A server of the look that stops under it is said, with why and its last lines (`preview-server.log`,
+`before-server.log` in the task's cache): what failed after is no finding of the task's. A task that writes a part of a page
 others build too — a section of the home — is looked at as that part (`taskParts.ts`, off the copy's own authoring:
 the elements its files write): its pictures clipped to its outermost elements (a provider's children, as it draws no
 node), and the page check's findings on other tasks' parts set apart and counted — a stub of theirs is no finding of
 its. A whole page, layout or component of its own is pictured whole, as before. A copy its agent's own server still
 serves (its `tmp/dev-server.json` answers) is looked at there and left running — a second server would not start on
-the copy's state, whose kv lock the first holds; `run preview --task` follows it the same way. `--hover <id>` is
+the copy's state, whose kv lock the first holds; `run preview --task` follows it the same way. So is one a `page shot`
+kept (`lingering.ts`), its use marked while it is followed so its watchdog leaves it; and a copy a look serves is said
+(`previewed.json`), so a `page shot` in it pictures through that server rather than start a second beside it. `--hover <id>` is
 `page check --hover` on each page and one more picture at 1440, light, with the pointer over it (`page shot --steps
 "hover …"`, taken apart so a missing element loses only that picture). A copy's server is told from another copy's by
 `/health`'s `Instance`, a mark of the folder it serves (`projectMark`): copies share the project's name, and
@@ -577,16 +587,40 @@ failed was in the run's work and nowhere in the log. When the
 run ends — finished, or aborted by a person — the report is left in `tmp/plitzi-reports/<run>-<time>.md`, with what was
 written or discarded and where a backup is.
 
+## Who calls (`identity.ts`)
+
+A name is anyone's to type. Said, or not said — a shell with no terminal was the lead — it was taken at its word:
+velada-polish's design-2 ran `task look` with no `--agent` and the run's log has the lead looking, and one `task review
+--approve` the same way would have been the lead's last word. So who calls is proved by a token:
+
+- Every agent of a run has a token of its own, `<run>.@<agent>.<secret>`, made at its first command — `--agent
+  <name>` said once — and printed to it then; the lead's is made by `run open` and printed with it. The run keeps each
+  one's digest (`identities/<agent>.json`), never the token; the agent's copy is in its scratch folder
+  (`scratch/<agent>/token`), read back by a harness that forgot it.
+- Each command after passes it (`--token`, or `PLITZI_TASK_TOKEN`; a task's token does the same, and a copy's is its
+  holder's). Refused (`identity`, 26): a name that has a token said without it, a token under another's name or of
+  another run, a name not of the project's team (`team.json`: its agents, `lead`, its co-leads), `person` from a shell
+  (a person is a terminal), and a caller that says nothing — except the readings anyone may ask (`run status`, `run
+  report`, `task claims`, `task proposals`, `run can-write`: a hook or a script, `unnamed`).
+- An agent's roles are its team's: `task next --role` and `task take` refuse a role it was not started as.
+- What tells an agent to start one again (`run monitor`, `run watch`) names it by its kept token once it has one:
+  `--token "$(cat tmp/plitzi-runs/<run>/scratch/<agent>/token)"`.
+
+With who calls proved, the lead's guards hold by name: `requireLead`, `requirePrincipal` and a verdict's guard let in
+`lead` and a person (and, for a verdict, a lead that reviews), and refuse every other — an agent of no team included,
+which a name alone once let through. `task message` goes out in the lead's voice, so it is a lead's too.
+
 ## Who may do what (`run/`)
 
 A person's actions — the final merge, restore, a forced stop, abort, purge, taking a run over, re-pinning it, opening
 one above the estimate's threshold — are refused with a task's token and in a shell with no terminal; a person confirms
 by typing the run's name. The lead's — opening, stopping, reviewing (and overwriting), reassigning, reverting,
-resolving a reconciliation and continuing, answering any proposal, the summary — are refused with a task's token; a
-verdict is a lead's (`lead`, a lead that reviews, a person) or a designer's on a UI that waits for one, refused to any
-other agent of the team even without a token (`lead-only`). This
+resolving a reconciliation and continuing, answering any proposal, the summary, a message to a task — are refused with
+a task's token and to any caller but the lead (`lead-only`); a verdict is a lead's (`lead`, a lead that reviews, a
+person) or a designer's on a UI that waits for one. This
 is a guard rail, not security: an agent with a shell can give itself a terminal (a pseudo-terminal) and type the run's
-name, and edit the run's records — `run.json` or a task's `state.json` broken by hand are refused by name, never read
+name, read another agent's token from its scratch folder (the run's files are the person's user's, as the agents are),
+and edit the run's records — `run.json` or a task's `state.json` broken by hand are refused by name, never read
 on a guess, but one rewritten whole is the agent's word. What holds is that whatever is written outside the flow is
 caught by fingerprint before anything is merged; **what keeps a person's actions a person's is the harness**: deny the
 agents `plitzi run finish --apply`, `run abort`, `run purge`, `run restore`, `run allow-finish`, `run stop --force` and
@@ -623,7 +657,7 @@ saw: it judges what happens from there. A task's commands are logged under the n
 
 10 `claimed`, 11 `waiting`, 12 `reassigned`, 13 `version-mismatch`, 14 `stopping`, 15 `forced-stop`, 16
 `reconciliation`, 17 `person-only`, 18 `conflict`, 19 `checks-failed`, 20 `invalid`, 21 `not-found`, 22
-`other-machine`, 23 `another-run`, 24 `agent-limit`, 25 `lead-only`. A refusal carries its code, the message, the next step and its
+`other-machine`, 23 `another-run`, 24 `agent-limit`, 25 `lead-only`, 26 `identity`. A refusal carries its code, the message, the next step and its
 detail (`--json`).
 
 ## Not built, and left out

@@ -1,3 +1,4 @@
+import { callerFlag } from './identity';
 import { isWorked } from './worked';
 
 import type { TaskView } from './taskStore';
@@ -32,7 +33,8 @@ export const runningAgents = (log: readonly Record<string, unknown>[]): Set<stri
 export const agentsNeeded = (
   views: readonly TaskView[],
   started: readonly StartedAgent[],
-  running: ReadonlySet<string>
+  running: ReadonlySet<string>,
+  run: { runId: string; identified: readonly string[] }
 ): Attention[] => {
   const busy = new Set(
     views.flatMap(view => [
@@ -88,7 +90,7 @@ export const agentsNeeded = (
     return [
       {
         kind: 'agents-needed' as const,
-        text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — plitzi task next --role ${next.roles.join(',')}${next.quality ? ` --quality ${next.quality}` : ''} --follow --take --agent ${next.agent}${next.onDemand ? ' (it stops by itself once nothing is left for it)' : ''}`,
+        text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — plitzi task next --role ${next.roles.join(',')}${next.quality ? ` --quality ${next.quality}` : ''} --follow --take ${callerFlag(run.runId, next.agent, run.identified)}${next.onDemand ? ' (it stops by itself once nothing is left for it)' : ''}`,
         who: 'lead' as const
       }
     ];

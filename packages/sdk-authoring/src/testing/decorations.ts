@@ -407,14 +407,28 @@ const countsOf = (layers: readonly PageDecoration[]): Partial<Record<DecorationK
   return counts;
 };
 
-/** The distinct details of `layers` of `kind`, each with how many times it is there: `box-shadow 60px rgb(…) ×4`. */
-const detailsOf = (layers: readonly PageDecoration[], kind: DecorationKind): string[] => {
+const timesOf = (layers: readonly PageDecoration[], kind: DecorationKind): Map<string, number> => {
   const times = new Map<string, number>();
   for (const layer of layers.filter(each => each.kind === kind)) {
     times.set(layer.detail, (times.get(layer.detail) ?? 0) + 1);
   }
 
-  return [...times].map(([detail, count]) => (count > 1 ? `${detail} ×${String(count)}` : detail));
+  return times;
+};
+
+/**
+ * The details of `kind` that `fewer` has fewer of than `more`, each with how many fewer: `box-shadow 60px rgb(…) ×4`.
+ * Each detail on its own — a kind counted whole listed every detail of it, kept ones too: one VS medal's shadow gone,
+ * and the cards' text-shadows ×20, all there, read as lost (velada-polish's design-2).
+ */
+const fewerOf = (fewer: readonly PageDecoration[], more: readonly PageDecoration[], kind: DecorationKind): string[] => {
+  const had = timesOf(fewer, kind);
+
+  return [...timesOf(more, kind)].flatMap(([detail, count]) => {
+    const gone = count - (had.get(detail) ?? 0);
+
+    return gone <= 0 ? [] : [gone > 1 ? `${detail} ×${String(gone)}` : detail];
+  });
 };
 
 /** A layer's look: its sort, and `wide` when it spans most of its section — what one look is matched by. */
@@ -479,12 +493,8 @@ export const compareDecorations = (
     const b = theirs.get(section) ?? [];
     const countA = countsOf(a);
     const countB = countsOf(b);
-    const missing = KINDS.filter(kind => (countB[kind] ?? 0) > (countA[kind] ?? 0)).flatMap(kind =>
-      detailsOf(b, kind).slice(0, DETAILS)
-    );
-    const extra = KINDS.filter(kind => (countA[kind] ?? 0) > (countB[kind] ?? 0)).flatMap(kind =>
-      detailsOf(a, kind).slice(0, DETAILS)
-    );
+    const missing = KINDS.flatMap(kind => fewerOf(a, b, kind).slice(0, DETAILS));
+    const extra = KINDS.flatMap(kind => fewerOf(b, a, kind).slice(0, DETAILS));
 
     const ourLooks = looksOf(a, here.regions, section);
     const theirLooks = looksOf(b, there.regions, section);

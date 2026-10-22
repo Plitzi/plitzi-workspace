@@ -30,7 +30,7 @@ export type {
 } from './types';
 export { CHECK_PASSWORD_ENV, CHECK_USER_ENV, checkAccount, sentElsewhere, signInAs } from './account';
 export type { Account } from './account';
-export { notShownInPage, pageFor, staticPaths } from './space';
+export { isNotFoundPage, notShownInPage, pageFor, staticPaths } from './space';
 export { contestedStylesInPage, contestedText, inertText } from './styles';
 export {
   listenForRefusedFieldsInPage,

@@ -292,7 +292,7 @@ export const menu = { id: 'menu', title: 'Carta', theme };
     try {
       await writeInCopy(home.work, DEV_SERVER_FILE, JSON.stringify({ port }));
       const preview = await startTaskPreview(lead(), 'es-launch', 't-home', await freePort(), { quiet: true });
-      expect(preview).toMatchObject({ borrowed: port, url: `http://127.0.0.1:${String(port)}` });
+      expect(preview).toMatchObject({ borrowed: { port, by: 'agent' }, url: `http://127.0.0.1:${String(port)}` });
       preview.stop();
       expect((await preview.done).why).toContain('asked to');
     } finally {

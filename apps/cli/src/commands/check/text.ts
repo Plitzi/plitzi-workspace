@@ -25,9 +25,11 @@ const heldText = (report: CheckReport, asked: CheckAsk): string[] => {
     ...(report.state === undefined ? [] : [`  · state ${JSON.stringify(report.state)}`]),
     ...Object.entries(report.sources ?? {}).map(([name, value]) => `  · source ${name}: ${shapeOf(value)}`),
     ...Object.entries(report.elements ?? {}).flatMap(([id, { read, styles }]) => [
-      `  · element ${id}: ${JSON.stringify(read)}`,
-      ...(styles === null
-        ? [`  · element ${id} is not on the page: its styles cannot be read`]
+      read === null || read === undefined
+        ? `  · element ${id}: the page's dev tools read no element by that name`
+        : `  · element ${id}: ${JSON.stringify(read)}`,
+      ...('unread' in styles
+        ? [`  · element ${id}: its styles cannot be read — ${styles.unread}`]
         : [
             ...(styles.contested.length === 0
               ? [`  · element ${id}: no property is set by more than one of its classes`]
@@ -117,7 +119,7 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
     ...(report.throttled && report.throttled.length > 0
       ? [
           chalk.dim(
-            `  · held back by their host (a 429, or dropped while it sent the rest), not the page's: ${report.throttled.slice(0, 4).join(', ')}${report.throttled.length > 4 ? `, … (${String(report.throttled.length)})` : ''}`
+            `  · held back by their host (a 429 or 503, a connection it let go or never answered, or dropped while it sent the rest), not the page's: ${report.throttled.slice(0, 4).join(', ')}${report.throttled.length > 4 ? `, … (${String(report.throttled.length)})` : ''}`
           )
         ]
       : []),

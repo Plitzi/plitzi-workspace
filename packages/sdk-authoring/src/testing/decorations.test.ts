@@ -131,6 +131,19 @@ describe('pageDecorations, of pictures', () => {
 });
 
 describe('compareDecorations', () => {
+  // velada-polish: one VS medal's shadow gone, and the cards' text-shadows — all still there — read as lost.
+  it('names only the details there are fewer of, each by how many', () => {
+    const regions = [region('section#fights-page', 0, 1000)];
+    const names = Array.from({ length: 20 }, () => layer('glow', 'text-shadow 12px rgba(0, 0, 0, 0.9)'));
+    const medal = layer('glow', 'box-shadow 14px rgba(255, 255, 255, 0.35)');
+    const compared = compareDecorations(
+      { layers: [...names, medal], regions },
+      { layers: [...names, medal, medal, medal], regions }
+    );
+
+    expect(compared).toMatchObject([{ missing: ['box-shadow 14px rgba(255, 255, 255, 0.35) ×2'], extra: [] }]);
+  });
+
   it('says, section by section, the dress the other page has and this one lacks — and what this one adds', () => {
     const regions = [region('header#site-header', 0, 80), region('section#artist-page', 80, 900)];
     const compared = compareDecorations(

@@ -54,7 +54,7 @@ const earlierText = (review: { earlier: number; task: { id: string } }): string[
     : [];
 
 /** A designer's review, as `task next` hands it: what to look at, what for, and how to say it. */
-const designReviewText = (review: NonNullable<NextTask['designReview']>, agent: string): string =>
+const designReviewText = (review: NonNullable<NextTask['designReview']>): string =>
   [
     chalk.bold(
       `Review ${review.task.id}'s UI — ${review.task.title}: a designer's look, before the lead's${review.round > 0 ? ` (round ${String(review.round)}: sent back since)` : ''}`
@@ -72,18 +72,18 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>, agent: 
           )
         ]
       : []),
-    `  Then say it: plitzi task review ${review.task.id} --approve [--note "what you saw"] | --changes "what, where, and why" [--on <element>] --agent ${agent}`
+    `  Then say it: plitzi task review ${review.task.id} --approve [--note "what you saw"] | --changes "what, where, and why" [--on <element>] --token <your token>`
   ].join('\n');
 
 /** A spike, as `task next --role lead` hands it to a lead: what to find out, for whom, and how to say it. */
-const spikeText = (spike: NonNullable<NextTask['spike']>, agent: string): string =>
+const spikeText = (spike: NonNullable<NextTask['spike']>): string =>
   [
     chalk.blue(chalk.bold(`Spike ${spike.task.id} — ${spike.task.title}: find out ${spike.question}`)),
     ...(spike.findings > 0
       ? [`  ${String(spike.findings)} finding(s) of it already: plitzi task context ${spike.task.id}`]
       : []),
     '  Compare with the original (page shot <path> --compare <original> --clip <section> --dress), read its computed styles, measure — write nothing of the task’s',
-    `  Then say it — the layers, their values, which file gets each — and its result, the tasks it makes, each with its "findings": plitzi task spike ${spike.task.id} --done "…" --tasks <stage.json> --agent ${agent}`
+    `  Then say it — the layers, their values, which file gets each — and its result, the tasks it makes, each with its "findings": plitzi task spike ${spike.task.id} --done "…" --tasks <stage.json> --token <your token>`
   ].join('\n');
 
 /** A lead's review, as `task next --role lead` hands it: the whole review `lead` would make, by this lead. */
@@ -109,20 +109,20 @@ const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: stri
           )
         ]
       : []),
-    `  Then say it: plitzi task review ${review.task.id} --approve [--note "…"] | --changes "what, where, and why" --agent ${agent}`,
+    `  Then say it: plitzi task review ${review.task.id} --approve [--note "…"] | --changes "what, where, and why" --token <your token>`,
     ...(isPrincipal(agent)
       ? []
       : ['  The plan, the person and the finish are lead’s: what you find beyond the task, tell lead'])
   ].join('\n');
 
 /** A question to the lead, as `task next --role lead` hands it to a lead that reviews: what to answer, and how. */
-const questionText = (question: NonNullable<NextTask['question']>, agent: string): string =>
+const questionText = (question: NonNullable<NextTask['question']>): string =>
   [
     chalk.bold(
       `Question ${question.id} from ${question.task}${question.agent ? ` (${question.agent})` : ''}: ${question.text}`
     ),
     `  ${question.agent ?? 'its agent'} waits for it. Answer what the code, the plan, the brief or the original answers — read them first (plitzi task show ${question.task})`,
-    `  Then: plitzi task message ${question.task} "…" --reply-to ${question.id} --agent ${agent}`,
+    `  Then: plitzi task message ${question.task} "…" --reply-to ${question.id} --token <your token>`,
     '  A choice for the person, or a change of plan, is lead’s: leave it — lead is woken for it if it is not answered in 2 min'
   ].join('\n');
 
@@ -130,13 +130,13 @@ const nextText = (next: NextTask, agent: string): string =>
   [
     ...messageLines(next.messages),
     next.question
-      ? questionText(next.question, agent)
+      ? questionText(next.question)
       : next.spike
-        ? spikeText(next.spike, agent)
+        ? spikeText(next.spike)
         : next.leadReview
           ? leadReviewText(next.leadReview, agent)
           : next.designReview
-            ? designReviewText(next.designReview, agent)
+            ? designReviewText(next.designReview)
             : next.task
               ? next.yours
                 ? [
