@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import create from './create';
 import { scaffold } from '../scaffold';
+import { NODE_RANGE } from '../scaffold/project';
 
 import type { CreateAnswers } from '../scaffold';
 
@@ -385,7 +386,7 @@ describe('the scaffold', () => {
         mode === 'server' ? 'node --env-file-if-exists=.env .plitzi/author.ts' : 'node .plitzi/author.ts'
       );
       expect(devDependencies.tsx).toBeUndefined();
-      expect(engines.node).toBe('>=22.18');
+      expect(engines.node).toBe(NODE_RANGE);
       expect(compilerOptions).toMatchObject({
         allowImportingTsExtensions: true,
         verbatimModuleSyntax: true,

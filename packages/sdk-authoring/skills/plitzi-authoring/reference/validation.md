@@ -28,7 +28,7 @@ bar.
    ```
 
 1. **Author once, print everything.** In a project `plitzi create` wrote, `npm run author`. Anywhere else, a file you run
-   with `node` (≥ 22.18 strips the types) — outside the project's source, never committed:
+   with `node` (Node 24 strips the types) — outside the project's source, never committed:
 
    ```ts
    import { authorSpace } from '@plitzi/sdk-authoring';

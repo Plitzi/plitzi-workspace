@@ -54,7 +54,7 @@
     "turbo": "^2.11.9"
   },
   "engines": {
-    "node": ">=22.18"
+    "node": "^24.22.1 || >=26.12.1"
   },
   "packageManager": "yarn@4.2.2",
   "workspaces": [

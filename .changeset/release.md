@@ -642,8 +642,8 @@ monitor` shows each as it comes, a problem in red.
     - `page shot --compare` (and `task look --before`, `run reference`) reads each page's dress — gradients, glows (a
       shadow blurred 12px or more), filters, ornaments drawn by `::before`/`::after`, background images — and says, section
       by section, what the other page has that this one lacks and what this one adds (`section#artist-page: 4 gradients,
-      3 glows → 12 gradients, 2 filters, 5 glows — add: radial-gradient rgba(199, 168, 107, 0.16); box-shadow 60px
-      rgba(199, 168, 107, 0.45)…`), before the words. The other site's dress is placed in this page's sections where the
+3 glows → 12 gradients, 2 filters, 5 glows — add: radial-gradient rgba(199, 168, 107, 0.16); box-shadow 60px
+rgba(199, 168, 107, 0.45)…`), before the words. The other site's dress is placed in this page's sections where the
       pictures found each, so one that names its sections otherwise is still read section by section; transparent
       layers (a hover's glow at rest) are not dress; colours read as `rgb()` whatever the page wrote (`color(srgb …)`,
       `oklab(…)`). New in `@plitzi/sdk-authoring`: `pageDecorations`, `compareDecorations`. la-velada's artist page lost
@@ -789,7 +789,7 @@ monitor` shows each as it comes, a problem in red.
       activity says a wait by its reason alone, and an agent joined though it made its scratch folder first.
     - The lead's skill says where leads went wrong in velada-dress and velada-polish: a check written is run once before
       a task gets it (a 404 page, `--status 404`); one look, one task; a question before the lead's own work, `run
-      watch` in the harness's background; what is so said from its source, never a copy or a class name; the report
+watch` in the harness's background; what is so said from its source, never a copy or a class name; the report
       before the finish.
     - The project's backlog: what a run noticed and left (`run notice "…" --on <where>`) is kept past the run in
       `.plitzi/backlog.json` as it finishes or is aborted — once — and `run plan` and `run open` list what is open for
@@ -823,49 +823,49 @@ monitor` shows each as it comes, a problem in red.
   passes it (`--token`, on every run and task command now): a name that has one said without it, a token under
   another's name, a name not of the team, `person` from a shell and a caller that says nothing are refused
   (`identity`, exit 26) — but for the readings anyone may ask (`run status`, `run report`, `task claims`, `task
-  proposals`, `run can-write`). An agent's roles are its team's (`task next --role`, `task take`). The lead's guards hold
+proposals`, `run can-write`). An agent's roles are its team's (`task next --role`, `task take`). The lead's guards hold
   by name now: `lead` or a person, and a lead that reviews for a verdict — never an agent of no team, which a name let
   through — and `task message`, in the lead's voice, is a lead's. `run monitor` and `run watch` start an agent again by
   its kept token.
 - **What velada-polish's look and its agents met in the CLI** (`@plitzi/cli`, `@plitzi/sdk-authoring`):
-    - A `task look` serves a copy through the server a `page shot` kept on it, its use marked while it is followed, and
-      a copy a look serves is said (`previewed.json`), so a picture in it goes through that server: two servers on one
-      copy fought over its state, and the lead's look pictured nothing. A look's quiet servers write to logs in the
-      task's cache, and one that stops under the look is said with why and its last lines.
-    - `task look --before` holds both sides to what the project changed — motion reduced, another site's pictures
-      stood in for on each side by a colour their address gives — where a busy CDN's 429s made 21–31% "differs" and the
-      same look said 7%, then 0%. Its own picture is `-after.png` (`-before.png` was the after). The dress is compared
-      detail by detail (`@plitzi/sdk-authoring`): what there are fewer of, by how many — not every detail of a kind
-      whose count changed, kept ones read as lost.
-    - `task look --width`, `--scheme` and `--status`, as `page shot` and `page check`; `page shot` and `page check
-      --timezone <IANA>`, a visitor elsewhere.
-    - `page check --element` says why an element's styles cannot be read — not authored (a component's part, with the
-      ids near it), not on the page at this width — where it said "not on the page" of one that was.
-    - `--clip`/`--scroll-to` find a section as a comparison's report names it (`section#home-sponsors`: its id, or its
-      element's name) and a bare id (`--clip combates`); `--scroll-to … --viewport` scrolls once the pictures are loaded,
-      where it pictured the top; `--compare --clip` writes the section, not the page, to `-o`, and says when the section
-      lined up with something else (90% or more differs, or farther than a screen) — a reference with no such section,
-      or no light scheme.
-    - `page check` counts an image a host let go — timed out, reset, closed, never answered, a 503 — as the host's, not
-      the page's: a CDN rate-limiting every request failed a developer's checks three times, a rerun passing.
-    - A reviewer's verdict is refused once while the lead said something to it it has not read, which the refusal hands
-      it: design-1's round went out before the lead's "only the bars this round" reached it.
-    - `run plan` says a check of an address no page answers (the not-found page, sent with 404) that says no `--status`;
-      the finish's audit reads a spike ended by what it found as ended, not as an approval the log missed; `task
-      discard` takes several files, and says which went back when one of them is refused.
+  - A `task look` serves a copy through the server a `page shot` kept on it, its use marked while it is followed, and
+    a copy a look serves is said (`previewed.json`), so a picture in it goes through that server: two servers on one
+    copy fought over its state, and the lead's look pictured nothing. A look's quiet servers write to logs in the
+    task's cache, and one that stops under the look is said with why and its last lines.
+  - `task look --before` holds both sides to what the project changed — motion reduced, another site's pictures
+    stood in for on each side by a colour their address gives — where a busy CDN's 429s made 21–31% "differs" and the
+    same look said 7%, then 0%. Its own picture is `-after.png` (`-before.png` was the after). The dress is compared
+    detail by detail (`@plitzi/sdk-authoring`): what there are fewer of, by how many — not every detail of a kind
+    whose count changed, kept ones read as lost.
+  - `task look --width`, `--scheme` and `--status`, as `page shot` and `page check`; `page shot` and `page check
+--timezone <IANA>`, a visitor elsewhere.
+  - `page check --element` says why an element's styles cannot be read — not authored (a component's part, with the
+    ids near it), not on the page at this width — where it said "not on the page" of one that was.
+  - `--clip`/`--scroll-to` find a section as a comparison's report names it (`section#home-sponsors`: its id, or its
+    element's name) and a bare id (`--clip combates`); `--scroll-to … --viewport` scrolls once the pictures are loaded,
+    where it pictured the top; `--compare --clip` writes the section, not the page, to `-o`, and says when the section
+    lined up with something else (90% or more differs, or farther than a screen) — a reference with no such section,
+    or no light scheme.
+  - `page check` counts an image a host let go — timed out, reset, closed, never answered, a 503 — as the host's, not
+    the page's: a CDN rate-limiting every request failed a developer's checks three times, a rerun passing.
+  - A reviewer's verdict is refused once while the lead said something to it it has not read, which the refusal hands
+    it: design-1's round went out before the lead's "only the bars this round" reached it.
+  - `run plan` says a check of an address no page answers (the not-found page, sent with 404) that says no `--status`;
+    the finish's audit reads a spike ended by what it found as ended, not as an approval the log missed; `task
+discard` takes several files, and says which went back when one of them is refused.
 - **What velada-polish's flow showed** (`@plitzi/cli`):
-    - A task sent back while its agent is at another one waits 3 minutes for it; past that, a free agent of its role
-      is handed it by `task next` — with what its review asked — and `--take` cuts the first agent's token (told, by
-      name) and takes it, its copy made again from the version that went to review (`handed-off`). A waiting agent is
-      told when it will be its. t-match-bars's changes waited ten minutes for dev-1 while two developers had nothing.
-    - A round of UI sent back is offered first to the designer who said the one before, another only after 3 minutes,
-      told to check what was asked and ask anew only what is broken: a second designer's own asks cost a round.
-    - A designer's `task look` of the UI it reviews is beside the run before it unless `--no-before`, and a look that
-      names its pages says the others its changes are drawn at — a shared file's — that it did not look at.
-    - `plitzi page measure <path> <element> --compare <url> --there <selector>`: an element's computed styles beside
-      another page's, each property that differs — the values the designers measured with scripts of their own.
-    - `task check --fix` runs the project's eslint and prettier on the task's changed files first, and a check failing
-      on lint or format says so; a task's holder reads its own task with `task show`.
+  - A task sent back while its agent is at another one waits 3 minutes for it; past that, a free agent of its role
+    is handed it by `task next` — with what its review asked — and `--take` cuts the first agent's token (told, by
+    name) and takes it, its copy made again from the version that went to review (`handed-off`). A waiting agent is
+    told when it will be its. t-match-bars's changes waited ten minutes for dev-1 while two developers had nothing.
+  - A round of UI sent back is offered first to the designer who said the one before, another only after 3 minutes,
+    told to check what was asked and ask anew only what is broken: a second designer's own asks cost a round.
+  - A designer's `task look` of the UI it reviews is beside the run before it unless `--no-before`, and a look that
+    names its pages says the others its changes are drawn at — a shared file's — that it did not look at.
+  - `plitzi page measure <path> <element> --compare <url> --there <selector>`: an element's computed styles beside
+    another page's, each property that differs — the values the designers measured with scripts of their own.
+  - `task check --fix` runs the project's eslint and prettier on the task's changed files first, and a check failing
+    on lint or format says so; a task's holder reads its own task with `task show`.
 - **Four wordings and wakes velada-polish showed** (`@plitzi/cli`, `@plitzi/sdk-authoring`): `--dress` and a
   comparison's dress name the element of ours where the other page wears a look this one lacks (`absentOn`); a task
   handed back to its own agent is said as it is — unblocked by the lead, or held all along — never "unblocked" for one
@@ -886,3 +886,10 @@ monitor` shows each as it comes, a problem in red.
   agent repeated; the harness's tokens said with `run report --tokens`. Kept as data beside the report
   (`<run>-<time>.json`), compared with the runs before at its end and by `plitzi run bench`. The report said 136 min
   of a run worked in 50, "refused: 0" of six refusals, one designer of two, and a stage's estimate for one agent.
+- **Node 24 at least, with its security fixes** (`@plitzi/cli`, `@plitzi/sdk-server`, `@plitzi/sdk-mcp`,
+  `@plitzi/sdk-authoring`): every package's `engines` — and what `plitzi create` and a plugin's package write — is
+  `^24.22.1 || >=26.12.1`: Node 24, the LTS the platform runs, from Node's security release of October 20–21, 2026,
+  where `>=22.18` let Node 22 and releases with known CVEs run a server. A project on Node 22 is to move to 24. CI runs
+  the repo's `.nvmrc` (24.22.1). `plitzi doctor` reads a range of several (`||`), refuses a Node before 24
+  (`node-too-old`) and warns of one behind its line's security release (`node-unpatched`, with the patch to install).
+  `undici` is `^8.12.3` (its advisories of October 14–15, 2026), the transitive copies on their patched lines.

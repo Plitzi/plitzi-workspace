@@ -1,6 +1,6 @@
 import { managerPackageFields } from '../packageManager';
 import { PROJECT_TMP } from '../paths';
-import { REACT_VERSION, SDK_VERSION, SHARED_DEV_DEPENDENCIES, VITE_VERSION } from '../project';
+import { NODE_RANGE, REACT_VERSION, SDK_VERSION, SHARED_DEV_DEPENDENCIES, VITE_VERSION } from '../project';
 
 import type { PluginNames } from './names';
 import type { PluginAnswers, ProjectFiles } from '../types';
@@ -51,8 +51,8 @@ const packageJson = ({ packageName, base }: PluginNames, { packageManager, owner
         'react-dom': REACT_VERSION,
         vite: VITE_VERSION
       },
-      // The build scripts are TypeScript that Node runs by stripping the types, which it does from 22.18.
-      engines: { node: '>=22.18' },
+      // The build scripts are TypeScript that Node runs by stripping the types — on Node 24, with its security fixes.
+      engines: { node: NODE_RANGE },
       ...managerPackageFields(packageManager)
     },
     null,

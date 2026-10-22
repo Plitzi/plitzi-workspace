@@ -1,6 +1,6 @@
 /**
  * The versions a project declares and installs, read as far as the doctor needs them: the ranges `package.json`
- * holds — `^0.38.4`, `~1.2.0`, `>=22.18`, `1.2.3` — and nothing else. Anything else (a `workspace:`, a `portal:`, a tag)
+ * holds — `^0.38.4`, `~1.2.0`, `>=22.18`, `1.2.3`, and several of them as one (`^22.23.4 || ^24.22.1`) — and nothing else. Anything else (a `workspace:`, a `portal:`, a tag)
  * is a choice of the project's, and is never called wrong.
  */
 
@@ -36,6 +36,13 @@ const nextBreaking = ([major, minor, patch]: Version): Version => {
  * nothing either way.
  */
 export const satisfies = (version: string, range: string): boolean | undefined => {
+  // One of several: allowed by any of them — unknown only when none allows it and one is not read here.
+  if (range.includes('||')) {
+    const each = range.split('||').map(part => satisfies(version, part));
+
+    return each.some(Boolean) ? true : each.includes(undefined) ? undefined : false;
+  }
+
   const installed = versionOf(version);
   const trimmed = range.trim();
   const floor = versionOf(trimmed.replace(/^(\^|~|>=|=)/, ''));
@@ -60,7 +67,26 @@ export const satisfies = (version: string, range: string): boolean | undefined =
 };
 
 /** The lowest version a range allows — `^0.38.4` → `0.38.4` — or nothing for one that is not a plain range. */
-export const floorOf = (range: string): Version | undefined =>
-  /^(\^|~|>=|=)?v?\d/.test(range.trim()) ? versionOf(range.trim().replace(/^(\^|~|>=|=)/, '')) : undefined;
+export const floorOf = (range: string): Version | undefined => {
+  if (range.includes('||')) {
+    return range
+      .split('||')
+      .map(part => floorOf(part))
+      .filter((floor): floor is Version => floor !== undefined)
+      .sort(compareVersions)
+      .at(0);
+  }
+
+  return /^(\^|~|>=|=)?v?\d/.test(range.trim()) ? versionOf(range.trim().replace(/^(\^|~|>=|=)/, '')) : undefined;
+};
+
+/** The lowest version a range allows on `major`'s line — `^24.22.1` of `^22.23.4 || ^24.22.1` for 24 — or none. */
+export const floorOnLine = (range: string, major: number): Version | undefined =>
+  range
+    .split('||')
+    .map(part => floorOf(part))
+    .filter((floor): floor is Version => floor?.[0] === major)
+    .sort(compareVersions)
+    .at(0);
 
 export const versionText = (version: Version): string => version.join('.');

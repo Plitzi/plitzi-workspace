@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { doctor } from '.';
+import { nodeFindings } from './packages';
 import create from '../commands/create';
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from '../commands/scaffoldRecord';
 
@@ -126,6 +127,16 @@ afterEach(async () => {
 // Each run is the whole doctor on a project on disk, some of them twice: far over the default 5 s on a machine running
 // every package's tests at once.
 describe('plitzi doctor', { timeout: 30_000 }, () => {
+  // Run as on a Node with its security release, whatever this machine runs: the machine's Node is no finding of the
+  // project's here — `nodeFindings` is held to each version below.
+  const machine = process.versions.node;
+  beforeEach(() => {
+    Object.defineProperty(process.versions, 'node', { value: '24.22.1', configurable: true });
+  });
+  afterEach(() => {
+    Object.defineProperty(process.versions, 'node', { value: machine, configurable: true });
+  });
+
   it('finds a project as plitzi create wrote it healthy', async () => {
     const report = await run({ strict: true });
 
@@ -711,5 +722,20 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
 
     expect(said.join('\n')).toContain('this is not one');
     expect(process.exitCode).toBe(1);
+  });
+});
+
+describe('the Node that runs a project', () => {
+  it('is too old before Node 24, unpatched behind its line’s security release, and fine at it', () => {
+    expect(nodeFindings('22.10.0').map(finding => finding.code)).toEqual(['node-too-old']);
+    // Node 22, patched as it is, is a line the project does not run on.
+    const [old] = nodeFindings('22.23.4');
+    expect(old).toMatchObject({ code: 'node-too-old', severity: 'error' });
+    expect(old.fix).toContain('nvm install 24.22.1');
+    const [unpatched] = nodeFindings('24.14.1');
+    expect(unpatched).toMatchObject({ code: 'node-unpatched', severity: 'warning' });
+    expect(unpatched.fix).toContain('nvm install 24.22.1');
+    expect(nodeFindings('24.22.1')).toEqual([]);
+    expect(nodeFindings('26.12.1')).toEqual([]);
   });
 });

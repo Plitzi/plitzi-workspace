@@ -11,14 +11,14 @@ PLITZI_HOST_KEY=<the space's self-hosting key> yarn start
 
 A space has two credentials, and this needs the second one.
 
-| | `render` — the **public** key | `host` — the **self-hosting** key |
-|---|---|---|
-| Where it lives | embedded in every published page | your server's environment, and nowhere else |
-| Who can read it | anyone who views source | only you |
+|                  | `render` — the **public** key                                                                   | `host` — the **self-hosting** key             |
+| ---------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Where it lives   | embedded in every published page                                                                | your server's environment, and nowhere else   |
+| Who can read it  | anyone who views source                                                                         | only you                                      |
 | What protects it | the **origins it declares** — the browser states where it is presenting from, and Plitzi checks | **being secret** — possessing it is the proof |
-| Used by | the browser-rendered SDK | `createCloudAdapters` |
+| Used by          | the browser-rendered SDK                                                                        | `createCloudAdapters`                         |
 
-The split is the whole point. An origin check works only because a *browser* is made to make the claim; a server
+The split is the whole point. An origin check works only because a _browser_ is made to make the claim; a server
 has no such claim to make, so if the public key were accepted without one, a key lifted from anybody's published
 page would be enough to serve a byte-identical clone of their site. Passing the public key here fails at startup
 with a message saying so, rather than as a 401 later.
@@ -38,8 +38,8 @@ If it leaks, revoke that one row — the published site keeps working, because i
 
 > **Pointing at a local Plitzi** (`PLITZI_SERVER_URL=https://server.plitzi.local`): the dev stack serves TLS with a
 > mkcert certificate, which browsers trust but Node's `fetch` does not. The `start` scripts already set
-> `NODE_OPTIONS=--use-system-ca` so Node reads the system trust store — plain `yarn start` works. That flag needs
-> Node 22+; on Node 20/21 set `NODE_EXTRA_CA_CERTS=$(mkcert -CAROOT)/rootCA.pem` instead.
+> `NODE_OPTIONS=--use-system-ca` so Node reads the system trust store — plain `yarn start` works on Node 24, the
+> least the example runs on.
 
 ## What this is for
 
@@ -56,11 +56,11 @@ PLITZI_ENVIRONMENT=production PLITZI_HOST_KEY=<key> yarn start # latest publishe
 PLITZI_ENVIRONMENT=production PLITZI_REVISION=12 …             # exactly revision 12
 ```
 
-| Config | Serves | Asks Plitzi |
-|---|---|---|
-| `environment: 'main'` | the document the builder is editing | **every request** — no cache |
-| `environment: 'production'` | the **latest** published revision | a revision NUMBER every `cacheSeconds`; the space only when that number moves |
-| `environment: 'production', revision: 12` | exactly that revision | **once**, ever |
+| Config                                    | Serves                              | Asks Plitzi                                                                   |
+| ----------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------- |
+| `environment: 'main'`                     | the document the builder is editing | **every request** — no cache                                                  |
+| `environment: 'production'`               | the **latest** published revision   | a revision NUMBER every `cacheSeconds`; the space only when that number moves |
+| `environment: 'production', revision: 12` | exactly that revision               | **once**, ever                                                                |
 
 The three are deliberate, not three settings for one thing.
 

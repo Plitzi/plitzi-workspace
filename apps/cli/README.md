@@ -84,12 +84,15 @@ bundler — so the linker is pinned to the layout npm and pnpm already give it.
 
 ## Node runs the TypeScript
 
-Every script that runs TypeScript — `start`, `author`, `page shot` — is plain `node`: Node 22.18+ strips the types
+Every script that runs TypeScript — `start`, `author`, `page shot` — is plain `node`: Node 24 strips the types
 itself, so nothing transpiles beside the server. (`tsx` did, and its loader thread cost a page server more memory
 than the server: ~270 MB to start where the same server starts in ~90.) The project's `tsconfig` holds it to what
 that needs — relative imports name their `.ts` file (`allowImportingTsExtensions`), type-only imports say so
 (`verbatimModuleSyntax`), nothing is written that stripping would leave broken (`erasableSyntaxOnly`) — so a
-mistake is a `typecheck` error, not a crash at `npm start`. `engines` says `>=22.18`.
+mistake is a `typecheck` error, not a crash at `npm start`. `engines` says `^24.22.1 || >=26.12.1`: Node 24 at
+least — the LTS the platform runs — each line from its last security release (October 2026), raised with each one;
+`plitzi doctor` refuses a Node before 24 (`node-too-old`) and warns of one behind its line's security release
+(`node-unpatched`), saying the patch to install.
 
 Each project also carries what lets its **first install through on release day**, which is the day every
 `@plitzi/*` package it depends on is new:

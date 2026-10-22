@@ -26,7 +26,8 @@ runs:
 
     - uses: actions/setup-node@v7
       with:
-        node-version: 24
+        # The repo's Node release, one (.nvmrc): a patch with Node's security fixes, never a floating major.
+        node-version-file: .nvmrc
         registry-url: ${{ inputs.registry-url }}
         scope: '@plitzi'
         cache: 'yarn'

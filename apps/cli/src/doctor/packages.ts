@@ -5,7 +5,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { editManifest, keepFolder } from './repairs';
 import { sayer } from './types';
-import { compareVersions, floorOf, satisfies, versionOf, versionText } from './versions';
+import { compareVersions, floorOf, floorOnLine, satisfies, versionOf, versionText } from './versions';
 import { localPackages } from '../commands/localPackages';
 import { planPackages } from '../commands/upgrade';
 import { installCommand } from '../scaffold';
@@ -80,6 +80,42 @@ const hasNodeModules = async (root: string): Promise<boolean> => {
 };
 
 /**
+ * What the Node that runs the project lacks: its line — a major before the range's lowest is one the project does not
+ * run on — or the security fixes its line's release has, a patch on its own line, never a new major.
+ */
+export const nodeFindings = (version: string): Finding[] => {
+  const running = versionOf(version);
+  const floor = floorOf(NODE_ENGINES.node);
+  if (running && floor && running[0] < floor[0]) {
+    return [
+      say.error(
+        'node-too-old',
+        `Node ${version} runs this, and the project needs Node ${String(floor[0])} or newer (${NODE_ENGINES.node}).`,
+        { fix: `Install Node ${versionText(floor)} or newer (nvm install ${versionText(floor)}).` }
+      )
+    ];
+  }
+
+  if (!running || satisfies(version, NODE_ENGINES.node) !== false) {
+    return [];
+  }
+
+  const patched = floorOnLine(NODE_ENGINES.node, running[0]);
+
+  return [
+    say.warning(
+      'node-unpatched',
+      `Node ${version} runs this without the security fixes the project asks for (${NODE_ENGINES.node}).`,
+      {
+        fix: patched
+          ? `Install Node ${versionText(patched)} or newer on its line (nvm install ${versionText(patched)}).`
+          : `Install a Node the range allows: ${NODE_ENGINES.node}.`
+      }
+    )
+  ];
+};
+
+/**
  * A second copy of a package a page must hold once, installed inside another: a second React breaks every hook, and a
  * second SDK a second runtime that the first never sees.
  */
@@ -134,17 +170,7 @@ const manifestChecks = (context: DoctorContext): Finding[] => {
     );
   }
 
-  const running = versionOf(process.versions.node);
-  const needed = floorOf(NODE_ENGINES.node);
-  if (running && needed && compareVersions(running, needed) < 0) {
-    findings.push(
-      say.error(
-        'node-too-old',
-        `Node ${process.versions.node} runs this, and the project needs ${NODE_ENGINES.node}: it runs its TypeScript by stripping the types, which older versions cannot.`,
-        { fix: `Install Node ${versionText(needed)} or newer.` }
-      )
-    );
-  }
+  findings.push(...nodeFindings(process.versions.node));
 
   return findings;
 };

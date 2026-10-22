@@ -94,13 +94,21 @@ const devDependencies = ({ mode }: CreateAnswers): Record<string, string> => ({
 });
 
 /**
+ * The Node releases a project runs on: Node 24 at least — the LTS the platform runs — each line from its last security
+ * release (October 2026: 24.22.1, 26.12.1). Node's security fixes are patches, and a range from 22.18 let a release
+ * with known CVEs run a server. Raised with each security release; every package of the workspace says the same
+ * (`engines.test.ts`).
+ */
+export const NODE_RANGE = '^24.22.1 || >=26.12.1';
+
+/**
  * Node runs this project's TypeScript itself — the server, `author`, `shot` — by stripping the types, which it does
  * without a flag from 22.18. Nothing transpiles beside the server: `tsx` did, and its loader thread cost a server
  * more memory than the server itself (~270 MB to start where the same server starts in ~90), which is the difference
  * between a small host and one that is killed on boot. The price is the one `tsconfig` enforces: relative imports
  * name their `.ts` file, and only syntax that erases (no `enum`, no parameter properties).
  */
-export const NODE_ENGINES = { node: '>=22.18' };
+export const NODE_ENGINES = { node: NODE_RANGE };
 
 /**
  * Node, with the project's `.env` in `process.env` before any module of it is evaluated — what `serverOptions.ts` and

@@ -107,7 +107,7 @@ server.listen(3001, '127.0.0.1');
 
 ```bash
 yarn add @plitzi/sdk-server react react-dom
-node server.ts     # http://127.0.0.1:3001/ — Node 22.18+ runs TypeScript itself
+node server.ts     # http://127.0.0.1:3001/ — Node 24 runs TypeScript itself
 ```
 
 No transpiler in front of it: Node strips the types. A loader such as `tsx` costs a page server more memory than the

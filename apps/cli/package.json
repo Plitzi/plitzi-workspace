@@ -10,7 +10,7 @@
   ],
   "type": "module",
   "engines": {
-    "node": ">=22.18"
+    "node": "^24.22.1 || >=26.12.1"
   },
   "bin": {
     "plitzi": "./dist/index.js"
