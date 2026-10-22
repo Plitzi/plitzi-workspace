@@ -1,6 +1,7 @@
 import type { BrowserPage, Scheme } from '../../browser';
 import type { FieldFill } from '../../options';
 import type { Account } from '../check';
+import type { PartCompared } from './compare';
 import type { SectionDecorations, TextComparison } from '@plitzi/sdk-authoring';
 
 /**
@@ -120,6 +121,8 @@ export interface ShotReport {
   scheme: Scheme;
   out: string;
   compare?: CompareReport;
+  /** `--clip a,b` beside the project's other server: each part's comparison, or why it could not be pictured. */
+  parts?: PartCompared[];
   frames?: { count: number; every: number; moving: RegionChange[]; still: string[] };
   /** How many arrivals that wait for the scroll (`on: 'view'` or `'scroll'`) the whole-page picture shows as they end. */
   settled?: number;

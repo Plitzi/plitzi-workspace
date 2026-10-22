@@ -47,7 +47,8 @@ export type Claim =
   | { kind: 'malformed'; task: boolean }
   /** A person, at a terminal of their own. */
   | { kind: 'person' }
-  | { kind: 'none' };
+  /** Nothing said — or `empty`: a token said blank, the `$(cat …)` that should have passed it read nothing. */
+  | { kind: 'none'; empty?: true };
 
 /** Who the caller is, proved — and, at its first command, the token made for it. */
 export interface Identified {
@@ -163,6 +164,15 @@ export const identify = async (
 ): Promise<Identified> => {
   if (claim.kind === 'person') {
     return { agent: 'person' };
+  }
+
+  if (claim.kind === 'none' && claim.empty) {
+    // velada-shell's design-1 passed `--token ""`: its copy had just been removed under it, and "who is calling?" said
+    // nothing of why its own token was not there.
+    throw new RunRefusal(
+      'identity',
+      `--token was said empty: the \`$(cat …)\` that passes it read nothing. Read it by its whole path — ${tokenFile(paths, '<you>')} — from the project's folder; if this shell's folder was a task's copy, it is gone once the task is approved or cut: cd to the project first`
+    );
   }
 
   if (claim.kind === 'none') {

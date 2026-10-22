@@ -17,7 +17,8 @@ too.
 - **Measure, never guess — in one call:** `plitzi page measure <path> "<ours> => <theirs>" … --compare <url> --width
 390,1440` measures every element at every width in one browser, the reference kept 6 h (`--fresh` reads it again),
   their `::before`/`::after` too: each property that differs, here → there, what both inherit said apart; a state with
-  `--hover|--focus "<ours> => <theirs>"` (a card's hover, its medal measured). Ask for those
+  `--hover|--focus "<ours> => <theirs>"` (a card's hover, its medal measured). An element that draws on its box (a
+  hairline, a fill): its box's height is a visible value. Ask for those
   values with **one** line that proves them all — the same command with `--same font-size,border,before:opacity`. `page shot --compare <url> --clip <section> --dress` says what a section wears and
   this one lacks, on which of our elements.
 - **What to look for:** hierarchy and spacing, the theme's tokens rather than new values, every state (empty, long,

@@ -215,7 +215,8 @@ their estimates, from the last ten runs, with five tasks at least) and say the e
 
 ## A run stacked on (`extend.ts`), and what awaits applying
 
-`run extend <run> <plan>` adds the next plan's tasks to an open run: their copies start from what it approved, they may
+`run extend <run> <plan>` adds the next plan's tasks to an open run — a stage may be its `tasks` alone, its name and
+goal the run's, and its team's size is held to the run's open work with it: their copies start from what it approved, they may
 wait for its tasks (`dependsOn`), their files are backed up beside its own, and one `finish` writes the stages into the
 project as one diff with one report. An id the run has is refused, and so is a file a task still at work holds. `run
 open` with a run going says to stack on it. `run pending` lists the project's runs not yet written into it — the ready
@@ -297,7 +298,10 @@ every task, spent the most).
 **Agents on demand** (`onDemand.ts`): a group's `min` (1 to its `count`) is how many start with the run; the rest are
 on demand (`StartedAgent.onDemand`). `run plan` says to start only the first; `run watch --until lead` tells the lead,
 role by role, when work waits — a task of its role ready, a UI review no designer is free for —
-and no running agent of it is free (`agents-needed`), naming the next one to start and its command; and an agent on
+and no running agent of it is free (`agents-needed`), naming the next one to start and its command — one on demand
+beside one running only when the work waiting and in hand, shared with it, is `TASKS_PER_AGENT` (2) each or more, as
+`run plan` counts a team's size (velada-shell's watch asked for dev-2 for two tasks the plan had said were too few); a
+UI review its author alone could make asks whatever the count — and an agent on
 demand that waits `ON_DEMAND_IDLE_MS` with nothing for it, and no task of its own that may come back, stops by itself,
 said in the activity — the lead starts it again when work waits. **The base goes first** (`freeBaseAgents`): a task ready is offered to an agent on demand only past what the
 team's base agents of its roles — there (marked present) and at nothing — take; with them free, it is told so and

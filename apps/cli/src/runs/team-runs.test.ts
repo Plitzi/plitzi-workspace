@@ -426,6 +426,25 @@ describe('a designer’s review of the others’ UI', () => {
     expect(await designOf('t-about')).toMatchObject({ status: 'skipped', by: 'lead', why: 'no-ui' });
   });
 
+  // velada-shell: the lead sent t-home-sections back while design-1 measured it, and its approval was refused with
+  // "changes-requested, not in review"; the lead approved another past design-1, and was not told it was at it.
+  it('tells a designer the lead decided first, and tells the lead a designer was at it', async () => {
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
+    await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'one source for the padding' }], 'refuse', {
+      skipDesign: 'lead'
+    });
+    expect(await refusalOf(reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', []))).toContain(
+      'was sent back meanwhile (round 1)'
+    );
+
+    await completed('dev-2', 't-about', 'src/space/pages/about.ts');
+    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
+    expect(
+      await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'lead' })
+    ).toMatchObject({ design: 'skipped', designBy: 'design-1' });
+  });
+
   it('says the designer’s changes as its UI review’s, and tells a designer the lead went past', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');

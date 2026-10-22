@@ -60,7 +60,16 @@ export const drawing = (except: readonly string[] = []): string[] => {
     .map(node => {
       const box = node.getBoundingClientRect();
       const style = getComputedStyle(node);
-      const words = node.childElementCount === 0 ? node.textContent.replace(/\s+/g, ' ').trim().slice(0, 80) : '';
+      // A local address is the same on both servers whatever port each was served on: /overlay writes its own URL, and
+      // read "moved" on every look at a task (velada-shell's design-1).
+      const words =
+        node.childElementCount === 0
+          ? node.textContent
+              .replace(/\s+/g, ' ')
+              .replace(/\b(127\.0\.0\.1|localhost|\[::1\]):\d+/g, '$1:<port>')
+              .trim()
+              .slice(0, 80)
+          : '';
 
       return [
         node.tagName.toLowerCase(),

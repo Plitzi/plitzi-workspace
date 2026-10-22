@@ -123,8 +123,8 @@ const saidValue = (value: string | undefined): string | undefined =>
   value === undefined || value.trim() === '' ? undefined : value.trim();
 
 /** What the caller brought: its own token, a name, a terminal — or nothing, or a token that is no agent's. */
-const claimOf = (said: { token?: string; name?: string }): Claim => {
-  const { token, name } = said;
+const claimOf = (said: { token?: string; name?: string; blank?: boolean }): Claim => {
+  const { token, name, blank } = said;
   if (token !== undefined) {
     return AGENT_TOKEN.test(token)
       ? { kind: 'agent', token, ...(name === undefined ? {} : { said: name }) }
@@ -133,6 +133,10 @@ const claimOf = (said: { token?: string; name?: string }): Claim => {
 
   if (name !== undefined) {
     return { kind: 'name', said: name };
+  }
+
+  if (blank) {
+    return { kind: 'none', empty: true };
   }
 
   return process.stdin.isTTY ? { kind: 'person' } : { kind: 'none' };
@@ -153,7 +157,13 @@ export const contextFor = async (options: RunCommandOptions): Promise<RunContext
     throw new RunRefusal('invalid', `"${quality}" is no quality: light, standard or high (--quality, PLITZI_QUALITY)`);
   }
 
-  const claim = claimOf({ ...(token === undefined ? {} : { token }), ...(name === undefined ? {} : { name }) });
+  // A `--token` said, and blank: told apart from none said, for what it means — a token file read from nowhere.
+  const blank = token === undefined && options.token !== undefined;
+  const claim = claimOf({
+    ...(token === undefined ? {} : { token }),
+    ...(name === undefined ? {} : { name }),
+    ...(blank ? { blank } : {})
+  });
   // The copy's task is its holder's: said to the token of the agent that took it, or to a person at its terminal —
   // the lead reviewing from inside a copy is the lead, holding no task.
   const ownName = claim.kind === 'agent' ? AGENT_TOKEN.exec(claim.token)?.[2] : undefined;

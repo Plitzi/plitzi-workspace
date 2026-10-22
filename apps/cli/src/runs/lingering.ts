@@ -25,7 +25,7 @@ interface Kept {
 }
 
 /** The newest write under the copy's `src/`, in ms: what a server started before it does not serve. */
-const newestWrite = async (work: string): Promise<number> => {
+export const newestWrite = async (work: string): Promise<number> => {
   const entries = await fs.readdir(path.join(work, 'src'), { recursive: true, withFileTypes: true }).catch(() => []);
   const times = await Promise.all(
     entries

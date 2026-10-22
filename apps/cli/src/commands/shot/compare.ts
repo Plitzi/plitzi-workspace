@@ -12,7 +12,7 @@ import {
   pageTexts
 } from '@plitzi/sdk-authoring';
 
-import { pictureOf, readPage } from './capture';
+import { pictureOf, readPage, targetOn } from './capture';
 import { pictureAnswered } from './remote';
 import { DRIFT_PX, TEXTS_SHOWN } from './types';
 import { dataUrl, fromDataUrl } from '../../browser';
@@ -227,45 +227,87 @@ const TALL_PAGE_PX = 4000;
 /** How many changed sections of a tall page are cut apart: the ones that changed most. */
 const SECTIONS_CUT = 4;
 
+/** One part compared by `compareLocalParts`: its report, or why it could not be pictured on one side. */
+export type PartCompared = { part: string; own: string; compare: CompareReport } | { part: string; problem: string };
+
+/** A part pictured on a page already open: the element the name finds, alone — or why there is none. */
+const partPicture = async (taken: Taken, part: string): Promise<Uint8Array | { problem: string }> => {
+  const read = await targetOn(taken.page, part);
+  if ('problem' in read) {
+    return read;
+  }
+
+  if (!read.found || !(await taken.page.locator(read.selector).first().isVisible())) {
+    return { problem: `${part} is not drawn on ${taken.page.url()}` };
+  }
+
+  return taken.page.locator(read.selector).first().screenshot();
+};
+
+/** A part's name as a file's: what the pictures of one part of several are told apart by. */
+const fileOf = (part: string): string => part.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+
 /**
- * One part of this page beside the same part of another server of the project — the run before a task — each pictured
- * alone, by the element both have: no page aligned, no words read. A look at a task compares the parts it built; that
- * nothing else moved is read, not pictured (`page same`). The whole-page comparison was 17 s a view of a 50 s look.
+ * The parts of this page beside the same parts of another server of the project — the run before a task — each
+ * pictured alone, by the element both have: no page aligned, no words read. A look at a task compares the parts it
+ * built; that nothing else moved is read, not pictured (`page same`). Each side is loaded once for all its parts:
+ * a part a process, velada-shell's six sections of the home loaded it 24 times a look (20 s).
  */
-export const compareLocalPart = async (
+export const compareLocalParts = async (
   browser: Browser,
   taken: Taken,
   target: string,
   view: View,
-  part: string,
+  parts: readonly string[],
   base: string,
-  /** Theirs, being pictured already — beside ours, when its scheme was said. */
+  /** Theirs, being pictured already — beside ours, when its scheme was said — framed on the first part. */
   early?: Promise<Taken | { problem: string }>
-): Promise<CompareReport | { problem: string }> => {
+): Promise<PartCompared[] | { problem: string }> => {
   const theirs =
     (await early) ??
-    (await pictureOf(browser, target, { ...view, scheme: taken.scheme, clip: part }, new URL(target).origin));
+    (await pictureOf(browser, target, { ...view, scheme: taken.scheme, clip: parts[0] }, new URL(target).origin));
   if ('problem' in theirs) {
     return theirs;
   }
 
   try {
-    const diff = await comparePictures(taken.page, dataUrl(taken.png), dataUrl(theirs.png));
-    await writeFile(`${base}-compare.png`, fromDataUrl(diff.sideBySide));
-    await writeFile(`${base}-diff.png`, fromDataUrl(diff.diff));
+    const compared: PartCompared[] = [];
+    for (const [index, part] of parts.entries()) {
+      // One part keeps the names a single clip always had; of several, each is named by its part.
+      const named = parts.length === 1 ? base : `${base}-${fileOf(part)}`;
+      const [ours, their] =
+        index === 0
+          ? [taken.png, theirs.png]
+          : await Promise.all([partPicture(taken, part), partPicture(theirs, part)]);
+      if (!(ours instanceof Uint8Array) || !(their instanceof Uint8Array)) {
+        const why = ours instanceof Uint8Array ? their : ours;
+        compared.push({ part, problem: 'problem' in why ? why.problem : `${part} could not be pictured` });
+        continue;
+      }
 
-    return {
-      url: target,
-      changed: diff.changed,
-      heights: { here: diff.heights.a, there: diff.heights.b },
-      regions: [{ name: part, element: part, changed: diff.changed }],
-      section: part,
-      texts: { same: 0, differ: [], onlyHere: [], onlyThere: [] },
-      decorations: [],
-      unloaded: theirs.unloaded,
-      sideBySide: `${base}-compare.png`,
-      diff: `${base}-diff.png`
-    };
+      const diff = await comparePictures(taken.page, dataUrl(ours), dataUrl(their));
+      await writeFile(`${named}.png`, ours);
+      await writeFile(`${named}-compare.png`, fromDataUrl(diff.sideBySide));
+      await writeFile(`${named}-diff.png`, fromDataUrl(diff.diff));
+      compared.push({
+        part,
+        own: `${named}.png`,
+        compare: {
+          url: target,
+          changed: diff.changed,
+          heights: { here: diff.heights.a, there: diff.heights.b },
+          regions: [{ name: part, element: part, changed: diff.changed }],
+          section: part,
+          texts: { same: 0, differ: [], onlyHere: [], onlyThere: [] },
+          decorations: [],
+          unloaded: theirs.unloaded,
+          sideBySide: `${named}-compare.png`,
+          diff: `${named}-diff.png`
+        }
+      });
+    }
+
+    return compared;
   } finally {
     await theirs.page.close();
   }

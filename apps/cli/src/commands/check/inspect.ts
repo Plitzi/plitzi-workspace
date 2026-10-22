@@ -9,7 +9,7 @@ import {
 
 import { CHECK_PASSWORD_ENV, sentElsewhere, signInAs } from './account';
 import { clickEffects } from './click';
-import { missedExpectations, wrappedLabelsInPage } from './expect';
+import { flushEdgesInPage, missedExpectations, wrappedLabelsInPage } from './expect';
 import { listRows } from './lists';
 import {
   NOT_FOUND_PROBE,
@@ -287,6 +287,12 @@ const inspectHere = async (
     elementId: each.id,
     width
   }));
+  const flush: CheckIssue[] = (await page.evaluate(flushEdgesInPage, undefined)).map(each => ({
+    code: 'flush-edge',
+    message: `${each.id} sits on ${each.section}'s bottom edge at ${String(width)} px, its section keeping no space below it (padding-bottom 0): it touches whatever follows. Give the section its padding below — the space a reference's sections keep top and bottom — rather than a margin on the one element`,
+    elementId: each.id,
+    width
+  }));
   // Each element asked for, one read each: what it reads and holds, and how its classes meet on it.
   const elements: NonNullable<CheckReport['elements']> = {};
   for (const id of asked.elements) {
@@ -371,7 +377,8 @@ const inspectHere = async (
     ...(late?.issues ?? []),
     ...failedFlows,
     ...missed,
-    ...wrapped
+    ...wrapped,
+    ...flush
   ];
 
   // What a document embedded in the page said (a video player's frame, by the origin of an iframe there) is that

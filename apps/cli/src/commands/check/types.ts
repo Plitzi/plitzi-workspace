@@ -71,7 +71,8 @@ export interface CheckIssue {
     | 'page-status'
     | 'expected-text'
     | 'label-wraps'
-    | 'fixed-ground';
+    | 'fixed-ground'
+    | 'flush-edge';
   message: string;
   /** The space's element it is about, by id — absent for one about the page as a whole. */
   elementId?: string;

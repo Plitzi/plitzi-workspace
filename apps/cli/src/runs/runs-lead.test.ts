@@ -279,6 +279,30 @@ describe('the lead’s plan as the run goes', () => {
     expect(dry.checked?.created).toEqual(['src/space/pages/contact.ts']);
   });
 
+  // velada-shell: the scope's four tasks were refused for a runId and a goal — the run had both.
+  it('takes a stage of tasks alone: its name and its goal are the run’s', async () => {
+    await open();
+    await bench.write(
+      'stage.json',
+      JSON.stringify({
+        tasks: [
+          {
+            id: 't-contact',
+            title: 'A contact page',
+            files: ['src/space/pages/contact.ts'],
+            dependsOn: [],
+            priority: 'medium',
+            estimateMinutes: 10,
+            acceptance: ['There is a contact page']
+          }
+        ]
+      })
+    );
+
+    const stacked = await extendRun(lead(), 'es-launch', path.join(bench.root, 'stage.json'));
+    expect(stacked).toMatchObject({ added: ['t-contact'] });
+  });
+
   it('takes up a piece the run left out once a stage proves it: no longer waiting, said', async () => {
     const plan = benchPlan();
     plan.inventory = [

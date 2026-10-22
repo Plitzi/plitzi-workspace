@@ -56,16 +56,10 @@ describe('agents on demand', () => {
       })
     );
 
-    // dev-1 at t-home; t-menu and t-about wait, and no developer running is free.
+    // dev-1 at t-home; t-menu and t-about wait — shared with dev-2, a task and a half each: not worth its start, as
+    // `run plan` counts it (velada-shell: the plan said the team was too big, the watch asked for dev-2).
     await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
-    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
-      expect.objectContaining({
-        kind: 'agents-needed',
-        text: expect.stringContaining(
-          'wait for a developer, and none running is free: start dev-2, on demand'
-        ) as unknown
-      })
-    );
+    expect((await viewRun(lead(), 'es-launch')).attention.map(item => item.kind)).not.toContain('agents-needed');
 
     // Started, and handed nothing it may take for a while — every ready task taken, t-book waiting — it stops, said.
     await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
@@ -76,6 +70,32 @@ describe('agents on demand', () => {
       onDemandIdleMs: 30
     });
     expect(stopped).toMatchObject({ finished: true, why: expect.stringContaining('you are on demand') as unknown });
+  });
+
+  it('asks for one on demand once the work waiting, shared with it, is worth its start', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 1 });
+    // Three rounds of the bench's tasks, each its own files: work enough for two.
+    const big = {
+      ...benchPlan(),
+      tasks: [0, 1, 2].flatMap(round =>
+        benchPlan().tasks.map(task => ({
+          ...task,
+          id: `${task.id}-${String(round)}`,
+          files: task.files.map(file => file.replace('src/space/pages/', `src/space/pages/round-${String(round)}/`)),
+          dependsOn: task.dependsOn.map(id => `${id}-${String(round)}`)
+        }))
+      )
+    };
+    await openRun(lead(), await bench.writePlan(big));
+    bench.advance(STARTING_MS);
+    await takeTask(bench.agent('dev-1'), 'es-launch', 't-home-0');
+
+    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
+      expect.objectContaining({
+        kind: 'agents-needed',
+        text: expect.stringContaining('none running is free: start dev-2, on demand') as unknown
+      })
+    );
   });
 
   // velada-dress: design-1 wrote t-shell, and was counted free for its UI review — design-2, on demand, never asked for.

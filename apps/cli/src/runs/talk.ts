@@ -1,6 +1,6 @@
 import { writeJson } from './files';
 import { handOver } from './handOver';
-import { requireALead, requireLead } from './leads';
+import { isCoLead, isPrincipal, requireALead, requireLead } from './leads';
 import { agentAddress, EVERYONE, LEAD, messagesOf, replyTo, sendMessage, unreadFor } from './messages';
 import { RunRefusal } from './refusal';
 import { assertStatus, loadRun, logRun, requireNoTask } from './run';
@@ -196,6 +196,16 @@ export const messageTasks = async (
  */
 export const readInbox = async (ctx: RunContext, runId: string, taskId?: string, all = false): Promise<Message[]> => {
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
+  // An agent holding no task — a designer between reviews — reads what was said to it by name: refused as the lead's
+  // inbox, it was told "lead-only" of its own (velada-shell's design-1).
+  if (taskId === undefined && !isPrincipal(ctx.agent) && !isCoLead(loaded.record, ctx.agent)) {
+    const own = agentAddress(ctx.agent);
+
+    return all
+      ? (await messagesOf(loaded)).filter(message => message.to === own || message.from === ctx.agent)
+      : unreadFor(loaded, own, true);
+  }
+
   if (taskId === undefined) {
     requireNoTask(ctx, 'read the lead’s inbox');
     await requireLead(ctx, loaded, 'read the lead’s inbox');

@@ -4,7 +4,7 @@ import chalk from 'chalk';
 
 import {
   checkWithInteraction,
-  comparedOf,
+  partsComparedOf,
   elsewhereOf,
   picturesOf,
   samePaths,
@@ -273,38 +273,38 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
             })
           )
         );
-        // Beside the run before it: its parts alone when it has some (each its own picture too), else the page.
+        // Beside the run before it: its parts alone when it has some, else the page. Its parts, all of them, in one
+        // comparison a page and a view — each side loaded once (a part a comparison loaded the home 24 times a look).
         const beside = (before ? pictured : []).flatMap(route =>
-          (partsBeside ? clips : [undefined]).flatMap(clip =>
-            views.map(([width, scheme]) => async () => {
-              // Named for what it is — the page after the task, set beside the run before it in `-after-compare.png`:
-              // `-before.png` was the after picture (velada-polish's design-1, the same md5 as the look's own).
-              const out = named(route, clip, width, scheme, true);
-              const shot = await runSelf(preview.dir, [
-                'page',
-                'shot',
-                route,
-                '--url',
-                preview.url,
-                ...zone,
-                '--compare',
-                before?.url ?? '',
-                ...(clip ? ['--clip', clip] : []),
-                '--width',
-                width,
-                '--scheme',
-                scheme,
-                '--json',
-                '-o',
-                out
-              ]);
+          views.map(([width, scheme]) => async () => {
+            const clip = partsBeside ? clips.join(',') : undefined;
+            // Named for what it is — the page after the task, set beside the run before it in `-after-compare.png`:
+            // `-before.png` was the after picture (velada-polish's design-1, the same md5 as the look's own).
+            const out = named(route, partsBeside && clips.length === 1 ? clips[0] : undefined, width, scheme, true);
+            const shot = await runSelf(preview.dir, [
+              'page',
+              'shot',
+              route,
+              '--url',
+              preview.url,
+              ...zone,
+              '--compare',
+              before?.url ?? '',
+              ...(clip ? ['--clip', clip] : []),
+              '--width',
+              width,
+              '--scheme',
+              scheme,
+              '--json',
+              '-o',
+              out
+            ]);
 
-              return {
-                compared: { route, width, scheme, ...comparedOf(shot.output) },
-                ...(clip && shot.code === 0 ? { shot: out } : {})
-              };
-            })
-          )
+            return partsComparedOf(shot.output).map(each => ({
+              compared: { route, width, scheme, ...each.compared },
+              ...(each.shot && shot.code === 0 ? { shot: each.shot } : clip && shot.code === 0 ? { shot: out } : {})
+            }));
+          })
         );
         // Its parts compared alone: that nothing else of the page moved is read, not pictured (`page same`).
         const rest = partsBeside
@@ -339,8 +339,8 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
             inTurns(rest, LOOK_AT_ONCE)
           ]);
           check = checked;
-          shots = [...pictures.flat(), ...set.flatMap(each => (each.shot ? [each.shot] : []))];
-          compared = set.map(each => each.compared);
+          shots = [...pictures.flat(), ...set.flat().flatMap(each => (each.shot ? [each.shot] : []))];
+          compared = set.flat().map(each => each.compared);
           movedElsewhere = read.flatMap(each => (each ? [each] : []));
         } finally {
           // Stopped under the look, it is said with why, before this look stops it: a picture that failed for it
@@ -574,6 +574,10 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
           ? [
               `${taskId} approved: ${list(reviewed.merged ?? [])} in the run's work.`,
               ...(reviewed.design === 'skipped' ? [`  · ${designSkipText(reviewed.designSkip)}`] : []),
+              // The lead went first while a designer was at it: said to the lead too, not only to the designer.
+              ...(reviewed.designBy
+                ? [`  · ${reviewed.designBy} was at its UI review: told to drop it, and to tell you what it found`]
+                : []),
               ...((reviewed.joined ?? []).length > 0
                 ? [`  Put together with the change made in the project meanwhile: ${list(reviewed.joined ?? [])}`]
                 : []),

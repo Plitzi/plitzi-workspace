@@ -1,6 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+
 import { readOptional, writeAtomic, writeJson } from '../files';
 import { EVERYONE, LEAD, sendMessage } from '../messages';
 import { isRunPlan } from '../model';
@@ -36,7 +38,14 @@ export interface OpenedRun {
   inputs: string[];
 }
 
-export const readPlanFile = async (file: string): Promise<RunPlan> => {
+export const readPlanFile = async (
+  file: string,
+  /**
+   * What a stage stacked on an open run may leave out — its name and its goal, the run's — filled before it is read:
+   * velada-shell's spike was refused its four tasks for a runId and a goal the run had.
+   */
+  fill?: { runId: string; goal: string }
+): Promise<RunPlan> => {
   const bytes = await readOptional(file);
   if (bytes === undefined) {
     throw new RunRefusal('not-found', `There is no plan at ${file}`);
@@ -47,6 +56,15 @@ export const readPlanFile = async (file: string): Promise<RunPlan> => {
     parsed = JSON.parse(bytes.toString('utf-8'));
   } catch {
     throw new RunRefusal('invalid', `${file} is not JSON`);
+  }
+
+  if (fill && isRecord(parsed)) {
+    parsed = {
+      ...parsed,
+      ...(parsed.runId === undefined ? { runId: fill.runId } : {}),
+      ...(parsed.goal === undefined ? { goal: fill.goal } : {}),
+      ...(parsed.version === undefined ? { version: 1 } : {})
+    };
   }
 
   if (!isRunPlan(parsed)) {

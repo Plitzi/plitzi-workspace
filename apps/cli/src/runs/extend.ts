@@ -24,7 +24,7 @@ import {
   updateRecord,
   withInputs
 } from './run';
-import { startingState } from './spike';
+import { isResearch, startingState } from './spike';
 import { keepFiles } from './store';
 import { viewTask } from './taskStore';
 import { coLeadNames, ensureTeam, teamSize } from './team';
@@ -71,7 +71,11 @@ export const extendRun = async (
   const loaded = await loadRun(ctx, runId);
   await requireLead(ctx, loaded, 'stack a stage on the run');
   assertStatus(loaded, ['open'], 'extend');
-  const next: RunPlan = await readPlanFile(file);
+  // A stage names itself and says its goal, or takes the run's: what is new in it is its tasks.
+  const next: RunPlan = await readPlanFile(file, {
+    runId: `${runId}-stage-${String(loaded.tasks.length)}`,
+    goal: loaded.plan.goal
+  });
   const { team } = await ensureTeam(ctx.root, next);
   // A stage worked by a larger team lets them work: never fewer than the run had.
   const allowed = Math.max(loaded.record.agents, teamSize(team));
@@ -104,7 +108,14 @@ export const extendRun = async (
         Object.entries((await readApproved(loaded.paths)).files)
           .filter(([, approved]) => approved.digest !== null)
           .map(([file]) => file)
-      )
+      ),
+      (
+        await Promise.all(
+          loaded.tasks
+            .filter(task => task.role !== 'lead' && !isResearch(task))
+            .map(async task => (await viewTask(loaded.paths, task)).state.status)
+        )
+      ).filter(status => status !== 'done').length
     );
   } catch (error) {
     if (error instanceof PlanRefusal) {

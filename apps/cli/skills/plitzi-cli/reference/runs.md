@@ -45,7 +45,8 @@ token under another's name, a name or a role not the team's: refused (`identity`
   3–10 s each; `task next|context|show|inbox|tell` a tenth. Change a batch, then check once — never after every edit;
   one acceptance line: `task check --acceptance`. Asked again with nothing changed, a check or a look says its last
   answer (`--fresh` runs it anew), and `complete` right after a passing check takes it. Every element and width in one
-  `page measure` call (`--hover <el>` for a state); a picture only for what a check cannot tell.
+  `page measure` call (`--hover <el>` for a state) — trying values, measure (~3 s), never `task check` (~10 s); a
+  picture only for what a check cannot tell.
 - **Only your files.** A file another task at work holds is refused at `complete`, naming it — `plitzi task discard
 <file>` puts it back (and brings the run's version of any file); propose the change to that task instead. **Name
   what you declare by your part** — classes and provider ids (`hero-title`, `fightsList`), never `title`: another

@@ -215,6 +215,8 @@ describe('what an agent leaves in the project', () => {
     await bench.write('tmp/lead2-preview.log', 'listening\n');
     await bench.write('tmp/shots/home.png', 'png');
     await bench.write('tmp/dev-server.json', '{}');
+    // velada-shell: the lead's stage, written in the seconds before `run extend` took it, was told to dev-1.
+    await bench.write('tmp/es-sections.stage.json', '{}');
 
     const left = (await viewRun(lead(), 'es-launch')).attention.filter(item => item.kind === 'left-in-tmp');
     expect(left.map(item => item.file)).toEqual(['tmp/dev1/', 'tmp/lead2-preview.log']);

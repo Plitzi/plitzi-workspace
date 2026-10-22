@@ -89,6 +89,52 @@ export const comparedOf = (output: string): Omit<BeforeAfter, 'route' | 'width' 
   }
 };
 
+/**
+ * Each part a `page shot --clip a,b` compared, read off its answer — a part's own picture, and its comparison or why it
+ * could not be pictured. One of a single part is read as `comparedOf` reads it.
+ */
+type PartRead = { compared: Omit<BeforeAfter, 'route' | 'width' | 'scheme'>; shot?: string };
+
+export const partsComparedOf = (output: string): PartRead[] => {
+  const at = output.indexOf('{');
+  let answer: unknown;
+  try {
+    answer = at === -1 ? undefined : JSON.parse(output.slice(at));
+  } catch {
+    answer = undefined;
+  }
+
+  const parts = isRecord(answer) && Array.isArray(answer.parts) ? answer.parts : undefined;
+  if (!parts) {
+    return [{ compared: comparedOf(output) }];
+  }
+
+  return parts.flatMap((each): PartRead[] => {
+    if (!isRecord(each) || typeof each.part !== 'string') {
+      return [];
+    }
+
+    if (typeof each.problem === 'string') {
+      return [{ compared: { sections: [], dress: [], problem: `${each.part}: ${each.problem}` } }];
+    }
+
+    const compare = isRecord(each.compare) ? each.compare : {};
+    const changed = typeof compare.changed === 'number' ? compare.changed : undefined;
+
+    return [
+      {
+        compared: {
+          ...(changed === undefined ? {} : { changed }),
+          sections: changed ? [`${each.part} ${String(changed)}%`] : [],
+          dress: [],
+          ...(typeof compare.sideBySide === 'string' ? { sideBySide: compare.sideBySide } : {})
+        },
+        ...(typeof each.own === 'string' ? { shot: each.own } : {})
+      }
+    ];
+  });
+};
+
 export interface Checked {
   code: number;
   output: string;

@@ -1,5 +1,9 @@
 import { authoredHandles } from './expectations';
 import { readOwnership } from './ownership';
+import { shellCommands } from './shell';
+
+import type { Acceptance } from './model';
+import type { TaskView } from './taskStore';
 
 /**
  * The pages a task's files are drawn at, for a look at it (`task look`, a designer's review): each file's page is the
@@ -111,4 +115,40 @@ export const examplePaths = async (
   }
 
   return { paths: [...new Set(paths)], unreached };
+};
+
+/** The `plitzi page` commands an acceptance line runs on a page: where its checks look. */
+const PAGE_COMMANDS = new Set(['check', 'measure', 'shot', 'same']);
+
+/**
+ * The pages a task's acceptance runs its checks on — `page check /combates /boxeadores`, `page measure /`: where its
+ * look starts when no page owns its files (a shared component's), rather than the reviewer told to name them
+ * (velada-shell's t-page-heading: "no page of the space owns its files", its acceptance naming two).
+ */
+export const acceptancePages = (acceptance: readonly Acceptance[]): string[] =>
+  [
+    ...new Set(
+      acceptance.flatMap(line =>
+        typeof line === 'string'
+          ? []
+          : shellCommands(line.check).flatMap(words => {
+              const at = words.findIndex((word, index) => word === 'page' && PAGE_COMMANDS.has(words[index + 1] ?? ''));
+              if (at === -1) {
+                return [];
+              }
+
+              const rest = words.slice(at + 2);
+              const firstOption = rest.findIndex(word => word.startsWith('--'));
+
+              return (firstOption === -1 ? rest : rest.slice(0, firstOption)).filter(word => word.startsWith('/'));
+            })
+      )
+    )
+  ].slice(0, MAX_PAGES);
+
+/** The pages a review looks at: those its files are drawn at — else those its acceptance checks. */
+export const reviewPages = async (review: Pick<TaskView, 'paths' | 'state' | 'task'>): Promise<string[]> => {
+  const owned = await pagesOf(review.paths.work, review.state.changed ?? []);
+
+  return owned.length > 0 ? owned : acceptancePages(review.task.acceptance);
 };

@@ -78,6 +78,14 @@ describe('finding what a picture is aimed at', () => {
     );
   });
 
+  // velada-shell's lead: "fights-heading" — a component's instance, which has no node of its own — was "No element".
+  it('finds a component’s instance by its name, on the root it is drawn as', async () => {
+    expect(await targetOn(having('[data-plitzi-instance="fights-heading"]'), 'fights-heading')).toEqual({
+      selector: '[data-plitzi-instance="fights-heading"]',
+      found: true
+    });
+  });
+
   it('finds a bare word as an element’s name, a tag, or an id — never an id CSS cannot read', async () => {
     expect(await targetOn(having('#combates'), 'combates')).toEqual({ selector: '#combates', found: true });
     expect(await targetOn(having(), 'combates')).toEqual({ selector: '[data-plitzi-el="combates"]', found: false });

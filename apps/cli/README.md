@@ -309,12 +309,17 @@ check run again in the same copy (lint 3.7 s → 0.5 s). A project whose scripts
 
 `page check --themes` reads each page in light and in dark too, and fails a ground the same in both under a text whose
 colour follows the theme and, in one of them, reads under 3:1 on it (`fixed-ground`): a fixed colour where a theme
-token belongs. A look at a task checks with it.
+token belongs. A look at a task checks with it. Every check fails a link or a button drawn on its section's bottom
+edge where the section keeps no space below it (`flush-edge`): la-velada's "Ver cartelera completa" sat against the next
+section, its sections' shared class without a bottom padding, and nothing else said it.
 
 `page same [paths…] --url <origin> --than <origin>` says whether pages draw the same on two servers of the project —
 every element on screen, its box, the style a reader sees and what its `::before`/`::after` draw, read, not pictured —
 and, where not, the first element that differs; exit 1 then. A look at a task reads with it the pages only a shared
-file of the task reaches, against the run before it, and pictures only those that differ.
+file of the task reaches, against the run before it, and pictures only those that differ; a local address reads alike
+whatever port each server was on. Beside the project's other server, `page shot --compare <local> --clip a,b,c`
+compares several parts on pages loaded once a side — a look compares a task's parts so, one call a page and a view (six
+sections of a home: 15.3 s a part at a time, 4 s together).
 
 `page measure <path> <element…> [--compare <url>]` reads elements' computed styles — type (family, size, weight, line
 height, tracking, case), colours, background, each border, radius, shadows, opacity, padding, margin, gap, size,
@@ -325,7 +330,11 @@ element at every width (`--width 390,1440`) is one call in one browser; the othe
 kept 6 h (`--fresh` reads it again). `--same font-size,border,before:opacity` (shorthands `border`, `font`, `size`)
 fails unless those are as the other page's: an acceptance's line that holds a copy to its reference. `--hover` or
 `--focus "<ours> => <theirs>"` puts both pages in that state first, its transitions finished: what a hover changes,
-held by `--same` as the rest is. `--scheme`,
+held by `--same` as the rest is. A line height and a tracking are said as their `em` of the font beside the pixels
+(`22.13px (1.5em)`: the rule to write, not the size's result); a difference both inherit from their parent is left out
+of `--same`, said beside it; the transform compared is the one that applies (`rotate`, `scale`, `translate` and
+`transform`, as CSS composes them); a component's instance is found by its name; an address nobody answers on is
+said as such. `--scheme`,
 `--timezone`, `--url`, `--json`, as `page shot`; the page is read once the space has hydrated.
 `--frames` compares pictures taken one after another and names what moved. A project `create` writes has them as
 `npm run check` and `npm run shot`.

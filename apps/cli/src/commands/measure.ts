@@ -32,7 +32,7 @@ import type { Browser, BrowserPage, Scheme } from '../browser';
  */
 
 /** The version of what is read: a kept reading of the other page made before it changed is read again. */
-const READING = 2;
+const READING = 3;
 
 export interface MeasureOptions {
   url?: string;
@@ -178,6 +178,57 @@ export const measureOn = async (page: BrowserPage, target: string): Promise<Meas
           const styles: Record<string, string> = Object.fromEntries(
             properties.map(property => [property, computed.getPropertyValue(property)])
           );
+          // The transform that applies: `translate`, `rotate` and `scale` — what Tailwind 4 writes `rotate-45` as — then
+          // `transform`, as CSS composes them. Read alone, the original's diamond was "transform: none" beside ours.
+          const [moved, turned, sized] = ['translate', 'rotate', 'scale'].map(property =>
+            computed.getPropertyValue(property)
+          );
+          if ([moved, turned, sized].some(value => value !== '' && value !== 'none')) {
+            const box = node.getBoundingClientRect();
+            const length = (value: string, of: number): number =>
+              value.endsWith('%') ? (Number.parseFloat(value) / 100) * of : Number.parseFloat(value) || 0;
+            const degrees = (value: string): number =>
+              value.endsWith('rad')
+                ? (Number.parseFloat(value) * 180) / Math.PI
+                : value.endsWith('turn')
+                  ? Number.parseFloat(value) * 360
+                  : Number.parseFloat(value) || 0;
+            let matrix = new DOMMatrix();
+            if (moved && moved !== 'none') {
+              const [x = '0', y = '0', z = '0'] = moved.split(' ');
+              matrix = matrix.translate(length(x, box.width), length(y, box.height), length(z, 0));
+            }
+
+            if (turned && turned !== 'none') {
+              const words = turned.split(' ');
+              const angle = degrees(words[words.length - 1] ?? '0');
+              const [axis] = words;
+              matrix =
+                words.length === 1 || axis === 'z'
+                  ? matrix.rotate(0, 0, angle)
+                  : axis === 'x'
+                    ? matrix.rotate(angle, 0, 0)
+                    : axis === 'y'
+                      ? matrix.rotate(0, angle, 0)
+                      : matrix.rotateAxisAngle(
+                          Number.parseFloat(words[0] ?? '0'),
+                          Number.parseFloat(words[1] ?? '0'),
+                          Number.parseFloat(words[2] ?? '1'),
+                          angle
+                        );
+            }
+
+            if (sized && sized !== 'none') {
+              const [sx = 1, sy = sx, sz = 1] = sized
+                .split(' ')
+                .map(value => (value.endsWith('%') ? Number.parseFloat(value) / 100 : Number.parseFloat(value)));
+              matrix = matrix.scale(sx, sy, sz);
+            }
+
+            const own = styles.transform;
+            styles.transform = (own && own !== 'none' ? matrix.multiply(new DOMMatrix(own)) : matrix).toString();
+          }
+
           for (const pseudo of pseudos) {
             const drawn = getComputedStyle(node, `::${pseudo}`);
             const content = drawn.getPropertyValue('content');
@@ -215,6 +266,23 @@ export const measureOn = async (page: BrowserPage, target: string): Promise<Meas
 
 const named = (each: Measured): string => `${each.tag}${each.text ? ` "${each.text}"` : ''} (${each.selector})`;
 
+/** What a line and a tracking are of their font: the rule that writes them, where pixels say one size's result. */
+const EM_RELATIVE = new Set(['line-height', 'letter-spacing']);
+
+/**
+ * A line height or a tracking as a share of the element's own font size — `22.13px` is `1.5em` of 14.75px: the value to
+ * write once for every size, where a developer copying the pixels tried three (velada-shell's VS text).
+ */
+const emOf = (property: string, value: string, side: Measured): string => {
+  const size = Number.parseFloat(side.styles['font-size'] ?? '');
+  const pixels = Number.parseFloat(value);
+  if (!EM_RELATIVE.has(property) || !value.endsWith('px') || !(size > 0) || !Number.isFinite(pixels)) {
+    return '';
+  }
+
+  return chalk.dim(` (${String(Math.round((pixels / size) * 1000) / 1000)}em)`);
+};
+
 /** A document's body measured on a space's page: where the space's own type is, to measure instead. */
 const rootNote = (here: Measured): string[] =>
   here.spaceRoot
@@ -245,7 +313,10 @@ export const measuredText = (here: Measured, there?: Measured, url?: string): st
     chalk.bold(`${named(here)} here → ${named(there)} on ${url ?? 'the other page'}`),
     ...rootNote(here),
     ...(differ.length === 0 ? ['  every property measured is the same'] : []),
-    ...own.map(each => `  ${chalk.yellow('≠')} ${each.property.padEnd(22)} ${each.here}  →  ${each.there}`),
+    ...own.map(
+      each =>
+        `  ${chalk.yellow('≠')} ${each.property.padEnd(22)} ${each.here}${emOf(each.property, each.here, here)}  →  ${each.there}${emOf(each.property, each.there, there)}`
+    ),
     // What the page's type gives every element: said once, so what this element itself does differently is read first.
     ...(inherited.length > 0
       ? [
@@ -333,10 +404,17 @@ export interface Reading {
   /** When the other page's reading was taken, when it was kept from an earlier call. */
   keptAt?: string;
   unlike: Difference[];
+  /** Of `--same`'s, what differs only as both inherit it from their parent: said, not failed — the parent holds it. */
+  inherited?: Difference[];
 }
 
 /** Our page at a width: open, its fonts in and the space hydrated — what a visitor's browser reads it as. */
-const ourPage = async (browser: Browser, origin: string, route: string, view: ViewAsked): Promise<BrowserPage> => {
+const ourPage = async (
+  browser: Browser,
+  origin: string,
+  route: string,
+  view: ViewAsked
+): Promise<{ page: BrowserPage; answered: boolean }> => {
   const page = await openProjectPage(browser, origin, {
     width: view.width,
     height: 900,
@@ -344,13 +422,17 @@ const ourPage = async (browser: Browser, origin: string, route: string, view: Vi
     ...(view.scheme ? { scheme: view.scheme } : {}),
     ...(view.timezone ? { timezone: view.timezone } : {})
   });
-  await openPage(page, `${origin}${route}`, { quietMs: PROJECT_QUIET_MS });
+  const answered = (await openPage(page, `${origin}${route}`, { quietMs: PROJECT_QUIET_MS })) !== null;
+  if (!answered) {
+    return { page, answered };
+  }
+
   // A text the browser rewrites after hydration (a visitor's time, read in its zone) read before it was the server's:
   // velada-fidelity's hero read "19:00H CEST" once, "11:00H GMT-6" after. A page with no space root has no wait.
   await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
   await page.evaluate(() => document.fonts.ready.then(() => undefined), undefined);
 
-  return page;
+  return { page, answered };
 };
 
 interface ViewAsked {
@@ -370,8 +452,15 @@ const readAt = async (
   options: Pick<MeasureOptions, 'same' | 'fresh'>,
   now: number
 ): Promise<Reading[]> => {
-  const page = await ourPage(browser, where.origin, where.route, view);
-  const notPut = view.state ? await putIn(page, view.state, view.state.pair.here) : undefined;
+  const { page, answered } = await ourPage(browser, where.origin, where.route, view);
+  // Nothing answering is said as such — not "No element … on chrome-error://" of a server gone (velada-shell's lead).
+  const notPut = !answered
+    ? {
+        problem: `nothing answers at ${where.origin}${where.route} — the server measured is not running (start it, or say where with --url)`
+      }
+    : view.state
+      ? await putIn(page, view.state, view.state.pair.here)
+      : undefined;
   const ours = notPut ? pairs.map(() => notPut) : await Promise.all(pairs.map(pair => measureOn(page, pair.here)));
   await page.close();
 
@@ -416,10 +505,14 @@ const readAt = async (
   return pairs.map((pair, index) => {
     const here = ours[index];
     const there = theirs[index];
-    const unlike =
+    const asked =
       there && !('problem' in there) && !('problem' in here) && options.same
         ? differences(here, there).differ.filter(each => options.same?.includes(each.property))
         : [];
+    // What both inherit from their parent is the parent's to hold, not the element's: said beside the line, never
+    // failing it — a proof line failed on a font-size the task never touched (velada-shell's design-1).
+    const unlike = asked.filter(each => !each.inherited);
+    const inheritedOnly = asked.filter(each => each.inherited);
     const keptAt = kept[index]?.at;
 
     return {
@@ -428,7 +521,8 @@ const readAt = async (
       here,
       ...(there ? { there } : {}),
       ...(keptAt ? { keptAt } : {}),
-      unlike
+      unlike,
+      ...(inheritedOnly.length > 0 ? { inherited: inheritedOnly } : {})
     };
   });
 };
@@ -458,7 +552,14 @@ export const readingText = (reading: Reading, target: string | undefined, same: 
             ? chalk.red(
                 `✗ --same: ${reading.unlike.map(each => `${each.property} ${each.here} → ${each.there}`).join('; ')}`
               )
-            : chalk.green(`✓ --same: ${same.join(', ')} as the other page's`)
+            : chalk.green(`✓ --same: ${same.join(', ')} as the other page's`),
+          ...(reading.inherited
+            ? [
+                chalk.dim(
+                  `  (left out of --same, inherited from its parent on both pages: ${reading.inherited.map(each => `${each.property} ${each.here} → ${each.there}`).join('; ')} — measure the parent to hold it)`
+                )
+              ]
+            : [])
         ]
       : [])
   ].join('\n');

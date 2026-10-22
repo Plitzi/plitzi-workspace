@@ -2,7 +2,7 @@ import http from 'node:http';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { examplePaths } from './pagesOf';
+import { acceptancePages, examplePaths } from './pagesOf';
 
 import type { AddressInfo } from 'node:net';
 
@@ -38,5 +38,18 @@ describe('examplePaths', () => {
       paths: ['/', '/boxeadores/alondrissa', '/artistas/juanes'],
       unreached: ['/combates/:id']
     });
+  });
+});
+
+// velada-shell's t-page-heading: a shared component's task, "no page of the space owns its files", its acceptance two.
+describe('the pages an acceptance checks', () => {
+  it('are read off its page commands, the options left out', () => {
+    expect(
+      acceptancePages([
+        'In light, the links are the theme’s ink',
+        { said: 'measured', check: 'plitzi page measure /combates "a => b" --url $PLITZI_URL --width 1440' },
+        { said: 'whole', check: 'plitzi page check /combates /boxeadores --url $PLITZI_URL --width 1440,390' }
+      ])
+    ).toEqual(['/combates', '/boxeadores']);
   });
 });

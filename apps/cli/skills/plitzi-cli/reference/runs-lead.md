@@ -98,7 +98,7 @@ run extend <run> next.json`; say each to the person. **You manage it:** no agent
    back. Judge the version that went to review, on a page several tasks build only its part. `plitzi task show
 t-home` is all of it (`<file> --diff`: one file's whole diff);
    `plitzi task look t-home --before` serves its copy, checks and pictures its pages beside the run before (its options:
-   [runs-designer.md](runs-designer.md)) — once: after the designer's, unchanged, it says that look again; code is `task show`. What the acceptance asks and the data does not show, you test yourself
+   [runs-designer.md](runs-designer.md)) — once: after the designer's, unchanged, it repeats it; code is `task show`. What the acceptance asks and the data does not show, you test
    (a module's function, its edge cases, `node -e` in the copy) — or send it back for the test it needs. Then
    `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Three rounds of yours —
    or three of the designer's — are yours: approve as it is, answer, or ask the person. A `--known-failure` says why and
@@ -125,9 +125,9 @@ backlog done <id> --note "…"` closes one. **Close it:** write the summary (don
   (never `&`), one at a time.
 - **Say what is so, read from its source** (the original's CSS, `task show`, the run's approved version), never from a
   copy, a class name or memory; never answer one way and tell another — a file a task holds is no one else's.
-- **A value is measured, never typed**: in the scope, `plitzi page measure <path> "<el> => <sel>" … --compare
-<reference> --width 390,1440` (`--hover` for a state) for each piece — the whole element, not the one property
-  asked; one acceptance line holds them (`--same …`).
+- **A value is measured, never typed**: scoping, `plitzi page measure <path> "<el> => <sel>" … --compare
+<reference> --width 390,1440` (`--hover`: a state) each piece — whole, its box too, both widths, held by one
+  acceptance line (`--same …`); "one class holds it" once grepped. A stage may be its `tasks` alone.
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red.
 - **Don't fix the CLI mid-run**: note it (`run notice`), fix it after.
 - **Look where it changed**: a fix for light in light, one for the phone at 390 (`task look --scheme light --width 390`).

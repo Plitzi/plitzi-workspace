@@ -17,14 +17,15 @@ export const DEVELOPERS_PER_DESIGNER = 3;
 export const DEVELOPERS_PER_DESIGNER_COPYING = 1;
 
 /** Below it, a team's agents spend more on starting than on the work: each reads the skills and its brief first. */
-const TASKS_PER_AGENT = 2;
+export const TASKS_PER_AGENT = 2;
 
 /**
  * Too many agents for the work, said before the run starts: velada-backlog's three tasks of a few values each went to
  * two developers and a designer — dev-2 spent 62k tokens, most of them its start, on one task of two lines.
  */
-const teamSizeNotice = (plan: Pick<RunPlan, 'tasks'>, team: Team): string[] => {
-  const work = plan.tasks.filter(task => task.role !== 'lead').length;
+const teamSizeNotice = (plan: Pick<RunPlan, 'tasks'>, team: Team, openWork: number): string[] => {
+  // A stage's tasks beside the run's still open: velada-shell's stack of one was told "1 task for 3 agents".
+  const work = plan.tasks.filter(task => task.role !== 'lead').length + openWork;
   const agents = startedAgents(team).length;
   if (work === 0 || work >= agents * TASKS_PER_AGENT) {
     return [];
@@ -60,8 +61,12 @@ const designersNotice = (plan: Pick<RunPlan, 'tasks' | 'designReview' | 'referen
 };
 
 /** The team's notices: one too big for the work is not told to grow — the designers it would add have less to review. */
-export const teamNotices = (plan: Pick<RunPlan, 'tasks' | 'designReview' | 'reference'>, team: Team): string[] => {
-  const tooBig = teamSizeNotice(plan, team);
+export const teamNotices = (
+  plan: Pick<RunPlan, 'tasks' | 'designReview' | 'reference'>,
+  team: Team,
+  openWork = 0
+): string[] => {
+  const tooBig = teamSizeNotice(plan, team, openWork);
 
   return tooBig.length > 0 ? tooBig : designersNotice(plan, team);
 };

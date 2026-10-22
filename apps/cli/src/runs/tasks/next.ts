@@ -11,7 +11,7 @@ import { handOffRework, reworkFor, reworksWaiting } from './handOff';
 import { IDLE_LEAD_MS, isCoLead, isPrincipal, LEAD_ROLE, leadReviewFor, markAsking, takeLeadReview } from '../leads';
 import { agentAddress, unreadFor } from '../messages';
 import { ON_DEMAND_IDLE_MS } from '../onDemand';
-import { pagesOf } from '../pagesOf';
+import { reviewPages } from '../pagesOf';
 import { agentScratch, runPaths } from '../paths';
 import { readyTasks } from '../plan';
 import { markPresent } from '../presence';
@@ -221,7 +221,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
         round: review.state.round,
         changed: review.state.changed ?? [],
         // Read off its copy: a page the task makes (a dog added to the data) is one to look at too.
-        pages: await pagesOf(review.paths.work, review.state.changed ?? []),
+        pages: await reviewPages(review),
         ...askedOf(review.state.notes),
         ...(review.state.design?.before !== undefined && review.state.design.before !== ctx.agent
           ? { before: review.state.design.before }
@@ -392,7 +392,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
                         : ''
                     }${
                       view.owner?.agent === ctx.agent && view.state.status === 'in-review'
-                        ? ' (yours: sent back, it comes to you here)'
+                        ? ' (yours, in review: if it is sent back, it comes to you here)'
                         : view.owner
                           ? ` (${view.owner.agent}${isDisconnected(view.task, view.signalAt, ctx.now()) ? ', no signal — the lead may reassign it' : ''})`
                           : ''
@@ -426,7 +426,10 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
         ? `${loaded.tasks.some(forRole) ? `no task is left for a ${String(role)}: every one is done` : `no task in this run is a ${String(role)}'s`} — what is left is for others (${others.map(task => task.id).join(', ') || 'in their hands'}). You can stop`
         : finished && roles !== undefined
           ? `${why} — the lead's to finish. You can stop`
-          : why,
+          : finished && !isPrincipal(ctx.agent)
+            ? // Asked with no role (velada-shell's dev-1 after its first task): the same words, never the lead's finish to run.
+              "every task is done — the run's finish is the lead's. You can stop"
+            : why,
     ready: [],
     messages,
     ...(finished ? { finished: true, worked } : {})
@@ -472,7 +475,7 @@ const leadNext = async (
         task: review.task,
         round: review.state.round,
         changed: review.state.changed ?? [],
-        pages: await pagesOf(review.paths.work, review.state.changed ?? []),
+        pages: await reviewPages(review),
         ...askedOf(review.state.notes),
         ...(changesBlock(review.state, false) ? { lastRound: true } : {}),
         copy: review.paths.work,

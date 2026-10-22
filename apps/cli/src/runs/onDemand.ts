@@ -1,4 +1,5 @@
 import { callerFlag } from './identity';
+import { TASKS_PER_AGENT } from './teamNotices';
 import { isWorked } from './worked';
 
 import type { TaskView } from './taskStore';
@@ -90,12 +91,27 @@ export const agentsNeeded = (
       return [];
     }
 
+    // One on demand beside those running is worth its start when the work waiting and in hand, shared with it, is
+    // TASKS_PER_AGENT each or more — as `run plan` counts it: fewer, those running take it next. velada-shell's watch asked
+    // for dev-2 for two tasks the plan had said were too few for three agents.
+    const runningOfRole = started.filter(each => ofRole(each) && running.has(each.agent));
+    const inHand = runningOfRole.filter(each => busy.has(each.agent)).length;
+    // A UI review no designer running may make — its own author's — waits for another whatever the count.
+    if (
+      next.onDemand &&
+      anyRunning &&
+      reviews.length === 0 &&
+      (waiting.length + inHand) / (runningOfRole.length + 1) < TASKS_PER_AGENT
+    ) {
+      return [];
+    }
+
     asked.add(next.agent);
 
     return [
       {
         kind: 'agents-needed' as const,
-        text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — plitzi task next --role ${next.roles.join(',')}${next.quality ? ` --quality ${next.quality}` : ''} --follow --take ${callerFlag(run.scratch, next.agent, run.identified)}${next.onDemand ? ' (it stops by itself once nothing is left for it)' : ''}`,
+        text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — plitzi task next --role ${next.roles.join(',')}${next.quality ? ` --quality ${next.quality}` : ''} --follow --take ${callerFlag(run.scratch, next.agent, run.identified)}${next.onDemand ? ` (it stops by itself once nothing is left for it; its start — the skills and its brief — costs about a small task, worth it for ${String(TASKS_PER_AGENT)} or more waiting)` : ''}`,
         who: 'lead' as const
       }
     ];

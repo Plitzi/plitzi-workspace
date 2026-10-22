@@ -118,7 +118,9 @@ describe('a review, taken from one queue', () => {
     ]);
     expect(both.filter(each => each.status === 'fulfilled')).toHaveLength(1);
     const lost = both.find(each => each.status === 'rejected');
-    expect(String(lost?.status === 'rejected' ? lost.reason : '')).toContain('is done, not in review');
+    expect(String(lost?.status === 'rejected' ? lost.reason : '')).toContain(
+      'is approved already: there is no review to say'
+    );
   });
 
   it('says why there is none, and that it can stop once every task is done', async () => {

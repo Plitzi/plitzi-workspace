@@ -51,6 +51,8 @@ export interface ReviewedTask {
   design?: 'approved' | 'skipped';
   /** `skipped`: why, as the lead said it. */
   designSkip?: DesignSkip;
+  /** `skipped` while a designer was at that review: who — told to drop it, and said to the lead. */
+  designBy?: string;
   /** Written in its copy after it went to review: not part of what was reviewed, so not merged. */
   notReviewed?: string[];
   /**
@@ -209,7 +211,12 @@ const decide = async (
       'invalid',
       atLimit
         ? `Task "${taskId}" is past its review rounds: the lead approves it as it is, or answers it (plitzi task unblock ${taskId} --answer "…")`
-        : `Task "${taskId}" is ${view.state.status}, not in review`,
+        : view.state.status === 'changes-requested' && !isPrincipal(ctx.agent)
+          ? // velada-shell's design-1 measured round 2, and its approval was refused with the status alone.
+            `Task "${taskId}" was sent back meanwhile (round ${String(view.state.round)}): there is no review to say now — what you measured, tell the lead (plitzi task tell --about ${taskId} "…" --token <yours>); its next round comes to review again`
+          : view.state.status === 'done'
+            ? `Task "${taskId}" is approved already: there is no review to say — what you found, tell the lead (plitzi task tell --about ${taskId} "…" --token <yours>)`
+            : `Task "${taskId}" is ${view.state.status}, not in review`,
       { task: taskId }
     );
   }
@@ -543,6 +550,7 @@ const decide = async (
     ...(unmerged ? { unmerged } : {}),
     ...(joined.length > 0 ? { joined } : {}),
     ...(skipped ? { design: 'skipped' as const, ...(why ? { designSkip: why } : {}) } : {}),
+    ...(skipped && view.state.design?.by ? { designBy: view.state.design.by } : {}),
     ...(notReviewed.length > 0 ? { notReviewed } : {})
   };
 };

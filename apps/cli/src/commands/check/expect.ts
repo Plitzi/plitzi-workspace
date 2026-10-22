@@ -138,3 +138,33 @@ export const missedExpectations = async (
 
   return { missed, met };
 };
+
+/**
+ * Run in the page: each link or button drawn on its section's bottom edge — within a pixel of it — where that section
+ * keeps no space below its content (padding-bottom 0): what sat against the next section with nothing between them.
+ * Carlos saw la-velada's "Ver cartelera completa" on #combates' edge, and no check, look or comparison had said it:
+ * the home's sections shared a class with no bottom padding. Self-contained — it is sent to the browser as it is.
+ */
+export const flushEdgesInPage = (): { id: string; section: string }[] => {
+  // Said once an element, of the innermost section it sits on — a section inside another comes later in the document.
+  const found = new Map<string, { id: string; section: string }>();
+  for (const each of Array.from(document.querySelectorAll('section[data-plitzi-el]')).flatMap(section => {
+    const box = section.getBoundingClientRect();
+    if (box.height < 40 || Number.parseFloat(getComputedStyle(section).paddingBottom) > 0) {
+      return [];
+    }
+
+    return Array.from(section.querySelectorAll('a[data-plitzi-el], button[data-plitzi-el]')).flatMap(node => {
+      const own = node.getBoundingClientRect();
+      const shown = own.width >= 2 && own.height >= 2 && getComputedStyle(node).visibility !== 'hidden';
+
+      return shown && Math.abs(box.bottom - own.bottom) <= 1
+        ? [{ id: node.getAttribute('data-plitzi-el') ?? '', section: section.getAttribute('data-plitzi-el') ?? '' }]
+        : [];
+    });
+  })) {
+    found.set(each.id, each);
+  }
+
+  return [...found.values()];
+};

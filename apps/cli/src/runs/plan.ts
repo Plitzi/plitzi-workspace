@@ -301,7 +301,9 @@ export const checkPlan = async (
   /** A stage's: the pieces of the run's inventory, which its lines may cover. */
   knownInventory: ReadonlySet<string> = new Set(),
   /** A stage's: the files the run's approved work holds that the project does not yet — made, not to make. */
-  inRunsWork: ReadonlySet<string> = new Set()
+  inRunsWork: ReadonlySet<string> = new Set(),
+  /** A stage's: the run's tasks not done yet, which the team works beside the stage's — its size is held to both. */
+  openWork = 0
 ): Promise<CheckedPlan> => {
   const agentsAsked = teamSize(team);
   const problems: string[] = [...roleProblems(written, team), ...inventoryProblems(written, knownInventory)];
@@ -327,7 +329,7 @@ export const checkPlan = async (
       `"${task}" gets no task of tests: ${why}. Name a test file in a task of yours for it, or say "tests": false — so that none is said, not missed`
     )
   );
-  notices.push(...teamNotices(plan, team));
+  notices.push(...teamNotices(plan, team, openWork));
   if (plan.reference !== undefined) {
     notices.push(
       `Its reference, ${plan.reference}, is kept once the run is open — plitzi run reference: each page of the inventory pictured and measured, which page shot --compare measures against for the whole run, not the site as it may change; the run finishing removes it`

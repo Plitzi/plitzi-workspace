@@ -21,6 +21,18 @@ describe('page same', () => {
     expect(lines[1]).toMatch(/^span \| vs \| VS \|/);
   });
 
+  // velada-shell: /overlay writes the URL it was served on — another port on each server — and "moved" on every look.
+  it('reads a local address alike on both servers, whatever port each was served on', () => {
+    Element.prototype.getClientRects = () => [new DOMRect(0, 0, 10, 10)] as unknown as DOMRectList;
+    const served = (port: number) => {
+      document.body.innerHTML = `<p data-plitzi-el="overlay-url">http://127.0.0.1:${String(port)}/overlay/obs</p>`;
+
+      return drawing();
+    };
+
+    expect(firstDifference(served(57545), served(57557))).toBeUndefined();
+  });
+
   // A task's parts are compared alone; what is read is that nothing else moved.
   it('leaves a task’s parts out, and still finds what changed outside them', () => {
     Element.prototype.getClientRects = () => [new DOMRect(0, 0, 10, 10)] as unknown as DOMRectList;

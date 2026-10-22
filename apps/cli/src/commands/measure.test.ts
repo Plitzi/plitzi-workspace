@@ -2,7 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { measuredText, measureOn, pairOf, putIn, sameProperties } from './measure';
+import { measuredText, measureOn, pairOf, putIn, readingText, sameProperties } from './measure';
 import { differences, MEASURED } from './measureValues';
 
 import type { Measured } from './measureValues';
@@ -133,6 +133,39 @@ describe('page measure', () => {
     expect(
       differences(moving, measured({ transition: 'color 0.6s ease' })).differ.map(each => each.property)
     ).toContain('transition');
+  });
+
+  // velada-shell: the brief said "16px → 22.13px", and dev-1 tried three values before line-height 1.5.
+  it('says a line height and a tracking as a share of the font beside their pixels', () => {
+    const here = measured({ 'font-size': '14.75px', 'line-height': '16px', 'letter-spacing': '2.36px' });
+    const there = measured({ 'font-size': '14.75px', 'line-height': '22.125px', 'letter-spacing': '2.36px' });
+
+    expect(stripVTControlCharacters(measuredText(here, there))).toMatch(
+      /≠ line-height\s+16px \(1\.085em\) {2}→ {2}22\.125px \(1\.5em\)/
+    );
+  });
+
+  // velada-shell's design-1: a proof line failed on a font-size both inherit, which the task never touched.
+  it('leaves what both inherit out of --same, said beside the line rather than failing it', () => {
+    const inherited = { property: 'font-size', here: '14px', there: '16px', inherited: true as const };
+    const text = stripVTControlCharacters(
+      readingText(
+        {
+          width: 1440,
+          pair: pairOf('site-socials => footer nav'),
+          here: measured({}),
+          there: measured({}),
+          unlike: [],
+          inherited: [inherited]
+        },
+        'https://www.example.com/',
+        ['gap', 'font-size'],
+        Date.now()
+      )
+    );
+
+    expect(text).toContain('✓ --same: gap, font-size');
+    expect(text).toContain('left out of --same, inherited from its parent on both pages: font-size 14px → 16px');
   });
 
   // velada-polish: the VS sizes in the acceptance were the lead's guess; a line that measures them proves them.

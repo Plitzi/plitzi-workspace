@@ -1,9 +1,13 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
 import chalk from 'chalk';
 
 import { ownServer, serveCopy } from './acceptance';
-import { canLinger, keepServer, keptServer, LINGER_MS, previewedServer } from './lingering';
+import { canLinger, keepServer, keptServer, LINGER_MS, newestWrite, previewedServer } from './lingering';
 import { copyOf, runPaths, taskPaths } from './paths';
 import { projectOrigin } from '../browser';
+import { DEV_SERVER_FILE } from '../scaffold/paths';
 
 import type { PlitziProject } from '../commands/existingProject';
 
@@ -28,6 +32,20 @@ export const originHere = async (
   // may be another copy's, or another project's of the person's.
   const own = await ownServer(root);
   if (own !== undefined) {
+    // The agent's own server, left as it is — it holds the copy's state — but written to since it started, said: it
+    // serves the copy as it was unless it watches (velada-shell's dev-1 measured a gap of 12px it had changed).
+    const started = await fs
+      .stat(path.join(root, DEV_SERVER_FILE))
+      .then(stat => stat.mtimeMs)
+      .catch(() => Date.now());
+    if ((await newestWrite(root)) > started) {
+      process.stderr.write(
+        chalk.yellow(
+          `· served by your own server on :${String(own)}, and the copy's src/ was written since it started: it shows the copy as it was unless it watches — restart it, or stop it (kill $(lsof -tiTCP:${String(own)} -sTCP:LISTEN)) and the CLI serves the copy as it is\n`
+        )
+      );
+    }
+
     return { origin: `http://127.0.0.1:${String(own)}` };
   }
 

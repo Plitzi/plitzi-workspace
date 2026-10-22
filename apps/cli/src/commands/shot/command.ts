@@ -17,7 +17,7 @@ import { fail } from '../terminal';
 import { capture, pictureOf, readPage } from './capture';
 import {
   compareText,
-  compareLocalPart,
+  compareLocalParts,
   compareWith,
   contactSheet,
   cropToSection,
@@ -283,10 +283,17 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   // the other site has none of this page's names to be clipped to.
   const besideLocal =
     options.compare !== undefined && /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:|\/|$)/.test(options.compare);
-  // Beside the project's own other server, a part is the same element on both: pictured alone each side (`compareLocalPart`).
+  // Beside the project's own other server, a part is the same element on both: pictured alone each side — several,
+  // `--clip a,b`, each on the pages loaded once (`compareLocalParts`).
   const localPart = besideLocal && options.clip !== undefined;
+  const parts = localPart
+    ? (options.clip ?? '')
+        .split(',')
+        .map(each => each.trim())
+        .filter(Boolean)
+    : [];
   const section = options.compare && !localPart ? options.clip : undefined;
-  const clip = options.compare && !localPart ? undefined : options.clip;
+  const clip = options.compare && !localPart ? undefined : localPart ? parts[0] : options.clip;
 
   try {
     const pathname = route ?? '/';
@@ -313,12 +320,12 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     };
     // The run before it, its part, pictured while ours is — its scheme said, nothing waits for ours to be painted.
     const otherPart =
-      localPart && options.compare && options.scheme && options.clip
+      localPart && options.compare && options.scheme && parts[0]
         ? (() => {
             const other = new URL(options.compare);
             const target = other.pathname === '/' ? new URL(pathname, other).href : other.href;
 
-            return pictureOf(browser, target, { ...view, clip: options.clip }, other.origin);
+            return pictureOf(browser, target, { ...view, clip: parts[0] }, other.origin);
           })()
         : undefined;
     const taken =
@@ -378,19 +385,36 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       const target = other.pathname === '/' ? new URL(pathname, other).href : other.href;
       // Against the page as the run kept it, where it did: the site may have changed since the run began.
       const kept = options.live ? undefined : await keptPage(project.root, target, view.width, taken.scheme);
+      const local = localPart
+        ? await compareLocalParts(browser, taken, target, view, parts, base, otherPart)
+        : undefined;
+      if (local && 'problem' in local) {
+        fail(local.problem);
+
+        return;
+      }
+
+      const single = local?.[0];
       const compared =
-        localPart && options.clip !== undefined
-          ? await compareLocalPart(browser, taken, target, view, options.clip, base, otherPart)
-          : await compareWith(browser, taken, target, view, regions, base, kept);
-      if ('problem' in compared) {
+        parts.length > 1
+          ? undefined
+          : single
+            ? 'problem' in single
+              ? single
+              : single.compare
+            : await compareWith(browser, taken, target, view, regions, base, kept);
+      if (compared && 'problem' in compared) {
         fail(compared.problem);
 
         return;
       }
 
-      if (section === undefined) {
+      // Several parts: each said apart, its own comparison — one of them not drawn is said, not the whole refused.
+      if (local && parts.length > 1) {
+        report.parts = local;
+      } else if (compared && section === undefined) {
         report.compare = compared;
-      } else {
+      } else if (compared && section !== undefined) {
         const kept = compared.regions.filter(each => matchesSection(each, section));
         if (kept.length === 0) {
           fail(
@@ -572,6 +596,12 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
         chalk.yellow(
           `${report.undrawn.join(', ')}: from another site, below the first screen — blank in a picture of the whole page, as the browser draws it only on screen: --scroll-to ${report.undrawn[0] ?? '<id>'} --viewport pictures it`
         )
+      );
+    }
+
+    for (const each of report.parts ?? []) {
+      console.log(
+        'problem' in each ? chalk.yellow(`? ${each.part}: ${each.problem}`) : compareText(each.compare).join('\n')
       );
     }
 

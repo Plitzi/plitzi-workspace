@@ -89,6 +89,10 @@ describe('who calls a run’s command, proved', () => {
     await expect(who({ kind: 'name', said: 'agent' })).rejects.toMatchObject({ code: 'identity' });
     await expect(who({ kind: 'none' })).rejects.toMatchObject({
       message: expect.stringContaining(tokenFile(paths(), '<you>')) as unknown
+    }); // velada-shell: `--token ""`, read from a copy removed under it, was "who is calling?" — it says what was empty.
+    await expect(who({ kind: 'none', empty: true })).rejects.toMatchObject({
+      code: 'identity',
+      message: expect.stringContaining('--token was said empty') as unknown
     });
   });
 

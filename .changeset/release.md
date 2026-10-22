@@ -955,3 +955,16 @@ theirs"`) at every width in one call and one browser, reads the other page witho
   the dev tools hidden from the first paint, and `node:http` imported only to sign in — four of la-velada's pages at two
   widths, 8.4 s to 3.1 s, the same report. A new project's `typecheck`, `lint` and `format` keep what they read
   (`tmp/plitzi-cache/checks`): a check run again reads only what changed (lint 3.7 s → 0.5 s).
+- **What velada-shell's activity showed, fixed** (`@plitzi/cli`): a look compares all of a task's parts on pages loaded
+  once a side (`page shot --compare <local> --clip a,b,c`: six sections of a home, 15.3 s → 4 s), and reads a local
+  address alike whatever its port (/overlay no longer "moved" on every look). `page measure` composes the transform
+  that applies (`rotate`/`scale`/`translate` and `transform`), finds a component's instance by its name, says an
+  address nobody answers on as such, leaves out of `--same` what both inherit (said beside it), says a line height and
+  a tracking as their `em` too, and holds a transition with an easing's commas still. `page check` fails a link or a
+  button on its section's bottom edge where the section keeps no space below (`flush-edge`). Every agent's last
+  `task next` says "You can stop" — never the lead's finish to run; a wait says an own task in review as such; an
+  agent holding no task reads its own inbox; an empty `--token` is said as one; a verdict refused because the lead
+  decided first says so, and the lead is told a designer was at the review it skipped; a review with no page owning its
+  files looks at the pages its acceptance checks. A stage may be its `tasks` alone; its team's size, and `run watch`'s
+  ask for an agent on demand, are held to the work open, as `run plan` counts it; the lead's plans and stages in tmp/
+  are no stray; the agent's own server written to since it started is said.
