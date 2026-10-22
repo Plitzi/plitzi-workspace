@@ -290,6 +290,10 @@ before a task — both sides are held to what the project changed: motion reduce
 for by a colour their address gives them.
 `--timezone <IANA>` (both) opens the page as a visitor in that zone: its clock and `Intl` read there.
 
+`page check --themes` reads each page in light and in dark too, and fails a ground the same in both under a text whose
+colour follows the theme and, in one of them, reads under 3:1 on it (`fixed-ground`): a fixed colour where a theme
+token belongs. A look at a task checks with it.
+
 `page same [paths…] --url <origin> --than <origin>` says whether pages draw the same on two servers of the project —
 every element on screen, its box, the style a reader sees and what its `::before`/`::after` draw, read, not pictured —
 and, where not, the first element that differs; exit 1 then. A look at a task reads with it the pages only a shared

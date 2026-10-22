@@ -162,6 +162,33 @@ export const throttledImage = (
 const HYDRATION = /hydrat|Minified React error #(418|423|425)/i;
 
 /**
+ * Run in the page: each element whose words the server's HTML (`served`) drew otherwise than the page does now — the
+ * innermost, as a parent differs because its child does. Self-contained: it is sent to the browser as it is.
+ */
+export const drawnOtherwise = (served: string): string[] => {
+  const words = (node: Element): string => node.textContent.replace(/\s+/g, ' ').trim();
+  const before = new Map(
+    Array.from(new DOMParser().parseFromString(served, 'text/html').querySelectorAll('[data-plitzi-el]'), node => [
+      node.getAttribute('data-plitzi-el') ?? '',
+      words(node)
+    ])
+  );
+  const differs = (node: Element): boolean => {
+    const there = before.get(node.getAttribute('data-plitzi-el') ?? '');
+
+    return there !== undefined && there !== words(node);
+  };
+
+  return Array.from(document.querySelectorAll('[data-plitzi-el]')).flatMap(node =>
+    differs(node) && !Array.from(node.querySelectorAll('[data-plitzi-el]')).some(differs)
+      ? [
+          `${node.getAttribute('data-plitzi-el') ?? ''} ("${(before.get(node.getAttribute('data-plitzi-el') ?? '') ?? '').slice(0, 40)}" from the server → "${words(node).slice(0, 40)}" in the browser)`
+        ]
+      : []
+  );
+};
+
+/**
  * A hydration error, said with the elements whose text the server and the browser drew differently — React names none
  * in a build (velada-fidelity: "Hydration failed" for the hero's time, found by reading the diff). The server's HTML is
  * asked again as the page is (its cookies), and each named element's text set beside the page's now.
@@ -175,32 +202,7 @@ const namedHydration = async (page: BrowserPage, address: string, errors: readon
     .get(address)
     .then(answer => answer.text())
     .catch(() => undefined);
-  const differ =
-    html === undefined
-      ? []
-      : await page
-          .evaluate((served: string) => {
-            const before = new DOMParser().parseFromString(served, 'text/html');
-            const text = (node: Element | null): string => (node?.textContent ?? '').replace(/\s+/g, ' ').trim();
-
-            return Array.from(document.querySelectorAll('[data-plitzi-el]')).flatMap(node => {
-              const id = node.getAttribute('data-plitzi-el') ?? '';
-              const there = before.querySelector(`[data-plitzi-el="${CSS.escape(id)}"]`);
-              // The innermost that differ: a parent differs because its child does.
-              const inner = Array.from(node.querySelectorAll('[data-plitzi-el]')).some(child => {
-                const childId = child.getAttribute('data-plitzi-el') ?? '';
-
-                return text(child) !== text(before.querySelector(`[data-plitzi-el="${CSS.escape(childId)}"]`));
-              });
-
-              return there && !inner && text(there) !== text(node)
-                ? [
-                    `${id} ("${text(there).slice(0, 40)}" from the server → "${text(node).slice(0, 40)}" in the browser)`
-                  ]
-                : [];
-            });
-          }, html)
-          .catch(() => []);
+  const differ = html === undefined ? [] : await page.evaluate(drawnOtherwise, html).catch(() => []);
 
   return errors.map(error =>
     HYDRATION.test(error) && differ.length > 0

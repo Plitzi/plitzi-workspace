@@ -25,6 +25,10 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .addOption(widthsOption('The widths to check it at, separated by commas', [1440, 390]))
     .addOption(schemeOption())
+    .option(
+      '--themes',
+      'Also each page in light and in dark: a ground the same in both under a text whose colour follows the theme — one scheme reads it on the wrong ground'
+    )
     .option('--state', 'Also what the page holds: its state, and every source by name')
     .option(
       '--element <id>',

@@ -349,6 +349,11 @@ the lead's too when none is free — and left out, the run decides as above; the
 going past a UI review a designer took tells that designer, who still tells the lead what it found with `task tell
 --about <task>` — the way any agent holding no task does.
 
+**A look reads both schemes.** Its `page check` runs with `--themes`: each page read in light and dark at its first
+width, and a ground the same in both under a text that follows the theme and reads under 3:1 on it in one of them
+fails it (`fixed-ground`, `commands/check/themes.ts`) — velada-fidelity's judges' rows were grey bars with a gold count
+at 1.5:1 in light, a scheme the reference did not have and no reviewer read.
+
 **A look pictures what can differ.** The pages a task's own files are drawn at are pictured; the ones only a shared
 file of it reaches (the theme, a component) are first read on both servers with `page same` — every element, box,
 style and pseudo-element — and only those that differ are pictured, the rest said as "drawn the same as the run before

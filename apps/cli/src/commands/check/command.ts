@@ -1,3 +1,4 @@
+import { themeIssues } from './themes';
 import { launchBrowser } from '../../browser';
 import { originHere } from '../../runs/copyServer';
 import { projectHere } from '../existingProject';
@@ -81,7 +82,8 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     ...(options.expect ? { expect: options.expect } : {}),
     ...(options.then ? { then: options.then } : {}),
     ...(options.url ? { url: options.url } : {}),
-    ...(options.space ? { space: options.space } : {})
+    ...(options.space ? { space: options.space } : {}),
+    ...(options.themes ? { themes: true } : {})
   });
   if ('problem' in reports) {
     fail(reports.problem);
@@ -120,6 +122,8 @@ export const checkRoutes = async (
     url?: string;
     /** A space module to check the pages against instead of the project's (`--space`). */
     space?: string;
+    /** Each page read in light and in dark too: a ground that does not follow the theme under a text that does. */
+    themes?: boolean;
   }
 ): Promise<CheckReport[] | { problem: string }> => {
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
@@ -171,6 +175,15 @@ export const checkRoutes = async (
           // Once, and said: a page red for a second of somebody else's outage is not one red for anything of its own.
           const looked = failed.length > 0 ? (await look()).map(each => ({ ...each, retriedAfter: failed })) : first;
           reports.push(...looked.map(each => ({ ...each, ...(options.scheme ? { scheme: options.scheme } : {}) })));
+        }
+
+        // Light and dark, once a page, at its first width: said on its first report, failing it.
+        const themed = options.themes ? await themeIssues(browser, where.origin, route, options.widths[0] ?? 1440) : [];
+        const first = reports.find(each => each.path === route);
+        if (first && themed.length > 0) {
+          first.issues.push(...themed);
+          first.problems.push(...themed.map(issue => issue.message));
+          first.ok = false;
         }
       }
 

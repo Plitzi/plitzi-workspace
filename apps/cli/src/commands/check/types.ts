@@ -9,6 +9,8 @@ import type { DataIssueCode, PageIssue } from '@plitzi/sdk-authoring';
 export interface CheckOptions {
   /** `--expect <id>~<text>`: each element shows its text, or the check fails — what an acceptance can be checked by. */
   expect?: Expectation[];
+  /** `--themes`: each page read in light and dark too — a ground that does not follow the theme under text that does. */
+  themes?: boolean;
   /** `--status <code>`: the status every page checked is meant to be sent with. */
   status?: number;
   /** `--then <path…>`: on from the page by its own links, no reload — each next page checked as the visitor reaches it. */
@@ -66,7 +68,8 @@ export interface CheckIssue {
     | 'redirected'
     | 'page-status'
     | 'expected-text'
-    | 'label-wraps';
+    | 'label-wraps'
+    | 'fixed-ground';
   message: string;
   /** The space's element it is about, by id — absent for one about the page as a whole. */
   elementId?: string;

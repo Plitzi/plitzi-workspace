@@ -35,7 +35,7 @@ export interface Sameness {
 }
 
 /** Every element drawn, a line each: its tag, its name, its words, its box, and what a reader sees of its style. */
-const drawing = (): string[] =>
+export const drawing = (): string[] =>
   Array.from(document.querySelectorAll('body *'))
     .filter(node => node.getClientRects().length > 0)
     .map(node => {
@@ -95,6 +95,21 @@ const readOn = async (
   }
 };
 
+/** The first line two drawings differ by — one longer than the other differs where the shorter ends — or none. */
+export const firstDifference = (
+  here: readonly string[],
+  there: readonly string[]
+): { here: string; there: string } | undefined => {
+  const at = here.findIndex((line, index) => line !== there[index]);
+  if (at === -1 && here.length === there.length) {
+    return undefined;
+  }
+
+  const index = at === -1 ? Math.min(here.length, there.length) : at;
+
+  return { here: here[index] ?? '(nothing)', there: there[index] ?? '(nothing)' };
+};
+
 /** Each page read on both servers in one browser: the same, or where it differs. */
 export const samePages = async (
   browser: Browser,
@@ -109,20 +124,8 @@ export const samePages = async (
         readOn(browser, new URL(options.url).origin, path, view),
         readOn(browser, new URL(options.than).origin, path, view)
       ]);
-      const at = here.findIndex((line, index) => line !== there[index]);
-      const differs = at !== -1 || here.length !== there.length;
-      read.push({
-        path,
-        same: !differs,
-        ...(differs
-          ? {
-              first: {
-                here: here[at === -1 ? there.length : at] ?? '(nothing)',
-                there: there[at === -1 ? here.length : at] ?? '(nothing)'
-              }
-            }
-          : {})
-      });
+      const first = firstDifference(here, there);
+      read.push({ path, same: first === undefined, ...(first ? { first } : {}) });
     } catch (error) {
       read.push({
         path,

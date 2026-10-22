@@ -921,3 +921,6 @@ theirs"`) at every width in one call and one browser, reads the other page witho
   what the click opened, and a tall comparison is cut section by section; a look says its browser's time zone
   (`--timezone`); `run plan` says a check reading elements written outside its task's files, and asks one designer
   per developer in a copy of a site.
+- **A ground fixed under the theme's text is found** (`@plitzi/cli`): `page check --themes` reads each page in light and
+  dark, and fails a ground the same in both under a text that follows the theme and reads under 3:1 on it in one of
+  them; a look at a task checks with it. A hydration error's elements and `page same` are tested in a DOM.

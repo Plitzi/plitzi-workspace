@@ -359,6 +359,8 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
                 ...pages,
                 '--width',
                 [...new Set(views.map(([width]) => width))].join(','),
+                // Light and dark read too: a ground fixed under the theme's text (velada-fidelity's judges' rows).
+                '--themes',
                 '--url',
                 preview.url,
                 ...zone,
