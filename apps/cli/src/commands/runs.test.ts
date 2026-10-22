@@ -250,6 +250,7 @@ describe('plitzi run and plitzi task, as processes', () => {
       .map(line => JSON.parse(line) as { by: string; command: string; chars: number });
     expect(usage.map(line => [line.by, line.command.split(' ').slice(1, 3).join(' ')])).toEqual(
       expect.arrayContaining([
+        ['lead', 'run open'],
         ['dev-1', 'task take'],
         ['dev-1', 'task context'],
         ['lead', 'run status']

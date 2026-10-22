@@ -39,6 +39,7 @@ import {
   TEAM_FILE,
   teamSize
 } from '../../runs/team';
+import { usageCaller } from '../../runs/usage';
 import { planSkills } from '../upgrade';
 
 import type { RunCommandOptions } from './shell';
@@ -323,6 +324,8 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
         ...(options.despiteChecks === undefined ? {} : { despiteChecks: options.despiteChecks })
       });
       await pruneRuns(ctx);
+      // The open is the lead's first command of the run: its cost counted as the lead's, not an unnamed caller's.
+      usageCaller(opened.paths.dir, ctx.agent);
       // Made with the run, so no one after takes the lead's name: the lead passes it on every command.
       const lead = await issueToken(opened.paths, opened.checked.runId, LEAD, ctx.now());
       if (!lead) {
