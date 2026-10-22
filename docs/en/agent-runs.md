@@ -624,6 +624,29 @@ failed was in the run's work and nowhere in the log. When the
 run ends — finished, or aborted by a person — the report is left in `tmp/plitzi-reports/<run>-<time>.md`, with what was
 written or discarded and where a backup is.
 
+**The run measured** (`runMetrics.ts`, `reportFlow.ts`): the report says where the time went and what it cost, read off
+the log, the messages and the run's usage — what velada-polish's lead computed by hand to find the run's bottlenecks:
+
+- **Flow:** the minutes worked (the open to every task approved), apart from the wait for the person's finish — the
+  report said 136 min of a run worked in 50. Each task: from stacked to taken, at work, its rounds (the UI's and the
+  lead's), each wait for its UI review and the review's own time, each wait for the lead, each wait for an agent after
+  changes were asked, its checks failed, its reworks handed off. Each agent: joined, stopped, its tasks, completes,
+  checks failed, refusals, the minutes it waited for work, its reviews (with changes) and their median minutes. Checks
+  failed by step (lint, typecheck, author, acceptance, a long file); refusals by code, with who and one command; each
+  question's wait for its answer. A spike is said as the lead's, by the lead that found it out.
+- **Cost** (`usage.ts`): each command run in a run — a task's, the lead's, a `page shot` in a copy — appends to the
+  run's `usage.jsonl` who ran it, the command (its tokens' secrets out), what it printed (stdout and stderr: what its
+  caller read, a token four characters), how long, its exit. The CLI's own child processes (`task look`'s checks and
+  shots, a check's scripts: `PLITZI_USAGE_CHILD`) count none — their output is read by the command, not an agent. The
+  report sums it by agent and by command, and lists the calls one agent made three times or more within ten minutes:
+  a loop, or an answer it could not use. The harness's own count — the lead is handed it with each agent's end — is said
+  with `run report --tokens dev-1=208061,…` (`tokens.json`), by agent, in all, and a task.
+- **The bench** (`bench.ts`): the same measures, one line a run, kept as data beside the report
+  (`<run>-<time>.json`, with the report whole), ends the report against the five runs before, and `plitzi run bench`
+  lists every run: minutes a task, rounds a task, the share of checks failed, refusals (`identity` apart), the median
+  waits for a UI review, the lead and a rework, the minutes agents waited, reworks handed off, what was read, tokens a
+  task, calls repeated — whether the team gets better from one run to the next.
+
 ## Who calls (`identity.ts`)
 
 A name is anyone's to type. Said, or not said — a shell with no terminal was the lead — it was taken at its word:

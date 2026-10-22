@@ -8,6 +8,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { checkAccount, checkRoutes, CHECK_PASSWORD_ENV, CHECK_USER_ENV, reportText, staticPaths } from './check';
 import { projectHere } from './existingProject';
+import { USAGE_OFF } from '../runs/usage';
 
 import type { Account, CheckReport } from './check';
 import type { Scheme } from '../browser';
@@ -83,6 +84,8 @@ export const runScript = (
       env: {
         ...process.env,
         ...env,
+        // What it prints is read by this command, not by an agent: a `plitzi` it runs counts no usage of its own.
+        [USAGE_OFF]: '1',
         FORCE_COLOR: '0',
         NO_COLOR: '1',
         PATH: [...bin, path.join(binRoot, 'node_modules', '.bin'), process.env.PATH ?? ''].join(path.delimiter)

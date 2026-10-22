@@ -5,17 +5,24 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { proposalsOf } from './agreements';
 import { auditRun } from './audit';
+import { benchOf, benchText, readBench } from './bench';
 import { readOptional, writeAtomic } from './files';
 import { coverage } from './inventory';
 import { requireLead } from './leads';
+import { messagesOf } from './messages';
 import { noticesOf, noticeText } from './notices';
 import { REPORTS_DIR, taskPaths } from './paths';
 import { RunRefusal } from './refusal';
+import { flowText } from './reportFlow';
 import { completionsOf, inputOf, loadRun, logRun, readApproved, readRunLog, requireNoTask, updateRecord } from './run';
+import { runMetrics } from './runMetrics';
 import { requestsOf } from './tasks';
 import { readReviewed, viewTask } from './taskStore';
+import { readUsage } from './usage';
 
+import type { BenchLine } from './bench';
 import type { LoadedRun, RunContext } from './run';
+import type { RunMetrics } from './runMetrics';
 
 /**
  * A run's report: how the whole run went. The CLI gathers what it knows — each task's agents, time against
@@ -72,6 +79,8 @@ export interface RunReport {
   audit: string[];
   /** What was seen wrong that no task owned (`plitzi run notice`): where the next stage starts. */
   noticed: string[];
+  /** Where its time went, what failed by step and code, and what it cost (`runMetrics.ts`): the bench's, as data. */
+  metrics: RunMetrics;
 }
 
 interface LogLine {
@@ -125,17 +134,26 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     const view = await viewTask(loaded.paths, task);
     const takes = log.filter(line => line.action === 'take' && line.task === task.id);
     const approval = log.find(line => line.action === 'review' && line.task === task.id && line.verdict === 'approve');
-    const first = takes.at(0);
+    // A spike is a lead's: from its take, by the lead that found it out, to its end — said as one, not as a developer's.
+    const spike = task.spike !== undefined;
+    const first = spike ? log.find(line => line.action === 'spike-taken' && line.task === task.id) : takes.at(0);
+    const ended = spike ? log.find(line => line.action === 'spike-done' && line.task === task.id) : approval;
+    // Every designer that said a round of its UI, in order — one named alone hid the other (velada-polish's t-match-bars).
+    const designers = [
+      ...new Set(log.filter(line => line.action === 'design-review' && line.task === task.id).map(line => line.by))
+    ];
     tasks.push({
       id: task.id,
       title: task.title,
       kind: task.kind,
-      role: task.role ?? 'developer',
+      role: spike ? 'lead (spike)' : (task.role ?? 'developer'),
       status: view.state.status,
-      agents: [...new Set(takes.map(line => line.by))],
+      agents: spike ? (view.state.spikedBy ? [view.state.spikedBy.by] : []) : [...new Set(takes.map(line => line.by))],
       rounds: view.state.round,
       ...(view.state.design?.status === 'approved'
-        ? { design: `UI by ${view.state.design.by ?? 'a designer'}` }
+        ? {
+            design: `UI by ${designers.length > 0 ? designers.join(', then ') : (view.state.design.by ?? 'a designer')}`
+          }
         : view.state.design?.status === 'skipped'
           ? {
               design:
@@ -147,7 +165,7 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
             }
           : {}),
       estimateMinutes: task.estimateMinutes,
-      ...(first ? { minutes: minutesBetween(first.at, approval?.at ?? now) } : {}),
+      ...(first ? { minutes: minutesBetween(first.at, ended?.at ?? now) } : {}),
       // What it changed: what it completed with, and what the run holds of it — a shared file it took by turns and
       // another task changed after it is still one it wrote.
       files: [
@@ -211,6 +229,17 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
 
   const { record } = loaded;
   const minutes = minutesBetween(record.openedAt, now);
+  const metrics = runMetrics({
+    log: await readRunLog(loaded.paths),
+    usage: readUsage(loaded.paths.dir),
+    answers: (await messagesOf(loaded)).flatMap(message =>
+      message.replyTo === undefined ? [] : [{ replyTo: message.replyTo, at: message.at }]
+    ),
+    tokens: await readTokens(loaded),
+    taskIds: loaded.tasks.map(task => task.id),
+    openedAt: record.openedAt,
+    now
+  });
   const problems = [
     ...tasks.filter(task => task.status !== 'done').map(task => `${task.id} did not finish: ${task.status}`),
     ...tasks.filter(task => task.blocked).map(task => `${task.id} was blocked: ${String(task.blocked)}`),
@@ -274,9 +303,25 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     restores: record.merges
       .filter(merge => merge.kind === 'restore')
       .map(merge => ({ id: merge.id, files: Object.keys(merge.files) })),
-    problems,
+    problems: [
+      ...problems,
+      ...(metrics.checks.failed > 0
+        ? [
+            `${String(metrics.checks.failed)} of ${String(metrics.checks.run)} task checks failed — ${Object.entries(
+              metrics.checks.byStep
+            )
+              .map(([step, times]) => `${step} ${String(times)}`)
+              .join(', ')}`
+          ]
+        : []),
+      ...(metrics.refusals.total > 0 ? [`${String(metrics.refusals.total)} command(s) refused (see Flow)`] : []),
+      ...metrics.cost.repeated.map(
+        each => `${each.by} ran \`${each.command}\` ${String(each.times)} times in ${String(each.within)} min`
+      )
+    ],
     audit: await auditRun(loaded),
-    noticed: (await noticesOf(loaded)).map(noticeText)
+    noticed: (await noticesOf(loaded)).map(noticeText),
+    metrics
   };
 };
 
@@ -293,11 +338,17 @@ const lines = (items: readonly string[], none: string): string[] =>
   items.length > 0 ? items.map(item => `- ${item}`) : [`- ${none}`];
 
 /** A report as a person reads it: the lead's summary first, then the facts. */
-export const reportText = (report: RunReport, summary: string | undefined, closing?: Closing): string =>
+export const reportText = (
+  report: RunReport,
+  summary: string | undefined,
+  closing?: Closing,
+  /** The runs measured before this one, and it last: the bench the report ends its flow with. */
+  benchBefore?: readonly BenchLine[]
+): string =>
   [
     `# Run "${report.runId}" — ${report.goal}`,
     '',
-    `${closing ? (closing.outcome === 'finished' ? 'Finished' : 'Aborted') : 'Going'} ${report.at} · opened ${report.openedAt} · ${String(report.minutes)} min, estimated ${String(report.estimate.wallMinutes)} with ${String(report.estimate.agents)} agents (${String(report.estimate.totalMinutes)} min of work)`,
+    `${closing ? (closing.outcome === 'finished' ? 'Finished' : 'Aborted') : 'Going'} ${report.at} · opened ${report.openedAt} · ${report.metrics.workMinutes === undefined ? `${String(report.minutes)} min` : `worked ${String(report.metrics.workMinutes)} min, then ${String(report.metrics.afterMinutes ?? 0)} to this report`}, estimated ${String(report.estimate.wallMinutes)} with ${String(report.estimate.agents)} agents (${String(report.estimate.totalMinutes)} min of work)`,
     '',
     '## The lead’s summary',
     '',
@@ -343,9 +394,11 @@ export const reportText = (report: RunReport, summary: string | undefined, closi
         `| ${task.id}${task.kind === 'integration' ? ' (integration)' : ''} | ${task.role} | ${task.status} | ${task.agents.join(', ') || '—'} | ${task.minutes === undefined ? '—' : String(task.minutes)} / ${String(task.estimateMinutes)} | ${String(task.rounds)}${task.design ? ` · ${task.design}` : ''} | ${String(task.cuts)} | ${task.files.join(', ') || '—'} |`
     ),
     '',
+    ...flowText(report.metrics),
+    ...(benchBefore && benchBefore.length > 0 ? ['## Against the runs before', '', ...benchText(benchBefore), ''] : []),
     '## What happened',
     '',
-    `- Completions: ${String(report.events.completed)}; refused: ${String(report.events.refused)}; checks failed: ${String(report.events.checksFailed)}; conflicts: ${String(report.events.conflicts)}`,
+    `- Completions: ${String(report.events.completed)}; completions refused for another task's files: ${String(report.events.refused)}; completions whose checks failed: ${String(report.events.checksFailed)}; conflicts: ${String(report.events.conflicts)}`,
     ...report.overwrites.map(
       each => `- Written over a change made outside the run: ${each.file} (${each.task}, decided by ${each.by})`
     ),
@@ -442,7 +495,58 @@ export const leaveReport = async (ctx: RunContext, loaded: LoadedRun, closing: C
     .replace(/\.\d+Z$/, 'Z');
   const file = path.join(ctx.root, REPORTS_DIR, `${loaded.record.runId}-${stamp}.md`);
   await fs.mkdir(path.dirname(file), { recursive: true });
-  await writeAtomic(file, reportText(report, await readSummary(loaded), closing));
+  const bench = benchOf(report, ctx.cli);
+  const before = await readBench(ctx.root);
+  await writeAtomic(file, reportText(report, await readSummary(loaded), closing, [...before.slice(-5), bench]));
+  // Beside it, the same as data: what `plitzi run bench` compares, and a lead debugging the run reads whole.
+  await writeAtomic(file.replace(/\.md$/, '.json'), `${JSON.stringify({ bench, report }, null, 2)}\n`);
 
   return file;
+};
+
+const tokensFile = (loaded: LoadedRun): string => path.join(loaded.paths.dir, 'tokens.json');
+
+/** What the harness counted each agent spent, as the lead said it (`run report --tokens`). */
+export const readTokens = async (loaded: LoadedRun): Promise<Record<string, number>> => {
+  const read: unknown = await fs
+    .readFile(tokensFile(loaded), 'utf-8')
+    .then(text => JSON.parse(text) as unknown)
+    .catch(() => undefined);
+
+  return isRecord(read)
+    ? Object.fromEntries(
+        Object.entries(read).flatMap(([agent, value]) => (typeof value === 'number' ? [[agent, value]] : []))
+      )
+    : {};
+};
+
+/**
+ * `run report --tokens dev-1=208061,design-2=261010`: the harness's own count of each agent's tokens, said by the lead,
+ * who is handed it — the CLI sees only what it printed. Kept with the run, each agent's last said.
+ */
+export const writeTokens = async (ctx: RunContext, runId: string, said: string): Promise<Record<string, number>> => {
+  requireNoTask(ctx, 'say what the agents spent');
+  const loaded = await loadRun(ctx, runId);
+  await requireLead(ctx, loaded, 'say what the agents spent');
+  const pairs = said
+    .split(',')
+    .map(each => each.trim())
+    .filter(Boolean);
+  const parsed = pairs.map(pair => /^([a-z][a-z0-9_-]*)=(\d+)$/.exec(pair));
+  const wrong = pairs.filter((_, index) => parsed[index] === null);
+  if (wrong.length > 0 || pairs.length === 0) {
+    throw new RunRefusal(
+      'invalid',
+      `--tokens is agent=count, separated by commas (dev-1=208061,design-2=261010)${wrong.length > 0 ? `: not ${wrong.join(', ')}` : ''}`
+    );
+  }
+
+  const tokens = {
+    ...(await readTokens(loaded)),
+    ...Object.fromEntries(parsed.flatMap(match => (match ? [[match[1], Number(match[2])]] : [])))
+  };
+  await writeAtomic(tokensFile(loaded), `${JSON.stringify(tokens, null, 2)}\n`);
+  await logRun(ctx, loaded.paths, { action: 'tokens', agents: Object.keys(tokens) });
+
+  return tokens;
 };

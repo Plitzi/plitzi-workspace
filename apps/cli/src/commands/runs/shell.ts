@@ -19,6 +19,7 @@ import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { activeRuns } from '../../runs/run';
 import { readOwner } from '../../runs/taskStore';
 import { isQuality } from '../../runs/team';
+import { USAGE_OFF, usageCaller } from '../../runs/usage';
 import { CLI_VERSION } from '../../scaffold/project';
 import { findProject } from '../existingProject';
 
@@ -249,6 +250,7 @@ const prove = async (ctx: RunContext, runId: string, anyone = false): Promise<vo
       : await identify(ctx.root, runPaths(ctx.root, runId), runId, pending.claim, ctx.now());
   pending.prove(identified.agent);
   unproved.delete(ctx);
+  usageCaller(runPaths(ctx.root, runId).dir, identified.agent);
   if (identified.issued) {
     process.stderr.write(`${chalk.bold(issuedText(runId, identified.agent, identified.issued))}\n`);
   }
@@ -435,7 +437,10 @@ export const act = async <T>(
 /** This CLI as a child process, in `cwd`: what a lead's one command runs several of, each as it would by hand. */
 export const runSelf = (cwd: string, args: string[]): Promise<{ code: number; output: string }> =>
   new Promise(resolve => {
-    const child = spawn(process.execPath, [process.argv[1], ...args], { cwd, env: process.env });
+    const child = spawn(process.execPath, [process.argv[1], ...args], {
+      cwd,
+      env: { ...process.env, [USAGE_OFF]: '1' }
+    });
     let output = '';
     child.stdout.on('data', (chunk: Buffer) => (output += chunk.toString()));
     child.stderr.on('data', (chunk: Buffer) => (output += chunk.toString()));

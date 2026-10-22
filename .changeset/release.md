@@ -878,3 +878,11 @@ monitor` shows each as it comes, a problem in red.
   no check of it measures; a stage stacked (`run extend`, a scope's tasks) says its plan's notices, which only a dry run
   did. The designer's half of a run is a reference of its own, `runs-designer.md`, handed with its first review; the
   lead's says to measure in the scope and to note, not fix, what the CLI does wrong mid-run.
+- **A run's report measures it, and the runs are a bench** (`@plitzi/cli`): a Flow section — minutes worked apart from
+  the wait for the finish; each task's wait to be taken, time at work, rounds (UI and lead), waits for each review and
+  for its agent after changes, checks failed, hand-offs; each agent's waits, reviews, refusals — and failed checks by
+  step, refusals by code, questions' waits. A Cost section: each command run in a run keeps who ran it and what it
+  printed (`usage.jsonl`; the CLI's own child processes count none), summed by agent and command, with the calls one
+  agent repeated; the harness's tokens said with `run report --tokens`. Kept as data beside the report
+  (`<run>-<time>.json`), compared with the runs before at its end and by `plitzi run bench`. The report said 136 min
+  of a run worked in 50, "refused: 0" of six refusals, one designer of two, and a stage's estimate for one agent.

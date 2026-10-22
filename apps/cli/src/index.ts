@@ -36,6 +36,7 @@ import { doctor } from './doctor';
 import { feedback } from './feedback';
 import { lint } from './lint';
 import { count, positiveInteger } from './options';
+import { startUsage } from './runs/usage';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
 import { FUNCTIONS_DIR } from './scaffold/paths';
 import { CLI_VERSION } from './scaffold/project';
@@ -568,4 +569,5 @@ program.on('command:*', (operands: string[]) => {
   );
 });
 
+startUsage(process.argv.slice(2), process.cwd());
 await program.parseAsync(process.argv);

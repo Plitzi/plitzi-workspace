@@ -2,11 +2,12 @@ import chalk from 'chalk';
 
 import { act, contextFor, runOf } from './shell';
 import { durationText, FOLLOW_MS } from '../../options';
+import { benchText, readBench } from '../../runs/bench';
 import { waitForLead } from '../../runs/leadWatch';
 import { showVersion } from '../../runs/merge';
 import { startPreview, startTaskPreview } from '../../runs/preview';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
-import { buildReport, readSummary, reportText, writeSummary } from '../../runs/report';
+import { buildReport, readSummary, reportText, writeSummary, writeTokens } from '../../runs/report';
 import { activeRuns, loadRun, pruneRuns } from '../../runs/run';
 import { pendingRuns, runsState, runText, viewRun } from '../../runs/view';
 
@@ -146,14 +147,20 @@ export const runShow = async (
 
 export const runReport = (
   runId: string | undefined,
-  options: RunCommandOptions & { summary?: string }
+  options: RunCommandOptions & { summary?: string; tokens?: string }
 ): Promise<void> =>
   act(
     options,
     async ctx => {
-      const id = await runOf(ctx, options, runId, { anyone: options.summary === undefined });
+      const id = await runOf(ctx, options, runId, {
+        anyone: options.summary === undefined && options.tokens === undefined
+      });
       if (options.summary) {
         await writeSummary(ctx, id, options.summary);
+      }
+
+      if (options.tokens) {
+        await writeTokens(ctx, id, options.tokens);
       }
 
       const loaded = await loadRun(ctx, id, { anyVersion: true });
@@ -211,3 +218,11 @@ export const runPreview = async (
     process.exitCode = error.exitCode;
   }
 };
+
+/** `plitzi run bench`: every run of the project measured the same way, oldest first — whether the team gets better. */
+export const runBench = (options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => ({ runs: await readBench(ctx.root) }),
+    ({ runs }) => benchText(runs).join('\n')
+  );

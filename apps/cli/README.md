@@ -497,7 +497,8 @@ plitzi run preview                         # the run's work as it goes, served: 
 plitzi run monitor                         # the run, live, in a terminal of your own beside the harness: its flow as a kanban, its tasks, agents and activity, fitted to the terminal — it only reads
 plitzi task show t-home                    # a task as its lead reviews it: checks, agreements, each file's diff
 plitzi task show t-home src/space/pages/home/hero.ts   # one file whole, as it went to review
-plitzi run report --summary summary.md     # the lead closes the run with its report
+plitzi run report --summary summary.md     # the lead closes the run with its report (--tokens agent=count,… the harness's)
+plitzi run bench                           # every run measured the same way: minutes a task, rounds, checks failed, cost
 plitzi run finish                          # the whole diff and the checks on the result — then --apply, a person's
 ```
 

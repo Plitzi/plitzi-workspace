@@ -247,6 +247,8 @@ export const extendRun = async (
     ...(record.designReview === true || next.designReview === true ? { designReview: true as const } : {}),
     estimate: {
       ...record.estimate,
+      // Worked by as many as it may be now: a run opened on its scope alone was estimated for one (velada-polish).
+      agents: Math.max(record.estimate.agents, allowed),
       tasks: record.estimate.tasks + tasks.length,
       totalMinutes: record.estimate.totalMinutes + checked.estimate.totalMinutes,
       wallMinutes: record.estimate.wallMinutes + checked.estimate.wallMinutes

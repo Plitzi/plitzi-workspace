@@ -236,4 +236,26 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect((await plitzi(work, ['task', 'show', 't-home'])).code).toBe(0);
     expect((await plitzi(work, ['task', 'show', 't-about'])).code).toBe(REFUSAL_EXIT_CODES['lead-only']);
   }, 120_000);
+
+  // What each command printed is what its agent read: the run's cost, kept a line a command — secrets out.
+  it('keeps what each command of a run printed, by whom — and nothing of a command outside a run', async () => {
+    const lead = await openRun();
+    const taken = await plitzi(bench.root, ['task', 'take', 't-about', '--agent', 'dev-1']);
+    await plitzi(String(taken.json.work), ['task', 'context']);
+    await plitzi(bench.root, ['run', 'status', '--token', lead]);
+
+    const usage = ((await bench.read('tmp/plitzi-runs/es-launch/usage.jsonl')) ?? '')
+      .split('\n')
+      .filter(Boolean)
+      .map(line => JSON.parse(line) as { by: string; command: string; chars: number });
+    expect(usage.map(line => [line.by, line.command.split(' ').slice(1, 3).join(' ')])).toEqual(
+      expect.arrayContaining([
+        ['dev-1', 'task take'],
+        ['dev-1', 'task context'],
+        ['lead', 'run status']
+      ])
+    );
+    expect(usage.every(line => line.chars > 0)).toBe(true);
+    expect(usage.map(line => line.command).join(' ')).not.toContain(lead.split('.').at(-1) ?? '');
+  }, 120_000);
 });

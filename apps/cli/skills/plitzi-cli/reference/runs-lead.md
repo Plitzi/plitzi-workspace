@@ -109,15 +109,15 @@ t-home` is all of it (`<file> --diff`: one file's whole diff);
 7. **Someone changed a file while the agent worked on it** → the approval stops, naming it: `--approve --merge` when
    the changes go together line by line (the refusal says so), `--approve --overwrite` (its version wins, said, the
    other kept) or `--changes` (redo it on the project's version). A change after approval puts the finish into
-   **reconciliation**: `plitzi run resolve <run> <file> --take project|run|merge|<file>`, then `plitzi run continue`.
-   **The brake** stops a run whose completions keep failing; `run resume`. **Plitzi upgraded mid-run** (`version-mismatch`, said in `run
-status`): ask the person to run `plitzi run attach <run>` — the agents keep their work and wait. To upgrade on
-   purpose, the person runs `plitzi run upgrade` — never an install under the open run.
+   **reconciliation**: `plitzi run resolve <run> <file> --take …`, then `plitzi run continue`.
+   **The brake** stops a run whose completions keep failing; `run resume`. **Plitzi upgraded mid-run**
+   (`version-mismatch`): the person runs `plitzi run attach <run>`; to upgrade on purpose, `plitzi run upgrade`.
 8. **Before you close, look at the coverage:** the finish runs each covering check on the result; look at what a
    check cannot see (`plitzi run preview`) — what is missing is a stage (`run extend`), or the next run's: `run notice "…"
 --on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run plan` and `run open` list; `run
-backlog done <id> --note "…"` closes one. **Close it:** write the summary (done, wrong, left) last: `plitzi run report --summary summary.md`; then `plitzi run
-finish` (the diff, checked). `--apply` is the person's, or yours if they allowed it. `run pending`: what awaits it.
+backlog done <id> --note "…"` closes one. **Close it:** write the summary (done, wrong, left) last, with each agent's tokens as the harness gave them:
+   `plitzi run report --summary summary.md --tokens dev-1=208061,…`; then `plitzi run finish` (the diff, checked). Its
+   report measures the run (flow, cost, calls repeated) against the runs before: `plitzi run bench`. `--apply` is the person's, or yours if they allowed it. `run pending`: what awaits it.
 
 ## Where leads went wrong
 

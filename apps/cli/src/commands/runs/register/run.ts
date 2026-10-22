@@ -11,6 +11,7 @@ import {
   runRehearse,
   runPreview,
   runPrune,
+  runBench,
   runReport,
   runPurge,
   runRelease,
@@ -376,8 +377,22 @@ export const registerRunGroup = (program: Command): Command => {
     .description('How the run went, as the CLI saw it — and, with --summary, the lead’s summary that closes it')
     .argument('[run]', 'The run')
     .option('--summary <file>', 'The lead’s summary: what the run did, what went wrong, what is left (Markdown)')
+    .option(
+      '--tokens <agent=count,…>',
+      'What the harness counted each agent spent — the lead is handed it — kept for the report and the bench'
+    )
     .option(...JSON_OPTION)
-    .action((run: string | undefined, options: RunCommandOptions & { summary?: string }) => runReport(run, options));
+    .action((run: string | undefined, options: RunCommandOptions & { summary?: string; tokens?: string }) =>
+      runReport(run, options)
+    );
+
+  runGroup
+    .command('bench')
+    .description(
+      'Every run of the project measured the same way, oldest first: minutes a task, rounds, checks failed, waits, cost'
+    )
+    .option(...JSON_OPTION)
+    .action((options: RunCommandOptions) => runBench(options));
 
   runGroup
     .command('resolve')
