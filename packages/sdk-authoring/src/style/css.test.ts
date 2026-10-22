@@ -244,6 +244,13 @@ describe('a style with pseudo-elements, conditions and its parent', () => {
     expect(() => toBlocks(pseudoInAncestor as StyleSpec)).toThrow(/\[ancestor-shape\][\s\S]*--fill-opacity/);
     const pseudoInState = { ancestors: { card: { states: { hover: { pseudos: { before: { opacity: '1' } } } } } } };
     expect(() => toBlocks(pseudoInState as StyleSpec)).toThrow(/\[state-shape\][\s\S]*pseudos: \{ before: \{ states/);
+    // la-velada's 404 arrow: a condition under an ancestor, dropped as `pseudos` was — told where it goes.
+    const conditionInAncestor = {
+      ancestors: { card: { conditions: { 'motion-reduce': { css: { transform: 'none' } } } } }
+    };
+    expect(() => toBlocks(conditionInAncestor as StyleSpec)).toThrow(
+      /\[ancestor-shape\][\s\S]*conditions: \{ 'motion-reduce': \{ css: \{ transition: 'none' \} \} \}/
+    );
     // …and this one they take: a state is CSS by its type, and `variants: {}` reads as a property.
     expect(() => toBlocks({ css: { color: 'red' }, states: { hover: { variants: {} } } })).toThrow(/\[state-shape\]/);
   });

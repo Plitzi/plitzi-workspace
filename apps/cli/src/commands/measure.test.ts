@@ -2,9 +2,10 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { differences, MEASURED, measuredText, measureOn, pairOf, putIn, sameProperties } from './measure';
+import { measuredText, measureOn, pairOf, putIn, sameProperties } from './measure';
+import { differences, MEASURED } from './measureValues';
 
-import type { Measured } from './measure';
+import type { Measured } from './measureValues';
 
 const measured = (styles: Record<string, string>, text = 'VS'): Measured => ({
   selector: '[data-plitzi-el="vs"]',
@@ -119,6 +120,19 @@ describe('page measure', () => {
     expect(stripVTControlCharacters(measuredText(body, measured({}, '')))).toContain(
       'body is the document\'s: the space dresses its root, shell-root — measure it, "shell-root => body"'
     );
+  });
+
+  // Preparing velada's next run: our footer's label, held still, read "color 1e-05s cubic-bezier(0.4, 0, 0.2, 1)" against
+  // the original's 0.3s — a difference of nothing, said because the easing's own commas split the list.
+  it('reads a transition held still as no difference, whatever commas its easing has', () => {
+    const here = measured({ transition: 'color 1e-05s cubic-bezier(0.4, 0, 0.2, 1), opacity 0s ease' });
+    const there = measured({ transition: 'color 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease' });
+    const moving = measured({ transition: 'color 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0s ease' });
+
+    expect(differences(here, there).differ.map(each => each.property)).not.toContain('transition');
+    expect(
+      differences(moving, measured({ transition: 'color 0.6s ease' })).differ.map(each => each.property)
+    ).toContain('transition');
   });
 
   // velada-polish: the VS sizes in the acceptance were the lead's guess; a line that measures them proves them.

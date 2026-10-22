@@ -46,8 +46,8 @@ export const CSS_CODES = {
   'ancestor-shape': {
     kind: 'refused',
     means:
-      "an ancestor condition given keys other than `css`, `states` and `variants` — `pseudos` above all: an ancestor's rules reach the element, never its `::before`/`::after`, and the key was dropped",
-    fix: "a custom property the ancestor's state sets — `ancestors: { [card.name]: { states: { hover: { '--fill-opacity': '1' } } } }` — read by the class's own pseudo-element: `pseudos: { before: { css: { opacity: 'var(--fill-opacity, 0.6)' } } }`"
+      "an ancestor condition given keys other than `css`, `states` and `variants` — `pseudos` (an ancestor's rules reach the element, never its `::before`/`::after`) or `conditions` — which were dropped without a word",
+    fix: "for `pseudos`, a custom property the ancestor's state sets — `ancestors: { [card.name]: { states: { hover: { '--fill-opacity': '1' } } } }` — read by the class's own pseudo-element: `pseudos: { before: { css: { opacity: 'var(--fill-opacity, 0.6)' } } }`; for `conditions`, the condition on the class's own `css` — `conditions: { 'motion-reduce': { css: { transition: 'none' } } }`"
   },
   'state-shape': {
     kind: 'refused',

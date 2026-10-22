@@ -936,7 +936,8 @@ theirs"`) at every width in one call and one browser, reads the other page witho
 - **What velada-backlog's agents met, fixed** (`@plitzi/cli`, `@plitzi/sdk-authoring`): `task next --take` from the copy
   of a task just completed takes the next one (a guard of the days a task's token was who one was refused it "without
   a token"). An ancestor's `pseudos` — dropped without a word, its CSS never emitted — is refused (`ancestor-shape`),
-  saying the way that works (a custom property the ancestor's state sets, read by the class's own pseudo-element), and
+  saying the way that works (a custom property the ancestor's state sets, read by the class's own pseudo-element) — so is
+  an ancestor's `conditions`, dropped the same way (la-velada's 404 arrows: the condition goes on the class's own `css`) — and
   a state holding a rule set's keys is refused for what it is (`state-shape`). `page measure --hover|--focus "<ours> =>
 <theirs>"` measures both pages in that state, its transitions waited for; `page check --hover` (and a look) says what
   `::before`/`::after` and custom properties change. A comparison numbers a component part's copies

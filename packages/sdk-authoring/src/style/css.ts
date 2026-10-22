@@ -269,7 +269,9 @@ const toAncestors = (ancestors: RuleSetSpec['ancestors']) =>
         'ancestor-shape',
         misplaced.includes('pseudos')
           ? `The ancestor "${name}" holds \`pseudos\`: an ancestor's rules reach the element, never its ::before or ::after. Let the ancestor's state set a custom property — \`ancestors: { '${name}': { states: { hover: { '--fill-opacity': '1' } } } }\` — and the class's own pseudo-element read it: \`pseudos: { before: { css: { opacity: 'var(--fill-opacity, 0.6)' } } }\`.`
-          : `The ancestor "${name}" holds ${misplaced.map(key => `\`${key}\``).join(', ')}: an ancestor condition is \`css\`, \`states\` and \`variants\`.`
+          : misplaced.includes('conditions')
+            ? `The ancestor "${name}" holds \`conditions\`: an ancestor's rules hold none. To keep what it changes still under reduced motion, give the class's own \`css\` the condition — \`conditions: { 'motion-reduce': { css: { transition: 'none' } } }\` at the top of the class — and the change lands without moving.`
+            : `The ancestor "${name}" holds ${misplaced.map(key => `\`${key}\``).join(', ')}: an ancestor condition is \`css\`, \`states\` and \`variants\`.`
       );
     }
 
