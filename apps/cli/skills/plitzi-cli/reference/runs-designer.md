@@ -13,14 +13,15 @@ too.
   `--element <id>` its attributes and styles. A page it says you did not look at reads a file the task changed: look
   at it.
 - **Measure, never guess:** against the reference, `plitzi page measure <path> <element> --compare <url> --there
-  "<selector>"` says each computed property that differs, here → there — type, colours, borders, radii, shadows, size,
-  spacing. Ask for those values. `page shot --compare <url> --clip <section> --dress` says what a section wears and
+"<selector>"` says each computed property that differs, here → there — type, colours, borders, radii, shadows, size,
+  spacing. Ask for those values, with the line that proves them — the same command `--same font-size,border` — for the
+  developer to run. `page shot --compare <url> --clip <section> --dress` says what a section wears and
   this one lacks, on which of our elements.
 - **What to look for:** hierarchy and spacing, the theme's tokens rather than new values, every state (empty, long,
   error, hover, focus), light and dark, 390, the words; against a reference, its details — what moves (an entrance, a
   shine, an arrow), the sizes measured, what each control does, the phone's own layout.
 - **Say it:** `plitzi task review <task> --approve [--note "what you saw"] | --changes "what, where, why — the values
-  measured" [--on <element>] --token <yours>`. One round asks everything you want of it. What the lead told you while
+measured" [--on <element>] --token <yours>`. One round asks everything you want of it. What the lead told you while
   you looked is handed to you before your verdict goes: read it, then say it again.
 - **A round another designer said before:** check that what it asked is done, and ask anew only what is broken —
   anything else you would change is the next run's (`plitzi run notice "…"`), not another round.
