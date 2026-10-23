@@ -270,12 +270,21 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
 
   const team = await readTeam(ctx.root).catch(() => undefined);
   const started = team ? startedAgents(team) : [];
-  attention.push(...bottlenecks(views, started, now));
-  // Agents on demand: told to the lead when work waits for one and none running is free.
   const log = await readRunLog(loaded.paths);
+  const running = runningAgents(log);
+  // Free means started and idle: an agent on demand never started is none (lx-copy: "dev-3, design-2 are free" for two
+  // agents nobody had started).
+  attention.push(
+    ...bottlenecks(
+      views,
+      started.filter(each => running.has(each.agent)),
+      now
+    )
+  );
+  // Agents on demand: told to the lead when work waits for one and none running is free.
   const identified = await identifiedAgents(loaded.paths);
   attention.push(
-    ...agentsNeeded(views, started, runningAgents(log), {
+    ...agentsNeeded(views, started, running, {
       identified,
       scratch: loaded.paths.scratch,
       openFor: now.getTime() - Date.parse(record.openedAt)

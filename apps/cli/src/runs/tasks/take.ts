@@ -215,7 +215,7 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
     await writeJson(path.join(view.paths.work, COPY_TASK_FILE), { run: runId, task: taskId, token, agent: ctx.agent });
     const approved = await readApproved(loaded.paths);
     for (const [file, entry] of Object.entries(approved.files)) {
-      await placeVersion(loaded.paths, under(view.paths.work, file), entry.digest);
+      await placeVersion(loaded.paths, under(view.paths.work, file), entry.digest, view.paths.work);
       start.files[file] = entry.digest;
       start.overlaid.push(file);
     }
@@ -224,7 +224,7 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
     await writeJson(view.paths.start, start);
     if (view.reviewed) {
       for (const [file, digest] of Object.entries(view.reviewed.files)) {
-        await placeVersion(loaded.paths, under(view.paths.work, file), digest);
+        await placeVersion(loaded.paths, under(view.paths.work, file), digest, view.paths.work);
       }
     }
 

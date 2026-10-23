@@ -16,9 +16,11 @@ import { AGENT_TOKEN, identify, issuedText, UNNAMED } from '../../runs/identity'
 import { LEAD } from '../../runs/messages';
 import { COPY_TASK_FILE, copyOf, runPaths } from '../../runs/paths';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
-import { activeRuns } from '../../runs/run';
+import { activeRuns, loadRun } from '../../runs/run';
+import { viewTask } from '../../runs/taskStore';
 import { isQuality } from '../../runs/team';
 import { USAGE_OFF, usageCaller } from '../../runs/usage';
+import { isWorked } from '../../runs/worked';
 import { CLI_VERSION } from '../../scaffold/project';
 import { findProject } from '../existingProject';
 
@@ -451,18 +453,53 @@ export const runSelf = (cwd: string, args: string[]): Promise<{ code: number; ou
   });
 };
 
+/**
+ * The task a holder's command is about: the token's or the one named — and, run outside the copy with the agent's own
+ * token and no task named, the one task that agent holds at work (lx-copy: `task context` refused five times from the
+ * project's folder, "Name the task", though the token said whose it was).
+ */
+const taskResolved = async (ctx: RunContext, runId: string, named?: string): Promise<string> => {
+  try {
+    return taskOf(ctx, named);
+  } catch (error) {
+    if (named !== undefined || ctx.agent === LEAD || ctx.agent === UNNAMED) {
+      throw error;
+    }
+
+    const loaded = await loadRun(ctx, runId);
+    const held = (await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)))).filter(
+      view => view.owner?.agent === ctx.agent && isWorked(view.state.status)
+    );
+    if (held.length === 1) {
+      return held[0].task.id;
+    }
+
+    throw new RunRefusal(
+      'invalid',
+      held.length === 0
+        ? `${ctx.agent} holds no task at work: name it, or run this in its copy (cd <its work folder>)`
+        : `${ctx.agent} holds ${held.map(view => view.task.id).join(', ')}: name the task, or run this in its copy`
+    );
+  }
+};
+
 /** The prelude every holder's command shares: the run and the task, from the token. */
 export const holder = async (
   ctx: RunContext,
   options: RunCommandOptions
-): Promise<{ runId: string; taskId: string }> => ({
-  runId: await runOf(ctx, options),
-  taskId: taskOf(ctx)
-});
+): Promise<{ runId: string; taskId: string }> => {
+  const runId = await runOf(ctx, options);
+
+  return { runId, taskId: await taskResolved(ctx, runId) };
+};
 
 /** For a task's holder or the lead: the token's task, else the one named. */
 export const either = async (
   ctx: RunContext,
   options: RunCommandOptions,
   named?: string
-): Promise<{ runId: string; taskId: string }> => ({ runId: await runOf(ctx, options), taskId: taskOf(ctx, named) });
+): Promise<{ runId: string; taskId: string }> => {
+  const runId = await runOf(ctx, options);
+
+  return { runId, taskId: await taskResolved(ctx, runId, named) };
+};

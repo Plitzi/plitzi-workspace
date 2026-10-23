@@ -537,7 +537,7 @@ const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
     case 'handed-off':
       return line(
         'agent',
-        `takes over ${textOf(entry.task)}'s changes from ${textOf(entry.from)}, who is at ${textOf(entry.at)}`
+        `takes over ${textOf(entry.task)}'s changes from ${textOf(entry.from)}, who is at ${textOf(entry.busyAt)}`
       );
     case 'question-taken':
       return line('agent', `answers ${textOf(entry.task)}'s ${textOf(entry.message)}`);

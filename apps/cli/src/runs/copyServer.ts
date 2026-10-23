@@ -4,7 +4,7 @@ import path from 'node:path';
 import chalk from 'chalk';
 
 import { ownServer, serveCopy } from './acceptance';
-import { canLinger, keepServer, keptServer, LINGER_MS, newestWrite, previewedServer } from './lingering';
+import { canLinger, keepServer, keptPort, keptServer, LINGER_MS, newestWrite, previewedServer } from './lingering';
 import { copyOf, runPaths, taskPaths } from './paths';
 import { projectOrigin } from '../browser';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
@@ -28,10 +28,13 @@ export const originHere = async (
     return projectOrigin(root, project, url);
   }
 
+  const cache = taskPaths(runPaths(copy.root, copy.run), copy.task).cache;
   // In a copy, only its own server is it — named by the mark of the folder its /health answers with: a port guessed
-  // may be another copy's, or another project's of the person's.
+  // may be another copy's, or another project's of the person's. The server the CLI kept writes the same record as
+  // the agent's own would: it is the CLI's, served again once the copy changed — never reused as it was (lx-copy: four
+  // of five agents measured code they had changed, told "your own server", and stopped it by hand).
   const own = await ownServer(root);
-  if (own !== undefined) {
+  if (own !== undefined && own !== (await keptPort(cache))) {
     // The agent's own server, left as it is — it holds the copy's state — but written to since it started, said: it
     // serves the copy as it was unless it watches (velada-shell's dev-1 measured a gap of 12px it had changed).
     const started = await fs
@@ -49,7 +52,6 @@ export const originHere = async (
     return { origin: `http://127.0.0.1:${String(own)}` };
   }
 
-  const cache = taskPaths(runPaths(copy.root, copy.run), copy.task).cache;
   // A look or a preview serving the copy: it is the copy's server while it runs — a second beside it fights it.
   const previewed = await previewedServer(root, cache);
   if (previewed !== undefined) {

@@ -51,17 +51,50 @@ export const keepFiles = async (
   return kept;
 };
 
-/** Writes the version `fingerprint` names at `file` — or removes it, for null. */
-export const placeVersion = async (run: RunPaths, file: string, fingerprint: string | null): Promise<void> => {
+/**
+ * The folders above `file` left empty, up to `root` and never past it: a tree a removal leaves must be the tree the
+ * project would be — lx-copy's t-base removed a plugin's files, and the empty `src/plugins/StatCard/` stayed in every
+ * copy, the preview and the run's work, where every folder of `src/plugins/` is a plugin the server refuses to build.
+ */
+const pruneEmptyParents = async (root: string, file: string): Promise<void> => {
+  const top = path.resolve(root);
+  for (let dir = path.dirname(path.resolve(file)); dir.startsWith(`${top}${path.sep}`); dir = path.dirname(dir)) {
+    const entries = await fs.readdir(dir).catch(() => undefined);
+    if (entries === undefined || entries.length > 0) {
+      return;
+    }
+
+    // Something written into it meanwhile keeps it, and every folder above it: a merge never fails on what it leaves.
+    if (
+      !(await fs.rmdir(dir).then(
+        () => true,
+        () => false
+      ))
+    ) {
+      return;
+    }
+  }
+};
+
+/**
+ * Writes the version `fingerprint` names at `file` — or removes it, for null, and with it the folders it leaves empty
+ * up to `root`, the tree it is placed in.
+ */
+export const placeVersion = async (
+  run: RunPaths,
+  file: string,
+  fingerprint: string | null,
+  root: string
+): Promise<void> => {
   if (fingerprint === null) {
     // A folder where no file was (a unit the run made): its files are put back one by one; it goes once it is empty.
     if ((await fs.stat(file).catch(() => undefined))?.isDirectory() === true) {
       await fs.rmdir(file).catch(() => undefined);
-
-      return;
+    } else {
+      await fs.rm(file, { force: true });
     }
 
-    await fs.rm(file, { force: true });
+    await pruneEmptyParents(root, file);
 
     return;
   }

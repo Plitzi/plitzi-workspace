@@ -1,14 +1,17 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { readOptional, writeJson } from '../files';
+import { fingerprint, readOptional, writeJson } from '../files';
+import { mergeLines } from '../merge3';
+import { entryOf } from '../model';
 import { ID, taskPaths, under } from '../paths';
 import { RunRefusal } from '../refusal';
-import { assertStatus, loadRun, logRun } from '../run';
+import { assertStatus, loadRun, logRun, readApproved } from '../run';
 import { putBlob, withLock } from '../store';
 import { readRequests, readStart, requestId, updateState, viewTask, writeRequest } from '../taskStore';
 import { buildRequestsMerge, changeApproved } from './approve';
 import { at, cleanPath, findTask, holderOf } from './common';
+import { textOf } from './context';
 import { activeHolder, allLocks, sharedFiles } from './locks';
 
 import type { RunTask, SharedRequest, TaskState } from '../model';
@@ -65,7 +68,7 @@ export const requestShared = async (
 
   const integration = await withLock(
     loaded.paths.mergeLock,
-    () => integrationFor(ctx, loaded, clean, [`${taskId}/${request.id}`], []),
+    () => integrationFor(ctx, loaded, [clean], [`${taskId}/${request.id}`], []),
     {
       now: ctx.now
     }
@@ -86,7 +89,7 @@ export const requestShared = async (
 
 const integrationAcceptance = async (
   loaded: LoadedRun,
-  file: string,
+  files: readonly string[],
   requests: readonly string[]
 ): Promise<string[]> => {
   const summaries: string[] = [];
@@ -99,7 +102,7 @@ const integrationAcceptance = async (
   }
 
   return [
-    `Every request on ${file} applied together: ${summaries.join('; ')}`,
+    `Every request on ${files.join(', ')} applied together: ${summaries.join('; ')}`,
     'The pages of the requesting tasks pass their checks with it',
     'Contradictory requests are not picked between: they go to the lead or a person'
   ];
@@ -110,14 +113,18 @@ const joinIntegration = async (
   ctx: RunContext,
   loaded: LoadedRun,
   task: RunTask,
+  joinedFiles: readonly string[],
   requests: readonly string[],
   dependsOn: readonly string[]
 ): Promise<void> => {
   const integrates = [...new Set([...(task.integrates ?? []), ...requests])];
+  const files = [...new Set([...task.files, ...joinedFiles])].sort();
   const joined: RunTask = {
     ...task,
+    files,
+    title: `Integrate the requests on ${files.join(', ')}`,
     dependsOn: [...new Set([...task.dependsOn, ...dependsOn])],
-    acceptance: await integrationAcceptance(loaded, task.files[0], integrates),
+    acceptance: await integrationAcceptance(loaded, files, integrates),
     integrates
   };
   const paths = taskPaths(loaded.paths, task.id);
@@ -134,25 +141,29 @@ const joinIntegration = async (
   await logRun(ctx, loaded.paths, {
     action: 'integration',
     task: task.id,
-    file: task.files[0],
+    files,
     requests,
     joined: true
   });
 };
 
 /**
- * The integration task that applies `requests` on `file`: the one nobody works yet joined — one per file, so what is
- * asked meanwhile never races it — or a new one, after any already being worked. Under the merge lock.
+ * The integration task that applies `requests` on `files` — the files one task's requests span, which only author
+ * together: the one nobody works yet that touches any of them joined, so what is asked meanwhile never races it — or a
+ * new one, after any already being worked. Under the merge lock. lx-copy: one task per file made t-shell's three
+ * requests three tasks, each failing for want of the others' — a cycle the lead broke by approving one with a failure.
  */
 const integrationFor = async (
   ctx: RunContext,
   loaded: LoadedRun,
-  file: string,
+  files: readonly string[],
   requests: string[],
   dependsOn: string[]
 ): Promise<string> => {
   const open: { task: RunTask; view: TaskView }[] = [];
-  for (const task of loaded.tasks.filter(each => each.kind === 'integration' && each.files.includes(file))) {
+  for (const task of loaded.tasks.filter(
+    each => each.kind === 'integration' && each.files.some(file => files.includes(file))
+  )) {
     const view = await viewTask(loaded.paths, task);
     if (view.state.status !== 'done') {
       open.push({ task, view });
@@ -161,24 +172,29 @@ const integrationFor = async (
 
   const waiting = open.find(each => !each.view.owner);
   if (waiting) {
-    await joinIntegration(ctx, loaded, waiting.task, requests, dependsOn);
+    await joinIntegration(ctx, loaded, waiting.task, files, requests, dependsOn);
 
     return waiting.task.id;
   }
 
-  return createIntegration(ctx, loaded, file, requests, [...dependsOn, ...open.map(each => each.task.id)]);
+  return createIntegration(ctx, loaded, files, requests, [...dependsOn, ...open.map(each => each.task.id)]);
 };
 
-/** Makes an integration task on `file` for `requests` (as `<task>/<request>`), after `dependsOn`. Under the merge lock. */
+/** Makes an integration task on `files` for `requests` (as `<task>/<request>`), after `dependsOn`. Under the merge lock. */
 const createIntegration = async (
   ctx: RunContext,
   loaded: LoadedRun,
-  file: string,
+  files: readonly string[],
   requests: string[],
   dependsOn: string[]
 ): Promise<string> => {
   const taken = new Set(loaded.tasks.map(task => task.id));
-  const stem = `integrate-${requestId(file).toLowerCase()}`.slice(0, 56);
+  const sorted = [...files].sort();
+  const stem =
+    `integrate-${requestId(sorted[0]).toLowerCase()}${sorted.length > 1 ? `-and-${String(sorted.length - 1)}` : ''}`.slice(
+      0,
+      56
+    );
   let id = stem;
   for (let n = 2; taken.has(id) || !ID.test(id); n += 1) {
     id = `${stem}-${String(n)}`;
@@ -186,12 +202,14 @@ const createIntegration = async (
 
   const task: RunTask = {
     id,
-    title: `Integrate the requests on ${file}`,
-    files: [file],
+    title: `Integrate the requests on ${sorted.join(', ')}`,
+    files: sorted,
     dependsOn,
-    priority: 'high',
+    // Small and on every later copy's path — what it applies, the run's work reads: taken before any other task
+    // (lx-copy: integrations waited for a free developer while three tasks worked on copies missing them).
+    priority: 'critical',
     estimateMinutes: 15,
-    acceptance: await integrationAcceptance(loaded, file, requests),
+    acceptance: await integrationAcceptance(loaded, sorted, requests),
     kind: 'integration',
     integrates: requests
   };
@@ -204,7 +222,7 @@ const createIntegration = async (
     updatedAt: at(ctx)
   } satisfies TaskState);
   loaded.tasks.push(task);
-  await logRun(ctx, loaded.paths, { action: 'integration', task: id, file, requests });
+  await logRun(ctx, loaded.paths, { action: 'integration', task: id, files: sorted, requests });
 
   return id;
 };
@@ -232,29 +250,85 @@ export const requestsOf = async (
 };
 
 /**
- * What approved tasks asked for on a shared file and did not go in, applied by one integration task — made as soon as
- * one is approved, not once every task asking is: an approved task's work reads its request, and the run's work waiting
- * for the rest read what it lacked. A request of a task still at work joins it, or the next one, once that is approved.
+ * Whether what `request` wants is in the run's work already: put together with the run's version, it changes nothing —
+ * another approval brought the same lines (lx-copy: two integration tasks made with nothing left to apply, and a token
+ * applied twice into a duplicate key).
+ */
+const alreadyIn = async (ctx: RunContext, loaded: LoadedRun, request: SharedRequest): Promise<boolean> => {
+  if (request.wanted === null) {
+    return false;
+  }
+
+  const entry = entryOf((await readApproved(loaded.paths)).files, request.file);
+  const current = entry ? entry.digest : await fingerprint(under(ctx.root, request.file));
+  if (current === null) {
+    return false;
+  }
+
+  const now = await textOf(loaded, ctx, current, request.file);
+  const result = mergeLines(
+    request.base === null ? '' : await textOf(loaded, ctx, request.base, request.file),
+    await textOf(loaded, ctx, request.wanted, request.file),
+    now
+  );
+
+  return result.ok && result.text === now;
+};
+
+/**
+ * What approved tasks asked for on shared files and did not go in, applied by integration tasks — made as soon as one is
+ * approved, not once every task asking is: an approved task's work reads its request, and the run's work waiting for
+ * the rest read what it lacked. A request already in the run's work is done at once, said, and never a task. The rest
+ * are one integration for each set of files that requests tie together — a task's requests on several files only
+ * author together. A request of a task still at work joins it, or the next one, once that is approved.
  */
 export const integrateWhenReady = async (ctx: RunContext, loaded: LoadedRun): Promise<string[]> => {
   const made: string[] = [];
+  const waiting: typeof all = [];
   const all = (await requestsOf(loaded)).filter(each => each.integratedBy === undefined);
-  const byFile = new Map<string, typeof all>();
-  all.forEach(each => byFile.set(each.request.file, [...(byFile.get(each.request.file) ?? []), each]));
-  const locks = await allLocks(ctx);
-  for (const [file, requests] of byFile) {
-    const approved = [];
-    for (const each of requests) {
-      if ((await viewTask(loaded.paths, findTask(loaded, each.task))).state.status === 'done') {
-        approved.push(each);
-      }
+  for (const each of all) {
+    if ((await viewTask(loaded.paths, findTask(loaded, each.task))).state.status !== 'done') {
+      continue;
     }
 
-    const requesters = [...new Set(approved.map(each => each.task))];
+    if (await alreadyIn(ctx, loaded, each.request)) {
+      await fs.rm(path.join(taskPaths(loaded.paths, each.task).requests, `${each.request.id}.json`), { force: true });
+      await logRun(ctx, loaded.paths, {
+        action: 'request-in',
+        task: each.task,
+        file: each.request.file,
+        why: 'its lines are in the run already'
+      });
+      continue;
+    }
+
+    waiting.push(each);
+  }
+
+  // Files tied together by the tasks asking: a task's requests on site.json, tokens.ts and index.ts are one set.
+  const groups: { files: Set<string>; requests: typeof all }[] = [];
+  for (const each of waiting) {
+    const tied = groups.filter(
+      group => group.files.has(each.request.file) || group.requests.some(other => other.task === each.task)
+    );
+    const into = { files: new Set([each.request.file]), requests: [each] };
+    for (const group of tied) {
+      group.files.forEach(file => into.files.add(file));
+      into.requests.push(...group.requests);
+      groups.splice(groups.indexOf(group), 1);
+    }
+
+    groups.push(into);
+  }
+
+  const locks = await allLocks(ctx);
+  for (const group of groups) {
+    const requesters = [...new Set(group.requests.map(each => each.task))];
+    const files = [...group.files];
     // A file another task holds by turns waits for it: once it lets go, its requests are merged then, and only what
     // does not merge is integrated.
-    const held = (locks.get(file) ?? []).some(each => each.live && !requesters.includes(each.task));
-    if (held || approved.length === 0) {
+    const held = files.some(file => (locks.get(file) ?? []).some(each => each.live && !requesters.includes(each.task)));
+    if (held) {
       continue;
     }
 
@@ -262,8 +336,8 @@ export const integrateWhenReady = async (ctx: RunContext, loaded: LoadedRun): Pr
       await integrationFor(
         ctx,
         loaded,
-        file,
-        approved.map(each => `${each.task}/${each.request.id}`),
+        files,
+        group.requests.map(each => `${each.task}/${each.request.id}`),
         requesters
       )
     );

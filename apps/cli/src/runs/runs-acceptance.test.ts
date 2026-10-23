@@ -174,8 +174,19 @@ describe('acceptance, checks and what is left behind', () => {
         .message
     ).toContain('is this task');
 
+    // Silent on the step only this copy fails, a known failure is refused (lx-copy: t-contact's own typecheck went
+    // through under one that named the shell's layout).
+    expect(
+      (
+        await refusal(
+          completeTask(home.ctx, 'es-launch', 't-home', {
+            knownFailure: { why: 'the hero waits for the menu’s tokens', fixedBy: 't-book' }
+          })
+        )
+      ).message
+    ).toContain('author fails in this copy and not in the run');
     const completed = await completeTask(home.ctx, 'es-launch', 't-home', {
-      knownFailure: { why: 'the hero waits for the menu’s tokens', fixedBy: 't-book' }
+      knownFailure: { why: 'author: the hero waits for the menu’s tokens', fixedBy: 't-book' }
     });
     expect(completed.checks.ok).toBe(false);
     const view = await viewRun(lead(), 'es-launch');

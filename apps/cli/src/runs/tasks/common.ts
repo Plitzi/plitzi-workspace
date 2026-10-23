@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import path from 'node:path';
 
 import { fingerprint, projectFiles, readOptional, writeJson } from '../files';
 import { mergeLines } from '../merge3';
@@ -8,6 +9,7 @@ import { RunRefusal } from '../refusal';
 import { readApproved } from '../run';
 import { getBlob, placeVersion, putBlob } from '../store';
 import { isDisconnected, readStart, revokedTokens, tokenPrint, viewTask } from '../taskStore';
+import { LINT_CACHE_FILE } from '../../scaffold/paths';
 
 import type { ApprovedManifest, RunTask, TaskStart } from '../model';
 import type { LoadedRun, RunContext } from '../run';
@@ -212,12 +214,17 @@ export const refreshCopy = async (
       if (bytes === undefined) {
         await fs.rm(under(view.paths.work, each), { force: true });
       } else {
-        await placeVersion(loaded.paths, under(view.paths.work, each), await putBlob(loaded.paths, bytes));
+        await placeVersion(
+          loaded.paths,
+          under(view.paths.work, each),
+          await putBlob(loaded.paths, bytes),
+          view.paths.work
+        );
       }
 
       overlaid.delete(each);
     } else {
-      await placeVersion(loaded.paths, under(view.paths.work, each), current.digest);
+      await placeVersion(loaded.paths, under(view.paths.work, each), current.digest, view.paths.work);
       overlaid.add(each);
     }
 
@@ -226,9 +233,16 @@ export const refreshCopy = async (
   }
 
   await writeJson(view.paths.start, { ...start, files, overlaid: [...overlaid].sort() });
+  // ESLint keeps its answers file by file: a file brought in — a token, a type — changes what the files reading it
+  // fail with, and the kept answer said the old errors (lx-copy: an agent deleted tmp/plitzi-cache/checks/eslint.json
+  // by hand to see its copy lint clean).
+  if (brought.length > 0) {
+    await fs.rm(path.join(view.paths.work, LINT_CACHE_FILE), { force: true });
+  }
 
   return brought.sort();
 };
+
 
 /** Who in the team does a task: its plan's role, a developer's when it says none. */
 export const roleOf = (task: RunTask): string => task.role ?? 'developer';

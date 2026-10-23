@@ -62,8 +62,14 @@ const isKeptPage = (value: unknown): value is KeptPage =>
   Array.isArray(value.decorations) &&
   value.decorations.every(layer => isRecord(layer) && isString(layer.kind) && isString(layer.detail));
 
-/** Where the open run that keeps `url`'s site is — the one this copy is of, or one open in the project. */
-const keepingRun = async (root: string, url: URL): Promise<{ dir: string; runId: string } | undefined> => {
+/**
+ * Where the open run that keeps a reference is — the one this copy is of, or one open in the project — and the site it
+ * keeps; with `origin`, only the run keeping that site.
+ */
+const keepingRun = async (
+  root: string,
+  origin?: string
+): Promise<{ dir: string; runId: string; reference: URL } | undefined> => {
   const copy = copyOf(root);
   const project = copy?.root ?? root;
   const runs = copy ? [copy.run] : await activeRuns(project);
@@ -71,8 +77,11 @@ const keepingRun = async (root: string, url: URL): Promise<{ dir: string; runId:
     const paths = runPaths(project, runId);
     const text = await readOptional(paths.plan);
     const plan: unknown = text === undefined ? undefined : JSON.parse(text.toString('utf-8'));
-    if (isRunPlan(plan) && plan.reference !== undefined && new URL(plan.reference).origin === url.origin) {
-      return { dir: paths.reference, runId };
+    if (isRunPlan(plan) && plan.reference !== undefined) {
+      const reference = new URL(plan.reference);
+      if (origin === undefined || reference.origin === origin) {
+        return { dir: paths.reference, runId, reference };
+      }
     }
   }
 
@@ -87,7 +96,7 @@ export const keptPage = async (
   scheme: Scheme
 ): Promise<{ png: Uint8Array; page: KeptPage; runId: string } | undefined> => {
   const address = new URL(url);
-  const run = await keepingRun(root, address);
+  const run = await keepingRun(root, address.origin);
   if (!run) {
     return undefined;
   }
@@ -111,6 +120,45 @@ const comparable = (text: string): string =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
+
+/** How many lines a kept text runs over: its height over its line height, a text of no measurable line height one. */
+const linesOf = (text: PageText): number => {
+  const lineHeight = Number.parseFloat(text.lineHeight);
+
+  return Number.isFinite(lineHeight) && lineHeight > 0 ? Math.round(text.height / lineHeight) : 1;
+};
+
+/**
+ * The labels the original itself breaks over two lines or more on the page at `pathname`, at this width — compared as
+ * spelt (`comparable`), in either scheme it was kept in: what a copy of it wraps on purpose. Empty outside a run that
+ * keeps a reference, or for a page it did not keep. lx-copy: the original's "TARJETAS GRÁFICAS" wraps under its
+ * tile, and `label-wraps` told every agent to keep it on one line — two bent the page to it.
+ */
+export const labelsWrappedInReference = async (root: string, pathname: string, width: number): Promise<Set<string>> => {
+  const run = await keepingRun(root);
+  if (!run) {
+    return new Set();
+  }
+
+  const wrapped = new Set<string>();
+  for (const scheme of ['light', 'dark'] as const) {
+    const text = await readOptional(path.join(run.dir, `${keptName(pathname, width, scheme)}.json`));
+    const page: unknown = text === undefined ? undefined : JSON.parse(text.toString('utf-8'));
+    if (isKeptPage(page)) {
+      for (const each of page.texts) {
+        if (linesOf(each) >= 2) {
+          wrapped.add(comparable(each.text));
+        }
+      }
+    }
+  }
+
+  return wrapped;
+};
+
+/** Whether `label` is one the original wraps, as `labelsWrappedInReference` read it. */
+export const wrapsAsReference = (wrapped: ReadonlySet<string>, label: string): boolean =>
+  wrapped.has(comparable(label));
 
 /** Whether a piece of the inventory names a heading: says it whole, or every word of it longer than two letters. */
 const names = (piece: string, heading: string): boolean => {

@@ -156,7 +156,7 @@ const recoverMerges = async (ctx: RunContext, loaded: LoadedRun): Promise<string
     for (const [written, { before, after }] of Object.entries(entry.files)) {
       const now = await fingerprint(under(ctx.root, written));
       if (now === after && now !== before) {
-        await placeVersion(loaded.paths, under(ctx.root, written), before);
+        await placeVersion(loaded.paths, under(ctx.root, written), before, ctx.root);
       }
     }
 
@@ -198,12 +198,12 @@ const writeMerge = async (
   const written: string[] = [];
   try {
     for (const [file, { after }] of Object.entries(files)) {
-      await placeVersion(loaded.paths, under(ctx.root, file), after);
+      await placeVersion(loaded.paths, under(ctx.root, file), after, ctx.root);
       written.push(file);
     }
   } catch (error) {
     for (const file of written.reverse()) {
-      await placeVersion(loaded.paths, under(ctx.root, file), files[file].before);
+      await placeVersion(loaded.paths, under(ctx.root, file), files[file].before, ctx.root);
     }
 
     await fs.rm(journal, { force: true });
@@ -285,7 +285,7 @@ const keepBackup = async (
     if (before === null) {
       created.push(file);
     } else {
-      await placeVersion(loaded.paths, under(path.join(dir, 'files'), file), before);
+      await placeVersion(loaded.paths, under(path.join(dir, 'files'), file), before, path.join(dir, 'files'));
     }
   }
 

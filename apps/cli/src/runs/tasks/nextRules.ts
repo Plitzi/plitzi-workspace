@@ -113,3 +113,22 @@ export const askedOf = (notes: readonly { by: string; text: string }[]): { asked
     earlier: reviews.filter(each => each.round !== last).length
   };
 };
+
+/**
+ * The roles an agent asks for work as: one role, or several it takes — `developer,reviewer`. None said: the roles the
+ * team started it with, never every role — a developer offered a UI review was refused at its verdict (lx-copy: dev-1
+ * and dev-2, each once).
+ */
+export const askedRoles = async (ctx: RunContext, role: string | undefined): Promise<string[] | undefined> => {
+  const said = role
+    ?.split(',')
+    .map(each => each.trim())
+    .filter(Boolean);
+  if (said !== undefined) {
+    return said;
+  }
+
+  const team = await readTeam(ctx.root).catch(() => undefined);
+
+  return team ? startedAgents(team).find(each => each.agent === ctx.agent)?.roles : undefined;
+};

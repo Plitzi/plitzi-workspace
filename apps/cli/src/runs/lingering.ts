@@ -59,6 +59,9 @@ const readKept = async (cache: string): Promise<Kept | undefined> => {
   return isKept(value) ? value : undefined;
 };
 
+/** The port of the copy's server the CLI keeps between commands — none when it keeps none. */
+export const keptPort = async (cache: string): Promise<number | undefined> => (await readKept(cache))?.port;
+
 /** Whether a group of processes is one to keep and stop later: not on Windows, where a child is not its own group. */
 export const canLinger = (): boolean => process.platform !== 'win32';
 

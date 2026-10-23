@@ -283,7 +283,8 @@ describe('plitzi run and plitzi task, as processes', () => {
 
     const dev = { PLITZI_TOKEN: await tokenOf('dev-1') };
     expect((await plitzi(work, ['task', 'show', 't-home'], dev)).code).toBe(0);
-    expect((await plitzi(work, ['task', 'show', 't-about'], dev)).code).toBe(REFUSAL_EXIT_CODES['lead-only']);
+    // Another task too, read only: lx-copy's agents were refused it and diffed its blobs by hash to read a request.
+    expect((await plitzi(work, ['task', 'show', 't-about'], dev)).code).toBe(0);
   }, 120_000);
 
   // What each command printed is what its agent read: the run's cost, kept a line a command — secrets out.

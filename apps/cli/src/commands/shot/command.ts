@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import chalk from 'chalk';
@@ -346,8 +346,20 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     // the copy (rebuilt when the task is taken again) and gone with the run — never left in the project's tmp/.
     const copy = copyOf(project.root);
     const file = `${name}-${String(view.width)}-${taken.scheme}.png`;
-    const out = options.out
-      ? path.resolve(project.root, options.out)
+    const asked = options.out === undefined ? undefined : path.resolve(project.root, options.out);
+    // A folder named is where the picture goes, by its own name: written over, a folder was Node's EISDIR (lx-copy's
+    // design-2).
+    const intoFolder =
+      asked !== undefined &&
+      (options.out?.endsWith('/') === true ||
+        (await stat(asked).then(
+          found => found.isDirectory(),
+          () => false
+        )));
+    const out = asked
+      ? intoFolder
+        ? path.join(asked, file)
+        : asked
       : copy
         ? path.join(runPaths(copy.root, copy.run).shots, copy.task, file)
         : path.resolve(project.root, `${PROJECT_TMP}/shots/${file}`);

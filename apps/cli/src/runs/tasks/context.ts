@@ -85,16 +85,17 @@ export const textOf = async (
 };
 
 /**
- * `plitzi task context`: what a task needs and nothing more, so its context stays small — the requests and their
- * diffs (an integration's), what related tasks did and noted, the plan's contracts, the project's and the run's notes, and its files.
+ * A task's requests on shared files, each with what it changes: an integration task's, the ones it applies; any other
+ * task's, the ones it made — from the version it started from to the one it asks for, not against the file now. What
+ * `task context` and `task show` both say (lx-copy: three agents diffed blobs by hash to read a request).
  */
-export const taskContext = async (ctx: RunContext, runId: string, taskId: string): Promise<TaskContext> => {
-  const loaded = await loadRun(ctx, runId, { anyVersion: true });
-  const task = findTask(loaded, taskId);
-  const view = await viewTask(loaded.paths, task);
-  const approved = await readApproved(loaded.paths);
+export const requestsShown = async (
+  ctx: RunContext,
+  loaded: LoadedRun,
+  task: RunTask,
+  view: TaskView
+): Promise<TaskContext['requests']> => {
   const requests: TaskContext['requests'] = [];
-  // An integration task's requests are the ones it applies; any other task's, the ones it made.
   const asked: [string, string][] = task.integrates
     ? task.integrates.map(requestKey)
     : view.requests.map(request => [task.id, request.id]);
@@ -105,7 +106,6 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
       continue;
     }
 
-    // What the task changed: from the version it started from to the one it asks for — not against the file now.
     const before = await textOf(loaded, ctx, request.base, request.file);
     const wanted = await textOf(loaded, ctx, request.wanted, request.file);
     const diff = before === wanted ? undefined : unifiedDiff(request.file, before, wanted);
@@ -118,6 +118,20 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
       notes: lastNotes(requesterView)
     });
   }
+
+  return requests;
+};
+
+/**
+ * `plitzi task context`: what a task needs and nothing more, so its context stays small — the requests and their
+ * diffs (an integration's), what related tasks did and noted, the plan's contracts, the project's and the run's notes, and its files.
+ */
+export const taskContext = async (ctx: RunContext, runId: string, taskId: string): Promise<TaskContext> => {
+  const loaded = await loadRun(ctx, runId, { anyVersion: true });
+  const task = findTask(loaded, taskId);
+  const view = await viewTask(loaded.paths, task);
+  const approved = await readApproved(loaded.paths);
+  const requests = await requestsShown(ctx, loaded, task, view);
 
   const relatedIds = new Set([...task.dependsOn, ...requests.map(request => request.task)]);
   const related: TaskContext['related'] = [];

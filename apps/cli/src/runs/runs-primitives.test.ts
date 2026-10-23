@@ -44,11 +44,38 @@ describe('a unit that is a folder, backed up as a path', () => {
     const paths = runPaths(bench.root, 'es-launch');
 
     expect(await fingerprint(folder)).toBeNull();
-    await placeVersion(paths, folder, null);
+    await placeVersion(paths, folder, null, bench.root);
     expect((await fs.stat(folder)).isDirectory()).toBe(true);
     await fs.rm(path.join(folder, 'index.ts'));
-    await placeVersion(paths, folder, null);
+    await placeVersion(paths, folder, null, bench.root);
     await expect(fs.access(folder)).rejects.toThrow();
+  });
+
+  // lx-copy: t-base removed the StatCard plugin's files, and its empty folder stayed in every copy, the preview and the
+  // run's work — where every folder of src/plugins/ is a plugin, and the server refused to start.
+  it('takes the folders a removal leaves empty, up to the tree it is placed in and never past it', async () => {
+    const plugins = path.join(bench.root, 'src/plugins');
+    const plugin = path.join(plugins, 'StatCard');
+    await fs.mkdir(plugin, { recursive: true });
+    await fs.writeFile(path.join(plugins, '.gitkeep'), '');
+    await fs.writeFile(path.join(plugin, 'index.ts'), 'export {};\n');
+    await fs.writeFile(path.join(plugin, 'StatCard.tsx'), 'export {};\n');
+    const paths = runPaths(bench.root, 'es-launch');
+
+    await placeVersion(paths, path.join(plugin, 'index.ts'), null, bench.root);
+    expect((await fs.readdir(plugin)).sort()).toEqual(['StatCard.tsx']);
+    await placeVersion(paths, path.join(plugin, 'StatCard.tsx'), null, bench.root);
+    await expect(fs.access(plugin)).rejects.toThrow();
+    const left = await fs.readdir(plugins);
+    expect(left).toContain('.gitkeep');
+    expect(left).not.toContain('StatCard');
+
+    // A tree that is itself the empty folder stays: the root is never removed.
+    const tree = path.join(bench.root, 'tmp/check-tree');
+    await fs.mkdir(path.join(tree, 'src'), { recursive: true });
+    await fs.writeFile(path.join(tree, 'src/only.ts'), '');
+    await placeVersion(paths, path.join(tree, 'src/only.ts'), null, tree);
+    expect(await fs.readdir(tree)).toEqual([]);
   });
 });
 

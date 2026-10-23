@@ -2,11 +2,13 @@ import chalk from 'chalk';
 
 import { act, runOf, taskOf } from './shell';
 import { inputLines, list, secondRunText } from './text';
+import { ownServer } from '../../runs/acceptance';
 import { BACKLOG_FILE } from '../../runs/backlog';
 import { abortRun, continueRun, finishRun, resolveFile, restoreFile } from '../../runs/merge';
 import { RunRefusal } from '../../runs/refusal';
 import { attachRun, pruneRuns, purgeRun, releaseRun, resumeRun, stopRun } from '../../runs/run';
 import { canWrite } from '../../runs/tasks';
+import { KV_FILE } from '../../scaffold/paths';
 
 import type { RunCommandOptions } from './shell';
 
@@ -75,12 +77,18 @@ export interface FinishOptions extends RunCommandOptions {
 export const runFinish = (runId: string | undefined, options: FinishOptions): Promise<void> =>
   act(
     options,
-    async ctx =>
-      finishRun(ctx, await runOf(ctx, options, runId), {
+    async ctx => {
+      const finished = await finishRun(ctx, await runOf(ctx, options, runId), {
         apply: options.apply ?? false,
         leavePending: options.leavePending ?? false,
         backup: options.keepBackup ?? false
-      }),
+      });
+      // A server of the project still up serves it as it was and holds its state: the person's next `npm start` fails
+      // on its lock (lx-copy: state/kv.json held by the lead's own server, stopped by port and not yet gone).
+      const running = finished.dryRun ? undefined : await ownServer(ctx.root);
+
+      return { ...finished, ...(running === undefined ? {} : { running }) };
+    },
     finished =>
       [
         chalk.bold(
@@ -157,6 +165,13 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
                     ? `The files as they were before it: ${finished.backup} (copy one back to undo it)`
                     : 'No backup was kept: --keep-backup keeps one next time.',
                   `Written by ${String(finished.writtenBy)}. The run's report: ${String(finished.report)}`,
+                  ...(finished.running === undefined
+                    ? []
+                    : [
+                        chalk.yellow(
+                          `A server of the project is still running on :${String(finished.running)}: it serves the project as it was and holds its state (${KV_FILE}) — stop it before npm start: kill $(lsof -tiTCP:${String(finished.running)} -sTCP:LISTEN)`
+                        )
+                      ]),
                   ...(finished.backlog
                     ? [
                         `What it noticed and left, kept for the next run in ${BACKLOG_FILE}: ${finished.backlog.join(', ')} (plitzi run backlog)`

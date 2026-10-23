@@ -79,24 +79,29 @@ export interface Bench {
   cleanup: () => Promise<void>;
 }
 
+/**
+ * The file of `dir/src` that fails the bench's checks: one holding `BROKEN`, or one holding `NEEDS:<name>` where no
+ * file holds `HAS:<name>` — a file that reads what another declares (lx-copy: t-shell's shell, reading keys its
+ * request on site.json held).
+ */
 const holdsBroken = async (dir: string): Promise<string | undefined> => {
-  const walk = async (at: string): Promise<string | undefined> => {
+  const texts: { file: string; text: string }[] = [];
+  const walk = async (at: string): Promise<void> => {
     for (const entry of await fs.readdir(at, { withFileTypes: true }).catch(() => [])) {
       const full = path.join(at, entry.name);
       if (entry.isDirectory()) {
-        const found = await walk(full);
-        if (found) {
-          return found;
-        }
-      } else if ((await fs.readFile(full, 'utf-8')).includes('BROKEN')) {
-        return path.relative(dir, full);
+        await walk(full);
+      } else {
+        texts.push({ file: path.relative(dir, full), text: await fs.readFile(full, 'utf-8') });
       }
     }
-
-    return undefined;
   };
+  await walk(path.join(dir, 'src'));
+  const has = new Set(texts.flatMap(({ text }) => [...text.matchAll(/HAS:(\w+)/g)].map(match => match[1])));
 
-  return walk(path.join(dir, 'src'));
+  return texts.find(
+    ({ text }) => text.includes('BROKEN') || [...text.matchAll(/NEEDS:(\w+)/g)].some(match => !has.has(match[1]))
+  )?.file;
 };
 
 export const makeBench = async (files: Record<string, string> = PROJECT_FILES): Promise<Bench> => {

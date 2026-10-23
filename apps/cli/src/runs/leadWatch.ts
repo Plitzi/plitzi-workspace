@@ -34,7 +34,9 @@ export interface LeadNews {
   timedOut?: true;
 }
 
-// What says how long something has lasted changes its words every minute: it is the same notice all the same.
+// What says how long something has lasted changes its words every minute: it is the same notice all the same. So does
+// a task held up behind another — its words name that one's state and who is free (lx-copy: the lead woken three
+// times for one "t-shell waits for t-base" it had kept on purpose, each time t-base's review moved).
 const TIMED = new Set<Attention['kind']>([
   'no-signal',
   'long-wait',
@@ -42,7 +44,8 @@ const TIMED = new Set<Attention['kind']>([
   'stopping',
   'slow-review',
   'ui-queued',
-  'refused-again'
+  'refused-again',
+  'held-up'
 ]);
 
 /** A review no lead took this round, by how long it has waited. */

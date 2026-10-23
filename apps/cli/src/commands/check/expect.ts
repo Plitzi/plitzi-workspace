@@ -23,8 +23,7 @@ export const shownTextInPage = (selector: string): string | null => {
  */
 export const wrappedLabelsInPage = (selector: string): { id: string; label: string; lines: number }[] =>
   Array.from(document.querySelectorAll(selector)).flatMap(node => {
-    const label = node.textContent.replace(/\s+/g, ' ').trim();
-    if (label === '' || label.split(' ').length > 3 || !(node instanceof HTMLElement) || node.offsetParent === null) {
+    if (!(node instanceof HTMLElement) || node.offsetParent === null) {
       return [];
     }
 
@@ -40,20 +39,28 @@ export const wrappedLabelsInPage = (selector: string): { id: string; label: stri
 
       return node;
     };
-    const groups = new Map<Element, { top: number; height: number }[]>();
+    const groups = new Map<Element, { words: string[]; boxes: { top: number; height: number }[] }>();
     const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
     for (let text = walker.nextNode(); text !== null; text = walker.nextNode()) {
-      if ((text.textContent ?? '').trim() === '') {
+      const words = (text.textContent ?? '').replace(/\s+/g, ' ').trim();
+      if (words === '') {
         continue;
       }
 
       const range = document.createRange();
       range.selectNodeContents(text);
       const block = blockOf(text);
-      groups.set(block, [
-        ...(groups.get(block) ?? []),
-        ...Array.from(range.getClientRects(), rect => ({ top: rect.top, height: rect.height }))
-      ]);
+      const group = groups.get(block) ?? { words: [], boxes: [] };
+      group.words.push(words);
+      group.boxes.push(...Array.from(range.getClientRects(), rect => ({ top: rect.top, height: rect.height })));
+      groups.set(block, group);
+    }
+
+    // The label as it reads, each block's words apart: `textContent` ran a tile's "TARJETAS GRÁFICAS" into its
+    // "Compra ahora" as "GRÁFICASCompra" (lx-copy) — three words of a four-word link, a label it never was.
+    const label = [...groups.values()].map(group => group.words.join(' ')).join(' ');
+    if (label === '' || label.split(' ').length > 3) {
+      return [];
     }
 
     // A new line starts more than half a line below the last: boxes of one line differ by less.
@@ -69,9 +76,14 @@ export const wrappedLabelsInPage = (selector: string): { id: string; label: stri
 
       return count;
     };
-    const lines = Math.max(0, ...[...groups.values()].map(linesOf));
+    // The block that runs over the most lines is the label said: the words the original's wrapping is compared with.
+    const [wrapped] = [...groups.values()]
+      .map(group => ({ text: group.words.join(' '), lines: linesOf(group.boxes) }))
+      .sort((a, b) => b.lines - a.lines);
 
-    return lines > 1 ? [{ id: node.getAttribute('data-plitzi-el') ?? '', label, lines }] : [];
+    return wrapped.lines > 1
+      ? [{ id: node.getAttribute('data-plitzi-el') ?? '', label: wrapped.text, lines: wrapped.lines }]
+      : [];
   });
 
 /**

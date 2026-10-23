@@ -1,9 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
-import { keptToParts } from './apart';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { keptToParts, keptToReference } from './apart';
 import { answeredImage, HOST_TROUBLE, throttledImage } from './inspect';
+import { runPaths } from '../../runs/paths';
+import { keptName } from '../../runs/reference';
+import { benchPlan, makeBench } from '../../tests/runProject';
+import { runSteps } from '../../tests/runSteps';
 
 import type { CheckReport } from './types';
+import type { KeptPage } from '../../runs/reference';
+import type { Bench } from '../../tests/runProject';
 
 const report = (issues: CheckReport['issues']): CheckReport => ({
   path: '/',
@@ -109,5 +118,76 @@ describe('a host that lets an image go', () => {
     }
 
     expect(HOST_TROUBLE.test('net::ERR_NAME_NOT_RESOLVED')).toBe(false);
+  });
+});
+
+// lx-copy: the original's "TARJETAS GRÁFICAS" wraps under its tile; label-wraps failed every check of a faithful copy.
+describe('a label wrapped as the original wraps it', () => {
+  let bench: Bench;
+  const { open } = runSteps(() => bench);
+
+  beforeEach(async () => {
+    bench = await makeBench();
+  });
+
+  afterEach(async () => {
+    await bench.cleanup();
+  });
+
+  const wraps = (label: string): CheckReport['issues'][number] => ({
+    code: 'label-wraps',
+    message: `${label} breaks onto 2 lines`,
+    elementId: 'collection-tile-link',
+    label,
+    width: 1440
+  });
+
+  it('fails nothing in a run that keeps the original wrapping it, and is said — another label still fails', async () => {
+    const runId = await open({ ...benchPlan(), reference: 'https://www.example.com' });
+    const dir = runPaths(bench.root, runId).reference;
+    const kept: KeptPage = {
+      url: 'https://www.example.com/',
+      width: 1440,
+      scheme: 'light',
+      at: '2026-10-22T22:33:00.000Z',
+      texts: [
+        {
+          text: 'TARJETAS GRÁFICAS',
+          tag: 'span',
+          x: 0,
+          y: 0,
+          width: 160,
+          height: 38,
+          fontSize: 14,
+          fontWeight: '700',
+          lineHeight: '19.6px',
+          letterSpacing: 'normal',
+          fontFamily: 'dm sans',
+          color: 'rgb(0, 0, 0)',
+          background: 'transparent',
+          padding: '0px',
+          radius: '0px'
+        }
+      ],
+      unloaded: 0,
+      decorations: []
+    };
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(path.join(dir, `${keptName('/', 1440, 'light')}.json`), JSON.stringify(kept));
+
+    const [asOriginal] = await keptToReference(bench.root, [report([wraps('TARJETAS GRÁFICAS')])]);
+    expect(asOriginal).toMatchObject({
+      ok: true,
+      issues: [],
+      asTheOriginal: ['"TARJETAS GRÁFICAS" wraps as the original\'s does at 1440 px']
+    });
+
+    const [squeezed] = await keptToReference(bench.root, [report([wraps('COMBOS DE OFICINA')])]);
+    expect(squeezed).toMatchObject({ ok: false, issues: [{ label: 'COMBOS DE OFICINA' }] });
+  });
+
+  it('keeps every finding outside a run that keeps a reference', async () => {
+    const [kept] = await keptToReference(bench.root, [report([wraps('TARJETAS GRÁFICAS')])]);
+    expect(kept).toMatchObject({ ok: false, issues: [{ code: 'label-wraps' }] });
   });
 });

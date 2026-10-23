@@ -58,7 +58,10 @@ const taskShowSummary = (taskId: string, options: RunCommandOptions & { full?: b
         ...shown.unanswered.map(each =>
           chalk.yellow(`  ⇄ unanswered ${each.id}: ${each.from} → ${each.to}: ${each.change}`)
         ),
-        ...shown.requests.map(each => `  ↗ request on ${each.file}: ${each.summary}`),
+        ...shown.requests.flatMap(each => [
+          `  ↗ request on ${each.file}${each.task === shown.task.id ? '' : ` from ${each.task}`}: ${each.summary}`,
+          ...(each.diff ? each.diff.split('\n').map(line => `      ${line}`) : [])
+        ]),
         ...(shown.notes.length > 0 ? ['Notes', ...shown.notes.map(note => `  ${note.by}: ${note.text}`)] : []),
         ...(shown.messages.length > 0 ? ['Said', ...messageLines(shown.messages)] : []),
         `Changed (${FROM_TEXT[shown.from]}): ${shown.files.length === 0 ? '—' : shown.files.map(each => `${each.file} (${each.change})`).join(', ')}`,

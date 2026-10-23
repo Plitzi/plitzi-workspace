@@ -12,7 +12,9 @@ import {
   DATA_DIR,
   DEV_SERVER_FILE,
   FUNCTIONS_DIR,
+  CHECKS_CACHE,
   KV_FILE,
+  LINT_CACHE_FILE,
   MAIN_FILE,
   PROJECT_STATE,
   PROJECT_NOTES,
@@ -137,8 +139,6 @@ const watchPaths = ({ source, fromSpace, runtime }: CreateAnswers): string =>
     .map(watched => `--watch-path=${watched}`)
     .join(' ');
 
-/** Where the project's checks keep what they read, to read again only what changed: in tmp/, never committed. */
-const CHECKS_CACHE = `${PROJECT_TMP}/plitzi-cache/checks`;
 
 /**
  * What `start` means, which is the whole difference between the two modes.
@@ -200,7 +200,7 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
     // keeps what it read in tmp/ and reads again only what changed: la-velada's lint, run twice, 3.7 s then 0.5 s —
     // and a run's task checks its copy again and again.
     typecheck: `tsc -p tsconfig.json --noEmit --pretty false --incremental --tsBuildInfoFile ${CHECKS_CACHE}/tsc.tsbuildinfo`,
-    lint: `eslint . --cache --cache-location ${CHECKS_CACHE}/eslint.json`,
+    lint: `eslint . --cache --cache-location ${LINT_CACHE_FILE}`,
     format: `prettier --write . --cache --cache-location ${CHECKS_CACHE}/prettier.json`,
     visual: 'playwright test',
     // The CLI's, on the project's own Playwright: a picture of a page, and whether a page is whole — in text.

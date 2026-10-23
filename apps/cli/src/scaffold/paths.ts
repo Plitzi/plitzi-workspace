@@ -67,6 +67,12 @@ export const SERVER_OPTIONS_FILE = 'src/config/serverOptions.ts';
 /** What Playwright leaves of a run: traces, failures' pictures. */
 export const VISUAL_OUTPUT = `${PROJECT_TMP}/visual`;
 
+/** Where the project's checks keep what they read, to read again only what changed: in tmp/, never committed. */
+export const CHECKS_CACHE = `${PROJECT_TMP}/plitzi-cache/checks`;
+
+/** What the project's lint keeps (`eslint --cache --cache-location …`): file by file, blind to what a file reads. */
+export const LINT_CACHE_FILE = `${CHECKS_CACHE}/eslint.json`;
+
 /**
  * The certificate `plitzi cert` makes for this machine as its network reaches it, and its key — `TLS_CERT` and `TLS_KEY`
  * in `.env`. In `tmp/`: made again on each machine, and a key never committed.

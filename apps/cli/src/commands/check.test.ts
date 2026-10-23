@@ -63,6 +63,10 @@ describe('plitzi page check / a list’s rows', () => {
     expect(listText('home-writer-list', { rendered: 4, source: 8 })).toBe('home-writer-list 4 of 8 rows');
     expect(listText('search-hits', { rendered: null, source: 16 })).toBe('search-hits not rendered (16 in its source)');
     expect(listText('feed', { rendered: 0, source: null })).toBe('feed reads nothing');
+    // A source the address names is read by the page, not the check: what it draws is said, never "reads nothing".
+    expect(listText('policy-sections', { rendered: 13, source: null })).toBe(
+      'policy-sections 13 rows drawn — its source not read here (one the address names)'
+    );
     // A list inside another's row, one copy left after a search: fed by its row, with no whole to count.
     expect(listText('faq-questions', { rendered: 1, source: 0 })).toBe('faq-questions 1 row, fed by the row it is in');
     expect(listText('vaccineRows', { rendered: 9, source: 9, copies: [2, 3, 4] })).toBe(
@@ -347,7 +351,11 @@ describe('a short label the page breaks onto two lines', () => {
       '<a data-plitzi-el="site-brand" href="/"><i class="fa-paw"></i>Pet Friends</a>',
       '<a data-plitzi-el="home-lede" href="/about">A whole sentence that wraps as text does</a>',
       // An eyebrow over a name, two blocks stacked on purpose: two lines of one each, no label broken.
-      '<a data-plitzi-el="artist-prev-card" href="/artistas/juanes"><div>Artista anterior</div><div>Juanes</div></a>'
+      '<a data-plitzi-el="artist-prev-card" href="/artistas/juanes"><div>Artista anterior</div><div>Juanes</div></a>',
+      // lx-copy: a tile's title over its call — four words read apart, never "GRÁFICASCompra": no label.
+      '<a data-plitzi-el="tile-gpu" href="/c/gpu"><div>TARJETAS GRÁFICAS</div><div>Compra ahora</div></a>',
+      // Three words in two blocks, the title wrapping: the label said is the block that wraps.
+      '<a data-plitzi-el="tile-pc" href="/c/pc"><div>PC GAMER</div><div>Ver</div></a>'
     ].join('');
     // jsdom lays nothing out: what the browser draws is said here — two lines for the menu's squeezed label.
     vi.spyOn(HTMLElement.prototype, 'offsetParent', 'get').mockReturnValue(document.body);
@@ -356,13 +364,16 @@ describe('a short label the page breaks onto two lines', () => {
       value(this: Range) {
         const text = this.startContainer.textContent;
 
-        return (text === 'This week' ? [0, 20] : text === 'Juanes' ? [20] : [0]).map(top => ({ top, height: 18 }));
+        const wraps = text === 'This week' || text === 'TARJETAS GRÁFICAS' || text === 'PC GAMER';
+
+        return (wraps ? [0, 20] : text === 'Juanes' ? [20] : [0]).map(top => ({ top, height: 18 }));
       }
     });
 
     try {
       expect(wrappedLabelsInPage('a[data-plitzi-el]')).toEqual([
-        { id: 'site-nav-digest', label: 'This week', lines: 2 }
+        { id: 'site-nav-digest', label: 'This week', lines: 2 },
+        { id: 'tile-pc', label: 'PC GAMER', lines: 2 }
       ]);
     } finally {
       Reflect.deleteProperty(Range.prototype, 'getClientRects');

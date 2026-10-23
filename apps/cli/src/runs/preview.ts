@@ -131,7 +131,7 @@ export const syncPreview = async (loaded: LoadedRun, root: string): Promise<bool
   for (const [file, entry] of Object.entries(approved)) {
     // Only what changed is written: every write is a reload in the open page.
     if ((await fingerprint(under(dir, file))) !== entry.digest) {
-      await placeVersion(loaded.paths, under(dir, file), entry.digest);
+      await placeVersion(loaded.paths, under(dir, file), entry.digest, dir);
     }
   }
 
@@ -313,7 +313,7 @@ const approvedCopy = async (ctx: RunContext, loaded: LoadedRun, dir: string): Pr
     (await projectFiles(ctx.root)).filter(file => isCopied(file, keep))
   );
   for (const [file, entry] of Object.entries(approved)) {
-    await placeVersion(loaded.paths, under(dir, file), entry.digest);
+    await placeVersion(loaded.paths, under(dir, file), entry.digest, dir);
   }
 
   // What a project needs to run that the run never copies: its public files (served as they are) and its settings.

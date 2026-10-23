@@ -101,7 +101,10 @@ export const handOffRework = async (ctx: RunContext, runId: string, taskId: stri
   await sendMessage(ctx, loaded, {
     from: LEAD,
     to: agentAddress(from),
-    text: `${taskId}'s changes went to ${ctx.agent}: you were at ${still.at}, and it waited — it is not yours now; go on with ${still.at}`
+    // Said as the CLI's, not a lead's decision: lx-copy's agents read these as "the lead reassigned" and kept editing
+    // the copy they had left.
+    text: `The CLI handed ${taskId}'s changes to ${ctx.agent}, no lead's decision: they waited while you were at ${still.at}. ${taskId} and its copy are not yours now — leave them as they are and go on with ${still.at}`
   });
-  await logRun(ctx, loaded.paths, { action: 'handed-off', task: taskId, from, to: ctx.agent, at: still.at });
+  // Its own name, never `at`: that is every entry's time, and the monitor showed these with none (lx-copy).
+  await logRun(ctx, loaded.paths, { action: 'handed-off', task: taskId, from, to: ctx.agent, busyAt: still.at });
 };

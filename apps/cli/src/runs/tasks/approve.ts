@@ -47,7 +47,12 @@ export const digestsOf = (manifest: ApprovedManifest): Record<string, string | n
 export const changeApproved = async (
   ctx: RunContext,
   loaded: LoadedRun,
-  build: (approved: ApprovedManifest) => Promise<Built | undefined>
+  build: (approved: ApprovedManifest) => Promise<Built | undefined>,
+  /**
+   * Checked whatever it merged: files new to the run go in unchecked otherwise — lx-copy's t-shell put its shell in
+   * without the site.json keys and tokens it read, and every copy after failed typecheck.
+   */
+  { checkAlways = false }: { checkAlways?: boolean } = {}
 ): Promise<Built | { failed: CheckResult } | undefined> => {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const approved = await readApproved(loaded.paths);
@@ -56,7 +61,7 @@ export const changeApproved = async (
       return undefined;
     }
 
-    if (built.merged.length > 0) {
+    if (built.merged.length > 0 || checkAlways) {
       const checks = await checkVersions(ctx, loaded, digestsOf(built.next));
       if (!checks.ok) {
         return { failed: checks };

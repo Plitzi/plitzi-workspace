@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
-import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+import { appendFileSync, existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
@@ -106,6 +106,31 @@ const runOfFolder = (cwd: string): { runDir: string; by: string } | undefined =>
     : undefined;
 };
 
+/** A command that hands no messages over: anything but a task's or a run's, which read the inbox themselves. */
+const isInboxless = (args: readonly string[]): boolean => !['task', 'run'].includes(args[0] ?? '');
+
+/** How many messages said to `agent` by name it has not read: none for the lead or an unnamed caller. */
+export const unreadByName = (runDir: string, agent: string): number => {
+  if (agent === 'lead' || agent === 'unnamed') {
+    return 0;
+  }
+
+  const read = readJsonSync(path.join(runDir, 'agents-read', `${agent}.json`));
+  const seen = new Set(Array.isArray(read) ? read.filter((id): id is string => typeof id === 'string') : []);
+  let names: string[];
+  try {
+    names = readdirSync(path.join(runDir, 'messages')).filter(name => name.endsWith('.json'));
+  } catch {
+    return 0;
+  }
+
+  return names.filter(name => {
+    const message = readJsonSync(path.join(runDir, 'messages', name));
+
+    return isRecord(message) && message.to === `@${agent}` && typeof message.id === 'string' && !seen.has(message.id);
+  }).length;
+};
+
 /**
  * Counts what this process prints from now, and, as it exits, says it in its run's usage — when it ran in one: a
  * command outside a run is nobody's cost to count. Never fails the command: a usage line not written is only not kept.
@@ -137,6 +162,15 @@ export const startUsage = (args: readonly string[], cwd: string, now: () => numb
     // A run gone — finished, aborted — is never made again by its last command's line.
     if (!where || !existsSync(where.runDir)) {
       return;
+    }
+
+    // A page command reads no inbox: what was said to its agent meanwhile — a review withdrawn under it — is pointed
+    // at here (lx-copy: design-2 measured a withdrawn review on and was refused three times on its verdict).
+    const unread = isInboxless(args) ? unreadByName(where.runDir, where.by) : 0;
+    if (unread > 0) {
+      process.stderr.write(
+        `· ${String(unread)} message${unread === 1 ? '' : 's'} for you not read yet — plitzi task inbox --token <yours>\n`
+      );
     }
 
     const line: UsageLine = {

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { unifiedDiff } from '../../fix/diff';
 import { checkAcceptance, letGo, serveForAcceptance } from '../acceptance';
 import { proposalsOf, unansweredTo } from '../agreements';
-import { failsWithout } from '../checks';
+import { failsWithout, ownFailing } from '../checks';
 import { designAtComplete } from '../design';
 import { createExclusive, exists, fingerprint, readOptional, writeAtomic, writeJson } from '../files';
 import { handOver } from '../handOver';
@@ -308,16 +308,27 @@ export const completeTask = async (
     const failing = checks.steps.filter(step => !step.ok);
     // What fails in the copy may not be the task's: a person's edit in the project, or another task's approved work, that
     // fails the checks reaches every copy. Checked against the run's work without this task before it is refused.
-    const preexisting =
-      !checks.ok && !knownFailure
-        ? failsWithout(checks, await checkVersions(ctx, loaded, digestsOf(await readApproved(loaded.paths))), [
-            `${view.paths.work}${path.sep}`,
-            new RegExp(
-              `${escapeRegExp(path.join(loaded.paths.cache, 'check-'))}[0-9a-f]+${escapeRegExp(path.sep)}`,
-              'g'
-            )
-          ])
-        : false;
+    const dirs = [
+      `${view.paths.work}${path.sep}`,
+      new RegExp(`${escapeRegExp(path.join(loaded.paths.cache, 'check-'))}[0-9a-f]+${escapeRegExp(path.sep)}`, 'g')
+    ];
+    const without = checks.ok
+      ? undefined
+      : await checkVersions(ctx, loaded, digestsOf(await readApproved(loaded.paths)));
+    const preexisting = !knownFailure && without !== undefined ? failsWithout(checks, without, dirs) : false;
+    // A known failure covers what it names: a step only this copy fails, its reason silent on it, is the task's own
+    // (lx-copy: t-contact's said the shell's empty layout, and its own duplicate token's typecheck went to review).
+    const unsaid =
+      knownFailure && without !== undefined
+        ? ownFailing(checks, without, dirs).filter(step => !knownFailure.why.toLowerCase().includes(step.name))
+        : [];
+    if (unsaid.length > 0) {
+      throw new RunRefusal(
+        'checks-failed',
+        `${unsaid.map(step => step.name).join(', ')} ${unsaid.length === 1 ? 'fails' : 'fail'} in this copy and not in the run's work — this task's own, which the known failure does not say: fix ${unsaid.length === 1 ? 'it' : 'them'}, or name ${unsaid.length === 1 ? 'it' : 'them'} in --known-failure with why`,
+        { task: taskId, steps: unsaid }
+      );
+    }
     if (!checks.ok) {
       if (!preexisting) {
         await recordBrake(ctx, loaded, 'checks-failed', taskId);

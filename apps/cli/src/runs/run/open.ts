@@ -67,6 +67,19 @@ export const readPlanFile = async (
     };
   }
 
+  // A task's findings written as a list, one finding a line, are its findings: said as words, each its own line
+  // (lx-copy: the scope's stage refused for ten lists — "in words, not […]").
+  if (isRecord(parsed) && Array.isArray(parsed.tasks)) {
+    parsed = {
+      ...parsed,
+      tasks: parsed.tasks.map((task: unknown) =>
+        isRecord(task) && Array.isArray(task.findings) && task.findings.every(line => typeof line === 'string')
+          ? { ...task, findings: task.findings.map(line => (line.startsWith('- ') ? line : `- ${line}`)).join('\n') }
+          : task
+      )
+    };
+  }
+
   if (!isRunPlan(parsed)) {
     const problems = runPlanProblems(parsed);
     throw new RunRefusal(

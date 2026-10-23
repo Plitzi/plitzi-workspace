@@ -155,20 +155,25 @@ const linesOf = (step: CheckStep, dirs: readonly (string | RegExp)[]): Set<strin
  * same step failing, saying nothing `without` does not say. A change that adds a failure of its own is never excused.
  * `dirs` are what each folder's paths start with, so the two are compared by what they say, not where they ran.
  */
-export const failsWithout = (mine: CheckResult, without: CheckResult, dirs: readonly (string | RegExp)[]): boolean => {
-  const failing = mine.steps.filter(step => !step.ok);
-  if (failing.length === 0) {
-    return false;
-  }
+export const failsWithout = (mine: CheckResult, without: CheckResult, dirs: readonly (string | RegExp)[]): boolean =>
+  mine.steps.some(step => !step.ok) && ownFailing(mine, without, dirs).length === 0;
 
-  return failing.every(step => {
+/**
+ * The steps that fail in `mine` and not, or not this way, in `without`: what the copy's own work fails — never what it
+ * only shares with the run's work.
+ */
+export const ownFailing = (mine: CheckResult, without: CheckResult, dirs: readonly (string | RegExp)[]): CheckStep[] =>
+  mine.steps.filter(step => {
+    if (step.ok) {
+      return false;
+    }
+
     const before = without.steps.find(each => each.name === step.name && !each.ok);
     if (!before) {
-      return false;
+      return true;
     }
 
     const known = linesOf(before, dirs);
 
-    return [...linesOf(step, dirs)].every(line => known.has(line));
+    return ![...linesOf(step, dirs)].every(line => known.has(line));
   });
-};

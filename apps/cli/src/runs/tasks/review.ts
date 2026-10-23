@@ -389,23 +389,6 @@ const decide = async (
     };
   }
 
-  const into = await changeApproved(ctx, loaded, approved =>
-    buildMergeIntoRun(ctx, loaded, view, start, submitted, onProjectChange, approved)
-  ).catch(async (error: unknown) => {
-    if (error instanceof RunRefusal && error.code === 'conflict') {
-      await recordBrake(ctx, loaded, 'conflict', taskId);
-    }
-
-    throw error;
-  });
-  if (into && 'failed' in into) {
-    throw new RunRefusal(
-      'conflict',
-      `Task "${taskId}"'s change, put together with the run's newer version, fails the project's checks: nothing was merged — send it back (--changes) to redo it on the run's version`,
-      { task: taskId, steps: into.failed.steps.filter(step => !step.ok) }
-    );
-  }
-
   const merged = Object.keys(submitted);
   // What it asked for on a file it then held and merged itself is done; what it asked for on any other goes in now, held
   // by another task or not, when it merges line by line with the run's version — its approved files read it, and a run
@@ -414,8 +397,61 @@ const decide = async (
   const requests = await readRequests(view.paths);
   const own = requests.filter(request => merged.includes(request.file));
   const asked = requests.filter(request => !merged.includes(request.file));
-  const went =
+  const onConflict = async (error: unknown): Promise<never> => {
+    if (error instanceof RunRefusal && error.code === 'conflict') {
+      await recordBrake(ctx, loaded, 'conflict', taskId);
+    }
+
+    throw error;
+  };
+  // Its files and what it asked of shared files are one change, checked as one: apart, lx-copy's t-shell went in
+  // reading site.json keys and tokens its requests held — files new to the run were never checked — and every copy made
+  // after failed typecheck until three integration tasks put them back together.
+  const together =
     asked.length === 0
+      ? undefined
+      : await changeApproved(
+          ctx,
+          loaded,
+          async approved => {
+            const files = await buildMergeIntoRun(ctx, loaded, view, start, submitted, onProjectChange, approved);
+            const withAsked = await buildRequestsMerge(
+              ctx,
+              loaded,
+              asked.map(request => ({ view, request })),
+              files.next
+            );
+
+            return withAsked
+              ? { next: withAsked.next, merged: [...files.merged, ...withAsked.merged], requests: withAsked.requests }
+              : files;
+          },
+          { checkAlways: true }
+        ).catch(onConflict);
+  const togetherIn = together !== undefined && !('failed' in together);
+  // Else its files alone — checked whatever they merged when it asked anything, so they go in only reading what is there.
+  const into = togetherIn
+    ? together
+    : await changeApproved(
+        ctx,
+        loaded,
+        approved => buildMergeIntoRun(ctx, loaded, view, start, submitted, onProjectChange, approved),
+        { checkAlways: asked.length > 0 }
+      ).catch(onConflict);
+  if (into && 'failed' in into) {
+    const failing = into.failed.steps.filter(step => !step.ok);
+    throw new RunRefusal(
+      'conflict',
+      asked.length > 0
+        ? `Task "${taskId}"'s files fail the project's checks (${failing.map(step => step.name).join(', ')}) without what it asked of ${asked.map(request => request.file).join(', ')}, and with it: nothing was merged — send it back (--changes) to redo it on the run's version`
+        : `Task "${taskId}"'s change, put together with the run's newer version, fails the project's checks (${failing.map(step => step.name).join(', ')}): nothing was merged — send it back (--changes) to redo it on the run's version`,
+      { task: taskId, steps: failing }
+    );
+  }
+
+  const went = togetherIn
+    ? together
+    : asked.length === 0
       ? undefined
       : await changeApproved(ctx, loaded, approved =>
           buildRequestsMerge(
@@ -439,7 +475,14 @@ const decide = async (
     unmergedFiles.length > 0
       ? {
           files: unmergedFiles,
-          reason: went && 'failed' in went ? 'the checks failed with it' : 'it does not merge line by line'
+          // Which checks, named: "the checks failed with it" alone left the lead guessing a task's from a run-wide one.
+          reason:
+            went && 'failed' in went
+              ? `the checks failed with it (${went.failed.steps
+                  .filter(step => !step.ok)
+                  .map(step => step.name)
+                  .join(', ')})`
+              : 'it does not merge line by line'
         }
       : undefined;
 

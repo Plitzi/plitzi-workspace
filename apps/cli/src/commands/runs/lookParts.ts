@@ -239,6 +239,25 @@ export const viewsAsked = (
 };
 
 /**
+ * The views a look takes by default, held to the schemes the space declares: a scheme it has not is pictured in one it
+ * has, once — lx-copy's space is light only, and every look pictured its phone in a dark it never shows.
+ */
+export const toDeclared = (
+  views: readonly (readonly [string, 'light' | 'dark'])[],
+  declared: readonly ('light' | 'dark')[]
+): (readonly [string, 'light' | 'dark'])[] => {
+  if (declared.length === 0) {
+    return [...views];
+  }
+
+  const held = views.map(([width, scheme]) => [width, declared.includes(scheme) ? scheme : declared[0]] as const);
+
+  return held.filter(
+    ([width, scheme], index) => held.findIndex(([w, s]) => w === width && s === scheme) === index
+  );
+};
+
+/**
  * With `PLITZI_TIMING=1`, each phase of a look said with how long it took, on stderr: where a look spends its time —
  * velada-fidelity's looks took 50 s, and nothing said which part.
  */

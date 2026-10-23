@@ -83,6 +83,58 @@ describe('originHere', () => {
     await expect(fetch(second, { signal: AbortSignal.timeout(3000) })).rejects.toThrow();
   }, 60_000);
 
+  // lx-copy: the project's server writes tmp/dev-server.json as it starts, so the server the CLI kept read as the
+  // agent's own — reused as it was, "restart it" said — and four of five agents measured code they had changed.
+  it('serves anew the server it kept, though that server wrote the record an agent’s own would', async () => {
+    await bench.write(
+      'serve.mjs',
+      [
+        "import fs from 'node:fs';",
+        "import http from 'node:http';",
+        '',
+        "const server = http.createServer((q, r) => r.end(q.url === '/health' ? '{}' : 'the copy'));",
+        'server.listen(Number(process.env.PORT), () => {',
+        "  fs.mkdirSync('tmp', { recursive: true });",
+        "  fs.writeFileSync('tmp/dev-server.json', JSON.stringify({ port: Number(process.env.PORT) }));",
+        '});',
+        ''
+      ].join('\n')
+    );
+    await bench.write(
+      'package.json',
+      `${JSON.stringify({ name: 'bench', type: 'module', private: true, scripts: { start: 'node serve.mjs' } })}\n`
+    );
+    await open();
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = {};\n');
+    const cache = taskPaths(runPaths(bench.root, 'es-launch'), 't-home').cache;
+    const origin = async (): Promise<string> => {
+      const where = await originHere(home.work, undefined);
+      if ('problem' in where) {
+        throw new Error(where.problem);
+      }
+
+      return where.origin;
+    };
+
+    const first = await origin();
+    await expect
+      .poll(() =>
+        fs.access(path.join(home.work, 'tmp/dev-server.json')).then(
+          () => true,
+          () => false
+        )
+      )
+      .toBe(true);
+    expect(await origin()).toBe(first);
+
+    await new Promise(resolve => setTimeout(resolve, 20));
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { es: true };\n');
+    const second = await origin();
+    expect(second).not.toBe(first);
+    await stopKept(cache);
+  }, 60_000);
+
   it('asks nothing of a folder that is no task’s copy', async () => {
     expect(await originHere(bench.root, undefined)).not.toHaveProperty('stop');
     expect(descendantsOf(process.pid).length).toBeGreaterThanOrEqual(0);

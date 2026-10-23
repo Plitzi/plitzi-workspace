@@ -25,7 +25,7 @@ import { byUrgency } from '../urgency';
 import { isWorked } from '../worked';
 import { at, findTask, roleOf } from './common';
 import { allLocks } from './locks';
-import { askedOf, baseFirst, lastAsked, reasonOf, spareNow, uiReviewsComing } from './nextRules';
+import { askedOf, askedRoles, baseFirst, lastAsked, reasonOf, spareNow, uiReviewsComing } from './nextRules';
 import { changesBlock } from './review';
 import { takeTask } from './take';
 
@@ -166,11 +166,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
   const states = new Map(views.map(view => [view.task.id, view.state]));
   const held = new Set(views.filter(view => view.owner).map(view => view.task.id));
-  // One role, or several an agent takes — `developer,reviewer`.
-  const roles = role
-    ?.split(',')
-    .map(each => each.trim())
-    .filter(Boolean);
+  const roles = await askedRoles(ctx, role);
   await assertRoles(ctx.root, ctx.agent, roles ?? []);
   const forRole = (task: RunTask): boolean => roles === undefined || roles.includes(roleOf(task));
   // What the lead said to this agent by name — between tasks, there is nowhere else for it to arrive.
@@ -308,6 +304,15 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
           hasDesignReview(view.task, [...view.task.files, ...(view.state.changed ?? [])])
       )
     : [];
+  // …unless a ready task is one no developer takes — a designer's — or critical: it waits for nobody else, and while
+  // reviews keep coming it would wait for ever (lx-copy: t-shell, critical and the only designer's, sat ready seven
+  // minutes until the lead messaged design-1, four developers keeping a review always "coming").
+  const ownToTake = ready.filter(task => task.role === DESIGNER || task.priority === 'critical');
+  if (reviewsComing.length > 0 && ownToTake.length > 0) {
+    // That one, not any task: what a developer would take still waits for the developers.
+    return { task: ownToTake[0], ready: ready.map(task => task.id), messages };
+  }
+
   if (ready.length > 0 && reviewsComing.length > 0) {
     return {
       why: `UI reviews are coming — ${reviewsComing.map(view => `${view.task.id} (${view.owner?.agent ?? ''})`).join(', ')} at work: a designer waits for them rather than taking a task of its own (--follow), and takes one once none is coming`,

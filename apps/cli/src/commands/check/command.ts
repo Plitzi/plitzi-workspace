@@ -5,7 +5,7 @@ import { inTurns } from '../../runs/inTurns';
 import { projectHere } from '../existingProject';
 import { fail } from '../terminal';
 import { checkAccount } from './account';
-import { keptToTask } from './apart';
+import { keptToReference, keptToTask } from './apart';
 import { checkAt } from './inspect';
 import { moduleSpace, projectSpace } from './space';
 import { reportText } from './text';
@@ -93,7 +93,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     return;
   }
 
-  const kept = await keptToTask(project.root, reports);
+  const kept = await keptToReference(project.root, await keptToTask(project.root, reports));
   console.log(options.json ? JSON.stringify(kept) : kept.map(report => reportText(report, asked)).join('\n'));
   if (kept.some(report => !report.ok)) {
     process.exitCode = 1;

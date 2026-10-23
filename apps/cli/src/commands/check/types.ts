@@ -76,6 +76,8 @@ export interface CheckIssue {
   message: string;
   /** The space's element it is about, by id — absent for one about the page as a whole. */
   elementId?: string;
+  /** A `label-wraps` finding's label, as the page shows it: what the original's own wrapping is compared with. */
+  label?: string;
   /** The width it was found at, so a list of every width's issues still says where each one is. */
   width: number;
 }
@@ -95,6 +97,8 @@ export interface CheckReport {
   hiddenAtWidth: string[];
   /** Checked in a task's copy: findings on elements other tasks write, said and failing nothing (`apart.ts`). */
   apart?: string[];
+  /** In a run that keeps a reference: labels wrapped as the original wraps them, said and failing nothing (`apart.ts`). */
+  asTheOriginal?: string[];
   consoleErrors: string[];
   failedRequests: string[];
   /** Whether the page had its dev tools on, which is what flows, state and elements are read from. */

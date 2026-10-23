@@ -293,8 +293,9 @@ describe('a task held behind one in review', () => {
       expect.objectContaining({
         kind: 'held-up',
         task: 't-book',
+        // dev-2 never joined: a member of the team nobody started is not free (lx-copy: "design-2 is free", unstarted).
         text: expect.stringMatching(
-          /t-book waits for t-menu \(.* review\) while dev-1, dev-2 are free: they share no file/
+          /t-book waits for t-menu \(.* review\) while dev-1 is free: they share no file/
         ) as unknown
       })
     );
@@ -642,6 +643,37 @@ describe('a designer, once it sent a task back', () => {
     const after = await nextTask(bench.agent('design-1'), 'data-run', 'designer');
     expect(after.finished).toBeUndefined();
     expect(after.why).toContain('t-data');
+  });
+});
+
+// lx-copy: dev-1 and dev-2 asked `task next` with no role, were offered what a designer takes, and refused for it.
+describe('an agent asking with no role', () => {
+  it('asks as the roles the team started it with: a developer is offered no UI review', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
+    await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.filter(task => task.id === 't-menu');
+    await openRun(lead(), await bench.writePlan(plan));
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+
+    const next = await nextTask(bench.agent('dev-2'), 'es-launch');
+    expect(next.designReview).toBeUndefined();
+  });
+});
+
+// lx-copy: t-shell, the only designer's and critical, sat ready seven minutes — four developers at UI tasks kept a
+// review always "coming", and design-1 waited for them until the lead messaged it.
+describe('a designer with a task only a designer takes', () => {
+  it('takes it though UI reviews are coming: nobody else would', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 1 });
+    await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'] });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.map(task => (task.id === 't-about' ? { ...task, role: 'designer' } : task));
+    await openRun(lead(), await bench.writePlan(plan));
+    await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
+
+    const next = await nextTask(bench.agent('design-1'), 'es-launch', 'designer,developer');
+    expect([next.task?.id, next.why]).toEqual(['t-about', undefined]);
   });
 });
 

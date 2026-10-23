@@ -14,9 +14,11 @@ import {
   lookKey,
   LOOK_AT_ONCE,
   phases,
+  toDeclared,
   viewsAsked
 } from './lookParts';
 import { act, runOf, runSelf } from './shell';
+import { projectSpace } from '../check/space';
 import { list } from './text';
 import { answering, freePort } from '../../runs/acceptance';
 import { designSkipText, isDesignSkip } from '../../runs/designSkip';
@@ -110,9 +112,8 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
         // (`options.designReview`): design-2 took the other two by hand, the team's standard asking for both.
         const precision = (await readTeam(ctx.root).catch(() => undefined))?.options?.designReview;
         const asked = viewsAsked(options);
-        const views: readonly (readonly [string, 'light' | 'dark'])[] = asked
-          ? asked
-          : precision === 'high'
+        const teams: readonly (readonly [string, 'light' | 'dark'])[] =
+          precision === 'high'
             ? [
                 ['1440', 'light'],
                 ['1440', 'dark'],
@@ -123,6 +124,8 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
                 ['1440', 'light'],
                 ['390', 'dark']
               ];
+        const space = asked ? undefined : await projectSpace(preview.dir);
+        const views = asked ?? toDeclared(teams, space && !('problem' in space) ? space.schemes : []);
         // No page named: the pages its changes are drawn at, by the files that changed — else the home page.
         // Read off the copy served: a page the task makes is one to look at too.
         const { changed, designing } = await viewTaskOf(ctx, runId, taskId);

@@ -256,10 +256,13 @@ describe('a task sent back while its agent is at another', () => {
     expect((await readRunLog(loaded.paths)).find(entry => entry.action === 'handed-off')).toMatchObject({
       task: 't-home',
       from: 'dev-1',
-      to: 'dev-3'
+      to: 'dev-3',
+      busyAt: 't-menu'
     });
+    // The entry's time stays its own: the monitor showed hand-offs with none and misaligned (lx-copy).
+    expect(typeof (await readRunLog(loaded.paths)).find(entry => entry.action === 'handed-off')?.at).toBe('string');
     expect((await nextTask(as('dev-1'), runId, 'developer')).messages.map(message => message.text).join(' ')).toContain(
-      "t-home's changes went to dev-3"
+      "The CLI handed t-home's changes to dev-3, no lead's decision"
     );
     await expect(reportProgress(as('dev-1', oldToken), runId, 't-home', {})).rejects.toMatchObject({
       code: 'reassigned'

@@ -114,6 +114,7 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
     ...(report.retriedAfter ? [`  · looked at again after the server failed: ${report.retriedAfter.join(', ')}`] : []),
     ...listsText(report.lists),
     ...(report.apart ?? []).map(each => chalk.dim(`  · another task's, not this one's: ${each}`)),
+    ...(report.asTheOriginal ?? []).map(each => chalk.dim(`  · as the original: ${each}`)),
     ...(report.expected ?? []).map(each => chalk.dim(`  · expected ${each} ✓`)),
     ...browserOnlyText(report),
     ...(report.throttled && report.throttled.length > 0

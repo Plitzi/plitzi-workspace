@@ -39,7 +39,7 @@ export const materialise = async (
     all.filter(file => !isSecretFile(file) && !isCopied(file, keep))
   );
   for (const [file, digest] of Object.entries(versions)) {
-    await placeVersion(loaded.paths, under(dir, file), digest);
+    await placeVersion(loaded.paths, under(dir, file), digest, dir);
   }
 
   return dir;

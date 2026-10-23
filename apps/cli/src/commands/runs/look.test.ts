@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkWithInteraction, comparedOf, samePaths, viewsAsked } from './lookParts';
+import { checkWithInteraction, comparedOf, samePaths, toDeclared, viewsAsked } from './lookParts';
 
 // velada-dress: /artistas's new light read "0.1% differs" beside the run before it — a soft light is under the
 // pictures' tolerance; its dress is not.
@@ -72,6 +72,34 @@ describe('task look --width and --scheme', () => {
 });
 
 // velada-fidelity: a look pictured nine pages a shared file reached, for two tokens added — 204 s.
+// lx-copy: a light-only space, and every look pictured its phone in a dark the space never shows.
+describe('task look on a space of one scheme', () => {
+  it('pictures each view in a scheme the space declares, once', () => {
+    expect(
+      toDeclared(
+        [
+          ['1440', 'light'],
+          ['390', 'dark']
+        ],
+        ['light']
+      )
+    ).toEqual([
+      ['1440', 'light'],
+      ['390', 'light']
+    ]);
+    expect(
+      toDeclared(
+        [
+          ['390', 'light'],
+          ['390', 'dark']
+        ],
+        ['light']
+      )
+    ).toEqual([['390', 'light']]);
+    expect(toDeclared([['390', 'dark']], [])).toEqual([['390', 'dark']]);
+  });
+});
+
 describe('the pages a look reads the same on both servers', () => {
   it('are the ones page same said draw the same — none from an answer it cannot read', () => {
     expect(

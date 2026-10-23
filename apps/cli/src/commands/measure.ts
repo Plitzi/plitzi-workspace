@@ -142,6 +142,32 @@ const otherSpelling = async (page: BrowserPage, target: string): Promise<string>
   return `name it by its element's id (fight-card-vs), #its-id, or any selector (.vs-medal, [data-plitzi-el="…"] > span)`;
 };
 
+/** How long a picture measured is waited for before it is read as it is: a picture that never loads holds nothing. */
+const IMAGE_WAIT_MS = 5000;
+
+/** How many matches of a selector are looked through for the first one shown. */
+const SHOWN_LOOK = 20;
+
+/**
+ * The first match of `selector` a visitor sees, as a selector: itself when it is the first, `… >> nth=N` when an
+ * earlier one is hidden, and itself again when none is shown (measured as it is, hidden or not).
+ */
+const firstShown = async (page: BrowserPage, selector: string): Promise<string> => {
+  for (let index = 0; index < SHOWN_LOOK; index += 1) {
+    const nth = `${selector} >> nth=${String(index)}`;
+    const match = page.locator(nth).first();
+    if ((await match.count()) === 0) {
+      break;
+    }
+
+    if (await match.isVisible()) {
+      return index === 0 ? selector : nth;
+    }
+  }
+
+  return selector;
+};
+
 /** One element of an open page, measured — or why it could not be. */
 export const measureOn = async (page: BrowserPage, target: string): Promise<Measured | { problem: string }> => {
   const found = await targetOn(page, target);
@@ -152,6 +178,29 @@ export const measureOn = async (page: BrowserPage, target: string): Promise<Meas
   if (!found.found) {
     return { problem: `No element ${target} on ${page.url()} — ${await otherSpelling(page, target)}` };
   }
+
+  // Of several matches, the first a visitor sees: the original's first `.header__heading-logo` is its hidden menu
+  // drawer's, and whichever the page drew first was measured — 0 px one call, 140 px the next (lx-copy's finish).
+  const shown = await firstShown(page, found.selector);
+  if (shown !== found.selector) {
+    found.selector = shown;
+  }
+
+  // A picture is measured drawn: read before it loads, an <img> sized by its own picture is 0 px wide, or "auto" tall
+  // (lx-copy: the original's logo read 140 px one call and 0 px the next, and failed the finish). A lazy one is asked
+  // for now; one that never loads is measured as it is after IMAGE_WAIT_MS.
+  await page
+    .locator(found.selector)
+    .first()
+    .evaluate(async (node, waitMs: number) => {
+      if (!(node instanceof HTMLImageElement) || (node.complete && node.naturalWidth > 0)) {
+        return;
+      }
+
+      node.loading = 'eager';
+      await Promise.race([node.decode().catch(() => undefined), new Promise(resolve => setTimeout(resolve, waitMs))]);
+    }, IMAGE_WAIT_MS)
+    .catch(() => undefined);
 
   return {
     selector: found.selector,

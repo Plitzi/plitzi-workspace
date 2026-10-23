@@ -102,6 +102,25 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-book')?.found).toBe(1);
   });
 
+  // lx-copy: the scope's stage carried the run's own goal, and `run status` said it twice.
+  // …and refused its stage for findings written as lists, one finding a line.
+  it('keeps the goal once when the scope’s stage says it again, and takes findings written as a list', async () => {
+    await open(scopePlan('es-launch', ASK));
+    const stage = { ...scoped(), goal: ASK };
+    // Written as a lead writes the file — a list where the type says words: what reading the file takes in.
+    const listed = { ...stage.tasks[0], findings: ['The hero is 48px', '- The menu wraps at 390'] };
+    await answerSpike(lead(), 'es-launch', SCOPE_SPIKE, 'Four pages', {
+      tasks: await bench.writePlan({ ...stage, tasks: [listed as unknown as RunPlan['tasks'][number], ...stage.tasks.slice(1)] })
+    });
+
+    const view = await viewRun(lead(), 'es-launch');
+    expect(view.goal).toBe(ASK);
+    const context = await taskContext(lead(), 'es-launch', stage.tasks[0].id);
+    expect(context.state.findings?.map(each => each.text).join('\n')).toContain(
+      '- The hero is 48px\n- The menu wraps at 390'
+    );
+  });
+
   // velada-polish: the scope's tasks named the VS sizes as the lead guessed them, and a stage stacked said no notice.
   it('says, as the scope stacks its tasks, the values none of their checks measures against the site', async () => {
     await open(scopePlan('es-launch', ASK, 'https://www.example.com'));

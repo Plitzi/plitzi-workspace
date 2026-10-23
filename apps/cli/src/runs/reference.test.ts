@@ -5,7 +5,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { runPaths } from './paths';
 import { runPlanProblems } from './planProblems';
-import { keptName, keptPage, referencePages, unnamedSections } from './reference';
+import {
+  keptName,
+  keptPage,
+  labelsWrappedInReference,
+  referencePages,
+  unnamedSections,
+  wrapsAsReference
+} from './reference';
 import { benchPlan, makeBench } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
@@ -46,15 +53,19 @@ const pageText = {
 };
 
 /** A page kept as `plitzi run reference` keeps it, in the run's folder. */
-const keep = async (runId: string, pathname: string): Promise<void> => {
+const keep = async (
+  runId: string,
+  pathname: string,
+  { width = 1440, texts = [] }: { width?: number; texts?: KeptPage['texts'] } = {}
+): Promise<void> => {
   const dir = runPaths(bench.root, runId).reference;
-  const name = keptName(pathname, 1440, 'dark');
+  const name = keptName(pathname, width, 'dark');
   const page: KeptPage = {
     url: new URL(pathname, REFERENCE).href,
-    width: 1440,
+    width,
     scheme: 'dark',
     at: '2026-10-21T10:00:00.000Z',
-    texts: [],
+    texts,
     unloaded: 0,
     decorations: []
   };
@@ -137,5 +148,29 @@ describe('the reference a run keeps', () => {
       expect.stringContaining('reference: the address of the site it copies')
     );
     expect(runPlanProblems({ ...benchPlan(), reference: REFERENCE })).toEqual([]);
+  });
+});
+
+// lx-copy: the original's "TARJETAS GRÁFICAS" wraps under its tile, and label-wraps told two agents to keep it on one line.
+describe('the labels the original wraps', () => {
+  it('reads them off the kept page at that width, spelt as either side spells them — one line is none', async () => {
+    const runId = await open({ ...benchPlan(), reference: REFERENCE });
+    await keep(runId, '/collections/laptops', {
+      width: 390,
+      texts: [
+        { ...pageText, text: 'TARJETAS GRÁFICAS', tag: 'span', height: 38, lineHeight: '19.6px' },
+        { ...pageText, text: 'MOUSE', tag: 'span', height: 19, lineHeight: '19.6px' }
+      ]
+    });
+    const copy = await take('agent-1', 't-menu');
+
+    for (const from of [bench.root, copy.work]) {
+      const wrapped = await labelsWrappedInReference(from, '/collections/laptops', 390);
+      expect(wrapsAsReference(wrapped, 'Tarjetas graficas')).toBe(true);
+      expect(wrapsAsReference(wrapped, 'MOUSE')).toBe(false);
+    }
+
+    expect(await labelsWrappedInReference(bench.root, '/collections/laptops', 1440)).toEqual(new Set());
+    expect(await labelsWrappedInReference(bench.root, '/collections/mouse', 390)).toEqual(new Set());
   });
 });

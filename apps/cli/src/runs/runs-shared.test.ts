@@ -126,6 +126,108 @@ export const theme = { card: { color: tokens.ink }, badge: {}, price: {} };
     expect(dry.plan.apply.map(each => each.file)).toEqual(['src/space/pages/menu.ts', 'src/space/theme.ts']);
   });
 
+  // lx-copy: t-shell's new files went in unchecked, reading keys its request held; the request waited for an
+  // integration, and every copy made after failed its checks until three integration tasks put them back together.
+  it('never merges files that read what their request holds without it — refused, naming the checks and the file', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    const menu = await take('agent-2', 't-menu');
+    await writeInCopy(
+      home.work,
+      'src/space/theme.ts',
+      `import { tokens } from './tokens.ts';
+
+export const theme = { card: { color: tokens.ink }, badge: {} };
+`
+    );
+    await writeInCopy(
+      menu.work,
+      'src/space/theme.ts',
+      `import { tokens } from './tokens.ts';
+
+export const theme = { card: { color: tokens.ink }, price: {} }; // HAS:price
+`
+    );
+    await writeInCopy(
+      menu.work,
+      'src/space/pages/menu.ts',
+      `import { theme } from '../theme.ts';
+
+export const menu = { id: 'menu', title: 'Carta', price: theme }; // NEEDS:price
+`
+    );
+    await completeTask(home.ctx, 'es-launch', 't-home');
+    await completeTask(menu.ctx, 'es-launch', 't-menu');
+    await reviewTask(lead(), 'es-launch', 't-home', 'approve', []);
+
+    const refused = await refusal(reviewTask(lead(), 'es-launch', 't-menu', 'approve', []));
+    expect(refused.code).toBe('conflict');
+    expect(refused.message).toContain("fail the project's checks (author) without what it asked of src/space/theme.ts");
+    const approved = await readApproved((await loadRun(lead(), 'es-launch')).paths);
+    expect(Object.keys(approved.files)).not.toContain('src/space/pages/menu.ts');
+  });
+
+  // lx-copy: one integration a file made t-shell's requests on site.json, tokens.ts and index.ts three tasks, each
+  // failing for want of the others' — a cycle the lead broke by approving one with a failure.
+  it('integrates one task’s requests on several files as one task', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    const menu = await take('agent-2', 't-menu');
+    for (const [held, key] of [
+      [home, 'badge'],
+      [menu, 'price']
+    ] as const) {
+      await writeInCopy(
+        held.work,
+        'src/space/theme.ts',
+        `import { tokens } from './tokens.ts';
+
+export const theme = { card: { color: tokens.ink }, ${key}: {} };
+`
+      );
+      await writeInCopy(held.work, 'src/space/tokens.ts', `export const tokens = { ink: '#111', ${key}: '#222' };\n`);
+    }
+
+    await completeTask(home.ctx, 'es-launch', 't-home');
+    await completeTask(menu.ctx, 'es-launch', 't-menu');
+    await reviewTask(lead(), 'es-launch', 't-home', 'approve', []);
+    const approved = await reviewTask(lead(), 'es-launch', 't-menu', 'approve', []);
+
+    expect(approved.integrations).toEqual(['integrate-src-space-theme-ts-and-1']);
+    const integrator = await take('agent-3', 'integrate-src-space-theme-ts-and-1');
+    const context = await taskContext(integrator.ctx, 'es-launch', 'integrate-src-space-theme-ts-and-1');
+    expect(context.requests.map(each => each.file).sort()).toEqual(['src/space/theme.ts', 'src/space/tokens.ts']);
+  });
+
+  it('merges a task’s files and its request together when they only author together', async () => {
+    await open();
+    const menu = await take('agent-2', 't-menu');
+    await writeInCopy(
+      menu.work,
+      'src/space/theme.ts',
+      `import { tokens } from './tokens.ts';
+
+export const theme = { card: { color: tokens.ink }, price: {} }; // HAS:price
+`
+    );
+    await writeInCopy(
+      menu.work,
+      'src/space/pages/menu.ts',
+      `import { theme } from '../theme.ts';
+
+export const menu = { id: 'menu', title: 'Carta', price: theme }; // NEEDS:price
+`
+    );
+    const home = await take('agent-1', 't-home');
+    expect(await claimFile(home.ctx, 'es-launch', 't-home', 'src/space/theme.ts')).toMatchObject({ granted: true });
+    await completeTask(menu.ctx, 'es-launch', 't-menu');
+
+    const approved = await reviewTask(lead(), 'es-launch', 't-menu', 'approve', []);
+    expect(approved.integrations).toEqual([]);
+    const files = (await readApproved((await loadRun(lead(), 'es-launch')).paths)).files;
+    expect(Object.keys(files)).toEqual(expect.arrayContaining(['src/space/pages/menu.ts', 'src/space/theme.ts']));
+  });
+
   it('a shared file waiting for its integration stays shared: taken by turns meanwhile, and one integration a file', async () => {
     await open();
     const home = await take('agent-1', 't-home');

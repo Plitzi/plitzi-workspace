@@ -3,9 +3,10 @@ import fs from 'node:fs/promises';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { copyOf, runPaths, taskPaths } from '../../runs/paths';
+import { labelsWrappedInReference, wrapsAsReference } from '../../runs/reference';
 import { taskParts } from '../../runs/taskParts';
 
-import type { CheckReport } from './types';
+import type { CheckIssue, CheckReport } from './types';
 import type { TaskParts } from '../../runs/taskParts';
 
 /**
@@ -47,7 +48,12 @@ export const keptToParts = (report: CheckReport, parts: Pick<TaskParts, 'ids' | 
     return report;
   }
 
-  const issues = report.issues.filter(issue => !theirs.includes(issue));
+  return { ...without(report, theirs), apart: theirs.map(issue => issue.message) };
+};
+
+/** A report with `moved` taken out of its issues, and its verdict again: passed once nothing else failed it. */
+const without = (report: CheckReport, moved: readonly CheckIssue[]): CheckReport => {
+  const issues = report.issues.filter(issue => !moved.includes(issue));
   const failedOnlyOnIssues =
     report.consoleErrors.length === 0 &&
     report.failedRequests.length === 0 &&
@@ -58,7 +64,39 @@ export const keptToParts = (report: CheckReport, parts: Pick<TaskParts, 'ids' | 
     ...report,
     issues,
     problems: issues.map(issue => issue.message),
-    apart: theirs.map(issue => issue.message),
     ok: report.ok || (issues.length === 0 && failedOnlyOnIssues)
   };
+};
+
+/**
+ * In a run that keeps a reference, a label the original itself wraps at that width is wrapped on purpose: its
+ * `label-wraps` is said, as the original's, and fails nothing — a copy is held to the original, not to a rule the
+ * original breaks. Anywhere else, every finding stays.
+ */
+export const keptToReference = async (root: string, reports: CheckReport[]): Promise<CheckReport[]> => {
+  const wrappedBy = new Map<string, ReadonlySet<string>>();
+
+  return Promise.all(
+    reports.map(async report => {
+      const wraps = report.issues.filter(issue => issue.code === 'label-wraps' && issue.label !== undefined);
+      if (wraps.length === 0) {
+        return report;
+      }
+
+      const key = `${report.path} ${String(report.width)}`;
+      const wrapped = wrappedBy.get(key) ?? (await labelsWrappedInReference(root, report.path, report.width));
+      wrappedBy.set(key, wrapped);
+      const asOriginal = wraps.filter(issue => wrapsAsReference(wrapped, issue.label ?? ''));
+      if (asOriginal.length === 0) {
+        return report;
+      }
+
+      return {
+        ...without(report, asOriginal),
+        asTheOriginal: asOriginal.map(
+          issue => `"${issue.label ?? ''}" wraps as the original's does at ${String(report.width)} px`
+        )
+      };
+    })
+  );
 };

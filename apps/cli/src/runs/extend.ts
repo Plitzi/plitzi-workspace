@@ -219,7 +219,12 @@ export const extendRun = async (
     .map(item => item.id);
   const plan: RunPlan = {
     ...loaded.plan,
-    goal: `${loaded.plan.goal} · ${next.goal}`,
+    // A stage that says the run's goal again — a scope's, filled in from the run — adds nothing to it (lx-copy: `run
+    // status` said the goal twice after its scope's stage).
+    goal:
+      next.goal.trim() === '' || loaded.plan.goal.split(' · ').includes(next.goal)
+        ? loaded.plan.goal
+        : `${loaded.plan.goal} · ${next.goal}`,
     tasks: [...loaded.plan.tasks, ...next.tasks],
     notes: [...(loaded.plan.notes ?? []), ...(next.notes ?? [])],
     ...(loaded.plan.leftOut || next.leftOut

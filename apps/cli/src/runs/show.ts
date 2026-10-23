@@ -3,10 +3,11 @@ import { fingerprint, readOptional } from './files';
 import { LEAD, markRead, messagesOf } from './messages';
 import { under } from './paths';
 import { RunRefusal } from './refusal';
-import { loadRun, readApproved, readBase, requireNoTask } from './run';
+import { loadRun, readApproved, readBase } from './run';
 import { getBlob } from './store';
 import { notReviewedIn } from './tasks';
-import { readRequests, readStart, viewTask } from './taskStore';
+import { requestsShown } from './tasks/context';
+import { readStart, viewTask } from './taskStore';
 import { unifiedDiff } from '../fix/diff';
 
 import type { ProposalView } from './agreements';
@@ -56,7 +57,8 @@ export interface TaskShown {
   notes: { at: string; by: string; text: string }[];
   agreements: ProposalView[];
   unanswered: ProposalView[];
-  requests: { file: string; summary: string }[];
+  /** What it asked of shared files — an integration task's, what it applies — each with what it changes. */
+  requests: { task: string; file: string; summary: string; diff?: string }[];
   messages: Message[];
   /** The commands that act on it from where it stands. */
   next: string[];
@@ -146,24 +148,14 @@ const nextFor = (task: RunTask, status: TaskStatus, design?: DesignReview): stri
   }
 };
 
-/**
- * The lead's view of a task — or its own holder's, with its token: read only, and what it did is its own to read
- * (velada-polish's dev-2 was refused its own task's diff). Another task's stays the lead's.
- */
-const requireShowable = (ctx: RunContext, taskId: string): void => {
-  const own = ctx.token?.split('.')[1];
-  if (own !== taskId) {
-    requireNoTask(ctx, `show ${taskId} — a task's token shows its own task (plitzi task show ${own ?? '<yours>'})`);
-  }
-};
-
 export const showTask = async (
   ctx: RunContext,
   runId: string,
   taskId: string,
   { full = false }: { full?: boolean } = {}
 ): Promise<TaskShown> => {
-  requireShowable(ctx, taskId);
+  // Read only, for anyone in the run: what another task changed or asks of a shared file is what an agent builds on —
+  // lx-copy's agents were refused another task's and diffed its blobs by hash to read a request.
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = loaded.tasks.find(each => each.id === taskId);
   if (!task) {
@@ -224,7 +216,12 @@ export const showTask = async (
     notes: view.state.notes.slice(-6),
     agreements: mine.filter(each => each.answer?.verdict === 'accept'),
     unanswered: mine.filter(each => each.answer === undefined),
-    requests: (await readRequests(view.paths)).map(each => ({ file: each.file, summary: each.summary })),
+    requests: (await requestsShown(ctx, loaded, task, view)).map(each => ({
+      task: each.task,
+      file: each.file,
+      summary: each.summary,
+      ...(each.diff ? { diff: each.diff } : {})
+    })),
     messages: said.slice(-6),
     next: nextFor(task, view.state.status, view.state.design)
   };
@@ -252,7 +249,8 @@ export const showTaskFile = async (
   taskId: string,
   file: string
 ): Promise<TaskFileShown> => {
-  requireShowable(ctx, taskId);
+  // Read only, for anyone in the run: what another task changed or asks of a shared file is what an agent builds on —
+  // lx-copy's agents were refused another task's and diffed its blobs by hash to read a request.
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = loaded.tasks.find(each => each.id === taskId);
   if (!task) {
