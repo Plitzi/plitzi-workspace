@@ -10,7 +10,7 @@ import { readOptional, writeAtomic } from './files';
 import { coverage } from './inventory';
 import { requireLead } from './leads';
 import { messagesOf } from './messages';
-import { noticesOf, noticeText } from './notices';
+import { noticesByOwner, noticeText } from './notices';
 import { REPORTS_DIR, taskPaths } from './paths';
 import { RunRefusal } from './refusal';
 import { flowText } from './reportFlow';
@@ -79,6 +79,8 @@ export interface RunReport {
   audit: string[];
   /** What was seen wrong that no task owned (`plitzi run notice`): where the next stage starts. */
   noticed: string[];
+  /** What its agents said of Plitzi itself (`run notice --plitzi`): the run's feedback carries it. */
+  ofPlitzi: string[];
   /** Where its time went, what failed by step and code, and what it cost (`runMetrics.ts`): the bench's, as data. */
   metrics: RunMetrics;
 }
@@ -229,6 +231,7 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
 
   const { record } = loaded;
   const minutes = minutesBetween(record.openedAt, now);
+  const notices = await noticesByOwner(loaded);
   const metrics = runMetrics({
     log: await readRunLog(loaded.paths),
     usage: readUsage(loaded.paths.dir),
@@ -320,7 +323,8 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
       )
     ],
     audit: await auditRun(loaded),
-    noticed: (await noticesOf(loaded)).map(noticeText),
+    noticed: notices.project.map(noticeText),
+    ofPlitzi: notices.plitzi.map(noticeText),
     metrics
   };
 };
@@ -363,6 +367,15 @@ export const reportText = (
           '',
           ...report.noticed.map(line => `- ${line}`),
           '- — what the next stage or run starts from (plitzi run extend)',
+          ''
+        ]
+      : []),
+    ...(report.ofPlitzi.length > 0
+      ? [
+          '## Noticed of Plitzi',
+          '',
+          ...report.ofPlitzi.map(line => `- ${line}`),
+          '- — the run’s feedback to Plitzi carries it, written as the run ends',
           ''
         ]
       : []),

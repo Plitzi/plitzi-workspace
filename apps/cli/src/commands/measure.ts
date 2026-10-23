@@ -10,6 +10,7 @@ import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
 import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
 import { projectHere } from './existingProject';
+import { putIn, stateText } from './measureState';
 import {
   comparable,
   differences,
@@ -24,6 +25,7 @@ import { targetOn } from './shot/capture';
 import { pageAnswered } from './shot/remote';
 import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
 
+import type { StateAsked } from './measureState';
 import type { Difference, Measured } from './measureValues';
 import type { Browser, BrowserPage, Scheme } from '../browser';
 
@@ -64,60 +66,16 @@ export interface MeasureOptions {
    */
   hover?: string;
   focus?: string;
+  /**
+   * Elements clicked on both pages, in order, before the rest is measured — `filters-toggle => .facets__open`: an open
+   * state, a drawer and a panel in it (lx-controls' designer measured the original's filter drawer by a script of its own).
+   */
+  click?: string[];
   json?: boolean;
 }
 
-/** The state both pages are measured in: an element of each hovered or focused first. */
-export interface StateAsked {
-  kind: 'hover' | 'focus';
-  pair: Pair;
-}
-
-/** The longest a state's transitions are waited for: a fade is a fraction of a second, an endless spin never ends. */
-const SETTLE_MS = 3000;
-
-/** Puts the page in the state asked — the element hovered or focused — and waits for what it starts to finish. */
-export const putIn = async (
-  page: BrowserPage,
-  state: StateAsked,
-  target: string
-): Promise<{ problem: string } | undefined> => {
-  const found = await targetOn(page, target);
-  if ('problem' in found) {
-    return found;
-  }
-
-  if (!found.found) {
-    return { problem: `No element ${target} to ${state.kind} on ${page.url()}` };
-  }
-
-  const element = page.locator(found.selector).first();
-  try {
-    await (state.kind === 'hover' ? element.hover({ timeout: 5000 }) : element.focus({ timeout: 5000 }));
-  } catch (error) {
-    return {
-      problem: `${target} could not be ${state.kind === 'hover' ? 'hovered' : 'focused'} on ${page.url()}: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`
-    };
-  }
-  await page.evaluate(
-    (most: number) =>
-      Promise.race([
-        Promise.all(
-          document
-            .getAnimations()
-            .filter(animation => animation.effect?.getTiming().iterations !== Infinity)
-            .map(animation => animation.finished.catch(() => undefined))
-        ),
-        new Promise(resolve => setTimeout(resolve, most))
-      ]).then(() => undefined),
-    SETTLE_MS
-  );
-
-  return undefined;
-};
-
 /** One element asked: ours, and the other page's — `ours => theirs`, or the same name there. */
-interface Pair {
+export interface Pair {
   here: string;
   there: string;
 }
@@ -471,7 +429,7 @@ export interface Reading {
 }
 
 /** Our page at a width: open, its fonts in and the space hydrated — what a visitor's browser reads it as. */
-const ourPage = async (
+export const ourPage = async (
   browser: Browser,
   origin: string,
   route: string,
@@ -497,7 +455,7 @@ const ourPage = async (
   return { page, answered };
 };
 
-interface ViewAsked {
+export interface ViewAsked {
   width: number;
   scheme?: Scheme;
   timezone?: string;
@@ -521,7 +479,7 @@ const readAt = async (
         problem: `nothing answers at ${where.origin}${where.route} — the server measured is not running (start it, or say where with --url)`
       }
     : view.state
-      ? await putIn(page, view.state, view.state.pair.here)
+      ? await putIn(page, view.state, 'here')
       : undefined;
   const ours = notPut ? pairs.map(() => notPut) : await Promise.all(pairs.map(pair => measureOn(page, pair.here)));
   await page.close();
@@ -534,7 +492,7 @@ const readAt = async (
       scheme: view.scheme,
       timezone: view.timezone,
       there: pair.there,
-      ...(view.state ? { state: view.state.kind, of: view.state.pair.there } : {})
+      ...(view.state ? { state: view.state.kind, of: view.state.pairs.map(pair => pair.there).join(' > ') } : {})
     })
   );
   const kept = target && !options.fresh ? await Promise.all(keys.map(file => readKept(file, now))) : [];
@@ -548,8 +506,7 @@ const readAt = async (
       ...(view.scheme ? { scheme: view.scheme } : {}),
       ...(view.timezone ? { timezone: view.timezone } : {})
     });
-    const otherNotPut =
-      view.state && !('problem' in other) ? await putIn(other.page, view.state, view.state.pair.there) : undefined;
+    const otherNotPut = view.state && !('problem' in other) ? await putIn(other.page, view.state, 'there') : undefined;
     for (const index of missing) {
       const read = 'problem' in other ? other : (otherNotPut ?? (await measureOn(other.page, pairs[index].there)));
       theirs[index] = read;
@@ -644,15 +601,21 @@ export const measure = async (route: string, elements: string[], options: Measur
     pairs[0] = { here: pairs[0].here, there: options.there };
   }
 
-  if (options.hover !== undefined && options.focus !== undefined) {
-    fail('One state at a time: --hover or --focus');
+  const states = [options.hover, options.focus, options.click].filter(asked => asked !== undefined);
+  if (states.length > 1) {
+    fail('One state at a time: --hover, --focus or --click');
 
     return;
   }
 
-  const asked = options.hover ?? options.focus;
   const state: StateAsked | undefined =
-    asked === undefined ? undefined : { kind: options.hover !== undefined ? 'hover' : 'focus', pair: pairOf(asked) };
+    options.hover !== undefined
+      ? { kind: 'hover', pairs: [pairOf(options.hover)] }
+      : options.focus !== undefined
+        ? { kind: 'focus', pairs: [pairOf(options.focus)] }
+        : options.click !== undefined
+          ? { kind: 'click', pairs: options.click.map(pairOf) }
+          : undefined;
 
   const target = options.compare
     ? new URL(options.compare).pathname === '/'
@@ -711,7 +674,7 @@ export const measure = async (route: string, elements: string[], options: Measur
       options.json
         ? JSON.stringify({
             url: target,
-            ...(state ? { state: { [state.kind]: state.pair } } : {}),
+            ...(state ? { state: { [state.kind]: state.kind === 'click' ? state.pairs : state.pairs[0] } } : {}),
             readings: readings.map(reading => ({
               ...reading,
               ...(reading.there && !('problem' in reading.there) && !('problem' in reading.here)
@@ -724,7 +687,7 @@ export const measure = async (route: string, elements: string[], options: Measur
             ...(state
               ? [
                   chalk.dim(
-                    `Read with ${state.pair.here} ${state.kind === 'hover' ? 'hovered' : 'focused'}${target ? ` (there: ${state.pair.there})` : ''}, its transitions finished`
+                    `Read with ${stateText(state, 'here')}${target ? ` (there: ${stateText(state, 'there')})` : ''}, its transitions finished`
                   )
                 ]
               : []),

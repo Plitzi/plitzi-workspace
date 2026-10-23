@@ -15,17 +15,17 @@ container([hero, grid])             // an array is the children
 
 | Authoring field | What it does |
 | --- | --- |
-| `id` | the ONE name this element answers to — its key in the document, a binding's source, a step's target. Unique across the WHOLE space |
+| `id` | the ONE name it answers to — its key, a binding's source, a step's target. Unique across the WHOLE space |
 | `class` | a shared class: a `styles()` declaration or a name from the space's `classes`; a list for several. Exclusive with `css` |
 | `css` | rules of this element's own: one set, or one per breakpoint (`{ desktop, tablet, mobile }`) |
-| `states` | `hover`, `focus-visible`, `current` (the chosen link, toggle, tab), `expanded`, `first`/`last`/`odd`/`even`, `hidden`… |
+| `states` | all there are: `hover`, `focus`, `focus-visible`, `focus-within`, `active`, `disabled`, `checked`, `visited`, `current` (the chosen link, tab), `expanded`, `hidden`, `first`/`last`/`odd`/`even` |
 | `variant` | a variant of the class it wears (when the class declares it) or of its type |
-| `slots` | a class for one of the element's OTHER selectors — a form control's `input` |
+| `slots` | a class for one of its OTHER selectors — a form control's `input` |
 | `bind` | where a value comes from |
 | `visible` | a condition (`'src'`, `'!src'`, `{ source, template }`), or `false` to start hidden |
 | `flows` | what happens on click, on submit, on load |
 | `runtime` | `'server'` resolves this provider's data on the server |
-| `loadStrategy` | when the contents mount relative to visibility: `eager`, `lazy`, `visible`. Left out, the type decides — `eager`, `lazy` for a modal or a dialog |
+| `loadStrategy` | when the contents mount: `eager`, `lazy`, `visible`; left out, `eager` (`lazy` for a modal or a dialog) |
 | `children` | the tree |
 | `meta` | `meta.label` is the element's name in the builder's tree |
 

@@ -40,7 +40,7 @@ export const clickThrough = async (
       return { problem: `${target} is not on the page: --click takes an element's name, a tag or a selector.` };
     }
 
-    const element = taken.page.locator(read.selector).first();
+    const element = taken.page.locator(read.selector).filter({ visible: true }).first();
 
     const before = moments[moments.length - 1].png;
     try {
@@ -78,6 +78,8 @@ const stepText = (step: ShotStep): string => {
       return `${step.kind} ${step.target}`;
     case 'type':
       return `type ${step.target}`;
+    case 'drag':
+      return `drag ${step.target} ${String(step.dx)} ${String(step.dy)}`;
     case 'press':
       return `press ${step.key}`;
     case 'wait':
@@ -110,9 +112,18 @@ export const playSteps = async (
     changes.push({ label: at, changed: (await comparePictures(page, dataUrl(before), dataUrl(png))).changed });
   };
 
+  // The one shown: a page drawing a control per width hides the other — a field of a phone's drawer, the first in the
+  // document, timed out at 1440 where the column's own was there to type into (lx-controls).
+  const shown = (selector: string) => page.locator(selector).filter({ visible: true }).first();
   for (const [index, step] of steps.entries()) {
     try {
-      if (step.kind === 'click' || step.kind === 'hover' || step.kind === 'scroll' || step.kind === 'type') {
+      if (
+        step.kind === 'click' ||
+        step.kind === 'hover' ||
+        step.kind === 'scroll' ||
+        step.kind === 'type' ||
+        step.kind === 'drag'
+      ) {
         const read = await targetOn(page, step.target);
         if ('problem' in read || !read.found) {
           return {
@@ -140,17 +151,45 @@ export const playSteps = async (
         }
 
         if (step.kind === 'hover') {
-          await page.locator(read.selector).first().hover({ timeout: 3000 });
+          await shown(read.selector).hover({ timeout: 3000 });
           continue;
         }
 
         // Brought into view as a reader scrolling to it would: a hover was how design-1 reached the footer.
         if (step.kind === 'scroll') {
-          await page.locator(read.selector).first().scrollIntoViewIfNeeded({ timeout: 3000 });
+          await shown(read.selector).scrollIntoViewIfNeeded({ timeout: 3000 });
           continue;
         }
 
-        await page.locator(read.selector).first().click({ timeout: 3000 });
+        // Pressed at its middle, moved in steps a hand would make, let go: a range's handle, a slider, a card dragged.
+        if (step.kind === 'drag') {
+          const box = await shown(read.selector).boundingBox({ timeout: 3000 });
+          if (box === null) {
+            return { problem: `Step ${String(index + 1)}: ${step.target} is not shown — nothing to drag` };
+          }
+
+          // A range is pressed at its thumb, where its value puts it — at its middle, the handle on top of it moved
+          // instead (lx-controls' two-handle price range).
+          const along = await shown(read.selector).evaluate(node => {
+            if (!(node instanceof HTMLInputElement) || node.type !== 'range') {
+              return 0.5;
+            }
+
+            const [min, max] = [Number(node.min || 0), Number(node.max || 100)];
+
+            return max > min ? (Number(node.value) - min) / (max - min) : 0.5;
+          }, undefined);
+          // The thumb travels the track less its own width, about the input's height: at its end it sits inside it.
+          const thumb = Math.min(box.height, box.width);
+          const [x, y] = [box.x + thumb / 2 + (box.width - thumb) * along, box.y + box.height / 2];
+          await page.mouse.move(x, y);
+          await page.mouse.down();
+          await page.mouse.move(x + step.dx, y + step.dy, { steps: 12 });
+          await page.mouse.up();
+          continue;
+        }
+
+        await shown(read.selector).click({ timeout: 3000 });
         // Typed into what has the focus: a click that left it on no field sent the text to the page's own shortcuts.
         if (step.kind === 'type') {
           const editable = await page.evaluate(() => {
@@ -167,6 +206,9 @@ export const playSteps = async (
             };
           }
 
+          // In place of what it held, as a person selecting it first: typed after it, a price field kept its old amount too
+          // (lx-controls).
+          await page.keyboard.press('ControlOrMeta+A');
           await page.keyboard.type(step.text);
         }
       } else if (step.kind === 'press') {

@@ -103,11 +103,14 @@ carousel({ id: 'hero', label: 'Featured', items: 'site.data.slides', autoplay: 5
 
 A `carousel` takes `items` and a `row` as a list does, and writes the row into a `carouselTrack`; its other children are
 its controls, which read `carousel_hero.index`, `.count`, `.item` and `.items` (`list({ id: 'dots', items: 'hero.items',
-… })` for dots, `activeWhen(dot, '{{ list_dots.index == carousel_hero.index }}')` for the current one). Steps:
-`carouselNext`, `carouselPrevious`, `carouselGoTo(id, index)`, `carouselPlay`, `carouselPause`; it fires `onChange`.
+… })` for dots, `activeWhen(dot, '{{ list_dots.index == carousel_hero.index }}')` for the current one), and where it
+stands: `.atStart`, `.atEnd` (a `scroll` row at either end of its box, however many it shows; one that loops is never at
+one) and `.shown` (slides in view whole) — an arrow hidden at its end is `activeWhen(arrow, '{{ carousel_hero.atEnd }}', { variant: 'spent' })`.
+Steps: `carouselNext(id, by?)`, `carouselPrevious(id, by?)` — `'page'` moves a row by as many as it shows —,
+`carouselGoTo(id, index)`, `carouselPlay`, `carouselPause`; it fires `onChange`.
 
 - `mode: 'slide'` (one at a time, `transition` `slide`/`fade`/`none`, back enters from the left), `'marquee'` (`speed` px/s,
-  no seam), `'scroll'` (a row that snaps and swipes; next moves a slide). Several slides at once: the carousel's class
+  no seam), `'scroll'` (a row that snaps and swipes; next moves a slide, or a page). Several slides at once: the carousel's class
   sets `--plitzi-carousel-slide-width` and `--plitzi-carousel-gap`.
 - Autoplay holds still under the pointer (`pauseOnHover`), with keyboard focus inside, in a hidden tab and for reduced
   motion. In the builder it stands on its first slide. `label` names it for a screen reader.

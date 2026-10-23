@@ -36,7 +36,7 @@ import { watchPass, watchSpace } from './commands/watch';
 import { doctor } from './doctor';
 import { feedback } from './feedback';
 import { lint } from './lint';
-import { count, positiveInteger } from './options';
+import { count, positiveInteger, swallowedFlag } from './options';
 import { acceptTokenEverywhere, startUsage } from './runs/usage';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
 import { FUNCTIONS_DIR } from './scaffold/paths';
@@ -76,6 +76,13 @@ import type { LintOptions } from './lint';
  */
 
 program.name('plitzi').description('Plitzi command line').version(CLI_VERSION);
+// Every command: a flag whose value is the next flag is refused before it runs, never read as what it was not.
+program.hook('preAction', (_program, action) => {
+  const swallowed = swallowedFlag(action);
+  if (swallowed) {
+    action.error(swallowed);
+  }
+});
 
 /** A flag given more than once, as the list of every value. */
 const collect = (value: string, previous: string[]): string[] => [...previous, value];

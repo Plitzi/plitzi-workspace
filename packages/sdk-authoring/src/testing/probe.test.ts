@@ -468,4 +468,17 @@ describe('probePage / transparent', () => {
 
     expect(probePage(input(['later', 'play'])).hidden).toEqual([]);
   });
+
+  // lx-controls: a carousel's arrow at its row's start, hidden as the original's is, read as an arrival never played.
+  it('says a control put out of use — transparent, and disabled or passing the pointer on — apart, not hidden', () => {
+    sized(100, 20);
+    document.body.innerHTML =
+      '<button data-plitzi-el="back" disabled style="opacity: 0">‹ Previous</button>' +
+      '<button data-plitzi-el="on" style="opacity: 0; pointer-events: none">Next ›</button>' +
+      '<button data-plitzi-el="lost" style="opacity: 0">Buy</button>';
+    const findings = probePage(input(['back', 'on', 'lost']));
+
+    expect(findings.outOfUse).toEqual(['back', 'on']);
+    expect(findings.hidden.map(({ id }) => id)).toEqual(['lost']);
+  });
 });

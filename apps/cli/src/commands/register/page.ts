@@ -4,6 +4,7 @@ import { expectation, fill, positiveInteger, statusCode, timeZone, width, widths
 import { check } from '../check';
 import { importPage } from '../importPage';
 import { measure, sameProperties } from '../measure';
+import { outline } from '../outline';
 import { pageSame } from '../same';
 import { shotEach, SHOT_MOMENTS } from '../shot';
 import { API_OPTION, DRY_RUN_OPTION, schemeOption, URL_OPTION, widthsOption } from './options';
@@ -11,6 +12,7 @@ import { API_OPTION, DRY_RUN_OPTION, schemeOption, URL_OPTION, widthsOption } fr
 import type { CheckOptions } from '../check';
 import type { ImportOptions } from '../importPage';
 import type { MeasureOptions } from '../measure';
+import type { OutlineOptions } from '../outline';
 import type { SameOptions } from '../same';
 import type { ShotOptions } from '../shot';
 import type { Command } from 'commander';
@@ -126,6 +128,10 @@ export const registerPage = (pageGroup: Command): void => {
       'Hover an element on both pages first — "fight-card => .fight-card" — and measure the rest as it leaves them, its transitions finished'
     )
     .option('--focus <element>', 'Focus an element on both pages first, as --hover does')
+    .option(
+      '--click <element...>',
+      'Click elements on both pages first, in order — "filters-toggle => .facets__open" — and measure the open state they leave'
+    )
     .addOption(
       new Option(
         '--same <properties>',
@@ -144,6 +150,25 @@ export const registerPage = (pageGroup: Command): void => {
     .option('--url <origin>', URL_OPTION)
     .option('--json', 'One object, for a tool or an agent')
     .action((route: string, elements: string[], options: MeasureOptions) => measure(route, elements, options));
+
+  pageGroup
+    .command('outline')
+    .argument('<path>', 'The page: /collections/laptops')
+    .description(
+      'What a page is made of, as a visitor sees it — each element by a selector page measure takes, its box and first words; the other site’s with --compare'
+    )
+    .option('--compare <url>', 'The other site: its page outlined instead — what to name after "=>" in page measure')
+    .option('--within <element>', 'One part alone — its element’s name, a tag or any selector')
+    .addOption(new Option('--depth <levels>', 'How many levels under the part are listed').argParser(positiveInteger))
+    .option(
+      '--click <element...>',
+      'Click elements first, in order — "filters-toggle => .facets__open", each page its own side — and outline what they open'
+    )
+    .addOption(new Option('--width <px>', 'The viewport width').argParser(width).default(1440))
+    .addOption(schemeOption())
+    .option('--url <origin>', URL_OPTION)
+    .option('--json', 'One object, for a tool or an agent')
+    .action((route: string, options: OutlineOptions) => outline(route, options));
 
   pageGroup
     .command('same')

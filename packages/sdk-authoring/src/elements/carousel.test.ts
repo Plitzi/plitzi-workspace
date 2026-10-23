@@ -109,4 +109,11 @@ describe('a carousel', () => {
       )
     ).toThrow();
   });
+
+  // lx-controls: a shop's arrows move a row of cards a page at a press; one slide a press could not be made a group.
+  it('moves a row a page when asked, and writes nothing more for the slide it always moved', () => {
+    expect(carouselNext('picks', 'page').params).toEqual({ by: 'page' });
+    expect(carouselPrevious('picks', 'page').params).toEqual({ by: 'page' });
+    expect(carouselNext('picks').params).toEqual({});
+  });
 });

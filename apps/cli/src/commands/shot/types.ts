@@ -93,6 +93,11 @@ export interface CompareReport {
   /** `--clip` with `--compare`: the one section the regions were kept to — the rest of the report is the whole page's. */
   section?: string;
   /**
+   * `--click` with `--compare`: the state both pages were pictured in, the clicks of each in words — what is on the
+   * screen once each was clicked, a drawer, a panel (lx-controls' designer clicked the original by a script of its own).
+   */
+  state?: string;
+  /**
    * That section lined up with a part of the other page that is not it: what its numbers measure is something else —
    * said, never a "99.5% differs" read as the section's (velada-polish: sponsors against the original's hero).
    */

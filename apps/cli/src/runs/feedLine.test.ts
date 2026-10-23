@@ -34,6 +34,12 @@ describe('the activity, in words', () => {
     expect(said).toMatchObject({ kind: 'other', text: 'checked t-home: what fails is not its own — author' });
   });
 
+  it('says what a kept count of tokens is', () => {
+    expect(
+      feedOf({ at: '2026-10-23T12:49:18.473Z', by: 'lead', action: 'tokens', agents: ['dev-1', 'design-1'] })?.text
+    ).toBe('kept what the harness counted each agent spent: dev-1, design-1');
+  });
+
   it('says what an agent’s last command was about', () => {
     expect(
       commandDoing(

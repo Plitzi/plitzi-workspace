@@ -31,6 +31,13 @@ export const clampIndex = (index: unknown, count: number): number => {
 /** The way a jump goes: on to a later slide, back to an earlier one. */
 export const directionOf = (from: number, to: number): CarouselDirection => (to < from ? 'previous' : 'next');
 
+/** The gap between two slides of a scrolling row, in pixels. */
+const gapOf = (scroller: HTMLElement): number => {
+  const gap = Number.parseFloat(getComputedStyle(scroller).columnGap);
+
+  return Number.isFinite(gap) ? gap : 0;
+};
+
 /** How far one slide is from the next in a scrolling row: its width and the gap after it. */
 export const slideStep = (scroller: HTMLElement): number => {
   const slide = scroller.firstElementChild;
@@ -38,7 +45,36 @@ export const slideStep = (scroller: HTMLElement): number => {
     return 0;
   }
 
-  const gap = Number.parseFloat(getComputedStyle(scroller).columnGap);
-
-  return slide.offsetWidth + (Number.isFinite(gap) ? gap : 0);
+  return slide.offsetWidth + gapOf(scroller);
 };
+
+/** How far a press moves: one slide, or a page — as many slides as the row shows whole. */
+export type CarouselStep = 'slide' | 'page';
+
+/** A step a flow wrote, as one the carousel takes: a page when it says so, a slide otherwise. */
+export const stepOf = (by: unknown): CarouselStep => (by === 'page' ? 'page' : 'slide');
+
+/**
+ * Where a carousel stands: at its first slide, at its last — a scrolling row at either end of its box, however many
+ * slides it shows (several in view, its index never reaches the last) — and how many slides it shows whole.
+ */
+export type CarouselEdges = { atStart: boolean; atEnd: boolean; shown: number };
+
+/** A scrolling row's edges, read off its box: a pixel of rounding either way is an end reached. */
+export const rowEdges = (scroller: HTMLElement): CarouselEdges => {
+  const step = slideStep(scroller);
+  const left = scroller.scrollLeft;
+
+  return {
+    atStart: left <= 1,
+    atEnd: left + scroller.clientWidth >= scroller.scrollWidth - 1,
+    shown: step > 0 ? Math.max(1, Math.floor((scroller.clientWidth + gapOf(scroller) + 1) / step)) : 1
+  };
+};
+
+/** A carousel of one slide at a time: at an end only where it stops there, never round one when it loops. */
+export const slideEdges = (index: number, count: number, loop: boolean): CarouselEdges => ({
+  atStart: !loop && index <= 0,
+  atEnd: !loop && index >= count - 1,
+  shown: 1
+});

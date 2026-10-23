@@ -5,16 +5,16 @@
 A large job split across a team of agents: each task works in a **copy**, the CLI checks and merges, and only **one
 final merge, approved by a person**, writes into the project. One run at a time per project.
 `--json` on any command (or `PLITZI_JSON=1`) answers one object with `said`, the sentence a person reads; each refusal
-has its exit code (below). A text written `-` is read from stdin (no quoting).
+has its exit code (below). A text written `-` is read from stdin.
 
 **The team.** The **lead** plans, reviews, answers and closes; past four agents, **leads that review** beside it
 (`lead-2`…, started by the lead) review what they are
 handed as strictly, answer the questions handed them, and stop when told — the rest is the lead's (`lead-only`, 25).
 The team is `.plitzi/team.json`: each agent's name, roles, count, model. Tasks name a role (`"role":
 "designer"`; `developer` when left out); `plitzi task next --role designer --follow --take --agent design-1` waits
-(8 min, `--timeout`) for the next one and takes it, handing back first a task you hold that can go on — or another's
-sent back while its agent is at a task (3 min on, you are handed its review's asks; its agent is told); a wait that ends
-is no reason to stop: run it again until it says you can. Started at a
+(8 min, `--timeout`) for the next one and takes it, handing back first a task you hold that can go on, or another's
+sent back while its agent is at a task (3 min on, you are handed its review's asks; its agent is told); run it again
+until it says you can stop. Started at a
 level, say it (`--quality high`, as `run plan` gave your command): you are handed tasks of it or below.
 **A designer** reviews the others' UI/UX before the lead's complete review: its half is [runs-designer.md](runs-designer.md). **A tester** gets `<task>-tests` after each developer task: tests of
 what its acceptance asked, both sides of each condition (a page's in `visual/<page>.spec.ts`, a module's beside it,
@@ -29,8 +29,7 @@ cd <work> && plitzi task context   # the brief, its files' data and imports (--f
 ```
 
 Inside `work`, a command knows its task and run (`tmp/plitzi-task.json`) — never who you are.
-`plitzi` is the project's `node_modules/.bin/plitzi` — by its whole path from a task's copy, as `task take` prints it;
-`npx plitzi` is ~0.2 s slower a call.
+`plitzi` is the project's `node_modules/.bin/plitzi`, by its whole path from a task's copy (`npx` is ~0.2 s slower).
 
 **Your token is who you are.** Your first command names you (`--agent design-1`) and answers your token
 (`<run>.@design-1.<secret>`) and the whole path it is kept at: pass it on **every** command after, in a task's copy too
@@ -38,16 +37,17 @@ Inside `work`, a command knows its task and run (`tmp/plitzi-task.json`) — nev
 token under another's name, a name or a role not the team's: refused (`identity`, 26).
 
 - **Write only in `work`**, never in the project; run the project's scripts there (no `node_modules` nor `.env` of its
-  own; its warning is expected). `plitzi page check /pets --width 1440,390` from `work` serves the copy (kept 3 min);
-  a server of your own there is stopped by its port (`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)`), never `pkill -f`. What
+  own; its warning is expected). `plitzi page check /pets --width 1440,390` from `work` serves the copy for the CLI's
+  commands (kept 3 min); a script of your own serves it itself (`PORT=<free> npm start` in `work`) and stops it by its
+  port (`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)`), never `pkill -f`. What
   is yours beside the work — a script, a log, a picture — goes in the copy's `tmp/`; between tasks,
   `tmp/plitzi-runs/<run>/scratch/<your name>/`; never the project's `tmp/`.
 - **Spend the heavy commands well: a run makes hundreds.** `task check`, `task look`, `page check|shot|measure` take
-  3–10 s each; `task next|context|show|inbox|tell` a tenth. Change a batch, then check once — never after every edit;
+  3–10 s each; `task next|context|show|inbox|tell` 0.3 s. Change a batch, then check once — never after every edit;
   one acceptance line: `task check --acceptance`. Asked again with nothing changed, a check or a look says its last
   answer (`--fresh` runs it anew), and `complete` right after a passing check takes it. Every element and width in one
-  `page measure` call (`--hover <el>` for a state) — trying values, measure (~3 s), never `task check` (~10 s); a
-  picture only for what a check cannot tell.
+  `page measure` call (`--hover <el>`, `--click <el…>` for a state) — trying values, measure (~3 s), never `task check` (~10 s); a
+  picture for what a check cannot tell.
 - **Only your files.** A file another task at work holds is refused at `complete`, naming it — `plitzi task discard
 <file>` puts it back (and brings the run's version of any file); propose the change to that task instead. **Name
   what you declare by your part** — classes and provider ids (`hero-title`, `fightsList`), never `title`: another
@@ -83,7 +83,7 @@ takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | 
   said meanwhile. What you declare for later tasks, unread yet, is a warning.
 - **Done:** `plitzi task complete [--note "what to look at"] [--review code|ui]` — the note goes to the lead with it;
   `code` when nothing a visitor sees changed (the lead's review alone), `ui` for its UI looked at first — the project's
-  checks and the acceptance's run in the copy. A control you add you use first (`page shot --click`). **A task never ends
+  checks and the acceptance's run in the copy. A control you add you use first, there and back (`page shot --click`). **A task never ends
   with failing checks** — lint, types, tests: fix them — nor with a file it took past 400 non-blank lines (your
   heartbeat says so first): split it. Only for a weighty reason: `plitzi task complete
 --known-failure "why" [--fixed-by <task>|lead]`, its why naming each failing step. A check that fails the same way without your change (a person's,

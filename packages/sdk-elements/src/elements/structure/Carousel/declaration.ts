@@ -2,10 +2,25 @@
 import { elementDeclaration } from '@plitzi/sdk-shared/authoring';
 
 import type { CarouselProps } from './Carousel';
+import type { InteractionCallbackParam } from '@plitzi/sdk-shared';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring';
 
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
 export type CarouselAttributes = AuthorableAttributes<CarouselProps>;
+
+/**
+ * How far a press moves a `scroll` carousel: one slide, or a page — as many as its row shows whole, the way a shop's
+ * arrows move a row of cards (lx-controls: one slide a press could not be made a group).
+ */
+const BY: InteractionCallbackParam = {
+  type: 'select',
+  label: 'How far',
+  defaultValue: 'slide',
+  options: [
+    { label: 'One slide', value: 'slide' },
+    { label: 'A page — as many as it shows', value: 'page' }
+  ]
+};
 
 const declaration = elementDeclaration<CarouselAttributes>()({
   type: 'carousel',
@@ -20,8 +35,8 @@ const declaration = elementDeclaration<CarouselAttributes>()({
     }
   },
   callbacks: {
-    next: { action: 'next', title: 'Next Slide', type: 'callback', params: {}, preview: {} },
-    previous: { action: 'previous', title: 'Previous Slide', type: 'callback', params: {}, preview: {} },
+    next: { action: 'next', title: 'Next Slide', type: 'callback', params: { by: BY }, preview: {} },
+    previous: { action: 'previous', title: 'Previous Slide', type: 'callback', params: { by: BY }, preview: {} },
     goTo: {
       action: 'goTo',
       title: 'Go To Slide',

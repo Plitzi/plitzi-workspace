@@ -35,6 +35,16 @@ const staysOpen = (request: SettlingRequest): boolean => {
 };
 
 /**
+ * A request for a page to come, not this one — a prefetch or prerender the browser sends as it idles: a shop's 126
+ * checkout scripts, fetched one after another, held every `page measure` of it 10 s past its look (lx-controls).
+ */
+const forLater = (request: SettlingRequest): boolean => {
+  const { 'sec-purpose': secPurpose = '', purpose = '' } = request.headers();
+
+  return /prefetch|prerender/.test(`${secPurpose} ${purpose}`);
+};
+
+/**
  * Opens a page and waits until it has settled: its document in, and nothing asked for in `quietMs` — the server data,
  * the images, the plugins it fetches after the HTML.
  *
@@ -50,7 +60,7 @@ export const openPage = async (
   const open = new Set<SettlingRequest>();
   let lastChange = Date.now();
   const started = (request: SettlingRequest) => {
-    if (!staysOpen(request)) {
+    if (!staysOpen(request) && !forLater(request)) {
       open.add(request);
       lastChange = Date.now();
     }

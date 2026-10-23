@@ -2,7 +2,8 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { measuredText, measureOn, pairOf, putIn, readingText, sameProperties } from './measure';
+import { measuredText, measureOn, pairOf, readingText, sameProperties } from './measure';
+import { putIn, stateText } from './measureState';
 import { differences, MEASURED } from './measureValues';
 
 import type { Measured } from './measureValues';
@@ -48,26 +49,29 @@ describe('page measure', () => {
   // velada-backlog: the medal's fill fades in on its card's hover — measured by hand, with a script of design-1's own.
   it('puts a page in the state asked before measuring — hovered or focused, its transitions waited for — or says why not', async () => {
     const acts: string[] = [];
-    const stand = (count: number, act: () => Promise<void>) =>
+    const stand = (count: number, act: () => Promise<void>) => {
+      const element = {
+        count: () => Promise.resolve(count),
+        hover: () => act().then(() => acts.push('hover')),
+        focus: () => act().then(() => acts.push('focus')),
+        click: () => act().then(() => acts.push('click'))
+      };
+
       // A stand-in of a page: what putIn reads of one — its address, the element found, the state put, the wait.
-      ({
+      return {
         url: () => 'http://127.0.0.1:8080/combates',
-        locator: () => ({
-          first: () => ({
-            count: () => Promise.resolve(count),
-            hover: () => act().then(() => acts.push('hover')),
-            focus: () => act().then(() => acts.push('focus'))
-          })
-        }),
-        evaluate: () => Promise.resolve(acts.push('settled'))
-      }) as unknown as Parameters<typeof putIn>[0];
-    const state = { kind: 'hover' as const, pair: pairOf('fight-card => .fight-card') };
+        locator: () => ({ first: () => element, filter: () => ({ first: () => element }) }),
+        evaluate: () => Promise.resolve(acts.push('settled')),
+        waitForTimeout: () => Promise.resolve()
+      } as unknown as Parameters<typeof putIn>[0];
+    };
+    const state = { kind: 'hover' as const, pairs: [pairOf('fight-card => .fight-card')] };
 
     expect(
       await putIn(
         stand(1, () => Promise.resolve()),
         state,
-        'fight-card'
+        'here'
       )
     ).toBeUndefined();
     expect(acts).toEqual(['hover', 'settled']);
@@ -75,7 +79,7 @@ describe('page measure', () => {
       await putIn(
         stand(0, () => Promise.resolve()),
         state,
-        'fight-card'
+        'here'
       )
     ).toEqual({
       problem: 'No element fight-card to hover on http://127.0.0.1:8080/combates'
@@ -84,11 +88,24 @@ describe('page measure', () => {
       await putIn(
         stand(1, () => Promise.reject(new Error('Timeout 5000ms exceeded.\n  waiting for…'))),
         { ...state, kind: 'focus' },
-        'fight-card'
+        'there'
       )
     ).toEqual({
-      problem: 'fight-card could not be focused on http://127.0.0.1:8080/combates: Timeout 5000ms exceeded.'
+      problem: '.fight-card could not be focused on http://127.0.0.1:8080/combates: Timeout 5000ms exceeded.'
     });
+
+    // lx-controls: an open state — a drawer, then a panel in it — clicked in turn on each page, each settled.
+    acts.length = 0;
+    const opened = { kind: 'click' as const, pairs: [pairOf('toggle => .open'), pairOf('row => summary')] };
+    expect(
+      await putIn(
+        stand(1, () => Promise.resolve()),
+        opened,
+        'there'
+      )
+    ).toBeUndefined();
+    expect(acts).toEqual(['click', 'settled', 'click', 'settled']);
+    expect(stateText(opened, 'there')).toBe('.open, then summary clicked');
   });
 
   // velada-backlog: design-1 measured `.home-faq-answer-text` — the element's id, written as a class — and was told

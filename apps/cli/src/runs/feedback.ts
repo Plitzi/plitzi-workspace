@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { noticesOf } from './notices';
+import { noticesByOwner } from './notices';
 import { buildReport } from './report';
 import { readRunLog } from './run';
 import { commandName } from './runMetrics';
@@ -38,7 +38,7 @@ export const buildFeedback = async (ctx: RunContext, loaded: LoadedRun): Promise
   const report = await buildReport(ctx, loaded);
   const { metrics } = report;
   const log = await readRunLog(loaded.paths);
-  const ofPlitzi = (await noticesOf(loaded)).filter(notice => notice.about === 'plitzi');
+  const ofPlitzi = (await noticesByOwner(loaded)).plitzi;
   const crashed = log.filter(entry => entry.action === 'crashed');
   const refusals = Object.entries(metrics.refusals.byCode).sort(([, a], [, b]) => b.times - a.times);
   const ownSteps = Object.entries(metrics.checks.byStep).sort(([, a], [, b]) => b - a);

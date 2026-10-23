@@ -8,7 +8,7 @@ import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import CarouselContext from './CarouselContext';
-import { clampIndex, directionOf, slideStep, stepIndex } from './carouselIndex';
+import { clampIndex, directionOf, rowEdges, slideEdges, slideStep, stepIndex, stepOf } from './carouselIndex';
 import declaration from './declaration';
 import useAutoplay from './useAutoplay';
 import pathFields from '../../../dataSource/pathFields';
@@ -20,7 +20,7 @@ import RootElement from '../../../Element/RootElement';
 import { rowKeys } from '../List/modes/ListControlled/rowKeys';
 
 import type { CarouselContextValue, CarouselMode, CarouselTransition } from './CarouselContext';
-import type { CarouselDirection } from './carouselIndex';
+import type { CarouselDirection, CarouselEdges, CarouselStep } from './carouselIndex';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
@@ -86,6 +86,15 @@ const Carousel = ({
   const rootRef = ref ?? ownRef;
   const scrollerRef = useRef<HTMLDivElement>(null);
   const current = clampIndex(index, count);
+  // A scrolling row's ends are its box's, measured as it scrolls; a carousel of one slide at a time stands where its
+  // index is. A row several slides wide never brought its index to the last: its end could not be known (lx-controls).
+  const [rowAt, setRowAt] = useState<CarouselEdges>({ atStart: true, atEnd: count <= 1, shown: 1 });
+  const edges: CarouselEdges =
+    mode === 'scroll'
+      ? rowAt
+      : mode === 'marquee'
+        ? { atStart: false, atEnd: false, shown: 1 }
+        : slideEdges(current, count, loop);
 
   // A carousel whose items shrank under it shows the last one there is rather than nothing.
   useEffect(() => {
@@ -108,34 +117,45 @@ const Carousel = ({
     [count, current, id, interactionsManager, list]
   );
 
-  /** A `scroll` carousel moves its box by whole slides, gap included; its index follows what the box shows. */
-  const scrollBySlide = useCallback((delta: number) => {
+  /**
+   * A `scroll` carousel moves its box by whole slides, gap included — one, or a page of as many as it shows whole; its
+   * index follows what the box shows.
+   */
+  const scrollBySlide = useCallback((delta: number, by: CarouselStep = 'slide') => {
     const scroller = scrollerRef.current;
     const step = scroller ? slideStep(scroller) : 0;
     if (scroller && step > 0) {
-      scroller.scrollBy({ left: delta * step, behavior: 'smooth' });
+      const slides = by === 'page' ? rowEdges(scroller).shown : 1;
+      scroller.scrollBy({ left: delta * slides * step, behavior: 'smooth' });
     }
   }, []);
 
-  const next = useCallback(() => {
-    if (mode === 'scroll') {
-      scrollBySlide(1);
+  // A page of a carousel that shows one slide at a time is that slide.
+  const next = useCallback(
+    (params: InteractionCallbackParamValues<{ by?: unknown }> = {}) => {
+      if (mode === 'scroll') {
+        scrollBySlide(1, stepOf(params.by));
 
-      return;
-    }
+        return;
+      }
 
-    moveTo(stepIndex(current, count, 1, loop), 'next');
-  }, [count, current, loop, mode, moveTo, scrollBySlide]);
+      moveTo(stepIndex(current, count, 1, loop), 'next');
+    },
+    [count, current, loop, mode, moveTo, scrollBySlide]
+  );
 
-  const previous = useCallback(() => {
-    if (mode === 'scroll') {
-      scrollBySlide(-1);
+  const previous = useCallback(
+    (params: InteractionCallbackParamValues<{ by?: unknown }> = {}) => {
+      if (mode === 'scroll') {
+        scrollBySlide(-1, stepOf(params.by));
 
-      return;
-    }
+        return;
+      }
 
-    moveTo(stepIndex(current, count, -1, loop), 'previous');
-  }, [count, current, loop, mode, moveTo, scrollBySlide]);
+      moveTo(stepIndex(current, count, -1, loop), 'previous');
+    },
+    [count, current, loop, mode, moveTo, scrollBySlide]
+  );
 
   const goTo = useCallback(
     (params: InteractionCallbackParamValues<{ index?: unknown }>) => {
@@ -152,7 +172,10 @@ const Carousel = ({
   );
 
   const onScrolledTo = useCallback(
-    (target: number) => {
+    (target: number, at: CarouselEdges) => {
+      setRowAt(was =>
+        was.atStart === at.atStart && was.atEnd === at.atEnd && was.shown === at.shown ? was : at
+      );
       if (target !== current) {
         moveTo(target, directionOf(current, target));
       }
@@ -180,9 +203,19 @@ const Carousel = ({
     [goTo, next, previous]
   );
 
+  const { atStart, atEnd, shown } = edges;
   const published = useMemo(
-    () => ({ items: list, count, index: current, item: list[current], playing: playing && autoplay > 0 }),
-    [autoplay, count, current, list, playing]
+    () => ({
+      items: list,
+      count,
+      index: current,
+      item: list[current],
+      playing: playing && autoplay > 0,
+      atStart,
+      atEnd,
+      shown
+    }),
+    [atEnd, atStart, autoplay, count, current, list, playing, shown]
   );
   const sourceFields = useCallback(() => pathFields(published), [published]);
   useRegisterSource({ id, source, name: elementLabel || `Carousel - ${id}`, fields: sourceFields });

@@ -83,7 +83,8 @@ are closed as its run is applied, each saying the task and the run that did it.
 **The run's feedback to Plitzi** (`feedback.ts`): what a run says of Plitzi itself — the CLI, the platform, its docs —
 written as the run finishes or is aborted to `.plitzi/feedback/<run>.md` (`run feedback` writes it before), for the
 person to share with Plitzi's team; never sent by itself. It holds the notices of Plitzi (`run notice --plitzi "…"`, which
-the agents' prompt asks for as a friction happens, and which never reach the project's backlog), what the audit saw go
+the agents' prompt asks for as a friction happens and `task next` asks again of an agent that may stop; the dry finish
+and the report list them apart from the project's next stage, and they never reach the project's backlog), what the audit saw go
 wrong in how the run was worked, the refusals by code, the commands that crashed, the checks failed for the work and for
 nothing of it, the calls made again and again, and the run's measures — nothing of the project: no code, no token, the
 project's folder and the person's home said as `<project>` and `~`. A run's log goes with the run and a report is read by nobody planning the next one: velada-polish's lead
@@ -142,7 +143,10 @@ a heartbeat, a write: `TaskView.workedAt`, never a review that sent it back); th
 or "finds out" only at a review or a spike a card names it on; what it did lately with nothing in hand is its last, idle
 — a pending task's card says whom it follows (`t-motion ← t-boxer, t-lint`) (`f` hides it), a stage with more cards than it shows scrolled by the wheel over it
 (`↑ 5 · + 7 more`, `FlowColumn`, `wheelTarget`); the tasks left and the agents, each with its state — at work,
-waiting, asking the lead, stopped, done, idle while its task waits for its review — fifteen listed at most, the rest scrolled to with ↑↓ — and the approved
+waiting, asking the lead, stopped, done, idle while its task waits for its review — each saying what it is at in words:
+the step it reported in its own (`task progress --step`), else what it ran last ("measuring /cart against the
+original"); one not started says so, one running before anything of it reached the log is "getting started", and none
+shows a command line, which is the lead's to read in `run watch` — fifteen listed at most, the rest scrolled to with ↑↓ — and the approved
 folded in a line naming them (`a`); last the activity in columns (time, who → whom for a message, task, what), every row
 the rest leaves, down to the terminal's foot, an event repeated in a row one line
 (×N, opened and folded with a click), paged with ← → and the wheel. It fits the terminal it is in (`monitorBoard.ts`,

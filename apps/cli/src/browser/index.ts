@@ -69,6 +69,8 @@ export interface PageElement {
   fill(value: string, options: { timeout: number }): Promise<void>;
   setChecked(checked: boolean, options: { timeout: number }): Promise<void>;
   selectOption(value: string, options: { timeout: number }): Promise<unknown>;
+  /** Where it is drawn on the screen, or null when it is not: what a drag presses at. */
+  boundingBox(options: { timeout: number }): Promise<{ x: number; y: number; width: number; height: number } | null>;
 }
 
 /** A request the page made, held by `route`: answered here, or let through as it was. */
@@ -90,8 +92,11 @@ export interface PageRoute {
 export interface BrowserPage {
   goto(url: string, options: { waitUntil: 'load' | 'domcontentloaded' | 'networkidle' }): Promise<unknown>;
   screenshot(options: { fullPage: boolean }): Promise<Uint8Array>;
-  /** The first element the selector finds — Playwright's own, which scrolls whatever pane holds it into view. */
-  locator(selector: string): { first(): PageElement };
+  /**
+   * The first element the selector finds — Playwright's own, which scrolls whatever pane holds it into view — or the
+   * first of them shown (`filter({ visible: true })`): a page that draws one control per width hides the other.
+   */
+  locator(selector: string): { first(): PageElement; filter(options: { visible: boolean }): { first(): PageElement } };
   evaluate<R, A>(fn: (input: A) => R | Promise<R>, input: A): Promise<R>;
   waitForSelector(selector: string, options: { timeout: number }): Promise<unknown>;
   waitForTimeout(milliseconds: number): Promise<void>;
@@ -99,6 +104,12 @@ export interface BrowserPage {
   waitForLoadState(state: 'load'): Promise<void>;
   /** The keyboard, as a person types on it: into whatever has the focus. */
   keyboard: { press(key: string): Promise<void>; type(text: string): Promise<void> };
+  /** The pointer, as a hand moves it: pressed, moved in steps, let go — a drag. */
+  mouse: {
+    move(x: number, y: number, options?: { steps: number }): Promise<void>;
+    down(): Promise<void>;
+    up(): Promise<void>;
+  };
   /** A stylesheet added to the page as it is now: what a capture leaves out or holds still. */
   addStyleTag(options: { content: string }): Promise<unknown>;
   /** A function run in each document the page opens, before its own scripts. */

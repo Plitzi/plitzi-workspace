@@ -73,6 +73,9 @@ describe('the run’s feedback to Plitzi', () => {
     const finished = await finishRun(bench.person(true), runId, { apply: true, leavePending: true });
 
     expect(finished.backlog).toEqual(['b-1']);
+    // Said apart at the finish: what is Plitzi's is never listed as the project's next stage (lx-controls).
+    expect(finished.noticed).toEqual(['The footer’s legal line wraps at 390 — lead']);
+    expect(finished.ofPlitzi).toEqual(['page measure reads no position, and every agent wrote a script for it — lead']);
     expect((await openBacklog(bench.root)).map(item => item.text)).toEqual(['The footer’s legal line wraps at 390']);
     const feedback = await fs.readFile(finished.feedback ?? '', 'utf-8');
     expect(feedback).toContain(`# Plitzi feedback — run ${runId}`);

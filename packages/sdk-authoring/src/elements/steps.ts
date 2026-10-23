@@ -311,10 +311,23 @@ export const toggleElement = (
   params
 });
 
-type ScrollMove = { x?: string; y?: string; behavior?: ScrollStepBehavior };
+/** An amount a box scrolls by or to: pixels — a number, or its digits — or a share of what it shows (`'80%'`). */
+type ScrollAmount = string | number;
+
+type ScrollMove = { x?: ScrollAmount; y?: ScrollAmount; behavior?: ScrollStepBehavior };
 
 /**
- * Moves what an element's box shows — a row of cards with `overflow: auto`, a panel — by an amount: pixels (`'240'`) or
+ * A move as its step's params hold it: each amount as text, the way the step's editor writes it — a number of pixels
+ * was refused by the type (`{ x: -180 }`, lx-controls' designer), though pixels are what most moves are.
+ */
+const moveParams = ({ x, y, behavior }: ScrollMove): Record<string, string> => ({
+  ...(x === undefined ? {} : { x: String(x) }),
+  ...(y === undefined ? {} : { y: String(y) }),
+  ...(behavior === undefined ? {} : { behavior })
+});
+
+/**
+ * Moves what an element's box shows — a row of cards with `overflow: auto`, a panel — by an amount: pixels (`240`) or
  * a share of what the box shows (`'80%'`); negative goes back. `target` is the element whose box scrolls.
  *
  * `[onClick(), scrollBy('cards', { x: '80%' })]` is the "next" arrow over a row that still swipes on a phone.
@@ -324,7 +337,7 @@ export const scrollBy = (target: string, move: ScrollMove): StepSpec => ({
   action: 'scrollBy',
   title: 'Scroll By',
   on: target,
-  params: { ...move }
+  params: moveParams(move)
 });
 
 /** Moves an element's box to a place: `'start'`, `'end'`, pixels from the start, or a share of the way (`'50%'`). */
@@ -333,7 +346,7 @@ export const scrollTo = (target: string, place: ScrollMove): StepSpec => ({
   action: 'scrollTo',
   title: 'Scroll To',
   on: target,
-  params: { ...place }
+  params: moveParams(place)
 });
 
 /**
@@ -426,11 +439,22 @@ const carouselStep = (
   params
 });
 
-/** The carousel `target` shows its next slide — round to the first after the last when it loops. */
-export const carouselNext = (target: string): StepSpec => carouselStep(target, 'next', 'Next Slide');
+/**
+ * How far a press moves a `scroll` carousel: one slide, or `page` — as many as its row shows whole, the way a shop's
+ * arrows move a row of cards. A carousel of one slide at a time moves one either way.
+ */
+export type CarouselBy = 'slide' | 'page';
 
-/** The carousel `target` shows its previous slide; the slide enters from the left. */
-export const carouselPrevious = (target: string): StepSpec => carouselStep(target, 'previous', 'Previous Slide');
+/**
+ * The carousel `target` shows its next slide — round to the first after the last when it loops; `page`, a row's
+ * next page. Its source says where it stands: `carousel_<id>.atEnd` hides the arrow there.
+ */
+export const carouselNext = (target: string, by?: CarouselBy): StepSpec =>
+  carouselStep(target, 'next', 'Next Slide', by === 'page' ? { by } : {});
+
+/** The carousel `target` shows its previous slide — the slide enters from the left; `page`, a row's previous page. */
+export const carouselPrevious = (target: string, by?: CarouselBy): StepSpec =>
+  carouselStep(target, 'previous', 'Previous Slide', by === 'page' ? { by } : {});
 
 /**
  * The carousel `target` shows the slide at `index`, from 0 — a dot's own row: `carouselGoTo('hero', '{{ list_dots.index }}')`.

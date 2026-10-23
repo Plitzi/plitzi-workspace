@@ -32,7 +32,6 @@ const RANK: Partial<Record<Attention['kind'], number>> = {
   proposal: 6,
   'long-wait': 6,
   'long-task': 6,
-  'file-too-long': 6,
   'left-in-tmp': 6
 };
 

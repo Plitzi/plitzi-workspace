@@ -25,6 +25,11 @@ export interface ProbeFindings {
   /** Owed, and hidden at this width by a breakpoint on purpose — checked at the width it shows at, not a problem. */
   byWidth: string[];
   /**
+   * Controls put out of use on purpose — transparent and taking no press (disabled, or passing the pointer on): a
+   * carousel's arrow at its end, hidden as a shop's are. Said apart, not a problem (lx-controls' look flagged one).
+   */
+  outOfUse: string[];
+  /**
    * Containers with nothing in them and no size of their own — a shell another part of the work fills (a layout's
    * header before it is built): nothing a visitor misses, said apart. One with a size of its own (a band, a rule) shows.
    */
@@ -209,6 +214,19 @@ export function probePage(input: ProbeInput): ProbeFindings {
   const missing: string[] = [];
   const hidden: { id: string; reason: string }[] = [];
   const byWidth: string[] = [];
+  const outOfUse: string[] = [];
+  /** Transparent, and taking no press: put out of use, not an arrival that never played. */
+  const spent = (node: Element): boolean => {
+    const clear = transparentAt(node);
+
+    return (
+      clear !== undefined &&
+      (getComputedStyle(clear).pointerEvents === 'none' ||
+        getComputedStyle(node).pointerEvents === 'none' ||
+        node.matches(':disabled, [aria-disabled="true"]') ||
+        node.querySelector(':disabled, [aria-disabled="true"]') !== null)
+    );
+  };
   const notDrawn: string[] = [];
   const empty: string[] = [];
   const holdsNothing = (node: Element): boolean => node.childElementCount === 0 && node.textContent.trim() === '';
@@ -224,6 +242,8 @@ export function probePage(input: ProbeInput): ProbeFindings {
         byWidth.push(id);
       } else if (!hider && container === true && nodes.every(holdsNothing)) {
         empty.push(id);
+      } else if (!hider && nodes.every(spent)) {
+        outOfUse.push(id);
       } else {
         hidden.push({ id, reason: whyHidden(nodes[0], list === true) });
       }
@@ -627,6 +647,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
     hidden,
     notDrawn,
     byWidth,
+    outOfUse,
     empty,
     brokenImages,
     overflow,

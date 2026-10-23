@@ -1,7 +1,8 @@
 /**
  * Three carousels from one element: slides that change on their own with arrows and dots, a marquee of logos that
  * never ends, and a row of cards a visitor swipes. The slides, the dots and anything else inside read the carousel's
- * source — `carousel_<id>.index`, `.count`, `.item`, `.items` — and the arrows and dots are steps on it.
+ * source — `carousel_<id>.index`, `.count`, `.item`, `.items`, and `.atStart`, `.atEnd`, `.shown` for where it stands —
+ * and the arrows and dots are steps on it.
  */
 import {
   activeWhen,
@@ -39,6 +40,12 @@ const dots = styles('hero-dots', { display: 'flex', gap: 8, margin: '0px', paddi
 
 // Several slides at once: the carousel's class says how wide each is and the gap between them.
 const cards = styles('picks-row', { '--plitzi-carousel-slide-width': '240px', '--plitzi-carousel-gap': '16px' });
+
+// An arrow with nowhere to go is hidden and passes the pointer on, as a shop's arrows do at a row's ends.
+const arrow = styles('picks-arrow', {
+  css: { transition: 'opacity 0.2s' },
+  variants: { spent: { opacity: 0, pointerEvents: 'none' } }
+});
 
 export const recipe: SpaceSpec = {
   name: 'Carousels',
@@ -100,7 +107,8 @@ export const recipe: SpaceSpec = {
           items: ['Acme', 'Globex', 'Initech', 'Umbrella', 'Hooli'],
           row: r => text({ from: r.item, css: { padding: '0px 24px', fontWeight: 600 } })
         }),
-        // A row that swipes on a phone and snaps to each card; the arrows move it a card at a time.
+        // A row that swipes on a phone and snaps to each card; the arrows move it a page — as many cards as it shows —
+        // and each hides at its end.
         carousel({
           id: 'picks',
           label: 'Picks',
@@ -109,7 +117,20 @@ export const recipe: SpaceSpec = {
           items: SLIDES,
           row: r => container({ class: slide, children: [text({ from: `${r.item}.title` })] }),
           children: [
-            button({ content: '›', title: 'More picks', flows: [[onClick(), carouselNext('picks')]] }),
+            button({
+              content: '‹',
+              title: 'Earlier picks',
+              class: arrow,
+              bind: [activeWhen(arrow, '{{ carousel_picks.atStart }}', { variant: 'spent' })],
+              flows: [[onClick(), carouselPrevious('picks', 'page')]]
+            }),
+            button({
+              content: '›',
+              title: 'More picks',
+              class: arrow,
+              bind: [activeWhen(arrow, '{{ carousel_picks.atEnd }}', { variant: 'spent' })],
+              flows: [[onClick(), carouselNext('picks', 'page')]]
+            }),
             text({ from: 'picks.index', as: '{{ source + 1 }} of {{ carousel_picks.count }}' })
           ]
         })

@@ -142,7 +142,7 @@ export const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => 
     case 'notice':
       return line(
         'message',
-        `noticed, owned by no task: ${textOf(entry.text)}${typeof entry.on === 'string' ? ` (on ${entry.on})` : ''}`
+        `${entry.about === 'plitzi' ? 'noticed of Plitzi' : 'noticed, owned by no task'}: ${textOf(entry.text)}${typeof entry.on === 'string' ? ` (on ${entry.on})` : ''}`
       );
     case 'propose':
       return line('message', `proposed ${textOf(entry.proposal)} to ${textOf(entry.to)}`);
@@ -152,6 +152,9 @@ export const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => 
       return line('run', `made ${task} for ${textOf(entry.file)}`);
     case 'summary':
       return line('run', 'wrote the run’s summary, its report’s first part');
+    // A bare "tokens" said nothing of what was kept (lx-controls).
+    case 'tokens':
+      return line('run', `kept what the harness counted each agent spent: ${listOf(entry.agents)}`);
     case 'message':
       // Each message is in the feed by its own words, read from the messages.
       return undefined;

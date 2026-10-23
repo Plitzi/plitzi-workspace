@@ -22,6 +22,7 @@ const report = (issues: CheckReport['issues']): CheckReport => ({
   problems: issues.map(issue => issue.message),
   issues,
   hiddenAtWidth: [],
+  outOfUse: [],
   empty: [],
   consoleErrors: [],
   failedRequests: [],

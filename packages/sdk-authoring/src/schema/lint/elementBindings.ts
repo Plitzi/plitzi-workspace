@@ -136,8 +136,33 @@ export const checkBindings = (ctx: LintContext, element: Element, where: string)
         element.id
       );
     }
+
+    // A true/false attribute fed text: "false" is a word, and a word is on — lx-controls' arrow stayed disabled at
+    // every index, React warning in the console and nothing in authoring.
+    const onOff = typeof declared === 'boolean' || (declared === undefined && ON_OFF_ATTRIBUTES.has(binding.to));
+    if (category === 'attributes' && onOff && last?.action === 'twigTemplate' && last.params.returnMode !== 'value') {
+      ctx.error(
+        'template-text-into-value',
+        `${where} binds "${binding.to}", a true/false attribute, through a template that renders text: "false" is a word, and "${binding.to}" is on whatever word it gets. Hand over the value: \`bindTemplate('${binding.to}', source, '{{ … }}', { returns: 'value' })\`.`,
+        element.id
+      );
+    }
   }
 };
+
+/** The attributes HTML reads as on by being there at all, whatever their value. */
+const ON_OFF_ATTRIBUTES = new Set([
+  'disabled',
+  'checked',
+  'hidden',
+  'open',
+  'required',
+  'readOnly',
+  'selected',
+  'multiple',
+  'autoFocus',
+  'inert'
+]);
 
 /** A sample of an answer, shown by the builder: what it holds is content, never a template. */
 const DATA_ATTRIBUTES = new Set(['mockData']);

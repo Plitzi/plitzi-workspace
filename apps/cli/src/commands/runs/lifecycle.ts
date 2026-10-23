@@ -138,6 +138,12 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
               ...finished.noticed.map(each => `    - ${each}`)
             ]
           : []),
+        ...(finished.ofPlitzi.length > 0
+          ? [
+              '  Noticed of Plitzi itself — the run’s feedback to Plitzi carries it, written as the run ends:',
+              ...finished.ofPlitzi.map(each => `    - ${each}`)
+            ]
+          : []),
         ...(finished.leftInTmp
           ? [
               chalk.yellow(

@@ -129,5 +129,25 @@ describe('lintSpace', () => {
 
       expect(errorsOf(documents)).toContain('template-text-into-value');
     });
+
+    // lx-controls: `bindTemplate('disabled', …)` rendered "false", and the arrow stayed disabled at every index.
+    it('template-text-into-value, for a true/false attribute — and not once it hands over the value', () => {
+      const binding = (returnMode?: 'value') => ({
+        id: 'b1',
+        to: 'disabled',
+        source: 'state.atStart',
+        transformers: [
+          { action: 'twigTemplate', params: { template: '{{ source }}', ...(returnMode ? { returnMode } : {}) } }
+        ]
+      });
+      const fed = (returnMode?: 'value') =>
+        withChange(({ schema }) => {
+          addElement(schema, { id: 'back', type: 'button', attributes: { content: 'Back' } });
+          schema.flat.back.definition.bindings = { attributes: [binding(returnMode)] };
+        });
+
+      expect(errorsOf(fed())).toContain('template-text-into-value');
+      expect(errorsOf(fed('value'))).not.toContain('template-text-into-value');
+    });
   });
 });

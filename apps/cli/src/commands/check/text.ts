@@ -138,6 +138,10 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
     report.empty.length > 0
       ? chalk.dim(`  · empty, with nothing in them yet and no size: ${report.empty.join(', ')}`)
       : undefined;
+  const outOfUse =
+    report.outOfUse.length > 0
+      ? chalk.dim(`  · out of use on purpose — transparent and taking no press: ${report.outOfUse.join(', ')}`)
+      : undefined;
   if (report.ok) {
     return [
       chalk.green(
@@ -145,6 +149,7 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
       ),
       ...(atWidth ? [atWidth] : []),
       ...(empty ? [empty] : []),
+      ...(outOfUse ? [outOfUse] : []),
       ...held
     ].join('\n');
   }
@@ -155,6 +160,7 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
     ...report.consoleErrors.map(error => `  - console: ${error}`),
     ...report.failedRequests.map(request => `  - request refused: ${request}`),
     ...(empty ? [empty] : []),
+    ...(outOfUse ? [outOfUse] : []),
     ...held
   ].join('\n');
 };

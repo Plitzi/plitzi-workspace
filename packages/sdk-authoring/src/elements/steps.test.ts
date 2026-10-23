@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { closeModal, onLoad, onPageLoad, openModal, setFieldValue } from './steps';
+import { closeModal, onLoad, onPageLoad, openModal, scrollBy, scrollTo, setFieldValue } from './steps';
 
 describe('element trigger builders', () => {
   it('keeps the generic load event and exposes the page-specific one without raw action strings', () => {
@@ -34,5 +34,14 @@ describe('setFieldValue', () => {
       on: 'profile-form',
       params: { name: 'username', value: '{{ auth.details.username }}' }
     });
+  });
+});
+
+// lx-controls: `scrollBy('categories-row', { x: -180 })` was refused by the type, though pixels are what most moves are.
+describe('a scroll step', () => {
+  it('takes pixels as a number or as text, and a share of the box as text — each held as the editor writes it', () => {
+    expect(scrollBy('row', { x: -180 }).params).toEqual({ x: '-180' });
+    expect(scrollBy('row', { x: '80%', behavior: 'smooth' }).params).toEqual({ x: '80%', behavior: 'smooth' });
+    expect(scrollTo('row', { x: 'start' }).params).toEqual({ x: 'start' });
   });
 });

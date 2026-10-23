@@ -89,6 +89,14 @@ const Position = () => {
   );
 };
 
+/** What an arrow's binding reads: whether the carousel stands at an end — the original's arrows hide there. */
+const Ends = () => {
+  const sources = useElementDataSource({ sources: ['carousel_hero'] });
+  const carousel = sources.carousel_hero as { atStart?: boolean; atEnd?: boolean } | undefined;
+
+  return <span data-testid="ends">{carousel?.atStart ? 'start' : carousel?.atEnd ? 'end' : 'between'}</span>;
+};
+
 const renderCarousel = (props: Partial<CarouselProps> = {}) =>
   render(
     <StoreProvider value={{}}>
@@ -97,6 +105,7 @@ const renderCarousel = (props: Partial<CarouselProps> = {}) =>
           <SlideTitle />
         </CarouselTrack>
         <Position />
+        <Ends />
       </Carousel>
     </StoreProvider>
   );
@@ -133,12 +142,17 @@ describe('Carousel', () => {
     expect(container.querySelector('[aria-roledescription="slide"]')?.getAttribute('aria-label')).toBe('2 of 3');
   });
 
-  it('stops at the ends when it does not loop', () => {
+  it('stops at the ends when it does not loop, and says it is at one', () => {
     const { getByTestId } = renderCarousel({ loop: false });
 
     call('previous');
 
     expect(getByTestId('slide').textContent).toBe('First');
+    expect(getByTestId('ends').textContent).toBe('start');
+    call('next');
+    call('next');
+
+    expect(getByTestId('ends').textContent).toBe('end');
   });
 
   it('moves on by itself, and not while paused', () => {

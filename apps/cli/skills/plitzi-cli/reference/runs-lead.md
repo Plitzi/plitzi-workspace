@@ -130,7 +130,8 @@ applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** 
 - **Say what is so, read from its source** (the original's CSS, `task show`, the run's approved version), never from a
   copy, a class name or memory; never answer one way and tell another — a file a task holds is no one else's.
 - **A value is measured, never typed**: scoping, `plitzi page measure <path> "<el> => <sel>" … --compare
-<reference> --width 390,1440` (`--hover`: a state) each piece — whole, its box too, both widths, held by one
+<reference> --width 390,1440` (`--hover`, `--click`: a state; `page outline <path> --compare <reference>` names
+  theirs) each piece — whole, its box too, both widths, held by one
   acceptance line (`--same …`); "one class holds it" once grepped. A stage may be its `tasks` alone.
 - **The scope, before it ends** — most rounds of a run are its: (1) each element measured whole — its box (height,
   padding), its pseudo-elements, a hover — at 390 and 1440, never only the property the ask names; (2) where a value
@@ -167,8 +168,9 @@ applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** 
 - **The scope follows every link** of the pages it keeps — a 404 here that answers there is a task — and measures each
   section's box at 1920 too, where a column the original centres stretches here.
 - **A command you hand an agent you ran**, as a line you write: one `--same` refused cost a round.
-- **A control is used, not pictured** — an arrow, a dot, a pager: `page shot <path> --click <element>` at both widths,
-  and a task that adds one says so in its acceptance; a picture passes one that moves nothing.
+- **A control is used there and back, not pictured** — an arrow, a dot, a pager, a drawer: `page shot <path> --compare
+  <url> --click "ours => theirs"` at both widths (`page measure --click` for its open state's values), and a task that
+  adds one says so in its acceptance; a picture passes one that moves nothing, or otherwise than the original's.
 - **The designer's own task off the critical path** while it is the only one reviewing UI: what waits on it waits on
   every review too.
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red.

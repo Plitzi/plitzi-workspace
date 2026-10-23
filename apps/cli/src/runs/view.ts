@@ -7,7 +7,6 @@ import { designSkipText } from './designSkip';
 import { fingerprint } from './files';
 import { identifiedAgents } from './identity';
 import { askingLeads, UNTAKEN_REVIEW_MS } from './leads';
-import { longFileText, longFilesIn } from './longFiles';
 import { LEAD, messagesOf, unreadFor } from './messages';
 import { agentsNeeded, runningAgents } from './onDemand';
 import { under } from './paths';
@@ -104,7 +103,6 @@ export interface Attention {
     | 'proposal'
     | 'overwrite'
     | 'known-failure'
-    | 'file-too-long'
     | 'version'
     | 'left-in-tmp'
     | 'ui-waits'
@@ -364,18 +362,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       }
     }
 
-    // A file a task is making too long to read whole: the lead asks for the split while it is still cheap.
-    if (view.owner && isWorked(view.state.status)) {
-      for (const long of await longFilesIn(view.paths.work, ctx.root)) {
-        attention.push({
-          kind: 'file-too-long',
-          task: view.task.id,
-          file: long.file,
-          text: `${view.task.id}: ${longFileText(long)} — ask it to split it now, by what changes together (plitzi task message ${view.task.id} "…")`,
-          who: 'lead'
-        });
-      }
-    }
+    // A file a task makes too long is said to its agent by its own `task check` and refused at `complete` — never the
+    // lead's to relay: lx-controls' message arrived after the agent had split it, a stale warning read as current.
 
     if (view.owner && view.state.status !== 'done') {
       const start = await readStart(view.paths);

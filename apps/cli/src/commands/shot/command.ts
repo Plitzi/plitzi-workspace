@@ -12,10 +12,12 @@ import { keptPage } from '../../runs/reference';
 import { PROJECT_TMP } from '../../scaffold/paths';
 import { checkAccount, CHECK_PASSWORD_ENV } from '../check';
 import { projectHere } from '../existingProject';
+import { pairOf } from '../measure';
 import { parseSteps } from '../shotSteps';
 import { fail, UNANSWERED_EXIT } from '../terminal';
 import { capture, pictureOf, readPage } from './capture';
 import {
+  compareAfterClicks,
   compareText,
   compareLocalParts,
   compareWith,
@@ -256,10 +258,11 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
 
     return;
   }
-  if (options.compare && clicks.length > 0) {
+  // Clicked beside another site: the screens of both once clicked, side by side — no sections, frames or clip of them.
+  if (options.compare && clicks.length > 0 && (options.clip || (options.frames ?? 0) > 1 || options.sheet)) {
     await browser.close();
     fail(
-      '`--compare` sets the page beside another site as it loads: leave out --click, or picture the click on its own.'
+      '`--click` with `--compare` sets the screens of both side by side once clicked: leave out --clip, --frames and --sheet.'
     );
 
     return;
@@ -379,10 +382,11 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
           found => found.isDirectory(),
           () => false
         )));
+    // A PNG is named one: written without it beside its own `-compare.png`, the picture read as no picture (lx-controls).
     const out = asked
       ? intoFolder
         ? path.join(asked, file)
-        : asked
+        : asked.replace(/(\.png)?$/, '.png')
       : copy
         ? path.join(runPaths(copy.root, copy.run).shots, copy.task, file)
         : path.resolve(project.root, `${PROJECT_TMP}/shots/${file}`);
@@ -420,6 +424,16 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       const target = other.pathname === '/' ? new URL(pathname, other).href : other.href;
       // Against the page as the run kept it, where it did: the site may have changed since the run began.
       const kept = options.live ? undefined : await keptPage(project.root, target, view.width, taken.scheme);
+      const clickedBeside =
+        clicks.length > 0
+          ? await compareAfterClicks(browser, taken, target, view, clicks.map(pairOf), base)
+          : undefined;
+      if (clickedBeside && 'problem' in clickedBeside) {
+        fail(clickedBeside.problem);
+
+        return;
+      }
+
       const local = localPart
         ? await compareLocalParts(browser, taken, target, view, parts, base, otherPart)
         : undefined;
@@ -430,8 +444,9 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       }
 
       const single = local?.[0];
-      const compared =
-        parts.length > 1
+      const compared = clickedBeside
+        ? clickedBeside
+        : parts.length > 1
           ? undefined
           : single
             ? 'problem' in single
@@ -513,7 +528,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
 
       moments = played.moments;
       report.steps = played.changes;
-    } else if (clicks.length > 0) {
+    } else if (clicks.length > 0 && !options.compare) {
       const played = await clickThrough(taken, how, clicks, { frames, every });
       if ('problem' in played) {
         fail(played.problem);

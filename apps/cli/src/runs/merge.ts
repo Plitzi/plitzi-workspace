@@ -9,7 +9,7 @@ import { requireLead } from './leads';
 import { acceptanceOnResult, checkVersions } from './materialise';
 import { mergeLines } from './merge3';
 import { entryOf, isMergeManifest } from './model';
-import { noticesOf, noticeText } from './notices';
+import { noticesByOwner, noticeText } from './notices';
 import { BACKUPS_DIR, under } from './paths';
 import { RunRefusal } from './refusal';
 import { leaveReport, readSummary, summaryBehind } from './report';
@@ -266,6 +266,8 @@ export interface Finished {
   audit: string[];
   /** What was seen wrong that no task owned (`plitzi run notice`): said, for the next stage. */
   noticed: string[];
+  /** What the run's agents said of Plitzi itself (`run notice --plitzi`): the run's feedback's, never the next stage's. */
+  ofPlitzi: string[];
   /** Dry run: the tasks approved after the lead's summary was written — the report that closes the run is behind. */
   summaryBehind?: string[];
 }
@@ -415,10 +417,12 @@ export const finishRun = async (
   }
 
   const strays = await leftInTmp(ctx.root, loaded.record);
+  const notices = await noticesByOwner(loaded);
   const leftThere = {
     ...(strays.length > 0 ? { leftInTmp: strays } : {}),
     audit: await auditRun(loaded),
-    noticed: (await noticesOf(loaded)).map(noticeText)
+    noticed: notices.project.map(noticeText),
+    ofPlitzi: notices.plitzi.map(noticeText)
   };
   const behind = await summaryBehind(loaded);
   if (!apply) {

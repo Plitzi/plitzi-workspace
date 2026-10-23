@@ -12,6 +12,7 @@ const report = (elements: CheckReport['elements']): CheckReport => ({
   problems: [],
   issues: [],
   hiddenAtWidth: [],
+  outOfUse: [],
   empty: [],
   consoleErrors: [],
   failedRequests: [],

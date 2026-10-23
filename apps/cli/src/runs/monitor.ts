@@ -2,7 +2,6 @@ import { commandDoing, doingOf, statusOf } from './agentDoing';
 import { answering, openQuestions } from './answering';
 import { isDesignSkip } from './designSkip';
 import { feedOf, glimpse, textOf } from './feedLine';
-import { callerFlag, identifiedAgents } from './identity';
 import { LEAD, messagesOf } from './messages';
 import { runPaths } from './paths';
 import { presentAt, PRESENCE_STALE_MS } from './presence';
@@ -381,7 +380,6 @@ const agentsOf = async (
   const started = new Map((team ? startedAgents(team) : []).map(each => [each.agent, each] as const));
   const names = [...new Set([...started.keys(), ...held.keys()])];
   const paths = runPaths(ctx.root, view.runId);
-  const identified = await identifiedAgents(paths);
   const present = new Map(await Promise.all(names.map(async agent => [agent, await presentAt(paths, agent)] as const)));
   // Between tasks and not said to have stopped: there while its follow marks it present, gone once it does not.
   const gone = (agent: string): number | undefined => {
@@ -443,7 +441,7 @@ const agentsOf = async (
               kind: 'agent' as const,
               status: 'no-signal' as const,
               ...about,
-              doing: `no sign of it for ${String(gone(agent))} min — its harness stopped it, or it hangs: start it again${member ? ` (plitzi task next --role ${member.roles.join(',')} --follow --take ${callerFlag(paths.scratch, agent, identified)})` : ''}${tail}`,
+              doing: `no sign of it for ${String(gone(agent))} min — its harness stopped it, or it hangs: the lead starts it again${tail}`,
               ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
             }
           : member?.onDemand && (lastBy.get(agent) === undefined || lastBy.get(agent)?.action === 'stops')
@@ -456,15 +454,16 @@ const agentsOf = async (
                 doing: `on demand — started when work waits for it${lastBy.get(agent) ? ', stopped when none was left' : ''}${tail}`,
                 ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
               }
-            : lastBy.get(agent) === undefined && present.get(agent) === undefined
+            : lastBy.get(agent) === undefined && present.get(agent) === undefined && !lastRun.has(agent)
               ? // Of the team's base and never started: not idle — nothing of it has run (velada-polish's dev-1 and
-                // design-1 read idle before either was started).
+                // design-1 read idle before either was started). How to start it is the lead's to read (run watch),
+                // never this row's: a person following the run read a command line where an agent should be.
                 {
                   agent,
                   kind: 'agent' as const,
                   status: 'not-started' as const,
                   ...about,
-                  doing: `starts with the run — ${member ? `plitzi task next --role ${member.roles.join(',')}${member.quality ? ` --quality ${member.quality}` : ''} --follow --take ${callerFlag(paths.scratch, agent, identified)}` : 'not started yet'}${tail}`
+                  doing: `not started yet — it starts with the run${tail}`
                 }
               : {
                   agent,
@@ -473,7 +472,8 @@ const agentsOf = async (
                   // stopped once it said so.
                   status: lastBy.get(agent)?.action === 'stops' ? ('stopped' as const) : ('idle' as const),
                   ...about,
-                  doing: `${betweenTasks(agent, lastBy.get(agent))}${tail}`,
+                  // Running, before anything of it reached the run's log: what it ran says what it is at.
+                  doing: `${lastBy.get(agent) === undefined && lastRun.has(agent) ? `getting started${lately(agent)}` : betweenTasks(agent, lastBy.get(agent))}${tail}`,
                   ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
                 };
   });

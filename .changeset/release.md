@@ -1046,3 +1046,28 @@ theirs"`) at every width in one call and one browser, reads the other page witho
     before) — the agents' notices of Plitzi (`run notice --plitzi`, never the project's backlog), the audit, refusals,
     crashes, checks and repeated calls, nothing of the project — for the person to share with Plitzi's team.
   - The agents' skills say each rule without the case it came from.
+- **Controls used beside the original, and a carousel that says where it stands** (`@plitzi/cli`, `@plitzi/sdk-authoring`,
+  `@plitzi/sdk-elements`), from lx-controls:
+  - `page shot --compare <url> --click "ours => theirs"`: both pages clicked in turn and their screens set side by side
+    once clicked — a drawer, a panel in it. `page measure --click <el…>` measures that open state on both pages, a click
+    given time for a drawer a script slides in.
+  - `page shot --steps`: `type` replaces what a field held; an element with spaces inside its brackets or quotes is read
+    whole (`[aria-label="Precio hasta"]`); `drag <el> <dx> [dy]` presses, moves and lets go — a range at its thumb; each
+    step acts on the element shown, where a page draws one per width. `--out <name>` is always a `.png`.
+  - A carousel publishes `atStart`, `atEnd` (a `scroll` row at either end of its box, however many it shows) and `shown`;
+    `next`/`previous` take `by: 'page'` — as many as the row shows (`carouselNext(id, 'page')`).
+  - Authoring refuses a true/false attribute (`disabled`, `checked`, `hidden`…) bound through a template that renders
+    text (`template-text-into-value`): "false" is a word, and the attribute was on whatever it said.
+  - `page check` says a control put out of use on purpose — transparent and taking no press — apart, never as an
+    arrival that never played.
+  - Runs: a flag that took the next flag as its value is refused, saying so (`--summary --token …`); an agent that may
+    stop is asked for what of Plitzi got in its way (`run notice --plitzi`); a file a task makes too long is the agent's
+    to hear, never the lead's to relay; the dry finish and the report list what was noticed of Plitzi apart from the
+    project's next stage; the monitor shows an agent not started as such and one starting by what it runs, never a
+    command line; the agents are asked to say what they are at (`task progress --step`), to use a control there and
+    back, and to take a difference they see inside their task as work.
+- **The other page's structure, in one call** (`@plitzi/cli`, `@plitzi/sdk-authoring`), from lx-controls' transcripts:
+  `page outline <path> [--compare <url>] [--within <part>] [--depth <n>] [--click <el…>]` lists the shown elements of
+  the project's page or the other site's — each by a selector `page measure` takes as it is, its box and first words —
+  where agents fetched the other site's HTML and searched it for classes. The style table names every state a class has;
+  `scrollBy`/`scrollTo` take pixels as a number too.

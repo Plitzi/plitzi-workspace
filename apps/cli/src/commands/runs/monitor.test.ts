@@ -63,6 +63,8 @@ describe('plitzi run monitor', () => {
     ).toBe(true);
     // Of the team, never started: not idle — nothing of it has run (velada-polish).
     expect(screen.some(line => line.includes('agent-3') && line.includes('not started'))).toBe(true);
+    // What an agent is at, never how to start it — a command line in its row read as noise (lx-controls).
+    expect(screen.some(line => line.includes('agent-3') && line.includes('task next'))).toBe(false);
     // Whether each starts with the run, in a column of its own (Carlos): the team's base here.
     expect(screen.some(line => /agent-2\s+base\s/.test(line))).toBe(true);
     expect(screen.some(line => line.includes('lead') && line.includes('approved t-about'))).toBe(true);

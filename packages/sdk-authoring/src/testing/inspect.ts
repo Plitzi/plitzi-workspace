@@ -77,6 +77,8 @@ export interface PageReport {
    * visitor misses, and said so. A container that should hold something is a page check's `--expect` on what it holds.
    */
   empty: string[];
+  /** Owed controls put out of use on purpose — transparent and taking no press: an arrow at its row's end. Said. */
+  outOfUse: string[];
 }
 
 const label = (handle: ElementHandle): string => `${handle.type} "${handle.id}"`;
@@ -309,7 +311,8 @@ const inspect = async (
         problems: issues.map(issue => issue.message),
         issues,
         hiddenAtWidth: findings.byWidth,
-        empty: findings.empty
+        empty: findings.empty,
+        outOfUse: findings.outOfUse
       };
     }
 

@@ -89,6 +89,19 @@ export const noticesOf = async (loaded: LoadedRun): Promise<Notice[]> =>
       : []
   );
 
+/**
+ * A run's notices, by whose they are: the project's — what the next stage starts from — and Plitzi's, which the run's
+ * feedback carries (lx-controls' dry finish listed what agents said of the CLI as the project's next stage).
+ */
+export const noticesByOwner = async (loaded: LoadedRun): Promise<{ project: Notice[]; plitzi: Notice[] }> => {
+  const all = await noticesOf(loaded);
+
+  return {
+    project: all.filter(notice => notice.about !== 'plitzi'),
+    plitzi: all.filter(notice => notice.about === 'plitzi')
+  };
+};
+
 /** A notice in a line: what, where, who — and at which task. */
 export const noticeText = (notice: Notice): string =>
   `${notice.text}${notice.on ? ` (on ${notice.on})` : ''} — ${notice.by}${notice.task ? `, at ${notice.task}` : ''}`;

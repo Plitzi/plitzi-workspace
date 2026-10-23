@@ -159,7 +159,7 @@ const handOffLines = (next: NextTask): string[] =>
       ]
     : [];
 
-const nextText = (next: NextTask, agent: string): string =>
+export const nextText = (next: NextTask, agent: string): string =>
   [
     ...messageLines(next.messages),
     next.question
@@ -192,7 +192,14 @@ const nextText = (next: NextTask, agent: string): string =>
                   ...(next.worked ?? []).map(
                     each =>
                       `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'with the lead, in review' : each.status}${each.finishedBy ? ` — as ${each.finishedBy} last did it, not your version` : ''}`
-                  )
+                  ),
+                  // lx-controls' dev-1 met four of Plitzi's frictions and said them only in its last words, which the
+                  // run's feedback never reads.
+                  ...(next.finished
+                    ? [
+                        '  Before you stop: what of Plitzi itself got in your way and is not said yet — plitzi run notice --plitzi "…", one each; the run’s feedback to Plitzi carries them, your last words do not'
+                      ]
+                    : [])
                 ].join('\n'),
     // Wherever the answer leaves an agent without a copy of a task in hand — between tasks, at a review.
     ...(next.task && !next.leadReview && !next.designReview

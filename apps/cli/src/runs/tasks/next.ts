@@ -428,7 +428,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     // Every answer that ends an agent's part says the skills' words (velada-fidelity's agents waited for them).
     why:
       finished && roles !== undefined && open.length > 0
-        ? `${loaded.tasks.some(forRole) ? `no task is left for a ${String(role)}: every one is done` : `no task in this run is a ${String(role)}'s`} — what is left is for others (${others.map(task => task.id).join(', ') || 'in their hands'}). You can stop`
+        ? `${loaded.tasks.some(forRole) ? `no task is left for a ${roles.join(' or ')}: every one is done` : `no task in this run is a ${roles.join(' or ')}'s`} — what is left is for others (${others.map(task => task.id).join(', ') || 'in their hands'}). You can stop`
         : finished && roles !== undefined
           ? `${why} — the lead's to finish. You can stop`
           : finished && !isPrincipal(ctx.agent)

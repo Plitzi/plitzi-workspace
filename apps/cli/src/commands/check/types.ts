@@ -97,6 +97,8 @@ export interface CheckReport {
   hiddenAtWidth: string[];
   /** Owed containers with nothing in them and no size: a shell another part fills — not a problem, said. */
   empty: string[];
+  /** Owed controls out of use on purpose — transparent and taking no press: an arrow at its end. Said, not a problem. */
+  outOfUse: string[];
   /** Checked in a task's copy: findings on elements other tasks write, said and failing nothing (`apart.ts`). */
   apart?: string[];
   /** In a run that keeps a reference: labels wrapped as the original wraps them, said and failing nothing (`apart.ts`). */

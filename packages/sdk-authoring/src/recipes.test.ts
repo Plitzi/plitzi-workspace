@@ -20,6 +20,7 @@ import {
   when,
   whileRunning
 } from './index';
+import { STYLE_STATES } from './style/css';
 
 import type { PluginDeclarationData, SpaceSpec } from './index';
 
@@ -37,6 +38,17 @@ const recipes = import.meta.glob<{ recipe: SpaceSpec; plugins?: readonly PluginD
 
 describe('the skill’s recipes', () => {
   // A recipe nobody can find is not one: each is a row of the recipes' index, by the intent it answers.
+  // lx-controls: a designer searched the types for whether `checked` was a state — the table listed some, then "…".
+  it('name every state a class has, in the table of what a style takes', () => {
+    const table = readFileSync(
+      new URL('../skills/plitzi-authoring/reference/elements-and-styles.md', import.meta.url),
+      'utf-8'
+    );
+    const row = table.split('\n').find(line => line.startsWith('| `states` |')) ?? '';
+
+    expect(STYLE_STATES.filter(state => !row.includes(`\`${state}\``))).toEqual([]);
+  });
+
   it('are each listed in the index of recipes', () => {
     const index = readFileSync(new URL('../skills/plitzi-authoring/reference/recipes.md', import.meta.url), 'utf-8');
     const unlisted = Object.keys(recipes)

@@ -484,7 +484,7 @@ describe('the lead’s plan as the run goes', () => {
     expect((await loadRun(lead(), 'es-launch')).record.leadFinishes).toBeUndefined();
   });
 
-  it('watches a file a task makes too long: the lead told once, the agent with its heartbeat, the complete held', async () => {
+  it('watches a file a task makes too long: the agent told with its heartbeat, the complete held, the lead never woken', async () => {
     const lines = (count: number): string =>
       Array.from({ length: count }, (_, index) => `export const line${String(index)} = ${String(index)};`).join('\n');
     await bench.write('src/space/pages/menu.ts', `${lines(410)}\n`);
@@ -494,13 +494,9 @@ describe('the lead’s plan as the run goes', () => {
 
     const signal = await reportProgress(home.ctx, 'es-launch', 't-home', {});
     expect(signal.longFiles).toEqual([{ file: 'src/space/pages/home/hero.ts', lines: 420, before: 1 }]);
-    const woken = await waitForLead(lead(), 'es-launch', { timeoutMs: 20, everyMs: 10 });
-    expect(woken.fresh.map(item => item.text)).toContain(
-      't-home: src/space/pages/home/hero.ts is 420 non-blank lines (more than 400; 1 in the project) — ask it to split it now, by what changes together (plitzi task message t-home "…")'
-    );
-    // Longer still, it is the same notice: the lead is not woken again for every line written.
-    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', `${lines(430)}\n`);
+    // The agent's to hear, never the lead's to relay: lx-controls' relayed message arrived after the split.
     expect((await waitForLead(lead(), 'es-launch', { timeoutMs: 20, everyMs: 10 })).fresh).toEqual([]);
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', `${lines(430)}\n`);
 
     const refused = await refusal(completeTask(home.ctx, 'es-launch', 't-home'));
     expect([refused.code, refused.message]).toEqual([

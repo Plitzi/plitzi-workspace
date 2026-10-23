@@ -12,14 +12,16 @@ import {
   pageTexts
 } from '@plitzi/sdk-authoring';
 
-import { pictureOf, readPage, targetOn } from './capture';
+import { capture, pictureOf, readPage, targetOn } from './capture';
 import { pictureAnswered } from './remote';
 import { DRIFT_PX, TEXTS_SHOWN } from './types';
 import { dataUrl, fromDataUrl } from '../../browser';
+import { putIn, stateText } from '../measureState';
 
 import type { CompareReport, RegionChange, Taken, View } from './types';
 import type { Browser } from '../../browser';
 import type { KeptPage } from '../../runs/reference';
+import type { Pair } from '../measure';
 import type {
   DecorationKind,
   PictureDiff,
@@ -77,9 +79,11 @@ const decorationText = (section: SectionDecorations): string =>
 /** What a comparison found, in the lines an agent reads before it opens a picture. */
 export const compareText = (compare: CompareReport): string[] => {
   const lines = [
-    compare.section === undefined
-      ? `${chalk.bold(`${String(compare.changed)}% differs`)} from ${compare.url}${compare.regions.length > 0 ? ` — ${regionsText(compare.regions)}` : ''}`
-      : `${chalk.bold(regionsText(compare.regions))} differs from ${compare.url} (the whole page ${String(compare.changed)}%; its dress and texts below are its own)`,
+    compare.state !== undefined
+      ? `${chalk.bold(`${String(compare.changed)}% differs`)} from ${compare.url}, the screen of each once clicked — ${compare.state}`
+      : compare.section === undefined
+        ? `${chalk.bold(`${String(compare.changed)}% differs`)} from ${compare.url}${compare.regions.length > 0 ? ` — ${regionsText(compare.regions)}` : ''}`
+        : `${chalk.bold(regionsText(compare.regions))} differs from ${compare.url} (the whole page ${String(compare.changed)}%; its dress and texts below are its own)`,
     ...(compare.keptAt
       ? [
           chalk.dim(
@@ -315,6 +319,67 @@ export const compareLocalParts = async (
     }
 
     return compared;
+  } finally {
+    await theirs.page.close();
+  }
+};
+
+/**
+ * Both pages once clicked — `--click "filters-toggle => .facets__open"`, each in turn on each page — and the screen of
+ * each set side by side: an open state, a drawer and a panel in it, beside the original's. No section or word is read:
+ * what a click opens has no place in the page's sections.
+ */
+export const compareAfterClicks = async (
+  browser: Browser,
+  taken: Taken,
+  target: string,
+  view: View,
+  clicks: readonly Pair[],
+  base: string
+): Promise<CompareReport | { problem: string }> => {
+  const local = /^(127\.0\.0\.1|localhost|\[::1\])$/.test(new URL(target).hostname);
+  const asked = { ...view, scheme: taken.scheme, viewport: true };
+  const theirs = local
+    ? await pictureOf(browser, target, asked, new URL(target).origin)
+    : await pictureAnswered(browser, target, asked);
+  if ('problem' in theirs) {
+    return theirs;
+  }
+
+  try {
+    const state = { kind: 'click' as const, pairs: [...clicks] };
+    const ours = await putIn(taken.page, state, 'here');
+    if (ours) {
+      return ours;
+    }
+
+    const their = await putIn(theirs.page, state, 'there');
+    if (their) {
+      return { problem: `${their.problem} — name the other page's own: --click "ours => theirs"` };
+    }
+
+    const [here, there] = await Promise.all([
+      capture(taken.page, { kind: 'viewport' }),
+      capture(theirs.page, { kind: 'viewport' })
+    ]);
+    const diff = await comparePictures(taken.page, dataUrl(here), dataUrl(there));
+    const said = stateText(state, 'here');
+    await writeFile(`${base}-clicked.png`, here);
+    await writeFile(`${base}-compare.png`, fromDataUrl(diff.sideBySide));
+    await writeFile(`${base}-diff.png`, fromDataUrl(diff.diff));
+
+    return {
+      url: target,
+      changed: diff.changed,
+      heights: { here: diff.heights.a, there: diff.heights.b },
+      regions: [],
+      state: `ours: ${said} · there: ${stateText(state, 'there')}`,
+      texts: { same: 0, differ: [], onlyHere: [], onlyThere: [] },
+      decorations: [],
+      unloaded: theirs.unloaded,
+      sideBySide: `${base}-compare.png`,
+      diff: `${base}-diff.png`
+    };
   } finally {
     await theirs.page.close();
   }

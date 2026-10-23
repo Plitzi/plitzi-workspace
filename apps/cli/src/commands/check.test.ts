@@ -329,6 +329,7 @@ describe('what a page check looks at again', () => {
         problems: [],
         issues: [],
         hiddenAtWidth: [],
+        outOfUse: [],
         empty: [],
         consoleErrors: [],
         failedRequests: ['500 /fn/aiko/weather', '404 /missing.png', '503 /fn/aiko/news'],

@@ -1,4 +1,4 @@
-import { InvalidArgumentError } from 'commander';
+import { Command, InvalidArgumentError } from 'commander';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -9,12 +9,23 @@ import {
   fill,
   pagePaths,
   positiveInteger,
+  swallowedFlag,
   timeZone,
   width,
   widths
 } from './options';
 
 describe('options', () => {
+  // lx-controls: `run report --summary --token <it>` read "--token" as the summary's file and the token as the run.
+  it('says a flag that took the next flag as its value', () => {
+    const command = new Command('report').option('--summary <file>').option('--token <token>').argument('[run]');
+    command.parse(['--summary', '--token', 'lx.@lead.abc'], { from: 'user' });
+    expect(swallowedFlag(command)).toBe('--summary takes a value and read --token as it: --summary <file>');
+    const fine = new Command('report').option('--summary <file>').option('--token <token>');
+    fine.parse(['--summary', 'notes.md', '--token', 'lx.@lead.abc'], { from: 'user' });
+    expect(swallowedFlag(fine)).toBeUndefined();
+  });
+
   it('reads pages by path, each once, and refuses one that is not a path', () => {
     expect(pagePaths('/, /boxeadores,/')).toEqual(['/', '/boxeadores']);
     expect(() => pagePaths('boxeadores')).toThrow(InvalidArgumentError);

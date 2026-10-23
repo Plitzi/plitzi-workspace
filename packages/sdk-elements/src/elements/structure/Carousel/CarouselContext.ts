@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import type { CarouselDirection } from './carouselIndex';
+import type { CarouselDirection, CarouselEdges } from './carouselIndex';
 import type { RefObject } from 'react';
 
 export type CarouselMode = 'slide' | 'marquee' | 'scroll';
@@ -25,8 +25,8 @@ export type CarouselContextValue = {
   live: boolean;
   /** The box a `scroll` carousel scrolls, which `next` and `previous` move. */
   scrollerRef: RefObject<HTMLDivElement | null>;
-  /** A `scroll` carousel reports the slide it scrolled to. */
-  onScrolledTo: (index: number) => void;
+  /** A `scroll` carousel reports the slide it scrolled to, and where its row stands — at an end, how many it shows. */
+  onScrolledTo: (index: number, edges: CarouselEdges) => void;
 };
 
 /** Absent outside a carousel: a track on its own renders its children as they are. */

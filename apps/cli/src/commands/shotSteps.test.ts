@@ -41,10 +41,30 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     ]);
   });
 
+  // lx-controls: `type [aria-label="Precio hasta"] 650` was cut at its first space into a selector that is none.
+  it('reads a selector with a space inside its brackets or quotes whole, unquoted', () => {
+    expect(parseSteps('type [aria-label="Precio hasta"] 650; click button:has-text("Ver más")', 500)).toEqual([
+      { kind: 'type', target: '[aria-label="Precio hasta"]', text: '650' },
+      { kind: 'click', target: 'button:has-text("Ver más")' }
+    ]);
+  });
+
+  // lx-controls: a range's handle could not be used — a click on it timed out, and no step moved it.
+  it('reads a drag by whole pixels, either way, and refuses one that goes nowhere', () => {
+    expect(parseSteps('drag price-max -120; drag [data-handle="low"] 40 8', 500)).toEqual([
+      { kind: 'drag', target: 'price-max', dx: -120, dy: 0 },
+      { kind: 'drag', target: '[data-handle="low"]', dx: 40, dy: 8 }
+    ]);
+    expect(parseSteps('drag price-max', 500)).toEqual({
+      problem:
+        'step 1 ("drag price-max"): drag needs an element and how far, in whole pixels — drag <element> <dx> [dy]: drag price-max -120'
+    });
+  });
+
   it('says which step is wrong, and what the steps are', () => {
     expect(parseSteps('click a; tap b', 500)).toEqual({
       problem:
-        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, press, wait, wait-for, shot, frames'
+        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, drag, press, wait, wait-for, shot, frames'
     });
     expect(parseSteps('wait soon', 500)).toEqual({
       problem: 'step 1 ("wait soon"): "soon" is not a whole number from 1 to 30000'
@@ -55,7 +75,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     });
     expect(parseSteps('# only a note', 500)).toEqual({
       problem:
-        '--steps has no step: click, hover, scroll, type, press, wait, wait-for, shot or frames, separated by ";"'
+        '--steps has no step: click, hover, scroll, type, drag, press, wait, wait-for, shot, frames, separated by ";"'
     });
   });
 });

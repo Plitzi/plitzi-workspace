@@ -224,11 +224,14 @@ plitzi page shot / --width 1440,390                # a picture at each width, ea
 plitzi page shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
 plitzi page shot / --viewport --click .knob open-button --frames 4 --every 250 --sheet   # an interaction, on one sheet
 plitzi page shot / --compare https://example.com --width 1440   # beside another site: what differs, and how
+plitzi page outline /shop --compare https://example.com --within .facets --width 390   # what to measure there
+plitzi page shot /shop --compare https://example.com --click "filters-open => .facets__open" --width 390   # both screens once clicked
 plitzi page shot /studio --width 390 --as maya   # a page for signed-in visitors: the picture is of it, not of the sign-in
 plitzi page shot / --viewport --frames 6 --every 200 --from load --sheet   # what plays as the page arrives
 plitzi page shot / --clip machine --sheet --steps "click .gm__knob; wait 300; frames 6 150; wait-for .gm__capsule; shot opened"   # an interaction, step by step
 plitzi page shot /expenses --fill expenses-search=kibble   # a picture before and after typing in a field
 plitzi page shot / --steps "hover home-cta; wait 400; shot hovered"   # a hover, pictured
+plitzi page shot /shop --steps 'type [aria-label="Up to"] 650; drag price-max -80; shot'   # a field, a range's handle
 ```
 
 Both run on the project's own Playwright against its running server (`npm start`), and refuse a port that answers as
@@ -293,9 +296,13 @@ waiting for the scroll shown as it ends — in `tmp/shots/` unless `--out` says 
 Both load a page as one that watches its realtime channels: it hears them — a topic the server refuses is still
 reported — and says nothing on them, so nobody on the page sees it arrive, join their members or send. `--presence`
 makes it take part as a visitor does. `--click` in `page shot` takes an element's name, a tag no element is named by
-(`textarea`) or any selector, CSS or Playwright's own (`button:has-text("Orbit")`). In `--steps`, an element with a
-space in it is quoted — `type ".panel textarea" hola` — and `type` fails when the click leaves no field focused. `hover <element>` puts the pointer over it and leaves it
-there, for the next `shot`.
+(`textarea`) or any selector, CSS or Playwright's own (`button:has-text("Orbit")`). In `--steps`, an element is read up to a
+space outside its quotes and brackets (`[aria-label="Up to"]` is one), or quoted whole — `type ".panel textarea" hola`;
+`type` replaces what the field held, and fails when the click leaves no field focused. `hover <element>` puts the
+pointer over it and leaves it there, for the next `shot`; `drag <element> <dx> [dy]` presses it — a range at its thumb —
+moves it that many pixels and lets go. A step acts on the element shown: a page drawing one per width hides the other.
+With `--compare`, `--click "ours => theirs"` clicks each page in turn and sets their screens side by side once clicked —
+an open drawer, a panel in it — with no sections or words read.
 
 `page shot --compare` writes the two pictures side by side and the differences in red. It compares each section where it
 is on the other page, so a page 400 px longer is said once, with the section the drift starts at; then it pairs the
@@ -330,6 +337,12 @@ token belongs. A look at a task checks with it. Every check fails a link or a bu
 edge where the section keeps no space below it (`flush-edge`): la-velada's "Ver cartelera completa" sat against the next
 section, its sections' shared class without a bottom padding, and nothing else said it.
 
+`page outline <path> [--compare <url>] [--within <part>] [--depth <n>] [--click <el…>] [--width <px>]` lists what a
+page is made of as a visitor sees it — each shown element by a selector that finds it alone (its name on the project's
+page; its id, its tag and classes, or its place under an ancestor on another site), its box and its first words,
+indented by depth — the project's page, or with `--compare` the other site's: what to name after `=>` in `page measure`,
+an open drawer's too (`--click`), with no HTML fetched and searched.
+
 `page same [paths…] --url <origin> --than <origin>` says whether pages draw the same on two servers of the project —
 every element on screen, its box, the style a reader sees and what its `::before`/`::after` draw, read, not pictured —
 and, where not, the first element that differs; exit 1 then. A look at a task reads with it the pages only a shared
@@ -349,7 +362,8 @@ a side alone, `margin-bottom`, `padding-top`) fails unless those are as the othe
 pixel either way the same: an acceptance's line that holds a copy to its reference. `x` is where the box starts in the
 viewport — a column against the other's at 1920. `--hover` or
 `--focus "<ours> => <theirs>"` puts both pages in that state first, its transitions finished: what a hover changes,
-held by `--same` as the rest is. A line height and a tracking are said as their `em` of the font beside the pixels
+held by `--same` as the rest is; `--click "<ours> => <theirs>" …` clicks each in turn on both — a drawer, then a panel
+in it — and measures the open state they leave. A line height and a tracking are said as their `em` of the font beside the pixels
 (`22.13px (1.5em)`: the rule to write, not the size's result); a difference both inherit from their parent is left out
 of `--same`, said beside it; the transform compared is the one that applies (`rotate`, `scale`, `translate` and
 `transform`, as CSS composes them); a component's instance is found by its name; an address nobody answers on is

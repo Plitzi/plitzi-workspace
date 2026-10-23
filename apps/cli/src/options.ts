@@ -1,5 +1,7 @@
 import { InvalidArgumentError } from 'commander';
 
+import type { Command } from 'commander';
+
 /**
  * What a flag's value has to be, read once where the command line is declared. A value that is not one is refused
  * there, saying what it takes — never turned into a default the person did not ask for, which is how a typo used to
@@ -190,4 +192,21 @@ export const expectation = (
   }
 
   return [...(previous ?? []), { element, text: rest.slice(at + 1), ...(scoped?.[1] ? { path: scoped[1] } : {}) }];
+};
+
+/**
+ * A flag that took the next flag as its value — `--summary --token …`, `--summary` reading "--token" — said, with
+ * what it takes: commander takes it whole, and the run read the token as the run (lx-controls' lead, twice).
+ */
+export const swallowedFlag = (command: Command): string | undefined => {
+  const flags = new Set(command.options.flatMap(option => (option.long ? [option.long] : [])));
+  const swallowed = command.options.find(option => {
+    const value: unknown = command.getOptionValue(option.attributeName());
+
+    return option.required && typeof value === 'string' && flags.has(value);
+  });
+
+  return swallowed
+    ? `${swallowed.long ?? swallowed.flags} takes a value and read ${String(command.getOptionValue(swallowed.attributeName()))} as it: ${swallowed.flags}`
+    : undefined;
 };
