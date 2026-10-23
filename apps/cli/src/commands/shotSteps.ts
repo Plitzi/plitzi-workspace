@@ -15,7 +15,7 @@
  *   frames <n> [ms]          n pictures, `--every` (or `ms`) apart
  *
  * Separated by `;` or a new line; a line starting with `#` is a note. An element is read whole up to a space outside
- * quotes and brackets — `[aria-label="Precio hasta"]` is one — or quoted. Every picture is labelled with its step and
+ * quotes and brackets — `[aria-label="Search the site"]` is one — or quoted. Every picture is labelled with its step and
  * the time since the first step.
  */
 
@@ -40,7 +40,7 @@ const unquoted = (text: string): string => text.replace(/^(["'])(.*)\1$/s, '$2')
 
 /**
  * An element at the start of a step's words, and what follows it: up to a space outside quotes and brackets, or a
- * quoted one whole — `[aria-label="Precio hasta"] 650` was cut at its first space into a selector that is none.
+ * quoted one whole — `[aria-label="Search the site"] lamps` was cut at its first space into a selector that is none.
  */
 export const leadingTarget = (text: string): { target: string; rest: string } => {
   const quoted = /^(["'])(.+?)\1(?:\s+|$)(.*)$/s.exec(text);
@@ -129,7 +129,7 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
         const y = pixels(dy);
         if (!target || x === undefined || y === undefined || (x === 0 && y === 0)) {
           return {
-            problem: `${at}: drag needs an element and how far, in whole pixels — drag <element> <dx> [dy]: drag price-max -120`
+            problem: `${at}: drag needs an element and how far, in whole pixels — drag <element> <dx> [dy]: drag volume-handle -120`
           };
         }
 

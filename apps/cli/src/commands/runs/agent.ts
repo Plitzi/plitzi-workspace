@@ -111,7 +111,8 @@ export const runAgent = (agent: string, options: AgentOptions): Promise<void> =>
         runId,
         root: ctx.root,
         tokenFile: tokenFile(loaded.paths, agent),
-        goal: loaded.plan.goal
+        goal: loaded.plan.goal,
+        ...(loaded.plan.reference === undefined ? {} : { reference: loaded.plan.reference })
       });
       const promptFile = path.join(scratch, 'prompt.md');
       await fs.writeFile(promptFile, `${prompt}\n`);

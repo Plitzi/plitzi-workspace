@@ -325,7 +325,7 @@ export const compareLocalParts = async (
 };
 
 /**
- * Both pages once clicked — `--click "filters-toggle => .facets__open"`, each in turn on each page — and the screen of
+ * Both pages once clicked — `--click "menu-toggle => .menu-button"`, each in turn on each page — and the screen of
  * each set side by side: an open state, a drawer and a panel in it, beside the original's. No section or word is read:
  * what a click opens has no place in the page's sections.
  */

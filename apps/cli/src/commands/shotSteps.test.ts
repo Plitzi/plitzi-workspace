@@ -57,7 +57,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     ]);
     expect(parseSteps('drag price-max', 500)).toEqual({
       problem:
-        'step 1 ("drag price-max"): drag needs an element and how far, in whole pixels — drag <element> <dx> [dy]: drag price-max -120'
+        'step 1 ("drag price-max"): drag needs an element and how far, in whole pixels — drag <element> <dx> [dy]: drag volume-handle -120'
     });
   });
 

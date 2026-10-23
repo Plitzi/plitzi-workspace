@@ -17,30 +17,57 @@ export interface StateAsked {
 
 const DONE: Record<StateAsked['kind'], string> = { hover: 'hovered', focus: 'focused', click: 'clicked' };
 
-/** The state in words: `filters-toggle clicked, then facet-row`. */
+/** The state in words: `menu-toggle clicked, then submenu-row`. */
 export const stateText = (state: StateAsked, side: keyof Pair): string =>
   `${state.pairs.map(pair => pair[side]).join(', then ')} ${DONE[state.kind]}`;
 
 /** The longest a state's transitions are waited for: a fade is a fraction of a second, an endless spin never ends. */
 const SETTLE_MS = 3000;
 
-/** What a click is given before its state is read: a drawer a script slides in takes about half a second. */
-const CLICK_SETTLE_MS = 700;
+/** How often the page's layout is read while it settles, and how many reads alike in a row count as still. */
+const LAYOUT_EVERY_MS = 100;
+const LAYOUT_STILL = 3;
 
-/** What the state started — its transitions, its animations — finished, or the longest a fade takes. */
+/**
+ * What the state started finished, or the longest a fade takes: the page's animations ended, then its layout still —
+ * the boxes of what is in view read alike three times running. A script that moves a panel frame by frame (a drawer
+ * slid in by its own code) shows in no animation of the page, only in the boxes moving (lx-controls).
+ */
 const settle = async (page: BrowserPage): Promise<void> => {
   await page.evaluate(
-    (most: number) =>
-      Promise.race([
-        Promise.all(
-          document
-            .getAnimations()
-            .filter(animation => animation.effect?.getTiming().iterations !== Infinity)
-            .map(animation => animation.finished.catch(() => undefined))
-        ),
-        new Promise(resolve => setTimeout(resolve, most))
-      ]).then(() => undefined),
-    SETTLE_MS
+    ({ most, every, still }: { most: number; every: number; still: number }) => {
+      const until = Date.now() + most;
+      const animations = Promise.all(
+        document
+          .getAnimations()
+          .filter(animation => animation.effect?.getTiming().iterations !== Infinity)
+          .map(animation => animation.finished.catch(() => undefined))
+      );
+      // Where the elements in view are drawn: one line of numbers, read again until it stops changing.
+      const layout = (): string =>
+        [...document.body.querySelectorAll('*')]
+          .slice(0, 600)
+          .map(node => node.getBoundingClientRect())
+          .filter(box => box.bottom > 0 && box.top < innerHeight && box.right > 0 && box.left < innerWidth)
+          .map(box => `${String(Math.round(box.left))},${String(Math.round(box.top))},${String(Math.round(box.width))}`)
+          .join(' ');
+      const stillLayout = async (): Promise<void> => {
+        let last = layout();
+        let alike = 0;
+        while (alike < still && Date.now() < until) {
+          await new Promise(resolve => setTimeout(resolve, every));
+          const now = layout();
+          alike = now === last ? alike + 1 : 0;
+          last = now;
+        }
+      };
+
+      return Promise.race([
+        animations.then(stillLayout),
+        new Promise(resolve => setTimeout(resolve, Math.max(0, until - Date.now())))
+      ]).then(() => undefined);
+    },
+    { most: SETTLE_MS, every: LAYOUT_EVERY_MS, still: LAYOUT_STILL }
   );
 };
 
@@ -78,12 +105,6 @@ export const putIn = async (
       return {
         problem: `${target} could not be ${DONE[state.kind]} on ${page.url()}: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`
       };
-    }
-
-    // A click's drawer may be slid in by a script, which no animation of the page's says: the original's filter drawer
-    // still sat 485px off a 390px screen when its transitions read finished (lx-controls).
-    if (state.kind === 'click') {
-      await page.waitForTimeout(CLICK_SETTLE_MS);
     }
 
     await settle(page);

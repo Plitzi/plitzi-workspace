@@ -45,7 +45,7 @@ the page hydrates and on a slow phone. Everything else repaints, or lays the pag
 - **`will-change`** only on the few elements about to move, never on every item of a list.
 
 **Between pages:** `settings.viewTransitions: true` draws each move as one view becoming the next — the pages cross-fade,
-and an element named the same on both (`viewTransitionName: 'fighter-portrait'` in its class) moves from where it was to
+and an element named the same on both (`viewTransitionName: 'product-photo'` in its class) moves from where it was to
 where it lands; give that name to one element per page. None where the browser has none or motion is reduced.
 
 `authorSpace` suggests `heavy-animation` for keyframes a class or `customCss` runs off the compositor, naming each

@@ -1080,3 +1080,6 @@ theirs"`) at every width in one call and one browser, reads the other page witho
   (`max`, `cycle`, `min`, `range`, one list the template check reads), and a name that is nothing answers in a fraction
   of a second; `task look` pictures only the pages a shared file reaches that changed beside the run before it, for a
   lead's look too.
+- **The CLI for any project and any run** (`@plitzi/cli`): help, messages, the README and the skills give neutral
+  examples, never one project's; a click's state is read once the page's layout is still, never after a fixed wait; the
+  agents' prompt and the lead's skill speak of a copied site only in a run that copies one (the plan's `reference`).

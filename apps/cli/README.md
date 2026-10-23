@@ -74,9 +74,9 @@ plitzi create . --force --no-install --package-manager npm --mode server --sourc
 ### From a space on Plitzi
 
 ```bash
-plitzi create my-board --from pizarra                                        # the draft, as code
-plitzi create my-board --from pizarra --environment production --revision 3  # a snapshot, as it was frozen
-plitzi create my-board --from pizarra --source cloud                         # the pages stay on Plitzi
+plitzi create my-board --from team-board                                     # the draft, as code
+plitzi create my-board --from team-board --environment production --revision 3  # a snapshot, as it was frozen
+plitzi create my-board --from team-board --source cloud                      # the pages stay on Plitzi
 ```
 
 A server project holding everything the space is made of — its pages as authoring code, its actions as `defineAction`
@@ -224,14 +224,14 @@ plitzi page shot / --width 1440,390                # a picture at each width, ea
 plitzi page shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
 plitzi page shot / --viewport --click .knob open-button --frames 4 --every 250 --sheet   # an interaction, on one sheet
 plitzi page shot / --compare https://example.com --width 1440   # beside another site: what differs, and how
-plitzi page outline /shop --compare https://example.com --within .facets --width 390   # what to measure there
-plitzi page shot /shop --compare https://example.com --click "filters-open => .facets__open" --width 390   # both screens once clicked
+plitzi page outline /pricing --compare https://example.com --within .plans --width 390   # what to measure there
+plitzi page shot /pricing --compare https://example.com --click "menu-toggle => .menu-button" --width 390   # both screens once clicked
 plitzi page shot /studio --width 390 --as maya   # a page for signed-in visitors: the picture is of it, not of the sign-in
 plitzi page shot / --viewport --frames 6 --every 200 --from load --sheet   # what plays as the page arrives
 plitzi page shot / --clip machine --sheet --steps "click .gm__knob; wait 300; frames 6 150; wait-for .gm__capsule; shot opened"   # an interaction, step by step
 plitzi page shot /expenses --fill expenses-search=kibble   # a picture before and after typing in a field
 plitzi page shot / --steps "hover home-cta; wait 400; shot hovered"   # a hover, pictured
-plitzi page shot /shop --steps 'type [aria-label="Up to"] 650; drag price-max -80; shot'   # a field, a range's handle
+plitzi page shot /settings --steps 'type [aria-label="Search the site"] lamps; drag volume-handle -80; shot'   # a field, a range's handle
 ```
 
 Both run on the project's own Playwright against its running server (`npm start`), and refuse a port that answers as
@@ -297,7 +297,7 @@ Both load a page as one that watches its realtime channels: it hears them — a 
 reported — and says nothing on them, so nobody on the page sees it arrive, join their members or send. `--presence`
 makes it take part as a visitor does. `--click` in `page shot` takes an element's name, a tag no element is named by
 (`textarea`) or any selector, CSS or Playwright's own (`button:has-text("Orbit")`). In `--steps`, an element is read up to a
-space outside its quotes and brackets (`[aria-label="Up to"]` is one), or quoted whole — `type ".panel textarea" hola`;
+space outside its quotes and brackets (`[aria-label="Search the site"]` is one), or quoted whole — `type ".panel textarea" hola`;
 `type` replaces what the field held, and fails when the click leaves no field focused. `hover <element>` puts the
 pointer over it and leaves it there, for the next `shot`; `drag <element> <dx> [dy]` presses it — a range at its thumb —
 moves it that many pixels and lets go. A step acts on the element shown: a page drawing one per width hides the other.
@@ -308,8 +308,8 @@ an open drawer, a panel in it — with no sections or words read.
 is on the other page, so a page 400 px longer is said once, with the section the drift starts at; then it pairs the
 texts both pages have and says what each does differently there — `h1 "Learn CSS" — font-size 68px → 60px · y +19px`.
 With `--clip <section>` the report keeps that one section's difference (both pages are still compared whole), and the
-picture `-o` writes is that section — the section by its id (`combates`), its element's (`home-fights`) or as the
-report names it (`section#home-fights`); a section that lined up with a part of the other page that is not it (90% or
+picture `-o` writes is that section — the section by its id (`pricing`), its element's (`home-pricing`) or as the
+report names it (`section#home-pricing`); a section that lined up with a part of the other page that is not it (90% or
 more differs, or farther than a screen) is said, never read as its figure. Beside a page of this machine — the run
 before a task — both sides are held to what the project changed: motion reduced, and another site's pictures stood in
 for by a colour their address gives them.
@@ -324,9 +324,9 @@ changed, not of a third party's CDN (a look's check uses it).
 What every page the CLI opens asks other sites for — pictures, fonts, styles, media, never a page or an API's answer —
 is kept on disk for 6 h (`tmp/plitzi-cache/http`, the project's, from a task's copy too), and the space a check is held
 to is kept by the files it is authored from (`tmp/plitzi-cache/authored`): each command opens a browser of its own with
-no cache, and la-velada's home asked a CDN, YouTube and Google Fonts for 63 files on every load. A check reads two
+no cache, and a home page that asks a CDN, a video host and a font service for dozens of files would ask on every load. A check reads two
 pages at a time, each at its widths at once, and waits 250 ms of quiet on the project's own pages (500 on another
-site's) — four of la-velada's pages at two widths, 8.4 s before, 3.1 s. A project's `typecheck`, `lint` and `format`
+site's) — four pages at two widths went from 8.4 s to 3.1 s. A project's `typecheck`, `lint` and `format`
 keep what they read in `tmp/plitzi-cache/checks` (`--incremental`, `--cache`) and read again only what changed: a
 check run again in the same copy (lint 3.7 s → 0.5 s). A project whose scripts an older CLI wrote is told so by
 `plitzi doctor` (`script-outdated`), and `plitzi upgrade packages --write` brings them up to these.
@@ -334,8 +334,8 @@ check run again in the same copy (lint 3.7 s → 0.5 s). A project whose scripts
 `page check --themes` reads each page in light and in dark too, and fails a ground the same in both under a text whose
 colour follows the theme and, in one of them, reads under 3:1 on it (`fixed-ground`): a fixed colour where a theme
 token belongs. A look at a task checks with it. Every check fails a link or a button drawn on its section's bottom
-edge where the section keeps no space below it (`flush-edge`): la-velada's "Ver cartelera completa" sat against the next
-section, its sections' shared class without a bottom padding, and nothing else said it.
+edge where the section keeps no space below it (`flush-edge`): a "See all" link sitting against the next section, its
+section's class without a bottom padding, which nothing else says.
 
 `page outline <path> [--compare <url>] [--within <part>] [--depth <n>] [--click <el…>] [--width <px>]` lists what a
 page is made of as a visitor sees it — each shown element by a selector that finds it alone (its name on the project's

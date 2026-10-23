@@ -67,7 +67,7 @@ export interface MeasureOptions {
   hover?: string;
   focus?: string;
   /**
-   * Elements clicked on both pages, in order, before the rest is measured — `filters-toggle => .facets__open`: an open
+   * Elements clicked on both pages, in order, before the rest is measured — `menu-toggle => .menu-button`: an open
    * state, a drawer and a panel in it (lx-controls' designer measured the original's filter drawer by a script of its own).
    */
   click?: string[];
@@ -80,7 +80,7 @@ export interface Pair {
   there: string;
 }
 
-/** `fight-card-vs => .vs-medal`: ours, then the other page's; one name alone is both. */
+/** `pricing-card => .plan-card`: ours, then the other page's; one name alone is both. */
 export const pairOf = (asked: string): Pair => {
   const arrow = asked.indexOf('=>');
   const here = (arrow < 0 ? asked : asked.slice(0, arrow)).trim();
@@ -105,7 +105,7 @@ const otherSpelling = async (page: BrowserPage, target: string): Promise<string>
     }
   }
 
-  return `name it by its element's id (fight-card-vs), #its-id, or any selector (.vs-medal, [data-plitzi-el="…"] > span)`;
+  return `name it by its element's id (pricing-card), #its-id, or any selector (.plan-card, [data-plitzi-el="…"] > span)`;
 };
 
 /** How long a picture measured is waited for before it is read as it is: a picture that never loads holds nothing. */

@@ -127,11 +127,10 @@ applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** 
 - **One look, one task**; its files are where its elements are built.
 - **A question first**: it holds an agent — answer before your own work. `run watch` in the harness's background
   (never `&`), one at a time.
-- **Say what is so, read from its source** (the original's CSS, `task show`, the run's approved version), never from a
+- **Say what is so, read from its source** (a copied site's CSS, `task show`, the run's approved version), never from a
   copy, a class name or memory; never answer one way and tell another — a file a task holds is no one else's.
-- **A value is measured, never typed**: scoping, `plitzi page measure <path> "<el> => <sel>" … --compare
-<reference> --width 390,1440` (`--hover`, `--click`: a state; `page outline <path> --compare <reference>` names
-  theirs) each piece — whole, its box too, both widths, held by one
+- **A value is measured, never typed**: scoping, `plitzi page measure <path> <elements…> --width 390,1440` (`--hover`,
+  `--click`: a state; `page outline <path>` names them; a copy's `"<el> => <sel>" … --compare <reference>`) each piece — whole, its box too, both widths, held by one
   acceptance line (`--same …`); "one class holds it" once grepped. A stage may be its `tasks` alone.
 - **The scope, before it ends** — most rounds of a run are its: (1) each element measured whole — its box (height,
   padding), its pseudo-elements, a hover — at 390 and 1440, never only the property the ask names; (2) where a value
@@ -146,31 +145,21 @@ applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** 
   `tmp/`, where the agents are told of strays.
 - **The page's own type is the page's**: `<page> => body` measures the body's font and background — a line on an
   element of the page makes a task invent a wrapper to carry it.
-- **A line names the original's counterpart**, and the finding says which element each id is (the button, not the row
-  it sits in): an id the task builds otherwise bends its markup, or never passes. A line moved to
-  another task once its elements exist is run on them first.
 - **A finding is read from its page**, measured — never from another page or memory; a piece the scope gives no number
   is one the agents guess.
 - **What two tasks share is the base task's, declared once**: a page's section styles and the space between sections,
   a format (a date), the whole palette — tasks adding tokens at once name one colour three ways.
-- **A copy is compared section by section**: each section's height at 390 against the original's, one `page measure`
-  call, before you approve a page — a section laid out another way on a phone passes a review looked at 1440.
 - **What must hold at `complete` is an acceptance line** (`run amend`), never a message: a message has no hold on it.
 - **What a task builds on is in its `dependsOn`**, not only in its words: a finding naming another task's component is a
   dependency `run plan` cannot see.
 - **A stage reads `run view`, not memory**: a task that merges a file one not done holds waits for it (`dependsOn`).
-- **A line nothing can answer is yours at once**: its command exits 2 (the original's element not there, nothing
-  served), you are told, and every try of the task fails on it until you amend it — never the agent's to bend.
-- **A line measures the design, never the data it shows**: a section's height only where its content is the
-  original's — over example texts or other data it is passed only by tuning boxes (a margin to the sub-pixel, a
-  min-height); measure its parts there (a gap, the order of its lines). A check asks what the original has: run it on the
-  original too (what is empty there is empty here).
-- **The scope follows every link** of the pages it keeps — a 404 here that answers there is a task — and measures each
-  section's box at 1920 too, where a column the original centres stretches here.
+- **A line nothing can answer is yours at once**: its command exits 2 (an element not there — a copied site's too —
+  nothing served), you are told, and every try of the task fails on it until you amend it — never the agent's to bend.
 - **A command you hand an agent you ran**, as a line you write: one `--same` refused cost a round.
-- **A control is used there and back, not pictured** — an arrow, a dot, a pager, a drawer: `page shot <path> --compare
-  <url> --click "ours => theirs"` at both widths (`page measure --click` for its open state's values), and a task that
-  adds one says so in its acceptance; a picture passes one that moves nothing, or otherwise than the original's.
+- **A control is used there and back, not pictured** — an arrow, a dot, a pager, a drawer: `page shot <path> --click
+  <el>` at both widths (a copy's beside its reference: `--compare <reference> --click "ours => theirs"`; `page measure
+  --click` for the open state's values), and a task that adds one says so in its acceptance; a picture passes one that
+  moves nothing, or otherwise than asked.
 - **The board is a kanban; keeping the team busy is yours.** A card ready beside each one in review, so an agent whose
   card waits takes another: stack the backlog (`run extend`, tasks that `closes`), split a card by what changes apart,
   give the designer the UI reviews — `--changes` with `--skip-design lead` keeps the next look yours. `run watch` says
@@ -183,3 +172,19 @@ applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** 
 - **Look where it changed**: a fix for light in light, one for the phone at 390 (`task look --scheme light --width 390`).
 - **A round trimmed is said**: what it leaves goes to the backlog (`run notice`), never into one more round.
 - **The report before the finish**; `--apply` is the person's unless they allowed you — never on your own.
+
+## When the run copies a site
+
+Its plan names the site (`"reference"`); what the rules above say of it, and these besides.
+
+- **A line names the copied site's counterpart**, and the finding says which element each id is (the button, not the row
+  it sits in): an id the task builds otherwise bends its markup, or never passes. A line moved to
+  another task once its elements exist is run on them first.
+- **A copy is compared section by section**: each section's height at 390 against the original's, one `page measure`
+  call, before you approve a page — a section laid out another way on a phone passes a review looked at 1440.
+- **A line measures the design, never the data it shows**: a section's height only where its content is the
+  original's — over example texts or other data it is passed only by tuning boxes (a margin to the sub-pixel, a
+  min-height); measure its parts there (a gap, the order of its lines). A check asks what the original has: run it on the
+  original too (what is empty there is empty here).
+- **The scope follows every link** of the pages it keeps — a 404 here that answers there is a task — and measures each
+  section's box at 1920 too, where a column the original centres stretches here.

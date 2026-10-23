@@ -23,6 +23,25 @@ describe('an agent’s prompt', () => {
     expect(prompt).not.toContain('runs-designer.md');
   });
 
+  // Carlos: the CLI works for any run, never one kind of it — a run copying nothing was told of an "original".
+  it('holds the work to the site the run copies when it copies one, and speaks of none when it does not', () => {
+    const copying = agentPrompt({
+      ...base,
+      agent: 'dev-1',
+      started: { roles: ['developer'] },
+      reference: 'https://www.example.com'
+    });
+    expect(copying).toContain('--compare https://www.example.com --width 390,1440');
+    expect(copying).toContain('--compare https://www.example.com --click "ours => theirs"');
+    expect(copying).not.toContain('<url>');
+
+    const building = agentPrompt({ ...base, agent: 'dev-1', started: { roles: ['developer'] } });
+    expect(building).not.toMatch(/original|--compare|copied site/);
+    expect(building).toContain('page shot <path> --click <element>');
+    const lead = agentPrompt({ ...base, agent: 'lead' });
+    expect(lead).not.toContain('--compare');
+  });
+
   it('gives a designer its half and its reviews, a lead that reviews the lead’s, at the level it is started at', () => {
     const designer = agentPrompt({ ...base, agent: 'design-1', started: { roles: ['designer', 'developer'] } });
     expect(designer).toContain('runs-designer.md');

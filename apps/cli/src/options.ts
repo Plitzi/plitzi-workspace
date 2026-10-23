@@ -121,7 +121,7 @@ export const names = (value: string): string[] => {
   return [...new Set(each)];
 };
 
-/** Pages by path, comma-separated — `/,/boxeadores` — each starting with `/`. */
+/** Pages by path, comma-separated — `/,/pricing` — each starting with `/`. */
 export const pagePaths = (value: string): string[] => {
   const each = value
     .split(',')

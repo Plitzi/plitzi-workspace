@@ -17,7 +17,7 @@ too.
 - **Measure, never guess — in one call:** `plitzi page measure <path> "<ours> => <theirs>" … --compare <url> --width
 390,1440` measures every element at every width in one browser, the reference kept 6 h (`--fresh` reads it again),
   their `::before`/`::after` too: each property that differs, here → there, what both inherit said apart; a state with
-  `--hover|--focus "<ours> => <theirs>"` (a card's hover, its medal measured), an open one with `--click`. What to name
+  `--hover|--focus "<ours> => <theirs>"` (a card's hover, its badge measured), an open one with `--click`. What to name
   after `=>`: `plitzi page outline <path> --compare <url> [--within <part>] [--click <el>]` lists the other page's
   elements by a selector it takes, each with its box — never its HTML fetched and searched. An element that draws on its box (a
   hairline, a fill): its box's height is a visible value. Ask for those
@@ -30,9 +30,9 @@ too.
 - **Say it:** `plitzi task review <task> --approve [--note "what you saw"] | --changes "what, where, why — the values
 measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it**: past them it goes to another designer or
   the lead, and your verdict is refused. One round asks everything you want of it. A difference a visitor sees is sent back, never approved with a note —
-  "approximate" is one. A control the task adds — an arrow, a dot, a pager, a drawer — you use there and back beside the
-  original's (`page shot <path> --compare <url> --click "ours => theirs"`: both screens once clicked): one that moves
-  nothing, or otherwise than the original's, is sent back. What the lead told you while
+  "approximate" is one. A control the task adds — an arrow, a dot, a pager, a drawer — you use there and back
+  (`page shot <path> --click <el>`; a copy beside its reference, `--compare <url> --click "ours => theirs"`: both screens
+  once clicked): one that moves nothing, or otherwise than asked — than the reference's, in a copy — is sent back. What the lead told you while
   you looked is handed to you before your verdict goes: read it, then say it again.
 - **Ask what the task is, not more** — every round, the first too: send it back for what its title and acceptance
   cover that is broken or measures off. Another element, a page-wide value (the body's font), a refinement the task

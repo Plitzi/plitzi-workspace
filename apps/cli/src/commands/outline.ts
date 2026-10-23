@@ -14,7 +14,7 @@ import type { BrowserPage, Scheme } from '../browser';
 /**
  * `plitzi page outline`: what a page is made of, as the elements a visitor sees — each by a selector `page measure`
  * takes as it is, its box and its first words. The other site's with `--compare`: what to name after `=>`, read in
- * one call where agents fetched its HTML and searched it for classes (lx-controls' designer, velada-backlog's).
+ * one call where agents fetched its HTML and searched it for classes (lx-controls' designer).
  */
 
 export interface OutlineOptions {
@@ -97,7 +97,7 @@ export const outlineIn = (input: {
     const chosen =
       named !== null && unique(`[data-plitzi-el="${named}"]`)
         ? `[data-plitzi-el="${named}"]`
-        : // An id a theme generated (`Details-Mobile-1-template--21308694102229__product-grid`) says less than a class.
+        : // A long id is most often one a theme or a framework generated, and says less than a class.
           node.id !== '' && node.id.length <= 32 && unique(`#${CSS.escape(node.id)}`)
           ? `#${CSS.escape(node.id)}`
           : unique(own)

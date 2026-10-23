@@ -113,10 +113,10 @@ export const registerPage = (pageGroup: Command): void => {
 
   pageGroup
     .command('measure')
-    .argument('<path>', 'The page: /combates')
+    .argument('<path>', 'The page: /pricing')
     .argument(
       '<elements...>',
-      'Its elements, each by its id (fight-card-vs), #its-id or any selector — and, with --compare, the other page’s after "=>": "fight-card-vs => .vs-medal". All measured in one call'
+      'Its elements, each by its id (pricing-card), #its-id or any selector — and, with --compare, the other page’s after "=>": "pricing-card => .plan-card". All measured in one call'
     )
     .description(
       'Elements’ computed styles — type, colours, borders, radii, shadows, size, spacing, motion, their ::before/::after — and, with --compare, beside another page’s: every element and width in one call'
@@ -125,12 +125,12 @@ export const registerPage = (pageGroup: Command): void => {
     .option('--there <selector>', 'With one element: the other page’s, by any selector (or write it "ours => theirs")')
     .option(
       '--hover <element>',
-      'Hover an element on both pages first — "fight-card => .fight-card" — and measure the rest as it leaves them, its transitions finished'
+      'Hover an element on both pages first — "pricing-card => .plan-card" — and measure the rest as it leaves them, its transitions finished'
     )
     .option('--focus <element>', 'Focus an element on both pages first, as --hover does')
     .option(
       '--click <element...>',
-      'Click elements on both pages first, in order — "filters-toggle => .facets__open" — and measure the open state they leave'
+      'Click elements on both pages first, in order — "menu-toggle => .menu-button" — and measure the open state they leave'
     )
     .addOption(
       new Option(
@@ -153,7 +153,7 @@ export const registerPage = (pageGroup: Command): void => {
 
   pageGroup
     .command('outline')
-    .argument('<path>', 'The page: /collections/laptops')
+    .argument('<path>', 'The page: /pricing')
     .description(
       'What a page is made of, as a visitor sees it — each element by a selector page measure takes, its box and first words; the other site’s with --compare'
     )
@@ -162,7 +162,7 @@ export const registerPage = (pageGroup: Command): void => {
     .addOption(new Option('--depth <levels>', 'How many levels under the part are listed').argParser(positiveInteger))
     .option(
       '--click <element...>',
-      'Click elements first, in order — "filters-toggle => .facets__open", each page its own side — and outline what they open'
+      'Click elements first, in order — "menu-toggle => .menu-button", each page its own side — and outline what they open'
     )
     .addOption(new Option('--width <px>', 'The viewport width').argParser(width).default(1440))
     .addOption(schemeOption())
