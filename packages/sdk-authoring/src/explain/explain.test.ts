@@ -210,6 +210,12 @@ describe('explain, of what a template reads and calls', () => {
     ]);
   });
 
+  it('says a carousel’s steps by the builder that writes them, with how far a press moves', () => {
+    expect(explain('carouselNext').map(each => `${each.kind}:${each.name}`)).toEqual(['step:next']);
+    expect(explainText('carouselNext')).toContain("Written: carouselNext('carousel-id', 'page')");
+    expect(explainText('carouselNext')).toContain("by?: 'slide' | 'page'");
+  });
+
   it('says every template function, written as it is called', () => {
     expect(explainText('max')).toContain('max — template function: The largest of the numbers given');
     expect(explainText('max')).toContain('Written: {{ max(a, b, …) | max(list) }}');

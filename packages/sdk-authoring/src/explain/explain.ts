@@ -183,7 +183,13 @@ export const BUILDER_NAMES: Record<string, string> = {
   toggleState: 'toggleElement',
   performQuery: 'reloadApi',
   cancelQuery: 'cancelApi',
-  delayTime: 'delay'
+  delayTime: 'delay',
+  // A carousel's own steps, written with its name: `explain carouselNext` answered nothing (lx-controls).
+  next: 'carouselNext',
+  previous: 'carouselPrevious',
+  goTo: 'carouselGoTo',
+  play: 'carouselPlay',
+  pause: 'carouselPause'
 };
 
 /**
