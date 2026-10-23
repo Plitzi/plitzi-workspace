@@ -75,8 +75,18 @@ nobody's task owns** — seen wrong outside the task in hand, there before the r
 (`notices.ts`), by an agent with its token, a reviewer by its name, or the lead: one line of the log (`notice`) —
 never a message to the lead, which would wake it for what is the next stage's — said by the finish and listed in the report under "Noticed, owned by no task" — and kept past the run in the project's backlog (`backlog.ts`, `.plitzi/backlog.json`, beside the team: the
 project's, in git), as the run finishes or is aborted, one already there kept once. `run plan` and `run open` list what
-is open for the run being planned to take up; `run backlog` lists it, `run backlog done <id> --note "…"` closes one,
-saying how. A run's log goes with the run and a report is read by nobody planning the next one: velada-polish's lead
+is open for the run being planned to take up; `run backlog` lists it, `run backlog add "…" [--on <where>]` keeps one
+with no run open (the person's, or an agent's between runs), and `run backlog done <id> --note "…"` closes one, saying
+how. A plan's task that does items says so — `"closes": ["b-3"]`, refused at `run plan` when one is not open — and they
+are closed as its run is applied, each saying the task and the run that did it.
+
+**The run's feedback to Plitzi** (`feedback.ts`): what a run says of Plitzi itself — the CLI, the platform, its docs —
+written as the run finishes or is aborted to `.plitzi/feedback/<run>.md` (`run feedback` writes it before), for the
+person to share with Plitzi's team; never sent by itself. It holds the notices of Plitzi (`run notice --plitzi "…"`, which
+the agents' prompt asks for as a friction happens, and which never reach the project's backlog), what the audit saw go
+wrong in how the run was worked, the refusals by code, the commands that crashed, the checks failed for the work and for
+nothing of it, the calls made again and again, and the run's measures — nothing of the project: no code, no token, the
+project's folder and the person's home said as `<project>` and `~`. A run's log goes with the run and a report is read by nobody planning the next one: velada-polish's lead
 had the next run's work nowhere the next run reads —
 what the next stage starts from. la-velada's empty stats cell was seen in two runs and noted "predates this task" in a
 review each time: in no task's acceptance, it was nobody's.
@@ -285,8 +295,8 @@ agent its scratch, made. Never removed by the run.
 ## Who works the runs (`team.ts`)
 
 Who works a project's runs is its own choice, in `.plitzi/team.json` (committed: it holds no secret, so it needs no
-`.example` as `.env` does). `plitzi create` writes the starter (`STARTER_TEAM`): a developer and a designer — two
-agents, since each spends tokens; the person grows it when a job asks — the harness's own models, and an `about` that
+`.example` as `.env` does). `plitzi create` writes the starter (`STARTER_TEAM`): two developers — one started with the
+run, the other on demand — and a designer, since each agent spends tokens; the person grows it when a job asks — the harness's own models, and an `about` that
 says what each field and each role the CLI knows means (`ROLES`: developer, designer, reviewer, tester, writer; any
 other name is a role of the project's own), since JSON has no comments; `about` is the CLI's — never read, written as this CLI says it whenever it
 writes the file, and brought up by `plitzi upgrade` with the files, the agents left as they are. The file is formatted as the project's Prettier leaves it (`formattedJson`). `run team` lists the roles too. The file

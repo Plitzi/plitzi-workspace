@@ -1,12 +1,14 @@
+import fs from 'node:fs/promises';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { closeBacklogItem, openBacklog } from './backlog';
+import { addBacklogItem, closeBacklogItem, openBacklog } from './backlog';
 import { abortRun, finishRun } from './merge';
 import { noticeRun, noticesOf } from './notices';
 import { buildReport, reportText } from './report';
 import { loadRun, readRunLog } from './run';
 import { readInbox } from './talk';
-import { makeBench } from '../tests/runProject';
+import { benchPlan, makeBench } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
 import type { Bench } from '../tests/runProject';
@@ -59,6 +61,27 @@ describe('run notice', () => {
   });
 });
 
+// Carlos: the lead listed what it found wrong with Plitzi in a journal of its own; the run writes it as feedback to share.
+describe('the run’s feedback to Plitzi', () => {
+  it('keeps what is noticed of Plitzi out of the backlog, and writes it with the run’s measures as it ends', async () => {
+    const runId = await open();
+    await noticeRun(lead(), runId, 'page measure reads no position, and every agent wrote a script for it', {
+      plitzi: true
+    });
+    await noticeRun(lead(), runId, 'The footer’s legal line wraps at 390');
+    await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
+    const finished = await finishRun(bench.person(true), runId, { apply: true, leavePending: true });
+
+    expect(finished.backlog).toEqual(['b-1']);
+    expect((await openBacklog(bench.root)).map(item => item.text)).toEqual(['The footer’s legal line wraps at 390']);
+    const feedback = await fs.readFile(finished.feedback ?? '', 'utf-8');
+    expect(feedback).toContain(`# Plitzi feedback — run ${runId}`);
+    expect(feedback).toContain('- page measure reads no position, and every agent wrote a script for it — lead');
+    expect(feedback).not.toContain('The footer’s legal line');
+    expect(feedback).not.toContain(bench.root);
+  });
+});
+
 // Carlos: what a run leaves is noted for the next — velada-polish's lead had it nowhere the next run reads.
 describe('the project’s backlog', () => {
   it('keeps what a run noticed past the run, once, for the next run — open until one says it is done', async () => {
@@ -83,5 +106,29 @@ describe('the project’s backlog', () => {
     });
     expect(await openBacklog(bench.root)).toEqual([]);
     expect(await refusal(closeBacklogItem(lead(), 'b-1', 'lead'))).toMatchObject({ code: 'invalid' });
+  });
+
+  // Carlos: the backlog kept through the CLI, read when a plan is written, so the lead takes it up.
+  it('takes an item with no run open, and closes it when a run whose task says it does it is applied', async () => {
+    expect(await addBacklogItem(bench.person(true), { text: 'The cart says no total', by: 'person' })).toMatchObject({
+      id: 'b-1',
+      from: 'no run'
+    });
+    expect(
+      await refusal(addBacklogItem(bench.person(true), { text: 'The cart says no total', by: 'person' }))
+    ).toMatchObject({ code: 'invalid' });
+
+    const unknown = benchPlan();
+    unknown.tasks[3] = { ...unknown.tasks[3], closes: ['b-9'] };
+    expect((await refusal(open(unknown))).message).toContain('b-9 is no open item of the backlog');
+
+    const plan = benchPlan();
+    plan.tasks[3] = { ...plan.tasks[3], closes: ['b-1'] };
+    const runId = await open(plan);
+    await doTask('agent-1', plan.tasks[3].id, plan.tasks[3].files[0], 'export const about = { total: true };\n');
+    const finished = await finishRun(bench.person(true), runId, { apply: true, leavePending: true });
+
+    expect(finished.closedBacklog).toEqual(['b-1']);
+    expect(await openBacklog(bench.root)).toEqual([]);
   });
 });

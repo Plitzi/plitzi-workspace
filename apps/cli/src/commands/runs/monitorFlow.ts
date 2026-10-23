@@ -274,7 +274,7 @@ export const flowBoard = (
       cell(
         chalk.bold('FLOW') +
           chalk.dim(
-            '  each task left to right, from to-do to approved · ↺2 sent back, at work again at round 2 · ‼ critical, ! high (its own or a task’s waiting on it) · the wheel scrolls a stage · f hides it'
+            `  each task left to right, from to-do to approved · ↺2 sent back, at work again at round 2 · ${chalk.red('‼')} critical, ${chalk.yellow('!')} high (its own or a task’s waiting on it) · the wheel scrolls a stage · f hides it`
           ),
         width
       ),

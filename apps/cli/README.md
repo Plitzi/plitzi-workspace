@@ -597,8 +597,8 @@ inbox`. A block lifted carries its answer (`task unblock --answer`), and `task n
   the project as it is until the finish, and says so on its console while a run is open.
 - **No task ends with failing checks** — lint, types, tests: `complete` refuses. Only for a reason that weighs, said to
   the lead: `--known-failure "why" --fixed-by <task>`; the final merge still needs every check green.
-- **As many agents as the team has** (`.plitzi/team.json`: every new project starts with a developer and a designer —
-  two agents, few tokens — and what each role does is in it, and in `run team`; one made before it gets the team its
+- **As many agents as the team has** (`.plitzi/team.json`: every new project starts with two developers — one with the
+  run, the other on demand — and a designer, few agents at once — and what each role does is in it, and in `run team`; one made before it gets the team its
   first plan needs; above 5 a person confirms): past it, `task take` waits for one to finish.
 - **Each task in a copy** of the project in `tmp/plitzi-runs/<run>/` — cloned copy-on-write where the disk can; never
   `.env` (its templates, `.env.example`, are), `node_modules` or the binaries of `public/`. Only the task's own files may

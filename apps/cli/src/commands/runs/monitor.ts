@@ -157,7 +157,14 @@ export const monitorScreen = (
       '←→ the activity',
       ...(short
         ? []
-        : ['"after X": starts once X is approved', '○ free to take', '■ needs someone', '‼ critical', '! high'])
+        : [
+            '"after X": starts once X is approved',
+            '○ free to take',
+            '■ needs someone',
+            // Toned as on the tasks they mark: dimmed with the rest, they read as no mark at all.
+            `${chalk.red('‼')} critical`,
+            `${chalk.yellow('!')} high`
+          ])
     ],
     width
   ).map(line => chalk.dim(line));

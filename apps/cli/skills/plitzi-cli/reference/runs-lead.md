@@ -113,8 +113,9 @@ t-home` is all of it (`<file> --diff`: one file's whole diff);
    then ask them — never put a CLI in `node_modules` yourself.
 8. **Before you close, look at the coverage:** the finish runs each covering check on the result; look at what a
    check cannot see (`plitzi run preview`) — what is missing is a stage (`run extend`), or the next run's: `run notice "…"
---on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run plan` and `run open` list; `run
-backlog done <id> --note "…"` closes one. **Close it:** write the summary (done, wrong, left) last, with each agent's tokens as the harness gave them:
+--on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run plan` and `run open` list (`run
+backlog add "…"` keeps one with no run open); a task of your plan that does one says so — `"closes": ["b-3"]` — and the
+applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** write the summary (done, wrong, left) last, with each agent's tokens as the harness gave them:
    `plitzi run report --summary summary.md --tokens dev-1=208061,…`; then `plitzi run finish` (the diff, checked). Its
    report measures the run (flow, cost, calls repeated) against the runs before: `plitzi run bench`. `--apply` is the person's, or yours if they allowed it — every server you started on the project stopped first (one
    serves the project as it was and holds its `state/kv.json`). `run pending`: what awaits it.
@@ -142,36 +143,37 @@ backlog done <id> --note "…"` closes one. **Close it:** write the summary (don
   next round's UI yours — never a designer's review offered, then decided past it.
 - **Your files** — a stage, a summary — in your scratch (`tmp/plitzi-runs/<run>/scratch/lead/`), never the project's
   `tmp/`, where the agents are told of strays.
-- **The page's own type is the page's**: `home => body` measures the body's font and background — a line on an element
-  of the page made a task invent a wrapper to carry it.
-- **A line names the original's counterpart**, and the finding says which element each id is (`product-buy-now` the
-  button, `product-buy` its row): an id the task builds otherwise bends its markup, or never passes. A line moved to
+- **The page's own type is the page's**: `<page> => body` measures the body's font and background — a line on an
+  element of the page makes a task invent a wrapper to carry it.
+- **A line names the original's counterpart**, and the finding says which element each id is (the button, not the row
+  it sits in): an id the task builds otherwise bends its markup, or never passes. A line moved to
   another task once its elements exist is run on them first.
-- **A finding is read from its page**, measured — never from another page or memory (a date the article never shows);
-  a piece the scope gives no number is one the agents guess.
+- **A finding is read from its page**, measured — never from another page or memory; a piece the scope gives no number
+  is one the agents guess.
 - **What two tasks share is the base task's, declared once**: a page's section styles and the space between sections,
-  a format (a date), the whole palette — three names for one grey came from three tasks adding a token at once.
+  a format (a date), the whole palette — tasks adding tokens at once name one colour three ways.
 - **A copy is compared section by section**: each section's height at 390 against the original's, one `page measure`
-  call, before you approve a page — a whole section laid out another way passed two reviews looked at 1440.
+  call, before you approve a page — a section laid out another way on a phone passes a review looked at 1440.
 - **What must hold at `complete` is an acceptance line** (`run amend`), never a message: a message has no hold on it.
-- **What a task builds on is in its `dependsOn`**, not only in its words: a finding naming another task's component (a
-  cart's "Top Productos" cards) is a dependency `run plan` cannot see.
+- **What a task builds on is in its `dependsOn`**, not only in its words: a finding naming another task's component is a
+  dependency `run plan` cannot see.
 - **A stage reads `run view`, not memory**: a task that merges a file one not done holds waits for it (`dependsOn`).
 - **A line nothing can answer is yours at once**: its command exits 2 (the original's element not there, nothing
   served), you are told, and every try of the task fails on it until you amend it — never the agent's to bend.
 - **A line measures the design, never the data it shows**: a section's height only where its content is the
-  original's — over example texts or another catalog it is passed only by tuning boxes (a 63.93px margin, min-heights:
-  three of lx-fidelity's lines); measure its parts there (a gap, the order of its lines). A check asks what the original
-  has: run it on the original too (an empty collection there is one here).
-- **The scope follows every link** of the pages it keeps — a 404 here that answers there is a task (23 collections) — and
-  measures each section's box at 1920 too, where a column the original centres stretches here.
+  original's — over example texts or other data it is passed only by tuning boxes (a margin to the sub-pixel, a
+  min-height); measure its parts there (a gap, the order of its lines). A check asks what the original has: run it on the
+  original too (what is empty there is empty here).
+- **The scope follows every link** of the pages it keeps — a 404 here that answers there is a task — and measures each
+  section's box at 1920 too, where a column the original centres stretches here.
 - **A command you hand an agent you ran**, as a line you write: one `--same` refused cost a round.
 - **A control is used, not pictured** — an arrow, a dot, a pager: `page shot <path> --click <element>` at both widths,
-  and a task that adds one says so in its acceptance (Opiniones' arrow moved nothing, and three reviews passed it).
+  and a task that adds one says so in its acceptance; a picture passes one that moves nothing.
 - **The designer's own task off the critical path** while it is the only one reviewing UI: what waits on it waits on
-  every review too (lx-fidelity: t-reviews 20 min).
+  every review too.
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red.
-- **Don't fix the CLI mid-run**: note it (`run notice`), fix it after.
+- **Don't fix Plitzi mid-run**: note it (`run notice --plitzi "…"`) — the run's feedback to Plitzi, written as it ends
+  (`.plitzi/feedback/<run>.md`, or `run feedback` before), carries it with what the CLI saw; the person shares it.
 - **Look where it changed**: a fix for light in light, one for the phone at 390 (`task look --scheme light --width 390`).
 - **A round trimmed is said**: what it leaves goes to the backlog (`run notice`), never into one more round.
 - **The report before the finish**; `--apply` is the person's unless they allowed you — never on your own.

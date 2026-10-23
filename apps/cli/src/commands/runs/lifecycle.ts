@@ -16,6 +16,10 @@ import type { RunCommandOptions } from './shell';
  * A run stopped, resumed, finished into the project — or not — attached, released, purged.
  */
 
+/** Where the run's feedback to Plitzi is, said with what to do with it: the person's to share, never sent by itself. */
+const feedbackLine = (file: string): string =>
+  `What this run says of Plitzi itself, for Plitzi's team: ${file} — nothing of the project in it; share it with Plitzi to make it better`;
+
 export const runCanWrite = (file: string, options: RunCommandOptions & { task?: string }): Promise<void> =>
   act(
     options,
@@ -177,6 +181,12 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
                         `What it noticed and left, kept for the next run in ${BACKLOG_FILE}: ${finished.backlog.join(', ')} (plitzi run backlog)`
                       ]
                     : []),
+                  ...(finished.closedBacklog
+                    ? [
+                        `Of the backlog, what its tasks did, closed: ${finished.closedBacklog.join(', ')} (plitzi run backlog --all)`
+                      ]
+                    : []),
+                  ...(finished.feedback ? [feedbackLine(finished.feedback)] : []),
                   ...inputLines(finished.inputs)
                 ].join('\n')
       ].join('\n')
@@ -205,6 +215,7 @@ export const runAbort = (runId: string | undefined, options: RunCommandOptions):
       [
         `Aborted and removed: nothing was written into the project. Discarded: ${list(aborted.discarded)}`,
         `The run's report: ${aborted.report}`,
+        feedbackLine(aborted.feedback),
         ...inputLines(aborted.inputs)
       ].join('\n')
   );

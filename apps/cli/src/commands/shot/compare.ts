@@ -145,7 +145,14 @@ export const compareText = (compare: CompareReport): string[] => {
     );
   }
 
-  lines.push(chalk.dim(`${compare.sideBySide}\n${compare.diff}`));
+  // A clipped section's pictures say so: among the page's, the one asked for was taken for missing.
+  lines.push(
+    chalk.dim(
+      compare.section === undefined
+        ? `${compare.sideBySide}\n${compare.diff}`
+        : `${compare.section}, ours beside theirs: ${compare.sideBySide}\n${compare.section}, what differs: ${compare.diff}`
+    )
+  );
   if (compare.sections) {
     lines.push(
       `The page is tall: the sections that changed most, each ours beside theirs — ${compare.sections.join(', ')}`

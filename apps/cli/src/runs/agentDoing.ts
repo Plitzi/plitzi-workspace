@@ -3,6 +3,43 @@ import type { TaskLine } from './view';
 
 /** What an agent holding `task` is, and does, in its row's words: the board's and the dev tools' one reading. */
 
+/** What each command is about, in a person's words — its path or task where it names one. */
+const DOING: Record<string, (target: string | undefined, compare: boolean) => string> = {
+  'page measure': (target, compare) => `measuring ${target ?? 'a page'}${compare ? ' against the original' : ''}`,
+  'page shot': (target, compare) => `picturing ${target ?? 'a page'}${compare ? ' beside the original' : ''}`,
+  'page check': target => `checking ${target ?? 'a page'} in a browser`,
+  'page same': target => `comparing ${target ?? 'a page'} with the run before`,
+  'task check': () => 'running its checks',
+  'task context': () => 'reading its brief',
+  'task show': target => `reading ${target ?? 'a task'}'s changes`,
+  'task look': target => `looking at ${target ?? 'a task'}`,
+  'task complete': () => 'sending its work to review',
+  'task review': target => `saying its verdict on ${target ?? 'a task'}`,
+  'task next': () => 'asking for work',
+  'task request': () => 'asking for a shared file',
+  'task wait': () => 'waiting for a shared file',
+  'task claim': () => 'taking a shared file',
+  'task message': () => 'writing to the run',
+  'task tell': () => 'telling the lead',
+  'task ask': () => 'asking the lead'
+};
+
+/**
+ * What an agent's last command was about, in words — `plitzi page measure /cart … --compare <site>` is "measuring /cart
+ * against the original": what it is at between the CLI's own marks of its task, where its row said "writes t-x" alone.
+ */
+export const commandDoing = (command: string): string => {
+  const words = command.split(' ').filter(word => word !== '' && word !== 'plitzi' && !word.endsWith('/plitzi'));
+  const name = words
+    .filter(word => !word.startsWith('-'))
+    .slice(0, 2)
+    .join(' ');
+  const target = words.filter(word => !word.startsWith('-')).at(2);
+  const said = Object.hasOwn(DOING, name) ? DOING[name] : undefined;
+
+  return said ? said(target, words.includes('--compare')) : `running ${name || 'a command'}`;
+};
+
 export const statusOf = (task: TaskLine): AgentStatus =>
   task.asking && !task.asking.answered
     ? 'asking'

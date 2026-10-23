@@ -20,13 +20,18 @@ export interface Notice {
   on?: string;
   /** The task its agent was at when it saw it. */
   task?: string;
+  /**
+   * `plitzi`: of Plitzi itself — the CLI, the platform, its docs — not of the project: never the project's backlog, the
+   * run's feedback to Plitzi carries it (`feedback.ts`).
+   */
+  about?: 'plitzi';
 }
 
 export const noticeRun = async (
   ctx: RunContext,
   runId: string,
   text: string,
-  { task, on }: { task?: string; on?: string } = {}
+  { task, on, plitzi = false }: { task?: string; on?: string; plitzi?: boolean } = {}
 ): Promise<Notice> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping', 'reconciliation'], 'notice something');
@@ -51,13 +56,15 @@ export const noticeRun = async (
     by: ctx.agent,
     text: text.trim(),
     ...(on ? { on } : {}),
-    ...(task ? { task } : {})
+    ...(task ? { task } : {}),
+    ...(plitzi ? { about: 'plitzi' as const } : {})
   };
   await logRun(ctx, loaded.paths, {
     action: 'notice',
     text: notice.text,
     ...(on ? { on } : {}),
-    ...(task ? { task } : {})
+    ...(task ? { task } : {}),
+    ...(plitzi ? { about: 'plitzi' } : {})
   });
   // Never sent to the lead as a message: it is for the next stage, not for now, and each woke the lead that waits on the
   // run for what needs it (velada-now: two designers' notices, two wake-ups with nothing to do). The activity shows it,
@@ -75,7 +82,8 @@ export const noticesOf = async (loaded: LoadedRun): Promise<Notice[]> =>
             by: typeof entry.by === 'string' ? entry.by : 'someone',
             text: entry.text,
             ...(typeof entry.on === 'string' ? { on: entry.on } : {}),
-            ...(typeof entry.task === 'string' ? { task: entry.task } : {})
+            ...(typeof entry.task === 'string' ? { task: entry.task } : {}),
+            ...(entry.about === 'plitzi' ? { about: 'plitzi' as const } : {})
           }
         ]
       : []

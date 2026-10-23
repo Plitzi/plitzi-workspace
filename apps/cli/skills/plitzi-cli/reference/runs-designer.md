@@ -23,7 +23,7 @@ too.
   this one lacks, on which of our elements.
 - **What to look for:** hierarchy and spacing, the theme's tokens rather than new values, every state (empty, long,
   error, hover, focus), light and dark — a reference with one scheme is no space with one: look at the other too, where
-  a fixed colour under a theme's text shows (velada-fidelity's judges' rows, grey in light) — 390, the words; against a reference, its details — what moves (an entrance, a
+  a fixed colour under a theme's text shows — 390, the words; against a reference, its details — what moves (an entrance, a
   shine, an arrow), the sizes measured, what each control does, the phone's own layout.
 - **Say it:** `plitzi task review <task> --approve [--note "what you saw"] | --changes "what, where, why — the values
 measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it**: past them it goes to another designer or
@@ -33,8 +33,7 @@ measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it**: 
   you looked is handed to you before your verdict goes: read it, then say it again.
 - **Ask what the task is, not more** — every round, the first too: send it back for what its title and acceptance
   cover that is broken or measures off. Another element, a page-wide value (the body's font), a refinement the task
-  never asked: `plitzi run notice "…"`, never a round — velada-fidelity sent back all four tasks with asks beyond them,
-  and ran 80 minutes for 10 minutes of work.
+  never asked: `plitzi run notice "…"`, never a round: asks beyond a task turn minutes of work into an hour of rounds.
 - **A round another designer said before:** check that what it asked is done, and ask anew only what is broken.
 - **Beyond the task:** wrong, and no task's — `plitzi run notice "…" --on <page|element|file>`; what the lead should
   know of a task — a finding for its code review (data frozen at authoring, a second source of truth) above all — `plitzi

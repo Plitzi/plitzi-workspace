@@ -2,7 +2,15 @@ import { act, holder, projectCaller, runOf, taskOf } from './shell';
 import { exchangeLines, messageLines } from './text';
 import { durationText, FOLLOW_MS } from '../../options';
 import { proposalsOf } from '../../runs/agreements';
-import { BACKLOG_FILE, backlogText, closeBacklogItem, openBacklog, readBacklog } from '../../runs/backlog';
+import {
+  addBacklogItem,
+  BACKLOG_FILE,
+  backlogText,
+  closeBacklogItem,
+  openBacklog,
+  readBacklog
+} from '../../runs/backlog';
+import { writeFeedback } from '../../runs/feedback';
 import { noticeRun, noticeText } from '../../runs/notices';
 import { runPaths } from '../../runs/paths';
 import { answerProposal, proposeChange } from '../../runs/proposals';
@@ -148,24 +156,43 @@ export const taskTell = (text: string, options: RunCommandOptions & { about?: st
   );
 
 /** `plitzi run notice`: something wrong that no task owns, kept for the finish and the next stage. */
-export const runNotice = (text: string, options: RunCommandOptions & { on?: string }): Promise<void> =>
+export const runNotice = (
+  text: string,
+  options: RunCommandOptions & { on?: string; plitzi?: boolean }
+): Promise<void> =>
   act(
     options,
     async ctx =>
       noticeRun(ctx, await runOf(ctx, options), text, {
         ...(ctx.token === undefined ? {} : { task: taskOf(ctx) }),
-        ...(options.on ? { on: options.on } : {})
+        ...(options.on ? { on: options.on } : {}),
+        ...(options.plitzi === true ? { plitzi: true } : {})
       }),
     // Said to whoever noticed it: an agent is told to go on with its task; the lead, that the next run takes it up.
     notice =>
-      `Noticed (${noticeText(notice)}): kept in the run's log — the finish says it, the report lists it, and the project's backlog (${BACKLOG_FILE}) keeps it for the next run. ${notice.task === undefined ? 'A stage of this run takes it up now (plitzi run extend), or the next run does.' : 'Go on with your task: it is not yours to fix in it.'}`
+      notice.about === 'plitzi'
+        ? `Noticed of Plitzi (${noticeText(notice)}): kept for the run's feedback to Plitzi, written as it ends — not the project's backlog. ${notice.task === undefined ? '' : 'Go on with your task.'}`.trim()
+        : `Noticed (${noticeText(notice)}): kept in the run's log — the finish says it, the report lists it, and the project's backlog (${BACKLOG_FILE}) keeps it for the next run. ${notice.task === undefined ? 'A stage of this run takes it up now (plitzi run extend), or the next run does.' : 'Go on with your task: it is not yours to fix in it.'}`
+  );
+
+/** `plitzi run feedback`: the run's feedback to Plitzi, written now — the finish writes it again as the run ends. */
+export const runFeedback = (runId: string | undefined, options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => {
+      const id = await runOf(ctx, options, runId, { anyone: true });
+
+      return { file: await writeFeedback(ctx, await loadRun(ctx, id, { anyVersion: true })) };
+    },
+    ({ file }) =>
+      `What this run says of Plitzi itself, for Plitzi's team: ${file} — nothing of the project in it; the finish writes it again with the run whole`
   );
 
 /** `plitzi run backlog`: what runs noticed and left, open first — `done <id>` closes one, saying how. */
 export const runBacklog = (
   action: string | undefined,
   id: string | undefined,
-  options: RunCommandOptions & { note?: string; all?: boolean }
+  options: RunCommandOptions & { note?: string; all?: boolean; on?: string }
 ): Promise<void> =>
   act(
     options,
@@ -181,17 +208,37 @@ export const runBacklog = (
         };
       }
 
+      if (action === 'add') {
+        if (id === undefined) {
+          throw new RunRefusal('invalid', 'Say the item: plitzi run backlog add "what to do" [--on <where>]');
+        }
+
+        return {
+          added: await addBacklogItem(ctx, {
+            text: id,
+            by: await projectCaller(ctx, options),
+            ...(options.on ? { on: options.on } : {})
+          }),
+          items: await openBacklog(ctx.root)
+        };
+      }
+
       if (action !== undefined) {
         throw new RunRefusal(
           'invalid',
-          `"${action}" is no backlog action: plitzi run backlog, or plitzi run backlog done <id>`
+          `"${action}" is no backlog action: plitzi run backlog, plitzi run backlog add "…", or plitzi run backlog done <id>`
         );
       }
 
       return { items: options.all === true ? await readBacklog(ctx.root) : await openBacklog(ctx.root) };
     },
-    ({ closed, items }: { closed?: BacklogItem; items: BacklogItem[] }) =>
+    ({ added, closed, items }: { added?: BacklogItem; closed?: BacklogItem; items: BacklogItem[] }) =>
       [
+        ...(added
+          ? [
+              `Kept ${added.id} in ${BACKLOG_FILE}: ${added.text} — a plan takes it up (a task's closes: ["${added.id}"])`
+            ]
+          : []),
         ...(closed ? [`Closed ${closed.id}: ${closed.text}${closed.done?.note ? ` — ${closed.done.note}` : ''}`] : []),
         items.length === 0
           ? `Nothing open in the project's backlog (${BACKLOG_FILE}).`

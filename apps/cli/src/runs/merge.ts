@@ -2,7 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { auditRun } from './audit';
-import { keepNotices } from './backlog';
+import { closeDoneByRun, keepNotices } from './backlog';
+import { writeFeedback } from './feedback';
 import { fingerprint, readJson, readOptional, writeJson } from './files';
 import { requireLead } from './leads';
 import { acceptanceOnResult, checkVersions } from './materialise';
@@ -255,6 +256,10 @@ export interface Finished {
   noReport?: true;
   /** Written: what the run noticed and left, kept in the project's backlog (`.plitzi/backlog.json`) by id. */
   backlog?: string[];
+  /** Written: the backlog's items its tasks said they do (`closes`), closed. */
+  closedBacklog?: string[];
+  /** Written: the run's feedback to Plitzi (`.plitzi/feedback/<run>.md`), for the person to share. */
+  feedback?: string;
   /** What appeared in the project's `tmp/` during the run that is nobody's tool — left there, said (`strays.ts`). */
   leftInTmp?: string[];
   /** What the run's activity shows was wrong in how it was worked: said, never refusing — and kept in the report. */
@@ -492,6 +497,10 @@ export const finishRun = async (
   });
   // What it noticed and left is the next run's: kept in the project's backlog before the run goes with its log.
   const backlog = (await keepNotices(ctx, loaded)).map(item => item.id);
+  // …and what its tasks said they do of it, closed: written into the project, it is done.
+  const closedBacklog = await closeDoneByRun(ctx, loaded);
+  // What it says of Plitzi itself, for the person to share with Plitzi: written before the run goes with its log.
+  const feedback = await writeFeedback(ctx, loaded);
   // Its work is in the project: the run goes, backups and all, unless a person asked to keep them. Its report stays.
   const inputs = await removeRun(ctx, loaded.paths, runId);
 
@@ -504,6 +513,8 @@ export const finishRun = async (
     writtenBy,
     ...(kept ? { backup: kept } : {}),
     ...(backlog.length > 0 ? { backlog } : {}),
+    ...(closedBacklog.length > 0 ? { closedBacklog } : {}),
+    feedback,
     ...leftThere
   };
 };
@@ -628,16 +639,17 @@ export const continueRun = async (ctx: RunContext, runId: string): Promise<void>
 export const abortRun = async (
   ctx: RunContext,
   runId: string
-): Promise<{ discarded: string[]; report: string; inputs: RemovedInputs }> => {
+): Promise<{ discarded: string[]; report: string; inputs: RemovedInputs; feedback: string }> => {
   const loaded = await loadRun(ctx, runId);
   await requirePerson(ctx, runId, `abort run "${runId}" — nothing of it is written, and its agents' work is discarded`);
   const discarded = Object.keys((await readApproved(loaded.paths)).files).sort();
   const report = await leaveReport(ctx, loaded, { outcome: 'aborted', files: discarded });
-  // Aborted, what it noticed still stands: the next run's.
+  // Aborted, what it noticed still stands: the next run's — and what it says of Plitzi, Plitzi's.
   await keepNotices(ctx, loaded);
+  const feedback = await writeFeedback(ctx, loaded);
   const inputs = await removeRun(ctx, loaded.paths, runId);
 
-  return { discarded, report, inputs };
+  return { discarded, report, inputs, feedback };
 };
 
 /** `plitzi run restore`: one project file put back from a backup — the run's opening one, or before a merge. */

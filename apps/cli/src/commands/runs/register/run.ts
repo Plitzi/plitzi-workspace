@@ -35,6 +35,7 @@ import {
   runTeamUnset,
   runNote,
   runBacklog,
+  runFeedback,
   runNotice,
   runReference
 } from '..';
@@ -308,19 +309,35 @@ export const registerRunGroup = (program: Command): Command => {
     )
     .argument('<text>', 'What is wrong — or - to read it from stdin')
     .option('--on <where>', 'Where it is: a page, an element, a file')
+    .option(
+      '--plitzi',
+      'Of Plitzi itself — the CLI, the platform, its docs — not of the project: for the run’s feedback to Plitzi, never the project’s backlog'
+    )
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
-    .action((text: string, options: RunCommandOptions & { on?: string }) => runNotice(text, options));
+    .action((text: string, options: RunCommandOptions & { on?: string; plitzi?: boolean }) => runNotice(text, options));
+
+  runGroup
+    .command('feedback')
+    .description(
+      'What the run says of Plitzi itself — written by the finish too: its agents’ notices of Plitzi, the refusals, the crashes, the checks no one’s work failed — for Plitzi’s team'
+    )
+    .argument('[run]', 'The run')
+    .option(...TOKEN_OPTION)
+    .option(...AGENT_OPTION)
+    .option(...JSON_OPTION)
+    .action((run: string | undefined, options: RunCommandOptions) => runFeedback(run, options));
 
   runGroup
     .command('backlog')
     .description(
-      'What runs noticed and left, kept in .plitzi/backlog.json for the next run — done <id> closes one, saying how'
+      'What is left to do, kept in .plitzi/backlog.json for the next run — what runs noticed, or add "…" with none open; done <id> closes one, saying how'
     )
-    .argument('[action]', 'done, to close an item')
-    .argument('[id]', 'The item it closes: b-3')
+    .argument('[action]', 'add, to keep an item; done, to close one')
+    .argument('[item]', 'With add: what to do, in words; with done: the item it closes, b-3')
+    .option('--on <where>', 'With add: where it is — a page, an element, a file')
     .option('--note <how>', 'With done: how it was done, or why it is no longer wanted')
     .option('--all', 'The closed items too')
     .option(...JSON_OPTION)
@@ -328,7 +345,7 @@ export const registerRunGroup = (program: Command): Command => {
       (
         action: string | undefined,
         id: string | undefined,
-        options: RunCommandOptions & { note?: string; all?: boolean }
+        options: RunCommandOptions & { note?: string; all?: boolean; on?: string }
       ) => runBacklog(action, id, options)
     );
 

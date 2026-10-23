@@ -666,7 +666,7 @@ export const projectFiles = (answers: CreateAnswers): ProjectFiles => ({
   [PROJECT_NOTES]: projectNotes(answers),
   '.env': envFile(answers),
   '.env.example': envExample(answers),
-  // Who works the project's runs of several agents: a developer and a designer to start, what each field and
+  // Who works the project's runs of several agents: two developers (one on demand) and a designer to start, what each field and
   // role means inside. Committed — no secret in it — and read by runs alone: one agent at a time never reads it.
   [TEAM_FILE]: formattedJson(STARTER_TEAM)
 });

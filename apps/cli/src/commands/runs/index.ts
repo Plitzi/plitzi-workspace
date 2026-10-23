@@ -39,6 +39,7 @@ export { taskContextCommand } from './brief';
 export { spaceImpact, spaceOverview } from './space';
 export {
   runBacklog,
+  runFeedback,
   runNotice,
   taskAnswer,
   taskAsk,

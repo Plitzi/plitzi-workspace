@@ -105,6 +105,11 @@ export interface PlannedTask {
    */
   touches?: string[];
   /**
+   * The project's backlog items it does (`b-62`): open ones, checked at `run plan`, and closed once the run is applied —
+   * said by the task that did them, never closed by hand one by one.
+   */
+  closes?: string[];
+  /**
    * How much it asks of the model that works it (`light`, `standard`, `high`): an agent started at a level takes it
    * at that level or above. Left out, `run plan` sets one and says why — what many tasks build on is `high`.
    */
@@ -511,6 +516,7 @@ export const isPlannedTask = (value: unknown): value is PlannedTask =>
   optional(value.role, isString) &&
   optional(value.quality, oneOf(QUALITIES)) &&
   optional(value.touches, isStrings) &&
+  optional(value.closes, isStrings) &&
   optional(value.tests, flag => flag === false) &&
   optional(value.spike, isString) &&
   optional(value.findings, isString);

@@ -12,7 +12,9 @@ import type { LoadedRun, RunContext } from './run';
  * The project's backlog: what a run noticed and left — `run notice` while it ran — kept past the run, in `.plitzi/`
  * beside the team, for the next run to take up. A run's log goes with the run, and a report is read by nobody planning
  * the next one: velada-polish's lead had the next run's work in its head and its notes, and nowhere the next run reads.
- * `run plan` and `run open` say what is open; `run backlog` lists it, `run backlog done <id>` closes an item.
+ * `run plan` and `run open` say what is open; `run backlog` lists it, `run backlog add "…"` keeps one with no run open
+ * (the person's, or an agent's between runs), `run backlog done <id>` closes one — and a task of a plan that says it
+ * does one (`closes`) closes it as its run is applied.
  */
 
 export const BACKLOG_FILE = path.join('.plitzi', 'backlog.json');
@@ -53,6 +55,89 @@ export const readBacklog = async (root: string): Promise<BacklogItem[]> =>
 export const openBacklog = async (root: string): Promise<BacklogItem[]> =>
   (await readBacklog(root)).filter(item => item.done === undefined);
 
+const nextId = (items: readonly BacklogItem[]): number =>
+  items.length === 0 ? 1 : Math.max(...items.map(item => Number(item.id.replace(/^b-/, '')) || 0)) + 1;
+
+const writeBacklog = (root: string, items: readonly BacklogItem[]): Promise<void> =>
+  writeJson(path.join(root, BACKLOG_FILE), { version: 1, items: [...items] } satisfies Backlog);
+
+/**
+ * `plitzi run backlog add "…"`: an item kept with no run open — the person's, or an agent's between runs — for the next
+ * plan to take up. The same words at the same place, open already, are that item: said, never kept twice.
+ */
+export const addBacklogItem = async (
+  ctx: RunContext,
+  { text, on, by }: { text: string; on?: string; by: string }
+): Promise<BacklogItem> => {
+  if (text.trim() === '') {
+    throw new RunRefusal(
+      'invalid',
+      'A backlog item says something: plitzi run backlog add "what to do" [--on <where>]'
+    );
+  }
+
+  const items = await readBacklog(ctx.root);
+  const same = items.find(item => item.done === undefined && item.text === text.trim() && item.on === on);
+  if (same) {
+    throw new RunRefusal('invalid', `The backlog has it open already: ${backlogText(same)}`);
+  }
+
+  const item: BacklogItem = {
+    id: `b-${String(nextId(items))}`,
+    text: text.trim(),
+    ...(on ? { on } : {}),
+    from: 'no run',
+    by,
+    at: ctx.now().toISOString()
+  };
+  await writeBacklog(ctx.root, [...items, item]);
+
+  return item;
+};
+
+/** The ids a plan's tasks say they close that are not open in the backlog: unknown, or closed already. */
+export const notOpen = async (root: string, ids: readonly string[]): Promise<string[]> => {
+  const open = new Set((await openBacklog(root)).map(item => item.id));
+
+  return [...new Set(ids)].filter(id => !open.has(id));
+};
+
+/**
+ * The items an applied run's tasks said they do (`closes`), closed — each saying the task and the run that did it. Answers
+ * the ids it closed; one closed meanwhile is left as it is.
+ */
+export const closeDoneByRun = async (ctx: RunContext, loaded: LoadedRun): Promise<string[]> => {
+  const doneBy = new Map(loaded.plan.tasks.flatMap(task => (task.closes ?? []).map(id => [id, task] as const)));
+  if (doneBy.size === 0) {
+    return [];
+  }
+
+  const items = await readBacklog(ctx.root);
+  const closed: string[] = [];
+  const next = items.map(item => {
+    const task = doneBy.get(item.id);
+    if (!task || item.done) {
+      return item;
+    }
+
+    closed.push(item.id);
+
+    return {
+      ...item,
+      done: {
+        at: ctx.now().toISOString(),
+        by: ctx.agent,
+        note: `done by run ${loaded.record.runId}'s ${task.id}: ${task.title}`
+      }
+    };
+  });
+  if (closed.length > 0) {
+    await writeBacklog(ctx.root, next);
+  }
+
+  return closed;
+};
+
 /**
  * A run's notices, kept in the project's backlog as it ends — finished or aborted: what it saw and left is the next
  * run's. One already there (the same words, the same place) is not kept twice. Answers the items it added.
@@ -60,9 +145,10 @@ export const openBacklog = async (root: string): Promise<BacklogItem[]> =>
 export const keepNotices = async (ctx: RunContext, loaded: LoadedRun): Promise<BacklogItem[]> => {
   const items = await readBacklog(ctx.root);
   const known = new Set(items.map(item => `${item.text}\u0000${item.on ?? ''}`));
-  const next = items.length === 0 ? 1 : Math.max(...items.map(item => Number(item.id.replace(/^b-/, '')) || 0)) + 1;
+  const next = nextId(items);
+  // Of the project's, never Plitzi's own: those go to Plitzi with the run's feedback.
   const added = (await noticesOf(loaded))
-    .filter(notice => !known.has(`${notice.text}\u0000${notice.on ?? ''}`))
+    .filter(notice => notice.about !== 'plitzi' && !known.has(`${notice.text}\u0000${notice.on ?? ''}`))
     .map((notice, index): BacklogItem => ({
       id: `b-${String(next + index)}`,
       text: notice.text,
@@ -72,7 +158,7 @@ export const keepNotices = async (ctx: RunContext, loaded: LoadedRun): Promise<B
       at: notice.at
     }));
   if (added.length > 0) {
-    await writeJson(path.join(ctx.root, BACKLOG_FILE), { version: 1, items: [...items, ...added] } satisfies Backlog);
+    await writeBacklog(ctx.root, [...items, ...added]);
   }
 
   return added;
@@ -107,10 +193,10 @@ export const closeBacklogItem = async (
     ...item,
     done: { at: ctx.now().toISOString(), by, ...(note ? { note } : {}) }
   };
-  await writeJson(path.join(ctx.root, BACKLOG_FILE), {
-    version: 1,
-    items: items.map(each => (each.id === id ? closed : each))
-  } satisfies Backlog);
+  await writeBacklog(
+    ctx.root,
+    items.map(each => (each.id === id ? closed : each))
+  );
 
   return closed;
 };

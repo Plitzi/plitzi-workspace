@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { namesServedCopy } from './acceptance';
+import { notOpen, openBacklog } from './backlog';
 import { elementFileNotices } from './elementFiles';
 import { expectationNotices, notFoundNotices } from './expectations';
 import { exists } from './files';
@@ -307,6 +308,17 @@ export const checkPlan = async (
 ): Promise<CheckedPlan> => {
   const agentsAsked = teamSize(team);
   const problems: string[] = [...roleProblems(written, team), ...inventoryProblems(written, knownInventory)];
+  // What a task says it closes is open in the backlog: an id mistyped would close nothing at the finish, unsaid.
+  const unknownClosed = await notOpen(
+    root,
+    written.tasks.flatMap(task => task.closes ?? [])
+  );
+  if (unknownClosed.length > 0) {
+    const open = (await openBacklog(root)).map(item => item.id);
+    problems.push(
+      `${unknownClosed.join(', ')} ${unknownClosed.length === 1 ? 'is' : 'are'} no open item of the backlog — a task's closes names what it does of it: ${open.join(', ') || 'nothing is open'} (plitzi run backlog)`
+    );
+  }
   const notices: string[] = [];
   // With a tester in the team, each developer task's tests are a task of their own, after it: checked as the lead's.
   const { plan, added, untested } = withTestTasks(

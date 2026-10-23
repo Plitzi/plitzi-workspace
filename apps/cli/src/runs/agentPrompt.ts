@@ -39,6 +39,7 @@ const skill = (root: string, file: string): string => path.join(root, SKILLS_ROO
 const rules = (bin: string): string[] => [
   `- Never run \`${bin} run finish\`, \`run abort\`, \`run purge\`, \`run restore\`, \`run allow-finish\` or \`run stop --force\` — a person's. Never \`git stash\`, \`checkout\` or \`reset\`. Stop a server only by its port (\`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)\`), never by name.`,
   '- A wait that ends is not your end: run `task next` again until it says "You can stop".',
+  '- Plitzi itself in your way — a refusal you think wrong, a command that cannot do what you need, a doc that misled you: say it as it happens, `PLITZI run notice --plitzi "…"` (the run\'s feedback to Plitzi carries it), and go on.',
   '- When it says you can stop, answer with a short report: what you did, what is uncertain, and every friction with the CLI — the command and what it said.'
 ];
 

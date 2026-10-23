@@ -66,6 +66,7 @@ export const runPlanProblems = (value: unknown): string[] => {
     check(optional(each.quality, oneOf(QUALITIES)), 'quality', 'light, standard or high');
     check(optional(each.milestone, isString), 'milestone', 'a name');
     check(optional(each.touches, isStrings), 'touches', 'paths');
+    check(optional(each.closes, isStrings), 'closes', 'the backlog items it does, by id (b-3)');
     check(
       optional(each.tests, flag => flag === false),
       'tests',

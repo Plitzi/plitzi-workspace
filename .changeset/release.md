@@ -1035,3 +1035,14 @@ theirs"`) at every width in one call and one browser, reads the other page witho
     asked once more.
   - The agents' prompt and the skills: a control is used before complete and before a verdict; the lead's lines measure
     design, never the data, and its scope follows every link and measures at 1920.
+- **A team that starts small, a run that says itself, a backlog and feedback** (`@plitzi/cli`):
+  - A new project's team is two developers — one with the run, the other on demand — and a designer.
+  - `run monitor`: the urgency marks of its legends are toned as on the tasks; an agent at work says what it last ran in
+    words ("measuring /cart against the original", "running its checks"); the activity says a refusal or a crash by its
+    command's name and first sentence, never the command line, and a check that failed for nothing of the work as such.
+  - `run backlog add "…" [--on <where>]` keeps an item with no run open; a plan's task that does items says so
+    (`"closes": ["b-3"]`, refused when one is not open) and the applied run closes them, each saying the task.
+  - The run's feedback to Plitzi: `.plitzi/feedback/<run>.md`, written as a run finishes or is aborted (`run feedback`
+    before) — the agents' notices of Plitzi (`run notice --plitzi`, never the project's backlog), the audit, refusals,
+    crashes, checks and repeated calls, nothing of the project — for the person to share with Plitzi's team.
+  - The agents' skills say each rule without the case it came from.

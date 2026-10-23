@@ -1,20 +1,20 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers';
-
-import { doingOf, statusOf } from './agentDoing';
+import { commandDoing, doingOf, statusOf } from './agentDoing';
 import { answering, openQuestions } from './answering';
-import { designSkipText, isDesignSkip } from './designSkip';
+import { isDesignSkip } from './designSkip';
+import { feedOf, glimpse, textOf } from './feedLine';
 import { callerFlag, identifiedAgents } from './identity';
 import { LEAD, messagesOf } from './messages';
 import { runPaths } from './paths';
 import { presentAt, PRESENCE_STALE_MS } from './presence';
 import { loadRun, readRunLog, runIds } from './run';
-import { reasonOf } from './tasks/nextRules';
 import { choiceText, readTeam, startedAgents } from './team';
+import { readUsage } from './usage';
 import { viewRun } from './view';
 import { isWorked } from './worked';
 
 import type { DesignSkip } from './designSkip';
 import type { RunContext } from './run';
+import type { UsageLine } from './usage';
 import type { RunView, TaskLine } from './view';
 
 /**
@@ -199,6 +199,9 @@ const lastDone = (entry: Record<string, unknown>): string | undefined => {
   }
 };
 
+/** How long an agent's last command says what it is at: older, it says nothing of now. */
+const LATELY_MS = 10 * 60_000;
+
 /** How recent a lead that reviews must have done something to count as started: idle, not waiting to be started. */
 const ACTIVE_MS = 3 * 60_000;
 
@@ -207,7 +210,8 @@ const agentsOf = async (
   ctx: RunContext,
   view: RunView,
   log: readonly Record<string, unknown>[],
-  stories: Partial<Record<string, TaskStory>>
+  stories: Partial<Record<string, TaskStory>>,
+  usage: readonly UsageLine[] = []
 ): Promise<AgentLine[]> => {
   const approvedBy = new Map<string, number>();
   for (const story of Object.values(stories)) {
@@ -225,6 +229,15 @@ const agentsOf = async (
   }
 
   const now = ctx.now().getTime();
+  // What each agent ran last, in words: what it is at between the marks its task leaves — "writes t-home" alone said
+  // nothing of it, and a person read the rest as noise.
+  const lastRun = new Map(usage.map(line => [line.by, line] as const));
+  const lately = (agent: string): string => {
+    const line = lastRun.get(agent);
+    const at = line ? Date.parse(line.at) : Number.NaN;
+
+    return line && now - at < LATELY_MS ? ` — ${commandDoing(line.command)}` : '';
+  };
   const team = await readTeam(ctx.root).catch(() => undefined);
   // A task is whoever is at it: its writer while it is written or sent back, its designer while it waits on that one's
   // UI review — and, at the lead's review, the lead's (its row says so). Its writer is free once it went to review.
@@ -407,7 +420,7 @@ const agentsOf = async (
           kind: 'agent' as const,
           status: statusOf(task),
           ...about,
-          doing: `${doingOf(task)}${tail}`,
+          doing: `${doingOf(task)}${task.step ? '' : lately(agent)}${tail}`,
           task: task.id,
           ...(task.signalAt ? { signalAt: task.signalAt } : {}),
           ...(task.noSignal ? { noSignal: true } : {})
@@ -468,162 +481,11 @@ const agentsOf = async (
   return [...leads, ...agents];
 };
 
-const glimpse = (text: string, length = 140): string =>
-  text.length <= length ? text : `${text.slice(0, length).trimEnd()}…`;
-
-/** One line of the run's log, said — `undefined` for what is not worth a person's look (a heartbeat, a brake event). */
-const textOf = (value: unknown): string => (typeof value === 'string' ? value : '');
-const listOf = (value: unknown): string =>
-  Array.isArray(value) ? value.filter(each => typeof each === 'string').join(', ') : '';
-
-/** One line of the run's activity, as the feed says it — every action the CLI writes, none left out on purpose. */
-const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
-  const at = textOf(entry.at);
-  const by = textOf(entry.by);
-  const task = textOf(entry.task);
-  const round = typeof entry.round === 'number' ? ` (round ${String(entry.round)})` : '';
-  const line = (kind: FeedLine['kind'], text: string): FeedLine => ({ at, by, kind, text, ...(task ? { task } : {}) });
-  switch (entry.action) {
-    case 'take':
-      return line('take', `took ${task}`);
-    case 'spike':
-      return line('agent', `went back to finding out for ${task}: ${textOf(entry.question)}`);
-    case 'spike-done':
-      return line(
-        entry.status === 'done' ? 'approved' : 'agent',
-        `found out for ${task} (${textOf(entry.question)}) — ${entry.status === 'done' ? 'research alone: done' : entry.status === 'pending' || entry.status === 'ready' ? `kept, not built now (${textOf(entry.status)})` : 'building it now'}`
-      );
-    case 'joined':
-      return line('agent', `joined the run${entry.quality ? ` at ${textOf(entry.quality)}` : ''}`);
-    case 'complete':
-      return line('complete', `sent ${task} to review`);
-    case 'check':
-      return entry.ok === true
-        ? line('other', `checked ${task}: passes`)
-        : {
-            ...line('problem', `checked ${task}: fails — ${listOf(entry.failed) || 'see its check'}`),
-            group: `check:${task}`
-          };
-    case 'look':
-      return line('review', `looked at ${task} (${listOf(entry.paths)})${entry.ok === false ? ': findings' : ''}`);
-    case 'review-taken':
-      return line('review', `took the ${textOf(entry.review)} review of ${task}`);
-    case 'review':
-      return entry.verdict === 'approve'
-        ? line(
-            'approved',
-            `approved ${task}${round}${entry.design === 'skipped' ? ` — ${designSkipText(isDesignSkip(entry.designSkip) ? entry.designSkip : undefined)}${typeof entry.designBy === 'string' ? ` (${entry.designBy} had it)` : ''}` : ''}`
-          )
-        : line('sent-back', `sent ${task} back${round}`);
-    case 'handed-on':
-      return line(
-        'run',
-        [
-          ...(Array.isArray(entry.granted) && entry.granted.length > 0
-            ? [`${task}'s files handed to ${listOf(entry.granted)}`]
-            : []),
-          ...(Array.isArray(entry.ready) && entry.ready.length > 0 ? [`ready now: ${listOf(entry.ready)}`] : [])
-        ].join(' · ')
-      );
-    case 'design-review':
-      return entry.verdict === 'approve'
-        ? line('approved', `approved the UI of ${task}`)
-        : line('sent-back', `sent ${task}'s UI back${round}`);
-    // Its reason alone — what it waits for is said to the agent at length, and filled a row of the activity.
-    case 'waiting':
-      return line('agent', `waits for work — ${reasonOf(textOf(entry.why))}`);
-    case 'resumes':
-      return line('agent', `goes on with ${textOf(entry.task)} — ${textOf(entry.question)} answered`);
-    case 'handed-off':
-      return line(
-        'agent',
-        `takes over ${textOf(entry.task)}'s changes from ${textOf(entry.from)}, who is at ${textOf(entry.busyAt)}`
-      );
-    case 'question-taken':
-      return line('agent', `answers ${textOf(entry.task)}'s ${textOf(entry.message)}`);
-    case 'stops':
-      return line('agent', `stops: ${textOf(entry.why)}`);
-    case 'settle':
-      return line('run', `merged the requests that waited: ${listOf(entry.settled)}`);
-    case 'settle-failed':
-      return line(
-        'run',
-        `could not merge the requests that waited: ${listOf(entry.requests)} — ${textOf(entry.reason)}`
-      );
-    case 'all-approved':
-      return line('run', `every task is approved (${String(entry.tasks)}) — next: ${textOf(entry.next)}`);
-    case 'ready':
-      return line(
-        'run',
-        `the run is ready: its ${String(entry.files)} files checked whole, ${String(entry.acceptance)} acceptance lines hold — next: ${textOf(entry.next)}`
-      );
-    case 'note':
-      // The note itself is in the feed, in its words, to every task.
-      return undefined;
-    case 'refused':
-      return {
-        ...line(
-          'problem',
-          `refused (${textOf(entry.code)}): ${textOf(entry.command)} — ${textOf(entry.message).slice(0, 160)}`
-        ),
-        group: `refused:${textOf(entry.code)}:${textOf(entry.command).split(' ').slice(0, 3).join(' ')}`
-      };
-    case 'crashed':
-      return line('problem', `crashed: ${textOf(entry.command)} — ${textOf(entry.error).slice(0, 160)}`);
-    case 'preview-sync-failed':
-      return line('problem', `the preview did not take ${task} in: ${textOf(entry.error).slice(0, 120)}`);
-    case 'ask':
-    case 'tell':
-      // The message itself is in the feed, in its words: a second line saying it was sent says nothing more.
-      return undefined;
-    case 'notice':
-      return line(
-        'message',
-        `noticed, owned by no task: ${textOf(entry.text)}${typeof entry.on === 'string' ? ` (on ${entry.on})` : ''}`
-      );
-    case 'propose':
-      return line('message', `proposed ${textOf(entry.proposal)} to ${textOf(entry.to)}`);
-    case 'answer':
-      return line('message', `answered ${textOf(entry.proposal)}: ${textOf(entry.verdict)}`);
-    case 'integration':
-      return line('run', `made ${task} for ${textOf(entry.file)}`);
-    case 'summary':
-      return line('run', 'wrote the run’s summary, its report’s first part');
-    case 'message':
-      // Each message is in the feed by its own words, read from the messages.
-      return undefined;
-    case 'stop':
-    case 'resume':
-    case 'extend':
-    case 'amend':
-    case 'attach':
-    case 'brake':
-    case 'open': {
-      const said: Record<string, string> = {
-        stop: 'stopped the run',
-        resume: 'opened the run again',
-        extend: `stacked a stage${typeof entry.stage === 'string' ? ` (${entry.stage})` : ''}`,
-        amend: `amended the plan${Array.isArray(entry.tasks) ? ` (${entry.tasks.flatMap(each => (isRecord(each) && typeof each.task === 'string' ? [each.task] : [])).join(', ')})` : ''}${Array.isArray(entry.removed) ? `, removed ${listOf(entry.removed)}` : ''}`,
-        attach: 'attached the run',
-        brake: 'the brake stopped the run',
-        open: `opened the run${typeof entry.tasks === 'number' ? ` — ${String(entry.tasks)} tasks${typeof entry.inventory === 'number' ? `, ${String(entry.inventory)} pieces` : ''}` : ''}`
-      };
-
-      return line(
-        entry.action === 'brake' ? 'problem' : 'run',
-        `${said[entry.action] ?? ''}${typeof entry.reason === 'string' ? ` — ${entry.reason}` : ''}`
-      );
-    }
-    default:
-      // An action this feed has no words for yet is said as it is written: never dropped.
-      return line('other', `${textOf(entry.action)}${task ? ` ${task}` : ''}`);
-  }
-};
-
 /** The run as `run monitor` shows it, newest of the feed first, `feedLength` of it. */
 export const monitorRun = async (ctx: RunContext, runId: string, feedLength = 40): Promise<Monitored> => {
   const view = await viewRun(ctx, runId);
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
+  const usage = readUsage(loaded.paths.dir);
   const log = await readRunLog(loaded.paths);
   const logged = log.flatMap(entry => feedOf(entry) ?? []);
   const stories = storiesOf(log);
@@ -689,5 +551,12 @@ export const monitorRun = async (ctx: RunContext, runId: string, feedLength = 40
         }
       : undefined;
 
-  return { view, agents: await agentsOf(ctx, view, log, stories), feed, stories, runs, ...(stage ? { stage } : {}) };
+  return {
+    view,
+    agents: await agentsOf(ctx, view, log, stories, usage),
+    feed,
+    stories,
+    runs,
+    ...(stage ? { stage } : {})
+  };
 };
