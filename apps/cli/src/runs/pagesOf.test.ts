@@ -29,13 +29,16 @@ const site = async (pages: Partial<Record<string, string[]>>): Promise<string> =
 // velada-now's fighter page — `/boxeadores/:slug` — had "no page" to look at: a page with a parameter was left out.
 describe('examplePaths', () => {
   it('opens a page with a parameter where the site links to it — its list first, then the home page', async () => {
+    // lx-fidelity: the first link that fits answers 404 — the nav's collection the catalog lacked — and is passed over.
     const origin = await site({
       '/': ['/', '/artistas/juanes', 'https://elsewhere.example/boxeadores/nope'],
-      '/boxeadores': ['/boxeadores', '/boxeadores/alondrissa', '/boxeadores/lit-killah']
+      '/boxeadores': ['/boxeadores', '/boxeadores/alondrissa', '/boxeadores/lit-killah'],
+      '/boxeadores/lit-killah': [],
+      '/artistas/juanes': []
     });
 
     expect(await examplePaths(origin, ['/', '/boxeadores/:slug', '/artistas/:slug', '/combates/:id'])).toEqual({
-      paths: ['/', '/boxeadores/alondrissa', '/artistas/juanes'],
+      paths: ['/', '/boxeadores/lit-killah', '/artistas/juanes'],
       unreached: ['/combates/:id']
     });
   });

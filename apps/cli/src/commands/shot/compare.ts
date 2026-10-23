@@ -322,7 +322,9 @@ export const compareWith = async (
   regions: PictureRegion[],
   base: string,
   /** The page as the run kept it: measured against, rather than the site asked now. */
-  kept?: { png: Uint8Array; page: KeptPage }
+  kept?: { png: Uint8Array; page: KeptPage },
+  /** `false` with `--clip <section>`: the one section is cut, not the page's most changed ones (written unasked before). */
+  { cutSections = true }: { cutSections?: boolean } = {}
 ): Promise<CompareReport | { problem: string }> => {
   // Their page in the theme ours was painted in: two schemes are not a difference worth reporting. One served on this
   // machine is the project's own — the run before a task (`task look --before`) — and is opened as the project is, its
@@ -399,7 +401,7 @@ export const compareWith = async (
 
   // Too tall to read whole: the sections that changed most, each cut apart, ours beside theirs.
   const sections: string[] = [];
-  if (Math.max(diff.heights.a, diff.heights.b) > TALL_PAGE_PX) {
+  if (cutSections && Math.max(diff.heights.a, diff.heights.b) > TALL_PAGE_PX) {
     const most = diff.regions
       .filter(change => change.changed > 0)
       .sort((a, b) => b.changed - a.changed)

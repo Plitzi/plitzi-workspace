@@ -202,10 +202,19 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
   // A picture laid as a backdrop — said nothing of (`alt=""`, hidden) and placed out of the flow, itself or its
   // <picture> — is dress; one with words, or in the flow, is a picture of the page's own.
   const placed = (element: Element): boolean => ['absolute', 'fixed'].includes(getComputedStyle(element).position);
+  // …or in the flow with the words laid over it, placed: the same backdrop drawn the other way (lx-fidelity: our banners'
+  // pictures, under their title and button, were "lacks background image" beside the original's placed one).
+  const overlaid = (element: Element): boolean => {
+    const holder = element.parentElement?.tagName === 'PICTURE' ? element.parentElement : element;
+
+    return Array.from(holder.parentElement?.children ?? []).some(other => other !== holder && placed(other));
+  };
   const isBackdrop = (element: Element): boolean =>
     element.tagName === 'IMG' &&
     (element.getAttribute('alt') === '' || element.closest('[aria-hidden="true"], [role="presentation"]') !== null) &&
-    (placed(element) || (element.parentElement?.tagName === 'PICTURE' && placed(element.parentElement)));
+    (placed(element) ||
+      (element.parentElement?.tagName === 'PICTURE' && placed(element.parentElement)) ||
+      overlaid(element));
   // What a layer is painted over or under: any photo or video drawn — a backdrop's too, as a copy may mark a fighter's
   // cut-out decorative where the original names it (velada-dress).
   const pictures = Array.from(document.body.querySelectorAll('img, video'))

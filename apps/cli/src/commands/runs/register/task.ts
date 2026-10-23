@@ -314,7 +314,10 @@ export const registerTaskGroup = (program: Command): Command => {
       '--known-failure <why>',
       'Go to review although the checks fail — for a reason that weighs, said to the lead'
     )
-    .option('--fixed-by <task>', 'With --known-failure: the task that fixes what fails')
+    .option(
+      '--fixed-by <task>',
+      'With --known-failure, optional: the task that fixes what fails — or lead, when it is the lead’s to settle (a line of its)'
+    )
     .option(
       '--review <kind>',
       'The review it asks for: code (the lead’s alone — nothing a visitor sees changed) or ui (its UI by a designer, or the lead, then the code); the run decides when left out'

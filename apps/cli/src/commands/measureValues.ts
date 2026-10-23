@@ -30,8 +30,26 @@ export const MEASURED = [
   'width',
   'height',
   'transform',
-  'transition'
+  'transition',
+  // Where its box starts in the viewport: a column measured against another's (lx-fidelity: every agent and the lead
+  // wrote a browser script of its own to read it).
+  'x'
 ] as const;
+
+/** The sides of a box's spacing `--same` takes alone — `margin-bottom` — each read off its shorthand as measured. */
+export const SIDE_LONGHANDS: Record<string, { shorthand: 'margin' | 'padding'; side: number }> = Object.fromEntries(
+  (['margin', 'padding'] as const).flatMap(shorthand =>
+    ['top', 'right', 'bottom', 'left'].map((side, index) => [`${shorthand}-${side}`, { shorthand, side: index }])
+  )
+);
+
+/** One side of a computed `margin` or `padding` — `0px 0px 24px` — as CSS reads one to four values. */
+export const sideOf = (value: string, side: number): string => {
+  const parts = value.trim().split(/\s+/);
+  const [top = '0px', right = top, bottom = top, left = right] = parts;
+
+  return [top, right, bottom, left][side];
+};
 
 /**
  * What is read of a box's `::before` and `::after`, when it draws one: velada's VS medal paints its fill on `::before`,
@@ -184,14 +202,42 @@ export interface Difference {
 }
 
 /** The properties that differ — here, there — and those the two share: what is read first, and what is said in a line. */
-export const differences = (here: Measured, there: Measured): { differ: Difference[]; same: string[] } => {
-  const value = (side: Measured, property: string): string => side.styles[property] ?? 'none';
+/**
+ * Two values the same but for lengths within half a pixel of each other: a box 404.98px and one 404.86px tall draw
+ * alike — held to the sub-pixel, a line failed for what no eye sees and an agent tuned a margin to 63.93px to pass it.
+ */
+const withinAPixel = (ours: string, theirs: string): boolean => {
+  const LENGTH = /(-?\d*\.?\d+)px/g;
+  const [a, b] = [ours, theirs].map(text => Array.from(text.matchAll(LENGTH), match => Number(match[1])));
+  if (a.length === 0 || a.length !== b.length || ours.replace(LENGTH, 'px') !== theirs.replace(LENGTH, 'px')) {
+    return false;
+  }
+
+  return a.every((length, index) => Math.abs(length - b[index]) < 0.5);
+};
+
+export const differences = (
+  here: Measured,
+  there: Measured,
+  asked: readonly string[] = []
+): { differ: Difference[]; same: string[] } => {
+  const value = (side: Measured, property: string): string => {
+    const longhand = Object.hasOwn(SIDE_LONGHANDS, property) ? SIDE_LONGHANDS[property] : undefined;
+
+    return longhand
+      ? sideOf(side.styles[longhand.shorthand] ?? '0px', longhand.side)
+      : (side.styles[property] ?? 'none');
+  };
   const alike = (property: string): boolean => {
     const [ours, theirs] = [comparable(property, value(here, property)), comparable(property, value(there, property))];
 
-    return ours === theirs || ours === HELD_STILL || theirs === HELD_STILL;
+    return ours === theirs || ours === HELD_STILL || theirs === HELD_STILL || withinAPixel(ours, theirs);
   };
-  const properties = propertiesOf(here, there);
+  // A side asked alone (`--same margin-bottom`) is compared too, read off the shorthand measured.
+  const properties = [
+    ...propertiesOf(here, there),
+    ...asked.filter(property => Object.hasOwn(SIDE_LONGHANDS, property))
+  ];
 
   return {
     differ: properties

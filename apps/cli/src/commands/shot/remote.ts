@@ -6,6 +6,11 @@ import { openOtherPage } from '../../browser';
 import type { Taken, View } from './types';
 import type { Browser, BrowserPage } from '../../browser';
 
+/** What a page its site never answered is said as — asked once more, after `ANSWER_AGAIN_MS`. */
+const NOT_ANSWERED = 'did not answer';
+
+const ANSWER_AGAIN_MS = 2_000;
+
 /** How long to wait before each try again of a page its site turned away as busy. */
 const RETRY_AFTER_MS = [10_000, 30_000];
 
@@ -34,7 +39,10 @@ const whenAnswered = async <T extends { page: BrowserPage }>(
         ({ problem: `${failed}: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}` }) as const
     );
     if ('problem' in taken) {
-      if (attempt === 0 && taken.problem.startsWith(failed)) {
+      // …and one it never answered, once more after a moment: lx-fidelity's original "did not answer" at 1440 now and
+      // then, and the same call answered at 390.
+      if (attempt === 0 && (taken.problem.startsWith(failed) || taken.problem.endsWith(NOT_ANSWERED))) {
+        await new Promise(resolve => setTimeout(resolve, ANSWER_AGAIN_MS));
         continue;
       }
 
@@ -91,7 +99,7 @@ export const pageAnswered = (
     if (!(await openPage(page, url).catch(() => null))) {
       await page.close();
 
-      return { problem: `${url} did not answer` };
+      return { problem: `${url} ${NOT_ANSWERED}` };
     }
 
     // Sizes are read in the fonts the page asked for, never its fallback's.

@@ -1021,3 +1021,17 @@ theirs"`) at every width in one call and one browser, reads the other page witho
   work, and a `complete` refused for it records no brake. `task check` says what failed for nothing of the copy's (a
   step the run's work fails the same way) as `notOwn`; the metrics count those apart, and `run bench` shows them in
   "Not theirs" beside the share of checks failed for the copy's own work (lx-copy: 72% failed, most of them neither).
+- **What a shop's second round taught the runs** (`@plitzi/cli`, `@plitzi/sdk-authoring`), from lx-fidelity:
+  - `page measure`: lengths within half a pixel are the same under `--same` (a 0.13px height failed a line, and an agent
+    tuned a margin to 63.93px to pass one); a side alone is taken (`--same margin-bottom`); `x` — where a box starts in
+    the viewport — is measured, a column against another's (every agent had written a browser script for it).
+  - The acceptance runs when what fails is the run's too; `--fixed-by lead` names no task for a failure the lead settles,
+    and `--fixed-by` is said optional; a task sent back keeps its requests for a copy made again; a rework is handed to
+    one agent when two ask at once.
+  - `page shot`: `--out <folder>` holds with several widths, every width is taken though one differs, `--clip --compare`
+    cuts that section alone; `--dress` takes a decorative picture under laid-over words as a backdrop.
+  - `task look` pictures a linked example that answers; `run reference` keeps the schemes the space declares; `run plan`
+    says the files read outside the tasks in one notice; a copy's reused server is said; a page that did not answer is
+    asked once more.
+  - The agents' prompt and the skills: a control is used before complete and before a verdict; the lead's lines measure
+    design, never the data, and its scope follows every link and measures at 1920.

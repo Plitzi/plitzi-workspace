@@ -13,7 +13,7 @@ import { PROJECT_TMP } from '../../scaffold/paths';
 import { checkAccount, CHECK_PASSWORD_ENV } from '../check';
 import { projectHere } from '../existingProject';
 import { parseSteps } from '../shotSteps';
-import { fail } from '../terminal';
+import { fail, UNANSWERED_EXIT } from '../terminal';
 import { capture, pictureOf, readPage } from './capture';
 import {
   compareText,
@@ -64,8 +64,20 @@ export const shotEach = async (
   const reports: ShotReport[] = [];
   const collect = rest.json && all.length > 1 ? (report: ShotReport) => reports.push(report) : undefined;
   try {
+    // A folder named stays the folder — each picture in it by its own name, the width in it (lx-fidelity: the folder
+    // became `<folder>-1440.png`); a file is named for each width.
+    const folder =
+      rest.out !== undefined &&
+      (rest.out.endsWith('/') ||
+        (await stat(path.resolve(project?.root ?? process.cwd(), rest.out)).then(
+          found => found.isDirectory(),
+          () => false
+        )));
+    let failed = false;
     for (const each of all) {
-      const out = rest.out && all.length > 1 ? rest.out.replace(/(\.png)?$/, `-${String(each)}.png`) : rest.out;
+      const out =
+        rest.out && all.length > 1 && !folder ? rest.out.replace(/(\.png)?$/, `-${String(each)}.png`) : rest.out;
+      process.exitCode = undefined;
       await shot(route, {
         ...rest,
         width: each,
@@ -73,10 +85,18 @@ export const shotEach = async (
         ...(served ? { url: served.origin } : {}),
         ...(collect ? { collect } : {})
       });
-      if (process.exitCode !== undefined && process.exitCode !== 0) {
-        break;
+      // A picture that differs at one width says nothing of the next: every width is taken, and the command fails at the
+      // end (lx-fidelity: a --dress failing at 1440 left 390 untaken, and the lead ran it again). One that cannot be taken
+      // at all stops it.
+      const exit = exitCode();
+      if (exit === UNANSWERED_EXIT) {
+        return;
       }
+
+      failed ||= exit !== undefined && exit !== 0;
     }
+
+    process.exitCode = failed ? 1 : undefined;
   } finally {
     served?.stop?.();
   }
@@ -85,6 +105,9 @@ export const shotEach = async (
     console.log(JSON.stringify({ widths: reports }));
   }
 };
+
+/** The exit a shot set, read anew: assigned before it, TypeScript would take it for the value it was given. */
+const exitCode = (): typeof process.exitCode => process.exitCode;
 
 const matchesSection = (region: { name: string; element?: string }, section: string): boolean =>
   region.name === section || region.name.endsWith(`#${section}`) || region.element === section;
@@ -414,7 +437,9 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
             ? 'problem' in single
               ? single
               : single.compare
-            : await compareWith(browser, taken, target, view, regions, base, kept);
+            : await compareWith(browser, taken, target, view, regions, base, kept, {
+                cutSections: section === undefined
+              });
       if (compared && 'problem' in compared) {
         fail(compared.problem);
 

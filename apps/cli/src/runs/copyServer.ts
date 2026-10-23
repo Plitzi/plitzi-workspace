@@ -53,13 +53,18 @@ export const originHere = async (
   }
 
   // A look or a preview serving the copy: it is the copy's server while it runs — a second beside it fights it.
+  // Said each time, not only the first: dev-1 found the port of the server holding the copy's state in an error.
   const previewed = await previewedServer(root, cache);
   if (previewed !== undefined) {
+    process.stderr.write(chalk.dim(`· served by the look or preview serving the copy: ${previewed}\n`));
+
     return { origin: previewed };
   }
 
   const kept = await keptServer(root, cache);
   if (kept !== undefined) {
+    process.stderr.write(chalk.dim(`· served by the CLI's server of the copy, kept from a command before: ${kept}\n`));
+
     return { origin: kept };
   }
 

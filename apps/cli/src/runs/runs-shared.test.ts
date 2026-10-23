@@ -1,6 +1,9 @@
+import fs from 'node:fs/promises';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { finishRun } from './merge';
+import { taskPaths } from './paths';
 import { loadRun, readApproved } from './run';
 import { checkTask, claimFile, completeTask, requestShared, reviewTask, taskContext, waitForFile } from './tasks';
 import { viewRun } from './view';
@@ -322,6 +325,22 @@ export const theme = { card: { color: tokens.ink }, ${key}: {} };
     const merged = (await readInCopy(holder.work, 'src/space/theme.ts')) ?? '';
     expect(merged).toContain('export const price = {};');
     expect(merged).toContain('export const home = {};');
+  });
+
+  // lx-fidelity: t-blog, sent back and taken by another agent, came back without its site.json request — author failed.
+  it('keeps a task sent back with its requests, at the version it asked, for a copy made again', async () => {
+    await open();
+    const holder = await take('agent-1', 't-home');
+    await claimFile(holder.ctx, 'es-launch', 't-home', 'src/space/theme.ts');
+    const menu = await take('agent-2', 't-menu');
+    const theme = (await readInCopy(menu.work, 'src/space/theme.ts')) ?? '';
+    await writeInCopy(menu.work, 'src/space/theme.ts', `${theme}export const price = {};\n`);
+    const [asked] = (await completeTask(menu.ctx, 'es-launch', 't-menu')).requests;
+    await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'Say the price' }]);
+
+    const run = await loadRun(lead(), 'es-launch');
+    const reviewed: unknown = JSON.parse(await fs.readFile(taskPaths(run.paths, 't-menu').reviewed, 'utf-8'));
+    expect(reviewed).toMatchObject({ files: { 'src/space/theme.ts': asked.wanted } });
   });
 
   // velada-dress: dev-1's wait for sponsors.ts ran out, t-heading stayed waiting, and no complete was let through.

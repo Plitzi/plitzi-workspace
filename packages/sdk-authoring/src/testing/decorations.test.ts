@@ -109,12 +109,15 @@ describe('pageDecorations, of pictures', () => {
     document.body.innerHTML = [
       '<footer><picture aria-hidden="true" style="position: absolute"><img alt="" src="https://cdn.example.com/hero-bg/background-2048.webp?v=2"></picture></footer>',
       '<div><img alt="IlloJuan" src="https://cdn.example.com/illojuan.webp" style="position: absolute"></div>',
-      '<p><img alt="" src="https://cdn.example.com/inline.webp"></p>'
+      '<p><img alt="" src="https://cdn.example.com/inline.webp"></p>',
+      // In the flow, its title laid over it: the same backdrop, drawn another way.
+      '<section><img alt="" src="https://cdn.example.com/banner.webp"><div style="position: absolute">Lo mejor</div></section>'
     ].join('');
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue(DOMRect.fromRect({ width: 100, height: 20 }));
 
     expect(pageDecorations(10).map(each => [each.kind, each.detail])).toEqual([
-      ['image', 'backdrop background-2048.webp']
+      ['image', 'backdrop background-2048.webp'],
+      ['image', 'backdrop banner.webp']
     ]);
   });
 

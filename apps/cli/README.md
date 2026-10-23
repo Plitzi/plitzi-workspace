@@ -344,8 +344,10 @@ transform, transition, and what `::before`/`::after` draw — and, beside anothe
 `"ours => theirs"`, by any selector, `#an-element-id` too; the same name when left out; `--there` for one): each property
 that differs, here → there, what both inherit from their parent said apart, then the ones they share in a line. Every
 element at every width (`--width 390,1440`) is one call in one browser; the other page is read without a picture and
-kept 6 h (`--fresh` reads it again). `--same font-size,border,before:opacity` (shorthands `border`, `font`, `size`)
-fails unless those are as the other page's: an acceptance's line that holds a copy to its reference. `--hover` or
+kept 6 h (`--fresh` reads it again). `--same font-size,border,before:opacity` (shorthands `border`, `font`, `size`;
+a side alone, `margin-bottom`, `padding-top`) fails unless those are as the other page's — lengths to the pixel, half a
+pixel either way the same: an acceptance's line that holds a copy to its reference. `x` is where the box starts in the
+viewport — a column against the other's at 1920. `--hover` or
 `--focus "<ours> => <theirs>"` puts both pages in that state first, its transitions finished: what a hover changes,
 held by `--same` as the rest is. A line height and a tracking are said as their `em` of the font beside the pixels
 (`22.13px (1.5em)`: the rule to write, not the size's result); a difference both inherit from their parent is left out

@@ -31,6 +31,7 @@ import { at, changedInCopy, cleanPath, findTask, holderOf, refreshCopy } from '.
 import { textOf } from './context';
 import { activeHolder, allLocks, sharedFiles } from './locks';
 import { againstRunWork, tellUnanswered } from './notOwn';
+import { LEAD } from '../messages';
 
 import type { CheckResult } from '../checks';
 import type { ReviewAsked } from '../design';
@@ -290,11 +291,16 @@ export const completeTask = async (
   const start = (await readStart(view.paths)) ?? started;
 
   const { knownFailure } = options;
-  const fixer = knownFailure?.fixedBy === undefined ? undefined : findTask(loaded, knownFailure.fixedBy);
+  // `lead`: what fails is the lead's to settle — a line of its that cannot pass — not any task's (lx-fidelity: agents named
+  // a task at work as a placeholder, which told the wrong task it had something to fix).
+  const fixer =
+    knownFailure?.fixedBy === undefined || knownFailure.fixedBy === LEAD
+      ? undefined
+      : findTask(loaded, knownFailure.fixedBy);
   if (fixer && (fixer.id === taskId || (await viewTask(loaded.paths, fixer)).state.status === 'done')) {
     throw new RunRefusal(
       'invalid',
-      `--fixed-by names the task that fixes what fails later: "${fixer.id}" is ${fixer.id === taskId ? 'this task' : 'done'}`,
+      `--fixed-by names the task that fixes what fails later, or lead when it is the lead's to settle (a line of its): "${fixer.id}" is ${fixer.id === taskId ? 'this task' : 'done'}`,
       { task: taskId }
     );
   }
@@ -336,7 +342,7 @@ export const completeTask = async (
         throw new RunRefusal('checks-failed', `The project's checks fail in task "${taskId}"'s copy`, {
           task: taskId,
           steps: failing,
-          next: 'fix what fails and complete again — or, for a reason that weighs, complete --known-failure "why" --fixed-by <task>'
+          next: 'fix what fails and complete again — or, for a reason that weighs, complete --known-failure "why" [--fixed-by <task>|lead]'
         });
       }
 
@@ -360,9 +366,10 @@ export const completeTask = async (
     }
 
     // What the task was asked, held by the commands its plan gives — once the project's checks pass, in the same copy.
+    // …or when what fails is the run's work's too (preexisting): no one's, it stops nothing of this task's.
     const accepted = kept
       ? kept.accepted
-      : checks.ok
+      : checks.ok || (without !== undefined && failsWithout(checks, without, dirs))
         ? await checkAcceptance(task.acceptance, { ...where, ...(serving ? { serving } : {}) })
         : [];
 

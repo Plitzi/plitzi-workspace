@@ -290,7 +290,9 @@ export const openRun = async (
     await sendMessage(ctx, opened, {
       from: LEAD,
       to: EVERYONE,
-      text: `The project failed ${failing.join(', ')} before the run, and it was opened despite it: ${despiteChecks}. A failure of these the run had from the start is none of yours — complete with --known-failure, naming it`
+      // Said as the checks now say it: a step the run's work fails the same way is no copy's (`notOwn`), its acceptance run
+      // all the same — a known failure for it was what agents were told, and is no longer needed.
+      text: `The project failed ${failing.join(', ')} before the run, and it was opened despite it: ${despiteChecks}. It is none of yours: your checks say it is the run's, and it stops none of your work`
     });
   }
 

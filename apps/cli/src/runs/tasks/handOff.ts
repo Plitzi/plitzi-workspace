@@ -1,6 +1,7 @@
 import { agentAddress, LEAD, sendMessage } from '../messages';
 import { RunRefusal } from '../refusal';
 import { loadRun, logRun } from '../run';
+import { withLock } from '../store';
 import { cutTask, viewTask } from '../taskStore';
 import { roleOf } from './common';
 
@@ -86,18 +87,28 @@ export const reworkFor = (
  */
 export const handOffRework = async (ctx: RunContext, runId: string, taskId: string, from: string): Promise<void> => {
   const loaded = await loadRun(ctx, runId);
-  const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
-  const still = reworksWaiting(views, ctx.agent, undefined).find(
-    each => each.view.task.id === taskId && each.from === from
-  );
-  if (!still) {
-    throw new RunRefusal('claimed', `${taskId} is ${from}'s again: it took it up meanwhile`, {
-      task: taskId,
-      holder: from
-    });
-  }
+  // Looked at and cut under the take's lock: two free agents asking at once were both handed it, 40ms apart
+  // (lx-fidelity's t-blog) — the second now finds it no one's, and is refused.
+  const still = await withLock(
+    loaded.paths.takeLock,
+    async () => {
+      const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
+      const waiting = reworksWaiting(views, ctx.agent, undefined).find(
+        each => each.view.task.id === taskId && each.from === from
+      );
+      if (!waiting) {
+        throw new RunRefusal('claimed', `${taskId} is not ${from}'s to hand on now: taken up, or handed, meanwhile`, {
+          task: taskId,
+          holder: from
+        });
+      }
 
-  await cutTask(still.view, `handed to ${ctx.agent}: ${from} was at ${still.at}`, ctx.now);
+      await cutTask(waiting.view, `handed to ${ctx.agent}: ${from} was at ${waiting.at}`, ctx.now);
+
+      return waiting;
+    },
+    { now: ctx.now }
+  );
   await sendMessage(ctx, loaded, {
     from: LEAD,
     to: agentAddress(from),

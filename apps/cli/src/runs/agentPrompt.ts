@@ -80,11 +80,13 @@ export const agentPrompt = ({ agent, started, runId, root, tokenFile, goal }: Pr
       : [
           "- Work only in the task's copy (the `work` folder its take prints): start with `PLITZI task context` there, and read the files you change yourself.",
           '- Measure, never guess — every element and width in one call: `PLITZI page measure <path> "<ours> => <theirs>" … --compare <url> --width 390,1440` (`--hover` for a state). Trying values, measure; never `task check` for it.',
-          '- Change a batch, then `PLITZI task check` once; then `PLITZI task complete`, and `PLITZI task next --follow --take` again.'
+          '- Change a batch, then `PLITZI task check` once; then `PLITZI task complete`, and `PLITZI task next --follow --take` again.',
+          // lx-fidelity: Opiniones' arrow moved nothing at 1440, and its developer, its designer and the lead each passed it.
+          "- A control you add or change — an arrow, a dot, a pager, a button — you use before you complete, at both widths, beside the original's: `PLITZI page shot <path> --click <element>` (or `--steps`); a picture is no proof of one."
         ]),
     ...(designer
       ? [
-          '- A review: one `PLITZI task look <task>` a round, then measure only what differs; send it back only for what its title and acceptance cover, with the values and one `--same` line that proves them — anything else is `PLITZI run notice "…"`. Say your verdict within 8 minutes.'
+          '- A review: one `PLITZI task look <task>` a round, then measure only what differs, and use each control it adds (`page shot --click`); send it back only for what its title and acceptance cover, with the values and one `--same` line that proves them — anything else is `PLITZI run notice "…"`. Say your verdict within 8 minutes.'
         ]
       : []),
     ...rules(bin)

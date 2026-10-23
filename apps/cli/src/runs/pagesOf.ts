@@ -71,6 +71,14 @@ const patternOf = (route: string): RegExp =>
  * link of its list page (`/boxeadores`), or else of the home page, that fits it — a visitor's way there, with no data
  * of the project's read. A pattern no link fits is said, never opened as it is.
  */
+/** How many links that fit a route are asked before its example is said unreached. */
+const EXAMPLES_TRIED = 5;
+
+const answers = (address: URL): Promise<boolean> =>
+  fetch(address)
+    .then(answer => answer.ok)
+    .catch(() => false);
+
 export const examplePaths = async (
   origin: string,
   routes: readonly string[],
@@ -112,9 +120,18 @@ export const examplePaths = async (
 
     const fits = patternOf(route);
     const list = route.slice(0, route.indexOf('/:')) || '/';
-    const found =
-      named.find(address => fits.test(address)) ??
-      [...(await links(list)), ...(await links('/'))].find(link => fits.test(link));
+    // Of the links that fit, the first that answers: lx-fidelity's look pictured the nav's first collection, a 404 there,
+    // and read the page's not-found as the task's failures.
+    const candidates = [...new Set([...(await links(list)), ...(await links('/'))].filter(link => fits.test(link)))];
+    let answering: string | undefined;
+    for (const link of candidates.slice(0, EXAMPLES_TRIED)) {
+      if (await answers(new URL(link, origin))) {
+        answering = link;
+        break;
+      }
+    }
+
+    const found = named.find(address => fits.test(address)) ?? answering;
     if (found) {
       paths.push(found);
     } else {

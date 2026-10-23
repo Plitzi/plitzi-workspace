@@ -83,10 +83,20 @@ export const checkTask = async (
   const serving = before ? undefined : serveForAcceptance(task.acceptance, where);
   let accepted: Awaited<ReturnType<typeof checkAcceptance>> = before?.accepted ?? [];
   let checks: CheckResult = before?.checks ?? { ok: true, steps: [] };
+  let notOwnSteps: string[] = [];
   try {
     if (!before) {
       checks = only === 'acceptance' ? checks : await ctx.checks(view.paths.work, ctx.root);
-      accepted = checks.ok ? await checkAcceptance(task.acceptance, { ...where, ...(serving ? { serving } : {}) }) : [];
+      notOwnSteps = checks.ok
+        ? []
+        : stepsNotOwn(checks, await againstRunWork(ctx, loaded, view, checks)).map(step => step.name);
+      // What fails for nothing of the copy's stops nothing of it: lx-fidelity's t-home went to review with its acceptance
+      // unrun, for a warning the run's work had too.
+      const ownFailing = checks.steps.filter(step => !step.ok && !notOwnSteps.includes(step.name));
+      accepted =
+        ownFailing.length === 0
+          ? await checkAcceptance(task.acceptance, { ...where, ...(serving ? { serving } : {}) })
+          : [];
     }
   } finally {
     await letGo(serving);
@@ -96,7 +106,7 @@ export const checkTask = async (
   const { outside } = started ? await whoseChanges(loaded, view, mine, started) : { outside: [] };
   const ok = checks.ok && accepted.every(each => each.ok) && tooLong.length === 0 && outside.length === 0;
   const notOwn = [
-    ...(checks.ok ? [] : stepsNotOwn(checks, await againstRunWork(ctx, loaded, view, checks))).map(step => step.name),
+    ...notOwnSteps,
     ...(await tellUnanswered(ctx, loaded, taskId, accepted)).map(each => `acceptance — ${each.said}`)
   ];
   // Passed whole: kept for the complete that follows, which does not run it all again while nothing changes.

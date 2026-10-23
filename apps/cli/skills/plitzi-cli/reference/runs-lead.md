@@ -89,8 +89,8 @@ person asked for a team:
    file a task takes past 400 lines (ask for the split) — each said once. **Talk:** answer a question with `plitzi
 task message t-home "…" --reply-to m3`; `task message all "…"` tells every task in hand, `task message @dev-1 "…"`
    an agent by name, between tasks too. **The scope changes while it runs** — yours to see, or the person's to ask: edit
-   the run's plan (`tmp/plitzi-runs/<run>/plan.json`; `inputs/` keeps what you opened it with) and `plitzi run
-amend` — acceptance, priorities, findings, notes, the inventory, what a task nobody took waits for (`dependsOn`), one
+   the plan in the run's `inputs/` (`run open` says which; the run's own `plan.json` is what amend compares it to,
+   never edited) and `plitzi run amend` — acceptance, priorities, findings, notes, the inventory, what a task nobody took waits for (`dependsOn`), one
    removed; more work is a stage, `plitzi
 run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — chase
    or decide a review that drags, settle a last cosmetic round yourself, amend away a dependency it does not need.
@@ -159,6 +159,17 @@ backlog done <id> --note "…"` closes one. **Close it:** write the summary (don
 - **A stage reads `run view`, not memory**: a task that merges a file one not done holds waits for it (`dependsOn`).
 - **A line nothing can answer is yours at once**: its command exits 2 (the original's element not there, nothing
   served), you are told, and every try of the task fails on it until you amend it — never the agent's to bend.
+- **A line measures the design, never the data it shows**: a section's height only where its content is the
+  original's — over example texts or another catalog it is passed only by tuning boxes (a 63.93px margin, min-heights:
+  three of lx-fidelity's lines); measure its parts there (a gap, the order of its lines). A check asks what the original
+  has: run it on the original too (an empty collection there is one here).
+- **The scope follows every link** of the pages it keeps — a 404 here that answers there is a task (23 collections) — and
+  measures each section's box at 1920 too, where a column the original centres stretches here.
+- **A command you hand an agent you ran**, as a line you write: one `--same` refused cost a round.
+- **A control is used, not pictured** — an arrow, a dot, a pager: `page shot <path> --click <element>` at both widths,
+  and a task that adds one says so in its acceptance (Opiniones' arrow moved nothing, and three reviews passed it).
+- **The designer's own task off the critical path** while it is the only one reviewing UI: what waits on it waits on
+  every review too (lx-fidelity: t-reviews 20 min).
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red.
 - **Don't fix the CLI mid-run**: note it (`run notice`), fix it after.
 - **Look where it changed**: a fix for light in light, one for the phone at 390 (`task look --scheme light --width 390`).

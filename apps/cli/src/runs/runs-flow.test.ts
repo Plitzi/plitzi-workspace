@@ -28,7 +28,7 @@ import {
   unblockTask,
   waitForFile
 } from './tasks';
-import { HAND_OFF_AFTER_MS } from './tasks/handOff';
+import { HAND_OFF_AFTER_MS, handOffRework } from './tasks/handOff';
 import { viewRun } from './view';
 import { benchPlan, makeBench, readInCopy, writeInCopy } from '../tests/runProject';
 
@@ -267,6 +267,22 @@ describe('a task sent back while its agent is at another', () => {
     await expect(reportProgress(as('dev-1', oldToken), runId, 't-home', {})).rejects.toMatchObject({
       code: 'reassigned'
     });
+  });
+
+  // lx-fidelity: t-blog was handed to design-1 and to dev-1, 40ms apart.
+  it('is handed to one agent when two ask at once', async () => {
+    await twoDevs();
+    const runId = benchPlan().runId;
+    bench.advance(HAND_OFF_AFTER_MS);
+    const both = await Promise.allSettled([
+      handOffRework(as('dev-2'), runId, 't-home', 'dev-1'),
+      handOffRework(as('dev-3'), runId, 't-home', 'dev-1')
+    ]);
+
+    expect(both.map(each => each.status).sort()).toEqual(['fulfilled', 'rejected']);
+    expect(both.find(each => each.status === 'rejected')).toMatchObject({ reason: { code: 'claimed' } });
+    const loaded = await loadRun(as('lead'), runId);
+    expect((await readRunLog(loaded.paths)).filter(entry => entry.action === 'handed-off')).toHaveLength(1);
   });
 
   it('stays its agent’s once it took it up again', async () => {

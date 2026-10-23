@@ -319,7 +319,10 @@ const decide = async (
   // What went to review is what is reviewed: written in the copy after `complete`, a change is not part of this round.
   const submitted = view.state.submitted ?? (await keepFiles(loaded.paths, view.paths.work, changed));
   const notReviewed = await writtenSince(view, start, submitted);
-  await writeJson(view.paths.reviewed, { round, at: at(ctx), files: submitted });
+  // Its requests too, at the version it asked: a copy made again from this (taken by another agent, or after a cut) holds
+  // what it asked of a shared file — lx-fidelity's t-blog came back without its site.json, and author failed on it.
+  const requested = Object.fromEntries((await readRequests(view.paths)).map(request => [request.file, request.wanted]));
+  await writeJson(view.paths.reviewed, { round, at: at(ctx), files: { ...requested, ...submitted } });
   await writeJson(view.paths.review, { round, verdict, comments, by: ctx.agent, at: at(ctx) });
 
   if (verdict === 'changes') {

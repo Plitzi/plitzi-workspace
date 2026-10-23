@@ -171,7 +171,8 @@ describe('acceptance, checks and what is left behind', () => {
     await bench.write('src/space/pages/about.ts', 'export const about = BROKEN;\n');
     const home = await take('agent-1', 't-home');
     await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = {};\n');
-    expect((await checkTask(home.ctx, 'es-launch', 't-home')).notOwn).toEqual(['author']);
+    // The acceptance runs though author fails: what fails is the run's too, and stops nothing of the copy's.
+    expect((await checkTask(home.ctx, 'es-launch', 't-home')).notOwn).toEqual(['author', 'acceptance — The logo']);
 
     await bench.write('src/space/pages/about.ts', 'export const about = {};\n');
     expect((await checkTask(home.ctx, 'es-launch', 't-home')).notOwn).toEqual(['acceptance — The logo']);
@@ -362,17 +363,16 @@ describe('acceptance, checks and what is left behind', () => {
     theme.tasks = [{ ...theme.tasks[0], files: ['src/space/theme.ts'] }];
     const reading = await checkPlan(bench.root, theme, await readOwnership(bench.root), teamFor(theme, 3));
     expect(reading.tasks[0].files).toEqual(['src/space/theme.ts']);
-    expect(
-      reading.notices.some(
-        notice =>
-          notice.startsWith('src/space/theme.ts (t-home) is read by') && notice.includes('src/space/pages/menu.ts')
-      )
-    ).toBe(true);
+    // One notice for every such file, each with the first that read it (lx-fidelity: twenty lines of it, twice).
+    const read = reading.notices.filter(notice => notice.includes('read by files no task holds'));
+    expect(read).toHaveLength(1);
+    expect(read[0]).toContain('src/space/theme.ts (t-home) ← ');
+    expect(read[0]).toContain('src/space/pages/book.ts, src/space/pages/home/index.ts +1');
 
     // A part of a page, read by the page's own index only: the index puts the parts together — no notice.
     const part = benchPlan();
     part.tasks = [{ ...part.tasks[0], files: ['src/space/pages/home/hero.ts'] }];
     const assembled = await checkPlan(bench.root, part, await readOwnership(bench.root), teamFor(part, 3));
-    expect(assembled.notices.filter(notice => notice.startsWith('src/space/pages/home/hero.ts'))).toEqual([]);
+    expect(assembled.notices.filter(notice => notice.includes('src/space/pages/home/hero.ts (t-home)'))).toEqual([]);
   });
 });

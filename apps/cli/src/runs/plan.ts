@@ -590,8 +590,10 @@ export const checkPlan = async (
   notices.push(...(await elementFileNotices(root, plan.tasks)));
   // What reads a task's file and is in no task: changed under it, never by it — the lead's to plan, or to leave.
   const planned = new Set(tasks.flatMap(task => task.files));
-  // One line a file a task changes — a data file read by every page is one notice, not one an importer.
-  const SHOWN_IMPORTERS = 6;
+  // One notice for all of them, each file with how many read it: lx-fidelity's six tasks printed twenty lines of it,
+  // twice, and none was acted on — burying the two notices that were.
+  const SHOWN_READ = 6;
+  const readOutside: string[] = [];
   for (const task of tasks) {
     for (const file of task.files) {
       const importers = ownership.importedBy.get(file) ?? [];
@@ -615,13 +617,17 @@ export const checkPlan = async (
         )
         .sort();
       if (outside.length > 0) {
-        const named = outside.slice(0, SHOWN_IMPORTERS).join(', ');
-        const more = outside.length > SHOWN_IMPORTERS ? ` and ${String(outside.length - SHOWN_IMPORTERS)} more` : '';
-        notices.push(
-          `${file} (${task.id}) is read by ${String(outside.length)} file${outside.length === 1 ? '' : 's'} no task holds — ${named}${more}: they change with it, as written — give one to a task if it must follow`
-        );
+        const more = outside.length > 2 ? ` +${String(outside.length - 2)}` : '';
+        readOutside.push(`${file} (${task.id}) ← ${outside.slice(0, 2).join(', ')}${more}`);
       }
     }
+  }
+
+  if (readOutside.length > 0) {
+    const more = readOutside.length > SHOWN_READ ? `, and ${String(readOutside.length - SHOWN_READ)} more` : '';
+    notices.push(
+      `${String(readOutside.length)} file${readOutside.length === 1 ? '' : 's'} the tasks change ${readOutside.length === 1 ? 'is' : 'are'} read by files no task holds, which change with them as written — ${readOutside.slice(0, SHOWN_READ).join('; ')}${more}: give one to a task if it must follow (plitzi space impact <file>)`
+    );
   }
 
   // How much each task asks of its model, where the plan says none: what many build on is worth the strongest; a

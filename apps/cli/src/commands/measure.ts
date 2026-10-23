@@ -10,7 +10,15 @@ import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
 import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
 import { projectHere } from './existingProject';
-import { comparable, differences, INHERITED, MEASURED, PSEUDO_MEASURED, PSEUDOS } from './measureValues';
+import {
+  comparable,
+  differences,
+  INHERITED,
+  MEASURED,
+  PSEUDO_MEASURED,
+  PSEUDOS,
+  SIDE_LONGHANDS
+} from './measureValues';
 import { originHere } from '../runs/copyServer';
 import { targetOn } from './shot/capture';
 import { pageAnswered } from './shot/remote';
@@ -227,6 +235,7 @@ export const measureOn = async (page: BrowserPage, target: string): Promise<Meas
           const styles: Record<string, string> = Object.fromEntries(
             properties.map(property => [property, computed.getPropertyValue(property)])
           );
+          styles.x = `${String(Math.round(node.getBoundingClientRect().left))}px`;
           // The transform that applies: `translate`, `rotate` and `scale` — what Tailwind 4 writes `rotate-45` as — then
           // `transform`, as CSS composes them. Read alone, the original's diamond was "transform: none" beside ours.
           const [moved, turned, sized] = ['translate', 'rotate', 'scale'].map(property =>
@@ -397,11 +406,15 @@ export const sameProperties = (value: string): string[] => {
     .map(each => each.trim())
     .filter(Boolean);
   const unknown = asked.filter(
-    each => !Object.hasOwn(GROUPS, each) && !MEASURED.some(property => property === each) && !PSEUDO_PROPERTY.test(each)
+    each =>
+      !Object.hasOwn(GROUPS, each) &&
+      !Object.hasOwn(SIDE_LONGHANDS, each) &&
+      !MEASURED.some(property => property === each) &&
+      !PSEUDO_PROPERTY.test(each)
   );
   if (unknown.length > 0 || asked.length === 0) {
     throw new InvalidArgumentError(
-      `--same takes what is measured — ${MEASURED.join(', ')} — a pseudo-element's (before:${PSEUDO_MEASURED.join(', before:')}; after: the same), or ${Object.keys(GROUPS).join(', ')}${unknown.length > 0 ? `: not ${unknown.join(', ')}` : ''}`
+      `--same takes what is measured — ${MEASURED.join(', ')}, a side of margin or padding (margin-bottom) — a pseudo-element's (before:${PSEUDO_MEASURED.join(', before:')}; after: the same), or ${Object.keys(GROUPS).join(', ')}${unknown.length > 0 ? `: not ${unknown.join(', ')}` : ''}`
     );
   }
 
@@ -556,7 +569,7 @@ const readAt = async (
     const there = theirs[index];
     const asked =
       there && !('problem' in there) && !('problem' in here) && options.same
-        ? differences(here, there).differ.filter(each => options.same?.includes(each.property))
+        ? differences(here, there, options.same).differ.filter(each => options.same?.includes(each.property))
         : [];
     // What both inherit from their parent is the parent's to hold, not the element's: said beside the line, never
     // failing it — a proof line failed on a font-size the task never touched (velada-shell's design-1).

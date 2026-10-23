@@ -260,3 +260,36 @@ describe('page measure', () => {
     expect(text).toContain('≈ inherited from its parent on both pages, differs: font-family system-ui → cinzel');
   });
 });
+
+// lx-fidelity: a height 0.13px off failed an acceptance line, an agent tuned a margin to 63.93px to pass one, `--same
+// margin-bottom` was refused, and every agent read positions with a browser script of its own.
+describe('page measure, held to the pixel', () => {
+  it('takes lengths within half a pixel as the same, and one a pixel off as different', () => {
+    const tall = (height: string, margin = '0px') => measured({ height, margin });
+
+    expect(differences(tall('404.984px'), tall('404.859px')).differ).toEqual([]);
+    expect(differences(tall('1005.03px'), tall('1004.95px')).differ).toEqual([]);
+    expect(differences(tall('405px'), tall('406px')).differ.map(each => each.property)).toEqual(['height']);
+  });
+
+  it('holds a side of a margin or a padding alone, read off its shorthand', () => {
+    expect(sameProperties('margin-bottom,padding-top')).toEqual(['margin-bottom', 'padding-top']);
+    const here = measured({ margin: '0px 0px 24px', padding: '10px 20px' });
+    const there = measured({ margin: '8px 0px 24px', padding: '10px 20px 12px' });
+
+    expect(differences(here, there, ['margin-bottom', 'padding-top', 'padding-bottom']).differ).toEqual(
+      expect.arrayContaining([{ property: 'padding-bottom', here: '10px', there: '12px' }])
+    );
+    expect(
+      differences(here, there, ['margin-bottom']).differ.filter(each => each.property === 'margin-bottom')
+    ).toEqual([]);
+  });
+
+  it('measures where a box starts, x, as a property --same takes', () => {
+    expect(MEASURED).toContain('x');
+    expect(sameProperties('x')).toEqual(['x']);
+    expect(differences(measured({ x: '50px' }), measured({ x: '290px' })).differ).toEqual([
+      { property: 'x', here: '50px', there: '290px' }
+    ]);
+  });
+});
