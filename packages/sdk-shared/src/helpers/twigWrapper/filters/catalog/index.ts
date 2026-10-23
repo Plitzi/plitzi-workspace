@@ -265,3 +265,30 @@ export const FILTER_DOCS: Record<string, FilterDoc> = {
     example: '{{ expenses|group_by("category") }}'
   }
 };
+
+/**
+ * What each template function is — `{{ max(a, b) }}`, called by name rather than piped — for `plitzi explain` and the
+ * check that refuses any other: the one list of them, which the evaluator implements and `catalog.test.ts` holds it to.
+ */
+export const FUNCTION_DOCS: Record<string, FilterDoc> = {
+  cycle: {
+    signature: 'cycle(values, index)',
+    summary: 'The value at index, going round the list: alternating classes, colours of a row',
+    example: "{{ cycle(['odd', 'even'], loop.index0) }}"
+  },
+  max: {
+    signature: 'max(a, b, …) | max(list)',
+    summary: 'The largest of the numbers given, or of a list',
+    example: '{{ max(carousel_row.count - 3, 0) }}'
+  },
+  min: {
+    signature: 'min(a, b, …) | min(list)',
+    summary: 'The smallest of the numbers given, or of a list',
+    example: '{{ min(state.page + 1, state.pages) }}'
+  },
+  range: {
+    signature: 'range(end) | range(start, end, step?)',
+    summary: 'The whole numbers from 0 (or start) to end, both included',
+    example: '{% for n in range(1, 5) %}{{ n }}{% endfor %}'
+  }
+};

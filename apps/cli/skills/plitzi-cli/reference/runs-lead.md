@@ -171,6 +171,10 @@ applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** 
 - **A control is used there and back, not pictured** — an arrow, a dot, a pager, a drawer: `page shot <path> --compare
   <url> --click "ours => theirs"` at both widths (`page measure --click` for its open state's values), and a task that
   adds one says so in its acceptance; a picture passes one that moves nothing, or otherwise than the original's.
+- **The board is a kanban; keeping the team busy is yours.** A card ready beside each one in review, so an agent whose
+  card waits takes another: stack the backlog (`run extend`, tasks that `closes`), split a card by what changes apart,
+  give the designer the UI reviews — `--changes` with `--skip-design lead` keeps the next look yours. `run watch` says
+  an agent with nothing to take (`idle-team`) and how to feed it.
 - **The designer's own task off the critical path** while it is the only one reviewing UI: what waits on it waits on
   every review too.
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red.

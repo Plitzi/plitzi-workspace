@@ -467,7 +467,11 @@ or ready, and is refused once an agent took it, as is a `dependsOn` on a task th
 (`dependsOnProblems`): the lead's way to free a task held behind one it needs nothing from, which `run watch` says
 (`held-up`: a pending task whose every remaining dependency is past its work — in review, sent back, blocked — while
 agents of its role have nothing to take; whether they share a file decides what it suggests — and `slow-review`, a
-review a designer or another lead took ten minutes ago and has not decided while the team has nothing to take); so is a plan that changes nothing. Its acceptance is held
+review a designer or another lead took ten minutes ago and has not decided while the team has nothing to take — and
+`idle-team`, the run as a kanban: an agent running with no card worked, no review in hand and none of its roles ready,
+said with the way to feed it — the backlog's items no task closes, the UI of a card in review a free designer could take
+(a send-back with `--skip-design lead` keeps the next look the lead's), a large card to split — or that nothing is left;
+`run plan` says the same of a plan with too few cards for its team); so is a plan that changes nothing. Its acceptance is held
 to `run plan`'s rules, among them a `page check` whose text the shell would split into a page.
 
 ## A plan rehearsed (`rehearse.ts`)

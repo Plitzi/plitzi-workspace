@@ -1,6 +1,7 @@
 import { interactionBasicTriggers } from '@plitzi/sdk-elements/elements/declarations';
 import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring';
-import { FILTER_DOCS } from '@plitzi/sdk-shared/helpers/twigWrapper/filters/catalog';
+import { GLOBAL_SOURCES } from '@plitzi/sdk-shared/dataSource';
+import { FILTER_DOCS, FUNCTION_DOCS } from '@plitzi/sdk-shared/helpers/twigWrapper/filters/catalog';
 
 import {
   elementAncestorTypes,
@@ -23,6 +24,7 @@ import { authoringCodeEntry, AUTHORING_CODES } from '../schema/codes';
 import { BUILTIN_TRANSFORMERS } from '../transformers';
 import { BUILDER_SIGNATURES, builderCall } from './builders';
 import { AUTHORING_HELPERS, MOTION_ENTRY } from './helpers';
+import { SOURCE_DOCS, sourceFields } from './sources';
 
 import type { AuthoringCodeEntry } from '../schema/codes';
 import type { InteractionCallback, InteractionCallbackParam } from '@plitzi/sdk-shared';
@@ -91,7 +93,9 @@ export type Explanation =
   | { kind: 'code'; name: string; codeKind: AuthoringCodeEntry['kind']; means: string; fix: string }
   | { kind: 'transformer'; name: string; title: string; description: string; params: ParamInfo[] }
   | { kind: 'helper'; name: string; signature: string; summary: string; example: string }
-  | { kind: 'filter'; name: string; signature: string; summary: string; example: string };
+  | { kind: 'filter'; name: string; signature: string; summary: string; example: string }
+  | { kind: 'function'; name: string; signature: string; summary: string; example: string }
+  | { kind: 'source'; name: string; summary: string; example: string; fields: string[] };
 
 export type ExplainKind = Explanation['kind'];
 
@@ -103,8 +107,14 @@ export const EXPLAIN_KINDS: Record<ExplainKind, string> = {
   code: 'codes',
   transformer: 'transformers',
   helper: 'helpers',
-  filter: 'filters'
+  filter: 'filters',
+  function: 'functions',
+  source: 'sources'
 };
+
+/** A global source by its name, as the type of the globals knows them. */
+const globalSource = (name: string): (typeof GLOBAL_SOURCES)[number] | undefined =>
+  GLOBAL_SOURCES.find(source => source === name);
 
 const isExplainKind = (kind: string): kind is ExplainKind => Object.hasOwn(EXPLAIN_KINDS, kind);
 
@@ -326,6 +336,8 @@ export const explain = (name: string): Explanation[] => {
   const transformer = Object.hasOwn(BUILTIN_TRANSFORMERS, name) ? BUILTIN_TRANSFORMERS[name] : undefined;
   const helper = Object.hasOwn(HELPERS, name) ? HELPERS[name] : undefined;
   const filter = Object.hasOwn(FILTER_DOCS, name) ? FILTER_DOCS[name] : undefined;
+  const templateFunction = Object.hasOwn(FUNCTION_DOCS, name) ? FUNCTION_DOCS[name] : undefined;
+  const source = globalSource(name);
   // Asked by the name the code calls it: what `reloadApi(…)` writes is the `performQuery` step.
   const builtStep = stepOfBuilder(name);
 
@@ -347,7 +359,9 @@ export const explain = (name: string): Explanation[] => {
         ]
       : []),
     ...(helper ? [{ kind: 'helper' as const, name, ...helper }] : []),
-    ...(filter ? [{ kind: 'filter' as const, name, ...filter }] : [])
+    ...(filter ? [{ kind: 'filter' as const, name, ...filter }] : []),
+    ...(templateFunction ? [{ kind: 'function' as const, name, ...templateFunction }] : []),
+    ...(source ? [{ kind: 'source' as const, name, ...SOURCE_DOCS[source], fields: sourceFields(source) }] : [])
   ];
 };
 
@@ -384,6 +398,10 @@ export const explainList = (kind: ExplainKind): { name: string; summary: string 
       return sorted(Object.entries(HELPERS).map(([name, entry]) => ({ name, summary: entry.summary })));
     case 'filter':
       return sorted(Object.entries(FILTER_DOCS).map(([name, entry]) => ({ name, summary: entry.summary })));
+    case 'function':
+      return sorted(Object.entries(FUNCTION_DOCS).map(([name, entry]) => ({ name, summary: entry.summary })));
+    case 'source':
+      return sorted(GLOBAL_SOURCES.map(name => ({ name, summary: SOURCE_DOCS[name].summary })));
   }
 };
 
@@ -458,6 +476,18 @@ export const explanationText = (explanation: Explanation): string => {
       return [
         `${explanation.name} — template filter: ${explanation.summary}`,
         `Written: {{ value|${explanation.signature} }}`,
+        `Example: ${explanation.example}`
+      ].join('\n');
+    case 'function':
+      return [
+        `${explanation.name} — template function: ${explanation.summary}`,
+        `Written: {{ ${explanation.signature} }}`,
+        `Example: ${explanation.example}`
+      ].join('\n');
+    case 'source':
+      return [
+        `${explanation.name} — global source, read by every template by its name: ${explanation.summary}`,
+        ...(explanation.fields.length > 0 ? [`Fields: ${explanation.fields.join(', ')} — no other`] : []),
         `Example: ${explanation.example}`
       ].join('\n');
   }

@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import { proposalsOf } from './agreements';
 import { answering } from './answering';
+import { stackableBacklog } from './backlog';
 import { bottlenecks } from './bottlenecks';
 import { designSkipText } from './designSkip';
 import { fingerprint } from './files';
@@ -109,6 +110,7 @@ export interface Attention {
     | 'ui-queued'
     | 'held-up'
     | 'slow-review'
+    | 'idle-team'
     | 'agents-needed'
     | 'refused-again'
     | 'spikes'
@@ -276,7 +278,9 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     ...bottlenecks(
       views,
       started.filter(each => running.has(each.agent)),
-      now
+      now,
+      // What the backlog still holds that no card of the run does: what the lead can stack for an agent with nothing.
+      await stackableBacklog(ctx.root, loaded.tasks)
     )
   );
   // Agents on demand: told to the lead when work waits for one and none running is free.

@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { addBacklogItem } from './backlog';
 import { checkedAfter } from './expectations';
 import { abortRun } from './merge';
 import { EVERYONE, messagesOf } from './messages';
@@ -289,6 +290,16 @@ describe('a plan held to the rules', () => {
 
     expect(notices).toContainEqual(expect.stringContaining('4 tasks for 5 agents: each agent starts by reading'));
     expect(notices.some(notice => notice.includes('change what a visitor sees'))).toBe(false);
+
+    // A kanban keeps cards ahead of the team: the backlog's open items, those no task of the plan closes, are said.
+    await addBacklogItem(lead(), { text: 'The footer wraps at 390', by: 'lead' });
+    await addBacklogItem(lead(), { text: 'The hero is 4px low', by: 'lead' });
+    const plan = benchPlan();
+    plan.tasks[0] = { ...plan.tasks[0], closes: ['b-2'] };
+    const stacked = (await checkPlan(bench.root, plan, await readOwnership(bench.root), team)).notices;
+    expect(stacked).toContainEqual(
+      expect.stringContaining('More cards keep the board ahead of the team — the backlog holds b-1')
+    );
   });
 
   it('expands a root with what it owns, says what is shared, and estimates it', async () => {

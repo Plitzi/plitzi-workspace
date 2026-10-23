@@ -55,6 +55,16 @@ export const readBacklog = async (root: string): Promise<BacklogItem[]> =>
 export const openBacklog = async (root: string): Promise<BacklogItem[]> =>
   (await readBacklog(root)).filter(item => item.done === undefined);
 
+/** The open items no task of these closes, by id: what the lead can stack as cards for an agent with nothing to take. */
+export const stackableBacklog = async (
+  root: string,
+  tasks: readonly { closes?: readonly string[] }[]
+): Promise<string[]> => {
+  const closed = new Set(tasks.flatMap(task => task.closes ?? []));
+
+  return (await openBacklog(root).catch(() => [])).map(item => item.id).filter(id => !closed.has(id));
+};
+
 const nextId = (items: readonly BacklogItem[]): number =>
   items.length === 0 ? 1 : Math.max(...items.map(item => Number(item.id.replace(/^b-/, '')) || 0)) + 1;
 

@@ -1071,3 +1071,12 @@ theirs"`) at every width in one call and one browser, reads the other page witho
   the project's page or the other site's — each by a selector `page measure` takes as it is, its box and first words —
   where agents fetched the other site's HTML and searched it for classes. The style table names every state a class has;
   `scrollBy`/`scrollTo` take pixels as a number too.
+- **The run as a kanban** (`@plitzi/cli`): `run watch` tells the lead of an agent running with nothing to take
+  (`idle-team`), with the way to feed it — the backlog's items no task closes, a free designer for the UI of a card in
+  review, a large card to split — or that nothing is left; `run plan` names the backlog's open items when a plan has too
+  few cards for its team; the lead's skill makes keeping the team busy the lead's.
+- **The CLI's slow calls** (`@plitzi/cli`, `@plitzi/sdk-authoring`, `@plitzi/sdk-shared`), from lx-controls' timings:
+  `explain` says the global sources (`host`, `theme`… with the fields the platform decides) and the template functions
+  (`max`, `cycle`, `min`, `range`, one list the template check reads), and a name that is nothing answers in a fraction
+  of a second; `task look` pictures only the pages a shared file reaches that changed beside the run before it, for a
+  lead's look too.

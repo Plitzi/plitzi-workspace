@@ -105,10 +105,18 @@ const installedPackages = (root: string): Entry[][] => {
 
 /**
  * Whether a package may export the name, before anything is parsed: a declaration file beside its entry points spells
- * it. A name that is nothing is answered without building a program for every package installed.
+ * it where an export would — declared (`declare const host`, `interface Host`), or in an export list (`host,`, `as
+ * host`). A name that is nothing is answered without building a program for every package installed: a word as common
+ * as `host`, spelled anywhere at all, built a program for each package that spelled it: 2.4 s to say it is nothing
+ * (lx-controls).
  */
 const spells = (entries: readonly Entry[], name: string): boolean => {
-  const word = new RegExp(`(?<![\\w$])${name.replace(/\$/g, '\\$')}(?![\\w$])`);
+  const escaped = name.replace(/\$/g, '\\$');
+  // Declared where a statement starts, or named in an export list — never a word of a comment or a parameter.
+  const word = new RegExp(
+    `(?:^\\s*(?:export\\s+)?(?:declare\\s+)?(?:default\\s+)?(?:abstract\\s+)?(?:const|let|var|function|class|type|interface|enum|namespace)\\s+${escaped}(?![\\w$]))|(?:export\\s*(?:type\\s*)?\\{[^}]*(?<![\\w$])${escaped}(?![\\w$])[^}]*\\})`,
+    'm'
+  );
   const dirs = new Set(entries.map(entry => path.dirname(entry.file)));
   const files = new Set(
     [...dirs].flatMap(dir =>

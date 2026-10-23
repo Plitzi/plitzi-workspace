@@ -158,10 +158,21 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
           ...(options.click ? ['--click', options.click] : []),
           ...(options.hover ? ['--hover', options.hover] : [])
         ];
+        // The pages only a shared file of it reaches — a data file every page reads, a theme: read beside the run
+        // before it, and pictured only where they changed.
+        const ownership = await readOwnership(preview.dir);
+        const direct = await pagesOf(
+          preview.dir,
+          changed.filter(file => ownership.ownerOf.has(file))
+        );
+        const reached = paths.length === 0 ? owned.filter(page => !direct.includes(page)) : [];
         // Beside the run before it: what the task moved, section by section — and that nothing else did. Started first:
-        // the pages a shared file of it reaches are read on both before any is pictured.
+        // the pages a shared file of it reaches are read on both before any is pictured. A lead's look starts it too
+        // when such pages are there: lx-controls' look at a carousel pictured all eight pages its data file reaches (61 s).
         const before =
-          (options.before ?? designing) ? await startBeforePreview(ctx, runId, taskId, await freePort()) : undefined;
+          (options.before ?? (designing || reached.length > 0))
+            ? await startBeforePreview(ctx, runId, taskId, await freePort())
+            : undefined;
         if (before) {
           stops.push(() => {
             before.stop();
@@ -178,16 +189,8 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
         // A page only a shared file of it reaches, drawn the same as the run before it — every element, box and style
         // read on both — is not pictured: velada-fidelity's look pictured nine pages for two tokens added (204 s).
         const unchanged = new Set<string>();
-        if (before && paths.length === 0) {
-          const ownership = await readOwnership(preview.dir);
-          const direct = await pagesOf(
-            preview.dir,
-            changed.filter(file => ownership.ownerOf.has(file))
-          );
-          const { paths: reachedOnly } = await examplePaths(
-            preview.url,
-            owned.filter(page => !direct.includes(page))
-          );
+        if (before && reached.length > 0) {
+          const { paths: reachedOnly } = await examplePaths(preview.url, reached);
           if (reachedOnly.length > 0) {
             const same = await runSelf(preview.dir, [
               'page',

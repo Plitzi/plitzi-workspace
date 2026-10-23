@@ -191,3 +191,29 @@ describe('explain', () => {
 });
 
 const explainText = (name: string): string => explain(name).map(explanationText).join('\n');
+
+// lx-controls: a developer asked `explain host`, `explain theme` and `explain max`, and was told they were nothing.
+describe('explain, of what a template reads and calls', () => {
+  it('says every global source, with the fields the platform decides of it', () => {
+    expect(explainText('theme')).toContain('theme — global source, read by every template by its name');
+    expect(explainText('theme')).toContain('Fields: mode, resolved — no other');
+    expect(explainText('host')).toContain('an application embedding the space');
+    expect(explainList('source').map(entry => entry.name)).toEqual([
+      'auth',
+      'computed',
+      'flags',
+      'host',
+      'navigation',
+      'state',
+      'theme',
+      'variables'
+    ]);
+  });
+
+  it('says every template function, written as it is called', () => {
+    expect(explainText('max')).toContain('max — template function: The largest of the numbers given');
+    expect(explainText('max')).toContain('Written: {{ max(a, b, …) | max(list) }}');
+    expect(explainKindOf('functions')).toBe('function');
+    expect(explainList('function').map(entry => entry.name)).toEqual(['cycle', 'max', 'min', 'range']);
+  });
+});

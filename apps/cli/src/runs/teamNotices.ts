@@ -23,7 +23,12 @@ export const TASKS_PER_AGENT = 2;
  * Too many agents for the work, said before the run starts: velada-backlog's three tasks of a few values each went to
  * two developers and a designer — dev-2 spent 62k tokens, most of them its start, on one task of two lines.
  */
-const teamSizeNotice = (plan: Pick<RunPlan, 'tasks'>, team: Team, openWork: number): string[] => {
+const teamSizeNotice = (
+  plan: Pick<RunPlan, 'tasks'>,
+  team: Team,
+  openWork: number,
+  backlog: readonly string[]
+): string[] => {
   // A stage's tasks beside the run's still open: velada-shell's stack of one was told "1 task for 3 agents".
   const work = plan.tasks.filter(task => task.role !== 'lead').length + openWork;
   const agents = startedAgents(team).length;
@@ -32,7 +37,9 @@ const teamSizeNotice = (plan: Pick<RunPlan, 'tasks'>, team: Team, openWork: numb
   }
 
   return [
-    `${String(work)} task${work === 1 ? '' : 's'} for ${String(agents)} agents: each agent starts by reading the skills and its brief — tens of thousands of tokens and minutes before its first line — so fewer than ${String(TASKS_PER_AGENT)} tasks each pays more for starting than for the work. A smaller team does it for less (plitzi run team set <entry> --count …); a few values each, the lead reviews them itself (--skip-design lead)`
+    // A kanban keeps a card ready beside each one in review: lx-controls' three cards for two agents left each waiting
+    // its own verdicts with nothing to take.
+    `${String(work)} task${work === 1 ? '' : 's'} for ${String(agents)} agents: each agent starts by reading the skills and its brief — tens of thousands of tokens and minutes before its first line — so fewer than ${String(TASKS_PER_AGENT)} tasks each pays more for starting than for the work, and an agent whose card is in review has none to take. More cards keep the board ahead of the team${backlog.length > 0 ? ` — the backlog holds ${backlog.slice(0, 5).join(', ')}${backlog.length > 5 ? ` +${String(backlog.length - 5)}` : ''} (a task that does one says "closes")` : ''}, or a large card split by what changes apart; else a smaller team does it for less (plitzi run team set <entry> --count …)`
   ];
 };
 
@@ -64,9 +71,11 @@ const designersNotice = (plan: Pick<RunPlan, 'tasks' | 'designReview' | 'referen
 export const teamNotices = (
   plan: Pick<RunPlan, 'tasks' | 'designReview' | 'reference'>,
   team: Team,
-  openWork = 0
+  openWork = 0,
+  /** The backlog's open items no task of the plan closes: the cards that could keep the team busy. */
+  backlog: readonly string[] = []
 ): string[] => {
-  const tooBig = teamSizeNotice(plan, team, openWork);
+  const tooBig = teamSizeNotice(plan, team, openWork, backlog);
 
   return tooBig.length > 0 ? tooBig : designersNotice(plan, team);
 };

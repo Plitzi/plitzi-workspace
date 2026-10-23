@@ -23,7 +23,13 @@ const heldIn = (view: TaskView): string | undefined =>
  * What holds the run's work back that only the lead can free: UI reviews no designer is free to take, and a task that
  * could start held behind others in review while agents of its role have nothing to take — each with the way out.
  */
-export const bottlenecks = (views: readonly TaskView[], started: readonly StartedAgent[], now: Date): Attention[] => {
+export const bottlenecks = (
+  views: readonly TaskView[],
+  started: readonly StartedAgent[],
+  now: Date,
+  /** The project's backlog items still open that no task of the run does: work the lead can stack. */
+  backlog: readonly string[] = []
+): Attention[] => {
   const found: Attention[] = [];
   const byId = new Map(views.map(view => [view.task.id, view] as const));
   const approvedIds = new Set(views.filter(view => view.state.status === 'done').map(view => view.task.id));
@@ -122,6 +128,8 @@ export const bottlenecks = (views: readonly TaskView[], started: readonly Starte
     });
   }
 
+  found.push(...idleTeam(views, started, backlog));
+
   // A spike is a lead's: each one waiting is said, with how to answer it — and, past a few, to start a lead for them.
   const spikes = views.filter(view => view.state.status === 'spike');
   if (spikes.length > 0) {
@@ -133,4 +141,76 @@ export const bottlenecks = (views: readonly TaskView[], started: readonly Starte
   }
 
   return found;
+};
+
+/**
+ * The run as a kanban: the lead keeps every agent busy. An agent running with nothing of its own being worked, no review
+ * in hand and no card of its roles ready is starved — said to the lead with the way to feed it: the backlog's items no
+ * task does yet, a card a designer could review the UI of, a large card to split; with nothing left, that it may go.
+ * lx-controls: three cards for two agents, each agent waited its own verdicts with nothing to take, the designer idle
+ * nine minutes beside two cards in review whose UI looks the lead had kept.
+ */
+export const idleTeam = (
+  views: readonly TaskView[],
+  /** The team's agents running now. */
+  running: readonly StartedAgent[],
+  backlog: readonly string[]
+): Attention[] => {
+  if (views.length === 0 || views.every(view => view.state.status === 'done')) {
+    return [];
+  }
+
+  const busy = new Set([
+    ...views.flatMap(view => (view.owner && isWorked(view.state.status) ? [view.owner.agent] : [])),
+    ...views.flatMap(view =>
+      view.state.design?.by && view.state.design.status === 'due' ? [view.state.design.by] : []
+    )
+  ]);
+  const readyFor = (roles: readonly string[]): boolean =>
+    views.some(view => view.state.status === 'ready' && roles.includes(view.task.role ?? DEVELOPER));
+  const starved = running.filter(each => !busy.has(each.agent) && !readyFor(each.roles));
+  if (starved.length === 0) {
+    return [];
+  }
+
+  const names = starved.map(each => each.agent);
+  const designer = starved.find(each => each.roles.includes(DESIGNER));
+  // In review with no UI look offered — kept by the lead, or skipped — while a designer who did not write it is free.
+  const lookable = designer
+    ? views.filter(
+        view =>
+          view.state.status === 'in-review' &&
+          view.state.design?.status !== 'due' &&
+          view.owner?.agent !== designer.agent
+      )
+    : [];
+  const worked = views.filter(view => view.owner && isWorked(view.state.status)).map(view => view.task.id);
+  const ways = [
+    ...(backlog.length > 0
+      ? [
+          `stack the backlog's ${backlog.slice(0, 5).join(', ')}${backlog.length > 5 ? ` +${String(backlog.length - 5)}` : ''} as cards (a stage of tasks that close them: plitzi run extend <stage.json>)`
+        ]
+      : []),
+    ...(designer && lookable.length > 0
+      ? [
+          `give ${designer.agent} the UI of ${lookable.map(view => view.task.id).join(', ')} — send work back without --skip-design lead, and the next look is offered to it`
+        ]
+      : []),
+    ...(worked.length > 0
+      ? [`split a large card still worked (${worked.join(', ')}) and hand a part (plitzi run amend)`]
+      : [])
+  ];
+  const onDemand = new Set(running.filter(each => each.onDemand).map(each => each.agent));
+
+  return [
+    {
+      kind: 'idle-team',
+      text: `${names.join(', ')} ${names.length === 1 ? 'has' : 'have'} nothing to take — keep the board ahead of the team: ${
+        ways.length > 0
+          ? ways.join('; or ')
+          : `nothing is left to give: ${names.some(name => onDemand.has(name)) ? 'one on demand stops by itself, ' : ''}the rest wait for their reviews — decide those first`
+      }`,
+      who: 'lead'
+    }
+  ];
 };

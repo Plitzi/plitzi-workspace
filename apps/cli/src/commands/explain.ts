@@ -14,7 +14,7 @@ import type { Explanation } from '@plitzi/sdk-authoring';
 
 /**
  * `plitzi explain <name>`: what a name means when authoring a space — an element, a step, a trigger, a problem's code,
- * a transformer, a helper (`bindTemplate`, `scope`, `motion`…) — in a few lines, from the catalogues the checks
+ * a transformer, a helper (`bindTemplate`, `scope`, `motion`…), a template's filter, function or global source — in a few lines, from the catalogues the checks
  * themselves read; any other export of a `@plitzi` package (`pageFamily`, `SpaceSpec`, `createServer`) by its published
  * declaration. A code is any check's: authoring's, `plitzi space lint`'s own rules (`LINT_RULES`) and the project's
  * layout (`PROJECT_LAYOUT_CODES`, what the server, `npm run author` and `plitzi doctor` hold a project to). `--list
@@ -166,7 +166,7 @@ export const explainCommand = async (name: string | undefined, options: ExplainO
 
     fail(
       [
-        `"${name}" is no element, step, trigger, code, transformer, helper or template filter, no step of a server action, nor an export of a @plitzi package installed here. See what there is: --list ${kinds}, tasks.`,
+        `"${name}" is no element, step, trigger, code, transformer, helper, template filter, template function or global source, no step of a server action, nor an export of a @plitzi package installed here. See what there is: --list ${kinds}, tasks.`,
         `A name of the project's own code is read where it is written: \`grep -rn "${name}" src/\`.`
       ].join('\n')
     );

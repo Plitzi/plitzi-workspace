@@ -1,3 +1,4 @@
+import { FUNCTION_DOCS } from './filters/catalog';
 import { filters } from './filters/filters';
 import { lex } from './Lexer';
 import { parse } from './Parser';
@@ -5,7 +6,7 @@ import { parse } from './Parser';
 import type { ASTNode, Expression } from './AST';
 
 /** The functions a template can call, as the evaluator implements them. Anything else evaluates to `''`. */
-const FUNCTIONS = new Set(['cycle', 'max', 'min', 'range']);
+const FUNCTIONS = new Set(Object.keys(FUNCTION_DOCS));
 
 /** The functions authors reach for that are written another way here — what the refusal says to write instead. */
 const roundedTo = (mode: string) => `value|round(0, '${mode}')`;
