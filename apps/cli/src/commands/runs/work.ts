@@ -153,7 +153,14 @@ export const taskCheck = (
           chalk.yellow(
             `  ✗ ${each.file} is ${each.holder}'s, at work — complete refuses it: put it back (plitzi task discard ${each.file}) and propose the change to ${each.holder} (plitzi task propose ${each.holder} --change "…"), or wait for it (plitzi task wait ${each.file})`
           )
-        )
+        ),
+        ...(checked.notOwn
+          ? [
+              chalk.dim(
+                `  Not your work, and not counted against you: ${checked.notOwn.join('; ')} — the run's work fails it too, or nothing could answer the line (the lead is told). Go on with the rest`
+              )
+            ]
+          : [])
       ].join('\n'),
     checked => (checked.ok ? 0 : 1)
   );

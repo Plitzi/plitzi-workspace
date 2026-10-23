@@ -15,6 +15,16 @@ const log: Record<string, unknown>[] = [
   { at: T(12), by: 'dev-1', action: 'take', task: 't-bars' },
   { at: T(13), by: 'dev-1', action: 'check', task: 't-bars', ok: false, failed: ['typecheck'] },
   { at: T(14), by: 'dev-1', action: 'check', task: 't-bars', ok: false, failed: ['lint', 'acceptance — the bar'] },
+  // Failed for nothing of its own — the run's work fails author too, and the logo's line read nothing: not counted.
+  {
+    at: T(14.5),
+    by: 'dev-1',
+    action: 'check',
+    task: 't-bars',
+    ok: false,
+    failed: ['author', 'acceptance — the logo'],
+    notOwn: ['author', 'acceptance — the logo']
+  },
   { at: T(15), by: 'dev-1', action: 'check', task: 't-bars', ok: true },
   { at: T(15), by: 'dev-1', action: 'ask', task: 't-bars', message: 'm1' },
   { at: T(16), by: 'dev-1', action: 'complete', task: 't-bars', review: 'ui' },
@@ -64,7 +74,7 @@ describe('a run measured from its records', () => {
       uiReviews: [3, 2],
       leadWaits: [1],
       reworkWaits: [10],
-      checks: { run: 4, failed: 2 }
+      checks: { run: 5, failed: 2 }
     });
     expect(metrics).toMatchObject({ workMinutes: 37, afterMinutes: 23 });
   });
@@ -81,7 +91,12 @@ describe('a run measured from its records', () => {
   });
 
   it('counts failed checks by step, refusals by code, a question’s wait, and calls made again and again', () => {
-    expect(metrics.checks).toEqual({ run: 4, failed: 2, byStep: { typecheck: 1, lint: 1, acceptance: 1 } });
+    expect(metrics.checks).toEqual({
+      run: 5,
+      failed: 2,
+      notOwn: 1,
+      byStep: { typecheck: 1, lint: 1, acceptance: 1 }
+    });
     expect(metrics.refusals.byCode).toMatchObject({
       'lead-only': { times: 1, by: ['dev-2'], command: 'plitzi task show t-bars' },
       identity: { times: 1, by: ['design-2'] }

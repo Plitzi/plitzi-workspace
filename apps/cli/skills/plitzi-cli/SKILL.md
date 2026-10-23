@@ -69,7 +69,8 @@ author`; a page: `page check`. The project around them: `doctor`, before `space 
 feedback` (`--previous <link>` continues an earlier one). It reads the versions and `doctor` itself and writes the
   page; fill it and publish it as its brief says, rather than a report of your own making.
 - **Read stdout, exit code and stderr apart.** The answer is on stdout (`--json`: one line); exit 1 means it did not do
-  what was asked. A refusal says what to change: change it — the same refusal twice says to stop and ask.
+  what was asked; a page command's 2, that it could not read what it asked (nothing served, the other page's element
+  not there). A refusal says what to change: change it — the same refusal twice says to stop and ask.
 
 **The MCP or this CLI.** A space written in code (`src/space/`) is this CLI's, with no account. One kept on Plitzi —
 edited in the builder — is the Plitzi MCP's. Never both on one space.

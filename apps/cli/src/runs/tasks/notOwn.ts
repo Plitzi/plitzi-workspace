@@ -1,0 +1,83 @@
+import path from 'node:path';
+
+import { ownFailing } from '../checks';
+import { checkVersions } from '../materialise';
+import { LEAD, messagesOf, sendMessage } from '../messages';
+import { readApproved } from '../run';
+import { digestsOf, escapeRegExp } from './approve';
+
+import type { CheckResult, CheckStep } from '../checks';
+import type { AcceptanceResult } from '../model';
+import type { LoadedRun, RunContext } from '../run';
+import type { TaskView } from '../taskStore';
+
+/**
+ * What fails in a copy that is not its agent's work: a step the run's work fails the same way without it (another
+ * task's approval, a person's edit), and an acceptance line nothing could answer (the line's, or the machine's). Said
+ * apart, so a run's failed checks count the work alone (lx-copy: 72% of its checks failed, most of them for neither).
+ */
+
+/** The copy's checks beside the run's work without it: what `ownFailing` reads them with. */
+export interface AgainstRunWork {
+  /** The run's work checked as approved — none while the copy's checks pass. */
+  without?: CheckResult;
+  /** The copy's own folders, which its checks' output names and the run's does not. */
+  dirs: (string | RegExp)[];
+}
+
+export const againstRunWork = async (
+  ctx: RunContext,
+  loaded: LoadedRun,
+  view: TaskView,
+  checks: CheckResult
+): Promise<AgainstRunWork> => ({
+  without: checks.ok ? undefined : await checkVersions(ctx, loaded, digestsOf(await readApproved(loaded.paths))),
+  dirs: [
+    `${view.paths.work}${path.sep}`,
+    new RegExp(`${escapeRegExp(path.join(loaded.paths.cache, 'check-'))}[0-9a-f]+${escapeRegExp(path.sep)}`, 'g')
+  ]
+});
+
+/** The failing steps that are not the copy's: those the run's work fails the same way. */
+export const stepsNotOwn = (checks: CheckResult, { without, dirs }: AgainstRunWork): CheckStep[] => {
+  if (without === undefined) {
+    return [];
+  }
+
+  const own = new Set(ownFailing(checks, without, dirs).map(step => step.name));
+
+  return checks.steps.filter(step => !step.ok && !own.has(step.name));
+};
+
+/**
+ * Tells the lead, once a line, of the acceptance lines of a task nothing could answer: the line is the lead's to amend,
+ * and every try of the task fails on it until then.
+ */
+export const tellUnanswered = async (
+  ctx: RunContext,
+  loaded: LoadedRun,
+  taskId: string,
+  accepted: readonly AcceptanceResult[]
+): Promise<AcceptanceResult[]> => {
+  const unanswered = accepted.filter(result => result.unanswered === true);
+  if (unanswered.length === 0) {
+    return [];
+  }
+
+  const said = (await messagesOf(loaded)).filter(message => message.from === 'plitzi' && message.about === taskId);
+  for (const line of unanswered) {
+    if (said.some(message => message.text.includes(line.check))) {
+      continue;
+    }
+
+    await sendMessage(ctx, loaded, {
+      from: 'plitzi',
+      to: LEAD,
+      text: `${taskId}'s acceptance line "${line.said}" cannot be answered — ${line.check} — ${line.output?.at(-1) ?? 'it read nothing'}. Not the work's: amend the line (plitzi run amend), or say why it waits`,
+      fyi: true,
+      about: taskId
+    });
+  }
+
+  return unanswered;
+};

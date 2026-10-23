@@ -4,13 +4,14 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { finishRun } from './merge';
+import { messagesOf } from './messages';
 import { readOwnership } from './ownership';
 import { checkPlan } from './plan';
 import { syncPreview } from './preview';
 import { loadRun } from './run';
 import { showTask } from './show';
 import { askLead, messageTasks, readInbox, tellLead } from './talk';
-import { completeTask, nextTask, reportProgress, revertTask, reviewTask, taskContext } from './tasks';
+import { checkTask, completeTask, nextTask, reportProgress, revertTask, reviewTask, taskContext } from './tasks';
 import { viewRun } from './view';
 import { benchPlan, makeBench, teamFor, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
@@ -161,6 +162,28 @@ describe('acceptance, checks and what is left behind', () => {
     expect(shown.checks).toMatchObject({ knownFailure: { preexisting: true, failing: ['author'] } });
     expect(view.attention.some(item => item.kind === 'known-failure' && item.task === 't-home')).toBe(true);
   });
+
+  // lx-copy: 72% of its checks failed, most for the run's own breakage or a line that could never pass.
+  it('a check failing for nothing of the copy’s says so, counted against nobody — a line nothing answers told once', async () => {
+    const plan = benchPlan();
+    plan.tasks[0].acceptance = [{ said: 'The logo', check: 'echo the original has no .logo; exit 2' }];
+    await open(plan);
+    await bench.write('src/space/pages/about.ts', 'export const about = BROKEN;\n');
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = {};\n');
+    expect((await checkTask(home.ctx, 'es-launch', 't-home')).notOwn).toEqual(['author']);
+
+    await bench.write('src/space/pages/about.ts', 'export const about = {};\n');
+    expect((await checkTask(home.ctx, 'es-launch', 't-home')).notOwn).toEqual(['acceptance — The logo']);
+    await checkTask(home.ctx, 'es-launch', 't-home', { fresh: true });
+    const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).filter(each => each.from === 'plitzi');
+    expect(told).toHaveLength(1);
+    expect(told[0]).toMatchObject({ to: 'lead', about: 't-home' });
+    expect(told[0].text).toContain('"The logo" cannot be answered');
+    expect((await refusal(completeTask(home.ctx, 'es-launch', 't-home'))).message).toContain(
+      'nothing could answer it: the lead is told — not your work'
+    );
+  }, 30_000);
 
   it('a task completes over failing checks only with a reason and the task that fixes it — said to both and the lead', async () => {
     await open();

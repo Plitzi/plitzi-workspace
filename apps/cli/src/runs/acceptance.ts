@@ -9,6 +9,7 @@ import { projectMark } from '@plitzi/sdk-shared/project';
 import { inTurns } from './inTurns';
 import { stopKept } from './lingering';
 import { stopTree, TREE } from './processes';
+import { UNANSWERED_EXIT } from '../commands/terminal';
 import { runScript, scriptsOf, tail } from '../commands/verify';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
 
@@ -213,6 +214,9 @@ const cliShim = async (cache: string): Promise<string> => {
 /** How many acceptance lines run at once on one served copy: each a browser, as a look's commands are. */
 const ACCEPTANCE_AT_ONCE = 2;
 
+/** A line's exit that answers nothing: a page command that could not read (2), a command not found or not runnable. */
+const isUnanswered = (code: number): boolean => code === UNANSWERED_EXIT || code === 126 || code === 127;
+
 export const checkAcceptance = async (
   acceptance: readonly Acceptance[],
   {
@@ -240,7 +244,13 @@ export const checkAcceptance = async (
     ? await (serving ?? serveCopy(work, root, cache))
     : undefined;
   if (served && 'problem' in served) {
-    return checked.map(each => ({ said: each.said, check: each.check, ok: false, output: [served.problem] }));
+    return checked.map(each => ({
+      said: each.said,
+      check: each.check,
+      ok: false,
+      output: [served.problem],
+      unanswered: true
+    }));
   }
 
   const bin = await cliShim(cache);
@@ -279,7 +289,7 @@ export const checkAcceptance = async (
       results[at] =
         code === 0
           ? { said: result.said, check: result.check, ok: true, firstFailed: result.output ?? [] }
-          : { ...result, output: tail(output) };
+          : { ...result, output: tail(output), ...(isUnanswered(code) ? { unanswered: true as const } : {}) };
     }
 
     return results;

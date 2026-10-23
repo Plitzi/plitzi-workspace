@@ -22,7 +22,10 @@ export interface BenchLine {
   workMinutes?: number;
   minutesPerTask?: number;
   roundsPerTask: number;
+  /** The share of `task check`s that failed for the copy's own work. */
   checksFailedPct: number;
+  /** Checks that failed for nothing of the copy's — the run's work failing too, a line nothing answered. */
+  checksNotOwn?: number;
   refusals: number;
   identityRefusals: number;
   uiWaitMedian?: number;
@@ -74,6 +77,7 @@ export const benchOf = (report: RunReport, cli: string): BenchLine => {
         }),
     roundsPerTask: flows.length === 0 ? 0 : tenths(rounds / flows.length),
     checksFailedPct: metrics.checks.run === 0 ? 0 : Math.round((metrics.checks.failed / metrics.checks.run) * 100),
+    checksNotOwn: metrics.checks.notOwn,
     refusals: metrics.refusals.total,
     identityRefusals: Object.hasOwn(metrics.refusals.byCode, 'identity') ? metrics.refusals.byCode.identity.times : 0,
     ...(uiWait === undefined ? {} : { uiWaitMedian: uiWait }),
@@ -120,8 +124,9 @@ export const readBench = async (root: string): Promise<BenchLine[]> => {
   return lines.flat().sort((a, b) => a.at.localeCompare(b.at));
 };
 
-const cell = (value: number | undefined, suffix = ''): string =>
-  value === undefined ? '—' : `${String(value)}${suffix}`;
+// A measure kept as `null` — a NaN written to JSON, as lx-copy's agents' wait was — is no number to print.
+const cell = (value: number | null | undefined, suffix = ''): string =>
+  typeof value !== 'number' || !Number.isFinite(value) ? '—' : `${String(value)}${suffix}`;
 const tokens = (value: number | undefined): string =>
   value === undefined ? '—' : value >= 1000 ? `${String(Math.round(value / 100) / 10)}k` : String(value);
 
@@ -130,10 +135,10 @@ export const benchText = (lines: readonly BenchLine[]): string[] =>
   lines.length === 0
     ? ['No run of this project was measured yet: each report keeps its run’s measures beside it.']
     : [
-        '| Run | Done | Worked (min) | Min / task | Rounds / task | Checks failed | Refused (identity) | UI wait | Lead wait | Rework wait | Agents waited | Handed off | Read | Tokens / task | Repeated | In the CLI (min) | Over budget |',
-        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+        '| Run | Done | Worked (min) | Min / task | Rounds / task | Checks failed | Not theirs | Refused (identity) | UI wait | Lead wait | Rework wait | Agents waited | Handed off | Read | Tokens / task | Repeated | In the CLI (min) | Over budget |',
+        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
         ...lines.map(
           line =>
-            `| ${line.runId} | ${String(line.done)}/${String(line.tasks)} | ${cell(line.workMinutes)} | ${cell(line.minutesPerTask)} | ${String(line.roundsPerTask)} | ${String(line.checksFailedPct)}% | ${String(line.refusals)} (${String(line.identityRefusals)}) | ${cell(line.uiWaitMedian)} | ${cell(line.leadWaitMedian)} | ${cell(line.reworkWaitMedian)} | ${String(line.agentsWaited)} | ${String(line.handOffs)} | ${tokens(line.readTokens)} | ${tokens(line.tokensPerTask)} | ${String(line.repeated)} | ${cell(line.cliMinutes)} | ${cell(line.overBudget)} |`
+            `| ${line.runId} | ${String(line.done)}/${String(line.tasks)} | ${cell(line.workMinutes)} | ${cell(line.minutesPerTask)} | ${String(line.roundsPerTask)} | ${String(line.checksFailedPct)}% | ${cell(line.checksNotOwn)} | ${String(line.refusals)} (${String(line.identityRefusals)}) | ${cell(line.uiWaitMedian)} | ${cell(line.leadWaitMedian)} | ${cell(line.reworkWaitMedian)} | ${cell(line.agentsWaited)} | ${String(line.handOffs)} | ${tokens(line.readTokens)} | ${tokens(line.tokensPerTask)} | ${String(line.repeated)} | ${cell(line.cliMinutes)} | ${cell(line.overBudget)} |`
         )
       ];

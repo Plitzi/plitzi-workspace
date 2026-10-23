@@ -157,6 +157,8 @@ backlog done <id> --note "…"` closes one. **Close it:** write the summary (don
 - **What a task builds on is in its `dependsOn`**, not only in its words: a finding naming another task's component (a
   cart's "Top Productos" cards) is a dependency `run plan` cannot see.
 - **A stage reads `run view`, not memory**: a task that merges a file one not done holds waits for it (`dependsOn`).
+- **A line nothing can answer is yours at once**: its command exits 2 (the original's element not there, nothing
+  served), you are told, and every try of the task fails on it until you amend it — never the agent's to bend.
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red.
 - **Don't fix the CLI mid-run**: note it (`run notice`), fix it after.
 - **Look where it changed**: a fix for light in light, one for the phone at 390 (`task look --scheme light --width 390`).

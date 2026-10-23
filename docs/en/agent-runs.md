@@ -703,7 +703,10 @@ the log, the messages and the run's usage — what velada-polish's lead computed
   lead's), each wait for its UI review and the review's own time, each wait for the lead, each wait for an agent after
   changes were asked, its checks failed, its reworks handed off. Each agent: joined, stopped, its tasks, completes,
   checks failed, refusals, the minutes it waited for work, its reviews (with changes) and their median minutes. Checks
-  failed by step (lint, typecheck, author, acceptance, a long file); refusals by code, with who and one command; each
+  failed by step (lint, typecheck, author, acceptance, a long file) — the copy's own failures only: a `task check` says
+  what failed for nothing of the copy's (`notOwn`, `tasks/notOwn.ts`) — a step the run's work fails the same way, an
+  acceptance line nothing could answer (its command exited 2, or could not run; the lead is told once, and a
+  `complete` refused for it records no brake) — and those are counted apart; refusals by code, with who and one command; each
   question's wait for its answer. A spike is said as the lead's, by the lead that found it out.
 - **Cost** (`usage.ts`): each command run in a run — a task's, the lead's, a `page shot` in a copy — appends to the
   run's `usage.jsonl` who ran it, the command (its tokens' secrets out), what it printed (stdout and stderr: what its
@@ -714,7 +717,8 @@ the log, the messages and the run's usage — what velada-polish's lead computed
   with `run report --tokens dev-1=208061,…` (`tokens.json`), by agent, in all, and a task.
 - **The bench** (`bench.ts`): the same measures, one line a run, kept as data beside the report
   (`<run>-<time>.json`, with the report whole), ends the report against the five runs before, and `plitzi run bench`
-  lists every run: minutes a task, rounds a task, the share of checks failed, refusals (`identity` apart), the median
+  lists every run: minutes a task, rounds a task, the share of checks failed for the copy's work and how many failed
+  for nothing of it ("Not theirs"), refusals (`identity` apart), the median
   waits for a UI review, the lead and a rework, the minutes agents waited, reworks handed off, what was read, tokens a
   task, calls repeated — whether the team gets better from one run to the next.
 

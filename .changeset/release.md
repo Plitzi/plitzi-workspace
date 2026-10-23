@@ -1015,3 +1015,9 @@ theirs"`) at every width in one call and one browser, reads the other page witho
 - **A layout's empty shell fails no page check** (`@plitzi/sdk-authoring`, `@plitzi/cli`): an owed container with nothing
   in it and no size of its own is said apart — `empty` in `inspectPage`'s report, "empty, with nothing in them yet" in
   `page check` — never "hidden". One with a size shows; one holding something unseen is hidden as before.
+- **A run's failed checks count the work alone** (`@plitzi/cli`): a page command that could not read what it was asked
+  (`page check`, `page measure`, `page same`: nothing served, the other page's element not there) exits 2, never 1; an
+  acceptance line that exits 2, or cannot run, is unanswered — the lead is told once, the agent is told it is not its
+  work, and a `complete` refused for it records no brake. `task check` says what failed for nothing of the copy's (a
+  step the run's work fails the same way) as `notOwn`; the metrics count those apart, and `run bench` shows them in
+  "Not theirs" beside the share of checks failed for the copy's own work (lx-copy: 72% failed, most of them neither).

@@ -37,6 +37,7 @@ describe('checkAcceptance', () => {
       [
         { said: 'Slow once', check: flaky },
         { said: 'Broken', check: 'echo still broken; exit 1' },
+        { said: 'Unread', check: 'echo the original has no .logo; exit 2' },
         { said: 'Fine', check: 'exit 0' }
       ],
       { work, root: work, cache: path.join(work, 'cache') }
@@ -45,6 +46,14 @@ describe('checkAcceptance', () => {
     expect(results).toEqual([
       { said: 'Slow once', check: flaky, ok: true, firstFailed: ['timed out'] },
       { said: 'Broken', check: 'echo still broken; exit 1', ok: false, output: ['still broken'] },
+      // A page command that could not read what it was asked: the line's, said apart from the work's.
+      {
+        said: 'Unread',
+        check: 'echo the original has no .logo; exit 2',
+        ok: false,
+        output: ['the original has no .logo'],
+        unanswered: true
+      },
       { said: 'Fine', check: 'exit 0', ok: true }
     ]);
   });

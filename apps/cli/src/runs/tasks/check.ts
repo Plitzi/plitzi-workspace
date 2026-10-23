@@ -7,6 +7,7 @@ import { tellLeftInTmp } from '../strays';
 import { changedInCopy, findTask, holderOf, refreshCopy } from './common';
 import { whoseChanges } from './complete';
 import { fixChanged } from './fix';
+import { againstRunWork, stepsNotOwn, tellUnanswered } from './notOwn';
 import { readStart } from '../taskStore';
 
 import type { CheckResult } from '../checks';
@@ -44,6 +45,11 @@ export interface CheckedTask {
   fixed?: { fixed: string[]; ran: string[] };
   /** Passed at this time, nothing changed since: the result said again, not run (`--fresh` runs it). */
   checkedAt?: string;
+  /**
+   * What failed that is not this copy's work: steps the run's work fails the same way, acceptance lines nothing could
+   * answer (the lead is told). Not counted against the agent; `complete` takes them as the run's.
+   */
+  notOwn?: string[];
 }
 
 export const checkTask = async (
@@ -89,6 +95,10 @@ export const checkTask = async (
   const tooLong = (await longFilesIn(view.paths.work, ctx.root)).filter(crossed).map(longFileText);
   const { outside } = started ? await whoseChanges(loaded, view, mine, started) : { outside: [] };
   const ok = checks.ok && accepted.every(each => each.ok) && tooLong.length === 0 && outside.length === 0;
+  const notOwn = [
+    ...(checks.ok ? [] : stepsNotOwn(checks, await againstRunWork(ctx, loaded, view, checks))).map(step => step.name),
+    ...(await tellUnanswered(ctx, loaded, taskId, accepted)).map(each => `acceptance — ${each.said}`)
+  ];
   // Passed whole: kept for the complete that follows, which does not run it all again while nothing changes.
   if (ok && only === undefined && started) {
     const key = await checkKey(loaded, view.paths, task, await changedInCopy(view, started));
@@ -107,7 +117,8 @@ export const checkTask = async (
             ...accepted.filter(each => !each.ok).map(each => `acceptance — ${each.said}`),
             ...tooLong,
             ...outside.map(each => `${each.file} is ${each.holder}'s`)
-          ]
+          ],
+          ...(notOwn.length > 0 ? { notOwn } : {})
         })
   });
 
@@ -121,6 +132,7 @@ export const checkTask = async (
     ...(only ? { only } : {}),
     ...(outside.length > 0 ? { othersFiles: outside } : {}),
     ...(fixed ? { fixed } : {}),
-    ...(before ? { checkedAt: before.at } : {})
+    ...(before ? { checkedAt: before.at } : {}),
+    ...(notOwn.length > 0 ? { notOwn } : {})
   };
 };

@@ -9,7 +9,6 @@ import { designAtComplete } from '../design';
 import { createExclusive, exists, fingerprint, readOptional, writeAtomic, writeJson } from '../files';
 import { handOver } from '../handOver';
 import { crossed, longFilesIn, longFileText } from '../longFiles';
-import { checkVersions } from '../materialise';
 import { mergeLines } from '../merge3';
 import { entryOf } from '../model';
 import { lockFile, NOT_TASK_DIRS, taskPaths, under } from '../paths';
@@ -27,11 +26,11 @@ import {
   viewTask,
   writeRequest
 } from '../taskStore';
-import { digestsOf, escapeRegExp } from './approve';
 import { checkedStill, checkKey } from './checked';
 import { at, changedInCopy, cleanPath, findTask, holderOf, refreshCopy } from './common';
 import { textOf } from './context';
 import { activeHolder, allLocks, sharedFiles } from './locks';
+import { againstRunWork, tellUnanswered } from './notOwn';
 
 import type { CheckResult } from '../checks';
 import type { ReviewAsked } from '../design';
@@ -310,13 +309,7 @@ export const completeTask = async (
     const failing = checks.steps.filter(step => !step.ok);
     // What fails in the copy may not be the task's: a person's edit in the project, or another task's approved work, that
     // fails the checks reaches every copy. Checked against the run's work without this task before it is refused.
-    const dirs = [
-      `${view.paths.work}${path.sep}`,
-      new RegExp(`${escapeRegExp(path.join(loaded.paths.cache, 'check-'))}[0-9a-f]+${escapeRegExp(path.sep)}`, 'g')
-    ];
-    const without = checks.ok
-      ? undefined
-      : await checkVersions(ctx, loaded, digestsOf(await readApproved(loaded.paths)));
+    const { without, dirs } = await againstRunWork(ctx, loaded, view, checks);
     const preexisting = !knownFailure && without !== undefined ? failsWithout(checks, without, dirs) : false;
     // A known failure covers what it names: a step only this copy fails, its reason silent on it, is the task's own
     // (lx-copy: t-contact's said the shell's empty layout, and its own duplicate token's typecheck went to review).
@@ -376,11 +369,16 @@ export const completeTask = async (
     return { checks, failing, preexisting, accepted };
   })().finally(() => letGo(serving));
   const unmet = accepted.filter(result => !result.ok);
+  // A line nothing could answer is the lead's, told: the brake is for the work, and the agent is told it is not its.
+  const unread = await tellUnanswered(ctx, loaded, taskId, unmet);
   if (unmet.length > 0 && !knownFailure) {
-    await recordBrake(ctx, loaded, 'checks-failed', taskId);
+    if (unread.length < unmet.length) {
+      await recordBrake(ctx, loaded, 'checks-failed', taskId);
+    }
+
     throw new RunRefusal(
       'checks-failed',
-      `Task "${taskId}"'s acceptance is not met: ${unmet.map(each => `"${each.said}"`).join(', ')}`,
+      `Task "${taskId}"'s acceptance is not met: ${unmet.map(each => `"${each.said}"${each.unanswered ? ' (nothing could answer it: the lead is told — not your work)' : ''}`).join(', ')}`,
       {
         task: taskId,
         steps: unmet.map(each => ({

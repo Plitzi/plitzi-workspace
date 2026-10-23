@@ -63,7 +63,11 @@ export interface RunMetrics {
   afterMinutes?: number;
   tasks: TaskFlow[];
   agents: AgentFlow[];
-  checks: { run: number; failed: number; byStep: Record<string, number> };
+  /**
+   * `failed`: the checks that failed for the copy's own work. `notOwn`: those that failed for nothing of it — a step
+   * the run's work fails the same way, a line nothing could answer (`tasks/notOwn.ts`). `byStep`: the own ones' steps.
+   */
+  checks: { run: number; failed: number; notOwn: number; byStep: Record<string, number> };
   refusals: { total: number; byCode: Record<string, { times: number; by: string[]; command?: string }> };
   questions: { asked: number; answered: number; waits: number[] };
   handOffs: number;
@@ -123,6 +127,20 @@ const waitsByDesign = (command: string): boolean =>
 const text = (value: unknown): string => (typeof value === 'string' ? value : '');
 const texts = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((each): each is string => typeof each === 'string') : [];
+/**
+ * A check that failed for the copy's own work: something it names failed that is not said not its own — a step the
+ * run's work fails too, a line nothing answered (`notOwn`). Before a check said so, every failure counted.
+ */
+const failedOwn = (entry: Entry): boolean => {
+  if (entry.action !== 'check' || entry.ok !== false) {
+    return false;
+  }
+
+  const notOwn = texts(entry.notOwn);
+
+  return notOwn.length === 0 || texts(entry.failed).some(name => !notOwn.includes(name));
+};
+
 const minutes = (from: string, to: string): number => Math.round((Date.parse(to) - Date.parse(from)) / 6_000) / 10;
 
 /** The command's name, without what it is about: `task check`, `page shot`. */
@@ -205,7 +223,7 @@ export const runMetrics = (input: {
       handOffs: entries.filter(entry => entry.action === 'handed-off').length,
       checks: {
         run: entries.filter(entry => entry.action === 'check').length,
-        failed: entries.filter(entry => entry.action === 'check' && entry.ok === false).length
+        failed: entries.filter(failedOwn).length
       }
     };
     const firstTake = entries.find(entry => entry.action === 'take');
@@ -326,7 +344,7 @@ export const runMetrics = (input: {
       completes: own.filter(entry => entry.action === 'complete').length,
       checks: {
         run: own.filter(entry => entry.action === 'check').length,
-        failed: own.filter(entry => entry.action === 'check' && entry.ok === false).length
+        failed: own.filter(failedOwn).length
       },
       refused: own.filter(entry => entry.action === 'refused').length,
       waited: Math.round(waited * 10) / 10,
@@ -344,8 +362,9 @@ export const runMetrics = (input: {
   });
 
   const byStep: Record<string, number> = {};
-  for (const entry of log.filter(each => each.action === 'check' && each.ok === false)) {
-    for (const failed of texts(entry.failed)) {
+  for (const entry of log.filter(failedOwn)) {
+    const notOwn = texts(entry.notOwn);
+    for (const failed of texts(entry.failed).filter(name => !notOwn.includes(name))) {
       // An acceptance line or a long file is said by its kind: the step, not its words, is what is counted.
       const step = failed.startsWith('acceptance')
         ? 'acceptance'
@@ -399,7 +418,8 @@ export const runMetrics = (input: {
     agents,
     checks: {
       run: log.filter(entry => entry.action === 'check').length,
-      failed: log.filter(entry => entry.action === 'check' && entry.ok === false).length,
+      failed: log.filter(failedOwn).length,
+      notOwn: log.filter(entry => entry.action === 'check' && entry.ok === false && !failedOwn(entry)).length,
       byStep
     },
     refusals: { total: log.filter(entry => entry.action === 'refused').length, byCode },

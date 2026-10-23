@@ -30,14 +30,17 @@ describe('the bench of a project’s runs', () => {
   it('lists each run measured the same way, a row each, oldest first', () => {
     const text = benchText([
       line('velada-polish'),
-      line('velada-next', { roundsPerTask: 1.2, checksFailedPct: 20, handOffs: 1 })
+      line('velada-next', { roundsPerTask: 1.2, checksFailedPct: 20, checksNotOwn: 9, handOffs: 1 })
     ]);
 
-    expect(text[0]).toContain('| Run | Done | Worked (min) | Min / task | Rounds / task | Checks failed |');
-    expect(text[2]).toBe(
-      '| velada-polish | 7/7 | 50 | 7.1 | 2 | 44% | 6 (0) | 3.6 | — | 6 | 31 | 0 | 182k | — | 2 | — | — |'
+    expect(text[0]).toContain(
+      '| Run | Done | Worked (min) | Min / task | Rounds / task | Checks failed | Not theirs |'
     );
-    expect(text[3]).toContain('| velada-next | 7/7 | 50 | 7.1 | 1.2 | 20% |');
+    // A run measured before checks said what was not the copy's has no count of them: "—", never 0.
+    expect(text[2]).toBe(
+      '| velada-polish | 7/7 | 50 | 7.1 | 2 | 44% | — | 6 (0) | 3.6 | — | 6 | 31 | 0 | 182k | — | 2 | — | — |'
+    );
+    expect(text[3]).toContain('| velada-next | 7/7 | 50 | 7.1 | 1.2 | 20% | 9 |');
   });
 
   it('says there is nothing to compare yet, rather than an empty table', () => {

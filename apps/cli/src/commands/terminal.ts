@@ -18,6 +18,19 @@ export const fail = (problem: string): void => {
   process.exitCode = 1;
 };
 
+/**
+ * A page command's exit when it could not answer what it was asked — nothing served, a browser that did not start, the
+ * element of the other page not there — never 1, which says the page was read and is not as asked: a run tells a check
+ * that fails for the work from one that cannot be answered, which is its line's or the machine's, not the agent's.
+ */
+export const UNANSWERED_EXIT = 2;
+
+/** Why a page command could not answer, to stderr, and {@link UNANSWERED_EXIT}. */
+export const unanswered = (problem: string): void => {
+  console.error(chalk.red(problem));
+  process.exitCode = UNANSWERED_EXIT;
+};
+
 /** A choice among a fixed few, put to the person as the flag that would have answered it. */
 export type Question<T extends string> = {
   flag: string;

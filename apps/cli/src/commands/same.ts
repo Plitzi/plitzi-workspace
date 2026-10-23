@@ -4,7 +4,7 @@ import { openPage } from '@plitzi/sdk-authoring';
 
 import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
 import { projectHere } from './existingProject';
-import { fail } from './terminal';
+import { unanswered, UNANSWERED_EXIT } from './terminal';
 
 import type { Browser, Scheme } from '../browser';
 
@@ -180,7 +180,7 @@ export const pageSame = async (paths: string[], options: SameOptions): Promise<v
 
   const browser = await launchBrowser(project.root);
   if ('problem' in browser) {
-    fail(browser.problem);
+    unanswered(browser.problem);
 
     return;
   }
@@ -200,8 +200,10 @@ export const pageSame = async (paths: string[], options: SameOptions): Promise<v
             )
             .join('\n')
     );
-    if (read.some(each => !each.same)) {
+    if (read.some(each => !each.same && !each.problem)) {
       process.exitCode = 1;
+    } else if (read.some(each => !each.same)) {
+      process.exitCode = UNANSWERED_EXIT;
     }
   } finally {
     await browser.close();

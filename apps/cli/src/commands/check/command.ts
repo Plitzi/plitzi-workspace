@@ -10,7 +10,7 @@ import { originHere } from '../../runs/copyServer';
 import { inTurns } from '../../runs/inTurns';
 import { runPaths, runsDir, taskPaths } from '../../runs/paths';
 import { projectHere } from '../existingProject';
-import { fail } from '../terminal';
+import { fail, unanswered, UNANSWERED_EXIT } from '../terminal';
 import { checkAccount } from './account';
 import { keptToReference, keptToTask } from './apart';
 import { checkAt } from './inspect';
@@ -95,14 +95,21 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     ...(options.standIns ? { standIns: true } : {})
   });
   if ('problem' in reports) {
-    fail(reports.problem);
+    unanswered(reports.problem);
 
     return;
   }
 
   const kept = await keptToReference(project.root, await keptToTask(project.root, reports));
   console.log(options.json ? JSON.stringify(kept) : kept.map(report => reportText(report, asked)).join('\n'));
-  if (kept.some(report => !report.ok)) {
+  const failed = kept.filter(report => !report.ok);
+  // Nothing answered where the page was asked: no page was read, so none is said wrong.
+  if (
+    failed.length > 0 &&
+    failed.every(report => report.issues.length > 0 && report.issues.every(issue => issue.code === 'no-answer'))
+  ) {
+    process.exitCode = UNANSWERED_EXIT;
+  } else if (failed.length > 0) {
     process.exitCode = 1;
   }
 };

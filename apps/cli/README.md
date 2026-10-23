@@ -31,6 +31,9 @@ plitzi run finish --apply                      # yours: the team's work into the
   address). So `--json`, where a command has it, prints one object on one line and nothing more — or, for one that
   stays (`space watch`, `space activity --follow`), one object a line as each happens.
 - **It exits 1 when it did not do what it was asked**, with why in red; a check that found something wrong exits 1 too.
+  A page command (`page check`, `page measure`, `page same`) that could not read what it was asked — nothing served, a
+  browser that did not start, the element of the page it compares to not there — exits 2: no page was found wrong, and
+  a run takes such an acceptance line as the lead's to amend, not the agent's work.
 - **A value that is not one is refused**, saying what the flag takes — a width out of range, a scheme that is not
   `light` or `dark`, a count of 0 — never quietly turned into the default.
 - **The same flag means the same thing everywhere:** `-o, --out` where it writes, `-f, --force` to write over what is

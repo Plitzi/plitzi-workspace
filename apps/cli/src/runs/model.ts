@@ -80,6 +80,11 @@ export interface AcceptanceResult {
    * so, never passed in silence.
    */
   firstFailed?: string[];
+  /**
+   * Failed twice without an answer: its command could not read what it asks (exit 2 — the other page's element not
+   * there, nothing served), or could not run at all. The line's or the machine's, not the work's: the lead is told.
+   */
+  unanswered?: true;
 }
 
 export interface PlannedTask {

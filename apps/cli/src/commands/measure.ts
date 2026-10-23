@@ -14,7 +14,7 @@ import { comparable, differences, INHERITED, MEASURED, PSEUDO_MEASURED, PSEUDOS 
 import { originHere } from '../runs/copyServer';
 import { targetOn } from './shot/capture';
 import { pageAnswered } from './shot/remote';
-import { fail } from './terminal';
+import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
 
 import type { Difference, Measured } from './measureValues';
 import type { Browser, BrowserPage, Scheme } from '../browser';
@@ -656,14 +656,14 @@ export const measure = async (route: string, elements: string[], options: Measur
   // In a task's copy nobody serves, the copy served — as `page shot` serves it — never a second server beside one.
   const where = await originHere(project.root, plitzi, options.url);
   if ('problem' in where) {
-    fail(where.problem);
+    unanswered(where.problem);
 
     return;
   }
 
   const browser = await launchBrowser(project.root);
   if ('problem' in browser) {
-    fail(browser.problem);
+    unanswered(browser.problem);
 
     return;
   }
@@ -723,7 +723,11 @@ export const measure = async (route: string, elements: string[], options: Measur
             ])
           ].join('\n')
     );
-    if (failed) {
+    // The other page's element not there is the question's, not this page's: unanswered (lx-copy's logo line read the
+    // original's hidden copy, and every try of the task failed for it).
+    if (readings.some(reading => reading.there !== undefined && 'problem' in reading.there)) {
+      process.exitCode = UNANSWERED_EXIT;
+    } else if (failed) {
       process.exitCode = 1;
     }
   } finally {
