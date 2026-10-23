@@ -29,6 +29,7 @@ export interface ElementSemantics {
 type DeclarationShape = {
   type: string;
   sourceType?: string;
+  publishes?: Record<string, string>;
   triggers?: Record<string, InteractionCallback>;
   callbacks?: Record<string, InteractionCallback>;
   ancestorType?: string;
@@ -79,6 +80,13 @@ export const elementSourceTypes: Record<string, string> = Object.fromEntries(
   Object.values(declarations)
     .filter(declaration => declaration.sourceType)
     .map(declaration => [declaration.type, declaration.sourceType as string])
+);
+
+/** What each type's source holds, field by field, as its declaration says it: what `explain` lists and searches. */
+export const elementPublishes: Record<string, Record<string, string>> = Object.fromEntries(
+  Object.values(declarations).flatMap(declaration =>
+    declaration.publishes ? [[declaration.type, declaration.publishes] as const] : []
+  )
 );
 
 /**

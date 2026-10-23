@@ -3,6 +3,7 @@ import { comparePictures } from '@plitzi/sdk-authoring';
 import { awaited, capture, targetOn } from './capture';
 import { dataUrl } from '../../browser';
 
+import type { BrowserPage } from '../../browser';
 import type { ShotStep } from '../shotSteps';
 import type { Framing, Moment, Taken } from './types';
 
@@ -91,6 +92,125 @@ const stepText = (step: ShotStep): string => {
   }
 };
 
+/** A step that acts on the page — every one but a picture: a press, a hover, a key, a wait. */
+export type ActingStep = Exclude<ShotStep, { kind: 'shot' } | { kind: 'frames' }>;
+
+/**
+ * One step played on a page — what `--steps` does between its pictures, and `page play` on each page it plays on — or
+ * what kept it from happening, said by its step.
+ */
+export const actStep = async (
+  page: BrowserPage,
+  step: ActingStep,
+  index: number
+): Promise<{ problem: string } | undefined> => {
+  // The one shown: a page drawing a control per width hides the other — a field of a phone's drawer, the first in the
+  // document, timed out at 1440 where the column's own was there to type into (lx-controls).
+  const shown = (selector: string) => page.locator(selector).filter({ visible: true }).first();
+  if (
+    step.kind === 'click' ||
+    step.kind === 'hover' ||
+    step.kind === 'scroll' ||
+    step.kind === 'type' ||
+    step.kind === 'drag'
+  ) {
+    const read = await targetOn(page, step.target);
+    if ('problem' in read || !read.found) {
+      return {
+        problem: `Step ${String(index + 1)}: ${'problem' in read ? read.problem : `${step.target} is not on the page — its name, a tag or a selector; one with spaces in quotes: type ".panel textarea" hola`}.`
+      };
+    }
+
+    // A select is chosen, not typed into — the element named, or the one select inside it (a `formControl` wraps it).
+    if (step.kind === 'type') {
+      const select = await page.evaluate((selector: string) => {
+        const node = document.querySelector(selector);
+
+        return node === null
+          ? undefined
+          : node.matches('select')
+            ? selector
+            : node.querySelectorAll('select').length === 1
+              ? `${selector} select`
+              : undefined;
+      }, read.selector);
+      if (select !== undefined) {
+        await page.locator(select).first().selectOption(step.text, { timeout: 3000 });
+        return undefined;
+      }
+    }
+
+    if (step.kind === 'hover') {
+      await shown(read.selector).hover({ timeout: 3000 });
+      return undefined;
+    }
+
+    // Brought into view as a reader scrolling to it would: a hover was how design-1 reached the footer.
+    if (step.kind === 'scroll') {
+      await shown(read.selector).scrollIntoViewIfNeeded({ timeout: 3000 });
+      return undefined;
+    }
+
+    // Pressed at its middle, moved in steps a hand would make, let go: a range's handle, a slider, a card dragged.
+    if (step.kind === 'drag') {
+      const box = await shown(read.selector).boundingBox({ timeout: 3000 });
+      if (box === null) {
+        return { problem: `Step ${String(index + 1)}: ${step.target} is not shown — nothing to drag` };
+      }
+
+      // A range is pressed at its thumb, where its value puts it — at its middle, the handle on top of it moved
+      // instead (lx-controls' two-handle price range).
+      const along = await shown(read.selector).evaluate(node => {
+        if (!(node instanceof HTMLInputElement) || node.type !== 'range') {
+          return 0.5;
+        }
+
+        const [min, max] = [Number(node.min || 0), Number(node.max || 100)];
+
+        return max > min ? (Number(node.value) - min) / (max - min) : 0.5;
+      }, undefined);
+      // The thumb travels the track less its own width, about the input's height: at its end it sits inside it.
+      const thumb = Math.min(box.height, box.width);
+      const [x, y] = [box.x + thumb / 2 + (box.width - thumb) * along, box.y + box.height / 2];
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x + step.dx, y + step.dy, { steps: 12 });
+      await page.mouse.up();
+      return undefined;
+    }
+
+    await shown(read.selector).click({ timeout: 3000 });
+    // Typed into what has the focus: a click that left it on no field sent the text to the page's own shortcuts.
+    if (step.kind === 'type') {
+      const editable = await page.evaluate(() => {
+        const focused = document.activeElement;
+
+        return (
+          focused instanceof HTMLElement && (focused.isContentEditable || focused.matches('input, textarea, select'))
+        );
+      }, undefined);
+      if (!editable) {
+        return {
+          problem: `Step ${String(index + 1)}: clicking ${step.target} leaves no field focused, so the text would go to the page itself — name the field: type ".panel textarea" hola`
+        };
+      }
+
+      // In place of what it held, as a person selecting it first: typed after it, a price field kept its old amount too
+      // (lx-controls).
+      await page.keyboard.press('ControlOrMeta+A');
+      await page.keyboard.type(step.text);
+    }
+  } else if (step.kind === 'press') {
+    await page.keyboard.press(step.key);
+  } else if (step.kind === 'wait') {
+    await page.waitForTimeout(step.ms);
+  } else {
+    await page.waitForSelector(awaited(step.target), { timeout: 10_000 });
+  }
+
+  return undefined;
+};
+
 /**
  * A `--steps` script played on the page: what each step does, and every picture the script asks for — each labelled with
  * its step and the time since the first, and measured against the one before it, so "nothing changed" is said.
@@ -112,111 +232,13 @@ export const playSteps = async (
     changes.push({ label: at, changed: (await comparePictures(page, dataUrl(before), dataUrl(png))).changed });
   };
 
-  // The one shown: a page drawing a control per width hides the other — a field of a phone's drawer, the first in the
-  // document, timed out at 1440 where the column's own was there to type into (lx-controls).
-  const shown = (selector: string) => page.locator(selector).filter({ visible: true }).first();
   for (const [index, step] of steps.entries()) {
     try {
-      if (
-        step.kind === 'click' ||
-        step.kind === 'hover' ||
-        step.kind === 'scroll' ||
-        step.kind === 'type' ||
-        step.kind === 'drag'
-      ) {
-        const read = await targetOn(page, step.target);
-        if ('problem' in read || !read.found) {
-          return {
-            problem: `Step ${String(index + 1)}: ${'problem' in read ? read.problem : `${step.target} is not on the page — its name, a tag or a selector; one with spaces in quotes: type ".panel textarea" hola`}.`
-          };
+      if (step.kind !== 'shot' && step.kind !== 'frames') {
+        const problem = await actStep(page, step, index);
+        if (problem) {
+          return problem;
         }
-
-        // A select is chosen, not typed into — the element named, or the one select inside it (a `formControl` wraps it).
-        if (step.kind === 'type') {
-          const select = await page.evaluate((selector: string) => {
-            const node = document.querySelector(selector);
-
-            return node === null
-              ? undefined
-              : node.matches('select')
-                ? selector
-                : node.querySelectorAll('select').length === 1
-                  ? `${selector} select`
-                  : undefined;
-          }, read.selector);
-          if (select !== undefined) {
-            await page.locator(select).first().selectOption(step.text, { timeout: 3000 });
-            continue;
-          }
-        }
-
-        if (step.kind === 'hover') {
-          await shown(read.selector).hover({ timeout: 3000 });
-          continue;
-        }
-
-        // Brought into view as a reader scrolling to it would: a hover was how design-1 reached the footer.
-        if (step.kind === 'scroll') {
-          await shown(read.selector).scrollIntoViewIfNeeded({ timeout: 3000 });
-          continue;
-        }
-
-        // Pressed at its middle, moved in steps a hand would make, let go: a range's handle, a slider, a card dragged.
-        if (step.kind === 'drag') {
-          const box = await shown(read.selector).boundingBox({ timeout: 3000 });
-          if (box === null) {
-            return { problem: `Step ${String(index + 1)}: ${step.target} is not shown — nothing to drag` };
-          }
-
-          // A range is pressed at its thumb, where its value puts it — at its middle, the handle on top of it moved
-          // instead (lx-controls' two-handle price range).
-          const along = await shown(read.selector).evaluate(node => {
-            if (!(node instanceof HTMLInputElement) || node.type !== 'range') {
-              return 0.5;
-            }
-
-            const [min, max] = [Number(node.min || 0), Number(node.max || 100)];
-
-            return max > min ? (Number(node.value) - min) / (max - min) : 0.5;
-          }, undefined);
-          // The thumb travels the track less its own width, about the input's height: at its end it sits inside it.
-          const thumb = Math.min(box.height, box.width);
-          const [x, y] = [box.x + thumb / 2 + (box.width - thumb) * along, box.y + box.height / 2];
-          await page.mouse.move(x, y);
-          await page.mouse.down();
-          await page.mouse.move(x + step.dx, y + step.dy, { steps: 12 });
-          await page.mouse.up();
-          continue;
-        }
-
-        await shown(read.selector).click({ timeout: 3000 });
-        // Typed into what has the focus: a click that left it on no field sent the text to the page's own shortcuts.
-        if (step.kind === 'type') {
-          const editable = await page.evaluate(() => {
-            const focused = document.activeElement;
-
-            return (
-              focused instanceof HTMLElement &&
-              (focused.isContentEditable || focused.matches('input, textarea, select'))
-            );
-          }, undefined);
-          if (!editable) {
-            return {
-              problem: `Step ${String(index + 1)}: clicking ${step.target} leaves no field focused, so the text would go to the page itself — name the field: type ".panel textarea" hola`
-            };
-          }
-
-          // In place of what it held, as a person selecting it first: typed after it, a price field kept its old amount too
-          // (lx-controls).
-          await page.keyboard.press('ControlOrMeta+A');
-          await page.keyboard.type(step.text);
-        }
-      } else if (step.kind === 'press') {
-        await page.keyboard.press(step.key);
-      } else if (step.kind === 'wait') {
-        await page.waitForTimeout(step.ms);
-      } else if (step.kind === 'wait-for') {
-        await page.waitForSelector(awaited(step.target), { timeout: 10_000 });
       } else if (step.kind === 'shot') {
         await picture(step.label ?? `step ${String(index + 1)}`);
       } else {

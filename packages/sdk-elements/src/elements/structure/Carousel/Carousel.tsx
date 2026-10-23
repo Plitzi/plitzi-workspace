@@ -173,9 +173,7 @@ const Carousel = ({
 
   const onScrolledTo = useCallback(
     (target: number, at: CarouselEdges) => {
-      setRowAt(was =>
-        was.atStart === at.atStart && was.atEnd === at.atEnd && was.shown === at.shown ? was : at
-      );
+      setRowAt(was => (was.atStart === at.atStart && was.atEnd === at.atEnd && was.shown === at.shown ? was : at));
       if (target !== current) {
         moveTo(target, directionOf(current, target));
       }

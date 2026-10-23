@@ -8,6 +8,7 @@ import {
   explain,
   explainKindOf,
   explainList,
+  explainSearch,
   explanationText
 } from './explain';
 import { AUTHORING_HELPERS } from './helpers';
@@ -221,5 +222,28 @@ describe('explain, of what a template reads and calls', () => {
     expect(explainText('max')).toContain('Written: {{ max(a, b, …) | max(list) }}');
     expect(explainKindOf('functions')).toBe('function');
     expect(explainList('function').map(entry => entry.name)).toEqual(['cycle', 'max', 'min', 'range']);
+  });
+});
+
+// lx-controls: agents read the bundle's types to learn whether a carousel could say where it stands, or `checked` was a
+// state — a question in words, answered by name.
+describe('explain --search', () => {
+  it('finds what the words describe, best first — a field an element publishes, a state, a source, a function', () => {
+    const first = (words: string) => {
+      const hit = explainSearch(words, 1).at(0);
+
+      return hit ? `${hit.kind}:${hit.name}` : 'nothing';
+    };
+
+    expect(first('carousel end')).toBe('field:carousel_<id>.atEnd');
+    expect(first('checked state')).toBe('state:checked');
+    expect(first('who is signed in')).toBe('source:auth');
+    expect(first('largest number')).toBe('function:max');
+    expect(explainSearch('the of in')).toEqual([]);
+  });
+
+  it('says an element’s source, field by field', () => {
+    expect(explainText('carousel')).toContain('Its source, carousel_<id>, holds:');
+    expect(explainText('carousel')).toContain('.atEnd — At its last');
   });
 });

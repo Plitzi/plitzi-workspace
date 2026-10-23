@@ -156,10 +156,10 @@ applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** 
 - **A line nothing can answer is yours at once**: its command exits 2 (an element not there — a copied site's too —
   nothing served), you are told, and every try of the task fails on it until you amend it — never the agent's to bend.
 - **A command you hand an agent you ran**, as a line you write: one `--same` refused cost a round.
-- **A control is used there and back, not pictured** — an arrow, a dot, a pager, a drawer: `page shot <path> --click
-  <el>` at both widths (a copy's beside its reference: `--compare <reference> --click "ours => theirs"`; `page measure
-  --click` for the open state's values), and a task that adds one says so in its acceptance; a picture passes one that
-  moves nothing, or otherwise than asked.
+- **A control is used there and back, not pictured** — an arrow, a dot, a pager, a drawer: its acceptance line is a
+  `page play <path> --steps "…" --read <el…> --width 390,1440` (a copy's beside its reference, `"ours => theirs"`,
+  `--compare <reference> --same moved,shown,enabled`; `page measure --click` for an open state's values) — never a
+  script of yours; a picture passes one that moves nothing, or otherwise than asked.
 - **The board is a kanban; keeping the team busy is yours.** A card ready beside each one in review, so an agent whose
   card waits takes another: stack the backlog (`run extend`, tasks that `closes`), split a card by what changes apart,
   give the designer the UI reviews — `--changes` with `--skip-design lead` keeps the next look yours. `run watch` says

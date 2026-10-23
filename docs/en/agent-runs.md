@@ -471,7 +471,10 @@ review a designer or another lead took ten minutes ago and has not decided while
 `idle-team`, the run as a kanban: an agent running with no card worked, no review in hand and none of its roles ready,
 said with the way to feed it — the backlog's items no task closes, the UI of a card in review a free designer could take
 (a send-back with `--skip-design lead` keeps the next look the lead's), a large card to split — or that nothing is left;
-`run plan` says the same of a plan with too few cards for its team); so is a plan that changes nothing. Its acceptance is held
+`run plan` says the same of a plan with too few cards for its team); so is a plan that changes nothing. `run plan` says
+too each acceptance line a script of the lead's own checks (`ownScripts.ts`: an interpreter given a file, or the file) —
+written with Plitzi (`page play`, `page measure --same`, `page check --expect`) any agent reads and reruns it — and the
+run's feedback lists them: each round names what Plitzi could not check, or was not known to. Its acceptance is held
 to `run plan`'s rules, among them a `page check` whose text the shell would split into a page.
 
 ## A plan rehearsed (`rehearse.ts`)

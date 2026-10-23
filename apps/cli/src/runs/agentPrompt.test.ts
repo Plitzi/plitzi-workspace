@@ -32,12 +32,12 @@ describe('an agent’s prompt', () => {
       reference: 'https://www.example.com'
     });
     expect(copying).toContain('--compare https://www.example.com --width 390,1440');
-    expect(copying).toContain('--compare https://www.example.com --click "ours => theirs"');
+    expect(copying).toContain('--compare https://www.example.com --same moved,shown,enabled');
     expect(copying).not.toContain('<url>');
 
     const building = agentPrompt({ ...base, agent: 'dev-1', started: { roles: ['developer'] } });
     expect(building).not.toMatch(/original|--compare|copied site/);
-    expect(building).toContain('page shot <path> --click <element>');
+    expect(building).toContain('page play <path> --steps "click <el>; click <el>" --read <el…>');
     const lead = agentPrompt({ ...base, agent: 'lead' });
     expect(lead).not.toContain('--compare');
   });

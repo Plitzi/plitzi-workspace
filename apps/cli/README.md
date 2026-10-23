@@ -225,6 +225,7 @@ plitzi page shot / --frames 4 --every 500       # what moves: a marquee, an auto
 plitzi page shot / --viewport --click .knob open-button --frames 4 --every 250 --sheet   # an interaction, on one sheet
 plitzi page shot / --compare https://example.com --width 1440   # beside another site: what differs, and how
 plitzi page outline /pricing --compare https://example.com --within .plans --width 390   # what to measure there
+plitzi page play /pricing --steps "click next; click next; click previous" --read plans-row next previous --width 390,1440   # a control used, read as numbers
 plitzi page shot /pricing --compare https://example.com --click "menu-toggle => .menu-button" --width 390   # both screens once clicked
 plitzi page shot /studio --width 390 --as maya   # a page for signed-in visitors: the picture is of it, not of the sign-in
 plitzi page shot / --viewport --frames 6 --every 200 --from load --sheet   # what plays as the page arrives
@@ -342,6 +343,13 @@ page is made of as a visitor sees it — each shown element by a selector that f
 page; its id, its tag and classes, or its place under an ancestor on another site), its box and its first words,
 indented by depth — the project's page, or with `--compare` the other site's: what to name after `=>` in `page measure`,
 an open drawer's too (`--click`), with no HTML fetched and searched.
+
+`page play <path> --steps "…" --read <el…> [--compare <url>] [--same moved,shown,enabled] [--width <px,px>]` plays an
+interaction step by step — the steps `page shot --steps` takes, but its pictures — and after each says of every element
+read how far its content moved (its scroll less its place: the same for a row that scrolls and one that slides by a
+transform), whether it is shown and whether it takes a press; a press on one hidden or out of use does nothing, as a
+visitor's. With `--compare` each step runs on the other site too, its elements after `=>`, and `--same` fails (exit 1)
+where a step leaves them otherwise there — a control's acceptance line, with no script of one's own.
 
 `page same [paths…] --url <origin> --than <origin>` says whether pages draw the same on two servers of the project —
 every element on screen, its box, the style a reader sees and what its `::before`/`::after` draw, read, not pictured —
@@ -704,12 +712,17 @@ plitzi explain content-attribute # a suggestion's code: what is written the long
 plitzi explain bindTemplate     # a helper: how it is written, what it is for, an example
 plitzi explain motion           # the arrivals, triggers and loops the SDK plays
 plitzi explain pageFamily       # any other export of a @plitzi package installed — createServer is sdk-server's and sdk-mcp's
-plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers, helpers, filters
+plitzi explain theme            # a global source a template reads, with the fields the platform decides; max, a template function
+plitzi explain --search "carousel end"   # what the words describe, best first: carousel_<id>.atEnd, then the rest
+plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers, helpers, filters, functions, sources
 plitzi explain list.put         # a server action's step, as the project's @plitzi/sdk-server declares it (--list tasks)
 ```
 
 What a name means when authoring, from the catalogues the checks themselves read — the answer to a question that would
-otherwise be a search through the SDK's types. A name no catalogue holds — `pageFamily`, `styles`, `SpaceSpec` — is any
+otherwise be a search through the SDK's types. An element that publishes a source says what it holds, field by field
+(`carousel_<id>.atEnd`, as its declaration's `publishes` says). `--search "<words>"` answers whether there is a way at
+all: every element, field, step, trigger, state, source, function, code, CLI command and option the words describe,
+best first. A name no catalogue holds — `pageFamily`, `styles`, `SpaceSpec` — is any
 export of `@plitzi/sdk-authoring`, answered from the `.d.ts` the project installed, so it is the version the project
 runs. An element of the project's own — `src/plugins/<Name>/` — is explained by its type the same way: what it takes
 (each attribute at its default), fires and answers, and how it is placed — its declaration imported and

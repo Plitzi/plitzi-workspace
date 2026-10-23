@@ -5,6 +5,7 @@ import { check } from '../check';
 import { importPage } from '../importPage';
 import { measure, sameProperties } from '../measure';
 import { outline } from '../outline';
+import { play } from '../play';
 import { pageSame } from '../same';
 import { shotEach, SHOT_MOMENTS } from '../shot';
 import { API_OPTION, DRY_RUN_OPTION, schemeOption, URL_OPTION, widthsOption } from './options';
@@ -13,6 +14,7 @@ import type { CheckOptions } from '../check';
 import type { ImportOptions } from '../importPage';
 import type { MeasureOptions } from '../measure';
 import type { OutlineOptions } from '../outline';
+import type { PlayOptions } from '../play';
 import type { SameOptions } from '../same';
 import type { ShotOptions } from '../shot';
 import type { Command } from 'commander';
@@ -150,6 +152,30 @@ export const registerPage = (pageGroup: Command): void => {
     .option('--url <origin>', URL_OPTION)
     .option('--json', 'One object, for a tool or an agent')
     .action((route: string, elements: string[], options: MeasureOptions) => measure(route, elements, options));
+
+  pageGroup
+    .command('play')
+    .argument('<path>', 'The page: /pricing')
+    .description(
+      'An interaction played step by step — and after each step how far each element read moved, whether it is shown and takes a press; beside another site with --compare, held to it with --same'
+    )
+    .requiredOption(
+      '--steps <script>',
+      'The steps, as page shot --steps writes them — click, hover, scroll, type, drag, press, wait, wait-for — each element "ours => theirs" with --compare'
+    )
+    .option('--read <element...>', 'The elements read after each step — "row => .slides" with --compare')
+    .option('--compare <url>', 'Another page — the site a copy is made after — played beside it, step for step')
+    .addOption(
+      new Option(
+        '--same <what>',
+        'Fail unless each step leaves them as the other page’s: moved,shown,enabled'
+      ).argParser((value: string) => value.split(',').map(each => each.trim()))
+    )
+    .addOption(widthsOption('The viewport widths, separated by commas: the steps played at each', [1440]))
+    .addOption(schemeOption())
+    .option('--url <origin>', URL_OPTION)
+    .option('--json', 'One object, for a tool or an agent')
+    .action((route: string, options: PlayOptions) => play(route, options));
 
   pageGroup
     .command('outline')

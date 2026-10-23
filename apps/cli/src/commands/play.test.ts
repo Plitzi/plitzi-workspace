@@ -1,0 +1,64 @@
+import { stripVTControlCharacters } from 'node:util';
+
+import { describe, expect, it } from 'vitest';
+
+import { playedText, unlikeIn } from './play';
+
+import type { ElementState, PlayedStep } from './play';
+
+const at = (x: number, shown = true, enabled = true): ElementState => ({ offset: { x, y: 0 }, shown, enabled });
+
+/** A row and its arrow, at the start and after one press — here and there. */
+const played = (hereMove: number, thereMove: number, arrowThereShown: boolean): PlayedStep[] => [
+  {
+    step: 'start',
+    reads: [
+      { element: 'row => .slides', here: at(0), there: at(0) },
+      { element: 'next => .next', here: at(-900), there: at(-900) }
+    ]
+  },
+  {
+    step: 'click next => .next',
+    reads: [
+      {
+        element: 'row => .slides',
+        here: at(hereMove),
+        there: at(thereMove),
+        moved: { here: { x: hereMove, y: 0 }, there: { x: thereMove, y: 0 } }
+      },
+      {
+        element: 'next => .next',
+        here: at(-900, false, false),
+        there: at(-900, arrowThereShown, arrowThereShown),
+        moved: { here: { x: 0, y: 0 }, there: { x: 0, y: 0 } }
+      }
+    ]
+  }
+];
+
+// lx-controls: a carousel's arrows used there and back on both sites took two dozen browser scripts of the agents' own.
+describe('page play', () => {
+  it('holds each step to the other page: how far it moved, within a rounding, whether shown, whether it takes a press', () => {
+    expect(unlikeIn(played(909, 909, false), ['moved', 'shown', 'enabled'])).toEqual([]);
+    // A scroll and a transform a pixel apart are one move; a card and a group are not.
+    expect(unlikeIn(played(910, 909, false), ['moved'])).toEqual([]);
+    expect(unlikeIn(played(455, 909, false), ['moved'])).toEqual([
+      'click next => .next: row => .slides moved 455px left here, 909px left there'
+    ]);
+    expect(unlikeIn(played(909, 909, true), ['shown', 'enabled'])).toEqual([
+      'click next => .next: next => .next is hidden here, shown there',
+      'click next => .next: next => .next takes no press here, takes a press there'
+    ]);
+    // Only what --same names is held.
+    expect(unlikeIn(played(455, 909, true), ['shown'])).toHaveLength(1);
+  });
+
+  it('says a move of what moves, and none of what never does', () => {
+    const lines = playedText(played(909, 909, false)).map(line => stripVTControlCharacters(line));
+
+    expect(lines).toContain(
+      '  row => .slides: moved 909px left, shown, enabled | there moved 909px left, shown, enabled'
+    );
+    expect(lines).toContain('  next => .next: hidden, no press | there hidden, no press');
+  });
+});

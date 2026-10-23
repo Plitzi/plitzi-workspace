@@ -22,7 +22,8 @@ too.
   elements by a selector it takes, each with its box — never its HTML fetched and searched. An element that draws on its box (a
   hairline, a fill): its box's height is a visible value. Ask for those
   values with **one** line that proves them all — the same command with `--same font-size,border,before:opacity`. `page shot --compare <url> --clip <section> --dress` says what a section wears and
-  this one lacks, on which of our elements.
+  this one lacks, on which of our elements; `--clip` takes any element, to see one part beside the other's — never a
+  picture cut by hand.
 - **What to look for:** hierarchy and spacing, the theme's tokens rather than new values, every state (empty, long,
   error, hover, focus), light and dark — a reference with one scheme is no space with one: look at the other too, where
   a fixed colour under a theme's text shows — 390, the words; against a reference, its details — what moves (an entrance, a
@@ -30,9 +31,10 @@ too.
 - **Say it:** `plitzi task review <task> --approve [--note "what you saw"] | --changes "what, where, why — the values
 measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it**: past them it goes to another designer or
   the lead, and your verdict is refused. One round asks everything you want of it. A difference a visitor sees is sent back, never approved with a note —
-  "approximate" is one. A control the task adds — an arrow, a dot, a pager, a drawer — you use there and back
-  (`page shot <path> --click <el>`; a copy beside its reference, `--compare <url> --click "ours => theirs"`: both screens
-  once clicked): one that moves nothing, or otherwise than asked — than the reference's, in a copy — is sent back. What the lead told you while
+  "approximate" is one. A control the task adds — an arrow, a dot, a pager, a drawer — you use there and back:
+  `page play <path> --steps "click <el>; …" --read <el…>` says how far each step moved what, what it shows and takes a
+  press (a copy beside its reference: `"ours => theirs"`, `--compare <url> --same moved,shown,enabled`); one that moves
+  nothing, or otherwise than asked — than the reference's, in a copy — is sent back. What the lead told you while
   you looked is handed to you before your verdict goes: read it, then say it again.
 - **Ask what the task is, not more** — every round, the first too: send it back for what its title and acceptance
   cover that is broken or measures off. Another element, a page-wide value (the body's font), a refinement the task

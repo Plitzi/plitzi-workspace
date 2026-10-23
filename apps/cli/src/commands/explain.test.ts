@@ -1,9 +1,10 @@
+import { Command } from 'commander';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { EXPLAIN_KINDS, explainList } from '@plitzi/sdk-authoring';
 import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project';
 
-import { explainCommand } from './explain';
+import { explainCommand, searchAll } from './explain';
 import { LINT_RULES } from '../lint/catalog';
 
 const printed = (run: () => void): string => {
@@ -81,5 +82,20 @@ describe('plitzi explain', () => {
 
     expect(error.mock.calls.flat().join('')).toContain('--list elements, steps, triggers, codes, transformers');
     expect(process.exitCode).toBe(1);
+  });
+
+  // lx-controls: agents read the bundle's types and every command's help to learn whether Plitzi had a way to do a thing.
+  it('searches by words what authoring knows, the CLI’s codes and its commands with their options', () => {
+    const page = new Command('page');
+    page.command('outline').description('What a page is made of, as a visitor sees it');
+    page
+      .command('measure')
+      .description('Elements’ computed styles')
+      .option('--click <element...>', 'Click elements first and measure the open state');
+    const names = (words: string) => searchAll(words, [page], 3).map(hit => `${hit.kind}:${hit.name}`);
+
+    expect(names('outline page')[0]).toBe('command:plitzi page outline');
+    expect(names('measure open state')[0]).toBe('command:plitzi page measure --click');
+    expect(names('carousel end')[0]).toBe('field:carousel_<id>.atEnd');
   });
 });

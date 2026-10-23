@@ -25,6 +25,16 @@ const BY: InteractionCallbackParam = {
 const declaration = elementDeclaration<CarouselAttributes>()({
   type: 'carousel',
   sourceType: 'carousel',
+  publishes: {
+    items: 'Every item it shows, one slide each',
+    count: 'How many items it has',
+    index: 'The slide it stands at, from 0 (a `scroll` row: the first in view)',
+    item: 'The item of that slide',
+    playing: 'Whether it moves on by itself now (autoplay, not paused)',
+    atStart: 'At its first slide — a `scroll` row at the start of its box; one that loops never is',
+    atEnd: 'At its last — a `scroll` row at the end of its box, however many it shows; one that loops never is',
+    shown: 'How many slides it shows whole (1 but for a `scroll` row)'
+  },
   triggers: {
     onChange: {
       action: 'onChange',

@@ -12,6 +12,7 @@ import {
   elementDefaultAttributes,
   elementLeafTypes,
   elementSlots,
+  elementPublishes,
   elementSourceTypes,
   elementTriggers,
   typeCallbackDefinitions,
@@ -25,6 +26,7 @@ import { BUILTIN_TRANSFORMERS } from '../transformers';
 import { BUILDER_SIGNATURES, builderCall } from './builders';
 import { AUTHORING_HELPERS, MOTION_ENTRY } from './helpers';
 import { SOURCE_DOCS, sourceFields } from './sources';
+import { STYLE_STATES } from '../style/css';
 
 import type { AuthoringCodeEntry } from '../schema/codes';
 import type { InteractionCallback, InteractionCallbackParam } from '@plitzi/sdk-shared';
@@ -63,6 +65,8 @@ export type Explanation =
       inside?: string;
       /** The name its data source is published under: `<source>_<id>`. */
       source?: string;
+      /** What that source holds, field by field, as the element declares it. */
+      publishes?: Record<string, string>;
       holdsChildren: boolean;
     }
   | {
@@ -248,6 +252,7 @@ const explainElement = (type: string): Explanation | undefined => {
     slots: elementSlots[type] ?? [],
     ...(Object.hasOwn(elementAncestorTypes, type) ? { inside: elementAncestorTypes[type] } : {}),
     ...(Object.hasOwn(elementSourceTypes, type) ? { source: elementSourceTypes[type] } : {}),
+    ...(Object.hasOwn(elementPublishes, type) ? { publishes: elementPublishes[type] } : {}),
     holdsChildren: !elementLeafTypes.includes(type)
   };
 };
@@ -411,6 +416,91 @@ export const explainList = (kind: ExplainKind): { name: string; summary: string 
   }
 };
 
+/** One thing a search found: what it is, its name as written, and its line. */
+export interface SearchHit {
+  kind: ExplainKind | 'field' | 'state';
+  name: string;
+  summary: string;
+}
+
+/** Words that say nothing of what is looked for. */
+const EMPTY_WORDS = new Set([
+  'the',
+  'and',
+  'for',
+  'with',
+  'who',
+  'what',
+  'how',
+  'its',
+  'is',
+  'in',
+  'of',
+  'to',
+  'on',
+  'or',
+  'it',
+  'by',
+  'an',
+  'be'
+]);
+
+/** A name or a line as words: `atEnd` is "at end", `carousel-next` "carousel next", plurals as their word. */
+export const searchWords = (text: string): string[] =>
+  text
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(word => word.length > 1 && !EMPTY_WORDS.has(word))
+    .map(word => (word.length > 3 && word.endsWith('s') && !word.endsWith('ss') ? word.slice(0, -1) : word));
+
+/** How many of the words asked a text holds, its name counted twice: what ranks a hit. */
+export const searchScore = (asked: readonly string[], name: string, summary: string): number => {
+  const named = new Set(searchWords(name));
+  const said = new Set(searchWords(summary));
+
+  return asked.reduce((score, word) => score + (named.has(word) ? 2 : said.has(word) ? 1 : 0), 0);
+};
+
+/**
+ * Everything authoring knows that the words describe — an element, a step, a trigger, a code, a helper, a filter, a
+ * function, a global source, a field an element publishes (`carousel_<id>.atEnd`) — best first: the question "does
+ * Plitzi have a way to…" answered in one call, where agents read the bundle's types for it (lx-controls).
+ */
+export const explainSearch = (text: string, limit = 10): SearchHit[] => {
+  const asked = [...new Set(searchWords(text))];
+  if (asked.length === 0) {
+    return [];
+  }
+
+  const hits: SearchHit[] = [
+    ...Object.values(EXPLAIN_KINDS).flatMap(listed => {
+      const kind = explainKindOf(listed);
+
+      return kind ? explainList(kind).map(entry => ({ kind, name: entry.name, summary: entry.summary })) : [];
+    }),
+    ...STYLE_STATES.map(state => ({
+      kind: 'state' as const,
+      name: state,
+      summary: `A state a class styles — styles(name, { states: { '${state}': { … } } })`
+    })),
+    ...Object.entries(elementPublishes).flatMap(([type, fields]) =>
+      Object.entries(fields).map(([field, what]) => ({
+        kind: 'field' as const,
+        name: `${elementSourceTypes[type] ?? type}_<id>.${field === '…' ? '<field>' : field}`,
+        summary: `${type}: ${what}`
+      }))
+    )
+  ];
+
+  return hits
+    .map(hit => ({ hit, score: searchScore(asked, hit.name, hit.summary) }))
+    .filter(each => each.score > 0)
+    .sort((a, b) => b.score - a.score || a.hit.name.localeCompare(b.hit.name))
+    .slice(0, limit)
+    .map(each => each.hit);
+};
+
 const valueText = (value: unknown): string => JSON.stringify(value);
 
 const paramsText = (params: ParamInfo[]): string[] =>
@@ -441,6 +531,12 @@ export const explanationText = (explanation: Explanation): string => {
           attribute =>
             `  ${attribute.name}${attribute.values ? `: ${attribute.values.map(value => `'${value}'`).join(' | ')}` : ''}${attribute.default === undefined ? '' : ` = ${valueText(attribute.default)}`}`
         ),
+        ...(explanation.publishes && explanation.source
+          ? [
+              `Its source, ${explanation.source}_<id>, holds:`,
+              ...Object.entries(explanation.publishes).map(([field, what]) => `  .${field} — ${what}`)
+            ]
+          : []),
         `Fires: ${explanation.triggers.join(', ')}`,
         `Answers: ${explanation.callbacks.join(', ')}`,
         ...(explanation.slots.length > 0 ? [`Slots: ${explanation.slots.join(', ')}`] : [])

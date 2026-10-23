@@ -33,7 +33,7 @@ const LAYOUT_STILL = 3;
  * the boxes of what is in view read alike three times running. A script that moves a panel frame by frame (a drawer
  * slid in by its own code) shows in no animation of the page, only in the boxes moving (lx-controls).
  */
-const settle = async (page: BrowserPage): Promise<void> => {
+export const settle = async (page: BrowserPage): Promise<void> => {
   await page.evaluate(
     ({ most, every, still }: { most: number; every: number; still: number }) => {
       const until = Date.now() + most;

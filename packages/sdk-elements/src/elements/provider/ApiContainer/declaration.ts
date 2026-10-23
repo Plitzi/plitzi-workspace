@@ -28,6 +28,15 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
     pagination: valuesOf<NonNullable<ApiContainerProps['pagination']>>()(['none', 'url', 'append'])
   },
   sourceType: 'apiContainer',
+  publishes: {
+    '…': "The answer's own fields, as the service sends them",
+    records: 'The rows of a paged answer, every page loaded so far',
+    isLoading: 'Whether an answer (or a next page) is on its way',
+    isEmpty: 'Whether the answer holds nothing',
+    hasError: 'Whether the service could not be reached',
+    errorMessage: 'What to tell the visitor when it could not',
+    isStale: 'A refresh from the server failed: what shows is from before'
+  },
   serverTemplates: ['notFound'],
   triggers: {
     onApiError: {

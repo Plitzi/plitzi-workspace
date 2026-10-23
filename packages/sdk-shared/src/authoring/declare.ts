@@ -37,6 +37,13 @@ export interface ElementDeclarationData {
    */
   sourceType?: string;
   /**
+   * What its source holds, field by field — `atEnd: 'At its last slide…'` — for whoever writes a binding to it: what
+   * `plitzi explain <type>` says and its search finds, where an author otherwise read the bundle's types to learn a
+   * carousel could say where it stands (lx-controls). The fields the element writes itself; a provider's answer is the
+   * service's, and is said as `…`.
+   */
+  publishes?: Record<string, string>;
+  /**
    * The triggers this type fires on top of the ones every element does (`onClick`, `onLoad`…), by action name.
    *
    * Declared here for the reason `sourceType` is: the component registers exactly these, and the authoring surface

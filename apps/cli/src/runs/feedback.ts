@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { noticesByOwner } from './notices';
+import { ownScriptLines } from './ownScripts';
 import { buildReport } from './report';
 import { readRunLog } from './run';
 import { commandName } from './runMetrics';
@@ -57,6 +58,11 @@ export const buildFeedback = async (ctx: RunContext, loaded: LoadedRun): Promise
     ...section(
       'What the run’s activity shows went wrong in how it was worked',
       report.audit.map(line => `- ${line}`)
+    ),
+    // What the run checked with scripts of the lead's own: where Plitzi could not say it, or was not known to.
+    ...section(
+      'Acceptance checked by scripts of the lead’s own — a Plitzi command missing, or unknown',
+      ownScriptLines(loaded.tasks).map(each => `- ${each.task}: ${each.scripts.join(', ')} — “${each.line}”`)
     ),
     ...section(
       'Refusals, by code',

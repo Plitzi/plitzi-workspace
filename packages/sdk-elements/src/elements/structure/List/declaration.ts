@@ -14,6 +14,11 @@ const declaration = elementDeclaration<ListAttributes>()({
     source: valuesOf<NonNullable<ListProps['source']>>()(['none', 'controlled'])
   },
   sourceType: 'list',
+  publishes: {
+    items: 'Every row it draws, as its items give them',
+    item: "Inside a row: that row's item",
+    index: 'Inside a row: its place, from 0'
+  },
   content: {
     attributes: {
       items: [],

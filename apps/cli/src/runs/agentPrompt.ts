@@ -44,6 +44,8 @@ const skill = (root: string, file: string): string => path.join(root, SKILLS_ROO
 const rules = (bin: string): string[] => [
   `- Never run \`${bin} run finish\`, \`run abort\`, \`run purge\`, \`run restore\`, \`run allow-finish\` or \`run stop --force\` — a person's. Never \`git stash\`, \`checkout\` or \`reset\`. Stop a server only by its port (\`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)\`), never by name.`,
   '- A wait that ends is not your end: run `task next` again until it says "You can stop".',
+  // lx-controls: two agents read the bundle's types, every command's help and a site's HTML to learn what Plitzi had.
+  '- Whether Plitzi has a way — a field, a step, a state, a command: `PLITZI explain --search "<words>"`, then `PLITZI explain <name>`; never the packages\' types nor a site\'s HTML fetched and searched. Nothing found that should be: `run notice --plitzi`.',
   '- Plitzi itself in your way — a refusal you think wrong, a command that cannot do what you need, a doc that misled you: say it as it happens, `PLITZI run notice --plitzi "…"` (the run\'s feedback to Plitzi carries it), and go on.',
   '- When it says you can stop, answer with a short report: what you did, what is uncertain, and every friction with the CLI — the command and what it said.'
 ];
@@ -54,7 +56,11 @@ export const agentPrompt = ({ agent, started, runId, root, tokenFile, goal, refe
   const token = `--token "$(cat ${tokenFile})"`;
   // What a page is held to: the site it copies, beside it — or, with none, what the task asks.
   const beside = reference === undefined ? '' : ` --compare ${reference}`;
-  const clickBeside = reference === undefined ? '--click <element>' : `--compare ${reference} --click "ours => theirs"`;
+  // A control used, step by step, read as numbers — beside the copied site's when there is one.
+  const playBeside =
+    reference === undefined
+      ? '--steps "click <el>; click <el>" --read <el…>'
+      : `--steps "click <ours> => <theirs>; …" --read "<ours> => <theirs>" …${beside} --same moved,shown,enabled`;
   if (isPrincipal(agent)) {
     return [
       `You are the lead of a Plitzi multi-agent run on the project ${root} (run "${runId}"). The person asked: ${goal}`,
@@ -98,11 +104,11 @@ export const agentPrompt = ({ agent, started, runId, root, tokenFile, goal, refe
           // lx-controls: a person following the run read commands where an agent's row should say what it is at.
           '- As what you are at changes, say it in your words — `PLITZI task progress --step "the hero: its title sits 4px low, moving it"`: the person following the run reads it.',
           // lx-fidelity: Opiniones' arrow moved nothing at 1440, and its developer, its designer and the lead each passed it.
-          `- A control you add or change — an arrow, a dot, a pager, a drawer — you use before you complete, there and back, at both widths${reference === undefined ? '' : ", beside the copied site's"}: \`PLITZI page shot <path> ${clickBeside}\` (or \`--steps\`); a picture is no proof of one.`
+          `- A control you add or change — an arrow, a dot, a pager, a drawer — you use before you complete, there and back, at both widths${reference === undefined ? '' : ", beside the copied site's"}: \`PLITZI page play <path> ${playBeside} --width 390,1440\` — how far each step moved what, what it shows and takes a press; a picture is no proof of one.`
         ]),
     ...(designer
       ? [
-          `- A review: one \`PLITZI task look <task>\` a round, then measure only what differs, and use each control it adds there and back (\`page shot <path> ${clickBeside}\`); send it back only for what its title and acceptance cover, with the values${reference === undefined ? '' : ' and one `--same` line that proves them'} — anything else is \`PLITZI run notice "…"\`. Say your verdict within 8 minutes.`
+          `- A review: one \`PLITZI task look <task>\` a round, then measure only what differs, and use each control it adds there and back (\`page play <path> ${playBeside}\`); send it back only for what its title and acceptance cover, with the values${reference === undefined ? '' : ' and one `--same` line that proves them'} — anything else is \`PLITZI run notice "…"\`. Say your verdict within 8 minutes.`
         ]
       : []),
     ...rules(bin)

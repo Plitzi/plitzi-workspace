@@ -1083,3 +1083,12 @@ theirs"`) at every width in one call and one browser, reads the other page witho
 - **The CLI for any project and any run** (`@plitzi/cli`): help, messages, the README and the skills give neutral
   examples, never one project's; a click's state is read once the page's layout is still, never after a fixed wait; the
   agents' prompt and the lead's skill speak of a copied site only in a run that copies one (the plan's `reference`).
+- **A control used, read as numbers** (`@plitzi/cli`): `page play <path> --steps "…" --read <el…>` plays an interaction
+  step by step and says after each how far every element read moved (its content's offset, whether a row scrolls or
+  slides by a transform), whether it is shown and takes a press; with `--compare` beside the other site, and `--same
+  moved,shown,enabled` fails where a step leaves them otherwise — an acceptance line for a control, with no script.
+- **Asking whether Plitzi has a way** (`@plitzi/cli`, `@plitzi/sdk-authoring`, `@plitzi/sdk-elements`,
+  `@plitzi/sdk-shared`): `explain --search "<words>"` finds every element, field, step, trigger, style state, source,
+  function, code, CLI command and option the words describe, best first; an element declares what its source holds
+  (`publishes`: the carousel, the list, the provider, the form, the channel) and `explain <element>` says it field by
+  field. `run plan` says an acceptance line checked by a script of the lead's own, and the run's feedback lists them.

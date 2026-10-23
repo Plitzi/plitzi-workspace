@@ -13,6 +13,14 @@ const declaration = elementDeclaration<ChannelAttributes>()({
     subType: valuesOf<NonNullable<ChannelProps['subType']>>()(['', 'div', 'section', 'aside', 'main'])
   },
   sourceType: 'channel',
+  publishes: {
+    connected: 'Whether the channel is connected now',
+    me: "This visitor's own member id",
+    members: 'Who is on the channel now',
+    messages: 'What was said on it since the page opened',
+    last: 'The last of them, or null',
+    retained: 'What the channel keeps for whoever joins'
+  },
   triggers: {
     onMessage: {
       action: 'onMessage',

@@ -328,9 +328,16 @@ program
     'An element, a step, a trigger, a problem’s code, a transformer or a helper: container, navigate, class-and-css, bindTemplate, motion'
   )
   .description('What a name means when authoring a space — what it takes, fires, reads and how it is written')
-  .option('--list <kind>', 'Every name of a kind: elements, steps, triggers, codes, transformers, helpers, filters')
+  .option(
+    '--list <kind>',
+    'Every name of a kind: elements, steps, triggers, codes, transformers, helpers, filters, functions, sources'
+  )
+  .option(
+    '--search <words>',
+    'What the words describe, best first — "carousel end", "checked state": elements, their fields, steps, states, sources, codes, commands'
+  )
   .option('--json', 'One object, for a tool or an agent')
-  .action((name: string | undefined, options: ExplainOptions) => explainCommand(name, options));
+  .action((name: string | undefined, options: ExplainOptions) => explainCommand(name, options, program.commands));
 
 program
   .command('upgrade')

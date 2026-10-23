@@ -1,6 +1,15 @@
 import chalk from 'chalk';
 
-import { EXPLAIN_KINDS, explain, explainKindOf, explainList, explanationText } from '@plitzi/sdk-authoring';
+import {
+  EXPLAIN_KINDS,
+  explain,
+  explainKindOf,
+  explainList,
+  explainSearch,
+  explanationText,
+  searchScore,
+  searchWords
+} from '@plitzi/sdk-authoring';
 import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project';
 
 import { apiDeclarations, apiText } from './apiDeclarations';
@@ -10,7 +19,8 @@ import { serverTasks, serverTaskText } from './serverTasks';
 import { fail } from './terminal';
 import { LINT_RULES } from '../lint/catalog';
 
-import type { Explanation } from '@plitzi/sdk-authoring';
+import type { Explanation, SearchHit } from '@plitzi/sdk-authoring';
+import type { Command } from 'commander';
 
 /**
  * `plitzi explain <name>`: what a name means when authoring a space — an element, a step, a trigger, a problem's code,
@@ -23,8 +33,52 @@ import type { Explanation } from '@plitzi/sdk-authoring';
 
 export interface ExplainOptions {
   list?: string;
+  /** Words of what is looked for: everything they describe, best first. */
+  search?: string;
   json?: boolean;
 }
+
+/** A command of the CLI as a search finds it: `plitzi page outline`, and what its help says it does. */
+const commandsOf = (commands: readonly Command[], above = 'plitzi'): { name: string; summary: string }[] =>
+  commands.flatMap(command => {
+    const name = `${above} ${command.name()}`;
+
+    // Its options too, each said with the command: `page measure --click` is what measures an open drawer.
+    return [
+      { name, summary: command.description() },
+      ...command.options.flatMap(option =>
+        option.long && !['--json', '--token', '--agent', '--run', '--help'].includes(option.long)
+          ? [{ name: `${name} ${option.long}`, summary: `${option.description} (${command.description()})` }]
+          : []
+      ),
+      ...commandsOf(command.commands, name)
+    ];
+  });
+
+/**
+ * Everything the words describe: what authoring knows, the codes of the CLI's own checks and its commands — "is there
+ * a way to…" answered in one call, never by reading a bundle's types or the help of every command.
+ */
+export const searchAll = (
+  words: string,
+  commands: readonly Command[],
+  limit = 10
+): (SearchHit | { kind: 'command' | 'code'; name: string; summary: string })[] => {
+  const asked = [...new Set(searchWords(words))];
+  const own = [
+    ...commandsOf(commands).map(each => ({ kind: 'command' as const, ...each })),
+    ...[...CHECK_CODES.values()].map(code => ({ kind: 'code' as const, name: code.name, summary: code.means }))
+  ];
+  const ranked = [
+    ...explainSearch(words, limit).map(hit => ({ hit, score: searchScore(asked, hit.name, hit.summary) })),
+    ...own.map(hit => ({ hit, score: searchScore(asked, hit.name, hit.summary) })).filter(each => each.score > 0)
+  ];
+
+  return ranked
+    .sort((a, b) => b.score - a.score || a.hit.name.localeCompare(b.hit.name))
+    .slice(0, limit)
+    .map(each => each.hit);
+};
 
 /**
  * A code of a check the CLI runs on the project rather than on the space — said as authoring says one of its own, and
@@ -83,7 +137,33 @@ const textOf = (explanation: AnyExplanation): string =>
 
 const kinds = Object.values(EXPLAIN_KINDS).join(', ');
 
-export const explainCommand = async (name: string | undefined, options: ExplainOptions): Promise<void> => {
+export const explainCommand = async (
+  name: string | undefined,
+  options: ExplainOptions,
+  commands: readonly Command[] = []
+): Promise<void> => {
+  if (options.search !== undefined) {
+    const hits = searchAll(options.search, commands);
+    if (hits.length === 0) {
+      fail(
+        `Nothing Plitzi has is described by "${options.search}" — other words, or what there is: --list ${kinds}, tasks. Something Plitzi should have: say it (plitzi run notice --plitzi "…", in a run).`
+      );
+
+      return;
+    }
+
+    console.log(
+      options.json
+        ? JSON.stringify(hits)
+        : [
+            ...hits.map(hit => `${hit.name.padEnd(36)} ${chalk.dim(`${hit.kind} — ${hit.summary}`)}`),
+            chalk.dim('Each said whole: plitzi explain <name>; a command: its --help')
+          ].join('\n')
+    );
+
+    return;
+  }
+
   // The steps a server action runs are the project's sdk-server's: read from the one installed, not a catalogue here.
   if (options.list === 'tasks') {
     const project = await findProject(process.cwd());

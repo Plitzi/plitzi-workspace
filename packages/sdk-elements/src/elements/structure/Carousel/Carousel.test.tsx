@@ -5,6 +5,7 @@ import { StoreProvider } from '@plitzi/nexus/react';
 
 import { Carousel } from './Carousel';
 import { CarouselTrack } from './CarouselTrack/CarouselTrack';
+import declaration from './declaration';
 import useElementDataSource from '../../../Element/hooks/useElementDataSource';
 
 import type { CarouselProps } from './Carousel';
@@ -97,6 +98,20 @@ const Ends = () => {
   return <span data-testid="ends">{carousel?.atStart ? 'start' : carousel?.atEnd ? 'end' : 'between'}</span>;
 };
 
+/** Every field the carousel's source holds, as a binding reads it. */
+const Fields = () => {
+  const sources = useElementDataSource({ sources: ['carousel_hero'] });
+  const carousel = sources.carousel_hero as Record<string, unknown> | undefined;
+
+  return (
+    <span data-testid="fields">
+      {Object.keys(carousel ?? {})
+        .sort()
+        .join(',')}
+    </span>
+  );
+};
+
 const renderCarousel = (props: Partial<CarouselProps> = {}) =>
   render(
     <StoreProvider value={{}}>
@@ -106,6 +121,7 @@ const renderCarousel = (props: Partial<CarouselProps> = {}) =>
         </CarouselTrack>
         <Position />
         <Ends />
+        <Fields />
       </Carousel>
     </StoreProvider>
   );
@@ -140,6 +156,13 @@ describe('Carousel', () => {
 
     expect(getByTestId('position').textContent).toBe('2 of 3');
     expect(container.querySelector('[aria-roledescription="slide"]')?.getAttribute('aria-label')).toBe('2 of 3');
+  });
+
+  // What `explain carousel` says it holds is what it publishes: an author read the bundle's types to learn of `atEnd`.
+  it('publishes the fields its declaration says, and no other', () => {
+    const { getByTestId } = renderCarousel();
+
+    expect(getByTestId('fields').textContent).toBe(Object.keys(declaration.publishes).sort().join(','));
   });
 
   it('stops at the ends when it does not loop, and says it is at one', () => {

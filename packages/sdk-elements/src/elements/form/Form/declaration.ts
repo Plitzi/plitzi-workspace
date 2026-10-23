@@ -15,6 +15,10 @@ const declaration = elementDeclaration<FormAttributes>()({
   // Not `form`: what a form offers its descendants is a record like any other provider's, so it registers under
   // the same source kind and a binding reads `apiContainer_<id>.values`.
   sourceType: 'apiContainer',
+  publishes: {
+    values: "Each field's value, by its name",
+    errors: "Each field's error, by its name — none while it is valid"
+  },
   triggers: {
     onSubmit: {
       action: 'onSubmit',

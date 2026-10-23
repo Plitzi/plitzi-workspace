@@ -1,12 +1,12 @@
 import fs from 'node:fs/promises';
 
+import { acceptanceProblems } from './acceptanceProblems';
 import { readOptional, writeAtomic, writeJson } from './files';
 import { inventoryProblems } from './inventory';
 import { requireLead } from './leads';
 import { EVERYONE, LEAD, sendMessage } from './messages';
 import { acceptanceText } from './model';
 import { taskPaths } from './paths';
-import { acceptanceProblems } from './plan';
 import { RunRefusal } from './refusal';
 import {
   assertStatus,
