@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -36,6 +36,41 @@ const moduleOf = (name: string, source: string): string => {
 
 afterAll(() => {
   rmSync(dir, { recursive: true, force: true });
+});
+
+// lx-copy: `page check --space` refused a space that loads its pages by folder and reads its data beside it.
+describe('authorIsolated, a space reading beside its folder', () => {
+  it('reads the project’s src/ — its pages’ folder, its data — and never the project’s root', async () => {
+    mkdirSync(path.join(dir, 'src/space/pages'), { recursive: true });
+    mkdirSync(path.join(dir, 'src/data'), { recursive: true });
+    writeFileSync(path.join(dir, 'src/space/pages/home.ts'), 'export default {};\n');
+    writeFileSync(path.join(dir, 'src/data/site.json'), JSON.stringify({ title: 'Laptop' }));
+    writeFileSync(path.join(dir, '.env'), 'SECRET=hunter2\n');
+    const space = (body: string): string => {
+      const file = path.join(dir, 'src/space', `${String(Math.random()).slice(2)}.ts`);
+      writeFileSync(
+        file,
+        `import { readFileSync, readdirSync } from 'node:fs';\n${body}\nexport const space = { name: 'Shop', permanentUrl: 'shop', pages: [{ name: 'Home', slug: '', body: [{ type: 'heading', id: 'title', attributes: { content: said } }] }] };\n`
+      );
+
+      return file;
+    };
+
+    const beside = await authorIsolated(
+      space(
+        "const said = readdirSync(new URL('./pages/', import.meta.url)).join(',') + ' ' + JSON.parse(readFileSync(new URL('../data/site.json', import.meta.url), 'utf-8')).title;"
+      )
+    );
+    expect(beside.ok ? 'ok' : beside.message).toBe('ok');
+    if (beside.ok) {
+      expect(JSON.stringify(beside.space.schema)).toContain('home.ts Laptop');
+    }
+
+    const root = await authorIsolated(
+      space("const said = readFileSync(new URL('../../.env', import.meta.url), 'utf-8');")
+    );
+    expect(root.ok).toBe(false);
+  });
 });
 
 describe('authorIsolated', () => {

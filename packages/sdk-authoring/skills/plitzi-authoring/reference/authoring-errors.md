@@ -139,6 +139,7 @@ The space is not written until these are fixed.
 | `server-provider-in-component` | a `runtime: 'server'` element inside a component: the page server resolves a page's and its layouts', never a component's | put the provider on the page, around the instance, and hand the component its rows as a prop |
 | `setting-misplaced` | `settings.computed` or `settings.channels` written inside `settings` | `computed` and `channels` at the top of the space |
 | `shorthand-ambiguous` | a shorthand one of whose parts is a bare `var(--x)` — `background: var(--surface)` — which longhand it is depends on what the variable holds | the longhand it is: `'background-color': 'var(--x)'` for a colour, `'background-image'` for a gradient or a picture |
+| `shorthand-unread` | a `font` shorthand with a part the expansion reads as none of its longhands — a `var()` size, a system font — or without the size and family CSS requires | the longhands it means: `'font-size': 'var(--size)'`, `'font-family': …`; a CSS-wide keyword (`font: inherit`) is read whole |
 | `slot-children` | children handed to an instance outside its slots | `children: { slotName: [ … ] }`; a component with no slots takes no children |
 | `slot-not-class` | a `slots` entry that is not a class — rules written in place, or nothing — which a slot cannot wear | the rules as a `styles()` declaration, handed to the slot beside its other classes |
 | `slot-unknown` | a component slot that is not an element of its tree | the id of an element inside the component — usually an empty container |
@@ -153,6 +154,7 @@ The space is not written until these are fixed.
 | `step-type` | a step `type` that does not exist | the step builders — `setState(…)`, `navigate(…)` — write it |
 | `structured-data-shape` | a page's `structuredData` item with no `@context` or `@type`, or a value JSON cannot carry | `structuredData: { '@context': 'https://schema.org', '@type': 'SportsEvent', name: '…' }` |
 | `style-condition-unknown` | a condition a class's rules cannot hold under | `motion-reduce`, `motion-safe`, or a container width — `container (max-width: 30rem)`, `container card (min-width: 480px)` |
+| `style-key-unknown` | a style holding a key that is no part of one — `slots` written inside `styles()` — beside its `css` or states | the element's `slots` beside its `class`, each a `styles()` of its own; a style takes `css`, `states`, `variants`, `ancestors`, `pseudos`, `conditions` |
 | `style-part-shape` | a condition or a pseudo-element given `variants`, `ancestors` or `conditions` — it holds its selector's own `css`, its `states` and (a condition) its `pseudos` | the class's own `css` under the condition — `{ 'motion-reduce': { css: { transition: 'none' } } }` drops what an ancestor's or a variant's rule would animate — or the rule under `ancestors`/`variants` at the top of the class |
 | `style-pseudo-content` | a `content` CSS cannot read — text without its quotes draws nothing — or a `before`/`after` with no `content`, which is not there at all | the text in quotes inside the string — `content: '"→"'`, `'""'` for an empty box — or a function such as `counter(step)` |
 | `style-pseudo-property` | a property the pseudo-element ignores — the browser drops it without a word | one it honours (`::selection` paints, `::marker` and `::placeholder` take text and font), or style the element |
@@ -177,6 +179,7 @@ The space is not written until these are fixed.
 | `unknown-field` | a field the space, a page, an element, a binding or a step does not have | the field it suggests; an element's attribute goes inside the factory's props (`button({ content })`) |
 | `unknown-transformer` | a transformer that does not exist | one of the transformers it lists |
 | `utility-module` | a utility sent to a module — a utility takes none | drop the `on` |
+| `variant-bound-twice` | two bindings (`variantFrom`, `activeOn`, `activeWhen`) setting the variant of one class on one element — the second always wins | one `variantFrom` whose template answers every case: `{{ wide ? 'roomy' : current ? 'active' : 'idle' }}` |
 | `visibility-as-attribute` | `visibility` bound as an attribute, which no element reads | `visible: { source, template }` |
 | `visitor-roles` | `settings.visitorRoles` written in a shape the runtime does not read | the shape the message gives |
 | `while-running` | `whileRunning` on a step that is not the trigger, or a mode other than `skip`, `parallel`, `queue`, `latest` | `[whileRunning('queue', onClick()), …]` |
@@ -201,6 +204,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `flag-rule-empty` | a flag rule with no conditions — skipped, never read as "always" | give it a condition, or set the flag's `value` instead |
 | `flag-unused` | a declared flag nothing gates on and no template reads | gate what it switches (`flag: 'x'`), or remove it once the feature has shipped |
 | `focus-on-field-box` | a `focus` or `focus-visible` state on a text field's or a select's `input` slot — the box the field is drawn in, which never takes focus, so no ring is ever shown | `'focus-within'` on the same class, or the state on the `field` slot |
+| `font-weight-not-loaded` | a `font-weight` no face the space loads has — the browser draws the nearest one, or fakes a bolder one | the weight in the font’s `weights`, or a weight it loads |
 | `FORM_SUBMIT_UNMANAGED` | a form the browser would submit itself, reloading the page | `managedByInteractions: true` |
 | `form-control-name-taken` | two controls in one form with one name — one overwrites the other | a name each |
 | `form-control-unnamed` | a control in a form with no `name` — its value never reaches `values` | `formControl({ name: 'email', … })` |

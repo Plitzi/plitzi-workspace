@@ -125,6 +125,8 @@ export interface CompletedTask {
   messages: Message[];
   requests: SharedRequest[];
   checks: CheckResult;
+  /** Its checks fail the same way in the run's work without it: not its own, nor said by a known failure. */
+  preexisting?: true;
   /** Its acceptance's checks, as they answered — none when it has none, or the project's checks failed first. */
   accepted: AcceptanceResult[];
   /** The task's files a person (or something else) changed in the project meanwhile: the person wins at the merge. */
@@ -330,7 +332,10 @@ export const completeTask = async (
       );
     }
     if (!checks.ok) {
-      if (!preexisting) {
+      // The brake counts the copy's own failures: one the run's work fails the same way — a half-merged approval, a
+      // person's edit — is no agent's, said or not (lx-copy: the brake fired on the run's own breakage and stopped the
+      // stage that would have finished it).
+      if (without === undefined || !failsWithout(checks, without, dirs)) {
         await recordBrake(ctx, loaded, 'checks-failed', taskId);
       }
 
@@ -514,6 +519,7 @@ export const completeTask = async (
     merged: mergedNow,
     requests,
     checks,
+    ...(preexisting ? { preexisting: true as const } : {}),
     accepted,
     changedInProject,
     ...(kept ? { checkedAt: kept.at } : {}),

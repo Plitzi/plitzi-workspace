@@ -89,7 +89,7 @@ person asked for a team:
    file a task takes past 400 lines (ask for the split) — each said once. **Talk:** answer a question with `plitzi
 task message t-home "…" --reply-to m3`; `task message all "…"` tells every task in hand, `task message @dev-1 "…"`
    an agent by name, between tasks too. **The scope changes while it runs** — yours to see, or the person's to ask: edit
-   the plan in the run's folder (`inputs/plan.json`) and `plitzi run amend` — acceptance, priorities, notes, the
+   the run's plan (`tmp/plitzi-runs/<run>/plan.json`; `inputs/` keeps what you opened it with) and `plitzi run amend` — acceptance, priorities, notes, the
    inventory, what a task nobody took waits for (`dependsOn`), one removed; more work is a stage, `plitzi
 run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — chase
    or decide a review that drags, settle a last cosmetic round yourself, amend away a dependency it does not need.
@@ -108,13 +108,15 @@ t-home` is all of it (`<file> --diff`: one file's whole diff);
    other kept) or `--changes` (redo it on the project's version). A change after approval puts the finish into
    **reconciliation**: `plitzi run resolve <run> <file> --take …`, then `plitzi run continue`.
    **The brake** stops a run whose completions keep failing; `run resume`. **Plitzi upgraded mid-run**
-   (`version-mismatch`): the person runs `plitzi run attach <run>`; to upgrade on purpose, `plitzi run upgrade`.
+   (`version-mismatch`): the person runs `plitzi run attach <run>`. Upgrading on purpose is the person's too (`plitzi run upgrade`): rebuild,
+   then ask them — never put a CLI in `node_modules` yourself.
 8. **Before you close, look at the coverage:** the finish runs each covering check on the result; look at what a
    check cannot see (`plitzi run preview`) — what is missing is a stage (`run extend`), or the next run's: `run notice "…"
 --on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run plan` and `run open` list; `run
 backlog done <id> --note "…"` closes one. **Close it:** write the summary (done, wrong, left) last, with each agent's tokens as the harness gave them:
    `plitzi run report --summary summary.md --tokens dev-1=208061,…`; then `plitzi run finish` (the diff, checked). Its
-   report measures the run (flow, cost, calls repeated) against the runs before: `plitzi run bench`. `--apply` is the person's, or yours if they allowed it. `run pending`: what awaits it.
+   report measures the run (flow, cost, calls repeated) against the runs before: `plitzi run bench`. `--apply` is the person's, or yours if they allowed it — every server you started on the project stopped first (one
+   serves the project as it was and holds its `state/kv.json`). `run pending`: what awaits it.
 
 ## Where leads went wrong
 
@@ -139,6 +141,19 @@ backlog done <id> --note "…"` closes one. **Close it:** write the summary (don
   next round's UI yours — never a designer's review offered, then decided past it.
 - **Your files** — a stage, a summary — in your scratch (`tmp/plitzi-runs/<run>/scratch/lead/`), never the project's
   `tmp/`, where the agents are told of strays.
+- **The page's own type is the page's**: `home => body` measures the body's font and background — a line on an element
+  of the page made a task invent a wrapper to carry it.
+- **A line names the original's counterpart**, and the finding says which element each id is (`product-buy-now` the
+  button, `product-buy` its row): an id the task builds otherwise bends its markup, or never passes. A line moved to
+  another task once its elements exist is run on them first.
+- **A finding is read from its page**, measured — never from another page or memory (a date the article never shows);
+  a piece the scope gives no number is one the agents guess.
+- **What two tasks share is the base task's, declared once**: a page's section styles and the space between sections,
+  a format (a date), the whole palette — three names for one grey came from three tasks adding a token at once.
+- **A copy is compared section by section**: each section's height at 390 against the original's, one `page measure`
+  call, before you approve a page — a whole section laid out another way passed two reviews looked at 1440.
+- **What must hold at `complete` is an acceptance line** (`run amend`), never a message: a message has no hold on it.
+- **A stage reads `run view`, not memory**: a task that merges a file one not done holds waits for it (`dependsOn`).
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red.
 - **Don't fix the CLI mid-run**: note it (`run notice`), fix it after.
 - **Look where it changed**: a fix for light in light, one for the phone at 390 (`task look --scheme light --width 390`).

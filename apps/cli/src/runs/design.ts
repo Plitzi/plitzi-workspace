@@ -197,15 +197,21 @@ export const designAtComplete = async (
   asked?: ReviewAsked,
   now: number = Date.now()
 ): Promise<{ design?: DesignReview; carried?: string }> => {
-  if (asked === 'code') {
+  const changesUi = loaded.record.designReview === true && hasDesignReview(view.task, changed);
+  if (asked === 'code' && !changesUi) {
     return {
       carried: 'Its developer asked for the code review alone: nothing it changed is to be looked at as a page'
     };
   }
 
-  if (asked !== 'ui' && (loaded.record.designReview !== true || !hasDesignReview(view.task, changed))) {
+  if (asked !== 'ui' && !changesUi) {
     return {};
   }
+
+  // A developer's "code alone" on files a page draws is not its to say: lx-copy's t-card, a component, skipped its
+  // designer that way, and the price-colour bug was what a look finds. Its UI is reviewed; said in its notes.
+  const overruled =
+    asked === 'code' ? ' — its developer asked for the code review alone, but what it changed draws UI' : '';
 
   // The lead sent it back saying its next look is the lead's own: no designer is offered it.
   const reserved = view.state.design?.reserved;
@@ -251,7 +257,8 @@ export const designAtComplete = async (
       round: view.state.round,
       ...(design?.by === undefined ? {} : { before: design.by }),
       since: new Date(now).toISOString()
-    }
+    },
+    ...(overruled ? { carried: `Its UI is reviewed${overruled}` } : {})
   };
 };
 

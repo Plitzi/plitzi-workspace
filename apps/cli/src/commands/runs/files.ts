@@ -93,7 +93,7 @@ export const taskWait = (
     },
     waited =>
       waited.granted
-        ? `Nobody held ${waited.file} any more: it is yours now, by turns.`
+        ? `Nobody held ${waited.file} any more: it is yours now, by turns.${waited.nowhere ? ` It is in neither the project nor the run's work yet: if a task at work or in review is making it, wait for that task (plitzi run status says who works what), not the file.` : ''}`
         : waited.followed
           ? `${waited.file} is yours now. ${waited.followed.note ?? ''}`
           : `Waiting for ${waited.holder} on ${waited.file}: it comes to this task when ${waited.holder} is approved, with the run's version. Go on with what of your task does not need it; \`plitzi task wait ${waited.file} --follow\` waits until it is yours.`,

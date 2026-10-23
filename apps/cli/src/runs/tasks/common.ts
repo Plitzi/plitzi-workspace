@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { LINT_CACHE_FILE } from '../../scaffold/paths';
 import { fingerprint, projectFiles, readOptional, writeJson } from '../files';
 import { mergeLines } from '../merge3';
 import { entryOf } from '../model';
@@ -9,7 +10,6 @@ import { RunRefusal } from '../refusal';
 import { readApproved } from '../run';
 import { getBlob, placeVersion, putBlob } from '../store';
 import { isDisconnected, readStart, revokedTokens, tokenPrint, viewTask } from '../taskStore';
-import { LINT_CACHE_FILE } from '../../scaffold/paths';
 
 import type { ApprovedManifest, RunTask, TaskStart } from '../model';
 import type { LoadedRun, RunContext } from '../run';
@@ -242,7 +242,6 @@ export const refreshCopy = async (
 
   return brought.sort();
 };
-
 
 /** Who in the team does a task: its plan's role, a developer's when it says none. */
 export const roleOf = (task: RunTask): string => task.role ?? 'developer';

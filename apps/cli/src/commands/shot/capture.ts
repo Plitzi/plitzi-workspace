@@ -103,10 +103,21 @@ export const targetOn = async (
       // `#home-fights-main > …`: an element's name written as an id, where the page has none by that id — the name is
       // what a person reads in the builder and in a report (velada-fidelity's design-1 met "not on" for each).
       const byName = target.replace(/#([A-Za-z_][\w-]*)/g, (_match, name: string) => namedBy(name));
+      if (byName !== target && (await found(byName))) {
+        return { selector: byName, found: true };
+      }
 
-      return byName !== target && (await found(byName))
-        ? { selector: byName, found: true }
-        : { selector: target, found: false };
+      // `article-table td`: an element's name, then what is inside it — the name read as the element's, as a bare word
+      // is (lx-copy's dev-2 wrote [data-plitzi-el="article-table"] td by hand).
+      const [first, ...rest] = target.trim().split(/\s+/);
+      if (rest.length > 0 && /^[A-Za-z_][\w-]*$/.test(first)) {
+        const inside = `${namedBy(first)} ${rest.join(' ')}`;
+        if (await found(inside)) {
+          return { selector: inside, found: true };
+        }
+      }
+
+      return { selector: target, found: false };
     }
 
     // A bare word: an element's name, a tag — or an id, as a section's anchor is (`--clip combates`) — or a component's

@@ -1,6 +1,6 @@
 import { expandBorder, expandBorderGroup } from './border';
 import { expandBorderRadius, expandBox, expandGap } from './box';
-import { SIDES } from './helpers';
+import { CSS_WIDE_KEYWORDS, SIDES } from './helpers';
 import {
   expandColumns,
   expandFlex,
@@ -24,6 +24,7 @@ import {
 import type { CssPatch, CssProps } from '../types';
 
 export { ambiguousShorthands } from './ambiguous';
+export { fontUnread } from './visual';
 export type { AmbiguousShorthand } from './ambiguous';
 
 // --- Shorthand expansion ------------------------------------------------------------------------------
@@ -80,8 +81,17 @@ const expandOne = (key: string, raw: string | number, out: CssProps): boolean =>
   // An empty shorthand declares nothing; expanding it would invent longhands with no value. It is still claimed as
   // expanded so the shorthand key itself never reaches persistence.
   const value = String(raw).trim();
-  if (value !== '') {
-    expand(key, value, out);
+  if (value === '') {
+    return true;
+  }
+
+  expand(key, value, out);
+  // `font: inherit` is every longhand inherited: an expander reading parts reads none in a keyword, and it vanished.
+  const keyword = value.toLowerCase();
+  if (CSS_WIDE_KEYWORDS.has(keyword) && Object.keys(out).length === 0) {
+    for (const longhand of shorthandLonghands(key) ?? []) {
+      out[longhand] = keyword;
+    }
   }
 
   return true;

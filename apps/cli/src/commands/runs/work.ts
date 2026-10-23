@@ -247,7 +247,10 @@ export const taskComplete = (
           : completed.checks.ok
             ? `  Checks passed: ${list(completed.checks.steps.map(step => step.name))}${completed.checkedAt ? ` — as task check passed them at ${completed.checkedAt.slice(11, 16)} UTC, nothing changed since: not run again` : ''}`
             : chalk.yellow(
-                `  Checks failing, as you said (--known-failure): ${list(completed.checks.steps.filter(step => !step.ok).map(step => step.name))}`
+                // Said as what it is: one with no --known-failure is the run's, not "as you said" (lx-copy's design-2).
+                completed.preexisting
+                  ? `  Checks failing the same way in the run's work without your task — not yours, the lead is told: ${list(completed.checks.steps.filter(step => !step.ok).map(step => step.name))}`
+                  : `  Checks failing, as you said (--known-failure): ${list(completed.checks.steps.filter(step => !step.ok).map(step => step.name))}`
               ),
         ...warningLines(completed.checks.steps, completed.changed),
         ...completed.accepted.map(

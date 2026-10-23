@@ -157,6 +157,23 @@ export const extendRun = async (
         `Task "${task.id}": ${each} is "${String(held.get(each))}"'s, still at work — wait for it (dependsOn) to name it`
       );
     }
+
+    // A folder it names holds what a task at work writes there — files that task may not have made yet (lx-copy:
+    // t-close-home's src/space/pages/home, t-home-top's sections in it, its topStyles.ts in no copy but its own).
+    const named = next.tasks.find(each => each.id === task.id)?.files ?? [];
+    const inside = [...held].filter(
+      ([file, holder]) => !after.has(holder) && named.some(folder => file.startsWith(`${folder}/`))
+    );
+    for (const holder of new Set(inside.map(([, each]) => each))) {
+      problems.push(
+        `Task "${task.id}": ${inside
+          .filter(([, each]) => each === holder)
+          .map(([file]) => file)
+          .join(
+            ', '
+          )} — in a folder it names — ${inside.length === 1 ? 'is' : 'are'} "${holder}"'s, still at work — wait for it (dependsOn)`
+      );
+    }
   }
 
   if (problems.length > 0 || !checked) {

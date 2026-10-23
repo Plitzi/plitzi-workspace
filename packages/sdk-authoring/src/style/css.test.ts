@@ -349,3 +349,46 @@ describe('a background whose part is a bare var()', () => {
     }
   });
 });
+
+describe('a font shorthand', () => {
+  it('sets every longhand to a CSS-wide keyword — `font: inherit` once vanished, and a button kept the browser’s font', () => {
+    expect(css({ font: 'inherit' })).toEqual({
+      'font-style': 'inherit',
+      'font-variant': 'inherit',
+      'font-weight': 'inherit',
+      'font-size': 'inherit',
+      'line-height': 'inherit',
+      'font-family': 'inherit'
+    });
+    expect(css({ padding: 'unset' })).toMatchObject({ 'padding-top': 'unset', 'padding-left': 'unset' });
+  });
+
+  it('is refused when a part is none of its longhands or its size or family is missing, naming what it does not read', () => {
+    expect(() => css({ font: '600 var(--size) Sans' })).toThrow(
+      /\[shorthand-unread\][^]*`var\(--size\) Sans` is none of its parts, and it has no size and no family/
+    );
+    expect(() => css({ font: 'bold' })).toThrow(/\[shorthand-unread\][^]*it has no size and no family;/);
+    expect(css({ font: "500 16px/1.2 'DM Sans', sans-serif" })).toEqual({
+      'font-weight': '500',
+      'font-size': '16px',
+      'line-height': '1.2',
+      'font-family': "'DM Sans', sans-serif"
+    });
+  });
+});
+
+describe('rules written where a style has no place for them', () => {
+  // Both were "`css: [object Object]` is not one CSS value", which pointed at neither. Written past the types, as
+  // JavaScript or a loosely typed project reaches them.
+  it('names `slots` inside `styles()` and where an element’s slots go', () => {
+    expect(() => toBlocks({ css: { color: 'red' }, slots: { input: { color: 'red' } } } as never)).toThrow(
+      /\[style-key-unknown\] A style holds `slots` beside `css`[^]*`slots` go on the element, beside its `class`/
+    );
+  });
+
+  it('says a rule set nested as a property holds rules, and where each kind goes', () => {
+    expect(() => css({ '&:hover': { color: 'blue' } } as never)).toThrow(
+      /\[css-value\] `&:hover` holds rules, not a CSS value[^]*states: \{ hover/
+    );
+  });
+});

@@ -139,7 +139,6 @@ const watchPaths = ({ source, fromSpace, runtime }: CreateAnswers): string =>
     .map(watched => `--watch-path=${watched}`)
     .join(' ');
 
-
 /**
  * What `start` means, which is the whole difference between the two modes.
  *

@@ -44,10 +44,10 @@ const refusalOf = async (work: Promise<unknown>): Promise<string> => {
 };
 
 /** A developer takes a task, writes it and completes it: in review, as its agent leaves it. */
-const completed = async (name: string, taskId: string, file: string): Promise<void> => {
+const completed = async (name: string, taskId: string, file: string, review?: 'code' | 'ui'): Promise<void> => {
   const taken = await takeTask(bench.agent(name), 'es-launch', taskId);
   await writeInCopy(taken.work, file, `export const page = { title: '${taskId}' };\n`);
-  await completeTask(bench.agent(name, { token: taken.token }), 'es-launch', taskId);
+  await completeTask(bench.agent(name, { token: taken.token }), 'es-launch', taskId, review ? { review } : {});
 };
 
 const designOf = async (taskId: string) =>
@@ -487,15 +487,22 @@ describe('a designer’s review of the others’ UI', () => {
 
   it('asks the review its developer says: the code alone goes straight to the lead, said in the activity', async () => {
     const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
-    await writeInCopy(taken.work, 'src/space/pages/menu.ts', 'export const page = { title: `t-menu` };\n');
+    await writeInCopy(taken.work, 'src/space/data/menu.json', '{ "title": "t-menu" }\n');
     await completeTask(bench.agent('dev-1', { token: taken.token }), 'es-launch', 't-menu', { review: 'code' });
 
     expect(await designOf('t-menu')).toBeUndefined();
-    expect((await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [])).merged).toEqual([
-      'src/space/pages/menu.ts'
-    ]);
+    const { merged } = await reviewTask(lead(), 'es-launch', 't-menu', 'approve', []);
+    expect(merged).toEqual(['src/space/data/menu.json']);
     const log = await readRunLog((await loadRun(lead(), 'es-launch')).paths);
     expect(log.find(entry => entry.action === 'complete' && entry.task === 't-menu')).toMatchObject({ review: 'code' });
+  });
+
+  it('reviews the UI of a task that changed a page though its developer asked for the code alone, said', async () => {
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts', 'code');
+
+    expect(await designOf('t-menu')).toMatchObject({ status: 'due' });
+    const { notes } = await readState(taskPaths((await loadRun(lead(), 'es-launch')).paths, 't-menu'));
+    expect(notes.at(-1)?.text).toContain('asked for the code review alone, but what it changed draws UI');
   });
 
   it('lets a designer’s approval stand for a round of changes that did not touch the UI', async () => {

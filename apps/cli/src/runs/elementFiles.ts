@@ -93,9 +93,27 @@ export const elementFileNotices = async (root: string, tasks: readonly PlannedTa
       new RegExp(`\\bid:\\s*['"\`]${element.replace(/[-]/g, '\\-')}['"\`]`).test(text) ? [file] : []
     );
 
+  // What a task this one waits on holds, it changes first — may move or remove the element (lx-copy: t-home-top told
+  // its checks read hero-title in index.ts, the tour's, which t-base before it removed).
+  const before = (task: PlannedTask): Set<string> => {
+    const found = new Set<string>();
+    const visit = (id: string): void => {
+      for (const dep of tasks.find(each => each.id === id)?.dependsOn ?? []) {
+        if (!found.has(dep)) {
+          found.add(dep);
+          visit(dep);
+        }
+      }
+    };
+    visit(task.id);
+
+    return new Set(tasks.filter(each => found.has(each.id)).flatMap(each => [...each.files, ...(each.touches ?? [])]));
+  };
+
   return asked.flatMap(({ task, elements }) => {
+    const changedBefore = before(task);
     const elsewhere = elements.flatMap(element => {
-      const files = writtenIn(element);
+      const files = writtenIn(element).filter(file => !changedBefore.has(file));
 
       const reached = (file: string): boolean =>
         task.files.includes(file) ||

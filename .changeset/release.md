@@ -979,3 +979,34 @@ theirs"`) at every width in one call and one browser, reads the other page witho
   `plitzi run agent <name>` writes an agent's prompt and the line that starts it headless in Claude Code, Codex or
   opencode, and `--launch` starts it (`run watch` names it when an agent is needed). The lead's half of the skill has
   the scope's checks a run's rounds came from, and the MCP's instructions say a team works a project, never a space.
+- **What a shop's copy taught the runs** (`@plitzi/cli`, `@plitzi/sdk-authoring`), from lx-copy's 24 tasks, 33
+  refusals and 13 completions carrying another task's failure:
+  - An approval merges a task's files and its requests together, checked; else its files alone, checked whenever it
+    asked anything; refused, naming the failing steps, when both fail. One integration task (`critical`) takes the
+    files a task's requests tie together; a request already in the run's work is done at once (`request-in`).
+  - A removal takes the folders it leaves empty, up to the tree's root — copies, preview, checks and `--apply`.
+  - A known failure covers the steps its why names; the brake counts only a copy's own failures; a copy that brings in
+    others' files drops its lint cache.
+  - The server the CLI kept is never taken for the agent's own; `page measure` reads the first visible match and waits
+    for its image; `label-wraps` with a kept reference passes a label the original wraps too.
+  - `task show` reads any task read-only, each request with its diff; a page command run with an agent's token says its
+    unread messages; a hand-off says it is the CLI's; a designer with a ready task of its own takes it though reviews
+    are coming; a code-only review is overruled, said, when the task changed what a page draws.
+  - `run plan` refuses a task holding a folder another task's files are in, and says a check on a page no page answers
+    yet that a later task checks too; `run extend` refuses a stage task writing where a task at work writes.
+  - `run finish --apply` says when a server of the project still runs (it holds `state/kv.json`).
+  - The lead's and designer's skills carry the run's lessons: the page's type measured on the page, a line naming the
+    original's counterpart, shared styles and the palette declared once, sections compared by height at 390, a
+    difference sent back, never approved with a note; the original is read, never written.
+- **`font: inherit` is every font longhand inherited** (`@plitzi/sdk-authoring`): a CSS-wide keyword on any shorthand
+  sets each longhand it covers — it expanded to nothing, and a button kept the browser's font. A `font` with a part the
+  expansion cannot read (a `var()` size, a system font) or without its size and family is refused (`shorthand-unread`).
+- **Two variant bindings on one class are refused** (`@plitzi/sdk-authoring`, `variant-bound-twice`): the second
+  `activeWhen`/`variantFrom` of one class on one element answered `idle` over the first, whose variant never showed.
+- **A style says where its rules go** (`@plitzi/sdk-authoring`): `slots` inside `styles()` is `style-key-unknown`,
+  naming the element's `slots`; a rule set nested as a property says it holds rules — never "`css: [object Object]` is
+  not one CSS value".
+- **A weight no font loads is warned** (`@plitzi/sdk-authoring`, `font-weight-not-loaded`): read against the family a
+  selector names, else every family the space loads; the browser drew the nearest weight.
+- **`page check --space` authors a space that reads beside its folder** (`@plitzi/sdk-authoring`): the project's
+  `src/`, `package.json` and `node_modules` are readable in the isolated author, never its root's `.env`.

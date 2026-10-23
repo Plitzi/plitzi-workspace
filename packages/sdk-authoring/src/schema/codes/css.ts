@@ -28,6 +28,18 @@ export const CSS_CODES = {
       'a shorthand one of whose parts is a bare `var(--x)` — `background: var(--surface)` — which longhand it is depends on what the variable holds',
     fix: "the longhand it is: `'background-color': 'var(--x)'` for a colour, `'background-image'` for a gradient or a picture"
   },
+  'shorthand-unread': {
+    kind: 'refused',
+    means:
+      'a `font` shorthand with a part the expansion reads as none of its longhands — a `var()` size, a system font — or without the size and family CSS requires',
+    fix: "the longhands it means: `'font-size': 'var(--size)'`, `'font-family': …`; a CSS-wide keyword (`font: inherit`) is read whole"
+  },
+  'style-key-unknown': {
+    kind: 'refused',
+    means:
+      'a style holding a key that is no part of one — `slots` written inside `styles()` — beside its `css` or states',
+    fix: "the element's `slots` beside its `class`, each a `styles()` of its own; a style takes `css`, `states`, `variants`, `ancestors`, `pseudos`, `conditions`"
+  },
   'rule-set-mixed': {
     kind: 'refused',
     means: 'a style that writes its rules beside `states`, `variants` or `ancestors` instead of under `css`',
@@ -127,6 +139,11 @@ export const CSS_CODES = {
     kind: 'warned',
     means: 'a `var(--x)` nothing in the space declares — the property it is in is dropped',
     fix: 'declare it under `variables`, fix the name, or give it a fallback: `var(--x, …)`'
+  },
+  'font-weight-not-loaded': {
+    kind: 'warned',
+    means: 'a `font-weight` no face the space loads has — the browser draws the nearest one, or fakes a bolder one',
+    fix: 'the weight in the font’s `weights`, or a weight it loads'
   },
   'colour-without-dark': {
     kind: 'warned',

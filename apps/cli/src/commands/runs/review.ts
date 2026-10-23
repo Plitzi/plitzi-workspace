@@ -18,13 +18,12 @@ import {
   viewsAsked
 } from './lookParts';
 import { act, runOf, runSelf } from './shell';
-import { projectSpace } from '../check/space';
 import { list } from './text';
 import { answering, freePort } from '../../runs/acceptance';
 import { designSkipText, isDesignSkip } from '../../runs/designSkip';
 import { inTurns } from '../../runs/inTurns';
 import { readOwnership } from '../../runs/ownership';
-import { examplePaths, pagesOf } from '../../runs/pagesOf';
+import { acceptancePages, examplePaths, pagesOf } from '../../runs/pagesOf';
 import { runPaths, taskPaths } from '../../runs/paths';
 import { startBeforePreview, startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
@@ -34,6 +33,7 @@ import { findingsOf, taskParts } from '../../runs/taskParts';
 import { findTask, notReviewedIn, reviewTask } from '../../runs/tasks';
 import { viewTask } from '../../runs/taskStore';
 import { readTeam } from '../../runs/team';
+import { projectSpace } from '../check/space';
 
 import type { BeforeAfter } from './lookParts';
 import type { RunCommandOptions } from './shell';
@@ -53,12 +53,17 @@ const viewTaskOf = async (
   ctx: RunContext,
   runId: string,
   taskId: string
-): Promise<{ changed: string[]; designing: boolean }> => {
+): Promise<{ changed: string[]; designing: boolean; acceptanceAt: string[] }> => {
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
-  const { state } = await viewTask(loaded.paths, findTask(loaded, taskId));
+  const task = findTask(loaded, taskId);
+  const { state } = await viewTask(loaded.paths, task);
 
   // The caller is the designer whose UI review it is: its look is set beside the run before it unless it says not.
-  return { changed: state.changed ?? [], designing: state.design?.status === 'due' && state.design.by === ctx.agent };
+  return {
+    changed: state.changed ?? [],
+    designing: state.design?.status === 'due' && state.design.by === ctx.agent,
+    acceptanceAt: acceptancePages(task.acceptance)
+  };
 };
 
 export interface LookOptions extends RunCommandOptions {
@@ -128,7 +133,7 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
         const views = asked ?? toDeclared(teams, space && !('problem' in space) ? space.schemes : []);
         // No page named: the pages its changes are drawn at, by the files that changed — else the home page.
         // Read off the copy served: a page the task makes is one to look at too.
-        const { changed, designing } = await viewTaskOf(ctx, runId, taskId);
+        const { changed, designing, acceptanceAt } = await viewTaskOf(ctx, runId, taskId);
         // Every page its changes are drawn at — a shared file's too: named pages are looked at, and the others
         // said (velada-polish: design-2 looked at /combates twice, and the home its card change broke was the lead's
         // to find).
@@ -144,7 +149,8 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
         // A page with a parameter in its address (`/boxeadores/:slug`) is opened where the site's own links go.
         const { paths: routes, unreached } = await examplePaths(
           preview.url,
-          paths.length > 0 ? paths : owned.length > 0 ? owned : ['/']
+          paths.length > 0 ? paths : owned.length > 0 ? owned : ['/'],
+          acceptanceAt
         );
         // Every page read in one visitor's zone: the machine's, unless said — and said under the pictures either way.
         const zone = options.timezone ? ['--timezone', options.timezone] : [];

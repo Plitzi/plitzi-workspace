@@ -110,7 +110,10 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     // Written as a lead writes the file — a list where the type says words: what reading the file takes in.
     const listed = { ...stage.tasks[0], findings: ['The hero is 48px', '- The menu wraps at 390'] };
     await answerSpike(lead(), 'es-launch', SCOPE_SPIKE, 'Four pages', {
-      tasks: await bench.writePlan({ ...stage, tasks: [listed as unknown as RunPlan['tasks'][number], ...stage.tasks.slice(1)] })
+      tasks: await bench.writePlan({
+        ...stage,
+        tasks: [listed as unknown as RunPlan['tasks'][number], ...stage.tasks.slice(1)]
+      })
     });
 
     const view = await viewRun(lead(), 'es-launch');

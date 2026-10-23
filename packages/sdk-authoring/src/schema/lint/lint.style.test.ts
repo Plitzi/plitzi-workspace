@@ -58,6 +58,35 @@ describe('lintSpace', () => {
       expect(unknown[0].message).toContain('did you mean "caret-blink"?');
     });
 
+    // The copy of a shop asked DM Sans for 400 where it loads 500 and 700: its pill drew at 500, and no check said so.
+    it('font-weight-not-loaded', () => {
+      const font = { fallback: 'sans-serif', styles: ['normal' as const], source: 'google' as const };
+      const documents = withChange(({ style }) => {
+        style.fonts = [
+          { ...font, family: 'DM Sans', weights: [500, 700] },
+          { ...font, family: 'Archivo', weights: [700] }
+        ];
+        style.variables.custom = { ...style.variables.custom, heading: "'Archivo', sans-serif" };
+        const rules = (name: string, rule: Record<string, string>) => ({
+          name,
+          type: 'class' as const,
+          cache: '',
+          attributes: { base: { default: rule } }
+        });
+        style.platform.desktop.pill = rules('pill', { 'font-weight': '400' });
+        style.platform.desktop.title = rules('title', { 'font-family': 'var(--heading)', 'font-weight': '500' });
+        style.platform.desktop.lead = rules('lead', { 'font-family': "'DM Sans'", 'font-weight': 'bold' });
+        style.platform.desktop.code = rules('code', { 'font-family': 'ui-monospace, monospace', 'font-weight': '300' });
+      });
+      const unloaded = lintSpace(documents).warnings.filter(issue => issue.code === 'font-weight-not-loaded');
+
+      expect(unloaded.map(issue => issue.details)).toEqual([
+        { selector: 'pill', weight: 400 },
+        { selector: 'title', weight: 500, family: 'Archivo' }
+      ]);
+      expect(unloaded[0].message).toContain('no family the space loads has ("DM Sans" 500/700, "Archivo" 700)');
+    });
+
     it('heading-level-overridden', () => {
       const headings = (classes: Record<string, { 'font-size': string } | { 'scroll-margin-top': string }>) =>
         lintSpace(

@@ -197,6 +197,35 @@ describe('the lead’s plan as the run goes', () => {
     expect(await fs.readFile(path.join(bench.root, 'src/space/pages/about.ts'), 'utf-8')).toContain('es: true');
   });
 
+  // lx-copy: t-close-home named src/space/pages/home while t-home-top, in review, still had files to put there.
+  it('refuses a stage task naming a folder a task at work writes in, unless it waits for it', async () => {
+    const plan = benchPlan();
+    plan.tasks[1].files = ['src/space/pages/menu.ts', 'src/space/pages/carta/list.ts'];
+    await open(plan);
+    await take('agent-2', 't-menu');
+    const tidy = {
+      id: 't-tidy',
+      title: 'One module of the menu’s styles',
+      files: ['src/space/pages/carta'],
+      dependsOn: [],
+      priority: 'medium' as const,
+      estimateMinutes: 10,
+      acceptance: ['One styles module']
+    };
+    const stage = (dependsOn: string[]): RunPlan => ({
+      version: 1,
+      runId: 'es-stage-tidy',
+      goal: 'Tidy',
+      tasks: [{ ...tidy, dependsOn }]
+    });
+
+    const refused = await refusal(extendRun(lead(), 'es-launch', await bench.writePlan(stage([]))));
+    expect(refused.message).toContain(
+      'src/space/pages/carta/list.ts — in a folder it names — is "t-menu"\'s, still at work'
+    );
+    await extendRun(lead(), 'es-launch', await bench.writePlan(stage(['t-menu'])));
+  });
+
   it('says in its activity what each agent is at between tasks, and ends saying the run is ready', async () => {
     await open();
     const log = async () => readRunLog((await loadRun(lead(), 'es-launch')).paths);

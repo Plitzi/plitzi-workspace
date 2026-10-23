@@ -27,7 +27,8 @@ too.
   shine, an arrow), the sizes measured, what each control does, the phone's own layout.
 - **Say it:** `plitzi task review <task> --approve [--note "what you saw"] | --changes "what, where, why — the values
 measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it**: past them it goes to another designer or
-  the lead, and your verdict is refused. One round asks everything you want of it. What the lead told you while
+  the lead, and your verdict is refused. One round asks everything you want of it. A difference a visitor sees is sent back, never approved with a note —
+  "approximate" is one. What the lead told you while
   you looked is handed to you before your verdict goes: read it, then say it again.
 - **Ask what the task is, not more** — every round, the first too: send it back for what its title and acceptance
   cover that is broken or measures off. Another element, a page-wide value (the body's font), a refinement the task

@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { checkedAfter } from './expectations';
 import { abortRun } from './merge';
 import { EVERYONE, messagesOf } from './messages';
 import { readOwnership } from './ownership';
@@ -95,6 +96,40 @@ describe('a plan held to the rules', () => {
     expect(
       runPlanProblems({ ...plan, tasks: [{ ...plan.tasks[0], acceptance: [{ said: 'x', covers: ['home-hero'] }] }] })
     ).toEqual([expect.stringContaining('a line that covers a piece of the inventory is one a command checks')]);
+  });
+
+  // lx-copy: t-base held src/space/pages to write the stubs, each a later task's file — complete refused them mid-run.
+  it('refuses a task holding a folder another task’s files are in, naming the shape that works', async () => {
+    const plan = benchPlan();
+    plan.tasks[0].files = ['src/space/pages/shop'];
+    plan.tasks[1].files = ['src/space/pages/shop/cart.ts'];
+    const problems = await checkPlan(bench.root, plan, await readOwnership(bench.root), teamFor(plan, 3)).then(
+      () => [],
+      (error: unknown) => (error instanceof PlanRefusal ? error.problems : [String(error)])
+    );
+
+    expect(problems).toContainEqual(
+      expect.stringContaining(
+        'Task "t-home" holds src/space/pages/shop, a folder with src/space/pages/shop/cart.ts ("t-menu") in it'
+      )
+    );
+  });
+
+  // lx-copy: t-card measured its card on the collection page t-collection made — and t-collection waited for t-card.
+  it('finds a later task checking the same missing page: the check before it cannot pass — a deadlock', () => {
+    const tasks = [
+      { id: 't-card', dependsOn: [] },
+      { id: 't-collection', dependsOn: ['t-card'] },
+      { id: 't-home', dependsOn: ['t-card'] }
+    ];
+    const asked = [
+      { task: 't-card', path: '/collections/laptops' },
+      { task: 't-collection', path: '/collections/laptops' },
+      { task: 't-home', path: '/' }
+    ];
+
+    expect(checkedAfter(tasks, asked, 't-card', '/collections/laptops')).toEqual(['t-collection']);
+    expect(checkedAfter(tasks, asked, 't-collection', '/collections/laptops')).toEqual([]);
   });
 
   it('says which tasks touch the same file outside their own, unless one waits for the other', async () => {

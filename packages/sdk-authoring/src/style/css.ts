@@ -13,7 +13,7 @@ import {
 } from '@plitzi/sdk-shared/style';
 
 import { cssNumberValue, cssPropertyName, isCssProperty, isCustomProperty, suggestCssProperty } from './properties';
-import { ambiguousShorthands, expandShorthandTraced } from './shorthand';
+import { ambiguousShorthands, expandShorthandTraced, fontUnread } from './shorthand';
 import { overlaid, recordShorthands } from './shorthandOrigins';
 import { AuthoringError } from '../schema/codes';
 import { didYouMean } from '../schema/suggest';
@@ -70,6 +70,13 @@ const breaksDeclaration = (value: string): boolean =>
 const assertValues = (rules: CssProps): void => {
   for (const [property, value] of Object.entries(rules)) {
     const text = typeof value === 'number' ? String(value) : value;
+    if (typeof value === 'object') {
+      throw new AuthoringError(
+        'css-value',
+        `\`${property}\` holds rules, not a CSS value: a rule set is plain CSS, one property per key. What applies in a state, a variant, a pseudo-element or at a breakpoint goes under its key — \`{ css: { desktop: { … }, mobile: { … } }, states: { hover: { … } }, pseudos: { before: { … } } }\`.`
+      );
+    }
+
     if (typeof text !== 'string' || text.trim() === '' || breaksDeclaration(text)) {
       throw new AuthoringError(
         'css-value',
@@ -109,6 +116,15 @@ export const css = (input: CssProps): StyleRules => {
     throw new AuthoringError(
       'shorthand-ambiguous',
       `${site ? `${site}: ` : ''}\`${ambiguous.property}: ${ambiguous.value}\` cannot be expanded into the longhands the style editor reads: what the variable holds decides which it is, and a guess painted a gradient as a colour — nothing. Name the longhand it is: ${ambiguous.fix}.`
+    );
+  }
+
+  const unread = typeof rules.font === 'string' ? fontUnread(rules.font) : undefined;
+  if (unread !== undefined) {
+    const site = callSite();
+    throw new AuthoringError(
+      'shorthand-unread',
+      `${site ? `${site}: ` : ''}\`font: ${String(rules.font)}\` cannot be expanded into the longhands the style editor reads: ${unread}; what it does not read is lost — the text drawn in the browser's font. Write the longhands it means: 'font-style', 'font-weight', 'font-size', 'line-height', 'font-family' (\`font: inherit\` is read whole).`
     );
   }
 
@@ -479,14 +495,29 @@ export const toBlocks = (spec: StyleSpec | undefined): ResponsiveBlock => {
     return {};
   }
 
-  const misplaced = Object.keys(spec).filter(key => RULE_SET_KEYS.has(key) && key !== 'css');
-  if (!isRuleSetSpec(spec) && misplaced.length > 0) {
-    const rules = Object.keys(spec).filter(key => !RULE_SET_KEYS.has(key));
+  const misplaced = Object.keys(spec).filter(key => RULE_SET_KEYS.has(key));
+  const rules = Object.keys(spec).filter(key => !RULE_SET_KEYS.has(key));
+  // `{ css, slots }` read as CSS made `css` a property of an object value: "`css: [object Object]` is not one CSS value".
+  const foreign = Object.entries(spec)
+    .filter(([key, value]) => !RULE_SET_KEYS.has(key) && !BREAKPOINT_SET.has(key) && typeof value === 'object')
+    .map(([key]) => key);
+  if (misplaced.length > 0 && foreign.length > 0) {
+    throw new AuthoringError(
+      'style-key-unknown',
+      `A style holds ${foreign.map(key => `\`${key}\``).join(', ')} beside ${misplaced.map(key => `\`${key}\``).join(', ')}: a style takes ${[...RULE_SET_KEYS].map(key => `\`${key}\``).join(', ')} and nothing else.` +
+        (foreign.includes('slots')
+          ? " An element's `slots` go on the element, beside its `class` — `formControl({ class: field, slots: { input: fieldInput } })` — each a `styles()` of its own."
+          : '')
+    );
+  }
+
+  const beside = misplaced.filter(key => key !== 'css');
+  if (!isRuleSetSpec(spec) && beside.length > 0) {
     throw new AuthoringError(
       'rule-set-mixed',
-      `A style writes ${rules.map(key => `\`${key}\``).join(', ')} beside ${misplaced.map(key => `\`${key}\``).join(', ')}. ` +
+      `A style writes ${rules.map(key => `\`${key}\``).join(', ')} beside ${beside.map(key => `\`${key}\``).join(', ')}. ` +
         'Once a style has states, variants, ancestors, pseudo-elements or conditions, its own rules go under `css`: ' +
-        `\`{ css: { ${rules.map(key => `${key}: …`).join(', ')} }, ${misplaced.map(key => `${key}: { … }`).join(', ')} }\`.`
+        `\`{ css: { ${rules.map(key => `${key}: …`).join(', ')} }, ${beside.map(key => `${key}: { … }`).join(', ')} }\`.`
     );
   }
 

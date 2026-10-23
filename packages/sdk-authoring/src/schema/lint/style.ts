@@ -3,7 +3,7 @@ import { animationNamesIn, keyframesNamesIn, SDK_KEYFRAMES_PREFIX } from '@plitz
 import { didYouMean } from '../suggest';
 
 import type { LintContext } from './context';
-import type { StyleItem, StyleObject, StyleStates, StyleVariables } from '@plitzi/sdk-shared';
+import type { StyleItem, StyleObject, StyleStates, StyleValue, StyleVariables } from '@plitzi/sdk-shared';
 
 /**
  * A colour token with a light value and no dark one: a dark theme shows the light value, which is how a near-black
@@ -120,8 +120,76 @@ const lintAnimations = (ctx: LintContext): void => {
   }
 };
 
+const WEIGHT_KEYWORDS: Record<string, number> = { normal: 400, bold: 700 };
+
+const weightOf = (value: StyleValue | undefined): number | undefined => {
+  const text = String(value ?? '').trim();
+
+  return WEIGHT_KEYWORDS[text] ?? (/^\d{3}$/.test(text) ? Number(text) : undefined);
+};
+
+/** The family a `font-family` draws first, a token's value followed — `var(--body)` is the family it holds. */
+const firstFamily = (ctx: LintContext, value: StyleValue): string | undefined => {
+  const tokens = new Map(Object.values(ctx.style.variables).flatMap(group => Object.entries(group)));
+  const text = String(value).replace(BARE_REFERENCE, (whole, name: string) => {
+    const token = tokens.get(name.slice(2));
+    const held = typeof token === 'object' ? token.default : token;
+
+    return typeof held === 'string' ? held : whole;
+  });
+
+  return text
+    .split(',')[0]
+    .trim()
+    .replace(/^['"]|['"]$/g, '');
+};
+
+/**
+ * A `font-weight` no loaded face has: the browser draws the nearest weight the family loads, or fakes a bolder one —
+ * the page asks for 400 and shows 500. Read against the family the selector names, else against every family the space
+ * loads, as it inherits one of them; a family the space does not load (a system stack) is the visitor's, unread.
+ */
+const lintFontWeights = (ctx: LintContext): void => {
+  const loaded = new Map(
+    (ctx.style.fonts ?? []).filter(font => font.source !== 'system').map(font => [font.family, font.weights] as const)
+  );
+  if (loaded.size === 0) {
+    return;
+  }
+
+  const every = new Set([...loaded.values()].flat());
+  const items = Object.values(ctx.style.platform).flatMap(items => Object.values(items));
+  const reported = new Set<string>();
+  for (const item of items) {
+    const rules = rulesOf(item);
+    const named = rules.map(rule => rule['font-family']).find(value => value !== undefined);
+    const family = named === undefined ? undefined : firstFamily(ctx, named);
+    if (family !== undefined && !loaded.has(family)) {
+      continue;
+    }
+
+    const weights = family === undefined ? every : new Set(loaded.get(family));
+    for (const weight of rules.map(rule => weightOf(rule['font-weight']))) {
+      const key = `${item.name}:${String(weight)}`;
+      if (weight === undefined || weights.has(weight) || reported.has(key)) {
+        continue;
+      }
+
+      reported.add(key);
+      const has = [...weights].sort((a, b) => a - b).join(', ');
+      ctx.warn(
+        'font-weight-not-loaded',
+        `The ${item.type} "${item.name}" sets font-weight ${String(weight)}, which ${family === undefined ? `no family the space loads has (${[...loaded].map(([name, own]) => `"${name}" ${own.join('/')}`).join(', ')})` : `"${family}" does not load (it loads ${has})`}: the browser draws the nearest weight it has, or fakes a bolder one. Load the weight — \`weights\` on the font — or write one it has.`,
+        undefined,
+        { selector: item.name, weight, ...(family === undefined ? {} : { family }) }
+      );
+    }
+  }
+};
+
 export const lintStyle = (ctx: LintContext): void => {
   lintColours(ctx);
   lintVariables(ctx);
   lintAnimations(ctx);
+  lintFontWeights(ctx);
 };

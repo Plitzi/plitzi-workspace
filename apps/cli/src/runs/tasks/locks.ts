@@ -1,9 +1,10 @@
 import fs from 'node:fs/promises';
 
 import { createExclusive, fingerprint, writeJson } from '../files';
+import { entryOf } from '../model';
 import { lockFile, runPaths, taskPaths, under } from '../paths';
 import { RunRefusal } from '../refusal';
-import { activeRuns, assertStatus, loadRun, readShared, runIds } from '../run';
+import { activeRuns, assertStatus, loadRun, readApproved, readShared, runIds } from '../run';
 import { runChanged } from '../runChanged';
 import { withLock } from '../store';
 import {
@@ -376,7 +377,7 @@ export const waitForFile = async (
   runId: string,
   taskId: string,
   file: string
-): Promise<{ file: string; holder?: string; granted?: true }> => {
+): Promise<{ file: string; holder?: string; granted?: true; nowhere?: true }> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'wait for a file');
   const task = findTask(loaded, taskId);
@@ -386,8 +387,14 @@ export const waitForFile = async (
   // Let go of before the wait came — its holder approved meanwhile: nothing to wait for, it is taken by turns now.
   if (!holder) {
     await claimFile(ctx, runId, taskId, clean);
+    // Held by nobody and in neither the project nor the run's work: another task may be making it, outside its plan's
+    // files — said, as granting it alone read as "it is there" (lx-copy: t-close-home waited for topStyles.ts, which
+    // only t-home-top's copy had).
+    const nowhere =
+      entryOf((await readApproved(loaded.paths)).files, clean) === undefined &&
+      (await fingerprint(under(ctx.root, clean))) === null;
 
-    return { file: clean, granted: true };
+    return { file: clean, granted: true, ...(nowhere ? { nowhere: true as const } : {}) };
   }
 
   await assertNoWaitCycle(loaded, taskId, holder);

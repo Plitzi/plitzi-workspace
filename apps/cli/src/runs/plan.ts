@@ -467,7 +467,9 @@ export const checkPlan = async (
 
       const other = holder.get(file);
       if (other !== undefined && other !== task.id) {
-        problems.push(`${file} is in "${other}" and "${task.id}": one agent per file — give it to one of them`);
+        problems.push(
+          `${file} is in "${other}" and "${task.id}": one agent per file — give it to one of them; one that makes it and one that fills it after: the first holds it, the other names it in "touches" and waits for the first (dependsOn)`
+        );
       }
 
       const sameFile = byCase.get(file.toLowerCase());
@@ -487,6 +489,18 @@ export const checkPlan = async (
     }
 
     tasks.push({ ...task, files: expanded, kind: 'work' });
+  }
+
+  // A task's "file" that is a folder not made yet, with another task's files in it: complete refuses the first anything
+  // under it the other holds (lx-copy: t-base held src/space/pages to write every page's stub, and each stub was a
+  // later task's — stuck mid-run, files never amended).
+  for (const [folder, owner] of holder) {
+    const inside = [...holder].filter(([file, other]) => other !== owner && file.startsWith(`${folder}/`));
+    if (inside.length > 0) {
+      problems.push(
+        `Task "${owner}" holds ${folder}, a folder with ${inside.map(([file, other]) => `${file} ("${other}")`).join(', ')} in it: one agent per file — name ${owner}'s own files, and let the others make theirs (a skeleton another task fills: its holder first, the other names it in "touches" and waits for it)`
+      );
+    }
   }
 
   /** Whether `a` is done before `b` starts: `b` waits for it, directly or through what it waits for. */

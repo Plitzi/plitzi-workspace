@@ -52,6 +52,12 @@ export const BINDING_CODES = {
     means: 'an `activeWhen` condition that reads nothing — always or never true',
     fix: "name what it depends on: `'{{ list_dots.index == state.slide }}'`"
   },
+  'variant-bound-twice': {
+    kind: 'refused',
+    means:
+      'two bindings (`variantFrom`, `activeOn`, `activeWhen`) setting the variant of one class on one element — the second always wins',
+    fix: "one `variantFrom` whose template answers every case: `{{ wide ? 'roomy' : current ? 'active' : 'idle' }}`"
+  },
   'visibility-as-attribute': {
     kind: 'refused',
     means: '`visibility` bound as an attribute, which no element reads',

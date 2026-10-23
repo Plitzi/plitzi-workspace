@@ -73,7 +73,13 @@ const patternOf = (route: string): RegExp =>
  */
 export const examplePaths = async (
   origin: string,
-  routes: readonly string[]
+  routes: readonly string[],
+  /**
+   * Addresses the task names itself — its acceptance's pages: one that fits a route is that route's example before any
+   * link is followed (lx-copy: t-product's look pictured the home and the blog, its product page unreached — no link
+   * to it on a copy without the cards).
+   */
+  named: readonly string[] = []
 ): Promise<{ paths: string[]; unreached: string[] }> => {
   const linksOf = new Map<string, Promise<string[]>>();
   const links = (page: string): Promise<string[]> => {
@@ -106,7 +112,9 @@ export const examplePaths = async (
 
     const fits = patternOf(route);
     const list = route.slice(0, route.indexOf('/:')) || '/';
-    const found = [...(await links(list)), ...(await links('/'))].find(link => fits.test(link));
+    const found =
+      named.find(address => fits.test(address)) ??
+      [...(await links(list)), ...(await links('/'))].find(link => fits.test(link));
     if (found) {
       paths.push(found);
     } else {

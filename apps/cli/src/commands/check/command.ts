@@ -1,7 +1,14 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { projectMark } from '@plitzi/sdk-shared/project';
+
 import { themeIssues } from './themes';
 import { launchBrowser } from '../../browser';
 import { originHere } from '../../runs/copyServer';
 import { inTurns } from '../../runs/inTurns';
+import { runPaths, runsDir, taskPaths } from '../../runs/paths';
 import { projectHere } from '../existingProject';
 import { fail } from '../terminal';
 import { checkAccount } from './account';
@@ -106,6 +113,33 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
  * browser, is a problem said once rather than a report per page.
  */
 /**
+ * The folder a server named by `--url` serves, when it is one of this project's run copies: its `/health` says the mark
+ * of the folder it serves, and the copy with that mark is the space its routes are judged by — not the project's own
+ * (lx-copy: a real product page on a copy's server read as "the page for an address nothing answers", judged by the
+ * tour still in the project). None found: the project's.
+ */
+const servedFolder = async (root: string, url: string): Promise<string | undefined> => {
+  const health: unknown = await fetch(new URL('/health', url), { signal: AbortSignal.timeout(2_000) })
+    .then(async (answer): Promise<unknown> => answer.json())
+    .catch(() => undefined);
+  const mark = isRecord(health) && typeof health.Instance === 'string' ? health.Instance : undefined;
+  if (mark === undefined || mark === projectMark(root)) {
+    return undefined;
+  }
+
+  for (const run of await fs.readdir(runsDir(root)).catch(() => [])) {
+    for (const task of await fs.readdir(path.join(runsDir(root), run, 'tasks')).catch(() => [])) {
+      const work = taskPaths(runPaths(root, run), task).work;
+      if (projectMark(work) === mark) {
+        return work;
+      }
+    }
+  }
+
+  return undefined;
+};
+
+/**
  * How many pages a check reads at once, each with its widths and schemes at once: four of la-velada's pages at two
  * widths took 6.9 s one by one, 4.2 s two at a time — and no less three or four at a time, the project's server busy.
  */
@@ -148,7 +182,7 @@ export const checkRoutes = async (
       options.space
         ? moduleSpace(options.space)
         : plitzi?.source === 'local'
-          ? projectSpace(project.root)
+          ? projectSpace(options.url ? ((await servedFolder(project.root, options.url)) ?? project.root) : project.root)
           : Promise.resolve(undefined),
       launchBrowser(project.root)
     ]);

@@ -3,6 +3,7 @@ import {
   ANIMATION_DIRECTIONS,
   ANIMATION_FILL_MODES,
   ANIMATION_PLAY_STATES,
+  CSS_WIDE_KEYWORDS,
   FONT_STYLE_KEYWORDS,
   FONT_VARIANT_KEYWORDS,
   FONT_WEIGHT_KEYWORDS,
@@ -248,7 +249,8 @@ export const expandBackground = (value: string, out: CssProps): void => expandLa
 
 // font: `[style variant weight] size[/line-height] family`. The size is the pivot — everything before it is a
 // keyword, everything after it the family.
-export const expandFont = (value: string, out: CssProps): void => {
+/** Expands a `font` value into `out` and returns the parts before its size it read as nothing. */
+const fontParts = (value: string, out: CssProps): string[] => {
   const [beforeSlash, afterSlash] = splitPair(value, '/');
   const tokens = splitTokens(beforeSlash);
   if (afterSlash !== undefined) {
@@ -260,6 +262,7 @@ export const expandFont = (value: string, out: CssProps): void => {
   }
 
   const family: string[] = [];
+  const unread: string[] = [];
   let foundSize = false;
   for (const token of tokens) {
     if (foundSize) {
@@ -283,10 +286,39 @@ export const expandFont = (value: string, out: CssProps): void => {
     } else if (LENGTH_RE.test(token)) {
       out['font-size'] = token;
       foundSize = true;
+    } else {
+      unread.push(token);
     }
   }
 
   if (family.length > 0) {
     out['font-family'] = family.join(' ');
   }
+
+  return unread;
+};
+
+export const expandFont = (value: string, out: CssProps): void => {
+  fontParts(value, out);
+};
+
+/**
+ * What a `font` value says that no longhand holds once expanded: a part before its size that is none of style, variant
+ * or weight (a `var()` size, a system font), or the size or family CSS requires — said, as the declaration would be
+ * written without it. Nothing for a value read whole.
+ */
+export const fontUnread = (value: string): string | undefined => {
+  if (CSS_WIDE_KEYWORDS.has(value.trim().toLowerCase())) {
+    return undefined;
+  }
+
+  const out: CssProps = {};
+  const unread = fontParts(value, out);
+  const missing = [out['font-size'] ? '' : 'size', out['font-family'] ? '' : 'family'].filter(Boolean);
+  const said = [
+    unread.length > 0 ? `\`${unread.join(' ')}\` is none of its parts` : '',
+    missing.length > 0 ? `it has no ${missing.join(' and no ')}` : ''
+  ].filter(Boolean);
+
+  return said.length > 0 ? said.join(', and ') : undefined;
 };

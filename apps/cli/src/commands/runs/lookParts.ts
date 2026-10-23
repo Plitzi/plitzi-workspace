@@ -252,9 +252,7 @@ export const toDeclared = (
 
   const held = views.map(([width, scheme]) => [width, declared.includes(scheme) ? scheme : declared[0]] as const);
 
-  return held.filter(
-    ([width, scheme], index) => held.findIndex(([w, s]) => w === width && s === scheme) === index
-  );
+  return held.filter(([width, scheme], index) => held.findIndex(([w, s]) => w === width && s === scheme) === index);
 };
 
 /**

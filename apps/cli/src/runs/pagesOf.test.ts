@@ -39,6 +39,16 @@ describe('examplePaths', () => {
       unreached: ['/combates/:id']
     });
   });
+
+  // lx-copy: t-product's look never pictured its product page — no link reached it on a copy without the cards.
+  it('opens a page with a parameter at an address the task names itself, before any link', async () => {
+    const origin = await site({ '/': ['/'] });
+
+    expect(await examplePaths(origin, ['/products/:slug'], ['/', '/products/acer-nitro'])).toEqual({
+      paths: ['/products/acer-nitro'],
+      unreached: []
+    });
+  });
 });
 
 // velada-shell's t-page-heading: a shared component's task, "no page of the space owns its files", its acceptance two.

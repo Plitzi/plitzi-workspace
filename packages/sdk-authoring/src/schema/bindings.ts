@@ -249,11 +249,49 @@ export const variantFrom = (cls: ClassRef, source: SourceName, options: VariantF
 export const hasVisibilityBinding = (bindings: BindingSpec[] | undefined): boolean =>
   bindings?.some(binding => binding.to === 'visibility' && binding.category === 'initialState') ?? false;
 
+/** The `class.slot` a binding sets the variant of — `variantFrom`, `activeOn`, `activeWhen` — if it sets one. */
+const variantKeyOf = (binding: BindingSpec): string | undefined => {
+  if (binding.to !== 'styleVariant' || binding.when) {
+    return undefined;
+  }
+
+  const key = binding.transformers?.find(transformer => transformer.action === 'styleVariant')?.params.key;
+
+  return typeof key === 'string' ? key : undefined;
+};
+
+/**
+ * Refuses two bindings setting one selector's variant: each answers for the whole selector, so the later one's answer
+ * — `idle` among them — always wins and the earlier one's variant never shows.
+ */
+const assertOneVariantBinding = (bindings: readonly BindingSpec[]): void => {
+  const seen = new Set<string>();
+  for (const key of bindings.map(variantKeyOf)) {
+    if (key === undefined) {
+      continue;
+    }
+
+    if (seen.has(key)) {
+      const [cls, slot] = key.split('.');
+      throw new AuthoringError(
+        'variant-bound-twice',
+        `Two bindings set the variant of \`${cls}\`${slot === 'base' ? '' : ` on its \`${slot}\` slot`} on one element: each answers for the class, so the second's answer always wins and the first's variant never shows. Bind it once, answering every case — \`variantFrom(${cls}, source, { template: "{{ wide ? 'roomy' : current ? 'active' : 'idle' }}" })\`.`
+      );
+    }
+
+    seen.add(key);
+  }
+};
+
 export const withVisibility = (spec: {
   bind?: BindingsSpec;
   visible?: string | false | VisibleCondition;
 }): BindingSpec[] | undefined => {
   const bound = spec.bind === undefined ? undefined : toBindingSpecs(spec.bind);
+  if (bound) {
+    assertOneVariantBinding(bound);
+  }
+
   // `false` is a starting state rather than a condition: nothing to bind, only an element that begins hidden.
   if (spec.visible === undefined || spec.visible === false) {
     return bound;

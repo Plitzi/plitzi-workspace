@@ -41,6 +41,9 @@ row's names: `r.item` and `r.index` for a binding or `from`, `r.inTemplate.item`
   reordered, a row's state (an open detail, a field's text) follows its item. Items named by another field say so —
   `itemKey: 'slug'` (`list-item-key-missing` warns when fixed items lack it). A row whose item changes mounts again,
   so a one-row list showing "the current slide" replays the slide's entrance animation.
+- **A data table** (a comparison, a product's specs) is a `markdown` element whose text is a table (`| a | b |`),
+  dressed through its slots `table`, `tableHead`, `tableRow`, `tableHeaderCell`, `tableCell`. There is no table
+  element: lists laid out as one read as no table to a screen reader or a search engine.
 
 ## Filtering and sorting
 

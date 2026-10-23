@@ -103,6 +103,9 @@ export const expandTo4 = (tokens: string[]): [string, string, string, string] =>
 
 export const SIDES = ['top', 'right', 'bottom', 'left'] as const;
 
+/** The keywords any property takes, a shorthand for every longhand it sets. */
+export const CSS_WIDE_KEYWORDS = new Set(['inherit', 'initial', 'unset', 'revert', 'revert-layer']);
+
 export const FLEX_DIRECTIONS = new Set(['row', 'row-reverse', 'column', 'column-reverse']);
 export const FLEX_WRAPS = new Set(['nowrap', 'wrap', 'wrap-reverse']);
 

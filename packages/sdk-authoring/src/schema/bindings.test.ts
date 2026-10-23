@@ -227,6 +227,20 @@ describe('activeWhen', () => {
   it('is refused a condition that reads nothing', () => {
     expect(() => activeWhen(dot, '1 == 1')).toThrow(/\[active-when-constant\]/);
   });
+
+  // Two on one class: the second answered `idle` whenever its own case did not hold, and the first's never showed.
+  it('is refused twice on one class of an element, naming the one binding that answers every case', () => {
+    const twice = [
+      activeWhen(dot, 'state.wide', { variant: 'roomy' }),
+      activeWhen(dot, 'list_dots.index == state.slide')
+    ];
+    expect(() => withVisibility({ bind: twice })).toThrow(
+      /\[variant-bound-twice\] Two bindings set the variant of `dot` on one element[^]*variantFrom\(dot, source/
+    );
+    expect(() =>
+      withVisibility({ bind: [activeWhen(dot, 'state.wide'), activeWhen(dot, 'state.open', { slot: 'icon' })] })
+    ).not.toThrow();
+  });
 });
 
 describe('a source named outside the scope that prefixes its element', () => {
