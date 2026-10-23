@@ -25,6 +25,17 @@ export { Element_2 as Element }
 export declare interface Undocumented {
     name: string;
 }
+
+/** What an action is. */
+export declare interface ActionSpec {
+    /** How a page names it. More on it here. */
+    id: string;
+    /** The steps it runs, in turn. */
+    steps?: unknown[];
+}
+
+/** A server action. */
+export declare const defineAction: <const Spec extends ActionSpec>(spec: Spec) => void;
 `;
 
 beforeEach(async () => {
@@ -95,6 +106,20 @@ describe('an export of a @plitzi package, explained from its published types', (
   it('answers one with no doc by its declaration alone, and nothing for a name it does not export', () => {
     expect(apiDeclarations(root, 'Undocumented')[0]).toMatchObject({ summary: '' });
     expect(apiDeclarations(root, 'nothingHere')).toEqual([]);
+  });
+
+  // lx-product: `explain defineAction` gave its signature alone, and an agent read the .d.ts for what ActionSpec holds.
+  it('says what a function takes, field by field — a generic one by its constraint', () => {
+    expect(apiDeclarations(root, 'defineAction')[0]?.takes).toEqual([
+      {
+        type: 'ActionSpec',
+        fields: [
+          { name: 'id', optional: false, doc: 'How a page names it.' },
+          { name: 'steps', optional: true, doc: 'The steps it runs, in turn.' }
+        ]
+      }
+    ]);
+    expect(apiDeclarations(root, 'pageFamily')[0]?.takes).toBeUndefined();
   });
 
   it('answers an export of another package, through its re-exports, saying where it is imported from', () => {

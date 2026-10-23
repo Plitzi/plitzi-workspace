@@ -1,17 +1,21 @@
 import fs from 'node:fs/promises';
+import path from 'node:path';
 
+import { format } from 'prettier';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { addBacklogItem, closeBacklogItem, openBacklog } from './backlog';
+import { addBacklogItem, BACKLOG_FILE, closeBacklogItem, openBacklog } from './backlog';
 import { abortRun, finishRun } from './merge';
 import { noticeRun, noticesOf } from './notices';
 import { buildReport, reportText } from './report';
 import { loadRun, readRunLog } from './run';
 import { readInbox } from './talk';
+import { qualityFilesFor } from '../scaffold/quality';
 import { benchPlan, makeBench } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
 import type { Bench } from '../tests/runProject';
+import type { Options } from 'prettier';
 
 let bench: Bench;
 
@@ -82,6 +86,21 @@ describe('the run’s feedback to Plitzi', () => {
     expect(feedback).toContain('- page measure reads no position, and every agent wrote a script for it — lead');
     expect(feedback).not.toContain('The footer’s legal line');
     expect(feedback).not.toContain(bench.root);
+  });
+
+  // lx-product: the feedback lx-controls left ended in a blank line, and the project's format check refused the next run.
+  it('leaves the feedback and the backlog as the project’s Prettier writes them', async () => {
+    const runId = await open();
+    await noticeRun(lead(), runId, 'page measure reads no position', { plitzi: true });
+    await noticeRun(lead(), runId, 'The footer’s legal line wraps at 390', { on: '/ #footer' });
+    await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
+    const finished = await finishRun(bench.person(true), runId, { apply: true, leavePending: true });
+    const options = JSON.parse(qualityFilesFor('node', [])['.prettierrc']) as Options;
+
+    for (const file of [finished.feedback ?? '', path.join(bench.root, BACKLOG_FILE)]) {
+      const text = await fs.readFile(file, 'utf-8');
+      expect(await format(text, { ...options, filepath: file })).toBe(text);
+    }
   });
 });
 

@@ -168,7 +168,14 @@ export const idleTeam = (
   ]);
   const readyFor = (roles: readonly string[]): boolean =>
     views.some(view => view.state.status === 'ready' && roles.includes(view.task.role ?? DEVELOPER));
-  const starved = running.filter(each => !busy.has(each.agent) && !readyFor(each.roles));
+  // A designer while others' work is under way waits for its UI reviews, which is what it is for — and waiting costs
+  // nothing: lx-product's idle-team told the lead to split a developer's card for the run's only UI reviewer.
+  const uiComing = views.some(
+    view => view.owner && isWorked(view.state.status) && (view.task.role ?? DEVELOPER) !== DESIGNER
+  );
+  const starved = running.filter(
+    each => !busy.has(each.agent) && !readyFor(each.roles) && !(uiComing && each.roles.includes(DESIGNER))
+  );
   if (starved.length === 0) {
     return [];
   }
@@ -205,6 +212,8 @@ export const idleTeam = (
   return [
     {
       kind: 'idle-team',
+      // Said again only when other agents go idle or a card is done, not when the advice's words change.
+      subject: `${names.join(',')}:${String(views.filter(view => view.state.status === 'done').length)}`,
       text: `${names.join(', ')} ${names.length === 1 ? 'has' : 'have'} nothing to take — keep the board ahead of the team: ${
         ways.length > 0
           ? ways.join('; or ')

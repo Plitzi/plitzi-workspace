@@ -2,6 +2,7 @@ import { comparePictures } from '@plitzi/sdk-authoring';
 
 import { awaited, capture, targetOn } from './capture';
 import { dataUrl } from '../../browser';
+import { settle } from '../measureState';
 
 import type { BrowserPage } from '../../browser';
 import type { ShotStep } from '../shotSteps';
@@ -257,5 +258,19 @@ export const playSteps = async (
     }
   }
 
+  // What the steps leave is pictured, once still, when they end on an action: lx-product's `--steps "click <pill>"`
+  // showed the menu shut — the picture before the click was the only one.
+  if (endsActing(steps)) {
+    await settle(page);
+    await picture('after');
+  }
+
   return { moments, changes };
+};
+
+/** Whether steps end on an action rather than a picture: what it leaves is then pictured once more. */
+export const endsActing = (steps: readonly ShotStep[]): boolean => {
+  const last = steps.at(-1);
+
+  return last !== undefined && last.kind !== 'shot' && last.kind !== 'frames';
 };

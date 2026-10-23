@@ -27,13 +27,18 @@ export const MEASURED = [
   'margin',
   'gap',
   'display',
+  // A list's marker — its type, inside or outside, a picture: lx-product's bullets on a line of their own were
+  // `list-style-position: inside`, unseen, rebuilt with a zero-width ::before at tuned heights.
+  'list-style',
   'width',
   'height',
   'transform',
   'transition',
   // Where its box starts in the viewport: a column measured against another's (lx-fidelity: every agent and the lead
-  // wrote a browser script of its own to read it).
-  'x'
+  // wrote a browser script of its own to read it) — and from the top of the page, an arrow at a column's foot
+  // (lx-product's design-1 judged it from a picture: `--same y` was refused).
+  'x',
+  'y'
 ] as const;
 
 /** The sides of a box's spacing `--same` takes alone — `margin-bottom` — each read off its shorthand as measured. */
@@ -206,15 +211,22 @@ export interface Difference {
  * Two values the same but for lengths within half a pixel of each other: a box 404.98px and one 404.86px tall draw
  * alike — held to the sub-pixel, a line failed for what no eye sees and an agent tuned a margin to 63.93px to pass it.
  */
-const withinAPixel = (ours: string, theirs: string): boolean => {
+const withinAPixel = (ours: string, theirs: string, share = 0): boolean => {
   const LENGTH = /(-?\d*\.?\d+)px/g;
   const [a, b] = [ours, theirs].map(text => Array.from(text.matchAll(LENGTH), match => Number(match[1])));
   if (a.length === 0 || a.length !== b.length || ours.replace(LENGTH, 'px') !== theirs.replace(LENGTH, 'px')) {
     return false;
   }
 
-  return a.every((length, index) => Math.abs(length - b[index]) < 0.5);
+  return a.every((length, index) => Math.abs(length - b[index]) < Math.max(0.5, Math.abs(b[index]) * share));
 };
+
+/**
+ * A box's size within a thousandth of it, half a pixel at the least: a tall one adds each of its lines' rounding — a
+ * 1588px section of eighteen list items came 1.06px off the original's (lx-product), invisible, and failed like a
+ * button 1px off. Spacing and type stay within half a pixel: there a pixel is seen.
+ */
+const SIZE_SHARE: Readonly<Record<string, number>> = { width: 0.001, height: 0.001 };
 
 export const differences = (
   here: Measured,
@@ -231,7 +243,12 @@ export const differences = (
   const alike = (property: string): boolean => {
     const [ours, theirs] = [comparable(property, value(here, property)), comparable(property, value(there, property))];
 
-    return ours === theirs || ours === HELD_STILL || theirs === HELD_STILL || withinAPixel(ours, theirs);
+    return (
+      ours === theirs ||
+      ours === HELD_STILL ||
+      theirs === HELD_STILL ||
+      withinAPixel(ours, theirs, SIZE_SHARE[property] ?? 0)
+    );
   };
   // A side asked alone (`--same margin-bottom`) is compared too, read off the shorthand measured.
   const properties = [

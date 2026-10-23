@@ -225,6 +225,7 @@ export const whenSucceeded = (stepId: string, step: StepSpec): StepSpec =>
 export const whenFailed = (stepId: string, step: StepSpec): StepSpec =>
   when({ field: `${stepId}.status`, operator: '!=', value: 'completed' }, step);
 
+/** An element's flows — each a trigger and its steps — as the document's interactions, every node given its id. */
 export const authorFlows = (flows: StepSpec[][], host?: string): Record<string, ElementInteraction> => {
   const counters = new Map<string, number>();
 

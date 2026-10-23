@@ -96,12 +96,27 @@ export const agentsNeeded = (
     // for dev-2 for two tasks the plan had said were too few for three agents.
     const runningOfRole = started.filter(each => ofRole(each) && running.has(each.agent));
     const inHand = runningOfRole.filter(each => busy.has(each.agent)).length;
+    // A task of the role that waits only for work under way is work coming: lx-product's t-buybox waited for
+    // t-description alone, and four cards for one developer (~145 min) never asked for the second.
+    const byId = new Map(views.map(view => [view.task.id, view]));
+    const coming = views.filter(
+      view =>
+        !view.owner &&
+        view.state.status === 'pending' &&
+        (view.task.role ?? 'developer') === role &&
+        view.task.dependsOn.length > 0 &&
+        view.task.dependsOn.every(id => {
+          const dependency = byId.get(id);
+
+          return dependency !== undefined && (dependency.state.status === 'done' || isWorked(dependency.state.status));
+        })
+    ).length;
     // A UI review no designer running may make — its own author's — waits for another whatever the count.
     if (
       next.onDemand &&
       anyRunning &&
       reviews.length === 0 &&
-      (waiting.length + inHand) / (runningOfRole.length + 1) < TASKS_PER_AGENT
+      (waiting.length + inHand + coming) / (runningOfRole.length + 1) < TASKS_PER_AGENT
     ) {
       return [];
     }

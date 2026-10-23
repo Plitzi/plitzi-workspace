@@ -1,16 +1,24 @@
 import http from 'node:http';
 
-import type { KeptAnswer, KeptAsk } from '../browser/keptBrowser';
-
 /**
- * The kept browser's door: asks to measure, over HTTP on 127.0.0.1 alone, each answered with what was read. An ask is
- * in flight from its arrival — its body still on its way — so a drain that comes meanwhile waits for it; a drain first
- * stops taking asks, then waits for those it took. An ask past `askMs` is answered as too slow, for its caller to read
- * the page as before.
+ * The kept browser's door: asks over HTTP on 127.0.0.1 alone, each to its route — a reading of the other page, its
+ * outline, a step of a page held for a play — and each answered with what it did. An ask is in flight from its arrival
+ * — its body still on its way — so a drain that comes meanwhile waits for it; a drain first stops taking asks, then
+ * waits for those it took. An ask past `askMs` is answered as too slow, for its caller to do it as before.
  */
 
+/** What a route answers: a body as JSON, and its status — 400 for an ask it cannot read. */
+export interface RouteAnswer {
+  status: number;
+  body: unknown;
+}
+
+/** A route: the ask's body as JSON, unread — each route says what it takes. */
+export type Route = (asked: unknown) => Promise<RouteAnswer>;
+
 export interface KeeperServerOptions {
-  measure: (asked: KeptAsk) => Promise<KeptAnswer>;
+  /** Each path it answers, `/measure` and the rest. */
+  routes: Readonly<Record<string, Route>>;
   /** The longest one ask is worked on before it is answered as too slow. */
   askMs: number;
   /** The largest ask it reads: a list of elements, never more. */
@@ -29,36 +37,24 @@ export interface KeeperServer {
   lastUse: () => number;
 }
 
-const isAsk = (value: unknown): value is KeptAsk => {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
+/** What an ask it could not do is answered with: why, for its caller to do it as before. */
+export const problem = (why: string): { problem: string } => ({ problem: why });
 
-  const targets: unknown = Reflect.get(value, 'targets');
-
-  return (
-    typeof Reflect.get(value, 'url') === 'string' &&
-    typeof Reflect.get(value, 'width') === 'number' &&
-    typeof Reflect.get(value, 'height') === 'number' &&
-    Array.isArray(targets) &&
-    targets.every(target => typeof target === 'string')
-  );
-};
-
-export const keeperServer = ({ measure, askMs, bodyBytes, onError }: KeeperServerOptions): KeeperServer => {
+export const keeperServer = ({ routes, askMs, bodyBytes, onError }: KeeperServerOptions): KeeperServer => {
   let inFlight = 0;
   let lastUse = Date.now();
   let draining = false;
 
   const server = http.createServer((request, response) => {
-    const answer = (status: number, body: KeptAnswer): void => {
+    const answer = (status: number, body: unknown): void => {
       if (!response.headersSent) {
         response.writeHead(status, { 'content-type': 'application/json' });
         response.end(JSON.stringify(body));
       }
     };
-    if (request.method !== 'POST' || request.url !== '/measure' || draining) {
-      answer(404, { problem: 'not a kept browser’s ask' });
+    const route = request.method === 'POST' && request.url !== undefined ? routes[request.url] : undefined;
+    if (!route || draining) {
+      answer(404, problem('not a kept browser’s ask'));
 
       return;
     }
@@ -79,7 +75,7 @@ export const keeperServer = ({ measure, askMs, bodyBytes, onError }: KeeperServe
     request.on('data', (chunk: string) => {
       text += chunk;
       if (text.length > bodyBytes) {
-        answer(413, { problem: 'an ask too large' });
+        answer(413, problem('an ask too large'));
         request.destroy();
       }
     });
@@ -88,26 +84,20 @@ export const keeperServer = ({ measure, askMs, bodyBytes, onError }: KeeperServe
       try {
         asked = JSON.parse(text);
       } catch {
-        answer(400, { problem: 'an ask that is no JSON' });
-
-        return;
-      }
-
-      if (!isAsk(asked)) {
-        answer(400, { problem: 'an ask without its page and elements' });
+        answer(400, problem('an ask that is no JSON'));
 
         return;
       }
 
       let timer: NodeJS.Timeout | undefined;
-      const slow = new Promise<KeptAnswer>(resolve => {
-        timer = setTimeout(() => resolve({ problem: 'the kept browser took too long' }), askMs);
+      const slow = new Promise<RouteAnswer>(resolve => {
+        timer = setTimeout(() => resolve({ status: 200, body: problem('the kept browser took too long') }), askMs);
       });
-      void Promise.race([measure(asked), slow])
+      void Promise.race([route(asked), slow])
         .then(
-          body => answer(200, body),
+          answered => answer(answered.status, answered.body),
           (error: unknown) => {
-            answer(200, { problem: error instanceof Error ? (error.message.split('\n')[0] ?? 'failed') : 'failed' });
+            answer(200, problem(error instanceof Error ? (error.message.split('\n')[0] ?? 'failed') : 'failed'));
             onError?.(error);
           }
         )

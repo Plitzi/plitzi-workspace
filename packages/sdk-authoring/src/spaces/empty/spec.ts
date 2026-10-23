@@ -27,6 +27,7 @@ const main = styles('main', { width: '100%', 'max-width': '1120px', margin: '0px
 /** The line under a page's title: the palette's quiet colour. */
 const lede = styles('lede', { color: 'var(--muted)', margin: '8px 0px 0px' });
 
+/** The space: its pages, layout, styles and theme — what `npm run author` writes as the space's documents. */
 export const space: SpaceSpec = {
   name: 'Empty space',
   permanentUrl: 'empty-space',

@@ -84,4 +84,15 @@ describe('compareTexts', () => {
       'written Ganador → ★ GANADOR'
     ]);
   });
+
+  // lx-product: our "Agotado" button was compared with the original's "Agotado" stock label, above its button.
+  it('pairs the same words with the same kind of element first: a button with a button, a label with a label', () => {
+    const button = (y: number) => text('Agotado', { tag: 'button', y, width: 414, height: 44 });
+    const label = (y: number) => text('Agotado', { tag: 'span', y, width: 65, height: 20 });
+    // Ours draws the button first; the original, its stock label first: in order alone they cross.
+    const { differ, same } = compareTexts([button(300), label(360)], [label(300), button(360)], () => 0);
+
+    expect(differ.flatMap(each => each.differences)).toEqual(['y +60px', 'y -60px']);
+    expect(same).toBe(0);
+  });
 });

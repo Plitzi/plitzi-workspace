@@ -6,6 +6,7 @@ export const cssProperties: string[] = Array.from(new Set(Object.values(styleCon
 
 const cssPropertySet = new Set(cssProperties);
 
+/** Whether a key is a CSS property the platform styles by — a custom property (`--x`) is none, and is written as it is. */
 export const isCssProperty = (key: string): boolean => cssPropertySet.has(key);
 
 const toKebab = (key: string): string => key.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();

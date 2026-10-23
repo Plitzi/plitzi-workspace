@@ -37,9 +37,17 @@ const taskShowSummary = (taskId: string, options: RunCommandOptions & { full?: b
               'Acceptance',
               ...shown.task.acceptance.map(each => {
                 const result = shown.accepted?.find(one => one.said === acceptanceText(each));
-                const mark = result ? (result.ok ? '✓' : '✗') : shown.status === 'done' ? '✓' : '☐';
+                const mark = result?.amended
+                  ? '↻'
+                  : result
+                    ? result.ok
+                      ? '✓'
+                      : '✗'
+                    : shown.status === 'done'
+                      ? '✓'
+                      : '☐';
 
-                return `  ${mark} ${acceptanceText(each)}${typeof each === 'string' ? '' : chalk.dim(`  [check: ${each.check}]`)}${result ? secondRunText(result) : ''}${result && !result.ok ? `\n${(result.output ?? []).map(line => `      ${line}`).join('\n')}` : ''}`;
+                return `  ${mark} ${acceptanceText(each)}${typeof each === 'string' ? '' : chalk.dim(`  [check: ${each.check}]`)}${result ? secondRunText(result) : ''}${result?.amended ? chalk.dim(' — amended once done: held at the finish') : ''}${result && !result.ok && !result.amended ? `\n${(result.output ?? []).map(line => `      ${line}`).join('\n')}` : ''}`;
               })
             ]
           : []),

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { REPORTS_DIR } from './paths';
+import { tokensText } from './runMetrics';
 
 import type { RunReport } from './report';
 
@@ -35,8 +36,11 @@ export interface BenchLine {
   agentsWaited: number;
   handOffs: number;
   readTokens: number;
+  /** The agents' contexts at their end, as the harness counts them, a task. */
   tokens?: number;
   tokensPerTask?: number;
+  /** What the agents read again at the least, a task (`runMetrics.ts`'s `reread`): what a run spends. */
+  rereadPerTask?: number;
   /** Calls one agent made again and again (`runMetrics.ts`'s repeated). */
   repeated: number;
   /** Minutes the agents spent inside the CLI, waits left out — and how many commands ran past their budget. */
@@ -90,7 +94,12 @@ export const benchOf = (report: RunReport, cli: string): BenchLine => {
       ? {}
       : {
           tokens: metrics.cost.tokens,
-          ...(done > 0 ? { tokensPerTask: Math.round(metrics.cost.tokens / done) } : {})
+          ...(done > 0
+            ? {
+                tokensPerTask: Math.round(metrics.cost.tokens / done),
+                ...(metrics.cost.reread === undefined ? {} : { rereadPerTask: Math.round(metrics.cost.reread / done) })
+              }
+            : {})
         }),
     repeated: metrics.cost.repeated.length,
     cliMinutes: metrics.cost.cliMinutes,
@@ -127,18 +136,17 @@ export const readBench = async (root: string): Promise<BenchLine[]> => {
 // A measure kept as `null` — a NaN written to JSON, as lx-copy's agents' wait was — is no number to print.
 const cell = (value: number | null | undefined, suffix = ''): string =>
   typeof value !== 'number' || !Number.isFinite(value) ? '—' : `${String(value)}${suffix}`;
-const tokens = (value: number | undefined): string =>
-  value === undefined ? '—' : value >= 1000 ? `${String(Math.round(value / 100) / 10)}k` : String(value);
+const tokens = (value: number | undefined): string => (value === undefined ? '—' : tokensText(value));
 
 /** The runs as one table, each a row, oldest first — the last row the one the report is of, when one is. */
 export const benchText = (lines: readonly BenchLine[]): string[] =>
   lines.length === 0
     ? ['No run of this project was measured yet: each report keeps its run’s measures beside it.']
     : [
-        '| Run | Done | Worked (min) | Min / task | Rounds / task | Checks failed | Not theirs | Refused (identity) | UI wait | Lead wait | Rework wait | Agents waited | Handed off | Read | Tokens / task | Repeated | In the CLI (min) | Over budget |',
+        '| Run | Done | Worked (min) | Min / task | Rounds / task | Checks failed | Not theirs | Refused (identity) | UI wait | Lead wait | Rework wait | Agents waited | Handed off | Read | Context / task | Read again / task (≥) | Repeated | In the CLI (min) | Over budget |',
         '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
         ...lines.map(
           line =>
-            `| ${line.runId} | ${String(line.done)}/${String(line.tasks)} | ${cell(line.workMinutes)} | ${cell(line.minutesPerTask)} | ${String(line.roundsPerTask)} | ${String(line.checksFailedPct)}% | ${cell(line.checksNotOwn)} | ${String(line.refusals)} (${String(line.identityRefusals)}) | ${cell(line.uiWaitMedian)} | ${cell(line.leadWaitMedian)} | ${cell(line.reworkWaitMedian)} | ${cell(line.agentsWaited)} | ${String(line.handOffs)} | ${tokens(line.readTokens)} | ${tokens(line.tokensPerTask)} | ${String(line.repeated)} | ${cell(line.cliMinutes)} | ${cell(line.overBudget)} |`
+            `| ${line.runId} | ${String(line.done)}/${String(line.tasks)} | ${cell(line.workMinutes)} | ${cell(line.minutesPerTask)} | ${String(line.roundsPerTask)} | ${String(line.checksFailedPct)}% | ${cell(line.checksNotOwn)} | ${String(line.refusals)} (${String(line.identityRefusals)}) | ${cell(line.uiWaitMedian)} | ${cell(line.leadWaitMedian)} | ${cell(line.reworkWaitMedian)} | ${cell(line.agentsWaited)} | ${String(line.handOffs)} | ${tokens(line.readTokens)} | ${tokens(line.tokensPerTask)} | ${tokens(line.rereadPerTask)} | ${String(line.repeated)} | ${cell(line.cliMinutes)} | ${cell(line.overBudget)} |`
         )
       ];

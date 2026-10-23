@@ -26,6 +26,7 @@ import type { AuthoringCodeEntry } from './entry';
 
 export type { AuthoringCodeEntry } from './entry';
 
+/** Every code authoring and its lint answer with — what each means and what to write instead: `plitzi explain <code>`. */
 export const AUTHORING_CODES = {
   ...SPACE_CODES,
   ...PAGE_CODES,

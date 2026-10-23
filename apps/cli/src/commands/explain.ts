@@ -16,9 +16,11 @@ import { apiDeclarations, apiText } from './apiDeclarations';
 import { findProject } from './existingProject';
 import { pluginText, projectPlugins } from './projectPlugins';
 import { serverTasks, serverTaskText } from './serverTasks';
+import { skillPassages, skillsMentions } from './skillsMentions';
 import { fail } from './terminal';
 import { LINT_RULES } from '../lint/catalog';
 
+import type { SkillPassage } from './skillsMentions';
 import type { Explanation, SearchHit } from '@plitzi/sdk-authoring';
 import type { Command } from 'commander';
 
@@ -62,16 +64,25 @@ const commandsOf = (commands: readonly Command[], above = 'plitzi'): { name: str
 export const searchAll = (
   words: string,
   commands: readonly Command[],
-  limit = 10
-): (SearchHit | { kind: 'command' | 'code'; name: string; summary: string })[] => {
+  limit = 10,
+  /** The skills' passages, a project's: what its references teach, answered beside the catalogues. */
+  passages: readonly SkillPassage[] = []
+): (SearchHit | { kind: 'command' | 'code' | 'skill'; name: string; summary: string })[] => {
   const asked = [...new Set(searchWords(words))];
   const own = [
     ...commandsOf(commands).map(each => ({ kind: 'command' as const, ...each })),
-    ...[...CHECK_CODES.values()].map(code => ({ kind: 'code' as const, name: code.name, summary: code.means }))
+    ...[...CHECK_CODES.values()].map(code => ({ kind: 'code' as const, name: code.name, summary: code.means })),
+    // A passage is found by what it says, never by where it is: its file's name would match every word of a path.
+    ...passages.map(each => ({ kind: each.kind, name: each.name, summary: each.summary, scored: each.text }))
   ];
   const ranked = [
     ...explainSearch(words, limit).map(hit => ({ hit, score: searchScore(asked, hit.name, hit.summary) })),
-    ...own.map(hit => ({ hit, score: searchScore(asked, hit.name, hit.summary) })).filter(each => each.score > 0)
+    ...own
+      .map(hit => ({
+        hit: 'scored' in hit ? { kind: hit.kind, name: hit.name, summary: hit.summary } : hit,
+        score: 'scored' in hit ? searchScore(asked, '', hit.scored) : searchScore(asked, hit.name, hit.summary)
+      }))
+      .filter(each => each.score > 0)
   ];
 
   return ranked
@@ -143,7 +154,8 @@ export const explainCommand = async (
   commands: readonly Command[] = []
 ): Promise<void> => {
   if (options.search !== undefined) {
-    const hits = searchAll(options.search, commands);
+    const project = await findProject(process.cwd());
+    const hits = searchAll(options.search, commands, 10, skillPassages(project?.root ?? process.cwd()));
     if (hits.length === 0) {
       fail(
         `Nothing Plitzi has is described by "${options.search}" — other words, or what there is: --list ${kinds}, tasks. Something Plitzi should have: say it (plitzi run notice --plitzi "…", in a run).`
@@ -229,7 +241,20 @@ export const explainCommand = async (
     // Not a name the catalogues hold: an export of a @plitzi package, read from the types the project installed.
     const api = apiDeclarations(process.cwd(), name);
     if (api.length > 0) {
-      console.log(options.json ? JSON.stringify(api) : api.map(apiText).join('\n\n'));
+      const taught = skillsMentions(project?.root ?? process.cwd(), name);
+      console.log(
+        options.json
+          ? JSON.stringify(api.map(each => ({ ...each, ...(taught.length > 0 ? { skills: taught } : {}) })))
+          : [
+              api.map(apiText).join('\n\n'),
+              ...(taught.length > 0
+                ? [
+                    'Where the skills teach it:',
+                    ...taught.map(each => `  ${each.file}:${String(each.line)} — ${each.text}`)
+                  ]
+                : [])
+            ].join('\n')
+      );
 
       return;
     }

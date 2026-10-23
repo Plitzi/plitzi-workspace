@@ -147,6 +147,7 @@ const literal = (value: Literal, indent = ''): string => {
         .join(',\n')}\n${indent}}`;
 };
 
+/** A page's or element's name from an imported site's text: accents dropped, lowercase, words joined by dashes. */
 export const importSlug = (text: string): string =>
   text
     .normalize('NFKD')

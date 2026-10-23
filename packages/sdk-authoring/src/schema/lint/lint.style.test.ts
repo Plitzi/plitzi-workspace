@@ -355,6 +355,16 @@ describe('lintSpace', () => {
       expect(warningsOf(documents)).not.toContain('click-on-static-element');
     });
 
+    // lx-product: the carousel's dots were empty list items with a click, and neither author nor lint said a thing.
+    it('click-on-static-element on an empty item of a list: a control drawn as a shape, no backdrop', () => {
+      const documents = withChange(({ schema }) => {
+        addElement(schema, { id: 'dot', type: 'listItem', attributes: {} });
+        setFlow(schema, 'dot', [step('click', 'trigger', 'onClick', { elementId: 'dot' })]);
+      });
+
+      expect(warningsOf(documents)).toContain('click-on-static-element');
+    });
+
     it('label-ignored', () => {
       const documents = withChange(({ schema }) => {
         addElement(schema, { id: 'row', type: 'container', attributes: { subType: 'li', label: 'A row' } });

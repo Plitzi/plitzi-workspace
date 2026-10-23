@@ -38,9 +38,17 @@ describe('the bench of a project’s runs', () => {
     );
     // A run measured before checks said what was not the copy's has no count of them: "—", never 0.
     expect(text[2]).toBe(
-      '| velada-polish | 7/7 | 50 | 7.1 | 2 | 44% | — | 6 (0) | 3.6 | — | 6 | 31 | 0 | 182k | — | 2 | — | — |'
+      '| velada-polish | 7/7 | 50 | 7.1 | 2 | 44% | — | 6 (0) | 3.6 | — | 6 | 31 | 0 | 182k | — | — | 2 | — | — |'
     );
     expect(text[3]).toContain('| velada-next | 7/7 | 50 | 7.1 | 1.2 | 20% | 9 |');
+  });
+
+  // lx-product: dev-1's harness said 310k — its context at the end — and it read 30.9M again over 164 turns.
+  it('says the harness’s count as a context a task, and what was read again as what a run spends', () => {
+    const text = benchText([line('lx-product', { tokensPerTask: 113_000, rereadPerTask: 7_200_000 })]);
+
+    expect(text[0]).toContain('| Context / task | Read again / task (≥) |');
+    expect(text[2]).toContain('| 182k | 113k | 7.2M |');
   });
 
   it('says there is nothing to compare yet, rather than an empty table', () => {

@@ -394,7 +394,7 @@ export const finishRun = async (
 
         return state.status === 'done'
           ? (state.accepted ?? [])
-              .filter(each => each.ok)
+              .filter(each => each.ok || each.amended !== undefined)
               .map(each => ({ task: task.id, said: each.said, check: each.check }))
           : [];
       })

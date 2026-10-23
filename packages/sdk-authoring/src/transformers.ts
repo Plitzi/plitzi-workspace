@@ -28,6 +28,7 @@ const boolParam = (description: string, dflt: 'true' | 'false'): BuiltinParam =>
   options: ['true', 'false']
 });
 
+/** The transformers a binding takes its value through — a template, a date, a number — each with its options. */
 export const BUILTIN_TRANSFORMERS: Record<string, BuiltinTransformer> = {
   twigTemplate: {
     title: 'Twig Template',

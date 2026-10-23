@@ -181,6 +181,11 @@ const differencesOf = (here: PageText, there: PageText, shiftAt: (y: number) => 
   return differences;
 };
 
+/** What a visitor presses rather than reads. */
+const CONTROL_TAGS = new Set(['button', 'a', 'input', 'select', 'textarea', 'summary', 'label']);
+
+const isControl = (tag: string): boolean => CONTROL_TAGS.has(tag);
+
 /**
  * The texts of two pages paired by their words — the second "Pricing" with the second "Pricing" — and what each pair
  * does differently on the second page. `shiftAt` says how far down the second page the rows around a point of the first
@@ -207,8 +212,19 @@ export const compareTexts = (
       differ.push({ tag: text.tag, text: text.text, y: text.y, differences });
     }
   };
+  // The same words drawn as a control and as text are two things: a button "Agotado" paired with a stock label
+  // "Agotado" compared a 414px button with a 65px word (lx-product's design-1, misled into a wrong notice).
+  const takeLike = (list: PageText[] | undefined, text: PageText): PageText | undefined => {
+    if (!list || list.length === 0) {
+      return undefined;
+    }
+
+    const like = list.findIndex(each => isControl(each.tag) === isControl(text.tag));
+
+    return list.splice(like === -1 ? 0 : like, 1)[0];
+  };
   for (const text of [...here].sort((one, two) => one.y - two.y)) {
-    const match = waiting.get(text.text)?.shift();
+    const match = takeLike(waiting.get(text.text), text);
     if (match) {
       pair(text, match);
     } else {
@@ -231,7 +247,7 @@ export const compareTexts = (
 
   const onlyHere: string[] = [];
   for (const text of unpaired) {
-    const match = byWords.get(wordsOf(text.text))?.shift();
+    const match = takeLike(byWords.get(wordsOf(text.text)), text);
     if (match) {
       const left = waiting.get(match.text) ?? [];
       const at = left.indexOf(match);

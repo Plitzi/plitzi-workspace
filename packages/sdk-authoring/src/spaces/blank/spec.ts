@@ -239,6 +239,7 @@ const heroActions = container({
   ]
 });
 
+/** The space: its pages, layout, styles and theme — what `npm run author` writes as the space's documents. */
 export const space: SpaceSpec = {
   name: 'New space',
   permanentUrl: 'new-space',

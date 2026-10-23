@@ -1,5 +1,5 @@
 import type { Measured } from './measureValues';
-import type { KeptAnswer, KeptAsk } from '../browser/keptBrowser';
+import type { KeptAnswer, KeptAsk, KeptView } from '../browser/keptBrowser';
 
 /**
  * The other site's pages a kept browser holds, and what is read on them at once (`measureKeeper.ts` runs it): a page
@@ -27,8 +27,14 @@ interface Held<P> {
   readers: number;
 }
 
-export interface KeptPages {
+export interface KeptPages<P = unknown> {
   measure: (asked: KeptAsk) => Promise<KeptAnswer>;
+  /**
+   * A page of the other site loaded already, for one ask alone — a state put on it, a play — taken out of those kept,
+   * and another loaded in its place for the next: the site's settling (its widgets' scripts, seconds) paid ahead. With
+   * none free to take, a page of its own is opened, and one is loaded for the next.
+   */
+  claim: (asked: KeptView) => Promise<{ page: P } | { problem: string }>;
   /** The pages held now, retired ones too. */
   size: () => number;
 }
@@ -36,7 +42,7 @@ export interface KeptPages {
 export const keyOf = (asked: Pick<KeptAsk, 'url' | 'width' | 'scheme'>): string =>
   `${asked.url}|${String(asked.width)}|${asked.scheme ?? 'light'}`;
 
-export const keptPages = <P>({ open, read, close, max }: KeptPagesOptions<P>): KeptPages => {
+export const keptPages = <P>({ open, read, close, max }: KeptPagesOptions<P>): KeptPages<P> => {
   const pages = new Map<string, Held<P>>();
   /** Pages a `fresh` ask replaced, still read by an ask that took them before: closed at their last reader. */
   const retired = new Set<Held<P>>();
@@ -91,6 +97,39 @@ export const keptPages = <P>({ open, read, close, max }: KeptPagesOptions<P>): K
     return entry.done;
   };
 
+  // A page loaded for the next reader, before one asks: loaded as a reader would load it, then read by nobody.
+  const loadAhead = (key: string, asked: KeptView): void => {
+    if (pages.has(key) || loading.has(key)) {
+      return;
+    }
+
+    // Loaded as every kept page is, its motion held still: a claim says what it wants on the page it takes.
+    const { reducedMotion: _motion, ...view } = asked;
+    void awaitLoad(key, { ...view, targets: [] }).then(
+      held => {
+        if (!('problem' in held)) {
+          held.readers -= 1;
+        }
+      },
+      () => undefined
+    );
+  };
+
+  const claim = async (asked: KeptView): Promise<{ page: P } | { problem: string }> => {
+    const key = keyOf(asked);
+    const kept = pages.get(key);
+    if (kept && kept.readers === 0) {
+      pages.delete(key);
+      loadAhead(key, asked);
+
+      return { page: kept.page };
+    }
+
+    loadAhead(key, asked);
+
+    return open({ ...asked, targets: [] });
+  };
+
   const measure = async (asked: KeptAsk): Promise<KeptAnswer> => {
     const key = keyOf(asked);
     const kept = pages.get(key);
@@ -133,5 +172,5 @@ export const keptPages = <P>({ open, read, close, max }: KeptPagesOptions<P>): K
     }
   };
 
-  return { measure, size: () => pages.size + retired.size };
+  return { measure, claim, size: () => pages.size + retired.size };
 };

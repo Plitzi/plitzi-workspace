@@ -28,10 +28,12 @@ import { isResearch, startingState } from './spike';
 import { keepFiles } from './store';
 import { viewTask } from './taskStore';
 import { coLeadNames, ensureTeam, teamSize } from './team';
+import { tryLines } from './tryLines';
 
 import type { RunPlan, RunTask } from './model';
 import type { CheckedPlan } from './plan';
 import type { RunContext } from './run';
+import type { TriedLine } from './tryLines';
 
 /**
  * `plitzi run extend`: the next plan stacked on an open run — begun where the run's work is, its tasks' copies made
@@ -59,23 +61,25 @@ export interface Extended {
   checked?: CheckedPlan;
   /** What its check says and refuses nothing for: said when it is stacked too — a stage's said only by a dry run once. */
   notices?: string[];
+  /** `dryRun` with `lines`: each acceptance line run once on the run's work, with what it is (`tryLines.ts`). */
+  tried?: TriedLine[];
 }
 
 export const extendRun = async (
   ctx: RunContext,
   runId: string,
   file: string,
-  { dryRun = false }: { dryRun?: boolean } = {}
+  { dryRun = false, lines = false }: { dryRun?: boolean; lines?: boolean } = {}
 ): Promise<Extended> => {
   requireNoTask(ctx, 'extend a run');
   const loaded = await loadRun(ctx, runId);
   await requireLead(ctx, loaded, 'stack a stage on the run');
   assertStatus(loaded, ['open'], 'extend');
-  // A stage names itself and says its goal, or takes the run's: what is new in it is its tasks.
-  const next: RunPlan = await readPlanFile(file, {
-    runId: `${runId}-stage-${String(loaded.tasks.length)}`,
-    goal: loaded.plan.goal
-  });
+  // A stage names itself and says its goal, or takes the run's: what is new in it is its tasks. One that says the run's
+  // own name is given a stage's — lx-product's three stages all said "lx-product", and were stacked under the run's name.
+  const stageId = `${runId}-stage-${String(loaded.tasks.length)}`;
+  const read: RunPlan = await readPlanFile(file, { runId: stageId, goal: loaded.plan.goal });
+  const next: RunPlan = read.runId === runId ? { ...read, runId: stageId } : read;
   const { team } = await ensureTeam(ctx.root, next);
   // A stage worked by a larger team lets them work: never fewer than the run had.
   const allowed = Math.max(loaded.record.agents, teamSize(team));
@@ -203,7 +207,8 @@ export const extendRun = async (
       ready: tasks.filter(isReady).map(task => task.id),
       notes: next.notes?.length ?? 0,
       primer: primer !== undefined,
-      checked: { ...checked, tasks }
+      checked: { ...checked, tasks },
+      ...(lines ? { tried: await tryLines(ctx, loaded, tasks) } : {})
     };
   }
 

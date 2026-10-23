@@ -86,6 +86,7 @@ export const SCROLL_CALLBACKS = {
   }
 } satisfies Record<string, BuiltinElementCallback>;
 
+/** The callbacks every element answers — `setState`, `scrollTo`, `scrollIntoView`… — each with its params, as a flow's step calls them. */
 export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> = {
   setState: {
     title: 'Update Element (set attribute / state)',

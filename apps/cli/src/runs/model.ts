@@ -85,6 +85,11 @@ export interface AcceptanceResult {
    * there, nothing served), or could not run at all. The line's or the machine's, not the work's: the lead is told.
    */
   unanswered?: true;
+  /**
+   * Amended by the lead once its task was done, and not run since: held at the finish, on the whole result, like every
+   * line of a done task — when. `ok` stays false until a run says it.
+   */
+  amended?: string;
 }
 
 export interface PlannedTask {
@@ -682,6 +687,7 @@ export const isTaskState = (value: unknown): value is TaskState =>
           isString(result.check) &&
           typeof result.ok === 'boolean' &&
           optional(result.output, isStrings) &&
+          optional(result.amended, isString) &&
           optional(result.firstFailed, isStrings)
       )
   ) &&

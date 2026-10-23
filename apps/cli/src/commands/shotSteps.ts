@@ -43,6 +43,21 @@ const unquoted = (text: string): string => text.replace(/^(["'])(.*)\1$/s, '$2')
  * quoted one whole — `[aria-label="Search the site"] lamps` was cut at its first space into a selector that is none.
  */
 export const leadingTarget = (text: string): { target: string; rest: string } => {
+  // `ours => theirs`, as page play and --compare name one element on each page: the pair is the target, whole
+  // (lx-product: `drag product-slides => .js-media-list -200 0` was refused until the pair was quoted).
+  const first = oneTarget(text);
+  const paired = /^=>\s*(.*)$/s.exec(first.rest);
+  if (paired) {
+    const second = oneTarget(paired[1]);
+
+    return { target: `${first.target} => ${second.target}`, rest: second.rest };
+  }
+
+  return first;
+};
+
+/** One element at the head of a step's text: quoted, or up to the first space outside brackets and quotes. */
+const oneTarget = (text: string): { target: string; rest: string } => {
   const quoted = /^(["'])(.+?)\1(?:\s+|$)(.*)$/s.exec(text);
   if (quoted) {
     return { target: quoted[2], rest: quoted[3] };

@@ -7,6 +7,7 @@ import { ownScriptLines } from './ownScripts';
 import { buildReport } from './report';
 import { readRunLog } from './run';
 import { commandName } from './runMetrics';
+import { projectFormatter } from '../commands/projectFormatter';
 
 import type { LoadedRun, RunContext } from './run';
 
@@ -96,11 +97,16 @@ export const buildFeedback = async (ctx: RunContext, loaded: LoadedRun): Promise
   return sanitized(ctx.root, text);
 };
 
-/** The run's feedback, written in the project: where it is. */
+/**
+ * The run's feedback, written in the project as its own Prettier writes it — the agents' words in it too: a file the run
+ * leaves never fails the project's format check, which refuses the next run (lx-product). Where it is.
+ */
 export const writeFeedback = async (ctx: RunContext, loaded: LoadedRun): Promise<string> => {
   const file = feedbackFile(ctx.root, loaded.record.runId);
   await fs.mkdir(path.dirname(file), { recursive: true });
-  await fs.writeFile(file, `${await buildFeedback(ctx, loaded)}\n`);
+  const format = await projectFormatter(ctx.root);
+  const text = `${(await buildFeedback(ctx, loaded)).trimEnd()}\n`;
+  await fs.writeFile(file, await format(path.relative(ctx.root, file), text));
 
   return file;
 };

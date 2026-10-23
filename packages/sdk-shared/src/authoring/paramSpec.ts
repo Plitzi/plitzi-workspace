@@ -21,6 +21,7 @@ import type { InteractionParamType } from '../types';
 // `elementIds` is a list of element ids — the editor offers the space's elements of `elementType` to pick from.
 // `json` is any JSON value — text, a number, a flag, an object or a list: an action's `input`, a state value that may
 // be a whole row.
+/** The types a step's, an action's or a task's param takes: what its value is checked as, and the builder's widget for it. */
 export const BUILTIN_PARAM_TYPES = [
   'text',
   'textarea',

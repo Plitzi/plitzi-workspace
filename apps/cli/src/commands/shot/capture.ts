@@ -108,10 +108,12 @@ export const targetOn = async (
       }
 
       // `article-table td`: an element's name, then what is inside it — the name read as the element's, as a bare word
-      // is (lx-copy's dev-2 wrote [data-plitzi-el="article-table"] td by hand).
+      // is (lx-copy's dev-2 wrote [data-plitzi-el="article-table"] td by hand). `product-dot:nth-child(3)`: a name with
+      // a pseudo-class, an attribute or a class written on it, read the same way (lx-product's dots: 16 checks failed).
       const [first, ...rest] = target.trim().split(/\s+/);
-      if (rest.length > 0 && /^[A-Za-z_][\w-]*$/.test(first)) {
-        const inside = `${namedBy(first)} ${rest.join(' ')}`;
+      const leading = /^([A-Za-z_][\w-]*)((?:[:[.][^\s]*)?)$/.exec(first);
+      if (leading && (rest.length > 0 || leading[2] !== '')) {
+        const inside = [`${namedBy(leading[1])}${leading[2]}`, ...rest].join(' ');
         if (await found(inside)) {
           return { selector: inside, found: true };
         }

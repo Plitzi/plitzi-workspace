@@ -107,9 +107,11 @@ export const leadItems = (view: RunView, now: Date): LeadItem[] => {
       .map(item => ({
         key: TIMED.has(item.kind)
           ? `${item.kind}:${item.task ?? ''}`
-          : item.file === undefined
-            ? `${item.kind}:${item.task ?? ''}:${item.text}`
-            : `${item.kind}:${item.task ?? ''}:${item.file}`,
+          : item.file !== undefined
+            ? `${item.kind}:${item.task ?? ''}:${item.file}`
+            : item.subject !== undefined
+              ? `${item.kind}:${item.task ?? ''}:${item.subject}`
+              : `${item.kind}:${item.task ?? ''}:${item.text}`,
         text: item.text,
         ...(item.fyi && item.message ? { message: item.message } : {})
       }))

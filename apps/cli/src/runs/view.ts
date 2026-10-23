@@ -118,6 +118,11 @@ export interface Attention {
   task?: string;
   /** The file it is about, when it is about one: what keeps it the same notice while its words change. */
   file?: string;
+  /**
+   * What else keeps it the same notice while its words change — idle agents and how far the board is: lx-product's lead
+   * was woken eleven times for one idle designer, each time the cards its advice named changed.
+   */
+  subject?: string;
   /** A message to the lead: its id — and whether it is only to know, read once `run watch` showed it. */
   message?: string;
   fyi?: true;

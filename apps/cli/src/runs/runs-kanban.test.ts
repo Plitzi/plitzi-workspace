@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { addBacklogItem } from './backlog';
 import { openRun } from './run';
-import { completeTask, reviewTask, takeTask } from './tasks';
+import { completeTask, reviewTask, takeNext, takeTask } from './tasks';
 import { setTeamAgent } from './team';
 import { viewRun } from './view';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
@@ -48,5 +48,29 @@ describe('an agent with nothing to take', () => {
     expect(await idle()).toContain("stack the backlog's b-1 as cards");
     await reviewTask(lead(), 'es-launch', 't-menu', 'approve', []);
     expect(await idle()).toBe('');
+  });
+
+  // lx-product: the run's only UI reviewer was said idle — split a developer's card for it — eleven times, once each
+  // time the cards the advice named changed.
+  it('leaves out a designer while others’ work is under way, and says one idleness once whatever its words', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
+    await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.filter(task => ['t-menu', 't-about'].includes(task.id));
+    await openRun(lead(), await bench.writePlan(plan));
+    await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
+    // The designer is running, and asks for work while t-menu is under way: its UI review is coming.
+    await takeNext(bench.agent('design-1'), 'es-launch', 'designer', { timeoutMs: 30, everyMs: 10 });
+    const idle = async () => (await viewRun(lead(), 'es-launch')).attention.find(item => item.kind === 'idle-team');
+
+    expect((await idle())?.text ?? '').not.toContain('design-1');
+
+    await completed('dev-2', 't-about', 'src/space/pages/about.ts');
+    const before = await idle();
+    expect(before?.text).toContain('dev-2 has nothing to take');
+    await addBacklogItem(lead(), { text: 'The footer wraps at 390', by: 'lead' });
+    const after = await idle();
+    expect(after?.text).not.toBe(before?.text);
+    expect(after?.subject).toBe(before?.subject);
   });
 });

@@ -249,6 +249,10 @@ their estimates, from the last ten runs, with five tasks at least) and say the e
 goal the run's, and its team's size is held to the run's open work with it: their copies start from what it approved, they may
 wait for its tasks (`dependsOn`), their files are backed up beside its own, and one `finish` writes the stages into the
 project as one diff with one report. An id the run has is refused, and so is a file a task still at work holds. `run
+extend … --dry-run --lines` runs each of the stage's acceptance lines once on the run's approved work (`tryLines.ts`, on
+the finish's own `acceptanceOnResult`) and says what each is: passing already (it holds nothing yet), failing for its
+value (what the task changes), reading an element of ours not built yet, one of the other site's that is not there (the
+line is wrong), or one its command refuses — the lines to fix first. `run
 open` with a run going says to stack on it. `run pending` lists the project's runs not yet written into it — the ready
 ones first, each with the command that applies it; read off the project's own `tmp/plitzi-runs/`, so every terminal on
 it sees the same, and no other project's runs.
@@ -329,8 +333,10 @@ every task, spent the most).
 on demand (`StartedAgent.onDemand`). `run plan` says to start only the first; `run watch --until lead` tells the lead,
 role by role, when work waits — a task of its role ready, a UI review no designer is free for —
 and no running agent of it is free (`agents-needed`), naming the next one to start and its command — one on demand
-beside one running only when the work waiting and in hand, shared with it, is `TASKS_PER_AGENT` (2) each or more, as
-`run plan` counts a team's size (velada-shell's watch asked for dev-2 for two tasks the plan had said were too few); a
+beside one running only when the work waiting, coming and in hand, shared with it, is `TASKS_PER_AGENT` (2) each or
+more, as `run plan` counts a team's size (velada-shell's watch asked for dev-2 for two tasks the plan had said were too
+few) — coming is a task of the role that waits only for work under way (lx-product's t-buybox, behind t-description in
+hand: four cards for one developer, and no dev-2 asked); a
 UI review its author alone could make asks whatever the count — and an agent on
 demand that waits `ON_DEMAND_IDLE_MS` with nothing for it, and no task of its own that may come back, stops by itself,
 said in the activity — the lead starts it again when work waits. **The base goes first** (`freeBaseAgents`): a task ready is offered to an agent on demand only past what the
@@ -461,8 +467,15 @@ estimates, milestones, the goal, and notes more (sent to every task) — into `p
 telling each task changed what it now asks. A task nobody took leaves the run when the plan no longer has it — under
 the take's lock, refused for one taken, or one another task waits for — and the inventory may change, checked again
 over what is left (`inventoryProblems`): the scope narrows, a lead's or a person's choice, never in silence; more work
-is a stage (`run extend`). The run's shape otherwise — their files, `touches` — is refused, as is a task already done,
-every reason at once; who a task is for and when — its `role`, `quality` and `dependsOn` — changes while it is pending
+is a stage (`run extend`). The run's shape otherwise — their files, `touches` — is refused, as is anything of a task
+already done but its acceptance, every reason at once: a done task is held at the finish by its acceptance, run again on
+the whole result, so a line of the lead's found wrong there is amended — it takes the place of the one its review
+accepted (`state.accepted`), marked `amended` until the finish runs it, and is said, not told: nobody is at the task.
+A plan is any of the run's: the one it opened with, a stage's as stacked, or several joined by hand — each speaks for the
+plans whose tasks it holds, read off the log (`extend`'s `added`), never by the `runId` it says: a task leaves only when
+a plan that holds its fellows leaves it out, a plan it does not hold keeps its tasks and the pieces they prove, and the
+goal, the inventory and the reference change only with the plan the run opened with. A stage that says the run's own id
+is named a stage's (`<run>-stage-<n>`) as it is stacked; who a task is for and when — its `role`, `quality` and `dependsOn` — changes while it is pending
 or ready, and is refused once an agent took it, as is a `dependsOn` on a task the run lacks, on itself, or in a circle
 (`dependsOnProblems`): the lead's way to free a task held behind one it needs nothing from, which `run watch` says
 (`held-up`: a pending task whose every remaining dependency is past its work — in review, sent back, blocked — while
@@ -471,6 +484,9 @@ review a designer or another lead took ten minutes ago and has not decided while
 `idle-team`, the run as a kanban: an agent running with no card worked, no review in hand and none of its roles ready,
 said with the way to feed it — the backlog's items no task closes, the UI of a card in review a free designer could take
 (a send-back with `--skip-design lead` keeps the next look the lead's), a large card to split — or that nothing is left;
+never a designer while others' work is under way, which waits for its UI reviews, and said once for the same agents
+and the same board (`subject`: which agents, how many cards done), whatever its advice's words — lx-product's lead was
+woken eleven times for one waiting designer;
 `run plan` says the same of a plan with too few cards for its team); so is a plan that changes nothing. `run plan` says
 too each acceptance line a script of the lead's own checks (`ownScripts.ts`: an interpreter given a file, or the file) —
 written with Plitzi (`page play`, `page measure --same`, `page check --expect`) any agent reads and reruns it — and the
@@ -735,7 +751,10 @@ the log, the messages and the run's usage — what velada-polish's lead computed
   shots, a check's scripts: `PLITZI_USAGE_CHILD`) count none — their output is read by the command, not an agent. The
   report sums it by agent and by command, and lists the calls one agent made three times or more within ten minutes:
   a loop, or an answer it could not use. The harness's own count — the lead is handed it with each agent's end — is said
-  with `run report --tokens dev-1=208061,…` (`tokens.json`), by agent, in all, and a task.
+  with `run report --tokens dev-1=208061,…` (`tokens.json`), by agent, in all, and a task: what a Claude Code subagent
+  reports is its context at its end, not what it spent. What it spent is that context read again on every turn: the
+  report says it at the least (`reread`: its calls × half its end — a context grown from nothing), and the bench a task
+  (lx-product's dev-1 said 310k and read 30.9M again; the estimate gives 26M, the harness's own prompt left out).
 - **The bench** (`bench.ts`): the same measures, one line a run, kept as data beside the report
   (`<run>-<time>.json`, with the report whole), ends the report against the five runs before, and `plitzi run bench`
   lists every run: minutes a task, rounds a task, the share of checks failed for the copy's work and how many failed

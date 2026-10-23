@@ -39,6 +39,7 @@ import {
   TEAM_FILE,
   teamSize
 } from '../../runs/team';
+import { triedText } from '../../runs/tryLines';
 import { usageCaller } from '../../runs/usage';
 import { planSkills } from '../upgrade';
 
@@ -248,12 +249,15 @@ const openRunOf = async (ctx: RunContext): Promise<{ runId: string; record: RunR
 export const runExtend = (
   runId: string | undefined,
   file: string,
-  options: PlanOptions & { dryRun?: boolean }
+  options: PlanOptions & { dryRun?: boolean; lines?: boolean }
 ): Promise<void> =>
   act(
     options,
     async ctx =>
-      extendRun(ctx, await runOf(ctx, options, runId), path.resolve(file), { dryRun: options.dryRun ?? false }),
+      extendRun(ctx, await runOf(ctx, options, runId), path.resolve(file), {
+        dryRun: options.dryRun ?? false,
+        lines: options.lines ?? false
+      }),
     extended =>
       [
         // A stage looked at before it is stacked — velada-polish's lead had no way but stacking it.
@@ -278,7 +282,10 @@ export const runExtend = (
               `  ${extended.newLeads.join(', ')} review beside you now: start each — plitzi task next --role lead --follow --take --agent <name>`
             ]
           : []),
-        ...(extended.notices ?? extended.checked?.notices ?? []).map(notice => `  · ${notice}`)
+        ...(extended.notices ?? extended.checked?.notices ?? []).map(notice => `  · ${notice}`),
+        ...(extended.tried && extended.tried.length > 0
+          ? ['Each line, run once on the run’s work as it is:', ...triedText(extended.tried)]
+          : [])
       ].join('\n')
   );
 
@@ -391,7 +398,11 @@ export const runAmend = (runId: string | undefined, file: string, options: RunCo
     amended =>
       [
         `Run "${amended.runId}" amended:`,
-        ...amended.tasks.map(each => `  ${each.task}: ${each.changed.join(', ')} — told, with what it now asks`),
+        ...amended.tasks.map(each =>
+          each.done
+            ? `  ${each.task}, done: its acceptance — held again at the finish, on the whole result (nobody is at it to tell)`
+            : `  ${each.task}: ${each.changed.join(', ')} — told, with what it now asks`
+        ),
         ...(amended.notes.length > 0 ? [`  ${String(amended.notes.length)} new note(s), sent to every task`] : []),
         ...(amended.goal === undefined ? [] : [`  the goal: ${amended.goal}`]),
         ...(amended.reference === undefined

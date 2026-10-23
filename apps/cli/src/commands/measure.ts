@@ -194,7 +194,9 @@ export const measureOn = async (page: BrowserPage, target: string): Promise<Meas
           const styles: Record<string, string> = Object.fromEntries(
             properties.map(property => [property, computed.getPropertyValue(property)])
           );
-          styles.x = `${String(Math.round(node.getBoundingClientRect().left))}px`;
+          const placed = node.getBoundingClientRect();
+          styles.x = `${String(Math.round(placed.left))}px`;
+          styles.y = `${String(Math.round(placed.top + window.scrollY))}px`;
           // The transform that applies: `translate`, `rotate` and `scale` — what Tailwind 4 writes `rotate-45` as — then
           // `transform`, as CSS composes them. Read alone, the original's diamond was "transform: none" beside ours.
           const [moved, turned, sized] = ['translate', 'rotate', 'scale'].map(property =>
@@ -529,17 +531,18 @@ const readAt = async (
   const theirs: (Measured | { problem: string } | undefined)[] = pairs.map((_pair, index) => kept[index]?.measured);
   const missing = target === undefined ? [] : pairs.flatMap((_pair, index) => (theirs[index] ? [] : [index]));
   if (target !== undefined && missing.length > 0) {
-    // Read in the kept browser, where the other page stays loaded between calls — a state put on a page would be left
-    // there for the next reader, and a time zone is its context's: those read on a page of their own, as before.
+    // Read in the kept browser, its pages loaded between calls — one in a state on a page no other reader shares, loaded
+    // ahead. A time zone is its context's: read here.
     const keptReadings =
-      view.state === undefined && view.timezone === undefined
+      view.timezone === undefined
         ? await keptMeasure(root, {
             url: target,
             width: view.width,
             height: 900,
             ...(view.scheme ? { scheme: view.scheme } : {}),
             targets: missing.map(index => pairs[index].there),
-            ...(options.fresh ? { fresh: true } : {})
+            ...(options.fresh ? { fresh: true } : {}),
+            ...(view.state && { state: { kind: view.state.kind, targets: view.state.pairs.map(pair => pair.there) } })
           })
         : undefined;
     // Answered with readings, they are what was read; answered with a problem of its own — on its way out, too slow — or

@@ -72,6 +72,23 @@ describe('agents on demand', () => {
     expect(stopped).toMatchObject({ finished: true, why: expect.stringContaining('you are on demand') as unknown });
   });
 
+  // lx-product: t-buybox waited for t-description alone, in hand — four cards for one developer, and no dev-2 asked.
+  it('counts as coming a task that waits only for work under way', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 1 });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.map(task => (task.id === 't-book' ? { ...task, dependsOn: ['t-home'] } : task));
+    await openRun(lead(), await bench.writePlan(plan));
+    bench.advance(STARTING_MS);
+    await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
+
+    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
+      expect.objectContaining({
+        kind: 'agents-needed',
+        text: expect.stringContaining('start dev-2, on demand') as unknown
+      })
+    );
+  });
+
   it('asks for one on demand once the work waiting, shared with it, is worth its start', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 1 });
     // Three rounds of the bench's tasks, each its own files: work enough for two.

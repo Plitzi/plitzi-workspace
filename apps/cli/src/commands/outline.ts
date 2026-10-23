@@ -4,6 +4,7 @@ import { launchBrowser } from '../browser';
 import { projectHere } from './existingProject';
 import { ourPage, pairOf } from './measure';
 import { putIn } from './measureState';
+import { keptOutline } from '../browser/keptBrowser';
 import { originHere } from '../runs/copyServer';
 import { targetOn } from './shot/capture';
 import { pageAnswered } from './shot/remote';
@@ -61,6 +62,11 @@ const WORDS = 32;
  */
 export const outlineIn = (input: {
   within?: string;
+  /**
+   * The attribute marking what was shown before a click: listed are only the elements it opened — each opened part from
+   * depth 0 — and the rest walked through unlisted (lx-product: the open menu came cut by --depth under the whole page).
+   */
+  opened?: string;
   depth: number;
   limit: number;
   words: number;
@@ -129,6 +135,12 @@ export const outlineIn = (input: {
         continue;
       }
 
+      // Shown before the click: not what it opened — what it opened may be inside it.
+      if (input.opened !== undefined && child.hasAttribute(input.opened)) {
+        walk(child, depth);
+        continue;
+      }
+
       if (depth > input.depth || elements.length >= input.limit) {
         more += 1 + child.querySelectorAll('*').length;
         continue;
@@ -165,9 +177,25 @@ export const outlineIn = (input: {
   return { elements, more };
 };
 
+/** The attribute marking what a page showed before a click, removed with the page. */
+const OPENED_MARK = 'data-plitzi-outline-before';
+
+/** Run in the page: every element shown now, marked — what a click shows next is what lacks the mark. */
+export const markShown = (mark: string): void => {
+  for (const node of document.querySelectorAll('body *')) {
+    const box = node.getBoundingClientRect();
+    if (box.width > 0 && box.height > 0 && getComputedStyle(node).visibility === 'visible') {
+      node.setAttribute(mark, '');
+    }
+  }
+};
+
 /** An outline in lines: indented by depth, each element's selector, box and first words. */
-export const outlineText = (outline: Outline, within?: string): string[] => [
-  chalk.bold(`${outline.url} at ${String(outline.width)} px${within === undefined ? '' : ` — inside ${within}`}`),
+export const outlineText = (outline: Outline, within?: string, opened = false): string[] => [
+  chalk.bold(
+    `${outline.url} at ${String(outline.width)} px${opened ? ' — what the click opened' : within === undefined ? '' : ` — inside ${within}`}`
+  ),
+  ...(opened && outline.elements.length === 0 ? [chalk.yellow('  nothing new is shown after the click')] : []),
   ...outline.elements.map(
     each =>
       `${'  '.repeat(each.depth)}${each.element ?? each.selector}  ${chalk.dim(`${String(each.box.width)}×${String(each.box.height)} at ${String(each.box.x)},${String(each.box.y)}`)}${each.text === undefined ? '' : ` “${each.text}”`}`
@@ -177,6 +205,48 @@ export const outlineText = (outline: Outline, within?: string): string[] => [
     : []),
   chalk.dim('Each is what page measure takes: plitzi page measure <path> "<ours> => <one of these>" --compare <url>')
 ];
+
+/**
+ * A page outlined as it is open: its elements clicked first — what they opened listed alone, unless a part is named —
+ * then the part named, or the whole page. What `page outline` does on a page of its own and the kept browser does on a
+ * warm one (`keeperRoutes.ts`); `phase` says what failed: a click, the part, or the reading.
+ */
+export const outlineOnPage = async (
+  page: BrowserPage,
+  asked: { clicks?: readonly string[]; within?: string; depth: number; limit: number; words: number }
+): Promise<
+  { outline: Omit<Outline, 'url' | 'width'>; opened: boolean } | { problem: string; phase: 'click' | 'part' | 'read' }
+> => {
+  // What shows before the click is marked, so that what it opens is listed alone — unless a part is named.
+  const before = asked.clicks !== undefined && asked.within === undefined ? OPENED_MARK : undefined;
+  if (before !== undefined) {
+    await page.evaluate(markShown, before);
+  }
+
+  const clicked =
+    asked.clicks === undefined
+      ? undefined
+      : await putIn(page, { kind: 'click', pairs: asked.clicks.map(each => ({ here: each, there: each })) }, 'here');
+  if (clicked) {
+    return { ...clicked, phase: 'click' };
+  }
+
+  // The part named as every page command names an element: its name, a tag or any selector.
+  const part = asked.within === undefined ? undefined : await targetOn(page, asked.within);
+  if (part && 'problem' in part) {
+    return { ...part, phase: 'part' };
+  }
+
+  const read = await page.evaluate(outlineIn, {
+    ...(part ? { within: part.selector } : {}),
+    ...(before === undefined ? {} : { opened: before }),
+    depth: asked.depth,
+    limit: asked.limit,
+    words: asked.words
+  });
+
+  return 'problem' in read ? { ...read, phase: 'read' } : { outline: read, opened: before !== undefined };
+};
 
 export const outline = async (route: string, options: OutlineOptions): Promise<void> => {
   const project = await projectHere('whose page to outline');
@@ -197,6 +267,55 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
     return;
   }
 
+  const width = options.width ?? 1440;
+  const url = target ?? `${where?.origin ?? ''}${route}`;
+  const asked = {
+    ...(options.click
+      ? { clicks: options.click.map(each => pairOf(each)[target === undefined ? 'here' : 'there']) }
+      : {}),
+    ...(options.within === undefined ? {} : { within: options.within }),
+    depth: options.depth ?? DEPTH,
+    limit: LIMIT,
+    words: WORDS
+  };
+  const said = (
+    read: { outline: Omit<Outline, 'url' | 'width'>; opened: boolean } | { problem: string; phase: string }
+  ): void => {
+    if ('problem' in read) {
+      // A part or a reading this page refuses is the asker's; the other site not answering a click is the site's.
+      (read.phase === 'part' || (read.phase === 'read' && target === undefined) ? fail : unanswered)(
+        read.phase === 'read' ? `${read.problem} on ${url}` : read.problem
+      );
+
+      return;
+    }
+
+    const result: Outline = { url, width, ...read.outline };
+    console.log(
+      options.json
+        ? JSON.stringify(result)
+        : outlineText(result, read.opened ? undefined : options.within, read.opened).join('\n')
+    );
+  };
+
+  // The other site outlined warm in the kept browser, on a page of its own: launched and loaded cold, 15 s a call
+  // (lx-product's dev-2, 28 calls). Not answered there, it is read here as before.
+  if (target !== undefined) {
+    const kept = await keptOutline(project.root, {
+      url: target,
+      width,
+      height: 900,
+      reducedMotion: true,
+      ...(options.scheme ? { scheme: options.scheme } : {}),
+      ...asked
+    });
+    if (kept && 'outline' in kept) {
+      said({ outline: kept.outline, opened: asked.clicks !== undefined && asked.within === undefined });
+
+      return;
+    }
+  }
+
   const browser = await launchBrowser(project.root);
   if ('problem' in browser) {
     unanswered(browser.problem);
@@ -204,7 +323,6 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
     return;
   }
 
-  const width = options.width ?? 1440;
   try {
     const opened: { page: BrowserPage } | { problem: string } =
       target !== undefined
@@ -217,46 +335,14 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
         : await ourPage(browser, where?.origin ?? '', route, {
             width,
             ...(options.scheme ? { scheme: options.scheme } : {})
-          }).then(read => (read.answered ? read : { problem: `nothing answers at ${where?.origin ?? ''}${route}` }));
+          }).then(read => (read.answered ? read : { problem: `nothing answers at ${url}` }));
     if ('problem' in opened) {
       unanswered(opened.problem);
 
       return;
     }
 
-    const side = target === undefined ? 'here' : 'there';
-    const clicked =
-      options.click === undefined
-        ? undefined
-        : await putIn(opened.page, { kind: 'click', pairs: options.click.map(pairOf) }, side);
-    if (clicked) {
-      unanswered(clicked.problem);
-
-      return;
-    }
-
-    // The part named as every page command names an element: its name, a tag or any selector.
-    const part = options.within === undefined ? undefined : await targetOn(opened.page, options.within);
-    if (part && 'problem' in part) {
-      fail(part.problem);
-
-      return;
-    }
-
-    const read = await opened.page.evaluate(outlineIn, {
-      ...(part ? { within: part.selector } : {}),
-      depth: options.depth ?? DEPTH,
-      limit: LIMIT,
-      words: WORDS
-    });
-    if ('problem' in read) {
-      (target === undefined ? fail : unanswered)(`${read.problem} on ${target ?? `${where?.origin ?? ''}${route}`}`);
-
-      return;
-    }
-
-    const result: Outline = { url: target ?? `${where?.origin ?? ''}${route}`, width, ...read };
-    console.log(options.json ? JSON.stringify(result) : outlineText(result, options.within).join('\n'));
+    said(await outlineOnPage(opened.page, asked));
   } finally {
     await browser.close();
   }

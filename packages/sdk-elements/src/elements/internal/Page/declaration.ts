@@ -15,6 +15,7 @@ export const DOCUMENT_SCROLLS = ['locked', 'noBounce'] as const;
 
 export type DocumentScroll = (typeof DOCUMENT_SCROLLS)[number];
 
+/** Whether a value is one of the page's `documentScroll` settings: `locked` or `noBounce`. */
 export const isDocumentScroll = (value: unknown): value is DocumentScroll =>
   DOCUMENT_SCROLLS.some(documentScroll => documentScroll === value);
 

@@ -1098,3 +1098,35 @@ theirs"`) at every width in one call and one browser, reads the other page witho
   page loads once for every ask meanwhile, a page being read is never closed under its reader, and any problem of its
   own reads the page as before. It stops 5 minutes after its last use, within the hour whatever happens, and when a run
   finishes or is aborted (`PLITZI_KEEP_BROWSER=0` keeps none).
+- **What a run leaves in the project passes its format check** (`@plitzi/cli`): the run's feedback is written as the
+  project's own Prettier writes it — it ended in a blank line, and the project's check refused the next run — and the
+  backlog as Prettier leaves JSON.
+- **A run's plans amended as the lead means them** (`@plitzi/cli`): `run amend` takes a done task's acceptance — the
+  finish holds the task to the amended line, run on the whole result (a bound of the lead's found too tight held a finish
+  with no way out) — and refuses the rest of a done task's ask, naming it. Any of the run's plans amends it — the one it
+  opened with, a stage's as stacked, or several joined by hand — each for the tasks of the plans it holds, read off the
+  run's log: a stage's plan no longer reads as the run's and drops the scope, and a joined plan that leaves a stage out
+  keeps that stage's tasks. A stage that says the run's own id is named a stage's as it is stacked.
+- **What lx-product's agents spent their time and tokens on, fixed** (`@plitzi/cli`, `@plitzi/sdk-authoring`,
+  `@plitzi/sdk-shared`, `@plitzi/sdk-elements`):
+  - The kept browser serves the other site's stateful reads too — `page measure --click/--hover`, `page play`'s other
+    side, `page outline --compare` — each on a page of its own taken from those it keeps, loaded ahead and replaced for
+    the next, in one context whose cache holds the site: a clicked measure 9.7 s → 4.6, a play 10.3 → 3.6, an outline
+    6.8 → 1.7–3.2. A play's page is held for it alone and closed by the play, or by the kept browser once unused a minute.
+  - `explain` of an export says the fields of what it takes and where the skills teach it; every export of
+    `@plitzi/sdk-authoring` carries a doc (held by a test), `defineAction` and `taskAction` with examples; `explain
+    --search` reads the skills' references too.
+  - An element named with a selector on it (`product-dot:nth-child(3)`) is that element, on every page command; a
+    step's `ours => theirs` pair is read whole in a drag or a type.
+  - `run extend --dry-run --lines` runs each of a stage's lines once on the run's work and says what each is.
+  - `page measure` reads `list-style` and `y`, and `--same` holds a box's size within a thousandth of it; `page play`
+    says a step that did nothing, never passes beside an element not on the page, reads a part by the row it scrolls;
+    `page outline --click` lists what the click opened; `page shot --steps` pictures what its last action leaves;
+    `page shot --compare` pairs the same words with the same kind of element first; `--clip` with a pair says what to
+    give it instead.
+  - `click-on-static-element` warns of an empty list item with a click (a carousel's dot): an empty container alone is a
+    backdrop.
+  - The report says what the agents read again at the least (`reread`), beside the harness's count, which is their
+    context at its end; the bench a task. `run watch` counts as coming a task that waits only for work under way, never
+    says a designer waiting for UI reviews is idle, and says one idleness once.
+  - A module only a page imports is the task's that names it, not the page's: a page split by its modules is a plan.

@@ -119,6 +119,7 @@ export interface SpaceHandles {
  */
 const escapeId = (value: string): string => value.replace(/["\\]/g, '\\$&');
 
+/** The CSS selector an element is found by on a rendered page: its `data-plitzi-el`, as tests and page commands read it. */
 export const selectorFor = (id: string): string => `[data-plitzi-el="${escapeId(id)}"]`;
 
 /**
@@ -130,6 +131,7 @@ export const instanceSelectorFor = (id: string): string => `[data-plitzi-instanc
 /** The route for a slug: authoring stores it bare, and everything that navigates wants it absolute. */
 export const pathForSlug = (slug: string): string => (slug ? `/${slug}` : '/');
 
+/** The handles of a space's pages and layouts — each one's path and element selectors — that tests and agents address it by. */
 export const buildHandles = (
   pages: Record<string, PageHandle>,
   layouts: Record<string, LayoutHandle> = {}

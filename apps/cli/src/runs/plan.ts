@@ -345,6 +345,19 @@ export const checkPlan = async (
   }
 
   const holder = new Map<string, string>();
+  // A file a task names is that task's, before any other's page brings it as a module only the page imports: a page
+  // split by its modules — its gallery one task's, its buying box another's — gives each module to its namer
+  // (lx-product: the refusal's way out, the module in "touches", refused a task that then wrote no file).
+  const namedBy = new Map<string, string>();
+  for (const task of plan.tasks) {
+    for (const raw of task.files) {
+      const file = normalised(raw);
+      if (file !== undefined && !namedBy.has(file)) {
+        namedBy.set(file, task.id);
+      }
+    }
+  }
+
   // Two paths that differ only in case are one file where the project is cloned on macOS or Windows.
   const byCase = new Map<string, { file: string; task: string }>();
   const created: string[] = [];
@@ -378,7 +391,9 @@ export const checkPlan = async (
       files.push(file);
     }
 
-    const expanded = expandFiles(ownership, files);
+    const expanded = expandFiles(ownership, files).filter(
+      file => files.includes(file) || (namedBy.get(file) ?? task.id) === task.id
+    );
     for (const file of expanded) {
       if ((await fs.stat(under(root, file)).catch(() => undefined))?.isDirectory()) {
         problems.push(

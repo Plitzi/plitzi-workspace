@@ -12,8 +12,10 @@ import type { CssProps, StyleRules } from './types';
 export const column = (gap: string, extra: CssProps = {}): StyleRules =>
   css({ display: 'flex', 'flex-direction': 'column', gap, ...extra });
 
+/** A flex row with this gap — and anything else asked, as plain CSS: `row('8px', { 'align-items': 'center' })`. */
 export const row = (gap: string, extra: CssProps = {}): StyleRules =>
   css({ display: 'flex', 'flex-direction': 'row', gap, ...extra });
 
+/** A grid of these columns and this gap: `grid('repeat(3, 1fr)', '24px')`. */
 export const grid = (columns: string, gap: string, extra: CssProps = {}): StyleRules =>
   css({ display: 'grid', 'grid-template-columns': columns, gap, ...extra });

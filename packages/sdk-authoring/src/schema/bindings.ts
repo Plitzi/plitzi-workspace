@@ -41,6 +41,7 @@ export const scopedHint = (name: string, ids: Iterable<string>): string => {
     : '';
 };
 
+/** The sources every element reads without a provider around it: `state`, `navigation`, `auth`, `theme`, `host`… */
 export const GLOBAL_SOURCES: readonly string[] = RUNTIME_GLOBAL_SOURCES;
 
 /** What an element inside a component can read besides its own tree: the globals, and what its instance hands in. */
@@ -283,6 +284,10 @@ const assertOneVariantBinding = (bindings: readonly BindingSpec[]): void => {
   }
 };
 
+/**
+ * An element's bindings with its `visible` condition among them — how an authored element is hidden: a source, a
+ * template or a condition, and `false` for one that starts hidden with nothing bound.
+ */
 export const withVisibility = (spec: {
   bind?: BindingsSpec;
   visible?: string | false | VisibleCondition;
@@ -320,6 +325,7 @@ export const authorBinding = (index: number, spec: BindingSpec): ElementBinding 
   ...(spec.enabled === undefined ? {} : { enabled: spec.enabled })
 });
 
+/** An element's bindings as the document keeps them: by category (`attributes`, `style`, `initialState`), each source resolved. */
 export const groupBindings = (
   path: string,
   bind: BindingsSpec,

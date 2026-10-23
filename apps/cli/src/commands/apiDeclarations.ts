@@ -24,6 +24,12 @@ export interface ApiExplanation {
   summary: string;
   /** Its declaration as published, cut after `WRITTEN_LINES`. */
   written: string;
+  /**
+   * What a function takes, field by field: each parameter whose type is a named object of the package's — its
+   * constraint, for a generic one — with what each field's doc says first. lx-product's dev-1 read the `.d.ts` 25 times
+   * for `defineAction`'s `ActionSpec` and `taskAction`'s options, which `explain` gave as a signature alone.
+   */
+  takes?: { type: string; fields: { name: string; optional: boolean; doc: string }[] }[];
 }
 
 const SCOPE = '@plitzi';
@@ -32,6 +38,50 @@ const SCOPE = '@plitzi';
 const FIRST = 'sdk-authoring';
 
 const WRITTEN_LINES = 14;
+
+/** The fields said of each type a function takes, at most. */
+const FIELDS_SAID = 16;
+
+/** The first sentence of a symbol's doc: what a field is, in a line. */
+const firstLine = (ts: typeof TypeScript, checker: TypeScript.TypeChecker, symbol: TypeScript.Symbol): string =>
+  (ts.displayPartsToString(symbol.getDocumentationComment(checker)).split(/\n\s*\n|(?<=\.)\s/)[0] ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/** The named object types a function's parameters are — a generic one's constraint — field by field. */
+const takesOf = (
+  ts: typeof TypeScript,
+  checker: TypeScript.TypeChecker,
+  declared: TypeScript.Symbol,
+  at: TypeScript.Node
+): NonNullable<ApiExplanation['takes']> => {
+  const signature = checker.getTypeOfSymbolAtLocation(declared, at).getCallSignatures().at(0);
+  if (!signature) {
+    return [];
+  }
+
+  return signature.parameters.flatMap(parameter => {
+    const raw = checker.getTypeOfSymbolAtLocation(parameter, at);
+    const type = raw.isTypeParameter() ? (checker.getBaseConstraintOfType(raw) ?? raw) : raw;
+    const named = type.aliasSymbol ?? type.getSymbol();
+    // An object a @plitzi package names (`ActionSpec`, `TaskActionOptions`): never a literal type, a string, a list.
+    const ours = named?.declarations?.some(each => each.getSourceFile().fileName.includes(`/${SCOPE}/`)) ?? false;
+    if (!named || !ours || named.name.startsWith('__') || !(type.flags & ts.TypeFlags.Object)) {
+      return [];
+    }
+
+    const fields = checker
+      .getPropertiesOfType(type)
+      .slice(0, FIELDS_SAID)
+      .map(field => ({
+        name: field.name,
+        optional: (field.flags & ts.SymbolFlags.Optional) !== 0,
+        doc: firstLine(ts, checker, field)
+      }));
+
+    return fields.length > 0 ? [{ type: named.name, fields }] : [];
+  });
+};
 
 /** The `node_modules/@plitzi` nearest `root`. */
 const scopeDir = (root: string): string | undefined => {
@@ -230,6 +280,7 @@ export const apiDeclarations = (root: string, name: string): ApiExplanation[] =>
       const found = lookUp(ts, checker, program.getSourceFile(entry.file), name);
       if (found) {
         const { declared, sourceFile, statements } = found;
+        const takes = takesOf(ts, checker, declared, statements[0]);
 
         return [
           {
@@ -237,7 +288,8 @@ export const apiDeclarations = (root: string, name: string): ApiExplanation[] =>
             name,
             from: entry.from,
             summary: summaryOf(sourceFile, statements[0]),
-            written: writtenOf(sourceFile, statements, declared.name, name)
+            written: writtenOf(sourceFile, statements, declared.name, name),
+            ...(takes.length > 0 ? { takes } : {})
           }
         ];
       }
@@ -250,5 +302,9 @@ export const apiDeclarations = (root: string, name: string): ApiExplanation[] =>
 export const apiText = (explanation: ApiExplanation): string =>
   [
     `${explanation.name} — export of ${explanation.from}${explanation.summary ? `: ${explanation.summary}` : ''}`,
-    explanation.written
+    explanation.written,
+    ...(explanation.takes ?? []).flatMap(taken => [
+      `Takes ${taken.type}:`,
+      ...taken.fields.map(field => `  ${field.name}${field.optional ? '?' : ''}${field.doc ? ` — ${field.doc}` : ''}`)
+    ])
   ].join('\n');

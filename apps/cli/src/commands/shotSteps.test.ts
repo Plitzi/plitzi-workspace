@@ -78,4 +78,12 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
         '--steps has no step: click, hover, scroll, type, drag, press, wait, wait-for, shot, frames, separated by ";"'
     });
   });
+
+  // lx-product: `drag product-slides => .js-media-list -200 0` was refused until the pair was quoted.
+  it('reads an element named on both pages — ours => theirs — as one, before what a drag or a type takes', () => {
+    expect(parseSteps('drag product-slides => .js-media-list -200 0; type q => ".search input" hola', 500)).toEqual([
+      { kind: 'drag', target: 'product-slides => .js-media-list', dx: -200, dy: 0 },
+      { kind: 'type', target: 'q => .search input', text: 'hola' }
+    ]);
+  });
 });

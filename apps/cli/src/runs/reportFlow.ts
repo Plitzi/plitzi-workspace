@@ -1,3 +1,5 @@
+import { tokensText } from './runMetrics';
+
 import type { RunMetrics } from './runMetrics';
 
 /**
@@ -7,8 +9,6 @@ import type { RunMetrics } from './runMetrics';
 
 const num = (value: number | undefined): string => (value === undefined ? '—' : String(value));
 const listed = (values: readonly number[]): string => (values.length === 0 ? '—' : values.join(', '));
-const tokensText = (value: number): string =>
-  value >= 1000 ? `${String(Math.round(value / 100) / 10)}k` : String(value);
 
 export const flowText = (metrics: RunMetrics): string[] => {
   const { checks, refusals, questions, cost } = metrics;
@@ -32,11 +32,11 @@ export const flowText = (metrics: RunMetrics): string[] => {
         `| ${task.task} | ${task.agents.join(', ') || '—'} | ${num(task.toTake)} | ${String(Math.round(task.worked * 10) / 10)} | ${String(task.rounds.ui)} / ${String(task.rounds.lead)} | ${listed(task.uiWaits)} | ${listed(task.uiReviews)} | ${listed(task.leadWaits)} | ${listed(task.reworkWaits)} | ${String(task.checks.failed)} of ${String(task.checks.run)} | ${String(task.handOffs)} |`
     ),
     '',
-    '| Agent | Joined | Stopped | Tasks | Completes | Checks failed | Refused | Waited for work | Reviews UI (changes) / lead (changes), median | Calls | Read (≈tokens) | Harness tokens |',
+    '| Agent | Joined | Stopped | Tasks | Completes | Checks failed | Refused | Waited for work | Reviews UI (changes) / lead (changes), median | Calls | Read (≈tokens) | Harness tokens (its context at the end) | Read again (≥) |',
     '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
     ...metrics.agents.map(
       agent =>
-        `| ${agent.agent} | ${agent.joinedAt?.slice(11, 16) ?? '—'} | ${agent.stoppedAt?.slice(11, 16) ?? '—'} | ${agent.tasks.join(', ') || '—'} | ${String(agent.completes)} | ${String(agent.checks.failed)} of ${String(agent.checks.run)} | ${String(agent.refused)} | ${String(agent.waited)} | ${String(agent.reviews.ui)} (${String(agent.reviews.uiChanges)}) / ${String(agent.reviews.lead)} (${String(agent.reviews.leadChanges)}), ${num(agent.reviews.medianMinutes)} | ${String(agent.calls)} | ${tokensText(agent.readTokens)} | ${agent.tokens === undefined ? '—' : tokensText(agent.tokens)} |`
+        `| ${agent.agent} | ${agent.joinedAt?.slice(11, 16) ?? '—'} | ${agent.stoppedAt?.slice(11, 16) ?? '—'} | ${agent.tasks.join(', ') || '—'} | ${String(agent.completes)} | ${String(agent.checks.failed)} of ${String(agent.checks.run)} | ${String(agent.refused)} | ${String(agent.waited)} | ${String(agent.reviews.ui)} (${String(agent.reviews.uiChanges)}) / ${String(agent.reviews.lead)} (${String(agent.reviews.leadChanges)}), ${num(agent.reviews.medianMinutes)} | ${String(agent.calls)} | ${tokensText(agent.readTokens)} | ${agent.tokens === undefined ? '—' : tokensText(agent.tokens)} | ${agent.reread === undefined ? '—' : tokensText(agent.reread)} |`
     ),
     '',
     `- Checks: ${String(checks.failed)} of ${String(checks.run)} failed (${String(rate)}%)${
@@ -62,7 +62,7 @@ export const flowText = (metrics: RunMetrics): string[] => {
     '',
     '## Cost — what the CLI made the agents read',
     '',
-    `${String(cost.calls)} commands printed ≈${tokensText(cost.readTokens)} tokens to the agents${cost.tokens === undefined ? ' — the harness’s own count was not said (plitzi run report --tokens agent=count,…)' : `; the harness counted ${tokensText(cost.tokens)} in all`}.`,
+    `${String(cost.calls)} commands printed ≈${tokensText(cost.readTokens)} tokens to the agents${cost.tokens === undefined ? ' — the harness’s own count was not said (plitzi run report --tokens agent=count,…)' : `; the harness counted ${tokensText(cost.tokens)} in all — each agent's context at its end, read again on every turn: ${tokensText(cost.reread ?? 0)} at the least over their calls, what a run spends`}.`,
     '',
     `The agents spent ${String(cost.cliMinutes)} min inside the CLI's commands, waits left out — every second there is theirs times their calls.`,
     '',

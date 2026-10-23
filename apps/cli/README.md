@@ -342,14 +342,19 @@ section's class without a bottom padding, which nothing else says.
 page is made of as a visitor sees it — each shown element by a selector that finds it alone (its name on the project's
 page; its id, its tag and classes, or its place under an ancestor on another site), its box and its first words,
 indented by depth — the project's page, or with `--compare` the other site's: what to name after `=>` in `page measure`,
-an open drawer's too (`--click`), with no HTML fetched and searched.
+an open drawer's too (`--click`: what the click opened, alone, unless `--within` names a part), with no HTML fetched and
+searched.
 
 `page play <path> --steps "…" --read <el…> [--compare <url>] [--same moved,shown,enabled] [--width <px,px>]` plays an
 interaction step by step — the steps `page shot --steps` takes, but its pictures — and after each says of every element
 read how far its content moved (its scroll less its place: the same for a row that scrolls and one that slides by a
-transform), whether it is shown and whether it takes a press; a press on one hidden or out of use does nothing, as a
-visitor's. With `--compare` each step runs on the other site too, its elements after `=>`, and `--same` fails (exit 1)
-where a step leaves them otherwise there — a control's acceptance line, with no script of one's own.
+transform; a part that does not scroll itself, by the one row inside it that does — a carousel named by its track),
+whether it is shown (a box, not hidden, not transparent) and whether it takes a press (not disabled, not inert, its
+pointer events not none); a press on one hidden or out of use does nothing, as a visitor's, and is said beside its step.
+With `--compare` each step runs on the other site too, its elements after `=>` (a drag's or a type's pair whole: `drag
+row => .slides -200 0`), and `--same` fails (exit 1) where a step leaves them otherwise there — never passing beside an
+element read that is not on the page — a control's acceptance line, with no script of one's own. `page shot --steps`
+that ends on an action pictures what it leaves.
 
 `page same [paths…] --url <origin> --than <origin>` says whether pages draw the same on two servers of the project —
 every element on screen, its box, the style a reader sees and what its `::before`/`::after` draw, read, not pictured —
@@ -366,12 +371,15 @@ transform, transition, and what `::before`/`::after` draw — and, beside anothe
 that differs, here → there, what both inherit from their parent said apart, then the ones they share in a line. Every
 element at every width (`--width 390,1440`) is one call in one browser; the other page is read without a picture and
 kept 6 h (`--fresh` reads it again). An element of the other page not read before is read on that page as a browser
-kept between commands holds it loaded (`keptBrowser.ts`) — a second or so, where loading it again took several —
-and that browser stops by itself 5 minutes after its last use, within the hour whatever happens, and when a run
-ends (`run finish`, `run abort`); `PLITZI_KEEP_BROWSER=0` keeps none. `--same font-size,border,before:opacity` (shorthands `border`, `font`, `size`;
-a side alone, `margin-bottom`, `padding-top`) fails unless those are as the other page's — lengths to the pixel, half a
-pixel either way the same: an acceptance's line that holds a copy to its reference. `x` is where the box starts in the
-viewport — a column against the other's at 1920. `--hover` or
+kept between commands holds it loaded (`keptBrowser.ts`) — a second or so, where loading it again took several — and
+what is read in a state (`--click`, `--hover`), `page play`'s other side and `page outline --compare` take a page of
+its own from it, loaded ahead and replaced for the next; that browser stops by itself 5 minutes after its last use,
+within the hour whatever happens, and when a run ends (`run finish`, `run abort`); `PLITZI_KEEP_BROWSER=0` keeps none.
+`--same font-size,border,before:opacity` (shorthands `border`, `font`, `size`; a side alone, `margin-bottom`,
+`padding-top`) fails unless those are as the other page's — lengths within half a pixel, a box's size within a
+thousandth of it: an acceptance's line that holds a copy to its reference. `x` and `y` are where the box starts — `x`
+in the viewport, `y` down the page — and `list-style` how a list draws its markers. An element is named as every page
+command names one: its name, a selector, or its name with a selector on it (`product-dot:nth-child(3)`). `--hover` or
 `--focus "<ours> => <theirs>"` puts both pages in that state first, its transitions finished: what a hover changes,
 held by `--same` as the rest is; `--click "<ours> => <theirs>" …` clicks each in turn on both — a drawer, then a panel
 in it — and measures the open state they leave. A line height and a tracking are said as their `em` of the font beside the pixels

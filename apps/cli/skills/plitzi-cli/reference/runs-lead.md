@@ -123,7 +123,9 @@ applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** 
 ## Where leads went wrong
 
 - **A check you write, you run once** on the run's work first: a 404 page is `page check … --status 404`, a `--clip`
-  names an id the page has. One that cannot pass costs every try of the task's.
+  names an id the page has. One that cannot pass costs every try of the task's: `run extend <run> <stage.json> --dry-run
+  --lines` runs each line of a stage once and says what it is — what the task changes, a part it builds, or a line that
+  cannot pass (the other site has no such element, a command it refuses).
 - **One look, one task**; its files are where its elements are built.
 - **A question first**: it holds an agent — answer before your own work. `run watch` in the harness's background
   (never `&`), one at a time.
@@ -166,7 +168,9 @@ applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** 
   an agent with nothing to take (`idle-team`) and how to feed it.
 - **The designer's own task off the critical path** while it is the only one reviewing UI: what waits on it waits on
   every review too.
-- **A line of yours found wrong is amended** (`plitzi run amend`), never left red.
+- **A line of yours found wrong is amended** (`plitzi run amend`), never left red — a done task's too: the finish holds
+  it to the amended line. The plan you amend is any of the run's — the one it opened with, a stage's, or several joined:
+  each changes only the tasks of the plans it holds.
 - **Don't fix Plitzi mid-run**: note it (`run notice --plitzi "…"`) — the run's feedback to Plitzi, written as it ends
   (`.plitzi/feedback/<run>.md`, or `run feedback` before), carries it with what the CLI saw; the person shares it.
 - **Look where it changed**: a fix for light in light, one for the phone at 390 (`task look --scheme light --width 390`).

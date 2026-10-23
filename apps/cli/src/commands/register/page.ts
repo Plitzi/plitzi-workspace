@@ -175,7 +175,7 @@ export const registerPage = (pageGroup: Command): void => {
     .addOption(
       new Option(
         '--same <what>',
-        'Fail unless each step leaves them as the other page’s: moved,shown,enabled'
+        'Fail unless each step leaves them as the other page’s: moved (its content’s offset), shown (a box, not hidden, not transparent), enabled (takes a press: not disabled, not inert, pointer-events not none — a closed panel hidden by display or visibility still takes one)'
       ).argParser((value: string) => value.split(',').map(each => each.trim()))
     )
     .addOption(widthsOption('The viewport widths, separated by commas: the steps played at each', [1440]))

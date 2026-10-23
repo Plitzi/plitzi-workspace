@@ -107,6 +107,10 @@ const normalise = (rules: CssProps): CssProps => {
   return normalised;
 };
 
+/**
+ * Plain CSS as a class's rules: properties written as CSS writes them (`'font-size'`), numbers in pixels where CSS
+ * takes a length — refused, saying which, for a property CSS does not have or a value it cannot read.
+ */
 export const css = (input: CssProps): StyleRules => {
   const rules = normalise(input);
   assertValues(rules);

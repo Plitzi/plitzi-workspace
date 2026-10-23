@@ -155,4 +155,58 @@ describe('the pages a kept browser holds', () => {
     reads.forEach(read => read.finish());
     expect(await again).toEqual({ readings: [{ problem: 'h1 read on page 1' }] });
   });
+
+  // lx-product: a state read on the other site paid its settling — its widgets' scripts, seconds — every time.
+  it('hands a free kept page to one ask alone, and loads another in its place for the next', async () => {
+    const { pages, loads, reads, settle } = bench();
+    const first = pages.measure(ask('https://site.test/'));
+    await settle();
+    loads[0]?.land();
+    await settle();
+    reads[0]?.finish();
+    await first;
+
+    const taken = await pages.claim({ url: 'https://site.test/', width: 1440, height: 900 });
+    expect(taken).toEqual({ page: { id: 1 } });
+    // Its place loaded again, read by nobody until a reader comes.
+    expect(loads).toHaveLength(2);
+    loads[1]?.land();
+    await settle();
+    const after = pages.measure(ask('https://site.test/'));
+    await settle();
+    reads.at(-1)?.finish();
+    expect(await after).toEqual({ readings: [{ problem: 'h1 read on page 2' }] });
+  });
+
+  it('never takes a page being read: one of its own is opened, and one loaded ahead for the next', async () => {
+    const { pages, loads, settle } = bench();
+    const reading = pages.measure(ask('https://site.test/'));
+    await settle();
+    loads[0]?.land();
+    await settle();
+
+    const taken = pages.claim({ url: 'https://site.test/', width: 1440, height: 900 });
+    await settle();
+    // Its own page: the reader keeps page 1.
+    expect(loads).toHaveLength(2);
+    loads[1]?.land();
+    expect(await taken).toEqual({ page: { id: 2 } });
+    expect(pages.size()).toBe(1);
+    void reading;
+  });
+
+  it('opens a page of its own with none kept, and the page it loaded ahead is the next one’s', async () => {
+    const { pages, loads, settle } = bench();
+    const own = pages.claim({ url: 'https://site.test/', width: 390, height: 900 });
+    await settle();
+    expect(loads).toHaveLength(2);
+    loads.forEach(load => load.land());
+    await settle();
+
+    const opened = await own;
+    const next = await pages.claim({ url: 'https://site.test/', width: 390, height: 900 });
+    const ids = [opened, next].map(each => ('page' in each ? each.page.id : undefined));
+    expect(ids.every(id => typeof id === 'number')).toBe(true);
+    expect(ids[0]).not.toBe(ids[1]);
+  });
 });

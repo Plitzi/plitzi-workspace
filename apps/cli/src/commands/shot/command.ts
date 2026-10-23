@@ -305,6 +305,17 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
+  // A clip names this page's element alone: the other site's is found by lining the pages up (lx-product's design-1 wrote
+  // `--clip "product-about => #about-product"`, and was told the page had no element of that id).
+  if (options.clip?.includes('=>')) {
+    await browser.close();
+    fail(
+      `--clip names this page's element alone — ${options.clip.split('=>')[0]?.trim() ?? ''} — the other site's is found by lining the pages up. To set one element beside its counterpart by name, measure it: page measure <path> "${options.clip}" --compare <url>.`
+    );
+
+    return;
+  }
+
   // Beside another site, a clip is the section of the report kept: both pages are compared whole, section by section —
   // the other site has none of this page's names to be clipped to.
   const besideLocal =

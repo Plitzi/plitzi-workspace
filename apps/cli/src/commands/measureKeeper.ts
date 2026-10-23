@@ -1,16 +1,25 @@
 import { rm } from 'node:fs/promises';
 
 import { launchBrowser } from '../browser';
+import { keeperRoutes } from './keeperRoutes';
 import { keeperServer } from './keeperServer';
 import { keptPages } from './keptPages';
 import { measureOn } from './measure';
+import { putIn, settle } from './measureState';
+import { outlineOnPage } from './outline';
+import { readState } from './play';
 import { pause, readRecordFile, recordOf, writeWhole } from '../browser/keptBrowser';
 import { pageAnswered } from './shot/remote';
+import { actStep } from './shot/steps';
+
+import type { BrowserPage } from '../browser';
+import type { KeptView } from '../browser/keptBrowser';
 
 /**
  * The kept browser's own process (`plitzi page keep-browser`, hidden, started by `page measure`): the other site's
- * pages held and read here (`keptPages.ts`), asked over HTTP on this machine alone (`keeperServer.ts`) — `keptBrowser.ts`
- * says why, and asks it. Its life: 5 minutes unused, an hour whatever happens, its record gone or another's, a run's end
+ * pages held and read here (`keptPages.ts`), its stateful reads and plays on pages of their own (`keeperRoutes.ts`), all
+ * in one context whose cache holds the site warm — asked over HTTP on this machine alone (`keeperServer.ts`);
+ * `keptBrowser.ts` says why, and asks it. Its life: 5 minutes unused, an hour whatever happens, its record gone or another's, a run's end
  * (SIGTERM) — each stop first taking no ask, then waiting for those taken, then closing its browser, and leaving
  * regardless once a close hangs.
  */
@@ -47,17 +56,55 @@ export const keepBrowser = async (root: string): Promise<void> => {
 
   const record = recordOf(root);
   const born = Date.now();
-  const pages = keptPages({
-    open: asked =>
-      pageAnswered(browser, asked.url, {
-        width: asked.width,
-        height: asked.height,
-        reducedMotion: true,
-        ...(asked.scheme ? { scheme: asked.scheme } : {})
-      }),
-    read: measureOn,
-    close: page => page.close(),
-    max: MAX_PAGES
+  // One context for every page: what the other site sends one page, the next takes from its cache.
+  const context = await browser.newContext();
+  const open = (view: KeptView) =>
+    pageAnswered(
+      browser,
+      view.url,
+      {
+        width: view.width,
+        height: view.height,
+        reducedMotion: view.reducedMotion ?? true,
+        ...(view.scheme ? { scheme: view.scheme } : {})
+      },
+      context
+    );
+  const pages = keptPages({ open, read: measureOn, close: page => page.close(), max: MAX_PAGES });
+  // A page for one ask alone: one kept already, taken and replaced — loaded, the site's widgets settled — in the media
+  // the ask wants (a play's motion played, a measure's held still).
+  const claimed = async (view: KeptView) => {
+    const taken = await pages.claim(view);
+    if (!('problem' in taken)) {
+      await taken.page.emulateMedia({
+        colorScheme: view.scheme ?? 'light',
+        reducedMotion: view.reducedMotion === false ? 'no-preference' : 'reduce'
+      });
+    }
+
+    return taken;
+  };
+  const served = keeperRoutes<BrowserPage>({
+    measure: pages.measure,
+    open: claimed,
+    measureOn,
+    putIn: (page, state) =>
+      putIn(page, { kind: state.kind, pairs: state.targets.map(each => ({ here: each, there: each })) }, 'here'),
+    outline: async (page, asked) => {
+      const read = await outlineOnPage(page, asked);
+
+      return 'problem' in read ? { problem: read.problem } : { outline: read.outline };
+    },
+    act: async (page, step, index) => {
+      const problem = await actStep(page, step, index);
+      if (!problem) {
+        await settle(page);
+      }
+
+      return problem;
+    },
+    readState,
+    close: page => page.close()
   });
   let stopping = false;
   const stop = async (drain: boolean): Promise<void> => {
@@ -73,11 +120,12 @@ export const keepBrowser = async (root: string): Promise<void> => {
     }
 
     await server.drain(drain ? DRAIN_MS : 0);
+    await served.closeAll();
     await browser.close().catch(() => undefined);
     process.exit(0);
   };
   const server = keeperServer({
-    measure: pages.measure,
+    routes: served.routes,
     askMs: ASK_MS,
     bodyBytes: BODY_BYTES,
     // A browser gone under an ask is no browser to keep: stopped, and the next command starts another.
@@ -100,6 +148,7 @@ export const keepBrowser = async (root: string): Promise<void> => {
   });
   for (;;) {
     await pause(LOOK_EVERY_MS);
+    await served.sweep();
     // Its record gone, or another's: two started at once and the other kept, or a run's end — this one is nobody's.
     if ((await readRecordFile(record))?.pid !== process.pid) {
       await stop(true);

@@ -87,7 +87,10 @@ describe('a run measured from its records', () => {
       calls: 1,
       readTokens: 3000
     });
-    expect(metrics.agents.find(agent => agent.agent === 'dev-1')).toMatchObject({ tokens: 208_061, completes: 2 });
+    const dev = metrics.agents.find(agent => agent.agent === 'dev-1');
+    expect(dev).toMatchObject({ tokens: 208_061, completes: 2 });
+    // lx-product: the harness's count is the context at the end; it is read again on every turn, growing from nothing.
+    expect(dev?.reread).toBe(Math.round(((dev?.calls ?? 0) * 208_061) / 2));
   });
 
   it('counts failed checks by step, refusals by code, a question’s wait, and calls made again and again', () => {
@@ -104,6 +107,7 @@ describe('a run measured from its records', () => {
     expect(metrics.questions).toEqual({ asked: 1, answered: 1, waits: [0.5] });
     expect(metrics.cost.repeated).toEqual([{ by: 'dev-1', command: 'plitzi task check', times: 3, within: 0.4 }]);
     expect(metrics.cost).toMatchObject({ calls: 4, readTokens: 6000, tokens: 208_061 });
+    expect(metrics.cost.reread).toBe(metrics.agents.reduce((sum, agent) => sum + (agent.reread ?? 0), 0));
     expect(metrics.cost.byCommand.find(each => each.command === 'task check')).toEqual({
       command: 'task check',
       calls: 3,

@@ -6,6 +6,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { keptMeasure, stopKeptBrowser } from './keptBrowser';
+import { keeperRoutes } from '../commands/keeperRoutes';
 import { keeperServer } from '../commands/keeperServer';
 
 const record = (root: string): string => path.join(root, 'tmp', 'plitzi-cache', 'kept-browser.json');
@@ -47,8 +48,17 @@ describe('the kept browser', () => {
     root = await mkdtemp(path.join(os.tmpdir(), 'plitzi-kept-'));
     await mkdir(path.dirname(record(root)), { recursive: true });
     const door = keeperServer({
-      measure: asked =>
-        Promise.resolve({ readings: asked.targets.map(target => ({ problem: `${target} on ${asked.url}` })) }),
+      routes: keeperRoutes<never>({
+        measure: asked =>
+          Promise.resolve({ readings: asked.targets.map(target => ({ problem: `${target} on ${asked.url}` })) }),
+        open: () => Promise.resolve({ problem: 'no page in this test' }),
+        measureOn: () => Promise.resolve({ problem: 'unread' }),
+        putIn: () => Promise.resolve(undefined),
+        outline: () => Promise.resolve({ problem: 'unread' }),
+        act: () => Promise.resolve(undefined),
+        readState: () => Promise.resolve({ problem: 'unread' }),
+        close: () => Promise.resolve()
+      }).routes,
       askMs: 5000,
       bodyBytes: 1024
     });

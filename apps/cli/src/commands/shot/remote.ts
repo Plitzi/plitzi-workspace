@@ -1,10 +1,10 @@
 import { openPage } from '@plitzi/sdk-authoring';
 
 import { pictureOf } from './capture';
-import { openOtherPage } from '../../browser';
+import { openOtherPage, openOtherPageIn } from '../../browser';
 
 import type { Taken, View } from './types';
-import type { Browser, BrowserPage } from '../../browser';
+import type { Browser, BrowserContext, BrowserPage } from '../../browser';
 
 /** What a page its site never answered is said as — asked once more, after `ANSWER_AGAIN_MS`. */
 const NOT_ANSWERED = 'did not answer';
@@ -87,15 +87,20 @@ export const pictureAnswered = (
 export const pageAnswered = (
   browser: Browser,
   url: string,
-  view: Pick<View, 'width' | 'height' | 'scheme' | 'reducedMotion' | 'timezone'>
+  view: Pick<View, 'width' | 'height' | 'scheme' | 'reducedMotion' | 'timezone'>,
+  /** A context shared with other pages, the kept browser's: the site loads warm. A time zone is a context's own. */
+  shared?: BrowserContext
 ): Promise<({ page: BrowserPage } & { notFound?: true }) | { problem: string }> =>
   whenAnswered(async () => {
-    const page = await openOtherPage(browser, {
-      viewport: { width: view.width, height: view.height },
-      colorScheme: view.scheme ?? 'light',
-      reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference',
-      ...(view.timezone ? { timezoneId: view.timezone } : {})
-    });
+    const page =
+      shared && !view.timezone
+        ? await openOtherPageIn(browser, shared, view)
+        : await openOtherPage(browser, {
+            viewport: { width: view.width, height: view.height },
+            colorScheme: view.scheme ?? 'light',
+            reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference',
+            ...(view.timezone ? { timezoneId: view.timezone } : {})
+          });
     if (!(await openPage(page, url).catch(() => null))) {
       await page.close();
 

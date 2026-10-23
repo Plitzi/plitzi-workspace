@@ -2,9 +2,10 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { readJson, writeJson } from './files';
+import { readJson, writeAtomic } from './files';
 import { noticesOf } from './notices';
 import { RunRefusal } from './refusal';
+import { formattedJson } from '../scaffold/formattedJson';
 
 import type { LoadedRun, RunContext } from './run';
 
@@ -68,8 +69,9 @@ export const stackableBacklog = async (
 const nextId = (items: readonly BacklogItem[]): number =>
   items.length === 0 ? 1 : Math.max(...items.map(item => Number(item.id.replace(/^b-/, '')) || 0)) + 1;
 
+// As the project's Prettier leaves it: committed beside its code, it never fails the project's format check.
 const writeBacklog = (root: string, items: readonly BacklogItem[]): Promise<void> =>
-  writeJson(path.join(root, BACKLOG_FILE), { version: 1, items: [...items] } satisfies Backlog);
+  writeAtomic(path.join(root, BACKLOG_FILE), formattedJson({ version: 1, items: [...items] } satisfies Backlog));
 
 /**
  * `plitzi run backlog add "…"`: an item kept with no run open — the person's, or an agent's between runs — for the next

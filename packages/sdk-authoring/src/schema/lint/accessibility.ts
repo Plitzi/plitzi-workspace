@@ -244,7 +244,7 @@ const firesOnClick = (element: Element): boolean =>
  * A click on a box. It works with a mouse; a keyboard never reaches it, a screen reader does not know it does anything,
  * and a browser agent reading the page's accessibility tree finds no control there to press.
  *
- * An empty layer is left alone — the backdrop behind a panel that closes it on click is a second way out, and the
+ * An empty container is left alone — the backdrop behind a panel that closes it on click is a second way out, and the
  * panel's own close button and Escape are the ones everybody can use.
  */
 const warnClickOnStaticElement = (ctx: LintContext, element: Element, where: string): void => {
@@ -253,8 +253,13 @@ const warnClickOnStaticElement = (ctx: LintContext, element: Element, where: str
     return;
   }
 
-  const empty = items.length === 0 && !(NAMING_ATTRIBUTES[type] ?? []).some(name => says(ctx, element, name));
-  if (empty) {
+  // A backdrop is a box laid over the page — a container. An empty item of a list with a click is a control drawn as a
+  // shape: lx-product's carousel dots were empty list items, and nothing said a keyboard never reached them.
+  const backdrop =
+    type === 'container' &&
+    items.length === 0 &&
+    !(NAMING_ATTRIBUTES[type] ?? []).some(name => says(ctx, element, name));
+  if (backdrop) {
     return;
   }
 

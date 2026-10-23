@@ -7,7 +7,7 @@ too.
 - **Wait for reviews:** `plitzi task next --role designer --follow --take --agent design-1` (your first command; then
   `--token …`). It hands you a task's UI before any task of your own: what it changed, the pages it is drawn at, what
   its last review asked. A round sent back comes to you first, if you said the one before.
-- **Look:** `plitzi task look <task>` — every page its changes are drawn at, light at 1440 and dark at 390 (`--width`,
+- **Look:** `plitzi task look <task>` — every page its changes are drawn at, light at 1440 and dark at 390 — a space that has one scheme, in it (`--width`,
   `--scheme` for others; `--status 404` for a not-found page), beside the run before it: what the task moved, and that
   nothing else did (`--no-before` leaves that out). `--click <id>` an open state, `--hover <id>` a hover,
   `--element <id>` its attributes and styles. A page it says you did not look at reads a file the task changed: look

@@ -588,3 +588,104 @@ describe('the lead’s plan as the run goes', () => {
     expect(again.message).toContain('asks nothing the run does not');
   });
 });
+
+// lx-product: a page-weight bound of the lead's, too tight once other tasks reached every page, held the finish — its
+// task done, the line could not be amended; and amending stages dropped s-scope, then a stage left out of a joined plan.
+describe('amending a run with stages and done tasks', () => {
+  const stage = (runId: string, id: string, file: string): RunPlan => ({
+    version: 1,
+    runId,
+    goal: `The ${id} page`,
+    tasks: [
+      {
+        id,
+        title: `A ${id} page`,
+        files: [file],
+        dependsOn: [],
+        priority: 'medium',
+        estimateMinutes: 10,
+        acceptance: [`There is a ${id} page`]
+      }
+    ]
+  });
+
+  /** A plan written under a name of its own: a stage saying the run's id would take the run's file otherwise. */
+  const planFile = async (plan: RunPlan, name: string): Promise<string> => {
+    await bench.write(name, JSON.stringify(plan));
+
+    return path.join(bench.root, name);
+  };
+
+  it('amends a done task’s acceptance alone — held again at the finish — and nothing else it was asked', async () => {
+    await open();
+    await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
+
+    const wrong = benchPlan();
+    wrong.tasks[3].acceptance = [{ said: 'About says hola', check: 'grep -q hola src/space/pages/about.ts' }];
+    expect(await amendRun(lead(), 'es-launch', await bench.writePlan(wrong))).toMatchObject({
+      tasks: [{ task: 't-about', changed: ['acceptance'], done: true }]
+    });
+    const held = await refusal(finishRun(lead(), 'es-launch', { apply: false, leavePending: true }));
+    expect([held.code, held.message]).toEqual(['checks-failed', expect.stringContaining('About says hola') as unknown]);
+
+    const right = benchPlan();
+    right.tasks[3].acceptance = [{ said: 'About is in Spanish', check: 'grep -q es src/space/pages/about.ts' }];
+    await amendRun(lead(), 'es-launch', await bench.writePlan(right));
+    await finishRun(lead(), 'es-launch', { apply: false, leavePending: true });
+
+    right.tasks[3].title = 'About, again';
+    expect((await refusal(amendRun(lead(), 'es-launch', await bench.writePlan(right)))).message).toContain(
+      '"t-about" is done: its title was held already — only its acceptance'
+    );
+  });
+
+  it('names a stage that says the run’s own name, and amends each plan for its own tasks alone', async () => {
+    await open();
+    const contact = stage('es-launch', 't-contact', 'src/space/pages/contact.ts');
+    await extendRun(lead(), 'es-launch', await planFile(contact, 'contact.plan.json'));
+    await extendRun(
+      lead(),
+      'es-launch',
+      await planFile(stage('es-faq', 't-faq', 'src/space/pages/faq.ts'), 'faq.plan.json')
+    );
+    const stacked = (await readRunLog((await loadRun(lead(), 'es-launch')).paths)).filter(
+      entry => entry.action === 'extend'
+    );
+    expect(stacked.map(entry => entry.stage)).toEqual(['es-launch-stage-4', 'es-faq']);
+
+    // A stage's plan as it was stacked amends its task, and no task of the plans it does not hold leaves.
+    contact.tasks[0].title = 'A contact page, with the map';
+    expect(await amendRun(lead(), 'es-launch', await planFile(contact, 'contact.plan.json'))).toMatchObject({
+      tasks: [{ task: 't-contact', changed: ['title'] }]
+    });
+    // The run's plan joined by hand without the faq's stage keeps the faq's task.
+    const joined = benchPlan();
+    joined.tasks.push(...contact.tasks);
+    joined.notes = ['Formal Spanish'];
+    const amended = await amendRun(lead(), 'es-launch', await bench.writePlan(joined));
+    expect(amended.removed).toBeUndefined();
+    const run = await loadRun(lead(), 'es-launch');
+    expect(run.tasks.map(task => task.id)).toEqual(expect.arrayContaining(['t-contact', 't-faq']));
+    expect(run.plan.tasks.map(task => task.id)).toEqual(expect.arrayContaining(['t-contact', 't-faq']));
+  });
+
+  it('runs a stage’s lines once on the run’s work before stacking it, each said for what it is', async () => {
+    await open();
+    await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
+    const next = stage('es-next', 't-contact', 'src/space/pages/contact.ts');
+    next.tasks[0].acceptance = [
+      { said: 'About stays Spanish', check: 'grep -q es src/space/pages/about.ts' },
+      { said: 'The contact page exists', check: 'test -f src/space/pages/contact.ts' }
+    ];
+    const dry = await extendRun(lead(), 'es-launch', await planFile(next, 'next.plan.json'), {
+      dryRun: true,
+      lines: true
+    });
+
+    expect(dry.tried).toEqual([
+      { task: 't-contact', said: 'About stays Spanish', verdict: 'passes' },
+      { task: 't-contact', said: 'The contact page exists', verdict: 'value' }
+    ]);
+    expect((await loadRun(lead(), 'es-launch')).tasks.map(task => task.id)).not.toContain('t-contact');
+  });
+});

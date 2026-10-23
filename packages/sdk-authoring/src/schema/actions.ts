@@ -258,6 +258,26 @@ export type ActionCallInput<Spec extends ActionSpec> =
     ? ActionInputOf<CallFieldsOf<Spec>>
     : Record<string, unknown>;
 
+/**
+ * A server action: what the server runs when a page asks (`call`), before the HTML of a page (`render`, fed to an
+ * `apiContainer({ runtime: 'server', action })`), on a schedule, or from a connector — its steps run in turn, each one's
+ * output there for the next. Its id is how a page names it (`runServerAction({ actionId })`), its triggers the ways in,
+ * typed: a `call`'s `input` fields are what a page hands it.
+ *
+ * ```ts
+ * export const save = defineAction({
+ *   id: 'save-habit',
+ *   name: 'Save a habit',
+ *   trigger: [
+ *     { type: 'call', access: 'session', input: { id: { type: 'text', required: true } } },
+ *     { type: 'schedule', cron: '0 * * * *' }
+ *   ],
+ *   steps: [{ id: 'saved', task: 'habits.save', params: { id: '{{ input.id }}' } }]
+ * });
+ * ```
+ *
+ * An action that only runs one of the space's tasks (a function of `src/functions/`) is a `taskAction`.
+ */
 export const defineAction = <const Spec extends ActionSpec>(spec: Spec): TypedActionEntry<ActionCallInput<Spec>> => {
   const triggers = Array.isArray(spec.trigger) ? spec.trigger : [spec.trigger];
   if (triggers.length === 0) {
@@ -382,6 +402,14 @@ const inputOf = (params: ActionTask['params']): Record<string, ActionField> =>
 
 const kebab = (name: string): string => name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 
+/** What a task takes, from its `run` — any object, for a task described without one. */
+type TaskInput<Task> = Task extends { run: (params: infer Params, ...rest: never[]) => unknown }
+  ? Params
+  : Record<string, unknown>;
+
+/** What a task answers, from its `run` — awaited: a page receives the value, never the promise. */
+type TaskOutput<Task> = Task extends { run: (...args: never[]) => infer Result } ? Awaited<Result> : unknown;
+
 /**
  * A server action that runs one of the space's tasks and answers its result — the way in a task is reached by from a
  * page (`call`), the HTML (`render`) or anywhere else, written once: the task's params are the action's input, its
@@ -394,14 +422,6 @@ const kebab = (name: string): string => name.replace(/([a-z0-9])([A-Z])/g, '$1-$
  *
  * An action of more than one step, or one whose input is not the task's params, is a `defineAction`.
  */
-/** What a task takes, from its `run` — any object, for a task described without one. */
-type TaskInput<Task> = Task extends { run: (params: infer Params, ...rest: never[]) => unknown }
-  ? Params
-  : Record<string, unknown>;
-
-/** What a task answers, from its `run` — awaited: a page receives the value, never the promise. */
-type TaskOutput<Task> = Task extends { run: (...args: never[]) => infer Result } ? Awaited<Result> : unknown;
-
 export const taskAction = <Task extends ActionTask>(
   task: Task,
   { trigger, id, name, description, output, limits }: TaskActionOptions

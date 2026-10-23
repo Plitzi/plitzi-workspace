@@ -86,6 +86,24 @@ describe('finding what a picture is aimed at', () => {
     });
   });
 
+  // lx-product: `product-dot:nth-child(3)` was "not on the page" — 16 checks of one task failed on it.
+  it('finds a name with a pseudo-class, an attribute or a class on it as that element — a tag stays a tag', async () => {
+    const third = '[data-plitzi-el="product-dot"]:nth-child(3)';
+    expect(await targetOn(having(third), 'product-dot:nth-child(3)')).toEqual({ selector: third, found: true });
+    expect(await targetOn(having(`${third} button`), 'product-dot:nth-child(3) button')).toEqual({
+      selector: `${third} button`,
+      found: true
+    });
+    expect(await targetOn(having('[data-plitzi-el="tab"][aria-selected]'), 'tab[aria-selected]')).toEqual({
+      selector: '[data-plitzi-el="tab"][aria-selected]',
+      found: true
+    });
+    expect(await targetOn(having('li:nth-child(3)'), 'li:nth-child(3)')).toEqual({
+      selector: 'li:nth-child(3)',
+      found: true
+    });
+  });
+
   it('finds a bare word as an element’s name, a tag, or an id — never an id CSS cannot read', async () => {
     expect(await targetOn(having('#combates'), 'combates')).toEqual({ selector: '#combates', found: true });
     expect(await targetOn(having(), 'combates')).toEqual({ selector: '[data-plitzi-el="combates"]', found: false });

@@ -44,8 +44,17 @@ export interface AgentFlow {
   /** What the CLI printed to it — read as tokens, a token four characters. */
   calls: number;
   readTokens: number;
-  /** The harness's own count, as the lead said it (`run report --tokens`). */
+  /**
+   * The harness's own count, as the lead said it (`run report --tokens`): the agent's context at its end — what a
+   * Claude Code subagent reports — not what it spent.
+   */
   tokens?: number;
+  /**
+   * What it read again, at the least: a context is read whole on every turn, and grows from nothing to `tokens` over
+   * its calls — half of it a call. lx-product's dev-1 said 310k and read 30.9M; this gives 26M, the harness's own
+   * prompt left out.
+   */
+  reread?: number;
 }
 
 export interface RepeatedCall {
@@ -74,8 +83,10 @@ export interface RunMetrics {
   cost: {
     calls: number;
     readTokens: number;
-    /** The harness's tokens, every agent's the lead said. */
+    /** The harness's tokens, every agent's the lead said: their contexts at their end. */
     tokens?: number;
+    /** What they read again at the least, every agent's (`reread`). */
+    reread?: number;
     byCommand: {
       command: string;
       calls: number;
@@ -188,6 +199,17 @@ const repeatedCalls = (usage: readonly UsageLine[]): RepeatedCall[] => {
     })
     .sort((a, b) => b.times - a.times);
 };
+
+/** A count of tokens as a person reads it: 7.2M, 113k, 900. */
+export const tokensText = (value: number): string =>
+  value >= 1_000_000
+    ? `${String(Math.round(value / 100_000) / 10)}M`
+    : value >= 1000
+      ? `${String(Math.round(value / 100) / 10)}k`
+      : String(value);
+
+/** What an agent read again over its calls at the least: its context, growing from nothing to its end, every turn. */
+const rereadOf = (calls: number, end: number): number => Math.round((calls * end) / 2);
 
 export const runMetrics = (input: {
   log: readonly Entry[];
@@ -357,7 +379,9 @@ export const runMetrics = (input: {
       },
       calls: calls.length,
       readTokens: Math.round(calls.reduce((sum, line) => sum + line.chars, 0) / 4),
-      ...(Object.hasOwn(input.tokens, agent) ? { tokens: input.tokens[agent] } : {})
+      ...(Object.hasOwn(input.tokens, agent)
+        ? { tokens: input.tokens[agent], reread: rereadOf(calls.length, input.tokens[agent]) }
+        : {})
     };
   });
 
@@ -428,7 +452,12 @@ export const runMetrics = (input: {
     cost: {
       calls: usage.length,
       readTokens: Math.round(usage.reduce((sum, line) => sum + line.chars, 0) / 4),
-      ...(tokens.length > 0 ? { tokens: tokens.reduce((sum, each) => sum + each, 0) } : {}),
+      ...(tokens.length > 0
+        ? {
+            tokens: tokens.reduce((sum, each) => sum + each, 0),
+            reread: agents.reduce((sum, each) => sum + (each.reread ?? 0), 0)
+          }
+        : {}),
       byCommand: [...byCommand]
         .map(([command, each]) => {
           const medianSeconds = Math.round((median(each.ms) ?? 0) / 100) / 10;

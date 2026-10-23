@@ -5,6 +5,7 @@ import { projectHere } from './existingProject';
 import { ourPage, pairOf } from './measure';
 import { settle } from './measureState';
 import { parseSteps } from './shotSteps';
+import { keptSession } from '../browser/keptBrowser';
 import { originHere } from '../runs/copyServer';
 import { targetOn } from './shot/capture';
 import { pageAnswered } from './shot/remote';
@@ -56,6 +57,11 @@ export interface ElementState {
 export interface PlayedStep {
   /** `start` before any step, else the step as written. */
   step: string;
+  /**
+   * A side the step did nothing on — its control hidden or taking no press, as a visitor's press does nothing — and why:
+   * said, never played as if it happened (lx-product: a tab drawn per width, its press at 390 skipped without a word).
+   */
+  idle?: Partial<Record<keyof Pair, string>>;
   /** Each element read, by how it was asked, here and — with `--compare` — there. */
   reads: { element: string; here?: ElementState; there?: ElementState; moved?: Moved; problem?: string }[];
 }
@@ -70,16 +76,31 @@ interface Moved {
 const alike = (a: number, b: number): boolean => Math.abs(a - b) <= Math.max(2, Math.abs(b) * 0.02);
 
 /** Run in the page, on the element: where its content is, whether it is seen, whether it takes a press. */
-const stateOf = (node: Element): ElementState => {
+export const stateOf = (node: Element): ElementState => {
   const box = node.getBoundingClientRect();
   const style = getComputedStyle(node);
   const disabled =
     node.matches(':disabled, [aria-disabled="true"]') ||
     style.pointerEvents === 'none' ||
     node.closest('[inert]') !== null;
+  // A part whose own box never scrolls but holds the row that does — a carousel named by its track, its scroller
+  // inside (lx-product's dev-1 read `.carousel__scroller` by its class): that row's scroll is what moved.
+  const scrolls = (each: Element): boolean => {
+    const overflow = getComputedStyle(each);
+
+    return (
+      (each.scrollWidth > each.clientWidth && /auto|scroll/.test(overflow.overflowX)) ||
+      (each.scrollHeight > each.clientHeight && /auto|scroll/.test(overflow.overflowY))
+    );
+  };
+  const inner = scrolls(node) ? [] : [...node.querySelectorAll('*')].filter(scrolls);
+  const scroller = inner.length === 1 ? inner[0] : node;
 
   return {
-    offset: { x: Math.round(node.scrollLeft - box.left), y: Math.round(node.scrollTop - box.top - window.scrollY) },
+    offset: {
+      x: Math.round(scroller.scrollLeft - box.left),
+      y: Math.round(scroller.scrollTop - box.top - window.scrollY)
+    },
     shown:
       box.width > 0 &&
       box.height > 0 &&
@@ -94,7 +115,7 @@ const stateOf = (node: Element): ElementState => {
  * One element's state on a page, by the way every page command names one — a Playwright selector too
  * (`:has-text("…")`): the first of it shown, else the first.
  */
-const readState = async (page: BrowserPage, target: string): Promise<ElementState | { problem: string }> => {
+export const readState = async (page: BrowserPage, target: string): Promise<ElementState | { problem: string }> => {
   const found = await targetOn(page, target);
   if ('problem' in found) {
     return found;
@@ -124,18 +145,67 @@ const stepText = (step: ActingStep): string =>
         : `${step.kind} ${step.target}`;
 
 /** The steps, each played on each page, every element read after it — or what kept a step from happening. */
+/**
+ * One page a play is played on: a page of this command's, or the other site's held warm in the kept browser
+ * (`keptSession`) — a step acted and waited for until the page is still, elements read as `readState` reads them.
+ */
+export interface PlaySide {
+  act: (step: ActingStep, index: number) => Promise<{ problem: string } | undefined>;
+  read: (targets: readonly string[]) => Promise<(ElementState | { problem: string })[] | { problem: string }>;
+}
+
+/** A page of this command's as a side of a play. */
+export const pageSide = (page: BrowserPage): PlaySide => ({
+  act: async (step, index) => {
+    const problem = await actStep(page, step, index);
+    // What the step started, over: its animations ended and the page's layout still — a slide, a drawer, a scroll.
+    if (!problem) {
+      await settle(page);
+    }
+
+    return problem;
+  },
+  read: async targets => {
+    const states: (ElementState | { problem: string })[] = [];
+    for (const target of targets) {
+      states.push(await readState(page, target));
+    }
+
+    return states;
+  }
+});
+
+/** The steps, each played on each side, every element read after it — or what kept a step from happening. */
 export const playOn = async (
-  pages: { here: BrowserPage; there?: BrowserPage },
+  sides: { here: PlaySide; there?: PlaySide },
   steps: readonly ActingStep[],
   reads: readonly Pair[]
 ): Promise<{ played: PlayedStep[] } | { problem: string; side: keyof Pair }> => {
   const played: PlayedStep[] = [];
   let last: PlayedStep | undefined;
+  const readSide = async (
+    side: PlaySide,
+    targets: readonly string[]
+  ): Promise<(ElementState | { problem: string })[]> => {
+    const read = await side.read(targets);
+
+    return 'problem' in read ? targets.map(() => read) : read;
+  };
   const readAll = async (label: string): Promise<PlayedStep> => {
     const entry: PlayedStep = { step: label, reads: [] };
+    const heres = await readSide(
+      sides.here,
+      reads.map(pair => pair.here)
+    );
+    const theres = sides.there
+      ? await readSide(
+          sides.there,
+          reads.map(pair => pair.there)
+        )
+      : [];
     for (const [index, pair] of reads.entries()) {
-      const here = await readState(pages.here, pair.here);
-      const there = pages.there ? await readState(pages.there, pair.there) : undefined;
+      const here = heres.at(index) ?? { problem: `${pair.here} was not read` };
+      const there = sides.there ? (theres.at(index) ?? { problem: `${pair.there} was not read` }) : undefined;
       const problem =
         'problem' in here ? here.problem : there && 'problem' in there ? `there: ${there.problem}` : undefined;
       const before = last?.reads[index];
@@ -156,7 +226,7 @@ export const playOn = async (
             }
           : undefined;
       entry.reads.push({
-        element: pages.there ? `${pair.here} => ${pair.there}` : pair.here,
+        element: sides.there ? `${pair.here} => ${pair.there}` : pair.here,
         ...(hereState ? { here: hereState } : {}),
         ...(thereState ? { there: thereState } : {}),
         ...(moved ? { moved } : {}),
@@ -171,39 +241,40 @@ export const playOn = async (
 
   played.push(await readAll('start'));
   for (const [index, step] of steps.entries()) {
-    for (const side of pages.there ? (['here', 'there'] as const) : (['here'] as const)) {
-      const page = side === 'here' ? pages.here : pages.there;
-      if (!page) {
+    const idle: Partial<Record<keyof Pair, string>> = {};
+    for (const name of sides.there ? (['here', 'there'] as const) : (['here'] as const)) {
+      const side = name === 'here' ? sides.here : sides.there;
+      if (!side) {
         continue;
       }
 
       // A press on a control out of use — hidden, disabled, passing the pointer on — does nothing, as a visitor's does:
       // played as such, never a failure; what it left is read as after any step.
-      const acting = sideOf(step, side);
+      const acting = sideOf(step, name);
       if (acting.kind === 'click' || acting.kind === 'drag' || acting.kind === 'type') {
-        const state = await readState(page, acting.target);
-        if (!('problem' in state) && (!state.shown || !state.enabled)) {
+        const state = (await readSide(side, [acting.target])).at(0);
+        if (state && !('problem' in state) && (!state.shown || !state.enabled)) {
+          idle[name] =
+            `${acting.target} ${state.shown ? 'takes no press' : 'is not shown'}: the ${acting.kind} did nothing`;
           continue;
         }
       }
 
       try {
-        const problem = await actStep(page, acting, index);
+        const problem = await side.act(acting, index);
         if (problem) {
-          return { problem: problem.problem, side };
+          return { problem: problem.problem, side: name };
         }
       } catch (error) {
         return {
-          problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen${side === 'there' ? ' there' : ''}: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`,
-          side
+          problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen${name === 'there' ? ' there' : ''}: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`,
+          side: name
         };
       }
-
-      // What the step started, over: its animations ended and the page's layout still — a slide, a drawer, a scroll.
-      await settle(page);
     }
 
-    played.push(await readAll(stepText(step)));
+    const entry = await readAll(stepText(step));
+    played.push(Object.keys(idle).length > 0 ? { ...entry, idle } : entry);
   }
 
   return { played };
@@ -268,6 +339,8 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
 
   return played.flatMap(entry => [
     chalk.bold(entry.step),
+    ...(entry.idle?.here ? [chalk.yellow(`  here: ${entry.idle.here}`)] : []),
+    ...(entry.idle?.there ? [chalk.yellow(`  there: ${entry.idle.there}`)] : []),
     ...entry.reads.map((read, index) => {
       if (read.problem) {
         return `  ${read.element}: ${chalk.red(read.problem)}`;
@@ -285,6 +358,24 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
     })
   ]);
 };
+
+/**
+ * What `--same` says of the steps: each difference, or that they held — never a pass while an element read is not on
+ * the page, which holds nothing (lx-product: "✓ every step as theirs" beside one not built yet).
+ */
+export const verdictOf = (
+  same: readonly PlaySame[],
+  unlike: readonly string[],
+  missing: boolean,
+  other: string
+): string[] =>
+  same.length === 0
+    ? []
+    : missing
+      ? [chalk.red(`✗ --same ${same.join(',')}: an element read is not on the page — nothing is held until it is`)]
+      : unlike.length === 0
+        ? [chalk.green(`✓ --same ${same.join(',')}: every step as ${other}'s`)]
+        : unlike.map(line => chalk.red(`✗ --same: ${line}`));
 
 export const play = async (route: string, options: PlayOptions): Promise<void> => {
   const project = await projectHere('whose page to play');
@@ -356,21 +447,32 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
         return;
       }
 
-      const theirs = target
-        ? await pageAnswered(browser, target, {
-            width,
-            height: 900,
-            reducedMotion: false,
-            ...(options.scheme ? { scheme: options.scheme } : {})
-          })
-        : undefined;
+      // The other site played warm in the kept browser, its page held for this play alone: opened cold here, it was
+      // 11–19 s a call (lx-product, 58 plays). Not kept, it is opened here as before.
+      const view = {
+        width,
+        height: 900,
+        reducedMotion: false,
+        ...(options.scheme ? { scheme: options.scheme } : {})
+      };
+      const held = target ? await keptSession(project.root, { url: target, ...view }) : undefined;
+      if (held && 'problem' in held) {
+        unanswered(held.problem);
+
+        return;
+      }
+
+      const theirs = target && !held ? await pageAnswered(browser, target, view) : undefined;
       if (theirs && 'problem' in theirs) {
         unanswered(theirs.problem);
 
         return;
       }
 
-      const outcome = await playOn({ here: ours.page, ...(theirs ? { there: theirs.page } : {}) }, steps, reads);
+      const there = held ? { act: held.act, read: held.read } : theirs ? pageSide(theirs.page) : undefined;
+      const outcome = await playOn({ here: pageSide(ours.page), ...(there ? { there } : {}) }, steps, reads).finally(
+        () => held?.close()
+      );
       await ours.page.close();
       await theirs?.page.close();
       if ('problem' in outcome) {
@@ -395,11 +497,7 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
             ...(results.length > 1 ? [chalk.bold.underline(`At ${String(each.width)} px`)] : []),
             ...playedText(each.played)
           ]),
-          ...(same.length > 0
-            ? unlike.length === 0
-              ? [chalk.green(`✓ --same ${same.join(',')}: every step as ${String(target)}'s`)]
-              : unlike.map(line => chalk.red(`✗ --same: ${line}`))
-            : [])
+          ...verdictOf(same, unlike, missing, String(target))
         ].join('\n')
   );
   if (unlike.length > 0) {

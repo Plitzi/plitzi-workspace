@@ -322,6 +322,16 @@ describe('a plan held to the rules', () => {
     });
   });
 
+  // lx-product: the product page's gallery and buying box, modules only it imports, could not be two tasks beside it.
+  it('gives a module only a page imports to the task that names it, not to the page’s', async () => {
+    const plan = benchPlan();
+    plan.tasks[1].files = ['src/space/pages/home/hero.ts'];
+    const checked = await checkPlan(bench.root, plan, await readOwnership(bench.root), teamFor(plan, 4));
+
+    expect(checked.tasks.find(task => task.id === 't-home')?.files).toEqual(['src/space/pages/home/index.ts']);
+    expect(checked.tasks.find(task => task.id === 't-menu')?.files).toEqual(['src/space/pages/home/hero.ts']);
+  });
+
   it('expands a plugin’s folder named with or without its slash, and refuses a plain folder', async () => {
     const plan = benchPlan();
     plan.tasks[3].files = ['src/plugins/Badge'];
@@ -337,6 +347,8 @@ describe('a plan held to the rules', () => {
 
   it('refuses, every reason at once, a repeated file, a cycle, an unknown task, credentials and what is not source', async () => {
     const plan = benchPlan();
+    // Named by both: one file, two tasks.
+    plan.tasks[0].files = [...plan.tasks[0].files, 'src/space/pages/home/hero.ts'];
     plan.tasks[1].files = ['src/space/pages/home/hero.ts', '.env', 'node_modules/x.js'];
     plan.tasks[0].dependsOn = ['t-book'];
     plan.tasks[3].dependsOn = ['t-nowhere'];

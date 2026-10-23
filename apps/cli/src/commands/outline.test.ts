@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { outlineIn } from './outline';
+import { markShown, outlineIn } from './outline';
 
 /** jsdom lays nothing out: every element given a box, the hidden ones none. */
 const laidOut = () =>
@@ -50,6 +50,26 @@ describe('page outline, in the page', () => {
     });
     expect(outlineIn({ within: '.nothing', depth: 2, limit: 50, words: 8 })).toEqual({
       problem: 'nothing on the page answers .nothing'
+    });
+  });
+
+  // lx-product: after `--click` the whole page was outlined, the open menu cut by --depth under it.
+  it('lists only what a click opened, from its own depth, walking through what showed before', () => {
+    laidOut();
+    document.body.innerHTML = `
+      <header><button id="menu-btn">Menu</button><div id="mega" hidden><nav><a>Audífonos</a></nav></div></header>
+      <main><section><h2>Hero</h2></section></main>`;
+    markShown('data-before');
+    document.getElementById('mega')?.removeAttribute('hidden');
+    const read = outlineIn({ opened: 'data-before', depth: 4, limit: 50, words: 20 });
+
+    expect(read).toEqual({
+      elements: [
+        expect.objectContaining({ selector: '#mega', depth: 0 }),
+        expect.objectContaining({ selector: 'nav', depth: 1 }),
+        expect.objectContaining({ selector: 'a', depth: 2, text: 'Audífonos' })
+      ],
+      more: 0
     });
   });
 });

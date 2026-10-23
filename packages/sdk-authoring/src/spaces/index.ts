@@ -398,6 +398,10 @@ const importOf = (names: Set<string>, kind: '' | 'type '): string => {
     : `import ${kind}{\n${sorted.map(name => `  ${name}`).join(',\n')}\n} from '@plitzi/sdk-authoring';`;
 };
 
+/**
+ * A module of the package's own made a project's: its imports of the package's other modules rewritten as imports of
+ * `@plitzi/sdk-authoring`, as a project that copies it imports them.
+ */
 export const toPortableSource = (source: string): string => {
   const lines = source.split('\n');
   const { statements, end } = leadingImports(lines);

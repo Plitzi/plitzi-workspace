@@ -289,6 +289,29 @@ describe('page measure, held to the pixel', () => {
     expect(differences(tall('405px'), tall('406px')).differ.map(each => each.property)).toEqual(['height']);
   });
 
+  // lx-product: the original's bullets were `list-style-position: inside`, which no reading showed, and an arrow's place
+  // down a column could be neither measured nor held (`--same y` refused).
+  it('reads and holds a list’s marker and where a box starts down the page', () => {
+    expect(sameProperties('list-style,y')).toEqual(['list-style', 'y']);
+    const item = (listStyle: string, y: string) => measured({ 'list-style': listStyle, y });
+
+    expect(differences(item('inside none disc', '625px'), item('inside none disc', '624.6px')).differ).toEqual([]);
+    expect(
+      differences(item('outside none disc', '625px'), item('inside none disc', '660px')).differ.map(
+        each => each.property
+      )
+    ).toEqual(['list-style', 'y']);
+  });
+
+  // lx-product: a 1588px section of eighteen list items came 1.06px off, each line's rounding added up.
+  it('holds a box’s size within a thousandth of it, its spacing within half a pixel', () => {
+    const box = (height: string, margin = '0px') => measured({ height, margin });
+
+    expect(differences(box('1589.56px'), box('1588.5px')).differ).toEqual([]);
+    expect(differences(box('1592px'), box('1588.5px')).differ.map(each => each.property)).toEqual(['height']);
+    expect(differences(box('40px', '33px'), box('40px', '32px')).differ.map(each => each.property)).toEqual(['margin']);
+  });
+
   it('holds a side of a margin or a padding alone, read off its shorthand', () => {
     expect(sameProperties('margin-bottom,padding-top')).toEqual(['margin-bottom', 'padding-top']);
     const here = measured({ margin: '0px 0px 24px', padding: '10px 20px' });

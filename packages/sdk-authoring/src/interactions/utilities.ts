@@ -11,6 +11,7 @@ import type { BuiltinActionSpec } from '@plitzi/sdk-shared/authoring';
 
 export type BuiltinUtility = BuiltinActionSpec;
 
+/** The utility steps a flow takes besides an element's own — a wait, a log, a value set — each with its params. */
 export const BUILTIN_UTILITIES: Record<string, BuiltinUtility> = {
   delayTime: {
     title: 'Delay Time',

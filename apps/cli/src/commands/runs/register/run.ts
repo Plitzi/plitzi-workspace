@@ -160,8 +160,12 @@ export const registerRunGroup = (program: Command): Command => {
     .argument('<run-or-file>', 'The open run — or, alone, the next plan: the run is then the one open')
     .argument('[file]', 'The next plan')
     .option('--dry-run', 'Check the stage against the run as it is — its tasks, what is ready — and stack nothing')
+    .option(
+      '--lines',
+      'With --dry-run: run each acceptance line once on the run’s work, and say what it is — what the task changes, a part it builds, or a line that cannot pass (the other site has no such element, a command it refuses)'
+    )
     .option(...JSON_OPTION)
-    .action((first: string, file: string | undefined, options: PlanOptions & { dryRun?: boolean }) =>
+    .action((first: string, file: string | undefined, options: PlanOptions & { dryRun?: boolean; lines?: boolean }) =>
       file === undefined ? runExtend(undefined, first, options) : runExtend(first, file, options)
     );
 

@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 import { acceptanceProblems } from './acceptanceProblems';
 import { readOptional, writeAtomic, writeJson } from './files';
-import { inventoryProblems } from './inventory';
+import { coversOf, inventoryProblems } from './inventory';
 import { requireLead } from './leads';
 import { EVERYONE, LEAD, sendMessage } from './messages';
 import { acceptanceText } from './model';
@@ -16,6 +16,7 @@ import {
   primerFile,
   readPlanFile,
   readPrimer,
+  readRunLog,
   requireNoTask,
   updateRecord,
   withInputs
@@ -25,7 +26,7 @@ import { withLock } from './store';
 import { updateState, viewTask } from './taskStore';
 
 import type { PlannedTask, RunPlan, RunTask } from './model';
-import type { RunContext } from './run';
+import type { LoadedRun, RunContext } from './run';
 import type { Finding } from './spike';
 
 /** What keeps `task`'s new dependencies from holding: one the run has not, itself, or a circle back to it. */
@@ -53,16 +54,20 @@ const dependsOnProblems = (task: PlannedTask, inRun: readonly RunTask[], planned
  * leave it (less to do; its pieces of the inventory then wait, or another task covers them) — a task more is a stage
  * (`run extend`). Who a task is for
  * — its role and quality — and what it waits for change until an agent takes it, and not after: it was taken as that. A task done is not
- * asked again. Each task whose ask changed is told so, with what it now says; nothing is changed unsaid.
+ * asked again — but for its acceptance, which the finish runs again on the whole result: a line of the lead's found wrong
+ * is amended there too. Each task whose ask changed is told so, with what it now says; nothing is changed unsaid.
  *
- * A run with stages stacked on it (`run extend`) is amended from either: its own plan, or a stage's as it was stacked —
- * the stage's tasks are the ones it changes, and the run's goal stays the run's.
+ * A run with stages stacked on it (`run extend`) is amended from any of its plans — the one it opened with, a stage's as it
+ * was stacked, or several joined — each speaking for the plans whose tasks it holds: a task leaves the run only when a plan
+ * that holds its fellows leaves it out, and the run's goal stays the run's unless the plan it opened with is amended.
  */
 
 export interface AmendedTask {
   task: string;
   /** The fields that changed, by name. */
   changed: string[];
+  /** Done already: its acceptance amended, held again at the finish — nobody told, as nobody is at it. */
+  done?: true;
 }
 
 export interface Amended {
@@ -93,6 +98,35 @@ const UNTAKEN: readonly string[] = ['pending', 'ready', 'spike'];
 
 const same = (a: unknown, b: unknown): boolean => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
+/** The plan a task came in with: 0 for the one the run opened with, n for the n-th stage stacked on it. */
+const OPENED = 0;
+
+/**
+ * Where each task of the run came from, read off its log — whatever each plan called itself: lx-product's stages said
+ * the run's own id, and its amend read a stage's plan as the run's and refused to drop s-scope. A task stacked again
+ * after it left (`run extend` once more) is its last stage's.
+ */
+const originsOf = async (loaded: LoadedRun): Promise<(id: string) => number> => {
+  const origins = new Map<string, number>();
+  const stacked = (await readRunLog(loaded.paths)).filter(entry => entry.action === 'extend');
+  stacked.forEach((entry, index) => {
+    const added: unknown = entry.added;
+    for (const id of Array.isArray(added) ? added : []) {
+      if (typeof id === 'string') {
+        origins.set(id, index + 1);
+      }
+    }
+  });
+
+  return id => origins.get(id) ?? OPENED;
+};
+
+/** The run's tasks as a stage's plan amends them: each it holds as it says, those it left out gone. */
+const amendedTasks = (plan: RunPlan, next: RunPlan, removed: readonly RunTask[]): PlannedTask[] =>
+  plan.tasks
+    .filter(task => !removed.some(each => each.id === task.id))
+    .map(task => next.tasks.find(each => each.id === task.id) ?? task);
+
 export const amendRun = async (ctx: RunContext, runId: string, file: string): Promise<Amended> => {
   requireNoTask(ctx, 'amend the plan');
   const loaded = await loadRun(ctx, runId);
@@ -100,14 +134,35 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   assertStatus(loaded, ['open', 'stopping'], 'amend the plan');
   const next: RunPlan = await readPlanFile(file);
   const before = new Map(loaded.plan.tasks.map(task => [task.id, task]));
-  // A stage stacked on the run: its plan names its own tasks, all of them the run's.
-  const stage = next.runId !== runId;
-  if (stage && !next.tasks.some(task => before.has(task.id))) {
+  if (!next.tasks.some(task => before.has(task.id))) {
     throw new RunRefusal(
       'invalid',
-      `${file} is the plan of "${next.runId}", and none of its tasks is run "${runId}"'s: it is no stage stacked on it`
+      `${file} holds none of run "${runId}"'s tasks: it is neither the plan the run opened with nor a stage stacked on it`
     );
   }
+
+  // The plans this one speaks for: those whose tasks it holds. One that leaves out the plan the run opened with — a
+  // stage's — keeps the run's goal, inventory and reference as they are.
+  const originOf = await originsOf(loaded);
+  const spoken = new Set(next.tasks.filter(task => before.has(task.id)).map(task => originOf(task.id)));
+  const stage = !spoken.has(OPENED);
+  // A plan it does not speak for keeps its tasks and the pieces they prove: a plan joined by hand without a stage
+  // stacked minutes before dropped that stage's task (lx-product's t-gallery-phone).
+  const untold = loaded.plan.tasks.filter(task => !spoken.has(originOf(task.id)));
+  const untoldPieces = (loaded.plan.inventory ?? []).filter(
+    piece =>
+      !(next.inventory ?? []).some(each => each.id === piece.id) &&
+      untold.some(task => task.acceptance.some(line => coversOf(line).includes(piece.id)))
+  );
+  const whole: RunPlan = stage
+    ? next
+    : {
+        ...next,
+        tasks: [...next.tasks, ...untold.filter(task => !next.tasks.some(each => each.id === task.id))],
+        ...(next.inventory || untoldPieces.length > 0
+          ? { inventory: [...(next.inventory ?? []), ...untoldPieces] }
+          : {})
+      };
 
   const problems: string[] = [];
   const added = next.tasks.filter(task => !before.has(task.id)).map(task => task.id);
@@ -117,10 +172,11 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     );
   }
 
-  // Less to do: a task nobody took goes, and what it covered is said waiting, or covered by another.
-  const removed = stage
-    ? []
-    : loaded.tasks.filter(task => task.kind === 'work' && !next.tasks.some(each => each.id === task.id));
+  // Less to do: a task nobody took goes — left out by a plan that speaks for it — and what it covered is said waiting, or
+  // covered by another.
+  const removed = loaded.tasks.filter(
+    task => task.kind === 'work' && spoken.has(originOf(task.id)) && !next.tasks.some(each => each.id === task.id)
+  );
   for (const task of removed) {
     const view = await viewTask(loaded.paths, task);
     if (!UNTAKEN.includes(view.state.status) || view.owner || view.state.round > 0) {
@@ -129,7 +185,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
       );
     }
 
-    const waiting = next.tasks.filter(each => each.dependsOn.includes(task.id)).map(each => each.id);
+    const waiting = whole.tasks.filter(each => each.dependsOn.includes(task.id)).map(each => each.id);
     if (waiting.length > 0) {
       problems.push(
         `Task "${task.id}" is what ${waiting.map(id => `"${id}"`).join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for: remove them too, or keep it`
@@ -137,12 +193,14 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     }
   }
 
-  const inventoryChanged = !stage && !same(next.inventory, loaded.plan.inventory);
+  const inventoryChanged = !stage && !same(whole.inventory, loaded.plan.inventory);
   if (inventoryChanged || removed.length > 0) {
-    problems.push(...inventoryProblems(next));
+    problems.push(
+      ...inventoryProblems(stage ? { ...loaded.plan, tasks: amendedTasks(loaded.plan, next, removed) } : whole)
+    );
   }
 
-  const changes: { task: PlannedTask; defined: RunTask; changed: string[] }[] = [];
+  const changes: { task: PlannedTask; defined: RunTask; changed: string[]; done?: true }[] = [];
   for (const task of next.tasks) {
     const was = before.get(task.id);
     const defined = loaded.tasks.find(each => each.id === task.id);
@@ -164,7 +222,19 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     const viewed = await viewTask(loaded.paths, defined);
     const { status } = viewed.state;
     if (status === 'done') {
-      problems.push(`Task "${task.id}" is done: what it was asked was held already`);
+      // Done is held at the finish by its acceptance alone, run again on the whole result: a line of the lead's found
+      // wrong there is amended — lx-product's page-weight bound, too tight once other tasks reached every page, held the
+      // finish with no way to change it. What else it was asked was held already.
+      const held = changed.filter(field => field !== 'acceptance');
+      if (held.length > 0) {
+        problems.push(
+          `Task "${task.id}" is done: its ${held.join(' and ')} ${held.length === 1 ? 'was' : 'were'} held already — only its acceptance, which the finish runs again, is amended`
+        );
+        continue;
+      }
+
+      problems.push(...(await acceptanceProblems(ctx.root, task)));
+      changes.push({ task, defined, changed: [...changed], done: true });
       continue;
     }
 
@@ -216,7 +286,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     );
   }
 
-  for (const { task, defined } of changes) {
+  for (const { task, defined, done } of changes) {
     // What the plan leaves out is dropped, not kept from before: the definition is the plan's, as amended.
     const { milestone: _milestone, role: _role, quality: _quality, findings: _findings, ...kept } = defined;
     const amended: RunTask = {
@@ -233,6 +303,29 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     };
 
     await writeJson(taskPaths(loaded.paths, task.id).definition, amended);
+    // What the finish holds a done task to is what its review accepted: the amended lines take their place there — one
+    // unchanged keeps what it answered, a new one waits for the finish to run it.
+    if (done) {
+      await updateState(
+        taskPaths(loaded.paths, task.id),
+        state => ({
+          ...state,
+          accepted: task.acceptance.flatMap(line =>
+            typeof line === 'string'
+              ? []
+              : [
+                  (state.accepted ?? []).find(each => each.said === line.said && each.check === line.check) ?? {
+                    said: line.said,
+                    check: line.check,
+                    ok: false,
+                    amended: ctx.now().toISOString()
+                  }
+                ]
+          )
+        }),
+        ctx.now
+      );
+    }
     // A finding gone wrong was corrected only by a message (lx-copy's "write every stub"): the brief says the new one.
     if (!same(task.findings, before.get(task.id)?.findings)) {
       const planned = task.findings;
@@ -290,12 +383,13 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     stage
       ? {
           ...loaded.plan,
-          tasks: loaded.plan.tasks.map(task => next.tasks.find(each => each.id === task.id) ?? task),
+          tasks: amendedTasks(loaded.plan, next, removed),
           notes: [...(loaded.plan.notes ?? []), ...notes]
         }
-      : { ...next, ...(loaded.plan.primer && next.primer === undefined ? { primer: loaded.plan.primer } : {}) }
+      : { ...whole, ...(loaded.plan.primer && next.primer === undefined ? { primer: loaded.plan.primer } : {}) }
   );
-  for (const { task, changed } of changes) {
+  // A done task has nobody at it: what it now holds is said in the amend's answer and log, and held at the finish.
+  for (const { task, changed } of changes.filter(change => change.done !== true)) {
     await sendMessage(ctx, loaded, {
       from: LEAD,
       to: task.id,
@@ -320,7 +414,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
 
   const amended: Amended = {
     runId,
-    tasks: changes.map(({ task, changed }) => ({ task: task.id, changed })),
+    tasks: changes.map(({ task, changed, done }) => ({ task: task.id, changed, ...(done ? { done } : {}) })),
     notes,
     ...(goal === undefined ? {} : { goal }),
     ...(primerChanged ? { primer: true as const } : {}),

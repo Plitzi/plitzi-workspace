@@ -20,6 +20,7 @@ const distance = (a: string, b: string): number => {
   return previous[b.length];
 };
 
+/** The candidate a misspelt name most likely meant, by edit distance — none when nothing is close enough to say. */
 export const closest = (name: string, candidates: Iterable<string>): string | undefined => {
   // Read twice below, and an iterator — a map's keys — is empty the second time.
   const list = [...candidates];
