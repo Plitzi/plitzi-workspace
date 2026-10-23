@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { STARTING_MS } from './onDemand';
 import { isRunRefusal } from './refusal';
 import { openRun } from './run';
-import { completeTask, followNext, nextTask, takeTask } from './tasks';
+import { completeTask, followNext, nextTask, reviewTask, takeTask } from './tasks';
 import { readTeam, setTeamAgent, startedAgents } from './team';
 import { viewRun } from './view';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
@@ -174,6 +174,50 @@ describe('agents on demand', () => {
       onDemandIdleMs: 30
     });
     expect(kept.finished).not.toBe(true);
+  });
+
+  // lx-product: dev-1 read 30.9M tokens for three tasks, each turn reading again what the tasks before it left; a session
+  // a task reads ~40 % less. The CLI cannot empty a harness's context: it tells the agent to stop, and the lead starts it.
+  it('ends a session of one task once it is complete, and asks for the next — for its own sent back too', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], sessionPerTask: true });
+    const team = await readTeam(bench.root);
+    expect(team ? startedAgents(team) : []).toEqual([{ agent: 'dev-1', roles: ['developer'], sessionPerTask: true }]);
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+    bench.advance(STARTING_MS);
+
+    const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
+    const complete = async (round: number) => {
+      await writeInCopy(
+        taken.work,
+        'src/space/pages/home/index.ts',
+        `export const page = { round: ${String(round)} };\n`
+      );
+      await completeTask(bench.agent('dev-1', { token: taken.token }), 'es-launch', 't-home');
+    };
+    await complete(1);
+    expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({
+      finished: true,
+      why: expect.stringContaining('t-home is complete: your team gives you one task a session') as unknown
+    });
+    // Stopped, with work waiting: started again, though it starts with the run.
+    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
+      expect.objectContaining({ kind: 'agents-needed', text: expect.stringContaining('start dev-1') as unknown })
+    );
+
+    await reviewTask(lead(), 'es-launch', 't-home', 'changes', [{ note: 'The title again' }]);
+    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
+      expect.objectContaining({
+        kind: 'agents-needed',
+        text: expect.stringContaining('t-home was sent back to dev-1, which is not running: start it again') as unknown
+      })
+    );
+    // Its next session: its own first, then stopped again once it is complete.
+    expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({
+      task: expect.objectContaining({ id: 't-home' }) as unknown,
+      yours: 'changes-requested'
+    });
+    await complete(2);
+    expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({ finished: true });
   });
 
   it('refuses a min past its count', async () => {

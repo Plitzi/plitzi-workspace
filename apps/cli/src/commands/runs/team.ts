@@ -48,10 +48,16 @@ const rolesText = (): string[] => [
 const memberText = (member: TeamChange['before']): string =>
   member === undefined ? 'none' : 'name' in member ? teamAgentText(member) : leadText(member);
 
-export const runTeamSet = (
-  name: string,
-  options: RunCommandOptions & { roles?: string[]; count?: number; min?: number; model?: string; effort?: string }
-): Promise<void> =>
+export interface TeamSetOptions extends RunCommandOptions {
+  roles?: string[];
+  count?: number;
+  min?: number;
+  model?: string;
+  effort?: string;
+  sessionPerTask?: boolean;
+}
+
+export const runTeamSet = (name: string, options: TeamSetOptions): Promise<void> =>
   act(
     options,
     async ctx =>
@@ -60,7 +66,8 @@ export const runTeamSet = (
         ...(options.count !== undefined ? { count: options.count } : {}),
         ...(options.min !== undefined ? { min: options.min } : {}),
         ...(options.model ? { model: parseModelChoice(options.model) } : {}),
-        ...(options.effort ? { effort: options.effort } : {})
+        ...(options.effort ? { effort: options.effort } : {}),
+        ...(options.sessionPerTask !== undefined ? { sessionPerTask: options.sessionPerTask } : {})
       }),
     changed =>
       changed.unchanged

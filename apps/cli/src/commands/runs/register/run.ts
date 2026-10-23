@@ -54,6 +54,7 @@ import type {
 } from '..';
 import type { AgentOptions } from '../agent';
 import type { StartOptions } from '../start';
+import type { TeamSetOptions } from '../team';
 import type { Command } from 'commander';
 
 /**
@@ -202,13 +203,13 @@ export const registerRunGroup = (program: Command): Command => {
     )
     .option('--model <model>', 'The harness’s own name for it: claude-sonnet-5-5')
     .option('--effort <effort>', 'How hard it thinks, in the harness’s words: high')
+    .option(
+      '--session-per-task',
+      'One task a session: each of its agents stops once it completes one, started again — a fresh context — for the next'
+    )
+    .option('--no-session-per-task', 'Its agents go on from one task to the next in one session')
     .option(...JSON_OPTION)
-    .action(
-      (
-        name: string,
-        options: RunCommandOptions & { roles?: string[]; count?: number; min?: number; model?: string; effort?: string }
-      ) => runTeamSet(name, options)
-    );
+    .action((name: string, options: TeamSetOptions) => runTeamSet(name, options));
 
   team
     .command('unset')

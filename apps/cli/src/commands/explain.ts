@@ -67,26 +67,35 @@ export const searchAll = (
   limit = 10,
   /** The skills' passages, a project's: what its references teach, answered beside the catalogues. */
   passages: readonly SkillPassage[] = []
-): (SearchHit | { kind: 'command' | 'code' | 'skill'; name: string; summary: string })[] => {
+): (Omit<SearchHit, 'score'> | { kind: 'command' | 'code' | 'skill'; name: string; summary: string })[] => {
   const asked = [...new Set(searchWords(words))];
   const own = [
     ...commandsOf(commands).map(each => ({ kind: 'command' as const, ...each })),
     ...[...CHECK_CODES.values()].map(code => ({ kind: 'code' as const, name: code.name, summary: code.means })),
     // A passage is found by what it says, never by where it is: its file's name would match every word of a path.
-    ...passages.map(each => ({ kind: each.kind, name: each.name, summary: each.summary, scored: each.text }))
+    ...passages.map(each => ({
+      kind: each.kind,
+      name: each.name,
+      summary: each.summary,
+      title: each.title,
+      scored: each.text
+    }))
   ];
   const ranked = [
-    ...explainSearch(words, limit).map(hit => ({ hit, score: searchScore(asked, hit.name, hit.summary) })),
+    ...explainSearch(words, limit).map(({ score, ...hit }) => ({ hit, score })),
     ...own
       .map(hit => ({
         hit: 'scored' in hit ? { kind: hit.kind, name: hit.name, summary: hit.summary } : hit,
-        score: 'scored' in hit ? searchScore(asked, '', hit.scored) : searchScore(asked, hit.name, hit.summary)
+        score: 'scored' in hit ? searchScore(asked, hit.title, hit.scored) : searchScore(asked, hit.name, hit.summary)
       }))
       .filter(each => each.score > 0)
   ];
 
+  // Of two that hold as many words, what the skills teach first — a passage says how, a catalogue's line what it is.
+  const taught = (hit: { kind: string }): number => (hit.kind === 'skill' ? 0 : 1);
+
   return ranked
-    .sort((a, b) => b.score - a.score || a.hit.name.localeCompare(b.hit.name))
+    .sort((a, b) => b.score - a.score || taught(a.hit) - taught(b.hit) || a.hit.name.localeCompare(b.hit.name))
     .slice(0, limit)
     .map(each => each.hit);
 };

@@ -48,89 +48,123 @@ export const agentsNeeded = (
   );
   const roles = [...new Set(started.flatMap(each => each.roles))];
   const asked = new Set<string>();
-
-  return roles.flatMap(role => {
-    // Free to take work of the role: running, at nothing — and, for a UI review, not the one who wrote the task.
-    // A designer is held for the UI reviews while others work (`task next` hands it none of its own then): it is no
-    // free developer — velada-dress's four ready tasks waited, two designers counted free for them.
-    const freeOf = (except?: string) =>
-      started.filter(
-        each =>
-          each.roles.includes(role) &&
-          (role === 'designer' || !each.roles.includes('designer')) &&
-          running.has(each.agent) &&
-          !busy.has(each.agent) &&
-          each.agent !== except
-      );
-    const ready = views
-      .filter(view => !view.owner && view.state.status === 'ready')
-      .filter(view => (view.task.role ?? 'developer') === role)
-      .map(view => view.task.id);
-    const reviews =
-      role === 'designer'
-        ? views
-            .filter(
-              view => view.state.status === 'in-review' && view.state.design?.status === 'due' && !view.state.design.by
-            )
-            .filter(view => freeOf(view.owner?.agent).length === 0)
-            .map(view => `the UI of ${view.task.id}`)
-        : [];
-    const waiting = [...(freeOf().length === 0 ? ready : []), ...reviews];
-    // The team's order: one that starts with the run first, then those on demand — never dev-2 while dev-1 is not running.
-    // With one of the role running, only an agent on demand is asked for: the rest are the lead's to start at the open.
-    const ofRole = (each: StartedAgent) =>
-      each.roles.includes(role) && (role === 'designer' || !each.roles.includes('designer'));
-    const anyRunning = started.some(each => ofRole(each) && running.has(each.agent));
-    const next = started.find(
-      each =>
-        ofRole(each) && !running.has(each.agent) && !asked.has(each.agent) && (each.onDemand === true || !anyRunning)
-    );
-    // One that starts with the run is being started as the run opens: asked for only once it had time to join —
-    // velada-fidelity's watch said "start dev-1" the moment the lead had started it.
-    if (waiting.length === 0 || !next || (!next.onDemand && run.openFor < STARTING_MS)) {
-      return [];
-    }
-
-    // One on demand beside those running is worth its start when the work waiting and in hand, shared with it, is
-    // TASKS_PER_AGENT each or more — as `run plan` counts it: fewer, those running take it next. velada-shell's watch asked
-    // for dev-2 for two tasks the plan had said were too few for three agents.
-    const runningOfRole = started.filter(each => ofRole(each) && running.has(each.agent));
-    const inHand = runningOfRole.filter(each => busy.has(each.agent)).length;
-    // A task of the role that waits only for work under way is work coming: lx-product's t-buybox waited for
-    // t-description alone, and four cards for one developer (~145 min) never asked for the second.
-    const byId = new Map(views.map(view => [view.task.id, view]));
-    const coming = views.filter(
-      view =>
-        !view.owner &&
-        view.state.status === 'pending' &&
-        (view.task.role ?? 'developer') === role &&
-        view.task.dependsOn.length > 0 &&
-        view.task.dependsOn.every(id => {
-          const dependency = byId.get(id);
-
-          return dependency !== undefined && (dependency.state.status === 'done' || isWorked(dependency.state.status));
-        })
-    ).length;
-    // A UI review no designer running may make — its own author's — waits for another whatever the count.
+  // A task sent back waits for its own agent alone, and nobody else takes it: one not running is asked for by name — an
+  // agent of one task a session stops once it completes one (`sessionPerTask`), before its review says.
+  const sentBack = new Map<string, string[]>();
+  for (const view of views) {
+    const owner = view.owner?.agent;
     if (
-      next.onDemand &&
-      anyRunning &&
-      reviews.length === 0 &&
-      (waiting.length + inHand + coming) / (runningOfRole.length + 1) < TASKS_PER_AGENT
+      owner &&
+      view.state.status === 'changes-requested' &&
+      !running.has(owner) &&
+      started.some(each => each.agent === owner)
     ) {
-      return [];
+      sentBack.set(owner, [...(sentBack.get(owner) ?? []), view.task.id]);
     }
+  }
 
-    asked.add(next.agent);
+  const backTo = [...sentBack].map(([agent, tasks]): Attention => {
+    asked.add(agent);
 
-    return [
-      {
-        kind: 'agents-needed' as const,
-        text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — plitzi run agent ${next.agent} --launch --harness <yours> (its prompt alone: plitzi run agent ${next.agent}; by hand: ${commandAs(run.scratch, next.agent, run.identified, `task next --role ${next.roles.join(',')}${next.quality ? ` --quality ${next.quality}` : ''} --follow --take`)})${next.onDemand ? ` — it stops by itself once nothing is left for it; its start costs about a small task, worth it for ${String(TASKS_PER_AGENT)} or more waiting` : ''}`,
-        who: 'lead' as const
-      }
-    ];
+    return {
+      kind: 'agents-needed' as const,
+      text: `${tasks.join(', ')} ${tasks.length === 1 ? 'was' : 'were'} sent back to ${agent}, which is not running: start it again — plitzi run agent ${agent} --launch --harness <yours> (its prompt alone: plitzi run agent ${agent}) — it takes ${tasks.length === 1 ? 'it' : 'them'} first`,
+      who: 'lead' as const
+    };
   });
+
+  return [
+    ...backTo,
+    ...roles.flatMap(role => {
+      // Free to take work of the role: running, at nothing — and, for a UI review, not the one who wrote the task.
+      // A designer is held for the UI reviews while others work (`task next` hands it none of its own then): it is no
+      // free developer — velada-dress's four ready tasks waited, two designers counted free for them.
+      const freeOf = (except?: string) =>
+        started.filter(
+          each =>
+            each.roles.includes(role) &&
+            (role === 'designer' || !each.roles.includes('designer')) &&
+            running.has(each.agent) &&
+            !busy.has(each.agent) &&
+            each.agent !== except
+        );
+      const ready = views
+        .filter(view => !view.owner && view.state.status === 'ready')
+        .filter(view => (view.task.role ?? 'developer') === role)
+        .map(view => view.task.id);
+      const reviews =
+        role === 'designer'
+          ? views
+              .filter(
+                view =>
+                  view.state.status === 'in-review' && view.state.design?.status === 'due' && !view.state.design.by
+              )
+              .filter(view => freeOf(view.owner?.agent).length === 0)
+              .map(view => `the UI of ${view.task.id}`)
+          : [];
+      const waiting = [...(freeOf().length === 0 ? ready : []), ...reviews];
+      // The team's order: one that starts with the run first, then those on demand — never dev-2 while dev-1 is not running.
+      // With one of the role running, only an agent on demand is asked for: the rest are the lead's to start at the open.
+      const ofRole = (each: StartedAgent) =>
+        each.roles.includes(role) && (role === 'designer' || !each.roles.includes('designer'));
+      const anyRunning = started.some(each => ofRole(each) && running.has(each.agent));
+      const next = started.find(
+        each =>
+          ofRole(each) &&
+          !running.has(each.agent) &&
+          !asked.has(each.agent) &&
+          // One of one task a session stopped once its task was complete: started again, a fresh context, for the next.
+          (each.onDemand === true || each.sessionPerTask === true || !anyRunning)
+      );
+      // One that starts with the run is being started as the run opens: asked for only once it had time to join —
+      // velada-fidelity's watch said "start dev-1" the moment the lead had started it.
+      if (waiting.length === 0 || !next || (!next.onDemand && run.openFor < STARTING_MS)) {
+        return [];
+      }
+
+      // One on demand beside those running is worth its start when the work waiting and in hand, shared with it, is
+      // TASKS_PER_AGENT each or more — as `run plan` counts it: fewer, those running take it next. velada-shell's watch asked
+      // for dev-2 for two tasks the plan had said were too few for three agents.
+      const runningOfRole = started.filter(each => ofRole(each) && running.has(each.agent));
+      const inHand = runningOfRole.filter(each => busy.has(each.agent)).length;
+      // A task of the role that waits only for work under way is work coming: lx-product's t-buybox waited for
+      // t-description alone, and four cards for one developer (~145 min) never asked for the second.
+      const byId = new Map(views.map(view => [view.task.id, view]));
+      const coming = views.filter(
+        view =>
+          !view.owner &&
+          view.state.status === 'pending' &&
+          (view.task.role ?? 'developer') === role &&
+          view.task.dependsOn.length > 0 &&
+          view.task.dependsOn.every(id => {
+            const dependency = byId.get(id);
+
+            return (
+              dependency !== undefined && (dependency.state.status === 'done' || isWorked(dependency.state.status))
+            );
+          })
+      ).length;
+      // A UI review no designer running may make — its own author's — waits for another whatever the count.
+      if (
+        next.onDemand &&
+        anyRunning &&
+        reviews.length === 0 &&
+        (waiting.length + inHand + coming) / (runningOfRole.length + 1) < TASKS_PER_AGENT
+      ) {
+        return [];
+      }
+
+      asked.add(next.agent);
+
+      return [
+        {
+          kind: 'agents-needed' as const,
+          text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — plitzi run agent ${next.agent} --launch --harness <yours> (its prompt alone: plitzi run agent ${next.agent}; by hand: ${commandAs(run.scratch, next.agent, run.identified, `task next --role ${next.roles.join(',')}${next.quality ? ` --quality ${next.quality}` : ''} --follow --take`)})${next.onDemand ? ` — it stops by itself once nothing is left for it; its start costs about a small task, worth it for ${String(TASKS_PER_AGENT)} or more waiting` : ''}`,
+          who: 'lead' as const
+        }
+      ];
+    })
+  ];
 };
 
 /**

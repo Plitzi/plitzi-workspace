@@ -1,10 +1,8 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
 
 import { durationText, FOLLOW_MS } from '../../options';
 import { questionFor, takeQuestion } from '../answering';
 import { designReviewFor, hasDesignReview, takeOfferedReview } from '../design';
-import { createExclusive } from '../files';
 import { handOver } from '../handOver';
 import { assertRoles } from '../identity';
 import { handOffRework, reworkFor, reworksWaiting } from './handOff';
@@ -25,7 +23,17 @@ import { byUrgency } from '../urgency';
 import { isWorked } from '../worked';
 import { at, findTask, roleOf } from './common';
 import { allLocks } from './locks';
-import { askedOf, askedRoles, baseFirst, lastAsked, reasonOf, spareNow, uiReviewsComing } from './nextRules';
+import {
+  askedOf,
+  askedRoles,
+  baseFirst,
+  lastAsked,
+  reasonOf,
+  markJoined,
+  sessionEnd,
+  spareNow,
+  uiReviewsComing
+} from './nextRules';
 import { changesBlock } from './review';
 import { takeTask } from './take';
 
@@ -126,22 +134,6 @@ export interface NextTask {
 }
 
 /** `plitzi task next`: the ready task to take — the most urgent (its priority, or the highest of what waits on it), then the longest chain still to do. */
-/** Logs `joined` the first time an agent asks the run for work — kept as the scratch folder it is given. */
-const markJoined = async (ctx: RunContext, loaded: LoadedRun): Promise<void> => {
-  // By a mark of its own, made once: the scratch folder an agent made itself first — for its crops — read as an arrival
-  // already said (velada-polish: design-1 never "joined" the run).
-  const mark = path.join(agentScratch(loaded.paths, ctx.agent), '.joined');
-  await fs.mkdir(path.dirname(mark), { recursive: true });
-  if (!(await createExclusive(mark, ctx.now().toISOString()))) {
-    return;
-  }
-
-  await logRun(ctx, loaded.paths, {
-    action: 'joined',
-    ...(ctx.quality === undefined ? {} : { quality: ctx.quality })
-  });
-};
-
 export const nextTask = async (ctx: RunContext, runId: string, role?: string): Promise<NextTask> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open'], 'start a task');
@@ -200,6 +192,12 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
         messages: [...messages, ...toTask].sort((x, y) => x.at.localeCompare(y.at) || x.id.localeCompare(y.id))
       };
     }
+  }
+
+  // One task a session: its own sent back comes first, above — while the session lasts, its context is still warm.
+  const sessionOver = await sessionEnd(ctx, loaded);
+  if (sessionOver !== undefined) {
+    return { why: sessionOver, ready: [], messages, finished: true };
   }
 
   // A lead that reviews is offered reviews, and nothing else: the queue of tasks in review no other lead took.

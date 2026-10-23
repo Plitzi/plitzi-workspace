@@ -344,6 +344,15 @@ team's base agents of its roles — there (marked present) and at nothing — ta
 waits. Running is read off the log (`runningAgents`): an
 agent that said something and has not stopped since. The monitor shows one not running as on demand, not as idle.
 
+**One task a session** (`"sessionPerTask": true` on a team's agent, `run team set dev --session-per-task`): the CLI
+cannot empty a harness's context, so the agent ends its session instead. Once it completes a task — its session being
+what it did since its last `stops` in the log (`sessionDone`) — `task next` tells it to stop rather than hand it the
+next, and its own task sent back meanwhile still comes first, while its context is warm. `run watch` asks the lead to
+start it again, as one on demand, when work of its role waits; and any task sent back to an agent that is not
+running asks for that agent by name, which it takes first. lx-product's dev-1 read 30.9M tokens for three tasks, each
+turn reading again what the tasks before left in its context: a session each reads ~40 % less, for ~1 minute and the
+skills read again at each start — worth it for an agent that works several tasks, not for one that works one.
+
 ## The tester's tasks (`tests.ts`)
 
 A tester in the team gives every developer task a task of its tests, `<id>-tests`, a tester's, after it: tests written

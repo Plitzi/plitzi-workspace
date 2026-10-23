@@ -2,6 +2,7 @@ import { interactionBasicTriggers } from '@plitzi/sdk-elements/elements/declarat
 import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring';
 import { GLOBAL_SOURCES } from '@plitzi/sdk-shared/dataSource';
 import { FILTER_DOCS, FUNCTION_DOCS } from '@plitzi/sdk-shared/helpers/twigWrapper/filters/catalog';
+import { STYLE_STATE_LABELS } from '@plitzi/sdk-shared/style';
 
 import {
   elementAncestorTypes,
@@ -416,12 +417,34 @@ export const explainList = (kind: ExplainKind): { name: string; summary: string 
   }
 };
 
-/** One thing a search found: what it is, its name as written, and its line. */
+/** One thing a search found: what it is, its name as written, its line — and how well it answers the words asked. */
 export interface SearchHit {
   kind: ExplainKind | 'field' | 'state';
   name: string;
   summary: string;
+  /** How many of the words asked it holds (`searchScore`), its description and params read too: what ranks it. */
+  score: number;
 }
+
+/**
+ * What an entry says beyond its line, read by a search and never listed: an element's description, a step's or a
+ * trigger's params. lx-product: "repeat list each item" missed `list`, whose description says it repeats a row once
+ * per entry, and "escape key close" `onKey`, whose keys take `escape` — the search read their titles alone.
+ */
+const aboutOf = (kind: SearchHit['kind'], name: string): string => {
+  if (kind !== 'element' && kind !== 'step' && kind !== 'trigger' && kind !== 'transformer') {
+    return '';
+  }
+
+  const explained = explain(name).find(each => each.kind === kind);
+  if (!explained) {
+    return '';
+  }
+
+  const params = 'params' in explained ? explained.params.map(param => `${param.name} ${param.description ?? ''}`) : [];
+
+  return [...('description' in explained ? [explained.description] : []), ...params].join(' ');
+};
 
 /** Words that say nothing of what is looked for. */
 const EMPTY_WORDS = new Set([
@@ -473,16 +496,17 @@ export const explainSearch = (text: string, limit = 10): SearchHit[] => {
     return [];
   }
 
-  const hits: SearchHit[] = [
+  const hits: Omit<SearchHit, 'score'>[] = [
     ...Object.values(EXPLAIN_KINDS).flatMap(listed => {
       const kind = explainKindOf(listed);
 
       return kind ? explainList(kind).map(entry => ({ kind, name: entry.name, summary: entry.summary })) : [];
     }),
+    // Named as the style editor names it — `last` is "Last child" — so a search in CSS's words finds it.
     ...STYLE_STATES.map(state => ({
       kind: 'state' as const,
       name: state,
-      summary: `A state a class styles — styles(name, { states: { '${state}': { … } } })`
+      summary: `${STYLE_STATE_LABELS[state]}: a state a class styles — styles(name, { states: { '${state}': { … } } })`
     })),
     ...Object.entries(elementPublishes).flatMap(([type, fields]) =>
       Object.entries(fields).map(([field, what]) => ({
@@ -494,11 +518,10 @@ export const explainSearch = (text: string, limit = 10): SearchHit[] => {
   ];
 
   return hits
-    .map(hit => ({ hit, score: searchScore(asked, hit.name, hit.summary) }))
-    .filter(each => each.score > 0)
-    .sort((a, b) => b.score - a.score || a.hit.name.localeCompare(b.hit.name))
-    .slice(0, limit)
-    .map(each => each.hit);
+    .map(hit => ({ ...hit, score: searchScore(asked, hit.name, `${hit.summary} ${aboutOf(hit.kind, hit.name)}`) }))
+    .filter(hit => hit.score > 0)
+    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+    .slice(0, limit);
 };
 
 const valueText = (value: unknown): string => JSON.stringify(value);

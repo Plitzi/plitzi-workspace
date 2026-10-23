@@ -118,7 +118,7 @@ container({ class: card, children: [ … ] });
 - One name declared twice with rules that disagree is refused. Declare a class once, in the module that owns it, and
   import it.
 - `ancestors: { [sidebar.name]: { variants: { collapsed: { display: 'none' } } } }` styles an element by the state or
-  variant of an ancestor class — the way to react to a parent's hover or collapse without a flow; `'>'` is the parent,
+  variant of an ancestor class (a descendant selector): a parent's hover or collapse, with no flow; `'>'` is the parent,
   whatever it wears (a component's part: `{ '>': { states: { expanded: … } } }`).
 - `pseudos: { after: { content: '"→"' } }` (`before`/`after` need a quoted `content`; also `selection`, `marker`,
   `placeholder`, `first-letter`, `first-line`). `conditions: { 'motion-reduce': …, 'container (max-width: 30rem)': … }`.

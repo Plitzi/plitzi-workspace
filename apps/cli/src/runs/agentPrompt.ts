@@ -23,7 +23,7 @@ export interface PromptFor {
   /** The agent, as the team names it — or `lead`. */
   agent: string;
   /** Its roles and level, from the team; none for the lead. */
-  started?: Pick<StartedAgent, 'roles' | 'quality'>;
+  started?: Pick<StartedAgent, 'roles' | 'quality' | 'sessionPerTask'>;
   runId: string;
   /** The project's folder. */
   root: string;
@@ -95,7 +95,9 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
           reference === undefined
             ? '- Measure, never guess — every element and width in one call: `PLITZI page measure <path> <elements…> --width 390,1440` (`--hover`, `--click` for a state; `PLITZI page outline <path> --within <part>` names them). Trying values, measure; never `task check` for it.'
             : `- Measure, never guess — every element and width in one call: \`PLITZI page measure <path> "<ours> => <theirs>" …${beside} --width 390,1440\` (\`--hover\`, \`--click\` for a state; \`PLITZI page outline <path>${beside} --within <part>\` names theirs). Trying values, measure; never \`task check\` for it.`,
-          '- Change a batch, then `PLITZI task check` once; then `PLITZI task complete`, and `PLITZI task next --follow --take` again.',
+          started?.sessionPerTask === true
+            ? '- Change a batch, then `PLITZI task check` once; then `PLITZI task complete --follow --take`. You work one task a session: once it is complete, task next says you can stop — stop then, with your report; the lead starts you again, a fresh context, for the next task, and for yours if it is sent back.'
+            : '- Change a batch, then `PLITZI task check` once; then `PLITZI task complete`, and `PLITZI task next --follow --take` again.',
           // lx-controls: t-collection completed with "Known: the phone keeps our inline panel, where the original opens a
           // drawer" — sent back for exactly that.
           `- ${reference === undefined ? 'Something wrong you see' : 'A difference from the site you copy you see'}, inside your task's title, is work, not a note: do it, or \`PLITZI task ask\` the lead before you complete.`,

@@ -1,0 +1,60 @@
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+import { searchAll } from './explain';
+import { skillPassages } from './skillsMentions';
+import { skillFiles } from '../scaffold/skills';
+
+import type { SkillPassage } from './skillsMentions';
+
+let root = '';
+let passages: SkillPassage[] = [];
+
+beforeAll(async () => {
+  root = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-search-'));
+  for (const [file, content] of Object.entries(skillFiles())) {
+    await fs.mkdir(path.dirname(path.join(root, file)), { recursive: true });
+    await fs.writeFile(path.join(root, file), content);
+  }
+
+  passages = skillPassages(root);
+});
+
+afterAll(async () => {
+  await fs.rm(root, { recursive: true, force: true });
+});
+
+/** lx-product's agents' own words, each with what answered it: the run spent 18 turns of dev-1's on the first five. */
+const ASKED: [string, RegExp][] = [
+  ['action step return', /server-data|ctx\.data|data-and-visibility/],
+  ['task step transform lookup rows data', /server-data|ctx\.data|taskAction/],
+  ['ctx.data', /ctx\.data/],
+  ['read src/data in an action', /server-data|ctx\.data/],
+  ['server action data', /recipes\/server-data/],
+  ['function task', /taskAction|functions\.md/],
+  ['descendant nested selectors', /ancestor/],
+  ['accordion collapse expand', /accordion/],
+  ['details summary disclosure', /accordion/],
+  ['repeat list each item', /^list$/],
+  ['escape key close', /^onKey$/],
+  ['hash link current page', /link-to-a-section|anchor/],
+  ['anchor list row', /anchor-in-row/],
+  ['last-child', /^last$/]
+];
+
+describe('explain --search, on what agents asked', () => {
+  it('answers each in its first three hits', () => {
+    const ranks = ASKED.map(([words, wanted]) => {
+      const hits = searchAll(words, [], 10, passages);
+
+      return `${String(hits.findIndex(hit => wanted.test(hit.name) || wanted.test(hit.summary)) + 1)} ${words} — ${hits
+        .slice(0, 3)
+        .map(hit => hit.name)
+        .join(' | ')}`;
+    });
+    expect(ranks.filter(rank => !/^[123] /.test(rank))).toEqual([]);
+  });
+});

@@ -64,9 +64,8 @@ apiContainer({ id: 'board', runtime: 'server', action: 'queue-board' })         
 
 - A provider's source is readable by its **descendants** only. Wrap what reads it; a sibling cannot see it.
 - It publishes its answer plus `isLoading`, `isEmpty`, `hasError`, `errorMessage` — bind a state to those, not to
-  guesses. A `query`'s body is `data` in **either runtime** (`p.data.plans`), so moving a provider to the server
-  changes no binding. A connector publishes `records` (or `record`). **An action publishes its output at the root**:
-  `apiContainer_board.columns`, never `.data.columns` (warned `action-output-path`).
+  guesses. A `query`'s body is `data` in **either runtime**: moving a provider to the server changes no binding. A connector publishes `records` (or `record`). **An action publishes its output (its last step's return)
+  at the root**: `apiContainer_board.columns`, never `.data.columns` (warned `action-output-path`).
   `isEmpty` reads what arrived: a `query`'s body when it is missing, `null`, `''`, `[]` or `{}`; a connector list by
   its `records`; a `singleRecord` provider by its `record`. It is also true before the first answer, so pair it with
   `not isLoading` for an empty state.

@@ -54,7 +54,8 @@ person asked for a team:
    brief starts with it, and the few references its files need. **The team** is the project's,
    `.plitzi/team.json` — grow it when the job asks (`plitzi run team set dev --count 3 --min 1 --model <model>`): its
    size is how many work at once; past `min`, on demand — `run watch` says when to start one (through its own CLI,
-   after its first start). A tester adds `<id>-tests` after each developer task (`"tests": false` for none); a designer reviews
+   after its first start). `--session-per-task`: its agents stop after each task, and `run watch` asks
+   you to start them again, fresh. A tester adds `<id>-tests` after each developer task (`"tests": false` for none); a designer reviews
    the others' UI before you (`options.designReview`; `"designReview": false` turns it off). Yours is the complete,
    strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
    `--skip-design lead|no-ui`; with `--changes`, `lead` keeps the next round's UI yours). A UI review held 8 min, or

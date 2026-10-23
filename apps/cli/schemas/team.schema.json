@@ -125,6 +125,10 @@
           "effort": {
             "type": "string",
             "description": "How hard it thinks, in the harness's words: high"
+          },
+          "sessionPerTask": {
+            "type": "boolean",
+            "description": "One task a session: each of its agents stops once it completes one, and the lead starts it again, a fresh context, for the next"
           }
         }
       }

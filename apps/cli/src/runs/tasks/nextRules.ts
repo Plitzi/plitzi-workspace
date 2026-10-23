@@ -1,9 +1,14 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
 import { hasDesignReview } from '../design';
+import { createExclusive } from '../files';
 import { coLeadsOf, spareLead } from '../leads';
 import { LEAD } from '../messages';
 import { freeBaseAgents, runningAgents } from '../onDemand';
+import { agentScratch } from '../paths';
 import { PRESENCE_STALE_MS, presentAt } from '../presence';
-import { loadRun, readRunLog } from '../run';
+import { loadRun, logRun, readRunLog } from '../run';
 import { viewTask } from '../taskStore';
 import { DESIGNER, readTeam, startedAgents } from '../team';
 import { isWorked } from '../worked';
@@ -12,6 +17,45 @@ import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 
 /** What `task next` weighs beside the work itself: who of the team goes first, who is spare, and how a wait is said. */
+
+/** Logs `joined` the first time an agent asks the run for work — kept as the scratch folder it is given. */
+export const markJoined = async (ctx: RunContext, loaded: LoadedRun): Promise<void> => {
+  // By a mark of its own, made once: the scratch folder an agent made itself first — for its crops — read as an arrival
+  // already said (velada-polish: design-1 never "joined" the run).
+  const mark = path.join(agentScratch(loaded.paths, ctx.agent), '.joined');
+  await fs.mkdir(path.dirname(mark), { recursive: true });
+  if (!(await createExclusive(mark, ctx.now().toISOString()))) {
+    return;
+  }
+
+  await logRun(ctx, loaded.paths, {
+    action: 'joined',
+    ...(ctx.quality === undefined ? {} : { quality: ctx.quality })
+  });
+};
+
+/**
+ * For an agent of one task a session (`sessionPerTask`): why it stops — the task it completed since it last stopped,
+ * its session's work done — or nothing. Read off the run's log, as who is running is (`runningAgents`): a session is
+ * what an agent did since its last `stops`, and the lead's next start of it is a fresh one.
+ */
+export const sessionEnd = async (ctx: RunContext, loaded: LoadedRun): Promise<string | undefined> => {
+  const team = await readTeam(ctx.root).catch(() => undefined);
+  if (!(team ? startedAgents(team) : []).some(each => each.agent === ctx.agent && each.sessionPerTask === true)) {
+    return undefined;
+  }
+
+  const own = (await readRunLog(loaded.paths)).filter(entry => entry.by === ctx.agent);
+  const since = own.findLastIndex(entry => entry.action === 'stops');
+  const completed = own.slice(since + 1).findLast(entry => entry.action === 'complete');
+  if (!completed) {
+    return undefined;
+  }
+
+  const task = typeof completed.task === 'string' ? completed.task : 'its task';
+
+  return `${task} is complete: your team gives you one task a session (sessionPerTask) — the lead starts you again, a fresh context, for the next, or for ${task} if it is sent back. You can stop`;
+};
 
 /** For an agent on demand: the team's base agents of its roles, there and free — ready work is theirs first. */
 export const baseFirst = async (

@@ -183,12 +183,15 @@ describe('the team of a project’s runs', () => {
     ).toEqual([
       '"extra" is no field of it (it takes version, lead, agents, options, about)',
       '"lead": "modle" is no field of it — did you mean "model"? (it takes model, effort, count)',
-      '"dev": "cuont" is no field of it — did you mean "count"? (it takes name, roles, count, min, model, effort)',
+      '"dev": "cuont" is no field of it — did you mean "count"? (it takes name, roles, count, min, model, effort, sessionPerTask)',
       '"lead" is the lead’s: give the lead its model under "lead", and the agent another name'
     ]);
     expect(teamProblems({ $schema: TEAM_SCHEMA, version: 1, agents: [{ name: 'dev', roles: ['developer'] }] })).toEqual(
       []
     );
+    expect(
+      teamProblems({ version: 1, agents: [{ name: 'dev', roles: ['developer'], sessionPerTask: 'yes' }] })
+    ).toEqual(['"dev": its sessionPerTask is true — one task a session — or false']);
   });
 
   // velada-now: a designer's strictest review took 83 steps, more than the task it reviewed — how close is the team's.
@@ -224,7 +227,8 @@ describe('the team of a project’s runs', () => {
       'min',
       'model',
       'name',
-      'roles'
+      'roles',
+      'sessionPerTask'
     ]);
   });
 

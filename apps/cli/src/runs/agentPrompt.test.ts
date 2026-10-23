@@ -58,6 +58,9 @@ describe('an agent’s prompt', () => {
     expect(agentPrompt({ ...base, agent: 'dev-2', started: { roles: ['developer'], quality: 'high' } })).toContain(
       '--quality high'
     );
+    const once = agentPrompt({ ...base, agent: 'dev-1', started: { roles: ['developer'], sessionPerTask: true } });
+    expect(once).toContain('You work one task a session: once it is complete, task next says you can stop');
+    expect(agentPrompt({ ...base, agent: 'dev-1', started: { roles: ['developer'] } })).not.toContain('a session');
   });
 
   it('gives the lead the ask, its scope, and how to start its team', () => {

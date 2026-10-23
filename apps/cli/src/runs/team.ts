@@ -111,6 +111,13 @@ export interface TeamAgent {
   min?: number;
   model?: ModelChoice;
   effort?: string;
+  /**
+   * Each of its agents works one task a session: once it completes one, `task next` tells it to stop, and the lead starts
+   * it again — a fresh context — for the next, or for its own sent back. lx-product: dev-1 read 30.9M tokens for three
+   * tasks, each turn reading again what the tasks before left in its context; a session each, ~40 % less, for ~1 minute
+   * and the skills read again at each start.
+   */
+  sessionPerTask?: boolean;
 }
 
 /** The leads' entry: their model, and how many — one for every `AGENTS_PER_LEAD` agents when not said. */
@@ -173,6 +180,8 @@ export interface StartedAgent {
   quality?: Quality;
   /** Past its group's `min`: started when work waits for it, and it stops once none is left (`onDemand.ts`). */
   onDemand?: true;
+  /** One task a session (`TeamAgent.sessionPerTask`): told to stop once it completes one, started again for the next. */
+  sessionPerTask?: true;
 }
 
 /** A role's or an agent's name, as a plan writes one. */
@@ -234,6 +243,10 @@ const agentProblem = (value: unknown): string | undefined => {
     return `"${name}": its effort is the harness’s word for it — high`;
   }
 
+  if (value.sessionPerTask !== undefined && typeof value.sessionPerTask !== 'boolean') {
+    return `"${name}": its sessionPerTask is true — one task a session — or false`;
+  }
+
   return undefined;
 };
 
@@ -242,7 +255,7 @@ const isTeamAgent = (value: unknown): value is TeamAgent => agentProblem(value) 
 const TEAM_KEYS = ['$schema', 'version', 'lead', 'agents', 'options', 'about'];
 const OPTION_KEYS = ['designReview'];
 const LEAD_KEYS = ['model', 'effort', 'count'];
-const AGENT_KEYS = ['name', 'roles', 'count', 'min', 'model', 'effort'];
+const AGENT_KEYS = ['name', 'roles', 'count', 'min', 'model', 'effort', 'sessionPerTask'];
 
 /** A key the file does not know — a typo, most often — said with the one it likely meant: it would be read as nothing. */
 const unknownKeys = (value: object, known: readonly string[], where: string): string[] =>
@@ -357,7 +370,7 @@ export const TEAM_ABOUT: Record<string, unknown> = {
   file: 'Who works the runs of several agents on this project (plitzi run). Edit it, or: plitzi run team set <name> --roles … --count … --model …',
   lead: 'The lead plans, reviews every task — the complete, strict review, and the final word — answers and closes: the one you talk to. Give it your strongest model: "lead": { "model": "…", "effort": "high" } (plitzi run team set lead --model …). One lead for every 4 agents: lead plans and finishes, lead-2, lead-3… only review, as strictly — "count" says another number (plitzi run team set lead --count 1).',
   agents:
-    'Each agent: a name (dev is dev-1, dev-2…), the roles it takes, how many of it (count), and the model to start it with, as the harness names it (claude-sonnet-5-5 in Claude Code; any model opencode or another harness takes); left out, the default of the harness. Or a model a quality level — "model": { "standard": "claude-sonnet-5-5", "high": "claude-opus-5-5" } (light, standard, high): each level is started apart (design-1-high) for the tasks of it, so the strongest model works only what many build on. How many agents work at once is the sum of the counts; "min" (from 1 to its count) starts only that many with the run, the rest on demand — the lead starts one when work waits for it (run watch says which), and it stops once none is left.',
+    'Each agent: a name (dev is dev-1, dev-2…), the roles it takes, how many of it (count), and the model to start it with, as the harness names it (claude-sonnet-5-5 in Claude Code; any model opencode or another harness takes); left out, the default of the harness. Or a model a quality level — "model": { "standard": "claude-sonnet-5-5", "high": "claude-opus-5-5" } (light, standard, high): each level is started apart (design-1-high) for the tasks of it, so the strongest model works only what many build on. How many agents work at once is the sum of the counts; "min" (from 1 to its count) starts only that many with the run, the rest on demand — the lead starts one when work waits for it (run watch says which), and it stops once none is left. "sessionPerTask": true gives each of its agents one task a session: told to stop once it completes one, started again by the lead, a fresh context, for the next or its own sent back — fewer tokens for an agent that works several tasks (plitzi run team set dev --session-per-task).',
   roles: { ...ROLES, '<any other>': 'A role of your own: a task names it, an agent takes it.' },
   options:
     '"designReview": how closely a designer reviews another task\'s UI — "light" (its pages at 1440 and 390, the default scheme, nothing it does not touch), "standard" (both schemes and widths, its sections against the reference; the default), "high" (every page that reads its files, against the run before it too). A review costs what it looks at.',
@@ -428,7 +441,10 @@ export const startedAgents = (team: Team): StartedAgent[] =>
     Array.from({ length: each.count ?? 1 }, (_, index): StartedAgent[] => {
       const name = `${each.name}-${String(index + 1)}`;
       const effort = each.effort ? { effort: each.effort } : {};
-      const demand = each.min !== undefined && index >= each.min ? { onDemand: true as const } : {};
+      const demand = {
+        ...(each.min !== undefined && index >= each.min ? { onDemand: true as const } : {}),
+        ...(each.sessionPerTask === true ? { sessionPerTask: true as const } : {})
+      };
       if (each.model === undefined || typeof each.model === 'string') {
         return [
           {
@@ -502,7 +518,7 @@ export const leadText = (lead: Lead | undefined): string =>
 
 /** One agent of the team, as `run team` says it. */
 export const teamAgentText = (each: TeamAgent): string =>
-  `${each.name}${(each.count ?? 1) > 1 ? ` × ${String(each.count)}` : ''}${each.min !== undefined && each.min < (each.count ?? 1) ? ` (${String(each.min)} at the start, the rest on demand)` : ''} — ${each.roles.join(', ')}${each.model ? ` — ${choiceText(each.model)}${each.effort ? ` (${each.effort})` : ''}` : ''}`;
+  `${each.name}${(each.count ?? 1) > 1 ? ` × ${String(each.count)}` : ''}${each.min !== undefined && each.min < (each.count ?? 1) ? ` (${String(each.min)} at the start, the rest on demand)` : ''} — ${each.roles.join(', ')}${each.model ? ` — ${choiceText(each.model)}${each.effort ? ` (${each.effort})` : ''}` : ''}${each.sessionPerTask === true ? ' — one task a session' : ''}`;
 
 export interface TeamChange {
   name: string;
@@ -520,6 +536,7 @@ export interface TeamAgentChange {
   min?: number;
   model?: ModelChoice;
   effort?: string;
+  sessionPerTask?: boolean;
 }
 
 const writeTeam = async (root: string, team: Team): Promise<void> => {
@@ -601,7 +618,8 @@ export const setTeamAgent = async (root: string, name: string, change: TeamAgent
     ...((change.count ?? before?.count) !== undefined ? { count: change.count ?? before?.count } : {}),
     ...((change.min ?? before?.min) !== undefined ? { min: change.min ?? before?.min } : {}),
     ...((change.model ?? before?.model) !== undefined ? { model: change.model ?? before?.model } : {}),
-    ...((change.effort ?? before?.effort) !== undefined ? { effort: change.effort ?? before?.effort } : {})
+    ...((change.effort ?? before?.effort) !== undefined ? { effort: change.effort ?? before?.effort } : {}),
+    ...((change.sessionPerTask ?? before?.sessionPerTask) === true ? { sessionPerTask: true } : {})
   };
   const problem = agentProblem(after);
   if (problem !== undefined) {

@@ -1,5 +1,6 @@
 /**
- * An accordion — questions whose answers open one at a time — written once and mapped over the questions: the open one
+ * An accordion — questions whose answers open one at a time, a disclosure that expands and collapses, as `<details>`
+ * would — written once and mapped over the questions: the open one
  * is a key in `state`, and each question reads it the same way. The button says whether its answer is open
  * (`ariaExpanded`) and which panel it opens (`controls`, by the panel's id), so a screen reader follows it; the panel is
  * revealed by the state, so it starts hidden.

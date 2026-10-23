@@ -1139,3 +1139,10 @@ moved,shown,enabled` fails where a step leaves them otherwise — an acceptance 
     `run open`.
   - A reading of the other page is kept by what it measures, and the kept browser is asked only by the CLI that started
     it: one an older CLI left running answered `list-style` and `y` as "none" — two differences that were not there.
+- **One task a session, and a search that finds what the skills teach.**
+  - `"sessionPerTask": true` on a team's agent (`plitzi run team set dev --session-per-task`): it stops once its task is
+    complete — its own sent back meanwhile first — and `run watch` asks the lead to start it again, a fresh context, for
+    the next. A task sent back to an agent that is not running asks for it by name.
+  - `explain --search` reads the recipes, every point of the references, an element's description and a step's params,
+    and a style state by its CSS name (`last` is "Last child"): of fourteen questions lx-product's agents asked, five
+    were answered in the first three hits, now every one — held by a test.
