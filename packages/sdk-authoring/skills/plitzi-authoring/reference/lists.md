@@ -58,7 +58,9 @@ list({
 })
 ```
 
-Only the rows that match are rendered. A counter and an empty state read the same predicate over the same source:
+Only the rows that match are rendered. What it filters by may be another source's value, named in full — never a
+literal copied out of the data: `{{ source|filter(p => p.collections|contains(apiContainer_site.data.home.collection))
+}}`. A counter and an empty state read the same predicate over the same source:
 `{{ source|filter(…)|length }}` as text, and `visible: { source: 'catalog.data.games', template: "{{ source is defined
 and source|filter(…)|length == 0 }}" }`.
 
