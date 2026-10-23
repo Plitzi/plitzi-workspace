@@ -1,6 +1,11 @@
+import { execFile } from 'node:child_process';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { promisify } from 'node:util';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { assertRoles, callerFlag, identifiedAgents, identify, issueToken, tokenFile } from './identity';
+import { assertRoles, cliFile, commandAs, identifiedAgents, identify, issueToken, tokenFile } from './identity';
 import { runPaths } from './paths';
 import { makeBench } from '../tests/runProject';
 
@@ -88,7 +93,7 @@ describe('who calls a run’s command, proved', () => {
     });
     await expect(who({ kind: 'name', said: 'agent' })).rejects.toMatchObject({ code: 'identity' });
     await expect(who({ kind: 'none' })).rejects.toMatchObject({
-      message: expect.stringContaining(tokenFile(paths(), '<you>')) as unknown
+      message: expect.stringContaining(cliFile(paths(), '<you>')) as unknown
     }); // velada-shell: `--token ""`, read from a copy removed under it, was "who is calling?" — it says what was empty.
     await expect(who({ kind: 'none', empty: true })).rejects.toMatchObject({
       code: 'identity',
@@ -112,10 +117,27 @@ describe('who calls a run’s command, proved', () => {
     await expect(assertRoles(bench.root, 'lead', ['lead'])).resolves.toBeUndefined();
   });
 
-  it('says how to start an agent again: by its name the first time, by its kept token after', () => {
-    expect(callerFlag(paths().scratch, 'dev-2', [])).toBe('--agent dev-2');
+  it('says how to start an agent again: by its name the first time, through its own CLI after', () => {
+    expect(commandAs(paths().scratch, 'dev-2', [], 'task next --follow')).toBe(
+      'plitzi task next --follow --agent dev-2'
+    );
     // By its whole path: the same from a task's copy as from the project.
-    expect(callerFlag(paths().scratch, 'dev-2', ['dev-2'])).toBe(`--token "$(cat ${tokenFile(paths(), 'dev-2')})"`);
+    expect(commandAs(paths().scratch, 'dev-2', ['dev-2'], 'task next --follow')).toBe(
+      `${cliFile(paths(), 'dev-2')} task next --follow`
+    );
     expect(tokenFile(paths(), 'dev-2')).toBe(`${bench.root}/tmp/plitzi-runs/es-launch/scratch/dev-2/token`);
+  });
+
+  // lx-product: `--token "$(cat …)"` and the CLI's path were 300 characters of every command an agent ran, each read
+  // again on every turn after — and velada-fidelity's, read from the wrong folder, came in empty.
+  it('gives an agent its own CLI with its token: the project’s, run with it, from any folder', async () => {
+    const bin = path.join(bench.root, 'node_modules', '.bin', 'plitzi');
+    await fs.mkdir(path.dirname(bin), { recursive: true });
+    await fs.writeFile(bin, '#!/bin/sh\necho "$PLITZI_TOKEN" "$@"\n', { mode: 0o755 });
+    const issued = await issueToken(paths(), RUN, 'dev-1', at);
+
+    expect(issued?.cli).toBe(cliFile(paths(), 'dev-1'));
+    const { stdout } = await promisify(execFile)(cliFile(paths(), 'dev-1'), ['task', 'check', 'a b'], { cwd: '/' });
+    expect(stdout).toBe(`${issued?.token ?? ''} task check a b\n`);
   });
 });

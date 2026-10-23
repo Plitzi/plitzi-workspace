@@ -2,9 +2,10 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { measuredText, measureOn, pairOf, readingText, sameProperties } from './measure';
+import { measureOn, pairOf, readingKey, sameProperties } from './measure';
 import { putIn, stateText } from './measureState';
-import { differences, MEASURED } from './measureValues';
+import { comparedText, measuredText, readingText } from './measureText';
+import { differences, MEASURED, PSEUDO_MEASURED } from './measureValues';
 
 import type { Measured } from './measureValues';
 
@@ -18,7 +19,7 @@ const measured = (styles: Record<string, string>, text = 'VS'): Measured => ({
 
 // velada-polish's designers read the original's CSS by curl, and measured with scripts of their own, for each value.
 describe('page measure', () => {
-  it('says what differs, by property, here → there — and what is the same in a line', () => {
+  it('says what differs, by property, here → there — and the rest the same, what each is compared on said above', () => {
     const here = measured({ 'font-size': '37.6px', 'border-top': '2px solid rgb(199, 168, 107)' });
     const there = measured({ 'font-size': '44px', 'border-top': '1px solid rgb(199, 168, 107)' });
 
@@ -26,12 +27,38 @@ describe('page measure', () => {
       { property: 'font-size', here: '37.6px', there: '44px' },
       { property: 'border-top', here: '2px solid rgb(199, 168, 107)', there: '1px solid rgb(199, 168, 107)' }
     ]);
-    const text = stripVTControlCharacters(measuredText(here, there, 'https://www.example.com/combates'));
-    expect(text).toContain(
-      'span "VS" ([data-plitzi-el="vs"]) here → span "VS" ([data-plitzi-el="vs"]) on https://www.example.com/combates'
-    );
+    const text = stripVTControlCharacters(measuredText(here, there));
+    expect(text).toContain('span "VS" ([data-plitzi-el="vs"]) here → span "VS" ([data-plitzi-el="vs"]) there');
     expect(text).toMatch(/≠ font-size\s+37\.6px {2}→ {2}44px/);
-    expect(text).toContain('the same: font-family');
+    expect(text).toContain('the rest the same');
+    expect(text).not.toContain('font-family');
+    expect(stripVTControlCharacters(comparedText('https://www.example.com/combates'))).toMatch(
+      /^Beside https:\/\/www\.example\.com\/combates \(there\) — each compared on font-family, .*, and the ::before\/::after either page has \(content, .*\): below, what differs$/
+    );
+  });
+
+  // lx-product: a reading of six pairs said the other page's address, its 25 properties and when it was kept six times —
+  // half of what it printed, read again by the agent on every turn after.
+  it('says per pair only what is its own: a pseudo-element compared, a side asked alone, nothing when all is the same', () => {
+    const plain = measured({});
+    const drawn = {
+      ...measured({}),
+      styles: { ...measured({}).styles, 'after:content': '""', 'after:width': '350px' }
+    };
+    const wider = { ...drawn, styles: { ...drawn.styles, 'font-size': '12px' } };
+
+    expect(stripVTControlCharacters(measuredText(drawn, wider))).toContain('the rest the same (its ::after too)');
+    expect(stripVTControlCharacters(measuredText(plain, plain))).not.toMatch(/the rest|the same:/);
+    const reading = {
+      width: 1440,
+      pair: pairOf('vs => .vs'),
+      here: plain,
+      there: plain,
+      keptAt: new Date(0).toISOString(),
+      unlike: []
+    };
+    expect(stripVTControlCharacters(readingText(reading, undefined, 0, true))).not.toContain('kept');
+    expect(stripVTControlCharacters(readingText(reading, undefined, 0))).toContain('(there: read 0 min ago and kept');
   });
 
   it('says an element that is not on the page, by the page it looked in', async () => {
@@ -175,7 +202,6 @@ describe('page measure', () => {
           unlike: [],
           inherited: [inherited]
         },
-        'https://www.example.com/',
         ['gap', 'font-size'],
         Date.now()
       )
@@ -291,6 +317,18 @@ describe('page measure, held to the pixel', () => {
 
   // lx-product: the original's bullets were `list-style-position: inside`, which no reading showed, and an arrow's place
   // down a column could be neither measured nor held (`--same y` refused).
+  // lx-product: a reading of the original kept before `list-style` and `y` were measured answered "none" for both — two
+  // differences that were not there, until it was read again.
+  it('keeps a reading of the other page by what it measures: one measured with fewer properties is read again', () => {
+    const key = JSON.parse(readingKey({ url: 'https://www.example.com/', target: '.hero' })) as unknown;
+
+    expect(key).toMatchObject({
+      url: 'https://www.example.com/',
+      measured: [...MEASURED],
+      pseudo: [...PSEUDO_MEASURED]
+    });
+  });
+
   it('reads and holds a list’s marker and where a box starts down the page', () => {
     expect(sameProperties('list-style,y')).toEqual(['list-style', 'y']);
     const item = (listStyle: string, y: string) => measured({ 'list-style': listStyle, y });

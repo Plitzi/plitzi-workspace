@@ -8,7 +8,7 @@ import { measureOn } from './measure';
 import { putIn, settle } from './measureState';
 import { outlineOnPage } from './outline';
 import { readState } from './play';
-import { pause, readRecordFile, recordOf, writeWhole } from '../browser/keptBrowser';
+import { cliBuild, pause, readRecordFile, recordOf, writeWhole } from '../browser/keptBrowser';
 import { pageAnswered } from './shot/remote';
 import { actStep } from './shot/steps';
 
@@ -142,7 +142,7 @@ export const keepBrowser = async (root: string): Promise<void> => {
     return;
   }
 
-  await writeWhole(record, JSON.stringify({ port, pid: process.pid }));
+  await writeWhole(record, JSON.stringify({ port, pid: process.pid, build: await cliBuild() }));
   process.on('SIGTERM', () => {
     void stop(true);
   });

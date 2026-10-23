@@ -29,12 +29,12 @@ cd <work> && plitzi task context   # the brief, its files' data and imports (--f
 ```
 
 Inside `work`, a command knows its task and run (`tmp/plitzi-task.json`) — never who you are.
-`plitzi` is the project's `node_modules/.bin/plitzi`, by its whole path from a task's copy (`npx` is ~0.2 s slower).
 
-**Your token is who you are.** Your first command names you (`--agent design-1`) and answers your token
-(`<run>.@design-1.<secret>`) and the whole path it is kept at: pass it on **every** command after, in a task's copy too
-(`--token "$(cat <that path>)"`). No token, an empty one (a `$(cat …)` that read nothing), a task's, your name alone, your
-token under another's name, a name or a role not the team's: refused (`identity`, 26).
+**Your own `plitzi` is who you are.** `run agent <name>` makes your token and, beside it, your own CLI
+(`tmp/plitzi-runs/<run>/scratch/<name>/plitzi`, the project's run with your token): your prompt names it; every command
+goes through it, by its whole path, in a task's copy too — never `--token` nor `--agent`. Started by hand, an agent names
+itself once (`--agent design-1`) and is answered both. No token, an empty one, a task's, your name alone,
+your token under another's name, a name or a role not the team's: refused (`identity`, 26).
 
 - **Write only in `work`**, never in the project; run the project's scripts there (no `node_modules` nor `.env` of its
   own; its warning is expected). `plitzi page check /pets --width 1440,390` from `work` serves the copy for the CLI's

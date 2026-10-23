@@ -8,7 +8,7 @@ import chalk from 'chalk';
 import { act, runOf } from './shell';
 import { agentPrompt, harnessCommand, HARNESSES, isHarness } from '../../runs/agentPrompt';
 import { writeJson } from '../../runs/files';
-import { tokenFile } from '../../runs/identity';
+import { issueToken, writeCli } from '../../runs/identity';
 import { isPrincipal, LEAD_ROLE } from '../../runs/leads';
 import { agentScratch } from '../../runs/paths';
 import { RunRefusal } from '../../runs/refusal';
@@ -105,12 +105,15 @@ export const runAgent = (agent: string, options: AgentOptions): Promise<void> =>
       const started = await startedOf(ctx.root, agent);
       const scratch = agentScratch(loaded.paths, agent);
       await fs.mkdir(scratch, { recursive: true });
+      // Made as it is started, so its prompt names its own CLI from its first command: one the lead started has its
+      // token already, and its CLI is written again — the same file.
+      await issueToken(loaded.paths, runId, agent, ctx.now());
       const prompt = agentPrompt({
         agent,
         ...(started ? { started } : {}),
         runId,
         root: ctx.root,
-        tokenFile: tokenFile(loaded.paths, agent),
+        cli: await writeCli(loaded.paths, agent),
         goal: loaded.plan.goal,
         ...(loaded.plan.reference === undefined ? {} : { reference: loaded.plan.reference })
       });

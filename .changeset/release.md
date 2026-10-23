@@ -1086,7 +1086,7 @@ theirs"`) at every width in one call and one browser, reads the other page witho
 - **A control used, read as numbers** (`@plitzi/cli`): `page play <path> --steps "…" --read <el…>` plays an interaction
   step by step and says after each how far every element read moved (its content's offset, whether a row scrolls or
   slides by a transform), whether it is shown and takes a press; with `--compare` beside the other site, and `--same
-  moved,shown,enabled` fails where a step leaves them otherwise — an acceptance line for a control, with no script.
+moved,shown,enabled` fails where a step leaves them otherwise — an acceptance line for a control, with no script.
 - **Asking whether Plitzi has a way** (`@plitzi/cli`, `@plitzi/sdk-authoring`, `@plitzi/sdk-elements`,
   `@plitzi/sdk-shared`): `explain --search "<words>"` finds every element, field, step, trigger, style state, source,
   function, code, CLI command and option the words describe, best first; an element declares what its source holds
@@ -1115,7 +1115,7 @@ theirs"`) at every width in one call and one browser, reads the other page witho
     6.8 → 1.7–3.2. A play's page is held for it alone and closed by the play, or by the kept browser once unused a minute.
   - `explain` of an export says the fields of what it takes and where the skills teach it; every export of
     `@plitzi/sdk-authoring` carries a doc (held by a test), `defineAction` and `taskAction` with examples; `explain
-    --search` reads the skills' references too.
+--search` reads the skills' references too.
   - An element named with a selector on it (`product-dot:nth-child(3)`) is that element, on every page command; a
     step's `ours => theirs` pair is read whole in a drag or a type.
   - `run extend --dry-run --lines` runs each of a stage's lines once on the run's work and says what each is.
@@ -1130,3 +1130,12 @@ theirs"`) at every width in one call and one browser, reads the other page witho
     context at its end; the bench a task. `run watch` counts as coming a task that waits only for work under way, never
     says a designer waiting for UI reviews is idle, and says one idleness once.
   - A module only a page imports is the task's that names it, not the page's: a page split by its modules is a plan.
+- **What an agent reads again, cut without losing a fact.** lx-product's agents read 49M tokens; every turn reads the
+  whole context again, so what a command prints is paid on every turn after it.
+  - `page measure` says the other page's address, what each pair is compared on and when it was kept once, above every
+    element; each pair says what differs and "the rest the same" — the same differences, a third less to read.
+  - An agent started with `run agent` has its own CLI beside its token (`scratch/<agent>/plitzi`), which passes the
+    token: its prompt names it, and no command carries `--token "$(cat …)"` nor `--agent`. The lead's comes with
+    `run open`.
+  - A reading of the other page is kept by what it measures, and the kept browser is asked only by the CLI that started
+    it: one an older CLI left running answered `list-style` and `y` as "none" — two differences that were not there.

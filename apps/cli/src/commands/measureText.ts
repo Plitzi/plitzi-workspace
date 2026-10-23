@@ -1,0 +1,150 @@
+import chalk from 'chalk';
+
+import { comparable, differences, MEASURED, PSEUDO_MEASURED, PSEUDOS } from './measureValues';
+
+import type { Reading } from './measure';
+import type { Measured } from './measureValues';
+
+/**
+ * What `page measure` prints of what it read: an element alone, its properties; a pair, what differs here → there and
+ * the rest the same, what each pair is compared on and when the other page was kept said once above them all.
+ */
+const named = (each: Measured): string => `${each.tag}${each.text ? ` "${each.text}"` : ''} (${each.selector})`;
+
+/** What a line and a tracking are of their font: the rule that writes them, where pixels say one size's result. */
+const EM_RELATIVE = new Set(['line-height', 'letter-spacing']);
+
+/**
+ * A line height or a tracking as a share of the element's own font size — `22.13px` is `1.5em` of 14.75px: the value to
+ * write once for every size, where a developer copying the pixels tried three (velada-shell's VS text).
+ */
+const emOf = (property: string, value: string, side: Measured): string => {
+  const size = Number.parseFloat(side.styles['font-size'] ?? '');
+  const pixels = Number.parseFloat(value);
+  if (!EM_RELATIVE.has(property) || !value.endsWith('px') || !(size > 0) || !Number.isFinite(pixels)) {
+    return '';
+  }
+
+  return chalk.dim(` (${String(Math.round((pixels / size) * 1000) / 1000)}em)`);
+};
+
+/** A document's body measured on a space's page: where the space's own type is, to measure instead. */
+const rootNote = (here: Measured): string[] =>
+  here.spaceRoot
+    ? [
+        chalk.dim(
+          `  ${here.tag} is the document's: the space dresses its root, ${here.spaceRoot} — measure it, "${here.spaceRoot} => ${here.tag}"`
+        )
+      ]
+    : [];
+
+/** The pseudo-elements a pair was compared on: what "the rest the same" covers beyond `MEASURED`. */
+const pseudosOf = (here: Measured, there: Measured): string[] =>
+  PSEUDOS.filter(pseudo => [here, there].some(side => Object.hasOwn(side.styles, `${pseudo}:content`)));
+
+/**
+ * What every pair of a reading is compared on, said once above them — each pair then says what differs and "the rest
+ * the same". lx-product: a pair said the other page's address and its 25 properties alike, 470 characters of 900, and
+ * a reading of six pairs said them six times; an agent read each again on every turn after.
+ */
+export const comparedText = (url: string | undefined): string =>
+  chalk.dim(
+    `${url ? `Beside ${url} (there) — each` : 'Each'} compared on ${MEASURED.join(', ')}, and the ${PSEUDOS.map(pseudo => `::${pseudo}`).join('/')} either page has (${PSEUDO_MEASURED.join(', ')}): below, what differs`
+  );
+
+/** Whether a pair's properties are those `comparedText` says: a side asked alone (`--same margin-bottom`) is not. */
+const saidAbove = (same: readonly string[]): boolean =>
+  same.every(property => (MEASURED as readonly string[]).includes(property) || property.includes(':'));
+
+export const measuredText = (here: Measured, there?: Measured): string => {
+  if (!there) {
+    return [
+      chalk.bold(named(here)),
+      ...rootNote(here),
+      ...Object.entries(here.styles).map(
+        ([property, value]) =>
+          `  ${property.padEnd(22)} ${value}${here.inherited.includes(property) ? chalk.dim('  (inherited)') : ''}`
+      )
+    ].join('\n');
+  }
+
+  const { differ, same } = differences(here, there);
+  const own = differ.filter(each => !each.inherited);
+  const inherited = differ.filter(each => each.inherited);
+  const pseudos = pseudosOf(here, there);
+  const rest = saidAbove(same)
+    ? `  the rest the same${pseudos.length > 0 ? ` (its ${pseudos.map(pseudo => `::${pseudo}`).join(' and ')} too)` : ''}`
+    : `  the same: ${same.join(', ')}`;
+
+  return [
+    chalk.bold(`${named(here)} here → ${named(there)} there`),
+    ...rootNote(here),
+    ...(differ.length === 0 ? ['  every property measured is the same'] : []),
+    ...own.map(
+      each =>
+        `  ${chalk.yellow('≠')} ${each.property.padEnd(22)} ${each.here}${emOf(each.property, each.here, here)}  →  ${each.there}${emOf(each.property, each.there, there)}`
+    ),
+    // What the page's type gives every element: said once, so what this element itself does differently is read first.
+    ...(inherited.length > 0
+      ? [
+          chalk.dim(
+            `  ≈ inherited from its parent on both pages, differs: ${inherited.map(each => `${each.property} ${comparable(each.property, each.here)} → ${comparable(each.property, each.there)}`).join('; ')}`
+          )
+        ]
+      : []),
+    ...(differ.length > 0 && same.length > 0 ? [chalk.dim(rest)] : [])
+  ].join('\n');
+};
+
+const minutesAgo = (at: string, now: number): string =>
+  `${String(Math.max(0, Math.round((now - Date.parse(at)) / 60_000)))} min ago`;
+
+/** When the other page's readings were kept, said once above them all when it is one time for all. */
+export const keptText = (readings: readonly Reading[], now: number): string | undefined => {
+  const times = new Set(readings.map(reading => (reading.keptAt ? minutesAgo(reading.keptAt, now) : undefined)));
+  const [time] = times;
+
+  return times.size === 1 && time !== undefined
+    ? chalk.dim(`(there: read ${time} and kept — --fresh reads it again)`)
+    : undefined;
+};
+
+/**
+ * What one reading says: its element measured, or why not — and, held to `--same`, whether it holds. The other page,
+ * and the time it was kept when it is one for all, are said above every reading (`comparedText`, `keptText`).
+ */
+export const readingText = (reading: Reading, same: string[] | undefined, now: number, keptSaid = false) => {
+  const { here, there } = reading;
+  if ('problem' in here) {
+    return chalk.red(`✗ ${here.problem}`);
+  }
+
+  if (there && 'problem' in there) {
+    return chalk.red(`✗ there: ${there.problem}`);
+  }
+
+  return [
+    measuredText(here, there),
+    ...(reading.keptAt && !keptSaid
+      ? [chalk.dim(`  (there: read ${minutesAgo(reading.keptAt, now)} and kept — --fresh reads it again)`)]
+      : []),
+    ...(same
+      ? [
+          reading.unlike.length > 0
+            ? chalk.red(
+                `✗ --same: ${reading.unlike.map(each => `${each.property} ${each.here} → ${each.there}`).join('; ')}`
+              )
+            : chalk.green(
+                `✓ --same: ${same.length > 4 ? `the ${String(same.length)} asked` : same.join(', ')} as the other page's`
+              ),
+          ...(reading.inherited
+            ? [
+                chalk.dim(
+                  `  (left out of --same, inherited from its parent on both pages: ${reading.inherited.map(each => `${each.property} ${each.here} → ${each.there}`).join('; ')} — measure the parent to hold it)`
+                )
+              ]
+            : [])
+        ]
+      : [])
+  ].join('\n');
+};

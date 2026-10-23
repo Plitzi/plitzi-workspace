@@ -11,15 +11,8 @@ import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
 import { projectHere } from './existingProject';
 import { putIn, stateText } from './measureState';
-import {
-  comparable,
-  differences,
-  INHERITED,
-  MEASURED,
-  PSEUDO_MEASURED,
-  PSEUDOS,
-  SIDE_LONGHANDS
-} from './measureValues';
+import { comparedText, keptText, readingText } from './measureText';
+import { differences, INHERITED, MEASURED, PSEUDO_MEASURED, PSEUDOS, SIDE_LONGHANDS } from './measureValues';
 import { keptMeasure } from '../browser/keptBrowser';
 import { originHere } from '../runs/copyServer';
 import { targetOn } from './shot/capture';
@@ -42,7 +35,11 @@ import type { Browser, BrowserPage, Scheme } from '../browser';
  * does not change within a run) for the calls after.
  */
 
-/** The version of what is read: a kept reading of the other page made before it changed is read again. */
+/**
+ * The version of how a reading is made: a kept reading of the other page made before it changed is read again. What it
+ * reads — `MEASURED`, `PSEUDO_MEASURED` — is in the key itself: lx-product added `list-style` and `y`, and a reading kept
+ * before them answered "none" for both, each a difference that was not there.
+ */
 const READING = 3;
 
 export interface MeasureOptions {
@@ -283,71 +280,6 @@ export const measureOn = async (page: BrowserPage, target: string): Promise<Meas
   };
 };
 
-const named = (each: Measured): string => `${each.tag}${each.text ? ` "${each.text}"` : ''} (${each.selector})`;
-
-/** What a line and a tracking are of their font: the rule that writes them, where pixels say one size's result. */
-const EM_RELATIVE = new Set(['line-height', 'letter-spacing']);
-
-/**
- * A line height or a tracking as a share of the element's own font size — `22.13px` is `1.5em` of 14.75px: the value to
- * write once for every size, where a developer copying the pixels tried three (velada-shell's VS text).
- */
-const emOf = (property: string, value: string, side: Measured): string => {
-  const size = Number.parseFloat(side.styles['font-size'] ?? '');
-  const pixels = Number.parseFloat(value);
-  if (!EM_RELATIVE.has(property) || !value.endsWith('px') || !(size > 0) || !Number.isFinite(pixels)) {
-    return '';
-  }
-
-  return chalk.dim(` (${String(Math.round((pixels / size) * 1000) / 1000)}em)`);
-};
-
-/** A document's body measured on a space's page: where the space's own type is, to measure instead. */
-const rootNote = (here: Measured): string[] =>
-  here.spaceRoot
-    ? [
-        chalk.dim(
-          `  ${here.tag} is the document's: the space dresses its root, ${here.spaceRoot} — measure it, "${here.spaceRoot} => ${here.tag}"`
-        )
-      ]
-    : [];
-
-export const measuredText = (here: Measured, there?: Measured, url?: string): string => {
-  if (!there) {
-    return [
-      chalk.bold(named(here)),
-      ...rootNote(here),
-      ...Object.entries(here.styles).map(
-        ([property, value]) =>
-          `  ${property.padEnd(22)} ${value}${here.inherited.includes(property) ? chalk.dim('  (inherited)') : ''}`
-      )
-    ].join('\n');
-  }
-
-  const { differ, same } = differences(here, there);
-  const own = differ.filter(each => !each.inherited);
-  const inherited = differ.filter(each => each.inherited);
-
-  return [
-    chalk.bold(`${named(here)} here → ${named(there)} on ${url ?? 'the other page'}`),
-    ...rootNote(here),
-    ...(differ.length === 0 ? ['  every property measured is the same'] : []),
-    ...own.map(
-      each =>
-        `  ${chalk.yellow('≠')} ${each.property.padEnd(22)} ${each.here}${emOf(each.property, each.here, here)}  →  ${each.there}${emOf(each.property, each.there, there)}`
-    ),
-    // What the page's type gives every element: said once, so what this element itself does differently is read first.
-    ...(inherited.length > 0
-      ? [
-          chalk.dim(
-            `  ≈ inherited from its parent on both pages, differs: ${inherited.map(each => `${each.property} ${comparable(each.property, each.here)} → ${comparable(each.property, each.there)}`).join('; ')}`
-          )
-        ]
-      : []),
-    ...(same.length > 0 ? [chalk.dim(`  the same: ${same.join(', ')}`)] : [])
-  ].join('\n');
-};
-
 /** Shorthands `--same` takes for the properties they stand for: a border is its four sides, a type its six. */
 const GROUPS: Record<string, readonly string[]> = {
   border: ['border-top', 'border-right', 'border-bottom', 'border-left'],
@@ -397,16 +329,17 @@ const isKept = (value: unknown): value is Kept =>
   typeof Reflect.get(value, 'at') === 'string' &&
   typeof Reflect.get(value, 'measured') === 'object';
 
+/** What a kept reading is found by: what was asked of the other page, and how and what it was read with. */
+export const readingKey = (key: Record<string, unknown>): string =>
+  JSON.stringify({ ...key, reading: READING, measured: MEASURED, pseudo: PSEUDO_MEASURED });
+
 const keptFile = (root: string, key: Record<string, unknown>): string =>
   path.join(
     root,
     PROJECT_TMP,
     'plitzi-cache',
     'measure',
-    `${createHash('sha256')
-      .update(JSON.stringify({ ...key, reading: READING }))
-      .digest('hex')
-      .slice(0, 32)}.json`
+    `${createHash('sha256').update(readingKey(key)).digest('hex').slice(0, 32)}.json`
   );
 
 const readKept = async (file: string, now: number): Promise<Kept | undefined> => {
@@ -591,44 +524,6 @@ const readAt = async (
   });
 };
 
-const minutesAgo = (at: string, now: number): string =>
-  `${String(Math.max(0, Math.round((now - Date.parse(at)) / 60_000)))} min ago`;
-
-/** What one reading says: its element measured, or why not — and, held to `--same`, whether it holds. */
-export const readingText = (reading: Reading, target: string | undefined, same: string[] | undefined, now: number) => {
-  const { here, there } = reading;
-  if ('problem' in here) {
-    return chalk.red(`✗ ${here.problem}`);
-  }
-
-  if (there && 'problem' in there) {
-    return chalk.red(`✗ there: ${there.problem}`);
-  }
-
-  return [
-    measuredText(here, there, target),
-    ...(reading.keptAt
-      ? [chalk.dim(`  (there: read ${minutesAgo(reading.keptAt, now)} and kept — --fresh reads it again)`)]
-      : []),
-    ...(same
-      ? [
-          reading.unlike.length > 0
-            ? chalk.red(
-                `✗ --same: ${reading.unlike.map(each => `${each.property} ${each.here} → ${each.there}`).join('; ')}`
-              )
-            : chalk.green(`✓ --same: ${same.join(', ')} as the other page's`),
-          ...(reading.inherited
-            ? [
-                chalk.dim(
-                  `  (left out of --same, inherited from its parent on both pages: ${reading.inherited.map(each => `${each.property} ${each.here} → ${each.there}`).join('; ')} — measure the parent to hold it)`
-                )
-              ]
-            : [])
-        ]
-      : [])
-  ].join('\n');
-};
-
 export const measure = async (route: string, elements: string[], options: MeasureOptions): Promise<void> => {
   const project = await projectHere('whose page to measure');
   if (!project) {
@@ -715,6 +610,7 @@ export const measure = async (route: string, elements: string[], options: Measur
       reading => 'problem' in reading.here || (reading.there && 'problem' in reading.there) || reading.unlike.length > 0
     );
     const widths = options.width ?? [1440];
+    const kept = target ? keptText(readings, now) : undefined;
     console.log(
       options.json
         ? JSON.stringify({
@@ -736,11 +632,13 @@ export const measure = async (route: string, elements: string[], options: Measur
                   )
                 ]
               : []),
+            ...(target ? [comparedText(target)] : []),
+            ...(kept ? [kept] : []),
             ...widths.flatMap(width => [
               ...(widths.length > 1 ? [chalk.bold.underline(`At ${String(width)} px`)] : []),
               ...readings
                 .filter(reading => reading.width === width)
-                .map(reading => readingText(reading, target, options.same, now))
+                .map(reading => readingText(reading, options.same, now, kept !== undefined))
             ])
           ].join('\n')
     );

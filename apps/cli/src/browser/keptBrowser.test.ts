@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { keptMeasure, stopKeptBrowser } from './keptBrowser';
+import { cliBuild, keptMeasure, readRecord, stopKeptBrowser } from './keptBrowser';
 import { keeperRoutes } from '../commands/keeperRoutes';
 import { keeperServer } from '../commands/keeperServer';
 
@@ -24,16 +24,29 @@ describe('the kept browser', () => {
     await mkdir(path.dirname(record(root)), { recursive: true });
     const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60_000)'], { stdio: 'ignore' });
     const ended = new Promise(resolve => child.on('exit', resolve));
-    await writeFile(record(root), JSON.stringify({ port: 1, pid: child.pid }));
+    await writeFile(record(root), JSON.stringify({ port: 1, pid: child.pid, build: 'another' }));
 
     expect(await stopKeptBrowser(root)).toBe(true);
     await ended;
     await expect(readFile(record(root))).rejects.toThrow();
 
     // One whose process is gone stops nothing, and is cleared.
-    await writeFile(record(root), JSON.stringify({ port: 1, pid: 999_999 }));
+    await writeFile(record(root), JSON.stringify({ port: 1, pid: 999_999, build: 'another' }));
     expect(await stopKeptBrowser(root)).toBe(false);
     await expect(readFile(record(root))).rejects.toThrow();
+  });
+
+  // lx-product: a CLI asked the browser an older one kept, and was answered with the older one's properties.
+  it('asks only one this CLI started: one another build started, or one that says not, is none to it', async () => {
+    root = await mkdtemp(path.join(os.tmpdir(), 'plitzi-kept-'));
+    await mkdir(path.dirname(record(root)), { recursive: true });
+    await writeFile(record(root), JSON.stringify({ port: 1, pid: process.pid, build: await cliBuild() }));
+    expect(await readRecord(root)).toMatchObject({ port: 1 });
+
+    await writeFile(record(root), JSON.stringify({ port: 1, pid: process.pid, build: 'another@1' }));
+    expect(await readRecord(root)).toBeUndefined();
+    await writeFile(record(root), JSON.stringify({ port: 1, pid: process.pid }));
+    expect(await readRecord(root)).toBeUndefined();
   });
 
   it('keeps nothing under a test run: the caller reads the other page as before', async () => {
@@ -63,7 +76,7 @@ describe('the kept browser', () => {
       bodyBytes: 1024
     });
     const port = await door.listen();
-    await writeFile(record(root), JSON.stringify({ port, pid: process.pid }));
+    await writeFile(record(root), JSON.stringify({ port, pid: process.pid, build: await cliBuild() }));
     process.env.PLITZI_KEEP_BROWSER = '1';
     try {
       expect(

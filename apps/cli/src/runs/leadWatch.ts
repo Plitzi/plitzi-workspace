@@ -1,6 +1,6 @@
 import { readJson, writeJson } from './files';
 import { FOLLOW_MS } from '../options';
-import { callerFlag } from './identity';
+import { commandAs } from './identity';
 import { REVIEW_BACKLOG_MS, UNTAKEN_REVIEW_MS } from './leads';
 import { LEAD, markRead, messagesOf } from './messages';
 import { runPaths } from './paths';
@@ -80,7 +80,7 @@ export const leadItems = (view: RunView, now: Date): LeadItem[] => {
       ? [
           {
             key: `leads-needed:${waiting[0].task.id}:${String(waiting[0].task.round)}`,
-            text: `${String(waiting.length)} reviews wait, the oldest (${waiting[0].task.id}) ${minutes(waiting[0].waited)} min: start a lead that reviews beside you — plitzi task next --role lead --follow --take ${callerFlag(view.scratch, idle[0], view.identified)} — it stops by itself once the queue is empty`
+            text: `${String(waiting.length)} reviews wait, the oldest (${waiting[0].task.id}) ${minutes(waiting[0].waited)} min: start a lead that reviews beside you — ${commandAs(view.scratch, idle[0], view.identified, 'task next --role lead --follow --take')} — it stops by itself once the queue is empty`
           }
         ]
       : []),

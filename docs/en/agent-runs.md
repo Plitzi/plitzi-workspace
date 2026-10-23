@@ -768,11 +768,13 @@ A name is anyone's to type. Said, or not said — a shell with no terminal was t
 velada-polish's design-2 ran `task look` with no `--agent` and the run's log has the lead looking, and one `task review
 --approve` the same way would have been the lead's last word. So who calls is proved by a token:
 
-- Every agent of a run has a token of its own, `<run>.@<agent>.<secret>`, made at its first command — `--agent
-  <name>` said once — and printed to it then; the lead's is made by `run open` and printed with it. The run keeps each
-  one's digest (`identities/<agent>.json`), never the token; the agent's copy is in its scratch folder
-  (`scratch/<agent>/token`), read back by a harness that forgot it.
-- Each command after passes it (`--token`, or `PLITZI_TOKEN`), in a task's copy too: the copy says which task — to its
+- Every agent of a run has a token of its own, `<run>.@<agent>.<secret>`, made by `run agent <name>` as it is started
+  — or, started by hand, at its first command (`--agent <name>` said once) — and the lead's by `run open`. The run
+  keeps each one's digest (`identities/<agent>.json`), never the token; the agent's copy is in its scratch folder
+  (`scratch/<agent>/token`), and beside it the agent's own CLI (`scratch/<agent>/plitzi`, `writeCli`): the project's,
+  run with `PLITZI_TOKEN` read from that file. Its prompt names it, so no command it types carries `--token "$(cat
+  …)"` — lx-product: that and the CLI's path were 300 characters of every command, read again on every turn after.
+- Each command passes the token (through the agent's CLI, `PLITZI_TOKEN` or `--token`), in a task's copy too: the copy says which task — to its
   holder's token alone, or a person at its terminal — never who calls, and a task's own token (`<run>.<task>.<secret>`)
   says no one. Refused (`identity`, 26): no token, an empty one, a task's, one that is no agent's, a name that has a
   token said without it, a token under another's name or of another run, a name not of the project's team (`team.json`:
@@ -782,8 +784,8 @@ velada-polish's design-2 ran `task look` with no `--agent` and the run's log has
   "agent" — it took a task, and the rework sent back to "agent" sat with no one. A holder's step is held to the task's
   owner too (`holderOf`): another agent with its copy's token acts on nothing of it.
 - An agent's roles are its team's: `task next --role` and `task take` refuse a role it was not started as.
-- What tells an agent to start one again (`run monitor`, `run watch`) names it by its kept token once it has one, by
-  its whole path — the same from a task's copy as from the project: `--token "$(cat <project>/tmp/plitzi-runs/<run>/scratch/<agent>/token)"`.
+- What tells an agent to start one again (`run monitor`, `run watch`) names it through its own CLI once it has one, by
+  its whole path — the same from a task's copy as from the project: `<project>/tmp/plitzi-runs/<run>/scratch/<agent>/plitzi task next …`.
 
 With who calls proved, the lead's guards hold by name: `requireLead`, `requirePrincipal` and a verdict's guard let in
 `lead` and a person (and, for a verdict, a lead that reviews), and refuse every other — an agent of no team included,

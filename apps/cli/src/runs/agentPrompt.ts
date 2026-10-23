@@ -27,8 +27,8 @@ export interface PromptFor {
   runId: string;
   /** The project's folder. */
   root: string;
-  /** Where its token is kept: what it passes on every command after its first. */
-  tokenFile: string;
+  /** Its own CLI (`writeCli`): the project's, passing its token — every command it runs. */
+  cli: string;
   /** The run's goal: what the lead was asked. */
   goal: string;
   /**
@@ -41,8 +41,8 @@ export interface PromptFor {
 const skill = (root: string, file: string): string => path.join(root, SKILLS_ROOT, 'plitzi-cli', 'reference', file);
 
 /** The rules every agent of a run holds to, whatever its role: said once, the skills saying why. */
-const rules = (bin: string): string[] => [
-  `- Never run \`${bin} run finish\`, \`run abort\`, \`run purge\`, \`run restore\`, \`run allow-finish\` or \`run stop --force\` — a person's. Never \`git stash\`, \`checkout\` or \`reset\`. Stop a server only by its port (\`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)\`), never by name.`,
+const rules = (cli: string): string[] => [
+  `- Never run \`${cli} run finish\`, \`run abort\`, \`run purge\`, \`run restore\`, \`run allow-finish\` or \`run stop --force\` — a person's. Never \`git stash\`, \`checkout\` or \`reset\`. Stop a server only by its port (\`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)\`), never by name.`,
   '- A wait that ends is not your end: run `task next` again until it says "You can stop".',
   // lx-controls: two agents read the bundle's types, every command's help and a site's HTML to learn what Plitzi had.
   '- Whether Plitzi has a way — a field, a step, a state, a command: `PLITZI explain --search "<words>"`, then `PLITZI explain <name>`; never the packages\' types nor a site\'s HTML fetched and searched. Nothing found that should be: `run notice --plitzi`.',
@@ -51,9 +51,7 @@ const rules = (bin: string): string[] => [
 ];
 
 /** An agent's prompt: the lead's, a lead's that reviews, or one of the team's by its roles. */
-export const agentPrompt = ({ agent, started, runId, root, tokenFile, goal, reference }: PromptFor): string => {
-  const bin = path.join(root, 'node_modules', '.bin', 'plitzi');
-  const token = `--token "$(cat ${tokenFile})"`;
+export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference }: PromptFor): string => {
   // What a page is held to: the site it copies, beside it — or, with none, what the task asks.
   const beside = reference === undefined ? '' : ` --compare ${reference}`;
   // A control used, step by step, read as numbers — beside the copied site's when there is one.
@@ -67,9 +65,9 @@ export const agentPrompt = ({ agent, started, runId, root, tokenFile, goal, refe
       '',
       `Read first, whole: ${skill(root, 'runs-lead.md')} and ${skill(root, 'runs.md')}.`,
       '',
-      `- The CLI is ${bin}. Pass ${token} on every command of the run.`,
+      `- The CLI is ${cli} — your own: it says who you are on every command, so pass no --token nor --agent.`,
       `- The run opens on its scope, your spike: find out what the ask takes (${reference === undefined ? '`task show`, `page check`, `page shot`' : `\`page measure …${beside}\`, \`page outline …${beside}\`, \`page shot …${beside}\``}), then end it with the tasks, each with what you found: \`task spike s-scope --done "…" --tasks <stage.json>\` (a stage is its \`tasks\`).`,
-      `- Start the team once there are tasks: \`${bin} run agent <name> --launch --harness <yours>\` for each agent \`run plan\` names; \`run watch --until lead\` wakes you for each review, question and block, and says when another agent is worth starting.`,
+      `- Start the team once there are tasks: \`${cli} run agent <name> --launch --harness <yours>\` for each agent \`run plan\` names; \`run watch --until lead\` wakes you for each review, question and block, and says when another agent is worth starting.`,
       '- Review each task: `task show` for its code, one `task look` for its pages, then `task review --approve | --changes "…"`. Then the report (`run report --summary`) and the dry finish (`run finish`): the person applies it.',
       '- What goes wrong in the CLI, note it (`run notice`) — it is fixed after the run, never during it.'
     ].join('\n');
@@ -89,7 +87,7 @@ export const agentPrompt = ({ agent, started, runId, root, tokenFile, goal, refe
     '',
     `Read first, whole: ${reading.join(' and ')}${designer ? ' — and, before your first review, what it names to read' : ''}.`,
     '',
-    `- The CLI is ${bin} (PLITZI below). Your first command names you: \`cd ${root} && PLITZI task next --role ${roles}${started?.quality ? ` --quality ${started.quality}` : ''} --follow --take --agent ${agent}\`. From then on every command — inside a task's copy too — passes ${token}; never --agent again.`,
+    `- The CLI is ${cli} (PLITZI below) — your own: it says who you are on every command, inside a task's copy too, so pass no --token nor --agent. Start with \`cd ${root} && PLITZI task next --role ${roles}${started?.quality ? ` --quality ${started.quality}` : ''} --follow --take\`.`,
     ...(coLead
       ? ['- You review what you are handed as strictly as the lead, and answer the questions handed to you.']
       : [
@@ -111,7 +109,7 @@ export const agentPrompt = ({ agent, started, runId, root, tokenFile, goal, refe
           `- A review: one \`PLITZI task look <task>\` a round, then measure only what differs, and use each control it adds there and back (\`page play <path> ${playBeside}\`); send it back only for what its title and acceptance cover, with the values${reference === undefined ? '' : ' and one `--same` line that proves them'} — anything else is \`PLITZI run notice "…"\`. Say your verdict within 8 minutes.`
         ]
       : []),
-    ...rules(bin)
+    ...rules(cli)
   ].join('\n');
 };
 

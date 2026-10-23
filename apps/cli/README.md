@@ -368,13 +368,16 @@ sections of a home: 15.3 s a part at a time, 4 s together).
 height, tracking, case), colours, background, each border, radius, shadows, opacity, padding, margin, gap, size,
 transform, transition, and what `::before`/`::after` draw — and, beside another page, the other's elements (each
 `"ours => theirs"`, by any selector, `#an-element-id` too; the same name when left out; `--there` for one): each property
-that differs, here → there, what both inherit from their parent said apart, then the ones they share in a line. Every
+that differs, here → there, what both inherit from their parent said apart, then "the rest the same" — what each is
+compared on, the other page's address and when it was kept said once, above every element. Every
 element at every width (`--width 390,1440`) is one call in one browser; the other page is read without a picture and
 kept 6 h (`--fresh` reads it again). An element of the other page not read before is read on that page as a browser
 kept between commands holds it loaded (`keptBrowser.ts`) — a second or so, where loading it again took several — and
 what is read in a state (`--click`, `--hover`), `page play`'s other side and `page outline --compare` take a page of
 its own from it, loaded ahead and replaced for the next; that browser stops by itself 5 minutes after its last use,
-within the hour whatever happens, and when a run ends (`run finish`, `run abort`); `PLITZI_KEEP_BROWSER=0` keeps none.
+within the hour whatever happens, and when a run ends (`run finish`, `run abort`); one another CLI started — another
+install, or this one upgraded — is not asked (it measures as that one does), and stops once this starts its own;
+`PLITZI_KEEP_BROWSER=0` keeps none. A reading kept is kept by what it measured, so a CLI that measures more reads it again.
 `--same font-size,border,before:opacity` (shorthands `border`, `font`, `size`; a side alone, `margin-bottom`,
 `padding-top`) fails unless those are as the other page's — lengths within half a pixel, a box's size within a
 thousandth of it: an acceptance's line that holds a copy to its reference. `x` and `y` are where the box starts — `x`
@@ -582,8 +585,9 @@ runs them — you, the lead, every agent.
 plitzi space overview                      # who owns which file, read off the imports; what is shared
 plitzi run team                            # who works the runs: .plitzi/team.json, the agents, their roles and models
 plitzi run plan plan.json                  # a plan the lead wrote, held to the rules and estimated
-plitzi run open plan.json                  # its folder, every file it touches backed up — and the lead's token, printed
-plitzi task next --role designer --agent design-1   # an agent's first command names it, and answers its own token
+plitzi run open plan.json                  # its folder, every file it touches backed up — and the lead's own CLI, printed
+plitzi run agent design-1 --launch         # its token, its own CLI (scratch/design-1/plitzi) and its prompt — started
+plitzi task next --role designer --agent design-1   # one started by hand names itself once, and is answered both
 plitzi task take t-home --token <yours> --json      # its files locked, its copy (which says the task, to you alone)
 plitzi task propose t-menu --change "…"    # ask another task to agree to a change; task answer accepts or counters
 plitzi task check --token …                # what complete holds the copy to, run now: nothing changes (--fix: lint and format first)

@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, realpath, rename, rm, stat, writeFile } from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
 
@@ -41,10 +41,28 @@ export interface KeptRecord {
   /** Where it answers, on 127.0.0.1. */
   port: number;
   pid: number;
+  /** The CLI that started it (`cliBuild`): it measures as that one does. */
+  build: string;
 }
 
 const isKeptRecord = (value: unknown): value is KeptRecord =>
-  isRecord(value) && typeof value.port === 'number' && typeof value.pid === 'number';
+  isRecord(value) && typeof value.port === 'number' && typeof value.pid === 'number' && typeof value.build === 'string';
+
+/**
+ * Which CLI this is: its file, and when it was written — another install, or the same upgraded. A kept browser another
+ * build started reads with that build's code: lx-product's, started by the CLI before `list-style` and `y` were
+ * measured, answered "none" for both to the one after — and so would one a `run upgrade` left running.
+ */
+export const cliBuild = async (): Promise<string> => {
+  const bin = process.argv.at(1) ?? '';
+  try {
+    const file = await realpath(bin);
+
+    return `${file}@${String((await stat(file)).mtimeMs)}`;
+  } catch {
+    return bin;
+  }
+};
 
 export const pause = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -73,10 +91,20 @@ export const readRecordFile = async (file: string): Promise<KeptRecord | undefin
 };
 
 /** The record of a kept browser that runs: one whose process is gone is none. */
-const readRecord = async (root: string): Promise<KeptRecord | undefined> => {
+const runningRecord = async (root: string): Promise<KeptRecord | undefined> => {
   const record = await readRecordFile(recordOf(root));
 
   return record && alive(record.pid) ? record : undefined;
+};
+
+/**
+ * The kept browser this CLI asks: one that runs, started by this build. One of another is none — the one this starts in
+ * its place writes the record, and the other, its record another's, stops itself.
+ */
+export const readRecord = async (root: string): Promise<KeptRecord | undefined> => {
+  const record = await runningRecord(root);
+
+  return record && record.build === (await cliBuild()) ? record : undefined;
 };
 
 /** Written whole or not at all: a command reading it while it is written never reads half of it. */
@@ -329,7 +357,7 @@ export const keptSession = async (
 
 /** Stops the project's kept browser, if one runs: what a run's end does, so none outlives it. */
 export const stopKeptBrowser = async (root: string): Promise<boolean> => {
-  const record = await readRecord(root);
+  const record = await runningRecord(root);
   await rm(recordOf(root), { force: true });
   if (!record) {
     return false;

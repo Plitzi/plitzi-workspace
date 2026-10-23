@@ -350,14 +350,15 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
         inputs: opened.inputs,
         backlog: await openBacklog(ctx.root),
         leadToken: lead.token,
-        leadTokenFile: lead.file
+        leadTokenFile: lead.file,
+        leadCli: lead.cli
       };
     },
     opened =>
       [
         `Run "${opened.runId}" is open: ${String(opened.tasks.length)} task${opened.tasks.length === 1 ? '' : 's'}, ${String(opened.backedUp)} files backed up in ${opened.folder}.`,
         chalk.bold(
-          `The lead's token: ${opened.leadToken} — the lead passes it on every command of the run (--token ${opened.leadToken}); a command as lead without it is refused. Kept in ${opened.leadTokenFile}`
+          `The lead's own CLI: ${opened.leadCli} — every command of the run as the lead goes through it, which passes the lead's token (${opened.leadToken}, kept in ${opened.leadTokenFile}); a command as lead without it is refused`
         ),
         ...(opened.leftOut.length > 0 ? [`Left out of it, as the plan says: ${opened.leftOut.join('; ')}`] : []),
         ...(opened.inputs.length > 0

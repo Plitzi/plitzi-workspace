@@ -53,8 +53,8 @@ person asked for a team:
    `plitzi run note "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB): what you learnt reading the project — every
    brief starts with it, and the few references its files need. **The team** is the project's,
    `.plitzi/team.json` — grow it when the job asks (`plitzi run team set dev --count 3 --min 1 --model <model>`): its
-   size is how many work at once; past `min`, on demand — `run watch` says when to start one (by its token, after its
-   first start). A tester adds `<id>-tests` after each developer task (`"tests": false` for none); a designer reviews
+   size is how many work at once; past `min`, on demand — `run watch` says when to start one (through its own CLI,
+   after its first start). A tester adds `<id>-tests` after each developer task (`"tests": false` for none); a designer reviews
    the others' UI before you (`options.designReview`; `"designReview": false` turns it off). Yours is the complete,
    strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
    `--skip-design lead|no-ui`; with `--changes`, `lead` keeps the next round's UI yours). A UI review held 8 min, or
@@ -82,8 +82,8 @@ person asked for a team:
    who works what when, the critical path, your review queue.
 4. **Ask the person first** who applies the run at the end — they, or you: then they open it in their terminal with
    `--lead-finishes` (or `plitzi run allow-finish` later). Never you.
-   `plitzi run open plan.json` backs up every file it touches and prints **your token** (`scratch/lead/token`): pass it
-   on every command after. Tell the person how to watch it: `plitzi run monitor`, and the approved work as it goes: `npm run start:preview`.
+   `plitzi run open plan.json` backs up every file it touches and prints **your own CLI** (`scratch/lead/plitzi`, with
+   your token): run every command after through it. Tell the person how to watch it: `plitzi run monitor`, and the approved work as it goes: `npm run start:preview`.
 5. Start each agent: `plitzi run agent <name> --launch` (alone: its prompt, for a subagent), and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
    file a task takes past 400 lines (ask for the split) — each said once. **Talk:** answer a question with `plitzi

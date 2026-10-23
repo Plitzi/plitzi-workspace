@@ -5,18 +5,21 @@ import { agentPrompt, harnessCommand } from './agentPrompt';
 const base = {
   runId: 'velada-shell',
   root: '/p/la-velada',
-  tokenFile: '/p/la-velada/tmp/plitzi-runs/velada-shell/scratch/dev-1/token',
+  cli: '/p/la-velada/tmp/plitzi-runs/velada-shell/scratch/dev-1/plitzi',
   goal: 'The shell as the original'
 };
 
 // Every run so far had its lead write each agent's prompt by hand; a person new to Plitzi had none to start one with.
 describe('an agent’s prompt', () => {
-  it('names a developer, its first command, its token on every command after — and what is never its', () => {
+  it('names a developer, its own CLI and its first command — and what is never its', () => {
     const prompt = agentPrompt({ ...base, agent: 'dev-1', started: { roles: ['developer'] } });
 
     expect(prompt).toContain('You are dev-1, a developer agent');
-    expect(prompt).toContain('cd /p/la-velada && PLITZI task next --role developer --follow --take --agent dev-1');
-    expect(prompt).toContain('--token "$(cat /p/la-velada/tmp/plitzi-runs/velada-shell/scratch/dev-1/token)"');
+    expect(prompt).toContain(
+      'The CLI is /p/la-velada/tmp/plitzi-runs/velada-shell/scratch/dev-1/plitzi (PLITZI below)'
+    );
+    expect(prompt).toContain('cd /p/la-velada && PLITZI task next --role developer --follow --take`');
+    expect(prompt).not.toMatch(/--agent dev-1|\$\(cat/);
     expect(prompt).toContain('/p/la-velada/.claude/skills/plitzi-cli/reference/runs.md');
     expect(prompt).toContain('run finish');
     expect(prompt).toContain('"You can stop"');

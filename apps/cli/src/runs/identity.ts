@@ -53,7 +53,7 @@ export type Claim =
 /** Who the caller is, proved — and, at its first command, the token made for it. */
 export interface Identified {
   agent: string;
-  issued?: { token: string; file: string };
+  issued?: { token: string; file: string; cli: string };
 }
 
 interface Identity {
@@ -72,6 +72,38 @@ const tokenIn = (scratch: string, agent: string): string => path.join(scratch, a
 
 /** Where an agent's token is kept for it: its own scratch folder, read back after a harness forgot it. */
 export const tokenFile = (paths: RunPaths, agent: string): string => tokenIn(paths.scratch, agent);
+
+/** An agent's own CLI, beside its token (`writeCli`). */
+const cliIn = (scratch: string, agent: string): string => path.join(scratch, agent, 'plitzi');
+
+export const cliFile = (paths: RunPaths, agent: string): string => cliIn(paths.scratch, agent);
+
+const shellQuoted = (word: string): string => `'${word.replace(/'/g, `'\\''`)}'`;
+
+/**
+ * An agent's own CLI: the project's, run with its token — so every command it types is `<its plitzi> task check`, never
+ * `--token "$(cat …)"`. lx-product: that flag and the CLI's path were 300 characters of every command, each kept in the
+ * agent's context and read again on every turn after; and velada-fidelity's `$(cat …)`, read from the wrong folder, came
+ * in empty. Written with the token, and again by `run agent` — the same file each time.
+ */
+export const writeCli = async (paths: RunPaths, agent: string): Promise<string> => {
+  const file = cliFile(paths, agent);
+  const bin = path.join(paths.root, 'node_modules', '.bin', 'plitzi');
+  await writeAtomic(
+    file,
+    [
+      '#!/bin/sh',
+      `# ${agent}'s plitzi: the project's, with ${agent}'s token (PLITZI_TOKEN), read on each command.`,
+      `PLITZI_TOKEN="$(cat ${shellQuoted(tokenFile(paths, agent))})"`,
+      'export PLITZI_TOKEN',
+      `exec ${shellQuoted(bin)} "$@"`,
+      ''
+    ].join('\n')
+  );
+  await fs.chmod(file, 0o755);
+
+  return file;
+};
 
 const digestOf = (secret: string): string => createHash('sha256').update(secret).digest('hex');
 
@@ -102,13 +134,13 @@ export const issueToken = async (
   const file = tokenFile(paths, agent);
   await writeAtomic(file, `${token}\n`);
 
-  return { token, file };
+  return { token, file, cli: await writeCli(paths, agent) };
 };
 
 const notYours = (paths: RunPaths, agent: string): RunRefusal =>
   new RunRefusal(
     'identity',
-    `${agent} has a token on this run: a command as ${agent} passes it (--token) — a name alone is anyone's to type. Its first command printed it, and it is kept in ${tokenFile(paths, agent)}`,
+    `${agent} has a token on this run: a command as ${agent} runs through its own CLI, ${cliFile(paths, agent)}, which passes it (or --token) — a name alone is anyone's to type`,
     { agent }
   );
 
@@ -178,7 +210,7 @@ export const identify = async (
   if (claim.kind === 'none') {
     throw new RunRefusal(
       'identity',
-      `Who is calling? Pass your token (--token), inside a task's copy too: your first command on run "${runId}" printed it, and it is kept in ${tokenFile(paths, '<you>')}. A newcomer names itself once (--agent <name>) and is given one`
+      `Who is calling? Run your commands through your own CLI, ${cliFile(paths, '<you>')}, which passes your token (or --token, kept beside it), inside a task's copy too. A newcomer names itself once (--agent <name>) and is given both`
     );
   }
 
@@ -186,8 +218,8 @@ export const identify = async (
     throw new RunRefusal(
       'identity',
       claim.task
-        ? `A task's token says which task, not who calls: pass your own (--token), as your first command on run "${runId}" printed it — kept in ${tokenFile(paths, '<you>')} — and work in the task's copy, which says the task`
-        : `That is no agent's token: <run>.@<agent>.<secret>, as your first command printed it — kept in ${tokenFile(paths, '<you>')}`
+        ? `A task's token says which task, not who calls: run your commands through your own CLI, ${cliFile(paths, '<you>')}, which passes your own token, and work in the task's copy, which says the task`
+        : `That is no agent's token: <run>.@<agent>.<secret> — your own CLI, ${cliFile(paths, '<you>')}, passes yours`
     );
   }
 
@@ -239,7 +271,7 @@ export const identify = async (
 
 /** What an agent is told when its token is made: once, where it reads it, with what to do with it. */
 export const issuedText = (runId: string, agent: string, issued: NonNullable<Identified['issued']>): string =>
-  `You are ${agent} on run "${runId}". Your token: ${issued.token} — pass it on every command from now on (--token ${issued.token}); --agent ${agent} alone is refused from here on. It is kept in ${issued.file}`;
+  `You are ${agent} on run "${runId}". Run every command from now on through your own CLI, ${issued.cli} — it passes your token (${issued.token}, kept in ${issued.file}); --agent ${agent} alone is refused from here on`;
 
 /** Who has a token on the run already: named by it from its next start, never by its name again. */
 export const identifiedAgents = async (paths: RunPaths): Promise<string[]> =>
@@ -249,12 +281,12 @@ export const identifiedAgents = async (paths: RunPaths): Promise<string[]> =>
     .sort();
 
 /**
- * How a command names `agent`: by its name the first time; after, by its token, read from where it is kept — by its
- * whole path, so it reads the same from a task's copy as from the project (a path from the project's root read nothing
- * in a copy, and an empty token was what let a caller in unnamed).
+ * A command as `agent`, said to whoever starts it: by its name the first time; after, through its own CLI, by its whole
+ * path — it reads the same from a task's copy as from the project (velada-fidelity: a token read by a path from the
+ * project's root read nothing in a copy, and an empty token was what let a caller in unnamed).
  */
-export const callerFlag = (scratch: string, agent: string, identified: readonly string[]): string =>
-  identified.includes(agent) ? `--token "$(cat ${tokenIn(scratch, agent)})"` : `--agent ${agent}`;
+export const commandAs = (scratch: string, agent: string, identified: readonly string[], args: string): string =>
+  identified.includes(agent) ? `${cliIn(scratch, agent)} ${args}` : `plitzi ${args} --agent ${agent}`;
 
 /**
  * The roles `agent` asks work of, held to its team's: a developer that says `--role designer` takes no UI review, and
