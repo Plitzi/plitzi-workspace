@@ -27,6 +27,9 @@ export const isFinding = (value: unknown): value is Finding =>
 export const isResearch = (task: { spike?: string; files: readonly string[] }): boolean =>
   task.spike !== undefined && task.files.length === 0;
 
+/** The question a plan's own finding for a task answers, as its state keeps it: `run amend` replaces it by this. */
+export const PLAN_FINDING = 'its spike';
+
 /**
  * A task's state before anyone starts it, as the run opens or a stage is stacked: a spike from the start, else ready or
  * pending on what it waits for — with what the spike that made it found for it, kept as the run's findings.
@@ -40,7 +43,9 @@ export const startingState = (
   round: 0,
   notes: [],
   updatedAt: at,
-  ...(task.findings === undefined ? {} : { findings: [{ at, by: 'lead', question: 'its spike', text: task.findings }] })
+  ...(task.findings === undefined
+    ? {}
+    : { findings: [{ at, by: 'lead', question: PLAN_FINDING, text: task.findings }] })
 });
 
 /** The id of a run's first spike: its scope. */

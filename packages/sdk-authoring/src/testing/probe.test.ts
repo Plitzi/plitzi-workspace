@@ -63,6 +63,29 @@ describe('probePage / an empty list', () => {
 });
 
 /** Whether a node or any of its ancestors is `display: none` — which, in a browser, leaves it no box. */
+// lx-copy: the layout's header, nav and footer left empty for a later task failed every other task's page check.
+describe('probePage / an empty container', () => {
+  it('says a container with nothing in it and no size empty, apart — and one holding something, or text, hidden', () => {
+    sized(100, 20);
+    document.body.innerHTML =
+      '<header data-plitzi-el="shell" data-empty="1"></header>' +
+      '<div data-plitzi-el="filled" data-empty="1"><span></span></div>' +
+      '<p data-plitzi-el="words" data-empty="1"></p>';
+    const asked = {
+      ...input([]),
+      expected: [
+        { id: 'shell', selector: '[data-plitzi-el="shell"]', container: true as const },
+        { id: 'filled', selector: '[data-plitzi-el="filled"]', container: true as const },
+        { id: 'words', selector: '[data-plitzi-el="words"]' }
+      ]
+    };
+    const findings = probePage(asked);
+
+    expect(findings.empty).toEqual(['shell']);
+    expect(findings.hidden.map(each => each.id)).toEqual(['filled', 'words']);
+  });
+});
+
 const hiddenByDisplay = (node: Element): boolean =>
   getComputedStyle(node).display === 'none' || (node.parentElement !== null && hiddenByDisplay(node.parentElement));
 

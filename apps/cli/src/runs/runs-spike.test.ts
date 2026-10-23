@@ -147,6 +147,24 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     expect((await loadRun(lead(), 'es-launch')).plan.reference).toBe('https://www.example.org');
   });
 
+  // lx-copy: t-base's finding "write every stub" was wrong, and only a message and a run note could say so.
+  it('amends what was found for a task: its brief says the new finding, its spikes’ kept, and it is told', async () => {
+    const plan = { ...scoped(), runId: 'es-launch' };
+    await open(plan);
+    const { id } = plan.tasks[2];
+    const amended = {
+      ...plan,
+      tasks: plan.tasks.map(task => (task.id === id ? { ...task, findings: 'Say "Reservar"' } : task))
+    };
+    expect((await amendRun(lead(), 'es-launch', await bench.writePlan(amended))).tasks).toEqual([
+      { task: id, changed: ['findings'] }
+    ]);
+    const { state } = await taskContext(lead(), 'es-launch', id);
+    expect(state.findings?.map(each => each.text)).toEqual(['Say "Reservar"']);
+    const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(each => each.to === id);
+    expect(told?.text).toContain('What was found for it now says: Say "Reservar"');
+  });
+
   it('ends research alone by its findings, what waits for it ready, reading them — and refuses an agent’s', async () => {
     await open(surveyed());
     expect(await statusOf('t-about')).toBe('pending');

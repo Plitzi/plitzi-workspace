@@ -5,10 +5,11 @@
  */
 export interface ProbeInput {
   /**
-   * `list`: a list, whose box is only its rows — none drawn is a list with nothing in it, not one hidden. `shownWith`:
-   * the selector of the element an element that chooses its children drew it with — owed only while that one shows.
+   * `list`: a list, whose box is only its rows — none drawn is a list with nothing in it, not one hidden. `container`:
+   * a container, which with nothing in it and no size of its own is empty, not hidden. `shownWith`: the selector of the
+   * element an element that chooses its children drew it with — owed only while that one shows.
    */
-  expected: { id: string; selector: string; list?: true; shownWith?: string }[];
+  expected: { id: string; selector: string; list?: true; container?: true; shownWith?: string }[];
   images: boolean;
   overflow: boolean;
   legibility: boolean;
@@ -23,6 +24,11 @@ export interface ProbeFindings {
   notDrawn: string[];
   /** Owed, and hidden at this width by a breakpoint on purpose — checked at the width it shows at, not a problem. */
   byWidth: string[];
+  /**
+   * Containers with nothing in them and no size of their own — a shell another part of the work fills (a layout's
+   * header before it is built): nothing a visitor misses, said apart. One with a size of its own (a band, a rule) shows.
+   */
+  empty: string[];
   /** Each with the element it is in, by id, when one of the space's holds it. */
   brokenImages: { source: string; elementId?: string; loading?: true }[];
   /** `elementIds`: the widest ones the space named, for a tool to point at. */
@@ -204,7 +210,9 @@ export function probePage(input: ProbeInput): ProbeFindings {
   const hidden: { id: string; reason: string }[] = [];
   const byWidth: string[] = [];
   const notDrawn: string[] = [];
-  for (const { id, selector, list, shownWith } of input.expected) {
+  const empty: string[] = [];
+  const holdsNothing = (node: Element): boolean => node.childElementCount === 0 && node.textContent.trim() === '';
+  for (const { id, selector, list, container, shownWith } of input.expected) {
     const nodes = [...document.querySelectorAll(selector)];
     if (shownWith !== undefined && ![...document.querySelectorAll(shownWith)].some(isVisible)) {
       notDrawn.push(id);
@@ -214,6 +222,8 @@ export function probePage(input: ProbeInput): ProbeFindings {
       const hider = hiderOf(nodes[0]);
       if (hider && laidOutByWidth(hider.at)) {
         byWidth.push(id);
+      } else if (!hider && container === true && nodes.every(holdsNothing)) {
+        empty.push(id);
       } else {
         hidden.push({ id, reason: whyHidden(nodes[0], list === true) });
       }
@@ -617,6 +627,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
     hidden,
     notDrawn,
     byWidth,
+    empty,
     brokenImages,
     overflow,
     cutOff,

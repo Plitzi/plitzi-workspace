@@ -95,6 +95,8 @@ export interface CheckReport {
   issues: CheckIssue[];
   /** Owed, and hidden at this width by a breakpoint on purpose: looked at, and not a problem. */
   hiddenAtWidth: string[];
+  /** Owed containers with nothing in them and no size: a shell another part fills — not a problem, said. */
+  empty: string[];
   /** Checked in a task's copy: findings on elements other tasks write, said and failing nothing (`apart.ts`). */
   apart?: string[];
   /** In a run that keeps a reference: labels wrapped as the original wraps them, said and failing nothing (`apart.ts`). */

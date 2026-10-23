@@ -134,12 +134,17 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
     report.hiddenAtWidth.length > 0
       ? chalk.dim(`  · hidden at this width by a breakpoint, on purpose: ${report.hiddenAtWidth.join(', ')}`)
       : undefined;
+  const empty =
+    report.empty.length > 0
+      ? chalk.dim(`  · empty, with nothing in them yet and no size: ${report.empty.join(', ')}`)
+      : undefined;
   if (report.ok) {
     return [
       chalk.green(
         `✓ ${head} — ${report.checked > 0 ? `${String(report.checked)} elements on screen, ` : ''}nothing wrong`
       ),
       ...(atWidth ? [atWidth] : []),
+      ...(empty ? [empty] : []),
       ...held
     ].join('\n');
   }
@@ -149,6 +154,7 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
     ...report.problems.map(problem => `  - ${problem}`),
     ...report.consoleErrors.map(error => `  - console: ${error}`),
     ...report.failedRequests.map(request => `  - request refused: ${request}`),
+    ...(empty ? [empty] : []),
     ...held
   ].join('\n');
 };

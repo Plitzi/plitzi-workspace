@@ -1010,3 +1010,8 @@ theirs"`) at every width in one call and one browser, reads the other page witho
   selector names, else every family the space loads; the browser drew the nearest weight.
 - **`page check --space` authors a space that reads beside its folder** (`@plitzi/sdk-authoring`): the project's
   `src/`, `package.json` and `node_modules` are readable in the isolated author, never its root's `.env`.
+- **`run amend` changes what was found for a task** (`@plitzi/cli`): its `findings`, until it is done — its brief says the
+  new finding, what its spikes found is kept, and the task is told.
+- **A layout's empty shell fails no page check** (`@plitzi/sdk-authoring`, `@plitzi/cli`): an owed container with nothing
+  in it and no size of its own is said apart — `empty` in `inspectPage`'s report, "empty, with nothing in them yet" in
+  `page check` — never "hidden". One with a size shows; one holding something unseen is hidden as before.

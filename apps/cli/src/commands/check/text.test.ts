@@ -12,6 +12,7 @@ const report = (elements: CheckReport['elements']): CheckReport => ({
   problems: [],
   issues: [],
   hiddenAtWidth: [],
+  empty: [],
   consoleErrors: [],
   failedRequests: [],
   devTools: true,
@@ -43,5 +44,18 @@ describe('an element asked for, in a page’s report', () => {
     );
     expect(text).toContain("element fight-card-name: the page's dev tools read no element by that name");
     expect(text).not.toContain('is not on the page: its styles');
+  });
+});
+
+// lx-copy: the layout's empty shell failed every page check until the task that fills it was done.
+describe('containers with nothing in them yet', () => {
+  it('are said apart, failing nothing', () => {
+    const text = reportText(
+      { ...report(undefined), empty: ['site-header', 'site-nav'] },
+      { state: false, elements: [] }
+    );
+
+    expect(text).toContain('nothing wrong');
+    expect(text).toContain('empty, with nothing in them yet and no size: site-header, site-nav');
   });
 });

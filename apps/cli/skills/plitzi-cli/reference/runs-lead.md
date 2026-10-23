@@ -89,8 +89,9 @@ person asked for a team:
    file a task takes past 400 lines (ask for the split) — each said once. **Talk:** answer a question with `plitzi
 task message t-home "…" --reply-to m3`; `task message all "…"` tells every task in hand, `task message @dev-1 "…"`
    an agent by name, between tasks too. **The scope changes while it runs** — yours to see, or the person's to ask: edit
-   the run's plan (`tmp/plitzi-runs/<run>/plan.json`; `inputs/` keeps what you opened it with) and `plitzi run amend` — acceptance, priorities, notes, the
-   inventory, what a task nobody took waits for (`dependsOn`), one removed; more work is a stage, `plitzi
+   the run's plan (`tmp/plitzi-runs/<run>/plan.json`; `inputs/` keeps what you opened it with) and `plitzi run
+amend` — acceptance, priorities, findings, notes, the inventory, what a task nobody took waits for (`dependsOn`), one
+   removed; more work is a stage, `plitzi
 run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — chase
    or decide a review that drags, settle a last cosmetic round yourself, amend away a dependency it does not need.
 6. **Review against the inventory, not only the picture:** every section and piece the task's acceptance names is
@@ -153,6 +154,8 @@ backlog done <id> --note "…"` closes one. **Close it:** write the summary (don
 - **A copy is compared section by section**: each section's height at 390 against the original's, one `page measure`
   call, before you approve a page — a whole section laid out another way passed two reviews looked at 1440.
 - **What must hold at `complete` is an acceptance line** (`run amend`), never a message: a message has no hold on it.
+- **What a task builds on is in its `dependsOn`**, not only in its words: a finding naming another task's component (a
+  cart's "Top Productos" cards) is a dependency `run plan` cannot see.
 - **A stage reads `run view`, not memory**: a task that merges a file one not done holds waits for it (`dependsOn`).
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red.
 - **Don't fix the CLI mid-run**: note it (`run notice`), fix it after.

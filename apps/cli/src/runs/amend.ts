@@ -20,11 +20,13 @@ import {
   updateRecord,
   withInputs
 } from './run';
+import { PLAN_FINDING } from './spike';
 import { withLock } from './store';
-import { viewTask } from './taskStore';
+import { updateState, viewTask } from './taskStore';
 
 import type { PlannedTask, RunPlan, RunTask } from './model';
 import type { RunContext } from './run';
+import type { Finding } from './spike';
 
 /** What keeps `task`'s new dependencies from holding: one the run has not, itself, or a circle back to it. */
 const dependsOnProblems = (task: PlannedTask, inRun: readonly RunTask[], planned: readonly PlannedTask[]): string[] => {
@@ -80,7 +82,9 @@ export interface Amended {
 }
 
 const SHAPE = ['files', 'touches'] as const;
-const ASK = ['title', 'acceptance', 'priority', 'estimateMinutes', 'milestone'] as const;
+const ASK = ['title', 'acceptance', 'priority', 'estimateMinutes', 'milestone', 'findings'] as const;
+/** The finding a plan gives a task, as its state keeps it beside what its spikes found (`startingState`). */
+const isPlanFinding = (finding: Finding): boolean => finding.by === LEAD && finding.question === PLAN_FINDING;
 // What a task waits for, and who it is for, change until it is taken: a lead clears a bottleneck by letting one start
 // sooner (velada-now: t-motion waited for t-boxer's third round, though it shared no file with it).
 const WHO = ['role', 'quality', 'dependsOn'] as const;
@@ -214,7 +218,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
 
   for (const { task, defined } of changes) {
     // What the plan leaves out is dropped, not kept from before: the definition is the plan's, as amended.
-    const { milestone: _milestone, role: _role, quality: _quality, ...kept } = defined;
+    const { milestone: _milestone, role: _role, quality: _quality, findings: _findings, ...kept } = defined;
     const amended: RunTask = {
       ...kept,
       title: task.title,
@@ -224,10 +228,28 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
       dependsOn: task.dependsOn,
       ...(task.role === undefined ? {} : { role: task.role }),
       ...(task.quality === undefined ? {} : { quality: task.quality }),
-      ...(task.milestone === undefined ? {} : { milestone: task.milestone })
+      ...(task.milestone === undefined ? {} : { milestone: task.milestone }),
+      ...(task.findings === undefined ? {} : { findings: task.findings })
     };
 
     await writeJson(taskPaths(loaded.paths, task.id).definition, amended);
+    // A finding gone wrong was corrected only by a message (lx-copy's "write every stub"): the brief says the new one.
+    if (!same(task.findings, before.get(task.id)?.findings)) {
+      const planned = task.findings;
+      await updateState(
+        taskPaths(loaded.paths, task.id),
+        state => ({
+          ...state,
+          findings: [
+            ...(planned === undefined
+              ? []
+              : [{ at: ctx.now().toISOString(), by: LEAD, question: PLAN_FINDING, text: planned }]),
+            ...(state.findings ?? []).filter(finding => !isPlanFinding(finding))
+          ]
+        }),
+        ctx.now
+      );
+    }
   }
 
   // Under the take's lock, and looked at again there: an agent that took one meanwhile keeps it, and nothing is removed.
@@ -279,7 +301,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
       to: task.id,
       text: `The lead amended this task (${changed.join(', ')}). It now asks: ${task.title}${
         changed.includes('acceptance') ? ` — ${task.acceptance.map(each => acceptanceText(each)).join('; ')}` : ''
-      }. Read it again: plitzi task context`
+      }${changed.includes('findings') ? `. What was found for it now says: ${task.findings ?? 'nothing'}` : ''}. Read it again: plitzi task context`
     });
   }
 

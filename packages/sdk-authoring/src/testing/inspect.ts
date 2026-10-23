@@ -72,6 +72,11 @@ export interface PageReport {
    * problem, and said so a reader knows they were looked at. Checked at the width they show at.
    */
   hiddenAtWidth: string[];
+  /**
+   * Owed containers with nothing in them and no size of their own — a layout's shell a later part fills: nothing a
+   * visitor misses, and said so. A container that should hold something is a page check's `--expect` on what it holds.
+   */
+  empty: string[];
 }
 
 const label = (handle: ElementHandle): string => `${handle.type} "${handle.id}"`;
@@ -280,6 +285,7 @@ const inspect = async (
       id: handle.id,
       selector: handle.selector,
       ...(handle.type === 'list' ? { list: true as const } : {}),
+      ...(handle.type === 'container' ? { container: true as const } : {}),
       ...(shownWith === undefined ? {} : { shownWith })
     })),
     images: !skip.has('images'),
@@ -302,7 +308,8 @@ const inspect = async (
         checked: expected.length - findings.notDrawn.length,
         problems: issues.map(issue => issue.message),
         issues,
-        hiddenAtWidth: findings.byWidth
+        hiddenAtWidth: findings.byWidth,
+        empty: findings.empty
       };
     }
 
