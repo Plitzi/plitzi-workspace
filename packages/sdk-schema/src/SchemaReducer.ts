@@ -1,6 +1,8 @@
 import { get, set, has } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 
+import { isSchemaSetting } from '@plitzi/sdk-shared/schema';
+
 import {
   addComponent,
   detachInstance,
@@ -23,6 +25,7 @@ import type {
   SpaceComponentDeclaration
 } from '@plitzi/sdk-shared';
 import type { ReducerActionOrigin } from '@plitzi/sdk-shared/helpers';
+import type { SchemaSettingValue } from '@plitzi/sdk-shared/schema';
 
 /** Variables a snippet brought with it, minus the ones this space already declares under the same name. */
 const appendVariables = (draft: Schema, variables: SchemaVariable[]): void => {
@@ -115,7 +118,7 @@ export type SchemaReducerActions = SchemaReducerActionsBase &
     | {
         type: 'SCHEMA_UPDATE_SETTINGS';
         path: string;
-        value: string | number | boolean;
+        value: SchemaSettingValue;
       }
     | {
         type: 'SCHEMA_ADD_COMPONENT';
@@ -356,8 +359,10 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
     case SchemaActions.SCHEMA_UPDATE_SETTINGS: {
       const { path, value } = action;
 
+      // A setting the space has no value for yet is written too, once it is one a space may carry: the builder lost a
+      // new one — a site's name, its robots.txt — while the platform kept it, until the next load.
       return produce(state, draft => {
-        if (path && has(state.settings, path)) {
+        if (path && (has(state.settings, path) || isSchemaSetting(path.split('.')[0] ?? ''))) {
           set(draft.settings, path, value);
         } else if (!path) {
           set(draft, 'settings', value);

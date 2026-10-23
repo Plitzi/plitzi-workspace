@@ -51,6 +51,25 @@ describe('resolvePageSeo', () => {
     });
   });
 
+  // A link pasted in a chat showed no picture: the page could not say one.
+  it('reads the picture a link to the page shows, its words and its kind — templates over its providers too', () => {
+    const s = schema({
+      room: page('room', {
+        seoEnabled: true,
+        seoImage: '{{ apiContainer_room.cover }}',
+        seoImageAlt: 'The cover of {{ apiContainer_room.name }}',
+        seoType: 'music.playlist'
+      }),
+      bare: page('bare', { seoEnabled: true, seoImageAlt: 'Nothing to say it of', seoType: 'podcast' })
+    });
+
+    expect(
+      resolvePageSeo(s, 'room', { apiContainer_room: { cover: 'https://cdn.test/jazz.png', name: 'Late Night Jazz' } })
+    ).toEqual({ image: 'https://cdn.test/jazz.png', imageAlt: 'The cover of Late Night Jazz', type: 'music.playlist' });
+    // Words for no picture, and a kind Open Graph does not have, say nothing.
+    expect(resolvePageSeo(s, 'bare')).toEqual({});
+  });
+
   it('reads the title and description the page declares', () => {
     const s = schema({
       home: page('home', { seoEnabled: true, seoPageTitle: 'Café Mirabel', seoPageDescription: 'A small kitchen.' })

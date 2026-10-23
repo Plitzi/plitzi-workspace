@@ -1,6 +1,7 @@
-import { jsonForScript, pageSeoText, pageStructuredData } from '@plitzi/sdk-shared/schema';
+import { isOgType, jsonForScript, pageSeoText, pageStructuredData } from '@plitzi/sdk-shared/schema';
 
 import type { Element, Schema } from '@plitzi/sdk-shared';
+import type { OgType } from '@plitzi/sdk-shared/schema';
 
 export type PageSeo = {
   title?: string;
@@ -9,6 +10,11 @@ export type PageSeo = {
   robots?: string;
   /** Each JSON-LD object, as the text of its `<script type="application/ld+json">` — escaped for the tag. */
   structuredData?: string[];
+  /** The picture a link to the page shows (`og:image`), as the page wrote it: a file of the site or an address. */
+  image?: string;
+  imageAlt?: string;
+  /** What the page is, in Open Graph's words (`og:type`). */
+  type?: OgType;
 };
 
 type PageSeoAttributes = {
@@ -17,6 +23,9 @@ type PageSeoAttributes = {
   seoPageDescription?: string;
   seoRobots?: string;
   seoStructuredData?: unknown;
+  seoImage?: string;
+  seoImageAlt?: string;
+  seoType?: string;
 };
 
 /**
@@ -53,11 +62,18 @@ export const resolvePageSeo = (
   const description = pageSeoText(page.attributes.seoPageDescription, context);
   const robots = typeof page.attributes.seoRobots === 'string' ? page.attributes.seoRobots.trim() : '';
   const structuredData = pageStructuredData(page.attributes.seoStructuredData, context).map(jsonForScript);
+  // A picture may be a template too: a room's page shows its own cover.
+  const image = pageSeoText(page.attributes.seoImage, context);
+  const imageAlt = pageSeoText(page.attributes.seoImageAlt, context);
+  const { seoType } = page.attributes;
 
   return {
     ...(title ? { title } : {}),
     ...(description ? { description } : {}),
     ...(robots ? { robots } : {}),
-    ...(structuredData.length > 0 ? { structuredData } : {})
+    ...(structuredData.length > 0 ? { structuredData } : {}),
+    ...(image ? { image } : {}),
+    ...(image && imageAlt ? { imageAlt } : {}),
+    ...(isOgType(seoType) ? { type: seoType } : {})
   };
 };

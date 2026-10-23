@@ -5,9 +5,11 @@ import {
   pageElementTypes,
   collectServerElements,
   notFoundProvider,
+  pageHeadTags,
   pageNotFound,
   pageServerContext,
   pageWithheldOf,
+  spaceIdentity,
   withholdPages
 } from '@plitzi/sdk-shared/schema';
 import { paintedKeys, paintedStateFor } from '@plitzi/sdk-shared/state';
@@ -22,7 +24,7 @@ import { publishSpaceDocument } from './spaceDocument';
 import { SPACE_TOKEN_PARAM } from '../../core/auth/credentials';
 import { imagesPathOf } from '../../core/http/stages/images';
 import { PREVIEW_TOKEN_PARAM, readDraftToken } from '../../core/previewToken';
-import { requestAuthority } from '../../core/requestParser';
+import { requestAuthority, requestOrigin } from '../../core/requestParser';
 import { sdkAssetVersion } from '../../core/sdkAssets';
 import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
@@ -441,6 +443,25 @@ export const prepareRender = async (
   // A page already running keeps its React; the choice shows on the next load.
   const vendorJs = (debugRendered ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js') + v;
 
+  // What a link preview reads of the page — its words as the deployment and the page say them, its picture, its own
+  // address — and the space's icon and language: written into the head, which a preview reads without running the page.
+  const deploymentProps = req.ctx.spaceDeployment?.templateProps;
+  const origin = requestOrigin(req);
+  const head = pageHeadTags(
+    {
+      title: pageSeo.title ?? deploymentProps?.title ?? DEFAULT_TITLE,
+      ...((pageSeo.description ?? deploymentProps?.description)
+        ? { description: pageSeo.description ?? deploymentProps?.description }
+        : {}),
+      ...(pageSeo.robots ? { robots: pageSeo.robots } : {}),
+      ...(pageSeo.image ? { image: pageSeo.image } : {}),
+      ...(pageSeo.imageAlt ? { imageAlt: pageSeo.imageAlt } : {}),
+      ...(pageSeo.type ? { type: pageSeo.type } : {})
+    },
+    spaceIdentity(schema?.settings),
+    origin === '' ? '' : `${origin}${req.path}`
+  );
+
   return {
     componentProps: {
       plugins: Object.keys(pluginComponents).length > 0 ? pluginComponents : undefined,
@@ -489,6 +510,7 @@ export const prepareRender = async (
       // default and stays in charge of pages that declare nothing, which is what makes this safe to turn on for
       // deployments that already set a title of their own.
       ...pageSeo,
+      head,
       plugins: templatePlugins,
       // The authorization, not what was drawn: see `debugAuthorized` above.
       debugMode: debugAuthorized,

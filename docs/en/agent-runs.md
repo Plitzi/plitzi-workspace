@@ -304,7 +304,7 @@ agent its scratch, made. Never removed by the run.
 
 Who works a project's runs is its own choice, in `.plitzi/team.json` (committed: it holds no secret, so it needs no
 `.example` as `.env` does). `plitzi create` writes the starter (`STARTER_TEAM`): two developers — one started with the
-run, the other on demand — and a designer, since each agent spends tokens; the person grows it when a job asks — the harness's own models, and an `about` that
+run, the other on demand — and a designer on `claude-sonnet-5-5`, since each agent spends tokens; the person grows it when a job asks — the developers on the harness's own model, and an `about` that
 says what each field and each role the CLI knows means (`ROLES`: developer, designer, reviewer, tester, writer; any
 other name is a role of the project's own), since JSON has no comments; `about` is the CLI's — never read, written as this CLI says it whenever it
 writes the file, and brought up by `plitzi upgrade` with the files, the agents left as they are. The file is formatted as the project's Prettier leaves it (`formattedJson`). `run team` lists the roles too. The file
@@ -343,6 +343,10 @@ said in the activity — the lead starts it again when work waits. **The base go
 team's base agents of its roles — there (marked present) and at nothing — take; with them free, it is told so and
 waits. Running is read off the log (`runningAgents`): an
 agent that said something and has not stopped since. The monitor shows one not running as on demand, not as idle.
+
+**A model one harness does not run** (`harnessRuns`): the team names a model once, for every harness — Claude Code
+runs a Claude one (`claude-…`, `sonnet`), Codex any other, opencode `provider/model`. One the harness does not run is
+not passed: the agent starts on the harness's own default, and `run agent --launch` says so.
 
 **One task a session** (`"sessionPerTask": true` on a team's agent, `run team set dev --session-per-task`): the CLI
 cannot empty a harness's context, so the agent ends its session instead. Once it completes a task — its session being

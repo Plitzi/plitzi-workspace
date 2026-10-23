@@ -2,6 +2,8 @@ export * from './anchor';
 export * from './schemaConstants';
 export * from './layoutChain';
 export * from './serverElements';
+export * from './pageHead';
+export * from './schemaSettings';
 export * from './snippet';
 
 export * from './motion';

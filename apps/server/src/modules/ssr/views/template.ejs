@@ -1,28 +1,25 @@
 <!doctype html>
-<html lang="en"<% if (locals.themeClass) { %> class="<%= locals.themeClass %>"<% } %>>
+<html lang="<%= (locals.head && locals.head.lang) || 'en' %>"<% if (locals.themeClass) { %> class="<%= locals.themeClass %>"<% } %>>
   <head>
     <meta charset="utf-8" />
     <title><%= locals.title || '' %></title>
-    <% if (locals.description) { %>
-    <meta name="description" content="<%= locals.description %>" />
-    <% } %>
-    <meta property="og:type" content="website" />
-    <% if (locals.title) { %>
-    <meta property="og:title" content="<%= locals.title %>" />
-    <meta name="twitter:title" content="<%= locals.title %>" />
-    <% } %>
-    <% if (locals.description) { %>
-    <meta property="og:description" content="<%= locals.description %>" />
-    <meta name="twitter:description" content="<%= locals.description %>" />
-    <% } %>
-    <% if (locals.robots) { %>
-    <meta name="robots" content="<%= locals.robots %>" />
-    <% } %>
+    <%
+      /*
+        What a link preview, a search engine and the browser read of the page, as `pageHeadTags` (@plitzi/sdk-shared)
+        decides it — the page's description, robots, Open Graph and card with its picture, its canonical address, the
+        space's icon and colour. The page keeps them as it moves (`PageHead`) from the same definition.
+      */
+    %>
+    <% ((locals.head && locals.head.meta) || []).forEach(function (tag) { %>
+    <meta <%= tag.attribute %>="<%= tag.key %>" content="<%= tag.content %>"<% if (tag.media) { %> media="<%= tag.media %>"<% } %> />
+    <% }) %>
     <% (locals.structuredData || []).forEach(function (json) { %>
     <script type="application/ld+json"><%- json %></script>
     <% }) %>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="shortcut icon" href="https://cdn.plitzi.com/resources/img/favicon.svg" />
+    <% ((locals.head && locals.head.links) || []).forEach(function (link) { %>
+    <link rel="<%= link.rel %>" href="<%= link.href %>"<% if (link.type) { %> type="<%= link.type %>"<% } %> />
+    <% }) %>
 
     <%
       /*
@@ -40,10 +37,11 @@
 
     <%
       /*
-        The one origin the document reaches for whatever the space declares: the favicon's. Named here so the space's
-        own fonts can skip it rather than ask for it twice. A font host is preconnected only when the space uses one.
+        Plitzi's icon's origin, reached when the space names no icon of its own. Named here so the space's own fonts
+        can skip it rather than ask for it twice. A font host is preconnected only when the space uses one.
       */
-      const staticOrigins = ['https://cdn.plitzi.com'];
+      const icon = ((locals.head && locals.head.links) || []).find(function (link) { return link.rel === 'icon'; });
+      const staticOrigins = icon && icon.href.indexOf('https://cdn.plitzi.com/') === 0 ? ['https://cdn.plitzi.com'] : [];
     %>
     <% for (const origin of staticOrigins) { %>
     <link rel="preconnect" href="<%= origin %>" crossorigin />

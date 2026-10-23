@@ -35,7 +35,7 @@ import type {
   Snippet
 } from '@plitzi/sdk-shared';
 import type { ParamSpec } from '@plitzi/sdk-shared/authoring';
-import type { ElementMotion } from '@plitzi/sdk-shared/schema';
+import type { ElementMotion, OgType } from '@plitzi/sdk-shared/schema';
 
 /**
  * What an author declares, as opposed to what a document stores.
@@ -289,6 +289,16 @@ export interface PageSpec {
    * several, each with `'@context'` and `'@type'`.
    */
   structuredData?: StructuredData | StructuredData[];
+  /**
+   * The picture a link to this page shows where it is pasted — a chat's preview card, a post (`og:image`): a file of
+   * the site (`'/og/home.png'`, in `public/`) or an address, about 1200×630. A template over the page's server providers
+   * too — `'{{ apiContainer_room.cover }}'` — as `seoTitle` is. Left out, the space's `settings.shareImage`.
+   */
+  seoImage?: string;
+  /** What that picture shows, for whoever cannot see it (`og:image:alt`). */
+  seoImageAlt?: string;
+  /** What the page is, in Open Graph's words (`og:type`): `'website'` when left out, `'article'`, `'music.playlist'`… */
+  seoType?: OgType;
   /**
    * One expression over the same answers that says this address shows nothing — a record that is not there: the page is
    * sent with status 404, rendered as written. For a record read by a provider the page shares with others, in its

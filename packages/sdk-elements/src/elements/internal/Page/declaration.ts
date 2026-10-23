@@ -1,5 +1,6 @@
 /** Static declaration for Page: type, default attributes and builder metadata. Data only, no React. */
 import { elementDeclaration } from '@plitzi/sdk-shared/authoring';
+import { OG_TYPES } from '@plitzi/sdk-shared/schema';
 
 import type { PageProps } from './Page';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring';
@@ -21,9 +22,10 @@ export const isDocumentScroll = (value: unknown): value is DocumentScroll =>
 
 const declaration = elementDeclaration<PageAttributes>()({
   type: 'page',
-  serverTemplates: ['seoPageTitle', 'seoPageDescription', 'notFound'],
+  serverTemplates: ['seoPageTitle', 'seoPageDescription', 'seoImage', 'seoImageAlt', 'notFound'],
   attributeValues: {
-    documentScroll: DOCUMENT_SCROLLS
+    documentScroll: DOCUMENT_SCROLLS,
+    seoType: OG_TYPES
   },
   triggers: {
     onPageLoad: {

@@ -123,30 +123,43 @@ const quoted = (word: string): string => (/^[\w./:=@-]+$/.test(word) ? word : `'
  * prompt itself — and the model the team names for it, where the harness takes one. Claude Code is let run the shell
  * and edit files in the project: a run's agent does nothing else.
  */
+/**
+ * Whether a harness runs a model of that name: Claude Code a Claude one (`claude-…`, or its aliases), Codex any other,
+ * opencode one written `provider/model`. The team's model is one name for every harness: one the harness does not run
+ * would refuse to start the agent.
+ */
+export const harnessRuns = (harness: Harness, model: string): boolean =>
+  harness === 'claude'
+    ? /^(claude-|sonnet|opus|haiku)/.test(model)
+    : harness === 'codex'
+      ? !/^(claude-|sonnet|opus|haiku)/.test(model)
+      : model.includes('/');
+
 export const harnessCommand = (
   harness: Harness,
   prompt: { file: string; text: string },
   model?: string
-): { command: string; args: string[]; line: string } => {
+): { command: string; args: string[]; line: string; model?: string } => {
   const PROMPT = '\0prompt';
+  // The team's model where this harness runs it; else the harness's own default, said by the caller.
+  const runs = model !== undefined && harnessRuns(harness, model) ? model : undefined;
   const parts: string[] =
     harness === 'claude'
       ? [
           'claude',
           '-p',
           PROMPT,
-          ...(model ? ['--model', model] : []),
+          ...(runs ? ['--model', runs] : []),
           '--permission-mode',
           'acceptEdits',
           '--allowedTools',
           'Bash Read Edit Write Glob Grep'
         ]
       : harness === 'codex'
-        ? ['codex', 'exec', '--full-auto', ...(model ? ['-m', model] : []), PROMPT]
-        : // opencode names a model provider/model: one the team writes another way is left to its default.
-          ['opencode', 'run', ...(model?.includes('/') ? ['--model', model] : []), PROMPT];
+        ? ['codex', 'exec', '--full-auto', ...(runs ? ['-m', runs] : []), PROMPT]
+        : ['opencode', 'run', ...(runs ? ['--model', runs] : []), PROMPT];
   const line = parts.map(part => (part === PROMPT ? `"$(cat ${prompt.file})"` : quoted(part))).join(' ');
   const [command = harness, ...args] = parts.map(part => (part === PROMPT ? prompt.text : part));
 
-  return { command, args, line };
+  return { command, args, line, ...(runs ? { model: runs } : {}) };
 };

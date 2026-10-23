@@ -57,6 +57,23 @@ export const PAGE_CODES = {
     means: "a line of the space's `settings.robotsTxt` that no crawler reads, or one with no `User-agent`",
     fix: '`User-agent: *` then `Allow: /`, `Disallow: /overlay` — each line `Field: value`, or a comment'
   },
+  'share-image-invalid': {
+    kind: 'refused',
+    means:
+      "a page's `seoImage` that is neither a file of the site, an address nor a template — or a `seoImageAlt` with no picture",
+    fix: "`seoImage: '/og/home.png'` (in public/), `'https://…'` or `'{{ apiContainer_room.cover }}'`, with `seoImageAlt` saying what it shows"
+  },
+  'og-type-unknown': {
+    kind: 'refused',
+    means: "a page's `seoType` that Open Graph does not name",
+    fix: "`seoType: 'article'`, `'profile'`, `'music.playlist'` — or leave it out, and the page is a `website`"
+  },
+  'space-identity-invalid': {
+    kind: 'refused',
+    means:
+      "the space's `siteName`, `language`, `favicon`, `shareImage` or `themeColor` written as nothing a head reads",
+    fix: "`siteName: 'Encore'`, `language: 'en'`, `favicon: '/favicon.svg'`, `shareImage: '/og.png'`, `themeColor: { light: '#fbf7f0', dark: '#0b0a10' }`"
+  },
   'structured-data-shape': {
     kind: 'refused',
     means: "a page's `structuredData` item with no `@context` or `@type`, or a value JSON cannot carry",

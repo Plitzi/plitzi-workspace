@@ -8,11 +8,12 @@ import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation';
-import { pageAccessOf } from '@plitzi/sdk-shared/schema';
+import { OG_TYPES, pageAccessOf } from '@plitzi/sdk-shared/schema';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useSettingsUpdate from '../../useSettingsUpdate';
 import LayoutPicker from '../LayoutPicker';
+import SharePreview from './SharePreview';
 
 import type { DocumentScroll } from './declaration';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
@@ -27,6 +28,10 @@ type SettingsProps = {
   folder?: string;
   seoPageTitle?: string;
   seoPageDescription?: string;
+  seoRobots?: string;
+  seoImage?: string;
+  seoImageAlt?: string;
+  seoType?: string;
   slug?: string;
   layout?: string;
   layoutContainer?: string;
@@ -46,6 +51,10 @@ const Settings = ({
   folder = '',
   seoPageTitle = 'Title',
   seoPageDescription = 'Description',
+  seoRobots = '',
+  seoImage = '',
+  seoImageAlt = '',
+  seoType = '',
   slug = '',
   layout = '',
   layoutContainer = '',
@@ -296,6 +305,46 @@ const Settings = ({
               <div className="settings-seo__description mb-1 pt-1 text-sm">{`${seoPageDescription.slice(0, 160)}...`}</div>
             </div>
           </div>
+          <Input
+            value={seoRobots}
+            label="Robots"
+            placeholder="index, follow"
+            onChange={update.text('seoRobots')}
+            size="xs"
+          />
+          <Input
+            value={seoImage}
+            label="Share image"
+            placeholder="/og.png, https://…, or {{ apiContainer_room.cover }}"
+            onChange={update.text('seoImage')}
+            size="xs"
+          />
+          <Input
+            value={seoImageAlt}
+            label="Share image description"
+            placeholder="What the picture shows"
+            onChange={update.text('seoImageAlt')}
+            size="xs"
+          />
+          <Select
+            value={seoType}
+            label="Kind of page"
+            onChange={update.text('seoType')}
+            size="xs"
+            placeholder="website"
+          >
+            {OG_TYPES.map(type => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </Select>
+          <SharePreview
+            title={seoPageTitle}
+            description={seoPageDescription}
+            {...(seoImage ? { image: seoImage } : {})}
+            {...(seoImageAlt ? { imageAlt: seoImageAlt } : {})}
+          />
         </>
       )}
     </div>

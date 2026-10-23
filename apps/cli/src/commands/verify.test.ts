@@ -2,14 +2,22 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { stepsOf, tail, verifyText } from './verify';
+import { stepsOf, tail, unservedProblem, verifyText } from './verify';
+
+import type { CheckReport } from './check';
 
 describe('what verify says of the pages for signed-in visitors', () => {
-  const pages = { schemes: ['light' as const], passing: 12, failing: [], unchecked: ['/studio', '/write'] };
+  const pages = {
+    schemes: ['light' as const],
+    passing: 12,
+    failing: [],
+    unchecked: ['/studio', '/write'],
+    unanswered: []
+  };
 
   it('says how to have them checked when the project names no account', () => {
     expect(stripVTControlCharacters(verifyText([], { ...pages, signedIn: { none: true } }))).toContain(
-      '- not checked — sent elsewhere (a page for signed-in visitors) or not answered: /studio, /write — name an account of the project in .env, PLITZI_CHECK_USER and PLITZI_CHECK_PASSWORD, and verify signs in for them'
+      '- not checked — sent elsewhere (a page for signed-in visitors): /studio, /write — name an account of the project in .env, PLITZI_CHECK_USER and PLITZI_CHECK_PASSWORD, and verify signs in for them'
     );
   });
 
@@ -28,6 +36,7 @@ describe('what verify says of the pages for signed-in visitors', () => {
         passing: 22,
         failing: [],
         unchecked: ['/studio/team'],
+        unanswered: ['/live'],
         signedIn: { as: 'carla', checks: 10 }
       })
     );
@@ -35,6 +44,25 @@ describe('what verify says of the pages for signed-in visitors', () => {
     // Every theme the space can be painted in, said: a page unreadable in the dark one is not a pass in the light one.
     expect(said).toContain('✓ pages — 22 checks at 1440 and 390 px, light and dark, 10 of them signed in as carla');
     expect(said).toContain('- not checked, even signed in as carla: /studio/team — that account may not see them');
+    expect(said).toContain('- not checked — nothing answered: /live');
+  });
+
+  // A new project, its server not started: verify checked no page and asked for an account in .env.
+  it('says a project nothing serves as such, never as pages for signed-in visitors', () => {
+    // Only what the check reads of a report — its path, and its issues by code — so the rest is left out.
+    const silent = (path: string) =>
+      ({
+        path,
+        ok: false,
+        issues: [{ code: 'no-answer', message: `nothing answers at http://127.0.0.1:8080${path}` }]
+      }) as unknown as CheckReport;
+
+    expect(unservedProblem([silent('/'), silent('/about')])).toBe(
+      'nothing answers at http://127.0.0.1:8080/ — start it (npm start) and verify again, or --no-pages to leave them'
+    );
+    expect(unservedProblem([silent('/'), { path: '/about', ok: true, issues: [] } as unknown as CheckReport])).toBe(
+      undefined
+    );
   });
 });
 

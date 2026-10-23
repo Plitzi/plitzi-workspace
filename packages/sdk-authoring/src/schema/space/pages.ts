@@ -151,7 +151,9 @@ export const addPage = (author: SpaceAuthor, page: PageSpec, index: number): str
       ...layoutAttributes(page.layout),
       ...(page.accessLevel ? { accessLevel: page.accessLevel } : {}),
       ...(page.access ? { access: { permissions: [...page.access.permissions] } } : {}),
-      seoEnabled: Boolean(page.seoTitle ?? page.seoDescription ?? page.robots ?? page.structuredData),
+      seoEnabled: Boolean(
+        page.seoTitle ?? page.seoDescription ?? page.robots ?? page.structuredData ?? page.seoImage ?? page.seoType
+      ),
       ...(page.seoTitle ? { seoPageTitle: page.seoTitle } : {}),
       ...(page.seoDescription ? { seoPageDescription: page.seoDescription } : {}),
       ...seoAttributes(`Page "${page.name}"`, page),

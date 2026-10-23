@@ -374,12 +374,12 @@ export const TEAM_ABOUT: Record<string, unknown> = {
   roles: { ...ROLES, '<any other>': 'A role of your own: a task names it, an agent takes it.' },
   options:
     '"designReview": how closely a designer reviews another task\'s UI — "light" (its pages at 1440 and 390, the default scheme, nothing it does not touch), "standard" (both schemes and widths, its sections against the reference; the default), "high" (every page that reads its files, against the run before it too). A review costs what it looks at.',
-  more: 'It starts small — every agent spends tokens: two developers, one started with the run and the other on demand, and a designer who reviews the UI of every other task. Grow it when a job asks — you decide: more developers (plitzi run team set dev --count 3 --min 2), a tester who writes the tests of each developer task (plitzi run team set test --roles tester), a writer.'
+  more: 'It starts small — every agent spends tokens: two developers, one started with the run and the other on demand, and a designer on Sonnet who reviews the UI of every other task. Grow it when a job asks — you decide: more developers (plitzi run team set dev --count 3 --min 2), a tester who writes the tests of each developer task (plitzi run team set test --roles tester), a writer.'
 };
 
 /**
  * The team a project starts with: two developers — one with the run, the other started on demand, when work waits for
- * it — and a designer: few agents at once from the start, the person growing it when a job asks.
+ * it — and a designer on Sonnet: few agents at once from the start, the person growing it when a job asks.
  */
 export const STARTER_TEAM: Team = {
   $schema: TEAM_SCHEMA,
@@ -387,7 +387,8 @@ export const STARTER_TEAM: Team = {
   about: TEAM_ABOUT,
   agents: [
     { name: 'dev', roles: [DEVELOPER], count: 2, min: 1 },
-    { name: 'design', roles: [DESIGNER] }
+    // A designer reviews what it is handed against its acceptance and its pictures: Sonnet does it well, for less.
+    { name: 'design', roles: [DESIGNER], model: 'claude-sonnet-5-5' }
   ]
 };
 

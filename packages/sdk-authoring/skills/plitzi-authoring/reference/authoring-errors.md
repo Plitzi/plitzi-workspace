@@ -107,6 +107,7 @@ The space is not written until these are fixed.
 | `not-found-in-browser` | `notFound` on a provider asked from the browser — its answer arrives after the page was sent with its status | `runtime: 'server'` on the provider, or `visible` on the page's "not found" part instead |
 | `not-found-not-a-template` | `notFound`, a provider's or a page's, that is not one `{{ expression }}` — never `true`, so never a 404 | `notFound: '{{ source.found == false }}'` |
 | `notifications-shape` | `notifications` with a field it does not have, or a value that is not one CSS value | the field it suggests, or one it lists; one CSS value, like 'var(--card)', '12px' or '500' |
+| `og-type-unknown` | a page's `seoType` that Open Graph does not name | `seoType: 'article'`, `'profile'`, `'music.playlist'` — or leave it out, and the page is a `website` |
 | `outside-ancestor` | an element that reads the state of an element it is not inside | nest it in the element the message names |
 | `page-access` | a page `access` the server cannot keep: no permissions, or one that is not a name | `access: { permissions: ['…'] }` with at least one permission name, or no `access` for a page anybody may see |
 | `page-access-level` | an `accessLevel` that is not one the router reads | one of the values the message lists |
@@ -138,6 +139,7 @@ The space is not written until these are fixed.
 | `server-data-in-browser` | a provider asking for the project's own data (`/data/…`, read by its server from `src/data/` and never served) from the browser | `runtime: 'server'` on the provider: the page arrives with the data in it |
 | `server-provider-in-component` | a `runtime: 'server'` element inside a component: the page server resolves a page's and its layouts', never a component's | put the provider on the page, around the instance, and hand the component its rows as a prop |
 | `setting-misplaced` | `settings.computed` or `settings.channels` written inside `settings` | `computed` and `channels` at the top of the space |
+| `share-image-invalid` | a page's `seoImage` that is neither a file of the site, an address nor a template — or a `seoImageAlt` with no picture | `seoImage: '/og/home.png'` (in public/), `'https://…'` or `'{{ apiContainer_room.cover }}'`, with `seoImageAlt` saying what it shows |
 | `shorthand-ambiguous` | a shorthand one of whose parts is a bare `var(--x)` — `background: var(--surface)` — which longhand it is depends on what the variable holds | the longhand it is: `'background-color': 'var(--x)'` for a colour, `'background-image'` for a gradient or a picture |
 | `shorthand-unread` | a `font` shorthand with a part the expansion reads as none of its longhands — a `var()` size, a system font — or without the size and family CSS requires | the longhands it means: `'font-size': 'var(--size)'`, `'font-family': …`; a CSS-wide keyword (`font: inherit`) is read whole |
 | `slot-children` | children handed to an instance outside its slots | `children: { slotName: [ … ] }`; a component with no slots takes no children |
@@ -145,6 +147,7 @@ The space is not written until these are fixed.
 | `slot-unknown` | a component slot that is not an element of its tree | the id of an element inside the component — usually an empty container |
 | `source-field-unknown` | a path into a typed source that its sample does not have | read a field the sample has, or add the field to the sample |
 | `source-name-missing` | a source named by nothing — most often a field read off a list row that has no types | write the row's field as text (`${r.item}.field`), or give the list `items` a typed source's path |
+| `space-identity-invalid` | the space's `siteName`, `language`, `favicon`, `shareImage` or `themeColor` written as nothing a head reads | `siteName: 'Encore'`, `language: 'en'`, `favicon: '/favicon.svg'`, `shareImage: '/og.png'`, `themeColor: { light: '#fbf7f0', dark: '#0b0a10' }` |
 | `state-key-list` | `settings.transientState` / `paintedState` that is not a list of top-level state keys | `transientState: ['demoStep']` — a dotted path names its top key |
 | `state-painted-and-transient` | a state key both painted (kept for the server) and transient (never kept) | remove it from one of the two |
 | `state-shape` | a state given a rule set's keys (`pseudos`, `variants`, `ancestors`…): a state holds plain CSS | a pseudo-element's state goes under the pseudo-element — `pseudos: { before: { states: { hover: { opacity: '1' } } } }`; an ancestor's, under `ancestors` |

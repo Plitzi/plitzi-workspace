@@ -115,6 +115,8 @@ const folderPath = (ctx: LintContext, folderId: string): string => {
 const PAGE_TEMPLATES = [
   ['seoPageTitle', 'seoTitle'],
   ['seoPageDescription', 'seoDescription'],
+  ['seoImage', 'seoImage'],
+  ['seoImageAlt', 'seoImageAlt'],
   ['notFound', 'notFound']
 ] as const;
 

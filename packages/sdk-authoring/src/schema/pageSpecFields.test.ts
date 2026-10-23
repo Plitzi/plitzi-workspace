@@ -18,6 +18,9 @@ describe('PAGE_SPEC_FIELDS', () => {
       seoDescription: 'Who we are.',
       robots: 'noindex, nofollow',
       structuredData: [{ '@context': 'https://schema.org', '@type': 'Organization', name: 'Example' }],
+      seoImage: '/og/about.png',
+      seoImageAlt: 'The team',
+      seoType: 'profile',
       notFound: '{{ navigation.routeParams.slug == "gone" }}',
       documentScroll: 'locked',
       body: []
@@ -147,5 +150,76 @@ describe('a page’s robots and structured data', () => {
     expect(write({}, { robotsTxt: 'User-agent: *\nDisallow: /overlay\n# kept out' })).not.toThrow();
     expect(write({}, { robotsTxt: 'User-agent: *\nDisalow: /overlay' })).toThrow(/\[robots-txt-line\].*line 2/s);
     expect(write({}, { robotsTxt: 'Disallow: /overlay' })).toThrow(/names no `User-agent:`/);
+  });
+});
+
+// A link to a space pasted in a chat showed no picture: a page says one now, and the space its name, icon and language.
+describe('a page’s share picture, and the space’s identity', () => {
+  const write =
+    (page: Pick<PageSpec, 'seoImage' | 'seoImageAlt' | 'seoType'>, settings: Record<string, unknown> = {}) =>
+    () =>
+      authorSpace({
+        name: 'Share',
+        permanentUrl: 'share',
+        settings,
+        pages: [{ id: 'home', name: 'Home', slug: '', ...page, body: [] }]
+      });
+
+  it('writes the picture, its words and the page’s kind for the head, and reads them back', () => {
+    const settings = {
+      siteName: 'Encore',
+      language: 'en',
+      favicon: '/favicon.svg',
+      shareImage: 'https://cdn.example.com/og.png',
+      themeColor: { light: '#fbf7f0', dark: '#0b0a10' }
+    };
+    const { schema, style } = write(
+      { seoImage: '/og/home.png', seoImageAlt: 'A room listening', seoType: 'music.playlist' },
+      settings
+    )();
+
+    expect(schema.flat.home.attributes).toMatchObject({
+      seoEnabled: true,
+      seoImage: '/og/home.png',
+      seoImageAlt: 'A room listening',
+      seoType: 'music.playlist'
+    });
+    const { spec } = specFromSpace({ schema, style });
+    expect(spec.pages[0]).toMatchObject({
+      seoImage: '/og/home.png',
+      seoImageAlt: 'A room listening',
+      seoType: 'music.playlist'
+    });
+    expect(spec.settings).toMatchObject(settings);
+  });
+
+  it('takes a picture written as a template over the page’s server providers, and refuses one it cannot read', () => {
+    const room = (runtime: 'server' | 'client') => () =>
+      authorSpace({
+        name: 'Share',
+        permanentUrl: 'share',
+        pages: [
+          {
+            id: 'room',
+            name: 'Room',
+            slug: 'r/:slug',
+            seoImage: '{{ apiContainer_room-data.cover }}',
+            body: [apiContainer({ id: 'room-data', query: '/data/rooms.json', runtime })]
+          }
+        ]
+      });
+
+    expect(room('server')).not.toThrow();
+    expect(room('client')).toThrow(/seoImage/);
+  });
+
+  it('refuses a picture no preview reaches, words for no picture, a kind Open Graph lacks and a broken identity', () => {
+    expect(write({ seoImage: 'og.png' })).toThrow(/\[share-image-invalid\].*neither a file of the site/s);
+    expect(write({ seoImageAlt: 'Nothing' })).toThrow(/\[share-image-invalid\].*names no seoImage/s);
+    // A kind no type has, as a document written by hand may hold: what the check is for.
+    expect(write({ seoType: 'podcast' as never })).toThrow(/\[og-type-unknown\]/);
+    expect(write({}, { language: 'English', favicon: 'favicon.svg' })).toThrow(
+      /\[space-identity-invalid\].*language "English".*favicon "favicon.svg"/s
+    );
   });
 });

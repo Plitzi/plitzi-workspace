@@ -4,6 +4,7 @@ import type { OfflineDataRaw } from './SdkTypes';
 import type { SSRMeterDecision, SSRSpaceDeployment } from './ServerAdapterTypes';
 import type { FontHead } from './StyleTypes';
 import type { SpaceChange } from '../history/types';
+import type { PageHeadTags } from '../schema/pageHead';
 import type { IncomingHttpHeaders } from 'node:http';
 import type { FC } from 'react';
 
@@ -139,6 +140,11 @@ export type SSRTemplateProps = {
   title?: string;
   /** Meta description for the document, and the share-preview text derived from it. */
   description?: string;
+  /**
+   * The head's tags besides the title and the JSON-LD — description, robots, Open Graph and card, the canonical
+   * address, the icon, the browser's colour, the language — as `pageHeadTags` decides them. The server's own.
+   */
+  head?: PageHeadTags;
   jsPath?: string;
   cssPath?: string;
   /** Font Awesome's rules, after `cssPath`; its fonts are files beside it, fetched only for a style the page uses. */

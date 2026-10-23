@@ -135,9 +135,10 @@ export const scriptsOf = async (root: string): Promise<Record<string, string>> =
 /** A page the browser was sent away from — one for signed-in visitors, sent to sign in. */
 const redirected = (report: CheckReport): boolean => report.issues.some(issue => issue.code === 'redirected');
 
+const unanswered = (report: CheckReport): boolean => report.issues.some(issue => issue.code === 'no-answer');
+
 /** A page the browser was sent away from, or that nothing answered: not looked at, so neither passing nor failing. */
-const unchecked = (report: CheckReport): boolean =>
-  redirected(report) || report.issues.some(issue => issue.code === 'no-answer');
+const unchecked = (report: CheckReport): boolean => redirected(report) || unanswered(report);
 
 export const verify = async (options: VerifyOptions): Promise<void> => {
   const project = await projectHere('to verify');
@@ -188,8 +189,10 @@ interface PagesChecked {
   schemes: Scheme[];
   passing: number;
   failing: CheckReport[];
-  /** Pages a browser could not look at — one for signed-in visitors, sent to sign in: by path. */
+  /** Pages that sent the browser away — one for signed-in visitors, sent to sign in: by path. */
   unchecked: string[];
+  /** Pages nothing answered at, while others did: by path. */
+  unanswered: string[];
   /**
    * The pages that sent the browser to sign in, checked again signed in as the project's account — or why they could
    * not be. Absent when no page did.
@@ -198,6 +201,16 @@ interface PagesChecked {
 }
 
 const NOT_STARTED = 'start it (npm start) and verify again, or --no-pages to leave them';
+
+/**
+ * Nothing answered any page: the project is not served — never a page for signed-in visitors. A new project, its server
+ * not started, was told to name an account in .env.
+ */
+export const unservedProblem = (reports: readonly CheckReport[]): string | undefined => {
+  const silent = reports.find(unanswered)?.issues.find(issue => issue.code === 'no-answer');
+
+  return silent && reports.every(unanswered) ? `${silent.message} — ${NOT_STARTED}` : undefined;
+};
 
 const pagesChecked = async (project: ExistingProject): Promise<PagesChecked | { problem: string }> => {
   const found = await staticPaths(project.root);
@@ -218,8 +231,9 @@ const pagesChecked = async (project: ExistingProject): Promise<PagesChecked | { 
         scheme,
         ...(account ? { account } : {})
       });
+      // The problem names its own fix — start the project, install Chromium: what is verify's to add is the rest.
       if ('problem' in reports) {
-        return { problem: `${reports.problem} — ${NOT_STARTED}` };
+        return { problem: `${reports.problem} — then verify again, or --no-pages to leave them` };
       }
 
       all.push(...reports);
@@ -231,6 +245,11 @@ const pagesChecked = async (project: ExistingProject): Promise<PagesChecked | { 
   const reports = await inEveryTheme(paths);
   if ('problem' in reports) {
     return reports;
+  }
+
+  const unserved = unservedProblem(reports);
+  if (unserved) {
+    return { problem: unserved };
   }
 
   const sentAway = [...new Set(reports.filter(redirected).map(report => report.path))];
@@ -262,7 +281,10 @@ const summary = (
   schemes,
   passing: reports.filter(report => report.ok).length,
   failing: reports.filter(report => !report.ok && !unchecked(report)),
-  unchecked: [...new Set(reports.filter(unchecked).map(report => report.path))],
+  unchecked: [...new Set(reports.filter(redirected).map(report => report.path))],
+  unanswered: [
+    ...new Set(reports.filter(report => unanswered(report) && !redirected(report)).map(report => report.path))
+  ],
   ...(signedIn ? { signedIn } : {})
 });
 
@@ -271,11 +293,11 @@ const uncheckedText = (pages: PagesChecked): string => {
   const list = pages.unchecked.join(', ');
   const signedIn = pages.signedIn;
   if (!signedIn || 'none' in signedIn) {
-    return `- not checked — sent elsewhere (a page for signed-in visitors) or not answered: ${list} — name an account of the project in .env, ${CHECK_USER_ENV} and ${CHECK_PASSWORD_ENV}, and verify signs in for them`;
+    return `- not checked — sent elsewhere (a page for signed-in visitors): ${list} — name an account of the project in .env, ${CHECK_USER_ENV} and ${CHECK_PASSWORD_ENV}, and verify signs in for them`;
   }
 
   if ('problem' in signedIn) {
-    return `- not checked — sent elsewhere (a page for signed-in visitors) or not answered: ${list} — ${signedIn.problem}`;
+    return `- not checked — sent elsewhere (a page for signed-in visitors): ${list} — ${signedIn.problem}`;
   }
 
   return `- not checked, even signed in as ${signedIn.as}: ${list} — that account may not see them, or nothing answered`;
@@ -314,6 +336,9 @@ export const verifyText = (
                     `✗ pages — ${String(pages.failing.length)} of ${String(pages.passing + pages.failing.length)} checks`
                   ),
               ...pages.failing.map(report => reportText(report, { state: false, elements: [] })),
-              ...(pages.unchecked.length > 0 ? [chalk.yellow(uncheckedText(pages))] : [])
+              ...(pages.unchecked.length > 0 ? [chalk.yellow(uncheckedText(pages))] : []),
+              ...(pages.unanswered.length > 0
+                ? [chalk.yellow(`- not checked — nothing answered: ${pages.unanswered.join(', ')}`)]
+                : [])
             ])
   ].join('\n');

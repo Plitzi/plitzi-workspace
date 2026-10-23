@@ -635,7 +635,7 @@ inbox`. A block lifted carries its answer (`task unblock --answer`), and `task n
 - **No task ends with failing checks** — lint, types, tests: `complete` refuses. Only for a reason that weighs, said to
   the lead: `--known-failure "why" --fixed-by <task>`; the final merge still needs every check green.
 - **As many agents as the team has** (`.plitzi/team.json`: every new project starts with two developers — one with the
-  run, the other on demand — and a designer, few agents at once — and what each role does is in it, and in `run team`; one made before it gets the team its
+  run, the other on demand — and a designer on Sonnet, few agents at once — and what each role does is in it, and in `run team`; one made before it gets the team its
   first plan needs; above 5 a person confirms): past it, `task take` waits for one to finish. `"sessionPerTask": true`
   (`run team set dev --session-per-task`) gives each of an entry's agents one task a session: once it completes one,
   `task next` tells it to stop, and `run watch` asks the lead to start it again, a fresh context — fewer tokens for an

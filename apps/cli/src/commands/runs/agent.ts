@@ -129,7 +129,7 @@ export const runAgent = (agent: string, options: AgentOptions): Promise<void> =>
       }
 
       const harness = await harnessOf(options.harness);
-      const { command, args, line } = harnessCommand(harness, { file: promptFile, text: prompt }, model);
+      const { command, args, line, model: ran } = harnessCommand(harness, { file: promptFile, text: prompt }, model);
       const log = path.join(scratch, 'agent.log');
       const out = openSync(log, 'a');
       // Its own process group, outliving this command: the agent works until task next tells it to stop.
@@ -147,7 +147,15 @@ export const runAgent = (agent: string, options: AgentOptions): Promise<void> =>
         log
       });
 
-      return { agent, runId, promptFile, ...(model ? { model } : {}), launched: { harness, pid: child.pid, log } };
+      return {
+        agent,
+        runId,
+        promptFile,
+        ...(ran ? { model: ran } : {}),
+        // The team's model, where this harness does not run it: said, the agent on the harness's own default.
+        ...(model && !ran ? { modelNotRun: model } : {}),
+        launched: { harness, pid: child.pid, log }
+      };
     },
     answer =>
       'launched' in answer
@@ -155,6 +163,13 @@ export const runAgent = (agent: string, options: AgentOptions): Promise<void> =>
             chalk.green(
               `${answer.agent} started in ${answer.launched.harness} (pid ${String(answer.launched.pid)})${answer.model ? ` on ${answer.model}` : ''}: it works until task next tells it to stop.`
             ),
+            ...('modelNotRun' in answer && answer.modelNotRun
+              ? [
+                  chalk.yellow(
+                    `  The team names ${answer.modelNotRun}, which ${answer.launched.harness} does not run: it started on ${answer.launched.harness}'s own default (.plitzi/team.json, or --harness)`
+                  )
+                ]
+              : []),
             `  Its output: ${answer.launched.log} — its prompt: ${answer.promptFile}`,
             `  Follow the run: plitzi run monitor ${answer.runId} (a person) · plitzi run watch ${answer.runId} --until lead (the lead)`
           ].join('\n')

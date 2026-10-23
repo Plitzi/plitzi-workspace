@@ -18,6 +18,7 @@ import {
   assertChannels,
   assertComputedOnce,
   assertRobotsTxt,
+  assertSpaceIdentity,
   assertPaintedState,
   assertSpaceShape,
   assertTransientState,
@@ -316,6 +317,7 @@ export class SpaceAuthor {
 
     assertComputedOnce(this);
     assertRobotsTxt(this);
+    assertSpaceIdentity(this);
     assertChannels(this);
     assertTransientState(this);
     assertPaintedState(this);

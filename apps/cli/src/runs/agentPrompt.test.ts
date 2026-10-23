@@ -87,6 +87,13 @@ describe('the command that starts an agent headless', () => {
     expect(harnessCommand('codex', prompt, 'gpt-x').line).toBe(
       'codex exec --full-auto -m gpt-x "$(cat /p/scratch/dev-1/prompt.md)"'
     );
+    // The team's model is one name for every harness: one this harness does not run is left to its own default, said.
+    expect(harnessCommand('codex', prompt, 'claude-sonnet-5-5')).toMatchObject({
+      line: 'codex exec --full-auto "$(cat /p/scratch/dev-1/prompt.md)"'
+    });
+    expect(harnessCommand('codex', prompt, 'claude-sonnet-5-5').model).toBeUndefined();
+    expect(harnessCommand('claude', prompt, 'gpt-x').line).not.toContain('--model');
+    expect(harnessCommand('claude', prompt, 'sonnet').model).toBe('sonnet');
     // opencode names a model provider/model: one written otherwise is left to its default.
     expect(harnessCommand('opencode', prompt, 'claude-sonnet-5-5').line).toBe(
       'opencode run "$(cat /p/scratch/dev-1/prompt.md)"'

@@ -36,3 +36,27 @@ describe('SchemaReducer feature flags', () => {
     expect(SchemaReducer(declared, { type: SchemaActions.SCHEMA_REMOVE_FLAG, name: 'gone' })).toBe(declared);
   });
 });
+
+// The builder wrote a setting only where the space already had a value for it: a site's name, its robots.txt, set in
+// the builder, were kept by the platform and lost on the canvas until the next load.
+describe('SchemaReducer settings', () => {
+  it('writes a setting the space has no value for yet, and leaves a key no space carries alone', () => {
+    const named = SchemaReducer(EMPTY_SCHEMA.schema, {
+      type: SchemaActions.SCHEMA_UPDATE_SETTINGS,
+      path: 'siteName',
+      value: 'Encore'
+    });
+    expect(named.settings.siteName).toBe('Encore');
+
+    const coloured = SchemaReducer(named, {
+      type: SchemaActions.SCHEMA_UPDATE_SETTINGS,
+      path: 'themeColor',
+      value: { light: '#fbf7f0', dark: '#0b0a10' }
+    });
+    expect(coloured.settings.themeColor).toEqual({ light: '#fbf7f0', dark: '#0b0a10' });
+
+    expect(
+      SchemaReducer(named, { type: SchemaActions.SCHEMA_UPDATE_SETTINGS, path: 'head', value: '<script>' }).settings
+    ).not.toHaveProperty('head');
+  });
+});

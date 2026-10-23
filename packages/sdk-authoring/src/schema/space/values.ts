@@ -146,6 +146,9 @@ export const PAGE_SPEC_FIELDS: Readonly<Record<string, keyof PageSpec>> = {
   seoPageDescription: 'seoDescription',
   seoRobots: 'robots',
   seoStructuredData: 'structuredData',
+  seoImage: 'seoImage',
+  seoImageAlt: 'seoImageAlt',
+  seoType: 'seoType',
   notFound: 'notFound',
   documentScroll: 'documentScroll'
 };

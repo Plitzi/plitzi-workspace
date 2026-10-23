@@ -92,6 +92,9 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 - **A designer reviews the UI of other tasks before the lead.** `options.designReview` (`light`, `standard`, `high`)
   says how closely. `task review --skip-design lead|no-ui` says why the lead skips it.
 - **A tester writes `<id>-tests`** after each developer task.
+- **The starter team's designer runs on `claude-sonnet-5-5`.** A model the team names is passed only to a harness that
+  runs it (Claude Code a Claude one, Codex any other, opencode `provider/model`); otherwise the agent starts on the
+  harness's default, and `run agent --launch` says so.
 - **Quality levels:** a task's `quality` (`light`, `standard`, `high`) picks the model a level, and work is taken by
   urgency.
 
@@ -157,6 +160,8 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
 
+- **`plitzi verify`** says a project nothing serves as such — start it — where it asked for an account in `.env`, and
+  says apart the pages nothing answered from those sent to sign in.
 - **`page check`** reads a page as a visitor's browser draws it:
   - `--expect <id>~<text>` holds what a page says, and `--then` goes on by the page's own links.
   - `--element`, `--hover`, `--click` and `--fill` say what an element shows and what an interaction changed.
@@ -195,6 +200,10 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   loads a folder's pages, and `PageSpec.nav` with `navOf(pages)` gives a layout its menu.
 - **A page's `robots` and `structuredData`** (JSON-LD, a template over its server providers), and
   `settings.robotsTxt`. `plitzi create` starts a space with both.
+- **Link previews that show a picture.** A page's `seoImage` (a file of the site, an address, or a template over its
+  server providers), `seoImageAlt` and `seoType` (Open Graph's kinds). The space says who it is once in `settings`:
+  `siteName`, `language`, `favicon`, `shareImage` (for a page with none) and `themeColor` (one, or one a scheme).
+  Refused when a head could not read them: `share-image-invalid`, `og-type-unknown`, `space-identity-invalid`.
 - **`settings.viewTransitions: true`** draws client-side navigation as view transitions; `view-transition-name` is a
   style property.
 - **An element's `motion`** takes `easing` and `distance`.
@@ -228,11 +237,25 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Server (`@plitzi/sdk-server`)
 
+- **The head a link preview reads is whole:** the page's Open Graph and card, with its picture made absolute (a chat
+  never resolves `/og.png`), `summary_large_image` when it has one, `og:url` and `<link rel="canonical">` from the
+  public address, the space's icon (Plitzi's only when it names none), its `theme-color`, and `<html lang>` (it was
+  always `en`). The page keeps the same tags as it moves (`pageHeadTags`, `@plitzi/sdk-shared/schema`).
 - **`list.put`** refuses a value written as JSON that does not parse.
 - **`/health` says which copy of a project serves**, and a port is held while it is being taken.
 - **A run's preview** answers `/__plitzi/run`, and only a preview's pages ask for it.
 - **The server's budget is loaded again:** the filters' catalogue and the pages' rule are entries of their own that the
   server never reads.
+
+## The builder (`@plitzi/plitzi-builder`, `@plitzi/sdk-elements`, `@plitzi/sdk-schema`)
+
+- **Settings → Sharing:** the site's name, language, icon, share image, theme colour and `robots.txt`, checked as they
+  are typed by the same rule authoring refuses on.
+- **A page's SEO** takes its share image, its description and its kind, with robots, and shows the link's card.
+- **A setting the space had no value for is kept:** the builder wrote a setting only where one was already there, so a
+  new one was saved by the platform and lost on the canvas until the next load. `SCHEMA_SETTINGS` lives in
+  `@plitzi/sdk-shared/schema` now, for the builder and authoring alike.
+- **The MCP's `patchSettings`** writes the site's identity, `robotsTxt` and `viewTransitions` too.
 
 ## Dev tools (`@plitzi/sdk-dev-tools`)
 

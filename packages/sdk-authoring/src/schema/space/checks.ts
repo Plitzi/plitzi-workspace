@@ -2,6 +2,7 @@ import { propNameProblem, isValidElementId } from '@plitzi/sdk-schema';
 import { checkVisitorRoles } from '@plitzi/sdk-shared/auth';
 import { BUILTIN_PARAM_TYPES } from '@plitzi/sdk-shared/authoring';
 import { channelProblems } from '@plitzi/sdk-shared/realtime';
+import { spaceIdentity, spaceIdentityProblems } from '@plitzi/sdk-shared/schema';
 
 import { GLOBAL_SOURCES } from '../bindings';
 import { AuthoringError, AUTHORING_CODES, isSuggestionCode } from '../codes';
@@ -192,6 +193,17 @@ export const assertElementShape = (spec: ElementSpec, path: string): void => {
   }
 
   assertId(spec.id, where);
+};
+
+/**
+ * The space's identity — its name, language, icon, share picture and colour — held to what a head reads, as the builder
+ * holds it while it is typed (`spaceIdentityProblems`): a favicon written as a bare name is a tab with no icon.
+ */
+export const assertSpaceIdentity = (author: SpaceAuthor): void => {
+  const problems = spaceIdentityProblems(spaceIdentity(author.spec.settings));
+  if (problems.length > 0) {
+    throw new AuthoringError('space-identity-invalid', `settings: ${problems.join(' ')}`);
+  }
 };
 
 /** The fields of a robots.txt search engines read; anything else is a line no crawler follows. */

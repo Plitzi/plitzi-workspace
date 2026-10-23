@@ -28,6 +28,7 @@ import type {
   SpaceComponentDeclaration,
   SnippetStyle
 } from '@plitzi/sdk-shared';
+import type { SchemaSettingValue } from '@plitzi/sdk-shared/schema';
 import type { ReactNode } from 'react';
 
 export type SchemaContextProviderProps = {
@@ -322,7 +323,7 @@ const SchemaContextProvider = ({
   );
 
   const schemaUpdateSettings = useCallback(
-    (value: string | number | boolean, path: string = '', fromSubscriptions = false) =>
+    (value: SchemaSettingValue, path: string = '', fromSubscriptions = false) =>
       dispatchSchema({ type: SchemaActions.SCHEMA_UPDATE_SETTINGS, value, path, fromSubscriptions }),
     [dispatchSchema]
   );

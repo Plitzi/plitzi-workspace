@@ -4,5 +4,4 @@
  */
 
 export type { SpecCorrection, SpecCorrectionCode, SpecFromSpace, SpecFromSpaceOptions } from './types';
-export { SCHEMA_SETTINGS } from './values';
 export { specFromSpace } from './reader';

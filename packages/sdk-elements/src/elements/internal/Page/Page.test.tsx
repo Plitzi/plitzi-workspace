@@ -169,6 +169,43 @@ describe('Page Tests', () => {
     expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Capsule montana-37');
   });
 
+  // A link to a space pasted in a chat showed no picture: the page now says one, as the server does, as it moves.
+  it('says the picture a link shows, made whole, with the space’s name, language and icon', async () => {
+    render(
+      <HelmetProvider>
+        <StoreProvider
+          value={{
+            navigation,
+            schema: {
+              flat: {},
+              settings: { customCss: '', siteName: 'Encore', language: 'es', favicon: '/favicon.svg' }
+            }
+          }}
+        >
+          <ElementContext value={skipHocEntry()}>
+            <Page
+              seoEnabled
+              seoPageTitle="Late Night Jazz"
+              seoPageDescription="Listening now"
+              seoImage="/covers/jazz.png"
+              seoImageAlt="A saxophone"
+              seoType="music.playlist"
+            />
+          </ElementContext>
+        </StoreProvider>
+      </HelmetProvider>
+    );
+
+    const content = (selector: string) => document.querySelector(selector)?.getAttribute('content');
+    await waitFor(() => expect(content('meta[property="og:image"]')).toBe(`${window.location.origin}/covers/jazz.png`));
+    expect(content('meta[property="og:image:alt"]')).toBe('A saxophone');
+    expect(content('meta[property="og:type"]')).toBe('music.playlist');
+    expect(content('meta[property="og:site_name"]')).toBe('Encore');
+    expect(content('meta[name="twitter:card"]')).toBe('summary_large_image');
+    expect(document.documentElement.getAttribute('lang')).toBe('es');
+    expect(document.querySelector('link[rel="icon"]')?.getAttribute('href')).toBe('/favicon.svg');
+  });
+
   /**
    * The builder's canvas: the page is drawn in a frame, and the head its code would write is the editor's. A second
    * head manager there rewrote the host page's tags — the builder's own stylesheet with them — on every preview.

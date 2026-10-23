@@ -264,6 +264,24 @@ export type Schema = {
      * to where it lands. Where the browser has none, or the visitor asks for less motion, the page changes at once.
      */
     viewTransitions?: boolean;
+    /**
+     * The site's name where a link to it is shown — a chat's preview, a search result — beside each page's own title
+     * (`og:site_name`).
+     */
+    siteName?: string;
+    /** The language its pages are written in, as a language tag (`en`, `es-MX`): `<html lang>` and `og:locale`. */
+    language?: string;
+    /** The tab's icon: a file of the site (`/favicon.svg`) or an address (`https://…`). Left out, Plitzi's. */
+    favicon?: string;
+    /**
+     * The picture a link to a page shows when the page names none of its own — a chat's preview card, a post. A file of
+     * the site or an address, about 1200×630; each page's `seoImage` wins over it.
+     */
+    shareImage?: string;
+    /**
+     * The colour a phone's browser paints around the page (`<meta name="theme-color">`): one colour, or one a scheme.
+     */
+    themeColor?: string | { light?: string; dark?: string };
     customCss: string;
     /**
      * The roles a signed-in visitor may hold in this space, each with the permissions it gives:

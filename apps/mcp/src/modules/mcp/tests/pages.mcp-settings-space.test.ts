@@ -152,6 +152,33 @@ describe('MCP settings (space-level customCss + auth config)', () => {
     expect(res.errors.some(e => e.message.includes('`board:{id}`'))).toBe(true);
   });
 
+  // A link to a space pasted in a chat showed no picture and Plitzi's icon, and an agent had no field to say otherwise.
+  it('writes how a link to the site shows — its name, language, icon, picture, colour — and its robots.txt', async () => {
+    const cap = capturing(buildSpace());
+    const identity = {
+      siteName: 'Encore',
+      language: 'en',
+      favicon: '/favicon.svg',
+      shareImage: '/og.png',
+      themeColor: { light: '#fbf7f0', dark: '#0b0a10' },
+      robotsTxt: 'User-agent: *\nAllow: /\n'
+    };
+    const res = await apply({ operations: [{ type: 'patchSettings', ...identity }] }, buildSpace(), cap.persisters);
+    expect(res.applied).toBe(true);
+    expect(readResource(cap.saved(), 'main', 'plitzi://settings/main')?.data).toMatchObject(identity);
+  });
+
+  it('refuses an identity a head cannot read, saying how to write it', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      { operations: [{ type: 'patchSettings', favicon: 'favicon.svg' }] },
+      buildSpace(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0]?.message).toContain('neither a file of the site nor an address');
+  });
+
   it('exposes settings in the cold-start primer', async () => {
     const cap = capturing(buildSpace());
     await apply({ operations: [{ type: 'patchSettings', customCss: '.z{}' }] }, buildSpace(), cap.persisters);

@@ -104,6 +104,12 @@ apiContainer_boxer.name }}'` on a detail page) — both written into the head th
 `/robots.txt` is `settings.robotsTxt` (`'User-agent: *\nAllow: /\n'` when left out); keep a page out of search with its
 `robots`, not a `Disallow` — a crawler barred from a page never reads its `noindex`.
 
+**Where a link to it is pasted** — a chat, a post: a page's `seoImage` is the picture its card shows (`'/og/home.png'` in
+`public/`, an address, or a template — `'{{ apiContainer_room.cover }}'`), about 1200×630, with `seoImageAlt`; its
+`seoType` is what it is (`'article'`, `'music.playlist'`; `'website'` left out). The space says who it is once, in
+`settings`: `siteName`, `language` (`<html lang>`), `favicon`, `shareImage` (a page with no picture of its own) and
+`themeColor` (`'#ff6a3d'` or `{ light, dark }`). The server writes the card, the page's address and the icon itself.
+
 ## Names
 
 - **Ids:** `area-role` in kebab-case — `hm-traffic-title`, `docs-nav-docs-data`. Never the builder's positional

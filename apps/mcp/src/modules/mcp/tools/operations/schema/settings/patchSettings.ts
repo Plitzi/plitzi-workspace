@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { NOTIFICATIONS_FIELDS, splitNotificationsCss, withNotificationsCss } from '@plitzi/sdk-authoring';
 import { channelProblems } from '@plitzi/sdk-shared/realtime';
+import { spaceIdentity, spaceIdentityProblems } from '@plitzi/sdk-shared/schema';
 
 import { empty, fail } from '../../../../helpers';
 import { settingsUri } from '../write';
@@ -75,13 +76,21 @@ export const patchSettingsOp = z
       .optional()
       .describe('Render from the stored session and confirm behind it (default), or wait for the confirmation'),
     sessionRevalidateSeconds: z.number().optional(),
+    siteName: z.string().optional().describe('Shown beside each title in a link card'),
+    language: z.string().optional().describe('"en", "es-MX"'),
+    favicon: z.string().optional().describe('"/favicon.svg" or https://…'),
+    shareImage: z.string().optional().describe("A link card's picture when its page has none: \"/og.png\""),
+    themeColor: z.union([z.string(), z.object({ light: z.string().optional(), dark: z.string().optional() })]).optional(),
+    robotsTxt: z.string().optional(),
+    viewTransitions: z.boolean().optional(),
     channels: z
       .record(z.string(), channel.nullable())
       .optional()
       .describe('Realtime channels by topic pattern (`board:{id}`); null removes one. See the guide')
   })
   .describe(
-    'Merge space-level settings — global CSS, notifications, kept state, auth, realtime channels. Only the fields ' +
+    'Merge space-level settings — global CSS, notifications, kept state, auth, realtime channels, the site\'s identity ' +
+      'and robots.txt. Only the fields ' +
       'sent change. ' +
       'customCss is for site-wide CSS, never to style one element (attach a definition for that).'
   );
@@ -135,6 +144,12 @@ export const patchSettings = (space: Space, env: Env, op: PatchSettings): OpResu
         'Fix the pattern or declaration and send it again'
       );
     }
+  }
+
+  // What a head reads of the site, held as authoring and the builder hold it: a bare file name is a tab with no icon.
+  const [identityProblem] = spaceIdentityProblems(spaceIdentity({ ...space.schema.settings, ...patch }));
+  if (identityProblem) {
+    return fail('settings', identityProblem, 'Fix the field and send it again');
   }
 
   // zod omits absent optional keys, so Object.entries yields only the fields the agent actually sent.

@@ -1,6 +1,6 @@
 import { isDocumentScroll } from '@plitzi/sdk-elements/elements/declarations';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
-import { pageAccessOf } from '@plitzi/sdk-shared/schema';
+import { isOgType, pageAccessOf } from '@plitzi/sdk-shared/schema';
 
 import { readBindings, readFlows } from './bindings';
 import { baseStyle, pageStyle } from './classes';
@@ -240,6 +240,9 @@ export const readPage = (reader: SpecReader, page: Element, index: number): Page
   const structuredData = Array.isArray(attributes.seoStructuredData)
     ? attributes.seoStructuredData.filter((item): item is Record<string, unknown> => isRecord(item))
     : [];
+  const seoImage = typeof attributes.seoImage === 'string' ? attributes.seoImage : '';
+  const seoImageAlt = typeof attributes.seoImageAlt === 'string' ? attributes.seoImageAlt : '';
+  const seoType = isOgType(attributes.seoType) ? attributes.seoType : undefined;
   const notFound = typeof attributes.notFound === 'string' ? attributes.notFound : '';
   const documentScroll = isDocumentScroll(attributes.documentScroll) ? attributes.documentScroll : undefined;
   if (!documentScroll && attributes.documentScroll !== undefined && attributes.documentScroll !== '') {
@@ -266,6 +269,9 @@ export const readPage = (reader: SpecReader, page: Element, index: number): Page
     ...(structuredData.length > 0
       ? { structuredData: structuredData.length === 1 ? structuredData[0] : structuredData }
       : {}),
+    ...(seoImage ? { seoImage } : {}),
+    ...(seoImage && seoImageAlt ? { seoImageAlt } : {}),
+    ...(seoType ? { seoType } : {}),
     ...(notFound ? { notFound } : {}),
     ...(documentScroll ? { documentScroll } : {}),
     ...(folder ? { folder } : {}),

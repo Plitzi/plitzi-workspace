@@ -1,11 +1,12 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { SCHEMA_SETTINGS } from '@plitzi/sdk-shared/schema';
 
 import { elementAttributeNames } from '../../elements';
 
 import type { SpecReader } from './reader';
 import type { SpecCorrectionCode } from './types';
 import type { CssProps } from '../../style';
-import type { BindingCategory, ElementBinding, ElementInteraction, Schema } from '@plitzi/sdk-shared';
+import type { BindingCategory, ElementBinding, ElementInteraction } from '@plitzi/sdk-shared';
 
 /**
  * Element types the builder no longer ships, and what each one is today.
@@ -65,6 +66,9 @@ export const PAGE_ATTRIBUTES = new Set([
   'seoPageDescription',
   'seoRobots',
   'seoStructuredData',
+  'seoImage',
+  'seoImageAlt',
+  'seoType',
   'notFound',
   'documentScroll',
   'enabled'
@@ -72,41 +76,7 @@ export const PAGE_ATTRIBUTES = new Set([
 
 export const LAYOUT_ATTRIBUTES = new Set(['folder', 'layout', 'layoutContainer']);
 
-/**
- * Every setting a space can carry, which `schemaSettings.test.ts` holds to the `Schema['settings']` type.
- *
- * A key outside it is one nothing reads any more — `head`, from before a space declared its fonts.
- */
-export const SCHEMA_SETTINGS = [
-  'keepState',
-  'stateStorage',
-  'transientState',
-  'paintedState',
-  'robotsTxt',
-  'viewTransitions',
-  'customCss',
-  'visitorRoles',
-  'userProvider',
-  'tokenStorage',
-  'loginUrl',
-  'userUrl',
-  'refreshUrl',
-  'logoutUrl',
-  'detailsPath',
-  'tokenPath',
-  'refreshTokenPath',
-  'expirationTimePath',
-  'refreshExpirationTimePath',
-  'sessionHintCookie',
-  'sessionExchangeUrl',
-  'mfaUrl',
-  'sessionGate',
-  'sessionRevalidateSeconds',
-  'debugMode',
-  'computed',
-  'channels'
-] as const satisfies readonly (keyof Schema['settings'])[];
-
+/** Every setting a space can carry (`SCHEMA_SETTINGS`): a key outside it is one nothing reads any more. */
 export const SETTING_NAMES = new Set<string>(SCHEMA_SETTINGS);
 
 /**

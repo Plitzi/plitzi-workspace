@@ -19,7 +19,7 @@ import PageWithheld from './PageWithheld';
 import type { DocumentScroll } from './declaration';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { ElementLayout } from '@plitzi/sdk-shared';
-import type { LayoutLink, PageAccess, PageWithheld as WithheldReason } from '@plitzi/sdk-shared/schema';
+import type { LayoutLink, OgType, PageAccess, PageWithheld as WithheldReason } from '@plitzi/sdk-shared/schema';
 import type { ReactNode, RefObject } from 'react';
 
 export type PageProps = {
@@ -31,6 +31,16 @@ export type PageProps = {
   seoRobots?: string;
   /** The page's JSON-LD, each object as it is written into the head. */
   seoStructuredData?: Record<string, unknown>[];
+  /**
+   * The picture a link to the page shows — a chat's preview card, a post (`og:image`): a file of the site (`/og.png`)
+   * or an address, about 1200×630. A template over the page's server providers too: a room's page shows its cover.
+   * Left out, the space's `shareImage`.
+   */
+  seoImage?: string;
+  /** What the picture shows, for whoever cannot see it (`og:image:alt`). */
+  seoImageAlt?: string;
+  /** What the page is, in Open Graph's words: `website` (the default), `article`, `profile`, `music.playlist`… */
+  seoType?: OgType;
   /**
    * A template over the page's server providers and `navigation` that says this address shows nothing — a record that
    * is not there: the page server sends it with status 404, rendered as written. Read there only (`serverTemplates`).
@@ -107,6 +117,9 @@ const Page = ({
   seoPageDescription = 'Description',
   seoRobots,
   seoStructuredData,
+  seoImage,
+  seoImageAlt,
+  seoType,
   documentScroll = '',
   withheld,
   className = '',
@@ -172,6 +185,9 @@ const Page = ({
           description={seoPageDescription}
           {...(seoRobots ? { robots: seoRobots } : {})}
           {...(seoStructuredData ? { structuredData: seoStructuredData } : {})}
+          {...(seoImage ? { image: seoImage } : {})}
+          {...(seoImageAlt ? { imageAlt: seoImageAlt } : {})}
+          {...(seoType ? { type: seoType } : {})}
         />
       )}
       {/* Rendered with the page, not hoisted: it is in the HTML the server sends, and it leaves with the page. */}
