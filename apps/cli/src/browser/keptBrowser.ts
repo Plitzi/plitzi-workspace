@@ -84,8 +84,13 @@ export const writeWhole = async (file: string, text: string): Promise<void> => {
   await rename(partial, file);
 };
 
-/** Kept out of tests, and wherever a person says so: a process left beside a test run is one nobody stops. */
-const keepingOff = (): boolean => process.env.VITEST !== undefined || process.env.PLITZI_KEEP_BROWSER === '0';
+/**
+ * Kept out of tests — a process left beside a test run is one nobody stops — unless a test asks for it
+ * (`PLITZI_KEEP_BROWSER=1`), and wherever a person says so (`=0`).
+ */
+const keepingOff = (): boolean =>
+  process.env.PLITZI_KEEP_BROWSER === '0' ||
+  (process.env.VITEST !== undefined && process.env.PLITZI_KEEP_BROWSER !== '1');
 
 /** A lock of one: written by whoever is first, taken over once older than `ageMs` — one that died left it. */
 const takeLock = async (file: string, ageMs: number): Promise<boolean> => {
