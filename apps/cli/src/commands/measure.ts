@@ -20,6 +20,7 @@ import {
   PSEUDOS,
   SIDE_LONGHANDS
 } from './measureValues';
+import { keptMeasure } from '../browser/keptBrowser';
 import { originHere } from '../runs/copyServer';
 import { targetOn } from './shot/capture';
 import { pageAnswered } from './shot/remote';
@@ -462,6 +463,35 @@ export interface ViewAsked {
   state?: StateAsked;
 }
 
+/** The other page's elements read on a page of their own, opened for them and closed: the way with no kept browser. */
+const readOther = async (
+  browser: Browser,
+  target: string,
+  view: ViewAsked,
+  targets: readonly string[]
+): Promise<(Measured | { problem: string })[]> => {
+  const other = await pageAnswered(browser, target, {
+    width: view.width,
+    height: 900,
+    reducedMotion: true,
+    ...(view.scheme ? { scheme: view.scheme } : {}),
+    ...(view.timezone ? { timezone: view.timezone } : {})
+  });
+  if ('problem' in other) {
+    return targets.map(() => other);
+  }
+
+  const notPut = view.state ? await putIn(other.page, view.state, 'there') : undefined;
+  const read: (Measured | { problem: string })[] = [];
+  for (const there of targets) {
+    read.push(notPut ?? (await measureOn(other.page, there)));
+  }
+
+  await other.page.close();
+
+  return read;
+};
+
 /** Every pair, at one width: ours on one page, the others' kept or read on one page of the other site. */
 const readAt = async (
   browser: Browser,
@@ -499,25 +529,37 @@ const readAt = async (
   const theirs: (Measured | { problem: string } | undefined)[] = pairs.map((_pair, index) => kept[index]?.measured);
   const missing = target === undefined ? [] : pairs.flatMap((_pair, index) => (theirs[index] ? [] : [index]));
   if (target !== undefined && missing.length > 0) {
-    const other = await pageAnswered(browser, target, {
-      width: view.width,
-      height: 900,
-      reducedMotion: true,
-      ...(view.scheme ? { scheme: view.scheme } : {}),
-      ...(view.timezone ? { timezone: view.timezone } : {})
-    });
-    const otherNotPut = view.state && !('problem' in other) ? await putIn(other.page, view.state, 'there') : undefined;
-    for (const index of missing) {
-      const read = 'problem' in other ? other : (otherNotPut ?? (await measureOn(other.page, pairs[index].there)));
-      theirs[index] = read;
-      if (!('problem' in read)) {
+    // Read in the kept browser, where the other page stays loaded between calls — a state put on a page would be left
+    // there for the next reader, and a time zone is its context's: those read on a page of their own, as before.
+    const keptReadings =
+      view.state === undefined && view.timezone === undefined
+        ? await keptMeasure(root, {
+            url: target,
+            width: view.width,
+            height: 900,
+            ...(view.scheme ? { scheme: view.scheme } : {}),
+            targets: missing.map(index => pairs[index].there),
+            ...(options.fresh ? { fresh: true } : {})
+          })
+        : undefined;
+    // Answered with readings, they are what was read; answered with a problem of its own — on its way out, too slow — or
+    // not at all, the page is read here as before: a kept browser never fails a measure that would pass without it.
+    const read: (Measured | { problem: string })[] =
+      keptReadings && 'readings' in keptReadings
+        ? keptReadings.readings
+        : await readOther(
+            browser,
+            target,
+            view,
+            missing.map(index => pairs[index].there)
+          );
+    for (const [at, index] of missing.entries()) {
+      const each = read[at] ?? { problem: `${pairs[index].there} was not read` };
+      theirs[index] = each;
+      if (!('problem' in each)) {
         await fs.mkdir(path.dirname(keys[index]), { recursive: true });
-        await fs.writeFile(keys[index], JSON.stringify({ at: new Date(now).toISOString(), measured: read }));
+        await fs.writeFile(keys[index], JSON.stringify({ at: new Date(now).toISOString(), measured: each }));
       }
-    }
-
-    if (!('problem' in other)) {
-      await other.page.close();
     }
   }
 

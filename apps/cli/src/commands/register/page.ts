@@ -4,6 +4,7 @@ import { expectation, fill, positiveInteger, statusCode, timeZone, width, widths
 import { check } from '../check';
 import { importPage } from '../importPage';
 import { measure, sameProperties } from '../measure';
+import { keepBrowser } from '../measureKeeper';
 import { outline } from '../outline';
 import { play } from '../play';
 import { pageSame } from '../same';
@@ -152,6 +153,12 @@ export const registerPage = (pageGroup: Command): void => {
     .option('--url <origin>', URL_OPTION)
     .option('--json', 'One object, for a tool or an agent')
     .action((route: string, elements: string[], options: MeasureOptions) => measure(route, elements, options));
+
+  // The browser `page measure` keeps the other site's pages open in, between commands: started by it, never by hand.
+  pageGroup
+    .command('keep-browser', { hidden: true })
+    .requiredOption('--root <dir>', 'The project whose cache holds its record')
+    .action((options: { root: string }) => keepBrowser(options.root));
 
   pageGroup
     .command('play')

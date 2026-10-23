@@ -1092,3 +1092,9 @@ theirs"`) at every width in one call and one browser, reads the other page witho
   function, code, CLI command and option the words describe, best first; an element declares what its source holds
   (`publishes`: the carousel, the list, the provider, the form, the channel) and `explain <element>` says it field by
   field. `run plan` says an acceptance line checked by a script of the lead's own, and the run's feedback lists them.
+- **The other page kept loaded between measures** (`@plitzi/cli`): `page measure` asks a browser kept between commands
+  to read an element of the other site not read before, on the page it still holds — about a second where loading it
+  took several. One per project, shared by a run's agents, measuring by itself so that no reader disturbs another: a
+  page loads once for every ask meanwhile, a page being read is never closed under its reader, and any problem of its
+  own reads the page as before. It stops 5 minutes after its last use, within the hour whatever happens, and when a run
+  finishes or is aborted (`PLITZI_KEEP_BROWSER=0` keeps none).

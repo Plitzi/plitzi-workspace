@@ -30,6 +30,7 @@ import { leftInTmp } from './strays';
 import { requestsOf } from './tasks';
 import { viewTask } from './taskStore';
 import { viewRun } from './view';
+import { stopKeptBrowser } from '../browser/keptBrowser';
 
 import type { CheckResult } from './checks';
 import type { AcceptanceAgain } from './materialise';
@@ -505,6 +506,8 @@ export const finishRun = async (
   const closedBacklog = await closeDoneByRun(ctx, loaded);
   // What it says of Plitzi itself, for the person to share with Plitzi: written before the run goes with its log.
   const feedback = await writeFeedback(ctx, loaded);
+  // The browser its measures kept the other site in: never one left behind the run.
+  await stopKeptBrowser(ctx.root);
   // Its work is in the project: the run goes, backups and all, unless a person asked to keep them. Its report stays.
   const inputs = await removeRun(ctx, loaded.paths, runId);
 
@@ -651,6 +654,7 @@ export const abortRun = async (
   // Aborted, what it noticed still stands: the next run's — and what it says of Plitzi, Plitzi's.
   await keepNotices(ctx, loaded);
   const feedback = await writeFeedback(ctx, loaded);
+  await stopKeptBrowser(ctx.root);
   const inputs = await removeRun(ctx, loaded.paths, runId);
 
   return { discarded, report, inputs, feedback };

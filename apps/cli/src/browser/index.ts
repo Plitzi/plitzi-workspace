@@ -152,7 +152,7 @@ export interface Browser {
   close(): Promise<void>;
 }
 
-interface Chromium {
+export interface Chromium {
   launch(): Promise<Browser>;
 }
 
@@ -172,8 +172,11 @@ export const PROJECT_QUIET_MS = 250;
 /** The project each browser was launched for: where the pages it opens keep what other sites send them. */
 const launchedFor = new WeakMap<Browser, string>();
 
-/** The project's `@playwright/test`'s Chromium, launched — or why there is none. */
-export const launchBrowser = async (root: string): Promise<Browser | { problem: string }> => {
+/**
+ * The project's `@playwright/test`'s Chromium, as its module exports it — or why there is none: what a browser is launched
+ * by here, and the kept one (`keptBrowser.ts`) connected to.
+ */
+export const chromiumOf = async (root: string): Promise<{ chromium: Chromium } | { problem: string }> => {
   let loaded: unknown;
   try {
     const resolved = createRequire(path.join(root, 'package.json')).resolve('@playwright/test');
@@ -200,8 +203,18 @@ export const launchBrowser = async (root: string): Promise<Browser | { problem: 
     return { problem: 'The @playwright/test installed here has no Chromium to launch.' };
   }
 
+  return { chromium };
+};
+
+/** The project's `@playwright/test`'s Chromium, launched — or why there is none. */
+export const launchBrowser = async (root: string): Promise<Browser | { problem: string }> => {
+  const loaded = await chromiumOf(root);
+  if ('problem' in loaded) {
+    return loaded;
+  }
+
   try {
-    const browser = await chromium.launch();
+    const browser = await loaded.chromium.launch();
     launchedFor.set(browser, root);
 
     return browser;
