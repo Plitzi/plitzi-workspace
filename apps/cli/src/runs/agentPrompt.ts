@@ -42,7 +42,9 @@ const skill = (root: string, file: string): string => path.join(root, SKILLS_ROO
 
 /** The rules every agent of a run holds to, whatever its role: said once, the skills saying why. */
 const rules = (cli: string): string[] => [
-  `- Never run \`${cli} run finish\`, \`run abort\`, \`run purge\`, \`run restore\`, \`run allow-finish\` or \`run stop --force\` — a person's. Never \`git stash\`, \`checkout\` or \`reset\`. Stop a server only by its port (\`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)\`), never by name.`,
+  `- Never run \`${cli} run finish\`, \`run abort\`, \`run purge\`, \`run restore\`, \`run allow-finish\` or \`run stop --force\` — a person's. Never \`git stash\`, \`checkout\` or \`reset\`.`,
+  // encore: a heredoc that never closed hung on stdin, and `pkill -f "cat"` to free it took the machine down.
+  `- Stop a server with \`${cli} server stop --port <port>\` in the folder that started it — it stops that folder's alone; a command that hangs is your harness's to stop. Never \`pkill\`, \`killall\` nor a kill by name or pattern: they reach every process on the machine. Write files with your edit tools, never a heredoc through the shell.`,
   '- A wait that ends is not your end: run `task next` again until it says "You can stop".',
   // lx-controls: two agents read the bundle's types, every command's help and a site's HTML to learn what Plitzi had.
   '- Whether Plitzi has a way — a field, a step, a state, a command: `PLITZI explain --search "<words>"`, then `PLITZI explain <name>`; never the packages\' types nor a site\'s HTML fetched and searched. Nothing found that should be: `run notice --plitzi`.',
@@ -96,7 +98,7 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
             ? '- Measure, never guess — every element and width in one call: `PLITZI page measure <path> <elements…> --width 390,1440` (`--hover`, `--click` for a state; `PLITZI page outline <path> --within <part>` names them). Trying values, measure; never `task check` for it.'
             : `- Measure, never guess — every element and width in one call: \`PLITZI page measure <path> "<ours> => <theirs>" …${beside} --width 390,1440\` (\`--hover\`, \`--click\` for a state; \`PLITZI page outline <path>${beside} --within <part>\` names theirs). Trying values, measure; never \`task check\` for it.`,
           started?.sessionPerTask === true
-            ? '- Change a batch, then `PLITZI task check` once; then `PLITZI task complete --follow --take`. You work one task a session: once it is complete, task next says you can stop — stop then, with your report; the lead starts you again, a fresh context, for the next task, and for yours if it is sent back.'
+            ? '- Change a batch, then `PLITZI task check` once; then `PLITZI task complete`, and `PLITZI task next --follow --take`. You work one task a session: once it is complete, task next says you can stop — stop then, with your report; the lead starts you again, a fresh context, for the next task, and for yours if it is sent back.'
             : '- Change a batch, then `PLITZI task check` once; then `PLITZI task complete`, and `PLITZI task next --follow --take` again.',
           // lx-controls: t-collection completed with "Known: the phone keeps our inline panel, where the original opens a
           // drawer" — sent back for exactly that.
@@ -135,10 +137,17 @@ export const harnessRuns = (harness: Harness, model: string): boolean =>
       ? !/^(claude-|sonnet|opus|haiku)/.test(model)
       : model.includes('/');
 
+/**
+ * The session an agent starts in, where the harness keeps one (Claude Code): a new one under an id of the CLI's
+ * (`--session-id`), kept so it can be resumed — or that one resumed (`--resume`), the prompt then what it is told.
+ */
+export type HarnessSession = { id: string; resume: boolean };
+
 export const harnessCommand = (
   harness: Harness,
   prompt: { file: string; text: string },
-  model?: string
+  model?: string,
+  session?: HarnessSession
 ): { command: string; args: string[]; line: string; model?: string } => {
   const PROMPT = '\0prompt';
   // The team's model where this harness runs it; else the harness's own default, said by the caller.
@@ -149,6 +158,7 @@ export const harnessCommand = (
           'claude',
           '-p',
           PROMPT,
+          ...(session ? [session.resume ? '--resume' : '--session-id', session.id] : []),
           ...(runs ? ['--model', runs] : []),
           '--permission-mode',
           'acceptEdits',

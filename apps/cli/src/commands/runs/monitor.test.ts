@@ -352,6 +352,20 @@ describe('plitzi run monitor', () => {
     });
   });
 
+  // encore: the lead read idle on the board while it planned the next stage and started agents — at work, no review held.
+  it('shows the lead working while its commands come, and idle once they stop', async () => {
+    const runId = await open();
+    await logRun(lead(), runPaths(bench.root, runId), { action: 'launch', agent: 'agent-1', harness: 'claude' });
+    const row = async () => (await monitorRun(lead(), runId)).agents.find(agent => agent.agent === 'lead');
+
+    expect(await row()).toMatchObject({
+      status: 'working',
+      doing: expect.stringContaining('started agent-1 in claude') as unknown
+    });
+    bench.advance(3 * 60_000 + 1);
+    expect((await row())?.status).toBe('idle');
+  });
+
   // velada-polish: design-1 made its scratch folder first, for its crops, and never "joined"; its wait filled a row.
   it('says an agent joined though its scratch was there first, and a wait by its reason alone', async () => {
     const runId = await open();

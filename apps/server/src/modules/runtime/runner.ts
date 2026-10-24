@@ -1,5 +1,5 @@
 import { ActionRefusal, isActionRefusal } from '../actions/runtime/errors';
-import { changeKv } from '../actions/runtime/kvChange';
+import { changeKv, changeListEntry } from '../actions/runtime/kvChange';
 import { requestFromWire, responseOf, wireResponseFrom, wireResponseOf } from '../functions/capabilities';
 import { createFunctionsDriver, describeFunctions } from '../functions/driver';
 import { FunctionFailure } from '../functions/protocol';
@@ -45,6 +45,7 @@ export const createRuntimeRunner = (definition: FunctionsDefinition = {}): Funct
         } satisfies StreamedRouteAnswer;
       },
       changeKv,
+      changeListEntry,
       refusal: message => new ActionRefusal(message)
     });
     try {

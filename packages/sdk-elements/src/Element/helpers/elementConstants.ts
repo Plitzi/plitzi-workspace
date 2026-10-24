@@ -107,6 +107,19 @@ export const interactionBasicTriggers: Record<string, InteractionCallback> = {
     params: {}
   },
   /**
+   * The element came into the visitor's view — `inView` true — or left it — false: a list's last row loading more as
+   * the page is read, a section starting its animation when it is reached. `margin` fires it that many pixels early.
+   */
+  onView: {
+    action: 'onView',
+    title: 'On View',
+    type: 'trigger',
+    preview: { inView: '' },
+    params: {
+      margin: { canBind: false, defaultValue: 0, type: 'number', label: 'Fire this many pixels before it shows' }
+    }
+  },
+  /**
    * The end of a server action this element started.
    *
    * Not a DOM event — nothing in `nativeEventsList` — so it is never wired to the element's markup: the actions

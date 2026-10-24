@@ -155,6 +155,11 @@ export const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => 
     // A bare "tokens" said nothing of what was kept (lx-controls).
     case 'tokens':
       return line('run', `kept what the harness counted each agent spent: ${listOf(entry.agents)}`);
+    case 'launch':
+      return line(
+        'run',
+        `started ${textOf(entry.agent)} in ${textOf(entry.harness)}${entry.resumed === true ? ', resuming its session' : ''}`
+      );
     case 'message':
       // Each message is in the feed by its own words, read from the messages.
       return undefined;

@@ -7,6 +7,7 @@ import { proposalsOf } from './agreements';
 import { auditRun } from './audit';
 import { benchOf, benchText, readBench } from './bench';
 import { readOptional, writeAtomic } from './files';
+import { rememberPace } from './history';
 import { coverage } from './inventory';
 import { requireLead } from './leads';
 import { messagesOf } from './messages';
@@ -513,6 +514,8 @@ export const leaveReport = async (ctx: RunContext, loaded: LoadedRun, closing: C
   await writeAtomic(file, reportText(report, await readSummary(loaded), closing, [...before.slice(-5), bench]));
   // Beside it, the same as data: what `plitzi run bench` compares, and a lead debugging the run reads whole.
   await writeAtomic(file.replace(/\.md$/, '.json'), `${JSON.stringify({ bench, report }, null, 2)}\n`);
+  // This machine's pace too: what the next first run of any project scales its estimates by.
+  await rememberPace(report.tasks);
 
   return file;
 };

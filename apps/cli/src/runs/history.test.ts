@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { readHistory } from './history';
+import { readHistory, rememberPace } from './history';
 import { REPORTS_DIR } from './paths';
 
 const roots: string[] = [];
@@ -44,10 +44,44 @@ describe('readHistory', () => {
       [885, 75]
     ]);
 
-    expect(await readHistory(root)).toEqual({ runs: 1, tasks: 6, ratio: expect.closeTo(0.33, 2) as number });
+    expect(await readHistory(root)).toEqual({
+      from: 'project',
+      runs: 1,
+      tasks: 6,
+      ratio: expect.closeTo(0.33, 2) as number
+    });
   });
 
   it('says no pace from fewer than five done tasks', async () => {
     expect(await readHistory(await projectWith([[10, 30]]))).toBeUndefined();
+  });
+
+  // encore, a first run: 630 min estimated, 148 taken — a project with no runs of its own reads this machine's.
+  it('reads this machine’s pace before a run of the project ended, and the project’s once one did', async () => {
+    const empty = await fs.mkdtemp(path.join(os.tmpdir(), 'run-history-empty-'));
+    roots.push(empty);
+    expect(await readHistory(empty)).toBeUndefined();
+
+    await rememberPace([8, 6, 7, 5, 9, 4].map(minutes => ({ status: 'done', minutes, estimateMinutes: 40 })));
+
+    expect(await readHistory(empty)).toEqual({
+      from: 'machine',
+      runs: 1,
+      tasks: 6,
+      ratio: expect.closeTo(0.16, 2) as number
+    });
+    expect(
+      (
+        await readHistory(
+          await projectWith([
+            [10, 30],
+            [20, 60],
+            [5, 15],
+            [9, 30],
+            [12, 40]
+          ])
+        )
+      )?.from
+    ).toBe('project');
   });
 });

@@ -19,6 +19,7 @@ import { teamNotices } from './teamNotices';
 import { testSetupOf, withTestTasks } from './tests';
 import { byUrgency, chainMinutes } from './urgency';
 
+import type { History } from './history';
 import type { Quality, RunPlan, RunTask, TaskState } from './model';
 import type { Ownership } from './ownership';
 import type { Team } from './team';
@@ -53,7 +54,7 @@ export interface PlanEstimate {
   needsConfirmation: boolean;
   why?: string;
   /** At this project's pace — its past runs' minutes over their estimates — when it has enough of them to say. */
-  paced?: { wallMinutes: number; ratio: number; runs: number; tasks: number };
+  paced?: { from: History['from']; wallMinutes: number; ratio: number; runs: number; tasks: number };
 }
 
 export interface CheckedPlan {

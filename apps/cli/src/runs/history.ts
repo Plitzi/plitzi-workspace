@@ -1,7 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+
 import { REPORTS_DIR } from './paths';
+import { configDir } from '../account/connection';
 
 /**
  * How this project's runs went against their estimates, read off the reports they left (`tmp/plitzi-reports/`): each
@@ -10,6 +13,11 @@ import { REPORTS_DIR } from './paths';
  */
 
 export interface History {
+  /**
+   * Whose runs it is read from: the project's own, or — before a run of it ended — this machine's, any project's: a
+   * lead's guess is off the same way from one project to the next (encore, a first run: 630 min estimated, 148 taken).
+   */
+  from: 'project' | 'machine';
   runs: number;
   tasks: number;
   /**
@@ -54,12 +62,73 @@ export const readHistory = async (root: string): Promise<History | undefined> =>
   }
 
   if (ratios.length < MIN_TASKS) {
-    return undefined;
+    const machine = await readMachinePace();
+
+    return machine.ratios.length < MIN_TASKS
+      ? undefined
+      : { from: 'machine', runs: machine.runs, tasks: machine.ratios.length, ratio: middleOf(machine.ratios) };
   }
 
-  const sorted = ratios.sort((a, b) => a - b);
-  const middle = Math.floor(sorted.length / 2);
-  const ratio = sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
+  return { from: 'project', runs, tasks: ratios.length, ratio: middleOf(ratios) };
+};
 
-  return { runs, tasks: sorted.length, ratio };
+const middleOf = (values: readonly number[]): number => {
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+
+  return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
+};
+
+/** This machine's pace: each done task's minutes over its estimate, of every project's runs that ended here. */
+interface MachinePace {
+  runs: number;
+  ratios: number[];
+}
+
+/** The most kept: the newest, a few runs' worth — how the agents on this machine work now. */
+const MAX_MACHINE_RATIOS = 300;
+
+const paceFile = (): string => path.join(configDir(), 'pace.json');
+
+const readMachinePace = async (): Promise<MachinePace> => {
+  const read: unknown = await fs
+    .readFile(paceFile(), 'utf-8')
+    .then(text => JSON.parse(text) as unknown)
+    .catch(() => undefined);
+
+  return isRecord(read) &&
+    typeof read.runs === 'number' &&
+    Array.isArray(read.ratios) &&
+    read.ratios.every(value => typeof value === 'number' && Number.isFinite(value))
+    ? { runs: read.runs, ratios: read.ratios as number[] }
+    : { runs: 0, ratios: [] };
+};
+
+/**
+ * A run that ended, kept in this machine's pace: each done task's minutes over its estimate. A pace that cannot be
+ * written costs the next first run its estimate's correction, never the run's end: said, and let go.
+ */
+export const rememberPace = async (tasks: readonly { minutes?: number; estimateMinutes: number; status: string }[]) => {
+  const ratios = tasks.flatMap(task =>
+    task.status === 'done' && task.minutes !== undefined && task.estimateMinutes > 0
+      ? [task.minutes / task.estimateMinutes]
+      : []
+  );
+  if (ratios.length === 0) {
+    return;
+  }
+
+  const before = await readMachinePace();
+  const pace: MachinePace = {
+    runs: before.runs + 1,
+    ratios: [...before.ratios, ...ratios].slice(-MAX_MACHINE_RATIOS)
+  };
+  await fs
+    .mkdir(configDir(), { recursive: true })
+    .then(() => fs.writeFile(paceFile(), `${JSON.stringify(pace)}\n`))
+    .catch((error: unknown) => {
+      console.warn(
+        `This machine's pace was not kept (${paceFile()}): ${error instanceof Error ? error.message : String(error)}`
+      );
+    });
 };

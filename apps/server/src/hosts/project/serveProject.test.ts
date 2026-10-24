@@ -325,6 +325,16 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     });
   });
 
+  // encore: the visual suite's server beside the one the CLI kept of a copy was refused — "createFileKv … is in use".
+  it('keeps its kv where PLITZI_KV_FILE says, leaving the project’s own for the server a person has open', async () => {
+    vi.stubEnv('PLITZI_KV_FILE', 'tmp/visual/kv.json');
+    await serve({ space: () => titled('a') });
+
+    expect(existsSync(path.join(root, 'tmp/visual/kv.json.lock'))).toBe(true);
+    expect(existsSync(path.join(root, 'state/kv.json.lock'))).toBe(false);
+    vi.unstubAllEnvs();
+  });
+
   it('authors it again on a save and serves the new documents from memory, every open page handed them', async () => {
     const running = await serve({ space: () => titled('authored at boot') });
     const reload = await listen(running.url);
@@ -423,19 +433,16 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     await reload.stop();
     expect(await pageOf(running.url)).toContain('badge@1.0.0');
 
-    // Its server half begun with no entry: said, never left unloaded in silence.
+    // Its server half begun with no definition: said, never left unloaded in silence.
     await write('src/plugins/Badge/functions/routes.ts', 'export const routes = {};\n');
-    await vi.waitFor(
-      () =>
-        expect(error).toHaveBeenCalledWith(
-          expect.stringContaining('[plugins] src/plugins/Badge/functions/ has no index.ts')
-        ),
-      { timeout: 5000 }
-    );
+    const unloaded = (call: unknown[]) =>
+      String(call[0]).includes('badge: its functions were not loaded again') &&
+      String(call[1]).includes('exports a definition by default');
+    await vi.waitFor(() => expect(error.mock.calls.some(unloaded)).toBe(true), { timeout: 5000 });
     // Said once, however many saves leave it so.
     await write('src/plugins/Badge/functions/routes.ts', 'export const routes = { a: 1 };\n');
     await new Promise(resolve => setTimeout(resolve, 600));
-    expect(error.mock.calls.filter(([line]) => String(line).includes('functions/ has no index.ts'))).toHaveLength(1);
+    expect(error.mock.calls.filter(unloaded)).toHaveLength(1);
   });
 
   it('authors nothing and watches nothing in production', async () => {

@@ -55,6 +55,7 @@ export interface TeamSetOptions extends RunCommandOptions {
   model?: string;
   effort?: string;
   sessionPerTask?: boolean;
+  resumeSession?: boolean;
 }
 
 export const runTeamSet = (name: string, options: TeamSetOptions): Promise<void> =>
@@ -67,7 +68,8 @@ export const runTeamSet = (name: string, options: TeamSetOptions): Promise<void>
         ...(options.min !== undefined ? { min: options.min } : {}),
         ...(options.model ? { model: parseModelChoice(options.model) } : {}),
         ...(options.effort ? { effort: options.effort } : {}),
-        ...(options.sessionPerTask !== undefined ? { sessionPerTask: options.sessionPerTask } : {})
+        ...(options.sessionPerTask !== undefined ? { sessionPerTask: options.sessionPerTask } : {}),
+        ...(options.resumeSession !== undefined ? { resumeSession: options.resumeSession } : {})
       }),
     changed =>
       changed.unchanged

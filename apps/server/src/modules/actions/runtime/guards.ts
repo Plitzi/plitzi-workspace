@@ -14,6 +14,9 @@ import type { ActionCallResult } from '@plitzi/sdk-shared';
 export type RunKind = 'call' | 'render';
 
 /** A run currently holding a slot, and the handle that can stop it. */
+/** What a run answered its caller: the call's result, and the reason a step wrote for the caller when it refused. */
+export type RunAnswer = ActionCallResult & { error?: string };
+
 export type ActiveRun = {
   runId: string;
   runKey: string;
@@ -31,6 +34,13 @@ export type ActiveRun = {
    * the input, and two identical calls a minute apart are usually two things somebody meant to happen twice.
    */
   explicitKey: boolean;
+  /**
+   * What the run answers, once it ends — `undefined` for one that ended with no answer (it threw): what a second
+   * identical call while it runs waits for, instead of being refused (`join`).
+   */
+  answered: Promise<RunAnswer | undefined>;
+  /** Settles `answered`: called by `end`. */
+  settle: (outcome: RunAnswer | undefined) => void;
 };
 
 /**
@@ -91,8 +101,15 @@ export type RunIdempotency = { replayTtlMs?: number };
 
 export type RunGuards = {
   begin: (params: BeginRunParams) => Promise<ActiveRun>;
+  /**
+   * The answer of the run this same call already started in this process, waited for — `undefined` when none runs
+   * here (another replica holds it, or it ended). A page that calls the same action with the same input twice at once
+   * (loaded at two widths, two tabs, two components) is answered twice by one run, never refused: encore's room logged
+   * a 409 on every second load, and acceptance checks failed on it at random.
+   */
+  join: (params: BeginRunParams) => Promise<RunAnswer | undefined> | undefined;
   /** Releases the key, and — for a run the caller keyed itself — remembers the answer for {@link RunIdempotency}. */
-  end: (run: ActiveRun, outcome?: ActionCallResult) => Promise<void>;
+  end: (run: ActiveRun, outcome?: RunAnswer) => Promise<void>;
   get: (runId: string) => ActiveRun | undefined;
   /** The answer a run with this key already produced, when it is still within the replay window. */
   replay: (params: BeginRunParams) => Promise<ActionCallResult | undefined>;
@@ -288,6 +305,10 @@ export const createRunGuards = (
       throw new ActionRunError('over_capacity', 'Too many actions are running right now');
     }
 
+    let settle: (outcome: RunAnswer | undefined) => void = () => undefined;
+    const answered = new Promise<RunAnswer | undefined>(resolve => {
+      settle = resolve;
+    });
     const run: ActiveRun = {
       runId: randomUUID(),
       runKey,
@@ -297,7 +318,9 @@ export const createRunGuards = (
       callerId: params.callerId,
       controller: new AbortController(),
       expiresAt: Date.now() + params.ttlMs,
-      explicitKey: Boolean(params.idempotencyKey)
+      explicitKey: Boolean(params.idempotencyKey),
+      answered,
+      settle
     };
     /**
      * The local slot is taken BEFORE anything is awaited, and that ordering is the guarantee.
@@ -353,9 +376,10 @@ export const createRunGuards = (
     await store.set(runResultKey(run.runKey), JSON.stringify(answer), ttlSeconds(replayTtlMs)).catch(() => undefined);
   };
 
-  const end = async (run: ActiveRun, outcome?: ActionCallResult) => {
+  const end = async (run: ActiveRun, outcome?: RunAnswer) => {
     byKey.delete(run.runKey);
     byId.delete(run.runId);
+    run.settle(outcome);
     if (outcome) {
       await remember(run, outcome);
     }
@@ -440,5 +464,8 @@ export const createRunGuards = (
     }
   };
 
-  return { begin, end, get: runId => byId.get(runId), replay, cancel, active: () => byKey.size };
+  const join = (params: BeginRunParams): Promise<RunAnswer | undefined> | undefined =>
+    byKey.get(deriveRunKey(params))?.answered;
+
+  return { begin, join, end, get: runId => byId.get(runId), replay, cancel, active: () => byKey.size };
 };

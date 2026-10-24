@@ -269,7 +269,10 @@ export type FunctionRouteContext = FunctionContext & { params: Record<string, st
  */
 export type FunctionRoute = (request: Request, ctx: FunctionRouteContext) => Response | Promise<Response>;
 
-/** What a space's `functions/index.ts` exports: its tasks, its routes, and where its code may reach. */
+/**
+ * What each file at the top of a space's `functions/` exports by default — its tasks, its routes, and where its code
+ * may reach — merged into the one definition a bundle exports (`mergeFunctions`).
+ */
 export type FunctionsDefinition = {
   /** The hosts `ctx.fetch` may reach. Anything else is refused before it leaves. */
   allow?: { hosts?: string[] };

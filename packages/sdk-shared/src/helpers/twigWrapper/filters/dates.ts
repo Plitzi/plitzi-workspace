@@ -1,5 +1,5 @@
 import { dateParts, toDate } from './dateParts';
-import { toStr } from './values';
+import { numberOf, toStr } from './values';
 
 import type { TwigFilter } from './types';
 
@@ -86,5 +86,55 @@ export const dateFilters: Record<string, TwigFilter> = {
     }
 
     return out;
+  },
+
+  // `| ago(locale?)` — how long ago a moment was, or how far ahead it is, in words: "4 minutes ago", "in 3 hours",
+  // "now" — at the render's moment, on the server then again in the browser (a page that stays open is not redrawn
+  // as time passes). The unit is the largest that is whole; the locale `en` when not named. encore's agents wrote a
+  // plugin for "Ended 4 min ago": every page with a history, a feed or a chat needs it.
+  ago: (value, args) => {
+    const date = toDate(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    const seconds = Math.round((date.getTime() - Date.now()) / 1000);
+    const units: [Intl.RelativeTimeFormatUnit, number][] = [
+      ['year', 31_536_000],
+      ['month', 2_592_000],
+      ['week', 604_800],
+      ['day', 86_400],
+      ['hour', 3_600],
+      ['minute', 60]
+    ];
+    const [unit, size] = units.find(([, length]) => Math.abs(seconds) >= length) ?? ['second', 1];
+    const amount = unit === 'second' ? (Math.abs(seconds) < 10 ? 0 : seconds) : Math.trunc(seconds / size);
+    for (const locale of [args.length > 0 ? toStr(args[0]) : 'en', 'en']) {
+      try {
+        return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(amount, unit);
+      } catch {
+        continue;
+      }
+    }
+
+    return '';
+  },
+
+  // `| duration` — a length in seconds as a clock writes it: 238 → "3:58", 3723 → "1:02:03". A track's length, a
+  // task's time: `date` is a moment, and a duration read as one was 06:40 for a 238 s track (encore's dev-2).
+  duration: value => {
+    const total = numberOf(value);
+    if (total === undefined || total < 0) {
+      return '';
+    }
+
+    const whole = Math.round(total);
+    const hours = Math.floor(whole / 3600);
+    const minutes = Math.floor((whole % 3600) / 60);
+    const seconds = String(whole % 60).padStart(2, '0');
+
+    return hours > 0
+      ? `${String(hours)}:${String(minutes).padStart(2, '0')}:${seconds}`
+      : `${String(minutes)}:${seconds}`;
   }
 };

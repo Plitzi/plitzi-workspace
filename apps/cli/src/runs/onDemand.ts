@@ -68,6 +68,7 @@ export const agentsNeeded = (
 
     return {
       kind: 'agents-needed' as const,
+      agent,
       text: `${tasks.join(', ')} ${tasks.length === 1 ? 'was' : 'were'} sent back to ${agent}, which is not running: start it again — plitzi run agent ${agent} --launch --harness <yours> (its prompt alone: plitzi run agent ${agent}) — it takes ${tasks.length === 1 ? 'it' : 'them'} first`,
       who: 'lead' as const
     };
@@ -159,6 +160,7 @@ export const agentsNeeded = (
       return [
         {
           kind: 'agents-needed' as const,
+          agent: next.agent,
           text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — plitzi run agent ${next.agent} --launch --harness <yours> (its prompt alone: plitzi run agent ${next.agent}; by hand: ${commandAs(run.scratch, next.agent, run.identified, `task next --role ${next.roles.join(',')}${next.quality ? ` --quality ${next.quality}` : ''} --follow --take`)})${next.onDemand ? ` — it stops by itself once nothing is left for it; its start costs about a small task, worth it for ${String(TASKS_PER_AGENT)} or more waiting` : ''}`,
           who: 'lead' as const
         }

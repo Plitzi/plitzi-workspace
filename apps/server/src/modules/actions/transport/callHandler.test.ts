@@ -368,7 +368,7 @@ describe('handleActionCall', () => {
     expect(payload.reason).toBe('recursion');
   });
 
-  it('refuses a second identical run while the first is still going', async () => {
+  it('answers a second identical call while the first is still going with that run, never running it twice', async () => {
     // The step parks until the test releases it, so the first run is provably still holding its key when the
     // second arrives — which is the only state single-flight is about.
     let release: () => void = () => undefined;
@@ -399,12 +399,16 @@ describe('handleActionCall', () => {
     const first = call(config, body, { module });
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    const second = await call(config, body, { module });
-    expect(second.sent.status).toBe(409);
-    expect(second.payload.reason).toBe('duplicate');
+    // encore: the room loaded at two widths called playback-start twice at once, and the second was refused with a
+    // 409 — a console error on a page that did nothing wrong. Now it waits for the run going and is answered by it.
+    const second = call(config, body, { module });
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(module.guards.active()).toBe(1);
 
     release();
-    await first;
+    const [firstAnswer, secondAnswer] = await Promise.all([first, second]);
+    expect(secondAnswer.sent.status).toBe(200);
+    expect(secondAnswer.payload).toMatchObject({ runId: firstAnswer.payload.runId, status: 'completed', joined: true });
     expect(module.guards.active()).toBe(0);
   });
 

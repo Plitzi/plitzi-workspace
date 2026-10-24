@@ -360,11 +360,15 @@ const agentsOf = async (
       approved: 0,
       // Reviewing only at a review it holds: what it did lately with nothing in hand (a look, an answer, an amend) is
       // its last, never "working" — the board showed a lead at work that no task or card named (velada-dress).
+      // At work without a review in hand — a stage written, agents started, an answer, a look — while its commands
+      // come: working, its last one said (encore: the lead read idle while it planned and launched). A wait is no work.
       status: at
         ? ('reviewing' as const)
-        : lead === LEAD || asking || recent
-          ? ('idle' as const)
-          : ('not-started' as const),
+        : recent && last?.action !== 'waiting'
+          ? ('working' as const)
+          : lead === LEAD || asking || recent
+            ? ('idle' as const)
+            : ('not-started' as const),
       ...(leadModel ? { model: leadModel } : {}),
       roles: [lead === LEAD ? 'plans, reviews, finishes' : 'reviews'],
       doing: at
@@ -444,7 +448,8 @@ const agentsOf = async (
               doing: `no sign of it for ${String(gone(agent))} min — its harness stopped it, or it hangs: the lead starts it again${tail}`,
               ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
             }
-          : member?.onDemand && (lastBy.get(agent) === undefined || lastBy.get(agent)?.action === 'stops')
+          : member?.onDemand &&
+              (lastBy.get(agent) === undefined || lastBy.get(agent)?.action === 'stops' || view.gone.includes(agent))
             ? // On demand, and not running: nothing is wrong — it is started when work waits for it (run watch says).
               {
                 agent,
@@ -470,10 +475,14 @@ const agentsOf = async (
                   kind: 'agent' as const,
                   // Between tasks: idle — a wait for work is no work, whatever its follow waits for (the line says what);
                   // stopped once it said so.
-                  status: lastBy.get(agent)?.action === 'stops' ? ('stopped' as const) : ('idle' as const),
+                  status:
+                    lastBy.get(agent)?.action === 'stops' || view.gone.includes(agent)
+                      ? ('stopped' as const)
+                      : ('idle' as const),
                   ...about,
-                  // Running, before anything of it reached the run's log: what it ran says what it is at.
-                  doing: `${lastBy.get(agent) === undefined && lastRun.has(agent) ? `getting started${lately(agent)}` : betweenTasks(agent, lastBy.get(agent))}${tail}`,
+                  // Running, before anything of it reached the run's log: what it ran says what it is at. Its process
+                  // gone with no stop said: ended, its last word a wait (encore's designers read idle for good).
+                  doing: `${view.gone.includes(agent) && lastBy.get(agent)?.action !== 'stops' ? 'its process ended — ' : ''}${lastBy.get(agent) === undefined && lastRun.has(agent) ? `getting started${lately(agent)}` : betweenTasks(agent, lastBy.get(agent))}${tail}`,
                   ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
                 };
   });

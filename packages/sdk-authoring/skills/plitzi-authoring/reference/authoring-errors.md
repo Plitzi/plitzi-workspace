@@ -111,6 +111,7 @@ The space is not written until these are fixed.
 | `outside-ancestor` | an element that reads the state of an element it is not inside | nest it in the element the message names |
 | `page-access` | a page `access` the server cannot keep: no permissions, or one that is not a name | `access: { permissions: ['…'] }` with at least one permission name, or no `access` for a page anybody may see |
 | `page-access-level` | an `accessLevel` that is not one the router reads | one of the values the message lists |
+| `page-catch-all-default` | the page of every address no other answers (`slug: '*'`) marked the home | `isDefault` on the page at `''`, or left out: the page at `''` is the home |
 | `page-nav-invalid` | a page's `nav` without a label, with an order that is no number, or on a page with no one address to list | `nav: { label: 'Pets', order: 3 }` on a page whose path takes no param — a page per record is reached from its list |
 | `page-route-reserved` | a page under `/fn`, where the space's functions answer | another slug |
 | `page-route-taken` | two pages at one address for the same visitors | another slug — or `accessLevel` `'public'` on one and `'authenticated'` on the other |

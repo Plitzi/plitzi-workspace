@@ -22,7 +22,10 @@ answers why it did not start.
 
 ## 1. What you write
 
-A space's functions are a handful of files under `functions/`. `index.ts` exports the definition by default:
+A space's functions are a handful of files under `functions/`. A file at the top of the folder exports a definition by
+default — one `index.ts`, or one per domain (`tracks.ts`, `billing.ts`), merged into one: a task id, a route, a job or
+an OAuth provider said in two files is refused naming both, `limits` is said in one, and `allow.hosts` is every file's
+together. A top-level file that exports no definition, and anything in a subfolder (`lib/`), is code they import:
 
 ```ts
 import { defineFunctions } from '@plitzi/sdk-server/functions';
@@ -54,7 +57,8 @@ export default defineFunctions({
 
 - **A task's `params` name how the builder edits each one** — `text`, `textarea`, `number`, `boolean`, `select`,
   `codemirror-json` for JSON — while an action's `input` names what the value is (`text`, `number`, `boolean`, `date`,
-  `json`, `file`). A JSON value is `codemirror-json` in a task's params and `json` in an action's input.
+  `json`, `file`, `list` — several values, one per line in the builder, with `maxItems`). A JSON value is
+  `codemirror-json` in a task's params and `json` in an action's input.
 - **Files import each other by relative path**, and `@plitzi/sdk-server/functions` — nothing else: no package, no
   Node built-in (`fs`, `process`, `Buffer`). Saving refuses anything else, with the file and line. A package the code
   needs — an iCal reader, a CSV parser — comes with it, as a function carries its dependencies: installed in the
@@ -86,7 +90,7 @@ Everything a function does besides computing goes through `ctx` — the same obj
 
 | | |
 |---|---|
-| `ctx.kv` | The space's key/value store: `get`, `set`, `delete`, `increment`, `swap` (compare-and-set), `change` (read, change and write back — again when somebody wrote first) and scored lists (`listPut`, `listRange`, `listRemove`) — the same store the `kv.*` and `list.*` steps use |
+| `ctx.kv` | The space's key/value store: `get`, `set`, `delete`, `increment`, `swap` (compare-and-set), `change` (read, change and write back — again when somebody wrote first) and scored lists (`listPut`, `listRange`, `listRemove`, and `listSwap` / `listChange` — one entry, as `swap` / `change` do a key) — the same store the `kv.*` and `list.*` steps use |
 | `ctx.rateLimit(bucket, { most, perSeconds, per, refuse })` | Counts one more and answers `{ allowed, count, remaining }` — per caller, or `per: 'everyone'`. The same count as `flow.rateLimit` on that bucket. With `refuse`, past the limit it refuses the call with those words instead; without, what to answer is the code's |
 | `ctx.sign(value)`, `ctx.verify(value, signature)` | HMAC-SHA-256 with a key of the space's own that the platform keeps: a link, an invitation, a key handed to a page. The code never holds the key, and what one space or environment signed no other verifies |
 | `ctx.fetch(url, init)` | To the hosts in `allow.hosts` only (`*.example.com` is every subdomain of it, not `example.com` itself), through the platform's outbound guard: private and cluster addresses are refused whatever you declare. `init.signal` cuts the request short (`AbortSignal.timeout(12_000)`), as the run's end does |
@@ -109,6 +113,15 @@ const board = await ctx.kv.change(`board:${id}`, current => ({ ...asBoard(curren
 ```
 
 The function may run more than once, so it only computes: anything it must do once goes after.
+
+One entry of a list is changed the same way — a vote that re-scores a queued track, `undefined` when it already left:
+
+```ts
+await ctx.kv.listChange('queue', trackId, entry => (entry ? { score: entry.score + 1, value: entry.value } : undefined));
+```
+
+`listSwap(list, id, expected, next)` writes `next` only while the entry is still `expected` (`null` takes it out), and
+answers whether it did.
 
 **Refusing is `ActionRefusal`**, from `@plitzi/sdk-server/functions`: throw it with a reason written for whoever
 asked, and the page reads it as the step's error (`{{ step.error }}`) — a route answers it with a `400` and

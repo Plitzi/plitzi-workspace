@@ -29,6 +29,19 @@ const TryField = ({ name, param, value, onChange }: TryFieldProps) => {
   );
 
   // A list of element ids, typed as ids are written: separated by commas.
+  // A list tried as written, a value a line: what the server reads it as.
+  const handleList = useCallback(
+    (next: string) =>
+      onChange(
+        name,
+        next
+          .split('\n')
+          .map(item => item.trim())
+          .filter(Boolean)
+      ),
+    [name, onChange]
+  );
+
   const handleIds = useCallback(
     (next: string) =>
       onChange(
@@ -66,6 +79,17 @@ const TryField = ({ name, param, value, onChange }: TryFieldProps) => {
           label={label}
           value={fieldText(value)}
           onChange={handleText}
+        />
+      )}
+      {param.type === 'list' && (
+        <TextArea
+          className="w-full"
+          id={id}
+          size="xs"
+          label={label}
+          placeholder="One a line"
+          value={Array.isArray(value) ? value.join('\n') : fieldText(value)}
+          onChange={handleList}
         />
       )}
       {param.type === 'elements' && (

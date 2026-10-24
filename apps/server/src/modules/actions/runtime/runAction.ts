@@ -223,6 +223,22 @@ const asDeclared = (type: string, value: unknown): unknown => {
     return String(value);
   }
 
+  // A list: bound to one, the list — its items as text; written by hand, a value a line or between commas.
+  if (type === 'list') {
+    if (Array.isArray(value)) {
+      return value.flatMap(item =>
+        typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean' ? [String(item)] : []
+      );
+    }
+
+    return typeof value === 'string'
+      ? value
+          .split(/[\n,]/)
+          .map(item => item.trim())
+          .filter(item => item !== '')
+      : value;
+  }
+
   if (typeof value !== 'string') {
     return value;
   }
@@ -245,10 +261,17 @@ type TaskParam = RegisteredTask['params'][string];
  */
 const paramProblem = (key: string, param: TaskParam, value: unknown): string | undefined => {
   const name = param.label ?? key;
-  const empty = value === undefined || value === null || (typeof value === 'string' && value.trim() === '');
+  const empty =
+    value === undefined ||
+    value === null ||
+    (typeof value === 'string' && value.trim() === '') ||
+    (Array.isArray(value) && value.length === 0);
   if (empty) {
     // A default fills an empty value: only a param with none is missing.
-    const defaulted = param.defaultValue !== undefined && param.defaultValue !== '';
+    const defaulted =
+      param.defaultValue !== undefined &&
+      param.defaultValue !== '' &&
+      !(Array.isArray(param.defaultValue) && param.defaultValue.length === 0);
 
     return param.required && !defaulted ? `${name} is required` : undefined;
   }
@@ -257,6 +280,10 @@ const paramProblem = (key: string, param: TaskParam, value: unknown): string | u
     return typeof value === 'string' && value.length > param.maxLength
       ? `${name} is longer than ${String(param.maxLength)} characters`
       : undefined;
+  }
+
+  if (param.type === 'list' && param.maxItems !== undefined && Array.isArray(value) && value.length > param.maxItems) {
+    return `${name} takes at most ${String(param.maxItems)}`;
   }
 
   if (param.type === 'number' && (param.min !== undefined || param.max !== undefined)) {

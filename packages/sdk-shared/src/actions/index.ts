@@ -6,6 +6,7 @@ export {
   DEFAULT_FUNCTION_TIME_LIMITS,
   FUNCTION_ROUTES_PREFIX,
   isFunctionRoutePath,
+  isFunctionsDefinitionFile,
   isFunctionsSourcePath,
   PLUGIN_FUNCTIONS_SOURCE,
   PLUGIN_ROUTES_SEGMENT,

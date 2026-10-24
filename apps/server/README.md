@@ -1202,6 +1202,11 @@ schema, because it is written as the set of questions your adapters have to answ
 sign-out also answer a full-page form submission with a `303` so the view re-renders, which a `fetch` client does
 not need and a `<form>` does.
 
+A write a page makes with the session cookie — `/auth/sessions/revoke` ("sign out everywhere"), `/auth/profile`,
+`/auth/password` — carries the CSRF token in the header `GET /auth/csrf` names (`{ token, headerName }`); one sent with
+`Authorization: Bearer` needs none. A sign-up refused because the account exists says which field to change:
+`400 { error, field: 'username' | 'email' }`.
+
 **Changing an email is a confirmation, not a write.** Supply `setPendingEmail` / `findByPendingEmail` /
 `clearPendingEmail` (the MySQL store has them) and `POST /auth/profile` parks the new address instead of applying
 it: the account keeps signing in with the old one until `POST /auth/confirm-email` proves somebody reads the new

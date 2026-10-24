@@ -208,6 +208,11 @@ export const registerRunGroup = (program: Command): Command => {
       'One task a session: each of its agents stops once it completes one, started again — a fresh context — for the next'
     )
     .option('--no-session-per-task', 'Its agents go on from one task to the next in one session')
+    .option(
+      '--resume-session',
+      'Started again after it died mid-task, an agent resumes its own session (Claude Code) — what it knew kept'
+    )
+    .option('--no-resume-session', 'Started again after it died mid-task, an agent starts a fresh session')
     .option(...JSON_OPTION)
     .action((name: string, options: TeamSetOptions) => runTeamSet(name, options));
 

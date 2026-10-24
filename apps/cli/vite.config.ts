@@ -38,6 +38,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    // Each test file on a config folder of its own: never the person's account nor this machine's pace.
+    setupFiles: ['src/tests/isolatedConfig.ts'],
     // As `plitzi functions dev` runs itself: the isolates need Node's startup snapshot off.
     execArgv: ['--no-node-snapshot']
   },

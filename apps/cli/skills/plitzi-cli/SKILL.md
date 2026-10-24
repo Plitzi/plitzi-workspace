@@ -44,6 +44,7 @@ npx plitzi explain --search "carousel end"              # whether Plitzi has a w
 npx plitzi doctor                                       # whether the project is whole; --fix the simple parts
 npx plitzi upgrade                                      # the project up to this CLI (--write)
 npx plitzi cert                                         # HTTPS for a phone on the Wi-Fi (with HOST=0.0.0.0)
+npx plitzi server stop --port 4793                      # this folder's own, never pkill
 ```
 
 ## Alone, or a team of agents
@@ -58,7 +59,7 @@ agent of a run (its prompt says so): [runs](reference/runs.md) — a designer's 
 
 ## Running it as an agent
 
-- **Which check.** All of it before you finish: `verify` — only what fails is printed. The space alone: `npm run
+- **Which check.** All of it before you finish: `verify`. The space alone: `npm run
 author`; a page: `page check`. The project around them: `doctor`, before `space push`. Pages for signed-in visitors
   are checked as the account `.env` names (`PLITZI_CHECK_USER`, `PLITZI_CHECK_PASSWORD`); `verify` says when none is.
 - **Be told, don't ask again.** While you edit `src/space/`, run `space watch --json` in the background: each save
@@ -67,11 +68,11 @@ author`; a page: `page check`. The project around them: `doctor`, before `space 
 - **Signing in happens in the browser** (`login`, `space use`, a first `plugin upload`): a tab waits for the person.
 - **One space at a time** — the one `whoami --json` names; `plitzi space use` switches it.
 - **A report to Plitzi** — the person asks for a report, feedback, the bugs found or what cost time: `npx plitzi
-feedback` (`--previous <link>` continues an earlier one). It reads the versions and `doctor` itself and writes the
-  page; fill it and publish it as its brief says, rather than a report of your own making.
+feedback` (`--previous <link>` continues an earlier one). It reads the versions and `doctor` and writes the page:
+  fill and publish it as its brief says.
 - **Read stdout, exit code and stderr apart.** The answer is on stdout (`--json`: one line); exit 1 means it did not do
   what was asked; a page command's 2, that it could not read what it asked (nothing served, the other page's element
-  not there). A refusal says what to change: change it — the same refusal twice says to stop and ask.
+  missing). A refusal says what to change: change it — the same refusal twice says to stop and ask.
 
 **The MCP or this CLI.** A space written in code (`src/space/`) is this CLI's, with no account. One kept on Plitzi —
 edited in the builder — is the Plitzi MCP's. Never both on one space.

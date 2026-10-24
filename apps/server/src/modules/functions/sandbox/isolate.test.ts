@@ -190,7 +190,7 @@ describe('preparing a space’s functions', () => {
   it('refuses a bundle with no default export', async () => {
     const prepared = await module.prepareFunctions({ 'index.ts': 'export const tasks = [];' });
 
-    expect(!prepared.ok && prepared.problems[0]?.message).toContain('exports its definition by default');
+    expect(!prepared.ok && prepared.problems[0]?.message).toContain('exports a definition by default');
   });
 
   it('is refused on a server with no runner', async () => {
@@ -368,6 +368,25 @@ describe('a space’s task, run in an isolate', () => {
     );
 
     expect((await space.run()).value).toEqual({ tally: { n: 10 }, untouched: true });
+  });
+
+  it('changes one entry of a list without losing a writer — and never brings back one taken out', async () => {
+    const space = await spaceWith(
+      sourceOf(`
+        await ctx.kv.listPut('queue', { id: 'a', score: 0, value: { votes: 0 } });
+        const vote = current => current ? { score: current.value.votes + 1, value: { votes: current.value.votes + 1 } } : undefined;
+        await Promise.all(Array.from({ length: 5 }, () => ctx.kv.listChange('queue', 'a', vote)));
+        const after = await ctx.kv.listRange('queue');
+        await ctx.kv.listRemove('queue', 'a');
+        const gone = await ctx.kv.listChange('queue', 'a', vote);
+        return { after, gone: gone === undefined, left: await ctx.kv.listRange('queue') };`)
+    );
+
+    expect((await space.run()).value).toEqual({
+      after: [{ id: 'a', score: 5, value: { votes: 5 } }],
+      gone: true,
+      left: []
+    });
   });
 
   it('counts a rate limit, and leaves what to answer past it to the code', async () => {

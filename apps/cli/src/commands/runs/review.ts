@@ -78,6 +78,8 @@ export interface LookOptions extends RunCommandOptions {
    * pictured with it there — at 1440 alone, as a phone has no pointer to hover with.
    */
   hover?: string;
+  /** Signed in first as this account, as `page check --as`: the password from `PLITZI_CHECK_PASSWORD`. */
+  as?: string;
   /** Read in the page, as `page check --element`: each one's attributes, box and classes. */
   element?: string[];
   /** Each page set beside the run before the task — its approved work — and what changed, section by section. */
@@ -154,6 +156,9 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
         );
         // Every page read in one visitor's zone: the machine's, unless said — and said under the pictures either way.
         const zone = options.timezone ? ['--timezone', options.timezone] : [];
+        // Read signed in when asked: a task whose UI is for signed-in visitors looked at as one (encore's designers saw
+        // only the guest's page of settings, a vote or the host's controls).
+        const signedIn = options.as ? ['--as', options.as] : [];
         const interaction = [
           ...(options.click ? ['--click', options.click] : []),
           ...(options.hover ? ['--hover', options.hover] : [])
@@ -223,6 +228,7 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
             '--url',
             preview.url,
             ...zone,
+            ...signedIn,
             ...(options.status === undefined ? [] : ['--status', String(options.status)]),
             ...also,
             ...(options.element ?? []).flatMap(id => ['--element', id])
@@ -247,6 +253,7 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
                 '--url',
                 preview.url,
                 ...zone,
+                ...signedIn,
                 '--width',
                 width,
                 '--scheme',
@@ -265,6 +272,7 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
                       '--url',
                       preview.url,
                       ...zone,
+                      ...signedIn,
                       '--width',
                       width,
                       '--scheme',
@@ -300,6 +308,7 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
               '--url',
               preview.url,
               ...zone,
+              ...signedIn,
               '--compare',
               before?.url ?? '',
               ...(clip ? ['--clip', clip] : []),

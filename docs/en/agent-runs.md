@@ -304,7 +304,10 @@ agent its scratch, made. Never removed by the run.
 
 Who works a project's runs is its own choice, in `.plitzi/team.json` (committed: it holds no secret, so it needs no
 `.example` as `.env` does). `plitzi create` writes the starter (`STARTER_TEAM`): two developers — one started with the
-run, the other on demand — and a designer on `claude-sonnet-5-5`, since each agent spends tokens; the person grows it when a job asks — the developers on the harness's own model, and an `about` that
+run, the other on demand — and a designer, since each agent spends tokens; the person grows it when a job asks. It
+names every model — the lead on `claude-opus-5-5`, the rest on `claude-sonnet-5-5` — because the models are the file's,
+never the CLI's (one deprecated is changed there, in sight): one it leaves out is the harness's own, and a lead that
+reviews (`lead-2`) starts on the lead's. And an `about` that
 says what each field and each role the CLI knows means (`ROLES`: developer, designer, reviewer, tester, writer; any
 other name is a role of the project's own), since JSON has no comments; `about` is the CLI's — never read, written as this CLI says it whenever it
 writes the file, and brought up by `plitzi upgrade` with the files, the agents left as they are. The file is formatted as the project's Prettier leaves it (`formattedJson`). `run team` lists the roles too. The file
@@ -356,6 +359,24 @@ start it again, as one on demand, when work of its role waits; and any task sent
 running asks for that agent by name, which it takes first. lx-product's dev-1 read 30.9M tokens for three tasks, each
 turn reading again what the tasks before left in its context: a session each reads ~40 % less, for ~1 minute and the
 skills read again at each start — worth it for an agent that works several tasks, not for one that works one.
+
+**An agent started again after it died** (`launch.ts`). `run agent --launch` keeps what it started in
+`scratch/<agent>/agent.json`: the pid, the harness, when, and the session. In Claude Code that is a session id of the
+CLI's own (`--session-id`). Started again, the agent is refused while that process still runs as its harness, because
+two sessions of one agent read one log. encore's dev-2, started again while its last session was still writing its
+stop, read the old completion as its own and stopped. Then, when the team asks it (`"resumeSession": true`,
+`run team set dev --resume-session`), it resumes that session (`--resume`). That needs four things: the agent died
+with a task in progress, its last word in the log is not a stop, Claude Code still keeps the session
+(`<CLAUDE_CONFIG_DIR>/projects/<the folder, dashed>/<id>.jsonl`), and the session is no larger than
+`DEFAULTS.resumeMaxBytes` (8 MB). Past that size, reading it again costs more than a fresh session that reads its task
+anew. Otherwise the agent starts fresh, and the launch says why. encore's machine went down with four agents mid-task.
+Each started again on a fresh session took its task back from its copy within two minutes, and lost only what it knew
+and had not written yet, which is what resuming keeps.
+
+**An agent just started is not silent** (`options.startGraceMinutes`, `DEFAULTS.startGraceMs` — 3 minutes — when not
+said). For that long after its launch, and until it stops, the tasks it holds do not read "no signal" and it counts as
+running. Its harness is loading and its skills are being read. Without it, every agent started again after encore's
+crash read "no signal" and "not running" at once, its last word from before, and `run watch` woke the lead for nothing.
 
 ## The tester's tasks (`tests.ts`)
 
@@ -701,6 +722,12 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
 - **A run gone stops what its agents left listening**: `finish`, `abort` and `purge` stop every server whose folder is
   in the run's (`stopListenersUnder`, read off `lsof`) and say so — velada-fidelity's copies' servers listened on after
   the finish removed their folders. A kept server's watchdog stops it once its record is gone with the run.
+- **An agent stops a server through the CLI, never by name** (`plitzi server stop [--port <port>]`, `commands/server.ts`):
+  what listens from the folder it is run in — its own `tmp/` left out, a run's copies each their own — and says by its
+  `/health` that it serves that folder (`projectMark`), stopped with what it started; anything else on the port is said
+  and left. encore's agent freed a heredoc hung on stdin with `pkill -f "cat"`, which matched every process whose
+  command line held the letters and took the machine down: the prompt's rules forbid `pkill`, `killall` and a kill by
+  name, a hung command is the harness's to stop, and files are written with the harness's edit tools.
 
 ## Into the project (`merge.ts`)
 

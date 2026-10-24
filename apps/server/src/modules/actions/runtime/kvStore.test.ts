@@ -301,4 +301,41 @@ describe('createKvStore change', () => {
     ).toEqual({ hours: 2 });
     expect(calls.find(call => call.method === 'swap')?.args).toEqual(['kv:board', undefined, '{"hours":2}', 7200]);
   });
+
+  // encore: a vote re-scored a queue entry with listPut while the track it was started — and put the song back.
+  describe('one entry of a list, changed as it is', () => {
+    it('swaps an entry only while it is as read, and takes it out with null', async () => {
+      const kv = createKvStore(createMemoryKv());
+      await kv.listPut('queue', { id: 'a', score: 1, value: { votes: 0 } });
+      const [read] = await kv.listRange('queue');
+
+      expect(await kv.listSwap('queue', 'a', read, { id: 'a', score: 2, value: { votes: 1 } })).toBe(true);
+      // Read before that write: it is no longer as read.
+      expect(await kv.listSwap('queue', 'a', read, { id: 'a', score: 9, value: { votes: 9 } })).toBe(false);
+      expect(await kv.listRange('queue')).toEqual([{ id: 'a', score: 2, value: { votes: 1 } }]);
+      expect(await kv.listSwap('queue', 'a', { id: 'a', score: 2, value: { votes: 1 } }, null)).toBe(true);
+      expect(await kv.listRange('queue')).toEqual([]);
+    });
+
+    it('changes an entry by what it holds now — and never brings back one taken out meanwhile', async () => {
+      const kv = createKvStore(createMemoryKv());
+      await kv.listPut('queue', { id: 'a', score: 1, value: { votes: 0 } });
+      const vote = (current: { score: number; value: unknown } | undefined) => {
+        if (!current) {
+          return undefined;
+        }
+
+        const votes = (current.value as { votes: number }).votes + 1;
+
+        return { score: votes, value: { votes } };
+      };
+
+      await Promise.all([kv.listChange('queue', 'a', vote), kv.listChange('queue', 'a', vote)]);
+      expect(await kv.listRange('queue')).toEqual([{ id: 'a', score: 2, value: { votes: 2 } }]);
+
+      await kv.listRemove('queue', 'a');
+      expect(await kv.listChange('queue', 'a', vote)).toBeUndefined();
+      expect(await kv.listRange('queue')).toEqual([]);
+    });
+  });
 });

@@ -121,4 +121,62 @@ describe('useScrollInteractions', () => {
 
     expect(fired).not.toHaveBeenCalled();
   });
+
+  // encore: "load more as you scroll" had no trigger on a page that scrolls the document — a "Show more" button instead.
+  describe('onView', () => {
+    let observed: { callback: IntersectionObserverCallback; options?: IntersectionObserverInit; node?: Element };
+    const disconnect = vi.fn();
+
+    beforeEach(() => {
+      disconnect.mockReset();
+      vi.stubGlobal(
+        'IntersectionObserver',
+        class {
+          constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+            observed = { callback, ...(options ? { options } : {}) };
+          }
+
+          observe(node: Element) {
+            observed.node = node;
+          }
+
+          disconnect() {
+            disconnect();
+          }
+        }
+      );
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    const seen = (isIntersecting: boolean) => {
+      // Only what the hook reads of an entry: whether the element is in view.
+      const entry = { isIntersecting } as unknown as IntersectionObserverEntry;
+      act(() => {
+        observed.callback([entry], {} as IntersectionObserver);
+      });
+    };
+
+    it('says the element came into view and left it, once each change, as early as its margin asks', () => {
+      const { node } = rowOfCards();
+      const { unmount } = mount(node, {
+        reached: { ...onScroll, id: 'reached', title: 'On View', action: 'onView', params: { margin: 400 } }
+      });
+
+      expect(observed.node).toBe(node);
+      expect(observed.options?.rootMargin).toBe('400px');
+      seen(true);
+      seen(true);
+      seen(false);
+
+      expect(fired.mock.calls).toEqual([
+        ['row', 'onView', { inView: true }],
+        ['row', 'onView', { inView: false }]
+      ]);
+      unmount();
+      expect(disconnect).toHaveBeenCalled();
+    });
+  });
 });

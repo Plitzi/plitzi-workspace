@@ -1,5 +1,5 @@
 import { ActionRefusal } from './errors';
-import { changeKv } from './kvChange';
+import { changeKv, changeListEntry } from './kvChange';
 import { listIdProblem, parseList, rangeOf, withEntry } from './kvList';
 
 import type { KvListEntry, KvListPut } from './kvList';
@@ -126,6 +126,34 @@ export const createKvStore = (
       changeList(list, entries =>
         entries.some(entry => entry.id === id) ? entries.filter(entry => entry.id !== id) : undefined
       ),
+    listSwap: async (list, id, expected, next) => {
+      if (next !== null) {
+        const problem = listIdProblem(next.id);
+        if (problem) {
+          throw new Error(problem);
+        }
+
+        if (next.id !== id || !Number.isFinite(next.score)) {
+          throw new Error('A list entry swapped in keeps its id, and its score is a number');
+        }
+      }
+
+      // Asked again when the list changed under it: what it answers is whether the last asking wrote.
+      return changeList(list, entries => {
+        const current = entries.find(entry => entry.id === id);
+        // Still as it was read — by its id, score and value — or still none when none was read.
+        if (JSON.stringify(current) !== JSON.stringify(expected)) {
+          return undefined;
+        }
+
+        if (next === null) {
+          return current === undefined ? undefined : entries.filter(entry => entry.id !== id);
+        }
+
+        return withEntry(entries, next)?.kept;
+      });
+    },
+    listChange: (list, id, change) => changeListEntry(store, list, id, change, { refusal }),
     change: (key, change, lifetime) => changeKv(store, key, change, { lifetime, refusal })
   };
 

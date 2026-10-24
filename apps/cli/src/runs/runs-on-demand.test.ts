@@ -1,8 +1,14 @@
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { readLaunch, writeLaunch } from './launch';
+import { waitForLead } from './leadWatch';
 import { STARTING_MS } from './onDemand';
 import { isRunRefusal } from './refusal';
-import { openRun } from './run';
+import { loadRun, openRun, readRunLog } from './run';
 import { completeTask, followNext, nextTask, reviewTask, takeTask } from './tasks';
 import { readTeam, setTeamAgent, startedAgents } from './team';
 import { viewRun } from './view';
@@ -136,6 +142,79 @@ describe('agents on demand', () => {
       })
     );
   });
+
+  // encore: both designers ended on a 'waiting' — the log read them running for good — and the UI reviews that waited
+  // were asked of nobody; their processes, launched by the CLI, had ended.
+  it('asks for a designer whose launched process has ended, whatever its last word in the log', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+    bench.advance(STARTING_MS);
+    // design-1 was there and waited for work: its last word, a wait.
+    await followNext(bench.agent('design-1'), 'es-launch', 'designer', { timeoutMs: 0, everyMs: 10 });
+    const { paths } = await loadRun(lead(), 'es-launch');
+    await writeLaunch(paths, 'design-1', {
+      pid: 999_999_999,
+      harness: 'claude',
+      startedAt: new Date(0).toISOString(),
+      log: path.join(paths.scratch, 'design-1', 'agent.log')
+    });
+    const home = await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: `Hola` };\n');
+    await completeTask(bench.agent('dev-1', { token: home.token }), 'es-launch', 't-home', { review: 'ui' });
+
+    const view = await viewRun(lead(), 'es-launch');
+    expect(view.gone).toEqual(['design-1']);
+    expect(view.attention).toContainEqual(
+      expect.objectContaining({
+        kind: 'agents-needed',
+        text: expect.stringContaining(
+          'the UI of t-home waits for a designer, and none running is free: start design-1'
+        ) as unknown
+      })
+    );
+  });
+
+  // encore: tasks waited 24 to 56 min to be taken while the lead, planning or reviewing, was the only one to start
+  // agents. With options.launch the lead's own wait starts them.
+  it.skipIf(process.platform === 'win32')(
+    'starts the agent the run asks for by itself, with options.launch, and does not wake the lead for it',
+    async () => {
+      await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+      await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
+      const teamFile = path.join(bench.root, '.plitzi', 'team.json');
+      const team = JSON.parse(await fs.readFile(teamFile, 'utf-8')) as Record<string, unknown>;
+      await fs.writeFile(teamFile, JSON.stringify({ ...team, options: { launch: 'claude' } }));
+      // A harness of its own on the PATH: it waits, as an agent at work would, and is stopped after.
+      const bin = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-harness-'));
+      await fs.writeFile(path.join(bin, 'claude'), '#!/bin/sh\nsleep 30\n', { mode: 0o755 });
+      const before = process.env.PATH;
+      process.env.PATH = `${bin}${path.delimiter}${before ?? ''}`;
+      try {
+        await openRun(lead(), await bench.writePlan(benchPlan()));
+        bench.advance(STARTING_MS);
+        const home = await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
+        await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: `Hola` };\n');
+        await completeTask(bench.agent('dev-1', { token: home.token }), 'es-launch', 't-home', { review: 'ui' });
+
+        const news = await waitForLead(lead(), 'es-launch', { timeoutMs: 200, everyMs: 50 });
+        const { paths } = await loadRun(lead(), 'es-launch');
+        const launch = await readLaunch(paths, 'design-1');
+
+        expect(launch).toMatchObject({ harness: 'claude' });
+        expect(news.fresh.some(item => item.text.includes('start design-1'))).toBe(false);
+        expect((await readRunLog(paths)).some(entry => entry.action === 'launch' && entry.agent === 'design-1')).toBe(
+          true
+        );
+        if (launch) {
+          process.kill(launch.pid);
+        }
+      } finally {
+        process.env.PATH = before;
+        await fs.rm(bin, { recursive: true, force: true });
+      }
+    }
+  );
 
   // Carlos: the base agent first, and one on demand only when it is needed — the base being free, it takes the work.
   it('hands ready work to a free base agent first: one on demand takes only what the base cannot', async () => {

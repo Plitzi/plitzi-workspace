@@ -49,7 +49,7 @@ export const readFunctionsDir = (dir: string | URL): Promise<FunctionsSource> =>
  * built exactly as the platform builds a space's (the same rules, one bundle) and loaded natively, for
  * `createServer({ functions: { native } })`. The same on `node src/main.ts` and on a compiled server: nothing here
  * depends on how the server itself runs. A directory with nothing in it is no functions; one that does not build, or
- * whose `index.ts` exports no definition, stops the server with where it is wrong.
+ * none of whose top-level files exports a definition, stops the server with where it is wrong.
  */
 export const loadFunctions = async (dir: string | URL): Promise<FunctionsDefinition[]> =>
   loadFunctionsSource(await readFunctionsDir(dir));
@@ -67,7 +67,9 @@ export const loadFunctionsSource = async (source: FunctionsSource): Promise<Func
   const loaded: unknown = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
   const definition = isRecord(loaded) ? loaded.default : undefined;
   if (!isFunctionsDefinition(definition)) {
-    throw new Error('functions/index.ts exports its definition by default: export default defineFunctions({ … })');
+    throw new Error(
+      'The functions bundle exports no definition: each file at the top of functions/ exports one by default — export default defineFunctions({ tasks: [ … ] })'
+    );
   }
 
   return [definition];

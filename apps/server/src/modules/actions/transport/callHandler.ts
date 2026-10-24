@@ -192,6 +192,32 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
     run = await module.guards.begin(begin);
   } catch (error) {
     const reason = error instanceof ActionRunError ? error.reason : 'failed';
+    // The same call already running here: answered by that run, as it answers its own caller — nothing runs twice and
+    // nothing is refused. Not metered, as nothing ran for it. One running on another replica is still a duplicate.
+    const joined = reason === 'duplicate' ? module.guards.join(begin) : undefined;
+    if (joined) {
+      const answer = await joined;
+      res.setHeader('X-Plitzi-Joined', 'true');
+      if (answer) {
+        send(
+          res,
+          200,
+          {
+            runId: answer.runId,
+            status: answer.status,
+            output: answer.output,
+            ...(answer.error === undefined ? {} : { error: answer.error }),
+            joined: true
+          },
+          answer.runId
+        );
+      } else {
+        fail(res, 'failed', 'The same call was already running, and it ended with no answer');
+      }
+
+      return;
+    }
+
     await reject(reason, error instanceof Error ? error.message : undefined);
     fail(res, reason, error instanceof Error ? error.message : 'Action refused');
 

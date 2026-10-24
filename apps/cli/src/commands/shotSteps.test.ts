@@ -64,7 +64,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   it('says which step is wrong, and what the steps are', () => {
     expect(parseSteps('click a; tap b', 500)).toEqual({
       problem:
-        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, drag, press, wait, wait-for, shot, frames'
+        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, shot, frames'
     });
     expect(parseSteps('wait soon', 500)).toEqual({
       problem: 'step 1 ("wait soon"): "soon" is not a whole number from 1 to 30000'
@@ -75,7 +75,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     });
     expect(parseSteps('# only a note', 500)).toEqual({
       problem:
-        '--steps has no step: click, hover, scroll, type, drag, press, wait, wait-for, shot, frames, separated by ";"'
+        '--steps has no step: click, hover, scroll, type, fill, drag, press, wait, wait-for, shot, frames, separated by ";"'
     });
   });
 

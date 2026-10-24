@@ -33,7 +33,7 @@ export type InteractionNode = {
 };
 
 export type InteractionParamType =
-  'boolean' | 'select' | 'text' | 'number' | 'textarea' | 'codemirror-text' | 'codemirror-json' | 'elements';
+  'boolean' | 'select' | 'text' | 'number' | 'textarea' | 'codemirror-text' | 'codemirror-json' | 'elements' | 'list';
 
 export type InteractionCallbackParamValues<T extends Record<string, unknown> = Record<string, unknown>> = T;
 
@@ -61,6 +61,11 @@ export type InteractionCallbackParam<T extends Record<string, unknown> = Record<
     | { type: 'codemirror-text'; defaultValue?: string }
     | { type: 'codemirror-json'; defaultValue?: string }
     | { type: 'boolean'; defaultValue?: boolean }
+    /**
+     * Several values, handed to a task as a list of text: bound to a list it is that list, and written by hand it is one
+     * a line (or separated by commas) — at most `maxItems`. encore's room took its genres as comma text before it.
+     */
+    | { type: 'list'; defaultValue?: string[]; maxItems?: number }
     | {
         /**
          * Several elements of the space, stored as their ids. The editor offers the elements of `elementType` to pick

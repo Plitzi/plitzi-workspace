@@ -130,3 +130,10 @@ export const DEV_SERVER_FILE = `${PROJECT_TMP}/dev-server.json`;
  * own server keeps its record apart, so the one a person runs is still what \`check\` and \`shot\` find.
  */
 export const SERVER_RECORD_ENV = 'PLITZI_SERVER_RECORD';
+
+/**
+ * Where a project's server keeps its \`kv\` instead of \`KV_FILE\`: the visual suite's own server keeps its own state, as
+ * it keeps its own record — one file is held by one process, and its server beside a person's open one (or the one
+ * the CLI keeps of a run's copy) was refused: encore's Playwright runs crashed on "createFileKv … is in use".
+ */
+export const KV_FILE_ENV = 'PLITZI_KV_FILE';

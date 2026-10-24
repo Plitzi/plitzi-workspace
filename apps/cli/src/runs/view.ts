@@ -6,7 +6,9 @@ import { stackableBacklog } from './backlog';
 import { bottlenecks } from './bottlenecks';
 import { designSkipText } from './designSkip';
 import { fingerprint } from './files';
+import { readHistory } from './history';
 import { identifiedAgents } from './identity';
+import { isRunning, processTable, readLaunch, startedWithin } from './launch';
 import { askingLeads, UNTAKEN_REVIEW_MS } from './leads';
 import { LEAD, messagesOf, unreadFor } from './messages';
 import { agentsNeeded, runningAgents } from './onDemand';
@@ -16,7 +18,7 @@ import { refusedAgain } from './refusedAgain';
 import { loadRun, pinnedChanges, pinnedNow, readApproved, readBase, readRunLog, runIds, samePinned } from './run';
 import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
-import { isDisconnected, readStart, viewTask } from './taskStore';
+import { DEFAULTS, isDisconnected, readStart, viewTask } from './taskStore';
 import { readTeam, startedAgents } from './team';
 import { chainMinutes, urgencies } from './urgency';
 import { isWorked } from './worked';
@@ -129,6 +131,8 @@ export interface Attention {
   text: string;
   /** Who acts on it. */
   who: Needs;
+  /** For an agent the run asks for (`agents-needed`): which — what `options.launch` starts by itself. */
+  agent?: string;
 }
 
 export interface RunView {
@@ -142,6 +146,8 @@ export interface RunView {
   milestones: { name: string; done: number; total: number }[];
   /** When it should end, at this pace: the longest chain still to do from now. */
   expectedEnd?: string;
+  /** The pace the expected end is read at: whose runs, and how far they took from their estimates. */
+  pace?: { from: 'project' | 'machine'; ratio: number };
   tasks: TaskLine[];
   attention: Attention[];
   merges: { id: string; kind: string; at: string; files: number }[];
@@ -150,6 +156,8 @@ export interface RunView {
   leads: string[];
   /** Those of them running now — each asked for a review within the last minute. */
   askingLeads: string[];
+  /** The agents the CLI launched whose process has ended: not running, whatever the log's last word of them. */
+  gone: string[];
   /** Where the run's approved work is served while a preview serves it (`run preview`, `npm run start:preview`). */
   previewPort?: number;
   /** The agents with a token on the run: started again by it, never by their name (`identity.ts`). */
@@ -169,7 +177,7 @@ const minutesBetween = (from: string, to: Date): number => Math.round((to.getTim
 /** Past its work: in review or approved, what its agent last said of the work is history. */
 const past = (view: TaskView): boolean => view.state.status === 'in-review' || view.state.status === 'done';
 
-const lineOf = (view: TaskView, now: Date, unblocks: string[], urgency: Priority): TaskLine => ({
+const lineOf = (view: TaskView, now: Date, starting: boolean, unblocks: string[], urgency: Priority): TaskLine => ({
   id: view.task.id,
   title: view.task.title,
   kind: view.task.kind,
@@ -188,7 +196,11 @@ const lineOf = (view: TaskView, now: Date, unblocks: string[], urgency: Priority
   ...(view.state.blockedBy ? { blockedBy: view.state.blockedBy } : {}),
   estimateMinutes: view.task.estimateMinutes,
   ...(view.owner ? { spentMinutes: minutesBetween(view.owner.takenAt, now) } : {}),
-  noSignal: view.owner !== undefined && isWorked(view.state.status) && isDisconnected(view.task, view.signalAt, now),
+  noSignal:
+    view.owner !== undefined &&
+    !starting &&
+    isWorked(view.state.status) &&
+    isDisconnected(view.task, view.signalAt, now),
   ...(view.owner ? { takenAt: view.owner.takenAt } : {}),
   ...(view.state.design ? { design: view.state.design } : {}),
   ...(view.state.status === 'in-review' && view.state.reviewer?.round === view.state.round
@@ -242,10 +254,52 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   const byId = new Map(views.map(view => [view.task.id, view]));
   const approvedIds = new Set(views.filter(view => view.state.status === 'done').map(view => view.task.id));
   const urgency = urgencies(loaded.tasks);
+  const team = await readTeam(ctx.root).catch(() => undefined);
+  const grace =
+    team?.options?.startGraceMinutes === undefined ? DEFAULTS.startGraceMs : team.options.startGraceMinutes * 60_000;
+  const started = team ? startedAgents(team) : [];
+  const log = await readRunLog(loaded.paths);
+  // What the CLI launched of the team and of the tasks' owners: its process, when, its session.
+  const launches = new Map(
+    (
+      await Promise.all(
+        [
+          ...new Set([
+            ...started.map(each => each.agent),
+            ...views.flatMap(view => (view.owner ? [view.owner.agent] : []))
+          ])
+        ].map(async agent => [agent, await readLaunch(loaded.paths, agent)] as const)
+      )
+    ).flatMap(([agent, launch]) => (launch ? [[agent, launch] as const] : []))
+  );
+  const table = processTable();
+  // Launched and its process gone: not running, whatever its last word in the log was — encore's designers ended on a
+  // 'waiting', read running for good, and no designer was asked for the UI reviews that waited on none.
+  const gone = new Set([...launches].filter(([, launch]) => !isRunning(launch, table)).map(([agent]) => agent));
+  // An agent just started has said nothing yet — its harness loading, its skills read: the tasks it holds are not
+  // silent, and it is running, until its grace is over or it stopped since (encore: every agent started again after the
+  // machine went down read "no signal" and "not running" at once, its last word from before).
+  const starting = new Set(
+    [...launches]
+      .filter(
+        ([agent, launch]) =>
+          !gone.has(agent) &&
+          startedWithin(launch, now, grace) &&
+          !log.some(
+            entry =>
+              entry.by === agent &&
+              entry.action === 'stops' &&
+              typeof entry.at === 'string' &&
+              Date.parse(entry.at) >= Date.parse(launch.startedAt)
+          )
+      )
+      .map(([agent]) => agent)
+  );
   const tasks = views.map(view => {
     const line = lineOf(
       view,
       now,
+      view.owner !== undefined && starting.has(view.owner.agent),
       loaded.tasks.filter(task => task.dependsOn.includes(view.task.id)).map(task => task.id),
       urgency.get(view.task.id) ?? view.task.priority
     );
@@ -273,10 +327,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     });
   }
 
-  const team = await readTeam(ctx.root).catch(() => undefined);
-  const started = team ? startedAgents(team) : [];
-  const log = await readRunLog(loaded.paths);
-  const running = runningAgents(log);
+  const running = new Set([...[...runningAgents(log)].filter(agent => !gone.has(agent)), ...starting]);
   // Free means started and idle: an agent on demand never started is none (lx-copy: "dev-3, design-2 are free" for two
   // agents nobody had started).
   attention.push(
@@ -486,7 +537,10 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   const chains = chainMinutes(
     remaining.map(task => ({ ...task, dependsOn: task.dependsOn.filter(id => remaining.some(each => each.id === id)) }))
   );
-  const left = Math.max(0, ...chains.values());
+  // Read at the pace this project's runs (or, before one ended, this machine's) took against their estimates: a lead's
+  // estimate is the same guess each time — encore's 630 min of plan took 148.
+  const pace = await readHistory(ctx.root);
+  const left = Math.max(0, ...chains.values()) * (pace?.ratio ?? 1);
 
   const port = await previewPort(loaded);
 
@@ -500,6 +554,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     total: views.length,
     milestones,
     ...(remaining.length === 0 ? {} : { expectedEnd: new Date(now.getTime() + left * 60_000).toISOString() }),
+    ...(pace ? { pace: { from: pace.from, ratio: pace.ratio } } : {}),
     // A task held on a question to the lead says so where its state is read, not only in the lead's inbox.
     tasks: parked(
       await Promise.all(
@@ -535,6 +590,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     approvedFiles: Object.keys(approved.files).length,
     leads: record.leads ?? [],
     askingLeads: await askingLeads(loaded, now),
+    gone: [...gone],
     ...(port === undefined ? {} : { previewPort: port }),
     identified,
     scratch: loaded.paths.scratch,
@@ -567,7 +623,7 @@ const designText = (design: DesignReview): string =>
 
 /** A run as `plitzi run watch` prints it: the run, a line per task, then what needs attention. */
 export const runText = (view: RunView): string => {
-  const head = `${view.goal} · ${view.status} · ${String(view.done)} of ${String(view.total)} tasks${view.expectedEnd ? ` · expected end ${hhmm(view.expectedEnd)}` : ''}`;
+  const head = `${view.goal} · ${view.status} · ${String(view.done)} of ${String(view.total)} tasks${view.expectedEnd ? ` · expected end ${hhmm(view.expectedEnd)}${view.pace ? ` (at this ${view.pace.from}'s pace, ${String(Math.round(view.pace.ratio * 100))}% of the estimates)` : ''}` : ''}`;
   const lines = [head];
   view.milestones.forEach(milestone =>
     lines.push(`  ${milestone.name}: ${String(milestone.done)} of ${String(milestone.total)}`)

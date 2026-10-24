@@ -157,6 +157,18 @@ const NodeBodyParam = ({
             onChange={handleChangeInput}
           />
         )}
+        {!isBinding && type === 'list' && (
+          // A value a line: kept as written, and read as a list by the server — a default list shown one a line.
+          <TextArea
+            label={finalLabel}
+            className="w-full"
+            size="xs"
+            placeholder="One a line"
+            value={Array.isArray(value) ? value.join('\n') : (value as string)}
+            error={problem}
+            onChange={handleChangeInput}
+          />
+        )}
         {!isBinding && type === 'codemirror-json' && (
           <CodeMirror
             label={finalLabel}

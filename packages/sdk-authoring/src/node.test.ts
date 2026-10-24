@@ -8,6 +8,7 @@ import { ProjectLayoutError } from '@plitzi/sdk-shared/project';
 
 import { authorSpace } from '.';
 import {
+  actionsIn,
   authorProjectSpace,
   pagesIn,
   pluginDeclarations,
@@ -117,6 +118,37 @@ describe('pagesIn', () => {
     writeFileSync(path.join(strays, 'helpers.ts'), 'export const format = (value: string) => value;\n');
 
     await expect(pagesIn(strays)).rejects.toThrow(/helpers\.ts exports no page by default/);
+  });
+});
+
+// encore: every domain appended to one actions/index.ts, and its conflicts and integration tasks were that list.
+describe('actionsIn', () => {
+  const actions = path.join(root, 'src/actions');
+  mkdirSync(actions, { recursive: true });
+  const entry = (id: string) => `{ id: '${id}', document: { nodes: [] } }`;
+  writeFileSync(
+    path.join(actions, 'rooms.ts'),
+    `export const roomsList = ${entry('rooms-list')};\nexport const roomsActions = [roomsList, ${entry('rooms-get')}];\n`
+  );
+  writeFileSync(path.join(actions, 'queue.ts'), `export default ${entry('queue-add')};\nexport const helper = 1;\n`);
+  writeFileSync(path.join(actions, 'index.ts'), 'throw new Error("never imported: it is the list");\n');
+  writeFileSync(path.join(actions, 'rooms.test.ts'), 'throw new Error("never imported");\n');
+
+  it('is every action the folder’s files export, on its own or in a list, once each — its index and tests left', async () => {
+    expect((await actionsIn(actions)).map(action => action.id)).toEqual(['queue-add', 'rooms-list', 'rooms-get']);
+  });
+
+  it('refuses one id two files define, naming both', async () => {
+    const twice = path.join(root, 'src/twice-actions');
+    mkdirSync(twice, { recursive: true });
+    writeFileSync(path.join(twice, 'a.ts'), `export const one = ${entry('rooms-list')};\n`);
+    writeFileSync(path.join(twice, 'b.ts'), `export const other = ${entry('rooms-list')};\n`);
+
+    await expect(actionsIn(twice)).rejects.toThrow('The action rooms-list is defined twice: in a.ts and in b.ts');
+  });
+
+  it('is none for a folder that is not there', async () => {
+    expect(await actionsIn(path.join(root, 'nowhere'))).toEqual([]);
   });
 });
 

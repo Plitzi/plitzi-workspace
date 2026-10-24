@@ -48,6 +48,17 @@ const currentUrl = (location: Location): string => {
   return `${protocol}//${location.host || location.hostname}${location.pathname}${location.search}`;
 };
 
+/** `path` with where the visitor was going as its `redirect`, unless the space already wrote one there. */
+const withRedirect = (path: string, from: string): string => {
+  const [pathname, query = ''] = path.split('?', 2);
+  const params = new URLSearchParams(query);
+  if (!params.has('redirect')) {
+    params.set('redirect', from);
+  }
+
+  return `${pathname}?${params.toString()}`;
+};
+
 const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: NavigationProviderProps) => {
   const { server } = use(NetworkContext);
   // The root store, for the prefetch below: `refreshRsc` writes what it fetched where every element reads it.
@@ -343,13 +354,18 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
       return null;
     }
 
+    // A sign-in of this space is told where the visitor was going too, the whole address as one elsewhere is: encore's
+    // guest sent to `/sign-in` was signed in on the home page. Not a signed-in visitor sent off a signed-out page (the
+    // website's landing): they are not coming back.
+    const onSite =
+      action.path && !authenticated ? withRedirect(action.path, currentUrl(location)) : (action.path ?? '');
     if (ssrResult) {
-      ssrResult.redirect = action.path ?? '';
+      ssrResult.redirect = onSite;
 
       return null;
     }
 
-    return <Navigate to={action.path ?? ''} replace />;
+    return <Navigate to={onSite} replace />;
   }
 
   return children;

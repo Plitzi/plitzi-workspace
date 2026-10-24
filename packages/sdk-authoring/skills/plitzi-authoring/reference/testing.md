@@ -56,8 +56,9 @@ Three flags say what a bare visit cannot promise, and `onScreen` leaves out:
 
 A `formControl`'s id names its wrapper: type into `locate('email').locator('input')`.
 
-Select by `data-plitzi-el`, never by a generated class name: authoring derives `<type>-<hash>` for an element's own
-rules, and that name changes when the rules do.
+Select by `data-plitzi-el`, never by `#id` or a generated class name: authoring derives `<type>-<hash>` for an element's
+own rules, and that name changes when the rules do. A component's instance has no node of its own — its id is on the
+component's root as `data-plitzi-instance` — so take the selector from `handles.element(id)`, which says which.
 
 ## Pressing a shortcut
 

@@ -8,7 +8,8 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
   away); `functions push` refuses when the space changed since the pull — someone saved in the builder. Then: keep your
   changes aside, `functions pull`, apply them again, `functions push`. Never `--force` over somebody else's work to get past it.
 - **A push is checked, not just stored.** A problem comes back as `src/functions/<file>:<line> <message>` and nothing is
-  saved — fix it and push again. `index.ts` must default-export `defineFunctions({ … })`; files import each other by
+  saved — fix it and push again. each top-level file may default-export `defineFunctions({ … })` — one `index.ts`, or one per domain, merged (a task or
+  route said twice is refused); files import each other by
   relative path and `@plitzi/sdk-server/functions`, nothing else — a package (installed in the project) is bundled in with
   `functions add <package>`, as `./vendor/<package>.js`; one that needs Node is refused. `src/data/` is read with `ctx.data('x.json')`, never
   imported (`dev` reads the project's). An action's built-in steps read no file: without a function task, `src/data/`

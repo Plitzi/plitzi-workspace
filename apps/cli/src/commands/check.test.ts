@@ -261,13 +261,23 @@ describe('the account a check signs in as', () => {
     await fs.rm(root, { recursive: true });
   });
 
+  // encore: an agent in a task's copy had no .env to read the password from, and could not check a page signed in.
+  it('reads its project’s account in a task’s copy, which has no .env', async () => {
+    const root = await projectWith('PLITZI_CHECK_PASSWORD=encore-demo\n');
+    const copy = path.join(root, 'tmp', 'plitzi-runs', 'encore', 'tasks', 't-room', 'cache', 'work');
+    await fs.mkdir(copy, { recursive: true });
+
+    expect(await checkAccount(copy, 'mika')).toEqual({ username: 'mika', password: 'encore-demo' });
+    await fs.rm(root, { recursive: true });
+  });
+
   it('is none when nothing names one, and says the password it lacks', async () => {
     const root = await projectWith('PLITZI_CHECK_USER=carla\n');
 
     const lacking = await checkAccount(root);
 
     expect(lacking && 'problem' in lacking ? lacking.problem : lacking).toContain(
-      'carla signs in with the password in PLITZI_CHECK_PASSWORD: set it in .env'
+      "carla signs in with the password in PLITZI_CHECK_PASSWORD: set it in the project's .env"
     );
     await fs.writeFile(path.join(root, '.env'), '');
     expect(await checkAccount(root)).toBeUndefined();

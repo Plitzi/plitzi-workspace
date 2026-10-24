@@ -1,5 +1,5 @@
 import { interactionBasicTriggers } from '@plitzi/sdk-elements/elements/declarations';
-import { intervalOf, MIN_INTERVAL_MS, parseKeys, SCROLL_TRIGGER } from '@plitzi/sdk-shared/helpers';
+import { intervalOf, MIN_INTERVAL_MS, parseKeys, SCROLL_TRIGGER, VIEW_TRIGGER } from '@plitzi/sdk-shared/helpers';
 
 import { typeTriggerDefinitions } from './catalog';
 import { AuthoringError } from '../schema/codes';
@@ -120,6 +120,13 @@ export const onInterval = (ms: number): StepSpec => {
  * 'boolean', value: '{{ row.atEnd }}' })]`.
  */
 export const onScroll = (): StepSpec => on(SCROLL_TRIGGER);
+
+/**
+ * The element came into the visitor's view — or left it — as the page is read: `{ inView }`. A list's last row loads
+ * more: `[named('end', onView(400)), when({ field: 'end.inView', operator: '==', value: true }), loadMore('posts')]`.
+ * `margin` fires it that many pixels before the element shows, so the next page is there when it is reached.
+ */
+export const onView = (margin = 0): StepSpec => on(VIEW_TRIGGER, margin === 0 ? {} : { margin });
 
 export const onPageLoad = (): StepSpec => on('onPageLoad');
 

@@ -3,7 +3,7 @@ import { promisify } from 'node:util';
 
 import { guestBytes, guestCrypto, guestEvents, guestFetch, installGuest } from './guest';
 import { guestPrelude } from './prelude';
-import { changeKv } from '../../actions/runtime/kvChange';
+import { changeKv, changeListEntry } from '../../actions/runtime/kvChange';
 import { createFunctionsDriver, describeFunctions } from '../driver';
 import { FunctionFailure, failedAnswerOf } from '../protocol';
 
@@ -214,7 +214,7 @@ const BOOTSTRAP = `(() => {
     fetch: (${guestFetch.toString()})(bytes, events),
     crypto: (${guestCrypto.toString()})(host, bytes)
   };
-  return (${installGuest.toString()})(globalThis, host, { changeKv: ${changeKv.toString()}, describeFunctions: ${describeFunctions.toString()}, createFunctionsDriver: ${createFunctionsDriver.toString()} }, parts);
+  return (${installGuest.toString()})(globalThis, host, { changeKv: ${changeKv.toString()}, changeListEntry: ${changeListEntry.toString()}, describeFunctions: ${describeFunctions.toString()}, createFunctionsDriver: ${createFunctionsDriver.toString()} }, parts);
 })()`;
 
 type Cached = { code: string; bytes: number; cachedData?: IsolatedVM.ExternalCopy<ArrayBuffer> };
@@ -433,7 +433,7 @@ export const createIsolateRunner = ({
       if (definition.typeof !== 'object') {
         throw new FunctionFailure(
           'error',
-          'functions/index.ts exports its definition by default: export default defineFunctions({ … })'
+          'The functions bundle exports no definition: each file at the top of functions/ exports one by default — export default defineFunctions({ tasks: [ … ] })'
         );
       }
 

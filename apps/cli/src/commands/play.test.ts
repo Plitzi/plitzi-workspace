@@ -6,7 +6,14 @@ import { playedText, unlikeIn, verdictOf } from './play';
 
 import type { ElementState, PlayedStep } from './play';
 
-const at = (x: number, shown = true, enabled = true): ElementState => ({ offset: { x, y: 0 }, shown, enabled });
+const at = (x: number, shown = true, enabled = true): ElementState => ({
+  offset: { x, y: 0 },
+  shown,
+  enabled,
+  text: '',
+  aria: {},
+  focused: false
+});
 
 /** A row and its arrow, at the start and after one press — here and there. */
 const played = (hereMove: number, thereMove: number, arrowThereShown: boolean): PlayedStep[] => [
@@ -64,6 +71,28 @@ describe('page play', () => {
 
   // lx-product: a tab drawn per width was hidden at 390, its press skipped without a word — and "✓ every step as
   // theirs" was said beside an element read that was not on the page.
+  // encore: Listen turning Mute, the focus back on the burger and a search typed each took a Playwright script.
+  it('says what a control says of itself: its words, its value, its ARIA states, its focus', () => {
+    const toggle: ElementState = { ...at(0), text: 'Mute', aria: { pressed: 'true' }, focused: true };
+    const search: ElementState = { ...at(0), text: '', value: 'lofi', aria: {} };
+
+    expect(
+      playedText([
+        {
+          step: 'click listen',
+          reads: [
+            { element: 'listen', here: toggle },
+            { element: 'search', here: search }
+          ]
+        }
+      ])
+    ).toEqual([
+      'click listen',
+      '  listen: shown, enabled · focused · pressed true · "Mute"',
+      '  search: shown, enabled · value "lofi"'
+    ]);
+  });
+
   it('says a step that did nothing on a side, and never passes one with an element not on the page', () => {
     const steps = played(909, 909, false);
     const idle: PlayedStep[] = [

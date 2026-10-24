@@ -2,10 +2,11 @@ import path from 'node:path';
 
 import esbuild from 'esbuild';
 
-import { isFunctionsSourcePath } from '@plitzi/sdk-shared/actions';
+import { isFunctionsDefinitionFile, isFunctionsSourcePath } from '@plitzi/sdk-shared/actions';
 
 import { ActionRefusal, defineFunctions } from './contract';
 
+import type { FunctionsDefinition } from './contract';
 import type { FunctionsProblem } from '@plitzi/sdk-shared';
 
 /** A space's functions source: its files under `functions/`, by path (`index.ts`, `lib/feed.ts`). */
@@ -26,8 +27,100 @@ export class FunctionsBuildError extends Error {
   }
 }
 
-/** The file a space's functions start from. */
-export const FUNCTIONS_ENTRY = 'index.ts';
+/**
+ * The definitions of `files`, merged into one — what a bundle exports by default. Printed into the bundle from itself,
+ * so it uses nothing outside: two tasks of one id or two routes of one path are refused, naming both files; the hosts
+ * code may reach are every file's together; a file whose default export is not a definition is no definition.
+ */
+export const mergeFunctions = (files: [string, unknown][]): FunctionsDefinition => {
+  const isDefinition = (value: unknown): value is FunctionsDefinition =>
+    typeof value === 'object' &&
+    value !== null &&
+    ['tasks', 'routes', 'allow', 'limits', 'oauth', 'jobs'].some(key => key in value) &&
+    !Array.isArray(value);
+  const tasks: FunctionsDefinition['tasks'] = [];
+  const routes: NonNullable<FunctionsDefinition['routes']> = {};
+  const oauth: NonNullable<FunctionsDefinition['oauth']> = {};
+  const jobs: NonNullable<FunctionsDefinition['jobs']> = {};
+  const hosts = new Set<string>();
+  const from = new Map<string, string>();
+  let limits: { file: string; value: NonNullable<FunctionsDefinition['limits']> } | undefined;
+  let found = 0;
+  // One name defined once across the files: a task by its id, a route by its path, a connection and a job by name.
+  const once = (kind: string, name: string, file: string): void => {
+    const before = from.get(`${kind} ${name}`);
+    if (before !== undefined) {
+      throw new Error(`The ${kind} ${name} is defined twice: in ${before} and in ${file} — one file defines it`);
+    }
+
+    from.set(`${kind} ${name}`, file);
+  };
+  for (const [file, value] of files) {
+    if (!isDefinition(value)) {
+      continue;
+    }
+
+    found += 1;
+    for (const task of value.tasks ?? []) {
+      once('task', `${task.namespace}.${task.action}`, file);
+      tasks.push(task);
+    }
+
+    for (const [route, handler] of Object.entries(value.routes ?? {})) {
+      once('route', route, file);
+      routes[route] = handler;
+    }
+
+    for (const [name, connection] of Object.entries(value.oauth ?? {})) {
+      once('OAuth connection', name, file);
+      oauth[name] = connection;
+    }
+
+    for (const [name, job] of Object.entries(value.jobs ?? {})) {
+      once('job', name, file);
+      jobs[name] = job;
+    }
+
+    if (value.limits !== undefined) {
+      if (limits !== undefined) {
+        throw new Error(
+          `The functions' limits are said twice: in ${limits.file} and in ${file} — they are every task's, said once`
+        );
+      }
+
+      limits = { file, value: value.limits };
+    }
+
+    for (const host of value.allow?.hosts ?? []) {
+      hosts.add(host);
+    }
+  }
+
+  if (found === 0) {
+    throw new Error(
+      "No file at the top of functions/ exports a definition by default: export default defineFunctions({ tasks: [ … ] }) in each domain's file"
+    );
+  }
+
+  return {
+    tasks,
+    ...(Object.keys(routes).length > 0 ? { routes } : {}),
+    ...(Object.keys(oauth).length > 0 ? { oauth } : {}),
+    ...(Object.keys(jobs).length > 0 ? { jobs } : {}),
+    ...(limits ? { limits: limits.value } : {}),
+    ...(hosts.size > 0 ? { allow: { hosts: [...hosts] } } : {})
+  };
+};
+
+/** The module a bundle starts from: each definition file imported, their definitions merged (`mergeFunctions`). */
+const ENTRY = '\0functions-entry';
+
+const entryModule = (files: string[]): string =>
+  [
+    ...files.map((file, index) => `import * as file${String(index)} from './${file}';`),
+    `const merge = ${mergeFunctions.toString()};`,
+    `export default merge([${files.map((file, index) => `[${JSON.stringify(file)}, file${String(index)}.default]`).join(', ')}]);`
+  ].join('\n');
 
 /** The most a bundle may weigh: well under the smallest provider a runner may be (Workers take 3 MB compressed). */
 export const MAX_FUNCTIONS_BYTES = 1_000_000;
@@ -54,8 +147,11 @@ const sourceProblems = (source: FunctionsSource): FunctionsProblem[] => {
     }
   }
 
-  if (!(FUNCTIONS_ENTRY in source)) {
-    problems.push({ message: `Functions start from ${FUNCTIONS_ENTRY}, which exports the definition by default` });
+  if (!Object.keys(source).map(normalize).some(isFunctionsDefinitionFile)) {
+    problems.push({
+      message:
+        'Functions are the files at the top of functions/, each exporting its definition by default: export default defineFunctions({ tasks: [ … ] })'
+    });
   }
 
   return problems;
@@ -91,6 +187,10 @@ const sourcePlugin = (files: Map<string, string>): esbuild.Plugin => ({
         return { path: CONTRACT_SPECIFIER, namespace: 'contract' };
       }
 
+      if (args.kind === 'entry-point' && args.path === ENTRY) {
+        return { path: ENTRY, namespace: 'entry' };
+      }
+
       if (args.kind !== 'entry-point' && !args.path.startsWith('.')) {
         return {
           errors: [
@@ -116,6 +216,11 @@ const sourcePlugin = (files: Map<string, string>): esbuild.Plugin => ({
         : { errors: [{ text: `"${args.path}" is not a file of this space's functions` }] };
     });
     build.onLoad({ filter: /.*/, namespace: 'contract' }, () => ({ contents: CONTRACT_MODULE, loader: 'js' }));
+    build.onLoad({ filter: /.*/, namespace: 'entry' }, () => ({
+      contents: entryModule([...files.keys()].filter(isFunctionsDefinitionFile).sort()),
+      loader: 'js',
+      resolveDir: '.'
+    }));
     build.onLoad({ filter: /.*/, namespace: 'functions' }, args => ({
       contents: files.get(args.path) ?? '',
       loader: loaderOf(args.path),
@@ -152,7 +257,7 @@ export const buildFunctions = async (source: FunctionsSource): Promise<Functions
   let result: esbuild.BuildResult<{ write: false }>;
   try {
     result = await esbuild.build({
-      entryPoints: [FUNCTIONS_ENTRY],
+      entryPoints: [ENTRY],
       bundle: true,
       write: false,
       format: 'esm',

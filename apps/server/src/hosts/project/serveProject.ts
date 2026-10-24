@@ -13,6 +13,7 @@ import {
   DEV_SERVER_FILE,
   FUNCTIONS_DIR,
   KV_FILE,
+  KV_FILE_ENV,
   PROJECT_TMP,
   PUBLIC_DIR,
   RUNTIME_BUNDLE,
@@ -387,7 +388,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
   let keptKv: FileKv | undefined;
   const kv = fleetKv(() => {
     keptKv = createFileKv({
-      file: path.join(root, KV_FILE),
+      file: path.resolve(root, process.env[KV_FILE_ENV] || KV_FILE),
       owner: `the server of "${name}", on port ${String(port)}`
     });
 

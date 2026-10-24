@@ -61,7 +61,9 @@ being found out), `{{ auth.details.username }}` — `details` carries `id`, `use
 A page's `accessLevel`: `'authenticated'` (signed in), `'public'` (signed OUT only — the sign-in page), or nothing
 (everybody). A lone `public` page vanishes the moment anyone signs in, so leave it out unless the page has a signed-in
 twin on the same slug. `unauthorizedRedirect` names where a visitor the page is not for goes — a page's id or slug
-(`''` is the home page), or a URL; without it they are answered 403.
+(`''` is the home page), or a URL; without it they are answered 403. A visitor not signed in is sent with the address
+they asked for as `?redirect=`, and the sign-in sends them back after `authLogin`:
+`navigate({ urlType: 'external', url: "{{ navigation.queryParams.redirect | default('/') }}" })`.
 
 A page for some permissions says so: `access: { permissions: ['postPublish'] }` — every one held, by a signed-in visitor
 (the permissions of their visitor roles; on Plitzi's own spaces, their account's). The server keeps it: anybody else is

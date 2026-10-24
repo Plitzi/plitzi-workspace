@@ -552,7 +552,9 @@ export interface SpaceSpec {
    * state is kept. `customCss` above is the one field of that same object every space sets, and it stays named on
    * its own for that reason; these are the rest, spread over it.
    */
-  settings?: Partial<Omit<Schema['settings'], 'customCss'>>;
+  // The settings written at the top of the space (`computed`, `channels`) are left out of these: typed here, they
+  // compiled and were refused by author (`setting-misplaced`) — encore's dev-2, from a brief that said settings.channels.
+  settings?: Partial<Omit<Schema['settings'], 'customCss' | 'computed' | 'channels'>>;
   /**
    * Server-resolved data for this space's `runtime: 'server'` elements: on unless a space turns it off. Left out,
    * authoring writes `{ enabled: true }` for a space that has a server element; `{ enabled: false }` with one is warned

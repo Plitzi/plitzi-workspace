@@ -44,9 +44,11 @@ the builder edits it with, and the \`index.ts\` that hands them over.
 
 const FUNCTIONS = `## \`${FUNCTIONS_DIR}/\` — the project's own server code
 
-The tasks a server action's steps run (\`task: 'namespace.action'\`) and the routes under \`/fn/\`, from \`index.ts\` —
-\`export default defineFunctions({ tasks, routes, allow })\` from \`@plitzi/sdk-server/functions\`. The server builds
-it at boot the way Plitzi builds a space's, and \`start:dev\` restarts on a change there. Nothing there, no functions.
+The tasks a server action's steps run (\`task: 'namespace.action'\`) and the routes under \`/fn/\`, a domain a file:
+each file at the top (\`rooms.ts\`, \`queue.ts\`) exports \`defineFunctions({ tasks, routes, allow })\` from
+\`@plitzi/sdk-server/functions\` by default, and the server merges them — nothing lists them, and a task or a route two
+files define is refused. A folder there is helpers. The server builds them at boot the way Plitzi builds a space's,
+and \`start:dev\` restarts on a change there. Nothing there, no functions.
 \`plitzi functions pull\` writes the space's functions there, and \`push\` sends them back. A file imports its siblings
 with their extension — \`import { reader } from './sources.ts'\`.
 `;

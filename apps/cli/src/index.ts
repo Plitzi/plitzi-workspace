@@ -29,6 +29,7 @@ import {
   setRuntimeVariable,
   unsetRuntimeVariable
 } from './commands/runtime';
+import { serverList, serverStop } from './commands/server';
 import { upgrade, UPGRADE_PARTS } from './commands/upgrade';
 import uploadPluginCommand from './commands/uploadPlugin';
 import { verify } from './commands/verify';
@@ -59,6 +60,7 @@ import type { PackSourceOptions } from './commands/packSource';
 import type { PullOptions } from './commands/pull';
 import type { PushOptions } from './commands/push';
 import type { RuntimeOptions, RuntimeStatusOptions } from './commands/runtime';
+import type { ServerStopOptions } from './commands/server';
 import type { UpgradeOptions } from './commands/upgrade';
 import type { UploadPluginOptions } from './commands/uploadPlugin';
 import type { VerifyOptions } from './commands/verify';
@@ -186,6 +188,27 @@ const runtime = program
 const sourceGroup = program
   .command('source')
   .description('The source a plugin or the runtime is built from, kept beside what is sent');
+
+const serverGroup = program
+  .command('server')
+  .description(
+    'This project’s own servers — what npm start left listening from this folder — listed, and stopped safely'
+  );
+
+serverGroup
+  .command('list')
+  .description('What listens from this folder, and whether its /health says it is this project')
+  .option('--json', 'One object, for a tool or an agent')
+  .action((options: { json?: boolean }) => serverList(options));
+
+serverGroup
+  .command('stop')
+  .description(
+    'Stop this project’s server — on --port, or every one — and what it started; never by name, never another folder’s'
+  )
+  .addOption(new Option('--port <port>', 'The one on this port alone').argParser(positiveInteger))
+  .option('--json', 'One object, for a tool or an agent')
+  .action((options: ServerStopOptions) => serverStop(options));
 
 spaceGroup
   .command('pull')

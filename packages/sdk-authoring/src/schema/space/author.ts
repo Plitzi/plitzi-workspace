@@ -26,7 +26,15 @@ import {
   collectSources
 } from './checks';
 import { markConditionalByChildren, resolveControls } from './elements';
-import { addComponent, addLayout, addPage, assertLayoutRef, buildPageFolders, writeRedirect } from './pages';
+import {
+  addComponent,
+  addLayout,
+  addPage,
+  assertLayoutRef,
+  buildPageFolders,
+  homeIndexOf,
+  writeRedirect
+} from './pages';
 import {
   assertAncestorClasses,
   collectDeclarations,
@@ -325,7 +333,8 @@ export class SpaceAuthor {
     const pageFolders = buildPageFolders(this);
     const declared = collecting(this, () => components.map(component => addComponent(this, component)));
     collecting(this, () => layouts.forEach(layout => addLayout(this, layout)));
-    const pages = collecting(this, () => this.spec.pages.map((page, index) => addPage(this, page, index)));
+    const home = homeIndexOf(this.spec.pages);
+    const pages = collecting(this, () => this.spec.pages.map((page, index) => addPage(this, page, index, home)));
     const families = new Map<object, string[]>();
     this.spec.pages.forEach((page, index) => {
       const family = familyOf(page);

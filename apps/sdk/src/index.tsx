@@ -32,7 +32,7 @@ import {
   useWebGL2
 } from '@plitzi/sdk-elements/canvas';
 import { ComponentProvider } from '@plitzi/sdk-elements/Component';
-import { useFlag } from '@plitzi/sdk-elements/dataSource';
+import { PluginSource, useFlag } from '@plitzi/sdk-elements/dataSource';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers';
 import { usePlitzi, PlitziProvider } from '@plitzi/sdk-shared/hooks';
@@ -490,6 +490,9 @@ export {
   useJob,
   // One of the space's feature flags, for a plugin that ships a feature behind one: whatever every layer decided.
   useFlag,
+  // A plugin's own data source for the elements put inside it — `{{ <sourceType>_<id>.track }}` — under the name its
+  // declaration's `sourceType` gives.
+  PluginSource,
   // A plugin that draws: a loop that runs only while somebody can see it move, and a canvas sized to the device, with
   // a still frame where it may not animate and an error that says why instead of an empty canvas.
   useAnimationFrame,

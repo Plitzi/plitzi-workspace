@@ -44,7 +44,7 @@ export const originHere = async (
     if ((await newestWrite(root)) > started) {
       process.stderr.write(
         chalk.yellow(
-          `· served by your own server on :${String(own)}, and the copy's src/ was written since it started: it shows the copy as it was unless it watches — restart it, or stop it (kill $(lsof -tiTCP:${String(own)} -sTCP:LISTEN)) and the CLI serves the copy as it is\n`
+          `· served by your own server on :${String(own)}, and the copy's src/ was written since it started: it shows the copy as it was unless it watches — restart it, or stop it (plitzi server stop --port ${String(own)}, in the copy) and the CLI serves the copy as it is\n`
         )
       );
     }

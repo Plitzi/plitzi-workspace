@@ -24,6 +24,8 @@ export const prefixKv = (store: ActionKvStore, prefix: string): ActionKvStore =>
     listPut: (list, entry, options) => store.listPut(scoped(list), entry, options),
     listRange: (list, range) => store.listRange(scoped(list), range),
     listRemove: (list, id) => store.listRemove(scoped(list), id),
+    listSwap: (list, id, expected, next) => store.listSwap(scoped(list), id, expected, next),
+    listChange: (list, id, change) => store.listChange(scoped(list), id, change),
     change: (key, change, lifetime) => store.change(scoped(key), change, lifetime)
   };
 };

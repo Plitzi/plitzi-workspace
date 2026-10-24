@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, unwatchFile, watch, watchFile } from 'node:fs';
 import path from 'node:path';
 
-import { PLUGIN_FUNCTIONS_SOURCE } from '@plitzi/sdk-shared/actions';
+import { isFunctionsDefinitionFile, PLUGIN_FUNCTIONS_SOURCE } from '@plitzi/sdk-shared/actions';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import {
   checkPluginFolder,
@@ -75,12 +75,14 @@ const pluginFolders = (root: string): Map<string, { folder: string; entry: strin
  * A plugin's server half: its `functions/` folder (`src/plugins/Board/functions/index.ts`), written like the project's
  * own `src/functions/` and loaded with what a plugin may reach — its own corner of `kv`, its routes under
  * `/fn/plugins/<name>/`, its tasks named `<name>.<action>`. A folder without one is a component and nothing else; one
- * with code and no `index.ts` is the layout check's to say (`plugin-functions-entry-missing`).
+ * with code and no file at its top is the layout check's to say (`plugin-functions-entry-missing`).
  */
 const folderFunctions = async (root: string, folder: string): Promise<FunctionsDefinition | undefined> => {
   const functions = path.join(root, PLUGINS_DIR, folder, PLUGIN_FUNCTIONS_DIR);
 
-  return existsSync(path.join(functions, 'index.ts')) ? (await loadFunctions(functions)).at(0) : undefined;
+  const top = existsSync(functions) ? readdirSync(functions).filter(isFunctionsDefinitionFile) : [];
+
+  return top.length > 0 ? (await loadFunctions(functions)).at(0) : undefined;
 };
 
 type BuiltPlugin = { type: string; source: PluginSource; functions?: string };
@@ -224,11 +226,14 @@ const watchPluginsFolder = (
       }
     }
   };
+  // What a plugin's functions failed to load with, by folder: said once while it stays so, as a layout finding is.
+  const failed = new Map<string, string>();
   const reloadFunctions = (folder: string): void => {
     const name = pluginTypeOf(folder);
     sayOf(folder);
     folderFunctions(root, folder)
       .then(definition => {
+        failed.delete(folder);
         server.functions.setPlugin(name, definition);
         // A plugin with no server half has nothing loaded to say.
         if (definition) {
@@ -236,10 +241,13 @@ const watchPluginsFolder = (
         }
       })
       .catch((error: unknown) => {
-        console.error(
-          `[plugins] ${name}: its functions were not loaded again:`,
-          error instanceof Error ? error.message : error
-        );
+        const message = error instanceof Error ? error.message : String(error);
+        if (failed.get(folder) === message) {
+          return;
+        }
+
+        failed.set(folder, message);
+        console.error(`[plugins] ${name}: its functions were not loaded again:`, message);
       });
   };
   const sync = (): void => {

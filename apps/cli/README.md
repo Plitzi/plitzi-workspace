@@ -185,8 +185,9 @@ with its fix). A plugin is declared by its folder: the server, `author` and `pag
 `src/plugins/<Name>/declaration.ts` (`pluginDeclarations` from `@plitzi/sdk-authoring/node`). What the server does
 besides serving the space is the project's own, in files it reads: `src/config/serverOptions.ts` (handed to `serveProject` —
 `images`, `action.limits`, `action.kv`, `rsc`) and, with `--source local`, `src/actions/index.ts` (the space's server
-actions, one `defineAction` each — `taskAction(task, { trigger })` for one that only runs a task — a file each as they
-grow).
+actions, one `defineAction` each — `taskAction(task, { trigger })` for one that only runs a task — a file per domain:
+`actionsIn` from `@plitzi/sdk-authoring/node` reads every file of `src/actions/` and what each exports, so nothing
+lists them; one id exported by two files is refused naming both).
 What `serveProject` wires itself — where the space comes from, the plugins, `public/`, `src/data/`, `src/functions/`,
 the actions' lookups — is left out of `serverOptions`' type (`ProjectServerOptions`), and comes after it, so an option
 there can never unwire it.
@@ -836,6 +837,18 @@ Security on Android.
 A certificate names the addresses it was made for: when the router hands the machine a new one, the server says so at
 boot, and `cert` makes one again — or open the `.local` name, which stays. A space read from Plitzi by a browser project
 answers the address the phone opens once it is among the space's allowed domains.
+
+## `server list` and `server stop`
+
+```bash
+npx plitzi server list                 # what this project's folder has listening, and whether each is its server
+npx plitzi server stop --port 4793     # that one, and what it started; none named: every one of this project
+```
+
+A server is the project's when it listens from the project's folder (`tmp/` left out: a run's copies each answer for
+their own) and its `/health` says it serves that folder. Only those are stopped — with the processes they started —
+never by name: one of another folder, or no Plitzi server at all, is named and left, and `--port` with nothing of the
+project on it fails. What agents run stops servers this way; `pkill` and `killall` reach every process on the machine.
 
 ## `feedback`
 

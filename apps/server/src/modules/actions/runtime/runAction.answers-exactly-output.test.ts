@@ -101,6 +101,42 @@ describe('runAction', () => {
     // A number bound to a text param arrives as its digits, and a required param with a default is never missing.
     expect(ran).toEqual([{ title: '12', seconds: 90, note: 'none' }]);
   });
+  // encore: a room's genres went to its task as "synthwave,house" — a param could not be a list.
+  it('hands a list param as a list: bound to one, or written a value a line or between commas — within maxItems', async () => {
+    const seen: unknown[] = [];
+    const task: FunctionTask<{ genres: string[] }> = {
+      namespace: 'test',
+      action: 'listed',
+      title: 'Listed',
+      params: { genres: { type: 'list', canBind: true, label: 'Genres', required: true, maxItems: 3 } },
+      run: params => {
+        seen.push(params.genres);
+
+        return Promise.resolve({});
+      }
+    };
+    const { runAction } = createActionsModule({ lookups, functions: tasksOf(task) });
+    const step = (genres: unknown) =>
+      buildEntry({
+        nodes: {
+          start: callTrigger({}, 'listed'),
+          listed: node('listed', { action: 'test.listed', params: { genres }, afterNode: 'out' }),
+          out: node('out', { action: 'flow.output', params: { values: '{"ok": true}' } })
+        }
+      });
+
+    await runAction(request(step(['synthwave', 'house'])));
+    await runAction(request(step('synthwave, house\ndnb')));
+    const none = await runAction(request(step([])));
+    const many = await runAction(request(step('a,b,c,d')));
+
+    expect(seen).toEqual([
+      ['synthwave', 'house'],
+      ['synthwave', 'house', 'dnb']
+    ]);
+    expect(none.error).toBe('Genres is required');
+    expect(many.error).toBe('Genres takes at most 3');
+  });
   it('refuses past a rate limit with the words the task gave it, in a server of its own too', async () => {
     const task: FunctionTask<Record<string, never>> = {
       namespace: 'test',

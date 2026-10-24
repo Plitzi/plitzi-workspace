@@ -1,5 +1,5 @@
 import { runCommand } from './packageManager';
-import { DEV_SERVER_FILE, SERVER_RECORD_ENV, VISUAL_OUTPUT } from './paths';
+import { DEV_SERVER_FILE, KV_FILE_ENV, SERVER_RECORD_ENV, VISUAL_OUTPUT } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -33,11 +33,18 @@ export default defineConfig({
   use: { baseURL: ORIGIN },
   // Playwright starts the project itself, on a port of its own, so \`${runCommand(packageManager, 'visual')}\` is one
   // command from a cold checkout and never runs against the server you have open. Plain HTTP whatever \`.env\` says
-  // (TLS_CERT is for a device on the Wi-Fi), and its record kept apart: \`${DEV_SERVER_FILE}\` stays yours.
+  // (TLS_CERT is for a device on the Wi-Fi), and its record and its state kept apart: \`${DEV_SERVER_FILE}\` and the
+  // project's \`kv\` stay yours, held by the server you have open.
   webServer: {
     command: '${runCommand(packageManager, 'start')}',
     url: ORIGIN,
-    env: { PORT: String(PORT), TLS_CERT: '', TLS_KEY: '', ${SERVER_RECORD_ENV}: '${VISUAL_OUTPUT}/server.json' },
+    env: {
+      PORT: String(PORT),
+      TLS_CERT: '',
+      TLS_KEY: '',
+      ${SERVER_RECORD_ENV}: '${VISUAL_OUTPUT}/server.json',
+      ${KV_FILE_ENV}: '${VISUAL_OUTPUT}/kv.json'
+    },
     reuseExistingServer: true,
     timeout: 120_000
   }

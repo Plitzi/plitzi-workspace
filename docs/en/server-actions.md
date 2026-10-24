@@ -338,6 +338,20 @@ process, like everything else that has to be agreed across replicas.
 
 ---
 
+### Over HTTP: a test, a script, another server
+
+The step and `useServerAction` are one request, and anything can make it: `POST /_action` on the space's own host, with
+`{ "actionId": "update-post", "input": { "slug": "hello" } }` (and an `idempotencyKey` of the caller's when a retry
+must not run twice). A call trigger's `access` decides who may: a session cookie or an `Authorization: Bearer` token
+for `session` and `role`, nothing for `public`. A page of another origin is refused (`reason: 'foreign'`); a request
+with no `Origin` — `curl`, a test's own `request`, a server — is not.
+
+A run that started answers `200 { runId, status, output, error? }`, its id in `X-Plitzi-Run-Id` too — one a step
+ended (an `ActionRefusal` included) is `status: 'failed'` with that `error`: it ran. One refused before it ran answers
+`{ error, reason }` with the status its reason maps to: `invalid_input` 422, `unauthenticated` 401, `forbidden` 403,
+`not_found` 404, `disabled` 409, `over_capacity` 429, `timeout` 504. The same call made while it is still running is
+answered by that run (`joined: true`, header `X-Plitzi-Joined`) — nothing runs twice.
+
 ## 4. The steps available
 
 Read the catalog in the editor — it is served by *your* server, so it lists what that deployment can actually run.

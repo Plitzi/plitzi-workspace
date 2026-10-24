@@ -187,6 +187,13 @@ const kvCall = (kv: ActionKvStore, method: string, args: unknown[]): Promise<unk
       return kv.listRange(stringArg(first, 'A list'), rangeOf(second));
     case 'listRemove':
       return kv.listRemove(stringArg(first, 'A list'), stringArg(second, 'An entry id'));
+    case 'listSwap':
+      return kv.listSwap(
+        stringArg(first, 'A list'),
+        stringArg(second, 'An entry id'),
+        third === undefined || third === null ? undefined : listEntryOf(third),
+        fourth === null ? null : listEntryOf(fourth)
+      );
     default:
       return Promise.reject(new CallError(`kv has no "${method}"`));
   }

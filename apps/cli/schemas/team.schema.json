@@ -129,6 +129,10 @@
           "sessionPerTask": {
             "type": "boolean",
             "description": "One task a session: each of its agents stops once it completes one, and the lead starts it again, a fresh context, for the next"
+          },
+          "resumeSession": {
+            "type": "boolean",
+            "description": "Started again after it died with a task in hand, an agent resumes its own session (Claude Code's --resume) \u2014 what it knew and had not written yet kept \u2014 unless the session is too large to read again for less than starting over"
           }
         }
       }
@@ -141,6 +145,16 @@
         "designReview": {
           "enum": ["light", "standard", "high"],
           "description": "How closely a designer reviews another task's UI: light (its pages, 1440 and 390, the default scheme), standard (both schemes and widths, its sections against the reference \u2014 the default), high (every page that reads its files, against the run before it too). A review costs what it looks at."
+        },
+        "startGraceMinutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30,
+          "description": "How long an agent just started may say nothing before the tasks it holds read 'no signal' and it reads as not running: 3 when not said"
+        },
+        "launch": {
+          "enum": ["claude", "codex", "opencode"],
+          "description": "The harness the CLI starts the agents in by itself: run watch --until lead starts each agent the run asks for instead of waking the lead to. Left out, the lead starts them."
         }
       }
     },

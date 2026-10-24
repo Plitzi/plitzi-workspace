@@ -103,6 +103,7 @@ export const installGuest = (
           : undefined
       ),
     changeKv: shared.changeKv,
+    changeListEntry: shared.changeListEntry,
     refusal
   });
 

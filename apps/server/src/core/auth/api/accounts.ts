@@ -39,8 +39,22 @@ export const accountsFlows = ({
       return limited;
     }
 
-    if ((await adapters.findByUsername?.(username)) ?? (await adapters.findByEmail?.(email))) {
-      return refuse(400, 'User already exists');
+    // Which one is taken, for the form to mark its field (encore's sign-up said it under the form): no more than "a user
+    // exists" already told, as that answered the same for an email tried with any username.
+    const taken = (await adapters.findByUsername?.(username))
+      ? 'username'
+      : (await adapters.findByEmail?.(email))
+        ? 'email'
+        : undefined;
+    if (taken) {
+      return {
+        ok: false,
+        status: 400,
+        body: {
+          error: taken === 'username' ? 'That username is taken' : 'An account with that email already exists',
+          field: taken
+        }
+      };
     }
 
     // Both are guaranteed by `capabilities.signup`; asserting it here keeps that guarantee where it is decided.

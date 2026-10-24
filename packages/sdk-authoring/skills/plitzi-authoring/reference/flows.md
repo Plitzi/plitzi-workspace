@@ -108,10 +108,10 @@ ticks while the element is mounted and the tab is in view, never in the builder 
 at the bound.
 
 **Scrolling** is a step on the element whose box scrolls (`overflow-x: auto` on a row of cards): `scrollBy('cards',
-{ x: '80%' })` moves it by most of what it shows (`'-80%'` back, `'240'` pixels), `scrollTo('cards', { x: 'end' })`
-to an end or a place, and `scrollIntoView('answer', { block: 'center' })` brings an element into view. `onScroll()`
+{ x: '80%' })` moves it (`'-80%'` back, `'240'` pixels), `scrollTo('cards', { x: 'end' })` to an end or a place, and `scrollIntoView('answer', { block: 'center' })` brings an element into view. `onScroll()`
 fires as the box moves and once on mount, with `{ x, y, atStart, atEnd }` — what an arrow that hides at the end reads
-(recipes/scroll-a-row.ts). A link to a section needs none of this: an `anchor` and a link's `hash`.
+(recipes/scroll-a-row.ts). `onView()` fires entering and leaving view. A link to a section is an
+`anchor` and a link's `hash`.
 
 **A form's flow goes on the `form`**, which hands its submit over with `managedByInteractions: true`
 (`FORM_SUBMIT_UNMANAGED` otherwise — the browser submits it natively and `onSubmit` never fires):

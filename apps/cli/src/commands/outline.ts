@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 
 import { launchBrowser } from '../browser';
+import { accountAsked } from './check';
 import { projectHere } from './existingProject';
 import { ourPage, pairOf } from './measure';
 import { putIn } from './measureState';
@@ -30,6 +31,8 @@ export interface OutlineOptions {
   click?: string[];
   scheme?: Scheme;
   url?: string;
+  /** Signed in first as this account: the password from `PLITZI_CHECK_PASSWORD`. */
+  as?: string;
   json?: boolean;
 }
 
@@ -316,6 +319,11 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
     }
   }
 
+  const account = await accountAsked(project.root, options.as);
+  if (account === null) {
+    return;
+  }
+
   const browser = await launchBrowser(project.root);
   if ('problem' in browser) {
     unanswered(browser.problem);
@@ -334,8 +342,9 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
           })
         : await ourPage(browser, where?.origin ?? '', route, {
             width,
+            ...(account ? { account } : {}),
             ...(options.scheme ? { scheme: options.scheme } : {})
-          }).then(read => (read.answered ? read : { problem: `nothing answers at ${url}` }));
+          }).then(read => (read.answered ? read : { problem: read.problem ?? `nothing answers at ${url}` }));
     if ('problem' in opened) {
       unanswered(opened.problem);
 

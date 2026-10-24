@@ -108,12 +108,17 @@ export const listenersUnder = (dir: string): { pid: number; port: number; cwd: s
   });
 };
 
+/** Stops one listening process and what it started — never by its name, which another process may carry. */
+export const stopListener = (pid: number): void => {
+  descendantsOf(pid).forEach(quietly);
+  quietly(pid);
+};
+
 /** Stops each server listening from inside `dir`, and what it started: said back as what was stopped. */
 export const stopListenersUnder = (dir: string): { pid: number; port: number; cwd: string }[] => {
   const listening = listenersUnder(dir);
   for (const { pid } of listening) {
-    descendantsOf(pid).forEach(quietly);
-    quietly(pid);
+    stopListener(pid);
   }
 
   return listening;

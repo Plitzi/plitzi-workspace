@@ -247,7 +247,8 @@ export const assertRobotsTxt = (author: SpaceAuthor): void => {
  * two answers to one question. What they say is `lintSpace`'s to read.
  */
 export const assertComputedOnce = (author: SpaceAuthor): void => {
-  if (author.spec.settings?.computed !== undefined) {
+  // Typed out of `settings`, and still refused for a space written without the types.
+  if (Object.hasOwn(author.spec.settings ?? {}, 'computed')) {
     throw new AuthoringError(
       'setting-misplaced',
       '`settings.computed` is written through `computed` at the top of the space, not inside `settings`.'
@@ -260,7 +261,7 @@ export const assertComputedOnce = (author: SpaceAuthor): void => {
  * with no access rule, is a channel nobody can use — refused with what to write instead.
  */
 export const assertChannels = (author: SpaceAuthor): void => {
-  if (author.spec.settings?.channels !== undefined) {
+  if (Object.hasOwn(author.spec.settings ?? {}, 'channels')) {
     throw new AuthoringError(
       'setting-misplaced',
       '`settings.channels` is written through `channels` at the top of the space, not inside `settings`.'

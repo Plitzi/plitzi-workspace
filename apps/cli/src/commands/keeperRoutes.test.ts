@@ -48,7 +48,14 @@ const bench = (overrides: Partial<KeeperDeps<Page>> = {}) => {
       return Promise.resolve(undefined);
     },
     readState: (page, target) =>
-      Promise.resolve({ offset: { x: page.done.length, y: 0 }, shown: target !== 'hidden', enabled: true }),
+      Promise.resolve({
+        offset: { x: page.done.length, y: 0 },
+        shown: target !== 'hidden',
+        enabled: true,
+        text: '',
+        aria: {},
+        focused: false
+      }),
     close: page => {
       page.closed = true;
 
@@ -98,8 +105,8 @@ describe('the kept browser’s routes', () => {
     });
     expect(await ask('/session/read', { session, targets: ['#row', 'hidden'] })).toEqual({
       states: [
-        { offset: { x: 1, y: 0 }, shown: true, enabled: true },
-        { offset: { x: 1, y: 0 }, shown: false, enabled: true }
+        { offset: { x: 1, y: 0 }, shown: true, enabled: true, text: '', aria: {}, focused: false },
+        { offset: { x: 1, y: 0 }, shown: false, enabled: true, text: '', aria: {}, focused: false }
       ]
     });
     expect(await routes.routes['/session/act']({ session, step: { kind: 'fly' }, index: 0 })).toMatchObject({

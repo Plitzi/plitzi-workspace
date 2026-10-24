@@ -293,6 +293,15 @@ const paramOf = (value: unknown): TaskParam | string => {
       return { ...base, type: value.type, ...(typeof defaultValue === 'string' ? { defaultValue } : {}) };
     case 'boolean':
       return { ...base, type: 'boolean', ...(typeof defaultValue === 'boolean' ? { defaultValue } : {}) };
+    case 'list':
+      return {
+        ...base,
+        type: 'list',
+        ...(Array.isArray(defaultValue) ? { defaultValue: defaultValue.filter(item => typeof item === 'string') } : {}),
+        ...(typeof value.maxItems === 'number' && Number.isInteger(value.maxItems) && value.maxItems > 0
+          ? { maxItems: value.maxItems }
+          : {})
+      };
     case 'elements':
       return {
         ...base,
@@ -309,7 +318,7 @@ const paramOf = (value: unknown): TaskParam | string => {
       return { ...base, type: 'select', options, ...(typeof defaultValue === 'string' ? { defaultValue } : {}) };
     }
     default:
-      return `has a type the builder cannot draw ("${String(value.type)}"): text, number, textarea, codemirror-text, codemirror-json, boolean, elements or select`;
+      return `has a type the builder cannot draw ("${String(value.type)}"): text, number, textarea, codemirror-text, codemirror-json, boolean, elements, list or select`;
   }
 };
 

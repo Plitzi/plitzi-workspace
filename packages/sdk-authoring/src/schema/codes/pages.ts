@@ -12,6 +12,11 @@ export const PAGE_CODES = {
     means: 'two pages at one address for the same visitors',
     fix: "another slug — or `accessLevel` `'public'` on one and `'authenticated'` on the other"
   },
+  'page-catch-all-default': {
+    kind: 'refused',
+    means: "the page of every address no other answers (`slug: '*'`) marked the home",
+    fix: "`isDefault` on the page at `''`, or left out: the page at `''` is the home"
+  },
   'page-route-reserved': {
     kind: 'refused',
     means: "a page under `/fn`, where the space's functions answer",

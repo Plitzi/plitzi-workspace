@@ -5,13 +5,19 @@ import {
   SCROLL_BEHAVIORS,
   SCROLL_POSITIONS,
   SCROLL_TRIGGER,
+  VIEW_TRIGGER,
   scrollDistance,
   scrollPosition,
   scrollState
 } from '@plitzi/sdk-shared/helpers';
 
 import type { InteractionsManagerApi, ElementInteraction, InteractionCallback } from '@plitzi/sdk-shared';
-import type { ScrollStepBehavior, ScrollStepPosition, ScrollTriggerPayload } from '@plitzi/sdk-shared/helpers';
+import type {
+  ScrollStepBehavior,
+  ScrollStepPosition,
+  ScrollTriggerPayload,
+  ViewTriggerPayload
+} from '@plitzi/sdk-shared/helpers';
 import type { RefObject } from 'react';
 
 export type UseScrollInteractionsProps = {
@@ -34,7 +40,7 @@ const positionOf = (value: unknown, fallback: ScrollStepPosition): ScrollStepPos
   SCROLL_POSITIONS.find(position => position === value) ?? fallback;
 
 /**
- * The element's scroll steps, and its `onScroll` trigger.
+ * The element's scroll steps, its `onScroll` trigger, and its `onView` trigger.
  *
  * The steps move the element's own box — a row of cards with `overflow: auto` — or, `scrollIntoView`, the page to it;
  * the node is read when a step runs, so one rendered after the flow was wired is still the one moved. `onScroll` fires
@@ -124,6 +130,54 @@ const useScrollInteractions = ({
       window.cancelAnimationFrame(frame);
     };
   }, [id, interactionsManager, listens, nodeRef, previewMode]);
+
+  // `onView`: the element coming into the visitor's view and leaving it — the margin of the first trigger that asks one.
+  const viewMargin = useMemo(() => {
+    const trigger = Object.values(interactions ?? {}).find(
+      node => node.type === 'trigger' && node.action === VIEW_TRIGGER && node.enabled
+    );
+    if (!trigger) {
+      return undefined;
+    }
+
+    const margin = Number((trigger.params as Record<string, unknown> | undefined)?.margin ?? 0);
+
+    return Number.isFinite(margin) ? margin : 0;
+  }, [interactions]);
+
+  useEffect(() => {
+    const node = nodeRef.current;
+    if (
+      !previewMode ||
+      viewMargin === undefined ||
+      !node ||
+      typeof window === 'undefined' ||
+      typeof IntersectionObserver === 'undefined'
+    ) {
+      return undefined;
+    }
+
+    let seen: boolean | undefined;
+    const observer = new IntersectionObserver(
+      entries => {
+        const inView = entries.some(entry => entry.isIntersecting);
+        // Said when it changes — not again for each threshold the browser reports while it stays the same.
+        if (inView === seen) {
+          return;
+        }
+
+        seen = inView;
+        const payload: ViewTriggerPayload = { inView };
+        void interactionsManager.interactionTrigger(id, VIEW_TRIGGER, payload);
+      },
+      { rootMargin: `${String(viewMargin)}px` }
+    );
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [id, interactionsManager, nodeRef, previewMode, viewMargin]);
 
   return callbacks;
 };

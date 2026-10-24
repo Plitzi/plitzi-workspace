@@ -245,13 +245,13 @@ export const prepareFunctions = async (
   } catch (error) {
     return {
       ok: false,
-      problems: [{ file: 'index.ts', message: error instanceof Error ? error.message : String(error) }]
+      problems: [{ message: error instanceof Error ? error.message : String(error) }]
     };
   }
 
   const { manifest, problems } = readManifest(declared, reserved, ceilings, scope);
 
   return problems.length
-    ? { ok: false, problems: problems.map(message => ({ file: 'index.ts', message })) }
+    ? { ok: false, problems: problems.map(message => ({ message })) }
     : { ok: true, functions: { bundle, manifest } };
 };

@@ -34,6 +34,13 @@ import type { RunPaths, TaskPaths } from './paths';
 export const DEFAULTS = {
   /** Without a write, progress, heartbeat or command for this long — or 25 % of its estimate, if longer — a task has no signal. */
   noSignalMs: 15 * 60_000,
+  /** An agent just started is not silent for this long (`TeamOptions.startGraceMinutes` says another). */
+  startGraceMs: 3 * 60_000,
+  /**
+   * The largest session an agent resumes (`TeamAgent.resumeSession`): past it, reading it all again costs more than a
+   * fresh session that reads its task anew (encore's agents' sessions ran 3–5 MB).
+   */
+  resumeMaxBytes: 8 * 1024 * 1024,
   /** A lock lasts while its task has a signal, and this long after it lost it. */
   lockAfterSignalMs: 30 * 60_000,
   /** A run's caches are purged after this long without activity; its essentials stay. */

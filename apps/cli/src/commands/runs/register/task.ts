@@ -394,6 +394,10 @@ export const registerTaskGroup = (program: Command): Command => {
     )
     .option('--no-before', 'Not beside the run before it: the designer’s look of the UI it reviews, as it is alone')
     .option(
+      '--as <username>',
+      'Look signed in as this account — a page for signed-in visitors as one of them; the password from PLITZI_CHECK_PASSWORD in the project’s .env'
+    )
+    .option(
       '--status <code>',
       'The status its pages are sent with — 404 for a not-found page — as page check --status',
       Number

@@ -74,13 +74,63 @@ describe('building a space’s functions', () => {
     expect(problems[0]).toMatchObject({ file: 'broken.ts', line: 1 });
   });
 
-  it('needs an index.ts, and paths that stay inside functions/', async () => {
-    const problems = await problemsOf({ 'main.ts': '', '../escape.ts': '' });
+  it('needs a file at the top of functions/, and paths that stay inside it', async () => {
+    const problems = await problemsOf({ 'lib/helper.ts': '', '../escape.ts': '' });
 
     expect(problems.map(({ message }) => message)).toEqual([
       expect.stringContaining('relative path under functions/'),
-      expect.stringContaining('start from index.ts')
+      expect.stringContaining('the files at the top of functions/')
     ]);
+  });
+
+  // encore: every domain appended to one index.ts, and four conflicts and three integration tasks were that list.
+  describe('a domain a file, with nothing listing them', () => {
+    const domain = (namespace: string, extra = '') => `import { defineFunctions } from '@plitzi/sdk-server/functions';
+
+export default defineFunctions({
+  tasks: [{ namespace: '${namespace}', action: 'list', title: 'List', params: {}, run: () => '${namespace}' }]${extra}
+});
+`;
+    const load = async (source: Record<string, string>) => {
+      const { code } = await buildFunctions(source);
+
+      return (
+        (await import(`data:text/javascript,${encodeURIComponent(code)}`)) as {
+          default: { tasks: { namespace: string; run: () => string }[]; allow?: { hosts: string[] } };
+        }
+      ).default;
+    };
+
+    it('merges every top-level file’s definition — a test, a helper in a folder and a module of types left out', async () => {
+      const merged = await load({
+        'rooms.ts': domain('rooms', ", allow: { hosts: ['www.youtube.com'] }"),
+        'queue.ts': domain('queue', ", allow: { hosts: ['www.youtube.com', 'oembed.example'] }"),
+        'types.ts': 'export type Room = { slug: string };',
+        'queue.test.ts': "import { test } from 'node:test';",
+        'lib/helper.ts': 'export default { tasks: [] };'
+      });
+
+      expect(merged.tasks.map(task => task.namespace).sort()).toEqual(['queue', 'rooms']);
+      expect(merged.allow?.hosts.sort()).toEqual(['oembed.example', 'www.youtube.com']);
+    });
+
+    it('keeps one index.ts that lists them as it was', async () => {
+      const merged = await load({ 'index.ts': INDEX, 'lib/label.ts': 'export const label = () => `ok`;' });
+
+      expect(merged.tasks.map(task => task.namespace)).toEqual(['feed']);
+    });
+
+    it('refuses a task two files define, naming both', async () => {
+      await expect(load({ 'a.ts': domain('rooms'), 'b.ts': domain('rooms') })).rejects.toThrow(
+        'The task rooms.list is defined twice: in a.ts and in b.ts'
+      );
+    });
+
+    it('says none when no top-level file exports a definition', async () => {
+      await expect(load({ 'types.ts': 'export type Room = { slug: string };' })).rejects.toThrow(
+        'No file at the top of functions/ exports a definition by default'
+      );
+    });
   });
 
   it('refuses a bundle over the size a runner takes', async () => {

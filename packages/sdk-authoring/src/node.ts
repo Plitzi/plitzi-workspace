@@ -41,6 +41,7 @@ import { authorSpace } from './index';
 import { compactSvg } from './svg/compactSvg';
 
 import type { AuthoredSpace, PageSpec, PluginDeclarationData, SpaceSpec } from './schema/types';
+import type { ActionEntry } from '@plitzi/sdk-shared';
 
 const pathOf = (where: string | URL): string => (where instanceof URL ? fileURLToPath(where) : where);
 
@@ -200,6 +201,58 @@ export const pagesIn = async (folder: string | URL): Promise<PageSpec[]> => {
   const first = home === -1 ? pages.findIndex(page => page.slug === '') : home;
 
   return first <= 0 ? pages : [pages[first], ...pages.filter((_, index) => index !== first)];
+};
+
+/** A server action as `defineAction` and `taskAction` make one: its id, and the document the server runs. */
+const isActionEntry = (value: unknown): value is ActionEntry =>
+  isRecord(value) && typeof value.id === 'string' && isRecord(value.document);
+
+/** A file of a folder of actions: a module at its top, never its `index` (the list itself), a test or a declaration. */
+const ACTION_MODULE = /^(?!index\.)[^.].*\.(ts|js|mjs)$/;
+const NOT_AN_ACTION = /\.(test|spec)\.(ts|js|mjs)$|\.d\.ts$/;
+
+/**
+ * Every server action of a folder — a project's `src/actions/` — a domain a file, read by what each exports: an action
+ * (`defineAction`, `taskAction`) or a list of them, by any name. Nothing lists them: encore's agents all appended to one
+ * `actions/index.ts`, and its conflicts and integration tasks were that list. The folder's `index` is where this is
+ * called from, and is not read. One action exported twice (on its own and in its file's list) counts once; two of one id
+ * are refused, naming both files.
+ */
+export const actionsIn = async (folder: string | URL): Promise<ActionEntry[]> => {
+  const root = pathOf(folder);
+  if (!existsSync(root)) {
+    return [];
+  }
+
+  const files = readdirSync(root, { withFileTypes: true })
+    .filter(entry => entry.isFile() && ACTION_MODULE.test(entry.name) && !NOT_AN_ACTION.test(entry.name))
+    .map(entry => path.join(root, entry.name))
+    .sort();
+  const actions: ActionEntry[] = [];
+  const fileOf = new Map<string, string>();
+  for (const file of files) {
+    const loaded = await importProjectModule(file, root);
+    const exported = isRecord(loaded) ? Object.values(loaded) : [];
+    for (const value of exported
+      .flatMap((each): unknown[] => (Array.isArray(each) ? each : [each]))
+      .filter(isActionEntry)) {
+      if (actions.includes(value)) {
+        continue;
+      }
+
+      const before = fileOf.get(value.id);
+      if (before !== undefined) {
+        throw new Error(
+          `The action ${value.id} is defined twice: in ${path.relative(root, before)} and in ${path.relative(root, file)} — one file defines it`
+        );
+      }
+
+      fileOf.set(value.id, file);
+      actions.push(value);
+    }
+  }
+
+  return actions;
 };
 
 /** The declaration of every plugin under `folder`, for `authorSpace`'s `plugins`: what each fires, answers and reads. */

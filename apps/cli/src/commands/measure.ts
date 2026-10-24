@@ -9,6 +9,7 @@ import { openPage } from '@plitzi/sdk-authoring';
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
 import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
+import { accountAsked, signInAs } from './check';
 import { projectHere } from './existingProject';
 import { putIn, stateText } from './measureState';
 import { comparedText, keptText, readingText } from './measureText';
@@ -19,6 +20,7 @@ import { targetOn } from './shot/capture';
 import { pageAnswered } from './shot/remote';
 import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
 
+import type { Account } from './check';
 import type { StateAsked } from './measureState';
 import type { Difference, Measured } from './measureValues';
 import type { Browser, BrowserPage, Scheme } from '../browser';
@@ -44,6 +46,8 @@ const READING = 3;
 
 export interface MeasureOptions {
   url?: string;
+  /** Signed in first as this account: the password from `PLITZI_CHECK_PASSWORD`. */
+  as?: string;
   width?: number[];
   scheme?: Scheme;
   timezone?: string;
@@ -370,7 +374,7 @@ export const ourPage = async (
   origin: string,
   route: string,
   view: ViewAsked
-): Promise<{ page: BrowserPage; answered: boolean }> => {
+): Promise<{ page: BrowserPage; answered: boolean; problem?: string }> => {
   const page = await openProjectPage(browser, origin, {
     width: view.width,
     height: 900,
@@ -378,6 +382,13 @@ export const ourPage = async (
     ...(view.scheme ? { scheme: view.scheme } : {}),
     ...(view.timezone ? { timezone: view.timezone } : {})
   });
+  // Signed in first when asked (`--as`): a page for signed-in visitors read as one of them — encore's designers could
+  // not look at a vote, a host's controls or a settings form, only `page check|shot` signing in.
+  const refused = view.account && (await signInAs(page, origin, view.account));
+  if (refused) {
+    return { page, answered: false, problem: `--as ${refused}` };
+  }
+
   const answered = (await openPage(page, `${origin}${route}`, { quietMs: PROJECT_QUIET_MS })) !== null;
   if (!answered) {
     return { page, answered };
@@ -393,6 +404,8 @@ export const ourPage = async (
 
 export interface ViewAsked {
   width: number;
+  /** The account the page is read signed in as (`--as`). */
+  account?: Account;
   scheme?: Scheme;
   timezone?: string;
   state?: StateAsked;
@@ -437,11 +450,13 @@ const readAt = async (
   options: Pick<MeasureOptions, 'same' | 'fresh'>,
   now: number
 ): Promise<Reading[]> => {
-  const { page, answered } = await ourPage(browser, where.origin, where.route, view);
+  const { page, answered, problem } = await ourPage(browser, where.origin, where.route, view);
   // Nothing answering is said as such — not "No element … on chrome-error://" of a server gone (velada-shell's lead).
   const notPut = !answered
     ? {
-        problem: `nothing answers at ${where.origin}${where.route} — the server measured is not running (start it, or say where with --url)`
+        problem:
+          problem ??
+          `nothing answers at ${where.origin}${where.route} — the server measured is not running (start it, or say where with --url)`
       }
     : view.state
       ? await putIn(page, view.state, 'here')
@@ -584,6 +599,13 @@ export const measure = async (route: string, elements: string[], options: Measur
     return;
   }
 
+  const account = await accountAsked(project.root, options.as);
+  if (account === null) {
+    await browser.close();
+
+    return;
+  }
+
   const now = Date.now();
   try {
     const readings: Reading[] = [];
@@ -596,6 +618,7 @@ export const measure = async (route: string, elements: string[], options: Measur
           pairs,
           {
             width,
+            ...(account ? { account } : {}),
             ...(options.scheme ? { scheme: options.scheme } : {}),
             ...(options.timezone ? { timezone: options.timezone } : {}),
             ...(state ? { state } : {})

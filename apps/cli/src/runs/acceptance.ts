@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { realpathSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import net from 'node:net';
 import path from 'node:path';
@@ -8,7 +9,7 @@ import { projectMark } from '@plitzi/sdk-shared/project';
 
 import { inTurns } from './inTurns';
 import { stopKept } from './lingering';
-import { stopTree, TREE } from './processes';
+import { listenersUnder, stopListener, stopTree, TREE } from './processes';
 import { UNANSWERED_EXIT } from '../commands/terminal';
 import { runScript, scriptsOf, tail } from '../commands/verify';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
@@ -100,6 +101,20 @@ export const ownServer = async (work: string): Promise<number | undefined> => {
   return typeof health.Instance !== 'string' || health.Instance === projectMark(work) ? port : undefined;
 };
 
+/** Waits, a few seconds at most, until nothing answers on `port`. */
+const stoppedAnswering = async (port: number): Promise<void> => {
+  for (let tries = 0; tries < 20; tries += 1) {
+    const answers = await fetch(`http://127.0.0.1:${String(port)}/health`, { signal: AbortSignal.timeout(500) })
+      .then(() => true)
+      .catch(() => false);
+    if (!answers) {
+      return;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
+};
+
 /** The copy served by its own start script on a free port, quietly: what `$PLITZI_URL` names. */
 export const serveCopy = async (
   work: string,
@@ -110,11 +125,23 @@ export const serveCopy = async (
 ): Promise<{ url: string; port: number; stop: () => void; keep: () => number | undefined } | { problem: string }> => {
   // Kept from a picture before: stopped — the copy is served here for this command, one server at a time on it.
   await stopKept(cache);
+  // One of the agent's own in the copy (npm start) holds its state too: stopped here, said — encore's agents stopped
+  // theirs by hand before every check (21 times), refused until they did. It is the copy's by its folder and its
+  // /health, never stopped by a name.
   const running = await ownServer(work);
   if (running !== undefined) {
-    return {
-      problem: `a server of your own is running in the copy, on :${String(running)} — stop it, and ${again}: the copy is served for it, and two servers on one copy fight over its state`
-    };
+    const pid = listenersUnder(realpathSync(work)).find(each => each.port === running)?.pid;
+    if (pid === undefined) {
+      return {
+        problem: `a server of your own is running in the copy, on :${String(running)}, and is not one this command can stop — stop it (plitzi server stop --port ${String(running)}), and ${again}: two servers on one copy fight over its state`
+      };
+    }
+
+    stopListener(pid);
+    await stoppedAnswering(running);
+    process.stderr.write(
+      `· stopped your own server on :${String(running)}: it held the copy's state, and the copy is served for this command — start it again after, if you want it\n`
+    );
   }
 
   const scripts = await scriptsOf(work);

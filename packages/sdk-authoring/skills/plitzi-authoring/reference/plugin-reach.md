@@ -33,6 +33,18 @@ assistant({ id: 'jarvis', flows: [[
 The receiver declares the action (`callbacks`) and registers it from its declaration; a name either side does not
 declare is refused when the space is authored.
 
+## To the elements inside it: `PluginSource`
+
+A plugin the space puts elements in — a player and its buttons — publishes a source to them, as a list or a form does:
+
+```tsx
+// its declaration: sourceType: 'player', publishes: { track: 'The track playing', playing: 'Whether it plays' }
+return <PluginSource declaration={declaration} data={{ track, playing }}>{children}</PluginSource>;
+```
+
+Inside, `{{ player_deck.track }}` (`<sourceType>_<id>`), checked when the space is authored. Only what is inside it
+reads it; what every page reads is kept state or a channel.
+
 ## To the server: `useServerAction`
 
 One operation is one server action — `taskAction(tasks.done, …)` or `defineAction(…)` — whose input the server checks

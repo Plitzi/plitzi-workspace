@@ -31,7 +31,20 @@ export type ShotStep =
   | { kind: 'shot'; label?: string }
   | { kind: 'frames'; count: number; every: number };
 
-const STEP_NAMES = ['click', 'hover', 'scroll', 'type', 'drag', 'press', 'wait', 'wait-for', 'shot', 'frames'] as const;
+// `fill` is `type` by the name a Playwright user reaches for (encore's dev-1): typing replaces what a field held either way.
+const STEP_NAMES = [
+  'click',
+  'hover',
+  'scroll',
+  'type',
+  'fill',
+  'drag',
+  'press',
+  'wait',
+  'wait-for',
+  'shot',
+  'frames'
+] as const;
 
 /** The longest a script may wait in one step: a page that needs more is waiting for something else. */
 const MAX_WAIT_MS = 30_000;
@@ -126,11 +139,12 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
 
         steps.push({ kind: name, target: argument });
         break;
-      case 'type': {
+      case 'type':
+      case 'fill': {
         const { target, rest: text } = leadingTarget(rest.join(' '));
         if (!target || text === '') {
           return {
-            problem: `${at}: type needs an element and the text — type <element> <text>, type ".panel textarea" hi`
+            problem: `${at}: ${name} needs an element and the text — ${name} <element> <text>, ${name} ".panel textarea" hi`
           };
         }
 

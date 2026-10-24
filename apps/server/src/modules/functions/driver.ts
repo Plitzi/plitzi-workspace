@@ -1,4 +1,4 @@
-import type { changeKv } from '../actions/runtime/kvChange';
+import type { changeKv, changeListEntry } from '../actions/runtime/kvChange';
 
 /**
  * What a driver needs of where it runs: the way to the platform, and that place's own `Request` and `Response`.
@@ -15,6 +15,7 @@ export type FunctionsDriverEnvironment = {
   /** What a route answered, as the wire carries it — `undefined` when it is not this environment's `Response`. */
   wireOfResponse: (response: unknown) => Promise<Record<string, unknown> | undefined>;
   changeKv: typeof changeKv;
+  changeListEntry: typeof changeListEntry;
   /** The error a refusal is: what the code throws to tell whoever asked, not a fault. */
   refusal: (message: string) => Error;
 };
@@ -169,6 +170,27 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
       listPut: kvCall('listPut'),
       listRange: kvCall('listRange'),
       listRemove: kvCall('listRemove'),
+      listSwap: (list: string, id: string, expected: unknown, next: unknown): Promise<boolean> =>
+        kvCall('listSwap')(list, id, expected ?? null, next).then(written => written === true),
+      listChange: (
+        list: string,
+        id: string,
+        change: (current: { id: string; score: number; value: unknown } | undefined) => unknown
+      ): Promise<unknown> =>
+        environment.changeListEntry(
+          {
+            listRange: listName =>
+              kvCall('listRange')(listName).then(entries =>
+                Array.isArray(entries) ? (entries as { id: string; score: number; value: unknown }[]) : []
+              ),
+            listSwap: (listName, entryId, expected, next) =>
+              kvCall('listSwap')(listName, entryId, expected ?? null, next).then(written => written === true)
+          },
+          list,
+          id,
+          change as Parameters<typeof environment.changeListEntry>[3],
+          { refusal }
+        ),
       change: (
         key: string,
         change: (current: unknown) => unknown,

@@ -1,12 +1,14 @@
 import { readJson, writeJson } from './files';
 import { FOLLOW_MS } from '../options';
 import { commandAs } from './identity';
+import { harnessOf, launchAgent } from './launchAgent';
 import { REVIEW_BACKLOG_MS, UNTAKEN_REVIEW_MS } from './leads';
 import { LEAD, markRead, messagesOf } from './messages';
 import { runPaths } from './paths';
 import { isRunRefusal } from './refusal';
 import { loadRun } from './run';
 import { runChanged } from './runChanged';
+import { readTeam } from './team';
 import { viewRun } from './view';
 
 import type { RunContext } from './run';
@@ -118,6 +120,45 @@ export const leadItems = (view: RunView, now: Date): LeadItem[] => {
   ];
 };
 
+/**
+ * With the team's `options.launch`, the agents the run asks for are started here, not woken for: each `agents-needed`
+ * notice names its agent, and it is launched as `run agent --launch` would — refused while it still runs, resuming
+ * its session when the team asks it. What could not start is said to the lead, with why.
+ */
+const launchAsked = async (
+  ctx: RunContext,
+  runId: string,
+  view: RunView
+): Promise<{ started: string[]; failed: LeadItem[] }> => {
+  const harness = (await readTeam(ctx.root).catch(() => undefined))?.options?.launch;
+  const asked = [
+    ...new Set(view.attention.flatMap(item => (item.kind === 'agents-needed' && item.agent ? [item.agent] : [])))
+  ];
+  if (harness === undefined || asked.length === 0) {
+    return { started: [], failed: [] };
+  }
+
+  const started: string[] = [];
+  const failed: LeadItem[] = [];
+  for (const agent of asked) {
+    try {
+      await launchAgent(ctx, runId, agent, await harnessOf(harness));
+      started.push(agent);
+    } catch (error) {
+      if (!isRunRefusal(error)) {
+        throw error;
+      }
+
+      failed.push({
+        key: `launch-failed:${agent}:${error.message}`,
+        text: `${agent} could not be started in ${harness} (options.launch): ${error.message} — start it yourself, plitzi run agent ${agent} --launch --harness <yours>`
+      });
+    }
+  }
+
+  return { started, failed };
+};
+
 const isKeys = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(each => typeof each === 'string');
 
@@ -130,9 +171,16 @@ export const waitForLead = async (
   for (;;) {
     let view: RunView;
     let seenFile: string;
+    let failedLaunches: LeadItem[] = [];
     try {
       seenFile = (await loadRun(ctx, runId, { anyMachine: true, anyVersion: true })).paths.leadSeen;
       view = await viewRun(ctx, runId);
+      const launched = await launchAsked(ctx, runId, view);
+      failedLaunches = launched.failed;
+      // Those started are running from now: read again, they no longer ask for the lead.
+      if (launched.started.length > 0) {
+        view = await viewRun(ctx, runId);
+      }
     } catch (error) {
       if (isRunRefusal(error) && error.code === 'not-found') {
         return { fresh: [], gone: true };
@@ -142,7 +190,7 @@ export const waitForLead = async (
     }
 
     const seen = new Set((await readJson(seenFile, isKeys, 'what the lead was woken for')) ?? []);
-    const fresh = leadItems(view, ctx.now()).filter(item => !seen.has(item.key));
+    const fresh = [...failedLaunches, ...leadItems(view, ctx.now())].filter(item => !seen.has(item.key));
     if (fresh.length > 0) {
       await writeJson(seenFile, [...seen, ...fresh.map(item => item.key)]);
       // What is only to know, shown whole here, is read: it leaves what needs the lead (Carlos: what was looked at

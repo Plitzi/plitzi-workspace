@@ -388,6 +388,15 @@ describe('confirming an address', () => {
     expect(mailed()?.data).not.toHaveProperty('redirect');
   });
 
+  /** A form marks the field to change: "a user exists" left the person guessing which of the two it was. */
+  it('names the field that is taken', async () => {
+    const { api } = setup();
+
+    expect(
+      await api.signup({ username: 'grace', email: pending.email, password: 'correct horse battery', redirect: '' })
+    ).toMatchObject({ ok: false, status: 400, body: { field: 'email' } });
+  });
+
   it('carries the destination into a link sent again', async () => {
     const { api, mailed } = setup();
 

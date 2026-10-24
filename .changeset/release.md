@@ -87,14 +87,29 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 - **`sessionPerTask`:** an agent works one task a session. It stops once its task is complete, and the lead starts it
   again with a fresh context for the next task, or for its own task if it is sent back. Fewer tokens for an agent that
   would otherwise carry several tasks in its context.
+- **`resumeSession`:** an agent started again after it died with a task in hand resumes its own session (Claude Code's
+  `--resume`), so it keeps what it knew and had not written yet. It starts fresh instead, saying why, when its session
+  is gone or past 8 MB. The starter team asks it of every agent. `run agent --launch` refuses to start a second session
+  of an agent that is still running.
+- **`options.startGraceMinutes`** (3 when not said): an agent just started does not read "no signal" or "not running",
+  so `run watch` no longer wakes the lead for every agent it has just launched.
+- **An agent whose process ended is not running**, whatever its last word in the log. An agent launched by
+  `run agent --launch` that has ended reads stopped on the board, and `run watch` asks for it again when work waits:
+  a UI review with no designer running says which designer to start, at once.
+- **The lead reads working on the board** while its commands come (a stage stacked, an agent started, a message), with
+  what it last did, and idle only once they stop. `run agent --launch` is in the run's feed: "started dev-2 in claude".
+- **`options.launch`** (a harness, `claude`): `run watch --until lead` starts the agents work waits for itself, rather
+  than asking the lead to, and says the ones it could not start.
 - **Leads:** one for every four agents (`lead-2`, `lead-3`…, or `"lead": { "count" }`). Co-leads review and answer
   questions from one queue and are started only when reviews queue up; planning and the finish stay with `lead`.
 - **A designer reviews the UI of other tasks before the lead.** `options.designReview` (`light`, `standard`, `high`)
   says how closely. `task review --skip-design lead|no-ui` says why the lead skips it.
 - **A tester writes `<id>-tests`** after each developer task.
-- **The starter team's designer runs on `claude-sonnet-5-5`.** A model the team names is passed only to a harness that
-  runs it (Claude Code a Claude one, Codex any other, opencode `provider/model`); otherwise the agent starts on the
-  harness's default, and `run agent --launch` says so.
+- **The starter team names its models:** the lead on `claude-opus-5-5`, the developers and the designer on
+  `claude-sonnet-5-5`. They are `team.json`'s, never the CLI's: one it leaves out is the harness's default. A lead that
+  reviews (`lead-2`) starts on the team's lead model. A model the team names is passed only to a harness that runs it
+  (Claude Code a Claude one, Codex any other, opencode `provider/model`); otherwise the agent starts on the harness's
+  default, and `run agent --launch` says so.
 - **Quality levels:** a task's `quality` (`light`, `standard`, `high`) picks the model a level, and work is taken by
   urgency.
 
@@ -125,6 +140,11 @@ report`, …).
   - `task message` reaches a task, an agent or `all`; `task inbox` reads them.
   - `task propose` and `task answer` are agreements between tasks; `task request` asks for a change in a shared file.
   - `task progress --step` says in words what the agent is at.
+- **Stopping a server:** `plitzi server list` and `plitzi server stop [--port <port>]` stop only what listens from the
+  folder they run in and says, by its `/health`, that it serves that folder — with what it started. Anything else on the
+  port is named and left alone. The agents' rules forbid `pkill`, `killall` and killing by name, leave a hung command
+  to the harness, and write files with the edit tools instead of a shell heredoc. An agent once freed a hung heredoc
+  with `pkill -f "cat"` and took the machine down.
 - **Reviews:**
   - `task show` shows a task as the lead reviews it: each diff, one file whole, what went to review.
   - `task look` looks at a task in one command: served, checked, pictured light and dark, its parts beside the run
@@ -146,6 +166,8 @@ report`, …).
   - The cost: each command's output, time and median against its budget.
   - The harness's tokens, beside a lower bound of what was read again.
   - An audit of what does not add up.
+- **The expected end follows the project's pace:** a run's estimates are scaled by how long its tasks took against
+  theirs, and a project with no history of its own takes this machine's (`~/.config/plitzi/pace.json`).
 
 ### Faster and lighter for the agents
 
@@ -153,6 +175,8 @@ report`, …).
   disk (`tmp/plitzi-cache/http`), and a browser kept between commands holds its pages loaded. Stateful reads — a click,
   a play, an outline — take a warm page from it: 2–5 s where a cold load took 10 s or more.
 - **A copy is served for a command when nothing serves it,** and kept three minutes for the next.
+- **An acceptance stops the agent's own server of its copy** before serving the copy itself, and says so: two servers of
+  one copy wrote one `kv` file. A project's Playwright server keeps its own (`PLITZI_KV_FILE`, set by the scaffold).
 - **The checks:** `author` runs first, then the rest three at a time. `typecheck`, `lint` and `format` keep caches, and
   a pass on one result is kept for the day, so the finish does not run it again.
 - **Less to read again:** `page measure` says the other page and what it compares once, above every element; `task
@@ -185,9 +209,12 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`page outline`** lists the shown elements of either page, each by a selector `page measure` takes, with
   `--within`, `--depth` and `--click` to say what the click opened.
 - **`page play <path> --steps … --read …`** plays an interaction and says after each step how far each element moved,
-  whether it is shown and whether it takes a press. With `--compare` it plays the other site beside it, and
+  whether it is shown and whether it takes a press. It reads each element's text, value, focus and `aria-pressed`,
+  `-expanded`, `-checked` and `-selected` too. With `--compare` it plays the other site beside it, and
   `--same moved,shown,enabled` turns that into an acceptance line.
 - **`page same`** says whether pages draw the same on two servers.
+- **`--as <account>`** on `page play`, `page measure`, `page outline` and `task look` signs in first, with the account
+  of the project's `.env` (in a task's copy, the project's). `fill` is a step of `--steps`.
 - **`plitzi explain`** answers "does Plitzi have a way to…". It covers elements and the fields their source publishes,
   steps, triggers, style states, global sources, template filters and functions, a server action's steps
   (`--list tasks`), codes, CLI commands and an export's fields.
@@ -198,6 +225,15 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 - **Pages registered by being there:** `pagesIn(new URL('./pages/', import.meta.url))` (`@plitzi/sdk-authoring/node`)
   loads a folder's pages, and `PageSpec.nav` with `navOf(pages)` gives a layout its menu.
+- **Actions registered by being there:** `actionsIn(new URL('./', import.meta.url))` reads every file of
+  `src/actions/` and what each exports — one file per domain, nothing to list; one id in two files is refused naming
+  both. New projects start with it.
+- **The home page is never the `'*'` page:** with no `isDefault`, the page at `''` is the home, else the first other one;
+  a `'*'` page that says `isDefault` is refused (`page-catch-all-default`).
+- **`settings` is typed** as the space's settings, so a misspelt one is a compile error.
+- **`onView(margin?)`** starts a flow when an element comes into view and when it leaves, with `{ inView }`.
+- **`unauthorizedRedirect` written with a query** (`'/sign-in?next=…'`) is refused saying the visitor's address travels
+  on its own, as `?redirect=`.
 - **A page's `robots` and `structuredData`** (JSON-LD, a template over its server providers), and
   `settings.robotsTxt`. `plitzi create` starts a space with both.
 - **Link previews that show a picture.** A page's `seoImage` (a file of the site, an address, or a template over its
@@ -230,7 +266,12 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **Loading and navigation:** a hidden `embed` loads nothing until it is shown, and a page being left keeps its server
   sections while the next one is prefetched.
 - **Small fixes:** a toast's close button shows its focus, and the dev tools never print.
+- **`PluginSource`** (`@plitzi/plitzi-sdk`): a plugin publishes a source to the elements put inside it, under its
+  declaration's `sourceType` — `{{ player_deck.track }}`.
+- **A visitor not signed in, sent from a page to a page of the space, carries `?redirect=<where they were going>`**,
+  as one sent to a sign-in elsewhere did, so the sign-in sends them back.
 - **Templates (`@plitzi/sdk-shared`):**
+  - `ago(locale?)` writes a moment as "4 minutes ago" / "in 3 hours", and `duration` a length in seconds as `3:58`.
   - `date` reads epoch seconds, and `'now'|date(…)` is the moment of the render.
   - `<`, `>`, `<=` and `>=` order strings as text.
   - `replace({…})` takes Twig's map form.
@@ -242,6 +283,15 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   public address, the space's icon (Plitzi's only when it names none), its `theme-color`, and `<html lang>` (it was
   always `en`). The page keeps the same tags as it moves (`pageHeadTags`, `@plitzi/sdk-shared/schema`).
 - **`list.put`** refuses a value written as JSON that does not parse.
+- **Functions by domain:** every file at the top of `functions/` (a space's or a plugin's) may export a definition by
+  default; they are merged — a task, route, job or provider said twice is refused naming both files, `limits` is said
+  once, `allow.hosts` is all of theirs.
+- **The same call made while it runs is answered by that run** (`joined: true`, `X-Plitzi-Joined`), not refused 409.
+- **An action's `list` input** takes several values — one per line in the builder, an array from code — with
+  `maxItems`.
+- **`kv.listSwap(list, id, expected, next)` and `kv.listChange(list, id, change)`** change one entry of a list only if
+  nobody changed it first, as `kv.swap` / `kv.change` do a key.
+- **A sign-up refused because the account exists names the field** (`field: 'username' | 'email'`).
 - **`/health` says which copy of a project serves**, and a port is held while it is being taken.
 - **A run's preview** answers `/__plitzi/run`, and only a preview's pages ask for it.
 - **The server's budget is loaded again:** the filters' catalogue and the pages' rule are entries of their own that the

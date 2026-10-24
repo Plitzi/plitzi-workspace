@@ -205,18 +205,21 @@ describe('the plugins', () => {
     );
   });
 
-  it('refuses a plugin’s functions/ with code and no index.ts — and leaves one with a placeholder alone', () => {
+  it('refuses a plugin’s functions/ with code in a folder alone — and leaves one with a placeholder, or a file at its top', () => {
     plugin('Board');
     write('src/plugins/Board/functions/.gitkeep');
     expect(checkProjectLayout(root)).toEqual([]);
 
-    write('src/plugins/Board/functions/routes.ts');
+    write('src/plugins/Board/functions/lib/routes.ts');
     expect(only('plugin-functions-entry-missing')).toMatchObject({
       level: 'error',
-      file: 'src/plugins/Board/functions/',
+      file: 'src/plugins/Board/functions/lib/',
       message:
-        "src/plugins/Board/functions/ has no index.ts, so none of the plugin's server half runs (its routes under /fn/plugins/board/)."
+        "src/plugins/Board/functions/ has no file at its top, and src/plugins/Board/functions/lib/ has: a folder there is helpers, so none of the plugin's server half runs (its routes under /fn/plugins/board/)."
     });
+
+    write('src/plugins/Board/functions/routes.ts');
+    expect(checkProjectLayout(root)).toEqual([]);
   });
 
   it('warns of a folder with no declaration, and of a declaration misnamed', () => {
@@ -293,14 +296,18 @@ describe('the built plugins', () => {
 });
 
 describe('the project’s code', () => {
-  it('refuses src/functions/ with code and no index.ts, and leaves a README alone', () => {
+  // encore: one index.ts listing every domain was its agents' conflicts; a domain is a file, and any at the top counts.
+  it('refuses src/functions/ with its code only in a folder, and leaves a README or a domain’s file alone', () => {
     write('src/functions/README.md');
     expect(checkProjectLayout(root)).toEqual([]);
 
-    write('src/functions/tasks.ts');
+    write('src/functions/lib/feed.ts');
     expect(only('functions-entry-missing').message).toBe(
-      'src/functions/ has no index.ts, so none of the project’s functions runs.'
+      'src/functions/ has no file at its top, and src/functions/lib/ has: a folder there is helpers, so none of the project’s functions runs.'
     );
+
+    write('src/functions/rooms.ts');
+    expect(checkProjectLayout(root)).toEqual([]);
   });
 
   it('refuses src/runtime/ with no index.ts', () => {

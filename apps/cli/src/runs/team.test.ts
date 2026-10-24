@@ -183,7 +183,7 @@ describe('the team of a project’s runs', () => {
     ).toEqual([
       '"extra" is no field of it (it takes version, lead, agents, options, about)',
       '"lead": "modle" is no field of it — did you mean "model"? (it takes model, effort, count)',
-      '"dev": "cuont" is no field of it — did you mean "count"? (it takes name, roles, count, min, model, effort, sessionPerTask)',
+      '"dev": "cuont" is no field of it — did you mean "count"? (it takes name, roles, count, min, model, effort, sessionPerTask, resumeSession)',
       '"lead" is the lead’s: give the lead its model under "lead", and the agent another name'
     ]);
     expect(teamProblems({ $schema: TEAM_SCHEMA, version: 1, agents: [{ name: 'dev', roles: ['developer'] }] })).toEqual(
@@ -192,6 +192,45 @@ describe('the team of a project’s runs', () => {
     expect(
       teamProblems({ version: 1, agents: [{ name: 'dev', roles: ['developer'], sessionPerTask: 'yes' }] })
     ).toEqual(['"dev": its sessionPerTask is true — one task a session — or false']);
+    expect(teamProblems({ version: 1, agents: [{ name: 'dev', roles: ['developer'], resumeSession: 'yes' }] })).toEqual(
+      ['"dev": its resumeSession is true — its own session resumed after it died with a task in hand — or false']
+    );
+  });
+
+  // encore: options.startGraceMinutes was checked but never read — readTeam kept designReview alone.
+  it('reads every option the file says, each as it is valid', async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-team-'));
+    try {
+      await fs.mkdir(path.join(root, '.plitzi'));
+      await fs.writeFile(
+        path.join(root, '.plitzi', 'team.json'),
+        JSON.stringify({
+          version: 1,
+          agents: [{ name: 'dev', roles: ['developer'] }],
+          options: { designReview: 'light', startGraceMinutes: 5, launch: 'claude' }
+        })
+      );
+
+      expect((await readTeam(root))?.options).toEqual({
+        designReview: 'light',
+        startGraceMinutes: 5,
+        launch: 'claude'
+      });
+    } finally {
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  });
+
+  // encore: every agent started again after the machine went down read "no signal" at once, its last word from before.
+  it('takes how long an agent just started may say nothing, from 1 to 30 minutes', () => {
+    const agents = [{ name: 'dev', roles: ['developer'] }];
+
+    expect(teamProblems({ version: 1, agents, options: { startGraceMinutes: 5 } })).toEqual([]);
+    for (const startGraceMinutes of [0, 31, 2.5, '3']) {
+      expect(teamProblems({ version: 1, agents, options: { startGraceMinutes } })).toEqual([
+        '"options": "startGraceMinutes" is a whole number from 1 to 30 — how long an agent just started may say nothing'
+      ]);
+    }
   });
 
   // velada-now: a designer's strictest review took 83 steps, more than the task it reviewed — how close is the team's.
@@ -219,7 +258,11 @@ describe('the team of a project’s runs', () => {
     };
 
     expect(props(schema, 'properties')).toEqual(['$schema', 'about', 'agents', 'lead', 'options', 'version']);
-    expect(props(schema, 'properties', 'options', 'properties')).toEqual(['designReview']);
+    expect(props(schema, 'properties', 'options', 'properties')).toEqual([
+      'designReview',
+      'launch',
+      'startGraceMinutes'
+    ]);
     expect(props(schema, 'properties', 'lead', 'properties')).toEqual(['count', 'effort', 'model']);
     expect(props(schema, 'properties', 'agents', 'items', 'properties')).toEqual([
       'count',
@@ -227,6 +270,7 @@ describe('the team of a project’s runs', () => {
       'min',
       'model',
       'name',
+      'resumeSession',
       'roles',
       'sessionPerTask'
     ]);

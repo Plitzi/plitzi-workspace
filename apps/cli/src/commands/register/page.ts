@@ -152,6 +152,10 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .option('--url <origin>', URL_OPTION)
     .option('--json', 'One object, for a tool or an agent')
+    .option(
+      '--as <username>',
+      'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env (a task’s copy reads its project’s)'
+    )
     .action((route: string, elements: string[], options: MeasureOptions) => measure(route, elements, options));
 
   // The browser `page measure` keeps the other site's pages open in, between commands: started by it, never by hand.
@@ -168,7 +172,7 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .requiredOption(
       '--steps <script>',
-      'The steps, as page shot --steps writes them — click, hover, scroll, type, drag, press, wait, wait-for — each element "ours => theirs" with --compare'
+      'The steps, as page shot --steps writes them — click, hover, scroll, type (or fill: what the field held replaced), drag, press, wait, wait-for — each element "ours => theirs" with --compare'
     )
     .option('--read <element...>', 'The elements read after each step — "row => .slides" with --compare')
     .option('--compare <url>', 'Another page — the site a copy is made after — played beside it, step for step')
@@ -182,6 +186,10 @@ export const registerPage = (pageGroup: Command): void => {
     .addOption(schemeOption())
     .option('--url <origin>', URL_OPTION)
     .option('--json', 'One object, for a tool or an agent')
+    .option(
+      '--as <username>',
+      'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env (a task’s copy reads its project’s)'
+    )
     .action((route: string, options: PlayOptions) => play(route, options));
 
   pageGroup
@@ -201,6 +209,10 @@ export const registerPage = (pageGroup: Command): void => {
     .addOption(schemeOption())
     .option('--url <origin>', URL_OPTION)
     .option('--json', 'One object, for a tool or an agent')
+    .option(
+      '--as <username>',
+      'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env (a task’s copy reads its project’s)'
+    )
     .action((route: string, options: OutlineOptions) => outline(route, options));
 
   pageGroup

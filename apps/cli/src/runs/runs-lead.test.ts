@@ -132,6 +132,7 @@ describe('the lead’s plan as the run goes', () => {
     const checked = await checkPlan(bench.root, benchPlan(), await readOwnership(bench.root), teamFor(benchPlan(), 2));
     // A quarter, half, a quarter, half, half: the middle one is half.
     expect(checked.estimate.paced).toEqual({
+      from: 'project',
       ratio: 0.5,
       runs: 1,
       tasks: 5,

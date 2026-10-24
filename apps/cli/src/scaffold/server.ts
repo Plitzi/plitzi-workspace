@@ -112,7 +112,9 @@ export const serverOptions: ProjectServerOptions = {};
 `;
 
 /** The space's server actions, in a file of the project's own that `src/main.ts` hands to the server. */
-const actionsModule = (): string => `import type { ActionEntry } from '@plitzi/sdk-authoring';
+const actionsModule = (): string => `import { actionsIn } from '@plitzi/sdk-authoring/node';
+
+import type { ActionEntry } from '@plitzi/sdk-authoring';
 import type { ActionLookups } from '@plitzi/sdk-server/actions';
 
 type Connector = NonNullable<Awaited<ReturnType<NonNullable<ActionLookups['getConnector']>>>>;
@@ -120,10 +122,10 @@ type Connector = NonNullable<Awaited<ReturnType<NonNullable<ActionLookups['getCo
 /**
  * The space's server actions — what a page asks the server to do (\`runServerAction\`), what feeds a provider before the
  * HTML (\`apiContainer({ runtime: 'server', action })\`), what runs on a clock (a \`schedule\` trigger). One
- * \`defineAction({ … })\` from \`@plitzi/sdk-authoring\` each — a file each beside this one as they grow — listed here:
- * \`${MAIN_FILE}\` hands them to the server.
+ * \`defineAction({ … })\` from \`@plitzi/sdk-authoring\` each, a domain a file beside this one (\`rooms.ts\`) — found by
+ * \`actionsIn\`, whatever each file exports: nothing to list here. \`${MAIN_FILE}\` hands them to the server.
  */
-export const actions: ActionEntry[] = [];
+export const actions: ActionEntry[] = await actionsIn(new URL('./', import.meta.url));
 
 /** The connectors those actions call, by id — a connector's manifest, as Plitzi keeps one. */
 export const connectors = new Map<string, Connector>();

@@ -91,3 +91,13 @@ export const scrollState = (box: ScrollBox): ScrollTriggerPayload => {
 
 /** The trigger a scroll fires, its action name in a flow. */
 export const SCROLL_TRIGGER = 'onScroll';
+
+/**
+ * The trigger an element coming into the visitor's view fires — and leaving it — its action name in a flow: "load more
+ * as you scroll" is a list's last row firing it. encore's agents searched for it six times and wrote a "Show more"
+ * button instead: a page that scrolls the document had no way to know a row was reached.
+ */
+export const VIEW_TRIGGER = 'onView';
+
+/** What `onView` carries: whether the element is now in view (it fires when it comes in, and when it goes). */
+export type ViewTriggerPayload = { inView: boolean };

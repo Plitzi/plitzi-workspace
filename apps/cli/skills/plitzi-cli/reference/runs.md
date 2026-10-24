@@ -38,8 +38,9 @@ your token under another's name, a name or a role not the team's: refused (`iden
 
 - **Write only in `work`**, never in the project; run the project's scripts there (no `node_modules` nor `.env` of its
   own; its warning is expected). `plitzi page check /pets --width 1440,390` from `work` serves the copy for the CLI's
-  commands (kept 3 min); a script of your own serves it itself (`PORT=<free> npm start` in `work`) and stops it by its
-  port (`kill $(lsof -tiTCP:<port> -sTCP:LISTEN)`), never `pkill -f`. What
+  commands (kept 3 min); a script of your own serves it itself (`PORT=<free> npm start` in `work`) and stops it with
+  `plitzi server stop --port <port>` there. Never `pkill`, `killall` nor a kill by name: they reach the whole
+  machine. A hung command is your harness's to stop; write files with your edit tools, never a shell heredoc. What
   is yours beside the work — a script, a log, a picture — goes in the copy's `tmp/`; between tasks,
   `tmp/plitzi-runs/<run>/scratch/<your name>/`; never the project's `tmp/`.
 - **Spend the heavy commands well: a run makes hundreds.** `task check`, `task look`, `page check|shot|measure` take
@@ -103,20 +104,20 @@ out (what was built on it waits again), and `plitzi run restore <run> <file>` pu
 
 ## Exit codes
 
-| Code         | Refused                                   | Do                                                                                               |
-| ------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| 10           | `claimed` — another task's file           | wait, request it, or take another task                                                           |
-| 11           | `waiting` — queued for a file             | go on with what does not need it                                                                 |
-| 12           | `reassigned` — no longer yours            | stop working on it                                                                               |
-| 13           | `version-mismatch`                        | Plitzi was upgraded: keep your work, `task next --follow` waits while a person runs `run attach` |
-| 14 / 15      | `stopping` / `forced-stop`                | finish the task in hand / stop writing; `task next --follow` waits                               |
-| 16           | `reconciliation`                          | the lead resolves it                                                                             |
-| 17           | `person-only`                             | ask the person to run it in their terminal                                                       |
-| 18           | `conflict`                                | the lead decides; or `task discard` and redo on the run's version                                |
-| 19           | `checks-failed`                           | fix what it names, complete again                                                                |
-| 23 / 24      | `another-run` / `agent-limit`             | one run at a time / hand back to the lead                                                        |
-| 20 / 21 / 22 | `invalid` / `not-found` / `other-machine` | read the message                                                                                 |
-| 25           | `lead-only`                               | it is `lead`'s: tell it, and go on with your part                                                |
-| 26           | `identity`                                | pass your own token (`--token`), never another's                                                 |
+| Code         | Refused                                   | Do                                                                                      |
+| ------------ | ----------------------------------------- | --------------------------------------------------------------------------------------- |
+| 10           | `claimed` — another task's file           | wait, request it, or take another task                                                  |
+| 11           | `waiting` — queued for a file             | go on with what does not need it                                                        |
+| 12           | `reassigned` — no longer yours            | stop working on it                                                                      |
+| 13           | `version-mismatch`                        | Plitzi upgraded: keep your work, `task next --follow` waits for a person's `run attach` |
+| 14 / 15      | `stopping` / `forced-stop`                | finish the task in hand / stop writing; `task next --follow` waits                      |
+| 16           | `reconciliation`                          | the lead resolves it                                                                    |
+| 17           | `person-only`                             | ask the person to run it in their terminal                                              |
+| 18           | `conflict`                                | the lead decides; or `task discard` and redo on the run's version                       |
+| 19           | `checks-failed`                           | fix what it names, complete again                                                       |
+| 23 / 24      | `another-run` / `agent-limit`             | one run at a time / hand back to the lead                                               |
+| 20 / 21 / 22 | `invalid` / `not-found` / `other-machine` | read the message                                                                        |
+| 25           | `lead-only`                               | it is `lead`'s: tell it, and go on with your part                                       |
+| 26           | `identity`                                | run your own `plitzi`, never another's token                                            |
 
 Any hook or editor can ask before writing: `plitzi run can-write <file>` (exit 10 with the holder).

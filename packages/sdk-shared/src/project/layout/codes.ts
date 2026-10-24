@@ -29,11 +29,11 @@ export const PROJECT_LAYOUT_CODES = {
   },
   'plugin-functions-entry-missing': {
     level: 'error',
-    means: 'a plugin’s functions/ with code and no index.ts, which its server half is built from'
+    means: 'a plugin’s functions/ with code and no file at its top, which its server half is built from'
   },
   'functions-entry-missing': {
     level: 'error',
-    means: 'src/functions/ with code and no index.ts, which the project’s functions are built from'
+    means: 'src/functions/ with code and no file at its top, which the project’s functions are built from'
   },
   'runtime-entry-missing': {
     level: 'error',

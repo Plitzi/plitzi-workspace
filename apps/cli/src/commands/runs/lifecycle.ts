@@ -179,7 +179,7 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
                     ? []
                     : [
                         chalk.yellow(
-                          `A server of the project is still running on :${String(finished.running)}: it serves the project as it was and holds its state (${KV_FILE}) — stop it before npm start: kill $(lsof -tiTCP:${String(finished.running)} -sTCP:LISTEN)`
+                          `A server of the project is still running on :${String(finished.running)}: it serves the project as it was and holds its state (${KV_FILE}) — stop it before npm start: plitzi server stop --port ${String(finished.running)}`
                         )
                       ]),
                   ...(finished.backlog

@@ -1,9 +1,9 @@
 import chalk from 'chalk';
 
-import { onPath } from './agent';
 import { runOpen } from './plan';
 import { launchBrowser } from '../../browser';
 import { HARNESSES, isHarness } from '../../runs/agentPrompt';
+import { onPath } from '../../runs/launchAgent';
 import { readTeam, startedAgents } from '../../runs/team';
 import { projectHere } from '../existingProject';
 import { fail } from '../terminal';

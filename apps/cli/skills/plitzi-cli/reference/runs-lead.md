@@ -55,21 +55,22 @@ person asked for a team:
    `.plitzi/team.json` — grow it when the job asks (`plitzi run team set dev --count 3 --min 1 --model <model>`): its
    size is how many work at once; past `min`, on demand — `run watch` says when to start one (through its own CLI,
    after its first start). `--session-per-task`: its agents stop after each task, and `run watch` asks
-   you to start them again, fresh. A tester adds `<id>-tests` after each developer task (`"tests": false` for none); a designer reviews
+   you to start them again, fresh; `--resume-session`: one that died mid-task resumes its session; one just started is
+   not "no signal" for `options.startGraceMinutes` (3). A tester adds `<id>-tests` after each developer task (`"tests": false` for none); a designer reviews
    the others' UI before you (`options.designReview`; `"designReview": false` turns it off). Yours is the complete,
    strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
    `--skip-design lead|no-ui`; with `--changes`, `lead` keeps the next round's UI yours). A UI review held 8 min, or
    queued 5, is yours: decide it. Take a task back any time: `task reassign <task> --reason "…" --to <agent>|lead`. **One lead for every four agents**: `lead-2`… beside you, started when `run watch
 --until lead` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`) and
-   answers the questions it is handed, and stops when nothing is left. A lead's own files go in `tmp/plitzi-runs/<run>/scratch/<name>/`, gone with the run.
+   answers the questions it is handed, and stops when nothing is left.
 
    **Keep a person's actions a person's in the harness**: deny the agents `run finish --apply`, `run abort`, `run purge`,
    `run restore`, `run allow-finish`, `run stop --force`, `run attach --take-over`.
 
    **Quality** (`"quality": "light" | "standard" | "high"`): `run plan` sets it where you say none. Ids: lowercase letters, digits, `-`, `_`; **classes and provider ids by area** (`pronosticos-card`, `topBoxers`):
    two tasks that name one class differently meet only at the approval. **Foundations go to different agents**: the
-   shell and the components as two tasks two agents take at once — one role allowed to only one agent works them one
-   after the other while every page waits. **A file other tasks import is their contract**: a task that changes what
+   shell and the components as two tasks two agents take at once — else one agent works them in turn while every page
+   waits. **A file other tasks import is their contract**: a task that changes what
    it exports (a component's params) changes it compatibly — a new param optional — or the plan says who follows it
    (`run plan` names each). **Read what a task changes before you write it**: asking for what is not there costs a
    round. **And what its data shows**: a case the project's
@@ -118,7 +119,7 @@ t-home` is all of it (`<file> --diff`: one file's whole diff);
 backlog add "…"` keeps one with no run open); a task of your plan that does one says so — `"closes": ["b-3"]` — and the
 applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** write the summary (done, wrong, left) last, with each agent's tokens as the harness gave them:
    `plitzi run report --summary summary.md --tokens dev-1=208061,…`; then `plitzi run finish` (the diff, checked). Its
-   report measures the run (flow, cost, calls repeated) against the runs before: `plitzi run bench`. `--apply` is the person's, or yours if they allowed it — every server you started on the project stopped first (one
+   report measures the run (flow, cost, calls repeated) against the runs before: `plitzi run bench`. `--apply` is the person's, or yours if they allowed it — every server you started on the project stopped first, with `plitzi server stop` (one
    serves the project as it was and holds its `state/kv.json`). `run pending`: what awaits it.
 
 ## Where leads went wrong

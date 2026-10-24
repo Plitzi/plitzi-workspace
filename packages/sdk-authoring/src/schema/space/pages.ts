@@ -110,7 +110,9 @@ const redirectTarget = (author: SpaceAuthor, target: string, where: string): str
     const names = pages.flatMap(candidate => [candidate.id, candidate.path]);
     throw new AuthoringError(
       'redirect-target-unknown',
-      `${where} sends a visitor it is not for to "${target}", which is no page of this space${didYouMean(target, names)}. Write a page's id or slug (\`''\` is the home page), or a full URL for somewhere else.`
+      `${where} sends a visitor it is not for to "${target}", which is no page of this space${didYouMean(target, names)}. Write a page's id or slug (\`''\` is the home page), or a full URL for somewhere else.${
+        target.includes('?') ? ' The address the visitor asked for travels on its own, as `?redirect=`.' : ''
+      }`
     );
   }
 
@@ -129,7 +131,30 @@ const pathFor = (author: SpaceAuthor, page: PageSpec, index: number): string => 
   return path;
 };
 
-export const addPage = (author: SpaceAuthor, page: PageSpec, index: number): string => {
+/**
+ * Which page is the space's home when none says `isDefault`: the one at `''`, else the first that is not the page of
+ * every address no other answers (`'*'`). encore: its 404 page, listed first, became the home — every unknown address
+ * then answered a bare "Not Found", and author said nothing.
+ */
+export const homeIndexOf = (pages: readonly PageSpec[]): number => {
+  const said = pages.findIndex(page => page.isDefault === true);
+  if (said !== -1) {
+    return said;
+  }
+
+  const root = pages.findIndex(page => page.slug === '');
+
+  return root !== -1 ? root : pages.findIndex(page => page.slug !== '*');
+};
+
+export const addPage = (author: SpaceAuthor, page: PageSpec, index: number, home: number): string => {
+  if (page.slug === '*' && page.isDefault === true) {
+    throw new AuthoringError(
+      'page-catch-all-default',
+      `Page "${page.name}" answers every address no other page does (slug '*'), and cannot be the home too: say isDefault on the page at '' (or leave it out — the page at '' is the home)`
+    );
+  }
+
   const path = pathFor(author, page, index);
   const id = page.id ?? nextId(author, 'page');
   assertFlowShapes(page.flows, `Page "${page.name}"`);
@@ -145,7 +170,7 @@ export const addPage = (author: SpaceAuthor, page: PageSpec, index: number): str
     id,
     attributes: {
       slug: page.slug,
-      default: page.isDefault ?? index === 0,
+      default: page.isDefault ?? index === home,
       name: page.name,
       ...(page.folder === undefined ? {} : { folder: page.folder }),
       ...layoutAttributes(page.layout),

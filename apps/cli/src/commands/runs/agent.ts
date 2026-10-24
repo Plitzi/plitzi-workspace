@@ -1,23 +1,11 @@
-import { spawn } from 'node:child_process';
-import { closeSync, constants, openSync } from 'node:fs';
-import fs from 'node:fs/promises';
-import path from 'node:path';
-
 import chalk from 'chalk';
 
 import { act, runOf } from './shell';
-import { agentPrompt, harnessCommand, HARNESSES, isHarness } from '../../runs/agentPrompt';
-import { writeJson } from '../../runs/files';
-import { issueToken, writeCli } from '../../runs/identity';
-import { isPrincipal, LEAD_ROLE } from '../../runs/leads';
-import { agentScratch } from '../../runs/paths';
-import { RunRefusal } from '../../runs/refusal';
-import { loadRun } from '../../runs/run';
-import { readTeam, startedAgents } from '../../runs/team';
+import { HARNESSES } from '../../runs/agentPrompt';
+import { harnessOf, launchAgent, promptAgent } from '../../runs/launchAgent';
 
 import type { RunCommandOptions } from './shell';
-import type { Harness } from '../../runs/agentPrompt';
-import type { StartedAgent } from '../../runs/team';
+import type { NoResume } from '../../runs/launch';
 
 /**
  * `plitzi run agent <name>`: an agent of the run's team, started — its prompt written in its scratch, and the command
@@ -30,70 +18,19 @@ export interface AgentOptions extends RunCommandOptions {
   launch?: boolean;
 }
 
-/** Whether a command is on this machine's PATH: a harness that is not installed is said, never started. */
-export const onPath = async (command: string): Promise<boolean> => {
-  for (const dir of (process.env.PATH ?? '').split(path.delimiter).filter(Boolean)) {
-    if (
-      await fs
-        .access(path.join(dir, command), constants.X_OK)
-        .then(() => true)
-        .catch(() => false)
-    ) {
-      return true;
-    }
-  }
+/** Why an agent the team asks to resume started on a fresh session, said — nothing when the team does not ask it. */
+const freshSaid = (fresh: { not: NoResume; bytes?: number }): string[] => {
+  const why: Record<NoResume, string | undefined> = {
+    'not-asked': undefined,
+    harness: 'its harness keeps no session to resume (Claude Code does)',
+    'no-session': 'its last launch kept no session',
+    'not-mid-task': 'it was not cut off mid-task',
+    gone: 'its session is no longer there',
+    'too-large': `its session is ${String(Math.round((fresh.bytes ?? 0) / 1024 / 1024))} MB — reading it again would cost more than starting over`
+  };
+  const said = why[fresh.not];
 
-  return false;
-};
-
-/** The harness asked — or the one installed, when exactly one is: refused, naming them, otherwise. */
-const harnessOf = async (asked: string | undefined): Promise<Harness> => {
-  if (asked !== undefined) {
-    if (!isHarness(asked)) {
-      throw new RunRefusal('invalid', `--harness ${asked}: one of ${HARNESSES.join(', ')}`);
-    }
-
-    if (!(await onPath(asked))) {
-      throw new RunRefusal('invalid', `--harness ${asked}: \`${asked}\` is not on this machine's PATH — install it`);
-    }
-
-    return asked;
-  }
-
-  const installed = (await Promise.all(HARNESSES.map(async each => ((await onPath(each)) ? [each] : [])))).flat();
-  if (installed.length !== 1) {
-    throw new RunRefusal(
-      'invalid',
-      installed.length === 0
-        ? `No harness on this machine's PATH to start it in (${HARNESSES.join(', ')}): start it yourself with its prompt`
-        : `Which harness: --harness ${installed.join(' | ')}`
-    );
-  }
-
-  return installed[0];
-};
-
-/** The team's agent of that name — a lead that reviews (`lead-2`) by its role — or the lead, which the team has not. */
-const startedOf = async (root: string, agent: string): Promise<StartedAgent | undefined> => {
-  if (isPrincipal(agent)) {
-    return undefined;
-  }
-
-  if (/^lead-\d+$/.test(agent)) {
-    return { agent, roles: [LEAD_ROLE] };
-  }
-
-  const team = await readTeam(root);
-  const started = team ? startedAgents(team) : [];
-  const found = started.find(each => each.agent === agent);
-  if (!found) {
-    throw new RunRefusal(
-      'not-found',
-      `"${agent}" is no agent of the team (.plitzi/team.json): ${started.map(each => each.agent).join(', ') || 'none'}, or lead`
-    );
-  }
-
-  return found;
+  return said === undefined || fresh.not === 'not-mid-task' ? [] : [chalk.yellow(`  On a fresh session: ${said}.`)];
 };
 
 export const runAgent = (agent: string, options: AgentOptions): Promise<void> =>
@@ -101,61 +38,10 @@ export const runAgent = (agent: string, options: AgentOptions): Promise<void> =>
     options,
     async ctx => {
       const runId = await runOf(ctx, options);
-      const loaded = await loadRun(ctx, runId);
-      const started = await startedOf(ctx.root, agent);
-      const scratch = agentScratch(loaded.paths, agent);
-      await fs.mkdir(scratch, { recursive: true });
-      // Made as it is started, so its prompt names its own CLI from its first command: one the lead started has its
-      // token already, and its CLI is written again — the same file.
-      await issueToken(loaded.paths, runId, agent, ctx.now());
-      const prompt = agentPrompt({
-        agent,
-        ...(started ? { started } : {}),
-        runId,
-        root: ctx.root,
-        cli: await writeCli(loaded.paths, agent),
-        goal: loaded.plan.goal,
-        ...(loaded.plan.reference === undefined ? {} : { reference: loaded.plan.reference })
-      });
-      const promptFile = path.join(scratch, 'prompt.md');
-      await fs.writeFile(promptFile, `${prompt}\n`);
-      const model = started?.model?.model;
-      const lines = HARNESSES.map(each => ({
-        harness: each,
-        line: harnessCommand(each, { file: promptFile, text: prompt }, model).line
-      }));
-      if (!options.launch) {
-        return { agent, runId, promptFile, ...(model ? { model } : {}), commands: lines };
-      }
 
-      const harness = await harnessOf(options.harness);
-      const { command, args, line, model: ran } = harnessCommand(harness, { file: promptFile, text: prompt }, model);
-      const log = path.join(scratch, 'agent.log');
-      const out = openSync(log, 'a');
-      // Its own process group, outliving this command: the agent works until task next tells it to stop.
-      const child = spawn(command, args, { cwd: ctx.root, detached: true, stdio: ['ignore', out, out] });
-      closeSync(out);
-      child.unref();
-      if (child.pid === undefined) {
-        throw new RunRefusal('invalid', `${harness} did not start: ${line}`);
-      }
-
-      await writeJson(path.join(scratch, 'agent.json'), {
-        pid: child.pid,
-        harness,
-        startedAt: ctx.now().toISOString(),
-        log
-      });
-
-      return {
-        agent,
-        runId,
-        promptFile,
-        ...(ran ? { model: ran } : {}),
-        // The team's model, where this harness does not run it: said, the agent on the harness's own default.
-        ...(model && !ran ? { modelNotRun: model } : {}),
-        launched: { harness, pid: child.pid, log }
-      };
+      return options.launch
+        ? launchAgent(ctx, runId, agent, await harnessOf(options.harness))
+        : promptAgent(ctx, runId, agent);
     },
     answer =>
       'launched' in answer
@@ -163,13 +49,18 @@ export const runAgent = (agent: string, options: AgentOptions): Promise<void> =>
             chalk.green(
               `${answer.agent} started in ${answer.launched.harness} (pid ${String(answer.launched.pid)})${answer.model ? ` on ${answer.model}` : ''}: it works until task next tells it to stop.`
             ),
-            ...('modelNotRun' in answer && answer.modelNotRun
+            ...(answer.modelNotRun
               ? [
                   chalk.yellow(
                     `  The team names ${answer.modelNotRun}, which ${answer.launched.harness} does not run: it started on ${answer.launched.harness}'s own default (.plitzi/team.json, or --harness)`
                   )
                 ]
               : []),
+            ...(answer.resumed
+              ? [`  It resumes its own session (${answer.resumed}): it went down mid-task, and goes on where it was.`]
+              : answer.fresh
+                ? freshSaid(answer.fresh)
+                : []),
             `  Its output: ${answer.launched.log} — its prompt: ${answer.promptFile}`,
             `  Follow the run: plitzi run monitor ${answer.runId} (a person) · plitzi run watch ${answer.runId} --until lead (the lead)`
           ].join('\n')

@@ -43,6 +43,19 @@ export const isFunctionsSourcePath = (path: string): boolean =>
   /^[A-Za-z0-9_][A-Za-z0-9_./-]*\.(ts|js|mjs|json)$/.test(path) &&
   !path.split('/').some(segment => segment === '..' || segment === '.' || segment === '');
 
+/**
+ * The files a space's functions are made of, each a definition of its own: every file at the top of `functions/` —
+ * never one in a folder (a helper), a test or a declaration. A domain is a file (`rooms.ts`, `queue.ts`) that exports
+ * `defineFunctions({ tasks })` by default, and nothing lists them: encore's agents all appended to one `index.ts`, and
+ * four of its conflicts and three integration tasks were that list. A file with no definition by default — a module of
+ * types, a helper at the top — is imported by the others, as any file.
+ */
+export const isFunctionsDefinitionFile = (file: string): boolean =>
+  !file.includes('/') &&
+  /\.(ts|js|mjs)$/.test(file) &&
+  !/\.(test|spec)\.(ts|js|mjs)$/.test(file) &&
+  !file.endsWith('.d.ts');
+
 /** How a reader reaches a directory, whatever it runs on: Node's `fs`, a test's map. */
 export type FunctionsSourceReader = {
   list: (dir: string) => Promise<{ name: string; directory: boolean }[]>;

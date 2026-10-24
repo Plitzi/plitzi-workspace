@@ -117,6 +117,28 @@ export type ActionKvStore = {
   /** Takes the entry with `id` out of the list, and answers whether it was there. */
   listRemove: (list: string, id: string) => Promise<boolean>;
   /**
+   * Writes the list's entry `id` as `next` — or takes it out, `next` null — only if it is still `expected`, the entry
+   * `listRange` answered (or, `expected` undefined, only if there is none). Answers whether it wrote: `swap`, for one
+   * entry of a list.
+   */
+  listSwap: (list: string, id: string, expected: KvListEntry | undefined, next: KvListEntry | null) => Promise<boolean>;
+  /**
+   * Reads the list's entry `id`, hands it to `change` and writes back what that answers — `{ score, value }`, or `null`
+   * to take it out — reading and asking again when somebody wrote in between. `undefined` writes nothing. A vote that
+   * re-scores an entry while the track it is starts was the race (encore's queue): the entry gone, nothing is put back.
+   */
+  listChange: (
+    list: string,
+    id: string,
+    change: (
+      current: KvListEntry | undefined
+    ) =>
+      | { score: number; value: unknown }
+      | null
+      | undefined
+      | Promise<{ score: number; value: unknown } | null | undefined>
+  ) => Promise<KvListEntry | null | undefined>;
+  /**
    * Reads the key, hands its value to `change` and writes back what that answers — reading and asking again when
    * somebody wrote in between, so no writer undoes another. `change` answering `undefined` writes nothing. Answers what
    * was written. `lifetime` is seconds, or worked out from the value written.

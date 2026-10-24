@@ -45,6 +45,8 @@ export { useRscData, elements, JsxManager };
 export { default as useChannel } from './realtime/useChannel';
 export { default as useJob } from './realtime/useJob';
 export { default as useFlag } from './dataSource/useFlag';
+export { default as PluginSource } from './dataSource/PluginSource';
+export type { PluginSourceProps, PluginSourceDeclaration } from './dataSource/PluginSource';
 export type { ChannelHandle, UseChannelOptions } from './realtime/useChannel';
 export { default as withElement } from './Element/hocs/withElement';
 export type { WithElementProps } from './Element/hocs/withElement';

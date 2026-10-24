@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 
 import chalk from 'chalk';
 
-import { readFunctionsSource } from '@plitzi/sdk-shared/actions';
+import { isFunctionsDefinitionFile, readFunctionsSource } from '@plitzi/sdk-shared/actions';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { connectToSpace } from './account';
@@ -91,12 +91,12 @@ const changedFiles = (a: Files, b: Files): string[] =>
   [...new Set([...Object.keys(a), ...Object.keys(b)])].filter(file => a[file] !== b[file]).sort();
 
 /**
- * What `src/functions/` holds that the space does not: nothing at all (`none`, no `src/functions/index.ts`), something changed
+ * What `src/functions/` holds that the space does not: nothing at all (`none`, no file at its top), something changed
  * since it was pulled from this space or never pulled (`changed`), or exactly what was pulled (`unchanged`).
  */
 export const functionsChange = async (root: string, spaceId: number): Promise<'none' | 'changed' | 'unchanged'> => {
   const [local, state] = await Promise.all([readFunctionsFiles(root), readFunctionsState(root)]);
-  if (!Object.hasOwn(local, 'index.ts')) {
+  if (!Object.keys(local).some(isFunctionsDefinitionFile)) {
     return 'none';
   }
 
@@ -213,8 +213,10 @@ export const pushFunctionsOf = async (
   { force = false, dryRun = false }: { force?: boolean; dryRun?: boolean } = {}
 ): Promise<PushOutcome> => {
   const [local, state] = await Promise.all([readFunctionsFiles(root), readFunctionsState(root)]);
-  if (!Object.hasOwn(local, 'index.ts')) {
-    fail(`There is no ${FUNCTIONS_DIR}/index.ts here: it is where a space’s functions start. Pull them, or write it.`);
+  if (!Object.keys(local).some(isFunctionsDefinitionFile)) {
+    fail(
+      `There is no file at the top of ${FUNCTIONS_DIR}/ here: each exports a definition of the space’s functions by default. Pull them, or write one.`
+    );
 
     return 'failed';
   }

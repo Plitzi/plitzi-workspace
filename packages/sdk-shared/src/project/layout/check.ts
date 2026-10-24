@@ -6,7 +6,7 @@ import { exists } from './files';
 import { nearMissFindings, spaceFindings } from './folders';
 import { isRecord } from '../../helpers/isRecord';
 import { AUTHOR_FILE, FUNCTIONS_DIR, RUNTIME_DIR, SPACE_DIR } from '../paths';
-import { pluginFindings, sourceEntryFindings } from './plugins';
+import { functionsFindings, pluginFindings, sourceEntryFindings } from './plugins';
 
 import type { LayoutFinding, ProjectLayoutOptions } from './codes';
 
@@ -40,12 +40,11 @@ export const checkProjectLayout = (root: string, options: ProjectLayoutOptions =
   const misplaced = nearMissFindings(root, known);
   const findings = [
     ...pluginFindings(root),
-    ...sourceEntryFindings(root, {
+    ...functionsFindings(root, {
       folder: FUNCTIONS_DIR,
-      accepted: ['index.ts'],
       code: 'functions-entry-missing',
       lost: 'none of the project’s functions runs',
-      write: `Write ${FUNCTIONS_DIR}/index.ts exporting defineFunctions({ … }) by default.`
+      write: `Write the domain's file at the top of ${FUNCTIONS_DIR}/ (rooms.ts) exporting defineFunctions({ tasks: [ … ] }) by default — a domain a file, nothing to list.`
     }),
     ...sourceEntryFindings(root, {
       folder: RUNTIME_DIR,

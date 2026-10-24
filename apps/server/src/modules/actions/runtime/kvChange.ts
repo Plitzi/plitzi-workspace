@@ -51,3 +51,52 @@ export const changeKv = async <V, T extends V>(
 
   throw refusal('Many people are changing this at once — try again in a moment');
 };
+
+/** What a change of a list's entry needs of a store: read the list, and write one entry only if it is still as read. */
+export type KvListChangeStore = {
+  listRange: (list: string) => Promise<{ id: string; score: number; value: unknown }[]>;
+  listSwap: (
+    list: string,
+    id: string,
+    expected: { id: string; score: number; value: unknown } | undefined,
+    next: { id: string; score: number; value: unknown } | null
+  ) => Promise<boolean>;
+};
+
+/**
+ * Reads the list's entry `id`, hands it to `change`, and writes back what that answers (`null` takes it out) — unless
+ * somebody wrote it in between, and then it reads again and asks again. `undefined` writes nothing. Answers the entry
+ * written, `null` when it was taken out, `undefined` when nothing was written. Self-contained, as `changeKv` is: the
+ * sandbox's guest is handed this function's source.
+ */
+export const changeListEntry = async (
+  store: KvListChangeStore,
+  list: string,
+  id: string,
+  change: (
+    current: { id: string; score: number; value: unknown } | undefined
+  ) =>
+    | { score: number; value: unknown }
+    | null
+    | undefined
+    | Promise<{ score: number; value: unknown } | null | undefined>,
+  { refusal }: { refusal: (message: string) => Error }
+): Promise<{ id: string; score: number; value: unknown } | null | undefined> => {
+  const attempts = 25;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const current = (await store.listRange(list)).find(entry => entry.id === id);
+    const next = await change(current);
+    if (next === undefined || (next === null && current === undefined)) {
+      return undefined;
+    }
+
+    const written = next === null ? null : { id, score: next.score, value: next.value };
+    if (await store.listSwap(list, id, current, written)) {
+      return written;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, Math.random() * Math.min(5 + attempt * 5, 50)));
+  }
+
+  throw refusal('Many people are changing this at once — try again in a moment');
+};

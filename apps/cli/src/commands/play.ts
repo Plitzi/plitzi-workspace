@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 
 import { launchBrowser } from '../browser';
+import { accountAsked } from './check';
 import { projectHere } from './existingProject';
 import { ourPage, pairOf } from './measure';
 import { settle } from './measureState';
@@ -38,6 +39,8 @@ export interface PlayOptions {
   width?: number[];
   scheme?: Scheme;
   url?: string;
+  /** Signed in first as this account: the password from `PLITZI_CHECK_PASSWORD`. */
+  as?: string;
   json?: boolean;
 }
 
@@ -46,12 +49,27 @@ export const PLAY_SAME = ['moved', 'shown', 'enabled'] as const;
 
 export type PlaySame = (typeof PLAY_SAME)[number];
 
-/** An element as a step leaves it: where its content is, whether it is seen, whether it takes a press. */
+/** The ARIA states a control says of itself — what a toggle, a disclosure or a tab is at. */
+export const ARIA_STATES = ['pressed', 'expanded', 'checked', 'selected'] as const;
+
+/**
+ * An element as a step leaves it: where its content is, whether it is seen, whether it takes a press — and what a
+ * control says: its words, a field's value, its ARIA states, whether it holds the focus. encore: four agents wrote a
+ * Playwright script for what this did not read — Listen turning Mute, the focus back on the burger, a search typed.
+ */
 export interface ElementState {
   /** Its content's offset — scroll less place — in whole pixels: what a move changes, however it is made. */
   offset: { x: number; y: number };
   shown: boolean;
   enabled: boolean;
+  /** Its words, as a visitor reads them: whitespace folded, the first 80 characters. */
+  text: string;
+  /** A field's value: an input, a textarea, a select. */
+  value?: string;
+  /** The ARIA states it says, each as its attribute (or a box's own `checked`) is. */
+  aria: Partial<Record<(typeof ARIA_STATES)[number], string>>;
+  /** It holds the focus, or something inside it does. */
+  focused: boolean;
 }
 
 export interface PlayedStep {
@@ -107,7 +125,22 @@ export const stateOf = (node: Element): ElementState => {
       style.visibility !== 'hidden' &&
       style.display !== 'none' &&
       Number(style.opacity) > 0,
-    enabled: !disabled
+    enabled: !disabled,
+    text: node.textContent.replace(/\s+/g, ' ').trim().slice(0, 80),
+    ...(node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement || node instanceof HTMLSelectElement
+      ? { value: node.value }
+      : {}),
+    // The list inline: this runs in the page, where nothing of the module is.
+    aria: Object.fromEntries(
+      (['pressed', 'expanded', 'checked', 'selected'] as const).flatMap(state => {
+        const said = node.getAttribute(`aria-${state}`);
+        const own = state === 'checked' && node instanceof HTMLInputElement && /checkbox|radio/.test(node.type);
+
+        return said !== null ? [[state, said]] : own ? [[state, String(node.checked)]] : [];
+      })
+    ),
+    focused:
+      document.activeElement !== null && (node === document.activeElement || node.contains(document.activeElement))
   };
 };
 
@@ -320,7 +353,13 @@ const moveText = ({ x, y }: { x: number; y: number }): string =>
         .join(', ');
 
 const stateText = (state: ElementState): string =>
-  `${state.shown ? 'shown' : 'hidden'}, ${state.enabled ? 'enabled' : 'no press'}`;
+  [
+    `${state.shown ? 'shown' : 'hidden'}, ${state.enabled ? 'enabled' : 'no press'}`,
+    ...(state.focused ? ['focused'] : []),
+    ...Object.entries(state.aria).map(([name, value]) => `${name} ${value}`),
+    ...(state.value !== undefined ? [`value "${state.value}"`] : []),
+    ...(state.text ? [`"${state.text}"`] : [])
+  ].join(' · ');
 
 /**
  * A played interaction in lines: each step, and each element as it left it — here, and there beside it. How far it
@@ -426,6 +465,11 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
     return;
   }
 
+  const account = await accountAsked(project.root, options.as);
+  if (account === null) {
+    return;
+  }
+
   const browser = await launchBrowser(project.root);
   if ('problem' in browser) {
     unanswered(browser.problem);
@@ -439,10 +483,11 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
     for (const width of options.width ?? [1440]) {
       const ours = await ourPage(browser, where.origin, route, {
         width,
+        ...(account ? { account } : {}),
         ...(options.scheme ? { scheme: options.scheme } : {})
       });
       if (!ours.answered) {
-        unanswered(`nothing answers at ${where.origin}${route}`);
+        unanswered(ours.problem ?? `nothing answers at ${where.origin}${route}`);
 
         return;
       }

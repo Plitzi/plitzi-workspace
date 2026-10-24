@@ -1,12 +1,5 @@
 import path from 'node:path';
 
-import {
-  PLUGIN_DECLARATION_FILE,
-  PLUGIN_ENTRIES,
-  PLUGIN_FUNCTIONS_DIR,
-  PLUGINS_DIR,
-  VENDOR_PLUGINS_DIR
-} from '../paths';
 import { finding } from './codes';
 import {
   CASE_NOTE,
@@ -22,6 +15,14 @@ import {
   sameIgnoringCase
 } from './files';
 import { readVendorPlugin } from './vendor';
+import { isFunctionsDefinitionFile } from '../../actions/functions';
+import {
+  PLUGIN_DECLARATION_FILE,
+  PLUGIN_ENTRIES,
+  PLUGIN_FUNCTIONS_DIR,
+  PLUGINS_DIR,
+  VENDOR_PLUGINS_DIR
+} from '../paths';
 
 import type { LayoutCode, LayoutFinding } from './codes';
 
@@ -151,6 +152,31 @@ export const entryFindings = (root: string, rule: EntryRule): LayoutFinding[] =>
   return [finding(code, `${folder}/`, `${folder}/ has no ${acceptedText(accepted)}, so ${lost}.`, rule.write)];
 };
 
+/**
+ * A folder of functions — the project's `src/functions/`, a plugin's `functions/` — is built from every file at its top,
+ * each a definition (`isFunctionsDefinitionFile`): one holding code with none there builds nothing. A folder in it is
+ * helpers, so code in one alone is one folder too deep.
+ */
+export const functionsFindings = (root: string, rule: Omit<EntryRule, 'accepted'>): LayoutFinding[] => {
+  const entries = entriesOf(path.join(root, rule.folder));
+  if (!holdsSource(entries) || entries.files.some(isFunctionsDefinitionFile)) {
+    return [];
+  }
+
+  const deeper = entries.folders.find(sub =>
+    entriesOf(path.join(root, rule.folder, sub)).files.some(isFunctionsDefinitionFile)
+  );
+
+  return [
+    finding(
+      rule.code,
+      `${rule.folder}/${deeper === undefined ? '' : `${deeper}/`}`,
+      `${rule.folder}/ has no file at its top${deeper === undefined ? '' : `, and ${rule.folder}/${deeper}/ has: a folder there is helpers`}, so ${rule.lost}.`,
+      rule.write
+    )
+  ];
+};
+
 /** A folder built from only when it holds code: one with a README or a `.gitkeep` alone is a placeholder. */
 export const sourceEntryFindings = (root: string, rule: EntryRule): LayoutFinding[] =>
   holdsSource(entriesOf(path.join(root, rule.folder))) ? entryFindings(root, rule) : [];
@@ -228,9 +254,8 @@ export const checkPluginFolder = (root: string, folder: string): LayoutFinding[]
       lost: `the server cannot build the plugin ${type}`,
       write: `Write ${at}/index.ts exporting the component by default${component ? ` — export { default } from './${component}';` : ''} — as npx plitzi plugin add writes it. Every folder of ${PLUGINS_DIR}/ is a plugin: code several plugins share goes outside it (src/shared/).`
     }),
-    ...sourceEntryFindings(root, {
+    ...functionsFindings(root, {
       folder: `${at}/${PLUGIN_FUNCTIONS_DIR}`,
-      accepted: ['index.ts'],
       code: 'plugin-functions-entry-missing',
       lost: `none of the plugin's server half runs (its routes under /fn/plugins/${type}/)`,
       write: `Write ${at}/${PLUGIN_FUNCTIONS_DIR}/index.ts exporting defineFunctions({ … }) by default — as npx plitzi plugin add --server writes it.`

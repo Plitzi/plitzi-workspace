@@ -379,7 +379,7 @@ const fieldTypeOf = (type: unknown): ActionField['type'] => {
     return type;
   }
 
-  return type === 'codemirror-json' || type === 'elements' ? 'json' : 'text';
+  return type === 'codemirror-json' || type === 'elements' || type === 'list' ? 'json' : 'text';
 };
 
 /** A task's params as the input of an action that runs it: each param a field, with its label, default and need. */

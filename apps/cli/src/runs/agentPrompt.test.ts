@@ -94,6 +94,16 @@ describe('the command that starts an agent headless', () => {
     expect(harnessCommand('codex', prompt, 'claude-sonnet-5-5').model).toBeUndefined();
     expect(harnessCommand('claude', prompt, 'gpt-x').line).not.toContain('--model');
     expect(harnessCommand('claude', prompt, 'sonnet').model).toBe('sonnet');
+    // A session of the CLI's id, kept to resume; or that one resumed (encore: four agents went down mid-task).
+    expect(harnessCommand('claude', prompt, undefined, { id: 'abc', resume: false }).args).toEqual(
+      expect.arrayContaining(['--session-id', 'abc'])
+    );
+    expect(harnessCommand('claude', prompt, undefined, { id: 'abc', resume: true }).args.slice(0, 4)).toEqual([
+      '-p',
+      'You are dev-1',
+      '--resume',
+      'abc'
+    ]);
     // opencode names a model provider/model: one written otherwise is left to its default.
     expect(harnessCommand('opencode', prompt, 'claude-sonnet-5-5').line).toBe(
       'opencode run "$(cat /p/scratch/dev-1/prompt.md)"'

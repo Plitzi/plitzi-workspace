@@ -266,7 +266,7 @@ export const isLocalTls = (origin: string): boolean => {
 };
 
 /** `/health`, read the way the tools read the pages: a local certificate taken as it is. */
-const readHealth = (origin: string): Promise<unknown> => {
+export const readHealth = (origin: string): Promise<unknown> => {
   if (!isLocalTls(origin)) {
     return fetch(`${origin}/health`)
       .then(response => response.json())
