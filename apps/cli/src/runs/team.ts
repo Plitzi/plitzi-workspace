@@ -45,6 +45,20 @@ export const DEVELOPER = 'developer';
 export const DESIGNER = 'designer';
 export const TESTER = 'tester';
 
+/** The strongest model a team is started with, where a role's work asks for it. */
+const STRONGEST = 'claude-opus-5-5';
+
+/**
+ * The model a role starts on when the team names none: the designer's eye Sonnet lacked (encore's UI came back
+ * mediocre), and the tester's — its tests and its review are what stop a bug or a regression getting through (Carlos).
+ * Any other role, the harness's own; the file's model, when it says one, always wins.
+ */
+export const ROLE_MODELS: Readonly<Partial<Record<string, string>>> = { [DESIGNER]: STRONGEST, [TESTER]: STRONGEST };
+
+/** The model an agent of these roles starts on when its entry names none. */
+const roleModel = (roles: readonly string[]): string | undefined =>
+  roles.map(role => ROLE_MODELS[role]).find(model => model !== undefined);
+
 export { QUALITIES };
 export type { Quality };
 
@@ -444,7 +458,7 @@ export const TEAM_ABOUT: Record<string, unknown> = {
   roles: { ...ROLES, '<any other>': 'A role of your own: a task names it, an agent takes it.' },
   options:
     '"designReview": how closely a designer reviews another task\'s UI — "light" (its pages at 1440 and 390, the default scheme, nothing it does not touch), "standard" (both schemes and widths, its sections against the reference; the default), "high" (every page that reads its files, against the run before it too). A review costs what it looks at. "startGraceMinutes": how long an agent just started may say nothing before the tasks it holds read \'no signal\' — 3 when not said. "launch": the harness (claude, codex, opencode) the CLI starts the agents in by itself when the run asks for one — left out, the lead starts them.',
-  more: 'It starts small — every agent spends tokens: two developers, one started with the run and the other on demand, and a designer who reviews the UI of every other task — the developers on Sonnet, the designer and the lead on Opus. Grow it when a job asks — you decide: more developers (plitzi run team set dev --count 3 --min 2), a tester who writes the tests of each developer task (plitzi run team set test --roles tester), a writer.'
+  more: 'It starts small — every agent spends tokens: two developers, one started with the run and the other on demand, and a designer who reviews the UI of every other task — the developers on Sonnet, the designer and the lead on Opus. Grow it when a job asks — you decide: more developers (plitzi run team set dev --count 3 --min 2), a tester who reviews the code and writes the tests of each developer task — on Opus too, unless you say a model: what it misses gets through (plitzi run team set test --roles tester), a writer.'
 };
 
 /**
@@ -458,10 +472,10 @@ export const STARTER_TEAM: Team = {
   // The models are the file's, never the CLI's: the lead — who plans, reviews every task and has the final word — on the
   // strongest, thinking hard; the designer too, whose eye Sonnet lacked (encore's UI came back mediocre); developers on
   // Sonnet, which works a task as well for less. One the file leaves out is the harness's own.
-  lead: { model: 'claude-opus-5-5', effort: 'high' },
+  lead: { model: STRONGEST, effort: 'high' },
   agents: [
     { name: 'dev', roles: [DEVELOPER], count: 2, min: 1, model: 'claude-sonnet-5-5', resumeSession: true },
-    { name: 'design', roles: [DESIGNER], model: 'claude-opus-5-5', resumeSession: true }
+    { name: 'design', roles: [DESIGNER], model: STRONGEST, resumeSession: true }
   ]
 };
 
@@ -473,7 +487,9 @@ const teamFor = (plan: Pick<RunPlan, 'tasks'>): Team => {
     ...STARTER_TEAM,
     agents: [
       ...STARTER_TEAM.agents,
-      ...roles.filter(role => !teamTakes(STARTER_TEAM, role)).map(role => ({ name: role, roles: [role] }))
+      ...roles
+        .filter(role => !teamTakes(STARTER_TEAM, role))
+        .map(role => ({ name: role, roles: [role], ...(ROLE_MODELS[role] ? { model: ROLE_MODELS[role] } : {}) }))
     ]
   };
 };
@@ -704,12 +720,14 @@ export const setTeamAgent = async (root: string, name: string, change: TeamAgent
     );
   }
 
+  // A new entry of a role that asks for the strongest model starts on it, written in the file (`ROLE_MODELS`).
+  const model = change.model ?? before?.model ?? (before === undefined ? roleModel(roles) : undefined);
   const after: TeamAgent = {
     name,
     roles,
     ...((change.count ?? before?.count) !== undefined ? { count: change.count ?? before?.count } : {}),
     ...((change.min ?? before?.min) !== undefined ? { min: change.min ?? before?.min } : {}),
-    ...((change.model ?? before?.model) !== undefined ? { model: change.model ?? before?.model } : {}),
+    ...(model !== undefined ? { model } : {}),
     ...((change.effort ?? before?.effort) !== undefined ? { effort: change.effort ?? before?.effort } : {}),
     ...((change.sessionPerTask ?? before?.sessionPerTask) === true ? { sessionPerTask: true } : {}),
     ...((change.resumeSession ?? before?.resumeSession) === true ? { resumeSession: true } : {})

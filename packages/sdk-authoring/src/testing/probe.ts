@@ -34,6 +34,12 @@ export interface ProbeFindings {
    * header before it is built): nothing a visitor misses, said apart. One with a size of its own (a band, a rule) shows.
    */
   empty: string[];
+  /**
+   * Elements a visitor sees with nothing in them — no words, no picture — that the SDK marks empty (`data-plitzi-empty`):
+   * a binding that read nothing, a field the data lacks. By id, with how many drew empty (one a list row). encore's room
+   * cards read "Text" — a placeholder — where their line was bound to nothing, and every check passed.
+   */
+  blank: { id: string; times: number; what: 'words' | 'picture' }[];
   /** Each with the element it is in, by id, when one of the space's holds it. */
   brokenImages: { source: string; elementId?: string; loading?: true }[];
   /** `elementIds`: the widest ones the space named, for a tool to point at. */
@@ -641,6 +647,24 @@ export function probePage(input: ProbeInput): ProbeFindings {
     }
   }
 
+  // Seen and empty: what a hider takes away is not seen, so not missed.
+  const blankCounts = new Map<string, { times: number; what: 'words' | 'picture' }>();
+  for (const node of document.querySelectorAll('[data-plitzi-empty]')) {
+    if (hiderOf(node)) {
+      continue;
+    }
+
+    const id = elementIdOf(node) ?? nameOf(node);
+    const kept = blankCounts.get(id) ?? {
+      times: 0,
+      what: node.tagName === 'IMG' ? ('picture' as const) : ('words' as const)
+    };
+    kept.times += 1;
+    blankCounts.set(id, kept);
+  }
+
+  const blank = [...blankCounts].map(([id, { times, what }]) => ({ id, times, what }));
+
   return {
     marked: document.querySelector('[data-plitzi-el]') !== null,
     missing,
@@ -649,6 +673,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
     byWidth,
     outOfUse,
     empty,
+    blank,
     brokenImages,
     overflow,
     cutOff,

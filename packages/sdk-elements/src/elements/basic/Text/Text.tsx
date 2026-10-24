@@ -21,8 +21,8 @@ export type TextProps = {
   decorative?: boolean;
 };
 
-const Text = ({ ref, content = 'Text', className = '', title = '', decorative = false }: TextProps) => {
-  const { previewMode, text, handleChange } = useEditableContent(content);
+const Text = ({ ref, content, className = '', title = '', decorative = false }: TextProps) => {
+  const { previewMode, text, handleChange, emptyMark } = useEditableContent(content);
 
   return (
     <RootElement
@@ -30,6 +30,7 @@ const Text = ({ ref, content = 'Text', className = '', title = '', decorative = 
       className={clsx('plitzi-component__text', className)}
       title={title || undefined}
       {...(decorative ? { 'aria-hidden': true } : {})}
+      {...emptyMark}
     >
       {previewMode && text}
       {!previewMode && (

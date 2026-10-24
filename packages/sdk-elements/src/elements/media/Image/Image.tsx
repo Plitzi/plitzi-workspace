@@ -8,6 +8,7 @@ import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import { getFallbackSVGBase64 } from './ImageHelper';
 import withElement from '../../../Element/hocs/withElement';
+import { emptyMark } from '../../../Element/hooks/useEditableContent';
 import RootElement from '../../../Element/RootElement';
 
 import type { RefObject } from 'react';
@@ -97,7 +98,8 @@ const Image = ({
   const broken = failed === src;
   const handleError = useCallback(() => setFailed(src), [src]);
   const shown = broken ? fallback : src;
-  const marker = broken ? { 'data-plitzi-failed': src } : {};
+  // Failed is said with its source; nothing given at all — a binding that read nothing — as empty (`emptyMark`).
+  const marker = broken ? { 'data-plitzi-failed': src } : emptyMark(previewMode === true && !srcProp);
 
   // `auto` is the browser's own choice, which is what leaving the attribute out asks for.
   const loading = loadMode === 'auto' ? undefined : loadMode;

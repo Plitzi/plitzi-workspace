@@ -88,9 +88,9 @@ const Button = ({
   const {
     definition: { styleSelectors }
   } = useElement();
-  // An icon and no words is an icon button: the placeholder is for a button with neither (encore's vote arrow read
-  // "↑ Button" — its author had named it with `title` and `label`, and left `content` out).
-  const words = content ?? (icon ? '' : 'Button');
+  // No words is no words: a placeholder is the builder's, set when one is placed (its declaration), never drawn on a
+  // page (encore's vote arrow read "↑ Button" — its author had named it with `title` and `label`, and left `content`).
+  const words = content ?? '';
 
   return (
     <RootElement

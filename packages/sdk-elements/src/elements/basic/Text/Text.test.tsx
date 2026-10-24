@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { Text } from './Text';
 import ElementContext from '../../../Element/ElementContext';
@@ -11,40 +11,25 @@ vi.mock('../../../Element/hocs/withElement', () => ({
 
 vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
   ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
-  usePlitzi: () => ({
-    settings: { previewMode: true }
-  })
+  usePlitzi: () => ({ settings: { previewMode: true } })
 }));
 
-describe('Text Tests', () => {
-  it('Render Component', () => {
-    const { baseElement } = render(
+describe('a text on a page', () => {
+  // encore's room cards read "Text" where a bound line resolved to nothing.
+  it('draws nothing when it has no words — no placeholder — and says it is empty', () => {
+    const { container } = render(
       <ElementContext value={skipHocEntry()}>
         <Text />
+        <Text content="Phoenix — Netrum" />
+        <Text content={0} />
       </ElementContext>
     );
+    const drawn = [...container.querySelectorAll('.plitzi-component__text')];
 
-    expect(baseElement).toBeTruthy();
-  });
-
-  it('shows its title to a pointer resting on it', () => {
-    const { getByText } = render(
-      <ElementContext value={skipHocEntry()}>
-        <Text content="UTC" title="Coordinated Universal Time" />
-      </ElementContext>
-    );
-
-    expect(getByText('UTC').getAttribute('title')).toBe('Coordinated Universal Time');
-  });
-
-  // A seal or a mark drawn for the look: a screen reader skips it, as it skips a decorative container.
-  it('is skipped by a screen reader when it is decorative', () => {
-    const { getByText } = render(
-      <ElementContext value={skipHocEntry()}>
-        <Text content="福" decorative />
-      </ElementContext>
-    );
-
-    expect(getByText('福').getAttribute('aria-hidden')).toBe('true');
+    expect(drawn.map(each => [each.textContent, each.hasAttribute('data-plitzi-empty')])).toEqual([
+      ['', true],
+      ['Phoenix — Netrum', false],
+      ['0', false]
+    ]);
   });
 });

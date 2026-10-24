@@ -54,6 +54,7 @@ const clean: ProbeFindings = {
   byWidth: [],
   outOfUse: [],
   empty: [],
+  blank: [],
   brokenImages: [],
   overflow: null,
   cutOff: [],
@@ -159,6 +160,7 @@ describe('testing/describeFindings', () => {
         ...clean,
         missing: ['title'],
         hidden: [{ id: 'rows', reason: 'display:none on "inner-slot"' }],
+        blank: [{ id: 'row-label', times: 4, what: 'words' }],
         brokenImages: [{ source: '/logo.png', elementId: 'logo' }],
         overflow: { pixels: 37, widest: ['"cover"', '<img.x>'], elementIds: ['cover'] },
         cutOff: [{ id: 'title', pixels: 60 }],
@@ -167,6 +169,7 @@ describe('testing/describeFindings', () => {
     ).toEqual([
       { code: 'element-missing', elementId: 'title' },
       { code: 'element-hidden', elementId: 'rows' },
+      { code: 'element-empty', elementId: 'row-label' },
       { code: 'image-not-loaded', elementId: 'logo' },
       { code: 'sideways-scroll', elementId: 'cover' },
       { code: 'cut-off', elementId: 'title' },

@@ -15,14 +15,15 @@ export type HeadingProps = {
   subType?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 };
 
-const Heading = ({ ref, className = '', content = 'Heading', subType = 'h1' }: HeadingProps) => {
-  const { previewMode, text, handleChange } = useEditableContent(content);
+const Heading = ({ ref, className = '', content, subType = 'h1' }: HeadingProps) => {
+  const { previewMode, text, handleChange, emptyMark } = useEditableContent(content);
 
   return (
     <RootElement
       ref={ref}
       tag={!previewMode ? 'div' : subType}
       className={clsx('plitzi-component__heading', { [`plitzi-component__heading-${subType}`]: subType }, className)}
+      {...emptyMark}
     >
       {previewMode && text}
       {!previewMode && <Contenteditable value={text} onChange={handleChange} openMode="doubleClick" />}

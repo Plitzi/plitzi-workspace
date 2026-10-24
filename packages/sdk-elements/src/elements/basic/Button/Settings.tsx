@@ -20,7 +20,7 @@ type SettingsProps = {
 };
 
 const Settings = ({
-  content = 'Button',
+  content = '',
   contentPlacement = 'after',
   icon = '',
   iconPlacement = 'before',

@@ -10,7 +10,7 @@ type SettingsProps = {
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
-const Settings = ({ content = 'Text', decorative = false, onUpdate }: SettingsProps) => {
+const Settings = ({ content = '', decorative = false, onUpdate }: SettingsProps) => {
   const handleChangeContent = useCallback((value: string) => onUpdate?.('content', value), [onUpdate]);
   const handleChangeDecorative = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('decorative', e.target.checked),

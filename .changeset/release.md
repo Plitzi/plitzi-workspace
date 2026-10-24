@@ -76,6 +76,9 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 
 ### The team (`.plitzi/team.json`)
 
+- **A tester starts on the strongest model, as a designer does,** when its entry names none (`ROLE_MODELS`): its tests
+  and its review are what stop a bug or a regression getting through. A model the file says always wins.
+
 - **The lead and its agents:** each agent's roles (`developer`, `designer`, `reviewer`, `tester`, `writer`, or the
   project's own), `count`, `model` (or one per quality level), `effort`. Edit it by hand, or with
   `plitzi run team set <name> …`.
@@ -243,6 +246,9 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
 
+- **`element-empty`:** `page check`, `inspectPage` and a project's visual tests report an element a visitor sees with
+  nothing in it — no words, no picture: a binding to a field the data lacks — by id, with how many list rows drew it so.
+
 - **`plitzi verify`** says a project nothing serves as such — start it — where it asked for an account in `.env`, and
   says apart the pages nothing answered from those sent to sign in.
 - **`page check`** reads a page as a visitor's browser draws it:
@@ -332,6 +338,11 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   `pageDecorations`, `compareDecorations`. Every export carries a doc.
 
 ## Elements and the SDK (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`, `@plitzi/sdk-shared`)
+
+- **No placeholder words on a page:** a text, paragraph, heading, button or field label with no value draws nothing,
+  never "Text", "Heading", "Button" or "Label" — encore's room cards read "Text" where their line was bound to nothing.
+  The placeholder is the builder's, set from the declaration when an element is placed. An element drawn empty — those,
+  and an image with no source — says so on the page (`data-plitzi-empty`).
 
 - **An anchor in a list's row is the row's own** (`faq-answer-luna`), and a button's `controls` points at its own row.
 - **A native disclosure:** `container({ subType: 'details' })` with a `summary`.

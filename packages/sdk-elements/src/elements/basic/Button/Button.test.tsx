@@ -59,8 +59,9 @@ describe('Button Tests', () => {
   });
 
   /** encore's vote arrow: `content` left out beside an icon read "↑ Button". The placeholder is for a button of neither. */
-  it('says no placeholder words beside an icon when its content is left out', () => {
-    const { getByRole } = render(
+  // A placeholder is the builder's, set from the declaration when one is placed: never words a visitor reads.
+  it('says no placeholder words when its content is left out, with an icon or without', () => {
+    const { getByRole, getAllByRole } = render(
       <ElementContext value={elementEntry('btn')}>
         <Button icon="fa-solid fa-arrow-up" label="Vote up" />
         <Button />
@@ -68,7 +69,7 @@ describe('Button Tests', () => {
     );
 
     expect(getByRole('button', { name: 'Vote up' }).textContent).toBe('');
-    expect(getByRole('button', { name: 'Button' })).toBeTruthy();
+    expect(getAllByRole('button').map(button => button.textContent)).toEqual(['', '']);
   });
 
   it('lets an empty content be named by its children or its title', () => {

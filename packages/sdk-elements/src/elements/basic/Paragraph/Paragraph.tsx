@@ -14,11 +14,16 @@ export type ParagraphProps = {
   className?: string;
 };
 
-const Paragraph = ({ ref, content = 'Paragraph', className = '' }: ParagraphProps) => {
-  const { previewMode, text, handleChange } = useEditableContent(content);
+const Paragraph = ({ ref, content, className = '' }: ParagraphProps) => {
+  const { previewMode, text, handleChange, emptyMark } = useEditableContent(content);
 
   return (
-    <RootElement ref={ref} tag={!previewMode ? 'div' : 'p'} className={clsx('plitzi-component__paragraph', className)}>
+    <RootElement
+      ref={ref}
+      tag={!previewMode ? 'div' : 'p'}
+      className={clsx('plitzi-component__paragraph', className)}
+      {...emptyMark}
+    >
       {previewMode && text}
       {!previewMode && <Contenteditable className="" value={text} onChange={handleChange} openMode="doubleClick" />}
     </RootElement>

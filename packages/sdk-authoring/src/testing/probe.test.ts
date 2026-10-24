@@ -482,3 +482,22 @@ describe('probePage / transparent', () => {
     expect(findings.hidden.map(({ id }) => id)).toEqual(['lost']);
   });
 });
+
+describe('probePage / elements shown empty', () => {
+  // encore's room cards read "Text" where their line was bound to nothing: the SDK now draws nothing, and says so.
+  it('counts each element the SDK marks empty by its id — a list row each — and leaves out one nobody sees', () => {
+    sized(100, 20);
+    document.body.innerHTML = [
+      '<div data-plitzi-el="room-card-now" data-plitzi-empty></div>',
+      '<div data-plitzi-el="room-card-now" data-plitzi-empty></div>',
+      '<img data-plitzi-el="hero-art" data-plitzi-empty>',
+      '<div data-plitzi-el="room-card-name">Night Drive</div>',
+      '<div style="display: none"><span data-plitzi-el="closed-note" data-plitzi-empty></span></div>'
+    ].join('');
+
+    expect(probePage(input([])).blank).toEqual([
+      { id: 'room-card-now', times: 2, what: 'words' },
+      { id: 'hero-art', times: 1, what: 'picture' }
+    ]);
+  });
+});

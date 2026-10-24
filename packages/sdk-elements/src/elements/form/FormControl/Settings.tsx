@@ -60,7 +60,7 @@ const toLength = (value: string): number => {
 const Settings = ({
   subType = 'text',
   name = '',
-  label = 'Label',
+  label = '',
   hideLabel = false,
   defaultValue = '',
   placeholder = '',

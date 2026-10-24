@@ -6,7 +6,7 @@ type SettingsProps = {
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
-const Settings = ({ content = 'Paragraph', onUpdate }: SettingsProps) => {
+const Settings = ({ content = '', onUpdate }: SettingsProps) => {
   const handleChangeContent = useCallback((value: string) => onUpdate?.('content', value), [onUpdate]);
 
   return (

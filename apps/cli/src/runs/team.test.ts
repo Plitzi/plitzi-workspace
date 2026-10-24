@@ -51,7 +51,10 @@ describe('the team of a project’s runs', () => {
       file: TEAM_FILE
     });
     await setTeamAgent(root, 'design', { roles: ['designer', 'reviewer'], model: 'claude-opus-5-5' });
-    await setTeamAgent(root, 'test', { roles: ['tester'] });
+    // A tester named with no model starts on the strongest: what its tests miss gets through (Carlos).
+    expect(await setTeamAgent(root, 'test', { roles: ['tester'] })).toMatchObject({
+      after: { name: 'test', roles: ['tester'], model: 'claude-opus-5-5' }
+    });
     expect(await setTeamAgent(root, 'lead', { model: 'claude-opus-5-5', effort: 'high' })).toMatchObject({
       after: { model: 'claude-opus-5-5', effort: 'high' }
     });
@@ -71,6 +74,10 @@ describe('the team of a project’s runs', () => {
     expect(await setTeamAgent(root, 'dev', { count: 3 })).toMatchObject({
       before: { count: 2 },
       after: { roles: ['developer'], count: 3, model: 'claude-sonnet-5-5' }
+    });
+    // A model said is the file's, whatever the role: the default is only for an entry that names none.
+    expect(await setTeamAgent(root, 'test', { model: 'claude-sonnet-5-5' })).toMatchObject({
+      after: { model: 'claude-sonnet-5-5' }
     });
     expect(await unsetTeamAgent(root, 'test')).toMatchObject({ before: { name: 'test' } });
     expect((await readTeam(root))?.agents.map(each => each.name)).toEqual(['dev', 'design']);

@@ -36,6 +36,7 @@ export type PageIssueCode =
   | 'element-missing'
   | 'element-hidden'
   | 'image-not-loaded'
+  | 'element-empty'
   | 'sideways-scroll'
   | 'cut-off'
   | 'illegible-text'
@@ -170,6 +171,11 @@ export const issuesOf = (expected: ElementHandle[], findings: ProbeFindings): Pa
     ...findings.hidden.map(({ id, reason }): PageIssue => ({
       code: 'element-hidden',
       message: `${named(id)} is on the page but not visible: ${reason}`,
+      elementId: id
+    })),
+    ...findings.blank.map(({ id, times, what }): PageIssue => ({
+      code: 'element-empty',
+      message: `${named(id)}${times > 1 ? ` (×${String(times)})` : ''} shows ${what === 'picture' ? 'no picture' : 'no words'} — what it reads has nothing: a binding to a field the data lacks, or a row with none. Bind it to what the data has, or hide it while it is empty (\`visible\`)`,
       elementId: id
     })),
     ...unboundImages(findings.brokenImages),

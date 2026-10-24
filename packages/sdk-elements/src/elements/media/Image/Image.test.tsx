@@ -35,6 +35,21 @@ describe('Image Tests', () => {
     expect(baseElement).toBeTruthy();
   });
 
+  // encore's live card drew the placeholder where its cover was bound to nothing: said on the page, for a check to see.
+  it('says on the page that it has nothing to show — not when a source is given', () => {
+    const { container } = render(
+      <ElementContext value={skipHocEntry()}>
+        <Image src="" />
+        <Image src="https://example.com/cover.jpg" />
+      </ElementContext>
+    );
+
+    expect([...container.querySelectorAll('img')].map(image => image.hasAttribute('data-plitzi-empty'))).toEqual([
+      true,
+      false
+    ]);
+  });
+
   /** No picture yet — none given, or a binding still waiting on its data — is drawn by the SDK, with no request at all. */
   it('draws its placeholder from the SDK when it has no source, never from the network', () => {
     const { container } = render(

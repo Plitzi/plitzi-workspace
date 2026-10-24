@@ -23,6 +23,13 @@ export const contentText = (content: unknown): string => {
 };
 
 /**
+ * What says on the page that an element has nothing to show — no words, no picture: a binding that read nothing, a
+ * field the data lacks. Drawn empty, never as a placeholder a visitor reads (encore's room cards said "Text"); the
+ * marker is how a page check tells it from an element left empty on purpose (`page check`, `element-empty`).
+ */
+export const emptyMark = (empty: boolean): { 'data-plitzi-empty'?: '' } => (empty ? { 'data-plitzi-empty': '' } : {});
+
+/**
  * A text element's words: drawn on a page, and edited in place in the builder — double-click, type — each change
  * written back to the element's `content`.
  */
@@ -44,7 +51,7 @@ const useEditableContent = (content: unknown) => {
     [builderContext, id, previewMode]
   );
 
-  return { previewMode, text, handleChange };
+  return { previewMode, text, handleChange, emptyMark: emptyMark(previewMode === true && text === '') };
 };
 
 export default useEditableContent;
