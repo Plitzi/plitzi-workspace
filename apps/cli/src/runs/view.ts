@@ -9,7 +9,7 @@ import { fingerprint } from './files';
 import { readHistory } from './history';
 import { identifiedAgents } from './identity';
 import { isRunning, processTable, readLaunch, startedWithin } from './launch';
-import { askingLeads, UNTAKEN_REVIEW_MS } from './leads';
+import { askingLeads, reviewersOf, UNTAKEN_REVIEW_MS } from './leads';
 import { LEAD, messagesOf, unreadFor } from './messages';
 import { agentsNeeded, runningAgents } from './onDemand';
 import { under } from './paths';
@@ -154,6 +154,8 @@ export interface RunView {
   approvedFiles: number;
   /** The leads besides `lead` that review (`lead-2`…): who may take the reviews, when the run has some. */
   leads: string[];
+  /** Who takes reviews beside `lead`: the leads that review, and the team's testers. */
+  reviewers: string[];
   /** Those of them running now — each asked for a review within the last minute. */
   askingLeads: string[];
   /** The agents the CLI launched whose process has ended: not running, whatever the log's last word of them. */
@@ -589,6 +591,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     })),
     approvedFiles: Object.keys(approved.files).length,
     leads: record.leads ?? [],
+    reviewers: await reviewersOf(loaded),
     askingLeads: await askingLeads(loaded, now),
     gone: [...gone],
     ...(port === undefined ? {} : { previewPort: port }),

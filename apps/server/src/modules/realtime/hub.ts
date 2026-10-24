@@ -2,7 +2,9 @@ import { JOIN_TYPE, LEAVE_TYPE, REVOKED_TYPE } from '@plitzi/sdk-shared/realtime
 
 import { warnRealtime } from './failure';
 import { isMessage } from './message';
+import { PRESENCE_HEARTBEAT_MS } from './presence';
 
+import type { RealtimePresence } from './presence';
 import type { RealtimeRetained } from './retained';
 import type { ChannelDeclaration, PubSubAdapter, RealtimeMessage, RealtimeSender } from '@plitzi/sdk-shared';
 
@@ -66,8 +68,40 @@ export type RealtimeHub = ReturnType<typeof createRealtimeHub>;
  * A hundred pages on one board are a hundred connections here and a single subscription to the adapter: a message
  * arrives once and is written to each of them. The last one to leave a topic unsubscribes it.
  */
-export const createRealtimeHub = (pubsub: PubSubAdapter, retained: RealtimeRetained) => {
+export const createRealtimeHub = (pubsub: PubSubAdapter, retained: RealtimeRetained, presence?: RealtimePresence) => {
   const byToken = new Map<string, RealtimeConnection>();
+  /** The presence topics a connection is counted on: those of a `presence: true` channel, for a page that is not watching. */
+  const counted = (connection: RealtimeConnection): string[] =>
+    connection.observer
+      ? []
+      : [...connection.topics].flatMap(([topic, declaration]) => (declaration.presence ? [topic] : []));
+  const memberOf = (connection: RealtimeConnection) => ({
+    from: connection.id,
+    ...(connection.user ? { user: connection.user } : {}),
+    since: Date.now()
+  });
+  // Every replica says its members are still there: one that went down stops counting (`PRESENCE_STALE_MS`).
+  const heartbeat = presence
+    ? setInterval(() => {
+        const byTopic = new Map<
+          string,
+          { space: RealtimeSpace; topic: string; members: ReturnType<typeof memberOf>[] }
+        >();
+        for (const connection of byToken.values()) {
+          for (const topic of counted(connection)) {
+            const key = adapterTopic(connection.space, topic);
+            const entry = byTopic.get(key) ?? { space: connection.space, topic, members: [] };
+            entry.members.push(memberOf(connection));
+            byTopic.set(key, entry);
+          }
+        }
+
+        for (const { space, topic, members } of byTopic.values()) {
+          presence.touch(space, topic, members).catch(warnRealtime(`"${topic}"'s presence was not refreshed`));
+        }
+      }, PRESENCE_HEARTBEAT_MS)
+    : undefined;
+  heartbeat?.unref();
   const local = new Map<string, { connections: Set<RealtimeConnection>; release: Promise<() => Promise<void>> }>();
 
   const publish = (space: RealtimeSpace, message: RealtimeMessage): Promise<void> =>
@@ -185,6 +219,9 @@ export const createRealtimeHub = (pubsub: PubSubAdapter, retained: RealtimeRetai
 
         if (declaration.presence && !connection.observer) {
           await publish(connection.space, from(connection, topic, JOIN_TYPE, null));
+          await presence
+            ?.touch(connection.space, topic, [memberOf(connection)])
+            .catch(warnRealtime(`"${topic}"'s presence was not recorded`));
         }
       }
     },
@@ -192,6 +229,12 @@ export const createRealtimeHub = (pubsub: PubSubAdapter, retained: RealtimeRetai
     /** Unsubscribes a connection that went away, and tells the channels it announced itself on. */
     disconnect: async (connection: RealtimeConnection): Promise<void> => {
       byToken.delete(connection.token);
+      for (const topic of counted(connection)) {
+        await presence
+          ?.depart(connection.space, topic, connection.id)
+          .catch(warnRealtime(`"${topic}"'s presence was not let go of`));
+      }
+
       for (const topic of connection.topics.keys()) {
         if (connection.announced.has(topic)) {
           await publish(connection.space, from(connection, topic, LEAVE_TYPE, null));
@@ -207,6 +250,7 @@ export const createRealtimeHub = (pubsub: PubSubAdapter, retained: RealtimeRetai
      * goes when its page leaves.
      */
     closeAll: (): void => {
+      clearInterval(heartbeat);
       [...byToken.values()].forEach(connection => connection.end());
     },
 

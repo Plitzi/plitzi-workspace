@@ -380,6 +380,14 @@ export const readCall = (value: unknown): FunctionCall => {
         type: stringArg(call.type, 'A type'),
         data: call.data
       };
+    case 'presence':
+      return { op: 'presence', topic: stringArg(call.topic, 'A topic') };
+    case 'visitor':
+      if (typeof call.who === 'number' && Number.isInteger(call.who)) {
+        return { op: 'visitor', who: call.who };
+      }
+
+      return { op: 'visitor', who: stringArg(call.who, 'A username or an id') };
     case 'grant': {
       const ttlSeconds = optionalNumber(call.ttlSeconds, 'A lifetime');
 
@@ -492,6 +500,10 @@ export const answerCall = async (ctx: FunctionContext, call: FunctionCall): Prom
     }
     case 'publish':
       return ctx.publish(call.topic, call.type, call.data);
+    case 'presence':
+      return ctx.presence(call.topic);
+    case 'visitor':
+      return (await ctx.visitors.get(call.who)) ?? null;
     case 'grant':
       return ctx.grant(call.topic, call.ttlSeconds);
     case 'revoke':

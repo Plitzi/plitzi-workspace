@@ -54,6 +54,7 @@ export const elementAttributeNames = {
   carousel: ['autoplay', 'itemKey', 'items', 'label', 'loop', 'mode', 'pauseOnHover', 'speed', 'transition'],
   carouselTrack: [],
   channel: ['grant', 'keep', 'presence', 'subType', 'topic'],
+  chart: ['emptyText', 'format', 'height', 'items', 'kind', 'label', 'labelField', 'max', 'showValues', 'valueField'],
   container: ['decorative', 'label', 'live', 'open', 'subType', 'title'],
   custom: null,
   dialogContainer: [
@@ -397,12 +398,12 @@ export const elementAttributeNames = {
     'layoutContainer',
     'notFound',
     'seoEnabled',
+    'seoImage',
+    'seoImageAlt',
     'seoPageDescription',
     'seoPageTitle',
     'seoRobots',
     'seoStructuredData',
-    'seoImage',
-    'seoImageAlt',
     'seoType',
     'withheld'
   ],

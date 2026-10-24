@@ -42,6 +42,12 @@ export interface SessionClient {
   userAgent?: string;
   ip?: string;
   /**
+   * The host it was signed in on: a space's own (`encore.plitzi.app`), where its visitors sign in through the platform,
+   * or the platform's. What "sign out of this site everywhere" ends — a host's cookies are its own, so its sessions
+   * are what a visitor holds there, on every device.
+   */
+  host?: string;
+  /**
    * The application holding it, when it is not a browser: a native client names itself when it registers
    * (`Plitzi CLI on carlos-mbp`, software `plitzi-cli`). A user agent says which browser; this says which app.
    */
@@ -66,6 +72,8 @@ export interface SessionSummary {
   userAgent?: string;
   ip?: string;
   app?: SessionApp;
+  /** Where it was signed in (`SessionClient.host`): a space's own host, or the platform's. */
+  host?: string;
   createdAt: number;
   /** When it was last used, where the store keeps it; a session never seen since it was made has none. */
   lastActiveAt?: number;
@@ -155,8 +163,16 @@ export interface AccountAdapters {
    * renewal leaves a row behind.
    */
   saveSession: (userId: number, session: SSRSession, context?: SessionContext) => Promise<void>;
-  /** Clear the pair, by whichever half the caller holds, or by account. */
-  clearSession: (target: { accessToken?: string; refreshToken?: string; userId?: number }) => Promise<void>;
+  /**
+   * Clear the pair, by whichever half the caller holds, or by account — and with `host` beside `userId`, only that
+   * account's sessions signed in on that host (`SessionClient.host`): a site's sign-out everywhere, not the account's.
+   */
+  clearSession: (target: {
+    accessToken?: string;
+    refreshToken?: string;
+    userId?: number;
+    host?: string;
+  }) => Promise<void>;
   /** Global roles and permissions, for the body a grant answers with. */
   loadAccess: (userId: number) => Promise<AccountAccess>;
 

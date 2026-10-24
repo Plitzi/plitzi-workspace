@@ -5,13 +5,21 @@ import { authFailureFromResponse } from '@plitzi/sdk-shared/auth';
 import AuthProvider from '../AuthProvider';
 
 import type { AuthProviderProps } from '../AuthProvider';
-import type { AuthFailureReason, AuthResult, MfaChallenge, Schema, TokenResult } from '@plitzi/sdk-shared';
+import type {
+  AuthFailureReason,
+  AuthResult,
+  MfaChallenge,
+  Schema,
+  SessionScope,
+  TokenResult
+} from '@plitzi/sdk-shared';
 
 export type BasicAuthProviderProps = AuthProviderProps & {
   loginUrl?: string;
   userUrl?: string;
   refreshUrl?: string;
   logoutUrl?: string;
+  revokeUrl?: string;
   sessionExchangeUrl?: Schema['settings']['sessionExchangeUrl'];
   mfaUrl?: Schema['settings']['mfaUrl'];
   detailsPath?: Schema['settings']['detailsPath'];
@@ -83,6 +91,7 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
     userUrl = '',
     refreshUrl = '',
     logoutUrl = '',
+    revokeUrl = '',
     sessionExchangeUrl = '',
     mfaUrl = '',
     detailsPath = 'details',
@@ -98,6 +107,7 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
       userUrl,
       refreshUrl,
       logoutUrl,
+      revokeUrl,
       sessionExchangeUrl,
       mfaUrl,
       detailsPath,
@@ -113,9 +123,9 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
   }
 
   protected get endpoints(): string[] {
-    const { loginUrl, userUrl, refreshUrl, logoutUrl } = this.options;
+    const { loginUrl, userUrl, refreshUrl, logoutUrl, revokeUrl } = this.options;
 
-    return [loginUrl, userUrl, refreshUrl, logoutUrl];
+    return [loginUrl, userUrl, refreshUrl, logoutUrl, revokeUrl];
   }
 
   /**
@@ -243,6 +253,30 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
     }
 
     await this.request(this.options.logoutUrl, { method: 'POST' });
+  }
+
+  /**
+   * The backend ends them (`revokeUrl`, `{ scope }` posted), asked with the session's own token — a bearer needs no
+   * CSRF token, and is the credential the backend reads first. No `revokeUrl`: refused, naming it, never a sign-out
+   * here that left the other devices signed in.
+   */
+  protected async requestLogoutEverywhere(scope: SessionScope): Promise<void> {
+    if (!this.options.revokeUrl) {
+      throw new Error('This space signs out everywhere through its revokeUrl, and it names none (settings.revokeUrl)');
+    }
+
+    const accessToken = this.token?.accessToken;
+    const res = await this.request(this.options.revokeUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+      },
+      body: JSON.stringify({ scope })
+    });
+    if (res.reason && res.status !== 401) {
+      throw new Error(`Signing out everywhere was refused (${String(res.status)})`);
+    }
   }
 
   // Helpers

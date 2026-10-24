@@ -6,6 +6,7 @@ import { serverLog } from '../helpers/serverLog';
 
 import type { ActionDbDriver, ActionLookups, ActionsConfig } from '../modules/actions/types';
 import type { ConnectorLookups } from '../modules/connectors/resolver';
+import type { FunctionVisitor } from '../modules/functions/contract';
 import type { SpaceFunctions } from '../modules/functions/protocol';
 import type {
   ActionDocument,
@@ -130,10 +131,27 @@ export const connectorLookupsOf = (config: ConnectorLookupsConfig): ConnectorLoo
  * The action lookups a deployment configured, each document checked as it is read. Asked for one, a document that is
  * not one is refused; listed, it is left out and said, so one broken action does not take its space's schedule down.
  */
-export const actionLookupsOf = (config: ActionLookupsConfig): ActionLookups => {
-  const { getConnector, getData, getFunctions, getPluginFunctions, listActions } = config;
+/** What a deployment answered for a visitor, as a function may read it: the public fields alone, the rest dropped. */
+const visitorOf = (found: unknown): FunctionVisitor | undefined => {
+  if (!isRecord(found) || typeof found.id !== 'number' || typeof found.username !== 'string') {
+    return undefined;
+  }
 
   return {
+    id: found.id,
+    username: found.username,
+    ...(typeof found.name === 'string' && found.name ? { name: found.name } : {}),
+    ...(typeof found.avatar === 'string' && found.avatar ? { avatar: found.avatar } : {})
+  };
+};
+
+export const actionLookupsOf = (config: ActionLookupsConfig): ActionLookups => {
+  const { getConnector, getData, getFunctions, getPluginFunctions, getVisitor, listActions } = config;
+
+  return {
+    ...(getVisitor
+      ? { getVisitor: async (spaceId, environment, who) => visitorOf(await getVisitor(spaceId, environment, who)) }
+      : {}),
     getAction: async (spaceId, actionId, at) => {
       const found = await config.getAction(spaceId, actionId, at);
       if (found === undefined || found === null) {

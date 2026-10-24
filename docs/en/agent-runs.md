@@ -305,13 +305,16 @@ agent its scratch, made. Never removed by the run.
 Who works a project's runs is its own choice, in `.plitzi/team.json` (committed: it holds no secret, so it needs no
 `.example` as `.env` does). `plitzi create` writes the starter (`STARTER_TEAM`): two developers — one started with the
 run, the other on demand — and a designer, since each agent spends tokens; the person grows it when a job asks. It
-names every model — the lead on `claude-opus-5-5`, the rest on `claude-sonnet-5-5` — because the models are the file's,
+names every model — the lead (at `"effort": "high"`) and the designer on `claude-opus-5-5`, the developers on
+`claude-sonnet-5-5` — because the models are the file's,
 never the CLI's (one deprecated is changed there, in sight): one it leaves out is the harness's own, and a lead that
 reviews (`lead-2`) starts on the lead's. And an `about` that
 says what each field and each role the CLI knows means (`ROLES`: developer, designer, reviewer, tester, writer; any
 other name is a role of the project's own), since JSON has no comments; `about` is the CLI's — never read, written as this CLI says it whenever it
 writes the file, and brought up by `plitzi upgrade` with the files, the agents left as they are. The file is formatted as the project's Prettier leaves it (`formattedJson`). `run team` lists the roles too. The file
-holds the leads' model, effort and count, and each agent — a name (`dev` is `dev-1`, `dev-2`…), the roles it takes, how many of it and the model to start it with, the
+holds the leads' model, effort and count, and each agent — its `effort` too, how hard it thinks (`low` to `max`:
+Claude Code's `--effort`, Codex's reasoning effort, `max` its `xhigh`; opencode takes none from the command line), the
+harness's own when not said — a name (`dev` is `dev-1`, `dev-2`…), the roles it takes, how many of it and the model to start it with, the
 harness's own name for it, nothing checked but that one is named — and its `options`: `designReview`, how closely a
 designer reviews another task's UI (`light`: its pages at 1440 and 390 in the default scheme, nothing it does not touch;
 `standard`, the default: both schemes and widths, its sections against the reference; `high`: every page that reads its
@@ -379,6 +382,11 @@ running. Its harness is loading and its skills are being read. Without it, every
 crash read "no signal" and "not running" at once, its last word from before, and `run watch` woke the lead for nothing.
 
 ## The tester's tasks (`tests.ts`)
+
+A tester reviews the code first: `task next` hands it the tasks in review that wait for no designer, as it hands a lead
+that reviews (`leadReviewFor`), its verdict is a lead's — its approval approves the task — and it never reviews what it
+worked. While a tester runs, `run watch` wakes the lead only for a review none took in `UNTAKEN_REVIEW_MS`: the testers
+the bottleneck. A team with no tester leaves every review to the leads.
 
 A tester in the team gives every developer task a task of its tests, `<id>-tests`, a tester's, after it: tests written
 from the task's acceptance, not its code, by an agent that did not write it. Its files are where the project's tests are

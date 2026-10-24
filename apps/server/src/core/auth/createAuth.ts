@@ -14,7 +14,7 @@ import type { CredentialCarrier } from './credentials';
 import type { IdentityAdapters, IdentityConfig } from './identity';
 import type { CookieSink } from './session';
 import type { TokenConfig } from './tokens';
-import type { ServerAuth, SSRAuthCookie, SSRSession, SSRUser } from '@plitzi/sdk-shared';
+import type { ServerAuth, SessionScope, SSRAuthCookie, SSRSession, SSRUser } from '@plitzi/sdk-shared';
 
 /**
  * Everything a deployment says about its own auth, in one object.
@@ -123,6 +123,7 @@ export const createAuth = (config: AuthConfig) => {
     loginUrl: `${basePath}/login`,
     userUrl: `${basePath}/session`,
     logoutUrl: `${basePath}/logout`,
+    revokeUrl: `${basePath}/sessions/revoke`,
     ...(api.capabilities.refresh ? { refreshUrl: `${basePath}/refresh` } : {}),
     ...(api.capabilities.mfa ? { mfaUrl: `${basePath}/mfa/complete` } : {})
   };
@@ -228,6 +229,17 @@ export const createAuth = (config: AuthConfig) => {
       applySessionOutcome(req, res, outcome, cookies, csrf),
     /** Both halves of a space permission: a global capability, and membership of that space. */
     can: identity.can,
+    /**
+     * One account's public face — its id and username, nothing else: by username or id, an active account only. What a
+     * self-hosted space's functions read of another person (`ctx.visitors.get`): every account of its own is its
+     * visitor. The platform says its own (`lookups.getVisitor`): only the people of the space being asked.
+     */
+    publicAccount: async (who: string | number): Promise<{ id: number; username: string } | undefined> => {
+      const { findById, findByUsername } = config.adapters;
+      const account = typeof who === 'number' ? await findById?.(who) : await findByUsername?.(who);
+
+      return account?.active ? { id: account.id, username: account.username } : undefined;
+    },
 
     /**
      * WHO a page request carries, and nothing about signing anyone in or out.
@@ -261,6 +273,17 @@ export const createAuth = (config: AuthConfig) => {
 
       endSession: async (req: CredentialCarrier): Promise<void> => {
         await api.logout({ accessToken: cookies.resolveSessionToken(req) });
+      },
+
+      endSessions: async (req: CredentialCarrier, scope: SessionScope): Promise<boolean> => {
+        const resolved = await identity.resolveActor(req);
+        if (!resolved.ok) {
+          return false;
+        }
+
+        await api.revokeSessions(resolved.actor.id, scope, req.hostname);
+
+        return true;
       },
       ...ssrIdentityAdapters
     }

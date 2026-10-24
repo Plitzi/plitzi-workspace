@@ -225,6 +225,16 @@ export const under = (folder: string, file: string): string => path.join(folder,
 export const COPY_TASK_FILE = 'tmp/plitzi-task.json';
 
 /** A folder inside a task's copy, read off its path: the project it belongs to, its run and its task. */
+/**
+ * The project a run's folder belongs to — a task's copy, the finish's checked copy (`cache/check-…`), anything under
+ * `tmp/plitzi-runs/` — `undefined` for a folder of no run. What reads the project's own settings from one (its `.env`).
+ */
+export const runProjectOf = (dir: string): string | undefined => {
+  const at = dir.indexOf(`${path.sep}${RUNS_DIR.split('/').join(path.sep)}${path.sep}`);
+
+  return at === -1 ? undefined : dir.slice(0, at);
+};
+
 export const copyOf = (dir: string): { root: string; run: string; task: string } | undefined => {
   const marker = `${path.sep}${RUNS_DIR.split('/').join(path.sep)}${path.sep}`;
   const at = dir.indexOf(marker);

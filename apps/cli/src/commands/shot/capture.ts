@@ -18,6 +18,13 @@ const namedBy = (target: string): string => `[data-plitzi-el="${target}"]`;
 /** A bare word as an id selector, where CSS reads it as one: never one that starts with a digit. */
 const idOf = (target: string): string[] => (/^[A-Za-z_]/.test(target) ? [`#${target}`] : []);
 
+/**
+ * An element by the name every page command takes: the space's element of that name, or — a plugin's own part, which
+ * no element names (`reactions-more`, inside the Reactions plugin) — the node of that id. `page play` found a plugin's
+ * picker that `page check --click` said was not on the page (encore's t-emojis).
+ */
+export const byNameOrId = (name: string): string => [namedBy(name), ...idOf(name)].join(', ');
+
 /** A section as a comparison's report names it: its tag, and its id or its element's name. */
 const REGION = /^([a-z][a-z0-9]*)#([\w-]+)(?::(\d+))?$/;
 

@@ -25,6 +25,7 @@ export const SCHEMA_SETTINGS = [
   'userUrl',
   'refreshUrl',
   'logoutUrl',
+  'revokeUrl',
   'detailsPath',
   'tokenPath',
   'refreshTokenPath',

@@ -69,7 +69,7 @@ const Button = ({
   className = '',
   children,
   contentPlacement = 'after',
-  content = 'Button',
+  content,
   icon = '',
   iconPlacement = 'before',
   subType = 'button',
@@ -88,6 +88,9 @@ const Button = ({
   const {
     definition: { styleSelectors }
   } = useElement();
+  // An icon and no words is an icon button: the placeholder is for a button with neither (encore's vote arrow read
+  // "↑ Button" — its author had named it with `title` and `label`, and left `content` out).
+  const words = content ?? (icon ? '' : 'Button');
 
   return (
     <RootElement
@@ -95,7 +98,7 @@ const Button = ({
       tag="button"
       type={previewMode ? subType : 'button'}
       className={clsx('plitzi-component__button', className, {
-        'container--empty--skip': !previewMode && !children && (content || icon)
+        'container--empty--skip': !previewMode && !children && (words || icon)
       })}
       disabled={disabled}
       title={title || undefined}
@@ -105,7 +108,7 @@ const Button = ({
       aria-controls={(controls && controlsInRow ? anchorInRows(controls, rows) : controls) || undefined}
     >
       <ElementWords
-        content={content}
+        content={words}
         icon={icon}
         iconPlacement={iconPlacement}
         iconClassName={styleSelectors.icon}

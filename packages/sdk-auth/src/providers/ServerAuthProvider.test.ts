@@ -53,6 +53,29 @@ describe('ServerAuthProvider', () => {
     expect(provider.getState()).toBe('guest');
   });
 
+  /** A visitor of a space signing out of it on their phone too: the page server ends this site's sessions. */
+  it('asks the page server to end the sessions the scope names, and then is nobody', async () => {
+    const fetchMock = vi.fn<typeof fetch>(() => Promise.resolve(new Response(null, { status: 200 })));
+    vi.stubGlobal('fetch', fetchMock);
+    const provider = new ServerAuthProvider();
+    await provider.init({ user: ada });
+
+    await provider.logoutEverywhere('site');
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/auth/logout-everywhere');
+    expect(fetchMock.mock.calls[0]?.[1]?.body).toBe('{"scope":"site"}');
+    expect(provider.getState()).toBe('guest');
+  });
+
+  it('fails, still signed in, when the page server refused', async () => {
+    vi.stubGlobal('fetch', () => Promise.resolve(new Response(null, { status: 403 })));
+    const provider = new ServerAuthProvider();
+    await provider.init({ user: ada });
+
+    await expect(provider.logoutEverywhere('all')).rejects.toThrow('refused (403)');
+    expect(provider.getState()).toBe('authenticated');
+  });
+
   it('goes to sign in, and comes back to this page', () => {
     const assign = vi.fn();
     vi.stubGlobal('location', { pathname: '/write', search: '?draft=1', assign });

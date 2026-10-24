@@ -155,7 +155,10 @@ export const readState = async (page: BrowserPage, target: string): Promise<Elem
   }
 
   if (!found.found) {
-    return { problem: `${target} is not on ${page.url()}` };
+    // `--read a,b`: one name with a comma in it, beside a `--width 390,1440` that does take commas (encore's lead).
+    return {
+      problem: `${target} is not on ${page.url()}${/^[\w-]+(,[\w-]+)+$/.test(target) ? ` — --read takes elements separated by spaces: --read ${target.split(',').join(' ')}` : ''}`
+    };
   }
 
   const located = page.locator(found.selector);

@@ -2,6 +2,7 @@
 @use './video' as video;
 @use './embed' as embed;
 @use './svg' as svg;
+@use './chart' as chart;
 @use './carousel' as carousel;
 @use './button' as button;
 @use './heading' as heading;
@@ -38,6 +39,7 @@
   @include video.styles;
   @include embed.styles;
   @include svg.styles;
+  @include chart.styles;
   @include carousel.styles;
   @include button.styles;
   @include heading.styles;

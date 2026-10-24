@@ -216,8 +216,8 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
       await execute(
         db,
         `INSERT INTO ${t.session}
-           (account_id, token, expires_at, refresh_token, refresh_expires_at, user_agent, ip, app_name, app_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           (account_id, token, expires_at, refresh_token, refresh_expires_at, user_agent, ip, app_name, app_id, host)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           userId,
           session.token,
@@ -229,7 +229,8 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
           context?.client?.userAgent?.slice(0, 255) ?? null,
           context?.client?.ip ?? null,
           context?.client?.app?.name.slice(0, 120) ?? null,
-          context?.client?.app?.softwareId?.slice(0, 64) ?? null
+          context?.client?.app?.softwareId?.slice(0, 64) ?? null,
+          context?.client?.host?.slice(0, 255) ?? null
         ]
       );
     },
@@ -240,7 +241,21 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
      * An empty target clears NOTHING — a `WHERE` assembled from no conditions is a `WHERE` that matches every row,
      * and the statement that would sign out an entire deployment must not be reachable by leaving an argument off.
      */
-    clearSession: async (target: { accessToken?: string; refreshToken?: string; userId?: number }): Promise<void> => {
+    clearSession: async (target: {
+      accessToken?: string;
+      refreshToken?: string;
+      userId?: number;
+      host?: string;
+    }): Promise<void> => {
+      // A site's sessions of one account: both, never either — `OR` would end the account's everywhere.
+      if (target.host !== undefined) {
+        if (target.userId !== undefined) {
+          await execute(db, `DELETE FROM ${t.session} WHERE account_id = ? AND host = ?`, [target.userId, target.host]);
+        }
+
+        return;
+      }
+
       const conditions: string[] = [];
       const params: unknown[] = [];
 

@@ -41,7 +41,7 @@ export const space: SpaceSpec = {
     'room:{id}': {
       access: { mode: 'public' }, // or { mode: 'session' }, or { mode: 'role', permissions: [...] }
       publish: 'clients', // the default
-      presence: true, // members, their state, join and leave
+      presence: true, // members, their state, join and leave — and counted by the server: ctx.presence(topic)
       maxMessageBytes: 8192, // 4096 when absent: the JSON of `data`
       messagesPerSecond: 40 // 30 when absent: per connection
     }

@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { defineFunctions } from './contract';
+import { actionLookupsOf } from '../../core/configSeam';
 import { createActionsModule } from '../actions';
 
 import type { FunctionContext, FunctionTask } from './contract';
-import type { ActionLookups } from '../actions/types';
-import type { ActionEntry, ElementInteraction, SSRUser } from '@plitzi/sdk-shared';
+import type { ActionLookups, ActionRealtime } from '../actions/types';
+import type { ActionEntry, ActionLookupsConfig, ElementInteraction, SSRUser } from '@plitzi/sdk-shared';
 
 const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction => ({
   id,
@@ -52,12 +53,16 @@ const runProbe = async (
     hosts = [],
     fetchImpl,
     credential,
-    getData
+    getData,
+    getVisitor,
+    realtime
   }: {
     hosts?: string[];
     fetchImpl?: typeof fetch;
     credential?: Record<string, string>;
     getData?: ActionLookups['getData'];
+    getVisitor?: ActionLookupsConfig['getVisitor'];
+    realtime?: ActionRealtime;
   } = {}
 ) => {
   const probe: FunctionTask<Record<string, never>> = {
@@ -71,10 +76,15 @@ const runProbe = async (
     lookups: {
       getAction: () => Promise.resolve(undefined),
       getCredential: () => Promise.resolve(credential),
-      ...(getData ? { getData } : {})
+      ...(getData ? { getData } : {}),
+      // Through the seam a deployment's lookup goes through: what it answers, filtered as code would read it.
+      ...(getVisitor
+        ? { getVisitor: actionLookupsOf({ getAction: () => Promise.resolve(undefined), getVisitor }).getVisitor }
+        : {})
     },
     functions: { native: [defineFunctions({ allow: { hosts }, tasks: [probe] })] },
-    ...(fetchImpl ? { fetchImpl } : {})
+    ...(fetchImpl ? { fetchImpl } : {}),
+    ...(realtime ? { realtime } : {})
   });
   const result = await module.runAction({
     entry: entryFor('probe.run'),
@@ -210,5 +220,71 @@ describe('ctx.data', () => {
     const result = await runProbe(ctx => ctx.data('prices.json').then(() => 'read', errorOf));
 
     expect(result.output.value).toContain('This server keeps no data for its spaces');
+  });
+});
+
+describe('ctx.presence', () => {
+  /** encore counted a room's listeners by the pages' own heartbeats in kv: the server knows who is connected. */
+  it('says who is on a topic of the space’s presence channels, as the server counts them', async () => {
+    const presence = vi.fn(() =>
+      Promise.resolve({ count: 1, members: [{ from: 'c-1', user: { id: 7, name: 'ana' }, since: 1_000 }] })
+    );
+    const realtime: ActionRealtime = {
+      publish: () => Promise.resolve(),
+      grant: () => Promise.resolve('g'),
+      revoke: () => Promise.resolve(),
+      presence
+    };
+
+    const result = await runProbe(ctx => ctx.presence('room:night-drive'), { realtime });
+
+    expect(result.output.value).toEqual({
+      count: 1,
+      members: [{ from: 'c-1', user: { id: 7, name: 'ana' }, since: 1_000 }]
+    });
+    expect(presence).toHaveBeenCalledWith({ spaceId: 3, environment: 'main' }, 'room:night-drive');
+  });
+
+  it('is refused, saying why, on a server with no channels', async () => {
+    const result = await runProbe(ctx =>
+      ctx.presence('room:x').then(
+        () => 'counted',
+        (error: unknown) => (error instanceof Error ? error.message : String(error))
+      )
+    );
+
+    expect(result.output.value).toContain('no realtime channels');
+  });
+});
+
+describe('ctx.visitors', () => {
+  /** encore kept its own copy of every profile in kv, written from `ctx.user`, to show one person to another. */
+  it('reads one person of the space, its public fields alone — an email the deployment answered never reaches code', async () => {
+    const getVisitor = vi.fn((_space: number, _environment: string, who: string | number) =>
+      Promise.resolve(
+        who === 'mika' ? { id: 9, username: 'mika', name: 'Mika', email: 'mika@example.com', roles: ['dj'] } : undefined
+      )
+    );
+
+    const result = await runProbe(
+      async ctx => ({ mika: await ctx.visitors.get('mika'), nobody: await ctx.visitors.get(42) }),
+      {
+        getVisitor
+      }
+    );
+
+    expect(result.output.value).toEqual({ mika: { id: 9, username: 'mika', name: 'Mika' } });
+    expect(getVisitor).toHaveBeenCalledWith(3, 'main', 42);
+  });
+
+  it('is refused, saying why, on a server that tells no visitor apart', async () => {
+    const result = await runProbe(ctx =>
+      ctx.visitors.get('mika').then(
+        () => 'read',
+        (error: unknown) => (error instanceof Error ? error.message : String(error))
+      )
+    );
+
+    expect(result.output.value).toContain('tells no visitor apart');
   });
 });

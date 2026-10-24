@@ -1,4 +1,5 @@
 import type { ActionEntry, ActionRunReport, ActionTaskDescriptor } from './ActionTypes';
+import type { SessionScope } from './AuthTypes';
 import type { Environment } from './CommonTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
 import type { DataDraft, DataSaveResult } from './DataTypes';
@@ -206,6 +207,12 @@ export type SSRAdapters = {
   authenticate?: (credentials: Record<string, string>, req: SSRRequest) => Promise<SSRSession | undefined>;
   /** Revoke whatever session this request carries, at the source. The cookies are the server's to clear. */
   endSession?: (req: SSRRequest) => Promise<void>;
+  /**
+   * Sign the person this request carries out on every device: `site`, of the sessions signed in on this request's host
+   * (a space's own — its visitors' sign-out everywhere); `all`, of every session of the account. Answers whether one was
+   * carried: nobody signed in has nothing to end. The cookies are the server's to clear.
+   */
+  endSessions?: (req: SSRRequest, scope: SessionScope) => Promise<boolean>;
   /**
    * Turn a credential the browser obtained from an identity provider into a session here — see the exchange stage.
    * Everything that decides whether it is any good lives in this adapter, because only the deployment knows:

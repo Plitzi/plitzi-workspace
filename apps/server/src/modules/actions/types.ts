@@ -1,7 +1,7 @@
 import type { LaterAnswer, LaterRequest } from './jobs/later';
 import type { ActionEmailSender } from './runtime/email';
 import type { FunctionsConfig } from '../functions/config';
-import type { FunctionJobs } from '../functions/contract';
+import type { FunctionJobs, FunctionPresence, FunctionVisitor } from '../functions/contract';
 import type { SpaceFunctions } from '../functions/protocol';
 import type { KvChangeLifetime } from './runtime/kvChange';
 import type { KvListEntry, KvListPut, KvListPutOptions, KvListRange } from './runtime/kvList';
@@ -192,6 +192,12 @@ export type ActionLookups = {
    */
   getData?: (spaceId: number, at?: SpaceRevision) => Promise<Record<string, string> | undefined>;
   /**
+   * One person of the space, by username or id — public fields alone (`FunctionVisitor`), and only of someone who
+   * belongs to it: what a function's `ctx.visitors.get` reads. Absent, a server with an `auth` of its own answers its
+   * accounts; else nobody is read.
+   */
+  getVisitor?: (spaceId: number, environment: string, who: string | number) => Promise<FunctionVisitor | undefined>;
+  /**
    * The feature flags the space declares as of that revision, for a flow that reads `{{ flags.<name> }}`. Only asked
    * for a run whose document names `flags` at all. Absent, such a flow sees no flags — and the server says so.
    */
@@ -249,6 +255,10 @@ export type ActionTaskContext = {
    * the `realtime.publish` task sends through.
    */
   publish?: (topic: string, type: string, data: unknown) => Promise<void>;
+  /** Who is on a topic of a `presence: true` channel of this space, on every replica — `undefined` with no channels. */
+  presence?: (topic: string) => Promise<FunctionPresence>;
+  /** One person of the space, public fields alone — `undefined` when the server tells no visitor apart. */
+  visitor?: (who: string | number) => Promise<FunctionVisitor | undefined>;
   /**
    * A grant for one topic of a `grant: true` channel of this space — what `realtime.grant` hands the page, once the
    * flow has decided the visitor may be there. `undefined` when the server has no realtime channels.
@@ -299,6 +309,7 @@ export type ActionRealtime = {
   ) => Promise<void>;
   grant: (space: { spaceId: number; environment: string }, topic: string, ttlSeconds?: number) => Promise<string>;
   revoke: (space: { spaceId: number; environment: string }, topic: string, grant?: string) => Promise<void>;
+  presence?: (space: { spaceId: number; environment: string }, topic: string) => Promise<FunctionPresence>;
   /** Says a job of the space's functions as it is now, on its own topic (`$job:<id>`), kept for a page that joins. */
   publishJob?: (space: { spaceId: number; environment: string }, jobId: string, view: FunctionJobView) => Promise<void>;
   /** Hands the realtime the way to a job, for the door of its topic: who started it, and who its `watch` lets in. */

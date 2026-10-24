@@ -76,7 +76,7 @@ describe('an agent’s prompt', () => {
 describe('the command that starts an agent headless', () => {
   it('reads its prompt from its file where said, and passes the prompt itself where run', () => {
     const prompt = { file: '/p/scratch/dev-1/prompt.md', text: 'You are dev-1' };
-    const claude = harnessCommand('claude', prompt, 'claude-sonnet-5-5');
+    const claude = harnessCommand('claude', prompt, { model: 'claude-sonnet-5-5' });
 
     expect(claude.line).toBe(
       `claude -p "$(cat /p/scratch/dev-1/prompt.md)" --model claude-sonnet-5-5 --permission-mode acceptEdits --allowedTools 'Bash Read Edit Write Glob Grep'`
@@ -84,32 +84,46 @@ describe('the command that starts an agent headless', () => {
     expect(claude.command).toBe('claude');
     expect(claude.args.slice(0, 2)).toEqual(['-p', 'You are dev-1']);
 
-    expect(harnessCommand('codex', prompt, 'gpt-x').line).toBe(
+    expect(harnessCommand('codex', prompt, { model: 'gpt-x' }).line).toBe(
       'codex exec --full-auto -m gpt-x "$(cat /p/scratch/dev-1/prompt.md)"'
     );
     // The team's model is one name for every harness: one this harness does not run is left to its own default, said.
-    expect(harnessCommand('codex', prompt, 'claude-sonnet-5-5')).toMatchObject({
+    expect(harnessCommand('codex', prompt, { model: 'claude-sonnet-5-5' })).toMatchObject({
       line: 'codex exec --full-auto "$(cat /p/scratch/dev-1/prompt.md)"'
     });
-    expect(harnessCommand('codex', prompt, 'claude-sonnet-5-5').model).toBeUndefined();
-    expect(harnessCommand('claude', prompt, 'gpt-x').line).not.toContain('--model');
-    expect(harnessCommand('claude', prompt, 'sonnet').model).toBe('sonnet');
+    expect(harnessCommand('codex', prompt, { model: 'claude-sonnet-5-5' }).model).toBeUndefined();
+    expect(harnessCommand('claude', prompt, { model: 'gpt-x' }).line).not.toContain('--model');
+    expect(harnessCommand('claude', prompt, { model: 'sonnet' }).model).toBe('sonnet');
     // A session of the CLI's id, kept to resume; or that one resumed (encore: four agents went down mid-task).
-    expect(harnessCommand('claude', prompt, undefined, { id: 'abc', resume: false }).args).toEqual(
+    expect(harnessCommand('claude', prompt, {}, { id: 'abc', resume: false }).args).toEqual(
       expect.arrayContaining(['--session-id', 'abc'])
     );
-    expect(harnessCommand('claude', prompt, undefined, { id: 'abc', resume: true }).args.slice(0, 4)).toEqual([
+    expect(harnessCommand('claude', prompt, {}, { id: 'abc', resume: true }).args.slice(0, 4)).toEqual([
       '-p',
       'You are dev-1',
       '--resume',
       'abc'
     ]);
     // opencode names a model provider/model: one written otherwise is left to its default.
-    expect(harnessCommand('opencode', prompt, 'claude-sonnet-5-5').line).toBe(
+    expect(harnessCommand('opencode', prompt, { model: 'claude-sonnet-5-5' }).line).toBe(
       'opencode run "$(cat /p/scratch/dev-1/prompt.md)"'
     );
-    expect(harnessCommand('opencode', prompt, 'anthropic/claude-sonnet-5-5').line).toContain(
+    expect(harnessCommand('opencode', prompt, { model: 'anthropic/claude-sonnet-5-5' }).line).toContain(
       '--model anthropic/claude-sonnet-5-5'
     );
+  });
+
+  /** The team's effort, as each harness takes it: Codex's highest is `xhigh`, opencode takes none — left to its own. */
+  it('says how hard the agent thinks where the harness takes it', () => {
+    const prompt = { file: '/p/prompt.md', text: 'You are lead-2' };
+
+    expect(harnessCommand('claude', prompt, { model: 'claude-opus-5-5', effort: 'high' })).toMatchObject({
+      effort: 'high',
+      args: expect.arrayContaining(['--effort', 'high']) as unknown
+    });
+    expect(harnessCommand('claude', prompt, { effort: 'low' }).line).toContain('--effort low');
+    expect(harnessCommand('codex', prompt, { effort: 'max' }).line).toContain('-c model_reasoning_effort=xhigh');
+    expect(harnessCommand('opencode', prompt, { effort: 'high' })).not.toHaveProperty('effort');
+    expect(harnessCommand('claude', prompt).line).not.toContain('--effort');
   });
 });

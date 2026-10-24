@@ -193,8 +193,12 @@ const lastDone = (entry: Record<string, unknown>): string | undefined => {
       return `told the lead on ${textOf(entry.task)}`;
     case 'message':
       return `wrote to ${textOf(entry.to) || 'the run'}`;
-    default:
-      return feedOf(entry)?.text;
+    default: {
+      // The feed's line leaves its task to a column of its own; a row of the agents has none, so it names it first.
+      const line = feedOf(entry);
+
+      return line && (line.task ? `${line.task}: ${line.text}` : line.text);
+    }
   }
 };
 

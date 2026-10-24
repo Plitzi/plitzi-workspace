@@ -20,6 +20,7 @@ const PROVIDER_SETTINGS = [
   'userUrl',
   'refreshUrl',
   'logoutUrl',
+  'revokeUrl',
   'detailsPath',
   'tokenPath',
   'refreshTokenPath',
@@ -65,6 +66,7 @@ const GeneralSettings = () => {
     userUrl,
     refreshUrl,
     logoutUrl,
+    revokeUrl,
     detailsPath = 'details',
     tokenPath = 'access_token',
     refreshTokenPath = 'refresh_token',
@@ -200,6 +202,13 @@ const GeneralSettings = () => {
               value={logoutUrl}
               onChange={handleChange('logoutUrl')}
               label="API Logout Url"
+            />
+            <Input
+              size="sm"
+              name="revokeUrl"
+              value={revokeUrl}
+              onChange={handleChange('revokeUrl')}
+              label="API Sign Out Everywhere Url (Optional) - ends the person's sessions on every device"
             />
             <Input
               size="sm"

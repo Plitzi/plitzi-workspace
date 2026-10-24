@@ -138,6 +138,7 @@ export const taskContextFor = (
   const oauthCallbackOrigin = config.functions?.oauth?.callbackOrigin;
   // Made once for the run, not per step: every read of one run sees one version of the data, looked up once.
   const readData = projectDataReader(config.lookups.getData, request.spaceId, request.at);
+  const { getVisitor } = config.lookups;
 
   return scope => ({
     runId: request.runId,
@@ -189,6 +190,7 @@ export const taskContextFor = (
     email,
     emit: chunk => request.emit?.(redactor.redact(chunk)),
     data: readData,
+    ...(getVisitor ? { visitor: who => getVisitor(request.spaceId, request.environment, who) } : {}),
     ...signing?.({ spaceId: request.spaceId, environment: request.environment }),
     ...(later.queue()
       ? laterFor(later, {
@@ -218,7 +220,14 @@ export const taskContextFor = (
           grant: (topic: string, ttlSeconds?: number) =>
             realtime.grant({ spaceId: request.spaceId, environment: request.environment }, topic, ttlSeconds),
           revoke: (topic: string, grant?: string) =>
-            realtime.revoke({ spaceId: request.spaceId, environment: request.environment }, topic, grant)
+            realtime.revoke({ spaceId: request.spaceId, environment: request.environment }, topic, grant),
+          ...(realtime.presence
+            ? {
+                presence: (topic: string) =>
+                  realtime.presence?.({ spaceId: request.spaceId, environment: request.environment }, topic) ??
+                  Promise.reject(new Error('This server counts nobody on its channels'))
+              }
+            : {})
         }
       : {})
   });

@@ -67,7 +67,8 @@ describe('plitzi run monitor', () => {
     expect(screen.some(line => line.includes('agent-3') && line.includes('task next'))).toBe(false);
     // Whether each starts with the run, in a column of its own (Carlos): the team's base here.
     expect(screen.some(line => /agent-2\s+base\s/.test(line))).toBe(true);
-    expect(screen.some(line => line.includes('lead') && line.includes('approved t-about'))).toBe(true);
+    // The task its own column, not said again in the words.
+    expect(screen.some(line => /lead\s+t-about\s+approved/.test(line))).toBe(true);
     expect(screen.some(line => /lead → agent-2\s+t-home\s+“Use the formal voice”/.test(line))).toBe(true);
   });
 
@@ -310,7 +311,9 @@ describe('plitzi run monitor', () => {
     await reportProgress(home.ctx, runId, 't-home', { step: 'the hero' });
     const { view, feed } = await monitorRun(lead(), runId);
     expect(plain(flowLines(view.tasks, 220)).some(line => line.includes('t-home agent-1'))).toBe(true);
-    expect(feed.map(line => line.text)).toContainEqual(`goes on with t-home — ${asked.question.id} answered`);
+    expect(feed.map(line => `${line.task ?? ''} ${line.text}`)).toContainEqual(
+      `t-home goes on — ${asked.question.id} answered`
+    );
   });
 
   // velada-dress: dev-2 stood "ready" with t-home, sent back, and "at work" with t-overlay at once — one agent, two
@@ -543,7 +546,7 @@ describe('plitzi run monitor', () => {
     const agent = (await monitorRun(lead(), runId)).agents.find(each => each.agent === 'agent-3');
     expect([agent?.status, agent?.doing, agent?.task]).toEqual([
       'idle',
-      expect.stringContaining('sent t-menu to review') as unknown,
+      expect.stringContaining('t-menu: sent it to review') as unknown,
       undefined
     ]);
   });
@@ -616,7 +619,7 @@ describe('plitzi run monitor', () => {
 
     const feed = (await monitorRun(lead(), runId)).feed.filter(line => line.task === 't-menu');
     expect(feed.find(line => line.kind === 'complete')?.text).toBe(
-      'sent t-menu to review — “Prices in euros, two decimals”'
+      'sent it to review — “Prices in euros, two decimals”'
     );
     expect(feed.filter(line => line.kind === 'message').map(line => line.quote)).toEqual(['One more thing']);
   });

@@ -1,6 +1,9 @@
 import { act } from './shell';
+import { RunRefusal } from '../../runs/refusal';
 import {
   checkTeamFile,
+  EFFORTS,
+  isEffort,
   parseModelChoice,
   coLeadNames,
   leadText,
@@ -14,7 +17,7 @@ import {
 } from '../../runs/team';
 
 import type { RunCommandOptions } from './shell';
-import type { TeamChange } from '../../runs/team';
+import type { Effort, TeamChange } from '../../runs/team';
 
 /**
  * `plitzi run team`: who works this project's runs, shown and changed.
@@ -58,6 +61,15 @@ export interface TeamSetOptions extends RunCommandOptions {
   resumeSession?: boolean;
 }
 
+/** `--effort`, refused naming the words when it is none of them. */
+const effortOf = (text: string): Effort => {
+  if (!isEffort(text)) {
+    throw new RunRefusal('invalid', `--effort ${text}: one of ${EFFORTS.join(', ')}`);
+  }
+
+  return text;
+};
+
 export const runTeamSet = (name: string, options: TeamSetOptions): Promise<void> =>
   act(
     options,
@@ -67,7 +79,7 @@ export const runTeamSet = (name: string, options: TeamSetOptions): Promise<void>
         ...(options.count !== undefined ? { count: options.count } : {}),
         ...(options.min !== undefined ? { min: options.min } : {}),
         ...(options.model ? { model: parseModelChoice(options.model) } : {}),
-        ...(options.effort ? { effort: options.effort } : {}),
+        ...(options.effort ? { effort: effortOf(options.effort) } : {}),
         ...(options.sessionPerTask !== undefined ? { sessionPerTask: options.sessionPerTask } : {}),
         ...(options.resumeSession !== undefined ? { resumeSession: options.resumeSession } : {})
       }),

@@ -95,7 +95,7 @@ describe('the scaffold', () => {
         about: { roles: { designer: expect.any(String) as unknown, tester: expect.any(String) as unknown } }
       });
       // The models are the file's: the lead on the strongest, every agent on the one it names.
-      expect(team).toHaveProperty('lead', { model: 'claude-opus-5-5' });
+      expect(team).toHaveProperty('lead', { model: 'claude-opus-5-5', effort: 'high' });
       expect(files['.gitignore'].split('\n')).not.toContain('.plitzi');
     }
   });

@@ -192,8 +192,29 @@ describe('saveSession', () => {
       client: { ip: '203.0.113.7', app: { name: 'Plitzi CLI on carlos-mbp', softwareId: 'plitzi-cli' } }
     });
 
-    expect(calls[0].sql).toContain('app_name, app_id');
-    expect(calls[0].params.slice(-3)).toEqual(['203.0.113.7', 'Plitzi CLI on carlos-mbp', 'plitzi-cli']);
+    expect(calls[0].sql).toContain('app_name, app_id, host');
+    expect(calls[0].params.slice(-4)).toEqual(['203.0.113.7', 'Plitzi CLI on carlos-mbp', 'plitzi-cli', null]);
+  });
+
+  /** Where it was signed in: what a site's sign-out everywhere ends, and a device list says. */
+  it('records the host it was signed in on', async () => {
+    const { db, calls } = fakeDb();
+    await createAccountStore(db, tables).saveSession(1, session, { client: { host: 'encore.plitzi.app' } });
+
+    expect(calls[0].params.at(-1)).toBe('encore.plitzi.app');
+  });
+});
+
+describe('clearing a site’s sessions', () => {
+  it('ends the account’s sessions on that host alone — never every one of its, nor every one there', async () => {
+    const { db, calls } = fakeDb();
+    const store = createAccountStore(db, tables);
+    await store.clearSession({ userId: 7, host: 'encore.plitzi.app' });
+    await store.clearSession({ host: 'encore.plitzi.app' });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].sql).toContain('account_id = ? AND host = ?');
+    expect(calls[0].params).toEqual([7, 'encore.plitzi.app']);
   });
 });
 

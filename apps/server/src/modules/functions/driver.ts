@@ -78,6 +78,38 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
 
   const listOf = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 
+  /** `ctx.visitors.get`'s answer: a person's public fields, or nobody — whatever came over the wire. */
+  const visitorOf = (value: unknown): { id: number; username: string; name?: string; avatar?: string } | undefined =>
+    isRecord(value) && typeof value.id === 'number' && typeof value.username === 'string'
+      ? {
+          id: value.id,
+          username: value.username,
+          ...(typeof value.name === 'string' ? { name: value.name } : {}),
+          ...(typeof value.avatar === 'string' ? { avatar: value.avatar } : {})
+        }
+      : undefined;
+
+  /** `ctx.presence`'s answer, as the platform said it — whatever came over the wire, read as what it must be. */
+  const presenceOf = (
+    value: unknown
+  ): { count: number; members: { from: string; user?: { id: number; name: string }; since: number }[] } => {
+    const members = (isRecord(value) ? listOf(value.members) : []).flatMap(member =>
+      isRecord(member) && typeof member.from === 'string' && typeof member.since === 'number'
+        ? [
+            {
+              from: member.from,
+              since: member.since,
+              ...(isRecord(member.user) && typeof member.user.id === 'number' && typeof member.user.name === 'string'
+                ? { user: { id: member.user.id, name: member.user.name } }
+                : {})
+            }
+          ]
+        : []
+    );
+
+    return { count: members.length, members };
+  };
+
   /** What a request's `signal` is, in whichever environment: an `AbortSignal` of its own, or one written the same. */
   type CodeSignal = {
     aborted: boolean;
@@ -209,6 +241,8 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
       publish: async (topic: string, type: string, data: unknown) => {
         await call({ op: 'publish', topic, type, data });
       },
+      presence: async (topic: string) => presenceOf(await call({ op: 'presence', topic })),
+      visitors: { get: async (who: string | number) => visitorOf(await call({ op: 'visitor', who })) },
       grant: (topic: string, ttlSeconds?: number) => call({ op: 'grant', topic, ttlSeconds }),
       revoke: async (topic: string, grant?: string) => {
         await call({ op: 'revoke', topic, grant });

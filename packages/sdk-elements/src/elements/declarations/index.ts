@@ -28,6 +28,7 @@ import LayoutContainerDeclaration from '../internal/LayoutContainer/declaration'
 import LoadingDeclaration from '../internal/Loading/declaration';
 import NotFoundDeclaration from '../internal/NotFound/declaration';
 import PageDeclaration from '../internal/Page/declaration';
+import ChartDeclaration from '../media/Chart/declaration';
 import EmbedDeclaration from '../media/Embed/declaration';
 import FontAwesomeDeclaration from '../media/FontAwesome/declaration';
 import ImageDeclaration from '../media/Image/declaration';
@@ -82,6 +83,7 @@ export const elementDeclarations = {
   PlitziSdk: PlitziSdkDeclaration,
   Reference: ReferenceDeclaration,
   RichText: RichTextDeclaration,
+  Chart: ChartDeclaration,
   Svg: SvgDeclaration,
   TabContainer: TabContainerDeclaration,
   TabContainerBody: TabContainerBodyDeclaration,
@@ -128,6 +130,7 @@ export {
   PlitziSdkDeclaration,
   ReferenceDeclaration,
   RichTextDeclaration,
+  ChartDeclaration,
   SvgDeclaration,
   TabContainerBodyDeclaration,
   TabContainerDeclaration,

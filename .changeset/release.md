@@ -96,6 +96,13 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 - **An agent whose process ended is not running**, whatever its last word in the log. An agent launched by
   `run agent --launch` that has ended reads stopped on the board, and `run watch` asks for it again when work waits:
   a UI review with no designer running says which designer to start, at once.
+- **A stage's checks read the run's work,** not the project the finish has not written yet: `run extend` no longer says
+  every element the run made is missing.
+- **`--as` in the finish:** any folder of a run — a task's copy, the finish's checked copy — signs in with the project's
+  `.env`.
+- **`server stop --port` on a run copy's server** says whose it is and where it is stopped from.
+- **The activity names a task once,** in its column: "approved (round 2)", not "approved t-shell (round 2)". An agent's
+  row names it before what it last did.
 - **The lead reads working on the board** while its commands come (a stage stacked, an agent started, a message), with
   what it last did, and idle only once they stop. `run agent --launch` is in the run's feed: "started dev-2 in claude".
 - **`options.launch`** (a harness, `claude`): `run watch --until lead` starts the agents work waits for itself, rather
@@ -104,12 +111,16 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   questions from one queue and are started only when reviews queue up; planning and the finish stay with `lead`.
 - **A designer reviews the UI of other tasks before the lead.** `options.designReview` (`light`, `standard`, `high`)
   says how closely. `task review --skip-design lead|no-ui` says why the lead skips it.
-- **A tester writes `<id>-tests`** after each developer task.
-- **The starter team names its models:** the lead on `claude-opus-5-5`, the developers and the designer on
-  `claude-sonnet-5-5`. They are `team.json`'s, never the CLI's: one it leaves out is the harness's default. A lead that
+- **A tester reviews the code, then writes `<id>-tests`** after each developer task. `task next` hands it the reviews
+  first, as a lead that reviews; its approval approves the task, and the lead is woken only for a review no tester took
+  in 2 minutes. With no tester in the team, the lead reviews every task.
+- **The starter team names its models:** the lead on `claude-opus-5-5` at `"effort": "high"`, the designer on
+  `claude-opus-5-5`, the developers on `claude-sonnet-5-5`. They are `team.json`'s, never the CLI's: one it leaves out is the harness's default. A lead that
   reviews (`lead-2`) starts on the team's lead model. A model the team names is passed only to a harness that runs it
   (Claude Code a Claude one, Codex any other, opencode `provider/model`); otherwise the agent starts on the harness's
   default, and `run agent --launch` says so.
+- **`effort`** for the lead and each agent (`low`, `medium`, `high`, `xhigh`, `max`; `run team set --effort`) is how hard
+  it thinks: Claude Code's `--effort`, Codex's reasoning effort (`max` is its `xhigh`). Left out, the harness's own.
 - **Quality levels:** a task's `quality` (`light`, `standard`, `high`) picks the model a level, and work is taken by
   urgency.
 
@@ -213,6 +224,10 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   `-expanded`, `-checked` and `-selected` too. With `--compare` it plays the other site beside it, and
   `--same moved,shown,enabled` turns that into an acceptance line.
 - **`page same`** says whether pages draw the same on two servers.
+- **`page check --click`, `--expect` and `--element` find a plugin's own parts** by their id, as `page play` does
+  (`reactions-more` inside a plugin).
+- **`--as` that reaches no server says so,** rather than ending in a stack trace; `--read a,b` says the elements are
+  separated by spaces.
 - **`--as <account>`** on `page play`, `page measure`, `page outline` and `task look` signs in first, with the account
   of the project's `.env` (in a task's copy, the project's). `fill` is a step of `--steps`.
 - **`plitzi explain`** answers "does Plitzi have a way to…". It covers elements and the fields their source publishes,
@@ -266,6 +281,13 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **Loading and navigation:** a hidden `embed` loads nothing until it is shown, and a page being left keeps its server
   sections while the next one is prefetched.
 - **Small fixes:** a toast's close button shows its focus, and the dev tools never print.
+- **A button with an icon and no `content` shows the icon alone,** not the placeholder "Button" beside it.
+- **`authLogoutEverywhere('site' | 'all')`**, the auth source's `logoutEverywhere`: a visitor signs out of the space on
+  every device, or out of their account everywhere. `basic` posts to the space's `revokeUrl` (the page server's sign-in
+  names it); a provider that cannot is refused, never a sign-out here alone.
+- **A `chart` element:** bars, a line, an area or a donut from bound rows (`items`, `labelField`, `valueField`), drawn
+  as SVG of its own at its box's width — no library loaded. It takes the colour of the text around it, its parts restyle
+  it, and its rows are written as a table a screen reader reads. On the canvas, unbound, it shows a sample to style.
 - **`PluginSource`** (`@plitzi/plitzi-sdk`): a plugin publishes a source to the elements put inside it, under its
   declaration's `sourceType` — `{{ player_deck.track }}`.
 - **A visitor not signed in, sent from a page to a page of the space, carries `?redirect=<where they were going>`**,
@@ -285,13 +307,22 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`list.put`** refuses a value written as JSON that does not parse.
 - **Functions by domain:** every file at the top of `functions/` (a space's or a plugin's) may export a definition by
   default; they are merged — a task, route, job or provider said twice is refused naming both files, `limits` is said
-  once, `allow.hosts` is all of theirs.
+  once, `allow.hosts` is all of theirs. A top-level file that exports no definition (a helper, types) is code the
+  others import, never bundled as one.
 - **The same call made while it runs is answered by that run** (`joined: true`, `X-Plitzi-Joined`), not refused 409.
 - **An action's `list` input** takes several values — one per line in the builder, an array from code — with
   `maxItems`.
+- **`ctx.presence(topic)`** says who is on a topic of a `presence: true` channel, counted by the server on every
+  replica (kept beside the grants in the actions' `kv`, with a heartbeat).
+- **`ctx.visitors.get(username | id)`** reads one of the space's people — public fields alone — through
+  `lookups.getVisitor`; a server with `auth` answers its own accounts (`auth.publicAccount`).
 - **`kv.listSwap(list, id, expected, next)` and `kv.listChange(list, id, change)`** change one entry of a list only if
   nobody changed it first, as `kv.swap` / `kv.change` do a key.
 - **A sign-up refused because the account exists names the field** (`field: 'username' | 'email'`).
+- **Signing out everywhere, of a site or of the account:** a session records the host it was signed in on;
+  `/auth/sessions/revoke` takes `{ scope: 'site' | 'all' }`, and the page server answers `/auth/logout-everywhere` for its
+  own host (`endSessions`). The MySQL store adds the column (schema 6) and lists each session with its host. A store of
+  your own: `saveSession` keeps `client.host`, `clearSession({ userId, host })` ends that account's sessions there alone.
 - **`/health` says which copy of a project serves**, and a port is held while it is being taken.
 - **A run's preview** answers `/__plitzi/run`, and only a preview's pages ask for it.
 - **The server's budget is loaded again:** the filters' catalogue and the pages' rule are entries of their own that the

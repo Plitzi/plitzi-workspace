@@ -198,6 +198,12 @@ export const authLogin = (
 
 export const authLogout = (): StepSpec => globalStep('logout');
 
+/**
+ * Signs the person out on every device, and here: `'site'` ends this space's sessions — a visitor's own, wherever they
+ * signed in to it; `'all'`, every session of their account. Said, never assumed. The step fails when it did not happen.
+ */
+export const authLogoutEverywhere = (scope: 'site' | 'all'): StepSpec => globalStep('logoutEverywhere', { scope });
+
 export const authRefreshDetails = (): StepSpec => globalStep('refreshDetails');
 
 /**

@@ -58,6 +58,19 @@ describe('Button Tests', () => {
     expect(close?.getAttribute('aria-hidden')).toBe('true');
   });
 
+  /** encore's vote arrow: `content` left out beside an icon read "↑ Button". The placeholder is for a button of neither. */
+  it('says no placeholder words beside an icon when its content is left out', () => {
+    const { getByRole } = render(
+      <ElementContext value={elementEntry('btn')}>
+        <Button icon="fa-solid fa-arrow-up" label="Vote up" />
+        <Button />
+      </ElementContext>
+    );
+
+    expect(getByRole('button', { name: 'Vote up' }).textContent).toBe('');
+    expect(getByRole('button', { name: 'Button' })).toBeTruthy();
+  });
+
   it('lets an empty content be named by its children or its title', () => {
     const { getByRole } = render(
       <ElementContext value={elementEntry('btn')}>

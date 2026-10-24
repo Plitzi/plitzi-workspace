@@ -51,7 +51,7 @@ export const accountsFlows = ({
         ok: false,
         status: 400,
         body: {
-          error: taken === 'username' ? 'That username is taken' : 'An account with that email already exists',
+          error: taken === 'username' ? 'That username is already taken' : 'An account with that email already exists',
           field: taken
         }
       };

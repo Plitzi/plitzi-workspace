@@ -4,7 +4,7 @@ import { readJson, writeJson } from './files';
 import { LEAD } from './messages';
 import { RunRefusal } from './refusal';
 import { updateState } from './taskStore';
-import { readTeam, startedAgents } from './team';
+import { readTeam, startedAgents, TESTER } from './team';
 import { byUrgency } from './urgency';
 
 import type { RunRecord } from './model';
@@ -40,6 +40,23 @@ export const IDLE_LEAD_MS = 4 * 60_000;
  */
 export const spareLead = (open: number, otherLeads: number): boolean => open <= otherLeads;
 
+/**
+ * The team's testers: they review the code of the tasks in review as a lead that reviews does — the same queue, the same
+ * verdict — before the tests they write, so the lead reviews only what none of them took within `UNTAKEN_REVIEW_MS`:
+ * the testers the bottleneck. A team with none leaves every review to the leads.
+ */
+export const testersOf = async (root: string): Promise<string[]> => {
+  const team = await readTeam(root).catch(() => undefined);
+
+  return team ? startedAgents(team).flatMap(each => (each.roles.includes(TESTER) ? [each.agent] : [])) : [];
+};
+
+/** Who reviews beside `lead`: the leads that review, and the testers. */
+export const reviewersOf = async (loaded: LoadedRun): Promise<string[]> => [
+  ...coLeadsOf(loaded.record),
+  ...(await testersOf(loaded.paths.root))
+];
+
 /** A lead that reviews asked within this is running: at `--follow` it asks every few seconds. */
 const ASKING_MS = 60_000;
 
@@ -53,12 +70,12 @@ export const markAsking = async (ctx: RunContext, loaded: LoadedRun): Promise<vo
   await writeJson(loaded.paths.leadsAsking, { ...asking, [ctx.agent]: ctx.now().toISOString() });
 };
 
-/** The leads that review and are running: each asked for a review within the last minute. */
+/** The reviewers running — leads that review, testers: each asked for a review within the last minute. */
 export const askingLeads = async (loaded: LoadedRun, now: Date): Promise<string[]> => {
   const asking =
     (await readJson(loaded.paths.leadsAsking, isAsking, 'when the leads asked').catch(() => undefined)) ?? {};
 
-  return coLeadsOf(loaded.record).filter(
+  return (await reviewersOf(loaded)).filter(
     lead => Object.hasOwn(asking, lead) && now.getTime() - Date.parse(asking[lead]) < ASKING_MS
   );
 };
@@ -115,12 +132,26 @@ export const requireALead = (ctx: RunContext, loaded: LoadedRun, action: string)
   );
 };
 
+/** Who took a task's work, by the notes its takes leave. */
+const workedBy = (view: TaskView, agent: string): boolean =>
+  view.state.notes.some(note => note.by === agent && note.text.startsWith('Taken'));
+
 /**
- * A lead's verdict on a task — `lead`, a lead that reviews, a person: any other is refused, a designer included once
- * the task's UI is said (its verdict is on the UI, and only while it waits for one).
+ * A lead's verdict on a task — `lead`, a lead that reviews, a tester, a person: any other is refused, a designer
+ * included once the task's UI is said (its verdict is on the UI, and only while it waits for one). A tester does not
+ * review what it worked — its own tests are another's to review.
  */
 export const assertReviewingLead = async (ctx: RunContext, loaded: LoadedRun, view: TaskView): Promise<void> => {
-  if (isPrincipal(ctx.agent) || isCoLead(loaded.record, ctx.agent)) {
+  const tester = (await testersOf(ctx.root)).includes(ctx.agent);
+  if (tester && workedBy(view, ctx.agent)) {
+    throw new RunRefusal(
+      'invalid',
+      `${ctx.agent} worked ${view.task.id}: its review is another tester's or a lead's — leave it, and go on with plitzi task next`,
+      { task: view.task.id }
+    );
+  }
+
+  if (isPrincipal(ctx.agent) || isCoLead(loaded.record, ctx.agent) || tester) {
     const { reviewer } = view.state;
     // A lead that reviews holds the review it took; `lead` has the last word and may give it on any.
     if (
@@ -138,7 +169,7 @@ export const assertReviewingLead = async (ctx: RunContext, loaded: LoadedRun, vi
     return;
   }
 
-  const leads = [LEAD, ...coLeadsOf(loaded.record)].join(', ');
+  const leads = [LEAD, ...(await reviewersOf(loaded))].join(', ');
   throw new RunRefusal(
     'lead-only',
     `${ctx.agent} is ${(await teamAgents(ctx.root)).includes(ctx.agent) ? 'an agent of the team' : 'no lead of this run'}: a lead says whether ${view.task.id} is done (${leads})${
@@ -147,10 +178,6 @@ export const assertReviewingLead = async (ctx: RunContext, loaded: LoadedRun, vi
     { task: view.task.id, holder: LEAD }
   );
 };
-
-/** Who took a task's work, by the notes its takes leave. */
-const workedBy = (view: TaskView, agent: string): boolean =>
-  view.state.notes.some(note => note.by === agent && note.text.startsWith('Taken'));
 
 /** A review no lead took this round, or `agent` did. */
 const freeFor = (view: TaskView, agent: string): boolean =>

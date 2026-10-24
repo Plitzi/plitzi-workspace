@@ -7,6 +7,7 @@ import { handleRealtimePublish, handleRealtimeSubscribe } from './handlers';
 import { createRealtimeHub } from './hub';
 import { realtimeModuleFor } from './index';
 import { createMemoryPubSub } from './memoryPubSub';
+import { createRealtimePresence } from './presence';
 import { createRealtimeRetained } from './retained';
 import { createMemoryKv } from '../actions/runtime/memoryKv';
 
@@ -581,5 +582,31 @@ describe('a channel that keeps what the server says', () => {
     );
     expect(page.heard()).toEqual([]);
     await page.close();
+  });
+});
+
+/** Who is on a presence channel, counted by the server on every replica — what a function's `ctx.presence` reads. */
+describe('a presence channel’s count', () => {
+  it('counts a page while it is there, never one that watches, and lets it go when it leaves', async () => {
+    const store = createMemoryKv();
+    const presence = createRealtimePresence(store);
+    const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(store), presence);
+    const space = { spaceId: 1, environment: 'main' };
+
+    const page = await connect(hub, 'board:1', { id: 7, username: 'mika' });
+    const check = await connect(hub, 'board:1', undefined, undefined, GRANTS, { cookie: 'plitzi-observer=1' });
+
+    expect(await presence.of(space, 'board:1')).toEqual([
+      {
+        from: page.ready?.connection,
+        user: expect.objectContaining({ id: 7 }) as unknown,
+        since: expect.any(Number) as unknown
+      }
+    ]);
+
+    await page.close();
+    await check.close();
+    expect(await presence.of(space, 'board:1')).toEqual([]);
+    hub.closeAll();
   });
 });

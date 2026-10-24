@@ -51,13 +51,13 @@ person asked for a team:
    a later task can undo it unseen (`run plan` names a task with no check). A check runs again on the whole result at
    the finish. **`notes`** hold for the whole run;
    `plitzi run note "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB): what you learnt reading the project — every
-   brief starts with it, and the few references its files need. **The team** is the project's,
-   `.plitzi/team.json` — grow it when the job asks (`plitzi run team set dev --count 3 --min 1 --model <model>`): its
+   brief starts with it, and the references its files need. **The team** is the project's,
+   `.plitzi/team.json` — grow it as the job asks (`plitzi run team set dev --count 3 --min 1 --model <m>`): its
    size is how many work at once; past `min`, on demand — `run watch` says when to start one (through its own CLI,
    after its first start). `--session-per-task`: its agents stop after each task, and `run watch` asks
-   you to start them again, fresh; `--resume-session`: one that died mid-task resumes its session; one just started is
-   not "no signal" for `options.startGraceMinutes` (3). A tester adds `<id>-tests` after each developer task (`"tests": false` for none); a designer reviews
-   the others' UI before you (`options.designReview`; `"designReview": false` turns it off). Yours is the complete,
+   you to start them again; `--resume-session`: one that died mid-task resumes; one just started is
+   not "no signal" for `options.startGraceMinutes` (3). A tester reviews code before you (yours: none took it in 2 min), adds `<id>-tests` (`"tests": false` for none); a designer reviews
+   the others' UI before you (`options.designReview`; `false` turns it off). Yours is the complete,
    strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
    `--skip-design lead|no-ui`; with `--changes`, `lead` keeps the next round's UI yours). A UI review held 8 min, or
    queued 5, is yours: decide it. Take a task back any time: `task reassign <task> --reason "…" --to <agent>|lead`. **One lead for every four agents**: `lead-2`… beside you, started when `run watch

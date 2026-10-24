@@ -11,6 +11,7 @@ export type AuthProviderSettings = Pick<
   | 'userUrl'
   | 'refreshUrl'
   | 'logoutUrl'
+  | 'revokeUrl'
   | 'detailsPath'
   | 'tokenPath'
   | 'refreshTokenPath'

@@ -171,6 +171,18 @@ export type FunctionJob<I extends Record<string, unknown> = Record<string, unkno
 };
 
 /**
+ * A person of the space as another's code may read them: who they are to a page — never their email, their roles or
+ * anything they did not show. `name` and `avatar` where the deployment keeps them.
+ */
+export type FunctionVisitor = { id: number; username: string; name?: string; avatar?: string };
+
+/** Who is on a presence channel's topic: how many, and each page with who is signed in on it. */
+export type FunctionPresence = {
+  count: number;
+  members: { from: string; user?: { id: number; name: string }; since: number }[];
+};
+
+/**
  * Everything a space's code can do besides computing — one object, the same wherever it runs. In a self-hosted server
  * it is built from the run's own context; in the sandbox each method is a call back to the platform, which scopes it
  * to the space and the run before doing it.
@@ -207,6 +219,17 @@ export type FunctionContext = {
   fetch: FunctionFetch;
   /** Says something on one of the space's realtime channels, as the server. */
   publish: (topic: string, type: string, data: unknown) => Promise<void>;
+  /**
+   * Who is on a topic of one of the space's `presence: true` channels now — every page connected to it, on whichever
+   * replica — the earliest arrived first. A room's listeners, counted by the server rather than by what pages report.
+   */
+  presence: (topic: string) => Promise<FunctionPresence>;
+  /**
+   * The space's people, read by another: `get('mika')` or `get(7)` — public fields alone, and only of someone who
+   * belongs to the space (the deployment says who: its visitors and members on Plitzi, every account of its own on a
+   * server of yours). `undefined` for anyone else, never "exists elsewhere": a profile page, a chat's names.
+   */
+  visitors: { get: (who: string | number) => Promise<FunctionVisitor | undefined> };
   /** Lets the visitor into one topic of a private (`grant: true`) channel. */
   grant: (topic: string, ttlSeconds?: number) => Promise<string>;
   /** Takes a grant back — or every grant for the topic, naming none. */

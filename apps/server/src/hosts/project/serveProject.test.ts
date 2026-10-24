@@ -437,7 +437,7 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     await write('src/plugins/Badge/functions/routes.ts', 'export const routes = {};\n');
     const unloaded = (call: unknown[]) =>
       String(call[0]).includes('badge: its functions were not loaded again') &&
-      String(call[1]).includes('exports a definition by default');
+      String(call[1]).includes('its definition by default');
     await vi.waitFor(() => expect(error.mock.calls.some(unloaded)).toBe(true), { timeout: 5000 });
     // Said once, however many saves leave it so.
     await write('src/plugins/Badge/functions/routes.ts', 'export const routes = { a: 1 };\n');

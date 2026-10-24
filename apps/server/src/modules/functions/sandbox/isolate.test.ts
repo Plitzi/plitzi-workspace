@@ -190,7 +190,7 @@ describe('preparing a space’s functions', () => {
   it('refuses a bundle with no default export', async () => {
     const prepared = await module.prepareFunctions({ 'index.ts': 'export const tasks = [];' });
 
-    expect(!prepared.ok && prepared.problems[0]?.message).toContain('exports a definition by default');
+    expect(!prepared.ok && prepared.problems[0]?.message).toContain('its definition by default');
   });
 
   it('is refused on a server with no runner', async () => {

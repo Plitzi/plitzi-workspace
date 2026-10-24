@@ -14,11 +14,10 @@ The team is `.plitzi/team.json`: each agent's name, roles, count, model. Tasks n
 "designer"`; `developer` when left out); `plitzi task next --role designer --follow --take --agent design-1` waits
 (8 min, `--timeout`) for the next one and takes it, handing back first a task you hold that can go on, or another's
 sent back while its agent is at a task (3 min on, you are handed its review's asks; its agent is told); run it again
-until it says you can stop. Started at a
-level, say it (`--quality high`, as `run plan` gave your command): you are handed tasks of it or below.
-**A designer** reviews the others' UI/UX before the lead's complete review: its half is [runs-designer.md](runs-designer.md). **A tester** gets `<task>-tests` after each developer task: tests of
+until it says you can stop. Started at a level, say it (`--quality high`, as `run plan` gave your command): you are handed tasks of it or below.
+**A designer** reviews the others' UI/UX before the lead: [runs-designer.md](runs-designer.md). **A tester** reviews code as the lead would, first; then `<task>-tests` after each developer task: tests of
 what its acceptance asked, both sides of each condition (a page's in `visual/<page>.spec.ts`, a module's beside it,
-`node --test`). A test the work fails is told to the lead (`task tell`), never bent to pass.
+`node --test`). A test the work fails is told to the lead (`task tell`), never bent.
 
 The lead's half — plan, rehearse, open, review, close, stack — is [runs-lead.md](runs-lead.md).
 

@@ -105,6 +105,19 @@ const STYLESHEET: Record<string, SlotRules> = {
   carousel: root('.plitzi-component__carousel'),
   carouselTrack: root('.plitzi-component__carousel-track'),
   channel: root('.plitzi-component__channel'),
+  chart: root('.plitzi-component__chart', {
+    bar: ['.plitzi-component__chart .chart__bar'],
+    line: ['.plitzi-component__chart .chart__line'],
+    area: ['.plitzi-component__chart .chart__area'],
+    point: ['.plitzi-component__chart .chart__point'],
+    slice: ['.plitzi-component__chart .chart__slice'],
+    hole: ['.plitzi-component__chart .chart__hole'],
+    grid: ['.plitzi-component__chart .chart__grid'],
+    axisLabel: ['.plitzi-component__chart .chart__axis'],
+    valueLabel: ['.plitzi-component__chart .chart__value'],
+    legend: ['.plitzi-component__chart .chart__legend'],
+    empty: ['.plitzi-component__chart .chart__empty']
+  }),
   container: root('.plitzi-component__container'),
   custom: root('.plitzi-component__custom'),
   dialogContainer: root('.plitzi-component__dialog-container', {

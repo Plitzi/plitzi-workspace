@@ -95,5 +95,25 @@ export const authCallbacks: Record<string, BuiltinGlobalCallback> = {
     title: 'Auth Logout',
     strictParams: true,
     params: {}
+  },
+  /**
+   * The person signed out on every device, and here: `site`, this space's sessions — a visitor's own, wherever they
+   * signed in to it; `all`, every session of their account. A refusal fails the step: a sign-out everywhere that did not
+   * happen must never read as one that did.
+   */
+  logoutEverywhere: {
+    source: 'auth',
+    title: 'Auth Sign Out Everywhere',
+    strictParams: true,
+    params: {
+      scope: {
+        type: 'select',
+        description: 'Which sessions end: this site’s, or every one of the account.',
+        default: 'site',
+        options: ['site', 'all'],
+        optionLabels: { site: 'This site, on every device', all: 'Every session of the account' },
+        canBind: false
+      }
+    }
   }
 };

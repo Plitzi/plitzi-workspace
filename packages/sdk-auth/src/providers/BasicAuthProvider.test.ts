@@ -649,3 +649,30 @@ describe('BasicAuthProvider second factor', () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
+
+describe('BasicAuthProvider signing out everywhere', () => {
+  it('asks the backend with the session’s own token, then is nobody', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi, revokeUrl: 'https://api.example.com/auth/sessions/revoke' });
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+    await provider.login({ username: 'ada', password: 'pw' });
+    mockFetch.mockResolvedValueOnce(jsonResponse({ message: 'All sessions revoked' }));
+
+    await provider.logoutEverywhere('all');
+
+    const [url, init] = mockFetch.mock.calls[1] ?? [];
+    expect(url).toBe('https://api.example.com/auth/sessions/revoke');
+    expect(init?.body).toBe('{"scope":"all"}');
+    expect(init?.headers).toMatchObject({ Authorization: 'Bearer token' });
+    expect(provider.getState()).toBe('guest');
+  });
+
+  /** Never a sign-out here that left the other devices signed in. */
+  it('refuses, naming the setting, when the space names no revokeUrl', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+    await provider.login({ username: 'ada', password: 'pw' });
+
+    await expect(provider.logoutEverywhere('site')).rejects.toThrow('settings.revokeUrl');
+    expect(provider.getState()).toBe('authenticated');
+  });
+});

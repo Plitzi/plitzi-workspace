@@ -5,6 +5,7 @@ import { createRealtimeGrants } from './grants';
 import { createRealtimeHub } from './hub';
 import { publishJobView } from './jobs';
 import { createMemoryPubSub } from './memoryPubSub';
+import { createRealtimePresence } from './presence';
 import { createRealtimeRetained } from './retained';
 import { fleetStore } from '../../core/server/fleet/link';
 import { createMemoryKv, KV_METHODS } from '../actions/runtime/memoryKv';
@@ -13,6 +14,7 @@ import type { ChannelResolver } from './declarations';
 import type { RealtimeGrants } from './grants';
 import type { RealtimeHub } from './hub';
 import type { JobLookup } from './jobs';
+import type { RealtimePresenceMember } from './presence';
 import type { ActionKvAdapter } from '../actions/types';
 import type { FunctionJobView, RealtimeTransport, SSRServerConfig } from '@plitzi/sdk-shared';
 
@@ -57,6 +59,14 @@ export type RealtimeModule = {
    * the action that lets it in for a new grant, if it still may.
    */
   revoke: (space: { spaceId: number; environment: string }, topic: string, grant?: string) => Promise<void>;
+  /**
+   * Who is on a topic of a `presence: true` channel now, on every replica — what a function's `ctx.presence` reads. A
+   * topic of any other channel is refused: nobody is counted there, and an empty answer would read as an empty room.
+   */
+  presence: (
+    space: { spaceId: number; environment: string },
+    topic: string
+  ) => Promise<{ count: number; members: RealtimePresenceMember[] }>;
   /** Says a job of the space's functions as it is now on its topic (`$job:<id>`), kept for a page that joins later. */
   publishJob: (space: { spaceId: number; environment: string }, jobId: string, view: FunctionJobView) => Promise<void>;
   /** Hands the realtime the way to a job, which the actions module holds: what the door of `$job:<id>` reads. */
@@ -87,7 +97,8 @@ export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | und
   // where the deployment gave none — the same fallbacks the actions take.
   const kv = config.action?.kv ?? fleetStore<ActionKvAdapter>('realtime.kv', KV_METHODS) ?? createMemoryKv();
   const retained = createRealtimeRetained(kv);
-  const hub = createRealtimeHub(config.realtime?.pubsub ?? createMemoryPubSub(), retained);
+  const presence = createRealtimePresence(kv);
+  const hub = createRealtimeHub(config.realtime?.pubsub ?? createMemoryPubSub(), retained, presence);
   const resolveChannels = createChannelResolver(getOfflineData);
   const grants = createRealtimeGrants(kv);
   let jobLookup: JobLookup | undefined;
@@ -124,6 +135,22 @@ export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | und
       }
 
       await hub.publish(space, message);
+    },
+    presence: async (space, topic) => {
+      const match = matchChannel(topic, await resolveChannels(space.spaceId, space.environment));
+      if (!match) {
+        throw new Error(`No channel of this space matches "${topic}": declare it in the space's \`channels\``);
+      }
+
+      if (match.declaration.presence !== true) {
+        throw new Error(
+          `"${match.pattern}" counts nobody: declare it \`presence: true\` for its pages to be counted, and read here`
+        );
+      }
+
+      const members = await presence.of(space, topic);
+
+      return { count: members.length, members };
     },
     grant: async (space, topic, ttlSeconds) => {
       const match = matchChannel(topic, await resolveChannels(space.spaceId, space.environment));

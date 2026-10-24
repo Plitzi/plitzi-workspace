@@ -221,6 +221,7 @@ describe('createServer with auth', () => {
         loginUrl: '/auth/login',
         userUrl: '/auth/session',
         logoutUrl: '/auth/logout',
+        revokeUrl: '/auth/sessions/revoke',
         refreshUrl: '/auth/refresh',
         sessionHintCookie: 'test_session_hint'
       })

@@ -48,7 +48,7 @@ const registeredFor = (provider: string): string[] => registrationFor(provider).
 
 describe('AuthInteractions', () => {
   it('offers the auth callbacks on the built-in provider', () => {
-    expect(registeredFor('basic')).toEqual(['login', 'refreshDetails', 'logout']);
+    expect(registeredFor('basic')).toEqual(['login', 'refreshDetails', 'logout', 'logoutEverywhere']);
   });
 
   /**
@@ -75,8 +75,8 @@ describe('AuthInteractions', () => {
   // The regression this pins: the callbacks used to be gated on the literal name `basic`, so a space wired to a
   // registered provider had no way to sign in or out from an interaction even though the context supplied all three.
   it('offers them on any other provider a space declares', () => {
-    expect(registeredFor('custom')).toEqual(['login', 'refreshDetails', 'logout']);
-    expect(registeredFor('acme-oidc')).toEqual(['login', 'refreshDetails', 'logout']);
+    expect(registeredFor('custom')).toEqual(['login', 'refreshDetails', 'logout', 'logoutEverywhere']);
+    expect(registeredFor('acme-oidc')).toEqual(['login', 'refreshDetails', 'logout', 'logoutEverywhere']);
   });
 
   it('offers nothing when the space does not authenticate', () => {

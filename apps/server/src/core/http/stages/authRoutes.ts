@@ -6,7 +6,7 @@ import { readRawBody } from '../../requestParser';
 import { isNavigation, safeRedirectTarget } from '../navigation';
 
 import type { Stage } from '../types';
-import type { SSRRequest } from '@plitzi/sdk-shared';
+import type { SessionScope, SSRRequest } from '@plitzi/sdk-shared';
 
 /**
  * Credentials as they arrive from a page: a posted form, or JSON from a script. Every field is handed to the
@@ -116,4 +116,57 @@ export const logoutStage: Stage = async ctx => {
   return true;
 };
 
-export const authRoutesStages: Stage[] = [loginStage, logoutStage, exchangeStage, signInStage];
+const isSessionScope = (value: unknown): value is SessionScope => value === 'site' || value === 'all';
+
+/**
+ * Signing the person out on every device (`endSessions`): `{ scope: 'site' }`, this host's sessions — a space's visitor
+ * ending it on their phone too; `{ scope: 'all' }`, every session of the account. Said, never assumed: a sign-out the
+ * page did not mean is one the person did not ask for. Guarded as a sign-out is — a page of another origin is refused.
+ */
+export const logoutEverywhereStage: Stage = async ctx => {
+  const { config, raw, req, res } = ctx;
+  const path =
+    config.logoutEverywherePath === false ? null : (config.logoutEverywherePath ?? '/auth/logout-everywhere');
+  const { endSessions } = config.adapters;
+  if (!path || !endSessions || req.method !== 'POST' || req.path !== path) {
+    return false;
+  }
+
+  if (refusedCrossSite(ctx)) {
+    return true;
+  }
+
+  req.body = await readRawBody(raw);
+  const { scope } = parseCredentials(req);
+  const answer = (status: number, body: object): true => {
+    res.setStatus(status);
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify(body));
+
+    return true;
+  };
+  if (!isSessionScope(scope)) {
+    return answer(400, {
+      error:
+        'Say which sessions end: { "scope": "site" } for this site\'s, { "scope": "all" } for every one of the account',
+      reason: 'invalid'
+    });
+  }
+
+  if (!(await endSessions(req, scope))) {
+    return answer(401, { error: 'Nobody is signed in here', reason: 'missing' });
+  }
+
+  clearSessionCookies(req, res, config.authCookie);
+  if (isNavigation(req)) {
+    res.setStatus(303);
+    res.setHeader('Location', safeRedirectTarget(req));
+    res.end();
+
+    return true;
+  }
+
+  return answer(200, { scope, ended: true });
+};
+
+export const authRoutesStages: Stage[] = [loginStage, logoutStage, logoutEverywhereStage, exchangeStage, signInStage];

@@ -48,13 +48,21 @@ export const isFunctionsSourcePath = (path: string): boolean =>
  * never one in a folder (a helper), a test or a declaration. A domain is a file (`rooms.ts`, `queue.ts`) that exports
  * `defineFunctions({ tasks })` by default, and nothing lists them: encore's agents all appended to one `index.ts`, and
  * four of its conflicts and three integration tasks were that list. A file with no definition by default — a module of
- * types, a helper at the top — is imported by the others, as any file.
+ * types, a helper at the top — is imported by the others, as any file: the bundle starts from those whose text
+ * {@link exportsByDefault}, never from the rest.
  */
 export const isFunctionsDefinitionFile = (file: string): boolean =>
   !file.includes('/') &&
   /\.(ts|js|mjs)$/.test(file) &&
   !/\.(test|spec)\.(ts|js|mjs)$/.test(file) &&
   !file.endsWith('.d.ts');
+
+/**
+ * Whether a file's text exports something by default — `export default …`, `export { x as default }`: a definition,
+ * for a file at the top of `functions/`. encore's `testing.ts`, a helper of its tests that reads `node:fs`, has none:
+ * bundled as a definition, it refused every build.
+ */
+export const exportsByDefault = (text: string): boolean => /^\s*export\s+default\b|\bas\s+default\s*[,}]/m.test(text);
 
 /** How a reader reaches a directory, whatever it runs on: Node's `fs`, a test's map. */
 export type FunctionsSourceReader = {

@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import esbuild from 'esbuild';
 
-import { isFunctionsDefinitionFile, isFunctionsSourcePath } from '@plitzi/sdk-shared/actions';
+import { exportsByDefault, isFunctionsDefinitionFile, isFunctionsSourcePath } from '@plitzi/sdk-shared/actions';
 
 import { ActionRefusal, defineFunctions } from './contract';
 
@@ -139,6 +139,9 @@ const CONTRACT_MODULE = [
 
 const normalize = (file: string): string => path.posix.normalize(file).replace(/^\.\//, '');
 
+/** A file the bundle starts from: one at the top of `functions/` whose text exports its definition by default. */
+const isDefinition = (file: string, text: string): boolean => isFunctionsDefinitionFile(file) && exportsByDefault(text);
+
 const sourceProblems = (source: FunctionsSource): FunctionsProblem[] => {
   const problems: FunctionsProblem[] = [];
   for (const file of Object.keys(source)) {
@@ -147,7 +150,7 @@ const sourceProblems = (source: FunctionsSource): FunctionsProblem[] => {
     }
   }
 
-  if (!Object.keys(source).map(normalize).some(isFunctionsDefinitionFile)) {
+  if (!Object.entries(source).some(([file, text]) => isDefinition(normalize(file), text))) {
     problems.push({
       message:
         'Functions are the files at the top of functions/, each exporting its definition by default: export default defineFunctions({ tasks: [ … ] })'
@@ -217,7 +220,12 @@ const sourcePlugin = (files: Map<string, string>): esbuild.Plugin => ({
     });
     build.onLoad({ filter: /.*/, namespace: 'contract' }, () => ({ contents: CONTRACT_MODULE, loader: 'js' }));
     build.onLoad({ filter: /.*/, namespace: 'entry' }, () => ({
-      contents: entryModule([...files.keys()].filter(isFunctionsDefinitionFile).sort()),
+      contents: entryModule(
+        [...files]
+          .filter(([file, text]) => isDefinition(file, text))
+          .map(([file]) => file)
+          .sort()
+      ),
       loader: 'js',
       resolveDir: '.'
     }));

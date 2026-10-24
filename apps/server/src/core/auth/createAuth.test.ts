@@ -143,3 +143,26 @@ describe('createAuth', () => {
     expect(grant.ok).toBe(false);
   });
 });
+
+/** A server of your own: its accounts are its space's people, read by another as an id and a username, nothing more. */
+describe('an account’s public face', () => {
+  it('answers an active account by username or id, its id and username alone — and nobody for an inactive one', async () => {
+    const accounts = {
+      mika: { id: 9, username: 'mika', email: 'mika@example.test', active: true, verified: true, passwordHash: 'x' },
+      gone: { id: 10, username: 'gone', email: 'gone@example.test', active: false, verified: true }
+    };
+    const auth = createAuth({
+      tokens: { secret: 'test-secret', issuer: 'https://acme.test' },
+      adapters: {
+        ...store(),
+        findByUsername: username => Promise.resolve(Object.values(accounts).find(each => each.username === username)),
+        findById: id => Promise.resolve(Object.values(accounts).find(each => each.id === id))
+      }
+    });
+
+    expect(await auth.publicAccount('mika')).toEqual({ id: 9, username: 'mika' });
+    expect(await auth.publicAccount(9)).toEqual({ id: 9, username: 'mika' });
+    expect(await auth.publicAccount('gone')).toBeUndefined();
+    expect(await auth.publicAccount('nobody')).toBeUndefined();
+  });
+});

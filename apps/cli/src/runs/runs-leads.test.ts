@@ -171,7 +171,35 @@ describe('the lead, woken for a review', () => {
     const late = leadItems(view, new Date(since + 3 * 60_000)).filter(item => item.key.startsWith('review:'));
     // The one lead-2 took is its: only the one nobody took.
     expect(late.map(item => item.key)).toEqual([expect.stringContaining(`review:${untaken}:`)]);
-    expect(late[0]?.text).toContain('no lead took it');
+    expect(late[0]?.text).toContain('no one took it');
+  });
+});
+
+/** A tester reviews the code before the tests it writes: its approval is the task's, and the lead is not woken for it. */
+describe('a tester, reviewing the code', () => {
+  it('takes the review the lead would, and approves the task', async () => {
+    const plan = { ...benchPlan(), designReview: false };
+    const file = await bench.writePlan(plan);
+    await bench.writeTeam({
+      version: 1,
+      agents: [
+        { name: 'agent', roles: ['developer'], count: 2 },
+        { name: 'test', roles: ['tester'] }
+      ]
+    });
+    const { runId } = (await openRun(lead(), file)).checked;
+    const menu = await take('agent-1', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Menú" };\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+
+    const offered = await takeNext(bench.agent('test-1'), runId, 'tester');
+    expect(offered.next.leadReview?.task.id).toBe('t-menu');
+    const view = await viewRun(lead(), runId);
+    expect(view.reviewers).toContain('test-1');
+    expect(leadItems(view, new Date()).filter(item => item.key.startsWith('review:'))).toEqual([]);
+
+    await reviewTask(bench.agent('test-1'), runId, 't-menu', 'approve', []);
+    expect((await viewRun(lead(), runId)).tasks.find(task => task.id === 't-menu')?.status).toBe('done');
   });
 });
 

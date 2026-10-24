@@ -10,6 +10,7 @@ import {
   pageMomentInPage,
   refusedFieldsInPage
 } from './moments';
+import { byNameOrId } from '../shot/capture';
 
 import type { Authored } from './space';
 import type { ClickAsk, ClickReport } from './types';
@@ -22,9 +23,7 @@ import type { FieldFill } from '../../options';
  */
 
 export const selectorOf = (authored: Authored | undefined, id: string): string =>
-  authored && Object.hasOwn(authored.handles.elements, id)
-    ? authored.handles.elements[id].selector
-    : `[data-plitzi-el="${id}"]`;
+  authored && Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id].selector : byNameOrId(id);
 
 const FIELDS = 'input, textarea, select';
 

@@ -287,6 +287,19 @@ const step5 = (t: Tables): string[] => [
   ...addColumn(unquote(t.mfa), 'last_used_step', 'BIGINT NULL AFTER recovery_codes')
 ];
 
+/**
+ * The host a session was signed in on (`SessionClient.host`), and an index to end a site's sessions by: a space's
+ * visitors sign in on its own host, and "sign out of this site everywhere" is every session of the account there.
+ */
+const step6 = (t: Tables): string[] => {
+  const session = unquote(t.session);
+
+  return [
+    ...addColumn(session, 'host', 'VARCHAR(255) NULL AFTER app_id'),
+    ...addIndex(session, 'session_account_host', '(account_id, host(191))')
+  ];
+};
+
 interface Step {
   version: number;
   statements: (tables: Tables) => string[];
@@ -298,7 +311,8 @@ const STEPS: Step[] = [
   { version: 2, statements: step2 },
   { version: 3, statements: step3 },
   { version: 4, statements: step4 },
-  { version: 5, statements: step5 }
+  { version: 5, statements: step5 },
+  { version: 6, statements: step6 }
 ];
 
 export const SCHEMA_VERSION = STEPS[STEPS.length - 1].version;

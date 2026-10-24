@@ -16,7 +16,7 @@ export type AuthInteractionsProps = {
 const AuthInteractions = ({ children }: AuthInteractionsProps) => {
   // Read as partial: with no auth provider mounted the context is its default `{}`, whatever its type promises.
   const auth: Partial<AuthContextValue> = use(AuthContext);
-  const { login, refresh, logout, provider } = auth;
+  const { login, refresh, logout, logoutEverywhere, provider } = auth;
   const { useInteractions } = use(InteractionsContext);
 
   // Offered whenever the page has a provider to sign in with, whichever it is — the space's own, or the one the server
@@ -32,9 +32,17 @@ const AuthInteractions = ({ children }: AuthInteractionsProps) => {
     return toInteractionCallbacks(authCallbacks, {
       login: (params: Record<string, unknown>) => login(params),
       refreshDetails: (params: Record<string, unknown>) => refresh(params),
-      logout: () => logout()
+      logout: () => logout(),
+      // A provider that cannot is left out of the step's work by its refusal: said, never a sign-out here alone.
+      logoutEverywhere: (params: Record<string, unknown>) => {
+        if (!logoutEverywhere) {
+          return Promise.reject(new Error(`The ${provider} sign-in has no way to sign out everywhere`));
+        }
+
+        return logoutEverywhere(params.scope === 'all' ? 'all' : 'site');
+      }
     });
-  }, [login, logout, refresh, provider]);
+  }, [login, logout, logoutEverywhere, refresh, provider]);
 
   useInteractions({ id: 'auth', callbacks: interactionCallbacks });
 

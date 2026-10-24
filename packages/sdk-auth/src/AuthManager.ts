@@ -4,6 +4,7 @@ import ServerAuthProvider from './providers/ServerAuthProvider';
 import type AuthProvider from './AuthProvider';
 import type { AuthBootstrap, AuthEventListener } from './AuthProvider';
 import type { AuthProviderSettings } from './types';
+import type { SessionScope } from '@plitzi/sdk-shared';
 import type { AuthFailureReason, AuthState, LoginResult, TokenResult } from '@plitzi/sdk-shared';
 
 export type AuthProviderFactory<U = Record<string, unknown>> = (settings: AuthProviderSettings) => AuthProvider<U>;
@@ -154,6 +155,11 @@ export class AuthManager<U = Record<string, unknown>> {
 
   logout(): Promise<void> {
     return this.provider?.logout() ?? Promise.resolve();
+  }
+
+  /** No provider, nobody signed in: nothing to end anywhere. */
+  logoutEverywhere(scope: SessionScope): Promise<void> {
+    return this.provider?.logoutEverywhere(scope) ?? Promise.resolve();
   }
 
   dispose(): void {

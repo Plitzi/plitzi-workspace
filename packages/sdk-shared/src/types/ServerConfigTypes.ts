@@ -43,6 +43,12 @@ export type ActionLookupsConfig = {
   getData?: (spaceId: number, at?: SpaceRevision) => Promise<unknown>;
   /** The feature flags the space declares as of that revision — what a flow reads as `{{ flags.<name> }}`. */
   getFlags?: (spaceId: number, at?: SpaceRevision) => Promise<Schema['flags']>;
+  /**
+   * One person of the space by username or id — `{ id, username, name?, avatar? }`, only of someone who belongs to it
+   * (its visitors and members, as the deployment knows them): a function's `ctx.visitors.get`. Whatever else is
+   * answered is dropped before code sees it. Given none, a server with an `auth` answers its own accounts.
+   */
+  getVisitor?: (spaceId: number, environment: string, who: string | number) => Promise<unknown>;
 };
 
 export type SSRActionConfig = {
@@ -314,6 +320,8 @@ export type SSRServerConfig = {
   loginPath?: string | false;
   middlewares?: SSRMiddleware[];
   logoutPath?: string | false;
+  /** Where a page signs its person out on every device (`endSessions`). Defaults to `/auth/logout-everywhere`. */
+  logoutEverywherePath?: string | false;
   /** Where a browser-obtained credential is handed over. Defaults to `/auth/exchange`; served only when the
    *  `exchangeCredential` adapter is supplied. */
   exchangePath?: string | false;

@@ -12,6 +12,7 @@ import type {
   LoginResult,
   MfaChallenge,
   Schema,
+  SessionScope,
   TokenResult
 } from '@plitzi/sdk-shared';
 
@@ -136,6 +137,11 @@ abstract class AuthProvider<U = Record<string, unknown>> {
   protected abstract requestRenewal(refreshToken?: string): Promise<AuthResult<U>>;
   protected abstract requestIdentity(): Promise<AuthResult<U>>;
   protected abstract requestLogout(): Promise<void>;
+  /**
+   * Ends the person's sessions on every device, as `scope` says (`SessionScope`). Throws when the backend refused or
+   * was not reached: a sign-out everywhere that did not happen must not read as one that did.
+   */
+  protected abstract requestLogoutEverywhere(scope: SessionScope): Promise<void>;
 
   /**
    * Hands the credential this browser just obtained to the rendering server, so it can establish a session of its
@@ -512,6 +518,13 @@ abstract class AuthProvider<U = Record<string, unknown>> {
 
   async logout(): Promise<void> {
     await this.requestLogout();
+    this.endSession();
+    this.emit({ type: 'logout' });
+  }
+
+  /** Signs the person out on every device — this site's sessions, or every one of the account — and here too. */
+  async logoutEverywhere(scope: SessionScope): Promise<void> {
+    await this.requestLogoutEverywhere(scope);
     this.endSession();
     this.emit({ type: 'logout' });
   }

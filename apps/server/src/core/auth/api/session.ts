@@ -273,12 +273,20 @@ export const sessionFlows = ({
    * works by account id, so it can be used from a device that still has a good session while the stolen copy is
    * somewhere else entirely.
    */
-  revokeSessions: async (userId?: number): Promise<AuthOutcome> => {
+  /**
+   * Signing out everywhere: every session of the account (`scope` `all`, or none said) — or, `site`, those signed in on
+   * `host`, the one asking: a space's visitor ending theirs there and nowhere else.
+   */
+  revokeSessions: async (userId: number | undefined, scope: unknown, host: string): Promise<AuthOutcome> => {
     if (!userId) {
       return refuse(401, 'Not authenticated', 'missing');
     }
 
-    await adapters.clearSession({ userId });
+    if (scope !== undefined && scope !== '' && scope !== 'site' && scope !== 'all') {
+      return refuse(400, 'A scope is "site" — this site\'s sessions — or "all", every one of the account');
+    }
+
+    await adapters.clearSession(scope === 'site' ? { userId, host: host.toLowerCase() } : { userId });
 
     return { ok: true, body: { message: 'All sessions revoked' }, endSession: true };
   },

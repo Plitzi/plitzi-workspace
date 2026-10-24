@@ -23,6 +23,7 @@ import Loading from './internal/Loading';
 import NotFound from './internal/NotFound';
 import Page from './internal/Page';
 // Media
+import Chart from './media/Chart';
 import Embed from './media/Embed';
 import FontAwesome from './media/FontAwesome';
 import Image from './media/Image';
@@ -62,6 +63,7 @@ export * from './internal/Page';
 export * from './media/FontAwesome';
 export * from './media/Embed';
 export * from './media/Image';
+export * from './media/Chart';
 export * from './media/Svg';
 export * from './media/Video';
 export * from './provider/ApiContainer';
@@ -94,6 +96,7 @@ export {
   Image,
   Video,
   Embed,
+  Chart,
   Svg,
   FontAwesome,
   Button,

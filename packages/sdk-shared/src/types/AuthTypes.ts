@@ -47,6 +47,12 @@ export type AuthResult<U = Record<string, unknown>> =
   ({ ok: true } & AuthGrant<U>) | { ok: false; reason: AuthFailureReason };
 
 /**
+ * Which sessions a sign-out everywhere ends: `site`, those signed in on this host — a space's own, its visitors'; `all`,
+ * every session of the account, wherever it signed in.
+ */
+export type SessionScope = 'site' | 'all';
+
+/**
  * What a sign-in came to: the session it minted, or why there is none.
  *
  * A bare `TokenResult | undefined` was not enough to write a sign-in screen with. Absence is every refusal at once —
@@ -64,6 +70,11 @@ export type AuthContextValue = {
   refresh: (params?: Record<string, unknown>) => Promise<TokenResult | undefined>;
   can: (permission: string) => boolean;
   logout: () => Promise<void>;
+  /**
+   * Signs the person out on every device: `site` of this site's sessions, `all` of every one of the account. The page
+   * then reads as signed out, as after `logout`. Absent where the provider has no way to.
+   */
+  logoutEverywhere?: (scope: SessionScope) => Promise<void>;
   /** Ask the backend whether the session still stands, renewing it if that is what it takes. Resolves to the
    *  outcome, so a caller that needs certainty (a guarded action) can await it instead of trusting the last check. */
   revalidate: (force?: boolean) => Promise<boolean>;

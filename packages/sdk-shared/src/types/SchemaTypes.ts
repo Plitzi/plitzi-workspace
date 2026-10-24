@@ -299,6 +299,8 @@ export type Schema = {
     userUrl?: string;
     refreshUrl?: string;
     logoutUrl?: string;
+    /** Where the person's sessions end on every device (`{ scope }` posted): `authLogoutEverywhere`'s, for `basic`. */
+    revokeUrl?: string;
     detailsPath?: string;
     tokenPath?: string;
     refreshTokenPath?: string;

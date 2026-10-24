@@ -223,7 +223,12 @@ export const checkPlan = async (
   /** A stage's: the files the run's approved work holds that the project does not yet — made, not to make. */
   inRunsWork: ReadonlySet<string> = new Set(),
   /** A stage's: the run's tasks not done yet, which the team works beside the stage's — its size is held to both. */
-  openWork = 0
+  openWork = 0,
+  /**
+   * A stage's: where the space its checks name is read — the run's work, materialised. The project holds what the
+   * finish has not written yet: encore's stage 5 read every room element and `/r/:slug` as missing, a deadlock each.
+   */
+  spaceRoot = root
 ): Promise<CheckedPlan> => {
   const agentsAsked = teamSize(team);
   const problems: string[] = [...roleProblems(written, team), ...inventoryProblems(written, knownInventory)];
@@ -531,7 +536,7 @@ export const checkPlan = async (
       )
     );
   created.forEach(file => notices.push(`${file} does not exist yet: the run makes it`));
-  notices.push(...(await expectationNotices(root, plan.tasks)), ...(await notFoundNotices(root, plan.tasks)));
+  notices.push(...(await expectationNotices(spaceRoot, plan.tasks)), ...(await notFoundNotices(spaceRoot, plan.tasks)));
   notices.push(
     ...sharedLookNotices(plan.tasks),
     ...unmeasuredNotices(plan.tasks, plan.reference),

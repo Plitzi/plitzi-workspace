@@ -158,7 +158,7 @@ const FLOWS: Flow[] = [
     method: 'POST',
     path: '/sessions/revoke',
     requirement: 'actor',
-    run: (api, _cookies, req) => api.revokeSessions(req.actor?.id)
+    run: (api, _cookies, req) => api.revokeSessions(req.actor?.id, field(req, 'scope'), req.hostname)
   },
   {
     method: 'POST',

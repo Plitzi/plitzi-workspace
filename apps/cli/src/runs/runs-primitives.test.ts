@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createExclusive, fingerprint } from './files';
-import { copyOf, runPaths, taskPaths } from './paths';
+import { copyOf, runPaths, runProjectOf, taskPaths } from './paths';
 import { placeVersion } from './store';
 import { claimFile, releaseFile, waitForFile } from './tasks';
 import { makeBench } from '../tests/runProject';
@@ -33,6 +33,16 @@ describe('a folder of a task’s copy', () => {
     expect(copyOf(path.join(work, 'src'))).toEqual({ root: '/home/ana/shop', run: 'es-launch', task: 't-home' });
     expect(copyOf(runPaths('/home/ana/shop', 'es-launch').dir)).toBeUndefined();
     expect(copyOf('/home/ana/shop')).toBeUndefined();
+  });
+});
+
+/** The finish checks a copy under the run's cache, which no task owns: its project is still the one to read. */
+describe('a folder of a run', () => {
+  it('belongs to its project, whatever of the run it is', () => {
+    const run = runPaths('/home/ana/shop', 'es-launch');
+    expect(runProjectOf(taskPaths(run, 't-home').work)).toBe('/home/ana/shop');
+    expect(runProjectOf(path.join(run.cache, 'check-61251b5c'))).toBe('/home/ana/shop');
+    expect(runProjectOf('/home/ana/shop')).toBeUndefined();
   });
 });
 

@@ -20,6 +20,7 @@ import LayoutContainer from './internal/LayoutContainer/Settings';
 import Loading from './internal/Loading/Settings';
 import NotFound from './internal/NotFound/Settings';
 import Page from './internal/Page/Settings';
+import Chart from './media/Chart/Settings';
 import Embed from './media/Embed/Settings';
 import FontAwesome from './media/FontAwesome/Settings';
 import Image from './media/Image/Settings';
@@ -74,6 +75,7 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   image: Image,
   video: Video,
   embed: Embed,
+  chart: Chart,
   svg: Svg,
   fontAwesome: FontAwesome,
   button: Button,

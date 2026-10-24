@@ -48,7 +48,7 @@ export type Server<T extends Record<string, unknown> = Record<string, unknown>> 
  * another provider ignores this entirely — it describes a different backend.
  */
 export type ServerAuth = Required<Pick<Schema['settings'], 'userProvider' | 'loginUrl'>> &
-  Pick<Schema['settings'], 'userUrl' | 'refreshUrl' | 'logoutUrl' | 'mfaUrl' | 'sessionHintCookie'>;
+  Pick<Schema['settings'], 'userUrl' | 'refreshUrl' | 'logoutUrl' | 'revokeUrl' | 'mfaUrl' | 'sessionHintCookie'>;
 
 /** What the rendering server hands over for THIS render, consumed once at the SDK root and not read from here again:
  *  the RSC bootstrap is projected into the store (`rsc`), which is where the live payload lives from then on. The

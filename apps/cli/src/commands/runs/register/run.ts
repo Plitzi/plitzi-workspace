@@ -202,7 +202,10 @@ export const registerRunGroup = (program: Command): Command => {
       positiveInteger
     )
     .option('--model <model>', 'The harness’s own name for it: claude-sonnet-5-5')
-    .option('--effort <effort>', 'How hard it thinks, in the harness’s words: high')
+    .option(
+      '--effort <effort>',
+      'How hard it thinks: low, medium, high, xhigh, max (Claude Code’s --effort, Codex’s reasoning effort)'
+    )
     .option(
       '--session-per-task',
       'One task a session: each of its agents stops once it completes one, started again — a fresh context — for the next'

@@ -294,7 +294,24 @@ describe('renewing and ending a session', () => {
   });
 
   it('refuses to revoke everything for a caller with no session', async () => {
-    expect(await build().revokeSessions(undefined)).toMatchObject({ ok: false, status: 401 });
+    expect(await build().revokeSessions(undefined, 'all', 'api.example.com')).toMatchObject({ ok: false, status: 401 });
+  });
+
+  /** A space's visitor signing out everywhere ends their sessions on its host, and leaves the platform's standing. */
+  it('ends a site’s sessions of the account, or every one, as the scope says', async () => {
+    const clearSession = vi.fn(() => Promise.resolve());
+    const api = build({ clearSession });
+
+    await api.revokeSessions(7, 'site', 'Encore.Plitzi.App');
+    await api.revokeSessions(7, 'all', 'encore.plitzi.app');
+    await api.revokeSessions(7, '', 'encore.plitzi.app');
+
+    expect(clearSession.mock.calls).toEqual([
+      [{ userId: 7, host: 'encore.plitzi.app' }],
+      [{ userId: 7 }],
+      [{ userId: 7 }]
+    ]);
+    expect(await api.revokeSessions(7, 'device', 'encore.plitzi.app')).toMatchObject({ ok: false, status: 400 });
   });
 });
 

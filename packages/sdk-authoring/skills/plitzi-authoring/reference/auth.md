@@ -48,7 +48,8 @@ form({
 - What it answers: `ok`; when not, `reason` (`unverified`, `inactive`, `network`, `missing`…) and, for `reason: 'mfa'`,
   `mfaToken` — the challenge `mode: 'mfa'` completes. Test it on `<step>.ok` with `when`, never `whenSucceeded` /
   `whenFailed`, which are a server action's ([flows](flows.md)).
-- `authLogout()` ends the session; `authRefreshDetails()` reloads who is signed in.
+- `authLogout()` ends the session; `authLogoutEverywhere('site' | 'all')` ends it on every device too — this space's
+  sessions, or every one of the account; `authRefreshDetails()` reloads who is signed in.
 
 ## Who is signed in
 

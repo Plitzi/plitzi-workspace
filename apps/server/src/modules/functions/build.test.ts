@@ -69,7 +69,10 @@ describe('building a space’s functions', () => {
   });
 
   it('points at a syntax error in the file it is in', async () => {
-    const problems = await problemsOf({ 'index.ts': 'import "./broken";', 'broken.ts': 'const = 1;' });
+    const problems = await problemsOf({
+      'index.ts': 'import "./broken";\nexport default {};',
+      'broken.ts': 'const = 1;'
+    });
 
     expect(problems[0]).toMatchObject({ file: 'broken.ts', line: 1 });
   });
@@ -114,6 +117,16 @@ export default defineFunctions({
       expect(merged.allow?.hosts.sort()).toEqual(['oembed.example', 'www.youtube.com']);
     });
 
+    // encore's testing.ts: a helper of its tests, at the top, reading node:fs — bundled as a definition, every build failed.
+    it('leaves out a top-level file that exports no definition, whatever it imports', async () => {
+      const merged = await load({
+        'rooms.ts': domain('rooms'),
+        'testing.ts': "import { readFile } from 'node:fs/promises';\nexport const fixture = () => readFile('x');"
+      });
+
+      expect(merged.tasks.map(task => task.namespace)).toEqual(['rooms']);
+    });
+
     it('keeps one index.ts that lists them as it was', async () => {
       const merged = await load({ 'index.ts': INDEX, 'lib/label.ts': 'export const label = () => `ok`;' });
 
@@ -128,7 +141,7 @@ export default defineFunctions({
 
     it('says none when no top-level file exports a definition', async () => {
       await expect(load({ 'types.ts': 'export type Room = { slug: string };' })).rejects.toThrow(
-        'No file at the top of functions/ exports a definition by default'
+        'Functions are the files at the top of functions/, each exporting its definition by default'
       );
     });
   });

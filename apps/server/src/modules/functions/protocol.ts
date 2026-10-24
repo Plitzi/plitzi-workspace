@@ -113,6 +113,8 @@ export type FunctionCall =
   | { op: 'fetch'; url: string; init: WireFetchInit; request?: number }
   | { op: 'abort'; request: number }
   | { op: 'publish'; topic: string; type: string; data: unknown }
+  | { op: 'presence'; topic: string }
+  | { op: 'visitor'; who: string | number }
   | { op: 'grant'; topic: string; ttlSeconds?: number }
   | { op: 'revoke'; topic: string; grant?: string }
   | { op: 'later'; request: LaterRequest }

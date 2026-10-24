@@ -168,7 +168,17 @@ export const createServer = (
         origins: [...(config.crossSiteWrites?.origins ?? []), ...auth.platformOrigins]
       },
       pageAuth: config.pageAuth ?? auth.pageAuth,
-      adapters: { ...auth.ssrAdapters, ...supplied }
+      adapters: { ...auth.ssrAdapters, ...supplied },
+      // A server of your own: every account of its is its space's visitor — what `ctx.visitors.get` reads, public
+      // fields alone. One that says who its visitors are (`lookups.getVisitor`) keeps its own answer.
+      ...(config.action?.lookups && !config.action.lookups.getVisitor
+        ? {
+            action: {
+              ...config.action,
+              lookups: { ...config.action.lookups, getVisitor: (_space, _environment, who) => auth.publicAccount(who) }
+            }
+          }
+        : {})
     })
   );
 

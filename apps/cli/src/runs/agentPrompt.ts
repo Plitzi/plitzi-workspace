@@ -3,7 +3,7 @@ import path from 'node:path';
 import { isPrincipal, LEAD_ROLE } from './leads';
 import { SKILLS_ROOT } from '../scaffold/skills';
 
-import type { StartedAgent } from './team';
+import type { Effort, StartedAgent } from './team';
 
 /**
  * What an agent of a run is started with: who it is, where it works and the run's protocol in short — the skills say it
@@ -78,10 +78,11 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
   const roles = started?.roles.join(',') ?? 'developer';
   const designer = started?.roles.includes('designer') === true;
   const coLead = started?.roles.includes(LEAD_ROLE) === true;
+  const tester = started?.roles.includes('tester') === true;
   const reading = [
     skill(root, 'runs.md'),
     ...(designer ? [skill(root, 'runs-designer.md')] : []),
-    ...(coLead ? [skill(root, 'runs-lead.md')] : [])
+    ...(coLead || tester ? [skill(root, 'runs-lead.md')] : [])
   ];
 
   return [
@@ -108,6 +109,11 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
           // lx-fidelity: Opiniones' arrow moved nothing at 1440, and its developer, its designer and the lead each passed it.
           `- A control you add or change — an arrow, a dot, a pager, a drawer — you use before you complete, there and back, at both widths${reference === undefined ? '' : ", beside the copied site's"}: \`PLITZI page play <path> ${playBeside} --width 390,1440\` — how far each step moved what, what it shows and takes a press; a picture is no proof of one.`
         ]),
+    ...(tester
+      ? [
+          '- `task next` hands you the code reviews first — the lead\'s, as strictly: correctness, races, stale state, security, the acceptance met, and its tests run (`PLITZI task look <task>`, then `PLITZI task review <task> --approve | --changes "…"`). Your approval is the task\'s: the lead reviews only what no tester takes in time. Then the tests of each developer task.'
+        ]
+      : []),
     ...(designer
       ? [
           `- A review: one \`PLITZI task look <task>\` a round, then measure only what differs, and use each control it adds there and back (\`page play <path> ${playBeside}\`); send it back only for what its title and acceptance cover, with the values${reference === undefined ? '' : ' and one `--same` line that proves them'} — anything else is \`PLITZI run notice "…"\`. Say your verdict within 8 minutes.`
@@ -143,15 +149,28 @@ export const harnessRuns = (harness: Harness, model: string): boolean =>
  */
 export type HarnessSession = { id: string; resume: boolean };
 
+/** What the team starts an agent on: its model and its effort, each the harness's own when not said. */
+export type HarnessStart = { model?: string; effort?: Effort };
+
+/** The effort as each harness takes it: Codex's highest is `xhigh`, and opencode takes none from the command line. */
+const effortFor = (harness: Harness, effort: Effort | undefined): string | undefined =>
+  effort === undefined || harness === 'opencode'
+    ? undefined
+    : harness === 'codex' && effort === 'max'
+      ? 'xhigh'
+      : effort;
+
 export const harnessCommand = (
   harness: Harness,
   prompt: { file: string; text: string },
-  model?: string,
+  start: HarnessStart = {},
   session?: HarnessSession
-): { command: string; args: string[]; line: string; model?: string } => {
+): { command: string; args: string[]; line: string; model?: string; effort?: string } => {
   const PROMPT = '\0prompt';
   // The team's model where this harness runs it; else the harness's own default, said by the caller.
+  const { model } = start;
   const runs = model !== undefined && harnessRuns(harness, model) ? model : undefined;
+  const effort = effortFor(harness, start.effort);
   const parts: string[] =
     harness === 'claude'
       ? [
@@ -160,16 +179,24 @@ export const harnessCommand = (
           PROMPT,
           ...(session ? [session.resume ? '--resume' : '--session-id', session.id] : []),
           ...(runs ? ['--model', runs] : []),
+          ...(effort ? ['--effort', effort] : []),
           '--permission-mode',
           'acceptEdits',
           '--allowedTools',
           'Bash Read Edit Write Glob Grep'
         ]
       : harness === 'codex'
-        ? ['codex', 'exec', '--full-auto', ...(runs ? ['-m', runs] : []), PROMPT]
+        ? [
+            'codex',
+            'exec',
+            '--full-auto',
+            ...(runs ? ['-m', runs] : []),
+            ...(effort ? ['-c', `model_reasoning_effort=${effort}`] : []),
+            PROMPT
+          ]
         : ['opencode', 'run', ...(runs ? ['--model', runs] : []), PROMPT];
   const line = parts.map(part => (part === PROMPT ? `"$(cat ${prompt.file})"` : quoted(part))).join(' ');
   const [command = harness, ...args] = parts.map(part => (part === PROMPT ? prompt.text : part));
 
-  return { command, args, line, ...(runs ? { model: runs } : {}) };
+  return { command, args, line, ...(runs ? { model: runs } : {}), ...(effort ? { effort } : {}) };
 };

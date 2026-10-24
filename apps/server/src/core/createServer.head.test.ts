@@ -40,7 +40,14 @@ const schema: Schema = {
   flat: {
     home: {
       ...node('home', 'page', 'home'),
-      attributes: { name: 'Home', slug: '', folder: '', default: true, seoEnabled: true, seoPageTitle: 'Listen together' }
+      attributes: {
+        name: 'Home',
+        slug: '',
+        folder: '',
+        default: true,
+        seoEnabled: true,
+        seoPageTitle: 'Listen together'
+      }
     },
     room: {
       ...node('room', 'page', 'room', ['room-data']),

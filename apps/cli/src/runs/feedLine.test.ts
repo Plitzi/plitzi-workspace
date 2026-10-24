@@ -31,7 +31,7 @@ describe('the activity, in words', () => {
       notOwn: ['author']
     });
 
-    expect(said).toMatchObject({ kind: 'other', text: 'checked t-home: what fails is not its own — author' });
+    expect(said).toMatchObject({ kind: 'other', text: 'checked: what fails is not its own — author' });
   });
 
   it('says what a kept count of tokens is', () => {

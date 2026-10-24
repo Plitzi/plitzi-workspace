@@ -1,4 +1,4 @@
-import { copyOf } from '../../runs/paths';
+import { runProjectOf } from '../../runs/paths';
 import { projectSettings } from '../projectSettings';
 import { fail } from '../terminal';
 
@@ -31,13 +31,14 @@ export const checkAccount = async (
   root: string,
   username?: string
 ): Promise<Account | { problem: string } | undefined> => {
-  // A task's copy has no .env — its agent never reads one: the account is its project's, read here for it.
-  const copy = copyOf(root);
-  const [own, project] = await Promise.all([
+  // A run's folder has no .env — a task's copy, the finish's checked copy: the account is its project's, read here
+  // for it (encore's finish: every `--as` line failed in its checked copy).
+  const project = runProjectOf(root);
+  const [own, projects] = await Promise.all([
     projectSettings(root),
-    copy ? projectSettings(copy.root) : Promise.resolve(undefined)
+    project ? projectSettings(project) : Promise.resolve(undefined)
   ]);
-  const value = (name: string): string => own.value(name) || (project?.value(name) ?? '');
+  const value = (name: string): string => own.value(name) || (projects?.value(name) ?? '');
   const named = username ?? value(CHECK_USER_ENV);
   if (!named) {
     return undefined;
@@ -46,7 +47,7 @@ export const checkAccount = async (
   const password = value(CHECK_PASSWORD_ENV);
   if (!password) {
     return {
-      problem: `${named} signs in with the password in ${CHECK_PASSWORD_ENV}: set it in the project's .env — never on the command line, which a shell keeps${copy ? ' (a task’s copy reads its project’s)' : ''}`
+      problem: `${named} signs in with the password in ${CHECK_PASSWORD_ENV}: set it in the project's .env — never on the command line, which a shell keeps${project ? ' (a run’s copy reads its project’s)' : ''}`
     };
   }
 
@@ -74,9 +75,14 @@ export const accountAsked = async (root: string, username: string | undefined): 
 
 /** Signs the page's browser in as the account, through the server's `/auth` routes: what went wrong, or nothing. */
 export const signInAs = async (page: BrowserPage, origin: string, account: Account): Promise<string | undefined> => {
-  const answer = await page.request.post(`${origin}${SIGN_IN_PATH}`, {
-    data: { username: account.username, password: account.password }
-  });
+  // Unreached is said, not thrown: a `--url` with no port ended the command in a stack trace (encore's lead).
+  const answer = await page.request
+    .post(`${origin}${SIGN_IN_PATH}`, { data: { username: account.username, password: account.password } })
+    .catch((error: unknown) => (error instanceof Error ? error : new Error(String(error))));
+  if (answer instanceof Error) {
+    return `nothing answered at ${origin} to sign in as ${account.username} (${answer.message.split('\n')[0]}): is the server up, and --url its address with its port?`;
+  }
+
   if (answer.ok()) {
     return undefined;
   }

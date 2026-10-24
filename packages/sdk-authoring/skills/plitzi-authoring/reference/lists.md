@@ -116,3 +116,10 @@ Steps: `carouselNext(id, by?)`, `carouselPrevious(id, by?)` — `'page'` moves a
   motion. In the builder it stands on its first slide. `label` names it for a screen reader.
 
 See recipes/carousel.ts.
+
+## Rows as a chart
+
+A `chart` draws rows too — bars, a line, an area or a donut, SVG of its own: bind `items` as a list's
+(`bindTemplate('items', 'stats.data', '{{ source.days }}', { returns: 'value' })`), name the fields (`labelField`,
+`valueField`) and say what it shows (`label`, read aloud with its rows as a table). It takes the colour of the text
+around it; its parts (`bar`, `line`, `grid`, `axisLabel`…) restyle it. Never a plugin for a bar chart.

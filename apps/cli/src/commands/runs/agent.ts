@@ -47,7 +47,7 @@ export const runAgent = (agent: string, options: AgentOptions): Promise<void> =>
       'launched' in answer
         ? [
             chalk.green(
-              `${answer.agent} started in ${answer.launched.harness} (pid ${String(answer.launched.pid)})${answer.model ? ` on ${answer.model}` : ''}: it works until task next tells it to stop.`
+              `${answer.agent} started in ${answer.launched.harness} (pid ${String(answer.launched.pid)})${answer.model ? ` on ${answer.model}` : ''}${answer.effort ? `, ${answer.effort} effort` : ''}: it works until task next tells it to stop.`
             ),
             ...(answer.modelNotRun
               ? [

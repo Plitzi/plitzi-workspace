@@ -157,6 +157,12 @@ export const functionContextFor = (
       sign: ctx.sign ?? unsigned,
       verify: ctx.verify ?? unsigned,
       publish: ctx.publish ?? unavailable('publish'),
+      presence: ctx.presence ?? unavailable('presence'),
+      visitors: {
+        get:
+          ctx.visitor ??
+          (() => Promise.reject(new Error('This server tells no visitor apart: it was given no getVisitor')))
+      },
       grant: ctx.grant ?? unavailable('grant'),
       revoke: ctx.revoke ?? unavailable('revoke'),
       later: ctx.later ?? noJobs,
@@ -188,6 +194,11 @@ export const functionContextFor = (
     sign: sign ? value => sign(pluginSigned(scope.plugin, value)) : unsigned,
     verify: verify ? (value, signature) => verify(pluginSigned(scope.plugin, value), signature) : unsigned,
     publish: noChannel,
+    presence: noChannel,
+    // The space's people are the space's: a plugin draws what its page hands it, and reads none of them.
+    visitors: {
+      get: () => Promise.reject(new Error('The functions of a plugin read none of the people of its space'))
+    },
     grant: noChannel,
     revoke: noChannel,
     later: noLater,

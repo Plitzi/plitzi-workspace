@@ -37,6 +37,7 @@ export const carousel = defineElement<
   Omit<CarouselAttributes, 'items'> & { items?: CarouselAttributes['items'] | SourceName }
 >(elementDeclarations.Carousel);
 export const carouselTrack = defineElement(elementDeclarations.CarouselTrack);
+export const chart = defineElement(elementDeclarations.Chart);
 export const channel = defineElement(elementDeclarations.Channel);
 export const container = defineElement(elementDeclarations.Container);
 export const custom = defineElement(elementDeclarations.Custom);

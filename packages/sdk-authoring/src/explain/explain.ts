@@ -205,6 +205,7 @@ export const BUILDER_NAMES: Record<string, string> = {
 export const GLOBAL_CALLBACK_BUILDERS: Record<string, string> = {
   login: 'authLogin',
   logout: 'authLogout',
+  logoutEverywhere: 'authLogoutEverywhere',
   refreshDetails: 'authRefreshDetails'
 };
 

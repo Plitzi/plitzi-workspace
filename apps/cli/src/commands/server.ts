@@ -94,8 +94,14 @@ export const serverStop = async (options: ServerStopOptions): Promise<void> => {
   const servers = await projectServers(project.root);
   const asked = options.port === undefined ? servers : servers.filter(each => each.port === options.port);
   if (options.port !== undefined && asked.length === 0) {
+    // A run's copy serving it is its agent's, left out on purpose — said with where to stop it from, if it must be.
+    const copy = listenersUnder(realpathSync(project.root)).find(
+      each => each.port === options.port && inside(each.cwd, path.join(realpathSync(project.root), PROJECT_TMP))
+    );
     fail(
-      `Nothing of this project listens on port ${String(options.port)} (${project.root}): what does listen there is no server started from this folder, and is left alone. plitzi server list says what is this project's.`
+      copy
+        ? `Port ${String(options.port)} is served from ${copy.cwd} — a run's copy, its agent's: stopped from there (cd ${copy.cwd} && plitzi server stop --port ${String(options.port)}), never from the project. A preview of a task stops by itself once the task is done.`
+        : `Nothing of this project listens on port ${String(options.port)} (${project.root}): what does listen there is no server started from this folder, and is left alone. plitzi server list says what is this project's.`
     );
 
     return;

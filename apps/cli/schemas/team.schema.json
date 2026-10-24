@@ -47,8 +47,8 @@
           "description": "The harness's name for the model \u2014 or one a quality level: { \"standard\": \"claude-sonnet-5-5\", \"high\": \"claude-opus-5-5\" }"
         },
         "effort": {
-          "type": "string",
-          "description": "How hard they think, in the harness's words: high"
+          "enum": ["low", "medium", "high", "xhigh", "max"],
+          "description": "How hard they think \u2014 Claude Code's --effort, Codex's reasoning effort; left out, the harness's own"
         },
         "count": {
           "type": "integer",
@@ -123,8 +123,8 @@
             "description": "The harness's name for the model \u2014 or one a quality level: { \"standard\": \"claude-sonnet-5-5\", \"high\": \"claude-opus-5-5\" }"
           },
           "effort": {
-            "type": "string",
-            "description": "How hard it thinks, in the harness's words: high"
+            "enum": ["low", "medium", "high", "xhigh", "max"],
+            "description": "How hard it thinks \u2014 Claude Code's --effort, Codex's reasoning effort; left out, the harness's own"
           },
           "sessionPerTask": {
             "type": "boolean",

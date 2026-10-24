@@ -6,7 +6,16 @@ import { designReviewFor, hasDesignReview, takeOfferedReview } from '../design';
 import { handOver } from '../handOver';
 import { assertRoles } from '../identity';
 import { handOffRework, reworkFor, reworksWaiting } from './handOff';
-import { IDLE_LEAD_MS, isCoLead, isPrincipal, LEAD_ROLE, leadReviewFor, markAsking, takeLeadReview } from '../leads';
+import {
+  IDLE_LEAD_MS,
+  isCoLead,
+  isPrincipal,
+  LEAD_ROLE,
+  leadReviewFor,
+  markAsking,
+  takeLeadReview,
+  testersOf
+} from '../leads';
 import { agentAddress, unreadFor } from '../messages';
 import { ON_DEMAND_IDLE_MS } from '../onDemand';
 import { reviewPages } from '../pagesOf';
@@ -18,7 +27,7 @@ import { assertStatus, loadRun, logRun, readRunLog } from '../run';
 import { runChanged } from '../runChanged';
 import { tellLeftInTmp } from '../strays';
 import { isDisconnected, updateState, viewTask } from '../taskStore';
-import { DEFAULT_DESIGN_REVIEW, DESIGNER, qualityRank, readTeam, startedAgents } from '../team';
+import { DEFAULT_DESIGN_REVIEW, DESIGNER, qualityRank, readTeam, startedAgents, TESTER } from '../team';
 import { byUrgency } from '../urgency';
 import { isWorked } from '../worked';
 import { at, findTask, roleOf } from './common';
@@ -35,12 +44,14 @@ import {
   uiReviewsComing
 } from './nextRules';
 import { changesBlock } from './review';
+import { reviewOffer } from './reviewOffer';
 import { takeTask } from './take';
 
 import type { Message } from '../messages';
 import type { AcceptanceResult, Quality, RunTask, TaskStatus } from '../model';
 import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
+import type { ReviewOffer } from './reviewOffer';
 import type { TakenTask } from './take';
 
 /**
@@ -95,23 +106,10 @@ export interface NextTask {
     first?: true;
   };
   /**
-   * A lead's that reviews (`--role lead`): a task in review no other lead took — what it changed, where it is drawn, and
-   * what its earlier reviews asked.
+   * A lead's that reviews (`--role lead`), or a tester's: a task in review no other reviewer took — what it changed,
+   * where it is drawn, and what its earlier reviews asked.
    */
-  leadReview?: {
-    task: RunTask;
-    round: number;
-    lastRound?: true;
-    changed: string[];
-    pages: string[];
-    asked: string[];
-    earlier: number;
-    copy: string;
-    /** A designer approved its UI: what it said, when it said something. */
-    design?: string;
-    /** Its UI review waits for a designer and none is free: the lead's too, said how. */
-    uiToo?: string;
-  };
+  leadReview?: ReviewOffer;
   /** A lead that reviews, with no review for it: a question to the lead to answer — the oldest no other lead took. */
   question?: { id: string; task: string; text: string; agent?: string };
   /** A lead's, with no review for it: a spike to find out — the most urgent no other lead took. */
@@ -232,6 +230,17 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
       ready: [],
       messages
     };
+  }
+
+  // A tester reviews the code of what is in review, as a lead that reviews does — before the tests it writes: a review
+  // holds a task already done. The lead is left what no tester took within `UNTAKEN_REVIEW_MS` (`leadWatch`); a UI
+  // still waiting for a designer is not offered, and its own tests are another's to review.
+  if (roles?.includes(TESTER) === true && (await testersOf(ctx.root)).includes(ctx.agent)) {
+    await markAsking(ctx, loaded);
+    const codeReview = leadReviewFor(views, ctx.agent);
+    if (codeReview) {
+      return { leadReview: await reviewOffer(codeReview), ready: [], messages };
+    }
   }
 
   // Started at a level, an agent is handed tasks of it or below: a stronger model is for the tasks that ask for one.
@@ -470,31 +479,13 @@ const leadNext = async (
   const noDesignerFree = designers.every(busy);
   const review = leadReviewFor(views, ctx.agent, noDesignerFree);
   if (review) {
-    const approvedUi = review.state.design?.status === 'approved' ? review.state.design : undefined;
-    const uiToo = review.state.design?.status === 'due';
-
     return {
-      leadReview: {
-        task: review.task,
-        round: review.state.round,
-        changed: review.state.changed ?? [],
-        pages: await reviewPages(review),
-        ...askedOf(review.state.notes),
-        ...(changesBlock(review.state, false) ? { lastRound: true } : {}),
-        copy: review.paths.work,
-        ...(approvedUi
-          ? {
-              design:
-                review.state.notes.findLast(note => note.text.startsWith('Its UI approved by'))?.text ??
-                `its UI approved by ${approvedUi.by ?? 'a designer'}`
-            }
-          : {}),
-        ...(uiToo
-          ? {
-              uiToo: `its UI waits for a designer and none is free${designers.length > 0 ? ` (${designers.join(', ')} at a task of its own)` : ''}: review its UI too — as the original, both schemes, the phone width — and approve with --skip-design lead, which the report says as the lead's UI review`
-            }
-          : {})
-      },
+      leadReview: await reviewOffer(
+        review,
+        review.state.design?.status === 'due'
+          ? `its UI waits for a designer and none is free${designers.length > 0 ? ` (${designers.join(', ')} at a task of its own)` : ''}: review its UI too — as the original, both schemes, the phone width — and approve with --skip-design lead, which the report says as the lead's UI review`
+          : undefined
+      ),
       ready: [],
       messages
     };

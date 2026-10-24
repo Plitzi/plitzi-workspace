@@ -1,8 +1,10 @@
+import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { readJson, writeAtomic, writeJson } from './files';
 import { coversOf } from './inventory';
 import { coLeadsOf, requireLead } from './leads';
+import { materialise } from './materialise';
 import { unmeasuredNotices } from './measuredValues';
 import { EVERYONE, LEAD, sendMessage } from './messages';
 import { isBaseManifest } from './model';
@@ -101,6 +103,12 @@ export const extendRun = async (
   const outside = (task: RunPlan['tasks'][number]): string[] =>
     task.dependsOn.filter(dependency => known.has(dependency));
   let checked: CheckedPlan | undefined;
+  const approved = (await readApproved(loaded.paths)).files;
+  const work = await materialise(
+    ctx,
+    loaded,
+    Object.fromEntries(Object.entries(approved).map(([file, each]) => [file, each.digest]))
+  );
   try {
     checked = await checkPlan(
       ctx.root,
@@ -109,8 +117,8 @@ export const extendRun = async (
       team,
       new Set((loaded.plan.inventory ?? []).map(item => item.id)),
       new Set(
-        Object.entries((await readApproved(loaded.paths)).files)
-          .filter(([, approved]) => approved.digest !== null)
+        Object.entries(approved)
+          .filter(([, each]) => each.digest !== null)
           .map(([file]) => file)
       ),
       (
@@ -119,7 +127,8 @@ export const extendRun = async (
             .filter(task => task.role !== 'lead' && !isResearch(task))
             .map(async task => (await viewTask(loaded.paths, task)).state.status)
         )
-      ).filter(status => status !== 'done').length
+      ).filter(status => status !== 'done').length,
+      work
     );
   } catch (error) {
     if (error instanceof PlanRefusal) {
@@ -127,6 +136,8 @@ export const extendRun = async (
     } else {
       throw error;
     }
+  } finally {
+    await fs.rm(work, { recursive: true, force: true });
   }
 
   // A stage copies the run's site unless it names its own: what its values are measured against.

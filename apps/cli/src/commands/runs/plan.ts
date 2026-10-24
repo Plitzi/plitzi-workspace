@@ -33,7 +33,7 @@ import {
   heldRoles,
   ensureTeam,
   leadModelText,
-  modelText,
+  startText,
   reviewsDesign,
   startedAgents,
   TEAM_FILE,
@@ -158,7 +158,7 @@ const startLines = (tasks: readonly RunTask[], team: Team, designReview: boolean
         ? `  ${each.agent} — nothing for its ${each.roles.join(', ')} in this plan: leave it out`
         : each.onDemand
           ? `  ${each.agent} — ${each.roles.join(', ')} — on demand: not at the start — when run watch --until lead says work waits for it: plitzi task next --role ${each.roles.join(',')}${each.quality ? ` --quality ${each.quality}` : ''} --follow --take --agent ${each.agent} (it stops by itself once nothing is left for it)`
-          : `  ${each.agent} — ${each.roles.join(', ')}${each.quality ? ` at ${each.quality}` : ''} — ${each.model ? modelText(each.model) : 'the harness’s own model'} (${work.join('; ')}): plitzi task next --role ${each.roles.join(',')}${each.quality ? ` --quality ${each.quality}` : ''} --follow --take --agent ${each.agent}`;
+          : `  ${each.agent} — ${each.roles.join(', ')}${each.quality ? ` at ${each.quality}` : ''} — ${startText(each)} (${work.join('; ')}): plitzi task next --role ${each.roles.join(',')}${each.quality ? ` --quality ${each.quality}` : ''} --follow --take --agent ${each.agent}`;
     })
   ];
 };

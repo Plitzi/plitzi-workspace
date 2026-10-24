@@ -13,10 +13,11 @@ export const clientOf = (carrier?: CredentialCarrier): SessionClient | undefined
   const ip = carrier.ip || forwardedIp(carrier.headers);
   const client: SessionClient = {
     ...(typeof userAgent === 'string' && userAgent ? { userAgent } : {}),
-    ...(ip ? { ip } : {})
+    ...(ip ? { ip } : {}),
+    ...(carrier.hostname ? { host: carrier.hostname.toLowerCase() } : {})
   };
 
-  return client.userAgent || client.ip ? client : undefined;
+  return client.userAgent || client.ip || client.host ? client : undefined;
 };
 
 /**

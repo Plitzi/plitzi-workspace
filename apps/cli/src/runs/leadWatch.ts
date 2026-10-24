@@ -66,9 +66,9 @@ const minutes = (ms: number): string => String(Math.round(ms / 60_000));
  */
 export const leadItems = (view: RunView, now: Date): LeadItem[] => {
   const waiting = untaken(view, now);
-  // A lead that reviews is running while it asks for reviews, and while it reviews one it took.
+  // A lead that reviews — or a tester — is running while it asks for reviews, and while it reviews one it took.
   const reviewing = view.tasks.flatMap(task =>
-    task.status === 'in-review' && task.reviewer !== undefined && view.leads.includes(task.reviewer)
+    task.status === 'in-review' && task.reviewer !== undefined && view.reviewers.includes(task.reviewer)
       ? [task.reviewer]
       : []
   );
@@ -89,8 +89,8 @@ export const leadItems = (view: RunView, now: Date): LeadItem[] => {
     // One a designer is still to look at is not the lead's yet: it wakes the lead once the designer said.
     ...view.tasks
       .filter(task => task.status === 'in-review' && task.design?.status !== 'due')
-      // One another lead took is theirs: the lead is not woken for it.
-      .filter(task => task.reviewer === undefined || !view.leads.includes(task.reviewer))
+      // One another lead or a tester took is theirs: the lead is not woken for it.
+      .filter(task => task.reviewer === undefined || !view.reviewers.includes(task.reviewer))
       .filter(
         task =>
           !helped ||
@@ -99,7 +99,7 @@ export const leadItems = (view: RunView, now: Date): LeadItem[] => {
       .map(task => ({
         key: `review:${task.id}:${String(task.round)}:${task.takenAt ?? ''}:${task.design?.status ?? ''}`,
         text: helped
-          ? `${task.id} has waited in review ${minutes(now.getTime() - Date.parse(task.since ?? view.openedAt))} min and no lead took it (${running.join(', ')} at a review): review it yourself — plitzi task look ${task.id}, then plitzi task review ${task.id} --approve | --changes "…"`
+          ? `${task.id} has waited in review ${minutes(now.getTime() - Date.parse(task.since ?? view.openedAt))} min and no one took it (${running.join(', ')} at a review): review it yourself — plitzi task look ${task.id}, then plitzi task review ${task.id} --approve | --changes "…"`
           : task.design?.status === 'approved'
             ? `${task.id} is in review, its UI approved by ${task.design.by ?? 'a designer'} — yours is the final review: plitzi task look ${task.id}, then plitzi task review ${task.id} --approve | --changes "…"`
             : `${task.id} is in review: plitzi task review ${task.id} --approve | --changes "…"`

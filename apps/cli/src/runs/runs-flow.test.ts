@@ -162,7 +162,7 @@ describe('a run played whole, as velada-dress went', () => {
     );
     expect(
       (await monitorRun(as('lead'), runId)).feed.some(
-        line => line.text === `goes on with t-home — ${asked.question.id} answered`
+        line => line.task === 't-home' && line.text === `goes on — ${asked.question.id} answered`
       )
     ).toBe(true);
 

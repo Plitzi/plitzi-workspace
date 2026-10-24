@@ -1,13 +1,15 @@
 import AuthProvider from '../AuthProvider';
 
 import type { AuthProviderProps } from '../AuthProvider';
-import type { AuthResult, MfaChallenge } from '@plitzi/sdk-shared';
+import type { AuthResult, MfaChallenge, SessionScope } from '@plitzi/sdk-shared';
 
 export type ServerAuthProviderProps = AuthProviderProps & {
   /** Where the page server starts a sign-in by redirect. Default `/auth/sign-in` (`createServer({ signIn })`). */
   loginUrl?: string;
   /** Where the page server ends the session on its host. Default `/auth/logout`. */
   logoutUrl?: string;
+  /** Where it ends the person's sessions on every device (`endSessions`). Default `/auth/logout-everywhere`. */
+  logoutEverywhereUrl?: string;
 };
 
 /**
@@ -26,11 +28,19 @@ class ServerAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
 
   private readonly logoutUrl: string;
 
-  constructor({ loginUrl = '', logoutUrl = '', ...providerProps }: ServerAuthProviderProps = {}) {
+  private readonly logoutEverywhereUrl: string;
+
+  constructor({
+    loginUrl = '',
+    logoutUrl = '',
+    logoutEverywhereUrl = '',
+    ...providerProps
+  }: ServerAuthProviderProps = {}) {
     // Nothing to keep: the credential is an httpOnly cookie on this host, invisible to the page by design.
     super({ ...providerProps, tokenStorage: '' });
     this.loginUrl = loginUrl || '/auth/sign-in';
     this.logoutUrl = logoutUrl || '/auth/logout';
+    this.logoutEverywhereUrl = logoutEverywhereUrl || '/auth/logout-everywhere';
   }
 
   protected get capabilities(): { renew: boolean; identity: boolean } {
@@ -58,6 +68,22 @@ class ServerAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
 
   protected async requestLogout(): Promise<void> {
     await fetch(this.logoutUrl, { method: 'POST', credentials: 'same-origin' });
+  }
+
+  /**
+   * The page server ends them (`/auth/logout-everywhere`): `site`, those signed in on this space's host — a visitor's
+   * own, on every device; `all`, every one of the account. A 401 is nobody signed in, so nothing is left to end.
+   */
+  protected async requestLogoutEverywhere(scope: SessionScope): Promise<void> {
+    const answer = await fetch(this.logoutEverywhereUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scope })
+    });
+    if (!answer.ok && answer.status !== 401) {
+      throw new Error(`Signing out everywhere was refused (${String(answer.status)})`);
+    }
   }
 
   /**
