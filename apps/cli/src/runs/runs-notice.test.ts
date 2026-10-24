@@ -79,11 +79,13 @@ describe('the run’s feedback to Plitzi', () => {
     expect(finished.backlog).toEqual(['b-1']);
     // Said apart at the finish: what is Plitzi's is never listed as the project's next stage (lx-controls).
     expect(finished.noticed).toEqual(['The footer’s legal line wraps at 390 — lead']);
-    expect(finished.ofPlitzi).toEqual(['page measure reads no position, and every agent wrote a script for it — lead']);
+    expect(finished.findings.filter(each => each.kind === 'said').map(each => [each.owner, each.title])).toEqual([
+      ['plitzi', 'page measure reads no position, and every agent wrote a script for it']
+    ]);
     expect((await openBacklog(bench.root)).map(item => item.text)).toEqual(['The footer’s legal line wraps at 390']);
     const feedback = await fs.readFile(finished.feedback ?? '', 'utf-8');
     expect(feedback).toContain(`# Plitzi feedback — run ${runId}`);
-    expect(feedback).toContain('- page measure reads no position, and every agent wrote a script for it — lead');
+    expect(feedback).toContain('**page measure reads no position, and every agent wrote a script for it**');
     expect(feedback).not.toContain('The footer’s legal line');
     expect(feedback).not.toContain(bench.root);
   });
@@ -97,7 +99,8 @@ describe('the run’s feedback to Plitzi', () => {
     const finished = await finishRun(bench.person(true), runId, { apply: true, leavePending: true });
     const options = JSON.parse(qualityFilesFor('node', [])['.prettierrc']) as Options;
 
-    for (const file of [finished.feedback ?? '', path.join(bench.root, BACKLOG_FILE)]) {
+    const feedback = finished.feedback ?? '';
+    for (const file of [feedback, feedback.replace(/\.md$/, '.json'), path.join(bench.root, BACKLOG_FILE)]) {
       const text = await fs.readFile(file, 'utf-8');
       expect(await format(text, { ...options, filepath: file })).toBe(text);
     }

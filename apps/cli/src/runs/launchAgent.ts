@@ -11,6 +11,7 @@ import { isPrincipal, LEAD_ROLE } from './leads';
 import { agentScratch } from './paths';
 import { RunRefusal } from './refusal';
 import { loadRun, logRun, readRunLog } from './run';
+import { SESSION_ENV } from './session';
 import { viewTask } from './taskStore';
 import { leadStart, readTeam, startedAgents } from './team';
 
@@ -208,7 +209,13 @@ export const launchAgent = async (
   const log = path.join(scratch, 'agent.log');
   const out = openSync(log, 'a');
   // Its own process group, outliving this command: the agent works until task next tells it to stop.
-  const child = spawn(command, args, { cwd: ctx.root, detached: true, stdio: ['ignore', out, out] });
+  // Every command it runs says its session (`SESSION_ENV`): a run reads which session did what, never guesses it.
+  const child = spawn(command, args, {
+    cwd: ctx.root,
+    detached: true,
+    stdio: ['ignore', out, out],
+    env: { ...process.env, [SESSION_ENV]: session.id }
+  });
   closeSync(out);
   child.unref();
   if (child.pid === undefined) {

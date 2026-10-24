@@ -6,6 +6,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { AGENT_TOKEN } from './identity';
 import { activeRunFile, COPY_TASK_FILE, copyOf, runPaths } from './paths';
+import { sessionOfProcess } from './session';
 
 import type { Command } from 'commander';
 
@@ -30,7 +31,31 @@ export interface UsageLine {
   chars: number;
   ms: number;
   code: number;
+  /** The harness session it ran in (`session.ts`): what liveness, one task a session and an agent's cost are read by. */
+  session?: string;
+  /** Ended other than 0: what it said was wrong, its first line — why a command failed, grouped across a run. */
+  error?: string;
+  /**
+   * Ended other than 0: the lines of what it printed that say what failed — a check's steps, a page's console errors
+   * and failed requests, a refusal and its way out — for whoever fixes it to read without running it again.
+   */
+  output?: string[];
+  /** The harness process it ran under, `<program>:<pid>:<started>`, when its sessions are kept by its own id. */
+  process?: string;
 }
+
+/** How much of what a command printed is kept to say why it failed: its start and its end, where that is said. */
+const KEPT_OUTPUT = 4000;
+
+/** Lines of a failure's output that say what failed, by what they start with or say. */
+const SAYS_FAILED =
+  /✗|\b(error|failed|fails|refused|cannot|not on the page|console|timed? ?out|exception)\b|\b[45]\d\d\b/i;
+
+/** How many of a failure's lines are kept. */
+const OUTPUT_LINES = 15;
+
+/** How much of what a command wrote to stderr is kept to say why it failed: its start is where it says so. */
+const KEPT_STDERR = 4000;
 
 /** A command of a run says who ran it once it is proved (`runOf`); one run elsewhere — a page shot in a copy — by the copy. */
 const caller: { runDir?: string; by?: string } = {};
@@ -40,13 +65,46 @@ export const usageCaller = (runDir: string, by: string): void => {
   caller.by = by;
 };
 
+/** A text as a run keeps it: a token passed (`--token`) and an agent's token's secret cut. */
+const withoutSecrets = (text: string): string =>
+  text
+    .replace(/(--token[ =])\S+/g, '$1…')
+    .replace(/\b([a-z0-9][a-z0-9_-]*\.@?[a-z0-9][a-z0-9_-]*)\.[0-9a-f]{32,48}\b/g, '$1.…');
+
 /** The command line as it is kept: secrets out — a task's token and an agent's — and no longer than a line. */
 export const keptCommand = (args: readonly string[]): string =>
-  ['plitzi', ...args]
-    .join(' ')
-    .replace(/(--token[ =])\S+/g, '$1…')
-    .replace(/\b([a-z0-9][a-z0-9_-]*\.@?[a-z0-9][a-z0-9_-]*)\.[0-9a-f]{32,48}\b/g, '$1.…')
-    .slice(0, 200);
+  withoutSecrets(['plitzi', ...args].join(' ')).slice(0, 200);
+
+/**
+ * Why a command that failed failed, in a line: the line that says it is an error (commander's `error: …`, a `✗`, a
+ * refusal), else its first — secrets cut as its command's are.
+ */
+export const errorLine = (stderr: string): string | undefined => {
+  const said = stderr
+    .split('\n')
+    // Colours are how a terminal shows it, not what it says.
+    // eslint-disable-next-line no-control-regex
+    .map(line => line.replace(/\x1b\[[0-9;]*m/g, '').trim())
+    .filter(line => line !== '' && !line.startsWith('·'));
+  const line = said.find(each => /^(error\b|✗|refused\b)|\b(Error|refused|cannot|is not)\b/.test(each)) ?? said.at(0);
+
+  return line === undefined ? undefined : withoutSecrets(line).slice(0, 200);
+};
+
+/**
+ * The lines of a failed command's output worth reading again: those that say what failed, else its last ones —
+ * colours left out, secrets cut, each no longer than a line.
+ */
+export const failureLines = (output: string): string[] => {
+  const lines = output
+    .split('\n')
+    // eslint-disable-next-line no-control-regex
+    .map(line => withoutSecrets(line.replace(/\x1b\[[0-9;]*m/g, '').trimEnd()).slice(0, 240))
+    .filter(line => line.trim() !== '' && !line.trim().startsWith('·'));
+  const failed = lines.filter(line => SAYS_FAILED.test(line));
+
+  return (failed.length > 0 ? failed : lines.slice(-OUTPUT_LINES)).slice(0, OUTPUT_LINES);
+};
 
 const readJsonSync = (file: string): unknown => {
   try {
@@ -144,11 +202,25 @@ export const startUsage = (args: readonly string[], cwd: string, now: () => numb
 
   const started = now();
   let chars = 0;
+  let stderr = '';
+  // Both streams, as the caller read them: the start kept whole, the end as it last was.
+  let head = '';
+  let tail = '';
   for (const stream of [process.stdout, process.stderr]) {
     const write = stream.write.bind(stream);
     // Bound and passed through whole: only the length is read, every overload's arguments go on as they came.
     stream.write = (chunk: string | Uint8Array, ...rest: unknown[]) => {
       chars += typeof chunk === 'string' ? chunk.length : chunk.byteLength;
+      const text = typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf-8');
+      if (stream === process.stderr && stderr.length < KEPT_STDERR) {
+        stderr += text.slice(0, KEPT_STDERR);
+      }
+
+      if (head.length < KEPT_OUTPUT) {
+        head += text.slice(0, KEPT_OUTPUT - head.length);
+      } else {
+        tail = (tail + text).slice(-KEPT_OUTPUT);
+      }
 
       return (write as (...all: unknown[]) => boolean)(chunk, ...rest);
     };
@@ -173,13 +245,20 @@ export const startUsage = (args: readonly string[], cwd: string, now: () => numb
       );
     }
 
+    const { session, process: harness } = sessionOfProcess();
+    const error = code === 0 ? undefined : errorLine(stderr);
+    const output = code === 0 ? [] : failureLines(`${head}\n${tail}`);
     const line: UsageLine = {
       at: new Date(started).toISOString(),
       by: where.by,
       command: keptCommand(args),
       chars,
       ms: now() - started,
-      code
+      code,
+      ...(session ? { session } : {}),
+      ...(harness ? { process: harness } : {}),
+      ...(error ? { error } : {}),
+      ...(output.length > 0 ? { output } : {})
     };
     try {
       appendFileSync(path.join(where.runDir, USAGE_FILE), `${JSON.stringify(line)}\n`);
@@ -196,7 +275,11 @@ const isUsageLine = (value: unknown): value is UsageLine =>
   typeof value.command === 'string' &&
   typeof value.chars === 'number' &&
   typeof value.ms === 'number' &&
-  typeof value.code === 'number';
+  typeof value.code === 'number' &&
+  (value.session === undefined || typeof value.session === 'string') &&
+  (value.error === undefined || typeof value.error === 'string') &&
+  (value.process === undefined || typeof value.process === 'string') &&
+  (value.output === undefined || (Array.isArray(value.output) && value.output.every(line => typeof line === 'string')));
 
 /** A run's usage, as its commands kept it — a line cut by a crash mid-write left out. */
 export const readUsage = (runDir: string): UsageLine[] => {

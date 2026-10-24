@@ -28,7 +28,7 @@ import { changesBlock } from './tasks/review';
 import { viewTask } from './taskStore';
 import { viewRun } from './view';
 import { benchPlan, makeBench, readInCopy, writeInCopy } from '../tests/runProject';
-import { runSteps } from '../tests/runSteps';
+import { LEAD_SAID, runSteps } from '../tests/runSteps';
 
 import type { Bench } from '../tests/runProject';
 
@@ -127,7 +127,7 @@ describe('taking a task', () => {
     }));
     await openWith(bench.person(true), await bench.writePlan(plan), 8);
     await bench.write('summary.md', 'Eight pages, eight agents.\n');
-    await writeSummary(lead(), 'eight', 'summary.md');
+    await writeSummary(lead(), 'eight', 'summary.md', LEAD_SAID);
     await Promise.all(
       plan.tasks.map(async (task, index) => {
         const held = await take(`agent-${String(index + 1)}`, task.id, 'eight');
@@ -152,7 +152,7 @@ describe('taking a task', () => {
       'invalid',
       expect.stringContaining('report was written before t1, t2, t3, t4, t5, t6, t7, t8 were approved') as unknown
     ]);
-    await writeSummary(lead(), 'eight', 'summary.md');
+    await writeSummary(lead(), 'eight', 'summary.md', LEAD_SAID);
     expect((await finishRun(lead(), 'eight', { apply: false, leavePending: false })).summaryBehind).toBeUndefined();
 
     await finishRun(bench.person(true), 'eight', { apply: true, leavePending: false });

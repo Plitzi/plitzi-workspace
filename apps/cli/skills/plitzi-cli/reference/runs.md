@@ -81,9 +81,9 @@ takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | 
   the copy to — the project's checks, the acceptance's commands, long files, no `space lint` warning in a file you
   changed: iterate on it, not on `complete`, whose failures count toward the run's brake. It hands you what the lead
   said meanwhile. What you declare for later tasks, unread yet, is a warning.
-- **Done:** `plitzi task complete [--note "what to look at"] [--review code|ui]` — the note goes to the lead with it;
-  `code` when nothing a visitor sees changed (the lead's review alone), `ui` for its UI looked at first — the project's
-  checks and the acceptance's run in the copy. A control you add you use first, there and back (`page play`). **A task never ends
+- **Done:** `plitzi task complete --ease <1-5> --hardest "…" [--friction "…"] [--note "…"] [--review code|ui]` — what
+  it was like to Plitzi, the note to the lead;
+  `code` when nothing a visitor sees changed (the lead's review alone), `ui` for its UI looked at first. A control you add you use first, there and back (`page play`). **A task never ends
   with failing checks** — lint, types, tests: fix them — nor with a file it took past 400 non-blank lines (your
   heartbeat says so first): split it. Only for a weighty reason: `plitzi task complete
 --known-failure "why" [--fixed-by <task>|lead]`, its why naming each failing step. A check that fails the same way without your change (a person's,

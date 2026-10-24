@@ -80,17 +80,23 @@ with no run open (the person's, or an agent's between runs), and `run backlog do
 how. A plan's task that does items says so — `"closes": ["b-3"]`, refused at `run plan` when one is not open — and they
 are closed as its run is applied, each saying the task and the run that did it.
 
-**The run's feedback to Plitzi** (`feedback.ts`): what a run says of Plitzi itself — the CLI, the platform, its docs —
-written as the run finishes or is aborted to `.plitzi/feedback/<run>.md` (`run feedback` writes it before), for the
-person to share with Plitzi's team; never sent by itself. It holds the notices of Plitzi (`run notice --plitzi "…"`, which
-the agents' prompt asks for as a friction happens and `task next` asks again of an agent that may stop; the dry finish
-and the report list them apart from the project's next stage, and they never reach the project's backlog), what the audit saw go
-wrong in how the run was worked, the refusals by code, the commands that crashed, the checks failed for the work and for
-nothing of it, the calls made again and again, and the run's measures — nothing of the project: no code, no token, the
-project's folder and the person's home said as `<project>` and `~`. A run's log goes with the run and a report is read by nobody planning the next one: velada-polish's lead
-had the next run's work nowhere the next run reads —
-what the next stage starts from. la-velada's empty stats cell was seen in two runs and noted "predates this task" in a
-review each time: in no task's acceptance, it was nobody's.
+**The run's feedback to Plitzi** (`feedback.ts`) is what a multi-agent run says of Plitzi itself, as `plitzi feedback`
+is a single agent's. Each agent reports every round it completes, with what it was like to work with Plitzi (below).
+The lead adds its own report and experience (`run report --summary … --ease --hardest`). The run consolidates them as it
+finishes or is aborted, with what its records show was Plitzi's or the machine's (the findings, below). `run feedback` writes it before that. It goes to
+`.plitzi/feedback/<run>.md` to read and `.plitzi/feedback/<run>.json` to analyse (`RunFeedback`, `version`ed), for the
+person to share with Plitzi's team; it is never sent by itself. Each file holds:
+- the findings of Plitzi and of the machine;
+- the experience, combined (below);
+- the lead's report;
+- what each agent and the lead spent, and the results read again the most;
+- refusals by code, and checks by step.
+
+Notices of Plitzi (`run notice --plitzi "…"`) are among the findings, grouped when two agents said one thing. They never
+reach the project's backlog. Nothing of the project's code is in either file and no token; the project's folder and the
+person's home are said as `<project>` and `~`. A run's log goes with the run: velada-polish's lead had the next run's
+work nowhere the next run reads, and la-velada's empty stats cell was seen in two runs and noted "predates this task"
+in a review each time.
 
 **More leads for a larger team** (`leads.ts`). One lead reviews for four agents (`AGENTS_PER_LEAD`): past that, tasks
 waited for its review in v12. A team of five or more has `lead-2`, `lead-3`… beside `lead` — `"lead": { "count" }` in
@@ -762,29 +768,108 @@ left and the run removed. Undoing the final merge is git's, or `--keep-backup`'s
 
 `run restore` puts one project file back, while the run goes, from `base.json` or from before a restore.
 
-## The report (`report.ts`)
+## The report (`report.ts`, `taskReports.ts`, `findings/`)
 
-The lead closes the run. `run report` gathers what the CLI saw — each task's agents, time from its first take to
-its approval against its estimate, reviews, cuts, a block; every completion, refusal, failed check and conflict, read
-off the log; overrides; requests and their integration; proposals and their answers; a reconciliation; restores — and
-derives the problems from it (a task not done or blocked, more than one review, a cut, a task over twice its estimate,
-failed checks, refusals, conflicts, overrides, unanswered proposals, the run over 1.5 times its estimate).
-**The audit** (`audit.ts`) reads the same log for what does not add up, and the report keeps it whether the run is
-approved or not, as does `run finish`'s output: a task done with no approval logged, more than six failed checks, a
-review that waited over ten minutes, sent back three times or more (by its UI review and by the lead, counted apart), a
-UI review skipped — and a designer that had it when the lead went past —, a crash, a preview that could not sync, a
-brake, the same refusal three times. The finish keeps each acceptance line that held on a result for an hour: run again
-on the same result, it runs only the others. Each is the CLI's to fix or the team's to learn from — the log holds every step
-for that reason: the plan and its team at `open`, each command refused or crashed (its line, the token redacted), each
-check with what failed, each look and review taken.
-`run report --summary <file>` keeps the lead's summary on top (logged as `summary`); the final merge is refused without
-it, and refused with one written before a task was approved (`summaryBehind`, `report.ts`: its `summary` line against each
-done task's reviewed version — a run from before that line by the file's time): the dry run says which tasks and is not
-`ready` until it is written again. An approval is logged the moment its task is done (`review`), and what it let go
-after — files handed on, tasks made ready — on a line of its own (`handed-on`): written last, one whose next steps
-failed was in the run's work and nowhere in the log. When the
-run ends — finished, or aborted by a person — the report is left in `tmp/plitzi-reports/<run>-<time>.md`, with what was
-written or discarded and where a backup is.
+The run reports itself, so the lead keeps no list of problems by hand: encore's lead kept 65 in a journal, each found
+by reading the log.
+
+**Each round, as its agent completed it** (`taskReports.ts`). `task complete` keeps the round at
+`tasks/<task>/reports/<round>.json` (round 1 is the first sent, as its review counts). It holds:
+- its time and its sessions;
+- its `task check`s, what failed in them and what each failing step last said (`checks.why`), and what it was refused;
+- every command it ran: what each printed and how long it took; for one that failed, its reason and the lines of its
+  output that say what failed — a page's console errors and failed requests among them (`errors`, `verdict` when the
+  failing is what it says of the work);
+- what it asked `explain` and what found no answer;
+- what it noticed of Plitzi;
+- what it was like to work with Plitzi, in its own words (`experience.ts`; the agent's prompt asks for it, and
+  `complete` refuses without the first two, before anything runs):
+  - `--ease <1-5>`: 1, it fought Plitzi; 5, Plitzi got out of the way;
+  - `--hardest "…"`: what cost the most — time, tries, tokens — and why;
+  - `--friction "…"`, again for each: what of Plitzi got in its way;
+  - `--helped "…"`, again for each: what helped, which a change must not take away;
+- what its harness spent (`harness/`): the harness, its model, effort and version; turns, tokens read fresh, from the
+  cache and written, its context at the end; the results that weighed most, by the tokens they were read again for in
+  later turns; and Plitzi's own files it read — a skill's, a package's types — and how often.
+
+The harness's spend is read from the sessions it keeps on the machine, summed for the round's window:
+- Claude Code's by its session id (`~/.claude/projects/*/<session>.jsonl`, `CLAUDE_CONFIG_DIR` moves it);
+- Codex's and OpenCode's by the harness process the commands ran under — the session started within two minutes of it,
+  in the project's folder: Codex's `~/.codex/sessions/<y>/<m>/<d>/rollout-*.jsonl` (`CODEX_HOME`), OpenCode's
+  `~/.local/share/opencode/opencode.db` (`XDG_DATA_HOME`), read with `node:sqlite`.
+
+Another harness's is said as not read. The lead's own sessions are read the same way, over the whole run.
+
+**The experience, combined** (`experience.ts`). The lead says its own with its summary (`run report --summary <file>
+--ease --hardest [--friction] [--helped]`, kept in `lead-experience.json`), and the run puts them all together:
+- the ease: the run's median, each agent's, and the hardest rounds (2 or less) with what cost the most;
+- what cost the most, what got in the way and what helped, each grouped when several said it alike, the most said
+  first, with who said it and at which task.
+
+Frictions are said of Plitzi as notices are, so the findings group the two: the same complaint from three agents is
+one finding, live from the second. The bench keeps the ease's median run after run: a change that made Plitzi harder
+shows as it falls.
+
+**What every command kept** (`usage.ts`, `session.ts`) makes this possible:
+- its session: the one `run agent --launch` started it in (`PLITZI_SESSION`, given to the harness), else the harness's
+  own (`CLAUDE_CODE_SESSION_ID`), else the harness process it runs under;
+- for a harness that keeps its sessions by its own id, that process (`process`: `<program>:<pid>:<started>`);
+- when it failed, the line that said why (`error`) and the lines of its output that say what failed (`output`), tokens
+  cut.
+
+A `task check` logs what it ran on (`input`: the copy, the run's approved work, the lines, the CLI — `checkKey`) and,
+when it fails, what each failing step said (`why`).
+
+**The findings** (`findings/`) are one list for everyone who reads the run. Each says:
+- what went wrong, with its evidence and how many times;
+- whose it is: Plitzi's (with its area: CLI, platform, docs), the lead's, the agents', or the machine's;
+- what would stop it happening again.
+
+They are read off the log, the usage, the plan, the agents' scratch, their notices and the rounds' reports:
+- **Sessions:** an agent with two tasks in progress, one in two sessions at once, a session that went on after "You can
+  stop".
+- **Checks:** a check answering two ways on one input (flaky; the lead's when it is a line, Plitzi's otherwise), an
+  acceptance line failing three checks of a task, a project step failing four, a change breaking what an approved task
+  was accepted on, lines rewritten after the run began.
+- **Gaps:** questions `explain` had no answer for, and topics one agent asked about in three ways or more; acceptance
+  checked by the lead's own scripts (the project's tests are not); scripts the agents wrote in their scratch and
+  packages they installed there; what was said of Plitzi — notices and frictions together.
+- **Failed commands, by why:** refused as written (an option or command the CLI has not: a doc or a prompt says it), the
+  machine's (a port, a permission, a browser not installed), and the same CLI error met twice. A check's verdict on the
+  work is not one of these.
+- **Cost:** an answer over 12k characters, a call repeated, a task reading 2.5 times the median, a context over 150k
+  tokens at a task's end, kinds of result read again for over a million tokens.
+- **How the run was worked** (`audit.ts`): an approval missing from the log, a review waiting over ten minutes, a known
+  failure, a task sent back three times, a UI review skipped or gone past, a crash, a preview that could not sync, the
+  brake, the same refusal three times.
+- **What it came to:** a task not done, blocked or cut; one over twice its estimate (the run over 1.5 times); conflicts;
+  files written over or joined; stops; unanswered proposals.
+
+**While the run goes**, `run watch` and `run status` say the live ones to the lead, each once, through the attention
+kind `finding` (`findings/live.ts`, beside `refused-again`):
+- an agent with two tasks, or in two sessions;
+- a session working on after it was told to stop;
+- a flaky check, or a line failing try after try;
+- a command refused as written twice;
+- something of Plitzi two agents said.
+
+`run report` starts with the run at a glance and the problems by whose, numbered, each with its evidence and its fix.
+Then it gives the experience combined, the lead's summary, what each review asked when it sent a task back, what each
+agent and the lead spent (with what each ran on, and Plitzi's files read the most), and the facts: each task's agents, time against
+its estimate, reviews, cuts and blocks; completions, refusals, failed checks and conflicts; overrides, requests,
+proposals, a reconciliation, restores. `run finish` prints a few findings of each whose and points at the report.
+`run report --summary <file>` keeps the lead's report (logged as `summary`); it adds only what no record says. The final
+merge is refused without it, and refused with one written before a task was approved (`summaryBehind`, `report.ts`: its
+`summary` line against each done task's reviewed version — a run from before that line by the file's time): the dry run
+says which tasks and is not `ready` until it is written again. An approval is logged the moment its task is done
+(`review`), and what it let go after — files handed on, tasks made ready — on a line of its own (`handed-on`): written
+last, one whose next steps failed was in the run's work and nowhere in the log. When the run ends — finished, or aborted
+by a person — the report is left in `tmp/plitzi-reports/<run>-<time>.md`, with what was written or discarded and where a
+backup is. Beside it, `<run>-<time>.json` is the whole run as data: the bench line, the report (`version`ed: findings,
+indicators, every round's report, each task's review asks, the lead's spend, the metrics), the lead's summary and the
+scripts kept. Those are in `<run>-<time>-scratch/<agent>/`: each agent's scripts copied out of its scratch before the
+run goes (256 KB at most each; larger ones named as left out). Each is what a command could not do. That folder and the
+JSON are what is read to analyse runs side by side.
 
 **The run measured** (`runMetrics.ts`, `reportFlow.ts`): the report says where the time went and what it cost, read off
 the log, the messages and the run's usage — what velada-polish's lead computed by hand to find the run's bottlenecks:
@@ -814,7 +899,10 @@ the log, the messages and the run's usage — what velada-polish's lead computed
   lists every run: minutes a task, rounds a task, the share of checks failed for the copy's work and how many failed
   for nothing of it ("Not theirs"), refusals (`identity` apart), the median
   waits for a UI review, the lead and a rework, the minutes agents waited, reworks handed off, what was read, tokens a
-  task, calls repeated — whether the team gets better from one run to the next.
+  task, calls repeated — whether the team gets better from one run to the next. A second table counts the findings'
+  patterns (`RunIndicators`): the ease's median, findings by whose, the share of failures not the agents', flaky checks, lines failing,
+  session breaks, `explain` misses, what was done beside the CLI, what two agents said, commands refused as written, and
+  the harness's tokens a task. A fix holds when its column falls.
 
 ## Who calls (`identity.ts`)
 

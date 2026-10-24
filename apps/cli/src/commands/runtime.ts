@@ -70,7 +70,9 @@ const projectPacker = async (root: string): Promise<Packer | undefined> => {
     // Said below: the one way to have it is to install it.
   }
 
-  fail('plitzi runtime packs it with this project’s own @plitzi/sdk-server:\n  npm install @plitzi/sdk-server');
+  fail(
+    'plitzi runtime push packs the runtime with this project’s own @plitzi/sdk-server, and none is installed:\n  npm install @plitzi/sdk-server'
+  );
 
   return undefined;
 };

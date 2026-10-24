@@ -1,10 +1,10 @@
 @mixin styles {
   // Drawn in the colour of the text around it: one colour themes the whole chart, its parts lighter or thinner of it.
   .plitzi-component__chart {
-    display: block;
-    position: relative;
     width: 100%;
     margin: 0;
+    position: relative;
+    display: block;
 
     .chart__bar,
     .chart__point,
@@ -34,32 +34,32 @@
     }
 
     .chart__axis {
-      fill: currentColor;
-      font-size: 12px;
       font-family: inherit;
+      font-size: 12px;
+      fill: currentColor;
       fill-opacity: 0.7;
     }
 
     .chart__value {
-      fill: currentColor;
-      font-size: 12px;
       font-family: inherit;
+      font-size: 12px;
+      fill: currentColor;
     }
 
     .chart__legend {
+      margin-top: 12px;
+      padding-left: 0;
       display: flex;
       flex-wrap: wrap;
+      font-size: 14px;
+      list-style-type: none;
       column-gap: 16px;
       row-gap: 4px;
-      list-style-type: none;
-      padding-left: 0;
-      margin-top: 12px;
-      font-size: 14px;
     }
 
     .chart__empty {
-      font-size: 14px;
       opacity: 0.7;
+      font-size: 14px;
     }
   }
 }

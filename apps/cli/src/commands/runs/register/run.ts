@@ -41,7 +41,16 @@ import {
 } from '..';
 import { runAgent } from '../agent';
 import { runStart } from '../start';
-import { JSON_OPTION, TOKEN_OPTION, RUN_OPTION, AGENT_OPTION } from './options';
+import {
+  AGENT_OPTION,
+  EASE_OPTION,
+  FRICTION_OPTION,
+  HARDEST_OPTION,
+  HELPED_OPTION,
+  JSON_OPTION,
+  RUN_OPTION,
+  TOKEN_OPTION
+} from './options';
 import { duration, FOLLOW_MS, names, pagePaths, positiveInteger } from '../../../options';
 
 import type {
@@ -52,6 +61,7 @@ import type {
   UpgradeRunOptions,
   WatchRunOptions
 } from '..';
+import type { ExperienceFlags } from '../../../runs/experience';
 import type { AgentOptions } from '../agent';
 import type { StartOptions } from '../start';
 import type { TeamSetOptions } from '../team';
@@ -488,14 +498,22 @@ export const registerRunGroup = (program: Command): Command => {
     .command('report')
     .description('How the run went, as the CLI saw it — and, with --summary, the lead’s summary that closes it')
     .argument('[run]', 'The run')
-    .option('--summary <file>', 'The lead’s summary: what the run did, what went wrong, what is left (Markdown)')
+    .option(
+      '--summary <file>',
+      'The lead’s report: what the run did, what went wrong that no record says, what is left (Markdown) — with --ease and --hardest'
+    )
+    .option(...EASE_OPTION)
+    .option(...HARDEST_OPTION)
+    .option(...FRICTION_OPTION)
+    .option(...HELPED_OPTION)
     .option(
       '--tokens <agent=count,…>',
       'What the harness counted each agent spent — the lead is handed it — kept for the report and the bench'
     )
     .option(...JSON_OPTION)
-    .action((run: string | undefined, options: RunCommandOptions & { summary?: string; tokens?: string }) =>
-      runReport(run, options)
+    .action(
+      (run: string | undefined, options: RunCommandOptions & { summary?: string; tokens?: string } & ExperienceFlags) =>
+        runReport(run, options)
     );
 
   runGroup

@@ -6,6 +6,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { REPORTS_DIR } from './paths';
 import { tokensText } from './runMetrics';
 
+import type { RunIndicators } from './findings';
 import type { RunReport } from './report';
 
 /**
@@ -46,6 +47,8 @@ export interface BenchLine {
   /** Minutes the agents spent inside the CLI, waits left out — and how many commands ran past their budget. */
   cliMinutes?: number;
   overBudget?: number;
+  /** The run's findings as numbers, a pattern each (`findings/`): what a fix is seen to hold by, run after run. */
+  indicators?: RunIndicators;
 }
 
 const median = (values: readonly number[]): number | undefined => {
@@ -103,7 +106,8 @@ export const benchOf = (report: RunReport, cli: string): BenchLine => {
         }),
     repeated: metrics.cost.repeated.length,
     cliMinutes: metrics.cost.cliMinutes,
-    overBudget: metrics.cost.byCommand.filter(each => each.overBudget !== undefined).length
+    overBudget: metrics.cost.byCommand.filter(each => each.overBudget !== undefined).length,
+    indicators: report.indicators
   };
 };
 
@@ -144,9 +148,20 @@ export const benchText = (lines: readonly BenchLine[]): string[] =>
     ? ['No run of this project was measured yet: each report keeps its run’s measures beside it.']
     : [
         '| Run | Done | Worked (min) | Min / task | Rounds / task | Checks failed | Not theirs | Refused (identity) | UI wait | Lead wait | Rework wait | Agents waited | Handed off | Read | Context / task | Read again / task (≥) | Repeated | In the CLI (min) | Over budget |',
-        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
         ...lines.map(
           line =>
             `| ${line.runId} | ${String(line.done)}/${String(line.tasks)} | ${cell(line.workMinutes)} | ${cell(line.minutesPerTask)} | ${String(line.roundsPerTask)} | ${String(line.checksFailedPct)}% | ${cell(line.checksNotOwn)} | ${String(line.refusals)} (${String(line.identityRefusals)}) | ${cell(line.uiWaitMedian)} | ${cell(line.leadWaitMedian)} | ${cell(line.reworkWaitMedian)} | ${cell(line.agentsWaited)} | ${String(line.handOffs)} | ${tokens(line.readTokens)} | ${tokens(line.tokensPerTask)} | ${tokens(line.rereadPerTask)} | ${String(line.repeated)} | ${cell(line.cliMinutes)} | ${cell(line.overBudget)} |`
-        )
+        ),
+        '',
+        // The patterns the findings count, a run a row: a fix holds when its column falls (runs before them say —).
+        '| Run | Ease (1–5) | Findings (Plitzi · lead · agents · machine) | Failures not theirs | Flaky checks | Lines failing | Session breaks | explain missed | Done beside the CLI | Said by 2+ | Refused as written | Harness read / task |',
+        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+        ...lines.map(line => {
+          const of = line.indicators;
+
+          return of === undefined
+            ? `| ${line.runId} | — | — | — | — | — | — | — | — | — | — | — |`
+            : `| ${line.runId} | ${cell(of.easeMedian)} | ${String(of.findings.plitzi)} · ${String(of.findings.lead)} · ${String(of.findings.agent)} · ${String(of.findings.machine)} | ${cell(of.notOwnPct, '%')} | ${String(of.flakyChecks)} | ${String(of.linesFailing)} | ${String(of.sessionBreaks)} | ${String(of.explainMissed)} | ${String(of.workarounds)} | ${String(of.saidByMany)} | ${String(of.refusedAsWritten)} | ${tokens(of.harnessTokensPerTask)} |`;
+        })
       ];

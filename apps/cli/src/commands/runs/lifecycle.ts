@@ -4,6 +4,7 @@ import { act, runOf, taskOf } from './shell';
 import { inputLines, list, secondRunText } from './text';
 import { ownServer } from '../../runs/acceptance';
 import { BACKLOG_FILE } from '../../runs/backlog';
+import { FINDING_OWNERS } from '../../runs/findings';
 import { abortRun, continueRun, finishRun, resolveFile, restoreFile } from '../../runs/merge';
 import { RunRefusal } from '../../runs/refusal';
 import { attachRun, pruneRuns, purgeRun, releaseRun, resumeRun, stopRun } from '../../runs/run';
@@ -11,6 +12,7 @@ import { canWrite } from '../../runs/tasks';
 import { KV_FILE } from '../../scaffold/paths';
 
 import type { RunCommandOptions } from './shell';
+import type { Finding } from '../../runs/findings';
 
 /**
  * A run stopped, resumed, finished into the project — or not — attached, released, purged.
@@ -19,6 +21,42 @@ import type { RunCommandOptions } from './shell';
 /** Where the run's feedback to Plitzi is, said with what to do with it: the person's to share, never sent by itself. */
 const feedbackLine = (file: string): string =>
   `What this run says of Plitzi itself, for Plitzi's team: ${file} — nothing of the project in it; share it with Plitzi to make it better`;
+
+/** How many of each whose come first in a finish's answer: the whole list is the report's. */
+const SHOWN_A_OWNER = 5;
+
+/** What the run shows went wrong, as the finish says it: a few of each whose — every one, with its evidence, in the report. */
+const findingsLines = (findings: readonly Finding[]): string[] => {
+  if (findings.length === 0) {
+    return ['  The run’s records show nothing out of place'];
+  }
+
+  const counts = FINDING_OWNERS.flatMap(owner => {
+    const theirs = findings.filter(finding => finding.owner === owner).length;
+
+    return theirs > 0 ? [`${owner} ${String(theirs)}`] : [];
+  });
+
+  return [
+    chalk.yellow(
+      `  What the run shows went wrong (${counts.join(', ')}) — each with its evidence and fix in the report: plitzi run report`
+    ),
+    ...FINDING_OWNERS.flatMap(owner => {
+      const theirs = findings.filter(finding => finding.owner === owner);
+
+      return [
+        ...theirs
+          .slice(0, SHOWN_A_OWNER)
+          .map(finding =>
+            chalk.yellow(`    - ${owner}: ${finding.title}${finding.times > 1 ? ` ×${String(finding.times)}` : ''}`)
+          ),
+        ...(theirs.length > SHOWN_A_OWNER
+          ? [chalk.yellow(`    - ${owner}: … ${String(theirs.length - SHOWN_A_OWNER)} more`)]
+          : [])
+      ];
+    })
+  ];
+};
 
 export const runCanWrite = (file: string, options: RunCommandOptions & { task?: string }): Promise<void> =>
   act(
@@ -126,22 +164,11 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
           .filter(each => each.firstFailed)
           .map(each => `    ${each.task}: ${each.said}${secondRunText(each)}`),
         ...(finished.left.length > 0 ? [`  Left in the plan: ${finished.left.join(', ')}`] : []),
-        ...(finished.audit.length > 0
-          ? [
-              chalk.yellow('  What the run’s activity shows (kept in its report — the CLI’s to fix, or the team’s):'),
-              ...finished.audit.map(each => chalk.yellow(`    - ${each}`))
-            ]
-          : ['  The run’s activity shows nothing out of place']),
+        ...findingsLines(finished.findings),
         ...(finished.noticed.length > 0
           ? [
               '  Noticed during the run, owned by no task — what a stage of its own takes (plitzi run extend):',
               ...finished.noticed.map(each => `    - ${each}`)
-            ]
-          : []),
-        ...(finished.ofPlitzi.length > 0
-          ? [
-              '  Noticed of Plitzi itself — the run’s feedback to Plitzi carries it, written as the run ends:',
-              ...finished.ofPlitzi.map(each => `    - ${each}`)
             ]
           : []),
         ...(finished.leftInTmp

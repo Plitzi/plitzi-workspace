@@ -33,9 +33,11 @@ import { textOf } from './context';
 import { activeHolder, allLocks, sharedFiles } from './locks';
 import { againstRunWork, tellUnanswered } from './notOwn';
 import { othersHeld } from './othersHeld';
+import { keepTaskReport } from '../taskReports';
 
 import type { CheckResult } from '../checks';
 import type { ReviewAsked } from '../design';
+import type { Experience } from '../experience';
 import type { Message } from '../messages';
 import type { AcceptanceResult, FileLock, SharedRequest, TaskStart } from '../model';
 import type { LoadedRun, RunContext } from '../run';
@@ -134,6 +136,8 @@ export interface CompletedTask {
   changedInProject: string[];
   /** When `task check` passed them, the checks taken from it: nothing changed since, so not run again. */
   checkedAt?: string;
+  /** The round's report, kept for the run's (`taskReports.ts`): which round, and whether it says what it was like. */
+  report: { round: number; experience?: true };
 }
 
 /**
@@ -151,6 +155,8 @@ export interface CompleteOptions {
   knownFailure?: { why: string; fixedBy?: string };
   /** The review it asks for: the code alone, or its UI too (`ReviewAsked`); the run decides when left out. */
   review?: ReviewAsked;
+  /** What it was like to work with Plitzi this round, in the agent's words (`experience.ts`): kept in its report. */
+  experience?: Experience;
 }
 
 /**
@@ -539,6 +545,15 @@ export const completeTask = async (
     // What review it went for: its UI's and the lead's, or the lead's alone.
     review: designed.design?.status === 'due' ? 'ui' : 'code'
   });
+  // The round as it was worked, kept beside the task: the run's report is put together from these.
+  const report = await keepTaskReport(loaded, view.paths, {
+    task: taskId,
+    // The round its review will say (`review.ts`): the first sent is round 1.
+    round: view.state.round + 1,
+    agent: ctx.agent,
+    to: at(ctx),
+    ...(options.experience === undefined ? {} : { experience: options.experience })
+  });
 
   return {
     changed,
@@ -551,6 +566,7 @@ export const completeTask = async (
     accepted,
     changedInProject,
     ...(kept ? { checkedAt: kept.at } : {}),
+    report: { round: report.round, ...(report.experience ? { experience: true as const } : {}) },
     messages: await handOver(ctx, loaded, taskId, ctx.agent)
   };
 };

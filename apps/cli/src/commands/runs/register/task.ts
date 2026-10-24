@@ -30,12 +30,22 @@ import {
   taskUnblock,
   taskWait
 } from '..';
-import { JSON_OPTION, TOKEN_OPTION, RUN_OPTION, AGENT_OPTION } from './options';
+import {
+  AGENT_OPTION,
+  EASE_OPTION,
+  FRICTION_OPTION,
+  HARDEST_OPTION,
+  HELPED_OPTION,
+  JSON_OPTION,
+  RUN_OPTION,
+  TOKEN_OPTION
+} from './options';
 import { groupHelp } from './run';
 import { duration, FOLLOW_MS, fraction, timeZone } from '../../../options';
 import { BLOCK_NEEDS } from '../../../runs/model';
 
 import type { AnswerOptions, LookOptions, ProposeOptions, ReviewOptions, RunCommandOptions } from '..';
+import type { ExperienceFlags } from '../../../runs/experience';
 import type { Command } from 'commander';
 
 /** Each command of `plitzi task`, by who runs it: an agent at its task, or the lead reviewing them. */
@@ -329,11 +339,21 @@ export const registerTaskGroup = (program: Command): Command => {
       '--note <text>',
       'What the lead should know as it reviews — a choice you made, what to look at — told with it'
     )
+    .option(...EASE_OPTION)
+    .option(...HARDEST_OPTION)
+    .option(...FRICTION_OPTION)
+    .option(...HELPED_OPTION)
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
     .action(
-      (options: RunCommandOptions & { knownFailure?: string; fixedBy?: string; note?: string; review?: string }) =>
-        taskComplete(options)
+      (
+        options: RunCommandOptions & {
+          knownFailure?: string;
+          fixedBy?: string;
+          note?: string;
+          review?: string;
+        } & ExperienceFlags
+      ) => taskComplete(options)
     );
 
   taskGroup

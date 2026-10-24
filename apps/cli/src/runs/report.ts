@@ -6,7 +6,10 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { proposalsOf } from './agreements';
 import { auditRun } from './audit';
 import { benchOf, benchText, readBench } from './bench';
+import { combineExperience, experienceText, isExperience, saidOfPlitzi } from './experience';
 import { readOptional, writeAtomic } from './files';
+import { factFindings, indicatorsOf, keepScratch, orderFindings, runFindings, scratchOf } from './findings';
+import { harnessUsage } from './harness';
 import { rememberPace } from './history';
 import { coverage } from './inventory';
 import { requireLead } from './leads';
@@ -15,22 +18,29 @@ import { noticesByOwner, noticeText } from './notices';
 import { REPORTS_DIR, taskPaths } from './paths';
 import { RunRefusal } from './refusal';
 import { flowText } from './reportFlow';
+import { consumptionText, findingsText, glanceText, reviewsText } from './reportHead';
 import { completionsOf, inputOf, loadRun, logRun, readApproved, readRunLog, requireNoTask, updateRecord } from './run';
 import { runMetrics } from './runMetrics';
+import { readTaskReports } from './taskReports';
 import { requestsOf } from './tasks';
 import { readReviewed, viewTask } from './taskStore';
 import { readUsage } from './usage';
 
 import type { BenchLine } from './bench';
+import type { CombinedExperience, Experience } from './experience';
+import type { Finding, RunIndicators } from './findings';
+import type { HarnessUsage } from './harness';
 import type { LoadedRun, RunContext } from './run';
 import type { RunMetrics } from './runMetrics';
+import type { TaskRoundReport } from './taskReports';
 
 /**
- * A run's report: how the whole run went. The CLI gathers what it knows — each task's agents, time against
- * its estimate, review rounds and cuts; every refusal, failed check and conflict; what was written over a change made
- * outside the run; requests and agreements — and the lead, who closes the run, writes the summary and the
- * problems on top (`plitzi run report --summary <file>`). The final merge does not go in without it. When the run ends,
- * the report is left in `tmp/plitzi-reports/`: the run goes, the report stays.
+ * A run's report: how the whole run went, put together from what it kept — each task's rounds as their agents completed
+ * them (`taskReports.ts`), its log and usage — into the problems it shows, each with its evidence, whose it is and what
+ * would stop it (`findings/`), what it spent, and the facts: each task's agents, time against its estimate, reviews and
+ * cuts; refusals, failed checks and conflicts; requests and agreements. The lead adds only what no record says
+ * (`plitzi run report --summary <file>`); the final merge does not go in without it. When the run ends, the report is
+ * left in `tmp/plitzi-reports/` as Markdown to read and JSON to analyse: the run goes, the report stays.
  */
 
 export interface TaskReport {
@@ -50,9 +60,18 @@ export interface TaskReport {
   knownFailure?: string;
   /** Its UI's review, in a run with a designer: who approved it, or that the lead approved without it. */
   design?: string;
+  /**
+   * What each review asked when it sent the task back, by round and by whom: what tells the agent's mistake from what
+   * Plitzi did not let it see (encore's eight sends-back were all logic: a race, a hole, a stale count).
+   */
+  reviews: { round: number; by: string; asked: string }[];
 }
 
+/** What a report's data is shaped as: what reads it across runs knows which it reads. */
+export const REPORT_VERSION = 2;
+
 export interface RunReport {
+  version: typeof REPORT_VERSION;
   runId: string;
   goal: string;
   /** What the plan said the run leaves out. */
@@ -74,16 +93,23 @@ export interface RunReport {
   /** Each time it stopped and was resumed, with why. */
   stops: { at: string; reason: string; resumedAt?: string; by?: string }[];
   restores: { id: string; files: string[] }[];
-  /** What went wrong or needs a look, read off the facts: the lead's summary says the rest. */
-  problems: string[];
-  /** What the run's activity shows was wrong in how it was worked (`audit.ts`): the CLI's to fix, or the team's. */
-  audit: string[];
+  /**
+   * What went wrong, each with its evidence, whose it is and what would stop it (`findings/`): the run's problems, read
+   * off what it kept — the lead's summary adds only what no record says.
+   */
+  findings: Finding[];
+  /** The findings as numbers, one a pattern: the bench's. */
+  indicators: RunIndicators;
+  /** What it was like to work with Plitzi: every round's and the lead's, combined (`experience.ts`). */
+  experience: CombinedExperience;
   /** What was seen wrong that no task owned (`plitzi run notice`): where the next stage starts. */
   noticed: string[];
-  /** What its agents said of Plitzi itself (`run notice --plitzi`): the run's feedback carries it. */
-  ofPlitzi: string[];
   /** Where its time went, what failed by step and code, and what it cost (`runMetrics.ts`): the bench's, as data. */
   metrics: RunMetrics;
+  /** Each round of each task, as its agent completed it (`taskReports.ts`). */
+  taskReports: TaskRoundReport[];
+  /** What the lead's own sessions spent over the run, when its harness keeps one this CLI reads. */
+  lead?: HarnessUsage;
 }
 
 interface LogLine {
@@ -180,6 +206,11 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
         ])
       ].sort(),
       cuts: view.state.notes.filter(note => note.text.startsWith('Cut at')).length,
+      reviews: view.state.notes.flatMap(note => {
+        const [, round, asked] = /^Review (\d+): ([\s\S]*)$/.exec(note.text) ?? [];
+
+        return round && asked ? [{ round: Number(round), by: note.by, asked }] : [];
+      }),
       ...(view.state.knownFailure
         ? { knownFailure: `${view.state.knownFailure.failing.join(', ')} failing: ${view.state.knownFailure.why}` }
         : {}),
@@ -233,9 +264,11 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
   const { record } = loaded;
   const minutes = minutesBetween(record.openedAt, now);
   const notices = await noticesByOwner(loaded);
+  const runLog = await readRunLog(loaded.paths);
+  const usage = readUsage(loaded.paths.dir);
   const metrics = runMetrics({
-    log: await readRunLog(loaded.paths),
-    usage: readUsage(loaded.paths.dir),
+    log: runLog,
+    usage,
     answers: (await messagesOf(loaded)).flatMap(message =>
       message.replyTo === undefined ? [] : [{ replyTo: message.replyTo, at: message.at }]
     ),
@@ -244,36 +277,38 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     openedAt: record.openedAt,
     now
   });
-  const problems = [
-    ...tasks.filter(task => task.status !== 'done').map(task => `${task.id} did not finish: ${task.status}`),
-    ...tasks.filter(task => task.blocked).map(task => `${task.id} was blocked: ${String(task.blocked)}`),
-    ...tasks.filter(task => task.rounds > 1).map(task => `${task.id} took ${String(task.rounds)} reviews`),
-    ...tasks
-      .filter(task => task.cuts > 0)
-      .map(task => `${task.id} was cut ${String(task.cuts)} time(s) and started again`),
-    ...tasks
-      .filter(task => task.minutes !== undefined && task.minutes > task.estimateMinutes * 2)
-      .map(task => `${task.id} took ${String(task.minutes)} min of an estimated ${String(task.estimateMinutes)}`),
-    ...(events.checksFailed > 0 ? [`The project’s checks failed ${String(events.checksFailed)} time(s)`] : []),
-    ...(events.refused > 0
-      ? [`${String(events.refused)} completion(s) refused for files that were not the task's`]
-      : []),
-    ...(events.conflicts > 0 ? [`${String(events.conflicts)} conflict(s)`] : []),
-    ...overwrites.map(each => `${each.file} was written over a change made outside the run (decided by ${each.by})`),
-    ...joined.map(
-      each => `${each.file} was changed outside the run too: both changes kept, line by line (decided by ${each.by})`
-    ),
-    ...stops.map(
-      stop =>
-        `The run stopped at ${stop.at} (${stop.reason})${stop.resumedAt ? `, resumed by ${String(stop.by)} at ${stop.resumedAt}` : ''}`
-    ),
-    ...proposals.filter(each => each.answer === undefined).map(each => `${each.id} was never answered`),
-    ...(minutes > record.estimate.wallMinutes * 1.5
-      ? [`The run took ${String(minutes)} min of an estimated ${String(record.estimate.wallMinutes)}`]
-      : [])
-  ];
+  const taskReports = await readTaskReports(loaded);
+  const leads = usage.filter(line => line.by.startsWith('lead'));
+  const lead = await harnessUsage({
+    sessions: [...new Set(leads.flatMap(line => (line.session ? [line.session] : [])))],
+    processes: [...new Set(leads.flatMap(line => (line.process ? [line.process] : [])))],
+    root: ctx.root,
+    from: record.openedAt,
+    to: now
+  });
+  const leadExperience = await readLeadExperience(loaded);
+  const experience = combineExperience(taskReports, leadExperience);
+  const facts = { tasks, events, overwrites, joined, stops, proposals, minutes, estimate: record.estimate };
+  const findings = orderFindings([
+    ...runFindings({
+      log: runLog,
+      usage,
+      tasks: loaded.tasks,
+      said: saidOfPlitzi(
+        notices.plitzi,
+        taskReports,
+        leadExperience ? { experience: leadExperience, at: now } : undefined
+      ),
+      scratch: await scratchOf(loaded.paths.scratch),
+      taskReports,
+      repeated: metrics.cost.repeated
+    }),
+    ...(await auditRun(loaded)),
+    ...factFindings(facts)
+  ]);
 
   return {
+    version: REPORT_VERSION,
     runId: record.runId,
     goal: loaded.plan.goal,
     leftOut: loaded.plan.leftOut ?? [],
@@ -307,26 +342,19 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     restores: record.merges
       .filter(merge => merge.kind === 'restore')
       .map(merge => ({ id: merge.id, files: Object.keys(merge.files) })),
-    problems: [
-      ...problems,
-      ...(metrics.checks.failed > 0
-        ? [
-            `${String(metrics.checks.failed)} of ${String(metrics.checks.run)} task checks failed — ${Object.entries(
-              metrics.checks.byStep
-            )
-              .map(([step, times]) => `${step} ${String(times)}`)
-              .join(', ')}`
-          ]
-        : []),
-      ...(metrics.refusals.total > 0 ? [`${String(metrics.refusals.total)} command(s) refused (see Flow)`] : []),
-      ...metrics.cost.repeated.map(
-        each => `${each.by} ran \`${each.command}\` ${String(each.times)} times in ${String(each.within)} min`
-      )
-    ],
-    audit: await auditRun(loaded),
+    findings,
+    indicators: indicatorsOf(
+      findings,
+      metrics,
+      taskReports,
+      tasks.filter(task => task.status === 'done').length,
+      experience.ease.median
+    ),
+    experience,
     noticed: notices.project.map(noticeText),
-    ofPlitzi: notices.plitzi.map(noticeText),
-    metrics
+    metrics,
+    taskReports,
+    ...(lead ? { lead } : {})
   };
 };
 
@@ -355,9 +383,17 @@ export const reportText = (
     '',
     `${closing ? (closing.outcome === 'finished' ? 'Finished' : 'Aborted') : 'Going'} ${report.at} · opened ${report.openedAt} · ${report.metrics.workMinutes === undefined ? `${String(report.minutes)} min` : `worked ${String(report.metrics.workMinutes)} min, then ${String(report.metrics.afterMinutes ?? 0)} to this report`}, estimated ${String(report.estimate.wallMinutes)} with ${String(report.estimate.agents)} agents (${String(report.estimate.totalMinutes)} min of work)`,
     '',
+    ...glanceText(report),
+    '',
+    '## Problems — whose, and what would stop them',
+    '',
+    ...findingsText(report.findings),
+    '## Using Plitzi — what it was like, every round’s and the lead’s',
+    '',
+    ...experienceText(report.experience),
     '## The lead’s summary',
     '',
-    summary?.trim() ?? '_None was written._',
+    summary?.trim() ?? '_None was written: the problems above are what the run kept._',
     '',
     ...(report.leftOut.length > 0
       ? ['## Left out, as the plan said', '', ...report.leftOut.map(line => `- ${line}`), '']
@@ -368,15 +404,6 @@ export const reportText = (
           '',
           ...report.noticed.map(line => `- ${line}`),
           '- — what the next stage or run starts from (plitzi run extend)',
-          ''
-        ]
-      : []),
-    ...(report.ofPlitzi.length > 0
-      ? [
-          '## Noticed of Plitzi',
-          '',
-          ...report.ofPlitzi.map(line => `- ${line}`),
-          '- — the run’s feedback to Plitzi carries it, written as the run ends',
           ''
         ]
       : []),
@@ -391,14 +418,6 @@ export const reportText = (
           ''
         ]
       : []),
-    '## Problems',
-    '',
-    ...lines(report.problems, 'none found in what the CLI saw'),
-    '',
-    '## What the activity shows (audit)',
-    '',
-    ...lines(report.audit, 'nothing out of place in the run’s activity'),
-    '',
     '## Tasks',
     '',
     '| Task | Role | Status | Agents | Time / estimate (min) | Reviews | Cuts | Files |',
@@ -408,6 +427,8 @@ export const reportText = (
         `| ${task.id}${task.kind === 'integration' ? ' (integration)' : ''} | ${task.role} | ${task.status} | ${task.agents.join(', ') || '—'} | ${task.minutes === undefined ? '—' : String(task.minutes)} / ${String(task.estimateMinutes)} | ${String(task.rounds)}${task.design ? ` · ${task.design}` : ''} | ${String(task.cuts)} | ${task.files.join(', ') || '—'} |`
     ),
     '',
+    ...reviewsText(report),
+    ...consumptionText(report),
     ...flowText(report.metrics),
     ...(benchBefore && benchBefore.length > 0 ? ['## Against the runs before', '', ...benchText(benchBefore), ''] : []),
     '## What happened',
@@ -445,8 +466,16 @@ export const reportText = (
     ''
   ].join('\n');
 
-/** `plitzi run report --summary <file>`: the lead's summary of the run, kept for its report. */
-export const writeSummary = async (ctx: RunContext, runId: string, file: string): Promise<void> => {
+/**
+ * `plitzi run report --summary <file> --ease --hardest …`: the lead's report of the run — its summary, and what it was
+ * like to work with Plitzi, as each agent said its rounds' — kept for the run's report and its feedback.
+ */
+export const writeSummary = async (
+  ctx: RunContext,
+  runId: string,
+  file: string,
+  experience: Experience
+): Promise<void> => {
   requireNoTask(ctx, 'write the run’s summary');
   const loaded = await loadRun(ctx, runId);
   await requireLead(ctx, loaded, 'write the run’s summary');
@@ -459,6 +488,7 @@ export const writeSummary = async (ctx: RunContext, runId: string, file: string)
   }
 
   await writeAtomic(loaded.paths.summary, text);
+  await writeAtomic(loaded.paths.leadExperience, `${JSON.stringify(experience, null, 2)}\n`);
   await logRun(ctx, loaded.paths, { action: 'summary' });
   const input = await inputOf(ctx, path.resolve(ctx.root, file));
   if (input) {
@@ -471,6 +501,22 @@ export const writeSummary = async (ctx: RunContext, runId: string, file: string)
 
 export const readSummary = async (loaded: LoadedRun): Promise<string | undefined> =>
   (await readOptional(loaded.paths.summary))?.toString('utf-8');
+
+/** What it was like for the lead, as it said it with its summary — none before it was said. */
+export const readLeadExperience = async (loaded: LoadedRun): Promise<Experience | undefined> => {
+  const text = (await readOptional(loaded.paths.leadExperience))?.toString('utf-8');
+  if (text === undefined) {
+    return undefined;
+  }
+
+  try {
+    const read: unknown = JSON.parse(text);
+
+    return isExperience(read) ? read : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 /**
  * The tasks approved after the lead's summary was written: what the report says nothing of — or says wrong (la-velada:
@@ -513,7 +559,13 @@ export const leaveReport = async (ctx: RunContext, loaded: LoadedRun, closing: C
   const before = await readBench(ctx.root);
   await writeAtomic(file, reportText(report, await readSummary(loaded), closing, [...before.slice(-5), bench]));
   // Beside it, the same as data: what `plitzi run bench` compares, and a lead debugging the run reads whole.
-  await writeAtomic(file.replace(/\.md$/, '.json'), `${JSON.stringify({ bench, report }, null, 2)}\n`);
+  // The agents' scripts, before the run's scratch goes with it: what each did that no command could.
+  const scratch = await keepScratch(loaded.paths.scratch, file.replace(/\.md$/, '-scratch'));
+  // The lead's summary in it too: the JSON is the whole run, for what analyses runs side by side.
+  await writeAtomic(
+    file.replace(/\.md$/, '.json'),
+    `${JSON.stringify({ bench, report, summary: (await readSummary(loaded)) ?? null, scratch }, null, 2)}\n`
+  );
   // This machine's pace too: what the next first run of any project scales its estimates by.
   await rememberPace(report.tasks);
 

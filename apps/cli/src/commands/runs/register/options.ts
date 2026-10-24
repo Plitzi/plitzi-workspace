@@ -1,3 +1,5 @@
+import { EASE_SCALE } from '../../../runs/experience';
+
 import type { Command } from 'commander';
 
 export const JSON_OPTION = ['--json', 'One object, for a tool or an agent'] as const;
@@ -12,6 +14,28 @@ export const RUN_OPTION = [
 export const AGENT_OPTION = [
   '--agent <name>',
   'Your name, said once — your first command on the run, which answers your token — then your token says it (or PLITZI_AGENT)'
+] as const;
+
+/** A flag said again for each value, as the list of them. */
+const each = (value: string, previous: readonly string[]): string[] => [...previous, value];
+
+/** What a list flag starts as before any is said: never changed, each value makes a new list. */
+const NONE: readonly string[] = [];
+
+/** What it was like to work with Plitzi (`experience.ts`): said by an agent at `task complete`, by the lead at its report. */
+export const EASE_OPTION = ['--ease <1-5>', `How Plitzi was to work with: ${EASE_SCALE}`] as const;
+export const HARDEST_OPTION = ['--hardest <text>', 'What cost you the most — time, tries, tokens — and why'] as const;
+export const FRICTION_OPTION = [
+  '--friction <text>',
+  'Something of Plitzi that got in your way — a command, a doc, an error, something missing; again for each',
+  each,
+  NONE
+] as const;
+export const HELPED_OPTION = [
+  '--helped <text>',
+  'Something of Plitzi that helped — what a change must not take away; again for each',
+  each,
+  NONE
 ] as const;
 
 /** What was piped in, read once: the text a `-` stands for. */

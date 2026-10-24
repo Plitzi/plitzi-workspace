@@ -117,9 +117,10 @@ t-home` is all of it (`<file> --diff`: one file's whole diff);
    check cannot see (`plitzi run preview`) — what is missing is a stage (`run extend`), or the next run's: `run notice "…"
 --on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run plan` and `run open` list (`run
 backlog add "…"` keeps one with no run open); a task of your plan that does one says so — `"closes": ["b-3"]` — and the
-applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** write the summary (done, wrong, left) last, with each agent's tokens as the harness gave them:
-   `plitzi run report --summary summary.md --tokens dev-1=208061,…`; then `plitzi run finish` (the diff, checked). Its
-   report measures the run (flow, cost, calls repeated) against the runs before: `plitzi run bench`. `--apply` is the person's, or yours if they allowed it — every server you started on the project stopped first, with `plitzi server stop` (one
+applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** `plitzi run report` lists the problems
+   (whose, evidence, fix) from the agents' round reports and the records — keep no list by hand; your summary adds what
+   no record says, and what it was like for you: `plitzi run report --summary summary.md --ease <1-5> --hardest "…"`
+   (it combines the agents'); then `plitzi run finish` (the diff, checked). `--apply` is the person's, or yours if they allowed it — every server you started on the project stopped first, with `plitzi server stop` (one
    serves the project as it was and holds its `state/kv.json`). `run pending`: what awaits it.
 
 ## Where leads went wrong
@@ -173,8 +174,8 @@ applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** 
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red — a done task's too: the finish holds
   it to the amended line. The plan you amend is any of the run's — the one it opened with, a stage's, or several joined:
   each changes only the tasks of the plans it holds.
-- **Don't fix Plitzi mid-run**: note it (`run notice --plitzi "…"`) — the run's feedback to Plitzi, written as it ends
-  (`.plitzi/feedback/<run>.md`, or `run feedback` before), carries it with what the CLI saw; the person shares it.
+- **Don't fix Plitzi mid-run**: note it (`run notice --plitzi "…"`); the run's feedback (`.plitzi/feedback/<run>.md`
+  and `.json`) consolidates it with the agents' reports for the person to share.
 - **Look where it changed**: a fix for light in light, one for the phone at 390 (`task look --scheme light --width 390`).
 - **A round trimmed is said**: what it leaves goes to the backlog (`run notice`), never into one more round.
 - **The report before the finish**; `--apply` is the person's unless they allowed you — never on your own.

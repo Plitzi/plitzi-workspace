@@ -65,6 +65,8 @@ export interface RunPaths {
   log: string;
   /** The lead's summary of the run, for its report. */
   summary: string;
+  /** What it was like for the lead to work with Plitzi (`experience.ts`), said with its summary. */
+  leadExperience: string;
   /** The lead's primer, as the run keeps it: every task's brief starts with it. */
   primer: string;
   /** Messages between the lead and the tasks, one a file. */
@@ -137,6 +139,7 @@ export const runPaths = (root: string, runId: string): RunPaths => {
     merges: path.join(dir, 'merges'),
     log: path.join(dir, 'log.jsonl'),
     summary: path.join(dir, 'summary.md'),
+    leadExperience: path.join(dir, 'lead-experience.json'),
     primer: path.join(dir, 'primer.md'),
     messages: path.join(dir, 'messages'),
     leadRead: path.join(dir, 'lead-read.json'),

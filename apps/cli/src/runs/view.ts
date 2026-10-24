@@ -6,6 +6,7 @@ import { stackableBacklog } from './backlog';
 import { bottlenecks } from './bottlenecks';
 import { designSkipText } from './designSkip';
 import { fingerprint } from './files';
+import { liveAttention } from './findings/live';
 import { readHistory } from './history';
 import { identifiedAgents } from './identity';
 import { isRunning, processTable, readLaunch, startedWithin } from './launch';
@@ -14,7 +15,6 @@ import { LEAD, messagesOf, unreadFor } from './messages';
 import { agentsNeeded, runningAgents } from './onDemand';
 import { under } from './paths';
 import { previewPort } from './previewRecord';
-import { refusedAgain } from './refusedAgain';
 import { loadRun, pinnedChanges, pinnedNow, readApproved, readBase, readRunLog, runIds, samePinned } from './run';
 import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
@@ -115,6 +115,7 @@ export interface Attention {
     | 'idle-team'
     | 'agents-needed'
     | 'refused-again'
+    | 'finding'
     | 'spikes'
     | 'message';
   task?: string;
@@ -350,7 +351,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       openFor: now.getTime() - Date.parse(record.openedAt)
     })
   );
-  attention.push(...refusedAgain(log, now));
+  // What the run's records show going wrong now, said while the lead can still act (`findings/live.ts`).
+  attention.push(...(await liveAttention(loaded, log, now)));
 
   for (const file of await leftInTmp(ctx.root, record)) {
     attention.push({

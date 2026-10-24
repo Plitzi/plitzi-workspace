@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { act, contextFor, runOf } from './shell';
 import { durationText, FOLLOW_MS } from '../../options';
 import { benchText, readBench } from '../../runs/bench';
+import { experienceFrom } from '../../runs/experience';
 import { waitForLead } from '../../runs/leadWatch';
 import { showVersion } from '../../runs/merge';
 import { startPreview, startTaskPreview } from '../../runs/preview';
@@ -12,6 +13,7 @@ import { activeRuns, loadRun, pruneRuns } from '../../runs/run';
 import { pendingRuns, runsState, runText, viewRun } from '../../runs/view';
 
 import type { RunCommandOptions } from './shell';
+import type { ExperienceFlags } from '../../runs/experience';
 
 /**
  * A run as it goes: its state and status, watched — for the lead, until something needs it — what awaits applying,
@@ -147,16 +149,18 @@ export const runShow = async (
 
 export const runReport = (
   runId: string | undefined,
-  options: RunCommandOptions & { summary?: string; tokens?: string }
+  options: RunCommandOptions & { summary?: string; tokens?: string } & ExperienceFlags
 ): Promise<void> =>
   act(
     options,
     async ctx => {
+      // The lead's report is its summary and what it was like, said together — asked before anything is written.
+      const experience = options.summary === undefined ? undefined : experienceFrom(options, 'run report --summary');
       const id = await runOf(ctx, options, runId, {
         anyone: options.summary === undefined && options.tokens === undefined
       });
-      if (options.summary) {
-        await writeSummary(ctx, id, options.summary);
+      if (options.summary && experience) {
+        await writeSummary(ctx, id, options.summary, experience);
       }
 
       if (options.tokens) {

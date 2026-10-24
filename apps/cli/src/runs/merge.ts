@@ -1,7 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { auditRun } from './audit';
 import { closeDoneByRun, keepNotices } from './backlog';
 import { writeFeedback } from './feedback';
 import { fingerprint, readJson, readOptional, writeJson } from './files';
@@ -12,7 +11,7 @@ import { entryOf, isMergeManifest } from './model';
 import { noticesByOwner, noticeText } from './notices';
 import { BACKUPS_DIR, under } from './paths';
 import { RunRefusal } from './refusal';
-import { leaveReport, readSummary, summaryBehind } from './report';
+import { buildReport, leaveReport, readSummary, summaryBehind } from './report';
 import {
   assertStatus,
   loadRun,
@@ -33,6 +32,7 @@ import { viewRun } from './view';
 import { stopKeptBrowser } from '../browser/keptBrowser';
 
 import type { CheckResult } from './checks';
+import type { Finding } from './findings';
 import type { AcceptanceAgain } from './materialise';
 import type { ApprovedManifest, MergeEntry, ReconciledFile, RunRecord } from './model';
 import type { LoadedRun, RemovedInputs, RunContext } from './run';
@@ -263,12 +263,10 @@ export interface Finished {
   feedback?: string;
   /** What appeared in the project's `tmp/` during the run that is nobody's tool — left there, said (`strays.ts`). */
   leftInTmp?: string[];
-  /** What the run's activity shows was wrong in how it was worked: said, never refusing — and kept in the report. */
-  audit: string[];
+  /** What the run shows went wrong, whose and what would stop it (`findings/`): said, never refusing — kept in the report. */
+  findings: Finding[];
   /** What was seen wrong that no task owned (`plitzi run notice`): said, for the next stage. */
   noticed: string[];
-  /** What the run's agents said of Plitzi itself (`run notice --plitzi`): the run's feedback's, never the next stage's. */
-  ofPlitzi: string[];
   /** Dry run: the tasks approved after the lead's summary was written — the report that closes the run is behind. */
   summaryBehind?: string[];
 }
@@ -421,9 +419,8 @@ export const finishRun = async (
   const notices = await noticesByOwner(loaded);
   const leftThere = {
     ...(strays.length > 0 ? { leftInTmp: strays } : {}),
-    audit: await auditRun(loaded),
-    noticed: notices.project.map(noticeText),
-    ofPlitzi: notices.plitzi.map(noticeText)
+    findings: (await buildReport(ctx, loaded)).findings,
+    noticed: notices.project.map(noticeText)
   };
   const behind = await summaryBehind(loaded);
   if (!apply) {

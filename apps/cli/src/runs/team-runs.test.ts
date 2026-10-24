@@ -462,8 +462,8 @@ describe('a designer’s review of the others’ UI', () => {
       designBy: 'design-2'
     });
     // Said as the lead's UI review, never as one nobody made.
-    expect(await auditRun(await loadRun(lead(), 'es-launch'))).toContain(
-      'Their UI reviewed by the lead, not a designer: t-about'
+    expect(await auditRun(await loadRun(lead(), 'es-launch'))).toContainEqual(
+      expect.objectContaining({ title: 'Their UI reviewed by the lead, not a designer', evidence: ['t-about'] })
     );
     const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(message => message.to === '@design-2');
     expect(told?.text).toContain('t-about is approved without its UI review');

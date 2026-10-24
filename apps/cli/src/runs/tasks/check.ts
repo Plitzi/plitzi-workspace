@@ -8,6 +8,7 @@ import { handOver } from '../handOver';
 import { crossed, longFilesIn, longFileText } from '../longFiles';
 import { assertStatus, loadRun, logRun } from '../run';
 import { tellLeftInTmp } from '../strays';
+import { failureLines } from '../usage';
 import { changedInCopy, findTask, holderOf, refreshCopy } from './common';
 import { whoseChanges } from './complete';
 import { fixChanged } from './fix';
@@ -27,6 +28,8 @@ import type { RunContext } from '../run';
  * among many does not stop the run.
  */
 
+/** How many lines of each failing step a check's log entry keeps: what it said, not all it printed. */
+const WHY_LINES = 8;
 export interface CheckedTask {
   ok: boolean;
   checks: CheckResult;
@@ -119,9 +122,11 @@ export const checkTask = async (
     ...notOwnSteps,
     ...(await tellUnanswered(ctx, loaded, taskId, accepted)).map(each => `acceptance — ${each.said}`)
   ];
+  // What it was run on — the copy's files, the run's approved work, the lines, the CLI — after any `--fix`: one input
+  // checked twice with two outcomes is a check that is not deterministic (encore's 409s "passing on rerun").
+  const key = started ? await checkKey(loaded, view.paths, task, await changedInCopy(view, started)) : undefined;
   // Passed whole: kept for the complete that follows, which does not run it all again while nothing changes.
-  if (ok && only === undefined && started) {
-    const key = await checkKey(loaded, view.paths, task, await changedInCopy(view, started));
+  if (ok && only === undefined && key !== undefined) {
     await keepChecked(view.paths, key, { checks, accepted }, ctx.now());
   }
   // What failed, by name: a run's activity says why a check did not pass, not only that it did not.
@@ -129,6 +134,7 @@ export const checkTask = async (
     action: 'check',
     task: taskId,
     ok,
+    ...(key === undefined || before ? {} : { input: key.slice(0, 16), ...(only ? { only } : {}) }),
     ...(ok
       ? {}
       : {
@@ -138,7 +144,16 @@ export const checkTask = async (
             ...tooLong,
             ...outside.map(each => `${each.file} is ${each.holder}'s`)
           ],
-          ...(notOwn.length > 0 ? { notOwn } : {})
+          ...(notOwn.length > 0 ? { notOwn } : {}),
+          // Why, each in its own words: what a fix is read from, never run again to find out (lx-product's t-gallery).
+          why: [
+            ...checks.steps
+              .filter(step => !step.ok)
+              .map(step => ({ step: step.name, said: failureLines((step.said ?? []).join('\n')).slice(0, WHY_LINES) })),
+            ...accepted
+              .filter(each => !each.ok)
+              .map(each => ({ step: `acceptance — ${each.said}`, said: (each.output ?? []).slice(-WHY_LINES) }))
+          ]
         })
   });
 

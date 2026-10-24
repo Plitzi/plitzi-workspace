@@ -8,9 +8,13 @@ import { openRun } from '../runs/run';
 import { completeTask, reviewTask, takeTask } from '../runs/tasks';
 
 import type { Bench } from './runProject';
+import type { Experience } from '../runs/experience';
 import type { RunPlan } from '../runs/model';
 import type { RefusalCode } from '../runs/refusal';
 import type { RunContext } from '../runs/run';
+
+/** What a test's lead says it was like, closing a run whose report is not what the test is about. */
+export const LEAD_SAID: Experience = { ease: 4, hardest: 'Writing the plan', frictions: [], helped: [] };
 
 /**
  * The steps the run tests are written in, over the bench each test makes: refused as what, the lead, a run opened, a
@@ -62,7 +66,7 @@ export const runSteps = (bench: () => Bench) => {
     await openWith(lead(), await bench().writePlan({ ...plan, designReview: plan.designReview ?? false }), agents);
     if (summary) {
       await bench().write('summary.md', '# What the run did\n\nTranslated the pages; nothing left.\n');
-      await writeSummary(lead(), plan.runId, 'summary.md');
+      await writeSummary(lead(), plan.runId, 'summary.md', LEAD_SAID);
     }
 
     return plan.runId;

@@ -46,10 +46,11 @@ describe('a run’s audit', () => {
       { by: 'dev-2', action: 'brake', reason: '10 failed checks or conflicts within 30 minutes' }
     ]);
     const findings = await auditRun(await loadRun(lead(), 'es-launch'));
-    expect(findings).toEqual([
-      expect.stringContaining('crashed'),
-      expect.stringContaining('The brake stopped the run'),
-      'Refused 3 times over: dev-1 · claimed · plitzi task next'
+    expect(findings.map(each => [each.kind, each.owner])).toEqual([
+      ['crashed', 'plitzi'],
+      ['brake', 'lead'],
+      ['refused-loop', 'plitzi']
     ]);
+    expect(findings[2].title).toBe('Refused 3 times over: dev-1 · claimed · plitzi task next');
   });
 });

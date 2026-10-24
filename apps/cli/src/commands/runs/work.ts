@@ -2,12 +2,14 @@ import chalk from 'chalk';
 
 import { act, either, holder, runOf } from './shell';
 import { hhmm, list, messageLines, secondRunText } from './text';
+import { experienceFrom } from '../../runs/experience';
 import { crossed, longFileText } from '../../runs/longFiles';
 import { RunRefusal } from '../../runs/refusal';
 import { tellLead } from '../../runs/talk';
 import { blockTask, checkTask, completeTask, noteTask, reportProgress, unblockTask } from '../../runs/tasks';
 
 import type { RunCommandOptions } from './shell';
+import type { ExperienceFlags } from '../../runs/experience';
 import type { BLOCK_NEEDS } from '../../runs/model';
 
 /**
@@ -204,11 +206,18 @@ export const warningLines = (
 };
 
 export const taskComplete = (
-  options: RunCommandOptions & { knownFailure?: string; fixedBy?: string; note?: string; review?: string }
+  options: RunCommandOptions & {
+    knownFailure?: string;
+    fixedBy?: string;
+    note?: string;
+    review?: string;
+  } & ExperienceFlags
 ): Promise<void> =>
   act(
     options,
     async ctx => {
+      // Asked first: a forgotten flag is said before anything runs, and costs no check.
+      const experience = experienceFrom(options, 'task complete');
       const { runId, taskId } = await holder(ctx, options);
       if (options.fixedBy && !options.knownFailure) {
         throw new RunRefusal('invalid', '--fixed-by goes with --known-failure "why": the task that fixes what fails');
@@ -220,6 +229,7 @@ export const taskComplete = (
 
       const completed = await completeTask(ctx, runId, taskId, {
         ...(options.review === undefined ? {} : { review: options.review }),
+        experience,
         ...(options.knownFailure
           ? { knownFailure: { why: options.knownFailure, ...(options.fixedBy ? { fixedBy: options.fixedBy } : {}) } }
           : {})
@@ -270,6 +280,7 @@ export const taskComplete = (
               )
             ]
           : []),
+        chalk.dim(`  Round ${String(completed.report.round)}'s report kept for the run's, with what it was like`),
         '  Nothing more on it until its review comes back: plitzi task next hands you what is next — a task you hold first.'
       ].join('\n')
   );

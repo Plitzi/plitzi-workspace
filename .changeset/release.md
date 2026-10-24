@@ -185,7 +185,46 @@ report`, …).
   - The flow: minutes, rounds, waits, checks and refusals by task and agent.
   - The cost: each command's output, time and median against its budget.
   - The harness's tokens, beside a lower bound of what was read again.
-  - An audit of what does not add up.
+- **The run reports itself; the lead keeps no list of problems.**
+  - Each round, as its agent completes it, is kept beside its task (`tasks/<task>/reports/<round>.json`). It holds:
+    - its time, its sessions, its checks and refusals;
+    - each command it ran, and why one failed;
+    - what it asked `explain` and found nothing for;
+    - its notices of Plitzi;
+    - what it was like to work with Plitzi, in its words: `task complete --ease <1-5> --hardest "…"` (asked before
+      anything runs), and `--friction "…"` and `--helped "…"` for each thing;
+    - what its harness spent. For Claude Code that is read from the session on the machine: turns, tokens and the
+      results read again the most.
+  - **Findings:** one list read off the run's records, each with its evidence, whose it is (Plitzi's — CLI, platform
+    or docs —, the lead's, the agents', the machine's) and what would stop it. It covers:
+    - an agent holding two tasks, in two sessions, or working on after it was told to stop;
+    - a check answering two ways on the same work, a line failing three tries, a step run again rather than read, a
+      task breaking what an approved one was accepted on;
+    - `explain` misses and topics asked three ways;
+    - the lead's own scripts and the agents' scratch scripts and packages, what two agents said of Plitzi;
+    - commands refused as written, the machine's errors;
+    - answers over 12k characters, costly tasks and contexts, results read again the most;
+    - what the audit and the run's facts said before.
+  - `run watch` says the live ones as they happen. `run report` starts with them, by whose. `run finish` points at them.
+    The bench counts them run after run.
+  - **The experience, combined:** the lead says its own with its summary (`run report --summary … --ease --hardest`).
+    The run puts every round's and the lead's together: the ease by agent, the hardest rounds, and what cost the most,
+    got in the way or helped, grouped when several said it alike, with who said it. Frictions join the notices in the
+    findings, so one complaint from three agents is one thing to fix. The bench keeps the ease run after run.
+  - **The run's feedback to Plitzi** consolidates the agents' round reports, the lead's report and experience and
+    Plitzi's findings, as `.plitzi/feedback/<run>.md` and a `.json` to analyse across runs. `plitzi feedback` stays a
+    single agent's.
+  - Every command keeps its session and, when it fails, why and the lines that say what failed (a page's console errors
+    and failed requests among them). A `task check` keeps what it ran on and what each failing step said.
+  - **The harness's spend for Claude Code, Codex and OpenCode,** read from the sessions each keeps on the machine (Codex
+    and OpenCode found by their process and the project's folder), with the model, effort and version each ran on, and
+    Plitzi's own files each read — the skills and packages' types a doc fix starts from.
+  - **What a fix reads without running anything again:** why each line or step kept failing, in the findings; what each
+    review asked when it sent a task back; and the agents' scripts, copied beside the report before the run's scratch
+    goes.
+- **Every `plitzi …` the CLI tells anyone to run is one it takes:** a test reads the skills, the agents' prompt and every
+  message of the CLI through its own parser. That is how `task complete --follow` reached three agents. The command
+  registration lives in `program.ts` (`buildProgram`), for that test.
 - **The expected end follows the project's pace:** a run's estimates are scaled by how long its tasks took against
   theirs, and a project with no history of its own takes this machine's (`~/.config/plitzi/pace.json`).
 

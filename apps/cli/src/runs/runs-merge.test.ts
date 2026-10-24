@@ -291,7 +291,8 @@ describe('the run’s report', () => {
     expect(done.report?.startsWith(path.join(bench.root, REPORTS_DIR, 'es-launch-'))).toBe(true);
     const report = await fs.readFile(String(done.report), 'utf-8');
     expect(report).toContain('Translated the pages; nothing left.');
-    expect(report).toContain('The project’s checks failed 1 time(s)');
+    expect(report).toContain('## Problems — whose, and what would stop them');
+    expect(report).toContain('completions whose checks failed: 1');
     expect(report).toContain('| t-home | developer | done | agent-1 |');
     expect(report).toContain('t-menu did not finish');
     expect(report).toContain('- src/space/pages/home/hero.ts');
@@ -301,6 +302,8 @@ describe('the run’s report', () => {
     await open(benchPlan(), { summary: false });
     const aborted = await abortRun(bench.person(true), 'es-launch');
 
-    expect(await fs.readFile(aborted.report, 'utf-8')).toContain('_None was written._');
+    expect(await fs.readFile(aborted.report, 'utf-8')).toContain(
+      '_None was written: the problems above are what the run kept._'
+    );
   });
 });

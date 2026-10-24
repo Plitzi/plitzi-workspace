@@ -16,6 +16,9 @@ const INTERPRETERS = new Set(['node', 'python', 'python3', 'bash', 'sh', 'zsh', 
 
 const SCRIPT_FILE = /\.(m?js|cjs|ts|py|sh|rb|pl|php)$/;
 
+/** A test of the project's, named as one. */
+const TEST_FILE = /\.(test|spec)\.[cm]?[jt]s$/;
+
 /** Each script a check runs, said by its interpreter and its file's name — never its whole path. */
 export const ownScriptsIn = (check: string): string[] =>
   shellCommands(check).flatMap(words => {
@@ -26,16 +29,25 @@ export const ownScriptsIn = (check: string): string[] =>
     }
 
     if (INTERPRETERS.has(path.basename(first))) {
+      // The project's own tests (`node --test src/x.test.ts`) are the project's, any agent reruns them: no script of one's.
+      if (rest.includes('--test')) {
+        return [];
+      }
+
       const file = rest.find(word => !word.startsWith('-'));
 
-      return file !== undefined && SCRIPT_FILE.test(file) ? [`${path.basename(first)} ${path.basename(file)}`] : [];
+      return file !== undefined && SCRIPT_FILE.test(file) && !TEST_FILE.test(file)
+        ? [`${path.basename(first)} ${path.basename(file)}`]
+        : [];
     }
 
     return SCRIPT_FILE.test(first) && (first.startsWith('./') || first.startsWith('/')) ? [path.basename(first)] : [];
   });
 
 /** The plan's acceptance lines a script of one's own checks: each task's, with what it runs. */
-export const ownScriptLines = (tasks: RunPlan['tasks']): { task: string; line: string; scripts: string[] }[] =>
+export const ownScriptLines = (
+  tasks: readonly RunPlan['tasks'][number][]
+): { task: string; line: string; scripts: string[] }[] =>
   tasks.flatMap(task =>
     task.acceptance.flatMap(each => {
       if (typeof each === 'string') {

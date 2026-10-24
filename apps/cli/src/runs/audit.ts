@@ -1,27 +1,26 @@
+import { clock, evidenceOf, text } from './findings/types';
 import { readRunLog } from './run';
 import { viewTask } from './taskStore';
 
+import type { Finding } from './findings/types';
 import type { LoadedRun } from './run';
 
 /**
  * What a run's own activity shows went wrong in how it was worked, read before it closes: never refusing the finish —
  * the work may be right — but said at it and kept in the report, so a CLI's defect or a team's habit is seen once, not
- * found again in the next run. Each finding names what it is about, with the numbers it is read from.
+ * found again in the next run. Each finding names what it is about, with the numbers it is read from, and whose it is.
  */
 
 /** A review that waited longer than this after its task was sent: the team, or the lead, was not there for it. */
 const SLOW_REVIEW_MS = 10 * 60_000;
 /** Refused this many times over, one agent, one code, one command: an agent looping on what it cannot do. */
 const LOOP = 3;
-/** Failed checks of one task past this: the task, or the check, is wrong. */
-const MANY_CHECKS = 6;
 
-const text = (value: unknown): string => (typeof value === 'string' ? value : '');
 const minutes = (ms: number): string => `${String(Math.round(ms / 60_000))} min`;
 
-export const auditRun = async (loaded: LoadedRun): Promise<string[]> => {
+export const auditRun = async (loaded: LoadedRun): Promise<Finding[]> => {
   const log = await readRunLog(loaded.paths);
-  const findings: string[] = [];
+  const findings: Finding[] = [];
   const by = (action: string, task?: string) =>
     log.filter(entry => entry.action === action && (task === undefined || entry.task === task));
 
@@ -33,19 +32,20 @@ export const auditRun = async (loaded: LoadedRun): Promise<string[]> => {
       ...by('spike-done', task.id)
     ];
     if (state.status === 'done' && approvals.length === 0) {
-      findings.push(
-        `${task.id} is done, and no approval of it is in the activity: it was approved by a step the log missed`
-      );
-    }
-
-    const failedChecks = by('check', task.id).filter(entry => entry.ok === false).length;
-    if (failedChecks > MANY_CHECKS) {
-      findings.push(
-        `${task.id}'s checks failed ${String(failedChecks)} times: the task's work, or a check it could not pass`
-      );
+      findings.push({
+        kind: 'approval-missing',
+        owner: 'plitzi',
+        area: 'cli',
+        title: `${task.id} is done, and no approval of it is in the activity`,
+        evidence: [`its state: done, round ${String(state.round)}`],
+        times: 1,
+        fix: 'every step that approves a task logs it',
+        subject: `approval-missing:${task.id}`
+      });
     }
 
     // Each time it was sent, how long until a review took it: its UI's, or the lead's.
+    const slow: string[] = [];
     for (const sent of by('complete', task.id)) {
       const after = log.find(
         entry =>
@@ -63,17 +63,34 @@ export const auditRun = async (loaded: LoadedRun): Promise<string[]> => {
 
       const waited = (after ? Date.parse(text(after.at)) : Date.now()) - Date.parse(text(sent.at));
       if (waited > SLOW_REVIEW_MS) {
-        findings.push(
-          `${task.id} waited ${minutes(waited)} in review before anyone looked at it (sent ${text(sent.at).slice(11, 16)} UTC)`
-        );
+        slow.push(`sent ${clock(sent.at)}, waited ${minutes(waited)}`);
       }
+    }
+
+    if (slow.length > 0) {
+      findings.push({
+        kind: 'slow-review',
+        owner: 'lead',
+        title: `${task.id} waited in review before anyone looked at it`,
+        evidence: slow,
+        times: slow.length,
+        fix: 'a designer free for UI reviews, and run watch --until lead answering the review first',
+        subject: `slow-review:${task.id}`
+      });
     }
 
     if (state.knownFailure) {
       const known = state.knownFailure;
-      findings.push(
-        `${task.id} went to review with a known failure: ${known.why}${known.fixedBy ? ` — fixed by ${known.fixedBy}` : known.preexisting ? ' — there before it' : ''}`
-      );
+      findings.push({
+        kind: 'known-failure',
+        owner: 'lead',
+        title: `${task.id} went to review with a known failure: ${known.failing.join(', ')}`,
+        evidence: [
+          `${known.why}${known.fixedBy ? ` — fixed by ${known.fixedBy}` : known.preexisting ? ' — there before it' : ''}`
+        ],
+        times: 1,
+        subject: `known-failure:${task.id}`
+      });
     }
 
     // Sent back, by whom: its UI's review and the lead's are rounds of their own (a designer's changes were logged as
@@ -86,9 +103,15 @@ export const auditRun = async (loaded: LoadedRun): Promise<string[]> => {
     );
     const byUi = changes.filter(entry => entry.action === 'design-review' || !text(entry.by).startsWith('lead')).length;
     if (changes.length >= 3) {
-      findings.push(
-        `${task.id} was sent back ${String(changes.length)} times — ${String(byUi)} by its UI review, ${String(changes.length - byUi)} by the lead`
-      );
+      findings.push({
+        kind: 'sent-back',
+        owner: 'lead',
+        title: `${task.id} was sent back ${String(changes.length)} times`,
+        evidence: [`${String(byUi)} by its UI review, ${String(changes.length - byUi)} by the lead`],
+        times: changes.length,
+        fix: 'what the reviews asked, in its brief or its lines from the start',
+        subject: `sent-back:${task.id}`
+      });
     }
   }
 
@@ -103,29 +126,70 @@ export const auditRun = async (loaded: LoadedRun): Promise<string[]> => {
   ] as const) {
     const these = skippedAs(why);
     if (these.length > 0) {
-      findings.push(`${said}: ${these.map(entry => text(entry.task)).join(', ')}`);
+      findings.push({
+        kind: 'ui-skipped',
+        owner: 'lead',
+        title: said,
+        evidence: [these.map(entry => text(entry.task)).join(', ')],
+        times: these.length,
+        subject: `ui-skipped:${why ?? 'unsaid'}`
+      });
     }
   }
 
   // A designer at a UI review the lead then went past: its review was wasted, and its finding went nowhere.
-  for (const entry of skipped.filter(each => typeof each.designBy === 'string')) {
-    findings.push(
-      `${text(entry.designBy)} had taken ${text(entry.task)}'s UI review when the lead approved it without it`
-    );
+  const wasted = skipped.filter(each => typeof each.designBy === 'string');
+  if (wasted.length > 0) {
+    findings.push({
+      kind: 'ui-review-wasted',
+      owner: 'lead',
+      title: 'UI reviews taken by a designer and gone past by the lead',
+      evidence: wasted.map(entry => `${text(entry.designBy)} had taken ${text(entry.task)}'s`),
+      times: wasted.length,
+      subject: 'ui-review-wasted'
+    });
   }
 
-  for (const crash of by('crashed')) {
-    findings.push(
-      `${text(crash.by)}'s command crashed at ${text(crash.at).slice(11, 16)} UTC: ${text(crash.command)} — ${text(crash.error)}`
-    );
+  const crashed = by('crashed');
+  if (crashed.length > 0) {
+    findings.push({
+      kind: 'crashed',
+      owner: 'plitzi',
+      area: 'cli',
+      title: `${String(crashed.length)} command(s) crashed`,
+      evidence: evidenceOf(
+        crashed.map(
+          crash =>
+            `${clock(crash.at)} ${text(crash.by)}: ${text(crash.command)} — ${text(crash.error).split('\n')[0]?.slice(0, 200) ?? ''}`
+        )
+      ),
+      times: crashed.length,
+      fix: 'a crash is a refusal nobody wrote: what it met, said in a sentence with its way out',
+      subject: 'crashed'
+    });
   }
 
   for (const failed of by('preview-sync-failed')) {
-    findings.push(`The preview did not take ${text(failed.task)} in: ${text(failed.error)}`);
+    findings.push({
+      kind: 'preview-sync',
+      owner: 'plitzi',
+      area: 'cli',
+      title: `The preview did not take ${text(failed.task)} in`,
+      evidence: [text(failed.error)],
+      times: 1,
+      subject: `preview-sync:${text(failed.task)}`
+    });
   }
 
   for (const brake of by('brake')) {
-    findings.push(`The brake stopped the run at ${text(brake.at).slice(11, 16)} UTC: ${text(brake.reason)}`);
+    findings.push({
+      kind: 'brake',
+      owner: 'lead',
+      title: `The brake stopped the run at ${clock(brake.at)}`,
+      evidence: [text(brake.reason)],
+      times: 1,
+      subject: `brake:${text(brake.at)}`
+    });
   }
 
   // The same refusal, met again and again by one agent: a loop, the CLI's or the agent's.
@@ -138,7 +202,16 @@ export const auditRun = async (loaded: LoadedRun): Promise<string[]> => {
 
   for (const [key, count] of refusals) {
     if (count >= LOOP) {
-      findings.push(`Refused ${String(count)} times over: ${key}`);
+      findings.push({
+        kind: 'refused-loop',
+        owner: 'plitzi',
+        area: 'cli',
+        title: `Refused ${String(count)} times over: ${key}`,
+        evidence: [key],
+        times: count,
+        fix: 'the refusal names what to do instead, or the command does it',
+        subject: `refused-loop:${key}`
+      });
     }
   }
 

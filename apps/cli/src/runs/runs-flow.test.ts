@@ -31,6 +31,7 @@ import {
 import { HAND_OFF_AFTER_MS, handOffRework } from './tasks/handOff';
 import { viewRun } from './view';
 import { benchPlan, makeBench, readInCopy, writeInCopy } from '../tests/runProject';
+import { LEAD_SAID } from '../tests/runSteps';
 
 import type { CheckResult, CheckRunner } from './checks';
 import type { RunContext } from './run';
@@ -180,7 +181,7 @@ describe('a run played whole, as velada-dress went', () => {
 
     expect((await viewRun(as('lead'), runId)).done).toBe(4);
     await bench.write('summary.md', '# What the run did\n\nTranslated the pages; nothing left.\n');
-    await writeSummary(as('lead'), runId, 'summary.md');
+    await writeSummary(as('lead'), runId, 'summary.md', LEAD_SAID);
     const dry = await finishRun(bench.agent('person', { checks: authorChecks }), runId, {
       apply: false,
       leavePending: false

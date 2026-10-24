@@ -28,7 +28,7 @@ import {
 import { setTeamAgent } from './team';
 import { viewRun } from './view';
 import { benchPlan, makeBench, teamFor, writeInCopy } from '../tests/runProject';
-import { runSteps } from '../tests/runSteps';
+import { LEAD_SAID, runSteps } from '../tests/runSteps';
 
 import type { Bench } from '../tests/runProject';
 
@@ -400,7 +400,7 @@ describe('what the lead handed the run', () => {
     });
     await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { title: "Sobre" };\n');
     await bench.write('tmp/v1/summary.md', '# Done\n');
-    await writeSummary(lead(), plan.runId, 'tmp/v1/summary.md');
+    await writeSummary(lead(), plan.runId, 'tmp/v1/summary.md', LEAD_SAID);
 
     const finished = await finishRun(bench.person(), plan.runId, { apply: true, leavePending: true });
     expect(finished.inputs?.removed).toEqual(['tmp/v1/summary.md']);

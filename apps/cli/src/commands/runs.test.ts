@@ -76,6 +76,9 @@ afterEach(async () => {
   await bench.cleanup();
 });
 
+/** What it was like, said at every complete: these tests are about who calls, not about the experience. */
+const SAID = ['--ease', '4', '--hardest', 'Nothing in particular'];
+
 describe('plitzi run and plitzi task, as processes', () => {
   it('opens a run, hands out a token, refuses a second taker with 10, and completes in the copy with its own token', async () => {
     const plan = await bench.writePlan(benchPlan());
@@ -98,7 +101,7 @@ describe('plitzi run and plitzi task, as processes', () => {
 `
     );
     // From inside its own copy, which has a package.json of its own: the project is still the one it belongs to.
-    const completed = await plitzi(work, ['task', 'complete'], { PLITZI_TOKEN: await tokenOf('dev-1') });
+    const completed = await plitzi(work, ['task', 'complete', ...SAID], { PLITZI_TOKEN: await tokenOf('dev-1') });
     expect(completed.code).toBe(0);
     expect(completed.json).toMatchObject({ changed: ['src/space/pages/about.ts'] });
   }, 120_000);
@@ -225,7 +228,7 @@ describe('plitzi run and plitzi task, as processes', () => {
 
     for (const [cwd, args, env] of [
       [work, ['task', 'context'], {}],
-      [work, ['task', 'complete', '--token', ''], {}],
+      [work, ['task', 'complete', ...SAID, '--token', ''], {}],
       [bench.root, ['task', 'next', '--take', '--role', 'developer', '--token', ''], {}],
       [work, ['task', 'heartbeat', '--token', String(taken.json.token)], {}],
       [bench.root, ['task', 'next', '--take', '--role', 'developer', '--token', 'not-a-token'], {}]
@@ -234,7 +237,7 @@ describe('plitzi run and plitzi task, as processes', () => {
     }
 
     // Another agent's token in dev-1's copy is not given dev-1's task.
-    const foreign = await plitzi(work, ['task', 'complete', '--token', await tokenOf('dev-2')]);
+    const foreign = await plitzi(work, ['task', 'complete', ...SAID, '--token', await tokenOf('dev-2')]);
     expect(foreign.code).not.toBe(0);
     expect(await bench.read('tmp/plitzi-runs/es-launch/scratch/agent/token')).toBeUndefined();
     const log = (await bench.read('tmp/plitzi-runs/es-launch/log.jsonl')) ?? '';
