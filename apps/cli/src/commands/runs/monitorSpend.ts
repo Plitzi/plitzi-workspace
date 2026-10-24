@@ -23,15 +23,19 @@ export const tokensShort = (tokens: number): string =>
       ? `${String(Math.round(tokens / 1000))}k`
       : String(tokens);
 
-const COLUMNS = ['WHO', 'DONE', 'TURNS', 'IN', 'OUT', 'CACHED', 'CONTEXT'] as const;
+const COLUMNS = ['WHO', 'DONE', 'SESS', 'TURNS', 'IN', 'OUT', 'CACHED', 'AVG', 'CONTEXT'] as const;
 
 /** What the spend's rows are ordered by — `s` turns to the next: what costs (in and out), what was read again, the context now, the name. */
-export type SpendSort = 'spent' | 'cached' | 'context' | 'agent';
+export type SpendSort = 'spent' | 'average' | 'cached' | 'context' | 'agent';
 
-export const SPEND_SORTS: readonly SpendSort[] = ['spent', 'cached', 'context', 'agent'];
+export const SPEND_SORTS: readonly SpendSort[] = ['spent', 'average', 'cached', 'context', 'agent'];
+
+/** What a session of an agent's costs on average: in and out. */
+const averageOf = (each: Spent): number => (each.input + each.output) / each.sessions;
 
 const SORT_WORDS: Record<SpendSort, string> = {
   spent: 'IN+OUT ↓',
+  average: 'AVG ↓',
   cached: 'CACHED ↓',
   context: 'CONTEXT ↓',
   agent: 'WHO A→Z'
@@ -43,11 +47,13 @@ export const sortSpend = (spend: readonly Spent[], by: SpendSort): Spent[] =>
     const order =
       by === 'spent'
         ? b.input + b.output - (a.input + a.output)
-        : by === 'cached'
-          ? b.cached - a.cached
-          : by === 'context'
-            ? b.context - a.context
-            : 0;
+        : by === 'average'
+          ? averageOf(b) - averageOf(a)
+          : by === 'cached'
+            ? b.cached - a.cached
+            : by === 'context'
+              ? b.context - a.context
+              : 0;
 
     return order || a.agent.localeCompare(b.agent);
   });
@@ -82,28 +88,33 @@ export const spendPanel = (
   }
 
   const pieces = sum(spend, each => each.pieces);
+  const sessions = sum(spend, each => each.sessions);
   const cellsOf = (each: Spent): string[] => [
     each.agent,
     String(each.pieces),
+    String(each.sessions),
     String(each.turns),
     tokensShort(each.input),
     tokensShort(each.output),
     tokensShort(each.cached),
+    tokensShort(Math.round(averageOf(each))),
     `${tokensShort(each.context)}${past(each) ? '!' : ' '}`
   ];
   const total = [
     'all',
     String(pieces),
+    String(sessions),
     String(sum(spend, each => each.turns)),
     tokensShort(sum(spend, each => each.input)),
     tokensShort(sum(spend, each => each.output)),
     tokensShort(sum(spend, each => each.cached)),
+    tokensShort(Math.round((sum(spend, each => each.input) + sum(spend, each => each.output)) / sessions)),
     ''
   ];
   const widths = COLUMNS.map((name, index) =>
     Math.max(name.length, ...[...spend.map(cellsOf), total].map(cells => (cells[index] ?? '').length))
   );
-  const perPiece = `  a piece of work: ${tokensShort(Math.round(sum(spend, each => each.input) / pieces))} in · ${tokensShort(Math.round(sum(spend, each => each.output) / pieces))} out · ${tokensShort(Math.round(sum(spend, each => each.cached) / pieces))} cached`;
+  const perPiece = `  a session, on average: ${tokensShort(Math.round(sum(spend, each => each.input) / sessions))} in · ${tokensShort(Math.round(sum(spend, each => each.output) / sessions))} out · ${tokensShort(Math.round(sum(spend, each => each.cached) / sessions))} cached`;
   const pastAny = spend.some(past);
   const pastLine = '  ! past its freshContextAt: started fresh after its piece';
   const width = Math.max(

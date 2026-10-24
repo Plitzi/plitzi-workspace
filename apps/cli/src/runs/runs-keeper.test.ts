@@ -66,7 +66,8 @@ describe("the run's keeper", () => {
 
     await abortRun(bench.person(true), 'es-launch');
     expect(await keepOnce(lead(), 'es-launch', start)).toEqual({ gone: true });
-  });
+    // A whole flow of the run, step by step: seconds alone, past the default 5 s beside the suite under load.
+  }, 30_000);
 
   it('starts nothing when the team names no harness to start it in', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });

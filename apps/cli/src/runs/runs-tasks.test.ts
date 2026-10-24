@@ -159,7 +159,8 @@ describe('taking a task', () => {
     for (let n = 1; n <= 8; n += 1) {
       expect(await bench.read(`src/space/pages/p${String(n)}.ts`)).toContain(`página ${String(n)}`);
     }
-  });
+    // Eight agents and their copies at once: ~3 s alone, past the default 5 s beside the rest of the suite.
+  }, 30_000);
 });
 
 describe('writing only what is one’s own', () => {

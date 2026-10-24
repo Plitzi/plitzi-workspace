@@ -168,7 +168,10 @@ activity under 80 columns), **the spend** (`monitorSpend.ts`): what each agent's
 the reviewers' too — its pieces of work, turns, tokens **in** (fresh input and context written to the cache), **out**
 and **cached** (its context read again each turn: a tenth of the price, and most of what is read — one figure of all
 three said 1.1M for one spec of encore-3's tester, ~240k its price), and its context now, marked past `freshContextAt`
-for an agent of `"session": "context"` alone. Sorted by in+out, `s` turning it to cached, context, name. It is kept in the run's log as each
+for an agent of `"session": "context"` alone; its sessions — the sessions its commands ran in — and what one costs
+on average, in and out (`AVG`): agents start fresh in different ways, a task each or past a size, and the average is
+what a task costs. It sits under the agents and the activity under the tasks, on the board's one split
+(`boardSplit`). Sorted by in+out, `s` turning it to average, cached, context, name. It is kept in the run's log as each
 piece of work ends (`spent`, `spent.ts`): a task completed, a review decided, each from the agent's last, read from
 its sessions as the round's report reads them (`harness/spentIn`). It fits the terminal it is in (`monitorBoard.ts`,
 `monitorFlow.ts`): the flow's stages in bands on a narrow one and its cards fewer on a short one — each stage's count in

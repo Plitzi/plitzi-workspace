@@ -104,7 +104,7 @@ describe.skipIf(process.platform === 'win32')('whether an agent still runs', () 
 describe('the environment an agent starts with', () => {
   // encore-2: the lead's CLI exported its token, every agent it launched inherited it, and a project script's
   // `plitzi space lint` ran as the lead.
-  it('carries its own token and session — never the identity of whoever started it', async () => {
+  it('carries its own token and session — never the identity nor the harness session of whoever started it', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-agent-env-'));
     const paths = runPaths(dir, 'encore-2');
     await fs.mkdir(path.join(paths.scratch, 'dev-1'), { recursive: true });
@@ -114,7 +114,10 @@ describe('the environment an agent starts with', () => {
       PATH: '/usr/bin',
       PLITZI_TOKEN: 'encore-2.@lead.ffffffffffffffffffffffffffffffff',
       PLITZI_AGENT: 'lead',
-      PLITZI_RUN: 'encore-2'
+      PLITZI_RUN: 'encore-2',
+      // encore-3: started from the lead's own Claude Code, design-1 carried the lead's session id.
+      CLAUDE_CODE_SESSION_ID: '267b7184-2784-452d-bd89-1f854a2fa662',
+      CLAUDE_CODE_SESSION_ATTENDED: '1'
     });
 
     expect(env).toEqual({

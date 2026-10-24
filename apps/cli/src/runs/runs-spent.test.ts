@@ -79,6 +79,7 @@ describe('what each agent spent', () => {
       {
         agent: 'lead',
         pieces: 1,
+        sessions: 1,
         turns: 20,
         input: 90_000,
         output: 9_000,
@@ -89,6 +90,7 @@ describe('what each agent spent', () => {
       {
         agent: 'agent-1',
         pieces: 2,
+        sessions: 1,
         turns: 24,
         input: 80_000,
         output: 8_000,

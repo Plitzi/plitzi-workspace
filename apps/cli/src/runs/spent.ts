@@ -2,6 +2,7 @@ import { logRun, readRunLog } from './run';
 import { readUsage } from './usage';
 
 import type { LoadedRun, RunContext } from './run';
+import type { UsageLine } from './usage';
 
 /**
  * What each agent's harness spent, kept in the run's log as each piece of its work ends — a task completed, a review
@@ -18,6 +19,11 @@ export interface Spent {
   agent: string;
   /** The pieces of work it ended. */
   pieces: number;
+  /**
+   * Its sessions: each start of its harness, read off the sessions its commands ran in — one a task for an agent of
+   * `"session": "task"`, several pieces each for `context`: what an average a session is taken over.
+   */
+  sessions: number;
   /** The model's answers. */
   turns: number;
   /**
@@ -73,8 +79,13 @@ export const logSpent = async (ctx: RunContext, loaded: LoadedRun, task: string,
   });
 };
 
-/** Each agent's spend so far, read off the run's log: the most spent first — what is new, then what was read again. */
-export const spentOf = (log: readonly Record<string, unknown>[]): Spent[] => {
+/**
+ * Each agent's spend so far, read off the run's log — its sessions off what its commands ran in (`usage.jsonl`): the
+ * most spent first, what is new, then what was read again.
+ */
+export const spentOf = (log: readonly Record<string, unknown>[], usage: readonly UsageLine[] = []): Spent[] => {
+  const sessionsOf = (agent: string): number =>
+    Math.max(1, new Set(usage.flatMap(line => (line.by === agent && line.session ? [line.session] : []))).size);
   const by = new Map<string, Spent>();
   for (const entry of log) {
     if (entry.action !== 'spent' || typeof entry.by !== 'string') {
@@ -84,6 +95,7 @@ export const spentOf = (log: readonly Record<string, unknown>[]): Spent[] => {
     const kept = by.get(entry.by) ?? {
       agent: entry.by,
       pieces: 0,
+      sessions: sessionsOf(entry.by),
       turns: 0,
       input: 0,
       output: 0,

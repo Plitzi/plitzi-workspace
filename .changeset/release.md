@@ -171,6 +171,14 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 - **The run's keeper starts on a run just opened** — its log's folder made (encore-3's open crashed on it, no agent
   started) — and is the one to start agents while it runs: the lead's watch starting them too told the lead an agent
   "could not be started" that was running. An agent started meanwhile by another is no failure.
+- **One start of an agent at a time** (a lock of its own): the keeper and a lead's watch both started encore-3's
+  design-1 — two sessions on one copy — and test-1 three times. An agent no longer inherits the harness session of
+  whoever started it (`CLAUDE_CODE_SESSION_*`).
+- **An acceptance reaches its copy's server where the server says it listens** (`PLITZI_SERVER_RECORD`): asked for a
+  port another check took meanwhile, a server while developing takes the next free one, and encore-3's checks waited a
+  minute on the port asked — a right task failed.
+- **A lead's `task show` of a task in review takes the review,** as `task look` does: the monitor says which task the
+  lead is at, and another lead is not offered it.
 - **A task sent back waits for its own agent,** who takes it as soon as it ends the task it is at: it is no longer
   handed to a free agent after 3 minutes (the `handed-off` entry and the bench's "Handed off" column are gone), and
   while it waits it never reads "no signal — reassign it".
@@ -268,8 +276,9 @@ report`, …).
     tab shows the whole on hover. encore-2's lines ran to 499 characters.
   - **What each agent spent, beside the activity:** pieces of work, turns, tokens in, out and cached — read again each
     turn, a tenth of the price, kept apart: one figure of all three said 1.1M where ~240k was the price — and its context,
-    marked past `freshContextAt` for a `"session": "context"` agent alone. As wide as it says, the activity taking the
-    rest; sorted by in+out, `s` changes it. Kept in the run's log as each task completes and each review is decided
+    marked past `freshContextAt` for a `"session": "context"` agent alone — and its sessions with what one costs on
+    average (`SESS`, `AVG`): agents start fresh in different ways, the average is what a task costs. Under the agents,
+    the activity under the tasks, on the board's one split; sorted by in+out, `s` changes it. Kept in the run's log as each task completes and each review is decided
     (`spent`), the lead and the reviewers included.
 - **`run watch --until lead`** wakes the lead once for each review, question, block, idle agent or agent to start.
   `run status` gives the same in one answer.

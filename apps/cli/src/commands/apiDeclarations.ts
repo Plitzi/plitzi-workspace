@@ -181,6 +181,22 @@ const spells = (entries: readonly Entry[], name: string): boolean => {
   return [...files].some(file => word.test(readFileSync(file, 'utf-8')));
 };
 
+/**
+ * Whether a package's declarations spell `member` as a member — `later:`, `save(`, `later?:` at a line's start — before
+ * a program is built for it: a bare name that is nothing is said without one (it took 5.7 s, a program a package).
+ */
+const spellsMember = (entries: readonly Entry[], member: string): boolean => {
+  const escaped = member.replace(/\$/g, '\\$');
+  const word = new RegExp(`^\\s*(?:readonly\\s+)?${escaped}\\??\\s*[:(<]`, 'm');
+  const dirs = new Set(entries.map(entry => path.dirname(entry.file)));
+
+  return [...dirs].some(dir =>
+    readdirSync(dir, { recursive: true, encoding: 'utf-8' })
+      .filter(file => file.endsWith('.d.ts'))
+      .some(file => word.test(readFileSync(path.join(dir, file), 'utf-8')))
+  );
+};
+
 /** The first paragraph of the doc comment a statement starts with. */
 const summaryOf = (sourceFile: TypeScript.SourceFile, statement: TypeScript.Statement): string => {
   const leading = sourceFile.text.slice(statement.getFullStart(), statement.getStart(sourceFile));
@@ -335,7 +351,7 @@ export const memberDeclarations = (root: string, name: string): ApiExplanation[]
 
   return installedPackages(root).flatMap(entries =>
     owners.flatMap(([said, owner]) => {
-      if (!spells(entries, owner)) {
+      if (!spells(entries, owner) || !spellsMember(entries, member)) {
         return [];
       }
 

@@ -18,11 +18,11 @@ import {
   viewsAsked
 } from './lookParts';
 import { act, runOf, runSelf } from './shell';
+import { takeOnRead } from './takeOnRead';
 import { list } from './text';
 import { answering, freePort } from '../../runs/acceptance';
 import { designSkipText, isDesignSkip } from '../../runs/designSkip';
 import { inTurns } from '../../runs/inTurns';
-import { takeOnLook } from '../../runs/leads';
 import { readOwnership } from '../../runs/ownership';
 import { acceptanceAccount, acceptancePages, examplePaths, pagesOf, pagesToLook } from '../../runs/pagesOf';
 import { runPaths, taskPaths } from '../../runs/paths';
@@ -499,10 +499,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
     options,
     async ctx => {
       const runId = await runOf(ctx, options);
-      const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
-      if (await takeOnLook(ctx, loaded, await viewTask(loaded.paths, findTask(loaded, taskId)))) {
-        await logRun(ctx, loaded.paths, { action: 'review-taken', task: taskId, review: 'lead' });
-      }
+      await takeOnRead(ctx, runId, taskId);
 
       if (options.click && options.hover) {
         throw new RunRefusal(

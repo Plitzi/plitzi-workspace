@@ -8,10 +8,11 @@ import { agentPrompt, harnessCommand, HARNESSES, isHarness } from './agentPrompt
 import { issueToken, tokenFile, writeCli } from './identity';
 import { isRunning, readLaunch, resumable, writeLaunch } from './launch';
 import { isPrincipal, LEAD_ROLE } from './leads';
-import { agentScratch } from './paths';
+import { agentScratch, runPaths } from './paths';
 import { RunRefusal } from './refusal';
 import { loadRun, logRun, readRunLog } from './run';
 import { SESSION_ENV } from './session';
+import { withLock } from './store';
 import { viewTask } from './taskStore';
 import { leadStart, readTeam, startedAgents } from './team';
 
@@ -200,13 +201,24 @@ export const agentEnv = async (
   return { ...env, ...(token ? { PLITZI_TOKEN: token } : {}), [SESSION_ENV]: session };
 };
 
-/** Starts the agent now, in `harness`: refused while it still runs. */
+/**
+ * Starts the agent now, in `harness`: refused while it still runs. One start of an agent at a time, held by a lock of its
+ * own: the run's keeper and a lead's watch both found encore-3's design-1 not running and both started it — two sessions
+ * on one copy, and a third of test-1's — the check that it runs and the start being two steps.
+ */
 export const launchAgent = async (
   ctx: RunContext,
   runId: string,
   agent: string,
   harness: Harness
 ): Promise<AgentLaunched> => {
+  const scratch = agentScratch(runPaths(ctx.root, runId), agent);
+  await fs.mkdir(scratch, { recursive: true });
+
+  return withLock(path.join(scratch, 'launch.lock'), () => startHeld(ctx, runId, agent, harness), { now: ctx.now });
+};
+
+const startHeld = async (ctx: RunContext, runId: string, agent: string, harness: Harness): Promise<AgentLaunched> => {
   const { loaded, started, scratch, cli, prompt, promptFile, told } = await prepare(ctx, runId, agent);
   const { model } = told;
   const last = await readLaunch(loaded.paths, agent);

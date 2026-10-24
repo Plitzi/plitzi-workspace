@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 
 import { act, runOf } from './shell';
+import { takeOnRead } from './takeOnRead';
 import { list, messageLines, outsideLines, secondRunText } from './text';
 import { acceptanceText } from '../../runs/model';
 import { FROM_TEXT, showTask, showTaskFile } from '../../runs/show';
@@ -23,7 +24,12 @@ const taskShowFile = (taskId: string, file: string, options: RunCommandOptions &
 const taskShowSummary = (taskId: string, options: RunCommandOptions & { full?: boolean }): Promise<void> =>
   act(
     options,
-    async ctx => showTask(ctx, await runOf(ctx, options), taskId, { full: options.full ?? false }),
+    async ctx => {
+      const runId = await runOf(ctx, options);
+      await takeOnRead(ctx, runId, taskId);
+
+      return showTask(ctx, runId, taskId, { full: options.full ?? false });
+    },
     shown => {
       const { knownFailure } = typeof shown.checks === 'object' ? shown.checks : { knownFailure: undefined };
 

@@ -4,7 +4,7 @@ import { emitKeypressEvents } from 'node:readline';
 import chalk from 'chalk';
 
 import { attentionLines } from './monitorAttention';
-import { bodyOf, detailOf, listedTasks, orderedTasks } from './monitorBoard';
+import { BESIDE_WIDTH, boardSplit, bodyOf, detailOf, listedTasks, orderedTasks } from './monitorBoard';
 import { cell, hhmm, wrapped } from './monitorCells';
 import { detailRows, FEED_LOOK, FEED_WORDS, feedColumns, feedRow, groupKey, opens, repeatRow } from './monitorFeed';
 import { fittedFlow } from './monitorFlow';
@@ -233,11 +233,14 @@ export const monitorScreen = (
   const left = Math.max(0, room - board.length - besideBoard - body.length - detail.length - ACTIVITY_HEAD);
   // The activity's rows: each event, and under an opened group each of its repeats.
   type Row = { row: string; key?: string };
-  // The spend beside the activity, as wide as it says, the activity taking the rest — its line over it when that leaves
-  // the activity too narrow.
+  // The spend beside the activity, on the board's split — the activity under the tasks, the spend under the agents — or,
+  // when it needs more than that half, as wide as it says with the activity taking the rest; a line over the activity
+  // when beside would leave it too narrow.
   const spendBeside = spendPanel(data.spend, data.freshAt, height, spendSort);
-  const beside = width - spendBeside.width - 2 >= ACTIVITY_LEAST;
-  const feedWidth = beside ? width - spendBeside.width - 2 : width;
+  const split = boardSplit(width);
+  const halves = width >= BESIDE_WIDTH && width - split - 3 >= spendBeside.width;
+  const beside = halves || width - spendBeside.width - 3 >= ACTIVITY_LEAST;
+  const feedWidth = halves ? split : beside ? width - spendBeside.width - 3 : width;
   const feedWidths = feedColumns([...feed, ...feed.flatMap(line => line.repeats ?? [])], feedWidth);
   const blocks: Row[][] = feed.map(line =>
     opens(line) && opened.has(groupKey(line))
@@ -298,7 +301,9 @@ export const monitorScreen = (
         ];
   const spendRows = beside ? spendPanel(data.spend, data.freshAt, feedLines.length, spendSort).lines : [];
   const activity = beside
-    ? feedLines.map((each, index) => `${cell(each, feedWidth)}  ${spendRows[index] ?? ' '.repeat(spendBeside.width)}`)
+    ? feedLines.map(
+        (each, index) => `${cell(each, feedWidth)}${chalk.dim(index === 0 ? '   ' : ' │ ')}${spendRows[index] ?? ''}`
+      )
     : feedLines;
 
   const boardTop = head.length + attention.length + 1;

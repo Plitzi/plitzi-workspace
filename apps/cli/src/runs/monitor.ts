@@ -584,7 +584,7 @@ export const monitorRun = async (ctx: RunContext, runId: string, feedLength = 40
     agents: await agentsOf(ctx, view, log, stories, usage),
     feed,
     stories,
-    spend: spentOf(log),
+    spend: spentOf(log, usage),
     freshAt: new Map(
       (team ? startedAgents(team) : [])
         .filter(each => each.session === 'context')

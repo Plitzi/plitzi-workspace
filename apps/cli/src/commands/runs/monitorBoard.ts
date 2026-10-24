@@ -249,7 +249,13 @@ const BRIEF_MORE = 13;
 /** The most tasks listed at once: the rest scrolled to with ↑↓, their rows the activity's. */
 export const TASK_ROWS = 15;
 /** Under it the agents go under the tasks rather than beside them: each column would be too narrow to read. */
-const BESIDE_WIDTH = 140;
+export const BESIDE_WIDTH = 140;
+
+/**
+ * Where the screen splits in two, side by side: the tasks left of it and the agents right, and under them the activity
+ * and the spend — one line down the screen, so its halves read as two columns.
+ */
+export const boardSplit = (width: number): number => Math.max(30, Math.floor(width * 0.42));
 
 /**
  * The tasks and the agents in `rows`: side by side on a wide terminal, the agents under the tasks on a narrow one — the
@@ -340,7 +346,7 @@ export const bodyOf = ({
     ...agentRowsOf(fitting, now),
     ...(fitting.length < agents.length ? [chalk.dim(`  + ${String(agents.length - fitting.length)} more`)] : [])
   ];
-  const leftWidth = Math.max(30, Math.floor(width * 0.42));
+  const leftWidth = boardSplit(width);
 
   return {
     lines: columns(taskLines, agentLines, leftWidth, Math.max(10, width - leftWidth - 3)),

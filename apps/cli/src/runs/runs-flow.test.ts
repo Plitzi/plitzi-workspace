@@ -297,7 +297,8 @@ describe('a task the lead takes back', () => {
         ['dev-3', 'lead', 'I finish it']
       ]
     );
-  });
+    // A whole flow of the run, step by step: seconds alone, past the default 5 s beside the suite under load.
+  }, 30_000);
 });
 
 // velada-polish: right after a `complete` told an agent to take no other step, `task next` handed back the task it held

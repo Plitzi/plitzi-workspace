@@ -12,7 +12,7 @@ import { stopKept } from './lingering';
 import { listenersUnder, stopListener, stopTree, TREE } from './processes';
 import { UNANSWERED_EXIT } from '../commands/terminal';
 import { runScript, scriptsOf, tail } from '../commands/verify';
-import { DEV_SERVER_FILE } from '../scaffold/paths';
+import { DEV_SERVER_FILE, PROJECT_TMP, SERVER_RECORD_ENV } from '../scaffold/paths';
 
 import type { Acceptance, AcceptanceResult } from './model';
 
@@ -41,10 +41,10 @@ export const freePort = (): Promise<number> =>
     });
   });
 
-/** Until something answers on `url`, or `ms` pass: whether it did. */
+/** Until something answers on `url`, or `ms` pass — asked once at least: whether it did. */
 export const answering = async (url: string, ms: number): Promise<boolean> => {
   const until = Date.now() + ms;
-  while (Date.now() < until) {
+  for (;;) {
     const ok = await fetch(url).then(
       () => true,
       () => false
@@ -53,10 +53,12 @@ export const answering = async (url: string, ms: number): Promise<boolean> => {
       return true;
     }
 
+    if (Date.now() >= until) {
+      return false;
+    }
+
     await new Promise(resolve => setTimeout(resolve, 300));
   }
-
-  return false;
 };
 
 /**
@@ -74,6 +76,31 @@ export const withServedValues = (check: string, values: Readonly<Record<string, 
   check.replace(/\$\{?(PLITZI_(?:URL|PORT))\}?/g, (written, name: string) =>
     Object.hasOwn(values, name) ? values[name] : written
   );
+
+/**
+ * Where the copy's server answers, within `ms`: the port it says it took, in the record it writes once it listens — or the
+ * port asked, once that answers (a server that writes no record). None when neither does.
+ */
+const answeringWhere = async (record: string, asked: number, ms: number): Promise<number | undefined> => {
+  for (const until = Date.now() + ms; Date.now() < until;) {
+    const value: unknown = await fs
+      .readFile(record, 'utf-8')
+      .then(text => JSON.parse(text) as unknown)
+      .catch(() => undefined);
+    const said = isRecord(value) && typeof value.port === 'number' ? value.port : undefined;
+    if (said !== undefined && (await answering(`http://127.0.0.1:${String(said)}`, Math.max(0, until - Date.now())))) {
+      return said;
+    }
+
+    if (said === undefined && (await answering(`http://127.0.0.1:${String(asked)}`, 0))) {
+      return asked;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+
+  return undefined;
+};
 
 /**
  * A server the agent started in its copy and left running: it holds the copy's state (its locks, its files) as the one
@@ -151,7 +178,11 @@ export const serveCopy = async (
     return { problem: 'the project has no start or start:dev script to serve the copy with' };
   }
 
-  const port = await freePort();
+  const asked = await freePort();
+  // Where the server says it took: the port asked can be taken before it binds — agents checking at once — and a server
+  // while developing takes the next free one (encore-3: asked 61515, it took 62189, and the check waited on 61515).
+  const record = path.join(PROJECT_TMP, 'plitzi-cache', 'acceptance-server.json');
+  await fs.rm(path.join(work, record), { force: true });
   const env = (await fs.readFile(path.join(root, '.env'), 'utf-8').catch(() => undefined)) ?? '';
   // What the server says goes to a log in the task's cache: when it does not answer, its last lines say why.
   const logFile = path.join(cache, 'acceptance-server.log');
@@ -170,17 +201,19 @@ export const serveCopy = async (
           .filter(line => line !== '' && !line.startsWith('#') && line.includes('='))
           .map(line => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)])
       ),
-      PORT: String(port),
+      PORT: String(asked),
+      [SERVER_RECORD_ENV]: record,
       PATH: `${path.join(root, 'node_modules', '.bin')}${path.delimiter}${process.env.PATH ?? ''}`
     }
   });
   const stop = (): void => {
     stopTree(child, { group: true });
   };
+  const where = await answeringWhere(path.join(work, record), asked, 60_000);
+  const port = where ?? asked;
   const url = `http://127.0.0.1:${String(port)}`;
-  const answered = await answering(url, 60_000);
   await log.close();
-  if (!answered) {
+  if (where === undefined) {
     stop();
     const said = tail((await fs.readFile(logFile, 'utf-8').catch(() => '')).trim());
 
