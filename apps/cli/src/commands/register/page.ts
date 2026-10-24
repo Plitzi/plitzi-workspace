@@ -9,7 +9,7 @@ import { outline } from '../outline';
 import { play } from '../play';
 import { pageSame } from '../same';
 import { shotEach, SHOT_MOMENTS } from '../shot';
-import { API_OPTION, DRY_RUN_OPTION, schemeOption, URL_OPTION, widthsOption } from './options';
+import { API_OPTION, DRY_RUN_OPTION, schemeOption, schemesOption, URL_OPTION, widthsOption } from './options';
 
 import type { CheckOptions } from '../check';
 import type { ImportOptions } from '../importPage';
@@ -17,7 +17,7 @@ import type { MeasureOptions } from '../measure';
 import type { OutlineOptions } from '../outline';
 import type { PlayOptions } from '../play';
 import type { SameOptions } from '../same';
-import type { ShotOptions } from '../shot';
+import type { ShotEachOptions } from '../shot';
 import type { Command } from 'commander';
 
 /** `plitzi page …`: a page of the running project checked, pictured, made and imported. */
@@ -209,10 +209,10 @@ export const registerPage = (pageGroup: Command): void => {
       '--click <element...>',
       'Click elements first, in order — "menu-toggle => .menu-button", each page its own side — and outline what they open'
     )
-    .addOption(new Option('--width <px>', 'The viewport width').argParser(width).default(1440))
+    .addOption(widthsOption('The viewport width — or several, separated by commas: an outline each', [1440]))
     .addOption(schemeOption())
     .option('--url <origin>', URL_OPTION)
-    .option('--json', 'One object, for a tool or an agent')
+    .option('--json', 'One object, for a tool or an agent — a list of them for several widths')
     .option(
       '--as <username>',
       'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env (a task’s copy reads its project’s)'
@@ -258,7 +258,7 @@ export const registerPage = (pageGroup: Command): void => {
         .argParser(positiveInteger)
         .default(800)
     )
-    .addOption(schemeOption())
+    .addOption(schemesOption())
     .option('-o, --out <file>', 'Where the picture goes. tmp/shots/<page>-<width>-<scheme>.png by default')
     .option(
       '--compare <url>',
@@ -327,7 +327,5 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .option('--url <origin>', URL_OPTION)
     .option('--json', 'One object, for a tool or an agent — { widths: [...] }, one each, at several widths')
-    .action((path: string | undefined, options: Omit<ShotOptions, 'width'> & { width: number[] }) =>
-      shotEach(path, options)
-    );
+    .action((path: string | undefined, options: ShotEachOptions) => shotEach(path, options));
 };

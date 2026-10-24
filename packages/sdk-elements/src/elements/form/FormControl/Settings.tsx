@@ -39,6 +39,11 @@ type SettingsProps = {
   minLengthMessage?: string;
   maxLength?: number;
   maxLengthMessage?: string;
+  min?: string;
+  minMessage?: string;
+  max?: string;
+  maxMessage?: string;
+  step?: string;
   formatMessage?: string;
   pattern?: string;
   patternMessage?: string;
@@ -73,6 +78,11 @@ const Settings = ({
   minLengthMessage = '',
   maxLength = 0,
   maxLengthMessage = '',
+  min = '',
+  minMessage = '',
+  max = '',
+  maxMessage = '',
+  step = '',
   formatMessage = '',
   pattern = '',
   patternMessage = '',
@@ -137,6 +147,17 @@ const Settings = ({
     (value: string) => onUpdate?.('maxLengthMessage', value),
     [onUpdate]
   );
+
+  // A number's bounds are kept as written — `''` for none, since `0` is one a field can have.
+  const handleChangeMin = useCallback((value: string) => onUpdate?.('min', value.trim()), [onUpdate]);
+
+  const handleChangeMinMessage = useCallback((value: string) => onUpdate?.('minMessage', value), [onUpdate]);
+
+  const handleChangeMax = useCallback((value: string) => onUpdate?.('max', value.trim()), [onUpdate]);
+
+  const handleChangeMaxMessage = useCallback((value: string) => onUpdate?.('maxMessage', value), [onUpdate]);
+
+  const handleChangeStep = useCallback((value: string) => onUpdate?.('step', value.trim()), [onUpdate]);
 
   const handleChangeFormatMessage = useCallback((value: string) => onUpdate?.('formatMessage', value), [onUpdate]);
 
@@ -240,6 +261,19 @@ const Settings = ({
       )}
       {isTyped && maxLength > 0 && (
         <Input value={maxLengthMessage} label="Max Length Message" onChange={handleChangeMaxLengthMessage} size="xs" />
+      )}
+      {subType === 'number' && (
+        <>
+          <Input value={min} label="Least Number" onChange={handleChangeMin} size="xs" />
+          {min !== '' && (
+            <Input value={minMessage} label="Too Small Message" onChange={handleChangeMinMessage} size="xs" />
+          )}
+          <Input value={max} label="Greatest Number" onChange={handleChangeMax} size="xs" />
+          {max !== '' && (
+            <Input value={maxMessage} label="Too Large Message" onChange={handleChangeMaxMessage} size="xs" />
+          )}
+          <Input value={step} label="Step" onChange={handleChangeStep} size="xs" />
+        </>
       )}
       {hasFormat(subType) && (
         <Input value={formatMessage} label="Invalid Format Message" onChange={handleChangeFormatMessage} size="xs" />

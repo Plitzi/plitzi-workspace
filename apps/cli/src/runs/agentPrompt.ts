@@ -65,7 +65,7 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
     return [
       `You are the lead of a Plitzi multi-agent run on the project ${root} (run "${runId}"). The person asked: ${goal}`,
       '',
-      `Read first, whole: ${skill(root, 'runs-plan.md')}, ${skill(root, 'runs-lead.md')} and ${skill(root, 'runs.md')}.`,
+      `Read first, whole: ${skill(root, 'runs-plan.md')}, ${skill(root, 'runs-lead.md')}, ${skill(root, 'runs-review.md')} and ${skill(root, 'runs.md')}.`,
       '',
       `- The CLI is ${cli} — your own: it says who you are on every command, so pass no --token nor --agent.`,
       `- The run opens on its scope, your spike: find out what the ask takes (${reference === undefined ? '`task show`, `page check`, `page shot`' : `\`page measure …${beside}\`, \`page outline …${beside}\`, \`page shot …${beside}\``}), then end it with the tasks, each with what you found: \`task spike s-scope --done "…" --tasks <stage.json>\` (a stage is its \`tasks\`).`,
@@ -82,7 +82,9 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
   const reading = [
     skill(root, 'runs.md'),
     ...(designer ? [skill(root, 'runs-designer.md')] : []),
-    ...(coLead || tester ? [skill(root, 'runs-lead.md')] : [])
+    // A reviewer's half, not the lead's whole: a tester and a co-lead start fresh after each piece, and encore-3's read
+    // the lead's 18k characters again each time to use the review it holds.
+    ...(coLead || tester ? [skill(root, 'runs-review.md')] : [])
   ];
 
   return [

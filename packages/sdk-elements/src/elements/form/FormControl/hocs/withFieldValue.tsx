@@ -34,6 +34,10 @@ export type WithFieldValueProps<T> = {
   minLengthMessage?: string;
   maxLength?: number;
   maxLengthMessage?: string;
+  min?: string;
+  minMessage?: string;
+  max?: string;
+  maxMessage?: string;
   formatMessage?: string;
   pattern?: string;
   patternMessage?: string;
@@ -55,6 +59,10 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
       minLengthMessage = '',
       maxLength = 0,
       maxLengthMessage = '',
+      min = '',
+      minMessage = '',
+      max = '',
+      maxMessage = '',
       formatMessage = '',
       pattern = '',
       patternMessage = '',
@@ -104,6 +112,10 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
         minLengthMessage,
         maxLength,
         maxLengthMessage,
+        min,
+        minMessage,
+        max,
+        maxMessage,
         type: subType,
         formatMessage,
         pattern,
@@ -118,6 +130,10 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
         minLengthMessage,
         maxLength,
         maxLengthMessage,
+        min,
+        minMessage,
+        max,
+        maxMessage,
         subType,
         formatMessage,
         pattern,

@@ -469,6 +469,29 @@ const reviewHeldBy = async (
   )?.task.id;
 
 /**
+ * The review an agent is at when it holds no task: what its sign of life is about — encore-3's designers said their
+ * progress through a review and were refused it nine times, each fresh session anew.
+ */
+export const reviewingOnly = async (ctx: RunContext, runId: string): Promise<string | undefined> => {
+  if (ctx.agent === LEAD || ctx.agent === UNNAMED) {
+    return undefined;
+  }
+
+  try {
+    taskOf(ctx);
+
+    return undefined;
+  } catch {
+    const loaded = await loadRun(ctx, runId);
+    const worked = (await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)))).some(
+      view => view.owner?.agent === ctx.agent && isWorked(view.state.status)
+    );
+
+    return worked ? undefined : reviewHeldBy(ctx, loaded);
+  }
+};
+
+/**
  * The task a holder's command is about: the token's or the one named — and, run outside the copy with the agent's own
  * token and no task named, the one task that agent holds at work (lx-copy: `task context` refused five times from the
  * project's folder, "Name the task", though the token said whose it was).
@@ -495,11 +518,28 @@ const taskResolved = async (ctx: RunContext, runId: string, named?: string): Pro
     throw new RunRefusal(
       'invalid',
       held.length === 0 && reviewing !== undefined
-        ? `${ctx.agent} reviews ${reviewing}, and holds no task at work: a review says itself — its look (plitzi task look ${reviewing}) and its verdict (plitzi task review ${reviewing} …); task progress and the rest are a writer's`
+        ? `${ctx.agent} reviews ${reviewing}, and holds no task at work: a review says itself — its look (plitzi task look ${reviewing}) and its verdict (plitzi task review ${reviewing} …); task progress notes you are at it, the rest are a writer's`
         : held.length === 0
           ? `${ctx.agent} holds no task at work: name it, or run this in its copy (cd <its work folder>)`
           : `${ctx.agent} holds ${held.map(view => view.task.id).join(', ')}: name the task, or run this in its copy`
     );
+  }
+};
+
+/**
+ * The task an agent means when it names none: the one it holds, or the one it reviews — encore-3's `task show` with no
+ * task was refused twice, its agent holding one.
+ */
+export const ownTask = async (ctx: RunContext, runId: string): Promise<string> => {
+  try {
+    return await taskResolved(ctx, runId);
+  } catch (error) {
+    const reviewing = await reviewingOnly(ctx, runId);
+    if (reviewing === undefined) {
+      throw error;
+    }
+
+    return reviewing;
   }
 };
 

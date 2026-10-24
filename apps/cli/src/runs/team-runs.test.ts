@@ -101,6 +101,11 @@ describe('the tests of a developer task, with a tester in the team', () => {
     expect(checked.tasks.filter(task => task.role === 'tester').map(task => [task.id, task.files])).toEqual([
       ['t-home-tests', ['src/functions/book.test.ts']]
     ]);
+    // encore-3: a task's acceptance held in a third test file of the folder, which the check never ran.
+    expect(checked.tasks.find(task => task.id === 't-home-tests')?.acceptance).toContainEqual({
+      said: 'Its modules’ tests pass, and every test beside them',
+      check: "node --test 'src/functions/**/*.test.ts'"
+    });
   });
 
   it('hands a tester what the task it tests was asked, and what its reviews asked on top', async () => {
@@ -134,6 +139,42 @@ describe('the tests of a developer task, with a tester in the team', () => {
       acceptance: ['About reads in Spanish'],
       reviews: ['Review 1: Say who we are, too']
     });
+  });
+
+  // encore-3: the one tester was at work 104 of 152 minutes, its cards alone the last 45, three developers waiting.
+  it('are a developer’s to take while every tester is at work — never the one who wrote what they test', async () => {
+    await bench.write(
+      'package.json',
+      JSON.stringify({ name: 'bench', type: 'module', private: true, devDependencies: { '@playwright/test': '^1.56.1' } })
+    );
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
+    await setTeamAgent(bench.root, 'test', { roles: ['tester'] });
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+    const write = async (agent: string, taskId: string, file: string): Promise<void> => {
+      const taken = await takeTask(bench.agent(agent), 'es-launch', taskId);
+      await writeInCopy(taken.work, file, `export const page = { es: true };\n`);
+      await completeTask(bench.agent(agent, { token: taken.token }), 'es-launch', taskId);
+      await reviewTask(lead(), 'es-launch', taskId, 'approve', []);
+    };
+    await write('dev-1', 't-about', 'src/space/pages/about.ts');
+    await write('dev-1', 't-menu', 'src/space/pages/menu.ts');
+
+    // The tester free: the developers are offered none of its cards.
+    expect((await nextTask(bench.agent('dev-2'), 'es-launch', 'developer')).ready).not.toContain(
+      't-about-tests'
+    );
+    await takeTask(bench.agent('test-1'), 'es-launch', 't-menu-tests');
+
+    // The tester at work: dev-2, who wrote none of it, takes t-about's tests; dev-1, who wrote it, is offered none.
+    const spare = (await nextTask(bench.agent('dev-2'), 'es-launch', 'developer')).ready;
+    expect(spare).toContain('t-about-tests');
+    expect((await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).ready).not.toContain(
+      't-about-tests'
+    );
+    await takeTask(bench.agent('dev-2'), 'es-launch', 't-about-tests', 'developer');
+    expect(await refusalOf(takeTask(bench.agent('dev-1'), 'es-launch', 't-menu-tests', 'developer'))).toContain(
+      'a tester’s, not a developer’s'
+    );
   });
 
   it('refuses a task whose role nobody in the team takes', async () => {

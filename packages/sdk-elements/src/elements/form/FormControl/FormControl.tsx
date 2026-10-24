@@ -78,6 +78,12 @@ export type FormControlProps = {
   minLengthMessage: string;
   maxLength: number;
   maxLengthMessage: string;
+  /** A `number` field's least and greatest value and its step, as numbers are written: `''` for none. */
+  min: string;
+  minMessage: string;
+  max: string;
+  maxMessage: string;
+  step: string;
   formatMessage: string;
   pattern: string;
   patternMessage: string;
@@ -113,6 +119,9 @@ const FormControl = ({
   options = [],
   required = false,
   maxLength = 0,
+  min = '',
+  max = '',
+  step = '',
   readOnly = false,
   // HOC
   value = '', // HOC Managed
@@ -248,6 +257,9 @@ const FormControl = ({
           autoFocus={focusWhenShown}
           required={required}
           maxLength={maxLength}
+          min={min}
+          max={max}
+          step={step}
           disabled={disabled}
           readOnly={readOnly || !previewMode}
           onChange={handleChangeInteraction}

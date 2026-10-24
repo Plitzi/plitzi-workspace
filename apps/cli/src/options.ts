@@ -1,5 +1,8 @@
 import { InvalidArgumentError } from 'commander';
 
+import { SCHEMES } from './browser';
+
+import type { Scheme } from './browser';
 import type { Command } from 'commander';
 
 /**
@@ -25,6 +28,22 @@ export const width = (value: string): number => {
 
 /** Widths separated by commas, each once, in the order given. */
 export const widths = (value: string): number[] => [...new Set(value.split(',').map(width))];
+
+const isScheme = (value: string): value is Scheme => (SCHEMES as readonly string[]).includes(value);
+
+/** Schemes separated by commas, each once: a picture of each, as `--width` takes several. */
+export const schemes = (value: string): Scheme[] => [
+  ...new Set(
+    value.split(',').map(each => {
+      const scheme = each.trim();
+      if (!isScheme(scheme)) {
+        throw new InvalidArgumentError(`A scheme is ${SCHEMES.join(' or ')} — or both: light,dark.`);
+      }
+
+      return scheme;
+    })
+  )
+];
 
 /** A whole number from 1: a height in pixels, a count, milliseconds. */
 export const positiveInteger = (value: string): number => {

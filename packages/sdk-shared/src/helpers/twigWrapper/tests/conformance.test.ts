@@ -106,6 +106,8 @@ describe('inspectTemplate', () => {
   it.each([
     ["{{ s matches '/^H/' }}", '`matches` is not supported'],
     ['{{ source|defualt }}', 'Unknown filter "defualt"'],
+    // A filter as JavaScript names it: encore-3's host picker wrote `concat`.
+    ["{{ [{ label: 'Pick' }]|concat(source) }}", 'Unknown filter "concat" — write `first|merge(second)`'],
     ['{{ now() }}', 'Unknown function "now()"'],
     // A filter called like a function, and the functions other engines have that are spelled otherwise here.
     ['{{ abs(delta) }}', 'Unknown function "abs()" — write `value|abs`'],

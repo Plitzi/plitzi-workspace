@@ -238,6 +238,15 @@ const decide = async (
     );
   }
 
+  // Never one's own: encore-3's lead took a ready task, wrote it and approved it, nobody else reading a line.
+  if (view.owner?.agent === ctx.agent) {
+    throw new RunRefusal(
+      'invalid',
+      `Task "${taskId}" is yours: another reviews it — a tester or a lead that reviews takes it from the queue (plitzi run agent lead-2 --launch starts one)`,
+      { task: taskId }
+    );
+  }
+
   // A UI review another designer holds now — its own timed out, or the lead's — is refused as that first, naming why:
   // what the lead said meanwhile is no reason to say the verdict again.
   if (designDue(view.state) && !isPrincipal(ctx.agent) && !isCoLead(loaded.record, ctx.agent)) {

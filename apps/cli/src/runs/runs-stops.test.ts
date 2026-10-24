@@ -293,12 +293,15 @@ describe('versions, machines and caches', () => {
     const upgraded = bench.agent('agent-2', { cli: '0.0.1-bench' });
 
     expect((await refusal(nextTask(upgraded, 'es-launch'))).code).toBe('version-mismatch');
+    // A stop is no command of the work: `run upgrade` stops a run whose version changed already, to set it right.
+    await stopRun({ ...lead(), cli: '0.0.1-bench' }, 'es-launch', false, 'stopping to upgrade Plitzi');
     // An agent attaches nothing; the lead, with no terminal, asks the person to.
     expect((await refusal(attachRun(upgraded, 'es-launch', false))).code).toBe('lead-only');
     expect((await refusal(attachRun({ ...lead(), cli: '0.0.1-bench' }, 'es-launch', false))).code).toBe('person-only');
     const attached = await attachRun({ ...bench.person(true), cli: '0.0.1-bench' }, 'es-launch', false);
     // An upgrade on this machine loses no work: the task in hand keeps its copy and its agent, and is told so.
     expect(attached).toMatchObject({ repinned: true, cut: [], kept: ['t-home'] });
+    await resumeRun({ ...lead(), cli: '0.0.1-bench' }, 'es-launch');
     const back = await nextTask({ ...home.ctx, cli: '0.0.1-bench', token: undefined }, 'es-launch');
     expect(back).toMatchObject({ task: { id: 't-home' }, yours: 'in-progress' });
     expect(back.messages.map(message => message.text).join(' ')).toContain('your copy and your work are kept');

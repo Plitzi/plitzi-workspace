@@ -44,6 +44,7 @@ import {
 } from './nextRules';
 import { changesBlock } from './review';
 import { reviewOffer } from './reviewOffer';
+import { spareTests } from './spareTests';
 import { takeTask } from './take';
 
 import type { Message } from '../messages';
@@ -154,7 +155,8 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   const held = new Set(views.filter(view => view.owner).map(view => view.task.id));
   const roles = await askedRoles(ctx, role);
   await assertRoles(ctx.root, ctx.agent, roles ?? []);
-  const forRole = (task: RunTask): boolean => roles === undefined || roles.includes(roleOf(task));
+  const spare = await spareTests(loaded, views, ctx.agent);
+  const forRole = (task: RunTask): boolean => roles === undefined || roles.includes(roleOf(task)) || spare(task);
   // What the lead said to this agent by name — between tasks, there is nowhere else for it to arrive.
   const messages = await unreadFor(loaded, agentAddress(ctx.agent), true);
   const mine = views.filter(view => view.owner?.agent === ctx.agent && isWorked(view.state.status));
@@ -266,7 +268,13 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   const handedTo = (task: RunTask): string | undefined => states.get(task.id)?.handTo?.agent;
   const fitting = readyTasks(loaded.tasks, states, held)
     .filter(task => forRole(task) && fits(task) && (handedTo(task) === undefined || handedTo(task) === ctx.agent))
-    .sort((a, b) => Number(handedTo(b) === ctx.agent) - Number(handedTo(a) === ctx.agent));
+    // What was handed to it first, then its own role's before another role's card it may take as a spare.
+    .sort(
+      (a, b) =>
+        Number(handedTo(b) === ctx.agent) - Number(handedTo(a) === ctx.agent) ||
+        Number(spare(a) && !(roles?.includes(roleOf(a)) ?? true)) -
+          Number(spare(b) && !(roles?.includes(roleOf(b)) ?? true))
+    );
   const ready = fitting.filter(task => holderOfFile(task) === undefined);
   const handed = ready.find(task => handedTo(task) === ctx.agent);
   if (handed) {

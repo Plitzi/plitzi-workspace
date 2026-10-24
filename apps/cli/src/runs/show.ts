@@ -26,9 +26,10 @@ const DIFF_LINES = 80;
 
 /**
  * How many lines of diff it shows in all: past them, each file left says its size and how to read it. encore-2's
- * `task show` answered up to 44k characters — eighteen files of eighty lines — and the reviewers read it 77 times.
+ * `task show` answered up to 44k characters — eighteen files of eighty lines — and the reviewers read it 77 times;
+ * encore-3's, at 400 lines, up to 24k, 46 times over 12k: a review reads the rest a file at a time.
  */
-const DIFF_TOTAL = 400;
+const DIFF_TOTAL = 240;
 
 export interface ShownFile {
   file: string;

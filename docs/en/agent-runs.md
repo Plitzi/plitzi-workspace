@@ -187,7 +187,10 @@ writing it. The activity says what each agent is at between tasks (`waiting`, `i
 approved (`all-approved`) and, at a whole and checked dry run of the finish, that the run is ready and whose step is
 next (`ready`). `task show` (`show.ts`) gathers the rest of a review —
 acceptance, checks, agreements, notes, what was said, each file's diff against where the copy started, the commands that
-act on it; `task show <task> <file>` is one of those files whole, read from where the diff is (`showTaskFile`).
+act on it; `task show <task> <file>` is one of those files whole, read from where the diff is (`showTaskFile`). Its
+diffs stop at `DIFF_TOTAL` (240) lines in all, each file past it said with how to read it: encore-3's ran to 24k
+characters, 46 of them over 12k. With no task named, it is the one the caller holds or reviews (`ownTask`); `task
+complete` takes its own task's id too, and refuses another's.
 
 **No task ends with failing checks**: `complete` refuses. `--known-failure "why" --fixed-by <task>` takes it to review
 anyway — said in the review, `run status` and the report, and to the task that fixes it; the final merge still needs
@@ -272,7 +275,10 @@ Every agent starts cold, and most of what it would read is the same for all of t
 Markdown beside it, 16 KB at most, kept in the run as `primer.md` and rewritten by `run amend` — opens every task's
 brief; below it, `task context` names the skill files the task's own files need (`readingFor`: the cheatsheet for the
 space, the reference of a layout, a component, data, a plugin or server code, and `runs.md`), only those the project
-has. `run plan` and `run rehearse` read the project's past reports too (`readHistory`: the done tasks' minutes over
+has. What a brief says of a task it depends on is its acceptance — six lines, the rest `task show <id>` — never how
+its reviews went, and a note of its own is 300 characters, the whole with `--json`: encore-3's briefs ran to 17k, 4k of
+them the tasks before it. A tester and a lead that review read `runs.md` and `runs-review.md` (how a task is judged, the
+same for the lead), never the lead's whole half: each starts fresh after every piece. `run plan` and `run rehearse` read the project's past reports too (`readHistory`: the done tasks' minutes over
 their estimates, from the last ten runs, with five tasks at least) and say the estimate at that pace beside the plan's.
 
 ## A run stacked on (`extend.ts`), and what awaits applying
@@ -370,7 +376,9 @@ every task, spent the most).
 **Agents on demand** (`onDemand.ts`): a group's `min` (1 to its `count`) is how many start with the run; the rest are
 on demand (`StartedAgent.onDemand`). `run plan` says to start only the first; `run watch --until lead` tells the lead,
 role by role, when work waits — a task of its role ready, a UI review no designer is free for —
-and no running agent of it is free (`agents-needed`), naming the next one to start and its command — one on demand
+and no running agent of it is free (`agents-needed`), naming the next one to start and its command — with a keeper
+running, said only once it stayed unstarted past `KEEPER_GRACE_MS` (90 s, the keeper's to start; encore-3's lead was told
+"start dev-1" in the seconds its keeper took to start it again for a fresh context) — one on demand
 beside one running only when the work waiting, coming and in hand, shared with it, is `TASKS_PER_AGENT` (2) each or
 more, as `run plan` counts a team's size (velada-shell's watch asked for dev-2 for two tasks the plan had said were too
 few) — coming is a task of the role that waits only for work under way (lx-product's t-buybox, behind t-description in
@@ -441,7 +449,9 @@ crash read "no signal" and "not running" at once, its last word from before, and
 
 A tester reviews the code first: `task next` hands it the tasks in review that wait for no designer, as it hands a lead
 that reviews (`leadReviewFor`), its verdict is a lead's — its approval approves the task — and it never reviews what it
-worked. While a tester runs, `run watch` wakes the lead only for a review none took in `UNTAKEN_REVIEW_MS`: the testers
+worked — nor does anyone review a task they worked, the lead included (`review.ts`: its own is a co-lead's or a tester's).
+A reviewer's `task progress` is its review's sign of life (`review-progress` in the log), not refused. While a tester
+runs, `run watch` wakes the lead only for a review none took in `UNTAKEN_REVIEW_MS`: the testers
 the bottleneck. A team with no tester leaves every review to the leads.
 
 A tester in the team gives every developer task a task of its tests, `<id>-tests`, a tester's, after it: tests written
@@ -452,7 +462,14 @@ from the task's acceptance, not its code, by an agent that did not write it. Its
 `PORT` set, which the project's Playwright config reads. The `plitzi` a check calls is this CLI (a `.cmd` too, on
 Windows), and the server is stopped as a tree there (`taskkill /T`), a process group elsewhere — a preview's too (`processes.ts`). Two developer tasks whose tests are one file share one task of them; one that says `"tests":
 false`, writes nothing a test is written for, or that a tester's task of the plan already waits for, gets none. A test
-the work fails is told to the lead, not bent: `complete` with `--known-failure` says why and which task fixes it.
+the work fails is told to the lead, not bent: `complete` with `--known-failure` says why and which task fixes it. A
+module's tests are checked by every test of its folder (`node --test '<dir>/**/*.test.ts'`): encore-3's test-1 held a
+task's acceptance in a third file of the folder, which a check naming the task's own files never ran.
+
+**Tests cards as a spare** (`tasks/spareTests.ts`): while every tester of the team is at a task of its own, a developer
+is offered and may take a `-tests` card — after its own role's cards — never one of a task it took: tests are written by
+someone who did not write the work. encore-3's one tester was at work 104 of the run's 152 minutes, its cards alone the
+last 45, three developers waiting.
 
 ## What the data never shows
 
@@ -583,7 +600,8 @@ review a designer or another lead took ten minutes ago and has not decided while
 `idle-team`, the run as a kanban: an agent running with no card worked, no review in hand and none of its roles ready,
 said with the way to feed it — the backlog's items no task closes, the UI of a card in review a free designer could take
 (a send-back with `--skip-design lead` keeps the next look the lead's), a large card to split — or that nothing is left;
-never a designer while others' work is under way, which waits for its UI reviews, and said once for the same agents
+never a designer while others' work is under way, which waits for its UI reviews, never an agent none of whose role's
+cards is left (it has done its part), and a card to split only of the idle agents' roles; said once for the same agents
 and the same board (`subject`: which agents, how many cards done), whatever its advice's words — lx-product's lead was
 woken eleven times for one waiting designer;
 `run plan` says the same of a plan with too few cards for its team); so is a plan that changes nothing. `run plan` says

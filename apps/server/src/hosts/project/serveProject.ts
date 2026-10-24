@@ -29,6 +29,7 @@ import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 
 import { runStatusStage, watchAgentRuns } from './agentRuns';
+import { watchLaterAsks } from './laterAsks';
 import { projectPlugins, watchProjectPlugins } from './plugins';
 import { createSpaceFailure } from './spaceFailure';
 import { watchSpace } from './watchSpace';
@@ -517,7 +518,9 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
           : []),
         watchProjectPlugins(root, server, plugins),
         // Said only by the process that speaks: a fleet's workers would each say it again.
-        ...(speaks ? [watchAgentRuns(root)] : [])
+        ...(speaks ? [watchAgentRuns(root)] : []),
+        // `plitzi functions later`: what waits to run later, and one started now, through the queue this server holds.
+        ...(speaks && jobs !== false ? [watchLaterAsks(root, () => jobs.queue, SPACE_ID)] : [])
       ]
     : [];
   const close = async (): Promise<void> => {

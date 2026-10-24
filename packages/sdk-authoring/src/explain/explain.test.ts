@@ -239,6 +239,8 @@ describe('explain --search', () => {
     expect(first('checked state')).toBe('state:checked');
     expect(first('who is signed in')).toBe('source:auth');
     expect(first('largest number')).toBe('function:max');
+    // encore-3: a name asked whole ranks over one that only shares a word with the question.
+    expect(explainSearch('date time ago relative filter', 3).map(hit => `${hit.kind}:${hit.name}`)).toContain('filter:ago');
     expect(explainSearch('the of in')).toEqual([]);
   });
 

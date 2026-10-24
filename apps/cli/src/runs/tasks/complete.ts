@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { isNotice } from '../../commands/verify';
 import { unifiedDiff } from '../../fix/diff';
 import { checkAcceptance, letGo, serveForAcceptance } from '../acceptance';
 import { proposalsOf, unansweredTo } from '../agreements';
@@ -141,11 +142,6 @@ export interface CompletedTask {
   report: { round: number; experience?: true };
 }
 
-/**
- * A line a check prints that says nothing of what failed: a copy's missing `.env`, expected (runs.md) — velada-dress's
- * t-predictions went to review failing "the same way without this task: .env not found".
- */
-const NOTICE = /\.env not found|Continuing without it/;
 
 /** What a check that passed still warned of, each as `<check>: <warning>`. */
 const warningsOf = (checks: CheckResult): string[] =>
@@ -519,7 +515,7 @@ export const completeTask = async (
       warnings: warningsOf(checks).length > 0 ? warningsOf(checks) : undefined,
       knownFailure: preexisting
         ? {
-            why: `the run's work fails ${failing.map(step => step.name).join(', ')} the same way without this task: ${failing.flatMap(step => step.said ?? []).find(line => line.trim() !== '' && !NOTICE.test(line)) ?? 'see the checks'}`,
+            why: `the run's work fails ${failing.map(step => step.name).join(', ')} the same way without this task: ${failing.flatMap(step => step.said ?? []).find(line => line.trim() !== '' && !isNotice(line)) ?? 'see the checks'}`,
             failing: failing.map(step => step.name),
             preexisting: true,
             at: at(ctx)

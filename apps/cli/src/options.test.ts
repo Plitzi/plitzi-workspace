@@ -9,6 +9,7 @@ import {
   fill,
   pagePaths,
   positiveInteger,
+  schemes,
   swallowedFlag,
   timeZone,
   width,
@@ -104,5 +105,11 @@ describe('options', () => {
   it('takes a time zone the browser knows, and refuses one it does not, by name', () => {
     expect(timeZone(' America/Mexico_City ')).toBe('America/Mexico_City');
     expect(() => timeZone('Mars/Olympus')).toThrow('"Mars/Olympus" is no time zone');
+  });
+
+  // encore-3: `page shot --scheme light,dark` was refused, where `--width 1440,390` was taken.
+  it('reads schemes as widths are read, each once, and refuses one that is none', () => {
+    expect(schemes('light,dark,light')).toEqual(['light', 'dark']);
+    expect(() => schemes('light,sepia')).toThrow('A scheme is light or dark');
   });
 });

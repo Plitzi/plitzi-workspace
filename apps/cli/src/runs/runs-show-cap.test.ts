@@ -38,7 +38,7 @@ describe('a task shown', () => {
 
     const shown = await showTask(lead(), 'es-launch', 't-home');
     const lines = shown.files.reduce((all, each) => all + (each.diff?.split('\n').length ?? 0), 0);
-    expect(lines).toBeLessThanOrEqual(400);
+    expect(lines).toBeLessThanOrEqual(240);
     const withheld = shown.files.filter(each => each.withheld !== undefined);
     expect(withheld.length).toBeGreaterThan(0);
     expect(withheld.every(each => (each.withheld ?? 0) > 100)).toBe(true);

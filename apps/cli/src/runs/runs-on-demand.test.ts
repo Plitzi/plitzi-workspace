@@ -6,7 +6,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { readLaunch, writeLaunch } from './launch';
-import { waitForLead } from './leadWatch';
+import { KEEPER_GRACE_MS, waitForLead } from './leadWatch';
 import { monitorRun } from './monitor';
 import { noticeRun } from './notices';
 import { STARTING_MS } from './onDemand';
@@ -144,6 +144,31 @@ describe('agents on demand', () => {
         ) as unknown
       })
     );
+  });
+
+  // encore-3: the lead was told "start dev-1" in the seconds the keeper took to start it again for a fresh context.
+  it('leaves starting an agent to a keeper that runs, telling the lead only once it stayed unstarted past its grace', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'], count: 2, min: 1 });
+    const plan = benchPlan();
+    plan.tasks[3].role = 'designer';
+    await openRun(lead(), await bench.writePlan(plan));
+    const about = await takeTask(bench.agent('design-1'), 'es-launch', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', 'export const page = { title: `t-about` };\n');
+    await completeTask(bench.agent('design-1', { token: about.token }), 'es-launch', 't-about', { review: 'ui' });
+    const startDesign = (texts: string[]): boolean => texts.some(text => text.includes('start design-2'));
+
+    const held = await waitForLead(lead(), 'es-launch', { timeoutMs: 40, everyMs: 10, launch: false });
+    expect(startDesign(held.fresh.map(item => item.text))).toBe(false);
+
+    // The clock moves while the watch looks: the agent stays unstarted past the keeper's grace.
+    const ticking = setInterval(() => {
+      bench.advance(KEEPER_GRACE_MS / 6);
+    }, 20);
+    const told = await waitForLead(lead(), 'es-launch', { timeoutMs: 3000, everyMs: 10, launch: false }).finally(() => {
+      clearInterval(ticking);
+    });
+    expect(startDesign(told.fresh.map(item => item.text))).toBe(true);
   });
 
   // encore: both designers ended on a 'waiting' — the log read them running for good — and the UI reviews that waited

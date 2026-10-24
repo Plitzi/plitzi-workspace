@@ -97,7 +97,16 @@ const testChecks = (files: readonly string[], served: boolean): Acceptance[] => 
             : `${said} — npx playwright test ${specs.join(' ')}, with the copy started by hand: the project has no start script`
         ]
       : []),
-    ...(units.length > 0 ? [{ said: 'Its modules’ tests pass', check: `node --test ${units.join(' ')}` }] : [])
+    // Every test beside them, not only the files named: encore-3's test-1 held a task's acceptance in a third file of
+    // the folder, which the check never ran.
+    ...(units.length > 0
+      ? [
+          {
+            said: 'Its modules’ tests pass, and every test beside them',
+            check: `node --test ${[...new Set(units.map(file => path.posix.dirname(file)))].map(dir => `'${dir}/**/*.test.ts'`).join(' ')}`
+          }
+        ]
+      : [])
   ];
 };
 

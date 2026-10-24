@@ -11,6 +11,10 @@ const rules = (overrides: Partial<FieldRules> = {}): FieldRules => ({
   minLengthMessage: '',
   maxLength: 0,
   maxLengthMessage: '',
+  min: '',
+  minMessage: '',
+  max: '',
+  maxMessage: '',
   type: 'text',
   formatMessage: '',
   pattern: '',
@@ -21,6 +25,24 @@ const rules = (overrides: Partial<FieldRules> = {}): FieldRules => ({
 });
 
 describe('validateField', () => {
+  // encore-3: the down votes that remove a song start at 2, and a number field could not say so.
+  describe('a number’s bounds', () => {
+    const number = (overrides: Partial<FieldRules>) => rules({ type: 'number', ...overrides });
+
+    it('refuses a number under its least or over its greatest, as numbers compare', () => {
+      expect(validateField('1', number({ min: '2' }), {})).toBe('Use a number from 2');
+      expect(validateField('10', number({ min: '2' }), {})).toBe('');
+      expect(validateField('1001', number({ max: '1000' }), {})).toBe('Use a number up to 1000');
+      expect(validateField(0, number({ min: '0' }), {})).toBe('');
+    });
+
+    it('says the author’s sentence, and nothing for a bound left out or a field that is no number', () => {
+      expect(validateField('1', number({ min: '2', minMessage: 'Al menos 2' }), {})).toBe('Al menos 2');
+      expect(validateField('-5', number({}), {})).toBe('');
+      expect(validateField('1', rules({ min: '2' }), {})).toBe('');
+    });
+  });
+
   describe('required', () => {
     it('refuses a blank required value', () => {
       expect(validateField('', rules({ required: true }), {})).toBe(REQUIRED_MESSAGE);

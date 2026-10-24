@@ -348,6 +348,24 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A lead with nothing waiting for it helps:** its skill says to take a ready task
   (`task reassign <task> --to lead`), work its copy and complete it — encore-3's lead wrote the moderation demo's tests
   while the tester ran a spec.
+- **What encore-3 cost, cut** (its tasks read 3.9M tokens each, encore-2's 2.2M):
+  - A tester and a lead that review read `runs-review.md` — how a task is judged, the same for the lead — never the
+    lead's whole half again on each fresh start.
+  - A brief says of a task it depends on its acceptance, six lines, never how its reviews went; a note, 300 characters
+    (the whole with `--json`). `task show`'s diffs stop at 240 lines in all.
+- **The tester is no bottleneck:** while every tester is at work, a developer is offered a `-tests` card after its own —
+  never of a task it worked (encore-3's tester was at work 104 of 152 minutes).
+- **Nobody reviews a task they worked**, the lead included: a co-lead or a tester does.
+- **A reviewer's `task progress`** is its review's sign of life, not refused (nine times in encore-3).
+- **`task show` with no task** is the one you hold or review; `task complete <id>` takes your own id.
+- **A tests card's check runs every test of its folder**, not only the files it names.
+- **`run watch` is quieter:** an agent none of whose role's cards is left is not called idle, a card to split is only of
+  the idle agents' roles, and an agent to start is the keeper's for 90 s before the lead hears of it.
+- **A command line refused says what it meant:** two flags a zsh variable held as one (`"--as mika"`), an option another
+  page command has (`page shot --element` is `--clip`), a command another group has (`run agents` is `run status`).
+- **A failed step says nothing of a copy's missing `.env`.**
+- **`run upgrade` sets right a run whose Plitzi already changed:** a stop loads the run whatever is installed — encore-3's
+  upgrade was refused `version-mismatch`, the very thing it re-pins.
 
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
 
@@ -401,6 +419,11 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   (`--list tasks`), codes, CLI commands and an export's fields.
   - `explain --search "<words>"` also reads the skills' references and recipes, so it answers with the page that
     teaches it.
+- **`page outline --width 390,1440`** outlines each width, and **`page shot --scheme light,dark`** pictures each scheme,
+  as `check`, `measure` and `play` take a list.
+- **`explain --search ctx.later`** answers the member first, as the installed types declare it.
+- **`plitzi functions later [key] --now`**: what the served project holds to run later (`ctx.later`), by key and when it
+  is due — and one started now, through the server's own queue: a spec of a show waited five real minutes a pass.
 
 ## Authoring (`@plitzi/sdk-authoring`)
 
@@ -486,6 +509,11 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   - `date` reads epoch seconds, and `'now'|date(…)` is the moment of the render.
   - `<`, `>`, `<=` and `>=` order strings as text.
   - `replace({…})` takes Twig's map form.
+- **A `number` field takes `min`, `max` and `step`** (`formControl`), each bound said by its `minMessage`/`maxMessage`
+  when broken, compared as numbers; the builder's panel shows them for a number field.
+- **A filter written as JavaScript names it** is refused with the one the templates have: `concat` — write
+  `first|merge(second)`.
+- The authoring skill says `|ago` for "3 minutes ago", not a transformer.
 
 ## Server (`@plitzi/sdk-server`)
 
@@ -523,6 +551,8 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A run's preview** answers `/__plitzi/run`, and only a preview's pages ask for it.
 - **The server's budget is loaded again:** the filters' catalogue and the pages' rule are entries of their own that the
   server never reads.
+- **`createFileJobQueue`** is exported from `@plitzi/sdk-server/actions`, as its docs said: a self-hosted server keeps
+  its jobs in a JSON file through a restart. A project's server answers `plitzi functions later` while developing.
 
 ## The builder (`@plitzi/plitzi-builder`, `@plitzi/sdk-elements`, `@plitzi/sdk-schema`)
 

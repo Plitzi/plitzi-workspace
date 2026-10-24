@@ -18,7 +18,9 @@ import { fileURLToPath } from 'url';
  */
 
 const BUDGET = {
-  '@plitzi/sdk-server': 202,
+  // 205: the job queue's rules are one module every queue shares (`queueRules`), and the default queue is the fleet's
+  // (`fleetJobQueue`); the file queue is loaded only by who uses it (`@plitzi/sdk-server/actions`, a project's server).
+  '@plitzi/sdk-server': 205,
   '@plitzi/sdk-shared': 129,
   '@plitzi/nexus': 31,
   '@plitzi/plitzi-ui': 19,

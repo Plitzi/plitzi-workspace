@@ -323,6 +323,7 @@ export const registerTaskGroup = (program: Command): Command => {
   taskGroup
     .command('complete')
     .description('Finish the task: its copy compared by fingerprint, the project’s checks run in it, and to review')
+    .argument('[task]', 'The task your token holds — named, it must be that one')
     .option(
       '--known-failure <why>',
       'Go to review although the checks fail — for a reason that weighs, said to the lead'
@@ -347,13 +348,14 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...JSON_OPTION)
     .action(
       (
+        task: string | undefined,
         options: RunCommandOptions & {
           knownFailure?: string;
           fixedBy?: string;
           note?: string;
           review?: string;
         } & ExperienceFlags
-      ) => taskComplete(options)
+      ) => taskComplete(task, options)
     );
 
   taskGroup
@@ -456,7 +458,7 @@ export const registerTaskGroup = (program: Command): Command => {
     .description(
       'A task as its lead reviews it: acceptance, checks, agreements, notes, what was said, each file’s diff, and what to run next'
     )
-    .argument('<task>', 'The task')
+    .argument('[task]', 'The task — the one you hold or review when left out')
     .argument(
       '[file]',
       'One file it changed, whole — as the diff reads it: as it went to review, its copy, or approved'
@@ -469,8 +471,12 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string, file: string | undefined, options: RunCommandOptions & { full?: boolean; diff?: boolean }) =>
-      taskShow(task, file, options)
+    .action(
+      (
+        task: string | undefined,
+        file: string | undefined,
+        options: RunCommandOptions & { full?: boolean; diff?: boolean }
+      ) => taskShow(task, file, options)
     );
 
   taskGroup

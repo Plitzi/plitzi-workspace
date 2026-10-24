@@ -1,5 +1,6 @@
 import { Command, Option } from 'commander';
 
+import { commandHint } from './commandHints';
 import { login, logout, space, whoami } from './commands/account';
 import { activity } from './commands/activity';
 import addPlugin from './commands/addPlugin';
@@ -10,13 +11,12 @@ import createPlugin from './commands/createPlugin';
 import { dataDescribe } from './commands/data';
 import { explainCommand } from './commands/explain';
 import { fix } from './commands/fix';
-import { devFunction, pullFunctions, pushFunctions, tryFunction } from './commands/functions';
-import { addFunctionsPackage } from './commands/functionsAdd';
 import packPluginCommand from './commands/packPlugin';
 import packSourceCommand from './commands/packSource';
 import { pull } from './commands/pull';
 import { push, PUSH_PARTS } from './commands/push';
 import { registerElement } from './commands/register/element';
+import { registerFunctions } from './commands/register/functions';
 import { API_OPTION, DRY_RUN_OPTION } from './commands/register/options';
 import { registerPage } from './commands/register/page';
 import { registerRuns } from './commands/runs/register';
@@ -40,7 +40,6 @@ import { lint } from './lint';
 import { count, positiveInteger, swallowedFlag } from './options';
 import { acceptTokenEverywhere } from './runs/usage';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
-import { FUNCTIONS_DIR } from './scaffold/paths';
 import { CLI_VERSION } from './scaffold/project';
 
 import type { AccountOptions, WhoamiOptions } from './commands/account';
@@ -54,7 +53,6 @@ import type { DataDescribeOptions } from './commands/data';
 import type { DryRunOptions } from './commands/dryRun';
 import type { ExplainOptions } from './commands/explain';
 import type { FixOptions } from './commands/fix';
-import type { FunctionsDevOptions, FunctionsOptions } from './commands/functions';
 import type { PackPluginOptions } from './commands/packPlugin';
 import type { PackSourceOptions } from './commands/packSource';
 import type { PullOptions } from './commands/pull';
@@ -87,6 +85,16 @@ export const buildProgram = (): Command => {
   const program = new Command();
 
   program.name('plitzi').description('Plitzi command line').version(CLI_VERSION);
+  // Set before any subcommand, which copies it: every refused command line says what it most likely meant.
+  program.configureOutput({
+    outputError: (text, write) => {
+      write(text);
+      const hint = commandHint(text, process.argv.slice(2));
+      if (hint) {
+        write(`  Next: ${hint}\n`);
+      }
+    }
+  });
   // Every command: a flag whose value is the next flag is refused before it runs, never read as what it was not.
   program.hook('preAction', (_program, action) => {
     const swallowed = swallowedFlag(action);
@@ -488,55 +496,7 @@ export const buildProgram = (): Command => {
     .option(...DRY_RUN_OPTION)
     .action((zip: string | undefined, options: UploadPluginOptions) => uploadPluginCommand(zip, options));
 
-  const functions = program
-    .command('functions')
-    .description(`The space’s own server code: ${FUNCTIONS_DIR}/ in this project is a working copy of it`);
-
-  functions
-    .command('pull')
-    .description(
-      `Write the space’s functions into ${FUNCTIONS_DIR}/ — refused when that would overwrite what is not pushed`
-    )
-    .option('-f, --force', 'Overwrite what is not pushed, or a copy of another space')
-    .option(...API_OPTION)
-    .option(...DRY_RUN_OPTION)
-    .action((options: FunctionsOptions) => pullFunctions(options));
-
-  functions
-    .command('push')
-    .description(
-      `Save ${FUNCTIONS_DIR}/ as the space’s draft: built and checked on the platform, refused if it moved on since`
-    )
-    .option(...API_OPTION)
-    .option(...DRY_RUN_OPTION)
-    .action((options: FunctionsOptions) => pushFunctions(options));
-
-  functions
-    .command('add')
-    .argument('<package>', 'An npm package the project installed — ical.js, @scope/name')
-    .description(
-      `Bundle a package into ${FUNCTIONS_DIR}/vendor/ for the functions to import, as a function carries its dependencies — web APIs only`
-    )
-    .option(...DRY_RUN_OPTION)
-    .action((name: string, options: DryRunOptions) => addFunctionsPackage(name, options));
-
-  functions
-    .command('try')
-    .argument('<task>', 'The task, <namespace>.<action>')
-    .description('Run one task of the draft in the sandbox: its value, what it logged, and why it failed')
-    .option('--params <json>', 'Its params, as a JSON object')
-    .option(...API_OPTION)
-    .action((task: string, options: FunctionsOptions) => tryFunction(task, options));
-
-  functions
-    .command('dev')
-    .argument('<task>', 'The task, <namespace>.<action>')
-    .description(
-      `Run one task from ${FUNCTIONS_DIR}/ on this machine, as the platform runs it — nothing reaches the space`
-    )
-    .option('--params <json>', 'Its params, as a JSON object')
-    .option('-w, --watch', `Run it again every time a file of ${FUNCTIONS_DIR}/ is saved`)
-    .action((task: string, options: FunctionsDevOptions) => devFunction(task, options));
+  registerFunctions(program);
 
   runtime
     .command('push')

@@ -20,6 +20,7 @@ import { skillPassages, skillsMentions } from './skillsMentions';
 import { fail } from './terminal';
 import { LINT_RULES } from '../lint/catalog';
 
+import type { ApiExplanation } from './apiDeclarations';
 import type { SkillPassage } from './skillsMentions';
 import type { Explanation, SearchHit } from '@plitzi/sdk-authoring';
 import type { Command } from 'commander';
@@ -66,8 +67,15 @@ export const searchAll = (
   commands: readonly Command[],
   limit = 10,
   /** The skills' passages, a project's: what its references teach, answered beside the catalogues. */
-  passages: readonly SkillPassage[] = []
-): (Omit<SearchHit, 'score'> | { kind: 'command' | 'code' | 'skill'; name: string; summary: string })[] => {
+  passages: readonly SkillPassage[] = [],
+  /** A member of what the project's code is handed, by its name — `ctx.later` — as the installed types declare it. */
+  memberOf: (name: string) => readonly ApiExplanation[] = () => []
+): (Omit<SearchHit, 'score'> | { kind: 'command' | 'code' | 'skill' | 'api'; name: string; summary: string })[] => {
+  // A member named in the words is answered first: encore-3's "ctx.later" was searched for five times and found every
+  // passage that said "later", never the member.
+  const members = (words.match(/\b[\w$]+\.[\w$]+\b/g) ?? []).flatMap(name =>
+    memberOf(name).map(each => ({ kind: each.kind, name: each.name, summary: each.summary }))
+  );
   const asked = [...new Set(searchWords(words))];
   const own = [
     ...commandsOf(commands).map(each => ({ kind: 'command' as const, ...each })),
@@ -94,10 +102,12 @@ export const searchAll = (
   // Of two that hold as many words, what the skills teach first — a passage says how, a catalogue's line what it is.
   const taught = (hit: { kind: string }): number => (hit.kind === 'skill' ? 0 : 1);
 
-  return ranked
-    .sort((a, b) => b.score - a.score || taught(a.hit) - taught(b.hit) || a.hit.name.localeCompare(b.hit.name))
-    .slice(0, limit)
-    .map(each => each.hit);
+  return [
+    ...members,
+    ...ranked
+      .sort((a, b) => b.score - a.score || taught(a.hit) - taught(b.hit) || a.hit.name.localeCompare(b.hit.name))
+      .map(each => each.hit)
+  ].slice(0, limit);
 };
 
 /**
@@ -164,7 +174,8 @@ export const explainCommand = async (
 ): Promise<void> => {
   if (options.search !== undefined) {
     const project = await findProject(process.cwd());
-    const hits = searchAll(options.search, commands, 10, skillPassages(project?.root ?? process.cwd()));
+    const root = project?.root ?? process.cwd();
+    const hits = searchAll(options.search, commands, 10, skillPassages(root), name => memberDeclarations(root, name));
     if (hits.length === 0) {
       fail(
         `Nothing Plitzi has is described by "${options.search}" — other words, or what there is: --list ${kinds}, tasks. Something Plitzi should have: say it (plitzi run notice --plitzi "…", in a run).`

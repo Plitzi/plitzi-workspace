@@ -548,6 +548,12 @@ does: a project's server keeps it in `state/jobs.json` — one due while the ser
 one a worker held when it went down is taken again, its attempt written `lost` (below, **Scheduled jobs**). Refused before anything is queued —
 an action with no later trigger, a switched-off one, a time out of range, a server that runs no jobs — and said why.
 
+While a project is served, `plitzi functions later` lists what waits and `plitzi functions later <key> --now` starts
+one now (`hosts/project/laterAsks.ts`): the CLI leaves its ask in the project's `tmp/later-ask.json`, since the server
+holds its queue's file, and the server sets the job again under its key, due now — the queue's own rule drops the one
+waiting — and answers in `tmp/later-answer.json`. A spec of a show that starts in five minutes waited the five on every
+pass (encore-3).
+
 ### Watching the queue
 
 Runs are history; the queue is the work. In the Plitzi dashboard, **Automations → Queue** shows what is scheduled and

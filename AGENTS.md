@@ -525,6 +525,11 @@ Academy lessons are seeds, and fail there first (`docs/en/releases.md` § Publis
   `page.evaluate` that declares a named function inside (`const load = () => …`): tsx wraps it in `__name`, which the
   page has not (`ReferenceError: __name is not defined`). Try anything a browser runs with the built CLI
   (`yarn build:dev`, `node apps/cli/dist/index.js …`).
+- `apps/cli/src/commands/runs.test.ts` starts the CLI as a process, which imports the other `@plitzi/*` packages from
+  their `dist`: a new export of `sdk-shared` fails all of it (`does not provide an export named …`) until
+  `yarn build:dev` there — vitest's own run reads the source and passes.
+- A skill's Markdown table is never reformatted with `prettier --write`: it pads every cell to the widest, and the
+  file's token budget (`skills.test.ts`) went 200 tokens over on one cell made longer.
 
 ## Documentation — one owner per fact
 

@@ -5,6 +5,25 @@ import { parse } from './Parser';
 
 import type { ASTNode, Expression } from './AST';
 
+/**
+ * A filter written as JavaScript names it, and what the templates call it: encore-3's host picker wrote `concat`, read
+ * as nothing at all.
+ */
+const JS_NAMES: Readonly<Partial<Record<string, string>>> = {
+  concat: 'first|merge(second)',
+  push: 'list|merge([item])',
+  includes: 'item in list',
+  indexOf: 'list|find(…)',
+  toUpperCase: 'value|upper',
+  toLowerCase: 'value|lower',
+  startsWith: 'value|startswith(prefix)',
+  endsWith: 'value|endswith(suffix)',
+  toFixed: 'value|number(2)',
+  stringify: 'value|to_json',
+  uniq: 'list|unique',
+  groupBy: "list|group_by('field')"
+};
+
 /** The functions a template can call, as the evaluator implements them. Anything else evaluates to `''`. */
 const FUNCTIONS = new Set(Object.keys(FUNCTION_DOCS));
 
@@ -114,7 +133,8 @@ class Inspector {
   private filterNames(names: readonly string[]): void {
     for (const name of names) {
       if (name && !Object.hasOwn(filters, name)) {
-        this.issues.push(`Unknown filter "${name}"`);
+        const twigs = JS_NAMES[name];
+        this.issues.push(`Unknown filter "${name}"${twigs ? ` — write \`${twigs}\`` : ''}`);
       }
     }
   }

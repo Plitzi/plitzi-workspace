@@ -128,6 +128,13 @@ export const KV_FILE = `${PROJECT_STATE}/kv.json`;
  */
 export const JOBS_FILE = `${PROJECT_STATE}/jobs.json`;
 
+/**
+ * What `plitzi functions later` asks the project's running server, and where it answers: the server holds its queue's
+ * file, so a run set for later is read and started now through it — a spec of a show waited five real minutes a pass.
+ */
+export const LATER_ASK_FILE = `${PROJECT_TMP}/later-ask.json`;
+export const LATER_ANSWER_FILE = `${PROJECT_TMP}/later-answer.json`;
+
 /** The port the server took and the name its `/health` answers with: what `check`, `shot` and `visual` find it by. */
 export const DEV_SERVER_FILE = `${PROJECT_TMP}/dev-server.json`;
 

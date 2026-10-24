@@ -24,7 +24,8 @@ export interface OutlineOptions {
   compare?: string;
   /** One part of the page — its element's name or any selector — outlined alone. */
   within?: string;
-  width?: number;
+  /** The viewport widths, an outline each. */
+  width?: number[];
   /** How many levels under the part are listed. */
   depth?: number;
   /** Elements clicked first, in order — an open drawer outlined: `"ours => theirs"`, each page its own side. */
@@ -270,89 +271,102 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
     return;
   }
 
-  const width = options.width ?? 1440;
-  const url = target ?? `${where?.origin ?? ''}${route}`;
-  const asked = {
-    ...(options.click
-      ? { clicks: options.click.map(each => pairOf(each)[target === undefined ? 'here' : 'there']) }
-      : {}),
-    ...(options.within === undefined ? {} : { within: options.within }),
-    depth: options.depth ?? DEPTH,
-    limit: LIMIT,
-    words: WORDS
+  // Each width its own outline, as `check` and `measure` take a list: encore-3's agents asked for 390,1440 four times.
+  const widths = options.width ?? [1440];
+  const outlines: Outline[] = [];
+  const at = async (width: number): Promise<void> => {
+    const url = target ?? `${where?.origin ?? ''}${route}`;
+    const asked = {
+      ...(options.click
+        ? { clicks: options.click.map(each => pairOf(each)[target === undefined ? 'here' : 'there']) }
+        : {}),
+      ...(options.within === undefined ? {} : { within: options.within }),
+      depth: options.depth ?? DEPTH,
+      limit: LIMIT,
+      words: WORDS
+    };
+    const said = (
+      read: { outline: Omit<Outline, 'url' | 'width'>; opened: boolean } | { problem: string; phase: string }
+    ): void => {
+      if ('problem' in read) {
+        // A part or a reading this page refuses is the asker's; the other site not answering a click is the site's.
+        (read.phase === 'part' || (read.phase === 'read' && target === undefined) ? fail : unanswered)(
+          read.phase === 'read' ? `${read.problem} on ${url}` : read.problem
+        );
+
+        return;
+      }
+
+      const result: Outline = { url, width, ...read.outline };
+      if (options.json) {
+        outlines.push(result);
+
+        return;
+      }
+
+      console.log(outlineText(result, read.opened ? undefined : options.within, read.opened).join('\n'));
+    };
+
+    // The other site outlined warm in the kept browser, on a page of its own: launched and loaded cold, 15 s a call
+    // (lx-product's dev-2, 28 calls). Not answered there, it is read here as before.
+    if (target !== undefined) {
+      const kept = await keptOutline(project.root, {
+        url: target,
+        width,
+        height: 900,
+        reducedMotion: true,
+        ...(options.scheme ? { scheme: options.scheme } : {}),
+        ...asked
+      });
+      if (kept && 'outline' in kept) {
+        said({ outline: kept.outline, opened: asked.clicks !== undefined && asked.within === undefined });
+
+        return;
+      }
+    }
+
+    const account = await accountAsked(project.root, options.as);
+    if (account === null) {
+      return;
+    }
+
+    const browser = await launchBrowser(project.root);
+    if ('problem' in browser) {
+      unanswered(browser.problem);
+
+      return;
+    }
+
+    try {
+      const opened: { page: BrowserPage } | { problem: string } =
+        target !== undefined
+          ? await pageAnswered(browser, target, {
+              width,
+              height: 900,
+              reducedMotion: true,
+              ...(options.scheme ? { scheme: options.scheme } : {})
+            })
+          : await ourPage(browser, where?.origin ?? '', route, {
+              width,
+              ...(account ? { account } : {}),
+              ...(options.scheme ? { scheme: options.scheme } : {})
+            }).then(read => (read.answered ? read : { problem: read.problem ?? `nothing answers at ${url}` }));
+      if ('problem' in opened) {
+        unanswered(opened.problem);
+
+        return;
+      }
+
+      said(await outlineOnPage(opened.page, asked));
+    } finally {
+      await browser.close();
+    }
   };
-  const said = (
-    read: { outline: Omit<Outline, 'url' | 'width'>; opened: boolean } | { problem: string; phase: string }
-  ): void => {
-    if ('problem' in read) {
-      // A part or a reading this page refuses is the asker's; the other site not answering a click is the site's.
-      (read.phase === 'part' || (read.phase === 'read' && target === undefined) ? fail : unanswered)(
-        read.phase === 'read' ? `${read.problem} on ${url}` : read.problem
-      );
-
-      return;
-    }
-
-    const result: Outline = { url, width, ...read.outline };
-    console.log(
-      options.json
-        ? JSON.stringify(result)
-        : outlineText(result, read.opened ? undefined : options.within, read.opened).join('\n')
-    );
-  };
-
-  // The other site outlined warm in the kept browser, on a page of its own: launched and loaded cold, 15 s a call
-  // (lx-product's dev-2, 28 calls). Not answered there, it is read here as before.
-  if (target !== undefined) {
-    const kept = await keptOutline(project.root, {
-      url: target,
-      width,
-      height: 900,
-      reducedMotion: true,
-      ...(options.scheme ? { scheme: options.scheme } : {}),
-      ...asked
-    });
-    if (kept && 'outline' in kept) {
-      said({ outline: kept.outline, opened: asked.clicks !== undefined && asked.within === undefined });
-
-      return;
-    }
+  for (const width of widths) {
+    await at(width);
   }
 
-  const account = await accountAsked(project.root, options.as);
-  if (account === null) {
-    return;
-  }
-
-  const browser = await launchBrowser(project.root);
-  if ('problem' in browser) {
-    unanswered(browser.problem);
-
-    return;
-  }
-
-  try {
-    const opened: { page: BrowserPage } | { problem: string } =
-      target !== undefined
-        ? await pageAnswered(browser, target, {
-            width,
-            height: 900,
-            reducedMotion: true,
-            ...(options.scheme ? { scheme: options.scheme } : {})
-          })
-        : await ourPage(browser, where?.origin ?? '', route, {
-            width,
-            ...(account ? { account } : {}),
-            ...(options.scheme ? { scheme: options.scheme } : {})
-          }).then(read => (read.answered ? read : { problem: read.problem ?? `nothing answers at ${url}` }));
-    if ('problem' in opened) {
-      unanswered(opened.problem);
-
-      return;
-    }
-
-    said(await outlineOnPage(opened.page, asked));
-  } finally {
-    await browser.close();
+  if (options.json) {
+    console.log(JSON.stringify(widths.length === 1 ? outlines[0] : outlines));
   }
 };

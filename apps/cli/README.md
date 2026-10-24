@@ -220,7 +220,7 @@ plitzi page check /expenses --fill expenses-search=kibble --element expenses-led
 plitzi page check /studio --as maya             # a page for signed-in visitors, signed in through /auth first
 plitzi page check / --url https://staging.example.com   # the project served elsewhere: a second server, staging, a deploy
 plitzi page check "/?__pt=weather" --url https://localhost:8091 --space tmp/pages/weather.ts   # a page not the project's
-plitzi page shot /about --width 390 --scheme dark
+plitzi page shot /about --width 390 --scheme light,dark
 plitzi page shot / --width 1440,390                # a picture at each width, each named by it
 plitzi page shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
 plitzi page shot / --viewport --click .knob open-button --frames 4 --every 250 --sheet   # an interaction, on one sheet
@@ -339,7 +339,7 @@ token belongs. A look at a task checks with it. Every check fails a link or a bu
 edge where the section keeps no space below it (`flush-edge`): a "See all" link sitting against the next section, its
 section's class without a bottom padding, which nothing else says.
 
-`page outline <path> [--compare <url>] [--within <part>] [--depth <n>] [--click <el…>] [--width <px>]` lists what a
+`page outline <path> [--compare <url>] [--within <part>] [--depth <n>] [--click <el…>] [--width <px,px>]` lists what a
 page is made of as a visitor sees it — each shown element by a selector that finds it alone (its name on the project's
 page; its id, its tag and classes, or its place under an ancestor on another site), its box and its first words,
 indented by depth — the project's page, or with `--compare` the other site's: what to name after `=>` in `page measure`,
@@ -602,7 +602,8 @@ plitzi run watch --until lead              # ends the moment something needs the
 plitzi run preview                         # the run's work as it goes, served: each approval shows; its dev tools' Run tab
 plitzi run monitor                         # the run, live, in a terminal of your own beside the harness: its flow as a kanban, its tasks, agents and activity, fitted to the terminal — it only reads
 plitzi task show t-home                    # a task as its lead reviews it: checks, agreements, each file's diff
-plitzi task show t-home src/space/pages/home/hero.ts   # one file whole, as it went to review
+plitzi task show t-home src/space/pages/home/hero.ts   # one file whole, as it went to review (no task: the one you hold or review)
+plitzi run settle after-stop:dev-2 --note "…"   # a finding the run raised to the lead, settled by what it did — the close waits on it
 plitzi run report --summary summary.md     # the lead closes the run with its report (--tokens agent=count,… the harness's)
 plitzi run bench                           # every run measured the same way: minutes a task, rounds, checks failed, cost
 plitzi run finish                          # the whole diff and the checks on the result — then --apply, a person's
@@ -734,6 +735,7 @@ plitzi explain motion           # the arrivals, triggers and loops the SDK plays
 plitzi explain pageFamily       # any other export of a @plitzi package installed — createServer is sdk-server's and sdk-mcp's
 plitzi explain theme            # a global source a template reads, with the fields the platform decides; max, a template function
 plitzi explain --search "carousel end"   # what the words describe, best first: carousel_<id>.atEnd, then the rest
+plitzi explain --search "ctx.later key"  # a member named in the words first, as the installed types declare it
 plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers, helpers, filters, functions, sources
 plitzi explain list.put         # a server action's step, as the project's @plitzi/sdk-server declares it (--list tasks)
 ```
@@ -1135,6 +1137,8 @@ plitzi functions push                                              # src/functio
 plitzi functions try seismic.feed --params '{"minMagnitude":"4"}'  # one task of the saved draft, in the sandbox
 plitzi functions dev seismic.feed --params '{}' --watch            # on this machine, as the platform runs it
 plitzi functions add ical.js                                       # an installed package bundled into src/functions/vendor/
+plitzi functions later                                             # what the served project holds to run later (ctx.later), by key
+plitzi functions later show:s1 --now                               # one of them started now, its input as it was set
 ```
 
 A space's own server code — tasks its actions run as steps, routes under `/fn/` — and `src/functions/` is a working copy

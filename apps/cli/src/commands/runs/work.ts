@@ -1,10 +1,12 @@
 import chalk from 'chalk';
 
-import { act, either, holder, runOf } from './shell';
+import { act, either, holder, reviewingOnly, runOf } from './shell';
 import { hhmm, list, messageLines, secondRunText } from './text';
 import { experienceFrom } from '../../runs/experience';
 import { crossed, longFileText } from '../../runs/longFiles';
+import { runPaths } from '../../runs/paths';
 import { RunRefusal } from '../../runs/refusal';
+import { logRun } from '../../runs/run';
 import { tellLead } from '../../runs/talk';
 import { blockTask, checkTask, completeTask, noteTask, reportProgress, unblockTask } from '../../runs/tasks';
 
@@ -20,7 +22,19 @@ export const taskProgress = (options: RunCommandOptions & { fraction?: number; s
   act(
     options,
     async ctx => {
-      const { runId, taskId } = await holder(ctx, options);
+      const runId = await runOf(ctx, options);
+      const reviewing = await reviewingOnly(ctx, runId);
+      if (reviewing !== undefined) {
+        await logRun(ctx, runPaths(ctx.root, runId), {
+          action: 'review-progress',
+          task: reviewing,
+          ...(options.step !== undefined ? { step: options.step } : {})
+        });
+
+        return { review: reviewing };
+      }
+
+      const { taskId } = await holder(ctx, options);
 
       return reportProgress(ctx, runId, taskId, {
         ...(options.fraction !== undefined ? { fraction: options.fraction } : {}),
@@ -28,17 +42,19 @@ export const taskProgress = (options: RunCommandOptions & { fraction?: number; s
       });
     },
     signal =>
-      [
-        ...messageLines(signal.messages),
-        ...signal.longFiles.map(long =>
-          chalk.yellow(
-            `  ⚠ ${longFileText(long)}: split it by what changes together — a section or a part per file${crossed(long) ? '; complete refuses it past the line' : ''}`
-          )
-        ),
-        signal.inReview
-          ? `${signal.task} is in review: no sign of life is needed until it comes back to you — and what you write in its copy now is not reviewed. Take another task meanwhile: plitzi task next`
-          : `${signal.task}: a sign of life at ${hhmm(signal.at)}. Without another, the lead may reassign it after ${hhmm(signal.quietAfter)}, and another agent take it after ${hhmm(signal.takenAfter)}.`
-      ].join('\n')
+      'review' in signal
+        ? `Noted on your review of ${signal.review}: the lead sees you are at it. Your verdict ends it: plitzi task review ${signal.review} --approve | --changes "…"`
+        : [
+            ...messageLines(signal.messages),
+            ...signal.longFiles.map(long =>
+              chalk.yellow(
+                `  ⚠ ${longFileText(long)}: split it by what changes together — a section or a part per file${crossed(long) ? '; complete refuses it past the line' : ''}`
+              )
+            ),
+            signal.inReview
+              ? `${signal.task} is in review: no sign of life is needed until it comes back to you — and what you write in its copy now is not reviewed. Take another task meanwhile: plitzi task next`
+              : `${signal.task}: a sign of life at ${hhmm(signal.at)}. Without another, the lead may reassign it after ${hhmm(signal.quietAfter)}, and another agent take it after ${hhmm(signal.takenAfter)}.`
+          ].join('\n')
   );
 
 export const taskBlock = (
@@ -206,6 +222,7 @@ export const warningLines = (
 };
 
 export const taskComplete = (
+  named: string | undefined,
   options: RunCommandOptions & {
     knownFailure?: string;
     fixedBy?: string;
@@ -219,6 +236,14 @@ export const taskComplete = (
       // Asked first: a forgotten flag is said before anything runs, and costs no check.
       const experience = experienceFrom(options, 'task complete');
       const { runId, taskId } = await holder(ctx, options);
+      // Named, it is said back: the lead's `task complete t-x` was refused as an argument too many (encore-3).
+      if (named !== undefined && named !== taskId) {
+        throw new RunRefusal(
+          'invalid',
+          `You hold ${taskId}, not ${named}: complete it in its copy — plitzi task complete`
+        );
+      }
+
       if (options.fixedBy && !options.knownFailure) {
         throw new RunRefusal('invalid', '--fixed-by goes with --known-failure "why": the task that fixes what fails');
       }

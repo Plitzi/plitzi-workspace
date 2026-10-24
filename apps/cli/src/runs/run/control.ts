@@ -131,7 +131,9 @@ export const stopRun = async (
   force: boolean,
   reason = `stopped by ${ctx.agent}`
 ): Promise<{ cut: string[] }> => {
-  const loaded = await loadRun(ctx, runId);
+  // Stopped whatever Plitzi is installed: a stop writes only the run's state, and `run upgrade` stops a run whose
+  // version changed already to set it right — encore-3's was refused it, left stopping on a version it never re-pinned.
+  const loaded = await loadRun(ctx, runId, { anyVersion: true });
   assertStatus(loaded, ['open', 'stopping', 'stopped'], 'stop');
   if (!force) {
     requirePrincipal(ctx, 'stop a run');

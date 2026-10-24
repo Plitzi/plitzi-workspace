@@ -58,3 +58,21 @@ describe('explain --search, on what agents asked', () => {
     expect(ranks.filter(rank => !/^[123] /.test(rank))).toEqual([]);
   });
 });
+
+// encore-3: "ctx.later" was searched for five times; every passage that said "later" came back, never the member.
+describe('explain --search, on a member named', () => {
+  it('answers the member first, as the installed types declare it', () => {
+    const later = {
+      kind: 'api' as const,
+      name: 'ctx.later',
+      from: '@plitzi/sdk-server/functions',
+      of: 'FunctionContext',
+      summary: 'Starts one of the space’s actions in so many seconds',
+      written: 'later: (request: LaterRequest) => Promise<LaterAnswer>;'
+    };
+    const hits = searchAll('ctx.later key replace', [], 10, passages, name => (name === 'ctx.later' ? [later] : []));
+
+    expect(hits[0]).toEqual({ kind: 'api', name: 'ctx.later', summary: later.summary });
+    expect(hits.length).toBeLessThanOrEqual(10);
+  });
+});

@@ -106,11 +106,18 @@ const FAILING = /^\s*(✗|✘|×|- |FAIL\b)|\berror\b|Error:/;
  * ones that say what failed first, in their place. A page check says its failure above what it read (`·` lines): its
  * last lines alone were what passed (`✓ / at 390 px`), and the failure at 1440 was cut.
  */
+/**
+ * A line a script prints that says nothing of what failed: a copy's missing `.env`, expected (runs.md) — every failed
+ * `author` of encore-3 began with it, and velada-dress's t-predictions went to review failing "the same way without
+ * this task: .env not found".
+ */
+export const isNotice = (line: string): boolean => /\.env not found|Continuing without it/.test(line);
+
 export const tail = (output: string): string[] => {
   const lines = output
     .split('\n')
     .map(line => line.trimEnd())
-    .filter(line => line.trim() !== '');
+    .filter(line => line.trim() !== '' && !isNotice(line));
   if (lines.length <= TAIL) {
     return lines;
   }

@@ -95,19 +95,9 @@ task message t-home "…" --reply-to m3`; `all` or `@dev-1` in place of the task
 run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — chase
    or decide a review that drags, settle a last cosmetic round yourself, amend away a dependency it does not need.
    **Nothing waits for you?** Help: `task reassign <ready task> --to lead`, then `task complete`.
-6. **Review against the inventory, not only the picture:** every section and piece the task's acceptance names is
-   there, as the reference has it — a difference you accept is one you say (`--note`); one a visitor would see is sent
-   back. Judge the version that went to review, on a page several tasks build only its part. `plitzi task show
-t-home` is all of it (`<file> --diff`: one file's whole diff);
-   `plitzi task look t-home --before` serves its copy, checks and pictures its pages beside the run before (its options:
-   [runs-designer.md](runs-designer.md)) — once: after the designer's, unchanged, it repeats it; code is `task show`. What the acceptance asks and the data does not show, you test
-   (a module's function, its edge cases, `node -e` in the copy) — or send it back for the test it needs. Then
-   `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Past three rounds (yours or
-   the designer's) it is yours: approve as it is, answer, or ask the person. A `--known-failure` says why and
-   which task fixes it — weigh that. The approval merges what went to review, not the copy as it is.
-7. **Someone changed a file while the agent worked on it** → the approval stops, naming it: `--approve --merge` when
-   the changes go together line by line (the refusal says so), `--approve --overwrite` (its version wins, said, the
-   other kept) or `--changes` (redo it on the project's version). A change after approval puts the finish into
+6. **Review each task** as [runs-review.md](runs-review.md) says — read it whole: the review is the same for you, a
+   co-lead and a tester.
+7. **A change after approval** puts the finish into
    **reconciliation**: `plitzi run resolve <run> <file> --take …`, then `plitzi run continue`.
    **The brake** stops a run whose completions keep failing; `run resume`. **Plitzi upgraded mid-run**
    (`version-mismatch`): the person runs `plitzi run attach <run>`. Upgrading on purpose is the person's (`plitzi run upgrade`): rebuild,
@@ -145,14 +135,11 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
   (exit 0 already: it holds nothing, or say it guards); (4) a line for each width the ask covers.
 - **The team the work is worth**: `run plan` says when it is too big — the base runs while the run is open; one on
   demand only when work waits. Started by `run agent`, never prompts of your own.
-- **A round that asks for code alone** (a refactor, one source for a value): `--changes "…" --skip-design lead`, the
-  next round's UI yours — never a designer's review offered, then decided past it.
 - **Your files** — a stage, a summary — in your scratch (`tmp/plitzi-runs/<run>/scratch/lead/`), never the project's
   `tmp/`, where the agents are told of strays.
 - **The page's own type is the page's**: `<page> => body` measures the body's font and background — a line on an
   element of the page makes a task invent a wrapper to carry it.
-- **A finding is read from its page**, measured — never from another page or memory; a piece the scope gives no number
-  is one the agents guess.
+- **A piece the scope gives no number** is one the agents guess.
 - **What two tasks share is the base task's, declared once**: a page's section styles and the space between sections,
   a format (a date), the whole palette — tasks adding tokens at once name one colour three ways.
 - **What must hold at `complete` is an acceptance line** (`run amend`), never a message: a message has no hold on it.
@@ -177,7 +164,6 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
   each changes only the tasks of the plans it holds.
 - **Don't fix Plitzi mid-run**: note it (`run notice --plitzi "…"`); the run's feedback (`.plitzi/feedback/<run>.md`)
   joins it to the agents' reports.
-- **Look where it changed**: a fix for light in light, one for the phone at 390 (`task look --scheme light --width 390`).
 - **A round trimmed is said**: what it leaves goes to the backlog (`run notice`), not one more round.
 - **The report before the finish**; `--apply` is the person's unless they allowed you.
 

@@ -70,6 +70,11 @@ const renderControl = (subType: FormControlProps['subType']) =>
           minLengthMessage=""
           maxLength={0}
           maxLengthMessage=""
+          min=""
+          minMessage=""
+          max=""
+          maxMessage=""
+          step=""
           formatMessage=""
           pattern=""
           patternMessage=""

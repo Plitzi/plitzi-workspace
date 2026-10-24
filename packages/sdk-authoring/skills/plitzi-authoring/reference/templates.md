@@ -113,5 +113,6 @@ A lookup across two sources — a row joined to the stats around it:
 - **Now** is `'now'`: `{{ 'now'|date('F Y', 'UTC') }}` is the month the page is rendered in — on the server, then again
   in the browser, so keep it to the day or coarser (a minute can pass between the two). An age, a "this month", a
   countdown reads it instead of a date written into the page.
-- For "3 minutes ago", the `dateConverter` transformer with `{ asAge: true }`; give it `isUnix: false` for an ISO
-  string. Its checkbox params accept real booleans (and `'true'`/`'false'`).
+- For "3 minutes ago" or "in 2 hours", `|ago` (`|ago('es')` in another language) — rendered on the server, then again
+  in the browser, so it holds to the minute. A transformer of a binding does the same: `dateConverter` with
+  `{ asAge: true }` (`isUnix: false` for an ISO string).

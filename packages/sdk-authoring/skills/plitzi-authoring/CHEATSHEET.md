@@ -49,10 +49,10 @@ carousel({ id: 'hero', items: 'p.data.slides', autoplay: 5000, row: 'slide-card'
                                                // rows follow their item's `id`, or `itemKey: 'slug'`
 apiContainer({ id: 'p', query: '/data/x.json', cache: true, children })   // publishes p.data; no box of its own
 apiContainer({ id: 'p', query: '/data/x.json', runtime: 'server', children }) // read by the page server: still p.data
-apiContainer({ id: 'p', action: 'report', runtime: 'server', children })     // the action's output at p's root: p.rows
+apiContainer({ id: 'p', action: 'report', runtime: 'server', children })     // its output at p's root: p.rows
                                                // loadingSlot: 'p-skeleton' — a child shown until it answers
 form({ id, managedByInteractions: true, flows, children })
-formControl({ name: 'email', label: 'Email', subType: 'email', required: true })   // optional without required; select: options: [{ label, value }]
+formControl({ name: 'email', label: 'Email', subType: 'email', required: true })   // optional without required; select: options: [{ label, value }]; number: min, max
 modalContainer({ id, visible: false, title, children })
 component('card', { props: { title }, children: { body: [ … ] } })
 const seats = defineElement(seatsDeclaration); seats({ id }) // a plugin

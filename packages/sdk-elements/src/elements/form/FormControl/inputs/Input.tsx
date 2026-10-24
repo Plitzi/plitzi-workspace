@@ -21,6 +21,10 @@ export type InputProps = {
   required?: boolean;
   /** `0` for none. The one rule the browser enforces itself, and by the kindest means: it stops the typing. */
   maxLength?: number;
+  /** A number's least and greatest value and its step, `''` for none: the browser's spinner keeps to them. */
+  min?: string;
+  max?: string;
+  step?: string;
   disabled?: boolean;
   readOnly?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -45,6 +49,9 @@ const Input = ({
   autoFocus = false,
   required = true,
   maxLength = 0,
+  min = '',
+  max = '',
+  step = '',
   disabled = false,
   readOnly = false,
   onChange,
@@ -92,6 +99,9 @@ const Input = ({
         value={value}
         required={required}
         maxLength={maxLength > 0 ? maxLength : undefined}
+        min={type === 'number' && min !== '' ? min : undefined}
+        max={type === 'number' && max !== '' ? max : undefined}
+        step={type === 'number' && step !== '' ? step : undefined}
         autoComplete={autoComplete ? 'on' : 'off'}
         disabled={disabled}
         readOnly={readOnly}

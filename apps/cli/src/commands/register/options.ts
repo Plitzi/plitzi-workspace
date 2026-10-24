@@ -1,7 +1,7 @@
 import { Option } from 'commander';
 
 import { SCHEMES } from '../../browser';
-import { widths } from '../../options';
+import { schemes, widths } from '../../options';
 
 /** The flags several groups of commands share, said once. */
 
@@ -14,6 +14,13 @@ export const schemeOption = (): Option =>
     '--scheme <scheme>',
     'The space’s theme, as a visitor’s toggle sets it. The space’s own default when left out'
   ).choices(SCHEMES);
+
+/** The schemes a page is pictured in: one, or each of several. */
+export const schemesOption = (): Option =>
+  new Option(
+    '--scheme <scheme,scheme>',
+    'The space’s theme, as a visitor’s toggle sets it — or both, light,dark: a picture each. The space’s own default when left out'
+  ).argParser(schemes);
 
 /** What every command that writes or sends takes: say what it would do, and do none of it. */
 export const DRY_RUN_OPTION = [

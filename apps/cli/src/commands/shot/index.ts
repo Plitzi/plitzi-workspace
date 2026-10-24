@@ -15,3 +15,4 @@
 export { SHOT_MOMENTS } from './types';
 export type { ShotMoment, ShotOptions } from './types';
 export { shot, shotEach } from './command';
+export type { ShotEachOptions } from './command';

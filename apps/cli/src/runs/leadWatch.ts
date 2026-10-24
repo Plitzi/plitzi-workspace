@@ -19,6 +19,9 @@ import type { Attention, RunView } from './view';
  * reading the run over and over. Each is said once: what it woke the lead for is kept in the run (`lead-seen.json`).
  */
 
+/** How long an agent the run asks for is the keeper's to start before the lead hears of it: a few of its looks. */
+export const KEEPER_GRACE_MS = 90_000;
+
 export interface LeadItem {
   key: string;
   text: string;
@@ -134,6 +137,9 @@ export const waitForLead = async (
   } = {}
 ): Promise<LeadNews> => {
   const started = Date.now();
+  // With a keeper, starting an agent the run asks for is its: the lead hears of one only once it stayed unstarted past
+  // the keeper's look — encore-3's lead was told "start dev-1" in the seconds the keeper took to start it again.
+  const needSince = new Map<string, number>();
   for (;;) {
     let view: RunView;
     let seenFile: string;
@@ -159,7 +165,28 @@ export const waitForLead = async (
     }
 
     const seen = new Set((await readJson(seenFile, isKeys, 'what the lead was woken for')) ?? []);
-    const fresh = [...failedLaunches, ...leadItems(view, ctx.now())].filter(item => !seen.has(item.key));
+    const now = ctx.now().getTime();
+    // By the agent asked for, whatever the words: they change as the work waiting does.
+    const asked = new Map(
+      view.attention.filter(item => item.kind === 'agents-needed').map(item => [item.text, item.agent ?? item.text])
+    );
+    const agents = new Set(asked.values());
+    for (const agent of [...needSince.keys()].filter(agent => !agents.has(agent))) {
+      needSince.delete(agent);
+    }
+
+    for (const agent of agents) {
+      needSince.set(agent, needSince.get(agent) ?? now);
+    }
+
+    const keeperHasIt = (item: LeadItem): boolean => {
+      const agent = asked.get(item.text);
+
+      return !launch && agent !== undefined && now - (needSince.get(agent) ?? now) < KEEPER_GRACE_MS;
+    };
+    const fresh = [...failedLaunches, ...leadItems(view, ctx.now())].filter(
+      item => !seen.has(item.key) && !keeperHasIt(item)
+    );
     if (fresh.length > 0) {
       await writeJson(seenFile, [...seen, ...fresh.map(item => item.key)]);
       // What is only to know, shown whole here, is read: it leaves what needs the lead (Carlos: what was looked at

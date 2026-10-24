@@ -147,3 +147,16 @@ describe('the commands the CLI tells anyone to run', () => {
     expect(problemsIn(['plitzi run team set dev --count 3 --min 1'], 'skill')).toEqual([]);
   });
 });
+
+// encore-3: `page outline --width 390,1440` and `page shot --scheme light,dark` were refused four times, where check,
+// measure and play take a list.
+describe('the page commands', () => {
+  const page = subcommand(program, 'page');
+  const optionOf = (command: string, flag: string) =>
+    subcommand(page ?? program, command)?.options.find(option => option.long === flag);
+
+  it('take a list of widths, and shot a list of schemes', () => {
+    expect(optionOf('outline', '--width')?.parseArg?.('390,1440', undefined)).toEqual([390, 1440]);
+    expect(optionOf('shot', '--scheme')?.parseArg?.('light,dark', undefined)).toEqual(['light', 'dark']);
+  });
+});

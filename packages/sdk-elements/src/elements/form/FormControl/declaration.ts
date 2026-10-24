@@ -244,6 +244,11 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       minLengthMessage: '',
       maxLength: 0,
       maxLengthMessage: '',
+      min: '',
+      minMessage: '',
+      max: '',
+      maxMessage: '',
+      step: '',
       formatMessage: '',
       pattern: '',
       patternMessage: '',
@@ -256,6 +261,8 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       description:
         'A single labelled input (text/select/checkbox/… per its subType) inside a form; captures one field of user ' +
         'input. Optional unless `required: true`, as an HTML field is: a `requiredMessage` alone requires nothing. ' +
+        'A `number` field takes `min` and `max` (each said by its `minMessage`/`maxMessage` when broken) and `step`, ' +
+        "written as numbers are — `'2'`; `''` for none. " +
         'A select offers its `options`: `[{ label, value }, …]` — the text shown, and what the field takes. A ' +
         '`switch` is a checkbox announced and drawn as an on/off switch (`role="switch"`), for a setting that applies at ' +
         'once; both hold `true`/`false`, and a `defaultValue` of `"true"` starts them on. Its slots: `label`, ' +

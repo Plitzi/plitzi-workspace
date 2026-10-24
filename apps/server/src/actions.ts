@@ -22,10 +22,14 @@ export { createActionsModule, spaceKvPatterns } from './modules/actions';
  *
  * `createActionsModule` already assembles these from `jobs` — a deployment reaches for them directly only to run a
  * sweep from its own cron, to build a worker in a process that serves no pages, or to hold the queue itself for an
- * operator's panel. The in-memory queue is the default and is correct for exactly one replica.
+ * operator's panel. The in-memory queue is the default and is correct for exactly one replica; `createFileJobQueue` keeps
+ * one process's in a JSON file, through a restart (a project's server keeps `state/jobs.json`).
  */
 export { createActionJobs, createJobWorker, createMemoryJobQueue, createScheduler } from './modules/actions/jobs';
+// From its file, not the barrel: the root server never loads a file queue it does not use.
+export { createFileJobQueue } from './modules/actions/jobs/fileQueue';
 export { DEFAULT_MAX_ATTEMPTS, scheduleFor, scheduleJobId, schedulesFor } from './modules/actions/jobs';
+export type { FileJobQueue, FileJobQueueOptions } from './modules/actions/jobs/fileQueue';
 /**
  * An operator's hold on the jobs from a process that serves no pages — a Queue panel's API: pause, resume, cancel and
  * requeue, each said on `$job:<id>` to whoever watches a job of the spaces' functions.

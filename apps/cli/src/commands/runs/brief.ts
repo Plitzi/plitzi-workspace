@@ -126,10 +126,22 @@ export const taskContextCommand = (
  * A task in a page an agent reads before it starts: what is asked, what holds for the whole run, what was decided with
  * others, what a review asked — and only where the rest is (`--json`: every file's text, every related task's notes).
  */
+/**
+ * What a brief says of a related task and of a note: enough to act on, the whole one command away. Read again on every
+ * turn of the task, encore-3's briefs ran to 17k characters — 4k of it what two tasks before it were asked and how
+ * their reviews went, their work already in the copy.
+ */
+const RELATED_LINES = 6;
+const LINE_SHOWN = 200;
+const NOTE_SHOWN = 300;
+
+const clipped = (text: string, most: number, whole: string): string =>
+  text.length <= most ? text : `${text.slice(0, most).trimEnd()}… (${whole})`;
+
 const findingsText = (title: string, findings: readonly Finding[]): string[] =>
   findings.length > 0 ? [title, ...findings.map(each => `  ◇ ${each.question} — ${each.text} (${each.by})`)] : [];
 
-const briefOf = (context: TaskContext): string => {
+export const briefOf = (context: TaskContext): string => {
   const { task, state } = context;
   const files = context.files.map(
     file =>
@@ -198,16 +210,23 @@ const briefOf = (context: TaskContext): string => {
     ...context.contracts.map(each => `  contract on ${each.resource} (${each.owner}): ${each.note}`),
     ...context.requests.map(each => `  ↗ request on ${each.file} from ${each.task}: ${each.summary}`),
     // What the review asked is said above: its note is not said twice.
-    ...(notesShown.length > 0 ? ['Its notes', ...notesShown.slice(-5).map(note => `  ${note.by}: ${note.text}`)] : []),
+    ...(notesShown.length > 0
+      ? ['Its notes', ...notesShown.slice(-5).map(note => `  ${note.by}: ${clipped(note.text, NOTE_SHOWN, 'whole: --json')}`)]
+      : []),
     ...(context.related.length > 0
       ? [`Related: ${context.related.map(each => `${each.task} (${each.status})`).join(', ')}`]
       : []),
+    // Its acceptance, what it was held to — not how its reviews went: its work is in the copy.
     ...context.related.flatMap(each =>
       each.asked
         ? [
             `What ${each.task} was asked — it is done before this one:`,
-            ...each.asked.acceptance.map(line => `  ☐ ${line}`),
-            ...each.asked.reviews.map(line => `  ↺ ${line}`)
+            ...each.asked.acceptance
+              .slice(0, RELATED_LINES)
+              .map(line => `  ☐ ${clipped(line, LINE_SHOWN, `plitzi task show ${each.task}`)}`),
+            ...(each.asked.acceptance.length > RELATED_LINES
+              ? [`  … ${String(each.asked.acceptance.length - RELATED_LINES)} more: plitzi task show ${each.task}`]
+              : [])
           ]
         : []
     ),

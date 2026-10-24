@@ -73,4 +73,25 @@ describe('an agent with nothing to take', () => {
     expect(after?.text).not.toBe(before?.text);
     expect(after?.subject).toBe(before?.subject);
   });
+
+  // encore-3: woken eight times at the end for developers with nothing of theirs left, told to split the tester's spec.
+  it('is not said of an agent none of whose role’s cards is left, nor told to split another role’s card', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'test', { roles: ['tester'] });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.filter(task => ['t-menu', 't-about'].includes(task.id));
+    const about = plan.tasks.find(task => task.id === 't-about');
+    if (!about) {
+      throw new Error('the bench plan has no t-about');
+    }
+
+    about.role = 'tester';
+    await openRun(lead(), await bench.writePlan(plan));
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+    await reviewTask(lead(), 'es-launch', 't-menu', 'approve', []);
+    await takeTask(bench.agent('test-1'), 'es-launch', 't-about');
+
+    const idle = (await viewRun(lead(), 'es-launch')).attention.find(item => item.kind === 'idle-team');
+    expect(idle?.text ?? '').not.toContain('dev-1');
+  });
 });

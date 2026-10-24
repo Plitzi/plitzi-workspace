@@ -173,8 +173,16 @@ export const idleTeam = (
   const uiComing = views.some(
     view => view.owner && isWorked(view.state.status) && (view.task.role ?? DEVELOPER) !== DESIGNER
   );
+  // An agent none of whose role's cards is left has done its part: encore-3's lead was woken eight times at the end, for
+  // developers with nothing of theirs left and a tester's spec it could not split for them.
+  const leftFor = (roles: readonly string[]): boolean =>
+    views.some(view => view.state.status !== 'done' && roles.includes(view.task.role ?? DEVELOPER));
   const starved = running.filter(
-    each => !busy.has(each.agent) && !readyFor(each.roles) && !(uiComing && each.roles.includes(DESIGNER))
+    each =>
+      !busy.has(each.agent) &&
+      !readyFor(each.roles) &&
+      leftFor(each.roles) &&
+      !(uiComing && each.roles.includes(DESIGNER))
   );
   if (starved.length === 0) {
     return [];
@@ -191,7 +199,11 @@ export const idleTeam = (
           view.owner?.agent !== designer.agent
       )
     : [];
-  const worked = views.filter(view => view.owner && isWorked(view.state.status)).map(view => view.task.id);
+  // A card to split is one of the idle agents' roles: a part of another role's is no work for them.
+  const idleRoles = new Set(starved.flatMap(each => each.roles));
+  const worked = views
+    .filter(view => view.owner && isWorked(view.state.status) && idleRoles.has(view.task.role ?? DEVELOPER))
+    .map(view => view.task.id);
   const ways = [
     ...(backlog.length > 0
       ? [

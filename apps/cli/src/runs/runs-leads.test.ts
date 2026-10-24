@@ -206,6 +206,35 @@ describe('a tester, reviewing the code', () => {
   });
 });
 
+describe('a task the lead wrote', () => {
+  // encore-3: the lead took a ready task while the tester ran a spec, wrote it and approved it — nobody else read it.
+  it('is reviewed by another: the lead is refused its own, a tester approves it', async () => {
+    const plan = { ...benchPlan(), designReview: false };
+    const file = await bench.writePlan(plan);
+    await bench.writeTeam({
+      version: 1,
+      agents: [
+        { name: 'agent', roles: ['developer'], count: 2 },
+        { name: 'test', roles: ['tester'] }
+      ]
+    });
+    const { runId } = (await openRun(lead(), file)).checked;
+    const { taken } = await reassignTask(lead(), runId, 't-menu', { to: 'lead' });
+    if (!taken) {
+      throw new Error('the lead took no copy of t-menu');
+    }
+
+    await writeInCopy(taken.work, 'src/space/pages/menu.ts', 'export const page = {};\n');
+    await completeTask(bench.agent('lead', { token: taken.token }), runId, 't-menu');
+
+    const own = await refusal(reviewTask(lead(), runId, 't-menu', 'approve', []));
+    expect(own.message).toContain('is yours: another reviews it');
+
+    await reviewTask(bench.agent('test-1'), runId, 't-menu', 'approve', []);
+    expect((await viewRun(lead(), runId)).tasks.find(task => task.id === 't-menu')?.status).toBe('done');
+  });
+});
+
 describe('a lead that reviews, started when the reviews queue up', () => {
   it('leaves every review to the lead while none runs, and says to start one once two waited five minutes', async () => {
     const { runId } = await twoInReview();

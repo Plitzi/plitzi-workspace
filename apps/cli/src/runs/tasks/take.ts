@@ -16,6 +16,7 @@ import { appendLog, cutTask, locksExpired, readOwner, revokeOwner, updateState, 
 import { isWorked } from '../worked';
 import { at, findTask, roleOf } from './common';
 import { allLocks, sharedFiles } from './locks';
+import { spareTests } from './spareTests';
 
 import type { ProposalView } from '../agreements';
 import type { Message } from '../messages';
@@ -52,7 +53,10 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open'], 'start a task');
   const task = findTask(loaded, taskId);
-  if (role !== undefined && roleOf(task) !== role) {
+  const views = await Promise.all(loaded.tasks.map(each => viewTask(loaded.paths, each)));
+  // A tests card a developer may take while every tester is at work: taken as the developer it is.
+  const spare = (await spareTests(loaded, views, ctx.agent))(task);
+  if (role !== undefined && roleOf(task) !== role && !spare) {
     throw new RunRefusal(
       'invalid',
       `Task "${taskId}" is a ${roleOf(task)}’s, not a ${role}’s: plitzi task next --role ${role}`,
@@ -63,7 +67,10 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
     );
   }
 
-  await assertRoles(ctx.root, ctx.agent, [roleOf(task)]);
+  if (!spare) {
+    await assertRoles(ctx.root, ctx.agent, [roleOf(task)]);
+  }
+
   let view = await viewTask(loaded.paths, task);
   const states = new Map(
     await Promise.all(loaded.tasks.map(async each => [each.id, (await viewTask(loaded.paths, each)).state] as const))

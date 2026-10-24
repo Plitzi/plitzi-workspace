@@ -52,7 +52,8 @@ describe('an agent’s prompt', () => {
     expect(designer).toContain('--role designer,developer');
 
     const coLead = agentPrompt({ ...base, agent: 'lead-2', started: { roles: ['lead'] } });
-    expect(coLead).toContain('runs-lead.md');
+    expect(coLead).toContain('runs-review.md');
+    expect(coLead).not.toContain('runs-lead.md');
     expect(coLead).toContain('as strictly as the lead');
 
     expect(agentPrompt({ ...base, agent: 'dev-2', started: { roles: ['developer'], quality: 'high' } })).toContain(

@@ -82,13 +82,11 @@ export const createActionJobs = (
   };
 };
 
-export { createFileJobQueue } from './fileQueue';
 export { createMemoryJobQueue } from './memoryQueue';
 export { createScheduler } from './scheduler';
 export { createJobWorker } from './worker';
 export { DEFAULT_MAX_ATTEMPTS, scheduleFor, scheduleJobId, schedulesFor } from './schedules';
 
-export type { FileJobQueue, FileJobQueueOptions } from './fileQueue';
 export type { MemoryJobQueueOptions } from './memoryQueue';
 export type { Scheduler, SchedulerOptions, SweepResult } from './scheduler';
 export type { JobWorker, JobWorkerOptions } from './worker';

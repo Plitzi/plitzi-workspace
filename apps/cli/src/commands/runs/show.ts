@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-import { act, runOf } from './shell';
+import { act, ownTask, runOf } from './shell';
 import { takeOnRead } from './takeOnRead';
 import { list, messageLines, outsideLines, secondRunText } from './text';
 import { acceptanceText } from '../../runs/model';
@@ -9,10 +9,18 @@ import { FROM_TEXT, showTask, showTaskFile } from '../../runs/show';
 import type { RunCommandOptions } from './shell';
 
 /** `plitzi task show <task> <file>`: the file whole, where the diff is read from — the text alone, to read or to pipe. */
-const taskShowFile = (taskId: string, file: string, options: RunCommandOptions & { diff?: boolean }): Promise<void> =>
+const taskShowFile = (
+  taskId: string | undefined,
+  file: string,
+  options: RunCommandOptions & { diff?: boolean }
+): Promise<void> =>
   act(
     options,
-    async ctx => showTaskFile(ctx, await runOf(ctx, options), taskId, file),
+    async ctx => {
+      const runId = await runOf(ctx, options);
+
+      return showTaskFile(ctx, runId, taskId ?? (await ownTask(ctx, runId)), file);
+    },
     shown =>
       options.diff === true
         ? (shown.diff ?? `${shown.file} of ${shown.task}: not text — no diff`)
@@ -21,11 +29,12 @@ const taskShowFile = (taskId: string, file: string, options: RunCommandOptions &
           : shown.text
   );
 
-const taskShowSummary = (taskId: string, options: RunCommandOptions & { full?: boolean }): Promise<void> =>
+const taskShowSummary = (named: string | undefined, options: RunCommandOptions & { full?: boolean }): Promise<void> =>
   act(
     options,
     async ctx => {
       const runId = await runOf(ctx, options);
+      const taskId = named ?? (await ownTask(ctx, runId));
       await takeOnRead(ctx, runId, taskId);
 
       return showTask(ctx, runId, taskId, { full: options.full ?? false });
@@ -103,7 +112,12 @@ const taskShowSummary = (taskId: string, options: RunCommandOptions & { full?: b
 
 /** `plitzi task show`: the task as its lead reviews it — or, with a file, that file whole. */
 export const taskShow = (
-  taskId: string,
-  file: string | undefined,
+  first: string | undefined,
+  second: string | undefined,
   options: RunCommandOptions & { full?: boolean; diff?: boolean }
-): Promise<void> => (file === undefined ? taskShowSummary(taskId, options) : taskShowFile(taskId, file, options));
+): Promise<void> => {
+  // A path alone is a file of the task one holds or reviews: a task id has no slash.
+  const [taskId, file] = second === undefined && first?.includes('/') === true ? [undefined, first] : [first, second];
+
+  return file === undefined ? taskShowSummary(taskId, options) : taskShowFile(taskId, file, options);
+};

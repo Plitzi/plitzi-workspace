@@ -15,6 +15,14 @@ export type FieldRules = {
   maxLength: number;
   maxLengthMessage: string;
   /**
+   * A `number` field's least and greatest value, written as numbers are — `''` for none, since `0` is a bound a field
+   * can have (encore-3's down votes to remove a song could not say they start at 2).
+   */
+  min: string;
+  minMessage: string;
+  max: string;
+  maxMessage: string;
+  /**
    * The control's `subType`. A type whose value has a shape of its own (see `FORMATS`) is checked against it here,
    * because a form with `noValidate` leaves nobody else to ask for it.
    */
@@ -102,6 +110,23 @@ export const validateField = (value: unknown, rules: FieldRules, values: Record<
 
   if (rules.maxLength > 0 && length > rules.maxLength) {
     return rules.maxLengthMessage || `Use at most ${rules.maxLength} characters`;
+  }
+
+  // A bound is a number's: what a `number` field holds, compared as one — `'9' < '10'` as text would say otherwise.
+  const bound = (written: string): number | undefined => {
+    const read = written.trim() === '' ? Number.NaN : Number(written);
+
+    return Number.isFinite(read) ? read : undefined;
+  };
+  const number = rules.type === 'number' ? Number(text) : Number.NaN;
+  const least = bound(rules.min);
+  const most = bound(rules.max);
+  if (Number.isFinite(number) && least !== undefined && number < least) {
+    return rules.minMessage || `Use a number from ${String(least)}`;
+  }
+
+  if (Number.isFinite(number) && most !== undefined && number > most) {
+    return rules.maxMessage || `Use a number up to ${String(most)}`;
   }
 
   const format = FORMATS.get(rules.type);
