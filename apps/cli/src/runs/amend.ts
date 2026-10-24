@@ -283,7 +283,15 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   const knownNotes = new Set(loaded.plan.notes ?? []);
   const notes = (next.notes ?? []).filter(note => !knownNotes.has(note));
   const goal = stage || next.goal === loaded.plan.goal ? undefined : next.goal;
-  const primer = await readPrimer(next, file);
+  // A stage's plan names the run's primer beside it (`primer.md`), and the run keeps that primer in its own folder: not
+  // beside the plan it moved into `inputs/<stage>/`, it is the run's as kept — unchanged — never a refusal (encore-2's
+  // lead copied it there by hand to amend).
+  const named = primerFile(next, file);
+  const keptOnly =
+    named !== undefined &&
+    (await readOptional(named)) === undefined &&
+    (await readOptional(loaded.paths.primer)) !== undefined;
+  const primer = keptOnly ? undefined : await readPrimer(next, file);
   const primerChanged = primer !== undefined && primer !== (await readOptional(loaded.paths.primer))?.toString('utf-8');
   // The site the run copies, set or changed: a run opened on its scope alone has none until the lead names it
   // (velada-polish: `run reference` refused, and the amend said nothing changed).

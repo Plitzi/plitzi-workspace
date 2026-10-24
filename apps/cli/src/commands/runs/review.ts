@@ -24,7 +24,7 @@ import { designSkipText, isDesignSkip } from '../../runs/designSkip';
 import { inTurns } from '../../runs/inTurns';
 import { takeOnLook } from '../../runs/leads';
 import { readOwnership } from '../../runs/ownership';
-import { acceptancePages, examplePaths, pagesOf, pagesToLook } from '../../runs/pagesOf';
+import { acceptanceAccount, acceptancePages, examplePaths, pagesOf, pagesToLook } from '../../runs/pagesOf';
 import { runPaths, taskPaths } from '../../runs/paths';
 import { startBeforePreview, startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
@@ -54,7 +54,7 @@ const viewTaskOf = async (
   ctx: RunContext,
   runId: string,
   taskId: string
-): Promise<{ changed: string[]; designing: boolean; acceptanceAt: string[] }> => {
+): Promise<{ changed: string[]; designing: boolean; acceptanceAt: string[]; acceptanceAs?: string }> => {
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = findTask(loaded, taskId);
   const { state } = await viewTask(loaded.paths, task);
@@ -63,7 +63,8 @@ const viewTaskOf = async (
   return {
     changed: state.changed ?? [],
     designing: state.design?.status === 'due' && state.design.by === ctx.agent,
-    acceptanceAt: acceptancePages(task.acceptance)
+    acceptanceAt: acceptancePages(task.acceptance),
+    ...(acceptanceAccount(task.acceptance) === undefined ? {} : { acceptanceAs: acceptanceAccount(task.acceptance) })
   };
 };
 
@@ -136,7 +137,7 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
         const views = asked ?? toDeclared(teams, space && !('problem' in space) ? space.schemes : []);
         // No page named: the pages its changes are drawn at, by the files that changed — else its acceptance's, else home.
         // Read off the copy served: a page the task makes is one to look at too.
-        const { changed, designing, acceptanceAt } = await viewTaskOf(ctx, runId, taskId);
+        const { changed, designing, acceptanceAt, acceptanceAs } = await viewTaskOf(ctx, runId, taskId);
         // Every page its changes are drawn at — a shared file's too: named pages are looked at, and the others
         // said (velada-polish: design-2 looked at /combates twice, and the home its card change broke was the lead's
         // to find).
@@ -161,7 +162,9 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
         const zone = options.timezone ? ['--timezone', options.timezone] : [];
         // Read signed in when asked: a task whose UI is for signed-in visitors looked at as one (encore's designers saw
         // only the guest's page of settings, a vote or the host's controls).
-        const signedIn = options.as ? ['--as', options.as] : [];
+        // Not told who to read it as: as its acceptance checks it — a page for signed-in visitors read signed in.
+        const as = options.as ?? acceptanceAs;
+        const signedIn = as ? ['--as', as] : [];
         const interaction = [
           ...(options.click ? ['--click', options.click] : []),
           ...(options.hover ? ['--hover', options.hover] : [])
@@ -388,6 +391,7 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
         return {
           task: taskId,
           url: preview.url,
+          ...(as !== undefined && options.as === undefined ? { signedInAs: as } : {}),
           ok: check.code === 0,
           check: kept?.text ?? check.output.trim(),
           ...(kept && kept.apart > 0 ? { apart: kept.apart } : {}),
@@ -425,6 +429,9 @@ const lookText = (looked: Looked): string =>
         : `${looked.task}, as its copy is now — served by ${looked.borrowed.by === 'agent' ? "its agent's own server" : 'the server a picture of it kept'} on :${String(looked.borrowed.port)}, left running (it holds the copy's state):`
     ),
     ...(looked.stoppedUnder ?? []).map(line => chalk.yellow(`⚠ ${line}`)),
+    ...(looked.signedInAs
+      ? [`Read signed in as ${looked.signedInAs}, as its acceptance checks it (--as another to read it otherwise)`]
+      : []),
     ...(looked.notLooked
       ? [
           chalk.yellow(

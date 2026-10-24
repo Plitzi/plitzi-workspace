@@ -1,4 +1,5 @@
 import { authorSpace } from '@plitzi/sdk-authoring';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { acceptanceText } from './model';
 import { shellCommands } from './shell';
@@ -62,6 +63,38 @@ export const authoredHandles = async (root: string): Promise<SpaceHandles | unde
   }
 };
 
+/** Every element id of components — their parts at any depth: what a page placing one draws. */
+export const partIdsOf = (components: unknown): string[] => {
+  const ids: string[] = [];
+  const walk = (value: unknown): void => {
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+
+      return;
+    }
+
+    if (!isRecord(value)) {
+      return;
+    }
+
+    if (typeof value.id === 'string' && typeof value.type === 'string') {
+      ids.push(value.id);
+    }
+
+    Object.values(value).forEach(walk);
+  };
+  walk(components);
+
+  return ids;
+};
+
+/** The project's components' parts, by id — none when its space cannot be read, which its checks say. */
+const componentPartIds = async (root: string): Promise<string[]> => {
+  const project = await loadProjectSpace(root);
+
+  return 'problem' in project ? [] : partIdsOf(project.space.components ?? []);
+};
+
 /** Each expected id of the plan's checks the space has no element of now, said with what it more likely meant. */
 export const expectationNotices = async (root: string, tasks: readonly PlannedTask[]): Promise<string[]> => {
   const wanted = tasks.flatMap(task =>
@@ -81,7 +114,9 @@ export const expectationNotices = async (root: string, tasks: readonly PlannedTa
     return [];
   }
 
-  const ids = Object.keys(handles.elements);
+  // A component's parts are elements of every page that places it (`room-card-now` of the room card): its id is one a
+  // check expects, and found there — encore-2's plan said the space had none.
+  const ids = [...Object.keys(handles.elements), ...(await componentPartIds(root))];
 
   const known = new Set(ids);
 

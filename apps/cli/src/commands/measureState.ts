@@ -76,13 +76,20 @@ export const settle = async (page: BrowserPage): Promise<void> => {
   );
 };
 
-/** What a step of the state does to its element. */
-const act = (element: PageElement, kind: StateAsked['kind']): Promise<void> =>
-  kind === 'hover'
-    ? element.hover({ timeout: 5000 })
-    : kind === 'focus'
-      ? element.focus({ timeout: 5000 })
-      : element.click({ timeout: 5000 });
+/**
+ * What a step of the state does to its element. A focus is a keyboard's — a key pressed first, then the element focused —
+ * so what the page draws on `:focus-visible` is drawn: focused by script alone, encore-2's focus ring never showed.
+ */
+const act = async (page: BrowserPage, element: PageElement, kind: StateAsked['kind']): Promise<void> => {
+  if (kind === 'hover') {
+    await element.hover({ timeout: 5000 });
+  } else if (kind === 'focus') {
+    await page.keyboard.press('Shift');
+    await element.focus({ timeout: 5000 });
+  } else {
+    await element.click({ timeout: 5000 });
+  }
+};
 
 /**
  * Puts the page in the state asked — the element hovered or focused, or each clicked in turn — and waits for what it
@@ -109,7 +116,7 @@ export const putIn = async (
     }
 
     try {
-      await act(page.locator(found.selector).filter({ visible: true }).first(), kind);
+      await act(page, page.locator(found.selector).filter({ visible: true }).first(), kind);
     } catch (error) {
       return {
         problem: `${target} could not be ${DONE[kind]} on ${page.url()}: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`

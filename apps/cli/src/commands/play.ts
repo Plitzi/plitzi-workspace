@@ -70,6 +70,14 @@ export interface ElementState {
   aria: Partial<Record<(typeof ARIA_STATES)[number], string>>;
   /** It holds the focus, or something inside it does. */
   focused: boolean;
+  /**
+   * Where it is against the viewport — and, in it, what covers its middle (a sticky header): a `scrollIntoView` that
+   * left a heading under the header read as fine (encore-2's dev-1 and design-1).
+   */
+  inView: 'whole' | 'part' | 'out';
+  coveredBy?: string;
+  /** Its transform, when it has one, as scale and translate: a bump (scale) or a float read as nothing moving. */
+  transform?: string;
 }
 
 export interface PlayedStep {
@@ -95,6 +103,50 @@ const alike = (a: number, b: number): boolean => Math.abs(a - b) <= Math.max(2, 
 
 /** Run in the page, on the element: where its content is, whether it is seen, whether it takes a press. */
 export const stateOf = (node: Element): ElementState => {
+  // Everything here runs in the page, where nothing of this module is: its helpers are its own.
+  const placeOf = (element: Element, rect: DOMRect): Pick<ElementState, 'inView' | 'coveredBy'> => {
+    const inside = (from: number, to: number, size: number) => from >= 0 && to <= size;
+    const touches = (from: number, to: number, size: number) => to > 0 && from < size;
+    const inView =
+      inside(rect.top, rect.bottom, innerHeight) && inside(rect.left, rect.right, innerWidth)
+        ? ('whole' as const)
+        : touches(rect.top, rect.bottom, innerHeight) && touches(rect.left, rect.right, innerWidth)
+          ? ('part' as const)
+          : ('out' as const);
+    if (inView === 'out' || rect.width === 0 || rect.height === 0) {
+      return { inView };
+    }
+
+    const middle = {
+      x: Math.min(Math.max(rect.left + rect.width / 2, 0), innerWidth - 1),
+      y: Math.min(Math.max(rect.top + Math.min(rect.height / 2, 12), 0), innerHeight - 1)
+    };
+    const hit = document.elementFromPoint(middle.x, middle.y);
+    if (!hit || element.contains(hit) || hit.contains(element)) {
+      return { inView };
+    }
+
+    const named = hit.closest('[data-plitzi-el]')?.getAttribute('data-plitzi-el');
+
+    return { inView, coveredBy: named ?? hit.tagName.toLowerCase() };
+  };
+  const transformOf = (value: string): string | undefined => {
+    const matrix = /^matrix\(([^)]+)\)$/.exec(value);
+    if (!matrix) {
+      return undefined;
+    }
+
+    const [a = 1, b = 0, , , e = 0, f = 0] = matrix[1].split(',').map(Number);
+    const scale = Math.round(Math.hypot(a, b) * 100) / 100;
+    const said = [
+      ...(scale === 1 ? [] : [`scale ${String(scale)}`]),
+      ...(Math.round(e) === 0 && Math.round(f) === 0
+        ? []
+        : [`translate ${String(Math.round(e))},${String(Math.round(f))}`])
+    ];
+
+    return said.length > 0 ? said.join(', ') : undefined;
+  };
   const box = node.getBoundingClientRect();
   const style = getComputedStyle(node);
   const disabled =
@@ -119,6 +171,8 @@ export const stateOf = (node: Element): ElementState => {
       x: Math.round(scroller.scrollLeft - box.left),
       y: Math.round(scroller.scrollTop - box.top - window.scrollY)
     },
+    ...placeOf(node, box),
+    ...(transformOf(style.transform) ? { transform: transformOf(style.transform) } : {}),
     shown:
       box.width > 0 &&
       box.height > 0 &&
@@ -358,6 +412,10 @@ const moveText = ({ x, y }: { x: number; y: number }): string =>
 const stateText = (state: ElementState): string =>
   [
     `${state.shown ? 'shown' : 'hidden'}, ${state.enabled ? 'enabled' : 'no press'}`,
+    // Said when it is not plainly there: half out of the viewport, out of it, or under something drawn over it.
+    ...(state.shown && state.inView !== 'whole' ? [state.inView === 'part' ? 'partly in view' : 'out of view'] : []),
+    ...(state.shown && state.coveredBy ? [`under ${state.coveredBy}`] : []),
+    ...(state.transform ? [state.transform] : []),
     ...(state.focused ? ['focused'] : []),
     ...Object.entries(state.aria).map(([name, value]) => `${name} ${value}`),
     ...(state.value !== undefined ? [`value "${state.value}"`] : []),

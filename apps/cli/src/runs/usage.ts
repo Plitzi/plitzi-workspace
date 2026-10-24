@@ -49,7 +49,10 @@ const KEPT_OUTPUT = 4000;
 
 /** Lines of a failure's output that say what failed, by what they start with or say. */
 const SAYS_FAILED =
-  /✗|\b(error|failed|fails|refused|cannot|not on the page|console|timed? ?out|exception)\b|\b[45]\d\d\b/i;
+  /✗|\b(error|failed|fails|refused|cannot|not on the page|console|timed? ?out|exception)\b|\b\w+Error\b|\b[45]\d\d\b/i;
+
+/** A test runner's line for one test that failed: node's `✖ name`, TAP's `not ok 3 - name`, vitest's `× name`. */
+const TEST_FAILED = /^\s*(✖|×|not ok\b|FAIL\b)/;
 
 /** How many of a failure's lines are kept. */
 const OUTPUT_LINES = 15;
@@ -101,9 +104,12 @@ export const failureLines = (output: string): string[] => {
     // eslint-disable-next-line no-control-regex
     .map(line => withoutSecrets(line.replace(/\x1b\[[0-9;]*m/g, '').trimEnd()).slice(0, 240))
     .filter(line => line.trim() !== '' && !line.trim().startsWith('·'));
-  const failed = lines.filter(line => SAYS_FAILED.test(line));
+  // A test runner's own line for a test that failed names it — `✖ the night counts to the millisecond` — where the rest
+  // of what it printed is a diff's fragments (encore-2's dev-2 read those alone): its names first.
+  const tests = lines.filter(line => TEST_FAILED.test(line));
+  const failed = lines.filter(line => SAYS_FAILED.test(line) && !TEST_FAILED.test(line));
 
-  return (failed.length > 0 ? failed : lines.slice(-OUTPUT_LINES)).slice(0, OUTPUT_LINES);
+  return (tests.length + failed.length > 0 ? [...tests, ...failed] : lines.slice(-OUTPUT_LINES)).slice(0, OUTPUT_LINES);
 };
 
 const readJsonSync = (file: string): unknown => {

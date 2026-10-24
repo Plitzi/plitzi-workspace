@@ -115,7 +115,12 @@ export const partsComparedOf = (output: string): PartRead[] => {
     }
 
     if (typeof each.problem === 'string') {
-      return [{ compared: { sections: [], dress: [], problem: `${each.part}: ${each.problem}` } }];
+      return [
+        {
+          compared: { sections: [], dress: [], problem: `${each.part}: ${each.problem}` },
+          ...(typeof each.own === 'string' ? { shot: each.own } : {})
+        }
+      ];
     }
 
     const compare = isRecord(each.compare) ? each.compare : {};

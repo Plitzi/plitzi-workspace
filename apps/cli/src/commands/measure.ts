@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import { InvalidArgumentError } from 'commander';
 
 import { openPage } from '@plitzi/sdk-authoring';
+import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
 import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
@@ -369,6 +370,20 @@ export interface Reading {
 }
 
 /** Our page at a width: open, its fonts in and the space hydrated — what a visitor's browser reads it as. */
+/** Why the page is the server's own rather than the space's — the space does not author — or nothing. */
+export const spaceFailureOn = async (page: BrowserPage): Promise<string | undefined> =>
+  page
+    .evaluate(meta => {
+      if (!document.querySelector(`meta[name="${meta}"]`)) {
+        return undefined;
+      }
+
+      const said = (document.querySelector('pre')?.textContent ?? '').trim().split('\n')[0] ?? '';
+
+      return `the space does not author, so the page is the server's error page${said ? ` — ${said}` : ''}: npm run author says why`;
+    }, SPACE_FAILURE_META)
+    .catch(() => undefined);
+
 export const ourPage = async (
   browser: Browser,
   origin: string,
@@ -392,6 +407,12 @@ export const ourPage = async (
   const answered = (await openPage(page, `${origin}${route}`, { quietMs: PROJECT_QUIET_MS })) !== null;
   if (!answered) {
     return { page, answered };
+  }
+
+  // The server's own page while the space does not author: said, never "No element …" of every element asked.
+  const failed = await spaceFailureOn(page);
+  if (failed !== undefined) {
+    return { page, answered: false, problem: failed };
   }
 
   // A text the browser rewrites after hydration (a visitor's time, read in its zone) read before it was the server's:

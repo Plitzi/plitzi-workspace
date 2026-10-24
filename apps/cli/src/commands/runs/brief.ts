@@ -9,6 +9,8 @@ import { MAX_LINES } from '../../lint/rules/fileTooLong';
 import { namesServedCopy } from '../../runs/acceptance';
 import { acceptanceText } from '../../runs/model';
 import { importedApis } from '../../runs/moduleApis';
+import { runPaths } from '../../runs/paths';
+import { logRun } from '../../runs/run';
 import { taskContext } from '../../runs/tasks';
 import { describeData } from '../data';
 
@@ -48,6 +50,37 @@ const filesOf = async (root: string, context: TaskContext): Promise<{ file: stri
   return shapes;
 };
 
+type Brief = TaskContext & {
+  whole: boolean;
+  data: Awaited<ReturnType<typeof filesOf>>;
+  imports: Awaited<ReturnType<typeof importedApis>>;
+};
+
+/** The brief's parts as printed: the task's own, the files themselves (`--files`), the data's shapes, what they import. */
+const partsOf = (context: Brief): { brief: string; files: string; shapes: string; imports: string } => ({
+  brief: briefOf(context),
+  files: (context.whole
+    ? context.files.flatMap(each =>
+        each.text === undefined
+          ? each.toCreate
+            ? [chalk.bold(`── ${each.file} — to create`)]
+            : []
+          : [chalk.bold(`── ${each.file} (${String(each.text.split('\n').length)} lines)`), each.text.trimEnd()]
+      )
+    : []
+  ).join('\n'),
+  shapes: context.data.flatMap(each => [chalk.bold(`── ${each.file}, its shape`), each.shape]).join('\n'),
+  imports: (context.imports.length > 0
+    ? [
+        chalk.bold(
+          '── What these files import from the rest of the project — how each is called, not its body (read the file only for what this does not say):'
+        ),
+        ...context.imports.flatMap(each => [each.file, ...each.names.map(name => `  ${name}`)])
+      ]
+    : []
+  ).join('\n')
+});
+
 export const taskContextCommand = (
   taskId: string | undefined,
   options: RunCommandOptions & { files?: boolean }
@@ -57,38 +90,36 @@ export const taskContextCommand = (
     async ctx => {
       const target = await either(ctx, options, taskId);
       const context = await taskContext(ctx, target.runId, target.taskId);
-
-      return {
+      const brief: Brief = {
         ...context,
         whole: options.files === true,
         data: await filesOf(ctx.root, context),
         imports: await importedApis(ctx.root, context.files)
       };
+      // What each part weighs, for the report: an agent reads its brief again on every turn after, and which part is
+      // heavy was guessed (encore-2: 61 briefs, up to 21k characters, read again for 1.1M tokens).
+      const parts = partsOf(brief);
+      const primer = context.primer?.trim().length ?? 0;
+      await logRun(ctx, runPaths(ctx.root, target.runId), {
+        action: 'brief',
+        task: target.taskId,
+        parts: {
+          primer,
+          brief: parts.brief.length - primer,
+          files: parts.files.length,
+          shapes: parts.shapes.length,
+          imports: parts.imports.length
+        }
+      });
+
+      return brief;
     },
     // The files themselves only with --files: an agent reads the ones it changes with its own reader — one that must
     // read a file before it edits it read each twice. velada-backlog's t-body-type: 57 KB with them, 3.5 KB without.
     context =>
-      [
-        briefOf(context),
-        ...(context.whole
-          ? context.files.flatMap(each =>
-              each.text === undefined
-                ? each.toCreate
-                  ? [chalk.bold(`── ${each.file} — to create`)]
-                  : []
-                : [chalk.bold(`── ${each.file} (${String(each.text.split('\n').length)} lines)`), each.text.trimEnd()]
-            )
-          : []),
-        ...context.data.flatMap(each => [chalk.bold(`── ${each.file}, its shape`), each.shape]),
-        ...(context.imports.length > 0
-          ? [
-              chalk.bold(
-                '── What these files import from the rest of the project — how each is called, not its body (read the file only for what this does not say):'
-              ),
-              ...context.imports.flatMap(each => [each.file, ...each.names.map(name => `  ${name}`)])
-            ]
-          : [])
-      ].join('\n')
+      Object.values(partsOf(context))
+        .filter(part => part !== '')
+        .join('\n')
   );
 
 /**

@@ -66,4 +66,22 @@ describe('what a failed command said, as its usage keeps it', () => {
     ).toEqual(['  ✗ console: Failed to load resource: 409 /_action']);
     expect(failureLines('one\ntwo\n')).toEqual(['one', 'two']);
   });
+
+  // encore-2's dev-2: a test failing said a diff's fragments, never which test.
+  it('names the tests that failed first, before what their assertions printed', () => {
+    const said = [
+      '▶ badges',
+      '  ✔ counts a play at 05:59 (1ms)',
+      '  ✖ counts the night to the millisecond (2ms)',
+      '    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:',
+      '    - false',
+      '    + true',
+      'ℹ fail 1'
+    ].join('\n');
+
+    expect(failureLines(said).slice(0, 2)).toEqual([
+      '  ✖ counts the night to the millisecond (2ms)',
+      '    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:'
+    ]);
+  });
 });

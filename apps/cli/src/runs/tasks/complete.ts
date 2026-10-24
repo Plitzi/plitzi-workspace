@@ -346,11 +346,18 @@ export const completeTask = async (
       }
 
       if (!knownFailure && !preexisting) {
-        throw new RunRefusal('checks-failed', `The project's checks fail in task "${taskId}"'s copy`, {
-          task: taskId,
-          steps: failing,
-          next: 'fix what fails and complete again — or, for a reason that weighs, complete --known-failure "why" [--fixed-by <task>|lead]'
-        });
+        // What the copy took from the run on this complete is said first: encore-2's test-1 checked green, completed,
+        // and failed on a file the run had approved since — no word of which had come in.
+        throw new RunRefusal(
+          'checks-failed',
+          `The project's checks fail in task "${taskId}"'s copy${brought.length > 0 ? ` — and it took from the run, on this complete, what was approved since: ${brought.join(', ')}; what fails may come from them — the run's version of each: plitzi run show <run> <file>` : ''}`,
+          {
+            task: taskId,
+            ...(brought.length > 0 ? { brought } : {}),
+            steps: failing,
+            next: 'fix what fails and complete again — or, for a reason that weighs, complete --known-failure "why" [--fixed-by <task>|lead]'
+          }
+        );
       }
 
       if (fixer && knownFailure) {

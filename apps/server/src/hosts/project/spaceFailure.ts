@@ -1,3 +1,5 @@
+import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
+
 import { LIVE_PAGES_PATH } from '../../core/http/stages/livePages';
 import { escapeHtml } from '../../helpers/escapeHtml';
 
@@ -17,6 +19,7 @@ const pageOf = (message: string): string => `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="${SPACE_FAILURE_META}" content="1">
 <title>The space does not author</title>
 <style>
   :root { color-scheme: light dark; }

@@ -10,7 +10,7 @@ import { agentAddress, LEAD, messagesOf, sendMessage, unreadFor } from '../messa
 import { taskPaths, under } from '../paths';
 import { syncPreview } from '../preview';
 import { RunRefusal } from '../refusal';
-import { assertStatus, loadRun, logRun, readApproved, recordBrake, requireNoTask } from '../run';
+import { assertStatus, loadRun, logRun, readApproved, readRunLog, recordBrake, requireNoTask } from '../run';
 import { keepFiles, withLock } from '../store';
 import { DEFAULTS, lockedFiles, readRequests, readStart, revokeOwner, updateState, viewTask } from '../taskStore';
 import { DESIGNER, readTeam, startedAgents, TEAM_FILE } from '../team';
@@ -163,6 +163,22 @@ export const changesBlock = (state: Pick<TaskState, 'round' | 'designRounds'>, b
  * with comments, and past the round limit blocked for the lead to decide; approval keeps its reviewed version, merges it into the run's
  * work, lets its files go to whoever waits for them, and makes ready what was waiting on it.
  */
+/** Whether `agent` looked at the task (`task look`) since its last completion: what a lead's UI review is. */
+const lookedSince = async (loaded: LoadedRun, agent: string, taskId: string): Promise<boolean> => {
+  const log = await readRunLog(loaded.paths);
+  const completed = log.findLast(entry => entry.action === 'complete' && entry.task === taskId);
+  const since = typeof completed?.at === 'string' ? Date.parse(completed.at) : 0;
+
+  return log.some(
+    entry =>
+      entry.action === 'look' &&
+      entry.task === taskId &&
+      entry.by === agent &&
+      typeof entry.at === 'string' &&
+      Date.parse(entry.at) >= since
+  );
+};
+
 export const reviewTask = async (
   ctx: RunContext,
   runId: string,
@@ -279,6 +295,15 @@ const decide = async (
 
   const skipped = verdict === 'approve' && designDue(view.state);
   const why = skipped ? skipDesign : undefined;
+  // The lead's UI review is a look at it, said: encore-2's lead approved t-reactions-quiet `--skip-design lead` without
+  // one, and the emoji sat at the top of every key — the person saw it, no check could.
+  if (why === 'lead' && !(await lookedSince(loaded, ctx.agent, taskId))) {
+    throw new RunRefusal(
+      'invalid',
+      `--skip-design lead says you reviewed ${taskId}'s UI yourself, and you have not looked at it since it was completed: plitzi task look ${taskId} (both schemes, the phone width), then approve`,
+      { task: taskId }
+    );
+  }
 
   // The lead sent back a task a designer was reviewing: its review ends now, and it is told — never left to say a
   // verdict that is refused (velada-fidelity: design-1's of t-result-card was turned away, naming nothing). An approval

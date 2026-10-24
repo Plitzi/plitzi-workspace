@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
 import { projectMark } from '@plitzi/sdk-shared/project';
 
 import { serveProject } from './serveProject';
@@ -278,7 +279,10 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
 
     const page = await fetch(`${running.url}/`, { headers: { accept: 'text/html' } });
     expect(page.status).toBe(503);
-    expect(await page.text()).toContain('ReferenceError: when is not defined');
+    const said = await page.text();
+    expect(said).toContain('ReferenceError: when is not defined');
+    // Marked as the server's own page, for a tool reading it to say so (`plitzi page measure`).
+    expect(said).toContain(`<meta name="${SPACE_FAILURE_META}"`);
     expect(error.mock.calls.flat().join('\n')).toContain('fix the space and save');
 
     const reload = await listen(running.url);

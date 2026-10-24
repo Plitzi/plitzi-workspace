@@ -2,7 +2,7 @@ import http from 'node:http';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { acceptancePages, examplePaths, pagesToLook } from './pagesOf';
+import { acceptanceAccount, acceptancePages, examplePaths, pagesToLook } from './pagesOf';
 
 import type { AddressInfo } from 'node:net';
 
@@ -90,5 +90,20 @@ describe('the pages a look opens', () => {
     expect(pagesToLook([], ['/home'], ['/r/night-drive'])).toEqual(['/home']);
     expect(pagesToLook([], [], ['/r/night-drive'])).toEqual(['/r/night-drive']);
     expect(pagesToLook([], [], [])).toEqual(['/']);
+  });
+});
+
+describe('the account a look reads as', () => {
+  // encore-2: looks at /settings and /rooms/new pictured the sign-in panel; their acceptance checked them --as mika.
+  it('is the one its acceptance checks the pages signed in as, else none', () => {
+    expect(
+      acceptanceAccount([
+        { said: 'Settings', check: 'plitzi page check /settings --url $PLITZI_URL --width 1440,390 --as mika' },
+        { said: 'Home', check: 'plitzi page check / --url $PLITZI_URL' }
+      ])
+    ).toBe('mika');
+    expect(acceptanceAccount([{ said: 'Home', check: 'plitzi page check / --url $PLITZI_URL' }, 'Reads well'])).toBe(
+      undefined
+    );
   });
 });

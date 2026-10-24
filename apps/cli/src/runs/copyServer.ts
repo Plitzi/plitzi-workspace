@@ -83,8 +83,8 @@ export const originHere = async (
   process.stderr.write(
     chalk.dim(
       pid === undefined
-        ? `· no server of the copy's answered: served on :${String(served.port)} for this command, stopped after it\n`
-        : `· no server of the copy's answered: served on :${String(served.port)}, kept ${String(LINGER_MS / 60_000)} min for the next command\n`
+        ? `· the copy served on :${String(served.port)} for this command, stopped after it (none was running)\n`
+        : `· the copy served on :${String(served.port)}, kept ${String(LINGER_MS / 60_000)} min for the next command (none was running)\n`
     )
   );
 

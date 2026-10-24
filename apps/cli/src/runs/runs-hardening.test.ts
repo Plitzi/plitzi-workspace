@@ -44,7 +44,7 @@ afterEach(async () => {
   await bench.cleanup();
 });
 
-const { refusal, lead, open, take, doTask } = runSteps(() => bench);
+const { refusal, lead, open, take, doTask, looked } = runSteps(() => bench);
 
 describe('what goes to review is what is approved', () => {
   it('merges the version that went to review, not what its copy holds since — and says so', async () => {
@@ -276,6 +276,12 @@ describe('a UI review, by the team’s designers', () => {
     expect(refused.message).toContain('--skip-design is a lead');
     expect(refused.message).toContain("--token <the lead's>");
 
+    // encore-2: the lead approved a UI it never looked at; its review of the UI is a look, said before the approval.
+    expect(
+      (await refusal(reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'lead' })))
+        .message
+    ).toContain('plitzi task look t-menu');
+    await looked('t-menu');
     expect(
       await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'lead' })
     ).toMatchObject({ verdict: 'approve', design: 'skipped', designSkip: 'lead' });

@@ -21,6 +21,9 @@ export const MEASURED = [
   'border-left',
   'border-radius',
   'box-shadow',
+  // A focus ring: encore-2's design-2 reviewed one (t-stats-focus) and could only picture it.
+  'outline',
+  'outline-offset',
   'text-shadow',
   'opacity',
   'padding',

@@ -92,6 +92,8 @@ person to share with Plitzi's team; it is never sent by itself. Each file holds:
 - what each agent and the lead spent, and the results read again the most;
 - each agent's life in figures (`lives`): how often it was started and stopped and why, its minutes at work, stopped
   and silent — what a board reading "no signal", or a team stopped for good, is read from;
+- what each brief weighed (`briefs`, `briefs.ts`), part by part — primer, brief, files, shapes, imports — off the log's
+  `brief` entries `task context` writes: a primer or a task that made every brief heavier is seen there;
 - refusals by code, and checks by step.
 
 Notices of Plitzi (`run notice --plitzi "…"`) are among the findings, grouped when two agents said one thing. They never
@@ -448,7 +450,8 @@ designer runs `task look`, then `task review --approve` — the task stays in re
 designer — and `run watch
 --until lead` wakes the lead for it then, not before — or `--changes`, which go back to the task as the lead's would and
 count as a round. The lead's approval while it is due is refused, naming the designer, unless `--skip-design <why>`
-says why — `lead` (the lead looked at its UI itself, both schemes and the phone width) or `no-ui` (it changes nothing
+says why — `lead` (the lead looked at its UI itself, both schemes and the phone width: refused without a `task look` of
+the task since its last complete, `lookedSince`) or `no-ui` (it changes nothing
 a visitor sees; `task complete --review code` says it from the start) — kept as the state's `design.why` and the log's
 `designSkip`. The report, the audit, `run watch` and the monitor say each by its reason ("UI by the lead", "no UI"),
 never one "skipped": la-velada's report counted 21 UI reviews the lead made as UI nobody looked at. A designer does not review its own work, and is not finished while a task whose UI it may

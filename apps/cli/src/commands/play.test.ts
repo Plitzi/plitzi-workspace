@@ -12,7 +12,8 @@ const at = (x: number, shown = true, enabled = true): ElementState => ({
   enabled,
   text: '',
   aria: {},
-  focused: false
+  focused: false,
+  inView: 'whole'
 });
 
 /** A row and its arrow, at the start and after one press — here and there. */
@@ -113,6 +114,33 @@ describe('page play', () => {
       'click listen',
       '  listen: shown, enabled · focused · pressed true · "Mute"',
       '  search: shown, enabled · value "lofi"'
+    ]);
+  });
+
+  // encore-2: "shown" of a dialog under the header, half below the fold, and scaled to nothing — said as if in plain view.
+  it('says where a shown element is when it is not plainly there: out of view, under another, transformed', () => {
+    const below: ElementState = { ...at(0), inView: 'part' };
+    const covered: ElementState = { ...at(0), coveredBy: 'site-header' };
+    const scaled: ElementState = { ...at(0), inView: 'out', transform: 'scale 0, translate 0,40' };
+
+    expect(
+      playedText([
+        {
+          step: 'start',
+          reads: [
+            { element: 'dialog', here: below },
+            { element: 'menu', here: covered },
+            { element: 'toast', here: scaled },
+            { element: 'plain', here: at(0) }
+          ]
+        }
+      ])
+    ).toEqual([
+      'start',
+      '  dialog: shown, enabled · partly in view',
+      '  menu: shown, enabled · under site-header',
+      '  toast: shown, enabled · out of view · scale 0, translate 0,40',
+      '  plain: shown, enabled'
     ]);
   });
 

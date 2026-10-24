@@ -126,6 +126,24 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 - **The dev tools' panel shows what its badge counts:** opening it from the badge mounted it again elsewhere in the
   layout, and the logs it kept were gone — a warning on the badge, none in the panel. It starts from the page's log
   history (`pConsole.history()`), and Clear empties that too.
+- **A `complete` whose checks fail names what it took from the run** on that complete, with how to read each — encore-2's
+  test-1 checked green and failed on a file approved since, with no word of which had come in.
+- **`task review --skip-design lead` approves only after a `task look`** of the task since its last complete.
+- **`task look` reads signed in as its acceptance checks it** (`--as` from the acceptance), and a page check refused 401
+  or 403 says who it was signed in as.
+- **A plan's element ids include its components' parts,** so an acceptance naming a part of a component is not refused
+  as unknown; **`run amend` keeps the run's primer** when the plan names one that is no longer beside it.
+- **A failing test is said by its name first** (`✖`, `FAIL`, `not ok`, an `…Error`), before the lines around it.
+- **The report and the feedback say what each brief weighed** — primer, brief, files, shapes, imports, per task — so a
+  brief that grew is seen.
+- **`page measure` reads `outline` and `outline-offset`,** and `--focus` focuses by the keyboard, so `:focus-visible`
+  draws as a visitor tabbing sees it.
+- **`page play` says where a shown element is when it is not plainly there:** partly or out of view, under another
+  element, and its transform — a dialog scaled to nothing was "shown".
+- **A part new in the run is pictured alone** in `task look --before`, saying the run before has none of it, rather than
+  failing the comparison.
+- **The space's failure page is recognised** (`<meta name="plitzi-space-failure">`, `SPACE_FAILURE_META`): a measure on it
+  says the space failed to render instead of measuring the error page.
 
 - **A tester starts on the strongest model, as a designer does,** when its entry names none (`ROLE_MODELS`): its tests
   and its review are what stop a bug or a regression getting through. A model the file says always wins.
@@ -385,6 +403,8 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   - A screen width written as a condition names the per-breakpoint value instead.
   - A refusal raised as a style is written names the author's line.
   - `heavy-animation` can be quieted on the elements that run it, and `repeated-shape` tells forms apart by their fields.
+- **`unknown-variant`:** an `activeWhen` that sets a class's variant the class does not declare is warned, naming the
+  variants it has.
 - **The testing helpers** used by the page tools are exported: `openPage`, `inspectPage`, `pageTexts`, `compareTexts`,
   `pageDecorations`, `compareDecorations`. Every export carries a doc.
 

@@ -1,3 +1,4 @@
+import { briefsText } from './briefs';
 import { FINDING_OWNERS } from './findings';
 import { tokensText } from './runMetrics';
 
@@ -108,6 +109,7 @@ export const consumptionText = (report: RunReport): string[] => {
             ]
           : []),
         '',
+        ...(report.briefs ? [...briefsText(report.briefs), ''] : []),
         ...(heaviest.size > 0
           ? [
               'What was read again the most — results kept in the context and read on every later turn:',

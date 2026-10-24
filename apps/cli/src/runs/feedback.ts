@@ -10,6 +10,7 @@ import { projectFormatter } from '../commands/projectFormatter';
 import { formattedJson } from '../scaffold/formattedJson';
 
 import type { AgentTimeline } from './agentTimeline';
+import type { Briefs } from './briefs';
 import type { CombinedExperience } from './experience';
 import type { Finding, RunIndicators } from './findings';
 import type { HarnessUsage } from './harness';
@@ -76,6 +77,8 @@ export interface RunFeedback {
    * Each agent's life, in figures: how often it was started and stopped, its minutes at work, stopped and silent, and
    * why it stopped — what a board reading "no signal" or a team stopped for good is read from (the report has its moments).
    */
+  /** What the agents' briefs weighed, part by part: which part of `task context` an agent reads again the most. */
+  briefs?: Briefs;
   lives: {
     agent: string;
     launches: number;
@@ -200,6 +203,7 @@ export const feedbackOf = async (ctx: RunContext, loaded: LoadedRun): Promise<Ru
       .slice(0, 16)
       .map(([file, times]) => ({ file, times })),
     reviewsAsked: report.tasks.flatMap(task => task.reviews.map(review => ({ task: task.id, ...review }))),
+    ...(report.briefs ? { briefs: report.briefs } : {}),
     lives: report.agents.map(life => ({
       agent: life.agent,
       launches: life.launches,

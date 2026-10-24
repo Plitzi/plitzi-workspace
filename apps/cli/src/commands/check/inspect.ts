@@ -219,6 +219,18 @@ const namedHydration = async (page: BrowserPage, address: string, errors: readon
   );
 };
 
+/**
+ * Why a page refused who read it, in words: signed in, the account is in and the page's access refuses it — encore-2's
+ * admin read "/moderation was sent with status 403" and its developer looked for a password that was there; not signed
+ * in, a page for signed-in visitors.
+ */
+export const refusedWhy = (status: number, signedInAs: string | undefined): string =>
+  status !== 401 && status !== 403
+    ? ''
+    : signedInAs !== undefined
+      ? `: signed in as ${signedInAs}, and the page's access refuses it — a permission or role the account lacks (its access, beside the account's roles)`
+      : ': a page for signed-in visitors — check it signed in (--as <account>)';
+
 const inspectHere = async (
   page: BrowserPage,
   {
@@ -234,8 +246,11 @@ const inspectHere = async (
     consoleErrors,
     failedRequests,
     answered,
-    throttled
+    throttled,
+    signedInAs
   }: {
+    /** The account it was read signed in as (`--as`), whose refusal a 401 or a 403 says. */
+    signedInAs?: string;
     origin: string;
     pathname: string;
     width: number;
@@ -361,7 +376,13 @@ const inspectHere = async (
             }
           ]
         : sentWith !== undefined && sentWith >= 400 && sentWith !== 404
-          ? [{ code: 'page-status', message: `${pathname} was sent with status ${String(sentWith)}`, width }]
+          ? [
+              {
+                code: 'page-status',
+                message: `${pathname} was sent with status ${String(sentWith)}${refusedWhy(sentWith, signedInAs)}`,
+                width
+              }
+            ]
           : // Asked for a page, the space's page for an address nothing answers came: no page of it is there. Only the
             // address a whole-project check makes for it looks at that page on purpose.
             notFoundPage && !pathname.endsWith(NOT_FOUND_PROBE)
@@ -620,7 +641,8 @@ export const checkAt = async (
       consoleErrors: () => consoleErrors(),
       failedRequests,
       answered: imagesAnswered,
-      throttled: heldBack
+      throttled: heldBack,
+      ...(account ? { signedInAs: account.username } : {})
     })
   ];
   // On as a visitor goes on: a click on the page's own link to each next path, no reload — what the space keeps while
@@ -644,7 +666,8 @@ export const checkAt = async (
             consoleErrors: () => consoleErrors(errorsBefore),
             failedRequests: failedRequests.slice(failedBefore),
             answered: imagesAnswered,
-            throttled: heldBack
+            throttled: heldBack,
+            ...(account ? { signedInAs: account.username } : {})
           })
         : unchecked({ code: 'no-page', message: went, width })
     );

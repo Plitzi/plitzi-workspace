@@ -89,6 +89,7 @@ describe('page measure', () => {
         url: () => 'http://127.0.0.1:8080/combates',
         locator: () => ({ first: () => element, filter: () => ({ first: () => element }) }),
         evaluate: () => Promise.resolve(acts.push('settled')),
+        keyboard: { press: (key: string) => Promise.resolve(acts.push(`press ${key}`)) },
         waitForTimeout: () => Promise.resolve()
       } as unknown as Parameters<typeof putIn>[0];
     };
@@ -133,6 +134,17 @@ describe('page measure', () => {
     ).toBeUndefined();
     expect(acts).toEqual(['click', 'settled', 'click', 'settled']);
     expect(stateText(opened, 'there')).toBe('.open, then summary clicked');
+
+    // encore-2: a focus ring is drawn on `:focus-visible` — a keyboard's focus: a key pressed, then the element focused.
+    acts.length = 0;
+    expect(
+      await putIn(
+        stand(1, () => Promise.resolve()),
+        { ...state, kind: 'focus' },
+        'here'
+      )
+    ).toBeUndefined();
+    expect(acts).toEqual(['press Shift', 'focus', 'settled']);
 
     // encore-2: a menu opened, then an item of it hovered — the clicks first, the hover last, each settled.
     acts.length = 0;

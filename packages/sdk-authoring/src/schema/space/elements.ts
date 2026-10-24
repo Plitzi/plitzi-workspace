@@ -179,6 +179,38 @@ const choosesChildren = (author: SpaceAuthor, element: Element): boolean => {
 };
 
 /**
+ * An `activeWhen` that sets a variant its class does not declare: nothing ever applies, and it was said nowhere
+ * (encore-2: motion-bump's variant is `hit`, and its `activeWhen` — `active` — never worked). `idle` is the class as it is.
+ */
+const warnVariantsSet = (author: SpaceAuthor, element: Element, spec: ElementSpec, where: string): void => {
+  for (const binding of Array.isArray(spec.bind) ? spec.bind : []) {
+    const setter = binding.transformers?.find(each => each.action === 'styleVariant');
+    const key = setter?.params.key;
+    const template = binding.transformers?.find(each => each.action === 'twigTemplate')?.params.template;
+    if (typeof key !== 'string' || typeof template !== 'string') {
+      continue;
+    }
+
+    const cls = key.slice(0, key.lastIndexOf('.'));
+    // The shape `activeWhen` writes — `{{ (…) ? 'active' : 'idle' }}` — names its one variant; a template that builds the
+    // name (`'c' ~ source`) or compares words (`source == 'handle'`) names none to hold the class to.
+    const names = [...template.matchAll(/\?\s*'([\w-]+)'\s*:\s*'idle'\s*\}\}\s*$/g)].map(match => match[1]);
+    const declared = Object.values(author.classRules.get(cls) ?? {}).flatMap(block =>
+      Object.keys(block.variants ?? {})
+    );
+    if (names.length === 0 || !author.classRules.has(cls) || names.some(name => declared.includes(name))) {
+      continue;
+    }
+
+    author.styleWarnings.push({
+      code: 'unknown-variant',
+      message: `${where} sets class ${cls}'s variant ${names.map(name => `'${name}'`).join(' or ')} by \`activeWhen\`, which ${cls} does not declare — ${declared.length > 0 ? `its variants: ${declared.join(', ')}` : 'it has none'} — so nothing applies. Name one it declares — \`activeWhen(${cls}, …, { variant: '${declared[0] ?? 'active'}' })\` — or declare it.`,
+      elementId: element.id
+    });
+  }
+};
+
+/**
  * What an element is written with that reaches nothing, said: a variant no class and no type style declares — the
  * element looks the same with it or without — and, once per plugin, an attribute it declares under one of the
  * element's own names, which a factory reads as that and never hands to the plugin.
@@ -195,6 +227,7 @@ const warnUnreachable = (author: SpaceAuthor, element: Element, spec: ElementSpe
     });
   }
 
+  warnVariantsSet(author, element, spec, where);
   if (spec.variant === undefined || variantDeclared(author, spec, spec.variant)) {
     return;
   }

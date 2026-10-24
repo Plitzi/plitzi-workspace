@@ -59,7 +59,7 @@ person asked for a team:
    not "no signal" for `options.startGraceMinutes` (3). A tester reviews code before you (yours: none took it in 2 min), adds `<id>-tests` (`"tests": false` for none); a designer reviews
    the others' UI before you (`options.designReview`; `false` turns it off). Yours is the complete,
    strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
-   `--skip-design lead|no-ui`; with `--changes`, `lead` keeps the next round's UI yours). A UI review held 8 min, or
+   `--skip-design lead|no-ui`, `lead` after your `task look`). A UI review held 8 min, or
    queued 5, is yours: decide it. Take a task back any time: `task reassign <task> --reason "…" --to <agent>|lead`. **One lead for every four agents**: `lead-2`… beside you, started when `run watch
 --until lead` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`) and
    answers the questions it is handed, and stops when nothing is left.

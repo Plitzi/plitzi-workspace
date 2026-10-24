@@ -7,7 +7,6 @@ import { leadItems } from './leadWatch';
 import { messagesOf } from './messages';
 import { monitorRun } from './monitor';
 import { taskPaths } from './paths';
-import { isRunRefusal } from './refusal';
 import { checkPlanFile, loadRun, openRun, readRunLog } from './run';
 import { tellLeadAbout } from './talk';
 import { completeTask, nextTask, reviewTask, takeNext, takeTask, taskContext } from './tasks';
@@ -16,8 +15,9 @@ import { readTeam, setTeamAgent, TEAM_FILE } from './team';
 import { testFilesFor } from './tests';
 import { viewRun } from './view';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
+import { lookedAt } from '../tests/runSteps';
+import { teamSteps } from '../tests/teamSteps';
 
-import type { RunContext } from './run';
 import type { Bench } from '../tests/runProject';
 
 /** A run worked by the project's team (`.plitzi/team.json`): its size, its tester's tasks, its designer's reviews. */
@@ -32,26 +32,7 @@ afterEach(async () => {
   await bench.cleanup();
 });
 
-const lead = (): RunContext => bench.agent('lead');
-
-const refusalOf = async (work: Promise<unknown>): Promise<string> => {
-  const refused = await work.then(
-    () => undefined,
-    (error: unknown) => error
-  );
-
-  return isRunRefusal(refused) ? refused.message : 'not refused';
-};
-
-/** A developer takes a task, writes it and completes it: in review, as its agent leaves it. */
-const completed = async (name: string, taskId: string, file: string, review?: 'code' | 'ui'): Promise<void> => {
-  const taken = await takeTask(bench.agent(name), 'es-launch', taskId);
-  await writeInCopy(taken.work, file, `export const page = { title: '${taskId}' };\n`);
-  await completeTask(bench.agent(name, { token: taken.token }), 'es-launch', taskId, review ? { review } : {});
-};
-
-const designOf = async (taskId: string) =>
-  (await readState(taskPaths((await loadRun(lead(), 'es-launch')).paths, taskId))).design;
+const { lead, completed, designOf, refusalOf } = teamSteps(() => bench);
 
 describe('the tests of a developer task, with a tester in the team', () => {
   it('are where the project keeps them: a page’s spec, a module’s test beside it', () => {
@@ -441,6 +422,7 @@ describe('a designer’s review of the others’ UI', () => {
 
     await completed('dev-2', 't-about', 'src/space/pages/about.ts');
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
+    await lookedAt(lead(), 'es-launch', 't-about');
     expect(
       await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'lead' })
     ).toMatchObject({ design: 'skipped', designBy: 'design-1' });
@@ -455,6 +437,7 @@ describe('a designer’s review of the others’ UI', () => {
 
     await completed('dev-2', 't-about', 'src/space/pages/about.ts');
     await takeNext(bench.agent('design-2'), 'es-launch', 'designer');
+    await lookedAt(lead(), 'es-launch', 't-about');
     await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'lead' });
     expect((await log()).find(entry => entry.action === 'review' && entry.task === 't-about')).toMatchObject({
       design: 'skipped',
@@ -625,85 +608,5 @@ describe('a designer’s review of the others’ UI', () => {
     const waiting = await nextTask(bench.agent('design-1'), 'es-launch', 'designer');
     expect(waiting.finished).toBeUndefined();
     expect(waiting.why).toContain('is yours to review once it is in review');
-  });
-});
-
-describe('a designer, once it sent a task back', () => {
-  it('keeps a designer waiting for a task it sent back whose files are data, but whose changes reached a page', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
-    await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
-    const plan = benchPlan('data-run');
-    plan.tasks = [{ ...plan.tasks[3], id: 't-data', files: ['src/data/menu.json'] }];
-    await openRun(lead(), await bench.writePlan(plan));
-    const taken = await takeTask(bench.agent('dev-1'), 'data-run', 't-data');
-    await writeInCopy(taken.work, 'src/data/menu.json', '{ "items": [{ "id": "tea" }] }\n');
-    // A page it reads changed too, taken by turns at complete: what a person sees changed.
-    await writeInCopy(
-      taken.work,
-      'src/space/pages/about.ts',
-      `export const about = { title: ${JSON.stringify('Tea')} };\n`
-    );
-    await completeTask(bench.agent('dev-1', { token: taken.token }), 'data-run', 't-data');
-    await takeNext(bench.agent('design-1'), 'data-run', 'designer');
-    await reviewTask(bench.agent('design-1'), 'data-run', 't-data', 'changes', [{ note: 'The tea has no price' }]);
-
-    const after = await nextTask(bench.agent('design-1'), 'data-run', 'designer');
-    expect(after.finished).toBeUndefined();
-    expect(after.why).toContain('t-data');
-  });
-});
-
-// lx-copy: dev-1 and dev-2 asked `task next` with no role, were offered what a designer takes, and refused for it.
-describe('an agent asking with no role', () => {
-  it('asks as the roles the team started it with: a developer is offered no UI review', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
-    await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
-    const plan = benchPlan();
-    plan.tasks = plan.tasks.filter(task => task.id === 't-menu');
-    await openRun(lead(), await bench.writePlan(plan));
-    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
-
-    const next = await nextTask(bench.agent('dev-2'), 'es-launch');
-    expect(next.designReview).toBeUndefined();
-  });
-});
-
-// lx-copy: t-shell, the only designer's and critical, sat ready seven minutes — four developers at UI tasks kept a
-// review always "coming", and design-1 waited for them until the lead messaged it.
-describe('a designer with a task only a designer takes', () => {
-  it('takes it though UI reviews are coming: nobody else would', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 1 });
-    await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'] });
-    const plan = benchPlan();
-    plan.tasks = plan.tasks.map(task => (task.id === 't-about' ? { ...task, role: 'designer' } : task));
-    await openRun(lead(), await bench.writePlan(plan));
-    await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
-
-    const next = await nextTask(bench.agent('design-1'), 'es-launch', 'designer,developer');
-    expect([next.task?.id, next.why]).toEqual(['t-about', undefined]);
-  });
-});
-
-// A designer at a task of its own left every UI review to the lead: it waits for the reviews coming instead.
-describe('a designer that develops too', () => {
-  beforeEach(async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 1 });
-    await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'] });
-    await openRun(lead(), await bench.writePlan(benchPlan()));
-  });
-
-  it('waits for the UI reviews coming rather than taking a task of its own, and takes one once none is', async () => {
-    const menu = await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
-    const waiting = await nextTask(bench.agent('design-1'), 'es-launch', 'designer,developer');
-    expect([waiting.task?.id, waiting.why]).toEqual([
-      undefined,
-      expect.stringContaining('UI reviews are coming — t-menu (dev-1) at work') as unknown
-    ]);
-
-    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "t-menu" };\n');
-    await completeTask(bench.agent('dev-1', { token: menu.token }), 'es-launch', 't-menu');
-    expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer,developer')).designReview?.task.id).toBe(
-      't-menu'
-    );
   });
 });

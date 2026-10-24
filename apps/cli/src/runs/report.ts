@@ -7,6 +7,7 @@ import { agentTimelines, timelinesText } from './agentTimeline';
 import { proposalsOf } from './agreements';
 import { auditRun } from './audit';
 import { benchOf, benchText, readBench } from './bench';
+import { briefsOf } from './briefs';
 import { combineExperience, experienceText, isExperience, saidOfPlitzi } from './experience';
 import { readOptional, writeAtomic } from './files';
 import { factFindings, indicatorsOf, keepScratch, orderFindings, runFindings, scratchOf } from './findings';
@@ -30,6 +31,7 @@ import { viewRun } from './view';
 
 import type { AgentTimeline } from './agentTimeline';
 import type { BenchLine } from './bench';
+import type { Briefs } from './briefs';
 import type { CombinedExperience, Experience } from './experience';
 import type { Finding, RunIndicators } from './findings';
 import type { HarnessUsage } from './harness';
@@ -115,6 +117,8 @@ export interface RunReport {
   lead?: HarnessUsage;
   /** Each agent's life in the run: started, at work, waiting, stopped and why, silent (`agentTimeline.ts`). */
   agents: AgentTimeline[];
+  /** What the agents' briefs weighed, part by part (`briefs.ts`): none when none was read. */
+  briefs?: Briefs;
 }
 
 interface LogLine {
@@ -360,7 +364,8 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     metrics,
     taskReports,
     ...(lead ? { lead } : {}),
-    agents: agentTimelines(runLog, ctx.now())
+    agents: agentTimelines(runLog, ctx.now()),
+    ...(briefsOf(runLog) ? { briefs: briefsOf(runLog) } : {})
   };
 };
 

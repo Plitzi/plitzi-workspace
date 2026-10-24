@@ -4,7 +4,7 @@ import { teamFor } from './runProject';
 import { benchPlan, writeInCopy } from './runProject';
 import { isRunRefusal } from '../runs/refusal';
 import { writeSummary } from '../runs/report';
-import { openRun } from '../runs/run';
+import { loadRun, logRun, openRun } from '../runs/run';
 import { completeTask, reviewTask, takeTask } from '../runs/tasks';
 
 import type { Bench } from './runProject';
@@ -41,6 +41,10 @@ export const refusal = async (work: Promise<unknown>): Promise<Refused> => {
 
   throw new Error('It was not refused');
 };
+
+/** A look at a task, as `task look` logs it — what a lead's UI review with `--skip-design lead` is. */
+export const lookedAt = async (ctx: RunContext, runId: string, taskId: string): Promise<void> =>
+  logRun(ctx, (await loadRun(ctx, runId)).paths, { action: 'look', task: taskId });
 
 export const runSteps = (bench: () => Bench) => {
   const lead = (): RunContext => bench().agent('lead');
@@ -88,5 +92,7 @@ export const runSteps = (bench: () => Bench) => {
     return reviewTask(lead(), runId, taskId, 'approve', []);
   };
 
-  return { refusal, lead, openWith, open, take, doTask };
+  const looked = (taskId: string, runId = 'es-launch') => lookedAt(lead(), runId, taskId);
+
+  return { refusal, lead, openWith, open, take, doTask, looked };
 };

@@ -239,7 +239,10 @@ const TALL_PAGE_PX = 4000;
 const SECTIONS_CUT = 4;
 
 /** One part compared by `compareLocalParts`: its report, or why it could not be pictured on one side. */
-export type PartCompared = { part: string; own: string; compare: CompareReport } | { part: string; problem: string };
+export type PartCompared =
+  | { part: string; own: string; compare: CompareReport }
+  /** Not compared: why — and, a part new with the task (the run before has none), its own picture. */
+  | { part: string; problem: string; own?: string };
 
 /** A part pictured on a page already open: the element the name finds, alone — or why there is none. */
 const partPicture = async (taken: Taken, part: string): Promise<Uint8Array | { problem: string }> => {
@@ -274,9 +277,15 @@ export const compareLocalParts = async (
   /** Theirs, being pictured already — beside ours, when its scheme was said — framed on the first part. */
   early?: Promise<Taken | { problem: string }>
 ): Promise<PartCompared[] | { problem: string }> => {
-  const theirs =
+  const framed =
     (await early) ??
     (await pictureOf(browser, target, { ...view, scheme: taken.scheme, clip: parts[0] }, new URL(target).origin));
+  // Its first part new with the task — the run before has none of it — the other side is pictured whole, and each part
+  // read on it: encore-2's look at a section the task added took no picture at all, "homeLive is not on …".
+  const clipped = !('problem' in framed);
+  const theirs = clipped
+    ? framed
+    : await pictureOf(browser, target, { ...view, scheme: taken.scheme }, new URL(target).origin);
   if ('problem' in theirs) {
     return theirs;
   }
@@ -287,9 +296,16 @@ export const compareLocalParts = async (
       // One part keeps the names a single clip always had; of several, each is named by its part.
       const named = parts.length === 1 ? base : `${base}-${fileOf(part)}`;
       const [ours, their] =
-        index === 0
+        index === 0 && clipped
           ? [taken.png, theirs.png]
-          : await Promise.all([partPicture(taken, part), partPicture(theirs, part)]);
+          : await Promise.all([index === 0 ? taken.png : partPicture(taken, part), partPicture(theirs, part)]);
+      if (ours instanceof Uint8Array && !(their instanceof Uint8Array)) {
+        // On this side alone: new with the task, pictured alone and said so — never a comparison lost.
+        await writeFile(`${named}.png`, ours);
+        compared.push({ part, problem: 'new: the run before has none of it — pictured alone', own: `${named}.png` });
+        continue;
+      }
+
       if (!(ours instanceof Uint8Array) || !(their instanceof Uint8Array)) {
         const why = ours instanceof Uint8Array ? their : ours;
         compared.push({ part, problem: 'problem' in why ? why.problem : `${part} could not be pictured` });

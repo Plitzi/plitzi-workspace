@@ -413,6 +413,23 @@ describe('what an element is written with that reaches nothing', () => {
 
     expect(warnings.map(warning => warning.code)).not.toContain('unknown-variant');
   });
+
+  // encore-2: motion-bump's variant is `hit`, and its `activeWhen` — which sets `active` — never worked, said nowhere.
+  it('says a binding that sets a variant its class does not declare, naming the ones it does', () => {
+    const bump = authoring.styles('bump', { css: { padding: '4px' }, variants: { hit: { scale: '1.1' } } });
+    const { warnings } = author([
+      authoring.text('Hit', { id: 'hit', class: bump, bind: [authoring.activeWhen(bump, '{{ state.hits > 0 }}')] }),
+      authoring.text('Ok', {
+        id: 'ok',
+        class: bump,
+        bind: [authoring.activeWhen(bump, '{{ state.hits > 0 }}', { variant: 'hit' })]
+      })
+    ]);
+    const said = warnings.filter(warning => warning.code === 'unknown-variant');
+
+    expect(said.map(warning => warning.elementId)).toEqual(['hit']);
+    expect(said[0]?.message).toContain('its variants: hit');
+  });
 });
 
 describe('an element’s motion', () => {

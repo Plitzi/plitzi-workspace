@@ -152,7 +152,10 @@ export const checkTask = async (
               .map(step => ({ step: step.name, said: failureLines((step.said ?? []).join('\n')).slice(0, WHY_LINES) })),
             ...accepted
               .filter(each => !each.ok)
-              .map(each => ({ step: `acceptance — ${each.said}`, said: (each.output ?? []).slice(-WHY_LINES) }))
+              .map(each => ({
+                step: `acceptance — ${each.said}`,
+                said: failureLines((each.output ?? []).join('\n')).slice(0, WHY_LINES)
+              }))
           ]
         })
   });

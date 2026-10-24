@@ -1,7 +1,9 @@
+import path from 'node:path';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
-import { expectedIds } from './expectations';
+import { expectedIds, partIdsOf } from './expectations';
 import { extendRun } from './extend';
 import { loadRun, openRun } from './run';
 import { meantOnPage } from '../commands/check';
@@ -68,6 +70,52 @@ describe('a stage’s plan, and what its checks expect', () => {
 });
 
 describe('a check as any shell runs it', () => {
+  // encore-2: a stage's plan named the run's primer (`primer.md`), not kept beside it, and its amend was refused.
+  it('amends a stage whose plan names the run’s primer though none is beside it: the run’s, as kept', async () => {
+    await bench.write('primer.md', '# What the project is\n');
+    const opened = { ...benchPlan(), primer: 'primer.md' };
+    await openRun(lead(), await bench.writePlan(opened));
+    const stage = {
+      version: 1 as const,
+      runId: 'es-launch-2',
+      goal: 'The contact page',
+      primer: 'primer.md',
+      tasks: [
+        {
+          id: 't-contact',
+          title: 'Contact',
+          files: ['src/space/pages/contact.ts'],
+          dependsOn: [],
+          priority: 'low' as const,
+          estimateMinutes: 10,
+          acceptance: ['It says how to reach us']
+        }
+      ]
+    };
+    await bench.write('primer.md', '# What the project is\n');
+    await extendRun(lead(), 'es-launch', await bench.writePlan(stage));
+    stage.tasks[0].acceptance = ['It says how to reach us, and when'];
+    await bench.write('tmp/stages/es-launch-2.plan.json', JSON.stringify(stage));
+
+    expect(
+      await amendRun(lead(), 'es-launch', path.join(bench.root, 'tmp/stages/es-launch-2.plan.json'))
+    ).toMatchObject({ tasks: [{ task: 't-contact', changed: ['acceptance'] }] });
+  });
+
+  // encore-2: `run plan` said the space had no room-card-now — a part of the room card every room list places.
+  it('counts a component’s parts, at any depth, as elements a check may expect', () => {
+    const card = {
+      id: 'room-card',
+      root: {
+        id: 'room-card-root',
+        type: 'container',
+        children: [{ id: 'room-card-now', type: 'text', children: [{ id: 'room-card-now-artist', type: 'text' }] }]
+      }
+    };
+
+    expect(partIdsOf([card])).toEqual(['room-card-root', 'room-card-now', 'room-card-now-artist']);
+  });
+
   it('has the copy served written in, and knows a Playwright spec needs it served', async () => {
     const { namesServedCopy, withServedValues } = await import('./acceptance');
     const values = { PLITZI_URL: 'http://127.0.0.1:8211', PLITZI_PORT: '8211' };
