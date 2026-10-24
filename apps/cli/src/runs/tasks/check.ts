@@ -1,4 +1,8 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
 import { checkedStill, checkKey, keepChecked } from './checked';
+import { LINT_CACHE_FILE } from '../../scaffold/paths';
 import { checkAcceptance, letGo, serveForAcceptance } from '../acceptance';
 import { handOver } from '../handOver';
 import { crossed, longFilesIn, longFileText } from '../longFiles';
@@ -70,6 +74,12 @@ export const checkTask = async (
   const messages = await handOver(ctx, loaded, taskId, view.owner?.agent ?? ctx.agent);
   // Checked against the run and the project as they are now, as `complete` will be.
   const brought = await refreshCopy(ctx, loaded, view);
+  // ESLint's answers are kept file by file, and a typed rule's depend on other files: a type fixed in an imported file
+  // left its unchanged importers failing as before (encore's dev-3). Fresh is fresh: they are read again.
+  if (fresh) {
+    await fs.rm(path.join(view.paths.work, LINT_CACHE_FILE), { force: true });
+  }
+
   const started = await readStart(view.paths);
   const mine = started ? await changedInCopy(view, started) : [];
   const fixed = fix ? await fixChanged(view.paths.work, ctx.root, mine) : undefined;

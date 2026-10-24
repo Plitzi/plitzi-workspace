@@ -24,13 +24,13 @@ style, variables, interactions/flows, data bindings) plus optional plugins, serv
 
 Five repositories, one product (all under `/Users/Carlos/htdocs/`):
 
-| Repo | What it is | Relation |
-| --- | --- | --- |
-| `plitzi-workspace` (here) | Builder, SDK, sdk-server, MCP, CLI, desktop, the `@plitzi/sdk-*` packages | Publishes every `@plitzi/*` package at one version |
-| `plitzi-sdk-server` | Plitzi's own deployment: MySQL/Mongo/Redis, accounts, workspaces, billing, seeds, the website | **Consumes** `@plitzi/sdk-server` and the rest from npm (or portals) |
-| `nexus` | `@plitzi/nexus`, the state store the SDK and builder run on | Consumed from npm (or a portal) |
-| `plitzi-ui` | `@plitzi/plitzi-ui`, the React component library + design tokens of the builder/dashboard | Consumed from npm (or a portal) |
-| `plitzi-platform` | k3s + Argo CD GitOps cluster (dev on a Raspberry Pi), screenshot service, old Terraform | Deploys `plitzi-sdk-server`'s image |
+| Repo                      | What it is                                                                                    | Relation                                                             |
+| ------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `plitzi-workspace` (here) | Builder, SDK, sdk-server, MCP, CLI, desktop, the `@plitzi/sdk-*` packages                     | Publishes every `@plitzi/*` package at one version                   |
+| `plitzi-sdk-server`       | Plitzi's own deployment: MySQL/Mongo/Redis, accounts, workspaces, billing, seeds, the website | **Consumes** `@plitzi/sdk-server` and the rest from npm (or portals) |
+| `nexus`                   | `@plitzi/nexus`, the state store the SDK and builder run on                                   | Consumed from npm (or a portal)                                      |
+| `plitzi-ui`               | `@plitzi/plitzi-ui`, the React component library + design tokens of the builder/dashboard     | Consumed from npm (or a portal)                                      |
+| `plitzi-platform`         | k3s + Argo CD GitOps cluster (dev on a Raspberry Pi), screenshot service, old Terraform       | Deploys `plitzi-sdk-server`'s image                                  |
 
 **The line between the two servers:** `@plitzi/sdk-server` (`apps/server`) is the **mechanism** — what everybody runs,
 self-hosters included; `plitzi-sdk-server` is **Plitzi's data and policy**. A self-hoster must get the full cycle
@@ -68,7 +68,7 @@ the four `AGENTS.md` in the same change. The person you work with is Carlos (the
   a workaround. Write defensive code: validate at runtime against what the type declares.
 - **Platform ≠ use case.** Do not change the platform just to make a seed or example work. Fix the seed first; touch
   the platform only when the bug is general (reproducible by a platform test without the seed), and then present the
-  evidence to Carlos *before* changing it. When fixing a report, find the general rule that produced it and fix that —
+  evidence to Carlos _before_ changing it. When fixing a report, find the general rule that produced it and fix that —
   if it fits Plitzi's model.
 - Defaults that cost differently per element (e.g. `loadStrategy`) are declared per type after auditing which need
   them; never flip a global default "to save resources".
@@ -82,7 +82,7 @@ the four `AGENTS.md` in the same change. The person you work with is Carlos (the
 **Safety in a shared working tree** (Carlos and other sessions work in these repos at the same time)
 
 - Never `git stash`, `git checkout -- <path>`, `git restore`, `git reset --hard` or `git clean` unless asked: they
-  destroy uncommitted work that is not yours. To compare with the base, copy *your* file aside
+  destroy uncommitted work that is not yours. To compare with the base, copy _your_ file aside
   (`git show HEAD:<file>`) and restore from that copy. Before instrumenting a file, copy it to a scratch dir.
 - Temporary scripts live outside the repo (scratch dir; import packages by absolute path). If something must be
   created in the repo, delete it in the same command and check `git status` at the end.
@@ -365,14 +365,18 @@ item captures its own value, extract the item into a sub-component that owns its
 
 ```tsx
 // Wrong — inline arrow, new reference every render
-<button onClick={() => setOpen(o => !o)} />
-{items.map(item => (
-  <button key={item.id} onClick={() => onSelect(item.id)}>{item.label}</button>
-))}
+<button onClick={() => setOpen(o => !o)} />;
+{
+  items.map(item => (
+    <button key={item.id} onClick={() => onSelect(item.id)}>
+      {item.label}
+    </button>
+  ));
+}
 
 // Correct
 const handleToggle = useCallback(() => setOpen(o => !o), []);
-<button onClick={handleToggle} />
+<button onClick={handleToggle} />;
 
 type SelectItemProps = { id: string; label: string; onSelect: (id: string) => void };
 const SelectItem = ({ id, label, onSelect }: SelectItemProps) => {
@@ -390,15 +394,17 @@ conditionals; a one-liner primitive (`{open ? '▲' : '▼'}`) may stay a ternar
 
 ```tsx
 // Correct
-{isLoading && <div className="spinner">...</div>}
-{!isLoading && <div className="data">...</div>}
+{
+  isLoading && <div className="spinner">...</div>;
+}
+{
+  !isLoading && <div className="data">...</div>;
+}
 
 // Wrong
-{isLoading ? (
-  <div className="spinner">...</div>
-) : (
-  <div className="data">...</div>
-)}
+{
+  isLoading ? <div className="spinner">...</div> : <div className="data">...</div>;
+}
 ```
 
 ### Styling — Tailwind CSS
@@ -415,9 +421,14 @@ extract a component.
 ### After-change Verification
 
 After finishing any set of code changes, always run:
+
 1. `yarn typecheck` — fix all TypeScript errors before considering the task done.
 2. `yarn lint` — fix all ESLint errors (warnings are acceptable).
 3. The tests of what you touched; for documentation, the checks in § Documentation.
+4. Touched `apps/server` or `packages/sdk-shared`: `yarn build:dev` there, then `yarn check:server-footprint` — what the
+   server loads at start, held to a budget; a module more fails, naming what imported it. One the server uses: raise
+   `BUDGET` (`apps/server/scripts/checkFootprint.mjs`) in the same change; one a barrel dragged in: import from an entry
+   without it. Left for CI, it reached Carlos as somebody else's failure every time.
 
 ## Platform rules that go wrong most
 
@@ -522,20 +533,20 @@ cost more than one that is missing: an agent reads both, cannot tell which is ri
 every fact has ONE owner that states it in full; every other place says it in a line, points to the owner, or is
 generated from it.
 
-| Surface | Reader | Owns | Where |
-| --- | --- | --- | --- |
-| The code | everyone | what is true: behaviour, defaults, names, messages | `AUTHORING_CODES` (`sdk-authoring/src/schema/codes/`), the `explain` catalogues, JSDoc, constants (`MOTION_*`, breakpoints) |
-| Authoring skill | an agent writing a space in code | how to write a space | `packages/sdk-authoring/skills/plitzi-authoring/` — `SKILL.md` (rules), `CHEATSHEET.md`, `reference/*` (one subject each), `recipes/*` (whole tested files) |
-| CLI skill | an agent using the CLI | what each command is for, when to use it | `apps/cli/skills/plitzi-cli/` |
-| `AGENTS.md` of a generated project | an agent in a generated project | that project's port, data, checks — and the few rules that go wrong most, in a line each | `apps/cli/src/scaffold/project.ts` |
-| `AGENTS.md` of a repo | an agent working on Plitzi itself | how we work and that repo's traps | this file (owner of § How we work) and the other four repos' |
-| CLI README | a person | every command and option | `apps/cli/README.md` |
-| MCP guide | an agent editing a live space through JSON ops | the ops and their JSON shapes | `apps/mcp/src/modules/mcp/helpers/guide.ts` |
-| `docs/en` | a contributor | why it is built the way it is, internals | `docs/en/*.md`; `docs/es` translates 8 of them — change both |
-| Package READMEs | someone configuring a package | its configuration (`createServer` options…) | `apps/server/README.md` and the rest |
-| Docs reference (`docs.plitzi.com/reference`) | a public user of Plitzi | the product, explained | `plitzi-sdk-server/prisma/seeds/spaces/platform/docs/pages/docs-*.ts` |
-| Docs guides and architecture (`docs.plitzi.com`) | a person getting Plitzi running, or deciding on it | nothing: the order, the picture, the checks — each fact a link to its owner | `…/platform/docs/pages/docs-guide-*.ts`, `docs-architecture.ts` |
-| Academy (`docs.plitzi.com/academy`) | a person learning Plitzi | nothing: the order to learn in, and a tested project (`academy/cafe-lumen/`) | `…/platform/docs/shell/levels.ts`, `pages/academy-*.ts` |
+| Surface                                          | Reader                                             | Owns                                                                                     | Where                                                                                                                                                       |
+| ------------------------------------------------ | -------------------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The code                                         | everyone                                           | what is true: behaviour, defaults, names, messages                                       | `AUTHORING_CODES` (`sdk-authoring/src/schema/codes/`), the `explain` catalogues, JSDoc, constants (`MOTION_*`, breakpoints)                                 |
+| Authoring skill                                  | an agent writing a space in code                   | how to write a space                                                                     | `packages/sdk-authoring/skills/plitzi-authoring/` — `SKILL.md` (rules), `CHEATSHEET.md`, `reference/*` (one subject each), `recipes/*` (whole tested files) |
+| CLI skill                                        | an agent using the CLI                             | what each command is for, when to use it                                                 | `apps/cli/skills/plitzi-cli/`                                                                                                                               |
+| `AGENTS.md` of a generated project               | an agent in a generated project                    | that project's port, data, checks — and the few rules that go wrong most, in a line each | `apps/cli/src/scaffold/project.ts`                                                                                                                          |
+| `AGENTS.md` of a repo                            | an agent working on Plitzi itself                  | how we work and that repo's traps                                                        | this file (owner of § How we work) and the other four repos'                                                                                                |
+| CLI README                                       | a person                                           | every command and option                                                                 | `apps/cli/README.md`                                                                                                                                        |
+| MCP guide                                        | an agent editing a live space through JSON ops     | the ops and their JSON shapes                                                            | `apps/mcp/src/modules/mcp/helpers/guide.ts`                                                                                                                 |
+| `docs/en`                                        | a contributor                                      | why it is built the way it is, internals                                                 | `docs/en/*.md`; `docs/es` translates 8 of them — change both                                                                                                |
+| Package READMEs                                  | someone configuring a package                      | its configuration (`createServer` options…)                                              | `apps/server/README.md` and the rest                                                                                                                        |
+| Docs reference (`docs.plitzi.com/reference`)     | a public user of Plitzi                            | the product, explained                                                                   | `plitzi-sdk-server/prisma/seeds/spaces/platform/docs/pages/docs-*.ts`                                                                                       |
+| Docs guides and architecture (`docs.plitzi.com`) | a person getting Plitzi running, or deciding on it | nothing: the order, the picture, the checks — each fact a link to its owner              | `…/platform/docs/pages/docs-guide-*.ts`, `docs-architecture.ts`                                                                                             |
+| Academy (`docs.plitzi.com/academy`)              | a person learning Plitzi                           | nothing: the order to learn in, and a tested project (`academy/cafe-lumen/`)             | `…/platform/docs/shell/levels.ts`, `pages/academy-*.ts`                                                                                                     |
 
 Rules:
 

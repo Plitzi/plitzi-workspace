@@ -103,6 +103,27 @@ describe('lintSpace', () => {
       });
       expect(errorsOf(bound)).not.toContain('channel-topic');
 
+      // encore's private rooms: a choice of prefix is read as either word, and both must be covered.
+      const choosing = (channels: Record<string, { access: { mode: 'public' } }>) =>
+        withChange(({ schema }) => {
+          schema.settings.channels = channels;
+          addElement(schema, {
+            id: 'room',
+            type: 'channel',
+            attributes: { topic: "{{ room.locked ? 'vault' : 'room' }}:{{ room.slug }}" }
+          });
+        });
+      const open = { access: { mode: 'public' as const } };
+      expect(errorsOf(choosing({ 'room:{slug}': open, 'vault:{slug}': open }))).not.toContain('channel-topic');
+      const half = lintSpace(choosing({ 'room:{slug}': open })).errors.find(each => each.code === 'channel-topic');
+      expect(half?.message).toContain('as "vault:x"');
+
+      // Words only the page puts together: nothing here to check, as a bound topic.
+      const joined = withChange(({ schema }) => {
+        addElement(schema, { id: 'room', type: 'channel', attributes: { topic: "{{ 'room:' ~ slug }}" } });
+      });
+      expect(errorsOf(joined)).not.toContain('channel-topic');
+
       // A job's topic is the platform's: no channel of the space has to cover it.
       const job = withChange(({ schema }) => {
         addElement(schema, { id: 'training', type: 'channel', attributes: { topic: '$job:{{ id }}' } });
@@ -261,6 +282,21 @@ describe('lintSpace', () => {
 
       // A list the mode leaves aside is not used, a template is known when the step runs, and a container is a target.
       expect(targets(refresh('all', ['nope'], 'all'), refresh('ok', ['feed', '{{ state.target }}']))).toEqual([]);
+    });
+
+    // encore's room heard the first of three closes the server said at once: the rest arrived while its flow ran.
+    it('message-while-running', () => {
+      const room = (whileRunning?: 'queue') =>
+        withChange(({ schema }) => {
+          addElement(schema, { id: 'room', type: 'channel', attributes: { topic: 'room:1' } });
+          setFlow(schema, 'room', [
+            step('heard', 'trigger', 'onMessage', { elementId: 'room', ...(whileRunning ? { whileRunning } : {}) }),
+            step('open', 'callback', 'openModal', { elementId: 'modal' })
+          ]);
+        });
+
+      expect(warningsOf(room())).toContain('message-while-running');
+      expect(warningsOf(room('queue'))).not.toContain('message-while-running');
     });
 
     it('unknown-global-callback', () => {

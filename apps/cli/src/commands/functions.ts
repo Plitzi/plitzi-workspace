@@ -412,19 +412,43 @@ const isLocalRunner = (value: unknown): value is LocalRunner =>
  * the checks, the isolates and the limits are the platform's own, at the version the project is on.
  */
 const projectRunner = async (root: string): Promise<LocalRunner | undefined> => {
+  let entry: string | undefined;
   try {
-    const entry = createRequire(path.join(root, 'package.json')).resolve('@plitzi/sdk-server/functions-runner');
-    const loaded: unknown = await import(pathToFileURL(entry).href);
-    if (isLocalRunner(loaded)) {
-      return loaded;
-    }
+    entry = createRequire(path.join(root, 'package.json')).resolve('@plitzi/sdk-server/functions-runner');
   } catch {
     // Said below: the one way to have it is to install it.
   }
 
+  // Asked before anything runs, from where the runner loads them: missing, the first task failed in the server's words
+  // (encore's dev-1).
+  const beside = entry === undefined ? undefined : createRequire(entry);
+  const missing = [
+    ...(entry === undefined ? ['@plitzi/sdk-server'] : []),
+    ...['isolated-vm', 'core-js'].filter(name => {
+      try {
+        beside?.resolve(name === 'core-js' ? 'core-js/actual/url' : name);
+
+        return beside === undefined;
+      } catch {
+        return true;
+      }
+    })
+  ];
+  if (entry !== undefined && missing.length === 0) {
+    try {
+      const loaded: unknown = await import(pathToFileURL(entry).href);
+      if (isLocalRunner(loaded)) {
+        return loaded;
+      }
+    } catch {
+      // Said below: what is installed is not a runner this CLI can drive.
+    }
+  }
+
   fail(
-    'plitzi functions dev runs them with this project’s own @plitzi/sdk-server, and the isolates it needs:\n' +
-      '  npm install --save-dev @plitzi/sdk-server isolated-vm core-js'
+    `plitzi functions dev runs them as the platform does — in isolates, within its limits — with this project’s own @plitzi/sdk-server (${missing.length > 0 ? `missing: ${missing.join(', ')}` : 'the one installed has no runner this CLI drives'}):\n` +
+      '  npm install --save-dev @plitzi/sdk-server isolated-vm core-js\n' +
+      'Without the isolates, the project’s own server (npm start) runs the same functions natively: call an action there with POST /_action { "actionId", "input" }.'
   );
 
   return undefined;

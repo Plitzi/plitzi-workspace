@@ -167,6 +167,12 @@ act on it; `task show <task> <file>` is one of those files whole, read from wher
 anyway — said in the review, `run status` and the report, and to the task that fixes it; the final merge still needs
 every check green.
 
+**Nor one that breaks what another was accepted on**: once its own lines pass, `complete` runs again, on the same copy,
+the lines of approved tasks that check a page its files draw (`othersHeld`) — encore's stats panel and its retro
+`/design` broke three such lines, found only at the finish. One that fails refuses it, naming whose; a change that
+means it (a page moved, its words rewritten) completes with `--known-failure "why" --fixed-by lead`, and the lead amends
+that task's line (`run amend` of its stage's plan).
+
 ## Who owns which file (`ownership.ts`)
 
 One agent per file, and a page is rarely one file: it is a folder of modules importing others every page imports. So

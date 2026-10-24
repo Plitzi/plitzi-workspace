@@ -41,7 +41,8 @@ import type { RunSnapshot } from '@plitzi/sdk-shared/runs';
  * are until the final merge. The `.env` is read from the project and handed to the server, never copied into the run.
  */
 
-const previewDir = (loaded: LoadedRun): string => path.join(loaded.paths.cache, 'preview');
+/** Where a run's preview materialises its approved work: what `page check --url` finds a preview's space by. */
+export const previewDir = (paths: { cache: string }): string => path.join(paths.cache, 'preview');
 /** The run as the preview's page shows it in its dev tools (`RUN_STATUS_PATH`), written as it goes. */
 const snapshotFile = (loaded: LoadedRun): string => path.join(loaded.paths.cache, 'preview-run.json');
 
@@ -126,7 +127,7 @@ export const syncPreview = async (loaded: LoadedRun, root: string): Promise<bool
     return false;
   }
 
-  const dir = previewDir(loaded);
+  const dir = previewDir(loaded.paths);
   const approved = (await readApproved(loaded.paths)).files;
   for (const [file, entry] of Object.entries(approved)) {
     // Only what changed is written: every write is a reload in the open page.
@@ -292,7 +293,7 @@ export const startPreview = async (ctx: RunContext, runId: string, port: number)
     );
   }
 
-  const dir = previewDir(loaded);
+  const dir = previewDir(loaded.paths);
   await approvedCopy(ctx, loaded, dir);
   await writeSnapshot(ctx, loaded);
   const served = await serve(ctx, loaded, dir, port, undefined, { snapshot: true });

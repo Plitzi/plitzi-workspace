@@ -19,7 +19,8 @@ button({ content: '', title: 'Close', icon: 'fa-solid fa-xmark' })
 // Words that do not say what it does — a key hint, a count: `label` is read in their place.
 button({ content: 'V', label: 'Select (V)', title: 'Select — V', icon: 'fa-solid fa-arrow-pointer' })
 
-// A link around a whole card: without `label` it is announced as every word inside the card.
+// A link around a whole card: without `label` it is announced as every word inside the card — and around an
+// `article`, Playwright reads no name at all (accname takes none from an article): name it, and a test finds it.
 link({ href: '/posts/field-notes', label: 'Read “Field notes”', children: [ /* cover, topic, title, byline */ ] })
 
 // A field whose design says what it is: the label stays, out of sight.

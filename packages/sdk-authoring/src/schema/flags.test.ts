@@ -72,3 +72,14 @@ describe('authoring flags', () => {
     expect(compareSpaces(documents, authorSpace(spec))).toEqual([]);
   });
 });
+
+// encore's settings: the Spotify card, its flag off, failed every page check as "not on the page".
+describe('an element behind a flag, in the handles', () => {
+  it('is conditional, with what is inside it: a bare visit owes it nothing', () => {
+    const { handles } = authorSpace(space);
+
+    expect(handles.element('checkout').conditional).toBe(true);
+    expect(handles.element('next').conditional).toBe(true);
+    expect(handles.element('legacy').conditional).toBe(true);
+  });
+});

@@ -122,6 +122,14 @@ export const actStep = async (
       };
     }
 
+    // On the page and drawn nowhere at this width — a burger at 1440, the nav behind it at 390: said at its own step,
+    // where encore's dev-1 saw the step pass and the next one fail on what it should have opened.
+    if ((await shown(read.selector).count()) === 0) {
+      return {
+        problem: `Step ${String(index + 1)}: ${step.target} is on the page but hidden at this width — a breakpoint, or a menu that is closed: ${step.kind} what a visitor sees here, or play it at the width that shows it`
+      };
+    }
+
     // A select is chosen, not typed into — the element named, or the one select inside it (a `formControl` wraps it).
     if (step.kind === 'type') {
       const select = await page.evaluate((selector: string) => {

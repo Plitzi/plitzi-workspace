@@ -71,6 +71,22 @@ const patternOf = (route: string): RegExp =>
  * link of its list page (`/boxeadores`), or else of the home page, that fits it — a visitor's way there, with no data
  * of the project's read. A pattern no link fits is said, never opened as it is.
  */
+/** Whether an address is one of a route's pages: `/r/night-drive/stats` of `/r/:slug/stats`. */
+export const pageFits = (route: string, address: string): boolean => patternOf(route).test(address.split(/[?#]/)[0]);
+
+/** A route's parameters as an address fills them: `/r/:slug` at `/r/night-drive` is `{ slug: 'night-drive' }`. */
+const paramsOf = (route: string, address: string): Record<string, string> => {
+  const parts = address.split(/[?#]/)[0].split('/');
+
+  return Object.fromEntries(
+    route
+      .split('/')
+      .flatMap((segment, index) =>
+        segment.startsWith(':') && parts[index] ? [[segment.slice(1), parts[index]] as const] : []
+      )
+  );
+};
+
 /** How many links that fit a route are asked before its example is said unreached. */
 const EXAMPLES_TRIED = 5;
 
@@ -112,6 +128,7 @@ export const examplePaths = async (
   };
   const paths: string[] = [];
   const unreached: string[] = [];
+  const params: Record<string, string> = {};
   for (const route of routes) {
     if (!route.includes(':')) {
       paths.push(route);
@@ -134,12 +151,31 @@ export const examplePaths = async (
     const found = named.find(address => fits.test(address)) ?? answering;
     if (found) {
       paths.push(found);
+      Object.assign(params, paramsOf(route, found));
     } else {
       unreached.push(route);
     }
   }
 
-  return { paths: [...new Set(paths)], unreached };
+  // A page no link reaches, filled with what another one's address said its parameters are — `/r/:slug/stats` at the
+  // `night-drive` of `/r/:slug` (encore's look left the room's stats unseen) — when that address answers.
+  const filled = await Promise.all(
+    unreached.map(async route => {
+      const names = route.split('/').flatMap(segment => (segment.startsWith(':') ? [segment.slice(1)] : []));
+      if (!names.every(name => Object.hasOwn(params, name))) {
+        return undefined;
+      }
+
+      const address = route.replace(/:([A-Za-z_]\w*)/g, (_match, name: string) => params[name]);
+
+      return (await answers(new URL(address, origin))) ? address : undefined;
+    })
+  );
+
+  return {
+    paths: [...new Set([...paths, ...filled.flatMap(address => (address ? [address] : []))])],
+    unreached: unreached.filter((_route, index) => filled[index] === undefined)
+  };
 };
 
 /** The `plitzi page` commands an acceptance line runs on a page: where its checks look. */

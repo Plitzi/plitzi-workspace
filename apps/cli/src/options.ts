@@ -177,21 +177,35 @@ export const fill = (value: string, previous: readonly FieldFill[] | undefined):
  * What an element shows, expected: `<id>~<text>`, or `<path> <id>~<text>` for one page of several — the path its own
  * word, a leading `/`: `--expect "/faq faq-title~Questions"`.
  */
+/**
+ * One `--expect` read: `<id>~<text>`, `<id>` alone — the element is shown, whatever it says (a swatch, a picture: encore's
+ * design-2 wrote `id~`) — and `<path> …` for one page. Nothing when it is none of them. What the option and a plan's
+ * acceptance lines (`expectedIds`) both read.
+ */
+export const readExpectation = (value: string): { element: string; text: string; path?: string } | undefined => {
+  const scoped = /^(\/\S*)\s+(.*)$/s.exec(value);
+  const rest = scoped?.[2] ?? value;
+  const at = rest.indexOf('~');
+  const element = (at === -1 ? rest : rest.slice(0, at)).trim();
+  const text = at === -1 ? '' : rest.slice(at + 1);
+
+  return element === '' || element.startsWith('/') || /\s/.test(element) || (at !== -1 && text === '')
+    ? undefined
+    : { element, text, ...(scoped?.[1] ? { path: scoped[1] } : {}) };
+};
+
 export const expectation = (
   value: string,
   previous: readonly { element: string; text: string; path?: string }[] | undefined
 ): { element: string; text: string; path?: string }[] => {
-  const scoped = /^(\/\S*)\s+(.*)$/s.exec(value);
-  const rest = scoped?.[2] ?? value;
-  const at = rest.indexOf('~');
-  const element = at === -1 ? '' : rest.slice(0, at).trim();
-  if (element === '' || rest.slice(at + 1) === '') {
+  const read = readExpectation(value);
+  if (!read) {
     throw new InvalidArgumentError(
-      'What an element shows is expected as <id>~<text>, or <path> <id>~<text> for one page: --expect "/walks walks-title~October".'
+      'What an element shows is expected as <id>~<text> — or <id> alone for "it is shown" — and <path> <id~text> for one page: --expect "/walks walks-title~October".'
     );
   }
 
-  return [...(previous ?? []), { element, text: rest.slice(at + 1), ...(scoped?.[1] ? { path: scoped[1] } : {}) }];
+  return [...(previous ?? []), read];
 };
 
 /**

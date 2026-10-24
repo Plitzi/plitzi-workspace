@@ -94,10 +94,40 @@ export const signInAs = async (page: BrowserPage, origin: string, account: Accou
 
 const withoutTrailingSlash = (path: string): string => (path.length > 1 ? path.replace(/\/+$/, '') : path);
 
-/** Where the page landed, when that is not the path it was opened at — sent to the sign-in, most often. */
-export const sentElsewhere = (page: BrowserPage, pathname: string): string | undefined => {
-  const landed = new URL(page.url()).pathname;
-  const asked = new URL(pathname, page.url()).pathname;
+const landedElsewhere = (url: string, pathname: string): string | undefined => {
+  const landed = new URL(url).pathname;
+  const asked = new URL(pathname, url).pathname;
 
   return withoutTrailingSlash(landed) === withoutTrailingSlash(asked) ? undefined : landed;
+};
+
+/** Where the page landed, when that is not the path it was opened at — sent to the sign-in, most often. */
+export const sentElsewhere = (page: BrowserPage, pathname: string): string | undefined =>
+  landedElsewhere(page.url(), pathname);
+
+/**
+ * What is wrong with where a checked page landed (`url`): anywhere but `--redirects-to` when that names a page, anywhere
+ * but the page asked when it does not — a page for signed-in visitors sends a guest to the sign-in, and every element of
+ * it would read as missing.
+ */
+export const landingProblem = (
+  url: string,
+  pathname: string,
+  meant: string | undefined,
+  account: Account | undefined
+): string | undefined => {
+  const landed = landedElsewhere(url, pathname);
+  if (meant !== undefined) {
+    return landedElsewhere(url, meant) === undefined
+      ? undefined
+      : `${pathname} was meant to send the browser to ${meant} (--redirects-to), and ${landed === undefined ? 'it stayed' : `it went to ${landed}`}`;
+  }
+
+  if (landed === undefined) {
+    return undefined;
+  }
+
+  return account
+    ? `${pathname} sent the browser to ${landed}, signed in as ${account.username}: that account may not see it`
+    : `${pathname} sent the browser to ${landed} — what a page for signed-in visitors does: \`plitzi page check ${pathname} --as <username>\` signs in first, the password in ${CHECK_PASSWORD_ENV} in .env — or \`--redirects-to ${landed}\` when that is what it is meant to do`;
 };

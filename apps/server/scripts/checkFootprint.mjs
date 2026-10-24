@@ -18,8 +18,8 @@ import { fileURLToPath } from 'url';
  */
 
 const BUDGET = {
-  '@plitzi/sdk-server': 201,
-  '@plitzi/sdk-shared': 126,
+  '@plitzi/sdk-server': 202,
+  '@plitzi/sdk-shared': 129,
   '@plitzi/nexus': 31,
   '@plitzi/plitzi-ui': 19,
   '@plitzi/plitzi-sdk': 1,
@@ -56,13 +56,27 @@ const ownerOf = file => {
 };
 
 const loaded = new Map();
+/** Who first imported each file: what a module over the budget is said with, so the barrel that brought it is named. */
+const importers = new Map();
 registerHooks({
+  resolve(specifier, context, next) {
+    const resolved = next(specifier, context);
+    if (resolved.url.startsWith('file:') && !importers.has(resolved.url) && context.parentURL?.startsWith('file:')) {
+      importers.set(resolved.url, fileURLToPath(context.parentURL));
+    }
+
+    return resolved;
+  },
   load(url, context, next) {
     if (url.startsWith('file:')) {
       const file = fileURLToPath(url);
       const owner = ownerOf(file);
       if (owner) {
-        loaded.set(owner.name, [...(loaded.get(owner.name) ?? []), path.relative(owner.dir, file)]);
+        const importer = importers.get(url);
+        const by = importer ? ownerOf(importer) : undefined;
+        const from =
+          importer && by ? ` ← ${by.name === owner.name ? '' : `${by.name} `}${path.relative(by.dir, importer)}` : '';
+        loaded.set(owner.name, [...(loaded.get(owner.name) ?? []), `${path.relative(owner.dir, file)}${from}`]);
       }
     }
 
@@ -83,7 +97,7 @@ for (const name of new Set([...Object.keys(BUDGET), ...loaded.keys()])) {
     problems.push(
       `${name}: ${String(files.length)} modules, over its budget of ${String(budget)}. If each is one the server uses, ` +
         `raise ${where}; if a folder barrel brought the browser's code or a heavy library along, import what the ` +
-        `server uses from an entry without it. Loaded:\n  ${files.sort().join('\n  ')}`
+        `server uses from an entry without it. Loaded, each with what imported it first:\n  ${files.sort().join('\n  ')}`
     );
   } else if (files.length < budget) {
     (name.startsWith('@plitzi/') ? problems : notes).push(

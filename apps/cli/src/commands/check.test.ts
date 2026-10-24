@@ -10,6 +10,7 @@ import {
   clickedText,
   contestedText,
   inertText,
+  landingProblem,
   listText,
   LOOK_PROPERTIES,
   lookChanges,
@@ -409,6 +410,32 @@ describe('a list drawn in every row of another', () => {
   it('says each copy is fed by its row when its source is the row’s', () => {
     expect(listText('faq-questions', { rendered: 16, source: 0, copies: [4, 4, 4, 4] })).toBe(
       'faq-questions 16 rows in 4 copies (4, 4, 4, 4), each fed by the row it is in'
+    );
+  });
+});
+
+describe('where a checked page landed', () => {
+  const at = (path: string): string => `http://localhost:3000${path}`;
+
+  it('is fine on the page asked, a trailing slash or a query apart', () => {
+    expect(landingProblem(at('/rooms/?x=1'), '/rooms', undefined, undefined)).toBeUndefined();
+  });
+
+  it('says a page that sent a guest elsewhere, and both ways on: signing in, or saying it is meant', () => {
+    const problem = landingProblem(at('/sign-in'), '/settings', undefined, undefined);
+
+    expect(problem).toContain('/settings sent the browser to /sign-in');
+    expect(problem).toContain('--as <username>');
+    expect(problem).toContain('--redirects-to /sign-in');
+  });
+
+  it('is fine where --redirects-to meant it to land, and says where it went or that it stayed otherwise', () => {
+    expect(landingProblem(at('/sign-in?next=%2Fsettings'), '/settings', '/sign-in', undefined)).toBeUndefined();
+    expect(landingProblem(at('/'), '/settings', '/sign-in', undefined)).toBe(
+      '/settings was meant to send the browser to /sign-in (--redirects-to), and it went to /'
+    );
+    expect(landingProblem(at('/settings'), '/settings', '/sign-in', undefined)).toBe(
+      '/settings was meant to send the browser to /sign-in (--redirects-to), and it stayed'
     );
   });
 });

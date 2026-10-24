@@ -79,6 +79,12 @@ export const FLOW_CODES = {
     means: 'a global callback sent to a module other than the one that registers it',
     fix: 'the step builder, which knows the module'
   },
+  'message-while-running': {
+    kind: 'warned',
+    means:
+      "a channel's `onMessage` flow with no `whileRunning`: a message that arrives while it runs is dropped (`skip`, the default)",
+    fix: "`[whileRunning('queue', onMessage()), …]` to hear each one, `'latest'` for the last; `whileRunning('skip', …)` when dropping is meant"
+  },
   'unknown-global-callback': {
     kind: 'warned',
     means: 'a global callback no built-in source declares — it runs only if something registers it',

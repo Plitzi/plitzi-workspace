@@ -13,6 +13,7 @@ import { showTask } from './show';
 import { askLead, messageTasks, readInbox, tellLead } from './talk';
 import { checkTask, completeTask, nextTask, reportProgress, revertTask, reviewTask, taskContext } from './tasks';
 import { viewRun } from './view';
+import { LINT_CACHE_FILE } from '../scaffold/paths';
 import { benchPlan, makeBench, teamFor, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
@@ -185,6 +186,23 @@ describe('acceptance, checks and what is left behind', () => {
       'nothing could answer it: the lead is told — not your work'
     );
   }, 30_000);
+
+  // encore's dev-3: a type fixed in an imported file left its unchanged importers failing, read off ESLint's cache.
+  it('a fresh check reads every file again: the copy’s lint cache goes with it', async () => {
+    const runId = await open();
+    const menu = await take('agent-1', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { title: "Menú" };\n');
+    const cache = path.join(menu.work, LINT_CACHE_FILE);
+    const passing: CheckRunner = () => Promise.resolve({ ok: true, steps: [] });
+    await fs.mkdir(path.dirname(cache), { recursive: true });
+    await fs.writeFile(cache, '{}');
+
+    await checkTask({ ...menu.ctx, checks: passing }, runId, 't-menu');
+    await expect(fs.readFile(cache, 'utf8')).resolves.toBe('{}');
+
+    await checkTask({ ...menu.ctx, checks: passing }, runId, 't-menu', { fresh: true });
+    await expect(fs.access(cache)).rejects.toThrow();
+  });
 
   it('a task completes over failing checks only with a reason and the task that fixes it — said to both and the lead', async () => {
     await open();

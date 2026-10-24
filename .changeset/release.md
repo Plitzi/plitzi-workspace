@@ -87,6 +87,7 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 - **`sessionPerTask`:** an agent works one task a session. It stops once its task is complete, and the lead starts it
   again with a fresh context for the next task, or for its own task if it is sent back. Fewer tokens for an agent that
   would otherwise carry several tasks in its context.
+  A task it still holds from an earlier session waits for the next one, named when it is told to stop.
 - **`resumeSession`:** an agent started again after it died with a task in hand resumes its own session (Claude Code's
   `--resume`), so it keeps what it knew and had not written yet. It starts fresh instead, saying why, when its session
   is gone or past 8 MB. The starter team asks it of every agent. `run agent --launch` refuses to start a second session
@@ -100,6 +101,13 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   every element the run made is missing.
 - **`--as` in the finish:** any folder of a run — a task's copy, the finish's checked copy — signs in with the project's
   `.env`.
+- **`task complete` runs again the lines of approved tasks on the pages it changes:** one it breaks refuses it, naming
+  whose — or, when the change means it, `--known-failure "why" --fixed-by lead` and the lead amends the line. Found
+  before review, not at the finish.
+- **`task look` fills a route no link reaches** with the parameters another page's address gave (`/r/:slug/stats` at
+  the `night-drive` of `/r/:slug`).
+- **`page check --then` follows the link a visitor sees at that width,** and says when every link there is hidden (a
+  nav behind the burger). **`page check --url` on a run's preview** judges by the run's work, not the project's.
 - **`server stop --port` on a run copy's server** says whose it is and where it is stopped from.
 - **The activity names a task once,** in its column: "approved (round 2)", not "approved t-shell (round 2)". An agent's
   row names it before what it last did.
@@ -146,6 +154,7 @@ report`, …).
 - **Checks:** `task check` (`--fix`, `--acceptance`) runs what `complete` will hold the copy to, without completing. A
   pass stands while nothing changes, and a failure that is not the copy's own is said apart. `complete` refuses
   authoring warnings and suggestions, lint warnings in changed files, and a file past 400 lines.
+  `--fresh` drops ESLint's kept answers too, so a type fixed in an imported file clears its importers.
 - **Talking:**
   - `task ask` is a question that waits for an answer; `task tell` is for the lead to know.
   - `task message` reaches a task, an agent or `all`; `task inbox` reads them.
@@ -199,6 +208,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   says apart the pages nothing answered from those sent to sign in.
 - **`page check`** reads a page as a visitor's browser draws it:
   - `--expect <id>~<text>` holds what a page says, and `--then` goes on by the page's own links.
+    `--expect <id>` alone holds that it is shown.
   - `--element`, `--hover`, `--click` and `--fill` say what an element shows and what an interaction changed.
   - `--status 404` checks a not-found page; `--themes` checks a fixed ground under theme-aware text.
   - It reports `heading-skipped`, `control-unnamed`, `label-wraps` and `flush-edge`.
@@ -230,6 +240,10 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   separated by spaces.
 - **`--as <account>`** on `page play`, `page measure`, `page outline` and `task look` signs in first, with the account
   of the project's `.env` (in a task's copy, the project's). `fill` is a step of `--steps`.
+- **A step on an element hidden at that width** (a burger at 1440) fails at its own step, naming the breakpoint, not
+  at the next one.
+- **`plitzi functions dev`** says before running what is missing — sdk-server, `isolated-vm`, `core-js`, resolved where
+  the runner loads them — and that the project's own `npm start` runs the same functions without the isolates.
 - **`plitzi explain`** answers "does Plitzi have a way to…". It covers elements and the fields their source publishes,
   steps, triggers, style states, global sources, template filters and functions, a server action's steps
   (`--list tasks`), codes, CLI commands and an export's fields.
@@ -237,6 +251,13 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
     teaches it.
 
 ## Authoring (`@plitzi/sdk-authoring`)
+
+- **`space lint` takes a module only its test reads as part of the space,** not an unused file (a palette held to AA
+  beside its test).
+- **`message-while-running`** warns of a channel's `onMessage` flow that says nothing of a message arriving while it runs
+  (the default `skip` drops it): `whileRunning('queue', …)`, `'latest'`, or `'skip'` when meant.
+- **A channel's topic with a choice** (`{{ room.locked ? 'vault' : 'room' }}:{{ id }}`) is checked as both words, each
+  needing its pattern; one put together otherwise is left to the server, as a bound topic is. Both were refused.
 
 - **Pages registered by being there:** `pagesIn(new URL('./pages/', import.meta.url))` (`@plitzi/sdk-authoring/node`)
   loads a folder's pages, and `PageSpec.nav` with `navOf(pages)` gives a layout its menu.

@@ -35,11 +35,16 @@ export const markJoined = async (ctx: RunContext, loaded: LoadedRun): Promise<vo
 };
 
 /**
- * For an agent of one task a session (`sessionPerTask`): why it stops — the task it completed since it last stopped,
- * its session's work done — or nothing. Read off the run's log, as who is running is (`runningAgents`): a session is
- * what an agent did since its last `stops`, and the lead's next start of it is a fresh one.
+ * For an agent of one task a session (`sessionPerTask`): the task it completed since it last stopped — its session's
+ * work done — and why it stops; or nothing. Read off the run's log, as who is running is (`runningAgents`): a session
+ * is what an agent did since its last `stops`, and the lead's next start of it is a fresh one.
  */
-export const sessionEnd = async (ctx: RunContext, loaded: LoadedRun): Promise<string | undefined> => {
+export const sessionEnd = async (
+  ctx: RunContext,
+  loaded: LoadedRun,
+  /** A task it still holds from an earlier session: the next session's, said so — never this one's second. */
+  stillHeld?: string
+): Promise<{ task: string | undefined; why: string } | undefined> => {
   const team = await readTeam(ctx.root).catch(() => undefined);
   if (!(team ? startedAgents(team) : []).some(each => each.agent === ctx.agent && each.sessionPerTask === true)) {
     return undefined;
@@ -52,9 +57,13 @@ export const sessionEnd = async (ctx: RunContext, loaded: LoadedRun): Promise<st
     return undefined;
   }
 
-  const task = typeof completed.task === 'string' ? completed.task : 'its task';
+  const task = typeof completed.task === 'string' ? completed.task : undefined;
+  const named = task ?? 'its task';
 
-  return `${task} is complete: your team gives you one task a session (sessionPerTask) — the lead starts you again, a fresh context, for the next, or for ${task} if it is sent back. You can stop`;
+  return {
+    task,
+    why: `${named} is complete: your team gives you one task a session (sessionPerTask) — the lead starts you again, a fresh context, for ${stillHeld === undefined ? 'the next' : `${stillHeld}, which you still hold`}, or for ${named} if it is sent back. You can stop`
+  };
 };
 
 /** For an agent on demand: the team's base agents of its roles, there and free — ready work is theirs first. */

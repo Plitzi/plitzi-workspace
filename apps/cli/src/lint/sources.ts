@@ -91,8 +91,22 @@ export const readSpaceSources = async (
     queue.push(...pageFolderLoads(ts, next, text).flatMap(folder => pageModulesIn(folder)));
   }
 
-  const unreached = (await filesUnder(path.join(root, spaceDir)))
-    .filter(file => isSpaceCode(file) && !seen.has(file) && !outside(file))
+  const under = await filesUnder(path.join(root, spaceDir));
+  // A module only its own test reads is kept on purpose — encore's `theme.ts`, its palette held to AA by `theme.test.ts`
+  // beside it: what a test of the space imports is not unused.
+  const tested = new Set<string>();
+  for (const test of under.filter(file => SOURCE.test(file) && /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(file))) {
+    const text = await fs.readFile(test, 'utf-8');
+    for (const imported of ts.preProcessFile(text, true, true).importedFiles) {
+      const resolved = imported.fileName.startsWith('.') ? await resolveImport(test, imported.fileName) : undefined;
+      if (resolved) {
+        tested.add(resolved);
+      }
+    }
+  }
+
+  const unreached = under
+    .filter(file => isSpaceCode(file) && !seen.has(file) && !tested.has(file) && !outside(file))
     .map(file => path.relative(root, file))
     .sort();
 

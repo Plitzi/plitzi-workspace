@@ -63,6 +63,10 @@ export const registerPage = (pageGroup: Command): void => {
       ).argParser(statusCode)
     )
     .option(
+      '--redirects-to <path>',
+      'The page is meant to send this visitor there (a guest of a signed-in page, to /sign-in): it fails unless it lands there, and what it lands on is checked'
+    )
+    .option(
       '--then <paths...>',
       'Go on from the page as a visitor does — a click on its own link to each, no reload — and check each the same way'
     )

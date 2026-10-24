@@ -91,6 +91,15 @@ describe('options', () => {
     expect(() => expectation('/faq', undefined)).toThrow(InvalidArgumentError);
   });
 
+  // encore's design-2 wrote `design-palette~` for "it is there": an id alone says the element is shown.
+  it('reads an id alone as an element that is shown, whatever it says — and refuses a ~ with nothing after it', () => {
+    expect(expectation('design-palette', undefined)).toEqual([{ element: 'design-palette', text: '' }]);
+    expect(expectation('/design design-palette', undefined)).toEqual([
+      { element: 'design-palette', text: '', path: '/design' }
+    ]);
+    expect(() => expectation('design-palette~', undefined)).toThrow(InvalidArgumentError);
+  });
+
   // velada-polish's design-2 could not test a visitor elsewhere: the server and the browser both read the machine's zone.
   it('takes a time zone the browser knows, and refuses one it does not, by name', () => {
     expect(timeZone(' America/Mexico_City ')).toBe('America/Mexico_City');

@@ -299,6 +299,26 @@ describe('agents on demand', () => {
     expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({ finished: true });
   });
 
+  // encore's dev-1: after t-player, next handed it t-shell, held from an earlier session — two tasks in one context.
+  it('leaves a task held from an earlier session to the next one, saying so', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], sessionPerTask: true });
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+    bench.advance(STARTING_MS);
+
+    await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
+    const menu = await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { title: "Menú" };\n');
+    await completeTask(bench.agent('dev-1', { token: menu.token }), 'es-launch', 't-menu');
+
+    expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({
+      finished: true,
+      why: expect.stringContaining('for t-home, which you still hold') as unknown
+    });
+    expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({
+      task: expect.objectContaining({ id: 't-home' }) as unknown
+    });
+  });
+
   it('refuses a min past its count', async () => {
     expect(await refusalOf(setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 3 }))).toContain(
       'its min — how many start with the run — is a whole number from 1 to its count (2)'

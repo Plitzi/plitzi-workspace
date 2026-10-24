@@ -5,6 +5,41 @@ import type { LintContext } from './context';
 /** What a `{{ … }}` in a topic stands for when it is checked: one segment, as a page will fill it in. */
 const SAMPLE_SEGMENT = 'x';
 
+/** `{{ cond ? 'a' : 'b' }}`: a part that is one of two words the template names. */
+const CHOICE = /^[^?'"]+\?\s*(['"])([^'"]*)\1\s*:\s*(['"])([^'"]*)\3\s*$/;
+
+/** Past this many topics a template can become, it is not read out: the server still checks what a page opens. */
+const MOST_TOPICS = 16;
+
+/**
+ * Every topic a templated one can become, as far as it can be told here: a plain `{{ id }}` is one segment, a choice
+ * `{{ room.locked ? 'vault' : 'room' }}` either word (encore's private rooms: the prefix was refused, read as one
+ * sample segment). `undefined` when a part is anything else written in words — `{{ 'room:' ~ id }}`, a filter — which
+ * only the page decides, as a bound topic is.
+ */
+const topicsOf = (topic: string): string[] | undefined => {
+  let topics = [''];
+  for (const [index, part] of topic.split(/\{\{([^}]*)\}\}/).entries()) {
+    if (index % 2 === 0) {
+      topics = topics.map(each => each + part);
+      continue;
+    }
+
+    const choice = CHOICE.exec(part);
+    if (!choice && /['"~|]/.test(part)) {
+      return undefined;
+    }
+
+    const words = choice ? [choice[2], choice[4]] : [SAMPLE_SEGMENT];
+    topics = topics.flatMap(each => words.map(word => each + word));
+    if (topics.length > MOST_TOPICS) {
+      return undefined;
+    }
+  }
+
+  return topics;
+};
+
 /**
  * A `channel` element whose topic no channel of the space covers — or a private one's, with no grant to open it: the
  * server refuses it, and the page shows a channel that never connects. Its templated parts (`board:{{ id }}`) are checked as the segment they become.
@@ -41,17 +76,24 @@ export const lintChannels = (ctx: LintContext): void => {
       continue;
     }
 
-    const sample = topic.replace(/\{\{[^}]*\}\}/g, SAMPLE_SEGMENT);
-    // A job's topic is the platform's: the job says who may watch it, and no channel of the space has to.
-    if (jobOfTopic(sample) !== undefined) {
+    // Written so only the page knows what it becomes: as a bound topic, nothing here to check it against.
+    const samples = topicsOf(topic);
+    if (samples === undefined) {
       continue;
     }
 
-    const match = matchChannel(sample, declared);
+    // A job's topic is the platform's: the job says who may watch it, and no channel of the space has to.
+    if (samples.some(sample => jobOfTopic(sample) !== undefined)) {
+      continue;
+    }
+
+    const matches = samples.map(sample => matchChannel(sample, declared));
+    const uncovered = samples.find((_, index) => matches[index] === undefined);
     const hasGrant =
       (typeof element.attributes.grant === 'string' && element.attributes.grant.trim() !== '') ||
       element.definition.bindings?.attributes?.some(binding => binding.to === 'grant') === true;
-    if (match?.declaration.grant === true && !hasGrant) {
+    const match = matches.find(each => each?.declaration.grant === true);
+    if (match && !hasGrant) {
       ctx.error(
         'channel-grant',
         `${where} opens "${topic}", a topic of the private channel "${match.pattern}" (\`grant: true\`), with no grant — the server refuses it every time. Bind \`grant\` to what the action that lets the visitor in returns from its \`realtime.grant\` step.`,
@@ -59,11 +101,12 @@ export const lintChannels = (ctx: LintContext): void => {
       );
     }
 
-    if (!match) {
+    if (uncovered !== undefined) {
+      const which = samples.length > 1 ? ` — as "${uncovered}"` : '';
       ctx.error(
         'channel-topic',
         patterns.length
-          ? `${where} opens "${topic}", which none of the space's channels covers (${patterns.map(pattern => `"${pattern}"`).join(', ')}). Use a topic one of them matches, or declare it in \`channels\`.`
+          ? `${where} opens "${topic}"${which}, which none of the space's channels covers (${patterns.map(pattern => `"${pattern}"`).join(', ')}). Use a topic one of them matches, or declare it in \`channels\`.`
           : `${where} opens "${topic}", but the space declares no channels. Declare one at the top of the space: \`channels: { 'board:{id}': { access: { mode: 'public' } } }\`.`,
         element.id
       );

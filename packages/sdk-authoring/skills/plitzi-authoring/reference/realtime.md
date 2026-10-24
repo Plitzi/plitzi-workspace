@@ -1,7 +1,9 @@
 # Realtime channels
 
 Pages that see each other — cursors, presence, a shared board — need a channel. Declare its topic pattern on the space,
-then subscribe with a `channel` element; a topic no pattern matches is refused, naming the patterns:
+then subscribe with a `channel` element; a topic no pattern matches is refused, naming the patterns. Each `{{ … }}` of
+a topic is checked as one segment, a choice `{{ room.locked ? 'vault' : 'room' }}:{{ id }}` as both words (each needs
+its pattern); a topic put together otherwise is the page's, as a bound `topic` is — only the server checks it:
 
 ```ts
 channels: {

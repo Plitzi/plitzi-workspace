@@ -10,6 +10,7 @@ import { createExclusive, exists, fingerprint, readOptional, writeAtomic, writeJ
 import { handOver } from '../handOver';
 import { crossed, longFilesIn, longFileText } from '../longFiles';
 import { mergeLines } from '../merge3';
+import { LEAD } from '../messages';
 import { entryOf } from '../model';
 import { lockFile, NOT_TASK_DIRS, taskPaths, under } from '../paths';
 import { RunRefusal } from '../refusal';
@@ -31,7 +32,7 @@ import { at, changedInCopy, cleanPath, findTask, holderOf, refreshCopy } from '.
 import { textOf } from './context';
 import { activeHolder, allLocks, sharedFiles } from './locks';
 import { againstRunWork, tellUnanswered } from './notOwn';
-import { LEAD } from '../messages';
+import { othersHeld } from './othersHeld';
 
 import type { CheckResult } from '../checks';
 import type { ReviewAsked } from '../design';
@@ -310,7 +311,7 @@ export const completeTask = async (
   // The copy served for the acceptance while the project's checks run; let go whatever ends them (a refusal too).
   const where = { work: view.paths.work, root: ctx.root, cache: view.paths.cache };
   const serving = kept ? undefined : serveForAcceptance(task.acceptance, where);
-  const { checks, failing, preexisting, accepted } = await (async () => {
+  const { checks, failing, preexisting, accepted, others } = await (async () => {
     const checks = kept?.checks ?? (await ctx.checks(view.paths.work, ctx.root));
     const failing = checks.steps.filter(step => !step.ok);
     // What fails in the copy may not be the task's: a person's edit in the project, or another task's approved work, that
@@ -372,8 +373,13 @@ export const completeTask = async (
       : checks.ok || (without !== undefined && failsWithout(checks, without, dirs))
         ? await checkAcceptance(task.acceptance, { ...where, ...(serving ? { serving } : {}) })
         : [];
+    // Its own lines met: the approved tasks' lines on the pages it draws, on the same copy (`othersHeld`).
+    const others =
+      !kept && accepted.every(result => result.ok)
+        ? await othersHeld(loaded, taskId, changed, { ...where, ...(serving ? { serving } : {}) })
+        : [];
 
-    return { checks, failing, preexisting, accepted };
+    return { checks, failing, preexisting, accepted, others };
   })().finally(() => letGo(serving));
   const unmet = accepted.filter(result => !result.ok);
   // A line nothing could answer is the lead's, told: the brake is for the work, and the agent is told it is not its.
@@ -394,6 +400,23 @@ export const completeTask = async (
           said: [each.check, ...(each.output ?? [])]
         })),
         next: 'make the copy do what the acceptance asks — each check is a command, run it yourself in the copy — and complete again'
+      }
+    );
+  }
+
+  const broke = others.filter(line => !line.ok);
+  if (broke.length > 0 && !knownFailure) {
+    throw new RunRefusal(
+      'checks-failed',
+      `Task "${taskId}" breaks what approved tasks were accepted on: ${broke.map(line => `${line.task}: "${line.said}"`).join('; ')}`,
+      {
+        task: taskId,
+        steps: broke.map(line => ({
+          name: `${line.task}'s acceptance — ${line.said}`,
+          ok: false,
+          said: [line.check, ...(line.output ?? [])]
+        })),
+        next: 'make it hold again — or, when your change means it (a page moved, its words rewritten), complete --known-failure "why" --fixed-by lead: the lead amends that line'
       }
     );
   }

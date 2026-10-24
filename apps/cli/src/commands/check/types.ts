@@ -15,6 +15,8 @@ export interface CheckOptions {
   standIns?: boolean;
   /** `--status <code>`: the status every page checked is meant to be sent with. */
   status?: number;
+  /** `--redirects-to <path>`: where the page is meant to send this visitor — a guest of a signed-in page, to sign in. */
+  redirectsTo?: string;
   /** `--then <path…>`: on from the page by its own links, no reload — each next page checked as the visitor reaches it. */
   then?: string[];
   /** Validated where the flag is declared (`widths` in options.ts). */
@@ -235,6 +237,11 @@ export interface CheckAsk {
   elements: readonly string[];
   /** `--status 404`: the status the page is meant to be sent with — a page for an address nothing answers, checked. */
   status?: number;
+  /**
+   * `--redirects-to /sign-in`: the page is meant to send this visitor there — checked by landing there, and what
+   * landed is checked as the page (its `--expect` too). encore's settings: a guest sent to sign in failed every check.
+   */
+  redirectsTo?: string;
 }
 
 export interface ClickAsk {

@@ -9,6 +9,7 @@ import { launchBrowser } from '../../browser';
 import { originHere } from '../../runs/copyServer';
 import { inTurns } from '../../runs/inTurns';
 import { runPaths, runsDir, taskPaths } from '../../runs/paths';
+import { previewDir } from '../../runs/preview';
 import { projectHere } from '../existingProject';
 import { fail, unanswered, UNANSWERED_EXIT } from '../terminal';
 import { checkAccount } from './account';
@@ -68,7 +69,8 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
   const asked: CheckAsk = {
     state: Boolean(options.state),
     elements: options.element ?? [],
-    ...(options.status === undefined ? {} : { status: options.status })
+    ...(options.status === undefined ? {} : { status: options.status }),
+    ...(options.redirectsTo === undefined ? {} : { redirectsTo: options.redirectsTo })
   };
   const reports = await checkRoutes(project, routes.length > 0 ? routes : ['/'], {
     widths: options.width ?? [1440, 390],
@@ -120,7 +122,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
  * browser, is a problem said once rather than a report per page.
  */
 /**
- * The folder a server named by `--url` serves, when it is one of this project's run copies: its `/health` says the mark
+ * The folder a server named by `--url` serves, when it is one of this project's run copies or a run's preview: its `/health` says the mark
  * of the folder it serves, and the copy with that mark is the space its routes are judged by — not the project's own
  * (lx-copy: a real product page on a copy's server read as "the page for an address nothing answers", judged by the
  * tour still in the project). None found: the project's.
@@ -135,6 +137,13 @@ const servedFolder = async (root: string, url: string): Promise<string | undefin
   }
 
   for (const run of await fs.readdir(runsDir(root)).catch(() => [])) {
+    // The run's preview too (`run preview`, its approved work): encore's lead read /rooms and /charts there as not
+    // found, judged by the project's space the finish had not written yet.
+    const preview = previewDir(runPaths(root, run));
+    if (projectMark(preview) === mark) {
+      return preview;
+    }
+
     for (const task of await fs.readdir(path.join(runsDir(root), run, 'tasks')).catch(() => [])) {
       const work = taskPaths(runPaths(root, run), task).work;
       if (projectMark(work) === mark) {

@@ -72,6 +72,29 @@ describe('page play', () => {
   // lx-product: a tab drawn per width was hidden at 390, its press skipped without a word — and "✓ every step as
   // theirs" was said beside an element read that was not on the page.
   // encore: Listen turning Mute, the focus back on the burger and a search typed each took a Playwright script.
+  // encore's t-emojis: its picker, drawn once its button opens it, read "not on" at the start — and the line was no one's.
+  it('says an element a step brings is not on the page yet, and one never there in red', () => {
+    const lines = playedText([
+      {
+        step: 'start',
+        reads: [
+          { element: 'picker', problem: 'picker is not on http://x/' },
+          { element: 'ghost', problem: 'ghost is not on http://x/' }
+        ]
+      },
+      {
+        step: 'click more',
+        reads: [
+          { element: 'picker', here: at(0) },
+          { element: 'ghost', problem: 'ghost is not on http://x/' }
+        ]
+      }
+    ]).map(line => stripVTControlCharacters(line));
+
+    expect(lines).toContain('  picker: not on the page yet');
+    expect(lines).toContain('  ghost: ghost is not on http://x/');
+  });
+
   it('says what a control says of itself: its words, its value, its ARIA states, its focus', () => {
     const toggle: ElementState = { ...at(0), text: 'Mute', aria: { pressed: 'true' }, focused: true };
     const search: ElementState = { ...at(0), text: '', value: 'lofi', aria: {} };

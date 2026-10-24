@@ -54,6 +54,22 @@ describe('examplePaths', () => {
   });
 });
 
+// encore: the room's stats page — `/r/:slug/stats` — reached by no link, though the room's own address said its slug.
+describe('examplePaths, a page no link reaches', () => {
+  it('is filled with the parameters another page’s address gave, when that address answers', async () => {
+    const origin = await site({
+      '/': ['/', '/r/night-drive'],
+      '/r/night-drive': [],
+      '/r/night-drive/stats': []
+    });
+
+    expect(await examplePaths(origin, ['/r/:slug', '/r/:slug/stats', '/u/:handle'])).toEqual({
+      paths: ['/r/night-drive', '/r/night-drive/stats'],
+      unreached: ['/u/:handle']
+    });
+  });
+});
+
 // velada-shell's t-page-heading: a shared component's task, "no page of the space owns its files", its acceptance two.
 describe('the pages an acceptance checks', () => {
   it('are read off its page commands, the options left out', () => {

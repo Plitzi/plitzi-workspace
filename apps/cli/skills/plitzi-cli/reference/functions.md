@@ -22,7 +22,13 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
   (`@plitzi/sdk-authoring`): its input is the task's params, its id `<namespace>-<action>` — and a plugin runs it typed by
   both, `useServerAction<typeof make>(make.id)`: one operation is one task, never a `case` in one route. A param says what it
   takes — `required`, `maxLength`, `min`/`max` — and a call outside it is refused with the reason before `run`;
-  `ctx.rateLimit('make', { most: 5, perSeconds: 600, refuse: 'Wait ten minutes' })` refuses over the limit alike.
+  `ctx.rateLimit('make', { most: 5, perSeconds: 600, refuse: 'Wait ten minutes' })` refuses over the limit alike. A test
+  or another server calls it as a page does: `POST /_action` on the space's host, `{ "actionId", "input" }` — `200 {
+  runId, status, output, error? }` once it ran (`status: 'failed'` when a step refused), `{ error, reason }` with a 4xx
+  when it was refused before.
+- **Other people, from a task:** `ctx.visitors.get('mika')` is someone of the space's public face (`username`, `name`,
+  `avatar` — never an email), `undefined` for anyone else; `ctx.presence(topic)` is who is on a `presence: true`
+  channel now (`count`, `members`), counted by the server on every replica.
 - **A run gets 100 ms of CPU and 10 s.** A task that needs more asks with `limits: { cpuMs, wallMs }` (or
   `defineFunctions({ limits })` for all), up to the plan's ceiling; asking above it is a problem the push reports.
 - **What must happen in N seconds whether or not a page is open** — a turn that runs out, a bot's move — is

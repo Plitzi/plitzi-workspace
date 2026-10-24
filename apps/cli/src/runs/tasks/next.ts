@@ -161,11 +161,21 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   const forRole = (task: RunTask): boolean => roles === undefined || roles.includes(roleOf(task));
   // What the lead said to this agent by name — between tasks, there is nowhere else for it to arrive.
   const messages = await unreadFor(loaded, agentAddress(ctx.agent), true);
+  // One task a session: once it completed one, only that task sent back is still this session's — its context is warm.
+  // Another it holds from an earlier session is the next one's: handed here, one session did two (encore's dev-1).
+  const mine = views.filter(view => view.owner?.agent === ctx.agent && isWorked(view.state.status));
+  const sessionOver = await sessionEnd(
+    ctx,
+    loaded,
+    mine.find(view => view.state.status !== 'changes-requested')?.task.id
+  );
   // What the caller holds and can go on with comes before anything new: an agent between tasks waits with `next`, and
   // this is how it hears that its blocked task was unblocked, or that its review asked for changes.
-  for (const view of views) {
+  for (const view of mine) {
     const { status } = view.state;
-    if (view.owner?.agent === ctx.agent && isWorked(status)) {
+    const thisSession =
+      sessionOver === undefined || (view.task.id === sessionOver.task && status === 'changes-requested');
+    if (isWorked(status) && thisSession) {
       // …with what was said to that task meanwhile — an amendment, a review's words — which it reads nowhere else first.
       const toTask = await handOver(ctx, loaded, view.task.id, ctx.agent);
 
@@ -192,10 +202,8 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     }
   }
 
-  // One task a session: its own sent back comes first, above — while the session lasts, its context is still warm.
-  const sessionOver = await sessionEnd(ctx, loaded);
   if (sessionOver !== undefined) {
-    return { why: sessionOver, ready: [], messages, finished: true };
+    return { why: sessionOver.why, ready: [], messages, finished: true };
   }
 
   // A lead that reviews is offered reviews, and nothing else: the queue of tasks in review no other lead took.

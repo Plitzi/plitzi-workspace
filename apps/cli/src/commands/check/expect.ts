@@ -17,6 +17,13 @@ export const shownTextInPage = (selector: string): string | null => {
   return node instanceof HTMLElement ? node.innerText : node === null ? null : node.textContent;
 };
 
+/** Whether the first element `selector` names is drawn: on the page, and with a box of its own. In the page. */
+export const isShownInPage = (selector: string): boolean => {
+  const node = document.querySelector(selector);
+
+  return node !== null && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden';
+};
+
 /**
  * The links and buttons whose short label — three words at most — the page breaks onto more than one line: squeezed in
  * a row with no room (a menu one entry too long), which no other check sees. In the page.
@@ -131,6 +138,21 @@ export const missedExpectations = async (
     '[data-plitzi-el]'
   );
   for (const { element, text } of expect) {
+    if (text === '') {
+      if (await page.evaluate(isShownInPage, selectorOf(authored, element))) {
+        met.push(element);
+      } else {
+        missed.push({
+          code: 'expected-text',
+          message: `--expect ${element}: ${element} is not shown on the page${meantOnPage(element, onPage)}`,
+          elementId: element,
+          width
+        });
+      }
+
+      continue;
+    }
+
     const found = await page.evaluate(shownTextInPage, selectorOf(authored, element));
     const shown = found === null ? undefined : found.replace(/\s+/g, ' ').trim();
     if (shown === undefined || !shown.toLowerCase().includes(text.toLowerCase())) {

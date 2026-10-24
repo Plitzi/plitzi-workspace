@@ -124,10 +124,10 @@ applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** 
 
 ## Where leads went wrong
 
-- **A check you write, you run once** on the run's work first: a 404 page is `page check … --status 404`, a `--clip`
-  names an id the page has. One that cannot pass costs every try of the task's: `run extend <run> <stage.json> --dry-run
-  --lines` runs each line of a stage once and says what it is — what the task changes, a part it builds, or a line that
-  cannot pass (the other site has no such element, a command it refuses).
+- **A check you write, you run once** on the run's work first: a 404 page is `page check … --status 404`, a guest
+  sent to sign in `--redirects-to /sign-in`, a `--clip` names an id the page has. One that cannot pass costs every try
+  of the task's: `run extend <run> <stage.json> --dry-run --lines` runs each line of a stage once and says what it is —
+  what the task changes, a part it builds, or a line that cannot pass.
 - **One look, one task**; its files are where its elements are built.
 - **A question first**: it holds an agent — answer before your own work. `run watch` in the harness's background
   (never `&`), one at a time.

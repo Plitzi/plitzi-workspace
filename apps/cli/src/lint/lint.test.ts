@@ -138,6 +138,9 @@ describe('plitzi space lint', () => {
       )
     );
     await write('src/space/old.ts', "export const old = 'nothing imports me';\n");
+    // A module only its test reads — a palette held to AA beside it — is kept on purpose, never unused.
+    await write('src/space/theme.ts', "export const pairs = [['#111', '#fff']];\n");
+    await write('src/space/theme.test.ts', "import { pairs } from './theme.ts';\n\nvoid pairs;\n");
 
     const report = await run();
 

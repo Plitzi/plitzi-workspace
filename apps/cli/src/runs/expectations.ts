@@ -4,6 +4,7 @@ import { acceptanceText } from './model';
 import { shellCommands } from './shell';
 import { isNotFoundPage, meantOnPage, pageFor } from '../commands/check';
 import { loadProjectSpace } from '../commands/projectSpace';
+import { readExpectation } from '../options';
 
 import type { PlannedTask } from './model';
 import type { SpaceHandles } from '@plitzi/sdk-authoring';
@@ -39,11 +40,11 @@ export const expectedIds = (check: string): Expected[] =>
     });
 
     return values.flatMap(value => {
-      const scoped = /^(\/\S*)\s+(.*)$/s.exec(value);
-      const rest = scoped?.[2] ?? value;
-      const element = rest.slice(0, rest.indexOf('~')).trim();
+      const read = readExpectation(value);
 
-      return element === '' || element.includes('$') ? [] : [{ element, ...(scoped?.[1] ? { path: scoped[1] } : {}) }];
+      return !read || read.element.includes('$')
+        ? []
+        : [{ element: read.element, ...(read.path ? { path: read.path } : {}) }];
     });
   });
 

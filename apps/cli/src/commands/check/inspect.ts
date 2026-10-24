@@ -7,7 +7,7 @@ import {
   readDevTools
 } from '@plitzi/sdk-authoring';
 
-import { CHECK_PASSWORD_ENV, sentElsewhere, signInAs } from './account';
+import { landingProblem, signInAs } from './account';
 import { clickEffects } from './click';
 import { flushEdgesInPage, missedExpectations, wrappedLabelsInPage } from './expect';
 import { listRows } from './lists';
@@ -75,9 +75,16 @@ const lateElements = (
  */
 const followLink = async (page: BrowserPage, origin: string, path: string): Promise<string | undefined> => {
   const selector = `a[href="${path}"], a[href="${origin}${path}"]`;
-  const link = page.locator(selector).first();
-  if ((await link.count()) === 0) {
+  const links = page.locator(selector);
+  if ((await links.first().count()) === 0) {
     return `--then ${path}: no link on the page goes there — a visitor could not get to it from here (check it on its own)`;
+  }
+
+  // The one a visitor sees at this width: the nav's own, hidden at 390 behind the burger, timed out where the footer's
+  // link was on screen (encore's t-retro-pages).
+  const link = links.filter({ visible: true }).first();
+  if ((await link.count()) === 0) {
+    return `--then ${path}: every link that goes there is hidden at this width — a visitor here opens a menu first (check it on its own, or click it open with --click)`;
   }
 
   await link.click({ timeout: 3000 });
@@ -586,17 +593,12 @@ export const checkAt = async (
 
   // A page that sent the browser elsewhere — a page for signed-in visitors, to the sign-in — is not the page asked for:
   // every element of it would read as missing.
-  const landed = sentElsewhere(page, pathname);
-  if (landed) {
+  const meant = asked.redirectsTo;
+  const landing = landingProblem(page.url(), pathname, meant, account);
+  if (landing !== undefined) {
     return [
       {
-        ...unchecked({
-          code: 'redirected',
-          message: account
-            ? `${pathname} sent the browser to ${landed}, signed in as ${account.username}: that account may not see it`
-            : `${pathname} sent the browser to ${landed} — what a page for signed-in visitors does: \`plitzi page check ${pathname} --as <username>\` signs in first, the password in ${CHECK_PASSWORD_ENV} in .env`,
-          width
-        }),
+        ...unchecked({ code: 'redirected', message: landing, width }),
         consoleErrors: consoleErrors().map(each => each.text),
         failedRequests
       }
@@ -606,7 +608,8 @@ export const checkAt = async (
   const reports = [
     await inspectHere(page, {
       origin,
-      pathname,
+      // Where it was meant to land is the page read: its elements, its expectations.
+      pathname: meant ?? pathname,
       width,
       authored,
       asked,

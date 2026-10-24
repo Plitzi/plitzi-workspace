@@ -28,7 +28,15 @@ export type {
   ListRows,
   PageMoment
 } from './types';
-export { accountAsked, CHECK_PASSWORD_ENV, CHECK_USER_ENV, checkAccount, sentElsewhere, signInAs } from './account';
+export {
+  accountAsked,
+  CHECK_PASSWORD_ENV,
+  CHECK_USER_ENV,
+  checkAccount,
+  landingProblem,
+  sentElsewhere,
+  signInAs
+} from './account';
 export type { Account } from './account';
 export { isNotFoundPage, notShownInPage, pageFor, staticPaths } from './space';
 export { contestedStylesInPage, contestedText, inertText } from './styles';

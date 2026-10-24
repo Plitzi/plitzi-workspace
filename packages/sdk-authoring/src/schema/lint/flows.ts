@@ -246,8 +246,26 @@ const checkWhileRunning = (ctx: LintContext, node: ElementInteraction, where: st
   }
 };
 
+/**
+ * A channel's messages come in bursts — a server says three things at once — and a flow started by one, by default,
+ * drops what arrives while it runs (`skip`). encore's room heard the first of three closes and missed the rest, with
+ * nothing said: what a message arriving mid-run does is said, never left to the default.
+ */
+const checkMessageWhileRunning = (ctx: LintContext, node: ElementInteraction, where: string, host: Element): void => {
+  if (node.action !== 'onMessage' || node.whileRunning !== undefined || ctx.catalogType(host) !== 'channel') {
+    return;
+  }
+
+  ctx.warn(
+    'message-while-running',
+    `${where}: its onMessage flow says nothing of a message arriving while it runs, so that one is dropped. Say it: \`whileRunning('queue', onMessage())\` hears each one in turn, \`'latest'\` the last; \`whileRunning('skip', …)\` if dropping is meant.`,
+    host.id
+  );
+};
+
 const checkTrigger = (ctx: LintContext, node: ElementInteraction, where: string, host: Element): void => {
   checkTriggerKeys(ctx, node, where, host.id);
+  checkMessageWhileRunning(ctx, node, where, host);
   checkTriggerInterval(ctx, node, where, host.id);
   const triggers = ctx.catalogs.vocabulary?.triggers;
   const type = ctx.catalogType(host);

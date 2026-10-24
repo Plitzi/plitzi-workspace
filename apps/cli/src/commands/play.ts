@@ -385,7 +385,11 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
     ...(entry.idle?.there ? [chalk.yellow(`  there: ${entry.idle.there}`)] : []),
     ...entry.reads.map((read, index) => {
       if (read.problem) {
-        return `  ${read.element}: ${chalk.red(read.problem)}`;
+        const appears = played.some(later => later !== entry && later.reads.at(index)?.problem === undefined);
+
+        return appears
+          ? `  ${read.element}: ${chalk.dim('not on the page yet')}`
+          : `  ${read.element}: ${chalk.red(read.problem)}`;
       }
 
       const said = moves(index) && read.moved !== undefined;
@@ -536,7 +540,13 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
   }
 
   const unlike = results.flatMap(each => each.unlike.map(line => `at ${String(each.width)} px, ${line}`));
-  const missing = results.some(each => each.played.some(entry => entry.reads.some(read => read.problem)));
+  // Missing is never read at any step: one that appears after a click — the picker it opens — is what was played
+  // (encore's t-emojis: its picker read "not on" at the start, and the line was said to be no one's).
+  const missing = results.some(each =>
+    (each.played[0]?.reads ?? []).some((_read, index) =>
+      each.played.every(entry => entry.reads.at(index)?.problem !== undefined)
+    )
+  );
   console.log(
     options.json
       ? JSON.stringify({ route, ...(target ? { compare: target } : {}), results })

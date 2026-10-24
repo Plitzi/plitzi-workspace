@@ -630,8 +630,8 @@ is billed like any other**: it does the same work.
 ### Retries, and the answer that is remembered
 
 Two different repeats, handled in two different places. A call that arrives **while** the first one is still
-running is refused as a `duplicate`. One that arrives **after** it finished is answered with what the first run
-returned, for as long as the deployment's replay window says (ten minutes on Plitzi) — which is how every webhook
+running is answered by that run (`joined: true`) — or refused as a `duplicate` when it runs on another of the server's
+processes. One that arrives **after** it finished is answered with what the first run returned, for as long as the deployment's replay window says (ten minutes on Plitzi) — which is how every webhook
 provider retries.
 
 Only ever for a key the CALLER named: an `idempotencyKey` on the step, or the delivery id a sender stamps on its
@@ -645,7 +645,7 @@ things somebody meant to happen twice.
 | What you see | What it usually is |
 |---|---|
 | The step reports itself inert | The page has no server tier — a static export or an embed. Deploy the space with an SSR credential |
-| `duplicate` | The same call is already running. Give the step an idempotency key if the repeat is legitimate. A `render` never reports this: two visitors of one page are not one caller submitting twice |
+| `duplicate` | The same call is already running, on another of the server's processes (on the same one, the call joins it). Give the step an idempotency key if the repeat is legitimate. A `render` never reports this: two visitors of one page are not one caller submitting twice |
 | `unauthenticated` (401) | Nobody is signed in and the trigger asks for somebody. Usually a session that ended under a page that still believed it had one — the SDK reports it to auth, which renews it or signs the visitor out there and then |
 | `forbidden` (403) | The action has no trigger step of that kind, or a signed-in caller does not hold the permissions the trigger asks for. Never read as a dead session: there is nothing to renew |
 | `over_capacity` | Too many runs at once. Calls are capped per space (`concurrency.perSpace`) and renders per process (`concurrency.renderPerProcess`) — a busy page is never counted against the space's call budget |

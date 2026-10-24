@@ -353,7 +353,9 @@ const writeElement = (
   const isRoot = parentId === '';
   const ownRootId = isRoot ? id : rootId;
   const bindings = withVisibility({ bind: boundFrom(author, spec, where), visible: spec.visible });
-  const ownCondition = spec.visible !== undefined || hasVisibilityBinding(bindings);
+  // Behind a feature flag is a condition too: off, it is not drawn, and a bare visit owes it no more than a hidden one
+  // (encore's settings: the Spotify card, its flag off, failed every check as "not on the page").
+  const ownCondition = spec.visible !== undefined || spec.flag !== undefined || hasVisibilityBinding(bindings);
   const conditional = above !== 'shown' || ownCondition;
   const shownWith = ownCondition ? undefined : shownWithOf(above, id);
   const ancestors = ancestorsOf(parentId, tree.map.flat);
