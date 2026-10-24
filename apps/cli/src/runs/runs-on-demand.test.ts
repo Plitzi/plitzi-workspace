@@ -8,7 +8,7 @@ import { readLaunch, writeLaunch } from './launch';
 import { waitForLead } from './leadWatch';
 import { STARTING_MS } from './onDemand';
 import { isRunRefusal } from './refusal';
-import { loadRun, openRun, readRunLog } from './run';
+import { loadRun, openRun, readRunLog, stopRun, writingTasks } from './run';
 import { completeTask, followNext, nextTask, reviewTask, takeTask } from './tasks';
 import { readTeam, setTeamAgent, startedAgents } from './team';
 import { viewRun } from './view';
@@ -308,6 +308,30 @@ describe('agents on demand', () => {
     });
     await complete(2);
     expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({ finished: true });
+  });
+
+  // encore-2: run upgrade waited on t-room-read, sent back to a dev-2 whose session had ended — nobody was writing it.
+  it('leaves out of a gentle stop a task sent back to an agent not running', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], sessionPerTask: true });
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+    bench.advance(STARTING_MS);
+
+    const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
+    await writeInCopy(taken.work, 'src/space/pages/home/index.ts', 'export const page = { round: 1 };\n');
+    await completeTask(bench.agent('dev-1', { token: taken.token }), 'es-launch', 't-home');
+    await reviewTask(lead(), 'es-launch', 't-home', 'changes', [{ note: 'The title again' }]);
+    // Still running — it has not stopped: its own sent back is what it writes next.
+    expect(await writingTasks(lead(), 'es-launch')).toEqual(['t-home']);
+
+    expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({
+      task: expect.objectContaining({ id: 't-home' }) as unknown
+    });
+    await completeTask(bench.agent('dev-1', { token: taken.token }), 'es-launch', 't-home');
+    expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({ finished: true });
+    await reviewTask(lead(), 'es-launch', 't-home', 'changes', [{ note: 'And the subtitle' }]);
+
+    await stopRun(lead(), 'es-launch', false, 'stopping to upgrade Plitzi');
+    expect(await writingTasks(lead(), 'es-launch')).toEqual([]);
   });
 
   // encore's dev-1: after t-player, next handed it t-shell, held from an earlier session — two tasks in one context.

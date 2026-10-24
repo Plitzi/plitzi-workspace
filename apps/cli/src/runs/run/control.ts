@@ -4,7 +4,9 @@ import path from 'node:path';
 import { sizeOf } from '../files';
 import { runPaths, taskPaths } from '../paths';
 import { RunRefusal } from '../refusal';
+import { agentsNow } from '../running';
 import { brakeFailuresFor, cutTask, DEFAULTS, readTasks, viewTask } from '../taskStore';
+import { readTeam } from '../team';
 import { removeRun } from './claim';
 import { requirePerson, requirePrincipal } from './context';
 import { LEAD, sendMessage } from '../messages';
@@ -106,12 +108,20 @@ export const recordBrake = async (
 /** What a task being written is in: an agent at it — a task in review, or blocked, has none writing. */
 const WRITING: readonly string[] = ['in-progress', 'changes-requested', 'waiting'];
 
-/** The tasks an agent is writing now: what a gentle stop waits for (`run upgrade`). */
+/**
+ * The tasks an agent is writing now: what a gentle stop waits for (`run upgrade`). One whose agent is not running has
+ * none writing it, its copy kept for when it starts again — encore-2's upgrade waited an hour on a task sent back to an
+ * agent that had ended.
+ */
 export const writingTasks = async (ctx: RunContext, runId: string): Promise<string[]> => {
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
   const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
+  const team = await readTeam(ctx.root).catch(() => undefined);
+  const { running } = await agentsNow(loaded.paths, views, team, await readRunLog(loaded.paths), ctx.now());
 
-  return views.filter(view => view.owner && WRITING.includes(view.state.status)).map(view => view.task.id);
+  return views
+    .filter(view => view.owner && running.has(view.owner.agent) && WRITING.includes(view.state.status))
+    .map(view => view.task.id);
 };
 
 /** `plitzi run stop`: the tasks in hand finish and go to review; none starts. `--force` is a person's: it cuts them now. */

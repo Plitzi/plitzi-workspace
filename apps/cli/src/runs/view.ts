@@ -9,16 +9,16 @@ import { fingerprint } from './files';
 import { liveAttention } from './findings/live';
 import { readHistory } from './history';
 import { identifiedAgents } from './identity';
-import { isRunning, processTable, readLaunch, startedWithin } from './launch';
 import { askingLeads, reviewersOf, UNTAKEN_REVIEW_MS } from './leads';
 import { LEAD, messagesOf, unreadFor } from './messages';
-import { agentsNeeded, runningAgents } from './onDemand';
+import { agentsNeeded } from './onDemand';
 import { under } from './paths';
 import { previewPort } from './previewRecord';
 import { loadRun, pinnedChanges, pinnedNow, readApproved, readBase, readRunLog, runIds, samePinned } from './run';
+import { agentsNow } from './running';
 import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
-import { DEFAULTS, isDisconnected, readStart, viewTask } from './taskStore';
+import { isDisconnected, readStart, viewTask } from './taskStore';
 import { readTeam, startedAgents } from './team';
 import { chainMinutes, urgencies } from './urgency';
 import { isWorked } from './worked';
@@ -254,47 +254,9 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   const approvedIds = new Set(views.filter(view => view.state.status === 'done').map(view => view.task.id));
   const urgency = urgencies(loaded.tasks);
   const team = await readTeam(ctx.root).catch(() => undefined);
-  const grace =
-    team?.options?.startGraceMinutes === undefined ? DEFAULTS.startGraceMs : team.options.startGraceMinutes * 60_000;
   const started = team ? startedAgents(team) : [];
   const log = await readRunLog(loaded.paths);
-  // What the CLI launched of the team and of the tasks' owners: its process, when, its session.
-  const launches = new Map(
-    (
-      await Promise.all(
-        [
-          ...new Set([
-            ...started.map(each => each.agent),
-            ...views.flatMap(view => (view.owner ? [view.owner.agent] : []))
-          ])
-        ].map(async agent => [agent, await readLaunch(loaded.paths, agent)] as const)
-      )
-    ).flatMap(([agent, launch]) => (launch ? [[agent, launch] as const] : []))
-  );
-  const table = processTable();
-  // Launched and its process gone: not running, whatever its last word in the log was — encore's designers ended on a
-  // 'waiting', read running for good, and no designer was asked for the UI reviews that waited on none.
-  const gone = new Set([...launches].filter(([, launch]) => !isRunning(launch, table)).map(([agent]) => agent));
-  // An agent just started has said nothing yet — its harness loading, its skills read: the tasks it holds are not
-  // silent, and it is running, until its grace is over or it stopped since (encore: every agent started again after the
-  // machine went down read "no signal" and "not running" at once, its last word from before).
-  const starting = new Set(
-    [...launches]
-      .filter(
-        ([agent, launch]) =>
-          !gone.has(agent) &&
-          startedWithin(launch, now, grace) &&
-          !log.some(
-            entry =>
-              entry.by === agent &&
-              entry.action === 'stops' &&
-              typeof entry.at === 'string' &&
-              Date.parse(entry.at) >= Date.parse(launch.startedAt)
-          )
-      )
-      .map(([agent]) => agent)
-  );
-  const running = new Set([...[...runningAgents(log)].filter(agent => !gone.has(agent)), ...starting]);
+  const { gone, starting, running } = await agentsNow(loaded.paths, views, team, log, now);
   // A task sent back to an agent not running waits for it to be started, and the lead is told that (`agentsNeeded`):
   // "no signal — reassign it" beside it contradicted it (encore-2: t-room-read's dev-2).
   const owesSignal = (view: TaskView): boolean =>

@@ -83,7 +83,8 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   inherited the lead's token from its CLI, and a project script's `plitzi space lint` ran as the lead — found by the
   run's own `two-sessions` finding.
 - **A task sent back to an agent that is not running reads as waiting for it, not silent:** the lead is told to start
-  it again, and no longer "no signal — reassign it" beside that (encore-2's t-room-read said both at once).
+  it again, and no longer "no signal — reassign it" beside that (encore-2's t-room-read said both at once) — and
+  `run upgrade` no longer waits for it: nobody is writing it, and its copy is kept (encore-2's waited an hour on it).
 
 - **A tester starts on the strongest model, as a designer does,** when its entry names none (`ROLE_MODELS`): its tests
   and its review are what stop a bug or a regression getting through. A model the file says always wins.
