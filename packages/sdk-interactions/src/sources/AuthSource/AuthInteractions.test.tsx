@@ -103,3 +103,36 @@ describe('AuthInteractions', () => {
     expect(registered).toEqual({});
   });
 });
+
+describe('signing out everywhere from a flow', () => {
+  // encore-2's dev-1: the step answered nothing, so a page could not say it was done.
+  it('answers ok once the provider has signed out, and fails the step when the provider cannot', async () => {
+    let registered: Record<string, InteractionCallback> = {};
+    const interactions = {
+      interactionsManager: {},
+      useInteractions: ({ callbacks }: { callbacks?: Record<string, InteractionCallback> }) => {
+        registered = callbacks ?? {};
+      }
+    } as unknown as InteractionsContextValue; // Only what the source reads: where it registers its callbacks.
+    const signOutEverywhere = (withIt: boolean) => {
+      render(
+        <AuthContext
+          value={{
+            ...authValue,
+            provider: 'basic',
+            ...(withIt ? { logoutEverywhere: () => Promise.resolve() } : {})
+          }}
+        >
+          <InteractionsContext value={interactions}>
+            <AuthInteractions />
+          </InteractionsContext>
+        </AuthContext>
+      );
+
+      return (params: Record<string, unknown>) => Promise.resolve(registered.logoutEverywhere.callback?.(params));
+    };
+
+    await expect(signOutEverywhere(true)({ scope: 'all' })).resolves.toEqual({ ok: true });
+    await expect(signOutEverywhere(false)({ scope: 'site' })).rejects.toThrow('has no way to sign out everywhere');
+  });
+});

@@ -290,6 +290,17 @@ describe('agents on demand', () => {
         text: expect.stringContaining('t-home was sent back to dev-1, which is not running: start it again') as unknown
       })
     );
+    // Waiting for its agent to be started is no silence: "reassign it" beside "start it again" said two things.
+    bench.advance(2 * 60 * 60_000);
+    const waiting = await viewRun(lead(), 'es-launch');
+    expect(waiting.attention).toContainEqual(
+      expect.objectContaining({
+        kind: 'agents-needed',
+        text: expect.stringContaining('t-home was sent back') as unknown
+      })
+    );
+    expect(waiting.attention).not.toContainEqual(expect.objectContaining({ kind: 'no-signal' }));
+    expect(waiting.tasks.find(task => task.id === 't-home')?.noSignal).toBe(false);
     // Its next session: its own first, then stopped again once it is complete.
     expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({
       task: expect.objectContaining({ id: 't-home' }) as unknown,

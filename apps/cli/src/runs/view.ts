@@ -180,7 +180,7 @@ const minutesBetween = (from: string, to: Date): number => Math.round((to.getTim
 /** Past its work: in review or approved, what its agent last said of the work is history. */
 const past = (view: TaskView): boolean => view.state.status === 'in-review' || view.state.status === 'done';
 
-const lineOf = (view: TaskView, now: Date, starting: boolean, unblocks: string[], urgency: Priority): TaskLine => ({
+const lineOf = (view: TaskView, now: Date, owesSignal: boolean, unblocks: string[], urgency: Priority): TaskLine => ({
   id: view.task.id,
   title: view.task.title,
   kind: view.task.kind,
@@ -199,11 +199,7 @@ const lineOf = (view: TaskView, now: Date, starting: boolean, unblocks: string[]
   ...(view.state.blockedBy ? { blockedBy: view.state.blockedBy } : {}),
   estimateMinutes: view.task.estimateMinutes,
   ...(view.owner ? { spentMinutes: minutesBetween(view.owner.takenAt, now) } : {}),
-  noSignal:
-    view.owner !== undefined &&
-    !starting &&
-    isWorked(view.state.status) &&
-    isDisconnected(view.task, view.signalAt, now),
+  noSignal: owesSignal && isWorked(view.state.status) && isDisconnected(view.task, view.signalAt, now),
   ...(view.owner ? { takenAt: view.owner.takenAt } : {}),
   ...(view.state.design ? { design: view.state.design } : {}),
   ...(view.state.status === 'in-review' && view.state.reviewer?.round === view.state.round
@@ -298,11 +294,18 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       )
       .map(([agent]) => agent)
   );
+  const running = new Set([...[...runningAgents(log)].filter(agent => !gone.has(agent)), ...starting]);
+  // A task sent back to an agent not running waits for it to be started, and the lead is told that (`agentsNeeded`):
+  // "no signal — reassign it" beside it contradicted it (encore-2: t-room-read's dev-2).
+  const owesSignal = (view: TaskView): boolean =>
+    view.owner !== undefined &&
+    !starting.has(view.owner.agent) &&
+    !(view.state.status === 'changes-requested' && !running.has(view.owner.agent));
   const tasks = views.map(view => {
     const line = lineOf(
       view,
       now,
-      view.owner !== undefined && starting.has(view.owner.agent),
+      owesSignal(view),
       loaded.tasks.filter(task => task.dependsOn.includes(view.task.id)).map(task => task.id),
       urgency.get(view.task.id) ?? view.task.priority
     );
@@ -330,7 +333,6 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     });
   }
 
-  const running = new Set([...[...runningAgents(log)].filter(agent => !gone.has(agent)), ...starting]);
   // Free means started and idle: an agent on demand never started is none (lx-copy: "dev-3, design-2 are free" for two
   // agents nobody had started).
   attention.push(

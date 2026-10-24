@@ -76,6 +76,15 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 
 ### The team (`.plitzi/team.json`)
 
+- **`run amend` keeps the tasks of tests the run made** after a developer task the plan keeps: encore-2's amend of a stage
+  dropped three, "nobody had taken them", with the proposals sent to them.
+- **An agent starts with its own identity, never its launcher's:** `run agent --launch` hands the harness the agent's
+  own token and session, and none of the lead's (`PLITZI_TOKEN`, `PLITZI_AGENT`, `PLITZI_RUN`). encore-2's agents
+  inherited the lead's token from its CLI, and a project script's `plitzi space lint` ran as the lead — found by the
+  run's own `two-sessions` finding.
+- **A task sent back to an agent that is not running reads as waiting for it, not silent:** the lead is told to start
+  it again, and no longer "no signal — reassign it" beside that (encore-2's t-room-read said both at once).
+
 - **A tester starts on the strongest model, as a designer does,** when its entry names none (`ROLE_MODELS`): its tests
   and its review are what stop a bug or a regression getting through. A model the file says always wins.
 
@@ -353,6 +362,9 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   sections while the next one is prefetched.
 - **Small fixes:** a toast's close button shows its focus, and the dev tools never print.
 - **A button with an icon and no `content` shows the icon alone,** not the placeholder "Button" beside it.
+- **Sign out everywhere works on a `createAuth` server as written:** the page takes the server's `revokeUrl` as it takes its
+  other auth endpoints (a space had to declare it by hand), and the step answers `{ ok: true }` for a flow to branch on —
+  a refusal still fails it. Found by encore-2's dev-1.
 - **`authLogoutEverywhere('site' | 'all')`**, the auth source's `logoutEverywhere`: a visitor signs out of the space on
   every device, or out of their account everywhere. `basic` posts to the space's `revokeUrl` (the page server's sign-in
   names it); a provider that cannot is refused, never a sign-out here alone.

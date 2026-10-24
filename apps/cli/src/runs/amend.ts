@@ -24,6 +24,8 @@ import {
 import { PLAN_FINDING } from './spike';
 import { withLock } from './store';
 import { updateState, viewTask } from './taskStore';
+import { TESTER } from './team';
+import { TESTS_SUFFIX } from './tests';
 
 import type { PlannedTask, RunPlan, RunTask } from './model';
 import type { LoadedRun, RunContext } from './run';
@@ -122,6 +124,17 @@ const originsOf = async (loaded: LoadedRun): Promise<(id: string) => number> => 
 };
 
 /** The run's tasks as a stage's plan amends them: each it holds as it says, those it left out gone. */
+/**
+ * A task the run made from the plan rather than one the plan wrote — the tests of its developer tasks (`withTestTasks`):
+ * it stays while every task it was made after does. encore-2's amend of a stage dropped three of them, as "nobody had
+ * taken them", with the proposals sent to them.
+ */
+const derivedFrom = (task: RunTask, next: RunPlan): boolean =>
+  task.role === TESTER &&
+  new RegExp(`${TESTS_SUFFIX}(-\\d+)?$`).test(task.id) &&
+  task.dependsOn.length > 0 &&
+  task.dependsOn.every(id => next.tasks.some(each => each.id === id));
+
 const amendedTasks = (plan: RunPlan, next: RunPlan, removed: readonly RunTask[]): PlannedTask[] =>
   plan.tasks
     .filter(task => !removed.some(each => each.id === task.id))
@@ -175,7 +188,11 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   // Less to do: a task nobody took goes — left out by a plan that speaks for it — and what it covered is said waiting, or
   // covered by another.
   const removed = loaded.tasks.filter(
-    task => task.kind === 'work' && spoken.has(originOf(task.id)) && !next.tasks.some(each => each.id === task.id)
+    task =>
+      task.kind === 'work' &&
+      spoken.has(originOf(task.id)) &&
+      !next.tasks.some(each => each.id === task.id) &&
+      !derivedFrom(task, next)
   );
   for (const task of removed) {
     const view = await viewTask(loaded.paths, task);

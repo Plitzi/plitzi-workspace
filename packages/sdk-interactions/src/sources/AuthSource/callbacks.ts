@@ -99,12 +99,13 @@ export const authCallbacks: Record<string, BuiltinGlobalCallback> = {
   /**
    * The person signed out on every device, and here: `site`, this space's sessions — a visitor's own, wherever they
    * signed in to it; `all`, every session of their account. A refusal fails the step: a sign-out everywhere that did not
-   * happen must never read as one that did.
+   * happen must never read as one that did. Done, it answers `{ ok: true }`, for a flow to say so.
    */
   logoutEverywhere: {
     source: 'auth',
     title: 'Auth Sign Out Everywhere',
     strictParams: true,
+    preview: { ok: false },
     params: {
       scope: {
         type: 'select',

@@ -5,7 +5,10 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { tokenFile } from './identity';
 import { claudeSessionFile, isRunning, resumable, startedWithin } from './launch';
+import { agentEnv } from './launchAgent';
+import { runPaths } from './paths';
 import { DEFAULTS } from './taskStore';
 
 import type { Launch } from './launch';
@@ -95,5 +98,30 @@ describe.skipIf(process.platform === 'win32')('whether an agent still runs', () 
 
     expect(startedWithin(launch(), now, 3 * 60_000)).toBe(true);
     expect(startedWithin(launch(), now, 60_000)).toBe(false);
+  });
+});
+
+describe('the environment an agent starts with', () => {
+  // encore-2: the lead's CLI exported its token, every agent it launched inherited it, and a project script's
+  // `plitzi space lint` ran as the lead.
+  it('carries its own token and session — never the identity of whoever started it', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-agent-env-'));
+    const paths = runPaths(dir, 'encore-2');
+    await fs.mkdir(path.join(paths.scratch, 'dev-1'), { recursive: true });
+    await fs.writeFile(tokenFile(paths, 'dev-1'), 'encore-2.@dev-1.0123456789abcdef0123456789abcdef\n');
+
+    const env = await agentEnv(paths, 'dev-1', 'session-1', {
+      PATH: '/usr/bin',
+      PLITZI_TOKEN: 'encore-2.@lead.ffffffffffffffffffffffffffffffff',
+      PLITZI_AGENT: 'lead',
+      PLITZI_RUN: 'encore-2'
+    });
+
+    expect(env).toEqual({
+      PATH: '/usr/bin',
+      PLITZI_TOKEN: 'encore-2.@dev-1.0123456789abcdef0123456789abcdef',
+      PLITZI_SESSION: 'session-1'
+    });
+    await fs.rm(dir, { recursive: true, force: true });
   });
 });

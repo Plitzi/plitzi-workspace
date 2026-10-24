@@ -1,8 +1,19 @@
 import type { AuthProviderSettings } from '../types';
 import type { ServerAuth } from '@plitzi/sdk-shared';
 
-/** The settings a server describes, each filling in only what the space left undeclared. */
-const DESCRIBED = ['loginUrl', 'userUrl', 'refreshUrl', 'logoutUrl', 'mfaUrl', 'sessionHintCookie'] as const;
+/**
+ * The settings a server describes, each filling in only what the space left undeclared — `revokeUrl` too: left out, a
+ * space on a `createAuth` server could not sign out everywhere until it declared it by hand (encore-2's dev-1).
+ */
+const DESCRIBED = [
+  'loginUrl',
+  'userUrl',
+  'refreshUrl',
+  'logoutUrl',
+  'revokeUrl',
+  'mfaUrl',
+  'sessionHintCookie'
+] as const;
 
 export type ResolvedAuthSettings = { provider: string; settings: AuthProviderSettings };
 

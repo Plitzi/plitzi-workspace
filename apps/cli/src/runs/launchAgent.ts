@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { agentPrompt, harnessCommand, HARNESSES, isHarness } from './agentPrompt';
-import { issueToken, writeCli } from './identity';
+import { issueToken, tokenFile, writeCli } from './identity';
 import { isRunning, readLaunch, resumable, writeLaunch } from './launch';
 import { isPrincipal, LEAD_ROLE } from './leads';
 import { agentScratch } from './paths';
@@ -17,6 +17,7 @@ import { leadStart, readTeam, startedAgents } from './team';
 
 import type { Harness } from './agentPrompt';
 import type { NoResume } from './launch';
+import type { RunPaths } from './paths';
 import type { RunContext } from './run';
 import type { StartedAgent } from './team';
 
@@ -167,6 +168,29 @@ export const promptAgent = async (ctx: RunContext, runId: string, agent: string)
   return { agent, runId, promptFile, ...told, commands: lines };
 };
 
+/** Who a command says it is, read from the environment: never handed down from whoever started the agent. */
+const IDENTITY_ENV = ['PLITZI_TOKEN', 'PLITZI_AGENT', 'PLITZI_RUN'] as const;
+
+/**
+ * The environment an agent's harness starts with: this process's, without the identity of whoever started it — the
+ * lead's own CLI exports its token, and encore-2's agents inherited it: a `plitzi` command of theirs that bypassed their
+ * own CLI (a project script's `plitzi space lint`) ran as the lead — with the agent's own token in its place, and its
+ * session (`SESSION_ENV`), so a run reads which session did what, never guesses it.
+ */
+export const agentEnv = async (
+  paths: RunPaths,
+  agent: string,
+  session: string,
+  from: NodeJS.ProcessEnv = process.env
+): Promise<NodeJS.ProcessEnv> => {
+  const env = Object.fromEntries(
+    Object.entries(from).filter(([name]) => !(IDENTITY_ENV as readonly string[]).includes(name))
+  );
+  const token = (await fs.readFile(tokenFile(paths, agent), 'utf-8').catch(() => '')).trim();
+
+  return { ...env, ...(token ? { PLITZI_TOKEN: token } : {}), [SESSION_ENV]: session };
+};
+
 /** Starts the agent now, in `harness`: refused while it still runs. */
 export const launchAgent = async (
   ctx: RunContext,
@@ -209,12 +233,11 @@ export const launchAgent = async (
   const log = path.join(scratch, 'agent.log');
   const out = openSync(log, 'a');
   // Its own process group, outliving this command: the agent works until task next tells it to stop.
-  // Every command it runs says its session (`SESSION_ENV`): a run reads which session did what, never guesses it.
   const child = spawn(command, args, {
     cwd: ctx.root,
     detached: true,
     stdio: ['ignore', out, out],
-    env: { ...process.env, [SESSION_ENV]: session.id }
+    env: await agentEnv(loaded.paths, agent, session.id)
   });
   closeSync(out);
   child.unref();

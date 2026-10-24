@@ -11,6 +11,7 @@ const served: ServerAuth = {
   userUrl: '/auth/session',
   refreshUrl: '/auth/refresh',
   logoutUrl: '/auth/logout',
+  revokeUrl: '/auth/logout-everywhere',
   sessionHintCookie: 'acme_session_hint'
 };
 
@@ -24,6 +25,8 @@ describe('the provider a page signs in with', () => {
         userUrl: '/auth/session',
         refreshUrl: '/auth/refresh',
         logoutUrl: '/auth/logout',
+        // encore-2: left out, a space on a createAuth server could not sign out everywhere.
+        revokeUrl: '/auth/logout-everywhere',
         sessionHintCookie: 'acme_session_hint'
       }
     });

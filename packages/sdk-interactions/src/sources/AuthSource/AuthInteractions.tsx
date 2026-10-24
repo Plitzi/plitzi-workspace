@@ -39,7 +39,8 @@ const AuthInteractions = ({ children }: AuthInteractionsProps) => {
           return Promise.reject(new Error(`The ${provider} sign-in has no way to sign out everywhere`));
         }
 
-        return logoutEverywhere(params.scope === 'all' ? 'all' : 'site');
+        // Said done, as its catalog entry says it: a flow branches on `.ok`, a refusal fails the step.
+        return logoutEverywhere(params.scope === 'all' ? 'all' : 'site').then(() => ({ ok: true }));
       }
     });
   }, [login, logout, logoutEverywhere, refresh, provider]);
