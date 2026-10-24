@@ -57,7 +57,11 @@ export const freshStart = async (
   const member = (team ? startedAgents(team) : []).find(each => each.agent === ctx.agent);
   // Only one the run starts again stops for it: an agent of the team, or a lead that reviews — another, with nobody to
   // start it, keeps its session.
-  const mode = member ? (member.session ?? DEFAULT_SESSION) : coLeadsOf(loaded.record).includes(ctx.agent) ? DEFAULT_SESSION : 'keep';
+  const mode = member
+    ? (member.session ?? DEFAULT_SESSION)
+    : coLeadsOf(loaded.record).includes(ctx.agent)
+      ? DEFAULT_SESSION
+      : 'keep';
   if (mode === 'keep') {
     return undefined;
   }

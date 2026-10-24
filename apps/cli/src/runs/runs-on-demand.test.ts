@@ -263,7 +263,8 @@ describe('agents on demand', () => {
   it('ends a session of one task once it is complete, and asks for the next — for its own sent back too', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
     const team = await readTeam(bench.root);
-    expect(team ? startedAgents(team) : []).toEqual([{ agent: 'dev-1', roles: ['developer'], session: 'task' }]);
+    // `task` is the default: said by no field.
+    expect(team ? startedAgents(team) : []).toEqual([{ agent: 'dev-1', roles: ['developer'] }]);
     await openRun(lead(), await bench.writePlan(benchPlan()));
     bench.advance(STARTING_MS);
 
@@ -280,7 +281,7 @@ describe('agents on demand', () => {
     expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({
       finished: true,
       why: expect.stringContaining(
-        't-home is complete: your team starts you again with a fresh context after each task'
+        't-home is complete: you are started again with a fresh context after each task'
       ) as unknown
     });
     // Stopped, with work waiting: started again, though it starts with the run.

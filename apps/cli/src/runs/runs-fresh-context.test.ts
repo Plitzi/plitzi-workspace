@@ -56,7 +56,7 @@ const completeHome = async (agent: string, tokens: number): Promise<void> => {
 
 describe('a fresh context', () => {
   it('starts an agent again once its context passes the team’s, between two tasks — never under it', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'context' });
     await openRun(lead(), await bench.writePlan(plan()));
     bench.advance(STARTING_MS);
 
@@ -93,7 +93,7 @@ describe('a fresh context', () => {
 
   it('starts a tester again past it once its review is decided, and one that keeps its session never', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'keep' });
-    await setTeamAgent(bench.root, 'test', { roles: ['tester'] });
+    await setTeamAgent(bench.root, 'test', { roles: ['tester'], session: 'context' });
     await openRun(lead(), await bench.writePlan(plan()));
     bench.advance(STARTING_MS);
 
@@ -169,7 +169,7 @@ describe('a fresh context', () => {
     await completeHome('dev-1', 50_000);
     expect(await nextTask(holding('dev-1', 50_000), 'es-launch', 'developer')).toMatchObject({
       finished: true,
-      why: expect.stringContaining('after each task or review ("session": "task")') as unknown
+      why: expect.stringContaining("after each task or review (your team's session: task)") as unknown
     });
   });
 });
@@ -198,8 +198,13 @@ describe('a task sent back to an agent at another', () => {
     // dev-2, free, is not handed it.
     expect((await nextTask(holding('dev-2', 50_000), 'es-launch', 'developer')).task?.id).not.toBe('t-home');
 
+    // t-menu done: its session ends there (`task`, the default), and the next one — dev-1's still — takes t-home first.
     await completeTask(holding('dev-1', 70_000, menu.token), 'es-launch', 't-menu');
     expect(await nextTask(holding('dev-1', 70_000), 'es-launch', 'developer')).toMatchObject({
+      finished: true,
+      why: expect.stringContaining('for t-home, which you hold') as unknown
+    });
+    expect(await nextTask(holding('dev-1', 46_000), 'es-launch', 'developer')).toMatchObject({
       task: expect.objectContaining({ id: 't-home' }) as unknown,
       yours: 'changes-requested'
     });

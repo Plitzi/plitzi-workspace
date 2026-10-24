@@ -54,8 +54,8 @@ person asked for a team:
    brief starts with it, and the references its files need. **The team** is the project's,
    `.plitzi/team.json` — grow it as the job asks (`plitzi run team set dev --count 3 --min 1 --model <m>`): its
    size is how many work at once; past `min`, on demand — `run watch` says when to start one (through its own CLI,
-   after its first start). Agents start fresh between tasks past `options.freshContextAt`
-   (`--session task|keep`); `--resume-session`: one that died mid-task resumes; one just started is
+   after its first start). Agents start fresh after each task or review, never in one
+   (`--session context|keep`); `--resume-session`: one that died mid-task resumes; one just started is
    not "no signal" for `options.startGraceMinutes` (3). A tester reviews code before you (yours: none took it in 2 min), adds `<id>-tests` (`"tests": false` for none); a designer reviews
    the others' UI before you (`options.designReview`; `false` turns it off). Yours is the complete,
    strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:

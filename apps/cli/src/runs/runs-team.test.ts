@@ -42,7 +42,11 @@ describe('a team: roles, waiting for work, and a lead who talks to the agents', 
   it('tells an agent whose task is in review not to stop when its wait ends', async () => {
     await open();
     // Its agents designers too, as the team says: a role of no task of the plan is still one it may ask work of.
-    await bench.writeTeam({ version: 1, agents: [{ name: 'agent', roles: ['developer', 'designer'], count: 4 }] });
+    // One session each, the test's: a fresh start between tasks is no stop for want of work (`runs-fresh-context`).
+    await bench.writeTeam({
+      version: 1,
+      agents: [{ name: 'agent', roles: ['developer', 'designer'], count: 4, session: 'keep' }]
+    });
     const menu = await take('agent-1', 't-menu');
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { es: true };\n');
     await completeTask(menu.ctx, 'es-launch', 't-menu');

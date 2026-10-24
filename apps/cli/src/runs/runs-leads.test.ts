@@ -6,7 +6,7 @@ import { messagesOf } from './messages';
 import { monitorRun } from './monitor';
 import { loadRun, openRun } from './run';
 import { askLead, messageTasks, noteRun } from './talk';
-import { completeTask, followNext, reassignTask, reviewTask, takeNext } from './tasks';
+import { completeTask, followNext, nextTask, reassignTask, reviewTask, takeNext } from './tasks';
 import { coLeadNames, leadCount, setTeamAgent } from './team';
 import { viewRun } from './view';
 import { benchPlan, makeBench, teamFor, writeInCopy } from '../tests/runProject';
@@ -95,6 +95,8 @@ describe('a review, taken from one queue', () => {
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "La carta" };\n');
     await completeTask(menu.ctx, runId, 't-menu');
 
+    // Its review decided, its session ends (a lead that reviews starts fresh after each); the next is lead-2's still.
+    expect(await nextTask(bench.agent('lead-2'), runId, 'lead')).toMatchObject({ finished: true });
     // t-home waited longer now, but lead-2 knows what it asked of t-menu.
     const next = await takeNext(bench.agent('lead-2'), runId, 'lead');
     expect(next.next.leadReview).toMatchObject({ task: { id: 't-menu' }, round: 1 });
@@ -105,6 +107,7 @@ describe('a review, taken from one queue', () => {
     await reviewTask(bench.agent('lead-2'), runId, 't-menu', 'changes', [{ note: 'Now say the season' }]);
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "La carta de otoño" };\n');
     await completeTask(menu.ctx, runId, 't-menu');
+    expect(await nextTask(bench.agent('lead-2'), runId, 'lead')).toMatchObject({ finished: true });
     const again = await takeNext(bench.agent('lead-2'), runId, 'lead');
     expect(again.next.leadReview).toMatchObject({ round: 2, earlier: 1 });
     expect(again.next.leadReview?.asked).toEqual([expect.stringContaining('Now say the season')]);
@@ -235,6 +238,8 @@ describe('a lead that reviews, started when the reviews queue up', () => {
     const { runId } = await twoInReview();
     const first = (await takeNext(bench.agent('lead-2'), runId, 'lead')).next.leadReview?.task.id ?? '';
     await reviewTask(bench.agent('lead-2'), runId, first, 'approve', []);
+    // Its review decided, its session ends; started again, it is no spare lead while a review waits.
+    expect(await nextTask(bench.agent('lead-2'), runId, 'lead')).toMatchObject({ finished: true });
     // One review still waits: not spare yet.
     expect(
       (await followNext(bench.agent('lead-2'), runId, 'lead', { timeoutMs: 0, everyMs: 1, idleMs: 60_000 })).finished

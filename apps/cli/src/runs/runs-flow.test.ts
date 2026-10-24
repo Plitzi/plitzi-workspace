@@ -241,7 +241,8 @@ describe('a task held by its holder alone', () => {
   });
   it('takes the next task from the copy of the one it completed: the copy says its task, never who takes', async () => {
     const plan = { ...benchPlan(), designReview: false };
-    await bench.writeTeam({ version: 1, agents: [{ name: 'dev', roles: ['developer'], count: 2 }] });
+    // One session, the test's: what it takes next in it is the point (a fresh start has tests of its own).
+    await bench.writeTeam({ version: 1, agents: [{ name: 'dev', roles: ['developer'], count: 2, session: 'keep' }] });
     await openRun(as('lead'), await bench.writePlan(plan));
     const home = await takeTask(as('dev-1'), plan.runId, 't-home');
     await writeInCopy(home.work, 'src/space/pages/home/index.ts', "export const home = { title: 'Hola' };\n");

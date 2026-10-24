@@ -197,12 +197,12 @@ describe('the team of a project’s runs', () => {
       []
     );
     expect(teamProblems({ version: 1, agents: [{ name: 'dev', roles: ['developer'], session: 'yes' }] })).toEqual([
-      '"dev": its session is context, task, keep — when it is started again with a fresh context: past options.freshContextAt (the default), after each task or review, or never'
+      '"dev": its session is task, context, keep — when it is started again with a fresh context: after each task or review (the default), past options.freshContextAt, or never'
     ]);
     // Renamed: refused saying what it is now, never read as nothing.
     expect(teamProblems({ version: 1, agents: [{ name: 'dev', roles: ['developer'], sessionPerTask: true }] })).toEqual(
       [
-        '"dev": "sessionPerTask" is now "session": "task" — or "context", the default: started again once its context passes options.freshContextAt — or "keep"'
+        '"dev": "sessionPerTask" is gone: a fresh session after each task or review is every agent\'s now — remove it ("session": "context" starts it again only past options.freshContextAt, "keep" never)'
       ]
     );
     expect(teamProblems({ version: 1, agents: [], options: { freshContextAt: 1000 } })).toEqual([

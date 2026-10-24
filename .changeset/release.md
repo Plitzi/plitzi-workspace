@@ -157,12 +157,13 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 - **`min`:** that many start with the run; the rest are **on demand**. `run watch --until lead` names the agent to start
   when work waits for one, and an agent with nothing left stops by itself.
 - **`session`: when an agent is started again with a fresh context,** always between two pieces of work — a task
-  completed, a review decided — so nothing it knows and has not written is lost: `context` (the default) once its
-  harness's context passes `options.freshContextAt` (100k tokens), `task` after each one, `keep` never. Testers,
-  designers and co-leads too; the lead that plans keeps its session. encore-2's designer and tester, never started
-  again, grew to 400k tokens and read 26–30k a turn, against ~12k for its developers started again per task.
-  **Breaking:** `sessionPerTask` is gone — `"session": "task"` says it, and a team file with the old key is refused
-  naming the new one (`run team set dev --session task`).
+  completed, a review decided — never in one, past any size, so nothing it knows and has not written is lost: `task`
+  (the default) after each one, `context` once its harness's context passes `options.freshContextAt` (100k tokens),
+  `keep` never. Testers, designers and co-leads too; the lead that plans keeps its session, and an agent outside the
+  team (nobody would start it again). encore-2's designer and tester, never started again, grew to 400k tokens and
+  read 26–30k a turn, against ~12k for its developers started again per task.
+  **Breaking:** `sessionPerTask` is gone — what it did is every agent's default now, and a team file with the old key
+  is refused saying to remove it.
 - **A task sent back waits for its own agent,** who takes it as soon as it ends the task it is at: it is no longer
   handed to a free agent after 3 minutes (the `handed-off` entry and the bench's "Handed off" column are gone), and
   while it waits it never reads "no signal — reassign it".

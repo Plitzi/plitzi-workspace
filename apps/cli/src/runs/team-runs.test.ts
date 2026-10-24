@@ -537,6 +537,8 @@ describe('a designer’s review of the others’ UI', () => {
     await completeTask(dev, 'es-launch', 't-menu');
 
     expect((await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).designReview).toBeUndefined();
+    // Its review decided, its session ends; started again, the round is offered to it.
+    expect(await nextTask(bench.agent('design-1'), 'es-launch', 'designer')).toMatchObject({ finished: true });
     expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer')).designReview?.task.id).toBe('t-menu');
 
     bench.advance(SAME_DESIGNER_MS);

@@ -397,17 +397,18 @@ was last launched or stopped (the log's `launch` and `stops`); once a piece of i
 before its own work is handed back — never while it is in one (`inAPiece`), read off the tasks' state, not the log: a
 task it holds at work, waiting or blocked (a `task next` comes from an agent in a task too, its task blocked or given
 back), one sent back it took up again, a review it took and has not decided. Past the threshold or not, it stops only
-once that piece ends: `"session": "context"` (the default) once its harness's context — its last turn's,
-read from the session (`harness/contextNow`, Claude Code, Codex, OpenCode; another harness's is never read, and its
-agents are not stopped for it) — passes `freshContextAt` (100k tokens, from 60k); `"task"` after each piece; `"keep"`
-never. The piece it just completed, sent back already, comes first instead: its context is what that round needs. The
-lead that plans never stops for it — the person talks to it. The keeper starts the agent again — of the base, whatever
+once that piece ends: `"session": "task"` (the default, `DEFAULT_SESSION`) after each piece; `"context"` once its
+harness's context — its last turn's, read from the session (`harness/contextNow`, Claude Code, Codex, OpenCode; another
+harness's is never read, and its agents are not stopped for it) — passes `freshContextAt` (100k tokens, from 60k);
+`"keep"` never. The piece it just completed, sent back already, comes first instead: its context is what that round
+needs. The lead that plans never stops for it — the person talks to it — nor an agent outside the team: only the
+team's agents and the leads that review are started again by the run. The keeper starts the agent again — of the base, whatever
 waits; on demand, when work of its role does — and any task sent back to an agent not running asks for it by name,
 which it takes first. Every turn reads the whole context again: encore-2's developers, a session a task, read ~12k
 tokens' worth a turn and ended each at 58–113k; its designer and tester, never started again, grew to 400k and read
 26–30k a turn — more, the two, than the developers' 49 sessions; a start costs ~40k tokens written, about what a
 piece of work carrying 50k more context reads again in ~15 turns. `sessionPerTask` was this rule's `"task"`, for
-tasks alone; a team file that says it is refused naming `"session"`.
+tasks alone, and asked for; a team file that says it is refused saying to remove it.
 
 **An agent started again after it died** (`launch.ts`). `run agent --launch` keeps what it started in
 `scratch/<agent>/agent.json`: the pid, the harness, when, and the session. In Claude Code that is a session id of the

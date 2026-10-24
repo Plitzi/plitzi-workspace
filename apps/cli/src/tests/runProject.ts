@@ -222,7 +222,9 @@ export const teamFor = (plan: Pick<RunPlan, 'tasks'>, count: number): Team => ({
     {
       name: 'agent',
       roles: [...new Set(['developer', ...plan.tasks.map(task => task.role ?? 'developer')])],
-      count
+      count,
+      // Scripted agents, each one session the test drives: a fresh start between tasks has tests of its own.
+      session: 'keep'
     }
   ]
 });
