@@ -263,8 +263,11 @@ describe('the lead’s plan as the run goes', () => {
     await doTask('agent-4', 't-book', 'src/space/pages/book.ts', 'export const book = {};\n');
 
     expect((await log()).at(-1)).toMatchObject({ action: 'all-approved', tasks: 4 });
-    expect((await nextTask(bench.agent('agent-4'), 'es-launch', 'developer')).finished).toBe(true);
-    expect((await log()).at(-1)).toMatchObject({ action: 'stops', by: 'agent-4' });
+    // Of the team's base, it waits while the run is open: the lead may stack another stage.
+    const idle = await nextTask(bench.agent('agent-4'), 'es-launch', 'developer');
+    expect(idle.finished).toBeUndefined();
+    expect(idle.why).toContain("you are of the team's base");
+    expect((await log()).filter(entry => entry.by === 'agent-4').map(entry => entry.action)).not.toContain('stops');
     await finishRun(lead(), 'es-launch', { apply: false, leavePending: true });
     expect((await log()).at(-1)).toMatchObject({
       action: 'ready',
@@ -451,8 +454,9 @@ describe('the lead’s plan as the run goes', () => {
     await doTask('agent-3', 't-about', 'src/space/pages/about.ts', 'export const about = { done: true };\n');
     await doTask('agent-3', 't-book', 'src/space/pages/book.ts', 'export const book = { done: true };\n');
 
+    // Nothing left for it: it hears how its own work ended, and waits, of the team's base, while the run is open.
     expect(await nextTask(bench.agent('agent-1'), 'es-launch')).toMatchObject({
-      finished: true,
+      why: expect.stringContaining("you are of the team's base") as unknown,
       worked: [{ task: 't-home', status: 'done' }]
     });
   });

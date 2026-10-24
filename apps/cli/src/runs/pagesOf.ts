@@ -207,6 +207,17 @@ export const acceptancePages = (acceptance: readonly Acceptance[]): string[] =>
     )
   ].slice(0, MAX_PAGES);
 
+/**
+ * The pages a look opens, in order: those asked, those its files are drawn at, those its acceptance checks — the home
+ * page last, as a review's offer reads them (`reviewPages`): encore-2's look at a plugin's file, drawn at no page,
+ * pictured the home page, where none of its reactions is.
+ */
+export const pagesToLook = (
+  asked: readonly string[],
+  drawn: readonly string[],
+  acceptance: readonly string[]
+): string[] => [...([asked, drawn, acceptance, ['/']].find(pages => pages.length > 0) ?? ['/'])];
+
 /** The pages a review looks at: those its files are drawn at — else those its acceptance checks. */
 export const reviewPages = async (review: Pick<TaskView, 'paths' | 'state' | 'task'>): Promise<string[]> => {
   const owned = await pagesOf(review.paths.work, review.state.changed ?? []);

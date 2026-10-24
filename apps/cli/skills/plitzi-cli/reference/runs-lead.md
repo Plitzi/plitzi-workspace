@@ -120,7 +120,8 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** `plitzi run report` lists the problems
    (whose, evidence, fix) from the agents' round reports and the records — keep no list by hand; your summary adds what
    no record says, and what it was like for you: `plitzi run report --summary summary.md --ease <1-5> --hardest "…"`
-   (it combines the agents'); then `plitzi run finish` (the diff, checked). `--apply` is the person's, or yours if they allowed it — every server you started on the project stopped first, with `plitzi server stop` (one
+   (it combines the agents'; refused while anything waits for you: settle it first); then `plitzi run finish` (the
+   diff, checked). `--apply` is the person's, or yours if they allowed it — every server you started on the project stopped first, with `plitzi server stop` (one
    serves the project as it was and holds its `state/kv.json`). `run pending`: what awaits it.
 
 ## Where leads went wrong
@@ -142,8 +143,8 @@ applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** 
   is written, grepped, before a finding says "one class holds it" (a copy beside it is a round lost); (3) each line of
   the acceptance run once on the run's work as it is — it fails for the value, never for a selector that finds nothing
   (exit 0 already: it holds nothing, or say it guards); (4) a line for each width the ask covers.
-- **The team the work is worth**: `run plan` says when it is too big — start the agents it starts with, and one on
-  demand only when `run watch` asks (it counts the work waiting). Started by `run agent`, never prompts of your own.
+- **The team the work is worth**: `run plan` says when it is too big — the base runs while the run is open; one on
+  demand only when work waits. Started by `run agent`, never prompts of your own.
 - **A round that asks for code alone** (a refactor, one source for a value): `--changes "…" --skip-design lead`, the
   next round's UI yours — never a designer's review offered, then decided past it.
 - **Your files** — a stage, a summary — in your scratch (`tmp/plitzi-runs/<run>/scratch/lead/`), never the project's

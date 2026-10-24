@@ -320,29 +320,31 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     };
 
     await writeJson(taskPaths(loaded.paths, task.id).definition, amended);
-    // What the finish holds a done task to is what its review accepted: the amended lines take their place there — one
-    // unchanged keeps what it answered, a new one waits for the finish to run it.
-    if (done) {
-      await updateState(
-        taskPaths(loaded.paths, task.id),
-        state => ({
-          ...state,
-          accepted: task.acceptance.flatMap(line =>
-            typeof line === 'string'
-              ? []
-              : [
-                  (state.accepted ?? []).find(each => each.said === line.said && each.check === line.check) ?? {
-                    said: line.said,
-                    check: line.check,
-                    ok: false,
-                    amended: ctx.now().toISOString()
-                  }
-                ]
-          )
-        }),
-        ctx.now
-      );
-    }
+    // What the finish holds a task to is what its review accepted: the amended lines take their place there — one
+    // unchanged keeps what it answered, a new one waits for the finish to run it. A task in review is held to them too:
+    // encore-2's t-playback-safety, amended while in review, was approved on its old line and the finish refused it.
+    await updateState(
+      taskPaths(loaded.paths, task.id),
+      state =>
+        state.accepted === undefined && !done
+          ? state
+          : {
+              ...state,
+              accepted: task.acceptance.flatMap(line =>
+                typeof line === 'string'
+                  ? []
+                  : [
+                      (state.accepted ?? []).find(each => each.said === line.said && each.check === line.check) ?? {
+                        said: line.said,
+                        check: line.check,
+                        ok: false,
+                        amended: ctx.now().toISOString()
+                      }
+                    ]
+              )
+            },
+      ctx.now
+    );
     // A finding gone wrong was corrected only by a message (lx-copy's "write every stub"): the brief says the new one.
     if (!same(task.findings, before.get(task.id)?.findings)) {
       const planned = task.findings;

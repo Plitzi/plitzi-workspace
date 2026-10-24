@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { agentTimelines, timelinesText } from './agentTimeline';
 import { proposalsOf } from './agreements';
 import { auditRun } from './audit';
 import { benchOf, benchText, readBench } from './bench';
@@ -25,7 +26,9 @@ import { readTaskReports } from './taskReports';
 import { requestsOf } from './tasks';
 import { readReviewed, viewTask } from './taskStore';
 import { readUsage } from './usage';
+import { viewRun } from './view';
 
+import type { AgentTimeline } from './agentTimeline';
 import type { BenchLine } from './bench';
 import type { CombinedExperience, Experience } from './experience';
 import type { Finding, RunIndicators } from './findings';
@@ -110,6 +113,8 @@ export interface RunReport {
   taskReports: TaskRoundReport[];
   /** What the lead's own sessions spent over the run, when its harness keeps one this CLI reads. */
   lead?: HarnessUsage;
+  /** Each agent's life in the run: started, at work, waiting, stopped and why, silent (`agentTimeline.ts`). */
+  agents: AgentTimeline[];
 }
 
 interface LogLine {
@@ -354,7 +359,8 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     noticed: notices.project.map(noticeText),
     metrics,
     taskReports,
-    ...(lead ? { lead } : {})
+    ...(lead ? { lead } : {}),
+    agents: agentTimelines(runLog, ctx.now())
   };
 };
 
@@ -428,6 +434,7 @@ export const reportText = (
     ),
     '',
     ...reviewsText(report),
+    ...timelinesText(report.agents),
     ...consumptionText(report),
     ...flowText(report.metrics),
     ...(benchBefore && benchBefore.length > 0 ? ['## Against the runs before', '', ...benchText(benchBefore), ''] : []),
@@ -470,6 +477,9 @@ export const reportText = (
  * `plitzi run report --summary <file> --ease --hardest …`: the lead's report of the run — its summary, and what it was
  * like to work with Plitzi, as each agent said its rounds' — kept for the run's report and its feedback.
  */
+/** What waits on the run's keeper, not on the lead: an agent to start. */
+const KEEPER_KINDS: ReadonlySet<string> = new Set(['agents-needed']);
+
 export const writeSummary = async (
   ctx: RunContext,
   runId: string,
@@ -479,6 +489,18 @@ export const writeSummary = async (
   requireNoTask(ctx, 'write the run’s summary');
   const loaded = await loadRun(ctx, runId);
   await requireLead(ctx, loaded, 'write the run’s summary');
+  // The lead closes what it was told first: a run that ended with notices standing read as one whose lead ignored them
+  // (encore-2: ten), and a lead that said "done" before them stacked a stage after. Starting agents is the keeper's.
+  const view = await viewRun(ctx, runId);
+  const open = view.attention.filter(item => item.who === 'lead' && !KEEPER_KINDS.has(item.kind));
+  if (view.done === view.total && open.length > 0) {
+    throw new RunRefusal(
+      'invalid',
+      `The run is not the lead's to close yet — ${String(open.length)} thing${open.length === 1 ? '' : 's'} wait${open.length === 1 ? 's' : ''} for you: ${open.map(item => item.text.split('\n')[0]).join(' · ')}. Settle each (review, answer, amend, a stage of its own), then close: plitzi run report --summary ${file}`,
+      { open: open.map(item => item.kind) }
+    );
+  }
+
   const text = (await readOptional(path.resolve(ctx.root, file)))?.toString('utf-8');
   if (text === undefined || text.trim() === '') {
     throw new RunRefusal(

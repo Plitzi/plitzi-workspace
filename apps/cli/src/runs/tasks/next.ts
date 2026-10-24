@@ -1,17 +1,17 @@
 import fs from 'node:fs/promises';
 
 import { durationText, FOLLOW_MS } from '../../options';
-import { questionFor, takeQuestion } from '../answering';
+import { takeQuestion } from '../answering';
 import { designReviewFor, hasDesignReview, takeOfferedReview } from '../design';
 import { handOver } from '../handOver';
 import { assertRoles } from '../identity';
 import { handOffRework, reworkFor, reworksWaiting } from './handOff';
 import {
   IDLE_LEAD_MS,
-  isCoLead,
   isPrincipal,
   LEAD_ROLE,
   leadReviewFor,
+  testerReviews,
   markAsking,
   takeLeadReview,
   testersOf
@@ -22,15 +22,15 @@ import { reviewPages } from '../pagesOf';
 import { agentScratch, runPaths } from '../paths';
 import { readyTasks } from '../plan';
 import { markPresent } from '../presence';
-import { isRunRefusal, RunRefusal } from '../refusal';
+import { isRunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readRunLog } from '../run';
 import { runChanged } from '../runChanged';
 import { tellLeftInTmp } from '../strays';
 import { isDisconnected, updateState, viewTask } from '../taskStore';
 import { DEFAULT_DESIGN_REVIEW, DESIGNER, qualityRank, readTeam, startedAgents, TESTER } from '../team';
-import { byUrgency } from '../urgency';
 import { isWorked } from '../worked';
 import { at, findTask, roleOf } from './common';
+import { leadNext } from './leadNext';
 import { allLocks } from './locks';
 import {
   askedOf,
@@ -50,7 +50,6 @@ import { takeTask } from './take';
 import type { Message } from '../messages';
 import type { AcceptanceResult, Quality, RunTask, TaskStatus } from '../model';
 import type { LoadedRun, RunContext } from '../run';
-import type { TaskView } from '../taskStore';
 import type { ReviewOffer } from './reviewOffer';
 import type { TakenTask } from './take';
 
@@ -245,7 +244,10 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   // still waiting for a designer is not offered, and its own tests are another's to review.
   if (roles?.includes(TESTER) === true && (await testersOf(ctx.root)).includes(ctx.agent)) {
     await markAsking(ctx, loaded);
-    const codeReview = leadReviewFor(views, ctx.agent);
+    const codeReview = leadReviewFor(
+      views.filter(view => testerReviews(view.task)),
+      ctx.agent
+    );
     if (codeReview) {
       return { leadReview: await reviewOffer(codeReview), ready: [], messages };
     }
@@ -422,8 +424,12 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
 
   // Never while a task of its own is in review: one sent back comes back to it, and nobody else redoes it.
   const ownInReview = views.some(view => view.owner?.agent === ctx.agent && view.state.status === 'in-review');
-  const finished =
-    !ownInReview && (open.length === 0 || (roles !== undefined && coming.length === 0 && toReview.length === 0));
+  const nothingLeft = open.length === 0 || (roles !== undefined && coming.length === 0 && toReview.length === 0);
+  // One of the team's base stays while the run is open, idle when nothing is left for it: the lead may stack another
+  // stage, and encore-2's designers and tester, stopped once every task was done, were stopped when one came.
+  const team = await readTeam(ctx.root).catch(() => undefined);
+  const ofBase = (team ? startedAgents(team) : []).some(each => each.agent === ctx.agent && each.onDemand !== true);
+  const finished = !ownInReview && !ofBase && nothingLeft;
   // An agent done with the run hears how its own work ended: its copies are gone, and the run may end before it asks.
   const worked = views
     .filter(view => view.state.notes.some(note => note.by === ctx.agent && note.text.startsWith('Taken')))
@@ -442,115 +448,20 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     // Finished, it says so: what is ready for other roles is no reason to wait.
     // Every answer that ends an agent's part says the skills' words (velada-fidelity's agents waited for them).
     why:
-      finished && roles !== undefined && open.length > 0
-        ? `${loaded.tasks.some(forRole) ? `no task is left for a ${roles.join(' or ')}: every one is done` : `no task in this run is a ${roles.join(' or ')}'s`} — what is left is for others (${others.map(task => task.id).join(', ') || 'in their hands'}). You can stop`
-        : finished && roles !== undefined
-          ? `${why} — the lead's to finish. You can stop`
-          : finished && !isPrincipal(ctx.agent)
-            ? // Asked with no role (velada-shell's dev-1 after its first task): the same words, never the lead's finish to run.
-              "every task is done — the run's finish is the lead's. You can stop"
-            : why,
+      ofBase && nothingLeft && !ownInReview
+        ? `${why} — you are of the team's base: wait for what comes (--follow) — a stage the lead stacks, a task sent back — until the run finishes`
+        : finished && roles !== undefined && open.length > 0
+          ? `${loaded.tasks.some(forRole) ? `no task is left for a ${roles.join(' or ')}: every one is done` : `no task in this run is a ${roles.join(' or ')}'s`} — what is left is for others (${others.map(task => task.id).join(', ') || 'in their hands'}). You can stop`
+          : finished && roles !== undefined
+            ? `${why} — the lead's to finish. You can stop`
+            : finished && !isPrincipal(ctx.agent)
+              ? // Asked with no role (velada-shell's dev-1 after its first task): the same words, never the lead's finish to run.
+                "every task is done — the run's finish is the lead's. You can stop"
+              : why,
     ready: [],
     messages,
-    ...(finished ? { finished: true, worked } : {})
-  };
-};
-
-/** `task next --role lead`: the review a lead takes next, why there is none, or that the run has none left for it. */
-const leadNext = async (
-  ctx: RunContext,
-  loaded: LoadedRun,
-  views: readonly TaskView[],
-  messages: Message[]
-): Promise<Omit<NextTask, 'scratch'>> => {
-  const { record } = loaded;
-  if (!isCoLead(record, ctx.agent) && !isPrincipal(ctx.agent)) {
-    throw new RunRefusal(
-      'invalid',
-      `${ctx.agent} is no lead of this run: its leads are lead${(record.leads ?? []).map(each => `, ${each}`).join('')} — a lead that reviews waits with plitzi task next --role lead --agent <its name> — its first command; its token after`
-    );
-  }
-
-  // Asking is running: while it is, `lead` leaves the reviews to it.
-  if (isCoLead(record, ctx.agent)) {
-    await markAsking(ctx, loaded);
-  }
-
-  // A UI review waits for a designer; with none free — each at a task of its own, or none in the team — it waits for
-  // nobody, and every review behind it with it (la-velada: seven tasks in review, the one designer redoing its own).
-  const team = await readTeam(ctx.root).catch(() => undefined);
-  const designers = (team ? startedAgents(team) : [])
-    .filter(each => each.roles.includes(DESIGNER))
-    .map(each => each.agent);
-  const busy = (agent: string): boolean =>
-    views.some(view => view.owner?.agent === agent && isWorked(view.state.status));
-  const noDesignerFree = designers.every(busy);
-  const review = leadReviewFor(views, ctx.agent, noDesignerFree);
-  if (review) {
-    return {
-      leadReview: await reviewOffer(
-        review,
-        review.state.design?.status === 'due'
-          ? `its UI waits for a designer and none is free${designers.length > 0 ? ` (${designers.join(', ')} at a task of its own)` : ''}: review its UI too — as the original, both schemes, the phone width — and approve with --skip-design lead, which the report says as the lead's UI review`
-          : undefined
-      ),
-      ready: [],
-      messages
-    };
-  }
-
-  // No review for it: a question to the lead, which holds an agent — the oldest no other lead took. The lead's own
-  // is the lead's to answer: it does not ask itself.
-  const question = isPrincipal(ctx.agent) ? undefined : await questionFor(ctx, loaded);
-  if (question) {
-    const asker = views.find(view => view.task.id === question.from)?.owner?.agent;
-
-    return {
-      question: { id: question.id, task: question.from, text: question.text, ...(asker ? { agent: asker } : {}) },
-      ready: [],
-      messages
-    };
-  }
-
-  // No question either: a spike, as every spike is a lead's — the most urgent no other lead is finding out.
-  const urgency = byUrgency(loaded.tasks);
-  const spike = views
-    .filter(view => view.state.status === 'spike' && (view.state.spikedBy?.by ?? ctx.agent) === ctx.agent)
-    .sort((a, b) => urgency(a.task, b.task) || a.task.id.localeCompare(b.task.id))
-    .at(0);
-  if (spike) {
-    return {
-      spike: {
-        task: spike.task,
-        question: spike.task.spike ?? 'what it needs',
-        findings: spike.state.findings?.length ?? 0
-      },
-      ready: [],
-      messages
-    };
-  }
-
-  const open = views.filter(view => view.state.status !== 'done');
-  if (open.length === 0) {
-    return { why: 'every task is done: no review is left. You can stop', ready: [], messages, finished: true };
-  }
-
-  const taken = views.filter(
-    view =>
-      view.state.status === 'in-review' &&
-      view.state.reviewer?.round === view.state.round &&
-      view.state.reviewer.by !== ctx.agent
-  );
-  const designs = views.filter(view => view.state.status === 'in-review' && view.state.design?.status === 'due');
-
-  return {
-    why: `no review waits for you: ${[
-      ...taken.map(view => `${view.task.id} is ${String(view.state.reviewer?.by)}'s`),
-      ...designs.map(view => `${view.task.id} waits for its UI review`),
-      `${String(open.length - taken.length - designs.length)} task(s) still being worked`
-    ].join(', ')} — wait for one (--follow)`,
-    ready: [],
-    messages
+    ...(finished ? { finished: true } : {}),
+    ...(nothingLeft && !ownInReview ? { worked } : {})
   };
 };
 

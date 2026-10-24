@@ -80,6 +80,8 @@ export interface Finding {
   fix?: string;
   /** What keeps it the same finding while its words change — an agent, a task, a line: a live one wakes the lead once. */
   subject: string;
+  /** The task it is about, when one: a live one leaves the lead's attention once that task is past it. */
+  task?: string;
   /** Said to the lead while the run goes (`run watch`), not only at its end. */
   live?: true;
 }

@@ -132,9 +132,9 @@ export const registerPage = (pageGroup: Command): void => {
     .option('--there <selector>', 'With one element: the other page’s, by any selector (or write it "ours => theirs")')
     .option(
       '--hover <element>',
-      'Hover an element on both pages first — "pricing-card => .plan-card" — and measure the rest as it leaves them, its transitions finished'
+      'Hover an element on both pages first — "pricing-card => .plan-card" — and measure the rest as it leaves them, its transitions finished; with --click, after them: an item of the menu they opened'
     )
-    .option('--focus <element>', 'Focus an element on both pages first, as --hover does')
+    .option('--focus <element>', 'Focus an element on both pages first, as --hover does — with --click, after them')
     .option(
       '--click <element...>',
       'Click elements on both pages first, in order — "menu-toggle => .menu-button" — and measure the open state they leave'
@@ -294,6 +294,10 @@ export const registerPage = (pageGroup: Command): void => {
     .option(
       '--click <element...>',
       'Click these in order once the page settles — each its name or a CSS selector, inside a plugin too — picturing what each changed (--frames pictures --every ms apart after each)'
+    )
+    .option(
+      '--hover <element>',
+      'Hover an element once the page settles — after --click, an item of what they opened — and picture the page so'
     )
     .addOption(
       new Option(

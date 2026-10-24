@@ -22,8 +22,9 @@ import { list } from './text';
 import { answering, freePort } from '../../runs/acceptance';
 import { designSkipText, isDesignSkip } from '../../runs/designSkip';
 import { inTurns } from '../../runs/inTurns';
+import { takeOnLook } from '../../runs/leads';
 import { readOwnership } from '../../runs/ownership';
-import { acceptancePages, examplePaths, pagesOf } from '../../runs/pagesOf';
+import { acceptancePages, examplePaths, pagesOf, pagesToLook } from '../../runs/pagesOf';
 import { runPaths, taskPaths } from '../../runs/paths';
 import { startBeforePreview, startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
@@ -133,7 +134,7 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
               ];
         const space = asked ? undefined : await projectSpace(preview.dir);
         const views = asked ?? toDeclared(teams, space && !('problem' in space) ? space.schemes : []);
-        // No page named: the pages its changes are drawn at, by the files that changed — else the home page.
+        // No page named: the pages its changes are drawn at, by the files that changed — else its acceptance's, else home.
         // Read off the copy served: a page the task makes is one to look at too.
         const { changed, designing, acceptanceAt } = await viewTaskOf(ctx, runId, taskId);
         // Every page its changes are drawn at — a shared file's too: named pages are looked at, and the others
@@ -149,9 +150,11 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
         const many = parts !== undefined && !parts.ownsRoot && parts.tops.length > PARTS_PICTURED;
         const clips = parts && !parts.ownsRoot && !many ? parts.tops : [];
         // A page with a parameter in its address (`/boxeadores/:slug`) is opened where the site's own links go.
+        // Its files drawn at no page (a plugin's): the pages its acceptance checks, before the home page — encore-2's
+        // look at the Reactions plugin's CSS pictured the home page, where no reaction is.
         const { paths: routes, unreached } = await examplePaths(
           preview.url,
-          paths.length > 0 ? paths : owned.length > 0 ? owned : ['/'],
+          pagesToLook(paths, owned, acceptanceAt),
           acceptanceAt
         );
         // Every page read in one visitor's zone: the machine's, unless said — and said under the pictures either way.
@@ -489,6 +492,11 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
     options,
     async ctx => {
       const runId = await runOf(ctx, options);
+      const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
+      if (await takeOnLook(ctx, loaded, await viewTask(loaded.paths, findTask(loaded, taskId)))) {
+        await logRun(ctx, loaded.paths, { action: 'review-taken', task: taskId, review: 'lead' });
+      }
+
       if (options.click && options.hover) {
         throw new RunRefusal(
           'invalid',

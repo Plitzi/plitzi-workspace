@@ -25,6 +25,7 @@ import {
   runMonitor,
   runUpgrade,
   runWatch,
+  runKeep,
   runAllowFinish,
   runAmend,
   runExtend,
@@ -74,7 +75,7 @@ import type { Command } from 'commander';
 const RUN_HELP: readonly { heading: string; commands: readonly string[] }[] = [
   {
     heading: 'Start and follow a run — you, or the agent you ask:',
-    commands: ['start', 'agent', 'monitor', 'watch', 'status', 'state', 'preview', 'pending', 'team']
+    commands: ['start', 'agent', 'monitor', 'watch', 'keep', 'status', 'state', 'preview', 'pending', 'team']
   },
   {
     heading: 'Yours alone — what writes into the project, or throws work away:',
@@ -422,6 +423,16 @@ export const registerRunGroup = (program: Command): Command => {
     )
     .option(...JSON_OPTION)
     .action((run: string | undefined, options: WatchRunOptions) => runWatch(run, options));
+
+  runGroup
+    .command('keep')
+    .description(
+      "The run's keeper: starts the agents the run asks for — its base when not running, one on demand for waiting work — in the team's options.launch harness, until the run is gone. The run starts it"
+    )
+    .argument('[run]', 'The run')
+    .option(...AGENT_OPTION)
+    .option(...TOKEN_OPTION)
+    .action((run: string | undefined, options: RunCommandOptions) => runKeep(run, options));
 
   runGroup
     .command('can-write')

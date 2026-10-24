@@ -312,11 +312,23 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     ...agentsNeeded(views, started, running, {
       identified,
       scratch: loaded.paths.scratch,
-      openFor: now.getTime() - Date.parse(record.openedAt)
+      openFor: now.getTime() - Date.parse(record.openedAt),
+      open: record.status === 'open'
     })
   );
   // What the run's records show going wrong now, said while the lead can still act (`findings/live.ts`).
-  attention.push(...(await liveAttention(loaded, log, now)));
+  attention.push(
+    ...(await liveAttention(
+      loaded,
+      log,
+      now,
+      new Set(
+        views
+          .filter(view => view.state.status === 'done' || view.state.status === 'in-review')
+          .map(view => view.task.id)
+      )
+    ))
+  );
 
   for (const file of await leftInTmp(ctx.root, record)) {
     attention.push({

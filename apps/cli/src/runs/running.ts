@@ -62,9 +62,15 @@ export const agentsNow = async (
       .map(([agent]) => agent)
   );
 
-  return {
-    gone,
-    starting,
-    running: new Set([...[...runningAgents(log)].filter(agent => !gone.has(agent)), ...starting])
-  };
+  // Launched by the CLI, its process says whether it runs — never the log's last word, which a stop followed by a
+  // notice read as alive and a busy agent's quiet read as gone (encore-2's watch asked for dev-1, running, while dev-2
+  // and dev-3 waited stopped). Started by hand, the log is all there is.
+  const byLog = runningAgents(log);
+  const running = new Set([
+    ...[...launches].filter(([agent]) => !gone.has(agent)).map(([agent]) => agent),
+    ...[...byLog].filter(agent => !launches.has(agent)),
+    ...starting
+  ]);
+
+  return { gone, starting, running };
 };

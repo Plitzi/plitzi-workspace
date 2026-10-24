@@ -204,7 +204,7 @@ export interface KeptAsk extends KeptView {
    * Read in a state — elements hovered, focused or clicked in turn first — on a page of its own, never one others read:
    * a state left on a kept page would be the next reader's.
    */
-  state?: { kind: 'hover' | 'focus' | 'click'; targets: string[] };
+  state?: { kind: 'hover' | 'focus' | 'click'; targets: string[]; then?: { kind: 'hover' | 'focus'; target: string } };
 }
 
 /** An outline of the other page — what a click opened, or one part — read on a page of its own. */

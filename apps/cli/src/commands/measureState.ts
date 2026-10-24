@@ -13,13 +13,18 @@ export interface StateAsked {
   kind: 'hover' | 'focus' | 'click';
   /** One hovered or focused; clicked, each in turn. */
   pairs: Pair[];
+  /**
+   * After the clicks, one element hovered or focused: a state reached in two moves — a menu opened, an item of it
+   * hovered (encore-2's design-1 asked it of `page measure` and `page shot`, and was refused).
+   */
+  then?: { kind: 'hover' | 'focus'; pair: Pair };
 }
 
 const DONE: Record<StateAsked['kind'], string> = { hover: 'hovered', focus: 'focused', click: 'clicked' };
 
 /** The state in words: `menu-toggle clicked, then submenu-row`. */
 export const stateText = (state: StateAsked, side: keyof Pair): string =>
-  `${state.pairs.map(pair => pair[side]).join(', then ')} ${DONE[state.kind]}`;
+  `${state.pairs.map(pair => pair[side]).join(', then ')} ${DONE[state.kind]}${state.then ? `, then ${state.then.pair[side]} ${DONE[state.then.kind]}` : ''}`;
 
 /** The longest a state's transitions are waited for: a fade is a fraction of a second, an endless spin never ends. */
 const SETTLE_MS = 3000;
@@ -88,7 +93,11 @@ export const putIn = async (
   state: StateAsked,
   side: keyof Pair
 ): Promise<{ problem: string } | undefined> => {
-  for (const pair of state.pairs) {
+  const steps = [
+    ...state.pairs.map(pair => ({ kind: state.kind, pair })),
+    ...(state.then ? [{ kind: state.then.kind, pair: state.then.pair }] : [])
+  ];
+  for (const { kind, pair } of steps) {
     const target = pair[side];
     const found = await targetOn(page, target);
     if ('problem' in found) {
@@ -96,14 +105,14 @@ export const putIn = async (
     }
 
     if (!found.found) {
-      return { problem: `No element ${target} to ${state.kind} on ${page.url()}` };
+      return { problem: `No element ${target} to ${kind} on ${page.url()}` };
     }
 
     try {
-      await act(page.locator(found.selector).filter({ visible: true }).first(), state.kind);
+      await act(page.locator(found.selector).filter({ visible: true }).first(), kind);
     } catch (error) {
       return {
-        problem: `${target} could not be ${DONE[state.kind]} on ${page.url()}: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`
+        problem: `${target} could not be ${DONE[kind]} on ${page.url()}: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`
       };
     }
 

@@ -27,7 +27,7 @@ import {
   missingDress,
   regionsText
 } from './compare';
-import { clickThrough, playSteps } from './steps';
+import { clickThrough, interactionSteps, playSteps } from './steps';
 import { MOVING_PERCENT } from './types';
 
 import type { Moment, ShotOptions, ShotReport, Taken, View } from './types';
@@ -218,19 +218,17 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   // `--fill` is said as page check says it, and played as the steps it is: each field typed into, then each click —
   // or, with none, a picture of what the typing changed.
   const filled = options.fill?.map(field => `type ${JSON.stringify(field.element)} ${field.value}`);
-  const asSteps = filled
-    ? [
-        'shot before',
-        ...filled,
-        ...((options.click ?? []).length > 0
-          ? (options.click ?? []).flatMap(click => [
-              `click ${JSON.stringify(click)}`,
-              'wait 600',
-              `shot after ${click}`
-            ])
-          : ['wait 600', 'shot filled'])
-      ].join('; ')
-    : undefined;
+  // A hover after the clicks is played as the steps it is: a menu opened, then an item of it hovered, pictured so —
+  // encore-2's design-1 asked `--click site-avatar --hover <item>` and was refused an option shot did not have.
+  const { hover } = options;
+  if (hover !== undefined && (options.steps !== undefined || options.compare)) {
+    await browser.close();
+    fail('`--hover` is played as steps: leave out --steps (write `hover <element>` in them) and --compare.');
+
+    return;
+  }
+
+  const asSteps = interactionSteps(filled, options.click ?? [], hover);
   const clicks = asSteps === undefined ? (options.click ?? []) : [];
   const script =
     asSteps ??

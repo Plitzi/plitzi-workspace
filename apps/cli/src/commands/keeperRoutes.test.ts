@@ -37,7 +37,9 @@ const bench = (overrides: Partial<KeeperDeps<Page>> = {}) => {
     },
     measureOn: (page, target) => Promise.resolve({ problem: `${target} on page ${String(page.id)}` }),
     putIn: (page, state) => {
-      page.done.push(`${state.kind} ${state.targets.join(', ')}`);
+      page.done.push(
+        `${state.kind} ${state.targets.join(', ')}${state.then ? ` then ${state.then.kind} ${state.then.target}` : ''}`
+      );
 
       return Promise.resolve(undefined);
     },
@@ -81,6 +83,14 @@ describe('the kept browser’s routes', () => {
       await ask('/measure', { ...view, targets: ['#menu', '.panel'], state: { kind: 'click', targets: ['#toggle'] } })
     ).toEqual({ readings: [{ problem: '#menu on page 1' }, { problem: '.panel on page 1' }] });
     expect(opened).toEqual([{ id: 1, done: ['click #toggle'], closed: true }]);
+
+    // A menu opened, then an item of it hovered: the hover goes with the clicks, after them.
+    await ask('/measure', {
+      ...view,
+      targets: ['.item'],
+      state: { kind: 'click', targets: ['#avatar'], then: { kind: 'hover', target: '.item' } }
+    });
+    expect(opened.at(-1)?.done).toEqual(['click #avatar then hover .item']);
   });
 
   it('outlines the other page on a page of its own, and refuses an ask it cannot read', async () => {
@@ -93,6 +103,13 @@ describe('the kept browser’s routes', () => {
     expect(await routes.routes['/outline']({ url: 'x' })).toMatchObject({ status: 400 });
     expect(
       await routes.routes['/measure']({ ...view, targets: ['h1'], state: { kind: 'drag', targets: [] } })
+    ).toMatchObject({ status: 400 });
+    expect(
+      await routes.routes['/measure']({
+        ...view,
+        targets: ['h1'],
+        state: { kind: 'click', targets: ['#a'], then: { kind: 'drag', target: '#b' } }
+      })
     ).toMatchObject({ status: 400 });
   });
 

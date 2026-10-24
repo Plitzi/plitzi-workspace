@@ -90,6 +90,8 @@ person to share with Plitzi's team; it is never sent by itself. Each file holds:
 - the experience, combined (below);
 - the lead's report;
 - what each agent and the lead spent, and the results read again the most;
+- each agent's life in figures (`lives`): how often it was started and stopped and why, its minutes at work, stopped
+  and silent — what a board reading "no signal", or a team stopped for good, is read from;
 - refusals by code, and checks by step.
 
 Notices of Plitzi (`run notice --plitzi "…"`) are among the findings, grouped when two agents said one thing. They never
@@ -359,8 +361,20 @@ UI review its author alone could make asks whatever the count — and an agent o
 demand that waits `ON_DEMAND_IDLE_MS` with nothing for it, and no task of its own that may come back, stops by itself,
 said in the activity — the lead starts it again when work waits. **The base goes first** (`freeBaseAgents`): a task ready is offered to an agent on demand only past what the
 team's base agents of its roles — there (marked present) and at nothing — take; with them free, it is told so and
-waits. Running is read off the log (`runningAgents`): an
-agent that said something and has not stopped since. The monitor shows one not running as on demand, not as idle.
+waits. **The base stays** while the run is open: `task next` never tells one of it to stop for want of work — it waits
+(`--follow`) for a stage the lead stacks or a task sent back, and hears how its own work ended (`worked`); only one on
+demand stops, and one of one task a session ends its session. A base agent not running is asked for whatever waits
+(`agents-needed`, the run open past `STARTING_MS`): encore-2's designers and tester, stopped once every task was done,
+were stopped when a stage came. **Running** (`running.ts`, `agentsNow`): an agent the CLI launched runs while its process
+does (`launch.ts`); one started by hand, by the log — it said something and has not stopped since, a stop holding until
+it comes back for work (`stoppedAgents`: a notice sent on its way out is no sign of life — encore-2's tester read "no
+signal" for half an hour after one). The monitor shows one not running as on demand, or stopped, never as idle.
+
+**The keeper** (`keeper.ts`, `plitzi run keep`): with the team's `options.launch`, the run starts the agents it asks for
+— the base not running, one on demand for waiting work, one a task was sent back to — by itself, every few seconds,
+whatever the lead is doing; `run open`, `run resume`, `run attach` and the lead's `run watch --until lead` start it,
+one a run (`cache/keeper.json`, its log `cache/keeper.log`), and it ends with the run. Only the lead's watch started
+agents before, so while the lead reviewed or wrote a stage, ready tasks waited with no developer running (encore-2).
 
 **A model one harness does not run** (`harnessRuns`): the team names a model once, for every harness — Claude Code
 runs a Claude one (`claude-…`, `sonnet`), Codex any other, opencode `provider/model`. One the harness does not run is
@@ -369,8 +383,8 @@ not passed: the agent starts on the harness's own default, and `run agent --laun
 **One task a session** (`"sessionPerTask": true` on a team's agent, `run team set dev --session-per-task`): the CLI
 cannot empty a harness's context, so the agent ends its session instead. Once it completes a task — its session being
 what it did since its last `stops` in the log (`sessionDone`) — `task next` tells it to stop rather than hand it the
-next, and its own task sent back meanwhile still comes first, while its context is warm. `run watch` asks the lead to
-start it again, as one on demand, when work of its role waits; and any task sent back to an agent that is not
+next, and its own task sent back meanwhile still comes first, while its context is warm. The keeper starts it again —
+of the base, whatever waits; on demand, when work of its role does — and any task sent back to an agent that is not
 running asks for that agent by name, which it takes first. lx-product's dev-1 read 30.9M tokens for three tasks, each
 turn reading again what the tasks before left in its context: a session each reads ~40 % less, for ~1 minute and the
 skills read again at each start — worth it for an agent that works several tasks, not for one that works one.
@@ -847,14 +861,21 @@ They are read off the log, the usage, the plan, the agents' scratch, their notic
 
 **While the run goes**, `run watch` and `run status` say the live ones to the lead, each once, through the attention
 kind `finding` (`findings/live.ts`, beside `refused-again`):
-- an agent with two tasks, or in two sessions;
-- a session working on after it was told to stop;
 - a flaky check, or a line failing try after try;
-- a command refused as written twice;
-- something of Plitzi two agents said.
+- a task refused again and again.
+
+What is past leaves the lead's attention — a task gone to review or approved, a line whose last check passed (a
+finding's `task`) — and what is Plitzi's (an agent with two tasks or in two sessions, a session working past its stop,
+a command refused as written, something two agents said of Plitzi) is the feedback's alone, never the lead's to clear:
+encore-2 ended with ten standing, which read as ignored. **The lead closes what it was told first**: every task done,
+`run report --summary` is refused while anything waits for the lead (`writeSummary`; an agent to start is the keeper's,
+not the lead's) — a lead that said "done" before them stacked a stage after.
 
 `run report` starts with the run at a glance and the problems by whose, numbered, each with its evidence and its fix.
-Then it gives the experience combined, the lead's summary, what each review asked when it sent a task back, what each
+Then it gives the experience combined, the lead's summary, what each review asked when it sent a task back, **each
+agent's life** (`agentTimeline.ts`: started, joined, took, completed, reviewed, waited and stopped — with why — and the
+minutes at work, stopped and silent; a silence is ten minutes and more with nothing logged while neither waiting nor
+stopped: what the board reads as no signal), what each
 agent and the lead spent (with what each ran on, and Plitzi's files read the most), and the facts: each task's agents, time against
 its estimate, reviews, cuts and blocks; completions, refusals, failed checks and conflicts; overrides, requests,
 proposals, a reconciliation, restores. `run finish` prints a few findings of each whose and points at the report.

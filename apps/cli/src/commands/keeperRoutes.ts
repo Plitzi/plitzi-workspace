@@ -64,7 +64,11 @@ const isAsk = (value: unknown): value is KeptAsk =>
     (isRecord(value.state) &&
       typeof value.state.kind === 'string' &&
       STATE_KINDS.includes(value.state.kind) &&
-      isStrings(value.state.targets)));
+      isStrings(value.state.targets) &&
+      (value.state.then === undefined ||
+        (isRecord(value.state.then) &&
+          (value.state.then.kind === 'hover' || value.state.then.kind === 'focus') &&
+          typeof value.state.then.target === 'string'))));
 
 const isOutlineAsk = (value: unknown): value is KeptOutlineAsk =>
   isRecord(value) &&

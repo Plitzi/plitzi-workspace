@@ -45,7 +45,7 @@ class PlitziConsole {
   #listeners = new Set<(log: Log) => void>();
   /** The last logs written, for a listener that arrives after them — a page's dev tools mount after its first flows. */
   #recent: Log[] = [];
-  recentLimit: number = 200;
+  recentLimit: number = 1000;
 
   constructor(callback?: CallbackInternal, pendingLimit: number = 100) {
     this.callbackInternal = callback;
@@ -85,6 +85,26 @@ class PlitziConsole {
     return () => {
       this.#listeners.delete(listener);
     };
+  }
+
+  /**
+   * The last logs written, oldest first: what a panel mounting again starts from. Its logs lived in its own state, and
+   * opening the panel from the badge moved it in the page's layout — React mounted it again, empty: the badge said a
+   * warning and the panel showed none (encore-2). Only in a browser, as everything kept here is.
+   */
+  history(): Log[] {
+    return [...this.#recent];
+  }
+
+  /** The history and what waits for a panel emptied: a panel's Clear empties what it starts from next time too. */
+  clearHistory() {
+    this.#recent = [];
+    this.pendingLogs = [];
+  }
+
+  /** What waited for a panel dropped, once the panel took the history that holds it. */
+  dropPending() {
+    this.pendingLogs = [];
   }
 
   setCallbackAddProvider(callback?: CallbackAddProvider) {

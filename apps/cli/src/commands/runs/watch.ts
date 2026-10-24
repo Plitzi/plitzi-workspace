@@ -4,6 +4,7 @@ import { act, contextFor, runOf } from './shell';
 import { durationText, FOLLOW_MS } from '../../options';
 import { benchText, readBench } from '../../runs/bench';
 import { experienceFrom } from '../../runs/experience';
+import { ensureKeeper, keepAgents } from '../../runs/keeper';
 import { waitForLead } from '../../runs/leadWatch';
 import { showVersion } from '../../runs/merge';
 import { startPreview, startTaskPreview } from '../../runs/preview';
@@ -65,7 +66,10 @@ const watchForLead = (runId: string | undefined, options: WatchRunOptions): Prom
   act(
     options,
     async ctx => {
-      const news = await waitForLead(ctx, await runOf(ctx, options, runId), {
+      const id = await runOf(ctx, options, runId);
+      // The run's keeper, should none run: a run opened before it existed, or one whose keeper died, gets it here.
+      await ensureKeeper(ctx, id);
+      const news = await waitForLead(ctx, id, {
         timeoutMs: options.timeout ?? FOLLOW_MS,
         everyMs: Math.max(1, options.interval ?? 10) * 1000
       });
@@ -230,3 +234,9 @@ export const runBench = (options: RunCommandOptions): Promise<void> =>
     async ctx => ({ runs: await readBench(ctx.root) }),
     ({ runs }) => benchText(runs).join('\n')
   );
+
+/** `plitzi run keep`: the run's keeper — started by the run itself; by hand only to watch it work. */
+export const runKeep = async (runId: string | undefined, options: RunCommandOptions): Promise<void> => {
+  const ctx = await contextFor(options);
+  await keepAgents(ctx, await runOf(ctx, options, runId));
+};

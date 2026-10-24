@@ -133,6 +133,23 @@ describe('page measure', () => {
     ).toBeUndefined();
     expect(acts).toEqual(['click', 'settled', 'click', 'settled']);
     expect(stateText(opened, 'there')).toBe('.open, then summary clicked');
+
+    // encore-2: a menu opened, then an item of it hovered — the clicks first, the hover last, each settled.
+    acts.length = 0;
+    const menuItem = {
+      kind: 'click' as const,
+      pairs: [pairOf('site-avatar')],
+      then: { kind: 'hover' as const, pair: pairOf('site-menu-item') }
+    };
+    expect(
+      await putIn(
+        stand(1, () => Promise.resolve()),
+        menuItem,
+        'here'
+      )
+    ).toBeUndefined();
+    expect(acts).toEqual(['click', 'settled', 'hover', 'settled']);
+    expect(stateText(menuItem, 'here')).toBe('site-avatar clicked, then site-menu-item hovered');
   });
 
   // velada-backlog: design-1 measured `.home-faq-answer-text` — the element's id, written as a class — and was told

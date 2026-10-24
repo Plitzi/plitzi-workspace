@@ -85,6 +85,47 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 - **A task sent back to an agent that is not running reads as waiting for it, not silent:** the lead is told to start
   it again, and no longer "no signal — reassign it" beside that (encore-2's t-room-read said both at once) — and
   `run upgrade` no longer waits for it: nobody is writing it, and its copy is kept (encore-2's waited an hour on it).
+- **`task complete` runs the approved tasks' lines on a copy still served:** the server lent for the task's own lines
+  was stopped once they passed, and every approved line on the same pages read "nothing answers" — encore-2's
+  t-room-side was refused three times as breaking five lines it had not touched. An approved line nothing could answer
+  is now told to the lead, as one of the task's own, and not held against the task.
+- **A lead's `task look` at a task whose review is its own takes the review,** said in the activity as `task next --take`
+  says it: encore-2's lead looked and approved, and the person following the run saw nobody take its reviews. A look
+  while the designer's UI review is due takes nothing.
+- **A line amended while its task waits in review is the one the finish holds it to:** `run amend` replaced the lines
+  of done tasks alone, so encore-2's t-playback-safety, amended in review, was approved on its old line and the finish
+  refused the run on it.
+- **The run starts its own agents — the keeper** (`plitzi run keep`): with the team's `options.launch`, the agents the
+  run asks for are started whatever the lead is doing — the base when not running, one on demand for waiting work, one
+  a task was sent back to. `run open`, `resume`, `attach` and the lead's `run watch` start it, one a run, its log in the
+  run's cache. Only the lead's watch started them before: encore-2's ready tasks waited with no developer running while
+  the lead reviewed or wrote a stage.
+- **The team's base stays while the run is open:** `task next` never tells one of the base to stop for want of work —
+  it waits for a stage the lead stacks, and hears how its own work ended; only one on demand stops. One not running is
+  asked for whatever waits. encore-2's designers and tester, stopped once every task was done, were stopped when a
+  stage came.
+- **Who runs is its process's to say:** an agent the CLI launched runs while its process does — never the log's last
+  word, which asked to start dev-1, running, while dev-2 and dev-3 waited stopped. A stop holds until the agent comes
+  back for work: a notice sent on its way out no longer reads as "no signal" (encore-2's tester, half an hour).
+- **The lead's attention holds only what is the lead's, and now:** a line that failed and passed since, a task refused
+  before it was approved, leave it; what is Plitzi's goes to the run's feedback alone. Every task done, the lead's
+  summary is refused while anything waits for it — encore-2 ended with ten notices standing, and its lead said "done"
+  before stacking a stage.
+- **The report tells each agent's life** — started, took, completed, reviewed, waited, stopped and why; its minutes at
+  work, stopped and silent — and the feedback its figures (`lives`): a run read whole after it is gone.
+- **A tester reviews code, never a design:** encore-2's test-1 approved the identity system and its components.
+- **`task look` with no page named opens its acceptance's pages before the home page,** as a review's offer does — a
+  look at a plugin's file pictured the home page, where none of its reactions is.
+- **A reviewer's holder command says its review speaks for itself** (its look, its verdict) where it said "holds no
+  task at work: name it"; the agent's prompt asks for progress in tasks of its own only.
+- **`page measure --click … --hover|--focus …` and `page shot --click … --hover …`:** a state reached in two moves — a
+  menu opened, an item of it hovered — measured and pictured; `measure` refused it as two states, `shot` had no
+  `--hover`.
+- **`task show` shows 400 lines of diff in all,** each file past them said with its size and how to read it:
+  encore-2's reached 44k characters, read 77 times.
+- **The dev tools' panel shows what its badge counts:** opening it from the badge mounted it again elsewhere in the
+  layout, and the logs it kept were gone — a warning on the badge, none in the panel. It starts from the page's log
+  history (`pConsole.history()`), and Clear empties that too.
 
 - **A tester starts on the strongest model, as a designer does,** when its entry names none (`ROLE_MODELS`): its tests
   and its review are what stop a bug or a regression getting through. A model the file says always wins.

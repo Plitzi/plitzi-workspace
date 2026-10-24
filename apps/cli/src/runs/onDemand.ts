@@ -18,16 +18,43 @@ export const ON_DEMAND_IDLE_MS = 4 * 60_000;
 /** How long an agent that starts with the run is given to join before the lead is told to start it. */
 export const STARTING_MS = 2 * 60_000;
 
-/** Who of the team is running now, by the run's log: any agent that said something and has not stopped since. */
-export const runningAgents = (log: readonly Record<string, unknown>[]): Set<string> => {
-  const last = new Map<string, unknown>();
+/** What brings an agent back after it stopped: a session of it asking for work, or taking some. */
+const BACK_FOR_WORK: ReadonlySet<string> = new Set([
+  'joined',
+  'waiting',
+  'take',
+  'review-taken',
+  'question-taken',
+  'spike-taken'
+]);
+
+/**
+ * Who said it stops and has not come back for work since, by the run's log: what an agent says on its way out — a
+ * notice, a tell — after its stop is no sign of life (encore-2's test-1 and designers read "no signal" for half an hour
+ * after a notice sent past their stop).
+ */
+export const stoppedAgents = (log: readonly Record<string, unknown>[]): Set<string> => {
+  const stopped = new Set<string>();
   for (const entry of log) {
-    if (typeof entry.by === 'string') {
-      last.set(entry.by, entry.action);
+    if (typeof entry.by !== 'string') {
+      continue;
+    }
+
+    if (entry.action === 'stops') {
+      stopped.add(entry.by);
+    } else if (BACK_FOR_WORK.has(String(entry.action))) {
+      stopped.delete(entry.by);
     }
   }
 
-  return new Set([...last].filter(([, action]) => action !== 'stops').map(([agent]) => agent));
+  return stopped;
+};
+
+/** Who of the team is running now, by the run's log: any agent that said something and has not stopped since. */
+export const runningAgents = (log: readonly Record<string, unknown>[]): Set<string> => {
+  const stopped = stoppedAgents(log);
+
+  return new Set(log.flatMap(entry => (typeof entry.by === 'string' && !stopped.has(entry.by) ? [entry.by] : [])));
 };
 
 /**
@@ -38,7 +65,7 @@ export const agentsNeeded = (
   views: readonly TaskView[],
   started: readonly StartedAgent[],
   running: ReadonlySet<string>,
-  run: { identified: readonly string[]; scratch: string; openFor: number }
+  run: { identified: readonly string[]; scratch: string; openFor: number; open: boolean }
 ): Attention[] => {
   const busy = new Set(
     views.flatMap(view => [
@@ -74,8 +101,7 @@ export const agentsNeeded = (
     };
   });
 
-  return [
-    ...backTo,
+  const byRole = [
     ...roles.flatMap(role => {
       // Free to take work of the role: running, at nothing — and, for a UI review, not the one who wrote the task.
       // A designer is held for the UI reviews while others work (`task next` hands it none of its own then): it is no
@@ -167,6 +193,21 @@ export const agentsNeeded = (
       ];
     })
   ];
+  // The team's base runs while the run is open, idle when nothing is for it: one not running — its session of one task
+  // over, or its harness gone — is started again whatever waits (Carlos: "los agentes base, deben estar siempre activos").
+  const base = run.open
+    ? started
+        .filter(each => each.onDemand !== true && !running.has(each.agent) && !asked.has(each.agent))
+        .filter(() => run.openFor >= STARTING_MS)
+        .map((each): Attention => ({
+          kind: 'agents-needed' as const,
+          agent: each.agent,
+          text: `${each.agent}, of the team's base, is not running: start it again — plitzi run agent ${each.agent} --launch --harness <yours> — it waits for work while the run is open`,
+          who: 'lead' as const
+        }))
+    : [];
+
+  return [...backTo, ...byRole, ...base];
 };
 
 /**

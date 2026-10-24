@@ -7,7 +7,7 @@ import { updateState } from './taskStore';
 import { readTeam, startedAgents, TESTER } from './team';
 import { byUrgency } from './urgency';
 
-import type { RunRecord } from './model';
+import type { RunRecord, RunTask } from './model';
 import type { LoadedRun, RunContext } from './run/context';
 import type { TaskView } from './taskStore';
 
@@ -190,6 +190,19 @@ const freeFor = (view: TaskView, agent: string): boolean =>
  * lead took — the one this lead reviewed before first (it knows what it asked), then the most urgent (`byUrgency`), then
  * the one that waited longest.
  */
+/**
+ * What a tester may review, as one who reviews beside the lead: code — a developer's task, another's tests. A design is
+ * not its to approve: encore-2's test-1 approved the identity system and its components, a designer's work no tester
+ * reads as one.
+ */
+export const testerReviews = (task: RunTask): boolean => {
+  const role = task.role ?? 'developer';
+
+  // Read as it is called: `team.ts` and this module import each other, and a set made as this one loads read TESTER
+  // before it was there.
+  return role === 'developer' || role === TESTER;
+};
+
 export const leadReviewFor = (
   views: readonly TaskView[],
   agent: string,
@@ -216,6 +229,25 @@ export const leadReviewFor = (
 };
 
 /** Takes the review offered: false when another lead took it first. */
+/**
+ * A look by the lead, or by one who reviews beside it, at a task whose review is its to take now takes it — said in the
+ * activity as `task next --take` says it: encore-2's lead looked and approved, and the person following the run saw
+ * nobody take its reviews. A look while the designer's UI review is due takes nothing: that review is the designer's.
+ */
+export const takeOnLook = async (ctx: RunContext, loaded: LoadedRun, view: TaskView): Promise<boolean> => {
+  const testers = await testersOf(loaded.paths.root);
+  const reviews =
+    ctx.agent === LEAD ||
+    coLeadsOf(loaded.record).includes(ctx.agent) ||
+    (testers.includes(ctx.agent) && testerReviews(view.task));
+  const taken = view.state.reviewer?.by === ctx.agent && view.state.reviewer.round === view.state.round;
+  if (!reviews || taken || view.state.status !== 'in-review' || view.state.design?.status === 'due') {
+    return false;
+  }
+
+  return takeLeadReview(ctx, view);
+};
+
 export const takeLeadReview = async (ctx: RunContext, view: TaskView): Promise<boolean> => {
   const at = ctx.now().toISOString();
   const after = await updateState(

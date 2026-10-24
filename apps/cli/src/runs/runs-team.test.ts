@@ -126,7 +126,10 @@ describe('a team: roles, waiting for work, and a lead who talks to the agents', 
     await completeTask(home.ctx, 'es-launch', 't-home');
     expect((await nextTask(bench.agent('agent-2'), 'es-launch', 'designer')).finished).toBeUndefined();
     await reviewTask(lead(), 'es-launch', 't-home', 'approve', []);
-    expect((await nextTask(bench.agent('agent-2'), 'es-launch', 'designer')).finished).toBe(true);
+    // Every task of its roles done: of the team's base, it waits for what the lead may stack, never told to stop.
+    const idle = await nextTask(bench.agent('agent-2'), 'es-launch', 'designer');
+    expect(idle.finished).toBeUndefined();
+    expect(idle.why).toContain("you are of the team's base");
   });
 
   it('a task is not approved over a question it asked the lead that is not answered; done, its token says so', async () => {

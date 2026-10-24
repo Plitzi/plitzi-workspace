@@ -453,6 +453,18 @@ export const runSelf = (cwd: string, args: string[]): Promise<{ code: number; ou
   });
 };
 
+/** The task in review whose review `ctx.agent` holds — a designer's UI review, or a reviewer's — if one. */
+const reviewHeldBy = async (
+  ctx: RunContext,
+  loaded: Awaited<ReturnType<typeof loadRun>>
+): Promise<string | undefined> =>
+  (await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)))).find(
+    view =>
+      view.state.status === 'in-review' &&
+      ((view.state.design?.status === 'due' && view.state.design.by === ctx.agent) ||
+        (view.state.reviewer?.by === ctx.agent && view.state.reviewer.round === view.state.round))
+  )?.task.id;
+
 /**
  * The task a holder's command is about: the token's or the one named — and, run outside the copy with the agent's own
  * token and no task named, the one task that agent holds at work (lx-copy: `task context` refused five times from the
@@ -474,11 +486,16 @@ const taskResolved = async (ctx: RunContext, runId: string, named?: string): Pro
       return held[0].task.id;
     }
 
+    // A reviewer in the copy it reviews holds no task: its review is said by its look and its verdict (encore-2's
+    // design-2 was asked for progress at a review and refused, "name it").
+    const reviewing = await reviewHeldBy(ctx, loaded);
     throw new RunRefusal(
       'invalid',
-      held.length === 0
-        ? `${ctx.agent} holds no task at work: name it, or run this in its copy (cd <its work folder>)`
-        : `${ctx.agent} holds ${held.map(view => view.task.id).join(', ')}: name the task, or run this in its copy`
+      held.length === 0 && reviewing !== undefined
+        ? `${ctx.agent} reviews ${reviewing}, and holds no task at work: a review says itself — its look (plitzi task look ${reviewing}) and its verdict (plitzi task review ${reviewing} …); task progress and the rest are a writer's`
+        : held.length === 0
+          ? `${ctx.agent} holds no task at work: name it, or run this in its copy (cd <its work folder>)`
+          : `${ctx.agent} holds ${held.map(view => view.task.id).join(', ')}: name the task, or run this in its copy`
     );
   }
 };

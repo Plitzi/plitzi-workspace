@@ -24,6 +24,12 @@ import type { LoadedRun, RunContext } from './run';
 /** How many lines of one file's diff it shows: past them, how many are left. */
 const DIFF_LINES = 80;
 
+/**
+ * How many lines of diff it shows in all: past them, each file left says its size and how to read it. encore-2's
+ * `task show` answered up to 44k characters — eighteen files of eighty lines — and the reviewers read it 77 times.
+ */
+const DIFF_TOTAL = 400;
+
 export interface ShownFile {
   file: string;
   /** Whether the copy adds it, changes it or removes it. */
@@ -31,6 +37,8 @@ export interface ShownFile {
   diff?: string;
   /** Lines of the diff past the ones shown. */
   more?: number;
+  /** Lines of its diff not shown at all: the files before it took the lines a show gives. */
+  withheld?: number;
   /** Not text, or too large to diff. */
   binary?: boolean;
 }
@@ -164,6 +172,7 @@ export const showTask = async (
 
   const { view, changed, submitted, from, versions } = await versionsOf(loaded, ctx.root, task);
   const files: ShownFile[] = [];
+  let left = DIFF_TOTAL;
   for (const file of changed) {
     const { before, after } = await versions(file);
     const change: ShownFile['change'] =
@@ -176,11 +185,18 @@ export const showTask = async (
     }
 
     const lines = unifiedDiff(file, a, b).split('\n');
+    if (!full && left <= 0) {
+      files.push({ file, change, withheld: lines.length });
+      continue;
+    }
+
+    const shown = full ? lines.length : Math.min(DIFF_LINES, left);
+    left -= shown;
     files.push({
       file,
       change,
-      diff: (full ? lines : lines.slice(0, DIFF_LINES)).join('\n'),
-      ...(!full && lines.length > DIFF_LINES ? { more: lines.length - DIFF_LINES } : {})
+      diff: lines.slice(0, shown).join('\n'),
+      ...(lines.length > shown ? { more: lines.length - shown } : {})
     });
   }
 

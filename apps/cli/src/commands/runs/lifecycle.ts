@@ -5,6 +5,7 @@ import { inputLines, list, secondRunText } from './text';
 import { ownServer } from '../../runs/acceptance';
 import { BACKLOG_FILE } from '../../runs/backlog';
 import { FINDING_OWNERS } from '../../runs/findings';
+import { ensureKeeper, keeperText } from '../../runs/keeper';
 import { abortRun, continueRun, finishRun, resolveFile, restoreFile } from '../../runs/merge';
 import { RunRefusal } from '../../runs/refusal';
 import { attachRun, pruneRuns, purgeRun, releaseRun, resumeRun, stopRun } from '../../runs/run';
@@ -106,8 +107,13 @@ export const runStop = (runId: string | undefined, options: RunCommandOptions & 
 export const runResume = (runId: string | undefined, options: RunCommandOptions): Promise<void> =>
   act(
     options,
-    async ctx => resumeRun(ctx, await runOf(ctx, options, runId)),
-    () => 'Open again: tasks can be taken.'
+    async ctx => {
+      const id = await runOf(ctx, options, runId);
+      await resumeRun(ctx, id);
+
+      return { keeper: await ensureKeeper(ctx, id) };
+    },
+    resumed => `Open again: tasks can be taken.\n${keeperText(resumed.keeper)}`
   );
 
 export interface FinishOptions extends RunCommandOptions {
@@ -268,9 +274,14 @@ export const runRestore = (
 export const runAttach = (runId: string, options: RunCommandOptions & { takeOver?: boolean }): Promise<void> =>
   act(
     options,
-    async ctx => attachRun(ctx, await runOf(ctx, options, runId), options.takeOver ?? false),
+    async ctx => {
+      const id = await runOf(ctx, options, runId);
+      const attached = await attachRun(ctx, id, options.takeOver ?? false);
+
+      return { ...attached, keeper: await ensureKeeper(ctx, id) };
+    },
     attached =>
-      `Attached to "${runId}"${attached.tookOver ? ', taken over from the other machine' : ''}${attached.repinned ? ', re-pinned to the Plitzi installed now' : ''}. Cut: ${list(attached.cut)}.${attached.kept.length > 0 ? ` Kept in their agents' hands, told to go on: ${attached.kept.join(', ')}.` : ''}\nGo on: plitzi run status ${runId}`
+      `Attached to "${runId}"${attached.tookOver ? ', taken over from the other machine' : ''}${attached.repinned ? ', re-pinned to the Plitzi installed now' : ''}. Cut: ${list(attached.cut)}.${attached.kept.length > 0 ? ` Kept in their agents' hands, told to go on: ${attached.kept.join(', ')}.` : ''}\n${keeperText(attached.keeper)}\nGo on: plitzi run status ${runId}`
   );
 
 export const runRelease = (runId: string, options: RunCommandOptions): Promise<void> =>

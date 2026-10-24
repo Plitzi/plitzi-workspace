@@ -2,7 +2,7 @@ import http from 'node:http';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { acceptancePages, examplePaths } from './pagesOf';
+import { acceptancePages, examplePaths, pagesToLook } from './pagesOf';
 
 import type { AddressInfo } from 'node:net';
 
@@ -80,5 +80,15 @@ describe('the pages an acceptance checks', () => {
         { said: 'whole', check: 'plitzi page check /combates /boxeadores --url $PLITZI_URL --width 1440,390' }
       ])
     ).toEqual(['/combates', '/boxeadores']);
+  });
+});
+
+describe('the pages a look opens', () => {
+  // encore-2: a look at the Reactions plugin's CSS, drawn at no page, pictured the home page.
+  it('are those asked, else those its files draw, else those its acceptance checks — the home page last', () => {
+    expect(pagesToLook(['/menu'], ['/home'], ['/r/:slug'])).toEqual(['/menu']);
+    expect(pagesToLook([], ['/home'], ['/r/night-drive'])).toEqual(['/home']);
+    expect(pagesToLook([], [], ['/r/night-drive'])).toEqual(['/r/night-drive']);
+    expect(pagesToLook([], [], [])).toEqual(['/']);
   });
 });

@@ -47,6 +47,8 @@ export interface ShotOptions {
    * plugin too — with what each click changed pictured: `frames` pictures `every` ms apart after each, or one.
    */
   click?: string[];
+  /** Hovered once the page settles — after the clicks, an item of what they opened — and the page pictured so. */
+  hover?: string;
   /** Every picture taken — before, after each click, or each of `frames` — on one contact sheet. */
   sheet?: boolean;
   /** Signed in first as this account, the password from `PLITZI_CHECK_PASSWORD` — as `page check --as` does. */

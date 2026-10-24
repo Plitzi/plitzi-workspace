@@ -111,6 +111,7 @@ export const linesFailing = (log: readonly LogEntry[]): Finding[] => {
       times: each.at.length,
       fix: 'run the line on the run’s work and the copy (run extend --dry-run --lines, task check --acceptance): a line that cannot pass is amended (run amend), one the work misses is said to the agent',
       subject: `line:${each.task}:${each.line}`,
+      task: each.task,
       live: true as const
     }));
 };

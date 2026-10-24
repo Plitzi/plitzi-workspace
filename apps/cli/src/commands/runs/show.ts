@@ -84,7 +84,11 @@ const taskShowSummary = (taskId: string, options: RunCommandOptions & { full?: b
         ...shown.files.flatMap(each =>
           each.binary
             ? [`  ${each.file}: not text — not shown`]
-            : [each.diff ?? '', ...(each.more ? [`  … ${String(each.more)} more lines (--full shows them)`] : [])]
+            : each.withheld !== undefined
+              ? [
+                  `  ${each.file}: ${String(each.withheld)} lines of diff, not shown — plitzi task show ${shown.task.id} ${each.file} --diff (or --full for every file)`
+                ]
+              : [each.diff ?? '', ...(each.more ? [`  … ${String(each.more)} more lines (--full shows them)`] : [])]
         ),
         ...(shown.next.length > 0 ? ['Next', ...shown.next.map(each => `  ${each}`)] : [])
       ].join('\n');

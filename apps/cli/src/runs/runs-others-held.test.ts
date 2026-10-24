@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { openRun } from './run';
+import { messagesOf } from './messages';
+import { loadRun, openRun } from './run';
 import { completeTask, reviewTask } from './tasks';
 import { benchPlan, makeBench, teamFor, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
@@ -37,14 +38,17 @@ const menuLine = {
   check: "grep -q 'Menú' src/space/pages/menu.ts # plitzi page check /menu"
 };
 
-const opened = async () => {
+const opened = async (
+  line: typeof menuLine = menuLine,
+  about: (typeof menuLine | string)[] = ['The prices follow']
+) => {
   const plan = benchPlan();
   plan.designReview = false;
   plan.tasks = plan.tasks.map(task =>
     task.id === 't-menu'
-      ? { ...task, acceptance: [menuLine] }
+      ? { ...task, acceptance: [line] }
       : task.id === 't-about'
-        ? { ...task, touches: ['src/space/pages/menu.ts'], dependsOn: ['t-menu'], acceptance: ['The prices follow'] }
+        ? { ...task, touches: ['src/space/pages/menu.ts'], dependsOn: ['t-menu'], acceptance: about }
         : task
   );
   const file = await bench.writePlan(plan);
@@ -73,5 +77,49 @@ describe('the lines of approved tasks, on a page a task changes', () => {
     await completeTask(prices.ctx, runId, 't-about', {
       knownFailure: { why: 'The page is the Carta now: the lead amends its line', fixedBy: 'lead' }
     });
+  });
+
+  // encore-2's t-room-side: its own lines passed on the copy served for them, which was stopped before the approved
+  // tasks' lines ran on it — "nothing answers", refused three times as breaking five lines it had not touched.
+  it('runs the approved lines on the copy served for its own, still answering', async () => {
+    await bench.write(
+      'serve.mjs',
+      "import http from 'node:http';\n\nhttp.createServer((q, r) => r.end('served')).listen(process.env.PORT);\n"
+    );
+    await bench.write(
+      'package.json',
+      `${JSON.stringify({ name: 'bench', type: 'module', private: true, scripts: { start: 'node serve.mjs' } })}\n`
+    );
+    await bench.write(
+      'check.mjs',
+      "const text = await (await fetch(process.env.PLITZI_URL)).text();\nprocess.exit(text === 'served' ? 0 : 1);\n"
+    );
+    const served = { said: 'The menu answers', check: 'node check.mjs $PLITZI_URL # plitzi page check /menu' };
+    const runId = await opened(served, [{ said: 'The about answers', check: 'node check.mjs $PLITZI_URL' }]);
+
+    const prices = await take('agent-2', 't-about');
+    await writeInCopy(prices.work, 'src/space/pages/menu.ts', 'export const page = { title: "Menú", prices: true };\n');
+    expect(await completeTask(prices.ctx, runId, 't-about')).toMatchObject({ changed: ['src/space/pages/menu.ts'] });
+  }, 60_000);
+
+  it('tells the lead of an approved line nothing could answer on the copy, and does not hold it against the task', async () => {
+    const unread = {
+      said: 'The menu reads in Spanish',
+      check: "grep -q 'Menú' src/space/pages/menu.ts || exit 2 # plitzi page check /menu"
+    };
+    const runId = await opened(unread);
+
+    const prices = await take('agent-2', 't-about');
+    await writeInCopy(prices.work, 'src/space/pages/menu.ts', 'export const page = { title: "Carta" };\n');
+    await completeTask(prices.ctx, runId, 't-about');
+
+    const told = (await messagesOf(await loadRun(lead(), runId))).filter(each => each.from === 'plitzi');
+    expect(told).toContainEqual(
+      expect.objectContaining({
+        to: 'lead',
+        about: 't-menu',
+        text: expect.stringContaining('"The menu reads in Spanish" cannot be answered') as unknown
+      })
+    );
   });
 });

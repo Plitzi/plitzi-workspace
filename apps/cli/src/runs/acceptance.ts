@@ -270,6 +270,9 @@ export const checkAcceptance = async (
   const served = checked.some(each => namesServedCopy(each.check))
     ? await (serving ?? serveCopy(work, root, cache))
     : undefined;
+  // A copy lent by the caller is the caller's to stop (`letGo`): stopped here, the approved tasks' lines `task complete`
+  // runs next on it read "nothing answers" — encore-2's t-room-side was refused three times as breaking five of them.
+  const own = serving === undefined;
   if (served && 'problem' in served) {
     return checked.map(each => ({
       said: each.said,
@@ -321,6 +324,8 @@ export const checkAcceptance = async (
 
     return results;
   } finally {
-    served?.stop();
+    if (own) {
+      served?.stop();
+    }
   }
 };

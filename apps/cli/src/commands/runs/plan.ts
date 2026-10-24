@@ -10,6 +10,7 @@ import { hasDesignReview } from '../../runs/design';
 import { extendRun } from '../../runs/extend';
 import { writeJson } from '../../runs/files';
 import { issueToken } from '../../runs/identity';
+import { ensureKeeper, keeperText } from '../../runs/keeper';
 import { LEAD } from '../../runs/messages';
 import { atPace } from '../../runs/plan';
 import { RunRefusal } from '../../runs/refusal';
@@ -340,6 +341,7 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
       }
 
       return {
+        keeper: await ensureKeeper(ctx, opened.checked.runId, lead.token),
         runId: opened.checked.runId,
         folder: opened.paths.dir,
         tasks: opened.checked.tasks.map(task => task.id),
@@ -357,6 +359,7 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
     opened =>
       [
         `Run "${opened.runId}" is open: ${String(opened.tasks.length)} task${opened.tasks.length === 1 ? '' : 's'}, ${String(opened.backedUp)} files backed up in ${opened.folder}.`,
+        keeperText(opened.keeper),
         chalk.bold(
           `The lead's own CLI: ${opened.leadCli} — every command of the run as the lead goes through it, which passes the lead's token (${opened.leadToken}, kept in ${opened.leadTokenFile}); a command as lead without it is refused`
         ),

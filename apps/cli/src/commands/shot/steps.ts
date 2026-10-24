@@ -70,6 +70,32 @@ export const clickThrough = async (
   return { moments, clicked };
 };
 
+/**
+ * `--fill`, `--click` and `--hover` said as the steps they are played as: the page before, each field typed into, each
+ * click — pictured after each, unless a hover ends them — and the hover, pictured so. None of `--fill` and `--hover`:
+ * none, the clicks played as clicks alone.
+ */
+export const interactionSteps = (
+  filled: readonly string[] | undefined,
+  clicks: readonly string[],
+  hover: string | undefined
+): string | undefined =>
+  filled || hover !== undefined
+    ? [
+        ...(filled ? ['shot before', ...filled] : []),
+        ...clicks.flatMap(click => [
+          `click ${JSON.stringify(click)}`,
+          'wait 600',
+          ...(hover === undefined ? [`shot after ${click}`] : [])
+        ]),
+        ...(hover !== undefined
+          ? [`hover ${JSON.stringify(hover)}`, 'wait 400', `shot ${hover} hovered`]
+          : clicks.length > 0
+            ? []
+            : ['wait 600', 'shot filled'])
+      ].join('; ')
+    : undefined;
+
 /** What a step is, as its label says it. */
 const stepText = (step: ShotStep): string => {
   switch (step.kind) {

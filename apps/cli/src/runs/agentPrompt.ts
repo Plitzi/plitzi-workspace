@@ -105,7 +105,7 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
           // drawer" — sent back for exactly that.
           `- ${reference === undefined ? 'Something wrong you see' : 'A difference from the site you copy you see'}, inside your task's title, is work, not a note: do it, or \`PLITZI task ask\` the lead before you complete.`,
           // lx-controls: a person following the run read commands where an agent's row should say what it is at.
-          '- As what you are at changes, say it in your words — `PLITZI task progress --step "the hero: its title sits 4px low, moving it"`: the person following the run reads it.',
+          '- As what you are at changes in a task of yours, say it in your words — `PLITZI task progress --step "the hero: its title sits 4px low, moving it"`: the person following the run reads it. A review says itself, by its look and its verdict.',
           // lx-fidelity: Opiniones' arrow moved nothing at 1440, and its developer, its designer and the lead each passed it.
           `- A control you add or change — an arrow, a dot, a pager, a drawer — you use before you complete, there and back, at both widths${reference === undefined ? '' : ", beside the copied site's"}: \`PLITZI page play <path> ${playBeside} --width 390,1440\` — how far each step moved what, what it shows and takes a press; a picture is no proof of one.`
         ]),

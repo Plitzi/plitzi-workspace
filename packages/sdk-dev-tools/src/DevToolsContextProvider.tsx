@@ -12,7 +12,9 @@ export type DevToolsContextProviderProps = {
 };
 
 const DevToolsContextProvider = ({ children }: DevToolsContextProviderProps) => {
-  const [logs, setLogs] = useState<Log[]>([]);
+  // From what the page logged before this panel mounted: opening it from the badge can mount it again elsewhere in
+  // the layout, and a panel that started empty showed none of the warnings its badge counted.
+  const [logs, setLogs] = useState<Log[]>(() => pConsole.history());
   const [providers, setProviders] = useState<Record<string, ProviderCallback>>({});
   const initRef = useRef(false);
 
@@ -50,7 +52,10 @@ const DevToolsContextProvider = ({ children }: DevToolsContextProviderProps) => 
     [providers]
   );
 
-  const handleClearLogs = useCallback(() => setLogs([]), []);
+  const handleClearLogs = useCallback(() => {
+    pConsole.clearHistory();
+    setLogs([]);
+  }, []);
 
   if (!initRef.current) {
     pConsole.setCallback(handleAddLog);
@@ -60,10 +65,12 @@ const DevToolsContextProvider = ({ children }: DevToolsContextProviderProps) => 
   }
 
   useEffect(() => {
+    // The history holds what waited for a panel: taken whole, once, never delivered a second time.
+    setLogs(pConsole.history());
+    pConsole.dropPending();
     pConsole.setCallback(handleAddLog);
     pConsole.setCallbackAddProvider(handleAddProvider);
     pConsole.setCallbackRemoveProvider(handleRemoveProvider);
-    pConsole.processPendingLogs();
 
     return () => {
       pConsole.setCallback(undefined);

@@ -472,7 +472,14 @@ const readAt = async (
       scheme: view.scheme,
       timezone: view.timezone,
       there: pair.there,
-      ...(view.state ? { state: view.state.kind, of: view.state.pairs.map(pair => pair.there).join(' > ') } : {})
+      ...(view.state
+        ? {
+            state: `${view.state.kind}${view.state.then ? `>${view.state.then.kind}` : ''}`,
+            of: [...view.state.pairs, ...(view.state.then ? [view.state.then.pair] : [])]
+              .map(pair => pair.there)
+              .join(' > ')
+          }
+        : {})
     })
   );
   const kept = target && !options.fresh ? await Promise.all(keys.map(file => readKept(file, now))) : [];
@@ -490,7 +497,13 @@ const readAt = async (
             ...(view.scheme ? { scheme: view.scheme } : {}),
             targets: missing.map(index => pairs[index].there),
             ...(options.fresh ? { fresh: true } : {}),
-            ...(view.state && { state: { kind: view.state.kind, targets: view.state.pairs.map(pair => pair.there) } })
+            ...(view.state && {
+              state: {
+                kind: view.state.kind,
+                targets: view.state.pairs.map(pair => pair.there),
+                ...(view.state.then ? { then: { kind: view.state.then.kind, target: view.state.then.pair.there } } : {})
+              }
+            })
           })
         : undefined;
     // Answered with readings, they are what was read; answered with a problem of its own — on its way out, too slow — or
@@ -556,21 +569,26 @@ export const measure = async (route: string, elements: string[], options: Measur
     pairs[0] = { here: pairs[0].here, there: options.there };
   }
 
-  const states = [options.hover, options.focus, options.click].filter(asked => asked !== undefined);
-  if (states.length > 1) {
-    fail('One state at a time: --hover, --focus or --click');
+  // Clicks first, in order, then one element hovered or focused: a menu opened and an item of it hovered. A hover
+  // and a focus at once are no state a visitor reaches.
+  if (options.hover !== undefined && options.focus !== undefined) {
+    fail('One hovered or one focused at a time: --hover or --focus — after --click … when it is inside what they open');
 
     return;
   }
 
-  const state: StateAsked | undefined =
+  const last: StateAsked['then'] =
     options.hover !== undefined
-      ? { kind: 'hover', pairs: [pairOf(options.hover)] }
+      ? { kind: 'hover', pair: pairOf(options.hover) }
       : options.focus !== undefined
-        ? { kind: 'focus', pairs: [pairOf(options.focus)] }
-        : options.click !== undefined
-          ? { kind: 'click', pairs: options.click.map(pairOf) }
-          : undefined;
+        ? { kind: 'focus', pair: pairOf(options.focus) }
+        : undefined;
+  const state: StateAsked | undefined =
+    options.click !== undefined
+      ? { kind: 'click', pairs: options.click.map(pairOf), ...(last ? { then: last } : {}) }
+      : last
+        ? { kind: last.kind, pairs: [last.pair] }
+        : undefined;
 
   const target = options.compare
     ? new URL(options.compare).pathname === '/'
@@ -638,7 +656,14 @@ export const measure = async (route: string, elements: string[], options: Measur
       options.json
         ? JSON.stringify({
             url: target,
-            ...(state ? { state: { [state.kind]: state.kind === 'click' ? state.pairs : state.pairs[0] } } : {}),
+            ...(state
+              ? {
+                  state: {
+                    [state.kind]: state.kind === 'click' ? state.pairs : state.pairs[0],
+                    ...(state.then ? { [state.then.kind]: state.then.pair } : {})
+                  }
+                }
+              : {}),
             readings: readings.map(reading => ({
               ...reading,
               ...(reading.there && !('problem' in reading.there) && !('problem' in reading.here)

@@ -410,7 +410,12 @@ export const completeTask = async (
     );
   }
 
-  const broke = others.filter(line => !line.ok);
+  // An approved task's line nothing could answer on the copy is that line's to amend, as one of its own: the lead is told.
+  for (const line of others.filter(each => each.unanswered === true)) {
+    await tellUnanswered(ctx, loaded, line.task, [line]);
+  }
+
+  const broke = others.filter(line => !line.ok && line.unanswered !== true);
   if (broke.length > 0 && !knownFailure) {
     throw new RunRefusal(
       'checks-failed',

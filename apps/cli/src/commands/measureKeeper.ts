@@ -89,7 +89,17 @@ export const keepBrowser = async (root: string): Promise<void> => {
     open: claimed,
     measureOn,
     putIn: (page, state) =>
-      putIn(page, { kind: state.kind, pairs: state.targets.map(each => ({ here: each, there: each })) }, 'here'),
+      putIn(
+        page,
+        {
+          kind: state.kind,
+          pairs: state.targets.map(each => ({ here: each, there: each })),
+          ...(state.then
+            ? { then: { kind: state.then.kind, pair: { here: state.then.target, there: state.then.target } } }
+            : {})
+        },
+        'here'
+      ),
     outline: async (page, asked) => {
       const read = await outlineOnPage(page, asked);
 

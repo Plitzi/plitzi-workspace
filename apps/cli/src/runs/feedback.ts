@@ -9,6 +9,7 @@ import { commandName, tokensText } from './runMetrics';
 import { projectFormatter } from '../commands/projectFormatter';
 import { formattedJson } from '../scaffold/formattedJson';
 
+import type { AgentTimeline } from './agentTimeline';
 import type { CombinedExperience } from './experience';
 import type { Finding, RunIndicators } from './findings';
 import type { HarnessUsage } from './harness';
@@ -71,6 +72,16 @@ export interface RunFeedback {
   plitziReadMost: { file: string; times: number }[];
   /** What each review asked when it sent a task back: the agent's mistake, or what Plitzi did not let it see. */
   reviewsAsked: { task: string; round: number; by: string; asked: string }[];
+  /**
+   * Each agent's life, in figures: how often it was started and stopped, its minutes at work, stopped and silent, and
+   * why it stopped — what a board reading "no signal" or a team stopped for good is read from (the report has its moments).
+   */
+  lives: {
+    agent: string;
+    launches: number;
+    minutes: AgentTimeline['minutes'];
+    stoppedFor: { why: string; times: number }[];
+  }[];
 }
 
 /** The feedback's Markdown for a run, in the project; its JSON beside it. */
@@ -99,6 +110,15 @@ const sanitizedData = (root: string, data: RunFeedback): RunFeedback => {
 
   // The same shape back, its strings cleaned: what `clean` maps keeps every key and every type but the strings' text.
   return clean(data) as RunFeedback;
+};
+
+const countBy = (values: readonly string[]): Map<string, number> => {
+  const counted = new Map<string, number>();
+  for (const value of values) {
+    counted.set(value, (counted.get(value) ?? 0) + 1);
+  }
+
+  return counted;
 };
 
 export const feedbackOf = async (ctx: RunContext, loaded: LoadedRun): Promise<RunFeedback> => {
@@ -179,7 +199,15 @@ export const feedbackOf = async (ctx: RunContext, loaded: LoadedRun): Promise<Ru
       .sort((a, b) => b[1] - a[1])
       .slice(0, 16)
       .map(([file, times]) => ({ file, times })),
-    reviewsAsked: report.tasks.flatMap(task => task.reviews.map(review => ({ task: task.id, ...review })))
+    reviewsAsked: report.tasks.flatMap(task => task.reviews.map(review => ({ task: task.id, ...review }))),
+    lives: report.agents.map(life => ({
+      agent: life.agent,
+      launches: life.launches,
+      minutes: life.minutes,
+      stoppedFor: [...countBy(life.stops.map(stop => stop.what.replace(/^stopped: /, '').split(':')[0]))].map(
+        ([why, times]) => ({ why, times })
+      )
+    }))
   });
 };
 
