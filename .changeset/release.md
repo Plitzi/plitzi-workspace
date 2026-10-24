@@ -343,6 +343,9 @@ report`, …).
   a pass on one result is kept for the day, so the finish does not run it again.
 - **Less to read again:** `page measure` says the other page and what it compares once, above every element; `task
 context` gives signatures instead of bodies; a wait is logged once per reason.
+- **A lead with nothing waiting for it helps:** its skill says to take a ready task
+  (`task reassign <task> --to lead`), work its copy and complete it — encore-3's lead wrote the moderation demo's tests
+  while the tester ran a spec.
 
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
 
@@ -460,6 +463,9 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **Sign out everywhere works on a `createAuth` server as written:** the page takes the server's `revokeUrl` as it takes its
   other auth endpoints (a space had to declare it by hand), and the step answers `{ ok: true }` for a flow to branch on —
   a refusal still fails it. Found by encore-2's dev-1.
+- **A guest refused asks no renewal** (`@plitzi/sdk-auth`): a 401 to a visitor who never signed in — a server action
+  kept for signed-in visitors — sent a `/auth/refresh` that could only fail (400). A refusal renews or ends a session
+  only when this browser holds one (a stored credential or the hint cookie). Found by Carlos on encore's Remind me.
 - **`authLogoutEverywhere('site' | 'all')`**, the auth source's `logoutEverywhere`: a visitor signs out of the space on
   every device, or out of their account everywhere. `basic` posts to the space's `revokeUrl` (the page server's sign-in
   names it); a provider that cannot is refused, never a sign-out here alone.

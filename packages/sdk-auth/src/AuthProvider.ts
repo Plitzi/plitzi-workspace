@@ -507,6 +507,12 @@ abstract class AuthProvider<U = Record<string, unknown>> {
       return false;
     }
 
+    // A visitor who never signed in is refused too — an action kept for signed-in visitors answers a guest 401. With
+    // no session in this browser there is nothing to renew or end: asking anyway is a refresh that cannot succeed.
+    if (!this.hasEvidence()) {
+      return false;
+    }
+
     if (this.renewable(reason)) {
       return this.renew();
     }

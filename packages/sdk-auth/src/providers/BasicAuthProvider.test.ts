@@ -417,6 +417,27 @@ describe('BasicAuthProvider failures', () => {
     expect(provider.getState()).toBe('guest');
   });
 
+  // A guest pressing a key a server action keeps for signed-in visitors: its 401 says nothing about a session here.
+  it('neither renews nor ends anything when a visitor who never signed in is refused', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    await provider.init();
+    const expired = vi.fn();
+    provider.on(event => {
+      if (event.type === 'expired') {
+        expired();
+      }
+    });
+
+    for (const reason of ['expired', 'missing', 'revoked'] as const) {
+      provider.invalidate(reason);
+    }
+
+    await Promise.resolve();
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(expired).not.toHaveBeenCalled();
+    expect(provider.getState()).toBe('guest');
+  });
+
   it('shares one renewal between concurrent callers', async () => {
     const provider = new BasicAuthProvider({ ...plitziApi });
     storeSession(inSeconds(-10));

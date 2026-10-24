@@ -185,6 +185,12 @@ export const ELEMENT_CODES = {
       "a `{{ }}` inside an attribute that is an object or a list — a provider's `input`, a list's `items`, a plugin's settings: only an attribute that is text is evaluated",
     fix: "a binding on the attribute (`bindTemplate(name, source, template, { returns: 'value' })`); for a provider's `input`, nothing for a route or query param — the action is already handed them as `input.<name>`"
   },
+  'server-source-in-browser': {
+    kind: 'refused',
+    means:
+      'a provider with an `action` or a `connector` asked from the browser — only the page server resolves those, so it never asks',
+    fix: "`runtime: 'server'` on the provider"
+  },
   'not-found-in-browser': {
     kind: 'refused',
     means:

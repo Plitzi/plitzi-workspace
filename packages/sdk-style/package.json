@@ -30,7 +30,7 @@
     "build:prod": "vite build"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.34",
+    "@plitzi/plitzi-ui": "^1.6.35",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",

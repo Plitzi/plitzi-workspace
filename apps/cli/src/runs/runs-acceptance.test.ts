@@ -335,7 +335,8 @@ describe('acceptance, checks and what is left behind', () => {
     // The plan was the run's from its opening, in its folder: only what was handed after is removed — or kept.
     expect(done.inputs).toEqual({ removed: [], kept: ['summary.md'], servers: [] });
     expect(await bench.read('es-launch.plan.json')).toBeUndefined();
-  });
+    // A run opened and finished whole: seconds alone, past the default 5 s beside the suite under load.
+  }, 30_000);
 
   it('a running preview takes each approval in; none running, nothing is written', async () => {
     await open();

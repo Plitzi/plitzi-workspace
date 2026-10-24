@@ -519,6 +519,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@codemirror/autocomplete@npm:^6.20.4":
+  version: 6.20.4
+  resolution: "@codemirror/autocomplete@npm:6.20.4"
+  dependencies:
+    "@codemirror/language": "npm:^6.0.0"
+    "@codemirror/state": "npm:^6.0.0"
+    "@codemirror/view": "npm:^6.17.0"
+    "@lezer/common": "npm:^1.0.0"
+  checksum: 10c0/f823a470dd0eccecc83e6ec527017c8fa70f2c4e98e4d4a1ed1d93b671f7271e590fb6899cd22a6608ffb1fb44b09613685969c1a43928cb80639640e4055da1
+  languageName: node
+  linkType: hard
+
 "@codemirror/commands@npm:^6.11.1":
   version: 6.11.1
   resolution: "@codemirror/commands@npm:6.11.1"
@@ -664,6 +676,18 @@ __metadata:
     style-mod: "npm:^4.1.0"
     w3c-keyname: "npm:^2.2.4"
   checksum: 10c0/b20e8545fcc158713250e55eb40c97e594a99c7406acafa68c75758395ec8393aca6b95f65533795f81d66e6f29bb8ad99c672281d5f03707c2c066a9e2dd36a
+  languageName: node
+  linkType: hard
+
+"@codemirror/view@npm:^6.43.15":
+  version: 6.43.15
+  resolution: "@codemirror/view@npm:6.43.15"
+  dependencies:
+    "@codemirror/state": "npm:^6.7.0"
+    crelt: "npm:^1.0.6"
+    style-mod: "npm:^4.1.0"
+    w3c-keyname: "npm:^2.2.4"
+  checksum: 10c0/314cb8a46634b522c706757fbb0b673d468eecf5ab5fe9d5c7e586a2a20c6deb2a2f61c0813cf9153dc3cc4ff7607a399c22fef6162d9656e674f5f18a127065
   languageName: node
   linkType: hard
 
@@ -1304,9 +1328,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hookform/resolvers@npm:^5.9.2":
-  version: 5.9.2
-  resolution: "@hookform/resolvers@npm:5.9.2"
+"@hookform/resolvers@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "@hookform/resolvers@npm:6.0.0"
   dependencies:
     "@standard-schema/utils": "npm:^0.3.0"
   peerDependencies:
@@ -1322,7 +1346,7 @@ __metadata:
     class-transformer: ">=0.4.0"
     class-validator: ">=0.12.0"
     computed-types: ^1.0.0
-    effect: ^3.10.3
+    effect: ^4.0.0
     fluentvalidation-ts: ^3.0.0
     fp-ts: ^2.7.0
     io-ts: ^2.0.0
@@ -1384,7 +1408,7 @@ __metadata:
       optional: true
     zod:
       optional: true
-  checksum: 10c0/a1dfbb21ca5c65cba81fb82b1176c4788b8fe6a591886c16908995c1c21fdb1426bce8f013c6d90c00d511b44c481f99bc9b897b8c6ca3f61e0db5f4fe7dfd4a
+  checksum: 10c0/97ca7f437ae6ab810f9fa5189de3291a1a9542e5be5d89731a95db0a26a98554857f892c450065cbc033ee0b9327da61a044343dad9f135c405dbbd6e50b6543
   languageName: node
   linkType: hard
 
@@ -2589,7 +2613,7 @@ __metadata:
     vite: "npm:^8.3.4"
     vitest: "npm:^5.0.5"
   bin:
-    plitzi: ./dist/index.js
+    plitzi: ./dist/bin.js
   languageName: unknown
   linkType: soft
 
@@ -2863,7 +2887,7 @@ __metadata:
     "@fortawesome/fontawesome-free": "npm:^7.3.1"
     "@plitzi/nexus": "npm:^1.4.0"
     "@plitzi/plitzi-sdk": "workspace:*"
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
@@ -2923,7 +2947,7 @@ __metadata:
   dependencies:
     "@fortawesome/fontawesome-free": "npm:^7.3.1"
     "@plitzi/plitzi-sdk": "workspace:*"
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@tailwindcss/postcss": "npm:^4.3.3"
@@ -2960,7 +2984,7 @@ __metadata:
     "@dr.pogodin/react-helmet": "npm:^3.3.2"
     "@fortawesome/fontawesome-free": "npm:^7.3.1"
     "@plitzi/nexus": "npm:^1.4.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-elements": "workspace:*"
@@ -3007,11 +3031,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui@npm:^1.6.34":
-  version: 1.6.34
-  resolution: "@plitzi/plitzi-ui@npm:1.6.34"
+"@plitzi/plitzi-ui@npm:^1.6.35":
+  version: 1.6.35
+  resolution: "@plitzi/plitzi-ui@npm:1.6.35"
   dependencies:
-    "@codemirror/autocomplete": "npm:^6.20.3"
+    "@codemirror/autocomplete": "npm:^6.20.4"
     "@codemirror/commands": "npm:^6.11.1"
     "@codemirror/lang-css": "npm:^6.3.1"
     "@codemirror/lang-html": "npm:^6.4.12"
@@ -3020,14 +3044,14 @@ __metadata:
     "@codemirror/search": "npm:^6.7.2"
     "@codemirror/state": "npm:^6.7.6"
     "@codemirror/theme-one-dark": "npm:^6.1.3"
-    "@codemirror/view": "npm:^6.43.14"
-    "@hookform/resolvers": "npm:^5.9.2"
+    "@codemirror/view": "npm:^6.43.15"
+    "@hookform/resolvers": "npm:^6.0.0"
     "@uiw/color-convert": "npm:^2.10.3"
     "@uiw/react-color-sketch": "npm:^2.10.3"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     date-fns: "npm:^4.4.0"
-    immer: "npm:^11.1.21"
+    immer: "npm:^11.2.9"
     react-markdown: "npm:^10.1.0"
     react-syntax-highlighter: "npm:^16.1.2"
     react-toastify: "npm:^11.1.0"
@@ -3040,7 +3064,7 @@ __metadata:
     react-dom: ^19.2.8
     react-hook-form: ^7.85.0
     zod: ^4.6.4
-  checksum: 10c0/89410c08e423cbb3004e6e6400a5f2f02b6b40abdc0363db24aa96add9c5e930f1e995d22f6bcd7b20db1df485d71b19094308c5f2185d5cb17cdc4547c0ee7f
+  checksum: 10c0/e17d6bacc78d45b03e48d39630acb83fd82a9d4bd1d5afc8f36debb7b8daedd11f8f71f6ba63df2aac7edbfbf19b09a7368d78c13d9d590584fb191e54635a8f
   languageName: node
   linkType: hard
 
@@ -3050,7 +3074,7 @@ __metadata:
   dependencies:
     "@changesets/cli": "npm:^3.0.3"
     "@playwright/test": "npm:^1.64.1"
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/react": "npm:^19.3.0"
     eslint: "npm:^9.39.5"
@@ -3066,7 +3090,7 @@ __metadata:
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
   dependencies:
     "@plitzi/nexus": "npm:^1.4.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.5"
@@ -3084,7 +3108,7 @@ __metadata:
   resolution: "@plitzi/sdk-authoring@workspace:packages/sdk-authoring"
   dependencies:
     "@microsoft/api-extractor": "npm:^7.59.4"
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@plitzi/sdk-elements": "workspace:*"
     "@plitzi/sdk-interactions": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
@@ -3110,7 +3134,7 @@ __metadata:
   resolution: "@plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools"
   dependencies:
     "@plitzi/nexus": "npm:^1.4.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@testing-library/react": "npm:^16.3.3"
@@ -3135,7 +3159,7 @@ __metadata:
   dependencies:
     "@dr.pogodin/react-helmet": "npm:^3.3.2"
     "@plitzi/nexus": "npm:^1.4.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-interactions": "workspace:*"
@@ -3179,7 +3203,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
@@ -3234,7 +3258,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-navigation@workspace:packages/sdk-navigation"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.5"
     react: "npm:^19.3.1"
@@ -3253,7 +3277,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-plugins@workspace:packages/sdk-plugins"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.5"
     typescript: "npm:^6.0.3"
@@ -3265,7 +3289,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-schema@workspace:packages/sdk-schema"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-style": "workspace:*"
     eslint: "npm:^9.39.5"
@@ -3341,7 +3365,7 @@ __metadata:
     "@apollo/client": "npm:^4.3.4"
     "@eslint/js": "npm:^10.0.1"
     "@plitzi/nexus": "npm:^1.4.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@testing-library/dom": "npm:^10.4.2"
     "@testing-library/react": "npm:^16.3.3"
     "@types/react": "npm:^19.3.0"
@@ -3386,7 +3410,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-style@workspace:packages/sdk-style"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-variables": "workspace:*"
@@ -3407,7 +3431,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-variables@workspace:packages/sdk-variables"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.34"
+    "@plitzi/plitzi-ui": "npm:^1.6.35"
     "@plitzi/sdk-shared": "workspace:*"
     clsx: "npm:^2.1.1"
     eslint: "npm:^9.39.5"
@@ -8535,6 +8559,13 @@ __metadata:
   version: 11.1.21
   resolution: "immer@npm:11.1.21"
   checksum: 10c0/0c29182c98d0cea079fc679a198a9bccc4d7d70b528d85f52707e606fbe6fc8fea0a3d583e86ff2d3eb75cd42e25aa359466e8e8edde316db436bb92a917fe84
+  languageName: node
+  linkType: hard
+
+"immer@npm:^11.2.9":
+  version: 11.2.9
+  resolution: "immer@npm:11.2.9"
+  checksum: 10c0/fe64b10033aba3f89f778f0a28835c31f9ce28283f0b9a85245de3885442aea20ea8cf6bda7bca57f8159ff2c566ada6d9da9285461e120fe1587d335d648551
   languageName: node
   linkType: hard
 

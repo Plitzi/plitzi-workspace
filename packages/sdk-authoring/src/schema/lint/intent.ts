@@ -194,6 +194,20 @@ export const checkIntent = (ctx: LintContext, element: Element, where: string): 
   const serverSource = ['connector', 'action', 'query'].find(
     key => typeof attributes[key] === 'string' && attributes[key] !== ''
   );
+  // The browser asks a `query` alone: an `action` or a `connector` is the page server's to resolve, so a provider asked
+  // from the browser with one never asks at all — encore's shell notice read reminders that never came, saying nothing.
+  const serverOnly = ['action', 'connector'].find(
+    key => (typeof attributes[key] === 'string' && attributes[key] !== '') || bound(key)
+  );
+  if (type === 'apiContainer' && serverOnly && element.definition.runtime !== 'server') {
+    ctx.error(
+      'server-source-in-browser',
+      `${where} is asked from the browser, which reads only its \`query\`: its \`${serverOnly}\` is answered by the page server alone, so it never asks and everything bound to it stays empty. Give it \`runtime: 'server'\`.`,
+      element.id,
+      { source: serverOnly }
+    );
+  }
+
   // A component's tree is placed by instances, any number of them on one page, and the page server resolves what the
   // page and its layouts hold — never inside a component. Left there, the provider stays loading for ever, wherever it
   // is placed.

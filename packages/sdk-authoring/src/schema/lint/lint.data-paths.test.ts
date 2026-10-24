@@ -114,6 +114,21 @@ describe('lintSpace', () => {
       expect(lintSpace({ schema, style }).errors.map(error => error.code)).toContain('not-found-in-browser');
     });
 
+    /** The browser asks a `query` alone: an `action` or a `connector` is answered by the page server, never there. */
+    it('server-source-in-browser, for an action or a connector with no server runtime', () => {
+      const { schema, style } = story();
+      delete schema.flat['post-data'].definition.runtime;
+      expect(lintSpace({ schema, style }).errors.map(error => error.code)).toContain('server-source-in-browser');
+
+      const { attributes } = schema.flat['post-data'];
+      delete attributes.action;
+      attributes.connector = 'stories';
+      expect(lintSpace({ schema, style }).errors.map(error => error.code)).toContain('server-source-in-browser');
+
+      schema.flat['post-data'].definition.runtime = 'server';
+      expect(lintSpace({ schema, style }).errors.map(error => error.code)).not.toContain('server-source-in-browser');
+    });
+
     /** A written input is a value: its braces reach the action as text, over the route param it meant to read. */
     /** Only an attribute that is text is interpolated: braces inside an object or a list arrive as written. */
     it('template-in-value, for any attribute that is an object or a list', () => {

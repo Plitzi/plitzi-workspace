@@ -14,8 +14,7 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview` — who owns which file. A page owns the modules only it imports; what two
    pages import (tokens, classes, a layout, a component) is **shared**, and so is every entry. `plitzi space impact <file>` — what depends on a file.
-2. **Write the plan** (JSON, best in the project's `tmp/`: the run removes it and its other inputs with itself, unless
-   changed since):
+2. **Write the plan** (JSON, best in the project's `tmp/`: the run removes it and its inputs, unless changed since):
 
    ```json
    {
@@ -60,9 +59,9 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    the others' UI before you (`options.designReview`; `false` turns it off). Yours is the complete,
    strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
    `--skip-design lead|no-ui`, `lead` after your `task look`). A UI review held 8 min, or
-   queued 5, is yours: decide it. Take a task back any time: `task reassign <task> --reason "…" --to <agent>|lead`. **One lead for every four agents**: `lead-2`… beside you, started when `run watch
---until lead` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`) and
-   answers the questions it is handed, and stops when nothing is left.
+   queued 5, is yours: decide it. Take a task back, or a ready one for yourself: `task reassign <task> --reason "…" --to <agent>|lead`. **One lead for every four agents**: `lead-2`… beside you, started when `run watch
+--until lead` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`),
+   answers the questions handed to it, and stops when none is left.
 
    **Keep a person's actions a person's in the harness**: deny the agents `run finish --apply`, `run abort`, `run purge`,
    `run restore`, `run allow-finish`, `run stop --force`, `run attach --take-over`.
@@ -80,7 +79,7 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    a file it does not hold says so (`"touches": ["src/space/tokens.ts"]`).
 
 3. `plitzi run plan plan.json` — refused, every reason at once; otherwise expanded, shared files and overlaps
-   listed, estimated — and the skills said when they are older than the CLI (`plitzi upgrade skills --write` first). `plitzi run rehearse plan.json` plays it out:
+   listed, estimated — and skills older than the CLI said (`plitzi upgrade skills --write`). `plitzi run rehearse plan.json` plays it out:
    who works what when, the critical path, your review queue.
 4. **The summary first** ([runs-plan.md](runs-plan.md) § 5), who applies it among it — the person, or you if they open it
    `--lead-finishes` (or `plitzi run allow-finish` later); never you. `plitzi run open plan.json` backs up every file
@@ -88,13 +87,14 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
 5. Start each agent: `plitzi run agent <name> --launch` (alone: its prompt, for a subagent), and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
    file a task takes past 400 lines (ask for the split) — each said once. **Talk:** answer a question with `plitzi
-task message t-home "…" --reply-to m3`; `task message all "…"` tells every task in hand, `task message @dev-1 "…"`
-   an agent by name, between tasks too. **The scope changes while it runs** — yours to see, or the person's to ask: edit
+task message t-home "…" --reply-to m3`; `all` or `@dev-1` in place of the task: every task in hand, or
+   one agent. **The scope changes while it runs** — yours to see, or the person's to ask: edit
    the plan in the run's `inputs/` (`run open` says which; the run's own `plan.json` is what amend compares it to,
    never edited) and `plitzi run amend` — acceptance, priorities, findings, notes, the inventory, what a task nobody took waits for (`dependsOn`), one
    removed; more work is a stage, `plitzi
 run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — chase
    or decide a review that drags, settle a last cosmetic round yourself, amend away a dependency it does not need.
+   **Nothing waits for you?** Help: `task reassign <ready task> --to lead`, then `task complete`.
 6. **Review against the inventory, not only the picture:** every section and piece the task's acceptance names is
    there, as the reference has it — a difference you accept is one you say (`--note`); one a visitor would see is sent
    back. Judge the version that went to review, on a page several tasks build only its part. `plitzi task show
@@ -102,16 +102,16 @@ t-home` is all of it (`<file> --diff`: one file's whole diff);
    `plitzi task look t-home --before` serves its copy, checks and pictures its pages beside the run before (its options:
    [runs-designer.md](runs-designer.md)) — once: after the designer's, unchanged, it repeats it; code is `task show`. What the acceptance asks and the data does not show, you test
    (a module's function, its edge cases, `node -e` in the copy) — or send it back for the test it needs. Then
-   `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Three rounds of yours —
-   or three of the designer's — are yours: approve as it is, answer, or ask the person. A `--known-failure` says why and
+   `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Past three rounds (yours or
+   the designer's) it is yours: approve as it is, answer, or ask the person. A `--known-failure` says why and
    which task fixes it — weigh that. The approval merges what went to review, not the copy as it is.
 7. **Someone changed a file while the agent worked on it** → the approval stops, naming it: `--approve --merge` when
    the changes go together line by line (the refusal says so), `--approve --overwrite` (its version wins, said, the
    other kept) or `--changes` (redo it on the project's version). A change after approval puts the finish into
    **reconciliation**: `plitzi run resolve <run> <file> --take …`, then `plitzi run continue`.
    **The brake** stops a run whose completions keep failing; `run resume`. **Plitzi upgraded mid-run**
-   (`version-mismatch`): the person runs `plitzi run attach <run>`. Upgrading on purpose is the person's too (`plitzi run upgrade`): rebuild,
-   then ask them — never put a CLI in `node_modules` yourself.
+   (`version-mismatch`): the person runs `plitzi run attach <run>`. Upgrading on purpose is the person's (`plitzi run upgrade`): rebuild,
+   then ask — never put a CLI in `node_modules` yourself.
 8. **Before you close, look at the coverage:** the finish runs each covering check on the result; look at what a
    check cannot see (`plitzi run preview`) — what is missing is a stage (`run extend`), or the next run's: `run notice "…"
 --on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run plan` and `run open` list (`run

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { monitorScreen, wheelTarget } from './monitor';
 import { flowBoard, flowLines } from './monitorFlow';
+import { spendPanel } from './monitorSpend';
 import { extendRun } from '../../runs/extend';
 import { groupRepeats, monitorRun } from '../../runs/monitor';
 import { runPaths } from '../../runs/paths';
@@ -486,6 +487,19 @@ describe('plitzi run monitor', () => {
         expect(activity, at).toBeGreaterThan(0);
         expect(keys - activity - 3, at).toBeGreaterThanOrEqual(3);
       }
+    }
+  });
+
+  it('gives the activity every column the spend beside it leaves, the spend as wide as it needs', async () => {
+    const runId = await open();
+    await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
+
+    const data = await monitorRun(lead(), runId);
+    const spend = spendPanel(data.spend, data.freshAt, 60);
+    for (const width of [160, 220, 300]) {
+      const screen = plain(monitorScreen(data, { selected: 0, open: false, width, height: 60, now: bench.now() }));
+      const title = screen.find(line => line.startsWith('ACTIVITY')) ?? '';
+      expect(title.indexOf('SPEND'), String(width)).toBe(width - spend.width);
     }
   });
 

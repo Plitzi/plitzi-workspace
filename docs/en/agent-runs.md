@@ -119,7 +119,8 @@ which offers it a task in review no other lead took (`TaskState.reviewer`, for t
 the one that waited longest — and reviews it as `lead` would, as strictly; a review another lead took is refused to it
 (`claimed`). Everything else — planning, amending, stacking a stage, answering, notes to every task, unblocking,
 reassigning, reverting, reconciling, the summary and the finish — is `lead`'s, refused to a lead that reviews and to an
-agent of the team (`lead-only`), so two never do it twice. `lead` may review any task; while one of them runs, `run watch
+agent of the team (`lead-only`), so two never do it twice. With nothing waiting for it, `lead` helps: `task reassign
+<ready task> --to lead` makes the task its own, worked in its copy and completed as an agent's is. `lead` may review any task; while one of them runs, `run watch
 --until lead` wakes it for a review only after it waited two minutes with no lead taking it (`UNTAKEN_REVIEW_MS`). Two verdicts on one task are given one at a time (`review.lock`): the second reads it said.
 
 **Connected as it goes.** A shared file a task changed — or any file no task at work holds: a done task's, one in no
