@@ -1,7 +1,7 @@
-import { createMemoryJobQueue, JOB_QUEUE_METHODS } from './memoryQueue';
+import { createMemoryJobQueue } from './memoryQueue';
 import { createScheduler } from './scheduler';
 import { createJobWorker } from './worker';
-import { fleetStore } from '../../../core/server/fleet/link';
+import { fleetJobQueue } from '../../../core/server/fleet/stores';
 
 import type { Scheduler } from './scheduler';
 import type { JobWorker } from './worker';
@@ -37,7 +37,7 @@ export const createActionJobs = (
   lookups: ActionLookups,
   functionJobs?: FunctionJobsService
 ): ActionJobs => {
-  const queue = config.queue ?? fleetStore<JobQueue>('actions.jobs', JOB_QUEUE_METHODS) ?? createMemoryJobQueue();
+  const queue = config.queue ?? fleetJobQueue(() => createMemoryJobQueue());
   const { produce = true, workers = 4 } = config;
 
   const scheduler = createScheduler({
@@ -82,11 +82,13 @@ export const createActionJobs = (
   };
 };
 
+export { createFileJobQueue } from './fileQueue';
 export { createMemoryJobQueue } from './memoryQueue';
 export { createScheduler } from './scheduler';
 export { createJobWorker } from './worker';
 export { DEFAULT_MAX_ATTEMPTS, scheduleFor, scheduleJobId, schedulesFor } from './schedules';
 
+export type { FileJobQueue, FileJobQueueOptions } from './fileQueue';
 export type { MemoryJobQueueOptions } from './memoryQueue';
 export type { Scheduler, SchedulerOptions, SweepResult } from './scheduler';
 export type { JobWorker, JobWorkerOptions } from './worker';

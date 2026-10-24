@@ -12,7 +12,7 @@ import {
 } from '@plitzi/sdk-authoring';
 import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project';
 
-import { apiDeclarations, apiText } from './apiDeclarations';
+import { apiDeclarations, apiText, memberDeclarations } from './apiDeclarations';
 import { findProject } from './existingProject';
 import { pluginText, projectPlugins } from './projectPlugins';
 import { serverTasks, serverTaskText } from './serverTasks';
@@ -247,8 +247,10 @@ export const explainCommand = async (
       return;
     }
 
-    // Not a name the catalogues hold: an export of a @plitzi package, read from the types the project installed.
-    const api = apiDeclarations(process.cwd(), name);
+    // Not a name the catalogues hold: an export of a @plitzi package, read from the types the project installed — or a
+    // member of one (`ctx.later`, or `later` when no export has the name).
+    const exported = name.includes('.') ? [] : apiDeclarations(process.cwd(), name);
+    const api = exported.length > 0 ? exported : memberDeclarations(process.cwd(), name);
     if (api.length > 0) {
       const taught = skillsMentions(project?.root ?? process.cwd(), name);
       console.log(

@@ -412,6 +412,32 @@ describe('agents on demand', () => {
     expect(await asked()).toEqual([]);
   });
 
+  // Carlos: the person hears what will happen before anything starts — a run opened on its scope is the lead's alone.
+  it('asks for no base agent while the run holds its scope alone, and for each once it has a task', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    const plan = benchPlan();
+    plan.tasks = [
+      {
+        id: 's-scope',
+        title: 'The scope',
+        files: [],
+        dependsOn: [],
+        priority: 'critical',
+        estimateMinutes: 30,
+        acceptance: ['Its result is the run’s tasks'],
+        spike: 'the ask'
+      }
+    ];
+    await openRun(lead(), await bench.writePlan(plan));
+    bench.advance(STARTING_MS);
+
+    const asked = async () =>
+      (await viewRun(lead(), 'es-launch')).attention
+        .filter(item => item.kind === 'agents-needed')
+        .map(item => item.agent);
+    expect(await asked()).toEqual([]);
+  });
+
   // encore's dev-1: after t-player, next handed it t-shell, held from an earlier session — two tasks in one context.
   // Carlos: never stopped in a task — one it holds at work is one, whatever its session mode says.
   it('goes on with a task it holds at work rather than stop after the one it completed', async () => {

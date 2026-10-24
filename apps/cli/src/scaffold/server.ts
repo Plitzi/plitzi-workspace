@@ -1,4 +1,4 @@
-import { ACTIONS_ENTRY, DATA_DIR, FUNCTIONS_DIR, KV_FILE, MAIN_FILE, SERVER_OPTIONS_FILE } from './paths';
+import { ACTIONS_ENTRY, DATA_DIR, FUNCTIONS_DIR, JOBS_FILE, KV_FILE, MAIN_FILE, SERVER_OPTIONS_FILE } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -90,7 +90,8 @@ ${serveCall([spaceProperty, ...(actions ? ['actions', 'connectors'] : []), 'serv
  */
 /** What a local project's server options say about its actions — the server runs them itself. */
 const ACTION_OPTIONS_DOC = ` * - \`action: { limits: { maxRequests, timeoutMs } }\` — a server action reading many sources: 20 requests and 10 s a
- *   run by default. \`action.kv\` — where \`kv\` keeps what it writes: \`${KV_FILE}\` by default.
+ *   run by default. \`action.kv\` — where \`kv\` keeps what it writes: \`${KV_FILE}\` by default; \`action.jobs.queue\` —
+ *   where \`ctx.later\`, the schedules and the jobs wait: \`${JOBS_FILE}\` by default (\`createSqliteJobQueue\`, a database's).
 `;
 
 const serverOptionsModule = (

@@ -374,7 +374,8 @@ team's base agents of its roles — there (marked present) and at nothing — ta
 waits. **The base stays** while the run is open: `task next` never tells one of it to stop for want of work — it waits
 (`--follow`) for a stage the lead stacks or a task sent back, and hears how its own work ended (`worked`); only one on
 demand stops, and one stops between two pieces of work for a fresh context (below). A base agent not running is asked for whatever waits
-(`agents-needed`, the run open past `STARTING_MS`): encore-2's designers and tester, stopped once every task was done,
+(`agents-needed`, the run open past `STARTING_MS`) — once the run has a task that is not a spike: a run opened on its
+scope is the lead's, planned with the person ([runs-plan.md](../../apps/cli/skills/plitzi-cli/reference/runs-plan.md)): encore-2's designers and tester, stopped once every task was done,
 were stopped when a stage came. **Running** (`running.ts`, `agentsNow`): an agent the CLI launched runs while its process
 does (`launch.ts`); one started by hand, by the log — it said something and has not stopped since, a stop holding until
 it comes back for work (`stoppedAgents`: a notice sent on its way out is no sign of life — encore-2's tester read "no

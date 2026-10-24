@@ -20,6 +20,8 @@ export interface ApiExplanation {
   name: string;
   /** Where it is imported from: `@plitzi/sdk-authoring`, `@plitzi/sdk-server/handlers`. */
   from: string;
+  /** A member's: the type it is a member of — `FunctionContext` for `ctx.later`. */
+  of?: string;
   /** The first paragraph of its doc, or nothing when it has none. */
   summary: string;
   /** Its declaration as published, cut after `WRITTEN_LINES`. */
@@ -301,10 +303,75 @@ export const apiDeclarations = (root: string, name: string): ApiExplanation[] =>
 
 export const apiText = (explanation: ApiExplanation): string =>
   [
-    `${explanation.name} — export of ${explanation.from}${explanation.summary ? `: ${explanation.summary}` : ''}`,
+    `${explanation.name} — ${explanation.of === undefined ? 'export' : `${explanation.of}'s member`} of ${explanation.from}${explanation.summary ? `: ${explanation.summary}` : ''}`,
     explanation.written,
     ...(explanation.takes ?? []).flatMap(taken => [
       `Takes ${taken.type}:`,
       ...taken.fields.map(field => `  ${field.name}${field.optional ? '?' : ''}${field.doc ? ` — ${field.doc}` : ''}`)
     ])
   ].join('\n');
+
+/** What the code of a space calls the objects it is handed — `ctx.later` is `FunctionContext`'s `later`. */
+const RECEIVERS: ReadonlyMap<string, string> = new Map([
+  ['ctx', 'FunctionContext'],
+  ['job', 'FunctionJobHandle']
+]);
+
+/**
+ * A member of a type a `@plitzi` package exports — `ctx.later`, `job.save`, `FunctionContext.cancelLater`, or a bare
+ * `later` when no export has the name: the method's whole doc and its signature, from the `.d.ts` installed. Encore's
+ * lead asked `explain later` and was told it was nothing, while `ctx.later` is what its shows start by.
+ */
+export const memberDeclarations = (root: string, name: string): ApiExplanation[] => {
+  const ts = loadTypeScript(root);
+  if (!ts || !/^(?:[\w$]+\.)?[\w$]+$/.test(name)) {
+    return [];
+  }
+
+  const parts = name.split('.');
+  const member = parts[parts.length - 1];
+  // `ctx.later` names its owner; a bare `later` is looked for in every object the code is handed.
+  const owners = parts.length === 2 ? [[parts[0], RECEIVERS.get(parts[0]) ?? parts[0]] as const] : [...RECEIVERS];
+
+  return installedPackages(root).flatMap(entries =>
+    owners.flatMap(([said, owner]) => {
+      if (!spells(entries, owner)) {
+        return [];
+      }
+
+      const program = ts.createProgram(
+        entries.map(entry => entry.file),
+        {
+          noEmit: true,
+          skipLibCheck: true,
+          types: [],
+          module: ts.ModuleKind.ESNext,
+          moduleResolution: ts.ModuleResolutionKind.Bundler
+        }
+      );
+      const checker = program.getTypeChecker();
+      for (const entry of entries) {
+        const found = lookUp(ts, checker, program.getSourceFile(entry.file), owner);
+        const property = found && checker.getPropertyOfType(checker.getDeclaredTypeOfSymbol(found.declared), member);
+        const declaration = property?.declarations?.[0];
+        if (property && declaration) {
+          const written = declaration.getSourceFile().text.slice(declaration.getStart(), declaration.getEnd());
+          const doc = ts.displayPartsToString(property.getDocumentationComment(checker)).replace(/\s+/g, ' ').trim();
+
+          return [
+            {
+              kind: 'api' as const,
+              name: `${said}.${member}`,
+              from: entry.from,
+              of: owner,
+              summary: doc,
+              written: written.split('\n').slice(0, WRITTEN_LINES).join('\n')
+            }
+          ];
+        }
+      }
+
+      return [];
+    })
+  );
+};

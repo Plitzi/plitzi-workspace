@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { apiDeclarations } from './apiDeclarations';
+import { apiDeclarations, memberDeclarations } from './apiDeclarations';
 
 /** A project whose installed `@plitzi/sdk-authoring` publishes these declarations, typed by the CLI's TypeScript. */
 let root = '';
@@ -53,12 +53,29 @@ beforeEach(async () => {
       exports: {
         '.': { types: './dist/index.d.ts', import: './dist/index.js' },
         './handlers': { types: './dist/handlers.d.ts', import: './dist/handlers.js' },
+        './functions': { types: './dist/functions.d.ts', import: './dist/functions.js' },
         './package.json': './package.json'
       }
     })
   );
   await fs.writeFile(path.join(server, 'dist', 'index.d.ts'), "export { createServer } from './core/createServer';\n");
   await fs.writeFile(path.join(server, 'dist', 'handlers.d.ts'), "export * from './core/guard';\n");
+  await fs.writeFile(
+    path.join(server, 'dist', 'functions.d.ts'),
+    [
+      '/** What a function is handed. */',
+      'export type FunctionContext = {',
+      '    /** Starts an action in so many seconds, whether or not a page is open. A key names it. */',
+      '    later: (request: { action: string; in: number }) => Promise<{ id: string; at: number }>;',
+      '};',
+      '/** What a job is handed besides its input. */',
+      'export type FunctionJobHandle = {',
+      '    /** Keeps where it is: the next slice starts with it. */',
+      '    save(state: unknown): Promise<void>;',
+      '};',
+      ''
+    ].join('\n')
+  );
   await fs.writeFile(
     path.join(server, 'dist', 'core', 'createServer.d.ts'),
     '/** The server this package makes: pages and RSC. */\nexport declare const createServer: (config: object) => void;\n'
@@ -145,5 +162,28 @@ describe('an export of a @plitzi package, explained from its published types', (
         written: 'const createServer: (config: object) => void;'
       }
     ]);
+  });
+});
+
+// Encore's lead: `plitzi explain later` answered it was nothing, while `ctx.later` is how its shows start.
+describe('a member of a type a @plitzi package exports', () => {
+  it('is said by what the code calls it — ctx, job — or by its type, with its whole doc', () => {
+    expect(memberDeclarations(root, 'ctx.later')).toEqual([
+      {
+        kind: 'api',
+        name: 'ctx.later',
+        from: '@plitzi/sdk-server/functions',
+        of: 'FunctionContext',
+        summary: 'Starts an action in so many seconds, whether or not a page is open. A key names it.',
+        written: 'later: (request: { action: string; in: number }) => Promise<{ id: string; at: number }>;'
+      }
+    ]);
+    expect(memberDeclarations(root, 'job.save')[0]).toMatchObject({ name: 'job.save', of: 'FunctionJobHandle' });
+    expect(memberDeclarations(root, 'FunctionContext.later')[0]).toMatchObject({ name: 'FunctionContext.later' });
+  });
+
+  it('answers a bare name as the member it is, and nothing for a member none has', () => {
+    expect(memberDeclarations(root, 'later')[0]).toMatchObject({ name: 'ctx.later', of: 'FunctionContext' });
+    expect(memberDeclarations(root, 'ctx.nothing')).toEqual([]);
   });
 });

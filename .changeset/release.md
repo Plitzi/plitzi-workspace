@@ -164,6 +164,10 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   read 26–30k a turn, against ~12k for its developers started again per task.
   **Breaking:** `sessionPerTask` is gone — what it did is every agent's default now, and a team file with the old key
   is refused saying to remove it.
+- **Planning a run with the person** (`runs-plan.md`, read by the lead first): the goal asked as a choice, the code and
+  the platform's limits read before a task is written, the person's decisions asked before the tasks, and a summary —
+  what is built, decided, left out, how long, who works, who applies it — said before anything starts. No agent of the
+  team starts while a run holds its scope spike alone.
 - **A task sent back waits for its own agent,** who takes it as soon as it ends the task it is at: it is no longer
   handed to a free agent after 3 minutes (the `handed-off` entry and the bench's "Handed off" column are gone), and
   while it waits it never reads "no signal — reassign it".
@@ -371,6 +375,8 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   at the next one.
 - **`plitzi functions dev`** says before running what is missing — sdk-server, `isolated-vm`, `core-js`, resolved where
   the runner loads them — and that the project's own `npm start` runs the same functions without the isolates.
+- **`plitzi explain ctx.later`** (`job.save`, `FunctionContext.later`, or a bare `later`) says a member of a type a
+  package exports, with its whole doc: `explain later` said it was nothing.
 - **`plitzi explain`** answers "does Plitzi have a way to…". It covers elements and the fields their source publishes,
   steps, triggers, style states, global sources, template filters and functions, a server action's steps
   (`--list tasks`), codes, CLI commands and an export's fields.
@@ -482,6 +488,13 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   own host (`endSessions`). The MySQL store adds the column (schema 6) and lists each session with its host. A store of
   your own: `saveSession` keeps `client.host`, `clearSession({ userId, host })` ends that account's sessions there alone.
 - **`/health` says which copy of a project serves**, and a port is held while it is being taken.
+- **The job queue survives a restart, kept where you choose** — as the `kv`: `createMemoryJobQueue`,
+  `createFileJobQueue({ file })`, `createSqliteJobQueue({ file | db })` (`@plitzi/sdk-server/sqlite`, shared by every
+  process on the file), Mongo, MySQL or a `JobQueue` of your own, all over one set of rules (`queueRules`) and the same
+  contract tests. **A project's server keeps it in `state/jobs.json`**, beside its `kv`: a `ctx.later` due while the
+  server was down runs once it is back, and a job a worker held is taken again, its attempt `lost`. Before, it lived
+  in memory and a restart dropped every `ctx.later` waiting. The primary and its workers share one queue
+  (`fleetJobQueue`): the primary's was another instance than the one its workers reached.
 - **A run's preview** answers `/__plitzi/run`, and only a preview's pages ask for it.
 - **The server's budget is loaded again:** the filters' catalogue and the pages' rule are entries of their own that the
   server never reads.

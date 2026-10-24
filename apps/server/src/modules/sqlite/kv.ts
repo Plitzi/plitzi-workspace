@@ -1,8 +1,7 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
+import { openDatabase } from './open';
 
 import type { ActionKvAdapter } from '../actions/types';
+import type { DatabaseSync } from 'node:sqlite';
 
 export type SqliteKvOptions = (
   | {
@@ -25,16 +24,6 @@ export type SqliteKvOptions = (
  * `julianday()` with no argument is the current instant.
  */
 const NOW_MS = 'CAST((julianday() - 2440587.5) * 86400000 AS INTEGER)';
-
-const open = (file: string): DatabaseSync => {
-  fs.mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
-  const db = new DatabaseSync(file);
-  // WAL so a reader never blocks a writer; `busy_timeout` so two processes reaching for the write lock at once queue
-  // for it instead of one of them failing with SQLITE_BUSY.
-  db.exec('PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000; PRAGMA synchronous = NORMAL;');
-
-  return db;
-};
 
 /**
  * A key/value store in a SQLite file, over Node's own `node:sqlite` — nothing to install, nothing to run beside the
@@ -63,7 +52,7 @@ export const createSqliteKv = (options: SqliteKvOptions): ActionKvAdapter => {
     );
   }
 
-  const db = options.db ?? open(options.file);
+  const db = options.db ?? openDatabase(options.file);
   db.exec(`CREATE TABLE IF NOT EXISTS ${table} (key TEXT PRIMARY KEY, value TEXT NOT NULL, expires_at INTEGER)`);
 
   const live = `(expires_at IS NULL OR expires_at > ${NOW_MS})`;

@@ -1,11 +1,13 @@
+import { closeSync, existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { keepOnce } from './keeper';
+import { keepOnce, openKeeperLog } from './keeper';
 import { abortRun } from './merge';
 import { STARTING_MS } from './onDemand';
+import { runPaths } from './paths';
 import { openRun, stopRun } from './run';
 import { completeTask, nextTask, takeTask } from './tasks';
 import { setTeamAgent } from './team';
@@ -74,5 +76,17 @@ describe("the run's keeper", () => {
       started: [],
       failed: []
     });
+  });
+});
+
+// encore-3: `run open` crashed opening cache/keeper.log, the run's cache not made yet — and no agent started.
+describe("the keeper's log", () => {
+  it('is opened in a run just opened, its cache folder made', async () => {
+    await openRun(bench.agent('lead'), await bench.writePlan(benchPlan()));
+    const { cache } = runPaths(bench.root, 'es-launch');
+    await fs.rm(cache, { recursive: true, force: true });
+
+    closeSync(openKeeperLog(cache));
+    expect(existsSync(path.join(cache, 'keeper.log'))).toBe(true);
   });
 });

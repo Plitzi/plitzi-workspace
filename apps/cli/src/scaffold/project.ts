@@ -13,6 +13,7 @@ import {
   DEV_SERVER_FILE,
   FUNCTIONS_DIR,
   CHECKS_CACHE,
+  JOBS_FILE,
   KV_FILE,
   LINT_CACHE_FILE,
   MAIN_FILE,
@@ -405,7 +406,7 @@ ${settingsSection(answers)}
   output. Ignored by git, and rebuilt whenever it is missing.${
     answers.mode === 'server'
       ? `
-- \`${PROJECT_STATE}/\` is what the server keeps for the space: its \`kv\` (\`${KV_FILE}\`) — saved layouts, counters, cached answers.
+- \`${PROJECT_STATE}/\` is what the server keeps for the space: its \`kv\` (\`${KV_FILE}\`) — saved layouts, counters, cached answers — and what waits to run (\`${JOBS_FILE}\`: \`ctx.later\`, the schedules, the jobs), kept across a restart.
   The deployment's state, kept across restarts and never rebuilt; ignored by git. \`action.kv\` in \`src/config/serverOptions.ts\`
   keeps it elsewhere.`
       : ''
@@ -488,7 +489,7 @@ export const agentsFile = (answers: CreateAnswers): string => {
     `- ${code(`${PROJECT_TMP}/`)} — what the project writes for itself while it runs: the plugins it built, the port it took, test output. Never committed, rebuilt when missing.`,
     ...(answers.mode === 'server'
       ? [
-          `- ${code(`${PROJECT_STATE}/`)} — what the server keeps for the space: its ${code('kv')} (${code(KV_FILE)}). The deployment's state — never committed, never rebuilt; ${code('action.kv')} in ${code('src/config/serverOptions.ts')} keeps it elsewhere.`
+          `- ${code(`${PROJECT_STATE}/`)} — what the server keeps for the space: its ${code('kv')} (${code(KV_FILE)}) and what waits to run (${code(JOBS_FILE)}). The deployment's state — never committed, never rebuilt; ${code('action.kv')} and ${code('action.jobs.queue')} in ${code('src/config/serverOptions.ts')} keep it elsewhere.`
         ]
       : []),
     `- ${code('.plitzi/')} — what the CLI records about the project: where it came from, what it wrote. Committed; the CLI's to change.`

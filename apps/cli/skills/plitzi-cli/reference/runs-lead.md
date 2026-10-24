@@ -1,7 +1,7 @@
 # Leading a team of agents: the lead's half of `plitzi run`
 
-What the lead does; the agents' half, refusals and exit codes: [runs.md](runs.md) — read both. **Start**, when the
-person asked for a team:
+What the lead does; the agents' half, refusals and exit codes: [runs.md](runs.md) — read both. **Before anything
+starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, their decisions, the summary before it opens. **Start**, when the person asked for a team:
 `plitzi run start "<the ask>"`; then `plitzi run agent <name> --launch` each agent.
 
 ## The lead
@@ -82,10 +82,9 @@ person asked for a team:
 3. `plitzi run plan plan.json` — refused, every reason at once; otherwise expanded, shared files and overlaps
    listed, estimated — and the skills said when they are older than the CLI (`plitzi upgrade skills --write` first). `plitzi run rehearse plan.json` plays it out:
    who works what when, the critical path, your review queue.
-4. **Ask the person first** who applies the run at the end — they, or you: then they open it in their terminal with
-   `--lead-finishes` (or `plitzi run allow-finish` later). Never you.
-   `plitzi run open plan.json` backs up every file it touches and prints **your own CLI** (`scratch/lead/plitzi`, with
-   your token): run every command after through it. Tell the person how to watch it: `plitzi run monitor`, and the approved work as it goes: `npm run start:preview`.
+4. **The summary first** ([runs-plan.md](runs-plan.md) § 5), who applies it among it — the person, or you if they open it
+   `--lead-finishes` (or `plitzi run allow-finish` later); never you. `plitzi run open plan.json` backs up every file
+   it touches and prints **your own CLI** (`scratch/lead/plitzi`, with your token): run every command after through it.
 5. Start each agent: `plitzi run agent <name> --launch` (alone: its prompt, for a subagent), and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
    file a task takes past 400 lines (ask for the split) — each said once. **Talk:** answer a question with `plitzi

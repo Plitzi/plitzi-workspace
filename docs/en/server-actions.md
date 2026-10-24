@@ -543,7 +543,9 @@ and its timer is set afresh — and `flow.cancelLater` / `ctx.cancelLater(key)` 
 alone: it is usually the run setting the next.
 
 It is a job like a schedule's, with every property above: due by the store's clock (from 0 to 30 days ahead, about a
-second late at most), run once across replicas, retried, and shown in the queue. Refused before anything is queued —
+second late at most), run once across replicas, retried, and shown in the queue. It outlives a restart where the queue
+does: a project's server keeps it in `state/jobs.json` — one due while the server was down runs once it is back, and
+one a worker held when it went down is taken again, its attempt written `lost` (below, **Scheduled jobs**). Refused before anything is queued —
 an action with no later trigger, a switched-off one, a time out of range, a server that runs no jobs — and said why.
 
 ### Watching the queue
@@ -779,7 +781,21 @@ log stream.
 
 A `schedule` trigger works with no configuration at all — over an in-process queue, which is correct for one
 replica and silently wrong for two, because each keeps its own schedules and the nightly email goes out once per
-replica. `false` turns the whole thing off for a server that must only render pages.
+replica, and which a restart empties. `false` turns the whole thing off for a server that must only render pages.
+
+Where the queue is kept is an adapter, as the `kv`'s is — every one passing the same contract tests, over the same
+rules (`queueRules`):
+
+| Store | | For |
+| --- | --- | --- |
+| `createMemoryJobQueue()` | `@plitzi/sdk-server/actions` | tests, and a server whose jobs may go with it |
+| `createFileJobQueue({ file })` | `@plitzi/sdk-server/actions` | one process that must survive a restart — **a project's server: `state/jobs.json`, beside its `kv`** |
+| `createSqliteJobQueue({ file \| db })` | `@plitzi/sdk-server/sqlite` | every process on one machine sharing it — beside `createSqliteKv({ db })` |
+| `createMongoJobQueue` / `createMysqlJobQueue` | `@plitzi/sdk-server/mongo` · `/mysql` | replicas sharing a database (below) |
+| your own `JobQueue` | | any other store: the seam below |
+
+The JSON file and the SQLite table keep the queue's state whole — right for what a project's queue holds; a deployment
+of thousands of jobs a minute keeps it in a database.
 
 ```ts
 createServer({

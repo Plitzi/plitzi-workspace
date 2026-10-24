@@ -122,6 +122,12 @@ export const PROJECT_STATE = 'state';
 /** The `kv` a project's server keeps, as one JSON file (`createFileKv`). */
 export const KV_FILE = `${PROJECT_STATE}/kv.json`;
 
+/**
+ * The job queue a project's server keeps beside its `kv` — what `ctx.later`, the schedules and the functions' jobs wait
+ * in — as one JSON file (`createFileJobQueue`): a job due while the server was down runs once it is back.
+ */
+export const JOBS_FILE = `${PROJECT_STATE}/jobs.json`;
+
 /** The port the server took and the name its `/health` answers with: what `check`, `shot` and `visual` find it by. */
 export const DEV_SERVER_FILE = `${PROJECT_TMP}/dev-server.json`;
 

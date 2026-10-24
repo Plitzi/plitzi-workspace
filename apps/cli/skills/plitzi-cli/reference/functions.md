@@ -34,7 +34,7 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
   `defineFunctions({ limits })` for all), up to the plan's ceiling; asking above it is a problem the push reports.
 - **What must happen in N seconds whether or not a page is open** — a turn that runs out, a bot's move — is
   `ctx.later({ action, in, input, key })` on an action with a `later` trigger (`flow.later` from a flow): never a page's
-  timer asking the server back. The same `key` replaces what still waits; `ctx.cancelLater(key)` drops it.
+  timer asking the server back. The same `key` replaces what still waits; `ctx.cancelLater(key)` drops it. It outlives a restart (`state/jobs.json`): one due meanwhile runs once the server is back.
 - **Work longer than a request** (training, an import, a crawl) is a job: `defineFunctions({ jobs: { train: { watch,
   run: async (input, job, ctx) => … } } })`, started with `ctx.jobs.start('train', input, { key })` from a route or a
   task. It runs in slices: `job.save(state)` is the one checkpoint (the next slice starts with `job.state`),

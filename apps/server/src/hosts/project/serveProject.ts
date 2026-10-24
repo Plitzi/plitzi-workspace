@@ -12,6 +12,7 @@ import {
   DATA_DIR,
   DEV_SERVER_FILE,
   FUNCTIONS_DIR,
+  JOBS_FILE,
   KV_FILE,
   KV_FILE_ENV,
   PROJECT_TMP,
@@ -37,8 +38,9 @@ import { createServer } from '../../core/createServer';
 import { reservePort } from '../../core/freePort';
 import { closeOnSignals } from '../../core/server/closeOnSignals';
 import { isFleetWorker } from '../../core/server/fleet/role';
-import { fleetKv } from '../../core/server/fleet/stores';
+import { fleetJobQueue, fleetKv } from '../../core/server/fleet/stores';
 import { consoleLogger } from '../../helpers/serverLog';
+import { createFileJobQueue } from '../../modules/actions/jobs/fileQueue';
 import { credentialsFromEnv } from '../../modules/actions/runtime/credentials';
 import { createFileKv } from '../../modules/actions/runtime/fileKv';
 import { loadFunctions } from '../../modules/functions/load';
@@ -49,6 +51,7 @@ import { serveRuntime } from '../../modules/runtime/stages';
 
 import type { AuthoredDocuments } from './watchSpace';
 import type { ServerConfig } from '../../core/createServer';
+import type { FileJobQueue } from '../../modules/actions/jobs/fileQueue';
 import type { FileKv } from '../../modules/actions/runtime/fileKv';
 import type { ActionCredential, ActionLookups } from '../../modules/actions/types';
 import type { ConnectorManifest } from '../../modules/connectors';
@@ -386,14 +389,33 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
   // What the actions and functions keep, in one file this process holds — a second server of the project is refused,
   // naming this one, rather than both writing over each other's changes. A worker reaches it through the primary.
   let keptKv: FileKv | undefined;
+  const kvFile = path.resolve(root, process.env[KV_FILE_ENV] || KV_FILE);
   const kv = fleetKv(() => {
-    keptKv = createFileKv({
-      file: path.resolve(root, process.env[KV_FILE_ENV] || KV_FILE),
-      owner: `the server of "${name}", on port ${String(port)}`
-    });
+    keptKv = createFileKv({ file: kvFile, owner: `the server of "${name}", on port ${String(port)}` });
 
     return keptKv;
   });
+  // What `ctx.later`, the schedules and the functions' jobs wait in, beside the `kv` and held the same way: a job due
+  // while the server was down runs once it is back (`state/jobs.json`; with the visual suite's own `kv`, beside it). A
+  // deployment that keeps it elsewhere says so (`action.jobs.queue`: `createSqliteJobQueue`, a database's).
+  let keptJobs: FileJobQueue | undefined;
+  const jobsConfig = serverOptions.action?.jobs;
+  const jobs =
+    jobsConfig === false
+      ? false
+      : {
+          ...jobsConfig,
+          queue:
+            jobsConfig?.queue ??
+            fleetJobQueue(() => {
+              keptJobs = createFileJobQueue({
+                file: path.join(path.dirname(kvFile), path.basename(JOBS_FILE)),
+                owner: `the server of "${name}", on port ${String(port)}`
+              });
+
+              return keptJobs;
+            })
+        };
 
   // `name` is what `/health` answers with, and `tmp/dev-server.json` records: how a tool knows it reached THIS project —
   // and `instance`, which copy of it: a run's copies share the name, and one on a port another copy holds reached that.
@@ -423,6 +445,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
         signingSecret: process.env.PLITZI_SIGNING_SECRET,
         kv,
         ...serverOptions.action,
+        jobs,
         ...(actions ? { lookups: actionLookups(actions, connectors, credentialsFromEnv()) } : {})
       }
     },
@@ -502,6 +525,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
     await server.close();
     await runtime?.close();
     await keptKv?.close();
+    await keptJobs?.close();
   };
   // A deploy, a restart or ^C closes the server instead of dropping it: requests in flight are answered, and the jobs
   // it runs finish first. A second ^C exits at once.

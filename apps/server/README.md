@@ -230,7 +230,8 @@ What it wires from the project:
   `dist/runtime/index.js` when the process was started on what `build` emitted (`process.argv[1]` under `dist/`), or
   `vendor/runtime.bundle` — in this process, its endpoints answered before anything else.
 - **Its files.** `public/` served as it is, `src/data/` read and never served (`dataDir`), the `kv` in `state/kv.json`
-  (`createFileKv`), `PLITZI_SIGNING_SECRET` what `ctx.sign` signs with.
+  (`createFileKv`) and the job queue beside it, `state/jobs.json` (`createFileJobQueue`: a `ctx.later` due while the
+  server was down runs once it is back), `PLITZI_SIGNING_SECRET` what `ctx.sign` signs with.
 - **Where it is.** `/health` answers with the space's permanent URL (or the cloud `name`), and `tmp/dev-server.json`
   records the name, the port, the URL this machine reaches it at (`https` with a certificate), its network addresses
   and its `publicUrl` — for `plitzi page check`, `shot`, `verify` and `visual`. A signal closes it (`closeOnSignals`).

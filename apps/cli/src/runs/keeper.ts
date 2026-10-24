@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { closeSync, openSync } from 'node:fs';
+import { closeSync, mkdirSync, openSync } from 'node:fs';
 import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
@@ -147,6 +147,16 @@ const alive = (pid: number): boolean => {
  * The run's keeper started, when the team says how to launch its agents and none runs already: one keeper a run,
  * outliving the command that started it. Answers its pid, or why none was started.
  */
+/**
+ * The keeper's log — what it started and could not, read when an agent the run asked for never came — opened for it to
+ * write in, its folder made: a run just opened has no `cache/` yet (encore-3's open crashed on it, the keeper unstarted).
+ */
+export const openKeeperLog = (cache: string): number => {
+  mkdirSync(cache, { recursive: true });
+
+  return openSync(path.join(cache, 'keeper.log'), 'a');
+};
+
 export const ensureKeeper = async (
   ctx: RunContext,
   runId: string,
@@ -164,8 +174,7 @@ export const ensureKeeper = async (
     return { pid: kept.pid, started: false };
   }
 
-  // What it started and could not, in a log beside the run's: read when an agent the run asked for never came.
-  const out = openSync(path.join(runPaths(ctx.root, runId).cache, 'keeper.log'), 'a');
+  const out = openKeeperLog(runPaths(ctx.root, runId).cache);
   const child = spawn(process.execPath, [process.argv[1], 'run', 'keep', runId], {
     cwd: ctx.root,
     detached: true,

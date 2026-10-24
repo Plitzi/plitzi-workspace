@@ -195,17 +195,20 @@ export const agentsNeeded = (
   ];
   // The team's base runs while the run is open, idle when nothing is for it: one not running — stopped for a fresh
   // context, or its harness gone — is started again whatever waits (Carlos: "los agentes base, deben estar siempre activos").
-  const base = run.open
-    ? started
-        .filter(each => each.onDemand !== true && !running.has(each.agent) && !asked.has(each.agent))
-        .filter(() => run.openFor >= STARTING_MS)
-        .map((each): Attention => ({
-          kind: 'agents-needed' as const,
-          agent: each.agent,
-          text: `${each.agent}, of the team's base, is not running: start it again — plitzi run agent ${each.agent} --launch --harness <yours> — it waits for work while the run is open`,
-          who: 'lead' as const
-        }))
-    : [];
+  // Not before the run has a task for them: a run opened on its scope is the lead's spike, planned with the person,
+  // and an agent started then would wait through all of it.
+  const base =
+    run.open && views.some(view => view.task.spike === undefined)
+      ? started
+          .filter(each => each.onDemand !== true && !running.has(each.agent) && !asked.has(each.agent))
+          .filter(() => run.openFor >= STARTING_MS)
+          .map((each): Attention => ({
+            kind: 'agents-needed' as const,
+            agent: each.agent,
+            text: `${each.agent}, of the team's base, is not running: start it again — plitzi run agent ${each.agent} --launch --harness <yours> — it waits for work while the run is open`,
+            who: 'lead' as const
+          }))
+      : [];
 
   return [...backTo, ...byRole, ...base];
 };
