@@ -1,6 +1,7 @@
 import { saidOfPlitzi } from '../experience';
 import { noticesByOwner } from '../notices';
 import { refusedAgain } from '../refusedAgain';
+import { settledFindings } from '../settle';
 import { readTaskReports } from '../taskReports';
 import { readUsage } from '../usage';
 import { liveFindings } from './index';
@@ -31,6 +32,8 @@ export const liveAttention = async (
 
   const past = (task: string | undefined): boolean =>
     task !== undefined && (settled.has(task) || lastCheck.get(task) === true);
+  // What the lead said it did about one (`run settle`): settled by its word, never by a task it holds none of.
+  const told = settledFindings(log);
 
   return [
     ...refusedAgain(log, now).filter(item => !past(item.task)),
@@ -40,12 +43,12 @@ export const liveAttention = async (
       // Frictions said at a complete as much as notices: two agents saying one thing is said while it can be acted on.
       said: saidOfPlitzi((await noticesByOwner(loaded)).plitzi, await readTaskReports(loaded))
     })
-      .filter(finding => finding.owner !== 'plitzi' && !past(finding.task))
+      .filter(finding => finding.owner !== 'plitzi' && !past(finding.task) && !told.has(finding.subject))
       .map((finding): Attention => ({
         kind: 'finding',
         subject: finding.subject,
         ...(finding.task ? { task: finding.task } : {}),
-        text: `${finding.title}${finding.fix ? ` — ${finding.fix}` : ''}`,
+        text: `${finding.title}${finding.fix ? ` — ${finding.fix}` : ''} · once handled: plitzi run settle ${finding.subject} --note "what you did"`,
         who: 'lead'
       }))
   ];

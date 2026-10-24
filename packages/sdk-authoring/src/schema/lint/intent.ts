@@ -203,8 +203,7 @@ export const checkIntent = (ctx: LintContext, element: Element, where: string): 
     ctx.error(
       'server-source-in-browser',
       `${where} is asked from the browser, which reads only its \`query\`: its \`${serverOnly}\` is answered by the page server alone, so it never asks and everything bound to it stays empty. Give it \`runtime: 'server'\`.`,
-      element.id,
-      { source: serverOnly }
+      element.id
     );
   }
 

@@ -19,6 +19,8 @@ export interface Spent {
   agent: string;
   /** The pieces of work it ended. */
   pieces: number;
+  /** The tasks those pieces were of — its own and those it reviewed — each once: what an average a task is taken over. */
+  tasks: string[];
   /**
    * Its sessions: each start of its harness, read off the sessions its commands ran in — one a task for an agent of
    * `"session": "task"`, several pieces each for `context`: what an average a session is taken over.
@@ -95,6 +97,7 @@ export const spentOf = (log: readonly Record<string, unknown>[], usage: readonly
     const kept = by.get(entry.by) ?? {
       agent: entry.by,
       pieces: 0,
+      tasks: [],
       sessions: sessionsOf(entry.by),
       turns: 0,
       input: 0,
@@ -103,6 +106,9 @@ export const spentOf = (log: readonly Record<string, unknown>[], usage: readonly
       context: 0
     };
     kept.pieces += 1;
+    if (typeof entry.task === 'string' && !kept.tasks.includes(entry.task)) {
+      kept.tasks.push(entry.task);
+    }
     kept.turns += count(entry.turns);
     kept.input += count(entry.input);
     kept.output += count(entry.output);

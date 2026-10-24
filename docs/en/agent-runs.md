@@ -169,10 +169,11 @@ activity under 80 columns), **the spend** (`monitorSpend.ts`): what each agent's
 the reviewers' too — its pieces of work, turns, tokens **in** (fresh input and context written to the cache), **out**
 and **cached** (its context read again each turn: a tenth of the price, and most of what is read — one figure of all
 three said 1.1M for one spec of encore-3's tester, ~240k its price), and its context now, marked past `freshContextAt`
-for an agent of `"session": "context"` alone; its sessions — the sessions its commands ran in — and what one costs
-on average, in and out (`AVG`): agents start fresh in different ways, a task each or past a size, and the average is
-what a task costs. It sits under the agents and the activity under the tasks, on the board's one split
-(`boardSplit`). Sorted by in+out, `s` turning it to average, cached, context, name. It is kept in the run's log as each
+for an agent of `"session": "context"` alone; its tasks — its own and those it reviewed, each once — and its sessions —
+the sessions its commands ran in — and what one of each costs on average, in and out (`PER SESS`, `PER TASK`, said in a
+line under them): agents start fresh in different ways, a task each or past a size, so a session is not a task. The
+run's `PER TASK` counts a task once whoever worked on it: every agent's spend over them, what a task cost the run.
+Sorted by in+out, `s` turning it to per session, per task, cached, context, name. It is kept in the run's log as each
 piece of work ends (`spent`, `spent.ts`): a task completed, a review decided, each from the agent's last, read from
 its sessions as the round's report reads them (`harness/spentIn`). It fits the terminal it is in (`monitorBoard.ts`,
 `monitorFlow.ts`): the flow's stages in bands on a narrow one and its cards fewer on a short one — each stage's count in
@@ -898,7 +899,11 @@ finding's `task`) — and what is Plitzi's (an agent with two tasks or in two se
 a command refused as written, something two agents said of Plitzi) is the feedback's alone, never the lead's to clear:
 encore-2 ended with ten standing, which read as ignored. **The lead closes what it was told first**: every task done,
 `run report --summary` is refused while anything waits for the lead (`writeSummary`; an agent to start is the keeper's,
-not the lead's) — a lead that said "done" before them stacked a stage after.
+not the lead's) — a lead that said "done" before them stacked a stage after. A finding no approval settles — an agent
+that went on after "You can stop", a check that answered two ways — the lead settles by saying what it did about it:
+`plitzi run settle <finding> --note "…"` (`settle.ts`, logged as `finding-settled`, the note kept for the report), and
+each finding names that command with its own subject. encore-3's close waited on three of them with no way to settle
+one.
 
 `run report` starts with the run at a glance and the problems by whose, numbered, each with its evidence and its fix.
 Then it gives the experience combined, the lead's summary, what each review asked when it sent a task back, **each

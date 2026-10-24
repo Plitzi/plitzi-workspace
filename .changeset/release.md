@@ -110,7 +110,9 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 - **The lead's attention holds only what is the lead's, and now:** a line that failed and passed since, a task refused
   before it was approved, leave it; what is Plitzi's goes to the run's feedback alone. Every task done, the lead's
   summary is refused while anything waits for it — encore-2 ended with ten notices standing, and its lead said "done"
-  before stacking a stage.
+  before stacking a stage. **`plitzi run settle <finding> --note "…"`** is how the lead settles a finding no approval
+  settles — an agent that went on after "You can stop", a check that answered two ways: it says what it did, kept for
+  the report; each finding says so. encore-3's close waited on three with no way to settle one.
 - **The report tells each agent's life** — started, took, completed, reviewed, waited, stopped and why; its minutes at
   work, stopped and silent — and the feedback its figures (`lives`): a run read whole after it is gone.
 - **A tester reviews code, never a design:** encore-2's test-1 approved the identity system and its components.
@@ -276,10 +278,10 @@ report`, …).
     tab shows the whole on hover. encore-2's lines ran to 499 characters.
   - **What each agent spent, beside the activity:** pieces of work, turns, tokens in, out and cached — read again each
     turn, a tenth of the price, kept apart: one figure of all three said 1.1M where ~240k was the price — and its context,
-    marked past `freshContextAt` for a `"session": "context"` agent alone — and its sessions with what one costs on
-    average (`SESS`, `AVG`): agents start fresh in different ways, the average is what a task costs. Under the agents,
-    the activity under the tasks, on the board's one split; sorted by in+out, `s` changes it. Kept in the run's log as each task completes and each review is decided
-    (`spent`), the lead and the reviewers included.
+    marked past `freshContextAt` for a `"session": "context"` agent alone — and its tasks and sessions, with what one of
+    each costs on average (`PER SESS`, `PER TASK`, said under them; the run's counts a task once, whoever worked on it).
+    As wide as it needs, the activity taking the rest; sorted by in+out, `s` changes it. Kept in the run's log as each
+    task completes and each review is decided (`spent`), the lead and the reviewers included.
 - **`run watch --until lead`** wakes the lead once for each review, question, block, idle agent or agent to start.
   `run status` gives the same in one answer.
 - **`npm run start:preview`** serves the run's approved work as it grows; `run preview --task` serves one task's copy.
@@ -402,6 +404,9 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Authoring (`@plitzi/sdk-authoring`)
 
+- **`server-source-in-browser`** refuses a provider with an `action` or a `connector` and no `runtime: 'server'`: the
+  browser asks a `query` alone, so it never asked and its children stayed empty, saying nothing — encore's shell notice
+  of a show starting never showed (found by encore-3's test-1).
 - **`space lint` takes a module only its test reads as part of the space,** not an unused file (a palette held to AA
   beside its test).
 - **`message-while-running`** warns of a channel's `onMessage` flow that says nothing of a message arriving while it runs

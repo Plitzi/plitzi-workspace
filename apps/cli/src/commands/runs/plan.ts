@@ -25,6 +25,7 @@ import {
   readCheckedPlan,
   readPlanFile
 } from '../../runs/run';
+import { settleFinding } from '../../runs/settle';
 import { SCOPE_SPIKE, scopePlan } from '../../runs/spike';
 import { noteRun } from '../../runs/talk';
 import { roleOf } from '../../runs/tasks';
@@ -393,6 +394,14 @@ export const runNote = (text: string, options: RunCommandOptions): Promise<void>
     options,
     async ctx => noteRun(ctx, await runOf(ctx, options), text),
     note => `Noted for every task (${note.id}) — the ones in hand with their next command, the rest with their take.`
+  );
+
+export const runSettle = (subject: string, options: RunCommandOptions & { note: string }): Promise<void> =>
+  act(
+    options,
+    async ctx => settleFinding(ctx, await runOf(ctx, options), subject, options.note),
+    settled =>
+      `Settled ${settled.subject}, your note kept beside it for the report: ${settled.text.split(' — ')[0] ?? ''}`
   );
 
 export const runAmend = (runId: string | undefined, file: string, options: RunCommandOptions): Promise<void> =>

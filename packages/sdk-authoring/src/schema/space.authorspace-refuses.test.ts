@@ -138,6 +138,7 @@ describe('authorSpace / what it refuses', () => {
               {
                 type: 'apiContainer',
                 id: 'posts',
+                runtime: 'server',
                 attributes: { action: 'list' },
                 children: [{ type: 'text', bind: { content: 'posts.title' } }]
               }
@@ -178,7 +179,7 @@ describe('authorSpace / what it refuses', () => {
             name: 'Home',
             slug: '',
             body: [
-              { type: 'apiContainer', id: 'posts', attributes: { action: 'list' } },
+              { type: 'apiContainer', id: 'posts', runtime: 'server', attributes: { action: 'list' } },
               { type: 'text', bind: { content: 'apiContainer_post.title' } }
             ]
           }
@@ -196,7 +197,7 @@ describe('authorSpace / what it refuses', () => {
           name: 'Home',
           slug: '',
           body: [
-            { type: 'apiContainer', id: 'posts', attributes: { action: 'list' } },
+            { type: 'apiContainer', id: 'posts', runtime: 'server', attributes: { action: 'list' } },
             { type: 'text', bind: { content: 'apiContainer_posts.title' } },
             { type: 'text', bind: [visibleWhen('apiContainer_posts.hasPosts')] }
           ]

@@ -35,6 +35,7 @@ import {
   runTeamSet,
   runTeamUnset,
   runNote,
+  runSettle,
   runBacklog,
   runFeedback,
   runNotice,
@@ -313,6 +314,20 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
     .action((text: string, options: RunCommandOptions) => runNote(text, options));
+
+  runGroup
+    .command('settle')
+    .description(
+      'Say what you did about a finding the run raised to you — an agent that went on after it was told to stop, a check that answered two ways — and it leaves your attention, your note kept for the report'
+    )
+    .argument('<finding>', 'The finding, as run watch names it (after-stop:dev-2, flaky:t-home:…)')
+    .requiredOption(
+      '--note <text>',
+      'What you did about it: looked and found it harmless, amended the line, told Plitzi'
+    )
+    .option(...RUN_OPTION)
+    .option(...JSON_OPTION)
+    .action((finding: string, options: RunCommandOptions & { note: string }) => runSettle(finding, options));
 
   runGroup
     .command('reference')

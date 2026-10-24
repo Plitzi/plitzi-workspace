@@ -5,7 +5,7 @@
  */
 
 export type { RunCommandOptions } from './shell';
-export { runAllowFinish, runAmend, runExtend, runNote, runOpen, runPlan, runRehearse } from './plan';
+export { runAllowFinish, runAmend, runExtend, runNote, runOpen, runPlan, runRehearse, runSettle } from './plan';
 export type { PlanOptions } from './plan';
 export { runTeam, runTeamCheck, runTeamSet, runTeamUnset } from './team';
 export { runMonitor } from './monitor';
