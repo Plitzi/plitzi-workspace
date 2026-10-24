@@ -10,7 +10,53 @@ import type { FeedLine } from './monitor';
  * Each line of a run's log as the activity says it, to a person following the run: in words — never a command line with
  * its flags and token — every action the CLI writes, none left out on purpose. The task a line is about is its own
  * column, never said again in its words: "approved (round 2)", not "approved t-shell (round 2)".
+ *
+ * Two texts a line: `text`, what a glance reads — `SHORT` at most, in its own words where the whole would be cut — and
+ * `detail`, the whole, opened under it. encore-2's activity ran to 499 characters a line (a failed check naming every
+ * file of every other task), and a tenth of its lines past 200: a person following the run read none of them.
  */
+
+/** The longest a line's `text` is: what a glance down the activity reads. */
+export const SHORT = 72;
+
+/** A line whose text is past `SHORT`: cut, the whole kept as its detail — one that says its own short words has both. */
+export const briefLine = (line: FeedLine): FeedLine =>
+  line.detail === undefined && line.text.length > SHORT
+    ? { ...line, text: glimpse(line.text, SHORT - 1), detail: line.text }
+    : line;
+
+/** A check's failure in a few words: the steps that failed — the acceptance's lines counted — and the files of others. */
+const failedText = (failed: readonly string[]): string => {
+  // A file another task holds is said "<file> is <task>'s" (`notOwn.ts`).
+  const theirs = failed.filter(each => / is \S+'s$/.test(each));
+  const steps = failed.filter(each => !theirs.includes(each));
+  const accepted = steps.filter(each => each.startsWith('acceptance'));
+  const named = [
+    ...steps.filter(each => !accepted.includes(each)),
+    ...(accepted.length === 0
+      ? []
+      : [accepted.length === 1 ? 'an acceptance line' : `${String(accepted.length)} acceptance lines`])
+  ];
+
+  return [
+    named.join(', '),
+    theirs.length === 0 ? '' : `${String(theirs.length)} file${theirs.length === 1 ? '' : 's'} of other tasks`
+  ]
+    .filter(Boolean)
+    .join(' + ');
+};
+
+/** Why an agent stopped, in a few words: the whole is the line's detail. */
+const stopText = (why: string): string =>
+  /fresh context|freshContextAt/.test(why)
+    ? 'stops for a fresh context — started again for what comes'
+    : /on demand/.test(why)
+      ? 'stops — on demand, nothing came for it'
+      : /no review came|other leads review/.test(why)
+        ? 'stops — no reviews for it now'
+        : /every one is done|nothing is left|no task is left/.test(why)
+          ? 'stops — nothing is left for it'
+          : 'stops';
 
 /** A refusal's or an error's first sentence, as a line says it: what went wrong, its details left to the command. */
 const firstSentence = (text: string): string => glimpse(text.replace(/\s+/g, ' ').split(/(?<=[.!?])\s/)[0] ?? '');
@@ -25,21 +71,43 @@ const listOf = (value: unknown): string =>
 
 /** One line of the run's activity, as the feed says it — every action the CLI writes, none left out on purpose. */
 export const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => {
+  const said = lineOf(entry);
+
+  return said === undefined ? undefined : briefLine(said);
+};
+
+const lineOf = (entry: Record<string, unknown>): FeedLine | undefined => {
   const at = textOf(entry.at);
   const by = textOf(entry.by);
   const task = textOf(entry.task);
   const round = typeof entry.round === 'number' ? ` (round ${String(entry.round)})` : '';
-  const line = (kind: FeedLine['kind'], text: string): FeedLine => ({ at, by, kind, text, ...(task ? { task } : {}) });
+  const line = (kind: FeedLine['kind'], text: string, detail?: string): FeedLine => ({
+    at,
+    by,
+    kind,
+    text,
+    ...(detail !== undefined && detail !== text ? { detail } : {}),
+    ...(task ? { task } : {})
+  });
   switch (entry.action) {
     case 'take':
       return line('take', 'took it');
     case 'spike':
       return line('agent', `went back to finding out: ${textOf(entry.question)}`);
-    case 'spike-done':
+    case 'spike-done': {
+      const outcome =
+        entry.status === 'done'
+          ? 'research alone: done'
+          : entry.status === 'pending' || entry.status === 'ready'
+            ? `kept, not built now (${textOf(entry.status)})`
+            : 'building it now';
+
       return line(
         entry.status === 'done' ? 'approved' : 'agent',
-        `found out (${textOf(entry.question)}) — ${entry.status === 'done' ? 'research alone: done' : entry.status === 'pending' || entry.status === 'ready' ? `kept, not built now (${textOf(entry.status)})` : 'building it now'}`
+        `found out — ${outcome}`,
+        `found out (${textOf(entry.question)}) — ${outcome}`
       );
+    }
     case 'joined':
       return line('agent', `joined the run${entry.quality ? ` at ${textOf(entry.quality)}` : ''}`);
     case 'complete':
@@ -56,6 +124,7 @@ export const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => 
       return {
         ...line(
           theirs ? 'other' : 'problem',
+          theirs ? 'checked: what fails is not its own' : `checks fail: ${failedText(failed) || 'see its check'}`,
           theirs
             ? `checked: what fails is not its own — ${notOwn.join(', ')}`
             : `checked: fails — ${failed.join(', ') || 'see its check'}`
@@ -64,13 +133,18 @@ export const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => 
       };
     }
     case 'look':
-      return line('review', `looked at it (${listOf(entry.paths)})${entry.ok === false ? ': findings' : ''}`);
+      return line(
+        'review',
+        `looked at it${entry.ok === false ? ' — findings' : ''}`,
+        `looked at it (${listOf(entry.paths)})${entry.ok === false ? ': findings' : ''}`
+      );
     case 'review-taken':
       return line('review', `took its ${textOf(entry.review)} review`);
     case 'review':
       return entry.verdict === 'approve'
         ? line(
             'approved',
+            `approved${round}${entry.design === 'skipped' ? (entry.designSkip === 'no-ui' ? ' — no UI' : ' — its UI by the lead') : ''}`,
             `approved${round}${entry.design === 'skipped' ? ` — ${designSkipText(isDesignSkip(entry.designSkip) ? entry.designSkip : undefined)}${typeof entry.designBy === 'string' ? ` (${entry.designBy} had it)` : ''}` : ''}`
           )
         : line('sent-back', `sent back${round}`);
@@ -93,12 +167,10 @@ export const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => 
       return line('agent', `waits for work — ${reasonOf(textOf(entry.why))}`);
     case 'resumes':
       return line('agent', `goes on — ${textOf(entry.question)} answered`);
-    case 'handed-off':
-      return line('agent', `takes over its changes from ${textOf(entry.from)}, who is at ${textOf(entry.busyAt)}`);
     case 'question-taken':
       return line('agent', `answers its ${textOf(entry.message)}`);
     case 'stops':
-      return line('agent', `stops: ${textOf(entry.why)}`);
+      return line('agent', stopText(textOf(entry.why)), `stops: ${textOf(entry.why)}`);
     case 'settle':
       return line('run', `merged the requests that waited: ${listOf(entry.settled)}`);
     case 'settle-failed':
@@ -107,14 +179,22 @@ export const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => 
         `could not merge the requests that waited: ${listOf(entry.requests)} — ${textOf(entry.reason)}`
       );
     case 'all-approved':
-      return line('run', `every task is approved (${String(entry.tasks)}) — next: ${textOf(entry.next)}`);
+      return line(
+        'run',
+        `every task is approved (${String(entry.tasks)})`,
+        `every task is approved (${String(entry.tasks)}) — next: ${textOf(entry.next)}`
+      );
     case 'ready':
       return line(
         'run',
+        'the run is ready to finish — a person applies it',
         `the run is ready: its ${String(entry.files)} files checked whole, ${String(entry.acceptance)} acceptance lines hold — next: ${textOf(entry.next)}`
       );
     case 'note':
       // The note itself is in the feed, in its words, to every task.
+      return undefined;
+    // A piece of work's spend is the spend panel's, beside the activity: a line each would say a number twice.
+    case 'spent':
       return undefined;
     // Said by the command's name and the refusal's first sentence: a command line with its flags and token read as
     // noise to a person following the run.
@@ -122,6 +202,7 @@ export const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => 
       return {
         ...line(
           'problem',
+          `${commandName(textOf(entry.command)) || 'a command'} refused — ${textOf(entry.code).replace(/-/g, ' ')}`,
           `${commandName(textOf(entry.command)) || 'a command'} was refused (${textOf(entry.code)}): ${firstSentence(textOf(entry.message))}`
         ),
         group: `refused:${textOf(entry.code)}:${commandName(textOf(entry.command))}`
@@ -129,6 +210,7 @@ export const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => 
     case 'crashed':
       return line(
         'problem',
+        `${commandName(textOf(entry.command)) || 'a command'} crashed`,
         `${commandName(textOf(entry.command)) || 'a command'} crashed: ${firstSentence(textOf(entry.error))}`
       );
     case 'preview-sync-failed':
@@ -140,6 +222,7 @@ export const feedOf = (entry: Record<string, unknown>): FeedLine | undefined => 
     case 'notice':
       return line(
         'message',
+        `${entry.about === 'plitzi' ? 'noticed of Plitzi' : 'noticed'}: ${textOf(entry.text)}`,
         `${entry.about === 'plitzi' ? 'noticed of Plitzi' : 'noticed, owned by no task'}: ${textOf(entry.text)}${typeof entry.on === 'string' ? ` (on ${entry.on})` : ''}`
       );
     case 'propose':

@@ -637,10 +637,10 @@ inbox`. A block lifted carries its answer (`task unblock --answer`), and `task n
   the lead: `--known-failure "why" --fixed-by <task>`; the final merge still needs every check green.
 - **As many agents as the team has** (`.plitzi/team.json`: every new project starts with two developers — one with the
   run, the other on demand — and a designer on Sonnet, few agents at once — and what each role does is in it, and in `run team`; one made before it gets the team its
-  first plan needs; above 5 a person confirms): past it, `task take` waits for one to finish. `"sessionPerTask": true`
-  (`run team set dev --session-per-task`) gives each of an entry's agents one task a session: once it completes one,
-  `task next` tells it to stop, and `run watch` asks the lead to start it again, a fresh context — fewer tokens for an
-  agent that works several tasks, each turn no longer reading again what the tasks before left.
+  first plan needs; above 5 a person confirms): past it, `task take` waits for one to finish. Between two pieces of work —
+  a task completed, a review decided — an agent is started again with a fresh context once its context passes
+  `options.freshContextAt` (100k tokens), every turn reading the whole context again; `"session": "task"` starts it
+  again after each one, `"keep"` never (`run team set dev --session task`). The lead that plans keeps its session.
 - **Each task in a copy** of the project in `tmp/plitzi-runs/<run>/` — cloned copy-on-write where the disk can; never
   `.env` (its templates, `.env.example`, are), `node_modules` or the binaries of `public/`. Only the task's own files may
   change in it: `task complete` refuses anything else, naming it, and runs the project's checks (what `verify` runs) in

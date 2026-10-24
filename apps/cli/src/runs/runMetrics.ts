@@ -26,7 +26,6 @@ export interface TaskFlow {
   leadWaits: number[];
   /** Each wait, after changes were asked, for an agent to be at it again. */
   reworkWaits: number[];
-  handOffs: number;
   checks: { run: number; failed: number };
 }
 
@@ -79,7 +78,6 @@ export interface RunMetrics {
   checks: { run: number; failed: number; notOwn: number; byStep: Record<string, number> };
   refusals: { total: number; byCode: Record<string, { times: number; by: string[]; command?: string }> };
   questions: { asked: number; answered: number; waits: number[] };
-  handOffs: number;
   cost: {
     calls: number;
     readTokens: number;
@@ -242,7 +240,6 @@ export const runMetrics = (input: {
       uiReviews: [],
       leadWaits: [],
       reworkWaits: [],
-      handOffs: entries.filter(entry => entry.action === 'handed-off').length,
       checks: {
         run: entries.filter(entry => entry.action === 'check').length,
         failed: entries.filter(failedOwn).length
@@ -448,7 +445,6 @@ export const runMetrics = (input: {
     },
     refusals: { total: log.filter(entry => entry.action === 'refused').length, byCode },
     questions: { asked: asked.length, answered: waits.length, waits },
-    handOffs: log.filter(entry => entry.action === 'handed-off').length,
     cost: {
       calls: usage.length,
       readTokens: Math.round(usage.reduce((sum, line) => sum + line.chars, 0) / 4),

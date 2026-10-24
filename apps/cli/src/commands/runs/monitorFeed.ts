@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-import { hhmm, ID_WIDTH, idCell } from './monitorCells';
+import { hhmm, ID_WIDTH, idCell, wrapped } from './monitorCells';
 
 import type { FeedLine } from '../../runs/monitor';
 
@@ -55,6 +55,25 @@ export const feedColumns = (lines: readonly FeedLine[], width: number): FeedColu
   };
 };
 
+/** Whether a line opens under it: a group of repeats, or one whose text says less than its whole. */
+export const opens = (line: FeedLine): boolean => line.count !== undefined || line.detail !== undefined;
+
+/**
+ * A line's whole, opened under it: its words wrapped to the activity's width, starting under its WHAT — the fold, the
+ * time, the mark, who and the task are the columns left of it.
+ */
+export const detailRows = (line: FeedLine, columns: FeedColumns, width: number): string[] => {
+  if (line.detail === undefined) {
+    return [];
+  }
+
+  const indent = 12 + columns.who + columns.task;
+
+  return wrapped(line.detail.split(' '), Math.max(20, width - indent), ' ').map(each =>
+    chalk.dim(`${' '.repeat(indent)}${each}`)
+  );
+};
+
 /** One event of the activity: when, what kind, who — and to whom, for a message — and what, its words quoted. */
 export const feedRow = (line: FeedLine, columns: FeedColumns, opened = false): string => {
   const look = FEED_LOOK[line.kind];
@@ -66,8 +85,9 @@ export const feedRow = (line: FeedLine, columns: FeedColumns, opened = false): s
       ? ''
       : chalk.bold(` ×${String(line.count)}`) +
         chalk.dim(` since ${hhmm(line.since ?? line.at)} · click ${opened ? 'folds' : 'opens'} it`);
-  // Left of the time, what a glance down the column reads first: a group folded, a group open, or a single event.
-  const fold = line.count === undefined ? '  ' : chalk.bold(opened ? '▾ ' : '▸ ');
+  // Left of the time, what a glance down the column reads first: a line that opens — a group, or one with more to say —
+  // folded or open, or a single event said whole.
+  const fold = !opens(line) ? '  ' : chalk.bold(opened ? '▾ ' : '▸ ');
 
   // The task its own column, empty when the event is about none: what happened to which task reads down the board.
   const task = line.task === undefined ? ' '.repeat(columns.task) : chalk.cyan(idCell(line.task, columns.task));

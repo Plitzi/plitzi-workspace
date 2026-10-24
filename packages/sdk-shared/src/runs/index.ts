@@ -49,7 +49,10 @@ export interface RunSnapshotAgent {
 export interface RunSnapshotEvent {
   at: string;
   by: string;
+  /** What happened, for a glance: 72 characters at most. */
   text: string;
+  /** The whole of it, when `text` says less. */
+  detail?: string;
   /** take, complete, review, message, run, problem (a refusal, a crash, a failed check), other */
   kind: string;
 }

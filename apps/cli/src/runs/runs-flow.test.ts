@@ -28,7 +28,6 @@ import {
   unblockTask,
   waitForFile
 } from './tasks';
-import { HAND_OFF_AFTER_MS, handOffRework } from './tasks/handOff';
 import { viewRun } from './view';
 import { benchPlan, makeBench, readInCopy, writeInCopy } from '../tests/runProject';
 import { LEAD_SAID } from '../tests/runSteps';
@@ -213,88 +212,8 @@ describe('a run played whole, as velada-dress went', () => {
     const [run] = await readBench(bench.root);
     expect(run).toMatchObject({ runId, tasks: 4, done: 4 });
     expect(run.roundsPerTask).toBeGreaterThanOrEqual(1);
-  });
-});
-
-// velada-polish: dev-1 held four tasks; t-match-bars's changes waited ten minutes for it while dev-2 and dev-3 had
-// nothing, and stopped.
-describe('a task sent back while its agent is at another', () => {
-  const twoDevs = async (): Promise<string> => {
-    const plan = { ...benchPlan(), designReview: false };
-    await bench.writeTeam({ version: 1, agents: [{ name: 'dev', roles: ['developer'], count: 3 }] });
-    await openRun(as('lead'), await bench.writePlan(plan));
-    const home = await takeTask(as('dev-1'), plan.runId, 't-home');
-    await writeInCopy(home.work, 'src/space/pages/home/index.ts', "export const home = { title: 'Hola' };\n");
-    await completeTask(as('dev-1', home.token), plan.runId, 't-home');
-    bench.advance(10_000);
-    const menu = await takeTask(as('dev-1'), plan.runId, 't-menu');
-    bench.advance(10_000);
-    await reportProgress(as('dev-1', menu.token), plan.runId, 't-menu', { step: 'the menu' });
-    bench.advance(10_000);
-    await reviewTask(as('lead'), plan.runId, 't-home', 'changes', [{ note: 'Bienvenidos, not Hola' }]);
-
-    return home.token;
-  };
-
-  it('goes to a free agent of its role once it waited, its review with it — and its agent is told', async () => {
-    const oldToken = await twoDevs();
-    const runId = benchPlan().runId;
-    // Nothing new for dev-3 — t-about taken, t-book waits for the others — only the rework that waits.
-    await takeTask(as('dev-2'), runId, 't-about');
-
-    const early = await nextTask(as('dev-3'), runId, 'developer');
-    expect(early.handOff).toBeUndefined();
-    expect(early.why).toContain("t-home's changes wait for dev-1 (at t-menu)");
-
-    bench.advance(HAND_OFF_AFTER_MS);
-    const next = await nextTask(as('dev-3'), runId, 'developer');
-    expect(next).toMatchObject({ task: { id: 't-home' }, handOff: { from: 'dev-1', at: 't-menu' } });
-    expect(next.asked?.join(' ')).toContain('Bienvenidos, not Hola');
-
-    const { taken } = await takeNext(as('dev-3'), runId, 'developer');
-    expect(taken?.task.id).toBe('t-home');
-    const loaded = await loadRun(as('lead'), runId);
-    expect((await readRunLog(loaded.paths)).find(entry => entry.action === 'handed-off')).toMatchObject({
-      task: 't-home',
-      from: 'dev-1',
-      to: 'dev-3',
-      busyAt: 't-menu'
-    });
-    // The entry's time stays its own: the monitor showed hand-offs with none and misaligned (lx-copy).
-    expect(typeof (await readRunLog(loaded.paths)).find(entry => entry.action === 'handed-off')?.at).toBe('string');
-    expect((await nextTask(as('dev-1'), runId, 'developer')).messages.map(message => message.text).join(' ')).toContain(
-      "The CLI handed t-home's changes to dev-3, no lead's decision"
-    );
-    await expect(reportProgress(as('dev-1', oldToken), runId, 't-home', {})).rejects.toMatchObject({
-      code: 'reassigned'
-    });
-  });
-
-  // lx-fidelity: t-blog was handed to design-1 and to dev-1, 40ms apart.
-  it('is handed to one agent when two ask at once', async () => {
-    await twoDevs();
-    const runId = benchPlan().runId;
-    bench.advance(HAND_OFF_AFTER_MS);
-    const both = await Promise.allSettled([
-      handOffRework(as('dev-2'), runId, 't-home', 'dev-1'),
-      handOffRework(as('dev-3'), runId, 't-home', 'dev-1')
-    ]);
-
-    expect(both.map(each => each.status).sort()).toEqual(['fulfilled', 'rejected']);
-    expect(both.find(each => each.status === 'rejected')).toMatchObject({ reason: { code: 'claimed' } });
-    const loaded = await loadRun(as('lead'), runId);
-    expect((await readRunLog(loaded.paths)).filter(entry => entry.action === 'handed-off')).toHaveLength(1);
-  });
-
-  it('stays its agent’s once it took it up again', async () => {
-    const token = await twoDevs();
-    const runId = benchPlan().runId;
-    bench.advance(10_000);
-    await reportProgress(as('dev-1', token), runId, 't-home', { step: 'Bienvenidos' });
-    bench.advance(HAND_OFF_AFTER_MS);
-
-    expect((await nextTask(as('dev-2'), runId, 'developer')).handOff).toBeUndefined();
-  });
+    // A whole run played: ~4 s alone, past the default 5 s beside the rest of the suite.
+  }, 30_000);
 });
 
 // velada-fidelity: dev-1 took t-faq-zone as "agent" (an empty token), and its rework went back to no one. A task is its

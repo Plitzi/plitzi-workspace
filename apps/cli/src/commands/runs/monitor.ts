@@ -6,8 +6,9 @@ import chalk from 'chalk';
 import { attentionLines } from './monitorAttention';
 import { bodyOf, detailOf, listedTasks, orderedTasks } from './monitorBoard';
 import { cell, hhmm, wrapped } from './monitorCells';
-import { FEED_LOOK, FEED_WORDS, feedColumns, feedRow, groupKey, repeatRow } from './monitorFeed';
+import { detailRows, FEED_LOOK, FEED_WORDS, feedColumns, feedRow, groupKey, opens, repeatRow } from './monitorFeed';
 import { fittedFlow } from './monitorFlow';
+import { SPEND_BESIDE, SPEND_WIDTH, spendLine, spendLines } from './monitorSpend';
 import { contextFor } from './shell';
 import { monitorRun } from '../../runs/monitor';
 import { runPaths } from '../../runs/paths';
@@ -155,6 +156,7 @@ export const monitorScreen = (
       'enter opens it',
       'a the approved',
       '←→ the activity',
+      'click a ▸ line: the whole of it',
       ...(short
         ? []
         : [
@@ -226,14 +228,18 @@ export const monitorScreen = (
   const left = Math.max(0, room - board.length - besideBoard - body.length - detail.length - ACTIVITY_HEAD);
   // The activity's rows: each event, and under an opened group each of its repeats.
   type Row = { row: string; key?: string };
-  const feedWidths = feedColumns([...feed, ...feed.flatMap(line => line.repeats ?? [])], width);
+  // The spend beside the activity on a wide terminal, its line over it on a narrow one.
+  const beside = width >= SPEND_BESIDE;
+  const feedWidth = beside ? width - SPEND_WIDTH - 2 : width;
+  const feedWidths = feedColumns([...feed, ...feed.flatMap(line => line.repeats ?? [])], feedWidth);
   const blocks: Row[][] = feed.map(line =>
-    line.count !== undefined && opened.has(groupKey(line))
+    opens(line) && opened.has(groupKey(line))
       ? [
           { row: feedRow(line, feedWidths, true), key: groupKey(line) },
+          ...detailRows(line, feedWidths, feedWidth).map(row => ({ row })),
           ...(line.repeats ?? []).map(each => ({ row: repeatRow(each, feedWidths) }))
         ]
-      : [{ row: feedRow(line, feedWidths), ...(line.count === undefined ? {} : { key: groupKey(line) }) }]
+      : [{ row: feedRow(line, feedWidths), ...(opens(line) ? { key: groupKey(line) } : {}) }]
   );
   // Paged by event, never splitting an opened group: its repeats are on the page its line is on.
   const pagesOf: Row[][] = [];
@@ -262,27 +268,31 @@ export const monitorScreen = (
   const page = Math.min(Math.max(0, feedPage), pages - 1);
   const firstLine = pagesOf.slice(0, page).reduce((sum, each) => sum + each.length, 0);
   const shownRows = pagesOf.at(page) ?? [];
-  const activity =
+  const feedLines =
     left === 0
       ? []
       : [
-          '',
+          beside ? '' : spendLine(data.spend, width),
           cell(
             `${chalk.bold('ACTIVITY')}${chalk.dim(
               pages > 1
                 ? `  ${String(firstLine + 1)}–${String(firstLine + shownRows.length)} of ${String(rows.length)} · ${page > 0 ? '← newer' : '← (newest)'} · ${page < pages - 1 ? 'older →' : '(oldest) →'} · the wheel too`
                 : `  ${String(rows.length)}, all shown`
             )}`,
-            width
+            feedWidth
           ),
           chalk.dim(
             cell(
               `  ${'TIME'.padEnd(5)}   ${'WHO'.padEnd(feedWidths.who)} ${'TASK'.padEnd(feedWidths.task)} WHAT`,
-              width
+              feedWidth
             )
           ),
-          ...shownRows.map(each => cell(each.row, width))
+          ...shownRows.map(each => cell(each.row, feedWidth))
         ];
+  const spendBeside = beside ? spendLines(data.spend, data.freshContextAt, feedLines.length) : [];
+  const activity = beside
+    ? feedLines.map((each, index) => `${cell(each, feedWidth)}  ${spendBeside[index] ?? ' '.repeat(SPEND_WIDTH)}`)
+    : feedLines;
 
   const boardTop = head.length + attention.length + 1;
   const bodyTop = boardTop + board.length + besideBoard;

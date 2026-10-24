@@ -134,13 +134,8 @@ export interface TeamAgent {
   min?: number;
   model?: ModelChoice;
   effort?: Effort;
-  /**
-   * Each of its agents works one task a session: once it completes one, `task next` tells it to stop, and the lead starts
-   * it again — a fresh context — for the next, or for its own sent back. lx-product: dev-1 read 30.9M tokens for three
-   * tasks, each turn reading again what the tasks before left in its context; a session each, ~40 % less, for ~1 minute
-   * and the skills read again at each start.
-   */
-  sessionPerTask?: boolean;
+  /** When each of its agents is started again with a fresh context (`SessionMode`): `DEFAULT_SESSION` when not said. */
+  session?: SessionMode;
   /**
    * Started again after it died with a task in hand — the machine down, the harness killed — it resumes its own session
    * (`--resume`, Claude Code's), what it knew and had not written yet with it, rather than a fresh one that reads the
@@ -149,6 +144,36 @@ export interface TeamAgent {
    */
   resumeSession?: boolean;
 }
+
+/**
+ * When an agent is started again with a fresh context — always between two pieces of work (a task completed, a review
+ * decided), never in one, so nothing it knows and has not written is lost:
+ * - `task` (`DEFAULT_SESSION`): after each one;
+ * - `context`: once its context passes the team's `freshContextAt`;
+ * - `keep`: never — one session while it runs.
+ *
+ * Every turn reads the whole context again: encore-2's developers, a session a task, read ~12k tokens' worth a turn;
+ * its designer and tester, never started again, grew to 400k and read 26–30k a turn — more, the two, than three
+ * developers' 49 sessions. The lead that plans is never started again: it is the one the person talks to.
+ */
+export type SessionMode = 'task' | 'context' | 'keep';
+
+export const SESSION_MODES: readonly SessionMode[] = ['task', 'context', 'keep'];
+
+/** Every agent's session but the planning lead's, when its entry says none (Carlos: "por defecto es task"). */
+export const DEFAULT_SESSION: SessionMode = 'task';
+
+const isSessionMode = (value: unknown): value is SessionMode =>
+  typeof value === 'string' && (SESSION_MODES as readonly string[]).includes(value);
+
+/** The context an agent is started again past when the team says none (`TeamOptions.freshContextAt`), in tokens. */
+export const FRESH_CONTEXT_AT = 100_000;
+
+/**
+ * The least `freshContextAt` takes: an agent's context starts at ~46k (its harness, its prompt, the brief) — below it,
+ * every piece of work would end in a start.
+ */
+const MIN_FRESH_CONTEXT_AT = 60_000;
 
 /** The leads' entry: their model, and how many — one for every `AGENTS_PER_LEAD` agents when not said. */
 export interface Lead {
@@ -192,12 +217,21 @@ export interface TeamOptions {
    * lead, planning or reviewing, was the only one to start agents. Not said: the lead starts them.
    */
   launch?: Harness;
+  /**
+   * The context, in tokens, past which an agent of `"session": "context"` is started again with a fresh one, between two
+   * pieces of work (`SessionMode`). `FRESH_CONTEXT_AT` when not said: past it, the next piece of work costs more reading
+   * it again each turn than a start costs — ~40k tokens written, at ~15 turns a task.
+   */
+  freshContextAt?: number;
 }
 
 /** The longest an agent just started may say nothing (`TeamOptions.startGraceMinutes`). */
 const MAX_START_GRACE_MINUTES = 30;
 
 /** The options as the file says them, each kept only as it is valid — `teamProblems` says what is not. */
+const isFreshContextAt = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isInteger(value) && value >= MIN_FRESH_CONTEXT_AT;
+
 const optionsOf = (options: Record<string, unknown>): TeamOptions => {
   const grace = options.startGraceMinutes;
 
@@ -206,7 +240,8 @@ const optionsOf = (options: Record<string, unknown>): TeamOptions => {
     ...(typeof grace === 'number' && Number.isInteger(grace) && grace >= 1 && grace <= MAX_START_GRACE_MINUTES
       ? { startGraceMinutes: grace }
       : {}),
-    ...(isHarness(options.launch) ? { launch: options.launch } : {})
+    ...(isHarness(options.launch) ? { launch: options.launch } : {}),
+    ...(isFreshContextAt(options.freshContextAt) ? { freshContextAt: options.freshContextAt } : {})
   };
 };
 
@@ -240,8 +275,8 @@ export interface StartedAgent {
   quality?: Quality;
   /** Past its group's `min`: started when work waits for it, and it stops once none is left (`onDemand.ts`). */
   onDemand?: true;
-  /** One task a session (`TeamAgent.sessionPerTask`): told to stop once it completes one, started again for the next. */
-  sessionPerTask?: true;
+  /** When it is started again with a fresh context (`TeamAgent.session`); `DEFAULT_SESSION` when not said. */
+  session?: Exclude<SessionMode, typeof DEFAULT_SESSION>;
   /** Resumes its own session when started again after it died with a task in hand (`TeamAgent.resumeSession`). */
   resumeSession?: true;
 }
@@ -305,8 +340,12 @@ const agentProblem = (value: unknown): string | undefined => {
     return `"${name}": its effort is how hard it thinks — ${EFFORTS.join(', ')} — or left out for the harness's own`;
   }
 
-  if (value.sessionPerTask !== undefined && typeof value.sessionPerTask !== 'boolean') {
-    return `"${name}": its sessionPerTask is true — one task a session — or false`;
+  if (value.sessionPerTask !== undefined) {
+    return `"${name}": "sessionPerTask" is gone: a fresh session after each task or review is every agent's now — remove it ("session": "context" starts it again only past options.freshContextAt, "keep" never)`;
+  }
+
+  if (value.session !== undefined && !isSessionMode(value.session)) {
+    return `"${name}": its session is ${SESSION_MODES.join(', ')} — when it is started again with a fresh context: after each task or review (the default), past options.freshContextAt, or never`;
   }
 
   if (value.resumeSession !== undefined && typeof value.resumeSession !== 'boolean') {
@@ -319,9 +358,9 @@ const agentProblem = (value: unknown): string | undefined => {
 const isTeamAgent = (value: unknown): value is TeamAgent => agentProblem(value) === undefined;
 
 const TEAM_KEYS = ['$schema', 'version', 'lead', 'agents', 'options', 'about'];
-const OPTION_KEYS = ['designReview', 'startGraceMinutes', 'launch'];
+const OPTION_KEYS = ['designReview', 'startGraceMinutes', 'launch', 'freshContextAt'];
 const LEAD_KEYS = ['model', 'effort', 'count'];
-const AGENT_KEYS = ['name', 'roles', 'count', 'min', 'model', 'effort', 'sessionPerTask', 'resumeSession'];
+const AGENT_KEYS = ['name', 'roles', 'count', 'min', 'model', 'effort', 'session', 'resumeSession'];
 
 /** A key the file does not know — a typo, most often — said with the one it likely meant: it would be read as nothing. */
 const unknownKeys = (value: object, known: readonly string[], where: string): string[] =>
@@ -365,7 +404,7 @@ export const teamProblems = (parsed: unknown): string[] => {
   if (parsed.options !== undefined) {
     if (!isRecord(parsed.options)) {
       problems.push(
-        '"options" is { "designReview"?: "light" | "standard" | "high", "startGraceMinutes"?: 1 to 30, "launch"?: "claude" | "codex" | "opencode" }'
+        '"options" is { "designReview"?: "light" | "standard" | "high", "startGraceMinutes"?: 1 to 30, "launch"?: "claude" | "codex" | "opencode", "freshContextAt"?: tokens }'
       );
     } else {
       problems.push(...unknownKeys(parsed.options, OPTION_KEYS, '"options": '));
@@ -376,6 +415,12 @@ export const teamProblems = (parsed: unknown): string[] => {
       if (parsed.options.launch !== undefined && !isHarness(parsed.options.launch)) {
         problems.push(
           `"options": "launch" is the harness the CLI starts the agents in — ${HARNESSES.join(', ')} — or left out for the lead to start them`
+        );
+      }
+
+      if (parsed.options.freshContextAt !== undefined && !isFreshContextAt(parsed.options.freshContextAt)) {
+        problems.push(
+          `"options": "freshContextAt" is the context, in tokens, past which an agent is started again fresh — a whole number from ${String(MIN_FRESH_CONTEXT_AT)}; ${String(FRESH_CONTEXT_AT)} when not said`
         );
       }
 
@@ -454,10 +499,10 @@ export const TEAM_ABOUT: Record<string, unknown> = {
   file: 'Who works the runs of several agents on this project (plitzi run). Edit it, or: plitzi run team set <name> --roles … --count … --model …',
   lead: 'The lead plans, reviews every task — the complete, strict review, and the final word — answers and closes: the one you talk to. Give it your strongest model: "lead": { "model": "…", "effort": "high" } (plitzi run team set lead --model …). One lead for every 4 agents: lead plans and finishes, lead-2, lead-3… only review, as strictly — "count" says another number (plitzi run team set lead --count 1).',
   agents:
-    'Each agent: a name (dev is dev-1, dev-2…), the roles it takes, how many of it (count), and the model to start it with, as the harness names it (claude-sonnet-5-5 in Claude Code; any model opencode or another harness takes); left out, the default of the harness. "effort": how hard it thinks — low, medium, high, xhigh, max — left out, the harness’s own (Claude Code’s --effort, Codex’s reasoning effort). Or a model a quality level — "model": { "standard": "claude-sonnet-5-5", "high": "claude-opus-5-5" } (light, standard, high): each level is started apart (design-1-high) for the tasks of it, so the strongest model works only what many build on. How many agents work at once is the sum of the counts; "min" (from 1 to its count) starts only that many with the run, the rest on demand — the lead starts one when work waits for it (run watch says which), and it stops once none is left. "sessionPerTask": true gives each of its agents one task a session: told to stop once it completes one, started again by the lead, a fresh context, for the next or its own sent back — fewer tokens for an agent that works several tasks (plitzi run team set dev --session-per-task). "resumeSession": true resumes an agent\'s own session when it is started again after it died with a task in hand — what it knew and had not written yet kept; Claude Code alone, and not a session past a size that would cost more to read again than to start over (plitzi run team set dev --resume-session).',
+    'Each agent: a name (dev is dev-1, dev-2…), the roles it takes, how many of it (count), and the model to start it with, as the harness names it (claude-sonnet-5-5 in Claude Code; any model opencode or another harness takes); left out, the default of the harness. "effort": how hard it thinks — low, medium, high, xhigh, max — left out, the harness’s own (Claude Code’s --effort, Codex’s reasoning effort). Or a model a quality level — "model": { "standard": "claude-sonnet-5-5", "high": "claude-opus-5-5" } (light, standard, high): each level is started apart (design-1-high) for the tasks of it, so the strongest model works only what many build on. How many agents work at once is the sum of the counts; "min" (from 1 to its count) starts only that many with the run, the rest on demand — the lead starts one when work waits for it (run watch says which), and it stops once none is left. "session": when its agents are started again with a fresh context, always between two pieces of work (a task completed, a review decided), never in one — "task" (the default) after each one, "context" once its context passes options.freshContextAt, "keep" never: every turn reads the whole context again, so a context that grew costs on every turn after (plitzi run team set dev --session context). The lead that plans keeps its session. "resumeSession": true resumes an agent\'s own session when it is started again after it died with a task in hand — what it knew and had not written yet kept; Claude Code alone, and not a session past a size that would cost more to read again than to start over (plitzi run team set dev --resume-session).',
   roles: { ...ROLES, '<any other>': 'A role of your own: a task names it, an agent takes it.' },
   options:
-    '"designReview": how closely a designer reviews another task\'s UI — "light" (its pages at 1440 and 390, the default scheme, nothing it does not touch), "standard" (both schemes and widths, its sections against the reference; the default), "high" (every page that reads its files, against the run before it too). A review costs what it looks at. "startGraceMinutes": how long an agent just started may say nothing before the tasks it holds read \'no signal\' — 3 when not said. "launch": the harness (claude, codex, opencode) the CLI starts the agents in by itself when the run asks for one — left out, the lead starts them.',
+    '"designReview": how closely a designer reviews another task\'s UI — "light" (its pages at 1440 and 390, the default scheme, nothing it does not touch), "standard" (both schemes and widths, its sections against the reference; the default), "high" (every page that reads its files, against the run before it too). A review costs what it looks at. "startGraceMinutes": how long an agent just started may say nothing before the tasks it holds read \'no signal\' — 3 when not said. "launch": the harness (claude, codex, opencode) the CLI starts the agents in by itself when the run asks for one — left out, the lead starts them. "freshContextAt": the context, in tokens, past which an agent of "session": "context" is started again fresh — 100000 when not said.',
   more: 'It starts small — every agent spends tokens: two developers, one started with the run and the other on demand, and a designer who reviews the UI of every other task — the developers on Sonnet, the designer and the lead on Opus. Grow it when a job asks — you decide: more developers (plitzi run team set dev --count 3 --min 2), a tester who reviews the code and writes the tests of each developer task — on Opus too, unless you say a model: what it misses gets through (plitzi run team set test --roles tester), a writer.'
 };
 
@@ -533,7 +578,7 @@ export const startedAgents = (team: Team): StartedAgent[] =>
       const effort = each.effort ? { effort: each.effort } : {};
       const demand = {
         ...(each.min !== undefined && index >= each.min ? { onDemand: true as const } : {}),
-        ...(each.sessionPerTask === true ? { sessionPerTask: true as const } : {}),
+        ...(each.session === 'context' || each.session === 'keep' ? { session: each.session } : {}),
         ...(each.resumeSession === true ? { resumeSession: true as const } : {})
       };
       if (each.model === undefined || typeof each.model === 'string') {
@@ -622,7 +667,7 @@ export const leadText = (lead: Lead | undefined): string =>
 
 /** One agent of the team, as `run team` says it. */
 export const teamAgentText = (each: TeamAgent): string =>
-  `${each.name}${(each.count ?? 1) > 1 ? ` × ${String(each.count)}` : ''}${each.min !== undefined && each.min < (each.count ?? 1) ? ` (${String(each.min)} at the start, the rest on demand)` : ''} — ${each.roles.join(', ')}${each.model ? ` — ${choiceText(each.model)}` : ''}${each.effort ? ` (${each.effort} effort)` : ''}${each.sessionPerTask === true ? ' — one task a session' : ''}${each.resumeSession === true ? ' — resumes its session after a crash' : ''}`;
+  `${each.name}${(each.count ?? 1) > 1 ? ` × ${String(each.count)}` : ''}${each.min !== undefined && each.min < (each.count ?? 1) ? ` (${String(each.min)} at the start, the rest on demand)` : ''} — ${each.roles.join(', ')}${each.model ? ` — ${choiceText(each.model)}` : ''}${each.effort ? ` (${each.effort} effort)` : ''}${each.session === 'context' ? ' — a fresh session past options.freshContextAt' : each.session === 'keep' ? ' — one session while it runs' : ''}${each.resumeSession === true ? ' — resumes its session after a crash' : ''}`;
 
 export interface TeamChange {
   name: string;
@@ -640,7 +685,7 @@ export interface TeamAgentChange {
   min?: number;
   model?: ModelChoice;
   effort?: Effort;
-  sessionPerTask?: boolean;
+  session?: SessionMode;
   resumeSession?: boolean;
 }
 
@@ -729,7 +774,10 @@ export const setTeamAgent = async (root: string, name: string, change: TeamAgent
     ...((change.min ?? before?.min) !== undefined ? { min: change.min ?? before?.min } : {}),
     ...(model !== undefined ? { model } : {}),
     ...((change.effort ?? before?.effort) !== undefined ? { effort: change.effort ?? before?.effort } : {}),
-    ...((change.sessionPerTask ?? before?.sessionPerTask) === true ? { sessionPerTask: true } : {}),
+    // The default is not written: the file says only what differs from it.
+    ...((change.session ?? before?.session) !== undefined && (change.session ?? before?.session) !== DEFAULT_SESSION
+      ? { session: change.session ?? before?.session }
+      : {}),
     ...((change.resumeSession ?? before?.resumeSession) === true ? { resumeSession: true } : {})
   };
   const problem = agentProblem(after);

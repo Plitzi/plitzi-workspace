@@ -35,7 +35,6 @@ export interface BenchLine {
   reworkWaitMedian?: number;
   /** Minutes the agents waited for work, together. */
   agentsWaited: number;
-  handOffs: number;
   readTokens: number;
   /** The agents' contexts at their end, as the harness counts them, a task. */
   tokens?: number;
@@ -91,7 +90,6 @@ export const benchOf = (report: RunReport, cli: string): BenchLine => {
     ...(leadWait === undefined ? {} : { leadWaitMedian: leadWait }),
     ...(reworkWait === undefined ? {} : { reworkWaitMedian: reworkWait }),
     agentsWaited: tenths(metrics.agents.reduce((sum, agent) => sum + agent.waited, 0)),
-    handOffs: metrics.handOffs,
     readTokens: metrics.cost.readTokens,
     ...(metrics.cost.tokens === undefined
       ? {}
@@ -147,11 +145,11 @@ export const benchText = (lines: readonly BenchLine[]): string[] =>
   lines.length === 0
     ? ['No run of this project was measured yet: each report keeps its run’s measures beside it.']
     : [
-        '| Run | Done | Worked (min) | Min / task | Rounds / task | Checks failed | Not theirs | Refused (identity) | UI wait | Lead wait | Rework wait | Agents waited | Handed off | Read | Context / task | Read again / task (≥) | Repeated | In the CLI (min) | Over budget |',
-        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+        '| Run | Done | Worked (min) | Min / task | Rounds / task | Checks failed | Not theirs | Refused (identity) | UI wait | Lead wait | Rework wait | Agents waited | Read | Context / task | Read again / task (≥) | Repeated | In the CLI (min) | Over budget |',
+        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
         ...lines.map(
           line =>
-            `| ${line.runId} | ${String(line.done)}/${String(line.tasks)} | ${cell(line.workMinutes)} | ${cell(line.minutesPerTask)} | ${String(line.roundsPerTask)} | ${String(line.checksFailedPct)}% | ${cell(line.checksNotOwn)} | ${String(line.refusals)} (${String(line.identityRefusals)}) | ${cell(line.uiWaitMedian)} | ${cell(line.leadWaitMedian)} | ${cell(line.reworkWaitMedian)} | ${cell(line.agentsWaited)} | ${String(line.handOffs)} | ${tokens(line.readTokens)} | ${tokens(line.tokensPerTask)} | ${tokens(line.rereadPerTask)} | ${String(line.repeated)} | ${cell(line.cliMinutes)} | ${cell(line.overBudget)} |`
+            `| ${line.runId} | ${String(line.done)}/${String(line.tasks)} | ${cell(line.workMinutes)} | ${cell(line.minutesPerTask)} | ${String(line.roundsPerTask)} | ${String(line.checksFailedPct)}% | ${cell(line.checksNotOwn)} | ${String(line.refusals)} (${String(line.identityRefusals)}) | ${cell(line.uiWaitMedian)} | ${cell(line.leadWaitMedian)} | ${cell(line.reworkWaitMedian)} | ${cell(line.agentsWaited)} | ${tokens(line.readTokens)} | ${tokens(line.tokensPerTask)} | ${tokens(line.rereadPerTask)} | ${String(line.repeated)} | ${cell(line.cliMinutes)} | ${cell(line.overBudget)} |`
         ),
         '',
         // The patterns the findings count, a run a row: a fix holds when its column falls (runs before them say —).

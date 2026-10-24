@@ -263,7 +263,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     view.owner !== undefined &&
     !starting.has(view.owner.agent) &&
     !(view.state.status === 'changes-requested' && !running.has(view.owner.agent));
-  const tasks = views.map(view => {
+  const lines = views.map(view => {
     const line = lineOf(
       view,
       now,
@@ -275,6 +275,14 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
 
     return view.state.status === 'pending' && waitsOn.length > 0 ? { ...line, waitsOn } : line;
   });
+  // A task sent back to an agent at another one waits for it, as the run means it to: its silence is no "no signal —
+  // reassign it" while its agent works the one it is at.
+  const waitingItsAgent = new Set(
+    parked(lines, views)
+      .filter(line => line.parkedFor !== undefined)
+      .map(line => line.id)
+  );
+  const tasks = lines.map(line => (waitingItsAgent.has(line.id) ? { ...line, noSignal: false } : line));
   const attention: Attention[] = [];
   const { record } = loaded;
   if (record.status === 'reconciliation') {

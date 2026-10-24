@@ -9,6 +9,7 @@ import {
   leadText,
   ROLES,
   readTeam,
+  SESSION_MODES,
   setTeamAgent,
   TEAM_FILE,
   teamAgentText,
@@ -17,7 +18,7 @@ import {
 } from '../../runs/team';
 
 import type { RunCommandOptions } from './shell';
-import type { Effort, TeamChange } from '../../runs/team';
+import type { Effort, SessionMode, TeamChange } from '../../runs/team';
 
 /**
  * `plitzi run team`: who works this project's runs, shown and changed.
@@ -57,9 +58,19 @@ export interface TeamSetOptions extends RunCommandOptions {
   min?: number;
   model?: string;
   effort?: string;
-  sessionPerTask?: boolean;
+  session?: string;
   resumeSession?: boolean;
 }
+
+/** `--session`, refused naming the modes when it is none of them. */
+const sessionOf = (text: string): SessionMode => {
+  const mode = SESSION_MODES.find(each => each === text);
+  if (mode === undefined) {
+    throw new RunRefusal('invalid', `--session ${text}: one of ${SESSION_MODES.join(', ')}`);
+  }
+
+  return mode;
+};
 
 /** `--effort`, refused naming the words when it is none of them. */
 const effortOf = (text: string): Effort => {
@@ -80,7 +91,7 @@ export const runTeamSet = (name: string, options: TeamSetOptions): Promise<void>
         ...(options.min !== undefined ? { min: options.min } : {}),
         ...(options.model ? { model: parseModelChoice(options.model) } : {}),
         ...(options.effort ? { effort: effortOf(options.effort) } : {}),
-        ...(options.sessionPerTask !== undefined ? { sessionPerTask: options.sessionPerTask } : {}),
+        ...(options.session !== undefined ? { session: sessionOf(options.session) } : {}),
         ...(options.resumeSession !== undefined ? { resumeSession: options.resumeSession } : {})
       }),
     changed =>

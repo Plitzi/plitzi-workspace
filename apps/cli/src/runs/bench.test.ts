@@ -19,7 +19,6 @@ const line = (runId: string, overrides: Partial<BenchLine> = {}): BenchLine => (
   uiWaitMedian: 3.6,
   reworkWaitMedian: 6,
   agentsWaited: 31,
-  handOffs: 0,
   readTokens: 182_000,
   repeated: 2,
   ...overrides
@@ -30,7 +29,7 @@ describe('the bench of a project’s runs', () => {
   it('lists each run measured the same way, a row each, oldest first', () => {
     const text = benchText([
       line('velada-polish'),
-      line('velada-next', { roundsPerTask: 1.2, checksFailedPct: 20, checksNotOwn: 9, handOffs: 1 })
+      line('velada-next', { roundsPerTask: 1.2, checksFailedPct: 20, checksNotOwn: 9 })
     ]);
 
     expect(text[0]).toContain(
@@ -38,7 +37,7 @@ describe('the bench of a project’s runs', () => {
     );
     // A run measured before checks said what was not the copy's has no count of them: "—", never 0.
     expect(text[2]).toBe(
-      '| velada-polish | 7/7 | 50 | 7.1 | 2 | 44% | — | 6 (0) | 3.6 | — | 6 | 31 | 0 | 182k | — | — | 2 | — | — |'
+      '| velada-polish | 7/7 | 50 | 7.1 | 2 | 44% | — | 6 (0) | 3.6 | — | 6 | 31 | 182k | — | — | 2 | — | — |'
     );
     expect(text[3]).toContain('| velada-next | 7/7 | 50 | 7.1 | 1.2 | 20% | 9 |');
   });

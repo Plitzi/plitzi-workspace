@@ -4,6 +4,7 @@ import { fingerprint } from './files';
 import { agentAddress, LEAD, sendMessage } from './messages';
 import { RunRefusal } from './refusal';
 import { logRun } from './run';
+import { logSpent } from './spent';
 import { updateState } from './taskStore';
 import { DESIGNER, readTeam, startedAgents } from './team';
 import { isUiFile, reviewedAsUi } from './uiFiles';
@@ -176,6 +177,7 @@ export const approveDesign = async (
     ctx.now
   );
   await logRun(ctx, loaded.paths, { action: 'design-review', task: view.task.id, verdict: 'approve' });
+  await logSpent(ctx, loaded, view.task.id, 'review');
 };
 
 /**

@@ -5,7 +5,6 @@ import { takeQuestion } from '../answering';
 import { designReviewFor, hasDesignReview, takeOfferedReview } from '../design';
 import { handOver } from '../handOver';
 import { assertRoles } from '../identity';
-import { handOffRework, reworkFor, reworksWaiting } from './handOff';
 import {
   IDLE_LEAD_MS,
   isPrincipal,
@@ -36,10 +35,10 @@ import {
   askedOf,
   askedRoles,
   baseFirst,
+  freshStart,
   lastAsked,
   reasonOf,
   markJoined,
-  sessionEnd,
   spareNow,
   uiReviewsComing
 } from './nextRules';
@@ -71,8 +70,6 @@ export interface NextTask {
   asked?: string[];
   /** In progress and the caller's: lifted from a block by the lead, or held all along — the one to go on with first. */
   back?: 'unblocked' | 'held';
-  /** A task sent back whose agent is at another, handed to the caller: whose it was, and where that agent is. */
-  handOff?: { from: string; at: string };
   /** One the caller holds: where its copy is — the only place its work is written. */
   work?: string;
   /**
@@ -160,21 +157,18 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   const forRole = (task: RunTask): boolean => roles === undefined || roles.includes(roleOf(task));
   // What the lead said to this agent by name — between tasks, there is nowhere else for it to arrive.
   const messages = await unreadFor(loaded, agentAddress(ctx.agent), true);
-  // One task a session: once it completed one, only that task sent back is still this session's — its context is warm.
-  // Another it holds from an earlier session is the next one's: handed here, one session did two (encore's dev-1).
   const mine = views.filter(view => view.owner?.agent === ctx.agent && isWorked(view.state.status));
-  const sessionOver = await sessionEnd(
-    ctx,
-    loaded,
-    mine.find(view => view.state.status !== 'changes-requested')?.task.id
-  );
+  // Between two pieces of work, before its own is handed back: the next session takes it up, with a fresh context.
+  const fresh = await freshStart(ctx, loaded, views);
+  if (fresh !== undefined) {
+    return { why: fresh.why, ready: [], messages, finished: true };
+  }
+
   // What the caller holds and can go on with comes before anything new: an agent between tasks waits with `next`, and
   // this is how it hears that its blocked task was unblocked, or that its review asked for changes.
   for (const view of mine) {
     const { status } = view.state;
-    const thisSession =
-      sessionOver === undefined || (view.task.id === sessionOver.task && status === 'changes-requested');
-    if (isWorked(status) && thisSession) {
+    if (isWorked(status)) {
       // …with what was said to that task meanwhile — an amendment, a review's words — which it reads nowhere else first.
       const toTask = await handOver(ctx, loaded, view.task.id, ctx.agent);
 
@@ -199,10 +193,6 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
         messages: [...messages, ...toTask].sort((x, y) => x.at.localeCompare(y.at) || x.id.localeCompare(y.id))
       };
     }
-  }
-
-  if (sessionOver !== undefined) {
-    return { why: sessionOver.why, ready: [], messages, finished: true };
   }
 
   // A lead that reviews is offered reviews, and nothing else: the queue of tasks in review no other lead took.
@@ -352,18 +342,6 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     return { task: ready[base.length], ready: ready.map(task => task.id), messages };
   }
 
-  // Nothing new: a task sent back while its agent is at another, past a wait, is this agent's to take over.
-  const rework = reworkFor(reworksWaiting(views, ctx.agent, roles), ctx.now().getTime());
-  if (rework.now) {
-    return {
-      task: rework.now.view.task,
-      handOff: { from: rework.now.from, at: rework.now.at },
-      asked: lastAsked(rework.now.view),
-      ready: [],
-      messages
-    };
-  }
-
   if (ready.length === 0 && waitingForFile.length > 0) {
     return {
       why: `ready, but a file of each is another task's until that one is approved: ${waitingForFile.map(each => `${each.waiting} (${each.file}, held by ${each.holder})`).join(', ')} — wait for it (--follow)`,
@@ -392,10 +370,6 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
           hasDesignReview(view.task, [...view.task.files, ...(view.state.changed ?? [])])
       )
     : [];
-  // A rework that waits for its agent, said with when it is this agent's: nothing ready is not nothing coming.
-  const later = rework.later
-    ? ` — ${rework.later.rework.view.task.id}'s changes wait for ${rework.later.rework.from} (at ${rework.later.rework.at}): yours at ${new Date(rework.later.at).toISOString().slice(11, 16)} UTC if it is not back at it`
-    : '';
   const why =
     roles !== undefined && coming.length === 0 && toReview.length > 0
       ? `no task is left for a ${String(role)} to work: the UI of ${toReview.map(view => `${view.task.id} (${view.state.status})`).join(', ')} is yours to review once it is in review — wait for it (--follow)`
@@ -420,7 +394,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
                           : ''
                     }`
                 )
-                .join(', ')}${later}`;
+                .join(', ')}`;
 
   // Never while a task of its own is in review: one sent back comes back to it, and nobody else redoes it.
   const ownInReview = views.some(view => view.owner?.agent === ctx.agent && view.state.status === 'in-review');
@@ -558,10 +532,6 @@ export const takeNext = async (
 
     const offered = next.task;
     try {
-      if (next.handOff) {
-        await handOffRework(ctx, runId, offered.id, next.handOff.from);
-      }
-
       return { next, taken: await takeTask(ctx, runId, offered.id, role === undefined ? undefined : roleOf(offered)) };
     } catch (error) {
       // Taken by another agent meanwhile — once: a task offered again after that is held for a reason of its own.

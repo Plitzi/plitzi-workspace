@@ -76,7 +76,7 @@ export const agentsNeeded = (
   const roles = [...new Set(started.flatMap(each => each.roles))];
   const asked = new Set<string>();
   // A task sent back waits for its own agent alone, and nobody else takes it: one not running is asked for by name — an
-  // agent of one task a session stops once it completes one (`sessionPerTask`), before its review says.
+  // agent stops between two pieces of work for a fresh context (`SessionMode`), before its review says.
   const sentBack = new Map<string, string[]>();
   for (const view of views) {
     const owner = view.owner?.agent;
@@ -140,8 +140,8 @@ export const agentsNeeded = (
           ofRole(each) &&
           !running.has(each.agent) &&
           !asked.has(each.agent) &&
-          // One of one task a session stopped once its task was complete: started again, a fresh context, for the next.
-          (each.onDemand === true || each.sessionPerTask === true || !anyRunning)
+          // One of the base not running is asked for below, whatever waits (`base`).
+          (each.onDemand === true || !anyRunning)
       );
       // One that starts with the run is being started as the run opens: asked for only once it had time to join —
       // velada-fidelity's watch said "start dev-1" the moment the lead had started it.
@@ -193,8 +193,8 @@ export const agentsNeeded = (
       ];
     })
   ];
-  // The team's base runs while the run is open, idle when nothing is for it: one not running — its session of one task
-  // over, or its harness gone — is started again whatever waits (Carlos: "los agentes base, deben estar siempre activos").
+  // The team's base runs while the run is open, idle when nothing is for it: one not running — stopped for a fresh
+  // context, or its harness gone — is started again whatever waits (Carlos: "los agentes base, deben estar siempre activos").
   const base = run.open
     ? started
         .filter(each => each.onDemand !== true && !running.has(each.agent) && !asked.has(each.agent))

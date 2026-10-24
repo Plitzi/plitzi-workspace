@@ -159,7 +159,15 @@ original"); one not started says so, one running before anything of it reached t
 shows a command line, which is the lead's to read in `run watch` — fifteen listed at most, the rest scrolled to with ↑↓ — and the approved
 folded in a line naming them (`a`); last the activity in columns (time, who → whom for a message, task, what), every row
 the rest leaves, down to the terminal's foot, an event repeated in a row one line
-(×N, opened and folded with a click), paged with ← → and the wheel. It fits the terminal it is in (`monitorBoard.ts`,
+(×N, opened and folded with a click), paged with ← → and the wheel. Each line says its event for a glance — 72
+characters at most (`SHORT`, `feedLine.ts`), in its own words where the whole would be cut: "checks fail: lint, 2
+acceptance lines + 1 file of other tasks", "stops for a fresh context" — and keeps the whole as its `detail`, opened
+under it with a click (▸); encore-2's ran to 499 characters a line, a tenth of them past 200. The dev tools' Run tab
+shows the same, the whole on hover. Beside the activity, from 140 columns (a line over it under them), **the spend**
+(`monitorSpend.ts`): what each agent's harness read so far — the lead's and the reviewers' too — its pieces of work
+done and its context when it last ended one, said apart past `freshContextAt`. It is kept in the run's log as each
+piece of work ends (`spent`, `spent.ts`): a task completed, a review decided, each from the agent's last, read from
+its sessions as the round's report reads them (`harness/spentIn`). It fits the terminal it is in (`monitorBoard.ts`,
 `monitorFlow.ts`): the flow's stages in bands on a narrow one and its cards fewer on a short one — each stage's count in
 a line where not even a card fits — the agents in brief under the tasks under 140 columns, the activity's columns as
 wide as what they say, the keys wrapped rather than cut, and under 24 rows the activity gives its rows to the board. It
@@ -365,7 +373,7 @@ said in the activity — the lead starts it again when work waits. **The base go
 team's base agents of its roles — there (marked present) and at nothing — take; with them free, it is told so and
 waits. **The base stays** while the run is open: `task next` never tells one of it to stop for want of work — it waits
 (`--follow`) for a stage the lead stacks or a task sent back, and hears how its own work ended (`worked`); only one on
-demand stops, and one of one task a session ends its session. A base agent not running is asked for whatever waits
+demand stops, and one stops between two pieces of work for a fresh context (below). A base agent not running is asked for whatever waits
 (`agents-needed`, the run open past `STARTING_MS`): encore-2's designers and tester, stopped once every task was done,
 were stopped when a stage came. **Running** (`running.ts`, `agentsNow`): an agent the CLI launched runs while its process
 does (`launch.ts`); one started by hand, by the log — it said something and has not stopped since, a stop holding until
@@ -382,14 +390,24 @@ agents before, so while the lead reviewed or wrote a stage, ready tasks waited w
 runs a Claude one (`claude-…`, `sonnet`), Codex any other, opencode `provider/model`. One the harness does not run is
 not passed: the agent starts on the harness's own default, and `run agent --launch` says so.
 
-**One task a session** (`"sessionPerTask": true` on a team's agent, `run team set dev --session-per-task`): the CLI
-cannot empty a harness's context, so the agent ends its session instead. Once it completes a task — its session being
-what it did since its last `stops` in the log (`sessionDone`) — `task next` tells it to stop rather than hand it the
-next, and its own task sent back meanwhile still comes first, while its context is warm. The keeper starts it again —
-of the base, whatever waits; on demand, when work of its role does — and any task sent back to an agent that is not
-running asks for that agent by name, which it takes first. lx-product's dev-1 read 30.9M tokens for three tasks, each
-turn reading again what the tasks before left in its context: a session each reads ~40 % less, for ~1 minute and the
-skills read again at each start — worth it for an agent that works several tasks, not for one that works one.
+**A fresh context** (`freshStart`, `nextRules.ts`; a team agent's `"session"`, `options.freshContextAt`): the CLI cannot
+empty a harness's context, so the agent ends its session instead — always between two pieces of work, a task completed
+or a review decided, never in one, so nothing it knows and has not written is lost. Its session is what it did since it
+was last launched or stopped (the log's `launch` and `stops`); once a piece of it ended, `task next` tells it to stop,
+before its own work is handed back — never while it is in one (`inAPiece`), read off the tasks' state, not the log: a
+task it holds at work, waiting or blocked (a `task next` comes from an agent in a task too, its task blocked or given
+back), one sent back it took up again, a review it took and has not decided. Past the threshold or not, it stops only
+once that piece ends: `"session": "context"` (the default) once its harness's context — its last turn's,
+read from the session (`harness/contextNow`, Claude Code, Codex, OpenCode; another harness's is never read, and its
+agents are not stopped for it) — passes `freshContextAt` (100k tokens, from 60k); `"task"` after each piece; `"keep"`
+never. The piece it just completed, sent back already, comes first instead: its context is what that round needs. The
+lead that plans never stops for it — the person talks to it. The keeper starts the agent again — of the base, whatever
+waits; on demand, when work of its role does — and any task sent back to an agent not running asks for it by name,
+which it takes first. Every turn reads the whole context again: encore-2's developers, a session a task, read ~12k
+tokens' worth a turn and ended each at 58–113k; its designer and tester, never started again, grew to 400k and read
+26–30k a turn — more, the two, than the developers' 49 sessions; a start costs ~40k tokens written, about what a
+piece of work carrying 50k more context reads again in ~15 turns. `sessionPerTask` was this rule's `"task"`, for
+tasks alone; a team file that says it is refused naming `"session"`.
 
 **An agent started again after it died** (`launch.ts`). `run agent --launch` keeps what it started in
 `scratch/<agent>/agent.json`: the pid, the harness, when, and the session. In Claude Code that is a session id of the
@@ -693,13 +711,12 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   (`eslint --fix` when its `lint` script is eslint's, `prettier --write --ignore-unknown` when its `format` is
   prettier's: `fix.ts`), and says what they rewrote; a check that fails on lint or format without it says `--fix` —
   velada-polish's dev-1 ran three checks in twenty seconds, twice, on what a `--fix` writes.
-- **A rework handed over** (`handOff.ts`): a task sent back while its agent is at another one of its own — nothing
-  done on it since the verdict — waits `HAND_OFF_AFTER_MS` (3 min) for that agent; past it, a free agent of its role
-  asking `task next` is handed it (`handOff`, with what its review asked), and `--take` cuts the first agent's token —
-  told, by name, to go on with the task it is at — and takes it, its copy made again from the version that went to
-  review (`handed-off` in the activity). Until then, the waiting agent's answer says when it is its. velada-polish's
-  dev-1 held four tasks, two sent back at once: t-match-bars's changes waited ten minutes for it while dev-2 and dev-3
-  had nothing, and stopped. A task's holder reads its own with `task show` (its token's task: another's is the lead's).
+- **A task sent back waits for its agent:** while that agent is at another task of its own, the one sent back is
+  parked for it (`parkedFor`, "dev-1 at t-menu first") and handed to it by its next `task next`, before anything new —
+  never to a free agent, and never read "no signal — reassign it" meanwhile: the agent that wrote it has the context
+  its review asks about (Carlos, after encore-2). It was handed to a free agent after 3 minutes before (velada-polish's
+  t-match-bars waited ten minutes with two developers free); a lead who wants that reassigns it (`task reassign`). A
+  task's holder reads its own with `task show` (its token's task: another's is the lead's).
 - **Handed back, and why:** a task its own agent holds comes back with `task next` first, said as it is — changes
   requested, unblocked by the lead, or held all along (`back`): one held while another was worked was said "unblocked"
   right after `complete` told the agent to take no other step. A `--follow` that ends says one rule whatever the agent

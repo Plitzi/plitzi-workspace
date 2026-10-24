@@ -11,6 +11,7 @@ import { taskPaths, under } from '../paths';
 import { syncPreview } from '../preview';
 import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readApproved, readRunLog, recordBrake, requireNoTask } from '../run';
+import { logSpent } from '../spent';
 import { keepFiles, withLock } from '../store';
 import { DEFAULTS, lockedFiles, readRequests, readStart, revokeOwner, updateState, viewTask } from '../taskStore';
 import { DESIGNER, readTeam, startedAgents, TEAM_FILE } from '../team';
@@ -406,6 +407,7 @@ const decide = async (
         ? { action: 'design-review', task: taskId, verdict, round }
         : { action: 'review', task: taskId, verdict, round }
     );
+    await logSpent(ctx, loaded, taskId, 'review');
     const goesFirst = toLead ? [] : await tellItGoesFirst(ctx, loaded, view);
 
     return {
@@ -551,6 +553,7 @@ const decide = async (
     ...(skipped ? { design: 'skipped', ...(why ? { designSkip: why } : {}) } : {}),
     ...(skipped && view.state.design?.by ? { designBy: view.state.design.by } : {})
   });
+  await logSpent(ctx, loaded, taskId, 'review');
   await fs.rm(view.paths.cache, { recursive: true, force: true });
 
   const refreshed = await loadRun(ctx, runId);

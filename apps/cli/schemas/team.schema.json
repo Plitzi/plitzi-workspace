@@ -126,9 +126,9 @@
             "enum": ["low", "medium", "high", "xhigh", "max"],
             "description": "How hard it thinks \u2014 Claude Code's --effort, Codex's reasoning effort; left out, the harness's own"
           },
-          "sessionPerTask": {
-            "type": "boolean",
-            "description": "One task a session: each of its agents stops once it completes one, and the lead starts it again, a fresh context, for the next"
+          "session": {
+            "enum": ["task", "context", "keep"],
+            "description": "When its agents are started again with a fresh context, always between two pieces of work (a task completed, a review decided), never in one: task (the default) after each one, context once its context passes options.freshContextAt, keep never"
           },
           "resumeSession": {
             "type": "boolean",
@@ -151,6 +151,11 @@
           "minimum": 1,
           "maximum": 30,
           "description": "How long an agent just started may say nothing before the tasks it holds read 'no signal' and it reads as not running: 3 when not said"
+        },
+        "freshContextAt": {
+          "type": "integer",
+          "minimum": 60000,
+          "description": "The context, in tokens, past which an agent of \"session\": \"context\" is started again with a fresh one, between two pieces of work: 100000 when not said"
         },
         "launch": {
           "enum": ["claude", "codex", "opencode"],

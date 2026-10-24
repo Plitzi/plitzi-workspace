@@ -2,6 +2,7 @@ import { LEAD } from '../messages';
 import { RunRefusal } from '../refusal';
 
 import type { CheckRunner } from '../checks';
+import type { HarnessUsage } from '../harness';
 import type { Quality, RunPlan, RunRecord, RunTask } from '../model';
 import type { RunPaths } from '../paths';
 
@@ -30,6 +31,21 @@ export interface RunContext {
    * is never a command that hangs (velada-dress: `run finish --apply` ran 23 acceptance lines again, saying nothing).
    */
   say?: (line: string) => void;
+  /**
+   * How many tokens the caller's harness session holds now (`harness/contextNow`) — what an agent between two pieces of
+   * work is started again with a fresh context by (`TeamOptions.freshContextAt`). Not said, or unread: never.
+   */
+  context?: () => Promise<number | undefined>;
+  /**
+   * What the caller's harness spent in a window, read from its sessions — those its commands ran in, and this one's
+   * (`harness/spentIn`): what a piece of work ended is kept by (`spent.ts`). Not said: nothing is kept.
+   */
+  spent?: (window: {
+    from: string;
+    to: string;
+    sessions: string[];
+    processes: string[];
+  }) => Promise<HarnessUsage | undefined>;
 }
 
 export interface LoadedRun {

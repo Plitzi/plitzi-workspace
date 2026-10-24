@@ -114,7 +114,7 @@ export const costFindings = (
         title: `${report.agent} ended ${report.task} (round ${String(report.round)}) with ${tokensText(report.harness.contextAtEnd)} tokens of context`,
         evidence: [`${String(report.harness.turns)} turns; read ${tokensText(report.harness.processed)} in all`],
         times: 1,
-        fix: 'one task a session (sessionPerTask in .plitzi/team.json) or a shorter brief: every turn reads the whole context again',
+        fix: 'a fresh session sooner — "session": "task", or a lower options.freshContextAt, in .plitzi/team.json — or a shorter brief: every turn reads the whole context again',
         subject: `context:${report.task}:${String(report.round)}`
       });
     }

@@ -23,7 +23,7 @@ export interface PromptFor {
   /** The agent, as the team names it — or `lead`. */
   agent: string;
   /** Its roles and level, from the team; none for the lead. */
-  started?: Pick<StartedAgent, 'roles' | 'quality' | 'sessionPerTask'>;
+  started?: Pick<StartedAgent, 'roles' | 'quality' | 'session'>;
   runId: string;
   /** The project's folder. */
   root: string;
@@ -49,7 +49,7 @@ const rules = (cli: string): string[] => [
   // lx-controls: two agents read the bundle's types, every command's help and a site's HTML to learn what Plitzi had.
   '- Whether Plitzi has a way — a field, a step, a state, a command: `PLITZI explain --search "<words>"`, then `PLITZI explain <name>`; never the packages\' types nor a site\'s HTML fetched and searched. Nothing found that should be: `run notice --plitzi`.',
   '- Plitzi itself in your way — a refusal you think wrong, a command that cannot do what you need, a doc that misled you: say it as it happens, `PLITZI run notice --plitzi "…"` (the run\'s feedback to Plitzi carries it), and go on.',
-  '- When it says you can stop, answer with a short report: what you did, what is uncertain, and every friction with the CLI — the command and what it said.'
+  '- When it says you can stop, answer with a short report: what you did, what is uncertain, and every friction with the CLI — the command and what it said. Between two tasks or reviews it may say so for a fresh context: the run starts you again with one, for what you hold and what comes.'
 ];
 
 /** An agent's prompt: the lead's, a lead's that reviews, or one of the team's by its roles. */
@@ -98,9 +98,7 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
           reference === undefined
             ? '- Measure, never guess — every element and width in one call: `PLITZI page measure <path> <elements…> --width 390,1440` (`--hover`, `--click` for a state; `PLITZI page outline <path> --within <part>` names them). Trying values, measure; never `task check` for it.'
             : `- Measure, never guess — every element and width in one call: \`PLITZI page measure <path> "<ours> => <theirs>" …${beside} --width 390,1440\` (\`--hover\`, \`--click\` for a state; \`PLITZI page outline <path>${beside} --within <part>\` names theirs). Trying values, measure; never \`task check\` for it.`,
-          started?.sessionPerTask === true
-            ? '- Change a batch, then `PLITZI task check` once; then `PLITZI task complete --ease <1-5> --hardest "what cost you the most, and why" [--friction "what of Plitzi got in your way" …] [--helped "…"]` — what it was like, for Plitzi — and `PLITZI task next --follow --take`. You work one task a session: once it is complete, task next says you can stop — stop then, with your report; the lead starts you again, a fresh context, for the next task, and for yours if it is sent back.'
-            : '- Change a batch, then `PLITZI task check` once; then `PLITZI task complete --ease <1-5> --hardest "what cost you the most, and why" [--friction "what of Plitzi got in your way" …] [--helped "…"]` — what it was like, for Plitzi — and `PLITZI task next --follow --take` again.',
+          '- Change a batch, then `PLITZI task check` once; then `PLITZI task complete --ease <1-5> --hardest "what cost you the most, and why" [--friction "what of Plitzi got in your way" …] [--helped "…"]` — what it was like, for Plitzi — and `PLITZI task next --follow --take` again.',
           // lx-controls: t-collection completed with "Known: the phone keeps our inline panel, where the original opens a
           // drawer" — sent back for exactly that.
           `- ${reference === undefined ? 'Something wrong you see' : 'A difference from the site you copy you see'}, inside your task's title, is work, not a note: do it, or \`PLITZI task ask\` the lead before you complete.`,

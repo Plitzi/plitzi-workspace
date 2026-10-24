@@ -3,14 +3,14 @@ import path from 'node:path';
 
 import { hasDesignReview } from '../design';
 import { createExclusive } from '../files';
-import { coLeadsOf, spareLead } from '../leads';
+import { coLeadsOf, isPrincipal, spareLead } from '../leads';
 import { LEAD } from '../messages';
 import { freeBaseAgents, runningAgents } from '../onDemand';
 import { agentScratch } from '../paths';
 import { PRESENCE_STALE_MS, presentAt } from '../presence';
 import { loadRun, logRun, readRunLog } from '../run';
 import { viewTask } from '../taskStore';
-import { DESIGNER, readTeam, startedAgents } from '../team';
+import { DEFAULT_SESSION, DESIGNER, FRESH_CONTEXT_AT, readTeam, startedAgents } from '../team';
 import { isWorked } from '../worked';
 
 import type { LoadedRun, RunContext } from '../run';
@@ -34,37 +34,109 @@ export const markJoined = async (ctx: RunContext, loaded: LoadedRun): Promise<vo
   });
 };
 
+/** What ends a piece of an agent's work, in the run's log: a task completed, a review decided. */
+const PIECE_ENDS = new Set(['complete', 'review', 'design-review']);
+
 /**
- * For an agent of one task a session (`sessionPerTask`): the task it completed since it last stopped — its session's
- * work done — and why it stops; or nothing. Read off the run's log, as who is running is (`runningAgents`): a session
- * is what an agent did since its last `stops`, and the lead's next start of it is a fresh one.
+ * Whether the caller, between two pieces of work, stops to be started again with a fresh context (`SessionMode`), and
+ * why — or nothing. Its session is what it did since it was last launched or stopped; once a piece of it ended, `task`
+ * (the default) stops it, and `context` once its harness's context passes the team's `freshContextAt`. The piece it just
+ * ended, sent back already, is the one exception: its context is what that round needs. The lead that plans never
+ * stops for it, nor an agent outside the team: nobody would start it again.
  */
-export const sessionEnd = async (
+export const freshStart = async (
   ctx: RunContext,
   loaded: LoadedRun,
-  /** A task it still holds from an earlier session: the next session's, said so — never this one's second. */
-  stillHeld?: string
-): Promise<{ task: string | undefined; why: string } | undefined> => {
+  views: readonly TaskView[]
+): Promise<{ why: string } | undefined> => {
+  if (isPrincipal(ctx.agent)) {
+    return undefined;
+  }
+
   const team = await readTeam(ctx.root).catch(() => undefined);
-  if (!(team ? startedAgents(team) : []).some(each => each.agent === ctx.agent && each.sessionPerTask === true)) {
+  const member = (team ? startedAgents(team) : []).find(each => each.agent === ctx.agent);
+  // Only one the run starts again stops for it: an agent of the team, or a lead that reviews — another, with nobody to
+  // start it, keeps its session.
+  const mode = member ? (member.session ?? DEFAULT_SESSION) : coLeadsOf(loaded.record).includes(ctx.agent) ? DEFAULT_SESSION : 'keep';
+  if (mode === 'keep') {
     return undefined;
   }
 
-  const own = (await readRunLog(loaded.paths)).filter(entry => entry.by === ctx.agent);
-  const since = own.findLastIndex(entry => entry.action === 'stops');
-  const completed = own.slice(since + 1).findLast(entry => entry.action === 'complete');
-  if (!completed) {
+  const log = await readRunLog(loaded.paths);
+  const began = log.findLastIndex(
+    entry =>
+      (entry.action === 'stops' && entry.by === ctx.agent) || (entry.action === 'launch' && entry.agent === ctx.agent)
+  );
+  const ended = log.slice(began + 1).findLast(entry => entry.by === ctx.agent && PIECE_ENDS.has(String(entry.action)));
+  if (!ended) {
     return undefined;
   }
 
-  const task = typeof completed.task === 'string' ? completed.task : undefined;
-  const named = task ?? 'its task';
+  const task = typeof ended.task === 'string' ? ended.task : undefined;
+  if (inAPiece(ctx.agent, views)) {
+    return undefined;
+  }
+
+  const own = views.filter(view => view.owner?.agent === ctx.agent && isWorked(view.state.status));
+  if (
+    ended.action === 'complete' &&
+    own.some(view => view.task.id === task && view.state.status === 'changes-requested')
+  ) {
+    return undefined;
+  }
+
+  const piece =
+    ended.action === 'complete'
+      ? `${task ?? 'your task'} is complete`
+      : `your review of ${task ?? 'a task'} is decided`;
+  const next =
+    own.length > 0
+      ? `${own.map(view => view.task.id).join(', ')}, which you hold, and what comes next`
+      : 'what comes next';
+  if (mode === 'task') {
+    return {
+      why: `${piece}: you are started again with a fresh context after each task or review (your team's session: task) — for ${next}. You can stop`
+    };
+  }
+
+  const context = await ctx.context?.();
+  const limit = team?.options?.freshContextAt ?? FRESH_CONTEXT_AT;
+  if (context === undefined || context <= limit) {
+    return undefined;
+  }
 
   return {
-    task,
-    why: `${named} is complete: your team gives you one task a session (sessionPerTask) — the lead starts you again, a fresh context, for ${stillHeld === undefined ? 'the next' : `${stillHeld}, which you still hold`}, or for ${named} if it is sent back. You can stop`
+    why: `${piece}, and your context is ${thousands(context)} tokens, past the team's ${thousands(limit)} (freshContextAt): every turn reads it all again — you are started again with a fresh one for ${next}. You can stop`
   };
 };
+
+/**
+ * Whether `agent` is in a piece of work, by the tasks' state — never by the log alone: a `task next` comes from an agent
+ * in a task too, its task blocked or given back to it, or one it took since its last piece ended. In one: a task it
+ * holds at work, waiting or blocked; one sent back it took up again since its review; a review it took and has not
+ * decided — its UI's or the code's. Stopped there, what it knows of it and has not written would be lost.
+ */
+export const inAPiece = (agent: string, views: readonly TaskView[]): boolean =>
+  views.some(view => {
+    const { state } = view;
+    if (view.owner?.agent === agent) {
+      if (state.status === 'in-progress' || state.status === 'waiting' || state.status === 'blocked') {
+        return true;
+      }
+
+      const sentBackAt = view.review === undefined ? Number.NaN : Date.parse(view.review.at);
+      if (state.status === 'changes-requested' && (view.workedAt ?? 0) > sentBackAt) {
+        return true;
+      }
+    }
+
+    return (
+      (state.status === 'in-review' && state.reviewer?.by === agent && state.reviewer.round === state.round) ||
+      (state.design?.status === 'due' && state.design.by === agent)
+    );
+  });
+
+const thousands = (tokens: number): string => `${String(Math.round(tokens / 1000))}k`;
 
 /** For an agent on demand: the team's base agents of its roles, there and free — ready work is theirs first. */
 export const baseFirst = async (

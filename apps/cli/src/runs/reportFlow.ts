@@ -25,11 +25,11 @@ export const flowText = (metrics: RunMetrics): string[] => {
         ]),
     'Minutes. Waits for a review count from when it was sent; for the lead, from the UI approved (or sent, with none); a rework, from the changes asked to an agent at it again.',
     '',
-    '| Task | Agents | To take | Worked | Rounds UI / lead | Waited for UI | UI review | Waited for lead | Rework waited | Checks failed | Handed off |',
-    '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+    '| Task | Agents | To take | Worked | Rounds UI / lead | Waited for UI | UI review | Waited for lead | Rework waited | Checks failed |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
     ...metrics.tasks.map(
       task =>
-        `| ${task.task} | ${task.agents.join(', ') || '—'} | ${num(task.toTake)} | ${String(Math.round(task.worked * 10) / 10)} | ${String(task.rounds.ui)} / ${String(task.rounds.lead)} | ${listed(task.uiWaits)} | ${listed(task.uiReviews)} | ${listed(task.leadWaits)} | ${listed(task.reworkWaits)} | ${String(task.checks.failed)} of ${String(task.checks.run)} | ${String(task.handOffs)} |`
+        `| ${task.task} | ${task.agents.join(', ') || '—'} | ${num(task.toTake)} | ${String(Math.round(task.worked * 10) / 10)} | ${String(task.rounds.ui)} / ${String(task.rounds.lead)} | ${listed(task.uiWaits)} | ${listed(task.uiReviews)} | ${listed(task.leadWaits)} | ${listed(task.reworkWaits)} | ${String(task.checks.failed)} of ${String(task.checks.run)} |`
     ),
     '',
     '| Agent | Joined | Stopped | Tasks | Completes | Checks failed | Refused | Waited for work | Reviews UI (changes) / lead (changes), median | Calls | Read (≈tokens) | Harness tokens (its context at the end) | Read again (≥) |',
@@ -58,7 +58,6 @@ export const flowText = (metrics: RunMetrics): string[] => {
         : ''
     }`,
     `- Questions: ${String(questions.asked)} asked, ${String(questions.answered)} answered${questions.waits.length > 0 ? `, in ${questions.waits.join(', ')} min` : ''}`,
-    `- Reworks handed to a free agent: ${String(metrics.handOffs)}`,
     '',
     '## Cost — what the CLI made the agents read',
     '',

@@ -261,9 +261,9 @@ describe('agents on demand', () => {
   // lx-product: dev-1 read 30.9M tokens for three tasks, each turn reading again what the tasks before it left; a session
   // a task reads ~40 % less. The CLI cannot empty a harness's context: it tells the agent to stop, and the lead starts it.
   it('ends a session of one task once it is complete, and asks for the next — for its own sent back too', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], sessionPerTask: true });
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
     const team = await readTeam(bench.root);
-    expect(team ? startedAgents(team) : []).toEqual([{ agent: 'dev-1', roles: ['developer'], sessionPerTask: true }]);
+    expect(team ? startedAgents(team) : []).toEqual([{ agent: 'dev-1', roles: ['developer'], session: 'task' }]);
     await openRun(lead(), await bench.writePlan(benchPlan()));
     bench.advance(STARTING_MS);
 
@@ -279,7 +279,9 @@ describe('agents on demand', () => {
     await complete(1);
     expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({
       finished: true,
-      why: expect.stringContaining('t-home is complete: your team gives you one task a session') as unknown
+      why: expect.stringContaining(
+        't-home is complete: your team starts you again with a fresh context after each task'
+      ) as unknown
     });
     // Stopped, with work waiting: started again, though it starts with the run.
     expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
@@ -315,7 +317,7 @@ describe('agents on demand', () => {
 
   // encore-2: run upgrade waited on t-room-read, sent back to a dev-2 whose session had ended — nobody was writing it.
   it('leaves out of a gentle stop a task sent back to an agent not running', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], sessionPerTask: true });
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
     await openRun(lead(), await bench.writePlan(benchPlan()));
     bench.advance(STARTING_MS);
 
@@ -340,7 +342,7 @@ describe('agents on demand', () => {
   // encore-2: test-1 and the designers sent a notice on their way out, after their stop, and the board read "no signal"
   // for half an hour where they had stopped.
   it('keeps an agent stopped through what it says after its stop', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], sessionPerTask: true });
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
     await openRun(lead(), await bench.writePlan(benchPlan()));
     bench.advance(STARTING_MS);
 
@@ -360,7 +362,7 @@ describe('agents on demand', () => {
   // encore-2: the watch asked to start dev-1 — running, its process alive, its log's last word a stop — while dev-2 and
   // dev-3 waited stopped. Launched by the CLI, its process says whether an agent runs.
   it('counts an agent launched by the CLI as running while its process lives, whatever its log says', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, sessionPerTask: true });
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, session: 'task' });
     await openRun(lead(), await bench.writePlan(benchPlan()));
     bench.advance(STARTING_MS);
     const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
@@ -388,7 +390,7 @@ describe('agents on demand', () => {
   // Carlos: "los agentes base, deben estar siempre activos aunque esten idle". One of the base whose session of one task
   // ended is asked for though nothing waits — the lead may stack a stage — and not once the run is stopping.
   it('asks for a base agent that is not running while the run is open, whatever waits', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], sessionPerTask: true });
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
     const plan = benchPlan();
     plan.designReview = false;
     plan.tasks = plan.tasks.filter(task => task.id === 't-home');
@@ -410,8 +412,9 @@ describe('agents on demand', () => {
   });
 
   // encore's dev-1: after t-player, next handed it t-shell, held from an earlier session — two tasks in one context.
-  it('leaves a task held from an earlier session to the next one, saying so', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], sessionPerTask: true });
+  // Carlos: never stopped in a task — one it holds at work is one, whatever its session mode says.
+  it('goes on with a task it holds at work rather than stop after the one it completed', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
     await openRun(lead(), await bench.writePlan(benchPlan()));
     bench.advance(STARTING_MS);
 
@@ -421,11 +424,8 @@ describe('agents on demand', () => {
     await completeTask(bench.agent('dev-1', { token: menu.token }), 'es-launch', 't-menu');
 
     expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({
-      finished: true,
-      why: expect.stringContaining('for t-home, which you still hold') as unknown
-    });
-    expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({
-      task: expect.objectContaining({ id: 't-home' }) as unknown
+      task: expect.objectContaining({ id: 't-home' }) as unknown,
+      yours: 'in-progress'
     });
   });
 

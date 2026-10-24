@@ -110,7 +110,13 @@ export const snapshotOf = ({ view, agents, feed }: Monitored, at: Date): RunSnap
     doing: each.doing,
     ...(each.task ? { task: each.task } : {})
   })),
-  feed: feed.slice(0, 40).map(each => ({ at: each.at, by: each.by, text: each.text, kind: each.kind }))
+  feed: feed.slice(0, 40).map(each => ({
+    at: each.at,
+    by: each.by,
+    text: each.text,
+    ...(each.detail === undefined ? {} : { detail: each.detail }),
+    kind: each.kind
+  }))
 });
 
 const writeSnapshot = async (ctx: RunContext, loaded: LoadedRun): Promise<void> => {

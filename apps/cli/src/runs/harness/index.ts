@@ -1,4 +1,5 @@
 import { readClaude } from './claude';
+import { sessionOfProcess } from '../session';
 import { readCodex } from './codex';
 import { readOpenCode } from './opencode';
 import { usageOf } from './types';
@@ -47,4 +48,40 @@ export const harnessUsage = async ({
   ]);
 
   return usageOf(reads.filter((read): read is SessionRead => read !== undefined));
+};
+
+/**
+ * How many tokens the harness session this command runs in holds now: its last turn's context. Nothing when the session
+ * is not one a run reads (a person's terminal, a harness other than Claude Code, Codex and OpenCode).
+ */
+export const contextNow = async (root: string, now: Date): Promise<number | undefined> => {
+  const { session, process } = sessionOfProcess();
+  const usage = await harnessUsage({
+    sessions: session === undefined ? [] : [session],
+    processes: process === undefined ? [] : [process],
+    root,
+    from: new Date(0).toISOString(),
+    to: now.toISOString()
+  });
+
+  return usage?.contextAtEnd;
+};
+
+/**
+ * What the harness spent from `from` to `to` in the sessions named, and in the one this command runs in — a command's
+ * own usage is written once it ends, so the session of the command that ends a piece of work is not among them yet.
+ */
+export const spentIn = async (
+  root: string,
+  window: { from: string; to: string; sessions: string[]; processes: string[] }
+): Promise<HarnessUsage | undefined> => {
+  const own = sessionOfProcess();
+
+  return harnessUsage({
+    sessions: [...new Set([...window.sessions, ...(own.session === undefined ? [] : [own.session])])],
+    processes: [...new Set([...window.processes, ...(own.process === undefined ? [] : [own.process])])],
+    root,
+    from: window.from,
+    to: window.to
+  });
 };

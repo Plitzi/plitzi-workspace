@@ -15,6 +15,7 @@ import { entryOf } from '../model';
 import { lockFile, NOT_TASK_DIRS, taskPaths, under } from '../paths';
 import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readApproved, readBase, recordBrake } from '../run';
+import { logSpent } from '../spent';
 import { keepFiles, putBlob, withLock } from '../store';
 import { tellLeftInTmp } from '../strays';
 import {
@@ -566,6 +567,7 @@ export const completeTask = async (
     to: at(ctx),
     ...(options.experience === undefined ? {} : { experience: options.experience })
   });
+  await logSpent(ctx, loaded, taskId, 'task');
 
   return {
     changed,

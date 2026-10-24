@@ -40,7 +40,7 @@ const launching = async () => {
 
 describe("the run's keeper", () => {
   it('starts a base agent whose session ended, while the run is open — and nothing once it stops or is gone', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], sessionPerTask: true });
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
     await launching();
     await openRun(lead(), await bench.writePlan(benchPlan()));
     bench.advance(STARTING_MS);
@@ -66,7 +66,7 @@ describe("the run's keeper", () => {
   });
 
   it('starts nothing when the team names no harness to start it in', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], sessionPerTask: true });
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
     await openRun(lead(), await bench.writePlan(benchPlan()));
     bench.advance(STARTING_MS);
 

@@ -156,10 +156,16 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   - A new project starts with two developers (one on demand) and a designer.
 - **`min`:** that many start with the run; the rest are **on demand**. `run watch --until lead` names the agent to start
   when work waits for one, and an agent with nothing left stops by itself.
-- **`sessionPerTask`:** an agent works one task a session. It stops once its task is complete, and the lead starts it
-  again with a fresh context for the next task, or for its own task if it is sent back. Fewer tokens for an agent that
-  would otherwise carry several tasks in its context.
-  A task it still holds from an earlier session waits for the next one, named when it is told to stop.
+- **`session`: when an agent is started again with a fresh context,** always between two pieces of work — a task
+  completed, a review decided — so nothing it knows and has not written is lost: `context` (the default) once its
+  harness's context passes `options.freshContextAt` (100k tokens), `task` after each one, `keep` never. Testers,
+  designers and co-leads too; the lead that plans keeps its session. encore-2's designer and tester, never started
+  again, grew to 400k tokens and read 26–30k a turn, against ~12k for its developers started again per task.
+  **Breaking:** `sessionPerTask` is gone — `"session": "task"` says it, and a team file with the old key is refused
+  naming the new one (`run team set dev --session task`).
+- **A task sent back waits for its own agent,** who takes it as soon as it ends the task it is at: it is no longer
+  handed to a free agent after 3 minutes (the `handed-off` entry and the bench's "Handed off" column are gone), and
+  while it waits it never reads "no signal — reassign it".
 - **`resumeSession`:** an agent started again after it died with a task in hand resumes its own session (Claude Code's
   `--resume`), so it keeps what it knew and had not written yet. It starts fresh instead, saying why, when its session
   is gone or past 8 MB. The starter team asks it of every agent. `run agent --launch` refuses to start a second session
@@ -249,6 +255,12 @@ report`, …).
 - **`plitzi run monitor`:** a live board in a terminal of its own. It shows what needs someone, the tasks and their
   flow as a kanban, each agent's state, and the whole activity, paged. It works with the mouse, fits any terminal and
   only reads.
+  - **Each activity line is short** — 72 characters at most, in its own words ("checks fail: lint + 3 files of other
+    tasks", "stops for a fresh context") — and a click on a ▸ line opens the whole of it under it; the dev tools' Run
+    tab shows the whole on hover. encore-2's lines ran to 499 characters.
+  - **What each agent spent, beside the activity:** tokens read, pieces of work done and its context, the lead and the
+    reviewers included, a context past `freshContextAt` said apart. Kept in the run's log as each task completes and
+    each review is decided (`spent`).
 - **`run watch --until lead`** wakes the lead once for each review, question, block, idle agent or agent to start.
   `run status` gives the same in one answer.
 - **`npm run start:preview`** serves the run's approved work as it grows; `run preview --task` serves one task's copy.

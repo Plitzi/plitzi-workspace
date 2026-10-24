@@ -175,6 +175,7 @@ const RunViewer = ({ snapshot }: { snapshot?: RunSnapshot }) => {
                     'min-w-0 grow',
                     event.kind === 'problem' ? 'text-red-600 dark:text-red-400' : 'text-zinc-600 dark:text-zinc-300'
                   )}
+                  title={event.detail}
                 >
                   {event.text}
                 </span>

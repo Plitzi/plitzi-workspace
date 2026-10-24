@@ -12,6 +12,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { failedSteps } from './text';
 import { projectChecks } from '../../runs/checks';
 import { writtenByAnother } from '../../runs/compat';
+import { contextNow, spentIn } from '../../runs/harness';
 import { AGENT_TOKEN, identify, issuedText, UNNAMED } from '../../runs/identity';
 import { LEAD } from '../../runs/messages';
 import { COPY_TASK_FILE, copyOf, runPaths } from '../../runs/paths';
@@ -188,6 +189,8 @@ export const contextFor = async (options: RunCommandOptions): Promise<RunContext
     ...(isQuality(quality) ? { quality } : {}),
     person: askPerson,
     checks: projectChecks,
+    context: () => contextNow(root, new Date()),
+    spent: window => spentIn(root, window),
     // On stderr, dim: never in an answer read as JSON, nor in the one sentence a command ends with.
     ...(options.json === true || process.env.PLITZI_JSON === '1'
       ? {}

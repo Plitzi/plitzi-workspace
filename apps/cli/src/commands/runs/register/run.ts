@@ -218,10 +218,9 @@ export const registerRunGroup = (program: Command): Command => {
       'How hard it thinks: low, medium, high, xhigh, max (Claude Code’s --effort, Codex’s reasoning effort)'
     )
     .option(
-      '--session-per-task',
-      'One task a session: each of its agents stops once it completes one, started again — a fresh context — for the next'
+      '--session <mode>',
+      'When its agents start again with a fresh context, between two pieces of work: task (after each task or review, the default), context (past options.freshContextAt), keep (never)'
     )
-    .option('--no-session-per-task', 'Its agents go on from one task to the next in one session')
     .option(
       '--resume-session',
       'Started again after it died mid-task, an agent resumes its own session (Claude Code) — what it knew kept'

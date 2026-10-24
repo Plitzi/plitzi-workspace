@@ -1,19 +1,21 @@
 import { commandDoing, doingOf, statusOf } from './agentDoing';
 import { answering, openQuestions } from './answering';
 import { isDesignSkip } from './designSkip';
-import { feedOf, glimpse, textOf } from './feedLine';
+import { feedOf, glimpse, SHORT, textOf } from './feedLine';
 import { LEAD, messagesOf } from './messages';
 import { stoppedAgents } from './onDemand';
 import { runPaths } from './paths';
 import { presentAt, PRESENCE_STALE_MS } from './presence';
 import { loadRun, readRunLog, runIds } from './run';
-import { choiceText, readTeam, startedAgents } from './team';
+import { spentOf } from './spent';
+import { choiceText, FRESH_CONTEXT_AT, readTeam, startedAgents } from './team';
 import { readUsage } from './usage';
 import { viewRun } from './view';
 import { isWorked } from './worked';
 
 import type { DesignSkip } from './designSkip';
 import type { RunContext } from './run';
+import type { Spent } from './spent';
 import type { UsageLine } from './usage';
 import type { RunView, TaskLine } from './view';
 
@@ -61,8 +63,10 @@ export interface AgentLine {
 export interface FeedLine {
   at: string;
   by: string;
-  /** What happened, said — whole, for a surface that shows one line of text. */
+  /** What happened, said for a glance — `SHORT` at most (`feedLine.ts`). */
   text: string;
+  /** The whole of it, when `text` says less: what a person opens the line to read. */
+  detail?: string;
   kind:
     | 'take'
     | 'complete'
@@ -137,6 +141,10 @@ export interface Monitored {
   feed: FeedLine[];
   /** Each task's story, by its id. */
   stories: Partial<Record<string, TaskStory>>;
+  /** What each agent's harness spent so far, the most read first (`spent.ts`). */
+  spend: Spent[];
+  /** The context past which an agent is started again fresh: a context past it is said apart. */
+  freshContextAt: number;
   /** Every run of the project, this one among them: which is shown, and that there are others. */
   runs: { runId: string; status: string }[];
   /**
@@ -512,7 +520,8 @@ export const monitorRun = async (ctx: RunContext, runId: string, feedLength = 40
     // To a task is to the agent writing it, said by its name with the task beside: who reads it, at a glance.
     const holder = stories[message.to]?.writers.at(-1);
     const to = message.to === '*' ? 'every task' : (holder ?? message.to.replace(/^@/, ''));
-    const quote = glimpse(message.text.replace(/\s+/g, ' '));
+    const whole = message.text.replace(/\s+/g, ' ');
+    const quote = glimpse(whole, SHORT - 1);
 
     return {
       at: message.at,
@@ -521,7 +530,8 @@ export const monitorRun = async (ctx: RunContext, runId: string, feedLength = 40
       to,
       quote,
       ...(writer === undefined ? (holder === undefined ? {} : { task: message.to }) : { task: message.from }),
-      text: `${writer === undefined ? '' : `on ${message.from} `}→ ${to}${message.fyi ? ' (for you to know)' : asks ? ' (asks)' : ''}: ${quote}`
+      text: `${writer === undefined ? '' : `on ${message.from} `}→ ${to}${message.fyi ? ' (for you to know)' : asks ? ' (asks)' : ''}: ${quote}`,
+      ...(quote === whole ? {} : { detail: whole })
     };
   });
   // A completion's note is sent to the lead as it completes (`task complete --note`): said on the completion's line, not
@@ -539,7 +549,8 @@ export const monitorRun = async (ctx: RunContext, runId: string, feedLength = 40
           )
         : undefined;
     if (note?.quote !== undefined) {
-      line.text = `${line.text} — “${note.quote}”`;
+      line.detail = `${line.detail ?? line.text} — “${note.detail ?? note.quote}”`;
+      line.text = glimpse(`${line.text} — “${note.quote}”`, SHORT - 1);
       notes.add(note);
     }
   }
@@ -566,11 +577,15 @@ export const monitorRun = async (ctx: RunContext, runId: string, feedLength = 40
         }
       : undefined;
 
+  const team = await readTeam(ctx.root).catch(() => undefined);
+
   return {
     view,
     agents: await agentsOf(ctx, view, log, stories, usage),
     feed,
     stories,
+    spend: spentOf(log),
+    freshContextAt: team?.options?.freshContextAt ?? FRESH_CONTEXT_AT,
     runs,
     ...(stage ? { stage } : {})
   };

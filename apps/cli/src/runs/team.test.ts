@@ -190,15 +190,24 @@ describe('the team of a project’s runs', () => {
     ).toEqual([
       '"extra" is no field of it (it takes version, lead, agents, options, about)',
       '"lead": "modle" is no field of it — did you mean "model"? (it takes model, effort, count)',
-      '"dev": "cuont" is no field of it — did you mean "count"? (it takes name, roles, count, min, model, effort, sessionPerTask, resumeSession)',
+      '"dev": "cuont" is no field of it — did you mean "count"? (it takes name, roles, count, min, model, effort, session, resumeSession)',
       '"lead" is the lead’s: give the lead its model under "lead", and the agent another name'
     ]);
     expect(teamProblems({ $schema: TEAM_SCHEMA, version: 1, agents: [{ name: 'dev', roles: ['developer'] }] })).toEqual(
       []
     );
-    expect(
-      teamProblems({ version: 1, agents: [{ name: 'dev', roles: ['developer'], sessionPerTask: 'yes' }] })
-    ).toEqual(['"dev": its sessionPerTask is true — one task a session — or false']);
+    expect(teamProblems({ version: 1, agents: [{ name: 'dev', roles: ['developer'], session: 'yes' }] })).toEqual([
+      '"dev": its session is context, task, keep — when it is started again with a fresh context: past options.freshContextAt (the default), after each task or review, or never'
+    ]);
+    // Renamed: refused saying what it is now, never read as nothing.
+    expect(teamProblems({ version: 1, agents: [{ name: 'dev', roles: ['developer'], sessionPerTask: true }] })).toEqual(
+      [
+        '"dev": "sessionPerTask" is now "session": "task" — or "context", the default: started again once its context passes options.freshContextAt — or "keep"'
+      ]
+    );
+    expect(teamProblems({ version: 1, agents: [], options: { freshContextAt: 1000 } })).toEqual([
+      '"options": "freshContextAt" is the context, in tokens, past which an agent is started again fresh — a whole number from 60000; 100000 when not said'
+    ]);
     expect(teamProblems({ version: 1, agents: [{ name: 'dev', roles: ['developer'], resumeSession: 'yes' }] })).toEqual(
       ['"dev": its resumeSession is true — its own session resumed after it died with a task in hand — or false']
     );
@@ -267,6 +276,7 @@ describe('the team of a project’s runs', () => {
     expect(props(schema, 'properties')).toEqual(['$schema', 'about', 'agents', 'lead', 'options', 'version']);
     expect(props(schema, 'properties', 'options', 'properties')).toEqual([
       'designReview',
+      'freshContextAt',
       'launch',
       'startGraceMinutes'
     ]);
@@ -279,7 +289,7 @@ describe('the team of a project’s runs', () => {
       'name',
       'resumeSession',
       'roles',
-      'sessionPerTask'
+      'session'
     ]);
   });
 
