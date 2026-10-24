@@ -163,9 +163,12 @@ the rest leaves, down to the terminal's foot, an event repeated in a row one lin
 characters at most (`SHORT`, `feedLine.ts`), in its own words where the whole would be cut: "checks fail: lint, 2
 acceptance lines + 1 file of other tasks", "stops for a fresh context" — and keeps the whole as its `detail`, opened
 under it with a click (▸); encore-2's ran to 499 characters a line, a tenth of them past 200. The dev tools' Run tab
-shows the same, the whole on hover. Beside the activity, from 140 columns (a line over it under them), **the spend**
-(`monitorSpend.ts`): what each agent's harness read so far — the lead's and the reviewers' too — its pieces of work
-done and its context when it last ended one, said apart past `freshContextAt`. It is kept in the run's log as each
+shows the same, the whole on hover. Beside the activity, as wide as it says and the activity taking the rest (a line over it when that would leave the
+activity under 80 columns), **the spend** (`monitorSpend.ts`): what each agent's harness spent so far — the lead's and
+the reviewers' too — its pieces of work, turns, tokens **in** (fresh input and context written to the cache), **out**
+and **cached** (its context read again each turn: a tenth of the price, and most of what is read — one figure of all
+three said 1.1M for one spec of encore-3's tester, ~240k its price), and its context now, marked past `freshContextAt`
+for an agent of `"session": "context"` alone. Sorted by in+out, `s` turning it to cached, context, name. It is kept in the run's log as each
 piece of work ends (`spent`, `spent.ts`): a task completed, a review decided, each from the agent's last, read from
 its sessions as the round's report reads them (`harness/spentIn`). It fits the terminal it is in (`monitorBoard.ts`,
 `monitorFlow.ts`): the flow's stages in bands on a narrow one and its cards fewer on a short one — each stage's count in
@@ -400,7 +403,7 @@ task it holds at work, waiting or blocked (a `task next` comes from an agent in 
 back), one sent back it took up again, a review it took and has not decided. Past the threshold or not, it stops only
 once that piece ends: `"session": "task"` (the default, `DEFAULT_SESSION`) after each piece; `"context"` once its
 harness's context — its last turn's, read from the session (`harness/contextNow`, Claude Code, Codex, OpenCode; another
-harness's is never read, and its agents are not stopped for it) — passes `freshContextAt` (100k tokens, from 60k);
+harness's is never read, and its agents are not stopped for it) — passes `freshContextAt` (250k tokens, from 60k);
 `"keep"` never. The piece it just completed, sent back already, comes first instead: its context is what that round
 needs. The lead that plans never stops for it — the person talks to it — nor an agent outside the team: only the
 team's agents and the leads that review are started again by the run. The keeper starts the agent again — of the base, whatever

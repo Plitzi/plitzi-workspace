@@ -158,7 +158,7 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   when work waits for one, and an agent with nothing left stops by itself.
 - **`session`: when an agent is started again with a fresh context,** always between two pieces of work — a task
   completed, a review decided — never in one, past any size, so nothing it knows and has not written is lost: `task`
-  (the default) after each one, `context` once its harness's context passes `options.freshContextAt` (100k tokens),
+  (the default) after each one, `context` once its harness's context passes `options.freshContextAt` (250k tokens),
   `keep` never. Testers, designers and co-leads too; the lead that plans keeps its session, and an agent outside the
   team (nobody would start it again). encore-2's designer and tester, never started again, grew to 400k tokens and
   read 26–30k a turn, against ~12k for its developers started again per task.
@@ -168,6 +168,9 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   the platform's limits read before a task is written, the person's decisions asked before the tasks, and a summary —
   what is built, decided, left out, how long, who works, who applies it — said before anything starts. No agent of the
   team starts while a run holds its scope spike alone.
+- **The run's keeper starts on a run just opened** — its log's folder made (encore-3's open crashed on it, no agent
+  started) — and is the one to start agents while it runs: the lead's watch starting them too told the lead an agent
+  "could not be started" that was running. An agent started meanwhile by another is no failure.
 - **A task sent back waits for its own agent,** who takes it as soon as it ends the task it is at: it is no longer
   handed to a free agent after 3 minutes (the `handed-off` entry and the bench's "Handed off" column are gone), and
   while it waits it never reads "no signal — reassign it".
@@ -263,9 +266,11 @@ report`, …).
   - **Each activity line is short** — 72 characters at most, in its own words ("checks fail: lint + 3 files of other
     tasks", "stops for a fresh context") — and a click on a ▸ line opens the whole of it under it; the dev tools' Run
     tab shows the whole on hover. encore-2's lines ran to 499 characters.
-  - **What each agent spent, beside the activity:** tokens read, pieces of work done and its context, the lead and the
-    reviewers included, a context past `freshContextAt` said apart. Kept in the run's log as each task completes and
-    each review is decided (`spent`).
+  - **What each agent spent, beside the activity:** pieces of work, turns, tokens in, out and cached — read again each
+    turn, a tenth of the price, kept apart: one figure of all three said 1.1M where ~240k was the price — and its context,
+    marked past `freshContextAt` for a `"session": "context"` agent alone. As wide as it says, the activity taking the
+    rest; sorted by in+out, `s` changes it. Kept in the run's log as each task completes and each review is decided
+    (`spent`), the lead and the reviewers included.
 - **`run watch --until lead`** wakes the lead once for each review, question, block, idle agent or agent to start.
   `run status` gives the same in one answer.
 - **`npm run start:preview`** serves the run's approved work as it grows; `run preview --task` serves one task's copy.

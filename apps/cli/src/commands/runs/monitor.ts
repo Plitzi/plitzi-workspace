@@ -8,7 +8,7 @@ import { bodyOf, detailOf, listedTasks, orderedTasks } from './monitorBoard';
 import { cell, hhmm, wrapped } from './monitorCells';
 import { detailRows, FEED_LOOK, FEED_WORDS, feedColumns, feedRow, groupKey, opens, repeatRow } from './monitorFeed';
 import { fittedFlow } from './monitorFlow';
-import { SPEND_BESIDE, SPEND_WIDTH, spendLine, spendLines } from './monitorSpend';
+import { ACTIVITY_LEAST, SPEND_SORTS, spendLine, spendPanel } from './monitorSpend';
 import { contextFor } from './shell';
 import { monitorRun } from '../../runs/monitor';
 import { runPaths } from '../../runs/paths';
@@ -16,6 +16,7 @@ import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { activeRuns, runIds } from '../../runs/run';
 
 import type { FlowColumn } from './monitorFlow';
+import type { SpendSort } from './monitorSpend';
 import type { RunCommandOptions } from './shell';
 import type { Monitored } from '../../runs/monitor';
 import type { RunContext } from '../../runs/run';
@@ -77,7 +78,8 @@ export const monitorScreen = (
     onGroupPages,
     onRegions,
     flow = true,
-    flowOffsets = new Map<number, number>()
+    flowOffsets = new Map<number, number>(),
+    spendSort = 'spent'
   }: {
     selected: number;
     open: boolean;
@@ -98,6 +100,8 @@ export const monitorScreen = (
     flow?: boolean;
     /** How far down each of the flow's stages is scrolled, by stage (`FlowColumn.stage`). */
     flowOffsets?: ReadonlyMap<number, number>;
+    /** What the spend's rows are ordered by — `s` turns it. */
+    spendSort?: SpendSort;
     /** Told which page of the activity each group's line is on: an opened group is shown on its page. */
     onGroupPages?: (pages: Map<string, number>) => void;
     /** Told which rows the tasks and the activity take (first, after the last; 0 the top): where the wheel scrolls what. */
@@ -157,6 +161,7 @@ export const monitorScreen = (
       'a the approved',
       '←→ the activity',
       'click a ▸ line: the whole of it',
+      's sorts the spend',
       ...(short
         ? []
         : [
@@ -228,9 +233,11 @@ export const monitorScreen = (
   const left = Math.max(0, room - board.length - besideBoard - body.length - detail.length - ACTIVITY_HEAD);
   // The activity's rows: each event, and under an opened group each of its repeats.
   type Row = { row: string; key?: string };
-  // The spend beside the activity on a wide terminal, its line over it on a narrow one.
-  const beside = width >= SPEND_BESIDE;
-  const feedWidth = beside ? width - SPEND_WIDTH - 2 : width;
+  // The spend beside the activity, as wide as it says, the activity taking the rest — its line over it when that leaves
+  // the activity too narrow.
+  const spendBeside = spendPanel(data.spend, data.freshAt, height, spendSort);
+  const beside = width - spendBeside.width - 2 >= ACTIVITY_LEAST;
+  const feedWidth = beside ? width - spendBeside.width - 2 : width;
   const feedWidths = feedColumns([...feed, ...feed.flatMap(line => line.repeats ?? [])], feedWidth);
   const blocks: Row[][] = feed.map(line =>
     opens(line) && opened.has(groupKey(line))
@@ -289,9 +296,9 @@ export const monitorScreen = (
           ),
           ...shownRows.map(each => cell(each.row, feedWidth))
         ];
-  const spendBeside = beside ? spendLines(data.spend, data.freshContextAt, feedLines.length) : [];
+  const spendRows = beside ? spendPanel(data.spend, data.freshAt, feedLines.length, spendSort).lines : [];
   const activity = beside
-    ? feedLines.map((each, index) => `${cell(each, feedWidth)}  ${spendBeside[index] ?? ' '.repeat(SPEND_WIDTH)}`)
+    ? feedLines.map((each, index) => `${cell(each, feedWidth)}  ${spendRows[index] ?? ' '.repeat(spendBeside.width)}`)
     : feedLines;
 
   const boardTop = head.length + attention.length + 1;
@@ -378,6 +385,7 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
   let showApproved = false;
   // The flow is the board's kanban: shown from the start, `f` hides it.
   let flow = true;
+  let spendSort: SpendSort = 'spent';
   // The groups of repeated events opened by a click, and which screen row is which group's line, as last drawn.
   const opened = new Set<string>();
   let groupRows = new Map<number, string>();
@@ -401,6 +409,7 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
           showApproved,
           flow,
           flowOffsets,
+          spendSort,
           opened,
           onGroupRows: rows => {
             groupRows = rows;
@@ -604,6 +613,8 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
           open = !open;
         } else if (key?.name === 'f') {
           flow = !flow;
+        } else if (key?.name === 's') {
+          spendSort = SPEND_SORTS[(SPEND_SORTS.indexOf(spendSort) + 1) % SPEND_SORTS.length] ?? 'spent';
         } else if (key?.name === 'a') {
           showApproved = !showApproved;
           selected = 0;

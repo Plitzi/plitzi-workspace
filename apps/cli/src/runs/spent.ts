@@ -20,8 +20,15 @@ export interface Spent {
   pieces: number;
   /** The model's answers. */
   turns: number;
-  /** Every turn's whole context, summed: what it read. */
-  read: number;
+  /**
+   * What it took in new — fresh input, and context written to the cache. With `output`, what costs; kept apart from
+   * `cached`: encore-3's test-1 read 1.1M tokens for one spec, 92 % of them its context read again from the cache.
+   */
+  input: number;
+  /** What it wrote: the model's answers. */
+  output: number;
+  /** Its context read again from the cache, every turn: a tenth of a fresh token's price, and most of what is read. */
+  cached: number;
   /** Its context when it last ended a piece. */
   context: number;
   model?: string;
@@ -58,13 +65,15 @@ export const logSpent = async (ctx: RunContext, loaded: LoadedRun, task: string,
     task,
     piece,
     turns: spent.turns,
-    read: spent.processed,
+    input: spent.input + spent.cacheWrite,
+    output: spent.output,
+    cached: spent.cacheRead,
     context: spent.contextAtEnd,
     ...(spent.model ? { model: spent.model } : {})
   });
 };
 
-/** Each agent's spend so far, read off the run's log: the most read first. */
+/** Each agent's spend so far, read off the run's log: the most spent first — what is new, then what was read again. */
 export const spentOf = (log: readonly Record<string, unknown>[]): Spent[] => {
   const by = new Map<string, Spent>();
   for (const entry of log) {
@@ -72,10 +81,20 @@ export const spentOf = (log: readonly Record<string, unknown>[]): Spent[] => {
       continue;
     }
 
-    const kept = by.get(entry.by) ?? { agent: entry.by, pieces: 0, turns: 0, read: 0, context: 0 };
+    const kept = by.get(entry.by) ?? {
+      agent: entry.by,
+      pieces: 0,
+      turns: 0,
+      input: 0,
+      output: 0,
+      cached: 0,
+      context: 0
+    };
     kept.pieces += 1;
     kept.turns += count(entry.turns);
-    kept.read += count(entry.read);
+    kept.input += count(entry.input);
+    kept.output += count(entry.output);
+    kept.cached += count(entry.cached);
     kept.context = count(entry.context);
     if (typeof entry.model === 'string') {
       kept.model = entry.model;
@@ -84,5 +103,7 @@ export const spentOf = (log: readonly Record<string, unknown>[]): Spent[] => {
     by.set(entry.by, kept);
   }
 
-  return [...by.values()].sort((a, b) => b.read - a.read || a.agent.localeCompare(b.agent));
+  return [...by.values()].sort(
+    (a, b) => b.input + b.output - (a.input + a.output) || b.cached - a.cached || a.agent.localeCompare(b.agent)
+  );
 };

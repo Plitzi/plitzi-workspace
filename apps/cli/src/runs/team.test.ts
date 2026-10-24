@@ -206,7 +206,7 @@ describe('the team of a project’s runs', () => {
       ]
     );
     expect(teamProblems({ version: 1, agents: [], options: { freshContextAt: 1000 } })).toEqual([
-      '"options": "freshContextAt" is the context, in tokens, past which an agent is started again fresh — a whole number from 60000; 100000 when not said'
+      '"options": "freshContextAt" is the context, in tokens, past which an agent is started again fresh — a whole number from 60000; 250000 when not said'
     ]);
     expect(teamProblems({ version: 1, agents: [{ name: 'dev', roles: ['developer'], resumeSession: 'yes' }] })).toEqual(
       ['"dev": its resumeSession is true — its own session resumed after it died with a task in hand — or false']

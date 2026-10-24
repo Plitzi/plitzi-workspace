@@ -8,6 +8,7 @@ import { keepOnce, openKeeperLog } from './keeper';
 import { abortRun } from './merge';
 import { STARTING_MS } from './onDemand';
 import { runPaths } from './paths';
+import { RunRefusal } from './refusal';
 import { openRun, stopRun } from './run';
 import { completeTask, nextTask, takeTask } from './tasks';
 import { setTeamAgent } from './team';
@@ -88,5 +89,26 @@ describe("the keeper's log", () => {
 
     closeSync(openKeeperLog(cache));
     expect(existsSync(path.join(cache, 'keeper.log'))).toBe(true);
+  });
+});
+
+// encore-3: the keeper and the lead's watch started design-1 at once, and the watch told the lead it "could not be
+// started" — it was running.
+describe('an agent started meanwhile by another', () => {
+  it('is no failure to start it', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await launching();
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+    bench.advance(STARTING_MS);
+
+    const already: StartAgent = agent =>
+      Promise.reject(new RunRefusal('invalid', `${agent} is running (pid 1)`, { running: true }));
+    expect(await keepOnce(lead(), 'es-launch', already)).toEqual({ started: [], failed: [] });
+
+    const broken: StartAgent = () => Promise.reject(new RunRefusal('invalid', 'claude did not start: no PATH'));
+    expect(await keepOnce(lead(), 'es-launch', broken)).toEqual({
+      started: [],
+      failed: [{ agent: 'dev-1', message: 'claude did not start: no PATH' }]
+    });
   });
 });

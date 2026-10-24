@@ -24,7 +24,10 @@ afterEach(async () => {
   await bench.cleanup();
 });
 
-/** A harness that read `read` tokens in `turns` turns, its context `context` — and the windows it was asked for. */
+/**
+ * A harness that read `read` tokens in `turns` turns — a tenth of them new context, a hundredth its answers, the rest its
+ * context read again — its context `context`, and the windows it was asked for.
+ */
 const harness =
   (read: number, turns: number, context: number, asked: { from: string; to: string }[]) =>
   (window: { from: string; to: string }): Promise<HarnessUsage | undefined> => {
@@ -35,9 +38,9 @@ const harness =
       model: 'claude-sonnet-5-5',
       turns,
       input: 0,
-      cacheRead: read,
-      cacheWrite: 0,
-      output: 0,
+      cacheRead: read * 0.89,
+      cacheWrite: read * 0.1,
+      output: read * 0.01,
       processed: read,
       contextAtEnd: context,
       heaviest: [],
@@ -73,8 +76,26 @@ describe('what each agent spent', () => {
     // Its second window starts where its first ended: nothing counted twice.
     expect(devWindows[1]?.from).toBe(kept[0]?.at);
     expect(spentOf(log)).toEqual([
-      { agent: 'lead', pieces: 1, turns: 20, read: 900_000, context: 150_000, model: 'claude-sonnet-5-5' },
-      { agent: 'agent-1', pieces: 2, turns: 24, read: 800_000, context: 70_000, model: 'claude-sonnet-5-5' }
+      {
+        agent: 'lead',
+        pieces: 1,
+        turns: 20,
+        input: 90_000,
+        output: 9_000,
+        cached: 801_000,
+        context: 150_000,
+        model: 'claude-sonnet-5-5'
+      },
+      {
+        agent: 'agent-1',
+        pieces: 2,
+        turns: 24,
+        input: 80_000,
+        output: 8_000,
+        cached: 712_000,
+        context: 70_000,
+        model: 'claude-sonnet-5-5'
+      }
     ]);
   });
 

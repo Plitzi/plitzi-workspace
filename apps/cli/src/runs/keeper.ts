@@ -64,6 +64,11 @@ export const launchAsked = async (
         throw error;
       }
 
+      // Started meanwhile by another — the keeper, a lead's watch: what was asked is so, and no failure to say.
+      if (error.detail.running === true) {
+        continue;
+      }
+
       failed.push({ agent, message: error.message });
     }
   }

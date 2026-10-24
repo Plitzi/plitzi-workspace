@@ -167,7 +167,7 @@ const isSessionMode = (value: unknown): value is SessionMode =>
   typeof value === 'string' && (SESSION_MODES as readonly string[]).includes(value);
 
 /** The context an agent is started again past when the team says none (`TeamOptions.freshContextAt`), in tokens. */
-export const FRESH_CONTEXT_AT = 100_000;
+export const FRESH_CONTEXT_AT = 250_000;
 
 /**
  * The least `freshContextAt` takes: an agent's context starts at ~46k (its harness, its prompt, the brief) — below it,
@@ -219,8 +219,8 @@ export interface TeamOptions {
   launch?: Harness;
   /**
    * The context, in tokens, past which an agent of `"session": "context"` is started again with a fresh one, between two
-   * pieces of work (`SessionMode`). `FRESH_CONTEXT_AT` when not said: past it, the next piece of work costs more reading
-   * it again each turn than a start costs — ~40k tokens written, at ~15 turns a task.
+   * pieces of work (`SessionMode`). `FRESH_CONTEXT_AT` when not said — 250k (Carlos: 100k fills in a task or two; an
+   * agent's context starts at ~46k and a task adds 30–60k).
    */
   freshContextAt?: number;
 }
@@ -502,7 +502,7 @@ export const TEAM_ABOUT: Record<string, unknown> = {
     'Each agent: a name (dev is dev-1, dev-2…), the roles it takes, how many of it (count), and the model to start it with, as the harness names it (claude-sonnet-5-5 in Claude Code; any model opencode or another harness takes); left out, the default of the harness. "effort": how hard it thinks — low, medium, high, xhigh, max — left out, the harness’s own (Claude Code’s --effort, Codex’s reasoning effort). Or a model a quality level — "model": { "standard": "claude-sonnet-5-5", "high": "claude-opus-5-5" } (light, standard, high): each level is started apart (design-1-high) for the tasks of it, so the strongest model works only what many build on. How many agents work at once is the sum of the counts; "min" (from 1 to its count) starts only that many with the run, the rest on demand — the lead starts one when work waits for it (run watch says which), and it stops once none is left. "session": when its agents are started again with a fresh context, always between two pieces of work (a task completed, a review decided), never in one — "task" (the default) after each one, "context" once its context passes options.freshContextAt, "keep" never: every turn reads the whole context again, so a context that grew costs on every turn after (plitzi run team set dev --session context). The lead that plans keeps its session. "resumeSession": true resumes an agent\'s own session when it is started again after it died with a task in hand — what it knew and had not written yet kept; Claude Code alone, and not a session past a size that would cost more to read again than to start over (plitzi run team set dev --resume-session).',
   roles: { ...ROLES, '<any other>': 'A role of your own: a task names it, an agent takes it.' },
   options:
-    '"designReview": how closely a designer reviews another task\'s UI — "light" (its pages at 1440 and 390, the default scheme, nothing it does not touch), "standard" (both schemes and widths, its sections against the reference; the default), "high" (every page that reads its files, against the run before it too). A review costs what it looks at. "startGraceMinutes": how long an agent just started may say nothing before the tasks it holds read \'no signal\' — 3 when not said. "launch": the harness (claude, codex, opencode) the CLI starts the agents in by itself when the run asks for one — left out, the lead starts them. "freshContextAt": the context, in tokens, past which an agent of "session": "context" is started again fresh — 100000 when not said.',
+    '"designReview": how closely a designer reviews another task\'s UI — "light" (its pages at 1440 and 390, the default scheme, nothing it does not touch), "standard" (both schemes and widths, its sections against the reference; the default), "high" (every page that reads its files, against the run before it too). A review costs what it looks at. "startGraceMinutes": how long an agent just started may say nothing before the tasks it holds read \'no signal\' — 3 when not said. "launch": the harness (claude, codex, opencode) the CLI starts the agents in by itself when the run asks for one — left out, the lead starts them. "freshContextAt": the context, in tokens, past which an agent of "session": "context" is started again fresh — 250000 when not said.',
   more: 'It starts small — every agent spends tokens: two developers, one started with the run and the other on demand, and a designer who reviews the UI of every other task — the developers on Sonnet, the designer and the lead on Opus. Grow it when a job asks — you decide: more developers (plitzi run team set dev --count 3 --min 2), a tester who reviews the code and writes the tests of each developer task — on Opus too, unless you say a model: what it misses gets through (plitzi run team set test --roles tester), a writer.'
 };
 

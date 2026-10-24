@@ -68,10 +68,11 @@ const watchForLead = (runId: string | undefined, options: WatchRunOptions): Prom
     async ctx => {
       const id = await runOf(ctx, options, runId);
       // The run's keeper, should none run: a run opened before it existed, or one whose keeper died, gets it here.
-      await ensureKeeper(ctx, id);
+      const kept = await ensureKeeper(ctx, id);
       const news = await waitForLead(ctx, id, {
         timeoutMs: options.timeout ?? FOLLOW_MS,
-        everyMs: Math.max(1, options.interval ?? 10) * 1000
+        everyMs: Math.max(1, options.interval ?? 10) * 1000,
+        launch: !('pid' in kept)
       });
       const { view, ...rest } = news;
 

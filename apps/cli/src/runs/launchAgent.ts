@@ -172,6 +172,13 @@ export const promptAgent = async (ctx: RunContext, runId: string, agent: string)
 const IDENTITY_ENV = ['PLITZI_TOKEN', 'PLITZI_AGENT', 'PLITZI_RUN'] as const;
 
 /**
+ * What a harness says of the session it runs in (`CLAUDE_CODE_SESSION_ID`…): an agent started from inside one — the
+ * lead's watch, run from its own Claude Code — inherited the lead's, and a command of the agent's could be read as the
+ * lead's session (encore-3's design-1 carried its lead's id). The agent's harness says its own.
+ */
+const HARNESS_SESSION_ENV = /^CLAUDE_CODE_SESSION/;
+
+/**
  * The environment an agent's harness starts with: this process's, without the identity of whoever started it — the
  * lead's own CLI exports its token, and encore-2's agents inherited it: a `plitzi` command of theirs that bypassed their
  * own CLI (a project script's `plitzi space lint`) ran as the lead — with the agent's own token in its place, and its
@@ -184,7 +191,9 @@ export const agentEnv = async (
   from: NodeJS.ProcessEnv = process.env
 ): Promise<NodeJS.ProcessEnv> => {
   const env = Object.fromEntries(
-    Object.entries(from).filter(([name]) => !(IDENTITY_ENV as readonly string[]).includes(name))
+    Object.entries(from).filter(
+      ([name]) => !(IDENTITY_ENV as readonly string[]).includes(name) && !HARNESS_SESSION_ENV.test(name)
+    )
   );
   const token = (await fs.readFile(tokenFile(paths, agent), 'utf-8').catch(() => '')).trim();
 
@@ -206,7 +215,8 @@ export const launchAgent = async (
   if (last && isRunning(last)) {
     throw new RunRefusal(
       'invalid',
-      `${agent} is running (pid ${String(last.pid)}, ${last.harness}, started ${last.startedAt}): it goes on by itself — let it finish, or stop it first (kill ${String(last.pid)}) and start it again`
+      `${agent} is running (pid ${String(last.pid)}, ${last.harness}, started ${last.startedAt}): it goes on by itself — let it finish, or stop it first (kill ${String(last.pid)}) and start it again`,
+      { running: true }
     );
   }
 

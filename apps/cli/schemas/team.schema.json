@@ -155,7 +155,7 @@
         "freshContextAt": {
           "type": "integer",
           "minimum": 60000,
-          "description": "The context, in tokens, past which an agent of \"session\": \"context\" is started again with a fresh one, between two pieces of work: 100000 when not said"
+          "description": "The context, in tokens, past which an agent of \"session\": \"context\" is started again with a fresh one, between two pieces of work: 250000 when not said"
         },
         "launch": {
           "enum": ["claude", "codex", "opencode"],

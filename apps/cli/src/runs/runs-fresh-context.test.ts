@@ -65,13 +65,13 @@ describe('a fresh context', () => {
       task: expect.objectContaining({ id: 't-menu' }) as unknown
     });
 
-    const menu = await takeTask(holding('dev-1', 140_000), 'es-launch', 't-menu');
+    const menu = await takeTask(holding('dev-1', 300_000), 'es-launch', 't-menu');
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = {};\n');
-    await completeTask(holding('dev-1', 140_000, menu.token), 'es-launch', 't-menu');
-    expect(await nextTask(holding('dev-1', 140_000), 'es-launch', 'developer')).toMatchObject({
+    await completeTask(holding('dev-1', 300_000, menu.token), 'es-launch', 't-menu');
+    expect(await nextTask(holding('dev-1', 300_000), 'es-launch', 'developer')).toMatchObject({
       finished: true,
       why: expect.stringContaining(
-        't-menu is complete, and your context is 140k tokens, past the team’s 100k'.replace('’', "'")
+        't-menu is complete, and your context is 300k tokens, past the team’s 250k'.replace('’', "'")
       ) as unknown
     });
     // Started again: its new session has ended nothing yet.
@@ -83,9 +83,9 @@ describe('a fresh context', () => {
     await openRun(lead(), await bench.writePlan(plan()));
     bench.advance(STARTING_MS);
 
-    await completeHome('dev-1', 140_000);
+    await completeHome('dev-1', 300_000);
     await reviewTask(lead(), 'es-launch', 't-home', 'changes', [{ note: 'The title again' }]);
-    expect(await nextTask(holding('dev-1', 140_000), 'es-launch', 'developer')).toMatchObject({
+    expect(await nextTask(holding('dev-1', 300_000), 'es-launch', 'developer')).toMatchObject({
       task: expect.objectContaining({ id: 't-home' }) as unknown,
       yours: 'changes-requested'
     });
@@ -102,11 +102,11 @@ describe('a fresh context', () => {
       finished: true
     });
 
-    expect((await nextTask(holding('test-1', 150_000), 'es-launch', 'tester')).leadReview?.task.id).toBe('t-home');
-    await reviewTask(holding('test-1', 150_000), 'es-launch', 't-home', 'approve', []);
-    expect(await nextTask(holding('test-1', 150_000), 'es-launch', 'tester')).toMatchObject({
+    expect((await nextTask(holding('test-1', 300_000), 'es-launch', 'tester')).leadReview?.task.id).toBe('t-home');
+    await reviewTask(holding('test-1', 300_000), 'es-launch', 't-home', 'approve', []);
+    expect(await nextTask(holding('test-1', 300_000), 'es-launch', 'tester')).toMatchObject({
       finished: true,
-      why: expect.stringContaining('your review of t-home is decided, and your context is 150k tokens') as unknown
+      why: expect.stringContaining('your review of t-home is decided, and your context is 300k tokens') as unknown
     });
   });
 
@@ -116,26 +116,26 @@ describe('a fresh context', () => {
     await openRun(lead(), await bench.writePlan(plan()));
     bench.advance(STARTING_MS);
 
-    await completeHome('dev-1', 150_000);
-    const menu = await takeTask(holding('dev-1', 160_000), 'es-launch', 't-menu');
+    await completeHome('dev-1', 300_000);
+    const menu = await takeTask(holding('dev-1', 305_000), 'es-launch', 't-menu');
     // Its `task next` while it holds t-menu at work hands it t-menu, never a stop.
-    expect(await nextTask(holding('dev-1', 170_000), 'es-launch', 'developer')).toMatchObject({
+    expect(await nextTask(holding('dev-1', 310_000), 'es-launch', 'developer')).toMatchObject({
       task: expect.objectContaining({ id: 't-menu' }) as unknown,
       yours: 'in-progress'
     });
 
-    await blockTask(holding('dev-1', 180_000, menu.token), 'es-launch', 't-menu', 'Which title?', 'lead');
+    await blockTask(holding('dev-1', 320_000, menu.token), 'es-launch', 't-menu', 'Which title?', 'lead');
     expect(await nextTask(holding('dev-1', 190_000), 'es-launch', 'developer')).not.toMatchObject({ finished: true });
     await unblockTask(lead(), 'es-launch', 't-menu', 'Carta');
-    expect(await nextTask(holding('dev-1', 200_000), 'es-launch', 'developer')).toMatchObject({
+    expect(await nextTask(holding('dev-1', 330_000), 'es-launch', 'developer')).toMatchObject({
       task: expect.objectContaining({ id: 't-menu' }) as unknown,
       yours: 'in-progress'
     });
 
     // Its piece ended: now it stops.
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = {};\n');
-    await completeTask(holding('dev-1', 210_000, menu.token), 'es-launch', 't-menu');
-    expect(await nextTask(holding('dev-1', 210_000), 'es-launch', 'developer')).toMatchObject({ finished: true });
+    await completeTask(holding('dev-1', 340_000, menu.token), 'es-launch', 't-menu');
+    expect(await nextTask(holding('dev-1', 340_000), 'es-launch', 'developer')).toMatchObject({ finished: true });
   });
 
   it('never stops a reviewer with a review it took and has not decided', async () => {
@@ -149,16 +149,16 @@ describe('a fresh context', () => {
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = {};\n');
     await completeTask(holding('dev-2', 50_000, menu.token), 'es-launch', 't-menu');
 
-    expect((await nextTask(holding('test-1', 150_000), 'es-launch', 'tester')).leadReview?.task.id).toBeDefined();
-    await reviewTask(holding('test-1', 150_000), 'es-launch', 't-home', 'approve', []);
+    expect((await nextTask(holding('test-1', 300_000), 'es-launch', 'tester')).leadReview?.task.id).toBeDefined();
+    await reviewTask(holding('test-1', 300_000), 'es-launch', 't-home', 'approve', []);
     // The next review taken — as its look takes it — and not decided yet: it goes on with it.
     const loaded = await loadRun(lead(), 'es-launch');
     const next = loaded.tasks.find(task => task.id === 't-menu');
-    expect(next && (await takeLeadReview(holding('test-1', 160_000), await viewTask(loaded.paths, next)))).toBe(true);
-    expect(await nextTask(holding('test-1', 170_000), 'es-launch', 'tester')).not.toMatchObject({ finished: true });
+    expect(next && (await takeLeadReview(holding('test-1', 305_000), await viewTask(loaded.paths, next)))).toBe(true);
+    expect(await nextTask(holding('test-1', 310_000), 'es-launch', 'tester')).not.toMatchObject({ finished: true });
 
-    await reviewTask(holding('test-1', 180_000), 'es-launch', 't-menu', 'approve', []);
-    expect(await nextTask(holding('test-1', 180_000), 'es-launch', 'tester')).toMatchObject({ finished: true });
+    await reviewTask(holding('test-1', 320_000), 'es-launch', 't-menu', 'approve', []);
+    expect(await nextTask(holding('test-1', 320_000), 'es-launch', 'tester')).toMatchObject({ finished: true });
   });
 
   it('starts an agent of "session": "task" again after each task, whatever its context', async () => {

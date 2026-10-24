@@ -125,7 +125,13 @@ const isKeys = (value: unknown): value is string[] =>
 export const waitForLead = async (
   ctx: RunContext,
   runId: string,
-  { timeoutMs = FOLLOW_MS, everyMs = 10_000 } = {}
+  {
+    timeoutMs = FOLLOW_MS,
+    everyMs = 10_000,
+    // The run's keeper starts the agents when one runs: the watch starts them only when none does — two starting one
+    // agent at once told the lead it "could not be started" (encore-3's design-1 and test-1).
+    launch = true
+  } = {}
 ): Promise<LeadNews> => {
   const started = Date.now();
   for (;;) {
@@ -135,7 +141,7 @@ export const waitForLead = async (
     try {
       seenFile = (await loadRun(ctx, runId, { anyMachine: true, anyVersion: true })).paths.leadSeen;
       view = await viewRun(ctx, runId);
-      const launched = await launchAsked(ctx, runId, view);
+      const launched = launch ? await launchAsked(ctx, runId, view) : { started: [], failed: [] };
       failedLaunches = launched.failed.map(({ agent, message }) => ({
         key: `launch-failed:${agent}:${message}`,
         text: `${agent} could not be started (options.launch): ${message} — start it yourself, plitzi run agent ${agent} --launch --harness <yours>`

@@ -640,7 +640,7 @@ inbox`. A block lifted carries its answer (`task unblock --answer`), and `task n
   first plan needs; above 5 a person confirms): past it, `task take` waits for one to finish. After each piece of work —
   a task completed, a review decided, never in one — an agent is started again with a fresh context, every turn
   reading the whole context again; `"session": "context"` starts it again only once its context passes
-  `options.freshContextAt` (100k tokens), `"keep"` never (`run team set dev --session context`). The lead that plans
+  `options.freshContextAt` (250k tokens), `"keep"` never (`run team set dev --session context`). The lead that plans
   keeps its session.
 - **Each task in a copy** of the project in `tmp/plitzi-runs/<run>/` — cloned copy-on-write where the disk can; never
   `.env` (its templates, `.env.example`, are), `node_modules` or the binaries of `public/`. Only the task's own files may

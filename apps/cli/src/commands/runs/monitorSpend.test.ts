@@ -2,55 +2,77 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { SPEND_WIDTH, spendLine, spendLines, tokensShort } from './monitorSpend';
+import { spendLine, spendPanel, tokensShort } from './monitorSpend';
+
+import type { Spent } from '../../runs/spent';
 
 const plain = (lines: string[]): string[] => lines.map(line => stripVTControlCharacters(line).trimEnd());
 
-describe("the monitor's spend", () => {
-  it('lists each agent, the most read first, with its context — said apart past a fresh start', () => {
-    const lines = spendLines(
-      [
-        { agent: 'test-1', pieces: 6, turns: 224, read: 30_655_798, context: 400_422 },
-        { agent: 'dev-1', pieces: 9, turns: 305, read: 4_800_000, context: 72_000 }
-      ],
-      100_000,
-      20
-    );
+/** encore-3's tester after one spec: 17 turns, 92 % of what it read its context again. */
+const tester: Spent = {
+  agent: 'test-1',
+  pieces: 1,
+  turns: 17,
+  input: 66_968,
+  output: 6_197,
+  cached: 1_253_308,
+  context: 92_877
+};
+const developer: Spent = {
+  agent: 'dev-1',
+  pieces: 1,
+  turns: 7,
+  input: 40_000,
+  output: 3_000,
+  cached: 370_000,
+  context: 140_000
+};
 
-    expect(lines.every(line => stripVTControlCharacters(line).length === SPEND_WIDTH)).toBe(true);
-    expect(plain(lines)).toEqual([
-      '',
-      'SPEND  tokens read by each agent',
-      '  WHO        DONE    READ  CONTEXT',
-      '  test-1        6     31M     400k!',
-      '  dev-1         9    4.8M      72k',
-      `  ${'─'.repeat(SPEND_WIDTH - 4)}`,
-      '  all          15     35M',
-      '  2.4M a piece of work',
-      '  ! past 100k: started fresh next'
+describe("the monitor's spend", () => {
+  it('says tokens in, out and cached apart, as wide as it says, a context past a fresh start marked', () => {
+    const { lines, width } = spendPanel([tester, developer], new Map([['dev-1', 100_000]]), 20);
+
+    expect(lines.every(line => stripVTControlCharacters(line).length === width)).toBe(true);
+    const shown = plain(lines);
+    expect(shown.slice(1, 5)).toEqual([
+      'SPEND  tokens in, out, and cached — read again, a tenth the price',
+      '  WHO     DONE  TURNS    IN  OUT  CACHED  CONTEXT',
+      '  test-1     1     17   67k   6k    1.3M     93k',
+      '  dev-1      1      7   40k   3k    370k    140k!'
+    ]);
+    expect(shown.slice(6)).toEqual([
+      '  all        2     24  107k   9k    1.6M',
+      '  a piece of work: 53k in · 5k out · 812k cached',
+      '  ! past its freshContextAt: started fresh after its piece'
     ]);
   });
 
+  // Carlos: every agent of encore-3 starts fresh after each piece, and the panel said "past 100k: started fresh next".
+  it('marks no context of an agent that starts fresh after every piece, however large', () => {
+    const lines = plain(spendPanel([tester, { ...developer, context: 400_000 }], new Map(), 20).lines);
+    expect(lines.some(line => line.includes('!'))).toBe(false);
+  });
+
   it('keeps the heaviest when the rows are few, and says the rest in one line', () => {
-    const many = Array.from({ length: 6 }, (_, index) => ({
+    const many = Array.from({ length: 6 }, (_, index): Spent => ({
       agent: `dev-${String(index + 1)}`,
       pieces: 1,
       turns: 10,
-      read: (6 - index) * 1_000_000,
+      input: (6 - index) * 10_000,
+      output: 1_000,
+      cached: 100_000,
       context: 50_000
     }));
 
-    const lines = plain(spendLines(many, 100_000, 9));
+    const { lines } = spendPanel(many, new Map(), 9);
     expect(lines).toHaveLength(9);
-    expect(lines).toContain('  +4 more');
+    expect(plain(lines)).toContain('  +4 more');
   });
 
-  it('says it in one line over the activity on a narrow terminal, and nothing before anything ended', () => {
-    expect(
-      stripVTControlCharacters(
-        spendLine([{ agent: 'dev-1', pieces: 1, turns: 10, read: 950_000, context: 60_000 }], 60)
-      )
-    ).toBe('SPEND 950k read — dev-1 950k'.padEnd(60));
+  it('says it in one line when beside would leave the activity too narrow, and nothing before anything ended', () => {
+    expect(stripVTControlCharacters(spendLine([tester], 120)).trimEnd()).toBe(
+      'SPEND 67k in · 6k out · 1.3M cached — test-1 73k'
+    );
     expect(spendLine([], 60)).toBe('');
     expect(tokensShort(950)).toBe('950');
   });

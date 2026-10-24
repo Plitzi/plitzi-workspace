@@ -143,8 +143,8 @@ export interface Monitored {
   stories: Partial<Record<string, TaskStory>>;
   /** What each agent's harness spent so far, the most read first (`spent.ts`). */
   spend: Spent[];
-  /** The context past which an agent is started again fresh: a context past it is said apart. */
-  freshContextAt: number;
+  /** The agents started again only once their context passes a size (`"session": "context"`), each with that size. */
+  freshAt: ReadonlyMap<string, number>;
   /** Every run of the project, this one among them: which is shown, and that there are others. */
   runs: { runId: string; status: string }[];
   /**
@@ -585,7 +585,11 @@ export const monitorRun = async (ctx: RunContext, runId: string, feedLength = 40
     feed,
     stories,
     spend: spentOf(log),
-    freshContextAt: team?.options?.freshContextAt ?? FRESH_CONTEXT_AT,
+    freshAt: new Map(
+      (team ? startedAgents(team) : [])
+        .filter(each => each.session === 'context')
+        .map(each => [each.agent, team?.options?.freshContextAt ?? FRESH_CONTEXT_AT] as const)
+    ),
     runs,
     ...(stage ? { stage } : {})
   };
