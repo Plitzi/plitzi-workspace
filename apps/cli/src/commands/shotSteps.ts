@@ -76,7 +76,9 @@ export const durationMs = (text: string | undefined): number | undefined => {
     return undefined;
   }
 
-  const ms = Math.round(Number(match[1]) * UNITS[match[2] ?? 'ms']);
+  // An optional group is undefined when absent, whatever its type says.
+  const unit: string | undefined = match[2];
+  const ms = Math.round(Number(match[1]) * UNITS[unit ?? 'ms']);
 
   return ms > 0 ? ms : undefined;
 };

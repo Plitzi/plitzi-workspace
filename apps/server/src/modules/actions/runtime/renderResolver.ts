@@ -94,7 +94,7 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
       );
     }
 
-    const ttlMs = trigger ? triggerCacheMs(triggerParams(trigger)) : 0;
+    const ttlMs = triggerCacheMs(triggerParams(trigger));
     const key = shareKey([spaceId, at.environment, at.revision, entry.id, user?.id ?? null, values]);
 
     const callerId = user ? `user:${user.id}` : 'render';

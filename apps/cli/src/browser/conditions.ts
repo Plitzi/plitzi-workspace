@@ -21,7 +21,11 @@ export const STORAGE_CONDITIONS = ['refused'] as const;
 
 /** Run in each document before its own scripts: a `play()` with sound before any press, refused as a browser does. */
 const refuseAutoplay = (): void => {
-  const play = HTMLMediaElement.prototype.play;
+  const play: unknown = Reflect.get(HTMLMediaElement.prototype, 'play');
+  if (typeof play !== 'function') {
+    return;
+  }
+
   HTMLMediaElement.prototype.play = function (this: HTMLMediaElement) {
     if (!this.muted && !navigator.userActivation.hasBeenActive) {
       return Promise.reject(
@@ -29,7 +33,9 @@ const refuseAutoplay = (): void => {
       );
     }
 
-    return play.call(this);
+    const played: unknown = Reflect.apply(play, this, []);
+
+    return played instanceof Promise ? played.then(() => undefined) : Promise.resolve();
   };
 };
 

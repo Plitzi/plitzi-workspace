@@ -185,7 +185,7 @@ The space is not written until these are fixed.
 | `unknown-field` | a field the space, a page, an element, a binding or a step does not have | the field it suggests; an element's attribute goes inside the factory's props (`button({ content })`) |
 | `unknown-transformer` | a transformer that does not exist | one of the transformers it lists |
 | `utility-module` | a utility sent to a module — a utility takes none | drop the `on` |
-| `variant-bound-twice` | two bindings (`variantFrom`, `activeOn`, `activeWhen`) setting the variant of one class on one element — the second always wins | one `variantFrom` whose template answers every case: `{{ wide ? 'roomy' : current ? 'active' : 'idle' }}` |
+| `variant-bound-twice` | two bindings (`variantFrom`, `activeOn`, `activeWhen`) setting the variant of one class on one element — the second always wins | one `variantFrom` whose template answers every case: `{{ wide ? 'roomy' : current ? 'active' : 'idle' }}`; two things that change apart (a size, a lit state) are two classes, each with its own `variantFrom` |
 | `visibility-as-attribute` | `visibility` bound as an attribute, which no element reads | `visible: { source, template }` |
 | `visitor-roles` | `settings.visitorRoles` written in a shape the runtime does not read | the shape the message gives |
 | `while-running` | `whileRunning` on a step that is not the trigger, or a mode other than `skip`, `parallel`, `queue`, `latest` | `[whileRunning('queue', onClick()), …]` |

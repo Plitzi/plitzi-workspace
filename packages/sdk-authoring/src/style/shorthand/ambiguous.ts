@@ -36,7 +36,7 @@ const BOX_SIDES: Readonly<Record<string, readonly [string, string, string, strin
  * got the whole of it, and with the variable unset every side was `4px 10px`, no length at all (encore-3's ON AIR plate).
  */
 const sidesOfOneVar = (property: string, value: string): AmbiguousShorthand | undefined => {
-  const sides = BOX_SIDES[property];
+  const sides = Object.hasOwn(BOX_SIDES, property) ? BOX_SIDES[property] : undefined;
   const tokens = splitTokens(value);
   const fallback = /^var\(\s*--[\w-]+\s*,(.*)\)$/s.exec(tokens[0] ?? '')?.[1];
   if (sides === undefined || tokens.length !== 1 || fallback === undefined || splitTokens(fallback.trim()).length < 2) {

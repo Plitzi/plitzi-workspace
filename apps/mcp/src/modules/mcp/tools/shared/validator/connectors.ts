@@ -102,16 +102,8 @@ export const checkProviderElement = (
     return;
   }
 
-  // The opposite mistake, and the more common one: the connector attributes are set but the element still renders
-  // in the browser, where they mean nothing — the page silently shows an empty list.
-  if (runtime !== 'server') {
-    warnOnce(
-      ctx,
-      `"${ref}" at ${base} names connector "${connectorId}" but is not server-rendered, so the connector is ` +
-        'IGNORED and the element fetches its own `query` from the browser instead. Set runtime: "server" on it.'
-    );
-  }
-
+  // The opposite mistake — a connector on a provider asked from the browser — is authoring's refusal
+  // (`server-source-in-browser`), said with the batch's other problems.
   const entry = findConnectorEntry(space, connectorId);
   if (!entry) {
     if (!batchConnectors.has(connectorId)) {

@@ -51,11 +51,11 @@ export const actionField = z
     required: z.boolean().optional(),
     defaultValue: z.union([z.string(), z.number(), z.boolean()]).optional(),
     label: z.string().optional(),
-    maxLength: z.number().optional().describe('text: a longer value is refused before the run'),
-    min: z.number().optional().describe('number: a smaller value is refused before the run'),
-    max: z.number().optional().describe('number: a larger value is refused before the run')
+    maxLength: z.number().optional(),
+    min: z.number().optional(),
+    max: z.number().optional()
   })
-  .describe('One typed value');
+  .describe('One typed value; a text past maxLength, a number outside min/max is refused');
 
 export const actionNode = z
   .object({

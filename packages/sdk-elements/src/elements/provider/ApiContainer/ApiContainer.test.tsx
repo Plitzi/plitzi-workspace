@@ -126,11 +126,13 @@ describe('ApiContainer — a server provider refreshed by a write', () => {
   // encore-3: a provider whose action had no render trigger said only "could not be reached"; the page server, while
   // developing, says why where the provider reads it.
   it('says why the page server could not resolve it, when it said', () => {
-    const { useStore } = createStoreHook<{ runtime?: { sources?: Record<string, { errorMessage?: string }> } }>();
+    const { useStore } = createStoreHook<{
+      runtime?: { sources?: { apiContainer_orders?: { errorMessage?: string } } };
+    }>();
     const Said = () => {
-      const [message] = useStore('runtime.sources.apiContainer_orders.errorMessage');
+      const [message = ''] = useStore('runtime.sources.apiContainer_orders.errorMessage');
 
-      return <span>{message ?? ''}</span>;
+      return <span>{message}</span>;
     };
     const { store, view } = renderProvider(true, 0, <Said />);
 

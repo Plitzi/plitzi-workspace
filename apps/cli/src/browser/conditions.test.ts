@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
 
-import { actStep } from '../commands/shot/steps';
 import { applyConditions, clockHeld, conditionsText } from './conditions';
+import { actStep } from '../commands/shot/steps';
 
 import type { BrowserPage, PageRoute } from './index';
 
@@ -83,8 +83,8 @@ describe('the browser a page is read in', () => {
   it('refuses a clock step on a page no --clock holds, saying the flag', async () => {
     const { page } = pageAsked();
 
-    expect(await actStep(page, { kind: 'tick', ms: 60_000 }, 0)).toEqual({
-      problem: expect.stringContaining('give the command --clock <instant>')
-    });
+    expect((await actStep(page, { kind: 'tick', ms: 60_000 }, 0))?.problem).toContain(
+      'give the command --clock <instant>'
+    );
   });
 });

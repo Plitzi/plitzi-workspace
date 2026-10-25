@@ -61,7 +61,6 @@ const UNITLESS = new Set([
 export const cssNumberValue = (property: string, value: number): string | number =>
   UNITLESS.has(property) || isCustomProperty(property) || value === 0 ? value : `${String(value)}px`;
 
-/** If a camelCase key maps to a known kebab-case property, return it — used to name the correct key in an error. */
 /** Properties CSS deprecated for another the vocabulary has: what to write instead, as the refusal says it. */
 const REPLACED: Readonly<Record<string, string>> = {
   // The classic sr-only line writes `clip: rect(0 0 0 0)`.
@@ -71,6 +70,7 @@ const REPLACED: Readonly<Record<string, string>> = {
 /** What to write in place of a deprecated property, or nothing when it is not one. */
 export const replacedCssProperty = (key: string): string | undefined => REPLACED[toKebab(key)];
 
+/** If a camelCase key maps to a known kebab-case property, return it — used to name the correct key in an error. */
 export const suggestCssProperty = (key: string): string | undefined => {
   const kebab = toKebab(key);
 

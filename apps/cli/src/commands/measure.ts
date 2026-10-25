@@ -24,11 +24,11 @@ import { pageAnswered } from './shot/remote';
 import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
 
 import type { Account } from './check';
-import type { ConditionOptions } from './register/options';
 import type { StateAsked } from './measureState';
 import type { Difference, Measured } from './measureValues';
 import type { Browser, BrowserPage, Scheme } from '../browser';
 import type { BrowserConditions } from '../browser/conditions';
+import type { ConditionOptions } from './register/options';
 
 /**
  * `plitzi page measure`: an element's computed styles — what a designer sizes a copy by — and, with `--compare`, the

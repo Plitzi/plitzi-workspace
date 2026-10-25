@@ -206,14 +206,14 @@ describe('MCP provider elements (the connector half that lives in the schema)', 
 
   // The commonest way to author a dead page: the connector props are right and the element still renders in the
   // browser, which ignores them.
-  it('warns when a provider names a connector but is not server-rendered', () => {
+  it('refuses a provider that names a connector but is asked from the browser', () => {
     const result = checkBatch(
       { operations: [provider({ connector: 'strapi-blog', resource: 'articles' })] },
       withConnector()
     );
 
-    expect(result.valid).toBe(true);
-    expect(result.warnings.join(' ')).toContain('not server-rendered');
+    expect(result.valid).toBe(false);
+    expect(JSON.stringify(result.errors)).toContain('server-source-in-browser');
   });
 
   it('warns when a server provider names a connector the space does not have', () => {

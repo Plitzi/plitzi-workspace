@@ -114,7 +114,7 @@ export const listenerOn = (port: number): { pid: number; cwd: string | undefined
     return undefined;
   }
 
-  const [found] = lsofFields(['-nP', `-iTCP:${String(port)}`, '-sTCP:LISTEN', '-Fp']);
+  const found = lsofFields(['-nP', `-iTCP:${String(port)}`, '-sTCP:LISTEN', '-Fp']).at(0);
   if (found === undefined) {
     return undefined;
   }

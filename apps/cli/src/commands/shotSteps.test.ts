@@ -116,10 +116,17 @@ describe('the steps that set what a page remembers and what time it is', () => {
   });
 
   it('refuses each written wrong, saying how it is written', () => {
-    expect(parseSteps('state roomOpen', 500)).toEqual({ problem: expect.stringContaining('its value as JSON') });
-    expect(parseSteps('clock tomorrow', 500)).toEqual({
-      problem: expect.stringContaining('clock 2026-10-25T20:00:00Z')
-    });
+    const problemOf = (script: string): string => {
+      const parsed = parseSteps(script, 500);
+
+      return 'problem' in parsed ? parsed.problem : '';
+    };
+
+    expect(problemOf('state roomOpen')).toContain('its value as JSON');
+    expect(problemOf('clock tomorrow')).toContain('clock 2026-10-25T20:00:00Z');
+    expect(problemOf('tick 8d')).toContain('up to a week');
+    expect(problemOf('store only-a-key')).toContain('a key and its value');
+  });
     expect(parseSteps('tick 8d', 500)).toEqual({ problem: expect.stringContaining('up to a week') });
     expect(parseSteps('store only-a-key', 500)).toEqual({ problem: expect.stringContaining('a key and its value') });
   });
