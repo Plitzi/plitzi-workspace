@@ -249,3 +249,24 @@ describe('explain --search', () => {
     expect(explainText('carousel')).toContain('.atEnd — At its last');
   });
 });
+
+// encore-4: `explain active` failed nine times, and the open tab was lit with `active` — the press — where `current` is
+// the chosen one; a tab's `aria-selected` was read off the served HTML.
+describe('explain, of a state a class styles and what an element marks its node with', () => {
+  it('says a state by its name, and that active is the press', () => {
+    expect(explainText('active')).toContain('active — a state a class styles (Active): while it is pressed');
+    expect(explainText('active')).toContain('never the chosen one of a set: that is current');
+    expect(explainText('current')).toContain('the selected tab (aria-selected)');
+    // encore-4's designer lit a nav LED through a custom property, told a state could not style a ::before.
+    expect(explainText('current')).toContain("pseudos: { before: { states: { 'current': { … } } } }");
+    expect(explainList('state').map(each => each.name)).toContain('expanded');
+  });
+
+  it('says what an element writes on its node, and how a class lights it', () => {
+    const tab = explainText('tabContainerItem');
+    expect(tab).toContain('On the page:');
+    expect(tab).toContain('aria-selected — on the open tab — what a class’s `current` state lights');
+    expect(tab).toContain('Attributes: none of its own');
+    expect(explainText('dropdown')).toContain('openDropdown');
+  });
+});

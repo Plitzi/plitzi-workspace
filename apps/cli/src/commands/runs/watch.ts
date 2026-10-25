@@ -9,7 +9,7 @@ import { waitForLead } from '../../runs/leadWatch';
 import { showVersion } from '../../runs/merge';
 import { startPreview, startTaskPreview } from '../../runs/preview';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
-import { buildReport, readSummary, reportText, writeSummary, writeTokens } from '../../runs/report';
+import { buildReport, readSummary, reportBrief, reportText, writeSummary } from '../../runs/report';
 import { activeRuns, loadRun, pruneRuns } from '../../runs/run';
 import { pendingRuns, runsState, runText, viewRun } from '../../runs/view';
 
@@ -154,7 +154,7 @@ export const runShow = async (
 
 export const runReport = (
   runId: string | undefined,
-  options: RunCommandOptions & { summary?: string; tokens?: string } & ExperienceFlags
+  options: RunCommandOptions & { summary?: string; full?: boolean } & ExperienceFlags
 ): Promise<void> =>
   act(
     options,
@@ -162,14 +162,10 @@ export const runReport = (
       // The lead's report is its summary and what it was like, said together — asked before anything is written.
       const experience = options.summary === undefined ? undefined : experienceFrom(options, 'run report --summary');
       const id = await runOf(ctx, options, runId, {
-        anyone: options.summary === undefined && options.tokens === undefined
+        anyone: options.summary === undefined
       });
       if (options.summary && experience) {
         await writeSummary(ctx, id, options.summary, experience);
-      }
-
-      if (options.tokens) {
-        await writeTokens(ctx, id, options.tokens);
       }
 
       const loaded = await loadRun(ctx, id, { anyVersion: true });
@@ -178,7 +174,7 @@ export const runReport = (
       return { report: await buildReport(ctx, loaded), ...(summary === undefined ? {} : { summary }) };
     },
     ({ report, summary }) =>
-      `${reportText(report, summary)}${summary === undefined ? '\nThe lead closes the run with its summary: plitzi run report --summary <file>' : ''}`
+      `${options.full === true ? reportText(report, summary) : reportBrief(report)}${summary === undefined ? '\nThe lead closes the run with its summary: plitzi run report --summary <file>' : ''}`
   );
 
 export const runPreview = async (

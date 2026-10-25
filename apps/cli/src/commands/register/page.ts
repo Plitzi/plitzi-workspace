@@ -1,6 +1,6 @@
 import { Option } from 'commander';
 
-import { expectation, fill, positiveInteger, statusCode, timeZone, width, widths } from '../../options';
+import { expectation, fill, positiveInteger, scale, statusCode, timeZone, width, widths } from '../../options';
 import { check } from '../check';
 import { importPage } from '../importPage';
 import { measure, onlyProperties, sameProperties } from '../measure';
@@ -163,6 +163,14 @@ export const registerPage = (pageGroup: Command): void => {
       '--rows',
       'Each row a list draws of every element asked, measured apart — the first alone hides how they differ'
     )
+    .option(
+      '--all',
+      'Every property of each, its initial values and what it inherits too — left out otherwise, and counted'
+    )
+    .option(
+      '--steps <script>',
+      'Played on the page before it is measured, as page play takes them — "type chat-input hi; press Enter": what only a visitor’s steps make, measured where it is drawn'
+    )
     .addOption(widthsOption('The viewport widths, separated by commas: every element measured at each', [1440]))
     .addOption(schemeOption())
     .addOption(
@@ -196,7 +204,7 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .requiredOption(
       '--steps <script>',
-      'The steps, as page shot --steps writes them — click, hover, scroll, type (or fill: what the field held replaced), drag, press, wait, wait-for, reload, store, state, clock, tick — each element "ours => theirs" with --compare'
+      'The steps, as page shot --steps writes them — click, hover, scroll, type (or fill: what the field held replaced), drag, press, wait, wait-for, reload, goto <path>, store, state, clock, tick — a ";" inside quotes is the text’s — each element "ours => theirs" with --compare'
     )
     .option('--read <element...>', 'The elements read after each step — "row => .slides" with --compare')
     .option('--compare <url>', 'Another page — the site a copy is made after — played beside it, step for step')
@@ -230,6 +238,10 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .option('--compare <url>', 'The other site: its page outlined instead — what to name after "=>" in page measure')
     .option('--within <element>', 'One part alone — its element’s name, a tag or any selector')
+    .option(
+      '--find <word>',
+      'The elements whose name, selector or words hold it — the whole page searched, its matches alone listed: an element found by a word you know'
+    )
     .addOption(new Option('--depth <levels>', 'How many levels under the part are listed').argParser(positiveInteger))
     .option(
       '--click <element...>',
@@ -285,7 +297,13 @@ export const registerPage = (pageGroup: Command): void => {
         .default(800)
     )
     .addOption(schemesOption())
-    .option('-o, --out <file>', 'Where the picture goes. tmp/shots/<page>-<width>-<scheme>.png by default')
+    .addOption(
+      new Option(
+        '--scale <n>',
+        'The picture n times as large, laid out as at its width — a small drawing read up close, cell by cell (1 to 4)'
+      ).argParser(scale)
+    )
+    .option('-o, --out <file>', 'Where the picture goes. tmp/shots/<page>[-<clip>]-<width>-<scheme>.png by default')
     .option(
       '--compare <url>',
       'Another site: the same page there, side by side, and how much differs by section — as the open run kept it, when it did (plitzi run reference)'

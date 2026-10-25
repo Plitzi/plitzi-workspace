@@ -23,6 +23,7 @@ import {
 } from './space';
 import { elementStyles } from './styles';
 import { openProjectPage, PROJECT_QUIET_MS } from '../../browser';
+import { localFetch } from '../../http';
 import { standInPictures } from '../shot/capture';
 
 import type { Account } from './account';
@@ -330,7 +331,7 @@ const inspectHere = async (
       ? dataIssues(authored.schema, pageId, devTools.sources, { hidden: await notShown(page, authored) })
       : undefined;
   const lists = authored && data ? await listRows(page, authored, data.lists) : {};
-  const served = ssr ? markedIn(await (await fetch(`${origin}${pathname}`)).text()) : undefined;
+  const served = ssr ? markedIn(await (await localFetch(`${origin}${pathname}`)).text()) : undefined;
   const late = served
     ? lateElements(
         authored?.schema,

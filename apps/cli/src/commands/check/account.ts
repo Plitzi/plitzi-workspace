@@ -1,3 +1,4 @@
+import { localFetch } from '../../http';
 import { runProjectOf } from '../../runs/paths';
 import { projectSettings } from '../projectSettings';
 import { fail } from '../terminal';
@@ -90,6 +91,28 @@ export const signInAs = async (page: BrowserPage, origin: string, account: Accou
   return answer.status() === 404
     ? `nothing answers at ${SIGN_IN_PATH}: --as signs in through the routes createServer({ auth }) mounts there`
     : `${account.username} was not signed in (${String(answer.status())}): ${(await answer.text()).slice(0, 200)} — check ${CHECK_PASSWORD_ENV} in .env`;
+};
+
+/**
+ * The session cookie of the account, signed in through the server's `/auth` routes with a plain request — for a
+ * command that reads the site's pages without a browser (a look finding its pages' links) — or why it could not be.
+ */
+export const sessionCookie = async (origin: string, account: Account): Promise<string | { problem: string }> => {
+  const answer = await localFetch(`${origin}${SIGN_IN_PATH}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ username: account.username, password: account.password }),
+    redirect: 'manual'
+  }).catch((error: unknown) => (error instanceof Error ? error : new Error(String(error))));
+  if (answer instanceof Error) {
+    return { problem: `nothing answered at ${origin} to sign in as ${account.username} (${answer.message})` };
+  }
+
+  const cookies = answer.headers.getSetCookie().map(cookie => cookie.split(';')[0]);
+
+  return answer.status < 400 && cookies.length > 0
+    ? cookies.join('; ')
+    : { problem: `${account.username} was not signed in at ${SIGN_IN_PATH} (${String(answer.status)})` };
 };
 
 const withoutTrailingSlash = (path: string): string => (path.length > 1 ? path.replace(/\/+$/, '') : path);

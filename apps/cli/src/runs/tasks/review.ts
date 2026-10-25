@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { readyWhatWaited, sayIfAllDone, statesOf } from './handOn';
 import { proposalsOf } from '../agreements';
-import { approveDesign, assertDesigner, designDue } from '../design';
+import { approveDesign, assertDesigner, designDue, reviewTimeOf, timedOut } from '../design';
 import { exists, fingerprint, writeJson } from '../files';
 import { assertReviewingLead, isCoLead, isPrincipal } from '../leads';
 import { agentAddress, LEAD, messagesOf, sendMessage, unreadFor } from '../messages';
@@ -305,6 +305,30 @@ const decide = async (
 
   const skipped = verdict === 'approve' && designDue(view.state);
   const why = skipped ? skipDesign : undefined;
+  // A designer at it, in its time: its review is cut from under it — its copy taken away mid-look (encore-4's design-1,
+  // four minutes into d-brand-logo's). Past its time it is the lead's to decide, as `slow-review` says.
+  const reviewing = view.state.design?.by;
+  if (
+    why !== undefined &&
+    reviewing !== undefined &&
+    reviewing !== ctx.agent &&
+    timedOut(view.state.design, ctx.now().getTime()) === undefined
+  ) {
+    const left = Math.max(
+      1,
+      Math.ceil(
+        (Date.parse(view.state.design?.at ?? ctx.now().toISOString()) +
+          reviewTimeOf(view.state.design) -
+          ctx.now().getTime()) /
+          60_000
+      )
+    );
+    throw new RunRefusal(
+      'claimed',
+      `${reviewing} is reviewing ${taskId}'s UI — its own for ${String(left)} min more: approving past it takes its copy from under it. Wait for its verdict (plitzi run watch --until lead wakes you), or ask it where it stands (plitzi task message @${reviewing} "…"); past its time it is yours to decide.`,
+      { task: taskId, designer: reviewing }
+    );
+  }
   // The lead's UI review is a look at it, said: encore-2's lead approved t-reactions-quiet `--skip-design lead` without
   // one, and the emoji sat at the top of every key — the person saw it, no check could.
   if (why === 'lead' && !(await lookedSince(loaded, ctx.agent, taskId))) {

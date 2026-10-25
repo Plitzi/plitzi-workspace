@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fingerprint } from './files';
 import { agentAddress, LEAD, sendMessage } from './messages';
 import { RunRefusal } from './refusal';
-import { logRun } from './run';
+import { logRun, readRunLog } from './run';
 import { logSpent } from './spent';
 import { updateState } from './taskStore';
 import { DESIGNER, readTeam, startedAgents } from './team';
@@ -73,6 +73,16 @@ export const SAME_DESIGNER_MS = 3 * 60_000;
  */
 export const REVIEW_TIMEOUT_MS = 8 * 60_000;
 
+/**
+ * More time for a designer's first review: it reads the references it is told to first (`DESIGN_READING`), and an
+ * 8-minute clock from the take could not hold both — encore-4's design-1 read them and saw its review taken past it.
+ */
+export const FIRST_REVIEW_READING_MS = 7 * 60_000;
+
+/** How long a taken review is its reviewer's: a designer's first holds its reading too. */
+export const reviewTimeOf = (design: Pick<DesignReview, 'first'> | undefined): number =>
+  REVIEW_TIMEOUT_MS + (design?.first === true ? FIRST_REVIEW_READING_MS : 0);
+
 /** How long a UI review due waits untaken before the lead is told to review it itself. */
 export const REVIEW_QUEUE_MS = 5 * 60_000;
 
@@ -84,7 +94,7 @@ export const timedOut = (design: DesignReview | undefined, now: number): number 
 
   const held = now - Date.parse(design.at);
 
-  return held > REVIEW_TIMEOUT_MS ? Math.round(held / 60_000) : undefined;
+  return held > reviewTimeOf(design) ? Math.round(held / 60_000) : undefined;
 };
 
 /**
@@ -110,7 +120,7 @@ export const assertDesigner = (view: TaskView, agent: string): void => {
   if (design?.by !== undefined && design.by !== agent) {
     throw new RunRefusal(
       'claimed',
-      `${design.by} reviews ${taskId}'s UI: it is theirs to say — a review taken is its designer's for ${String(REVIEW_TIMEOUT_MS / 60_000)} min, and one held past it goes to another. What you found, say for the next run: plitzi run notice "…" --on <element>`,
+      `${design.by} reviews ${taskId}'s UI: it is theirs to say — a review taken is its designer's for ${String(reviewTimeOf(design) / 60_000)} min, and one held past it goes to another. What you found, say for the next run: plitzi run notice "…" --on <element>`,
       { task: taskId, holder: design.by }
     );
   }
@@ -130,7 +140,9 @@ export const assertDesigner = (view: TaskView, agent: string): void => {
  */
 export const takeDesignReview = async (
   ctx: RunContext,
-  view: TaskView
+  view: TaskView,
+  /** The designer's first review of the run: its time holds the reading asked first. */
+  first = false
 ): Promise<{ taken: boolean; from?: string; minutes?: number }> => {
   const now = ctx.now().getTime();
   const before = view.state.design?.by;
@@ -141,7 +153,15 @@ export const takeDesignReview = async (
       designDue(state) &&
       state.design &&
       (state.design.by === undefined || state.design.by === ctx.agent || timedOut(state.design, now) !== undefined)
-        ? { ...state, design: { ...state.design, by: ctx.agent, at: ctx.now().toISOString() } }
+        ? {
+            ...state,
+            design: {
+              ...state.design,
+              by: ctx.agent,
+              at: ctx.now().toISOString(),
+              ...(first ? { first: true as const } : {})
+            }
+          }
         : state,
     ctx.now
   );
@@ -269,7 +289,10 @@ export const designAtComplete = async (
  * it, and that one is told on its next command. False when another designer took it first.
  */
 export const takeOfferedReview = async (ctx: RunContext, loaded: LoadedRun, view: TaskView): Promise<boolean> => {
-  const took = await takeDesignReview(ctx, view);
+  const reviewed = (await readRunLog(loaded.paths)).some(
+    entry => entry.by === ctx.agent && entry.action === 'review-taken' && entry.review === 'ui'
+  );
+  const took = await takeDesignReview(ctx, view, !reviewed);
   if (!took.taken) {
     return false;
   }
@@ -278,7 +301,7 @@ export const takeOfferedReview = async (ctx: RunContext, loaded: LoadedRun, view
     await sendMessage(ctx, loaded, {
       from: LEAD,
       to: agentAddress(took.from),
-      text: `${view.task.id}'s UI review went to ${ctx.agent}: you held it ${String(took.minutes)} min, past the ${String(REVIEW_TIMEOUT_MS / 60_000)} a review is a designer's — it is not yours now. What you found, say for the next run: plitzi run notice "…"`
+      text: `${view.task.id}'s UI review went to ${ctx.agent}: you held it ${String(took.minutes)} min, past the ${String(reviewTimeOf(view.state.design) / 60_000)} a review is a designer's — it is not yours now. What you found, say for the next run: plitzi run notice "…"`
     });
     await logRun(ctx, loaded.paths, {
       action: 'review-timed-out',

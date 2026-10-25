@@ -10,16 +10,29 @@ import type { UsageLine } from '../usage';
  * session was still writing (#44).
  */
 
-/** An agent with two tasks in progress at once: replayed take by take, each time it happened said once. */
+/**
+ * An agent with two tasks in progress at once: replayed take by take, each time it happened said once. A task sent
+ * back while its agent is at another waits for it — Carlos's rule (encore-2): never handed to a free one — and is its
+ * agent's work again once the other is complete; counted then, never while it waits (encore-4 said dev-1 held two).
+ */
 export const twoTasks = (log: readonly LogEntry[]): Finding[] => {
   const owner = new Map<string, string>();
   const working = new Map<string, Set<string>>();
+  const waiting = new Map<string, Set<string>>();
   const seen = new Map<string, string[]>();
-  const of = (agent: string): Set<string> => {
-    const held = working.get(agent) ?? new Set<string>();
-    working.set(agent, held);
+  const setOf = (sets: Map<string, Set<string>>, agent: string): Set<string> => {
+    const held = sets.get(agent) ?? new Set<string>();
+    sets.set(agent, held);
 
     return held;
+  };
+  // Its own work done or handed on, a sent-back task waiting for it is what it is at next.
+  const nextOwn = (agent: string): void => {
+    const first = [...setOf(waiting, agent)].at(0);
+    if (setOf(working, agent).size === 0 && first !== undefined) {
+      setOf(waiting, agent).delete(first);
+      setOf(working, agent).add(first);
+    }
   };
 
   for (const entry of log) {
@@ -27,18 +40,24 @@ export const twoTasks = (log: readonly LogEntry[]): Finding[] => {
     const by = text(entry.by);
     if (entry.action === 'take') {
       owner.set(task, by);
-      of(by).add(task);
+      setOf(waiting, by).delete(task);
+      setOf(working, by).add(task);
     } else if (entry.action === 'complete') {
-      of(by).delete(task);
+      setOf(working, by).delete(task);
+      nextOwn(by);
     } else if (entry.action === 'review' && entry.verdict === 'changes') {
       const holder = owner.get(task);
-      if (holder !== undefined) {
-        of(holder).add(task);
+      if (holder !== undefined && !setOf(working, holder).has(task)) {
+        setOf(waiting, holder).add(task);
+        nextOwn(holder);
       }
     } else if (entry.action === 'reassign') {
-      of(text(entry.from)).delete(task);
+      const from = text(entry.from);
+      setOf(working, from).delete(task);
+      setOf(waiting, from).delete(task);
+      nextOwn(from);
       owner.set(task, text(entry.to));
-      of(text(entry.to)).add(task);
+      setOf(working, text(entry.to)).add(task);
     } else {
       continue;
     }
@@ -61,7 +80,7 @@ export const twoTasks = (log: readonly LogEntry[]): Finding[] => {
     title: `${agent} had two tasks in progress at once`,
     evidence: evidenceOf(pairs),
     times: pairs.length,
-    fix: 'one task in progress an agent: a second sent back to a busy agent is offered to a free one of its role, not stacked on it',
+    fix: 'one task in progress an agent: another is taken once its own is complete — one sent back waits for it, and is what it takes next',
     subject: `two-tasks:${agent}`,
     live: true
   }));

@@ -60,10 +60,20 @@ export type TemplateInspection = {
    * scope when it renders.
    */
   freeNames: string[];
+  /**
+   * What reads as something other than it looks, though the interpreter reads it whole: `sort or 'listeners'` answers
+   * `true`, never "listeners" — `or` is a test, and a fallback value is `??`. encore-4's Explore links wrote `?sort=true`.
+   */
+  notes: string[];
 };
+
+/** A literal that is a value, not a truth: a text or a number. */
+const valueLiteral = (expr: Expression): boolean =>
+  expr.type === 'literal' && (typeof expr.value === 'string' || typeof expr.value === 'number');
 
 class Inspector {
   readonly issues: string[] = [];
+  readonly notes: string[] = [];
   readonly freeNames = new Set<string>();
 
   nodes(nodes: readonly ASTNode[], bound: ReadonlySet<string>): Set<string> {
@@ -195,6 +205,13 @@ class Inspector {
 
         return;
       case 'binary':
+        if ((expr.operator === 'or' || expr.operator === 'and') && [expr.left, expr.right].some(valueLiteral)) {
+          const value = [expr.left, expr.right].find(valueLiteral);
+          this.notes.push(
+            `\`${expr.operator}\` with ${value?.type === 'literal' ? JSON.stringify(value.value) : 'a value'} answers true or false, never the value — a fallback value is \`??\`: \`x ?? ${value?.type === 'literal' ? JSON.stringify(value.value) : '…'}\``
+          );
+        }
+
         this.expression(expr.left, scope);
         // `x is defined`: the right side of a test names the test, not a variable.
         if (!((expr.operator === 'is' || expr.operator === 'is not') && expr.right.type === 'path')) {
@@ -233,7 +250,7 @@ class Inspector {
 export const inspectTemplate = (template: string): TemplateInspection => {
   const lexed = lex(template);
   if (lexed.error) {
-    return { issues: [lexed.error], freeNames: [] };
+    return { issues: [lexed.error], freeNames: [], notes: [] };
   }
 
   const inspector = new Inspector();
@@ -244,5 +261,9 @@ export const inspectTemplate = (template: string): TemplateInspection => {
 
   inspector.nodes(nodes, new Set());
 
-  return { issues: [...new Set(inspector.issues)], freeNames: [...inspector.freeNames] };
+  return {
+    issues: [...new Set(inspector.issues)],
+    freeNames: [...inspector.freeNames],
+    notes: [...new Set(inspector.notes)]
+  };
 };

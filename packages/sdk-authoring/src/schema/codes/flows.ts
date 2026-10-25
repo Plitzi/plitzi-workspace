@@ -2,6 +2,12 @@ import type { AuthoringCodeEntry } from './entry';
 
 /** Flows and steps. */
 export const FLOW_CODES = {
+  'condition-short-source': {
+    kind: 'refused',
+    means:
+      "a step's condition reading an element's source by the element's id alone — `roomStats.locked` — which reads nothing",
+    fix: 'the source named in full, as a template names it: `apiContainer_roomStats.locked`'
+  },
   'flow-empty': {
     kind: 'refused',
     means: 'a flow with no steps',

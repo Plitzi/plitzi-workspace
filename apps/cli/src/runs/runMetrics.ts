@@ -43,17 +43,18 @@ export interface AgentFlow {
   /** What the CLI printed to it — read as tokens, a token four characters. */
   calls: number;
   readTokens: number;
-  /**
-   * The harness's own count, as the lead said it (`run report --tokens`): the agent's context at its end — what a
-   * Claude Code subagent reports — not what it spent.
-   */
-  tokens?: number;
-  /**
-   * What it read again, at the least: a context is read whole on every turn, and grows from nothing to `tokens` over
-   * its calls — half of it a call. lx-product's dev-1 said 310k and read 30.9M; this gives 26M, the harness's own
-   * prompt left out.
-   */
-  reread?: number;
+  /** What its harness spent, from its rounds' reports (`taskReports.ts`) — when its harness keeps a session read. */
+  harness?: AgentHarness;
+}
+
+/** One agent's harness over the run, from its rounds' reports. */
+export interface AgentHarness {
+  /** All it read: every turn's whole context, summed. */
+  processed: number;
+  /** Its largest context at a round's end. */
+  contextMax: number;
+  /** What its heaviest results were read again for in later turns, at the least. */
+  reread: number;
 }
 
 export interface RepeatedCall {
@@ -81,10 +82,8 @@ export interface RunMetrics {
   cost: {
     calls: number;
     readTokens: number;
-    /** The harness's tokens, every agent's the lead said: their contexts at their end. */
-    tokens?: number;
-    /** What they read again at the least, every agent's (`reread`). */
-    reread?: number;
+    /** Every agent's harness, summed: all they read, and what of it was results read again. */
+    harness?: { processed: number; reread: number };
     byCommand: {
       command: string;
       calls: number;
@@ -171,10 +170,18 @@ const median = (values: readonly number[]): number | undefined => {
 const REPEATED = 3;
 const REPEAT_WINDOW_MIN = 10;
 
+/**
+ * A call an agent is meant to make again: a wait that ends on news, and `task next --take`, which hands one piece of
+ * work a call. encore-4 counted test-1's 14 `task next --follow --take` in 6 min as a loop — one a fresh session each.
+ */
+const calledAgainByDesign = (command: string): boolean =>
+  waitsByDesign(command) || /^plitzi task next\b.*\s--take\b/.test(command);
+
 const repeatedCalls = (usage: readonly UsageLine[]): RepeatedCall[] => {
   const groups = new Map<string, UsageLine[]>();
-  for (const line of usage) {
-    const key = `${line.by}\u0000${line.command}`;
+  // In one session: a fresh session runs its first commands again, as it should.
+  for (const line of usage.filter(each => !calledAgainByDesign(each.command))) {
+    const key = `${line.by}\u0000${line.session ?? ''}\u0000${line.command}`;
     groups.set(key, [...(groups.get(key) ?? []), line]);
   }
 
@@ -206,15 +213,13 @@ export const tokensText = (value: number): string =>
       ? `${String(Math.round(value / 100) / 10)}k`
       : String(value);
 
-/** What an agent read again over its calls at the least: its context, growing from nothing to its end, every turn. */
-const rereadOf = (calls: number, end: number): number => Math.round((calls * end) / 2);
-
 export const runMetrics = (input: {
   log: readonly Entry[];
   usage: readonly UsageLine[];
   /** The messages that answer another, with when: a question's wait. */
   answers: readonly { replyTo: string; at: string }[];
-  tokens: Readonly<Record<string, number>>;
+  /** Each agent's harness, from the rounds' reports (`harnessOf`). */
+  harness: Readonly<Record<string, AgentHarness>>;
   taskIds: readonly string[];
   openedAt: string;
   now: string;
@@ -323,19 +328,24 @@ export const runMetrics = (input: {
     ...new Set([
       ...log.map(entry => text(entry.by)).filter(Boolean),
       ...usage.map(line => line.by),
-      ...Object.keys(input.tokens)
+      ...Object.keys(input.harness)
     ])
   ].filter(name => name !== 'plitzi' && name !== 'unnamed');
+  const allApproved = log.findLast(entry => entry.action === 'all-approved');
+  // The run's work ends with its last approval: what an agent waited past it was for the person's finish, not for work
+  // (encore-4 counted 1692 min of waits, 9 h of them for an apply).
+  const workEnd = allApproved ? at(allApproved) : input.now;
   const agents: AgentFlow[] = names.map(agent => {
     const own = log.filter(entry => entry.by === agent);
     let waited = 0;
     own.forEach((entry, index) => {
-      if (entry.action !== 'waiting') {
+      if (entry.action !== 'waiting' || at(entry) >= workEnd) {
         return;
       }
 
       const next = own.slice(index + 1).find(each => each.action !== 'waiting');
-      waited += minutes(at(entry), next ? at(next) : input.now);
+      const end = next && at(next) < workEnd ? at(next) : workEnd;
+      waited += minutes(at(entry), end);
     });
     const reviewTimes: number[] = [];
     own
@@ -376,9 +386,7 @@ export const runMetrics = (input: {
       },
       calls: calls.length,
       readTokens: Math.round(calls.reduce((sum, line) => sum + line.chars, 0) / 4),
-      ...(Object.hasOwn(input.tokens, agent)
-        ? { tokens: input.tokens[agent], reread: rereadOf(calls.length, input.tokens[agent]) }
-        : {})
+      ...(Object.hasOwn(input.harness, agent) ? { harness: input.harness[agent] } : {})
     };
   });
 
@@ -417,7 +425,6 @@ export const runMetrics = (input: {
 
     return answer ? [minutes(at(entry), answer.at)] : [];
   });
-  const allApproved = log.findLast(entry => entry.action === 'all-approved');
   const byCommand = new Map<string, { calls: number; chars: number; ms: number[] }>();
   for (const line of usage) {
     const name = commandName(line.command);
@@ -429,7 +436,7 @@ export const runMetrics = (input: {
     });
   }
 
-  const tokens = Object.values(input.tokens);
+  const harness = Object.values(input.harness);
 
   return {
     ...(allApproved
@@ -448,10 +455,12 @@ export const runMetrics = (input: {
     cost: {
       calls: usage.length,
       readTokens: Math.round(usage.reduce((sum, line) => sum + line.chars, 0) / 4),
-      ...(tokens.length > 0
+      ...(harness.length > 0
         ? {
-            tokens: tokens.reduce((sum, each) => sum + each, 0),
-            reread: agents.reduce((sum, each) => sum + (each.reread ?? 0), 0)
+            harness: {
+              processed: harness.reduce((sum, each) => sum + each.processed, 0),
+              reread: harness.reduce((sum, each) => sum + each.reread, 0)
+            }
           }
         : {}),
       byCommand: [...byCommand]
@@ -475,4 +484,28 @@ export const runMetrics = (input: {
         10
     }
   };
+};
+
+/** Each agent's harness over the run: its rounds' reports summed, its largest context kept. */
+export const harnessOf = (
+  reports: readonly {
+    agent: string;
+    harness?: { processed: number; contextAtEnd: number; heaviest: { reread: number }[] };
+  }[]
+): Record<string, AgentHarness> => {
+  const byAgent: Record<string, AgentHarness> = {};
+  for (const report of reports) {
+    if (report.harness) {
+      const kept = Object.hasOwn(byAgent, report.agent)
+        ? byAgent[report.agent]
+        : { processed: 0, contextMax: 0, reread: 0 };
+      byAgent[report.agent] = {
+        processed: kept.processed + report.harness.processed,
+        contextMax: Math.max(kept.contextMax, report.harness.contextAtEnd),
+        reread: kept.reread + report.harness.heaviest.reduce((sum, result) => sum + result.reread, 0)
+      };
+    }
+  }
+
+  return byAgent;
 };

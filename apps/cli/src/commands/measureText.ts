@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-import { comparable, differences, MEASURED, PSEUDO_MEASURED, PSEUDOS } from './measureValues';
+import { atInitial, comparable, differences, MEASURED, PSEUDO_MEASURED, PSEUDOS } from './measureValues';
 
 import type { Reading } from './measure';
 import type { Measured } from './measureValues';
@@ -56,16 +56,50 @@ export const comparedText = (url: string | undefined): string =>
 const saidAbove = (same: readonly string[]): boolean =>
   same.every(property => (MEASURED as readonly string[]).includes(property) || property.includes(':'));
 
-export const measuredText = (here: Measured, there?: Measured): string => {
+/** A picture written into a value (`url(data:image/svg+xml,…)`) said by its kind and size: thousands of characters a value. */
+const shortValue = (value: string): string =>
+  value.replace(
+    /url\((["'])data:([\w/+.-]+)[;,][\s\S]*?\1\)|url\(data:([\w/+.-]+)[;,][^)]*\)/g,
+    (match, _quote: string | undefined, quoted: string | undefined, bare: string | undefined) =>
+      `url(data:${quoted ?? bare ?? ''} … ${String(match.length)} chars)`
+  );
+
+/**
+ * One element read alone: what it says of itself — a property at its initial value and one taken from its parent left
+ * out, unless every one is asked (`all`). encore-4's measures printed ~40 properties an element, a data URI whole in
+ * each: 38k characters in one answer, read again on every turn after it.
+ */
+const aloneText = (here: Measured, all: boolean): string => {
+  const entries = Object.entries(here.styles);
+  const shown = all
+    ? entries
+    : entries.filter(([property, value]) => !atInitial(property, value) && !here.inherited.includes(property));
+  const initial = entries.filter(([property, value]) => atInitial(property, value)).length;
+  const inherited = entries.filter(([property]) => here.inherited.includes(property)).length;
+
+  return [
+    chalk.bold(named(here)),
+    ...rootNote(here),
+    ...(here.matches === undefined
+      ? []
+      : [chalk.dim(`  (the first shown of ${String(here.matches)} it finds — --rows measures each)`)]),
+    ...shown.map(
+      ([property, value]) =>
+        `  ${property.padEnd(22)} ${all ? value : shortValue(value)}${here.inherited.includes(property) ? chalk.dim('  (inherited)') : ''}`
+    ),
+    ...(!all && initial + inherited > 0
+      ? [
+          chalk.dim(
+            `  (${[initial > 0 ? `${String(initial)} at their initial value` : '', inherited > 0 ? `${String(inherited)} inherited from its parent` : ''].filter(Boolean).join(', ')}: --all says them)`
+          )
+        ]
+      : [])
+  ].join('\n');
+};
+
+export const measuredText = (here: Measured, there?: Measured, all = false): string => {
   if (!there) {
-    return [
-      chalk.bold(named(here)),
-      ...rootNote(here),
-      ...Object.entries(here.styles).map(
-        ([property, value]) =>
-          `  ${property.padEnd(22)} ${value}${here.inherited.includes(property) ? chalk.dim('  (inherited)') : ''}`
-      )
-    ].join('\n');
+    return aloneText(here, all);
   }
 
   const { differ, same } = differences(here, there);
@@ -113,7 +147,13 @@ export const keptText = (readings: readonly Reading[], now: number): string | un
  * What one reading says: its element measured, or why not — and, held to `--same`, whether it holds. The other page,
  * and the time it was kept when it is one for all, are said above every reading (`comparedText`, `keptText`).
  */
-export const readingText = (reading: Reading, same: string[] | undefined, now: number, keptSaid = false) => {
+export const readingText = (
+  reading: Reading,
+  same: string[] | undefined,
+  now: number,
+  keptSaid = false,
+  all = false
+) => {
   const { here, there } = reading;
   if ('problem' in here) {
     return chalk.red(`✗ ${here.problem}`);
@@ -124,7 +164,7 @@ export const readingText = (reading: Reading, same: string[] | undefined, now: n
   }
 
   return [
-    measuredText(here, there),
+    measuredText(here, there, all),
     ...(reading.keptAt && !keptSaid
       ? [chalk.dim(`  (there: read ${minutesAgo(reading.keptAt, now)} and kept — --fresh reads it again)`)]
       : []),

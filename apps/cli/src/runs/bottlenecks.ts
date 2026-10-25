@@ -1,4 +1,4 @@
-import { REVIEW_QUEUE_MS, REVIEW_TIMEOUT_MS } from './design';
+import { REVIEW_QUEUE_MS, reviewTimeOf } from './design';
 import { LEAD } from './messages';
 import { DESIGNER, DEVELOPER } from './team';
 import { isWorked } from './worked';
@@ -111,9 +111,10 @@ export const bottlenecks = (
           ? { by: reviewer.by, at: reviewer.at, what: 'review' }
           : undefined;
     const held = taken ? now.getTime() - Date.parse(taken.at) : 0;
+    const time = reviewTimeOf(taken?.what === 'UI review' ? design : undefined);
     // Past the review's time it is no longer its reviewer's, idle team or not; under it, only while others sit free.
-    const past = held >= REVIEW_TIMEOUT_MS;
-    if (!taken || (!past && (held < REVIEW_TIMEOUT_MS / 2 || idleAll.length === 0))) {
+    const past = held >= time;
+    if (!taken || (!past && (held < time / 2 || idleAll.length === 0))) {
       continue;
     }
 
@@ -122,7 +123,7 @@ export const bottlenecks = (
       kind: 'slow-review',
       task: view.task.id,
       text: past
-        ? `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min, past the ${String(REVIEW_TIMEOUT_MS / 60_000)} a review is its reviewer's: ${taken.what === 'UI review' ? 'the next designer free takes it — or ' : ''}decide it yourself now: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design lead' : ''} | --changes "…"`
+        ? `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min, past the ${String(time / 60_000)} a review is its reviewer's: ${taken.what === 'UI review' ? 'the next designer free takes it — or ' : ''}decide it yourself now: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design lead' : ''} | --changes "…"`
         : `${taken.by} has had ${view.task.id}'s ${taken.what} ${String(minutes)} min while ${idleAll.join(', ')} ${idleAll.length === 1 ? 'has' : 'have'} nothing to take: ask where it stands and for a decision now (plitzi task message @${taken.by} "…") — or decide it yourself: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design lead' : ''} | --changes "…"`,
       who: 'lead'
     });

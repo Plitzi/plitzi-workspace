@@ -547,8 +547,21 @@ const checkConditionGlobals = (
   hostId: string
 ): void => {
   for (const { field } of conditionRules(node.when)) {
-    if (!steps.has(field.split('.')[0])) {
-      checkGlobalRead(ctx, field, `${where}: the condition of step "${node.id}"`, hostId);
+    const [root = ''] = field.split('.');
+    if (steps.has(root)) {
+      continue;
+    }
+
+    checkGlobalRead(ctx, field, `${where}: the condition of step "${node.id}"`, hostId);
+    // An element's source named by its id alone is read as nothing — the rule never holds, and nothing said so
+    // (encore-4's `roomStatsData.locked`, for `apiContainer_roomStatsData.locked`).
+    const prefix = ctx.sources.get(root);
+    if (prefix) {
+      ctx.error(
+        'condition-short-source',
+        `${where}: the condition of step "${node.id}" reads \`${field}\`, but a source is named in full — \`${prefix}_${field}\`. Named by its element's id alone it reads nothing, and the rule answers the same whatever the source holds.`,
+        hostId
+      );
     }
   }
 };

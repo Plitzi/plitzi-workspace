@@ -9,6 +9,7 @@ export const SCHEMA_SETTINGS = [
   'keepState',
   'stateStorage',
   'transientState',
+  'keptState',
   'paintedState',
   'robotsTxt',
   'viewTransitions',

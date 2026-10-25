@@ -51,6 +51,9 @@ export interface StepResult {
 
 const TAIL = 15;
 
+/** Of what a failing line says under it, the deepest lines kept: where a type error says its cause. */
+const CAUSE_LINES = 3;
+
 const WIDTHS = [1440, 390];
 
 /** The steps the project has a script for, in the order a problem is best fixed in. */
@@ -122,7 +125,28 @@ export const tail = (output: string): string[] => {
     return lines;
   }
 
-  const kept = new Set(lines.flatMap((line, index) => (FAILING.test(line) ? [index] : [])).slice(0, TAIL));
+  // A failing line and what it says under it, indented — tsc names an overload, then, deepest, its cause: kept with its
+  // deepest lines, where the cause is (encore-4's tester read the overloads and lost `T | Promise<T>`).
+  const indent = (line: string): number => line.length - line.trimStart().length;
+  const blocks = lines.flatMap((line, index) => {
+    if (!FAILING.test(line)) {
+      return [];
+    }
+
+    let end = index;
+    while (end + 1 < lines.length && indent(lines[end + 1]) > indent(line) && !FAILING.test(lines[end + 1])) {
+      end += 1;
+    }
+
+    // The deepest lines under it: tsc's cause is said last and indented most.
+    const under = Array.from({ length: end - index }, (_, offset) => index + 1 + offset)
+      .sort((a, b) => indent(lines[b]) - indent(lines[a]) || b - a)
+      .slice(0, CAUSE_LINES)
+      .sort((a, b) => a - b);
+
+    return [index, ...under];
+  });
+  const kept = new Set(blocks.slice(0, TAIL));
   for (let index = lines.length - 1; index >= 0 && kept.size < TAIL; index -= 1) {
     kept.add(index);
   }

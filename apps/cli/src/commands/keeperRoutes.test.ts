@@ -4,6 +4,8 @@ import { keeperRoutes, MAX_SESSIONS, SESSION_IDLE_MS } from './keeperRoutes';
 
 import type { KeeperDeps } from './keeperRoutes';
 
+const colour = { text: 'rgb(0, 0, 0)', ground: 'rgb(255, 255, 255)' };
+
 /** A page as the test knows it: its number, what was done on it, and whether it was closed. */
 interface Page {
   id: number;
@@ -57,7 +59,8 @@ const bench = (overrides: Partial<KeeperDeps<Page>> = {}) => {
         text: '',
         aria: {},
         focused: false,
-        inView: 'whole'
+        inView: 'whole',
+        colour
       }),
     close: page => {
       page.closed = true;
@@ -123,8 +126,26 @@ describe('the kept browser’s routes', () => {
     });
     expect(await ask('/session/read', { session, targets: ['#row', 'hidden'] })).toEqual({
       states: [
-        { offset: { x: 1, y: 0 }, shown: true, enabled: true, text: '', aria: {}, focused: false, inView: 'whole' },
-        { offset: { x: 1, y: 0 }, shown: false, enabled: true, text: '', aria: {}, focused: false, inView: 'whole' }
+        {
+          offset: { x: 1, y: 0 },
+          shown: true,
+          enabled: true,
+          text: '',
+          aria: {},
+          focused: false,
+          inView: 'whole',
+          colour
+        },
+        {
+          offset: { x: 1, y: 0 },
+          shown: false,
+          enabled: true,
+          text: '',
+          aria: {},
+          focused: false,
+          inView: 'whole',
+          colour
+        }
       ]
     });
     expect(await routes.routes['/session/act']({ session, step: { kind: 'fly' }, index: 0 })).toMatchObject({

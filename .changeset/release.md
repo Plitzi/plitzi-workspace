@@ -35,6 +35,12 @@ authoring and the elements learnt from the runs.
 - **`plitzi upgrade`** brings the new scripts (`start:preview`, the visual suite's own server on port 8400) and the
   team file's `about`. `upgrade --write` waits for an open run unless `--with-open-runs`; `plitzi run upgrade` upgrades
   under an open run without breaking it.
+- **`run report --tokens` is gone.** The harness's count comes from each round's report: the agent table says what
+  each harness read, its largest context and what it read again; the bench's "Context / task" column is gone.
+- **`grid-area` and `grid-row`/`grid-column` expand as CSS does:** an omitted part is `auto`, a named area's mirrors it.
+  `'grid-area': '2 / 1'` used to end at row 1 and column 1 — a space that placed by it may move; look at its grids.
+- **`condition-short-source`** refuses a step's condition naming an element's source by its id alone
+  (`roomStats.locked`), which never held: write `apiContainer_roomStats.locked`.
 
 ## Several agents on one project (`@plitzi/cli`)
 
@@ -388,6 +394,28 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`↻ restarting` in the monitor:** an agent stopped between two pieces of work for a fresh context reads restarting —
   before the run starts it again and after, until its first command — never "stopped" (encore-4's design-1), and the
   run counts it running from its launch.
+- **`run report` prints the run at a glance and each finding's title**; `--full` (and the finish's file) the whole of
+  it. Its title is the run's goal, the stages it grew by listed under it; the lead's summary sits under its heading.
+- **What the report counts, counted right:** an agent's waits and minutes end at the last approval, not the person's
+  finish; a call is repeated within one session, never a wait (`--follow`, `run watch`) nor `task next --take`; the head,
+  the indicators and the bench count the same tasks; a heavy context and a costly task are one finding each, the rounds
+  their evidence; `explain` is said once; what agents said is grouped by its first text; a tool's result is named
+  `Read .ts`, `Bash plitzi page measure` (a command after a comment, a `cd` or a loop too).
+- **`task context`** reads what its files import from the task's copy, never the project as the run began.
+- **`task check`:** `--fix` touches the task's own files alone; a check failing as the last one on the same files says
+  so; a backup an editor or `sed -i -E` left is refused (`plitzi task discard`); a type error keeps its cause, the deepest
+  lines under it. `complete` refuses the backups too.
+- **Reviews:** a designer's first review is its own for 15 min, its reading held; `--skip-design` is refused while a
+  designer reviews in its time. `task next`'s look names the acceptance's pages too, signed in as it checks them, and a
+  page checked with a status of its own apart (`--status 404`).
+- **`task look`:** finds a page only a signed-in visitor has a link to (`/u/:username`); keeps every look of a round;
+  says a tall page's parts; says a picture not taken once a reason, with how to see the part; a dress change once, with
+  every section it is in; that its copy holds its plays' state (`server reset` for a cold side); `--before` when not set
+  beside the run before.
+- **An agent is told what is next for it:** `task show` of another task offers `task tell`/`task propose`, never the
+  lead's `task message`; a base agent with every task approved hears that the run waits for its finish and a person's
+  apply; a new file beside a file near the limit is said to be the task's.
+- **`two-tasks`** no longer counts a sent-back task waiting for its agent — the rule is that it waits.
 
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
 
@@ -464,6 +492,28 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   (`overflow: hidden` on a pixel, `clip-path: inset(50%)`, `clip: rect(0 0 0 0)`).
 - **`plitzi space fix` says what is left** when nothing has one fix to write — each warning and suggestion where it was
   written, and how one written so on purpose is quieted — never "Nothing to fix" beside them.
+- **`page shot`:** `--scale <1–4>` pictures a small drawing up close; a `--clip`'s name is in the file's
+  (`home-site-header-1440-light.png`); a whole page past three screens is also written in parts a screen and a half tall;
+  a clipped part is pictured without what is pinned over it (a sticky header); a sheet pinned over the page that holds
+  more than the screen is pictured whole; a component's instance is clipped by its name; `--frames` on a part counts any
+  change as motion, and a page's slight changes are said apart.
+- **`page measure`** says what an element says of itself — its initial values and what it inherits counted, `--all` for
+  every one, a data URI by its kind and size — and how many elements its selector finds; it measures `animation`,
+  `position`, `max-width`, `grid-area` and a pseudo-element's `position`, `top`…; `--steps` plays steps first (data only a
+  visitor makes: a chat line); `No element` says the ways one is not drawn.
+- **`page play`:** `goto <path>`; `→ <path>` where a step took the page; a colour a step changed; an element's
+  animations; a `;` inside quotes is the text's; `fill .class=text`; a `state` value quoted as a shell writes it. A click
+  that navigates is no failure, in `page check --click` too.
+- **`page outline --find <word>`** lists the elements whose name, selector or words hold it, the whole page searched.
+- **An option's value that is the next option** (`--width --scheme`) says the value went missing; `page shot --full`
+  says a shot is the whole page already.
+- **Node 24's fetch failing its first request** with `setTypeOfService EINVAL` is asked again, once, for the CLI's
+  requests to a server of this machine.
+- **`explain`** answers a name it does not have with what its words describe, a setting of the space as one, a state a
+  class styles (`active` is the press; the open tab is `current`), and what an element writes on its node.
+- **`page check`** reads a condition written inside a class's rule (`@container`, nested) as the width hiding it.
+- **`selector-instance`** (`plitzi space lint`): a test's `data-plitzi-el` selector naming a component's instance, which
+  finds nothing — `handles.element(id).selector` does.
 
 ## Authoring (`@plitzi/sdk-authoring`)
 
@@ -520,6 +570,11 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   action, and refused before the task runs (`Invalid input: minutes (number, at most 240)`).
 - **The testing helpers** used by the page tools are exported: `openPage`, `inspectPage`, `pageTexts`, `compareTexts`,
   `pageDecorations`, `compareDecorations`. Every export carries a doc.
+- **`popup-position-set`** warns of a class setting where a `dropdownPopup` is drawn; **`icon-font-replaced`** of a
+  class giving a `fontAwesome` icon another font; **`template-or-value`** of `x or 'value'`, which answers true or false
+  (`??` is the fallback).
+- **`keptState`** names the only state keys kept — refused beside `transientState`, a painted key one of them.
+- The `repeated-on-pages` suggestion says where a component of one area is written and listed.
 
 ## Elements and the SDK (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`, `@plitzi/sdk-shared`)
 
@@ -573,6 +628,13 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A filter written as JavaScript names it** is refused with the one the templates have: `concat` — write
   `first|merge(second)`.
 - The authoring skill says `|ago` for "3 minutes ago", not a transformer.
+- **`dropdown`:** `popupWidth: 'trigger'` makes its popup at least as wide as its trigger; `openDropdown`,
+  `closeDropdown` and `toggleDropdown` open and close it from a step.
+- **`settings.keptState`:** with `keepState`, only these keys are written and brought back — a dismissed notice kept, the
+  page's other keys fresh.
+- **A declaration's `marks`** say what an element writes on its node (`role="tab"`, `aria-selected`) and how a class
+  styles it; `explain` and its search read them. Each style state says what it is (`STYLE_STATE_MEANINGS`).
+- `inspectTemplate` answers `notes`: what reads as other than it looks.
 
 ## Server (`@plitzi/sdk-server`)
 
@@ -627,7 +689,8 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A setting the space had no value for is kept:** the builder wrote a setting only where one was already there, so a
   new one was saved by the platform and lost on the canvas until the next load. `SCHEMA_SETTINGS` lives in
   `@plitzi/sdk-shared/schema` now, for the builder and authoring alike.
-- **The MCP's `patchSettings`** writes the site's identity, `robotsTxt` and `viewTransitions` too.
+- **The MCP's `patchSettings`** writes the site's identity, `robotsTxt` and `viewTransitions` too, and `keptState`.
+- **Settings › State** edits `keptState` beside the keys never kept, and says when both are written.
 
 ## Dev tools (`@plitzi/sdk-dev-tools`)
 

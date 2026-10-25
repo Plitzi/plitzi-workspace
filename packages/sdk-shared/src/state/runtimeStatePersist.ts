@@ -106,16 +106,33 @@ const KEPT_PATH = 'runtime.state';
 const omitKeys = (from: Record<string, unknown>, keys: ReadonlySet<string>): Record<string, unknown> =>
   Object.fromEntries(Object.entries(from).filter(([key]) => !keys.has(key)));
 
-const pickKeys = (from: unknown, keys: ReadonlySet<string>): Record<string, unknown> =>
-  isRecord(from) ? Object.fromEntries(Object.entries(from).filter(([key]) => keys.has(key))) : {};
 
 /** `schema` is typed required but seeded after mount, so it is read defensively. */
 const schemaSettings = (state: CommonState): CommonState['schema']['settings'] | undefined =>
   (state.schema as CommonState['schema'] | undefined)?.settings;
 
-/** The keys a space declared never to keep. */
-const transientKeys = (settings: Pick<CommonState['schema']['settings'], 'transientState'> | undefined): Set<string> =>
-  new Set((settings?.transientState ?? []).filter((key): key is string => typeof key === 'string' && key !== ''));
+const keyList = (keys: unknown): Set<string> =>
+  new Set(Array.isArray(keys) ? keys.filter((key): key is string => typeof key === 'string' && key !== '') : []);
+
+/**
+ * Whether a key of `runtime.state` is kept: one of `keptState` when the space names the keys it keeps, else any not in
+ * `transientState`, the keys it names to leave out.
+ */
+const keptKey = (
+  settings: Pick<CommonState['schema']['settings'], 'transientState' | 'keptState'> | undefined
+): ((key: string) => boolean) => {
+  const kept = keyList(settings?.keptState);
+  if (kept.size > 0) {
+    return key => kept.has(key);
+  }
+
+  const transient = keyList(settings?.transientState);
+
+  return key => !transient.has(key);
+};
+
+const keysWhere = (from: unknown, keep: (key: string) => boolean): Record<string, unknown> =>
+  isRecord(from) ? Object.fromEntries(Object.entries(from).filter(([key]) => keep(key))) : {};
 
 const browserStorage = (kind: 'local' | 'session'): Storage | undefined => {
   try {
@@ -222,17 +239,20 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
     // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
     paths: [KEPT_PATH] as PathOf<TState>[],
     /**
-     * The space's transient keys stay out of what is written — and out of what is read back, so an entry kept before a
-     * key was declared transient does not bring it back — while the values they hold now survive the restore, which
+     * The keys a space does not keep (`keptKey`) stay out of what is written — and out of what is read back, so an entry
+     * kept before a key was left out does not bring it back — while the values they hold now survive the restore, which
      * lands late (after hydration, once auth settles) and would otherwise put `runtime.state` back whole over them.
      */
-    partializePath: (_path, value, state) =>
-      isRecord(value) ? omitKeys(value, transientKeys(schemaSettings(state))) : value,
-    mergePath: (_path, persisted, current, state) => {
-      const transient = transientKeys(schemaSettings(state));
+    partializePath: (_path, value, state) => {
+      const kept = keptKey(schemaSettings(state));
 
-      return transient.size > 0 && isRecord(persisted)
-        ? { ...omitKeys(persisted, transient), ...pickKeys(current, transient) }
+      return isRecord(value) ? keysWhere(value, kept) : value;
+    },
+    mergePath: (_path, persisted, current, state) => {
+      const kept = keptKey(schemaSettings(state));
+
+      return isRecord(persisted)
+        ? { ...keysWhere(persisted, kept), ...keysWhere(current, key => !kept(key)) }
         : persisted;
     },
     storage: (state: CommonState) => {

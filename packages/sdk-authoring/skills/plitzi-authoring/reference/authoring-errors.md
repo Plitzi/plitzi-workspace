@@ -62,6 +62,7 @@ The space is not written until these are fixed.
 | `computed-reads-element` | a computed value reading an element's source — no element is around the whole space | compute it from the globals and the variables, or bind it on the element |
 | `computed-unknown` | a computed value read before it is declared, or never declared | declare it in `computed`, above the one that reads it |
 | `condition-field-unpublished` | a `when` asking a step of its flow for a key it never publishes — `whenSucceeded` / `whenFailed` on anything but `runServerAction` | a key the step publishes (`explain <step>`): after `authLogin`, `when({ field: 'signedIn.ok', operator: '=', value: true }, …)` |
+| `condition-short-source` | a step's condition reading an element's source by the element's id alone — `roomStats.locked` — which reads nothing | the source named in full, as a template names it: `apiContainer_roomStats.locked` |
 | `controls-other-row` | a button's `controls` naming an element a list draws in its rows, from outside that row | the button in the same row as what it shows and hides, or `controls` naming an element outside the list |
 | `controls-unknown` | a button's `controls` naming no element of the space | the id of the element it shows and hides: `controls: 'faq-answer'` |
 | `css-property-twice` | one property written twice in a rule set — `paddingTop` beside `'padding-top'` — so one would silently win | keep one |
@@ -151,8 +152,10 @@ The space is not written until these are fixed.
 | `source-field-unknown` | a path into a typed source that its sample does not have | read a field the sample has, or add the field to the sample |
 | `source-name-missing` | a source named by nothing — most often a field read off a list row that has no types | write the row's field as text (`${r.item}.field`), or give the list `items` a typed source's path |
 | `space-identity-invalid` | the space's `siteName`, `language`, `favicon`, `shareImage` or `themeColor` written as nothing a head reads | `siteName: 'Encore'`, `language: 'en'`, `favicon: '/favicon.svg'`, `shareImage: '/og.png'`, `themeColor: { light: '#fbf7f0', dark: '#0b0a10' }` |
+| `state-kept-and-transient` | `keptState` (the only keys kept) and `transientState` (the keys left out) both said | one of the two: `keptState` when few keys are kept, `transientState` when few are not |
 | `state-key-list` | `settings.transientState` / `paintedState` that is not a list of top-level state keys | `transientState: ['demoStep']` — a dotted path names its top key |
 | `state-painted-and-transient` | a state key both painted (kept for the server) and transient (never kept) | remove it from one of the two |
+| `state-painted-not-kept` | a `paintedState` key that `keptState` does not keep — the server draws with what is kept | add it to `keptState`, or leave it out of `paintedState` |
 | `state-shape` | a state given a rule set's keys (`pseudos`, `variants`, `ancestors`…): a state holds plain CSS | a pseudo-element's state goes under the pseudo-element — `pseudos: { before: { states: { hover: { opacity: '1' } } } }`; an ancestor's, under `ancestors` |
 | `step-duplicate` | two steps with one name in a flow or an action | a name each |
 | `step-name` | a step name a later step cannot read as `{{ name.field }}` | a letter first, then letters, digits, `-` and `_` |
@@ -217,7 +220,9 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `form-value-compared-to-blank` | a `when` comparing a submitted field to `""` — a field nobody typed in is not sent | `operator: 'empty'` / `'notEmpty'` |
 | `heading-level-overridden` | a markdown's or richText's `heading` slot and a level's (`heading3`) both setting one property, the general class written later in the stylesheet — the level's value is lost | set the property on one of the two: the level slot for that level alone, `heading` for every heading |
 | `heading-level-skipped` | an `h4` right after an `h2` — the outline misses a level | the next level down; size it with its class |
+| `icon-font-replaced` | a class on a `fontAwesome` icon setting `font-family` — the icon's glyphs are Font Awesome's font, and another draws a fallback character in their place | the class's `font-family` on the text around the icon, never on the icon; its size and colour on the icon are fine |
 | `image-without-alt` | an image that is not `decorative` and has no `alt` | say what it shows, or `decorative: true` |
+| `kept-state-without-keep-state` | `keptState` without `keepState` — nothing is kept in the first place | `settings.keepState: true`, or remove `keptState` |
 | `label-ignored` | a `label` on a container whose tag is named by what it holds (`li`, a heading) | the words inside, or a landmark tag (`nav`, `section`…) |
 | `link-current-section` | `current: 'section'` on a link that is never current (an external one) or current everywhere (to `/`) | leave `current` out — `'section'` is for a link to a section's own page, `/automations/runs` |
 | `list-item-key-missing` | a list's `itemKey` that some of its items lack, or two of them share — the rows fall back to `id`, then position | a field every item has, once each |
@@ -230,6 +235,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `painted-state-without-keep-state` | `paintedState` without `keepState` — nothing is kept for the server to draw with | `settings.keepState: true`, or remove `paintedState` |
 | `path-not-in-data` | a binding onto a provider whose answer the author could read (`data`), through a path that answer does not have | the path the message lists the keys for — `p.data.plans`, not `p.data.landing.plans` |
 | `plugin-attribute-reserved` | a plugin attribute named as one of the element’s own fields — a factory never hands it to the plugin | rename it in the plugin (`variant` → `kind`) |
+| `popup-position-set` | a class on a `dropdownPopup` setting where it is drawn — `position`, `top`, `left`, `right`, `bottom`, `inset` or `transform` — over the place its dropdown puts it at, at the space's root | its look on the class, its place on the dropdown: `popupPlacement`, `containerTopOffset`, `containerLeftOffset`, and `popupWidth: "trigger"` for its width |
 | `provider-without-source` | an `apiContainer` that asks nothing | a `query` (or `action`, `connector`, `resource`) |
 | `required-message-unused` | a `requiredMessage` on a field nothing requires — fields are optional unless `required: true`, so it is never shown and an empty answer is sent | `required: true` on the field, or no message |
 | `route-param-undeclared` | `navigation.routeParams.x` read on a page whose slug has no `:x` — always empty | add `:x` to the slug, or read `navigation.queryParams.x` |
@@ -240,6 +246,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `STYLE_WITHOUT_TAG` | style on a provider that renders no element of its own | `subType: 'div'` on the provider, or style its parent |
 | `tablet-rule-skips-mobile` | a tablet rule phones never get — mobile inherits desktop, not tablet | write it under `compact` (tablet and mobile together) |
 | `template-never-resolved` | a condition in an attribute, which only resolves `{{ name\|filter }}` — used as written | move it into `bindTemplate` |
+| `template-or-value` | a template's `or` (or `and`) beside a text or a number — `sort or 'listeners'` — which answers true or false, never the value | a fallback value with `??`: `sort ?? 'listeners'`; a test with `or` between two conditions |
 | `transient-state-without-keep-state` | `transientState` without `keepState` — nothing is kept in the first place | `settings.keepState: true`, or remove `transientState` |
 | `unknown-element-type` | a type no built-in element has | the built-in it suggests; a plugin's declaration goes in `authorSpace(space, { plugins: [declaration] })` |
 | `unknown-global-callback` | a global callback no built-in source declares — it runs only if something registers it | the built-in it suggests, or make sure a plugin or module of the space registers it |
@@ -264,7 +271,7 @@ Nothing is wrong: the page renders as written. Each is a shorter way to the same
 | `literal-colour` | a colour written out in a class where the space has a token of that value — it stays put in the dark scheme | `var(--token)` when it should follow the scheme; a token of one value of its own when it must stay the same in both |
 | `not-found-page` | a space with no page of its own for an address no other page answers — a plain one was added, in the home page’s layout, sent with status 404 | a page whose slug is `'*'`: `{ id: 'not-found', name: 'Not found', slug: '*', layout: …, body: [...] }` |
 | `plugin-custom-host` | a `custom` element naming, by `renderType`, a plugin whose declaration the space was handed | place it from its declaration — `const seatPicker = defineElement(declaration)`, then `seatPicker({ id, … })`: typed by what it declares (a `definePlugin` declaration carries its attributes), the element the builder adds too |
-| `repeated-on-pages` | the same block — a header, a footer, a side panel — written into several pages | a layout holding it once (`layouts`, and `layout: { id, slot }` on each page) — a component when only some pages of a layout carry it; a link marks its own page with the `current` state |
+| `repeated-on-pages` | the same block — a header, a footer, a side panel — written into several pages | a layout holding it once (`layouts`, and `layout: { id, slot }` on each page) — a component when only some pages of a layout carry it, written in its area’s folder and listed in the space’s `components`; a link marks its own page with the `current` state |
 | `repeated-shape` | the same structure written again and again with different words — cards, rows, tiles; copies that bind different data, read their own template or render on the server are controls, not repeats | a component with props (`components`, `component(id, { props })`), or one `list` when they are rows of data side by side — a few cards a person rewords on the canvas can stay cards |
 | `unused-class` | a class declared in `classes` that no element, binding, flow or other class names | remove it from `classes` — or wear it where it was meant to go |
 | `unused-component` | a component no page, layout or other component places | remove it from `components`, or place it where it was meant to go |

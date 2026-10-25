@@ -6,11 +6,19 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { agentTimelines, timelinesText } from './agentTimeline';
 import { proposalsOf } from './agreements';
 import { auditRun } from './audit';
-import { benchOf, benchText, readBench } from './bench';
+import { benchOf, benchText, readBench, teamTasks } from './bench';
 import { briefsOf } from './briefs';
 import { combineExperience, experienceText, isExperience, saidOfPlitzi } from './experience';
 import { readOptional, writeAtomic } from './files';
-import { factFindings, indicatorsOf, keepScratch, orderFindings, runFindings, scratchOf } from './findings';
+import {
+  FINDING_OWNERS,
+  factFindings,
+  indicatorsOf,
+  keepScratch,
+  orderFindings,
+  runFindings,
+  scratchOf
+} from './findings';
 import { harnessUsage } from './harness';
 import { rememberPace } from './history';
 import { coverage } from './inventory';
@@ -22,7 +30,7 @@ import { RunRefusal } from './refusal';
 import { flowText } from './reportFlow';
 import { consumptionText, findingsText, glanceText, reviewsText } from './reportHead';
 import { completionsOf, inputOf, loadRun, logRun, readApproved, readRunLog, requireNoTask, updateRecord } from './run';
-import { runMetrics } from './runMetrics';
+import { harnessOf, runMetrics } from './runMetrics';
 import { readTaskReports } from './taskReports';
 import { requestsOf } from './tasks';
 import { readReviewed, viewTask } from './taskStore';
@@ -275,18 +283,18 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
   const notices = await noticesByOwner(loaded);
   const runLog = await readRunLog(loaded.paths);
   const usage = readUsage(loaded.paths.dir);
+  const taskReports = await readTaskReports(loaded);
   const metrics = runMetrics({
     log: runLog,
     usage,
     answers: (await messagesOf(loaded)).flatMap(message =>
       message.replyTo === undefined ? [] : [{ replyTo: message.replyTo, at: message.at }]
     ),
-    tokens: await readTokens(loaded),
+    harness: harnessOf(taskReports),
     taskIds: loaded.tasks.map(task => task.id),
     openedAt: record.openedAt,
     now
   });
-  const taskReports = await readTaskReports(loaded);
   const leads = usage.filter(line => line.by.startsWith('lead'));
   const lead = await harnessUsage({
     sessions: [...new Set(leads.flatMap(line => (line.session ? [line.session] : [])))],
@@ -356,7 +364,7 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
       findings,
       metrics,
       taskReports,
-      tasks.filter(task => task.status === 'done').length,
+      teamTasks(tasks).filter(task => task.status === 'done').length,
       experience.ease.median
     ),
     experience,
@@ -364,7 +372,8 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     metrics,
     taskReports,
     ...(lead ? { lead } : {}),
-    agents: agentTimelines(runLog, ctx.now()),
+    // To the last approval: past it every agent waits for the person's finish (encore-4: 595 min "at work or waiting").
+    agents: agentTimelines(runLog, workEndOf(runLog) ?? ctx.now()),
     ...(briefsOf(runLog) ? { briefs: briefsOf(runLog) } : {})
   };
 };
@@ -382,6 +391,56 @@ const lines = (items: readonly string[], none: string): string[] =>
   items.length > 0 ? items.map(item => `- ${item}`) : [`- ${none}`];
 
 /** A report as a person reads it: the lead's summary first, then the facts. */
+const workEndOf = (log: readonly Record<string, unknown>[]): Date | undefined => {
+  const approved = log.findLast(entry => entry.action === 'all-approved');
+
+  return typeof approved?.at === 'string' ? new Date(approved.at) : undefined;
+};
+
+/**
+ * The run's goal grows by a stage's at each `run extend` (`extend.ts`): the title is the run's own, the stages a list
+ * under it — encore-4's title was 16 goals in one line.
+ */
+const goalText = (runId: string, goal: string): string[] => {
+  const [own, ...stages] = goal.split(' · ');
+
+  return [
+    `# Run "${runId}" — ${own}`,
+    ...(stages.length > 0 ? ['', 'Its stages, as they were stacked:', '', ...stages.map(stage => `- ${stage}`)] : [])
+  ];
+};
+
+/** The lead's summary sits under a heading of the report's: its own headings go two levels down. */
+const nestedHeadings = (text: string): string =>
+  text.replace(/^(#{1,4}) /gm, (_match, hashes: string) => `${hashes}## `);
+
+/**
+ * The report as a command prints it: the run at a glance and each finding's title — the evidence, the flow and the
+ * cost are the whole report's (`--full`, and the file a finish writes). encore-4's lead read 112k characters of it.
+ */
+export const reportBrief = (report: RunReport): string => {
+  const titles = FINDING_OWNERS.flatMap(owner => {
+    const theirs = report.findings.filter(finding => finding.owner === owner);
+
+    return theirs.length === 0
+      ? []
+      : [
+          '',
+          `${owner} (${String(theirs.length)}):`,
+          ...theirs.map(finding => `- ${finding.title}${finding.times > 1 ? ` ×${String(finding.times)}` : ''}`)
+        ];
+  });
+
+  return [
+    ...goalText(report.runId, report.goal).slice(0, 1),
+    '',
+    ...glanceText(report),
+    ...titles,
+    '',
+    'Each with its evidence and fix, and the flow, the cost and the bench: plitzi run report --full'
+  ].join('\n');
+};
+
 export const reportText = (
   report: RunReport,
   summary: string | undefined,
@@ -390,7 +449,7 @@ export const reportText = (
   benchBefore?: readonly BenchLine[]
 ): string =>
   [
-    `# Run "${report.runId}" — ${report.goal}`,
+    ...goalText(report.runId, report.goal),
     '',
     `${closing ? (closing.outcome === 'finished' ? 'Finished' : 'Aborted') : 'Going'} ${report.at} · opened ${report.openedAt} · ${report.metrics.workMinutes === undefined ? `${String(report.minutes)} min` : `worked ${String(report.metrics.workMinutes)} min, then ${String(report.metrics.afterMinutes ?? 0)} to this report`}, estimated ${String(report.estimate.wallMinutes)} with ${String(report.estimate.agents)} agents (${String(report.estimate.totalMinutes)} min of work)`,
     '',
@@ -404,7 +463,9 @@ export const reportText = (
     ...experienceText(report.experience),
     '## The lead’s summary',
     '',
-    summary?.trim() ?? '_None was written: the problems above are what the run kept._',
+    summary === undefined
+      ? '_None was written: the problems above are what the run kept._'
+      : nestedHeadings(summary.trim()),
     '',
     ...(report.leftOut.length > 0
       ? ['## Left out, as the plan said', '', ...report.leftOut.map(line => `- ${line}`), '']
@@ -597,51 +658,4 @@ export const leaveReport = async (ctx: RunContext, loaded: LoadedRun, closing: C
   await rememberPace(report.tasks);
 
   return file;
-};
-
-const tokensFile = (loaded: LoadedRun): string => path.join(loaded.paths.dir, 'tokens.json');
-
-/** What the harness counted each agent spent, as the lead said it (`run report --tokens`). */
-export const readTokens = async (loaded: LoadedRun): Promise<Record<string, number>> => {
-  const read: unknown = await fs
-    .readFile(tokensFile(loaded), 'utf-8')
-    .then(text => JSON.parse(text) as unknown)
-    .catch(() => undefined);
-
-  return isRecord(read)
-    ? Object.fromEntries(
-        Object.entries(read).flatMap(([agent, value]) => (typeof value === 'number' ? [[agent, value]] : []))
-      )
-    : {};
-};
-
-/**
- * `run report --tokens dev-1=208061,design-2=261010`: the harness's own count of each agent's tokens, said by the lead,
- * who is handed it — the CLI sees only what it printed. Kept with the run, each agent's last said.
- */
-export const writeTokens = async (ctx: RunContext, runId: string, said: string): Promise<Record<string, number>> => {
-  requireNoTask(ctx, 'say what the agents spent');
-  const loaded = await loadRun(ctx, runId);
-  await requireLead(ctx, loaded, 'say what the agents spent');
-  const pairs = said
-    .split(',')
-    .map(each => each.trim())
-    .filter(Boolean);
-  const parsed = pairs.map(pair => /^([a-z][a-z0-9_-]*)=(\d+)$/.exec(pair));
-  const wrong = pairs.filter((_, index) => parsed[index] === null);
-  if (wrong.length > 0 || pairs.length === 0) {
-    throw new RunRefusal(
-      'invalid',
-      `--tokens is agent=count, separated by commas (dev-1=208061,design-2=261010)${wrong.length > 0 ? `: not ${wrong.join(', ')}` : ''}`
-    );
-  }
-
-  const tokens = {
-    ...(await readTokens(loaded)),
-    ...Object.fromEntries(parsed.flatMap(match => (match ? [[match[1], Number(match[2])]] : [])))
-  };
-  await writeAtomic(tokensFile(loaded), `${JSON.stringify(tokens, null, 2)}\n`);
-  await logRun(ctx, loaded.paths, { action: 'tokens', agents: Object.keys(tokens) });
-
-  return tokens;
 };

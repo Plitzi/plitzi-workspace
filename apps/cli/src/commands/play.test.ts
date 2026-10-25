@@ -13,7 +13,8 @@ const at = (x: number, shown = true, enabled = true): ElementState => ({
   text: '',
   aria: {},
   focused: false,
-  inView: 'whole'
+  inView: 'whole',
+  colour: { text: 'rgb(0, 0, 0)', ground: 'rgb(255, 255, 255)' }
 });
 
 /** A row and its arrow, at the start and after one press — here and there. */
@@ -164,6 +165,35 @@ describe('page play', () => {
     expect(said(false, [])).toEqual(["✓ --same shown: every step as https://site.test/'s"]);
     expect(said(false, ['start: row is hidden here, shown there'])).toEqual([
       '✗ --same: start: row is hidden here, shown there'
+    ]);
+  });
+});
+
+// encore-4: a filter link went to /rooms?sort=true unsaid; a tone picked changed a colour no read said; a reaction's
+// float played and ended, read as "hidden" as though the press did nothing.
+describe('what a step left', () => {
+  it('says where the page went, a colour a step changed, and the animations an element has', () => {
+    const tone = (text: string): ElementState => ({ ...at(0), colour: { text, ground: 'rgb(20, 20, 20)' } });
+    const lines = playedText([
+      { step: 'start', reads: [{ element: 'avatar', here: tone('rgb(255, 176, 0)') }] },
+      {
+        step: 'click tone-teal',
+        went: { here: '/rooms?genre=synthwave' },
+        reads: [
+          {
+            element: 'avatar',
+            here: { ...tone('rgb(0, 160, 160)'), shown: false, animations: ['float finished'] }
+          }
+        ]
+      }
+    ]).map(line => stripVTControlCharacters(line));
+
+    expect(lines).toEqual([
+      'start',
+      '  avatar: shown, enabled',
+      'click tone-teal',
+      '  → /rooms?genre=synthwave',
+      '  avatar: hidden, enabled · float finished · colour now rgb(0, 160, 160) on rgb(20, 20, 20) (was rgb(255, 176, 0) on rgb(20, 20, 20))'
     ]);
   });
 });

@@ -3,7 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 
-export type FloatingPosition = { top: number; left: number };
+/** Where the popup is drawn — and, asked to be as wide as its trigger, its least width. */
+export type FloatingPosition = { top: number; left: number; minWidth?: number };
 
 export type UseDropdownProps = {
   ref?: RefObject<HTMLDivElement | null>;

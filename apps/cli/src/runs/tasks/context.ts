@@ -54,6 +54,11 @@ export interface TaskContext {
   /** `toCreate`: a file of the task's that does not exist yet — it is the task's to write. */
   files: { file: string; from: 'copy' | 'run'; text?: string; bytes?: number; toCreate?: boolean }[];
   /**
+   * Where the rest of the project is read from for it — what its files import, the data's shapes: its copy while it
+   * holds one. encore-4's tester read `formatCountdown` as the project had it before the run, its copy's being new.
+   */
+  sourceRoot: string;
+  /**
    * Another task's files beside its own, by name — `shows.test.ts` of `shows.ts`, a tester's: encore-3's developers wrote
    * tests into a tests card's file and learnt it at `task check`, the writing lost.
    */
@@ -211,6 +216,7 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
     reading: await readingFor(ctx.root, [...task.files, ...(task.touches ?? [])]),
     runNotes: (await runNotesOf(loaded)).map(note => note.text),
     files,
+    sourceRoot: copy ? view.paths.work : ctx.root,
     neighbours: loaded.tasks.flatMap(other =>
       other.id === task.id
         ? []

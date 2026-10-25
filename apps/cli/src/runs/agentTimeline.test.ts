@@ -28,4 +28,19 @@ describe("an agent's timeline", () => {
     expect(life.minutes.stopped).toBe(36);
     expect(life.silences).toEqual([{ from: at(3), minutes: 20 }]);
   });
+
+  it('ends at the end it is given, and counts no call an agent never named as an agent (encore-4)', () => {
+    const log = [
+      { at: at(0), by: 'lead', action: 'launch', agent: 'dev-1' },
+      { at: at(1), by: 'dev-1', action: 'waiting', why: 'every task is done' },
+      { at: at(5), by: 'unnamed', action: 'refused', code: 'identity' },
+      // Past the end — the person's finish, hours later — nothing counts.
+      { at: at(50), by: 'dev-1', action: 'waiting', why: 'the run is finishing' }
+    ];
+
+    const lives = agentTimelines(log, new Date(Date.parse(at(10))));
+
+    expect(lives.map(life => life.agent)).toEqual(['dev-1']);
+    expect(lives[0].minutes).toEqual({ active: 10, stopped: 0, silent: 0 });
+  });
 });

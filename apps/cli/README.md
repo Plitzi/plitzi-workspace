@@ -234,6 +234,10 @@ plitzi page shot / --clip machine --sheet --steps "click .gm__knob; wait 300; fr
 plitzi page shot /expenses --fill expenses-search=kibble   # a picture before and after typing in a field
 plitzi page shot / --steps "hover home-cta; wait 400; shot hovered"   # a hover, pictured
 plitzi page shot /settings --steps 'type [aria-label="Search the site"] lamps; drag volume-handle -80; shot'   # a field, a range's handle
+plitzi page shot /design --clip brand-mark --scale 3   # a small drawing up close, cell by cell
+plitzi page measure /r/demo chat-line --steps 'type chat-input "hi; there"; press Enter' --only box   # what only a visitor's steps make
+plitzi page outline /sign-in --find wordmark   # the elements a word names, the whole page searched
+plitzi page play / --steps "click genre-chip; goto /rooms" --read site-header   # where each step took the page, said
 ```
 
 Both run on the project's own Playwright against its running server (`npm start`), and refuse a port that answers as
@@ -291,7 +295,9 @@ the element's report says the text it shows.
 `--scheme` is the space's own theme, set as a visitor's toggle sets it (the `theme` cookie); left out, the space's
 default, and `page shot` names the file by the theme it was painted in. The dev tools' badge is hidden from both. A
 full-page `page shot` is the whole page — the pane the SDK scrolls in unrolled, every lazy picture loaded, every arrival
-waiting for the scroll shown as it ends — in `tmp/shots/` unless `--out` says where. Any one picture (a part with
+waiting for the scroll shown as it ends, a sheet pinned over it whole — in `tmp/shots/` unless `--out` says where, named
+`<page>[-<clip>]-<width>-<scheme>.png`; one taller than three screens is also written in parts (`-part-1.png`, …), each
+readable at its size. A `--clip` is pictured without what is pinned over it (a sticky header). Any one picture (a part with
 `--clip`, the screen with `--scroll-to` or `--viewport`) shows its arrivals as they end too; `--frames`, `--click` and
 `--steps` take the page as it plays, and each picture after the first is written beside it (`<name>-1.png`, …).
 
@@ -612,7 +618,7 @@ plitzi run monitor                         # the run, live, in a terminal of you
 plitzi task show t-home                    # a task as its lead reviews it: checks, agreements, each file's diff
 plitzi task show t-home src/space/pages/home/hero.ts   # one file whole, as it went to review (no task: the one you hold or review)
 plitzi run settle after-stop:dev-2 --note "…"   # a finding the run raised to the lead, settled by what it did — the close waits on it
-plitzi run report --summary summary.md     # the lead closes the run with its report (--tokens agent=count,… the harness's)
+plitzi run report --summary summary.md     # the lead closes the run with its report (--full: the whole of it)
 plitzi run bench                           # every run measured the same way: minutes a task, rounds, checks failed, cost
 plitzi run finish                          # the whole diff and the checks on the result — then --apply, a person's
 ```

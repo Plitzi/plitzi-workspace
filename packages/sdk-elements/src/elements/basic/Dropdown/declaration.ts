@@ -10,7 +10,19 @@ export type DropdownAttributes = AuthorableAttributes<DropdownProps>;
 const declaration = elementDeclaration<DropdownAttributes>()({
   type: 'dropdown',
   attributeValues: {
-    popupPlacement: valuesOf<NonNullable<DropdownProps['popupPlacement']>>()(['left', 'right', 'top', 'bottom'])
+    popupPlacement: valuesOf<NonNullable<DropdownProps['popupPlacement']>>()(['left', 'right', 'top', 'bottom']),
+    popupWidth: valuesOf<NonNullable<DropdownProps['popupWidth']>>()(['content', 'trigger'])
+  },
+  callbacks: {
+    openDropdown: { action: 'openDropdown', title: 'Open Dropdown', type: 'callback', params: {}, preview: {} },
+    closeDropdown: { action: 'closeDropdown', title: 'Close Dropdown', type: 'callback', params: {}, preview: {} },
+    toggleDropdown: { action: 'toggleDropdown', title: 'Toggle Dropdown', type: 'callback', params: {}, preview: {} }
+  },
+  marks: {
+    'aria-expanded': 'on its trigger while the popup is open — what a class’s `expanded` state lights',
+    '.popup-container--no-visible': 'on its dropdownPopup while closed',
+    'the popup':
+      'drawn at the space’s root, `position: fixed` where the dropdown places it — a class on the popup sets its look, never its position (top, left, position, inset, transform); `popupWidth: "trigger"` makes it as wide as the trigger'
   },
   content: {
     attributes: {
@@ -21,6 +33,7 @@ const declaration = elementDeclaration<DropdownAttributes>()({
       closeOnClickPopup: true,
       containerTopOffset: 5,
       containerLeftOffset: 5,
+      popupWidth: 'content',
       disabled: false
     },
     definition: {

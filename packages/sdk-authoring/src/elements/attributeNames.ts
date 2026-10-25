@@ -72,7 +72,8 @@ export const elementAttributeNames = {
     'containerTopOffset',
     'disabled',
     'openPopup',
-    'popupPlacement'
+    'popupPlacement',
+    'popupWidth'
   ],
   dropdownPopup: [],
   embed: ['allow', 'loading', 'referrerPolicy', 'sandbox', 'src', 'title'],

@@ -9,6 +9,7 @@ import {
   fill,
   pagePaths,
   positiveInteger,
+  scale,
   schemes,
   swallowedFlag,
   timeZone,
@@ -25,6 +26,19 @@ describe('options', () => {
     const fine = new Command('report').option('--summary <file>').option('--token <token>');
     fine.parse(['--summary', 'notes.md', '--token', 'lx.@lead.abc'], { from: 'user' });
     expect(swallowedFlag(fine)).toBeUndefined();
+  });
+
+  // encore-4: `page shot / 390 dark site-header --width --scheme --clip` was told a width is a whole number, five times.
+  it('says a value that is the next option is missing, not invalid', () => {
+    for (const parse of [widths, schemes, positiveInteger, timeZone]) {
+      expect(() => parse('--scheme')).toThrow('--scheme is the next option, not a value');
+    }
+  });
+
+  // encore-4: a 16 px mark read cell by cell needed a script of the designer's own — page shot had no zoom.
+  it('reads a picture’s scale, 1 to 4', () => {
+    expect(scale('3')).toBe(3);
+    expect(() => scale('8')).toThrow('A scale is a whole number from 1 to 4');
   });
 
   it('reads pages by path, each once, and refuses one that is not a path', () => {

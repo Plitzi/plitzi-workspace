@@ -19,6 +19,7 @@ import {
   assertComputedOnce,
   assertRobotsTxt,
   assertSpaceIdentity,
+  assertKeptState,
   assertPaintedState,
   assertSpaceShape,
   assertTransientState,
@@ -332,6 +333,7 @@ export class SpaceAuthor {
     assertSpaceIdentity(this);
     assertChannels(this);
     assertTransientState(this);
+    assertKeptState(this);
     assertPaintedState(this);
     assertVisitorRoles(this);
     const pageFolders = buildPageFolders(this);

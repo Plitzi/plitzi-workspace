@@ -68,4 +68,27 @@ describe("a task's brief", () => {
       "Beside them, another task's — write nothing there: src/functions/book.test.ts (t-home-tests, a tester's)"
     );
   });
+
+  // encore-4: a tester's brief said how format.ts was called before the run — its copy held the developer's change.
+  it('reads the rest of the project from the task’s copy while it holds one', async () => {
+    const runId = await open(benchPlan());
+    expect((await taskContext(lead(), runId, 't-home')).sourceRoot).toBe(bench.root);
+
+    const held = await take('agent-1', 't-home');
+    expect((await taskContext(held.ctx, runId, 't-home')).sourceRoot).toBe(held.work);
+  });
+
+  // encore-4: a tester told its test file was near the limit wrote a new one beside it, unsure the new file was its own.
+  it('says a new file beside a file near the limit is the task’s', async () => {
+    const runId = await open(benchPlan());
+    const held = await take('agent-1', 't-home');
+    await writeInCopy(
+      held.work,
+      'src/space/pages/home/index.ts',
+      `${Array.from({ length: 360 }, (_, index) => `export const v${String(index)} = ${String(index)};`).join('\n')}\n`
+    );
+
+    const brief = stripVTControlCharacters(briefOf(await taskContext(held.ctx, runId, 't-home')));
+    expect(brief).toContain('a new file is yours (no task holds it; it goes in with your complete)');
+  });
 });

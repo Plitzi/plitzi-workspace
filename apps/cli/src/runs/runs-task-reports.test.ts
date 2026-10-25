@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { feedbackFile, feedbackOf, writeFeedback } from './feedback';
 import { keepScratch } from './findings';
-import { buildReport, reportText } from './report';
+import { buildReport, reportBrief, reportText } from './report';
 import { loadRun } from './run';
 import { readTaskReports } from './taskReports';
 import { checkTask, completeTask, reviewTask } from './tasks';
@@ -62,6 +62,16 @@ describe('a round’s report, and the run’s', () => {
     const report = await buildReport(lead(), loaded);
     expect(report.taskReports).toHaveLength(1);
     expect(reportText(report, undefined)).toContain('## Problems — whose, and what would stop them');
+    // encore-4: the title held every stage's goal, and the lead's summary's `#` sat above the report's own `##`.
+    const staged = reportText({ ...report, goal: 'The run · A stage · Another' }, '# The summary\n\n## What it did');
+    expect(staged).toContain(`# Run "${runId}" — The run\n\nIts stages, as they were stacked:\n\n- A stage\n- Another`);
+    expect(staged).toContain('### The summary\n\n#### What it did');
+    // What the command prints: the glance and each finding's title — encore-4's lead read 112k characters.
+    const brief = reportBrief({ ...report, goal: 'The run · A stage' });
+    expect(brief).toContain(`# Run "${runId}" — The run`);
+    expect(brief).not.toContain('A stage');
+    expect(brief).toContain('plitzi run report --full');
+    expect(brief.length).toBeLessThan(reportText(report, undefined).length);
 
     // Combined with the lead's, said with its summary: the frictions are findings of Plitzi's too.
     const feedback = await feedbackOf(lead(), loaded);

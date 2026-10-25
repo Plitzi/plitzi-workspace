@@ -1,12 +1,16 @@
+import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import chalk from 'chalk';
+
+import { PROJECT_STATE } from '@plitzi/sdk-shared/project';
 
 import {
   checkWithInteraction,
   partsComparedOf,
   elsewhereOf,
   picturesOf,
+  readablePictures,
   samePaths,
   stoppedText,
   keepLook,
@@ -17,6 +21,7 @@ import {
   toDeclared,
   viewsAsked
 } from './lookParts';
+import { lookText } from './lookText';
 import { act, runOf, runSelf } from './shell';
 import { takeOnRead } from './takeOnRead';
 import { list } from './text';
@@ -24,7 +29,14 @@ import { answering, freePort } from '../../runs/acceptance';
 import { designSkipText, isDesignSkip } from '../../runs/designSkip';
 import { inTurns } from '../../runs/inTurns';
 import { readOwnership } from '../../runs/ownership';
-import { acceptanceAccount, acceptancePages, examplePaths, pagesOf, pagesToLook } from '../../runs/pagesOf';
+import {
+  acceptanceAccount,
+  acceptancePages,
+  acceptanceStatuses,
+  examplePaths,
+  pagesOf,
+  pagesToLook
+} from '../../runs/pagesOf';
 import { runPaths, taskPaths } from '../../runs/paths';
 import { startBeforePreview, startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
@@ -34,6 +46,7 @@ import { findingsOf, taskParts } from '../../runs/taskParts';
 import { findTask, notReviewedIn, reviewTask } from '../../runs/tasks';
 import { viewTask } from '../../runs/taskStore';
 import { readTeam } from '../../runs/team';
+import { checkAccount, sessionCookie } from '../check/account';
 import { projectSpace } from '../check/space';
 
 import type { BeforeAfter } from './lookParts';
@@ -54,7 +67,13 @@ const viewTaskOf = async (
   ctx: RunContext,
   runId: string,
   taskId: string
-): Promise<{ changed: string[]; designing: boolean; acceptanceAt: string[]; acceptanceAs?: string }> => {
+): Promise<{
+  changed: string[];
+  designing: boolean;
+  acceptanceAt: string[];
+  acceptanceAs?: string;
+  byStatus: { page: string; status: number }[];
+}> => {
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = findTask(loaded, taskId);
   const { state } = await viewTask(loaded.paths, task);
@@ -64,6 +83,7 @@ const viewTaskOf = async (
     changed: state.changed ?? [],
     designing: state.design?.status === 'due' && state.design.by === ctx.agent,
     acceptanceAt: acceptancePages(task.acceptance),
+    byStatus: acceptanceStatuses(task.acceptance),
     ...(acceptanceAccount(task.acceptance) === undefined ? {} : { acceptanceAs: acceptanceAccount(task.acceptance) })
   };
 };
@@ -98,7 +118,7 @@ export interface LookOptions extends RunCommandOptions {
 const PARTS_PICTURED = 3;
 
 /** The look itself, once its task is locked: its copy served, checked, pictured and set beside the run before it. */
-const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[], options: LookOptions) =>
+export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[], options: LookOptions) =>
   // One look of a task at a time: two served its copy at once, and the first to finish stopped the server the
   // other was picturing — a lead's look and its designer's, on la-velada's t-home-details.
   withLock(
@@ -137,7 +157,16 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
         const views = asked ?? toDeclared(teams, space && !('problem' in space) ? space.schemes : []);
         // No page named: the pages its changes are drawn at, by the files that changed — else its acceptance's, else home.
         // Read off the copy served: a page the task makes is one to look at too.
-        const { changed, designing, acceptanceAt, acceptanceAs } = await viewTaskOf(ctx, runId, taskId);
+        const {
+          changed,
+          designing,
+          acceptanceAt: checked,
+          acceptanceAs,
+          byStatus
+        } = await viewTaskOf(ctx, runId, taskId);
+        // A page its acceptance checks with a status of its own is looked at with it, apart — said below the look.
+        const ownStatus = options.status === undefined ? byStatus : [];
+        const acceptanceAt = checked.filter(page => !ownStatus.some(each => each.page === page));
         // Every page its changes are drawn at — a shared file's too: named pages are looked at, and the others
         // said (velada-polish: design-2 looked at /combates twice, and the home its card change broke was the lead's
         // to find).
@@ -153,17 +182,22 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
         // A page with a parameter in its address (`/boxeadores/:slug`) is opened where the site's own links go.
         // Its files drawn at no page (a plugin's): the pages its acceptance checks, before the home page — encore-2's
         // look at the Reactions plugin's CSS pictured the home page, where no reaction is.
-        const { paths: routes, unreached } = await examplePaths(
-          preview.url,
-          pagesToLook(paths, owned, acceptanceAt),
-          acceptanceAt
-        );
-        // Every page read in one visitor's zone: the machine's, unless said — and said under the pictures either way.
-        const zone = options.timezone ? ['--timezone', options.timezone] : [];
         // Read signed in when asked: a task whose UI is for signed-in visitors looked at as one (encore's designers saw
         // only the guest's page of settings, a vote or the host's controls).
         // Not told who to read it as: as its acceptance checks it — a page for signed-in visitors read signed in.
         const as = options.as ?? acceptanceAs;
+        // Its links followed as that account too: a page only it has a link to (`/u/:username`) is found.
+        const account = as === undefined ? undefined : await checkAccount(preview.dir, as);
+        const cookie =
+          account === undefined || 'problem' in account ? undefined : await sessionCookie(preview.url, account);
+        const { paths: routes, unreached } = await examplePaths(
+          preview.url,
+          pagesToLook(paths, owned, acceptanceAt),
+          acceptanceAt,
+          typeof cookie === 'string' ? cookie : undefined
+        );
+        // Every page read in one visitor's zone: the machine's, unless said — and said under the pictures either way.
+        const zone = options.timezone ? ['--timezone', options.timezone] : [];
         const signedIn = as ? ['--as', as] : [];
         const interaction = [
           ...(options.click ? ['--click', options.click] : []),
@@ -245,13 +279,13 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
         const partsBeside = before !== undefined && clips.length > 0;
         // Why a picture was not taken, kept to be said: "No picture could be taken" alone left encore-3's reviewers to
         // page through it themselves — a page for the signed-in, a part new since the run before.
-        const unpictured: string[] = [];
+        const unpictured: { what: string; why: string }[] = [];
         const notTaken = (what: string, output: string): void => {
           const why = output
             .split('\n')
             .map(line => line.trim())
             .find(line => line !== '' && !line.startsWith('{'));
-          unpictured.push(`${what}: ${why ?? 'the picture failed, saying nothing'}`);
+          unpictured.push({ what, why: why ?? 'the picture failed, saying nothing' });
         };
         const named = (route: string, clip: string | undefined, width: string, scheme: string, after = false) =>
           path.join(
@@ -275,6 +309,7 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
                 '--scheme',
                 scheme,
                 ...(clip ? ['--clip', clip] : []),
+                '--json',
                 '-o',
                 out
               ]);
@@ -307,7 +342,7 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
               }
 
               return [
-                ...(shot.code === 0 ? [out] : []),
+                ...(shot.code === 0 ? readablePictures(shot.output, out) : []),
                 ...(hovered && hovered.code === 0 ? picturesOf(hovered.output) : [])
               ];
             })
@@ -452,9 +487,17 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
           ...(movedElsewhere.length > 0 ? { movedElsewhere } : {}),
           timezone: options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
           ...(compared.length > 0 ? { compared } : {}),
+          // Its copy served with the state its plays left: the run before it starts cold (encore-4: the song playing
+          // differed on the two sides, the copy's queue played by its agent).
+          ...(compared.length > 0 &&
+          (await fs.readdir(path.join(preview.dir, PROJECT_STATE)).catch(() => [])).length > 0
+            ? { warmCopy: true }
+            : {}),
+          ...(before === undefined ? { notBeside: true } : {}),
           ...(preview.borrowed === undefined ? {} : { borrowed: preview.borrowed }),
           ...(stoppedUnder.length > 0 ? { stoppedUnder } : {}),
           ...(notLooked.length > 0 ? { notLooked } : {}),
+          ...(ownStatus.length > 0 ? { ownStatus } : {}),
           ...(notReviewed.length > 0 ? { notReviewed } : {})
         };
       } finally {
@@ -466,89 +509,6 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
     },
     { waitMs: 10 * 60_000, ttlMs: 15 * 60_000 }
   );
-
-type Looked = Awaited<ReturnType<typeof lookAt>>;
-
-/** What a look says. */
-export const lookText = (looked: Looked): string =>
-  [
-    chalk.bold(
-      looked.borrowed === undefined
-        ? `${looked.task}, as it went to review (served from its copy, now stopped):`
-        : `${looked.task}, as its copy is now — served by ${looked.borrowed.by === 'agent' ? "its agent's own server" : 'the server a picture of it kept'} on :${String(looked.borrowed.port)}, left running (it holds the copy's state):`
-    ),
-    ...(looked.stoppedUnder ?? []).map(line => chalk.yellow(`⚠ ${line}`)),
-    ...(looked.signedInAs
-      ? [`Read signed in as ${looked.signedInAs}, as its acceptance checks it (--as another to read it otherwise)`]
-      : []),
-    ...(looked.notLooked
-      ? [
-          chalk.yellow(
-            `⚠ Its changes are drawn at ${list(looked.notLooked)} too — a file it changed is read there — not looked at: plitzi task look ${looked.task}${looked.notLooked.map(page => ` ${page}`).join('')} --before`
-          )
-        ]
-      : []),
-    ...(looked.notReviewed
-      ? [
-          chalk.yellow(
-            `⚠ Its copy changed after it went to review: ${list(looked.notReviewed)} — what is served is not what an approval merges (that is what went to review). Ask it why (plitzi task message ${looked.task} "…"), or send it back (--changes) to complete again`
-          )
-        ]
-      : []),
-    ...(looked.parts
-      ? [`Its part of the page, pictured alone: ${looked.parts.join(', ')} — the rest is other tasks'`]
-      : []),
-    ...(looked.wholeFor
-      ? [`Its parts — ${looked.wholeFor.join(', ')} — pictured with the page whole: too many to picture apart`]
-      : []),
-    ...(looked.unreached
-      ? [
-          chalk.yellow(
-            `⚠ No link of the site reaches ${list(looked.unreached)}: not looked at — name one: plitzi task look ${looked.task} <its address>`
-          )
-        ]
-      : []),
-    looked.check,
-    ...(looked.apart ? [chalk.dim(`  · ${String(looked.apart)} finding(s) on other tasks' parts left out`)] : []),
-    ...(looked.movedElsewhere
-      ? looked.movedElsewhere.map(each =>
-          chalk.yellow(
-            `⚠ ${each.route} moved outside its parts too — the first element that differs from the run before it: ${each.here}\n    before: ${each.there}`
-          )
-        )
-      : []),
-    ...(looked.unchanged
-      ? [
-          chalk.dim(
-            `Drawn the same as the run before it — every element, box and style read on both, so not pictured: ${list(looked.unchanged)} (a shared file of it reaches them; plitzi task look ${looked.task} <page> pictures one anyway)`
-          )
-        ]
-      : []),
-    ...(looked.shots.length > 0
-      ? [
-          `Pictures — a browser in ${looked.timezone}, its language en-US (--timezone for another zone):`,
-          ...looked.shots.map(each => `  ${each}`)
-        ]
-      : ['No picture could be taken.']),
-    ...(looked.unpictured
-      ? [
-          chalk.yellow(`Not pictured (${String(looked.unpictured.length)}):`),
-          ...looked.unpictured.slice(0, 6).map(each => chalk.yellow(`  ${each}`)),
-          ...(looked.unpictured.length > 6 ? [chalk.yellow(`  … ${String(looked.unpictured.length - 6)} more`)] : [])
-        ]
-      : []),
-    ...(looked.compared
-      ? [
-          "Beside the run before it (its approved work, without this task) — motion reduced and another site's pictures stood in for on both sides, so only what the project changed differs; each side by side (after | before) in its -after-compare.png:",
-          ...looked.compared.map(each =>
-            each.problem
-              ? chalk.yellow(`  ${each.route} at ${each.width} ${each.scheme}: ${each.problem}`)
-              : `  ${each.route} at ${each.width} ${each.scheme}: ${(each.changed === 0 || each.sections.length === 0) && each.dress.length === 0 ? 'nothing changed' : `${String(each.changed ?? 0)}% differs${each.sections.length > 0 ? ` — ${each.sections.join(', ')}` : ''}${each.dress.length > 0 ? ` · its dress: ${each.dress.join(' · ')}` : ''}`}${each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
-          )
-        ]
-      : []),
-    `Then: plitzi task review ${looked.task} --approve | --changes "…"`
-  ].join('\n');
 
 export const taskLook = (taskId: string, paths: string[], options: LookOptions): Promise<void> =>
   act(

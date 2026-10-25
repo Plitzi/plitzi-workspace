@@ -58,7 +58,8 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    not "no signal" for `options.startGraceMinutes` (3). A tester reviews code before you (yours: none took it in 2 min), adds `<id>-tests` (`"tests": false` for none); a designer reviews
    the others' UI before you (`options.designReview`; `false` turns it off). Yours is the complete,
    strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
-   `--skip-design lead|no-ui`, `lead` after your `task look`). A UI review held 8 min, or
+   `--skip-design lead|no-ui`, `lead` after your `task look`). A designer at a UI review, in its time, is not gone past (`--skip-design` is refused: its copy would go from under it);
+   a UI review held 8 min (15, a designer's first), or
    queued 5, is yours: decide it. Take a task back, or a ready one for yourself: `task reassign <task> --reason "…" --to <agent>|lead`. **One lead for every four agents**: `lead-2`… beside you, started when `run watch
 --until lead` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`),
    answers the questions handed to it, and stops when none is left.
@@ -107,7 +108,7 @@ run extend <run> next.json`; say each to the person. **You manage it:** no agent
 --on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run plan` and `run open` list (`run
 backlog add "…"` keeps one with no run open); a task of your plan that does one says so — `"closes": ["b-3"]` — and the
    applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** `plitzi run report` lists the problems
-   (whose, evidence, fix) from the agents' round reports and the records — keep no list by hand; your summary adds what
+   by whose from the agents' round reports and the records (`--full`: each with its evidence and fix) — keep no list by hand; your summary adds what
    no record says, and what it was like for you: `plitzi run report --summary summary.md --ease <1-5> --hardest "…"`
    (it combines the agents'; refused while anything waits for you: settle each — a finding by what you did,
    `run settle <finding> --note "…"`); then `plitzi run finish` (the
@@ -152,6 +153,12 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 - **A line nothing can answer is yours at once**: its command exits 2 (an element not there — a copied site's too —
   nothing served), you are told, and every try of the task fails on it until you amend it — never the agent's to bend.
 - **A command you hand an agent you ran**, as a line you write: one `--same` refused cost a round.
+- **A link's line follows it**: that the link is there proves nothing — encore-4's show links all went to `/r/`. Click it
+  and say where it lands (`page check <path> --click <link>` prints the address; `page play … --steps "click <link>"`
+  says `→ <path>`), and that page answers.
+- **Your look covers every state the task names**: an approval read from the state at rest misses the one the task is
+  about (encore-4: the plates' keys wrapped only when reminded). Each state — signed in, open, reminded, empty, at the
+  phone width — is a `task look --click/--as` or a `page play` before you approve.
 - **A control is used there and back, not pictured** — an arrow, a dot, a pager, a drawer: its acceptance line is a
   `page play <path> --steps "…" --read <el…> --width 390,1440` (a copy's beside its reference, `"ours => theirs"`,
   `--compare <reference> --same moved,shown,enabled`; `page measure --click` for an open state's values) — never a

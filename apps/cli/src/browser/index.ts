@@ -11,6 +11,7 @@ import { OBSERVER_COOKIE_NAME } from '@plitzi/sdk-shared/realtime';
 import { THEME_COOKIE_NAME } from '@plitzi/sdk-shared/theme';
 
 import { keepStatic, staticCacheDir } from './staticCache';
+import { localFetch } from '../http';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
 
 import type { PlitziProject } from '../commands/existingProject';
@@ -93,7 +94,11 @@ export interface PageRoute {
 
 export interface BrowserPage {
   goto(url: string, options: { waitUntil: 'load' | 'domcontentloaded' | 'networkidle' }): Promise<unknown>;
-  screenshot(options: { fullPage: boolean }): Promise<Uint8Array>;
+  /** `clip`: the part of the page drawn, in its own coordinates — with `fullPage`, anywhere down the whole page. */
+  screenshot(options: {
+    fullPage: boolean;
+    clip?: { x: number; y: number; width: number; height: number };
+  }): Promise<Uint8Array>;
   /**
    * The first element the selector finds — Playwright's own, which scrolls whatever pane holds it into view — or the
    * first of them shown (`filter({ visible: true })`): a page that draws one control per width hides the other.
@@ -170,6 +175,8 @@ export interface Browser {
     ignoreHTTPSErrors?: boolean;
     /** The visitor's time zone (IANA), the browser's clock and `Intl` read in: the machine's when left out. */
     timezoneId?: string;
+    /** Device pixels a CSS pixel: a picture `n` times as large, a small drawing read up close. */
+    deviceScaleFactor?: number;
   }): Promise<BrowserPage>;
   close(): Promise<void>;
 }
@@ -278,7 +285,7 @@ export const isLocalTls = (origin: string): boolean => {
 /** `/health`, read the way the tools read the pages: a local certificate taken as it is. */
 export const readHealth = (origin: string): Promise<unknown> => {
   if (!isLocalTls(origin)) {
-    return fetch(`${origin}/health`)
+    return localFetch(`${origin}/health`)
       .then(response => response.json())
       .catch(() => null);
   }
@@ -390,6 +397,8 @@ export interface ProjectView {
   presence?: boolean;
   /** The visitor's time zone (IANA, `America/Mexico_City`): a page that writes the visitor's hour, read as theirs. */
   timezone?: string;
+  /** Device pixels a CSS pixel (`page shot --scale`): the picture that many times as large, the layout the same. */
+  scale?: number;
 }
 
 /** What `page` asks other sites than `own` for, kept on disk for the project's next browsers (`staticCache.ts`). */
@@ -447,7 +456,8 @@ export const openProjectPage = async (browser: Browser, origin: string, view: Pr
     colorScheme: view.scheme ?? 'light',
     reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference',
     ignoreHTTPSErrors: isLocalTls(origin),
-    ...(view.timezone ? { timezoneId: view.timezone } : {})
+    ...(view.timezone ? { timezoneId: view.timezone } : {}),
+    ...(view.scale ? { deviceScaleFactor: view.scale } : {})
   });
   await Promise.all([keepOthers(browser, page, origin), withoutDevTools(page)]);
   await page

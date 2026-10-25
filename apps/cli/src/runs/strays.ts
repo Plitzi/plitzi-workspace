@@ -76,3 +76,15 @@ export const tellLeftInTmp = async (ctx: RunContext, loaded: LoadedRun): Promise
 
   return fresh;
 };
+
+/** A file a source file's editor or `sed -i <suffix>` leaves beside it: the source's name, then a suffix. */
+const BACKUP = /\.(?:[cm]?[jt]sx?|json|css|scss|md|html|svg)(?:-[\w.]+|~|\.(?:orig|bak|rej|swp|tmp))$/;
+
+/**
+ * The files a task changed that are backups an editor or `sed -i -E` left — `roomBrowse.test.ts-E`: macOS's `sed` takes
+ * `-E` as the backup's suffix. encore-4's went to review as a file of the task's, listed only as "(added)".
+ */
+export const backupFiles = (files: readonly string[]): string[] => files.filter(file => BACKUP.test(file));
+
+export const backupText = (file: string): string =>
+  `${file} is a backup an editor or \`sed -i\` left (macOS's sed takes the word after -i as its suffix: write \`sed -i '' …\`) — put it back: plitzi task discard ${file}`;

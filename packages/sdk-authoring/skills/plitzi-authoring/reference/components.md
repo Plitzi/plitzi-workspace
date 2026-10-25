@@ -39,7 +39,8 @@ export const productCard: ComponentSpec = {
   })
 };
 
-// in the space
+// in the space — the one list every component of it is in, whichever area it serves (a project keeps it beside
+// `components.ts`, in `src/space/components/index.ts`); one area's own is written in its folder and listed there
 components: [productCard],
 pages: [{ name: 'Shop', slug: 'shop', body: [
   component('product-card', { props: { title: 'Lamp', price: 40 }, children: { 'product-card-actions': [button('Buy')] } })

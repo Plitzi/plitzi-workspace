@@ -267,6 +267,8 @@ describe('the lead’s plan as the run goes', () => {
     const idle = await nextTask(bench.agent('agent-4'), 'es-launch', 'developer');
     expect(idle.finished).toBeUndefined();
     expect(idle.why).toContain("you are of the team's base");
+    // encore-4: design-1 waited 4.5 h told only to wait — the run waited for the person's apply.
+    expect(idle.why).toContain("it waits for its finish — the lead's summary, then a person's apply");
     expect((await log()).filter(entry => entry.by === 'agent-4').map(entry => entry.action)).not.toContain('stops');
     await finishRun(lead(), 'es-launch', { apply: false, leavePending: true });
     expect((await log()).at(-1)).toMatchObject({

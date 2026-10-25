@@ -54,6 +54,12 @@ export const LINT_RULES = {
       'a `plitzi-lint-disable` comment naming a suggestion of authoring’s, which only `quiet` on its element silences',
     docs: `${REFERENCE}/structure.md`
   },
+  'selector-instance': {
+    severity: 'warning',
+    means:
+      'a test’s selector naming a component’s instance by `data-plitzi-el` — it finds nothing, so a test that it is hidden passes',
+    docs: `${REFERENCE}/testing.md`
+  },
   'space-does-not-author': {
     severity: 'error',
     means: 'the space does not author, so what authoring suggests about it could not be read',

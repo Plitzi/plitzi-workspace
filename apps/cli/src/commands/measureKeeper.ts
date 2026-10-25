@@ -4,7 +4,7 @@ import { launchBrowser } from '../browser';
 import { keeperRoutes } from './keeperRoutes';
 import { keeperServer } from './keeperServer';
 import { keptPages } from './keptPages';
-import { measureOn } from './measure';
+import { measureOn } from './measureOn';
 import { putIn, settle } from './measureState';
 import { outlineOnPage } from './outline';
 import { readState } from './play';

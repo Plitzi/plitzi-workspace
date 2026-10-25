@@ -5,7 +5,8 @@ import { DatabaseSync } from 'node:sqlite';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { harnessUsage } from './index';
+import { harnessUsage, kindOf } from './index';
+import { whatOf } from './types';
 import { SESSION_ENV, sessionOfProcess } from '../session';
 
 /** An agent's session as each harness keeps it, reduced to what a round's cost is read from. */
@@ -100,7 +101,7 @@ describe('what a Claude Code session spent in a round', () => {
       contextAtEnd: 5110,
       heaviest: [
         { tool: 'Bash', what: 'plitzi page measure', results: 1, chars: 4000, reread: 2000 },
-        { tool: 'Read', what: 'Read .md', results: 1, chars: 400, reread: 200 }
+        { tool: 'Read', what: '.md', results: 1, chars: 400, reread: 200 }
       ],
       plitziRead: [{ file: 'skills/plitzi-authoring/reference/realtime.md', times: 1 }]
     });
@@ -232,5 +233,22 @@ describe('the session a command runs in', () => {
 
     vi.stubEnv(SESSION_ENV, '');
     expect(sessionOfProcess()).toEqual({ session: 'claude-2' });
+  });
+});
+
+describe('what a tool was asked, named by its kind', () => {
+  it('names the command a shell ran past comments, a cd and a loop, and a file read by its extension (encore-4)', () => {
+    const named = (tool: string, input: unknown) => kindOf(tool, whatOf(tool, input));
+
+    expect(named('Read', { file_path: '/w/src/space/home.ts' })).toBe('Read .ts');
+    expect(named('Grep', { pattern: 'x' })).toBe('Grep');
+    expect(named('Bash', { command: '# measure the sign\nplitzi page measure / home-sign' })).toBe(
+      'Bash plitzi page measure'
+    );
+    expect(named('Bash', { command: 'cd /w/copy; plitzi task check' })).toBe('Bash plitzi task check');
+    expect(named('Bash', { command: 'for w in 390 1440; do plitzi page shot / --width $w; done' })).toBe(
+      'Bash plitzi page shot'
+    );
+    expect(named('Bash', { command: '"$(dirname x)"/run.sh' })).toBe('Bash a shell script');
   });
 });

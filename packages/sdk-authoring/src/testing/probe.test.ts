@@ -117,6 +117,28 @@ describe('probePage / hidden by the width it is drawn at', () => {
   });
 });
 
+// encore-4: the home's wide-screen sides, shown from 1600 px by a container condition written in their class, read as
+// broken below it — the condition's declarations nest under the class's rule, which the probe never read.
+describe('probePage / a condition written inside a class', () => {
+  it('reads the declarations nested under it as the class’s, hidden at this width on purpose', () => {
+    sized(100, 20);
+    document.head.innerHTML = '<style>.wide-side { display: none }</style>';
+    document.body.innerHTML = '<aside data-plitzi-el="home-side" data-empty="1" class="wide-side"></aside>';
+    const shown = document.createElement('div').style;
+    shown.display = 'block';
+    // What a browser hands for `.wide-side { @container (min-width: 1600px) { display: block } }`, which jsdom cannot
+    // parse: the class's rule, the condition inside it, and the declarations straight under the condition.
+    const condition = Object.create(CSSMediaRule.prototype) as CSSMediaRule;
+    Object.defineProperty(condition, 'cssRules', { value: [{ style: shown }] });
+    const rule = Object.create(CSSStyleRule.prototype) as CSSStyleRule;
+    Object.defineProperty(rule, 'selectorText', { value: '.wide-side' });
+    Object.defineProperty(rule, 'cssRules', { value: [condition] });
+    vi.spyOn(document, 'styleSheets', 'get').mockReturnValue([{ cssRules: [rule] }] as unknown as StyleSheetList);
+
+    expect(probePage(input(['home-side'])).byWidth).toEqual(['home-side']);
+  });
+});
+
 describe('probePage / images', () => {
   /** A lazy image at `left`, `top`, 100×100, never fetched — as a browser leaves one it has not been asked for yet. */
   const lazyImageAt = (src: string, left: number, top: number): HTMLImageElement => {

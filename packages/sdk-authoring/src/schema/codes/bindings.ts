@@ -78,6 +78,12 @@ export const BINDING_CODES = {
     means: 'a template, which renders text, feeding an attribute that holds a list or an object',
     fix: "`bindTemplate('items', source, '{{ … }}', { returns: 'value' })`"
   },
+  'template-or-value': {
+    kind: 'warned',
+    means:
+      "a template's `or` (or `and`) beside a text or a number — `sort or 'listeners'` — which answers true or false, never the value",
+    fix: "a fallback value with `??`: `sort ?? 'listeners'`; a test with `or` between two conditions"
+  },
   'template-unreadable': {
     kind: 'refused',
     means: 'a template with an operator, a filter or a function that does not exist, or broken syntax',

@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import { spaceRootOf } from '@plitzi/sdk-shared/helpers';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
+import declaration from './declaration';
 import DropdownContext from './DropdownContext';
 import useDropdown from './useDropdown';
 import useDropdownTrigger from './useDropdownTrigger';
@@ -13,6 +14,7 @@ import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
+import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type DropdownProps = {
@@ -26,8 +28,18 @@ export type DropdownProps = {
   closeOnClickPopup?: boolean;
   containerTopOffset?: number;
   containerLeftOffset?: number;
+  /**
+   * How wide the popup is: as its content (`content`), or at least as wide as its trigger (`trigger`) — a select's list.
+   * A width in % on the popup's class reads the window's, as it is drawn at the space's root (encore-4's people picker).
+   */
+  popupWidth?: 'content' | 'trigger';
   disabled?: boolean;
 };
+
+/** Its state with the popup open or closed, the rest kept: what every way of opening and closing it writes. */
+export const withOpen =
+  (open: boolean) =>
+  <S extends Record<string, unknown>>(state: S): S => ({ ...state, openPopup: open });
 
 const Dropdown = ({
   ref: refProp,
@@ -40,6 +52,7 @@ const Dropdown = ({
   closeOnClickPopup = true,
   containerTopOffset = 5,
   containerLeftOffset = 5,
+  popupWidth = 'content',
   disabled = false
 }: DropdownProps) => {
   const {
@@ -65,19 +78,19 @@ const Dropdown = ({
 
       e.stopPropagation();
       e.preventDefault();
-      setElementState(state => ({ ...state, openPopup: false }));
+      setElementState(withOpen(false));
     },
     [closeOnClickBackground, setElementState]
   );
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
-      setElementState(state => ({ ...state, openPopup: open }));
+      setElementState(withOpen(open));
     },
     [setElementState]
   );
 
-  const [, , handleClick, handleClickPopup, , parameters] = useDropdown({
+  const [, , handleClick, handleClickPopup, triggerRect, position] = useDropdown({
     ref,
     popupRef,
     open: openPopup,
@@ -92,6 +105,22 @@ const Dropdown = ({
     myWindow: windowInstance,
     onChange: handleOpenChange
   });
+
+  const parameters = useMemo(
+    () =>
+      position && popupWidth === 'trigger' && triggerRect ? { ...position, minWidth: triggerRect.width } : position,
+    [position, popupWidth, triggerRect]
+  );
+
+  // Opened and closed by a step, as a modal is — closing on a pick needed `updateElement` on `openPopup` (encore-4).
+  const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(
+    () => ({
+      openDropdown: { ...declaration.callbacks.openDropdown, callback: () => handleOpenChange(true) },
+      closeDropdown: { ...declaration.callbacks.closeDropdown, callback: () => handleOpenChange(false) },
+      toggleDropdown: { ...declaration.callbacks.toggleDropdown, callback: () => handleOpenChange(!openPopup) }
+    }),
+    [handleOpenChange, openPopup]
+  );
 
   /**
    * Where the open popup and its backdrop are drawn: the space's root, from the first time the menu opens. Drawn
@@ -142,6 +171,7 @@ const Dropdown = ({
       ref={ref}
       className={clsx('plitzi-component__dropdown', className, { 'container--empty--skip': !previewMode && !children })}
       onClick={handleClickTrigger}
+      interactionCallbacks={interactionCallbacks}
     >
       <DropdownContext value={dropdownContext}>{children}</DropdownContext>
       {background && layer ? createPortal(background, layer) : background}

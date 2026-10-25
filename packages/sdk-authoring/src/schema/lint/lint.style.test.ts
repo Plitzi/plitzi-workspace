@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
-import { authorSpace, button, container, form, formControl, lintSpace, markdown, text } from '../../index';
+import {
+  authorSpace,
+  button,
+  container,
+  dropdown,
+  dropdownPopup,
+  fontAwesome,
+  form,
+  formControl,
+  lintSpace,
+  markdown,
+  text
+} from '../../index';
 import { addElement, errorsOf, homeId, setFlow, step, warningsOf, withChange } from './tests/lintFixture';
 
 import type { Schema } from '@plitzi/sdk-shared';
@@ -216,6 +228,80 @@ describe('lintSpace', () => {
       // The box's own state, and a field that is its own box, are seen.
       expect(focused('email', 'focus-within')).toEqual([]);
       expect(focused('textarea', 'focus')).toEqual([]);
+    });
+
+    // encore-4: a header menu's class set `position`, and its popup lay in the header's flow; a class gave an icon
+    // another font, and it drew "≡" — every check passed both.
+    it('popup-position-set', () => {
+      const warned = (popup: Record<string, string>, icon: Record<string, string>) =>
+        lintSpace(
+          authorSpace({
+            name: 'Menu',
+            permanentUrl: 'menu',
+            classes: { menu: { css: popup }, glyph: { css: icon } },
+            pages: [
+              {
+                id: 'home',
+                name: 'Home',
+                slug: '',
+                body: [
+                  dropdown({
+                    id: 'site-menu',
+                    children: [
+                      fontAwesome({ id: 'site-burger', icon: 'fa-solid fa-bars', class: 'glyph' }),
+                      dropdownPopup({
+                        id: 'site-menu-popup',
+                        class: 'menu',
+                        children: [text({ id: 'm', content: 'Rooms' })]
+                      })
+                    ]
+                  })
+                ]
+              }
+            ]
+          })
+        ).warnings.filter(issue => issue.code === 'popup-position-set' || issue.code === 'icon-font-replaced');
+
+      const warnings = warned({ position: 'absolute', padding: '8px' }, { color: 'red' });
+      expect(warnings.map(issue => issue.code)).toEqual(['popup-position-set']);
+      expect(warnings[0].message).toContain('class "menu" sets `position`');
+      expect(warned({ padding: '8px', 'min-width': '200px' }, { color: 'red' })).toEqual([]);
+    });
+
+    it('icon-font-replaced', () => {
+      const warned = (popup: Record<string, string>, icon: Record<string, string>) =>
+        lintSpace(
+          authorSpace({
+            name: 'Menu',
+            permanentUrl: 'menu',
+            classes: { menu: { css: popup }, glyph: { css: icon } },
+            pages: [
+              {
+                id: 'home',
+                name: 'Home',
+                slug: '',
+                body: [
+                  dropdown({
+                    id: 'site-menu',
+                    children: [
+                      fontAwesome({ id: 'site-burger', icon: 'fa-solid fa-bars', class: 'glyph' }),
+                      dropdownPopup({
+                        id: 'site-menu-popup',
+                        class: 'menu',
+                        children: [text({ id: 'm', content: 'Rooms' })]
+                      })
+                    ]
+                  })
+                ]
+              }
+            ]
+          })
+        ).warnings.filter(issue => issue.code === 'popup-position-set' || issue.code === 'icon-font-replaced');
+
+      expect(warned({ padding: '8px' }, { 'font-family': 'monospace' }).map(issue => issue.code)).toEqual([
+        'icon-font-replaced'
+      ]);
+      expect(warned({ padding: '8px' }, { color: 'red', 'font-size': '20px' })).toEqual([]);
     });
 
     it('element-slot-unknown', () => {

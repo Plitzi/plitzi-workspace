@@ -10,6 +10,14 @@ brought back:
 settings: { keepState: true, transientState: ['filter', 'tourStep', 'panelOpen'] }
 ```
 
+When few keys are kept and many are not — a dismissed notice, and the page's every other key fresh — name the ones
+kept instead, with `keptState`: only those are written and brought back. One of the two, never both (`authorSpace`
+refuses it), and a `paintedState` key is one of the kept:
+
+```ts
+settings: { keepState: true, keptState: ['dismissedShow'] }
+```
+
 Do not reset kept state from `onPageLoad` instead: what was kept is restored late — after hydration, once auth knows
 who this is — and lands in the middle of that flow, so half of it is undone. A filter restored on the next visit is a
 page that looks broken. Keeping state is the SPACE's setting; a page does not take `keepState`.

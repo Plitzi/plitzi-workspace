@@ -6,8 +6,8 @@ import { LINT_CACHE_FILE } from '../../scaffold/paths';
 import { checkAcceptance, letGo, serveForAcceptance } from '../acceptance';
 import { handOver } from '../handOver';
 import { crossed, longFilesIn, longFileText } from '../longFiles';
-import { assertStatus, loadRun, logRun } from '../run';
-import { tellLeftInTmp } from '../strays';
+import { assertStatus, loadRun, logRun, readRunLog } from '../run';
+import { backupFiles, backupText, tellLeftInTmp } from '../strays';
 import { failureLines } from '../usage';
 import { changedInCopy, findTask, holderOf, refreshCopy } from './common';
 import { whoseChanges } from './complete';
@@ -37,6 +37,8 @@ export interface CheckedTask {
   accepted: AcceptanceResult[];
   /** Files past what is read whole: `complete` refuses them. */
   tooLong: string[];
+  /** Backups an editor or `sed -i` left among its files: `complete` refuses them. */
+  backups?: string[];
   /**
    * What was said to the task and its agent and not read: an agent iterating checks, and runs no other command until it
    * completes — a change the lead asked meanwhile reaches it here, not after it went to review.
@@ -52,6 +54,11 @@ export interface CheckedTask {
   fixed?: { fixed: string[]; ran: string[] };
   /** Passed at this time, nothing changed since: the result said again, not run (`--fresh` runs it). */
   checkedAt?: string;
+  /**
+   * Failed as it does now at this time, on the same files: run again with nothing changed — encore-4's dev-1 checked
+   * twelve times in nine minutes. Said, so the next run follows a change.
+   */
+  failedAlikeAt?: string;
   /**
    * What failed that is not this copy's work: steps the run's work fails the same way, acceptance lines nothing could
    * answer (the lead is told). Not counted against the agent; `complete` takes them as the run's.
@@ -85,7 +92,16 @@ export const checkTask = async (
 
   const started = await readStart(view.paths);
   const mine = started ? await changedInCopy(view, started) : [];
-  const fixed = fix ? await fixChanged(view.paths.work, ctx.root, mine) : undefined;
+  const { outside } = started ? await whoseChanges(loaded, view, mine, started) : { outside: [] };
+  // Fixed on its own files alone: encore-4's dev-2 had `--fix` rewrite a file another task held, then refused for it.
+  const othersFiles = new Set(outside.map(each => each.file));
+  const fixed = fix
+    ? await fixChanged(
+        view.paths.work,
+        ctx.root,
+        mine.filter(file => !othersFiles.has(file))
+      )
+    : undefined;
   // Checked already, passing, and nothing changed since: said, not run again — `--fresh` runs it whatever.
   const before =
     only === undefined && !fresh && fixed === undefined && started
@@ -116,8 +132,13 @@ export const checkTask = async (
   }
 
   const tooLong = (await longFilesIn(view.paths.work, ctx.root)).filter(crossed).map(longFileText);
-  const { outside } = started ? await whoseChanges(loaded, view, mine, started) : { outside: [] };
-  const ok = checks.ok && accepted.every(each => each.ok) && tooLong.length === 0 && outside.length === 0;
+  const backups = backupFiles(mine);
+  const ok =
+    backups.length === 0 &&
+    checks.ok &&
+    accepted.every(each => each.ok) &&
+    tooLong.length === 0 &&
+    outside.length === 0;
   const notOwn = [
     ...notOwnSteps,
     ...(await tellUnanswered(ctx, loaded, taskId, accepted)).map(each => `acceptance — ${each.said}`)
@@ -125,6 +146,25 @@ export const checkTask = async (
   // What it was run on — the copy's files, the run's approved work, the lines, the CLI — after any `--fix`: one input
   // checked twice with two outcomes is a check that is not deterministic (encore's 409s "passing on rerun").
   const key = started ? await checkKey(loaded, view.paths, task, await changedInCopy(view, started)) : undefined;
+  const failed = [
+    ...backups.map(backupText),
+    ...checks.steps.filter(step => !step.ok).map(step => step.name),
+    ...accepted.filter(each => !each.ok).map(each => `acceptance — ${each.said}`),
+    ...tooLong,
+    ...outside.map(each => `${each.file} is ${each.holder}'s`)
+  ];
+  const input = key?.slice(0, 16);
+  const lastAlike =
+    !ok && input !== undefined
+      ? (await readRunLog(loaded.paths)).findLast(
+          entry =>
+            entry.action === 'check' &&
+            entry.task === taskId &&
+            entry.ok === false &&
+            entry.input === input &&
+            JSON.stringify(entry.failed) === JSON.stringify(failed)
+        )
+      : undefined;
   // Passed whole: kept for the complete that follows, which does not run it all again while nothing changes.
   if (ok && only === undefined && key !== undefined) {
     await keepChecked(view.paths, key, { checks, accepted }, ctx.now());
@@ -138,12 +178,7 @@ export const checkTask = async (
     ...(ok
       ? {}
       : {
-          failed: [
-            ...checks.steps.filter(step => !step.ok).map(step => step.name),
-            ...accepted.filter(each => !each.ok).map(each => `acceptance — ${each.said}`),
-            ...tooLong,
-            ...outside.map(each => `${each.file} is ${each.holder}'s`)
-          ],
+          failed,
           ...(notOwn.length > 0 ? { notOwn } : {}),
           // Why, each in its own words: what a fix is read from, never run again to find out (lx-product's t-gallery).
           why: [
@@ -165,12 +200,14 @@ export const checkTask = async (
     checks,
     accepted,
     tooLong,
+    ...(backups.length > 0 ? { backups } : {}),
     messages,
     ...(brought.length > 0 ? { brought } : {}),
     ...(only ? { only } : {}),
     ...(outside.length > 0 ? { othersFiles: outside } : {}),
     ...(fixed ? { fixed } : {}),
     ...(before ? { checkedAt: before.at } : {}),
+    ...(typeof lastAlike?.at === 'string' ? { failedAlikeAt: lastAlike.at } : {}),
     ...(notOwn.length > 0 ? { notOwn } : {})
   };
 };

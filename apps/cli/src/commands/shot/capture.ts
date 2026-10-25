@@ -71,7 +71,11 @@ export const awaited = (target: string): string => {
     return `${region[1]}#${region[2]}, ${region[1]}${namedBy(region[2])}`;
   }
 
-  return BARE.test(target) ? [namedBy(target), target, ...idOf(target)].join(', ') : target;
+  // A component's instance too, as `targetOn` finds it: waited for by its name alone, encore-4's clip of one said
+  // "not on the page" while page measure read it.
+  return BARE.test(target)
+    ? [namedBy(target), target, ...idOf(target), `[data-plitzi-instance="${target}"]`].join(', ')
+    : target;
 };
 
 /**
@@ -153,16 +157,115 @@ const framing = (view: { viewport?: boolean; scrollTo?: string }, clip?: string)
   return view.viewport || view.scrollTo ? { kind: 'viewport' } : { kind: 'page' };
 };
 
+/**
+ * Runs in the page: how much more a sheet pinned to the screen holds than it shows — a modal page (encore-4's room
+ * stats) scrolls inside itself, and a whole-page picture showed its first screen alone. The widest such scroller's,
+ * 0 when there is none. Self-contained — it is serialised.
+ */
+export const pinnedScroll = (): number => {
+  let more = 0;
+  for (const element of document.querySelectorAll<HTMLElement>('body *')) {
+    const style = getComputedStyle(element);
+    const box = element.getBoundingClientRect();
+    if (box.width < window.innerWidth / 2) {
+      continue;
+    }
+
+    // Pinned itself, past the screen's foot or holding more than its box — a sheet the whole-page walk (`unrollPage`) let
+    // grow, or one held to the screen by its insets whose rows spill out of it (encore-4's stats panel).
+    if (style.position === 'fixed') {
+      more = Math.max(
+        more,
+        Math.round(box.bottom - window.innerHeight),
+        element.clientHeight > 0 ? element.scrollHeight - element.clientHeight : 0
+      );
+    }
+
+    const scrolls =
+      (style.overflowY === 'auto' || style.overflowY === 'scroll') && element.scrollHeight > element.clientHeight + 1;
+    let pinned = false;
+    for (let at: HTMLElement | null = element; at && scrolls && !pinned; at = at.parentElement) {
+      pinned = getComputedStyle(at).position === 'fixed';
+    }
+
+    if (pinned) {
+      more = Math.max(more, element.scrollHeight - element.clientHeight);
+    }
+  }
+
+  return more;
+};
+
+/** The attribute a pinned element hidden for an element's picture carries: its own visibility, put back after. */
+export const HIDDEN_FOR_SHOT = 'data-plitzi-shot-hidden';
+
+/**
+ * Runs in the page: every element pinned to the screen (fixed or sticky) that is neither the target, inside it nor
+ * around it, hidden — what is drawn over a part scrolled to the top of the screen, a site's sticky header over the
+ * first rows of encore-4's queue in every clipped picture. Self-contained — it is serialised.
+ */
+export const hidePinned = (target: Element, attribute: string): number => {
+  let hidden = 0;
+  for (const element of document.querySelectorAll<HTMLElement>('body *')) {
+    const { position } = getComputedStyle(element);
+    if (
+      (position === 'fixed' || position === 'sticky') &&
+      !element.contains(target) &&
+      !target.contains(element) &&
+      !element.hasAttribute(attribute)
+    ) {
+      element.setAttribute(attribute, element.style.visibility);
+      element.style.visibility = 'hidden';
+      hidden += 1;
+    }
+  }
+
+  return hidden;
+};
+
+/** Runs in the page: what `hidePinned` hid, shown again as it was. Self-contained — it is serialised. */
+export const showPinned = (attribute: string): void => {
+  for (const element of document.querySelectorAll<HTMLElement>(`[${attribute}]`)) {
+    element.style.visibility = element.getAttribute(attribute) ?? '';
+    element.removeAttribute(attribute);
+  }
+};
+
+/** One element's picture, nothing pinned to the screen drawn over it. */
+const elementShot = async (page: BrowserPage, selector: string): Promise<Uint8Array> => {
+  const element = page.locator(selector).first();
+  await element.evaluate(hidePinned, HIDDEN_FOR_SHOT);
+  try {
+    return await element.screenshot();
+  } finally {
+    await page.evaluate(showPinned, HIDDEN_FOR_SHOT);
+  }
+};
+
 export const capture = async (page: BrowserPage, how: Framing): Promise<Uint8Array> => {
   if (how.kind === 'element') {
-    return page.locator(how.selector).first().screenshot();
+    return elementShot(page, how.selector);
   }
 
   if (how.kind === 'element-later') {
     const read = await targetOn(page, how.target);
     const shown = !('problem' in read) && read.found && (await page.locator(read.selector).first().isVisible());
 
-    return shown ? page.locator(read.selector).first().screenshot() : page.screenshot({ fullPage: false });
+    return shown ? elementShot(page, read.selector) : page.screenshot({ fullPage: false });
+  }
+
+  if (how.kind === 'page') {
+    // A sheet pinned over the page, scrolling on its own, is pictured whole: the screen made as tall as what it holds.
+    const more = await page.evaluate(pinnedScroll, undefined);
+    if (more > 0) {
+      const size = await page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }), undefined);
+      await page.setViewportSize({ width: size.width, height: size.height + more });
+      try {
+        return await page.screenshot({ fullPage: true });
+      } finally {
+        await page.setViewportSize(size);
+      }
+    }
   }
 
   return page.screenshot({ fullPage: how.kind === 'page' });
@@ -226,7 +329,8 @@ export const pictureOf = async (
         viewport: { width: view.width, height: view.height },
         colorScheme: view.scheme ?? 'light',
         reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference',
-        ...(view.timezone ? { timezoneId: view.timezone } : {})
+        ...(view.timezone ? { timezoneId: view.timezone } : {}),
+        ...(view.scale ? { deviceScaleFactor: view.scale } : {})
       });
   if (view.standIns && origin) {
     await standInPictures(page, origin);
@@ -295,7 +399,9 @@ export const pictureOf = async (
         continue;
       }
 
-      return { problem: `${target} is not on ${url}.` };
+      return {
+        problem: `${target} is not on ${url} — not drawn there: hidden by its \`visible\` or a \`when\` (data a play makes: --steps), opened by a click (--click), for signed-in visitors (--as), or on another page (plitzi page outline <path> lists what is drawn).`
+      };
     }
 
     shown[target] = read.selector;

@@ -2,7 +2,8 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { measureOn, onlyProperties, pairOf, readingKey, sameProperties } from './measure';
+import { onlyProperties, pairOf, readingKey, sameProperties } from './measure';
+import { measureOn } from './measureOn';
 import { putIn, rowsOf, stateText } from './measureState';
 import { comparedText, measuredText, readingText } from './measureText';
 import { differences, MEASURED, PSEUDO_MEASURED } from './measureValues';
@@ -69,7 +70,10 @@ describe('page measure', () => {
     } as unknown as Parameters<typeof measureOn>[0];
 
     expect(await measureOn(page, 'vs-medal')).toEqual({
-      problem: expect.stringContaining('No element vs-medal on http://127.0.0.1:8080/combates — name it by') as unknown
+      // encore-4: a host's desk measured as a guest — the ways it may not be drawn there, said.
+      problem: expect.stringContaining(
+        'No element vs-medal on http://127.0.0.1:8080/combates — not drawn here: a page for signed-in visitors (--as <username>)'
+      ) as unknown
     });
   });
 
@@ -432,5 +436,48 @@ describe('page measure, held to the pixel', () => {
     expect(differences(measured({ x: '50px' }), measured({ x: '290px' })).differ).toEqual([
       { property: 'x', here: '50px', there: '290px' }
     ]);
+  });
+});
+
+// encore-4: ~40 properties an element, a data URI whole in each — 38k characters in one answer, read on every turn.
+describe('an element measured alone', () => {
+  it('says what it says of itself: its initial and inherited values counted, a data URI by its kind and size', () => {
+    const glow = `url("data:image/svg+xml,${'%3Cpath%20d%3D%22M0%200h1%22%2F%3E'.repeat(40)}")`;
+    const sign: Measured = {
+      selector: '[data-plitzi-el="home-sign"]',
+      tag: 'div',
+      text: 'ENCORE',
+      styles: {
+        'font-size': '32px',
+        color: 'rgb(255, 176, 0)',
+        'background-color': 'rgba(0, 0, 0, 0)',
+        'background-image': glow,
+        'box-shadow': 'none',
+        animation: 'none 0s ease 0s 1 normal none running',
+        'grid-area': 'auto / auto / auto / auto',
+        'before:top': 'auto',
+        'before:position': 'absolute',
+        // As a browser says them with nothing set: a width of 0, a style of none, motion stilled for the reading.
+        'border-top': '0px solid rgb(35, 26, 18)',
+        outline: 'rgb(35, 26, 18) none 3px',
+        transition: '1e-05s'
+      },
+      inherited: ['color'],
+      matches: 6
+    };
+
+    const text = stripVTControlCharacters(measuredText(sign));
+    expect(text).toContain('(the first shown of 6 it finds — --rows measures each)');
+    expect(text).toContain('font-size              32px');
+    expect(text).toContain('before:position        absolute');
+    expect(text).toMatch(/background-image +url\(data:image\/svg\+xml … \d+ chars\)/);
+    expect(text).not.toContain('box-shadow');
+    expect(text).not.toContain('rgb(255, 176, 0)');
+    expect(text).toContain('(8 at their initial value, 1 inherited from its parent: --all says them)');
+    expect(text).not.toContain('border-top');
+
+    const all = stripVTControlCharacters(measuredText(sign, undefined, true));
+    expect(all).toContain('box-shadow             none');
+    expect(all).toContain(glow);
   });
 });

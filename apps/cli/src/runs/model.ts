@@ -357,6 +357,8 @@ export interface DesignReview {
   /** The designer who took it, or said it. */
   by?: string;
   at?: string;
+  /** Taken as its designer's first review of the run: its time holds the reading it asks for first (`reviewTimeOf`). */
+  first?: true;
   /** `skipped`: why the lead approved it without the designer's review. */
   why?: DesignSkip;
   /**

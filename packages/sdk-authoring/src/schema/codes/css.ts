@@ -66,6 +66,18 @@ export const CSS_CODES = {
     means: "a state given a rule set's keys (`pseudos`, `variants`, `ancestors`…): a state holds plain CSS",
     fix: "a pseudo-element's state goes under the pseudo-element — `pseudos: { before: { states: { hover: { opacity: '1' } } } }`; an ancestor's, under `ancestors`"
   },
+  'popup-position-set': {
+    kind: 'warned',
+    means:
+      "a class on a `dropdownPopup` setting where it is drawn — `position`, `top`, `left`, `right`, `bottom`, `inset` or `transform` — over the place its dropdown puts it at, at the space's root",
+    fix: 'its look on the class, its place on the dropdown: `popupPlacement`, `containerTopOffset`, `containerLeftOffset`, and `popupWidth: "trigger"` for its width'
+  },
+  'icon-font-replaced': {
+    kind: 'warned',
+    means:
+      "a class on a `fontAwesome` icon setting `font-family` — the icon's glyphs are Font Awesome's font, and another draws a fallback character in their place",
+    fix: "the class's `font-family` on the text around the icon, never on the icon; its size and colour on the icon are fine"
+  },
   'focus-on-field-box': {
     kind: 'warned',
     means:

@@ -180,6 +180,23 @@ describe('authorSpace / kept state', () => {
 
     expect(warnings.map(warning => warning.code)).toEqual(['painted-state-without-keep-state']);
   });
+
+  // encore-4: keeping one key — a dismissed notice — meant listing every other key the space writes as transient.
+  it('writes the only keys kept, and refuses them beside transient keys or a painted key they do not keep', () => {
+    const { schema, warnings } = authorSpace(space({ keepState: true, keptState: ['dismissed'] }));
+    expect(schema.settings.keptState).toEqual(['dismissed']);
+    expect(warnings).toEqual([]);
+
+    expect(() =>
+      authorSpace(space({ keepState: true, keptState: ['dismissed'], transientState: ['demo'] }))
+    ).toThrow(/say one of the two/u);
+    expect(() =>
+      authorSpace(space({ keepState: true, keptState: ['dismissed'], paintedState: ['toolPick'] }))
+    ).toThrow(/names "toolPick", which `settings.keptState` does not keep/u);
+    expect(authorSpace(space({ keptState: ['dismissed'] })).warnings.map(warning => warning.code)).toEqual([
+      'kept-state-without-keep-state'
+    ]);
+  });
 });
 
 describe('authorSpace / states, variants and element defaults', () => {

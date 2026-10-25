@@ -1,10 +1,15 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { stateOf } from './play';
 
 afterEach(() => {
   vi.restoreAllMocks();
+});
+
+// jsdom runs no animation and has no `getAnimations`: a page whose element has none, as a browser answers it.
+beforeEach(() => {
+  Element.prototype.getAnimations = () => [];
 });
 
 /** A box that scrolls `left` px of a row wider than itself, as jsdom lays nothing out. */

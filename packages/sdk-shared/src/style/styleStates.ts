@@ -62,6 +62,29 @@ export const STYLE_STATE_LABELS: Record<(typeof STYLE_STATES)[number], string> =
 };
 
 /**
+ * What each state is, in a line — what `plitzi explain` says of it, and where it differs from what its name suggests:
+ * encore-4's agents lit the open tab with `active`, the press, where `current` is the chosen one.
+ */
+export const STYLE_STATE_MEANINGS: Record<(typeof STYLE_STATES)[number], string> = {
+  hover: 'while the pointer is over it',
+  focus: 'while it holds the focus, from a click or the keyboard',
+  'focus-visible': 'while it holds the focus from the keyboard — the ring a keyboard user needs',
+  'focus-within': 'while anything inside it holds the focus — a field wrapper around its input',
+  active: 'while it is pressed, the pointer down on it (CSS :active) — never the chosen one of a set: that is current',
+  disabled: 'while it takes no press — a disabled control',
+  checked: 'while a box or a radio is ticked',
+  visited: 'a link to a page the visitor has been to',
+  current:
+    'the chosen one of a set, as the element says it — the selected tab (aria-selected), the link to the page shown (aria-current), the pressed toggle (aria-pressed)',
+  expanded: 'the control of a panel while the panel is open — a dropdown trigger, an accordion header (aria-expanded)',
+  hidden: 'how it looks while its `visible` says no — where it goes as it hides, with a transition on the class',
+  first: 'the first of its siblings',
+  last: 'the last of its siblings',
+  odd: 'an odd one among its siblings (1st, 3rd…)',
+  even: 'an even one among its siblings (2nd, 4th…)'
+};
+
+/**
  * Where each state is written in a rule, which is the order they win in.
  *
  * Every state weighs the same, so where two apply at once — hovered while pressed, hovered while disabled — the one

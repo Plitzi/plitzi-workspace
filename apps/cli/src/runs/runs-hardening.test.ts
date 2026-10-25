@@ -5,6 +5,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
+import { FIRST_REVIEW_READING_MS, REVIEW_TIMEOUT_MS } from './design';
 import { finishRun } from './merge';
 import { readOwnership } from './ownership';
 import { runPaths } from './paths';
@@ -278,6 +279,8 @@ describe('a UI review, by the team’s designers', () => {
     // encore-3: a hint that says --token contradicts the agent's own CLI, which says who it is: none says it.
     expect(refused.message).not.toContain('--token');
 
+    // design-1's review in its time is design-1's (encore-4): past it — its first, which holds its reading — the lead's.
+    bench.advance(REVIEW_TIMEOUT_MS + FIRST_REVIEW_READING_MS + 60_000);
     // encore-2: the lead approved a UI it never looked at; its review of the UI is a look, said before the approval.
     expect(
       (await refusal(reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'lead' })))

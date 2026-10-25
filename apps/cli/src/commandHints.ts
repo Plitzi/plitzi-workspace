@@ -15,7 +15,11 @@ const ELSEWHERE: Readonly<Partial<Record<string, string>>> = {
 
 /** An option another page command has, and what this one calls the same thing. */
 const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<string, string>>>>>> = {
-  'page shot': { '--element': '--clip <element> pictures one element' },
+  'page shot': {
+    '--element': '--clip <element> pictures one element',
+    // encore-4's design-1, twice: a page shot is the whole page unless told otherwise.
+    '--full': 'a page shot is the whole page already — --viewport pictures the first screen alone'
+  },
   'page measure': { '--element': 'the elements are its arguments: plitzi page measure <path> <element…>' },
   'page play': { '--element': '--read <element…> says what elements show after the steps' }
 };

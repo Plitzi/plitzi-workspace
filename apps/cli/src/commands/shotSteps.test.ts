@@ -72,7 +72,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   it('says which step is wrong, and what the steps are', () => {
     expect(parseSteps('click a; tap b', 500)).toEqual({
       problem:
-        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, store, state, clock, tick, shot, frames'
+        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, store, state, clock, tick, shot, frames'
     });
     expect(parseSteps('wait soon', 500)).toEqual({
       problem: 'step 1 ("wait soon"): "soon" is not a whole number from 1 to 30000'
@@ -83,7 +83,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     });
     expect(parseSteps('# only a note', 500)).toEqual({
       problem:
-        '--steps has no step: click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, store, state, clock, tick, shot, frames, separated by ";"'
+        '--steps has no step: click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, store, state, clock, tick, shot, frames, separated by ";"'
     });
   });
 
@@ -126,5 +126,24 @@ describe('the steps that set what a page remembers and what time it is', () => {
     expect(problemOf('clock tomorrow')).toContain('clock 2026-10-25T20:00:00Z');
     expect(problemOf('tick 8d')).toContain('up to a week');
     expect(problemOf('store only-a-key')).toContain('a key and its value');
+  });
+
+  // encore-4: a chat line holding ";" was cut there; `fill .chat-input=Great` was one selector; a quoted state, refused.
+  it('reads a ";" inside quotes as the text’s, a class before =, a state quoted as a shell writes it, and goto', () => {
+    expect(
+      parseSteps(
+        `type chat-input "late; still here"; fill .chat-input=Great; state dismissed '"show-1"'; goto /rooms`,
+        500
+      )
+    ).toEqual([
+      { kind: 'type', target: 'chat-input', text: 'late; still here' },
+      { kind: 'type', target: '.chat-input', text: 'Great' },
+      { kind: 'state', key: 'dismissed', value: 'show-1' },
+      { kind: 'goto', path: '/rooms' }
+    ]);
+    const problem = parseSteps('state dismissed show-1', 500);
+    expect('problem' in problem ? problem.problem : '').toContain('got show-1: a text in double quotes');
+    const nowhere = parseSteps('goto rooms', 500);
+    expect('problem' in nowhere ? nowhere.problem : '').toContain('goto needs a path of the site');
   });
 });

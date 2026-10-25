@@ -29,11 +29,13 @@ too.
   a fixed colour under a theme's text shows — 390, the words; against a reference, its details — what moves (an entrance, a
   shine, an arrow), the sizes measured, what each control does, the phone's own layout.
 - **Say it:** `plitzi task review <task> --approve [--note "what you saw"] | --changes "what, where, why — the values
-measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it**: past them it goes to another designer or
+measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it** (15 for your first, which holds the reading
+  it asks first): past them it goes to another designer or
   the lead, and your verdict is refused. One round asks everything you want of it. A difference a visitor sees is sent back, never approved with a note —
   "approximate" is one. A control the task adds — an arrow, a dot, a pager, a drawer — you use there and back:
   `page play <path> --steps "click <el>; …" --read <el…>` says how far each step moved what, what it shows and takes a
-  press (a copy beside its reference: `"ours => theirs"`, `--compare <url> --same moved,shown,enabled`); one that moves
+  press, a colour a step changed, its animations, and where a step took the page (`goto <path>` opens another — what
+  holds across pages) (a copy beside its reference: `"ours => theirs"`, `--compare <url> --same moved,shown,enabled`); one that moves
   nothing, or otherwise than asked — than the reference's, in a copy — is sent back. A state the demo data never has is
   played into: `state <key> <json>`, `store <key> <value>` then `reload`, `--clock <instant>` with `tick 5m` for a
   countdown; a copy whose data a play used up goes back cold with `plitzi server reset` (its server stopped). What the lead told you while

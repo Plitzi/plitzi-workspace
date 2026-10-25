@@ -36,6 +36,10 @@ describe('a look kept for the same look asked again', () => {
     await keepLook(cache, key, 'the look', bench.now());
     expect(await keptLook(cache, key, bench.now())).toMatchObject({ text: 'the look' });
     expect(await keptLook(cache, 'another', bench.now())).toBeUndefined();
+    // A second look, of other pages, keeps the first (encore-4: each look forgot the pages the other covered).
+    await keepLook(cache, 'other pages', 'the other look', bench.now());
+    expect(await keptLook(cache, key, bench.now())).toMatchObject({ text: 'the look' });
+    expect(await keptLook(cache, 'other pages', bench.now())).toMatchObject({ text: 'the other look' });
 
     // Its copy changed after it went to review: a new look.
     await writeInCopy(taken.work, 'src/space/pages/home/index.ts', "export const home = { title: 'Hola!' };\n");

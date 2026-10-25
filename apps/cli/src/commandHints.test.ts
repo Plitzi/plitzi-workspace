@@ -16,6 +16,7 @@ describe('what a refused command line meant', () => {
       '--clip <element>'
     );
     expect(commandHint("error: unknown option '--element'", ['page', 'check', '/'])).toBeUndefined();
+    expect(commandHint("error: unknown option '--full'", ['page', 'shot', '/', '--full'])).toContain('--viewport');
   });
 
   it('names the command that answers one another group has', () => {

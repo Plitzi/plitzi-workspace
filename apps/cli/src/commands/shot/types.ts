@@ -19,6 +19,11 @@ export interface ShotOptions {
   /** The numbers and the scheme are validated where the flags are declared (options.ts). */
   width?: number;
   height?: number;
+  /**
+   * The picture this many times as large, the layout as at its width — a small drawing read cell by cell: encore-4's
+   * designer printed its pixel mark as text with a script of its own, page shot having no zoom.
+   */
+  scale?: number;
   /** The space's theme. Left out, the space's own default — and the file is named by the one painted. */
   scheme?: Scheme;
   out?: string;
@@ -130,7 +135,8 @@ export interface ShotReport {
   compare?: CompareReport;
   /** `--clip a,b` beside the project's other server: each part's comparison, or why it could not be pictured. */
   parts?: PartCompared[];
-  frames?: { count: number; every: number; moving: RegionChange[]; still: string[] };
+  /** `slight`: a region of a whole page that changed by `MOVING_PERCENT` or less — a caret, or a small part moving. */
+  frames?: { count: number; every: number; moving: RegionChange[]; slight: RegionChange[]; still: string[] };
   /** How many arrivals that wait for the scroll (`on: 'view'` or `'scroll'`) the whole-page picture shows as they end. */
   settled?: number;
   /** Pictures of this page not drawn when it was taken. */
@@ -147,6 +153,11 @@ export interface ShotReport {
   /** The pictures after the first, each with what it shows — or, with `sheet`, the one sheet that holds them all. */
   pictures?: { label: string; out: string }[];
   sheet?: string;
+  /**
+   * A whole page taller than `TILED_SCREENS` screens, in parts a screen and a half tall each: read whole, a phone's
+   * page (390 × 8052) was shrunk to 97 px wide and nothing of it could be read (encore-4's design-2).
+   */
+  tiles?: string[];
 }
 
 /** One picture of a page as it plays: what it shows — `before`, `<target> +250 ms` — and the picture. */
@@ -158,6 +169,8 @@ export interface Moment {
 export interface View {
   width: number;
   height: number;
+  /** Device pixels a CSS pixel: `--scale`. */
+  scale?: number;
   scheme?: Scheme;
   reducedMotion: boolean;
   waitFor?: string;

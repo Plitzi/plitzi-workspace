@@ -46,4 +46,15 @@ describe('a task shown', () => {
     const whole = await showTask(lead(), 'es-launch', 't-home', { full: true });
     expect(whole.files.every(each => each.withheld === undefined && each.more === undefined)).toBe(true);
   });
+
+  // encore-4: design-2's `task show` of another task offered `task message`, which an agent's token is refused.
+  it('offers an agent of the team its own next steps, the lead the lead’s', async () => {
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+    await take('agent-1', 't-home');
+
+    expect((await showTask(lead(), 'es-launch', 't-home')).next[0]).toContain('plitzi task message t-home');
+    const asked = await showTask(bench.agent('agent-2'), 'es-launch', 't-home');
+    expect(asked.next.join('\n')).toContain('plitzi task tell --about t-home');
+    expect(asked.next.join('\n')).not.toContain('task message');
+  });
 });

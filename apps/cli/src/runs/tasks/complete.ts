@@ -18,7 +18,7 @@ import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readApproved, readBase, recordBrake } from '../run';
 import { logSpent } from '../spent';
 import { keepFiles, putBlob, withLock } from '../store';
-import { tellLeftInTmp } from '../strays';
+import { backupFiles, backupText, tellLeftInTmp } from '../strays';
 import {
   appendLog,
   lockedFiles,
@@ -450,6 +450,16 @@ export const completeTask = async (
         next: 'make it hold again — or, when your change means it (a page moved, its words rewritten), complete --known-failure "why" --fixed-by lead: the lead amends that line'
       }
     );
+  }
+
+  // A backup an editor left is no work of the task's: never handed to review as an added file (encore-4's `-E`).
+  const backups = backupFiles(changed);
+  if (backups.length > 0) {
+    throw new RunRefusal('checks-failed', `Task "${taskId}" holds backups an editor left: ${backups.join(', ')}`, {
+      task: taskId,
+      steps: backups.map(file => ({ name: `backup — ${file}`, ok: false, said: [backupText(file)] })),
+      next: backups.map(file => `plitzi task discard ${file}`).join('; ')
+    });
   }
 
   // A file it took past what is read whole is split before review: the lead never receives a 500-line file to approve.

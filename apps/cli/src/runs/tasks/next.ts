@@ -430,16 +430,19 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     // Finished, it says so: what is ready for other roles is no reason to wait.
     // Every answer that ends an agent's part says the skills' words (velada-fidelity's agents waited for them).
     why:
-      ofBase && nothingLeft && !ownInReview
-        ? `${why} — you are of the team's base: wait for what comes (--follow) — a stage the lead stacks, a task sent back — until the run finishes`
-        : finished && roles !== undefined && open.length > 0
-          ? `${loaded.tasks.some(forRole) ? `no task is left for a ${roles.join(' or ')}: every one is done` : `no task in this run is a ${roles.join(' or ')}'s`} — what is left is for others (${others.map(task => task.id).join(', ') || 'in their hands'}). You can stop`
-          : finished && roles !== undefined
-            ? `${why} — the lead's to finish. You can stop`
-            : finished && !isPrincipal(ctx.agent)
-              ? // Asked with no role (velada-shell's dev-1 after its first task): the same words, never the lead's finish to run.
-                "every task is done — the run's finish is the lead's. You can stop"
-              : why,
+      // Every task approved: what is left is the finish — encore-4's design-1 waited 4.5 h told only to wait.
+      ofBase && open.length === 0 && !ownInReview
+        ? "every task of the run is approved: it waits for its finish — the lead's summary, then a person's apply — and nothing comes to you unless the lead stacks a stage — you are of the team's base: wait for it (--follow)"
+        : ofBase && nothingLeft && !ownInReview
+          ? `${why} — you are of the team's base: wait for what comes (--follow) — a stage the lead stacks, a task sent back — until the run finishes`
+          : finished && roles !== undefined && open.length > 0
+            ? `${loaded.tasks.some(forRole) ? `no task is left for a ${roles.join(' or ')}: every one is done` : `no task in this run is a ${roles.join(' or ')}'s`} — what is left is for others (${others.map(task => task.id).join(', ') || 'in their hands'}). You can stop`
+            : finished && roles !== undefined
+              ? `${why} — the lead's to finish. You can stop`
+              : finished && !isPrincipal(ctx.agent)
+                ? // Asked with no role (velada-shell's dev-1 after its first task): the same words, never the lead's finish to run.
+                  "every task is done — the run's finish is the lead's. You can stop"
+                : why,
     ready: [],
     messages,
     ...(finished ? { finished: true } : {}),

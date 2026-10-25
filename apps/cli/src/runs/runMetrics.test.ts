@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { commandName, runMetrics } from './runMetrics';
+import { commandName, harnessOf, runMetrics } from './runMetrics';
 
 import type { UsageLine } from './usage';
 
@@ -36,6 +36,8 @@ const log: Record<string, unknown>[] = [
   { at: T(36), by: 'design-2', action: 'design-review', task: 't-bars', verdict: 'approve' },
   { at: T(37), by: 'lead', action: 'review', task: 't-bars', verdict: 'approve' },
   { at: T(37), by: 'lead', action: 'all-approved' },
+  // Past the last approval: what it waits for now is the person's finish, not work.
+  { at: T(40), by: 'test-1', action: 'waiting', why: 'every task is done' },
   { at: T(20), by: 'dev-2', action: 'refused', code: 'lead-only', command: 'plitzi task show t-bars' },
   { at: T(25), by: 'design-2', action: 'refused', code: 'identity', command: 'plitzi task look t-bars' }
 ].sort((a, b) => a.at.localeCompare(b.at));
@@ -57,7 +59,7 @@ describe('a run measured from its records', () => {
     log,
     usage,
     answers: [{ replyTo: 'm1', at: T(15.5) }],
-    tokens: { 'dev-1': 208_061 },
+    harness: { 'dev-1': { processed: 2_000_000, contextMax: 208_061, reread: 900_000 } },
     taskIds: ['t-bars'],
     openedAt: T(0),
     now: T(60)
@@ -87,10 +89,12 @@ describe('a run measured from its records', () => {
       calls: 1,
       readTokens: 3000
     });
+    expect(metrics.agents.find(agent => agent.agent === 'test-1')?.waited).toBe(0);
     const dev = metrics.agents.find(agent => agent.agent === 'dev-1');
-    expect(dev).toMatchObject({ tokens: 208_061, completes: 2 });
-    // lx-product: the harness's count is the context at the end; it is read again on every turn, growing from nothing.
-    expect(dev?.reread).toBe(Math.round(((dev?.calls ?? 0) * 208_061) / 2));
+    expect(dev).toMatchObject({
+      harness: { processed: 2_000_000, contextMax: 208_061, reread: 900_000 },
+      completes: 2
+    });
   });
 
   it('counts failed checks by step, refusals by code, a question’s wait, and calls made again and again', () => {
@@ -106,8 +110,11 @@ describe('a run measured from its records', () => {
     });
     expect(metrics.questions).toEqual({ asked: 1, answered: 1, waits: [0.5] });
     expect(metrics.cost.repeated).toEqual([{ by: 'dev-1', command: 'plitzi task check', times: 3, within: 0.4 }]);
-    expect(metrics.cost).toMatchObject({ calls: 4, readTokens: 6000, tokens: 208_061 });
-    expect(metrics.cost.reread).toBe(metrics.agents.reduce((sum, agent) => sum + (agent.reread ?? 0), 0));
+    expect(metrics.cost).toMatchObject({
+      calls: 4,
+      readTokens: 6000,
+      harness: { processed: 2_000_000, reread: 900_000 }
+    });
     expect(metrics.cost.byCommand.find(each => each.command === 'task check')).toEqual({
       command: 'task check',
       calls: 3,
@@ -126,5 +133,54 @@ describe('a run measured from its records', () => {
   it('names a command by what it is, not what it is about', () => {
     expect(commandName('plitzi task look t-bars --before')).toBe('task look');
     expect(commandName('plitzi page shot / --width 390')).toBe('page shot');
+  });
+});
+
+describe('a call made again', () => {
+  const measured = (lines: UsageLine[]) =>
+    runMetrics({ log: [], usage: lines, answers: [], harness: {}, taskIds: [], openedAt: T(0), now: T(60) }).cost
+      .repeated;
+  const line = (minute: number, command: string, session?: string): UsageLine => ({
+    at: T(minute),
+    by: 'test-1',
+    command,
+    chars: 400,
+    ms: 500,
+    code: 0,
+    ...(session === undefined ? {} : { session })
+  });
+
+  it('is no loop when the call is how work is waited for or taken (encore-4: a fresh session each)', () => {
+    expect(
+      measured([
+        ...[1, 2, 3, 4].map(minute => line(minute, 'plitzi task next --role tester --follow --take')),
+        ...[5, 6, 7].map(minute => line(minute, 'plitzi task next --role lead --take')),
+        ...[8, 9, 10].map(minute => line(minute, 'plitzi run watch --until lead'))
+      ])
+    ).toEqual([]);
+  });
+
+  it('counts in one session, not across fresh ones', () => {
+    expect(measured([1, 2, 3].map(minute => line(minute, 'plitzi task context', `s${String(minute)}`)))).toEqual([]);
+    expect(measured([1, 2, 3].map(minute => line(minute, 'plitzi task context', 's1')))).toEqual([
+      { by: 'test-1', command: 'plitzi task context', times: 3, within: 2 }
+    ]);
+  });
+});
+
+describe('each agent’s harness over the run', () => {
+  it('sums its rounds, keeps its largest context, and counts what its heaviest results were read again for', () => {
+    const round = (agent: string, processed: number, contextAtEnd: number, reread: number[]) => ({
+      agent,
+      harness: { processed, contextAtEnd, heaviest: reread.map(each => ({ reread: each })) }
+    });
+
+    expect(
+      harnessOf([
+        round('design-1', 5_000_000, 168_000, [1_000, 2_000]),
+        round('design-1', 7_000_000, 193_000, [500]),
+        { agent: 'dev-1' }
+      ])
+    ).toEqual({ 'design-1': { processed: 12_000_000, contextMax: 193_000, reread: 3_500 } });
   });
 });

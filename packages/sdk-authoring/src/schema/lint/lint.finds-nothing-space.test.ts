@@ -459,6 +459,28 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('template-unreadable');
     });
 
+    // encore-4: Explore's links wrote `?sort=true` — `(sort or "listeners")` is a test, never the fallback value.
+    it('template-or-value', () => {
+      const bound = (template: string) =>
+        withChange(({ schema }) => {
+          schema.flat.hello.definition.bindings = {
+            attributes: [
+              {
+                id: 'b1',
+                to: 'content',
+                source: 'state.sort',
+                transformers: [{ action: 'twigTemplate', params: { template } }]
+              }
+            ]
+          };
+        });
+      const documents = bound("{{ source or 'listeners' }}");
+      const fine = bound("{{ source ?? 'listeners' }}");
+
+      expect(warningsOf(documents)).toContain('template-or-value');
+      expect(warningsOf(fine)).not.toContain('template-or-value');
+    });
+
     it('template-short-source', () => {
       const documents = withChange(({ schema }) => {
         schema.flat.row.attributes.content = '{{ feed.data.title }}';

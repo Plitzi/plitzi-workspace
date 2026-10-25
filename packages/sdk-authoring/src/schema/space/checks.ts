@@ -283,7 +283,7 @@ export const assertChannels = (author: SpaceAuthor): void => {
  */
 const stateKeyList = (
   author: SpaceAuthor,
-  setting: 'transientState' | 'paintedState',
+  setting: 'transientState' | 'paintedState' | 'keptState',
   example: string[],
   does: string
 ): string[] => {
@@ -335,6 +335,29 @@ export const assertTransientState = (author: SpaceAuthor): void => {
 };
 
 /**
+ * The only keys a space keeps. Refused beside `transientState`: one names what is kept, the other what is not, and a
+ * key in neither would be kept by one and not by the other. Warned without `keepState`, as `transientState` is.
+ */
+export const assertKeptState = (author: SpaceAuthor): void => {
+  const kept = stateKeyList(author, 'keptState', ['dismissedNotice'], 'to keep, and only those');
+  if (kept.length > 0 && (author.spec.settings?.transientState ?? []).length > 0) {
+    throw new AuthoringError(
+      'state-kept-and-transient',
+      '`settings.keptState` names the only keys kept, and `settings.transientState` the keys left out — say one of the two: `keptState` when few are kept, `transientState` when few are not.'
+    );
+  }
+
+  if (kept.length > 0 && author.spec.settings?.keepState !== true) {
+    author.styleWarnings.push({
+      code: 'kept-state-without-keep-state',
+      message:
+        '`settings.keptState` names the keys to keep, but `settings.keepState` is not on — nothing is kept, so it does nothing. Turn `keepState` on, or remove `keptState`.',
+      details: { keys: kept }
+    });
+  }
+};
+
+/**
  * The kept keys the first paint depends on, which the server renders with (see `paintedState.ts` in sdk-shared).
  *
  * Refused when a key is also transient — never kept, and kept for the server, at once — since whichever the runtime
@@ -349,6 +372,16 @@ export const assertPaintedState = (author: SpaceAuthor): void => {
     throw new AuthoringError(
       'state-painted-and-transient',
       `\`settings.paintedState\` and \`settings.transientState\` both name ${both.map(key => `"${key}"`).join(', ')}. A painted key is kept, so the server can draw with it; a transient one never is. Remove ${both.length === 1 ? 'it' : 'them'} from one of the two.`
+    );
+  }
+
+  // Kept for the server to draw with, a painted key is one the space keeps: with `keptState`, one it names.
+  const kept = author.spec.settings?.keptState ?? [];
+  const unkept = kept.length > 0 ? painted.filter(key => !kept.includes(key)) : [];
+  if (unkept.length > 0) {
+    throw new AuthoringError(
+      'state-painted-not-kept',
+      `\`settings.paintedState\` names ${unkept.map(key => `"${key}"`).join(', ')}, which \`settings.keptState\` does not keep — a painted key is kept, so the server can draw with it. Add ${unkept.length === 1 ? 'it' : 'them'} to \`keptState\`, or leave ${unkept.length === 1 ? 'it' : 'them'} out of \`paintedState\`.`
     );
   }
 

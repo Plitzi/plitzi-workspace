@@ -1,6 +1,7 @@
 import { authoredHandles } from './expectations';
 import { readOwnership } from './ownership';
 import { shellCommands } from './shell';
+import { localFetch } from '../http';
 
 import type { Acceptance } from './model';
 import type { TaskView } from './taskStore';
@@ -90,8 +91,8 @@ const paramsOf = (route: string, address: string): Record<string, string> => {
 /** How many links that fit a route are asked before its example is said unreached. */
 const EXAMPLES_TRIED = 5;
 
-const answers = (address: URL): Promise<boolean> =>
-  fetch(address)
+const answers = (address: URL, headers: Record<string, string>): Promise<boolean> =>
+  localFetch(address, { headers })
     .then(answer => answer.ok)
     .catch(() => false);
 
@@ -103,8 +104,14 @@ export const examplePaths = async (
    * link is followed (lx-copy: t-product's look pictured the home and the blog, its product page unreached — no link
    * to it on a copy without the cards).
    */
-  named: readonly string[] = []
+  named: readonly string[] = [],
+  /**
+   * The session a signed-in look reads the site with (`cookie`): a link only a signed-in visitor has — `/u/:username`,
+   * the account's own — is followed as one. encore-4's look said "No link of the site reaches /u/:username".
+   */
+  cookie?: string
 ): Promise<{ paths: string[]; unreached: string[] }> => {
+  const headers: Record<string, string> = cookie === undefined ? {} : { cookie };
   const linksOf = new Map<string, Promise<string[]>>();
   const links = (page: string): Promise<string[]> => {
     const known = linksOf.get(page);
@@ -112,7 +119,7 @@ export const examplePaths = async (
       return known;
     }
 
-    const read = fetch(new URL(page, origin))
+    const read = localFetch(new URL(page, origin), { headers })
       .then(answer => (answer.ok ? answer.text() : ''))
       .then(html =>
         [...html.matchAll(/href="([^"]+)"/g)].flatMap(match => {
@@ -142,7 +149,7 @@ export const examplePaths = async (
     const candidates = [...new Set([...(await links(list)), ...(await links('/'))].filter(link => fits.test(link)))];
     let answering: string | undefined;
     for (const link of candidates.slice(0, EXAMPLES_TRIED)) {
-      if (await answers(new URL(link, origin))) {
+      if (await answers(new URL(link, origin), headers)) {
         answering = link;
         break;
       }
@@ -168,7 +175,7 @@ export const examplePaths = async (
 
       const address = route.replace(/:([A-Za-z_]\w*)/g, (_match, name: string) => params[name]);
 
-      return (await answers(new URL(address, origin))) ? address : undefined;
+      return (await answers(new URL(address, origin), headers)) ? address : undefined;
     })
   );
 
@@ -224,19 +231,49 @@ export const acceptanceAccount = (acceptance: readonly Acceptance[]): string | u
     .at(0);
 
 /**
- * The pages a look opens, in order: those asked, those its files are drawn at, those its acceptance checks — the home
- * page last, as a review's offer reads them (`reviewPages`): encore-2's look at a plugin's file, drawn at no page,
- * pictured the home page, where none of its reactions is.
+ * The pages a look opens: those asked — else those its files are drawn at and those its acceptance checks, together —
+ * else the home page. encore-2's look at a plugin's file, drawn at no page, pictured the home page, where none of its
+ * reactions is; encore-4's left out the 404 its acceptance checked, its files drawn at other pages.
  */
 export const pagesToLook = (
   asked: readonly string[],
   drawn: readonly string[],
   acceptance: readonly string[]
-): string[] => [...([asked, drawn, acceptance, ['/']].find(pages => pages.length > 0) ?? ['/'])];
+): string[] => {
+  const found = asked.length > 0 ? [...asked] : [...new Set([...drawn, ...acceptance])];
 
-/** The pages a review looks at: those its files are drawn at — else those its acceptance checks. */
+  return found.length > 0 ? found : ['/'];
+};
+
+/**
+ * The pages its acceptance checks with a status of their own (`page check /no-such-page --status 404`): looked at
+ * with it, apart — a look sends one status for all its pages.
+ */
+export const acceptanceStatuses = (acceptance: readonly Acceptance[]): { page: string; status: number }[] => {
+  const found = new Map<string, number>();
+  for (const words of acceptance.flatMap(line => (typeof line === 'string' ? [] : shellCommands(line.check)))) {
+    const at = words.findIndex((word, index) => word === 'page' && PAGE_COMMANDS.has(words[index + 1] ?? ''));
+    const status = Number(words.at(words.indexOf('--status') + 1));
+    if (at !== -1 && words.includes('--status') && Number.isInteger(status) && status !== 200) {
+      const rest = words.slice(at + 2);
+      const firstOption = rest.findIndex(word => word.startsWith('--'));
+      (firstOption === -1 ? rest : rest.slice(0, firstOption))
+        .filter(word => word.startsWith('/'))
+        .forEach(page => found.set(page, status));
+    }
+  }
+
+  return [...found].map(([page, status]) => ({ page, status }));
+};
+
+/**
+ * The pages a review looks at: those its files are drawn at and those its acceptance checks — a page with a status of
+ * its own left to its own look (`acceptanceStatuses`). encore-4's look of t-retro-pass left out its 404 page: its
+ * files were drawn at other pages, and only those were offered.
+ */
 export const reviewPages = async (review: Pick<TaskView, 'paths' | 'state' | 'task'>): Promise<string[]> => {
   const owned = await pagesOf(review.paths.work, review.state.changed ?? []);
+  const apart = new Set(acceptanceStatuses(review.task.acceptance).map(each => each.page));
 
-  return owned.length > 0 ? owned : acceptancePages(review.task.acceptance);
+  return [...new Set([...owned, ...acceptancePages(review.task.acceptance)])].filter(page => !apart.has(page));
 };

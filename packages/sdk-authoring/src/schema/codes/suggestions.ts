@@ -5,7 +5,7 @@ export const SUGGESTION_CODES = {
   'repeated-on-pages': {
     kind: 'suggested',
     means: 'the same block — a header, a footer, a side panel — written into several pages',
-    fix: 'a layout holding it once (`layouts`, and `layout: { id, slot }` on each page) — a component when only some pages of a layout carry it; a link marks its own page with the `current` state'
+    fix: 'a layout holding it once (`layouts`, and `layout: { id, slot }` on each page) — a component when only some pages of a layout carry it, written in its area’s folder and listed in the space’s `components`; a link marks its own page with the `current` state'
   },
   'repeated-shape': {
     kind: 'suggested',

@@ -1,5 +1,6 @@
 import { commandName, tokensText } from '../runMetrics';
 import { clock, evidenceOf } from './types';
+import { kindOf } from '../harness';
 
 import type { Finding } from './types';
 import type { RepeatedCall } from '../runMetrics';
@@ -86,43 +87,54 @@ export const costFindings = (
     }
   }
 
+  // One finding each, the tasks and rounds its evidence: encore-4 said eleven heavy contexts as eleven findings.
   const typical = median([...byTask.values()].map(each => each.processed));
-  if (byTask.size >= MEDIAN_OF && typical > 0) {
-    for (const [task, spent] of byTask) {
-      if (spent.processed > typical * COSTLY) {
-        findings.push({
-          kind: 'costly-task',
-          owner: 'agent',
-          title: `${task} read ${tokensText(spent.processed)} tokens, ${String(Math.round((spent.processed / typical) * 10) / 10)}× the run’s median task`,
-          evidence: [
-            `${String(spent.turns)} turns by ${[...spent.agents].join(', ')}`,
-            `the median task read ${tokensText(typical)}`
-          ],
-          times: 1,
-          fix: 'its heaviest results (in its task reports) say where: a long answer read early, a file read whole, a check run again',
-          subject: `costly-task:${task}`
-        });
-      }
-    }
+  const costly =
+    byTask.size >= MEDIAN_OF && typical > 0
+      ? [...byTask].filter(([, spent]) => spent.processed > typical * COSTLY)
+      : [];
+  if (costly.length > 0) {
+    const sorted = costly.sort((a, b) => b[1].processed - a[1].processed);
+    findings.push({
+      kind: 'costly-task',
+      owner: 'agent',
+      title: `${sorted.length === 1 ? `${sorted[0][0]} read` : `${String(sorted.length)} tasks read`} over ${String(COSTLY)}× the run’s median task (${tokensText(typical)})`,
+      evidence: evidenceOf(
+        sorted.map(
+          ([task, spent]) =>
+            `${task}: ${tokensText(spent.processed)}, ${String(Math.round((spent.processed / typical) * 10) / 10)}× — ${String(spent.turns)} turns by ${[...spent.agents].join(', ')}`
+        )
+      ),
+      times: sorted.length,
+      fix: 'its heaviest results (in its task reports) say where: a long answer read early, a file read whole, a check run again',
+      subject: 'costly-task'
+    });
   }
 
-  for (const report of taskReports) {
-    if (report.harness && report.harness.contextAtEnd >= HEAVY_CONTEXT) {
-      findings.push({
-        kind: 'context-heavy',
-        owner: 'lead',
-        title: `${report.agent} ended ${report.task} (round ${String(report.round)}) with ${tokensText(report.harness.contextAtEnd)} tokens of context`,
-        evidence: [`${String(report.harness.turns)} turns; read ${tokensText(report.harness.processed)} in all`],
-        times: 1,
-        fix: 'a fresh session sooner — "session": "task", or a lower options.freshContextAt, in .plitzi/team.json — or a shorter brief: every turn reads the whole context again',
-        subject: `context:${report.task}:${String(report.round)}`
-      });
-    }
+  const heavy = taskReports
+    .filter(report => report.harness && report.harness.contextAtEnd >= HEAVY_CONTEXT)
+    .sort((a, b) => (b.harness?.contextAtEnd ?? 0) - (a.harness?.contextAtEnd ?? 0));
+  if (heavy.length > 0) {
+    findings.push({
+      kind: 'context-heavy',
+      owner: 'lead',
+      title: `${String(heavy.length)} round${heavy.length === 1 ? '' : 's'} ended with over ${tokensText(HEAVY_CONTEXT)} tokens of context`,
+      evidence: evidenceOf(
+        heavy.map(
+          report =>
+            `${report.agent} at ${report.task} (round ${String(report.round)}): ${tokensText(report.harness?.contextAtEnd ?? 0)}, ${String(report.harness?.turns ?? 0)} turns, ${tokensText(report.harness?.processed ?? 0)} read`
+        )
+      ),
+      times: heavy.length,
+      // A session already fresh each task (encore-4's team) grows within the task: the card is what is too large.
+      fix: 'a smaller task — split the card so one fits a context — and results read in part; a team whose "session" is "context" or "keep" starts fresh sooner with a lower options.freshContextAt in .plitzi/team.json',
+      subject: 'context-heavy'
+    });
   }
 
   const results = new Map<string, { what: string; reread: number; chars: number; results: number }>();
   for (const result of taskReports.flatMap(report => report.harness?.heaviest ?? [])) {
-    const key = `${result.tool} ${result.what}`;
+    const key = kindOf(result.tool, result.what);
     const kept = results.get(key) ?? { what: key, reread: 0, chars: 0, results: 0 };
     kept.reread += result.reread;
     kept.chars += result.chars;

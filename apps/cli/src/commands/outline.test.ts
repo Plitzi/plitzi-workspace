@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { markShown, outlineIn } from './outline';
+import { foundIn, markShown, outlineIn } from './outline';
 
 /** jsdom lays nothing out: every element given a box, the hidden ones none. */
 const laidOut = () =>
@@ -91,5 +91,22 @@ describe('page outline, in the page', () => {
     expect(outlineIn({ within: '[data-plitzi-el="requests"]', depth: 2, limit: 50, words: 20 })).toMatchObject({
       elements: [expect.objectContaining({ text: "Sam's request" })]
     });
+  });
+});
+
+// encore-4: the sign-in wordmark's id came from a prefix built in code — found by grepping the source.
+describe('page outline --find', () => {
+  it('lists the elements whose name, selector or words hold the word, each at the top', () => {
+    const box = { x: 0, y: 0, width: 10, height: 10 };
+    expect(
+      foundIn(
+        [
+          { selector: 'header', depth: 0, box },
+          { selector: '[data-plitzi-el="auth-brand-wordmark"]', depth: 3, box, element: 'auth-brand-wordmark' },
+          { selector: 'p', depth: 4, box, text: 'Sign in to Encore' }
+        ],
+        'WORDMARK'
+      )
+    ).toEqual([{ selector: '[data-plitzi-el="auth-brand-wordmark"]', depth: 0, box, element: 'auth-brand-wordmark' }]);
   });
 });

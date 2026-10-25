@@ -50,7 +50,14 @@ export const errorFindings = (usage: readonly UsageLine[]): Finding[] => {
   const failed = usage.filter(line => line.code !== 0 && line.error !== undefined);
   const asWritten = failed.filter(line => AS_WRITTEN.test(line.error ?? ''));
   const machine = failed.filter(line => MACHINE.test(line.error ?? '') && !asWritten.includes(line));
-  const rest = failed.filter(line => !asWritten.includes(line) && !machine.includes(line) && !isVerdict(line.command));
+  // An `explain` with no answer is said by its own finding (`explain.ts`), with the question: encore-4 said each twice.
+  const rest = failed.filter(
+    line =>
+      !asWritten.includes(line) &&
+      !machine.includes(line) &&
+      !isVerdict(line.command) &&
+      !commandName(line.command).startsWith('explain')
+  );
 
   return [
     ...grouped(asWritten).map(lines => ({

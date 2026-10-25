@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { experienceText } from './experience';
+import { kindOf } from './harness';
 import { buildReport, readSummary } from './report';
 import { findingsText, ranOn } from './reportHead';
 import { commandName, tokensText } from './runMetrics';
@@ -155,7 +156,7 @@ export const feedbackOf = async (ctx: RunContext, loaded: LoadedRun): Promise<Ru
     }
 
     for (const result of round.harness?.heaviest ?? []) {
-      const what = `${result.tool} ${result.what}`;
+      const what = kindOf(result.tool, result.what);
       reread.set(what, (reread.get(what) ?? 0) + result.reread);
     }
   }

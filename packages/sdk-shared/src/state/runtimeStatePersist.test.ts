@@ -276,6 +276,45 @@ describe('runtimeStatePersist', () => {
   });
 
   /**
+   * The keys a space names as the only ones kept — encore-4's dismissed notice, the page's every other key fresh: with
+   * `transientState` alone it had to list every key it did not keep.
+   */
+  describe('kept keys alone', () => {
+    const keeping = (hydrating = false) =>
+      build({
+        schema: { settings: { keepState: true, keptState: ['dismissed'] } } as unknown as Schema,
+        render: hydrating ? { isHydrating: true, hydrated: false } : { isHydrating: false }
+      });
+
+    const stored = () => {
+      const raw = JSON.parse(localStorage.getItem(KEY) ?? '{}') as { payload?: string };
+
+      return (JSON.parse(raw.payload ?? '{}') as { state?: Record<string, unknown> }).state?.['runtime.state'];
+    };
+
+    it('writes them and nothing else, and brings back nothing else', () => {
+      localStorage.setItem(KEY, entry('', { dismissed: 'show-1', panelOpen: true }));
+      const store = keeping();
+      store.hydrate?.();
+
+      expect(store.getState().runtime?.state).toEqual({ dismissed: 'show-1' });
+      store.setState('runtime.state', { dismissed: 'show-2', panelOpen: true });
+      expect(stored()).toEqual({ dismissed: 'show-2' });
+    });
+
+    it('keeps a key it does not keep that was set before the restore', () => {
+      localStorage.setItem(KEY, entry('', { dismissed: 'show-1' }));
+      const store = keeping(true);
+      store.setState('runtime.state', { panelOpen: true });
+      store.hydrate?.();
+
+      store.setState('render.hydrated', true);
+
+      expect(store.getState().runtime?.state).toEqual({ dismissed: 'show-1', panelOpen: true });
+    });
+  });
+
+  /**
    * The keys a space declares its first paint depends on: kept in a cookie as well, which the server renders with. The
    * page starts from those values (the SDK's `state`), so what matters here is that the cookie follows the state — and
    * that nothing somebody else wrote is ever left painted.

@@ -80,13 +80,27 @@ describe('malformed / unsupported shorthands', () => {
     });
   });
   describe('grid-area edge cases', () => {
-    it('3 values fills col-end from row-end', () => {
+    it('3 values leave the column end auto when the column start is a number', () => {
       const result = expandShorthand({ 'grid-area': '1 / 2 / 3' });
       expect(result).toEqual({
         'grid-row-start': '1',
         'grid-column-start': '2',
         'grid-row-end': '3',
-        'grid-column-end': '3'
+        'grid-column-end': 'auto'
+      });
+    });
+
+    it('an omitted end mirrors a start that names an area', () => {
+      expect(expandShorthand({ 'grid-area': 'main / side' })).toEqual({
+        'grid-row-start': 'main',
+        'grid-column-start': 'side',
+        'grid-row-end': 'main',
+        'grid-column-end': 'side'
+      });
+      expect(expandShorthand({ 'grid-row': 'header' })).toEqual({ 'grid-row-start': 'header', 'grid-row-end': 'header' });
+      expect(expandShorthand({ 'grid-column': 'span 2' })).toEqual({
+        'grid-column-start': 'span 2',
+        'grid-column-end': 'auto'
       });
     });
 

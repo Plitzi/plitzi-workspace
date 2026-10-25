@@ -1,0 +1,207 @@
+import { INHERITED, MEASURED, PSEUDO_MEASURED, PSEUDOS } from './measureValues';
+import { targetOn } from './shot/capture';
+
+import type { Measured } from './measureValues';
+import type { BrowserPage } from '../browser';
+
+/** One element of an open page, read as `page measure` reads it: found by any name, its first shown, measured. */
+
+/**
+ * What to write instead of a name not on the page: the same name the other way — an element's id written as a class
+ * (`.home-faq-answer-text`, velada-backlog's design-1), a class as an id — when that way finds it; how to name one else.
+ */
+const otherSpelling = async (page: BrowserPage, target: string): Promise<string> => {
+  const name = /^[.#]?([A-Za-z_][\w-]*)$/.exec(target)?.[1];
+  const ways = name === undefined ? [] : [name, `.${name}`].filter(way => way !== target);
+  for (const way of ways) {
+    const other = await targetOn(page, way);
+    if (!('problem' in other) && other.found) {
+      return way === name
+        ? `${name} is an element's id here: write it without the dot`
+        : `${name} is a class here, no element's id: write it .${name}`;
+    }
+  }
+
+  // Not drawn here at all: encore-4's dev-1 measured a host's desk as a guest, on /r/ with no room — told only "No element".
+  return `not drawn here: a page for signed-in visitors (--as <username>), a part a click opens or a visitor’s steps make (--click, --steps), a route with a parameter written as one of its addresses (/r/night-drive, not /r/:slug) — or name it by its element's id (pricing-card), #its-id, or any selector (.plan-card, [data-plitzi-el="…"] > span)`;
+};
+
+/** How long a picture measured is waited for before it is read as it is: a picture that never loads holds nothing. */
+const IMAGE_WAIT_MS = 5000;
+
+/** How many matches of a selector are looked through for the first one shown. */
+const SHOWN_LOOK = 20;
+
+/**
+ * The first match of `selector` a visitor sees, as a selector: itself when it is the first, `… >> nth=N` when an
+ * earlier one is hidden, and itself again when none is shown (measured as it is, hidden or not).
+ */
+const firstShown = async (page: BrowserPage, selector: string): Promise<string> => {
+  for (let index = 0; index < SHOWN_LOOK; index += 1) {
+    const nth = `${selector} >> nth=${String(index)}`;
+    const match = page.locator(nth).first();
+    if ((await match.count()) === 0) {
+      break;
+    }
+
+    if (await match.isVisible()) {
+      return index === 0 ? selector : nth;
+    }
+  }
+
+  return selector;
+};
+
+/** One element of an open page, measured — or why it could not be. */
+export const measureOn = async (page: BrowserPage, target: string): Promise<Measured | { problem: string }> => {
+  const found = await targetOn(page, target);
+  if ('problem' in found) {
+    return found;
+  }
+
+  if (!found.found) {
+    return { problem: `No element ${target} on ${page.url()} — ${await otherSpelling(page, target)}` };
+  }
+
+  // Of several matches, the first a visitor sees: the original's first `.header__heading-logo` is its hidden menu
+  // drawer's, and whichever the page drew first was measured — 0 px one call, 140 px the next (lx-copy's finish).
+  const shown = await firstShown(page, found.selector);
+  if (shown !== found.selector) {
+    found.selector = shown;
+  }
+
+  // A picture is measured drawn: read before it loads, an <img> sized by its own picture is 0 px wide, or "auto" tall
+  // (lx-copy: the original's logo read 140 px one call and 0 px the next, and failed the finish). A lazy one is asked
+  // for now; one that never loads is measured as it is after IMAGE_WAIT_MS.
+  await page
+    .locator(found.selector)
+    .first()
+    .evaluate(async (node, waitMs: number) => {
+      if (!(node instanceof HTMLImageElement) || (node.complete && node.naturalWidth > 0)) {
+        return;
+      }
+
+      node.loading = 'eager';
+      await Promise.race([node.decode().catch(() => undefined), new Promise(resolve => setTimeout(resolve, waitMs))]);
+    }, IMAGE_WAIT_MS)
+    .catch(() => undefined);
+
+  // A Playwright selector (`… >> nth=2`) is no CSS: its matches are not counted, as one.
+  const matches = await page
+    .evaluate((selector: string) => document.querySelectorAll(selector).length, found.selector)
+    .catch(() => 1);
+
+  return {
+    selector: found.selector,
+    ...(matches > 1 ? { matches } : {}),
+    ...(await page
+      .locator(found.selector)
+      .first()
+      .evaluate(
+        (
+          node,
+          {
+            properties,
+            pseudos,
+            pseudoProperties,
+            inheritable
+          }: {
+            properties: readonly string[];
+            pseudos: readonly string[];
+            pseudoProperties: readonly string[];
+            inheritable: readonly string[];
+          }
+        ) => {
+          const computed = getComputedStyle(node);
+          const parent = node.parentElement ? getComputedStyle(node.parentElement) : undefined;
+          const styles: Record<string, string> = Object.fromEntries(
+            properties.map(property => [property, computed.getPropertyValue(property)])
+          );
+          const placed = node.getBoundingClientRect();
+          styles.x = `${String(Math.round(placed.left))}px`;
+          styles.y = `${String(Math.round(placed.top + window.scrollY))}px`;
+          // The transform that applies: `translate`, `rotate` and `scale` — what Tailwind 4 writes `rotate-45` as — then
+          // `transform`, as CSS composes them. Read alone, the original's diamond was "transform: none" beside ours.
+          const [moved, turned, sized] = ['translate', 'rotate', 'scale'].map(property =>
+            computed.getPropertyValue(property)
+          );
+          if ([moved, turned, sized].some(value => value !== '' && value !== 'none')) {
+            const box = node.getBoundingClientRect();
+            const length = (value: string, of: number): number =>
+              value.endsWith('%') ? (Number.parseFloat(value) / 100) * of : Number.parseFloat(value) || 0;
+            const degrees = (value: string): number =>
+              value.endsWith('rad')
+                ? (Number.parseFloat(value) * 180) / Math.PI
+                : value.endsWith('turn')
+                  ? Number.parseFloat(value) * 360
+                  : Number.parseFloat(value) || 0;
+            let matrix = new DOMMatrix();
+            if (moved && moved !== 'none') {
+              const [x = '0', y = '0', z = '0'] = moved.split(' ');
+              matrix = matrix.translate(length(x, box.width), length(y, box.height), length(z, 0));
+            }
+
+            if (turned && turned !== 'none') {
+              const words = turned.split(' ');
+              const angle = degrees(words[words.length - 1] ?? '0');
+              const [axis] = words;
+              matrix =
+                words.length === 1 || axis === 'z'
+                  ? matrix.rotate(0, 0, angle)
+                  : axis === 'x'
+                    ? matrix.rotate(angle, 0, 0)
+                    : axis === 'y'
+                      ? matrix.rotate(0, angle, 0)
+                      : matrix.rotateAxisAngle(
+                          Number.parseFloat(words[0] ?? '0'),
+                          Number.parseFloat(words[1] ?? '0'),
+                          Number.parseFloat(words[2] ?? '1'),
+                          angle
+                        );
+            }
+
+            if (sized && sized !== 'none') {
+              const [sx = 1, sy = sx, sz = 1] = sized
+                .split(' ')
+                .map(value => (value.endsWith('%') ? Number.parseFloat(value) / 100 : Number.parseFloat(value)));
+              matrix = matrix.scale(sx, sy, sz);
+            }
+
+            const own = styles.transform;
+            styles.transform = (own && own !== 'none' ? matrix.multiply(new DOMMatrix(own)) : matrix).toString();
+          }
+
+          for (const pseudo of pseudos) {
+            const drawn = getComputedStyle(node, `::${pseudo}`);
+            const content = drawn.getPropertyValue('content');
+            if (content !== 'none' && content !== 'normal' && content !== '') {
+              for (const property of pseudoProperties) {
+                styles[`${pseudo}:${property}`] = drawn.getPropertyValue(property);
+              }
+            }
+          }
+
+          const tag = node.tagName.toLowerCase();
+          const root = tag === 'body' || tag === 'html' ? document.querySelector('[data-plitzi-el]') : null;
+
+          return {
+            tag,
+            ...(root ? { spaceRoot: root.getAttribute('data-plitzi-el') ?? '' } : {}),
+            text: node.textContent.replace(/\s+/g, ' ').trim().slice(0, 60),
+            styles,
+            inherited: parent
+              ? inheritable.filter(
+                  property => computed.getPropertyValue(property) === parent.getPropertyValue(property)
+                )
+              : []
+          };
+        },
+        {
+          properties: [...MEASURED],
+          pseudos: [...PSEUDOS],
+          pseudoProperties: [...PSEUDO_MEASURED],
+          inheritable: [...INHERITED]
+        }
+      ))
+  };
+};

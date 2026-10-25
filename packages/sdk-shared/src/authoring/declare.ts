@@ -44,6 +44,12 @@ export interface ElementDeclarationData {
    */
   publishes?: Record<string, string>;
   /**
+   * What it writes on its node that a style or a check reads it by — `role="tab"`, `aria-selected`, a class it adds —
+   * and how a class styles it: what `plitzi explain <type>` says under "On the page". encore-4's developer read the
+   * served HTML to learn a tab says `aria-selected`, and lit the open tab with a state that never matched it.
+   */
+  marks?: Record<string, string>;
+  /**
    * The triggers this type fires on top of the ones every element does (`onClick`, `onLoad`…), by action name.
    *
    * Declared here for the reason `sourceType` is: the component registers exactly these, and the authoring surface

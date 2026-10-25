@@ -2,7 +2,7 @@ import http from 'node:http';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { acceptanceAccount, acceptancePages, examplePaths, pagesToLook } from './pagesOf';
+import { acceptanceAccount, acceptancePages, acceptanceStatuses, examplePaths, pagesToLook } from './pagesOf';
 
 import type { AddressInfo } from 'node:net';
 
@@ -87,9 +87,33 @@ describe('the pages a look opens', () => {
   // encore-2: a look at the Reactions plugin's CSS, drawn at no page, pictured the home page.
   it('are those asked, else those its files draw, else those its acceptance checks — the home page last', () => {
     expect(pagesToLook(['/menu'], ['/home'], ['/r/:slug'])).toEqual(['/menu']);
-    expect(pagesToLook([], ['/home'], ['/r/night-drive'])).toEqual(['/home']);
+    // Together: encore-4's look of t-retro-pass left out the page its acceptance checked, its files drawn elsewhere.
+    expect(pagesToLook([], ['/home'], ['/r/night-drive'])).toEqual(['/home', '/r/night-drive']);
     expect(pagesToLook([], [], ['/r/night-drive'])).toEqual(['/r/night-drive']);
     expect(pagesToLook([], [], [])).toEqual(['/']);
+  });
+});
+
+// encore-4: a look signed in as dax said "No link of the site reaches /u/:username" — the link is a signed-in visitor's.
+describe('examplePaths, signed in', () => {
+  it('follows the links a signed-in visitor has, with the session it is given', async () => {
+    const server = http.createServer((request, response) => {
+      const signedIn = request.headers.cookie === 'session=dax';
+      const links =
+        request.url === '/' ? (signedIn ? ['/u/dax'] : ['/sign-in']) : request.url === '/u/dax' ? [] : undefined;
+      response.writeHead(links ? 200 : 404, { 'content-type': 'text/html' });
+      response.end((links ?? []).map(href => `<a href="${href}">${href}</a>`).join(''));
+    });
+    servers.push(server);
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    // Listening on a host and port, address() is an AddressInfo: its type is a union with the string a pipe answers.
+    const origin = `http://127.0.0.1:${String((server.address() as AddressInfo).port)}`;
+
+    expect(await examplePaths(origin, ['/u/:username'])).toEqual({ paths: [], unreached: ['/u/:username'] });
+    expect(await examplePaths(origin, ['/u/:username'], [], 'session=dax')).toEqual({
+      paths: ['/u/dax'],
+      unreached: []
+    });
   });
 });
 
@@ -105,5 +129,17 @@ describe('the account a look reads as', () => {
     expect(acceptanceAccount([{ said: 'Home', check: 'plitzi page check / --url $PLITZI_URL' }, 'Reads well'])).toBe(
       undefined
     );
+  });
+
+  it('says the pages its acceptance checks with a status of their own', () => {
+    expect(
+      acceptanceStatuses([
+        {
+          said: 'The 404 reads as Encore',
+          check: 'npx plitzi page check /no-such-page --status 404 --expect not-found'
+        },
+        { said: 'Home', check: 'npx plitzi page check / --status 200' }
+      ])
+    ).toEqual([{ page: '/no-such-page', status: 404 }]);
   });
 });

@@ -32,7 +32,7 @@ const PROVIDER_SETTINGS = [
 ] as const;
 
 /** The settings that name `runtime.state` keys, each edited as a comma-separated field. */
-type StateKeySetting = 'transientState' | 'paintedState';
+type StateKeySetting = 'transientState' | 'keptState' | 'paintedState';
 
 /** The state keys a comma-separated field names, as the runtime compares them: trimmed, none empty. */
 const parseStateKeys = (text: string): string[] =>
@@ -49,12 +49,16 @@ const GeneralSettings = () => {
   // Each field's own text, so a comma being typed is not normalised away under the cursor.
   const [keyTexts, setKeyTexts] = useState<Record<StateKeySetting, string>>({
     transientState: (settingsProp.transientState ?? []).join(', '),
+    keptState: (settingsProp.keptState ?? []).join(', '),
     paintedState: (settingsProp.paintedState ?? []).join(', ')
   });
   const transientKeys = parseStateKeys(keyTexts.transientState);
+  const keptKeys = parseStateKeys(keyTexts.keptState);
   const paintedKeys = parseStateKeys(keyTexts.paintedState);
-  const dottedKeys = [...transientKeys, ...paintedKeys].filter(key => key.includes('.'));
+  const dottedKeys = [...transientKeys, ...keptKeys, ...paintedKeys].filter(key => key.includes('.'));
   const bothKeys = paintedKeys.filter(key => transientKeys.includes(key));
+  // A painted key is a kept one: with only some kept, one of those.
+  const unkeptPainted = keptKeys.length > 0 ? paintedKeys.filter(key => !keptKeys.includes(key)) : [];
   const {
     userProvider,
     keepState,
@@ -342,6 +346,21 @@ const GeneralSettings = () => {
         {keepState && (
           <Input
             size="sm"
+            name="keptState"
+            value={keyTexts.keptState}
+            onChange={handleChangeStateKeys('keptState')}
+            label="Keep only these state keys"
+            placeholder="dismissedNotice"
+          />
+        )}
+        {keepState && transientKeys.length > 0 && keptKeys.length > 0 && (
+          <Alert intent="warning" size="xs" solid={false}>
+            Say one of the two: the keys never kept, or the only keys kept — leave the other empty.
+          </Alert>
+        )}
+        {keepState && (
+          <Input
+            size="sm"
             name="paintedState"
             value={keyTexts.paintedState}
             onChange={handleChangeStateKeys('paintedState')}
@@ -359,6 +378,13 @@ const GeneralSettings = () => {
           <Alert intent="warning" size="xs" solid={false}>
             {dottedKeys.join(', ')}: name the top-level key a Set State step writes, without dots — anything under it
             goes with it.
+          </Alert>
+        )}
+        {keepState && unkeptPainted.length > 0 && (
+          <Alert intent="warning" size="xs" solid={false}>
+            {unkeptPainted.join(', ')}: drawn on the server, but not among the keys kept — add{' '}
+            {unkeptPainted.length === 1 ? 'it' : 'them'} there, or leave {unkeptPainted.length === 1 ? 'it' : 'them'}{' '}
+            out.
           </Alert>
         )}
         {keepState && bothKeys.length > 0 && (

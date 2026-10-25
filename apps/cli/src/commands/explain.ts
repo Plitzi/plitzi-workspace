@@ -11,6 +11,7 @@ import {
   searchWords
 } from '@plitzi/sdk-authoring';
 import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project';
+import { SCHEMA_SETTINGS } from '@plitzi/sdk-shared/schema';
 
 import { apiDeclarations, apiText, memberDeclarations } from './apiDeclarations';
 import { findProject } from './existingProject';
@@ -167,6 +168,14 @@ const textOf = (explanation: AnyExplanation): string =>
 
 const kinds = Object.values(EXPLAIN_KINDS).join(', ');
 
+/** A name as the words a search reads: `keepState` → `keep state`, `page-play` → `page play`. */
+export const wordsOfName = (name: string): string =>
+  name
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[-_.]+/g, ' ')
+    .toLowerCase()
+    .trim();
+
 export const explainCommand = async (
   name: string | undefined,
   options: ExplainOptions,
@@ -291,9 +300,49 @@ export const explainCommand = async (
       return;
     }
 
+    // A setting of the whole space (`settings.keepState`): said as one, with where the skills teach it — encore-4's
+    // `explain keepState` was "no name", three times.
+    if ((SCHEMA_SETTINGS as readonly string[]).includes(name)) {
+      const taught = skillsMentions(project?.root ?? process.cwd(), name);
+      console.log(
+        options.json
+          ? JSON.stringify([{ kind: 'setting', name, skills: taught }])
+          : [
+              `${name} — a setting of the whole space: \`settings: { ${name}: … }\` in the space's spec, never a page's.`,
+              ...(taught.length > 0
+                ? [
+                    'Where the skills teach it:',
+                    ...taught.map(each => `  ${each.file}:${String(each.line)} — ${each.text}`)
+                  ]
+                : [])
+            ].join('\n')
+      );
+
+      return;
+    }
+
+    // No name: what its words describe, as --search answers them — encore-4's `explain active`, `explain keepState`,
+    // `explain icon` each failed, nine times, where a search found the passage that teaches it.
+    const described = searchAll(wordsOfName(name), commands, 5, skillPassages(project?.root ?? process.cwd()), each =>
+      memberDeclarations(project?.root ?? process.cwd(), each)
+    );
+    if (described.length > 0) {
+      console.log(
+        options.json
+          ? JSON.stringify({ name, unknown: true, described })
+          : [
+              chalk.yellow(`"${name}" is no name Plitzi has — what the words describe:`),
+              ...described.map(hit => `${hit.name.padEnd(36)} ${chalk.dim(`${hit.kind} — ${hit.summary}`)}`),
+              chalk.dim(`Each said whole: plitzi explain <name>; more: plitzi explain --search "${wordsOfName(name)}"`)
+            ].join('\n')
+      );
+
+      return;
+    }
+
     fail(
       [
-        `"${name}" is no element, step, trigger, code, transformer, helper, template filter, template function or global source, no step of a server action, nor an export of a @plitzi package installed here. See what there is: --list ${kinds}, tasks.`,
+        `"${name}" is no element, step, trigger, code, transformer, helper, template filter, template function or global source, no step of a server action, nor an export of a @plitzi package installed here, and no passage of the skills says it. See what there is: --list ${kinds}, tasks.`,
         `A name of the project's own code is read where it is written: \`grep -rn "${name}" src/\`.`
       ].join('\n')
     );

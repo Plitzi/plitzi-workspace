@@ -12,21 +12,24 @@ import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
 import { accountAsked, signInAs } from './check';
 import { projectHere } from './existingProject';
-import { putIn, rowsOf, stateText } from './measureState';
+import { measureOn } from './measureOn';
+import { putIn, rowsOf, settle, stateText } from './measureState';
 import { comparedText, keptText, readingText } from './measureText';
-import { differences, INHERITED, MEASURED, onlyOf, PSEUDO_MEASURED, PSEUDOS, SIDE_LONGHANDS } from './measureValues';
+import { differences, MEASURED, onlyOf, PSEUDO_MEASURED, PSEUDOS, SIDE_LONGHANDS } from './measureValues';
+import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
 import { applyConditions } from '../browser/conditions';
 import { keptMeasure } from '../browser/keptBrowser';
 import { conditionsOf } from './register/options';
 import { originHere } from '../runs/copyServer';
-import { targetOn } from './shot/capture';
 import { pageAnswered } from './shot/remote';
-import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
+import { actStep } from './shot/steps';
+import { parseSteps } from './shotSteps';
 
 import type { Account } from './check';
 import type { StateAsked } from './measureState';
 import type { Difference, Measured } from './measureValues';
 import type { Browser, BrowserPage, Scheme } from '../browser';
+import type { ActingStep } from './shot/steps';
 import type { BrowserConditions } from '../browser/conditions';
 import type { ConditionOptions } from './register/options';
 
@@ -80,6 +83,10 @@ export interface MeasureOptions extends ConditionOptions {
   click?: string[];
   /** Each row a list draws of every element asked, measured apart — never with --compare, whose rows are another's. */
   rows?: boolean;
+  /** Every property read, its initial and inherited ones too — a reading alone leaves them out (`measureText.ts`). */
+  all?: boolean;
+  /** Played before it is measured, as `page play --steps` writes them. */
+  steps?: string;
   /** Only these properties of each element, printed: `box`, `font`, `border`, `size` or any measured. */
   only?: string[];
   json?: boolean;
@@ -98,199 +105,6 @@ export const pairOf = (asked: string): Pair => {
   const there = arrow < 0 ? '' : asked.slice(arrow + 2).trim();
 
   return { here, there: there === '' ? here : there };
-};
-
-/**
- * What to write instead of a name not on the page: the same name the other way — an element's id written as a class
- * (`.home-faq-answer-text`, velada-backlog's design-1), a class as an id — when that way finds it; how to name one else.
- */
-const otherSpelling = async (page: BrowserPage, target: string): Promise<string> => {
-  const name = /^[.#]?([A-Za-z_][\w-]*)$/.exec(target)?.[1];
-  const ways = name === undefined ? [] : [name, `.${name}`].filter(way => way !== target);
-  for (const way of ways) {
-    const other = await targetOn(page, way);
-    if (!('problem' in other) && other.found) {
-      return way === name
-        ? `${name} is an element's id here: write it without the dot`
-        : `${name} is a class here, no element's id: write it .${name}`;
-    }
-  }
-
-  return `name it by its element's id (pricing-card), #its-id, or any selector (.plan-card, [data-plitzi-el="…"] > span)`;
-};
-
-/** How long a picture measured is waited for before it is read as it is: a picture that never loads holds nothing. */
-const IMAGE_WAIT_MS = 5000;
-
-/** How many matches of a selector are looked through for the first one shown. */
-const SHOWN_LOOK = 20;
-
-/**
- * The first match of `selector` a visitor sees, as a selector: itself when it is the first, `… >> nth=N` when an
- * earlier one is hidden, and itself again when none is shown (measured as it is, hidden or not).
- */
-const firstShown = async (page: BrowserPage, selector: string): Promise<string> => {
-  for (let index = 0; index < SHOWN_LOOK; index += 1) {
-    const nth = `${selector} >> nth=${String(index)}`;
-    const match = page.locator(nth).first();
-    if ((await match.count()) === 0) {
-      break;
-    }
-
-    if (await match.isVisible()) {
-      return index === 0 ? selector : nth;
-    }
-  }
-
-  return selector;
-};
-
-/** One element of an open page, measured — or why it could not be. */
-export const measureOn = async (page: BrowserPage, target: string): Promise<Measured | { problem: string }> => {
-  const found = await targetOn(page, target);
-  if ('problem' in found) {
-    return found;
-  }
-
-  if (!found.found) {
-    return { problem: `No element ${target} on ${page.url()} — ${await otherSpelling(page, target)}` };
-  }
-
-  // Of several matches, the first a visitor sees: the original's first `.header__heading-logo` is its hidden menu
-  // drawer's, and whichever the page drew first was measured — 0 px one call, 140 px the next (lx-copy's finish).
-  const shown = await firstShown(page, found.selector);
-  if (shown !== found.selector) {
-    found.selector = shown;
-  }
-
-  // A picture is measured drawn: read before it loads, an <img> sized by its own picture is 0 px wide, or "auto" tall
-  // (lx-copy: the original's logo read 140 px one call and 0 px the next, and failed the finish). A lazy one is asked
-  // for now; one that never loads is measured as it is after IMAGE_WAIT_MS.
-  await page
-    .locator(found.selector)
-    .first()
-    .evaluate(async (node, waitMs: number) => {
-      if (!(node instanceof HTMLImageElement) || (node.complete && node.naturalWidth > 0)) {
-        return;
-      }
-
-      node.loading = 'eager';
-      await Promise.race([node.decode().catch(() => undefined), new Promise(resolve => setTimeout(resolve, waitMs))]);
-    }, IMAGE_WAIT_MS)
-    .catch(() => undefined);
-
-  return {
-    selector: found.selector,
-    ...(await page
-      .locator(found.selector)
-      .first()
-      .evaluate(
-        (
-          node,
-          {
-            properties,
-            pseudos,
-            pseudoProperties,
-            inheritable
-          }: {
-            properties: readonly string[];
-            pseudos: readonly string[];
-            pseudoProperties: readonly string[];
-            inheritable: readonly string[];
-          }
-        ) => {
-          const computed = getComputedStyle(node);
-          const parent = node.parentElement ? getComputedStyle(node.parentElement) : undefined;
-          const styles: Record<string, string> = Object.fromEntries(
-            properties.map(property => [property, computed.getPropertyValue(property)])
-          );
-          const placed = node.getBoundingClientRect();
-          styles.x = `${String(Math.round(placed.left))}px`;
-          styles.y = `${String(Math.round(placed.top + window.scrollY))}px`;
-          // The transform that applies: `translate`, `rotate` and `scale` — what Tailwind 4 writes `rotate-45` as — then
-          // `transform`, as CSS composes them. Read alone, the original's diamond was "transform: none" beside ours.
-          const [moved, turned, sized] = ['translate', 'rotate', 'scale'].map(property =>
-            computed.getPropertyValue(property)
-          );
-          if ([moved, turned, sized].some(value => value !== '' && value !== 'none')) {
-            const box = node.getBoundingClientRect();
-            const length = (value: string, of: number): number =>
-              value.endsWith('%') ? (Number.parseFloat(value) / 100) * of : Number.parseFloat(value) || 0;
-            const degrees = (value: string): number =>
-              value.endsWith('rad')
-                ? (Number.parseFloat(value) * 180) / Math.PI
-                : value.endsWith('turn')
-                  ? Number.parseFloat(value) * 360
-                  : Number.parseFloat(value) || 0;
-            let matrix = new DOMMatrix();
-            if (moved && moved !== 'none') {
-              const [x = '0', y = '0', z = '0'] = moved.split(' ');
-              matrix = matrix.translate(length(x, box.width), length(y, box.height), length(z, 0));
-            }
-
-            if (turned && turned !== 'none') {
-              const words = turned.split(' ');
-              const angle = degrees(words[words.length - 1] ?? '0');
-              const [axis] = words;
-              matrix =
-                words.length === 1 || axis === 'z'
-                  ? matrix.rotate(0, 0, angle)
-                  : axis === 'x'
-                    ? matrix.rotate(angle, 0, 0)
-                    : axis === 'y'
-                      ? matrix.rotate(0, angle, 0)
-                      : matrix.rotateAxisAngle(
-                          Number.parseFloat(words[0] ?? '0'),
-                          Number.parseFloat(words[1] ?? '0'),
-                          Number.parseFloat(words[2] ?? '1'),
-                          angle
-                        );
-            }
-
-            if (sized && sized !== 'none') {
-              const [sx = 1, sy = sx, sz = 1] = sized
-                .split(' ')
-                .map(value => (value.endsWith('%') ? Number.parseFloat(value) / 100 : Number.parseFloat(value)));
-              matrix = matrix.scale(sx, sy, sz);
-            }
-
-            const own = styles.transform;
-            styles.transform = (own && own !== 'none' ? matrix.multiply(new DOMMatrix(own)) : matrix).toString();
-          }
-
-          for (const pseudo of pseudos) {
-            const drawn = getComputedStyle(node, `::${pseudo}`);
-            const content = drawn.getPropertyValue('content');
-            if (content !== 'none' && content !== 'normal' && content !== '') {
-              for (const property of pseudoProperties) {
-                styles[`${pseudo}:${property}`] = drawn.getPropertyValue(property);
-              }
-            }
-          }
-
-          const tag = node.tagName.toLowerCase();
-          const root = tag === 'body' || tag === 'html' ? document.querySelector('[data-plitzi-el]') : null;
-
-          return {
-            tag,
-            ...(root ? { spaceRoot: root.getAttribute('data-plitzi-el') ?? '' } : {}),
-            text: node.textContent.replace(/\s+/g, ' ').trim().slice(0, 60),
-            styles,
-            inherited: parent
-              ? inheritable.filter(
-                  property => computed.getPropertyValue(property) === parent.getPropertyValue(property)
-                )
-              : []
-          };
-        },
-        {
-          properties: [...MEASURED],
-          pseudos: [...PSEUDOS],
-          pseudoProperties: [...PSEUDO_MEASURED],
-          inheritable: [...INHERITED]
-        }
-      ))
-  };
 };
 
 /** Shorthands `--same` takes for the properties they stand for: a border is its four sides, a type its six. */
@@ -452,6 +266,11 @@ export interface ViewAsked {
   scheme?: Scheme;
   timezone?: string;
   state?: StateAsked;
+  /**
+   * Played on this page before it is measured — `--steps`, as `page play` takes them: data only a visitor's steps make
+   * (encore-4's chat line, which no demo data holds) measured where it is drawn.
+   */
+  steps?: readonly ActingStep[];
   /** The browser it is read in, where not a visitor's ordinary one (`--clock`, `--block`, `--autoplay`, `--storage`). */
   conditions?: BrowserConditions;
 }
@@ -485,6 +304,20 @@ const readOther = async (
   return read;
 };
 
+/** The steps played on the page, each settled — or the one that could not be, said. */
+const playedOn = async (page: BrowserPage, steps: readonly ActingStep[]): Promise<{ problem: string } | undefined> => {
+  for (const [index, step] of steps.entries()) {
+    const problem = await actStep(page, step, index);
+    if (problem) {
+      return problem;
+    }
+
+    await settle(page);
+  }
+
+  return undefined;
+};
+
 /** Every pair, at one width: ours on one page, the others' kept or read on one page of the other site. */
 const readAt = async (
   browser: Browser,
@@ -503,9 +336,7 @@ const readAt = async (
           problem ??
           `nothing answers at ${where.origin}${where.route} — the server measured is not running (start it, or say where with --url)`
       }
-    : view.state
-      ? await putIn(page, view.state, 'here')
-      : undefined;
+    : ((await playedOn(page, view.steps ?? [])) ?? (view.state ? await putIn(page, view.state, 'here') : undefined));
   // Each row a list draws of an element, with --rows: the first alone hid that three plates' readouts differed (encore-3).
   const asked = options.rows && !notPut ? (await Promise.all(pairs.map(pair => rowsOf(page, pair)))).flat() : pairs;
   const ours = notPut ? asked.map(() => notPut) : await Promise.all(asked.map(pair => measureOn(page, pair.here)));
@@ -656,6 +487,31 @@ export const measure = async (route: string, elements: string[], options: Measur
     return;
   }
 
+  const parsed = options.steps === undefined ? [] : parseSteps(options.steps, 500);
+  if ('problem' in parsed) {
+    fail(`--steps: ${parsed.problem}.`);
+
+    return;
+  }
+
+  // What this page's visitor does before it is measured: the other page is another site, with no such data to make.
+  if (parsed.length > 0 && target) {
+    fail(
+      '--steps makes data on this page before it is measured: leave out --compare, or put the other page in its state with --click'
+    );
+
+    return;
+  }
+
+  const pictured = parsed.find(step => step.kind === 'shot' || step.kind === 'frames');
+  if (pictured) {
+    fail(`page measure reads what the steps leave, with no picture: "${pictured.kind}" is page shot --steps'.`);
+
+    return;
+  }
+
+  const steps = parsed.filter((step): step is ActingStep => step.kind !== 'shot' && step.kind !== 'frames');
+
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
   // In a task's copy nobody serves, the copy served — as `page shot` serves it — never a second server beside one.
   const where = await originHere(project.root, plitzi, options.url);
@@ -695,6 +551,7 @@ export const measure = async (route: string, elements: string[], options: Measur
             ...(options.scheme ? { scheme: options.scheme } : {}),
             ...(options.timezone ? { timezone: options.timezone } : {}),
             ...(state ? { state } : {}),
+            ...(steps.length > 0 ? { steps } : {}),
             conditions: conditionsOf(options)
           },
           options,
@@ -748,7 +605,15 @@ export const measure = async (route: string, elements: string[], options: Measur
               ...(widths.length > 1 ? [chalk.bold.underline(`At ${String(width)} px`)] : []),
               ...shownReadings
                 .filter(reading => reading.width === width)
-                .map(reading => readingText(reading, options.same, now, kept !== undefined))
+                .map(reading =>
+                  readingText(
+                    reading,
+                    options.same,
+                    now,
+                    kept !== undefined,
+                    options.all === true || options.only !== undefined
+                  )
+                )
             ])
           ].join('\n')
     );

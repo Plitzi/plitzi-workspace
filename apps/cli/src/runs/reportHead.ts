@@ -1,5 +1,7 @@
+import { teamTasks } from './bench';
 import { briefsText } from './briefs';
 import { FINDING_OWNERS } from './findings';
+import { kindOf } from './harness';
 import { tokensText } from './runMetrics';
 
 import type { Finding } from './findings';
@@ -77,7 +79,7 @@ export const consumptionText = (report: RunReport): string[] => {
   const read = new Map<string, number>();
   for (const harness of [...report.taskReports.map(round => round.harness), report.lead]) {
     for (const result of harness?.heaviest ?? []) {
-      const key = `${result.tool} ${result.what}`;
+      const key = kindOf(result.tool, result.what);
       heaviest.set(key, (heaviest.get(key) ?? 0) + result.reread);
     }
 
@@ -151,11 +153,13 @@ export const reviewsText = (report: RunReport): string[] => {
 
 /** The run in a few lines: what was done, what failed, how many findings whose, what it read. */
 export const glanceText = (report: RunReport): string[] => {
-  const done = report.tasks.filter(task => task.status === 'done').length;
+  const team = teamTasks(report.tasks);
+  const done = team.filter(task => task.status === 'done').length;
+  const spikes = report.tasks.length - team.length;
   const { indicators, metrics } = report;
 
   return [
-    `- Tasks: ${String(done)} of ${String(report.tasks.length)} done; reviews ${String(report.tasks.reduce((sum, task) => sum + task.rounds, 0))}`,
+    `- Tasks: ${String(done)} of ${String(team.length)} done${spikes > 0 ? ` (and the lead's ${spikes === 1 ? 'spike' : `${String(spikes)} spikes`})` : ''}; reviews ${String(report.tasks.reduce((sum, task) => sum + task.rounds, 0))}`,
     `- Task checks: ${String(metrics.checks.run)} run, ${String(metrics.checks.failed)} failed on the work, ${String(metrics.checks.notOwn)} on nothing of it${indicators.notOwnPct === undefined ? '' : ` (${String(indicators.notOwnPct)}% of the failures)`}`,
     `- Findings: ${FINDING_OWNERS.map(owner => `${owner} ${String(indicators.findings[owner])}`).join(', ')}`,
     ...(indicators.harnessTokens === undefined

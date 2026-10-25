@@ -45,6 +45,36 @@ export const stoppedText = (what: string, served: Pick<Preview, 'stopped'> | und
     : [];
 };
 
+/** A list said once an item, the times it repeats beside it: `radial-gradient(…) ×4`. */
+const counted = (items: readonly string[]): string[] => {
+  const times = new Map<string, number>();
+  items.forEach(item => times.set(item, (times.get(item) ?? 0) + 1));
+
+  return [...times].map(([item, count]) => (count > 1 ? `${item} ×${String(count)}` : item));
+};
+
+/**
+ * The sections whose dress changed, a change once with every section it is in: encore-4's look listed one gradient
+ * again and again, section by section and within one — a wall of text a designer read for one change.
+ */
+const dressOf = (decorations: readonly unknown[], listOf: (value: unknown) => string[]): string[] => {
+  const bySaid = new Map<string, string[]>();
+  for (const section of decorations) {
+    if (!isRecord(section) || typeof section.section !== 'string') {
+      continue;
+    }
+
+    const added = counted(listOf(section.extra));
+    const gone = counted([...listOf(section.absent), ...listOf(section.missing)]);
+    if (added.length > 0 || gone.length > 0) {
+      const said = `${added.length > 0 ? `+ ${added.join('; ')}` : ''}${added.length > 0 && gone.length > 0 ? ' ' : ''}${gone.length > 0 ? `− ${gone.join('; ')}` : ''}`;
+      bySaid.set(said, [...(bySaid.get(said) ?? []), section.section]);
+    }
+  }
+
+  return [...bySaid].map(([said, sections]) => `${sections.join(', ')} ${said}`);
+};
+
 /** What `page shot --compare --json` answered: how much differs, by section, and where the pictures went. */
 export const comparedOf = (output: string): Omit<BeforeAfter, 'route' | 'width' | 'scheme'> => {
   const at = output.indexOf('{');
@@ -68,20 +98,7 @@ export const comparedOf = (output: string): Omit<BeforeAfter, 'route' | 'width' 
           ? [`${region.name} ${String(region.changed)}%`]
           : []
       ),
-      dress: decorations.flatMap(section => {
-        if (!isRecord(section) || typeof section.section !== 'string') {
-          return [];
-        }
-
-        const added = listOf(section.extra);
-        const gone = [...listOf(section.absent), ...listOf(section.missing)];
-
-        return added.length > 0 || gone.length > 0
-          ? [
-              `${section.section}${added.length > 0 ? ` + ${added.join('; ')}` : ''}${gone.length > 0 ? ` − ${gone.join('; ')}` : ''}`
-            ]
-          : [];
-      }),
+      dress: dressOf(decorations, listOf),
       ...(typeof compare.sideBySide === 'string' ? { sideBySide: compare.sideBySide } : {})
     };
   } catch {
@@ -216,6 +233,22 @@ export const picturesOf = (output: string): string[] => {
   }
 };
 
+/**
+ * The picture a shot says it took, as its reader reads it: a tall page's parts (`tiles`) when it was cut into them —
+ * a phone's whole page shrank to 97 px wide in a viewer (encore-4) — else the picture.
+ */
+export const readablePictures = (output: string, out: string): string[] => {
+  try {
+    const report: unknown = JSON.parse(output.trim().split('\n').at(-1) ?? '');
+    const tiles = isRecord(report) && Array.isArray(report.tiles) ? report.tiles : [];
+    const parts = tiles.filter((tile): tile is string => typeof tile === 'string');
+
+    return parts.length > 0 ? parts : [out];
+  } catch {
+    return [out];
+  }
+};
+
 const WIDTHS = /^\d{3,4}(,\d{3,4})*$/;
 
 /**
@@ -301,9 +334,35 @@ export const lookKey = async (
 
 const lookedFile = (cache: string): string => path.join(cache, 'looked.json');
 
-/** A look said, kept under its key: what is said again while nothing changes. */
-export const keepLook = (cache: string, key: string, text: string, now: Date): Promise<void> =>
-  writeJson(lookedFile(cache), { at: now.toISOString(), key, text });
+type Kept = Record<string, { at: string; text: string }>;
+
+/** The looks kept, by key, the ones past `LOOKED_FOR_MS` left out. */
+const keptLooks = async (cache: string, now: Date): Promise<Kept> => {
+  const read: unknown = await fs
+    .readFile(lookedFile(cache), 'utf-8')
+    .then(text => JSON.parse(text) as unknown)
+    .catch(() => undefined);
+
+  return isRecord(read)
+    ? Object.fromEntries(
+        Object.entries(read).flatMap(([key, look]) =>
+          isRecord(look) &&
+          typeof look.at === 'string' &&
+          typeof look.text === 'string' &&
+          now.getTime() - Date.parse(look.at) < LOOKED_FOR_MS
+            ? [[key, { at: look.at, text: look.text }]]
+            : []
+        )
+      )
+    : {};
+};
+
+/**
+ * A look said, kept under its key — every look of the task, not only the last: a round's two looks of different pages
+ * each stand (encore-4's lead: "each look forgets the pages the other covered").
+ */
+export const keepLook = async (cache: string, key: string, text: string, now: Date): Promise<void> =>
+  writeJson(lookedFile(cache), { ...(await keptLooks(cache, now)), [key]: { at: now.toISOString(), text } });
 
 /** The look that still stands for `key`, when one does. */
 export const keptLook = async (
@@ -311,16 +370,7 @@ export const keptLook = async (
   key: string,
   now: Date
 ): Promise<{ at: string; text: string } | undefined> => {
-  const read: unknown = await fs
-    .readFile(lookedFile(cache), 'utf-8')
-    .then(text => JSON.parse(text) as unknown)
-    .catch(() => undefined);
+  const kept = await keptLooks(cache, now);
 
-  return isRecord(read) &&
-    read.key === key &&
-    typeof read.at === 'string' &&
-    typeof read.text === 'string' &&
-    now.getTime() - Date.parse(read.at) < LOOKED_FOR_MS
-    ? { at: read.at, text: read.text }
-    : undefined;
+  return Object.hasOwn(kept, key) ? kept[key] : undefined;
 };

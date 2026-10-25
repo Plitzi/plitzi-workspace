@@ -30,6 +30,7 @@ type DeclarationShape = {
   type: string;
   sourceType?: string;
   publishes?: Record<string, string>;
+  marks?: Record<string, string>;
   triggers?: Record<string, InteractionCallback>;
   callbacks?: Record<string, InteractionCallback>;
   ancestorType?: string;
@@ -86,6 +87,13 @@ export const elementSourceTypes: Record<string, string> = Object.fromEntries(
 export const elementPublishes: Record<string, Record<string, string>> = Object.fromEntries(
   Object.values(declarations).flatMap(declaration =>
     declaration.publishes ? [[declaration.type, declaration.publishes] as const] : []
+  )
+);
+
+/** What each type writes on its node that a style or a check reads, as its declaration says it (`marks`). */
+export const elementMarks: Record<string, Record<string, string>> = Object.fromEntries(
+  Object.values(declarations).flatMap(declaration =>
+    declaration.marks ? [[declaration.type, declaration.marks] as const] : []
   )
 );
 

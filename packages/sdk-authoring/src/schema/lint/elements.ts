@@ -6,7 +6,7 @@ import { didYouMean } from '../suggest';
 import { checkAttributeTemplates, checkBindings, shorten } from './elementBindings';
 import { checkRequiredMessage, warnFormControls } from './forms';
 import { checkIntent, warnRouteParams } from './intent';
-import { checkFocusOnFieldBox, checkHeadingLevels, checkSlots } from './slots';
+import { checkFocusOnFieldBox, checkHeadingLevels, checkIconFont, checkPopupPosition, checkSlots } from './slots';
 
 import type { LintContext } from './context';
 import type { Element } from '@plitzi/sdk-shared';
@@ -270,6 +270,8 @@ export const lintElements = (ctx: LintContext): void => {
     checkSlots(ctx, element, where);
     checkHeadingLevels(ctx, element, where);
     checkFocusOnFieldBox(ctx, element, where);
+    checkPopupPosition(ctx, element, where);
+    checkIconFont(ctx, element, where);
     warnRouteParams(ctx, element, where);
   }
 

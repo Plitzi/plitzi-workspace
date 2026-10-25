@@ -115,6 +115,8 @@ const stepText = (step: ShotStep): string => {
       return `wait ${String(step.ms)} ms`;
     case 'reload':
       return 'reload';
+    case 'goto':
+      return `goto ${step.path}`;
     case 'store':
       return `store ${step.key}`;
     case 'state':
@@ -226,9 +228,20 @@ export const actStep = async (
     }
 
     // A click's answer from the server landed before what follows reads the page: a key lit by a vote's answer.
-    await (step.kind === 'click'
-      ? answered(page, () => shown(read.selector).click({ timeout: 3000 }))
-      : shown(read.selector).click({ timeout: 3000 }));
+    const from = page.url();
+    try {
+      await (step.kind === 'click'
+        ? answered(page, () => shown(read.selector).click({ timeout: 3000 }))
+        : shown(read.selector).click({ timeout: 3000 }));
+    } catch (error) {
+      // A click that took the page elsewhere did what it was for — what follows reads the page it went to (encore-4's
+      // dev-1 read a plain locator timeout, with nothing of the navigation in it).
+      if (page.url() !== from) {
+        return undefined;
+      }
+
+      throw error;
+    }
     // Typed into what has the focus: a click that left it on no field sent the text to the page's own shortcuts.
     if (step.kind === 'type') {
       const editable = await page.evaluate(() => {
@@ -255,6 +268,10 @@ export const actStep = async (
     await page.waitForTimeout(step.ms);
   } else if (step.kind === 'reload') {
     await page.reload({ waitUntil: 'load' });
+    await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
+  } else if (step.kind === 'goto') {
+    // Its path on the page's own site: a play beside another site goes to that site's page of it.
+    await page.goto(new URL(step.path, page.url()).href, { waitUntil: 'load' });
     await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
   } else if (step.kind === 'store') {
     const stored = await page.evaluate(

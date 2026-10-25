@@ -12,6 +12,7 @@
  *   wait <ms>                time passing
  *   wait-for <element>       until it is on the page and shown (10 s at most)
  *   reload                   the page loaded again, as a visitor's reload: what it kept read back
+ *   goto <path>              another page of the site opened in the same tab: what holds across pages
  *   store <key> <value>      a value put in the page's localStorage, as an earlier visit left it — then `reload`
  *   state <key> <json>       one key of the space's state written, as a setState step would (development pages)
  *   clock <instant>          the page's clock set to an ISO instant (needs `--clock`): 2026-10-25T20:00:00Z
@@ -19,7 +20,8 @@
  *   shot [label]             a picture now
  *   frames <n> [ms]          n pictures, `--every` (or `ms`) apart
  *
- * Separated by `;` or a new line; a line starting with `#` is a note. An element is read whole up to a space outside
+ * Separated by `;` or a new line — one inside quotes is the text's: `type chat-input "late; still here"`; a line
+ * starting with `#` is a note. An element is read whole up to a space outside
  * quotes and brackets — `[aria-label="Search the site"]` is one — or quoted. Every picture is labelled with its step and
  * the time since the first step.
  */
@@ -34,6 +36,7 @@ export type ShotStep =
   | { kind: 'wait'; ms: number }
   | { kind: 'wait-for'; target: string }
   | { kind: 'reload' }
+  | { kind: 'goto'; path: string }
   | { kind: 'store'; key: string; value: string }
   | { kind: 'state'; key: string; value: unknown }
   | { kind: 'clock'; time: number }
@@ -53,6 +56,7 @@ const STEP_NAMES = [
   'wait',
   'wait-for',
   'reload',
+  'goto',
   'store',
   'state',
   'clock',
@@ -156,10 +160,32 @@ const count = (value: string | undefined, at: string, max: number): number | { p
     : { problem: `${at}: "${value ?? ''}" is not a whole number from 1 to ${String(max)}` };
 };
 
+/**
+ * A script's steps, apart: at each `;` or new line outside quotes — encore-4's chat line "late — still here; ok" was
+ * cut at its `;`, and the message never sent.
+ */
+const stepLines = (script: string): string[] => {
+  const lines: string[] = [];
+  let quote: string | undefined;
+  let from = 0;
+  for (let index = 0; index < script.length; index += 1) {
+    const char = script.charAt(index);
+    if (quote) {
+      quote = char === quote ? undefined : quote;
+    } else if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === ';' || char === '\n') {
+      lines.push(script.slice(from, index));
+      from = index + 1;
+    }
+  }
+
+  return [...lines, script.slice(from)];
+};
+
 /** A script, read into its steps — or what is wrong with it, said by its step. */
 export const parseSteps = (script: string, every: number): ShotStep[] | { problem: string } => {
-  const lines = script
-    .split(/[;\n]/)
+  const lines = stepLines(script)
     .map(line => line.trim())
     .filter(line => line !== '' && !line.startsWith('#'));
   if (lines.length === 0) {
@@ -189,7 +215,8 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
         // `fill email=ana@x.com` as `--fill` writes it, beside `fill email ana@x.com`: encore-3's agents wrote the flag's
         // spelling in a step and were refused.
         const said = rest.join(' ');
-        const flagged = /^([A-Za-z][\w-]*)=([\s\S]*)$/.exec(said);
+        // A class or an id too: encore-4's `fill .encore-chat__input=Great` was read as one selector.
+        const flagged = /^([.#]?[A-Za-z_][\w-]*)=([\s\S]*)$/.exec(said);
         const { target, rest: text } = flagged ? { target: flagged[1], rest: flagged[2] } : leadingTarget(said);
         if (!target || text === '') {
           return {
@@ -233,6 +260,13 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
       case 'reload':
         steps.push({ kind: 'reload' });
         break;
+      case 'goto':
+        if (!argument.startsWith('/')) {
+          return { problem: `${at}: goto needs a path of the site — goto /rooms, goto /r/night-drive` };
+        }
+
+        steps.push({ kind: 'goto', path: argument });
+        break;
       case 'store': {
         const [key, ...value] = rest;
         if (!key || value.length === 0) {
@@ -244,13 +278,14 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
       }
       case 'state': {
         const [key, ...value] = rest;
-        const written = value.join(' ');
+        // Wrapped in single quotes as a shell writes it — `state show '{"id":"x"}'` — the JSON is what is inside.
+        const written = value.join(' ').replace(/^'([\s\S]*)'$/, '$1');
         let parsed: unknown;
         try {
           parsed = JSON.parse(written);
         } catch {
           return {
-            problem: `${at}: state needs a key and its value as JSON — state roomOpen true, state show '{"title":"Late set"}'`
+            problem: `${at}: state needs a key and its value as JSON — got ${written === '' ? 'none' : written}: a text in double quotes (state dismissed "show-1"), true, 3, or an object (state show '{"title":"Late set"}')`
           };
         }
 

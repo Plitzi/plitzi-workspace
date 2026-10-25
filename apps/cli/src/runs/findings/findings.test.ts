@@ -6,6 +6,7 @@ import { errorFindings } from './errors';
 import { explainFindings } from './explain';
 import { indicatorsOf, liveFindings, runFindings } from './index';
 import { afterStop, twoSessions, twoTasks } from './sessions';
+import { groupAlike } from './words';
 import { saidFindings, workaroundFindings } from './workarounds';
 
 import type { LogEntry } from './types';
@@ -28,7 +29,8 @@ const use = (minute: number, by: string, command: string, more: Partial<UsageLin
 });
 
 describe('how tasks and sessions were held', () => {
-  it('says an agent with two tasks in progress once a pair — encore’s dev-1, sent back two at once', () => {
+  // encore-4: dev-1's sent-back task waited for it while it was at another — Carlos's rule — and read as two at once.
+  it('says an agent with two tasks in progress once a pair, never a sent-back one waiting for it', () => {
     const log: LogEntry[] = [
       { at: T(1), by: 'dev-1', action: 'take', task: 't-live' },
       { at: T(2), by: 'dev-1', action: 'complete', task: 't-live' },
@@ -41,9 +43,15 @@ describe('how tasks and sessions were held', () => {
     const found = twoTasks(log);
 
     expect(found.map(each => [each.title, each.evidence, each.live])).toEqual([
-      ['dev-1 had two tasks in progress at once', ['t-live + t-settings, from 10:04 UTC'], true],
       ['dev-3 had two tasks in progress at once', ['t-other + t-settings, from 10:07 UTC'], true]
     ]);
+    // Taking another while one is in hand is two at once.
+    expect(
+      twoTasks([
+        { at: T(1), by: 'dev-1', action: 'take', task: 't-live' },
+        { at: T(2), by: 'dev-1', action: 'take', task: 't-settings' }
+      ]).map(each => each.evidence)
+    ).toEqual([['t-live + t-settings, from 10:02 UTC']]);
   });
 
   it('says commands a session ran after it was told to stop — not a notice, nor a session started again', () => {
@@ -218,6 +226,21 @@ describe('what the agents looked for and did beside Plitzi', () => {
   });
 });
 
+describe('what agents said, grouped by what it is about', () => {
+  it('joins a text to a group by its first text, so a notice of two things draws no third in (encore-4)', () => {
+    const groups = groupAlike(
+      [
+        "page play crashed once with undici 'setTypeOfService EINVAL' on the first run; a rerun worked",
+        "page measure crashed once with 'setTypeOfService EINVAL' from undici. Also page measure with no --rows silently measures the first match of a repeated id",
+        'page measure has no compact mode and measures only the first of a repeated element'
+      ],
+      text => text
+    );
+
+    expect(groups.map(group => group.length)).toEqual([2, 1]);
+  });
+});
+
 describe('commands that failed, by why', () => {
   it('says a command refused as written — live when it happens again — the machine’s, and a CLI error met twice', () => {
     const usage = [
@@ -226,7 +249,10 @@ describe('commands that failed, by why', () => {
       use(3, 'dev-1', 'plitzi page shot /', { code: 1, error: 'connect ECONNREFUSED 127.0.0.1:8080' }),
       use(4, 'dev-1', 'plitzi server stop', { code: 1, error: 'Nothing listens on 8300' }),
       use(5, 'dev-2', 'plitzi server stop', { code: 1, error: 'Nothing listens on 8301' }),
-      use(6, 'dev-2', 'plitzi task check', { code: 1, error: 'refused: lint fails' })
+      use(6, 'dev-2', 'plitzi task check', { code: 1, error: 'refused: lint fails' }),
+      // explain's misses are its own finding's: encore-4 said "explain active" there and here.
+      use(7, 'dev-1', 'plitzi explain active', { code: 1, error: '"active" is no element' }),
+      use(8, 'dev-1', 'plitzi explain icon', { code: 1, error: '"icon" is no element' })
     ];
 
     expect(errorFindings(usage).map(each => [each.kind, each.owner, each.times, each.live ?? false])).toEqual([
@@ -276,7 +302,8 @@ describe('what the run spent that it did not have to', () => {
         round('t-a', spent(1_000_000)),
         round('t-b', spent(1_000_000)),
         round('t-c', spent(1_000_000)),
-        round('t-d', spent(9_000_000, 210_000))
+        round('t-d', spent(9_000_000, 210_000)),
+        round('t-e', spent(1_000_000, 160_000))
       ]
     );
 
@@ -287,7 +314,14 @@ describe('what the run spent that it did not have to', () => {
       ['context-heavy', 'lead'],
       ['costly-result', 'plitzi']
     ]);
-    expect(found[4].title).toBe('What Bash plitzi page measure answered was read again for 4.8M tokens');
+    expect(found[4].title).toBe('What Bash plitzi page measure answered was read again for 6M tokens');
+    // One finding a kind, the rounds its evidence: encore-4 said eleven heavy contexts as eleven.
+    expect(found[3]).toMatchObject({
+      title: '2 rounds ended with over 150k tokens of context',
+      evidence: ['dev-1 at t-d (round 1): 210k, 50 turns, 9M read', 'dev-1 at t-e (round 1): 160k, 50 turns, 1M read'],
+      times: 2
+    });
+    expect(found[2].title).toBe('t-d read over 2.5× the run’s median task (1M)');
   });
 });
 

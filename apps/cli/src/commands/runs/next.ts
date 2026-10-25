@@ -8,11 +8,13 @@ import { FOLLOW_MS } from '../../options';
 import { DESIGN_LOOK } from '../../runs/design';
 import { isPrincipal } from '../../runs/leads';
 import { acceptanceText } from '../../runs/model';
+import { acceptanceAccount, acceptanceStatuses } from '../../runs/pagesOf';
 import { copyOf } from '../../runs/paths';
 import { DESIGN_READING } from '../../runs/reading';
 import { nextTask, followNext, takeNext, takeTask } from '../../runs/tasks';
 
 import type { RunCommandOptions } from './shell';
+import type { RunTask } from '../../runs/model';
 import type { NextTask, TakenTask } from '../../runs/tasks';
 
 /**
@@ -57,6 +59,26 @@ const earlierText = (review: { earlier: number; task: { id: string } }): string[
     ? [chalk.dim(`  …and ${String(review.earlier)} note(s) of earlier rounds: plitzi task show ${review.task.id}`)]
     : [];
 
+/**
+ * The look a review starts from, as `task next` offers it: its pages signed in as its acceptance checks them, and a
+ * page its acceptance checks with a status of its own looked at with it — encore-4's offer left out t-retro-pass's 404.
+ */
+const lookCommand = (task: RunTask, pages: readonly string[], also: string): string[] => {
+  const as = acceptanceAccount(task.acceptance);
+  const signedIn = as === undefined ? '' : ` --as ${as}`;
+  const byStatus = new Map<number, string[]>();
+  for (const { page, status } of acceptanceStatuses(task.acceptance)) {
+    byStatus.set(status, [...(byStatus.get(status) ?? []), page]);
+  }
+
+  return [
+    `plitzi task look ${task.id} ${pages.length > 0 ? pages.join(' ') : '<page…>'}${signedIn}${also}${pages.length > 0 ? '' : '   # no page of the space owns its files: name the ones it shows on'}`,
+    ...[...byStatus].map(
+      ([status, pages]) => `plitzi task look ${task.id} ${pages.join(' ')} --status ${String(status)}`
+    )
+  ];
+};
+
 /** A designer's review, as `task next` hands it: what to look at, what for, and how to say it. */
 const designReviewText = (review: NonNullable<NextTask['designReview']>): string =>
   [
@@ -79,7 +101,10 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>): string
     ...earlierText(review),
     `  It changed: ${review.changed.join(', ') || 'nothing said'} — in its copy, ${review.copy}`,
     // Beside the run before it, measured — its dress too — and the copy served for it: what a designer rebuilt by hand.
-    `  Look at it as it went to review, beside the run before it: plitzi task look ${review.task.id} ${review.pages.length > 0 ? review.pages.join(' ') : '<page…>'} --before${review.pages.length > 0 ? '' : '   # no page of the space owns its files: name the ones it shows on'}`,
+    ...lookCommand(review.task, review.pages, ' --before').map(
+      (command, index) =>
+        `  ${index === 0 ? 'Look at it as it went to review, beside the run before it' : 'And'}: ${command}`
+    ),
     `  Look for (${review.precision}, as the team asks — options.designReview) ${DESIGN_LOOK[review.precision]}`,
     `  Send it back only for what its title and acceptance cover — anything beyond it is plitzi run notice "…", never a round: ${review.task.acceptance.map(acceptanceText).join(' · ')}`,
     // What its own checks measured at complete: the review starts from what fails, not by measuring all of it again.
@@ -120,9 +145,13 @@ const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: stri
     `  It changed: ${review.changed.join(', ') || 'nothing said'} — in its copy, ${review.copy}`,
     `  What went to review, against its acceptance: plitzi task show ${review.task.id}`,
     // Its UI said by a designer, the lead's is the code: the look is for what the code changes on a page, if anything.
-    review.design
-      ? `  Its UI is reviewed: yours is the code, the acceptance and the edge cases — look (plitzi task look ${review.task.id}) only where the code changes what a page does`
-      : `  Look at it as it went to review: plitzi task look ${review.task.id} ${review.pages.length > 0 ? review.pages.join(' ') : '<page…>'}`,
+    ...(review.design
+      ? [
+          `  Its UI is reviewed: yours is the code, the acceptance and the edge cases — look (plitzi task look ${review.task.id}) only where the code changes what a page does`
+        ]
+      : lookCommand(review.task, review.pages, '').map(
+          (command, index) => `  ${index === 0 ? 'Look at it as it went to review' : 'And'}: ${command}`
+        )),
     ...(review.lastRound
       ? [
           chalk.yellow(

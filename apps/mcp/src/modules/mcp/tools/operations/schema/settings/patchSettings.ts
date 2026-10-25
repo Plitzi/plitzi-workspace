@@ -47,6 +47,7 @@ export const patchSettingsOp = z
     keepState: z.boolean().optional().describe('Keep runtime state (setState keys) across reloads'),
     stateStorage: z.enum(['localStorage', 'sessionStorage']).optional(),
     transientState: z.array(z.string()).optional().describe('Top-level state keys never kept'),
+    keptState: z.array(z.string()).optional().describe('The only top-level state keys kept (not with transientState)'),
     paintedState: z.array(z.string()).optional().describe('Kept keys the first paint shows'),
     userProvider: userProvider
       .optional()

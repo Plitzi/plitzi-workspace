@@ -81,6 +81,16 @@ export interface ElementState {
   coveredBy?: string;
   /** Its transform, when it has one, as scale and translate: a bump (scale) or a float read as nothing moving. */
   transform?: string;
+  /**
+   * Its text's colour and the ground it sits on — its own, else the first an ancestor paints: encore-4's tone picker
+   * was proven by ten page measures, one a tone and scheme, the play saying nothing of colour.
+   */
+  colour: { text: string; ground: string };
+  /**
+   * Its animations as they stand — `float finished` — when it has any: encore-4's reaction floated in and out, and a
+   * read after it said "hidden", as though the press had done nothing.
+   */
+  animations?: string[];
 }
 
 export interface PlayedStep {
@@ -91,6 +101,8 @@ export interface PlayedStep {
    * said, never played as if it happened (lx-product: a tab drawn per width, its press at 390 skipped without a word).
    */
   idle?: Partial<Record<keyof Pair, string>>;
+  /** Where the step took the page, when it went elsewhere — a link followed, a form sent: encore-4's filter links. */
+  went?: Partial<Record<keyof Pair, string>>;
   /** Each element read, by how it was asked, here and — with `--compare` — there. */
   reads: { element: string; here?: ElementState; there?: ElementState; moved?: Moved; problem?: string }[];
 }
@@ -150,6 +162,17 @@ export const stateOf = (node: Element): ElementState => {
 
     return said.length > 0 ? said.join(', ') : undefined;
   };
+  // The ground its text sits on: its own colour, else the first an ancestor paints — white where none does.
+  const groundOf = (element: Element): string => {
+    for (let at: Element | null = element; at; at = at.parentElement) {
+      const ground = getComputedStyle(at).backgroundColor;
+      if (ground !== 'rgba(0, 0, 0, 0)' && ground !== 'transparent') {
+        return ground;
+      }
+    }
+
+    return 'rgb(255, 255, 255)';
+  };
   const box = node.getBoundingClientRect();
   const style = getComputedStyle(node);
   const disabled =
@@ -197,7 +220,18 @@ export const stateOf = (node: Element): ElementState => {
       })
     ),
     focused:
-      document.activeElement !== null && (node === document.activeElement || node.contains(document.activeElement))
+      document.activeElement !== null && (node === document.activeElement || node.contains(document.activeElement)),
+    colour: { text: style.color, ground: groundOf(node) },
+    ...(node.getAnimations().length > 0
+      ? {
+          animations: node
+            .getAnimations()
+            .map(
+              animation =>
+                `${animation instanceof CSSAnimation ? animation.animationName : animation instanceof CSSTransition ? `${animation.transitionProperty} transition` : 'animation'} ${animation.playState}`
+            )
+        }
+      : {})
   };
 };
 
@@ -239,6 +273,8 @@ const stepText = (step: ActingStep): string => {
       return `drag ${step.target} ${String(step.dx)} ${String(step.dy)}`;
     case 'reload':
       return 'reload';
+    case 'goto':
+      return `goto ${step.path}`;
     case 'store':
     case 'state':
       return `${step.kind} ${step.key}`;
@@ -256,11 +292,18 @@ const stepText = (step: ActingStep): string => {
  */
 export interface PlaySide {
   act: (step: ActingStep, index: number) => Promise<{ problem: string } | undefined>;
+  /** Where its page is now, path and query: a step that takes it elsewhere is said (`PlayedStep.went`). */
+  address?: () => string;
   read: (targets: readonly string[]) => Promise<(ElementState | { problem: string })[] | { problem: string }>;
 }
 
 /** A page of this command's as a side of a play. */
 export const pageSide = (page: BrowserPage): PlaySide => ({
+  address: () => {
+    const url = new URL(page.url());
+
+    return `${url.pathname}${url.search}`;
+  },
   act: async (step, index) => {
     const problem = await actStep(page, step, index);
     // What the step started, over: its animations ended and the page's layout still — a slide, a drawer, a scroll.
@@ -347,6 +390,7 @@ export const playOn = async (
   played.push(await readAll('start'));
   for (const [index, step] of steps.entries()) {
     const idle: Partial<Record<keyof Pair, string>> = {};
+    const was = { here: sides.here.address?.(), there: sides.there?.address?.() };
     for (const name of sides.there ? (['here', 'there'] as const) : (['here'] as const)) {
       const side = name === 'here' ? sides.here : sides.there;
       if (!side) {
@@ -378,8 +422,17 @@ export const playOn = async (
       }
     }
 
+    const now = { here: sides.here.address?.(), there: sides.there?.address?.() };
+    const went: Partial<Record<keyof Pair, string>> = {
+      ...(now.here !== undefined && now.here !== was.here ? { here: now.here } : {}),
+      ...(now.there !== undefined && now.there !== was.there ? { there: now.there } : {})
+    };
     const entry = await readAll(stepText(step));
-    played.push(Object.keys(idle).length > 0 ? { ...entry, idle } : entry);
+    played.push({
+      ...entry,
+      ...(Object.keys(idle).length > 0 ? { idle } : {}),
+      ...(Object.keys(went).length > 0 ? { went } : {})
+    });
   }
 
   return { played };
@@ -431,6 +484,7 @@ const stateText = (state: ElementState): string =>
     ...(state.shown && state.inView !== 'whole' ? [state.inView === 'part' ? 'partly in view' : 'out of view'] : []),
     ...(state.shown && state.coveredBy ? [`under ${state.coveredBy}`] : []),
     ...(state.transform ? [state.transform] : []),
+    ...(state.animations ? [state.animations.join(', ')] : []),
     ...(state.focused ? ['focused'] : []),
     ...Object.entries(state.aria).map(([name, value]) => `${name} ${value}`),
     ...(state.value !== undefined ? [`value "${state.value}"`] : []),
@@ -452,8 +506,10 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
       );
     });
 
-  return played.flatMap(entry => [
+  return played.flatMap((entry, at) => [
     chalk.bold(entry.step),
+    ...(entry.went?.here ? [`  → ${entry.went.here}`] : []),
+    ...(entry.went?.there ? [chalk.dim(`  → there ${entry.went.there}`)] : []),
     ...(entry.idle?.here ? [chalk.yellow(`  here: ${entry.idle.here}`)] : []),
     ...(entry.idle?.there ? [chalk.yellow(`  there: ${entry.idle.there}`)] : []),
     ...entry.reads.flatMap((read, index) => {
@@ -471,7 +527,13 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
       }
 
       const said = moves(index) && read.moved !== undefined;
-      const here = `${said && read.moved ? `moved ${moveText(read.moved.here)}, ` : ''}${read.here ? stateText(read.here) : ''}`;
+      // Its colour said when a step changed it — what a tone picked, a state lit — never on every line.
+      const before = at === 0 ? undefined : played[at - 1]?.reads.at(index)?.here?.colour;
+      const colour =
+        read.here && before && (before.text !== read.here.colour.text || before.ground !== read.here.colour.ground)
+          ? ` · colour now ${read.here.colour.text} on ${read.here.colour.ground} (was ${before.text} on ${before.ground})`
+          : '';
+      const here = `${said && read.moved ? `moved ${moveText(read.moved.here)}, ` : ''}${read.here ? stateText(read.here) : ''}${colour}`;
       const there = read.there
         ? chalk.dim(
             ` | there ${said && read.moved?.there ? `moved ${moveText(read.moved.there)}, ` : ''}${stateText(read.there)}`

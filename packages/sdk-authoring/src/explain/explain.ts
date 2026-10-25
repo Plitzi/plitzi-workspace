@@ -2,7 +2,7 @@ import { interactionBasicTriggers } from '@plitzi/sdk-elements/elements/declarat
 import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring';
 import { GLOBAL_SOURCES } from '@plitzi/sdk-shared/dataSource';
 import { FILTER_DOCS, FUNCTION_DOCS } from '@plitzi/sdk-shared/helpers/twigWrapper/filters/catalog';
-import { STYLE_STATE_LABELS } from '@plitzi/sdk-shared/style';
+import { STYLE_STATE_LABELS, STYLE_STATE_MEANINGS } from '@plitzi/sdk-shared/style';
 
 import {
   elementAncestorTypes,
@@ -13,6 +13,7 @@ import {
   elementDefaultAttributes,
   elementLeafTypes,
   elementSlots,
+  elementMarks,
   elementPublishes,
   elementSourceTypes,
   elementTriggers,
@@ -68,6 +69,8 @@ export type Explanation =
       source?: string;
       /** What that source holds, field by field, as the element declares it. */
       publishes?: Record<string, string>;
+      /** What it writes on its node that a style or a check reads (`marks`). */
+      marks?: Record<string, string>;
       holdsChildren: boolean;
     }
   | {
@@ -100,7 +103,8 @@ export type Explanation =
   | { kind: 'helper'; name: string; signature: string; summary: string; example: string }
   | { kind: 'filter'; name: string; signature: string; summary: string; example: string }
   | { kind: 'function'; name: string; signature: string; summary: string; example: string }
-  | { kind: 'source'; name: string; summary: string; example: string; fields: string[] };
+  | { kind: 'source'; name: string; summary: string; example: string; fields: string[] }
+  | { kind: 'state'; name: string; label: string; meaning: string };
 
 export type ExplainKind = Explanation['kind'];
 
@@ -114,7 +118,8 @@ export const EXPLAIN_KINDS: Record<ExplainKind, string> = {
   helper: 'helpers',
   filter: 'filters',
   function: 'functions',
-  source: 'sources'
+  source: 'sources',
+  state: 'states'
 };
 
 /** A global source by its name, as the type of the globals knows them. */
@@ -255,6 +260,7 @@ const explainElement = (type: string): Explanation | undefined => {
     ...(Object.hasOwn(elementAncestorTypes, type) ? { inside: elementAncestorTypes[type] } : {}),
     ...(Object.hasOwn(elementSourceTypes, type) ? { source: elementSourceTypes[type] } : {}),
     ...(Object.hasOwn(elementPublishes, type) ? { publishes: elementPublishes[type] } : {}),
+    ...(Object.hasOwn(elementMarks, type) ? { marks: elementMarks[type] } : {}),
     holdsChildren: !elementLeafTypes.includes(type)
   };
 };
@@ -351,6 +357,9 @@ export const explain = (name: string): Explanation[] => {
   const filter = Object.hasOwn(FILTER_DOCS, name) ? FILTER_DOCS[name] : undefined;
   const templateFunction = Object.hasOwn(FUNCTION_DOCS, name) ? FUNCTION_DOCS[name] : undefined;
   const source = globalSource(name);
+  // A state a class styles, asked by its name: encore-4's `explain active` failed nine times, where the open tab is
+  // `current` and `active` the press.
+  const state = STYLE_STATES.find(each => each === name);
   // Asked by the name the code calls it: what `reloadApi(…)` writes is the `performQuery` step.
   const builtStep = stepOfBuilder(name);
 
@@ -374,7 +383,10 @@ export const explain = (name: string): Explanation[] => {
     ...(helper ? [{ kind: 'helper' as const, name, ...helper }] : []),
     ...(filter ? [{ kind: 'filter' as const, name, ...filter }] : []),
     ...(templateFunction ? [{ kind: 'function' as const, name, ...templateFunction }] : []),
-    ...(source ? [{ kind: 'source' as const, name, ...SOURCE_DOCS[source], fields: sourceFields(source) }] : [])
+    ...(source ? [{ kind: 'source' as const, name, ...SOURCE_DOCS[source], fields: sourceFields(source) }] : []),
+    ...(state
+      ? [{ kind: 'state' as const, name, label: STYLE_STATE_LABELS[state], meaning: STYLE_STATE_MEANINGS[state] }]
+      : [])
   ];
 };
 
@@ -415,6 +427,8 @@ export const explainList = (kind: ExplainKind): { name: string; summary: string 
       return sorted(Object.entries(FUNCTION_DOCS).map(([name, entry]) => ({ name, summary: entry.summary })));
     case 'source':
       return sorted(GLOBAL_SOURCES.map(name => ({ name, summary: SOURCE_DOCS[name].summary })));
+    case 'state':
+      return sorted(STYLE_STATES.map(name => ({ name, summary: STYLE_STATE_MEANINGS[name] })));
   }
 };
 
@@ -507,8 +521,15 @@ export const explainSearch = (text: string, limit = 10): SearchHit[] => {
     ...STYLE_STATES.map(state => ({
       kind: 'state' as const,
       name: state,
-      summary: `${STYLE_STATE_LABELS[state]}: a state a class styles — styles(name, { states: { '${state}': { … } } })`
+      summary: `${STYLE_STATE_LABELS[state]}: ${STYLE_STATE_MEANINGS[state]} — styles(name, { states: { '${state}': { … } } })`
     })),
+    ...Object.entries(elementMarks).flatMap(([type, marks]) =>
+      Object.entries(marks).map(([mark, what]) => ({
+        kind: 'element' as const,
+        name: type,
+        summary: `${mark} — ${what}`
+      }))
+    ),
     ...Object.entries(elementPublishes).flatMap(([type, fields]) =>
       Object.entries(fields).map(([field, what]) => ({
         kind: 'field' as const,
@@ -550,7 +571,7 @@ export const explanationText = (explanation: Explanation): string => {
       return [
         `${explanation.name} — element: ${explanation.label}. ${explanation.description}`,
         `Written: ${explanation.factory}${explanation.holdsChildren ? ', with children' : '; holds no children'}${explanation.inside ? `, only inside a ${explanation.inside}` : ''}${explanation.source ? `; publishes ${explanation.source}_<id>` : ''}`,
-        'Attributes:',
+        ...(explanation.attributes.length > 0 ? ['Attributes:'] : ['Attributes: none of its own — what it is made of is its children']),
         ...explanation.attributes.map(
           attribute =>
             `  ${attribute.name}${attribute.values ? `: ${attribute.values.map(value => `'${value}'`).join(' | ')}` : ''}${attribute.default === undefined ? '' : ` = ${valueText(attribute.default)}`}`
@@ -560,6 +581,9 @@ export const explanationText = (explanation: Explanation): string => {
               `Its source, ${explanation.source}_<id>, holds:`,
               ...Object.entries(explanation.publishes).map(([field, what]) => `  .${field} — ${what}`)
             ]
+          : []),
+        ...(explanation.marks
+          ? ['On the page:', ...Object.entries(explanation.marks).map(([mark, what]) => `  ${mark} — ${what}`)]
           : []),
         `Fires: ${explanation.triggers.join(', ')}`,
         `Answers: ${explanation.callbacks.join(', ')}`,
@@ -615,6 +639,11 @@ export const explanationText = (explanation: Explanation): string => {
         `${explanation.name} — global source, read by every template by its name: ${explanation.summary}`,
         ...(explanation.fields.length > 0 ? [`Fields: ${explanation.fields.join(', ')} — no other`] : []),
         `Example: ${explanation.example}`
+      ].join('\n');
+    case 'state':
+      return [
+        `${explanation.name} — a state a class styles (${explanation.label}): ${explanation.meaning}.`,
+        `Written: styles(name, { states: { '${explanation.name}': { … } } }); its ::before or ::after in it: pseudos: { before: { states: { '${explanation.name}': { … } } } }; a part lit by a condition of its own instead: activeWhen(class, '{{ … }}')`
       ].join('\n');
   }
 };

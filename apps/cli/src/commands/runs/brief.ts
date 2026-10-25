@@ -93,8 +93,8 @@ export const taskContextCommand = (
       const brief: Brief = {
         ...context,
         whole: options.files === true,
-        data: await filesOf(ctx.root, context),
-        imports: await importedApis(ctx.root, context.files)
+        data: await filesOf(context.sourceRoot, context),
+        imports: await importedApis(context.sourceRoot, context.files)
       };
       // What each part weighs, for the report: an agent reads its brief again on every turn after, and which part is
       // heavy was guessed (encore-2: 61 briefs, up to 21k characters, read again for 1.1M tokens).
@@ -241,7 +241,7 @@ export const briefOf = (context: TaskContext): string => {
     // A file near the line has little room: where the new part goes is decided before the first edit, not after.
     ...nearLimit(context).map(each =>
       chalk.yellow(
-        `  ⚠ ${each.file} is ${String(each.lines)} non-blank lines of ${String(MAX_LINES)}: what you add likely goes in a module of its own, beside it`
+        `  ⚠ ${each.file} is ${String(each.lines)} non-blank lines of ${String(MAX_LINES)}: what you add likely goes in a module of its own, beside it — a new file is yours (no task holds it; it goes in with your complete), though your files do not list it`
       )
     ),
     ...(context.reading.length > 0

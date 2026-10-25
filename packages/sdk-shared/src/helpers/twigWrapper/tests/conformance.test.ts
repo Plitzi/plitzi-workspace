@@ -135,3 +135,15 @@ describe('inspectTemplate', () => {
     expect(inspectTemplate('{{ x is defined and y is not empty }}').freeNames.sort()).toEqual(['x', 'y']);
   });
 });
+
+// encore-4: `(sort or "listeners")` answered true, and Explore's links wrote `?sort=true`.
+describe('inspectTemplate, of what reads as something other than it looks', () => {
+  it('notes an `or` or an `and` beside a text or a number, never one between conditions', () => {
+    expect(inspectTemplate("{{ sort or 'listeners' }}").notes).toEqual([
+      '`or` with "listeners" answers true or false, never the value — a fallback value is `??`: `x ?? "listeners"`'
+    ]);
+    expect(inspectTemplate('{% if open and 3 %}x{% endif %}').notes).toHaveLength(1);
+    expect(inspectTemplate("{{ sort ?? 'listeners' }}").notes).toEqual([]);
+    expect(inspectTemplate('{% if open or closed %}x{% endif %}').notes).toEqual([]);
+  });
+});

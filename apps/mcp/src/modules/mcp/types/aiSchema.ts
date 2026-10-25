@@ -296,6 +296,8 @@ export interface AISettings {
   stateStorage?: 'localStorage' | 'sessionStorage';
   /** Top-level state keys never kept, even with `keepState` on. */
   transientState?: string[];
+  /** The only top-level state keys kept, with `keepState` on — the other way round from `transientState`. */
+  keptState?: string[];
   /** Kept keys the first paint shows, kept in a cookie too so the server renders with them. Small values only. */
   paintedState?: string[];
   /** `basic` covers any HTTP+JSON backend by configuration; anything else is a name someone registered. */

@@ -534,7 +534,8 @@ it" (velada-fidelity: nine pages pictured, 204 s, for two tokens added). A page 
 whatever it reads.
 
 **A review has its time** (velada-fidelity: design-1 held one 16 min, a task queued 18 min behind it, both developers
-free). A UI review taken is its designer's for `REVIEW_TIMEOUT_MS` (8 min): past it, `task next --take` hands it to
+free). A UI review taken is its designer's for `REVIEW_TIMEOUT_MS` (8 min) — a designer's first for 7 min more
+(`FIRST_REVIEW_READING_MS`, `design.first`), which reads the references it is told to first: past it, `task next --take` hands it to
 another designer — the first told on its next command (`review-timed-out` in the log), and its verdict after refused as
 `claimed`, saying to keep what it found for the next run (`run notice`) — and `run watch` tells the lead, idle team or
 not, to decide it (`slow-review`; under the limit, only while others sit free, from half of it). One due nobody takes
@@ -923,8 +924,9 @@ that went on after "You can stop", a check that answered two ways — the lead s
 each finding names that command with its own subject. encore-3's close waited on three of them with no way to settle
 one.
 
-`run report` starts with the run at a glance and the problems by whose, numbered, each with its evidence and its fix.
-Then it gives the experience combined, the lead's summary, what each review asked when it sent a task back, **each
+`run report` prints the run at a glance and each problem's title by whose (`reportBrief`); `--full`, and the file a
+finish writes, the whole report: the run's goal (the stages it grew by listed under it), the run at a glance, and the
+problems by whose, numbered, each with its evidence and its fix. Then it gives the experience combined, the lead's summary, what each review asked when it sent a task back, **each
 agent's life** (`agentTimeline.ts`: started, joined, took, completed, reviewed, waited and stopped — with why — and the
 minutes at work, stopped and silent; a silence is ten minutes and more with nothing logged while neither waiting nor
 stopped: what the board reads as no signal), what each
@@ -961,18 +963,17 @@ the log, the messages and the run's usage — what velada-polish's lead computed
   run's `usage.jsonl` who ran it, the command (its tokens' secrets out), what it printed (stdout and stderr: what its
   caller read, a token four characters), how long, its exit. The CLI's own child processes (`task look`'s checks and
   shots, a check's scripts: `PLITZI_USAGE_CHILD`) count none — their output is read by the command, not an agent. The
-  report sums it by agent and by command, and lists the calls one agent made three times or more within ten minutes:
-  a loop, or an answer it could not use. The harness's own count — the lead is handed it with each agent's end — is said
-  with `run report --tokens dev-1=208061,…` (`tokens.json`), by agent, in all, and a task: what a Claude Code subagent
-  reports is its context at its end, not what it spent. What it spent is that context read again on every turn: the
-  report says it at the least (`reread`: its calls × half its end — a context grown from nothing), and the bench a task
-  (lx-product's dev-1 said 310k and read 30.9M again; the estimate gives 26M, the harness's own prompt left out).
+  report sums it by agent and by command, and lists the calls one agent made three times or more within ten minutes
+  of one session — a loop, or an answer it could not use; a wait (`--follow`, `run watch`) and `task next --take` are
+  meant to be run again, and a fresh session runs its first commands again, so neither counts. The harness's own count
+  comes from each round's report (`taskReports.ts`, its `harness`): by agent, what it read in all (every turn's whole
+  context), its largest context at a round's end, and what its heaviest results were read again for at the least.
 - **The bench** (`bench.ts`): the same measures, one line a run, kept as data beside the report
   (`<run>-<time>.json`, with the report whole), ends the report against the five runs before, and `plitzi run bench`
   lists every run: minutes a task, rounds a task, the share of checks failed for the copy's work and how many failed
   for nothing of it ("Not theirs"), refusals (`identity` apart), the median
-  waits for a UI review, the lead and a rework, the minutes agents waited, reworks handed off, what was read, tokens a
-  task, calls repeated — whether the team gets better from one run to the next. A second table counts the findings'
+  waits for a UI review, the lead and a rework, the minutes agents waited (to the last approval: past it they wait for
+  the person's finish), reworks handed off, what was read, what was read again a task, calls repeated — whether the team gets better from one run to the next. A second table counts the findings'
   patterns (`RunIndicators`): the ease's median, findings by whose, the share of failures not the agents', flaky checks, lines failing,
   session breaks, `explain` misses, what was done beside the CLI, what two agents said, commands refused as written, and
   the harness's tokens a task. A fix holds when its column falls.

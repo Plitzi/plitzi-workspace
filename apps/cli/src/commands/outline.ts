@@ -34,6 +34,11 @@ export interface OutlineOptions {
   url?: string;
   /** Signed in first as this account: the password from `PLITZI_CHECK_PASSWORD`. */
   as?: string;
+  /**
+   * The elements whose name, selector or words hold this — the whole page searched, at any depth: encore-4's designer
+   * found the sign-in wordmark's id, built from a prefix in code, by grepping the source.
+   */
+  find?: string;
   json?: boolean;
 }
 
@@ -57,6 +62,18 @@ export interface Outline {
 
 const DEPTH = 4;
 const LIMIT = 120;
+/** How deep, and how many, a `--find` reads: the whole page, its matches alone listed. */
+const FIND_DEPTH = 64;
+const FIND_LIMIT = 5000;
+
+/** The elements whose name, selector or words hold `word`, each at the top: what `--find` lists. */
+export const foundIn = (elements: readonly OutlinedElement[], word: string): OutlinedElement[] => {
+  const asked = word.toLowerCase();
+
+  return elements
+    .filter(each => [each.element, each.selector, each.text].some(said => said?.toLowerCase().includes(asked)))
+    .map(each => ({ ...each, depth: 0 }));
+};
 const WORDS = 32;
 
 /**
@@ -308,8 +325,8 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
         ? { clicks: options.click.map(each => pairOf(each)[target === undefined ? 'here' : 'there']) }
         : {}),
       ...(options.within === undefined ? {} : { within: options.within }),
-      depth: options.depth ?? DEPTH,
-      limit: LIMIT,
+      depth: options.find === undefined ? (options.depth ?? DEPTH) : FIND_DEPTH,
+      limit: options.find === undefined ? LIMIT : FIND_LIMIT,
       words: WORDS
     };
     const said = (
@@ -324,7 +341,16 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
         return;
       }
 
-      const result: Outline = { url, width, ...read.outline };
+      const result: Outline =
+        options.find === undefined
+          ? { url, width, ...read.outline }
+          : { url, width, elements: foundIn(read.outline.elements, options.find), more: 0 };
+      if (options.find !== undefined && result.elements.length === 0 && !options.json) {
+        console.log(`Nothing on ${url} at ${String(width)} px is named or says "${options.find}".`);
+
+        return;
+      }
+
       if (options.json) {
         outlines.push(result);
 

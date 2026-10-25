@@ -96,6 +96,19 @@ describe('what a failed step says', () => {
     ]);
     expect(said.at(-1)).toBe('✓ / at 390 px — nothing wrong');
     expect(tail('one\n\ntwo')).toEqual(['one', 'two']);
+    // encore-4: tsc's error named its overloads, and its cause — the deepest line under it — was cut.
+    const typed = tail(
+      [
+        'src/a.test.ts(3,1): error TS2769: No overload matches this call.',
+        '  Overload 1 of 2, (block: Promise<unknown>): Promise<void>',
+        "    Argument of type '() => T | Promise<T>' is not assignable to parameter of type 'Promise<unknown>'.",
+        '  Overload 2 of 2, (block: () => Promise<unknown>): Promise<void>',
+        "    Type 'T | Promise<T>' is not assignable to type 'Promise<unknown>'.",
+        ...Array.from({ length: 20 }, (_, index) => `  · noise ${String(index)}`),
+        'Found 1 error.'
+      ].join('\n')
+    );
+    expect(typed).toContain("    Type 'T | Promise<T>' is not assignable to type 'Promise<unknown>'.");
     // encore-3: every failed `author` began with the missing .env, a line that says nothing of what failed.
     expect(tail('.env not found. Continuing without it.\nSpace "encore" was not written')).toEqual([
       'Space "encore" was not written'

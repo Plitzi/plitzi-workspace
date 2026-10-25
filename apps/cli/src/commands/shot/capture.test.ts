@@ -107,8 +107,11 @@ describe('finding what a picture is aimed at', () => {
   it('finds a bare word as an element’s name, a tag, or an id — never an id CSS cannot read', async () => {
     expect(await targetOn(having('#combates'), 'combates')).toEqual({ selector: '#combates', found: true });
     expect(await targetOn(having(), 'combates')).toEqual({ selector: '[data-plitzi-el="combates"]', found: false });
-    expect(awaited('combates')).toBe('[data-plitzi-el="combates"], combates, #combates');
-    expect(awaited('404')).toBe('[data-plitzi-el="404"], 404');
+    // encore-4: a component's instance was waited for by no selector that finds it, and the clip said "not on".
+    expect(awaited('combates')).toBe(
+      '[data-plitzi-el="combates"], combates, #combates, [data-plitzi-instance="combates"]'
+    );
+    expect(awaited('404')).toBe('[data-plitzi-el="404"], 404, [data-plitzi-instance="404"]');
   });
 });
 

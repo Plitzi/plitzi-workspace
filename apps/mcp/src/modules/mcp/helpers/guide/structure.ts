@@ -158,7 +158,8 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
   yourself.
 - \`keepState\` / \`stateStorage\` — keep the runtime state (\`state.<key>\`, what \`setState\` writes) across reloads,
   in \`localStorage\`/\`sessionStorage\`, filed under whoever is signed in. It is the space's setting — pages do not
-  take one. \`transientState\` lists the top-level keys never kept (a filter, a demo, a panel left open); do not
+  take one. \`transientState\` lists the top-level keys never kept (a filter, a demo, a panel left open) — or
+  \`keptState\` the only ones kept, when few are (a dismissed notice); one of the two. Do not
   reset kept state from \`onPageLoad\` instead — it is restored later than that and undoes half of the reset.
   \`paintedState\` lists the kept keys the FIRST PAINT shows (the tool a toolbar shows, a name in an avatar): they go
   in a cookie too, so the server draws with them instead of the page swapping them in after load. Small values only.

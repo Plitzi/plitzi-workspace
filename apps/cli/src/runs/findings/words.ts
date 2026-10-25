@@ -83,7 +83,11 @@ const ALIKE = 0.28;
 const isAlike = (a: ReadonlySet<string>, b: ReadonlySet<string>): boolean =>
   likeness(a, b) >= ALIKE || (shared(a, b) >= 2 && shared(a, b) / Math.min(a.size, b.size) >= 0.5);
 
-/** The texts, grouped by what they are about: each group in the order its texts came. */
+/**
+ * The texts, grouped by what they are about: each group in the order its texts came. A text joins the group whose
+ * first text it is alike — never the group's words gathered so far: a long notice of two things drew both into one
+ * (encore-4 grouped "page measure measures the first row only" under an undici crash).
+ */
 export const groupAlike = <T>(items: readonly T[], said: (item: T) => string): T[][] => {
   const groups: { words: Set<string>; items: T[] }[] = [];
   for (const item of items) {
@@ -91,7 +95,6 @@ export const groupAlike = <T>(items: readonly T[], said: (item: T) => string): T
     const group = groups.find(each => isAlike(words, each.words));
     if (group) {
       group.items.push(item);
-      words.forEach(word => group.words.add(word));
     } else {
       groups.push({ words, items: [item] });
     }

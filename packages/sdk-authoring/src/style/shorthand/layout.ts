@@ -89,18 +89,22 @@ export const expandPlacePair = (
   out[`justify-${prop}`] = justify;
 };
 
-// grid-row / grid-column: `start / end` (a lone value sets the start and leaves the end auto).
+// A grid line's omitted end mirrors its start only when the start names an area (a custom ident); otherwise it is auto.
+const GRID_IDENT_RE = /^-?[A-Za-z_][\w-]*$/;
+const pairedLine = (line: string): string => (GRID_IDENT_RE.test(line) && line !== 'auto' && line !== 'span' ? line : 'auto');
+
+// grid-row / grid-column: `start / end`.
 export const expandGridLine = (key: 'grid-row' | 'grid-column', value: string, out: CssProps): void => {
   const axis = key.slice('grid-'.length);
-  const [start, end = 'auto'] = splitOn(value, '/');
+  const [start, end = pairedLine(start)] = splitOn(value, '/');
   out[`grid-${axis}-start`] = start;
   out[`grid-${axis}-end`] = end;
 };
 
-// grid-area: `row-start / column-start / row-end / column-end`, each omitted part mirroring the one it pairs with.
+// grid-area: `row-start / column-start / row-end / column-end`.
 export const expandGridArea = (value: string, out: CssProps): void => {
-  const parts = splitOn(value, '/');
-  const [rowStart, colStart = rowStart, rowEnd = colStart, colEnd = rowEnd] = parts;
+  const [rowStart, colStart = pairedLine(rowStart), rowEnd = pairedLine(rowStart), colEnd = pairedLine(colStart)] =
+    splitOn(value, '/');
   out['grid-row-start'] = rowStart;
   out['grid-column-start'] = colStart;
   out['grid-row-end'] = rowEnd;

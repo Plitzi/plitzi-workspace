@@ -136,23 +136,23 @@ describe('expandShorthand', () => {
     });
   });
   describe('grid-area', () => {
-    it('expands single value to all positions', () => {
+    it('leaves the omitted parts of a line number auto', () => {
       const result = expandShorthand({ 'grid-area': '1' });
       expect(result).toEqual({
         'grid-row-start': '1',
-        'grid-column-start': '1',
-        'grid-row-end': '1',
-        'grid-column-end': '1'
+        'grid-column-start': 'auto',
+        'grid-row-end': 'auto',
+        'grid-column-end': 'auto'
       });
     });
 
-    it('expands two values to row/column start', () => {
-      const result = expandShorthand({ 'grid-area': '1 / 2' });
+    it('expands two line numbers to the starts, the ends auto', () => {
+      const result = expandShorthand({ 'grid-area': '2 / 1' });
       expect(result).toEqual({
-        'grid-row-start': '1',
-        'grid-column-start': '2',
-        'grid-row-end': '2',
-        'grid-column-end': '2'
+        'grid-row-start': '2',
+        'grid-column-start': '1',
+        'grid-row-end': 'auto',
+        'grid-column-end': 'auto'
       });
     });
 

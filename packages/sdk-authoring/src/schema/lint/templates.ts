@@ -181,7 +181,11 @@ export const checkTemplate = (
     return;
   }
 
-  const { issues, freeNames } = inspectTemplate(template);
+  const { issues, freeNames, notes } = inspectTemplate(template);
+  for (const note of notes) {
+    ctx.warn('template-or-value', `${where}: in "${shorten(template)}", ${note}.`, id);
+  }
+
   const reads = globalFieldsRead(template);
   checkComputedReads(ctx, reads, where, site, id);
   checkFlagReads(ctx, reads, where, id);

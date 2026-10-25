@@ -207,6 +207,28 @@ describe('lintSpace', () => {
       expect(warningsOf(fine)).not.toContain('form-value-compared-to-blank');
     });
 
+    // encore-4: `roomStatsData.locked` never held, and nothing said so — the source is `apiContainer_roomStatsData`.
+    it('condition-short-source', () => {
+      const conditioned = (field: string) =>
+        withChange(({ schema }) => {
+          setFlow(schema, 'go', [
+            onClick(),
+            step('note', 'globalCallback', 'addNotification', {
+              elementId: 'space',
+              params: { content: 'Locked' },
+              when: { combinator: 'and', rules: [{ field, operator: '=', value: true }] }
+            })
+          ]);
+        });
+
+      const short = lintSpace(conditioned('feed.locked')).errors.filter(
+        issue => issue.code === 'condition-short-source'
+      );
+      expect(short).toHaveLength(1);
+      expect(short[0].message).toContain('a source is named in full — `apiContainer_feed.locked`');
+      expect(errorsOf(conditioned('apiContainer_feed.locked'))).not.toContain('condition-short-source');
+    });
+
     /** `whenSucceeded` after a sign-in: `login` answers `ok` and `reason`, never a server action's `status`. */
     it('condition-field-unpublished', () => {
       const guarded = (id: string, field: string, operator: '=' | '!=') =>

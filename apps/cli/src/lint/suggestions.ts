@@ -4,6 +4,7 @@ import path from 'node:path';
 import { authorSpace, refusalOf } from '@plitzi/sdk-authoring';
 
 import { finding } from './catalog';
+import { specSelectorFindings } from './specSelectors';
 import { loadProjectSpace } from '../commands/projectSpace';
 
 import type { LintFinding } from './types';
@@ -80,9 +81,9 @@ export const authoringFindings = async (root: string): Promise<LintFinding[]> =>
     return [finding('space-does-not-author', `${project.problem} What authoring suggests could not be read.`)];
   }
 
-  let suggestions: Suggestion[];
+  let authored: ReturnType<typeof authorSpace>;
   try {
-    suggestions = authorSpace(project.space, project.authoring).suggestions;
+    authored = authorSpace(project.space, project.authoring);
   } catch (error) {
     return [
       finding(
@@ -92,9 +93,13 @@ export const authoringFindings = async (root: string): Promise<LintFinding[]> =>
     ];
   }
 
-  return Promise.all(
-    suggestions
-      .filter(suggestion => !NOT_RELAYED.has(suggestion.code))
-      .map(suggestion => fromSuggestion(root, suggestion))
-  );
+  return [
+    ...(await Promise.all(
+      authored.suggestions
+        .filter(suggestion => !NOT_RELAYED.has(suggestion.code))
+        .map(suggestion => fromSuggestion(root, suggestion))
+    )),
+    // The project's tests, read against the space they test: an instance named as no node is.
+    ...(await specSelectorFindings(root, authored.handles))
+  ];
 };

@@ -246,6 +246,12 @@ export type Schema = {
      */
     transientState?: string[];
     /**
+     * The only keys of `runtime.state` kept, with `keepState` on — the rest start fresh on every visit: a dismissed notice
+     * kept, a page's every other key left alone. The other way round from `transientState`, which names the keys to
+     * leave out; a space says one of the two. Top-level keys, as `setState` writes them.
+     */
+    keptState?: string[];
+    /**
      * Keys of `runtime.state` the first paint depends on — the tool a toolbar shows, a name in an avatar — kept in a
      * cookie as well as in `stateStorage`, so the server renders with them and the page does not swap them in after
      * hydration. Small values only: the cookie travels with every request and holds at most a few kilobytes. Needs

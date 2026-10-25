@@ -71,33 +71,49 @@ const commandOf = (input: Record<string, unknown>): string | undefined => {
       : undefined;
 };
 
-/** What a tool was asked, in words that say its kind and nothing of the project: `plitzi page measure`, `Read .ts`. */
-export const whatOf = (tool: string, input: unknown): string => {
+/**
+ * What a tool was asked, in words that say its kind and nothing of the project — the tool itself left to `kindOf`:
+ * `plitzi page measure`, `.ts`. encore-4 read "Read Read .ts", and "Bash " for 371 results: a command after a comment,
+ * a `cd …;`, a subshell, or a loop had no word that named it.
+ */
+export const whatOf = (_tool: string, input: unknown): string => {
   if (!isRecord(input)) {
-    return tool;
+    return '';
   }
 
   const command = commandOf(input);
   if (command !== undefined) {
-    // The command itself, past a `cd …&&` and variables set before it; a CLI by its path is named by its file.
-    const words = command
-      .replace(/^\s*(bash|zsh|sh)\s+-l?c\s+/, '')
-      .replace(/^\s*cd\s+\S+\s*&&\s*/, '')
+    // The first line that runs something, past comments, a `cd …` and variables set before it; a CLI by its path is
+    // named by its file.
+    const line =
+      command
+        .replace(/^\s*(bash|zsh|sh)\s+-l?c\s+/, '')
+        .split('\n')
+        .map(each => each.trim())
+        .find(each => each !== '' && !each.startsWith('#')) ?? '';
+    const words = line
+      .replace(/^[({]\s*/, '')
+      .replace(/^cd\s+\S+\s*(&&|;)\s*/, '')
+      .replace(/^(for|while|if)\b.*?;\s*(do|then)\s+/, '')
       .split(/\s+/)
       .filter(word => word !== '' && !/^[A-Z_][A-Z0-9_]*=/.test(word))
       .map(word => path.basename(word.replace(/^['"]|['"]$/g, '')));
     const first = words.at(0) ?? '';
-
-    return [first === 'npx' ? words.slice(0, 2) : [first], first === 'plitzi' ? words.slice(1, 3) : []]
+    const named = [first === 'npx' ? words.slice(0, 2) : [first], first === 'plitzi' ? words.slice(1, 3) : []]
       .flat()
       .filter(word => /^[\w.-]+$/.test(word))
       .join(' ');
+
+    return named === '' ? 'a shell script' : named;
   }
 
   const file = input.file_path ?? input.filePath ?? input.path;
 
-  return typeof file === 'string' ? `${tool} ${path.extname(file) || 'file'}` : tool;
+  return typeof file === 'string' ? path.extname(file) || 'file' : '';
 };
+
+/** A tool's kind of result, as reports name it: `Bash plitzi page measure`, `Read .ts`, `Grep`. */
+export const kindOf = (tool: string, what: string): string => (what === '' ? tool : `${tool} ${what}`);
 
 /** A file of Plitzi's own named in what a tool was given: a skill's, or a `@plitzi` package's. */
 const PLITZI_FILE = /(?:skills\/plitzi-[\w-]+\/[\w./-]+\.\w+|@plitzi\/[\w-]+\/[\w./-]+\.\w+)/g;
@@ -120,7 +136,7 @@ export const usageOf = (reads: readonly SessionRead[]): HarnessUsage | undefined
   for (const result of reads.flatMap(read => read.results)) {
     const asked = calls.get(result.key) ?? { tool: 'unknown', what: 'unknown' };
     const after = answered.filter(turn => turn.at > result.at).length;
-    const kind = `${asked.tool} ${asked.what}`;
+    const kind = kindOf(asked.tool, asked.what);
     const kept = heaviest.get(kind) ?? { tool: asked.tool, what: asked.what, results: 0, chars: 0, reread: 0 };
     kept.results += 1;
     kept.chars += result.chars;

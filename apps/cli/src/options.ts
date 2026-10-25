@@ -11,11 +11,25 @@ import type { Command } from 'commander';
  * check a page at no width at all and say nothing.
  */
 
+/**
+ * A value that is another option: the one this option takes went missing — an empty shell variable, the words of a
+ * loop out of order. encore-4's `page shot /design 390 dark pixels-brand-row --width --scheme --clip` was told only
+ * that a width is a whole number, five times.
+ */
+const refuseOption = (value: string): void => {
+  if (/^--?[a-z]/i.test(value.trim())) {
+    throw new InvalidArgumentError(
+      `${value.trim()} is the next option, not a value: each option's value goes right after it (--width 1440 --scheme dark) — a shell variable left empty drops it.`
+    );
+  }
+};
+
 const MIN_WIDTH = 320;
 const MAX_WIDTH = 3840;
 
 /** A viewport width: a whole number of pixels, from a small phone to a 4K screen. */
 export const width = (value: string): number => {
+  refuseOption(value);
   const parsed = Number(value.trim());
   if (!Number.isInteger(parsed) || parsed < MIN_WIDTH || parsed > MAX_WIDTH) {
     throw new InvalidArgumentError(
@@ -32,21 +46,26 @@ export const widths = (value: string): number[] => [...new Set(value.split(',').
 const isScheme = (value: string): value is Scheme => (SCHEMES as readonly string[]).includes(value);
 
 /** Schemes separated by commas, each once: a picture of each, as `--width` takes several. */
-export const schemes = (value: string): Scheme[] => [
-  ...new Set(
-    value.split(',').map(each => {
-      const scheme = each.trim();
-      if (!isScheme(scheme)) {
-        throw new InvalidArgumentError(`A scheme is ${SCHEMES.join(' or ')} — or both: light,dark.`);
-      }
+export const schemes = (value: string): Scheme[] => {
+  refuseOption(value);
 
-      return scheme;
-    })
-  )
-];
+  return [
+    ...new Set(
+      value.split(',').map(each => {
+        const scheme = each.trim();
+        if (!isScheme(scheme)) {
+          throw new InvalidArgumentError(`A scheme is ${SCHEMES.join(' or ')} — or both: light,dark.`);
+        }
+
+        return scheme;
+      })
+    )
+  ];
+};
 
 /** A whole number from 1: a height in pixels, a count, milliseconds. */
 export const positiveInteger = (value: string): number => {
+  refuseOption(value);
   const parsed = Number(value.trim());
   if (!Number.isInteger(parsed) || parsed < 1) {
     throw new InvalidArgumentError('It takes a whole number from 1.');
@@ -55,8 +74,22 @@ export const positiveInteger = (value: string): number => {
   return parsed;
 };
 
+const MAX_SCALE = 4;
+
+/** A picture's zoom: device pixels a CSS pixel, 1 to 4. */
+export const scale = (value: string): number => {
+  refuseOption(value);
+  const parsed = Number(value.trim());
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > MAX_SCALE) {
+    throw new InvalidArgumentError(`A scale is a whole number from 1 to ${String(MAX_SCALE)}: --scale 3.`);
+  }
+
+  return parsed;
+};
+
 /** An HTTP status, `404`: three digits, 100 to 599. */
 export const statusCode = (value: string): number => {
+  refuseOption(value);
   const parsed = Number(value.trim());
   if (!Number.isInteger(parsed) || parsed < 100 || parsed > 599) {
     throw new InvalidArgumentError('A status is an HTTP code, 100 to 599: --status 404.');
@@ -67,6 +100,7 @@ export const statusCode = (value: string): number => {
 
 /** A time zone the browser knows (IANA): refused here, by name, rather than by the browser mid-check. */
 export const timeZone = (value: string): string => {
+  refuseOption(value);
   const zone = value.trim();
   try {
     Intl.DateTimeFormat('en', { timeZone: zone });

@@ -531,13 +531,10 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...HARDEST_OPTION)
     .option(...FRICTION_OPTION)
     .option(...HELPED_OPTION)
-    .option(
-      '--tokens <agent=count,…>',
-      'What the harness counted each agent spent — the lead is handed it — kept for the report and the bench'
-    )
+    .option('--full', 'The whole report — each finding with its evidence and fix, the flow, the cost, the bench')
     .option(...JSON_OPTION)
     .action(
-      (run: string | undefined, options: RunCommandOptions & { summary?: string; tokens?: string } & ExperienceFlags) =>
+      (run: string | undefined, options: RunCommandOptions & { summary?: string; full?: boolean } & ExperienceFlags) =>
         runReport(run, options)
     );
 

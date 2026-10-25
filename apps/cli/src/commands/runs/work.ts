@@ -7,6 +7,7 @@ import { crossed, longFileText } from '../../runs/longFiles';
 import { runPaths } from '../../runs/paths';
 import { RunRefusal } from '../../runs/refusal';
 import { logRun } from '../../runs/run';
+import { backupText } from '../../runs/strays';
 import { tellLead } from '../../runs/talk';
 import { blockTask, checkTask, completeTask, noteTask, reportProgress, unblockTask } from '../../runs/tasks';
 
@@ -146,6 +147,13 @@ export const taskCheck = (
                 ? 'Your copy does not pass yet — only what --fix said was changed, and nothing counted against the run:'
                 : 'Your copy does not pass yet — none of your work was changed, and nothing counted against the run:'
             ),
+        ...(checked.failedAlikeAt
+          ? [
+              chalk.yellow(
+                `  The same as at ${checked.failedAlikeAt.slice(11, 16)} UTC, on the same files: nothing changed since, so it fails the same — change what it says, then check (a check run again on the same files answers the same)`
+              )
+            ]
+          : []),
         ...checked.checks.steps.map(
           step =>
             `  ${step.ok ? '✓' : chalk.yellow('✗')} ${step.name}${step.ok ? '' : `\n${(step.said ?? []).map(line => `      ${line}`).join('\n')}`}`
@@ -167,6 +175,7 @@ export const taskCheck = (
             `  ${each.ok ? '✓' : chalk.yellow('✗')} acceptance — ${each.said}  ${chalk.dim(`[${each.check}]`)}${secondRunText(each)}${each.ok || !each.output ? '' : `\n${each.output.map(line => `      ${line}`).join('\n')}`}`
         ),
         ...checked.tooLong.map(each => chalk.yellow(`  ✗ ${each}`)),
+        ...(checked.backups ?? []).map(file => chalk.yellow(`  ✗ ${backupText(file)}`)),
         ...(checked.othersFiles ?? []).map(each =>
           chalk.yellow(
             `  ✗ ${each.file} is ${each.holder}'s, at work — complete refuses it: put it back (plitzi task discard ${each.file}) and propose the change to ${each.holder} (plitzi task propose ${each.holder} --change "…"), or wait for it (plitzi task wait ${each.file})`

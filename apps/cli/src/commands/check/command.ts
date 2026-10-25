@@ -18,6 +18,7 @@ import { checkAt } from './inspect';
 import { moduleSpace, projectSpace } from './space';
 import { reportText } from './text';
 import { serverErrors } from './types';
+import { localFetch } from '../../http';
 
 import type { Scheme } from '../../browser';
 import type { ExistingProject } from '../existingProject';
@@ -128,7 +129,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
  * tour still in the project). None found: the project's.
  */
 const servedFolder = async (root: string, url: string): Promise<string | undefined> => {
-  const health: unknown = await fetch(new URL('/health', url), { signal: AbortSignal.timeout(2_000) })
+  const health: unknown = await localFetch(new URL('/health', url), { signal: AbortSignal.timeout(2_000) })
     .then(async (answer): Promise<unknown> => answer.json())
     .catch(() => undefined);
   const mark = isRecord(health) && typeof health.Instance === 'string' ? health.Instance : undefined;

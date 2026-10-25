@@ -37,6 +37,13 @@ export const MEASURED = [
   'height',
   'transform',
   'transition',
+  // Whether a part plays, is paused or stilled under reduced motion: encore-4's designer wrote a Playwright script of its
+  // own to read it.
+  'animation',
+  // Where a grid places it, and the width it is held to: encore-4's designer read them from the served HTML with curl.
+  'position',
+  'max-width',
+  'grid-area',
   // Where its box starts in the viewport: a column measured against another's (lx-fidelity: every agent and the lead
   // wrote a browser script of its own to read it) — and from the top of the page, an arrow at a column's foot
   // (lx-product's design-1 judged it from a picture: `--same y` was refused).
@@ -65,6 +72,12 @@ export const sideOf = (value: string, side: number): string => {
  */
 export const PSEUDO_MEASURED = [
   'content',
+  // Where it sits: a marquee's bulb row under its sign (encore-4's designer measured it by a picture).
+  'position',
+  'top',
+  'right',
+  'bottom',
+  'left',
   'background-color',
   'background-image',
   'opacity',
@@ -104,6 +117,11 @@ export interface Measured {
    * space gives are on it — velada-backlog's `body` read Times 400 and the noscript's words.
    */
   spaceRoot?: string;
+  /**
+   * How many elements its selector finds, when more than one: the first shown was measured — a list's first row alone
+   * (encore-4's widest genre name could not be named, and was proven by a picture).
+   */
+  matches?: number;
 }
 
 /** A colour written as CSS Color 4 writes it — `color(srgb 0.78 0.66 0.42 / 0.5)` — as `rgb()`: one colour, one way. */
@@ -286,4 +304,49 @@ export const onlyOf = (
   );
 
   return { ...read, styles: Object.fromEntries(Object.entries(read.styles).filter(([key]) => shown.has(key))) };
+};
+
+/**
+ * A computed value that is its property's own initial one — what an element says nothing of: `none`, `normal`, a
+ * transparent ground, no border. A reading leaves them out unless asked for all (`--all`).
+ */
+const INITIAL: Readonly<Record<string, RegExp>> = {
+  'background-color': /^rgba\(0, 0, 0, 0\)$/,
+  'background-image': /^none$/,
+  'box-shadow': /^none$/,
+  'text-shadow': /^none$/,
+  // No style, or no width, is no outline — whatever colour it is said with (`rgb(…) none 3px`).
+  outline: /\bnone\b|^0px\b|\s0px$/,
+  'outline-offset': /^0px$/,
+  opacity: /^1$/,
+  transform: /^none$/,
+  // A page measured with its motion stilled (`MOTION_STILL_CSS`) reads its transitions as `1e-05s`: none of its own.
+  transition: /^((all|none)( 0s ease 0s)?( normal)?|(all |none )?1e-05s)$/,
+  // No name, no animation — whatever its timing says; stilled, only a time is left.
+  animation: /^none\b|^1e-05s$/,
+  'letter-spacing': /^normal$/,
+  'text-transform': /^none$/,
+  'border-top': /^0px\b/,
+  'border-right': /^0px\b/,
+  'border-bottom': /^0px\b/,
+  'border-left': /^0px\b/,
+  'border-radius': /^0px$/,
+  margin: /^0px$/,
+  padding: /^0px$/,
+  gap: /^normal$/,
+  'list-style': /^outside none disc$/,
+  position: /^static$/,
+  'max-width': /^none$/,
+  'grid-area': /^auto( \/ auto){0,3}$/,
+  top: /^auto$/,
+  right: /^auto$/,
+  bottom: /^auto$/,
+  left: /^auto$/
+};
+
+/** Whether a computed value is its property's initial one — a pseudo-element's (`before:top`) read as its property. */
+export const atInitial = (property: string, value: string): boolean => {
+  const own = property.includes(':') ? property.slice(property.indexOf(':') + 1) : property;
+
+  return Object.hasOwn(INITIAL, own) && INITIAL[own].test(value.trim());
 };

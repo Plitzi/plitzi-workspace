@@ -6,6 +6,7 @@ import { usageOf } from './types';
 
 import type { HarnessUsage, SessionRead } from './types';
 
+export { kindOf } from './types';
 export type { HarnessName, HarnessUsage } from './types';
 
 /**

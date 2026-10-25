@@ -66,7 +66,8 @@ export const agentTimelines = (log: readonly Record<string, unknown>[], end: Dat
   const agents = [
     ...new Set(
       log.flatMap(entry => [
-        ...(typeof entry.by === 'string' && entry.by !== 'lead' && entry.by !== 'plitzi' && entry.by !== 'person'
+        // `unnamed`: a call no agent's token named (a refusal of `identity`) — said with the refusals, it is no agent.
+        ...(typeof entry.by === 'string' && !['lead', 'plitzi', 'person', 'unnamed'].includes(entry.by)
           ? [entry.by]
           : []),
         ...(entry.action === 'launch' && typeof entry.agent === 'string' && entry.agent !== 'lead' ? [entry.agent] : [])
@@ -91,8 +92,12 @@ export const agentTimelines = (log: readonly Record<string, unknown>[], end: Dat
     const minutes = { active: 0, stopped: 0, silent: 0 };
     const silences: { from: string; minutes: number }[] = [];
     for (const [index, entry] of own.entries()) {
+      if (Date.parse(text(entry.at)) >= end.getTime()) {
+        break;
+      }
+
       const next = own.at(index + 1);
-      const until = next ? Date.parse(text(next.at)) : end.getTime();
+      const until = Math.min(next ? Date.parse(text(next.at)) : end.getTime(), end.getTime());
       const span = minutesBetween(text(entry.at), until);
       // Stopped as the board reads it: after a stop, until it comes back for work or is started again.
       const stopped = stoppedAgents(own.slice(0, index + 1)).has(agent) && entry.action !== 'launch';

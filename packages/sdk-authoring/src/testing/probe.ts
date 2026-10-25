@@ -87,30 +87,41 @@ export function probePage(input: ProbeInput): ProbeFindings {
     return undefined;
   };
 
-  /** The style rules of the page's own sheets that sit under a condition on the viewport (`@media`, `@container`). */
-  const conditionalRules = (): CSSStyleRule[] => {
-    const found: CSSStyleRule[] = [];
-    const walk = (rules: CSSRuleList, conditional: boolean): void => {
+  /**
+   * The style rules of the page's own sheets that sit under a condition on the viewport (`@media`, `@container`), by
+   * the selector they apply to. A condition written inside a class's rule — as a space's classes are written — holds
+   * declarations of that rule's selector (`CSSNestedDeclarations`): encore-4's wide-screen sides, shown by a container
+   * condition, read as broken below it.
+   */
+  const conditionalRules = (): { selectorText: string; style: CSSStyleDeclaration }[] => {
+    const found: { selectorText: string; style: CSSStyleDeclaration }[] = [];
+    const walk = (rules: CSSRuleList, conditional: boolean, around: string | undefined): void => {
       for (const rule of rules) {
         if (rule instanceof CSSStyleRule) {
           if (conditional) {
-            found.push(rule);
+            found.push({ selectorText: rule.selectorText, style: rule.style });
           }
 
-          walk(rule.cssRules, conditional);
+          walk(rule.cssRules, conditional, rule.selectorText);
         } else if (
           rule instanceof CSSMediaRule ||
           (typeof CSSContainerRule !== 'undefined' && rule instanceof CSSContainerRule)
         ) {
-          walk(rule.cssRules, true);
+          walk(rule.cssRules, true, around);
         } else if (rule instanceof CSSGroupingRule) {
-          walk(rule.cssRules, conditional);
+          walk(rule.cssRules, conditional, around);
+        } else if (conditional && around !== undefined) {
+          // Declarations nested straight under the condition: the enclosing rule's, read by its selector.
+          const style: unknown = Reflect.get(rule, 'style');
+          if (style instanceof CSSStyleDeclaration) {
+            found.push({ selectorText: around, style });
+          }
         }
       }
     };
     for (const sheet of document.styleSheets) {
       try {
-        walk(sheet.cssRules, false);
+        walk(sheet.cssRules, false, undefined);
       } catch {
         // A stylesheet from another origin keeps its rules to itself.
       }
@@ -119,7 +130,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
     return found;
   };
 
-  let widthRules: CSSStyleRule[] | undefined;
+  let widthRules: { selectorText: string; style: CSSStyleDeclaration }[] | undefined;
   /**
    * Whether a node is shown or hidden by the width it is drawn at: a rule under a breakpoint sets its `display` or its
    * `visibility` — whether that rule applies now or not. The desktop navigation a phone hides, the bottom bar only a

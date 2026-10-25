@@ -178,3 +178,65 @@ export const checkHeadingLevels = (ctx: LintContext, element: Element, where: st
     }
   }
 };
+
+/** Where a popup is drawn, set by its dropdown: a class's rule on any of these moves it off its trigger. */
+const POPUP_PLACE = ['position', 'top', 'left', 'right', 'bottom', 'inset', 'transform'];
+
+/** The first of `properties` a class sets on an element's own node, at any breakpoint and in any state — and where. */
+const setOnBase = (
+  ctx: LintContext,
+  element: Element,
+  properties: readonly string[]
+): { className: string; property: string; mode: string } | undefined => {
+  for (const className of classesOf(element.definition.styleSelectors.base)) {
+    for (const [mode, items] of Object.entries(ctx.style.platform)) {
+      for (const rules of classRules(items, className).values()) {
+        const property = properties.find(each => rules.has(each));
+        if (property) {
+          return { className, property, mode };
+        }
+      }
+    }
+  }
+
+  return undefined;
+};
+
+/**
+ * A dropdown's popup is drawn at the space's root, `position: fixed` where its dropdown places it: a class that sets
+ * its place moves it off its trigger, silently — encore-4's header menu was laid in the header's flow, the burger cut
+ * off, and only a picture at 390 showed it.
+ */
+export const checkPopupPosition = (ctx: LintContext, element: Element, where: string): void => {
+  if (element.definition.type !== 'dropdownPopup') {
+    return;
+  }
+
+  const set = setOnBase(ctx, element, POPUP_PLACE);
+  if (set) {
+    ctx.warn(
+      'popup-position-set',
+      `${where} is a dropdownPopup whose class "${set.className}" sets \`${set.property}\` (${set.mode}) — but its dropdown draws it at the space's root, fixed where it places it, and the class moves it off its trigger. Give the class its look alone; its place is the dropdown's: \`popupPlacement\`, \`containerTopOffset\`, \`containerLeftOffset\` — and \`popupWidth: 'trigger'\` for a list as wide as its trigger.`,
+      element.id
+    );
+  }
+};
+
+/**
+ * An icon's glyphs are Font Awesome's font: a class giving it another `font-family` draws a fallback character — a
+ * "≡" for a bars icon — and every check passed it (encore-4's design-2 saw it in a picture).
+ */
+export const checkIconFont = (ctx: LintContext, element: Element, where: string): void => {
+  if (element.definition.type !== 'fontAwesome') {
+    return;
+  }
+
+  const set = setOnBase(ctx, element, ['font-family']);
+  if (set) {
+    ctx.warn(
+      'icon-font-replaced',
+      `${where} is a fontAwesome icon whose class "${set.className}" sets \`font-family\` (${set.mode}) — the icon's glyphs are Font Awesome's font, and another draws a fallback character in their place. Set the font on the text around it; on the icon, its size and colour.`,
+      element.id
+    );
+  }
+};

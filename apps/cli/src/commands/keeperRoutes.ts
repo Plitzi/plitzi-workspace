@@ -98,7 +98,19 @@ const isStep = (value: unknown): value is ActingStep => {
     case 'press':
       return typeof value.key === 'string';
     case 'wait':
+    case 'tick':
       return typeof value.ms === 'number';
+    // Every step a play takes, the other site's page too: a `goto` there went unread as "not a step".
+    case 'reload':
+      return true;
+    case 'goto':
+      return typeof value.path === 'string';
+    case 'store':
+      return typeof value.key === 'string' && typeof value.value === 'string';
+    case 'state':
+      return typeof value.key === 'string' && 'value' in value;
+    case 'clock':
+      return typeof value.time === 'number';
     default:
       return false;
   }

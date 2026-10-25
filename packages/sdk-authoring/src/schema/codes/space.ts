@@ -22,6 +22,21 @@ export const SPACE_CODES = {
     means: 'a state key both painted (kept for the server) and transient (never kept)',
     fix: 'remove it from one of the two'
   },
+  'state-kept-and-transient': {
+    kind: 'refused',
+    means: '`keptState` (the only keys kept) and `transientState` (the keys left out) both said',
+    fix: 'one of the two: `keptState` when few keys are kept, `transientState` when few are not'
+  },
+  'state-painted-not-kept': {
+    kind: 'refused',
+    means: 'a `paintedState` key that `keptState` does not keep — the server draws with what is kept',
+    fix: 'add it to `keptState`, or leave it out of `paintedState`'
+  },
+  'kept-state-without-keep-state': {
+    kind: 'warned',
+    means: '`keptState` without `keepState` — nothing is kept in the first place',
+    fix: '`settings.keepState: true`, or remove `keptState`'
+  },
   'transient-state-without-keep-state': {
     kind: 'warned',
     means: '`transientState` without `keepState` — nothing is kept in the first place',

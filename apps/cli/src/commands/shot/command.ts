@@ -27,6 +27,8 @@ import {
   missingDress,
   regionsText
 } from './compare';
+import { framesOf } from './frames';
+import { shotFile, tilesOf } from './output';
 import { clickThrough, interactionSteps, playSteps } from './steps';
 import { MOVING_PERCENT } from './types';
 
@@ -341,6 +343,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     const view: View = {
       width: options.width ?? 1280,
       height: options.height ?? 800,
+      ...(options.scale ? { scale: options.scale } : {}),
       ...(options.scheme ? { scheme: options.scheme } : {}),
       // Beside a page of this machine — the run before a task — both sides held to what the project changed: motion
       // reduced and another site's pictures stood in for, on each (velada-polish: the same look 7%, then 0%).
@@ -381,12 +384,10 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
 
     const { how } = taken;
 
-    // Named by the theme the page was painted in, which is the space's default when none was asked for.
-    const name = pathname === '/' ? 'home' : pathname.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
     // Taken in a task's copy, a picture is the run's, by task: where the lead reads what the agent points at, outside
     // the copy (rebuilt when the task is taken again) and gone with the run — never left in the project's tmp/.
     const copy = copyOf(project.root);
-    const file = `${name}-${String(view.width)}-${taken.scheme}.png`;
+    const file = shotFile(pathname, clip, view.width, taken.scheme);
     const asked = options.out === undefined ? undefined : path.resolve(project.root, options.out);
     // A folder named is where the picture goes, by its own name: written over, a folder was Node's EISDIR (lx-copy's
     // design-2).
@@ -408,6 +409,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     const base = out.replace(/\.png$/, '');
     await mkdir(path.dirname(out), { recursive: true });
     await writeFile(out, taken.png);
+    const tiles = how.kind === 'page' ? await tilesOf(taken.page, view, base) : [];
     // The sections a diff is told by are the page's: a picture of part of it is one region, named for what it shows.
     const regions: PictureRegion[] = how.kind === 'page' ? await readPage(taken.page, pageRegions, undefined) : [];
     // `--clip` with `--compare` may name any element, not only a section: one inside a section is a region of its own,
@@ -431,7 +433,8 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       ...(taken.settled > 0 ? { settled: taken.settled } : {}),
       ...(taken.unloaded > 0 ? { unloaded: taken.unloaded } : {}),
       ...(taken.undrawn.length > 0 ? { undrawn: taken.undrawn } : {}),
-      ...(taken.sentTo ? { sentTo: taken.sentTo } : {})
+      ...(taken.sentTo ? { sentTo: taken.sentTo } : {}),
+      ...(tiles.length > 0 ? { tiles } : {})
     };
 
     if (options.compare) {
@@ -577,12 +580,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
         how.kind === 'page'
           ? framesMoved(diffs)
           : [{ name: whole, changed: Math.max(0, ...diffs.map(diff => diff.changed)) }];
-      report.frames = {
-        count: frames,
-        every,
-        moving: moved.filter(region => region.changed > MOVING_PERCENT),
-        still: moved.filter(region => region.changed <= MOVING_PERCENT).map(region => region.name)
-      };
+      report.frames = framesOf(moved, how.kind === 'page', frames, every);
     }
 
     // The pictures taken after the first: on one sheet with `--sheet`, and each in a file of its own beside it always —
@@ -715,6 +713,12 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       console.log(`sheet: ${report.sheet}`);
     }
 
+    if (report.tiles) {
+      console.log(
+        `A tall page, in ${String(report.tiles.length)} parts too, each read at its size: ${report.tiles.join(', ')}`
+      );
+    }
+
     for (const picture of report.pictures ?? []) {
       console.log(`${picture.label}: ${picture.out}`);
     }
@@ -725,6 +729,11 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
           ? `moving over ${String(report.frames.count)} frames: ${regionsText(report.frames.moving)}`
           : `nothing moved over ${String(report.frames.count)} frames, ${String(report.frames.every)} ms apart`
       );
+      if (report.frames.slight.length > 0) {
+        console.log(
+          `  barely — ${String(MOVING_PERCENT)}% or less, a caret or anti-aliasing, or a small part that moves: ${regionsText(report.frames.slight)} (--clip <it> says whether it moves)`
+        );
+      }
     }
   } finally {
     await browser.close();

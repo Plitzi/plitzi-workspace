@@ -1,5 +1,6 @@
 import { proposalsOf } from './agreements';
 import { fingerprint, readOptional } from './files';
+import { isCoLead, isPrincipal } from './leads';
 import { LEAD, markRead, messagesOf } from './messages';
 import { under } from './paths';
 import { RunRefusal } from './refusal';
@@ -132,6 +133,15 @@ export const FROM_TEXT: Record<TaskShown['from'], string> = {
   none: 'nothing yet'
 };
 
+/**
+ * What an agent of the team does with another's task: tells the lead, or asks that task to agree to a change — never
+ * the lead's steps, which refuse its token (encore-4's design-2 was offered `task message`).
+ */
+const agentNext = (task: RunTask): string[] => [
+  `plitzi task tell --about ${task.id} "…"   # what the lead should know of it`,
+  `plitzi task propose ${task.id} --change "…"   # a change you need it to agree to`
+];
+
 const nextFor = (task: RunTask, status: TaskStatus, design?: DesignReview): string[] => {
   switch (status) {
     case 'in-review':
@@ -240,7 +250,10 @@ export const showTask = async (
       ...(each.diff ? { diff: each.diff } : {})
     })),
     messages: said.slice(-6),
-    next: nextFor(task, view.state.status, view.state.design)
+    next:
+      isPrincipal(ctx.agent) || isCoLead(loaded.record, ctx.agent)
+        ? nextFor(task, view.state.status, view.state.design)
+        : agentNext(task)
   };
 };
 

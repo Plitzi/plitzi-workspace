@@ -177,12 +177,16 @@ export const clickEffects = async (
   const ran = new Set(tools.flows.map(flow => `${flow.at}|${flow.trigger}|${String(flow.on)}`));
   const looked = await looksOf();
   if (target) {
+    const from = page.url();
     try {
       await (hover ? target.hover({ timeout: 3000 }) : target.click({ timeout: 3000 }));
     } catch (error) {
-      const reason = error instanceof Error ? error.message.split('\n')[0] : String(error);
+      // A click that took the page elsewhere did its work: what changed is read on the page it went to (encore-4).
+      if (page.url() === from) {
+        const reason = error instanceof Error ? error.message.split('\n')[0] : String(error);
 
-      return { element: label, problem: `${label} could not be ${verb}: ${reason}`, changes: [], failed: [] };
+        return { element: label, problem: `${label} could not be ${verb}: ${reason}`, changes: [], failed: [] };
+      }
     }
   } else {
     const done = await fillAll();
