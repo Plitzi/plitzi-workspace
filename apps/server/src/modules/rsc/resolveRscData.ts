@@ -175,10 +175,16 @@ export const resolveRscData = async ({
     if (result.status === 'rejected') {
       // Nobody is waiting for it any more: not a failure of the element.
       if (!signal?.aborted) {
-        serverLog.error('RSC', `element ${targets[index].id} failed to resolve`, result.reason);
+        const reason: unknown = result.reason;
+        // An action that refused this visitor did its job: one line of why, no stack; anything else is an error.
+        if (reason instanceof Error && 'refused' in reason && reason.refused === true) {
+          serverLog.warn('RSC', `element ${targets[index].id}: ${reason.message}`);
+        } else {
+          serverLog.error('RSC', `element ${targets[index].id} failed to resolve`, reason);
+        }
+
         // While developing, said where the page reads it: the provider shows why, not "could not be reached".
         if (sayFailures) {
-          const reason: unknown = result.reason;
           acum[targets[index].id] = { [RSC_FAILURE]: reason instanceof Error ? reason.message : String(reason) };
         }
       }

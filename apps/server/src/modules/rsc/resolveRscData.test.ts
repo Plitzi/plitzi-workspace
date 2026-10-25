@@ -170,6 +170,28 @@ describe('resolveRscData', () => {
     expect(Object.keys((await resolveRscData(asked)).serverData ?? {})).toEqual(['postNested']);
   });
 
+  // encore-4: a guest's every room page logged an error with its stack for data the action rightly refused them.
+  it('says an element an action refused this visitor as a warning line, and anything else as an error', async () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const warnings = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const refused = Object.assign(new Error('Action "people" ended as failed, refused (not-host): For the host.'), {
+      refused: true
+    });
+    const resolveElement = vi
+      .fn<RscElementResolver>()
+      .mockImplementation(({ element }) =>
+        element.id === 'postApi' ? Promise.reject(refused) : Promise.reject(new Error('socket hang up'))
+      );
+
+    await resolveRscData({ ...base, schema: buildSchema(), req: request('/blog/hello'), resolveElement });
+
+    expect(JSON.stringify(warnings.mock.calls)).toContain('element postApi: Action \\"people\\" ended as failed, refused (not-host)');
+    expect(JSON.stringify(errors.mock.calls)).not.toContain('postApi');
+    expect(JSON.stringify(errors.mock.calls)).toContain('postNested failed to resolve');
+    errors.mockRestore();
+    warnings.mockRestore();
+  });
+
   it('reaches server elements nested under non-server containers', async () => {
     const resolveElement = vi.fn<RscElementResolver>().mockResolvedValue({ ok: true });
 

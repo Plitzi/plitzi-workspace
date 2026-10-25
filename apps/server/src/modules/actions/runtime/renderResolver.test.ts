@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { ActionRefusal } from './errors';
 import { createActionResolver } from './renderResolver';
+import { tasksOf } from '../../functions/tests/tasksOf';
 import { createActionsModule } from '../index';
 
+import type { FunctionTask } from '../../functions/contract';
 import type { RscElementResolver } from '../../rsc/resolveRscData';
 import type { ActionEntry, Element, ElementInteraction, SSRRequest } from '@plitzi/sdk-shared';
 
@@ -221,6 +224,53 @@ describe('createActionResolver', () => {
     };
 
     await expect(resolve({ action: 'post-page' }, failing)).rejects.toThrow(/failed/);
+  });
+
+  // encore-4: the log said "ended as failed" and nothing of why, as an error with its stack, for every guest's page.
+  it('says why a run did not complete, in its step’s words — a refusal marked as one', async () => {
+    const failing: ActionEntry = {
+      ...entry,
+      document: {
+        ...entry.document,
+        nodes: {
+          ...entry.document.nodes,
+          load: { ...entry.document.nodes.load, action: 'flow.fail', params: { message: 'There is no room at this address.' } }
+        }
+      }
+    };
+
+    const failure: unknown = await resolve({ action: 'post-page' }, failing).catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(Error);
+    expect((failure as Error).message).toBe('Action "post-page" ended as failed: There is no room at this address.');
+    // A step that broke is no refusal: an error, with its stack.
+    expect(failure).toMatchObject({ refused: false });
+  });
+
+  it('marks a refusal of this visitor as one, with its code and words', async () => {
+    const task: FunctionTask<Record<string, never>> = {
+      namespace: 'test',
+      action: 'closed',
+      title: 'Closed',
+      params: {},
+      run: () => Promise.reject(new ActionRefusal('There is no room at this address.', { code: 'room-not-found' }))
+    };
+    const refusing: ActionEntry = {
+      ...entry,
+      document: {
+        ...entry.document,
+        nodes: { ...entry.document.nodes, load: { ...entry.document.nodes.load, action: 'test.closed', params: {} } }
+      }
+    };
+    const lookups = { getAction: () => Promise.resolve(refusing) };
+    const resolver = createActionResolver(lookups, createActionsModule({ lookups, functions: tasksOf(task) }));
+
+    const failure: unknown = await render(resolver, { action: 'post-page' }).catch((error: unknown) => error);
+
+    expect((failure as Error).message).toBe(
+      'Action "post-page" ended as failed, refused (room-not-found): There is no room at this address.'
+    );
+    expect(failure).toMatchObject({ refused: true });
   });
 
   /** The render gave up — its budget ran out, or the visitor left. The run must end with it rather than carry on

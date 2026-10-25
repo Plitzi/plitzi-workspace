@@ -36,6 +36,14 @@ const BACK_FOR_WORK: ReadonlySet<string> = new Set([
 export const stoppedAgents = (log: readonly Record<string, unknown>[]): Set<string> => {
   const stopped = new Set<string>();
   for (const entry of log) {
+    // Started again — by the keeper or a lead, after a stop for a fresh context — it runs from its launch, before its
+    // first command: until then a base agent read "stopped" while it was already at work (encore-4's design-1).
+    if (entry.action === 'launch' && typeof entry.agent === 'string') {
+      stopped.delete(entry.agent);
+
+      continue;
+    }
+
     if (typeof entry.by !== 'string') {
       continue;
     }

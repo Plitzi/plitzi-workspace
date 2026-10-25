@@ -44,10 +44,25 @@ describe('children on a type that holds none', () => {
 });
 
 describe('a default content rendered beside children', () => {
+  // The builder places a button with its placeholder word; code writes none (encore-4), so only a word kept beside
+  // children is warned.
   it('warns when the placeholder word would print next to them', () => {
-    const { warnings } = author([authoring.button({ id: 'go', children: [authoring.text('Launch')] })]);
+    const { warnings } = author([
+      authoring.button({ id: 'go', content: 'Button', children: [authoring.text('Launch')] })
+    ]);
 
     expect(warnings.map(warning => warning.code)).toContain('default-content-beside-children');
+  });
+
+  it('writes no placeholder word for an element written with no words', () => {
+    const { schema, warnings } = author([
+      authoring.button({ id: 'go', children: [authoring.text('Launch')] }),
+      authoring.text({ id: 'bound', bind: [authoring.bindTemplate('content', 'state.now', '{{ source }}')] })
+    ]);
+
+    expect(warnings.map(warning => warning.code)).not.toContain('default-content-beside-children');
+    expect(schema.flat.go.attributes.content).toBeUndefined();
+    expect(schema.flat.bound.attributes.content).toBeUndefined();
   });
 
   it('says nothing once the content is the author’s', () => {

@@ -95,6 +95,8 @@ export interface ElementDeclarationData {
   serverTemplates?: readonly string[];
   content?: {
     attributes?: Record<string, unknown>;
+    /** The attributes whose default is the builder's placeholder words, never a value ({@link ElementContentSpec}). */
+    placeholders?: readonly string[];
     definition?: { label?: string };
   };
 }
@@ -210,6 +212,12 @@ const definitionWith = <Definition extends { styleSelectors?: Record<string, str
 /** What a built-in element writes in its declaration's `content`: what is its own — the rest is filled in. */
 export interface ElementContentSpec {
   attributes: Record<string, unknown>;
+  /**
+   * The attributes whose default is the builder's placeholder — the words an element shows on the canvas when it is
+   * placed ("Text", "Button") — never a value: code that writes the element without one draws nothing, as a bound
+   * text whose binding read nothing (encore's room cards and Home's window said "Text").
+   */
+  placeholders?: readonly string[];
   /** Left out: `type` (the declaration's), no bindings, visible, and the `base` style selector beside its own. */
   definition: Omit<
     Partial<ElementDefinition>,

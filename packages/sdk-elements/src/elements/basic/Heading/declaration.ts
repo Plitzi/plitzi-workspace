@@ -13,6 +13,7 @@ const declaration = elementDeclaration<HeadingAttributes>()({
     subType: valuesOf<NonNullable<HeadingProps['subType']>>()(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
   },
   content: {
+    placeholders: ['content'],
     attributes: {
       content: 'Heading',
       subType: 'h1'

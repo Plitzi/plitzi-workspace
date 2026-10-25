@@ -225,6 +225,7 @@ const declaration = elementDeclaration<FormControlAttributes>()({
     }
   },
   content: {
+    placeholders: ['label'],
     attributes: {
       subType: 'text',
       name: '',

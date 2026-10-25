@@ -62,6 +62,7 @@ export const AGENT_STATE: Record<AgentStatus, string> = {
   waiting: chalk.cyan('◌ waiting'),
   idle: chalk.dim('○ idle'),
   stopped: chalk.dim('◼ stopped'),
+  restarting: chalk.cyan('↻ restarting'),
   done: chalk.green('✓ done'),
   'not-started': chalk.dim('· not started'),
   'no-signal': chalk.red('● no signal')

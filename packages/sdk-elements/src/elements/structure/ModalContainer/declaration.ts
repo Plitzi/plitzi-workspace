@@ -31,6 +31,7 @@ const declaration = elementDeclaration<ModalContainerAttributes>()({
     closeModal: { action: 'closeModal', title: 'Close Modal', type: 'callback', params: {}, preview: {} }
   },
   content: {
+    placeholders: ['title'],
     attributes: {
       title: 'Modal Header',
       autoHideAfterClick: true

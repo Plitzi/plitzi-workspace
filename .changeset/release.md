@@ -381,6 +381,12 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   counted in a line, theirs whose file it is.
 - **`task look` says what it did not picture,** each page and why, and pictures a part new since the run before alone.
 - **A command no longer tells an agent to pass its token** — the shell carries it.
+- **`run monitor`'s flow says who has each review:** one the lead took while its UI waited for a designer
+  (`--skip-design lead`) is in the lead's column, named; a long id gives way to the name, cut in its middle, where it
+  took the name with it ("t-desk-selector-ai…"); a review nobody took yet reads "waiting" (encore-4).
+- **`↻ restarting` in the monitor:** an agent stopped between two pieces of work for a fresh context reads restarting —
+  before the run starts it again and after, until its first command — never "stopped" (encore-4's design-1), and the
+  run counts it running from its launch.
 
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
 
@@ -553,6 +559,10 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   - `replace({…})` takes Twig's map form.
 - **A `number` field takes `min`, `max` and `step`** (`formControl`), each bound said by its `minMessage`/`maxMessage`
   when broken, compared as numbers; the builder's panel shows them for a number field.
+- **An element written with no words draws none:** a declaration names the attributes whose default is the builder's
+  placeholder (`placeholders`: a text's, heading's, paragraph's, button's and markdown's `content`, a field's `label`,
+  a modal's `title`), and authoring never writes them — a bound text that read nothing drew "Text" (encore-4's Home
+  window). The builder still places an element with its word.
 - **A server provider that failed says why while developing:** its element shows the error its action or connector
   answered (`rscFailureOf`), not "could not be reached"; in production it stays the visitor's message.
 - **A flow reads a refusal's `code`:** `/_action` answers it beside the message, so a page tells "too-many" from
@@ -602,6 +612,9 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`createFileJobQueue`** is exported from `@plitzi/sdk-server/actions`, as its docs said: a self-hosted server keeps
   its jobs in a JSON file through a restart. A project's server answers `plitzi functions later` while developing.
 - **An action's input field takes `maxLength`, `min` and `max`**, refused before the run with the limit named.
+- **A render an action refused says why, as a warning:** `Action "x" ended as failed, refused (room-not-found): There
+  is no room at this address.` — one line, no stack — where the log said "ended as failed" as an error for every
+  guest's page; a step that broke stays an error, with its own message.
 - **A `render` read of an action with no `render` trigger** says so — the trigger to add — and a refusal's `code` reaches
   the page (`ActionRefusal`).
 

@@ -23,10 +23,16 @@ type RenderRun = { output: unknown; summary: ActionRunSummary };
  */
 class RenderRunFailure extends Error {
   readonly summary: ActionRunSummary;
+  /**
+   * The action answered this visitor with a refusal (`ActionRefusal`): a room closed, data that is another's — the
+   * action doing its job, said as a warning, never an error with its stack (encore-4's log, a guest's every page).
+   */
+  readonly refused: boolean;
 
-  constructor(message: string, summary: ActionRunSummary, options?: ErrorOptions) {
+  constructor(message: string, summary: ActionRunSummary, options?: ErrorOptions & { refused?: boolean }) {
     super(message, options);
     this.summary = summary;
+    this.refused = options?.refused === true;
   }
 }
 
@@ -166,7 +172,13 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
          */
         const summary = summaryOf({ status: result.status, steps: result.steps });
         if (result.status !== 'completed') {
-          throw new RenderRunFailure(`Action "${actionId}" ended as ${result.status}`, summary);
+          // Why, in the step's own words: "ended as failed" alone sent whoever read the log to rerun it to find out.
+          const said = result.error ?? result.steps.find(step => step.status === 'failed')?.error;
+          throw new RenderRunFailure(
+            `Action "${actionId}" ended as ${result.status}${result.code ? `, refused (${result.code})` : ''}${said ? `: ${said}` : ''}`,
+            summary,
+            { refused: result.error !== undefined }
+          );
         }
 
         // The output alone: a render slice is serialized into the page, so anything beyond what the output step

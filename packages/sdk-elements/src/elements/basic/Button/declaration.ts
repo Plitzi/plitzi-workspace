@@ -34,6 +34,7 @@ const declaration = elementDeclaration<ButtonAttributes>()({
     iconPlacement: valuesOf<NonNullable<ButtonProps['iconPlacement']>>()(['before', 'after'])
   },
   content: {
+    placeholders: ['content'],
     attributes: {
       contentPlacement: 'after',
       content: 'Button',

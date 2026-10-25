@@ -4,8 +4,9 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { takeLeadReview } from './leads';
+import { monitorRun } from './monitor';
 import { STARTING_MS } from './onDemand';
-import { loadRun, openRun } from './run';
+import { loadRun, logRun, openRun } from './run';
 import { blockTask, completeTask, nextTask, reviewTask, takeTask, unblockTask } from './tasks';
 import { viewTask } from './taskStore';
 import { setTeamAgent } from './team';
@@ -171,6 +172,23 @@ describe('a fresh context', () => {
       finished: true,
       why: expect.stringContaining("after each task or review (your team's session: task)") as unknown
     });
+
+    // encore-4: the monitor read a base agent "stopped" while the run started it again — it is restarting, said so,
+    // before its launch and after it, until its first command.
+    const dev = async () => (await monitorRun(lead(), 'es-launch')).agents.find(agent => agent.agent === 'dev-1');
+    expect(await dev()).toMatchObject({
+      status: 'restarting',
+      doing: expect.stringContaining('restarting') as unknown
+    });
+    const loaded = await loadRun(lead(), 'es-launch');
+    await logRun(lead(), loaded.paths, { action: 'launch', agent: 'dev-1', harness: 'claude' });
+    expect(await dev()).toMatchObject({
+      status: 'restarting',
+      doing: expect.stringContaining('started again') as unknown
+    });
+    // Its first command of the new session (here its join, as the bench's one session cannot be started anew).
+    await logRun(holding('dev-1', 0), loaded.paths, { action: 'joined' });
+    expect((await dev())?.status).not.toBe('restarting');
   });
 });
 

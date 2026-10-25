@@ -8,6 +8,9 @@ import type { TaskLine } from '../../runs/view';
 const MIN_STAGE = 19;
 /** The widest: past it a stage's cards are no easier to read, and the row is only longer. */
 const MAX_STAGE = 30;
+
+/** The least of a card's id kept beside who it is with: enough of its two ends to tell it apart. */
+const MIN_ID = 8;
 /** What goes between two stages: an arrow to the next step. */
 const GAP = 4;
 /** What starts each band: the arrow a band carried on from the one above starts with, the first's a blank as wide. */
@@ -149,14 +152,16 @@ const stagesOf = (tasks: readonly TaskLine[]): Stage[] => {
     {
       name: '◎ UI review',
       tone: chalk.magenta,
-      tasks: of('in-review').filter(task => task.design?.status === 'due'),
-      who: task => task.design?.by ?? 'nobody yet'
+      tasks: of('in-review').filter(task => task.design?.status === 'due' && task.reviewer === undefined),
+      who: task => task.design?.by ?? 'waiting'
     },
     {
+      // A lead that took a review whose UI waits for a designer reviews it whole (--skip-design lead): it is with the
+      // lead, named — never "nobody yet" in the UI's column while the lead says it is reviewing it (encore-4).
       name: '◎ lead review',
       tone: chalk.magenta,
-      tasks: of('in-review').filter(task => task.design?.status !== 'due'),
-      who: task => task.reviewer ?? 'no lead yet'
+      tasks: of('in-review').filter(task => task.design?.status !== 'due' || task.reviewer !== undefined),
+      who: task => task.reviewer ?? 'waiting'
     },
     { name: '✓ approved', tone: chalk.green, tasks: of('done') }
   ];
@@ -227,9 +232,11 @@ export const flowBoard = (
           // A name longer than its column cut in the middle, as the tasks' list cuts one: its ends tell it apart.
           const name = task ? nameOf(task) : undefined;
           const mark = task ? markOf(task) : { text: '', width: 0 };
-          const room = stageWidth - mark.width;
-          const id = name && name.length > room ? idCell(name, room).trimEnd() : name;
           const who = task && stage.who ? stage.who(task) : '';
+          // Who it is with keeps its place: the id gives way first, cut in its middle — cut at the card's end, a long id
+          // took the name with it, and the lead's review read nobody's (encore-4: "t-desk-selector-ai…").
+          const room = stageWidth - mark.width - (who ? Math.min(who.length + 1, stageWidth - mark.width - MIN_ID) : 0);
+          const id = name && name.length > room ? idCell(name, room).trimEnd() : name;
 
           return task && id ? fit(`${mark.text}${stage.tone(id)}${who ? chalk.dim(` ${who}`) : ''}`) : fit('');
         }),

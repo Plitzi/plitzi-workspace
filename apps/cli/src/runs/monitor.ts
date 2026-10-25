@@ -36,6 +36,7 @@ export type AgentStatus =
   | 'waiting'
   | 'idle'
   | 'stopped'
+  | 'restarting'
   | 'done'
   | 'not-started'
   | 'no-signal';
@@ -286,6 +287,25 @@ const agentsOf = async (
       : last?.action === 'waiting'
         ? `${tookAny.has(agent) ? 'waiting for work' : 'waiting for its first task'} — ${standing}`
         : `between tasks${last ? ` — last: ${lastDone(last) ?? ''}` : ' — not started yet'}`;
+  /**
+   * An agent stopped between two pieces of work for a fresh context, and not back at work yet: restarting — neither
+   * stopped (it comes back) nor idle (it is not there to take work). encore-4's design-1 read "stopped" the while.
+   */
+  const restartingOf = (agent: string): string | undefined => {
+    // Its own last word, whatever it was: any command of it after the stop says it is back.
+    const last = log.findLast(entry => entry.by === agent);
+    if (last?.action !== 'stops' || typeof last.why !== 'string' || !/fresh context|freshContextAt/.test(last.why)) {
+      return undefined;
+    }
+
+    const launched = log.some(
+      entry => entry.action === 'launch' && entry.agent === agent && String(entry.at) >= String(last.at)
+    );
+
+    return launched
+      ? 'started again with a fresh context — reading in before it takes what comes'
+      : 'restarting with a fresh context — the run starts it again for what comes';
+  };
   const uiWaiting = view.tasks.filter(
     task => task.status === 'in-review' && task.design?.status === 'due' && task.design.by === undefined
   );
@@ -466,7 +486,9 @@ const agentsOf = async (
               doing: `no sign of it for ${String(gone(agent))} min — its harness stopped it, or it hangs: the lead starts it again${tail}`,
               ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
             }
-          : member?.onDemand && (lastBy.get(agent) === undefined || stopped.has(agent) || view.gone.includes(agent))
+          : member?.onDemand &&
+              restartingOf(agent) === undefined &&
+              (lastBy.get(agent) === undefined || stopped.has(agent) || view.gone.includes(agent))
             ? // On demand, and not running: nothing is wrong — it is started when work waits for it (run watch says).
               {
                 agent,
@@ -492,11 +514,15 @@ const agentsOf = async (
                   kind: 'agent' as const,
                   // Between tasks: idle — a wait for work is no work, whatever its follow waits for (the line says what);
                   // stopped once it said so.
-                  status: stopped.has(agent) || view.gone.includes(agent) ? ('stopped' as const) : ('idle' as const),
+                  status: restartingOf(agent)
+                    ? ('restarting' as const)
+                    : stopped.has(agent) || view.gone.includes(agent)
+                      ? ('stopped' as const)
+                      : ('idle' as const),
                   ...about,
                   // Running, before anything of it reached the run's log: what it ran says what it is at. Its process
                   // gone with no stop said: ended, its last word a wait (encore's designers read idle for good).
-                  doing: `${view.gone.includes(agent) && !stopped.has(agent) ? 'its process ended — ' : ''}${lastBy.get(agent) === undefined && lastRun.has(agent) ? `getting started${lately(agent)}` : betweenTasks(agent, lastBy.get(agent))}${tail}`,
+                  doing: `${restartingOf(agent) ?? `${view.gone.includes(agent) && !stopped.has(agent) ? 'its process ended — ' : ''}${lastBy.get(agent) === undefined && lastRun.has(agent) ? `getting started${lately(agent)}` : betweenTasks(agent, lastBy.get(agent))}`}${tail}`,
                   ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
                 };
   });

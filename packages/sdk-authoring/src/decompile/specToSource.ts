@@ -1,4 +1,4 @@
-import { defaultAttributes, defaultLabel } from '../elements';
+import { declaresAttribute, defaultAttributes, defaultLabel } from '../elements';
 import * as factories from '../elements/elements';
 import { isRuleSetSpec, isStyleDeclaration } from '../style';
 import { camel, deepEqual, keyLiteral, literal, RESERVED, withSuffix } from './literal';
@@ -522,7 +522,9 @@ class SourceWriter {
     }
 
     const content =
-      isFactory && typeof attributes.content === 'string' && 'content' in defaults ? attributes.content : undefined;
+      isFactory && typeof attributes.content === 'string' && declaresAttribute(spec.type, 'content')
+        ? attributes.content
+        : undefined;
     const props: string[] = [];
     if (spec.id !== undefined) {
       props.push(`id: ${literal(spec.id)}`);

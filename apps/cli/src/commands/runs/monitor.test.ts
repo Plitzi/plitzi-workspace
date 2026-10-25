@@ -258,6 +258,39 @@ describe('plitzi run monitor', () => {
     expect(repeats.every(line => line.indexOf('“The CDN') === unfolded[row].indexOf('“The CDN') + 2)).toBe(true);
   });
 
+  // encore-4: the lead took a review whose UI waited for a designer, said "reviewing", and its card read "nobody yet".
+  it('puts a review the lead took in the lead’s column, named, though its UI waits for a designer', async () => {
+    const runId = await open();
+    const menu = await take('agent-3', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { es: true };\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+    const { tasks } = (await monitorRun(lead(), runId)).view;
+    const due = (reviewer?: string) =>
+      tasks.map(task =>
+        task.id === 't-menu' ? { ...task, design: { status: 'due' as const, round: 0 }, reviewer } : task
+      );
+
+    const waiting = plain(flowLines(due(), 200));
+    expect(waiting.find(line => line.includes('pending'))).toMatch(/UI review \(1\).*lead review \(0\)/);
+    expect(waiting.some(line => line.includes('t-menu waiting'))).toBe(true);
+
+    const taken = plain(flowLines(due('lead'), 200));
+    expect(taken.find(line => line.includes('pending'))).toMatch(/UI review \(0\).*lead review \(1\)/);
+    expect(taken.some(line => line.includes('t-menu lead'))).toBe(true);
+
+    // A long id gives way to the name: "t-desk-selector-ai…" read nobody's at the monitor's 140 columns.
+    const long = due('lead').map(task => (task.id === 't-menu' ? { ...task, id: 't-desk-selector-air' } : task));
+    const narrow = plain(flowLines(long, 140));
+    expect(narrow.some(line => /t-desk.*air lead/.test(line))).toBe(true);
+    const untaken = plain(
+      flowLines(
+        long.map(task => ({ ...task, reviewer: undefined, design: undefined })),
+        140
+      )
+    );
+    expect(untaken.some(line => /t-des.*air waiting/.test(line))).toBe(true);
+  });
+
   it('draws the run as a flow, each task in its stage, the review split, and one sent back at work again', async () => {
     const runId = await open();
     await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
@@ -271,7 +304,7 @@ describe('plitzi run monitor', () => {
     expect(head).toMatch(
       /pending \(1\).*ready \(0\).*at work \(1\).*held \(0\).*UI review \(0\).*lead review \(1\).*approved \(1\)/
     );
-    expect(flow.some(line => line.includes('t-home agent-2') && line.includes('t-menu no lead yet'))).toBe(true);
+    expect(flow.some(line => line.includes('t-home agent-2') && line.includes('t-menu waiting'))).toBe(true);
 
     // A question to the lead holds its agent: the task is held, saying why, and no longer at work.
     const asked = await askLead(home.ctx, runId, 't-home', 'Spanish or Catalan?');

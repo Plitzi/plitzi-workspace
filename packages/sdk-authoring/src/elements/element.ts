@@ -255,6 +255,19 @@ const listShape = (
   return { ...shaped, children: [track, ...(children ?? [])] };
 };
 
+/**
+ * A declaration's defaults that are values — the ones an element needs to render — without the builder's placeholder
+ * words ("Text", "Button"): written in code with no value of its own, an element draws nothing, never a word nobody
+ * wrote (encore-4's Home window read "Text" for a room with nothing playing).
+ */
+const valueDefaults = (declaration: ElementDeclarationData | undefined): Record<string, unknown> => {
+  const placeholders = new Set(declaration?.content?.placeholders ?? []);
+
+  return Object.fromEntries(
+    Object.entries(declaration?.content?.attributes ?? {}).filter(([name]) => !placeholders.has(name))
+  );
+};
+
 const buildSpec = (
   type: string,
   declaration: ElementDeclarationData | undefined,
@@ -332,7 +345,7 @@ const buildSpec = (
     // `source` — and dropping them because the author only set the text is how an authored element ends up
     // subtly unlike one the builder created.
     attributes: {
-      ...declaration?.content?.attributes,
+      ...valueDefaults(declaration),
       ...inferred(type, attributes),
       ...(from === undefined ? {} : unfilled(type, attributes)),
       ...(list ? list.attributes : attributes)
@@ -384,9 +397,11 @@ const declarationsByType = new Map<string, ElementDeclarationData>(
  * An attribute equal to one of these says nothing a factory would not say for it, which is what lets a reader of a
  * document leave it out, and what makes "absent" and "the default" the same answer when two documents are compared.
  */
-export const defaultAttributes = (type: string): Record<string, unknown> => ({
-  ...declarationsByType.get(type)?.content?.attributes
-});
+export const defaultAttributes = (type: string): Record<string, unknown> => valueDefaults(declarationsByType.get(type));
+
+/** Whether elements of this type declare the attribute — as a value, or as the builder's placeholder words. */
+export const declaresAttribute = (type: string, name: string): boolean =>
+  Object.hasOwn(declarationsByType.get(type)?.content?.attributes ?? {}, name);
 
 /** The name a factory gives an element of this type in the builder's tree, unless the author gave it another. */
 export const defaultLabel = (type: string): string => declarationsByType.get(type)?.content?.definition?.label ?? type;
