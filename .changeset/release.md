@@ -384,6 +384,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`run monitor`'s flow says who has each review:** one the lead took while its UI waited for a designer
   (`--skip-design lead`) is in the lead's column, named; a long id gives way to the name, cut in its middle, where it
   took the name with it ("t-desk-selector-ai…"); a review nobody took yet reads "waiting" (encore-4).
+- **The monitor's approved column puts the latest approval first** — what just landed (encore-4).
 - **`↻ restarting` in the monitor:** an agent stopped between two pieces of work for a fresh context reads restarting —
   before the run starts it again and after, until its first command — never "stopped" (encore-4's design-1), and the
   run counts it running from its launch.

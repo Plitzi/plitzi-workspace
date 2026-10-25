@@ -163,7 +163,12 @@ const stagesOf = (tasks: readonly TaskLine[]): Stage[] => {
       tasks: of('in-review').filter(task => task.design?.status !== 'due' || task.reviewer !== undefined),
       who: task => task.reviewer ?? 'waiting'
     },
-    { name: '✓ approved', tone: chalk.green, tasks: of('done') }
+    // The latest approval first: what just landed is what a person following the run looks for (encore-4).
+    {
+      name: '✓ approved',
+      tone: chalk.green,
+      tasks: of('done').sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    }
   ];
 };
 

@@ -291,6 +291,19 @@ describe('plitzi run monitor', () => {
     expect(untaken.some(line => /t-des.*air waiting/.test(line))).toBe(true);
   });
 
+  // encore-4: the approved column read in the plan's order; Carlos looks for what was approved last.
+  it('lists the approved tasks the latest approval first', async () => {
+    const runId = await open();
+    const { tasks } = (await monitorRun(lead(), runId)).view;
+    const done = (id: string, at: string) => ({ ...tasks[0], id, status: 'done' as const, updatedAt: at });
+    const flow = plain(
+      flowLines([done('t-first', '2026-10-25T01:00:00.000Z'), done('t-last', '2026-10-25T03:00:00.000Z')], 200)
+    );
+    const at = (id: string) => flow.findIndex(line => line.includes(id));
+
+    expect(at('t-last')).toBeLessThan(at('t-first'));
+  });
+
   it('draws the run as a flow, each task in its stage, the review split, and one sent back at work again', async () => {
     const runId = await open();
     await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
