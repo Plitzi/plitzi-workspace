@@ -55,11 +55,11 @@ export interface TaskContext {
   files: { file: string; from: 'copy' | 'run'; text?: string; bytes?: number; toCreate?: boolean }[];
   /**
    * Where the rest of the project is read from for it — what its files import, the data's shapes: its copy while it
-   * holds one. encore-4's tester read `formatCountdown` as the project had it before the run, its copy's being new.
+   * holds one. A run's tester read `formatCountdown` as the project had it before the run, its copy's being new.
    */
   sourceRoot: string;
   /**
-   * Another task's files beside its own, by name — `shows.test.ts` of `shows.ts`, a tester's: encore-3's developers wrote
+   * Another task's files beside its own, by name — `shows.test.ts` of `shows.ts`, a tester's: a run's developers wrote
    * tests into a tests card's file and learnt it at `task check`, the writing lost.
    */
   neighbours: { file: string; task: string; role: string }[];
@@ -100,7 +100,7 @@ export const textOf = async (
 /**
  * A task's requests on shared files, each with what it changes: an integration task's, the ones it applies; any other
  * task's, the ones it made — from the version it started from to the one it asks for, not against the file now. What
- * `task context` and `task show` both say (lx-copy: three agents diffed blobs by hash to read a request).
+ * `task context` and `task show` both say (three agents diffed blobs by hash to read a request).
  */
 export const requestsShown = async (
   ctx: RunContext,

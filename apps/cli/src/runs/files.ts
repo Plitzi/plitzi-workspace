@@ -85,7 +85,7 @@ export const exists = (file: string): Promise<boolean> =>
 /**
  * A file's bytes, or undefined when there is no file there — nothing at all, or a folder: a plan's unit that is a folder
  * not made yet (a plugin's) is backed up as a path, and once the run makes it, it is a folder of files the run approves
- * one by one, never read as one file (la-velada: the preview's sync read src/plugins/TierList and stopped the approval).
+ * one by one, never read as one file (the preview's sync read src/plugins/TierList and stopped the approval).
  */
 export const readOptional = async (file: string): Promise<Buffer | undefined> => {
   try {

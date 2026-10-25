@@ -52,7 +52,7 @@ export type ShotEachOptions = Omit<ShotOptions, 'width' | 'scheme'> & { width: n
 
 export const shotEach = async (route: string | undefined, options: ShotEachOptions): Promise<void> => {
   const { width: widthsAsked, scheme: schemesAsked, ...rest } = options;
-  // Each width in each scheme asked: `--scheme light,dark` as `--width 1440,390` (encore-3's design-2 asked for both).
+  // Each width in each scheme asked: `--scheme light,dark` as `--width 1440,390` (a run's design-2 asked for both).
   const all = widthsAsked.flatMap(width =>
     (schemesAsked ?? [undefined]).map(scheme => ({ width, ...(scheme ? { scheme } : {}) }))
   );
@@ -73,7 +73,7 @@ export const shotEach = async (route: string | undefined, options: ShotEachOptio
   const reports: ShotReport[] = [];
   const collect = rest.json && all.length > 1 ? (report: ShotReport) => reports.push(report) : undefined;
   try {
-    // A folder named stays the folder — each picture in it by its own name, the width in it (lx-fidelity: the folder
+    // A folder named stays the folder — each picture in it by its own name, the width in it (the folder
     // became `<folder>-1440.png`); a file is named for each width.
     const folder =
       rest.out !== undefined &&
@@ -96,7 +96,7 @@ export const shotEach = async (route: string | undefined, options: ShotEachOptio
         ...(collect ? { collect } : {})
       });
       // A picture that differs at one width says nothing of the next: every width is taken, and the command fails at the
-      // end (lx-fidelity: a --dress failing at 1440 left 390 untaken, and the lead ran it again). One that cannot be taken
+      // end (a --dress failing at 1440 left 390 untaken, and the lead ran it again). One that cannot be taken
       // at all stops it.
       const exit = exitCode();
       if (exit === UNANSWERED_EXIT) {
@@ -227,7 +227,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   // or, with none, a picture of what the typing changed.
   const filled = options.fill?.map(field => `type ${JSON.stringify(field.element)} ${field.value}`);
   // A hover after the clicks is played as the steps it is: a menu opened, then an item of it hovered, pictured so —
-  // encore-2's design-1 asked `--click site-avatar --hover <item>` and was refused an option shot did not have.
+  // A run's design-1 asked `--click site-avatar --hover <item>` and was refused an option shot did not have.
   const { hover } = options;
   if (hover !== undefined && (options.steps !== undefined || options.compare)) {
     await browser.close();
@@ -311,7 +311,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
-  // A clip names this page's element alone: the other site's is found by lining the pages up (lx-product's design-1 wrote
+  // A clip names this page's element alone: the other site's is found by lining the pages up (a run's design-1 wrote
   // `--clip "product-about => #about-product"`, and was told the page had no element of that id).
   if (options.clip?.includes('=>')) {
     await browser.close();
@@ -346,7 +346,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       ...(options.scale ? { scale: options.scale } : {}),
       ...(options.scheme ? { scheme: options.scheme } : {}),
       // Beside a page of this machine — the run before a task — both sides held to what the project changed: motion
-      // reduced and another site's pictures stood in for, on each (velada-polish: the same look 7%, then 0%).
+      // reduced and another site's pictures stood in for, on each (the same look 7%, then 0%).
       reducedMotion: options.reducedMotion === true || besideLocal,
       ...(besideLocal ? { standIns: true } : {}),
       ...(options.waitFor ? { waitFor: options.waitFor } : {}),
@@ -358,7 +358,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       ...(account ? { account } : {}),
       ...(fromLoad ? { fromLoad } : {}),
       // One picture shows every arrival as it ends — a part clipped or scrolled to too, whose arrivals were taken as they
-      // began, blank (la-velada's schedule rows, sent back for it). Frames, clicks and steps are about what moves, so
+      // began, blank (a run's schedule rows, sent back for it). Frames, clicks and steps are about what moves, so
       // they are taken as the page plays.
       still: (options.frames ?? 0) <= 1 && clicks.length === 0 && steps === undefined && !fromLoad
     };
@@ -389,7 +389,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     const copy = copyOf(project.root);
     const file = shotFile(pathname, clip, view.width, taken.scheme);
     const asked = options.out === undefined ? undefined : path.resolve(project.root, options.out);
-    // A folder named is where the picture goes, by its own name: written over, a folder was Node's EISDIR (lx-copy's
+    // A folder named is where the picture goes, by its own name: written over, a folder was Node's EISDIR (a run's
     // design-2).
     const intoFolder =
       asked !== undefined &&
@@ -398,7 +398,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
           found => found.isDirectory(),
           () => false
         )));
-    // A PNG is named one: written without it beside its own `-compare.png`, the picture read as no picture (lx-controls).
+    // A PNG is named one: written without it beside its own `-compare.png`, the picture read as no picture.
     const out = asked
       ? intoFolder
         ? path.join(asked, file)
@@ -413,7 +413,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     // The sections a diff is told by are the page's: a picture of part of it is one region, named for what it shows.
     const regions: PictureRegion[] = how.kind === 'page' ? await readPage(taken.page, pageRegions, undefined) : [];
     // `--clip` with `--compare` may name any element, not only a section: one inside a section is a region of its own,
-    // compared where it is — a panel of a page, a card — where only the landmarks could be named (la-velada's pills).
+    // compared where it is — a panel of a page, a card — where only the landmarks could be named (a run's pills).
     const clipped = section === undefined ? undefined : await clipRegion(taken.page, regions, section);
     if (clipped && 'problem' in clipped) {
       fail(clipped.problem);
@@ -584,7 +584,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     }
 
     // The pictures taken after the first: on one sheet with `--sheet`, and each in a file of its own beside it always —
-    // a sheet of 1440-wide steps is too small to read one, and kept none whole (velada-dress, design-1).
+    // a sheet of 1440-wide steps is too small to read one, and kept none whole (design-1).
     if (moments.length > 1 && options.sheet) {
       const sheet = await taken.page.evaluate(
         contactSheet,

@@ -8,7 +8,7 @@ import { runSteps } from '../tests/runSteps';
 import type { Bench } from '../tests/runProject';
 
 /**
- * What the run made from a plan stays when the plan is amended: encore-2's amend of a stage dropped the tasks of tests
+ * What the run made from a plan stays when the plan is amended: a run's amend of a stage dropped the tasks of tests
  * the run had made after its developer tasks — "nobody had taken them" — with the proposals sent to them.
  */
 

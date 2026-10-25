@@ -198,7 +198,7 @@ export const jsonForScript = (value: unknown): string => JSON.stringify(value).r
 
 /**
  * A server element that failed, as the page server says it while developing (`devMode`): why, where the page reads it.
- * Without it the provider said only "could not be reached" — encore-3's session action with no `render` trigger, whose
+ * Without it the provider said only "could not be reached" — a run's session action with no `render` trigger, whose
  * `forbidden` was in a log no agent read. A deployment says nothing of it to a visitor: the element is left out.
  */
 export const RSC_FAILURE = '$failed';

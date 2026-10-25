@@ -25,7 +25,7 @@ class RenderRunFailure extends Error {
   readonly summary: ActionRunSummary;
   /**
    * The action answered this visitor with a refusal (`ActionRefusal`): a room closed, data that is another's — the
-   * action doing its job, said as a warning, never an error with its stack (encore-4's log, a guest's every page).
+   * action doing its job, said as a warning, never an error with its stack (a run's log, a guest's every page).
    */
   readonly refused: boolean;
 

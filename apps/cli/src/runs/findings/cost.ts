@@ -8,7 +8,7 @@ import type { TaskRoundReport } from '../taskReports';
 import type { UsageLine } from '../usage';
 
 /**
- * What the run spent that it did not have to: a command's answer too long to read (lx-product: a 17k-character
+ * What the run spent that it did not have to: a command's answer too long to read (a 17k-character
  * `page measure`, read again on every later turn), a call made again and again, a task that read several times what
  * the others did, a context carried whole into a task's last turn, and the results its agents read again the most.
  */
@@ -87,7 +87,7 @@ export const costFindings = (
     }
   }
 
-  // One finding each, the tasks and rounds its evidence: encore-4 said eleven heavy contexts as eleven findings.
+  // One finding each, the tasks and rounds its evidence: a run said eleven heavy contexts as eleven findings.
   const typical = median([...byTask.values()].map(each => each.processed));
   const costly =
     byTask.size >= MEDIAN_OF && typical > 0
@@ -126,7 +126,7 @@ export const costFindings = (
         )
       ),
       times: heavy.length,
-      // A session already fresh each task (encore-4's team) grows within the task: the card is what is too large.
+      // A session already fresh each task (a run's team) grows within the task: the card is what is too large.
       fix: 'a smaller task — split the card so one fits a context — and results read in part; a team whose "session" is "context" or "keep" starts fresh sooner with a lower options.freshContextAt in .plitzi/team.json',
       subject: 'context-heavy'
     });

@@ -242,7 +242,7 @@ describe('activeWhen', () => {
     ).not.toThrow();
   });
 
-  /** encore-3: a size and a lit state on one lamp — the refusal names two classes, the way two axes are written. */
+  /** A size and a lit state on one lamp — the refusal names two classes, the way two axes are written. */
   it('takes two classes of one element, each with its variant bound, and names them in the refusal', () => {
     const size = styles('dotSize', { css: { width: '8px' }, variants: { large: { width: '16px' } } });
 

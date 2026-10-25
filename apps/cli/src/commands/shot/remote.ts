@@ -23,7 +23,7 @@ const documentStatus = (): number => {
 };
 
 /**
- * A page of another site, taken by `take` once its site answers it — never its error page kept as the page: la-velada's
+ * A page of another site, taken by `take` once its site answers it — never its error page kept as the page: a run's
  * original answered its fighters' list with "You are being rate limited". A site that says it is busy (429, 503) is
  * asked again, later; any other error is said.
  */
@@ -33,13 +33,13 @@ const whenAnswered = async <T extends { page: BrowserPage }>(
 ): Promise<(T & { notFound?: true }) | { problem: string }> => {
   for (let attempt = 0; ; attempt += 1) {
     // A page the browser gave up on (a font that never loaded, a page still busy) is this page's failure, asked once
-    // more — never the end of every page after it: la-velada's original timed one out, and the command crashed.
+    // more — never the end of every page after it: a run's original timed one out, and the command crashed.
     const taken = await take().catch(
       (error: unknown) =>
         ({ problem: `${failed}: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}` }) as const
     );
     if ('problem' in taken) {
-      // …and one it never answered, once more after a moment: lx-fidelity's original "did not answer" at 1440 now and
+      // …and one it never answered, once more after a moment: a run's original "did not answer" at 1440 now and
       // then, and the same call answered at 390.
       if (attempt === 0 && (taken.problem.startsWith(failed) || taken.problem.endsWith(NOT_ANSWERED))) {
         await new Promise(resolve => setTimeout(resolve, ANSWER_AGAIN_MS));
@@ -54,7 +54,7 @@ const whenAnswered = async <T extends { page: BrowserPage }>(
       return taken;
     }
 
-    // An address nothing answers is a page of its own — the site's 404, which a copy makes too (la-velada's "Elige a
+    // An address nothing answers is a page of its own — the site's 404, which a copy makes too (a run's "Elige a
     // tu boxeador"): kept, and said so, never refused as an error page.
     if (status === 404) {
       return { ...taken, notFound: true };

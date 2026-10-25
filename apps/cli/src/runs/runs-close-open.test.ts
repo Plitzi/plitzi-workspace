@@ -13,7 +13,7 @@ import { LEAD_SAID, runSteps } from '../tests/runSteps';
 import type { Bench } from '../tests/runProject';
 
 /**
- * encore-2's lead said the run was done with ten notices standing, and stacked a stage after. Every task done, the lead
+ * A run's lead said the run was done with ten notices standing, and stacked a stage after. Every task done, the lead
  * closes what it was told first: its summary is refused while anything waits for it.
  */
 
@@ -49,7 +49,7 @@ describe("the lead's close", () => {
     await writeSummary(lead(), 'es-launch', 'summary.md', LEAD_SAID);
   });
 
-  // encore-3: two agents went on after "You can stop", a finding no task holds — no approval settles it, and the close
+  // Two agents went on after "You can stop", a finding no task holds — no approval settles it, and the close
   // waited on it with nothing the lead could do. The lead says what it did about it, and only then closes.
   it('waits on a finding no task holds until the lead says what it did about it', async () => {
     const plan = benchPlan();

@@ -10,7 +10,7 @@ import type { RunContext } from './run';
 import type { Bench } from '../tests/runProject';
 
 /**
- * encore-2's tester read 30M tokens, nearly all of it reviewing, and no round's report held it: what every agent's
+ * A run's tester read 30M tokens, nearly all of it reviewing, and no round's report held it: what every agent's
  * harness spent is kept as each piece of its work ends — a task completed, a review decided — the lead's too.
  */
 

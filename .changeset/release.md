@@ -66,7 +66,7 @@ start one. How it works: `docs/en/agent-runs.md`.
   could not run, values no line measures, too few designers.
 - **`run rehearse`** plays a plan out before any agent starts: the schedule, the critical path, the lead's queue and the
   run's length for each team size. A module a task makes beside a file of its own it changes is that file's to import,
-  not a registration in the space's entry: encore-5's four UI tasks were said to meet in `src/space/index.ts`.
+  not a registration in the space's entry: a run's four UI tasks were said to meet in `src/space/index.ts`.
 - **Each task works in its own copy** under `tmp/plitzi-runs/`, cloned copy-on-write, with `public/` binaries and no
   `.env`. `task complete` refuses changes to another task's files, takes free shared files by turns (or requests them),
   and runs the project's checks there.
@@ -91,50 +91,58 @@ open` refuses one already used.
 - **What a run noticed and left** becomes the project's backlog (`run notice --on`, `.plitzi/backlog.json`, `run
 backlog`), offered to the next plan. What got in the agents' way in Plitzi goes to its `feedback.md` (`run notice
 --plitzi`), for the person to share. `run plan` and `run open` say which items the plan takes up, by task, and list as
-  open only those no task's `closes` names — encore-5's plan closed all five and was told to take them up.
+  open only those no task's `closes` names — a run's plan closed all five and was told to take them up.
+- **A task that waits for another never holds its files against it:** a stage stacked after a task, naming the file
+  that task makes, refused its complete as "another task's at work" while it could not start before it.
+- **`run monitor`'s spend says what the run costs in the harness:** a TOTAL column — in, out and cached summed, each
+  agent's and the run's whole — and the one-line spend starts with it.
+- **Agents run the project's `typecheck` and `lint` before `task check`:** their prompt and `runs.md` say it — of
+  a run's 34 checks, 17 failed on what those scripts say in seconds.
+- **The lead notes every problem of Plitzi as it happens** — the CLI, the platform, a skill or doc, a workaround a limit
+  forced — with `run notice --plitzi`: its prompt said `run notice` (the project's backlog) of the CLI alone.
 
 ### The team (`.plitzi/team.json`)
 
-- **`run amend` keeps the tasks of tests the run made** after a developer task the plan keeps: encore-2's amend of a stage
+- **`run amend` keeps the tasks of tests the run made** after a developer task the plan keeps: a run's amend of a stage
   dropped three, "nobody had taken them", with the proposals sent to them.
 - **An agent starts with its own identity, never its launcher's:** `run agent --launch` hands the harness the agent's
-  own token and session, and none of the lead's (`PLITZI_TOKEN`, `PLITZI_AGENT`, `PLITZI_RUN`). encore-2's agents
+  own token and session, and none of the lead's (`PLITZI_TOKEN`, `PLITZI_AGENT`, `PLITZI_RUN`). A run's agents
   inherited the lead's token from its CLI, and a project script's `plitzi space lint` ran as the lead — found by the
   run's own `two-sessions` finding.
 - **A task sent back to an agent that is not running reads as waiting for it, not silent:** the lead is told to start
-  it again, and no longer "no signal — reassign it" beside that (encore-2's t-room-read said both at once) — and
-  `run upgrade` no longer waits for it: nobody is writing it, and its copy is kept (encore-2's waited an hour on it).
+  it again, and no longer "no signal — reassign it" beside that (a run's t-room-read said both at once) — and
+  `run upgrade` no longer waits for it: nobody is writing it, and its copy is kept (a run's waited an hour on it).
 - **`task complete` runs the approved tasks' lines on a copy still served:** the server lent for the task's own lines
-  was stopped once they passed, and every approved line on the same pages read "nothing answers" — encore-2's
+  was stopped once they passed, and every approved line on the same pages read "nothing answers" — a run's
   t-room-side was refused three times as breaking five lines it had not touched. An approved line nothing could answer
   is now told to the lead, as one of the task's own, and not held against the task.
 - **A lead's `task look` at a task whose review is its own takes the review,** said in the activity as `task next --take`
-  says it: encore-2's lead looked and approved, and the person following the run saw nobody take its reviews. A look
+  says it: a run's lead looked and approved, and the person following the run saw nobody take its reviews. A look
   while the designer's UI review is due takes nothing.
 - **A line amended while its task waits in review is the one the finish holds it to:** `run amend` replaced the lines
-  of done tasks alone, so encore-2's t-playback-safety, amended in review, was approved on its old line and the finish
+  of done tasks alone, so a run's t-playback-safety, amended in review, was approved on its old line and the finish
   refused the run on it.
 - **The run starts its own agents — the keeper** (`plitzi run keep`): with the team's `options.launch`, the agents the
   run asks for are started whatever the lead is doing — the base when not running, one on demand for waiting work, one
   a task was sent back to. `run open`, `resume`, `attach` and the lead's `run watch` start it, one a run, its log in the
-  run's cache. Only the lead's watch started them before: encore-2's ready tasks waited with no developer running while
+  run's cache. Only the lead's watch started them before: a run's ready tasks waited with no developer running while
   the lead reviewed or wrote a stage.
 - **The team's base stays while the run is open:** `task next` never tells one of the base to stop for want of work —
   it waits for a stage the lead stacks, and hears how its own work ended; only one on demand stops. One not running is
-  asked for whatever waits. encore-2's designers and tester, stopped once every task was done, were stopped when a
+  asked for whatever waits. A run's designers and tester, stopped once every task was done, were stopped when a
   stage came.
 - **Who runs is its process's to say:** an agent the CLI launched runs while its process does — never the log's last
   word, which asked to start dev-1, running, while dev-2 and dev-3 waited stopped. A stop holds until the agent comes
-  back for work: a notice sent on its way out no longer reads as "no signal" (encore-2's tester, half an hour).
+  back for work: a notice sent on its way out no longer reads as "no signal" (a run's tester, half an hour).
 - **The lead's attention holds only what is the lead's, and now:** a line that failed and passed since, a task refused
   before it was approved, leave it; what is Plitzi's goes to the run's feedback alone. Every task done, the lead's
-  summary is refused while anything waits for it — encore-2 ended with ten notices standing, and its lead said "done"
+  summary is refused while anything waits for it — a run ended with ten notices standing, and its lead said "done"
   before stacking a stage. **`plitzi run settle <finding> --note "…"`** is how the lead settles a finding no approval
   settles — an agent that went on after "You can stop", a check that answered two ways: it says what it did, kept for
-  the report; each finding says so. encore-3's close waited on three with no way to settle one.
+  the report; each finding says so. A run's close waited on three with no way to settle one.
 - **The report tells each agent's life** — started, took, completed, reviewed, waited, stopped and why; its minutes at
   work, stopped and silent — and the feedback its figures (`lives`): a run read whole after it is gone.
-- **A tester reviews code, never a design:** encore-2's test-1 approved the identity system and its components.
+- **A tester reviews code, never a design:** a run's test-1 approved the identity system and its components.
 - **`task look` with no page named opens its acceptance's pages before the home page,** as a review's offer does — a
   look at a plugin's file pictured the home page, where none of its reactions is.
 - **A reviewer's holder command says its review speaks for itself** (its look, its verdict) where it said "holds no
@@ -143,11 +151,11 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   menu opened, an item of it hovered — measured and pictured; `measure` refused it as two states, `shot` had no
   `--hover`.
 - **`task show` shows 400 lines of diff in all,** each file past them said with its size and how to read it:
-  encore-2's reached 44k characters, read 77 times.
+  A run's reached 44k characters, read 77 times.
 - **The dev tools' panel shows what its badge counts:** opening it from the badge mounted it again elsewhere in the
   layout, and the logs it kept were gone — a warning on the badge, none in the panel. It starts from the page's log
   history (`pConsole.history()`), and Clear empties that too.
-- **A `complete` whose checks fail names what it took from the run** on that complete, with how to read each — encore-2's
+- **A `complete` whose checks fail names what it took from the run** on that complete, with how to read each — a run's
   test-1 checked green and failed on a file approved since, with no word of which had come in.
 - **`task review --skip-design lead` approves only after a `task look`** of the task since its last complete.
 - **`task look` reads signed in as its acceptance checks it** (`--as` from the acceptance), and a page check refused 401
@@ -181,7 +189,7 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   completed, a review decided — never in one, past any size, so nothing it knows and has not written is lost: `task`
   (the default) after each one, `context` once its harness's context passes `options.freshContextAt` (250k tokens),
   `keep` never. Testers, designers and co-leads too; the lead that plans keeps its session, and an agent outside the
-  team (nobody would start it again). encore-2's designer and tester, never started again, grew to 400k tokens and
+  team (nobody would start it again). A run's designer and tester, never started again, grew to 400k tokens and
   read 26–30k a turn, against ~12k for its developers started again per task.
   **Breaking:** `sessionPerTask` is gone — what it did is every agent's default now, and a team file with the old key
   is refused saying to remove it.
@@ -189,14 +197,14 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   the platform's limits read before a task is written, the person's decisions asked before the tasks, and a summary —
   what is built, decided, left out, how long, who works, who applies it — said before anything starts. No agent of the
   team starts while a run holds its scope spike alone.
-- **The run's keeper starts on a run just opened** — its log's folder made (encore-3's open crashed on it, no agent
+- **The run's keeper starts on a run just opened** — its log's folder made (a run's open crashed on it, no agent
   started) — and is the one to start agents while it runs: the lead's watch starting them too told the lead an agent
   "could not be started" that was running. An agent started meanwhile by another is no failure.
-- **One start of an agent at a time** (a lock of its own): the keeper and a lead's watch both started encore-3's
+- **One start of an agent at a time** (a lock of its own): the keeper and a lead's watch both started a run's
   design-1 — two sessions on one copy — and test-1 three times. An agent no longer inherits the harness session of
   whoever started it (`CLAUDE_CODE_SESSION_*`).
 - **An acceptance reaches its copy's server where the server says it listens** (`PLITZI_SERVER_RECORD`): asked for a
-  port another check took meanwhile, a server while developing takes the next free one, and encore-3's checks waited a
+  port another check took meanwhile, a server while developing takes the next free one, and a run's checks waited a
   minute on the port asked — a right task failed.
 - **A lead's `task show` of a task in review takes the review,** as `task look` does: the monitor says which task the
   lead is at, and another lead is not offered it.
@@ -296,7 +304,7 @@ report`, …).
   only reads.
   - **Each activity line is short** — 72 characters at most, in its own words ("checks fail: lint + 3 files of other
     tasks", "stops for a fresh context") — and a click on a ▸ line opens the whole of it under it; the dev tools' Run
-    tab shows the whole on hover. encore-2's lines ran to 499 characters.
+    tab shows the whole on hover. A run's lines ran to 499 characters.
   - **What each agent spent, beside the activity:** pieces of work, turns, tokens in, out and cached — read again each
     turn, a tenth of the price, kept apart: one figure of all three said 1.1M where ~240k was the price — and its context,
     marked past `freshContextAt` for a `"session": "context"` agent alone — and its tasks and sessions, with what one of
@@ -367,17 +375,17 @@ report`, …).
 - **Less to read again:** `page measure` says the other page and what it compares once, above every element; `task
 context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A lead with nothing waiting for it helps:** its skill says to take a ready task
-  (`task reassign <task> --to lead`), work its copy and complete it — encore-3's lead wrote the moderation demo's tests
+  (`task reassign <task> --to lead`), work its copy and complete it — a run's lead wrote the moderation demo's tests
   while the tester ran a spec.
-- **What encore-3 cost, cut** (its tasks read 3.9M tokens each, encore-2's 2.2M):
+- **What a run cost, cut** (its tasks read 3.9M tokens each, another's 2.2M):
   - A tester and a lead that review read `runs-review.md` — how a task is judged, the same for the lead — never the
     lead's whole half again on each fresh start.
   - A brief says of a task it depends on its acceptance, six lines, never how its reviews went; a note, 300 characters
     (the whole with `--json`). `task show`'s diffs stop at 240 lines in all.
 - **The tester is no bottleneck:** while every tester is at work, a developer is offered a `-tests` card after its own —
-  never of a task it worked (encore-3's tester was at work 104 of 152 minutes).
+  never of a task it worked (a run's tester was at work 104 of 152 minutes).
 - **Nobody reviews a task they worked**, the lead included: a co-lead or a tester does.
-- **A reviewer's `task progress`** is its review's sign of life, not refused (nine times in encore-3).
+- **A reviewer's `task progress`** is its review's sign of life, not refused (nine times in one run).
 - **`task show` with no task** is the one you hold or review; `task complete <id>` takes your own id.
 - **A tests card's check runs every test of its folder**, not only the files it names.
 - **`run watch` is quieter:** an agent none of whose role's cards is left is not called idle, a card to split is only of
@@ -385,18 +393,18 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A command line refused says what it meant:** two flags a zsh variable held as one (`"--as mika"`), an option another
   page command has (`page shot --element` is `--clip`), a command another group has (`run agents` is `run status`).
 - **A failed step says nothing of a copy's missing `.env`.**
-- **`run upgrade` sets right a run whose Plitzi already changed:** a stop loads the run whatever is installed — encore-3's
+- **`run upgrade` sets right a run whose Plitzi already changed:** a stop loads the run whatever is installed — a run's
   upgrade was refused `version-mismatch`, the very thing it re-pins.
 - **A package that comes with the SDK stops no run:** a run pins the CLI and the `@plitzi` packages the project names;
-  one they bring (`@plitzi/plitzi-ui`) moving within their ranges is said to the lead, and the agents go on. encore-3's
+  one they bring (`@plitzi/plitzi-ui`) moving within their ranges is said to the lead, and the agents go on. A run's
   plitzi-ui patch held every agent 13 minutes. `run notice` is taken while a version changed, and `task next --follow`
   waits through it to its end, never refused there.
 - **A reviewer reads the task's brief:** `task context` in a review copy is the reviewed task's. A review the lead
   decides while another holds it tells that reviewer so, and nobody reviews their own.
 - **A brief says the neighbours another task holds:** a file beside the task's own (`room.test.ts` beside `room.ts`) and
-  whose it is — encore-3's developers found them at `task check`, after writing them.
+  whose it is — a run's developers found them at `task check`, after writing them.
 - **A wait that would never end is refused:** `task wait` and `task propose --wait` on a task that runs after this one
-  (its `dependsOn` leads to it) say so at once, and leave no proposal behind; encore-3's dev-1 waited past its harness's
+  (its `dependsOn` leads to it) say so at once, and leave no proposal behind; a run's dev-1 waited past its harness's
   timeout.
 - **A review reads its own warnings:** the checks' warnings a task leaves are those on files it changed; the rest are
   counted in a line, theirs whose file it is.
@@ -404,10 +412,10 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A command no longer tells an agent to pass its token** — the shell carries it.
 - **`run monitor`'s flow says who has each review:** one the lead took while its UI waited for a designer
   (`--skip-design lead`) is in the lead's column, named; a long id gives way to the name, cut in its middle, where it
-  took the name with it ("t-desk-selector-ai…"); a review nobody took yet reads "waiting" (encore-4).
-- **The monitor's approved column puts the latest approval first** — what just landed (encore-4).
+  took the name with it ("t-desk-selector-ai…"); a review nobody took yet reads "waiting".
+- **The monitor's approved column puts the latest approval first** — what just landed.
 - **`↻ restarting` in the monitor:** an agent stopped between two pieces of work for a fresh context reads restarting —
-  before the run starts it again and after, until its first command — never "stopped" (encore-4's design-1), and the
+  before the run starts it again and after, until its first command — never "stopped" (a run's design-1), and the
   run counts it running from its launch.
 - **`run report` prints the run at a glance and each finding's title**; `--full` (and the finish's file) the whole of
   it. Its title is the run's goal, the stages it grew by listed under it; the lead's summary sits under its heading.
@@ -533,8 +541,8 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 ## Authoring (`@plitzi/sdk-authoring`)
 
 - **`server-source-in-browser`** refuses a provider with an `action` or a `connector` and no `runtime: 'server'`: the
-  browser asks a `query` alone, so it never asked and its children stayed empty, saying nothing — encore's shell notice
-  of a show starting never showed (found by encore-3's test-1).
+  browser asks a `query` alone, so it never asked and its children stayed empty, saying nothing — a run's shell notice
+  of a show starting never showed (found by a run's test-1).
 - **`space lint` takes a module only its test reads as part of the space,** not an unused file (a palette held to AA
   beside its test).
 - **`message-while-running`** warns of a channel's `onMessage` flow that says nothing of a message arriving while it runs
@@ -576,7 +584,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   variants it has.
 - **`provider-when-not-rules`** refuses a provider's `when` that is no rule group (a string, a single rule) — it never
   waited — and a rule's field is read as a source by its name.
-- **`id-taken` lists every clash at once**, the ids under a refused element too: encore-3's took three check rounds.
+- **`id-taken` lists every clash at once**, the ids under a refused element too: a run's took three check rounds.
 - **`padding: 'var(--pad, 4px 10px)'` is refused, naming the longhands:** each side got the whole fallback — no length.
 - **`clip` names its successor** in the refusal: `clip-path: inset(50%)`, or the `sr-only` utility.
 - **`repeated-shape` says what counts as a copy** (three of four elements or more, two of eight) and how copies alike on
@@ -594,7 +602,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 ## Elements and the SDK (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`, `@plitzi/sdk-shared`)
 
 - **No placeholder words on a page:** a text, paragraph, heading, button or field label with no value draws nothing,
-  never "Text", "Heading", "Button" or "Label" — encore's room cards read "Text" where their line was bound to nothing.
+  never "Text", "Heading", "Button" or "Label" — a run's room cards read "Text" where their line was bound to nothing.
   The placeholder is the builder's, set from the declaration when an element is placed. An element drawn empty — those,
   and an image with no source — says so on the page (`data-plitzi-empty`).
 
@@ -609,10 +617,10 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A button with an icon and no `content` shows the icon alone,** not the placeholder "Button" beside it.
 - **Sign out everywhere works on a `createAuth` server as written:** the page takes the server's `revokeUrl` as it takes its
   other auth endpoints (a space had to declare it by hand), and the step answers `{ ok: true }` for a flow to branch on —
-  a refusal still fails it. Found by encore-2's dev-1.
+  a refusal still fails it. Found by a run's dev-1.
 - **A guest refused asks no renewal** (`@plitzi/sdk-auth`): a 401 to a visitor who never signed in — a server action
   kept for signed-in visitors — sent a `/auth/refresh` that could only fail (400). A refusal renews or ends a session
-  only when this browser holds one (a stored credential or the hint cookie). Found by Carlos on encore's Remind me.
+  only when this browser holds one (a stored credential or the hint cookie). Found by Carlos on a run's Remind me.
 - **`authLogoutEverywhere('site' | 'all')`**, the auth source's `logoutEverywhere`: a visitor signs out of the space on
   every device, or out of their account everywhere. `basic` posts to the space's `revokeUrl` (the page server's sign-in
   names it); a provider that cannot is refused, never a sign-out here alone.
@@ -632,7 +640,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   when broken, compared as numbers; the builder's panel shows them for a number field.
 - **An element written with no words draws none:** a declaration names the attributes whose default is the builder's
   placeholder (`placeholders`: a text's, heading's, paragraph's, button's and markdown's `content`, a field's `label`,
-  a modal's `title`), and authoring never writes them — a bound text that read nothing drew "Text" (encore-4's Home
+  a modal's `title`), and authoring never writes them — a bound text that read nothing drew "Text" (a run's Home
   window). The builder still places an element with its word.
 - **A server provider that failed says why while developing:** its element shows the error its action or connector
   answered (`rscFailureOf`), not "could not be reached"; in production it stays the visitor's message.

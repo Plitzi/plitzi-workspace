@@ -7,7 +7,7 @@ import type { Effort, StartedAgent } from './team';
 
 /**
  * What an agent of a run is started with: who it is, where it works and the run's protocol in short — the skills say it
- * whole. Every run so far had its lead write these by hand (velada-shell's dev-1 and design-1, a page each): a person
+ * whole. Every run so far had its lead write these by hand (a run's dev-1 and design-1, a page each): a person
  * new to Plitzi had nothing to start an agent with. `plitzi run agent <name>` writes it, and starts it when asked.
  */
 
@@ -43,10 +43,10 @@ const skill = (root: string, file: string): string => path.join(root, SKILLS_ROO
 /** The rules every agent of a run holds to, whatever its role: said once, the skills saying why. */
 const rules = (cli: string): string[] => [
   `- Never run \`${cli} run finish\`, \`run abort\`, \`run purge\`, \`run restore\`, \`run allow-finish\` or \`run stop --force\` — a person's. Never \`git stash\`, \`checkout\` or \`reset\`.`,
-  // encore: a heredoc that never closed hung on stdin, and `pkill -f "cat"` to free it took the machine down.
+  // A heredoc that never closed hung on stdin, and `pkill -f "cat"` to free it took the machine down.
   `- Stop a server with \`${cli} server stop --port <port>\` in the folder that started it — it stops that folder's alone; a command that hangs is your harness's to stop. Never \`pkill\`, \`killall\` nor a kill by name or pattern: they reach every process on the machine. Write files with your edit tools, never a heredoc through the shell.`,
   '- A wait that ends is not your end: run `task next` again until it says "You can stop".',
-  // lx-controls: two agents read the bundle's types, every command's help and a site's HTML to learn what Plitzi had.
+  // Two agents read the bundle's types, every command's help and a site's HTML to learn what Plitzi had.
   '- Whether Plitzi has a way — a field, a step, a state, a command: `PLITZI explain --search "<words>"`, then `PLITZI explain <name>`; never the packages\' types nor a site\'s HTML fetched and searched. Nothing found that should be: `run notice --plitzi`.',
   '- Plitzi itself in your way — a refusal you think wrong, a command that cannot do what you need, a doc that misled you: say it as it happens, `PLITZI run notice --plitzi "…"` (the run\'s feedback to Plitzi carries it), and go on.',
   '- When it says you can stop, answer with a short report: what you did, what is uncertain, and every friction with the CLI — the command and what it said. Between two tasks or reviews it may say so for a fresh context: the run starts you again with one, for what you hold and what comes.'
@@ -71,7 +71,9 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
       `- The run opens on its scope, your spike: find out what the ask takes (${reference === undefined ? '`task show`, `page check`, `page shot`' : `\`page measure …${beside}\`, \`page outline …${beside}\`, \`page shot …${beside}\``}), then end it with the tasks, each with what you found: \`task spike s-scope --done "…" --tasks <stage.json>\` (a stage is its \`tasks\`).`,
       `- Start the team once there are tasks: \`${cli} run agent <name> --launch --harness <yours>\` for each agent \`run plan\` names; \`run watch --until lead\` wakes you for each review, question and block, and says when another agent is worth starting.`,
       '- Review each task: `task show` for its code, one `task look` for its pages, then `task review --approve | --changes "…"`. Then the report (`run report --summary`) and the dry finish (`run finish`): the person applies it.',
-      '- What goes wrong in the CLI, note it (`run notice`) — it is fixed after the run, never during it.'
+      // Told `run notice` of "the CLI" alone, the lead noted three of six problems — a skill naming a command the
+      // CLI lacks, a platform gap an agent hit, a workaround a limit forced — and plain `run notice` is the project's backlog.
+      '- Everything of Plitzi in your way — the CLI, the platform, a skill or doc that misled you, a workaround a limit forced on you — note it as it happens, one each with what it cost: `run notice --plitzi "…"` (the run\'s feedback to Plitzi carries it). Fixed after the run, never during it.'
     ].join('\n');
   }
 
@@ -82,7 +84,7 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
   const reading = [
     skill(root, 'runs.md'),
     ...(designer ? [skill(root, 'runs-designer.md')] : []),
-    // A reviewer's half, not the lead's whole: a tester and a co-lead start fresh after each piece, and encore-3's read
+    // A reviewer's half, not the lead's whole: a tester and a co-lead start fresh after each piece, and a run's read
     // the lead's 18k characters again each time to use the review it holds.
     ...(coLead || tester ? [skill(root, 'runs-review.md')] : [])
   ];
@@ -100,13 +102,14 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
           reference === undefined
             ? '- Measure, never guess — every element and width in one call: `PLITZI page measure <path> <elements…> --width 390,1440` (`--hover`, `--click` for a state; `PLITZI page outline <path> --within <part>` names them). Trying values, measure; never `task check` for it.'
             : `- Measure, never guess — every element and width in one call: \`PLITZI page measure <path> "<ours> => <theirs>" …${beside} --width 390,1440\` (\`--hover\`, \`--click\` for a state; \`PLITZI page outline <path>${beside} --within <part>\` names theirs). Trying values, measure; never \`task check\` for it.`,
-          '- Change a batch, then `PLITZI task check` once; then `PLITZI task complete --ease <1-5> --hardest "what cost you the most, and why" [--friction "what of Plitzi got in your way" …] [--helped "…"]` — what it was like, for Plitzi — and `PLITZI task next --follow --take` again.',
-          // lx-controls: t-collection completed with "Known: the phone keeps our inline panel, where the original opens a
+          // 17 of 34 checks failed on typecheck or lint — what the project's own scripts say in seconds.
+          '- Change a batch, then run the project\'s own `typecheck` and `lint` scripts in your copy (`npm run typecheck`, `npm run lint` — cached, seconds) and fix what they say; then `PLITZI task check` once; then `PLITZI task complete --ease <1-5> --hardest "what cost you the most, and why" [--friction "what of Plitzi got in your way" …] [--helped "…"]` — what it was like, for Plitzi — and `PLITZI task next --follow --take` again.',
+          // T-collection completed with "Known: the phone keeps our inline panel, where the original opens a
           // drawer" — sent back for exactly that.
           `- ${reference === undefined ? 'Something wrong you see' : 'A difference from the site you copy you see'}, inside your task's title, is work, not a note: do it, or \`PLITZI task ask\` the lead before you complete.`,
-          // lx-controls: a person following the run read commands where an agent's row should say what it is at.
+          // A person following the run read commands where an agent's row should say what it is at.
           '- As what you are at changes in a task of yours, say it in your words — `PLITZI task progress --step "the hero: its title sits 4px low, moving it"`: the person following the run reads it. A review says itself, by its look and its verdict.',
-          // lx-fidelity: Opiniones' arrow moved nothing at 1440, and its developer, its designer and the lead each passed it.
+          // Opiniones' arrow moved nothing at 1440, and its developer, its designer and the lead each passed it.
           `- A control you add or change — an arrow, a dot, a pager, a drawer — you use before you complete, there and back, at both widths${reference === undefined ? '' : ", beside the copied site's"}: \`PLITZI page play <path> ${playBeside} --width 390,1440\` — how far each step moved what, what it shows and takes a press; a picture is no proof of one.`
         ]),
     ...(tester

@@ -11,7 +11,7 @@ import { runSteps } from '../tests/runSteps';
 import type { Bench } from '../tests/runProject';
 
 /**
- * encore-2: the lead looked at a task in review and approved it, and the person following the run saw nobody take its
+ * The lead looked at a task in review and approved it, and the person following the run saw nobody take its
  * reviews — only `task next --take` said so. A look by whoever reviews it now takes the review.
  */
 

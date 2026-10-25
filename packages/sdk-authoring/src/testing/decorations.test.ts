@@ -102,7 +102,7 @@ describe('pageDecorations, of filters that do something', () => {
   });
 });
 
-// velada-dress: the footer's photo, a decorative <picture>, was nobody's dress and went; and the fighters' spotlight,
+// The footer's photo, a decorative <picture>, was nobody's dress and went; and the fighters' spotlight,
 // the original's behind each cut-out, was painted over the faces — both passed every --dress check.
 describe('pageDecorations, of pictures', () => {
   it('reads a decorative picture laid behind a section as its background — never a picture of the page’s own', () => {
@@ -134,7 +134,7 @@ describe('pageDecorations, of pictures', () => {
 });
 
 describe('compareDecorations', () => {
-  // velada-polish: one VS medal's shadow gone, and the cards' text-shadows — all still there — read as lost.
+  // One VS medal's shadow gone, and the cards' text-shadows — all still there — read as lost.
   it('names only the details there are fewer of, each by how many', () => {
     const regions = [region('section#fights-page', 0, 1000)];
     const names = Array.from({ length: 20 }, () => layer('glow', 'text-shadow 12px rgba(0, 0, 0, 0.9)'));
@@ -183,7 +183,7 @@ describe('compareDecorations', () => {
     ]);
   });
 
-  // la-velada's artist page had a gold radial gradient — on one card — where the original's lit the whole page.
+  // A run's artist page had a gold radial gradient — on one card — where the original's lit the whole page.
   it('tells a light across the section from the same gradient on one card in it', () => {
     const regions = [region('section#artist-page', 0, 1000)];
     const card = layer('gradient', 'radial-gradient rgba(199, 168, 107, 0.18)');

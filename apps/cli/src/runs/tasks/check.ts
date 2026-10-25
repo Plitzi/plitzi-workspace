@@ -55,7 +55,7 @@ export interface CheckedTask {
   /** Passed at this time, nothing changed since: the result said again, not run (`--fresh` runs it). */
   checkedAt?: string;
   /**
-   * Failed as it does now at this time, on the same files: run again with nothing changed — encore-4's dev-1 checked
+   * Failed as it does now at this time, on the same files: run again with nothing changed — a run's dev-1 checked
    * twelve times in nine minutes. Said, so the next run follows a change.
    */
   failedAlikeAt?: string;
@@ -72,7 +72,7 @@ export const checkTask = async (
   taskId: string,
   /**
    * `acceptance`: its commands alone, the copy served for them — what an agent iterating on one line runs, where the
-   * whole check ran author, lint and typecheck again each time (la-velada: 52 of 88 failed checks were acceptance).
+   * whole check ran author, lint and typecheck again each time (52 of 88 failed checks were acceptance).
    */
   { only, fix = false, fresh = false }: { only?: 'acceptance'; fix?: boolean; fresh?: boolean } = {}
 ): Promise<CheckedTask> => {
@@ -85,7 +85,7 @@ export const checkTask = async (
   // Checked against the run and the project as they are now, as `complete` will be.
   const brought = await refreshCopy(ctx, loaded, view);
   // ESLint's answers are kept file by file, and a typed rule's depend on other files: a type fixed in an imported file
-  // left its unchanged importers failing as before (encore's dev-3). Fresh is fresh: they are read again.
+  // left its unchanged importers failing as before (a run's dev-3). Fresh is fresh: they are read again.
   if (fresh) {
     await fs.rm(path.join(view.paths.work, LINT_CACHE_FILE), { force: true });
   }
@@ -93,7 +93,7 @@ export const checkTask = async (
   const started = await readStart(view.paths);
   const mine = started ? await changedInCopy(view, started) : [];
   const { outside } = started ? await whoseChanges(loaded, view, mine, started) : { outside: [] };
-  // Fixed on its own files alone: encore-4's dev-2 had `--fix` rewrite a file another task held, then refused for it.
+  // Fixed on its own files alone: a run's dev-2 had `--fix` rewrite a file another task held, then refused for it.
   const othersFiles = new Set(outside.map(each => each.file));
   const fixed = fix
     ? await fixChanged(
@@ -119,7 +119,7 @@ export const checkTask = async (
       notOwnSteps = checks.ok
         ? []
         : stepsNotOwn(checks, await againstRunWork(ctx, loaded, view, checks)).map(step => step.name);
-      // What fails for nothing of the copy's stops nothing of it: lx-fidelity's t-home went to review with its acceptance
+      // What fails for nothing of the copy's stops nothing of it: a run's t-home went to review with its acceptance
       // unrun, for a warning the run's work had too.
       const ownFailing = checks.steps.filter(step => !step.ok && !notOwnSteps.includes(step.name));
       accepted =
@@ -144,7 +144,7 @@ export const checkTask = async (
     ...(await tellUnanswered(ctx, loaded, taskId, accepted)).map(each => `acceptance — ${each.said}`)
   ];
   // What it was run on — the copy's files, the run's approved work, the lines, the CLI — after any `--fix`: one input
-  // checked twice with two outcomes is a check that is not deterministic (encore's 409s "passing on rerun").
+  // checked twice with two outcomes is a check that is not deterministic (a run's 409s "passing on rerun").
   const key = started ? await checkKey(loaded, view.paths, task, await changedInCopy(view, started)) : undefined;
   const failed = [
     ...backups.map(backupText),
@@ -180,7 +180,7 @@ export const checkTask = async (
       : {
           failed,
           ...(notOwn.length > 0 ? { notOwn } : {}),
-          // Why, each in its own words: what a fix is read from, never run again to find out (lx-product's t-gallery).
+          // Why, each in its own words: what a fix is read from, never run again to find out (a run's t-gallery).
           why: [
             ...checks.steps
               .filter(step => !step.ok)

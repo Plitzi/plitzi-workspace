@@ -26,7 +26,7 @@ export interface ProbeFindings {
   byWidth: string[];
   /**
    * Controls put out of use on purpose — transparent and taking no press (disabled, or passing the pointer on): a
-   * carousel's arrow at its end, hidden as a shop's are. Said apart, not a problem (lx-controls' look flagged one).
+   * carousel's arrow at its end, hidden as a shop's are. Said apart, not a problem (a run's look flagged one).
    */
   outOfUse: string[];
   /**
@@ -36,7 +36,7 @@ export interface ProbeFindings {
   empty: string[];
   /**
    * Elements a visitor sees with nothing in them — no words, no picture — that the SDK marks empty (`data-plitzi-empty`):
-   * a binding that read nothing, a field the data lacks. By id, with how many drew empty (one a list row). encore's room
+   * a binding that read nothing, a field the data lacks. By id, with how many drew empty (one a list row). A run's room
    * cards read "Text" — a placeholder — where their line was bound to nothing, and every check passed.
    */
   blank: { id: string; times: number; what: 'words' | 'picture' }[];
@@ -90,7 +90,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
   /**
    * The style rules of the page's own sheets that sit under a condition on the viewport (`@media`, `@container`), by
    * the selector they apply to. A condition written inside a class's rule — as a space's classes are written — holds
-   * declarations of that rule's selector (`CSSNestedDeclarations`): encore-4's wide-screen sides, shown by a container
+   * declarations of that rule's selector (`CSSNestedDeclarations`): a run's wide-screen sides, shown by a container
    * condition, read as broken below it.
    */
   const conditionalRules = (): { selectorText: string; style: CSSStyleDeclaration }[] => {

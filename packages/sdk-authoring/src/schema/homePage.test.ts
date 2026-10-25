@@ -20,7 +20,7 @@ const homeOf = (pages: PageSpec[]): unknown[] => {
     .map(element => element.attributes.slug);
 };
 
-// encore: its 404 page, listed first, became the home — every unknown address answered a bare "Not Found".
+// Its 404 page, listed first, became the home — every unknown address answered a bare "Not Found".
 describe('the space’s home page', () => {
   it('is the page at an empty slug when none says isDefault — never the page of every other address', () => {
     expect(homeOf([page('Not found', '*'), page('Rooms', 'rooms'), page('Home', '')])).toEqual(['']);

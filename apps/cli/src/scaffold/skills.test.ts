@@ -38,7 +38,7 @@ const budgetOf = (path: string): number | undefined => {
   }
 
   // The lead's half is read once a run, by the strongest model of it, and what it gets wrong — a scope measured short,
-  // a line nothing proves — is paid in every task's round (velada-shell: three of five rounds were the scope's).
+  // a line nothing proves — is paid in every task's round (three of five rounds were the scope's).
   if (path.endsWith('/runs-lead.md')) {
     return 4500;
   }

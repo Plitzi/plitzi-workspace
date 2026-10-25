@@ -37,7 +37,7 @@ describe('setFieldValue', () => {
   });
 });
 
-// lx-controls: `scrollBy('categories-row', { x: -180 })` was refused by the type, though pixels are what most moves are.
+// `scrollBy('categories-row', { x: -180 })` was refused by the type, though pixels are what most moves are.
 describe('a scroll step', () => {
   it('takes pixels as a number or as text, and a share of the box as text — each held as the editor writes it', () => {
     expect(scrollBy('row', { x: -180 }).params).toEqual({ x: '-180' });

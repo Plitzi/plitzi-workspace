@@ -41,7 +41,7 @@ describe('the activity, in words', () => {
     });
   });
 
-  // encore-2: a tenth of the activity's lines ran past 200 characters, the longest 499 — a failed check naming every
+  // A tenth of the activity's lines ran past 200 characters, the longest 499 — a failed check naming every
   // file of other tasks — and a person following the run read none of them.
   it('says each line for a glance, the whole kept for whoever opens it', () => {
     const failing = feedOf({

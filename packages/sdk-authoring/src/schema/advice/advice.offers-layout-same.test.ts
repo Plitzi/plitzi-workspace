@@ -166,7 +166,7 @@ describe('suggestions', () => {
 
     expect(codesOf(alike)).toContain('repeated-shape');
   });
-  /** encore-3: a helper called three times tripped it, and the agent guessed a smaller shape to get under it. */
+  /** A helper called three times tripped it, and the agent guessed a smaller shape to get under it. */
   it('says what counts as a copy, and how copies alike on purpose are kept', () => {
     const { suggestions } = authorSpace(
       dashboard(

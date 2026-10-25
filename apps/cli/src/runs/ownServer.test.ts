@@ -14,7 +14,7 @@ const servers: http.Server[] = [];
 const serve = async (instance: string): Promise<number> => {
   const server = http.createServer((_request, response) => {
     response.setHeader('Content-Type', 'application/json');
-    response.end(JSON.stringify({ Server: 'la-velada', Instance: instance }));
+    response.end(JSON.stringify({ Server: 'acme', Instance: instance }));
   });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   servers.push(server);
@@ -26,7 +26,7 @@ const serve = async (instance: string): Promise<number> => {
 const copyRecording = async (port: number): Promise<string> => {
   const work = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-own-server-')));
   await fs.mkdir(path.join(work, 'tmp'));
-  await fs.writeFile(path.join(work, 'tmp/dev-server.json'), JSON.stringify({ name: 'la-velada', port }));
+  await fs.writeFile(path.join(work, 'tmp/dev-server.json'), JSON.stringify({ name: 'acme', port }));
 
   return work;
 };
@@ -43,7 +43,7 @@ describe('a server of the copy’s own', () => {
 
     const work = await copyRecording(0);
     const own = await serve(projectMark(work));
-    await fs.writeFile(path.join(work, 'tmp/dev-server.json'), JSON.stringify({ name: 'la-velada', port: own }));
+    await fs.writeFile(path.join(work, 'tmp/dev-server.json'), JSON.stringify({ name: 'acme', port: own }));
     expect(await ownServer(work)).toBe(own);
   });
 });

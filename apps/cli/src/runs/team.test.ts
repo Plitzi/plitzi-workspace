@@ -213,7 +213,7 @@ describe('the team of a project’s runs', () => {
     );
   });
 
-  // encore: options.startGraceMinutes was checked but never read — readTeam kept designReview alone.
+  // Options.startGraceMinutes was checked but never read — readTeam kept designReview alone.
   it('reads every option the file says, each as it is valid', async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-team-'));
     try {
@@ -237,7 +237,7 @@ describe('the team of a project’s runs', () => {
     }
   });
 
-  // encore: every agent started again after the machine went down read "no signal" at once, its last word from before.
+  // Every agent started again after the machine went down read "no signal" at once, its last word from before.
   it('takes how long an agent just started may say nothing, from 1 to 30 minutes', () => {
     const agents = [{ name: 'dev', roles: ['developer'] }];
 
@@ -249,7 +249,7 @@ describe('the team of a project’s runs', () => {
     }
   });
 
-  // velada-now: a designer's strictest review took 83 steps, more than the task it reviewed — how close is the team's.
+  // A designer's strictest review took 83 steps, more than the task it reviewed — how close is the team's.
   it('says how closely a designer reviews, and refuses a level it does not know', () => {
     const team = { version: 1, agents: [{ name: 'design', roles: ['designer'] }] };
 

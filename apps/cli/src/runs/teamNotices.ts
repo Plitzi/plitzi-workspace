@@ -10,7 +10,7 @@ import type { Team } from './team';
 export const DEVELOPERS_PER_DESIGNER = 3;
 
 /**
- * …and in a copy of a site (`reference`), where each review measures every value against it: one each. velada-fidelity's
+ * …and in a copy of a site (`reference`), where each review measures every value against it: one each. A run's
  * two developers built four tasks in 22 minutes, and its one designer's reviews — 6 to 16 minutes each — held the run
  * another hour.
  */
@@ -20,7 +20,7 @@ export const DEVELOPERS_PER_DESIGNER_COPYING = 1;
 export const TASKS_PER_AGENT = 2;
 
 /**
- * Too many agents for the work, said before the run starts: velada-backlog's three tasks of a few values each went to
+ * Too many agents for the work, said before the run starts: a run's three tasks of a few values each went to
  * two developers and a designer — dev-2 spent 62k tokens, most of them its start, on one task of two lines.
  */
 const teamSizeNotice = (
@@ -29,7 +29,7 @@ const teamSizeNotice = (
   openWork: number,
   backlog: readonly string[]
 ): string[] => {
-  // A stage's tasks beside the run's still open: velada-shell's stack of one was told "1 task for 3 agents".
+  // A stage's tasks beside the run's still open: a run's stack of one was told "1 task for 3 agents".
   const work = plan.tasks.filter(task => task.role !== 'lead').length + openWork;
   const agents = startedAgents(team).length;
   if (work === 0 || work >= agents * TASKS_PER_AGENT) {
@@ -37,14 +37,14 @@ const teamSizeNotice = (
   }
 
   return [
-    // A kanban keeps a card ready beside each one in review: lx-controls' three cards for two agents left each waiting
+    // A kanban keeps a card ready beside each one in review: a run's three cards for two agents left each waiting
     // its own verdicts with nothing to take.
     `${String(work)} task${work === 1 ? '' : 's'} for ${String(agents)} agents: each agent starts by reading the skills and its brief — tens of thousands of tokens and minutes before its first line — so fewer than ${String(TASKS_PER_AGENT)} tasks each pays more for starting than for the work, and an agent whose card is in review has none to take. More cards keep the board ahead of the team${backlog.length > 0 ? ` — the backlog holds ${backlog.slice(0, 5).join(', ')}${backlog.length > 5 ? ` +${String(backlog.length - 5)}` : ''} (a task that does one says "closes")` : ''}, or a large card split by what changes apart; else a smaller team does it for less (plitzi run team set <entry> --count …)`
   ];
 };
 
 /**
- * Too few designers for the UI to review, said before the run starts: la-velada's one designer beside four developers
+ * Too few designers for the UI to review, said before the run starts: a run's one designer beside four developers
  * left 21 tasks' UI to the lead. A designer that develops too is counted as a designer: it reviews first.
  */
 const designersNotice = (plan: Pick<RunPlan, 'tasks' | 'designReview' | 'reference'>, team: Team): string[] => {

@@ -103,7 +103,7 @@ describe('lintSpace', () => {
       });
       expect(errorsOf(bound)).not.toContain('channel-topic');
 
-      // encore's private rooms: a choice of prefix is read as either word, and both must be covered.
+      // A run's private rooms: a choice of prefix is read as either word, and both must be covered.
       const choosing = (channels: Record<string, { access: { mode: 'public' } }>) =>
         withChange(({ schema }) => {
           schema.settings.channels = channels;
@@ -207,7 +207,7 @@ describe('lintSpace', () => {
       expect(warningsOf(fine)).not.toContain('form-value-compared-to-blank');
     });
 
-    // encore-4: `roomStatsData.locked` never held, and nothing said so — the source is `apiContainer_roomStatsData`.
+    // `roomStatsData.locked` never held, and nothing said so — the source is `apiContainer_roomStatsData`.
     it('condition-short-source', () => {
       const conditioned = (field: string) =>
         withChange(({ schema }) => {
@@ -306,7 +306,7 @@ describe('lintSpace', () => {
       expect(targets(refresh('all', ['nope'], 'all'), refresh('ok', ['feed', '{{ state.target }}']))).toEqual([]);
     });
 
-    // encore's room heard the first of three closes the server said at once: the rest arrived while its flow ran.
+    // A run's room heard the first of three closes the server said at once: the rest arrived while its flow ran.
     it('message-while-running', () => {
       const room = (whileRunning?: 'queue') =>
         withChange(({ schema }) => {

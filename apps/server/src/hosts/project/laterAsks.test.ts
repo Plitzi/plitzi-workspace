@@ -32,7 +32,7 @@ const withShow = async (): Promise<{ queue: JobQueue; due: number }> => {
   return { queue, due };
 };
 
-// encore-3: a spec of a show that starts in five minutes waited the five real minutes, every pass.
+// A spec of a show that starts in five minutes waited the five real minutes, every pass.
 describe('plitzi functions later, as the project server answers it', () => {
   it('lists what waits to run later, by its key and when it is due', async () => {
     const { queue, due } = await withShow();

@@ -5,7 +5,7 @@ import type { GlobalSource } from '@plitzi/sdk-shared/dataSource';
 /**
  * What each global source a template reads is — `navigation`, `host`, `theme`… — for `plitzi explain` and `--list
  * sources`: one entry for every global there is, the type holding the two together, so a new global is explained the day
- * it is added. lx-controls' developer asked `explain host` and `explain theme` and was told they were nothing.
+ * it is added. A run's developer asked `explain host` and `explain theme` and was told they were nothing.
  */
 export interface SourceDoc {
   summary: string;

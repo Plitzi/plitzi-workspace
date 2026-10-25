@@ -123,7 +123,7 @@ describe('ApiContainer — a server provider refreshed by a write', () => {
     view.unmount();
   });
 
-  // encore-3: a provider whose action had no render trigger said only "could not be reached"; the page server, while
+  // A provider whose action had no render trigger said only "could not be reached"; the page server, while
   // developing, says why where the provider reads it.
   it('says why the page server could not resolve it, when it said', () => {
     const { useStore } = createStoreHook<{

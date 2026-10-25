@@ -16,7 +16,7 @@ import type { BrowserPage, Scheme } from '../browser';
 /**
  * `plitzi page outline`: what a page is made of, as the elements a visitor sees — each by a selector `page measure`
  * takes as it is, its box and its first words. The other site's with `--compare`: what to name after `=>`, read in
- * one call where agents fetched its HTML and searched it for classes (lx-controls' designer).
+ * one call where agents fetched its HTML and searched it for classes (a run's designer).
  */
 
 export interface OutlineOptions {
@@ -35,7 +35,7 @@ export interface OutlineOptions {
   /** Signed in first as this account: the password from `PLITZI_CHECK_PASSWORD`. */
   as?: string;
   /**
-   * The elements whose name, selector or words hold this — the whole page searched, at any depth: encore-4's designer
+   * The elements whose name, selector or words hold this — the whole page searched, at any depth: a run's designer
    * found the sign-in wordmark's id, built from a prefix in code, by grepping the source.
    */
   find?: string;
@@ -85,7 +85,7 @@ export const outlineIn = (input: {
   within?: string;
   /**
    * The attribute marking what was shown before a click: listed are only the elements it opened — each opened part from
-   * depth 0 — and the rest walked through unlisted (lx-product: the open menu came cut by --depth under the whole page).
+   * depth 0 — and the rest walked through unlisted (the open menu came cut by --depth under the whole page).
    */
   opened?: string;
   depth: number;
@@ -100,7 +100,7 @@ export const outlineIn = (input: {
     }
   };
   // The part a visitor sees: a page that draws one per width hides the other, and its first was a hidden copy with no
-  // rows to list (encore-3's requests list, outlined empty).
+  // rows to list (a run's requests list, outlined empty).
   const visibleBox = (node: Element): boolean => {
     const box = node.getBoundingClientRect();
 
@@ -178,7 +178,7 @@ export const outlineIn = (input: {
       }
 
       // A bare wrapper — a div or span that names nothing, says nothing and holds one thing — is walked through: a page's
-      // first levels were five such divs and "480 more under these", none of its parts named (encore-3).
+      // first levels were five such divs and "480 more under these", none of its parts named.
       const shownChildren = [...child.children].filter(each => !skipped.has(each.tagName) && shown(each));
       const ownWords = [...child.childNodes].some(
         each => each.nodeType === Node.TEXT_NODE && (each.textContent ?? '').trim() !== ''
@@ -315,7 +315,7 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
     return;
   }
 
-  // Each width its own outline, as `check` and `measure` take a list: encore-3's agents asked for 390,1440 four times.
+  // Each width its own outline, as `check` and `measure` take a list: a run's agents asked for 390,1440 four times.
   const widths = options.width ?? [1440];
   const outlines: Outline[] = [];
   const at = async (width: number): Promise<void> => {
@@ -361,7 +361,7 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
     };
 
     // The other site outlined warm in the kept browser, on a page of its own: launched and loaded cold, 15 s a call
-    // (lx-product's dev-2, 28 calls). Not answered there, it is read here as before.
+    // (a run's dev-2, 28 calls). Not answered there, it is read here as before.
     if (target !== undefined) {
       const kept = await keptOutline(project.root, {
         url: target,

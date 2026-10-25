@@ -511,7 +511,7 @@ describe('page folders', () => {
     ).toThrow(/inside itself/);
   });
 
-  // encore-3: two tasks reused room-request, room-request-message and roomRequests — three runs of the checks to find.
+  // Two tasks reused room-request, room-request-message and roomRequests — three runs of the checks to find.
   it('says every name taken under a refused element at once, not one a run', () => {
     const box = (id: string, children: ElementSpec[]): ElementSpec => ({
       type: 'container',
@@ -539,7 +539,7 @@ describe('page folders', () => {
     expect(refused).toContain('4 problems');
   });
 
-  // encore-3: a when on `roomData.role` never held and said nothing; a string where the rule group goes, no rule at all.
+  // A when on `roomData.role` never held and said nothing; a string where the rule group goes, no rule at all.
   it('resolves a provider’s when as a binding’s source, refusing a name nothing answers to and a when that is no group', () => {
     const provider = (when: unknown): ElementSpec => ({
       type: 'apiContainer',

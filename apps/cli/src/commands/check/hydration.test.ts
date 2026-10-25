@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { drawnOtherwise } from './inspect';
 
-// velada-fidelity: "Hydration failed" for the hero's time, found by reading the diff — React names no element in a build.
+// "Hydration failed" for the hero's time, found by reading the diff — React names no element in a build.
 describe('a hydration error, named', () => {
   it('names the innermost elements the server drew otherwise, with both texts', () => {
     const served =

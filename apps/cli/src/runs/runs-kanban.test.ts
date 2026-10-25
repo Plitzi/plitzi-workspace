@@ -29,7 +29,7 @@ const completed = async (name: string, taskId: string, file: string): Promise<vo
   await completeTask(bench.agent(name, { token: taken.token }), 'es-launch', taskId, {});
 };
 
-// Carlos: the flow is a kanban, and the lead keeps every agent busy — lx-controls' agents waited their own verdicts with
+// Carlos: the flow is a kanban, and the lead keeps every agent busy — a run's agents waited their own verdicts with
 // nothing to take, the designer beside two cards whose UI the lead had kept.
 describe('an agent with nothing to take', () => {
   it('is said to the lead with the work it can stack for it — and, with none left, that it waits for its reviews', async () => {
@@ -50,7 +50,7 @@ describe('an agent with nothing to take', () => {
     expect(await idle()).toBe('');
   });
 
-  // lx-product: the run's only UI reviewer was said idle — split a developer's card for it — eleven times, once each
+  // The run's only UI reviewer was said idle — split a developer's card for it — eleven times, once each
   // time the cards the advice named changed.
   it('leaves out a designer while others’ work is under way, and says one idleness once whatever its words', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
@@ -74,7 +74,7 @@ describe('an agent with nothing to take', () => {
     expect(after?.subject).toBe(before?.subject);
   });
 
-  // encore-3: woken eight times at the end for developers with nothing of theirs left, told to split the tester's spec.
+  // Woken eight times at the end for developers with nothing of theirs left, told to split the tester's spec.
   it('is not said of an agent none of whose role’s cards is left, nor told to split another role’s card', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await setTeamAgent(bench.root, 'test', { roles: ['tester'] });

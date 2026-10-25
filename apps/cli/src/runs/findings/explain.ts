@@ -6,7 +6,7 @@ import type { Finding } from './types';
 import type { UsageLine } from '../usage';
 
 /**
- * What the agents asked `explain` — and where Plitzi had no answer, or several tries found one: encore's ten misses
+ * What the agents asked `explain` — and where Plitzi had no answer, or several tries found one: a run's ten misses
  * (`authSignup`, `chart`, `timeago`…) were each a gap the platform then filled, and dev-1 asked about dialogs eight
  * ways. The questions themselves are the evidence: what an agent looks for, in its words.
  */

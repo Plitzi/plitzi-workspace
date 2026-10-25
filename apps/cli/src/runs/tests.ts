@@ -97,7 +97,7 @@ const testChecks = (files: readonly string[], served: boolean): Acceptance[] => 
             : `${said} — npx playwright test ${specs.join(' ')}, with the copy started by hand: the project has no start script`
         ]
       : []),
-    // Every test beside them, not only the files named: encore-3's test-1 held a task's acceptance in a third file of
+    // Every test beside them, not only the files named: a run's test-1 held a task's acceptance in a third file of
     // the folder, which the check never ran.
     ...(units.length > 0
       ? [

@@ -7,7 +7,7 @@ import type { RunTask } from '../model';
 
 /**
  * What the run did beside Plitzi — each one a command or a feature it lacked: acceptance checked by scripts of the
- * lead's own (encore: the sign-up, the share card, the player's sync, an action called over HTTP), scripts the agents
+ * lead's own (the sign-up, the share card, the player's sync, an action called over HTTP), scripts the agents
  * wrote in their scratch, packages they installed there (design-1's axe-core, for an accessibility audit) — and what
  * they said of Plitzi, grouped: three agents noticed the prompt's `task complete --follow` four times.
  */

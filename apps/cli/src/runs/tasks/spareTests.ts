@@ -10,7 +10,7 @@ import type { LoadedRun } from '../run';
 import type { TaskView } from '../taskStore';
 
 /**
- * A tests card (`<task>-tests`) a developer may take while every tester of the team is at a task of its own: encore-3's
+ * A tests card (`<task>-tests`) a developer may take while every tester of the team is at a task of its own: a run's
  * one tester was at work 104 of its 152 minutes, the last 45 its cards alone, three developers waiting. Never one who
  * worked a task it tests — tests are written from what was asked, by someone who did not write the work.
  */

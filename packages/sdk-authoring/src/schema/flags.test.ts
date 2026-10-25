@@ -73,7 +73,7 @@ describe('authoring flags', () => {
   });
 });
 
-// encore's settings: the Spotify card, its flag off, failed every page check as "not on the page".
+// The Spotify card, its flag off, failed every page check as "not on the page".
 describe('an element behind a flag, in the handles', () => {
   it('is conditional, with what is inside it: a bare visit owes it nothing', () => {
     const { handles } = authorSpace(space);

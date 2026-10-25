@@ -11,7 +11,7 @@ import type { Browser, Scheme } from '../browser';
 /**
  * `plitzi page same`: whether pages draw the same on two servers of the project — the run before a task and the task's
  * copy — read, not pictured: every element on screen, its box and the styles a reader sees. A look at a task pictures
- * the pages a shared file of it reaches; velada-fidelity's design-1 waited 204 s for nine, when the task had only added
+ * the pages a shared file of it reaches; a run's design-1 waited 204 s for nine, when the task had only added
  * two tokens no other page reads. What draws the same is not pictured; what differs, or cannot be told, is.
  */
 
@@ -61,7 +61,7 @@ export const drawing = (except: readonly string[] = []): string[] => {
       const box = node.getBoundingClientRect();
       const style = getComputedStyle(node);
       // A local address is the same on both servers whatever port each was served on: /overlay writes its own URL, and
-      // read "moved" on every look at a task (velada-shell's design-1).
+      // read "moved" on every look at a task (a run's design-1).
       const words =
         node.childElementCount === 0
           ? node.textContent
@@ -90,7 +90,7 @@ export const drawing = (except: readonly string[] = []): string[] => {
         style.boxShadow.slice(0, 120),
         style.opacity,
         style.transform,
-        // What it draws on ::before and ::after: a fill, a mark — velada's VS medal paints on one.
+        // What it draws on ::before and ::after: a fill, a mark — a run's VS medal paints on one.
         ...['::before', '::after'].map(pseudo => {
           const drawn = getComputedStyle(node, pseudo);
 

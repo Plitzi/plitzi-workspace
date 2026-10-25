@@ -26,10 +26,10 @@ const site = async (pages: Partial<Record<string, string[]>>): Promise<string> =
   return `http://127.0.0.1:${String((server.address() as AddressInfo).port)}`;
 };
 
-// velada-now's fighter page — `/boxeadores/:slug` — had "no page" to look at: a page with a parameter was left out.
+// A run's fighter page — `/boxeadores/:slug` — had "no page" to look at: a page with a parameter was left out.
 describe('examplePaths', () => {
   it('opens a page with a parameter where the site links to it — its list first, then the home page', async () => {
-    // lx-fidelity: the first link that fits answers 404 — the nav's collection the catalog lacked — and is passed over.
+    // The first link that fits answers 404 — the nav's collection the catalog lacked — and is passed over.
     const origin = await site({
       '/': ['/', '/artistas/juanes', 'https://elsewhere.example/boxeadores/nope'],
       '/boxeadores': ['/boxeadores', '/boxeadores/alondrissa', '/boxeadores/lit-killah'],
@@ -43,7 +43,7 @@ describe('examplePaths', () => {
     });
   });
 
-  // lx-copy: t-product's look never pictured its product page — no link reached it on a copy without the cards.
+  // T-product's look never pictured its product page — no link reached it on a copy without the cards.
   it('opens a page with a parameter at an address the task names itself, before any link', async () => {
     const origin = await site({ '/': ['/'] });
 
@@ -54,7 +54,7 @@ describe('examplePaths', () => {
   });
 });
 
-// encore: the room's stats page — `/r/:slug/stats` — reached by no link, though the room's own address said its slug.
+// The room's stats page — `/r/:slug/stats` — reached by no link, though the room's own address said its slug.
 describe('examplePaths, a page no link reaches', () => {
   it('is filled with the parameters another page’s address gave, when that address answers', async () => {
     const origin = await site({
@@ -70,7 +70,7 @@ describe('examplePaths, a page no link reaches', () => {
   });
 });
 
-// velada-shell's t-page-heading: a shared component's task, "no page of the space owns its files", its acceptance two.
+// A shared component's task, "no page of the space owns its files", its acceptance two.
 describe('the pages an acceptance checks', () => {
   it('are read off its page commands, the options left out', () => {
     expect(
@@ -84,17 +84,17 @@ describe('the pages an acceptance checks', () => {
 });
 
 describe('the pages a look opens', () => {
-  // encore-2: a look at the Reactions plugin's CSS, drawn at no page, pictured the home page.
+  // A look at the Reactions plugin's CSS, drawn at no page, pictured the home page.
   it('are those asked, else those its files draw, else those its acceptance checks — the home page last', () => {
     expect(pagesToLook(['/menu'], ['/home'], ['/r/:slug'])).toEqual(['/menu']);
-    // Together: encore-4's look of t-retro-pass left out the page its acceptance checked, its files drawn elsewhere.
+    // Together: a run's look of t-retro-pass left out the page its acceptance checked, its files drawn elsewhere.
     expect(pagesToLook([], ['/home'], ['/r/night-drive'])).toEqual(['/home', '/r/night-drive']);
     expect(pagesToLook([], [], ['/r/night-drive'])).toEqual(['/r/night-drive']);
     expect(pagesToLook([], [], [])).toEqual(['/']);
   });
 });
 
-// encore-4: a look signed in as dax said "No link of the site reaches /u/:username" — the link is a signed-in visitor's.
+// A look signed in as dax said "No link of the site reaches /u/:username" — the link is a signed-in visitor's.
 describe('examplePaths, signed in', () => {
   it('follows the links a signed-in visitor has, with the session it is given', async () => {
     const server = http.createServer((request, response) => {
@@ -118,7 +118,7 @@ describe('examplePaths, signed in', () => {
 });
 
 describe('the account a look reads as', () => {
-  // encore-2: looks at /settings and /rooms/new pictured the sign-in panel; their acceptance checked them --as mika.
+  // Looks at /settings and /rooms/new pictured the sign-in panel; their acceptance checked them --as mika.
   it('is the one its acceptance checks the pages signed in as, else none', () => {
     expect(
       acceptanceAccount([
@@ -135,7 +135,7 @@ describe('the account a look reads as', () => {
     expect(
       acceptanceStatuses([
         {
-          said: 'The 404 reads as Encore',
+          said: 'The 404 reads as Acme',
           check: 'npx plitzi page check /no-such-page --status 404 --expect not-found'
         },
         { said: 'Home', check: 'npx plitzi page check / --status 200' }

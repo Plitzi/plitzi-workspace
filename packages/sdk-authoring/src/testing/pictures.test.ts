@@ -37,7 +37,7 @@ describe('alignPictures', () => {
     expect(drift).toEqual({ name: 'section#plans', shift: 40 });
   });
 
-  // velada-now: the original's header — dressed otherwise than the copy's — fitted a dark band far down better than its
+  // The original's header — dressed otherwise than the copy's — fitted a dark band far down better than its
   // own place, and was said to have moved there.
   it('keeps a section that differs where it is, rather than at a look-alike band far down', () => {
     const plain = profile([...range(0, 80).map(() => [10, 10, 30]), ...range(80, 1600).map(content)]);
@@ -109,7 +109,7 @@ describe('pageRegions', () => {
     vi.restoreAllMocks();
   });
 
-  // velada-backlog: a heading component's four copies were one name — its change said of one, pictured of another.
+  // A heading component's four copies were one name — its change said of one, pictured of another.
   it('numbers the copies of a part after the first, so each is told apart', () => {
     document.body.innerHTML =
       '<main data-plitzi-el="match"><header data-plitzi-el="match-heading-root"></header><header data-plitzi-el="match-heading-root"></header></main>';

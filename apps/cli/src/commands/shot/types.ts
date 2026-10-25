@@ -20,7 +20,7 @@ export interface ShotOptions {
   width?: number;
   height?: number;
   /**
-   * The picture this many times as large, the layout as at its width — a small drawing read cell by cell: encore-4's
+   * The picture this many times as large, the layout as at its width — a small drawing read cell by cell: a run's
    * designer printed its pixel mark as text with a script of its own, page shot having no zoom.
    */
   scale?: number;
@@ -77,7 +77,7 @@ export interface ShotOptions {
  */
 /**
  * How a picture is framed. An element's clip a click or a step opens (an FAQ's answer) is found as each picture is taken
- * (`later`): before the click it is not on the page, and the shot said "not on" (velada-fidelity's design-1).
+ * (`later`): before the click it is not on the page, and the shot said "not on" (a run's design-1).
  */
 export type Framing =
   | { kind: 'page' }
@@ -101,12 +101,12 @@ export interface CompareReport {
   section?: string;
   /**
    * `--click` with `--compare`: the state both pages were pictured in, the clicks of each in words — what is on the
-   * screen once each was clicked, a drawer, a panel (lx-controls' designer clicked the original by a script of its own).
+   * screen once each was clicked, a drawer, a panel (a run's designer clicked the original by a script of its own).
    */
   state?: string;
   /**
    * That section lined up with a part of the other page that is not it: what its numbers measure is something else —
-   * said, never a "99.5% differs" read as the section's (velada-polish: sponsors against the original's hero).
+   * said, never a "99.5% differs" read as the section's (sponsors against the original's hero).
    */
   misaligned?: string;
   /** The words both pages have, and what each does differently there. */
@@ -118,8 +118,8 @@ export interface CompareReport {
   sideBySide: string;
   diff: string;
   /**
-   * A page too tall to read side by side whole: each section that changed most, cut from it, both sides — velada-
-   * fidelity's look wrote a 780×13779 picture whose top was no section at all.
+   * A page too tall to read side by side whole: each section that changed most, cut from it, both sides — a run's look
+   * wrote a 780×13779 picture whose top was no section at all.
    */
   sections?: string[];
 }
@@ -155,7 +155,7 @@ export interface ShotReport {
   sheet?: string;
   /**
    * A whole page taller than `TILED_SCREENS` screens, in parts a screen and a half tall each: read whole, a phone's
-   * page (390 × 8052) was shrunk to 97 px wide and nothing of it could be read (encore-4's design-2).
+   * page (390 × 8052) was shrunk to 97 px wide and nothing of it could be read (a run's design-2).
    */
   tiles?: string[];
 }
@@ -188,7 +188,7 @@ export interface View {
   /**
    * Another site's pictures stood in for, each by one of its own colour: two pages of the project set side by side
    * (`--compare` with the run before a task) differ only by what the project changed, never by which of a busy CDN's
-   * pictures loaded on which side (velada-polish: 21–31% "differs" at 390, from 429s).
+   * pictures loaded on which side (21–31% "differs" at 390, from 429s).
    */
   standIns?: boolean;
   /** The visitor's time zone (IANA): the page as one there sees its hours — the machine's when left out. */
@@ -217,7 +217,7 @@ export const IMAGES_BUDGET_MS = 8000;
 
 /**
  * …and another site, whose pictures come from its CDN: a reference taken before its footer photo loaded told a spike
- * the original had none (velada-dress).
+ * the original had none.
  */
 export const REMOTE_IMAGES_BUDGET_MS = 20_000;
 

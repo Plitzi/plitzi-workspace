@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { drawing, firstDifference } from './same';
 
-// velada-fidelity: a look pictured nine pages a shared file reached, for two tokens added — what draws the same is not.
+// A look pictured nine pages a shared file reached, for two tokens added — what draws the same is not.
 describe('page same', () => {
   it('says the first element two drawings differ by, or none', () => {
     expect(firstDifference(['div | a', 'p | b'], ['div | a', 'p | b'])).toBeUndefined();
@@ -21,7 +21,7 @@ describe('page same', () => {
     expect(lines[1]).toMatch(/^span \| vs \| VS \|/);
   });
 
-  // velada-shell: /overlay writes the URL it was served on — another port on each server — and "moved" on every look.
+  // shop-shell: /overlay writes the URL it was served on — another port on each server — and "moved" on every look.
   it('reads a local address alike on both servers, whatever port each was served on', () => {
     Element.prototype.getClientRects = () => [new DOMRect(0, 0, 10, 10)] as unknown as DOMRectList;
     const served = (port: number) => {

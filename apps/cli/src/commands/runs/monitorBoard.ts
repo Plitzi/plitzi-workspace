@@ -178,7 +178,7 @@ const agentRowsOf = (agents: readonly AgentLine[], now: Date): string[] => {
 
   return agents.map((agent, index) => {
     const row = cells[index] ?? agentCells(agent, now);
-    // A line, never a paragraph: a question quoted whole filled the panel (velada-polish's dev-3, 352 characters) —
+    // A line, never a paragraph: a question quoted whole filled the panel (a run's dev-3, 352 characters) —
     // the task's own detail has all of it.
     const doing = agent.doing.length > DOING_SHOWN ? `${agent.doing.slice(0, DOING_SHOWN - 1)}…` : agent.doing;
 

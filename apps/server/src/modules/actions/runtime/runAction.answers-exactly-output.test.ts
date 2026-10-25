@@ -102,7 +102,7 @@ describe('runAction', () => {
     // A number bound to a text param arrives as its digits, and a required param with a default is never missing.
     expect(ran).toEqual([{ title: '12', seconds: 90, note: 'none' }]);
   });
-  // encore: a room's genres went to its task as "synthwave,house" — a param could not be a list.
+  // A room's genres went to its task as "synthwave,house" — a param could not be a list.
   it('hands a list param as a list: bound to one, or written a value a line or between commas — within maxItems', async () => {
     const seen: unknown[] = [];
     const task: FunctionTask<{ genres: string[] }> = {
@@ -155,7 +155,7 @@ describe('runAction', () => {
     expect((await runAction(request(entry))).error).toBe('Wait a minute');
   });
 
-  // encore-3: a spec could tell a refusal only by its words; its code reaches the page with them.
+  // A spec could tell a refusal only by its words; its code reaches the page with them.
   it('answers a refusal’s code beside its words', async () => {
     const task: FunctionTask<Record<string, never>> = {
       namespace: 'test',
@@ -507,7 +507,7 @@ describe('runAction', () => {
       }
     });
 
-    await expect(runAction(request(entry, { input: { minutes: 300, title: 'Encore' } }))).rejects.toMatchObject({
+    await expect(runAction(request(entry, { input: { minutes: 300, title: 'Acme' } }))).rejects.toMatchObject({
       reason: 'invalid_input',
       message: 'Invalid input: minutes (number, at most 240), title (text, longer than 4 characters)'
     });

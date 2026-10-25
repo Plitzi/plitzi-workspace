@@ -250,7 +250,7 @@ export const menu = { id: 'menu', title: 'Carta', theme };
         `export const hero = { text: 'v${String(round)}' };\n`
       );
       await completeTask(home.ctx, 'es-launch', 't-home');
-      // Said to the reviewer before it asks: its last round's changes block the task (velada-dress: design-2 found out after).
+      // Said to the reviewer before it asks: its last round's changes block the task (design-2 found out after).
       const loaded = await loadRun(lead(), 'es-launch');
       const task = loaded.tasks.find(each => each.id === 't-home');
       if (!task) {

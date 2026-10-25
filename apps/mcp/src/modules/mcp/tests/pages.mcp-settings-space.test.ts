@@ -156,7 +156,7 @@ describe('MCP settings (space-level customCss + auth config)', () => {
   it('writes how a link to the site shows — its name, language, icon, picture, colour — and its robots.txt', async () => {
     const cap = capturing(buildSpace());
     const identity = {
-      siteName: 'Encore',
+      siteName: 'Acme',
       language: 'en',
       favicon: '/favicon.svg',
       shareImage: '/og.png',

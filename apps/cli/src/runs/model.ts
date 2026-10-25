@@ -169,7 +169,7 @@ export interface RunPlan {
   /**
    * The site the run copies or follows, as its address (`https://www.example.com`): `plitzi run reference` keeps its
    * pages as they are when the run starts, and `page shot --compare` measures against what was kept — the site may
-   * change while the run works, or after it (la-velada's original redesigned its fighter page after the copy).
+   * change while the run works, or after it (a run's original redesigned its fighter page after the copy).
    */
   reference?: string;
 }
@@ -363,12 +363,12 @@ export interface DesignReview {
   why?: DesignSkip;
   /**
    * The designer who said the round before: offered this one first, and the rest only past a wait — another designer
-   * brought asks of its own, and cost a round (velada-polish's t-match-bars).
+   * brought asks of its own, and cost a round (a run's t-match-bars).
    */
   before?: string;
   /**
    * The lead that sent it back saying it reviews the next round's UI itself (`--changes … --skip-design lead`): that
-   * round comes to the lead, never to a designer (velada-fidelity's t-result-card went to design-1 after the lead said
+   * round comes to the lead, never to a designer (a run's t-result-card went to design-1 after the lead said
    * it was its own, and the lead took it from under it).
    */
   reserved?: string;

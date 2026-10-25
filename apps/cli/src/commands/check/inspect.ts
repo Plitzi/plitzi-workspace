@@ -82,7 +82,7 @@ const followLink = async (page: BrowserPage, origin: string, path: string): Prom
   }
 
   // The one a visitor sees at this width: the nav's own, hidden at 390 behind the burger, timed out where the footer's
-  // link was on screen (encore's t-retro-pages).
+  // link was on screen (a run's t-retro-pages).
   const link = links.filter({ visible: true }).first();
   if ((await link.count()) === 0) {
     return `--then ${path}: every link that goes there is hidden at this width — a visitor here opens a menu first (check it on its own, or click it open with --click)`;
@@ -110,7 +110,7 @@ const followLink = async (page: BrowserPage, origin: string, path: string): Prom
 /** What the page open in `page` is checked for, as it stands: what `checkAt` asks of its first page and `--then` of each next. */
 /**
  * An image the probe calls never loaded that the browser was answered for (2xx): it loaded and draws no size of its own
- * — an SVG with a viewBox and no width or height, a flag — which the browser reports as 0 wide (la-velada: every
+ * — an SVG with a viewBox and no width or height, a flag — which the browser reports as 0 wide (every
  * country flag of the schedules, failing each check of the home).
  */
 export const answeredImage = (issue: { code: string; message: string }, answered: ReadonlySet<string>): boolean => {
@@ -147,7 +147,7 @@ interface ConsoleLine {
 /**
  * The address an image issue names, when it is one the browser was told to ask again later (429) — or, for the images
  * of one other host said together ("64 images from cdn… did not load"), that host, when it held any of them back: the
- * finding names no address, and velada-fidelity's checks failed on a third party's busy CDN, then passed on a rerun.
+ * finding names no address, and a run's checks failed on a third party's busy CDN, then passed on a rerun.
  */
 export const throttledImage = (
   issue: { code: string; message: string },
@@ -199,7 +199,7 @@ export const drawnOtherwise = (served: string): string[] => {
 
 /**
  * A hydration error, said with the elements whose text the server and the browser drew differently — React names none
- * in a build (velada-fidelity: "Hydration failed" for the hero's time, found by reading the diff). The server's HTML is
+ * in a build ("Hydration failed" for the hero's time, found by reading the diff). The server's HTML is
  * asked again as the page is (its cookies), and each named element's text set beside the page's now.
  */
 const namedHydration = async (page: BrowserPage, address: string, errors: readonly string[]): Promise<string[]> => {
@@ -221,7 +221,7 @@ const namedHydration = async (page: BrowserPage, address: string, errors: readon
 };
 
 /**
- * Why a page refused who read it, in words: signed in, the account is in and the page's access refuses it — encore-2's
+ * Why a page refused who read it, in words: signed in, the account is in and the page's access refuses it — a run's
  * admin read "/moderation was sent with status 403" and its developer looked for a password that was there; not signed
  * in, a page for signed-in visitors.
  */
@@ -269,7 +269,7 @@ const inspectHere = async (
     answered: ReadonlySet<string>;
     /**
      * What a host held back — answered 429 (ask again later), or dropped while it answered the page's other requests:
-     * its limit met by the checks asking at once (la-velada: the original's CDN, under a run's checks), said apart and
+     * its limit met by the checks asking at once (the original's CDN, under a run's checks), said apart and
      * never the page's failure. Read once the page is looked at.
      */
     throttled: () => ReadonlySet<string>;
@@ -356,7 +356,7 @@ const inspectHere = async (
     }));
   const notFoundPage = handles && pageId ? isNotFoundPage(handles.pages[pageId]) : false;
   // Asked for a status (`--status 404`): the page sent with it is what was meant — its 404 page, on purpose — and one sent
-  // with another is the finding. velada-now's designer saw its intended 404 page marked ✗, with no way to say it.
+  // with another is the finding. A run's designer saw its intended 404 page marked ✗, with no way to say it.
   const statusIssues: CheckIssue[] =
     asked.status !== undefined
       ? sentWith === asked.status
@@ -412,7 +412,7 @@ const inspectHere = async (
   ];
 
   // What a document embedded in the page said (a video player's frame, by the origin of an iframe there) is that
-  // document's, not the space's: said apart, never the page's failure (la-velada: YouTube's player, a permissions
+  // document's, not the space's: said apart, never the page's failure (YouTube's player, a permissions
   // policy line now and then).
   const embeds = new Set(
     await page.evaluate(
@@ -529,12 +529,12 @@ export const checkAt = async (
   // An image a host dropped (no answer at all) while it answered the page's other requests is that host holding back,
   // as a 429 is; a host that answered nothing is down, or the address wrong — the page's to fix. But a host that let the
   // connection go, or never answered (`HOST_TROUBLE`, or still pending), is busy whatever else it answered: a CDN
-  // rate-limiting every request failed dev-1's checks three times in velada-polish, and a rerun passed.
+  // rate-limiting every request failed dev-1's checks three times in shop-polish, and a rerun passed.
   const answeredHosts = new Set<string>();
   const dropped = new Set<string>();
   const busy = new Set<string>();
   // …and so is one it still has not answered when the page is looked at, a host that answered the rest stalling it:
-  // neither a 429 nor a drop, and read as the page's own image that never loaded (la-velada's CDN, under a finish).
+  // neither a 429 nor a drop, and read as the page's own image that never loaded (a run's CDN, under a finish).
   const pending = new Set<string>();
   const elsewhere = (url: string, type: string): boolean => type === 'image' && !url.startsWith(origin);
   page.on('request', request => {

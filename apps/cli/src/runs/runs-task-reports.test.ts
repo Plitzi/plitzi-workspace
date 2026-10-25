@@ -18,7 +18,7 @@ import type { Bench } from '../tests/runProject';
 
 /**
  * Each agent reports its round as it completes it; the lead's report and the run's feedback put them together — so the
- * lead keeps no list of problems by hand (encore's journal held 65).
+ * lead keeps no list of problems by hand (a run's journal held 65).
  */
 
 let bench: Bench;
@@ -63,11 +63,11 @@ describe('a round’s report, and the run’s', () => {
     const report = await buildReport(lead(), loaded);
     expect(report.taskReports).toHaveLength(1);
     expect(reportText(report, undefined)).toContain('## Problems — whose, and what would stop them');
-    // encore-4: the title held every stage's goal, and the lead's summary's `#` sat above the report's own `##`.
+    // The title held every stage's goal, and the lead's summary's `#` sat above the report's own `##`.
     const staged = reportText({ ...report, goal: 'The run · A stage · Another' }, '# The summary\n\n## What it did');
     expect(staged).toContain(`# Run "${runId}" — The run\n\nIts stages, as they were stacked:\n\n- A stage\n- Another`);
     expect(staged).toContain('### The summary\n\n#### What it did');
-    // What the command prints: the glance and each finding's title — encore-4's lead read 112k characters.
+    // What the command prints: the glance and each finding's title — a run's lead read 112k characters.
     const brief = reportBrief({ ...report, goal: 'The run · A stage' });
     expect(brief).toContain(`# Run "${runId}" — The run`);
     expect(brief).not.toContain('A stage');

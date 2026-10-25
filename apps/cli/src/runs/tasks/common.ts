@@ -155,7 +155,7 @@ const mergedInCopy = async (
 /**
  * Brings a task's copy up to the run: every file the run approved since the copy was made — or that `file` names — put
  * in, unless the task changed it itself; and a file of the project a person changed since, that no task's approval
- * holds and this task does not own (la-velada: the data formatted mid-run failed every older copy's checks, and braked
+ * holds and this task does not own (the data formatted mid-run failed every older copy's checks, and braked
  * the run twice). A changed file is told by its time first: the copy is not read whole at each call. A file handed on by turns arrives with what it imports, approved after the copy
  * was made. Answers what it brought.
  */
@@ -194,7 +194,7 @@ export const refreshCopy = async (
     const startedFrom = files[each] ?? null;
     // The task's own change stays: only what it did not touch is brought, and `file` when it is asked for by name — but a
     // shared file both it and the run changed is put together line by line now, as `complete` will: its checks run on
-    // what is merged (velada-dress: t-sponsors' theme.ts lacked the run's new token, and author failed in its copy).
+    // what is merged (t-sponsors' theme.ts lacked the run's new token, and author failed in its copy).
     if (each !== file && inCopy !== startedFrom) {
       if (!own.has(each) && (await mergedInCopy(ctx, loaded, approved, view, each, startedFrom))) {
         files[each] = (await currentVersion(ctx, approved, each)).digest;
@@ -234,7 +234,7 @@ export const refreshCopy = async (
 
   await writeJson(view.paths.start, { ...start, files, overlaid: [...overlaid].sort() });
   // ESLint keeps its answers file by file: a file brought in — a token, a type — changes what the files reading it
-  // fail with, and the kept answer said the old errors (lx-copy: an agent deleted tmp/plitzi-cache/checks/eslint.json
+  // fail with, and the kept answer said the old errors (an agent deleted tmp/plitzi-cache/checks/eslint.json
   // by hand to see its copy lint clean).
   if (brought.length > 0) {
     await fs.rm(path.join(view.paths.work, LINT_CACHE_FILE), { force: true });

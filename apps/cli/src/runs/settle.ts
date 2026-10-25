@@ -8,7 +8,7 @@ import type { RunContext } from './run';
 /**
  * `plitzi run settle`: the lead says what it did about a finding the run's records raised — an agent that went on after
  * it was told to stop, a check that answered two ways — and it leaves the lead's attention. Said, never cleared in
- * silence: the note is kept in the log, beside the finding the report keeps. encore-3's close waited on three findings
+ * silence: the note is kept in the log, beside the finding the report keeps. A run's close waited on three findings
  * no task held, with no way for the lead to settle one.
  */
 

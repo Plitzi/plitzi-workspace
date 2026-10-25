@@ -27,7 +27,7 @@ export interface HarnessUsage {
   heaviest: { tool: string; what: string; results: number; chars: number; reread: number }[];
   /**
    * Plitzi's own docs and types it read — a skill's file, a package's declarations — and how often: a doc read before a
-   * failure is the doc to fix (lx-product's dev-1 read the packages' types 25 times for what `explain` did not say).
+   * failure is the doc to fix (a run's dev-1 read the packages' types 25 times for what `explain` did not say).
    */
   plitziRead: { file: string; times: number }[];
 }
@@ -73,7 +73,7 @@ const commandOf = (input: Record<string, unknown>): string | undefined => {
 
 /**
  * What a tool was asked, in words that say its kind and nothing of the project — the tool itself left to `kindOf`:
- * `plitzi page measure`, `.ts`. encore-4 read "Read Read .ts", and "Bash " for 371 results: a command after a comment,
+ * `plitzi page measure`, `.ts`. A run read "Read Read .ts", and "Bash " for 371 results: a command after a comment,
  * a `cd …;`, a subshell, or a loop had no word that named it.
  */
 export const whatOf = (_tool: string, input: unknown): string => {

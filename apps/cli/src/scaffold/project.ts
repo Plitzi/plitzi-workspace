@@ -198,7 +198,7 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
     // How the space's source is written — its files, data, tokens, repeats — eslint's way; `lint` is the code's.
     ...(source === 'local' ? { 'lint:space': 'plitzi space lint' } : {}),
     // One line per error — file(line,col) and the message — rather than a framed excerpt of each. Each of the three
-    // keeps what it read in tmp/ and reads again only what changed: la-velada's lint, run twice, 3.7 s then 0.5 s —
+    // keeps what it read in tmp/ and reads again only what changed: a run's lint, run twice, 3.7 s then 0.5 s —
     // and a run's task checks its copy again and again.
     typecheck: `tsc -p tsconfig.json --noEmit --pretty false --incremental --tsBuildInfoFile ${CHECKS_CACHE}/tsc.tsbuildinfo`,
     lint: `eslint . --cache --cache-location ${LINT_CACHE_FILE}`,

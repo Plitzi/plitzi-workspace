@@ -145,7 +145,7 @@ export interface CompletedTask {
 /** What a check that passed still warned of, each as `<check>: <warning>`. */
 /**
  * The checks' warnings a review reads: those on a file the task changed, each — and the rest counted in a line, theirs
- * whose file it is. encore-3: an integrate task's review listed an unused-file warning on a file it never touched.
+ * whose file it is. An integrate task's review listed an unused-file warning on a file it never touched.
  */
 const warningsOf = (checks: CheckResult, changed: readonly string[]): string[] => {
   const all = checks.steps.flatMap(step => (step.warnings ?? []).map(warning => ({ step: step.name, warning })));
@@ -189,7 +189,7 @@ export const completeTask = async (
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);
   // A task waiting for a file completes too, leaving its queue: what it waited for it does without — and a change to that
-  // file still in its copy is refused below, naming it (velada-dress: dev-1's `task wait` ran out, t-heading stayed
+  // file still in its copy is refused below, naming it (dev-1's `task wait` ran out, t-heading stayed
   // waiting, and nothing let it complete).
   if (!['in-progress', 'changes-requested', 'waiting'].includes(view.state.status)) {
     throw new RunRefusal('invalid', `Task "${taskId}" is ${view.state.status}: only a task in progress completes`, {
@@ -311,7 +311,7 @@ export const completeTask = async (
   const start = (await readStart(view.paths)) ?? started;
 
   const { knownFailure } = options;
-  // `lead`: what fails is the lead's to settle — a line of its that cannot pass — not any task's (lx-fidelity: agents named
+  // `lead`: what fails is the lead's to settle — a line of its that cannot pass — not any task's (agents named
   // a task at work as a placeholder, which told the wrong task it had something to fix).
   const fixer =
     knownFailure?.fixedBy === undefined || knownFailure.fixedBy === LEAD
@@ -338,7 +338,7 @@ export const completeTask = async (
     const { without, dirs } = await againstRunWork(ctx, loaded, view, checks);
     const preexisting = !knownFailure && without !== undefined ? failsWithout(checks, without, dirs) : false;
     // A known failure covers what it names: a step only this copy fails, its reason silent on it, is the task's own
-    // (lx-copy: t-contact's said the shell's empty layout, and its own duplicate token's typecheck went to review).
+    // (t-contact's said the shell's empty layout, and its own duplicate token's typecheck went to review).
     const unsaid =
       knownFailure && without !== undefined
         ? ownFailing(checks, without, dirs).filter(step => !knownFailure.why.toLowerCase().includes(step.name))
@@ -352,14 +352,14 @@ export const completeTask = async (
     }
     if (!checks.ok) {
       // The brake counts the copy's own failures: one the run's work fails the same way — a half-merged approval, a
-      // person's edit — is no agent's, said or not (lx-copy: the brake fired on the run's own breakage and stopped the
+      // person's edit — is no agent's, said or not (the brake fired on the run's own breakage and stopped the
       // stage that would have finished it).
       if (without === undefined || !failsWithout(checks, without, dirs)) {
         await recordBrake(ctx, loaded, 'checks-failed', taskId);
       }
 
       if (!knownFailure && !preexisting) {
-        // What the copy took from the run on this complete is said first: encore-2's test-1 checked green, completed,
+        // What the copy took from the run on this complete is said first: a run's test-1 checked green, completed,
         // and failed on a file the run had approved since — no word of which had come in.
         throw new RunRefusal(
           'checks-failed',
@@ -452,7 +452,7 @@ export const completeTask = async (
     );
   }
 
-  // A backup an editor left is no work of the task's: never handed to review as an added file (encore-4's `-E`).
+  // A backup an editor left is no work of the task's: never handed to review as an added file (a run's `-E`).
   const backups = backupFiles(changed);
   if (backups.length > 0) {
     throw new RunRefusal('checks-failed', `Task "${taskId}" holds backups an editor left: ${backups.join(', ')}`, {
@@ -477,7 +477,7 @@ export const completeTask = async (
     );
   }
 
-  // A file it hands over has no warning of the space's lint, whoever wrote it: la-velada's run left ten in files its tasks
+  // A file it hands over has no warning of the space's lint, whoever wrote it: a run's run left ten in files its tasks
   // changed — each said at complete, none fixed — and the finish passed with them.
   const warned = (checks.steps.find(step => step.name === 'lint:space')?.warnings ?? []).filter(warning =>
     changed.some(file => warning.startsWith(`${file}:`) || warning.startsWith(`${file} `))
@@ -622,7 +622,7 @@ export const discardFile = async (ctx: RunContext, runId: string, taskId: string
 /**
  * What the task changed that is not its own: a file another task at work holds (`outside`, which `complete` refuses),
  * and a shared one or one in no task it takes by turns or requests (`asRequests`). `task check` says the first before
- * the work is done: la-velada's t-boxer learnt it changed t-lint's `theme.ts` only at `complete`.
+ * the work is done: a run's t-boxer learnt it changed t-lint's `theme.ts` only at `complete`.
  */
 export const whoseChanges = async (
   loaded: LoadedRun,
@@ -647,7 +647,7 @@ export const whoseChanges = async (
     // A file no task at work holds — shared, a done task's, or in no task of the plan — is taken by turns as the task
     // completes when it is free (the same an agent gets from `task claim`), and requested when it is not. A new file
     // nobody names is the task's.
-    const planned = await activeHolder(loaded, file);
+    const planned = await activeHolder(loaded, file, task);
     if (planned && planned.id !== task.id) {
       outside.push({ file, holder: planned.id });
     } else if (shared.has(file) || Object.hasOwn(started.files, file)) {

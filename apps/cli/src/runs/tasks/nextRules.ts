@@ -21,7 +21,7 @@ import type { TaskView } from '../taskStore';
 /** Logs `joined` the first time an agent asks the run for work — kept as the scratch folder it is given. */
 export const markJoined = async (ctx: RunContext, loaded: LoadedRun): Promise<void> => {
   // By a mark of its own, made once: the scratch folder an agent made itself first — for its crops — read as an arrival
-  // already said (velada-polish: design-1 never "joined" the run).
+  // already said (design-1 never "joined" the run).
   const mark = path.join(agentScratch(loaded.paths, ctx.agent), '.joined');
   await fs.mkdir(path.dirname(mark), { recursive: true });
   if (!(await createExclusive(mark, ctx.now().toISOString()))) {
@@ -227,7 +227,7 @@ export const lastAsked = (view: TaskView): string[] =>
 
 /**
  * What a task's reviews asked, as the next review is handed it: the last review's notes whole, the earlier ones counted —
- * each round's hand-off repeated every review before it whole (velada-now's t-boxer, round 4).
+ * each round's hand-off repeated every review before it whole (a run's t-boxer, round 4).
  */
 export const askedOf = (notes: readonly { by: string; text: string }[]): { asked: string[]; earlier: number } => {
   const reviews = notes.flatMap(note => {
@@ -245,7 +245,7 @@ export const askedOf = (notes: readonly { by: string; text: string }[]): { asked
 
 /**
  * The roles an agent asks for work as: one role, or several it takes — `developer,reviewer`. None said: the roles the
- * team started it with, never every role — a developer offered a UI review was refused at its verdict (lx-copy: dev-1
+ * team started it with, never every role — a developer offered a UI review was refused at its verdict (dev-1
  * and dev-2, each once).
  */
 export const askedRoles = async (ctx: RunContext, role: string | undefined): Promise<string[] | undefined> => {

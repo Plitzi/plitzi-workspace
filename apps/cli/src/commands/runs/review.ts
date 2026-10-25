@@ -120,7 +120,7 @@ const PARTS_PICTURED = 3;
 /** The look itself, once its task is locked: its copy served, checked, pictured and set beside the run before it. */
 export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[], options: LookOptions) =>
   // One look of a task at a time: two served its copy at once, and the first to finish stopped the server the
-  // other was picturing — a lead's look and its designer's, on la-velada's t-home-details.
+  // other was picturing — a lead's look and its designer's, on a run's t-home-details.
   withLock(
     taskPaths(runPaths(ctx.root, runId), taskId).lookLock,
     async () => {
@@ -168,21 +168,21 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         const ownStatus = options.status === undefined ? byStatus : [];
         const acceptanceAt = checked.filter(page => !ownStatus.some(each => each.page === page));
         // Every page its changes are drawn at — a shared file's too: named pages are looked at, and the others
-        // said (velada-polish: design-2 looked at /combates twice, and the home its card change broke was the lead's
+        // said (design-2 looked at /combates twice, and the home its card change broke was the lead's
         // to find).
         const drawnAt = await pagesOf(preview.dir, changed);
         const owned = paths.length > 0 ? [] : drawnAt;
         const notLooked = paths.length > 0 ? drawnAt.filter(page => !paths.includes(page)) : [];
         // A part of a page others build too: its own elements pictured, its own findings kept — the rest is theirs.
         const parts = await taskParts(preview.dir, changed);
-        // More parts than are pictured apart: the page whole, never the first three of them — velada-dress's t-home
+        // More parts than are pictured apart: the page whole, never the first three of them — a run's t-home
         // changed six sections, and the sede, info and faq went unseen.
         const many = parts !== undefined && !parts.ownsRoot && parts.tops.length > PARTS_PICTURED;
         const clips = parts && !parts.ownsRoot && !many ? parts.tops : [];
         // A page with a parameter in its address (`/boxeadores/:slug`) is opened where the site's own links go.
-        // Its files drawn at no page (a plugin's): the pages its acceptance checks, before the home page — encore-2's
+        // Its files drawn at no page (a plugin's): the pages its acceptance checks, before the home page — a run's
         // look at the Reactions plugin's CSS pictured the home page, where no reaction is.
-        // Read signed in when asked: a task whose UI is for signed-in visitors looked at as one (encore's designers saw
+        // Read signed in when asked: a task whose UI is for signed-in visitors looked at as one (a run's designers saw
         // only the guest's page of settings, a vote or the host's controls).
         // Not told who to read it as: as its acceptance checks it — a page for signed-in visitors read signed in.
         const as = options.as ?? acceptanceAs;
@@ -213,7 +213,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         const reached = paths.length === 0 ? owned.filter(page => !direct.includes(page)) : [];
         // Beside the run before it: what the task moved, section by section — and that nothing else did. Started first:
         // the pages a shared file of it reaches are read on both before any is pictured. A lead's look starts it too
-        // when such pages are there: lx-controls' look at a carousel pictured all eight pages its data file reaches (61 s).
+        // when such pages are there: a run's look at a carousel pictured all eight pages its data file reaches (61 s).
         const before =
           (options.before ?? (designing || reached.length > 0))
             ? await startBeforePreview(ctx, runId, taskId, await freePort())
@@ -232,7 +232,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         }
 
         // A page only a shared file of it reaches, drawn the same as the run before it — every element, box and style
-        // read on both — is not pictured: velada-fidelity's look pictured nine pages for two tokens added (204 s).
+        // read on both — is not pictured: a run's look pictured nine pages for two tokens added (204 s).
         const unchanged = new Set<string>();
         if (before && reached.length > 0) {
           const { paths: reachedOnly } = await examplePaths(preview.url, reached);
@@ -260,7 +260,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
             ...pages,
             '--width',
             [...new Set(views.map(([width]) => width))].join(','),
-            // Light and dark read too: a ground fixed under the theme's text (velada-fidelity's judges' rows).
+            // Light and dark read too: a ground fixed under the theme's text (a run's judges' rows).
             '--themes',
             // Another site's pictures stood in for: a look is of the task's change — a third party's CDN, throttling a
             // look's pages at once, held the check up to its budget, and failed it now and then.
@@ -277,7 +277,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         // at once, a few at a time: each is a page or two in a browser of its own, and one after another they were
         // most of a look (the sanity run: 25 s, 22 of them waiting in turn).
         const partsBeside = before !== undefined && clips.length > 0;
-        // Why a picture was not taken, kept to be said: "No picture could be taken" alone left encore-3's reviewers to
+        // Why a picture was not taken, kept to be said: "No picture could be taken" alone left a run's reviewers to
         // page through it themselves — a page for the signed-in, a part new since the run before.
         const unpictured: { what: string; why: string }[] = [];
         const notTaken = (what: string, output: string): void => {
@@ -354,7 +354,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
           views.map(([width, scheme]) => async () => {
             const clip = partsBeside ? clips.join(',') : undefined;
             // Named for what it is — the page after the task, set beside the run before it in `-after-compare.png`:
-            // `-before.png` was the after picture (velada-polish's design-1, the same md5 as the look's own).
+            // `-before.png` was the after picture (a run's design-1, the same md5 as the look's own).
             const out = named(route, partsBeside && clips.length === 1 ? clips[0] : undefined, width, scheme, true);
             const shot = await runSelf(preview.dir, [
               'page',
@@ -454,7 +454,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
           movedElsewhere = read.flatMap(each => (each ? [each] : []));
         } finally {
           // Stopped under the look, it is said with why, before this look stops it: a picture that failed for it
-          // is no finding of the task's (velada-polish: every picture failed, the servers' output thrown away).
+          // is no finding of the task's (every picture failed, the servers' output thrown away).
           stoppedUnder.push(...stoppedText("its copy's server", preview), ...stoppedText('the run before it', before));
           before?.stop();
         }
@@ -487,7 +487,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
           ...(movedElsewhere.length > 0 ? { movedElsewhere } : {}),
           timezone: options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
           ...(compared.length > 0 ? { compared } : {}),
-          // Its copy served with the state its plays left: the run before it starts cold (encore-4: the song playing
+          // Its copy served with the state its plays left: the run before it starts cold (the song playing
           // differed on the two sides, the copy's queue played by its agent).
           ...(compared.length > 0 &&
           (await fs.readdir(path.join(preview.dir, PROJECT_STATE)).catch(() => [])).length > 0

@@ -212,7 +212,7 @@ export const warningLines = (
 
   return [
     // A token declared and read nowhere yet is what a task declares for a later one: as the skill says, no failure —
-    // said so, not as something to fix (velada-dress: design-1 read the two as contradicting each other).
+    // said so, not as something to fix (design-1 read the two as contradicting each other).
     ...own.map(each =>
       chalk.yellow(
         /unused-token/.test(each.warning)
@@ -245,7 +245,7 @@ export const taskComplete = (
       // Asked first: a forgotten flag is said before anything runs, and costs no check.
       const experience = experienceFrom(options, 'task complete');
       const { runId, taskId } = await holder(ctx, options);
-      // Named, it is said back: the lead's `task complete t-x` was refused as an argument too many (encore-3).
+      // Named, it is said back: the lead's `task complete t-x` was refused as an argument too many.
       if (named !== undefined && named !== taskId) {
         throw new RunRefusal(
           'invalid',
@@ -298,7 +298,7 @@ export const taskComplete = (
           : completed.checks.ok
             ? `  Checks passed: ${list(completed.checks.steps.map(step => step.name))}${completed.checkedAt ? ` — as task check passed them at ${completed.checkedAt.slice(11, 16)} UTC, nothing changed since: not run again` : ''}`
             : chalk.yellow(
-                // Said as what it is: one with no --known-failure is the run's, not "as you said" (lx-copy's design-2).
+                // Said as what it is: one with no --known-failure is the run's, not "as you said" (a run's design-2).
                 completed.preexisting
                   ? `  Checks failing the same way in the run's work without your task — not yours, the lead is told: ${list(completed.checks.steps.filter(step => !step.ok).map(step => step.name))}`
                   : `  Checks failing, as you said (--known-failure): ${list(completed.checks.steps.filter(step => !step.ok).map(step => step.name))}`

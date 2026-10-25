@@ -61,7 +61,7 @@ const earlierText = (review: { earlier: number; task: { id: string } }): string[
 
 /**
  * The look a review starts from, as `task next` offers it: its pages signed in as its acceptance checks them, and a
- * page its acceptance checks with a status of its own looked at with it — encore-4's offer left out t-retro-pass's 404.
+ * page its acceptance checks with a status of its own looked at with it — a run's offer left out t-retro-pass's 404.
  */
 const lookCommand = (task: RunTask, pages: readonly string[], also: string): string[] => {
   const as = acceptanceAccount(task.acceptance);
@@ -85,7 +85,7 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>): string
     chalk.bold(
       `Review ${review.task.id}'s UI — ${review.task.title}: a designer's look, before the lead's${review.round > 0 ? ` (round ${String(review.round)}: sent back since)` : ''}`
     ),
-    // Said first, on its own, on the first review alone: in the middle of a line, every time, velada-backlog's design-1
+    // Said first, on its own, on the first review alone: in the middle of a line, every time, a run's design-1
     // read it after its first verdict.
     ...(review.first
       ? [chalk.yellow(`  Your first review: read these first, whole — ${DESIGN_READING.join(', ')}`)]
@@ -208,7 +208,7 @@ export const nextText = (next: NextTask, agent: string): string =>
                     each =>
                       `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'with the lead, in review' : each.status}${each.finishedBy ? ` — as ${each.finishedBy} last did it, not your version` : ''}`
                   ),
-                  // lx-controls' dev-1 met four of Plitzi's frictions and said them only in its last words, which the
+                  // A run's dev-1 met four of Plitzi's frictions and said them only in its last words, which the
                   // run's feedback never reads.
                   ...(next.finished
                     ? [

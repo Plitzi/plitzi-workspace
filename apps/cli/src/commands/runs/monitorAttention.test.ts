@@ -6,7 +6,7 @@ import { attentionLines } from './monitorAttention';
 
 import type { RunView } from '../../runs/view';
 
-// velada-polish: what needed attention was a wall of sentences, each with its task and agent somewhere in it.
+// What needed attention was a wall of sentences, each with its task and agent somewhere in it.
 describe('what needs attention, as the monitor lists it', () => {
   it('says for whom, what, the task and its agent in columns — the most pressing first, what is only to know last', () => {
     const view = {

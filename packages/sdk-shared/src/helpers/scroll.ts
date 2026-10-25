@@ -94,7 +94,7 @@ export const SCROLL_TRIGGER = 'onScroll';
 
 /**
  * The trigger an element coming into the visitor's view fires — and leaving it — its action name in a flow: "load more
- * as you scroll" is a list's last row firing it. encore's agents searched for it six times and wrote a "Show more"
+ * as you scroll" is a list's last row firing it. A run's agents searched for it six times and wrote a "Show more"
  * button instead: a page that scrolls the document had no way to know a row was reached.
  */
 export const VIEW_TRIGGER = 'onView';

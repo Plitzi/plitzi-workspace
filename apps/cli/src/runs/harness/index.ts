@@ -11,7 +11,7 @@ export type { HarnessName, HarnessUsage } from './types';
 
 /**
  * What an agent's harness spent, read from the sessions it keeps on this machine — the cost the CLI's own count (what it
- * printed) leaves out: lx-product's dev-1 printed ~100k characters and its harness read 30.9M tokens, every turn reading
+ * printed) leaves out: a run's dev-1 printed ~100k characters and its harness read 30.9M tokens, every turn reading
  * its whole context again. Read for a window of time (a task's round, the lead's run), never sent anywhere: kept in the
  * run's own report as numbers, the model it ran on, and the names of the tools and Plitzi's files it read.
  *

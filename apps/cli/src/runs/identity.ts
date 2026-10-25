@@ -14,7 +14,7 @@ import type { RunPaths } from './paths';
 
 /**
  * Who calls a run's command, proved by a token rather than said: a name is anyone's to type. A name said, or none, was
- * taken at its word — and none, from a shell with no terminal, was the lead (velada-polish: design-2 ran `task look`
+ * taken at its word — and none, from a shell with no terminal, was the lead (design-2 ran `task look`
  * without `--agent`, and the run's log has the lead looking; one `task review --approve` the same way is the lead's
  * last word, given by a designer). So every agent of a run has a token of its own, `<run>.@<agent>.<secret>`, made at
  * its first command — the lead's when the run opens — kept in its scratch folder, and passed on each command after:
@@ -35,8 +35,7 @@ const RESERVED = new Set(['person', 'agent', UNNAMED]);
 
 /**
  * What a caller brings to say who it is, read before the run is known. Only an agent's own token says who: a task's
- * says which task — its copy's, for its holder — and a token said that is neither, or empty, is none (velada-fidelity:
- * `--token "$(cat …)"` read from the wrong folder came in empty, ran as "agent" and took a task).
+ * says which task — its copy's, for its holder — and a token said that is neither, or empty, is none (* `--token "$(cat …)"` read from the wrong folder came in empty, ran as "agent" and took a task).
  */
 export type Claim =
   /** An agent's own token, with the name it said, if it said one. */
@@ -82,8 +81,8 @@ const shellQuoted = (word: string): string => `'${word.replace(/'/g, `'\\''`)}'`
 
 /**
  * An agent's own CLI: the project's, run with its token — so every command it types is `<its plitzi> task check`, never
- * `--token "$(cat …)"`. lx-product: that flag and the CLI's path were 300 characters of every command, each kept in the
- * agent's context and read again on every turn after; and velada-fidelity's `$(cat …)`, read from the wrong folder, came
+ * `--token "$(cat …)"`. That flag and the CLI's path were 300 characters of every command, each kept in the
+ * agent's context and read again on every turn after; and a run's `$(cat …)`, read from the wrong folder, came
  * in empty. Written with the token, and again by `run agent` — the same file each time.
  */
 export const writeCli = async (paths: RunPaths, agent: string): Promise<string> => {
@@ -199,7 +198,7 @@ export const identify = async (
   }
 
   if (claim.kind === 'none' && claim.empty) {
-    // velada-shell's design-1 passed `--token ""`: its copy had just been removed under it, and "who is calling?" said
+    // A run's design-1 passed `--token ""`: its copy had just been removed under it, and "who is calling?" said
     // nothing of why its own token was not there.
     throw new RunRefusal(
       'identity',
@@ -282,7 +281,7 @@ export const identifiedAgents = async (paths: RunPaths): Promise<string[]> =>
 
 /**
  * A command as `agent`, said to whoever starts it: by its name the first time; after, through its own CLI, by its whole
- * path — it reads the same from a task's copy as from the project (velada-fidelity: a token read by a path from the
+ * path — it reads the same from a task's copy as from the project (a token read by a path from the
  * project's root read nothing in a copy, and an empty token was what let a caller in unnamed).
  */
 export const commandAs = (scratch: string, agent: string, identified: readonly string[], args: string): string =>

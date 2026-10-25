@@ -6,7 +6,7 @@ import type { Finding, LogEntry } from './types';
 
 /**
  * What the run's checks say of the checks themselves: one that answers two ways on the same work, an acceptance line
- * failing try after try (lx-product's t-gallery-phone: four lines × four tries, all the lead's), a step an agent ran
+ * failing try after try (four lines × four tries, all the lead's), a step an agent ran
  * again rather than read, a task breaking what another was approved on, and lines rewritten once the run had begun.
  */
 

@@ -12,7 +12,7 @@ import type { FeedLine } from './monitor';
  * column, never said again in its words: "approved (round 2)", not "approved t-shell (round 2)".
  *
  * Two texts a line: `text`, what a glance reads — `SHORT` at most, in its own words where the whole would be cut — and
- * `detail`, the whole, opened under it. encore-2's activity ran to 499 characters a line (a failed check naming every
+ * `detail`, the whole, opened under it. A run's activity ran to 499 characters a line (a failed check naming every
  * file of every other task), and a tenth of its lines past 200: a person following the run read none of them.
  */
 
@@ -233,7 +233,7 @@ const lineOf = (entry: Record<string, unknown>): FeedLine | undefined => {
       return line('run', `integration task, for ${textOf(entry.file)}`);
     case 'summary':
       return line('run', 'wrote the run’s summary, its report’s first part');
-    // A bare "tokens" said nothing of what was kept (lx-controls).
+    // A bare "tokens" said nothing of what was kept.
     case 'tokens':
       return line('run', `kept what the harness counted each agent spent: ${listOf(entry.agents)}`);
     case 'launch':

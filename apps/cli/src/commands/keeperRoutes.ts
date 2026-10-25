@@ -16,7 +16,7 @@ import type { KeptAnswer, KeptAsk, KeptOutlineAnswer, KeptOutlineAsk, KeptView }
  * nobody else reads, opened warm and closed; and a page held for one command's play — opened, stepped, read, closed —
  * each its own session, closed once unused a minute, a handful at most.
  *
- * lx-product: a stateful read of the other site — `--click`, `page play`, `page outline --compare` — launched a browser
+ * A stateful read of the other site — `--click`, `page play`, `page outline --compare` — launched a browser
  * and loaded the site cold every time, 10–17 s a call, where a kept one reads in 1–2.
  */
 

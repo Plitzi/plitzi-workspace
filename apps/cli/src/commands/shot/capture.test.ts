@@ -31,7 +31,7 @@ const reloading = (times: number): Pick<BrowserPage, 'evaluate' | 'waitForLoadSt
   return page;
 };
 
-// velada-dress: a run's preview reloads at each approval, and `page shot --compare` died reading it.
+// A run's preview reloads at each approval, and `page shot --compare` died reading it.
 describe('reading a page that reloads under it', () => {
   it('reads it again once it has loaded', async () => {
     const page = reloading(1);
@@ -53,7 +53,7 @@ const having = (...present: string[]) => ({
   })
 });
 
-// velada-polish: the report named `section#home-sponsors` (its element's name, not an id), and `--scroll-to` said it was
+// The report named `section#home-sponsors` (its element's name, not an id), and `--scroll-to` said it was
 // not on the page; `--clip combates`, an anchor's id, the same.
 describe('finding what a picture is aimed at', () => {
   it('finds a section as a comparison names it: by its id, or by its element’s name', async () => {
@@ -68,7 +68,7 @@ describe('finding what a picture is aimed at', () => {
     expect(awaited('section#home-sponsors')).toBe('section#home-sponsors, section[data-plitzi-el="home-sponsors"]');
   });
 
-  // velada-backlog: four copies of one heading were one region's name; the second's change pictured the first.
+  // Four copies of one heading were one region's name; the second's change pictured the first.
   it('finds a copy of a component’s part by its place, as a comparison numbers it', async () => {
     expect(
       await targetOn(having('header[data-plitzi-el="match-heading-root"] >> nth=1'), 'header#match-heading-root:2')
@@ -78,7 +78,7 @@ describe('finding what a picture is aimed at', () => {
     );
   });
 
-  // velada-shell's lead: "fights-heading" — a component's instance, which has no node of its own — was "No element".
+  // A run's lead: "fights-heading" — a component's instance, which has no node of its own — was "No element".
   it('finds a component’s instance by its name, on the root it is drawn as', async () => {
     expect(await targetOn(having('[data-plitzi-instance="fights-heading"]'), 'fights-heading')).toEqual({
       selector: '[data-plitzi-instance="fights-heading"]',
@@ -86,7 +86,7 @@ describe('finding what a picture is aimed at', () => {
     });
   });
 
-  // lx-product: `product-dot:nth-child(3)` was "not on the page" — 16 checks of one task failed on it.
+  // `product-dot:nth-child(3)` was "not on the page" — 16 checks of one task failed on it.
   it('finds a name with a pseudo-class, an attribute or a class on it as that element — a tag stays a tag', async () => {
     const third = '[data-plitzi-el="product-dot"]:nth-child(3)';
     expect(await targetOn(having(third), 'product-dot:nth-child(3)')).toEqual({ selector: third, found: true });
@@ -107,7 +107,7 @@ describe('finding what a picture is aimed at', () => {
   it('finds a bare word as an element’s name, a tag, or an id — never an id CSS cannot read', async () => {
     expect(await targetOn(having('#combates'), 'combates')).toEqual({ selector: '#combates', found: true });
     expect(await targetOn(having(), 'combates')).toEqual({ selector: '[data-plitzi-el="combates"]', found: false });
-    // encore-4: a component's instance was waited for by no selector that finds it, and the clip said "not on".
+    // A component's instance was waited for by no selector that finds it, and the clip said "not on".
     expect(awaited('combates')).toBe(
       '[data-plitzi-el="combates"], combates, #combates, [data-plitzi-instance="combates"]'
     );

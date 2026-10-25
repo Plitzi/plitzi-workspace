@@ -156,7 +156,7 @@ describe('the pages a kept browser holds', () => {
     expect(await again).toEqual({ readings: [{ problem: 'h1 read on page 1' }] });
   });
 
-  // lx-product: a state read on the other site paid its settling — its widgets' scripts, seconds — every time.
+  // A state read on the other site paid its settling — its widgets' scripts, seconds — every time.
   it('hands a free kept page to one ask alone, and loads another in its place for the next', async () => {
     const { pages, loads, reads, settle } = bench();
     const first = pages.measure(ask('https://site.test/'));

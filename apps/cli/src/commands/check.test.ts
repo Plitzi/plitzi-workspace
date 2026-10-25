@@ -262,13 +262,13 @@ describe('the account a check signs in as', () => {
     await fs.rm(root, { recursive: true });
   });
 
-  // encore: an agent in a task's copy had no .env to read the password from, and could not check a page signed in.
+  // An agent in a task's copy had no .env to read the password from, and could not check a page signed in.
   it('reads its project’s account in a task’s copy, which has no .env', async () => {
-    const root = await projectWith('PLITZI_CHECK_PASSWORD=encore-demo\n');
-    const copy = path.join(root, 'tmp', 'plitzi-runs', 'encore', 'tasks', 't-room', 'cache', 'work');
+    const root = await projectWith('PLITZI_CHECK_PASSWORD=acme-demo\n');
+    const copy = path.join(root, 'tmp', 'plitzi-runs', 'acme', 'tasks', 't-room', 'cache', 'work');
     await fs.mkdir(copy, { recursive: true });
 
-    expect(await checkAccount(copy, 'mika')).toEqual({ username: 'mika', password: 'encore-demo' });
+    expect(await checkAccount(copy, 'mika')).toEqual({ username: 'mika', password: 'acme-demo' });
     await fs.rm(root, { recursive: true });
   });
 
@@ -365,7 +365,7 @@ describe('a short label the page breaks onto two lines', () => {
       '<a data-plitzi-el="home-lede" href="/about">A whole sentence that wraps as text does</a>',
       // An eyebrow over a name, two blocks stacked on purpose: two lines of one each, no label broken.
       '<a data-plitzi-el="artist-prev-card" href="/artistas/juanes"><div>Artista anterior</div><div>Juanes</div></a>',
-      // lx-copy: a tile's title over its call — four words read apart, never "GRÁFICASCompra": no label.
+      // A tile's title over its call — four words read apart, never "GRÁFICASCompra": no label.
       '<a data-plitzi-el="tile-gpu" href="/c/gpu"><div>TARJETAS GRÁFICAS</div><div>Compra ahora</div></a>',
       // Three words in two blocks, the title wrapping: the label said is the block that wraps.
       '<a data-plitzi-el="tile-pc" href="/c/pc"><div>PC GAMER</div><div>Ver</div></a>'

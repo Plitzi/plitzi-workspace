@@ -24,7 +24,7 @@ export const contentText = (content: unknown): string => {
 
 /**
  * What says on the page that an element has nothing to show — no words, no picture: a binding that read nothing, a
- * field the data lacks. Drawn empty, never as a placeholder a visitor reads (encore's room cards said "Text"); the
+ * field the data lacks. Drawn empty, never as a placeholder a visitor reads (a run's room cards said "Text"); the
  * marker is how a page check tells it from an element left empty on purpose (`page check`, `element-empty`).
  */
 export const emptyMark = (empty: boolean): { 'data-plitzi-empty'?: '' } => (empty ? { 'data-plitzi-empty': '' } : {});

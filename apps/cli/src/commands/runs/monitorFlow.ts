@@ -42,7 +42,7 @@ const markOf = (task: TaskLine): { text: string; width: number } => {
 
 /**
  * Who a card is with: its agent, the lead at its spike, the designer or lead at its review — what puts it at the top
- * of its stage, the ones nobody is on below (velada-dress: a stage's cards under its scroll were the ones being worked).
+ * of its stage, the ones nobody is on below (a stage's cards under its scroll were the ones being worked).
  */
 const withSomeone = (task: TaskLine): boolean =>
   task.agent !== undefined ||
@@ -65,7 +65,7 @@ const standingOf = (task: TaskLine): string =>
 /**
  * What a pending task waits for: each task it follows that is not approved yet, and where that one stands — "after
  * t-boxer (UI review), t-lint (lead review)". Its tasks at review were a pending task's whole reason, and nothing on
- * the screen said so (la-velada: t-motion pending while the three it followed waited for one designer).
+ * the screen said so (t-motion pending while the three it followed waited for one designer).
  */
 export const waitsText = (task: TaskLine, tasks: readonly TaskLine[]): string => {
   const left = waitedFor(task, tasks).map(other => `${other.id} (${standingOf(other)})`);
@@ -117,7 +117,7 @@ const stagesOf = (tasks: readonly TaskLine[]): Stage[] => {
     // Free to take: no agent's yet — a task sent back is its writer's, at work or held.
     { name: '○ ready', tone: text => text, tasks: of('ready') },
     // One card an agent: the task it is at — written, or again after a review sent it back (↺). The others it holds
-    // wait for it, held (velada-dress: dev-2 "ready" with t-home and "at work" with t-overlay at once).
+    // wait for it, held (dev-2 "ready" with t-home and "at work" with t-overlay at once).
     {
       name: '▶ at work',
       tone: chalk.cyan,
@@ -157,13 +157,13 @@ const stagesOf = (tasks: readonly TaskLine[]): Stage[] => {
     },
     {
       // A lead that took a review whose UI waits for a designer reviews it whole (--skip-design lead): it is with the
-      // lead, named — never "nobody yet" in the UI's column while the lead says it is reviewing it (encore-4).
+      // lead, named — never "nobody yet" in the UI's column while the lead says it is reviewing it.
       name: '◎ lead review',
       tone: chalk.magenta,
       tasks: of('in-review').filter(task => task.design?.status !== 'due' || task.reviewer !== undefined),
       who: task => task.reviewer ?? 'waiting'
     },
-    // The latest approval first: what just landed is what a person following the run looks for (encore-4).
+    // The latest approval first: what just landed is what a person following the run looks for.
     {
       name: '✓ approved',
       tone: chalk.green,
@@ -239,7 +239,7 @@ export const flowBoard = (
           const mark = task ? markOf(task) : { text: '', width: 0 };
           const who = task && stage.who ? stage.who(task) : '';
           // Who it is with keeps its place: the id gives way first, cut in its middle — cut at the card's end, a long id
-          // took the name with it, and the lead's review read nobody's (encore-4: "t-desk-selector-ai…").
+          // took the name with it, and the lead's review read nobody's ("t-desk-selector-ai…").
           const room = stageWidth - mark.width - (who ? Math.min(who.length + 1, stageWidth - mark.width - MIN_ID) : 0);
           const id = name && name.length > room ? idCell(name, room).trimEnd() : name;
 

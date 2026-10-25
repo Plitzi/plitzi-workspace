@@ -92,7 +92,7 @@ describe('an image its host held back (429)', () => {
     ).toBeUndefined();
   });
 
-  // velada-fidelity: "64 images from cdn.infolavelada.com did not load" names no address, and failed every check.
+  // "64 images from cdn.example.com did not load" names no address, and failed every check.
   it('is the host’s too when its images are said together, and it held back any of them', () => {
     const grouped = (host: string) => ({
       code: 'image-not-loaded',
@@ -106,7 +106,7 @@ describe('an image its host held back (429)', () => {
   });
 });
 
-// velada-polish: a CDN rate-limiting every request — connections reset, never answered — failed dev-1's checks three
+// A CDN rate-limiting every request — connections reset, never answered — failed dev-1's checks three
 // times, and a rerun passed: a busy host's, never the page's. A name that resolves to nothing stays the page's.
 describe('a host that lets an image go', () => {
   it('is busy when it times out, resets or closes — and the page’s when its name resolves to nothing', () => {
@@ -123,7 +123,7 @@ describe('a host that lets an image go', () => {
   });
 });
 
-// lx-copy: the original's "TARJETAS GRÁFICAS" wraps under its tile; label-wraps failed every check of a faithful copy.
+// The original's "TARJETAS GRÁFICAS" wraps under its tile; label-wraps failed every check of a faithful copy.
 describe('a label wrapped as the original wraps it', () => {
   let bench: Bench;
   const { open } = runSteps(() => bench);

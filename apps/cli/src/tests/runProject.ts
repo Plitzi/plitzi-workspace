@@ -81,7 +81,7 @@ export interface Bench {
 
 /**
  * The file of `dir/src` that fails the bench's checks: one holding `BROKEN`, or one holding `NEEDS:<name>` where no
- * file holds `HAS:<name>` — a file that reads what another declares (lx-copy: t-shell's shell, reading keys its
+ * file holds `HAS:<name>` — a file that reads what another declares (t-shell's shell, reading keys its
  * request on site.json held).
  */
 const holdsBroken = async (dir: string): Promise<string | undefined> => {

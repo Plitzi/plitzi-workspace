@@ -3,7 +3,7 @@ import { stoppedAgents } from './onDemand';
 /**
  * Each agent's life in the run, read off its log: when it was started, what it took, completed and reviewed, when it
  * waited and stopped and why — and the minutes it was at work, stopped, or silent without having stopped. Kept in the
- * report so a run is read whole after it is gone: encore-2's tester and designers read "no signal" for half an hour,
+ * report so a run is read whole after it is gone: a run's tester and designers read "no signal" for half an hour,
  * and only the run's folder, copied aside before the finish, said why (Carlos: "esa información, agrégala al reporte").
  */
 

@@ -39,13 +39,13 @@ export interface ElementDeclarationData {
   /**
    * What its source holds, field by field — `atEnd: 'At its last slide…'` — for whoever writes a binding to it: what
    * `plitzi explain <type>` says and its search finds, where an author otherwise read the bundle's types to learn a
-   * carousel could say where it stands (lx-controls). The fields the element writes itself; a provider's answer is the
+   * carousel could say where it stands. The fields the element writes itself; a provider's answer is the
    * service's, and is said as `…`.
    */
   publishes?: Record<string, string>;
   /**
    * What it writes on its node that a style or a check reads it by — `role="tab"`, `aria-selected`, a class it adds —
-   * and how a class styles it: what `plitzi explain <type>` says under "On the page". encore-4's developer read the
+   * and how a class styles it: what `plitzi explain <type>` says under "On the page". A run's developer read the
    * served HTML to learn a tab says `aria-selected`, and lit the open tab with a state that never matched it.
    */
   marks?: Record<string, string>;
@@ -221,7 +221,7 @@ export interface ElementContentSpec {
   /**
    * The attributes whose default is the builder's placeholder — the words an element shows on the canvas when it is
    * placed ("Text", "Button") — never a value: code that writes the element without one draws nothing, as a bound
-   * text whose binding read nothing (encore's room cards and Home's window said "Text").
+   * text whose binding read nothing (a run's room cards and Home's window said "Text").
    */
   placeholders?: readonly string[];
   /** Left out: `type` (the declaration's), no bindings, visible, and the `base` style selector beside its own. */

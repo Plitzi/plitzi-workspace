@@ -49,7 +49,7 @@ describe('acceptance, checks and what is left behind', () => {
     expect((await readInbox(lead(), runId)).map(message => message.text)).toContain('Prices come from menu.json');
   });
 
-  // la-velada: ten warnings in files the run's tasks changed, each said at complete and none fixed.
+  // Ten warnings in files the run's tasks changed, each said at complete and none fixed.
   it('refuses a completion that leaves a warning of the space’s lint in a file it changed — not in one it did not', async () => {
     const runId = await open();
     const menu = await take('agent-1', 't-menu');
@@ -70,7 +70,7 @@ describe('acceptance, checks and what is left behind', () => {
 
     await completeTask({ ...menu.ctx, checks: warning('src/space/pages/about.ts') }, runId, 't-menu');
     expect((await viewRun(lead(), runId)).tasks.find(task => task.id === 't-menu')?.status).toBe('in-review');
-    // Its review reads the one on another's file as a count, never as its own (encore-3's integrate task).
+    // Its review reads the one on another's file as a count, never as its own (a run's integrate task).
     const shown = await showTask(lead(), runId, 't-menu');
     expect(shown.warnings).toEqual([
       "1 more in files it did not change — another task's, or the project's: npx plitzi space lint lists them"
@@ -169,7 +169,7 @@ describe('acceptance, checks and what is left behind', () => {
     expect(view.attention.some(item => item.kind === 'known-failure' && item.task === 't-home')).toBe(true);
   });
 
-  // lx-copy: 72% of its checks failed, most for the run's own breakage or a line that could never pass.
+  // 72% of its checks failed, most for the run's own breakage or a line that could never pass.
   it('a check failing for nothing of the copy’s says so, counted against nobody — a line nothing answers told once', async () => {
     const plan = benchPlan();
     plan.tasks[0].acceptance = [{ said: 'The logo', check: 'echo the original has no .logo; exit 2' }];
@@ -192,7 +192,7 @@ describe('acceptance, checks and what is left behind', () => {
     );
   }, 30_000);
 
-  // encore's dev-3: a type fixed in an imported file left its unchanged importers failing, read off ESLint's cache.
+  // A type fixed in an imported file left its unchanged importers failing, read off ESLint's cache.
   it('a fresh check reads every file again: the copy’s lint cache goes with it', async () => {
     const runId = await open();
     const menu = await take('agent-1', 't-menu');
@@ -221,7 +221,7 @@ describe('acceptance, checks and what is left behind', () => {
         .message
     ).toContain('is this task');
 
-    // Silent on the step only this copy fails, a known failure is refused (lx-copy: t-contact's own typecheck went
+    // Silent on the step only this copy fails, a known failure is refused (t-contact's own typecheck went
     // through under one that named the shell's layout).
     expect(
       (
@@ -387,7 +387,7 @@ describe('acceptance, checks and what is left behind', () => {
     theme.tasks = [{ ...theme.tasks[0], files: ['src/space/theme.ts'] }];
     const reading = await checkPlan(bench.root, theme, await readOwnership(bench.root), teamFor(theme, 3));
     expect(reading.tasks[0].files).toEqual(['src/space/theme.ts']);
-    // One notice for every such file, each with the first that read it (lx-fidelity: twenty lines of it, twice).
+    // One notice for every such file, each with the first that read it (twenty lines of it, twice).
     const read = reading.notices.filter(notice => notice.includes('read by files no task holds'));
     expect(read).toHaveLength(1);
     expect(read[0]).toContain('src/space/theme.ts (t-home) ← ');

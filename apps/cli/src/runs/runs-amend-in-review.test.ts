@@ -10,7 +10,7 @@ import { runSteps } from '../tests/runSteps';
 import type { Bench } from '../tests/runProject';
 
 /**
- * A line amended while its task waits in review is the one the finish holds it to: encore-2's t-playback-safety was
+ * A line amended while its task waits in review is the one the finish holds it to: a run's t-playback-safety was
  * amended in review, approved on its old line, and the finish refused the run on it.
  */
 

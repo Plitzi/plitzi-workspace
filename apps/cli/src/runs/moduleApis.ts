@@ -8,7 +8,7 @@ import type TypeScript from 'typescript';
 /**
  * What a task's files import from the rest of the project, as their brief says it: each name they import, its
  * signature and the first sentence of its doc — never its body. Every agent of a run read the same shared modules whole
- * to learn how to call them (la-velada: `theme.ts`, `sectionHeading.ts`, the components' `index.ts`, a dozen times
+ * to learn how to call them (`theme.ts`, `sectionHeading.ts`, the components' `index.ts`, a dozen times
  * each across the run); the names a file imports, and how they are called, are what it needs of them.
  */
 export interface ImportedApi {

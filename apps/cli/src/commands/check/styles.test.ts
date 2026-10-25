@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { elementStyles } from './styles';
 
-// velada-backlog: `task look --element fight-card-vs` found it on the page, ten copies, then said it was no element of
+// `task look --element fight-card-vs` found it on the page, ten copies, then said it was no element of
 // the space — "a component's part is named by its instance's id". It was a class.
 describe('an element whose styles are asked', () => {
   it('is said to be a class, and who wears it, when the name is a class', async () => {

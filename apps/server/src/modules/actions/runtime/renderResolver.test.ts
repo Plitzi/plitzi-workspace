@@ -226,7 +226,7 @@ describe('createActionResolver', () => {
     await expect(resolve({ action: 'post-page' }, failing)).rejects.toThrow(/failed/);
   });
 
-  // encore-4: the log said "ended as failed" and nothing of why, as an error with its stack, for every guest's page.
+  // The log said "ended as failed" and nothing of why, as an error with its stack, for every guest's page.
   it('says why a run did not complete, in its step’s words — a refusal marked as one', async () => {
     const failing: ActionEntry = {
       ...entry,
@@ -234,7 +234,11 @@ describe('createActionResolver', () => {
         ...entry.document,
         nodes: {
           ...entry.document.nodes,
-          load: { ...entry.document.nodes.load, action: 'flow.fail', params: { message: 'There is no room at this address.' } }
+          load: {
+            ...entry.document.nodes.load,
+            action: 'flow.fail',
+            params: { message: 'There is no room at this address.' }
+          }
         }
       }
     };
@@ -385,7 +389,7 @@ describe('createActionResolver', () => {
       }
     };
 
-    // Said for what it lacks: encore-3's refusal read `forbidden` in a log, the page only "could not be reached".
+    // Said for what it lacks: a run's refusal read `forbidden` in a log, the page only "could not be reached".
     await expect(resolve({ action: 'post-page' }, callOnly)).rejects.toThrow(
       'Action "post-page" has no "render" trigger: a server provider reads an action through one'
     );

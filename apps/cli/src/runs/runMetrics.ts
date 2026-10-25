@@ -2,7 +2,7 @@ import type { UsageLine } from './usage';
 
 /**
  * A run measured from its own records — its activity, the usage each command kept, the messages — as the lead measured
- * velada-polish by hand to find where its time went: how long each task waited to be taken, was worked, waited for its
+ * shop-polish by hand to find where its time went: how long each task waited to be taken, was worked, waited for its
  * UI review and the lead's, and for its agent after it was sent back; how long each agent waited for work; every check
  * failed by its step; every refusal by its code; how long a question waited; and what the run cost — what each command
  * printed, which its agent read — with the calls repeated. The report says it, and keeps it as data, the bench's.
@@ -102,7 +102,7 @@ export interface RunMetrics {
 
 /**
  * What one call of a command may take, in seconds — every second an agent spends in the CLI is multiplied by agents and
- * calls (Carlos, velada-fidelity: ~150 page measures at 18 s each). A command whose median is past its budget is said in
+ * calls (Carlos: ~150 page measures at 18 s each). A command whose median is past its budget is said in
  * the report, and counted in the bench.
  */
 export const CLI_BUDGET_S: Record<string, number> = {
@@ -172,7 +172,7 @@ const REPEAT_WINDOW_MIN = 10;
 
 /**
  * A call an agent is meant to make again: a wait that ends on news, and `task next --take`, which hands one piece of
- * work a call. encore-4 counted test-1's 14 `task next --follow --take` in 6 min as a loop — one a fresh session each.
+ * work a call. A run counted test-1's 14 `task next --follow --take` in 6 min as a loop — one a fresh session each.
  */
 const calledAgainByDesign = (command: string): boolean =>
   waitsByDesign(command) || /^plitzi task next\b.*\s--take\b/.test(command);
@@ -333,7 +333,7 @@ export const runMetrics = (input: {
   ].filter(name => name !== 'plitzi' && name !== 'unnamed');
   const allApproved = log.findLast(entry => entry.action === 'all-approved');
   // The run's work ends with its last approval: what an agent waited past it was for the person's finish, not for work
-  // (encore-4 counted 1692 min of waits, 9 h of them for an apply).
+  // (A run counted 1692 min of waits, 9 h of them for an apply).
   const workEnd = allApproved ? at(allApproved) : input.now;
   const agents: AgentFlow[] = names.map(agent => {
     const own = log.filter(entry => entry.by === agent);

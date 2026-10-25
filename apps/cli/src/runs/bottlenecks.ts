@@ -62,7 +62,7 @@ export const bottlenecks = (
   }
 
   // A task that could start, held behind one going round its reviews while agents of its role sit free: the lead's to
-  // unblock — la-velada's t-motion waited three rounds of t-boxer's UI review it needed nothing from, two developers idle.
+  // unblock — a run's t-motion waited three rounds of t-boxer's UI review it needed nothing from, two developers idle.
   const reviewing = new Set(views.flatMap(view => (view.state.design?.by ? [view.state.design.by] : [])));
   const free = (role: string): string[] =>
     started
@@ -98,7 +98,7 @@ export const bottlenecks = (
   }
 
   // A review taken and not decided while the team has nothing to take: the run waits on one agent, and only the lead
-  // can ask it where it stands or decide it — velada-now's last task sat in a designer's review, five agents idle.
+  // can ask it where it stands or decide it — a run's last task sat in a designer's review, five agents idle.
   const idleAll = views.some(view => view.state.status === 'ready')
     ? []
     : started.filter(each => atOwn(each.agent) === undefined && !reviewing.has(each.agent)).map(each => each.agent);
@@ -148,7 +148,7 @@ export const bottlenecks = (
  * The run as a kanban: the lead keeps every agent busy. An agent running with nothing of its own being worked, no review
  * in hand and no card of its roles ready is starved — said to the lead with the way to feed it: the backlog's items no
  * task does yet, a card a designer could review the UI of, a large card to split; with nothing left, that it may go.
- * lx-controls: three cards for two agents, each agent waited its own verdicts with nothing to take, the designer idle
+ * Three cards for two agents, each agent waited its own verdicts with nothing to take, the designer idle
  * nine minutes beside two cards in review whose UI looks the lead had kept.
  */
 export const idleTeam = (
@@ -170,11 +170,11 @@ export const idleTeam = (
   const readyFor = (roles: readonly string[]): boolean =>
     views.some(view => view.state.status === 'ready' && roles.includes(view.task.role ?? DEVELOPER));
   // A designer while others' work is under way waits for its UI reviews, which is what it is for — and waiting costs
-  // nothing: lx-product's idle-team told the lead to split a developer's card for the run's only UI reviewer.
+  // nothing: a run's idle-team told the lead to split a developer's card for the run's only UI reviewer.
   const uiComing = views.some(
     view => view.owner && isWorked(view.state.status) && (view.task.role ?? DEVELOPER) !== DESIGNER
   );
-  // An agent none of whose role's cards is left has done its part: encore-3's lead was woken eight times at the end, for
+  // An agent none of whose role's cards is left has done its part: a run's lead was woken eight times at the end, for
   // developers with nothing of theirs left and a tester's spec it could not split for them.
   const leftFor = (roles: readonly string[]): boolean =>
     views.some(view => view.state.status !== 'done' && roles.includes(view.task.role ?? DEVELOPER));

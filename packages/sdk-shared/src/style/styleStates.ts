@@ -63,7 +63,7 @@ export const STYLE_STATE_LABELS: Record<(typeof STYLE_STATES)[number], string> =
 
 /**
  * What each state is, in a line — what `plitzi explain` says of it, and where it differs from what its name suggests:
- * encore-4's agents lit the open tab with `active`, the press, where `current` is the chosen one.
+ * A run's agents lit the open tab with `active`, the press, where `current` is the chosen one.
  */
 export const STYLE_STATE_MEANINGS: Record<(typeof STYLE_STATES)[number], string> = {
   hover: 'while the pointer is over it',

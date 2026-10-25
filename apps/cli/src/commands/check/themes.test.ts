@@ -15,7 +15,7 @@ const reading = (text: string, color: string, background: string, page: string, 
   page
 });
 
-// velada-fidelity: the judges' rows a fixed dark colour under the theme's text — grey bars, a gold count lost on them.
+// The judges' rows a fixed dark colour under the theme's text — grey bars, a gold count lost on them.
 describe('a ground that does not follow the theme', () => {
   it('is found when it is the same in both schemes under a text that changes and barely reads in one', () => {
     const fixed = 'rgba(10, 16, 36, 0.55) none';

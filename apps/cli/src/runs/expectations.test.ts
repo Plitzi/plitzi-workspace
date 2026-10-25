@@ -10,7 +10,7 @@ const handles = {
   pages: { home: page('home', '/'), fight: page('fight', '/combate/:slug'), lost: page('lost', '/*', '*') }
 } as unknown as SpaceHandles;
 
-// velada-polish: the lead's acceptance `page check /no-existe` had no --status 404, and could never pass.
+// The lead's acceptance `page check /no-existe` had no --status 404, and could never pass.
 describe('a plan’s check of an address no page answers', () => {
   it('reads the addresses a page check asks, and whether it says a status', () => {
     expect(checkedPaths('plitzi page check /no-existe /combates --width 1440 --expect "x~y"')).toEqual([

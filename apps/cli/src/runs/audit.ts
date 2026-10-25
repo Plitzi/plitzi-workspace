@@ -26,7 +26,7 @@ export const auditRun = async (loaded: LoadedRun): Promise<Finding[]> => {
 
   for (const task of loaded.tasks) {
     const { state } = await viewTask(loaded.paths, task);
-    // A spike ends with what it found (`spike-done`), never with an approval: velada-polish's s-scope read as missed.
+    // A spike ends with what it found (`spike-done`), never with an approval: a run's s-scope read as missed.
     const approvals = [
       ...by('review', task.id).filter(entry => entry.verdict === 'approve'),
       ...by('spike-done', task.id)

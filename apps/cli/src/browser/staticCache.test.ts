@@ -85,7 +85,7 @@ const harness = async (own?: string) => {
   return { ask, fetched: () => fetched };
 };
 
-// la-velada's home asked a CDN, YouTube and Google Fonts for 63 files on each of a check's loads: 1.25 s cold, 0.27 s warm.
+// A run's home asked a CDN, YouTube and Google Fonts for 63 files on each of a check's loads: 1.25 s cold, 0.27 s warm.
 describe('what pages ask other sites for, kept', () => {
   it('fetches a picture once and answers it from disk after — decoded, its CORS kept, for the next browser too', async () => {
     const first = await harness('http://127.0.0.1:8080');
@@ -117,9 +117,9 @@ describe('what pages ask other sites for, kept', () => {
   });
 
   it('is the project’s, also from a task’s copy: every task reads what another fetched', () => {
-    const copy = path.join('/p/la-velada', 'tmp', 'plitzi-runs', 'r', 'tasks', 't-a', 'cache', 'work');
+    const copy = path.join('/p/acme', 'tmp', 'plitzi-runs', 'r', 'tasks', 't-a', 'cache', 'work');
 
-    expect(staticCacheDir(copy)).toBe(path.join('/p/la-velada', 'tmp', 'plitzi-cache', 'http'));
-    expect(staticCacheDir('/p/la-velada')).toBe(path.join('/p/la-velada', 'tmp', 'plitzi-cache', 'http'));
+    expect(staticCacheDir(copy)).toBe(path.join('/p/acme', 'tmp', 'plitzi-cache', 'http'));
+    expect(staticCacheDir('/p/acme')).toBe(path.join('/p/acme', 'tmp', 'plitzi-cache', 'http'));
   });
 });

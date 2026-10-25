@@ -92,7 +92,7 @@ export const reassignTask = async (
     now: ctx.now
   });
   const from = view.owner?.agent;
-  // Its agent learns it with its next command, and why — never only by a refusal of a token cut (velada-fidelity).
+  // Its agent learns it with its next command, and why — never only by a refusal of a token cut.
   if (from !== undefined && from !== ctx.agent) {
     await sendMessage(ctx, refreshed, {
       from: LEAD,

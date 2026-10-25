@@ -8,7 +8,7 @@ import type { BrowserPage } from '../browser';
 
 /**
  * What to write instead of a name not on the page: the same name the other way — an element's id written as a class
- * (`.home-faq-answer-text`, velada-backlog's design-1), a class as an id — when that way finds it; how to name one else.
+ * (`.home-faq-answer-text`, a run's design-1), a class as an id — when that way finds it; how to name one else.
  */
 const otherSpelling = async (page: BrowserPage, target: string): Promise<string> => {
   const name = /^[.#]?([A-Za-z_][\w-]*)$/.exec(target)?.[1];
@@ -22,7 +22,7 @@ const otherSpelling = async (page: BrowserPage, target: string): Promise<string>
     }
   }
 
-  // Not drawn here at all: encore-4's dev-1 measured a host's desk as a guest, on /r/ with no room — told only "No element".
+  // Not drawn here at all: a run's dev-1 measured a host's desk as a guest, on /r/ with no room — told only "No element".
   return `not drawn here: a page for signed-in visitors (--as <username>), a part a click opens or a visitor’s steps make (--click, --steps), a route with a parameter written as one of its addresses (/r/night-drive, not /r/:slug) — or name it by its element's id (pricing-card), #its-id, or any selector (.plan-card, [data-plitzi-el="…"] > span)`;
 };
 
@@ -64,14 +64,14 @@ export const measureOn = async (page: BrowserPage, target: string): Promise<Meas
   }
 
   // Of several matches, the first a visitor sees: the original's first `.header__heading-logo` is its hidden menu
-  // drawer's, and whichever the page drew first was measured — 0 px one call, 140 px the next (lx-copy's finish).
+  // drawer's, and whichever the page drew first was measured — 0 px one call, 140 px the next (a run's finish).
   const shown = await firstShown(page, found.selector);
   if (shown !== found.selector) {
     found.selector = shown;
   }
 
   // A picture is measured drawn: read before it loads, an <img> sized by its own picture is 0 px wide, or "auto" tall
-  // (lx-copy: the original's logo read 140 px one call and 0 px the next, and failed the finish). A lazy one is asked
+  // (the original's logo read 140 px one call and 0 px the next, and failed the finish). A lazy one is asked
   // for now; one that never loads is measured as it is after IMAGE_WAIT_MS.
   await page
     .locator(found.selector)

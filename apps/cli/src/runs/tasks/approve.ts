@@ -49,7 +49,7 @@ export const changeApproved = async (
   loaded: LoadedRun,
   build: (approved: ApprovedManifest) => Promise<Built | undefined>,
   /**
-   * Checked whatever it merged: files new to the run go in unchecked otherwise — lx-copy's t-shell put its shell in
+   * Checked whatever it merged: files new to the run go in unchecked otherwise — a run's t-shell put its shell in
    * without the site.json keys and tokens it read, and every copy after failed typecheck.
    */
   { checkAlways = false }: { checkAlways?: boolean } = {}
@@ -233,7 +233,7 @@ export const buildMergeIntoRun = async (
 /**
  * Requests on shared files as the run's next manifest, together: each put together line by line with what the run holds
  * — and with the ones before it — so their checks run once over all of them. Apart, two approved tasks' requests on one
- * file each failed the checks for want of the other's (velada-dress: t-sponsors' and t-predictions' tokens, neither
+ * file each failed the checks for want of the other's (t-sponsors' and t-predictions' tokens, neither
  * ever merged, every task's check failing on both). One that does not merge is left out, said by `requests`.
  */
 export const buildRequestsMerge = async (

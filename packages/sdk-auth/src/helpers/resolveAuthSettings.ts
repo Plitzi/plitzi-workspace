@@ -3,7 +3,7 @@ import type { ServerAuth } from '@plitzi/sdk-shared';
 
 /**
  * The settings a server describes, each filling in only what the space left undeclared — `revokeUrl` too: left out, a
- * space on a `createAuth` server could not sign out everywhere until it declared it by hand (encore-2's dev-1).
+ * space on a `createAuth` server could not sign out everywhere until it declared it by hand (a run's dev-1).
  */
 const DESCRIBED = [
   'loginUrl',

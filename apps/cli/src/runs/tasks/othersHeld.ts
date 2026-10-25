@@ -11,7 +11,7 @@ export type OtherLine = AcceptanceResult & { task: string };
 
 /**
  * The lines approved tasks were accepted on that check a page the task's files draw — run again on its copy, before it
- * goes to review. A task that moves another's page on purpose (encore's stats became a panel, the retro rewrote
+ * goes to review. A task that moves another's page on purpose (a run's stats became a panel, the retro rewrote
  * `/design`'s copy) broke their lines, and nothing said so until the finish, three of them at once: said here, to the
  * one who can fix it — or, when the change is meant, say so and the lead amends the line.
  */

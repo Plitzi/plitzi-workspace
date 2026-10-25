@@ -37,7 +37,7 @@ const PREVIEW_STOP_MS = 10_000;
 /**
  * A run's preview stopped before its folder goes: its record removed first, which the preview reads as "the run ended"
  * and stops its server on — then waited for. Its folder removed under it instead, the server restarted by its own watch
- * in a folder that no longer exists, and crashed (`uv_cwd`) before the preview saw the run end (la-velada's finish).
+ * in a folder that no longer exists, and crashed (`uv_cwd`) before the preview saw the run end (a run's finish).
  */
 export const stopPreviewOf = async (paths: RunPaths): Promise<void> => {
   const running = await readJson(previewRecord(paths), isPreview, 'a run’s preview').catch(() => undefined);

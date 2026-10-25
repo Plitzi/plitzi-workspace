@@ -20,7 +20,7 @@ import type { RunView } from './view';
  * The run's own keeper of its agents: with the team's `options.launch`, the agents the run asks for — the base not
  * running, one on demand for work that waits, one a task was sent back to — are started as `run agent --launch` would,
  * whatever the lead is doing. Only the lead's `run watch --until lead` started them before, so while the lead reviewed
- * or wrote a stage, ready tasks waited with no developer running (encore-2: Carlos saw four, and none at work).
+ * or wrote a stage, ready tasks waited with no developer running (Carlos saw four, and none at work).
  */
 
 /** An agent the run asked for that could not be started, and why. */
@@ -154,7 +154,7 @@ const alive = (pid: number): boolean => {
  */
 /**
  * The keeper's log — what it started and could not, read when an agent the run asked for never came — opened for it to
- * write in, its folder made: a run just opened has no `cache/` yet (encore-3's open crashed on it, the keeper unstarted).
+ * write in, its folder made: a run just opened has no `cache/` yet (a run's open crashed on it, the keeper unstarted).
  */
 export const openKeeperLog = (cache: string): number => {
   mkdirSync(cache, { recursive: true });

@@ -155,7 +155,7 @@ export const serveCopy = async (
 ): Promise<{ url: string; port: number; stop: () => void; keep: () => number | undefined } | { problem: string }> => {
   // Kept from a picture before: stopped — the copy is served here for this command, one server at a time on it.
   await stopKept(cache);
-  // One of the agent's own in the copy (npm start) holds its state too: stopped here, said — encore's agents stopped
+  // One of the agent's own in the copy (npm start) holds its state too: stopped here, said — a run's agents stopped
   // theirs by hand before every check (21 times), refused until they did. It is the copy's by its folder and its
   // /health, never stopped by a name.
   const running = await ownServer(work);
@@ -183,7 +183,7 @@ export const serveCopy = async (
 
   const asked = await freePort();
   // Where the server says it took: the port asked can be taken before it binds — agents checking at once — and a server
-  // while developing takes the next free one (encore-3: asked 61515, it took 62189, and the check waited on 61515).
+  // while developing takes the next free one (asked 61515, it took 62189, and the check waited on 61515).
   const record = path.join(PROJECT_TMP, 'plitzi-cache', 'acceptance-server.json');
   await fs.rm(path.join(work, record), { force: true });
   const env = (await fs.readFile(path.join(root, '.env'), 'utf-8').catch(() => undefined)) ?? '';
@@ -307,7 +307,7 @@ export const checkAcceptance = async (
     ? await (serving ?? serveCopy(work, root, cache))
     : undefined;
   // A copy lent by the caller is the caller's to stop (`letGo`): stopped here, the approved tasks' lines `task complete`
-  // runs next on it read "nothing answers" — encore-2's t-room-side was refused three times as breaking five of them.
+  // runs next on it read "nothing answers" — a run's t-room-side was refused three times as breaking five of them.
   const own = serving === undefined;
   if (served && 'problem' in served) {
     return checked.map(each => ({
@@ -326,7 +326,7 @@ export const checkAcceptance = async (
   const run = (each: { check: string }) =>
     runScript(work, withServedValues(each.check, values), root, { env: values, bin: [bin] });
   try {
-    // Two at a time: velada-backlog's t-body-type ran a measure, then a check of four pages, one after the other — 11 s
+    // Two at a time: a run's t-body-type ran a measure, then a check of four pages, one after the other — 11 s
     // of its 18 s check, each line a browser of its own the other did not wait on.
     const results: AcceptanceResult[] = await inTurns(
       checked.map((each, index) => async () => {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { checkWithInteraction, comparedOf, samePaths, toDeclared, viewsAsked } from './lookParts';
 
-// velada-dress: /artistas's new light read "0.1% differs" beside the run before it — a soft light is under the
+// A page's new light read "0.1% differs" beside the run before it — a soft light is under the
 // pictures' tolerance; its dress is not.
 describe('task look --before, as it reads a comparison', () => {
   it('says the dress the task added and took away, section by section, beside the pixels', () => {
@@ -35,7 +35,7 @@ describe('task look --before, as it reads a comparison', () => {
   });
 });
 
-// velada-dress: `task look --hover` on a task of three pages was refused whole — a hover is one element of one page.
+// `task look --hover` on a task of three pages was refused whole — a hover is one element of one page.
 describe('task look, a hover or a click on several pages', () => {
   it('checks the pages together, then each with the interaction apart', async () => {
     const asked: string[] = [];
@@ -50,7 +50,7 @@ describe('task look, a hover or a click on several pages', () => {
   });
 });
 
-// velada-polish's design-2: `page shot` had --width and --scheme, `task look` neither — a look at 768, or light at 390,
+// A run's design-2: `page shot` had --width and --scheme, `task look` neither — a look at 768, or light at 390,
 // was a page shot by hand.
 describe('task look --width and --scheme', () => {
   it('pictures each width in each scheme asked, and none asked is the team’s', () => {
@@ -71,8 +71,8 @@ describe('task look --width and --scheme', () => {
   });
 });
 
-// velada-fidelity: a look pictured nine pages a shared file reached, for two tokens added — 204 s.
-// lx-copy: a light-only space, and every look pictured its phone in a dark the space never shows.
+// A look pictured nine pages a shared file reached, for two tokens added — 204 s.
+// A light-only space, and every look pictured its phone in a dark the space never shows.
 describe('task look on a space of one scheme', () => {
   it('pictures each view in a scheme the space declares, once', () => {
     expect(

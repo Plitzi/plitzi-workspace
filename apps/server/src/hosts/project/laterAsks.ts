@@ -9,7 +9,7 @@ import type { Job, JobQueue } from '@plitzi/sdk-shared';
 /**
  * `plitzi functions later` while the project is served: what waits to run later (`ctx.later`), and one of them started
  * now. The server holds its queue's file, so the CLI asks it through a file of the project's `tmp/` and reads the answer
- * beside it — a spec of a show that starts in five minutes waited the five, every pass (encore-3's test-1, ~6 min each).
+ * beside it — a spec of a show that starts in five minutes waited the five, every pass (a run's test-1, ~6 min each).
  * Only while developing: a deployment's queue is an operator's (`createJobControl`).
  */
 

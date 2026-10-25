@@ -138,7 +138,7 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
         backup: options.keepBackup ?? false
       });
       // A server of the project still up serves it as it was and holds its state: the person's next `npm start` fails
-      // on its lock (lx-copy: state/kv.json held by the lead's own server, stopped by port and not yet gone).
+      // on its lock (state/kv.json held by the lead's own server, stopped by port and not yet gone).
       const running = finished.dryRun ? undefined : await ownServer(ctx.root);
 
       return { ...finished, ...(running === undefined ? {} : { running }) };

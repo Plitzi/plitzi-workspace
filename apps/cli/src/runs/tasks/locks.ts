@@ -133,14 +133,37 @@ export interface ClaimOutcome {
   holder?: string;
 }
 
-/** The task whose plan names `file`, if one does. */
+/** Whether `task` waits, through its `dependsOn` and theirs, for the task `on`. */
+const waitsFor = (loaded: LoadedRun, task: RunTask, on: string, seen = new Set<string>()): boolean =>
+  task.dependsOn.some(id => {
+    if (id === on) {
+      return true;
+    }
+
+    if (seen.has(id)) {
+      return false;
+    }
+
+    seen.add(id);
+    const before = loaded.tasks.find(each => each.id === id);
+
+    return before !== undefined && waitsFor(loaded, before, on, seen);
+  });
+
 /**
  * The task whose plan names `file` while it is not done: once done, it holds nothing — its files are taken by turns,
  * and a shared one is requested like any other. An integration task is never one: the shared file it applies requests
  * to stays shared, held by its lock only while it is worked — until then, taken by turns or requested like any other.
+ * Nor, for the task asking (`asker`), is one that waits for it: it takes the file after, and holding it meanwhile left
+ * both waiting for ever (a stacked task after t-follow-api named the file t-follow-api created).
  */
-export const activeHolder = async (loaded: LoadedRun, file: string): Promise<RunTask | undefined> => {
-  const planned = loaded.tasks.find(task => task.kind !== 'integration' && task.files.includes(file));
+export const activeHolder = async (loaded: LoadedRun, file: string, asker?: RunTask): Promise<RunTask | undefined> => {
+  const planned = loaded.tasks.find(
+    task =>
+      task.kind !== 'integration' &&
+      task.files.includes(file) &&
+      (asker === undefined || task.id === asker.id || !waitsFor(loaded, task, asker.id))
+  );
 
   return planned && (await viewTask(loaded.paths, planned)).state.status !== 'done' ? planned : undefined;
 };
@@ -161,7 +184,7 @@ export const claimFile = async (
     return { file: clean, granted: true };
   }
 
-  const planned = await activeHolder(loaded, clean);
+  const planned = await activeHolder(loaded, clean, task);
   if (planned) {
     throw new RunRefusal('claimed', `${clean} is task "${planned.id}"'s: wait for it (plitzi task wait)`, {
       file: clean,
@@ -368,7 +391,7 @@ const runsAfter = (loaded: LoadedRun, taskId: string): Set<string> => {
 
 export const assertNoWaitCycle = async (loaded: LoadedRun, taskId: string, holder: string): Promise<void> => {
   // A task that runs only after this one hands nothing on before this one is approved: the wait would never end, and the
-  // agent's harness gave up on it first (encore-3's dev-1, at t-moderation-demo).
+  // agent's harness gave up on it first (a run's dev-1, at t-moderation-demo).
   if (runsAfter(loaded, taskId).has(holder)) {
     throw new RunRefusal(
       'invalid',
@@ -414,7 +437,7 @@ export const waitForFile = async (
   if (!holder) {
     await claimFile(ctx, runId, taskId, clean);
     // Held by nobody and in neither the project nor the run's work: another task may be making it, outside its plan's
-    // files — said, as granting it alone read as "it is there" (lx-copy: t-close-home waited for topStyles.ts, which
+    // files — said, as granting it alone read as "it is there" (t-close-home waited for topStyles.ts, which
     // only t-home-top's copy had).
     const nowhere =
       entryOf((await readApproved(loaded.paths)).files, clean) === undefined &&

@@ -18,7 +18,7 @@ import {
 } from './options';
 
 describe('options', () => {
-  // lx-controls: `run report --summary --token <it>` read "--token" as the summary's file and the token as the run.
+  // `run report --summary --token <it>` read "--token" as the summary's file and the token as the run.
   it('says a flag that took the next flag as its value', () => {
     const command = new Command('report').option('--summary <file>').option('--token <token>').argument('[run]');
     command.parse(['--summary', '--token', 'lx.@lead.abc'], { from: 'user' });
@@ -28,14 +28,14 @@ describe('options', () => {
     expect(swallowedFlag(fine)).toBeUndefined();
   });
 
-  // encore-4: `page shot / 390 dark site-header --width --scheme --clip` was told a width is a whole number, five times.
+  // `page shot / 390 dark site-header --width --scheme --clip` was told a width is a whole number, five times.
   it('says a value that is the next option is missing, not invalid', () => {
     for (const parse of [widths, schemes, positiveInteger, timeZone]) {
       expect(() => parse('--scheme')).toThrow('--scheme is the next option, not a value');
     }
   });
 
-  // encore-4: a 16 px mark read cell by cell needed a script of the designer's own — page shot had no zoom.
+  // A 16 px mark read cell by cell needed a script of the designer's own — page shot had no zoom.
   it('reads a picture’s scale, 1 to 4', () => {
     expect(scale('3')).toBe(3);
     expect(() => scale('8')).toThrow('A scale is a whole number from 1 to 4');
@@ -106,7 +106,7 @@ describe('options', () => {
     expect(() => expectation('/faq', undefined)).toThrow(InvalidArgumentError);
   });
 
-  // encore's design-2 wrote `design-palette~` for "it is there": an id alone says the element is shown.
+  // A run's design-2 wrote `design-palette~` for "it is there": an id alone says the element is shown.
   it('reads an id alone as an element that is shown, whatever it says — and refuses a ~ with nothing after it', () => {
     expect(expectation('design-palette', undefined)).toEqual([{ element: 'design-palette', text: '' }]);
     expect(expectation('/design design-palette', undefined)).toEqual([
@@ -115,13 +115,13 @@ describe('options', () => {
     expect(() => expectation('design-palette~', undefined)).toThrow(InvalidArgumentError);
   });
 
-  // velada-polish's design-2 could not test a visitor elsewhere: the server and the browser both read the machine's zone.
+  // A run's design-2 could not test a visitor elsewhere: the server and the browser both read the machine's zone.
   it('takes a time zone the browser knows, and refuses one it does not, by name', () => {
     expect(timeZone(' America/Mexico_City ')).toBe('America/Mexico_City');
     expect(() => timeZone('Mars/Olympus')).toThrow('"Mars/Olympus" is no time zone');
   });
 
-  // encore-3: `page shot --scheme light,dark` was refused, where `--width 1440,390` was taken.
+  // `page shot --scheme light,dark` was refused, where `--width 1440,390` was taken.
   it('reads schemes as widths are read, each once, and refuses one that is none', () => {
     expect(schemes('light,dark,light')).toEqual(['light', 'dark']);
     expect(() => schemes('light,sepia')).toThrow('A scheme is light or dark');

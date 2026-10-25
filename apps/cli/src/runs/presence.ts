@@ -8,7 +8,7 @@ import type { RunPaths } from './paths';
 /**
  * Who is still there: an agent waiting for work writes nothing to the run's log — a wait is said once — so the log
  * tells a live agent from one whose harness stopped it by nothing. Each call of `task next`, and each turn of its
- * `--follow`, marks the agent present, in its scratch; the monitor reads it. velada-dress's agents, stopped by their
+ * `--follow`, marks the agent present, in its scratch; the monitor reads it. A run's agents, stopped by their
  * harness, still read "working" and "waiting".
  */
 

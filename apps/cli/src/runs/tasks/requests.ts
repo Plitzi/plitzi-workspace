@@ -150,7 +150,7 @@ const joinIntegration = async (
 /**
  * The integration task that applies `requests` on `files` — the files one task's requests span, which only author
  * together: the one nobody works yet that touches any of them joined, so what is asked meanwhile never races it — or a
- * new one, after any already being worked. Under the merge lock. lx-copy: one task per file made t-shell's three
+ * new one, after any already being worked. Under the merge lock. One task per file made t-shell's three
  * requests three tasks, each failing for want of the others' — a cycle the lead broke by approving one with a failure.
  */
 const integrationFor = async (
@@ -206,7 +206,7 @@ const createIntegration = async (
     files: sorted,
     dependsOn,
     // Small and on every later copy's path — what it applies, the run's work reads: taken before any other task
-    // (lx-copy: integrations waited for a free developer while three tasks worked on copies missing them).
+    // (integrations waited for a free developer while three tasks worked on copies missing them).
     priority: 'critical',
     estimateMinutes: 15,
     acceptance: await integrationAcceptance(loaded, sorted, requests),
@@ -251,7 +251,7 @@ export const requestsOf = async (
 
 /**
  * Whether what `request` wants is in the run's work already: put together with the run's version, it changes nothing —
- * another approval brought the same lines (lx-copy: two integration tasks made with nothing left to apply, and a token
+ * another approval brought the same lines (two integration tasks made with nothing left to apply, and a token
  * applied twice into a duplicate key).
  */
 const alreadyIn = async (ctx: RunContext, loaded: LoadedRun, request: SharedRequest): Promise<boolean> => {

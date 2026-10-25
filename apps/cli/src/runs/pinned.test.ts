@@ -12,7 +12,7 @@ afterEach(async () => {
   await Promise.all(roots.splice(0).map(root => fs.rm(root, { recursive: true, force: true })));
 });
 
-// la-velada: read while npm installed, the run saw its staging folders as packages — every package "none" — and was
+// Read while npm installed, the run saw its staging folders as packages — every package "none" — and was
 // told Plitzi changed under it.
 describe('pinnedNow', () => {
   it('pins the @plitzi packages installed, never npm’s staging folders nor a manifest half written', async () => {
@@ -30,7 +30,7 @@ describe('pinnedNow', () => {
   });
 });
 
-// encore-3: a plitzi-ui patch under the SDK refused every agent's command until a person attached again.
+// A plitzi-ui patch under the SDK refused every agent's command until a person attached again.
 describe('pinDifference', () => {
   const pin = (packages: Record<string, string>) => ({ cli: '0.38.24', packages });
 

@@ -5,15 +5,15 @@ import type { UsageLine } from '../usage';
 
 /**
  * How the run's agents held their tasks and their sessions, replayed from the log and the usage — the state the CLI
- * keeps, checked against what it should never be. Encore's: dev-1 handed t-shell while it held t-player (one session,
+ * keeps, checked against what it should never be. A run's: dev-1 handed t-shell while it held t-player (one session,
  * two tasks); dev-1 sent back two tasks at once (the lead reassigned one by hand); dev-2 started again while its last
  * session was still writing (#44).
  */
 
 /**
  * An agent with two tasks in progress at once: replayed take by take, each time it happened said once. A task sent
- * back while its agent is at another waits for it — Carlos's rule (encore-2): never handed to a free one — and is its
- * agent's work again once the other is complete; counted then, never while it waits (encore-4 said dev-1 held two).
+ * back while its agent is at another waits for it — Carlos's rule: never handed to a free one — and is its
+ * agent's work again once the other is complete; counted then, never while it waits (a run said dev-1 held two).
  */
 export const twoTasks = (log: readonly LogEntry[]): Finding[] => {
   const owner = new Map<string, string>();

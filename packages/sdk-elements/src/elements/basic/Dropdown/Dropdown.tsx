@@ -30,7 +30,7 @@ export type DropdownProps = {
   containerLeftOffset?: number;
   /**
    * How wide the popup is: as its content (`content`), or at least as wide as its trigger (`trigger`) — a select's list.
-   * A width in % on the popup's class reads the window's, as it is drawn at the space's root (encore-4's people picker).
+   * A width in % on the popup's class reads the window's, as it is drawn at the space's root (a run's people picker).
    */
   popupWidth?: 'content' | 'trigger';
   disabled?: boolean;
@@ -112,7 +112,7 @@ const Dropdown = ({
     [position, popupWidth, triggerRect]
   );
 
-  // Opened and closed by a step, as a modal is — closing on a pick needed `updateElement` on `openPopup` (encore-4).
+  // Opened and closed by a step, as a modal is — closing on a pick needed `updateElement` on `openPopup`.
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(
     () => ({
       openDropdown: { ...declaration.callbacks.openDropdown, callback: () => handleOpenChange(true) },

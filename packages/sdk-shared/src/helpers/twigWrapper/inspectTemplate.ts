@@ -6,7 +6,7 @@ import { parse } from './Parser';
 import type { ASTNode, Expression } from './AST';
 
 /**
- * A filter written as JavaScript names it, and what the templates call it: encore-3's host picker wrote `concat`, read
+ * A filter written as JavaScript names it, and what the templates call it: a run's host picker wrote `concat`, read
  * as nothing at all.
  */
 const JS_NAMES: Readonly<Partial<Record<string, string>>> = {
@@ -62,7 +62,7 @@ export type TemplateInspection = {
   freeNames: string[];
   /**
    * What reads as something other than it looks, though the interpreter reads it whole: `sort or 'listeners'` answers
-   * `true`, never "listeners" — `or` is a test, and a fallback value is `??`. encore-4's Explore links wrote `?sort=true`.
+   * `true`, never "listeners" — `or` is a test, and a fallback value is `??`. A run's Explore links wrote `?sort=true`.
    */
   notes: string[];
 };

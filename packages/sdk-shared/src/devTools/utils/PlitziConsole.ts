@@ -90,7 +90,7 @@ class PlitziConsole {
   /**
    * The last logs written, oldest first: what a panel mounting again starts from. Its logs lived in its own state, and
    * opening the panel from the badge moved it in the page's layout — React mounted it again, empty: the badge said a
-   * warning and the panel showed none (encore-2). Only in a browser, as everything kept here is.
+   * warning and the panel showed none. Only in a browser, as everything kept here is.
    */
   history(): Log[] {
     return [...this.#recent];

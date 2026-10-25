@@ -64,7 +64,7 @@ export const wrappedLabelsInPage = (selector: string): { id: string; label: stri
     }
 
     // The label as it reads, each block's words apart: `textContent` ran a tile's "TARJETAS GRÁFICAS" into its
-    // "Compra ahora" as "GRÁFICASCompra" (lx-copy) — three words of a four-word link, a label it never was.
+    // "Compra ahora" as "GRÁFICASCompra" — three words of a four-word link, a label it never was.
     const label = [...groups.values()].map(group => group.words.join(' ')).join(' ');
     if (label === '' || label.split(' ').length > 3) {
       return [];
@@ -176,7 +176,7 @@ export const missedExpectations = async (
 /**
  * Run in the page: each link or button drawn on its section's bottom edge — within a pixel of it — where that section
  * keeps no space below its content (padding-bottom 0): what sat against the next section with nothing between them.
- * Carlos saw la-velada's "Ver cartelera completa" on #combates' edge, and no check, look or comparison had said it:
+ * Carlos saw a run's "Ver cartelera completa" on #combates' edge, and no check, look or comparison had said it:
  * the home's sections shared a class with no bottom padding. Self-contained — it is sent to the browser as it is.
  */
 export const flushEdgesInPage = (): { id: string; section: string }[] => {

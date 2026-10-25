@@ -22,7 +22,7 @@ const handles = {
   }
 } as unknown as SpaceHandles;
 
-// encore-4: a spec looked for an instance by data-plitzi-el, matched nothing, and its toBeHidden() passed.
+// A spec looked for an instance by data-plitzi-el, matched nothing, and its toBeHidden() passed.
 describe('a test’s selector of a component’s instance', () => {
   it('is said where it is written, with the selector that finds it', async () => {
     root = await fs.mkdtemp(path.join(os.tmpdir(), 'spec-selectors-'));

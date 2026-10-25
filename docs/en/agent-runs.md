@@ -61,12 +61,12 @@ messages to every task (`*`): each task reads every one once, with its take or i
 (the brief an agent starts from) lists them beside its acceptance, what a review asked and what was agreed, with its
 files' sizes, the shape of the data they import and how to call what they import from the rest of the project
 (`moduleApis.ts`: each imported name's signature and the first sentence of its doc, followed through a barrel, never
-its body — two of la-velada's pages import 43k characters of shared modules, said in 3k); `--files` adds the files as
+its body — two of a run's pages import 43k characters of shared modules, said in 3k); `--files` adds the files as
 they are, for a harness with no reader of its own — one that reads a file before it edits it read each twice
-(velada-backlog's t-body-type: 57 KB with them, 3.5 KB without). In a
+(a run's t-body-type: 57 KB with them, 3.5 KB without). In a
 task's copy whose own server is not running, `page check` and `page shot` serve the copy (`copyServer.ts`, by
 `serveCopy`) and keep it `LINGER_MS` for the next (`lingering.ts`): an agent starts no server to look at its page, where
-la-velada's spent 64 steps starting, waiting for, asking about and stopping theirs, and pictures it again without a
+one run's agents spent 64 steps starting, waiting for, asking about and stopping theirs, and pictures it again without a
 start each time. A watchdog of its own stops it once unused or the copy is gone; one written since it was served
 (`src/`) is stopped and the copy served anew — `start` does not reload — and whatever serves the copy itself
 (`complete`, `task check`) stops it first: one server on a copy. Where processes are no group to stop later (Windows),
@@ -99,8 +99,8 @@ It holds:
 
 Notices of Plitzi (`run notice --plitzi "…"`) are among the findings, grouped when two agents said one thing. They never
 reach the project's backlog. Nothing of the project's code is in either file and no token; the project's folder and the
-person's home are said as `<project>` and `~`. A run's log goes with the run: velada-polish's lead had the next run's
-work nowhere the next run reads, and la-velada's empty stats cell was seen in two runs and noted "predates this task"
+person's home are said as `<project>` and `~`. A run's log goes with the run: a run's lead had the next run's
+work nowhere the next run reads, and a run's empty stats cell was seen in two runs and noted "predates this task"
 in a review each time.
 
 **More leads for a larger team** (`leads.ts`). One lead reviews for four agents (`AGENTS_PER_LEAD`): past that, tasks
@@ -115,7 +115,7 @@ with no review for it, `task next --role lead` hands it the oldest question to t
 (`answering.json`) — what the code, the plan or the original answers; a choice for the person or a change of plan it
 leaves — and `lead` hears what it said (an fyi), woken for the question only once it waited `UNTAKEN_REVIEW_MS`
 unanswered. A message to a task answers its one open question; with two open it is refused until `--reply-to` says
-which, and one to `all` answers none (velada-dress: a note to every task marked a question answered). A lead that reviews waits with `task next --role lead --follow --take`,
+which, and one to `all` answers none (a note to every task marked a question answered). A lead that reviews waits with `task next --role lead --follow --take`,
 which offers it a task in review no other lead took (`TaskState.reviewer`, for the round) — one it sent back first, then
 the one that waited longest — and reviews it as `lead` would, as strictly; a review another lead took is refused to it
 (`claimed`). Everything else — planning, amending, stacking a stage, answering, notes to every task, unblocking,
@@ -147,7 +147,7 @@ stops its preview before its folder goes (`stopPreviewOf`): the record first, wh
 the folder once it stopped — never a server left watching a folder removed under it. `run monitor` is the same run, live, for
 a person in a terminal of their own: it only reads (nothing marked read, nothing the lead is woken for touched) and
 refuses a shell with no terminal, an agent's, whose is `run watch`. It is a board for a supervisor: the run and the stage at
-work (`stage 3: velada-motion`, its goal under it — `run extend` logs each stage's), what needs someone on top; under it the run's flow, always — its kanban, each task a card in its stage from to-do to approved, with what holds
+work (`stage 3: motion`, its goal under it — `run extend` logs each stage's), what needs someone on top; under it the run's flow, always — its kanban, each task a card in its stage from to-do to approved, with what holds
 an agent; a task a review sent back is at work again with its agent, its card marked with the round it is at
 (`t-boxer ↺2`), never a stage apart. An agent is at one task at a time — the one it last did something on itself (taken,
 a heartbeat, a write: `TaskView.workedAt`, never a review that sent it back); the others it holds are held for it
@@ -164,12 +164,12 @@ the rest leaves, down to the terminal's foot, an event repeated in a row one lin
 (×N, opened and folded with a click), paged with ← → and the wheel. Each line says its event for a glance — 72
 characters at most (`SHORT`, `feedLine.ts`), in its own words where the whole would be cut: "checks fail: lint, 2
 acceptance lines + 1 file of other tasks", "stops for a fresh context" — and keeps the whole as its `detail`, opened
-under it with a click (▸); encore-2's ran to 499 characters a line, a tenth of them past 200. The dev tools' Run tab
+under it with a click (▸); one run's lines ran to 499 characters a line, a tenth of them past 200. The dev tools' Run tab
 shows the same, the whole on hover. Beside the activity, as wide as it says and the activity taking the rest (a line over it when that would leave the
 activity under 80 columns), **the spend** (`monitorSpend.ts`): what each agent's harness spent so far — the lead's and
 the reviewers' too — its pieces of work, turns, tokens **in** (fresh input and context written to the cache), **out**
 and **cached** (its context read again each turn: a tenth of the price, and most of what is read — one figure of all
-three said 1.1M for one spec of encore-3's tester, ~240k its price), and its context now, marked past `freshContextAt`
+three said 1.1M for one spec of a run's tester, ~240k its price), and its context now, marked past `freshContextAt`
 for an agent of `"session": "context"` alone; its tasks — its own and those it reviewed, each once — and its sessions —
 the sessions its commands ran in — and what one of each costs on average, in and out (`PER SESS`, `PER TASK`, said in a
 line under them): agents start fresh in different ways, a task each or past a size, so a session is not a task. The
@@ -189,9 +189,9 @@ approved (`all-approved`) and, at a whole and checked dry run of the finish, tha
 next (`ready`). `task show` (`show.ts`) gathers the rest of a review —
 acceptance, checks, agreements, notes, what was said, each file's diff against where the copy started, the commands that
 act on it; `task show <task> <file>` is one of those files whole, read from where the diff is (`showTaskFile`). Its
-diffs stop at `DIFF_TOTAL` (240) lines in all, each file past it said with how to read it: encore-3's ran to 24k
+diffs stop at `DIFF_TOTAL` (240) lines in all, each file past it said with how to read it: one run's diffs ran to 24k
 characters, 46 of them over 12k. The commands that act on it are the caller's: a lead's, or — for an agent of the
-team — `task tell --about` and `task propose` (encore-4's design-2 was offered `task message`, which refused its token).
+team — `task tell --about` and `task propose` (a run's design-2 was offered `task message`, which refused its token).
 With no task named, it is the one the caller holds or reviews (`ownTask`); `task
 complete` takes its own task's id too, and refuses another's.
 
@@ -200,7 +200,7 @@ anyway — said in the review, `run status` and the report, and to the task that
 every check green.
 
 **Nor one that breaks what another was accepted on**: once its own lines pass, `complete` runs again, on the same copy,
-the lines of approved tasks that check a page its files draw (`othersHeld`) — encore's stats panel and its retro
+the lines of approved tasks that check a page its files draw (`othersHeld`) — a run's stats panel and its retro
 `/design` broke three such lines, found only at the finish. One that fails refuses it, naming whose; a change that
 means it (a page moved, its words rewritten) completes with `--known-failure "why" --fixed-by lead`, and the lead amends
 that task's line (`run amend` of its stage's plan).
@@ -224,7 +224,7 @@ ownership is read off the imports, with the project's own TypeScript (`fileImpor
 A plan names units; `checkPlan` expands each with what it owns and refuses a file in two tasks, or a folder that is not
 a plugin's. What the job asks that the run does not do is the plan's `leftOut` — said at `run plan` (and that nothing
 is, when it says none), at `run open` and in the report — so the scope is a choice made with the person, never found
-after (la-velada's copy left the tier list and the hero's logo out, unsaid). The plan's `inventory` lists the job
+after (a run's copy left the tier list and the hero's logo out, unsaid). The plan's `inventory` lists the job
 piece by piece (`inventory.ts`: `{ id, piece, page?, leftOut? }`): each piece is covered by a line of a task's acceptance
 a command proves (`{ said, check, covers: [id] }`) or waits with its reason, and `checkPlan` refuses one that is neither,
 a line covering a piece not listed, or an id twice — so coverage is checked at `run plan`, held at `complete` and on the
@@ -234,12 +234,12 @@ site says it (`reference`, its address): once the run is open, `plitzi run refer
 page of the inventory, and its home, pictured and its words measured at 1440 and 390 in both schemes, in the run's
 `reference/` — and `page shot --compare` on that site, in the project or a task's copy, measures against what was kept
 and says when it was kept (`--live` asks the site as it is now). A page the site answers with an error is never kept
-as the page — a 429 or a 503 is asked again 10 s and 30 s later, the pages a moment apart (la-velada's original
+as the page — a 429 or a 503 is asked again 10 s and 30 s later, the pages a moment apart (a run's original
 answered its fighters' list with "You are being rate limited"). Keeping it says, too, each page's section headings no
 piece of the inventory names (`unnamedSections`: an h1 or h2 drawn, not a card's title beside others like it, words
 compared without accents or case) — what the plan may have
-missed, for `run amend` or a stage: la-velada's lead left three pieces of the artist page out, found only at review. The site may change while the run works or after:
-la-velada's original redesigned its fighter page after the copy, and a comparison with it measured another page. The
+missed, for `run amend` or a stage: a run's lead left three pieces of the artist page out, found only at review. The site may change while the run works or after:
+A run's original redesigned its fighter page after the copy, and a comparison with it measured another page. The
 run finishing removes it with the rest of its folder. It says — never refuses — a file of a task that other tasks' files import (what it exports is their contract:
 change it compatibly, or say in the plan who follows it), and the tasks whose acceptance no command proves (they hold at
 their review only; a check runs at `complete` and again at the finish). A task holds its plan's files only until it is done: then a shared one among them (the entry a shell task
@@ -249,8 +249,7 @@ version put into its copy) or, when several tasks want one at once, changed in e
 task changed in a shared file it does not hold becomes one at `complete`, its version kept. **A request goes in when its
 task is approved**, held by another task or not, when it merges line by line with the run's version
 (`buildRequestsMerge`: all of the task's together, checked once) — the holder's copy brings it at its next refresh. Its
-approved files read what it adds, and a run whose work reads what it lacks fails every task's checks (velada-dress:
-t-sponsors and t-predictions approved, their tokens waiting on the theme t-home held — every check failed on them, and
+approved files read what it adds, and a run whose work reads what it lacks fails every task's checks (t-sponsors and t-predictions approved, their tokens waiting on the theme t-home held — every check failed on them, and
 when t-home let go, each request alone failed the checks for want of the other's). A file let go of settles the approved
 tasks' requests on it together (`settleRequests`); what does not go in is said in the log (`unmerged`,
 `settle-failed`), and as soon as one requester is approved the CLI makes one integration task over the requests of the
@@ -279,10 +278,10 @@ Markdown beside it, 16 KB at most, kept in the run as `primer.md` and rewritten 
 brief; below it, `task context` names the skill files the task's own files need (`readingFor`: the cheatsheet for the
 space, the reference of a layout, a component, data, a plugin or server code, and `runs.md`), only those the project
 has. What its files import from the rest of the project — each name's signature and doc's first sentence — is read from
-the task's copy while it holds one (`sourceRoot`; encore-4's tester read a function as the project had it before the run),
+the task's copy while it holds one (`sourceRoot`; a run's tester read a function as the project had it before the run),
 and a file of it near the line says a new file beside it is the task's. What a brief says of a task it depends on is its
 acceptance — six lines, the rest `task show <id>` — never how
-its reviews went, and a note of its own is 300 characters, the whole with `--json`: encore-3's briefs ran to 17k, 4k of
+its reviews went, and a note of its own is 300 characters, the whole with `--json`: a run's briefs ran to 17k, 4k of
 them the tasks before it. A tester and a lead that review read `runs.md` and `runs-review.md` (how a task is judged, the
 same for the lead), never the lead's whole half: each starts fresh after every piece. `run plan` and `run rehearse` read the project's past reports too (`readHistory`: the done tasks' minutes over
 their estimates, from the last ten runs, with five tasks at least) and say the estimate at that pace beside the plan's.
@@ -308,11 +307,11 @@ it sees the same, and no other project's runs.
 the review a lead made by hand in four or five commands, while every agent waited. `--before` sets each page beside the run before the
 task — its approved work, made in the task's cache and served for the look (`startBeforePreview`) — by `page shot
 --compare`, and says what changed, section by section, or that nothing did: what the task moved, and that nothing else
-did, where velada-now's designer copied a folder and started two servers by hand for every review. A server on this
+did, where a run's designer copied a folder and started two servers by hand for every review. A server on this
 machine is compared as the project, its scheme chosen as a visitor's toggle chooses it — and, both sides being the
 project's, held to what the project changed: motion reduced, and every picture from another site stood in for on each
 side by a square of a colour its address gives it (`standIns`), so the same picture is the same on both and another one
-differs (velada-polish: a busy CDN's 429s made 21–31% "differs" at 390, and the same look said 7%, then 0%). The page's
+differs (a busy CDN's 429s made 21–31% "differs" at 390, and the same look said 7%, then 0%). The page's
 own picture of a comparison is `-after.png`, beside the run before in `-after-compare.png`. Its dress is compared detail
 by detail: what there are fewer of, by how many — a kind counted whole listed details still there as lost — and a look
 this page lacks is said on the element of ours where the other page wears it (`absentOn`: the named element drawn at
@@ -339,7 +338,7 @@ Which pages, and as whom: with none named, the pages its files are drawn at and 
 (`pagesToLook`) — a page its acceptance checks with a status of its own (`--status 404`) apart, said with the command
 that looks at it (`acceptanceStatuses`); `task next` offers the same, `--as` the account its acceptance checks with. A
 route with a parameter is filled from the site's links, read signed in when the look is (`sessionCookie`: a plain sign-in
-through `/auth/login`), so `/u/:username` is found as the account's own link (encore-4). What it says: a whole page past
+through `/auth/login`), so `/u/:username` is found as the account's own link. What it says: a whole page past
 three screens pictured in parts too (`readablePictures`, the shot's `tiles`) — a phone's page read whole shrank to 97 px;
 a picture not taken said once a reason, with every picture it stopped, and how to see a part on none of them (`--as`,
 `--click`: `unpicturedText`); a dress change once, with every section it is in, an item repeated in one as `×n`
@@ -374,7 +373,7 @@ harness's own name for it, nothing checked but that one is named — and its `op
 designer reviews another task's UI (`light`: its pages at 1440 and 390 in the default scheme, nothing it does not touch;
 `standard`, the default: both schemes and widths, its sections against the reference; `high`: every page that reads its
 files, against the run before it too), handed with each review (`DESIGN_LOOK`). A review costs what it looks at:
-velada-now's strictest took 83 steps, more than the task it reviewed. The CLI starts no agent; `run plan` says what to start
+A run's strictest took 83 steps, more than the task it reviewed. The CLI starts no agent; `run plan` says what to start
 each with — its roles, its model, the plan's tasks it takes and `task next --role <roles> --follow --take --agent
 <name>`. The team's size is how many agents work a run at once — no flag says otherwise; a project made before the starter gets
 it at its first run, with an agent for each other role its plan names, said; a team somebody emptied is refused. A task whose role nobody in the team takes
@@ -387,18 +386,18 @@ files import; `light` for ten minutes on one file; `standard` the rest. An agent
 (`{ "standard": "…", "high": "…" }`, `run team set <name> --model standard=…,high=…`): each level is started apart
 (`design-1-high`), and `run plan` says which tasks are each one's. An agent started at a level (`task next --quality`,
 `PLITZI_QUALITY`) is handed tasks of it or below, never above — and told what waits above it, for the lead to start a
-stronger one. The strongest model works only what is worth it (la-velada: the designer, on the harness's own model for
+stronger one. The strongest model works only what is worth it (the designer, on the harness's own model for
 every task, spent the most).
 
 **Agents on demand** (`onDemand.ts`): a group's `min` (1 to its `count`) is how many start with the run; the rest are
 on demand (`StartedAgent.onDemand`). `run plan` says to start only the first; `run watch --until lead` tells the lead,
 role by role, when work waits — a task of its role ready, a UI review no designer is free for —
 and no running agent of it is free (`agents-needed`), naming the next one to start and its command — with a keeper
-running, said only once it stayed unstarted past `KEEPER_GRACE_MS` (90 s, the keeper's to start; encore-3's lead was told
+running, said only once it stayed unstarted past `KEEPER_GRACE_MS` (90 s, the keeper's to start; a run's lead was told
 "start dev-1" in the seconds its keeper took to start it again for a fresh context) — one on demand
 beside one running only when the work waiting, coming and in hand, shared with it, is `TASKS_PER_AGENT` (2) each or
-more, as `run plan` counts a team's size (velada-shell's watch asked for dev-2 for two tasks the plan had said were too
-few) — coming is a task of the role that waits only for work under way (lx-product's t-buybox, behind t-description in
+more, as `run plan` counts a team's size (a run's watch asked for dev-2 for two tasks the plan had said were too
+few) — coming is a task of the role that waits only for work under way (a run's t-buybox, behind t-description in
 hand: four cards for one developer, and no dev-2 asked); a
 UI review its author alone could make asks whatever the count — and an agent on
 demand that waits `ON_DEMAND_IDLE_MS` with nothing for it, and no task of its own that may come back, stops by itself,
@@ -408,17 +407,17 @@ waits. **The base stays** while the run is open: `task next` never tells one of 
 (`--follow`) for a stage the lead stacks or a task sent back, and hears how its own work ended (`worked`); only one on
 demand stops, and one stops between two pieces of work for a fresh context (below). A base agent not running is asked for whatever waits
 (`agents-needed`, the run open past `STARTING_MS`) — once the run has a task that is not a spike: a run opened on its
-scope is the lead's, planned with the person ([runs-plan.md](../../apps/cli/skills/plitzi-cli/reference/runs-plan.md)): encore-2's designers and tester, stopped once every task was done,
+scope is the lead's, planned with the person ([runs-plan.md](../../apps/cli/skills/plitzi-cli/reference/runs-plan.md)): a run's designers and tester, stopped once every task was done,
 were stopped when a stage came. **Running** (`running.ts`, `agentsNow`): an agent the CLI launched runs while its process
 does (`launch.ts`); one started by hand, by the log — it said something and has not stopped since, a stop holding until
-it comes back for work (`stoppedAgents`: a notice sent on its way out is no sign of life — encore-2's tester read "no
+it comes back for work (`stoppedAgents`: a notice sent on its way out is no sign of life — a run's tester read "no
 signal" for half an hour after one). The monitor shows one not running as on demand, or stopped, never as idle.
 
 **The keeper** (`keeper.ts`, `plitzi run keep`): with the team's `options.launch`, the run starts the agents it asks for
 — the base not running, one on demand for waiting work, one a task was sent back to — by itself, every few seconds,
 whatever the lead is doing; `run open`, `run resume`, `run attach` and the lead's `run watch --until lead` start it,
 one a run (`cache/keeper.json`, its log `cache/keeper.log`), and it ends with the run. Only the lead's watch started
-agents before, so while the lead reviewed or wrote a stage, ready tasks waited with no developer running (encore-2).
+agents before, so while the lead reviewed or wrote a stage, ready tasks waited with no developer running.
 
 **A model one harness does not run** (`harnessRuns`): the team names a model once, for every harness — Claude Code
 runs a Claude one (`claude-…`, `sonnet`), Codex any other, opencode `provider/model`. One the harness does not run is
@@ -438,7 +437,7 @@ harness's is never read, and its agents are not stopped for it) — passes `fres
 needs. The lead that plans never stops for it — the person talks to it — nor an agent outside the team: only the
 team's agents and the leads that review are started again by the run. The keeper starts the agent again — of the base, whatever
 waits; on demand, when work of its role does — and any task sent back to an agent not running asks for it by name,
-which it takes first. Every turn reads the whole context again: encore-2's developers, a session a task, read ~12k
+which it takes first. Every turn reads the whole context again: a run's developers, a session a task, read ~12k
 tokens' worth a turn and ended each at 58–113k; its designer and tester, never started again, grew to 400k and read
 26–30k a turn — more, the two, than the developers' 49 sessions; a start costs ~40k tokens written, about what a
 piece of work carrying 50k more context reads again in ~15 turns. `sessionPerTask` was this rule's `"task"`, for
@@ -447,19 +446,19 @@ tasks alone, and asked for; a team file that says it is refused saying to remove
 **An agent started again after it died** (`launch.ts`). `run agent --launch` keeps what it started in
 `scratch/<agent>/agent.json`: the pid, the harness, when, and the session. In Claude Code that is a session id of the
 CLI's own (`--session-id`). Started again, the agent is refused while that process still runs as its harness, because
-two sessions of one agent read one log. encore's dev-2, started again while its last session was still writing its
+two sessions of one agent read one log. A run's dev-2, started again while its last session was still writing its
 stop, read the old completion as its own and stopped. Then, when the team asks it (`"resumeSession": true`,
 `run team set dev --resume-session`), it resumes that session (`--resume`). That needs four things: the agent died
 with a task in progress, its last word in the log is not a stop, Claude Code still keeps the session
 (`<CLAUDE_CONFIG_DIR>/projects/<the folder, dashed>/<id>.jsonl`), and the session is no larger than
 `DEFAULTS.resumeMaxBytes` (8 MB). Past that size, reading it again costs more than a fresh session that reads its task
-anew. Otherwise the agent starts fresh, and the launch says why. encore's machine went down with four agents mid-task.
+anew. Otherwise the agent starts fresh, and the launch says why. A run's machine went down with four agents mid-task.
 Each started again on a fresh session took its task back from its copy within two minutes, and lost only what it knew
 and had not written yet, which is what resuming keeps.
 
 **An agent just started is not silent** (`options.startGraceMinutes`, `DEFAULTS.startGraceMs` — 3 minutes — when not
 said). For that long after its launch, and until it stops, the tasks it holds do not read "no signal" and it counts as
-running. Its harness is loading and its skills are being read. Without it, every agent started again after encore's
+running. Its harness is loading and its skills are being read. Without it, every agent started again after a run's
 crash read "no signal" and "not running" at once, its last word from before, and `run watch` woke the lead for nothing.
 
 ## The tester's tasks (`tests.ts`)
@@ -480,12 +479,12 @@ from the task's acceptance, not its code, by an agent that did not write it. Its
 Windows), and the server is stopped as a tree there (`taskkill /T`), a process group elsewhere — a preview's too (`processes.ts`). Two developer tasks whose tests are one file share one task of them; one that says `"tests":
 false`, writes nothing a test is written for, or that a tester's task of the plan already waits for, gets none. A test
 the work fails is told to the lead, not bent: `complete` with `--known-failure` says why and which task fixes it. A
-module's tests are checked by every test of its folder (`node --test '<dir>/**/*.test.ts'`): encore-3's test-1 held a
+module's tests are checked by every test of its folder (`node --test '<dir>/**/*.test.ts'`): a run's test-1 held a
 task's acceptance in a third file of the folder, which a check naming the task's own files never ran.
 
 **Tests cards as a spare** (`tasks/spareTests.ts`): while every tester of the team is at a task of its own, a developer
 is offered and may take a `-tests` card — after its own role's cards — never one of a task it took: tests are written by
-someone who did not write the work. encore-3's one tester was at work 104 of the run's 152 minutes, its cards alone the
+someone who did not write the work. A run's one tester was at work 104 of the run's 152 minutes, its cards alone the
 last 45, three developers waiting.
 
 ## What the data never shows
@@ -516,7 +515,7 @@ says why — `lead` (the lead looked at its UI itself, both schemes and the phon
 the task since its last complete, `lookedSince`) or `no-ui` (it changes nothing
 a visitor sees; `task complete --review code` says it from the start) — kept as the state's `design.why` and the log's
 `designSkip`. The report, the audit, `run watch` and the monitor say each by its reason ("UI by the lead", "no UI"),
-never one "skipped": la-velada's report counted 21 UI reviews the lead made as UI nobody looked at. A designer does not review its own work, and is not finished while a task whose UI it may
+never one "skipped": a run's report counted 21 UI reviews the lead made as UI nobody looked at. A designer does not review its own work, and is not finished while a task whose UI it may
 review is still to be done. A task asks the review it needs as it is sent: `task complete --review code` goes to the
 lead's code review alone (nothing a visitor sees changed), `--review ui` has its UI looked at first — by a designer,
 the lead's too when none is free — and left out, the run decides as above; the activity says which (`complete`'s
@@ -542,16 +541,16 @@ command the CLI runs of itself say how long it took.
 
 **A look reads both schemes.** Its `page check` runs with `--themes`: each page read in light and dark at its first
 width, and a ground the same in both under a text that follows the theme and reads under 3:1 on it in one of them
-fails it (`fixed-ground`, `commands/check/themes.ts`) — velada-fidelity's judges' rows were grey bars with a gold count
+fails it (`fixed-ground`, `commands/check/themes.ts`) — a run's judges' rows were grey bars with a gold count
 at 1.5:1 in light, a scheme the reference did not have and no reviewer read.
 
 **A look pictures what can differ.** The pages a task's own files are drawn at are pictured; the ones only a shared
 file of it reaches (the theme, a component) are first read on both servers with `page same` — every element, box,
 style and pseudo-element — and only those that differ are pictured, the rest said as "drawn the same as the run before
-it" (velada-fidelity: nine pages pictured, 204 s, for two tokens added). A page named on the command is pictured
+it" (nine pages pictured, 204 s, for two tokens added). A page named on the command is pictured
 whatever it reads.
 
-**A review has its time** (velada-fidelity: design-1 held one 16 min, a task queued 18 min behind it, both developers
+**A review has its time** (design-1 held one 16 min, a task queued 18 min behind it, both developers
 free). A UI review taken is its designer's for `REVIEW_TIMEOUT_MS` (8 min) — a designer's first for 7 min more
 (`FIRST_REVIEW_READING_MS`, `design.first`), which reads the references it is told to first: past it, `task next --take` hands it to
 another designer — the first told on its next command (`review-timed-out` in the log), and its verdict after refused as
@@ -559,29 +558,29 @@ another designer — the first told on its next command (`review-timed-out` in t
 not, to decide it (`slow-review`; under the limit, only while others sit free, from half of it). One due nobody takes
 for `REVIEW_QUEUE_MS` (5 min) is the lead's to review now (`ui-queued`). A lead that sends a task back with `--changes
 … --skip-design lead` keeps its next round's UI review (`design.reserved`): that round comes due to the lead alone,
-`skipped` by `lead` — never offered to a designer (velada-fidelity's t-result-card went to design-1 after the lead said
+`skipped` by `lead` — never offered to a designer (a run's t-result-card went to design-1 after the lead said
 it was its own); a designer reviewing the round it sent back is told its review ended.
 
 **A round sent back goes to the designer who said the one before** (`design.before`, kept as the round comes due with
-its time, `since`): offered to it first, and to another designer only past `SAME_DESIGNER_MS` (3 min) — velada-polish's
+its time, `since`): offered to it first, and to another designer only past `SAME_DESIGNER_MS` (3 min) — a run's
 t-match-bars had design-2's first round and design-1's second, which brought asks of its own and cost a round. Another
 designer taking it is told so in its brief: check what the round before asked, and ask anew only what is broken — the
 rest is a notice for the next run. A designer's `task look` of the UI it reviews is set beside the run before it
 (`--before`) unless it says `--no-before`, and names the pages its changes are drawn at that were not looked at — a
-shared file's: velada-polish's design-2 looked at /combates twice, and the home its card change broke was the lead's to
+shared file's: a run's design-2 looked at one page twice, and the home its card change broke was the lead's to
 find. The values a review asks for are measured, not guessed: `plitzi page measure <path> "<ours> => <theirs>" …
 --compare <url> --width 390,1440` reads elements' computed styles — type, colours, borders, radii, shadows, size,
-spacing, motion, and what their `::before`/`::after` draw (velada's VS fill was there, unseen, and the plan asked it
+spacing, motion, and what their `::before`/`::after` draw (a run's VS fill was there, unseen, and the plan asked it
 away) — in a state too, an element hovered or focused on both pages first (`--hover "<ours> => <theirs>"`, its
 transitions waited for) — and the other page's elements', and says each property that differs, what both inherit from their parent said
 apart. Every element at every width is one call, in one browser, the other page read without a picture and kept 6 h
-(`tmp/plitzi-cache/measure`, `--fresh` reads it again): velada-fidelity's ~150 calls of one element at ~18 s each were
-most of its developers' time; the designers of velada-polish wrote Playwright
+(`tmp/plitzi-cache/measure`, `--fresh` reads it again): a run's ~150 calls of one element at ~18 s each were
+most of its developers' time; the designers of one run wrote Playwright
 scripts of their own, and read the original's CSS by curl, for each one. `--same <properties>` (`font-size,border`;
 shorthands `border`, `font`, `size`) fails unless those are as the other page's — the other page asked as a site is,
 again when it says it is busy — so an acceptance holds a value to the reference rather than to the lead's guess, and
 `run plan` says a task of a copy (`reference`) whose acceptance names values (a length, a colour) no check of it
-measures (`measuredValues.ts`): velada-polish's VS sizes were written 2.35/2.75/3.35rem, the original's 3em, and a round
+measures (`measuredValues.ts`): a run's VS sizes were written 2.35/2.75/3.35rem, the original's 3em, and a round
 went to finding it out. A stage stacked — `run extend`, or the scope's tasks — says its plan's notices too, which only a
 dry run said. What the designer reads is its own half of the run, `runs-designer.md` (`DESIGN_READING`), handed with its
 first review; the developers' `runs.md` points to it in a line.
@@ -621,7 +620,7 @@ said with the way to feed it — the backlog's items no task closes, the UI of a
 (a send-back with `--skip-design lead` keeps the next look the lead's), a large card to split — or that nothing is left;
 never a designer while others' work is under way, which waits for its UI reviews, never an agent none of whose role's
 cards is left (it has done its part), and a card to split only of the idle agents' roles; said once for the same agents
-and the same board (`subject`: which agents, how many cards done), whatever its advice's words — lx-product's lead was
+and the same board (`subject`: which agents, how many cards done), whatever its advice's words — a run's lead was
 woken eleven times for one waiting designer;
 `run plan` says the same of a plan with too few cards for its team); so is a plan that changes nothing. `run plan` says
 too each acceptance line a script of the lead's own checks (`ownScripts.ts`: an interpreter given a file, or the file) —
@@ -757,8 +756,8 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   review, no brake. `--fix` first runs the project's own linter and formatter on the files the task changed alone
   (`eslint --fix` when its `lint` script is eslint's, `prettier --write --ignore-unknown` when its `format` is
   prettier's: `fix.ts`), and says what they rewrote; a check that fails on lint or format without it says `--fix` —
-  velada-polish's dev-1 ran three checks in twenty seconds, twice, on what a `--fix` writes. Another task's file in the
-  copy is not fixed — it is refused as that task's, as before (`whoseChanges` read first; encore-4's dev-2). A check
+  a run's dev-1 ran three checks in twenty seconds, twice, on what a `--fix` writes. Another task's file in the
+  copy is not fixed — it is refused as that task's, as before (`whoseChanges` read first; a run's dev-2). A check
   failing as the last one of the task did, on the same input (`input`, the check's key) and the same failures, says so
   (`failedAlikeAt`) — dev-1 checked twelve times in nine minutes. A backup an editor left (`roomBrowse.test.ts-E` from
   macOS's `sed -i -E`) fails the check and is refused at `complete` (`backupFiles`, `strays.ts`). A failing step's
@@ -766,7 +765,7 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
 - **A task sent back waits for its agent:** while that agent is at another task of its own, the one sent back is
   parked for it (`parkedFor`, "dev-1 at t-menu first") and handed to it by its next `task next`, before anything new —
   never to a free agent, and never read "no signal — reassign it" meanwhile: the agent that wrote it has the context
-  its review asks about (Carlos, after encore-2). It was handed to a free agent after 3 minutes before (velada-polish's
+  its review asks about (Carlos). It was handed to a free agent after 3 minutes before (a run's
   t-match-bars waited ten minutes with two developers free); a lead who wants that reassigns it (`task reassign`). A
   task's holder reads its own with `task show` (its token's task: another's is the lead's).
 - **Handed back, and why:** a task its own agent holds comes back with `task next` first, said as it is — changes
@@ -774,9 +773,9 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   right after `complete` told the agent to take no other step. A `--follow` that ends says one rule whatever the agent
   holds: the wait ended, not the work — run it again; only "You can stop" stops it (and a task of its in review comes
   back to it if sent back). A base agent with every task of the run approved hears what is left: the finish — the lead's summary, then a
-  person's apply — and nothing for it unless the lead stacks a stage (encore-4's design-1 waited 4.5 h told only to wait). A request of a task not approved yet is in no one's attention — it goes in with the
+  person's apply — and nothing for it unless the lead stacks a stage (a run's design-1 waited 4.5 h told only to wait). A request of a task not approved yet is in no one's attention — it goes in with the
   approval — so `run watch --until lead` is not woken for it; one left once its task is approved is. `--acceptance` runs only the acceptance's commands, the copy served for them, and says the
-  project's checks were not run: la-velada's agents iterated on one failing line with the whole check each time (52 of
+  project's checks were not run: a run's agents iterated on one failing line with the whole check each time (52 of
   their 88 failed checks were an acceptance line). An agent iterating on a fix checks with it,
   and completes once it passes; it hands over what was said to the task meanwhile, which an agent that only edits
   files would otherwise read only at `complete`. What a task declares for the tasks after it — a component, a token,
@@ -827,12 +826,12 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   — an agent of the team of its role, else refused before anything is cut), or to the lead, who takes it then, a copy of
   its own. The log keeps who, from whom, to whom and why (`reassign`).
 - **A run gone stops what its agents left listening**: `finish`, `abort` and `purge` stop every server whose folder is
-  in the run's (`stopListenersUnder`, read off `lsof`) and say so — velada-fidelity's copies' servers listened on after
+  in the run's (`stopListenersUnder`, read off `lsof`) and say so — a run's copies' servers listened on after
   the finish removed their folders. A kept server's watchdog stops it once its record is gone with the run.
 - **An agent stops a server through the CLI, never by name** (`plitzi server stop [--port <port>]`, `commands/server.ts`):
   what listens from the folder it is run in — its own `tmp/` left out, a run's copies each their own — and says by its
   `/health` that it serves that folder (`projectMark`), stopped with what it started; anything else on the port is said
-  and left. encore's agent freed a heredoc hung on stdin with `pkill -f "cat"`, which matched every process whose
+  and left. A run's agent freed a heredoc hung on stdin with `pkill -f "cat"`, which matched every process whose
   command line held the letters and took the machine down: the prompt's rules forbid `pkill`, `killall` and a kill by
   name, a hung command is the harness's to stop, and files are written with the harness's edit tools.
 
@@ -841,7 +840,7 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
 `run finish` compares each approved file with the project: unchanged since the run knew it → written; already the same
 → left; changed since → a conflict. With `--apply` the person is asked first, before any check, and every check and acceptance
 line is said as it runs (`ctx.say`, on stderr) — asked after them, a finish of 23 lines sat silent for minutes and was
-stopped as hung (velada-dress). The whole result is materialised (project + run) and checked first — a dry run by
+stopped as hung. The whole result is materialised (project + run) and checked first — a dry run by
 default, listing what is written over a change made outside — and so is what each done task was accepted on: every
 `{ said, check }` line that passed at its review runs again on the whole result, so one a later task broke (the print of
 a page another task grew) stops the finish, naming both; a pass of either on the very same result (and, for acceptance, the same kept reference) is said again within
@@ -857,7 +856,7 @@ left and the run removed. Undoing the final merge is git's, or `--keep-backup`'s
 
 ## The report (`report.ts`, `taskReports.ts`, `findings/`)
 
-The run reports itself, so the lead keeps no list of problems by hand: encore's lead kept 65 in a journal, each found
+The run reports itself, so the lead keeps no list of problems by hand: a run's lead kept 65 in a journal, each found
 by reading the log.
 
 **Each round, as its agent completed it** (`taskReports.ts`). `task complete` keeps the round at
@@ -944,12 +943,12 @@ kind `finding` (`findings/live.ts`, beside `refused-again`):
 What is past leaves the lead's attention — a task gone to review or approved, a line whose last check passed (a
 finding's `task`) — and what is Plitzi's (an agent with two tasks or in two sessions, a session working past its stop,
 a command refused as written, something two agents said of Plitzi) is the feedback's alone, never the lead's to clear:
-encore-2 ended with ten standing, which read as ignored. **The lead closes what it was told first**: every task done,
+One run ended with ten standing, which read as ignored. **The lead closes what it was told first**: every task done,
 `run report --summary` is refused while anything waits for the lead (`writeSummary`; an agent to start is the keeper's,
 not the lead's) — a lead that said "done" before them stacked a stage after. A finding no approval settles — an agent
 that went on after "You can stop", a check that answered two ways — the lead settles by saying what it did about it:
 `plitzi run settle <finding> --note "…"` (`settle.ts`, logged as `finding-settled`, the note kept for the report), and
-each finding names that command with its own subject. encore-3's close waited on three of them with no way to settle
+each finding names that command with its own subject. A run's close waited on three of them with no way to settle
 one.
 
 `run report` prints the run at a glance and each problem's title by whose (`reportBrief`); `--full`, and the file a
@@ -989,7 +988,7 @@ token's secret cut. The project's typecheck, lint and format never read it: the 
 copy leaves it out. `plitzi feedback`, one agent's report, is kept beside them, `agents/<date>/report.html`.
 
 **The run measured** (`runMetrics.ts`, `reportFlow.ts`): the report says where the time went and what it cost, read off
-the log, the messages and the run's usage — what velada-polish's lead computed by hand to find the run's bottlenecks:
+the log, the messages and the run's usage — what a run's lead computed by hand to find the run's bottlenecks:
 
 - **Flow:** the minutes worked (the open to every task approved), apart from the wait for the person's finish — the
   report said 136 min of a run worked in 50. Each task: from stacked to taken, at work, its rounds (the UI's and the
@@ -1023,7 +1022,7 @@ the log, the messages and the run's usage — what velada-polish's lead computed
 ## Who calls (`identity.ts`)
 
 A name is anyone's to type. Said, or not said — a shell with no terminal was the lead — it was taken at its word:
-velada-polish's design-2 ran `task look` with no `--agent` and the run's log has the lead looking, and one `task review
+A run's design-2 ran `task look` with no `--agent` and the run's log has the lead looking, and one `task review
 --approve` the same way would have been the lead's last word. So who calls is proved by a token:
 
 - Every agent of a run has a token of its own, `<run>.@<agent>.<secret>`, made by `run agent <name>` as it is started
@@ -1031,14 +1030,14 @@ velada-polish's design-2 ran `task look` with no `--agent` and the run's log has
   keeps each one's digest (`identities/<agent>.json`), never the token; the agent's copy is in its scratch folder
   (`scratch/<agent>/token`), and beside it the agent's own CLI (`scratch/<agent>/plitzi`, `writeCli`): the project's,
   run with `PLITZI_TOKEN` read from that file. Its prompt names it, so no command it types carries `--token "$(cat
-  …)"` — lx-product: that and the CLI's path were 300 characters of every command, read again on every turn after.
+  …)"` — that and the CLI's path were 300 characters of every command, read again on every turn after.
 - Each command passes the token (through the agent's CLI, `PLITZI_TOKEN` or `--token`), in a task's copy too: the copy says which task — to its
   holder's token alone, or a person at its terminal — never who calls, and a task's own token (`<run>.<task>.<secret>`)
   says no one. Refused (`identity`, 26): no token, an empty one, a task's, one that is no agent's, a name that has a
   token said without it, a token under another's name or of another run, a name not of the project's team (`team.json`:
   its agents, `lead`, its co-leads), `person` from a shell (a person is a terminal) — except the readings anyone may ask
   (`run status`, `run report`, `task claims`, `task proposals`, `run can-write`: a hook or a script, `unnamed`). The CLI
-  makes up no name: velada-fidelity's `--token "$(cat …)"`, read from the wrong folder, came in empty and ran as
+  makes up no name: a run's `--token "$(cat …)"`, read from the wrong folder, came in empty and ran as
   "agent" — it took a task, and the rework sent back to "agent" sat with no one. A holder's step is held to the task's
   owner too (`holderOf`): another agent with its copy's token acts on nothing of it.
 - An agent's roles are its team's: `task next --role` and `task take` refuse a role it was not started as.
@@ -1127,6 +1126,6 @@ person's action from a shell with no terminal, and a command run from inside a t
 **A run played whole** (`runs-flow.test.ts`): one story, agent by agent, as a real run went — the base agent and one
 on demand, a shared file held while another task's request on it is approved, a question a lead that reviews answers
 and its agent takes up, the reviews, the finish — with a simulated `author` (a page reading a token its theme does not
-declare fails), so the rules meet where no test of one of them looks. velada-dress's failures were each rule right
+declare fails), so the rules meet where no test of one of them looks. A run's failures were each rule right
 alone and wrong together. **A change to how a run behaves adds its step to the story** — beside its own unit test — and
 a run's post-mortem adds what it found there.

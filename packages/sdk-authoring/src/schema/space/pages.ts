@@ -133,7 +133,7 @@ const pathFor = (author: SpaceAuthor, page: PageSpec, index: number): string => 
 
 /**
  * Which page is the space's home when none says `isDefault`: the one at `''`, else the first that is not the page of
- * every address no other answers (`'*'`). encore: its 404 page, listed first, became the home — every unknown address
+ * every address no other answers (`'*'`). Its 404 page, listed first, became the home — every unknown address
  * then answered a bare "Not Found", and author said nothing.
  */
 export const homeIndexOf = (pages: readonly PageSpec[]): number => {

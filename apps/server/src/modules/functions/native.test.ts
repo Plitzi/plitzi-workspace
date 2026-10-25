@@ -224,7 +224,7 @@ describe('ctx.data', () => {
 });
 
 describe('ctx.presence', () => {
-  /** encore counted a room's listeners by the pages' own heartbeats in kv: the server knows who is connected. */
+  /** a project counted a room's listeners by the pages' own heartbeats in kv: the server knows who is connected. */
   it('says who is on a topic of the space’s presence channels, as the server counts them', async () => {
     const presence = vi.fn(() =>
       Promise.resolve({ count: 1, members: [{ from: 'c-1', user: { id: 7, name: 'ana' }, since: 1_000 }] })
@@ -258,7 +258,7 @@ describe('ctx.presence', () => {
 });
 
 describe('ctx.visitors', () => {
-  /** encore kept its own copy of every profile in kv, written from `ctx.user`, to show one person to another. */
+  /** a project kept its own copy of every profile in kv, written from `ctx.user`, to show one person to another. */
   it('reads one person of the space, its public fields alone — an email the deployment answered never reaches code', async () => {
     const getVisitor = vi.fn((_space: number, _environment: string, who: string | number) =>
       Promise.resolve(

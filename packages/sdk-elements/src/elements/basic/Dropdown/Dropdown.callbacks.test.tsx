@@ -37,7 +37,7 @@ vi.mock('../../../Element/RootElement', () => ({
   }
 }));
 
-// encore-4: a pick closed its menu only by `updateElement` on `openPopup`, found by reading the store.
+// A pick closed its menu only by `updateElement` on `openPopup`, found by reading the store.
 describe('a dropdown opened and closed by a step', () => {
   it('answers openDropdown, closeDropdown and toggleDropdown by its open state', () => {
     let written = 0;

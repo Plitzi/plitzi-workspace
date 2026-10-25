@@ -104,7 +104,7 @@ export type RunGuards = {
   /**
    * The answer of the run this same call already started in this process, waited for — `undefined` when none runs
    * here (another replica holds it, or it ended). A page that calls the same action with the same input twice at once
-   * (loaded at two widths, two tabs, two components) is answered twice by one run, never refused: encore's room logged
+   * (loaded at two widths, two tabs, two components) is answered twice by one run, never refused: a run's room logged
    * a 409 on every second load, and acceptance checks failed on it at random.
    */
   join: (params: BeginRunParams) => Promise<RunAnswer | undefined> | undefined;

@@ -14,7 +14,7 @@ import type { RunPaths } from './paths';
 
 /**
  * What `run agent --launch` keeps of an agent it started, beside its prompt (`scratch/<agent>/agent.json`): its process,
- * when, and — in a harness that keeps one — its session, so the agent started again after it died resumes it. encore: the
+ * when, and — in a harness that keeps one — its session, so the agent started again after it died resumes it. The
  * machine went down with four agents mid-task; each was started again on a fresh session and read its task anew.
  */
 export interface Launch {

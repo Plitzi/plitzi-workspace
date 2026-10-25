@@ -271,7 +271,7 @@ export const runExtend = (
       }),
     extended =>
       [
-        // A stage looked at before it is stacked — velada-polish's lead had no way but stacking it.
+        // A stage looked at before it is stacked — a run's lead had no way but stacking it.
         extended.checked
           ? `Checked, nothing stacked on "${extended.runId}": ${extended.added.join(', ')} would be added — run it again without --dry-run to stack them.`
           : `Stacked on "${extended.runId}": ${extended.added.join(', ')} — written into the project with the rest, in one finish.`,

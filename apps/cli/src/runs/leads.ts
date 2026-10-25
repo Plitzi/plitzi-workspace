@@ -35,7 +35,7 @@ export const IDLE_LEAD_MS = 4 * 60_000;
 
 /**
  * A lead that reviews is spare when the tasks not approved yet are no more than the other leads running: each reviews
- * one at a time, and what is left is theirs (velada-dress: lead-2 waiting through the run's last task and its
+ * one at a time, and what is left is theirs (lead-2 waiting through the run's last task and its
  * integration, the lead there for both).
  */
 export const spareLead = (open: number, otherLeads: number): boolean => open <= otherLeads;
@@ -192,7 +192,7 @@ const freeFor = (view: TaskView, agent: string): boolean =>
  */
 /**
  * What a tester may review, as one who reviews beside the lead: code — a developer's task, another's tests. A design is
- * not its to approve: encore-2's test-1 approved the identity system and its components, a designer's work no tester
+ * not its to approve: a run's test-1 approved the identity system and its components, a designer's work no tester
  * reads as one.
  */
 export const testerReviews = (task: RunTask): boolean => {
@@ -231,7 +231,7 @@ export const leadReviewFor = (
 /** Takes the review offered: false when another lead took it first. */
 /**
  * A look by the lead, or by one who reviews beside it, at a task whose review is its to take now takes it — said in the
- * activity as `task next --take` says it: encore-2's lead looked and approved, and the person following the run saw
+ * activity as `task next --take` says it: a run's lead looked and approved, and the person following the run saw
  * nobody take its reviews. A look while the designer's UI review is due takes nothing: that review is the designer's.
  */
 export const takeOnLook = async (ctx: RunContext, loaded: LoadedRun, view: TaskView): Promise<boolean> => {

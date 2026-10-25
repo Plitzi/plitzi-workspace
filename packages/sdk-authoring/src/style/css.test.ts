@@ -113,7 +113,7 @@ describe('css', () => {
 
   it('reports every unknown property at once', () => {
     expect(() => css({ nope: '1px', alsoNope: '2px' })).toThrow(/Unknown CSS properties: "nope", "also-nope"/);
-    // encore-3: the classic sr-only line's `clip` was refused with no word of what replaced it.
+    // The classic sr-only line's `clip` was refused with no word of what replaced it.
     expect(() => css({ clip: 'rect(0, 0, 0, 0)' })).toThrow(
       /"clip" \(deprecated: write 'clip-path': 'inset\(50%\)', or the `sr-only` utility/
     );
@@ -220,7 +220,7 @@ describe('a style with pseudo-elements, conditions and its parent', () => {
     expect(() => toBlocks({ conditions: { 'container (width: 30rem)': { opacity: '1' } } })).toThrow(
       /min-width, max-width/
     );
-    // velada-dress: dev-2 wrote the screen's width as a condition, and found the breakpoints by trying.
+    // Dev-2 wrote the screen's width as a condition, and found the breakpoints by trying.
     expect(() => toBlocks({ conditions: { '(max-width: 480px)': { opacity: '1' } } })).toThrow(
       /The screen's width is no condition: a value per breakpoint is — `\{ desktop: …, tablet: …, mobile: …, compact: … \}`/
     );
@@ -241,14 +241,14 @@ describe('a style with pseudo-elements, conditions and its parent', () => {
     expect(() => toBlocks({ ancestors: { '> .card': { css: { color: 'red' } } } })).toThrow(/\[ancestor-not-class\]/);
   });
 
-  // velada-backlog: `ancestors: { card: { pseudos: … } }` passed author and lint, and its CSS was never emitted.
+  // `ancestors: { card: { pseudos: … } }` passed author and lint, and its CSS was never emitted.
   it('refuses what an ancestor or a state cannot hold, naming where it goes, rather than dropping it', () => {
     // The types refuse these two — a project's spread, or its JavaScript, gets past them: cast to reach the guard.
     const pseudoInAncestor = { ancestors: { card: { pseudos: { before: { opacity: '1' } } } } };
     expect(() => toBlocks(pseudoInAncestor as StyleSpec)).toThrow(/\[ancestor-shape\][\s\S]*--fill-opacity/);
     const pseudoInState = { ancestors: { card: { states: { hover: { pseudos: { before: { opacity: '1' } } } } } } };
     expect(() => toBlocks(pseudoInState as StyleSpec)).toThrow(/\[state-shape\][\s\S]*pseudos: \{ before: \{ states/);
-    // la-velada's 404 arrow: a condition under an ancestor, dropped as `pseudos` was — told where it goes.
+    // A run's 404 arrow: a condition under an ancestor, dropped as `pseudos` was — told where it goes.
     const conditionInAncestor = {
       ancestors: { card: { conditions: { 'motion-reduce': { css: { transform: 'none' } } } } }
     };
@@ -319,7 +319,7 @@ describe('a background whose part is a bare var()', () => {
     );
     expect(() => css({ background: 'url(a.png) no-repeat, var(--x)' })).toThrow(/\[shorthand-ambiguous\]/);
     expect(() => css({ background: 'center / cover var(--x)' })).toThrow(/\[shorthand-ambiguous\]/);
-    // encore-3: every side of the ON AIR plate got the whole `var(--pad, 4px 10px)`, no length at all unset.
+    // Every side of the ON AIR plate got the whole `var(--pad, 4px 10px)`, no length at all unset.
     expect(() => css({ padding: 'var(--on-air-pad, 4px 10px)' })).toThrow(/'padding-top': 'var\(--padding-top, …\)'/);
     expect(css({ padding: 'var(--pad, 4px)' })['padding-top']).toBe('var(--pad, 4px)');
     expect(css({ padding: 'var(--y, 4px) var(--x, 10px)' })['padding-left']).toBe('var(--x, 10px)');

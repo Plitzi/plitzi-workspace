@@ -302,7 +302,7 @@ describe('createKvStore change', () => {
     expect(calls.find(call => call.method === 'swap')?.args).toEqual(['kv:board', undefined, '{"hours":2}', 7200]);
   });
 
-  // encore: a vote re-scored a queue entry with listPut while the track it was started — and put the song back.
+  // A vote re-scored a queue entry with listPut while the track it was started — and put the song back.
   describe('one entry of a list, changed as it is', () => {
     it('swaps an entry only while it is as read, and takes it out with null', async () => {
       const kv = createKvStore(createMemoryKv());

@@ -35,7 +35,7 @@ describe('Image Tests', () => {
     expect(baseElement).toBeTruthy();
   });
 
-  // encore's live card drew the placeholder where its cover was bound to nothing: said on the page, for a check to see.
+  // A run's live card drew the placeholder where its cover was bound to nothing: said on the page, for a check to see.
   it('says on the page that it has nothing to show — not when a source is given', () => {
     const { container } = render(
       <ElementContext value={skipHocEntry()}>

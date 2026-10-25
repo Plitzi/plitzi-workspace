@@ -16,7 +16,7 @@ import type { PageDecoration, PageText } from '@plitzi/sdk-authoring';
 /**
  * The plan's `reference` site as the run keeps it (`plitzi run reference`): each page of its inventory pictured and its
  * words measured, at each width and scheme, the moment the lead kept it. `page shot --compare` measures against this,
- * not the site as it is now: la-velada's original redesigned its fighter page after the copy, and a comparison with it
+ * not the site as it is now: a run's original redesigned its fighter page after the copy, and a comparison with it
  * measured another page. In the run's folder: gone with the run when it finishes.
  */
 export interface KeptPage {
@@ -131,7 +131,7 @@ const linesOf = (text: PageText): number => {
 /**
  * The labels the original itself breaks over two lines or more on the page at `pathname`, at this width — compared as
  * spelt (`comparable`), in either scheme it was kept in: what a copy of it wraps on purpose. Empty outside a run that
- * keeps a reference, or for a page it did not keep. lx-copy: the original's "TARJETAS GRÁFICAS" wraps under its
+ * keeps a reference, or for a page it did not keep. The original's "TARJETAS GRÁFICAS" wraps under its
  * tile, and `label-wraps` told every agent to keep it on one line — two bent the page to it.
  */
 export const labelsWrappedInReference = async (root: string, pathname: string, width: number): Promise<Set<string>> => {
@@ -172,7 +172,7 @@ const names = (piece: string, heading: string): boolean => {
 
 /**
  * Each kept page's headings — its sections, as a reader names them — that no piece of the inventory names, on that
- * page or on none (the shell's): what the plan may have missed. la-velada's lead left three pieces of the artist page
+ * page or on none (the shell's): what the plan may have missed. A run's lead left three pieces of the artist page
  * out of the inventory, found only at review.
  */
 export const unnamedSections = (

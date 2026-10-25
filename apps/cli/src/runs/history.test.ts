@@ -16,7 +16,7 @@ afterEach(async () => {
 const projectWith = async (rows: readonly [number, number][]): Promise<string> => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'run-history-'));
   roots.push(root);
-  const dir = runReportDir(root, 'velada');
+  const dir = runReportDir(root, 'shop');
   await fs.mkdir(dir, { recursive: true });
   const tasks = rows.map(([minutes, estimateMinutes], index) => ({
     id: `t-${String(index)}`,
@@ -33,7 +33,7 @@ const projectWith = async (rows: readonly [number, number][]): Promise<string> =
 };
 
 describe('readHistory', () => {
-  // la-velada: thirty tasks took about a third of their estimates, and one whose approval the log lost ran 885 min of 75.
+  // Thirty tasks took about a third of their estimates, and one whose approval the log lost ran 885 min of 75.
   it('reads the project’s pace as the middle task’s, which one clock left running does not move', async () => {
     const root = await projectWith([
       [10, 30],
@@ -56,7 +56,7 @@ describe('readHistory', () => {
     expect(await readHistory(await projectWith([[10, 30]]))).toBeUndefined();
   });
 
-  // encore, a first run: 630 min estimated, 148 taken — a project with no runs of its own reads this machine's.
+  // A first run: 630 min estimated, 148 taken — a project with no runs of its own reads this machine's.
   it('reads this machine’s pace before a run of the project ended, and the project’s once one did', async () => {
     const empty = await fs.mkdtemp(path.join(os.tmpdir(), 'run-history-empty-'));
     roots.push(empty);

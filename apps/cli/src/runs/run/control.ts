@@ -110,7 +110,7 @@ const WRITING: readonly string[] = ['in-progress', 'changes-requested', 'waiting
 
 /**
  * The tasks an agent is writing now: what a gentle stop waits for (`run upgrade`). One whose agent is not running has
- * none writing it, its copy kept for when it starts again — encore-2's upgrade waited an hour on a task sent back to an
+ * none writing it, its copy kept for when it starts again — a run's upgrade waited an hour on a task sent back to an
  * agent that had ended.
  */
 export const writingTasks = async (ctx: RunContext, runId: string): Promise<string[]> => {
@@ -132,7 +132,7 @@ export const stopRun = async (
   reason = `stopped by ${ctx.agent}`
 ): Promise<{ cut: string[] }> => {
   // Stopped whatever Plitzi is installed: a stop writes only the run's state, and `run upgrade` stops a run whose
-  // version changed already to set it right — encore-3's was refused it, left stopping on a version it never re-pinned.
+  // version changed already to set it right — a run's was refused it, left stopping on a version it never re-pinned.
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
   assertStatus(loaded, ['open', 'stopping', 'stopped'], 'stop');
   if (!force) {

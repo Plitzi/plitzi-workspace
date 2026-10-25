@@ -60,7 +60,7 @@ const fresh = (kept: Kept, now: number): Kept =>
 /**
  * Who is on each presence channel, kept where the actions keep their `kv` — beside the grants and what `retain` keeps —
  * so a function on one replica counts the pages connected to all of them (`ctx.presence`). A page counted by its own
- * replica alone answered a room of three as one (encore's listeners, counted by the pages' own heartbeats in kv).
+ * replica alone answered a room of three as one (a run's listeners, counted by the pages' own heartbeats in kv).
  *
  * One value per topic, written by compare-and-swap; each member carries when its replica last saw it, so one that went
  * down without a word stops counting within {@link PRESENCE_STALE_MS}, and is dropped at the next write.

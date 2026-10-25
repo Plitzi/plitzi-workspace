@@ -188,7 +188,7 @@ const choosesChildren = (author: SpaceAuthor, element: Element): boolean => {
 
 /**
  * An `activeWhen` that sets a variant its class does not declare: nothing ever applies, and it was said nowhere
- * (encore-2: motion-bump's variant is `hit`, and its `activeWhen` — `active` — never worked). `idle` is the class as it is.
+ * (motion-bump's variant is `hit`, and its `activeWhen` — `active` — never worked). `idle` is the class as it is.
  */
 const warnVariantsSet = (author: SpaceAuthor, element: Element, spec: ElementSpec, where: string): void => {
   for (const binding of Array.isArray(spec.bind) ? spec.bind : []) {
@@ -268,7 +268,7 @@ const recordHandle = (author: SpaceAuthor, handle: ElementHandle): void => {
 
 /**
  * A provider's `when`: a rule group whose every field is a source resolved as a binding's is — a name nothing answers to
- * is refused, a short one written whole. A wrong one never held and said nothing (encore-3: `roomData.role` for
+ * is refused, a short one written whole. A wrong one never held and said nothing (`roomData.role` for
  * `apiContainer_roomData.role`), and a string where the group goes was read as no rule at all.
  */
 const providerWhen = (
@@ -319,7 +319,7 @@ export const addElement = (
   } catch (error) {
     author.skipped += 1;
     author.refusals.push({ place, at: writtenAt(spec), ...refusalOf(error) });
-    // Its subtree is skipped: a name under it taken too is said now, not in the next run — encore-3's two tasks reusing
+    // Its subtree is skipped: a name under it taken too is said now, not in the next run — a run's two tasks reusing
     // room-request, room-request-message and roomRequests took three runs of the checks to find.
     if (error instanceof AuthoringError && error.code === 'id-taken') {
       takenUnder(author, spec.children ?? [], place);
@@ -451,7 +451,7 @@ const writeElement = (
   const ownRootId = isRoot ? id : rootId;
   const bindings = withVisibility({ bind: boundFrom(author, spec, where), visible: spec.visible });
   // Behind a feature flag is a condition too: off, it is not drawn, and a bare visit owes it no more than a hidden one
-  // (encore's settings: the Spotify card, its flag off, failed every check as "not on the page").
+  // (the Spotify card, its flag off, failed every check as "not on the page").
   const ownCondition = spec.visible !== undefined || spec.flag !== undefined || hasVisibilityBinding(bindings);
   const conditional = above !== 'shown' || ownCondition;
   const shownWith = ownCondition ? undefined : shownWithOf(above, id);

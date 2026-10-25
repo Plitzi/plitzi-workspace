@@ -42,7 +42,7 @@ export interface SessionClient {
   userAgent?: string;
   ip?: string;
   /**
-   * The host it was signed in on: a space's own (`encore.plitzi.app`), where its visitors sign in through the platform,
+   * The host it was signed in on: a space's own (`acme.plitzi.app`), where its visitors sign in through the platform,
    * or the platform's. What "sign out of this site everywhere" ends — a host's cookies are its own, so its sessions
    * are what a visitor holds there, on every device.
    */

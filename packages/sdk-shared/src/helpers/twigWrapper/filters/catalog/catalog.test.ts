@@ -15,7 +15,7 @@ describe('the template filters, documented', () => {
     expect(filters.date('now', ['Y', 'UTC'])).toBe(year);
   });
 
-  // lx-controls: `plitzi explain max` answered nothing — a function was known only to the evaluator and the check.
+  // `plitzi explain max` answered nothing — a function was known only to the evaluator and the check.
   it('documents the functions the evaluator implements: each one answers', () => {
     expect(processTwig('{{ max(2, 7, 3) }}', {})).toBe('7');
     expect(processTwig('{{ min(2, 7, 3) }}', {})).toBe('2');

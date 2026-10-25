@@ -293,7 +293,7 @@ const toAncestors = (ancestors: RuleSetSpec['ancestors']) =>
       );
     }
 
-    // Only these three are an ancestor's: anything else — `pseudos` was velada-backlog's — was dropped without a word.
+    // Only these three are an ancestor's: anything else — `pseudos` was a run's — was dropped without a word.
     const misplaced = Object.keys(ancestor).filter(key => !ANCESTOR_KEYS.has(key));
     if (misplaced.length > 0) {
       throw new AuthoringError(

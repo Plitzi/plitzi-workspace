@@ -15,7 +15,7 @@ const laidOut = (boxes: Record<string, [number, number]>) =>
     return new DOMRect(0, top, 200, bottom - top);
   });
 
-// Carlos: la-velada's "Ver cartelera completa" on #combates' bottom edge, and nothing had said it.
+// Carlos: a run's "Ver cartelera completa" on #combates' bottom edge, and nothing had said it.
 describe('a link on its section’s edge', () => {
   it('is said of a section that keeps no space below — once, of the innermost — and not of one that does', () => {
     document.body.innerHTML = `

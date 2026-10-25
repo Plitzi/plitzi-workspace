@@ -9,7 +9,7 @@ import type { CheckRunner } from './checks';
 import type { Bench } from '../tests/runProject';
 
 /**
- * encore-2's test-1 checked green, completed, and failed on a file the run had approved since — taken into its copy by
+ * A run's test-1 checked green, completed, and failed on a file the run had approved since — taken into its copy by
  * the complete — with no word of which had come in.
  */
 

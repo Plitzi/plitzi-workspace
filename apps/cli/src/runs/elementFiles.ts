@@ -7,7 +7,7 @@ import { shellCommands } from './shell';
 import type { PlannedTask } from './model';
 
 /**
- * Where the elements a task's checks read are written, held to the task's files: velada-fidelity's t-result-card was
+ * Where the elements a task's checks read are written, held to the task's files: a run's t-result-card was
  * given `match/styles.ts` alone, its acceptance measured the judges' block — written in `pages/combate.ts` and
  * `match/parts.ts`, another task's — and its second round waited for that task's approval. Said at `run plan`.
  */
@@ -73,7 +73,7 @@ const importsOf = (file: string, text: string, files: ReadonlySet<string>): stri
 /**
  * Each task whose checks read an element written in none of its files, nor in a file that imports one of them: where
  * it is written, to give it the file. A helper or a token the element's file imports is the task's way to it —
- * velada-backlog's t-body-type changed the FAQ's answers through `fore()`, in a file of its own, and was told otherwise.
+ * A run's t-body-type changed the FAQ's answers through `fore()`, in a file of its own, and was told otherwise.
  */
 export const elementFileNotices = async (root: string, tasks: readonly PlannedTask[]): Promise<string[]> => {
   const asked = tasks.map(task => ({
@@ -93,7 +93,7 @@ export const elementFileNotices = async (root: string, tasks: readonly PlannedTa
       new RegExp(`\\bid:\\s*['"\`]${element.replace(/[-]/g, '\\-')}['"\`]`).test(text) ? [file] : []
     );
 
-  // What a task this one waits on holds, it changes first — may move or remove the element (lx-copy: t-home-top told
+  // What a task this one waits on holds, it changes first — may move or remove the element (t-home-top told
   // its checks read hero-title in index.ts, the tour's, which t-base before it removed).
   const before = (task: PlannedTask): Set<string> => {
     const found = new Set<string>();

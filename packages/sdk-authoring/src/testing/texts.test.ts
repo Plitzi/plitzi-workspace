@@ -52,7 +52,7 @@ describe('compareTexts', () => {
     expect(differ.map(entry => entry.differences)).toEqual([['padding 8px 16px → 6px 12px']]);
   });
 
-  // la-velada's copy wrote "Logotipo" where its original draws "LOGOTIPO": one text in other capitals, not two.
+  // A run's copy wrote "Logotipo" where its original draws "LOGOTIPO": one text in other capitals, not two.
   it('pairs the same words in other capitals, and says their case differs', () => {
     expect(compareTexts([text('Logotipo')], [text('LOGOTIPO')])).toMatchObject({
       same: 0,
@@ -85,7 +85,7 @@ describe('compareTexts', () => {
     ]);
   });
 
-  // lx-product: our "Agotado" button was compared with the original's "Agotado" stock label, above its button.
+  // Our "Agotado" button was compared with the original's "Agotado" stock label, above its button.
   it('pairs the same words with the same kind of element first: a button with a button, a label with a label', () => {
     const button = (y: number) => text('Agotado', { tag: 'button', y, width: 414, height: 44 });
     const label = (y: number) => text('Agotado', { tag: 'span', y, width: 65, height: 20 });

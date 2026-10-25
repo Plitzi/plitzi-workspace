@@ -43,7 +43,7 @@ export const readPlanFile = async (
   file: string,
   /**
    * What a stage stacked on an open run may leave out — its name and its goal, the run's — filled before it is read:
-   * velada-shell's spike was refused its four tasks for a runId and a goal the run had.
+   * A run's spike was refused its four tasks for a runId and a goal the run had.
    */
   fill?: { runId: string; goal: string }
 ): Promise<RunPlan> => {
@@ -69,7 +69,7 @@ export const readPlanFile = async (
   }
 
   // A task's findings written as a list, one finding a line, are its findings: said as words, each its own line
-  // (lx-copy: the scope's stage refused for ten lists — "in words, not […]").
+  // (the scope's stage refused for ten lists — "in words, not […]").
   if (isRecord(parsed) && Array.isArray(parsed.tasks)) {
     parsed = {
       ...parsed,
@@ -253,7 +253,7 @@ export const openRun = async (
     const taskFiles = taskPaths(paths, task.id);
     await writeJson(taskFiles.definition, task);
     // The scope is the lead's from the open — no lead takes it from a queue: unowned, the monitor showed the lead idle
-    // while it scoped the run (velada-polish).
+    // while it scoped the run.
     const state = startingState(task, task.dependsOn.length === 0, at);
     await writeJson(taskFiles.state, task.id === SCOPE_SPIKE ? { ...state, spikedBy: { by: LEAD, at } } : state);
   }

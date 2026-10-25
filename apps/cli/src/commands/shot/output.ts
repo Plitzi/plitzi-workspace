@@ -43,7 +43,7 @@ const slug = (text: string): string => text.replace(/[^a-z0-9]+/gi, '-').replace
 
 /**
  * A picture's file: the page, the part clipped, the width and the theme it was painted in — the space's default when
- * none was asked for. A part is in the name: two clips of one page wrote one file, the second over the first (encore-4).
+ * none was asked for. A part is in the name: two clips of one page wrote one file, the second over the first.
  */
 export const shotFile = (pathname: string, clip: string | undefined, width: number, scheme: string): string =>
   `${pathname === '/' ? 'home' : slug(pathname)}${clip === undefined ? '' : `-${slug(clip)}`}-${String(width)}-${scheme}.png`;

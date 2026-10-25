@@ -553,7 +553,7 @@ export interface SpaceSpec {
    * its own for that reason; these are the rest, spread over it.
    */
   // The settings written at the top of the space (`computed`, `channels`) are left out of these: typed here, they
-  // compiled and were refused by author (`setting-misplaced`) — encore's dev-2, from a brief that said settings.channels.
+  // compiled and were refused by author (`setting-misplaced`) — a run's dev-2, from a brief that said settings.channels.
   settings?: Partial<Omit<Schema['settings'], 'customCss' | 'computed' | 'channels'>>;
   /**
    * Server-resolved data for this space's `runtime: 'server'` elements: on unless a space turns it off. Left out,

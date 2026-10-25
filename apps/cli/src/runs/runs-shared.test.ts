@@ -129,7 +129,7 @@ export const theme = { card: { color: tokens.ink }, badge: {}, price: {} };
     expect(dry.plan.apply.map(each => each.file)).toEqual(['src/space/pages/menu.ts', 'src/space/theme.ts']);
   });
 
-  // lx-copy: t-shell's new files went in unchecked, reading keys its request held; the request waited for an
+  // T-shell's new files went in unchecked, reading keys its request held; the request waited for an
   // integration, and every copy made after failed its checks until three integration tasks put them back together.
   it('never merges files that read what their request holds without it — refused, naming the checks and the file', async () => {
     await open();
@@ -170,7 +170,7 @@ export const menu = { id: 'menu', title: 'Carta', price: theme }; // NEEDS:price
     expect(Object.keys(approved.files)).not.toContain('src/space/pages/menu.ts');
   });
 
-  // lx-copy: one integration a file made t-shell's requests on site.json, tokens.ts and index.ts three tasks, each
+  // One integration a file made t-shell's requests on site.json, tokens.ts and index.ts three tasks, each
   // failing for want of the others' — a cycle the lead broke by approving one with a failure.
   it('integrates one task’s requests on several files as one task', async () => {
     await open();
@@ -303,7 +303,7 @@ export const theme = { card: { color: tokens.ink }, ${key}: {} };
     expect(refused.message).toContain('src/space/pages/home/hero.ts (task "t-home"');
   });
 
-  // velada-dress: t-sponsors approved with its tokens a request on the theme t-home held — the run's work read tokens it
+  // T-sponsors approved with its tokens a request on the theme t-home held — the run's work read tokens it
   // lacked, and every task's check failed on them until nobody could complete.
   it('merges a request at its approval though another task holds the file — the holder’s copy brings it', async () => {
     await open();
@@ -327,7 +327,7 @@ export const theme = { card: { color: tokens.ink }, ${key}: {} };
     expect(merged).toContain('export const home = {};');
   });
 
-  // lx-fidelity: t-blog, sent back and taken by another agent, came back without its site.json request — author failed.
+  // T-blog, sent back and taken by another agent, came back without its site.json request — author failed.
   it('keeps a task sent back with its requests, at the version it asked, for a copy made again', async () => {
     await open();
     const holder = await take('agent-1', 't-home');
@@ -343,7 +343,7 @@ export const theme = { card: { color: tokens.ink }, ${key}: {} };
     expect(reviewed).toMatchObject({ files: { 'src/space/theme.ts': asked.wanted } });
   });
 
-  // velada-dress: dev-1's wait for sponsors.ts ran out, t-heading stayed waiting, and no complete was let through.
+  // Dev-1's wait for sponsors.ts ran out, t-heading stayed waiting, and no complete was let through.
   it('completes a task that waited for a file and does without it, out of the queue', async () => {
     await open();
     const holder = await take('agent-1', 't-home');

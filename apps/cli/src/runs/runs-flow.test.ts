@@ -37,7 +37,7 @@ import type { RunContext } from './run';
 import type { Bench } from '../tests/runProject';
 
 /**
- * A run played whole, agent by agent, as velada-dress went — each rule it broke now held at once: the multi-agent run is
+ * A run played whole, agent by agent, as a run went — each rule it broke now held at once: the multi-agent run is
  * the sum of its rules, and they meet where no unit test of one of them looks. Its `author` is the project's as it
  * matters here: a page reading a token (`token('x')`) its copy's theme does not declare (`declare('x')`) fails.
  */
@@ -63,7 +63,7 @@ const sources = async (dir: string): Promise<string[]> => {
   );
 };
 
-/** `author`, as velada-dress met it: every token a page reads is declared by the theme. */
+/** `author`, as a run met it: every token a page reads is declared by the theme. */
 const authorChecks: CheckRunner = async (dir): Promise<CheckResult> => {
   const text = (await sources(dir)).join('\n');
   const declared = new Set([...text.matchAll(/declare\('([a-z-]+)'\)/g)].map(match => match[1]));
@@ -81,7 +81,7 @@ const as = (name: string, token?: string): RunContext =>
 
 const THEME = 'src/space/theme.ts';
 
-describe('a run played whole, as velada-dress went', () => {
+describe('a run played whole, as a run went', () => {
   it('holds every rule it broke: base first, requests merged at approval, a lead that reviews answering, the finish whole', async () => {
     const plan = { ...benchPlan(), designReview: false };
     await bench.writeTeam({
@@ -93,7 +93,7 @@ describe('a run played whole, as velada-dress went', () => {
     const runId = plan.runId;
 
     // Who calls is proved: dev-1's name is its token's once given — said again alone, or that token under the lead's
-    // name, refused (velada-polish: design-2, unnamed, was logged as the lead).
+    // name, refused (design-2, unnamed, was logged as the lead).
     const { paths } = await loadRun(as('lead'), runId);
     const dev1 = await identify(bench.root, paths, runId, { kind: 'name', said: 'dev-1' }, new Date());
     expect(dev1.issued?.token).toMatch(/^es-launch\.@dev-1\.[0-9a-f]{32}$/);
@@ -212,7 +212,7 @@ describe('a run played whole, as velada-dress went', () => {
   }, 30_000);
 });
 
-// velada-fidelity: dev-1 took t-faq-zone as "agent" (an empty token), and its rework went back to no one. A task is its
+// Dev-1 took t-faq-zone as "agent" (an empty token), and its rework went back to no one. A task is its
 // holder's: another agent holding its copy's token acts on nothing of it, and the holder acts on it as itself.
 describe('a task held by its holder alone', () => {
   it('refuses another agent the task, its copy’s token in hand, and keeps the work and the log the holder’s', async () => {
@@ -251,7 +251,7 @@ describe('a task held by its holder alone', () => {
   });
 });
 
-// The lead takes a task back from an agent at any time, says why, and decides where it goes (Carlos, velada-fidelity).
+// The lead takes a task back from an agent at any time, says why, and decides where it goes (Carlos).
 describe('a task the lead takes back', () => {
   it('goes to the agent it is handed to — no other — or to the lead itself; its agent is told why', async () => {
     const plan = { ...benchPlan(), designReview: false };
@@ -297,7 +297,7 @@ describe('a task the lead takes back', () => {
   }, 30_000);
 });
 
-// velada-polish: right after a `complete` told an agent to take no other step, `task next` handed back the task it held
+// Right after a `complete` told an agent to take no other step, `task next` handed back the task it held
 // "unblocked" — never blocked: it was held all along.
 describe('a task handed back to its own agent', () => {
   it('says it is held all along, or unblocked by the lead, as it is', async () => {

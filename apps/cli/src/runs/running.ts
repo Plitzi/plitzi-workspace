@@ -39,11 +39,11 @@ export const agentsNow = async (
     ).flatMap(([agent, launch]) => (launch ? [[agent, launch] as const] : []))
   );
   const table = processTable();
-  // Launched and its process gone: not running, whatever its last word in the log was — encore's designers ended on a
+  // Launched and its process gone: not running, whatever its last word in the log was — a run's designers ended on a
   // 'waiting', read running for good, and no designer was asked for the UI reviews that waited on none.
   const gone = new Set([...launches].filter(([, launch]) => !isRunning(launch, table)).map(([agent]) => agent));
   // An agent just started has said nothing yet — its harness loading, its skills read: the tasks it holds are not
-  // silent, and it is running, until its grace is over or it stopped since (encore: every agent started again after the
+  // silent, and it is running, until its grace is over or it stopped since (every agent started again after the
   // machine went down read "no signal" and "not running" at once, its last word from before).
   const starting = new Set(
     [...launches]
@@ -63,7 +63,7 @@ export const agentsNow = async (
   );
 
   // Launched by the CLI, its process says whether it runs — never the log's last word, which a stop followed by a
-  // notice read as alive and a busy agent's quiet read as gone (encore-2's watch asked for dev-1, running, while dev-2
+  // notice read as alive and a busy agent's quiet read as gone (a run's watch asked for dev-1, running, while dev-2
   // and dev-3 waited stopped). Started by hand, the log is all there is.
   const byLog = runningAgents(log);
   const running = new Set([

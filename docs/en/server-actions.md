@@ -552,8 +552,8 @@ an action with no later trigger, a switched-off one, a time out of range, a serv
 While a project is served, `plitzi functions later` lists what waits and `plitzi functions later <key> --now` starts
 one now (`hosts/project/laterAsks.ts`): the CLI leaves its ask in the project's `tmp/later-ask.json`, since the server
 holds its queue's file, and the server sets the job again under its key, due now — the queue's own rule drops the one
-waiting — and answers in `tmp/later-answer.json`. A spec of a show that starts in five minutes waited the five on every
-pass (encore-3).
+waiting — and answers in `tmp/later-answer.json`. A spec of something due in five minutes waited the five on every
+pass.
 
 ### Watching the queue
 

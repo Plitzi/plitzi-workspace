@@ -39,7 +39,7 @@ export interface LeadNews {
 }
 
 // What says how long something has lasted changes its words every minute: it is the same notice all the same. So does
-// a task held up behind another — its words name that one's state and who is free (lx-copy: the lead woken three
+// a task held up behind another — its words name that one's state and who is free (the lead woken three
 // times for one "t-shell waits for t-base" it had kept on purpose, each time t-base's review moved).
 const TIMED = new Set<Attention['kind']>([
   'no-signal',
@@ -132,13 +132,13 @@ export const waitForLead = async (
     timeoutMs = FOLLOW_MS,
     everyMs = 10_000,
     // The run's keeper starts the agents when one runs: the watch starts them only when none does — two starting one
-    // agent at once told the lead it "could not be started" (encore-3's design-1 and test-1).
+    // agent at once told the lead it "could not be started" (a run's design-1 and test-1).
     launch = true
   } = {}
 ): Promise<LeadNews> => {
   const started = Date.now();
   // With a keeper, starting an agent the run asks for is its: the lead hears of one only once it stayed unstarted past
-  // the keeper's look — encore-3's lead was told "start dev-1" in the seconds the keeper took to start it again.
+  // the keeper's look — a run's lead was told "start dev-1" in the seconds the keeper took to start it again.
   const needSince = new Map<string, number>();
   for (;;) {
     let view: RunView;

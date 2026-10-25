@@ -93,7 +93,7 @@ const ASK = ['title', 'acceptance', 'priority', 'estimateMinutes', 'milestone', 
 /** The finding a plan gives a task, as its state keeps it beside what its spikes found (`startingState`). */
 const isPlanFinding = (finding: Finding): boolean => finding.by === LEAD && finding.question === PLAN_FINDING;
 // What a task waits for, and who it is for, change until it is taken: a lead clears a bottleneck by letting one start
-// sooner (velada-now: t-motion waited for t-boxer's third round, though it shared no file with it).
+// sooner (t-motion waited for t-boxer's third round, though it shared no file with it).
 const WHO = ['role', 'quality', 'dependsOn'] as const;
 // A spike nobody holds is untaken too: a lead finds it out, and no agent has taken it as anything yet.
 const UNTAKEN: readonly string[] = ['pending', 'ready', 'spike'];
@@ -104,7 +104,7 @@ const same = (a: unknown, b: unknown): boolean => JSON.stringify(a ?? null) === 
 const OPENED = 0;
 
 /**
- * Where each task of the run came from, read off its log — whatever each plan called itself: lx-product's stages said
+ * Where each task of the run came from, read off its log — whatever each plan called itself: a run's stages said
  * the run's own id, and its amend read a stage's plan as the run's and refused to drop s-scope. A task stacked again
  * after it left (`run extend` once more) is its last stage's.
  */
@@ -126,7 +126,7 @@ const originsOf = async (loaded: LoadedRun): Promise<(id: string) => number> => 
 /** The run's tasks as a stage's plan amends them: each it holds as it says, those it left out gone. */
 /**
  * A task the run made from the plan rather than one the plan wrote — the tests of its developer tasks (`withTestTasks`):
- * it stays while every task it was made after does. encore-2's amend of a stage dropped three of them, as "nobody had
+ * it stays while every task it was made after does. A run's amend of a stage dropped three of them, as "nobody had
  * taken them", with the proposals sent to them.
  */
 const derivedFrom = (task: RunTask, next: RunPlan): boolean =>
@@ -160,7 +160,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   const spoken = new Set(next.tasks.filter(task => before.has(task.id)).map(task => originOf(task.id)));
   const stage = !spoken.has(OPENED);
   // A plan it does not speak for keeps its tasks and the pieces they prove: a plan joined by hand without a stage
-  // stacked minutes before dropped that stage's task (lx-product's t-gallery-phone).
+  // stacked minutes before dropped that stage's task (a run's t-gallery-phone).
   const untold = loaded.plan.tasks.filter(task => !spoken.has(originOf(task.id)));
   const untoldPieces = (loaded.plan.inventory ?? []).filter(
     piece =>
@@ -240,7 +240,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     const { status } = viewed.state;
     if (status === 'done') {
       // Done is held at the finish by its acceptance alone, run again on the whole result: a line of the lead's found
-      // wrong there is amended — lx-product's page-weight bound, too tight once other tasks reached every page, held the
+      // wrong there is amended — a run's page-weight bound, too tight once other tasks reached every page, held the
       // finish with no way to change it. What else it was asked was held already.
       const held = changed.filter(field => field !== 'acceptance');
       if (held.length > 0) {
@@ -284,7 +284,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   const notes = (next.notes ?? []).filter(note => !knownNotes.has(note));
   const goal = stage || next.goal === loaded.plan.goal ? undefined : next.goal;
   // A stage's plan names the run's primer beside it (`primer.md`), and the run keeps that primer in its own folder: not
-  // beside the plan it moved into `inputs/<stage>/`, it is the run's as kept — unchanged — never a refusal (encore-2's
+  // beside the plan it moved into `inputs/<stage>/`, it is the run's as kept — unchanged — never a refusal (a run's
   // lead copied it there by hand to amend).
   const named = primerFile(next, file);
   const keptOnly =
@@ -294,7 +294,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   const primer = keptOnly ? undefined : await readPrimer(next, file);
   const primerChanged = primer !== undefined && primer !== (await readOptional(loaded.paths.primer))?.toString('utf-8');
   // The site the run copies, set or changed: a run opened on its scope alone has none until the lead names it
-  // (velada-polish: `run reference` refused, and the amend said nothing changed).
+  // (`run reference` refused, and the amend said nothing changed).
   const reference = !stage && next.reference !== loaded.plan.reference ? next.reference : undefined;
   if (
     changes.length === 0 &&
@@ -330,7 +330,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     await writeJson(taskPaths(loaded.paths, task.id).definition, amended);
     // What the finish holds a task to is what its review accepted: the amended lines take their place there — one
     // unchanged keeps what it answered, a new one waits for the finish to run it. A task in review is held to them too:
-    // encore-2's t-playback-safety, amended while in review, was approved on its old line and the finish refused it.
+    // A run's t-playback-safety, amended while in review, was approved on its old line and the finish refused it.
     await updateState(
       taskPaths(loaded.paths, task.id),
       state =>
@@ -353,7 +353,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
             },
       ctx.now
     );
-    // A finding gone wrong was corrected only by a message (lx-copy's "write every stub"): the brief says the new one.
+    // A finding gone wrong was corrected only by a message (a run's "write every stub"): the brief says the new one.
     if (!same(task.findings, before.get(task.id)?.findings)) {
       const planned = task.findings;
       await updateState(

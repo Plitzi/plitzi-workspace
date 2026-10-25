@@ -24,7 +24,7 @@ afterEach(async () => {
 const { lead, open, take } = runSteps(() => bench);
 
 describe("a task's brief", () => {
-  // encore-3's briefs ran to 17k characters, read again every turn: 4k of it what the tasks before were asked and how
+  // A run's briefs ran to 17k characters, read again every turn: 4k of it what the tasks before were asked and how
   // their reviews went, and notes that restated whole amendments.
   it('says what a task before it was asked, not its reviews, and a long note in part', async () => {
     const plan = benchPlan();
@@ -54,7 +54,7 @@ describe("a task's brief", () => {
     expect(note).toContain('(whole: --json)');
   });
 
-  // encore-3: developers wrote tests into a tests card's file and learnt it at task check, the writing lost.
+  // Developers wrote tests into a tests card's file and learnt it at task check, the writing lost.
   it('says another task’s file beside the task’s own — its tests, a tester’s', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await setTeamAgent(bench.root, 'test', { roles: ['tester'] });
@@ -69,7 +69,7 @@ describe("a task's brief", () => {
     );
   });
 
-  // encore-4: a tester's brief said how format.ts was called before the run — its copy held the developer's change.
+  // A tester's brief said how format.ts was called before the run — its copy held the developer's change.
   it('reads the rest of the project from the task’s copy while it holds one', async () => {
     const runId = await open(benchPlan());
     expect((await taskContext(lead(), runId, 't-home')).sourceRoot).toBe(bench.root);
@@ -78,7 +78,7 @@ describe("a task's brief", () => {
     expect((await taskContext(held.ctx, runId, 't-home')).sourceRoot).toBe(held.work);
   });
 
-  // encore-4: a tester told its test file was near the limit wrote a new one beside it, unsure the new file was its own.
+  // A tester told its test file was near the limit wrote a new one beside it, unsure the new file was its own.
   it('says a new file beside a file near the limit is the task’s', async () => {
     const runId = await open(benchPlan());
     const held = await take('agent-1', 't-home');

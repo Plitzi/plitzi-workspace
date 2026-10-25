@@ -137,7 +137,7 @@ export const checkBindings = (ctx: LintContext, element: Element, where: string)
       );
     }
 
-    // A true/false attribute fed text: "false" is a word, and a word is on — lx-controls' arrow stayed disabled at
+    // A true/false attribute fed text: "false" is a word, and a word is on — a run's arrow stayed disabled at
     // every index, React warning in the console and nothing in authoring.
     const onOff = typeof declared === 'boolean' || (declared === undefined && ON_OFF_ATTRIBUTES.has(binding.to));
     if (category === 'attributes' && onOff && last?.action === 'twigTemplate' && last.params.returnMode !== 'value') {

@@ -28,8 +28,8 @@ const line = (runId: string, overrides: Partial<BenchLine> = {}): BenchLine => (
 describe('the bench of a project’s runs', () => {
   it('lists each run measured the same way, a row each, oldest first', () => {
     const text = benchText([
-      line('velada-polish'),
-      line('velada-next', { roundsPerTask: 1.2, checksFailedPct: 20, checksNotOwn: 9 })
+      line('shop-polish'),
+      line('shop-next', { roundsPerTask: 1.2, checksFailedPct: 20, checksNotOwn: 9 })
     ]);
 
     expect(text[0]).toContain(
@@ -37,14 +37,14 @@ describe('the bench of a project’s runs', () => {
     );
     // A run measured before checks said what was not the copy's has no count of them: "—", never 0.
     expect(text[2]).toBe(
-      '| velada-polish | 7/7 | 50 | 7.1 | 2 | 44% | — | 6 (0) | 3.6 | — | 6 | 31 | 182k | — | 2 | — | — |'
+      '| shop-polish | 7/7 | 50 | 7.1 | 2 | 44% | — | 6 (0) | 3.6 | — | 6 | 31 | 182k | — | 2 | — | — |'
     );
-    expect(text[3]).toContain('| velada-next | 7/7 | 50 | 7.1 | 1.2 | 20% | 9 |');
+    expect(text[3]).toContain('| shop-next | 7/7 | 50 | 7.1 | 1.2 | 20% | 9 |');
   });
 
-  // encore-4: the harness's own count comes from the rounds' reports — the column was "—" when no lead said it by hand.
+  // The harness's own count comes from the rounds' reports — the column was "—" when no lead said it by hand.
   it('says what was read again a task, from the harness', () => {
-    const text = benchText([line('encore-4', { rereadPerTask: 7_200_000 })]);
+    const text = benchText([line('shop-4', { rereadPerTask: 7_200_000 })]);
 
     expect(text[0]).toContain('| Read | Read again / task (≥) | Repeated |');
     expect(text[2]).toContain('| 182k | 7.2M | 2 |');
@@ -56,7 +56,7 @@ describe('the bench of a project’s runs', () => {
     ]);
   });
 
-  it('counts the team’s tasks, not the lead’s spike — the same in the head and the bench (encore-4: 39 and 38)', () => {
+  it('counts the team’s tasks, not the lead’s spike — the same in the head and the bench (39 and 38)', () => {
     expect(
       teamTasks([
         { id: 's-scope', role: 'lead (spike)' },

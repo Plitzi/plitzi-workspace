@@ -19,7 +19,7 @@ import type { StartAgent } from './keeper';
 import type { Bench } from '../tests/runProject';
 
 /**
- * encore-2: only the lead's `run watch --until lead` started agents, so while the lead reviewed or wrote a stage, ready
+ * Only the lead's `run watch --until lead` started agents, so while the lead reviewed or wrote a stage, ready
  * tasks waited with no developer running. The run's keeper starts them whatever the lead is doing.
  */
 
@@ -81,7 +81,7 @@ describe("the run's keeper", () => {
   });
 });
 
-// encore-3: `run open` crashed opening cache/keeper.log, the run's cache not made yet — and no agent started.
+// `run open` crashed opening cache/keeper.log, the run's cache not made yet — and no agent started.
 describe("the keeper's log", () => {
   it('is opened in a run just opened, its cache folder made', async () => {
     await openRun(bench.agent('lead'), await bench.writePlan(benchPlan()));
@@ -93,7 +93,7 @@ describe("the keeper's log", () => {
   });
 });
 
-// encore-3: the keeper and the lead's watch started design-1 at once, and the watch told the lead it "could not be
+// The keeper and the lead's watch started design-1 at once, and the watch told the lead it "could not be
 // started" — it was running.
 describe('an agent started meanwhile by another', () => {
   it('is no failure to start it', async () => {

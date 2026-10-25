@@ -63,7 +63,7 @@ describe('tasks agreeing with each other', () => {
     expect(context.proposals.agreements.map(each => each.id)).toEqual(['t-menu-p1']);
   });
 
-  // encore-3: dev-1 waited on a task that ran only after its own, past its harness's timeout, with nothing said.
+  // Dev-1 waited on a task that ran only after its own, past its harness's timeout, with nothing said.
   it('refuses a wait on a task that runs after this one, leaving no proposal behind', async () => {
     await open();
     const home = await take('agent-1', 't-home');

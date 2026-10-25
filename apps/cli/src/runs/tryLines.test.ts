@@ -4,7 +4,7 @@ import { triedText, verdictOf } from './tryLines';
 
 const REFERENCE = 'https://www.example.com';
 
-// lx-product: the lead dry-ran a stage's 13 lines by hand, and four lines of a later stage were never run on ours —
+// The lead dry-ran a stage's 13 lines by hand, and four lines of a later stage were never run on ours —
 // 16 checks of one task failed on them, not the work.
 describe('a stage’s lines, run once on the run’s work', () => {
   it('says each for what it is: passing already, failing for its value, ours not built, theirs not there, refused', () => {

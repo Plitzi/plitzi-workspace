@@ -105,7 +105,7 @@ export const failureLines = (output: string): string[] => {
     .map(line => withoutSecrets(line.replace(/\x1b\[[0-9;]*m/g, '').trimEnd()).slice(0, 240))
     .filter(line => line.trim() !== '' && !line.trim().startsWith('·'));
   // A test runner's own line for a test that failed names it — `✖ the night counts to the millisecond` — where the rest
-  // of what it printed is a diff's fragments (encore-2's dev-2 read those alone): its names first.
+  // of what it printed is a diff's fragments (a run's dev-2 read those alone): its names first.
   const tests = lines.filter(line => TEST_FAILED.test(line));
   const failed = lines.filter(line => SAYS_FAILED.test(line) && !TEST_FAILED.test(line));
 
@@ -130,7 +130,7 @@ const tokenSaid = (args: readonly string[]): string | undefined => {
 
 /**
  * Who an agent's token says ran a command no run's context proved — `page measure`, `page shot`, `lint` — checked
- * against the digest its run keeps, so a cost is never counted as another's: velada-fidelity's designer measured for
+ * against the digest its run keeps, so a cost is never counted as another's: a run's designer measured for
  * minutes and none of it was in the usage, every line "unnamed" or missing.
  */
 const tokenCaller = (cwd: string, args: readonly string[]): { runDir: string; by: string } | undefined => {
@@ -243,7 +243,7 @@ export const startUsage = (args: readonly string[], cwd: string, now: () => numb
     }
 
     // A page command reads no inbox: what was said to its agent meanwhile — a review withdrawn under it — is pointed
-    // at here (lx-copy: design-2 measured a withdrawn review on and was refused three times on its verdict).
+    // at here (design-2 measured a withdrawn review on and was refused three times on its verdict).
     const unread = isInboxless(args) ? unreadByName(where.runDir, where.by) : 0;
     if (unread > 0) {
       process.stderr.write(
@@ -309,7 +309,7 @@ export const readUsage = (runDir: string): UsageLine[] => {
 
 /**
  * Every command takes `--token`, not only a run's: the protocol is to pass it on each, and `page measure --token` was
- * refused as an unknown option (velada-fidelity's designer). A command that is no run's reads it for its cost alone.
+ * refused as an unknown option (a run's designer). A command that is no run's reads it for its cost alone.
  */
 export const acceptTokenEverywhere = (command: Command): void => {
   for (const sub of command.commands) {

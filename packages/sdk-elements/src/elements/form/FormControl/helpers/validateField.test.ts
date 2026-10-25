@@ -25,7 +25,7 @@ const rules = (overrides: Partial<FieldRules> = {}): FieldRules => ({
 });
 
 describe('validateField', () => {
-  // encore-3: the down votes that remove a song start at 2, and a number field could not say so.
+  // The down votes that remove a song start at 2, and a number field could not say so.
   describe('a number’s bounds', () => {
     const number = (overrides: Partial<FieldRules>) => rules({ type: 'number', ...overrides });
 

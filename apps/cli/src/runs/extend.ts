@@ -78,7 +78,7 @@ export const extendRun = async (
   await requireLead(ctx, loaded, 'stack a stage on the run');
   assertStatus(loaded, ['open'], 'extend');
   // A stage names itself and says its goal, or takes the run's: what is new in it is its tasks. One that says the run's
-  // own name is given a stage's — lx-product's three stages all said "lx-product", and were stacked under the run's name.
+  // own name is given a stage's — a run's three stages all said the run's own name, and were stacked under the run's name.
   const stageId = `${runId}-stage-${String(loaded.tasks.length)}`;
   const read: RunPlan = await readPlanFile(file, { runId: stageId, goal: loaded.plan.goal });
   const next: RunPlan = read.runId === runId ? { ...read, runId: stageId } : read;
@@ -173,8 +173,7 @@ export const extendRun = async (
       );
     }
 
-    // A folder it names holds what a task at work writes there — files that task may not have made yet (lx-copy:
-    // t-close-home's src/space/pages/home, t-home-top's sections in it, its topStyles.ts in no copy but its own).
+    // A folder it names holds what a task at work writes there — files that task may not have made yet (// t-close-home's src/space/pages/home, t-home-top's sections in it, its topStyles.ts in no copy but its own).
     const named = next.tasks.find(each => each.id === task.id)?.files ?? [];
     const inside = [...held].filter(
       ([file, holder]) => !after.has(holder) && named.some(folder => file.startsWith(`${folder}/`))
@@ -252,7 +251,7 @@ export const extendRun = async (
     .map(item => item.id);
   const plan: RunPlan = {
     ...loaded.plan,
-    // A stage that says the run's goal again — a scope's, filled in from the run — adds nothing to it (lx-copy: `run
+    // A stage that says the run's goal again — a scope's, filled in from the run — adds nothing to it (`run
     // status` said the goal twice after its scope's stage).
     goal:
       next.goal.trim() === '' || loaded.plan.goal.split(' · ').includes(next.goal)
@@ -296,7 +295,7 @@ export const extendRun = async (
     ...(record.designReview === true || next.designReview === true ? { designReview: true as const } : {}),
     estimate: {
       ...record.estimate,
-      // Worked by as many as it may be now: a run opened on its scope alone was estimated for one (velada-polish).
+      // Worked by as many as it may be now: a run opened on its scope alone was estimated for one.
       agents: Math.max(record.estimate.agents, allowed),
       tasks: record.estimate.tasks + tasks.length,
       totalMinutes: record.estimate.totalMinutes + checked.estimate.totalMinutes,

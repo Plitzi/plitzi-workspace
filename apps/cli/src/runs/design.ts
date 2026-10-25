@@ -68,14 +68,14 @@ export const SAME_DESIGNER_MS = 3 * 60_000;
 
 /**
  * How long a UI review is its designer's once taken: past it, another designer takes it, or the lead decides it — the
- * designer told. velada-fidelity's design-1 held one 16 min, and a task waited 18 min queued behind it: the run's time
+ * designer told. A run's design-1 held one 16 min, and a task waited 18 min queued behind it: the run's time
  * went to one agent's review while the developers sat free.
  */
 export const REVIEW_TIMEOUT_MS = 8 * 60_000;
 
 /**
  * More time for a designer's first review: it reads the references it is told to first (`DESIGN_READING`), and an
- * 8-minute clock from the take could not hold both — encore-4's design-1 read them and saw its review taken past it.
+ * 8-minute clock from the take could not hold both — a run's design-1 read them and saw its review taken past it.
  */
 export const FIRST_REVIEW_READING_MS = 7 * 60_000;
 
@@ -230,7 +230,7 @@ export const designAtComplete = async (
     return {};
   }
 
-  // A developer's "code alone" on files a page draws is not its to say: lx-copy's t-card, a component, skipped its
+  // A developer's "code alone" on files a page draws is not its to say: a run's t-card, a component, skipped its
   // designer that way, and the price-colour bug was what a look finds. Its UI is reviewed; said in its notes.
   const overruled =
     asked === 'code' ? ' — its developer asked for the code review alone, but what it changed draws UI' : '';

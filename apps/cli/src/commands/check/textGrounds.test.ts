@@ -15,7 +15,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// encore-3: the ON AIR lamp's hidden line failed contrast at 1.06:1 — a reader never sees it.
+// The ON AIR lamp's hidden line failed contrast at 1.06:1 — a reader never sees it.
 describe('the words page check judges for contrast', () => {
   it('leaves out words clipped to nothing for screen readers alone, and keeps the words shown', () => {
     laidOut();

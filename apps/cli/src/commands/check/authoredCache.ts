@@ -15,7 +15,7 @@ import type { Schema } from '@plitzi/sdk-shared';
 
 /**
  * The project's space as `page check` authored it, kept by what it was authored from: every check loaded the project's
- * modules and authored them again — 340 ms of la-velada's, its source the same between one check and the next. Read
+ * modules and authored them again — 340 ms of a run's, its source the same between one check and the next. Read
  * back, its handles are built again from the pages and layouts (`buildHandles`): what a check asks of them is theirs.
  */
 

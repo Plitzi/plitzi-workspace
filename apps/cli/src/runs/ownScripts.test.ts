@@ -4,7 +4,7 @@ import { ownScriptNotices, ownScriptsIn } from './ownScripts';
 
 import type { RunPlan } from './model';
 
-// lx-controls: the lead's acceptance checked a carousel and five article pages with two scripts of its own, unseen.
+// The lead's acceptance checked a carousel and five article pages with two scripts of its own, unseen.
 describe('an acceptance line checked by a script of one’s own', () => {
   it('is told by what runs a file — an interpreter given one, or the file itself — never a Plitzi or package command', () => {
     expect(ownScriptsIn('node /x/scratch/lead/checks/moves.mjs $PLITZI_URL / row next 1440')).toEqual([

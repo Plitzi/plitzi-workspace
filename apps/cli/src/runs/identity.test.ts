@@ -82,7 +82,7 @@ describe('who calls a run’s command, proved', () => {
   });
 
   it('never names a caller by a task’s token, nor by one that is no agent’s — it makes up no name', async () => {
-    // velada-fidelity: an empty `--token` read from the wrong folder ran as "agent" and took a task.
+    // An empty `--token` read from the wrong folder ran as "agent" and took a task.
     await expect(who({ kind: 'malformed', task: true })).rejects.toMatchObject({
       code: 'identity',
       message: expect.stringContaining("A task's token says which task, not who calls") as unknown
@@ -94,7 +94,7 @@ describe('who calls a run’s command, proved', () => {
     await expect(who({ kind: 'name', said: 'agent' })).rejects.toMatchObject({ code: 'identity' });
     await expect(who({ kind: 'none' })).rejects.toMatchObject({
       message: expect.stringContaining(cliFile(paths(), '<you>')) as unknown
-    }); // velada-shell: `--token ""`, read from a copy removed under it, was "who is calling?" — it says what was empty.
+    }); // shop-shell: `--token ""`, read from a copy removed under it, was "who is calling?" — it says what was empty.
     await expect(who({ kind: 'none', empty: true })).rejects.toMatchObject({
       code: 'identity',
       message: expect.stringContaining('--token was said empty') as unknown
@@ -128,8 +128,8 @@ describe('who calls a run’s command, proved', () => {
     expect(tokenFile(paths(), 'dev-2')).toBe(`${bench.root}/tmp/plitzi-runs/es-launch/scratch/dev-2/token`);
   });
 
-  // lx-product: `--token "$(cat …)"` and the CLI's path were 300 characters of every command an agent ran, each read
-  // again on every turn after — and velada-fidelity's, read from the wrong folder, came in empty.
+  // `--token "$(cat …)"` and the CLI's path were 300 characters of every command an agent ran, each read
+  // again on every turn after — and a run's, read from the wrong folder, came in empty.
   it('gives an agent its own CLI with its token: the project’s, run with it, from any folder', async () => {
     const bin = path.join(bench.root, 'node_modules', '.bin', 'plitzi');
     await fs.mkdir(path.dirname(bin), { recursive: true });

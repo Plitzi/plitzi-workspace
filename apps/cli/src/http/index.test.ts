@@ -6,7 +6,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-// encore-4: Node 24's fetch failed the first call after a copy's server started — `setTypeOfService EINVAL`, eight times.
+// Node 24's fetch failed the first call after a copy's server started — `setTypeOfService EINVAL`, eight times.
 describe('a request to a server of this machine', () => {
   it('is asked again once when the socket refused its type of service, and only then', async () => {
     const einval = Object.assign(new Error('setTypeOfService EINVAL'), { syscall: 'setTypeOfService' });

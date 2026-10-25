@@ -12,7 +12,7 @@ import type { TaskView } from './taskStore';
  * (`dogFilter.ts` is drawn at /walks, /visits, /reminders) — and its address is the authored space's —
  * a page of that id, or the pages a family of that name makes (`pet.ts` → `/pets/luna`, `/pets/bruno`). A page with a
  * parameter in its address is said as its pattern (`/boxeadores/:slug`), for `examplePaths` to open by the site's own
- * links: left out, velada-now's fighter page had "no page" to look at, and a theme's change missed every detail page.
+ * links: left out, a run's fighter page had "no page" to look at, and a theme's change missed every detail page.
  * What matches nothing is left out rather than guessed.
  */
 
@@ -101,13 +101,13 @@ export const examplePaths = async (
   routes: readonly string[],
   /**
    * Addresses the task names itself — its acceptance's pages: one that fits a route is that route's example before any
-   * link is followed (lx-copy: t-product's look pictured the home and the blog, its product page unreached — no link
+   * link is followed (t-product's look pictured the home and the blog, its product page unreached — no link
    * to it on a copy without the cards).
    */
   named: readonly string[] = [],
   /**
    * The session a signed-in look reads the site with (`cookie`): a link only a signed-in visitor has — `/u/:username`,
-   * the account's own — is followed as one. encore-4's look said "No link of the site reaches /u/:username".
+   * the account's own — is followed as one. A run's look said "No link of the site reaches /u/:username".
    */
   cookie?: string
 ): Promise<{ paths: string[]; unreached: string[] }> => {
@@ -144,7 +144,7 @@ export const examplePaths = async (
 
     const fits = patternOf(route);
     const list = route.slice(0, route.indexOf('/:')) || '/';
-    // Of the links that fit, the first that answers: lx-fidelity's look pictured the nav's first collection, a 404 there,
+    // Of the links that fit, the first that answers: a run's look pictured the nav's first collection, a 404 there,
     // and read the page's not-found as the task's failures.
     const candidates = [...new Set([...(await links(list)), ...(await links('/'))].filter(link => fits.test(link)))];
     let answering: string | undefined;
@@ -165,7 +165,7 @@ export const examplePaths = async (
   }
 
   // A page no link reaches, filled with what another one's address said its parameters are — `/r/:slug/stats` at the
-  // `night-drive` of `/r/:slug` (encore's look left the room's stats unseen) — when that address answers.
+  // `night-drive` of `/r/:slug` (a run's look left the room's stats unseen) — when that address answers.
   const filled = await Promise.all(
     unreached.map(async route => {
       const names = route.split('/').flatMap(segment => (segment.startsWith(':') ? [segment.slice(1)] : []));
@@ -191,7 +191,7 @@ const PAGE_COMMANDS = new Set(['check', 'measure', 'shot', 'same']);
 /**
  * The pages a task's acceptance runs its checks on — `page check /combates /boxeadores`, `page measure /`: where its
  * look starts when no page owns its files (a shared component's), rather than the reviewer told to name them
- * (velada-shell's t-page-heading: "no page of the space owns its files", its acceptance naming two).
+ * ("no page of the space owns its files", its acceptance naming two).
  */
 export const acceptancePages = (acceptance: readonly Acceptance[]): string[] =>
   [
@@ -216,7 +216,7 @@ export const acceptancePages = (acceptance: readonly Acceptance[]): string[] =>
 
 /**
  * The account its acceptance checks the pages signed in as (`page check … --as mika`), when one: a look at them signs
- * in as it. encore-2's looks at /settings and /rooms/new pictured the sign-in panel, and said "nothing changed" of a
+ * in as it. A run's looks at /settings and /rooms/new pictured the sign-in panel, and said "nothing changed" of a
  * change they never drew. Two accounts named: the first.
  */
 export const acceptanceAccount = (acceptance: readonly Acceptance[]): string | undefined =>
@@ -232,8 +232,8 @@ export const acceptanceAccount = (acceptance: readonly Acceptance[]): string | u
 
 /**
  * The pages a look opens: those asked — else those its files are drawn at and those its acceptance checks, together —
- * else the home page. encore-2's look at a plugin's file, drawn at no page, pictured the home page, where none of its
- * reactions is; encore-4's left out the 404 its acceptance checked, its files drawn at other pages.
+ * else the home page. A run's look at a plugin's file, drawn at no page, pictured the home page, where none of its
+ * reactions is; a run's left out the 404 its acceptance checked, its files drawn at other pages.
  */
 export const pagesToLook = (
   asked: readonly string[],
@@ -268,7 +268,7 @@ export const acceptanceStatuses = (acceptance: readonly Acceptance[]): { page: s
 
 /**
  * The pages a review looks at: those its files are drawn at and those its acceptance checks — a page with a status of
- * its own left to its own look (`acceptanceStatuses`). encore-4's look of t-retro-pass left out its 404 page: its
+ * its own left to its own look (`acceptanceStatuses`). A run's look of t-retro-pass left out its 404 page: its
  * files were drawn at other pages, and only those were offered.
  */
 export const reviewPages = async (review: Pick<TaskView, 'paths' | 'state' | 'task'>): Promise<string[]> => {

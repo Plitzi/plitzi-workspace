@@ -7,7 +7,7 @@ import { list } from './text';
 import type { lookAt } from './review';
 
 /**
- * The pictures not taken, a reason once with every picture it stopped: encore-4's look said "siteRooms is not on <url>"
+ * The pictures not taken, a reason once with every picture it stopped: a run's look said "siteRooms is not on <url>"
  * ten times — a part only a signed-in visitor has, which no line said how to see.
  */
 export const unpicturedText = (unpictured: readonly { what: string; why: string }[]): string[] => {

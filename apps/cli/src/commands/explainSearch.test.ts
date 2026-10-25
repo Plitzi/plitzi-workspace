@@ -27,7 +27,7 @@ afterAll(async () => {
   await fs.rm(root, { recursive: true, force: true });
 });
 
-/** lx-product's agents' own words, each with what answered it: the run spent 18 turns of dev-1's on the first five. */
+/** A run's agents' own words, each with what answered it: the run spent 18 turns of dev-1's on the first five. */
 const ASKED: [string, RegExp][] = [
   ['action step return', /server-data|ctx\.data|data-and-visibility/],
   ['task step transform lookup rows data', /server-data|ctx\.data|taskAction/],
@@ -59,7 +59,7 @@ describe('explain --search, on what agents asked', () => {
   });
 });
 
-// encore-3: "ctx.later" was searched for five times; every passage that said "later" came back, never the member.
+// "ctx.later" was searched for five times; every passage that said "later" came back, never the member.
 describe('explain --search, on a member named', () => {
   it('answers the member first, as the installed types declare it', () => {
     const later = {

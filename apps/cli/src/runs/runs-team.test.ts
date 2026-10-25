@@ -38,7 +38,7 @@ afterEach(async () => {
 const { refusal, lead, open, take, doTask } = runSteps(() => bench);
 
 describe('a team: roles, waiting for work, and a lead who talks to the agents', () => {
-  // velada-now: two developers took the end of a wait for the run's, and stopped — their tasks came back to nobody.
+  // Two developers took the end of a wait for the run's, and stopped — their tasks came back to nobody.
   it('tells an agent whose task is in review not to stop when its wait ends', async () => {
     await open();
     // Its agents designers too, as the team says: a role of no task of the plan is still one it may ask work of.
@@ -178,8 +178,8 @@ describe('a team: roles, waiting for work, and a lead who talks to the agents', 
     expect(shown.files[0].diff).toMatch(/^\+export const hero = \{"text":"Hola"\};$/m);
     expect(shown.messages.map(message => message.text)).toEqual(['Formal or informal?', 'The hero keeps its id']);
     expect(shown.next.join('\n')).toContain('plitzi task review t-home --approve');
-    // Its holder reads its own, as the lead does (velada-polish's dev-2, refused its own) — and another's, read only
-    // (lx-copy: three agents diffed blobs by hash to read what a request asked).
+    // Its holder reads its own, as the lead does (a run's dev-2, refused its own) — and another's, read only
+    // (three agents diffed blobs by hash to read what a request asked).
     expect((await showTask(home.ctx, 'es-launch', 't-home')).task.id).toBe('t-home');
     expect((await showTask(home.ctx, 'es-launch', 't-menu')).task.id).toBe('t-menu');
   });

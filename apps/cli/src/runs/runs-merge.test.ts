@@ -262,7 +262,7 @@ describe('the run’s report', () => {
 `
     );
 
-    // The dry run says it, and is not "ready" without it: velada-dress's said the person's step was next, and it was not.
+    // The dry run says it, and is not "ready" without it: a run's said the person's step was next, and it was not.
     const dry = await finishRun(lead(), 'es-launch', { apply: false, leavePending: true });
     expect(dry.noReport).toBe(true);
     expect((await readRunLog(runPaths(bench.root, 'es-launch'))).some(entry => entry.action === 'ready')).toBe(false);

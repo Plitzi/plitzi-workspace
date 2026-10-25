@@ -276,7 +276,7 @@ describe('runtimeStatePersist', () => {
   });
 
   /**
-   * The keys a space names as the only ones kept — encore-4's dismissed notice, the page's every other key fresh: with
+   * The keys a space names as the only ones kept — a run's dismissed notice, the page's every other key fresh: with
    * `transientState` alone it had to list every key it did not keep.
    */
   describe('kept keys alone', () => {

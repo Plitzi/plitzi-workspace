@@ -130,7 +130,7 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('template-text-into-value');
     });
 
-    // lx-controls: `bindTemplate('disabled', …)` rendered "false", and the arrow stayed disabled at every index.
+    // `bindTemplate('disabled', …)` rendered "false", and the arrow stayed disabled at every index.
     it('template-text-into-value, for a true/false attribute — and not once it hands over the value', () => {
       const binding = (returnMode?: 'value') => ({
         id: 'b1',

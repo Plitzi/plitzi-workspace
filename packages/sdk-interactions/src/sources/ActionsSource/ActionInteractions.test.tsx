@@ -296,7 +296,7 @@ describe('ActionInteractions', () => {
     expect(interactionTrigger).not.toHaveBeenCalledWith('button1', 'onFlowEnd', expect.anything());
   });
 
-  // encore-3: a spec told a refusal only by its words; its code reaches the flow, and the step's answer.
+  // A spec told a refusal only by its words; its code reaches the flow, and the step's answer.
   it('hands a refusal’s code to the flow beside its words', async () => {
     vi.stubGlobal(
       'fetch',

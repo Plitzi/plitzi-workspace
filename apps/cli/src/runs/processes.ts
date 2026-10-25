@@ -103,7 +103,7 @@ const cwdsOf = (pids: readonly number[]): Map<number, string> =>
 
 /**
  * The servers listening from inside `dir` — what an agent started in a task's copy (`npm start`) and left running: a
- * run's copies removed under them (velada-fidelity's finish), they listened on with no folder, no one's to stop. Read
+ * run's copies removed under them (a run's finish), they listened on with no folder, no one's to stop. Read
  * off `lsof`: nothing where there is none (Windows).
  */
 export const listenersUnder = (dir: string): { pid: number; port: number; cwd: string }[] => {

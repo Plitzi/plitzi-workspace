@@ -14,7 +14,7 @@ import type { Attention } from '../view';
  * What the run's records show going wrong now — a task refused again and again, a line failing try after try, a prompt
  * three agents found wrong, an agent holding two tasks — as the lead's attention while the run goes: each said once
  * (its subject), and every one kept for the report too. What is past leaves it — a task gone to review or approved, a
- * line that passed since — and what is Plitzi's is the run's feedback's, never the lead's to clear: encore-2 ended
+ * line that passed since — and what is Plitzi's is the run's feedback's, never the lead's to clear: a run ended
  * with ten of them standing, which read as ignored.
  */
 export const liveAttention = async (

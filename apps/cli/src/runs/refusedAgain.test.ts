@@ -12,7 +12,7 @@ const refused = (minute: number, code: string, message: string) => ({
   message
 });
 
-// velada-dress: dev-1 refused four times in twenty minutes on t-heading, and nobody knew until the run was over.
+// Dev-1 refused four times in twenty minutes on t-heading, and nobody knew until the run was over.
 describe('a task refused again and again', () => {
   it('wakes the lead once it is refused three times within twenty minutes — not for older ones', () => {
     const log = [

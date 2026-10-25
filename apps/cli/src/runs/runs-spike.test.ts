@@ -69,7 +69,7 @@ describe('a spike: finding out, in the run, a lead’s', () => {
   it('opens a run on the ask as its scope, whose result is the tasks — each with what was found for it', async () => {
     await open(scopePlan('es-launch', ASK));
     expect(await statusOf(SCOPE_SPIKE)).toBe('spike');
-    // The lead's from the open: at it on the board, never idle (velada-polish: the monitor said the lead was idle).
+    // The lead's from the open: at it on the board, never idle (the monitor said the lead was idle).
     expect((await monitorRun(lead(), 'es-launch')).agents.find(agent => agent.agent === 'lead')).toMatchObject({
       status: 'working',
       task: SCOPE_SPIKE
@@ -102,7 +102,7 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-book')?.found).toBe(1);
   });
 
-  // lx-copy: the scope's stage carried the run's own goal, and `run status` said it twice.
+  // The scope's stage carried the run's own goal, and `run status` said it twice.
   // …and refused its stage for findings written as lists, one finding a line.
   it('keeps the goal once when the scope’s stage says it again, and takes findings written as a list', async () => {
     await open(scopePlan('es-launch', ASK));
@@ -124,7 +124,7 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     );
   });
 
-  // velada-polish: the scope's tasks named the VS sizes as the lead guessed them, and a stage stacked said no notice.
+  // The scope's tasks named the VS sizes as the lead guessed them, and a stage stacked said no notice.
   it('says, as the scope stacks its tasks, the values none of their checks measures against the site', async () => {
     await open(scopePlan('es-launch', ASK, 'https://www.example.com'));
     const stage = scoped();
@@ -136,7 +136,7 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     expect(done.notices?.join(' ')).toContain(`Task "${stage.tasks[0].id}" names values (48px)`);
   });
 
-  // velada-polish: a run opened on its scope had no reference, and the amend that named it said nothing changed.
+  // A run opened on its scope had no reference, and the amend that named it said nothing changed.
   it('takes the site the run copies at the open, and by an amend once open', async () => {
     await open(scopePlan('es-launch', ASK, 'https://www.example.com'));
     expect((await loadRun(lead(), 'es-launch')).plan.reference).toBe('https://www.example.com');
@@ -147,7 +147,7 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     expect((await loadRun(lead(), 'es-launch')).plan.reference).toBe('https://www.example.org');
   });
 
-  // lx-copy: t-base's finding "write every stub" was wrong, and only a message and a run note could say so.
+  // T-base's finding "write every stub" was wrong, and only a message and a run note could say so.
   it('amends what was found for a task: its brief says the new finding, its spikes’ kept, and it is told', async () => {
     const plan = { ...scoped(), runId: 'es-launch' };
     await open(plan);
@@ -182,7 +182,7 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     expect(
       (await taskContext(about.ctx, 'es-launch', 't-about')).related.find(each => each.task === 's-survey')?.findings
     ).toEqual([expect.objectContaining({ text: 'The original has a team grid; ours lacks it' })]);
-    // Ended by what it found, not approved: no step the audit reads as missed (velada-polish's s-scope).
+    // Ended by what it found, not approved: no step the audit reads as missed (a run's s-scope).
     expect((await auditRun(await loadRun(lead(), 'es-launch'))).map(each => each.title).join(' ')).not.toContain(
       's-survey is done'
     );

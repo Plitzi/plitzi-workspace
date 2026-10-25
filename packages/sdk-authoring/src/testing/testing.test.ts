@@ -121,7 +121,7 @@ describe('testing/describeFindings', () => {
     ]);
   });
 
-  // la-velada's /boxeadores/ibai: an id the data has none of, and four "never loaded" for images whose address was still
+  // A run's /boxeadores/ibai: an id the data has none of, and four "never loaded" for images whose address was still
   // `{{ list_boxer-one.item.boxer.cutout }}` — read as a broken server.
   it('says images whose address is still a binding once, with why — apart from one a server failed', () => {
     expect(
@@ -140,7 +140,7 @@ describe('testing/describeFindings', () => {
   });
 
   /** What a tool acts on (`plitzi page check --json`): the kind of problem and the element, beside the sentence. */
-  // velada-dress: twenty fighters' photos from a slow CDN buried t-404's check under twenty lines.
+  // Twenty fighters' photos from a slow CDN buried t-404's check under twenty lines.
   it('says the images one server did not load as one finding past a few, each one apart below that', () => {
     const fighters = Array.from({ length: 5 }, (_, index) => ({ source: `https://cdn.test/f${String(index)}.webp` }));
     const said = issuesOf(owed, {

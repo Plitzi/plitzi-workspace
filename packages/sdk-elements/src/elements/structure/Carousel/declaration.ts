@@ -10,7 +10,7 @@ export type CarouselAttributes = AuthorableAttributes<CarouselProps>;
 
 /**
  * How far a press moves a `scroll` carousel: one slide, or a page — as many as its row shows whole, the way a shop's
- * arrows move a row of cards (lx-controls: one slide a press could not be made a group).
+ * arrows move a row of cards (one slide a press could not be made a group).
  */
 const BY: InteractionCallbackParam = {
   type: 'select',

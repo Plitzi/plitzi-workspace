@@ -10,20 +10,20 @@ describe('a page’s head', () => {
   it('says the page to a link preview whole: its picture made absolute, the card large, its address and the site', () => {
     const tags = pageHeadTags(
       { title: 'Late Night Jazz', description: 'Listening now', image: '/rooms/jazz.png', imageAlt: 'A saxophone' },
-      { siteName: 'Encore', language: 'es-MX' },
-      'https://encore.example.com/r/jazz'
+      { siteName: 'Acme', language: 'es-MX' },
+      'https://acme.example.com/r/jazz'
     );
 
-    expect(tag(tags, 'og:image')).toEqual(['https://encore.example.com/rooms/jazz.png']);
-    expect(tag(tags, 'twitter:image')).toEqual(['https://encore.example.com/rooms/jazz.png']);
+    expect(tag(tags, 'og:image')).toEqual(['https://acme.example.com/rooms/jazz.png']);
+    expect(tag(tags, 'twitter:image')).toEqual(['https://acme.example.com/rooms/jazz.png']);
     expect(tag(tags, 'og:image:alt')).toEqual(['A saxophone']);
     expect(tag(tags, 'twitter:card')).toEqual(['summary_large_image']);
-    expect(tag(tags, 'og:url')).toEqual(['https://encore.example.com/r/jazz']);
-    expect(tag(tags, 'og:site_name')).toEqual(['Encore']);
+    expect(tag(tags, 'og:url')).toEqual(['https://acme.example.com/r/jazz']);
+    expect(tag(tags, 'og:site_name')).toEqual(['Acme']);
     expect(tag(tags, 'og:locale')).toEqual(['es_MX']);
     expect(tag(tags, 'og:type')).toEqual(['website']);
     expect(tags.lang).toBe('es-MX');
-    expect(tags.links).toContainEqual({ rel: 'canonical', href: 'https://encore.example.com/r/jazz' });
+    expect(tags.links).toContainEqual({ rel: 'canonical', href: 'https://acme.example.com/r/jazz' });
   });
 
   it('falls back to the space’s picture and Plitzi’s icon, and says a small card with no picture', () => {
@@ -56,7 +56,7 @@ describe('a page’s head', () => {
   });
 
   it('says what is wrong with the space’s identity, each with its fix', () => {
-    expect(spaceIdentityProblems({ siteName: 'Encore', language: 'en', favicon: '/favicon.svg' })).toEqual([]);
+    expect(spaceIdentityProblems({ siteName: 'Acme', language: 'en', favicon: '/favicon.svg' })).toEqual([]);
     expect(
       spaceIdentityProblems({
         siteName: ' ',

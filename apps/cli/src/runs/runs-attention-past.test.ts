@@ -11,7 +11,7 @@ import { runSteps } from '../tests/runSteps';
 import type { Bench } from '../tests/runProject';
 
 /**
- * encore-2 ended with ten notices standing in the lead's attention — lines that had failed and passed since, a task
+ * A run ended with ten notices standing in the lead's attention — lines that had failed and passed since, a task
  * refused before it was approved, Plitzi's own findings — and it read as if the lead had ignored them. What is past
  * leaves the lead's attention; what is Plitzi's is the feedback's.
  */

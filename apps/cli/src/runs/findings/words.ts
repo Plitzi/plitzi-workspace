@@ -86,7 +86,7 @@ const isAlike = (a: ReadonlySet<string>, b: ReadonlySet<string>): boolean =>
 /**
  * The texts, grouped by what they are about: each group in the order its texts came. A text joins the group whose
  * first text it is alike — never the group's words gathered so far: a long notice of two things drew both into one
- * (encore-4 grouped "page measure measures the first row only" under an undici crash).
+ * (a run grouped "page measure measures the first row only" under an undici crash).
  */
 export const groupAlike = <T>(items: readonly T[], said: (item: T) => string): T[][] => {
   const groups: { words: Set<string>; items: T[] }[] = [];

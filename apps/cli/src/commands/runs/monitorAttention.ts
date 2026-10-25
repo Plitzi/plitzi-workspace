@@ -7,7 +7,7 @@ import type { Attention, RunView } from '../../runs/view';
 /**
  * What needs someone, as a table: for whom, what sort of thing, the task it comes from and the agent at it, then what
  * it says — the most pressing first, what is only to know last. A list of sentences each saying its own task and
- * agent somewhere in it read as a wall (velada-polish).
+ * agent somewhere in it read as a wall.
  */
 
 /** How pressing each sort is: a person's step and what stops the run first, what is only to know last. */

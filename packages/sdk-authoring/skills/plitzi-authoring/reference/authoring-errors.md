@@ -151,7 +151,7 @@ The space is not written until these are fixed.
 | `slot-unknown` | a component slot that is not an element of its tree | the id of an element inside the component — usually an empty container |
 | `source-field-unknown` | a path into a typed source that its sample does not have | read a field the sample has, or add the field to the sample |
 | `source-name-missing` | a source named by nothing — most often a field read off a list row that has no types | write the row's field as text (`${r.item}.field`), or give the list `items` a typed source's path |
-| `space-identity-invalid` | the space's `siteName`, `language`, `favicon`, `shareImage` or `themeColor` written as nothing a head reads | `siteName: 'Encore'`, `language: 'en'`, `favicon: '/favicon.svg'`, `shareImage: '/og.png'`, `themeColor: { light: '#fbf7f0', dark: '#0b0a10' }` |
+| `space-identity-invalid` | the space's `siteName`, `language`, `favicon`, `shareImage` or `themeColor` written as nothing a head reads | `siteName: 'My site'`, `language: 'en'`, `favicon: '/favicon.svg'`, `shareImage: '/og.png'`, `themeColor: { light: '#fbf7f0', dark: '#0b0a10' }` |
 | `state-kept-and-transient` | `keptState` (the only keys kept) and `transientState` (the keys left out) both said | one of the two: `keptState` when few keys are kept, `transientState` when few are not |
 | `state-key-list` | `settings.transientState` / `paintedState` that is not a list of top-level state keys | `transientState: ['demoStep']` — a dotted path names its top key |
 | `state-painted-and-transient` | a state key both painted (kept for the server) and transient (never kept) | remove it from one of the two |

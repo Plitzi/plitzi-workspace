@@ -32,7 +32,7 @@ const testFiles = async (dir: string): Promise<string[]> => {
 /**
  * A test's selector naming a component's instance by `data-plitzi-el`, which finds nothing: an instance has no node of
  * its own, its name is on the component's root as `data-plitzi-instance`. Matching nothing, `toBeHidden()` passes and a
- * "both sides" test holds nothing — encore-4's tester met it three times.
+ * "both sides" test holds nothing — a run's tester met it three times.
  */
 export const specSelectorFindings = async (root: string, handles: SpaceHandles): Promise<LintFinding[]> => {
   const files = await testFiles(root);

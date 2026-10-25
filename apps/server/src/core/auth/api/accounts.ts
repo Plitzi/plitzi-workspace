@@ -39,7 +39,7 @@ export const accountsFlows = ({
       return limited;
     }
 
-    // Which one is taken, for the form to mark its field (encore's sign-up said it under the form): no more than "a user
+    // Which one is taken, for the form to mark its field (a run's sign-up said it under the form): no more than "a user
     // exists" already told, as that answered the same for an email tried with any username.
     const taken = (await adapters.findByUsername?.(username))
       ? 'username'

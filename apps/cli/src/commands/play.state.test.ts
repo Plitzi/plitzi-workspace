@@ -22,7 +22,7 @@ const scrolling = (node: HTMLElement, left: number): void => {
   node.style.overflowX = 'auto';
 };
 
-// lx-product: a carousel named by its track — whose own box never scrolls — read "moved nothing", and its scroller
+// A carousel named by its track — whose own box never scrolls — read "moved nothing", and its scroller
 // could only be named by an inner class.
 describe('page play, in the page', () => {
   it('reads how far a part moved by the one row it holds that scrolls, when its own box does not', () => {

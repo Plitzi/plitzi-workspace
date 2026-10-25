@@ -302,16 +302,16 @@ describe('renewing and ending a session', () => {
     const clearSession = vi.fn(() => Promise.resolve());
     const api = build({ clearSession });
 
-    await api.revokeSessions(7, 'site', 'Encore.Plitzi.App');
-    await api.revokeSessions(7, 'all', 'encore.plitzi.app');
-    await api.revokeSessions(7, '', 'encore.plitzi.app');
+    await api.revokeSessions(7, 'site', 'Acme.Plitzi.App');
+    await api.revokeSessions(7, 'all', 'acme.plitzi.app');
+    await api.revokeSessions(7, '', 'acme.plitzi.app');
 
     expect(clearSession.mock.calls).toEqual([
-      [{ userId: 7, host: 'encore.plitzi.app' }],
+      [{ userId: 7, host: 'acme.plitzi.app' }],
       [{ userId: 7 }],
       [{ userId: 7 }]
     ]);
-    expect(await api.revokeSessions(7, 'device', 'encore.plitzi.app')).toMatchObject({ ok: false, status: 400 });
+    expect(await api.revokeSessions(7, 'device', 'acme.plitzi.app')).toMatchObject({ ok: false, status: 400 });
   });
 });
 

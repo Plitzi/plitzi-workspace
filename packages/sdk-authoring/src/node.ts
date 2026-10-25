@@ -213,7 +213,7 @@ const NOT_AN_ACTION = /\.(test|spec)\.(ts|js|mjs)$|\.d\.ts$/;
 
 /**
  * Every server action of a folder — a project's `src/actions/` — a domain a file, read by what each exports: an action
- * (`defineAction`, `taskAction`) or a list of them, by any name. Nothing lists them: encore's agents all appended to one
+ * (`defineAction`, `taskAction`) or a list of them, by any name. Nothing lists them: a run's agents all appended to one
  * `actions/index.ts`, and its conflicts and integration tasks were that list. The folder's `index` is where this is
  * called from, and is not read. One action exported twice (on its own and in its file's list) counts once; two of one id
  * are refused, naming both files.

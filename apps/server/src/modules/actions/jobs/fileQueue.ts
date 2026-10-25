@@ -10,7 +10,7 @@ import type { JobQueue } from '@plitzi/sdk-shared';
 export type FileJobQueueOptions = {
   /** The JSON file the queue lives in — created, with its folder, on the first change. */
   file: string;
-  /** Who holds it, said to a second process that tries: `the server of "encore", on port 8080`. */
+  /** Who holds it, said to a second process that tries: `the server of "acme", on port 8080`. */
   owner?: string;
   /** How many finished jobs to keep before the oldest are dropped. Default 500. */
   retainFinished?: number;

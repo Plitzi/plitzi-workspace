@@ -90,7 +90,7 @@ export const dateFilters: Record<string, TwigFilter> = {
 
   // `| ago(locale?)` — how long ago a moment was, or how far ahead it is, in words: "4 minutes ago", "in 3 hours",
   // "now" — at the render's moment, on the server then again in the browser (a page that stays open is not redrawn
-  // as time passes). The unit is the largest that is whole; the locale `en` when not named. encore's agents wrote a
+  // as time passes). The unit is the largest that is whole; the locale `en` when not named. A run's agents wrote a
   // plugin for "Ended 4 min ago": every page with a history, a feed or a chat needs it.
   ago: (value, args) => {
     const date = toDate(value);
@@ -121,7 +121,7 @@ export const dateFilters: Record<string, TwigFilter> = {
   },
 
   // `| duration` — a length in seconds as a clock writes it: 238 → "3:58", 3723 → "1:02:03". A track's length, a
-  // task's time: `date` is a moment, and a duration read as one was 06:40 for a 238 s track (encore's dev-2).
+  // task's time: `date` is a moment, and a duration read as one was 06:40 for a 238 s track (a run's dev-2).
   duration: value => {
     const total = numberOf(value);
     if (total === undefined || total < 0) {

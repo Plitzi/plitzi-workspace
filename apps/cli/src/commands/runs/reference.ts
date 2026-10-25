@@ -75,11 +75,11 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
       // Each page once, as a desktop reader sees it: what its sections are compared with the inventory by.
       const read: KeptPage[] = [];
       // A site that paints the same in both schemes has one: once its first page says so, each picture is taken once and
-      // kept under both names — velada-fidelity's original has no light scheme, and a quarter of 111 s went to it.
+      // kept under both names — a run's original has no light scheme, and a quarter of 111 s went to it.
       let oneScheme: boolean | undefined;
       const pages = options.pages ?? referencePages(loaded.plan);
       // The schemes the space declares, as `task look` pictures it: a dark picture of the original is compared with no page
-      // of a light space (lx-fidelity kept 28 pictures, 14 of them never read).
+      // of a light space (a run kept 28 pictures, 14 of them never read).
       const space = await projectSpace(ctx.root);
       const declared = 'problem' in space ? [] : space.schemes;
       const schemes = SCHEMES.filter(scheme => declared.length === 0 || declared.includes(scheme));

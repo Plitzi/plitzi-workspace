@@ -71,7 +71,7 @@ const countsText = (counts: Partial<Record<DecorationKind, number>>): string => 
 /**
  * A section's dress, in one line: how many layers of each kind on either page, and the looks it has none of — what
  * `--dress` fails on. The layers there are more of, or here only, are in `--json` (`missing`, `extra`): listed here
- * they named looks the page already had, drawn another way, and read as what to add (velada-dress).
+ * they named looks the page already had, drawn another way, and read as what to add.
  */
 const decorationText = (section: SectionDecorations): string =>
   `  ${section.section}: ${countsText(section.here)} → ${countsText(section.there)}${section.absent.length > 0 ? ` — none here of: ${section.absent.map(look => (section.absentOn?.[look] ? `${look} at ours: ${section.absentOn[look]}` : look)).join('; ')}` : ''}`;
@@ -171,7 +171,7 @@ const CLIP_MARGIN = 40;
 
 /**
  * The comparison's pictures cut to one section: ours where it is, theirs where the alignment found it — what a `--clip`
- * asks of a comparison. They were the whole page, 12,000 px tall, and every designer cropped them by hand (velada-dress).
+ * asks of a comparison. They were the whole page, 12,000 px tall, and every designer cropped them by hand.
  */
 export const cropToSection = async (
   page: Taken['page'],
@@ -265,7 +265,7 @@ const fileOf = (part: string): string => part.replace(/[^a-z0-9]+/gi, '-').repla
  * The parts of this page beside the same parts of another server of the project — the run before a task — each
  * pictured alone, by the element both have: no page aligned, no words read. A look at a task compares the parts it
  * built; that nothing else moved is read, not pictured (`page same`). Each side is loaded once for all its parts:
- * a part a process, velada-shell's six sections of the home loaded it 24 times a look (20 s).
+ * a part a process, a run's six sections of the home loaded it 24 times a look (20 s).
  */
 export const compareLocalParts = async (
   browser: Browser,
@@ -281,7 +281,7 @@ export const compareLocalParts = async (
     (await early) ??
     (await pictureOf(browser, target, { ...view, scheme: taken.scheme, clip: parts[0] }, new URL(target).origin));
   // Its first part new with the task — the run before has none of it — the other side is pictured whole, and each part
-  // read on it: encore-2's look at a section the task added took no picture at all, "homeLive is not on …".
+  // read on it: a run's look at a section the task added took no picture at all, "homeLive is not on …".
   const clipped = !('problem' in framed);
   const theirs = clipped
     ? framed
@@ -419,7 +419,7 @@ export const compareWith = async (
   // theme chosen as a visitor's toggle chooses it: asked as another site's, it painted its default (dark) against a
   // light page, and differed 90%.
   const local = /^(127\.0\.0\.1|localhost|\[::1\])$/.test(new URL(target).hostname);
-  // Another site is asked as the reference keeps it: again, later, when it says it is busy (429, 503) — velada-dress's
+  // Another site is asked as the reference keeps it: again, later, when it says it is busy (429, 503) — a run's
   // original rate-limited a headless browser asked often (Cloudflare 1015), and a comparison failed on its error page.
   const live = kept
     ? undefined
@@ -456,7 +456,7 @@ export const compareWith = async (
   const shiftAt = (y: number): number => rowShift[Math.min(Math.max(0, Math.round(y)), rowShift.length - 1)] ?? 0;
   const texts = compareTexts(await readPage(taken.page, pageTexts, PAGE_TEXT_LIMIT), theirs.texts, shiftAt);
   // Their dress placed in our sections, each where the pictures found it there: a site that names its sections otherwise
-  // (la-velada's original names none) is still read section by section.
+  // (a run's original names none) is still read section by section.
   const shifted = regions.map(region => ({
     ...region,
     y: region.y + (diff.regions.find(change => change.name === region.name)?.shift ?? 0)

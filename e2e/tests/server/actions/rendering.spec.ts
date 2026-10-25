@@ -88,7 +88,7 @@ describeTarget('action-server', subject => {
   /** The server is up; what it cannot reach is the rest of the world. The action's own `http.request` resolves
    *  nowhere, so the run fails — and a page must not fail with it: every other section renders exactly as it would
    *  have. This is a development server (`devMode`), so the element says why, where its provider shows an error
-   *  (encore-3: a refusal read in a log, the page only "could not be reached"); a published site says nothing of
+   *  (a refusal read in a log, the page only "could not be reached"); a published site says nothing of
    *  it — the `published-server` half below. */
   test('an action whose own call cannot leave the machine costs its section and nothing else', async ({
     page,

@@ -86,7 +86,7 @@ const SharingSettings = () => {
           size="sm"
           name="siteName"
           label="Site name"
-          placeholder="Encore"
+          placeholder="My site"
           value={identity.siteName ?? ''}
           onChange={handleText('siteName')}
         />

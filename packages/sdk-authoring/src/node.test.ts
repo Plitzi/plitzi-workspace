@@ -121,7 +121,7 @@ describe('pagesIn', () => {
   });
 });
 
-// encore: every domain appended to one actions/index.ts, and its conflicts and integration tasks were that list.
+// Every domain appended to one actions/index.ts, and its conflicts and integration tasks were that list.
 describe('actionsIn', () => {
   const actions = path.join(root, 'src/actions');
   mkdirSync(actions, { recursive: true });

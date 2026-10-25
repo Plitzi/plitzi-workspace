@@ -9,7 +9,7 @@ import type { LoadedRun, RunContext } from './run';
 /**
  * `plitzi run notice`: something wrong seen while working that no task owns — outside the task in hand, there before
  * the run, nobody's to fix in this one. Kept in the run's log, said by the finish and listed in the report, where the
- * next stage or run is planned from: la-velada's empty stats cell was seen in two runs, noted "predates this task" in
+ * next stage or run is planned from: a run's empty stats cell was seen in two runs, noted "predates this task" in
  * a review each time, and left.
  */
 export interface Notice {
@@ -33,7 +33,7 @@ export const noticeRun = async (
   text: string,
   { task, on, plitzi = false }: { task?: string; on?: string; plitzi?: boolean } = {}
 ): Promise<Notice> => {
-  // Any version: what is wrong is said while it is — a Plitzi changed under the run among it (encore-3: refused 13).
+  // Any version: what is wrong is said while it is — a Plitzi changed under the run among it (refused 13).
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
   assertStatus(loaded, ['open', 'stopping', 'reconciliation'], 'notice something');
   if (text.trim() === '') {
@@ -68,7 +68,7 @@ export const noticeRun = async (
     ...(plitzi ? { about: 'plitzi' } : {})
   });
   // Never sent to the lead as a message: it is for the next stage, not for now, and each woke the lead that waits on the
-  // run for what needs it (velada-now: two designers' notices, two wake-ups with nothing to do). The activity shows it,
+  // run for what needs it (two designers' notices, two wake-ups with nothing to do). The activity shows it,
   // the finish says it and the report lists it.
   return notice;
 };
@@ -92,7 +92,7 @@ export const noticesOf = async (loaded: LoadedRun): Promise<Notice[]> =>
 
 /**
  * A run's notices, by whose they are: the project's — what the next stage starts from — and Plitzi's, which the run's
- * feedback carries (lx-controls' dry finish listed what agents said of the CLI as the project's next stage).
+ * feedback carries (a run's dry finish listed what agents said of the CLI as the project's next stage).
  */
 export const noticesByOwner = async (loaded: LoadedRun): Promise<{ project: Notice[]; plitzi: Notice[] }> => {
   const all = await noticesOf(loaded);

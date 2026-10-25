@@ -32,7 +32,7 @@ export const materialise = async (
     all.filter(file => isCopied(file, keep))
   );
   // The pictures the pages draw, as a task's copy has them: without them every check of a page with one failed on its
-  // 404 — la-velada's finish, on the artists' photos in public/.
+  // 404 — a run's finish, on the artists' photos in public/.
   await cloneServed(
     ctx.root,
     dir,
@@ -47,7 +47,7 @@ export const materialise = async (
 
 /**
  * How long a pass is kept: the same tree passes the same checks — but a check may read the day (an age, a month's
- * total), so for the day it passed on, twelve hours at most. An hour was no unit a check reads: velada-dress's finish
+ * total), so for the day it passed on, twelve hours at most. An hour was no unit a check reads: a run's finish
  * ran its 23 acceptance lines again two hours after its dry run on the very same result.
  */
 const KEPT_MS = 12 * 60 * 60_000;
@@ -91,7 +91,7 @@ const treeKey = async (ctx: RunContext, versions: Record<string, string | null>)
 
 /**
  * The Plitzi the checks run with, as it is installed: each `@plitzi` package and when its manifest and its build were
- * written. An install writes them again whatever the version says — velada-now's upgrade put new code under the same
+ * written. An install writes them again whatever the version says — a run's upgrade put new code under the same
  * 0.38.24, and the finish said its checks "as they did on this same result, not run again".
  */
 const toolsKey = async (root: string): Promise<[string, number, number][]> => {
@@ -178,7 +178,7 @@ export const acceptanceOnResult = async (
 
   // Kept line by line: on the same result, a line that passed has nothing new to tell, and the next finish runs only
   // the ones that did not — a whole set run again for one line a CDN was slow on asked the CDN the same thousands of
-  // images again, and failed on another (la-velada).
+  // images again, and failed on another.
   const tree = `${await treeKey(ctx, versions)}:${createHash('sha256')
     .update(JSON.stringify(await referenceKey(loaded)))
     .digest('hex')}`;

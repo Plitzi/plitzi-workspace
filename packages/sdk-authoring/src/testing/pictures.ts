@@ -137,7 +137,7 @@ const SAME_FIT = 1;
 /**
  * What moving costs a fit, for each 100 px from where the section before it sits: a section that differs on the two
  * pages — what a comparison is for — fits a look-alike band far away about as poorly as its own place, and the far one
- * won (velada-now: the original's header "747px lower there", the dress of the page's middle read as its header's). A
+ * won (the original's header "747px lower there", the dress of the page's middle read as its header's). A
  * page that truly moved fits its new place far better than this costs.
  */
 const MOVE_COST = 1;
@@ -377,7 +377,7 @@ export const diffPictures = async ({ a, b, regions, tolerance, rowShift }: Pictu
  * footer, each section and aside), or, on a page that has none, the named blocks right inside the page. Each named by
  * its tag and its id or element name (`section#plans`, `div#hero`); a component's part, the same name in each of its
  * copies, by its place after the first (`header#match-heading-root:2`) — one name for four headings said one's change
- * and pictured another (velada-backlog). Self-contained — it is serialised.
+ * and pictured another. Self-contained — it is serialised.
  */
 export const pageRegions = (): PictureRegion[] => {
   const numbered = (regions: PictureRegion[]): PictureRegion[] => {

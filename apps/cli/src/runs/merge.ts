@@ -348,7 +348,7 @@ export const finishRun = async (
   }
 
   // The lead closes the run: its report is written before the person writes the run into the project — refused at once,
-  // before the person is asked and the checks run, not after them (velada-dress: refused at the end of a long finish).
+  // before the person is asked and the checks run, not after them (refused at the end of a long finish).
   // A dry run says it, and is not "ready" without it: its dry run said the person's step was next, and it was not.
   const reported = (await readSummary(loaded)) !== undefined;
   if (apply && !reported) {
@@ -360,7 +360,7 @@ export const finishRun = async (
   }
 
   // Asked first, the person's word, then minutes of checks: asked after them, the person waited at a command that said
-  // nothing, and stopped it as hung (velada-dress). Nothing is written while a check fails, confirmed or not.
+  // nothing, and stopped it as hung. Nothing is written while a check fails, confirmed or not.
   if (apply && loaded.record.leadFinishes === undefined) {
     await requirePerson(
       ctx,

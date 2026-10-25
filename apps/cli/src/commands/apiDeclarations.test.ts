@@ -125,7 +125,7 @@ describe('an export of a @plitzi package, explained from its published types', (
     expect(apiDeclarations(root, 'nothingHere')).toEqual([]);
   });
 
-  // lx-product: `explain defineAction` gave its signature alone, and an agent read the .d.ts for what ActionSpec holds.
+  // `explain defineAction` gave its signature alone, and an agent read the .d.ts for what ActionSpec holds.
   it('says what a function takes, field by field — a generic one by its constraint', () => {
     expect(apiDeclarations(root, 'defineAction')[0]?.takes).toEqual([
       {
@@ -165,7 +165,7 @@ describe('an export of a @plitzi package, explained from its published types', (
   });
 });
 
-// Encore's lead: `plitzi explain later` answered it was nothing, while `ctx.later` is how its shows start.
+// A run's lead: `plitzi explain later` answered it was nothing, while `ctx.later` is how its shows start.
 describe('a member of a type a @plitzi package exports', () => {
   it('is said by what the code calls it — ctx, job — or by its type, with its whole doc', () => {
     expect(memberDeclarations(root, 'ctx.later')).toEqual([

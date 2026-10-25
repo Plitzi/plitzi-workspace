@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { HIDDEN_FOR_SHOT, hidePinned, pinnedScroll, showPinned } from './capture';
 
-// encore-4: a part clipped under a sticky site header was pictured with the header over its first rows.
+// A part clipped under a sticky site header was pictured with the header over its first rows.
 describe('what is pinned over an element pictured', () => {
   it('is hidden for the picture — never the element, what holds it or what it holds — and shown again as it was', () => {
     document.body.innerHTML = `
@@ -27,7 +27,7 @@ describe('what is pinned over an element pictured', () => {
   });
 });
 
-// encore-4: the room's stats sheet scrolls inside itself; its lower blocks never showed in a whole-page picture.
+// The room's stats sheet scrolls inside itself; its lower blocks never showed in a whole-page picture.
 describe('a sheet pinned over the page that scrolls on its own', () => {
   const sized = (id: string, box: { scrollHeight: number; clientHeight: number; width: number }) => {
     const element = document.getElementById(id);
@@ -52,7 +52,7 @@ describe('a sheet pinned over the page that scrolls on its own', () => {
     expect(pinnedScroll()).toBe(1600);
   });
 
-  // encore-4's stats sheet, let grow to what it holds by the whole-page walk: fixed, and past the screen's foot.
+  // A run's stats sheet, let grow to what it holds by the whole-page walk: fixed, and past the screen's foot.
   it('says how far a sheet pinned to the screen reaches past its foot', () => {
     document.body.innerHTML = '<aside id="sheet" style="position: fixed"></aside>';
     const sheet = document.getElementById('sheet');

@@ -44,9 +44,9 @@ describe('SchemaReducer settings', () => {
     const named = SchemaReducer(EMPTY_SCHEMA.schema, {
       type: SchemaActions.SCHEMA_UPDATE_SETTINGS,
       path: 'siteName',
-      value: 'Encore'
+      value: 'Acme'
     });
-    expect(named.settings.siteName).toBe('Encore');
+    expect(named.settings.siteName).toBe('Acme');
 
     const coloured = SchemaReducer(named, {
       type: SchemaActions.SCHEMA_UPDATE_SETTINGS,

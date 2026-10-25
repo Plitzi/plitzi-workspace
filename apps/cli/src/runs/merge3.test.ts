@@ -57,7 +57,7 @@ describe('two changes to one file, put together line by line', () => {
     });
   });
 
-  // velada-dress: tasks added the tokens the lead gave them, in their copies, and the requests that held them were merged
+  // Tasks added the tokens the lead gave them, in their copies, and the requests that held them were merged
   // after the run had them elsewhere — every key twice, and the typecheck failing on it.
   it('takes no addition twice: what the other side added elsewhere is left out, the rest kept', () => {
     const base = ['const colours = {', "  ink: '#000',", "  halo: '#111'", '};', ''].join('\n');

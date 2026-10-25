@@ -12,7 +12,7 @@ import type { BrowserPage, PageRoute } from './index';
 /**
  * What a page asks another site for that does not change while it is worked on — its pictures, fonts, styles and
  * media — kept on disk for every browser the CLI opens after. Each command launches a Chromium of its own, with no
- * cache: la-velada's home asked a CDN, YouTube and Google Fonts for 63 files on every load, 1.25 s where a warm one
+ * cache: a run's home asked a CDN, YouTube and Google Fonts for 63 files on every load, 1.25 s where a warm one
  * takes 0.27 s, and a CDN that throttles a run's thousands of requests failed checks that had nothing to do with it.
  * The project's own files are never kept: they are what a task changes.
  */

@@ -66,7 +66,7 @@ describe('agents on demand', () => {
     );
 
     // dev-1 at t-home; t-menu and t-about wait — shared with dev-2, a task and a half each: not worth its start, as
-    // `run plan` counts it (velada-shell: the plan said the team was too big, the watch asked for dev-2).
+    // `run plan` counts it (the plan said the team was too big, the watch asked for dev-2).
     await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
     expect((await viewRun(lead(), 'es-launch')).attention.map(item => item.kind)).not.toContain('agents-needed');
 
@@ -81,7 +81,7 @@ describe('agents on demand', () => {
     expect(stopped).toMatchObject({ finished: true, why: expect.stringContaining('you are on demand') as unknown });
   });
 
-  // lx-product: t-buybox waited for t-description alone, in hand — four cards for one developer, and no dev-2 asked.
+  // T-buybox waited for t-description alone, in hand — four cards for one developer, and no dev-2 asked.
   it('counts as coming a task that waits only for work under way', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 1 });
     const plan = benchPlan();
@@ -124,7 +124,7 @@ describe('agents on demand', () => {
     );
   });
 
-  // velada-dress: design-1 wrote t-shell, and was counted free for its UI review — design-2, on demand, never asked for.
+  // Design-1 wrote t-shell, and was counted free for its UI review — design-2, on demand, never asked for.
   it('asks for another designer for a UI review its author cannot make', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'], count: 2, min: 1 });
@@ -146,7 +146,7 @@ describe('agents on demand', () => {
     );
   });
 
-  // encore-3: the lead was told "start dev-1" in the seconds the keeper took to start it again for a fresh context.
+  // The lead was told "start dev-1" in the seconds the keeper took to start it again for a fresh context.
   it('leaves starting an agent to a keeper that runs, telling the lead only once it stayed unstarted past its grace', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'], count: 2, min: 1 });
@@ -171,7 +171,7 @@ describe('agents on demand', () => {
     expect(startDesign(told.fresh.map(item => item.text))).toBe(true);
   });
 
-  // encore: both designers ended on a 'waiting' — the log read them running for good — and the UI reviews that waited
+  // Both designers ended on a 'waiting' — the log read them running for good — and the UI reviews that waited
   // were asked of nobody; their processes, launched by the CLI, had ended.
   it('asks for a designer whose launched process has ended, whatever its last word in the log', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
@@ -203,7 +203,7 @@ describe('agents on demand', () => {
     );
   });
 
-  // encore: tasks waited 24 to 56 min to be taken while the lead, planning or reviewing, was the only one to start
+  // Tasks waited 24 to 56 min to be taken while the lead, planning or reviewing, was the only one to start
   // agents. With options.launch the lead's own wait starts them.
   it.skipIf(process.platform === 'win32')(
     'starts the agent the run asks for by itself, with options.launch, and does not wake the lead for it',
@@ -266,7 +266,7 @@ describe('agents on demand', () => {
     expect((await nextTask(bench.agent('dev-2'), 'es-launch', 'developer')).task?.id).toBe(ready[0]);
   });
 
-  // velada-dress: design-2, on demand, stopped at 20:18 with four UI reviews on their way, and was started again for them.
+  // Design-2, on demand, stopped at 20:18 with four UI reviews on their way, and was started again for them.
   it('keeps a designer on demand while more UI reviews are coming than the other designers running', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
     await setTeamAgent(bench.root, 'design', { roles: ['designer'], count: 2, min: 1 });
@@ -283,7 +283,7 @@ describe('agents on demand', () => {
     expect(kept.finished).not.toBe(true);
   });
 
-  // lx-product: dev-1 read 30.9M tokens for three tasks, each turn reading again what the tasks before it left; a session
+  // Dev-1 read 30.9M tokens for three tasks, each turn reading again what the tasks before it left; a session
   // a task reads ~40 % less. The CLI cannot empty a harness's context: it tells the agent to stop, and the lead starts it.
   it('ends a session of one task once it is complete, and asks for the next — for its own sent back too', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
@@ -341,7 +341,7 @@ describe('agents on demand', () => {
     expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({ finished: true });
   });
 
-  // encore-2: run upgrade waited on t-room-read, sent back to a dev-2 whose session had ended — nobody was writing it.
+  // Run upgrade waited on t-room-read, sent back to a dev-2 whose session had ended — nobody was writing it.
   it('leaves out of a gentle stop a task sent back to an agent not running', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
     await openRun(lead(), await bench.writePlan(benchPlan()));
@@ -365,7 +365,7 @@ describe('agents on demand', () => {
     expect(await writingTasks(lead(), 'es-launch')).toEqual([]);
   });
 
-  // encore-2: test-1 and the designers sent a notice on their way out, after their stop, and the board read "no signal"
+  // Test-1 and the designers sent a notice on their way out, after their stop, and the board read "no signal"
   // for half an hour where they had stopped.
   it('keeps an agent stopped through what it says after its stop', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
@@ -385,7 +385,7 @@ describe('agents on demand', () => {
     expect(row?.status).toBe('stopped');
   });
 
-  // encore-2: the watch asked to start dev-1 — running, its process alive, its log's last word a stop — while dev-2 and
+  // The watch asked to start dev-1 — running, its process alive, its log's last word a stop — while dev-2 and
   // dev-3 waited stopped. Launched by the CLI, its process says whether an agent runs.
   it('counts an agent launched by the CLI as running while its process lives, whatever its log says', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, session: 'task' });
@@ -463,7 +463,7 @@ describe('agents on demand', () => {
     expect(await asked()).toEqual([]);
   });
 
-  // encore's dev-1: after t-player, next handed it t-shell, held from an earlier session — two tasks in one context.
+  // After t-player, next handed it t-shell, held from an earlier session — two tasks in one context.
   // Carlos: never stopped in a task — one it holds at work is one, whatever its session mode says.
   it('goes on with a task it holds at work rather than stop after the one it completed', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });

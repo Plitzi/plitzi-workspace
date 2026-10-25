@@ -12,7 +12,7 @@ import { SESSION_ENV, sessionOfProcess } from '../session';
 /** An agent's session as each harness keeps it, reduced to what a round's cost is read from. */
 
 const SESSION = '0f8fad5b-d9cb-469f-a165-70867728950e';
-const ROOT = '/work/encore';
+const ROOT = '/work/acme';
 let home: string;
 
 beforeEach(async () => {
@@ -49,7 +49,7 @@ describe('what a Claude Code session spent in a round', () => {
       cache_creation_input_tokens: 100,
       output_tokens: 50
     };
-    const folder = path.join(home, 'claude', 'projects', '-work-encore');
+    const folder = path.join(home, 'claude', 'projects', '-work-acme');
     await fs.mkdir(folder, { recursive: true });
     await fs.writeFile(
       path.join(folder, `${SESSION}.jsonl`),
@@ -66,7 +66,7 @@ describe('what a Claude Code session spent in a round', () => {
             type: 'tool_use',
             id: 'u2',
             name: 'Read',
-            input: { file_path: '/work/encore/.claude/skills/plitzi-authoring/reference/realtime.md' }
+            input: { file_path: '/work/acme/.claude/skills/plitzi-authoring/reference/realtime.md' }
           }
         ]),
         // The same answer kept again for its next part: counted once.
@@ -237,7 +237,7 @@ describe('the session a command runs in', () => {
 });
 
 describe('what a tool was asked, named by its kind', () => {
-  it('names the command a shell ran past comments, a cd and a loop, and a file read by its extension (encore-4)', () => {
+  it('names the command a shell ran past comments, a cd and a loop, and a file read by its extension', () => {
     const named = (tool: string, input: unknown) => kindOf(tool, whatOf(tool, input));
 
     expect(named('Read', { file_path: '/w/src/space/home.ts' })).toBe('Read .ts');

@@ -70,7 +70,7 @@ describe('a stage’s plan, and what its checks expect', () => {
 });
 
 describe('a check as any shell runs it', () => {
-  // encore-2: a stage's plan named the run's primer (`primer.md`), not kept beside it, and its amend was refused.
+  // A stage's plan named the run's primer (`primer.md`), not kept beside it, and its amend was refused.
   it('amends a stage whose plan names the run’s primer though none is beside it: the run’s, as kept', async () => {
     await bench.write('primer.md', '# What the project is\n');
     const opened = { ...benchPlan(), primer: 'primer.md' };
@@ -102,7 +102,7 @@ describe('a check as any shell runs it', () => {
     ).toMatchObject({ tasks: [{ task: 't-contact', changed: ['acceptance'] }] });
   });
 
-  // encore-2: `run plan` said the space had no room-card-now — a part of the room card every room list places.
+  // `run plan` said the space had no room-card-now — a part of the room card every room list places.
   it('counts a component’s parts, at any depth, as elements a check may expect', () => {
     const card = {
       id: 'room-card',

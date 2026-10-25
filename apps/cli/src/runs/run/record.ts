@@ -74,7 +74,7 @@ const declaredPlitzi = async (root: string): Promise<Set<string> | undefined> =>
 /**
  * How a run's pin and the one installed now differ: what stops its agents — the CLI, or a package the project names
  * itself — and what only moved under them, a package that comes with those (`@plitzi/plitzi-ui`, under the SDK) within
- * their ranges, as a fresh install gets it: said, never a stop. encore-3: a plitzi-ui patch held every agent 13 minutes
+ * their ranges, as a fresh install gets it: said, never a stop. A plitzi-ui patch held every agent 13 minutes
  * until a person attached again. A `package.json` that cannot be read stops on any change, as before.
  */
 export const pinDifference = async (

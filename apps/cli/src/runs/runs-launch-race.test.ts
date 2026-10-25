@@ -12,7 +12,7 @@ import { benchPlan, makeBench } from '../tests/runProject';
 import type { Bench } from '../tests/runProject';
 
 /**
- * encore-3: the run's keeper and the lead's watch both found design-1 not running and both started it — two sessions on
+ * The run's keeper and the lead's watch both found design-1 not running and both started it — two sessions on
  * one copy — and test-1 three times: the check that an agent runs and its start were two steps.
  */
 

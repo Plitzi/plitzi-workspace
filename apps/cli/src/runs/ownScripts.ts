@@ -8,7 +8,7 @@ import type { RunPlan } from './model';
  * The scripts of a lead's own an acceptance line runs — `node checks/moves.mjs`, `python3 probe.py` — where a Plitzi
  * command would say the same to any agent and be rerun by it: what Plitzi could not check yet, or what the lead did
  * not know it could. Said at `run plan` and counted in the run's feedback, so each round names the gaps it worked
- * around (lx-controls: the lead's two scripts checked a carousel and the article pages, unseen by the run).
+ * around (the lead's two scripts checked a carousel and the article pages, unseen by the run).
  */
 
 /** What runs a file of one's own: an interpreter given a path, or the path itself. */

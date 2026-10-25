@@ -9,7 +9,7 @@ import { runSteps } from '../../tests/runSteps';
 
 import type { Bench } from '../../tests/runProject';
 
-/** encore-2's design-2 ran `task progress` at a review and was told "holds no task at work: name it". */
+/** A run's design-2 ran `task progress` at a review and was told "holds no task at work: name it". */
 
 let bench: Bench;
 

@@ -145,7 +145,7 @@ export const actStep = async (
   index: number
 ): Promise<{ problem: string } | undefined> => {
   // The one shown: a page drawing a control per width hides the other — a field of a phone's drawer, the first in the
-  // document, timed out at 1440 where the column's own was there to type into (lx-controls).
+  // document, timed out at 1440 where the column's own was there to type into.
   const shown = (selector: string) => page.locator(selector).filter({ visible: true }).first();
   if (
     step.kind === 'click' ||
@@ -162,7 +162,7 @@ export const actStep = async (
     }
 
     // On the page and drawn nowhere at this width — a burger at 1440, the nav behind it at 390: said at its own step,
-    // where encore's dev-1 saw the step pass and the next one fail on what it should have opened.
+    // where a run's dev-1 saw the step pass and the next one fail on what it should have opened.
     if ((await shown(read.selector).count()) === 0) {
       return {
         problem: `Step ${String(index + 1)}: ${step.target} is on the page but hidden at this width — a breakpoint, or a menu that is closed: ${step.kind} what a visitor sees here, or play it at the width that shows it`
@@ -207,7 +207,7 @@ export const actStep = async (
       }
 
       // A range is pressed at its thumb, where its value puts it — at its middle, the handle on top of it moved
-      // instead (lx-controls' two-handle price range).
+      // instead (a run's two-handle price range).
       const along = await shown(read.selector).evaluate(node => {
         if (!(node instanceof HTMLInputElement) || node.type !== 'range') {
           return 0.5;
@@ -234,7 +234,7 @@ export const actStep = async (
         ? answered(page, () => shown(read.selector).click({ timeout: 3000 }))
         : shown(read.selector).click({ timeout: 3000 }));
     } catch (error) {
-      // A click that took the page elsewhere did what it was for — what follows reads the page it went to (encore-4's
+      // A click that took the page elsewhere did what it was for — what follows reads the page it went to (a run's
       // dev-1 read a plain locator timeout, with nothing of the navigation in it).
       if (page.url() !== from) {
         return undefined;
@@ -258,7 +258,7 @@ export const actStep = async (
       }
 
       // In place of what it held, as a person selecting it first: typed after it, a price field kept its old amount too
-      // (lx-controls).
+      //.
       await page.keyboard.press('ControlOrMeta+A');
       await page.keyboard.type(step.text);
     }
@@ -373,7 +373,7 @@ export const playSteps = async (
     }
   }
 
-  // What the steps leave is pictured, once still, when they end on an action: lx-product's `--steps "click <pill>"`
+  // What the steps leave is pictured, once still, when they end on an action: a run's `--steps "click <pill>"`
   // showed the menu shut — the picture before the click was the only one.
   if (endsActing(steps)) {
     await settle(page);

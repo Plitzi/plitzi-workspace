@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { serveCopy } from './acceptance';
 
 /**
- * encore-3: the acceptance's server was asked for :61515, found it taken — agents checking at once — and took :62189, as
+ * The acceptance's server was asked for :61515, found it taken — agents checking at once — and took :62189, as
  * a server while developing does; the check waited on :61515 for a minute and failed a task that was right.
  */
 

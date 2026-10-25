@@ -239,7 +239,7 @@ export interface CheckAsk {
   status?: number;
   /**
    * `--redirects-to /sign-in`: the page is meant to send this visitor there — checked by landing there, and what
-   * landed is checked as the page (its `--expect` too). encore's settings: a guest sent to sign in failed every check.
+   * landed is checked as the page (its `--expect` too). A run's settings: a guest sent to sign in failed every check.
    */
   redirectsTo?: string;
 }

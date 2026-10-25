@@ -16,7 +16,7 @@ const EM_RELATIVE = new Set(['line-height', 'letter-spacing']);
 
 /**
  * A line height or a tracking as a share of the element's own font size — `22.13px` is `1.5em` of 14.75px: the value to
- * write once for every size, where a developer copying the pixels tried three (velada-shell's VS text).
+ * write once for every size, where a developer copying the pixels tried three (a run's VS text).
  */
 const emOf = (property: string, value: string, side: Measured): string => {
   const size = Number.parseFloat(side.styles['font-size'] ?? '');
@@ -44,7 +44,7 @@ const pseudosOf = (here: Measured, there: Measured): string[] =>
 
 /**
  * What every pair of a reading is compared on, said once above them — each pair then says what differs and "the rest
- * the same". lx-product: a pair said the other page's address and its 25 properties alike, 470 characters of 900, and
+ * the same". A pair said the other page's address and its 25 properties alike, 470 characters of 900, and
  * a reading of six pairs said them six times; an agent read each again on every turn after.
  */
 export const comparedText = (url: string | undefined): string =>
@@ -66,7 +66,7 @@ const shortValue = (value: string): string =>
 
 /**
  * One element read alone: what it says of itself — a property at its initial value and one taken from its parent left
- * out, unless every one is asked (`all`). encore-4's measures printed ~40 properties an element, a data URI whole in
+ * out, unless every one is asked (`all`). A run's measures printed ~40 properties an element, a data URI whole in
  * each: 38k characters in one answer, read again on every turn after it.
  */
 const aloneText = (here: Measured, all: boolean): string => {

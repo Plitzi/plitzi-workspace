@@ -175,13 +175,13 @@ const IDENTITY_ENV = ['PLITZI_TOKEN', 'PLITZI_AGENT', 'PLITZI_RUN'] as const;
 /**
  * What a harness says of the session it runs in (`CLAUDE_CODE_SESSION_ID`…): an agent started from inside one — the
  * lead's watch, run from its own Claude Code — inherited the lead's, and a command of the agent's could be read as the
- * lead's session (encore-3's design-1 carried its lead's id). The agent's harness says its own.
+ * lead's session (a run's design-1 carried its lead's id). The agent's harness says its own.
  */
 const HARNESS_SESSION_ENV = /^CLAUDE_CODE_SESSION/;
 
 /**
  * The environment an agent's harness starts with: this process's, without the identity of whoever started it — the
- * lead's own CLI exports its token, and encore-2's agents inherited it: a `plitzi` command of theirs that bypassed their
+ * lead's own CLI exports its token, and a run's agents inherited it: a `plitzi` command of theirs that bypassed their
  * own CLI (a project script's `plitzi space lint`) ran as the lead — with the agent's own token in its place, and its
  * session (`SESSION_ENV`), so a run reads which session did what, never guesses it.
  */
@@ -203,7 +203,7 @@ export const agentEnv = async (
 
 /**
  * Starts the agent now, in `harness`: refused while it still runs. One start of an agent at a time, held by a lock of its
- * own: the run's keeper and a lead's watch both found encore-3's design-1 not running and both started it — two sessions
+ * own: the run's keeper and a lead's watch both found a run's design-1 not running and both started it — two sessions
  * on one copy, and a third of test-1's — the check that it runs and the start being two steps.
  */
 export const launchAgent = async (
@@ -223,7 +223,7 @@ const startHeld = async (ctx: RunContext, runId: string, agent: string, harness:
   const { model } = told;
   const last = await readLaunch(loaded.paths, agent);
   // Two sessions of one agent read one log: the new one took the old one's completion for its own and stopped
-  // (encore: dev-2 started again while its last session was still writing its stop).
+  // (dev-2 started again while its last session was still writing its stop).
   if (last && isRunning(last)) {
     throw new RunRefusal(
       'invalid',

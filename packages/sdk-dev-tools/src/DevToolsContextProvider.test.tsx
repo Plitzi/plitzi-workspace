@@ -9,7 +9,7 @@ import { DevToolsContext } from '@plitzi/sdk-shared/devTools/react';
 import DevToolsContextProvider from './DevToolsContextProvider';
 
 /**
- * encore-2: the badge said a warning, and the panel it opened showed none. Opening it moved the panel in the page's
+ * The badge said a warning, and the panel it opened showed none. Opening it moved the panel in the page's
  * layout, React mounted its provider again, and the logs it kept in its own state were gone. It starts from what the
  * page logged since, and a Clear empties that too.
  */

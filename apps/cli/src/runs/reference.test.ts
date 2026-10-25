@@ -74,7 +74,7 @@ const keep = async (
   await fs.writeFile(path.join(dir, `${name}.json`), JSON.stringify(page));
 };
 
-// la-velada's original redesigned its fighter page after the copy: a comparison with the live site measured another page.
+// A run's original redesigned its fighter page after the copy: a comparison with the live site measured another page.
 describe('the reference a run keeps', () => {
   it('keeps the home and each page the inventory names — a pattern is no page', () => {
     expect(
@@ -106,7 +106,7 @@ describe('the reference a run keeps', () => {
     expect(await keptPage(bench.root, 'https://other.example.org/menu', 1440, 'dark')).toBeUndefined();
   });
 
-  // la-velada's lead left three pieces of the artist page out of the inventory, found only at review.
+  // A run's lead left three pieces of the artist page out of the inventory, found only at review.
   it('says the headings of a kept page no piece of the inventory names — whatever their accents and case', () => {
     let headingAt = 0;
     const heading = (text: string, tag = 'h2') => ({ ...pageText, text, tag, y: (headingAt += 300) });
@@ -144,14 +144,14 @@ describe('the reference a run keeps', () => {
   });
 
   it('is a site’s address in the plan', () => {
-    expect(runPlanProblems({ ...benchPlan(), reference: 'infolavelada.com' })).toContainEqual(
+    expect(runPlanProblems({ ...benchPlan(), reference: 'example.com' })).toContainEqual(
       expect.stringContaining('reference: the address of the site it copies')
     );
     expect(runPlanProblems({ ...benchPlan(), reference: REFERENCE })).toEqual([]);
   });
 });
 
-// lx-copy: the original's "TARJETAS GRÁFICAS" wraps under its tile, and label-wraps told two agents to keep it on one line.
+// The original's "TARJETAS GRÁFICAS" wraps under its tile, and label-wraps told two agents to keep it on one line.
 describe('the labels the original wraps', () => {
   it('reads them off the kept page at that width, spelt as either side spells them — one line is none', async () => {
     const runId = await open({ ...benchPlan(), reference: REFERENCE });

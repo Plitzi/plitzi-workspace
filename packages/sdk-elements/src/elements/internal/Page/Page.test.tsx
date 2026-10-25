@@ -178,7 +178,7 @@ describe('Page Tests', () => {
             navigation,
             schema: {
               flat: {},
-              settings: { customCss: '', siteName: 'Encore', language: 'es', favicon: '/favicon.svg' }
+              settings: { customCss: '', siteName: 'Acme', language: 'es', favicon: '/favicon.svg' }
             }
           }}
         >
@@ -200,7 +200,7 @@ describe('Page Tests', () => {
     await waitFor(() => expect(content('meta[property="og:image"]')).toBe(`${window.location.origin}/covers/jazz.png`));
     expect(content('meta[property="og:image:alt"]')).toBe('A saxophone');
     expect(content('meta[property="og:type"]')).toBe('music.playlist');
-    expect(content('meta[property="og:site_name"]')).toBe('Encore');
+    expect(content('meta[property="og:site_name"]')).toBe('Acme');
     expect(content('meta[name="twitter:card"]')).toBe('summary_large_image');
     expect(document.documentElement.getAttribute('lang')).toBe('es');
     expect(document.querySelector('link[rel="icon"]')?.getAttribute('href')).toBe('/favicon.svg');

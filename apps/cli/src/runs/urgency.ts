@@ -33,7 +33,7 @@ export const chainMinutes = (tasks: readonly RunTask[]): Map<string, number> => 
 /**
  * Each task's priority as every queue weighs it: its own, or that of any task waiting on it, whichever comes first — a
  * low task that a critical one waits for is critical, and one that holds three back goes before one that holds none
- * (velada-now: the three reviews t-motion waited for came in the order they arrived, as any other).
+ * (the three reviews t-motion waited for came in the order they arrived, as any other).
  */
 export const effectiveRanks = (tasks: readonly RunTask[]): Map<string, number> => {
   const dependants = new Map<string, string[]>();

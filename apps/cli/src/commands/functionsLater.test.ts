@@ -46,7 +46,7 @@ const serverAnswers = (answer: (ask: Record<string, unknown>) => Record<string, 
 const printed = (calls: readonly unknown[][]): string =>
   calls.map(call => stripVTControlCharacters(String(call[0]))).join('\n');
 
-// encore-3: a spec of a show that starts in five minutes waited the five, every pass.
+// A spec of a show that starts in five minutes waited the five, every pass.
 describe('plitzi functions later', () => {
   it('lists what the served project holds to run later, by key and when it is due', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);

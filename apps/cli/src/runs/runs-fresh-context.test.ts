@@ -18,7 +18,7 @@ import type { RunContext } from './run';
 import type { Bench } from '../tests/runProject';
 
 /**
- * encore-2: its developers, a session a task, read ~12k tokens' worth a turn; its designer and tester, never started
+ * Its developers, a session a task, read ~12k tokens' worth a turn; its designer and tester, never started
  * again, grew to 400k and read 26–30k a turn. An agent is started again with a fresh context between two pieces of
  * work — once its context passes the team's `freshContextAt`, or after each one (`"session": "task"`).
  */
@@ -173,7 +173,7 @@ describe('a fresh context', () => {
       why: expect.stringContaining("after each task or review (your team's session: task)") as unknown
     });
 
-    // encore-4: the monitor read a base agent "stopped" while the run started it again — it is restarting, said so,
+    // The monitor read a base agent "stopped" while the run started it again — it is restarting, said so,
     // before its launch and after it, until its first command.
     const dev = async () => (await monitorRun(lead(), 'es-launch')).agents.find(agent => agent.agent === 'dev-1');
     expect(await dev()).toMatchObject({

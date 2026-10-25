@@ -24,7 +24,7 @@ export interface LoadedImages {
  * scroll, not to an attribute — and back up; then `loading="lazy"` is made eager and the pictures are awaited, in
  * rounds while loading one turns up another (a blurred placeholder swapped for its picture), for `budgetMs` at most.
  * A lazy `<iframe>` is made eager first and awaited too — and one from another site below the first screen is named:
- * it loads, and still is a blank box in the picture (la-velada's venue map), which only a picture of it in view shows.
+ * it loads, and still is a blank box in the picture (a run's venue map), which only a picture of it in view shows.
  */
 export const loadImages = async (budgetMs: number): Promise<LoadedImages> => {
   const deadline = Date.now() + budgetMs;
@@ -43,7 +43,7 @@ export const loadImages = async (budgetMs: number): Promise<LoadedImages> => {
   // player that waits for its press) has nothing to load.
   const embeds = Array.from(document.querySelectorAll('iframe'));
   // Loaded already, before any listener: its `load` came and went — one of this site's says so of itself; another
-  // site's cannot be read, and is waited for (velada-dress: the overlay's own preview, loaded, "had not loaded").
+  // site's cannot be read, and is waited for (the overlay's own preview, loaded, "had not loaded").
   const complete = (embed: HTMLIFrameElement): boolean => {
     try {
       return embed.contentDocument?.readyState === 'complete' && embed.contentDocument.URL !== 'about:blank';

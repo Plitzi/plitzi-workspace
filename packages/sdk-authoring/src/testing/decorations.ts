@@ -2,9 +2,9 @@
  * What a page is dressed in besides its words and pictures — the gradients behind a section, the glows around a card, the
  * ornaments drawn by `::before`/`::after`, the images a background carries — read on two pages and compared by section.
  * A comparison of pixels says a soft glow as a few percent spread over a section, and one of texts never sees it:
- * la-velada's artist page lost the original's warm light, its portrait's corners and its card's halo, and three reviews
+ * A run's artist page lost the original's warm light, its portrait's corners and its card's halo, and three reviews
  * passed it. Each layer over a picture says whether it is painted over or under it: a fighter's spotlight is the
- * original's behind the cut-out, and over the face it is another look (velada-dress: t-predictions, approved so).
+ * original's behind the cut-out, and over the face it is another look (t-predictions, approved so).
  */
 
 import type { PictureRegion } from './pictures';
@@ -33,7 +33,7 @@ export interface PageDecoration {
 
 /**
  * Runs in the page: every gradient, glow (a shadow blurred 12px or more), filter, background image — in the CSS, or a
- * decorative picture laid behind or over a section (`alt=""` or hidden, absolutely placed: velada-dress's footer photo
+ * decorative picture laid behind or over a section (`alt=""` or hidden, absolutely placed: a run's footer photo
  * was nobody's dress, and went) — and ornament (a pseudo-element drawn with a border or a background) of what is drawn,
  * its element's box beside it, and whether it is over or under the picture it covers. Skips the dev tools' own chrome
  * and what a visitor cannot see. Self-contained — it is serialised.
@@ -167,7 +167,7 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
       }
     }
 
-    // A filter that does nothing is no dress: `blur(0px)` is an arrival's blurred fade at rest (velada-dress: a check
+    // A filter that does nothing is no dress: `blur(0px)` is an arrival's blurred fade at rest (a check
     // asked a page for it).
     if (style.filter !== 'none' && /blur|drop-shadow/.test(style.filter) && !isInert(style.filter)) {
       layers.push({
@@ -178,7 +178,7 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
     }
 
     // A pseudo-element with a border or a fill of its own is drawn: a corner bracket, a divider's rule, a badge's dot —
-    // unless it has no size: a hover's underline at rest (width 0) is not dress (la-velada's socials read as four dots).
+    // unless it has no size: a hover's underline at rest (width 0) is not dress (a run's socials read as four dots).
     const sized = !/^0(px)?$/.test(style.width) && !/^0(px)?$/.test(style.height);
     if (on !== 'element' && layers.length === 0 && sized) {
       const bordered = ['Top', 'Right', 'Bottom', 'Left'].some(
@@ -202,7 +202,7 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
   // A picture laid as a backdrop — said nothing of (`alt=""`, hidden) and placed out of the flow, itself or its
   // <picture> — is dress; one with words, or in the flow, is a picture of the page's own.
   const placed = (element: Element): boolean => ['absolute', 'fixed'].includes(getComputedStyle(element).position);
-  // …or in the flow with the words laid over it, placed: the same backdrop drawn the other way (lx-fidelity: our banners'
+  // …or in the flow with the words laid over it, placed: the same backdrop drawn the other way (our banners'
   // pictures, under their title and button, were "lacks background image" beside the original's placed one).
   const overlaid = (element: Element): boolean => {
     const holder = element.parentElement?.tagName === 'PICTURE' ? element.parentElement : element;
@@ -216,7 +216,7 @@ export const pageDecorations = (limit: number): PageDecoration[] => {
       (element.parentElement?.tagName === 'PICTURE' && placed(element.parentElement)) ||
       overlaid(element));
   // What a layer is painted over or under: any photo or video drawn — a backdrop's too, as a copy may mark a fighter's
-  // cut-out decorative where the original names it (velada-dress).
+  // cut-out decorative where the original names it.
   const pictures = Array.from(document.body.querySelectorAll('img, video'))
     .map(element => ({ element, box: element.getBoundingClientRect() }))
     .filter(({ element, box }) => box.width > 0 && box.height > 0 && getComputedStyle(element).visibility !== 'hidden');
@@ -394,7 +394,7 @@ export interface SectionDecorations {
   absentLayers: PageDecoration[];
   /**
    * Of each absent look, the element of this page where the other page wears it — by its name, found at the same place
-   * of the section: the one to dress (velada-dress: "lacks radial-gradient" said what, never on which element).
+   * of the section: the one to dress ("lacks radial-gradient" said what, never on which element).
    */
   absentOn?: Record<string, string>;
 }
@@ -433,7 +433,7 @@ const timesOf = (layers: readonly PageDecoration[], kind: DecorationKind): Map<s
 /**
  * The details of `kind` that `fewer` has fewer of than `more`, each with how many fewer: `box-shadow 60px rgb(…) ×4`.
  * Each detail on its own — a kind counted whole listed every detail of it, kept ones too: one VS medal's shadow gone,
- * and the cards' text-shadows ×20, all there, read as lost (velada-polish's design-2).
+ * and the cards' text-shadows ×20, all there, read as lost (a run's design-2).
  */
 const fewerOf = (fewer: readonly PageDecoration[], more: readonly PageDecoration[], kind: DecorationKind): string[] => {
   const had = timesOf(fewer, kind);

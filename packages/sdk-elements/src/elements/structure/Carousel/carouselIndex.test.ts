@@ -23,7 +23,7 @@ describe('carousel positions', () => {
     expect(directionOf(1, 3)).toBe('next');
   });
 
-  // lx-controls: a row showing three of five never brought its index to the last — its end could not be known.
+  // A row showing three of five never brought its index to the last — its end could not be known.
   it('says where a scrolling row stands by its box: at either end, and how many slides it shows whole', () => {
     const row = (scrollLeft: number) => {
       const scroller = document.createElement('div');

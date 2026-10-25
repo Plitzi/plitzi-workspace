@@ -28,7 +28,7 @@ export interface ApiExplanation {
   written: string;
   /**
    * What a function takes, field by field: each parameter whose type is a named object of the package's — its
-   * constraint, for a generic one — with what each field's doc says first. lx-product's dev-1 read the `.d.ts` 25 times
+   * constraint, for a generic one — with what each field's doc says first. A run's dev-1 read the `.d.ts` 25 times
    * for `defineAction`'s `ActionSpec` and `taskAction`'s options, which `explain` gave as a signature alone.
    */
   takes?: { type: string; fields: { name: string; optional: boolean; doc: string }[] }[];
@@ -160,7 +160,7 @@ const installedPackages = (root: string): Entry[][] => {
  * it where an export would — declared (`declare const host`, `interface Host`), or in an export list (`host,`, `as
  * host`). A name that is nothing is answered without building a program for every package installed: a word as common
  * as `host`, spelled anywhere at all, built a program for each package that spelled it: 2.4 s to say it is nothing
- * (lx-controls).
+ *.
  */
 const spells = (entries: readonly Entry[], name: string): boolean => {
   const escaped = name.replace(/\$/g, '\\$');
@@ -335,7 +335,7 @@ const RECEIVERS: ReadonlyMap<string, string> = new Map([
 
 /**
  * A member of a type a `@plitzi` package exports — `ctx.later`, `job.save`, `FunctionContext.cancelLater`, or a bare
- * `later` when no export has the name: the method's whole doc and its signature, from the `.d.ts` installed. Encore's
+ * `later` when no export has the name: the method's whole doc and its signature, from the `.d.ts` installed. A run's
  * lead asked `explain later` and was told it was nothing, while `ctx.later` is what its shows start by.
  */
 export const memberDeclarations = (root: string, name: string): ApiExplanation[] => {

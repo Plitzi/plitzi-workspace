@@ -82,7 +82,7 @@ section around it. All of it is `@plitzi/sdk-authoring`, for a suite to use as w
 
 **What a page tool prints is read again on every turn after it.** An agent's context holds each answer to the end of
 its task, so a page tool says what is acted on first and the rest on asking: `page measure` an element's own values (its
-initial and inherited ones counted, a data URI by its kind and size — encore-4's measures ran to 38k characters), a tall
+initial and inherited ones counted, a data URI by its kind and size — whole, a measure ran to tens of thousands of characters), a tall
 page's picture in parts a model reads at their size rather than one shrunk to 97 px wide, a look's reasons once each.
 What a browser runs on the page (`page.evaluate`) is self-contained, and tried with the built CLI: tsx wraps a named
 function in `__name`, which a page has not. The CLI's requests to a server of this machine go through `localFetch`

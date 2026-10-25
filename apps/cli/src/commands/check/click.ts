@@ -181,7 +181,7 @@ export const clickEffects = async (
     try {
       await (hover ? target.hover({ timeout: 3000 }) : target.click({ timeout: 3000 }));
     } catch (error) {
-      // A click that took the page elsewhere did its work: what changed is read on the page it went to (encore-4).
+      // A click that took the page elsewhere did its work: what changed is read on the page it went to.
       if (page.url() === from) {
         const reason = error instanceof Error ? error.message.split('\n')[0] : String(error);
 

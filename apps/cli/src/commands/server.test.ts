@@ -45,7 +45,7 @@ const serve = (cwd: string, instance?: string): ChildProcess =>
     { cwd, stdio: 'ignore' }
   );
 
-// encore: an agent freed a hung heredoc with `pkill -f "cat"` and took the machine down — a server is stopped as this
+// An agent freed a hung heredoc with `pkill -f "cat"` and took the machine down — a server is stopped as this
 // folder's, told by where it listens from and what its /health says, never by a name.
 describe.skipIf(process.platform === 'win32')('plitzi server stop', () => {
   let root: string;
@@ -123,14 +123,14 @@ describe.skipIf(process.platform === 'win32')('plitzi server stop', () => {
     expect(process.exitCode).toBe(1);
   });
 
-  // encore-3: `server stop --port` said "nothing of this project listens" for a server that had already exited.
+  // `server stop --port` said "nothing of this project listens" for a server that had already exited.
   it('says a port nothing listens on is free, not held by another folder', async () => {
     await serverStop({ port: 1 });
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Nothing listens on port 1'));
   });
 
-  // encore-3: a reviewer's page play used the demo's data up, and emptying the copy's sqlite by hand was the way back.
+  // A reviewer's page play used the demo's data up, and emptying the copy's sqlite by hand was the way back.
   it('resets what the server keeps to a cold start, and refuses while a server of the folder runs', async () => {
     await fs.mkdir(path.join(root, 'state'));
     await fs.writeFile(path.join(root, 'state', 'kv.json'), '{}');

@@ -4,7 +4,7 @@ import path from 'node:path';
 /**
  * Where the project's skills write a name — the reference that says how it is used, and the recipe that shows it:
  * `explain` of an export points at them, so a reader goes to the page that teaches it rather than the published types
- * (lx-product's dev-1 read the `.d.ts` for `taskAction`, which the functions reference teaches with an example).
+ * (a run's dev-1 read the `.d.ts` for `taskAction`, which the functions reference teaches with an example).
  */
 
 export interface SkillMention {
@@ -78,7 +78,7 @@ const POINT = /^\s*(?:#{2,4}|[-*])\s+/;
 
 /**
  * What a point is about: a heading's words, what it says in bold, or the name it starts with in code — `ancestors: { … }`
- * is about `ancestors`. lx-product: the point that teaches `ancestors` was a plain one, and no search read it.
+ * is about `ancestors`. The point that teaches `ancestors` was a plain one, and no search read it.
  */
 const pointOf = (line: string): string =>
   /^\s*#{2,4}\s+(.*)$/.exec(line)?.[1] ??
@@ -143,7 +143,7 @@ const recipePassage = (root: string, file: string): SkillPassage[] => {
 /**
  * The skills as passages a search reads — each heading and point of a reference with the lines that go on with it, and
  * each recipe by its comment — so `explain --search` answers what the skills teach beside what the catalogues hold:
- * lx-product's "server action reads a data file for a provider" found neither `ctx.data` nor `taskAction`, both taught
+ * A run's "server action reads a data file for a provider" found neither `ctx.data` nor `taskAction`, both taught
  * in the functions reference, and "accordion collapse expand" nothing, beside `recipes/accordion.ts`.
  */
 export const skillPassages = (root: string): SkillPassage[] =>

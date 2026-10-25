@@ -14,7 +14,7 @@ import type { TaskView } from '../taskStore';
 /**
  * What fails in a copy that is not its agent's work: a step the run's work fails the same way without it (another
  * task's approval, a person's edit), and an acceptance line nothing could answer (the line's, or the machine's). Said
- * apart, so a run's failed checks count the work alone (lx-copy: 72% of its checks failed, most of them for neither).
+ * apart, so a run's failed checks count the work alone (72% of its checks failed, most of them for neither).
  */
 
 /** The copy's checks beside the run's work without it: what `ownFailing` reads them with. */

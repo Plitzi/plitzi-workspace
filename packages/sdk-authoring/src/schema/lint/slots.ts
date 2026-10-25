@@ -204,7 +204,7 @@ const setOnBase = (
 
 /**
  * A dropdown's popup is drawn at the space's root, `position: fixed` where its dropdown places it: a class that sets
- * its place moves it off its trigger, silently — encore-4's header menu was laid in the header's flow, the burger cut
+ * its place moves it off its trigger, silently — a run's header menu was laid in the header's flow, the burger cut
  * off, and only a picture at 390 showed it.
  */
 export const checkPopupPosition = (ctx: LintContext, element: Element, where: string): void => {
@@ -224,7 +224,7 @@ export const checkPopupPosition = (ctx: LintContext, element: Element, where: st
 
 /**
  * An icon's glyphs are Font Awesome's font: a class giving it another `font-family` draws a fallback character — a
- * "≡" for a bars icon — and every check passed it (encore-4's design-2 saw it in a picture).
+ * "≡" for a bars icon — and every check passed it (a run's design-2 saw it in a picture).
  */
 export const checkIconFont = (ctx: LintContext, element: Element, where: string): void => {
   if (element.definition.type !== 'fontAwesome') {

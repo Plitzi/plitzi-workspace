@@ -24,7 +24,7 @@ import type { ShotStep } from './shotSteps';
  * `plitzi page play`: an interaction played step by step — a press, a drag, a key — and, after each step, how far each
  * element read moved and how it stands (shown, enabled), on the project's page and, with `--compare`, on the other
  * site's at once; `--same` fails where the two do otherwise. What a control does, read as numbers and held by an
- * acceptance line: every run so far had its agents and its lead write browser scripts for it (lx-controls: two dozen,
+ * acceptance line: every run so far had its agents and its lead write browser scripts for it (two dozen,
  * a carousel's arrows used there and back on both sites).
  *
  * How far something moved is how far its content went: its scroll less its place — the same number for a row that
@@ -57,7 +57,7 @@ export const ARIA_STATES = ['pressed', 'expanded', 'checked', 'selected'] as con
 
 /**
  * An element as a step leaves it: where its content is, whether it is seen, whether it takes a press — and what a
- * control says: its words, a field's value, its ARIA states, whether it holds the focus. encore: four agents wrote a
+ * control says: its words, a field's value, its ARIA states, whether it holds the focus. Four agents wrote a
  * Playwright script for what this did not read — Listen turning Mute, the focus back on the burger, a search typed.
  */
 export interface ElementState {
@@ -75,19 +75,19 @@ export interface ElementState {
   focused: boolean;
   /**
    * Where it is against the viewport — and, in it, what covers its middle (a sticky header): a `scrollIntoView` that
-   * left a heading under the header read as fine (encore-2's dev-1 and design-1).
+   * left a heading under the header read as fine (a run's dev-1 and design-1).
    */
   inView: 'whole' | 'part' | 'out';
   coveredBy?: string;
   /** Its transform, when it has one, as scale and translate: a bump (scale) or a float read as nothing moving. */
   transform?: string;
   /**
-   * Its text's colour and the ground it sits on — its own, else the first an ancestor paints: encore-4's tone picker
+   * Its text's colour and the ground it sits on — its own, else the first an ancestor paints: a run's tone picker
    * was proven by ten page measures, one a tone and scheme, the play saying nothing of colour.
    */
   colour: { text: string; ground: string };
   /**
-   * Its animations as they stand — `float finished` — when it has any: encore-4's reaction floated in and out, and a
+   * Its animations as they stand — `float finished` — when it has any: a run's reaction floated in and out, and a
    * read after it said "hidden", as though the press had done nothing.
    */
   animations?: string[];
@@ -98,10 +98,10 @@ export interface PlayedStep {
   step: string;
   /**
    * A side the step did nothing on — its control hidden or taking no press, as a visitor's press does nothing — and why:
-   * said, never played as if it happened (lx-product: a tab drawn per width, its press at 390 skipped without a word).
+   * said, never played as if it happened (a tab drawn per width, its press at 390 skipped without a word).
    */
   idle?: Partial<Record<keyof Pair, string>>;
-  /** Where the step took the page, when it went elsewhere — a link followed, a form sent: encore-4's filter links. */
+  /** Where the step took the page, when it went elsewhere — a link followed, a form sent: a run's filter links. */
   went?: Partial<Record<keyof Pair, string>>;
   /** Each element read, by how it was asked, here and — with `--compare` — there. */
   reads: { element: string; here?: ElementState; there?: ElementState; moved?: Moved; problem?: string }[];
@@ -180,7 +180,7 @@ export const stateOf = (node: Element): ElementState => {
     style.pointerEvents === 'none' ||
     node.closest('[inert]') !== null;
   // A part whose own box never scrolls but holds the row that does — a carousel named by its track, its scroller
-  // inside (lx-product's dev-1 read `.carousel__scroller` by its class): that row's scroll is what moved.
+  // inside (a run's dev-1 read `.carousel__scroller` by its class): that row's scroll is what moved.
   const scrolls = (each: Element): boolean => {
     const overflow = getComputedStyle(each);
 
@@ -246,7 +246,7 @@ export const readState = async (page: BrowserPage, target: string): Promise<Elem
   }
 
   if (!found.found) {
-    // `--read a,b`: one name with a comma in it, beside a `--width 390,1440` that does take commas (encore's lead).
+    // `--read a,b`: one name with a comma in it, beside a `--width 390,1440` that does take commas (a run's lead).
     return {
       problem: `${target} is not on ${page.url()}${/^[\w-]+(,[\w-]+)+$/.test(target) ? ` — --read takes elements separated by spaces: --read ${target.split(',').join(' ')}` : ''}`
     };
@@ -516,7 +516,7 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
       if (read.problem) {
         const appears = played.some(later => later !== entry && later.reads.at(index)?.problem === undefined);
         // Never there: said once, at the first step — the same line at every step and width buried the steps that
-        // were read (encore-3's `--read a,b`).
+        // were read (a run's `--read a,b`).
         const before = played.slice(0, played.indexOf(entry)).some(earlier => earlier.reads.at(index)?.problem);
 
         return appears
@@ -547,7 +547,7 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
 
 /**
  * What `--same` says of the steps: each difference, or that they held — never a pass while an element read is not on
- * the page, which holds nothing (lx-product: "✓ every step as theirs" beside one not built yet).
+ * the page, which holds nothing ("✓ every step as theirs" beside one not built yet).
  */
 export const verdictOf = (
   same: readonly PlaySame[],
@@ -642,7 +642,7 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
       }
 
       // The other site played warm in the kept browser, its page held for this play alone: opened cold here, it was
-      // 11–19 s a call (lx-product, 58 plays). Not kept, it is opened here as before.
+      // 11–19 s a call (58 plays). Not kept, it is opened here as before.
       const view = {
         width,
         height: 900,
@@ -683,7 +683,7 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
 
   const unlike = results.flatMap(each => each.unlike.map(line => `at ${String(each.width)} px, ${line}`));
   // Missing is never read at any step: one that appears after a click — the picker it opens — is what was played
-  // (encore's t-emojis: its picker read "not on" at the start, and the line was said to be no one's).
+  // (its picker read "not on" at the start, and the line was said to be no one's).
   const missing = results.some(each =>
     (each.played[0]?.reads ?? []).some((_read, index) =>
       each.played.every(entry => entry.reads.at(index)?.problem !== undefined)

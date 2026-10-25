@@ -8,7 +8,7 @@ import type { Browser } from '../../browser';
 
 /**
  * A ground that does not follow the theme under a text that does, read where it costs the text: in one scheme the two
- * barely tell apart. velada-fidelity's judges' rows were a fixed dark colour (`on-photo-shade` at 55%) under the
+ * barely tell apart. A run's judges' rows were a fixed dark colour (`on-photo-shade` at 55%) under the
  * theme's text — right in dark, grey bars with dark words in light; the reference had no light scheme, and only the
  * lead's look saw it. Read in both schemes, element by element: the same ground in both, its text's colour not, and in
  * one of them under 3:1 against it. A text that changes its colour and reads well on both (cream, then gold, on a dark
@@ -47,7 +47,7 @@ export const textGrounds = (): TextGround[] => {
       .find(colour => colour !== 'transparent' && !/rgba\([^)]*,\s*0\)$/.test(colour)) ?? 'rgb(255, 255, 255)';
 
   // An sr-only line's words overflow a pixel-wide box, so their own box can be large: only the box clipping them says
-  // nobody sees them (encore-3's ON AIR lamp). A clipping box of any size is left be — a scrolled panel shows its words.
+  // nobody sees them (a run's ON AIR lamp). A clipping box of any size is left be — a scrolled panel shows its words.
   const tiny = (box: DOMRect): boolean => box.width < 2 || box.height < 2;
   const seen = (node: Element): boolean => {
     if (tiny(node.getBoundingClientRect())) {

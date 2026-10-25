@@ -31,7 +31,7 @@ const projectWith = async (files: Record<string, string>): Promise<string> => {
   return root;
 };
 
-// la-velada's agents read the same shared modules whole, a dozen times each across the run, to learn how to call them.
+// A run's agents read the same shared modules whole, a dozen times each across the run, to learn how to call them.
 describe('importedApis', () => {
   it('says each name a task’s file imports — its signature and doc, through a barrel — never the body', async () => {
     const page = [

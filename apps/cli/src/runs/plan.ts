@@ -226,7 +226,7 @@ export const checkPlan = async (
   openWork = 0,
   /**
    * A stage's: where the space its checks name is read — the run's work, materialised. The project holds what the
-   * finish has not written yet: encore's stage 5 read every room element and `/r/:slug` as missing, a deadlock each.
+   * finish has not written yet: a run's stage 5 read every room element and `/r/:slug` as missing, a deadlock each.
    */
   spaceRoot = root
 ): Promise<CheckedPlan> => {
@@ -353,7 +353,7 @@ export const checkPlan = async (
   const holder = new Map<string, string>();
   // A file a task names is that task's, before any other's page brings it as a module only the page imports: a page
   // split by its modules — its gallery one task's, its buying box another's — gives each module to its namer
-  // (lx-product: the refusal's way out, the module in "touches", refused a task that then wrote no file).
+  // (the refusal's way out, the module in "touches", refused a task that then wrote no file).
   const namedBy = new Map<string, string>();
   for (const task of plan.tasks) {
     for (const raw of task.files) {
@@ -443,7 +443,7 @@ export const checkPlan = async (
   }
 
   // A task's "file" that is a folder not made yet, with another task's files in it: complete refuses the first anything
-  // under it the other holds (lx-copy: t-base held src/space/pages to write every page's stub, and each stub was a
+  // under it the other holds (t-base held src/space/pages to write every page's stub, and each stub was a
   // later task's — stuck mid-run, files never amended).
   for (const [folder, owner] of holder) {
     const inside = [...holder].filter(([file, other]) => other !== owner && file.startsWith(`${folder}/`));
@@ -545,7 +545,7 @@ export const checkPlan = async (
   notices.push(...(await elementFileNotices(root, plan.tasks)));
   // What reads a task's file and is in no task: changed under it, never by it — the lead's to plan, or to leave.
   const planned = new Set(tasks.flatMap(task => task.files));
-  // One notice for all of them, each file with how many read it: lx-fidelity's six tasks printed twenty lines of it,
+  // One notice for all of them, each file with how many read it: a run's six tasks printed twenty lines of it,
   // twice, and none was acted on — burying the two notices that were.
   const SHOWN_READ = 6;
   const readOutside: string[] = [];
@@ -564,7 +564,7 @@ export const checkPlan = async (
       }
 
       // …but its own folder's index: it puts the folder's parts together, and a part's change reaches it only through
-      // a name it imports, which the task's typecheck says at complete — la-velada's page index was one notice a part.
+      // a name it imports, which the task's typecheck says at complete — a run's page index was one notice a part.
       const outside = importers
         .filter(
           importer =>

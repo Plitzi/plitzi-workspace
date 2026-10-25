@@ -14,7 +14,7 @@ import type { LoadedRun, RunContext } from './run';
 /**
  * What appeared in the project's `tmp/` since the run opened that neither the CLI nor the project's server keeps there,
  * nor the lead handed the run: an agent's script, log or picture, written beside the project instead of in its copy or
- * its scratch (la-velada: `tmp/dev1/`, a co-lead's preview log). Read one level deep — said, never removed: the
+ * its scratch (`tmp/dev1/`, a co-lead's preview log). Read one level deep — said, never removed: the
  * project's `tmp/` is the person's too.
  */
 export const leftInTmp = async (root: string, record: Pick<RunRecord, 'openedAt' | 'inputs'>): Promise<string[]> => {
@@ -24,7 +24,7 @@ export const leftInTmp = async (root: string, record: Pick<RunRecord, 'openedAt'
   for (const entry of entries) {
     const file = `${PROJECT_TMP}/${entry.name}`;
     const handed = record.inputs.some(input => input.file === file || input.file.startsWith(`${file}/`));
-    // A plan or a stage the lead is writing, to hand the run: its, before it is handed (velada-shell's stage, told to
+    // A plan or a stage the lead is writing, to hand the run: its, before it is handed (a run's stage, told to
     // dev-1 in the seconds before \`run extend\` took it).
     const toHand = !entry.isDirectory() && /\.(plan|stage)\.json$/.test(entry.name);
     if (TOOL_TMP.includes(file) || handed || toHand) {
@@ -47,7 +47,7 @@ const toldFile = (loaded: LoadedRun): string => path.join(loaded.paths.dir, 'lef
 /**
  * What is new in the project's `tmp/` said to every agent, once each — whoever left it hears it with its next command,
  * whatever it holds: the lead's notice alone reached the one who did it only if the lead passed it
- * on (la-velada: a dev's scratch and a co-lead's log). Run at the agents' own commands, never at a read.
+ * on (a dev's scratch and a co-lead's log). Run at the agents' own commands, never at a read.
  */
 export const tellLeftInTmp = async (ctx: RunContext, loaded: LoadedRun): Promise<string[]> => {
   const left = await leftInTmp(ctx.root, loaded.record);
@@ -82,7 +82,7 @@ const BACKUP = /\.(?:[cm]?[jt]sx?|json|css|scss|md|html|svg)(?:-[\w.]+|~|\.(?:or
 
 /**
  * The files a task changed that are backups an editor or `sed -i -E` left — `roomBrowse.test.ts-E`: macOS's `sed` takes
- * `-E` as the backup's suffix. encore-4's went to review as a file of the task's, listed only as "(added)".
+ * `-E` as the backup's suffix. A run's went to review as a file of the task's, listed only as "(added)".
  */
 export const backupFiles = (files: readonly string[]): string[] => files.filter(file => BACKUP.test(file));
 

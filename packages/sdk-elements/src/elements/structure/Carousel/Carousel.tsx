@@ -87,7 +87,7 @@ const Carousel = ({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const current = clampIndex(index, count);
   // A scrolling row's ends are its box's, measured as it scrolls; a carousel of one slide at a time stands where its
-  // index is. A row several slides wide never brought its index to the last: its end could not be known (lx-controls).
+  // index is. A row several slides wide never brought its index to the last: its end could not be known.
   const [rowAt, setRowAt] = useState<CarouselEdges>({ atStart: true, atEnd: count <= 1, shown: 1 });
   const edges: CarouselEdges =
     mode === 'scroll'

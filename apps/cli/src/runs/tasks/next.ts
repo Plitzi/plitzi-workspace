@@ -177,7 +177,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
       // Sent back: what its last review asked, said where it is handed back — not only in the brief.
       const asked = lastAsked(view);
       // Why it comes back, as it is: lifted by the lead, or never let go — one held while another was worked was said
-      // "unblocked" right after a `complete` told it to take no other step (velada-polish).
+      // "unblocked" right after a `complete` told it to take no other step.
       const back =
         status === 'changes-requested'
           ? undefined
@@ -250,7 +250,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     ctx.quality === undefined || qualityRank(task.quality ?? 'standard') <= qualityRank(ctx.quality);
   const above = readyTasks(loaded.tasks, states, held).filter(task => forRole(task) && !fits(task));
   // A task whose file another task holds is not offered: taking it would be refused (`claimed`), and an agent refused
-  // three times stops — la-velada's integration of home/index.ts, while the task holding it was sent back.
+  // three times stops — a run's integration of home/index.ts, while the task holding it was sent back.
   const locks = await allLocks(ctx);
   const holderOfFile = (task: RunTask): { file: string; task: string } | undefined => {
     for (const file of task.files) {
@@ -308,7 +308,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   }
 
   // A designer takes no task of its own while others are at work on a UI it will review: their reviews come soon, and
-  // one at a task of its own leaves every one of them to the lead (la-velada's motion stage: the designer at a fight's
+  // one at a task of its own leaves every one of them to the lead (a run's motion stage: the designer at a fight's
   // page for twenty minutes, nine UI reviews the lead's). Nothing coming its way, it works as any developer.
   const reviewsComing = designer
     ? views.filter(
@@ -320,7 +320,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
       )
     : [];
   // …unless a ready task is one no developer takes — a designer's — or critical: it waits for nobody else, and while
-  // reviews keep coming it would wait for ever (lx-copy: t-shell, critical and the only designer's, sat ready seven
+  // reviews keep coming it would wait for ever (t-shell, critical and the only designer's, sat ready seven
   // minutes until the lead messaged design-1, four developers keeping a review always "coming").
   const ownToTake = ready.filter(task => task.role === DESIGNER || task.priority === 'critical');
   if (reviewsComing.length > 0 && ownToTake.length > 0) {
@@ -408,7 +408,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   const ownInReview = views.some(view => view.owner?.agent === ctx.agent && view.state.status === 'in-review');
   const nothingLeft = open.length === 0 || (roles !== undefined && coming.length === 0 && toReview.length === 0);
   // One of the team's base stays while the run is open, idle when nothing is left for it: the lead may stack another
-  // stage, and encore-2's designers and tester, stopped once every task was done, were stopped when one came.
+  // stage, and a run's designers and tester, stopped once every task was done, were stopped when one came.
   const team = await readTeam(ctx.root).catch(() => undefined);
   const ofBase = (team ? startedAgents(team) : []).some(each => each.agent === ctx.agent && each.onDemand !== true);
   const finished = !ownInReview && !ofBase && nothingLeft;
@@ -428,9 +428,9 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
 
   return {
     // Finished, it says so: what is ready for other roles is no reason to wait.
-    // Every answer that ends an agent's part says the skills' words (velada-fidelity's agents waited for them).
+    // Every answer that ends an agent's part says the skills' words (a run's agents waited for them).
     why:
-      // Every task approved: what is left is the finish — encore-4's design-1 waited 4.5 h told only to wait.
+      // Every task approved: what is left is the finish — a run's design-1 waited 4.5 h told only to wait.
       ofBase && open.length === 0 && !ownInReview
         ? "every task of the run is approved: it waits for its finish — the lead's summary, then a person's apply — and nothing comes to you unless the lead stacks a stage — you are of the team's base: wait for it (--follow)"
         : ofBase && nothingLeft && !ownInReview
@@ -440,7 +440,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
             : finished && roles !== undefined
               ? `${why} — the lead's to finish. You can stop`
               : finished && !isPrincipal(ctx.agent)
-                ? // Asked with no role (velada-shell's dev-1 after its first task): the same words, never the lead's finish to run.
+                ? // Asked with no role (a run's dev-1 after its first task): the same words, never the lead's finish to run.
                   "every task is done — the run's finish is the lead's. You can stop"
                 : why,
     ready: [],
@@ -585,7 +585,7 @@ export const followNext = async (
         (error.code === 'stopping' || error.code === 'forced-stop' || error.code === 'version-mismatch')
       ) {
         // Waiting for the run to go on is being there: unmarked, the monitor showed design-1 gone while the brake held
-        // the run (velada-dress) — `nextTask` refuses before it marks.
+        // the run — `nextTask` refuses before it marks.
         await markPresent(runPaths(ctx.root, runId), ctx.agent, ctx.now());
 
         return {
@@ -612,9 +612,9 @@ export const followNext = async (
     }
 
     // The agent waits, and the activity says for what — once for each reason: a wait run again after its timeout, for
-    // the same reason, is the same wait (velada-now's log held 28 "waiting" and 10 "idle" for a handful of waits).
+    // the same reason, is the same wait (a run's log held 28 "waiting" and 10 "idle" for a handful of waits).
     // By its reason, not its words: the tasks a reason names change as the run goes, and each change was a line
-    // (velada-dress: 118 "waiting" in a log of 505, for a handful of waits).
+    // (118 "waiting" in a log of 505, for a handful of waits).
     const why = next.why ?? 'nothing is ready';
     const reason = reasonOf(why);
     if (saidWaiting !== reason) {
@@ -639,9 +639,9 @@ export const followNext = async (
     // Its wait's end is no state of its own: it is told to wait again, and stays waiting until it takes work or stops.
     if (onDemand && Date.now() - started >= onDemandIdleMs) {
       // Not while a task of its own may come back to it: one in review, or blocked — nor, a designer, while more UI
-      // reviews are coming than the other designers running (velada-dress: design-2 stopped at 20:18 with four on
+      // reviews are coming than the other designers running (design-2 stopped at 20:18 with four on
       // their way, and was started again for them).
-      // Read only, so a wait through a version change is told it ended, not refused (encore-3).
+      // Read only, so a wait through a version change is told it ended, not refused.
       const loaded = await loadRun(ctx, runId, { anyVersion: true });
       const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
       const own = views.filter(view => view.owner?.agent === ctx.agent && view.state.status !== 'done');
@@ -656,7 +656,7 @@ export const followNext = async (
 
     if (Date.now() - started >= timeoutMs) {
       // Its own task in review comes back to it if it is sent back: an agent told only "nothing came" took the wait's
-      // end for the run's, and stopped — and velada-now's t-case and t-boxer came back to nobody.
+      // end for the run's, and stopped — and a run's t-case and t-boxer came back to nobody.
       const loaded = await loadRun(ctx, runId, { anyVersion: true });
       const inReview = (await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task))))
         .filter(view => view.owner?.agent === ctx.agent && view.state.status === 'in-review')

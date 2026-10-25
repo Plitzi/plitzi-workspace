@@ -14,7 +14,7 @@ import { listenerOn, listenersUnder, stopListener } from '../runs/processes';
 
 /**
  * `plitzi server list` and `plitzi server stop`: this project's own servers — what `npm start` left listening from this
- * folder — and stopping one, never by its name. encore: an agent stopping a hung `cat` with `pkill -f "cat"` matched
+ * folder — and stopping one, never by its name. An agent stopping a hung `cat` with `pkill -f "cat"` matched
  * every process whose command line held those letters (`/Applications/…` among them) and took the machine down. A
  * server is this project's when it listens from its folder (a run's copies, under `tmp/`, are each their own) and its
  * `/health` says it serves this folder (`projectMark`); anything else on a port is somebody else's, said and left.
@@ -145,7 +145,7 @@ export interface ServerResetOptions {
 
 /**
  * Puts what this folder's server keeps (`state/` — its kv, its jobs) back to a cold start: the next start is a fresh
- * clone's. encore-3: a reviewer's `page play` used the demo's data up, and emptying the copy's sqlite by hand was the only
+ * clone's. A reviewer's `page play` used the demo's data up, and emptying the copy's sqlite by hand was the only
  * way back. Refused while a server of this folder runs: it holds the files open and writes them back.
  */
 export const serverReset = async (options: ServerResetOptions): Promise<void> => {

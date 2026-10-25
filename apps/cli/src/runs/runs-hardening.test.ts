@@ -133,7 +133,7 @@ describe('a shared file, by turns', () => {
 });
 
 describe('a shared file both a task and the run changed', () => {
-  // velada-dress: t-sponsors' theme.ts lacked the token the run's newly approved header read, and author failed in its
+  // T-sponsors' theme.ts lacked the token the run's newly approved header read, and author failed in its
   // copy — the two were only put together at complete.
   it('is put together in the copy as it is brought up to the run: its checks run on both changes', async () => {
     const runId = await open();
@@ -252,7 +252,7 @@ describe('a UI review, by the team’s designers', () => {
     });
   });
 
-  // velada-polish: design-1's round went out before the lead's "only the bars this round" reached it.
+  // Design-1's round went out before the lead's "only the bars this round" reached it.
   it('hands a designer what the lead said while it reviewed, before its verdict goes', async () => {
     await inReview();
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
@@ -276,12 +276,12 @@ describe('a UI review, by the team’s designers', () => {
     );
     expect(refused.message).toContain('--skip-design is a lead');
     expect(refused.message).toContain('--approve --skip-design lead');
-    // encore-3: a hint that says --token contradicts the agent's own CLI, which says who it is: none says it.
+    // A hint that says --token contradicts the agent's own CLI, which says who it is: none says it.
     expect(refused.message).not.toContain('--token');
 
-    // design-1's review in its time is design-1's (encore-4): past it — its first, which holds its reading — the lead's.
+    // design-1's review in its time is design-1's: past it — its first, which holds its reading — the lead's.
     bench.advance(REVIEW_TIMEOUT_MS + FIRST_REVIEW_READING_MS + 60_000);
-    // encore-2: the lead approved a UI it never looked at; its review of the UI is a look, said before the approval.
+    // The lead approved a UI it never looked at; its review of the UI is a look, said before the approval.
     expect(
       (await refusal(reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'lead' })))
         .message
@@ -349,7 +349,7 @@ describe('the checks of one result, run once', () => {
 });
 
 describe('the checks of one result, kept for the day', () => {
-  // velada-dress: the finish ran its checks again two hours after its dry run, on the very same result — an hour was no
+  // The finish ran its checks again two hours after its dry run, on the very same result — an hour was no
   // unit a check reads; a day is.
   it('reuses a pass hours later the same day, and runs it again the next', async () => {
     const runId = await open();
@@ -369,7 +369,7 @@ describe('the checks of one result, kept for the day', () => {
 });
 
 describe('the checks of a result once Plitzi changed', () => {
-  // velada-now's upgrade put new code under the same 0.38.24: its finish said the checks of "this same result, not run
+  // A run's upgrade put new code under the same 0.38.24: its finish said the checks of "this same result, not run
   // again" — run by the Plitzi it had replaced.
   it('runs them again when the installed Plitzi was written again, whatever its version says', async () => {
     const manifest = path.join(bench.root, 'node_modules', '@plitzi', 'sdk-authoring', 'package.json');

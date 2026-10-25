@@ -28,7 +28,7 @@ export interface RunContext {
   checks: CheckRunner;
   /**
    * What a long command is at, said as it goes — to a person's terminal, apart from its answer — so a minute of checks
-   * is never a command that hangs (velada-dress: `run finish --apply` ran 23 acceptance lines again, saying nothing).
+   * is never a command that hangs (`run finish --apply` ran 23 acceptance lines again, saying nothing).
    */
   say?: (line: string) => void;
   /**
@@ -71,7 +71,7 @@ export const requirePerson = async (ctx: RunContext, runId: string, action: stri
 
 /**
  * The lead's or a person's: refused with a task's token — a task does not approve, stop or reassign. A task's token is the agent's, and what it may not do is the lead's to do or to ask the person for: `lead-only`, the
- * agent told to tell it — never `person-only`, which sent an agent to ask a person it has none of (velada-dress: dev-1,
+ * agent told to tell it — never `person-only`, which sent an agent to ask a person it has none of (dev-1,
  * answering its own spike).
  */
 export const requireNoTask = (ctx: RunContext, action: string): void => {

@@ -26,7 +26,7 @@ const task = (files: string[], check: string): PlannedTask => ({
   acceptance: [{ said: 'The judges as the original', check }]
 });
 
-// velada-fidelity: t-result-card was given match/styles.ts; its check measured the judges, written in pages/combate.ts.
+// T-result-card was given match/styles.ts; its check measured the judges, written in pages/combate.ts.
 describe('the elements a task’s checks read', () => {
   it('are read off page check and page measure, ours before its "=>"', () => {
     expect(
@@ -54,7 +54,7 @@ describe('the elements a task’s checks read', () => {
     ).toEqual([]);
   });
 
-  // velada-backlog: t-body-type measured the FAQ's answers, written in faq.ts, and changed them through fore() — its own.
+  // T-body-type measured the FAQ's answers, written in faq.ts, and changed them through fore() — its own.
   it('say nothing of an element whose file imports one of the task’s: that import is the task’s way to it', async () => {
     await bench.write(
       'src/space/pages/home/faq.ts',

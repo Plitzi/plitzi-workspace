@@ -258,7 +258,7 @@ const listShape = (
 /**
  * A declaration's defaults that are values — the ones an element needs to render — without the builder's placeholder
  * words ("Text", "Button"): written in code with no value of its own, an element draws nothing, never a word nobody
- * wrote (encore-4's Home window read "Text" for a room with nothing playing).
+ * wrote (a run's Home window read "Text" for a room with nothing playing).
  */
 const valueDefaults = (declaration: ElementDeclarationData | undefined): Record<string, unknown> => {
   const placeholders = new Set(declaration?.content?.placeholders ?? []);

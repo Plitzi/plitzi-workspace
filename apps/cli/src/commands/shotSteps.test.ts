@@ -41,7 +41,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     ]);
   });
 
-  // encore-3: `fill email=ana@x.com`, as `--fill` writes it, was refused in a step.
+  // `fill email=ana@x.com`, as `--fill` writes it, was refused in a step.
   it('reads a field filled as --fill writes it, an element named before its =', () => {
     expect(parseSteps('fill room-request-message=Para ti, Sam; type q=lofi', 500)).toEqual([
       { kind: 'type', target: 'room-request-message', text: 'Para ti, Sam' },
@@ -49,7 +49,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     ]);
   });
 
-  // lx-controls: `type [aria-label="Precio hasta"] 650` was cut at its first space into a selector that is none.
+  // `type [aria-label="Precio hasta"] 650` was cut at its first space into a selector that is none.
   it('reads a selector with a space inside its brackets or quotes whole, unquoted', () => {
     expect(parseSteps('type [aria-label="Precio hasta"] 650; click button:has-text("Ver más")', 500)).toEqual([
       { kind: 'type', target: '[aria-label="Precio hasta"]', text: '650' },
@@ -57,7 +57,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     ]);
   });
 
-  // lx-controls: a range's handle could not be used — a click on it timed out, and no step moved it.
+  // A range's handle could not be used — a click on it timed out, and no step moved it.
   it('reads a drag by whole pixels, either way, and refuses one that goes nowhere', () => {
     expect(parseSteps('drag price-max -120; drag [data-handle="low"] 40 8', 500)).toEqual([
       { kind: 'drag', target: 'price-max', dx: -120, dy: 0 },
@@ -87,7 +87,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     });
   });
 
-  // lx-product: `drag product-slides => .js-media-list -200 0` was refused until the pair was quoted.
+  // `drag product-slides => .js-media-list -200 0` was refused until the pair was quoted.
   it('reads an element named on both pages — ours => theirs — as one, before what a drag or a type takes', () => {
     expect(parseSteps('drag product-slides => .js-media-list -200 0; type q => ".search input" hola', 500)).toEqual([
       { kind: 'drag', target: 'product-slides => .js-media-list', dx: -200, dy: 0 },
@@ -96,7 +96,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   });
 });
 
-// encore-3: a choice kept across a reload, a countdown and a state the demo data never has were each a Playwright file.
+// A choice kept across a reload, a countdown and a state the demo data never has were each a Playwright file.
 describe('the steps that set what a page remembers and what time it is', () => {
   it('reads a reload, a stored value, a state written, the clock set and moved on', () => {
     expect(
@@ -128,7 +128,7 @@ describe('the steps that set what a page remembers and what time it is', () => {
     expect(problemOf('store only-a-key')).toContain('a key and its value');
   });
 
-  // encore-4: a chat line holding ";" was cut there; `fill .chat-input=Great` was one selector; a quoted state, refused.
+  // A chat line holding ";" was cut there; `fill .chat-input=Great` was one selector; a quoted state, refused.
   it('reads a ";" inside quotes as the text’s, a class before =, a state quoted as a shell writes it, and goto', () => {
     expect(
       parseSteps(

@@ -280,7 +280,7 @@ const agentsOf = async (
   const tookAny = new Set(
     log.flatMap(entry => (entry.action === 'take' && typeof entry.by === 'string' ? [entry.by] : []))
   );
-  // A run stopped holds everyone: said so, never "waiting for work" while work is there (velada-dress: the brake).
+  // A run stopped holds everyone: said so, never "waiting for work" while work is there (the brake).
   const betweenTasks = (agent: string, last: Record<string, unknown> | undefined): string =>
     view.status !== 'open'
       ? `waits for the run to go on — it is ${view.status}${view.status === 'stopping' ? ': plitzi run resume' : ''}`
@@ -289,7 +289,7 @@ const agentsOf = async (
         : `between tasks${last ? ` — last: ${lastDone(last) ?? ''}` : ' — not started yet'}`;
   /**
    * An agent stopped between two pieces of work for a fresh context, and not back at work yet: restarting — neither
-   * stopped (it comes back) nor idle (it is not there to take work). encore-4's design-1 read "stopped" the while.
+   * stopped (it comes back) nor idle (it is not there to take work). A run's design-1 read "stopped" the while.
    */
   const restartingOf = (agent: string): string | undefined => {
     // Its own last word, whatever it was: any command of it after the stop says it is back.
@@ -351,7 +351,7 @@ const agentsOf = async (
     const lastAt = typeof last?.at === 'string' ? Date.parse(last.at) : undefined;
     const lastLine = last ? lastDone(last) : undefined;
     const recent = lastAt !== undefined && now - lastAt < ACTIVE_MS && lastLine !== undefined;
-    // Finding out a spike it took: working, on that task — what it is at, never idle (velada-dress: the lead at
+    // Finding out a spike it took: working, on that task — what it is at, never idle (the lead at
     // t-shell's spike was nowhere on the board).
     const spiking = at ? undefined : view.tasks.find(task => task.status === 'spike' && task.spikedBy === lead);
     // Answering a question it took: working, on the task that asked — the board names it there too, held on it.
@@ -393,9 +393,9 @@ const agentsOf = async (
       ...(lead === LEAD ? {} : { onDemand: true as const }),
       approved: 0,
       // Reviewing only at a review it holds: what it did lately with nothing in hand (a look, an answer, an amend) is
-      // its last, never "working" — the board showed a lead at work that no task or card named (velada-dress).
+      // its last, never "working" — the board showed a lead at work that no task or card named.
       // At work without a review in hand — a stage written, agents started, an answer, a look — while its commands
-      // come: working, its last one said (encore: the lead read idle while it planned and launched). A wait is no work.
+      // come: working, its last one said (the lead read idle while it planned and launched). A wait is no work.
       status: at
         ? ('reviewing' as const)
         : recent && last?.action !== 'waiting'
@@ -466,7 +466,7 @@ const agentsOf = async (
           ...(task.noSignal ? { noSignal: true } : {})
         }
       : finished
-        ? // Every task approved: nothing is left for any agent, whatever it said last — velada-now's dev-2 showed
+        ? // Every task approved: nothing is left for any agent, whatever it said last — a run's dev-2 showed
           // "waiting for work" an hour after its agent had gone, design-1 idle.
           {
             agent,
@@ -499,7 +499,7 @@ const agentsOf = async (
                 ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
               }
             : lastBy.get(agent) === undefined && present.get(agent) === undefined && !lastRun.has(agent)
-              ? // Of the team's base and never started: not idle — nothing of it has run (velada-polish's dev-1 and
+              ? // Of the team's base and never started: not idle — nothing of it has run (a run's dev-1 and
                 // design-1 read idle before either was started). How to start it is the lead's to read (run watch),
                 // never this row's: a person following the run read a command line where an agent should be.
                 {
@@ -521,7 +521,7 @@ const agentsOf = async (
                       : ('idle' as const),
                   ...about,
                   // Running, before anything of it reached the run's log: what it ran says what it is at. Its process
-                  // gone with no stop said: ended, its last word a wait (encore's designers read idle for good).
+                  // gone with no stop said: ended, its last word a wait (a run's designers read idle for good).
                   doing: `${restartingOf(agent) ?? `${view.gone.includes(agent) && !stopped.has(agent) ? 'its process ended — ' : ''}${lastBy.get(agent) === undefined && lastRun.has(agent) ? `getting started${lately(agent)}` : betweenTasks(agent, lastBy.get(agent))}`}${tail}`,
                   ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
                 };

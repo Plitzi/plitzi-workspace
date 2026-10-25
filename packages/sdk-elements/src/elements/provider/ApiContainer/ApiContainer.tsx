@@ -252,7 +252,7 @@ const ApiContainer = ({
    *
    * A provider on the page being LEFT has its answer still (`useRscData` keeps it): the destination's payload,
    * prefetched before the route changes, is no reason to unmount what is on screen — the page emptied for the moment
-   * between, and a view transition's picture of it held nothing to move (la-velada's picker).
+   * between, and a view transition's picture of it held nothing to move (a run's picker).
    */
   const rscPending = serverMode && !!rscLocation && rscLocation !== currentRscLocation() && !rscAnswered;
 

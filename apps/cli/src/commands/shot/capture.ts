@@ -21,7 +21,7 @@ const idOf = (target: string): string[] => (/^[A-Za-z_]/.test(target) ? [`#${tar
 /**
  * An element by the name every page command takes: the space's element of that name, or — a plugin's own part, which
  * no element names (`reactions-more`, inside the Reactions plugin) — the node of that id. `page play` found a plugin's
- * picker that `page check --click` said was not on the page (encore's t-emojis).
+ * picker that `page check --click` said was not on the page (a run's t-emojis).
  */
 export const byNameOrId = (name: string): string => [namedBy(name), ...idOf(name)].join(', ');
 
@@ -30,7 +30,7 @@ const REGION = /^([a-z][a-z0-9]*)#([\w-]+)(?::(\d+))?$/;
 
 /**
  * A reading of the page, once more when the page navigated under it: a project served with its watch reloads the page
- * when its space changes — a run's preview at each approval (velada-dress: `page shot --compare` died with "Execution
+ * when its space changes — a run's preview at each approval (`page shot --compare` died with "Execution
  * context was destroyed"). Twice, it is refused as what it is.
  */
 export const readPage = async <R, A>(
@@ -71,7 +71,7 @@ export const awaited = (target: string): string => {
     return `${region[1]}#${region[2]}, ${region[1]}${namedBy(region[2])}`;
   }
 
-  // A component's instance too, as `targetOn` finds it: waited for by its name alone, encore-4's clip of one said
+  // A component's instance too, as `targetOn` finds it: waited for by its name alone, a run's clip of one said
   // "not on the page" while page measure read it.
   return BARE.test(target)
     ? [namedBy(target), target, ...idOf(target), `[data-plitzi-instance="${target}"]`].join(', ')
@@ -91,7 +91,7 @@ export const targetOn = async (
   try {
     const found = async (selector: string): Promise<boolean> => (await page.locator(selector).first().count()) > 0;
     // A section as a comparison names it, `section#home-sponsors`: its id, or its element's name — the report writes
-    // either the same way, and `--scroll-to` answered "not on" for the name it printed (velada-polish's design-1).
+    // either the same way, and `--scroll-to` answered "not on" for the name it printed (a run's design-1).
     const region = REGION.exec(target);
     if (region) {
       const [, tag, name, place] = region;
@@ -112,15 +112,15 @@ export const targetOn = async (
       }
 
       // `#home-fights-main > …`: an element's name written as an id, where the page has none by that id — the name is
-      // what a person reads in the builder and in a report (velada-fidelity's design-1 met "not on" for each).
+      // what a person reads in the builder and in a report (a run's design-1 met "not on" for each).
       const byName = target.replace(/#([A-Za-z_][\w-]*)/g, (_match, name: string) => namedBy(name));
       if (byName !== target && (await found(byName))) {
         return { selector: byName, found: true };
       }
 
       // `article-table td`: an element's name, then what is inside it — the name read as the element's, as a bare word
-      // is (lx-copy's dev-2 wrote [data-plitzi-el="article-table"] td by hand). `product-dot:nth-child(3)`: a name with
-      // a pseudo-class, an attribute or a class written on it, read the same way (lx-product's dots: 16 checks failed).
+      // is (a run's dev-2 wrote [data-plitzi-el="article-table"] td by hand). `product-dot:nth-child(3)`: a name with
+      // a pseudo-class, an attribute or a class written on it, read the same way (16 checks failed).
       const [first, ...rest] = target.trim().split(/\s+/);
       const leading = /^([A-Za-z_][\w-]*)((?:[:[.][^\s]*)?)$/.exec(first);
       if (leading && (rest.length > 0 || leading[2] !== '')) {
@@ -134,7 +134,7 @@ export const targetOn = async (
     }
 
     // A bare word: an element's name, a tag — or an id, as a section's anchor is (`--clip combates`) — or a component's
-    // instance, which has no node of its own: its root carries its name (`fights-heading`, velada-shell's lead).
+    // instance, which has no node of its own: its root carries its name (`fights-heading`, a run's lead).
     for (const selector of [namedBy(target), target, ...idOf(target), `[data-plitzi-instance="${target}"]`]) {
       if (await found(selector)) {
         return { selector, found: true };
@@ -158,7 +158,7 @@ const framing = (view: { viewport?: boolean; scrollTo?: string }, clip?: string)
 };
 
 /**
- * Runs in the page: how much more a sheet pinned to the screen holds than it shows — a modal page (encore-4's room
+ * Runs in the page: how much more a sheet pinned to the screen holds than it shows — a modal page (a run's room
  * stats) scrolls inside itself, and a whole-page picture showed its first screen alone. The widest such scroller's,
  * 0 when there is none. Self-contained — it is serialised.
  */
@@ -172,7 +172,7 @@ export const pinnedScroll = (): number => {
     }
 
     // Pinned itself, past the screen's foot or holding more than its box — a sheet the whole-page walk (`unrollPage`) let
-    // grow, or one held to the screen by its insets whose rows spill out of it (encore-4's stats panel).
+    // grow, or one held to the screen by its insets whose rows spill out of it (a run's stats panel).
     if (style.position === 'fixed') {
       more = Math.max(
         more,
@@ -202,7 +202,7 @@ export const HIDDEN_FOR_SHOT = 'data-plitzi-shot-hidden';
 /**
  * Runs in the page: every element pinned to the screen (fixed or sticky) that is neither the target, inside it nor
  * around it, hidden — what is drawn over a part scrolled to the top of the screen, a site's sticky header over the
- * first rows of encore-4's queue in every clipped picture. Self-contained — it is serialised.
+ * first rows of a run's queue in every clipped picture. Self-contained — it is serialised.
  */
 export const hidePinned = (target: Element, attribute: string): number => {
   let hidden = 0;
@@ -277,7 +277,7 @@ export const capture = async (page: BrowserPage, how: Framing): Promise<Uint8Arr
  */
 /**
  * Runs in the page: every animation that ends, ended — the page as it settles — and every loop held at its start. The
- * space's own motion is held by `MOTION_STILL_CSS`; another site's, or one written by hand, ran on: velada-now's
+ * space's own motion is held by `MOTION_STILL_CSS`; another site's, or one written by hand, ran on: a run's
  * comparisons caught the original's late arrivals mid-fade, and read them as changes (6% on an artist's page).
  * Self-contained — it is serialised.
  */
@@ -417,7 +417,7 @@ export const pictureOf = async (
     ? await page.evaluate((selector: string) => document.querySelectorAll(selector).length, WAITING_FOR_SCROLL)
     : 0;
   // A page is taken without scrolling: a lazy picture below the fold would be a hole, and an arrival waiting for the
-  // scroll would be one too — in a clip as in the whole page (velada-dress: a section's photo, lazy, read as none).
+  // scroll would be one too — in a clip as in the whole page (a section's photo, lazy, read as none).
   // Loaded, unrolled (the SDK scrolls a pane of its own, which a full-page picture cannot extend) and held at its end,
   // the page is what a reader scrolling down ends up seeing.
   const whole = how.kind === 'page';
@@ -426,7 +426,7 @@ export const pictureOf = async (
   if (whole) {
     await page.evaluate(unrollPage, undefined);
     // Back at its top, the document's and any pane's: the walk that loads its pictures, or a link the page followed to
-    // an anchor, left it scrolled — velada-dress's t-match pictured from mid-page, not from the hero it was about.
+    // an anchor, left it scrolled — a run's t-match pictured from mid-page, not from the hero it was about.
     await page.evaluate(() => {
       window.scrollTo(0, 0);
       for (const pane of Array.from(document.querySelectorAll('*'))) {
@@ -438,7 +438,7 @@ export const pictureOf = async (
   }
 
   // Scrolled to once its pictures are loaded: the walk that loads them leaves the page where it ended, and the
-  // viewport pictured the top (velada-polish's design-1, `--scroll-to … --viewport`).
+  // viewport pictured the top (a run's design-1, `--scroll-to … --viewport`).
   if (view.scrollTo) {
     await page.locator(shown[view.scrollTo]).first().scrollIntoViewIfNeeded();
   }

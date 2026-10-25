@@ -111,7 +111,7 @@ const isUnbound = (source: string): boolean => {
 /**
  * The images whose address is still a binding, said once with why: what they read has no value — a row the data has
  * none of (an address naming an id nobody has), or a field it lacks. One "never loaded" each read as a broken server
- * (la-velada's /boxeadores/ibai: four of them).
+ * (a run's /boxeadores/ibai: four of them).
  */
 const unboundImages = (images: readonly { source: string; elementId?: string }[]): PageIssue[] => {
   const bindings = [
@@ -199,7 +199,7 @@ const IMAGES_APART = 3;
 
 /**
  * The images that did not load, each a finding — or, past `IMAGES_APART` from one server, one for that server: a page of
- * twenty fighters on a slow CDN buried the rest of its check under twenty lines (velada-dress, t-404).
+ * twenty fighters on a slow CDN buried the rest of its check under twenty lines (t-404).
  */
 const unloadedImages = (images: readonly { source: string; elementId?: string; loading?: boolean }[]): PageIssue[] => {
   const hostOf = (source: string): string => {

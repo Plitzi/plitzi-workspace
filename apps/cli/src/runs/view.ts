@@ -85,7 +85,7 @@ export interface TaskLine {
   spikedBy?: string;
   /**
    * At work, while its agent is at another of the tasks it holds — one at a time: that one. A task sent back while its
-   * agent wrote the next one was on the board twice, its agent "ready" and "at work" at once (velada-dress).
+   * agent wrote the next one was on the board twice, its agent "ready" and "at work" at once.
    */
   parkedFor?: string;
   /** At work, held on a question its agent asked the lead and nobody answered: which, in a line. */
@@ -122,7 +122,7 @@ export interface Attention {
   /** The file it is about, when it is about one: what keeps it the same notice while its words change. */
   file?: string;
   /**
-   * What else keeps it the same notice while its words change — idle agents and how far the board is: lx-product's lead
+   * What else keeps it the same notice while its words change — idle agents and how far the board is: a run's lead
    * was woken eleven times for one idle designer, each time the cards its advice named changed.
    */
   subject?: string;
@@ -258,7 +258,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   const log = await readRunLog(loaded.paths);
   const { gone, starting, running } = await agentsNow(loaded.paths, views, team, log, now);
   // A task sent back to an agent not running waits for it to be started, and the lead is told that (`agentsNeeded`):
-  // "no signal — reassign it" beside it contradicted it (encore-2: t-room-read's dev-2).
+  // "no signal — reassign it" beside it contradicted it (t-room-read's dev-2).
   const owesSignal = (view: TaskView): boolean =>
     view.owner !== undefined &&
     !starting.has(view.owner.agent) &&
@@ -309,7 +309,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     });
   }
 
-  // Free means started and idle: an agent on demand never started is none (lx-copy: "dev-3, design-2 are free" for two
+  // Free means started and idle: an agent on demand never started is none ("dev-3, design-2 are free" for two
   // agents nobody had started).
   attention.push(
     ...bottlenecks(
@@ -417,7 +417,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     }
 
     // A file a task makes too long is said to its agent by its own `task check` and refused at `complete` — never the
-    // lead's to relay: lx-controls' message arrived after the agent had split it, a stale warning read as current.
+    // lead's to relay: a run's message arrived after the agent had split it, a stale warning read as current.
 
     if (view.owner && view.state.status !== 'done') {
       const start = await readStart(view.paths);
@@ -469,7 +469,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   (await unreadFor(loaded, LEAD, false))
     .filter(message => !answered.has(message.id) && !answeringNow(message))
     // Said for the lead to know of a task approved since — by it, or by a designer about it: its history now, in the
-    // inbox — nothing to act on, and it held velada-now's finish.
+    // inbox — nothing to act on, and it held a run's finish.
     .filter(message => !(message.fyi === true && byId.get(message.about ?? message.from)?.state.status === 'done'))
     .forEach(message =>
       attention.push({
@@ -485,7 +485,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       })
     );
 
-  // A request of a task not approved yet is no one's to act on: it goes in with the approval (velada-polish's lead was
+  // A request of a task not approved yet is no one's to act on: it goes in with the approval (a run's lead was
   // woken for t-match-bars's theme request while it was in review). One left after its approval is.
   const approvedTasks = new Set(views.filter(view => view.state.status === 'done').map(view => view.task.id));
   const pending = (await requestsOf(loaded)).filter(
@@ -532,7 +532,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     remaining.map(task => ({ ...task, dependsOn: task.dependsOn.filter(id => remaining.some(each => each.id === id)) }))
   );
   // Read at the pace this project's runs (or, before one ended, this machine's) took against their estimates: a lead's
-  // estimate is the same guess each time — encore's 630 min of plan took 148.
+  // estimate is the same guess each time — a run's 630 min of plan took 148.
   const pace = await readHistory(ctx.root);
   const left = Math.max(0, ...chains.values()) * (pace?.ratio ?? 1);
 

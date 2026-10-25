@@ -16,7 +16,7 @@ const pageOf = (html: string) => {
   } as unknown as BrowserPage;
 };
 
-// encore-2: `page measure` answered "No element …" six times on the server's page for a space that did not author.
+// `page measure` answered "No element …" six times on the server's page for a space that did not author.
 describe("the server's page for a space that does not author", () => {
   it('is said with what the server said, and a page of the space is not', async () => {
     expect(

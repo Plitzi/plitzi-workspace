@@ -19,7 +19,7 @@ const report: CompareReport = {
 };
 
 describe('a comparison with another site, said', () => {
-  // velada-polish: sponsors in light against an original with no light scheme — 99.5%, 2526px off — read as the section's.
+  // Sponsors in light against an original with no light scheme — 99.5%, 2526px off — read as the section's.
   it('says a clipped section lined up with something else, before its figures are read', () => {
     const lines = compareText({
       ...report,
@@ -39,7 +39,7 @@ describe('a comparison with another site, said', () => {
     );
   });
 
-  // la-velada's artist page lost the original's warm light, its portrait's corners and its card's halo: a few percent
+  // A run's artist page lost the original's warm light, its portrait's corners and its card's halo: a few percent
   // of pixels, and no text — three reviews passed it. Said by section, before the words.
   it('says the dress a section has there and not here — and what it adds — before the words', () => {
     const lines = compareText({
@@ -97,7 +97,7 @@ describe('a comparison with another site, said', () => {
     ]);
   });
 
-  // velada-dress/-polish: "lacks radial-gradient" said what, never on which of our elements — a developer looked for it.
+  // "lacks radial-gradient" said what, never on which of our elements — a developer looked for it.
   it('says the element of ours where the other page wears a look this one lacks', () => {
     const look = 'box-shadow (box-shadow 48px rgba(199, 168, 107, 0.1))';
     expect(

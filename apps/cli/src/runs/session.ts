@@ -3,7 +3,7 @@ import path from 'node:path';
 
 /**
  * Which session of its harness a command ran in — what a run reads liveness, "one task a session" and an agent's cost
- * by. Encore read them off its log alone: 556 commands ran after their agent's `stops` with no start logged, and the
+ * by. A run read them off its log alone: 556 commands ran after their agent's `stops` with no start logged, and the
  * CLI took agents long gone for running (#27, #44, #49). A session the CLI started says it (`PLITZI_SESSION`); one a
  * harness started says its own (Claude Code's `CLAUDE_CODE_SESSION_ID`); any other is the harness process the command
  * runs under, by its pid and when it started.

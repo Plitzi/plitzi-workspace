@@ -48,7 +48,7 @@ describe('stopTree', () => {
   });
 });
 
-// velada-fidelity: the servers its agents started in their copies listened on after the finish removed the copies.
+// The servers its agents started in their copies listened on after the finish removed the copies.
 describe.skipIf(process.platform === 'win32')('the servers left listening in a run’s folders', () => {
   it('finds a server by the folder it runs in, and stops it — none outside it', async () => {
     const dir = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-listeners-')));

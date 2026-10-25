@@ -50,7 +50,7 @@ describe('openPage', () => {
     ).toBe(true);
   });
 
-  // lx-controls: a shop prefetched its checkout's scripts one after another, and every reading of it waited 10 s more.
+  // A shop prefetched its checkout's scripts one after another, and every reading of it waited 10 s more.
   it('settles without waiting on what the browser fetches for a page to come', async () => {
     const prefetch: SettlingRequest = {
       url: () => '/cdn/checkout.js',

@@ -122,7 +122,7 @@ describe('useScrollInteractions', () => {
     expect(fired).not.toHaveBeenCalled();
   });
 
-  // encore: "load more as you scroll" had no trigger on a page that scrolls the document — a "Show more" button instead.
+  // "load more as you scroll" had no trigger on a page that scrolls the document — a "Show more" button instead.
   describe('onView', () => {
     let observed: { callback: IntersectionObserverCallback; options?: IntersectionObserverInit; node?: Element };
     const disconnect = vi.fn();

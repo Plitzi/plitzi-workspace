@@ -125,7 +125,7 @@ export type ActionKvStore = {
   /**
    * Reads the list's entry `id`, hands it to `change` and writes back what that answers — `{ score, value }`, or `null`
    * to take it out — reading and asking again when somebody wrote in between. `undefined` writes nothing. A vote that
-   * re-scores an entry while the track it is starts was the race (encore's queue): the entry gone, nothing is put back.
+   * re-scores an entry while the track it is starts was the race (a run's queue): the entry gone, nothing is put back.
    */
   listChange: (
     list: string,
@@ -538,7 +538,7 @@ export type ActionRunResult = {
   /** Why the run failed, when a step said so for the caller (`ActionRefusal`). Absent for every other failure. */
   error?: string;
   /**
-   * The refusal's code, when its step gave one (`refuse('banned', …)`): what a page tells refusals apart by — encore-3's
+   * The refusal's code, when its step gave one (`refuse('banned', …)`): what a page tells refusals apart by — a run's
    * specs could only read their words.
    */
   code?: string;

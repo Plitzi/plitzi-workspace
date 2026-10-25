@@ -12,7 +12,7 @@ const steps = (script: string) => {
   return parsed;
 };
 
-// lx-product: `page shot --steps "click <pill>"` pictured the menu shut — the picture before the click was the only one.
+// `page shot --steps "click <pill>"` pictured the menu shut — the picture before the click was the only one.
 describe('page shot --steps', () => {
   it('pictures what steps leave when they end on an action, and adds none after a picture', () => {
     expect(endsActing(steps('click site-menu'))).toBe(true);
@@ -23,7 +23,7 @@ describe('page shot --steps', () => {
 });
 
 describe('the steps a --fill, --click and --hover are played as', () => {
-  // encore-2: design-1 asked `page shot --click site-avatar --hover <item>` and was refused an option shot did not have.
+  // Design-1 asked `page shot --click site-avatar --hover <item>` and was refused an option shot did not have.
   it('clicks, then hovers and pictures the page so — and pictures each click when nothing is hovered after', () => {
     expect(interactionSteps(undefined, ['site-avatar'], 'site-menu-item')).toBe(
       'click "site-avatar"; wait 600; hover "site-menu-item"; wait 400; shot site-menu-item hovered'

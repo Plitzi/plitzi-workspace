@@ -84,7 +84,7 @@ describe('plitzi explain', () => {
     expect(process.exitCode).toBe(1);
   });
 
-  // encore-4: `explain active`, `explain keepState`, `explain page-play` failed nine times; a search answered them.
+  // `explain active`, `explain keepState`, `explain page-play` failed nine times; a search answered them.
   it('answers a name it does not have with what its words describe', async () => {
     const page = new Command('page');
     page.command('play').description('An interaction step by step, each element read after it');
@@ -98,7 +98,7 @@ describe('plitzi explain', () => {
     expect(process.exitCode).toBe(0);
   });
 
-  // encore-4: `explain keepState` — a setting of the space — was "no name".
+  // `explain keepState` — a setting of the space — was "no name".
   it('says a setting of the space as one', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     await explainCommand('keepState', {});
@@ -106,7 +106,7 @@ describe('plitzi explain', () => {
     expect(log.mock.calls.flat().join('\n')).toContain('keepState — a setting of the whole space');
   });
 
-  // lx-controls: agents read the bundle's types and every command's help to learn whether Plitzi had a way to do a thing.
+  // Agents read the bundle's types and every command's help to learn whether Plitzi had a way to do a thing.
   it('searches by words what authoring knows, the CLI’s codes and its commands with their options', () => {
     const page = new Command('page');
     page.command('outline').description('What a page is made of, as a visitor sees it');

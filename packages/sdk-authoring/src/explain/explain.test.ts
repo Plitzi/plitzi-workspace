@@ -193,7 +193,7 @@ describe('explain', () => {
 
 const explainText = (name: string): string => explain(name).map(explanationText).join('\n');
 
-// lx-controls: a developer asked `explain host`, `explain theme` and `explain max`, and was told they were nothing.
+// A developer asked `explain host`, `explain theme` and `explain max`, and was told they were nothing.
 describe('explain, of what a template reads and calls', () => {
   it('says every global source, with the fields the platform decides of it', () => {
     expect(explainText('theme')).toContain('theme — global source, read by every template by its name');
@@ -225,7 +225,7 @@ describe('explain, of what a template reads and calls', () => {
   });
 });
 
-// lx-controls: agents read the bundle's types to learn whether a carousel could say where it stands, or `checked` was a
+// Agents read the bundle's types to learn whether a carousel could say where it stands, or `checked` was a
 // state — a question in words, answered by name.
 describe('explain --search', () => {
   it('finds what the words describe, best first — a field an element publishes, a state, a source, a function', () => {
@@ -239,8 +239,10 @@ describe('explain --search', () => {
     expect(first('checked state')).toBe('state:checked');
     expect(first('who is signed in')).toBe('source:auth');
     expect(first('largest number')).toBe('function:max');
-    // encore-3: a name asked whole ranks over one that only shares a word with the question.
-    expect(explainSearch('date time ago relative filter', 3).map(hit => `${hit.kind}:${hit.name}`)).toContain('filter:ago');
+    // A name asked whole ranks over one that only shares a word with the question.
+    expect(explainSearch('date time ago relative filter', 3).map(hit => `${hit.kind}:${hit.name}`)).toContain(
+      'filter:ago'
+    );
     expect(explainSearch('the of in')).toEqual([]);
   });
 
@@ -250,14 +252,14 @@ describe('explain --search', () => {
   });
 });
 
-// encore-4: `explain active` failed nine times, and the open tab was lit with `active` — the press — where `current` is
+// `explain active` failed nine times, and the open tab was lit with `active` — the press — where `current` is
 // the chosen one; a tab's `aria-selected` was read off the served HTML.
 describe('explain, of a state a class styles and what an element marks its node with', () => {
   it('says a state by its name, and that active is the press', () => {
     expect(explainText('active')).toContain('active — a state a class styles (Active): while it is pressed');
     expect(explainText('active')).toContain('never the chosen one of a set: that is current');
     expect(explainText('current')).toContain('the selected tab (aria-selected)');
-    // encore-4's designer lit a nav LED through a custom property, told a state could not style a ::before.
+    // A run's designer lit a nav LED through a custom property, told a state could not style a ::before.
     expect(explainText('current')).toContain("pseudos: { before: { states: { 'current': { … } } } }");
     expect(explainList('state').map(each => each.name)).toContain('expanded');
   });

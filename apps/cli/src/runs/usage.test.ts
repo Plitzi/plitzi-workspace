@@ -21,7 +21,7 @@ afterEach(async () => {
 const say = (id: string, to: string): Promise<void> =>
   fs.writeFile(path.join(runDir, 'messages', `${id}.json`), JSON.stringify({ id, to, from: 'lead', text: 'x' }));
 
-// lx-copy: design-2 measured on through a review the lead had withdrawn — a page command reads no inbox, and the
+// Design-2 measured on through a review the lead had withdrawn — a page command reads no inbox, and the
 // message waited for its verdict, refused three times.
 describe('the messages a page command points its agent at', () => {
   it('counts what was said to the agent by name and not read — not another’s, not what it read', async () => {
@@ -50,7 +50,7 @@ describe('why a command failed, as its usage keeps it', () => {
       "error: unknown option '--follow'"
     );
     expect(errorLine('· 2 messages for you not read yet\nThe page answered 500\nmore\n')).toBe('The page answered 500');
-    expect(errorLine('Refused: task t-a is not yours (--token encore.dev-1.0123456789abcdef0123456789abcdef)')).toBe(
+    expect(errorLine('Refused: task t-a is not yours (--token acme.dev-1.0123456789abcdef0123456789abcdef)')).toBe(
       'Refused: task t-a is not yours (--token …'
     );
     expect(errorLine('')).toBeUndefined();
@@ -67,7 +67,7 @@ describe('what a failed command said, as its usage keeps it', () => {
     expect(failureLines('one\ntwo\n')).toEqual(['one', 'two']);
   });
 
-  // encore-2's dev-2: a test failing said a diff's fragments, never which test.
+  // A test failing said a diff's fragments, never which test.
   it('names the tests that failed first, before what their assertions printed', () => {
     const said = [
       '▶ badges',

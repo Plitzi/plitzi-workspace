@@ -13,7 +13,7 @@ import { fail } from './terminal';
 /**
  * `plitzi functions later [key] --now`: what the project's running server holds to run later (`ctx.later`), and one of
  * them started now — asked through the project's `tmp/`, since the server holds its queue's file. A spec of something
- * that starts in five minutes waited the five, every pass (encore-3's shows).
+ * that starts in five minutes waited the five, every pass (a run's shows).
  */
 
 export interface FunctionsLaterOptions {

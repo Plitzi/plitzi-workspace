@@ -8,7 +8,7 @@ const dressed = (clip: string, look: string) => ({
   check: `plitzi page shot / --url $PLITZI_URL --compare https://example.com/ --clip ${clip} --dress "${look}"`
 });
 
-// velada-dress: the sponsors section's glow was t-heading's, its banners t-sponsors' — one waited fifty minutes on the other.
+// The sponsors section's glow was t-heading's, its banners t-sponsors' — one waited fifty minutes on the other.
 describe('one section dressed by two tasks', () => {
   it('says the tasks that both prove the dress of a section, and none that prove their own', () => {
     const plan = benchPlan();

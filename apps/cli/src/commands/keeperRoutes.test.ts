@@ -75,7 +75,7 @@ const bench = (overrides: Partial<KeeperDeps<Page>> = {}) => {
   return { routes, ask, opened, later: (ms: number) => (time += ms) };
 };
 
-// lx-product: a stateful read of the other site — a click, a play, an outline — launched and loaded it cold each time,
+// A stateful read of the other site — a click, a play, an outline — launched and loaded it cold each time,
 // 10–17 s a call, where a kept one reads in 1–2.
 describe('the kept browser’s routes', () => {
   it('reads a state on a page of its own, closed after — a plain reading from the pages kept', async () => {

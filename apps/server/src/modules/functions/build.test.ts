@@ -86,7 +86,7 @@ describe('building a space’s functions', () => {
     ]);
   });
 
-  // encore: every domain appended to one index.ts, and four conflicts and three integration tasks were that list.
+  // Every domain appended to one index.ts, and four conflicts and three integration tasks were that list.
   describe('a domain a file, with nothing listing them', () => {
     const domain = (namespace: string, extra = '') => `import { defineFunctions } from '@plitzi/sdk-server/functions';
 
@@ -117,7 +117,7 @@ export default defineFunctions({
       expect(merged.allow?.hosts.sort()).toEqual(['oembed.example', 'www.youtube.com']);
     });
 
-    // encore's testing.ts: a helper of its tests, at the top, reading node:fs — bundled as a definition, every build failed.
+    // A run's testing.ts: a helper of its tests, at the top, reading node:fs — bundled as a definition, every build failed.
     it('leaves out a top-level file that exports no definition, whatever it imports', async () => {
       const merged = await load({
         'rooms.ts': domain('rooms'),

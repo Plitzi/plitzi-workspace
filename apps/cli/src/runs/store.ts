@@ -53,7 +53,7 @@ export const keepFiles = async (
 
 /**
  * The folders above `file` left empty, up to `root` and never past it: a tree a removal leaves must be the tree the
- * project would be — lx-copy's t-base removed a plugin's files, and the empty `src/plugins/StatCard/` stayed in every
+ * project would be — a run's t-base removed a plugin's files, and the empty `src/plugins/StatCard/` stayed in every
  * copy, the preview and the run's work, where every folder of `src/plugins/` is a plugin the server refuses to build.
  */
 const pruneEmptyParents = async (root: string, file: string): Promise<void> => {

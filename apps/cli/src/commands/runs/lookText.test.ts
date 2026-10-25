@@ -6,7 +6,7 @@ import { lookText, unpicturedText } from './lookText';
 
 type Looked = Parameters<typeof lookText>[0];
 
-// encore-3: "No picture could be taken" alone left four reviewers to page through it themselves.
+// "No picture could be taken" alone left four reviewers to page through it themselves.
 describe('a look that took no picture', () => {
   it('says why each was not taken', () => {
     // The few fields a look's text reads when nothing was pictured; the rest of a look is none of this test's.
@@ -29,19 +29,19 @@ describe('a look that took no picture', () => {
     expect(text).toContain('No picture could be taken.');
     expect(text).toContain('Not pictured (1):');
     expect(text).toContain('room-request is not on the page');
-    // encore-4's designer looked at its own task to see nothing else moved, and was not told --before does it.
+    // A run's designer looked at its own task to see nothing else moved, and was not told --before does it.
     expect(text).not.toContain('Not set beside the run before it');
     expect(stripVTControlCharacters(lookText({ ...looked, notBeside: true }))).toContain(
       'Not set beside the run before it — that nothing else moved is read with it: --before'
     );
-    // encore-4: the song playing differed on the two sides — the copy's queue played by its agent.
+    // The song playing differed on the two sides — the copy's queue played by its agent.
     expect(stripVTControlCharacters(lookText({ ...looked, warmCopy: true }))).toContain(
       'plitzi server reset in its copy (its server stopped), then look again --fresh'
     );
   });
 });
 
-// encore-4: "siteRooms is not on <url>" ten times — a part a guest has not, and no line said how to see it.
+// "siteRooms is not on <url>" ten times — a part a guest has not, and no line said how to see it.
 describe('pictures not taken for one reason', () => {
   it('are said once, with how to see the part', () => {
     const text = unpicturedText(

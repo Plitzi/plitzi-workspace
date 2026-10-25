@@ -92,7 +92,7 @@ export const readSpaceSources = async (
   }
 
   const under = await filesUnder(path.join(root, spaceDir));
-  // A module only its own test reads is kept on purpose — encore's `theme.ts`, its palette held to AA by `theme.test.ts`
+  // A module only its own test reads is kept on purpose — a run's `theme.ts`, its palette held to AA by `theme.test.ts`
   // beside it: what a test of the space imports is not unused.
   const tested = new Set<string>();
   for (const test of under.filter(file => SOURCE.test(file) && /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(file))) {

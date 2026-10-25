@@ -7,7 +7,7 @@ export const REFUSED_WINDOW_MS = 20 * 60_000;
 export const REFUSED_AGAIN = 3;
 
 /**
- * A task refused again and again, said to the lead while it happens — not in the report after: velada-dress's dev-1 was
+ * A task refused again and again, said to the lead while it happens — not in the report after: a run's dev-1 was
  * refused four times in twenty minutes on t-heading (a file another task held, a wait run out, a complete from a wait)
  * and nobody knew until the run was over. Counted by the task the refused command names, its code and what it said.
  */

@@ -125,7 +125,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
 /**
  * The folder a server named by `--url` serves, when it is one of this project's run copies or a run's preview: its `/health` says the mark
  * of the folder it serves, and the copy with that mark is the space its routes are judged by — not the project's own
- * (lx-copy: a real product page on a copy's server read as "the page for an address nothing answers", judged by the
+ * (a real product page on a copy's server read as "the page for an address nothing answers", judged by the
  * tour still in the project). None found: the project's.
  */
 const servedFolder = async (root: string, url: string): Promise<string | undefined> => {
@@ -138,7 +138,7 @@ const servedFolder = async (root: string, url: string): Promise<string | undefin
   }
 
   for (const run of await fs.readdir(runsDir(root)).catch(() => [])) {
-    // The run's preview too (`run preview`, its approved work): encore's lead read /rooms and /charts there as not
+    // The run's preview too (`run preview`, its approved work): a run's lead read /rooms and /charts there as not
     // found, judged by the project's space the finish had not written yet.
     const preview = previewDir(runPaths(root, run));
     if (projectMark(preview) === mark) {
@@ -157,7 +157,7 @@ const servedFolder = async (root: string, url: string): Promise<string | undefin
 };
 
 /**
- * How many pages a check reads at once, each with its widths and schemes at once: four of la-velada's pages at two
+ * How many pages a check reads at once, each with its widths and schemes at once: four of a run's pages at two
  * widths took 6.9 s one by one, 4.2 s two at a time — and no less three or four at a time, the project's server busy.
  */
 const ROUTES_AT_ONCE = 2;

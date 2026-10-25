@@ -9,7 +9,7 @@ import { localFetch } from '../http';
 
 /**
  * A copy's server kept a while after the command that served it: an agent pictures its page again and again, and each
- * `page shot` started the copy's server and stopped it (seconds each, velada-dress's agents shot hundreds). Kept for
+ * `page shot` started the copy's server and stopped it (seconds each, a run's agents shot hundreds). Kept for
  * `LINGER_MS` past its last use, by a watchdog of its own that stops it then — or once the copy is gone — and stopped
  * at once by whatever serves the copy itself (`complete`, `task check`): two servers on one copy fight over its state.
  * Where processes are not a group to stop together (Windows), nothing is kept.
@@ -167,7 +167,7 @@ const previewedFile = (cache: string): string => path.join(cache, 'previewed.jso
 
 /**
  * A copy served by a preview (`task look`, `run preview --task`), said where a picture asks for the copy's server: one
- * started beside it holds the copy's state (its kv) against the other's, and one of them fails — velada-polish's lead
+ * started beside it holds the copy's state (its kv) against the other's, and one of them fails — a run's lead
  * look pictured nothing.
  */
 export const markPreviewed = (cache: string, port: number): Promise<void> =>

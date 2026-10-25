@@ -62,9 +62,9 @@ describe('plitzi run monitor', () => {
     expect(
       screen.some(line => line.includes('agent-2') && line.includes('● working') && line.includes('writes t-home'))
     ).toBe(true);
-    // Of the team, never started: not idle — nothing of it has run (velada-polish).
+    // Of the team, never started: not idle — nothing of it has run.
     expect(screen.some(line => line.includes('agent-3') && line.includes('not started'))).toBe(true);
-    // What an agent is at, never how to start it — a command line in its row read as noise (lx-controls).
+    // What an agent is at, never how to start it — a command line in its row read as noise.
     expect(screen.some(line => line.includes('agent-3') && line.includes('task next'))).toBe(false);
     // Whether each starts with the run, in a column of its own (Carlos): the team's base here.
     expect(screen.some(line => /agent-2\s+base\s/.test(line))).toBe(true);
@@ -258,7 +258,7 @@ describe('plitzi run monitor', () => {
     expect(repeats.every(line => line.indexOf('“The CDN') === unfolded[row].indexOf('“The CDN') + 2)).toBe(true);
   });
 
-  // encore-4: the lead took a review whose UI waited for a designer, said "reviewing", and its card read "nobody yet".
+  // The lead took a review whose UI waited for a designer, said "reviewing", and its card read "nobody yet".
   it('puts a review the lead took in the lead’s column, named, though its UI waits for a designer', async () => {
     const runId = await open();
     const menu = await take('agent-3', 't-menu');
@@ -291,7 +291,7 @@ describe('plitzi run monitor', () => {
     expect(untaken.some(line => /t-des.*air waiting/.test(line))).toBe(true);
   });
 
-  // encore-4: the approved column read in the plan's order; Carlos looks for what was approved last.
+  // The approved column read in the plan's order; Carlos looks for what was approved last.
   it('lists the approved tasks the latest approval first', async () => {
     const runId = await open();
     const { tasks } = (await monitorRun(lead(), runId)).view;
@@ -324,7 +324,7 @@ describe('plitzi run monitor', () => {
     const held = plain(flowLines((await monitorRun(lead(), runId)).view.tasks, 200));
     expect(held.find(line => line.includes('pending'))).toMatch(/at work \(0\).*held \(1\)/);
     expect(held.some(line => line.includes(`t-home asks lead (${asked.question.id})`))).toBe(true);
-    // The lead's row says what waits on it, not idle (velada-polish: dev-3 kept waiting, the lead "idle").
+    // The lead's row says what waits on it, not idle (dev-3 kept waiting, the lead "idle").
     expect((await monitorRun(lead(), runId)).agents.find(agent => agent.agent === 'lead')?.doing).toBe(
       `1 question waits for you: t-home's ${asked.question.id}`
     );
@@ -344,7 +344,7 @@ describe('plitzi run monitor', () => {
     expect(back.some(line => line.includes('sent back ('))).toBe(false);
   });
 
-  // velada-dress: the lead answered t-fights, and nothing on the board moved until dev-1 had completed it — an answer is
+  // The lead answered t-fights, and nothing on the board moved until dev-1 had completed it — an answer is
   // taken up by its agent, and that is what puts the task at work again.
   it('holds an answered task until its agent has the answer, then says it goes on', async () => {
     const runId = await open();
@@ -363,7 +363,7 @@ describe('plitzi run monitor', () => {
     );
   });
 
-  // velada-dress: dev-2 stood "ready" with t-home, sent back, and "at work" with t-overlay at once — one agent, two
+  // Dev-2 stood "ready" with t-home, sent back, and "at work" with t-overlay at once — one agent, two
   // cards, and no telling which it was at.
   it('shows an agent at one task at a time: the one it last worked on, the others held for it', async () => {
     const runId = await open();
@@ -384,7 +384,7 @@ describe('plitzi run monitor', () => {
     });
   });
 
-  // velada-dress: agents stopped by their harness still read "working" and "waiting" — a wait is said once, and nothing
+  // Agents stopped by their harness still read "working" and "waiting" — a wait is said once, and nothing
   // told a live agent from a gone one.
   it('says an agent between tasks is gone once nothing marked it present for a while', async () => {
     const runId = await open();
@@ -402,7 +402,7 @@ describe('plitzi run monitor', () => {
     });
   });
 
-  // encore: the lead read idle on the board while it planned the next stage and started agents — at work, no review held.
+  // The lead read idle on the board while it planned the next stage and started agents — at work, no review held.
   it('shows the lead working while its commands come, and idle once they stop', async () => {
     const runId = await open();
     await logRun(lead(), runPaths(bench.root, runId), { action: 'launch', agent: 'agent-1', harness: 'claude' });
@@ -416,7 +416,7 @@ describe('plitzi run monitor', () => {
     expect((await row())?.status).toBe('idle');
   });
 
-  // velada-polish: design-1 made its scratch folder first, for its crops, and never "joined"; its wait filled a row.
+  // Design-1 made its scratch folder first, for its crops, and never "joined"; its wait filled a row.
   it('says an agent joined though its scratch was there first, and a wait by its reason alone', async () => {
     const runId = await open();
     await fs.mkdir(path.join(runPaths(bench.root, runId).dir, 'scratch', 'agent-4'), { recursive: true });
@@ -428,7 +428,7 @@ describe('plitzi run monitor', () => {
     expect(wait?.text.length ?? 0).toBeLessThan(80);
   });
 
-  // velada-dress: the brake stopped the run and design-1, waiting for it to go on, read "no signal" — gone, it was not.
+  // The brake stopped the run and design-1, waiting for it to go on, read "no signal" — gone, it was not.
   it('keeps an agent waiting through a stopped run present, its row saying what it waits for', async () => {
     const runId = await open();
     await stopRun(lead(), runId, false, 'the brake');
@@ -611,7 +611,7 @@ describe('plitzi run monitor', () => {
     ]);
   });
 
-  // la-velada: a designer waiting for its first review showed the whole reason of the wait on its row — every task and
+  // A designer waiting for its first review showed the whole reason of the wait on its row — every task and
   // its status; the activity says that, the row says how the run stands.
   it('says an agent waiting for its first task in a few words, not the list of every task', async () => {
     const runId = await open();
@@ -630,7 +630,7 @@ describe('plitzi run monitor', () => {
     expect(agent?.doing).not.toContain('t-home');
   });
 
-  // la-velada: t-motion sat pending while the three it followed waited for one designer — nothing on screen said so.
+  // T-motion sat pending while the three it followed waited for one designer — nothing on screen said so.
   it('says what a pending task waits for, and where each of those stands, on its row and in the flow', async () => {
     const runId = await open();
     const home = await take('agent-1', 't-home');

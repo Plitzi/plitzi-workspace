@@ -6,7 +6,7 @@ import type { LoadedRun, RunContext } from './run';
 
 /**
  * A stage's acceptance lines run once on the run's work as it is — before an agent tries any — each said for what it
- * is: what the task is to change, a part it builds, or a line that cannot pass for a reason of its own. lx-product's
+ * is: what the task is to change, a part it builds, or a line that cannot pass for a reason of its own. A run's
  * lead dry-ran its 13 lines by hand (2.5 min) and four of a later stage's were never run on ours: 16 checks of one task
  * failed on the lines, not the work.
  */

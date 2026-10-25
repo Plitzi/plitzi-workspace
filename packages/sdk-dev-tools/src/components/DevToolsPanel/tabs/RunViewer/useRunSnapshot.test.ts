@@ -7,7 +7,7 @@ import useRunSnapshot from './useRunSnapshot';
 import type { RunSnapshot } from '@plitzi/sdk-shared/runs';
 
 const snapshot: RunSnapshot = {
-  runId: 'velada-copy',
+  runId: 'shop-copy',
   goal: 'A copy of the site',
   status: 'finished',
   done: 2,

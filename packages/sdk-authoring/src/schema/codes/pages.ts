@@ -77,7 +77,7 @@ export const PAGE_CODES = {
     kind: 'refused',
     means:
       "the space's `siteName`, `language`, `favicon`, `shareImage` or `themeColor` written as nothing a head reads",
-    fix: "`siteName: 'Encore'`, `language: 'en'`, `favicon: '/favicon.svg'`, `shareImage: '/og.png'`, `themeColor: { light: '#fbf7f0', dark: '#0b0a10' }`"
+    fix: "`siteName: 'My site'`, `language: 'en'`, `favicon: '/favicon.svg'`, `shareImage: '/og.png'`, `themeColor: { light: '#fbf7f0', dark: '#0b0a10' }`"
   },
   'structured-data-shape': {
     kind: 'refused',

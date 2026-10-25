@@ -41,7 +41,7 @@ const Embed = ({
   } = usePlitzi();
   const { visible } = useElement();
   // Hidden, it loads nothing — a frame hidden in CSS is loaded whatever its `loading`, so a player behind a poster loaded
-  // on every visit (la-velada's YouTube, autoplay); shown once, it keeps its page, as a video paused by hiding it would
+  // on every visit (a run's YouTube, autoplay); shown once, it keeps its page, as a video paused by hiding it would
   // lose its place. In the builder every frame shows what it holds.
   const [shown, setShown] = useState(visible);
   if (visible && !shown) {

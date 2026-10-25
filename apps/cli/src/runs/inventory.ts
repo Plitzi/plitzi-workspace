@@ -7,7 +7,7 @@ import type { Acceptance, PlannedTask, RunPlan } from './model';
 /**
  * What the job asks, piece by piece — a page, a section, a tool a visitor would miss — listed before the plan, so what
  * a run covers is checked against it rather than remembered: each piece is proven by a task's acceptance that a command
- * checks (`covers`), or left out with its reason. la-velada's first run left the tier list, the live stream and a
+ * checks (`covers`), or left out with its reason. A run's first run left the tier list, the live stream and a
  * dozen pieces unsaid: they were in no list to be missed from.
  */
 export interface InventoryItem {

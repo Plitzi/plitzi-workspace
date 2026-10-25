@@ -45,7 +45,7 @@ your token under another's name, a name or a role not the team's: refused (`iden
 - **Spend the heavy commands well: a run makes hundreds.** `task check`, `task look`, `page check|shot|measure` take
   3–10 s; `task next|context|show|inbox|tell` 0.3 s. Change a batch, then check once — never after every edit;
   one acceptance line: `task check --acceptance`. Asked again with nothing changed, a check or a look says its last
-  answer (`--fresh` runs it anew), and `complete` right after a passing check takes it. Every element and width in one
+  answer (`--fresh`: anew), and `complete` right after a passing check takes it. Every element and width in one
   `page measure` call (`--hover <el>`, `--click <el…>` for a state, `--steps` for what a visitor makes) —
   trying values, measure, never `task check`; a picture for what a check cannot tell.
 - **Only your files.** A file another task at work holds is refused at `complete`, naming it — `plitzi task discard
@@ -76,10 +76,9 @@ takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | 
   only it talks to the person), then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks
   for changes.
-- **Before done:** `plitzi task check` (`--fix`: eslint and prettier fix your files first) runs what `complete` holds
+- **Before done:** `npm run typecheck` and `lint` (seconds), then `plitzi task check` (`--fix`: eslint and prettier fix first) runs what `complete` holds
   the copy to — the project's checks, the acceptance's commands, long files, no `space lint` warning in a file you
-  changed: iterate on it, not on `complete`, whose failures count toward the run's brake. It hands you what the lead
-  said meanwhile. What you declare for later tasks, unread yet, is a warning.
+  changed: iterate on it, not on `complete`, whose failures count toward the run's brake. It hands you the lead's news. What you declare for later tasks, unread yet, is a warning.
 - **Done:** `plitzi task complete --ease <1-5> --hardest "…" [--friction "…"] [--note "…"] [--review code|ui]` — what
   it was like to Plitzi, the note to the lead;
   `code` when nothing a visitor sees changed (the lead's review alone), `ui` for its UI looked at first. A control you add you use first, there and back (`page play`). **A task never ends

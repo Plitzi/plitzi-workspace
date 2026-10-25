@@ -35,7 +35,7 @@ afterEach(async () => {
   await fs.rm(root, { recursive: true, force: true });
 });
 
-// velada-polish's dev-1: three checks in twenty seconds, twice, each failing on what a lint --fix writes.
+// Three checks in twenty seconds, twice, each failing on what a lint --fix writes.
 describe('task check --fix', () => {
   it('runs the project’s linter and formatter on the task’s changed files alone, and says what they rewrote', async () => {
     const fixed = await fixChanged(root, root, ['src/mine.ts', 'src/data.json']);

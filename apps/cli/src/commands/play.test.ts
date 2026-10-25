@@ -45,7 +45,7 @@ const played = (hereMove: number, thereMove: number, arrowThereShown: boolean): 
   }
 ];
 
-// lx-controls: a carousel's arrows used there and back on both sites took two dozen browser scripts of the agents' own.
+// A carousel's arrows used there and back on both sites took two dozen browser scripts of the agents' own.
 describe('page play', () => {
   it('holds each step to the other page: how far it moved, within a rounding, whether shown, whether it takes a press', () => {
     expect(unlikeIn(played(909, 909, false), ['moved', 'shown', 'enabled'])).toEqual([]);
@@ -71,10 +71,10 @@ describe('page play', () => {
     expect(lines).toContain('  next => .next: hidden, no press | there hidden, no press');
   });
 
-  // lx-product: a tab drawn per width was hidden at 390, its press skipped without a word — and "✓ every step as
+  // A tab drawn per width was hidden at 390, its press skipped without a word — and "✓ every step as
   // theirs" was said beside an element read that was not on the page.
-  // encore: Listen turning Mute, the focus back on the burger and a search typed each took a Playwright script.
-  // encore's t-emojis: its picker, drawn once its button opens it, read "not on" at the start — and the line was no one's.
+  // Listen turning Mute, the focus back on the burger and a search typed each took a Playwright script.
+  // Its picker, drawn once its button opens it, read "not on" at the start — and the line was no one's.
   it('says an element a step brings is not on the page yet, and one never there in red', () => {
     const lines = playedText([
       {
@@ -94,7 +94,7 @@ describe('page play', () => {
     ]).map(line => stripVTControlCharacters(line));
 
     expect(lines).toContain('  picker: not on the page yet');
-    // encore-3's `--read a,b`: said once, at the first step, not again at every step.
+    // A run's `--read a,b`: said once, at the first step, not again at every step.
     expect(lines.filter(line => line.startsWith('  ghost:'))).toEqual([
       '  ghost: ghost is not on http://x/ (at every step)'
     ]);
@@ -121,7 +121,7 @@ describe('page play', () => {
     ]);
   });
 
-  // encore-2: "shown" of a dialog under the header, half below the fold, and scaled to nothing — said as if in plain view.
+  // "shown" of a dialog under the header, half below the fold, and scaled to nothing — said as if in plain view.
   it('says where a shown element is when it is not plainly there: out of view, under another, transformed', () => {
     const below: ElementState = { ...at(0), inView: 'part' };
     const covered: ElementState = { ...at(0), coveredBy: 'site-header' };
@@ -169,7 +169,7 @@ describe('page play', () => {
   });
 });
 
-// encore-4: a filter link went to /rooms?sort=true unsaid; a tone picked changed a colour no read said; a reaction's
+// A filter link went to /rooms?sort=true unsaid; a tone picked changed a colour no read said; a reaction's
 // float played and ended, read as "hidden" as though the press did nothing.
 describe('what a step left', () => {
   it('says where the page went, a colour a step changed, and the animations an element has', () => {

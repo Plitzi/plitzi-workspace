@@ -325,7 +325,7 @@ type ScrollMove = { x?: ScrollAmount; y?: ScrollAmount; behavior?: ScrollStepBeh
 
 /**
  * A move as its step's params hold it: each amount as text, the way the step's editor writes it — a number of pixels
- * was refused by the type (`{ x: -180 }`, lx-controls' designer), though pixels are what most moves are.
+ * was refused by the type (`{ x: -180 }`, a run's designer), though pixels are what most moves are.
  */
 const moveParams = ({ x, y, behavior }: ScrollMove): Record<string, string> => ({
   ...(x === undefined ? {} : { x: String(x) }),

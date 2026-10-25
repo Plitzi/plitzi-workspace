@@ -142,7 +142,7 @@ export type Merged = { ok: true; text: string } | { ok: false; conflicts: number
 /**
  * A change with what the other side added too, somewhere else, taken out of what it writes: each run of two lines or more — not all
  * punctuation — the base has nowhere and the other version holds whole. Put in twice it is a key declared twice
- * (velada-dress: the tokens tasks added in their copies by the lead's word, and the requests that added them after
+ * (the tokens tasks added in their copies by the lead's word, and the requests that added them after
  * another entry). Answers the hunk left, `undefined` for an addition with nothing of its own left.
  */
 const withoutAddedAlready = (hunk: Hunk, base: readonly string[], theirs: readonly string[]): Hunk | undefined => {

@@ -13,7 +13,7 @@ import type { Command } from 'commander';
 
 /**
  * A value that is another option: the one this option takes went missing — an empty shell variable, the words of a
- * loop out of order. encore-4's `page shot /design 390 dark pixels-brand-row --width --scheme --clip` was told only
+ * loop out of order. A run's `page shot /design 390 dark pixels-brand-row --width --scheme --clip` was told only
  * that a width is a whole number, five times.
  */
 const refuseOption = (value: string): void => {
@@ -136,7 +136,7 @@ export const duration = (value: string): number => {
  * the ten minutes a harness gives one command (Claude Code's), so the agent hears it end rather than losing it to the
  * background — and runs it again to go on waiting.
  */
-// Eight, not nine: a minute of margin for the command's own start and end (velada-dress's agents set --timeout 8m).
+// Eight, not nine: a minute of margin for the command's own start and end (a run's agents set --timeout 8m).
 export const FOLLOW_MS = 8 * 60_000;
 
 export const durationText = (ms: number): string => {
@@ -231,7 +231,7 @@ export const fill = (value: string, previous: readonly FieldFill[] | undefined):
  * word, a leading `/`: `--expect "/faq faq-title~Questions"`.
  */
 /**
- * One `--expect` read: `<id>~<text>`, `<id>` alone — the element is shown, whatever it says (a swatch, a picture: encore's
+ * One `--expect` read: `<id>~<text>`, `<id>` alone — the element is shown, whatever it says (a swatch, a picture: a run's
  * design-2 wrote `id~`) — and `<path> …` for one page. Nothing when it is none of them. What the option and a plan's
  * acceptance lines (`expectedIds`) both read.
  */
@@ -263,7 +263,7 @@ export const expectation = (
 
 /**
  * A flag that took the next flag as its value — `--summary --token …`, `--summary` reading "--token" — said, with
- * what it takes: commander takes it whole, and the run read the token as the run (lx-controls' lead, twice).
+ * what it takes: commander takes it whole, and the run read the token as the run (a run's lead, twice).
  */
 export const swallowedFlag = (command: Command): string | undefined => {
   const flags = new Set(command.options.flatMap(option => (option.long ? [option.long] : [])));

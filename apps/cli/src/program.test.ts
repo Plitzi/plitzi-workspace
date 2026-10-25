@@ -10,7 +10,7 @@ import type { Command } from 'commander';
 
 /**
  * Every `plitzi …` the CLI tells someone to run — in its skills, in an agent's prompt, in a refusal's way out — is a
- * command this CLI has, with options it takes: encore's prompt said `task complete --follow --take`, and three agents
+ * command this CLI has, with options it takes: a run's prompt said `task complete --follow --take`, and three agents
  * were refused four times before anyone read the notices (`run view`, `--token` in a lead's hand-off, the same story).
  */
 
@@ -148,7 +148,7 @@ describe('the commands the CLI tells anyone to run', () => {
   });
 });
 
-// encore-3: `page outline --width 390,1440` and `page shot --scheme light,dark` were refused four times, where check,
+// `page outline --width 390,1440` and `page shot --scheme light,dark` were refused four times, where check,
 // measure and play take a list.
 describe('the page commands', () => {
   const page = subcommand(program, 'page');

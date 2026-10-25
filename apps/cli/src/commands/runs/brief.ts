@@ -97,7 +97,7 @@ export const taskContextCommand = (
         imports: await importedApis(context.sourceRoot, context.files)
       };
       // What each part weighs, for the report: an agent reads its brief again on every turn after, and which part is
-      // heavy was guessed (encore-2: 61 briefs, up to 21k characters, read again for 1.1M tokens).
+      // heavy was guessed (61 briefs, up to 21k characters, read again for 1.1M tokens).
       const parts = partsOf(brief);
       const primer = context.primer?.trim().length ?? 0;
       await logRun(ctx, runPaths(ctx.root, target.runId), {
@@ -115,7 +115,7 @@ export const taskContextCommand = (
       return brief;
     },
     // The files themselves only with --files: an agent reads the ones it changes with its own reader — one that must
-    // read a file before it edits it read each twice. velada-backlog's t-body-type: 57 KB with them, 3.5 KB without.
+    // read a file before it edits it read each twice. A run's t-body-type: 57 KB with them, 3.5 KB without.
     context =>
       Object.values(partsOf(context))
         .filter(part => part !== '')
@@ -128,7 +128,7 @@ export const taskContextCommand = (
  */
 /**
  * What a brief says of a related task and of a note: enough to act on, the whole one command away. Read again on every
- * turn of the task, encore-3's briefs ran to 17k characters — 4k of it what two tasks before it were asked and how
+ * turn of the task, a run's briefs ran to 17k characters — 4k of it what two tasks before it were asked and how
  * their reviews went, their work already in the copy.
  */
 const RELATED_LINES = 6;

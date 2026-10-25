@@ -36,7 +36,7 @@ const staysOpen = (request: SettlingRequest): boolean => {
 
 /**
  * A request for a page to come, not this one — a prefetch or prerender the browser sends as it idles: a shop's 126
- * checkout scripts, fetched one after another, held every `page measure` of it 10 s past its look (lx-controls).
+ * checkout scripts, fetched one after another, held every `page measure` of it 10 s past its look.
  */
 const forLater = (request: SettlingRequest): boolean => {
   const { 'sec-purpose': secPurpose = '', purpose = '' } = request.headers();
@@ -76,7 +76,7 @@ export const openPage = async (
 
   try {
     // The document is what answers; its images are what the quiet below waits for, each with the time it takes. Waiting
-    // for `load` instead made a CDN slow to send them read as nothing answering at all (la-velada's home, under load).
+    // for `load` instead made a CDN slow to send them read as nothing answering at all (a run's home, under load).
     const answered = await page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => null);
     if (!answered) {
       return null;

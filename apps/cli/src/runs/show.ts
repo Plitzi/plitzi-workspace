@@ -26,9 +26,9 @@ import type { LoadedRun, RunContext } from './run';
 const DIFF_LINES = 80;
 
 /**
- * How many lines of diff it shows in all: past them, each file left says its size and how to read it. encore-2's
+ * How many lines of diff it shows in all: past them, each file left says its size and how to read it. A run's
  * `task show` answered up to 44k characters — eighteen files of eighty lines — and the reviewers read it 77 times;
- * encore-3's, at 400 lines, up to 24k, 46 times over 12k: a review reads the rest a file at a time.
+ * A run's, at 400 lines, up to 24k, 46 times over 12k: a review reads the rest a file at a time.
  */
 const DIFF_TOTAL = 240;
 
@@ -135,7 +135,7 @@ export const FROM_TEXT: Record<TaskShown['from'], string> = {
 
 /**
  * What an agent of the team does with another's task: tells the lead, or asks that task to agree to a change — never
- * the lead's steps, which refuse its token (encore-4's design-2 was offered `task message`).
+ * the lead's steps, which refuse its token (a run's design-2 was offered `task message`).
  */
 const agentNext = (task: RunTask): string[] => [
   `plitzi task tell --about ${task.id} "…"   # what the lead should know of it`,
@@ -174,7 +174,7 @@ export const showTask = async (
   { full = false }: { full?: boolean } = {}
 ): Promise<TaskShown> => {
   // Read only, for anyone in the run: what another task changed or asks of a shared file is what an agent builds on —
-  // lx-copy's agents were refused another task's and diffed its blobs by hash to read a request.
+  // A run's agents were refused another task's and diffed its blobs by hash to read a request.
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = loaded.tasks.find(each => each.id === taskId);
   if (!task) {
@@ -280,7 +280,7 @@ export const showTaskFile = async (
   file: string
 ): Promise<TaskFileShown> => {
   // Read only, for anyone in the run: what another task changed or asks of a shared file is what an agent builds on —
-  // lx-copy's agents were refused another task's and diffed its blobs by hash to read a request.
+  // A run's agents were refused another task's and diffed its blobs by hash to read a request.
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = loaded.tasks.find(each => each.id === taskId);
   if (!task) {

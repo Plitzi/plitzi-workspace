@@ -16,7 +16,7 @@ export interface StateAsked {
   pairs: Pair[];
   /**
    * After the clicks, one element hovered or focused: a state reached in two moves — a menu opened, an item of it
-   * hovered (encore-2's design-1 asked it of `page measure` and `page shot`, and was refused).
+   * hovered (a run's design-1 asked it of `page measure` and `page shot`, and was refused).
    */
   then?: { kind: 'hover' | 'focus'; pair: Pair };
 }
@@ -27,7 +27,7 @@ const DONE: Record<StateAsked['kind'], string> = { hover: 'hovered', focus: 'foc
 const ANSWER_MS = 5000;
 
 /**
- * A step run with what it asks the server answered before the page is read: encore-3's down key, lit by the vote's
+ * A step run with what it asks the server answered before the page is read: a run's down key, lit by the vote's
  * answer, measured unlit — `--click` read the page before the action landed. A stream (an event source, a socket) never
  * finishes, and is not waited for.
  */
@@ -71,7 +71,7 @@ const LAYOUT_STILL = 3;
 /**
  * What the state started finished, or the longest a fade takes: the page's animations ended, then its layout still —
  * the boxes of what is in view read alike three times running. A script that moves a panel frame by frame (a drawer
- * slid in by its own code) shows in no animation of the page, only in the boxes moving (lx-controls).
+ * slid in by its own code) shows in no animation of the page, only in the boxes moving.
  */
 export const settle = async (page: BrowserPage): Promise<void> => {
   await page.evaluate(
@@ -113,7 +113,7 @@ export const settle = async (page: BrowserPage): Promise<void> => {
 
 /**
  * What a step of the state does to its element. A focus is a keyboard's — a key pressed first, then the element focused —
- * so what the page draws on `:focus-visible` is drawn: focused by script alone, encore-2's focus ring never showed.
+ * so what the page draws on `:focus-visible` is drawn: focused by script alone, a run's focus ring never showed.
  */
 const act = async (page: BrowserPage, element: PageElement, kind: StateAsked['kind']): Promise<void> => {
   if (kind === 'hover') {

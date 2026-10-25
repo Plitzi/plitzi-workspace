@@ -162,7 +162,7 @@ describe('stopping, cuts and disconnects', () => {
     expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-home')?.status).toBe('in-progress');
   });
 
-  // la-velada: t-boxer changed t-lint's theme.ts, and learnt it only at complete, after all its work.
+  // T-boxer changed t-lint's theme.ts, and learnt it only at complete, after all its work.
   it('says at check a file it changed that another task at work holds — what complete would refuse', async () => {
     await open();
     const home = await take('agent-1', 't-home');
@@ -175,7 +175,7 @@ describe('stopping, cuts and disconnects', () => {
     });
   });
 
-  // la-velada: 52 of 88 failed checks were an acceptance line, each run again after author, lint and typecheck.
+  // 52 of 88 failed checks were an acceptance line, each run again after author, lint and typecheck.
   it('runs the acceptance alone when asked — the project’s checks left for complete, and said', async () => {
     const plan = benchPlan();
     plan.tasks[0].acceptance = [{ said: 'The hero says Hola', check: 'grep -q Hola src/space/pages/home/hero.ts' }];
@@ -215,7 +215,7 @@ describe('what an agent leaves in the project', () => {
     await bench.write('tmp/lead2-preview.log', 'listening\n');
     await bench.write('tmp/shots/home.png', 'png');
     await bench.write('tmp/dev-server.json', '{}');
-    // velada-shell: the lead's stage, written in the seconds before `run extend` took it, was told to dev-1.
+    // The lead's stage, written in the seconds before `run extend` took it, was told to dev-1.
     await bench.write('tmp/es-sections.stage.json', '{}');
 
     const left = (await viewRun(lead(), 'es-launch')).attention.filter(item => item.kind === 'left-in-tmp');
@@ -310,7 +310,7 @@ describe('versions, machines and caches', () => {
     });
   });
 
-  // encore-3: `task next --follow --take` refused at once with version-mismatch, though its own words say it waits.
+  // `task next --follow --take` refused at once with version-mismatch, though its own words say it waits.
   it('waits through a version change while following, taking nothing, and says why', async () => {
     await open();
     const upgraded = bench.agent('agent-2', { cli: '0.0.1-bench' });

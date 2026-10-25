@@ -8,7 +8,7 @@ import type { UsageLine } from '../usage';
 /**
  * Commands that failed, grouped by why (`UsageLine.error`) — a failure that is a check's verdict on the work left out:
  * a command refused as it was written (an option the CLI has not, a command it does not know: a doc or a prompt says
- * it — encore's `task complete --follow`, three agents, four times), the machine's (a port, a permission, a browser
+ * it — a run's `task complete --follow`, three agents, four times), the machine's (a port, a permission, a browser
  * not installed), and the same error of the CLI met again and again.
  */
 
@@ -50,7 +50,7 @@ export const errorFindings = (usage: readonly UsageLine[]): Finding[] => {
   const failed = usage.filter(line => line.code !== 0 && line.error !== undefined);
   const asWritten = failed.filter(line => AS_WRITTEN.test(line.error ?? ''));
   const machine = failed.filter(line => MACHINE.test(line.error ?? '') && !asWritten.includes(line));
-  // An `explain` with no answer is said by its own finding (`explain.ts`), with the question: encore-4 said each twice.
+  // An `explain` with no answer is said by its own finding (`explain.ts`), with the question: a run said each twice.
   const rest = failed.filter(
     line =>
       !asWritten.includes(line) &&

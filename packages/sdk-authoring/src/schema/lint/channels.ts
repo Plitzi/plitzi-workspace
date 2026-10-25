@@ -13,7 +13,7 @@ const MOST_TOPICS = 16;
 
 /**
  * Every topic a templated one can become, as far as it can be told here: a plain `{{ id }}` is one segment, a choice
- * `{{ room.locked ? 'vault' : 'room' }}` either word (encore's private rooms: the prefix was refused, read as one
+ * `{{ room.locked ? 'vault' : 'room' }}` either word (a run's private rooms: the prefix was refused, read as one
  * sample segment). `undefined` when a part is anything else written in words — `{{ 'room:' ~ id }}`, a filter — which
  * only the page decides, as a bound topic is.
  */

@@ -87,7 +87,7 @@ describe('the lead’s plan as the run goes', () => {
     expect((await refusal(openWith(lead(), await bench.writePlan(plan), 4))).message).toContain('over 16');
   });
 
-  // velada-now: t-motion waited for t-boxer's third round though it shared no file with it — and amend refused to let
+  // T-motion waited for t-boxer's third round though it shared no file with it — and amend refused to let
   // it start: what a task waits for was the run's shape.
   it('lets the lead change what a task nobody took waits for — never into a circle', async () => {
     const plan = benchPlan();
@@ -199,7 +199,7 @@ describe('the lead’s plan as the run goes', () => {
     expect(await fs.readFile(path.join(bench.root, 'src/space/pages/about.ts'), 'utf-8')).toContain('es: true');
   });
 
-  // lx-copy: t-close-home named src/space/pages/home while t-home-top, in review, still had files to put there.
+  // T-close-home named src/space/pages/home while t-home-top, in review, still had files to put there.
   it('refuses a stage task naming a folder a task at work writes in, unless it waits for it', async () => {
     const plan = benchPlan();
     plan.tasks[1].files = ['src/space/pages/menu.ts', 'src/space/pages/carta/list.ts'];
@@ -268,7 +268,7 @@ describe('the lead’s plan as the run goes', () => {
     const idle = await nextTask(bench.agent('agent-4'), 'es-launch', 'developer');
     expect(idle.finished).toBeUndefined();
     expect(idle.why).toContain("you are of the team's base");
-    // encore-4: design-1 waited 4.5 h told only to wait — the run waited for the person's apply.
+    // Design-1 waited 4.5 h told only to wait — the run waited for the person's apply.
     expect(idle.why).toContain("it waits for its finish — the lead's summary, then a person's apply");
     expect((await log()).filter(entry => entry.by === 'agent-4').map(entry => entry.action)).not.toContain('stops');
     await finishRun(lead(), 'es-launch', { apply: false, leavePending: true });
@@ -315,7 +315,7 @@ describe('the lead’s plan as the run goes', () => {
     expect(dry.checked?.created).toEqual(['src/space/pages/contact.ts']);
   });
 
-  // velada-shell: the scope's four tasks were refused for a runId and a goal — the run had both.
+  // The scope's four tasks were refused for a runId and a goal — the run had both.
   it('takes a stage of tasks alone: its name and its goal are the run’s', async () => {
     await open();
     await bench.write(
@@ -504,7 +504,7 @@ describe('the lead’s plan as the run goes', () => {
 
     const signal = await reportProgress(home.ctx, 'es-launch', 't-home', {});
     expect(signal.longFiles).toEqual([{ file: 'src/space/pages/home/hero.ts', lines: 420, before: 1 }]);
-    // The agent's to hear, never the lead's to relay: lx-controls' relayed message arrived after the split.
+    // The agent's to hear, never the lead's to relay: a run's relayed message arrived after the split.
     expect((await waitForLead(lead(), 'es-launch', { timeoutMs: 20, everyMs: 10 })).fresh).toEqual([]);
     await writeInCopy(home.work, 'src/space/pages/home/hero.ts', `${lines(430)}\n`);
 
@@ -599,7 +599,7 @@ describe('the lead’s plan as the run goes', () => {
   });
 });
 
-// lx-product: a page-weight bound of the lead's, too tight once other tasks reached every page, held the finish — its
+// A page-weight bound of the lead's, too tight once other tasks reached every page, held the finish — its
 // task done, the line could not be amended; and amending stages dropped s-scope, then a stage left out of a joined plan.
 describe('amending a run with stages and done tasks', () => {
   const stage = (runId: string, id: string, file: string): RunPlan => ({

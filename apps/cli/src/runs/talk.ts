@@ -96,7 +96,7 @@ export const tellLead = async (ctx: RunContext, runId: string, taskId: string, t
 /**
  * `plitzi task tell --about <task>` with no task in hand: an agent of the team that holds none — a designer between
  * reviews — tells the lead what it found on a task, said by its own name. A review the lead decided first had nowhere to
- * go (la-velada: design-1's finding on t-motion, refused twice).
+ * go (design-1's finding on t-motion, refused twice).
  */
 export const tellLeadAbout = async (ctx: RunContext, runId: string, about: string, text: string): Promise<Message> => {
   const loaded = await loadRun(ctx, runId);
@@ -147,9 +147,9 @@ export const messageTasks = async (
       : to.startsWith('@')
         ? [to]
         : [findTask(loaded, to).id];
-  // What the lead says to a task with its one question open is its answer, said with --reply-to or not: velada-now's lead
+  // What the lead says to a task with its one question open is its answer, said with --reply-to or not: a run's lead
   // answered t-motion without it, and the monitor said for good that t-motion asked the lead. Said to every task, it
-  // answers none — velada-dress: a note to all marked t-artists' question answered — and with two open, it says which.
+  // answers none — a note to all marked t-artists' question answered — and with two open, it says which.
   const messages = await messagesOf(loaded);
   const answered = new Set(messages.flatMap(message => (message.replyTo ? [message.replyTo] : [])));
   const openQuestions = (target: string): string[] =>
@@ -197,7 +197,7 @@ export const messageTasks = async (
 export const readInbox = async (ctx: RunContext, runId: string, taskId?: string, all = false): Promise<Message[]> => {
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
   // An agent holding no task — a designer between reviews — reads what was said to it by name: refused as the lead's
-  // inbox, it was told "lead-only" of its own (velada-shell's design-1).
+  // inbox, it was told "lead-only" of its own (a run's design-1).
   if (taskId === undefined && !isPrincipal(ctx.agent) && !isCoLead(loaded.record, ctx.agent)) {
     const own = agentAddress(ctx.agent);
 

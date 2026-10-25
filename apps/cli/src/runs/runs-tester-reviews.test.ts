@@ -8,7 +8,7 @@ import { runSteps } from '../tests/runSteps';
 
 import type { Bench } from '../tests/runProject';
 
-/** encore-2's test-1 approved the identity system and its components: a designer's work, not a tester's to review. */
+/** A run's test-1 approved the identity system and its components: a designer's work, not a tester's to review. */
 
 let bench: Bench;
 

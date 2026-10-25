@@ -267,7 +267,7 @@ const saidBy = (ctx: RunContext): string => {
 
 /**
  * Who calls a command of the project's, not of one run's — the backlog: proved by the open run when there is one; with
- * none, a person at its terminal, else `unnamed` — never a name it says unproved, nor a crash (velada-fidelity's lead,
+ * none, a person at its terminal, else `unnamed` — never a name it says unproved, nor a crash (a run's lead,
  * closing an item once its run had finished).
  */
 export const projectCaller = async (ctx: RunContext, options: RunCommandOptions): Promise<string> => {
@@ -469,7 +469,7 @@ const reviewHeldBy = async (
   )?.task.id;
 
 /**
- * The review an agent is at when it holds no task: what its sign of life is about — encore-3's designers said their
+ * The review an agent is at when it holds no task: what its sign of life is about — a run's designers said their
  * progress through a review and were refused it nine times, each fresh session anew.
  */
 export const reviewingOnly = async (ctx: RunContext, runId: string): Promise<string | undefined> => {
@@ -493,7 +493,7 @@ export const reviewingOnly = async (ctx: RunContext, runId: string): Promise<str
 
 /**
  * The task a holder's command is about: the token's or the one named — and, run outside the copy with the agent's own
- * token and no task named, the one task that agent holds at work (lx-copy: `task context` refused five times from the
+ * token and no task named, the one task that agent holds at work (`task context` refused five times from the
  * project's folder, "Name the task", though the token said whose it was).
  */
 const taskResolved = async (ctx: RunContext, runId: string, named?: string): Promise<string> => {
@@ -512,7 +512,7 @@ const taskResolved = async (ctx: RunContext, runId: string, named?: string): Pro
       return held[0].task.id;
     }
 
-    // A reviewer in the copy it reviews holds no task: its review is said by its look and its verdict (encore-2's
+    // A reviewer in the copy it reviews holds no task: its review is said by its look and its verdict (a run's
     // design-2 was asked for progress at a review and refused, "name it").
     const reviewing = await reviewHeldBy(ctx, loaded);
     throw new RunRefusal(
@@ -527,7 +527,7 @@ const taskResolved = async (ctx: RunContext, runId: string, named?: string): Pro
 };
 
 /**
- * The task an agent means when it names none: the one it holds, or the one it reviews — encore-3's `task show` with no
+ * The task an agent means when it names none: the one it holds, or the one it reviews — a run's `task show` with no
  * task was refused twice, its agent holding one.
  */
 export const ownTask = async (ctx: RunContext, runId: string): Promise<string> => {
@@ -561,7 +561,7 @@ export const either = async (
 ): Promise<{ runId: string; taskId: string }> => {
   const runId = await runOf(ctx, options);
 
-  // A reviewer reads the brief of what it reviews: encore-3's tester and designers were refused it four times, judging
+  // A reviewer reads the brief of what it reviews: a run's tester and designers were refused it four times, judging
   // without the plan's findings.
   return { runId, taskId: named === undefined ? await ownTask(ctx, runId) : await taskResolved(ctx, runId, named) };
 };

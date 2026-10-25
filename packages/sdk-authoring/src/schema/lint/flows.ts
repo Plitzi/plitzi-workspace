@@ -248,7 +248,7 @@ const checkWhileRunning = (ctx: LintContext, node: ElementInteraction, where: st
 
 /**
  * A channel's messages come in bursts — a server says three things at once — and a flow started by one, by default,
- * drops what arrives while it runs (`skip`). encore's room heard the first of three closes and missed the rest, with
+ * drops what arrives while it runs (`skip`). A run's room heard the first of three closes and missed the rest, with
  * nothing said: what a message arriving mid-run does is said, never left to the default.
  */
 const checkMessageWhileRunning = (ctx: LintContext, node: ElementInteraction, where: string, host: Element): void => {
@@ -554,7 +554,7 @@ const checkConditionGlobals = (
 
     checkGlobalRead(ctx, field, `${where}: the condition of step "${node.id}"`, hostId);
     // An element's source named by its id alone is read as nothing — the rule never holds, and nothing said so
-    // (encore-4's `roomStatsData.locked`, for `apiContainer_roomStatsData.locked`).
+    // (a run's `roomStatsData.locked`, for `apiContainer_roomStatsData.locked`).
     const prefix = ctx.sources.get(root);
     if (prefix) {
       ctx.error(

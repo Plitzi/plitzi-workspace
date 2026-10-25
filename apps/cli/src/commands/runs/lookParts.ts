@@ -27,7 +27,7 @@ export interface BeforeAfter {
   /**
    * The sections whose dress the task changed — a layer added, or one taken away — in a few words: a soft light is a
    * few levels a pixel, under the picture comparison's tolerance, and read "0.1% differs" where a page's light was
-   * new (velada-dress, /artistas).
+   * new .
    */
   dress: string[];
   sideBySide?: string;
@@ -54,7 +54,7 @@ const counted = (items: readonly string[]): string[] => {
 };
 
 /**
- * The sections whose dress changed, a change once with every section it is in: encore-4's look listed one gradient
+ * The sections whose dress changed, a change once with every section it is in: a run's look listed one gradient
  * again and again, section by section and within one — a wall of text a designer read for one change.
  */
 const dressOf = (decorations: readonly unknown[], listOf: (value: unknown) => string[]): string[] => {
@@ -164,7 +164,7 @@ export interface Checked {
 
 /**
  * The page check of `task look`: its pages, and the click or hover asked — one element of one page, as `page check`
- * takes it, so with several pages each is checked with it apart (velada-dress: `task look --hover` on a task of three
+ * takes it, so with several pages each is checked with it apart (`task look --hover` on a task of three
  * pages was refused whole). One browser at a time: each check opens its own.
  */
 /** What `page same --json` read differing first, for one page: none when it drew the same, or could not be told. */
@@ -235,7 +235,7 @@ export const picturesOf = (output: string): string[] => {
 
 /**
  * The picture a shot says it took, as its reader reads it: a tall page's parts (`tiles`) when it was cut into them —
- * a phone's whole page shrank to 97 px wide in a viewer (encore-4) — else the picture.
+ * a phone's whole page shrank to 97 px wide in a viewer — else the picture.
  */
 export const readablePictures = (output: string, out: string): string[] => {
   try {
@@ -278,7 +278,7 @@ export const viewsAsked = (
 
 /**
  * The views a look takes by default, held to the schemes the space declares: a scheme it has not is pictured in one it
- * has, once — lx-copy's space is light only, and every look pictured its phone in a dark it never shows.
+ * has, once — a run's space is light only, and every look pictured its phone in a dark it never shows.
  */
 export const toDeclared = (
   views: readonly (readonly [string, 'light' | 'dark'])[],
@@ -295,7 +295,7 @@ export const toDeclared = (
 
 /**
  * With `PLITZI_TIMING=1`, each phase of a look said with how long it took, on stderr: where a look spends its time —
- * velada-fidelity's looks took 50 s, and nothing said which part.
+ * A run's looks took 50 s, and nothing said which part.
  */
 export const phases = (): ((what: string) => void) => {
   let last = Date.now();
@@ -359,7 +359,7 @@ const keptLooks = async (cache: string, now: Date): Promise<Kept> => {
 
 /**
  * A look said, kept under its key — every look of the task, not only the last: a round's two looks of different pages
- * each stand (encore-4's lead: "each look forgets the pages the other covered").
+ * each stand ("each look forgets the pages the other covered").
  */
 export const keepLook = async (cache: string, key: string, text: string, now: Date): Promise<void> =>
   writeJson(lookedFile(cache), { ...(await keptLooks(cache, now)), [key]: { at: now.toISOString(), text } });

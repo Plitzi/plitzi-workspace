@@ -31,7 +31,7 @@ afterEach(async () => {
 
 const { refusal, lead, open, take, doTask } = runSteps(() => bench);
 
-// la-velada: an empty cell of the stats grid, seen in two runs and noted "predates this task" in a review each time.
+// An empty cell of the stats grid, seen in two runs and noted "predates this task" in a review each time.
 describe('run notice', () => {
   it('keeps what an agent saw that no task owns — the lead hears it, the report lists it', async () => {
     const runId = await open();
@@ -79,7 +79,7 @@ describe('the run’s feedback to Plitzi', () => {
     const finished = await finishRun(bench.person(true), runId, { apply: true, leavePending: true });
 
     expect(finished.backlog).toEqual(['b-1']);
-    // Said apart at the finish: what is Plitzi's is never listed as the project's next stage (lx-controls).
+    // Said apart at the finish: what is Plitzi's is never listed as the project's next stage.
     expect(finished.noticed).toEqual(['The footer’s legal line wraps at 390 — lead']);
     expect(finished.findings.filter(each => each.kind === 'said').map(each => [each.owner, each.title])).toEqual([
       ['plitzi', 'page measure reads no position, and every agent wrote a script for it']
@@ -92,7 +92,7 @@ describe('the run’s feedback to Plitzi', () => {
     expect(feedback).not.toContain(bench.root);
   });
 
-  // lx-product: the feedback lx-controls left ended in a blank line, and the project's format check refused the next run.
+  // The feedback a run left ended in a blank line, and the project's format check refused the next run.
   it('leaves the backlog as the project’s Prettier writes it, and its reports where no check reads', async () => {
     const runId = await open();
     await noticeRun(lead(), runId, 'page measure reads no position', { plitzi: true });
@@ -109,7 +109,7 @@ describe('the run’s feedback to Plitzi', () => {
   });
 });
 
-// Carlos: what a run leaves is noted for the next — velada-polish's lead had it nowhere the next run reads.
+// Carlos: what a run leaves is noted for the next — a run's lead had it nowhere the next run reads.
 describe('the project’s backlog', () => {
   it('keeps what a run noticed past the run, once, for the next run — open until one says it is done', async () => {
     const runId = await open();
@@ -151,7 +151,7 @@ describe('the project’s backlog', () => {
 
     const plan = benchPlan();
     plan.tasks[3] = { ...plan.tasks[3], closes: ['b-1'] };
-    // encore-5's plan closed all five open items, and `run plan` still listed them as open, to take up.
+    // A run's plan closed all five open items, and `run plan` still listed them as open, to take up.
     await addBacklogItem(bench.person(true), { text: 'The footer wraps', by: 'person' });
     expect(await backlogOfPlan(bench.root, plan.tasks)).toEqual({
       taken: [{ item: expect.objectContaining({ id: 'b-1' }) as unknown, task: plan.tasks[3].id }],

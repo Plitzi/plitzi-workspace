@@ -4,7 +4,7 @@ import type { RegionChange, ShotReport } from './types';
 
 /**
  * What moved over the frames, by region. A part asked for by name moves when any of it changed: a few cells of pixel
- * art turning in a large clip are under a whole page's share for carets and anti-aliasing — encore-4's reels "moved
+ * art turning in a large clip are under a whole page's share for carets and anti-aliasing — a run's reels "moved
  * nothing" while they turned. A page's region under it is said apart, never dropped.
  */
 export const framesOf = (

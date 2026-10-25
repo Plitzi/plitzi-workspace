@@ -58,7 +58,7 @@ describe('Button Tests', () => {
     expect(close?.getAttribute('aria-hidden')).toBe('true');
   });
 
-  /** encore's vote arrow: `content` left out beside an icon read "↑ Button". The placeholder is for a button of neither. */
+  /** A run's vote arrow: `content` left out beside an icon read "↑ Button". The placeholder is for a button of neither. */
   // A placeholder is the builder's, set from the declaration when one is placed: never words a visitor reads.
   it('says no placeholder words when its content is left out, with an icon or without', () => {
     const { getByRole, getAllByRole } = render(

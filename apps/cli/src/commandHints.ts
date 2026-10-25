@@ -1,5 +1,5 @@
 /**
- * What a command line commander refused most likely meant, said under its own error — encore-3's agents were refused
+ * What a command line commander refused most likely meant, said under its own error — a run's agents were refused
  * 22 command lines as written, each found again by the next session: a shell variable holding two flags, an option
  * another page command has, a command another group has.
  */
@@ -17,7 +17,7 @@ const ELSEWHERE: Readonly<Partial<Record<string, string>>> = {
 const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<string, string>>>>>> = {
   'page shot': {
     '--element': '--clip <element> pictures one element',
-    // encore-4's design-1, twice: a page shot is the whole page unless told otherwise.
+    // A run's design-1, twice: a page shot is the whole page unless told otherwise.
     '--full': 'a page shot is the whole page already — --viewport pictures the first screen alone'
   },
   'page measure': { '--element': 'the elements are its arguments: plitzi page measure <path> <element…>' },

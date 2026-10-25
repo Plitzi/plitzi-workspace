@@ -101,7 +101,7 @@ export const taskWait = (
     waited => (waited.granted || options.follow ? 0 : 11)
   );
 
-/** `plitzi task discard <files...>`: each put back in turn — dev-1 discarded one at a time, a command each (velada-polish). */
+/** `plitzi task discard <files...>`: each put back in turn — dev-1 discarded one at a time, a command each. */
 export const taskDiscard = (files: string[], options: RunCommandOptions): Promise<void> =>
   act(
     options,

@@ -7,7 +7,7 @@ import type { LoadedRun, RunContext } from './run';
 /**
  * What the holder of `taskId` has not read, handed over and marked read — and, for each answer to a question the task
  * asked, the task taken up again: said in the activity the moment its agent has the answer, at whatever command, as a
- * person goes back to work once answered. Until then the task is held on its question (velada-dress: t-fights stood
+ * person goes back to work once answered. Until then the task is held on its question (t-fights stood
  * answered and nowhere at work while dev-1 had not read it).
  */
 export const handOver = async (

@@ -111,7 +111,7 @@ const FAILING = /^\s*(✗|✘|×|- |FAIL\b)|\berror\b|Error:/;
  */
 /**
  * A line a script prints that says nothing of what failed: a copy's missing `.env`, expected (runs.md) — every failed
- * `author` of encore-3 began with it, and velada-dress's t-predictions went to review failing "the same way without
+ * a run's `author` began with it, and a run's t-predictions went to review failing "the same way without
  * this task: .env not found".
  */
 export const isNotice = (line: string): boolean => /\.env not found|Continuing without it/.test(line);
@@ -126,7 +126,7 @@ export const tail = (output: string): string[] => {
   }
 
   // A failing line and what it says under it, indented — tsc names an overload, then, deepest, its cause: kept with its
-  // deepest lines, where the cause is (encore-4's tester read the overloads and lost `T | Promise<T>`).
+  // deepest lines, where the cause is (a run's tester read the overloads and lost `T | Promise<T>`).
   const indent = (line: string): number => line.length - line.trimStart().length;
   const blocks = lines.flatMap((line, index) => {
     if (!FAILING.test(line)) {

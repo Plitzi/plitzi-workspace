@@ -63,7 +63,7 @@ export type InteractionCallbackParam<T extends Record<string, unknown> = Record<
     | { type: 'boolean'; defaultValue?: boolean }
     /**
      * Several values, handed to a task as a list of text: bound to a list it is that list, and written by hand it is one
-     * a line (or separated by commas) — at most `maxItems`. encore's room took its genres as comma text before it.
+     * a line (or separated by commas) — at most `maxItems`. A run's room took its genres as comma text before it.
      */
     | { type: 'list'; defaultValue?: string[]; maxItems?: number }
     | {

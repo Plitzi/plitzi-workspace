@@ -89,7 +89,7 @@ export const looksInPage = ({
   for (const node of [...around, root, ...Array.from(root.querySelectorAll('[data-plitzi-el]'))].slice(0, 40)) {
     const style = getComputedStyle(node);
     const parent = node.parentElement?.closest('[data-plitzi-el]');
-    // What it draws on ::before/::after, and the custom properties it holds: velada-backlog's medal faded its fill in on
+    // What it draws on ::before/::after, and the custom properties it holds: a run's medal faded its fill in on
     // a pseudo-element, by a custom property its card's hover set — and the look said the hover changed nothing.
     const drawn = ['before', 'after'].flatMap(pseudo => {
       const pseudoStyle = getComputedStyle(node, `::${pseudo}`);

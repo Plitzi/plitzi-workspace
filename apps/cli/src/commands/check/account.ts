@@ -33,7 +33,7 @@ export const checkAccount = async (
   username?: string
 ): Promise<Account | { problem: string } | undefined> => {
   // A run's folder has no .env — a task's copy, the finish's checked copy: the account is its project's, read here
-  // for it (encore's finish: every `--as` line failed in its checked copy).
+  // for it (every `--as` line failed in its checked copy).
   const project = runProjectOf(root);
   const [own, projects] = await Promise.all([
     projectSettings(root),
@@ -76,7 +76,7 @@ export const accountAsked = async (root: string, username: string | undefined): 
 
 /** Signs the page's browser in as the account, through the server's `/auth` routes: what went wrong, or nothing. */
 export const signInAs = async (page: BrowserPage, origin: string, account: Account): Promise<string | undefined> => {
-  // Unreached is said, not thrown: a `--url` with no port ended the command in a stack trace (encore's lead).
+  // Unreached is said, not thrown: a `--url` with no port ended the command in a stack trace (a run's lead).
   const answer = await page.request
     .post(`${origin}${SIGN_IN_PATH}`, { data: { username: account.username, password: account.password } })
     .catch((error: unknown) => (error instanceof Error ? error : new Error(String(error))));

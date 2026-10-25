@@ -38,7 +38,7 @@ export const DEFAULTS = {
   startGraceMs: 3 * 60_000,
   /**
    * The largest session an agent resumes (`TeamAgent.resumeSession`): past it, reading it all again costs more than a
-   * fresh session that reads its task anew (encore's agents' sessions ran 3–5 MB).
+   * fresh session that reads its task anew (a run's agents' sessions ran 3–5 MB).
    */
   resumeMaxBytes: 8 * 1024 * 1024,
   /** A lock lasts while its task has a signal, and this long after it lost it. */

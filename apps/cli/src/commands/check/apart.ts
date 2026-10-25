@@ -12,8 +12,7 @@ import type { TaskParts } from '../../runs/taskParts';
 /**
  * A page checked inside a task's copy is held to that task's part of it: a finding on an element another task writes —
  * a stub of theirs, a label they own — is said apart and fails nothing, as `task look` sets it apart. A task's
- * acceptance runs `page check` on a page several tasks build, and failed on what none of its own files write (la-velada:
- * four tasks on the home's label-wraps of another's). The finish checks the whole result again, so nothing is lost:
+ * acceptance runs `page check` on a page several tasks build, and failed on what none of its own files write (* four tasks on the home's label-wraps of another's). The finish checks the whole result again, so nothing is lost:
  * a finding apart is the other task's to fix, and the run's to hold at the end. A task that writes the page's root, or a
  * check outside a copy, keeps every finding.
  */

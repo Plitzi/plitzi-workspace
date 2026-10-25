@@ -3,7 +3,7 @@ import { acceptanceText } from './model';
 import type { PlannedTask } from './model';
 
 /**
- * A copy's values measured, never typed from a guess: velada-polish's lead wrote the VS sizes of /combates as
+ * A copy's values measured, never typed from a guess: a run's lead wrote the VS sizes of /combates as
  * 2.35/2.75/3.35rem, the original's was 3em, and a round went to finding it out. A task of a plan that copies a site
  * (`reference`) whose acceptance names values — a size, a colour — and none of whose checks measures against the site
  * is said at `run plan`: hold them with `page measure --same`, or the review finds the guess.

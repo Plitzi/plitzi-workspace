@@ -21,7 +21,7 @@ export const MEASURED = [
   'border-left',
   'border-radius',
   'box-shadow',
-  // A focus ring: encore-2's design-2 reviewed one (t-stats-focus) and could only picture it.
+  // A focus ring: a run's design-2 reviewed one (t-stats-focus) and could only picture it.
   'outline',
   'outline-offset',
   'text-shadow',
@@ -30,23 +30,23 @@ export const MEASURED = [
   'margin',
   'gap',
   'display',
-  // A list's marker — its type, inside or outside, a picture: lx-product's bullets on a line of their own were
+  // A list's marker — its type, inside or outside, a picture: a run's bullets on a line of their own were
   // `list-style-position: inside`, unseen, rebuilt with a zero-width ::before at tuned heights.
   'list-style',
   'width',
   'height',
   'transform',
   'transition',
-  // Whether a part plays, is paused or stilled under reduced motion: encore-4's designer wrote a Playwright script of its
+  // Whether a part plays, is paused or stilled under reduced motion: a run's designer wrote a Playwright script of its
   // own to read it.
   'animation',
-  // Where a grid places it, and the width it is held to: encore-4's designer read them from the served HTML with curl.
+  // Where a grid places it, and the width it is held to: a run's designer read them from the served HTML with curl.
   'position',
   'max-width',
   'grid-area',
-  // Where its box starts in the viewport: a column measured against another's (lx-fidelity: every agent and the lead
+  // Where its box starts in the viewport: a column measured against another's (every agent and the lead
   // wrote a browser script of its own to read it) — and from the top of the page, an arrow at a column's foot
-  // (lx-product's design-1 judged it from a picture: `--same y` was refused).
+  // (a run's design-1 judged it from a picture: `--same y` was refused).
   'x',
   'y'
 ] as const;
@@ -67,12 +67,12 @@ export const sideOf = (value: string, side: number): string => {
 };
 
 /**
- * What is read of a box's `::before` and `::after`, when it draws one: velada's VS medal paints its fill on `::before`,
+ * What is read of a box's `::before` and `::after`, when it draws one: a run's VS medal paints its fill on `::before`,
  * where a reading of the box alone saw none — and the plan written from it asked the fill away.
  */
 export const PSEUDO_MEASURED = [
   'content',
-  // Where it sits: a marquee's bulb row under its sign (encore-4's designer measured it by a picture).
+  // Where it sits: a marquee's bulb row under its sign (a run's designer measured it by a picture).
   'position',
   'top',
   'right',
@@ -114,12 +114,12 @@ export interface Measured {
   inherited: string[];
   /**
    * The space's root, when the document's `body` or `html` was measured on a page of a space: the type and colours a
-   * space gives are on it — velada-backlog's `body` read Times 400 and the noscript's words.
+   * space gives are on it — a run's `body` read Times 400 and the noscript's words.
    */
   spaceRoot?: string;
   /**
    * How many elements its selector finds, when more than one: the first shown was measured — a list's first row alone
-   * (encore-4's widest genre name could not be named, and was proven by a picture).
+   * (a run's widest genre name could not be named, and was proven by a picture).
    */
   matches?: number;
 }
@@ -173,7 +173,7 @@ const transitionsOf = (value: string): string[] => {
 
 /**
  * A computed value as it is compared: its colours in one notation, its numbers to two decimals — what a browser writes
- * two ways for one look (velada's gold read `rgb(199, 168, 107)` on one page and `color(srgb 0.78 0.66 0.42)` on the
+ * two ways for one look (a run's gold read `rgb(199, 168, 107)` on one page and `color(srgb 0.78 0.66 0.42)` on the
  * other) is no difference to ask a developer for.
  */
 export const comparable = (property: string, value: string): string => {
@@ -244,7 +244,7 @@ const withinAPixel = (ours: string, theirs: string, share = 0): boolean => {
 
 /**
  * A box's size within a thousandth of it, half a pixel at the least: a tall one adds each of its lines' rounding — a
- * 1588px section of eighteen list items came 1.06px off the original's (lx-product), invisible, and failed like a
+ * 1588px section of eighteen list items came 1.06px off the original's, invisible, and failed like a
  * button 1px off. Spacing and type stay within half a pixel: there a pixel is seen.
  */
 const SIZE_SHARE: Readonly<Record<string, number>> = { width: 0.001, height: 0.001 };

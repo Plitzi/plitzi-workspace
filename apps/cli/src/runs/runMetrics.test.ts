@@ -6,7 +6,7 @@ import type { UsageLine } from './usage';
 
 const T = (minutes: number): string => new Date(Date.UTC(2026, 9, 21, 23, 0) + minutes * 60_000).toISOString();
 
-// velada-polish's t-match-bars, its times as the lead read them off the log by hand to find where the run went.
+// A run's t-match-bars, its times as the lead read them off the log by hand to find where the run went.
 const log: Record<string, unknown>[] = [
   { at: T(0), by: 'lead', action: 'open', taskIds: ['s-scope'] },
   { at: T(10), by: 'lead', action: 'extend', added: ['t-bars'] },
@@ -150,7 +150,7 @@ describe('a call made again', () => {
     ...(session === undefined ? {} : { session })
   });
 
-  it('is no loop when the call is how work is waited for or taken (encore-4: a fresh session each)', () => {
+  it('is no loop when the call is how work is waited for or taken (a fresh session each)', () => {
     expect(
       measured([
         ...[1, 2, 3, 4].map(minute => line(minute, 'plitzi task next --role tester --follow --take')),

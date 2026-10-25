@@ -32,7 +32,7 @@ const request = (resourceType: string, accept = '*/*'): SettlingRequest => ({
   headers: () => ({ accept })
 });
 
-// encore-3: the down key, lit by the vote's answer, measured unlit — the page was read before the action landed.
+// The down key, lit by the vote's answer, measured unlit — the page was read before the action landed.
 describe('a step whose server answer the page is read after', () => {
   it('waits for the fetch the step started, never for a stream', async () => {
     const { page, emit } = pageOf();

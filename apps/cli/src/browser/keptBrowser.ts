@@ -17,7 +17,7 @@ import type { ActingStep } from '../commands/shot/steps';
 /**
  * A browser kept open between `page measure` calls, the other site's pages loaded in it: a call that reads an element
  * of the other page not read before asks it, and it reads that page as it already is — rather than launching a browser
- * and loading the page again, most of a reading of another site (lx-controls: 6 s a call, about 1 s once kept).
+ * and loading the page again, most of a reading of another site (6 s a call, about 1 s once kept).
  *
  * It measures itself (`measureKeeper.ts`), answering over HTTP on this machine alone: a command attached to its pages
  * over the DevTools protocol reset their emulated colour scheme for every other reader — so none attaches, and what is
@@ -50,7 +50,7 @@ const isKeptRecord = (value: unknown): value is KeptRecord =>
 
 /**
  * Which CLI this is: its file, and when it was written — another install, or the same upgraded. A kept browser another
- * build started reads with that build's code: lx-product's, started by the CLI before `list-style` and `y` were
+ * build started reads with that build's code: a run's, started by the CLI before `list-style` and `y` were
  * measured, answered "none" for both to the one after — and so would one a `run upgrade` left running.
  */
 export const cliBuild = async (): Promise<string> => {

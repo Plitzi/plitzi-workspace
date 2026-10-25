@@ -254,7 +254,7 @@ const warnClickOnStaticElement = (ctx: LintContext, element: Element, where: str
   }
 
   // A backdrop is a box laid over the page — a container. An empty item of a list with a click is a control drawn as a
-  // shape: lx-product's carousel dots were empty list items, and nothing said a keyboard never reached them.
+  // shape: a run's carousel dots were empty list items, and nothing said a keyboard never reached them.
   const backdrop =
     type === 'container' &&
     items.length === 0 &&

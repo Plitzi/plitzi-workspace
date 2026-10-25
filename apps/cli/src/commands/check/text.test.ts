@@ -21,7 +21,7 @@ const report = (elements: CheckReport['elements']): CheckReport => ({
   elements
 });
 
-// velada-polish's design-2: a component's part was read on the page, and its styles said "not on the page"; an id that
+// A component's part was read on the page, and its styles said "not on the page"; an id that
 // is nobody's printed nothing it could act on.
 describe('an element asked for, in a page’s report', () => {
   it('says why its styles cannot be read, as it is — and that nothing on the page is called so', () => {
@@ -48,7 +48,7 @@ describe('an element asked for, in a page’s report', () => {
   });
 });
 
-// lx-copy: the layout's empty shell failed every page check until the task that fills it was done.
+// The layout's empty shell failed every page check until the task that fills it was done.
 describe('containers with nothing in them yet', () => {
   it('are said apart, failing nothing', () => {
     const text = reportText(

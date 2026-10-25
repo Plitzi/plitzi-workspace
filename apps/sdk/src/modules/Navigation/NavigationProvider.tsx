@@ -354,7 +354,7 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
       return null;
     }
 
-    // A sign-in of this space is told where the visitor was going too, the whole address as one elsewhere is: encore's
+    // A sign-in of this space is told where the visitor was going too, the whole address as one elsewhere is: a run's
     // guest sent to `/sign-in` was signed in on the home page. Not a signed-in visitor sent off a signed-out page (the
     // website's landing): they are not coming back.
     const onSite =

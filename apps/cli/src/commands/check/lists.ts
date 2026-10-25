@@ -76,7 +76,7 @@ const rowsText = (count: number): string => `${String(count)} row${count === 1 ?
 /** One list's rows in a few words: `plan-list 3 rows`, `feed 4 of 8 rows`, `hits not rendered (16 in its source)`. */
 export const listText = (id: string, { rendered, source, copies }: ListRows): string => {
   // A source the check cannot read — one the page's address names (`navigation.routeParams.slug`) — is no empty
-  // list: what the page draws is said (lx-copy: "policy-sections reads nothing" over 13 sections drawn, and the lead
+  // list: what the page draws is said ("policy-sections reads nothing" over 13 sections drawn, and the lead
   // sent the task back on it).
   if (source === null && rendered !== null && rendered > 0) {
     return `${id} ${rowsText(rendered)} drawn — its source not read here (one the address names)`;

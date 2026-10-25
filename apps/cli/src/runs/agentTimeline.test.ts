@@ -15,7 +15,7 @@ describe("an agent's timeline", () => {
       // Writing tests for 20 minutes with nothing logged: a silence.
       { at: at(23), by: 'test-1', action: 'complete', task: 't-tests' },
       { at: at(24), by: 'test-1', action: 'stops', why: 't-tests is complete: one task a session' },
-      // encore-2's test-1 said a notice after its stop: still stopped, never silent.
+      // A run's test-1 said a notice after its stop: still stopped, never silent.
       { at: at(24), by: 'test-1', action: 'notice', text: 'something of Plitzi' }
     ];
 
@@ -29,7 +29,7 @@ describe("an agent's timeline", () => {
     expect(life.silences).toEqual([{ from: at(3), minutes: 20 }]);
   });
 
-  it('ends at the end it is given, and counts no call an agent never named as an agent (encore-4)', () => {
+  it('ends at the end it is given, and counts no call an agent never named as an agent', () => {
     const log = [
       { at: at(0), by: 'lead', action: 'launch', agent: 'dev-1' },
       { at: at(1), by: 'dev-1', action: 'waiting', why: 'every task is done' },

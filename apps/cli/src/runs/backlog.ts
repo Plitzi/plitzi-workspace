@@ -12,7 +12,7 @@ import type { LoadedRun, RunContext } from './run';
 /**
  * The project's backlog: what a run noticed and left — `run notice` while it ran — kept past the run, in `.plitzi/`
  * beside the team, for the next run to take up. A run's log goes with the run, and a report is read by nobody planning
- * the next one: velada-polish's lead had the next run's work in its head and its notes, and nowhere the next run reads.
+ * the next one: a run's lead had the next run's work in its head and its notes, and nowhere the next run reads.
  * `run plan` and `run open` say what is open; `run backlog` lists it, `run backlog add "…"` keeps one with no run open
  * (the person's, or an agent's between runs), `run backlog done <id>` closes one — and a task of a plan that says it
  * does one (`closes`) closes it as its run is applied.

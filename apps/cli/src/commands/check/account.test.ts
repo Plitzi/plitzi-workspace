@@ -35,7 +35,7 @@ const server = async (): Promise<string> => {
   return `http://127.0.0.1:${String((listening.address() as AddressInfo).port)}`;
 };
 
-// encore-4: a look signed in found no link to /u/:username — its links were read as a guest's.
+// A look signed in found no link to /u/:username — its links were read as a guest's.
 describe('a session for reading the site without a browser', () => {
   it('is the cookies the sign-in sets, or why there are none', async () => {
     const origin = await server();

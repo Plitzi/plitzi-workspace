@@ -72,7 +72,7 @@ export const searchAll = (
   /** A member of what the project's code is handed, by its name — `ctx.later` — as the installed types declare it. */
   memberOf: (name: string) => readonly ApiExplanation[] = () => []
 ): (Omit<SearchHit, 'score'> | { kind: 'command' | 'code' | 'skill' | 'api'; name: string; summary: string })[] => {
-  // A member named in the words is answered first: encore-3's "ctx.later" was searched for five times and found every
+  // A member named in the words is answered first: a run's "ctx.later" was searched for five times and found every
   // passage that said "later", never the member.
   const members = (words.match(/\b[\w$]+\.[\w$]+\b/g) ?? []).flatMap(name =>
     memberOf(name).map(each => ({ kind: each.kind, name: each.name, summary: each.summary }))
@@ -300,7 +300,7 @@ export const explainCommand = async (
       return;
     }
 
-    // A setting of the whole space (`settings.keepState`): said as one, with where the skills teach it — encore-4's
+    // A setting of the whole space (`settings.keepState`): said as one, with where the skills teach it — a run's
     // `explain keepState` was "no name", three times.
     if ((SCHEMA_SETTINGS as readonly string[]).includes(name)) {
       const taught = skillsMentions(project?.root ?? process.cwd(), name);
@@ -321,7 +321,7 @@ export const explainCommand = async (
       return;
     }
 
-    // No name: what its words describe, as --search answers them — encore-4's `explain active`, `explain keepState`,
+    // No name: what its words describe, as --search answers them — a run's `explain active`, `explain keepState`,
     // `explain icon` each failed, nine times, where a search found the passage that teaches it.
     const described = searchAll(wordsOfName(name), commands, 5, skillPassages(project?.root ?? process.cwd()), each =>
       memberDeclarations(project?.root ?? process.cwd(), each)

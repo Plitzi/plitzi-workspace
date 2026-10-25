@@ -31,7 +31,7 @@ afterEach(async () => {
 
 const { lead, take } = runSteps(() => bench);
 
-// encore-4: dev-2's `task check --fix` rewrote avatar.ts, a file another task held, and only then refused it.
+// Dev-2's `task check --fix` rewrote avatar.ts, a file another task held, and only then refused it.
 describe('task check --fix', () => {
   it('fixes the task’s own files, never one another task holds', async () => {
     const plan = benchPlan();
@@ -49,7 +49,7 @@ describe('task check --fix', () => {
     expect(handed).toEqual([['src/space/pages/home/index.ts']]);
   });
 
-  // encore-4: dev-1 checked twelve times in nine minutes — a check run again with nothing changed answers the same.
+  // Dev-1 checked twelve times in nine minutes — a check run again with nothing changed answers the same.
   it('says a failure is the same as the last one, on the same files', async () => {
     const plan = benchPlan();
     plan.designReview = false;
@@ -68,7 +68,7 @@ describe('task check --fix', () => {
     expect(changed.failedAlikeAt).toBeUndefined();
   });
 
-  // encore-4: `sed -i -E` on macOS left roomBrowse.test.ts-E, which went to review as a file of the task's.
+  // `sed -i -E` on macOS left roomBrowse.test.ts-E, which went to review as a file of the task's.
   it('fails on a backup an editor left among its files, saying how to put it back', async () => {
     const plan = benchPlan();
     plan.designReview = false;

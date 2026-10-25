@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { agentPrompt, harnessCommand } from './agentPrompt';
 
 const base = {
-  runId: 'velada-shell',
-  root: '/p/la-velada',
-  cli: '/p/la-velada/tmp/plitzi-runs/velada-shell/scratch/dev-1/plitzi',
+  runId: 'shop-shell',
+  root: '/p/acme',
+  cli: '/p/acme/tmp/plitzi-runs/shop-shell/scratch/dev-1/plitzi',
   goal: 'The shell as the original'
 };
 
@@ -15,15 +15,15 @@ describe('an agent’s prompt', () => {
     const prompt = agentPrompt({ ...base, agent: 'dev-1', started: { roles: ['developer'] } });
 
     expect(prompt).toContain('You are dev-1, a developer agent');
-    expect(prompt).toContain(
-      'The CLI is /p/la-velada/tmp/plitzi-runs/velada-shell/scratch/dev-1/plitzi (PLITZI below)'
-    );
-    expect(prompt).toContain('cd /p/la-velada && PLITZI task next --role developer --follow --take`');
+    expect(prompt).toContain('The CLI is /p/acme/tmp/plitzi-runs/shop-shell/scratch/dev-1/plitzi (PLITZI below)');
+    expect(prompt).toContain('cd /p/acme && PLITZI task next --role developer --follow --take`');
     expect(prompt).not.toMatch(/--agent dev-1|\$\(cat/);
-    expect(prompt).toContain('/p/la-velada/.claude/skills/plitzi-cli/reference/runs.md');
+    expect(prompt).toContain('/p/acme/.claude/skills/plitzi-cli/reference/runs.md');
     expect(prompt).toContain('run finish');
     expect(prompt).toContain('"You can stop"');
     expect(prompt).not.toContain('runs-designer.md');
+    // 17 of 34 checks failed on typecheck or lint — the project's own scripts first, then the check.
+    expect(prompt).toMatch(/`npm run typecheck`, `npm run lint`.*then `PLITZI task check` once/);
   });
 
   // Carlos: the CLI works for any run, never one kind of it — a run copying nothing was told of an "original".
@@ -71,6 +71,8 @@ describe('an agent’s prompt', () => {
     expect(prompt).toContain('The person asked: The shell as the original');
     expect(prompt).toContain('task spike s-scope --done');
     expect(prompt).toContain('run agent <name> --launch');
+    // Plitzi's problems go to the run's feedback, never the project's backlog (plain `run notice`).
+    expect(prompt).toContain('run notice --plitzi');
   });
 });
 
@@ -95,7 +97,7 @@ describe('the command that starts an agent headless', () => {
     expect(harnessCommand('codex', prompt, { model: 'claude-sonnet-5-5' }).model).toBeUndefined();
     expect(harnessCommand('claude', prompt, { model: 'gpt-x' }).line).not.toContain('--model');
     expect(harnessCommand('claude', prompt, { model: 'sonnet' }).model).toBe('sonnet');
-    // A session of the CLI's id, kept to resume; or that one resumed (encore: four agents went down mid-task).
+    // A session of the CLI's id, kept to resume; or that one resumed (four agents went down mid-task).
     expect(harnessCommand('claude', prompt, {}, { id: 'abc', resume: false }).args).toEqual(
       expect.arrayContaining(['--session-id', 'abc'])
     );

@@ -39,7 +39,7 @@ describe('motion', () => {
     });
   });
 
-  // la-velada copied its original's arrivals value for value — `fade-in-up .6s ease-in-out 20px` — and, with a curve and
+  // A run copied its original's arrivals value for value — `fade-in-up .6s ease-in-out 20px` — and, with a curve and
   // a distance the presets could not take, wrote eight keyframes of its own instead.
   it('takes the curve and the distance of an arrival, as CSS and px — and only for one that travels', () => {
     expect(motionProblems({ enter: 'fade-up', easing: 'ease-in-out', distance: 20 })).toEqual([]);

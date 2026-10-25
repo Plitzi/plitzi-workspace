@@ -115,12 +115,12 @@ export const expectationNotices = async (root: string, tasks: readonly PlannedTa
   }
 
   // A component's parts are elements of every page that places it (`room-card-now` of the room card): its id is one a
-  // check expects, and found there — encore-2's plan said the space had none.
+  // check expects, and found there — a run's plan said the space had none.
   const ids = [...Object.keys(handles.elements), ...(await componentPartIds(root))];
 
   const known = new Set(ids);
 
-  // Once an element a check: one that expects four texts of it is one element the space lacks, not four (la-velada).
+  // Once an element a check: one that expects four texts of it is one element the space lacks, not four.
   const said = new Set<string>();
 
   const missing = wanted
@@ -133,7 +133,7 @@ export const expectationNotices = async (root: string, tasks: readonly PlannedTa
       return first;
     });
   // One line a task, its elements together: a stage whose tasks make every element its checks read said each apart —
-  // 37 lines in lx-copy's scope, burying the one warning that mattered.
+  // 37 lines in a run's scope, burying the one warning that mattered.
   const byTask = new Map<string, typeof missing>();
   missing.forEach(expected => byTask.set(expected.task, [...(byTask.get(expected.task) ?? []), expected]));
 
@@ -172,7 +172,7 @@ export const fallsToNotFound = (handles: SpaceHandles, path: string): boolean =>
 
 /**
  * The tasks after `task` — waiting on it, however far — that check `path` too: one of them likely makes the page, and
- * `task`'s check on it cannot pass before that one (lx-copy: t-card measured its card on the collection page that
+ * `task`'s check on it cannot pass before that one (t-card measured its card on the collection page that
  * t-collection made, and t-collection waited for t-card).
  */
 export const checkedAfter = (
@@ -197,7 +197,7 @@ export const checkedAfter = (
 
 /**
  * Each check of the plan that asks an address no page of the space answers — it falls to the not-found page, sent with
- * 404 — and says no `--status`: it fails on the status, whatever the page shows (velada-polish's lead wrote one, and
+ * 404 — and says no `--status`: it fails on the status, whatever the page shows (a run's lead wrote one, and
  * dev-3 asked why the acceptance could not pass). A notice: the task may make the page.
  */
 export const notFoundNotices = async (root: string, tasks: readonly PlannedTask[]): Promise<string[]> => {

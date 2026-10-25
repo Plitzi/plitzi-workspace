@@ -10,7 +10,7 @@ import type { LoadedRun, RunContext } from './run/context';
 
 /**
  * A question to the lead answered by a lead that reviews: one with a lead's model, there while the lead is at something
- * else — velada-dress's agents waited a median 7.8 minutes for the lead's answers. A lead that reviews is handed the
+ * else — a run's agents waited a median 7.8 minutes for the lead's answers. A lead that reviews is handed the
  * oldest question no other lead took, when no review waits for it (`task next --role lead`); what is the person's to
  * decide, or changes the plan, it leaves to the lead. The lead is woken for it only once it waited `UNTAKEN_REVIEW_MS`
  * unanswered.

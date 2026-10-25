@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { commandHint } from './commandHints';
 import { buildProgram } from './program';
 
-/** encore-3: 22 command lines refused as written, each found again by the next session that wrote it. */
+/** 22 command lines refused as written, each found again by the next session that wrote it. */
 describe('what a refused command line meant', () => {
   it('says a shell variable that held two flags arrived as one', () => {
     const hint = commandHint("error: unknown option '--as mika'", ['page', 'check', '/', '--as mika']);
@@ -20,7 +20,7 @@ describe('what a refused command line meant', () => {
   });
 
   it('names the command that answers one another group has', () => {
-    expect(commandHint("error: unknown command 'agents'", ['run', 'agents', 'encore-3'])).toContain('run status');
+    expect(commandHint("error: unknown command 'agents'", ['run', 'agents', 'shop-3'])).toContain('run status');
     expect(commandHint("error: unknown command 'list'", ['task', 'list'])).toContain('run status');
     expect(commandHint("error: unknown command 'nope'", ['run', 'nope'])).toBeUndefined();
   });

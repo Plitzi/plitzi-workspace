@@ -106,7 +106,7 @@ describe('inspectTemplate', () => {
   it.each([
     ["{{ s matches '/^H/' }}", '`matches` is not supported'],
     ['{{ source|defualt }}', 'Unknown filter "defualt"'],
-    // A filter as JavaScript names it: encore-3's host picker wrote `concat`.
+    // A filter as JavaScript names it: a run's host picker wrote `concat`.
     ["{{ [{ label: 'Pick' }]|concat(source) }}", 'Unknown filter "concat" — write `first|merge(second)`'],
     ['{{ now() }}', 'Unknown function "now()"'],
     // A filter called like a function, and the functions other engines have that are spelled otherwise here.
@@ -136,7 +136,7 @@ describe('inspectTemplate', () => {
   });
 });
 
-// encore-4: `(sort or "listeners")` answered true, and Explore's links wrote `?sort=true`.
+// `(sort or "listeners")` answered true, and Explore's links wrote `?sort=true`.
 describe('inspectTemplate, of what reads as something other than it looks', () => {
   it('notes an `or` or an `and` beside a text or a number, never one between conditions', () => {
     expect(inspectTemplate("{{ sort or 'listeners' }}").notes).toEqual([

@@ -8,7 +8,7 @@ import type { RunReport } from './report';
 
 /**
  * The work the team did: its tasks, not a scope or a spike the lead found out alone — counted the same in the report's
- * head, its indicators and the bench (encore-4's head said 39 of 39, its bench 38/38).
+ * head, its indicators and the bench (a run's head said 39 of 39, its bench 38/38).
  */
 export const teamTasks = <T extends { role: string }>(tasks: readonly T[]): T[] =>
   tasks.filter(task => task.role !== 'lead (spike)');
@@ -113,7 +113,7 @@ const isBenchLine = (value: unknown): value is BenchLine =>
 export const readBench = async (root: string): Promise<BenchLine[]> =>
   (await readRunReports(root)).flatMap(({ data }) => (isBenchLine(data.bench) ? [data.bench] : []));
 
-// A measure kept as `null` — a NaN written to JSON, as lx-copy's agents' wait was — is no number to print.
+// A measure kept as `null` — a NaN written to JSON, as a run's agents' wait was — is no number to print.
 const cell = (value: number | null | undefined, suffix = ''): string =>
   typeof value !== 'number' || !Number.isFinite(value) ? '—' : `${String(value)}${suffix}`;
 const tokens = (value: number | undefined): string => (value === undefined ? '—' : tokensText(value));

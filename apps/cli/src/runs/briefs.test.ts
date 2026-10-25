@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { briefsOf, briefsText } from './briefs';
 
-// encore-2: 61 briefs read again for 1.1M tokens, and nothing said which part of them weighed.
+// 61 briefs read again for 1.1M tokens, and nothing said which part of them weighed.
 describe('the briefs a run read', () => {
   it('are summed by part, with their median and each part’s share — none without one', () => {
     const log = [

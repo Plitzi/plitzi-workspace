@@ -32,7 +32,7 @@ export const leadNext = async (
   }
 
   // A UI review waits for a designer; with none free — each at a task of its own, or none in the team — it waits for
-  // nobody, and every review behind it with it (la-velada: seven tasks in review, the one designer redoing its own).
+  // nobody, and every review behind it with it (seven tasks in review, the one designer redoing its own).
   const team = await readTeam(ctx.root).catch(() => undefined);
   const designers = (team ? startedAgents(team) : [])
     .filter(each => each.roles.includes(DESIGNER))

@@ -9,7 +9,7 @@ import { runSteps } from '../tests/runSteps';
 import type { Bench } from '../tests/runProject';
 
 /**
- * A task that changes a page an approved task was accepted on runs that task's lines again before review: encore's
+ * A task that changes a page an approved task was accepted on runs that task's lines again before review: a run's
  * stats panel and the retro's `/design` copy broke three lines of earlier stages, and nothing said so until the finish.
  */
 
@@ -79,7 +79,7 @@ describe('the lines of approved tasks, on a page a task changes', () => {
     });
   });
 
-  // encore-2's t-room-side: its own lines passed on the copy served for them, which was stopped before the approved
+  // Its own lines passed on the copy served for them, which was stopped before the approved
   // tasks' lines ran on it — "nothing answers", refused three times as breaking five lines it had not touched.
   it('runs the approved lines on the copy served for its own, still answering', async () => {
     await bench.write(

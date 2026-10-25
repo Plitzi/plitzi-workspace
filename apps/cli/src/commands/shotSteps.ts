@@ -44,7 +44,7 @@ export type ShotStep =
   | { kind: 'shot'; label?: string }
   | { kind: 'frames'; count: number; every: number };
 
-// `fill` is `type` by the name a Playwright user reaches for (encore's dev-1): typing replaces what a field held either way.
+// `fill` is `type` by the name a Playwright user reaches for (a run's dev-1): typing replaces what a field held either way.
 const STEP_NAMES = [
   'click',
   'hover',
@@ -106,7 +106,7 @@ const unquoted = (text: string): string => text.replace(/^(["'])(.*)\1$/s, '$2')
  */
 export const leadingTarget = (text: string): { target: string; rest: string } => {
   // `ours => theirs`, as page play and --compare name one element on each page: the pair is the target, whole
-  // (lx-product: `drag product-slides => .js-media-list -200 0` was refused until the pair was quoted).
+  // (`drag product-slides => .js-media-list -200 0` was refused until the pair was quoted).
   const first = oneTarget(text);
   const paired = /^=>\s*(.*)$/s.exec(first.rest);
   if (paired) {
@@ -161,7 +161,7 @@ const count = (value: string | undefined, at: string, max: number): number | { p
 };
 
 /**
- * A script's steps, apart: at each `;` or new line outside quotes — encore-4's chat line "late — still here; ok" was
+ * A script's steps, apart: at each `;` or new line outside quotes — a run's chat line "late — still here; ok" was
  * cut at its `;`, and the message never sent.
  */
 const stepLines = (script: string): string[] => {
@@ -212,10 +212,10 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
         break;
       case 'type':
       case 'fill': {
-        // `fill email=ana@x.com` as `--fill` writes it, beside `fill email ana@x.com`: encore-3's agents wrote the flag's
+        // `fill email=ana@x.com` as `--fill` writes it, beside `fill email ana@x.com`: a run's agents wrote the flag's
         // spelling in a step and were refused.
         const said = rest.join(' ');
-        // A class or an id too: encore-4's `fill .encore-chat__input=Great` was read as one selector.
+        // A class or an id too: a run's `fill .chat__input=Great` was read as one selector.
         const flagged = /^([.#]?[A-Za-z_][\w-]*)=([\s\S]*)$/.exec(said);
         const { target, rest: text } = flagged ? { target: flagged[1], rest: flagged[2] } : leadingTarget(said);
         if (!target || text === '') {

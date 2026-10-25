@@ -9,7 +9,7 @@ import { runSteps } from '../../tests/runSteps';
 
 import type { Bench } from '../../tests/runProject';
 
-/** Carlos, on encore-3: the monitor said the lead was "working", never at which task — it read them with `task show`. */
+/** Carlos: the monitor said the lead was "working", never at which task — it read them with `task show`. */
 
 let bench: Bench;
 

@@ -1,6 +1,6 @@
 /**
  * What the agents' briefs weighed (`task context`), part by part: an agent reads its brief again on every turn after,
- * and encore-2's report could say only that it was read again for 1.1M tokens — not which part was heavy.
+ * and a run's report could say only that it was read again for 1.1M tokens — not which part was heavy.
  */
 
 export interface Briefs {

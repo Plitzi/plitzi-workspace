@@ -8,7 +8,7 @@ import { runSteps } from '../tests/runSteps';
 
 import type { Bench } from '../tests/runProject';
 
-/** encore-2: `task show` answered up to 44k characters — eighteen files of eighty lines — read 77 times by its reviewers. */
+/** `task show` answered up to 44k characters — eighteen files of eighty lines — read 77 times by its reviewers. */
 
 let bench: Bench;
 
@@ -47,7 +47,7 @@ describe('a task shown', () => {
     expect(whole.files.every(each => each.withheld === undefined && each.more === undefined)).toBe(true);
   });
 
-  // encore-4: design-2's `task show` of another task offered `task message`, which an agent's token is refused.
+  // Design-2's `task show` of another task offered `task message`, which an agent's token is refused.
   it('offers an agent of the team its own next steps, the lead the lead’s', async () => {
     await openRun(lead(), await bench.writePlan(benchPlan()));
     await take('agent-1', 't-home');

@@ -91,7 +91,7 @@ export const space = { tokens, pages: await pagesIn(new URL('./pages/', import.m
     expect(played.contention).toEqual([]);
   });
 
-  // encore-5: a picker queue.ts places and a band home.ts stacks were said to register in the space's entry, at once.
+  // A picker queue.ts places and a band home.ts stacks were said to register in the space's entry, at once.
   it('reads a module made beside a file the task changes as that file’s to import: it registers nowhere', async () => {
     const plan = benchPlan();
     plan.tasks.push(

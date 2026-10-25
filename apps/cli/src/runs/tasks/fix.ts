@@ -5,7 +5,7 @@ import { fingerprint } from '../files';
 
 /**
  * `task check --fix`: what the project's own linter and formatter fix by themselves, fixed first — on the files the
- * task changed, never another's — then checked. velada-polish's dev-1 ran `task check` three times in twenty seconds,
+ * task changed, never another's — then checked. A run's dev-1 ran `task check` three times in twenty seconds,
  * twice, each failing on lint a `--fix` writes: a round of checks for what no one has to think about.
  */
 

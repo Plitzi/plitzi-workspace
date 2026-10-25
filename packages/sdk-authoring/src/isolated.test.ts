@@ -38,7 +38,7 @@ afterAll(() => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-// lx-copy: `page check --space` refused a space that loads its pages by folder and reads its data beside it.
+// `page check --space` refused a space that loads its pages by folder and reads its data beside it.
 describe('authorIsolated, a space reading beside its folder', () => {
   it('reads the project’s src/ — its pages’ folder, its data — and never the project’s root', async () => {
     mkdirSync(path.join(dir, 'src/space/pages'), { recursive: true });

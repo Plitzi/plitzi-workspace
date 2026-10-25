@@ -66,7 +66,7 @@ export interface TaskReport {
   design?: string;
   /**
    * What each review asked when it sent the task back, by round and by whom: what tells the agent's mistake from what
-   * Plitzi did not let it see (encore's eight sends-back were all logic: a race, a hole, a stale count).
+   * Plitzi did not let it see (a run's eight sends-back were all logic: a race, a hole, a stale count).
    */
   reviews: { round: number; by: string; asked: string }[];
 }
@@ -175,7 +175,7 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     const spike = task.spike !== undefined;
     const first = spike ? log.find(line => line.action === 'spike-taken' && line.task === task.id) : takes.at(0);
     const ended = spike ? log.find(line => line.action === 'spike-done' && line.task === task.id) : approval;
-    // Every designer that said a round of its UI, in order — one named alone hid the other (velada-polish's t-match-bars).
+    // Every designer that said a round of its UI, in order — one named alone hid the other (a run's t-match-bars).
     const designers = [
       ...new Set(log.filter(line => line.action === 'design-review' && line.task === task.id).map(line => line.by))
     ];
@@ -363,7 +363,7 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     metrics,
     taskReports,
     ...(lead ? { lead } : {}),
-    // To the last approval: past it every agent waits for the person's finish (encore-4: 595 min "at work or waiting").
+    // To the last approval: past it every agent waits for the person's finish (595 min "at work or waiting").
     agents: agentTimelines(runLog, workEndOf(runLog) ?? ctx.now()),
     ...(briefsOf(runLog) ? { briefs: briefsOf(runLog) } : {})
   };
@@ -390,7 +390,7 @@ const workEndOf = (log: readonly Record<string, unknown>[]): Date | undefined =>
 
 /**
  * The run's goal grows by a stage's at each `run extend` (`extend.ts`): the title is the run's own, the stages a list
- * under it — encore-4's title was 16 goals in one line.
+ * under it — a run's title was 16 goals in one line.
  */
 const goalText = (runId: string, goal: string): string[] => {
   const [own, ...stages] = goal.split(' · ');
@@ -407,7 +407,7 @@ const nestedHeadings = (text: string): string =>
 
 /**
  * The report as a command prints it: the run at a glance and each finding's title — the evidence, the flow and the
- * cost are the whole report's (`--full`, and the file a finish writes). encore-4's lead read 112k characters of it.
+ * cost are the whole report's (`--full`, and the file a finish writes). A run's lead read 112k characters of it.
  */
 export const reportBrief = (report: RunReport): string => {
   const titles = FINDING_OWNERS.flatMap(owner => {
@@ -547,7 +547,7 @@ export const writeSummary = async (
   const loaded = await loadRun(ctx, runId);
   await requireLead(ctx, loaded, 'write the run’s summary');
   // The lead closes what it was told first: a run that ended with notices standing read as one whose lead ignored them
-  // (encore-2: ten), and a lead that said "done" before them stacked a stage after. Starting agents is the keeper's.
+  // (ten), and a lead that said "done" before them stacked a stage after. Starting agents is the keeper's.
   const view = await viewRun(ctx, runId);
   const open = view.attention.filter(item => item.who === 'lead' && !KEEPER_KINDS.has(item.kind));
   if (view.done === view.total && open.length > 0) {
@@ -598,8 +598,7 @@ export const readLeadExperience = async (loaded: LoadedRun): Promise<Experience 
 };
 
 /**
- * The tasks approved after the lead's summary was written: what the report says nothing of — or says wrong (la-velada:
- * "the morph is left out", written before t-morph was approved). When it was written is its `summary` entry in the log;
+ * The tasks approved after the lead's summary was written: what the report says nothing of — or says wrong (* "the morph is left out", written before t-morph was approved). When it was written is its `summary` entry in the log;
  * a run whose summary came before that entry was kept is read by its file's time, the same clock its approvals have.
  */
 export const summaryBehind = async (loaded: LoadedRun): Promise<string[]> => {

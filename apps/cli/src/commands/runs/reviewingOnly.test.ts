@@ -21,7 +21,7 @@ afterEach(async () => {
 
 const { lead, take } = runSteps(() => bench);
 
-// encore-3: the designers said their progress through a review and were refused nine times, each fresh session anew.
+// The designers said their progress through a review and were refused nine times, each fresh session anew.
 describe('a sign of life said at a review', () => {
   it('is the review’s for an agent that holds no task, and never a writer’s', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
@@ -38,7 +38,7 @@ describe('a sign of life said at a review', () => {
     expect(await reviewingOnly(lead(), 'es-launch')).toBeUndefined();
   });
 
-  // encore-3: `task show` with no task was refused twice, its agent holding one.
+  // `task show` with no task was refused twice, its agent holding one.
   it('names the task an agent means when it names none: the one it holds, or the one it reviews', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
     await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
@@ -51,7 +51,7 @@ describe('a sign of life said at a review', () => {
 
     expect(await ownTask(bench.agent('design-1'), 'es-launch')).toBe('t-menu');
     expect(await ownTask(home.ctx, 'es-launch')).toBe('t-home');
-    // encore-3: a reviewer's `task context` was refused four times; it reads the brief of what it reviews.
+    // A reviewer's `task context` was refused four times; it reads the brief of what it reviews.
     expect(await either(bench.agent('design-1'), { run: 'es-launch' })).toEqual({
       runId: 'es-launch',
       taskId: 't-menu'

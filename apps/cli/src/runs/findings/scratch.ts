@@ -67,7 +67,7 @@ const KEEP_MOST_BYTES = 256 * 1024;
 
 /**
  * Each agent's scripts copied out of the run's scratch before it goes — to `into/<agent>/<path>` beside the run's report:
- * each one is what a command could not do, and what it does is the CLI's next feature (encore's design-1 installed
+ * each one is what a command could not do, and what it does is the CLI's next feature (a run's design-1 installed
  * axe-core to audit what `page check` did not). Each one `clean`ed — what leaves the run leaves the person's machine out
  * (`withoutMachine`). What it kept, and what it left out as too large.
  */

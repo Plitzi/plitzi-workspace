@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { processTwig } from '../index';
 
-// encore: "Ended 4 min ago" took a plugin, and a track's 238 s read through `date` printed 06:40.
+// "Ended 4 min ago" took a plugin, and a track's 238 s read through `date` printed 06:40.
 describe('processTwig — a moment as how long ago, a length as a clock', () => {
   const now = Date.UTC(2026, 9, 24, 12, 0, 0);
 

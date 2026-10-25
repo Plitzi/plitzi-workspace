@@ -194,7 +194,7 @@ export const BUILDER_NAMES: Record<string, string> = {
   performQuery: 'reloadApi',
   cancelQuery: 'cancelApi',
   delayTime: 'delay',
-  // A carousel's own steps, written with its name: `explain carouselNext` answered nothing (lx-controls).
+  // A carousel's own steps, written with its name: `explain carouselNext` answered nothing.
   next: 'carouselNext',
   previous: 'carouselPrevious',
   goTo: 'carouselGoTo',
@@ -357,7 +357,7 @@ export const explain = (name: string): Explanation[] => {
   const filter = Object.hasOwn(FILTER_DOCS, name) ? FILTER_DOCS[name] : undefined;
   const templateFunction = Object.hasOwn(FUNCTION_DOCS, name) ? FUNCTION_DOCS[name] : undefined;
   const source = globalSource(name);
-  // A state a class styles, asked by its name: encore-4's `explain active` failed nine times, where the open tab is
+  // A state a class styles, asked by its name: a run's `explain active` failed nine times, where the open tab is
   // `current` and `active` the press.
   const state = STYLE_STATES.find(each => each === name);
   // Asked by the name the code calls it: what `reloadApi(…)` writes is the `performQuery` step.
@@ -443,7 +443,7 @@ export interface SearchHit {
 
 /**
  * What an entry says beyond its line, read by a search and never listed: an element's description, a step's or a
- * trigger's params. lx-product: "repeat list each item" missed `list`, whose description says it repeats a row once
+ * trigger's params. A run's "repeat list each item" missed `list`, whose description says it repeats a row once
  * per entry, and "escape key close" `onKey`, whose keys take `escape` — the search read their titles alone.
  */
 const aboutOf = (kind: SearchHit['kind'], name: string): string => {
@@ -503,7 +503,7 @@ export const searchScore = (asked: readonly string[], name: string, summary: str
 /**
  * Everything authoring knows that the words describe — an element, a step, a trigger, a code, a helper, a filter, a
  * function, a global source, a field an element publishes (`carousel_<id>.atEnd`) — best first: the question "does
- * Plitzi have a way to…" answered in one call, where agents read the bundle's types for it (lx-controls).
+ * Plitzi have a way to…" answered in one call, where agents read the bundle's types for it.
  */
 export const explainSearch = (text: string, limit = 10): SearchHit[] => {
   const asked = [...new Set(searchWords(text))];
@@ -571,7 +571,9 @@ export const explanationText = (explanation: Explanation): string => {
       return [
         `${explanation.name} — element: ${explanation.label}. ${explanation.description}`,
         `Written: ${explanation.factory}${explanation.holdsChildren ? ', with children' : '; holds no children'}${explanation.inside ? `, only inside a ${explanation.inside}` : ''}${explanation.source ? `; publishes ${explanation.source}_<id>` : ''}`,
-        ...(explanation.attributes.length > 0 ? ['Attributes:'] : ['Attributes: none of its own — what it is made of is its children']),
+        ...(explanation.attributes.length > 0
+          ? ['Attributes:']
+          : ['Attributes: none of its own — what it is made of is its children']),
         ...explanation.attributes.map(
           attribute =>
             `  ${attribute.name}${attribute.values ? `: ${attribute.values.map(value => `'${value}'`).join(' | ')}` : ''}${attribute.default === undefined ? '' : ` = ${valueText(attribute.default)}`}`

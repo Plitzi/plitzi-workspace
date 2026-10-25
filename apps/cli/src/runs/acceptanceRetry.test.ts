@@ -13,7 +13,7 @@ afterEach(async () => {
 });
 
 /**
- * A line that asks a slow server fails one run in many: la-velada's finish failed a different line each time a CDN was
+ * A line that asks a slow server fails one run in many: a run's finish failed a different line each time a CDN was
  * busy. Each failed line runs once more, and one that passes only then says so.
  */
 describe('checkAcceptance', () => {

@@ -2,7 +2,7 @@ import type { BrowserPage } from './index';
 
 /**
  * The browser a page is read in, where it is not a visitor's ordinary one: what a check of a refusal, a failure or a
- * time needs, set before the page is asked for. encore-3: a remembered Listen, a player that does not load and a
+ * time needs, set before the page is asked for. A remembered Listen, a player that does not load and a
  * countdown were each a throwaway Playwright file, because no command could read the page that way.
  */
 export interface BrowserConditions {

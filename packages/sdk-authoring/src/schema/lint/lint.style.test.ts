@@ -230,7 +230,7 @@ describe('lintSpace', () => {
       expect(focused('textarea', 'focus')).toEqual([]);
     });
 
-    // encore-4: a header menu's class set `position`, and its popup lay in the header's flow; a class gave an icon
+    // A header menu's class set `position`, and its popup lay in the header's flow; a class gave an icon
     // another font, and it drew "≡" — every check passed both.
     it('popup-position-set', () => {
       const warned = (popup: Record<string, string>, icon: Record<string, string>) =>
@@ -441,7 +441,7 @@ describe('lintSpace', () => {
       expect(warningsOf(documents)).not.toContain('click-on-static-element');
     });
 
-    // lx-product: the carousel's dots were empty list items with a click, and neither author nor lint said a thing.
+    // The carousel's dots were empty list items with a click, and neither author nor lint said a thing.
     it('click-on-static-element on an empty item of a list: a control drawn as a shape, no backdrop', () => {
       const documents = withChange(({ schema }) => {
         addElement(schema, { id: 'dot', type: 'listItem', attributes: {} });

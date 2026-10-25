@@ -151,7 +151,7 @@ const writtenSince = async (
 /**
  * Whether asking for changes now blocks the task for the lead: its rounds of this kind — the designer's on its UI, the
  * lead's on the rest — at their limit with this one. Said to the reviewer before it asks (`task next`), never found out
- * after (velada-dress: design-2's third round on t-overlay).
+ * after (design-2's third round on t-overlay).
  */
 export const changesBlock = (state: Pick<TaskState, 'round' | 'designRounds'>, byDesigner: boolean): boolean => {
   const designRounds = state.designRounds ?? 0;
@@ -213,7 +213,7 @@ const decide = async (
   const task = findTask(loaded, taskId);
   const view = await viewTask(loaded.paths, task);
   // Past the round limit it is the lead's to decide — the lead speaks to the person, if it must ask — never an agent's:
-  // velada-now's t-boxer waited for "a person" nobody in the run was.
+  // A run's t-boxer waited for "a person" nobody in the run was.
   const atLimit = view.state.status === 'blocked' && view.state.blockedBy?.review === true;
   if (atLimit && verdict === 'approve') {
     if (!isPrincipal(ctx.agent)) {
@@ -229,7 +229,7 @@ const decide = async (
       atLimit
         ? `Task "${taskId}" is past its review rounds: the lead approves it as it is, or answers it (plitzi task unblock ${taskId} --answer "…")`
         : view.state.status === 'changes-requested' && !isPrincipal(ctx.agent)
-          ? // velada-shell's design-1 measured round 2, and its approval was refused with the status alone.
+          ? // A run's design-1 measured round 2, and its approval was refused with the status alone.
             `Task "${taskId}" was sent back meanwhile (round ${String(view.state.round)}): there is no review to say now — what you measured, tell the lead (plitzi task tell --about ${taskId} "…"); its next round comes to review again`
           : view.state.status === 'done'
             ? `Task "${taskId}" is approved already: there is no review to say — what you found, tell the lead (plitzi task tell --about ${taskId} "…")`
@@ -238,7 +238,7 @@ const decide = async (
     );
   }
 
-  // Never one's own: encore-3's lead took a ready task, wrote it and approved it, nobody else reading a line.
+  // Never one's own: a run's lead took a ready task, wrote it and approved it, nobody else reading a line.
   if (view.owner?.agent === ctx.agent) {
     throw new RunRefusal(
       'invalid',
@@ -254,7 +254,7 @@ const decide = async (
   }
 
   // What the lead said to a reviewer while it reviewed is read before its verdict, not after: design-1's round on
-  // t-match-bars went out before the lead's "only the bars this round" reached it (velada-polish). Handed over here,
+  // t-match-bars went out before the lead's "only the bars this round" reached it. Handed over here,
   // read; said again, the verdict goes.
   if (!isPrincipal(ctx.agent)) {
     const meanwhile = (await unreadFor(loaded, agentAddress(ctx.agent), true)).filter(message => message.from === LEAD);
@@ -305,7 +305,7 @@ const decide = async (
 
   const skipped = verdict === 'approve' && designDue(view.state);
   const why = skipped ? skipDesign : undefined;
-  // A designer at it, in its time: its review is cut from under it — its copy taken away mid-look (encore-4's design-1,
+  // A designer at it, in its time: its review is cut from under it — its copy taken away mid-look (a run's design-1,
   // four minutes into d-brand-logo's). Past its time it is the lead's to decide, as `slow-review` says.
   const reviewing = view.state.design?.by;
   if (
@@ -329,7 +329,7 @@ const decide = async (
       { task: taskId, designer: reviewing }
     );
   }
-  // The lead's UI review is a look at it, said: encore-2's lead approved t-reactions-quiet `--skip-design lead` without
+  // The lead's UI review is a look at it, said: a run's lead approved t-reactions-quiet `--skip-design lead` without
   // one, and the emoji sat at the top of every key — the person saw it, no check could.
   if (why === 'lead' && !(await lookedSince(loaded, ctx.agent, taskId))) {
     throw new RunRefusal(
@@ -340,7 +340,7 @@ const decide = async (
   }
 
   // The lead sent back a task a designer was reviewing: its review ends now, and it is told — never left to say a
-  // verdict that is refused (velada-fidelity: design-1's of t-result-card was turned away, naming nothing). An approval
+  // verdict that is refused (design-1's of t-result-card was turned away, naming nothing). An approval
   // tells it once the approval is in (below).
   const cut = verdict === 'changes' && !byDesigner && designDue(view.state) ? view.state.design?.by : undefined;
   if (cut !== undefined && cut !== ctx.agent) {
@@ -351,7 +351,7 @@ const decide = async (
     });
   }
 
-  // A reviewer that took this round's review and is still at it is told its review ends — encore-3's tester read on as
+  // A reviewer that took this round's review and is still at it is told its review ends — a run's tester read on as
   // the lead approved, the task's copy gone under it, and its own verdict refused "approved already".
   const holder = view.state.reviewer;
   if (holder && holder.by !== ctx.agent && holder.round === view.state.round && !byDesigner) {
@@ -390,7 +390,7 @@ const decide = async (
   const submitted = view.state.submitted ?? (await keepFiles(loaded.paths, view.paths.work, changed));
   const notReviewed = await writtenSince(view, start, submitted);
   // Its requests too, at the version it asked: a copy made again from this (taken by another agent, or after a cut) holds
-  // what it asked of a shared file — lx-fidelity's t-blog came back without its site.json, and author failed on it.
+  // what it asked of a shared file — a run's t-blog came back without its site.json, and author failed on it.
   const requested = Object.fromEntries((await readRequests(view.paths)).map(request => [request.file, request.wanted]));
   await writeJson(view.paths.reviewed, { round, at: at(ctx), files: { ...requested, ...submitted } });
   await writeJson(view.paths.review, { round, verdict, comments, by: ctx.agent, at: at(ctx) });
@@ -466,7 +466,7 @@ const decide = async (
   const merged = Object.keys(submitted);
   // What it asked for on a file it then held and merged itself is done; what it asked for on any other goes in now, held
   // by another task or not, when it merges line by line with the run's version — its approved files read it, and a run
-  // whose work reads what it lacks fails every task's checks (velada-dress: t-sponsors approved, its tokens waiting on
+  // whose work reads what it lacks fails every task's checks (t-sponsors approved, its tokens waiting on
   // t-home). The holder's copy brings it in at its next refresh. Only what does not merge waits for an integration task.
   const requests = await readRequests(view.paths);
   const own = requests.filter(request => merged.includes(request.file));
@@ -478,7 +478,7 @@ const decide = async (
 
     throw error;
   };
-  // Its files and what it asked of shared files are one change, checked as one: apart, lx-copy's t-shell went in
+  // Its files and what it asked of shared files are one change, checked as one: apart, a run's t-shell went in
   // reading site.json keys and tokens its requests held — files new to the run were never checked — and every copy made
   // after failed typecheck until three integration tasks put them back together.
   const together =
@@ -584,7 +584,7 @@ const decide = async (
     ctx.now
   );
   // Said the moment it is so: the approval is in the run's work, whatever the steps after it meet — written last, one
-  // that failed after it left an approval the log never had (la-velada: t-tier-list, approved and nowhere in the log).
+  // that failed after it left an approval the log never had (t-tier-list, approved and nowhere in the log).
   await logRun(ctx, loaded.paths, {
     action: 'review',
     task: taskId,
@@ -624,7 +624,7 @@ const decide = async (
     await logRun(ctx, loaded.paths, { action: 'handed-on', task: taskId, granted, ready });
   }
 
-  // A designer at its UI review learns it is decided, never finds out by a refusal (la-velada: design-1 on t-motion).
+  // A designer at its UI review learns it is decided, never finds out by a refusal (design-1 on t-motion).
   const designer = skipped ? view.state.design?.by : undefined;
   if (designer) {
     await sendMessage(ctx, refreshed, {

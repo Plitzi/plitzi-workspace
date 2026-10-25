@@ -8,7 +8,7 @@ import type { UsageLine } from './usage';
  * What each agent's harness spent, kept in the run's log as each piece of its work ends — a task completed, a review
  * decided (`spent`): the window since its last, so nothing is counted twice and nothing between two pieces is lost.
  * The monitor's spend panel reads it as the run goes. A round's report keeps its own, in detail; this is every agent's,
- * the lead and the reviewers among them — encore-2's tester read 30M tokens, nearly all of it reviewing, which no
+ * the lead and the reviewers among them — a run's tester read 30M tokens, nearly all of it reviewing, which no
  * round's report held.
  */
 
@@ -30,7 +30,7 @@ export interface Spent {
   turns: number;
   /**
    * What it took in new — fresh input, and context written to the cache. With `output`, what costs; kept apart from
-   * `cached`: encore-3's test-1 read 1.1M tokens for one spec, 92 % of them its context read again from the cache.
+   * `cached`: a run's test-1 read 1.1M tokens for one spec, 92 % of them its context read again from the cache.
    */
   input: number;
   /** What it wrote: the model's answers. */

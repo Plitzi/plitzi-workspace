@@ -25,7 +25,7 @@ afterEach(async () => {
   await fs.rm(root, { recursive: true, force: true });
 });
 
-// lx-product: dev-1 read the published types for `taskAction`, which the functions reference teaches with an example.
+// Dev-1 read the published types for `taskAction`, which the functions reference teaches with an example.
 describe('where the skills teach a name', () => {
   it('names the line that writes it as code, the references before the recipes — never a word in prose', () => {
     expect(skillsMentions(root, 'taskAction')).toEqual([
@@ -43,7 +43,7 @@ describe('where the skills teach a name', () => {
     expect(skillsMentions(root, 'nothingHere')).toEqual([]);
   });
 
-  // lx-product: "server action reads a data file for a provider" found neither ctx.data nor taskAction.
+  // "server action reads a data file for a provider" found neither ctx.data nor taskAction.
   it('lets a search answer with what a reference teaches, a point read whole with the lines that go on with it', () => {
     const passages = skillPassages(root);
     expect(passages.map(each => each.text)).toEqual([

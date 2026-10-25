@@ -52,7 +52,7 @@ export const pageTexts = (limit: number): PageText[] => {
     }
 
     // As a reader sees it: a heading written "Boxeadores" and drawn in capitals is "BOXEADORES", as the original that
-    // wrote it in capitals is — two pages read alike are not two different words (la-velada's comparison said so of
+    // wrote it in capitals is — two pages read alike are not two different words (a run's comparison said so of
     // every heading).
     const words = element.textContent.replace(/\s+/g, ' ').trim();
     const shown =
@@ -213,7 +213,7 @@ export const compareTexts = (
     }
   };
   // The same words drawn as a control and as text are two things: a button "Agotado" paired with a stock label
-  // "Agotado" compared a 414px button with a 65px word (lx-product's design-1, misled into a wrong notice).
+  // "Agotado" compared a 414px button with a 65px word (a run's design-1, misled into a wrong notice).
   const takeLike = (list: PageText[] | undefined, text: PageText): PageText | undefined => {
     if (!list || list.length === 0) {
       return undefined;

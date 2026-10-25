@@ -49,7 +49,7 @@ export const TESTER = 'tester';
 const STRONGEST = 'claude-opus-5-5';
 
 /**
- * The model a role starts on when the team names none: the designer's eye Sonnet lacked (encore's UI came back
+ * The model a role starts on when the team names none: the designer's eye Sonnet lacked (a run's UI came back
  * mediocre), and the tester's — its tests and its review are what stop a bug or a regression getting through (Carlos).
  * Any other role, the harness's own; the file's model, when it says one, always wins.
  */
@@ -139,7 +139,7 @@ export interface TeamAgent {
   /**
    * Started again after it died with a task in hand — the machine down, the harness killed — it resumes its own session
    * (`--resume`, Claude Code's), what it knew and had not written yet with it, rather than a fresh one that reads the
-   * task again. encore: four agents went down with the machine mid-task. Not a session larger than
+   * task again. Four agents went down with the machine mid-task. Not a session larger than
    * `DEFAULTS.resumeMaxBytes` — reading it again would cost more than starting over — nor a harness that keeps none.
    */
   resumeSession?: boolean;
@@ -152,7 +152,7 @@ export interface TeamAgent {
  * - `context`: once its context passes the team's `freshContextAt`;
  * - `keep`: never — one session while it runs.
  *
- * Every turn reads the whole context again: encore-2's developers, a session a task, read ~12k tokens' worth a turn;
+ * Every turn reads the whole context again: a run's developers, a session a task, read ~12k tokens' worth a turn;
  * its designer and tester, never started again, grew to 400k and read 26–30k a turn — more, the two, than three
  * developers' 49 sessions. The lead that plans is never started again: it is the one the person talks to.
  */
@@ -201,19 +201,19 @@ export interface TeamOptions {
   /**
    * How closely a designer reviews another task's UI (`light`, `standard`, `high`): its own pages in one scheme, or both
    * schemes and widths against the reference, or every page that reads its files against the run before it. A review
-   * costs what it looks at — velada-now's strictest took 83 steps, more than the task it reviewed.
+   * costs what it looks at — a run's strictest took 83 steps, more than the task it reviewed.
    */
   designReview?: Quality;
   /**
    * How long an agent just started may say nothing before the tasks it holds read "no signal": its harness loading, its
-   * skills read. encore: every agent started again after the machine went down read "no signal" at once — its last word
+   * skills read. Every agent started again after the machine went down read "no signal" at once — its last word
    * was from before — and `run watch` woke the lead for it. `DEFAULTS.startGraceMs` when not said.
    */
   startGraceMinutes?: number;
   /**
    * The harness the CLI starts the agents in by itself (`claude`, `codex`, `opencode`): `run watch --until lead` starts
    * each agent the run asks for — one on demand, one of one task a session, a task's owner it was sent back to, a
-   * designer for a UI review — instead of waking the lead to. encore: tasks waited 24 to 56 min to be taken while the
+   * designer for a UI review — instead of waking the lead to. Tasks waited 24 to 56 min to be taken while the
    * lead, planning or reviewing, was the only one to start agents. Not said: the lead starts them.
    */
   launch?: Harness;
@@ -515,7 +515,7 @@ export const STARTER_TEAM: Team = {
   version: 1,
   about: TEAM_ABOUT,
   // The models are the file's, never the CLI's: the lead — who plans, reviews every task and has the final word — on the
-  // strongest, thinking hard; the designer too, whose eye Sonnet lacked (encore's UI came back mediocre); developers on
+  // strongest, thinking hard; the designer too, whose eye Sonnet lacked (a run's UI came back mediocre); developers on
   // Sonnet, which works a task as well for less. One the file leaves out is the harness's own.
   lead: { model: STRONGEST, effort: 'high' },
   agents: [

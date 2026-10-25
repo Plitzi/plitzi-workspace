@@ -44,7 +44,7 @@ describe('children on a type that holds none', () => {
 });
 
 describe('a default content rendered beside children', () => {
-  // The builder places a button with its placeholder word; code writes none (encore-4), so only a word kept beside
+  // The builder places a button with its placeholder word; code writes none, so only a word kept beside
   // children is warned.
   it('warns when the placeholder word would print next to them', () => {
     const { warnings } = author([
@@ -429,7 +429,7 @@ describe('what an element is written with that reaches nothing', () => {
     expect(warnings.map(warning => warning.code)).not.toContain('unknown-variant');
   });
 
-  // encore-2: motion-bump's variant is `hit`, and its `activeWhen` — which sets `active` — never worked, said nowhere.
+  // Motion-bump's variant is `hit`, and its `activeWhen` — which sets `active` — never worked, said nowhere.
   it('says a binding that sets a variant its class does not declare, naming the ones it does', () => {
     const bump = authoring.styles('bump', { css: { padding: '4px' }, variants: { hit: { scale: '1.1' } } });
     const { warnings } = author([

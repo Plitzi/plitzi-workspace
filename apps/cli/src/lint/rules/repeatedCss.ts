@@ -103,7 +103,7 @@ const declarationsOf = (ts: typeof TypeScript, node: TypeScript.ObjectLiteralExp
 
 /**
  * The visually-hidden pattern — out of sight, kept for a screen reader — however it is spelled: absolute, a pixel wide,
- * clipped. Five tasks of one run wrote it by hand, where `tw('sr-only')` is it (la-velada).
+ * clipped. Five tasks of one run wrote it by hand, where `tw('sr-only')` is it.
  */
 const isVisuallyHidden = (declarations: readonly string[]): boolean =>
   declarations.includes('position:absolute') &&

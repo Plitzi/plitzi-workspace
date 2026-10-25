@@ -35,11 +35,11 @@ import type { ConditionOptions } from './register/options';
 
 /**
  * `plitzi page measure`: an element's computed styles — what a designer sizes a copy by — and, with `--compare`, the
- * same of an element of another page, beside them. velada-polish's designers wrote Playwright scripts of their own and
+ * same of an element of another page, beside them. A run's designers wrote Playwright scripts of their own and
  * read the original's CSS by curl for each value they asked a developer for (a size, a weight, a tracking, a border);
  * the comparison of pictures says what differs, never by how much.
  *
- * Its calls are an agent's loop, multiplied: velada-fidelity's developers made ~150 of them at ~18 s each, one element
+ * Its calls are an agent's loop, multiplied: a run's developers made ~150 of them at ~18 s each, one element
  * at one width a call, the original loaded whole — and pictured — every time. So one call measures every element asked
  * at every width asked, in one browser; the other page is read without a picture, and what was read of it is kept (it
  * does not change within a run) for the calls after.
@@ -47,7 +47,7 @@ import type { ConditionOptions } from './register/options';
 
 /**
  * The version of how a reading is made: a kept reading of the other page made before it changed is read again. What it
- * reads — `MEASURED`, `PSEUDO_MEASURED` — is in the key itself: lx-product added `list-style` and `y`, and a reading kept
+ * reads — `MEASURED`, `PSEUDO_MEASURED` — is in the key itself: a run added `list-style` and `y`, and a reading kept
  * before them answered "none" for both, each a difference that was not there.
  */
 const READING = 3;
@@ -65,20 +65,20 @@ export interface MeasureOptions extends ConditionOptions {
   there?: string;
   /**
    * The properties that must be the same as the other page's — `font-size,border` — or the command fails: what an
-   * acceptance proves a value by, measured, never typed from a guess (velada-polish's VS sizes were the lead's guess).
+   * acceptance proves a value by, measured, never typed from a guess (a run's VS sizes were the lead's guess).
    */
   same?: string[];
   /** The other page read again, never from what was kept of it. */
   fresh?: boolean;
   /**
    * An element hovered, or focused, on both pages before the rest is measured — `fight-card => .fight-card`: what a
-   * state changes, held by `--same` as the rest is (velada-backlog's medal fade could only be read by hand).
+   * state changes, held by `--same` as the rest is (a run's medal fade could only be read by hand).
    */
   hover?: string;
   focus?: string;
   /**
    * Elements clicked on both pages, in order, before the rest is measured — `menu-toggle => .menu-button`: an open
-   * state, a drawer and a panel in it (lx-controls' designer measured the original's filter drawer by a script of its own).
+   * state, a drawer and a panel in it (a run's designer measured the original's filter drawer by a script of its own).
    */
   click?: string[];
   /** Each row a list draws of every element asked, measured apart — never with --compare, whose rows are another's. */
@@ -112,7 +112,7 @@ const GROUPS: Record<string, readonly string[]> = {
   border: ['border-top', 'border-right', 'border-bottom', 'border-left'],
   font: ['font-family', 'font-size', 'font-weight', 'line-height', 'letter-spacing', 'text-transform'],
   size: ['width', 'height'],
-  // Where it is and how big, its spacing with it: what a fit is checked by — encore-3's agents grepped it out of 30.
+  // Where it is and how big, its spacing with it: what a fit is checked by — a run's agents grepped it out of 30.
   box: ['x', 'y', 'width', 'height', 'padding', 'margin']
 };
 
@@ -233,7 +233,7 @@ export const ourPage = async (
     await applyConditions(page, view.conditions);
   }
 
-  // Signed in first when asked (`--as`): a page for signed-in visitors read as one of them — encore's designers could
+  // Signed in first when asked (`--as`): a page for signed-in visitors read as one of them — a run's designers could
   // not look at a vote, a host's controls or a settings form, only `page check|shot` signing in.
   const refused = view.account && (await signInAs(page, origin, view.account));
   if (refused) {
@@ -252,7 +252,7 @@ export const ourPage = async (
   }
 
   // A text the browser rewrites after hydration (a visitor's time, read in its zone) read before it was the server's:
-  // velada-fidelity's hero read "19:00H CEST" once, "11:00H GMT-6" after. A page with no space root has no wait.
+  // A run's hero read "19:00H CEST" once, "11:00H GMT-6" after. A page with no space root has no wait.
   await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
   await page.evaluate(() => document.fonts.ready.then(() => undefined), undefined);
 
@@ -268,7 +268,7 @@ export interface ViewAsked {
   state?: StateAsked;
   /**
    * Played on this page before it is measured — `--steps`, as `page play` takes them: data only a visitor's steps make
-   * (encore-4's chat line, which no demo data holds) measured where it is drawn.
+   * (a run's chat line, which no demo data holds) measured where it is drawn.
    */
   steps?: readonly ActingStep[];
   /** The browser it is read in, where not a visitor's ordinary one (`--clock`, `--block`, `--autoplay`, `--storage`). */
@@ -329,7 +329,7 @@ const readAt = async (
   now: number
 ): Promise<Reading[]> => {
   const { page, answered, problem } = await ourPage(browser, where.origin, where.route, view);
-  // Nothing answering is said as such — not "No element … on chrome-error://" of a server gone (velada-shell's lead).
+  // Nothing answering is said as such — not "No element … on chrome-error://" of a server gone (a run's lead).
   const notPut = !answered
     ? {
         problem:
@@ -337,7 +337,7 @@ const readAt = async (
           `nothing answers at ${where.origin}${where.route} — the server measured is not running (start it, or say where with --url)`
       }
     : ((await playedOn(page, view.steps ?? [])) ?? (view.state ? await putIn(page, view.state, 'here') : undefined));
-  // Each row a list draws of an element, with --rows: the first alone hid that three plates' readouts differed (encore-3).
+  // Each row a list draws of an element, with --rows: the first alone hid that three plates' readouts differed.
   const asked = options.rows && !notPut ? (await Promise.all(pairs.map(pair => rowsOf(page, pair)))).flat() : pairs;
   const ours = notPut ? asked.map(() => notPut) : await Promise.all(asked.map(pair => measureOn(page, pair.here)));
   await page.close();
@@ -413,7 +413,7 @@ const readAt = async (
         ? differences(here, there, options.same).differ.filter(each => options.same?.includes(each.property))
         : [];
     // What both inherit from their parent is the parent's to hold, not the element's: said beside the line, never
-    // failing it — a proof line failed on a font-size the task never touched (velada-shell's design-1).
+    // failing it — a proof line failed on a font-size the task never touched (a run's design-1).
     const unlike = asked.filter(each => !each.inherited);
     const inheritedOnly = asked.filter(each => each.inherited);
     const keptAt = kept[index]?.at;
@@ -617,7 +617,7 @@ export const measure = async (route: string, elements: string[], options: Measur
             ])
           ].join('\n')
     );
-    // The other page's element not there is the question's, not this page's: unanswered (lx-copy's logo line read the
+    // The other page's element not there is the question's, not this page's: unanswered (a run's logo line read the
     // original's hidden copy, and every try of the task failed for it).
     if (readings.some(reading => reading.there !== undefined && 'problem' in reading.there)) {
       process.exitCode = UNANSWERED_EXIT;

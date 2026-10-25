@@ -193,7 +193,7 @@ const propertyOf = (value: unknown, key: string): unknown =>
 
 /**
  * How long a page of the project's own server waits with no request open before it is read: half of `openPage`'s 500,
- * for another site. Four of la-velada's pages at two widths read the same, cold and warm, five times each, at 500, 250
+ * for another site. Four of a run's pages at two widths read the same, cold and warm, five times each, at 500, 250
  * and 150 — 5.9 s at 500, 3.9 s at 250. Its other sites' files come from the kept ones (`staticCache.ts`) at once.
  */
 export const PROJECT_QUIET_MS = 250;
@@ -423,7 +423,7 @@ export const openOtherPage = async (
 /**
  * Another site's page in a context shared with others — the kept browser's, whose cache holds the site from the pages
  * read before — sized and in the media asked on the page alone: the other site loaded in a fraction of the time a new
- * context takes (lx-product: 0.6 s against 1.4–2.4).
+ * context takes (0.6 s against 1.4–2.4).
  */
 export const openOtherPageIn = async (
   browser: Browser,

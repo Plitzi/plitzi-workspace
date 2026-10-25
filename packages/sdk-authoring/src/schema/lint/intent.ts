@@ -62,7 +62,7 @@ const ANSWER_FIELDS = ['data', 'records'];
 /**
  * A list's items bound to a query provider outside its answer: the provider publishes its answer beside its state
  * (`data`, `records`, `isLoading`…), so the provider itself — or a field of the answer read at its root — is no list,
- * and the rows draw nothing (NaN, the placeholder) without a word (la-velada: `source.fights`, `.data` left out). A
+ * and the rows draw nothing (NaN, the placeholder) without a word (`source.fights`, `.data` left out). A
  * provider fed by a server action publishes the output at its root: read as it is there.
  */
 const warnItemsOutsideAnswer = (
@@ -195,7 +195,7 @@ export const checkIntent = (ctx: LintContext, element: Element, where: string): 
     key => typeof attributes[key] === 'string' && attributes[key] !== ''
   );
   // The browser asks a `query` alone: an `action` or a `connector` is the page server's to resolve, so a provider asked
-  // from the browser with one never asks at all — encore's shell notice read reminders that never came, saying nothing.
+  // from the browser with one never asks at all — a run's shell notice read reminders that never came, saying nothing.
   const serverOnly = ['action', 'connector'].find(
     key => (typeof attributes[key] === 'string' && attributes[key] !== '') || bound(key)
   );

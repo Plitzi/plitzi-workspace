@@ -23,7 +23,7 @@ export type PluginSourceProps<Data extends Record<string, unknown>> = {
 /**
  * A plugin's own data source, for the elements put inside it: a player's track and whether it plays, read by the
  * space's own buttons and text — what a list, a form or a carousel publishes, under the name its declaration's
- * `sourceType` gives, so `plitzi explain` and the binding checks know it. encore's player had none, and kept its state
+ * `sourceType` gives, so `plitzi explain` and the binding checks know it. A run's player had none, and kept its state
  * in `runtime.state` for every page to see instead.
  *
  * Only what is inside it reads it: a source is the elements' scope, not the page's.

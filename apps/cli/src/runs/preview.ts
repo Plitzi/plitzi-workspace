@@ -196,7 +196,7 @@ const serve = async (
   }: {
     quiet?: boolean;
     snapshot?: boolean;
-    /** Where a quiet server's output goes: what says why, when it stops under a look (velada-polish: silent). */
+    /** Where a quiet server's output goes: what says why, when it stops under a look (silent). */
     log?: string;
   } = {}
 ): Promise<Omit<Preview, 'dir'>> => {
@@ -333,7 +333,7 @@ const approvedCopy = async (ctx: RunContext, loaded: LoadedRun, dir: string): Pr
 /**
  * The run as it is without `taskId` — its approved work — served on `port` for a look that compares the task's copy
  * with what it changes: what a designer built by hand, a folder copied and two servers started, to say what the task
- * moved and that nothing else did (velada-now's design-1, twenty steps a review). In the task's cache: gone with it.
+ * moved and that nothing else did (a run's design-1, twenty steps a review). In the task's cache: gone with it.
  */
 export const startBeforePreview = async (
   ctx: RunContext,
@@ -428,7 +428,7 @@ export const startTaskPreview = async (
   }
 
   // One a picture of the copy kept (`lingering.ts`) serves it already: a second server beside it would fight it over
-  // the copy's state, and one of them fail — velada-polish's lead look pictured nothing. Followed, its use marked.
+  // the copy's state, and one of them fail — a run's lead look pictured nothing. Followed, its use marked.
   const { cache } = taskPaths(loaded.paths, taskId);
   const kept = await keptServer(view.paths.work, cache);
   if (kept !== undefined) {

@@ -63,7 +63,7 @@ describe('probePage / an empty list', () => {
 });
 
 /** Whether a node or any of its ancestors is `display: none` — which, in a browser, leaves it no box. */
-// lx-copy: the layout's header, nav and footer left empty for a later task failed every other task's page check.
+// The layout's header, nav and footer left empty for a later task failed every other task's page check.
 describe('probePage / an empty container', () => {
   it('says a container with nothing in it and no size empty, apart — and one holding something, or text, hidden', () => {
     sized(100, 20);
@@ -117,7 +117,7 @@ describe('probePage / hidden by the width it is drawn at', () => {
   });
 });
 
-// encore-4: the home's wide-screen sides, shown from 1600 px by a container condition written in their class, read as
+// The home's wide-screen sides, shown from 1600 px by a container condition written in their class, read as
 // broken below it — the condition's declarations nest under the class's rule, which the probe never read.
 describe('probePage / a condition written inside a class', () => {
   it('reads the declarations nested under it as the class’s, hidden at this width on purpose', () => {
@@ -491,7 +491,7 @@ describe('probePage / transparent', () => {
     expect(probePage(input(['later', 'play'])).hidden).toEqual([]);
   });
 
-  // lx-controls: a carousel's arrow at its row's start, hidden as the original's is, read as an arrival never played.
+  // A carousel's arrow at its row's start, hidden as the original's is, read as an arrival never played.
   it('says a control put out of use — transparent, and disabled or passing the pointer on — apart, not hidden', () => {
     sized(100, 20);
     document.body.innerHTML =
@@ -506,7 +506,7 @@ describe('probePage / transparent', () => {
 });
 
 describe('probePage / elements shown empty', () => {
-  // encore's room cards read "Text" where their line was bound to nothing: the SDK now draws nothing, and says so.
+  // A run's room cards read "Text" where their line was bound to nothing: the SDK now draws nothing, and says so.
   it('counts each element the SDK marks empty by its id — a list row each — and leaves out one nobody sees', () => {
     sized(100, 20);
     document.body.innerHTML = [

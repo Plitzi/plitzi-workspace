@@ -218,7 +218,7 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect(log).not.toContain(lead.split('.').at(-1) ?? '');
   }, 120_000);
 
-  // velada-fidelity: `--token "$(cat …)"` read from the wrong folder came in empty and ran as "agent" — it joined, took a
+  // `--token "$(cat …)"` read from the wrong folder came in empty and ran as "agent" — it joined, took a
   // task, and the rework sent back to "agent" sat with no one. No token, an empty one, a task's: who calls is unproved.
   it('refuses every caller its own token does not prove — in a task’s copy too — and never makes up a name', async () => {
     await openRun();
@@ -244,15 +244,13 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect(log).not.toContain('"by":"agent"');
   }, 120_000);
 
-  // velada-fidelity: closing an item once its run had finished crashed — the caller read before any run proved it.
+  // Closing an item once its run had finished crashed — the caller read before any run proved it.
   it('closes a backlog item with no run open, saying who it can: unnamed off a terminal', async () => {
     await bench.write(
       '.plitzi/backlog.json',
       JSON.stringify({
         version: 1,
-        items: [
-          { id: 'b-1', text: 'A CLI defect', from: 'velada-fidelity', by: 'lead', at: '2026-10-22T15:00:00.000Z' }
-        ]
+        items: [{ id: 'b-1', text: 'A CLI defect', from: 'shop-fidelity', by: 'lead', at: '2026-10-22T15:00:00.000Z' }]
       })
     );
 
@@ -261,7 +259,7 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect(closed.json).toMatchObject({ closed: { id: 'b-1', done: { by: 'unnamed', note: 'the CLI’s' } } });
   }, 120_000);
 
-  // velada-polish's dev-1 expected several files and met "too many arguments".
+  // A run's dev-1 expected several files and met "too many arguments".
   it('puts several files of a copy back in one discard, and says them', async () => {
     await openRun();
     const taken = await plitzi(bench.root, ['task', 'take', 't-home', '--agent', 'dev-1']);
@@ -278,7 +276,7 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect(discarded.json).toMatchObject({ files: ['src/space/pages/home/index.ts', 'src/space/pages/home/hero.ts'] });
   }, 120_000);
 
-  // velada-polish's dev-2 was refused its own task's diff: what it did is its own to read; another's is the lead's.
+  // A run's dev-2 was refused its own task's diff: what it did is its own to read; another's is the lead's.
   it('shows a task to its holder from its copy, and refuses another task to it', async () => {
     await openRun();
     const taken = await plitzi(bench.root, ['task', 'take', 't-home', '--agent', 'dev-1']);
@@ -286,7 +284,7 @@ describe('plitzi run and plitzi task, as processes', () => {
 
     const dev = { PLITZI_TOKEN: await tokenOf('dev-1') };
     expect((await plitzi(work, ['task', 'show', 't-home'], dev)).code).toBe(0);
-    // Another task too, read only: lx-copy's agents were refused it and diffed its blobs by hash to read a request.
+    // Another task too, read only: a run's agents were refused it and diffed its blobs by hash to read a request.
     expect((await plitzi(work, ['task', 'show', 't-about'], dev)).code).toBe(0);
   }, 120_000);
 

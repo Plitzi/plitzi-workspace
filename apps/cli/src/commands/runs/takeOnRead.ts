@@ -6,7 +6,7 @@ import type { RunContext } from '../../runs/run';
 
 /**
  * A lead's (or a tester's) read of a task in review — its look, its show — takes the review, said in the activity: the
- * board names the task it is at, and another lead is not offered it. Encore-3's lead read with `task show` and the
+ * board names the task it is at, and another lead is not offered it. A run's lead read with `task show` and the
  * monitor said only "working", never which task.
  */
 export const takeOnRead = async (ctx: RunContext, runId: string, taskId: string): Promise<void> => {

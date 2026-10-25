@@ -207,7 +207,7 @@ describe('a tester, reviewing the code', () => {
 });
 
 describe('a review the lead decides while another holds it', () => {
-  // encore-3: the lead approved what test-1 was reviewing; the copy went under it, and its verdict was refused.
+  // The lead approved what test-1 was reviewing; the copy went under it, and its verdict was refused.
   it('tells the reviewer its review ends', async () => {
     const plan = { ...benchPlan(), designReview: false };
     const file = await bench.writePlan(plan);
@@ -231,7 +231,7 @@ describe('a review the lead decides while another holds it', () => {
 });
 
 describe('a task the lead wrote', () => {
-  // encore-3: the lead took a ready task while the tester ran a spec, wrote it and approved it — nobody else read it.
+  // The lead took a ready task while the tester ran a spec, wrote it and approved it — nobody else read it.
   it('is reviewed by another: the lead is refused its own, a tester approves it', async () => {
     const plan = { ...benchPlan(), designReview: false };
     const file = await bench.writePlan(plan);
@@ -286,7 +286,7 @@ describe('a lead that reviews, started when the reviews queue up', () => {
     expect(idle.why).toContain('You can stop');
   });
 
-  // velada-dress: lead-2 waited through the run's last task and its integration, the lead there for both.
+  // Lead-2 waited through the run's last task and its integration, the lead there for both.
   it('stops at once when what is left is for the other leads — no review waiting', async () => {
     const { runId } = await twoInReview();
     const first = (await takeNext(bench.agent('lead-2'), runId, 'lead')).next.leadReview?.task.id ?? '';
@@ -310,7 +310,7 @@ describe('a lead that reviews, started when the reviews queue up', () => {
   });
 });
 
-// velada-dress: the agents waited a median 7.8 minutes for the lead's answers, lead-2 idle beside it.
+// The agents waited a median 7.8 minutes for the lead's answers, lead-2 idle beside it.
 describe('a question to the lead, answered by a lead that reviews', () => {
   it('is handed to one lead that reviews when no review waits, the lead told what it said — and woken only if it waits', async () => {
     const { runId } = await twoInReview();

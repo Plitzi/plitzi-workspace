@@ -153,7 +153,7 @@ describe('resolveRscData', () => {
     expect(Object.keys(result.serverData ?? {}).sort()).toEqual(['postApi', 'postNested']);
   });
 
-  // encore-3: a session action with no render trigger failed 'forbidden' in a log, the page saying "could not be reached".
+  // A session action with no render trigger failed 'forbidden' in a log, the page saying "could not be reached".
   it('says a failed element’s reason in its data while developing, and leaves it out otherwise', async () => {
     const resolveElement = vi
       .fn<RscElementResolver>()
@@ -170,7 +170,7 @@ describe('resolveRscData', () => {
     expect(Object.keys((await resolveRscData(asked)).serverData ?? {})).toEqual(['postNested']);
   });
 
-  // encore-4: a guest's every room page logged an error with its stack for data the action rightly refused them.
+  // A guest's every room page logged an error with its stack for data the action rightly refused them.
   it('says an element an action refused this visitor as a warning line, and anything else as an error', async () => {
     const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const warnings = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
@@ -185,7 +185,9 @@ describe('resolveRscData', () => {
 
     await resolveRscData({ ...base, schema: buildSchema(), req: request('/blog/hello'), resolveElement });
 
-    expect(JSON.stringify(warnings.mock.calls)).toContain('element postApi: Action \\"people\\" ended as failed, refused (not-host)');
+    expect(JSON.stringify(warnings.mock.calls)).toContain(
+      'element postApi: Action \\"people\\" ended as failed, refused (not-host)'
+    );
     expect(JSON.stringify(errors.mock.calls)).not.toContain('postApi');
     expect(JSON.stringify(errors.mock.calls)).toContain('postNested failed to resolve');
     errors.mockRestore();

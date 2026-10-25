@@ -329,7 +329,7 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     });
   });
 
-  // encore: the visual suite's server beside the one the CLI kept of a copy was refused — "createFileKv … is in use".
+  // The visual suite's server beside the one the CLI kept of a copy was refused — "createFileKv … is in use".
   it('keeps its kv where PLITZI_KV_FILE says, leaving the project’s own for the server a person has open', async () => {
     vi.stubEnv('PLITZI_KV_FILE', 'tmp/visual/kv.json');
     await serve({ space: () => titled('a') });

@@ -22,7 +22,7 @@ const launch = (over: Partial<Launch> = {}): Launch => ({
   ...over
 });
 
-// encore: the machine went down with four agents mid-task; started again, each read its task anew on a fresh session.
+// The machine went down with four agents mid-task; started again, each read its task anew on a fresh session.
 describe('an agent started again after it died', () => {
   let config: string;
   const root = '/Users/someone/htdocs/my.site';
@@ -102,27 +102,27 @@ describe.skipIf(process.platform === 'win32')('whether an agent still runs', () 
 });
 
 describe('the environment an agent starts with', () => {
-  // encore-2: the lead's CLI exported its token, every agent it launched inherited it, and a project script's
+  // The lead's CLI exported its token, every agent it launched inherited it, and a project script's
   // `plitzi space lint` ran as the lead.
   it('carries its own token and session — never the identity nor the harness session of whoever started it', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-agent-env-'));
-    const paths = runPaths(dir, 'encore-2');
+    const paths = runPaths(dir, 'shop-2');
     await fs.mkdir(path.join(paths.scratch, 'dev-1'), { recursive: true });
-    await fs.writeFile(tokenFile(paths, 'dev-1'), 'encore-2.@dev-1.0123456789abcdef0123456789abcdef\n');
+    await fs.writeFile(tokenFile(paths, 'dev-1'), 'shop-2.@dev-1.0123456789abcdef0123456789abcdef\n');
 
     const env = await agentEnv(paths, 'dev-1', 'session-1', {
       PATH: '/usr/bin',
-      PLITZI_TOKEN: 'encore-2.@lead.ffffffffffffffffffffffffffffffff',
+      PLITZI_TOKEN: 'shop-2.@lead.ffffffffffffffffffffffffffffffff',
       PLITZI_AGENT: 'lead',
-      PLITZI_RUN: 'encore-2',
-      // encore-3: started from the lead's own Claude Code, design-1 carried the lead's session id.
+      PLITZI_RUN: 'shop-2',
+      // Started from the lead's own Claude Code, design-1 carried the lead's session id.
       CLAUDE_CODE_SESSION_ID: '267b7184-2784-452d-bd89-1f854a2fa662',
       CLAUDE_CODE_SESSION_ATTENDED: '1'
     });
 
     expect(env).toEqual({
       PATH: '/usr/bin',
-      PLITZI_TOKEN: 'encore-2.@dev-1.0123456789abcdef0123456789abcdef',
+      PLITZI_TOKEN: 'shop-2.@dev-1.0123456789abcdef0123456789abcdef',
       PLITZI_SESSION: 'session-1'
     });
     await fs.rm(dir, { recursive: true, force: true });

@@ -99,7 +99,7 @@ describe('a plan held to the rules', () => {
     ).toEqual([expect.stringContaining('a line that covers a piece of the inventory is one a command checks')]);
   });
 
-  // lx-copy: t-base held src/space/pages to write the stubs, each a later task's file — complete refused them mid-run.
+  // T-base held src/space/pages to write the stubs, each a later task's file — complete refused them mid-run.
   it('refuses a task holding a folder another task’s files are in, naming the shape that works', async () => {
     const plan = benchPlan();
     plan.tasks[0].files = ['src/space/pages/shop'];
@@ -116,7 +116,7 @@ describe('a plan held to the rules', () => {
     );
   });
 
-  // lx-copy: t-card measured its card on the collection page t-collection made — and t-collection waited for t-card.
+  // T-card measured its card on the collection page t-collection made — and t-collection waited for t-card.
   it('finds a later task checking the same missing page: the check before it cannot pass — a deadlock', () => {
     const tasks = [
       { id: 't-card', dependsOn: [] },
@@ -232,7 +232,7 @@ describe('a plan held to the rules', () => {
     expect(unchecked[0]).not.toContain('t-theme');
   });
 
-  // la-velada: one designer beside four developers, and 21 tasks' UI went to the lead.
+  // One designer beside four developers, and 21 tasks' UI went to the lead.
   it('says before the run that too few designers review the UI, and how many keep up', async () => {
     const teamOf = (designers: number) => ({
       version: 1 as const,
@@ -261,7 +261,7 @@ describe('a plan held to the rules', () => {
     );
     expect((await notices(2)).some(notice => notice.includes('change what a visitor sees'))).toBe(false);
 
-    // velada-fidelity: in a copy of a site each review measures every value — one designer for each developer.
+    // In a copy of a site each review measures every value — one designer for each developer.
     const copying = async (designers: number) =>
       (
         await checkPlan(
@@ -277,7 +277,7 @@ describe('a plan held to the rules', () => {
     expect((await copying(4)).some(notice => notice.includes('change what a visitor sees'))).toBe(false);
   });
 
-  // velada-backlog: three tasks of a few values for two developers and a designer — dev-2's 62k tokens on one task.
+  // Three tasks of a few values for two developers and a designer — dev-2's 62k tokens on one task.
   it('says before the run that the team is too big for the work, rather than asking it for more designers', async () => {
     const team = {
       version: 1 as const,
@@ -322,7 +322,7 @@ describe('a plan held to the rules', () => {
     });
   });
 
-  // lx-product: the product page's gallery and buying box, modules only it imports, could not be two tasks beside it.
+  // The product page's gallery and buying box, modules only it imports, could not be two tasks beside it.
   it('gives a module only a page imports to the task that names it, not to the page’s', async () => {
     const plan = benchPlan();
     plan.tasks[1].files = ['src/space/pages/home/hero.ts'];

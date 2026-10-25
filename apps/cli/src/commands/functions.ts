@@ -420,7 +420,7 @@ const projectRunner = async (root: string): Promise<LocalRunner | undefined> => 
   }
 
   // Asked before anything runs, from where the runner loads them: missing, the first task failed in the server's words
-  // (encore's dev-1).
+  // (a run's dev-1).
   const beside = entry === undefined ? undefined : createRequire(entry);
   const missing = [
     ...(entry === undefined ? ['@plitzi/sdk-server'] : []),

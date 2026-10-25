@@ -459,7 +459,7 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('template-unreadable');
     });
 
-    // encore-4: Explore's links wrote `?sort=true` — `(sort or "listeners")` is a test, never the fallback value.
+    // Explore's links wrote `?sort=true` — `(sort or "listeners")` is a test, never the fallback value.
     it('template-or-value', () => {
       const bound = (template: string) =>
         withChange(({ schema }) => {

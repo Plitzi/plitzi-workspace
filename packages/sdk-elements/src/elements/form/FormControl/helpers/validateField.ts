@@ -16,7 +16,7 @@ export type FieldRules = {
   maxLengthMessage: string;
   /**
    * A `number` field's least and greatest value, written as numbers are — `''` for none, since `0` is a bound a field
-   * can have (encore-3's down votes to remove a song could not say they start at 2).
+   * can have (a run's down votes to remove a song could not say they start at 2).
    */
   min: string;
   minMessage: string;

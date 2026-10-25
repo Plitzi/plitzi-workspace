@@ -147,7 +147,7 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     expect(report.areas.every(area => area.status === 'ok')).toBe(true);
   });
 
-  // la-velada, made by an older CLI, still said `>=22.18`: nothing told it, and it let Node 22 install it.
+  // A project made by an older CLI still said `>=22.18`: nothing told it, and it let Node 22 install it.
   it('raises engines an older CLI wrote to the range, with --fix', async () => {
     await write(
       'package.json',

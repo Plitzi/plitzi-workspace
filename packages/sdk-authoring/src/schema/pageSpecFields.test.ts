@@ -113,19 +113,19 @@ describe('a page’s robots and structured data', () => {
   it('writes them for the head, the page searched as it says', () => {
     const { schema } = write({
       robots: 'NoIndex,  nofollow',
-      structuredData: { '@context': 'https://schema.org', '@type': 'SportsEvent', name: 'La Velada' }
+      structuredData: { '@context': 'https://schema.org', '@type': 'SportsEvent', name: 'Acme Night' }
     })();
 
     expect(schema.flat.home.attributes).toMatchObject({
       seoEnabled: true,
       seoRobots: 'noindex, nofollow',
-      seoStructuredData: [{ '@context': 'https://schema.org', '@type': 'SportsEvent', name: 'La Velada' }]
+      seoStructuredData: [{ '@context': 'https://schema.org', '@type': 'SportsEvent', name: 'Acme Night' }]
     });
   });
 
   it('refuses a directive no search engine reads, and JSON-LD with no type or vocabulary', () => {
     expect(write({ robots: 'noindx' })).toThrow(/\[robots-unknown\].*did you mean "noindex"/s);
-    expect(write({ structuredData: { name: 'La Velada' } })).toThrow(/\[structured-data-shape\]/);
+    expect(write({ structuredData: { name: 'Acme Night' } })).toThrow(/\[structured-data-shape\]/);
     expect(write({ structuredData: { '@context': 'https://schema.org', '@type': 'Event', at: new Date() } })).toThrow(
       /what JSON cannot carry/
     );
@@ -167,7 +167,7 @@ describe('a page’s share picture, and the space’s identity', () => {
 
   it('writes the picture, its words and the page’s kind for the head, and reads them back', () => {
     const settings = {
-      siteName: 'Encore',
+      siteName: 'Acme',
       language: 'en',
       favicon: '/favicon.svg',
       shareImage: 'https://cdn.example.com/og.png',

@@ -89,7 +89,7 @@ const Button = ({
     definition: { styleSelectors }
   } = useElement();
   // No words is no words: a placeholder is the builder's, set when one is placed (its declaration), never drawn on a
-  // page (encore's vote arrow read "↑ Button" — its author had named it with `title` and `label`, and left `content`).
+  // page (a run's vote arrow read "↑ Button" — its author had named it with `title` and `label`, and left `content`).
   const words = content ?? '';
 
   return (

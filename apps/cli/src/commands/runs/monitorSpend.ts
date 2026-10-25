@@ -8,7 +8,7 @@ import type { Spent } from '../../runs/spent';
  * The monitor's spend: what each agent's harness spent so far, kept as each piece of its work ended (`spent.ts`) —
  * beside the activity, as wide as what it says, the activity taking the rest; a line over it when that leaves the
  * activity too narrow. Tokens taken in and written apart from those read again from the cache every turn — a tenth of
- * the price, and most of what is read: one figure of them all said 1.1M for one spec of encore-3's tester, ~240k its
+ * the price, and most of what is read: one figure of them all said 1.1M for one spec of a run's tester, ~240k its
  * price.
  */
 
@@ -32,6 +32,7 @@ const COLUMNS = [
   'IN',
   'OUT',
   'CACHED',
+  'TOTAL',
   'PER SESS',
   'PER TASK',
   'CONTEXT'
@@ -44,6 +45,12 @@ const COLUMNS = [
 export type SpendSort = 'spent' | 'session' | 'task' | 'cached' | 'context' | 'agent';
 
 export const SPEND_SORTS: readonly SpendSort[] = ['spent', 'session', 'task', 'cached', 'context', 'agent'];
+
+/**
+ * Every token an agent's harness counted: what it took in new, what it wrote and its context read again — the whole of
+ * what the run costs in the harness, which no other figure says (Carlos).
+ */
+const totalOf = (each: Spent): number => each.input + each.output + each.cached;
 
 /** What a session of an agent's costs on average: in and out. */
 const perSession = (each: Spent): number => (each.input + each.output) / each.sessions;
@@ -122,6 +129,7 @@ export const spendPanel = (
     tokensShort(each.input),
     tokensShort(each.output),
     tokensShort(each.cached),
+    tokensShort(totalOf(each)),
     tokensShort(Math.round(perSession(each))),
     tokensShort(Math.round(perTask(each))),
     `${tokensShort(each.context)}${past(each) ? '!' : ' '}`
@@ -135,6 +143,7 @@ export const spendPanel = (
     tokensShort(sum(spend, each => each.input)),
     tokensShort(sum(spend, each => each.output)),
     tokensShort(sum(spend, each => each.cached)),
+    tokensShort(sum(spend, totalOf)),
     tokensShort(Math.round(costs / sessions)),
     tokensShort(Math.round(costs / Math.max(1, tasks))),
     ''
@@ -144,12 +153,14 @@ export const spendPanel = (
   );
   // The legend is as narrow as the table: the spend is as wide as its widest line, taken from the activity.
   const perPiece = '  PER SESS · PER TASK: IN+OUT over its sessions · its tasks';
+  const totalLegend = '  TOTAL: IN+OUT+CACHED, every token its harness counted';
   const pastAny = spend.some(past);
   const pastLine = '  ! past its freshContextAt: started fresh after its piece';
   const width = Math.max(
     visible(title),
     visible(rowOf([...COLUMNS], widths)),
     visible(perPiece),
+    visible(totalLegend),
     ...(pastAny ? [visible(pastLine)] : [])
   );
   const agents = sortSpend(spend, by).map(each => {
@@ -161,6 +172,7 @@ export const spendPanel = (
   const foot = [
     chalk.dim(cell(`  ${'─'.repeat(width - 2)}`, width)),
     cell(chalk.bold(rowOf(total, widths)), width),
+    chalk.dim(cell(totalLegend, width)),
     chalk.dim(cell(perPiece, width)),
     ...(pastAny ? [chalk.yellow(cell(pastLine, width))] : [])
   ];
@@ -179,7 +191,7 @@ export const spendLine = (spend: readonly Spent[], width: number): string =>
   spend.length === 0
     ? ''
     : cell(
-        `${chalk.bold('SPEND')} ${tokensShort(sum(spend, each => each.input))} in · ${tokensShort(sum(spend, each => each.output))} out · ${tokensShort(sum(spend, each => each.cached))} cached${chalk.dim(
+        `${chalk.bold('SPEND')} ${tokensShort(sum(spend, totalOf))} in all — ${tokensShort(sum(spend, each => each.input))} in · ${tokensShort(sum(spend, each => each.output))} out · ${tokensShort(sum(spend, each => each.cached))} cached${chalk.dim(
           ` — ${sortSpend(spend, 'spent')
             .map(each => `${each.agent} ${tokensShort(each.input + each.output)}`)
             .join(' · ')}`

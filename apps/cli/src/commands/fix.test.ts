@@ -7,7 +7,7 @@ describe('space fix with nothing to write', () => {
     expect(nothingToWrite({ problems: [], suggestions: [], fixes: [] })).toContain('Nothing to fix.');
   });
 
-  /** encore-3: a suggestion with no one fix read "Nothing to fix", and the agent guessed a smaller shape to get by. */
+  /** A suggestion with no one fix read "Nothing to fix", and the agent guessed a smaller shape to get by. */
   it('lists what is left for the author, and how a suggestion written so on purpose is quieted', () => {
     const said = nothingToWrite({
       problems: [],

@@ -7,7 +7,7 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-// velada-dress: the overlay's own preview, a lazy embed loaded before anything listened, "had not loaded" — and the
+// The overlay's own preview, a lazy embed loaded before anything listened, "had not loaded" — and the
 // picture waited its whole budget for a load that had come and gone.
 describe('loadImages, of embeds', () => {
   it('counts an embed of this site loaded already as loaded, and waits for none of it', async () => {

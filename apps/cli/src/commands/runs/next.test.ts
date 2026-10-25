@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { nextText } from './next';
 
-// lx-controls: an agent met Plitzi's frictions and said them only in its last words, which the run's feedback never reads.
+// An agent met Plitzi's frictions and said them only in its last words, which the run's feedback never reads.
 describe('plitzi task next, with nothing left', () => {
   it('asks for what of Plitzi got in the way before the agent stops', () => {
     const said = stripVTControlCharacters(

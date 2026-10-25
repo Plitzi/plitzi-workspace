@@ -101,7 +101,7 @@ describe('the tests of a developer task, with a tester in the team', () => {
     expect(checked.tasks.filter(task => task.role === 'tester').map(task => [task.id, task.files])).toEqual([
       ['t-home-tests', ['src/functions/book.test.ts']]
     ]);
-    // encore-3: a task's acceptance held in a third test file of the folder, which the check never ran.
+    // A task's acceptance held in a third test file of the folder, which the check never ran.
     expect(checked.tasks.find(task => task.id === 't-home-tests')?.acceptance).toContainEqual({
       said: 'Its modules’ tests pass, and every test beside them',
       check: "node --test 'src/functions/**/*.test.ts'"
@@ -141,7 +141,7 @@ describe('the tests of a developer task, with a tester in the team', () => {
     });
   });
 
-  // encore-3: the one tester was at work 104 of 152 minutes, its cards alone the last 45, three developers waiting.
+  // The one tester was at work 104 of 152 minutes, its cards alone the last 45, three developers waiting.
   it('are a developer’s to take while every tester is at work — never the one who wrote what they test', async () => {
     await bench.write(
       'package.json',
@@ -316,7 +316,7 @@ describe('a task held behind one in review', () => {
       expect.objectContaining({
         kind: 'held-up',
         task: 't-book',
-        // dev-2 never joined: a member of the team nobody started is not free (lx-copy: "design-2 is free", unstarted).
+        // dev-2 never joined: a member of the team nobody started is not free ("design-2 is free", unstarted).
         text: expect.stringMatching(
           /t-book waits for t-menu \(.* review\) while dev-1 is free: they share no file/
         ) as unknown
@@ -373,7 +373,7 @@ describe('a designer’s review of the others’ UI', () => {
     await openRun(lead(), await bench.writePlan(benchPlan()));
   });
 
-  // la-velada: design-1 reviewed t-lint's UI, and the monitor said it was idle — the flow said otherwise.
+  // Design-1 reviewed t-lint's UI, and the monitor said it was idle — the flow said otherwise.
   it('shows a designer at the UI review it took as reviewing, in the monitor', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
@@ -389,7 +389,7 @@ describe('a designer’s review of the others’ UI', () => {
     );
   });
 
-  // velada-backlog: design-1 read its reading list after its first verdict — said mid-line, on every review.
+  // Design-1 read its reading list after its first verdict — said mid-line, on every review.
   it('says what to read before a designer’s first review, and not again on the next', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
     await completed('dev-2', 't-about', 'src/space/pages/about.ts');
@@ -453,7 +453,7 @@ describe('a designer’s review of the others’ UI', () => {
     expect(await designOf('t-about')).toMatchObject({ status: 'skipped', by: 'lead', why: 'no-ui' });
   });
 
-  // velada-shell: the lead sent t-home-sections back while design-1 measured it, and its approval was refused with
+  // The lead sent t-home-sections back while design-1 measured it, and its approval was refused with
   // "changes-requested, not in review"; the lead approved another past design-1, and was not told it was at it.
   it('tells a designer the lead decided first, and tells the lead a designer was at it', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
@@ -468,7 +468,7 @@ describe('a designer’s review of the others’ UI', () => {
     await completed('dev-2', 't-about', 'src/space/pages/about.ts');
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
     await lookedAt(lead(), 'es-launch', 't-about');
-    // In its time the review is the designer's: approving past it took encore-4's design-1's copy from under it.
+    // In its time the review is the designer's: approving past it took a run's design-1's copy from under it.
     expect(
       await refusalOf(reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'lead' }))
     ).toContain("design-1 is reviewing t-about's UI — its own for 8 min more");
@@ -578,7 +578,7 @@ describe('a designer’s review of the others’ UI', () => {
     });
   });
 
-  // velada-polish: design-2 said t-match-bars's first round, design-1 its second — with asks of its own, a round more.
+  // Design-2 said t-match-bars's first round, design-1 its second — with asks of its own, a round more.
   it('offers a round sent back to the designer who said the one before, and another only past a wait', async () => {
     const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
     const dev = bench.agent('dev-1', { token: taken.token });
@@ -599,13 +599,13 @@ describe('a designer’s review of the others’ UI', () => {
     expect(other).toMatchObject({ task: { id: 't-menu' }, before: 'design-1' });
   });
 
-  // velada-fidelity: design-1 held t-prediction-card's review 16 min, t-result-card queued 18 min behind it.
+  // Design-1 held t-prediction-card's review 16 min, t-result-card queued 18 min behind it.
   it('takes a review held past its time from its designer — another takes it, the first is told and refused after', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
     expect((await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).designReview).toBeUndefined();
 
-    // Its first review: past the 8 minutes, still its own — it reads what it is told to first (encore-4's design-1).
+    // Its first review: past the 8 minutes, still its own — it reads what it is told to first (a run's design-1).
     bench.advance(REVIEW_TIMEOUT_MS + 60_000);
     expect((await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).designReview).toBeUndefined();
     bench.advance(FIRST_REVIEW_READING_MS);
@@ -626,7 +626,7 @@ describe('a designer’s review of the others’ UI', () => {
     );
   });
 
-  // velada-fidelity: the lead said t-result-card's next round was its own; the CLI handed it to design-1 all the same.
+  // The lead said t-result-card's next round was its own; the CLI handed it to design-1 all the same.
   it('keeps a round the lead sent back as its own the lead’s: no designer is offered it, and one at it is told', async () => {
     const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
     const dev = bench.agent('dev-1', { token: taken.token });

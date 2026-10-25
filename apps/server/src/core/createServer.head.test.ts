@@ -31,7 +31,7 @@ const schema: Schema = {
   ...EMPTY_SCHEMA.schema,
   settings: {
     ...EMPTY_SCHEMA.schema.settings,
-    siteName: 'Encore',
+    siteName: 'Acme',
     language: 'es-MX',
     favicon: '/favicon.svg',
     shareImage: '/og.png',
@@ -107,7 +107,7 @@ describe('the head a link preview reads', () => {
     expect(html).toContain('<meta property="og:type" content="music.playlist" />');
     expect(html).toContain(`<meta property="og:url" content="${BASE}/r/jazz" />`);
     expect(html).toContain(`<link rel="canonical" href="${BASE}/r/jazz" />`);
-    expect(html).toContain('<meta property="og:site_name" content="Encore" />');
+    expect(html).toContain('<meta property="og:site_name" content="Acme" />');
     expect(html).toContain('<meta property="og:locale" content="es_MX" />');
     expect(html).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml" />');
     expect(html).toContain('<meta name="theme-color" content="#0b0a10" media="(prefers-color-scheme: dark)" />');

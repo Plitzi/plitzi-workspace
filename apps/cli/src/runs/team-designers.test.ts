@@ -47,7 +47,7 @@ describe('a designer, once it sent a task back', () => {
   });
 });
 
-// lx-copy: dev-1 and dev-2 asked `task next` with no role, were offered what a designer takes, and refused for it.
+// Dev-1 and dev-2 asked `task next` with no role, were offered what a designer takes, and refused for it.
 describe('an agent asking with no role', () => {
   it('asks as the roles the team started it with: a developer is offered no UI review', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
@@ -62,7 +62,7 @@ describe('an agent asking with no role', () => {
   });
 });
 
-// lx-copy: t-shell, the only designer's and critical, sat ready seven minutes — four developers at UI tasks kept a
+// T-shell, the only designer's and critical, sat ready seven minutes — four developers at UI tasks kept a
 // review always "coming", and design-1 waited for them until the lead messaged it.
 describe('a designer with a task only a designer takes', () => {
   it('takes it though UI reviews are coming: nobody else would', async () => {

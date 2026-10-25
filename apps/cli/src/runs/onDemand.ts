@@ -30,14 +30,14 @@ const BACK_FOR_WORK: ReadonlySet<string> = new Set([
 
 /**
  * Who said it stops and has not come back for work since, by the run's log: what an agent says on its way out — a
- * notice, a tell — after its stop is no sign of life (encore-2's test-1 and designers read "no signal" for half an hour
+ * notice, a tell — after its stop is no sign of life (a run's test-1 and designers read "no signal" for half an hour
  * after a notice sent past their stop).
  */
 export const stoppedAgents = (log: readonly Record<string, unknown>[]): Set<string> => {
   const stopped = new Set<string>();
   for (const entry of log) {
     // Started again — by the keeper or a lead, after a stop for a fresh context — it runs from its launch, before its
-    // first command: until then a base agent read "stopped" while it was already at work (encore-4's design-1).
+    // first command: until then a base agent read "stopped" while it was already at work (a run's design-1).
     if (entry.action === 'launch' && typeof entry.agent === 'string') {
       stopped.delete(entry.agent);
 
@@ -113,7 +113,7 @@ export const agentsNeeded = (
     ...roles.flatMap(role => {
       // Free to take work of the role: running, at nothing — and, for a UI review, not the one who wrote the task.
       // A designer is held for the UI reviews while others work (`task next` hands it none of its own then): it is no
-      // free developer — velada-dress's four ready tasks waited, two designers counted free for them.
+      // free developer — a run's four ready tasks waited, two designers counted free for them.
       const freeOf = (except?: string) =>
         started.filter(
           each =>
@@ -152,17 +152,17 @@ export const agentsNeeded = (
           (each.onDemand === true || !anyRunning)
       );
       // One that starts with the run is being started as the run opens: asked for only once it had time to join —
-      // velada-fidelity's watch said "start dev-1" the moment the lead had started it.
+      // A run's watch said "start dev-1" the moment the lead had started it.
       if (waiting.length === 0 || !next || (!next.onDemand && run.openFor < STARTING_MS)) {
         return [];
       }
 
       // One on demand beside those running is worth its start when the work waiting and in hand, shared with it, is
-      // TASKS_PER_AGENT each or more — as `run plan` counts it: fewer, those running take it next. velada-shell's watch asked
+      // TASKS_PER_AGENT each or more — as `run plan` counts it: fewer, those running take it next. A run's watch asked
       // for dev-2 for two tasks the plan had said were too few for three agents.
       const runningOfRole = started.filter(each => ofRole(each) && running.has(each.agent));
       const inHand = runningOfRole.filter(each => busy.has(each.agent)).length;
-      // A task of the role that waits only for work under way is work coming: lx-product's t-buybox waited for
+      // A task of the role that waits only for work under way is work coming: a run's t-buybox waited for
       // t-description alone, and four cards for one developer (~145 min) never asked for the second.
       const byId = new Map(views.map(view => [view.task.id, view]));
       const coming = views.filter(

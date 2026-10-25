@@ -51,7 +51,7 @@ const authored = (): Authored => ({
   schemes: ['light', 'dark']
 });
 
-// Every page check loaded the project's modules and authored them again: 340 ms of la-velada's, the same each time.
+// Every page check loaded the project's modules and authored them again: 340 ms of a run's, the same each time.
 describe('the space a check is held to, kept', () => {
   it('comes back whole — its handles answering as they did — for the very files it was authored from', async () => {
     const key = await authoredKey(root);

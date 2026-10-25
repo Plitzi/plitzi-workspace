@@ -15,14 +15,14 @@ import { configDir } from '../account/connection';
 export interface History {
   /**
    * Whose runs it is read from: the project's own, or — before a run of it ended — this machine's, any project's: a
-   * lead's guess is off the same way from one project to the next (encore, a first run: 630 min estimated, 148 taken).
+   * lead's guess is off the same way from one project to the next (a first run: 630 min estimated, 148 taken).
    */
   from: 'project' | 'machine';
   runs: number;
   tasks: number;
   /**
    * The middle of each done task's minutes over its estimate: below 1, they took less. The middle, not the sum: one task
-   * whose clock ran on (la-velada's t-tier-list, 885 min of 75, its approval lost) outweighed thirty that took a third.
+   * whose clock ran on (a run's t-tier-list, 885 min of 75, its approval lost) outweighed thirty that took a third.
    */
   ratio: number;
 }

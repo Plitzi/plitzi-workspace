@@ -15,7 +15,7 @@ import type { PlitziProject } from '../commands/existingProject';
  * Where a page of the project here is served for a check or a picture — and, in a task's copy whose own server is not
  * running, the copy served for that command alone and stopped after it. Agents started their copy's server by hand to
  * look at a page and spent their steps on it: start it in the background, wait, ask its port, stop it after
- * (la-velada: 64 of them across a run, and one `pkill` that stopped every copy's server). A server of the agent's own,
+ * (64 of them across a run, and one `pkill` that stopped every copy's server). A server of the agent's own,
  * running, is used as it is.
  */
 export const originHere = async (
@@ -31,12 +31,12 @@ export const originHere = async (
   const cache = taskPaths(runPaths(copy.root, copy.run), copy.task).cache;
   // In a copy, only its own server is it — named by the mark of the folder its /health answers with: a port guessed
   // may be another copy's, or another project's of the person's. The server the CLI kept writes the same record as
-  // the agent's own would: it is the CLI's, served again once the copy changed — never reused as it was (lx-copy: four
+  // the agent's own would: it is the CLI's, served again once the copy changed — never reused as it was (four
   // of five agents measured code they had changed, told "your own server", and stopped it by hand).
   const own = await ownServer(root);
   if (own !== undefined && own !== (await keptPort(cache))) {
     // The agent's own server, left as it is — it holds the copy's state — but written to since it started, said: it
-    // serves the copy as it was unless it watches (velada-shell's dev-1 measured a gap of 12px it had changed).
+    // serves the copy as it was unless it watches (a run's dev-1 measured a gap of 12px it had changed).
     const started = await fs
       .stat(path.join(root, DEV_SERVER_FILE))
       .then(stat => stat.mtimeMs)

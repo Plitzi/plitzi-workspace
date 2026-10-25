@@ -73,7 +73,7 @@ const readable = (dir: string, modules: string): string[] => {
     realpathSync(path.join(modules, '@plitzi', name))
   );
   // The project's src/ whole, when the module is in it: a space reads beside its folder — its pages by folder
-  // (`pagesIn`), its data (`../data/*.json`) — and was refused at its first read (lx-copy's `page check --space`). Never
+  // (`pagesIn`), its data (`../data/*.json`) — and was refused at its first read (a run's `page check --space`). Never
   // the project's root, where its .env is.
   const root = realpathSync(path.dirname(modules));
   const source = path.join(root, 'src');

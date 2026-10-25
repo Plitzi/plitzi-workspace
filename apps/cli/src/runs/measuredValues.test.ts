@@ -16,7 +16,7 @@ const task = (id: string, acceptance: PlannedTask['acceptance']): PlannedTask =>
 
 const SITE = 'https://www.example.com';
 
-// velada-polish: the VS sizes were the lead's guess (2.35/2.75/3.35rem; the original's, 3em) — a round to find out.
+// The VS sizes were the lead's guess (2.35/2.75/3.35rem; the original's, 3em) — a round to find out.
 describe('values a copy is held to, measured', () => {
   it('says a task of a copy whose acceptance names values no check of it measures against the site', () => {
     const [notice] = unmeasuredNotices(

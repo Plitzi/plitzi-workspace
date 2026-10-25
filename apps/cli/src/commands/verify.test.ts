@@ -96,7 +96,7 @@ describe('what a failed step says', () => {
     ]);
     expect(said.at(-1)).toBe('✓ / at 390 px — nothing wrong');
     expect(tail('one\n\ntwo')).toEqual(['one', 'two']);
-    // encore-4: tsc's error named its overloads, and its cause — the deepest line under it — was cut.
+    // Tsc's error named its overloads, and its cause — the deepest line under it — was cut.
     const typed = tail(
       [
         'src/a.test.ts(3,1): error TS2769: No overload matches this call.',
@@ -109,9 +109,9 @@ describe('what a failed step says', () => {
       ].join('\n')
     );
     expect(typed).toContain("    Type 'T | Promise<T>' is not assignable to type 'Promise<unknown>'.");
-    // encore-3: every failed `author` began with the missing .env, a line that says nothing of what failed.
-    expect(tail('.env not found. Continuing without it.\nSpace "encore" was not written')).toEqual([
-      'Space "encore" was not written'
+    // Every failed `author` began with the missing .env, a line that says nothing of what failed.
+    expect(tail('.env not found. Continuing without it.\nSpace "acme" was not written')).toEqual([
+      'Space "acme" was not written'
     ]);
   });
 });

@@ -1,7 +1,7 @@
 /**
  * Why a lead approved a task without its designer's UI review, said as it does (`--skip-design <why>`): it looked at the
  * UI itself (`lead`), or the task changes nothing a visitor sees (`no-ui`). Never "skipped" alone: read as nobody
- * looking at it, where the lead had (la-velada: 21 tasks reviewed by the lead, counted as "UI skipped").
+ * looking at it, where the lead had (21 tasks reviewed by the lead, counted as "UI skipped").
  */
 export const DESIGN_SKIPS = ['lead', 'no-ui'] as const;
 

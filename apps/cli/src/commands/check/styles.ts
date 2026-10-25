@@ -183,7 +183,7 @@ const nearIds = (ids: readonly string[], id: string): string[] =>
 /**
  * The contested styles of the element asked for, by its handle's selector and the classes the space gives it — or why
  * they cannot be read, as it is: one answer for three reasons said "is not on the page" of an element that was
- * (velada-polish's design-2: a component's part, read in the page, its styles "not on the page").
+ * (a component's part, read in the page, its styles "not on the page").
  */
 export const elementStyles = async (
   page: BrowserPage,
@@ -199,7 +199,7 @@ export const elementStyles = async (
   const handle = Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id] : undefined;
   const element = Object.hasOwn(authored.schema.flat, id) ? authored.schema.flat[id] : undefined;
   if (!handle || !element) {
-    // A class, found on the page by it: velada-backlog's `--element fight-card-vs` was found, then said no element —
+    // A class, found on the page by it: a run's `--element fight-card-vs` was found, then said no element —
     // with the advice for a component's part, which it was not.
     const wearing = Object.values(authored.schema.flat).filter(one => classesOf(one).includes(id));
     if (wearing.length > 0) {

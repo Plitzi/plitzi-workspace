@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { lookChanges } from './moments';
 
-// velada-backlog: the VS medal's fill faded in on its ::before by a custom property its card's hover set, and
+// The VS medal's fill faded in on its ::before by a custom property its card's hover set, and
 // `task look --hover` said nothing changed — design-1 read it with a script of its own.
 describe('what a hover changes', () => {
   it("says a pseudo-element's change and a custom property's, the latter once — where it changed, not where it is inherited", () => {

@@ -42,9 +42,9 @@ beforeEach(() => {
 // A link to a space pasted in a chat showed no picture and Plitzi's icon: the builder had no place to say otherwise.
 describe('SharingSettings', () => {
   it('reads the space’s identity and writes each change back, an emptied field left out', () => {
-    const { container } = renderWith({ siteName: 'Encore', favicon: '/favicon.svg' });
+    const { container } = renderWith({ siteName: 'Acme', favicon: '/favicon.svg' });
 
-    expect(fieldOf(container, 'siteName').value).toBe('Encore');
+    expect(fieldOf(container, 'siteName').value).toBe('Acme');
     fireEvent.change(fieldOf(container, 'shareImage'), { target: { value: '/og.png' } });
     expect(emit).toHaveBeenCalledWith('main', 'schemaUpdateSettings', '/og.png', 'shareImage');
     fireEvent.change(fieldOf(container, 'favicon'), { target: { value: '' } });

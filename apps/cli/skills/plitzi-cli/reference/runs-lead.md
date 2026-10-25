@@ -145,7 +145,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
   a format (a date), the whole palette — tasks adding tokens at once name one colour three ways.
 - **What must hold at `complete` is an acceptance line** (`run amend`), never a message: a message has no hold on it.
 - **A line reads what a cold start holds**: the copy's seeded data, a state set by its own steps (`page play --steps
-  "state …"`, `--clock`) — never what moves while it runs (the busiest room's track): `run finish` runs a failed line
+"state …"`, `--clock`) — never what moves while it runs (the busiest room's track): `run finish` runs a failed line
   once more, and live data fails it twice. `plitzi server reset` puts a copy back to its cold start.
 - **What a task builds on is in its `dependsOn`**, not only in its words: a finding naming another task's component is a
   dependency `run plan` cannot see.
@@ -153,11 +153,11 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 - **A line nothing can answer is yours at once**: its command exits 2 (an element not there — a copied site's too —
   nothing served), you are told, and every try of the task fails on it until you amend it — never the agent's to bend.
 - **A command you hand an agent you ran**, as a line you write: one `--same` refused cost a round.
-- **A link's line follows it**: that the link is there proves nothing — encore-4's show links all went to `/r/`. Click it
+- **A link's line follows it**: that the link is there proves nothing — a list of links can all go to the same page. Click it
   and say where it lands (`page check <path> --click <link>` prints the address; `page play … --steps "click <link>"`
   says `→ <path>`), and that page answers.
 - **Your look covers every state the task names**: an approval read from the state at rest misses the one the task is
-  about (encore-4: the plates' keys wrapped only when reminded). Each state — signed in, open, reminded, empty, at the
+  about (keys that wrap only once a state is on). Each state — signed in, open, reminded, empty, at the
   phone width — is a `task look --click/--as` or a `page play` before you approve.
 - **A control is used there and back, not pictured** — an arrow, a dot, a pager, a drawer: its acceptance line is a
   `page play <path> --steps "…" --read <el…> --width 390,1440` (a copy's beside its reference, `"ours => theirs"`,
@@ -172,8 +172,9 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red — a done task's too: the finish holds
   it to the amended line. The plan you amend is any of the run's — the one it opened with, a stage's, or several joined:
   each changes only the tasks of the plans it holds.
-- **Don't fix Plitzi mid-run**: note it (`run notice --plitzi "…"`); the run's feedback (`feedback.md` of its reports)
-  joins it to the agents' reports.
+- **Every problem of Plitzi, noted as it happens** — the CLI, the platform, a skill or doc that misled, a workaround a
+  limit forced: `run notice --plitzi "…"`, one each with what it cost; never fixed mid-run. The run's `feedback.md` joins
+  them to the agents' reports.
 - **A round trimmed is said**: what it leaves goes to the backlog (`run notice`), not one more round.
 - **The report before the finish**; `--apply` is the person's unless they allowed you.
 

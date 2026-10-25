@@ -29,7 +29,7 @@ const pageAsked = () => {
   return { page: fake as unknown as BrowserPage, scripts, routes, install, clock: fake.clock };
 };
 
-// encore-3: a remembered Listen, a player that does not load and a countdown were each a throwaway Playwright file.
+// A remembered Listen, a player that does not load and a countdown were each a throwaway Playwright file.
 describe('the browser a page is read in', () => {
   it('holds the clock, fails the requests asked, and says so', async () => {
     const { page, routes, install } = pageAsked();
@@ -40,7 +40,7 @@ describe('the browser a page is read in', () => {
     expect(install).toHaveBeenCalledWith({ time });
     expect(clockHeld(page)).toBe(true);
     expect(routes[0]?.matcher(new URL('https://www.youtube.com/iframe_api?v=1'))).toBe(true);
-    expect(routes[0]?.matcher(new URL('https://encore.test/app.js'))).toBe(false);
+    expect(routes[0]?.matcher(new URL('https://acme.test/app.js'))).toBe(false);
     expect(conditionsText({ clock: time, block: ['youtube.com/iframe_api'], storage: 'refused' })).toBe(
       'clock held at 2026-10-25T20:00:00.000Z · blocked: youtube.com/iframe_api · storage refused'
     );

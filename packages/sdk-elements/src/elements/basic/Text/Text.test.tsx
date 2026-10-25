@@ -15,7 +15,7 @@ vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
 }));
 
 describe('a text on a page', () => {
-  // encore's room cards read "Text" where a bound line resolved to nothing.
+  // A run's room cards read "Text" where a bound line resolved to nothing.
   it('draws nothing when it has no words — no placeholder — and says it is empty', () => {
     const { container } = render(
       <ElementContext value={skipHocEntry()}>

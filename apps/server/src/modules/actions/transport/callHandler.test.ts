@@ -399,7 +399,7 @@ describe('handleActionCall', () => {
     const first = call(config, body, { module });
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    // encore: the room loaded at two widths called playback-start twice at once, and the second was refused with a
+    // The room loaded at two widths called playback-start twice at once, and the second was refused with a
     // 409 — a console error on a page that did nothing wrong. Now it waits for the run going and is answered by it.
     const second = call(config, body, { module });
     await new Promise(resolve => setTimeout(resolve, 0));

@@ -61,7 +61,7 @@ describe('a unit that is a folder, backed up as a path', () => {
     await expect(fs.access(folder)).rejects.toThrow();
   });
 
-  // lx-copy: t-base removed the StatCard plugin's files, and its empty folder stayed in every copy, the preview and the
+  // T-base removed the StatCard plugin's files, and its empty folder stayed in every copy, the preview and the
   // run's work — where every folder of src/plugins/ is a plugin, and the server refused to start.
   it('takes the folders a removal leaves empty, up to the tree it is placed in and never past it', async () => {
     const plugins = path.join(bench.root, 'src/plugins');

@@ -296,7 +296,7 @@ describe('the built plugins', () => {
 });
 
 describe('the project’s code', () => {
-  // encore: one index.ts listing every domain was its agents' conflicts; a domain is a file, and any at the top counts.
+  // One index.ts listing every domain was its agents' conflicts; a domain is a file, and any at the top counts.
   it('refuses src/functions/ with its code only in a folder, and leaves a README or a domain’s file alone', () => {
     write('src/functions/README.md');
     expect(checkProjectLayout(root)).toEqual([]);

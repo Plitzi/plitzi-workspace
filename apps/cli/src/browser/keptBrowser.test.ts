@@ -36,7 +36,7 @@ describe('the kept browser', () => {
     await expect(readFile(record(root))).rejects.toThrow();
   });
 
-  // lx-product: a CLI asked the browser an older one kept, and was answered with the older one's properties.
+  // A CLI asked the browser an older one kept, and was answered with the older one's properties.
   it('asks only one this CLI started: one another build started, or one that says not, is none to it', async () => {
     root = await mkdtemp(path.join(os.tmpdir(), 'plitzi-kept-'));
     await mkdir(path.dirname(record(root)), { recursive: true });

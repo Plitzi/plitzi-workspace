@@ -39,10 +39,10 @@ const servedBench = async (startDev?: string): Promise<void> => {
   );
 };
 
-// la-velada's agents started their copy's server by hand to look at a page — 64 steps across a run, waiting for it,
+// A run's agents started their copy's server by hand to look at a page — 64 steps across a run, waiting for it,
 // asking its port, stopping it — and one `pkill` stopped every copy's server.
 describe('originHere', () => {
-  // velada-dress: each `page shot` from a copy started its server and stopped it — hundreds of starts in a run.
+  // Each `page shot` from a copy started its server and stopped it — hundreds of starts in a run.
   it('serves a task’s copy nobody serves, keeps it for the next command, serves it anew once the copy changed', async () => {
     await bench.write(
       'serve.mjs',
@@ -83,7 +83,7 @@ describe('originHere', () => {
     await expect(fetch(second, { signal: AbortSignal.timeout(3000) })).rejects.toThrow();
   }, 60_000);
 
-  // lx-copy: the project's server writes tmp/dev-server.json as it starts, so the server the CLI kept read as the
+  // The project's server writes tmp/dev-server.json as it starts, so the server the CLI kept read as the
   // agent's own — reused as it was, "restart it" said — and four of five agents measured code they had changed.
   it('serves anew the server it kept, though that server wrote the record an agent’s own would', async () => {
     await bench.write(
@@ -140,7 +140,7 @@ describe('originHere', () => {
     expect(descendantsOf(process.pid).length).toBeGreaterThanOrEqual(0);
   });
 
-  // velada-polish: the lead's look served a copy a picture's kept server held — two servers on one copy — and pictured
+  // The lead's look served a copy a picture's kept server held — two servers on one copy — and pictured
   // nothing; the before's server stopped too, its output thrown away.
   it('looks at a copy through the server a picture kept, its use marked while it is followed', async () => {
     await servedBench();
