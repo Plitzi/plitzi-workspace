@@ -127,7 +127,4 @@ describe('the steps that set what a page remembers and what time it is', () => {
     expect(problemOf('tick 8d')).toContain('up to a week');
     expect(problemOf('store only-a-key')).toContain('a key and its value');
   });
-    expect(parseSteps('tick 8d', 500)).toEqual({ problem: expect.stringContaining('up to a week') });
-    expect(parseSteps('store only-a-key', 500)).toEqual({ problem: expect.stringContaining('a key and its value') });
-  });
 });
