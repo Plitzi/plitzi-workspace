@@ -145,43 +145,57 @@ answers it, so the tab asks only a page its server marked (`runStatus` in the pa
 request it lets by) — asked everywhere, every page in debug mode logged a 404 every three seconds. A run that ends (finished, aborted)
 stops its preview before its folder goes (`stopPreviewOf`): the record first, which the preview reads as the end, then
 the folder once it stopped — never a server left watching a folder removed under it. `run monitor` is the same run, live, for
-a person in a terminal of their own: it only reads (nothing marked read, nothing the lead is woken for touched) and
-refuses a shell with no terminal, an agent's, whose is `run watch`. It is a board for a supervisor: the run and the stage at
-work (`stage 3: motion`, its goal under it — `run extend` logs each stage's), what needs someone on top; under it the run's flow, always — its kanban, each task a card in its stage from to-do to approved, with what holds
-an agent; a task a review sent back is at work again with its agent, its card marked with the round it is at
-(`t-boxer ↺2`), never a stage apart. An agent is at one task at a time — the one it last did something on itself (taken,
-a heartbeat, a write: `TaskView.workedAt`, never a review that sent it back); the others it holds are held for it
-(`parkedFor`: `t-home dev-2 at t-overlay`), so an agent is never on two cards of the flow at once. A lead is "reviewing"
-or "finds out" only at a review or a spike a card names it on; what it did lately with nothing in hand is its last, idle
-— a pending task's card says whom it follows (`t-motion ← t-boxer, t-lint`) (`f` hides it), a stage with more cards than it shows scrolled by the wheel over it
-(`↑ 5 · + 7 more`, `FlowColumn`, `wheelTarget`); the tasks left and the agents, each with its state — at work,
-waiting, asking the lead, stopped, done, idle while its task waits for its review — each saying what it is at in words:
-the step it reported in its own (`task progress --step`), else what it ran last ("measuring /cart against the
-original"); one not started says so, one running before anything of it reached the log is "getting started", and none
-shows a command line, which is the lead's to read in `run watch` — fifteen listed at most, the rest scrolled to with ↑↓ — and the approved
-folded in a line naming them (`a`); last the activity in columns (time, who → whom for a message, task, what), every row
-the rest leaves, down to the terminal's foot, an event repeated in a row one line
-(×N, opened and folded with a click), paged with ← → and the wheel. Each line says its event for a glance — 72
-characters at most (`SHORT`, `feedLine.ts`), in its own words where the whole would be cut: "checks fail: lint, 2
-acceptance lines + 1 file of other tasks", "stops for a fresh context" — and keeps the whole as its `detail`, opened
-under it with a click (▸); one run's lines ran to 499 characters a line, a tenth of them past 200. The dev tools' Run tab
-shows the same, the whole on hover. Beside the activity, as wide as it says and the activity taking the rest (a line over it when that would leave the
-activity under 80 columns), **the spend** (`monitorSpend.ts`): what each agent's harness spent so far — the lead's and
-the reviewers' too — its pieces of work, turns, tokens **in** (fresh input and context written to the cache), **out**
-and **cached** (its context read again each turn: a tenth of the price, and most of what is read — one figure of all
-three said 1.1M for one spec of a run's tester, ~240k its price), and its context now, marked past `freshContextAt`
-for an agent of `"session": "context"` alone; its tasks — its own and those it reviewed, each once — and its sessions —
-the sessions its commands ran in — and what one of each costs on average, in and out (`PER SESS`, `PER TASK`, said in a
-line under them): agents start fresh in different ways, a task each or past a size, so a session is not a task. The
-run's `PER TASK` counts a task once whoever worked on it: every agent's spend over them, what a task cost the run.
-Sorted by in+out, `s` turning it to per session, per task, cached, context, name. It is kept in the run's log as each
-piece of work ends (`spent`, `spent.ts`): a task completed, a review decided, each from the agent's last, read from
-its sessions as the round's report reads them (`harness/spentIn`). It fits the terminal it is in (`monitorBoard.ts`,
-`monitorFlow.ts`): the flow's stages in bands on a narrow one and its cards fewer on a short one — each stage's count in
-a line where not even a card fits — the agents in brief under the tasks under 140 columns, the activity's columns as
-wide as what they say, the keys wrapped rather than cut, and under 24 rows the activity gives its rows to the board. It
-watches the run's folder and
-draws again the moment the CLI writes to it, every second for its clock, in one synchronized frame. Everything that
+a person in a terminal of their own: it reads the run (nothing marked read, nothing the lead is woken for touched) and
+refuses a shell with no terminal, an agent's, whose is `run watch` — the one thing it starts is the run's preview (`p`,
+below). It is drawn whole on every frame as a canvas of cells (`monitorCanvas.ts`) in Plitzi's own colours
+(`monitorTheme.ts`: the brand's tokens, dark or light as the terminal's background answers, `t` or `--theme` to say it;
+each agent a hue of its own, the same everywhere on the panel), at the depth the terminal draws — every colour, the 256,
+the 16, or none under `NO_COLOR`, a selection then drawn inverse. On top, the run and the stage at work (`stage 3 ·
+motion`, its goal beside it — `run extend` logs each stage's) and its state; the views as tabs, each its key (`1`
+Overview, `2` Flow, `3` Tasks, `4` Agents, `5` Spend), how many tasks are approved and when the run is expected to end;
+a strip of every task as a block in the colour of where it stands — by stage, each as wide as its share, when there
+are more than the width holds. At the foot a status bar (the run, what it spent, the preview's port, the keys) and over
+it what needs someone, one notice at a time in a frame — "Needs you" when one is the person's, else "For the lead" —
+its command copied by `c`, `n` the next, `d` every one whole, `esc` put off until it says something else.
+
+The Overview is the activity as a transcript, the newest at the bottom: each event a line (time, who in its hue, task,
+what) — 72 characters at most (`SHORT`, `feedLine.ts`), in its own words where the whole would be cut: "checks fail:
+lint, 2 acceptance lines + 1 file of other tasks", "stops for a fresh context" — its whole kept as its `detail` and
+opened under it with a click (▸), an event repeated in a row one line (×N, opened the same way); one run's lines ran to
+499 characters a line, a tenth of them past 200. Paged with ← → and the wheel. Under it the agents at work, each with
+a spinner, its verb (Writing, Reviewing, Asking…), its task, the step it reported in its own words (`task progress
+--step`) or what it ran last ("measuring /cart against the original") — never a command line, which is the lead's to
+read in `run watch` — and how long; at its foot the flow in brief, a line a stage. From 130 columns a sidebar beside it
+lists the tasks left (the approved folded in a line, `a` lists them; ↑↓ selects, ⏎ opens one: its story, its files,
+`y` copies its id), the agents with their state — at work, waiting, asking the lead, stopped, done, idle while its task
+waits for its review; one not started says so, one running before anything of it reached the log is "getting started" —
+what each spent and the run with its preview; narrower, those are their own views.
+
+**Flow** is the run's kanban: each task a card in its stage from to-do to approved, with what holds an agent; a task a
+review sent back is at work again with its agent, its card marked with the round it is at (`t-boxer ↺2`), never a stage
+apart. An agent is at one task at a time — the one it last did something on itself (taken, a heartbeat, a write:
+`TaskView.workedAt`, never a review that sent it back); the others it holds are held for it (`parkedFor`), so an agent
+is never on two cards at once. A lead is "reviewing" or "finds out" only at a review or a spike a card names it on. A
+pending task's card says what it waits for (`after t-boxer, t-lint`), and a stage with more cards than it shows is
+scrolled by the wheel over it (`↑ 5 · +7 more`). **Tasks** and **Agents** are the same as tables. **Spend**
+(`monitorSpend.ts`) is what each agent's harness spent so far — the lead's and the reviewers' too — its pieces of work,
+turns, tokens **in** (fresh input and context written to the cache), **out** and **cached** (its context read again
+each turn: a tenth of the price, and most of what is read — one figure of all three said 1.1M for one spec of a run's
+tester, ~240k its price), and its context now, marked past `freshContextAt` for an agent of `"session": "context"`
+alone; its tasks — its own and those it reviewed, each once — and its sessions — the sessions its commands ran in — and
+what one of each costs on average (`PER SESS`, `PER TASK`): agents start fresh in different ways, a task each or past a
+size, so a session is not a task. The run's `PER TASK` counts a task once whoever worked on it: every agent's spend over
+them, what a task cost the run. Sorted by in+out, `s` turning it to per session, per task, cached, context, name. It is
+kept in the run's log as each piece of work ends (`spent`, `spent.ts`): a task completed, a review decided, each from
+the agent's last, read from its sessions as the round's report reads them (`harness/spentIn`).
+
+`ctrl+p` is a palette: a task, an agent (its line copies `plitzi task message @agent "…"`), a view or an action, found
+by the letters typed in order; `?` lists the keys. `p` starts the run's preview on 8300 (`monitorPreview.ts`, what
+`run preview` serves) and stops it, `o` opens it in the browser: its server's output is kept in the run's cache
+(`preview.log`) and its last lines shown under its address, and quitting stops a preview the monitor started — one
+another process serves is said as served there and left alone. The monitor watches the run's folder and draws again the
+moment the CLI writes to it, every second for its clock and faster while an agent is at work, in one synchronized frame.
+Everything that
 waits on a run — `task next --follow`, a file's wait, a question's answer, `run watch --until lead`, `task inbox
 --follow` — wakes the same way (`runChanged.ts`), on a change, not at its next look: a hand-off is as quick as the CLI
 writing it. The activity says what each agent is at between tasks (`waiting`, `idle`, `stops`), that every task is

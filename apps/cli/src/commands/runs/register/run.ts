@@ -406,7 +406,7 @@ export const registerRunGroup = (program: Command): Command => {
   runGroup
     .command('monitor')
     .description(
-      'A run, live, for a person — in a terminal of its own, beside the harness: its tasks, its leads, what needs someone; it only reads'
+      'A run, live, for a person — in a terminal of its own, beside the harness: its tasks, its agents, what needs someone, its preview (p); it never writes to the run'
     )
     .argument('[run]', 'The run — the only open one when left out')
     .option(
@@ -414,7 +414,10 @@ export const registerRunGroup = (program: Command): Command => {
       'How often it reads the run anyway (5): it follows the run live, as the CLI writes it',
       positiveInteger
     )
-    .action((run: string | undefined, options: RunCommandOptions & { interval?: number }) => runMonitor(run, options));
+    .option('--theme <theme>', 'light or dark — the terminal’s own background when left out')
+    .action((run: string | undefined, options: RunCommandOptions & { interval?: number; theme?: string }) =>
+      runMonitor(run, options)
+    );
 
   runGroup
     .command('watch')
@@ -637,7 +640,7 @@ A run, from the ask to your project — multi-agent mode, only when you ask for 
   1. plitzi run start "<what you want>"   the project checked, the run opened on its scope (your agent is its lead)
   2. the lead scopes it: what the job takes, written as tasks, each with how it is checked
   3. plitzi run agent <name> --launch --harness claude|codex|opencode   each agent of .plitzi/team.json started
-  4. plitzi run monitor                  follow it; npm run start:preview serves the approved work as it grows
+  4. plitzi run monitor                  follow it; its p serves the approved work as it grows (on 8300)
   5. plitzi run finish --apply           yours: the work into the project once you read the lead's report
      plitzi run abort                    yours: the run ended, nothing of its work written
 Nothing touches the project before step 5. Either way its reports stay, to commit and send to Plitzi:

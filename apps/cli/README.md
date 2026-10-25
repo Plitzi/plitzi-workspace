@@ -628,7 +628,7 @@ plitzi run reference                       # the plan's reference site kept as i
 plitzi run watch --json                    # how the run goes: a line per task, what needs attention
 plitzi run watch --until lead              # ends the moment something needs the lead: run it in the background
 plitzi run preview                         # the run's work as it goes, served: each approval shows; its dev tools' Run tab
-plitzi run monitor                         # the run, live, in a terminal of your own beside the harness: its flow as a kanban, its tasks, agents and activity, fitted to the terminal — it only reads
+plitzi run monitor                         # the run, live, in a terminal of your own beside the harness: its activity, flow, tasks, agents and spend, fitted to the terminal — it only reads; p serves the preview
 plitzi task show t-home                    # a task as its lead reviews it: checks, agreements, each file's diff
 plitzi task show t-home src/space/pages/home/hero.ts   # one file whole, as it went to review (no task: the one you hold or review)
 plitzi run settle after-stop:dev-2 --note "…"   # a finding the run raised to the lead, settled by what it did — the close waits on it
@@ -661,8 +661,8 @@ inbox`. A block lifted carries its answer (`task unblock --answer`), and `task n
   its designer's for 8 minutes (15, its first, which holds its reading); in that time the lead's `--skip-design` is
   refused, past it the lead decides.
 - **Connected as it goes:** a shared file a task changed is its by turns at `complete` when nobody holds it, and merged
-  line by line when the run moved meanwhile; `run preview` — the project's `npm run start:preview` — serves the run's
-  work as each task is approved, and `run preview --task` a task in review, before it is. Your own `start:dev` serves
+  line by line when the run moved meanwhile; `run preview` — the project's `npm run start:preview`, or `p` in
+  `run monitor` — serves the run's work as each task is approved, and `run preview --task` a task in review, before it is. Your own `start:dev` serves
   the project as it is until the finish, and says so on its console while a run is open.
 - **No task ends with failing checks** — lint, types, tests: `complete` refuses. Only for a reason that weighs, said to
   the lead: `--known-failure "why" --fixed-by <task>`; the final merge still needs every check green.

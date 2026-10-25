@@ -177,6 +177,8 @@ export interface Preview {
   borrowed?: { port: number; by: 'agent' | 'kept' };
   /** Once it stopped, why — and what the server said last, when it wrote to a log: none while it serves. */
   stopped: () => { why: string; said: string[] } | undefined;
+  /** Where its server writes, when it was started quiet: what a panel shows of it (`run monitor`). */
+  log?: string;
 }
 
 /**
@@ -285,8 +287,19 @@ const borrow = (url: string, touch?: () => Promise<void>): Omit<Preview, 'dir'> 
   return { url, done, stop: () => release('the preview stopped: it was asked to'), stopped: () => ended };
 };
 
-/** `plitzi run preview`: the run's work served on `port`, kept up to date until the run ends. */
-export const startPreview = async (ctx: RunContext, runId: string, port: number): Promise<Preview> => {
+/** Where a quiet preview's server writes: beside the run, read by the panel that started it. */
+export const previewLog = (paths: { cache: string }): string => path.join(paths.cache, 'preview.log');
+
+/**
+ * `plitzi run preview`: the run's work served on `port`, kept up to date until the run ends. `quiet`: its server's
+ * output goes to `previewLog`, not to the terminal — the monitor draws its own screen there.
+ */
+export const startPreview = async (
+  ctx: RunContext,
+  runId: string,
+  port: number,
+  { quiet = false }: { quiet?: boolean } = {}
+): Promise<Preview> => {
   requireNoTask(ctx, 'preview the run');
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
   // One preview a run: a second would rebuild the folder the first one serves from under it.
@@ -302,11 +315,15 @@ export const startPreview = async (ctx: RunContext, runId: string, port: number)
   const dir = previewDir(loaded.paths);
   await approvedCopy(ctx, loaded, dir);
   await writeSnapshot(ctx, loaded);
-  const served = await serve(ctx, loaded, dir, port, undefined, { snapshot: true });
+  const log = quiet ? previewLog(loaded.paths) : undefined;
+  const served = await serve(ctx, loaded, dir, port, undefined, {
+    snapshot: true,
+    ...(log === undefined ? {} : { quiet: true, log })
+  });
   await writeJson(previewRecord(loaded.paths), { pid: process.pid, port });
   void served.done.then(() => fs.rm(previewRecord(loaded.paths), { force: true })).catch(() => undefined);
 
-  return { ...served, dir };
+  return { ...served, dir, ...(log === undefined ? {} : { log }) };
 };
 
 /** The project with the run's approved work in it, made at `dir` afresh: what `run preview` serves. */

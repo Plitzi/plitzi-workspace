@@ -658,7 +658,7 @@ export const runText = (view: RunView): string => {
   if (view.status === 'open' || view.status === 'stopping') {
     lines.push(
       view.previewPort === undefined
-        ? 'In a browser, as the tasks are approved: npm run start:preview (plitzi run preview) — the project itself is untouched until the finish'
+        ? 'In a browser, as the tasks are approved: p in plitzi run monitor, or npm run start:preview — the project itself is untouched until the finish'
         : `In a browser, as the tasks are approved: http://127.0.0.1:${String(view.previewPort)} (the run's preview)`
     );
   }

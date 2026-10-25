@@ -26,6 +26,14 @@ import type { Acceptance, AcceptanceResult } from './model';
 
 const isChecked = (each: Acceptance): each is { said: string; check: string } => typeof each !== 'string';
 
+/** `port` when nothing listens on it, else any free one: a preview keeps the address a person knows when it can. */
+export const portOr = (port: number): Promise<number> =>
+  new Promise(resolve => {
+    const server = net.createServer();
+    server.once('error', () => resolve(freePort()));
+    server.listen(port, '127.0.0.1', () => server.close(() => resolve(port)));
+  });
+
 export const freePort = (): Promise<number> =>
   new Promise((resolve, reject) => {
     const server = net.createServer();

@@ -1,5 +1,3 @@
-import { stripVTControlCharacters } from 'node:util';
-
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
@@ -12,7 +10,7 @@ import { loadRun, openRun } from './run';
 import { scopePlan, SCOPE_SPIKE } from './spike';
 import { answerSpike, nextTask, startSpike, takeNext, taskContext, unblockTask } from './tasks';
 import { viewRun } from './view';
-import { flowLines } from '../commands/runs/monitorFlow';
+import { flowStages } from '../commands/runs/monitorFlow';
 import { benchPlan, makeBench, teamFor } from '../tests/runProject';
 import { refusal, runSteps } from '../tests/runSteps';
 
@@ -231,8 +229,8 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     });
     expect((await takeNext(bench.agent('lead-3'), 'es-launch', 'lead')).next.spike?.task.id).toBe('s-words');
     // In the flow and the board's task row, with the lead at it — never "free": no agent takes a spike.
-    const flow = flowLines((await viewRun(lead(), 'es-launch')).tasks, 200).map(line => stripVTControlCharacters(line));
-    expect(flow.some(line => line.includes('s-survey lead-2'))).toBe(true);
+    const spikes = flowStages((await viewRun(lead(), 'es-launch')).tasks).find(stage => stage.key === 'spike');
+    expect(spikes?.tasks.map(task => `${task.id} ${spikes.who(task)}`)).toContain('s-survey lead-2');
     // On the board at its spike, never idle.
     expect((await monitorRun(lead(), 'es-launch')).agents.find(agent => agent.agent === 'lead-2')).toMatchObject({
       status: 'working',

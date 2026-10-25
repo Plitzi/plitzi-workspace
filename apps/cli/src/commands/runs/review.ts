@@ -666,7 +666,7 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
               ...(reviewed.previewProblem
                 ? [
                     chalk.yellow(
-                      `  ⚠ The run's preview did not take it in: ${reviewed.previewProblem} — restart it (npm run start:preview)`
+                      `  ⚠ The run's preview did not take it in: ${reviewed.previewProblem} — restart it (p in plitzi run monitor, or npm run start:preview)`
                     )
                   ]
                 : []),

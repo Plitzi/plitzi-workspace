@@ -1,13 +1,9 @@
-import chalk from 'chalk';
-
-import { cell, visible } from './monitorCells';
-
 import type { Attention, RunView } from '../../runs/view';
 
 /**
- * What needs someone, as a table: for whom, what sort of thing, the task it comes from and the agent at it, then what
- * it says — the most pressing first, what is only to know last. A list of sentences each saying its own task and
- * agent somewhere in it read as a wall.
+ * What needs someone, one notice at a time as the panel's box says it: what sort of thing, the task it comes from and
+ * the agent at it, what it says — the most pressing first, what is only to know last — and the command that answers
+ * it, copied rather than printed in its row.
  */
 
 /** How pressing each sort is: a person's step and what stops the run first, what is only to know last. */
@@ -60,24 +56,45 @@ const saidOf = (item: Attention): string => {
     .replace(/ — read: plitzi task inbox$/, '');
 };
 
-/** The rows of what needs attention, at most `rows` of them, each cut to `width`. */
-export const attentionLines = (view: RunView, width: number, rows: number): string[] => {
-  const holder = new Map(view.tasks.flatMap(task => (task.agent ? [[task.id, task.agent] as const] : [])));
-  const sorted = [...view.attention].sort((a, b) => rankOf(a) - rankOf(b));
-  const shown = sorted.slice(0, rows).map(item => ({
-    who: item.who === 'person' ? chalk.red('■ you') : chalk.yellow('⚠ lead'),
-    sort: chalk.bold(sortOf(item)),
-    task: item.task ?? '',
-    agent: chalk.dim(item.task === undefined ? '' : (holder.get(item.task) ?? '')),
-    said: saidOf(item)
-  }));
-  const widthOf = (key: 'who' | 'sort' | 'task' | 'agent') => Math.max(0, ...shown.map(each => visible(each[key])));
-  const widths = { who: widthOf('who'), sort: widthOf('sort'), task: widthOf('task'), agent: widthOf('agent') };
+/** A notice as the panel's box says it: what sort, its task and agent, what it says, and the command that answers it. */
+export interface Need {
+  key: string;
+  sort: string;
+  /** For the person watching (`who: 'person'`), or the lead's to act on — shown so the person knows. */
+  person: boolean;
+  task?: string;
+  agent?: string;
+  said: string;
+  /** The `plitzi …` command it names, when it names one: what `c` copies. */
+  fix?: string;
+}
 
-  return shown.map(each =>
-    cell(
-      ` ${cell(each.who, widths.who)}  ${cell(each.sort, widths.sort)}  ${cell(each.task, widths.task)}  ${cell(each.agent, widths.agent)}  ${each.said}`,
-      width
-    )
-  );
+/** What keeps a notice the same while its words change: put off (`esc`), it is back once it says something else. */
+export const needKey = (item: Attention): string =>
+  [item.kind, item.task ?? '', item.file ?? '', item.subject ?? '', item.message ?? '', item.text].join('|');
+
+/** The command a notice names, whole: what it says to run — `plitzi run agent agent-4 --launch`. */
+export const fixOf = (text: string): string | undefined =>
+  /(plitzi (?:run|task|server|page|space) [^—;:()]*?)(?=\s+—|[;:()]|$)/.exec(text)?.[1]?.trim();
+
+/** The notices, the most pressing first — those for the person watching before the lead's. */
+export const needsOf = (view: RunView): Need[] => {
+  const holder = new Map(view.tasks.flatMap(task => (task.agent ? [[task.id, task.agent] as const] : [])));
+
+  return [...view.attention]
+    .sort((a, b) => rankOf(a) - rankOf(b))
+    .map(item => {
+      const agent = item.task === undefined ? item.agent : (holder.get(item.task) ?? item.agent);
+      const fix = fixOf(item.text);
+
+      return {
+        key: needKey(item),
+        sort: sortOf(item),
+        person: item.who === 'person',
+        ...(item.task === undefined ? {} : { task: item.task }),
+        ...(agent === undefined ? {} : { agent }),
+        said: saidOf(item),
+        ...(fix === undefined ? {} : { fix })
+      };
+    });
 };

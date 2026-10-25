@@ -393,7 +393,7 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
         opened.tasks.length === 1 && opened.tasks[0] === SCOPE_SPIKE
           ? `Next, yours: the scope — find out what the ask takes (plitzi run reference --run ${opened.runId} --pages "…" keeps the site it copies), then end it with its tasks: plitzi task spike ${SCOPE_SPIKE} --done "what you found" --tasks <stage.json>. Agents start once there are tasks to take.`
           : `Start a task: plitzi task next --run ${opened.runId}`,
-        'Watch it in a browser as the tasks are approved: npm run start:preview (plitzi run preview, on 8300) — the project itself is untouched until the finish',
+        'Watch it in a browser as the tasks are approved: p in plitzi run monitor, or npm run start:preview (on 8300) — the project itself is untouched until the finish',
         ...backlogLines(opened.backlog)
       ].join('\n')
   );

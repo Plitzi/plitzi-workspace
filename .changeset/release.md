@@ -95,7 +95,7 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 - **A task that waits for another never holds its files against it:** a stage stacked after a task, naming the file
   that task makes, refused its complete as "another task's at work" while it could not start before it.
 - **`run monitor`'s spend says what the run costs in the harness:** a TOTAL column — in, out and cached summed, each
-  agent's and the run's whole — and the one-line spend starts with it.
+  agent's and the run's whole — and the status bar says the run's.
 - **A finish never crashes on an agent still ending a command:** its usage line is not written into a run being removed,
   the removal is retried, and the project is let go whatever happens — a finish failed with `ENOTEMPTY` after writing
   the work, leaving the project claimed by a run that was gone.
@@ -328,21 +328,24 @@ report`, …).
 
 ### Watching a run
 
-- **`plitzi run monitor`:** a live board in a terminal of its own. It shows what needs someone, the tasks and their
-  flow as a kanban, each agent's state, and the whole activity, paged. It works with the mouse, fits any terminal and
-  only reads.
+- **`plitzi run monitor`:** a live board in a terminal of its own, in Plitzi's colours (dark or light, as the terminal
+  is). Views as tabs: Overview, Flow (the kanban), Tasks, Agents, Spend. The Overview shows the activity, the agents at
+  work and the flow in brief; from 130 columns, a sidebar with the tasks, agents, spend and preview. What needs someone
+  is one notice at a time, its command copied with `c`. It also has a command palette (`ctrl+p`) and works with the
+  mouse. It fits any terminal and only reads, except for the preview it starts with `p`.
   - **Each activity line is short** — 72 characters at most, in its own words ("checks fail: lint + 3 files of other
     tasks", "stops for a fresh context") — and a click on a ▸ line opens the whole of it under it; the dev tools' Run
     tab shows the whole on hover. A run's lines ran to 499 characters.
-  - **What each agent spent, beside the activity:** pieces of work, turns, tokens in, out and cached — read again each
+  - **What each agent spent** (Spend, and the sidebar): pieces of work, turns, tokens in, out and cached — read again each
     turn, a tenth of the price, kept apart: one figure of all three said 1.1M where ~240k was the price — and its context,
     marked past `freshContextAt` for a `"session": "context"` agent alone — and its tasks and sessions, with what one of
     each costs on average (`PER SESS`, `PER TASK`, said under them; the run's counts a task once, whoever worked on it).
-    As wide as it needs, the activity taking the rest; sorted by in+out, `s` changes it. Kept in the run's log as each
+    Sorted by in+out, `s` changes it. Kept in the run's log as each
     task completes and each review is decided (`spent`), the lead and the reviewers included.
 - **`run watch --until lead`** wakes the lead once for each review, question, block, idle agent or agent to start.
   `run status` gives the same in one answer.
-- **`npm run start:preview`** serves the run's approved work as it grows; `run preview --task` serves one task's copy.
+- **The run's preview** serves its approved work as it grows: `p` in `run monitor`, its server's output under its
+  address, or `npm run start:preview`; `run preview --task` serves one task's copy.
   The page's dev tools show the run in a **Run** tab.
 - **The report and the bench** (`run report --summary --tokens`, `run bench`):
   - The flow: minutes, rounds, waits, checks and refusals by task and agent.

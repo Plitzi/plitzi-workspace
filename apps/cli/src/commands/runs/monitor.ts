@@ -1,357 +1,47 @@
+import { spawn } from 'node:child_process';
 import { watch } from 'node:fs';
 import { emitKeypressEvents } from 'node:readline';
 
 import chalk from 'chalk';
 
-import { attentionLines } from './monitorAttention';
-import { bodyOf, detailOf, listedTasks, orderedTasks } from './monitorBoard';
-import { cell, hhmm, wrapped } from './monitorCells';
-import { detailRows, FEED_LOOK, FEED_WORDS, feedColumns, feedRow, groupKey, opens, repeatRow } from './monitorFeed';
-import { fittedFlow } from './monitorFlow';
-import { ACTIVITY_LEAST, SPEND_SORTS, spendLine, spendPanel } from './monitorSpend';
+import { listedTasks } from './monitorBoard';
+import { createCanvas } from './monitorCanvas';
+import { initialUi, LIVE_VERB, VIEWS } from './monitorModel';
+import { PREVIEW_LINES, previewControl } from './monitorPreview';
+import { monitorScreen, paletteFor } from './monitorScreen';
+import { SPEND_SORTS } from './monitorSpend';
+import { THEMES, themeOfBackground } from './monitorTheme';
 import { contextFor } from './shell';
 import { monitorRun } from '../../runs/monitor';
 import { runPaths } from '../../runs/paths';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { activeRuns, runIds } from '../../runs/run';
 
-import type { FlowColumn } from './monitorFlow';
-import type { SpendSort } from './monitorSpend';
+import type { PaletteAction } from './monitorDialogs';
+import type { MonitorUi } from './monitorModel';
+import type { Screen } from './monitorScreen';
+import type { ColorDepth, ThemeName } from './monitorTheme';
 import type { RunCommandOptions } from './shell';
 import type { Monitored } from '../../runs/monitor';
 import type { RunContext } from '../../runs/run';
-import type { TaskLine } from '../../runs/view';
 
 /**
- * `plitzi run monitor`: a person's panel over a run, in a terminal of its own beside the harness's — the run it shows
- * on top, its tasks and where each stands, every agent with its model and what it is at, and what happened last: takes,
- * reviews and their verdicts, messages. It only reads — no message is marked read, nothing the lead is woken for is
- * touched — so the agents never notice it. A shell with no terminal (an agent's) is refused: theirs is `run watch`.
+ * `plitzi run monitor`: a person's panel over a run, in a terminal of its own beside the harness's — the run on top,
+ * its activity told as it happens, its tasks and agents, what needs someone, the preview served from it (`p`). It
+ * reads the run and never writes to it — no message marked read, nothing the lead is woken for touched — so the agents
+ * never notice it; the preview it serves is the person's, and stops with it. A shell with no terminal (an agent's) is
+ * refused: theirs is `run watch`.
  */
-
-/** How the head counts tasks in each state. */
-const STATUS_WORDS: Record<TaskLine['status'], string> = {
-  'in-progress': 'at work',
-  spike: 'in spike',
-  'changes-requested': 'sent back',
-  'in-review': 'in review',
-  waiting: 'waiting',
-  blocked: 'blocked',
-  failed: 'failed',
-  ready: 'free to take',
-  pending: 'pending',
-  done: 'approved'
-};
 
 /** A mouse report in SGR form: the button, the column, the row, and M pressed or m released. */
 // eslint-disable-next-line no-control-regex -- a terminal's mouse report starts with ESC: it is what is matched
 const MOUSE = /\x1b\[<(\d+);(\d+);(\d+)([Mm])/g;
 
-/** The attention rows shown on top: the board is for seeing it all, the full list is `run status`. */
-const ATTENTION_ROWS = 5;
-
-/** Under it the head says only the run and its counts: the goal and the preview are for a taller terminal. */
-const SHORT_HEIGHT = 32;
-/** The activity's events the board leaves room for: a fifth of it, from these to these — and then whatever it leaves. */
-const MIN_EVENTS = 3;
-const MAX_EVENTS = 10;
-/** The activity's own rows above its events: a blank, its title, its columns' names. */
-const ACTIVITY_HEAD = 3;
-/** From this height on the activity always has its few events; under it, the board takes the rows. */
-const MIN_ACTIVITY_HEIGHT = 24;
-/** The fewest rows the tasks and agents are given, whatever is left. */
-const MIN_BODY = 4;
-/** The panel, as lines that fit `width` × `height`: the run, attention, the flow, tasks and agents, then the feed. */
-export const monitorScreen = (
-  data: Monitored,
-  {
-    selected,
-    open,
-    width,
-    height,
-    now,
-    feedPage = 0,
-    onFeedPages,
-    showApproved = false,
-    opened = new Set<string>(),
-    onGroupRows,
-    onGroupPages,
-    onRegions,
-    flow = true,
-    flowOffsets = new Map<number, number>(),
-    spendSort = 'spent'
-  }: {
-    selected: number;
-    open: boolean;
-    width: number;
-    height: number;
-    now: Date;
-    /** Which page of the activity, newest first: 0 is the latest, each → one older. */
-    feedPage?: number;
-    /** Told how many pages the activity has at this height: what → may go up to. */
-    onFeedPages?: (pages: number) => void;
-    /** The approved tasks listed one by one too (`a`); otherwise said in one line under the rest. */
-    showApproved?: boolean;
-    /** The groups of repeated events opened, by `groupKey`: each repeat shown under its line. */
-    opened?: ReadonlySet<string>;
-    /** Told which row of the screen is which group's line (0 the top): what a click there opens or folds. */
-    onGroupRows?: (rows: Map<number, string>) => void;
-    /** The run's flow, the board's kanban, above the tasks and agents — `f` hides it. */
-    flow?: boolean;
-    /** How far down each of the flow's stages is scrolled, by stage (`FlowColumn.stage`). */
-    flowOffsets?: ReadonlyMap<number, number>;
-    /** What the spend's rows are ordered by — `s` turns it. */
-    spendSort?: SpendSort;
-    /** Told which page of the activity each group's line is on: an opened group is shown on its page. */
-    onGroupPages?: (pages: Map<string, number>) => void;
-    /** Told which rows the tasks and the activity take (first, after the last; 0 the top): where the wheel scrolls what. */
-    onRegions?: (regions: Regions) => void;
-  }
-): string[] => {
-  const { view, agents, feed, runs, stories, stage } = data;
-  const others = runs.filter(run => run.runId !== view.runId);
-  const tasks = orderedTasks(view.tasks);
-  const counts = (['in-progress', 'changes-requested', 'in-review', 'waiting', 'blocked', 'ready', 'pending'] as const)
-    .map(status => [status, tasks.filter(task => task.status === status).length] as const)
-    .filter(([, count]) => count > 0)
-    .map(([status, count]) => `${String(count)} ${STATUS_WORDS[status]}`);
-  const asking = tasks.filter(task => task.asking !== undefined && task.asking.answered !== true).length;
-  if (asking > 0) {
-    counts.push(chalk.yellow(`${String(asking)} asking the lead`));
-  }
-
-  // A short terminal keeps the run's line and its counts; the goal and the preview are for a tall one.
-  const short = height < SHORT_HEIGHT;
-  const preview = `${view.previewPort === undefined ? chalk.dim('preview: npm run start:preview') : `preview: http://127.0.0.1:${String(view.previewPort)}`}${others.length > 0 ? chalk.dim(` · other runs: ${others.map(run => `${run.runId} (${run.status})`).join(', ')}`) : ''}`;
-  const head = [
-    chalk.inverse(
-      cell(
-        ` RUN ${view.runId}${stage ? ` · stage ${String(stage.of)}: ${stage.name}` : ''}${view.scopedBefore ? ' · scoped before the run' : ''} · ${view.status.toUpperCase()} · ${String(view.done)} of ${String(view.total)} approved${view.expectedEnd ? ` · expected end ${hhmm(view.expectedEnd)} UTC` : ''} · ${hhmm(now.toISOString())} UTC`,
-        width
-      )
-    ),
-    // The stage at work, when stages were stacked: what is being done now, not the run's first goal.
-    ...(short ? [] : [chalk.dim(cell(` ${stage?.goal ?? view.goal}`, width))]),
-    cell(
-      ` ${counts.length > 0 ? counts.join(' · ') : 'nothing at work'}${short ? chalk.dim(' · ') + preview : ''}`,
-      width
-    ),
-    ...(short ? [] : [cell(` ${preview}`, width)]),
-    ''
-  ];
-  // What may need a supervisor: on top, under the run's head — the rest of the board is what is going on.
-  const attentionRows = short ? 2 : ATTENTION_ROWS;
-  const attention =
-    view.attention.length === 0
-      ? [cell(chalk.green(' ✓ nothing needs anyone now'), width)]
-      : [
-          chalk.bold.yellow(` NEEDS ATTENTION (${String(view.attention.length)})`),
-          ...attentionLines(view, width, attentionRows),
-          ...(view.attention.length > attentionRows
-            ? [chalk.dim(`   + ${String(view.attention.length - attentionRows)} more — plitzi run status`)]
-            : [])
-        ];
-  // The keys and the activity's marks, wrapped to the width rather than cut: on a narrow terminal each still says them.
-  const keys = wrapped(
-    [
-      'q quits',
-      `f ${flow ? 'hides' : 'shows'} the flow`,
-      '↑↓ a task',
-      'enter opens it',
-      'a the approved',
-      '←→ the activity',
-      'click a ▸ line: the whole of it',
-      's sorts the spend',
-      ...(short
-        ? []
-        : [
-            '"after X": starts once X is approved',
-            '○ free to take',
-            '■ needs someone',
-            // Toned as on the tasks they mark: dimmed with the rest, they read as no mark at all.
-            `${chalk.red('‼')} critical`,
-            `${chalk.yellow('!')} high`
-          ])
-    ],
-    width
-  ).map(line => chalk.dim(line));
-  const marks = wrapped(
-    [
-      'activity:',
-      ...(
-        ['take', 'complete', 'review', 'approved', 'sent-back', 'message', 'question', 'problem', 'run'] as const
-      ).map(kind => `${FEED_LOOK[kind].mark} ${chalk.dim(FEED_WORDS[kind])}`)
-    ],
-    width,
-    '  '
-  );
-  const foot = ['', ...keys, ...marks];
-
-  // What is left under the head, the attention and the keys, shared by what matters most first: the flow — the board's
-  // kanban, where every task stands — then the tasks and agents, then the activity: a fifth or so, and every row the tasks — fifteen at most — leave.
-  const room = Math.max(0, height - head.length - attention.length - 1 - foot.length);
-  const listed = listedTasks(view.tasks, showApproved);
-  const picked = listed.at(selected);
-  // A few events of the activity on any terminal of a usual height; on a shorter one it gives its rows to the board.
-  const leastActivity = height >= MIN_ACTIVITY_HEIGHT ? MIN_EVENTS + ACTIVITY_HEAD : 0;
-  // A task opened says all it can in what the board and the activity leave: its files are the last of it, cut first.
-  const detail =
-    open && picked
-      ? ['', ...detailOf(picked, stories[picked.id]).map(line => cell(line, width))].slice(
-          0,
-          Math.max(2, room - MIN_BODY - 3 - leastActivity)
-        )
-      : [];
-  const flowBoard = flow
-    ? fittedFlow(
-        view.tasks,
-        width,
-        Math.min(Math.round(room * 0.4), room - leastActivity - MIN_BODY - detail.length - 1),
-        flowOffsets
-      )
-    : { lines: [], columns: [] };
-  const board = flowBoard.lines;
-  const besideBoard = board.length > 0 ? 1 : 0;
-  const wanted = Math.min(MAX_EVENTS, Math.max(MIN_EVENTS, Math.round(room * 0.2))) + ACTIVITY_HEAD;
-  const bodyRoom = Math.max(
-    MIN_BODY,
-    room - board.length - besideBoard - detail.length - Math.max(leastActivity, Math.min(wanted, room - MIN_BODY))
-  );
-  const { lines: body, tasks: taskRows } = bodyOf({
-    tasks,
-    listed,
-    agents,
-    stories,
-    selected,
-    open,
-    showApproved,
-    width,
-    rows: bodyRoom,
-    now
-  });
-  // Every row the board leaves — the tasks listed fifteen at most — is the activity's.
-  const left = Math.max(0, room - board.length - besideBoard - body.length - detail.length - ACTIVITY_HEAD);
-  // The activity's rows: each event, and under an opened group each of its repeats.
-  type Row = { row: string; key?: string };
-  // The spend beside the activity, as wide as it needs and the activity taking the rest; a line over the activity when
-  // beside would leave it too narrow.
-  const spendBeside = spendPanel(data.spend, data.freshAt, height, spendSort);
-  const beside = width - spendBeside.width - 3 >= ACTIVITY_LEAST;
-  const feedWidth = beside ? width - spendBeside.width - 3 : width;
-  const feedWidths = feedColumns([...feed, ...feed.flatMap(line => line.repeats ?? [])], feedWidth);
-  const blocks: Row[][] = feed.map(line =>
-    opens(line) && opened.has(groupKey(line))
-      ? [
-          { row: feedRow(line, feedWidths, true), key: groupKey(line) },
-          ...detailRows(line, feedWidths, feedWidth).map(row => ({ row })),
-          ...(line.repeats ?? []).map(each => ({ row: repeatRow(each, feedWidths) }))
-        ]
-      : [{ row: feedRow(line, feedWidths), ...(opens(line) ? { key: groupKey(line) } : {}) }]
-  );
-  // Paged by event, never splitting an opened group: its repeats are on the page its line is on.
-  const pagesOf: Row[][] = [];
-  let filling: Row[] = [];
-  for (const block of left === 0 ? [] : blocks) {
-    if (filling.length > 0 && filling.length + block.length > left) {
-      pagesOf.push(filling);
-      filling = [];
-    }
-
-    filling.push(...block.slice(0, left));
-  }
-
-  if (filling.length > 0) {
-    pagesOf.push(filling);
-  }
-
-  onGroupPages?.(
-    new Map(
-      pagesOf.flatMap((each, index) => each.flatMap(row => (row.key === undefined ? [] : [[row.key, index] as const])))
-    )
-  );
-  const rows = blocks.flat();
-  const pages = Math.max(1, pagesOf.length);
-  onFeedPages?.(pages);
-  const page = Math.min(Math.max(0, feedPage), pages - 1);
-  const firstLine = pagesOf.slice(0, page).reduce((sum, each) => sum + each.length, 0);
-  const shownRows = pagesOf.at(page) ?? [];
-  const feedLines =
-    left === 0
-      ? []
-      : [
-          beside ? '' : spendLine(data.spend, width),
-          cell(
-            `${chalk.bold('ACTIVITY')}${chalk.dim(
-              pages > 1
-                ? `  ${String(firstLine + 1)}–${String(firstLine + shownRows.length)} of ${String(rows.length)} · ${page > 0 ? '← newer' : '← (newest)'} · ${page < pages - 1 ? 'older →' : '(oldest) →'} · the wheel too`
-                : `  ${String(rows.length)}, all shown`
-            )}`,
-            feedWidth
-          ),
-          chalk.dim(
-            cell(
-              `  ${'TIME'.padEnd(5)}   ${'WHO'.padEnd(feedWidths.who)} ${'TASK'.padEnd(feedWidths.task)} WHAT`,
-              feedWidth
-            )
-          ),
-          ...shownRows.map(each => cell(each.row, feedWidth))
-        ];
-  const spendRows = beside ? spendPanel(data.spend, data.freshAt, feedLines.length, spendSort).lines : [];
-  const activity = beside
-    ? feedLines.map(
-        (each, index) => `${cell(each, feedWidth)}${chalk.dim(index === 0 ? '   ' : ' │ ')}${spendRows[index] ?? ''}`
-      )
-    : feedLines;
-
-  const boardTop = head.length + attention.length + 1;
-  const bodyTop = boardTop + board.length + besideBoard;
-  // Where each group's line lands on the screen: the rows above it, then the activity's title and column names.
-  const above = bodyTop + body.length + detail.length + ACTIVITY_HEAD;
-  onGroupRows?.(
-    new Map(shownRows.flatMap((each, index) => (each.key === undefined ? [] : [[above + index, each.key] as const])))
-  );
-  onRegions?.({
-    flow: flowBoard.columns.map(column => ({
-      ...column,
-      rows: [boardTop + column.rows[0], boardTop + column.rows[1]] as [number, number]
-    })),
-    tasks: [bodyTop + taskRows[0], bodyTop + taskRows[1]],
-    // Its title and its columns' names too: the wheel turns its pages anywhere over it.
-    activity: [above - (ACTIVITY_HEAD - 1), above + shownRows.length]
-  });
-
-  return [...head, ...attention, '', ...board, ...(besideBoard ? [''] : []), ...body, ...detail, ...activity, ...foot];
-};
-
-/** Where on the screen the wheel scrolls something (rows and columns from 0): each of the flow's stages, the tasks, the activity. */
-export interface Regions {
-  flow: FlowColumn[];
-  tasks: [number, number];
-  activity: [number, number];
-}
-
-/**
- * What the wheel scrolls at a row and column of the screen: a stage of the flow — its cards — the tasks' list, or the
- * activity's pages; nothing over the rest (the head, the keys), which once turned the activity's pages under the flow.
- */
-export const wheelTarget = (
-  row: number,
-  column: number,
-  regions: Regions
-): { stage: FlowColumn } | 'tasks' | 'activity' | undefined => {
-  const stage = regions.flow.find(
-    each => row >= each.rows[0] && row < each.rows[1] && column >= each.cols[0] && column < each.cols[1]
-  );
-  if (stage) {
-    return { stage };
-  }
-
-  return row >= regions.tasks[0] && row < regions.tasks[1]
-    ? 'tasks'
-    : row >= regions.activity[0] && row < regions.activity[1]
-      ? 'activity'
-      : undefined;
-};
+/** How often an animated frame is drawn — the spinner of an agent at work — and the clock's when nothing moves. */
+const FRAME_MS = 120;
+const CLOCK_MS = 1000;
+/** How long a word a key said stays in the status bar. */
+const FLASH_MS = 2500;
 
 /** Which run to show: the one named, else the open one, else the newest the project has. */
 const runToShow = async (ctx: RunContext, named: string | undefined): Promise<string | undefined> => {
@@ -367,7 +57,54 @@ const runToShow = async (ctx: RunContext, named: string | undefined): Promise<st
   return (await runIds(ctx.root)).at(-1);
 };
 
-export const runMonitor = async (runId: string | undefined, options: RunCommandOptions & { interval?: number }) => {
+/**
+ * The terminal's background, asked (OSC 11): a light terminal is drawn light. A terminal that does not answer within a
+ * moment is drawn dark, Plitzi's own.
+ */
+const askBackground = (): Promise<ThemeName> =>
+  new Promise(resolve => {
+    let said = '';
+    const read = (data: Buffer): void => {
+      said += data.toString('utf-8');
+      const theme = themeOfBackground(said);
+      if (theme) {
+        done(theme);
+      }
+    };
+    const timer = setTimeout(() => done('dark'), 200);
+    const done = (theme: ThemeName): void => {
+      clearTimeout(timer);
+      process.stdin.off('data', read);
+      resolve(theme);
+    };
+    process.stdin.on('data', read);
+    process.stdout.write('\x1b]11;?\x1b\\');
+  });
+
+/** The system's own clipboard tool, by platform. */
+const CLIPBOARD: Partial<Record<NodeJS.Platform, [string, string[]]>> = {
+  darwin: ['pbcopy', []],
+  win32: ['clip', []],
+  linux: ['xclip', ['-selection', 'clipboard']]
+};
+
+/** `text` on the clipboard: the system's own tool where there is one, and the terminal's (OSC 52) besides. */
+const copyText = (text: string): void => {
+  const tool = CLIPBOARD[process.platform];
+  if (tool) {
+    const child = spawn(tool[0], tool[1], { stdio: ['pipe', 'ignore', 'ignore'] });
+    // A machine with no such tool still has the terminal's copy, below.
+    child.on('error', () => undefined);
+    child.stdin.end(text);
+  }
+
+  process.stdout.write(`\x1b]52;c;${Buffer.from(text).toString('base64')}\x07`);
+};
+
+export const runMonitor = async (
+  runId: string | undefined,
+  options: RunCommandOptions & { interval?: number; theme?: string }
+): Promise<void> => {
   if (!process.stdout.isTTY || !process.stdin.isTTY) {
     const refused = new RunRefusal(
       'invalid',
@@ -380,59 +117,19 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
   }
 
   const ctx = await contextFor(options);
-  let selected = 0;
-  let open = false;
-  let feedPage = 0;
-  let feedPages = 1;
-  let showApproved = false;
-  // The flow is the board's kanban: shown from the start, `f` hides it.
-  let flow = true;
-  let spendSort: SpendSort = 'spent';
-  // The groups of repeated events opened by a click, and which screen row is which group's line, as last drawn.
-  const opened = new Set<string>();
-  let groupRows = new Map<number, string>();
-  let groupPages = new Map<string, number>();
-  let regions: Regions = { flow: [], tasks: [0, 0], activity: [0, 0] };
-  // How far down each of the flow's stages the wheel scrolled its cards.
-  const flowOffsets = new Map<number, number>();
+  const depth: ColorDepth = chalk.level;
+  emitKeypressEvents(process.stdin);
+  process.stdin.setRawMode(true);
+  process.stdin.resume();
+  let themeName: ThemeName =
+    options.theme === 'light' || options.theme === 'dark' ? options.theme : await askBackground();
+  let ui: MonitorUi = initialUi();
   let last: Monitored | undefined;
+  let screen: Screen | undefined;
   let note = 'Reading the run…';
+  let previewOutput: string[] = [];
+  let flashTimer: ReturnType<typeof setTimeout> | undefined;
 
-  const draw = (): void => {
-    const lines = last
-      ? monitorScreen(last, {
-          selected,
-          open,
-          width: process.stdout.columns,
-          // One row fewer than the terminal's: the last line written ends the screen, and a full one would scroll it.
-          height: process.stdout.rows - 1,
-          now: new Date(),
-          feedPage,
-          showApproved,
-          flow,
-          flowOffsets,
-          spendSort,
-          opened,
-          onGroupRows: rows => {
-            groupRows = rows;
-          },
-          onGroupPages: pages => {
-            groupPages = pages;
-          },
-          onRegions: each => {
-            regions = each;
-          },
-          onFeedPages: pages => {
-            feedPages = pages;
-            feedPage = Math.min(feedPage, pages - 1);
-          }
-        })
-      : [note];
-    // Written over from the top, each line cleared past its end and what is below cleared after — never the screen
-    // wiped first, which flickered — inside the terminal's synchronized output, drawn as one frame.
-    const shown = lines.slice(0, Math.max(1, process.stdout.rows - 1)).map(line => `${line}\x1b[K`);
-    process.stdout.write(`\x1b[?2026h\x1b[H${shown.join('\n')}\x1b[J\x1b[?2026l`);
-  };
   // Many events in a moment — a wheel spun, a burst of writes — drawn once, at most every 16 ms.
   let drawing: ReturnType<typeof setTimeout> | undefined;
   const drawSoon = (): void => {
@@ -441,12 +138,51 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
       draw();
     }, 16);
   };
+  // The run's preview, served from here on `p`: it lives with the panel.
+  const preview = previewControl(ctx, drawSoon);
 
-  // Live: the run's folder watched, read again the moment the CLI writes to it — a take, a review, a message, a state —
-  // and drawn again every second for the clock and the "ago"s. What a copy writes (cache/) and the blobs are no news
-  // for the board. The interval is the fallback, for an event the system did not deliver.
+  const draw = (): void => {
+    const width = process.stdout.columns;
+    const height = process.stdout.rows;
+    const theme = THEMES[themeName];
+    let lines: string[];
+    if (last) {
+      screen = monitorScreen(last, ui, {
+        width,
+        height,
+        now: new Date(),
+        theme,
+        preview: { state: preview.state(last.view.previewPort), output: previewOutput }
+      });
+      lines = screen.canvas.ansi(depth);
+    } else {
+      const canvas = createCanvas(width, height, theme);
+      canvas.put(1, 2, '◆ plitzi', { fg: theme.primary, bold: true });
+      canvas.put(3, 2, note, { fg: theme.muted });
+      lines = canvas.ansi(depth);
+    }
+
+    // Written over from the top inside the terminal's synchronized output, drawn as one frame — never the screen wiped
+    // first, which flickered.
+    process.stdout.write(`\x1b[?2026h\x1b[H${lines.join('\r\n')}\x1b[?2026l`);
+  };
+
+  const flash = (said: string): void => {
+    ui = { ...ui, flash: said };
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => {
+      ui = { ...ui, flash: undefined };
+      drawSoon();
+    }, FLASH_MS);
+  };
+
+  // Live: the run's folder watched, read again the moment the CLI writes to it — a take, a review, a message, a state.
+  // What a copy writes (cache/) and the blobs are no news for the board. The interval is the fallback, for an event the
+  // system did not deliver.
   let watched: { id: string; close: () => void } | undefined;
   let soon: ReturnType<typeof setTimeout> | undefined;
+  let looking = false;
+  let lookAgain = false;
   const follow = (id: string): void => {
     if (watched?.id === id) {
       return;
@@ -455,13 +191,12 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
     watched?.close();
     try {
       const watcher = watch(runPaths(ctx.root, id).dir, { recursive: true }, (_event, file) => {
-        const changed = file ?? '';
-        if (/(^|\/)(cache|blobs|scratch|shots)(\/|$)/.test(changed)) {
+        if (/(^|\/)(cache|blobs|scratch|shots)(\/|$)/.test(file ?? '')) {
           return;
         }
 
-        // At most a read every 150 ms, never pushed back by the next change: a run written to without a pause — five
-        // agents at work, a stage stacked — was otherwise never read again until the clock's fallback.
+        // At most a read every 150 ms, never pushed back by the next change: a run written to without a pause was
+        // otherwise never read again until the clock's fallback.
         soon ??= setTimeout(() => {
           soon = undefined;
           void look();
@@ -472,8 +207,41 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
       watched = undefined;
     }
   };
-  let looking = false;
-  let lookAgain = false;
+
+  const lookOnce = async (): Promise<void> => {
+    const id = await runToShow(ctx, runId ?? options.run);
+    if (id === undefined) {
+      last = undefined;
+      note = 'No run in this project yet — this panel shows one the moment it opens (plitzi run open). q quits.';
+      draw();
+
+      return;
+    }
+
+    follow(id);
+    try {
+      // The whole activity: a person scrolls back through it (← →), from the plan to now.
+      last = await monitorRun(ctx, id, Number.MAX_SAFE_INTEGER);
+      const count = listedTasks(last.view.tasks, ui.showApproved).length;
+      ui = { ...ui, selected: Math.min(ui.selected, Math.max(0, count - 1)) };
+    } catch (error) {
+      // Read while the CLI was writing it — a plan half written as a stage is stacked: the board stays as it was and is
+      // read again in a moment. Thrown, it ended the monitor.
+      if (!isRunRefusal(error)) {
+        setTimeout(() => void look(), 500);
+
+        return;
+      }
+
+      last = undefined;
+      note =
+        error.code === 'not-found'
+          ? `Run "${id}" is gone: it finished, or a person aborted it. Waiting for the next one — q quits.`
+          : `${error.code}: ${error.message}`;
+    }
+
+    draw();
+  };
 
   const look = async (): Promise<void> => {
     // One read at a time: one asked for meanwhile runs right after, never beside it.
@@ -498,90 +266,116 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
     }
   };
 
-  const lookOnce = async (): Promise<void> => {
-    const id = await runToShow(ctx, runId ?? options.run);
-    if (id !== undefined) {
-      follow(id);
-    }
-
-    if (id === undefined) {
-      last = undefined;
-      note = 'No run in this project yet — this panel shows one the moment it opens (plitzi run open). q quits.';
-    } else {
-      try {
-        // The whole activity: a person pages back through it (← →), from the plan to now.
-        last = await monitorRun(ctx, id, Number.MAX_SAFE_INTEGER);
-        selected = Math.min(selected, Math.max(0, listedTasks(last.view.tasks, showApproved).length - 1));
-      } catch (error) {
-        // Read while the CLI was writing it — a plan half written as a stage is stacked: the board stays as it was and is
-        // read again in a moment. Thrown, it ended the monitor.
-        if (!isRunRefusal(error)) {
-          setTimeout(() => void look(), 500);
-
-          return;
-        }
-
-        last = undefined;
-        note =
-          error.code === 'not-found'
-            ? `Run "${id}" is gone: it finished, or a person aborted it. Waiting for the next one — q quits.`
-            : `${error.code}: ${error.message}`;
-      }
-    }
-
-    draw();
-  };
-
   await new Promise<void>(resolve => {
-    emitKeypressEvents(process.stdin);
-    process.stdin.setRawMode(true);
-    // The alternate screen, as a pager uses: the terminal's own text is back as it was once it quits.
-    // The mouse too (SGR reports): a click on a group of repeated events opens or folds it, the wheel pages the activity.
+    // The alternate screen, as a pager uses: the terminal's own text is back as it was once it quits. The mouse too (SGR
+    // reports): a click opens a line, picks a task or a view; the wheel scrolls what it is over.
     process.stdout.write('\x1b[?1049h\x1b[?25l\x1b[?1000h\x1b[?1006h');
     const timer = setInterval(() => void look(), Math.max(1, options.interval ?? 5) * 1000);
-    const clock = setInterval(drawSoon, 1000);
+    let ticked = 0;
+    const clock = setInterval(() => {
+      ticked += FRAME_MS;
+      const moving = last?.agents.some(agent => LIVE_VERB[agent.status] !== undefined) === true;
+      if (moving || ticked >= CLOCK_MS) {
+        ticked = 0;
+        ui = { ...ui, frame: ui.frame + 1 };
+        void preview
+          .output(PREVIEW_LINES)
+          .then(lines => {
+            previewOutput = lines;
+          })
+          .catch(() => undefined);
+        drawSoon();
+      }
+    }, FRAME_MS);
     const quit = (): void => {
+      preview.stop();
       clearInterval(timer);
       clearInterval(clock);
       clearTimeout(soon);
       clearTimeout(drawing);
+      clearTimeout(flashTimer);
       watched?.close();
       process.stdin.setRawMode(false);
       process.stdin.pause();
       process.stdout.write('\x1b[?1000l\x1b[?1006l\x1b[?25h\x1b[?1049l');
       resolve();
     };
+
+    /** What a command of the palette does: what the panel's keys do, and what only it reaches. */
+    const runAction = (action: PaletteAction): void => {
+      if (!last) {
+        return;
+      }
+
+      ui = { ...ui, dialog: undefined };
+      if (action.kind === 'view') {
+        ui = { ...ui, view: action.view, selected: 0 };
+      } else if (action.kind === 'task') {
+        const index = listedTasks(last.view.tasks, true).findIndex(task => task.id === action.id);
+        ui = { ...ui, showApproved: true, selected: Math.max(0, index), dialog: { kind: 'task' } };
+      } else if (action.kind === 'copy') {
+        copyText(action.text);
+        flash(`copied: ${action.text}`);
+      } else if (action.kind === 'preview') {
+        preview.toggle(last.view.runId, last.view.previewPort);
+      } else if (action.kind === 'open-preview') {
+        preview.open(last.view.previewPort);
+      } else if (action.kind === 'approved') {
+        ui = { ...ui, showApproved: !ui.showApproved, selected: 0 };
+      } else if (action.kind === 'theme') {
+        themeName = themeName === 'dark' ? 'light' : 'dark';
+      } else {
+        quit();
+      }
+    };
+
     process.stdin.on('data', (data: Buffer) => {
       let changed = false;
       for (const [, button, column, row, kind] of data.toString('utf-8').matchAll(MOUSE)) {
-        const pressed = kind === 'M';
-        if (pressed && button === '0') {
-          // Rows are counted from 1 by the terminal, from 0 by the screen drawn.
-          const key = groupRows.get(Number(row) - 1);
-          if (key !== undefined) {
-            if (!opened.delete(key)) {
-              opened.add(key);
+        if (kind !== 'M' || !screen || ui.dialog) {
+          continue;
+        }
+
+        const at = { row: Number(row) - 1, col: Number(column) - 1 };
+        if (button === '0') {
+          const hit = screen.hits.find(each => each.row === at.row && at.col >= each.from && at.col < each.to);
+          if (hit?.action.kind === 'view') {
+            ui = { ...ui, view: hit.action.view, selected: 0 };
+          } else if (hit?.action.kind === 'task') {
+            // A click picks a task; a click on the one picked opens it.
+            ui =
+              hit.action.index === ui.selected
+                ? { ...ui, dialog: { kind: 'task' } }
+                : { ...ui, selected: hit.action.index };
+          } else if (hit?.action.kind === 'event') {
+            const opened = new Set(ui.opened);
+            if (!opened.delete(hit.action.key)) {
+              opened.add(hit.action.key);
             }
 
-            // Opened at a page's foot, it no longer fits there: the page it is on now is the one shown.
-            draw();
-            feedPage = groupPages.get(key) ?? feedPage;
-            changed = true;
+            ui = { ...ui, opened };
           }
-        } else if (pressed && (button === '64' || button === '65')) {
-          // The wheel scrolls what it is over: a stage of the flow its cards, the tasks' list its selection, the
-          // activity its pages.
-          const at = Number(row) - 1;
+
+          changed = true;
+        } else if (button === '64' || button === '65') {
           const up = button === '64';
-          const count = last ? listedTasks(last.view.tasks, showApproved).length : 0;
-          const over = wheelTarget(at, Number(column) - 1, regions);
-          if (typeof over === 'object') {
-            const now = flowOffsets.get(over.stage.stage) ?? 0;
-            flowOffsets.set(over.stage.stage, Math.min(over.stage.max, Math.max(0, now + (up ? -1 : 1))));
-          } else if (over === 'tasks' && count > 0) {
-            selected = up ? Math.max(0, selected - 1) : Math.min(count - 1, selected + 1);
-          } else if (over === 'activity') {
-            feedPage = up ? Math.max(0, feedPage - 1) : Math.min(feedPage + 1, feedPages - 1);
+          const over = screen.areas.find(
+            each =>
+              at.row >= each.top &&
+              at.row < each.top + each.height &&
+              at.col >= each.left &&
+              at.col < each.left + each.width
+          );
+          const count = last ? listedTasks(last.view.tasks, ui.showApproved).length : 0;
+          if (over?.area.kind === 'activity') {
+            const most = Math.max(0, (last?.feed.length ?? 1) - 1);
+            ui = { ...ui, feedBack: Math.max(0, Math.min(most, ui.feedBack + (up ? 1 : -1))) };
+          } else if (over?.area.kind === 'tasks' && count > 0) {
+            ui = { ...ui, selected: Math.max(0, Math.min(count - 1, ui.selected + (up ? -1 : 1))) };
+          } else if (over?.area.kind === 'stage') {
+            const offsets = new Map(ui.flowOffsets);
+            offsets.set(over.area.key, Math.max(0, (offsets.get(over.area.key) ?? 0) + (up ? -1 : 1)));
+            ui = { ...ui, flowOffsets: offsets };
           }
 
           changed = true;
@@ -592,38 +386,108 @@ export const runMonitor = async (runId: string | undefined, options: RunCommandO
         drawSoon();
       }
     });
+
     process.stdin.on(
       'keypress',
-      (_text: string | undefined, key: { name?: string; ctrl?: boolean; sequence?: string } | undefined) => {
-        // A mouse report is read above, never as keys.
-        if (key?.sequence?.includes('[<') === true) {
+      (text: string | undefined, key: { name?: string; ctrl?: boolean; sequence?: string } | undefined) => {
+        // A mouse report, or the terminal's answer about its background, is read above — never as keys.
+        if (key?.sequence?.includes('[<') === true || key?.sequence?.includes(']11;') === true) {
           return;
         }
 
-        if (key?.name === 'q' || (key?.ctrl === true && key.name === 'c')) {
+        if (key?.ctrl === true && key.name === 'c') {
           quit();
 
           return;
         }
 
-        const count = last ? listedTasks(last.view.tasks, showApproved).length : 0;
-        if (key?.name === 'down' && count > 0) {
-          selected = (selected + 1) % count;
+        const count = last ? listedTasks(last.view.tasks, ui.showApproved).length : 0;
+        const needs = screen?.needs ?? [];
+        const { dialog } = ui;
+        if (dialog?.kind === 'palette') {
+          const found = last ? paletteFor(last, ui, THEMES[themeName], needs) : [];
+          if (key?.name === 'escape') {
+            ui = { ...ui, dialog: undefined };
+          } else if (key?.name === 'return') {
+            const picked = found.at(dialog.at);
+            if (picked) {
+              runAction(picked.action);
+            }
+          } else if (key?.name === 'up') {
+            ui = { ...ui, dialog: { ...dialog, at: Math.max(0, dialog.at - 1) } };
+          } else if (key?.name === 'down') {
+            ui = { ...ui, dialog: { ...dialog, at: Math.min(Math.max(0, found.length - 1), dialog.at + 1) } };
+          } else if (key?.name === 'backspace') {
+            ui = { ...ui, dialog: { kind: 'palette', query: dialog.query.slice(0, -1), at: 0 } };
+          } else if (text !== undefined && text.length === 1 && text >= ' ' && key?.ctrl !== true) {
+            ui = { ...ui, dialog: { kind: 'palette', query: `${dialog.query}${text}`, at: 0 } };
+          }
+
+          draw();
+
+          return;
+        }
+
+        if (dialog !== undefined && (key?.name === 'escape' || key?.name === 'return' || text === '?')) {
+          ui = { ...ui, dialog: undefined };
+          draw();
+
+          return;
+        }
+
+        if (key?.name === 'q') {
+          quit();
+
+          return;
+        }
+
+        const digit = Number(text);
+        const need = needs.at(Math.min(ui.needsAt, needs.length - 1));
+        if (key?.ctrl === true && key.name === 'p') {
+          ui = { ...ui, dialog: { kind: 'palette', query: '', at: 0 } };
+        } else if (text === '?') {
+          ui = { ...ui, dialog: { kind: 'help' } };
+        } else if (Number.isInteger(digit) && digit >= 1 && digit <= VIEWS.length) {
+          ui = { ...ui, view: VIEWS[digit - 1]?.view ?? 'overview', selected: 0 };
+        } else if (key?.name === 'down' && count > 0) {
+          ui = { ...ui, selected: (ui.selected + 1) % count };
         } else if (key?.name === 'up' && count > 0) {
-          selected = (selected - 1 + count) % count;
-        } else if (key?.name === 'return') {
-          open = !open;
-        } else if (key?.name === 'f') {
-          flow = !flow;
-        } else if (key?.name === 's') {
-          spendSort = SPEND_SORTS[(SPEND_SORTS.indexOf(spendSort) + 1) % SPEND_SORTS.length] ?? 'spent';
-        } else if (key?.name === 'a') {
-          showApproved = !showApproved;
-          selected = 0;
-        } else if (key?.name === 'right') {
-          feedPage = Math.min(feedPage + 1, feedPages - 1);
+          ui = { ...ui, selected: (ui.selected - 1 + count) % count };
+        } else if (key?.name === 'return' && count > 0) {
+          ui = { ...ui, dialog: { kind: 'task' } };
         } else if (key?.name === 'left') {
-          feedPage = Math.max(0, feedPage - 1);
+          ui = { ...ui, feedBack: Math.min(Math.max(0, (last?.feed.length ?? 1) - 1), ui.feedBack + 5) };
+        } else if (key?.name === 'right') {
+          ui = { ...ui, feedBack: Math.max(0, ui.feedBack - 5) };
+        } else if (key?.name === 'a') {
+          ui = { ...ui, showApproved: !ui.showApproved, selected: 0 };
+        } else if (key?.name === 's') {
+          ui = {
+            ...ui,
+            spendSort: SPEND_SORTS[(SPEND_SORTS.indexOf(ui.spendSort) + 1) % SPEND_SORTS.length] ?? 'spent'
+          };
+        } else if (key?.name === 't') {
+          themeName = themeName === 'dark' ? 'light' : 'dark';
+        } else if (key?.name === 'p' && last) {
+          preview.toggle(last.view.runId, last.view.previewPort);
+        } else if (key?.name === 'o' && last) {
+          preview.open(last.view.previewPort);
+        } else if (key?.name === 'n' && needs.length > 0) {
+          ui = { ...ui, needsAt: (Math.min(ui.needsAt, needs.length - 1) + 1) % needs.length };
+        } else if (key?.name === 'd' && needs.length > 0) {
+          ui = { ...ui, dialog: { kind: 'needs' } };
+        } else if (key?.name === 'c' && need?.fix !== undefined) {
+          copyText(need.fix);
+          flash(`copied: ${need.fix}`);
+        } else if (key?.name === 'escape' && need) {
+          ui = { ...ui, dismissed: new Set([...ui.dismissed, need.key]), needsAt: 0 };
+          flash('put off — back once it says something else');
+        } else if (key?.name === 'y' && last) {
+          const task = listedTasks(last.view.tasks, ui.showApproved).at(ui.selected);
+          if (task) {
+            copyText(task.id);
+            flash(`copied: ${task.id}`);
+          }
         }
 
         draw();
