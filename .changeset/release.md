@@ -278,6 +278,8 @@ report`, …).
   port is named and left alone. The agents' rules forbid `pkill`, `killall` and killing by name, leave a hung command
   to the harness, and write files with the edit tools instead of a shell heredoc. An agent once freed a hung heredoc
   with `pkill -f "cat"` and took the machine down.
+  Telling whose a server is reads every listener's folder in one `lsof`, not one per process: `server list` and
+  `server stop` took seconds on a machine with many servers listening, and a few hundred milliseconds now.
 - **Reviews:**
   - `task show` shows a task as the lead reviews it: each diff, one file whole, what went to review.
   - `task look` looks at a task in one command: served, checked, pictured light and dark, its parts beside the run

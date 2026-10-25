@@ -87,6 +87,21 @@ const lsofFields = (args: readonly string[]): { pid: number; names: string[] }[]
 };
 
 /**
+ * The folder each process was started in, one `lsof` for them all: one a process took a machine with many servers
+ * listening seconds — `server stop` with them (and its tests, past their time beside the rest of the suite).
+ */
+const cwdsOf = (pids: readonly number[]): Map<number, string> =>
+  pids.length === 0
+    ? new Map<number, string>()
+    : new Map<number, string>(
+        lsofFields(['-a', '-d', 'cwd', '-p', [...new Set(pids)].join(','), '-Fn']).flatMap(({ pid, names }) => {
+          const cwd = names.at(0);
+
+          return cwd === undefined ? [] : [[pid, cwd] as const];
+        })
+      );
+
+/**
  * The servers listening from inside `dir` — what an agent started in a task's copy (`npm start`) and left running: a
  * run's copies removed under them (velada-fidelity's finish), they listened on with no folder, no one's to stop. Read
  * off `lsof`: nothing where there is none (Windows).
@@ -96,11 +111,12 @@ export const listenersUnder = (dir: string): { pid: number; port: number; cwd: s
     return [];
   }
 
-  return lsofFields(['-nP', '-iTCP', '-sTCP:LISTEN', '-Fpn']).flatMap(({ pid, names }) => {
+  const listening = lsofFields(['-nP', '-iTCP', '-sTCP:LISTEN', '-Fpn']);
+  const cwds = cwdsOf(listening.map(each => each.pid));
+
+  return listening.flatMap(({ pid, names }) => {
     const port = Number(names.at(0)?.split(':').at(-1));
-    const cwd = lsofFields(['-a', '-p', String(pid), '-d', 'cwd', '-Fn'])
-      .at(0)
-      ?.names.at(0);
+    const cwd = cwds.get(pid);
 
     return Number.isInteger(port) && cwd !== undefined && (cwd === dir || cwd.startsWith(`${dir}/`))
       ? [{ pid, port, cwd }]
@@ -119,11 +135,7 @@ export const listenerOn = (port: number): { pid: number; cwd: string | undefined
     return undefined;
   }
 
-  const cwd = lsofFields(['-a', '-p', String(found.pid), '-d', 'cwd', '-Fn'])
-    .at(0)
-    ?.names.at(0);
-
-  return { pid: found.pid, cwd };
+  return { pid: found.pid, cwd: cwdsOf([found.pid]).get(found.pid) };
 };
 
 /** Stops one listening process and what it started — never by its name, which another process may carry. */
