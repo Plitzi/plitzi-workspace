@@ -41,6 +41,18 @@ describe('what a refused command line meant', () => {
     );
   });
 
+  it('says where a command folded into another went, and a flag a command now does by itself', () => {
+    expect(commandHint("error: unknown command 'heartbeat'", ['task', 'heartbeat'])).toContain('plitzi task progress');
+    expect(commandHint("error: unknown command 'allow-finish'", ['run', 'allow-finish'])).toContain(
+      'run finish --lead-finishes'
+    );
+    expect(commandHint("error: unknown option '--take'", ['task', 'next', '--take'])).toContain('--peek');
+    expect(commandHint("error: unknown option '--until'", ['run', 'watch', '--until', 'lead'])).toContain('lead');
+    expect(commandHint("error: unknown option '--search'", ['explain', '--search', 'carousel end'])).toContain(
+      'plitzi explain "carousel end"'
+    );
+  });
+
   it('is said by every command, each copying the program’s output', () => {
     const program = buildProgram();
     const shot = program.commands.find(each => each.name() === 'page')?.commands.find(each => each.name() === 'shot');

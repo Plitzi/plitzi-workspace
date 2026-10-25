@@ -19,7 +19,7 @@ import type { RunContext } from '../run';
  * What a task at work says while it works: its progress (the heartbeat), a block and its answer, a note.
  */
 
-/** `plitzi task progress` and `plitzi task heartbeat`: the holder's sign of life, with where it is if it says. */
+/** `plitzi task progress` and `plitzi task progress`: the holder's sign of life, with where it is if it says. */
 export interface Signal {
   task: string;
   at: string;

@@ -1,3 +1,8 @@
+import chalk from 'chalk';
+
+import { openPage } from '@plitzi/sdk-authoring';
+
+import { PROJECT_QUIET_MS } from '../../browser';
 import { runProjectOf } from '../../runs/paths';
 import { projectSettings } from '../projectSettings';
 import { fail } from '../terminal';
@@ -112,6 +117,60 @@ export const sessionCookie = async (origin: string, account: Account): Promise<s
   return answer.status < 400 && cookies.length > 0
     ? cookies.join('; ')
     : { problem: `${account.username} was not signed in at ${SIGN_IN_PATH} (${String(answer.status)})` };
+};
+
+/** The project's own account (`PLITZI_CHECK_USER`), for a page that sends a guest away — none when it names none. */
+export const projectAccount = async (root: string): Promise<Account | undefined> => {
+  const account = await checkAccount(root);
+
+  return account === undefined || 'problem' in account ? undefined : account;
+};
+
+/** A page read signed in as the project's account by itself: who, and where it sent a guest. */
+export interface SignedInWhereSent {
+  as: string;
+  from: string;
+}
+
+/**
+ * A page that sent a guest elsewhere — to the sign-in — read again signed in as the project's account, when none was
+ * asked (`--as`) nor a guest's view (`--guest`): seven page commands in ten of two runs said `--as`, and one that
+ * forgot read the sign-in panel as the page. Nothing when it stayed, or the project names no account.
+ */
+export const signInWhereSent = async (
+  page: BrowserPage,
+  origin: string,
+  pathname: string,
+  account: Account | undefined
+): Promise<SignedInWhereSent | { problem: string } | undefined> => {
+  const from = sentElsewhere(page, pathname);
+  if (from === undefined || account === undefined) {
+    return undefined;
+  }
+
+  const refused = await signInAs(page, origin, account);
+  if (refused !== undefined) {
+    return { problem: `${pathname} sends a guest to ${from}, and ${refused}` };
+  }
+
+  await openPage(page, `${origin}${pathname}`, { quietMs: PROJECT_QUIET_MS });
+
+  return { as: account.username, from };
+};
+
+/** What a page command says of a page it read signed in by itself, apart from what it answers. */
+export const signedInNote = (pathname: string, signed: SignedInWhereSent): string =>
+  `· ${pathname} sends a guest to ${signed.from}: read signed in as ${signed.as}, the project's account (--as another, --guest as a guest)`;
+
+const saidSignedIn = new Set<string>();
+
+/** Said once a page — a play at two widths reads it twice — where an answer read as JSON is not. */
+export const saySignedIn = (pathname: string, signed: SignedInWhereSent): void => {
+  const note = signedInNote(pathname, signed);
+  if (!saidSignedIn.has(note)) {
+    saidSignedIn.add(note);
+    process.stderr.write(`${chalk.dim(note)}\n`);
+  }
 };
 
 const withoutTrailingSlash = (path: string): string => (path.length > 1 ? path.replace(/\/+$/, '') : path);

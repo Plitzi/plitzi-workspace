@@ -86,7 +86,11 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .option(
       '--as <username>',
-      'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env'
+      'Sign in first as this account — another than the project’s, which a page that sends a guest away is read as by itself — through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env'
+    )
+    .option(
+      '--guest',
+      'Read as a guest, though a page sends one away — left out, the project’s account (PLITZI_CHECK_USER) is signed in there by itself, and said'
     )
     .addOption(
       new Option(
@@ -184,7 +188,11 @@ export const registerPage = (pageGroup: Command): void => {
     .option('--json', 'One object, for a tool or an agent')
     .option(
       '--as <username>',
-      'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env (a task’s copy reads its project’s)'
+      'Sign in first as this account — another than the project’s, which a page that sends a guest away is read as by itself — through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env (a task’s copy reads its project’s)'
+    )
+    .option(
+      '--guest',
+      'Read as a guest, though a page sends one away — left out, the project’s account (PLITZI_CHECK_USER) is signed in there by itself, and said'
     );
   withConditionOptions(measureCommand).action((route: string, elements: string[], options: MeasureOptions) =>
     measure(route, elements, options)
@@ -223,7 +231,11 @@ export const registerPage = (pageGroup: Command): void => {
     .option('--json', 'One object, for a tool or an agent')
     .option(
       '--as <username>',
-      'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env (a task’s copy reads its project’s)'
+      'Sign in first as this account — another than the project’s, which a page that sends a guest away is read as by itself — through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env (a task’s copy reads its project’s)'
+    )
+    .option(
+      '--guest',
+      'Read as a guest, though a page sends one away — left out, the project’s account (PLITZI_CHECK_USER) is signed in there by itself, and said'
     )
     .addOption(
       new Option(
@@ -256,7 +268,11 @@ export const registerPage = (pageGroup: Command): void => {
     .option('--json', 'One object, for a tool or an agent — a list of them for several widths')
     .option(
       '--as <username>',
-      'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env (a task’s copy reads its project’s)'
+      'Sign in first as this account — another than the project’s, which a page that sends a guest away is read as by itself — through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env (a task’s copy reads its project’s)'
+    )
+    .option(
+      '--guest',
+      'Read as a guest, though a page sends one away — left out, the project’s account (PLITZI_CHECK_USER) is signed in there by itself, and said'
     )
     .action((route: string, options: OutlineOptions) => outline(route, options));
 
@@ -360,7 +376,11 @@ export const registerPage = (pageGroup: Command): void => {
     .option('--reduced-motion', 'As a visitor who asked for less motion')
     .option(
       '--as <username>',
-      'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env'
+      'Sign in first as this account — another than the project’s, which a page that sends a guest away is read as by itself — through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env'
+    )
+    .option(
+      '--guest',
+      'Read as a guest, though a page sends one away — left out, the project’s account (PLITZI_CHECK_USER) is signed in there by itself, and said'
     )
     .addOption(
       new Option(

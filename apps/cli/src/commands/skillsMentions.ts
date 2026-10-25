@@ -142,7 +142,7 @@ const recipePassage = (root: string, file: string): SkillPassage[] => {
 
 /**
  * The skills as passages a search reads — each heading and point of a reference with the lines that go on with it, and
- * each recipe by its comment — so `explain --search` answers what the skills teach beside what the catalogues hold:
+ * each recipe by its comment — so `explain "<words>"` answers what the skills teach beside what the catalogues hold:
  * A run's "server action reads a data file for a provider" found neither `ctx.data` nor `taskAction`, both taught
  * in the functions reference, and "accordion collapse expand" nothing, beside `recipes/accordion.ts`.
  */

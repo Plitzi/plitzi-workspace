@@ -42,6 +42,18 @@ authoring and the elements learnt from the runs.
   and the format (`tsconfig.base.json`, `eslint.config.mjs`, `.prettierignore`): run it before the next run ends. The
   old files are read no more — `run bench` and the estimates start again from the runs that end now; delete them, or
   keep them by hand. The feedback's JSON is gone: its data is the report's (`report.json`).
+- **The CLI does what it was always told, and its surface is smaller.** `task next` takes the next task and waits for
+  one: `--follow --take` are gone — `--no-wait` answers now (the lead's queue of reviews: `task next --role lead
+--no-wait`), `--peek` only looks; a team agent's roles come from the team, `--role` only narrows them. `run watch` run
+  by a lead ends on what needs it — `--until lead` is gone; a person's follows the run. Page commands read a page that
+  sends a guest away signed in as the project's account (`PLITZI_CHECK_USER`) by themselves, and say so — `--as`
+  names another, `--guest` reads it as a guest. Folded into another: `task heartbeat` → `task progress` (alone, a sign
+  of life); `task claims` → `task claim` with no file; `task proposals` → `task propose` with no task; `run pending` →
+  `run state`, which lists the runs not written in yet, ready ones first; `run feedback` → `run report --plitzi`;
+  `run allow-finish [--revoke]` → `run finish --lead-finishes | --no-lead-finishes`; `run continue` → `run resolve
+<run>` with no file; `run prune` is gone — every `run open`, and `run watch` while it follows, prune; `explain
+--search "…"` → `explain "…"` (several words are a search). A command or flag written the old way is refused naming
+  the new one. Agents' prompts and the skills say the new ones: `plitzi upgrade skills --write`.
 - **`run report --tokens` is gone.** The harness's count comes from each round's report: the agent table says what
   each harness read, its largest context and what it read again; the bench's "Context / task" column is gone.
 - **`grid-area` and `grid-row`/`grid-column` expand as CSS does:** an omitted part is `auto`, a named area's mirrors it.

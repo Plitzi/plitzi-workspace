@@ -14,7 +14,7 @@ import type { RunContext } from './run';
 import type { Attention, RunView } from './view';
 
 /**
- * `plitzi run watch --until lead`: what a lead waiting in the background runs — it ends the moment the run has
+ * `plitzi run watch`: what a lead waiting in the background runs — it ends the moment the run has
  * something new for the lead (a task in review, a question, a block, a notice), so the lead is woken for it instead of
  * reading the run over and over. Each is said once: what it woke the lead for is kept in the run (`lead-seen.json`).
  */
@@ -85,7 +85,7 @@ export const leadItems = (view: RunView, now: Date): LeadItem[] => {
       ? [
           {
             key: `leads-needed:${waiting[0].task.id}:${String(waiting[0].task.round)}`,
-            text: `${String(waiting.length)} reviews wait, the oldest (${waiting[0].task.id}) ${minutes(waiting[0].waited)} min: start a lead that reviews beside you — ${commandAs(view.scratch, idle[0], view.identified, 'task next --role lead --follow --take')} — it stops by itself once the queue is empty`
+            text: `${String(waiting.length)} reviews wait, the oldest (${waiting[0].task.id}) ${minutes(waiting[0].waited)} min: start a lead that reviews beside you — ${commandAs(view.scratch, idle[0], view.identified, 'task next --role lead')} — it stops by itself once the queue is empty`
           }
         ]
       : []),

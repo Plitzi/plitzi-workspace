@@ -342,7 +342,7 @@ export const finishRun = async (
     );
     throw new RunRefusal(
       'reconciliation',
-      `Run "${runId}" is in reconciliation: ${plan.conflicts.map(each => each.file).join(', ')} changed on both sides. Nothing was written. The lead resolves each (plitzi run resolve ${runId} <file> --take project|run|merge|<file>), then continues (plitzi run continue ${runId}) or aborts (plitzi run abort ${runId})`,
+      `Run "${runId}" is in reconciliation: ${plan.conflicts.map(each => each.file).join(', ')} changed on both sides. Nothing was written. The lead resolves each (plitzi run resolve ${runId} <file> --take project|run|merge|<file>), then a person lets it go on (plitzi run resolve ${runId}, no file) or aborts (plitzi run abort ${runId})`,
       { run: runId, files: plan.conflicts.map(each => each.file) }
     );
   }
@@ -615,7 +615,7 @@ export const resolveFile = async (
   return { ...conflict, resolved };
 };
 
-/** `plitzi run continue`: every file resolved, the run goes on — the next finish checks the project again. */
+/** `plitzi run resolve <run>` with no file: every file resolved, the run goes on — the next finish checks the project again. */
 export const continueRun = async (ctx: RunContext, runId: string): Promise<void> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['reconciliation'], 'continue');

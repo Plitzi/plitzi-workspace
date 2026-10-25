@@ -317,7 +317,7 @@ const cachesOf = async (paths: RunPaths): Promise<string[]> => [
 ];
 
 /**
- * `plitzi run prune`: the caches of runs idle for 8 hours removed, and the oldest beyond the size cap — never an
+ * The caches of runs idle for 8 hours removed — at every run's open and while a person watches, and the oldest beyond the size cap — never an
  * essential, so every run pruned can still be attached to, resumed and undone.
  */
 export const pruneRuns = async (ctx: RunContext): Promise<Pruned[]> => {

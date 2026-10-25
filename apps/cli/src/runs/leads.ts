@@ -15,7 +15,7 @@ import type { TaskView } from './taskStore';
  * A run's leads: `lead`, who plans, answers, decides, finishes and reviews — and, past four agents, the others
  * (`lead-2`…), who review as it does and nothing else, **started only when the reviews queue up**: a lead waiting for a
  * review it is never handed spends tokens on nothing. `lead` reviews every task while none of them runs; once two wait
- * and the oldest waited `REVIEW_BACKLOG_MS`, `run watch --until lead` says to start one. A review is taken from one queue
+ * and the oldest waited `REVIEW_BACKLOG_MS`, `run watch` says to start one. A review is taken from one queue
  * (`task next --role lead`), so two leads never review one task; with one of them running, `lead` is woken only for a
  * review none took within `UNTAKEN_REVIEW_MS`; and one handed nothing for `IDLE_LEAD_MS` is told to stop — at once
  * when no review waits and the tasks left are no more than the other leads, who review one each (`spareLead`).
@@ -231,7 +231,7 @@ export const leadReviewFor = (
 /** Takes the review offered: false when another lead took it first. */
 /**
  * A look by the lead, or by one who reviews beside it, at a task whose review is its to take now takes it — said in the
- * activity as `task next --take` says it: a run's lead looked and approved, and the person following the run saw
+ * activity as `task next` says it: a run's lead looked and approved, and the person following the run saw
  * nobody take its reviews. A look while the designer's UI review is due takes nothing: that review is the designer's.
  */
 export const takeOnLook = async (ctx: RunContext, loaded: LoadedRun, view: TaskView): Promise<boolean> => {

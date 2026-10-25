@@ -23,7 +23,7 @@ export interface LeftReport {
 /**
  * Leaves the reports of a run that ends in its folder — the report, its data, the feedback to Plitzi, the run's records
  * and the agents' scripts — before the run goes with everything it held. A run's folder written again (its feedback
- * written mid-run, `run feedback`) is this run's: its records and scripts are this ending's alone.
+ * written mid-run, `run report --plitzi`) is this run's: its records and scripts are this ending's alone.
  */
 export const leaveReport = async (ctx: RunContext, loaded: LoadedRun, closing: Closing): Promise<LeftReport> => {
   const dir = runReportDir(ctx.root, loaded.record.runId);

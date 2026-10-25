@@ -7,12 +7,13 @@ designer's look at the UI first is [runs-designer.md](runs-designer.md); the res
 - **Against the inventory, not only the picture:** every section and piece the task's acceptance names is there, as the
   reference has it — a difference you accept is one you say (`--note`); one a visitor would see is sent back. Judge the
   version that went to review, on a page several tasks build only its part.
-- **Read it:** `plitzi task show t-home` is all of it (`<file> --diff`: one file's whole diff); `plitzi task look t-home
+- **Read it:** `plitzi task show t-home` is all of it, its diffs cut short (`--full`: as many whole as one answer holds;
+  `<file> --diff`: one file's whole diff); `plitzi task look t-home
 --before` serves its copy, checks and pictures its pages beside the run before (its options:
   [runs-designer.md](runs-designer.md)) — once: after the designer's, unchanged, it repeats it. A lead's read of a task in
   review takes its review, so no two leads decide one.
 - **What the data does not show, you test:** a case the acceptance asks for that no page reaches — a module's function,
-  its edge cases, `node -e` in the copy; a probe (two calls at once) is a `node --test` file in your scratch importing
+  its edge cases (the project's `test` script runs every `*.test.ts` at complete), `node -e` in the copy; a probe (two calls at once) is a `node --test` file in your scratch importing
   the copy's code by its absolute path, never a file in the copy — or send it back for the test it needs. A finding is read from its page,
   measured — never from another page or memory. A fix for light is looked at in light, one for the phone at 390
   (`task look --scheme light --width 390`).

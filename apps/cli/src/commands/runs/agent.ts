@@ -64,7 +64,7 @@ export const runAgent = (agent: string, options: AgentOptions): Promise<void> =>
                   ? freshSaid(answer.fresh)
                   : []),
               `  Its output: ${answer.launched.log} — its prompt: ${answer.promptFile}`,
-              `  Follow the run: plitzi run monitor ${answer.runId} (a person) · plitzi run watch ${answer.runId} --until lead (the lead)`
+              `  Follow the run: plitzi run monitor ${answer.runId} (a person) · plitzi run watch ${answer.runId} (the lead)`
             ].join('\n')
           : [
               `${answer.agent}'s prompt for run "${answer.runId}": ${answer.promptFile}`,

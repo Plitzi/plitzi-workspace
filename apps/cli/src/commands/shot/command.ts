@@ -10,7 +10,7 @@ import { originHere } from '../../runs/copyServer';
 import { copyOf, runPaths } from '../../runs/paths';
 import { keptPage } from '../../runs/reference';
 import { PROJECT_TMP } from '../../scaffold/paths';
-import { checkAccount, CHECK_PASSWORD_ENV } from '../check';
+import { checkAccount, CHECK_PASSWORD_ENV, projectAccount } from '../check';
 import { projectHere } from '../existingProject';
 import { pairOf } from '../measure';
 import { parseSteps } from '../shotSteps';
@@ -192,13 +192,16 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
-  // Signed in only when asked: a page pictured as nobody is what a visitor who has not signed in sees.
+  // Signed in when asked — or, by the project's account, where a page sends a guest away (unless --guest).
   const account = options.as === undefined ? undefined : await checkAccount(project.root, options.as);
   if (account && 'problem' in account) {
     fail(`--as ${account.problem}.`);
 
     return;
   }
+
+  const own =
+    options.as === undefined && options.guest !== true && !external ? await projectAccount(project.root) : undefined;
 
   const browser = await launchBrowser(project.root);
   if ('problem' in browser) {
@@ -357,6 +360,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       ...(options.presence ? { presence: true } : {}),
       ...(options.timezone ? { timezone: options.timezone } : {}),
       ...(account ? { account } : {}),
+      ...(own ? { projectAccount: own } : {}),
       ...(fromLoad ? { fromLoad } : {}),
       // One picture shows every arrival as it ends — a part clipped or scrolled to too, whose arrivals were taken as they
       // began, blank (a run's schedule rows, sent back for it). Frames, clicks and steps are about what moves, so

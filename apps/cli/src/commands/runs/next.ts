@@ -11,7 +11,7 @@ import { acceptanceText } from '../../runs/model';
 import { acceptanceAccount, acceptanceStatuses } from '../../runs/pagesOf';
 import { copyOf } from '../../runs/paths';
 import { DESIGN_READING } from '../../runs/reading';
-import { nextTask, followNext, takeNext, takeTask } from '../../runs/tasks';
+import { nextTask, takeNext, takeTask } from '../../runs/tasks';
 
 import type { RunCommandOptions } from './shell';
 import type { RunTask } from '../../runs/model';
@@ -21,10 +21,16 @@ import type { NextTask, TakenTask } from '../../runs/tasks';
  * `plitzi task next` and `task take`: what an agent is handed, said.
  */
 
+/**
+ * Taken and waited for unless told: an agent's every `task next` was `--follow --take` (130 of 138 in two runs) — the
+ * lead's queue of reviews answers now (`--no-wait`), and a look ahead takes nothing (`--peek`).
+ */
 export const taskNext = (
-  options: RunCommandOptions & { role?: string; follow?: boolean; timeout?: number; take?: boolean }
-): Promise<void> =>
-  options.take
+  options: RunCommandOptions & { role?: string; wait: boolean; peek?: boolean; timeout?: number }
+): Promise<void> => {
+  const follow = options.wait && options.peek !== true;
+
+  return options.peek !== true
     ? act(
         options,
         async ctx => {
@@ -33,7 +39,7 @@ export const taskNext = (
             ctx,
             runId,
             options.role,
-            options.follow ? { timeoutMs: options.timeout ?? FOLLOW_MS } : undefined
+            follow ? { timeoutMs: options.timeout ?? FOLLOW_MS } : undefined
           );
 
           return { ...next, agent: ctx.agent, ...(taken ? { taken } : {}) };
@@ -42,16 +48,10 @@ export const taskNext = (
       )
     : act(
         options,
-        async ctx => ({
-          ...(options.follow
-            ? await followNext(ctx, await runOf(ctx, options), options.role, {
-                timeoutMs: options.timeout ?? FOLLOW_MS
-              })
-            : await nextTask(ctx, await runOf(ctx, options), options.role)),
-          agent: ctx.agent
-        }),
+        async ctx => ({ ...(await nextTask(ctx, await runOf(ctx, options), options.role)), agent: ctx.agent }),
         answer => nextText(answer, answer.agent)
       );
+};
 
 /** The earlier reviews' notes, counted: the last one's are what this round answers. */
 const earlierText = (review: { earlier: number; task: { id: string } }): string[] =>

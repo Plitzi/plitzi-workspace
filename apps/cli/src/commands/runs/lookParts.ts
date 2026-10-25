@@ -102,7 +102,7 @@ export const readAsFor = async (
     routes.length === 0
       ? []
       : redirectedPaths(
-          (await runSelf(dir, ['page', 'check', ...routes, '--width', '1440', '--url', url, '--json'])).output
+          (await runSelf(dir, ['page', 'check', ...routes, '--width', '1440', '--url', url, '--guest', '--json'])).output
         );
   if (sent.length === 0) {
     return declared;

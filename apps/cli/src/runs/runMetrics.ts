@@ -115,7 +115,6 @@ export const CLI_BUDGET_S: Record<string, number> = {
   'task message': 2,
   'task inbox': 2,
   'task progress': 2,
-  'task heartbeat': 2,
   'task review': 10,
   'task check': 30,
   'task complete': 45,
@@ -130,7 +129,7 @@ export const CLI_BUDGET_S: Record<string, number> = {
 
 /** A call that waits by design — for work, an answer, the lead's next item — is no time the CLI took. */
 const waitsByDesign = (command: string): boolean =>
-  /\s--follow\b|^plitzi run (watch|monitor)\b|^plitzi task wait\b/.test(command);
+  /\s--follow\b|^plitzi run (watch|monitor)\b|^plitzi task wait\b|^plitzi task next\b(?!.*\s--(no-wait|peek)\b)/.test(command);
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '');
 const texts = (value: unknown): string[] =>
@@ -171,11 +170,11 @@ const REPEATED = 3;
 const REPEAT_WINDOW_MIN = 10;
 
 /**
- * A call an agent is meant to make again: a wait that ends on news, and `task next --take`, which hands one piece of
- * work a call. A run counted test-1's 14 `task next --follow --take` in 6 min as a loop — one a fresh session each.
+ * A call an agent is meant to make again: a wait that ends on news, and `task next`, which hands one piece of
+ * work a call. A run counted test-1's 14 `task next` in 6 min as a loop — one a fresh session each.
  */
 const calledAgainByDesign = (command: string): boolean =>
-  waitsByDesign(command) || /^plitzi task next\b.*\s--take\b/.test(command);
+  waitsByDesign(command) || /^plitzi task next\b(?!.*\s--peek\b)/.test(command);
 
 const repeatedCalls = (usage: readonly UsageLine[]): RepeatedCall[] => {
   const groups = new Map<string, UsageLine[]>();

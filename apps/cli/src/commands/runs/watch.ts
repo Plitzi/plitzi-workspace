@@ -5,13 +5,15 @@ import { durationText, FOLLOW_MS } from '../../options';
 import { benchText, readBench } from '../../runs/bench';
 import { experienceFrom } from '../../runs/experience';
 import { ensureKeeper, keepAgents } from '../../runs/keeper';
+import { isCoLead } from '../../runs/leads';
 import { waitForLead } from '../../runs/leadWatch';
 import { showVersion } from '../../runs/merge';
+import { LEAD } from '../../runs/messages';
 import { startPreview, startTaskPreview } from '../../runs/preview';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { buildReport, readSummary, reportBrief, reportText, writeSummary } from '../../runs/report';
 import { activeRuns, loadRun, pruneRuns } from '../../runs/run';
-import { pendingRuns, runsState, runText, viewRun } from '../../runs/view';
+import { runsState, runText, viewRun } from '../../runs/view';
 
 import type { RunCommandOptions } from './shell';
 import type { ExperienceFlags } from '../../runs/experience';
@@ -21,33 +23,18 @@ import type { ExperienceFlags } from '../../runs/experience';
  * one run's record, its report and its preview.
  */
 
-export const runPending = (options: RunCommandOptions): Promise<void> =>
-  act(
-    options,
-    ctx => pendingRuns(ctx),
-    pending =>
-      pending.length === 0
-        ? 'Nothing pending: no run of this project is waiting to be written into it.'
-        : [
-            ...pending.map(run =>
-              run.ready
-                ? `${chalk.green('ready')} ${run.runId} — ${run.goal} (${String(run.done)} of ${String(run.total)} done)\n  ${run.leadFinishes ? 'the lead may apply it, as you allowed — or you: ' : 'apply it, in your terminal: '}${run.apply}`
-                : `${chalk.yellow(run.status)} ${run.runId} — ${run.goal} (${String(run.done)} of ${String(run.total)} done): still at work`
-            )
-          ].join('\n')
-  );
-
 export const runState = (options: RunCommandOptions): Promise<void> =>
   act(
     options,
     ctx => runsState(ctx),
     runs =>
       runs.length === 0
-        ? 'No runs in this project.'
+        ? 'No run of this project is waiting to be written into it.'
         : runs
-            .map(
-              run =>
-                `${run.runId}: ${run.status}, ${String(run.done)} of ${String(run.total)} tasks done${run.activeOn ? ` on ${run.activeOn}` : ', released'}${run.attention > 0 ? `, ${String(run.attention)} needing attention` : ''} — each task, its agent and the files it holds: plitzi run status ${run.runId} (or plitzi task claims)`
+            .map(run =>
+              run.ready
+                ? `${chalk.green('ready')} ${run.runId} — ${run.goal} (${String(run.done)} of ${String(run.total)} done)\n  ${run.leadFinishes ? 'the lead may apply it, as you allowed — or you: ' : 'apply it, in your terminal: '}${run.apply}`
+                : `${chalk.yellow(run.status)} ${run.runId} — ${run.goal} (${String(run.done)} of ${String(run.total)} done${run.activeOn ? `, on ${run.activeOn}` : ', released'}${run.attention > 0 ? `, ${String(run.attention)} needing attention` : ''}): plitzi run status ${run.runId}`
             )
             .join('\n')
   );
@@ -57,11 +44,10 @@ export const runStatus = (runId: string | undefined, options: RunCommandOptions)
 
 export interface WatchRunOptions extends RunCommandOptions {
   interval?: number;
-  until?: 'lead';
   timeout?: number;
 }
 
-/** `plitzi run watch --until lead`: ends with what is new for the lead — what a lead waiting in the background runs. */
+/** `plitzi run watch`: ends with what is new for the lead — what a lead waiting in the background runs. */
 const watchForLead = (runId: string | undefined, options: WatchRunOptions): Promise<void> =>
   act(
     options,
@@ -90,8 +76,28 @@ const watchForLead = (runId: string | undefined, options: WatchRunOptions): Prom
   );
 
 /** `plitzi run watch`: the run as it goes, again whenever it changes — one JSON object a line with --json. */
+/**
+ * Whether who watches leads the run: its watch ends on what needs it. Every lead's watch was `--until lead` (83 of 83 in
+ * two runs); a person follows the run (`run monitor`, or this).
+ */
+const watchedByLead = async (runId: string | undefined, options: WatchRunOptions): Promise<boolean> => {
+  try {
+    const ctx = await contextFor(options);
+    const id = await runOf(ctx, options, runId, { anyone: true });
+
+    return ctx.agent === LEAD || isCoLead((await loadRun(ctx, id)).record, ctx.agent);
+  } catch (error) {
+    // Said by the watch itself, which reads the run the same way.
+    if (isRunRefusal(error)) {
+      return false;
+    }
+
+    throw error;
+  }
+};
+
 export const runWatch = async (runId: string | undefined, options: WatchRunOptions): Promise<void> => {
-  if (options.until === 'lead') {
+  if (await watchedByLead(runId, options)) {
     return watchForLead(runId, options);
   }
 

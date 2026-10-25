@@ -136,7 +136,7 @@ export const assertDesigner = (view: TaskView, agent: string): void => {
 };
 
 /**
- * `task next --take`, for a designer: the review it was offered, its own — false when another designer took it first.
+ * `task next`, for a designer: the review it was offered, its own — false when another designer took it first.
  * One another designer held past its time is taken from it: who it was is said back, for it to be told.
  */
 export const takeDesignReview = async (

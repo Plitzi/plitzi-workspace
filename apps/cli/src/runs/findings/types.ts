@@ -4,7 +4,7 @@ import type { UsageLine } from '../usage';
 
 /**
  * What a run shows went wrong, one list for everyone who reads it — the lead while it goes (`run watch`), the person
- * at its end (`run report`), Plitzi's team (`run feedback`) and the next run's bench — read off what the run kept, so
+ * at its end (`run report`), Plitzi's team (`run report --plitzi`) and the next run's bench — read off what the run kept, so
  * nobody has to write it down by hand: a run's lead kept 65 problems in a journal, each found by reading the log.
  */
 

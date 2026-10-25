@@ -56,7 +56,7 @@ export const bottlenecks = (
   if (uiWaiting.length > 0 && designers.length > 0 && designers.every(agent => atOwn(agent) !== undefined)) {
     found.push({
       kind: 'ui-waits',
-      text: `${uiWaiting.map(view => view.task.id).join(', ')} wait for a UI review, and no designer is free (${designers.map(agent => `${agent} at ${String(atOwn(agent))}`).join(', ')}): start another designer (team.json's designers) — or review them yourself, UI included (both schemes, the phone width): plitzi task next --role lead --take, then --approve --skip-design lead`,
+      text: `${uiWaiting.map(view => view.task.id).join(', ')} wait for a UI review, and no designer is free (${designers.map(agent => `${agent} at ${String(atOwn(agent))}`).join(', ')}): start another designer (team.json's designers) — or review them yourself, UI included (both schemes, the phone width): plitzi task next --role lead --no-wait, then --approve --skip-design lead`,
       who: 'lead'
     });
   }
@@ -91,7 +91,7 @@ export const bottlenecks = (
       text: `${view.task.id} waits for ${held.map(other => `${other.task.id} (${String(heldIn(other))})`).join(', ')} while ${idle.join(', ')} ${idle.length === 1 ? 'is' : 'are'} free: ${
         shared.length === 0
           ? `they share no file — if ${view.task.id} needs nothing they make (no action, data or module it calls: a page that asks their server action needs it there), take the dependency away and it starts now (its dependsOn in the plan, then plitzi run amend)`
-          : `they share ${shared.join(', ')} — review ${held.map(other => other.task.id).join(', ')} first (plitzi task next --role lead --take), or settle what is left yourself`
+          : `they share ${shared.join(', ')} — review ${held.map(other => other.task.id).join(', ')} first (plitzi task next --role lead --no-wait), or settle what is left yourself`
       }`,
       who: 'lead'
     });
@@ -136,7 +136,7 @@ export const bottlenecks = (
   if (spikes.length > 0) {
     found.push({
       kind: 'spikes',
-      text: `${spikes.map(view => `${view.task.id} (${view.task.spike ?? 'what it needs'})`).join('; ')} ${spikes.length === 1 ? 'is' : 'are'} in spike, a lead's to find out: compare, measure, then plitzi task spike <spike> --done "what was found" --tasks <stage.json>${spikes.length > 2 ? ' — several: a lead that reviews takes them too (plitzi task next --role lead --follow --take --agent lead-2)' : ''}`,
+      text: `${spikes.map(view => `${view.task.id} (${view.task.spike ?? 'what it needs'})`).join('; ')} ${spikes.length === 1 ? 'is' : 'are'} in spike, a lead's to find out: compare, measure, then plitzi task spike <spike> --done "what was found" --tasks <stage.json>${spikes.length > 2 ? ' — several: a lead that reviews takes them too (plitzi task next --role lead --agent lead-2)' : ''}`,
       who: 'lead'
     });
   }

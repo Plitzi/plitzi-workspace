@@ -11,7 +11,7 @@ export { runTeam, runTeamCheck, runTeamSet, runTeamUnset } from './team';
 export { runMonitor } from './monitor';
 export { runUpgrade } from './upgrade';
 export type { UpgradeRunOptions } from './upgrade';
-export { runBench, runKeep, runPending, runPreview, runReport, runShow, runState, runStatus, runWatch } from './watch';
+export { runBench, runKeep, runPreview, runReport, runShow, runState, runStatus, runWatch } from './watch';
 export type { WatchRunOptions } from './watch';
 export {
   runAbort,
@@ -19,7 +19,6 @@ export {
   runCanWrite,
   runContinue,
   runFinish,
-  runPrune,
   runPurge,
   runRelease,
   runResolve,

@@ -288,7 +288,7 @@ const decide = async (
     const by = view.state.design?.by;
     throw new RunRefusal(
       'invalid',
-      `Task "${taskId}"'s UI waits for ${by ?? 'a designer'}'s review${by ? '' : ' (none took it yet)'}: run watch --until lead wakes you once it is said — or approve it now without it, saying why: --skip-design lead (you looked at its UI yourself, as a designer would) or --skip-design no-ui (it changes nothing a visitor sees)`,
+      `Task "${taskId}"'s UI waits for ${by ?? 'a designer'}'s review${by ? '' : ' (none took it yet)'}: run watch wakes you once it is said — or approve it now without it, saying why: --skip-design lead (you looked at its UI yourself, as a designer would) or --skip-design no-ui (it changes nothing a visitor sees)`,
       { task: taskId, ...(by ? { designer: by } : {}) }
     );
   }
@@ -315,7 +315,7 @@ const decide = async (
     );
     throw new RunRefusal(
       'claimed',
-      `${reviewing} is reviewing ${taskId}'s UI — its own for ${String(left)} min more: approving past it takes its copy from under it. Wait for its verdict (plitzi run watch --until lead wakes you), or ask it where it stands (plitzi task message @${reviewing} "…"); past its time it is yours to decide.`,
+      `${reviewing} is reviewing ${taskId}'s UI — its own for ${String(left)} min more: approving past it takes its copy from under it. Wait for its verdict (plitzi run watch wakes you), or ask it where it stands (plitzi task message @${reviewing} "…"); past its time it is yours to decide.`,
       { task: taskId, designer: reviewing }
     );
   }

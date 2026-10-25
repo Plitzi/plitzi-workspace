@@ -33,6 +33,16 @@ describe('plitzi explain', () => {
     expect(answer).toEqual([expect.objectContaining({ reads: ['x', 'y', 'atStart', 'atEnd'] })]);
   });
 
+  // A run's agents searched with --search 24 times in 70: several words are a search, a name is one word.
+  it('answers several words with what they describe, best first', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    await explainCommand('carousel end', {});
+
+    const said = log.mock.calls.flat().join('\n');
+    expect(said).toMatch(/^carousel_<id>\.atEnd/m);
+    expect(said).toContain('Each said whole: plitzi explain <name>');
+  });
+
   it('lists a kind by its plural', () => {
     expect(printed(() => explainCommand(undefined, { list: 'codes' }))).toContain('class-and-css');
   });

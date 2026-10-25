@@ -373,16 +373,14 @@ export const buildProgram = (): Command => {
     .command('explain')
     .argument(
       '[name]',
-      'An element, a step, a trigger, a problem’s code, a transformer or a helper: container, navigate, class-and-css, bindTemplate, motion'
+      'An element, a step, a trigger, a problem’s code, a transformer or a helper: container, navigate, class-and-css, bindTemplate, motion — or words, quoted, for what they describe, best first: "carousel end", "checked state"'
     )
-    .description('What a name means when authoring a space — what it takes, fires, reads and how it is written')
+    .description(
+      'What a name means when authoring a space — what it takes, fires, reads and how it is written; several words, what has them: elements, their fields, steps, states, sources, codes, commands'
+    )
     .option(
       '--list <kind>',
       'Every name of a kind: elements, steps, triggers, codes, transformers, helpers, filters, functions, sources'
-    )
-    .option(
-      '--search <words>',
-      'What the words describe, best first — "carousel end", "checked state": elements, their fields, steps, states, sources, codes, commands'
     )
     .option('--json', 'One object, for a tool or an agent')
     .action((name: string | undefined, options: ExplainOptions) => explainCommand(name, options, program.commands));

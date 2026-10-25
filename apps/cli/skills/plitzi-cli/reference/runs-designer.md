@@ -4,19 +4,21 @@ What a designer of a run does — it looks at the UI the others' tasks change, a
 review. The run's protocol — your token, the refusals and their exit codes — is [runs.md](runs.md), which you read
 too.
 
-- **Wait for reviews:** `plitzi task next --role designer --follow --take --agent design-1` (your first command; then
+- **Wait for reviews:** `plitzi task next --agent design-1` (your first command; then
   `--token …`). It hands you a task's UI before any task of your own: what it changed, the pages it is drawn at, what
   its last review asked. A round sent back comes to you first, if you said the one before.
 - **Look:** `plitzi task look <task>` — every page its changes are drawn at, light at 1440 and dark at 390 — a space that has one scheme, in it (`--width`,
   `--scheme` for others; `--status 404` for a not-found page), beside the run before it: what the task moved, and that
   nothing else did (`--no-before` leaves that out). `--click <id>` an open state, `--hover <id>` a hover, `--steps
-  "state notice …"` what only a message or a flow shows, `--element <id>` its attributes and styles. A page it says you did not look at reads a file the task changed: look
-  at it. **One look a round** (~8 s): it checks both schemes, pictures the task's parts beside the run before it and
+  "state notice …"` what only a message or a flow shows, `--element <id>` its attributes and styles. A page that sends a guest to sign in is read as the project's account
+  by itself (`--as` another); a page the task adds is pictured alone. A page it says you did not look at reads a file
+  the task changed: look at it. **One look a round** (~8 s): it checks both schemes, pictures the task's parts beside the run before it and
   reads that nothing else moved — asked again with nothing changed, it says the same (`--fresh` looks anew). Then
   measure only what it, or the task's checks, show differs.
 - **Measure, never guess — in one call:** `plitzi page measure <path> "<ours> => <theirs>" … --compare <url> --width
 390,1440` measures every element at every width in one browser, the reference kept 6 h (`--fresh` reads it again),
-  their `::before`/`::after` too: each property that differs, here → there, what both inherit said apart; a state with
+  their `::before`/`::after` too, with where each is drawn (x, y): each property that differs, here → there, what both
+  inherit said apart — a hover that only underlines shows as `text-decoration`; `--only x,y,width` prints just those; a state with
   `--hover|--focus "<ours> => <theirs>"` (a card's hover, its badge measured), an open one with `--click`. What to name
   after `=>`: `plitzi page outline <path> --compare <url> [--within <part>] [--click <el>]` lists the other page's
   elements by a selector it takes, each with its box — never its HTML fetched and searched. An element that draws on its box (a
@@ -39,7 +41,7 @@ measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it** (
   nothing, or otherwise than asked — than the reference's, in a copy — is sent back. A state the demo data never has is
   played into: `state <key> <json>`, `store <key> <value>` then `reload`, `--clock <instant>` with `tick 5m` for a
   countdown, `action <id> '<json>'` for the server's data (an action run as the page's visitor), and `as <account>
-  <step>` for what another person does — `as mika type dm-input hi; as mika press Enter` — seen on this page; a copy whose data a play used up goes back cold with `plitzi server reset` (its server stopped). What the lead told you while
+  <step>` for what another person does — `as mika type dm-input hi; as mika press Enter` — seen on this page; a copy whose data a play used up goes back cold with `plitzi server reset` in it. What the lead told you while
   you looked is handed to you before your verdict goes: read it, then say it again.
 - **Ask what the task is, not more** — every round, the first too: send it back for what its title and acceptance
   cover that is broken or measures off. Another element, a page-wide value (the body's font), a refinement the task

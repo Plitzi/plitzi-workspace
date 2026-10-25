@@ -24,7 +24,7 @@ import {
   taskContext,
   unblockTask
 } from './tasks';
-import { pendingRuns, viewRun } from './view';
+import { runsState, viewRun } from './view';
 import { benchPlan, makeBench, readInCopy, teamFor, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
@@ -372,7 +372,7 @@ describe('the lead’s plan as the run goes', () => {
 
   it('lists the runs waiting to be written into the project, the ready ones first, with what applies each', async () => {
     await open();
-    expect(await pendingRuns(lead())).toMatchObject([{ runId: 'es-launch', ready: false, done: 0, total: 4 }]);
+    expect(await runsState(lead())).toMatchObject([{ runId: 'es-launch', ready: false, done: 0, total: 4 }]);
     for (const [task, file] of [
       ['t-home', 'src/space/pages/home/hero.ts'],
       ['t-menu', 'src/space/pages/menu.ts'],
@@ -382,7 +382,7 @@ describe('the lead’s plan as the run goes', () => {
       await doTask('agent-1', task, file, 'export const done = true;\n');
     }
 
-    expect(await pendingRuns(lead())).toMatchObject([
+    expect(await runsState(lead())).toMatchObject([
       { runId: 'es-launch', ready: true, leadFinishes: false, apply: 'npx plitzi run finish es-launch --apply' }
     ]);
   });

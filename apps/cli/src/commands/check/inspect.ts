@@ -7,7 +7,7 @@ import {
   readDevTools
 } from '@plitzi/sdk-authoring';
 
-import { landingProblem, signInAs } from './account';
+import { landingProblem, saySignedIn, signInAs, signInWhereSent } from './account';
 import { clickEffects } from './click';
 import { flushEdgesInPage, missedExpectations, wrappedLabelsInPage } from './expect';
 import { listRows } from './lists';
@@ -489,6 +489,8 @@ export const checkAt = async (
   asked: CheckAsk,
   ssr: boolean,
   account: Account | undefined,
+  /** The project's, signed in as when the page sends a guest away and no account was asked. */
+  projectAccount: Account | undefined,
   click?: ClickAsk,
   expect: readonly Expectation[] = [],
   then: readonly string[] = []
@@ -615,7 +617,24 @@ export const checkAt = async (
   // A page that sent the browser elsewhere — a page for signed-in visitors, to the sign-in — is not the page asked for:
   // every element of it would read as missing.
   const meant = asked.redirectsTo;
-  const landing = landingProblem(page.url(), pathname, meant, account);
+  const signed =
+    account || meant !== undefined ? undefined : await signInWhereSent(page, origin, pathname, projectAccount);
+  if (signed && 'problem' in signed) {
+    return [
+      {
+        ...unchecked({ code: 'not-signed-in', message: signed.problem, width }),
+        consoleErrors: consoleErrors().map(each => each.text),
+        failedRequests
+      }
+    ];
+  }
+
+  if (signed) {
+    saySignedIn(pathname, signed);
+  }
+
+  const readAs = account ?? (signed ? projectAccount : undefined);
+  const landing = landingProblem(page.url(), pathname, meant, readAs);
   if (landing !== undefined) {
     return [
       {
@@ -642,7 +661,7 @@ export const checkAt = async (
       failedRequests,
       answered: imagesAnswered,
       throttled: heldBack,
-      ...(account ? { signedInAs: account.username } : {})
+      ...(readAs ? { signedInAs: readAs.username } : {})
     })
   ];
   // On as a visitor goes on: a click on the page's own link to each next path, no reload — what the space keeps while
@@ -667,7 +686,7 @@ export const checkAt = async (
             failedRequests: failedRequests.slice(failedBefore),
             answered: imagesAnswered,
             throttled: heldBack,
-            ...(account ? { signedInAs: account.username } : {})
+            ...(readAs ? { signedInAs: readAs.username } : {})
           })
         : unchecked({ code: 'no-page', message: went, width })
     );

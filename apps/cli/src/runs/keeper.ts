@@ -19,7 +19,7 @@ import type { RunView } from './view';
 /**
  * The run's own keeper of its agents: with the team's `options.launch`, the agents the run asks for — the base not
  * running, one on demand for work that waits, one a task was sent back to — are started as `run agent --launch` would,
- * whatever the lead is doing. Only the lead's `run watch --until lead` started them before, so while the lead reviewed
+ * whatever the lead is doing. Only the lead's `run watch` started them before, so while the lead reviewed
  * or wrote a stage, ready tasks waited with no developer running (Carlos saw four, and none at work).
  */
 

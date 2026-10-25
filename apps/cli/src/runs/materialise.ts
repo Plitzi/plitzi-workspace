@@ -135,7 +135,7 @@ export const checkVersions = async (
   { final = false }: CheckOptions = {}
 ): Promise<CheckResult> => {
   const key = `${await treeKey(ctx, versions)}${final ? '-final' : ''}`;
-  // In the run's cache: `run prune` may take it, and a pass not kept is only run again.
+  // In the run's cache: pruning may take it, and a pass not kept is only run again.
   const keptAt = path.join(loaded.paths.cache, 'checks', `${key}.json`);
   const kept = await readOptional(keptAt);
   const parsed: unknown = kept === undefined ? undefined : parseKept(kept);

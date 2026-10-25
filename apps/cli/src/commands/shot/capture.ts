@@ -2,7 +2,7 @@ import { loadImages, openPage, unrollPage } from '@plitzi/sdk-authoring';
 import { MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema';
 
 import { openOtherPage, openProjectPage, paintedScheme, PROJECT_QUIET_MS } from '../../browser';
-import { sentElsewhere, signInAs } from '../check';
+import { saySignedIn, sentElsewhere, signInAs, signInWhereSent } from '../check';
 import { BARE, IMAGES_BUDGET_MS, REMOTE_IMAGES_BUDGET_MS, WAITING_FOR_SCROLL } from './types';
 
 import type { Framing, Taken, View } from './types';
@@ -355,6 +355,16 @@ export const pictureOf = async (
         ? `Nothing answers at ${url}. Start the project first: npm start`
         : `${url} did not answer — asked twice, 30 s each: a site warming up answers on the next try, run it again`
     };
+  }
+
+  const signed =
+    origin && !view.account ? await signInWhereSent(page, origin, new URL(url).pathname, view.projectAccount) : undefined;
+  if (signed && 'problem' in signed) {
+    return signed;
+  }
+
+  if (signed) {
+    saySignedIn(new URL(url).pathname, signed);
   }
 
   const sentTo = origin ? sentElsewhere(page, new URL(url).pathname) : undefined;

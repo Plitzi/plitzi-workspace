@@ -24,7 +24,7 @@ import type { StartedAgent } from './team';
 
 /**
  * An agent of the run's team, prepared — its token, its own CLI, its prompt in its scratch — and started headless in a
- * harness: what `plitzi run agent <name> --launch` does, and what `run watch --until lead` does by itself for the agents
+ * harness: what `plitzi run agent <name> --launch` does, and what `run watch` does by itself for the agents
  * the run asks for when the team says so (`options.launch`). Either way a launch is the same: refused for an agent
  * still running, resuming the session of one that died mid-task when the team asks it, logged for the board.
  */

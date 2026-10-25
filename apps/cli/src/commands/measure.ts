@@ -10,7 +10,7 @@ import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
 import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
-import { accountAsked, signInAs } from './check';
+import { accountAsked, projectAccount, saySignedIn, signInAs, signInWhereSent } from './check';
 import { projectHere } from './existingProject';
 import { measureOn } from './measureOn';
 import { putIn, rowsOf, settle, stateText } from './measureState';
@@ -89,6 +89,8 @@ export interface MeasureOptions extends ConditionOptions {
   steps?: string;
   /** Only these properties of each element, printed: `box`, `font`, `border`, `size` or any measured. */
   only?: string[];
+  /** Read as a guest, though a page sends one away: the project's account is not signed in by itself. */
+  guest?: boolean;
   json?: boolean;
 }
 
@@ -245,6 +247,15 @@ export const ourPage = async (
     return { page, answered };
   }
 
+  const signed = view.account ? undefined : await signInWhereSent(page, origin, route, view.projectAccount);
+  if (signed && 'problem' in signed) {
+    return { page, answered: false, problem: signed.problem };
+  }
+
+  if (signed) {
+    saySignedIn(route, signed);
+  }
+
   // The server's own page while the space does not author: said, never "No element …" of every element asked.
   const failed = await spaceFailureOn(page);
   if (failed !== undefined) {
@@ -263,6 +274,8 @@ export interface ViewAsked {
   width: number;
   /** The account the page is read signed in as (`--as`). */
   account?: Account;
+  /** The project's, signed in as when the page sends a guest away and no account was asked. */
+  projectAccount?: Account;
   scheme?: Scheme;
   timezone?: string;
   state?: StateAsked;
@@ -537,6 +550,8 @@ export const measure = async (route: string, elements: string[], options: Measur
     return;
   }
 
+  const own = options.as === undefined && options.guest !== true ? await projectAccount(project.root) : undefined;
+
   const now = Date.now();
   try {
     const readings: Reading[] = [];
@@ -550,6 +565,7 @@ export const measure = async (route: string, elements: string[], options: Measur
           {
             width,
             ...(account ? { account } : {}),
+            ...(own ? { projectAccount: own } : {}),
             ...(options.scheme ? { scheme: options.scheme } : {}),
             ...(options.timezone ? { timezone: options.timezone } : {}),
             ...(state ? { state } : {}),

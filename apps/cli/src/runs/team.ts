@@ -211,7 +211,7 @@ export interface TeamOptions {
    */
   startGraceMinutes?: number;
   /**
-   * The harness the CLI starts the agents in by itself (`claude`, `codex`, `opencode`): `run watch --until lead` starts
+   * The harness the CLI starts the agents in by itself (`claude`, `codex`, `opencode`): `run watch` starts
    * each agent the run asks for — one on demand, one of one task a session, a task's owner it was sent back to, a
    * designer for a UI review — instead of waking the lead to. Tasks waited 24 to 56 min to be taken while the
    * lead, planning or reviewing, was the only one to start agents. Not said: the lead starts them.

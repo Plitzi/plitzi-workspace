@@ -16,7 +16,7 @@ describe('an agent’s prompt', () => {
 
     expect(prompt).toContain('You are dev-1, a developer agent');
     expect(prompt).toContain('The CLI is /p/acme/tmp/plitzi-runs/shop-shell/scratch/dev-1/plitzi (PLITZI below)');
-    expect(prompt).toContain('cd /p/acme && PLITZI task next --role developer --follow --take`');
+    expect(prompt).toContain('cd /p/acme && PLITZI task next` — it takes your next task, waiting until one is ready');
     expect(prompt).not.toMatch(/--agent dev-1|\$\(cat/);
     expect(prompt).toContain('/p/acme/.claude/skills/plitzi-cli/reference/runs.md');
     expect(prompt).toContain('run finish');
@@ -49,7 +49,8 @@ describe('an agent’s prompt', () => {
     const designer = agentPrompt({ ...base, agent: 'design-1', started: { roles: ['designer', 'developer'] } });
     expect(designer).toContain('runs-designer.md');
     expect(designer).toContain('one `PLITZI task look <task>` a round');
-    expect(designer).toContain('--role designer,developer');
+    expect(designer).toContain('a designer,developer agent');
+    expect(designer).not.toContain('--role');
 
     const coLead = agentPrompt({ ...base, agent: 'lead-2', started: { roles: ['lead'] } });
     expect(coLead).toContain('runs-review.md');

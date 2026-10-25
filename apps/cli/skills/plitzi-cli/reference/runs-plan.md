@@ -28,8 +28,9 @@ an agent starts or a token is spent. The lead's half after it: [runs-lead.md](ru
 
 ## 4. The primer and the plan
 
-- **Primer** (≤ 16 KB): what is true of the project, the decisions, the constraints found (time, what survives a
-  restart), and the demo data that shows each state.
+- **Primer** (≤ 16 KB; every task's first brief carries it, so keep it under 6k — `run plan` says the cost past it):
+  what is true of the project, the decisions, the constraints found (time, what survives a restart), and the demo data
+  that shows each state; the rest named where it is (a file, a skill).
 - **Plan**: one contract task first when several share a model; each task's `findings` from what you read; the ids its
   checks expect named in a note, so no agent names them otherwise; `leftOut` as lines.
 - `plitzi run plan <plan>` until nothing it flags is left to fix (a file read by one no task holds, a check on an id

@@ -59,19 +59,16 @@ const TASK_HELP: readonly { heading: string; commands: readonly string[] }[] = [
       'check',
       'complete',
       'progress',
-      'heartbeat',
       'ask',
       'tell',
       'inbox',
       'claim',
-      'claims',
       'wait',
       'release',
       'request',
       'discard',
       'propose',
       'answer',
-      'proposals',
       'block',
       'spike',
       'note'
@@ -94,15 +91,18 @@ export const registerTaskGroup = (program: Command): Command => {
   taskGroup
     .command('next')
     .description(
-      'The ready task to take: the most urgent — its priority or the highest of what waits on it — then the longest chain still to do'
+      'The next task, taken — waiting until one is ready: the most urgent — its priority or the highest of what waits on it — then the longest chain still to do'
     )
     .option(
       '--role <roles>',
       'Only a task for these roles, separated by commas: developer, designer, reviewer, tester, writer…'
     )
-    .option('--follow', 'Wait until one is ready — or every task of the role is done (finished: true)')
-    .option('--take', 'Take it too, in the same breath: one another agent took meanwhile is passed for the next')
-    .option('--timeout <duration>', 'With --follow: give up after this long, said (90s, 8m, 1h)', duration, FOLLOW_MS)
+    .option(
+      '--no-wait',
+      'Answer now — the ready one taken, or none — rather than wait until one is ready or every task of the role is done'
+    )
+    .option('--peek', 'Only say what is next: nothing taken, nothing waited for')
+    .option('--timeout <duration>', 'While it waits: give up after this long, said (90s, 8m, 1h)', duration, FOLLOW_MS)
     .addOption(
       new Option(
         '--quality <level>',
@@ -111,7 +111,7 @@ export const registerTaskGroup = (program: Command): Command => {
     )
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((options: RunCommandOptions & { role?: string; follow?: boolean; timeout?: number; take?: boolean }) =>
+    .action((options: RunCommandOptions & { role?: string; wait: boolean; peek?: boolean; timeout?: number }) =>
       taskNext(options)
     );
 
@@ -126,19 +126,15 @@ export const registerTaskGroup = (program: Command): Command => {
     .action((task: string, options: RunCommandOptions & { role?: string }) => taskTake(task, options));
 
   taskGroup
-    .command('claims')
-    .description('Which files each task locks, why and since when')
+    .command('claim')
+    .description('Take shared files by turns — with none named, which files each task locks, why and since when')
+    .argument('[files...]', 'The project files')
+    .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((options: RunCommandOptions) => taskClaims(options));
-
-  taskGroup
-    .command('claim')
-    .description('Take shared files by turns')
-    .argument('<files...>', 'The project files')
-    .option(...TOKEN_OPTION)
-    .option(...JSON_OPTION)
-    .action((files: string[], options: RunCommandOptions) => taskClaim(files, options));
+    .action((files: string[], options: RunCommandOptions) =>
+      files.length === 0 ? taskClaims(options) : taskClaim(files, options)
+    );
 
   taskGroup
     .command('release')
@@ -177,19 +173,14 @@ export const registerTaskGroup = (program: Command): Command => {
 
   taskGroup
     .command('progress')
-    .description('Where the task is: its fraction and step — a heartbeat too')
+    .description(
+      'Where the task is — its fraction and step — and a sign of life: alone, during a long think or test run with no write, at least every 2 minutes'
+    )
     .option('--fraction <n>', 'Between 0 and 1', fraction)
     .option('--step <step>', 'What it is on: "page 3 of 5"')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
     .action((options: RunCommandOptions & { fraction?: number; step?: string }) => taskProgress(options));
-
-  taskGroup
-    .command('heartbeat')
-    .description('A sign of life, for a long think or test run with no write — at least every 2 minutes')
-    .option(...TOKEN_OPTION)
-    .option(...JSON_OPTION)
-    .action((options: RunCommandOptions) => taskProgress(options));
 
   taskGroup
     .command('spike')
@@ -269,17 +260,20 @@ export const registerTaskGroup = (program: Command): Command => {
   taskGroup
     .command('propose')
     .description(
-      'Ask another task to agree to a change — to make it, or to accept it in its work; --wait for the answer'
+      'Ask another task to agree to a change — to make it, or to accept it in its work; --wait for the answer. With no task, the proposals between tasks and their answers — your task’s, with its token'
     )
-    .argument('<task>', 'The task asked')
-    .requiredOption('--change <change>', 'The change, specifically: "the card takes a `lang` prop"')
+    .argument('[task]', 'The task asked')
+    .option('--change <change>', 'The change, specifically: "the card takes a `lang` prop"')
     .option('--about <file>', 'The file it is about')
     .option('--why <why>', 'Why this task needs it')
     .option('--wait', 'Wait for the answer; go on with what does not need it')
     .option('--follow', 'Stay until the answer comes, giving the task’s sign of life meanwhile')
     .option(...TOKEN_OPTION)
+    .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string, options: ProposeOptions) => taskPropose(task, options));
+    .action((task: string | undefined, options: ProposeOptions) =>
+      task === undefined ? taskProposals(options) : taskPropose(task, options)
+    );
 
   taskGroup
     .command('answer')
@@ -296,14 +290,6 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
     .action((proposal: string, options: AnswerOptions) => taskAnswer(proposal, options));
-
-  taskGroup
-    .command('proposals')
-    .description('The proposals between tasks and their answers — your task’s, with its token')
-    .option(...TOKEN_OPTION)
-    .option(...RUN_OPTION)
-    .option(...JSON_OPTION)
-    .action((options: RunCommandOptions) => taskProposals(options));
 
   taskGroup
     .command('check')

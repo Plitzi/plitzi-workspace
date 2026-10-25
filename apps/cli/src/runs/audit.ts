@@ -74,7 +74,7 @@ export const auditRun = async (loaded: LoadedRun): Promise<Finding[]> => {
         title: `${task.id} waited in review before anyone looked at it`,
         evidence: slow,
         times: slow.length,
-        fix: 'a designer free for UI reviews, and run watch --until lead answering the review first',
+        fix: 'a designer free for UI reviews, and run watch answering the review first',
         subject: `slow-review:${task.id}`
       });
     }

@@ -12,7 +12,7 @@ import { runPaths, runsDir, taskPaths } from '../../runs/paths';
 import { previewDir } from '../../runs/preview';
 import { projectHere } from '../existingProject';
 import { fail, unanswered, UNANSWERED_EXIT } from '../terminal';
-import { checkAccount } from './account';
+import { checkAccount, projectAccount } from './account';
 import { keptToReference, keptToTask } from './apart';
 import { checkAt } from './inspect';
 import { moduleSpace, projectSpace } from './space';
@@ -34,13 +34,15 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     return;
   }
 
-  // Signed in only when asked: a page checked as nobody is what a visitor who has not signed in sees.
+  // Signed in when asked — or, by the project's account, where a page sends a guest away (unless --guest).
   const account = options.as === undefined ? undefined : await checkAccount(project.root, options.as);
   if (account && 'problem' in account) {
     fail(`--as ${account.problem}.`);
 
     return;
   }
+
+  const own = options.as === undefined && options.guest !== true ? await projectAccount(project.root) : undefined;
 
   // A path is a page's address: one that reads as a flag is a flag cut off from its command (`npx … check -- /x --width`).
   const flags = routes.filter(route => route.startsWith('-'));
@@ -80,6 +82,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     presence: options.presence === true,
     ...(options.timezone ? { timezone: options.timezone } : {}),
     ...(account ? { account } : {}),
+    ...(own ? { projectAccount: own } : {}),
     ...(options.click || options.hover || options.fill
       ? {
           click: {
@@ -173,6 +176,8 @@ export const checkRoutes = async (
     presence?: boolean;
     timezone?: string;
     account?: Account;
+    /** The project's, signed in as when a page sends a guest away and no account was asked. */
+    projectAccount?: Account;
     click?: ClickAsk;
     expect?: Expectation[];
     then?: string[];
@@ -234,6 +239,7 @@ export const checkRoutes = async (
             options.asked,
             options.ssr,
             options.account,
+            options.projectAccount,
             options.click,
             options.expect,
             options.then

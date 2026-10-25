@@ -29,7 +29,7 @@ import type { Message } from '../../runs/messages';
  */
 
 export interface ProposeOptions extends RunCommandOptions {
-  change: string;
+  change?: string;
   about?: string;
   why?: string;
   wait?: boolean;
@@ -41,6 +41,12 @@ export const taskPropose = (toTask: string, options: ProposeOptions): Promise<vo
   act(
     options,
     async ctx => {
+      if (options.change === undefined) {
+        throw new RunRefusal('invalid', `A proposal says the change it asks of ${toTask}: --change "…"`, {
+          next: `plitzi task propose ${toTask} --change "the card takes a \`lang\` prop"`
+        });
+      }
+
       const { runId, taskId } = await holder(ctx, options);
 
       const proposed = await proposeChange(ctx, runId, taskId, toTask, {
@@ -57,7 +63,7 @@ export const taskPropose = (toTask: string, options: ProposeOptions): Promise<vo
         ? `${proposed.proposal.to} answered ${proposed.proposal.id}: ${proposed.followed.note ?? ''}`
         : proposed.waiting
           ? `Proposed to ${proposed.proposal.to} as ${proposed.proposal.id}; this task waits for the answer (--follow stays until it comes). Go on with what does not need it.`
-          : `Proposed to ${proposed.proposal.to} as ${proposed.proposal.id}. Its answer comes in plitzi task proposals.`,
+          : `Proposed to ${proposed.proposal.to} as ${proposed.proposal.id}. Its answer is listed by plitzi task propose (no task named).`,
     0
   );
 
@@ -186,7 +192,7 @@ export const runNotice = (
         : `Noticed (${noticeText(notice)}): kept in the run's log — the finish says it, the report lists it, and the project's backlog (${BACKLOG_FILE}) keeps it for the next run. ${notice.task === undefined ? 'A stage of this run takes it up now (plitzi run extend), or the next run does.' : 'Go on with your task: it is not yours to fix in it.'}`
   );
 
-/** `plitzi run feedback`: the run's feedback to Plitzi, written now — the finish writes it again as the run ends. */
+/** `plitzi run report --plitzi`: the run's feedback to Plitzi, written now — the finish writes it again as the run ends. */
 export const runFeedback = (runId: string | undefined, options: RunCommandOptions): Promise<void> =>
   act(
     options,

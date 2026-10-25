@@ -10,7 +10,16 @@ const ELSEWHERE: Readonly<Partial<Record<string, string>>> = {
   'run view': 'plitzi run status — or plitzi run monitor, a live board',
   'task list': 'plitzi run status lists the tasks and where each stands',
   'page text':
-    'plitzi page outline <path> --within <element> says a part’s words; page check --element <id> what one holds'
+    'plitzi page outline <path> --within <element> says a part’s words; page check --element <id> what one holds',
+  // Folded into another, the CLI's surface cut down: what each was is said where it went.
+  'task heartbeat': 'plitzi task progress is the sign of life — alone, or with --step',
+  'task claims': 'plitzi task claim, with no file named, says who holds which file',
+  'task proposals': 'plitzi task propose, with no task named, lists the proposals and their answers',
+  'run pending': 'plitzi run state lists the runs not yet written into the project, ready ones first',
+  'run feedback': 'plitzi run report --plitzi says what the run says of Plitzi',
+  'run allow-finish': 'plitzi run finish --lead-finishes, a person’s (--no-lead-finishes takes it back)',
+  'run continue': 'plitzi run resolve <run>, no file named, lets the run go on once every file is settled',
+  'run prune': 'nothing to run: every run open, and run watch while it follows, prune the caches'
 };
 
 /** An option another page command has, and what this one calls the same thing. */
@@ -24,7 +33,13 @@ const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<stri
   'page play': { '--element': '--read <element…> says what elements show after the steps' },
   'task look': {
     '--clip': 'task look pictures whole pages — page shot <path> --clip <element> pictures one element of the copy'
-  }
+  },
+  'task next': {
+    '--take': 'task next takes the task by itself — --peek only looks',
+    '--follow': 'task next waits by itself — --no-wait answers now'
+  },
+  'run watch': { '--until': 'run watch, run by the lead, ends on what needs the lead — no --until' },
+  explain: { '--search': 'explain takes the words themselves, quoted: plitzi explain "carousel end"' }
 };
 
 /** A command that takes no argument, and where what was given to it is read. */

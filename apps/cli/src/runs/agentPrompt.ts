@@ -42,12 +42,12 @@ const skill = (root: string, file: string): string => path.join(root, SKILLS_ROO
 
 /** The rules every agent of a run holds to, whatever its role: said once, the skills saying why. */
 const rules = (cli: string): string[] => [
-  `- Never run \`${cli} run finish\`, \`run abort\`, \`run purge\`, \`run restore\`, \`run allow-finish\` or \`run stop --force\` — a person's. Never \`git stash\`, \`checkout\` or \`reset\`.`,
+  `- Never run \`${cli} run finish\`, \`run abort\`, \`run purge\`, \`run restore\` or \`run stop --force\` — a person's. Never \`git stash\`, \`checkout\` or \`reset\`.`,
   // A heredoc that never closed hung on stdin, and `pkill -f "cat"` to free it took the machine down.
   `- Stop a server with \`${cli} server stop --port <port>\` in the folder that started it — it stops that folder's alone; a command that hangs is your harness's to stop. Never \`pkill\`, \`killall\` nor a kill by name or pattern: they reach every process on the machine. Write files with your edit tools, never a heredoc through the shell.`,
   '- A wait that ends is not your end: run `task next` again until it says "You can stop".',
   // Two agents read the bundle's types, every command's help and a site's HTML to learn what Plitzi had.
-  '- Whether Plitzi has a way — a field, a step, a state, a command: `PLITZI explain --search "<words>"`, then `PLITZI explain <name>`; never the packages\' types nor a site\'s HTML fetched and searched. Nothing found that should be: `run notice --plitzi`.',
+  '- Whether Plitzi has a way — a field, a step, a state, a command: `PLITZI explain "<words>"`, then `PLITZI explain <name>`; never the packages\' types nor a site\'s HTML fetched and searched. Nothing found that should be: `run notice --plitzi`.',
   '- Plitzi itself in your way — a refusal you think wrong, a command that cannot do what you need, a doc that misled you: say it as it happens, `PLITZI run notice --plitzi "…"` (the run\'s feedback to Plitzi carries it), and go on.',
   '- When it says you can stop, answer with a short report: what you did, what is uncertain, and every friction with the CLI — the command and what it said. Between two tasks or reviews it may say so for a fresh context: the run starts you again with one, for what you hold and what comes.'
 ];
@@ -69,7 +69,7 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
       '',
       `- The CLI is ${cli} — your own: it says who you are on every command, so pass no --token nor --agent.`,
       `- The run opens on its scope, your spike: find out what the ask takes (${reference === undefined ? '`task show`, `page check`, `page shot`' : `\`page measure …${beside}\`, \`page outline …${beside}\`, \`page shot …${beside}\``}), then end it with the tasks, each with what you found: \`task spike s-scope --done "…" --tasks <stage.json>\` (a stage is its \`tasks\`).`,
-      `- Start the team once there are tasks: \`${cli} run agent <name> --launch --harness <yours>\` for each agent \`run plan\` names; \`run watch --until lead\` wakes you for each review, question and block, and says when another agent is worth starting.`,
+      `- Start the team once there are tasks: \`${cli} run agent <name> --launch --harness <yours>\` for each agent \`run plan\` names; \`run watch\` wakes you for each review, question and block, and says when another agent is worth starting.`,
       '- Review each task: `task show` for its code, one `task look` for its pages, then `task review --approve | --changes "…"`. Then the report (`run report --summary`) and the dry finish (`run finish`): the person applies it.',
       // Told `run notice` of "the CLI" alone, the lead noted three of six problems — a skill naming a command the
       // CLI lacks, a platform gap an agent hit, a workaround a limit forced — and plain `run notice` is the project's backlog.
@@ -94,7 +94,7 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
     '',
     `Read first, whole: ${reading.join(' and ')}${designer ? ' — and, before your first review, what it names to read' : ''}.`,
     '',
-    `- The CLI is ${cli} (PLITZI below) — your own: it says who you are on every command, inside a task's copy too, so pass no --token nor --agent. Start with \`cd ${root} && PLITZI task next --role ${roles}${started?.quality ? ` --quality ${started.quality}` : ''} --follow --take\`.`,
+    `- The CLI is ${cli} (PLITZI below) — your own: it says who you are on every command, inside a task's copy too, so pass no --token nor --agent. Start with \`cd ${root} && PLITZI task next${started?.quality ? ` --quality ${started.quality}` : ''}\` — it takes your next task, waiting until one is ready, for your roles as the team says them.`,
     ...(coLead
       ? ['- You review what you are handed as strictly as the lead, and answer the questions handed to you.']
       : [
@@ -103,7 +103,7 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
             ? '- Measure, never guess — every element and width in one call: `PLITZI page measure <path> <elements…> --width 390,1440` (`--hover`, `--click` for a state; `PLITZI page outline <path> --within <part>` names them). Trying values, measure; never `task check` for it.'
             : `- Measure, never guess — every element and width in one call: \`PLITZI page measure <path> "<ours> => <theirs>" …${beside} --width 390,1440\` (\`--hover\`, \`--click\` for a state; \`PLITZI page outline <path>${beside} --within <part>\` names theirs). Trying values, measure; never \`task check\` for it.`,
           // 17 of 34 checks failed on typecheck or lint — what the project's own scripts say in seconds.
-          '- Change a batch, then run the project\'s own `typecheck` and `lint` scripts in your copy (`npm run typecheck`, `npm run lint` — cached, seconds) and fix what they say; then `PLITZI task check` once; then `PLITZI task complete --ease <1-5> --hardest "what cost you the most, and why" [--friction "what of Plitzi got in your way" …] [--helped "…"]` — what it was like, for Plitzi — and `PLITZI task next --follow --take` again.',
+          '- Change a batch, then run the project\'s own `typecheck` and `lint` scripts in your copy (`npm run typecheck`, `npm run lint` — cached, seconds) and fix what they say; then `PLITZI task check` once; then `PLITZI task complete --ease <1-5> --hardest "what cost you the most, and why" [--friction "what of Plitzi got in your way" …] [--helped "…"]` — what it was like, for Plitzi — and `PLITZI task next` again.',
           // T-collection completed with "Known: the phone keeps our inline panel, where the original opens a
           // drawer" — sent back for exactly that.
           `- ${reference === undefined ? 'Something wrong you see' : 'A difference from the site you copy you see'}, inside your task's title, is work, not a note: do it, or \`PLITZI task ask\` the lead before you complete.`,

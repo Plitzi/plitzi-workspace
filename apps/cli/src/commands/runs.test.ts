@@ -114,8 +114,39 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect(finish.code).toBe(REFUSAL_EXIT_CODES['person-only']);
 
     expect((await plitzi(bench.root, ['task', 'reassign', 't-about', '--token', lead])).code).toBe(0);
-    const stale = await plitzi(String(taken.json.work), ['task', 'heartbeat', '--token', await tokenOf('dev-1')]);
+    const stale = await plitzi(String(taken.json.work), ['task', 'progress', '--token', await tokenOf('dev-1')]);
     expect(stale.code).toBe(REFUSAL_EXIT_CODES.reassigned);
+  }, 120_000);
+
+  // Two runs' agents wrote `task next --follow --take` 130 times in 138, the lead `run watch --until lead` 83 in 83: what
+  // was always said is what the command does, and each list is its command with nothing named.
+  it('takes and waits by itself, watches for the lead as the lead, and lists with nothing named', async () => {
+    const lead = await openRun();
+
+    const peeked = await plitzi(bench.root, ['task', 'next', '--agent', 'dev-1', '--peek']);
+    expect(peeked.code).toBe(0);
+    expect(peeked.json).not.toHaveProperty('taken');
+    const taken = await plitzi(bench.root, ['task', 'next', '--token', await tokenOf('dev-1'), '--no-wait']);
+    expect(taken.code).toBe(0);
+    expect(taken.json).toMatchObject({ taken: { task: { id: 't-home' } } });
+
+    const watched = await plitzi(bench.root, ['run', 'watch', '--token', lead, '--timeout', '1s']);
+    expect(watched.code).toBe(0);
+    expect(watched.json).toMatchObject({ status: 'open' });
+
+    expect((await plitzi(bench.root, ['task', 'claim', '--token', lead])).code).toBe(0);
+    expect((await plitzi(bench.root, ['task', 'propose', '--token', lead])).code).toBe(0);
+    const unsaid = await plitzi(bench.root, ['task', 'propose', 't-menu', '--token', await tokenOf('dev-1')]);
+    expect(unsaid.code).toBe(REFUSAL_EXIT_CODES.invalid);
+    expect(unsaid.json).toMatchObject({ next: 'plitzi task propose t-menu --change "the card takes a `lang` prop"' });
+    expect((await plitzi(bench.root, ['run', 'report', '--plitzi', '--token', lead])).code).toBe(0);
+    expect((await plitzi(bench.root, ['run', 'state'])).json).toMatchObject([
+      { runId: 'es-launch', ready: false, apply: 'npx plitzi run finish es-launch --apply' }
+    ]);
+
+    // A lead never grants itself the project's finish: a person's, as `run open --lead-finishes` is.
+    const granted = await plitzi(bench.root, ['run', 'finish', '--lead-finishes', '--token', lead]);
+    expect(granted.code).toBe(REFUSAL_EXIT_CODES['person-only']);
   }, 120_000);
 
   it('answers can-write for any hook: 10 with the holder for another task’s file, 0 for a free one', async () => {
@@ -190,19 +221,21 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect(posing.code).toBe(REFUSAL_EXIT_CODES.identity);
 
     // A newcomer of the team names itself once and is given its token; its name alone is refused after.
-    const joined = await plitzi(bench.root, ['task', 'next', '--agent', 'design-1', '--role', 'designer']);
+    const joined = await plitzi(bench.root, ['task', 'next', '--agent', 'design-1', '--role', 'designer', '--peek']);
     expect(joined.code).toBe(0);
     const design = (await bench.read('tmp/plitzi-runs/es-launch/scratch/design-1/token'))?.trim() ?? '';
     expect(design).toMatch(/^es-launch\.@design-1\.[0-9a-f]{32}$/);
-    expect((await plitzi(bench.root, ['task', 'next', '--agent', 'design-1', '--role', 'designer'])).code).toBe(
-      REFUSAL_EXIT_CODES.identity
-    );
+    expect(
+      (await plitzi(bench.root, ['task', 'next', '--agent', 'design-1', '--role', 'designer', '--peek'])).code
+    ).toBe(REFUSAL_EXIT_CODES.identity);
 
     // Its token under another's name, a name of no team, a role not its own: each refused.
     const asLead = await plitzi(bench.root, ['task', 'reassign', 't-about', '--token', design, '--agent', 'lead']);
     expect(asLead.code).toBe(REFUSAL_EXIT_CODES.identity);
-    expect((await plitzi(bench.root, ['task', 'next', '--agent', 'intruder'])).code).toBe(REFUSAL_EXIT_CODES.identity);
-    expect((await plitzi(bench.root, ['task', 'next', '--token', design, '--role', 'developer'])).code).toBe(
+    expect((await plitzi(bench.root, ['task', 'next', '--agent', 'intruder', '--peek'])).code).toBe(
+      REFUSAL_EXIT_CODES.identity
+    );
+    expect((await plitzi(bench.root, ['task', 'next', '--token', design, '--role', 'developer', '--peek'])).code).toBe(
       REFUSAL_EXIT_CODES.identity
     );
 
@@ -224,14 +257,14 @@ describe('plitzi run and plitzi task, as processes', () => {
     await openRun();
     const taken = await plitzi(bench.root, ['task', 'take', 't-about', '--agent', 'dev-1']);
     const work = String(taken.json.work);
-    await plitzi(bench.root, ['task', 'next', '--agent', 'dev-2', '--role', 'developer']);
+    await plitzi(bench.root, ['task', 'next', '--agent', 'dev-2', '--role', 'developer', '--peek']);
 
     for (const [cwd, args, env] of [
       [work, ['task', 'context'], {}],
       [work, ['task', 'complete', ...SAID, '--token', ''], {}],
-      [bench.root, ['task', 'next', '--take', '--role', 'developer', '--token', ''], {}],
-      [work, ['task', 'heartbeat', '--token', String(taken.json.token)], {}],
-      [bench.root, ['task', 'next', '--take', '--role', 'developer', '--token', 'not-a-token'], {}]
+      [bench.root, ['task', 'next', '--no-wait', '--role', 'developer', '--token', ''], {}],
+      [work, ['task', 'progress', '--token', String(taken.json.token)], {}],
+      [bench.root, ['task', 'next', '--no-wait', '--role', 'developer', '--token', 'not-a-token'], {}]
     ] as const) {
       expect((await plitzi(cwd, [...args], env)).code).toBe(REFUSAL_EXIT_CODES.identity);
     }

@@ -270,7 +270,7 @@ describe('a lead that reviews, started when the reviews queue up', () => {
 
     const late = leadItems(view, new Date(since + 6 * 60_000));
     expect(late[0]?.key.startsWith('leads-needed:')).toBe(true);
-    expect(late[0]?.text).toContain('plitzi task next --role lead --follow --take --agent lead-2');
+    expect(late[0]?.text).toContain('plitzi task next --role lead --agent lead-2');
   });
 
   it('is running while it asks, and is told to stop once nothing came for a while', async () => {

@@ -133,7 +133,7 @@ export const duration = (value: string): number => {
 
 /** A duration as a person reads it: `45 s`, `1 min 30 s`, `8 min`, `1 h 30 min`. */
 /**
- * How long a command that waits (`task next --follow`, `run watch --until lead`, `task wait`) waits when not told: under
+ * How long a command that waits (`task next`, `run watch`, `task wait`) waits when not told: under
  * the ten minutes a harness gives one command (Claude Code's), so the agent hears it end rather than losing it to the
  * background — and runs it again to go on waiting.
  */

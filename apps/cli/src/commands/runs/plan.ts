@@ -128,7 +128,7 @@ export const runAllowFinish = (
     async ctx => allowLeadFinish(ctx, await runOf(ctx, options, runId), { revoke: options.revoke ?? false }),
     allowed =>
       allowed.leadFinishes
-        ? `The lead of "${allowed.runId}" may now write it into the project itself — once its report is written and the checks pass on the whole result (plitzi run finish --apply). Take it back: plitzi run allow-finish --revoke`
+        ? `The lead of "${allowed.runId}" may now write it into the project itself — once its report is written and the checks pass on the whole result (plitzi run finish --apply). Take it back: plitzi run finish --no-lead-finishes`
         : `The lead of "${allowed.runId}" may no longer write it into the project: a person does (plitzi run finish --apply).`
   );
 
@@ -141,10 +141,10 @@ const startLines = (tasks: readonly RunTask[], team: Team, designReview: boolean
 
   return [
     `Start the team (${TEAM_FILE}):`,
-    `  lead — ${leadModelText(team.lead)} — you: plan, answer, decide, finish and review — take each review from the queue (plitzi task next --role lead --take)${coLeadNames(team).length > 0 ? ', so a lead started beside you does not take it too' : ''}`,
+    `  lead — ${leadModelText(team.lead)} — you: plan, answer, decide, finish and review — take each review from the queue (plitzi task next --role lead --no-wait)${coLeadNames(team).length > 0 ? ', so a lead started beside you does not take it too' : ''}`,
     ...coLeadNames(team).map(
       name =>
-        `  ${name} — a lead that reviews, as strictly as you, from one queue — ${leadModelText(team.lead)}: not at the start — when run watch --until lead says the reviews queue up: plitzi task next --role lead --follow --take --agent ${name} (it stops by itself once the queue is empty)`
+        `  ${name} — a lead that reviews, as strictly as you, from one queue — ${leadModelText(team.lead)}: not at the start — when run watch says the reviews queue up: plitzi task next --role lead --agent ${name} (it stops by itself once the queue is empty)`
     ),
     ...startedAgents(team).map(each => {
       // Started at a level, it works that level's tasks: the ones below go to the agent of theirs, when the team has one.
@@ -164,8 +164,8 @@ const startLines = (tasks: readonly RunTask[], team: Team, designReview: boolean
       return work.length === 0
         ? `  ${each.agent} — nothing for its ${each.roles.join(', ')} in this plan: leave it out`
         : each.onDemand
-          ? `  ${each.agent} — ${each.roles.join(', ')} — on demand: not at the start — when run watch --until lead says work waits for it: plitzi task next --role ${each.roles.join(',')}${each.quality ? ` --quality ${each.quality}` : ''} --follow --take --agent ${each.agent} (it stops by itself once nothing is left for it)`
-          : `  ${each.agent} — ${each.roles.join(', ')}${each.quality ? ` at ${each.quality}` : ''} — ${startText(each)} (${work.join('; ')}): plitzi task next --role ${each.roles.join(',')}${each.quality ? ` --quality ${each.quality}` : ''} --follow --take --agent ${each.agent}`;
+          ? `  ${each.agent} — ${each.roles.join(', ')} — on demand: not at the start — when run watch says work waits for it: plitzi task next${each.quality ? ` --quality ${each.quality}` : ''} --agent ${each.agent} (it stops by itself once nothing is left for it)`
+          : `  ${each.agent} — ${each.roles.join(', ')}${each.quality ? ` at ${each.quality}` : ''} — ${startText(each)} (${work.join('; ')}): plitzi task next${each.quality ? ` --quality ${each.quality}` : ''} --agent ${each.agent}`;
     })
   ];
 };
@@ -290,7 +290,7 @@ export const runExtend = (
           : []),
         ...(extended.newLeads
           ? [
-              `  ${extended.newLeads.join(', ')} review beside you now: start each — plitzi task next --role lead --follow --take --agent <name>`
+              `  ${extended.newLeads.join(', ')} review beside you now: start each — plitzi task next --role lead --agent <name>`
             ]
           : []),
         ...(extended.notices ?? extended.checked?.notices ?? []).map(notice => `  · ${notice}`),
@@ -381,7 +381,7 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
           : []),
         opened.leadFinishes
           ? 'The lead writes it into the project at the end, as you allowed — once its report is written and the checks pass on the whole result.'
-          : `A person writes it into the project at the end (plitzi run finish --apply) — or lets the lead, in their terminal: plitzi run allow-finish ${opened.runId}`,
+          : `A person writes it into the project at the end (plitzi run finish --apply) — or lets the lead, in their terminal: plitzi run finish --lead-finishes ${opened.runId}`,
         // On its scope alone, the next step is the lead's, not an agent's: there is nothing to take until it ends.
         ...(opened.tasks.includes(SCOPE_SPIKE)
           ? []

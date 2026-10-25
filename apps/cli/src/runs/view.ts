@@ -674,13 +674,17 @@ export const runText = (view: RunView): string => {
   return lines.join('\n');
 };
 
-/** `plitzi run state`: every run of the project, with where it stands. */
-export interface PendingRun {
+/** A run of the project as `plitzi run state` lists it: where it stands, and what writes it into the project. */
+export interface ProjectRun {
   runId: string;
   goal: string;
   status: string;
   done: number;
   total: number;
+  /** The machine it is active on — none once released. */
+  activeOn?: string;
+  /** What needs someone now. */
+  attention: number;
   /** Every task done and nothing in the way: the finish is all that is left. */
   ready: boolean;
   /** A person let the lead write it into the project itself. */
@@ -690,11 +694,11 @@ export interface PendingRun {
 }
 
 /**
- * `plitzi run pending`: the runs of this project not yet written into it — the ones ready to apply first, each with the
+ * `plitzi run state`: every run of this project not yet written into it — the ones ready to apply first, each with the
  * command that applies it, so nobody keeps the list in their head.
  */
-export const pendingRuns = async (ctx: RunContext): Promise<PendingRun[]> => {
-  const pending: PendingRun[] = [];
+export const runsState = async (ctx: RunContext): Promise<ProjectRun[]> => {
+  const runs: ProjectRun[] = [];
   for (const runId of await runIds(ctx.root)) {
     const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true }).catch(() => undefined);
     const view = loaded ? await viewRun(ctx, runId).catch(() => undefined) : undefined;
@@ -702,38 +706,19 @@ export const pendingRuns = async (ctx: RunContext): Promise<PendingRun[]> => {
       continue;
     }
 
-    pending.push({
+    runs.push({
       runId,
       goal: view.goal,
       status: view.status,
       done: view.done,
       total: view.total,
+      ...(view.activeOn.machine ? { activeOn: view.activeOn.machine } : {}),
+      attention: view.attention.length,
       ready: view.done === view.total && (view.status === 'open' || view.status === 'stopped'),
       leadFinishes: loaded.record.leadFinishes !== undefined,
       apply: `npx plitzi run finish ${runId} --apply`
     });
   }
 
-  return pending.sort((a, b) => Number(b.ready) - Number(a.ready) || a.runId.localeCompare(b.runId));
-};
-
-export const runsState = async (
-  ctx: RunContext
-): Promise<{ runId: string; status: string; done: number; total: number; activeOn: string; attention: number }[]> => {
-  const all = [];
-  for (const runId of await runIds(ctx.root)) {
-    const view = await viewRun(ctx, runId).catch(() => undefined);
-    if (view) {
-      all.push({
-        runId,
-        status: view.status,
-        done: view.done,
-        total: view.total,
-        activeOn: view.activeOn.machine,
-        attention: view.attention.length
-      });
-    }
-  }
-
-  return all;
+  return runs.sort((a, b) => Number(b.ready) - Number(a.ready) || a.runId.localeCompare(b.runId));
 };

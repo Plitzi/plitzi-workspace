@@ -12,7 +12,7 @@ import type { RunCommandOptions } from './shell';
  * `plitzi run upgrade`: Plitzi upgraded under an open run without breaking it — a person's, in their terminal. The run
  * stops gently (what is being written finishes and goes to review, nothing starts), Plitzi is upgraded once nothing is
  * being written — `node_modules` never changes under an agent's command — and the new CLI re-pins the run (`run
- * attach`, the tasks in hand keep their copies) and opens it again; the agents waiting with `task next --follow` go on.
+ * attach`, the tasks in hand keep their copies) and opens it again; the agents waiting with `task next` go on.
  * An upgrade that fails leaves the run as it was, opened again.
  */
 
@@ -111,7 +111,7 @@ export const runUpgrade = async (runId: string | undefined, options: UpgradeRunO
     }
 
     process.exitCode = await plitzi(['run', 'resume', id]);
-    say('The run goes on with the new Plitzi; the agents waiting with task next --follow pick it up.');
+    say('The run goes on with the new Plitzi; the agents waiting with task next pick it up.');
   } catch (error) {
     if (!isRunRefusal(error)) {
       throw error;

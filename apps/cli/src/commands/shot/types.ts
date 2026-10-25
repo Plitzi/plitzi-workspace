@@ -58,6 +58,8 @@ export interface ShotOptions {
   sheet?: boolean;
   /** Signed in first as this account, the password from `PLITZI_CHECK_PASSWORD` — as `page check --as` does. */
   as?: string;
+  /** Read as a guest, though a page sends one away: the project's account is not signed in by itself. */
+  guest?: boolean;
   /** Taking part in the page's channels — arriving, announcing itself — as a visitor does, so the others see it. */
   presence?: boolean;
   /** `--timezone <IANA>`: the visitor's time zone, the browser's clock read in — the machine's when left out. */
@@ -181,6 +183,8 @@ export interface View {
   still: boolean;
   /** Signed in as first — on the project's own page only, never another site's. */
   account?: Account;
+  /** The project's, signed in as when the page sends a guest away and no account was asked. */
+  projectAccount?: Account;
   /** Taking part in the project page's channels; otherwise it only watches them. */
   presence?: boolean;
   /** The first picture taken as soon as the HTML is in, not once the page settles: what plays while it loads. */

@@ -10,7 +10,6 @@ import {
   runPlan,
   runRehearse,
   runPreview,
-  runPrune,
   runBench,
   runReport,
   runPurge,
@@ -30,7 +29,6 @@ import {
   runAmend,
   runExtend,
   runTeam,
-  runPending,
   runTeamCheck,
   runTeamSet,
   runTeamUnset,
@@ -76,11 +74,11 @@ import type { Command } from 'commander';
 const RUN_HELP: readonly { heading: string; commands: readonly string[] }[] = [
   {
     heading: 'Start and follow a run — you, or the agent you ask:',
-    commands: ['start', 'agent', 'monitor', 'watch', 'keep', 'status', 'state', 'preview', 'pending', 'team']
+    commands: ['start', 'agent', 'monitor', 'watch', 'keep', 'status', 'state', 'preview', 'team']
   },
   {
     heading: 'Yours alone — what writes into the project, or throws work away:',
-    commands: ['finish', 'allow-finish', 'abort', 'restore', 'purge', 'resolve', 'continue', 'upgrade']
+    commands: ['finish', 'abort', 'restore', 'purge', 'resolve', 'upgrade']
   },
   {
     heading: "The lead's — the agent that plans, reviews and closes:",
@@ -182,14 +180,6 @@ export const registerRunGroup = (program: Command): Command => {
       file === undefined ? runExtend(undefined, first, options) : runExtend(first, file, options)
     );
 
-  runGroup
-    .command('pending')
-    .description(
-      'The runs of this project not yet written into it — ready ones first, each with the command that applies it'
-    )
-    .option(...JSON_OPTION)
-    .action((options: RunCommandOptions) => runPending(options));
-
   const team = runGroup
     .command('team')
     .description(
@@ -281,20 +271,10 @@ export const registerRunGroup = (program: Command): Command => {
     .action((file: string | undefined, options: PlanOptions) => runOpen(file, options));
 
   runGroup
-    .command('allow-finish')
-    .description(
-      'A person lets the lead of an open run write it into the project itself (finish --apply), once its report is written and the checks pass — --revoke takes it back'
-    )
-    .argument('[run]', 'The run — the only open one when left out')
-    .option('--revoke', 'Take it back: a person writes the run into the project')
-    .option(...JSON_OPTION)
-    .action((run: string | undefined, options: RunCommandOptions & { revoke?: boolean }) =>
-      runAllowFinish(run, options)
-    );
-
-  runGroup
     .command('state')
-    .description('Every run of the project, and where it stands')
+    .description(
+      'Every run of the project not yet written into it, and where it stands — ready ones first, each with the command that applies it'
+    )
     .option(...JSON_OPTION)
     .action((options: RunCommandOptions) => runState(options));
 
@@ -358,17 +338,6 @@ export const registerRunGroup = (program: Command): Command => {
     .action((text: string, options: RunCommandOptions & { on?: string; plitzi?: boolean }) => runNotice(text, options));
 
   runGroup
-    .command('feedback')
-    .description(
-      'What the run says of Plitzi itself, now (.plitzi/plitzi-reports/runs/<run>/feedback.md) — written by the finish too, beside the report and the records: its agents’ notices of Plitzi, the refusals, the crashes, the checks no one’s work failed — for Plitzi’s team'
-    )
-    .argument('[run]', 'The run')
-    .option(...TOKEN_OPTION)
-    .option(...AGENT_OPTION)
-    .option(...JSON_OPTION)
-    .action((run: string | undefined, options: RunCommandOptions) => runFeedback(run, options));
-
-  runGroup
     .command('backlog')
     .description(
       'What is left to do, kept in .plitzi/backlog.json for the next run — what runs noticed, or add "…" with none open; done <id> closes one, saying how'
@@ -421,19 +390,13 @@ export const registerRunGroup = (program: Command): Command => {
   runGroup
     .command('watch')
     .description(
-      'Follow a run: printed again whenever it changes, until it finishes — one JSON object a line with --json'
+      "Follow a run. A lead's ends the moment something new needs it — a review, a question, a block, a notice — each said once; a person's prints the run again whenever it changes, until it finishes (one JSON object a line with --json)"
     )
     .argument('[run]', 'The run — the only open one when left out')
-    .option('--interval <seconds>', 'How often to look (2; 10 with --until lead)', positiveInteger)
-    .addOption(
-      new Option(
-        '--until <who>',
-        'End the moment something new needs them — a review, a question, a block, a notice — each said once'
-      ).choices(['lead'])
-    )
+    .option('--interval <seconds>', "How often to look (10 a lead's, 2 a person's)", positiveInteger)
     .option(
       '--timeout <duration>',
-      'With --until: how long to wait before ending with nothing new (90s, 8m, 1h; a number is minutes)',
+      "A lead's: how long to wait before ending with nothing new (90s, 8m, 1h; a number is minutes)",
       duration,
       FOLLOW_MS
     )
@@ -507,9 +470,18 @@ export const registerRunGroup = (program: Command): Command => {
       '--keep-backup',
       'Keep the project’s files as they were before the merge, in tmp/plitzi-backups/ — off by default'
     )
+    .option(
+      '--lead-finishes',
+      'A person’s: let the lead of the open run write it in itself, once its report is written and the checks pass — as run open --lead-finishes'
+    )
+    .option('--no-lead-finishes', 'A person’s: take that back — a person writes the run into the project')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((run: string | undefined, options: FinishOptions) => runFinish(run, options));
+    .action((run: string | undefined, options: FinishOptions & { leadFinishes?: boolean }) =>
+      options.leadFinishes === undefined
+        ? runFinish(run, options)
+        : runAllowFinish(run, { ...options, revoke: !options.leadFinishes })
+    );
 
   runGroup
     .command('preview')
@@ -534,10 +506,18 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...FRICTION_OPTION)
     .option(...HELPED_OPTION)
     .option('--full', 'The whole report — each finding with its evidence and fix, the flow, the cost, the bench')
+    .option(
+      '--plitzi',
+      'What the run says of Plitzi itself, now (.plitzi/plitzi-reports/runs/<run>/feedback.md) — written by the finish too: its agents’ notices of Plitzi, the refusals, the crashes, the checks no one’s work failed — for Plitzi’s team'
+    )
+    .option(...TOKEN_OPTION)
+    .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
     .action(
-      (run: string | undefined, options: RunCommandOptions & { summary?: string; full?: boolean } & ExperienceFlags) =>
-        runReport(run, options)
+      (
+        run: string | undefined,
+        options: RunCommandOptions & { summary?: string; full?: boolean; plitzi?: boolean } & ExperienceFlags
+      ) => (options.plitzi === true ? runFeedback(run, options) : runReport(run, options))
     );
 
   runGroup
@@ -551,25 +531,18 @@ export const registerRunGroup = (program: Command): Command => {
   runGroup
     .command('resolve')
     .description(
-      'Settle one file of a reconciliation: the project’s version, the run’s, both merged, or a file of yours'
+      'Settle one file of a reconciliation — the project’s version, the run’s, both merged, or a file of yours; with no file, every one settled, the run goes on (a person’s)'
     )
     .argument('<run>', 'The run')
-    .argument('<file>', 'The file under reconciliation')
-    .requiredOption(
+    .argument('[file]', 'The file under reconciliation')
+    .option(
       '--take <version>',
-      'project, run, merge (both changes line by line, when they touch different lines), or the path of a file holding the version to keep'
+      'With a file: project, run, merge (both changes line by line, when they touch different lines), or the path of a file holding the version to keep'
     )
     .option(...JSON_OPTION)
-    .action((run: string, file: string, options: RunCommandOptions & { take: string }) =>
-      runResolve(run, file, options)
+    .action((run: string, file: string | undefined, options: RunCommandOptions & { take?: string }) =>
+      file === undefined ? runContinue(run, options) : runResolve(run, file, options)
     );
-
-  runGroup
-    .command('continue')
-    .description('Every file resolved: the run goes on — a person’s')
-    .argument('[run]', 'The run')
-    .option(...JSON_OPTION)
-    .action((run: string | undefined, options: RunCommandOptions) => runContinue(run, options));
 
   runGroup
     .command('abort')
@@ -624,12 +597,6 @@ export const registerRunGroup = (program: Command): Command => {
     .argument('<run>', 'The run')
     .option(...JSON_OPTION)
     .action((run: string, options: RunCommandOptions) => runPurge(run, options));
-
-  runGroup
-    .command('prune')
-    .description('Remove the caches of a run idle for 8 hours — never its backups or its approved work')
-    .option(...JSON_OPTION)
-    .action((options: RunCommandOptions) => runPrune(options));
 
   groupHelp(runGroup, RUN_HELP);
   runGroup.addHelpText(

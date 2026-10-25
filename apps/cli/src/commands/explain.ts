@@ -37,8 +37,6 @@ import type { Command } from 'commander';
 
 export interface ExplainOptions {
   list?: string;
-  /** Words of what is looked for: everything they describe, best first. */
-  search?: string;
   json?: boolean;
 }
 
@@ -181,13 +179,15 @@ export const explainCommand = async (
   options: ExplainOptions,
   commands: readonly Command[] = []
 ): Promise<void> => {
-  if (options.search !== undefined) {
+  // Several words are what something is described by, best first — a name is one word (`explain "carousel end"`).
+  const words = name !== undefined && /\s/.test(name.trim()) ? name.trim() : undefined;
+  if (words !== undefined) {
     const project = await findProject(process.cwd());
     const root = project?.root ?? process.cwd();
-    const hits = searchAll(options.search, commands, 10, skillPassages(root), name => memberDeclarations(root, name));
+    const hits = searchAll(words, commands, 10, skillPassages(root), each => memberDeclarations(root, each));
     if (hits.length === 0) {
       fail(
-        `Nothing Plitzi has is described by "${options.search}" — other words, or what there is: --list ${kinds}, tasks. Something Plitzi should have: say it (plitzi run notice --plitzi "…", in a run).`
+        `Nothing Plitzi has is described by "${words}" — other words, or what there is: --list ${kinds}, tasks. Something Plitzi should have: say it (plitzi run notice --plitzi "…", in a run).`
       );
 
       return;
@@ -321,7 +321,7 @@ export const explainCommand = async (
       return;
     }
 
-    // No name: what its words describe, as --search answers them — a run's `explain active`, `explain keepState`,
+    // No name: what its words describe, as several words are answered — a run's `explain active`, `explain keepState`,
     // `explain icon` each failed, nine times, where a search found the passage that teaches it.
     const described = searchAll(wordsOfName(name), commands, 5, skillPassages(project?.root ?? process.cwd()), each =>
       memberDeclarations(project?.root ?? process.cwd(), each)
@@ -333,7 +333,9 @@ export const explainCommand = async (
           : [
               chalk.yellow(`"${name}" is no name Plitzi has — what the words describe:`),
               ...described.map(hit => `${hit.name.padEnd(36)} ${chalk.dim(`${hit.kind} — ${hit.summary}`)}`),
-              chalk.dim(`Each said whole: plitzi explain <name>; more: plitzi explain --search "${wordsOfName(name)}"`)
+              chalk.dim(
+                `Each said whole: plitzi explain <name>${/\s/.test(wordsOfName(name)) ? `; more: plitzi explain "${wordsOfName(name)}"` : ''}`
+              )
             ].join('\n')
       );
 

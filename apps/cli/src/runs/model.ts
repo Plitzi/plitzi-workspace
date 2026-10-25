@@ -233,7 +233,7 @@ export interface RunRecord {
   /** Above the threshold, who confirmed the estimate: a person, by typing the run's name. */
   confirmed?: string;
   /**
-   * When a person let the lead write the run into the project itself — `run open --lead-finishes`, `run allow-finish`,
+   * When a person let the lead write the run into the project itself — `run open --lead-finishes`, `run finish --lead-finishes`,
    * confirmed by typing the run's name: `finish --apply` then needs no person, and still a report and green checks.
    */
   leadFinishes?: string;
@@ -334,14 +334,14 @@ export interface TaskState {
   warnings?: string[];
   /**
    * Its UI's review by a designer, in a run that has one: `due` from its `complete` until a designer says — the agent
-   * who took it to review, once one did (`task next --take`) — and `approved` once it did: then it is the lead's.
+   * who took it to review, once one did (`task next`) — and `approved` once it did: then it is the lead's.
    */
   design?: DesignReview;
   /** The lead that took this round's review from the queue (`task next --role lead`): another lead is not offered it. */
   reviewer?: { by: string; round: number; at: string };
   /** What its spikes found out, oldest first: in its brief, and in the brief of every task that waits for it. */
   findings?: Finding[];
-  /** The lead finding it out, once one took it (`task next --role lead --take`): another is not offered it. */
+  /** The lead finding it out, once one took it (`task next --role lead --no-wait`): another is not offered it. */
   spikedBy?: { by: string; at: string };
   /**
    * The agent the lead handed it to when it took it back (`task reassign --to <agent>`): offered to that one first, and

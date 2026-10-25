@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 import { launchBrowser } from '../browser';
-import { accountAsked } from './check';
+import { accountAsked, projectAccount } from './check';
 import { projectHere } from './existingProject';
 import { ourPage, pairOf } from './measure';
 import { settle } from './measureState';
@@ -62,6 +62,8 @@ export interface PlayOptions extends ConditionOptions {
   url?: string;
   /** Signed in first as this account: the password from `PLITZI_CHECK_PASSWORD`. */
   as?: string;
+  /** Read as a guest, though a page sends one away: the project's account is not signed in by itself. */
+  guest?: boolean;
   json?: boolean;
 }
 
@@ -505,6 +507,8 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
     return;
   }
 
+  const own = options.as === undefined && options.guest !== true ? await projectAccount(project.root) : undefined;
+
   const browser = await launchBrowser(project.root);
   if ('problem' in browser) {
     unanswered(browser.problem);
@@ -521,6 +525,7 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
         conditions: conditionsOf(options),
         ...(options.timezone ? { timezone: options.timezone } : {}),
         ...(account ? { account } : {}),
+        ...(own ? { projectAccount: own } : {}),
         ...(options.scheme ? { scheme: options.scheme } : {})
       });
       if (!ours.answered) {

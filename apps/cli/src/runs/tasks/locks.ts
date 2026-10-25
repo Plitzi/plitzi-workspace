@@ -104,7 +104,7 @@ export const canWrite = async (ctx: RunContext, file: string, taskId?: string): 
   return { ok: true, file: clean };
 };
 
-/** `plitzi task claims`: every live `.lock` of a run, by file. */
+/** `plitzi task claim`: every live `.lock` of a run, by file. */
 export const claims = async (
   ctx: RunContext,
   runId: string

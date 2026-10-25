@@ -223,7 +223,7 @@ export const showTask = async (
   const { knownFailure } = view.state;
 
   const said = (await messagesOf(loaded)).filter(each => each.to === taskId || each.from === taskId);
-  // The lead reads what this task told it here — a question stays until it is answered: `run watch --until lead` and the
+  // The lead reads what this task told it here — a question stays until it is answered: `run watch` and the
   // inbox do not hand it over again.
   await markRead(
     loaded,

@@ -85,7 +85,7 @@ export interface RunPaths {
   messages: string;
   /** Which of them the lead has read. */
   leadRead: string;
-  /** What `run watch --until lead` already woke the lead for. */
+  /** What `run watch` already woke the lead for. */
   leadSeen: string;
   /** When each lead that reviews last asked for a review (`task next --role lead`): which of them are running. */
   leadsAsking: string;

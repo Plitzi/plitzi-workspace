@@ -11,7 +11,7 @@ has its exit code (below). A text written `-` is read from stdin.
 (`lead-2`…, started by the lead) review what they are
 handed as strictly, answer the questions handed them, and stop when told — the rest is the lead's (`lead-only`, 25).
 The team is `.plitzi/team.json`: each agent's name, roles, count, model. Tasks name a role (`"role":
-"designer"`; `developer` when left out); `plitzi task next --role designer --follow --take --agent design-1` waits
+"designer"`; `developer` when left out); `plitzi task next --agent design-1` waits
 (8 min, `--timeout`) for the next one and takes it — first a task you hold that can go on, or another's sent back
 while its agent is at a task (3 min on, with its review's asks); again until it says you can stop. Started at a level, say it (`--quality high`, as `run plan` gave your command): you are handed tasks of it or below.
 **A designer** reviews UI/UX before the lead: [runs-designer.md](runs-designer.md). **A tester** reviews code as the lead would ([runs-review.md](runs-review.md)), first; then `<task>-tests` after each developer task: tests of
@@ -61,15 +61,15 @@ request <file> --summary "why"`), merged when you are approved; **another task's
   meanwhile (`--follow` to stay until it is yours) — a task nobody took yet: the claim takes its file ahead of it. A
   file handed on arrives with what the run approved since.
 - **Agree with another task** when your work needs a change in its files: `plitzi task propose t-menu --change "the card
-takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | --reject "why" | --counter "…"`.
-  Answer what is proposed to you before you complete (`plitzi task proposals`); honour what you accepted; `--withdraw
+takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t-home-p1 --accept | --reject "why" | --counter "…"`.
+  Answer what is proposed to you before you complete (`plitzi task propose` lists them); honour what you accepted; `--withdraw
   "why"` takes back your own.
 - **Stuck, or unsure?** `plitzi task ask "Spanish or Catalan?"` (`--follow` waits for the answer). **Something the lead
   should know** — a finding, a choice you made, a risk — with no answer needed: `plitzi task tell "…"` (holding no task — a reviewer — `--about <task> --token <yours>`). **Wrong, and no task's** — outside yours, there
   before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage. What the lead
   says to you arrives with your next heartbeat, progress or completion — read it (`task inbox --all`: all again).
 - **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"` (at a review too); in a long think or test
-  run, `plitzi task heartbeat` every 2 minutes.
+  run, `plitzi task progress` every 2 minutes.
 - **A spike** is a lead's: what is built is decided by what it finds — your brief has what was found for your task.
   Your work needs something found out first: `plitzi task spike "what"` — blocked on the lead, its files yours; the
   answer comes back with the task (`task next`), take another meanwhile.
@@ -82,7 +82,7 @@ takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | 
   changed: iterate on it, not on `complete`, whose failures count toward the run's brake. It hands you the lead's news. What you declare for later tasks, unread yet, is a warning.
 - **Done:** `plitzi task complete --ease <1-5> --hardest "…" [--friction "…"] [--note "…"] [--review code|ui]` — what
   it was like to Plitzi, the note to the lead;
-  `code` when nothing a visitor sees changed (the lead's review alone), `ui` for its UI looked at first. A control you add you use first, there and back (`page play`). **A task never ends
+  `code` when nothing a visitor sees changed (the lead's alone, unless a page draws it), `ui` for its UI looked at first. A control you add you use first, there and back (`page play`). **A task never ends
   with failing checks** — lint, types, tests: fix them — nor with a file it took past 400 non-blank lines (your
   heartbeat says so first): split it. Only for a weighty reason: `plitzi task complete
 --known-failure "why" [--fixed-by <task>|lead]`, its why naming each failing step. A check that fails the same way without your change (a person's,
@@ -107,8 +107,8 @@ out (what was built on it waits again), and `plitzi run restore <run> <file>` pu
 | 10           | `claimed` — another task's file           | wait, request it, or take another task                                                  |
 | 11           | `waiting` — queued for a file             | go on with what does not need it                                                        |
 | 12           | `reassigned` — no longer yours            | stop working on it                                                                      |
-| 13           | `version-mismatch`                        | Plitzi upgraded: keep your work, `task next --follow` waits for a person's `run attach` |
-| 14 / 15      | `stopping` / `forced-stop`                | finish the task in hand / stop writing; `task next --follow` waits                      |
+| 13           | `version-mismatch`                        | Plitzi upgraded: keep your work, `task next` waits for a person's `run attach` |
+| 14 / 15      | `stopping` / `forced-stop`                | finish the task in hand / stop writing; `task next` waits                      |
 | 16           | `reconciliation`                          | the lead resolves it                                                                    |
 | 17           | `person-only`                             | ask the person to run it in their terminal                                              |
 | 18           | `conflict`                                | the lead decides; or `task discard` and redo on the run's version                       |

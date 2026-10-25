@@ -79,7 +79,7 @@ the space with it (the e2e harness: `renderSpace(page, space, { debugMode: true 
 ## Asking the page what it holds
 
 `plitzi page check` lists every flow that failed while the page loaded; `--state` adds the state and every source by its
-full name, `--element <id>` one element — what it reads, its own state, whether it is on screen. They come from the
+full name, each key with what it holds, `--element <id>` one element — what it reads, its own state, whether it is on screen. They come from the
 page's dev tools (debug mode, any development server). In a test, `readDevTools(page, { state: true })` from
 `@plitzi/sdk-authoring` answers the same.
 

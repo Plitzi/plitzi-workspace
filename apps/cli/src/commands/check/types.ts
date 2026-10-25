@@ -43,6 +43,8 @@ export interface CheckOptions {
    * the password in `PLITZI_CHECK_PASSWORD` — what a page for signed-in visitors is checked as.
    */
   as?: string;
+  /** Read as a guest, though a page sends one away: the project's account is not signed in by itself. */
+  guest?: boolean;
   /** Taking part in the page's channels — arriving, announcing itself, sending — as a visitor does. */
   presence?: boolean;
   /** `--timezone <IANA>`: the visitor's time zone, the browser's clock read in — the machine's when left out. */

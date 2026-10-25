@@ -18,7 +18,7 @@ const DOING: Record<string, (target: string | undefined, compare: boolean) => st
   'task next': () => 'asking for work',
   'task request': () => 'asking for a shared file',
   'task wait': () => 'waiting for a shared file',
-  'task claim': () => 'taking a shared file',
+  'task claim': target => (target === undefined ? 'reading who holds which file' : 'taking a shared file'),
   'task message': () => 'writing to the run',
   'task tell': () => 'telling the lead',
   'task ask': () => 'asking the lead'

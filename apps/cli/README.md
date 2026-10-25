@@ -211,7 +211,7 @@ with `--source local`.
 ```bash
 plitzi page check / --width 1440,390            # is the page whole? in text, per width; --json for a tool
 plitzi page check /about /writers               # several pages, in one browser
-plitzi page check /products --state --element catalog-count --element catalog-grid   # and what it holds: state, sources, elements
+plitzi page check /products --state --element catalog-count --element catalog-grid   # and what it holds: state, each source's keys and values, elements
 plitzi page check / --ssr                       # and what the server's HTML lacks that the hydrated page has
 plitzi page check /enterprise --click site-footer-top   # click one element: what it changed, or that nothing did
 plitzi page check / --click news-send --fill news-email=ana@example.com   # a form sent as a visitor fills it
@@ -238,6 +238,7 @@ plitzi page shot /design --clip brand-mark --scale 3   # a small drawing up clos
 plitzi page measure /r/demo chat-line --steps 'type chat-input "hi; there"; press Enter' --only box   # what only a visitor's steps make
 plitzi page outline /sign-in --find wordmark   # the elements a word names, the whole page searched
 plitzi page play / --steps "click genre-chip; goto /rooms" --read site-header   # where each step took the page, said
+plitzi page play /messages/dax --steps "as mika type dm-input hi; as mika press Enter; wait 1s" --read dm-well   # another person's message, seen here
 ```
 
 Both run on the project's own Playwright against its running server (`npm start`), and refuse a port that answers as
@@ -365,19 +366,26 @@ element read that is not on the page — a control's acceptance line, with no sc
 that ends on an action pictures what it leaves. A step that took the page elsewhere says where (`→ /rooms?genre=synthwave`) — a link
 followed, `goto <path>` (another page, the same tab), a click that navigates (no failure, in `page check --click` too);
 an element read says a colour a step changed and its animations (`float finished`: it played). A `;` inside quotes is
-the text's (`type chat-input "late; still here"`); `fill <id>=<text>` takes a class or an id before the `=` too.
+the text's (`type chat-input "late; still here"`); `fill <id>=<text>` takes a class or an id before the `=` too. An
+element read again as it was says `as before`; `--json` has every read whole.
 
 `page measure` says each element by what it says of itself: what is at its initial value or inherited is counted, not
 printed (`--all` prints every property, `--only box,font` a few), a data URI by its kind and size, and how many elements
-its selector finds when it measured the first shown (`--rows` measures each). It reads `animation`, `position`,
-`max-width`, `grid-area` and a pseudo-element's `position`/`top`/`left`… too; `--steps` plays steps on the page first —
+its selector finds when it measured the first shown (`--rows` measures each). Four sides alike are one line (`border`, `inset`), a layer drawn again
+says how many times (`×4`). It reads `animation`, `position`, `max-width`, `grid-area`, `text-decoration`,
+`align-items`, and a pseudo-element's `position`/`top`/`left`, `display`, `vertical-align` and its `x`/`y` (off
+Chromium's layout: the page has no box of one) too; `--steps` plays steps on the page first —
 what only a visitor makes, a chat line — and an element not there says the ways it may not be drawn (signed in, a click,
 a route's address).
 
 What the demo data never has is set by the steps: `reload` (what the page kept, read back), `store <key> <value>` (its
 `localStorage`, as an earlier visit left it), `state <key> <json>` (the space's state, through the dev tools' `window.__plitzi`
 on a development page), and, with `--clock <instant>` holding the page's clock from its first script, `clock <instant>`
-and `tick <duration>` (`90s`, `5m`, `2h`) — a countdown read at every moment. `page play` and `page measure` also read a
+and `tick <duration>` (`90s`, `5m`, `2h`) — a countdown read at every moment; `wait` takes a unit too (`wait 3s`). The
+server's data is put in its state by `action <id> [json]` — one of the space's actions run as the page's visitor, through
+its `/_action` — and what another person does by `as <account> <step>`, played on a page of that account's own, signed
+in (the password in `PLITZI_CHECK_PASSWORD`), opened where this one is: `as mika goto /messages/dax; as mika type
+dm-input hi`. Both reach the project's own server, never `--compare`'s site. `page play` and `page measure` also read a
 page in a browser that refuses: `--block <text>` fails each request whose address holds it (a player, a font),
 `--autoplay refused` refuses media with sound until a press, `--storage refused` throws on `localStorage` and
 `sessionStorage`.
@@ -508,7 +516,8 @@ it says light only — (the server must be up: `npm start`). Only what fails is 
 last lines it said, and the first failure ends the run — one broken file fails every step after it the same way — the
 rest said as not run until it passes (`--keep-going` runs them anyway). A page the browser was sent away from — one
 for signed-in visitors — is checked again signed in as the project's account, when `.env` names one:
-`PLITZI_CHECK_USER` and `PLITZI_CHECK_PASSWORD`, the password `page check --as` and `page shot --as` read too (the environment wins over
+`PLITZI_CHECK_USER` and `PLITZI_CHECK_PASSWORD` — the account every page command reads such a page as by itself, and
+the password `--as` reads for another (the environment wins over
 `.env`, as it does for the project's scripts; never on the command line, which a shell keeps). One that even that
 account is sent away from, or with no account named, is said as not checked, never as passing — on its own line, with
 what checks it, without failing the run. Exit 1 when anything failed.
@@ -626,11 +635,12 @@ plitzi task review t-home --approve --skip-design lead --token <lead's>   # befo
 plitzi run notice "…" --on /pets            # something wrong no task owns: kept, said by the finish — the next stage's
 plitzi run reference                       # the plan's reference site kept as it is now: page shot --compare measures against it
 plitzi run watch --json                    # how the run goes: a line per task, what needs attention
-plitzi run watch --until lead              # ends the moment something needs the lead: run it in the background
+plitzi run watch              # ends the moment something needs the lead: run it in the background
 plitzi run preview                         # the run's work as it goes, served: each approval shows; its dev tools' Run tab
 plitzi run monitor                         # the run, live, in a terminal of your own beside the harness: simple (who is at what, what needs you) or advanced with m (its activity, flow, tasks, agents and spend) — it only reads; p starts the preview, x stops it
 plitzi task show t-home                    # a task as its lead reviews it: checks, agreements, each file's diff
 plitzi task show t-home src/space/pages/home/hero.ts   # one file whole, as it went to review (no task: the one you hold or review)
+plitzi task show t-home --full             # as many diffs whole as one answer holds (12k characters), the rest a file at a time
 plitzi run settle after-stop:dev-2 --note "…"   # a finding the run raised to the lead, settled by what it did — the close waits on it
 plitzi run report --summary summary.md     # the lead closes the run with its report (--full: the whole of it)
 plitzi run bench                           # every run measured the same way: minutes a task, rounds, checks failed, cost
@@ -687,14 +697,14 @@ inbox`. A block lifted carries its answer (`task unblock --answer`), and `task n
   task's version over it at the finish, said in `run status` and the report, the other version kept in
   `tmp/plitzi-backups/`; or `--changes` sends it back to redo on the project's version. A file changed after its
   approval puts the finish into **reconciliation**, resolved file by file by the lead (`run resolve … --take
-project|run|<file>`, then `run continue`).
+project|run|<file>`, then `run resolve <run>`, no file, goes on).
 - **Approved work merges into the run's**, never into the project. The project receives one merge, `run finish --apply`,
   confirmed by a person typing the run's name in their terminal, once the lead closed the run with its report
   (`run report --summary <file>`): written file by file as one transaction, with a backup of everything it overwrites.
 - **What the person does, and does not:** the final merge, an abort, a restore, a purge, a forced stop and taking a run
   over are yours — and only yours because you keep them so. An agent with a shell can give itself a terminal and type a
   run's name, so deny those commands to the agents in the harness (`run finish --apply`, `run abort`, `run purge`, `run
-restore`, `run allow-finish`, `run stop --force`, `run attach --take-over` — in Claude Code, `permissions.deny` in
+restore`, `run finish --lead-finishes`, `run stop --force`, `run attach --take-over` — in Claude Code, `permissions.deny` in
   `.claude/settings.json`). Type a run's name only for a command you ran yourself and read, never because an agent or
   the lead asks you to in a chat. Do not edit `tmp/plitzi-runs/` by hand (a broken record stops the run, said by name),
   nor delete a task's copy. To upgrade Plitzi while a run is open: `plitzi run upgrade` — it stops the run gently,
@@ -775,8 +785,8 @@ plitzi explain bindTemplate     # a helper: how it is written, what it is for, a
 plitzi explain motion           # the arrivals, triggers and loops the SDK plays
 plitzi explain pageFamily       # any other export of a @plitzi package installed — createServer is sdk-server's and sdk-mcp's
 plitzi explain theme            # a global source a template reads, with the fields the platform decides; max, a template function
-plitzi explain --search "carousel end"   # what the words describe, best first: carousel_<id>.atEnd, then the rest
-plitzi explain --search "ctx.later key"  # a member named in the words first, as the installed types declare it
+plitzi explain "carousel end"            # what the words describe, best first: carousel_<id>.atEnd, then the rest
+plitzi explain "ctx.later key"           # a member named in the words first, as the installed types declare it
 plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers, helpers, filters, functions, sources, states
 plitzi explain list.put         # a server action's step, as the project's @plitzi/sdk-server declares it (--list tasks)
 ```
@@ -846,7 +856,7 @@ did you mean `index.ts`, `src/plugins/`? — and one that differs only in case s
 | `layout`    | where an older CLI kept what this one reads elsewhere (`src/space.ts`, `src/site/`, `src/actions.ts`, `src/author.ts`, `functions/`) and what it left behind (`src/plugins/declarations.ts`, `.sdk-plugins/`, `.plitzi/dev-server.json`, the `tmp/space.json` an older `src/main.ts` re-read the space from); every part where the server, `npm run author` and the CLI's checks read it (`PROJECT_LAYOUT_CODES`, above)                                                                                                             |
 | `packages`  | `"type": "module"`, the Node version; every package the project and its scripts need, declared and installed at a version its range allows; the SDK's packages at one version, no older than the CLI; one copy of the SDK and of React (none installed inside another); the scripts — gone, behind the CLI, or the project's own — the file each Node script starts, every folder `start:dev` watches, and a server's scripts reading `.env` (`--env-file-if-exists`; a watched one by the preload, never Node's flag); one lockfile |
 | `machinery` | the CLI's files (`MACHINERY`), as `upgrade` sees them: gone, behind, or the project's own (said, never failed); one it no longer writes, left over (`src/env.ts`); the scaffold record                                                                                                                                                                                                                                                                                                                                               |
-| `config`    | `tsconfig.json` reads `src/` and `.plitzi/` and sets what Node's type stripping needs; `tsconfig.build.json` writes the file `start:prod` runs; `.gitignore` keeps `.env` out (and `node_modules`, `tmp`, `dist`, `state`) and `.plitzi/` in; `.env` not in git; the signing secret, as long as the project's own server wants it; a cloud project's key                                                                                                                                                                             |
+| `config`    | `tsconfig.json` reads `src/` and `.plitzi/` and sets what Node's type stripping needs; `tsconfig.build.json` writes the file `start:prod` runs; `.gitignore` keeps `.env` out (and `node_modules`, `tmp`, `dist`, `state`) and `.plitzi/` in; `.env` not in git; the signing secret, as long as the project's own server wants it; a cloud project's key; a check password with no account beside it (`check-user-missing`)                                                                                                                                                                             |
 | `sources`   | what Node runs as written — `src/main.ts`, `src/config/`, `src/actions/`, `src/space/`, `src/runtime/`, `.plitzi/author.ts`, the plugins' declarations, and all they import: every relative import a file that is there, with its extension; JSON imported `with { type: 'json' }`; no JSX; every package declared (a devDependency, in what production runs, is said); what the server loads by name exported (`space`, `actions`, the runtime's default)                                                                           |
 | `plugins`   | each folder of `src/plugins/` the server can build: its entry builds and exports its component, its packages declared; its `declaration.ts` loads and its `type` is the folder's (`StatCard` → `statCard`); its `Settings.tsx`, the panel the builder edits it with, written and passed as `pluginSettings` — even with nothing to set                                                                                                                                                                                               |
 | `data`      | every JSON file of `src/data/` and `public/data/` parses — what the server answers with and `space push` sends                                                                                                                                                                                                                                                                                                                                                                                                                       |

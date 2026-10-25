@@ -103,7 +103,7 @@ export const leadNext = async (
       ...taken.map(view => `${view.task.id} is ${String(view.state.reviewer?.by)}'s`),
       ...designs.map(view => `${view.task.id} waits for its UI review`),
       `${String(open.length - taken.length - designs.length)} task(s) still being worked`
-    ].join(', ')} — wait for one (--follow)`,
+    ].join(', ')} — wait for one: the same command without --no-wait`,
     ready: [],
     messages
   };

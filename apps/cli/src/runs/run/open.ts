@@ -344,7 +344,7 @@ export const openRun = async (
 };
 
 /**
- * `plitzi run allow-finish`: a person lets the lead of an open run write it into the project itself — or, `--revoke`,
+ * `plitzi run finish --lead-finishes`: a person lets the lead of an open run write it into the project itself — or, `--no-lead-finishes`,
  * takes that back. A person's, confirmed by typing the run's name: an agent never grants itself the project.
  */
 export const allowLeadFinish = async (

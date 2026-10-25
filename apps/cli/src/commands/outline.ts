@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 import { launchBrowser } from '../browser';
-import { accountAsked } from './check';
+import { accountAsked, projectAccount } from './check';
 import { projectHere } from './existingProject';
 import { ourPage, pairOf } from './measure';
 import { putIn } from './measureState';
@@ -34,6 +34,8 @@ export interface OutlineOptions {
   url?: string;
   /** Signed in first as this account: the password from `PLITZI_CHECK_PASSWORD`. */
   as?: string;
+  /** Read as a guest, though a page sends one away: the project's account is not signed in by itself. */
+  guest?: boolean;
   /**
    * The elements whose name, selector or words hold this — the whole page searched, at any depth: a run's designer
    * found the sign-in wordmark's id, built from a prefix in code, by grepping the source.
@@ -401,6 +403,8 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
       return;
     }
 
+    const own = options.as === undefined && options.guest !== true ? await projectAccount(project.root) : undefined;
+
     const browser = await launchBrowser(project.root);
     if ('problem' in browser) {
       unanswered(browser.problem);
@@ -420,6 +424,7 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
           : await ourPage(browser, where?.origin ?? '', route, {
               width,
               ...(account ? { account } : {}),
+              ...(own ? { projectAccount: own } : {}),
               ...(options.scheme ? { scheme: options.scheme } : {})
             }).then(read => (read.answered ? read : { problem: read.problem ?? `nothing answers at ${url}` }));
       if ('problem' in opened) {

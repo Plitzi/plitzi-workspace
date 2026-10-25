@@ -34,10 +34,14 @@ export {
   CHECK_USER_ENV,
   checkAccount,
   landingProblem,
+  projectAccount,
+  saySignedIn,
   sentElsewhere,
-  signInAs
+  signedInNote,
+  signInAs,
+  signInWhereSent
 } from './account';
-export type { Account } from './account';
+export type { Account, SignedInWhereSent } from './account';
 export { isNotFoundPage, notShownInPage, pageFor, staticPaths } from './space';
 export { contestedStylesInPage, contestedText, inertText } from './styles';
 export {

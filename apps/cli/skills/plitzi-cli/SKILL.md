@@ -40,7 +40,7 @@ npx plitzi element move ent-faq --before ent-pricing    # an element put elsewhe
 npx plitzi page check -- /about --width 1440,390        # whether a page is whole, in text
 npx plitzi space activity --follow --json               # what others do on the space: edits, versions, failures
 npx plitzi explain navigate                             # what a name means: element, step, state, setting, any export
-npx plitzi explain --search "carousel end"              # whether Plitzi has a way: fields, steps, states, commands
+npx plitzi explain "carousel end"                       # whether Plitzi has a way: fields, steps, states, commands
 npx plitzi doctor                                       # whether the project is whole; --fix the simple parts
 npx plitzi upgrade                                      # the project up to this CLI (--write)
 npx plitzi cert                                         # HTTPS for a phone on the Wi-Fi (with HOST=0.0.0.0)
@@ -60,8 +60,7 @@ agent of a run (its prompt says so): [runs](reference/runs.md) — a designer's 
 ## Running it as an agent
 
 - **Which check.** All of it before you finish: `verify`. The space alone: `npm run
-author`; a page: `page check`. The project around them: `doctor`, before `space push`. Pages for signed-in visitors
-  are checked as the account `.env` names (`PLITZI_CHECK_USER`, `PLITZI_CHECK_PASSWORD`); `verify` says when none is.
+author`; a page: `page check`. The project around them: `doctor`, before `space push`. A page that sends a guest to sign in is read as `.env`'s account (`PLITZI_CHECK_USER`) by every page command, said; `doctor` says when none is.
 - **Be told, don't ask again.** While you edit `src/space/`, run `space watch --json` in the background: each save
   answers with what it changed, the problems it brought and fixed, or why the space stopped authoring. On a space
   people edit too, `space activity --follow --json` says their edits and the actions that fail as they happen.

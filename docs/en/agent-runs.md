@@ -51,7 +51,7 @@ agents, answers them, reviews — the complete, strict review and the final word
 `messages/` (`messages.ts`, `talk.ts`): an agent's question is on top of `run status`; what the lead says to a task — or
 to every task in hand, or to an agent by name (`@dev-1`), which `task next` hands over between tasks — is handed over
 with the task's next heartbeat, progress or completion, marked read as it is; a question with a reply leaves `run
-status`. `run watch --until lead` (`leadWatch.ts`) is what a lead waits with in the background: it ends with what is new
+status`. `run watch` (`leadWatch.ts`) is what a lead waits with in the background: it ends with what is new
 for it — a review by its round, a question, a block, a notice — each once, what it woke the lead for kept in the run's
 `lead-seen.json`. A block the lead lifts carries what the task waited for (`task unblock --answer`), and `task next`
 hands an agent the task it holds and can go on with — unblocked, or sent back with changes — before anything new
@@ -83,7 +83,7 @@ are closed as its run is applied, each saying the task and the run that did it.
 **The run's feedback to Plitzi** (`feedback.ts`) is what a multi-agent run says of Plitzi itself, as `plitzi feedback`
 is a single agent's. Each agent reports every round it completes, with what it was like to work with Plitzi (below).
 The lead adds its own report and experience (`run report --summary … --ease --hardest`). The run consolidates them as it
-finishes or is aborted, with what its records show was Plitzi's or the machine's (the findings, below). `run feedback` writes it before that. It is
+finishes or is aborted, with what its records show was Plitzi's or the machine's (the findings, below). `run report --plitzi` writes it before that. It is
 `feedback.md` in the run's folder of reports (`.plitzi/plitzi-reports/runs/<run>/`, below), the file of it read first;
 its data is the report's (`report.json`). The person shares the folder with Plitzi's team; it is never sent by itself.
 It holds:
@@ -107,22 +107,19 @@ in a review each time.
 waited for its review in v12. A team of five or more has `lead-2`, `lead-3`… beside `lead` — `"lead": { "count" }` in
 `team.json` says another number — recorded in `run.json` (`leads`) when the run opens or a stage raises them. Two levels
 and one queue, no lead with agents of its own — **started only when the reviews queue up**, since one waiting for
-reviews it is never handed spends tokens on nothing: `lead` reviews every task, taking each from the queue (`task next
---role lead --take`), until two wait and the oldest waited five minutes (`REVIEW_BACKLOG_MS`) — then `run watch --until
-lead` names the one to start; one handed nothing for four minutes (`IDLE_LEAD_MS`) is told it can stop — at once when no review waits and the tasks left are no more than the other leads, who review one each (`spareLead`), and a lead that
+reviews it is never handed spends tokens on nothing: `lead` reviews every task, taking each from the queue (`task next --role lead --no-wait`), until two wait and the oldest waited five minutes (`REVIEW_BACKLOG_MS`) — then `run watch` names the one to start; one handed nothing for four minutes (`IDLE_LEAD_MS`) is told it can stop — at once when no review waits and the tasks left are no more than the other leads, who review one each (`spareLead`), and a lead that
 asked within the last minute (`leads-asking.json`) is running. A lead that reviews answers questions too (`answering.ts`):
 with no review for it, `task next --role lead` hands it the oldest question to the lead no other lead took
 (`answering.json`) — what the code, the plan or the original answers; a choice for the person or a change of plan it
 leaves — and `lead` hears what it said (an fyi), woken for the question only once it waited `UNTAKEN_REVIEW_MS`
 unanswered. A message to a task answers its one open question; with two open it is refused until `--reply-to` says
-which, and one to `all` answers none (a note to every task marked a question answered). A lead that reviews waits with `task next --role lead --follow --take`,
+which, and one to `all` answers none (a note to every task marked a question answered). A lead that reviews waits with `task next --role lead`,
 which offers it a task in review no other lead took (`TaskState.reviewer`, for the round) — one it sent back first, then
 the one that waited longest — and reviews it as `lead` would, as strictly; a review another lead took is refused to it
 (`claimed`). Everything else — planning, amending, stacking a stage, answering, notes to every task, unblocking,
 reassigning, reverting, reconciling, the summary and the finish — is `lead`'s, refused to a lead that reviews and to an
 agent of the team (`lead-only`), so two never do it twice. With nothing waiting for it, `lead` helps: `task reassign
-<ready task> --to lead` makes the task its own, worked in its copy and completed as an agent's is. `lead` may review any task; while one of them runs, `run watch
---until lead` wakes it for a review only after it waited two minutes with no lead taking it (`UNTAKEN_REVIEW_MS`). Two verdicts on one task are given one at a time (`review.lock`): the second reads it said.
+<ready task> --to lead` makes the task its own, worked in its copy and completed as an agent's is. `lead` may review any task; while one of them runs, `run watch` wakes it for a review only after it waited two minutes with no lead taking it (`UNTAKEN_REVIEW_MS`). Two verdicts on one task are given one at a time (`review.lock`): the second reads it said.
 
 **Connected as it goes.** A shared file a task changed — or any file no task at work holds: a done task's, one in no
 task — is taken by turns at `complete` when nobody else holds it, so it merges with the task instead of waiting for an
@@ -204,7 +201,7 @@ dialog's own keys, and `q`. The keys and the mouse are answered apart from the t
 tested; with no run to draw, the panel says why in a frame of its own — none yet, or the one it showed is gone. The monitor watches the run's folder and draws again the
 moment the CLI writes to it, every second for its clock and faster while an agent is at work, in one synchronized frame.
 Everything that
-waits on a run — `task next --follow`, a file's wait, a question's answer, `run watch --until lead`, `task inbox
+waits on a run — `task next`, a file's wait, a question's answer, `run watch`, `task inbox
 --follow` — wakes the same way (`runChanged.ts`), on a change, not at its next look: a hand-off is as quick as the CLI
 writing it. The activity says what each agent is at between tasks (`waiting`, `idle`, `stops`), that every task is
 approved (`all-approved`) and, at a whole and checked dry run of the finish, that the run is ready and whose step is
@@ -290,14 +287,16 @@ agreed between them. `task propose <task> --change …` writes a proposal in the
 answers once, in its own `answers/` (created exclusively): accept, reject (saying why) or counter, which is a proposal
 made back. Three rounds of counters and the lead decides; the lead may answer any proposal. A proposer
 that `--wait`s is waiting like a wait on a file — the same cycle check, one wait graph — and is taken back up with the
-answer in its notes. A task does not complete with a proposal to it unanswered; accepted proposals are its
+answer in its notes. A proposal to a task in review is refused, as one to a task done: nobody answers while it is
+reviewed — the lead asks it in the review (`task tell --about`), or the file is changed after its approval (a run's
+design-2 waited ten minutes on one). A task does not complete with a proposal to it unanswered; accepted proposals are its
 **agreements**, in its context and its reviewer's. What another task proposes is data, never an order.
 
 ## A cold start, short (`reading.ts`, `history.ts`)
 
 Every agent starts cold, and most of what it would read is the same for all of them. A plan's `primer` — the lead's
 Markdown beside it, 16 KB at most, kept in the run as `primer.md` and rewritten by `run amend` — opens every task's
-brief; below it, `task context` names the skill files the task's own files need (`readingFor`: the cheatsheet for the
+brief (`run plan` says one past 6k, half of `LARGE_OUTPUT`, with what it costs: every first brief carries it whole); below it, `task context` names the skill files the task's own files need (`readingFor`: the cheatsheet for the
 space, the reference of a layout, a component, data, a plugin or server code, and `runs.md`), only those the project
 has. What its files import from the rest of the project — each name's signature and doc's first sentence — is read from
 the task's copy while it holds one (`sourceRoot`; a run's tester read a function as the project had it before the run),
@@ -318,7 +317,7 @@ extend … --dry-run --lines` runs each of the stage's acceptance lines once on 
 the finish's own `acceptanceOnResult`) and says what each is: passing already (it holds nothing yet), failing for its
 value (what the task changes), reading an element of ours not built yet, one of the other site's that is not there (the
 line is wrong), or one its command refuses — the lines to fix first. `run
-open` with a run going says to stack on it. `run pending` lists the project's runs not yet written into it — the ready
+open` with a run going says to stack on it. `run state` lists the project's runs not yet written into it — the ready
 ones first, each with the command that applies it; read off the project's own `tmp/plitzi-runs/`, so every terminal on
 it sees the same, and no other project's runs.
 
@@ -339,6 +338,10 @@ by detail: what there are fewer of, by how many — a kind counted whole listed 
 this page lacks is said on the element of ours where the other page wears it (`absentOn`: the named element drawn at
 that place of the section — "lacks box-shadow … — at ours: match-result"), here and in `--dress`'s failure. `--width`,
 `--scheme` (each width in each) and `--status` (a not-found page, `--status 404`) are `page shot`'s and `page check`'s.
+A page that sends a guest away is found by one guest check (`readAsFor`, `page check --guest`) and read as the project's
+account; a page the run before answers 404 — one the task adds — is pictured alone (`newSinceBefore`); a look that took no
+picture says why, or that nothing was to picture. A look's lock (`look.lock`) whose process on this machine is gone is
+taken at once, and one held past its wait is a refusal naming what holds it.
 A server of the look that stops under it is said, with why and its last lines (`preview-server.log`,
 `before-server.log` in the task's cache): what failed after is no finding of the task's. A task that writes a part of a page
 others build too — a section of the home — is looked at as that part (`taskParts.ts`, off the copy's own authoring:
@@ -396,7 +399,7 @@ designer reviews another task's UI (`light`: its pages at 1440 and 390 in the de
 `standard`, the default: both schemes and widths, its sections against the reference; `high`: every page that reads its
 files, against the run before it too), handed with each review (`DESIGN_LOOK`). A review costs what it looks at:
 A run's strictest took 83 steps, more than the task it reviewed. The CLI starts no agent; `run plan` says what to start
-each with — its roles, its model, the plan's tasks it takes and `task next --role <roles> --follow --take --agent
+each with — its roles, its model, the plan's tasks it takes and `task next --agent
 <name>`. The team's size is how many agents work a run at once — no flag says otherwise; a project made before the starter gets
 it at its first run, with an agent for each other role its plan names, said; a team somebody emptied is refused. A task whose role nobody in the team takes
 is refused at `run plan`; an agent of one role is held to it in a rehearsal. `run team` shows it; `run team set|unset
@@ -412,7 +415,7 @@ stronger one. The strongest model works only what is worth it (the designer, on 
 every task, spent the most).
 
 **Agents on demand** (`onDemand.ts`): a group's `min` (1 to its `count`) is how many start with the run; the rest are
-on demand (`StartedAgent.onDemand`). `run plan` says to start only the first; `run watch --until lead` tells the lead,
+on demand (`StartedAgent.onDemand`). `run plan` says to start only the first; `run watch` tells the lead,
 role by role, when work waits — a task of its role ready, a UI review no designer is free for —
 and no running agent of it is free (`agents-needed`), naming the next one to start and its command — with a keeper
 running, said only once it stayed unstarted past `KEEPER_GRACE_MS` (90 s, the keeper's to start; a run's lead was told
@@ -437,7 +440,7 @@ signal" for half an hour after one). The monitor shows one not running as on dem
 
 **The keeper** (`keeper.ts`, `plitzi run keep`): with the team's `options.launch`, the run starts the agents it asks for
 — the base not running, one on demand for waiting work, one a task was sent back to — by itself, every few seconds,
-whatever the lead is doing; `run open`, `run resume`, `run attach` and the lead's `run watch --until lead` start it,
+whatever the lead is doing; `run open`, `run resume`, `run attach` and the lead's `run watch` start it,
 one a run (`cache/keeper.json`, its log `cache/keeper.log`), and it ends with the run. Only the lead's watch started
 agents before, so while the lead reviewed or wrote a stage, ready tasks waited with no developer running.
 
@@ -530,8 +533,7 @@ task changes (under `src/space/`, but its data, or a plugin) is looked at by a d
 its state's `design` is `due`. A designer's `task next` offers it before any task of its own (`--take` makes it theirs:
 another designer is not offered it), with what it changed, the pages it is likely drawn at and what to look for; the
 designer runs `task look`, then `task review --approve` — the task stays in review, the lead's now — whose review is the complete and strict one, and the final word, the code above all once its UI is approved; the designer's is the UI/UX, as a
-designer — and `run watch
---until lead` wakes the lead for it then, not before — or `--changes`, which go back to the task as the lead's would and
+designer — and `run watch` wakes the lead for it then, not before — or `--changes`, which go back to the task as the lead's would and
 count as a round. The lead's approval while it is due is refused, naming the designer, unless `--skip-design <why>`
 says why — `lead` (the lead looked at its UI itself, both schemes and the phone width: refused without a `task look` of
 the task since its last complete, `lookedSince`) or `no-ui` (it changes nothing
@@ -539,7 +541,8 @@ a visitor sees; `task complete --review code` says it from the start) — kept a
 `designSkip`. The report, the audit, `run watch` and the monitor say each by its reason ("UI by the lead", "no UI"),
 never one "skipped": a run's report counted 21 UI reviews the lead made as UI nobody looked at. A designer does not review its own work, and is not finished while a task whose UI it may
 review is still to be done. A task asks the review it needs as it is sent: `task complete --review code` goes to the
-lead's code review alone (nothing a visitor sees changed), `--review ui` has its UI looked at first — by a designer,
+lead's code review alone (nothing a visitor sees changed; kept only when no page draws a file it changed —
+`drawnByAPage` — a setting or a type), `--review ui` has its UI looked at first — by a designer,
 the lead's too when none is free — and left out, the run decides as above; the activity says which (`complete`'s
 `review`). The designer's changes are logged as its UI review (`design-review`, `changes`), apart from the lead's; a lead
 going past a UI review a designer took tells that designer, who still tells the lead what it found with `task tell
@@ -574,7 +577,7 @@ whatever it reads.
 
 **A review has its time** (design-1 held one 16 min, a task queued 18 min behind it, both developers
 free). A UI review taken is its designer's for `REVIEW_TIMEOUT_MS` (8 min) — a designer's first for 7 min more
-(`FIRST_REVIEW_READING_MS`, `design.first`), which reads the references it is told to first: past it, `task next --take` hands it to
+(`FIRST_REVIEW_READING_MS`, `design.first`), which reads the references it is told to first: past it, `task next` hands it to
 another designer — the first told on its next command (`review-timed-out` in the log), and its verdict after refused as
 `claimed`, saying to keep what it found for the next run (`run notice`) — and `run watch` tells the lead, idle team or
 not, to decide it (`slow-review`; under the limit, only while others sit free, from half of it). One due nobody takes
@@ -611,7 +614,7 @@ first review; the developers' `runs.md` points to it in a line.
 
 A file past the space lint's `file-too-long` line (`MAX_LINES`, 400 lines that say something) is one nobody reads at
 once, an agent least. Every code file under a copy's `src/` that is past it and longer than in the project is said to
-the lead while the task works (`run status`, `run watch --until lead`, once a file), to the agent with each heartbeat
+the lead while the task works (`run status`, `run watch`, once a file), to the agent with each heartbeat
 and progress, and held at `complete`: a file the task took past the line — new, or under it in the project — refuses
 the completion until it is split. One already past it that the task made longer is said, not refused: the project's
 debt is not the task's.
@@ -634,7 +637,8 @@ goal, the inventory and the reference change only with the plan the run opened w
 is named a stage's (`<run>-stage-<n>`) as it is stacked; who a task is for and when — its `role`, `quality` and `dependsOn` — changes while it is pending
 or ready, and is refused once an agent took it, as is a `dependsOn` on a task the run lacks, on itself, or in a circle
 (`dependsOnProblems`): the lead's way to free a task held behind one it needs nothing from, which `run watch` says
-(`held-up`: a pending task whose every remaining dependency is past its work — in review, sent back, blocked — while
+(`held-ahead`: a ready task none can take because another task holds a file it needs, claimed ahead of it — review
+that one first; `held-up`: a pending task whose every remaining dependency is past its work — in review, sent back, blocked — while
 agents of its role have nothing to take; whether they share a file decides what it suggests — and `slow-review`, a
 review a designer or another lead took ten minutes ago and has not decided while the team has nothing to take — and
 `idle-team`, the run as a kanban: an agent running with no card worked, no review in hand and none of its roles ready,
@@ -695,7 +699,7 @@ project's `tmp/`. What the lead handed the run — the plan, the primer beside i
 summary — is kept in `run.json` by path and fingerprint (`inputs`) and removed with the run while it is as the run read it,
 with the folder that held only them; one changed since is kept, and said.
 
-While the run goes, everything but `cache/` is essential — with no git it is the only way back — and `run prune` removes
+While the run goes, everything but `cache/` is essential — with no git it is the only way back — and pruning (at every `run open`, and while `run watch` follows) removes
 only caches (a run idle 8 hours; the oldest quiet ones above 1 GB). **When the run ends, it goes whole**, backups
 included: a finished or aborted run leaves nothing for anyone to clean up but its report. `run finish --apply
 --keep-backup` keeps the project's files as they were before the merge in `tmp/plitzi-backups/<run>-<time>/`, as plain
@@ -727,7 +731,7 @@ rather than a spike per task — found out by one, built by another, each read t
 
 **Later spikes are the lead's to open**, when the work asks for one: a research task stacked with `run extend`, ended the
 same way. It starts in `spike`, ahead of `ready` (ready is ready to build), whether or not what it waits for is done —
-finding out is reading. No agent is offered it or takes it (`take` refuses one); `run watch --until lead` says each spike
+finding out is reading. No agent is offered it or takes it (`take` refuses one); `run watch` says each spike
 waiting (`spikes`), and `task next --role lead` hands a lead that reviews the most urgent one no other lead took
 (`spikedBy`) when no review waits for it. Its findings go into the brief of every task that waits for it, made ready by
 it (`readyWhatWaited`), no review.
@@ -796,7 +800,7 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   holds: the wait ended, not the work — run it again; only "You can stop" stops it (and a task of its in review comes
   back to it if sent back). A base agent with every task of the run approved hears what is left: the finish — the lead's summary, then a
   person's apply — and nothing for it unless the lead stacks a stage (a run's design-1 waited 4.5 h told only to wait). A request of a task not approved yet is in no one's attention — it goes in with the
-  approval — so `run watch --until lead` is not woken for it; one left once its task is approved is. `--acceptance` runs only the acceptance's commands, the copy served for them, and says the
+  approval — so `run watch` is not woken for it; one left once its task is approved is. `--acceptance` runs only the acceptance's commands, the copy served for them, and says the
   project's checks were not run: a run's agents iterated on one failing line with the whole check each time (52 of
   their 88 failed checks were an acceptance line). An agent iterating on a fix checks with it,
   and completes once it passes; it hands over what was said to the task meanwhile, which an agent that only edits
@@ -1027,7 +1031,7 @@ the log, the messages and the run's usage — what a run's lead computed by hand
   caller read, a token four characters), how long, its exit. The CLI's own child processes (`task look`'s checks and
   shots, a check's scripts: `PLITZI_USAGE_CHILD`) count none — their output is read by the command, not an agent. The
   report sums it by agent and by command, and lists the calls one agent made three times or more within ten minutes
-  of one session — a loop, or an answer it could not use; a wait (`--follow`, `run watch`) and `task next --take` are
+  of one session — a loop, or an answer it could not use; a wait (`--follow`, `run watch`) and `task next` are
   meant to be run again, and a fresh session runs its first commands again, so neither counts. The harness's own count
   comes from each round's report (`taskReports.ts`, its `harness`): by agent, what it read in all (every turn's whole
   context), its largest context at a round's end, and what its heaviest results were read again for at the least.
@@ -1058,7 +1062,7 @@ A run's design-2 ran `task look` with no `--agent` and the run's log has the lea
   says no one. Refused (`identity`, 26): no token, an empty one, a task's, one that is no agent's, a name that has a
   token said without it, a token under another's name or of another run, a name not of the project's team (`team.json`:
   its agents, `lead`, its co-leads), `person` from a shell (a person is a terminal) — except the readings anyone may ask
-  (`run status`, `run report`, `task claims`, `task proposals`, `run can-write`: a hook or a script, `unnamed`). The CLI
+  (`run status`, `run report`, `task claim`, `task propose`, `run can-write`: a hook or a script, `unnamed`). The CLI
   makes up no name: a run's `--token "$(cat …)"`, read from the wrong folder, came in empty and ran as
   "agent" — it took a task, and the rework sent back to "agent" sat with no one. A holder's step is held to the task's
   owner too (`holderOf`): another agent with its copy's token acts on nothing of it.
@@ -1083,13 +1087,13 @@ name, read another agent's token from its scratch folder (the run's files are th
 and edit the run's records — `run.json` or a task's `state.json` broken by hand are refused by name, never read
 on a guess, but one rewritten whole is the agent's word. What holds is that whatever is written outside the flow is
 caught by fingerprint before anything is merged; **what keeps a person's actions a person's is the harness**: deny the
-agents `plitzi run finish --apply`, `run abort`, `run purge`, `run restore`, `run allow-finish`, `run stop --force` and
+agents `plitzi run finish --apply`, `run abort`, `run purge`, `run restore`, `run finish --lead-finishes`, `run stop --force` and
 `run attach --take-over` (in Claude Code, `permissions.deny` in the project's `.claude/settings.json`), and let them
 run the rest. A token is told apart: one a task was cut from is `reassigned`, one it was never taken with `invalid`
 (`revoked.json` keeps the fingerprints of those it lost).
 
-**The final merge can be the lead's**, when a person says so: `run open --lead-finishes`, or `run allow-finish` on an
-open run (`--revoke` takes it back), each confirmed by typing the run's name — the lead asks for it before opening, and
+**The final merge can be the lead's**, when a person says so: `run open --lead-finishes`, or `run finish --lead-finishes` on an
+open run (`--no-lead-finishes` takes it back), each confirmed by typing the run's name — the lead asks for it before opening, and
 never grants it to itself. The record keeps when (`leadFinishes`); `finish --apply` then asks no one, and still needs
 the lead's report, a dry run's checks green on the whole result and no conflict with the project; the report says who
 wrote it.
@@ -1097,7 +1101,7 @@ wrote it.
 The run pins this CLI and every `@plitzi/*` installed; a change refuses every command (`version-mismatch`) until a person
 attaches, which re-pins it. **An upgrade loses no work**: on this machine a task in hand keeps its copy, its agent and
 its token — its next `complete` runs the checks with what is installed now — and is told so; only a copy that is gone, or
-another machine's, starts over from its reviewed version. Meanwhile `task next --follow` waits through it as through a
+another machine's, starts over from its reviewed version. Meanwhile `task next` waits through it as through a
 stop, and `run status` says what the person runs. A run outlives the CLI that opened it, so every change to its files is
 additive (`model.ts`): `src/tests/runRecords/<version>/` keeps a run as each CLI wrote it, and `runs-compat.test.ts`
 reads, works and finishes every one; one this CLI still cannot read is said as the other CLI's, with the command that

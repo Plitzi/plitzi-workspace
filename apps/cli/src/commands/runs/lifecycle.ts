@@ -8,7 +8,7 @@ import { FINDING_OWNERS } from '../../runs/findings';
 import { ensureKeeper, keeperText } from '../../runs/keeper';
 import { abortRun, continueRun, finishRun, resolveFile, restoreFile } from '../../runs/merge';
 import { RunRefusal } from '../../runs/refusal';
-import { attachRun, pruneRuns, purgeRun, releaseRun, resumeRun, stopRun } from '../../runs/run';
+import { attachRun, purgeRun, releaseRun, resumeRun, stopRun } from '../../runs/run';
 import { canWrite } from '../../runs/tasks';
 import { KV_FILE } from '../../scaffold/paths';
 
@@ -208,7 +208,7 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
                 ? 'With --apply the run enters reconciliation: a person resolves each conflict.'
                 : finished.leadFinishes
                   ? 'A person let the lead write it: plitzi run finish --apply (--keep-backup keeps the files it overwrites)'
-                  : 'A person writes it: plitzi run finish --apply (--keep-backup keeps the files it overwrites) — or lets the lead, once: plitzi run allow-finish'
+                  : 'A person writes it: plitzi run finish --apply (--keep-backup keeps the files it overwrites) — or lets the lead, once: plitzi run finish --lead-finishes'
               : [
                   finished.backup
                     ? `The files as they were before it: ${finished.backup} (copy one back to undo it)`
@@ -237,12 +237,28 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
       ].join('\n')
   );
 
-export const runResolve = (runId: string, file: string, options: RunCommandOptions & { take: string }): Promise<void> =>
+export const runResolve = (
+  runId: string,
+  file: string,
+  options: RunCommandOptions & { take?: string }
+): Promise<void> =>
   act(
     options,
-    ctx => resolveFile(ctx, runId, file, options.take),
+    ctx => {
+      if (options.take === undefined) {
+        throw new RunRefusal(
+          'invalid',
+          `${file} is settled with the version to keep: --take project|run|merge|<file>`,
+          {
+            next: `plitzi run resolve ${runId} ${file} --take run`
+          }
+        );
+      }
+
+      return resolveFile(ctx, runId, file, options.take);
+    },
     resolved =>
-      `${resolved.file}: resolved with ${resolved.resolved ?? ''}. Continue when every file is: plitzi run continue ${runId}`
+      `${resolved.file}: resolved with ${resolved.resolved ?? ''}. Once every file is: plitzi run resolve ${runId} — the run goes on`
   );
 
 export const runContinue = (runId: string | undefined, options: RunCommandOptions): Promise<void> =>
@@ -301,14 +317,4 @@ export const runPurge = (runId: string, options: RunCommandOptions): Promise<voi
     options,
     ctx => purgeRun(ctx, runId),
     inputs => [`Run "${runId}" removed, with its backups.`, ...inputLines(inputs)].join('\n')
-  );
-
-export const runPrune = (options: RunCommandOptions): Promise<void> =>
-  act(
-    options,
-    ctx => pruneRuns(ctx),
-    pruned =>
-      pruned.length === 0
-        ? 'No cache to prune.'
-        : pruned.map(each => `${each.run}: ${(each.freed / 1e6).toFixed(1)} MB freed (${each.why})`).join('\n')
   );

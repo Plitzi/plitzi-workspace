@@ -238,7 +238,7 @@ export const assertStatus = (loaded: LoadedRun, allowed: readonly RunRecord['sta
       `Run "${runId}" is stopping${why}: it cannot ${action} — the tasks in hand finish, and nothing starts until it is resumed (plitzi run resume ${runId})`,
       {
         run: runId,
-        next: 'finish the task in hand; then wait for the resume (plitzi task next --follow waits through it)'
+        next: 'finish the task in hand; then wait for the resume (plitzi task next waits through it)'
       }
     );
   }

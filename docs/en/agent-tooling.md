@@ -15,14 +15,15 @@ How to write a space is the `plitzi-authoring` skill (`packages/sdk-authoring/sk
 | --- | --- | --- |
 | Write | `npm run author` | Whether the space authors: one line when it does, every problem at once (file, line, what to change) when not — and, under the warnings, the suggestions: a shorter way to the same page, with the elements it saves |
 | Lint | `npm run lint:space` (`plitzi space lint`) | How the space's source is written, eslint's way, at file:line: files too long, pages in one file, rows of data written in code, colours that are not tokens, CSS copied, a row singled out in a `map`, minted ids, files nothing imports — beside authoring's suggestions at the line that wrote them. `--max-warnings 0` for CI |
+| Test | `npm test` (`node --test 'src/**/*.test.ts'`) | The project's modules' own tests, each beside its module — run by `verify` and by a run's every check, so a test left red is said |
 | Watch | `npx plitzi space watch --json`, in the background | Every save answered with what it did: the space's changes element by element, the findings and warnings it brought and fixed — or that the space stopped authoring and why. `author` and `lint` without asking, one line an event |
 | Upgrade | `npx plitzi upgrade [files\|packages\|skills\|migrations]` | The project brought up to the CLI it has: the CLI's files (replaced where nobody changed them, a diff where somebody did), `package.json` merged, the skills, every change a version made that its source must follow, at its line; `--write` makes it |
 | Project | `npx plitzi doctor` | Whether the project the CLI set up is whole, after moving or rewiring files and before a push: where each part lives, packages, the CLI's files and scripts, configs, what Node runs, plugin folders, data files, functions — each problem with its file and fix. Never the space: that is `author`'s. `--fix` repairs the simple ones |
 | Repair | `npx plitzi space fix` | The problems — and the suggestions — with a single reading, as a diff of the author's own source; `--write` applies and re-checks |
 | Check | `npm run check` (`plitzi page check`) | Whether a page of the running server is whole, in text: elements on screen, overflow, contrast, console, refused requests, failed flows, bindings reading a path their provider's answer lacks, failed providers, rows per list; `--ssr` names what the server's HTML lacks that the hydrated page has |
-| Inspect | `plitzi page check --state --element <id>` | What the page holds: its state, every source by name and shape, one element's own state and bindings |
+| Inspect | `plitzi page check --state --element <id>` | What the page holds: its state, every source by name with what each key holds, one element's own state and bindings |
 | Look | `plitzi page shot` | A picture (in `tmp/shots/`, named by page, clip, width and scheme) — `--compare <url>` against another site: each section where it is there, and the texts both have with what each does differently, measured; `--frames` for what moves; a full page has its lazy pictures loaded and its arrivals shown as they end, a sheet pinned over it whole, and in parts too when it is taller than three screens; `--scale` up close |
-| Measure | `plitzi page measure`, `page play`, `page outline` | Computed styles in numbers (what an element says of itself; `--all` the rest), an interaction step by step (where each step took the page, what changed), what a page is made of (`--find <word>` for an element by a word) |
+| Measure | `plitzi page measure`, `page play`, `page outline` | Computed styles in numbers (what an element says of itself — four sides alike as one line, a layer drawn again as `×n`; `--all` the rest, `--only` some; a `::before`/`::after`'s x and y read off Chromium's layout, `DOM.getBoxModel`, as the page has no box of one), an interaction step by step (where each step took the page, what changed), what a page is made of (`--find <word>` for an element by a word) |
 | Explain | `plitzi explain <name>` | What an element (and what it writes on its node), a step, a problem code, a style state, a setting or a helper (`bindTemplate`, `motion`…) means, from the catalogues the checks read; any other export of a `@plitzi` package installed, from its published types; a name none of them, what its words describe |
 | Start from | `plitzi page import <url>` | A page the user already has, measured as tokens, an outline and lists to write from |
 
@@ -43,7 +44,8 @@ print what the page holds. `window.__plitzi.element()`, the panel's **Runtime** 
 (`sdk-dev-tools/src/agentInspector/report.ts`).
 The sources it reads are also held to the page: `dataIssues` (`@plitzi/sdk-authoring`) walks every binding of
 the page against the answer its provider gave, so a path that answer lacks is said with the keys it has, and a provider
-that failed is said once rather than as every element it left empty. What is inside an element the page is not showing
+that failed is said once rather than as every element it left empty — and said though everything that reads it is
+hidden at that width (a run's check passed a page at 1440 with its lists empty). What is inside an element the page is not showing
 — a `visible` of its own that says no — is not mounted, so `page check` hands those to `dataIssues` (`hidden`) and only their
 own condition is read. A list's rows are counted twice: what its source holds (`dataIssues`, before the binding's
 transformers) and the copies of its row the page draws, so a filtered list reads `4 of 8 rows`. `sources()` cuts only a
@@ -84,10 +86,21 @@ section around it. All of it is `@plitzi/sdk-authoring`, for a suite to use as w
 its task, so a page tool says what is acted on first and the rest on asking: `page measure` an element's own values (its
 initial and inherited ones counted, a data URI by its kind and size — whole, a measure ran to tens of thousands of characters), a tall
 page's picture in parts a model reads at their size rather than one shrunk to 97 px wide, a look's reasons once each.
+`page play` says an element read again as it was `as before`; `task look` names its pictures' folder once; `task show
+--full` holds as many diffs whole as one answer does (12k characters, `LARGE_OUTPUT`), the rest a file at a time.
 What a browser runs on the page (`page.evaluate`) is self-contained, and tried with the built CLI: tsx wraps a named
-function in `__name`, which a page has not. The CLI's requests to a server of this machine go through `localFetch`
-(`apps/cli/src/http/`): Node 24's fetch fails the first request on a socket just opened (`setTypeOfService EINVAL`) and
-is asked again, once.
+function in `__name`, which a page has not. Node 24's undici sets a socket's type of service on every request, and on
+macOS that throws from a socket's event (`setTypeOfService EINVAL`) and ends the process: the CLI makes it best effort
+(`bestEffortTypeOfService`, `apps/cli/src/http/`) before anything runs.
+
+**A page for signed-in visitors is read as one.** A page that sends a guest away — to the sign-in — is read again
+signed in as the project's account (`PLITZI_CHECK_USER`, its password in `PLITZI_CHECK_PASSWORD`) by every page command
+(`signInWhereSent`, `check/account.ts`), said once on stderr; `--as` names another, `--guest` keeps the guest's view
+(`task look` finds the pages that redirect with one). A page that shows a guest a panel of its own, without sending it
+anywhere, is read as a guest. **Another person's steps:** `as <account> <step>` plays a step on a page of that
+account's own (`shot/visitors.ts`), and `action <id> [json]` runs one of the space's actions as the page's visitor — the
+server's data put in the state a check needs. **A save that did not author** leaves the project's server serving the
+last space that did: `/health` says why (`spaceStale`), and every page command says it before what it read.
 
 **`--scheme` is the space's theme.** The machine's preference loses to a space whose default is dark, as it would for
 any visitor. So `page check` and `page shot` set the `theme` cookie a visitor's toggle writes (`openProjectPage`) when a scheme is

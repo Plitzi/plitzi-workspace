@@ -30,10 +30,10 @@ const NEXT_STEP: Record<RefusalCode, string> = {
   waiting: 'take another ready task meanwhile; the file comes to this task when its holder is approved',
   reassigned: 'stop working on this task: it is no longer yours',
   'version-mismatch':
-    'the Plitzi version changed while the run is open: a person re-pins it in their terminal (plitzi run attach) — an agent keeps its work in its copy and waits (plitzi task next --follow waits through it); the lead tells the person',
+    'the Plitzi version changed while the run is open: a person re-pins it in their terminal (plitzi run attach) — an agent keeps its work in its copy and waits (plitzi task next waits through it); the lead tells the person',
   stopping: 'finish the task in hand and take no other',
   'forced-stop':
-    'stop writing now: a task in hand was cut, and what it wrote since its last review is not kept (a task in review keeps its work); plitzi task next --follow waits for the lead to resume the run',
+    'stop writing now: a task in hand was cut, and what it wrote since its last review is not kept (a task in review keeps its work); plitzi task next waits for the lead to resume the run',
   reconciliation: 'wait: the lead resolves each file (plitzi run resolve), then continues the run',
   'person-only': 'ask a person to run it in their own terminal',
   conflict:

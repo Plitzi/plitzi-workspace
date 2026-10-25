@@ -58,14 +58,14 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    not "no signal" for `options.startGraceMinutes` (3). A tester reviews code before you (yours: none took it in 2 min), adds `<id>-tests` (`"tests": false` for none); a designer reviews
    the others' UI before you (`options.designReview`; `false` turns it off). Yours is the complete,
    strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
-   `--skip-design lead|no-ui`, `lead` after your `task look`). A designer at a UI review, in its time, is not gone past (`--skip-design` is refused: its copy would go from under it);
+   `--skip-design lead|no-ui`, `lead` after your `task look`; a developer's `--review code` stands when no page draws
+   what it changed). A designer at a UI review, in its time, is not gone past (`--skip-design` is refused: its copy would go from under it);
    a UI review held 8 min (15, a designer's first), or
-   queued 5, is yours: decide it. Take a task back, or a ready one for yourself: `task reassign <task> --reason "…" --to <agent>|lead`. **One lead for every four agents**: `lead-2`… beside you, started when `run watch
---until lead` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`),
+   queued 5, is yours: decide it. Take a task back, or a ready one for yourself: `task reassign <task> --reason "…" --to <agent>|lead`. **One lead for every four agents**: `lead-2`… beside you, started when `run watch` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`),
    answers the questions handed to it, and stops when none is left.
 
    **Keep a person's actions a person's in the harness**: deny the agents `run finish --apply`, `run abort`, `run purge`,
-   `run restore`, `run allow-finish`, `run stop --force`, `run attach --take-over`.
+   `run restore`, `run finish --lead-finishes`, `run stop --force`, `run attach --take-over`.
 
    **Quality** (`"quality": "light" | "standard" | "high"`): `run plan` sets it where you say none. Ids: lowercase letters, digits, `-`, `_`; **classes and provider ids by area** (`pronosticos-card`, `topBoxers`):
    two tasks that name one class differently meet only at the approval. **Foundations go to different agents**: the
@@ -83,11 +83,12 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    listed, estimated — and skills older than the CLI said (`plitzi upgrade skills --write`). `plitzi run rehearse plan.json` plays it out:
    who works what when, the critical path, your review queue.
 4. **The summary first** ([runs-plan.md](runs-plan.md) § 5), who applies it among it — the person, or you if they open it
-   `--lead-finishes` (or `plitzi run allow-finish` later); never you. `plitzi run open plan.json` backs up every file
+   `--lead-finishes` (or `plitzi run finish --lead-finishes` later); never you. `plitzi run open plan.json` backs up every file
    it touches and prints **your own CLI** (`scratch/lead/plitzi`, with your token): run every command after through it.
 5. Start each agent: `plitzi run agent <name> --launch` (alone: its prompt, for a subagent), and follow:
-   `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
-   file a task takes past 400 lines (ask for the split), the run standing still (what holds each task) — each said once. **Talk:** answer a question with `plitzi
+   `plitzi run watch` in the background ends when something needs you — a review, a question, a block, a
+   file a task takes past 400 lines (ask for the split), the run standing still (what holds each task), a ready task held by another's claim (`held-ahead`: review that one
+   first) — each said once. **Talk:** answer a question with `plitzi
 task message t-home "…" --reply-to m3`; `all` or `@dev-1` in place of the task: every task in hand, or
    one agent. **The scope changes while it runs** — yours to see, or the person's to ask: edit
    the plan in the run's `inputs/` (`run open` says which; the run's own `plan.json` is what amend compares it to,
@@ -99,7 +100,7 @@ run extend <run> next.json`; say each to the person. **You manage it:** no agent
 6. **Review each task** as [runs-review.md](runs-review.md) says — read it whole: the review is the same for you, a
    co-lead and a tester.
 7. **A change after approval** puts the finish into
-   **reconciliation**: `plitzi run resolve <run> <file> --take …`, then `plitzi run continue`.
+   **reconciliation**: `plitzi run resolve <run> <file> --take …`, then `plitzi run resolve <run>` (no file) goes on.
    **The brake** stops a run whose completions keep failing; `run resume`. **Plitzi upgraded mid-run**
    (`version-mismatch`): the person runs `plitzi run attach <run>`. Upgrading on purpose is the person's (`plitzi run upgrade`): rebuild,
    then ask — never put a CLI in `node_modules` yourself.
@@ -107,13 +108,14 @@ run extend <run> next.json`; say each to the person. **You manage it:** no agent
    check cannot see (`plitzi run preview`) — what is missing is a stage (`run extend`), or the next run's: `run notice "…"
 --on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run plan` and `run open` list (`run
 backlog add "…"` keeps one with no run open); a task of your plan that does one says so — `"closes": ["b-3"]` — and the
-   applied run closes it; else `run backlog done <id> --note "…"`. **Close it:** `plitzi run report` lists the problems
+   applied run closes it; else `run backlog done <id> --note "…"`; `run report --plitzi` is what the run says of
+   Plitzi so far. **Close it:** `plitzi run report` lists the problems
    by whose from the agents' round reports and the records (`--full`: each with its evidence and fix) — keep no list by hand; your summary adds what
    no record says, and what it was like for you: `plitzi run report --summary summary.md --ease <1-5> --hardest "…"`
    (it combines the agents'; refused while anything waits for you: settle each — a finding by what you did,
    `run settle <finding> --note "…"`); then `plitzi run finish` (the
    diff, checked). `--apply` is the person's, or yours if they allowed it — every server you started on the project stopped first, with `plitzi server stop` (one
-   serves the project as it was and holds its `state/kv.json`). `run pending`: what awaits it.
+   serves the project as it was and holds its `state/kv.json`). `run state`: what awaits it.
 
 ## Where leads went wrong
 

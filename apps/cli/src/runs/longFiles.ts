@@ -7,7 +7,7 @@ import { MAX_LINES } from '../lint/rules/fileTooLong';
 /**
  * The files a task makes too long to read whole — past the space's lint's `file-too-long` (`MAX_LINES` lines that say
  * something), for every file of code in the copy's `src/`, not the space's alone: a plugin or an action of 500 lines is
- * the same file nobody reads at once. Said to the lead while the task works (`run watch --until lead`), to the agent with
+ * the same file nobody reads at once. Said to the lead while the task works (`run watch`), to the agent with
  * its heartbeat, and held at `complete`: a file the task took past the line, it splits before review.
  */
 

@@ -5,7 +5,7 @@ const QUIET = /(^|[\\/])(cache|blobs|scratch|shots)([\\/]|$)/;
 
 /**
  * Waits until the run's folder changes — a task taken, sent, reviewed, a message, a state — or `ms` passes, whichever
- * comes first. What waits on a run (an agent's `task next --follow`, a lead's `run watch`, a question's answer) wakes
+ * comes first. What waits on a run (an agent's `task next`, a lead's `run watch`, a question's answer) wakes
  * the moment there is something to read, never up to ten seconds after it: the hand-offs between agents are that much
  * smoother. Where the system cannot watch a folder, it is the timer alone, as before.
  */
