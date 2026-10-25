@@ -39,7 +39,7 @@ npx plitzi element remove ent-trust                     # an element taken out, 
 npx plitzi element move ent-faq --before ent-pricing    # an element put elsewhere among its siblings
 npx plitzi page check -- /about --width 1440,390        # whether a page is whole, in text
 npx plitzi space activity --follow --json               # what others do on the space: edits, versions, failures
-npx plitzi explain navigate                             # what a name means: element, step, code, any export
+npx plitzi explain navigate                             # what a name means: element, step, state, setting, any export
 npx plitzi explain --search "carousel end"              # whether Plitzi has a way: fields, steps, states, commands
 npx plitzi doctor                                       # whether the project is whole; --fix the simple parts
 npx plitzi upgrade                                      # the project up to this CLI (--write)

@@ -30,9 +30,9 @@ Never download a whole tree you do not need.
   \`link\` navigates between pages, \`list\` repeats a template over a data array. \`plugin\` types are the elements
   of the plugins the space installed: added by their type, like a built-in.
 - \`plitzi://css-properties\` — valid kebab-case CSS property keys.
-- \`plitzi://explain/{name}\` — what a name means: an element type's attributes, triggers and callbacks; a step's
-  params and what it publishes; what a trigger hands its flow; a problem code's fix. \`plitzi://explain/steps\` (or
-  elements, triggers, codes, transformers) lists every one of a kind.
+- \`plitzi://explain/{name}\` — what a name means: an element type's attributes, triggers, callbacks and what it writes
+  on its node; a step's params and what it publishes; what a trigger hands its flow; a style state; a problem code's
+  fix. \`plitzi://explain/steps\` (or elements, triggers, codes, transformers, states) lists every one of a kind.
 - \`plitzi://schema/{env}/pages\` — page **summaries** (ref, label, elementCount, folder). No element trees.
 - \`plitzi://schema/{env}/layouts\` — the shared **layout shells** (header/sidebar/footer) and the pages rendered
   inside each. Read one like a page. See *Shared layouts* below.
@@ -238,5 +238,9 @@ You do not have to rewrite them.
   \`carouselTrack\` (the slides go in it), a \`tabContainer\` a \`tabContainerHeader\` and a \`tabContainerBody\`, a
   \`dropdown\` a \`dropdownPopup\`. Without its part it shows nothing (\`part-missing\`); a part anywhere else breaks the
   page (\`outside-ancestor\`).
+- **A dropdown places its popup**: the popup's class is its look, never its place (\`popup-position-set\`) —
+  \`popupPlacement\`, the offsets and \`popupWidth: "trigger"\` are the dropdown's; the \`openDropdown\`,
+  \`closeDropdown\` and \`toggleDropdown\` steps open and close it. The open tab is a class's \`current\` state
+  (\`aria-selected\`), never \`active\` (the press): \`plitzi://explain/<type>\` says what each element writes on its node.
 
 `;

@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import create from './create';
 import { scaffold } from '../scaffold';
+import { CLI_DIR, REPORTS_DIR, TSCONFIG_BASE } from '../scaffold/paths';
 import { NODE_RANGE } from '../scaffold/project';
 
 import type { CreateAnswers } from '../scaffold';
@@ -321,6 +322,19 @@ describe('the scaffold', () => {
       const ignored = scaffold(answers({ mode }))['.gitignore'].split('\n');
       expect(ignored).toContain('tmp');
       expect(ignored.some(line => line.startsWith('.plitzi') || line.startsWith('.sdk-plugins'))).toBe(false);
+    }
+  });
+
+  // Carlos: a run's reports are committed with the project, for its team and to send to Plitzi — the agents' scripts in
+  // them are no code of the project's to typecheck, lint or format.
+  it('keeps what runs and agents report committed, and out of its typecheck, lint and format', () => {
+    for (const mode of ['server', 'client'] as const) {
+      const files = scaffold(answers({ mode }));
+      expect(files['.gitignore'].split('\n')).not.toContain(REPORTS_DIR);
+      expect(files['.prettierignore'].split('\n')).toContain(REPORTS_DIR);
+      expect(files['eslint.config.mjs']).toContain(`'${REPORTS_DIR}'`);
+      const base = JSON.parse(files[TSCONFIG_BASE]) as { exclude?: string[] };
+      expect(base.exclude?.map(each => path.posix.join(CLI_DIR, each))).toEqual([REPORTS_DIR]);
     }
   });
 

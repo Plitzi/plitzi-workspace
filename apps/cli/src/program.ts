@@ -429,7 +429,7 @@ export const buildProgram = (): Command => {
   program
     .command('feedback')
     .description(
-      'Start a report to Plitzi: writes the page in tmp/feedback/ with the versions and the project already in it, and tells the agent how to fill and publish it — to send as a link'
+      'Start a report to Plitzi: writes the page in .plitzi/plitzi-reports/agents/<date>/ with the versions and the project already in it, and tells the agent how to fill and publish it — to send as a link'
     )
     .option(
       '--previous <url>',

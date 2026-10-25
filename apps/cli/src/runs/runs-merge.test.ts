@@ -5,7 +5,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { writeAtomic } from './files';
 import { abortRun, continueRun, finishRun, resolveFile, restoreFile, showVersion } from './merge';
-import { BACKUPS_DIR, REPORTS_DIR, RUNS_DIR, runPaths } from './paths';
+import { BACKUPS_DIR, RUNS_DIR, runPaths } from './paths';
+import { runReportDir } from './reports';
 import { readRunLog } from './run';
 import { completeTask, revertTask, reviewTask, takeTask } from './tasks';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
@@ -288,8 +289,8 @@ describe('the run’s report', () => {
     await reviewTask(lead(), 'es-launch', 't-home', 'approve', []);
     const done = await finishRun(bench.person(true), 'es-launch', { apply: true, leavePending: true });
 
-    expect(done.report?.startsWith(path.join(bench.root, REPORTS_DIR, 'es-launch-'))).toBe(true);
-    const report = await fs.readFile(String(done.report), 'utf-8');
+    expect(done.report?.dir).toBe(runReportDir(bench.root, 'es-launch'));
+    const report = await fs.readFile(path.join(runReportDir(bench.root, 'es-launch'), 'report.md'), 'utf-8');
     expect(report).toContain('Translated the pages; nothing left.');
     expect(report).toContain('## Problems — whose, and what would stop them');
     expect(report).toContain('completions whose checks failed: 1');
@@ -302,8 +303,55 @@ describe('the run’s report', () => {
     await open(benchPlan(), { summary: false });
     const aborted = await abortRun(bench.person(true), 'es-launch');
 
-    expect(await fs.readFile(aborted.report, 'utf-8')).toContain(
+    expect(await fs.readFile(path.join(aborted.report.dir, 'report.md'), 'utf-8')).toContain(
       '_None was written: the problems above are what the run kept._'
     );
+  });
+
+  // Carlos: one folder per run, committed and sent to Plitzi — everything a fix needs, the run long gone, and nothing of
+  // the person's machine or of the project's files.
+  it('keeps the run’s records and its agents’ scripts with it, the machine left out, under an id of its own', async () => {
+    await open(benchPlan(), { summary: false });
+    const about = await take('agent-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', `export const about = { title: 'Sobre' };\n`);
+    await completeTask(about.ctx, 'es-launch', 't-about');
+    const scratch = path.join(runPaths(bench.root, 'es-launch').scratch, 'agent-1');
+    await fs.mkdir(scratch, { recursive: true });
+    await fs.writeFile(path.join(scratch, 'probe.mjs'), `// ${bench.root}\n`);
+    const { report } = await abortRun(bench.person(true), 'es-launch');
+
+    const all = (await fs.readdir(report.dir, { recursive: true })).map(String);
+    const files: string[] = [];
+    for (const file of all) {
+      if ((await fs.stat(path.join(report.dir, file))).isFile()) {
+        files.push(file.split(path.sep).join('/'));
+      }
+    }
+
+    expect(files).toEqual(
+      expect.arrayContaining([
+        'feedback.md',
+        'report.md',
+        'report.json',
+        'records/plan.json',
+        'records/run.json',
+        'records/log.jsonl',
+        'records/tasks/t-about/task.json',
+        'records/tasks/t-about/state.json',
+        'scratch/agent-1/probe.mjs'
+      ])
+    );
+    expect(
+      files.filter(file => /^records\/(blobs|identities)\/|\/cache\/work\/|owner\.json$|\.lock$/.test(file))
+    ).toEqual([]);
+    expect(report.records.files).toBe(files.filter(file => file.startsWith('records/')).length);
+    for (const file of files) {
+      expect(await fs.readFile(path.join(report.dir, file), 'utf-8')).not.toContain(bench.root);
+    }
+
+    const data = JSON.parse(await fs.readFile(path.join(report.dir, 'report.json'), 'utf-8')) as { version: number };
+    expect(data.version).toBe(1);
+    const again = await refusal(open(benchPlan(), { summary: false }));
+    expect(again.message).toContain('already ended in this project');
   });
 });

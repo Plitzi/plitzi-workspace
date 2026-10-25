@@ -11,6 +11,7 @@ import { runPaths, runsDir, taskPaths } from '../paths';
 import { checkPlan, PlanRefusal } from '../plan';
 import { runPlanProblems } from '../planProblems';
 import { RunRefusal } from '../refusal';
+import { runReportDir } from '../reports';
 import { SCOPE_SPIKE, startingState } from '../spike';
 import { keepFiles } from '../store';
 import { coLeadNames, ensureTeam, reviewsDesign, teamSize } from '../team';
@@ -183,6 +184,16 @@ export const openRun = async (
     throw new RunRefusal(
       'invalid',
       `There is a run "${checked.runId}" already: attach to it (plitzi run attach ${checked.runId}), or a person purges it`,
+      { run: checked.runId }
+    );
+  }
+
+  // A run's reports are kept by its id: a second run of one name would write over the first's — its team's and Plitzi's.
+  const reported = runReportDir(ctx.root, checked.runId);
+  if (await fs.stat(reported).catch(() => undefined)) {
+    throw new RunRefusal(
+      'invalid',
+      `A run "${checked.runId}" already ended in this project: its reports are in ${path.relative(ctx.root, reported)}. Give this plan a runId of its own`,
       { run: checked.runId }
     );
   }

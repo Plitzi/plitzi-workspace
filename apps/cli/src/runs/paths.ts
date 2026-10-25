@@ -8,6 +8,7 @@ import {
   PROJECT_STATE,
   PROJECT_TMP,
   PUBLIC_DIR,
+  REPORTS_DIR,
   RUNS_DIR,
   VENDOR_PLUGINS_DIR
 } from '../scaffold/paths';
@@ -26,8 +27,19 @@ export { RUNS_DIR };
 /** A run's id or a task's: what a folder can be named on every system, and a person can type. */
 export const ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 
-/** What a task's copy leaves out: what is not the project's source, and what an agent must never read. */
-export const NOT_COPIED_DIRS = new Set(['node_modules', '.git', '.yarn', PROJECT_TMP, BUILD_DIR, PROJECT_STATE]);
+/**
+ * What a task's copy leaves out, by project path: what is not the project's source, what an agent must never read — and
+ * the reports of the runs before, whose records an agent would only spend its reading on.
+ */
+export const NOT_COPIED_DIRS = new Set([
+  'node_modules',
+  '.git',
+  '.yarn',
+  PROJECT_TMP,
+  BUILD_DIR,
+  PROJECT_STATE,
+  REPORTS_DIR
+]);
 
 /**
  * What no task writes, though its copy holds it: the CLI's part of the project (`.plitzi/` — what authors the space,
@@ -97,9 +109,6 @@ export const agentScratch = (paths: RunPaths, agent: string): string => path.joi
 /** Where `--keep-backup` leaves what the final merge overwrote: out of the run, which goes, and out of git. */
 export const BACKUPS_DIR = `${PROJECT_TMP}/plitzi-backups`;
 
-/** Where a run's report is left when it ends: out of the run, which goes, and out of git. */
-export const REPORTS_DIR = `${PROJECT_TMP}/plitzi-reports`;
-
 /**
  * What the CLI and the project's own server keep in the project's `tmp/`: anything else that appears there while a run
  * is open was left by someone — said to the lead, never removed, since `tmp/` is the person's too.
@@ -107,7 +116,6 @@ export const REPORTS_DIR = `${PROJECT_TMP}/plitzi-reports`;
 export const TOOL_TMP: readonly string[] = [
   RUNS_DIR,
   BACKUPS_DIR,
-  REPORTS_DIR,
   DEV_SERVER_FILE,
   `${PROJECT_TMP}/shots`,
   `${PROJECT_TMP}/visual`,

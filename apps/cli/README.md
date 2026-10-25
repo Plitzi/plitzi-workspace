@@ -166,9 +166,9 @@ when an install fails the CLI says which setting names it.
 | `src/data/`       | Server mode: the project's own data — JSON its server reads for a provider (`query: '/data/<file>'`, `runtime: 'server'`) and never serves (`dataDir`). What a provider reads is in the page it renders: data a page must not carry is a server action's to read                                                                                                                                                                       | yes    |
 | `src/functions/`  | Server mode: the project's own server code — tasks and `/fn/` routes (`defineFunctions`), built at boot                                                                                                                                                                                                                                                                                                                                | yes    |
 | `vendor/plugins/` | The plugins the project runs as they were built, with no source (a project made from a space gets them), each folder with its `plugin-manifest.json`. The server runs them, and `author`, `page check`, `space fix` and `space push` know every element type each provides                                                                                                                                                             | yes    |
-| `tmp/`            | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), screenshots and test output. Rebuilt when missing — but `tmp/plitzi-runs/`, the run of agents going (`plitzi run`): its backups and approved work, never rebuilt; removing it loses them, never the project. A run's report is left in `tmp/plitzi-reports/`         | no     |
+| `tmp/`            | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), screenshots and test output. Rebuilt when missing — but `tmp/plitzi-runs/`, the run of agents going (`plitzi run`): its backups and approved work, never rebuilt; removing it loses them, never the project                                                                                                     | no     |
 | `state/`          | Server mode: what the server keeps for the space — its `kv` in `state/kv.json` (`createFileKv`): saved layouts, counters, cached answers. The deployment's state: kept across restarts, never rebuilt. `action.kv` in `src/config/serverOptions.ts` keeps it elsewhere (`createSqliteKv` for several processes, or a database)                                                                                                         | no     |
-| `.plitzi/`        | The CLI's part of the project, in one folder: what authors the space and the compiler options (below), and what it records — the space it came from (`space.json`), the functions' working copy, the files `create` wrote (`scaffold.json`), the team of its runs (`team.json`) — what `space pull`, `space push` and `upgrade` stand on. A project an older CLI laid out has a `plitzi/` beside it: `plitzi doctor --fix` moves it in | yes    |
+| `.plitzi/`        | The CLI's part of the project, in one folder: what authors the space and the compiler options (below), and what it records — the space it came from (`space.json`), the functions' working copy, the files `create` wrote (`scaffold.json`), the team of its runs (`team.json`) — what `space pull`, `space push` and `upgrade` stand on; and what runs and agents reported (`plitzi-reports/`, below). A project an older CLI laid out has a `plitzi/` beside it: `plitzi doctor --fix` moves it in | yes    |
 
 **`.plitzi/` is the CLI's; `src/` is yours — but `src/main.ts`.** `.plitzi/` holds `author.ts`, the types plugins import
 (`assets.d.ts`, server mode) or the page's base styles (`preflight.css`, client mode), the compiler options
@@ -345,12 +345,13 @@ token belongs. A look at a task checks with it. Every check fails a link or a bu
 edge where the section keeps no space below it (`flush-edge`): a "See all" link sitting against the next section, its
 section's class without a bottom padding, which nothing else says.
 
-`page outline <path> [--compare <url>] [--within <part>] [--depth <n>] [--click <el…>] [--width <px,px>]` lists what a
+`page outline <path> [--compare <url>] [--within <part>] [--find <word>] [--depth <n>] [--click <el…>] [--width <px,px>]` lists what a
 page is made of as a visitor sees it — each shown element by a selector that finds it alone (its name on the project's
 page; its id, its tag and classes, or its place under an ancestor on another site), its box and its first words,
 indented by depth — the project's page, or with `--compare` the other site's: what to name after `=>` in `page measure`,
 an open drawer's too (`--click`: what the click opened, alone, unless `--within` names a part), with no HTML fetched and
-searched.
+searched. `--find <word>` lists only the elements whose name, selector or words hold it, the whole page searched: an
+element found by a word you know (an id built in code).
 
 `page play <path> --steps "…" --read <el…> [--compare <url>] [--same moved,shown,enabled] [--width <px,px>]` plays an
 interaction step by step — the steps `page shot --steps` takes, but its pictures — and after each says of every element
@@ -361,7 +362,17 @@ pointer events not none); a press on one hidden or out of use does nothing, as a
 With `--compare` each step runs on the other site too, its elements after `=>` (a drag's or a type's pair whole: `drag
 row => .slides -200 0`), and `--same` fails (exit 1) where a step leaves them otherwise there — never passing beside an
 element read that is not on the page — a control's acceptance line, with no script of one's own. `page shot --steps`
-that ends on an action pictures what it leaves.
+that ends on an action pictures what it leaves. A step that took the page elsewhere says where (`→ /rooms?genre=synthwave`) — a link
+followed, `goto <path>` (another page, the same tab), a click that navigates (no failure, in `page check --click` too);
+an element read says a colour a step changed and its animations (`float finished`: it played). A `;` inside quotes is
+the text's (`type chat-input "late; still here"`); `fill <id>=<text>` takes a class or an id before the `=` too.
+
+`page measure` says each element by what it says of itself: what is at its initial value or inherited is counted, not
+printed (`--all` prints every property, `--only box,font` a few), a data URI by its kind and size, and how many elements
+its selector finds when it measured the first shown (`--rows` measures each). It reads `animation`, `position`,
+`max-width`, `grid-area` and a pseudo-element's `position`/`top`/`left`… too; `--steps` plays steps on the page first —
+what only a visitor makes, a chat line — and an element not there says the ways it may not be drawn (signed in, a click,
+a route's address).
 
 What the demo data never has is set by the steps: `reload` (what the page kept, read back), `store <key> <value>` (its
 `localStorage`, as an earlier visit left it), `state <key> <json>` (the space's state, through the dev tools' `window.__plitzi`
@@ -406,7 +417,9 @@ of `--same`, said beside it; the transform compared is the one that applies (`ro
 `transform`, as CSS composes them); a component's instance is found by its name; an address nobody answers on is
 said as such. `--scheme`,
 `--timezone`, `--url`, `--json`, as `page shot`; the page is read once the space has hydrated.
-`--frames` compares pictures taken one after another and names what moved. A project `create` writes has them as
+`--frames` compares pictures taken one after another and names what moved — a part clipped moves when any of it
+changed (a few cells of pixel art turning), and a page's region changed by 0.5% or less is said apart, as barely
+(a caret, or a small part that moves). A project `create` writes has them as
 `npm run check` and `npm run shot`.
 
 ## `space fix`
@@ -523,6 +536,7 @@ has it as `npm run lint:space`.
 | `special-case-in-map`      | a `map` that singles out a row by its `id`, `key`, `slug`, `name`, `title` or `label`: the difference belongs in the row's data                                                                             |
 | `colour-not-token`         | a hex, `rgb()`/`hsl()`/`oklch()`… or a named colour where a colour is all a property takes — outside the declared tokens (`variables`, `light`/`dark`), anchors, masks, markup and URLs                     |
 | `positional-id`            | an id minted for an element nobody named — `container-45`, `heading-a7k2`                                                                                                                                   |
+| `selector-instance`        | a test's (`*.spec.ts`, `*.test.ts`) selector naming a component's instance by `data-plitzi-el`, which finds nothing — an instance's name is on its root as `data-plitzi-instance`: `handles.element(id).selector` |
 | `disable-names-suggestion` | a `plitzi-lint-disable` comment naming a suggestion of authoring's, which a comment does not silence: `quiet: ['<code>']` on its element                                                                    |
 | `space-does-not-author`    | error: the space does not author, so authoring's suggestions could not be read — `npm run author` says why                                                                                                  |
 | `project-layout`           | error: the project is laid out where its server and `npm run author` refuse to start — one line, each error `doctor`'s to say; authoring's suggestions are read once they are fixed                         |
@@ -605,7 +619,7 @@ plitzi run agent design-1 --launch         # its token, its own CLI (scratch/des
 plitzi task next --role designer --agent design-1   # one started by hand names itself once, and is answered both
 plitzi task take t-home --token <yours> --json      # its files locked, its copy (which says the task, to you alone)
 plitzi task propose t-menu --change "…"    # ask another task to agree to a change; task answer accepts or counters
-plitzi task check --token …                # what complete holds the copy to, run now: nothing changes (--fix: lint and format first)
+plitzi task check --token …                # what complete holds the copy to, run now: nothing changes (--fix: lint and format your files first)
 plitzi task complete --token …             # its copy compared by fingerprint, the project's checks run in it
 plitzi task review t-home --approve --token <lead's>   # the lead's: into the run's work, never into the project
 plitzi task review t-home --approve --skip-design lead --token <lead's>   # before its UI review, saying why: lead or no-ui
@@ -642,8 +656,10 @@ lead`) and do nothing else; tasks name the role that
   agents talk while they work: `task ask` (an agent's question, on top of `run status`), `task message
 <task|all|@agent>` (the lead's word, handed to the agent with its next heartbeat, progress or completion), `task
 inbox`. A block lifted carries its answer (`task unblock --answer`), and `task next` hands an agent back the task it
-  holds first — and a free agent a task sent back while its own agent is at another (after 3 minutes; that agent is
-  told). A round of UI sent back goes to the designer who said the one before, another only after a wait.
+  holds first — a task sent back while its agent is at another waits for that agent, never handed to a free one. A
+  round of UI sent back goes to the designer who said the one before, another only after a wait. A UI review taken is
+  its designer's for 8 minutes (15, its first, which holds its reading); in that time the lead's `--skip-design` is
+  refused, past it the lead decides.
 - **Connected as it goes:** a shared file a task changed is its by turns at `complete` when nobody holds it, and merged
   line by line when the run moved meanwhile; `run preview` — the project's `npm run start:preview` — serves the run's
   work as each task is approved, and `run preview --task` a task in review, before it is. Your own `start:dev` serves
@@ -686,10 +702,18 @@ restore`, `run allow-finish`, `run stop --force`, `run attach --take-over` — i
   under an open run by hand: it changes `node_modules` under the agents' commands (and stops a preview).
   Editing a project file a task holds is yours to do — its approval then stops and the lead decides — but telling the
   lead first costs less.
-- **When it ends, the run goes** — backups included, so none is left to clean up — and its report stays in
-  `tmp/plitzi-reports/<run>-<time>.md`: the lead's summary, the problems, every task (agents, time against its
-  estimate, reviews, cuts) and what was written. `--keep-backup` keeps the project's files as they were before the merge
-  in `tmp/plitzi-backups/`; `run abort` (a person's) writes nothing, discards the agents' work and leaves the report too.
+- **When it ends, the run goes** — backups included, so none is left to clean up — and its reports stay, committed with
+  the project, in one folder: `.plitzi/plitzi-reports/runs/<run>/`. `feedback.md` is what of the run is Plitzi's, to
+  read first; `report.md` the lead's summary, the problems, every task (agents, time against its estimate, reviews,
+  cuts) and what was written; `report.json` the same as data (`version`ed — what `run bench` and the next plans'
+  estimates read); `records/` what the run kept — its plan, log, usage, messages, each task's definition, state, rounds
+  and reviews, never the project's files — and `scratch/` the scripts its agents wrote for themselves. No path of the
+  machine and no token in any of them: send the folder to Plitzi's team, and Plitzi gets better from it. A run's id is
+  its folder's: a second run of the same name is refused at `run open`. `run report` prints the run at a glance and each
+  problem's title (`--full`: the whole, as `report.md`); its waits and minutes count to the last approval, its tokens are
+  what each agent's harness read, from the rounds' reports. `--keep-backup` keeps the project's files as they were
+  before the merge in `tmp/plitzi-backups/`; `run abort` (a person's) writes nothing, discards the agents' work and
+  leaves the reports too.
 - **Cuts:** a task with no signal (15 minutes without a write, progress or heartbeat) can be reassigned; one taken again
   starts from its last reviewed version — what was written since is never resumed. `run attach` picks a run up after
   the harness died, on another machine, or after an upgrade. `run stop` lets the tasks in hand finish.
@@ -740,6 +764,9 @@ did not write again.
 
 ```bash
 plitzi explain container        # an element: its attributes and their values, what it fires and answers, its slots
+plitzi explain tabContainerItem # …and what it writes on its node (role, aria-selected) and the state that lights it
+plitzi explain current          # a state a class styles: current is the chosen one, active the press
+plitzi explain keepState        # a setting of the whole space, and where the skills teach it
 plitzi explain navigate         # a step: its params, what it publishes, and the function that writes it
 plitzi explain onScroll         # a trigger: what it hands its flow, and what fires it
 plitzi explain class-and-css    # a problem's code: what was wrong, what to write instead
@@ -750,7 +777,7 @@ plitzi explain pageFamily       # any other export of a @plitzi package installe
 plitzi explain theme            # a global source a template reads, with the fields the platform decides; max, a template function
 plitzi explain --search "carousel end"   # what the words describe, best first: carousel_<id>.atEnd, then the rest
 plitzi explain --search "ctx.later key"  # a member named in the words first, as the installed types declare it
-plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers, helpers, filters, functions, sources
+plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers, helpers, filters, functions, sources, states
 plitzi explain list.put         # a server action's step, as the project's @plitzi/sdk-server declares it (--list tasks)
 ```
 
@@ -762,7 +789,9 @@ best first. A name no catalogue holds — `pageFamily`, `styles`, `SpaceSpec` �
 export of `@plitzi/sdk-authoring`, answered from the `.d.ts` the project installed, so it is the version the project
 runs. An element of the project's own — `src/plugins/<Name>/` — is explained by its type the same way: what it takes
 (each attribute at its default), fires and answers, and how it is placed — its declaration imported and
-`defineElement(declaration)` called — which `plugin add` prints too. `--json` answers in one object; over MCP it is `plitzi://explain/{name}`.
+`defineElement(declaration)` called — which `plugin add` prints too. A name none of these is answered with what its
+words describe (`keepState` read as "keep state"), as `--search` would — said as a name Plitzi has not. `--json` answers
+in one object; over MCP it is `plitzi://explain/{name}`.
 
 ## `doctor`
 
@@ -879,7 +908,8 @@ npx @plitzi/cli feedback --previous https://claude.ai/artifact/…   # continuin
 
 A report of what broke, misled or cost time, for a developer to send to Plitzi as a link. The CLI reads what a report
 must not get wrong — every `@plitzi` package installed and its version, Node and the machine, the project's mode and
-source, what `plitzi doctor` finds — and writes the page the report is laid out in, `tmp/feedback/report-<date>.html`:
+source, what `plitzi doctor` finds — and writes the page the report is laid out in, in a folder of its own beside the
+runs' (`.plitzi/plitzi-reports/agents/<date>/report.html`, committed):
 a tally by severity, what was built, what changed since the earlier reports, where to start, the findings filtered by
 severity and area and each copied as an issue, and what worked — in light and dark, on a phone. It prints how to fill
 it for the agent the developer works with: one `REPORT` object, each finding reproduced on the installed versions

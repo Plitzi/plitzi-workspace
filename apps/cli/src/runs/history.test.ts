@@ -5,7 +5,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { readHistory, rememberPace } from './history';
-import { REPORTS_DIR } from './paths';
+import { runReportDir } from './reports';
 
 const roots: string[] = [];
 
@@ -16,17 +16,17 @@ afterEach(async () => {
 const projectWith = async (rows: readonly [number, number][]): Promise<string> => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'run-history-'));
   roots.push(root);
-  await fs.mkdir(path.join(root, REPORTS_DIR), { recursive: true });
+  const dir = runReportDir(root, 'velada');
+  await fs.mkdir(dir, { recursive: true });
+  const tasks = rows.map(([minutes, estimateMinutes], index) => ({
+    id: `t-${String(index)}`,
+    status: 'done',
+    minutes,
+    estimateMinutes
+  }));
   await fs.writeFile(
-    path.join(root, REPORTS_DIR, 'velada-20261021T000000Z.md'),
-    [
-      '| Task | Role | Status | Agents | Time / estimate (min) | Reviews |',
-      '| --- | --- | --- | --- | --- | --- |',
-      ...rows.map(
-        ([took, estimate], index) =>
-          `| t-${String(index)} | developer | done | dev-1 | ${String(took)} / ${String(estimate)} | 1 |`
-      )
-    ].join('\n')
+    path.join(dir, 'report.json'),
+    JSON.stringify({ version: 1, report: { at: '2026-10-21T00:00:00.000Z', tasks } })
   );
 
   return root;

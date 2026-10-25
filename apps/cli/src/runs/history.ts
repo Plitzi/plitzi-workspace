@@ -3,11 +3,11 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { REPORTS_DIR } from './paths';
+import { readRunReports } from './reports';
 import { configDir } from '../account/connection';
 
 /**
- * How this project's runs went against their estimates, read off the reports they left (`tmp/plitzi-reports/`): each
+ * How this project's runs went against their estimates, read off the reports they left (`reports.ts`): each
  * done task's minutes over its estimate. What `run plan` and `run rehearse` scale a new plan's estimates by — a lead's
  * guess at minutes is the same guess every time, and the project's own runs say by how much it is off.
  */
@@ -33,32 +33,27 @@ const MIN_TASKS = 5;
 /** The newest reports read, at most: an old run's pace is another project's, more often than not. */
 const MAX_REPORTS = 10;
 
-/** A row of a report's tasks table: `| t-home | developer | done | dev-1 | 9 / 30 | …` — its minutes and estimate. */
-const ROW = /^\| [^|]+ \| [^|]+ \| done \| [^|]+ \| (\d+) \/ (\d+) \|/;
+/** A done task's minutes over its estimate, as its report kept it: none for a task not done, or with no estimate. */
+const ratioOf = (task: unknown): number[] =>
+  isRecord(task) &&
+  task.status === 'done' &&
+  typeof task.minutes === 'number' &&
+  typeof task.estimateMinutes === 'number' &&
+  task.estimateMinutes > 0
+    ? [task.minutes / task.estimateMinutes]
+    : [];
 
 export const readHistory = async (root: string): Promise<History | undefined> => {
-  const dir = path.join(root, REPORTS_DIR);
-  const names = (await fs.readdir(dir).catch(() => []))
-    .filter(name => name.endsWith('.md'))
-    .sort()
-    .slice(-MAX_REPORTS);
   let runs = 0;
   const ratios: number[] = [];
-  for (const name of names) {
-    const text = await fs.readFile(path.join(dir, name), 'utf-8').catch(() => '');
-    const rows = text
-      .split('\n')
-      .map(line => ROW.exec(line))
-      .filter(match => match !== null);
-    if (rows.length > 0) {
+  for (const { data } of (await readRunReports(root)).slice(-MAX_REPORTS)) {
+    const tasks: unknown[] = isRecord(data.report) && Array.isArray(data.report.tasks) ? data.report.tasks : [];
+    const done = tasks.flatMap(ratioOf);
+    if (done.length > 0) {
       runs += 1;
     }
 
-    for (const [, minutes, estimate] of rows) {
-      if (Number(estimate) > 0) {
-        ratios.push(Number(minutes) / Number(estimate));
-      }
-    }
+    ratios.push(...done);
   }
 
   if (ratios.length < MIN_TASKS) {

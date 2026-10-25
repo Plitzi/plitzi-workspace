@@ -360,7 +360,7 @@ export const registerRunGroup = (program: Command): Command => {
   runGroup
     .command('feedback')
     .description(
-      'What the run says of Plitzi itself — written by the finish too: its agents’ notices of Plitzi, the refusals, the crashes, the checks no one’s work failed — for Plitzi’s team'
+      'What the run says of Plitzi itself, now (.plitzi/plitzi-reports/runs/<run>/feedback.md) — written by the finish too, beside the report and the records: its agents’ notices of Plitzi, the refusals, the crashes, the checks no one’s work failed — for Plitzi’s team'
     )
     .argument('[run]', 'The run')
     .option(...TOKEN_OPTION)
@@ -639,8 +639,9 @@ A run, from the ask to your project — multi-agent mode, only when you ask for 
   3. plitzi run agent <name> --launch --harness claude|codex|opencode   each agent of .plitzi/team.json started
   4. plitzi run monitor                  follow it; npm run start:preview serves the approved work as it grows
   5. plitzi run finish --apply           yours: the work into the project once you read the lead's report
-     plitzi run abort                    yours: the run ended, nothing written — it leaves no trace
-Nothing touches the project before step 5. The guide: https://docs.plitzi.com/guides/team`
+     plitzi run abort                    yours: the run ended, nothing of its work written
+Nothing touches the project before step 5. Either way its reports stay, to commit and send to Plitzi:
+.plitzi/plitzi-reports/runs/<run>/ (feedback.md first). The guide: https://docs.plitzi.com/guides/team`
   );
 
   return runGroup;

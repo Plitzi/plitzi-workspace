@@ -1,5 +1,5 @@
 import { MACHINERY } from './machinery';
-import { PROJECT_TMP, TEST_OUTPUTS } from './paths';
+import { PROJECT_TMP, REPORTS_DIR, TEST_OUTPUTS } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -105,5 +105,11 @@ export const qualityFilesFor = (globals: 'node' | 'browser', outputs: readonly s
   'eslint.config.mjs': eslintConfig(globals, outputs)
 });
 
+/**
+ * What runs and agents leave of themselves, committed (`.plitzi/plitzi-reports/`): written as they ended — the agents'
+ * own scripts among them — and nobody's to format or lint.
+ */
+const PROJECT_REPORTS = [REPORTS_DIR];
+
 export const qualityFiles = ({ mode }: CreateAnswers): ProjectFiles =>
-  qualityFilesFor(mode === 'server' ? 'node' : 'browser', [...PROJECT_OUTPUTS, ...PROJECT_SERVED]);
+  qualityFilesFor(mode === 'server' ? 'node' : 'browser', [...PROJECT_OUTPUTS, ...PROJECT_SERVED, ...PROJECT_REPORTS]);

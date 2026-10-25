@@ -88,7 +88,9 @@ looked at; the assertions that gate a run are the ones that mean the same thing 
 One rule worth knowing before writing a spec: **find an element by `data-plitzi-el`, never by `data-id`.** Every
 render carries `data-plitzi-el` — the element's id, the name the space gave it (`settings.testAttributes: false` is the
 only thing that takes it off). `data-id`, `data-name` and `data-type` are the builder's: they appear only with
-debugging on or in the canvas, so a check written against them passes there and fails on the published page.
+debugging on or in the canvas, so a check written against them passes there and fails on the published page. A
+component's instance has no node of its own: its name is on the component's root as `data-plitzi-instance` — a project's
+spec that names one by `data-plitzi-el` finds nothing, which `plitzi space lint` says (`selector-instance`).
 
 ### Rendering an arbitrary schema
 

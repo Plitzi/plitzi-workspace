@@ -185,7 +185,7 @@ export const runFeedback = (runId: string | undefined, options: RunCommandOption
       return { file: await writeFeedback(ctx, await loadRun(ctx, id, { anyVersion: true })) };
     },
     ({ file }) =>
-      `What this run says of Plitzi itself — its agents' reports, the lead's and what its records show — for Plitzi's team: ${file} and its JSON beside it (${file.replace(/\.md$/, '.json')}), nothing of the project's code in them; the finish writes them again with the run whole`
+      `What this run says of Plitzi itself — its agents' reports, the lead's and what its records show — for Plitzi's team: ${file}, nothing of the project's code in it. The finish writes it again with the run whole, its report and its records beside it`
   );
 
 /** `plitzi run backlog`: what runs noticed and left, open first — `done <id>` closes one, saying how. */

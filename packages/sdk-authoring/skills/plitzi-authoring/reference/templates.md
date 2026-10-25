@@ -55,7 +55,8 @@ outside the element that publishes it — each with the name it should have been
 ## The language
 
 - Operators: `~` (concat), `+ - * / // % **`, `== != < > <= >=`, `and or not`, `in`, `starts with`, `ends with`,
-  `a ? b : c`, `a ? b` (empty when false), `a ?: b` (a when truthy), `a ?? b` (a when defined).
+  `a ? b : c`, `a ? b` (empty when false), `a ?: b` (a when truthy), `a ?? b` (a when defined). `or` and `and` answer
+  true or false, never a value: `sort or 'listeners'` is `true` — the fallback is `sort ?? 'listeners'` (`template-or-value`).
 - Access: `a.b`, `a.0`, `a[i]`, `(expr).key`, `(expr)[i]`, `['x', 'y'][i]`, `{ k: 1 }.k`.
 - Blocks: `{% set x = … %}`, `{% if %}…{% elseif %}…{% else %}…{% endif %}`, `{% for item in list %}…{% endfor %}`,
   `{% apply upper %}…{% endapply %}`, `{% break %}`, `{% continue %}`.

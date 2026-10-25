@@ -20,6 +20,7 @@ import {
   PROJECT_STATE,
   PROJECT_NOTES,
   PROJECT_TMP,
+  REPORTS_DIR,
   TEST_OUTPUTS,
   TLS_CERT_FILE,
   TLS_KEY_FILE,
@@ -287,7 +288,10 @@ export const tsconfigBase = ({ mode }: CreateAnswers): string =>
         types: mode === 'client' ? ['node', 'vite/client'] : ['node'],
         lib: ['ES2023', 'DOM', 'DOM.Iterable'],
         jsx: 'react-jsx'
-      }
+      },
+      // Of the CLI's folder the typecheck reads, never what runs left: the agents' scripts kept with a run's reports are
+      // none of the project's program. Relative to this file; a project's tsconfig that says its own `exclude` names it too.
+      exclude: [REPORTS_DIR.slice(`${CLI_DIR}/`.length)]
     },
     null,
     2

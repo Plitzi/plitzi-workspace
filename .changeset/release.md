@@ -35,6 +35,12 @@ authoring and the elements learnt from the runs.
 - **`plitzi upgrade`** brings the new scripts (`start:preview`, the visual suite's own server on port 8400) and the
   team file's `about`. `upgrade --write` waits for an open run unless `--with-open-runs`; `plitzi run upgrade` upgrades
   under an open run without breaking it.
+- **Reports to Plitzi live in `.plitzi/plitzi-reports/`, committed.** A run's — once `tmp/plitzi-reports/<run>-<time>.*`
+  and `.plitzi/feedback/<run>.*` — are one folder, `runs/<run>/`; `plitzi feedback`'s page, once in `tmp/feedback/`, is
+  `agents/<date>/report.html`. `plitzi upgrade` brings the ignores that keep the folder out of the typecheck, the lint
+  and the format (`tsconfig.base.json`, `eslint.config.mjs`, `.prettierignore`): run it before the next run ends. The
+  old files are read no more — `run bench` and the estimates start again from the runs that end now; delete them, or
+  keep them by hand. The feedback's JSON is gone: its data is the report's (`report.json`).
 - **`run report --tokens` is gone.** The harness's count comes from each round's report: the agent table says what
   each harness read, its largest context and what it read again; the bench's "Context / task" column is gone.
 - **`grid-area` and `grid-row`/`grid-column` expand as CSS does:** an omitted part is `auto`, a named area's mirrors it.
@@ -75,10 +81,15 @@ start one. How it works: `docs/en/agent-runs.md`.
   - `run pending` lists runs not yet applied. `run resolve` settles a file a person changed meanwhile, and `task
 revert` takes back an approval.
 - **A run closes clean:** nothing unread, unanswered or blocked, and nothing left in the project's `tmp/`. Its servers,
-  preview and kept browser are stopped, its folders removed. Its report stays in `tmp/plitzi-reports/`.
+  preview and kept browser are stopped, its folders removed.
+- **Its reports stay, in one folder to commit and send to Plitzi:** `.plitzi/plitzi-reports/runs/<run>/` — `feedback.md`
+  (what of it is Plitzi's, read first), `report.md`, `report.json`, `records/` (the run's plan, log, usage, messages and
+  each task's rounds and reviews, to compute any of it again with the run gone — never the project's files) and
+  `scratch/` (the agents' own scripts). No path of the machine and no token in any. A run's id is its folder's: `run
+open` refuses one already used.
 - **What a run noticed and left** becomes the project's backlog (`run notice --on`, `.plitzi/backlog.json`, `run
-backlog`), offered to the next plan. What got in the agents' way in Plitzi goes to `.plitzi/feedback/<run>.md`
-  (`run notice --plitzi`), for the person to share.
+backlog`), offered to the next plan. What got in the agents' way in Plitzi goes to its `feedback.md` (`run notice
+--plitzi`), for the person to share.
 
 ### The team (`.plitzi/team.json`)
 
@@ -323,8 +334,8 @@ report`, …).
     got in the way or helped, grouped when several said it alike, with who said it. Frictions join the notices in the
     findings, so one complaint from three agents is one thing to fix. The bench keeps the ease run after run.
   - **The run's feedback to Plitzi** consolidates the agents' round reports, the lead's report and experience and
-    Plitzi's findings, as `.plitzi/feedback/<run>.md` and a `.json` to analyse across runs. `plitzi feedback` stays a
-    single agent's.
+    Plitzi's findings, as the `feedback.md` of the run's reports; its data is the report's. `plitzi feedback` stays a
+    single agent's, kept beside them.
   - Every command keeps its session and, when it fails, why and the lines that say what failed (a page's console errors
     and failed requests among them). A `task check` keeps what it ran on and what each failing step said.
   - **The harness's spend for Claude Code, Codex and OpenCode,** read from the sessions each keeps on the machine (Codex
@@ -676,7 +687,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   its jobs in a JSON file through a restart. A project's server answers `plitzi functions later` while developing.
 - **An action's input field takes `maxLength`, `min` and `max`**, refused before the run with the limit named.
 - **A render an action refused says why, as a warning:** `Action "x" ended as failed, refused (room-not-found): There
-  is no room at this address.` — one line, no stack — where the log said "ended as failed" as an error for every
+is no room at this address.` — one line, no stack — where the log said "ended as failed" as an error for every
   guest's page; a step that broke stays an error, with its own message.
 - **A `render` read of an action with no `render` trigger** says so — the trigger to add — and a refusal's `code` reaches
   the page (`ActionRefusal`).

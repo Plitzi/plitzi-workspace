@@ -46,8 +46,8 @@ your token under another's name, a name or a role not the team's: refused (`iden
   3–10 s; `task next|context|show|inbox|tell` 0.3 s. Change a batch, then check once — never after every edit;
   one acceptance line: `task check --acceptance`. Asked again with nothing changed, a check or a look says its last
   answer (`--fresh` runs it anew), and `complete` right after a passing check takes it. Every element and width in one
-  `page measure` call (`--hover <el>`, `--click <el…>` for a state) — trying values, measure, never `task check`; a
-  picture for what a check cannot tell.
+  `page measure` call (`--hover <el>`, `--click <el…>` for a state, `--steps` for what a visitor makes) —
+  trying values, measure, never `task check`; a picture for what a check cannot tell.
 - **Only your files.** A file another task at work holds is refused at `complete`, naming it — `plitzi task discard
 <file>` puts it back (and brings the run's version of any file); propose the change to that task instead. **Name
   what you declare by your part** — classes and provider ids (`hero-title`, `pricingPlans`), never `title`: another
@@ -75,7 +75,7 @@ takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | 
 - **Blocked by something outside the plan** (a key, a decision): `plitzi task block --reason "…"` (the lead's:
   only it talks to the person), then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks
-  for changes. `agent-limit` (24) on `take`: hand back to the lead.
+  for changes.
 - **Before done:** `plitzi task check` (`--fix`: eslint and prettier fix your files first) runs what `complete` holds
   the copy to — the project's checks, the acceptance's commands, long files, no `space lint` warning in a file you
   changed: iterate on it, not on `complete`, whose failures count toward the run's brake. It hands you what the lead

@@ -5,11 +5,13 @@ import { format } from 'prettier';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { addBacklogItem, BACKLOG_FILE, closeBacklogItem, openBacklog } from './backlog';
+import { feedbackFile } from './feedback';
 import { abortRun, finishRun } from './merge';
 import { noticeRun, noticesOf } from './notices';
 import { buildReport, reportText } from './report';
 import { loadRun, readRunLog } from './run';
 import { readInbox } from './talk';
+import { REPORTS_DIR } from '../scaffold/paths';
 import { qualityFilesFor } from '../scaffold/quality';
 import { benchPlan, makeBench } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
@@ -83,7 +85,7 @@ describe('the run’s feedback to Plitzi', () => {
       ['plitzi', 'page measure reads no position, and every agent wrote a script for it']
     ]);
     expect((await openBacklog(bench.root)).map(item => item.text)).toEqual(['The footer’s legal line wraps at 390']);
-    const feedback = await fs.readFile(finished.feedback ?? '', 'utf-8');
+    const feedback = await fs.readFile(feedbackFile(bench.root, runId), 'utf-8');
     expect(feedback).toContain(`# Plitzi feedback — run ${runId}`);
     expect(feedback).toContain('**page measure reads no position, and every agent wrote a script for it**');
     expect(feedback).not.toContain('The footer’s legal line');
@@ -91,7 +93,7 @@ describe('the run’s feedback to Plitzi', () => {
   });
 
   // lx-product: the feedback lx-controls left ended in a blank line, and the project's format check refused the next run.
-  it('leaves the feedback and the backlog as the project’s Prettier writes them', async () => {
+  it('leaves the backlog as the project’s Prettier writes it, and its reports where no check reads', async () => {
     const runId = await open();
     await noticeRun(lead(), runId, 'page measure reads no position', { plitzi: true });
     await noticeRun(lead(), runId, 'The footer’s legal line wraps at 390', { on: '/ #footer' });
@@ -99,11 +101,11 @@ describe('the run’s feedback to Plitzi', () => {
     const finished = await finishRun(bench.person(true), runId, { apply: true, leavePending: true });
     const options = JSON.parse(qualityFilesFor('node', [])['.prettierrc']) as Options;
 
-    const feedback = finished.feedback ?? '';
-    for (const file of [feedback, feedback.replace(/\.md$/, '.json'), path.join(bench.root, BACKLOG_FILE)]) {
-      const text = await fs.readFile(file, 'utf-8');
-      expect(await format(text, { ...options, filepath: file })).toBe(text);
-    }
+    const backlog = path.join(bench.root, BACKLOG_FILE);
+    const text = await fs.readFile(backlog, 'utf-8');
+    expect(await format(text, { ...options, filepath: backlog })).toBe(text);
+    // The reports are where the scaffold's ignores leave them alone (`create.test.ts`).
+    expect(path.relative(bench.root, finished.report?.dir ?? '').startsWith(`${REPORTS_DIR}/`)).toBe(true);
   });
 });
 
@@ -119,8 +121,8 @@ describe('the project’s backlog', () => {
       expect.objectContaining({ id: 'b-1', on: '/ #home-faq', from: runId, by: 'lead' })
     ]);
 
-    // Noticed again by the next run: kept once.
-    const again = await open();
+    // Noticed again by the next run — a run of its own name, the first's reports kept by theirs: kept once.
+    const again = await open({ ...benchPlan(), runId: `${runId}-2` });
     await noticeRun(lead(), again, 'The FAQ pill does not name the visitor’s zone', { on: '/ #home-faq' });
     await abortRun(bench.person(true), again);
     expect(await openBacklog(bench.root)).toHaveLength(1);

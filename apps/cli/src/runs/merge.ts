@@ -2,16 +2,16 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { closeDoneByRun, keepNotices } from './backlog';
-import { writeFeedback } from './feedback';
 import { fingerprint, readJson, readOptional, writeJson } from './files';
 import { requireLead } from './leads';
+import { leaveReport } from './leaveReport';
 import { acceptanceOnResult, checkVersions } from './materialise';
 import { mergeLines } from './merge3';
 import { entryOf, isMergeManifest } from './model';
 import { noticesByOwner, noticeText } from './notices';
 import { BACKUPS_DIR, under } from './paths';
 import { RunRefusal } from './refusal';
-import { buildReport, leaveReport, readSummary, summaryBehind } from './report';
+import { buildReport, readSummary, summaryBehind } from './report';
 import {
   assertStatus,
   loadRun,
@@ -33,6 +33,7 @@ import { stopKeptBrowser } from '../browser/keptBrowser';
 
 import type { CheckResult } from './checks';
 import type { Finding } from './findings';
+import type { LeftReport } from './leaveReport';
 import type { AcceptanceAgain } from './materialise';
 import type { ApprovedManifest, MergeEntry, ReconciledFile, RunRecord } from './model';
 import type { LoadedRun, RemovedInputs, RunContext } from './run';
@@ -245,8 +246,8 @@ export interface Finished {
   left: string[];
   /** With `--keep-backup`, or for what was written over a change made outside the run: the files as they were. */
   backup?: string;
-  /** The run's report, left when it ends. */
-  report?: string;
+  /** Written: the run's reports — its report, the feedback to Plitzi, its records — left in the project as it ends. */
+  report?: LeftReport;
   /** The plan and summary it was handed: removed with it, or kept when changed since. */
   inputs?: RemovedInputs;
   /** Written: by whom — a person, or the lead a person allowed. */
@@ -259,8 +260,6 @@ export interface Finished {
   backlog?: string[];
   /** Written: the backlog's items its tasks said they do (`closes`), closed. */
   closedBacklog?: string[];
-  /** Written: the run's feedback to Plitzi (`.plitzi/feedback/<run>.md`), for the person to share. */
-  feedback?: string;
   /** What appeared in the project's `tmp/` during the run that is nobody's tool — left there, said (`strays.ts`). */
   leftInTmp?: string[];
   /** What the run shows went wrong, whose and what would stop it (`findings/`): said, never refusing — kept in the report. */
@@ -501,8 +500,6 @@ export const finishRun = async (
   const backlog = (await keepNotices(ctx, loaded)).map(item => item.id);
   // …and what its tasks said they do of it, closed: written into the project, it is done.
   const closedBacklog = await closeDoneByRun(ctx, loaded);
-  // What it says of Plitzi itself, for the person to share with Plitzi: written before the run goes with its log.
-  const feedback = await writeFeedback(ctx, loaded);
   // The browser its measures kept the other site in: never one left behind the run.
   await stopKeptBrowser(ctx.root);
   // Its work is in the project: the run goes, backups and all, unless a person asked to keep them. Its report stays.
@@ -518,7 +515,6 @@ export const finishRun = async (
     ...(kept ? { backup: kept } : {}),
     ...(backlog.length > 0 ? { backlog } : {}),
     ...(closedBacklog.length > 0 ? { closedBacklog } : {}),
-    feedback,
     ...leftThere
   };
 };
@@ -643,18 +639,17 @@ export const continueRun = async (ctx: RunContext, runId: string): Promise<void>
 export const abortRun = async (
   ctx: RunContext,
   runId: string
-): Promise<{ discarded: string[]; report: string; inputs: RemovedInputs; feedback: string }> => {
+): Promise<{ discarded: string[]; report: LeftReport; inputs: RemovedInputs }> => {
   const loaded = await loadRun(ctx, runId);
   await requirePerson(ctx, runId, `abort run "${runId}" — nothing of it is written, and its agents' work is discarded`);
   const discarded = Object.keys((await readApproved(loaded.paths)).files).sort();
   const report = await leaveReport(ctx, loaded, { outcome: 'aborted', files: discarded });
-  // Aborted, what it noticed still stands: the next run's — and what it says of Plitzi, Plitzi's.
+  // Aborted, what it noticed still stands: the next run's — what it says of Plitzi is in its reports.
   await keepNotices(ctx, loaded);
-  const feedback = await writeFeedback(ctx, loaded);
   await stopKeptBrowser(ctx.root);
   const inputs = await removeRun(ctx, loaded.paths, runId);
 
-  return { discarded, report, inputs, feedback };
+  return { discarded, report, inputs };
 };
 
 /** `plitzi run restore`: one project file put back from a backup — the run's opening one, or before a merge. */

@@ -1,4 +1,13 @@
-import { AUTHOR_FILE, CLI_DIR, DATA_DIR, FUNCTIONS_DIR, MAIN_FILE, RUNTIME_DIR, TSCONFIG_BASE } from './paths';
+import {
+  AUTHOR_FILE,
+  CLI_DIR,
+  DATA_DIR,
+  FUNCTIONS_DIR,
+  MAIN_FILE,
+  REPORTS_DIR,
+  RUNTIME_DIR,
+  TSCONFIG_BASE
+} from './paths';
 
 import type { CreateAnswers } from './types';
 
@@ -101,6 +110,9 @@ whole project to what follows — and to what Node, the server and \`space push\
   }
 - \`${TSCONFIG_BASE}\` — the compiler options, which \`tsconfig.json\` extends. \`tsconfig.json\` is yours: a folder of
   your own (\`scripts/\`, \`tools/\`) goes in its \`include\`.
+- \`${REPORTS_DIR}/\` — what runs and agents said of the project and of Plitzi: each run's reports as it ended
+  (\`runs/<run>/\`, its \`feedback.md\` first) and each agent's (\`plitzi feedback\`, \`agents/<date>/\`). Committed, and
+  nobody's to typecheck, lint or format; send a folder to Plitzi's team and Plitzi gets better from it.
 
 ${server ? 'What the server does besides serving the space is yours, in `src/config/serverOptions.ts`.\n\n' : ''}${PLUGINS(answers)}
 ${server ? `${FUNCTIONS}\n${RUNTIME}\n` : ''}${DATA(answers)}${answers.fromSpace ? `\n${FROM_SPACE}` : ''}`;

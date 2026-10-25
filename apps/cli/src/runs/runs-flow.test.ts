@@ -201,11 +201,7 @@ describe('a run played whole, as velada-dress went', () => {
     expect((await openBacklog(bench.root)).map(item => item.text)).toEqual(['The book page has no map']);
 
     // Its report says where the time went and what it cost, and keeps it as data beside it: the bench's.
-    const reports = await fs.readdir(path.join(bench.root, 'tmp', 'plitzi-reports'));
-    const report = await fs.readFile(
-      path.join(bench.root, 'tmp', 'plitzi-reports', reports.find(file => file.endsWith('.md')) ?? ''),
-      'utf-8'
-    );
+    const report = await fs.readFile(path.join(applied.report?.dir ?? '', 'report.md'), 'utf-8');
     expect(report).toContain('## Flow — where the time went');
     expect(report).toContain('## Cost — what the CLI made the agents read');
     expect(report).toMatch(/\| t-menu \| dev-2 \|/);

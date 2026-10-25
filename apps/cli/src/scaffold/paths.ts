@@ -59,6 +59,15 @@ export const PROJECT_NOTES = 'NOTES.md';
 /** The compiler options the CLI keeps up, which the project's own `tsconfig.json` extends. */
 export const TSCONFIG_BASE = `${CLI_DIR}/tsconfig.base.json`;
 
+/**
+ * What runs and agents say of the project and of Plitzi, kept with the project and committed: a team reads its runs
+ * again, and sends one folder to Plitzi's team to make Plitzi better. Each its own folder — a run that ended under
+ * `runs/<run>/`, one agent's report (`plitzi feedback`) under `agents/<date>/` — nobody's to typecheck, lint or format.
+ */
+export const REPORTS_DIR = `${CLI_DIR}/plitzi-reports`;
+export const RUN_REPORTS_DIR = `${REPORTS_DIR}/runs`;
+export const AGENT_REPORTS_DIR = `${REPORTS_DIR}/agents`;
+
 /** The space's server actions, a folder like the space: `index.ts` lists them for the server, one action a file. */
 export const ACTIONS_DIR = 'src/actions';
 export const ACTIONS_ENTRY = `${ACTIONS_DIR}/index.ts`;

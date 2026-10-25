@@ -747,7 +747,9 @@ part of this: their data arrives with the page. The dev-tools' Store tab lists w
 ### State that outlives a visit
 
 `settings: { keepState: true }` keeps `runtime.state` — what `setState` writes — across reloads, in the browser's
-storage and under whoever is signed in. `transientState` lists the keys never kept: a filter, a panel left open.
+storage and under whoever is signed in. `transientState` lists the keys never kept: a filter, a panel left open — or
+`keptState` the only keys kept, when few are (a dismissed notice): one of the two, `authorSpace` refuses both. The
+runtime keeps a key when `keptState` names it, else when `transientState` does not (`keptKey`, `runtimeStatePersist.ts`).
 
 Web storage is the browser's alone, so what was kept comes back after hydration: the server paints the space's
 defaults, and the page swaps in what the visitor chose a moment later. For what the first paint SHOWS — the tool a

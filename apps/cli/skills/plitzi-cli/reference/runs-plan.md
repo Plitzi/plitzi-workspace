@@ -5,7 +5,7 @@ an agent starts or a token is spent. The lead's half after it: [runs-lead.md](ru
 
 ## 1. The goal, asked
 
-- Read what is open first: `plitzi run backlog`, the last run's `.plitzi/feedback/<run>.md` (**What is left**).
+- Read what is open first: `plitzi run backlog`, the last run's `.plitzi/plitzi-reports/runs/<run>/report.md` (**What is left**).
 - Ask the goal as a choice — two to four options, yours recommended first, each with its size (tasks) and what it tests
   of the project. One open question is not asked when a choice would do.
 

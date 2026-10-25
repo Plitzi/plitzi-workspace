@@ -1,14 +1,12 @@
 import fs from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
 
 import { experienceText } from './experience';
 import { kindOf } from './harness';
 import { buildReport, readSummary } from './report';
 import { findingsText, ranOn } from './reportHead';
+import { REPORT_FILES, runReportDir, withoutMachine } from './reports';
 import { commandName, tokensText } from './runMetrics';
-import { projectFormatter } from '../commands/projectFormatter';
-import { formattedJson } from '../scaffold/formattedJson';
 
 import type { AgentTimeline } from './agentTimeline';
 import type { Briefs } from './briefs';
@@ -23,20 +21,13 @@ import type { LoadedRun, RunContext } from './run';
  * top, and what the run's records show was Plitzi's (`findings/`) — consolidated as the run ends, for the person to
  * share with Plitzi's team: so a run on any project says what Plitzi should fix or improve.
  *
- * Written twice beside the project's team and backlog, never sent by itself: as Markdown to read, and as JSON to analyse
- * across runs and projects (`RunFeedback`). Nothing of the project's code in it, no token, no path of the person's
- * machine — how Plitzi behaved, and what it cost.
+ * The first file of the run's folder of reports (`reports.ts`), the one read first: its data is the report's, kept
+ * beside it (`report.json`). Nothing of the project's code in it, no token, no path of the person's machine — how Plitzi
+ * behaved, and what it cost.
  */
 
-export const FEEDBACK_DIR = path.join('.plitzi', 'feedback');
-
-/** What the feedback's data is shaped as: what reads it across runs knows which it reads. */
-export const FEEDBACK_VERSION = 1;
-
-/** A run's feedback to Plitzi as data: the JSON beside its Markdown. */
+/** A run's feedback to Plitzi as data: what its Markdown is written from. */
 export interface RunFeedback {
-  version: typeof FEEDBACK_VERSION;
-  kind: 'run';
   runId: string;
   /** The Plitzi it ran on: the CLI and every package the run pinned. */
   pinned: LoadedRun['record']['pinned'];
@@ -88,15 +79,9 @@ export interface RunFeedback {
   }[];
 }
 
-/** The feedback's Markdown for a run, in the project; its JSON beside it. */
-export const feedbackFile = (root: string, runId: string): string => path.join(root, FEEDBACK_DIR, `${runId}.md`);
-
-/** A text with the person's machine left out: the project's folder and their home said as such, a token's secret cut. */
-const sanitized = (root: string, text: string): string =>
-  text
-    .replaceAll(root, '<project>')
-    .replaceAll(os.homedir(), '~')
-    .replace(/\b[\w-]+\.(?:@[\w-]+|t-[\w-]+)\.[0-9a-f]{16,}\b/g, '<token>');
+/** The feedback's Markdown for a run, in its folder of reports. */
+export const feedbackFile = (root: string, runId: string): string =>
+  path.join(runReportDir(root, runId), REPORT_FILES.feedback);
 
 const section = (title: string, lines: readonly string[]): string[] =>
   lines.length === 0 ? [] : [`## ${title}`, '', ...lines, ''];
@@ -105,7 +90,7 @@ const section = (title: string, lines: readonly string[]): string[] =>
 const sanitizedData = (root: string, data: RunFeedback): RunFeedback => {
   const clean = (value: unknown): unknown =>
     typeof value === 'string'
-      ? sanitized(root, value)
+      ? withoutMachine(root, value)
       : Array.isArray(value)
         ? value.map(clean)
         : typeof value === 'object' && value !== null
@@ -164,8 +149,6 @@ export const feedbackOf = async (ctx: RunContext, loaded: LoadedRun): Promise<Ru
   const summary = (await readSummary(loaded))?.trim();
 
   return sanitizedData(ctx.root, {
-    version: FEEDBACK_VERSION,
-    kind: 'run',
     runId: loaded.record.runId,
     pinned: loaded.record.pinned,
     openedAt: report.openedAt,
@@ -224,8 +207,10 @@ export const feedbackText = (data: RunFeedback): string =>
     `CLI ${data.pinned.cli} · ${data.openedAt.slice(0, 10)} · ${String(data.tasks.done)} of ${String(data.tasks.total)} tasks, ${String(data.agents.length)} agents · ${String(data.minutes)} min`,
     '',
     'What this run says of Plitzi itself — its agents’ reports of each task, the lead’s, and what the run’s records show —',
-    'consolidated by the CLI as the run ended, nothing of the project’s code in it. Share it with Plitzi’s team (this file',
-    'and the JSON beside it): it is how a run on any project makes Plitzi better.',
+    'consolidated by the CLI, nothing of the project’s code in it: the file of this folder to read first. Beside it, as the',
+    'run ends: `report.md` (the run whole), `report.json` (the same as data), `records/` (what the run kept — its plan, log,',
+    'usage, messages, each task’s rounds and reviews) and `scratch/` (the agents’ own scripts), no path of this machine and',
+    'no token in any. Send the folder to Plitzi’s team: it is how a run on any project makes Plitzi better.',
     '',
     '## What the run shows was Plitzi’s',
     '',
@@ -284,19 +269,13 @@ export const buildFeedback = async (ctx: RunContext, loaded: LoadedRun): Promise
   feedbackText(await feedbackOf(ctx, loaded));
 
 /**
- * The run's feedback, written in the project as its own Prettier writes it — the agents' words in it too: a file the run
- * leaves never fails the project's format check, which refuses the next run (lx-product). Where its Markdown is; its
- * JSON beside it.
+ * The run's feedback, written in its folder of reports — which the project's formatter, lint and typecheck leave alone
+ * (the scaffold's ignores, `plitzi upgrade`): where it is.
  */
 export const writeFeedback = async (ctx: RunContext, loaded: LoadedRun): Promise<string> => {
   const file = feedbackFile(ctx.root, loaded.record.runId);
   await fs.mkdir(path.dirname(file), { recursive: true });
-  const format = await projectFormatter(ctx.root);
-  const data = await feedbackOf(ctx, loaded);
-  await fs.writeFile(file, await format(path.relative(ctx.root, file), `${feedbackText(data).trimEnd()}\n`));
-  const json = file.replace(/\.md$/, '.json');
-  // As Prettier leaves JSON, when the project has none to write it with.
-  await fs.writeFile(json, await format(path.relative(ctx.root, json), formattedJson(data)));
+  await fs.writeFile(file, `${feedbackText(await feedbackOf(ctx, loaded)).trimEnd()}\n`);
 
   return file;
 };

@@ -58,7 +58,9 @@ A `formControl`'s id names its wrapper: type into `locate('email').locator('inpu
 
 Select by `data-plitzi-el`, never by `#id` or a generated class name: authoring derives `<type>-<hash>` for an element's
 own rules, and that name changes when the rules do. A component's instance has no node of its own — its id is on the
-component's root as `data-plitzi-instance` — so take the selector from `handles.element(id)`, which says which.
+component's root as `data-plitzi-instance` — so take the selector from `handles.element(id)`, which says which. A
+spec naming an instance by `data-plitzi-el` finds nothing, and `toBeHidden()` passes on it: `plitzi space lint` says it
+(`selector-instance`).
 
 ## Pressing a shortcut
 

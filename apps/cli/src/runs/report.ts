@@ -6,26 +6,17 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { agentTimelines, timelinesText } from './agentTimeline';
 import { proposalsOf } from './agreements';
 import { auditRun } from './audit';
-import { benchOf, benchText, readBench, teamTasks } from './bench';
+import { benchText, teamTasks } from './bench';
 import { briefsOf } from './briefs';
 import { combineExperience, experienceText, isExperience, saidOfPlitzi } from './experience';
 import { readOptional, writeAtomic } from './files';
-import {
-  FINDING_OWNERS,
-  factFindings,
-  indicatorsOf,
-  keepScratch,
-  orderFindings,
-  runFindings,
-  scratchOf
-} from './findings';
+import { FINDING_OWNERS, factFindings, indicatorsOf, orderFindings, runFindings, scratchOf } from './findings';
 import { harnessUsage } from './harness';
-import { rememberPace } from './history';
 import { coverage } from './inventory';
 import { requireLead } from './leads';
 import { messagesOf } from './messages';
 import { noticesByOwner, noticeText } from './notices';
-import { REPORTS_DIR, taskPaths } from './paths';
+import { taskPaths } from './paths';
 import { RunRefusal } from './refusal';
 import { flowText } from './reportFlow';
 import { consumptionText, findingsText, glanceText, reviewsText } from './reportHead';
@@ -53,7 +44,7 @@ import type { TaskRoundReport } from './taskReports';
  * would stop it (`findings/`), what it spent, and the facts: each task's agents, time against its estimate, reviews and
  * cuts; refusals, failed checks and conflicts; requests and agreements. The lead adds only what no record says
  * (`plitzi run report --summary <file>`); the final merge does not go in without it. When the run ends, the report is
- * left in `tmp/plitzi-reports/` as Markdown to read and JSON to analyse: the run goes, the report stays.
+ * left in the project's reports with the run's records (`leaveReport.ts`): the run goes, the report stays.
  */
 
 export interface TaskReport {
@@ -631,31 +622,4 @@ export const summaryBehind = async (loaded: LoadedRun): Promise<string[]> => {
   );
 
   return approved.flatMap(each => (each.at !== undefined && each.at > written ? [each.id] : []));
-};
-
-/** Leaves the report of a run that ends, out of the run: `tmp/plitzi-reports/<run>-<time>.md`. */
-export const leaveReport = async (ctx: RunContext, loaded: LoadedRun, closing: Closing): Promise<string> => {
-  const report = await buildReport(ctx, loaded);
-  const stamp = ctx
-    .now()
-    .toISOString()
-    .replace(/[-:]/g, '')
-    .replace(/\.\d+Z$/, 'Z');
-  const file = path.join(ctx.root, REPORTS_DIR, `${loaded.record.runId}-${stamp}.md`);
-  await fs.mkdir(path.dirname(file), { recursive: true });
-  const bench = benchOf(report, ctx.cli);
-  const before = await readBench(ctx.root);
-  await writeAtomic(file, reportText(report, await readSummary(loaded), closing, [...before.slice(-5), bench]));
-  // Beside it, the same as data: what `plitzi run bench` compares, and a lead debugging the run reads whole.
-  // The agents' scripts, before the run's scratch goes with it: what each did that no command could.
-  const scratch = await keepScratch(loaded.paths.scratch, file.replace(/\.md$/, '-scratch'));
-  // The lead's summary in it too: the JSON is the whole run, for what analyses runs side by side.
-  await writeAtomic(
-    file.replace(/\.md$/, '.json'),
-    `${JSON.stringify({ bench, report, summary: (await readSummary(loaded)) ?? null, scratch }, null, 2)}\n`
-  );
-  // This machine's pace too: what the next first run of any project scales its estimates by.
-  await rememberPace(report.tasks);
-
-  return file;
 };

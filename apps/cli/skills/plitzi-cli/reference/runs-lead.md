@@ -172,7 +172,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red — a done task's too: the finish holds
   it to the amended line. The plan you amend is any of the run's — the one it opened with, a stage's, or several joined:
   each changes only the tasks of the plans it holds.
-- **Don't fix Plitzi mid-run**: note it (`run notice --plitzi "…"`); the run's feedback (`.plitzi/feedback/<run>.md`)
+- **Don't fix Plitzi mid-run**: note it (`run notice --plitzi "…"`); the run's feedback (`feedback.md` of its reports)
   joins it to the agents' reports.
 - **A round trimmed is said**: what it leaves goes to the backlog (`run notice`), not one more round.
 - **The report before the finish**; `--apply` is the person's unless they allowed you.

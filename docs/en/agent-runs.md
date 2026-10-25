@@ -83,9 +83,10 @@ are closed as its run is applied, each saying the task and the run that did it.
 **The run's feedback to Plitzi** (`feedback.ts`) is what a multi-agent run says of Plitzi itself, as `plitzi feedback`
 is a single agent's. Each agent reports every round it completes, with what it was like to work with Plitzi (below).
 The lead adds its own report and experience (`run report --summary … --ease --hardest`). The run consolidates them as it
-finishes or is aborted, with what its records show was Plitzi's or the machine's (the findings, below). `run feedback` writes it before that. It goes to
-`.plitzi/feedback/<run>.md` to read and `.plitzi/feedback/<run>.json` to analyse (`RunFeedback`, `version`ed), for the
-person to share with Plitzi's team; it is never sent by itself. Each file holds:
+finishes or is aborted, with what its records show was Plitzi's or the machine's (the findings, below). `run feedback` writes it before that. It is
+`feedback.md` in the run's folder of reports (`.plitzi/plitzi-reports/runs/<run>/`, below), the file of it read first;
+its data is the report's (`report.json`). The person shares the folder with Plitzi's team; it is never sent by itself.
+It holds:
 - the findings of Plitzi and of the machine;
 - the experience, combined (below);
 - the lead's report;
@@ -189,7 +190,9 @@ next (`ready`). `task show` (`show.ts`) gathers the rest of a review —
 acceptance, checks, agreements, notes, what was said, each file's diff against where the copy started, the commands that
 act on it; `task show <task> <file>` is one of those files whole, read from where the diff is (`showTaskFile`). Its
 diffs stop at `DIFF_TOTAL` (240) lines in all, each file past it said with how to read it: encore-3's ran to 24k
-characters, 46 of them over 12k. With no task named, it is the one the caller holds or reviews (`ownTask`); `task
+characters, 46 of them over 12k. The commands that act on it are the caller's: a lead's, or — for an agent of the
+team — `task tell --about` and `task propose` (encore-4's design-2 was offered `task message`, which refused its token).
+With no task named, it is the one the caller holds or reviews (`ownTask`); `task
 complete` takes its own task's id too, and refuses another's.
 
 **No task ends with failing checks**: `complete` refuses. `--known-failure "why" --fixed-by <task>` takes it to review
@@ -275,7 +278,10 @@ Every agent starts cold, and most of what it would read is the same for all of t
 Markdown beside it, 16 KB at most, kept in the run as `primer.md` and rewritten by `run amend` — opens every task's
 brief; below it, `task context` names the skill files the task's own files need (`readingFor`: the cheatsheet for the
 space, the reference of a layout, a component, data, a plugin or server code, and `runs.md`), only those the project
-has. What a brief says of a task it depends on is its acceptance — six lines, the rest `task show <id>` — never how
+has. What its files import from the rest of the project — each name's signature and doc's first sentence — is read from
+the task's copy while it holds one (`sourceRoot`; encore-4's tester read a function as the project had it before the run),
+and a file of it near the line says a new file beside it is the task's. What a brief says of a task it depends on is its
+acceptance — six lines, the rest `task show <id>` — never how
 its reviews went, and a note of its own is 300 characters, the whole with `--json`: encore-3's briefs ran to 17k, 4k of
 them the tasks before it. A tester and a lead that review read `runs.md` and `runs-review.md` (how a task is judged, the
 same for the lead), never the lead's whole half: each starts fresh after every piece. `run plan` and `run rehearse` read the project's past reports too (`readHistory`: the done tasks' minutes over
@@ -328,6 +334,17 @@ kept (`lingering.ts`), its use marked while it is followed so its watchdog leave
 `page check` in one copy refuses the port another holds, and `task complete` counts a server on the port as its copy's
 only when `/health` names the copy. A copy's `start:dev` without `PORT` takes a free port from 8080 and holds it while it
 starts (`reservePort`, a lock per port): two copies started at once no longer meet on the same one.
+
+Which pages, and as whom: with none named, the pages its files are drawn at and those its acceptance checks, together
+(`pagesToLook`) — a page its acceptance checks with a status of its own (`--status 404`) apart, said with the command
+that looks at it (`acceptanceStatuses`); `task next` offers the same, `--as` the account its acceptance checks with. A
+route with a parameter is filled from the site's links, read signed in when the look is (`sessionCookie`: a plain sign-in
+through `/auth/login`), so `/u/:username` is found as the account's own link (encore-4). What it says: a whole page past
+three screens pictured in parts too (`readablePictures`, the shot's `tiles`) — a phone's page read whole shrank to 97 px;
+a picture not taken said once a reason, with every picture it stopped, and how to see a part on none of them (`--as`,
+`--click`: `unpicturedText`); a dress change once, with every section it is in, an item repeated in one as `×n`
+(`dressOf`); that the copy was served with the state its plays left (`state/`), the run before cold (`warmCopy`); and
+`--before` when it was not set beside the run before (`notBeside`).
 
 Its pictures are the run's (`<run>/shots/`), and so is a `page shot` taken inside a task's copy (`<run>/shots/<task>/`):
 read by the lead while the run is open, gone with it — never left in the project's `tmp/`, which is the person's. An
@@ -517,7 +534,8 @@ nothing). Its check, its parts' comparisons and that reading run at once, three 
 in for another site's pictures (`page check --stand-ins`: a look is of the task's change, not a third party's CDN,
 which throttled a look's pages and failed them now and then); the run before it is served once and kept while nothing
 is approved (`startBeforePreview`, `before-kept/`); and a look asked again, the task, the run and the ask unchanged,
-says that look again (`looked.json`, 30 min; `--fresh` looks anew). The sanity run's look went from 50.5 s to 7.5 s, and
+says that look again (`looked.json`, 30 min, every look of the task by its key — a round's two looks of different pages
+each stand; `--fresh` looks anew). The sanity run's look went from 50.5 s to 7.5 s, and
 to 0.1 s asked again; its complete from 8.5 s to 0.35 s. `plitzi` starts through `dist/bin.js`, which turns on Node's compile cache first (a start ~30% shorter), and
 `task take` prints the project's own `node_modules/.bin/plitzi` (npx adds ~0.2 s a call). `PLITZI_TIMING=1` makes every
 command the CLI runs of itself say how long it took.
@@ -739,7 +757,12 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   review, no brake. `--fix` first runs the project's own linter and formatter on the files the task changed alone
   (`eslint --fix` when its `lint` script is eslint's, `prettier --write --ignore-unknown` when its `format` is
   prettier's: `fix.ts`), and says what they rewrote; a check that fails on lint or format without it says `--fix` —
-  velada-polish's dev-1 ran three checks in twenty seconds, twice, on what a `--fix` writes.
+  velada-polish's dev-1 ran three checks in twenty seconds, twice, on what a `--fix` writes. Another task's file in the
+  copy is not fixed — it is refused as that task's, as before (`whoseChanges` read first; encore-4's dev-2). A check
+  failing as the last one of the task did, on the same input (`input`, the check's key) and the same failures, says so
+  (`failedAlikeAt`) — dev-1 checked twelve times in nine minutes. A backup an editor left (`roomBrowse.test.ts-E` from
+  macOS's `sed -i -E`) fails the check and is refused at `complete` (`backupFiles`, `strays.ts`). A failing step's
+  output keeps, under each failing line, its deepest lines (`tail`: tsc's cause, under the overloads it tried).
 - **A task sent back waits for its agent:** while that agent is at another task of its own, the one sent back is
   parked for it (`parkedFor`, "dev-1 at t-menu first") and handed to it by its next `task next`, before anything new —
   never to a free agent, and never read "no signal — reassign it" meanwhile: the agent that wrote it has the context
@@ -750,7 +773,8 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   requested, unblocked by the lead, or held all along (`back`): one held while another was worked was said "unblocked"
   right after `complete` told the agent to take no other step. A `--follow` that ends says one rule whatever the agent
   holds: the wait ended, not the work — run it again; only "You can stop" stops it (and a task of its in review comes
-  back to it if sent back). A request of a task not approved yet is in no one's attention — it goes in with the
+  back to it if sent back). A base agent with every task of the run approved hears what is left: the finish — the lead's summary, then a
+  person's apply — and nothing for it unless the lead stacks a stage (encore-4's design-1 waited 4.5 h told only to wait). A request of a task not approved yet is in no one's attention — it goes in with the
   approval — so `run watch --until lead` is not woken for it; one left once its task is approved is. `--acceptance` runs only the acceptance's commands, the copy served for them, and says the
   project's checks were not run: la-velada's agents iterated on one failing line with the whole check each time (52 of
   their 88 failed checks were an acceptance line). An agent iterating on a fix checks with it,
@@ -866,7 +890,8 @@ Another harness's is said as not read. The lead's own sessions are read the same
 **The experience, combined** (`experience.ts`). The lead says its own with its summary (`run report --summary <file>
 --ease --hardest [--friction] [--helped]`, kept in `lead-experience.json`), and the run puts them all together:
 - the ease: the run's median, each agent's, and the hardest rounds (2 or less) with what cost the most;
-- what cost the most, what got in the way and what helped, each grouped when several said it alike, the most said
+- what cost the most, what got in the way and what helped, each grouped when several said it alike (a text joins the group
+  whose first text it is alike, never the words a group gathered: `groupAlike`), the most said
   first, with who said it and at which task.
 
 Frictions are said of Plitzi as notices are, so the findings group the two: the same complaint from three agents is
@@ -889,19 +914,22 @@ when it fails, what each failing step said (`why`).
 - what would stop it happening again.
 
 They are read off the log, the usage, the plan, the agents' scratch, their notices and the rounds' reports:
-- **Sessions:** an agent with two tasks in progress, one in two sessions at once, a session that went on after "You can
-  stop".
+- **Sessions:** an agent with two tasks in progress — taken, never a sent-back one waiting for it, which is the rule —
+  one in two sessions at once, a session that went on after "You can stop".
 - **Checks:** a check answering two ways on one input (flaky; the lead's when it is a line, Plitzi's otherwise), an
   acceptance line failing three checks of a task, a project step failing four, a change breaking what an approved task
   was accepted on, lines rewritten after the run began.
-- **Gaps:** questions `explain` had no answer for, and topics one agent asked about in three ways or more; acceptance
+- **Gaps:** questions `explain` had no answer for (said there alone, not again as a failed command), and topics one
+  agent asked about in three ways or more; acceptance
   checked by the lead's own scripts (the project's tests are not); scripts the agents wrote in their scratch and
   packages they installed there; what was said of Plitzi — notices and frictions together.
 - **Failed commands, by why:** refused as written (an option or command the CLI has not: a doc or a prompt says it), the
   machine's (a port, a permission, a browser not installed), and the same CLI error met twice. A check's verdict on the
   work is not one of these.
-- **Cost:** an answer over 12k characters, a call repeated, a task reading 2.5 times the median, a context over 150k
-  tokens at a task's end, kinds of result read again for over a million tokens.
+- **Cost:** an answer over 12k characters, a call repeated, the tasks reading 2.5 times the median (one finding, each
+  task its evidence), the rounds ending with a context over 150k tokens (one finding, each round its evidence), kinds of
+  result read again for over a million tokens — named by the tool and what it was asked (`Read .ts`, `Bash plitzi page
+  measure`: `whatOf`, `kindOf`).
 - **How the run was worked** (`audit.ts`): an approval missing from the log, a review waiting over ten minutes, a known
   failure, a task sent back three times, a UI review skipped or gone past, a crash, a preview that could not sync, the
   brake, the same refusal three times.
@@ -928,8 +956,9 @@ one.
 finish writes, the whole report: the run's goal (the stages it grew by listed under it), the run at a glance, and the
 problems by whose, numbered, each with its evidence and its fix. Then it gives the experience combined, the lead's summary, what each review asked when it sent a task back, **each
 agent's life** (`agentTimeline.ts`: started, joined, took, completed, reviewed, waited and stopped — with why — and the
-minutes at work, stopped and silent; a silence is ten minutes and more with nothing logged while neither waiting nor
-stopped: what the board reads as no signal), what each
+minutes at work, stopped and silent, to the last approval — past it every agent waits for the person's finish; a silence
+is ten minutes and more with nothing logged while neither waiting nor stopped: what the board reads as no signal; a call
+no agent's token named, `unnamed`, is a refusal, never an agent), what each
 agent and the lead spent (with what each ran on, and Plitzi's files read the most), and the facts: each task's agents, time against
 its estimate, reviews, cuts and blocks; completions, refusals, failed checks and conflicts; overrides, requests,
 proposals, a reconciliation, restores. `run finish` prints a few findings of each whose and points at the report.
@@ -939,12 +968,25 @@ merge is refused without it, and refused with one written before a task was appr
 says which tasks and is not `ready` until it is written again. An approval is logged the moment its task is done
 (`review`), and what it let go after — files handed on, tasks made ready — on a line of its own (`handed-on`): written
 last, one whose next steps failed was in the run's work and nowhere in the log. When the run ends — finished, or aborted
-by a person — the report is left in `tmp/plitzi-reports/<run>-<time>.md`, with what was written or discarded and where a
-backup is. Beside it, `<run>-<time>.json` is the whole run as data: the bench line, the report (`version`ed: findings,
-indicators, every round's report, each task's review asks, the lead's spend, the metrics), the lead's summary and the
-scripts kept. Those are in `<run>-<time>-scratch/<agent>/`: each agent's scripts copied out of its scratch before the
-run goes (256 KB at most each; larger ones named as left out). Each is what a command could not do. That folder and the
-JSON are what is read to analyse runs side by side.
+by a person — its reports are left in one folder, committed with the project and the one a developer sends to Plitzi
+(`leaveReport.ts`, `reports.ts`): `.plitzi/plitzi-reports/runs/<run>/`. A run's id is its folder's: `run open` refuses
+an id that already left one. In it:
+
+- `feedback.md` — what of the run is Plitzi's (above), read first;
+- `report.md` — the report whole, with what was written or discarded and where a backup is;
+- `report.json` — the same as data (`REPORT_VERSION`): the bench line, the report (findings, indicators, every round's
+  report, each task's review asks, the lead's spend, the metrics), the lead's summary and the scripts kept — what
+  `run bench` and the next plans' estimates (`history.ts`) read;
+- `records/` — the run's own records as it kept them, to compute any of it again with the run gone: its record, plan,
+  primer, log, usage, messages, and each task's definition, state, rounds, reviews and log. Never what `NOT_RECORDS`
+  names — the project's files as the run kept them (`blobs/`), the copies, the pictures, who held which token;
+- `scratch/<agent>/` — each agent's scripts copied out of its scratch before the run goes (256 KB at most each; larger
+  ones named as left out). Each is what a command could not do.
+
+Every text in it has the machine left out (`withoutMachine`): the project's folder said `<project>`, the home `~`, a
+token's secret cut. The project's typecheck, lint and format never read it: the scaffold's `tsconfig.base.json`,
+`eslint.config.mjs` and `.prettierignore` name it (`plitzi upgrade` brings them to a project made before), and a task's
+copy leaves it out. `plitzi feedback`, one agent's report, is kept beside them, `agents/<date>/report.html`.
 
 **The run measured** (`runMetrics.ts`, `reportFlow.ts`): the report says where the time went and what it cost, read off
 the log, the messages and the run's usage — what velada-polish's lead computed by hand to find the run's bottlenecks:
@@ -968,8 +1010,8 @@ the log, the messages and the run's usage — what velada-polish's lead computed
   meant to be run again, and a fresh session runs its first commands again, so neither counts. The harness's own count
   comes from each round's report (`taskReports.ts`, its `harness`): by agent, what it read in all (every turn's whole
   context), its largest context at a round's end, and what its heaviest results were read again for at the least.
-- **The bench** (`bench.ts`): the same measures, one line a run, kept as data beside the report
-  (`<run>-<time>.json`, with the report whole), ends the report against the five runs before, and `plitzi run bench`
+- **The bench** (`bench.ts`): the same measures, one line a run, kept in the run's `report.json` with the report
+  whole, ends the report against the five runs before, and `plitzi run bench`
   lists every run: minutes a task, rounds a task, the share of checks failed for the copy's work and how many failed
   for nothing of it ("Not theirs"), refusals (`identity` apart), the median
   waits for a UI review, the lead and a rework, the minutes agents waited (to the last approval: past it they wait for

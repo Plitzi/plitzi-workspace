@@ -38,7 +38,7 @@ describe('plitzi feedback', () => {
     await fs.writeFile(path.join(folder, 'package.json'), JSON.stringify({ name: 'shop' }));
     const answer = await answered({});
 
-    expect(answer.file).toBe(path.join(folder, 'tmp/feedback', `report-${answer.facts.date}.html`));
+    expect(answer.file).toBe(path.join(folder, '.plitzi/plitzi-reports/agents', answer.facts.date, 'report.html'));
     expect(answer.facts.node).toBe(process.version);
     const page = await fs.readFile(answer.file, 'utf-8');
     expect(page).toContain(`const FACTS = ${JSON.stringify(answer.facts, null, 2)}`);
@@ -67,7 +67,9 @@ describe('plitzi feedback', () => {
     const second = await answered({});
 
     expect(second.file).not.toBe(first.file);
-    expect(path.basename(second.file)).toBe(`report-${second.facts.date}-2.html`);
+    expect(path.relative(folder, second.file)).toBe(
+      path.join('.plitzi/plitzi-reports/agents', `${second.facts.date}-2`, 'report.html')
+    );
   });
 
   it('continues the reports it is given, and refuses a link that is not one', async () => {

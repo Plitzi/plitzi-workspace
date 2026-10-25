@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { feedbackFile, feedbackOf, writeFeedback } from './feedback';
 import { keepScratch } from './findings';
 import { buildReport, reportBrief, reportText } from './report';
+import { withoutMachine } from './reports';
 import { loadRun } from './run';
 import { readTaskReports } from './taskReports';
 import { checkTask, completeTask, reviewTask } from './tasks';
@@ -93,8 +94,6 @@ describe('a round’s report, and the run’s', () => {
 
     const file = await writeFeedback(lead(), loaded);
     expect(file).toBe(feedbackFile(bench.root, runId));
-    const json = JSON.parse(await fs.readFile(file.replace(/\.md$/, '.json'), 'utf-8')) as { kind: string };
-    expect(json.kind).toBe('run');
     expect(await fs.readFile(file, 'utf-8')).toContain(
       '- explain had no answer for a page’s share image — agent-1 at t-about'
     );
@@ -125,9 +124,14 @@ describe('what a fix of Plitzi reads without running it again', () => {
 
     const scratch = path.join(loaded.paths.scratch, 'agent-1', 'axe');
     await fs.mkdir(scratch, { recursive: true });
-    await fs.writeFile(path.join(scratch, 'audit.mjs'), 'console.log("audit");\n');
+    await fs.writeFile(path.join(scratch, 'audit.mjs'), `console.log(${JSON.stringify(bench.root)});\n`);
     const into = path.join(bench.root, 'tmp', 'kept');
-    expect(await keepScratch(loaded.paths.scratch, into)).toEqual({ kept: ['agent-1/axe/audit.mjs'], tooLarge: [] });
-    expect(await fs.readFile(path.join(into, 'agent-1', 'axe', 'audit.mjs'), 'utf-8')).toBe('console.log("audit");\n');
+    expect(await keepScratch(loaded.paths.scratch, into, text => withoutMachine(bench.root, text))).toEqual({
+      kept: ['agent-1/axe/audit.mjs'],
+      tooLarge: []
+    });
+    expect(await fs.readFile(path.join(into, 'agent-1', 'axe', 'audit.mjs'), 'utf-8')).toBe(
+      'console.log("<project>");\n'
+    );
   });
 });

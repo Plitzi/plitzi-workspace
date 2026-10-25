@@ -118,15 +118,16 @@ describe('the lead’s plan as the run goes', () => {
   });
 
   it('paces a plan by how this project’s runs went: their middle done task’s minutes over its estimate', async () => {
-    const row = (task: string, minutes: number, estimate: number): string =>
-      `| ${task} | developer | done | dev-1 | ${String(minutes)} / ${String(estimate)} | 1 | 0 | src/a.ts |`;
+    const task = (id: string, minutes: number, estimateMinutes: number) => ({
+      id,
+      status: 'done',
+      minutes,
+      estimateMinutes
+    });
+    const tasks = [task('a', 5, 20), task('b', 10, 20), task('c', 5, 20), task('d', 10, 20), task('e', 10, 20)];
     await bench.write(
-      'tmp/plitzi-reports/old-run-20261020T000000Z.md',
-      [
-        '## Tasks',
-        '',
-        ...[row('a', 5, 20), row('b', 10, 20), row('c', 5, 20), row('d', 10, 20), row('e', 10, 20)]
-      ].join('\n')
+      '.plitzi/plitzi-reports/runs/old-run/report.json',
+      JSON.stringify({ version: 1, report: { at: '2026-10-20T00:00:00.000Z', tasks } })
     );
 
     const checked = await checkPlan(bench.root, benchPlan(), await readOwnership(bench.root), teamFor(benchPlan(), 2));
@@ -477,7 +478,9 @@ describe('the lead’s plan as the run goes', () => {
     const finished = await finishRun(lead(), 'es-launch', { apply: true, leavePending: true });
     expect(finished.writtenBy).toMatch(/^the lead \(lead\), as a person allowed it at /);
     expect(await fs.readFile(path.join(bench.root, 'src/space/pages/about.ts'), 'utf-8')).toContain('es: true');
-    expect(await fs.readFile(String(finished.report), 'utf-8')).toContain('Written by the lead (lead), as a person');
+    expect(await fs.readFile(path.join(finished.report?.dir ?? '', 'report.md'), 'utf-8')).toContain(
+      'Written by the lead (lead), as a person'
+    );
   });
 
   it('asks a person at the open when the lead is to finish, and opens nothing without one', async () => {

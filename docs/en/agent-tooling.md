@@ -21,8 +21,9 @@ How to write a space is the `plitzi-authoring` skill (`packages/sdk-authoring/sk
 | Repair | `npx plitzi space fix` | The problems — and the suggestions — with a single reading, as a diff of the author's own source; `--write` applies and re-checks |
 | Check | `npm run check` (`plitzi page check`) | Whether a page of the running server is whole, in text: elements on screen, overflow, contrast, console, refused requests, failed flows, bindings reading a path their provider's answer lacks, failed providers, rows per list; `--ssr` names what the server's HTML lacks that the hydrated page has |
 | Inspect | `plitzi page check --state --element <id>` | What the page holds: its state, every source by name and shape, one element's own state and bindings |
-| Look | `plitzi page shot` | A picture (in `tmp/shots/`) — `--compare <url>` against another site: each section where it is there, and the texts both have with what each does differently, measured; `--frames` for what moves; a full page has its lazy pictures loaded and its arrivals shown as they end |
-| Explain | `plitzi explain <name>` | What an element, a step, a problem code or a helper (`bindTemplate`, `motion`…) means, from the catalogues the checks read; any other export of a `@plitzi` package installed, from its published types |
+| Look | `plitzi page shot` | A picture (in `tmp/shots/`, named by page, clip, width and scheme) — `--compare <url>` against another site: each section where it is there, and the texts both have with what each does differently, measured; `--frames` for what moves; a full page has its lazy pictures loaded and its arrivals shown as they end, a sheet pinned over it whole, and in parts too when it is taller than three screens; `--scale` up close |
+| Measure | `plitzi page measure`, `page play`, `page outline` | Computed styles in numbers (what an element says of itself; `--all` the rest), an interaction step by step (where each step took the page, what changed), what a page is made of (`--find <word>` for an element by a word) |
+| Explain | `plitzi explain <name>` | What an element (and what it writes on its node), a step, a problem code, a style state, a setting or a helper (`bindTemplate`, `motion`…) means, from the catalogues the checks read; any other export of a `@plitzi` package installed, from its published types; a name none of them, what its words describe |
 | Start from | `plitzi page import <url>` | A page the user already has, measured as tokens, an outline and lists to write from |
 
 Text first, pictures second. A screenshot costs thousands of tokens and still has to be looked at; `page check` says what is
@@ -78,6 +79,15 @@ are on the other (`alignPictures`, over row profiles — a page 400 px longer is
 drift starts, instead of every section under it differing), and pairs the texts both pages have (`pageTexts`,
 `compareTexts`): font size, weight, line height, colour, padding, radius, box, and position less the drift of the
 section around it. All of it is `@plitzi/sdk-authoring`, for a suite to use as well.
+
+**What a page tool prints is read again on every turn after it.** An agent's context holds each answer to the end of
+its task, so a page tool says what is acted on first and the rest on asking: `page measure` an element's own values (its
+initial and inherited ones counted, a data URI by its kind and size — encore-4's measures ran to 38k characters), a tall
+page's picture in parts a model reads at their size rather than one shrunk to 97 px wide, a look's reasons once each.
+What a browser runs on the page (`page.evaluate`) is self-contained, and tried with the built CLI: tsx wraps a named
+function in `__name`, which a page has not. The CLI's requests to a server of this machine go through `localFetch`
+(`apps/cli/src/http/`): Node 24's fetch fails the first request on a socket just opened (`setTypeOfService EINVAL`) and
+is asked again, once.
 
 **`--scheme` is the space's theme.** The machine's preference loses to a space whose default is dark, as it would for
 any visitor. So `page check` and `page shot` set the `theme` cookie a visitor's toggle writes (`openProjectPage`) when a scheme is

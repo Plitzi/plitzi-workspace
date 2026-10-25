@@ -18,7 +18,7 @@ container([hero, grid])             // an array is the children
 | `id` | the ONE name it answers to — its key, a binding's source, a step's target. Unique across the WHOLE space |
 | `class` | a shared class: a `styles()` declaration or a name from the space's `classes`; a list for several. Exclusive with `css` |
 | `css` | rules of this element's own: one set, or one per breakpoint (`{ desktop, tablet, mobile }`) |
-| `states` | all there are: `hover`, `focus`, `focus-visible`, `focus-within`, `active`, `disabled`, `checked`, `visited`, `current` (the chosen link, tab), `expanded`, `hidden`, `first`/`last`/`odd`/`even` |
+| `states` | all there are: `hover`, `focus`, `focus-visible`, `focus-within`, `active` (the press), `disabled`, `checked`, `visited`, `current` (the chosen link, the open tab), `expanded`, `hidden`, `first`/`last`/`odd`/`even` |
 | `variant` | a variant of the class it wears (when the class declares it) or of its type |
 | `slots` | a class for one of its OTHER selectors — a form control's `input` |
 | `bind` | where a value comes from |
@@ -34,8 +34,7 @@ reads).
 
 **A link says where by its `href`:** a page id (`link({ href: 'reports' })`, folder included), a path within the space
 — with `{{tokens}}` if it needs them, a row's own slug (`'/games/{{ list_games.item.slug }}'`) — or a full URL
-(`https:`, `mailto:`, `tel:`), passed through untouched. `mode` follows from it; write it only to say otherwise. A link
-that opens another tab (`target: 'blank'`) gets `rel="noopener noreferrer"`. A link is an `<a>`: never put a link inside
+(`https:`, `mailto:`, `tel:`), passed through untouched. `mode` follows from it; write it only to say otherwise. A link is an `<a>`: never put a link inside
 another link — make the card the link, or the button, not both.
 
 **A link's words are its `content`** and an icon its `icon`, as a button's (`link({ href: 'pricing', content:
@@ -48,7 +47,7 @@ layout lights the right item everywhere.
 an `anchor` (`anchor: 'plans'` → `id="plans"`: lowercase, digits, `-`) and link to it with `hash`:
 `link({ href: 'home', hash: 'plans' })` goes to `/#plans` and scrolls there, waiting for a section that renders once
 its data arrives. One per page, layouts included; none in a component. In a list's row it is `<anchor>-<row key>`
-(`hash: 'pick-luna'`). `authorSpace` refuses the rest, and a `hash` no element there carries (`anchor-missing`). Under a fixed
+(`hash: 'pick-luna'`). Under a fixed
 header, give the section `scroll-margin-top` (the header's height) so it does not land beneath it.
 
 **Some types hold no children.** A `heading`, `text`, `paragraph`, `image`, `formControl`… renders its own attributes
@@ -121,7 +120,8 @@ container({ class: card, children: [ … ] });
   variant of an ancestor class (a descendant selector): a parent's hover or collapse, with no flow; `'>'` is the parent,
   whatever it wears (a component's part: `{ '>': { states: { expanded: … } } }`).
 - `pseudos: { after: { content: '"→"' } }` (`before`/`after` need a quoted `content`; also `selection`, `marker`,
-  `placeholder`, `first-letter`, `first-line`). `conditions: { 'motion-reduce': …, 'container (max-width: 30rem)': … }`.
+  `placeholder`, `first-letter`, `first-line`); its element's state goes inside it:
+  `pseudos: { before: { states: { hover: … } } }`. `conditions: { 'motion-reduce': …, 'container (max-width: 30rem)': … }`.
 - **`hidden` is how an element looks while its `visible` says no** — where it goes as it hides, and where it comes
   from as it shows. Give the class a transition that includes `display` with `allow-discrete`, and a panel fades or
   slides instead of blinking; the transition on the base is the way in, the one in `hidden` the way out:
@@ -151,8 +151,8 @@ container({ class: card, children: [ … ] });
 - Per element TYPE defaults go in `elements: { heading: { base, states, variants, pseudos, slots } }` — a whole type.
 - **Slots** are an element's parts (not `customCss`): a `formControl`'s `input` (the box), `field` (its `<input>`),
   `label`, `requiredMark`, `error`; a `markdown`'s or `richText`'s `heading`, `heading2`, `link`, `codeBlockFrame`…;
-  a `pagination`'s `page` (the one shown: its `current` state). `plitzi explain <type>` lists them. Style one
-  element's with `slots`, a type's with `elements.<type>.slots`.
+  a `pagination`'s `page` (the one shown: its `current` state). `plitzi explain <type>` lists them, and what the element
+  writes on its node (`aria-selected`). Style one element's with `slots`, a type's with `elements.<type>.slots`.
 - A `modalContainer` / `dialogContainer` is fixed to the viewport, as tall as its content up to the screen, and 500px
   wide up to the screen; theme its look through its slots.
 

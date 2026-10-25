@@ -14,14 +14,20 @@ import { KV_FILE } from '../../scaffold/paths';
 
 import type { RunCommandOptions } from './shell';
 import type { Finding } from '../../runs/findings';
+import type { LeftReport } from '../../runs/leaveReport';
 
 /**
  * A run stopped, resumed, finished into the project — or not — attached, released, purged.
  */
 
-/** Where the run's feedback to Plitzi is, said with what to do with it: the person's to share, never sent by itself. */
-const feedbackLine = (file: string): string =>
-  `What this run says of Plitzi itself, for Plitzi's team: ${file} — nothing of the project in it; share it with Plitzi to make it better`;
+/** Where the run's reports are, said with what to do with them: the person's to commit and share, never sent by itself. */
+const reportLines = (left: LeftReport): string[] => [
+  `The run's reports: ${left.dir} — feedback.md (what of it is Plitzi's, read first), report.md (the run whole), report.json, records/ (what the run kept: ${String(left.records.files)} files, ${String(Math.ceil(left.records.bytes / 1024))} KB)${left.scratch.kept.length > 0 ? `, scratch/ (the agents' ${String(left.scratch.kept.length)} script${left.scratch.kept.length === 1 ? '' : 's'})` : ''}`,
+  ...(left.scratch.tooLarge.length > 0
+    ? [`  Scripts left out as too large to be an agent's: ${list(left.scratch.tooLarge)}`]
+    : []),
+  "  No path of this machine and no token in them: commit them with the project, and send the folder to Plitzi's team to make Plitzi better"
+];
 
 /** How many of each whose come first in a finish's answer: the whole list is the report's. */
 const SHOWN_A_OWNER = 5;
@@ -207,7 +213,8 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
                   finished.backup
                     ? `The files as they were before it: ${finished.backup} (copy one back to undo it)`
                     : 'No backup was kept: --keep-backup keeps one next time.',
-                  `Written by ${String(finished.writtenBy)}. The run's report: ${String(finished.report)}`,
+                  `Written by ${String(finished.writtenBy)}.`,
+                  ...(finished.report ? reportLines(finished.report) : []),
                   ...(finished.running === undefined
                     ? []
                     : [
@@ -225,7 +232,6 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
                         `Of the backlog, what its tasks did, closed: ${finished.closedBacklog.join(', ')} (plitzi run backlog --all)`
                       ]
                     : []),
-                  ...(finished.feedback ? [feedbackLine(finished.feedback)] : []),
                   ...inputLines(finished.inputs)
                 ].join('\n')
       ].join('\n')
@@ -253,8 +259,7 @@ export const runAbort = (runId: string | undefined, options: RunCommandOptions):
     aborted =>
       [
         `Aborted and removed: nothing was written into the project. Discarded: ${list(aborted.discarded)}`,
-        `The run's report: ${aborted.report}`,
-        feedbackLine(aborted.feedback),
+        ...reportLines(aborted.report),
         ...inputLines(aborted.inputs)
       ].join('\n')
   );

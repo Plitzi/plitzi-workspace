@@ -154,7 +154,7 @@ export const projectFiles = async (root: string): Promise<string[]> => {
     for (const entry of entries) {
       const relative = prefix === '' ? entry.name : `${prefix}/${entry.name}`;
       if (entry.isDirectory()) {
-        if (!(prefix === '' && NOT_COPIED_DIRS.has(entry.name)) && entry.name !== 'node_modules') {
+        if (!NOT_COPIED_DIRS.has(relative) && entry.name !== 'node_modules') {
           await walk(path.join(dir, entry.name), relative);
         }
       } else if (entry.isFile() && !isSecretFile(relative)) {

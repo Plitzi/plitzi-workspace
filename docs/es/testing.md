@@ -87,9 +87,13 @@ pantalla el último árbol bueno.
 **No hay baselines de screenshot en git.** Las capturas se escriben en `e2e/.artifacts/screenshots/` para
 mirarlas; lo que decide si un run pasa son las aserciones que significan lo mismo en cualquier máquina.
 
-Una regla que conviene saber antes de escribir un spec: **afirma sobre clases, nunca sobre `data-id`.** Esos
-atributos son solo de servidor — existen para que la hidratación encuentre lo que renderizó el servidor — así que
-una comprobación escrita contra ellos pasa en SSR y parece un renderer roto en todo lo demás.
+Una regla que conviene saber antes de escribir un spec: **encuentra un elemento por `data-plitzi-el`, nunca por
+`data-id`.** Todo render lleva `data-plitzi-el` — el id del elemento, el nombre que le dio el space
+(`settings.testAttributes: false` es lo único que lo quita). `data-id`, `data-name` y `data-type` son del builder:
+aparecen solo con la depuración activa o en el canvas, así que una comprobación escrita contra ellos pasa ahí y falla en
+la página publicada. La instancia de un componente no tiene nodo propio: su nombre está en la raíz del componente como
+`data-plitzi-instance` — un spec del proyecto que la nombra por `data-plitzi-el` no encuentra nada, y `plitzi space lint`
+lo dice (`selector-instance`).
 
 ### Renderizar un schema cualquiera
 

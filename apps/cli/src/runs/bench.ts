@@ -1,9 +1,6 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { REPORTS_DIR } from './paths';
+import { readRunReports } from './reports';
 import { tokensText } from './runMetrics';
 
 import type { RunIndicators } from './findings';
@@ -17,7 +14,7 @@ export const teamTasks = <T extends { role: string }>(tasks: readonly T[]): T[] 
   tasks.filter(task => task.role !== 'lead (spike)');
 
 /**
- * Each run measured the same way, kept beside its report (`<run>-<time>.json`), so runs are compared — the bench a team
+ * Each run measured the same way, kept in its report's data (`report.json`), so runs are compared — the bench a team
  * is improved by: its minutes a task, its rounds, the share of its checks that failed, how long reviews and reworks
  * waited, what it cost. `plitzi run bench` lists them; every report ends with the runs before it.
  */
@@ -112,23 +109,9 @@ const isBenchLine = (value: unknown): value is BenchLine =>
   typeof value.roundsPerTask === 'number' &&
   typeof value.checksFailedPct === 'number';
 
-/** Every run of the project measured, oldest first: what its reports kept beside them. */
-export const readBench = async (root: string): Promise<BenchLine[]> => {
-  const dir = path.join(root, REPORTS_DIR);
-  const files = (await fs.readdir(dir).catch((): string[] => [])).filter(file => file.endsWith('.json'));
-  const lines = await Promise.all(
-    files.map(async file => {
-      const read: unknown = await fs
-        .readFile(path.join(dir, file), 'utf-8')
-        .then(text => JSON.parse(text) as unknown)
-        .catch(() => undefined);
-
-      return isRecord(read) && isBenchLine(read.bench) ? [read.bench] : [];
-    })
-  );
-
-  return lines.flat().sort((a, b) => a.at.localeCompare(b.at));
-};
+/** Every run of the project measured, oldest first: what its reports kept (`reports.ts`). */
+export const readBench = async (root: string): Promise<BenchLine[]> =>
+  (await readRunReports(root)).flatMap(({ data }) => (isBenchLine(data.bench) ? [data.bench] : []));
 
 // A measure kept as `null` — a NaN written to JSON, as lx-copy's agents' wait was — is no number to print.
 const cell = (value: number | null | undefined, suffix = ''): string =>
