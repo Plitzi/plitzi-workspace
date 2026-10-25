@@ -25,8 +25,14 @@ export const MAX_LIST_BYTES = 128_000;
 
 const ID = /^[A-Za-z0-9:_.@-]{1,128}$/;
 
+/**
+ * Why an id is no list entry's — said with the id refused and the marks allowed quoted: "… : _ . @ -" ending the line
+ * read as cut short, and a run's id with a '|' took three rounds to find.
+ */
 export const listIdProblem = (id: unknown): string | undefined =>
-  typeof id === 'string' && ID.test(id) ? undefined : 'A list entry’s id is 1-128 of A-Z a-z 0-9 : _ . @ -';
+  typeof id === 'string' && ID.test(id)
+    ? undefined
+    : `A list entry’s id is 1 to 128 letters, digits and the marks ':' '_' '.' '@' '-': ${typeof id === 'string' ? JSON.stringify(id.length > 60 ? `${id.slice(0, 60)}…` : id) : String(id)} is not`;
 
 const isEntry = (value: unknown): value is KvListEntry =>
   isRecord(value) && typeof value.id === 'string' && typeof value.score === 'number';

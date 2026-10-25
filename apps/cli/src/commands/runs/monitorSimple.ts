@@ -5,7 +5,7 @@ import { AGENT_LOOK, hhmm, LIVE_VERB, since, TASK_LOOK, toneOf } from './monitor
 import { drawWho, shimmer, SPINNER } from './monitorOverview';
 import { drawPreviewLine } from './monitorSide';
 
-import type { MonitorUi, Paint, PreviewShown } from './monitorModel';
+import type { MonitorUi, Paint, PreviewShown, Tone } from './monitorModel';
 import type { Rect } from './monitorSide';
 import type { AgentStatus, Monitored } from '../../runs/monitor';
 import type { TaskLine } from '../../runs/view';
@@ -45,8 +45,9 @@ const drawWorking = (p: Paint, data: Monitored, ui: MonitorUi, top: number, rect
   const nameWidth = Math.min(12, Math.max(4, ...shown.map(agent => textWidth(agent.agent))));
   shown.forEach((agent, index) => {
     const task = data.view.tasks.find(each => each.id === agent.task);
+    const tone = AGENT_LOOK[agent.status].tone;
     canvas.put(row, rect.left + 4, SPINNER[(ui.frame + index * 3) % SPINNER.length] ?? '✻', {
-      fg: theme.primary,
+      fg: toneOf(theme, tone),
       bold: true
     });
     canvas.put(row, rect.left + 6, clip(agent.agent, nameWidth), {
@@ -55,7 +56,7 @@ const drawWorking = (p: Paint, data: Monitored, ui: MonitorUi, top: number, rect
     });
     // An agent at no task — the lead between reviews — works at what it says it does.
     const verb = agent.task === undefined && agent.status === 'working' ? 'Working' : (LIVE_VERB[agent.status] ?? '');
-    let col = shimmer(p, row, rect.left + 8 + nameWidth, `${verb}…`, ui.frame + index * 4);
+    let col = shimmer(p, row, rect.left + 8 + nameWidth, `${verb}…`, ui.frame + index * 4, tone);
     if (agent.task !== undefined) {
       col = canvas.put(row, col + 1, agent.task, { fg: theme.link });
     }
@@ -75,12 +76,24 @@ const drawWorking = (p: Paint, data: Monitored, ui: MonitorUi, top: number, rect
   }
 
   const more = live.length - shown.length;
-  const rest = [
-    ...(more > 0 ? [`+${String(more)} more at work`] : []),
-    ...[...others].map(([status, names]) => `${AGENT_LOOK[status].label}: ${names.join(', ')}`)
+  // Each part in the tone of where it stands: a stopped agent reads apart from a free one at a glance.
+  const rest: { text: string; tone: Tone }[] = [
+    ...(more > 0 ? [{ text: `+${String(more)} more at work`, tone: 'primary' as const }] : []),
+    ...[...others].map(([status, names]) => ({
+      text: `${AGENT_LOOK[status].label}: ${names.join(', ')}`,
+      tone: AGENT_LOOK[status].tone
+    }))
   ];
   if (rest.length > 0) {
-    canvas.put(row, rect.left + 4, clip(rest.join(' · '), rect.width - 6), { fg: theme.subtle });
+    const end = rect.left + rect.width - 2;
+    let col = rect.left + 4;
+    rest.forEach(({ text, tone }, index) => {
+      if (index > 0) {
+        col = canvas.put(row, col, ' · ', { fg: theme.subtle }, end);
+      }
+
+      col = canvas.put(row, col, clip(text, Math.max(0, end - col)), { fg: toneOf(theme, tone) }, end);
+    });
     row += 1;
   }
 

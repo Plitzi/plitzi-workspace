@@ -1,4 +1,3 @@
-import { localFetch } from '../../http';
 import { runProjectOf } from '../../runs/paths';
 import { projectSettings } from '../projectSettings';
 import { fail } from '../terminal';
@@ -98,7 +97,7 @@ export const signInAs = async (page: BrowserPage, origin: string, account: Accou
  * command that reads the site's pages without a browser (a look finding its pages' links) — or why it could not be.
  */
 export const sessionCookie = async (origin: string, account: Account): Promise<string | { problem: string }> => {
-  const answer = await localFetch(`${origin}${SIGN_IN_PATH}`, {
+  const answer = await fetch(`${origin}${SIGN_IN_PATH}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ username: account.username, password: account.password }),

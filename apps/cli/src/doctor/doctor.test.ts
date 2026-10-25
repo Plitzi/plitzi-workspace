@@ -727,6 +727,15 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     expect(findingOf(report, 'signing-secret-missing')).toBeUndefined();
   });
 
+  // A password with no account beside it: a run's looks pictured the sign-in five times.
+  it('says a check password that names no account', async () => {
+    await write('.env', 'PLITZI_CHECK_PASSWORD=demo\n');
+    expect(findingOf(await run(), 'check-user-missing')).toMatchObject({ file: '.env' });
+
+    await write('.env', 'PLITZI_CHECK_USER=dax\nPLITZI_CHECK_PASSWORD=demo\n');
+    expect(findingOf(await run(), 'check-user-missing')).toBeUndefined();
+  });
+
   it('refuses a folder that is not a project plitzi create wrote', async () => {
     vi.spyOn(process, 'cwd').mockReturnValue(home);
     await fs.writeFile(path.join(home, 'package.json'), '{"name":"other"}');

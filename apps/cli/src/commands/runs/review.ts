@@ -17,10 +17,11 @@ import {
   keptLook,
   lookKey,
   LOOK_AT_ONCE,
+  newSinceBefore,
   phases,
   toDeclared,
-  viewsAsked,
-  visitorsOnly
+  readAsFor,
+  viewsAsked
 } from './lookParts';
 import { lookText } from './lookText';
 import { act, runOf, runSelf } from './shell';
@@ -194,7 +195,9 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         // Nor by its acceptance: a page the space keeps for signed-in visitors, read as the project's own account.
         const toLook = pagesToLook(paths, owned, acceptanceAt);
         const guarded =
-          options.as === undefined && acceptanceAs === undefined ? await visitorsOnly(preview.dir, toLook) : undefined;
+          options.as === undefined && acceptanceAs === undefined
+            ? await readAsFor(preview.dir, preview.url, toLook, acceptanceAt)
+            : undefined;
         const as = options.as ?? acceptanceAs ?? guarded?.as;
         // Its links followed as that account too: a page only it has a link to (`/u/:username`) is found.
         const account = as === undefined ? undefined : await checkAccount(preview.dir, as);
@@ -361,31 +364,35 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         );
         // Beside the run before it: its parts alone when it has some, else the page. Its parts, all of them, in one
         // comparison a page and a view — each side loaded once (a part a comparison loaded the home 24 times a look).
+        const added = before ? await newSinceBefore(before.url, pictured) : new Set<string>();
         const beside = (before ? pictured : []).flatMap(route =>
           views.map(([width, scheme]) => async () => {
             const clip = partsBeside ? clips.join(',') : undefined;
             // Named for what it is — the page after the task, set beside the run before it in `-after-compare.png`:
             // `-before.png` was the after picture (a run's design-1, the same md5 as the look's own).
             const out = named(route, partsBeside && clips.length === 1 ? clips[0] : undefined, width, scheme, true);
-            const shot = await runSelf(preview.dir, [
-              'page',
-              'shot',
-              route,
-              '--url',
-              preview.url,
-              ...zone,
-              ...signedIn,
-              '--compare',
-              before?.url ?? '',
-              ...(clip ? ['--clip', clip] : []),
-              '--width',
-              width,
-              '--scheme',
-              scheme,
-              '--json',
-              '-o',
-              out
-            ]);
+            // A page the task adds is set beside nothing: the run before answers it 404.
+            const shot = added.has(route)
+              ? { code: 1, output: `${route} is new: the run before has no page there` }
+              : await runSelf(preview.dir, [
+                  'page',
+                  'shot',
+                  route,
+                  '--url',
+                  preview.url,
+                  ...zone,
+                  ...signedIn,
+                  '--compare',
+                  before?.url ?? '',
+                  ...(clip ? ['--clip', clip] : []),
+                  '--width',
+                  width,
+                  '--scheme',
+                  scheme,
+                  '--json',
+                  '-o',
+                  out
+                ]);
 
             if (shot.code !== 0) {
               // Set beside nothing — a part new since the run before, absent there — it is pictured alone, said so.
@@ -421,7 +428,13 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
                 : [];
             }
 
-            return partsComparedOf(shot.output).map(each => ({
+            const parts = partsComparedOf(shot.output);
+            // Answered, and nothing in it read as a comparison: said, never a look with no picture and no word why.
+            if (parts.length === 0) {
+              notTaken(`${route}${clip ? ` ${clip}` : ''} at ${width} ${scheme}, beside the run before`, shot.output);
+            }
+
+            return parts.map(each => ({
               compared: { route, width, scheme, ...each.compared },
               ...(each.shot ? { shot: each.shot } : clip ? { shot: out } : {})
             }));
@@ -520,7 +533,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         preview.stop();
       }
     },
-    { waitMs: 10 * 60_000, ttlMs: 15 * 60_000 }
+    { waitMs: 10 * 60_000, ttlMs: 15 * 60_000, doing: `a look of ${taskId}` }
   );
 
 export const taskLook = (taskId: string, paths: string[], options: LookOptions): Promise<void> =>

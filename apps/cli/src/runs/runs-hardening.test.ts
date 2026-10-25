@@ -390,6 +390,22 @@ describe('the checks of a result once Plitzi changed', () => {
 });
 
 describe('what the lead handed the run', () => {
+  // A run's 9.7 KB primer put all 19 first briefs over 12k characters, each read again on every turn after.
+  it('says a primer heavy enough to outweigh a task’s own brief, with what it costs the run', async () => {
+    const plan = { ...benchPlan(), designReview: false, primer: 'primer.md' };
+    await bench.write('tmp/v1/plan.json', JSON.stringify(plan));
+    await bench.writeTeam(teamFor(plan, 4));
+    await bench.write('tmp/v1/primer.md', `# What a task needs\n${'A rule of the project, said once.\n'.repeat(60)}`);
+    expect((await checkPlanFile(lead(), path.join(bench.root, 'tmp/v1/plan.json'))).notices).not.toContainEqual(
+      expect.stringContaining('The primer is')
+    );
+
+    await bench.write('tmp/v1/primer.md', `# What a task needs\n${'A rule of the project, said once.\n'.repeat(220)}`);
+    expect((await checkPlanFile(lead(), path.join(bench.root, 'tmp/v1/plan.json'))).notices).toContainEqual(
+      expect.stringMatching(/^The primer is 7\.\d KB: every task's first brief carries it whole — \d+ tasks read/)
+    );
+  });
+
   it('takes the plan and its primer into its folder, where the lead amends them — and removes what it was handed after', async () => {
     const plan = { ...benchPlan(), designReview: false, primer: 'primer.md' };
     await bench.write('tmp/v1/primer.md', '# What a task needs\n');

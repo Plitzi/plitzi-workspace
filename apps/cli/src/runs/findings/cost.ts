@@ -14,7 +14,7 @@ import type { UsageLine } from '../usage';
  */
 
 /** An answer this long is one an agent pays for on every turn after it. */
-const LARGE_OUTPUT = 12_000;
+export const LARGE_OUTPUT = 12_000;
 
 /** A task that read this many times the run's median is one to look at. */
 const COSTLY = 2.5;

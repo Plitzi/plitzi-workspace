@@ -83,6 +83,16 @@ export const proposeChange = async (
     );
   }
 
+  // In review, its agent is done with it: nobody answers until it is sent back or approved — a run's d-follow-names
+  // waited ten minutes on one to t-model, which was approved and never answered it.
+  if (target.state.status === 'in-review') {
+    throw new RunRefusal(
+      'invalid',
+      `Task "${to.id}" is in review: nobody answers a proposal while it is — ask the lead to ask it in the review (plitzi task tell --about ${to.id} "…"), or wait for its approval (plitzi task wait ${to.id}) and change the file yourself`,
+      { task: to.id }
+    );
+  }
+
   // Before the proposal is written: a wait refused leaves nothing half made.
   if (ask.wait) {
     await assertNoWaitCycle(loaded, from.id, to.id);

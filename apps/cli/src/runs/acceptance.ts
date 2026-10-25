@@ -12,7 +12,6 @@ import { stopKept } from './lingering';
 import { listenersUnder, stopListener, stopTree, TREE } from './processes';
 import { UNANSWERED_EXIT } from '../commands/terminal';
 import { runScript, scriptsOf, tail } from '../commands/verify';
-import { localFetch } from '../http';
 import { DEV_SERVER_FILE, PROJECT_TMP, SERVER_RECORD_ENV } from '../scaffold/paths';
 
 import type { Acceptance, AcceptanceResult } from './model';
@@ -54,7 +53,7 @@ export const freePort = (): Promise<number> =>
 export const answering = async (url: string, ms: number): Promise<boolean> => {
   const until = Date.now() + ms;
   for (;;) {
-    const ok = await localFetch(url).then(
+    const ok = await fetch(url).then(
       () => true,
       () => false
     );
@@ -127,7 +126,7 @@ export const ownServer = async (work: string): Promise<number | undefined> => {
 
   // The copy's own, by the mark of its folder its `/health` answers with: a record left behind by a server that died
   // names a port another copy's server may hold now, and that one is no server of this copy's.
-  const health: unknown = await localFetch(`http://127.0.0.1:${String(port)}/health`, {
+  const health: unknown = await fetch(`http://127.0.0.1:${String(port)}/health`, {
     signal: AbortSignal.timeout(1_000)
   })
     .then(async (response): Promise<unknown> => response.json())
@@ -142,7 +141,7 @@ export const ownServer = async (work: string): Promise<number | undefined> => {
 /** Waits, a few seconds at most, until nothing answers on `port`. */
 const stoppedAnswering = async (port: number): Promise<void> => {
   for (let tries = 0; tries < 20; tries += 1) {
-    const answers = await localFetch(`http://127.0.0.1:${String(port)}/health`, { signal: AbortSignal.timeout(500) })
+    const answers = await fetch(`http://127.0.0.1:${String(port)}/health`, { signal: AbortSignal.timeout(500) })
       .then(() => true)
       .catch(() => false);
     if (!answers) {

@@ -49,7 +49,8 @@ const TIMED = new Set<Attention['kind']>([
   'slow-review',
   'ui-queued',
   'refused-again',
-  'held-up'
+  'held-up',
+  'held-ahead'
 ]);
 
 /** A review no lead took this round, by how long it has waited. */

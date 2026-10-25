@@ -5,8 +5,6 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { projectMark } from '@plitzi/sdk-shared/project';
 
-import { localFetch } from '../http';
-
 /**
  * A copy's server kept a while after the command that served it: an agent pictures its page again and again, and each
  * `page shot` started the copy's server and stopped it (seconds each, a run's agents shot hundreds). Kept for
@@ -81,7 +79,7 @@ export const keptServer = async (work: string, cache: string): Promise<string | 
     return undefined;
   }
 
-  const health: unknown = await localFetch(`http://127.0.0.1:${String(kept.port)}/health`, {
+  const health: unknown = await fetch(`http://127.0.0.1:${String(kept.port)}/health`, {
     signal: AbortSignal.timeout(1_000)
   })
     .then(async (response): Promise<unknown> => response.json())
@@ -142,7 +140,7 @@ export const stopKept = async (cache: string): Promise<void> => {
 
   await fs.rm(fileOf(cache), { force: true });
   for (let tries = 0; tries < 20; tries += 1) {
-    const answers = await localFetch(`http://127.0.0.1:${String(kept.port)}/health`, {
+    const answers = await fetch(`http://127.0.0.1:${String(kept.port)}/health`, {
       signal: AbortSignal.timeout(500)
     })
       .then(() => true)
@@ -185,7 +183,7 @@ export const previewedServer = async (work: string, cache: string): Promise<stri
     return undefined;
   }
 
-  const health: unknown = await localFetch(`http://127.0.0.1:${String(value.port)}/health`, {
+  const health: unknown = await fetch(`http://127.0.0.1:${String(value.port)}/health`, {
     signal: AbortSignal.timeout(1_000)
   })
     .then(async (response): Promise<unknown> => response.json())

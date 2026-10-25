@@ -4,6 +4,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { readOptional, writeAtomic, writeJson } from '../files';
+import { LARGE_OUTPUT } from '../findings/cost';
 import { EVERYONE, LEAD, sendMessage } from '../messages';
 import { isRunPlan } from '../model';
 import { readOwnership } from '../ownership';
@@ -135,20 +136,38 @@ export const readPrimer = async (plan: RunPlan, planFile: string): Promise<strin
   return text;
 };
 
+/**
+ * Half an answer an agent pays for on every turn: a task's first brief is the primer and the task's own, its imports'
+ * half the rest — a run's 9.7 KB primer put all 19 of its briefs over, read again for 1.9M tokens.
+ */
+const PRIMER_LIGHT = LARGE_OUTPUT / 2;
+
+/** A primer heavy enough to put every first brief over what an agent reads again cheaply, said with what it costs. */
+export const heavyPrimer = (primer: string | undefined, tasks: number): string[] => {
+  const bytes = primer === undefined ? 0 : Buffer.byteLength(primer);
+
+  return bytes > PRIMER_LIGHT
+    ? [
+        `The primer is ${(bytes / 1024).toFixed(1)} KB: every task's first brief carries it whole — ${String(tasks)} tasks read ${String(Math.round((bytes * tasks) / 1024))} KB of it before their own, again on every turn after. Over ${String(PRIMER_LIGHT / 1000)}k it outweighs a task's own brief: keep what every task needs, and say where the rest is (a file, a skill)`
+      ]
+    : [];
+};
+
 export const readCheckedPlan = async (
   root: string,
   file: string
 ): Promise<{ checked: CheckedPlan; ownership: Ownership; team: Team }> => {
   const plan = await readPlanFile(file);
-  await readPrimer(plan, file);
+  const primer = await readPrimer(plan, file);
   const ownership = await readOwnership(root);
   // The team works the run, and says how many at once: a project's first run writes the one its plan needs.
   const { team, created } = await ensureTeam(root, plan);
   try {
     const checked = await checkPlan(root, plan, ownership, team);
+    const notices = [...(created ? [created] : []), ...checked.notices, ...heavyPrimer(primer, checked.tasks.length)];
 
     return {
-      checked: created ? { ...checked, notices: [created, ...checked.notices] } : checked,
+      checked: { ...checked, notices },
       ownership,
       team
     };

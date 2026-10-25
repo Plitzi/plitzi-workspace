@@ -39,13 +39,17 @@ const rowOfCards = () => {
 };
 
 /** A step run the way the interactions manager runs it: the callback the element registered under the action. */
-const run = (callbacks: Record<string, InteractionCallback>, action: string, params: Record<string, unknown>): void => {
+const run = (
+  callbacks: Record<string, InteractionCallback>,
+  action: string,
+  params: Record<string, unknown>
+): Promise<unknown> => {
   const registered = callbacks[action].callback;
   if (!registered) {
     throw new Error(`nothing is registered for ${action}`);
   }
 
-  void registered(params);
+  return Promise.resolve(registered(params));
 };
 
 const mount = (node: HTMLElement, interactions: Record<string, ElementInteraction> = {}, previewMode = true) =>
@@ -71,22 +75,56 @@ describe('useScrollInteractions', () => {
     vi.useRealTimers();
   });
 
-  it('moves the box by a share of what it shows, or to an end', () => {
+  it('moves the box by a share of what it shows, or to an end', async () => {
     const { node, scrollBy, scrollTo } = rowOfCards();
     const { result } = mount(node);
 
-    run(result.current, 'scrollBy', { x: '80%' });
-    run(result.current, 'scrollTo', { x: 'end', behavior: 'auto' });
+    await run(result.current, 'scrollBy', { x: '80%' });
+    await run(result.current, 'scrollTo', { x: 'end', behavior: 'auto' });
 
     expect(scrollBy).toHaveBeenCalledWith({ left: 320, top: 0, behavior: 'smooth' });
     expect(scrollTo).toHaveBeenCalledWith({ left: 600, top: 0, behavior: 'auto' });
   });
 
-  it('brings the element into view where it is asked to land', () => {
+  // A page-load scrollTo('dm-well', { y: 'end' }) met a list not laid out yet and did nothing: a chat opened on its first
+  // line. It waits a few frames for the box to have something to scroll.
+  it('scrolls to an end once the box has something to scroll, not before', async () => {
+    const node = document.createElement('div');
+    const scrollTo = vi.fn();
+    let rows = 0;
+    Object.defineProperties(node, {
+      scrollWidth: { value: 400 },
+      clientWidth: { value: 400 },
+      scrollHeight: { get: () => 100 + rows * 50 },
+      clientHeight: { value: 100 }
+    });
+    Object.assign(node, { scrollTo, scrollBy: vi.fn(), scrollIntoView: vi.fn() });
+    const { result } = mount(node);
+
+    // A frame, then what it let go on: the step's own awaits.
+    const frame = async () => {
+      act(() => {
+        vi.advanceTimersToNextFrame();
+      });
+      for (let turn = 0; turn < 5; turn += 1) {
+        await Promise.resolve();
+      }
+    };
+    const moved = run(result.current, 'scrollTo', { y: 'end', behavior: 'auto' });
+    await frame();
+    await frame();
+    expect(scrollTo).not.toHaveBeenCalled();
+    rows = 6;
+    await frame();
+    await moved;
+    expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 300, behavior: 'auto' });
+  });
+
+  it('brings the element into view where it is asked to land', async () => {
     const { node, scrollIntoView } = rowOfCards();
     const { result } = mount(node);
 
-    run(result.current, 'scrollIntoView', { block: 'center' });
+    await run(result.current, 'scrollIntoView', { block: 'center' });
 
     expect(scrollIntoView).toHaveBeenCalledWith({ block: 'center', inline: 'nearest', behavior: 'smooth' });
   });

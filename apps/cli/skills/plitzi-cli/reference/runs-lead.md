@@ -49,8 +49,8 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    page shows, not a file's text. Else, text — and only text holds at your review alone:
    a later task can undo it unseen (`run plan` names a task with no check). A check runs again on the whole result at
    the finish. **`notes`** hold for the whole run;
-   `plitzi run note "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB): what you learnt reading the project — every
-   brief starts with it, and the references its files need. **The team** is the project's,
+   `plitzi run note "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB; past 6k `run plan` says what it costs): what you
+   learnt reading the project — every brief starts with it, and the references its files need. **The team** is the project's,
    `.plitzi/team.json` — grow it as the job asks (`plitzi run team set dev --count 3 --min 1 --model <m>`): its
    size is how many work at once; past `min`, on demand — `run watch` says when to start one (through its own CLI,
    after its first start). Agents start fresh after each task or review, never in one

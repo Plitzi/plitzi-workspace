@@ -1,7 +1,6 @@
 import { authoredHandles } from './expectations';
 import { readOwnership } from './ownership';
 import { shellCommands } from './shell';
-import { localFetch } from '../http';
 
 import type { Acceptance } from './model';
 import type { TaskView } from './taskStore';
@@ -22,7 +21,8 @@ const MAX_PAGES = 8;
 /** `walkFilter` → `walk-filter`: a file's name as a page's id is usually written. */
 const kebab = (name: string): string => name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 
-export const pagesOf = async (root: string, files: readonly string[]): Promise<string[]> => {
+/** The pages' files a task's files are drawn by: each file's owner, or the pages a shared one is reached from. */
+const pageUnits = async (root: string, files: readonly string[]): Promise<Set<string>> => {
   const ownership = await readOwnership(root);
   // A shared file — a component, the theme — is drawn at the pages that reach it, not at none of them.
   const unitsOf = (file: string): string[] => {
@@ -33,7 +33,8 @@ export const pagesOf = async (root: string, files: readonly string[]): Promise<s
 
     return ownership.shared.get(file) ?? [file];
   };
-  const units = new Set(
+
+  return new Set(
     files.flatMap(unitsOf).flatMap(unit =>
       unit.startsWith(PAGES)
         ? [
@@ -45,6 +46,17 @@ export const pagesOf = async (root: string, files: readonly string[]): Promise<s
         : []
     )
   );
+};
+
+/**
+ * Whether any page draws one of these files — read off the imports alone, no space authored: a type, a setting with
+ * no element (`settings.transientState` in the space's entry) or seed data is drawn by none.
+ */
+export const drawnByAPage = async (root: string, files: readonly string[]): Promise<boolean> =>
+  (await pageUnits(root, files)).size > 0;
+
+export const pagesOf = async (root: string, files: readonly string[]): Promise<string[]> => {
+  const units = await pageUnits(root, files);
   if (units.size === 0) {
     return [];
   }
@@ -92,7 +104,7 @@ const paramsOf = (route: string, address: string): Record<string, string> => {
 const EXAMPLES_TRIED = 5;
 
 const answers = (address: URL, headers: Record<string, string>): Promise<boolean> =>
-  localFetch(address, { headers })
+  fetch(address, { headers })
     .then(answer => answer.ok)
     .catch(() => false);
 
@@ -119,7 +131,7 @@ export const examplePaths = async (
       return known;
     }
 
-    const read = localFetch(new URL(page, origin), { headers })
+    const read = fetch(new URL(page, origin), { headers })
       .then(answer => (answer.ok ? answer.text() : ''))
       .then(html =>
         [...html.matchAll(/href="([^"]+)"/g)].flatMap(match => {

@@ -23,7 +23,6 @@ import {
 } from './space';
 import { elementStyles } from './styles';
 import { openProjectPage, PROJECT_QUIET_MS } from '../../browser';
-import { localFetch } from '../../http';
 import { standInPictures } from '../shot/capture';
 
 import type { Account } from './account';
@@ -306,7 +305,7 @@ const inspectHere = async (
     await page.evaluate(wrappedLabelsInPage, 'a[data-plitzi-el], button[data-plitzi-el]')
   ).map(each => ({
     code: 'label-wraps',
-    message: `${each.id}'s label "${each.label}" breaks onto ${String(each.lines)} lines at ${String(width)} px: it is squeezed — give its row room, or let the row wrap as a whole and keep the label on one line (white-space: nowrap). A link or button of three words or fewer is read as a label, and its text's lines are counted where they are drawn`,
+    message: `${each.id}'s label "${each.label}" breaks onto ${String(each.lines)} lines at ${String(width)} px: it is squeezed — give its row room, or let the row wrap as a whole and keep the label on one line (white-space: nowrap). A link or button of three words or fewer is read as a label — a link alone across its column is a title, left to wrap — and its text's lines are counted where they are drawn`,
     elementId: each.id,
     label: each.label,
     width
@@ -331,7 +330,7 @@ const inspectHere = async (
       ? dataIssues(authored.schema, pageId, devTools.sources, { hidden: await notShown(page, authored) })
       : undefined;
   const lists = authored && data ? await listRows(page, authored, data.lists) : {};
-  const served = ssr ? markedIn(await (await localFetch(`${origin}${pathname}`)).text()) : undefined;
+  const served = ssr ? markedIn(await (await fetch(`${origin}${pathname}`)).text()) : undefined;
   const late = served
     ? lateElements(
         authored?.schema,

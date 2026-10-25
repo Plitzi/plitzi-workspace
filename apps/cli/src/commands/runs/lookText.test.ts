@@ -26,7 +26,7 @@ describe('a look that took no picture', () => {
     } as unknown as Looked;
     const text = stripVTControlCharacters(lookText(looked));
 
-    expect(text).toContain('No picture could be taken.');
+    expect(text).toContain('No picture could be taken:');
     expect(text).toContain('Not pictured (1):');
     expect(text).toContain('room-request is not on the page');
     // A run's designer looked at its own task to see nothing else moved, and was not told --before does it.
@@ -37,6 +37,24 @@ describe('a look that took no picture', () => {
     // The song playing differed on the two sides — the copy's queue played by its agent.
     expect(stripVTControlCharacters(lookText({ ...looked, warmCopy: true }))).toContain(
       'plitzi server reset in its copy (its server stopped), then look again --fresh'
+    );
+  });
+
+  // A run's look said "No picture could be taken" of / as a guest and signed in, with no reason given.
+  it('says what it is when no reason was given: nothing changed to picture, or no command that said why', () => {
+    const looked = {
+      task: 't-home',
+      url: 'http://127.0.0.1:50000',
+      ok: true,
+      check: '',
+      shots: []
+    } as unknown as Looked;
+
+    expect(stripVTControlCharacters(lookText({ ...looked, unchanged: ['/'] }))).toContain(
+      'Nothing pictured: what it looked at is drawn as the run before it draws it.'
+    );
+    expect(stripVTControlCharacters(lookText(looked))).toContain(
+      'No picture was taken, and no picture command said why: look at one page again — plitzi task look t-home <page> --fresh'
     );
   });
 

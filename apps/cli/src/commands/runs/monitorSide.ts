@@ -132,9 +132,7 @@ export const drawSide = (p: Paint, data: Monitored, ui: MonitorUi, preview: Prev
     canvas.put(row, rect.left + 4, clip(agent.agent, 10), { fg: p.hues.get(agent.agent) ?? theme.text, bold: true });
     canvas.put(row, rect.left + 15, clip(shortModel(agent.model), 10), { fg: theme.subtle });
     const at = agentAt(agent, now);
-    canvas.right(row, end, clip(at, Math.max(0, rect.width - 30)), {
-      fg: agent.status === 'no-signal' ? theme.danger : agent.status === 'asking' ? theme.warning : theme.muted
-    });
+    canvas.right(row, end, clip(at, Math.max(0, rect.width - 30)), { fg: toneOf(theme, look.tone) });
     row += 1;
   }
 

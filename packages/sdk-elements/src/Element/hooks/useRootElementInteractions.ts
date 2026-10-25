@@ -9,6 +9,7 @@ import { pConsole } from '@plitzi/sdk-shared/devTools';
 import { isRecord, emptyObject } from '@plitzi/sdk-shared/helpers';
 
 import useElementInteractions from './useElementInteractions';
+import useFocusInteractions from './useFocusInteractions';
 import useInternalClassName from './useInternalClassName';
 import useIntervalTriggers from './useIntervalTriggers';
 import useKeyTriggers from './useKeyTriggers';
@@ -165,9 +166,10 @@ const useRootElementInteractions = ({
     previewMode,
     interactionsManager
   });
+  const focusCallbacks = useFocusInteractions({ label: definition.label, nodeRef });
   const callbacks = useMemo(
-    () => ({ ...interactionCallbacks, ...scrollCallbacks, ...basicCallbacks }),
-    [interactionCallbacks, scrollCallbacks, basicCallbacks]
+    () => ({ ...interactionCallbacks, ...scrollCallbacks, ...focusCallbacks, ...basicCallbacks }),
+    [interactionCallbacks, scrollCallbacks, focusCallbacks, basicCallbacks]
   );
 
   useInteractions({ id, interactions, triggers, callbacks, getAdditionalParams });

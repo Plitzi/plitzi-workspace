@@ -11,7 +11,6 @@ import { OBSERVER_COOKIE_NAME } from '@plitzi/sdk-shared/realtime';
 import { THEME_COOKIE_NAME } from '@plitzi/sdk-shared/theme';
 
 import { keepStatic, staticCacheDir } from './staticCache';
-import { localFetch } from '../http';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
 
 import type { PlitziProject } from '../commands/existingProject';
@@ -285,7 +284,7 @@ export const isLocalTls = (origin: string): boolean => {
 /** `/health`, read the way the tools read the pages: a local certificate taken as it is. */
 export const readHealth = (origin: string): Promise<unknown> => {
   if (!isLocalTls(origin)) {
-    return localFetch(`${origin}/health`)
+    return fetch(`${origin}/health`)
       .then(response => response.json())
       .catch(() => null);
   }

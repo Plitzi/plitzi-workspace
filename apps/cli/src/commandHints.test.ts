@@ -25,6 +25,22 @@ describe('what a refused command line meant', () => {
     expect(commandHint("error: unknown command 'nope'", ['run', 'nope'])).toBeUndefined();
   });
 
+  it('says a bare option takes its value, and where what a command takes none of is read', () => {
+    expect(
+      commandHint("error: option '--as <username>' argument missing", ['page', 'play', '/u/juno', '--as'])
+    ).toContain('--as <value>');
+    expect(
+      commandHint("error: too many arguments for 'inbox'. Expected 0 arguments but got 1: d-x.", [
+        'task',
+        'inbox',
+        'd-x'
+      ])
+    ).toContain('plitzi task show <task>');
+    expect(commandHint("error: unknown option '--clip'", ['task', 'look', 'd-x', '/', '--clip', 'hero'])).toContain(
+      'page shot <path> --clip'
+    );
+  });
+
   it('is said by every command, each copying the program’s output', () => {
     const program = buildProgram();
     const shot = program.commands.find(each => each.name() === 'page')?.commands.find(each => each.name() === 'shot');

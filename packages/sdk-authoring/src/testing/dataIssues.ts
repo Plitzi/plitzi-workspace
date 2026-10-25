@@ -95,7 +95,7 @@ const insideHidden = (schema: Schema, element: Element, hidden: ReadonlySet<stri
 /**
  * Every binding of the page onto a provider that has answered, read against that answer: a path that stops before its
  * last step — or a list's rows that are not there — is an issue that says where it stopped and what was there; a
- * provider that failed is one too. A provider still on its way, or not on this page, is passed over — its answer is not
+ * provider on the page that failed is one too, whether or not anything shown reads it. A provider still on its way, or not on this page, is passed over — its answer is not
  * in yet, or not this page's to judge — and so is what is inside an element the page is not showing (`hidden`).
  */
 export const dataIssues = (
@@ -155,6 +155,23 @@ export const dataIssues = (
           elementId: element.id
         });
       }
+    }
+  }
+
+  // One that failed with nothing shown reading it — what reads it hidden at this width — failed all the same: a run's
+  // check passed a room at 1440 with its lists at 0 rows, and only the 390 pass said why.
+  for (const [provider, answer] of Object.entries(sources)) {
+    const failure =
+      provider.startsWith(PROVIDER) && !failed.has(provider) && isRecord(answer) && answer.isLoading !== true
+        ? failureOf(answer)
+        : undefined;
+    if (failure) {
+      failed.add(provider);
+      issues.push({
+        code: 'provider-failed',
+        message: `${provider} failed — ${failure} — so everything bound to it is empty`,
+        elementId: provider.slice(PROVIDER.length)
+      });
     }
   }
 

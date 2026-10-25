@@ -154,4 +154,25 @@ describe.skipIf(process.platform === 'win32')('plitzi server stop', () => {
     await expect(fs.access(path.join(root, 'state'))).rejects.toThrow();
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Removed state/ (kv.json)'));
   }, 20_000);
+
+  // A run's designers were refused six times by their copy's own server — started by their page commands — and ran
+  // reset again in bursts: in a run's copy, reset stops it first, and says so.
+  it("stops a run's copy's own server first, then resets", async () => {
+    const copy = path.join(root, 'tmp', 'plitzi-runs', 'es-launch', 'tasks', 't-home', 'cache', 'work');
+    await fs.mkdir(path.join(copy, 'state'), { recursive: true });
+    await fs.writeFile(path.join(copy, 'package.json'), JSON.stringify({ name: 'site', private: true }));
+    await fs.writeFile(path.join(copy, 'state', 'kv.json'), '{}');
+    vi.spyOn(process, 'cwd').mockReturnValue(copy);
+    const child = serve(copy, projectMark(copy));
+    started.push(child);
+    const pid = child.pid ?? 0;
+    expect(await until(async () => (await projectServers(copy)).some(each => each.pid === pid))).toBe(true);
+
+    await serverReset({});
+
+    expect(process.exitCode).toBeUndefined();
+    expect(alive(pid)).toBe(false);
+    await expect(fs.access(path.join(copy, 'state'))).rejects.toThrow();
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Stopped this copy's server"));
+  }, 20_000);
 });

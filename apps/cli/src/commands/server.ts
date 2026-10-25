@@ -10,6 +10,7 @@ import { PROJECT_STATE, PROJECT_TMP, projectMark } from '@plitzi/sdk-shared/proj
 import { readHealth } from '../browser';
 import { projectHere } from './existingProject';
 import { fail } from './terminal';
+import { copyOf } from '../runs/paths';
 import { listenerOn, listenersUnder, stopListener } from '../runs/processes';
 
 /**
@@ -146,8 +147,26 @@ export interface ServerResetOptions {
 /**
  * Puts what this folder's server keeps (`state/` — its kv, its jobs) back to a cold start: the next start is a fresh
  * clone's. A reviewer's `page play` used the demo's data up, and emptying the copy's sqlite by hand was the only
- * way back. Refused while a server of this folder runs: it holds the files open and writes them back.
+ * way back. A server of this folder holds the files open and writes them back: in a run's copy — served by its page
+ * commands — it is stopped first and said (a run's designers were refused six times, and ran reset again in bursts);
+ * in the project itself it may be a person's, and the reset is refused until they stop it.
  */
+/** Whether every server listening from inside `root` has stopped within `ms`. */
+const stoppedWithin = async (root: string, ms: number): Promise<boolean> => {
+  const until = Date.now() + ms;
+  for (;;) {
+    if (listenersUnder(root).filter(each => !inside(each.cwd, path.join(root, PROJECT_TMP))).length === 0) {
+      return true;
+    }
+
+    if (Date.now() > until) {
+      return false;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+};
+
 export const serverReset = async (options: ServerResetOptions): Promise<void> => {
   const project = await projectHere('whose server state to reset');
   if (!project) {
@@ -157,9 +176,24 @@ export const serverReset = async (options: ServerResetOptions): Promise<void> =>
   const running = listenersUnder(realpathSync(project.root)).filter(
     each => !inside(each.cwd, path.join(realpathSync(project.root), PROJECT_TMP))
   );
-  if (running.length > 0) {
+  const inCopy = copyOf(realpathSync(project.root)) !== undefined;
+  if (running.length > 0 && !inCopy) {
     fail(
       `A server of this folder is running on ${running.map(each => `:${String(each.port)}`).join(', ')} and holds ${PROJECT_STATE}/ open — it would write it back. Stop it first (plitzi server stop), then reset.`
+    );
+
+    return;
+  }
+
+  // The copy's own, started by its page commands: stopped, and waited for — it writes what it holds as it goes.
+  for (const each of running) {
+    stopListener(each.pid);
+  }
+
+  const stopped = running.length > 0 ? await stoppedWithin(realpathSync(project.root), 10_000) : true;
+  if (!stopped) {
+    fail(
+      `The copy's server on ${running.map(each => `:${String(each.port)}`).join(', ')} did not stop within 10 seconds: ${PROJECT_STATE}/ is left as it is — run plitzi server reset again in a moment.`
     );
 
     return;
@@ -175,6 +209,12 @@ export const serverReset = async (options: ServerResetOptions): Promise<void> =>
     console.log(JSON.stringify({ removed: options.dryRun ? [] : kept, wouldRemove: options.dryRun ? kept : [] }));
 
     return;
+  }
+
+  if (running.length > 0) {
+    console.log(
+      `Stopped this copy's server on ${running.map(each => `:${String(each.port)}`).join(', ')} first: it held ${PROJECT_STATE}/ open. The next page command starts it again.`
+    );
   }
 
   console.log(

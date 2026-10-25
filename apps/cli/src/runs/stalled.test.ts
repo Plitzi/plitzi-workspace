@@ -84,3 +84,39 @@ describe('a task blocked', () => {
     expect((await allLocks(lead())).get('src/space/theme.ts') ?? []).toHaveLength(0);
   });
 });
+
+describe('a ready task held by a claim ahead of it', () => {
+  // A run's t-crate-radio sat ready 22 minutes with three developers free: d-follow-names had claimed its test file, and
+  // the lead's watch said only that the designers had nothing to take.
+  it('is said to the lead at once, with the task that holds its file and what frees it', async () => {
+    const plan = benchPlan();
+    const runId = await open({ ...plan, tasks: plan.tasks.filter(task => task.id === 't-about') });
+    const about = await take('agent-1', 't-about');
+    await claimFile(about.ctx, runId, 't-about', 'src/space/theme.ts');
+    await extendRun(
+      lead(),
+      runId,
+      await bench.writePlan({
+        version: 1 as const,
+        runId: 'es-launch-2',
+        goal: 'A warmer theme',
+        tasks: [
+          {
+            id: 't-theme',
+            title: 'Warmer ink',
+            files: ['src/space/theme.ts'],
+            dependsOn: [],
+            priority: 'high' as const,
+            estimateMinutes: 10,
+            acceptance: ['The ink is warmer']
+          }
+        ]
+      })
+    );
+
+    const said = (await viewRun(lead(), runId)).attention.find(item => item.kind === 'held-ahead');
+    expect(said).toMatchObject({ who: 'lead', task: 't-theme' });
+    expect(said?.text).toContain('t-theme is ready, and none can take it: t-about holds src/space/theme.ts');
+    expect(said?.text).toContain('free once t-about is approved');
+  });
+});

@@ -60,3 +60,21 @@ describe('containers with nothing in them yet', () => {
     expect(text).toContain('empty, with nothing in them yet and no size: site-header, site-nav');
   });
 });
+
+describe('the sources a page holds, with --state', () => {
+  it('says what each key holds — a short value as it is, a list or an object by its size', () => {
+    const text = reportText(
+      {
+        ...report(undefined),
+        sources: {
+          channel_siteInbox: { connected: true, unread: 3, me: { name: 'dax' }, rows: [1, 2], note: 'x'.repeat(40) }
+        }
+      },
+      { state: true, elements: [] }
+    );
+
+    expect(text).toContain(
+      `· source channel_siteInbox: { connected: true, unread: 3, me: {1}, rows: [2], note: "${'x'.repeat(28)}… }`
+    );
+  });
+});

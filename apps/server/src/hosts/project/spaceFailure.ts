@@ -60,6 +60,9 @@ const asksForPage = (method: string, accept: string | string[] | undefined): boo
 
 export const createSpaceFailure = () => {
   let failure: string | undefined;
+  // A save that did not author while the last space that did is served: the pages are that one's, and `/health` says
+  // why — a run's designer measured an element the refused save added and was told it was "not drawn there".
+  let stale: string | undefined;
 
   const stage: Stage = ctx => {
     if (failure === undefined || !asksForPage(ctx.req.method, ctx.req.headers.accept)) {
@@ -80,9 +83,16 @@ export const createSpaceFailure = () => {
     fail: (message: string): void => {
       failure = message;
     },
+    /** A save did not author: the last space that did is still served, and this is why it is not the saved one. */
+    stale: (message: string): void => {
+      stale = message;
+    },
+    /** What `/health` adds while a save has not authored: why the page is the space as it last authored. */
+    health: (): Record<string, unknown> => (stale === undefined ? {} : { spaceStale: stale }),
     /** It authored: the pages are the space's again. */
     clear: (): void => {
       failure = undefined;
+      stale = undefined;
     }
   };
 };

@@ -40,7 +40,17 @@ const heldText = (report: CheckReport, asked: CheckAsk): string[] => {
   ];
 };
 
-/** A value's shape in a few words: a list's length, an object's keys, a short value as it is. */
+/** A short value as it is, cut past `most` characters. */
+const shortOf = (value: unknown, most: number): string => {
+  const text = value === undefined ? 'undefined' : JSON.stringify(value);
+
+  return text.length > most ? `${text.slice(0, most - 1)}…` : text;
+};
+
+/**
+ * A value's shape in a few words: a list's length, an object's keys with what each holds — a short value as it is, a
+ * list or an object by its size. A run's designer read `channel_siteInbox.connected` with `--json` and a script.
+ */
 const shapeOf = (value: unknown): string => {
   if (Array.isArray(value)) {
     return `a list of ${String(value.length)}`;
@@ -48,13 +58,20 @@ const shapeOf = (value: unknown): string => {
 
   if (isRecord(value)) {
     const keys = Object.keys(value);
+    const held = (each: unknown): string =>
+      Array.isArray(each)
+        ? `[${String(each.length)}]`
+        : isRecord(each)
+          ? `{${String(Object.keys(each).length)}}`
+          : shortOf(each, 30);
 
-    return `{ ${keys.slice(0, 8).join(', ')}${keys.length > 8 ? ', …' : ''} }`;
+    return `{ ${keys
+      .slice(0, 8)
+      .map(key => `${key}: ${held(value[key])}`)
+      .join(', ')}${keys.length > 8 ? `, … ${String(keys.length - 8)} more` : ''} }`;
   }
 
-  const text = value === undefined ? 'undefined' : JSON.stringify(value);
-
-  return text.length > 60 ? `${text.slice(0, 57)}…` : text;
+  return shortOf(value, 60);
 };
 
 /** With `--ssr`, what only the browser renders — not a problem outside a server provider, and said so it is seen. */

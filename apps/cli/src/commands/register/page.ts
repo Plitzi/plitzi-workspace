@@ -355,7 +355,7 @@ export const registerPage = (pageGroup: Command): void => {
     .option('--sheet', 'Every picture taken — before, after each click, each frame — on one contact sheet')
     .option(
       '--steps <script>',
-      'An interaction, step by step: "click <el>; hover <el>; type <el> <text>; press <key>; wait <ms>; wait-for <el>; shot [label]; frames <n> [ms]" — or @file with one per line'
+      'An interaction, step by step: "click <el>; hover <el>; type <el> <text>; press <key>; wait <ms|3s>; wait-for <el>; shot [label]; frames <n> [ms]" — or @file with one per line'
     )
     .option('--reduced-motion', 'As a visitor who asked for less motion')
     .option(

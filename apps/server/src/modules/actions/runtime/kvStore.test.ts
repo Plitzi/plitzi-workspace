@@ -232,7 +232,13 @@ describe('createKvStore lists', () => {
   it('refuses an id a list cannot hold, and a list larger than a store keeps', async () => {
     const kv = createKvStore(createMemoryKv());
 
-    await expect(kv.listPut('l', { id: 'no spaces', score: 1, value: null })).rejects.toThrow('id is 1-128');
+    await expect(kv.listPut('l', { id: 'no spaces', score: 1, value: null })).rejects.toThrow(
+      `the marks ':' '_' '.' '@' '-': "no spaces" is not`
+    );
+    // The id refused is named: a run's had a '|' from a pair of usernames, and the rule's line read as cut short.
+    await expect(kv.listPut('l', { id: 'dm:dax|nova:m4', score: 1, value: null })).rejects.toThrow(
+      '"dm:dax|nova:m4" is not'
+    );
     await expect(kv.listPut('l', { id: 'big', score: 1, value: 'x'.repeat(150_000) })).rejects.toThrow(
       'keep fewer entries'
     );

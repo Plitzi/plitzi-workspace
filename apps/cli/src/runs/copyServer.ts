@@ -3,10 +3,12 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+
 import { ownServer, serveCopy } from './acceptance';
 import { canLinger, keepServer, keptPort, keptServer, LINGER_MS, newestWrite, previewedServer } from './lingering';
 import { copyOf, runPaths, taskPaths } from './paths';
-import { projectOrigin } from '../browser';
+import { projectOrigin, readHealth } from '../browser';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
 
 import type { PlitziProject } from '../commands/existingProject';
@@ -19,6 +21,38 @@ import type { PlitziProject } from '../commands/existingProject';
  * running, is used as it is.
  */
 export const originHere = async (
+  root: string,
+  project: PlitziProject | undefined,
+  url?: string
+): Promise<{ origin: string; stop?: () => void } | { problem: string }> => {
+  const found = await servedHere(root, project, url);
+  if (!('problem' in found)) {
+    sayStale(await readHealth(found.origin));
+  }
+
+  return found;
+};
+
+/**
+ * A save to the space that did not author, as the server's `/health` says it: what is read is the space as it last
+ * authored — a run's designer measured an element the refused save added and was told it was "not drawn there".
+ */
+export const sayStale = (health: unknown): void => {
+  const why = isRecord(health) && typeof health.spaceStale === 'string' ? health.spaceStale : undefined;
+  const first = why
+    ?.split('\n')
+    .map(line => line.trim())
+    .find(line => line !== '');
+  if (first !== undefined) {
+    process.stderr.write(
+      chalk.yellow(
+        `· the last save to the space did not author: this is the space as it last authored, without that save — ${first} (npm run author says it whole)\n`
+      )
+    );
+  }
+};
+
+const servedHere = async (
   root: string,
   project: PlitziProject | undefined,
   url?: string

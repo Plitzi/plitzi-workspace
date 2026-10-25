@@ -217,6 +217,8 @@ export interface ListRows {
    * copy: `rendered` is then all of them, and each copy filters its own share of the source.
    */
   copies?: number[];
+  /** Its rows written out as its children, no source feeding it: `source` is how many there are. */
+  written?: true;
 }
 
 /**

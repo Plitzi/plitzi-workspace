@@ -385,6 +385,19 @@ export const scrollTo = (target: string, place: ScrollMove): StepSpec => ({
 });
 
 /**
+ * Gives an element the keyboard's focus: itself, or the first field, button or link inside it (a form control's
+ * input). A composer sent with its key gives its field the focus back — `[onClick(), …, resetForm('chat'),
+ * focus('chat-input')]` — as Enter keeps it.
+ */
+export const focus = (target: string): StepSpec => ({
+  type: 'callback',
+  action: 'focus',
+  title: 'Focus',
+  on: target,
+  params: {}
+});
+
+/**
  * Brings an element into view — the page, and every box around it that scrolls. For a link to a part of the page,
  * an `anchor` and a link's `hash` say it without a flow; this is for a flow that has more to do.
  */

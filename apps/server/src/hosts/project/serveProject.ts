@@ -432,7 +432,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
       port,
       devMode: serverOptions.devMode ?? developing,
       livePages: serverOptions.livePages ?? serverOptions.devMode ?? developing,
-      health: { name, instance: projectMark(root) },
+      health: { name, instance: projectMark(root), check: spaceFailure.health },
       adapters,
       plugins: plugins.sources,
       publicDir: path.join(root, PUBLIC_DIR),
@@ -510,12 +510,23 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
     ? [
         ...(held
           ? [
-              watchSpace(root, authored => {
-                held.documents = authored;
-                spaceFailure.clear();
-                // The open pages swap the new space where they stand, their state kept; one that cannot loads again.
-                server.updatePages(authored);
-              })
+              watchSpace(
+                root,
+                authored => {
+                  held.documents = authored;
+                  spaceFailure.clear();
+                  // The open pages swap the new space where they stand, their state kept; one that cannot loads again.
+                  server.updatePages(authored);
+                },
+                // A space that never authored keeps its error page; one that did keeps being served, `/health` saying why.
+                why => {
+                  if (held.documents) {
+                    spaceFailure.stale(why);
+                  } else {
+                    spaceFailure.fail(why);
+                  }
+                }
+              )
             ]
           : []),
         watchProjectPlugins(root, server, plugins),

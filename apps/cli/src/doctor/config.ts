@@ -7,6 +7,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { projectModule } from './projectModules';
 import { editTsConfig, freshSecret, ignoreLines, unignore, writeFormatted } from './repairs';
 import { sayer } from './types';
+import { CHECK_PASSWORD_ENV, CHECK_USER_ENV } from '../commands/check/account';
 import { projectSettings } from '../commands/projectSettings';
 import {
   CLI_DIR,
@@ -447,6 +448,18 @@ const envChecks = async ({ root, answers }: DoctorContext): Promise<Finding[]> =
         })
       );
     }
+  }
+
+  // A password that names no one: every page check, look and acceptance line reads a page for signed-in visitors as a
+  // guest. A run's designers pictured the sign-in five times with the password set and no account beside it.
+  if (settings.value(CHECK_PASSWORD_ENV) && !settings.value(CHECK_USER_ENV)) {
+    findings.push(
+      say.warning(
+        'check-user-missing',
+        `${CHECK_PASSWORD_ENV} is set in ${where}, and ${CHECK_USER_ENV} is not: no check knows whose password it is, so a page for signed-in visitors is read as a guest.`,
+        { file: '.env', fix: `Set ${CHECK_USER_ENV}=<the account that password signs in> in .env.` }
+      )
+    );
   }
 
   // No `.env` at the root is the layout's to say (`env-missing`, `env-in-src`), and its fix — `.env.example` copied, the

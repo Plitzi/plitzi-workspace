@@ -130,9 +130,9 @@ export const TASK_LOOK: Record<TaskLine['status'], { glyph: string; label: strin
   done: { glyph: '✓', label: 'approved', tone: 'success' }
 };
 
-/** Where an agent stands, as a glyph, a word and a tone. */
+/** Where an agent stands, as a glyph, a word and a tone — the word drawn in its tone wherever an agent is listed. */
 export const AGENT_LOOK: Record<AgentStatus, { glyph: string; label: string; tone: Tone }> = {
-  working: { glyph: '●', label: 'working', tone: 'success' },
+  working: { glyph: '●', label: 'working', tone: 'primary' },
   reviewing: { glyph: '●', label: 'reviewing', tone: 'link' },
   blocked: { glyph: '●', label: 'blocked', tone: 'warning' },
   asking: { glyph: '?', label: 'asks the lead', tone: 'warning' },

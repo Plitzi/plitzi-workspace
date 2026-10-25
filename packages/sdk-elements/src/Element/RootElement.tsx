@@ -48,8 +48,13 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   const previewMode = serviceContext.settings.previewMode ?? true;
   const debugMode = Boolean(serviceContext.settings.debugMode);
 
+  // A tagless element (a provider, a channel) has no node to hide: hidden, it draws nothing — its `visible` was ignored,
+  // and a channel held behind it showed the header's envelope to a guest. Said after every hook a branch calls.
+  const hiddenTagless = tag === '' && !elementContext.visible;
   if (elementContext.plitziJsxSkipHOC) {
-    return renderStaticTag({ tag, refProp: ref, style: styleParsed, className, otherProps, children });
+    return hiddenTagless
+      ? null
+      : renderStaticTag({ tag, refProp: ref, style: styleParsed, className, otherProps, children });
   }
 
   const {
@@ -102,19 +107,21 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
         };
 
   if (!interactive) {
-    return renderStaticTag({
-      tag,
-      refProp: ref,
-      style: { ...style, ...styleParsed, ...motion.style },
-      className,
-      otherProps,
-      anchor: rowAnchor,
-      params,
-      serverMarker,
-      motion: motion.attributes,
-      testMarker,
-      children
-    });
+    return hiddenTagless
+      ? null
+      : renderStaticTag({
+          tag,
+          refProp: ref,
+          style: { ...style, ...styleParsed, ...motion.style },
+          className,
+          otherProps,
+          anchor: rowAnchor,
+          params,
+          serverMarker,
+          motion: motion.attributes,
+          testMarker,
+          children
+        });
   }
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -129,6 +136,10 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     otherProps,
     ref
   });
+
+  if (hiddenTagless) {
+    return null;
+  }
 
   return renderStaticTag({
     tag,

@@ -16,7 +16,7 @@ import { under } from './paths';
 import { previewPort } from './previewRecord';
 import { loadRun, pinDifference, pinnedNow, readApproved, readBase, readRunLog, runIds } from './run';
 import { agentsNow } from './running';
-import { lockHolder, stalled } from './stalled';
+import { heldAhead, lockHolder, stalled } from './stalled';
 import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
@@ -112,6 +112,7 @@ export interface Attention {
     | 'ui-waits'
     | 'ui-queued'
     | 'held-up'
+    | 'held-ahead'
     | 'slow-review'
     | 'idle-team'
     | 'agents-needed'
@@ -325,6 +326,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   // A run that stands still is said with what holds each task, read as `task next` reads it: the lock on a file it needs.
   const locks = await allLocks(ctx);
   attention.push(...stalled(views, lockHolder(locks, record.runId), running, now));
+  attention.push(...heldAhead(views, lockHolder(locks, record.runId)));
   // Agents on demand: told to the lead when work waits for one and none running is free.
   const identified = await identifiedAgents(loaded.paths);
   attention.push(

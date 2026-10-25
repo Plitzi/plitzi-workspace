@@ -1,10 +1,10 @@
 import { clip, textWidth } from './monitorCanvas';
 import { EVENT_TONE, groupKey, openedRows, opens, whatOf } from './monitorFeed';
 import { briefStages } from './monitorFlow';
-import { hhmm, LIVE_VERB, since, toneOf, urgencyOf } from './monitorModel';
+import { AGENT_LOOK, hhmm, LIVE_VERB, since, toneOf, urgencyOf } from './monitorModel';
 import { drawPreviewLine, shortModel } from './monitorSide';
 
-import type { MonitorUi, Paint, PreviewShown } from './monitorModel';
+import type { MonitorUi, Paint, PreviewShown, Tone } from './monitorModel';
 import type { Rect } from './monitorSide';
 import type { FeedLine, Monitored } from '../../runs/monitor';
 
@@ -168,17 +168,17 @@ const drawBrief = (p: Paint, data: Monitored, top: number, rect: Rect): void => 
   });
 };
 
-/** The verb, a light sweeping across it: an agent at work, seen to be. */
-export const shimmer = (p: Paint, row: number, col: number, word: string, frame: number): number => {
+/**
+ * The verb in the tone of what the agent is at — writing in the accent, asking in amber, restarting in blue — a light
+ * sweeping across it: an agent at work, seen to be. Every verb shimmered in the accent, so none told its state.
+ */
+export const shimmer = (p: Paint, row: number, col: number, word: string, frame: number, tone: Tone): number => {
   const sweep = frame % (word.length + 6);
   let at = col;
   let index = 0;
   for (const char of word) {
     const near = Math.abs(index - sweep + 2) <= 1;
-    at = p.canvas.put(row, at, char, {
-      fg: near ? p.theme.text : index % 2 === 0 ? p.theme.primary : p.theme.link,
-      bold: true
-    });
+    at = p.canvas.put(row, at, char, { fg: near ? p.theme.text : toneOf(p.theme, tone), bold: true });
     index += 1;
   }
 
@@ -201,8 +201,9 @@ const drawLive = (p: Paint, data: Monitored, ui: MonitorUi, top: number, rect: R
   live.forEach((agent, index) => {
     const row = top + 1 + index;
     const task = data.view.tasks.find(each => each.id === agent.task);
+    const tone = AGENT_LOOK[agent.status].tone;
     canvas.put(row, rect.left + 2, SPINNER[(ui.frame + index * 3) % SPINNER.length] ?? '✻', {
-      fg: theme.primary,
+      fg: toneOf(theme, tone),
       bold: true
     });
     canvas.put(row, rect.left + 4, clip(agent.agent, nameWidth), {
@@ -211,7 +212,7 @@ const drawLive = (p: Paint, data: Monitored, ui: MonitorUi, top: number, rect: R
     });
     // An agent at no task — the lead between reviews — works at what it says it does.
     const verb = agent.task === undefined && agent.status === 'working' ? 'Working' : (LIVE_VERB[agent.status] ?? '');
-    let col = shimmer(p, row, rect.left + 6 + nameWidth, `${verb}…`, ui.frame + index * 4);
+    let col = shimmer(p, row, rect.left + 6 + nameWidth, `${verb}…`, ui.frame + index * 4, tone);
     if (agent.task) {
       col = canvas.put(row, col + 1, agent.task, { fg: theme.link });
     }

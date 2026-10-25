@@ -1,11 +1,12 @@
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
+import { stripVTControlCharacters } from 'node:util';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { freePort } from './acceptance';
-import { originHere } from './copyServer';
+import { originHere, sayStale } from './copyServer';
 import { markPreviewed, stopKept } from './lingering';
 import { runPaths, taskPaths } from './paths';
 import { startTaskPreview } from './preview';
@@ -194,5 +195,31 @@ describe('originHere', () => {
     } finally {
       server.close();
     }
+  });
+});
+
+// A run's designer measured an element a refused save added, was told it was "not drawn there", and looked for a `when`.
+describe('a save to the space that did not author', () => {
+  it('is said with the first line of why, by every command that reads the page — and nothing when it authored', () => {
+    const said: string[] = [];
+    const write = vi.spyOn(process.stderr, 'write').mockImplementation(chunk => {
+      said.push(String(chunk));
+
+      return true;
+    });
+    try {
+      sayStale({
+        Server: 'shop',
+        spaceStale: '\n[author] style-pseudo-content: legend::after\n  at src/space/styles.ts'
+      });
+      sayStale({ Server: 'shop' });
+      sayStale(null);
+    } finally {
+      write.mockRestore();
+    }
+
+    expect(said.map(line => stripVTControlCharacters(line))).toEqual([
+      '· the last save to the space did not author: this is the space as it last authored, without that save — [author] style-pseudo-content: legend::after (npm run author says it whole)\n'
+    ]);
   });
 });

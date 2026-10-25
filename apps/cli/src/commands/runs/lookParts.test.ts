@@ -1,6 +1,8 @@
+import { createServer } from 'node:http';
+
 import { describe, expect, it } from 'vitest';
 
-import { comparedOf, partsComparedOf, readablePictures } from './lookParts';
+import { comparedOf, newSinceBefore, partsComparedOf, readablePictures, redirectedPaths } from './lookParts';
 
 // A look at a section the task added — the run before has none — took no picture at all.
 describe('the parts a look set beside the run before it', () => {
@@ -68,5 +70,50 @@ describe('the dress a comparison says changed', () => {
       `moderation-open, moderation-closed + ${glow} ×2`,
       'moderation-head − a hairline'
     ]);
+  });
+});
+
+// /settings and /messages send a guest to the sign-in from their own flows, declaring no access: a run's designers
+// looked at them as guests five times, and pictured the sign-in.
+describe('the pages a guest is sent away from', () => {
+  it('are read off a page check, each once, whatever its width', () => {
+    const report = (path: string, codes: string[], width = 1440) => ({
+      path,
+      width,
+      ok: codes.length === 0,
+      issues: codes.map(code => ({ code, message: '', width }))
+    });
+    const output = [
+      'Served on :61354',
+      JSON.stringify([
+        report('/settings', ['redirected']),
+        report('/settings', ['redirected'], 390),
+        report('/charts', []),
+        report('/messages/nova', ['label-wraps', 'redirected'])
+      ])
+    ].join('\n');
+    expect(redirectedPaths(output)).toEqual(['/settings', '/messages/nova']);
+    expect(redirectedPaths('not json')).toEqual([]);
+  });
+});
+
+// Set beside the run before, a run's new /messages was compared with the 404 page: '16% differs', the 404's dress listed.
+describe('the pages a task adds', () => {
+  it('are the routes the run before answers 404, pictured alone', async () => {
+    const before = createServer((request, response) => {
+      response.statusCode = request.url === '/' || request.url === '/charts' ? 200 : 404;
+      response.end();
+    });
+    await new Promise<void>(resolve => before.listen(0, '127.0.0.1', resolve));
+    const address = before.address();
+    const url = `http://127.0.0.1:${String(typeof address === 'object' && address ? address.port : 0)}`;
+    try {
+      expect([...(await newSinceBefore(url, ['/', '/messages', '/charts', '/messages/nova']))]).toEqual([
+        '/messages',
+        '/messages/nova'
+      ]);
+    } finally {
+      before.close();
+    }
   });
 });

@@ -75,8 +75,18 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
         'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, store, state, clock, tick, shot, frames'
     });
     expect(parseSteps('wait soon', 500)).toEqual({
-      problem: 'step 1 ("wait soon"): "soon" is not a whole number from 1 to 30000'
+      problem:
+        'step 1 ("wait soon"): "soon" is not a wait from 1 ms to 30 s — milliseconds, or with its unit: wait 300, wait 3s'
     });
+    expect(parseSteps('wait 31s', 500)).toEqual({
+      problem:
+        'step 1 ("wait 31s"): "31s" is not a wait from 1 ms to 30 s — milliseconds, or with its unit: wait 300, wait 3s'
+    });
+    // A run's designer wrote `wait 3s` and was refused: a duration reads with its unit.
+    expect(parseSteps('wait 3s; wait 250', 500)).toEqual([
+      { kind: 'wait', ms: 3000 },
+      { kind: 'wait', ms: 250 }
+    ]);
     expect(parseSteps('type title', 500)).toEqual({
       problem:
         'step 1 ("type title"): type needs an element and the text — type <element> <text> or type <element>=<text>, type ".panel textarea" hi'

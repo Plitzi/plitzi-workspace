@@ -106,7 +106,13 @@ export const lookText = (looked: Looked): string =>
           `Pictures — a browser in ${looked.timezone}, its language en-US (--timezone for another zone):`,
           ...looked.shots.map(each => `  ${each}`)
         ]
-      : ['No picture could be taken.']),
+      : [
+          looked.unpictured
+            ? 'No picture could be taken:'
+            : looked.unchanged
+              ? 'Nothing pictured: what it looked at is drawn as the run before it draws it.'
+              : `No picture was taken, and no picture command said why: look at one page again — plitzi task look ${looked.task} <page> --fresh`
+        ]),
     ...(looked.unpictured ? unpicturedText(looked.unpictured) : []),
     ...(looked.compared
       ? [

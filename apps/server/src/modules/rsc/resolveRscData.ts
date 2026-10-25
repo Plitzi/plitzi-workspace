@@ -250,8 +250,13 @@ export const resolveRscData = async ({
           serverLog.error('RSC', `element ${targets[index].id} failed to resolve`, reason);
         }
 
-        // While developing, said where the page reads it: the provider shows why, not "could not be reached".
-        if (sayFailures) {
+        // A refusal's words are the visitor's, as `/_action` answers them: said where the page reads them, everywhere.
+        // Anything else only while developing — the provider shows why, not "could not be reached".
+        const said =
+          reason instanceof Error && 'said' in reason && typeof reason.said === 'string' ? reason.said : undefined;
+        if (said !== undefined) {
+          acum[targets[index].id] = { [RSC_FAILURE]: said };
+        } else if (sayFailures) {
           acum[targets[index].id] = { [RSC_FAILURE]: reason instanceof Error ? reason.message : String(reason) };
         }
       }

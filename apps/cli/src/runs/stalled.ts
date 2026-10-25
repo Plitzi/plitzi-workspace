@@ -37,6 +37,33 @@ export const lockHolder =
     return undefined;
   };
 
+/**
+ * A ready task none can take because another task of the run holds a file of it — claimed ahead of it — said to the
+ * lead with what frees it. A run's t-crate-radio sat ready 22 minutes, three developers free: d-follow-names had
+ * claimed its test file, the agents read why, and the lead's watch said only that the designers had nothing to take.
+ */
+export const heldAhead = (views: readonly TaskView[], heldBy: (view: TaskView) => HeldBy | undefined): Attention[] => {
+  const byId = new Map(views.map(view => [view.task.id, view] as const));
+
+  return views.flatMap(view => {
+    const held = view.state.status === 'ready' ? heldBy(view) : undefined;
+    const holder = held ? byId.get(held.task) : undefined;
+    if (!held || !holder || holder.state.status === 'done') {
+      return [];
+    }
+
+    return [
+      {
+        kind: 'held-ahead' as const,
+        task: view.task.id,
+        subject: `${view.task.id}:${held.task}:${held.file}`,
+        text: `${view.task.id} is ready, and none can take it: ${held.task} holds ${held.file}, claimed ahead of it — it is free once ${held.task} is approved (${holder.state.status} now): review ${held.task} first, or ${held.task} lets the file go (plitzi task release ${held.file})`,
+        who: 'lead' as const
+      }
+    ];
+  });
+};
+
 export const stalled = (
   views: readonly TaskView[],
   /** The lock that keeps a ready task from being offered, if one does. */

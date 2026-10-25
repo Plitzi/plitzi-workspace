@@ -4,8 +4,10 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { listedTasks } from './monitorBoard';
+import { createCanvas } from './monitorCanvas';
 import { flowStages, nameOf } from './monitorFlow';
 import { initialUi } from './monitorModel';
+import { shimmer } from './monitorOverview';
 import { monitorScreen, waitingScreen } from './monitorScreen';
 import { THEMES } from './monitorTheme';
 import { extendRun } from '../../runs/extend';
@@ -91,6 +93,41 @@ describe('plitzi run monitor', () => {
     expect(advanced.join('\n')).toContain('For the lead');
     expect(all).not.toContain('For the lead');
     expect(text.at(-1)).toMatch(/\d+ for the lead/);
+  });
+
+  // Every state read the same grey, and working the green of what is approved.
+  it("draws each agent's state in its tone — working in the accent", async () => {
+    const runId = await open();
+    await take('agent-2', 't-home');
+    const { screen, text } = shown(await monitorRun(lead(), runId));
+    const row = text.findIndex(line => line.includes('on t-home'));
+    expect(row).toBeGreaterThan(0);
+    const ansi = screen.canvas.ansi(3)[row] ?? '';
+    const [r, g, b] = [1, 3, 5].map(at => Number.parseInt(THEMES.dark.primary.slice(at, at + 2), 16));
+    expect(ansi).toMatch(new RegExp(`38;2;${String(r)};${String(g)};${String(b)}[;0-9]*mon t-home`));
+  });
+
+  // Every live verb shimmered in the accent: Writing, Asking and Restarting read alike.
+  it('shimmers each live verb in the tone of its state', () => {
+    const rgb = (hex: string) => [1, 3, 5].map(at => String(Number.parseInt(hex.slice(at, at + 2), 16))).join(';');
+    const verb = (word: string, tone: 'primary' | 'warning' | 'info') => {
+      const canvas = createCanvas(20, 1, THEMES.dark);
+      // A frame whose sweep is past the word: every letter in the state's tone.
+      shimmer(
+        { canvas, theme: THEMES.dark, hues: new Map(), now: bench.now(), hits: [], areas: [] },
+        0,
+        0,
+        word,
+        14,
+        tone
+      );
+
+      return canvas.ansi(3)[0] ?? '';
+    };
+    expect(verb('Writing…', 'primary')).toContain(`38;2;${rgb(THEMES.dark.primary)}`);
+    expect(verb('Asking…', 'warning')).toContain(`38;2;${rgb(THEMES.dark.warning)}`);
+    expect(verb('Asking…', 'warning')).not.toContain(`38;2;${rgb(THEMES.dark.primary)}`);
+    expect(verb('Restarting…', 'info')).toContain(`38;2;${rgb(THEMES.dark.info)}`);
   });
 
   it('waits for a run in a frame of its own, its head and its foot as ever, every edge the same width', () => {

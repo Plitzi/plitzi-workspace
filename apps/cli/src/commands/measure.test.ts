@@ -1,8 +1,11 @@
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { stripVTControlCharacters } from 'node:util';
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { onlyProperties, pairOf, readingKey, sameProperties } from './measure';
+import { measure, onlyProperties, pairOf, readingKey, sameProperties } from './measure';
 import { measureOn } from './measureOn';
 import { putIn, rowsOf, stateText } from './measureState';
 import { comparedText, measuredText, readingText } from './measureText';
@@ -437,6 +440,28 @@ describe('page measure, held to the pixel', () => {
       { property: 'x', here: '50px', there: '290px' }
     ]);
   });
+
+  // A hover that only underlined a link read as "nothing changed"; a hairline's ::after, centred or on the baseline,
+  // was told from a picture.
+  it('reads a link’s underline, and where a pseudo-element sits on its line or in its row', () => {
+    const rest = measured({ 'text-decoration': 'none solid rgb(35, 26, 18)', 'after:vertical-align': 'baseline' });
+    const hovered = measured({
+      'text-decoration': 'underline 1px solid rgb(35, 26, 18)',
+      'after:vertical-align': 'baseline'
+    });
+
+    expect(differences(rest, hovered).differ.map(each => each.property)).toEqual(['text-decoration']);
+    const text = stripVTControlCharacters(
+      measuredText(measured({ ...rest.styles, 'align-items': 'center', 'after:align-self': 'auto' }))
+    );
+    expect(text).toContain('align-items            center');
+    expect(text).not.toContain('text-decoration');
+    expect(text).not.toContain('after:vertical-align');
+    expect(sameProperties('after:align-self,text-underline-offset')).toEqual([
+      'after:align-self',
+      'text-underline-offset'
+    ]);
+  });
 });
 
 // ~40 properties an element, a data URI whole in each — 38k characters in one answer, read on every turn.
@@ -495,5 +520,31 @@ describe('an element measured alone', () => {
     expect(stripVTControlCharacters(measuredText(hidden))).toContain('hidden: a visitor sees none of what it finds');
     expect(stripVTControlCharacters(measuredText(hidden, shown))).toContain('hidden here: a visitor sees none');
     expect(stripVTControlCharacters(measuredText(shown, shown))).not.toContain('hidden');
+  });
+});
+
+// A designer reading four elements' width, x and y on one page was refused --same, and printed ~20 lines each.
+describe('--same on one page', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    process.exitCode = undefined;
+  });
+
+  it('is refused naming --only, which prints just those', async () => {
+    const project = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-measure-'));
+    const said: string[] = [];
+    vi.spyOn(process, 'cwd').mockReturnValue(project);
+    vi.spyOn(console, 'error').mockImplementation((line: unknown) => said.push(String(line)));
+    try {
+      await fs.writeFile(path.join(project, 'package.json'), '{"name":"site"}');
+      await measure('/', ['legend'], { same: sameProperties('size,x') });
+    } finally {
+      await fs.rm(project, { recursive: true, force: true });
+    }
+
+    expect(process.exitCode).toBe(1);
+    expect(stripVTControlCharacters(said.join('\n'))).toContain(
+      "to print only some of this page's, --only width,height,x"
+    );
   });
 });

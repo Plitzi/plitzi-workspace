@@ -67,7 +67,8 @@ export const expectationMissed = (
 
 /**
  * The links and buttons whose short label — three words at most — the page breaks onto more than one line: squeezed in
- * a row with no room (a menu one entry too long), which no other check sees. In the page.
+ * a row with no room (a menu one entry too long), which no other check sees. A link with nothing beside it is a title,
+ * never said. In the page.
  */
 export const wrappedLabelsInPage = (selector: string): { id: string; label: string; lines: number }[] =>
   Array.from(document.querySelectorAll(selector)).flatMap(node => {
@@ -107,7 +108,34 @@ export const wrappedLabelsInPage = (selector: string): { id: string; label: stri
     // The label as it reads, each block's words apart: `textContent` ran a tile's "TARJETAS GRÁFICAS" into its
     // "Compra ahora" as "GRÁFICASCompra" — three words of a four-word link, a label it never was.
     const label = [...groups.values()].map(group => group.words.join(' ')).join(' ');
-    if (label === '' || label.split(' ').length > 3) {
+    // A dash between a track and its artist is no word: "Limitless — Elektronomia" is two.
+    if (label === '' || label.split(' ').filter(word => /[\p{L}\p{N}]/u.test(word)).length > 3) {
+      return [];
+    }
+
+    // A label is squeezed by what shares its row — a menu's next entry. A link alone across its column is a title (a
+    // track's in a 210 px card column), which wraps as text does.
+    const besideAnything = (from: Element): boolean => {
+      let at = from;
+      while (at.parentElement && at.parentElement !== document.body && at.parentElement.children.length === 1) {
+        at = at.parentElement;
+      }
+
+      const box = at.getBoundingClientRect();
+
+      return Array.from(at.parentElement?.children ?? []).some(other => {
+        const near = other.getBoundingClientRect();
+
+        return (
+          other !== at &&
+          near.width > 0 &&
+          near.top < box.bottom &&
+          near.bottom > box.top &&
+          (near.right <= box.left || near.left >= box.right)
+        );
+      });
+    };
+    if (node instanceof HTMLAnchorElement && !besideAnything(node)) {
       return [];
     }
 

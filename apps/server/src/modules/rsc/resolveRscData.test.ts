@@ -175,7 +175,8 @@ describe('resolveRscData', () => {
     const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const warnings = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const refused = Object.assign(new Error('Action "people" ended as failed, refused (not-host): For the host.'), {
-      refused: true
+      refused: true,
+      said: 'For the host.'
     });
     const resolveElement = vi
       .fn<RscElementResolver>()
@@ -183,8 +184,17 @@ describe('resolveRscData', () => {
         element.id === 'postApi' ? Promise.reject(refused) : Promise.reject(new Error('socket hang up'))
       );
 
-    await resolveRscData({ ...base, schema: buildSchema(), req: request('/blog/hello'), resolveElement });
+    const { serverData } = await resolveRscData({
+      ...base,
+      schema: buildSchema(),
+      req: request('/blog/hello'),
+      resolveElement
+    });
 
+    // The refusal's words alone, for the visitor — published too, as `/_action` answers them; a page had to split
+    // "Action … refused (code): " off to show them. A failure that is no refusal is not said there.
+    expect(serverData?.postApi).toEqual({ [RSC_FAILURE]: 'For the host.' });
+    expect(serverData?.postNested).toBeUndefined();
     expect(JSON.stringify(warnings.mock.calls)).toContain(
       'element postApi: Action \\"people\\" ended as failed, refused (not-host)'
     );

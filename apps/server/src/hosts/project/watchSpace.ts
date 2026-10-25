@@ -28,14 +28,21 @@ const authored = (file: string): boolean =>
   !/^(config|actions|connectors|functions|runtime)([\\/]|$)/.test(file) &&
   (!/^plugins([\\/]|$)/.test(file) || path.basename(file) === 'declaration.ts');
 
+/** The most of what a refusing script printed that is kept to say why: its report starts with what matters. */
+const SAID_MOST = 4000;
+
 /**
  * A save to the space, while developing: re-authored by the project's `.plitzi/author.ts` in a process of its own — the
  * only way to read every file of it again, which an import never does twice — and handed over IPC (`--ipc`), so
- * `onAuthored` swaps the documents the server serves. What it refuses is printed by the script, and the page keeps
- * the last space that authored. Saves in quick succession author once; one during a run, once more after it. Answers
- * what stops watching.
+ * `onAuthored` swaps the documents the server serves. What it refuses is printed by the script, and handed to
+ * `onRefused`: the page keeps the last space that authored. Saves in quick succession author once; one during a run,
+ * once more after it. Answers what stops watching.
  */
-export const watchSpace = (root: string, onAuthored: (documents: AuthoredDocuments) => void): (() => void) => {
+export const watchSpace = (
+  root: string,
+  onAuthored: (documents: AuthoredDocuments) => void,
+  onRefused: (why: string) => void
+): (() => void) => {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let running: ChildProcess | undefined;
   let again = false;
@@ -52,11 +59,17 @@ export const watchSpace = (root: string, onAuthored: (documents: AuthoredDocumen
     }
 
     let documents: AuthoredDocuments | undefined;
+    let said = '';
     const child = spawn(process.execPath, [path.join(root, AUTHOR_FILE), '--ipc'], {
       cwd: root,
-      stdio: ['inherit', 'inherit', 'inherit', 'ipc']
+      stdio: ['inherit', 'inherit', 'pipe', 'ipc']
     });
     running = child;
+    // Printed as ever, and kept: what it refused is why the page is still the last space that authored.
+    child.stderr?.on('data', (chunk: Buffer) => {
+      process.stderr.write(chunk);
+      said = `${said}${chunk.toString('utf8')}`.slice(0, SAID_MOST);
+    });
     child.on('message', message => {
       if (isAuthoredDocuments(message)) {
         documents = message;
@@ -64,6 +77,7 @@ export const watchSpace = (root: string, onAuthored: (documents: AuthoredDocumen
     });
     child.on('error', error => {
       console.error(`[author] ${AUTHOR_FILE} did not run: ${error.message}`);
+      onRefused(`${AUTHOR_FILE} did not run: ${error.message}`);
     });
     child.on('close', code => {
       running = undefined;
@@ -77,6 +91,8 @@ export const watchSpace = (root: string, onAuthored: (documents: AuthoredDocumen
         console.error(
           `[author] ${AUTHOR_FILE} authored the space and handed nothing over: it is older than this server — npx plitzi upgrade files --write`
         );
+      } else {
+        onRefused(said.trim() || `${AUTHOR_FILE} exited with ${String(code)} and said nothing`);
       }
 
       if (again) {

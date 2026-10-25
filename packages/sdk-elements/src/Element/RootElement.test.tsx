@@ -152,6 +152,34 @@ describe('RootElement', () => {
     });
   });
 
+  // A channel with no tag ignored its own `visible`: its children drew, and the header's envelope showed to a guest.
+  describe('a tagless element hidden', () => {
+    it('draws nothing in each branch — and draws again once visible, interactions wired', () => {
+      expect(renderRoot(fullContext({ visible: false }), { tag: '' }).container.textContent).toBe('');
+      expect(
+        renderRoot({ id: 'el1', rootId: 'root', visible: false, traceId: 'el1', plitziJsxSkipHOC: true }, { tag: '' })
+          .container.textContent
+      ).toBe('');
+
+      interactions.interactionsManager = interactionsManager;
+      interactions.useInteractions = useInteractions;
+      const shown = renderRoot(fullContext({ visible: false }), { tag: '' });
+      expect(shown.container.textContent).toBe('');
+      shown.rerender(
+        <StoreProvider value={{ runtime: { sources: {} } }}>
+          <ElementContext value={fullContext({ visible: true })}>
+            <RootElement tag="">child</RootElement>
+          </ElementContext>
+        </StoreProvider>
+      );
+      expect(shown.container.textContent).toBe('child');
+      // A tagged one keeps its node, hidden by its class as before.
+      expect(
+        renderRoot(fullContext({ visible: false }), { tag: 'section' }).container.querySelector('section')
+      ).not.toBe(null);
+    });
+  });
+
   describe('with InteractionsContext', () => {
     beforeEach(() => {
       interactions.interactionsManager = interactionsManager;

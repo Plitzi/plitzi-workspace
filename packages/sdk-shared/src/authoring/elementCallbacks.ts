@@ -86,7 +86,15 @@ export const SCROLL_CALLBACKS = {
   }
 } satisfies Record<string, BuiltinElementCallback>;
 
-/** The callbacks every element answers — `setState`, `scrollTo`, `scrollIntoView`… — each with its params, as a flow's step calls them. */
+/**
+ * The keyboard's focus given to an element — itself, or the first field, button or link inside it (a form control's
+ * input). A composer sent with its key gives its field the focus back; no step could, so only Enter kept it.
+ */
+export const FOCUS_CALLBACKS = {
+  focus: { title: 'Focus', type: 'callback', strictParams: true, params: {} }
+} satisfies Record<string, BuiltinElementCallback>;
+
+/** The callbacks every element answers — `setState`, `scrollTo`, `scrollIntoView`, `focus`… — each with its params, as a flow's step calls them. */
 export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> = {
   setState: {
     title: 'Update Element (set attribute / state)',
@@ -175,7 +183,8 @@ export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> =
       }
     }
   },
-  ...SCROLL_CALLBACKS
+  ...SCROLL_CALLBACKS,
+  ...FOCUS_CALLBACKS
 };
 
 /** The built-in element callback for an action, or undefined when the action is not a known built-in (an

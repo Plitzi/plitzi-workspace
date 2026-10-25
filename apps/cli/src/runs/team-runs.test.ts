@@ -533,6 +533,15 @@ describe('a designer’s review of the others’ UI', () => {
     expect(log.find(entry => entry.action === 'complete' && entry.task === 't-menu')).toMatchObject({ review: 'code' });
   });
 
+  // A run's designers were sent a settings change (settings.transientState) and a model: their looks had no page.
+  it('reviews the code alone, as its developer asked, of a change to the space no page draws', async () => {
+    await completed('dev-1', 't-menu', 'src/space/index.ts', 'code');
+
+    expect(await designOf('t-menu')).toBeUndefined();
+    const { notes } = await readState(taskPaths((await loadRun(lead(), 'es-launch')).paths, 't-menu'));
+    expect(notes.at(-1)?.text).toContain('no page draws what it changed (src/space/index.ts)');
+  });
+
   it('reviews the UI of a task that changed a page though its developer asked for the code alone, said', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts', 'code');
 

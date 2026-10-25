@@ -25,11 +25,16 @@ export const MEASURED = [
   'outline',
   'outline-offset',
   'text-shadow',
+  // A link's hover that only underlines it read as "nothing changed": a run's designer needed a picture to see it.
+  'text-decoration',
+  'text-underline-offset',
   'opacity',
   'padding',
   'margin',
   'gap',
   'display',
+  // Where a row's parts sit across it: a legend's hairline, its ::after, centred beside two lines or on the baseline.
+  'align-items',
   // A list's marker — its type, inside or outside, a picture: a run's bullets on a line of their own were
   // `list-style-position: inside`, unseen, rebuilt with a zero-width ::before at tuned heights.
   'list-style',
@@ -78,6 +83,11 @@ export const PSEUDO_MEASURED = [
   'right',
   'bottom',
   'left',
+  // Where one that is not positioned sits on its line or in its row — the browser gives no box of a pseudo-element to
+  // read its x and y from (a run's hairline, on the baseline or centred, was told from a picture).
+  'display',
+  'vertical-align',
+  'align-self',
   'background-color',
   'background-image',
   'opacity',
@@ -320,6 +330,12 @@ const INITIAL: Readonly<Record<string, RegExp>> = {
   'background-image': /^none$/,
   'box-shadow': /^none$/,
   'text-shadow': /^none$/,
+  // No line is no decoration, whatever style and colour it is said with (`none solid rgb(…)`).
+  'text-decoration': /^none\b/,
+  'text-underline-offset': /^auto$/,
+  'align-items': /^normal$/,
+  'vertical-align': /^baseline$/,
+  'align-self': /^auto$/,
   // No style, or no width, is no outline — whatever colour it is said with (`rgb(…) none 3px`).
   outline: /\bnone\b|^0px\b|\s0px$/,
   'outline-offset': /^0px$/,

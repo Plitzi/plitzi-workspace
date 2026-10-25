@@ -205,7 +205,10 @@ export const stateOf = (node: Element): ElementState => {
       Number(style.opacity) > 0,
     ...(screenReaderOnly ? { screenReaderOnly: true as const } : {}),
     enabled: !disabled,
-    text: seenText(node).replace(/\s+/g, ' ').trim().slice(0, 80),
+    // Whole, as far as an element says in words (2000 at most, written here: this runs in the page, where nothing of
+    // the module is): cut at 80, a failed run's details printed into the page could not be read, --json included.
+    // The line a person reads clips it (`stateText`).
+    text: seenText(node).replace(/\s+/g, ' ').trim().slice(0, 2000),
     ...(rows === undefined ? {} : { rows }),
     ...(node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement || node instanceof HTMLSelectElement
       ? { value: node.value }

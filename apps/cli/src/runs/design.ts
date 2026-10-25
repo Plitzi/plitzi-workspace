@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import { fingerprint } from './files';
 import { agentAddress, LEAD, sendMessage } from './messages';
+import { acceptancePages, drawnByAPage } from './pagesOf';
 import { RunRefusal } from './refusal';
 import { logRun, readRunLog } from './run';
 import { logSpent } from './spent';
@@ -228,6 +229,19 @@ export const designAtComplete = async (
 
   if (asked !== 'ui' && !changesUi) {
     return {};
+  }
+
+  // A developer's "code alone" on files no page draws — a type, a setting with no element — stands: a run's designers
+  // were sent a settings change and a model, and their looks had no page to open.
+  const ui = changed.filter(isUiFile);
+  if (
+    asked === 'code' &&
+    !(await drawnByAPage(view.paths.work, ui)) &&
+    acceptancePages(view.task.acceptance).length === 0
+  ) {
+    return {
+      carried: `Its developer asked for the code review alone, and no page draws what it changed (${ui.join(', ')}): its code is reviewed alone`
+    };
   }
 
   // A developer's "code alone" on files a page draws is not its to say: a run's t-card, a component, skipped its

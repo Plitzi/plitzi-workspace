@@ -9,7 +9,7 @@
  *   type <element> <text>    text typed into a field, in place of what it held: type ".panel textarea" hi
  *   drag <element> <dx> [dy] pressed, moved by that many pixels (negative: left, up) and let go — a slider's handle
  *   press <key>              a key, as Playwright names it: Enter, Escape, ArrowDown…
- *   wait <ms>                time passing
+ *   wait <ms|3s>             time passing
  *   wait-for <element>       until it is on the page and shown (10 s at most)
  *   reload                   the page loaded again, as a visitor's reload: what it kept read back
  *   goto <path>              another page of the site opened in the same tab: what holds across pages
@@ -249,9 +249,11 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
         steps.push({ kind: 'press', key: argument });
         break;
       case 'wait': {
-        const ms = count(rest[0], at, MAX_WAIT_MS);
-        if (typeof ms !== 'number') {
-          return ms;
+        const ms = durationMs(rest[0]);
+        if (ms === undefined || ms > MAX_WAIT_MS) {
+          return {
+            problem: `${at}: "${rest[0] ?? ''}" is not a wait from 1 ms to 30 s — milliseconds, or with its unit: wait 300, wait 3s`
+          };
         }
 
         steps.push({ kind: 'wait', ms });

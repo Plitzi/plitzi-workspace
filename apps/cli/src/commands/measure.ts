@@ -482,7 +482,9 @@ export const measure = async (route: string, elements: string[], options: Measur
   }
 
   if (options.same && !target) {
-    fail('--same holds properties to another page: give it --compare <that page>');
+    fail(
+      `--same holds properties to another page: give it --compare <that page> — to print only some of this page's, --only ${options.same.join(',')}`
+    );
 
     return;
   }

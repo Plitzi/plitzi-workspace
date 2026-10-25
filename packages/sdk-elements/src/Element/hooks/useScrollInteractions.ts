@@ -39,6 +39,27 @@ const behaviorOf = (value: unknown): ScrollStepBehavior =>
 const positionOf = (value: unknown, fallback: ScrollStepPosition): ScrollStepPosition =>
   SCROLL_POSITIONS.find(position => position === value) ?? fallback;
 
+/** How many frames a scroll step waits for its box to have something to scroll. */
+const LAYOUT_FRAMES = 20;
+
+/**
+ * The box once it has something to scroll, or once `LAYOUT_FRAMES` frames passed: a step run by `onPageLoad` met a
+ * list not laid out yet — `scrollTo('dm-well', { y: 'end' })` did nothing, and a chat opened on its first line.
+ */
+const laidOut = async (node: HTMLElement): Promise<void> => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  for (let frame = 0; frame < LAYOUT_FRAMES; frame += 1) {
+    if (node.scrollHeight > node.clientHeight || node.scrollWidth > node.clientWidth) {
+      return;
+    }
+
+    await new Promise(resolve => window.requestAnimationFrame(resolve));
+  }
+};
+
 /**
  * The element's scroll steps, its `onScroll` trigger, and its `onView` trigger.
  *
@@ -67,12 +88,13 @@ const useScrollInteractions = ({
               behavior: behaviorOf(params.behavior)
             });
           },
-          scrollTo: (params: ScrollParams) => {
+          scrollTo: async (params: ScrollParams) => {
             const node = nodeRef.current;
             if (!node) {
               return;
             }
 
+            await laidOut(node);
             node.scrollTo({
               left: scrollPosition(params.x, node.scrollWidth, node.clientWidth) ?? node.scrollLeft,
               top: scrollPosition(params.y, node.scrollHeight, node.clientHeight) ?? node.scrollTop,

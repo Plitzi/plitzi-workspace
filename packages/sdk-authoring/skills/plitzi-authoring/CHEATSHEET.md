@@ -104,8 +104,8 @@ A flow is `[trigger, …steps]`, in an element's `flows`.
 [onClick(), setState({ key: 'saved', type: 'boolean', value: true })]  // types: boolean, number, text, json
 [named('sent', onSubmit()), setState({ key: 'email', type: 'text', value: '{{ sent.values.email }}' })]
 [on('onChange'), …]; [on('onMouseEnter'), …]; [onPageLoad(), …]; [onKey('mod+k, escape'), …]
-[onInterval(5000), …]                                          // every 5 s, while the tab is in view
-[onClick(), scrollBy('cards', { x: '80%' })]; scrollTo('cards', { x: 'end' }); scrollIntoView('answer')
+[onInterval(5000), …]                                          // every 5 s, the tab in view
+[onClick(), scrollBy('cards', { x: '80%' })]; scrollTo('cards', { x: 'end' }); scrollIntoView('answer'); focus('field')
 [named('row', onScroll()), …]                                  // { x, y, atStart, atEnd } of its own box
 [onClick(), toggleState({ key: 'menuOpen' })]
 [onClick(), cycleState({ key: 'slide', length: 3, by: -1 })]   // goes round; stepState({ key, by, min, max }) stops

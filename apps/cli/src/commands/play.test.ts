@@ -2,7 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { playedText, playOn, readTargets, stepsOf, unlikeIn, verdictOf } from './play';
+import { playedText, playOn, readTargets, sharedServerNote, stepsOf, unlikeIn, verdictOf } from './play';
 
 import type { PlayedStep, PlaySide } from './play';
 import type { ElementState } from './playState';
@@ -253,5 +253,14 @@ describe('page play, a target out of view', () => {
     expect(playedText(result.played).map(line => stripVTControlCharacters(line))).toContain(
       '  (scrolled into view first, as a pointer reaches it: moves are from there)'
     );
+  });
+});
+
+// A run's crate queue gave its real answer at 1440 alone: at 390 the share was already spent on the same server.
+describe('a play over several widths', () => {
+  it('says the next width starts from what the first one’s acting steps changed', () => {
+    expect(sharedServerNote(2, [{ kind: 'click' }])).toContain('Each width played on one server');
+    expect(sharedServerNote(2, [{ kind: 'wait' }, { kind: 'hover' }])).toBeUndefined();
+    expect(sharedServerNote(1, [{ kind: 'click' }])).toBeUndefined();
   });
 });

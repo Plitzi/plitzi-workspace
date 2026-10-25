@@ -21,6 +21,21 @@ import type { ConditionOptions } from './register/options';
 import type { ActingStep } from './shot/steps';
 import type { ShotStep } from './shotSteps';
 
+/** How much of an element's text a line of `--read` shows; `--json` has it whole. */
+const TEXT_SHOWN = 80;
+
+/** The steps that act on a page — what may write on its server: a queue's share spent, a vote cast. */
+const ACTING = new Set(['click', 'press', 'type', 'drag']);
+
+/**
+ * What a play over several widths says when its steps act: each width is played on one server, so the next starts from
+ * what the first changed there — a run's crate queue gave its real answer at 1440 alone, 390 meeting the share spent.
+ */
+export const sharedServerNote = (widths: number, steps: readonly { kind: string }[]): string | undefined =>
+  widths > 1 && steps.some(step => ACTING.has(step.kind))
+    ? 'Each width played on one server: what the first width’s steps changed there (a share spent, a vote cast) is what the next starts from — play each width alone, after plitzi server reset, to read each from a cold start.'
+    : undefined;
+
 /**
  * `plitzi page play`: an interaction played step by step — a press, a drag, a key — and, after each step, how far each
  * element read moved and how it stands (shown, enabled), on the project's page and, with `--compare`, on the other
@@ -334,7 +349,11 @@ const stateText = (state: ElementState): string =>
     ...Object.entries(state.aria).map(([name, value]) => `${name} ${value}`),
     ...(state.value !== undefined ? [`value "${state.value}"`] : []),
     ...(state.rows === undefined ? [] : [`${String(state.rows)} rows`]),
-    ...(state.text ? [`"${state.text}"`] : [])
+    ...(state.text
+      ? [
+          `"${state.text.length > TEXT_SHOWN ? `${state.text.slice(0, TEXT_SHOWN)}…" (--json has its ${String(state.text.length)} characters)` : `${state.text}"`}`
+        ]
+      : [])
   ].join(' · ');
 
 /**
@@ -555,15 +574,22 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
       each.played.every(entry => entry.reads.at(index)?.problem !== undefined)
     )
   );
+  const shared = sharedServerNote(results.length, steps);
   console.log(
     options.json
-      ? JSON.stringify({ route, ...(target ? { compare: target } : {}), results })
+      ? JSON.stringify({
+          route,
+          ...(target ? { compare: target } : {}),
+          results,
+          ...(shared ? { sharedServer: shared } : {})
+        })
       : [
           ...results.flatMap(each => [
             ...(results.length > 1 ? [chalk.bold.underline(`At ${String(each.width)} px`)] : []),
             ...playedText(each.played)
           ]),
-          ...verdictOf(same, unlike, missing, String(target))
+          ...verdictOf(same, unlike, missing, String(target)),
+          ...(shared ? [chalk.yellow(shared)] : [])
         ].join('\n')
   );
   if (unlike.length > 0) {

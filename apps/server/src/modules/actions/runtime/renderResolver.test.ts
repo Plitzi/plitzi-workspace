@@ -274,7 +274,7 @@ describe('createActionResolver', () => {
     expect((failure as Error).message).toBe(
       'Action "post-page" ended as failed, refused (room-not-found): There is no room at this address.'
     );
-    expect(failure).toMatchObject({ refused: true });
+    expect(failure).toMatchObject({ refused: true, said: 'There is no room at this address.' });
   });
 
   /** The render gave up — its budget ran out, or the visitor left. The run must end with it rather than carry on

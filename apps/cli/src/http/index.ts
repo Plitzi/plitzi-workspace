@@ -1,27 +1,26 @@
+import { Socket } from 'node:net';
+
 /**
- * The CLI's requests to a server of this machine — a project's, a task's copy — made with Node's `fetch`.
- *
- * Node 24's `fetch` is undici 7, which sets a socket's type of service on every request with nothing to catch it: on a
- * socket just opened, macOS answers `setTypeOfService EINVAL`, and the request fails. A run's agents met it eight
- * times — `page measure` and `page play`, the first call after a copy's server started — each with a stack trace and
- * no message; the same call again worked. undici 8 catches it; until Node's own does, it is asked again here, once.
+ * Node 24's `fetch` is undici 7, which sets each socket's type of service on every request and lets a failure escape:
+ * on macOS a socket in some states answers `setTypeOfService EINVAL`, and Node throws it from the socket's own event —
+ * nothing awaits it, so the process ends with a stack trace. A run's agents met it on `page measure`, `page play` and
+ * `task look`, eight times and then twice more after a retry of the request, which never saw it, was tried. Node already
+ * treats it as best effort on Windows, and undici 8 catches it: the CLI does the same, once, as it starts — until Node
+ * bundles undici 8.
  */
+export const bestEffortTypeOfService = (): void => {
+  // Kept unbound on purpose: it is called with each socket as `this`, below.
+  // eslint-disable-next-line @typescript-eslint/unbound-method
+  const setTypeOfService = Socket.prototype.setTypeOfService;
+  Socket.prototype.setTypeOfService = function (this: Socket, tos: number): Socket {
+    try {
+      return setTypeOfService.call(this, tos);
+    } catch (error) {
+      if (error instanceof Error && 'syscall' in error && error.syscall === 'setTypeOfService') {
+        return this;
+      }
 
-const isTypeOfService = (error: unknown): boolean => {
-  for (let at: unknown = error; at instanceof Error; at = at.cause) {
-    if (/setTypeOfService/.test(at.message) || ('syscall' in at && at.syscall === 'setTypeOfService')) {
-      return true;
-    }
-  }
-
-  return false;
-};
-
-export const localFetch = (input: string | URL, init?: RequestInit): Promise<Response> =>
-  fetch(input, init).catch((error: unknown) => {
-    if (!isTypeOfService(error)) {
       throw error;
     }
-
-    return fetch(input, init);
-  });
+  };
+};

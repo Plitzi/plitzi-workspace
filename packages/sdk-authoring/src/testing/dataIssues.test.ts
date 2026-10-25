@@ -88,6 +88,39 @@ describe('dataIssues', () => {
     });
   });
 
+  // A run's check passed a room at 1440 with its lists at 0 rows: what read the provider was hidden at that width.
+  it('says a provider that failed though everything that reads it is hidden', () => {
+    const room = authorSpace({
+      name: 'Room',
+      permanentUrl: 'room',
+      pages: [
+        {
+          id: 'room',
+          name: 'Room',
+          slug: 'room',
+          body: [
+            apiContainer({
+              id: 'crate',
+              query: '/data/crate.json',
+              children: [
+                container({ id: 'crate-panel', children: [heading({ id: 'crate-title', from: 'crate.data.name' })] })
+              ]
+            })
+          ]
+        }
+      ]
+    }).schema;
+    const refused = { apiContainer_crate: { isLoading: false, hasError: true, errorMessage: 'no "render" trigger' } };
+
+    expect(dataIssues(room, 'room', refused, { hidden: new Set(['crate-panel']) }).issues).toEqual([
+      {
+        code: 'provider-failed',
+        message: 'apiContainer_crate failed — no "render" trigger — so everything bound to it is empty',
+        elementId: 'crate'
+      }
+    ]);
+  });
+
   describe('an element the page is not showing', () => {
     const post = authorSpace({
       name: 'Blog',

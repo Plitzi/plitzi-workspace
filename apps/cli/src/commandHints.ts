@@ -21,7 +21,16 @@ const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<stri
     '--full': 'a page shot is the whole page already — --viewport pictures the first screen alone'
   },
   'page measure': { '--element': 'the elements are its arguments: plitzi page measure <path> <element…>' },
-  'page play': { '--element': '--read <element…> says what elements show after the steps' }
+  'page play': { '--element': '--read <element…> says what elements show after the steps' },
+  'task look': {
+    '--clip': 'task look pictures whole pages — page shot <path> --clip <element> pictures one element of the copy'
+  }
+};
+
+/** A command that takes no argument, and where what was given to it is read. */
+const TAKES_NONE: Readonly<Partial<Record<string, string>>> = {
+  'task inbox':
+    'task inbox is what was said to you, from any task; what a task’s agent and reviewers said is in plitzi task show <task>'
 };
 
 /** The command's two words, flags aside: `page shot` of `page shot / --width 390`. */
@@ -40,6 +49,16 @@ export const commandHint = (error: string, argv: readonly string[]): string | un
 
   if (unknownOption !== undefined) {
     return COUNTERPARTS[commandOf(argv)]?.[unknownOption];
+  }
+
+  // `--as $WHO` with $WHO empty leaves the flag bare, the next flag read as its value would be.
+  const bareOption = /option '(--[\w-]+) <[^>]+>' argument missing/.exec(error)?.[1];
+  if (bareOption !== undefined) {
+    return `${bareOption} takes its value right after it (${bareOption} <value>) — a shell variable that is empty leaves it bare`;
+  }
+
+  if (/too many arguments for '[^']+'/.test(error)) {
+    return TAKES_NONE[commandOf(argv)];
   }
 
   const unknownCommand = /unknown command '([^']+)'/.exec(error)?.[1];

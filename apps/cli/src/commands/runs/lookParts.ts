@@ -6,8 +6,10 @@ import chalk from 'chalk';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { runSelf } from './shell';
 import { authoredHandles } from '../../runs/expectations';
 import { writeJson } from '../../runs/files';
+import { examplePaths } from '../../runs/pagesOf';
 import { RunRefusal } from '../../runs/refusal';
 import { loadRun } from '../../runs/run';
 import { findTask } from '../../runs/tasks';
@@ -51,6 +53,86 @@ export const visitorsOnly = async (
     : 'problem' in account
       ? { pages: guarded, problem: account.problem }
       : { pages: guarded, as: account.username };
+};
+
+/** The pages a page check's answer (`--json`) says sent the browser elsewhere — to the sign-in, for a guest. */
+export const redirectedPaths = (output: string): string[] => {
+  const line = output.trim().split('\n').at(-1) ?? '';
+  try {
+    const read: unknown = JSON.parse(line);
+
+    return Array.isArray(read)
+      ? [
+          ...new Set(
+            read.flatMap(report =>
+              isRecord(report) &&
+              typeof report.path === 'string' &&
+              Array.isArray(report.issues) &&
+              report.issues.some(issue => isRecord(issue) && issue.code === 'redirected')
+                ? [report.path]
+                : []
+            )
+          )
+        ]
+      : [];
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Who a look reads its pages as, when nobody said: the project's account (`PLITZI_CHECK_USER`) for the pages the
+ * space keeps for signed-in visitors — and for those whose own flows send a guest to the sign-in, found by one quick
+ * check as a guest. A run's designers looked at /settings and /messages as guests five times: those pages declare no
+ * access, they redirect, and their look pictured the sign-in.
+ */
+export const readAsFor = async (
+  dir: string,
+  url: string,
+  pages: readonly string[],
+  acceptanceAt: readonly string[]
+): Promise<{ pages: string[]; as?: string; problem?: string } | undefined> => {
+  const declared = await visitorsOnly(dir, pages);
+  if (declared?.as !== undefined || (await checkAccount(dir)) === undefined) {
+    return declared;
+  }
+
+  const { paths: routes } = await examplePaths(url, pages, acceptanceAt);
+  const sent =
+    routes.length === 0
+      ? []
+      : redirectedPaths(
+          (await runSelf(dir, ['page', 'check', ...routes, '--width', '1440', '--url', url, '--json'])).output
+        );
+  if (sent.length === 0) {
+    return declared;
+  }
+
+  const account = await checkAccount(dir);
+  const guarded = [...new Set([...(declared?.pages ?? []), ...sent])];
+
+  return account === undefined
+    ? { pages: guarded }
+    : 'problem' in account
+      ? { pages: guarded, problem: account.problem }
+      : { pages: guarded, as: account.username };
+};
+
+/**
+ * The routes the run before the task does not have — they answer it 404: pages the task adds, pictured alone. Set
+ * beside the run before, a run's /messages was compared with the 404 page and read "16% differs", the 404's dress
+ * listed as what the new page lacks.
+ */
+export const newSinceBefore = async (beforeUrl: string, routes: readonly string[]): Promise<Set<string>> => {
+  const answers = await Promise.all(
+    routes.map(async route => {
+      const answer = await fetch(new URL(route, beforeUrl), { redirect: 'manual' }).catch(() => undefined);
+
+      return answer?.status === 404 ? [route] : [];
+    })
+  );
+
+  return new Set(answers.flat());
 };
 
 /** One page of a look beside the run before the task: how much differs, and in which sections. */

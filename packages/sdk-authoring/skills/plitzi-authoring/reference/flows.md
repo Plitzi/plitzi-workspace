@@ -99,18 +99,18 @@ where it is written.
 
 **Something every few seconds** — an autoplay, a clock — is `onInterval(ms)`, a trigger every element has:
 `[[onInterval(5000), cycleState({ key: 'slide', length: 4 })]]`. It
-ticks while the element is mounted and the tab is in view, never in the builder outside preview, at least every 250 ms
-(`trigger-interval` otherwise). To pause it, give its steps a condition — a state that `on('onMouseEnter')` sets and
-`on('onMouseLeave')` clears. `{{ <step>.count }}` is how many times it has ticked. No plugin needed.
+ticks while mounted and the tab in view, never in the builder outside preview, every 250 ms at least
+(`trigger-interval` otherwise). To pause it, give its steps a condition: a state `on('onMouseEnter')` sets,
+`on('onMouseLeave')` clears. `{{ <step>.count }}` counts its ticks. No plugin needed.
 
 **A number that goes round, or stops:** `cycleState({ key: 'slide', length: 4 })` is "next" — after the last the first
 — and `by: -1` "previous"; `stepState({ key: 'shown', by: 40, max: 'apiContainer_site.data.total' })` adds and stops
 at the bound.
 
 **Scrolling** is a step on the element whose box scrolls (`overflow-x: auto` on a row of cards): `scrollBy('cards',
-{ x: '80%' })` moves it (`'-80%'` back, `'240'` pixels), `scrollTo('cards', { x: 'end' })` to an end or a place, and `scrollIntoView('answer', { block: 'center' })` brings an element into view. `onScroll()`
+{ x: '80%' })` moves it (`'-80%'` back, `'240'` pixels), `scrollTo('cards', { x: 'end' })` to an end or a place, and `scrollIntoView('answer', { block: 'center' })` brings one into view. `focus('chat-input')` gives it, or its first field, the keyboard. `onScroll()`
 fires as the box moves and once on mount, with `{ x, y, atStart, atEnd }` — what an arrow that hides at the end reads
-(recipes/scroll-a-row.ts). `onView()` fires entering and leaving view. A link to a section is an
+(recipes/scroll-a-row.ts). `onView()` fires on entering and leaving. A link to a section is an
 `anchor` and a link's `hash`.
 
 **A form's flow goes on the `form`**, which hands its submit over with `managedByInteractions: true`

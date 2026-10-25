@@ -6,6 +6,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { createExclusive, exists, readOptional, writeAtomic } from './files';
 import { under } from './paths';
+import { RunRefusal } from './refusal';
 import { digest } from '../commands/spaceOrigin';
 
 import type { RunPaths } from './paths';
@@ -113,23 +114,49 @@ const isHeldLock = (value: unknown): value is HeldLock =>
 
 const pause = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
-export class LockTimeout extends Error {
-  constructor(file: string, held: HeldLock | undefined) {
+/** A lock held past the wait: said as a refusal — what holds it and its way out — never a stack trace. */
+export class LockTimeout extends RunRefusal {
+  constructor(file: string, held: HeldLock | undefined, doing: string) {
     super(
-      `${file} is held${held ? ` by process ${String(held.pid)} on ${held.machine} since ${held.at}` : ''}: another merge is going on. Try again in a moment.`
+      'invalid',
+      `${file} is held${held ? ` by process ${String(held.pid)} on ${held.machine} since ${held.at}` : ''}: ${doing} is going on.`,
+      { file, next: 'try again in a moment — or once that process ends' }
     );
     this.name = 'LockTimeout';
   }
 }
 
+/** Whether a lock's holder is gone: a process of this machine that no longer runs. Another machine's is never judged. */
+const holderGone = (held: HeldLock): boolean => {
+  if (held.machine !== os.hostname()) {
+    return false;
+  }
+
+  try {
+    process.kill(held.pid, 0);
+
+    return false;
+  } catch (error) {
+    // EPERM: it runs, as another user — only ESRCH says it is gone.
+    return error instanceof Error && 'code' in error && error.code === 'ESRCH';
+  }
+};
+
 /**
  * Runs `work` holding `file` — created exclusively, so one holder at a time across processes — and lets it go after.
- * A holder cut before it let go is waited out: a lock older than `ttlMs` is taken over.
+ * A holder cut before it let go is not waited for: a lock whose process of this machine is gone is taken over at once
+ * (a look that crashed held its task's for its whole wait), and any lock older than `ttlMs`. `doing` says what holds
+ * it, should the wait run out.
  */
 export const withLock = async <T>(
   file: string,
   work: () => Promise<T>,
-  { ttlMs = 5 * 60_000, waitMs = 30_000, now = (): Date => new Date() } = {}
+  {
+    ttlMs = 5 * 60_000,
+    waitMs = 30_000,
+    now = (): Date => new Date(),
+    doing = 'another command of the run'
+  }: { ttlMs?: number; waitMs?: number; now?: () => Date; doing?: string } = {}
 ): Promise<T> => {
   const mine: HeldLock = { pid: process.pid, machine: os.hostname(), at: now().toISOString() };
   const started = Date.now();
@@ -147,7 +174,7 @@ export const withLock = async <T>(
       held = undefined;
     }
 
-    const stale = held === undefined || now().getTime() - Date.parse(held.at) > ttlMs;
+    const stale = held === undefined || holderGone(held) || now().getTime() - Date.parse(held.at) > ttlMs;
     if (stale && bytes !== undefined) {
       // Only the lock as read is taken away: one another process made meanwhile is not.
       const again = await readOptional(file);
@@ -159,7 +186,7 @@ export const withLock = async <T>(
     }
 
     if (Date.now() - started > waitMs) {
-      throw new LockTimeout(file, held);
+      throw new LockTimeout(file, held, doing);
     }
 
     await pause(40);

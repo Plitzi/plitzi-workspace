@@ -371,6 +371,19 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     await new Promise(resolve => setTimeout(resolve, 200));
 
     expect(await pageOf(running.url)).toContain('<title>authored at boot</title>');
+    // Said where a tool asks whether it reached this project: the page is the last space that authored, and why.
+    await vi.waitFor(async () => {
+      expect(await (await fetch(`${running.url}/health`)).json()).toMatchObject({
+        spaceStale: '[author] refused: the space does not author'
+      });
+    });
+
+    await write('next.json', JSON.stringify(titled('authored again')));
+    await saveUntil(
+      () => write('src/space/index.ts', 'export const space = { fixed: true };\n'),
+      async () => (await pageOf(running.url)).includes('<title>authored again</title>')
+    );
+    expect(await (await fetch(`${running.url}/health`)).json()).not.toHaveProperty('spaceStale');
   });
 
   it('leaves the server’s own code to a restart: a save to it authors nothing', async () => {

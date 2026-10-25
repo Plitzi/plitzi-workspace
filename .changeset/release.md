@@ -32,8 +32,9 @@ authoring and the elements learnt from the runs.
   `.plitzi/**/*`: TypeScript skips a dot folder named bare.
 - **`PLITZI_TOKEN`** replaces `PLITZI_TASK_TOKEN`. `task block --needs person` and `run open --agents` are gone: only
   the lead talks to the person, and the team's size is how many agents work at once.
-- **`plitzi upgrade`** brings the new scripts (`start:preview`, the visual suite's own server on port 8400) and the
-  team file's `about`. `upgrade --write` waits for an open run unless `--with-open-runs`; `plitzi run upgrade` upgrades
+- **`plitzi upgrade`** brings the new scripts (`start:preview`, the visual suite's own server on port 8400, `test`) and
+  the team file's `about`. `test` is `node --test 'src/**/*.test.ts'`: `plitzi verify` and a run's checks now run the
+  project's own tests, so a project whose tests are red fails them until they pass. `upgrade --write` waits for an open run unless `--with-open-runs`; `plitzi run upgrade` upgrades
   under an open run without breaking it.
 - **Reports to Plitzi live in `.plitzi/plitzi-reports/`, committed.** A run's — once `tmp/plitzi-reports/<run>-<time>.*`
   and `.plitzi/feedback/<run>.*` — are one folder, `runs/<run>/`; `plitzi feedback`'s page, once in `tmp/feedback/`, is
@@ -125,8 +126,8 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 - **`run plan`'s notices take what the plan already says:** a file other tasks import is no longer said of a task that
   waits for it — the follower the notice asks for — and a reader a task names in `touches` is no longer read by files
   no task holds. `run rehearse` reads the parts a task makes with a page as that page's to import, never as
-  registered in the space's entry. Its advice to hold an agent to a role names the command that does it (`run team set <name>
-  --roles …`).
+  registered in the space's entry. Its advice to hold an agent to a role names the command that does it:
+  `run team set <name> --roles …`.
 - **`run watch`'s "they share no file" says what else a task may need** of the one it waits for: its actions, data or
   modules.
 
@@ -333,6 +334,14 @@ report`, …).
 
 ### Watching a run
 
+- **A ready task held by another's claim is said to the lead** (`held-ahead`): which task holds which file, and that
+  approving it frees the file. A run's ready task sat 22 minutes with three developers free.
+- **A proposal to a task in review is refused**, naming what works instead (the lead asks it in the review, or the file
+  is changed after its approval): one waited ten minutes for an answer that could not come.
+- **A developer's "code review alone" stands when no page draws what it changed** — a setting with no element, a type:
+  designers were sent such tasks, and their looks had no page to open.
+- **`run plan` says a primer over 6k** and what it costs: every task's first brief carries it whole, and a run's 9.7 KB
+  one put all 19 of its briefs over 12k characters.
 - **`plitzi run monitor`:** a live board in a terminal of its own, in Plitzi's colours (dark or light, as the terminal
   is). It opens simple — who is at what, the tasks by stage and the stuck ones, the preview, the latest events, your own
   notices — and `m` switches to advanced at any moment (`--advanced` opens it so). Advanced has views as tabs:
@@ -482,6 +491,30 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
 
+- **No more crashes on `setTypeOfService EINVAL`.** Node 24's undici threw it from a socket's event on macOS, ending
+  `task look`, `page measure` and `page play` with a stack trace; the CLI sets a socket's type of service as best effort.
+- **A look that crashed no longer holds its task's look:** a lock whose process on this machine is gone is taken at once,
+  and a lock held past its wait is a refusal naming what holds it, never a stack trace.
+- **`task look` reads signed-in pages signed in:** a page that sends a guest to the sign-in from its own flows is found by
+  one quick guest check and read as the project's account (`PLITZI_CHECK_USER`); `plitzi doctor` says a check password
+  with no account beside it (`check-user-missing`). A page the task adds is pictured alone, never set beside the 404.
+- **`plitzi server reset` in a run's copy stops the copy's own server first**, and says so.
+- **`page play --read` keeps an element's text whole** in `--json` (the line a person reads clips it at 80), and a play
+  over several widths whose steps act says each width starts from what the first changed on the server. Its `wait`
+  takes a unit: `wait 3s`.
+- **A save to the space that did not author is said by every page command:** the page is the space as it last
+  authored, and the line says why — a run measured an element the refused save added and was told it was not drawn.
+- **`page check`** says a provider that failed though everything that reads it is hidden at that width (a run's passed
+  at 1440 with its lists empty); `--state` says what each key of a source holds, not its keys alone; a list written out
+  as its children counts them as its rows; `label-wraps` leaves a link alone across its column (a title) to wrap, and
+  a dash is no word.
+- **`page measure`** reads `text-decoration` and `text-underline-offset` (a hover that only underlines), `align-items`,
+  and where a `::before`/`::after` sits on its line or in its row (`display`, `vertical-align`, `align-self`); `--same`
+  without `--compare` names `--only`.
+- **`task look`** says why it has no picture — nothing to picture, or no command that said why — and a comparison that
+  answered nothing readable.
+- **A refused command line** says what an option left bare takes (`--as` with an empty shell variable), where
+  `task inbox` reads a task's messages, and `page shot --clip` for `task look --clip`.
 - **`element-empty`:** `page check`, `inspectPage` and a project's visual tests report an element a visitor sees with
   nothing in it — no words, no picture: a binding to a field the data lacks — by id, with how many list rows drew it so.
 
@@ -588,6 +621,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Authoring (`@plitzi/sdk-authoring`)
 
+- **`focus('field-id')`**: a step that gives an element — or the first field inside it — the keyboard's focus.
 - **`server-when-unknown`** warns of a server provider whose `when` reads what only the browser holds (a `state`, a
   variable, a browser provider): the page server resolves it whatever it says.
 
@@ -660,6 +694,10 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Elements and the SDK (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`, `@plitzi/sdk-shared`)
 
+- **A hidden element with no tag draws nothing**: a `channel` or provider without a `subType` ignored its own `visible`, its
+  children shown.
+- **Scroll steps wait for their box to have something to scroll**: `scrollTo(…, { y: 'end' })` on a page's load did
+  nothing on a list not laid out yet. And every element answers a `focus` step.
 - **A provider's `when` holds, in the browser and on the page server.** The browser read it against the route and query
   params alone, where authoring writes its fields as sources (`auth.isAuthenticated`, `apiContainer_room.found`): it
   now reads the sources it names. The page server resolved every server provider whatever its `when` said — a guest's
@@ -736,6 +774,13 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Server (`@plitzi/sdk-server`)
 
+- **A project's server keeps the last space that authored when a save does not, and `/health` says why**
+  (`spaceStale`), until a save authors; a space that never authored shows the latest refusal, not the first.
+
+- **A refusal's words reach the element that asked for them**, in production too, as `/_action` answers them — not
+  "could not be reached", nor the log's "Action … ended as failed, refused (code): …" around them.
+- **A list entry's id refused names the id**, the marks allowed quoted. A test's store is the server's own:
+  `createKvStore(createMemoryKv())` from `@plitzi/sdk-server/actions`.
 - **A project's server holding its state names how to stop it:** a second `npm start` beside a server a page check kept
   is refused with `plitzi server stop --port <port>` in the holder's name.
 

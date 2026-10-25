@@ -203,6 +203,9 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
     typecheck: `tsc -p tsconfig.json --noEmit --pretty false --incremental --tsBuildInfoFile ${CHECKS_CACHE}/tsc.tsbuildinfo`,
     lint: `eslint . --cache --cache-location ${LINT_CACHE_FILE}`,
     format: `prettier --write . --cache --cache-location ${CHECKS_CACHE}/prettier.json`,
+    // A module's own tests, beside it (`node --test`, Node stripping their types): run by `verify` and by every run's
+    // checks. Without it a project's tests ran nowhere — a run's state test was red for two runs and nothing said it.
+    test: "node --test 'src/**/*.test.ts'",
     visual: 'playwright test',
     // The CLI's, on the project's own Playwright: a picture of a page, and whether a page is whole — in text.
     shot: 'plitzi page shot',
@@ -463,6 +466,7 @@ export const agentsFile = (answers: CreateAnswers): string => {
           `| ${run('lint:space')} | how the space's source is written: each practice to change at its file and line |`
         ]
       : []),
+    `| ${run('test')} | the modules' own tests, each beside its module (\`*.test.ts\`, \`node:test\`) |`,
     `| ${run('visual')} | open the page in a browser and check it rendered |`
   ];
   const zeroWarnings = local ? `Zero warnings from ${run('author')}.` : 'Zero warnings from authoring.';

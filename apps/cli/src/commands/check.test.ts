@@ -76,6 +76,28 @@ describe('plitzi page check / a list’s rows', () => {
       'vaccineRows 9 rows in 3 copies (2, 3, 4) of 9 in its source'
     );
   });
+
+  // A run read a list of written-out items as "list-1 1 row, fed by the row it is in": its children taken for one row.
+  it('counts a list’s written-out children as its rows, each drawn once', () => {
+    document.body.innerHTML = `
+      <ul data-plitzi-el="steps"><li data-plitzi-el="step-one"></li><li data-plitzi-el="step-two"></li><li data-plitzi-el="step-three"></li></ul>`;
+
+    expect(
+      renderedRowsInPage([
+        {
+          id: 'steps',
+          selector: marked('steps'),
+          row: [marked('step-one'), marked('step-two'), marked('step-three'), marked('step-four')],
+          written: true
+        }
+      ])
+    ).toEqual([['steps', [3]]]);
+    expect(listText('steps', { rendered: 3, source: 3, written: true })).toBe('steps 3 rows written out');
+    expect(listText('steps', { rendered: 3, source: 4, written: true })).toBe('steps 3 of 4 rows written out');
+    expect(listText('steps', { rendered: 6, source: 3, copies: [3, 3], written: true })).toBe(
+      'steps 3 rows written out, drawn in 2 copies (3, 3)'
+    );
+  });
 });
 
 describe('plitzi page check / what the page is not showing', () => {
@@ -359,7 +381,7 @@ describe('a short label the page breaks onto two lines', () => {
     vi.restoreAllMocks();
   });
 
-  it('is said with its lines — a long one, one on one line, or blocks stacked on purpose, is not', () => {
+  it('is said with its lines — a long one, one on one line, blocks stacked on purpose or a lone title, is not', () => {
     document.body.innerHTML = [
       '<a data-plitzi-el="site-nav-digest" href="/digest">This week</a>',
       '<a data-plitzi-el="site-nav-home" href="/">Home</a>',
@@ -370,8 +392,24 @@ describe('a short label the page breaks onto two lines', () => {
       // A tile's title over its call — four words read apart, never "GRÁFICASCompra": no label.
       '<a data-plitzi-el="tile-gpu" href="/c/gpu"><div>TARJETAS GRÁFICAS</div><div>Compra ahora</div></a>',
       // Three words in two blocks, the title wrapping: the label said is the block that wraps.
-      '<a data-plitzi-el="tile-pc" href="/c/pc"><div>PC GAMER</div><div>Ver</div></a>'
+      '<a data-plitzi-el="tile-pc" href="/c/pc"><div>PC GAMER</div><div>Ver</div></a>',
+      // A track's title alone across its card column wraps as text does: a title, no label.
+      '<div data-plitzi-el="track-card"><a data-plitzi-el="track-title" href="/t/1">Limitless — Elektronomia</a></div>'
     ].join('');
+    // Where each sits: the menu's two entries share a row, and so do the two tiles; the rest are rows of their own.
+    const rows: Record<string, [top: number, left: number, right: number]> = {
+      'site-nav-digest': [0, 0, 80],
+      'site-nav-home': [0, 90, 140],
+      'tile-gpu': [100, 0, 200],
+      'tile-pc': [100, 210, 410]
+    };
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const id = this.getAttribute('data-plitzi-el') ?? '';
+      const order = Array.from(document.querySelectorAll('[data-plitzi-el]')).indexOf(this);
+      const [top, left, right] = rows[id] ?? [200 + order * 40, 0, 210];
+
+      return DOMRect.fromRect({ x: left, y: top, width: right - left, height: 40 });
+    });
     // jsdom lays nothing out: what the browser draws is said here — two lines for the menu's squeezed label.
     vi.spyOn(HTMLElement.prototype, 'offsetParent', 'get').mockReturnValue(document.body);
     Object.defineProperty(Range.prototype, 'getClientRects', {
@@ -379,7 +417,11 @@ describe('a short label the page breaks onto two lines', () => {
       value(this: Range) {
         const text = this.startContainer.textContent;
 
-        const wraps = text === 'This week' || text === 'TARJETAS GRÁFICAS' || text === 'PC GAMER';
+        const wraps =
+          text === 'This week' ||
+          text === 'TARJETAS GRÁFICAS' ||
+          text === 'PC GAMER' ||
+          text === 'Limitless — Elektronomia';
 
         return (wraps ? [0, 20] : text === 'Juanes' ? [20] : [0]).map(top => ({ top, height: 18 }));
       }

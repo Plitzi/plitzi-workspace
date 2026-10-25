@@ -26,6 +26,7 @@ export const BUILDER_SIGNATURES: Readonly<Record<string, string>> = {
   scrollBy: "scrollBy('row-id', { x: '80%' })",
   scrollTo: "scrollTo('row-id', { x: 'end' })",
   scrollIntoView: "scrollIntoView('element-id', { block: 'center' }?)",
+  focus: "focus('field-id')",
   carouselNext: "carouselNext('carousel-id', 'page')",
   carouselPrevious: "carouselPrevious('carousel-id', 'page')",
   carouselGoTo: "carouselGoTo('carousel-id', index)",

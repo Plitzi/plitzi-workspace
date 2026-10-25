@@ -95,6 +95,27 @@ describe('tasks agreeing with each other', () => {
     ).toContain('is done');
   });
 
+  // A run's d-follow-names proposed to t-model in review: nobody answers one then, t-model was approved, and it waited
+  // ten minutes polling for an answer that could not come.
+  it('refuses a proposal to a task in review, naming the ways that work', async () => {
+    await open();
+    const about = await take('agent-3', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', 'export const about = {};\n');
+    await completeTask(about.ctx, 'es-launch', 't-about');
+    const menu = await take('agent-2', 't-menu');
+
+    const refused = await refusal(
+      proposeChange(menu.ctx, 'es-launch', 't-menu', 't-about', {
+        change: 'z',
+        about: 'src/space/pages/about.ts',
+        wait: true
+      })
+    );
+    expect(refused.message).toContain('Task "t-about" is in review');
+    expect(refused.message).toContain('plitzi task tell --about t-about');
+    expect(await proposalsOf(await loadRun(lead(), 'es-launch'))).toEqual([]);
+  });
+
   it('after three rounds of counters the lead decides; a rejection says why', async () => {
     await open();
     const home = await take('agent-1', 't-home');

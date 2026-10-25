@@ -28,11 +28,23 @@ class RenderRunFailure extends Error {
    * action doing its job, said as a warning, never an error with its stack (a run's log, a guest's every page).
    */
   readonly refused: boolean;
+  /**
+   * A refusal's own words, written for whoever called: what the element shows the visitor, alone — never the log's
+   * line around them ("Action … ended as failed, refused (code): …"), which a page had to split to show.
+   */
+  readonly said?: string;
 
-  constructor(message: string, summary: ActionRunSummary, options?: ErrorOptions & { refused?: boolean }) {
+  constructor(
+    message: string,
+    summary: ActionRunSummary,
+    options?: ErrorOptions & { refused?: boolean; said?: string }
+  ) {
     super(message, options);
     this.summary = summary;
     this.refused = options?.refused === true;
+    if (options?.said !== undefined) {
+      this.said = options.said;
+    }
   }
 }
 
@@ -177,7 +189,7 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
           throw new RenderRunFailure(
             `Action "${actionId}" ended as ${result.status}${result.code ? `, refused (${result.code})` : ''}${said ? `: ${said}` : ''}`,
             summary,
-            { refused: result.error !== undefined }
+            result.error === undefined ? { refused: false } : { refused: true, said: result.error }
           );
         }
 
