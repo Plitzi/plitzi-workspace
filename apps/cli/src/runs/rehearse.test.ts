@@ -86,6 +86,19 @@ export const space = { tokens, pages: await pagesIn(new URL('./pages/', import.m
         acceptance: [`There is a ${name} page`]
       }))
     );
+    // A page made with its parts in a folder of their own: the page puts them together — two such tasks were said to
+    // register in the space's entry at once.
+    plan.tasks.push(
+      ...['inbox', 'thread'].map(name => ({
+        id: `t-${name}`,
+        title: `The ${name}`,
+        files: [`src/space/pages/${name}.ts`, `src/space/messages/${name}.ts`, `src/space/messages/${name}Styles.ts`],
+        dependsOn: [],
+        priority: 'medium' as const,
+        estimateMinutes: 15,
+        acceptance: [`There is the ${name}`]
+      }))
+    );
     const played = await rehearsed(plan, { agents: 6, reviewMinutes: 5 });
 
     expect(played.contention).toEqual([]);
@@ -159,7 +172,10 @@ export const space = { tokens, pages: await pagesIn(new URL('./pages/', import.m
     expect(staffed.unstaffed).toEqual(['t-about', 't-book', 't-contact', 't-faq', 't-home', 't-menu', 't-tokens']);
     expect(staffed.scale[0]).toEqual({ agents: 1, wallMinutes: null });
     expect(staffed.scheduled).toEqual([]);
-    expect(staffed.advice.join('\n')).toContain('give their role an agent');
-    expect(staffed.advice.join('\n')).toContain('With no agent held to a role, 1 agent finishes');
+    // Each names the command that does it: the rehearsal takes no roles of its own.
+    expect(staffed.advice.join('\n')).toContain('give their role an agent (plitzi run team set <name> --roles …)');
+    expect(staffed.advice.find(line => line.startsWith('With no agent held to a role, 1 agent finishes'))).toMatch(
+      /\(plitzi run team set <name> --roles …\)$/
+    );
   });
 });

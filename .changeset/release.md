@@ -122,6 +122,11 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   "unanswered" on the other task held its complete.
 - **`run agent --launch` on an agent that runs answers so**, nothing started — it was a refusal, run twice by a lead.
 - **`run plan` says an id two tasks expect to make on two pages:** an element's id is the space's, one element.
+- **`run plan`'s notices take what the plan already says:** a file other tasks import is no longer said of a task that
+  waits for it — the follower the notice asks for — and a reader a task names in `touches` is no longer read by files
+  no task holds. `run rehearse` reads the parts a task makes with a page as that page's to import, never as
+  registered in the space's entry. Its advice to hold an agent to a role names the command that does it (`run team set <name>
+  --roles …`).
 - **`run watch`'s "they share no file" says what else a task may need** of the one it waits for: its actions, data or
   modules.
 

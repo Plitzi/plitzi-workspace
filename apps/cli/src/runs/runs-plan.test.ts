@@ -225,6 +225,20 @@ describe('a plan held to the rules', () => {
         'src/space/theme.ts (t-theme) is imported by the files of other tasks — src/space/pages/book.ts (t-book), src/space/pages/home/index.ts (t-home), src/space/pages/menu.ts (t-menu)'
       )
     );
+    // A task that waits for t-theme follows it — t-menu, and t-book through it: what the notice asks for, so it is
+    // said of t-home alone.
+    const followed = structuredClone(plan);
+    for (const task of followed.tasks.filter(each => each.id === 't-menu')) {
+      task.dependsOn = [...task.dependsOn, 't-theme'];
+    }
+
+    const after = await checkPlan(bench.root, followed, await readOwnership(bench.root), teamFor(followed, 3));
+    expect(after.notices).toContainEqual(
+      expect.stringContaining(
+        'src/space/theme.ts (t-theme) is imported by the files of other tasks — src/space/pages/home/index.ts (t-home):'
+      )
+    );
+
     // Said once for every task with no check — t-theme has one.
     const unchecked = read.notices.filter(notice => notice.startsWith('No line of'));
     expect(unchecked).toHaveLength(1);

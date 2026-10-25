@@ -393,6 +393,18 @@ describe('acceptance, checks and what is left behind', () => {
     expect(read[0]).toContain('src/space/theme.ts (t-home) ← ');
     expect(read[0]).toContain('src/space/pages/book.ts, src/space/pages/home/index.ts +1');
 
+    // A reader a task names in "touches" is followed by it: no longer one no task holds.
+    const touched = benchPlan();
+    touched.tasks = [
+      {
+        ...touched.tasks[0],
+        files: ['src/space/theme.ts'],
+        touches: ['src/space/pages/book.ts', 'src/space/pages/home/index.ts', 'src/space/pages/menu.ts']
+      }
+    ];
+    const following = await checkPlan(bench.root, touched, await readOwnership(bench.root), teamFor(touched, 3));
+    expect(following.notices.filter(notice => notice.includes('src/space/theme.ts (t-home) ←'))).toEqual([]);
+
     // A part of a page, read by the page's own index only: the index puts the parts together — no notice.
     const part = benchPlan();
     part.tasks = [{ ...part.tasks[0], files: ['src/space/pages/home/hero.ts'] }];

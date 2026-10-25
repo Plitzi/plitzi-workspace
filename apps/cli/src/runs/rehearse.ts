@@ -272,7 +272,9 @@ const changesOf = (task: RunTask, ownership: Ownership, created: readonly string
 
   // A page made in a folder the project loads its pages from registers nowhere: it is a page by being there. Nor does a
   // module made beside a file of the entry's the task changes, which is that file's to import (a picker
-  // queue.ts places, a band home.ts stacks — four tasks said to register in the space's entry).
+  // queue.ts places, a band home.ts stacks — four tasks said to register in the space's entry), nor one made with such
+  // a page, which puts its parts together (an inbox page and its rows, in a folder of their own).
+  const makesPage = task.files.some(each => inPageFolder(ownership, each));
   for (const file of task.files.filter(each => created.includes(each) && !inPageFolder(ownership, each))) {
     const entry = ownership.entries
       .filter(each => file.startsWith(each.slice(0, each.lastIndexOf('/') + 1)))
@@ -281,7 +283,7 @@ const changesOf = (task: RunTask, ownership: Ownership, created: readonly string
       task.files.some(
         each => each !== at && !created.includes(each) && each.startsWith(at.slice(0, at.lastIndexOf('/') + 1))
       );
-    if (entry && !importedBy(entry) && !task.files.includes(entry) && !changes.has(entry)) {
+    if (entry && !makesPage && !importedBy(entry) && !task.files.includes(entry) && !changes.has(entry)) {
       changes.set(entry, 'registers');
     }
   }
@@ -406,14 +408,14 @@ export const rehearse = (
     const freeFinished = free.unstaffed.length + free.stranded.length === 0;
     if (freeFinished && (!finished || free.wallMinutes < played.wallMinutes)) {
       advice.push(
-        `With no agent held to a role, ${finishText(options.agents)} in ${String(free.wallMinutes)} min${finished ? ` instead of ${String(played.wallMinutes)}` : ''}: hold one to a role only when its tasks need it (--roles)`
+        `With no agent held to a role, ${finishText(options.agents)} in ${String(free.wallMinutes)} min${finished ? ` instead of ${String(played.wallMinutes)}` : ''}: hold one to a role only when its tasks need it (plitzi run team set <name> --roles …)`
       );
     }
   }
 
   if (played.unstaffed.length > 0) {
     advice.push(
-      `No agent may take ${played.unstaffed.join(', ')}: give their role an agent (--roles), or leave an agent free of a role`
+      `No agent may take ${played.unstaffed.join(', ')}: give their role an agent (plitzi run team set <name> --roles …), or leave an agent free of a role`
     );
   }
 

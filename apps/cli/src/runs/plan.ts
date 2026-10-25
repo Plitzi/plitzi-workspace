@@ -545,8 +545,18 @@ export const checkPlan = async (
     ...ownScriptNotices(plan.tasks)
   );
   notices.push(...(await elementFileNotices(root, plan.tasks)));
-  // What reads a task's file and is in no task: changed under it, never by it — the lead's to plan, or to leave.
-  const planned = new Set(tasks.flatMap(task => task.files));
+  // What reads a task's file and is in no task: changed under it, never by it — the lead's to plan, or to leave. A file
+  // a task names in "touches" is followed by it: the plan says who keeps it in step.
+  const planned = new Set(
+    tasks.flatMap(task => [
+      ...task.files,
+      ...(task.touches ?? []).flatMap(raw => {
+        const file = normalised(raw);
+
+        return file === undefined ? [] : [file];
+      })
+    ])
+  );
   // One notice for all of them, each file with how many read it: a run's six tasks printed twenty lines of it,
   // twice, and none was acted on — burying the two notices that were.
   const SHOWN_READ = 6;
@@ -556,8 +566,13 @@ export const checkPlan = async (
       const importers = ownership.importedBy.get(file) ?? [];
       // Imported by another task's files: what it exports is their contract — v12 changed a component's params, and
       // its callers were three other tasks'.
+      // One whose task waits for this one follows it — what the notice asks for.
       const theirs = importers
-        .filter(importer => holder.get(importer) !== undefined && holder.get(importer) !== task.id)
+        .filter(importer => {
+          const other = holder.get(importer);
+
+          return other !== undefined && other !== task.id && !before(task.id, other);
+        })
         .sort();
       if (theirs.length > 0) {
         notices.push(
