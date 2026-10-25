@@ -72,6 +72,28 @@ describe('page play', () => {
     expect(lines).toContain('  next => .next: hidden, no press | there hidden, no press');
   });
 
+  // A run's nine steps repeated two elements whole at each: 21k characters to find the one line that changed.
+  it('says an element read again as it was "as before", and in full again once it changes', () => {
+    const steady = { element: 'dm-well', here: at(0) };
+    const lines = playedText([
+      { step: 'start', reads: [steady] },
+      { step: 'wait 300 ms', reads: [steady] },
+      { step: 'press Enter', reads: [{ element: 'dm-well', here: at(0, false) }] },
+      { step: 'wait 300 ms', reads: [{ element: 'dm-well', here: at(0, false) }] }
+    ]).map(line => stripVTControlCharacters(line));
+
+    expect(lines).toEqual([
+      'start',
+      '  dm-well: shown, enabled',
+      'wait 300 ms',
+      '  dm-well: as before',
+      'press Enter',
+      '  dm-well: hidden, enabled',
+      'wait 300 ms',
+      '  dm-well: as before'
+    ]);
+  });
+
   // A tab drawn per width was hidden at 390, its press skipped without a word — and "✓ every step as
   // theirs" was said beside an element read that was not on the page.
   // Listen turning Mute, the focus back on the burger and a search typed each took a Playwright script.

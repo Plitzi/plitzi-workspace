@@ -6,12 +6,13 @@ import { stripVTControlCharacters } from 'node:util';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { measure, onlyProperties, pairOf, readingKey, sameProperties } from './measure';
-import { measureOn } from './measureOn';
+import { measureOn, pseudoBoxes } from './measureOn';
 import { putIn, rowsOf, stateText } from './measureState';
 import { comparedText, measuredText, readingText } from './measureText';
 import { differences, MEASURED, PSEUDO_MEASURED } from './measureValues';
 
 import type { Measured } from './measureValues';
+import type { LayoutSession } from '../browser';
 
 const measured = (styles: Record<string, string>, text = 'VS'): Measured => ({
   selector: '[data-plitzi-el="vs"]',
@@ -545,6 +546,88 @@ describe('--same on one page', () => {
     expect(process.exitCode).toBe(1);
     expect(stripVTControlCharacters(said.join('\n'))).toContain(
       "to print only some of this page's, --only width,height,x"
+    );
+  });
+});
+
+// A legend's hairline, its ::after: on the baseline or centred beside two lines was told from a picture.
+describe('where a pseudo-element is drawn', () => {
+  it('reads each one asked off the browser’s layout, down the page as an element’s y is', async () => {
+    const asked: string[] = [];
+    const answers: Record<string, unknown> = {
+      'DOM.getDocument': { root: { nodeId: 1 } },
+      'DOM.querySelector': { nodeId: 7 },
+      'DOM.describeNode': {
+        node: {
+          pseudoElements: [
+            { pseudoType: 'before', backendNodeId: 70 },
+            { pseudoType: 'marker', backendNodeId: 71 },
+            { pseudoType: 'after', backendNodeId: 72 }
+          ]
+        }
+      }
+    };
+    const session = {
+      send: (method: string, params: Record<string, unknown>) => {
+        asked.push(`${method} ${JSON.stringify(params)}`);
+
+        return Promise.resolve(
+          method === 'DOM.getBoxModel'
+            ? { model: { border: params.backendNodeId === 72 ? [131.9, 57.5, 348, 57.5] : [5, 7, 11, 7] } }
+            : answers[method]
+        );
+      },
+      detach: () => Promise.resolve()
+    };
+
+    // The fake answers the four methods `pseudoBoxes` sends, as Chromium does; the protocol has hundreds more.
+    expect(
+      await pseudoBoxes(session as unknown as LayoutSession, '[data-plitzi-measured="m1"]', ['after'], 50)
+    ).toEqual({
+      'after:x': '132px',
+      'after:y': '108px'
+    });
+    expect(asked).toContain('DOM.querySelector {"nodeId":1,"selector":"[data-plitzi-measured=\\"m1\\"]"}');
+    expect(asked.filter(each => each.startsWith('DOM.getBoxModel'))).toEqual(['DOM.getBoxModel {"backendNodeId":72}']);
+    expect(PSEUDO_MEASURED).toEqual(expect.arrayContaining(['x', 'y']));
+  });
+});
+
+// A run's measure of nine elements answered 23k characters: four borders alike on four lines, a rivet drawn four times.
+describe('a reading said short', () => {
+  it('says four borders alike as one, and a layer drawn again by how many times — --all says each whole', () => {
+    const rivet = 'radial-gradient(circle, rgb(42, 31, 22) 0px, rgb(181, 165, 130) 3px, rgba(0, 0, 0, 0) 4.25px)';
+    const panel: Measured = {
+      selector: '[data-plitzi-el="inbox"]',
+      tag: 'div',
+      text: 'Inbox',
+      styles: {
+        'border-top': '2px solid rgb(42, 31, 22)',
+        'border-right': '2px solid rgb(42, 31, 22)',
+        'border-bottom': '2px solid rgb(42, 31, 22)',
+        'border-left': '2px solid rgb(42, 31, 22)',
+        'before:content': '""',
+        'before:top': '6px',
+        'before:right': '6px',
+        'before:bottom': '6px',
+        'before:left': '6px',
+        'before:background-image': [rivet, rivet, rivet, rivet, 'linear-gradient(red, blue)'].join(', ')
+      },
+      inherited: []
+    };
+
+    const text = stripVTControlCharacters(measuredText(panel));
+    expect(text).toContain('border                 2px solid rgb(42, 31, 22)');
+    expect(text).not.toContain('border-top');
+    expect(text).toContain('before:inset           6px');
+    expect(text).not.toContain('before:top');
+    expect(text).toContain(`before:background-image ${rivet} ×4, linear-gradient(red, blue)`);
+    const whole = stripVTControlCharacters(measuredText(panel, undefined, true));
+    expect(whole).toContain('border-left            2px solid rgb(42, 31, 22)');
+    expect(whole).not.toContain('×4');
+    const uneven = { ...panel, styles: { ...panel.styles, 'border-left': '0px none rgb(42, 31, 22)' } };
+    expect(stripVTControlCharacters(measuredText(uneven))).toContain(
+      'border-top             2px solid rgb(42, 31, 22)'
     );
   });
 });

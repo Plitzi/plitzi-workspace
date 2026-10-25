@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import chalk from 'chalk';
 
 import { PROJECT_STATE } from '@plitzi/sdk-shared/project';
@@ -26,6 +28,28 @@ export const unpicturedText = (unpictured: readonly { what: string; why: string 
     )
   ];
 };
+
+/**
+ * The pictures, each folder said once and its files under it: a look of eight pages listed sixteen whole paths, the same
+ * hundred characters before each name.
+ */
+export const picturesText = (shots: readonly string[]): string[] => {
+  const byFolder = new Map<string, string[]>();
+  for (const shot of shots) {
+    const folder = path.dirname(shot);
+    byFolder.set(folder, [...(byFolder.get(folder) ?? []), path.basename(shot)]);
+  }
+
+  return [...byFolder].flatMap(([folder, files]) => [`  in ${folder}/`, ...files.map(file => `    ${file}`)]);
+};
+
+/** The most of a comparison's sections and dress said on its line: its picture has them all. */
+const MOST_SAID = 4;
+
+const fewOf = (items: readonly string[], joiner: string): string =>
+  items.length > MOST_SAID
+    ? `${items.slice(0, MOST_SAID).join(joiner)}${joiner}and ${String(items.length - MOST_SAID)} more`
+    : items.join(joiner);
 
 /** What `task look` says of a look: what it served, read and pictured, and what it could not. */
 
@@ -104,7 +128,7 @@ export const lookText = (looked: Looked): string =>
     ...(looked.shots.length > 0
       ? [
           `Pictures — a browser in ${looked.timezone}, its language en-US (--timezone for another zone):`,
-          ...looked.shots.map(each => `  ${each}`)
+          ...picturesText(looked.shots)
         ]
       : [
           looked.unpictured
@@ -120,7 +144,7 @@ export const lookText = (looked: Looked): string =>
           ...looked.compared.map(each =>
             each.problem
               ? chalk.yellow(`  ${each.route} at ${each.width} ${each.scheme}: ${each.problem}`)
-              : `  ${each.route} at ${each.width} ${each.scheme}: ${(each.changed === 0 || each.sections.length === 0) && each.dress.length === 0 ? 'nothing changed' : `${String(each.changed ?? 0)}% differs${each.sections.length > 0 ? ` — ${each.sections.join(', ')}` : ''}${each.dress.length > 0 ? ` · its dress: ${each.dress.join(' · ')}` : ''}`}${each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
+              : `  ${each.route} at ${each.width} ${each.scheme}: ${(each.changed === 0 || each.sections.length === 0) && each.dress.length === 0 ? 'nothing changed' : `${String(each.changed ?? 0)}% differs${each.sections.length > 0 ? ` — ${fewOf(each.sections, ', ')}` : ''}${each.dress.length > 0 ? ` · its dress: ${fewOf(each.dress, ' · ')}` : ''}`}${each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
           )
         ]
       : []),

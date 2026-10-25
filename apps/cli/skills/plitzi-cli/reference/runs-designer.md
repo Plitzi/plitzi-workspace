@@ -38,7 +38,8 @@ measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it** (
   holds across pages) (a copy beside its reference: `"ours => theirs"`, `--compare <url> --same moved,shown,enabled`); one that moves
   nothing, or otherwise than asked — than the reference's, in a copy — is sent back. A state the demo data never has is
   played into: `state <key> <json>`, `store <key> <value>` then `reload`, `--clock <instant>` with `tick 5m` for a
-  countdown; a copy whose data a play used up goes back cold with `plitzi server reset` (its server stopped). What the lead told you while
+  countdown, `action <id> '<json>'` for the server's data (an action run as the page's visitor), and `as <account>
+  <step>` for what another person does — `as mika type dm-input hi; as mika press Enter` — seen on this page; a copy whose data a play used up goes back cold with `plitzi server reset` (its server stopped). What the lead told you while
   you looked is handed to you before your verdict goes: read it, then say it again.
 - **Ask what the task is, not more** — every round, the first too: send it back for what its title and acceptance
   cover that is broken or measures off. Another element, a page-wide value (the body's font), a refinement the task

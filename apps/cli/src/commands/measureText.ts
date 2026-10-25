@@ -57,11 +57,78 @@ const saidAbove = (same: readonly string[]): boolean =>
   same.every(property => (MEASURED as readonly string[]).includes(property) || property.includes(':'));
 
 /** A picture written into a value (`url(data:image/svg+xml,…)`) said by its kind and size: thousands of characters a value. */
-const shortValue = (value: string): string =>
+const withoutData = (value: string): string =>
   value.replace(
     /url\((["'])data:([\w/+.-]+)[;,][\s\S]*?\1\)|url\(data:([\w/+.-]+)[;,][^)]*\)/g,
     (match, _quote: string | undefined, quoted: string | undefined, bare: string | undefined) =>
       `url(data:${quoted ?? bare ?? ''} … ${String(match.length)} chars)`
+  );
+
+/** A value's layers — a background's, a shadow's — at its commas outside brackets. */
+const layersOf = (value: string): string[] => {
+  const layers: string[] = [];
+  let depth = 0;
+  let from = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value.charAt(index);
+    depth += char === '(' ? 1 : char === ')' ? -1 : 0;
+    if (char === ',' && depth === 0) {
+      layers.push(value.slice(from, index).trim());
+      from = index + 1;
+    }
+  }
+
+  return [...layers, value.slice(from).trim()];
+};
+
+/**
+ * A value as a reading says it: a picture written into it by its kind and size, and a layer drawn again and again
+ * once with how many times — a ::before's four rivets were one radial-gradient written four times, 600 characters.
+ */
+const shortValue = (value: string): string => {
+  const runs: { layer: string; times: number }[] = [];
+  for (const layer of layersOf(withoutData(value))) {
+    const last = runs.at(-1);
+    if (last?.layer === layer) {
+      last.times += 1;
+    } else {
+      runs.push({ layer, times: 1 });
+    }
+  }
+
+  return runs.map(({ layer, times }) => (times > 1 ? `${layer} ×${String(times)}` : layer)).join(', ');
+};
+
+/** Four sides read apart, and the shorthand a person writes them with when they are alike. */
+const SIDE_GROUPS: readonly { shorthand: string; sides: readonly string[] }[] = [
+  { shorthand: 'border', sides: ['border-top', 'border-right', 'border-bottom', 'border-left'] },
+  { shorthand: 'inset', sides: ['top', 'right', 'bottom', 'left'] }
+];
+
+/**
+ * Four sides alike said as one line — `border: 2px solid …`, a ::before's `inset: 6px` — on the element and on each of
+ * its pseudo-elements.
+ */
+const sidesJoined = (entries: [string, string][]): [string, string][] =>
+  ['', ...PSEUDOS.map(pseudo => `${pseudo}:`)].reduce(
+    (joined, prefix) =>
+      SIDE_GROUPS.reduce((current, { shorthand, sides }) => {
+        const named = sides.map(side => `${prefix}${side}`);
+        const values = named.map(property => current.find(([each]) => each === property)?.[1]);
+        const [first] = values;
+        if (first === undefined || values.some(value => value !== first)) {
+          return current;
+        }
+
+        return current.flatMap(([property, value]): [string, string][] =>
+          property === named[0]
+            ? [[`${prefix}${shorthand}`, value]]
+            : named.includes(property)
+              ? []
+              : [[property, value]]
+        );
+      }, joined),
+    entries
   );
 
 const HIDDEN = 'a visitor sees none of what it finds — its box and place are not on the page';
@@ -75,7 +142,9 @@ const aloneText = (here: Measured, all: boolean): string => {
   const entries = Object.entries(here.styles);
   const shown = all
     ? entries
-    : entries.filter(([property, value]) => !atInitial(property, value) && !here.inherited.includes(property));
+    : sidesJoined(
+        entries.filter(([property, value]) => !atInitial(property, value) && !here.inherited.includes(property))
+      );
   const initial = entries.filter(([property, value]) => atInitial(property, value)).length;
   const inherited = entries.filter(([property]) => here.inherited.includes(property)).length;
 

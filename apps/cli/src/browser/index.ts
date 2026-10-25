@@ -91,6 +91,18 @@ export interface PageRoute {
   fetch(): Promise<{ status(): number; headers(): Record<string, string>; body(): Promise<Uint8Array> }>;
 }
 
+/** What of Chromium's protocol a page command asks: a pseudo-element's box, which the page itself has none of. */
+export interface LayoutSession {
+  send(method: 'DOM.getDocument', params: { depth: number }): Promise<{ root: { nodeId: number } }>;
+  send(method: 'DOM.querySelector', params: { nodeId: number; selector: string }): Promise<{ nodeId: number }>;
+  send(
+    method: 'DOM.describeNode',
+    params: { nodeId: number; depth: number }
+  ): Promise<{ node: { pseudoElements?: { pseudoType?: string; backendNodeId: number }[] } }>;
+  send(method: 'DOM.getBoxModel', params: { backendNodeId: number }): Promise<{ model: { border: number[] } }>;
+  detach(): Promise<void>;
+}
+
 export interface BrowserPage {
   goto(url: string, options: { waitUntil: 'load' | 'domcontentloaded' | 'networkidle' }): Promise<unknown>;
   /** `clip`: the part of the page drawn, in its own coordinates — with `fullPage`, anywhere down the whole page. */
@@ -120,8 +132,14 @@ export interface BrowserPage {
   addStyleTag(options: { content: string }): Promise<unknown>;
   /** A function run in each document the page opens, before its own scripts. */
   addInitScript<A>(script: (input: A) => void, input: A): Promise<void>;
-  /** The browser context the page lives in — its cookies, set before the page is asked for. */
-  context(): { addCookies(cookies: { name: string; value: string; url: string }[]): Promise<void> };
+  /**
+   * The browser context the page lives in — its cookies, set before the page is asked for — and Chromium's own
+   * protocol on the page, for what the page does not say of itself.
+   */
+  context(): {
+    addCookies(cookies: { name: string; value: string; url: string }[]): Promise<void>;
+    newCDPSession(page: BrowserPage): Promise<LayoutSession>;
+  };
   /** Where the page is now — after any redirect the server answered with. */
   url(): string;
   /** What the page asks for, answered here first: a picture of another site stood in for, the rest let through. */

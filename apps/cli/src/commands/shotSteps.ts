@@ -1,3 +1,5 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+
 /**
  * `page shot --steps`: what a person does to a page, one step after another, and the pictures taken along the way — a
  * queue that fills, a restart, an opening watched frame by frame. What `--click` cannot say: a wait between two
@@ -17,6 +19,11 @@
  *   state <key> <json>       one key of the space's state written, as a setState step would (development pages)
  *   clock <instant>          the page's clock set to an ISO instant (needs `--clock`): 2026-10-25T20:00:00Z
  *   tick <duration>          the page's clock moved on, its timers run (needs `--clock`): 90s, 5m, 2h, 1500
+ *   action <id> [json]       one of the space's actions run as the page's visitor, through its /_action — the
+ *                            server's data put in the state a step needs: action crate-hide '{"crate":"c1"}'
+ *   as <account> <step>      the step played by another account, signed in on a page of its own (the password in
+ *                            PLITZI_CHECK_PASSWORD): as mika type dm-input hi; as mika press Enter — what another
+ *                            person does, seen on this page
  *   shot [label]             a picture now
  *   frames <n> [ms]          n pictures, `--every` (or `ms`) apart
  *
@@ -26,7 +33,8 @@
  * the time since the first step.
  */
 
-export type ShotStep =
+/** A step one visitor plays on its own page: every step but a picture, or one played as another account. */
+export type PageStep =
   | { kind: 'click'; target: string }
   | { kind: 'hover'; target: string }
   | { kind: 'scroll'; target: string }
@@ -41,6 +49,11 @@ export type ShotStep =
   | { kind: 'state'; key: string; value: unknown }
   | { kind: 'clock'; time: number }
   | { kind: 'tick'; ms: number }
+  | { kind: 'action'; action: string; input: Record<string, unknown> };
+
+export type ShotStep =
+  | PageStep
+  | { kind: 'as'; account: string; step: PageStep }
   | { kind: 'shot'; label?: string }
   | { kind: 'frames'; count: number; every: number };
 
@@ -61,6 +74,8 @@ const STEP_NAMES = [
   'state',
   'clock',
   'tick',
+  'action',
+  'as',
   'shot',
   'frames'
 ] as const;
@@ -183,6 +198,10 @@ const stepLines = (script: string): string[] => {
   return [...lines, script.slice(from)];
 };
 
+/** Whether a step is one a visitor plays on its own page — no picture, and none played as another account. */
+export const isPageStep = (step: ShotStep): step is PageStep =>
+  step.kind !== 'as' && step.kind !== 'shot' && step.kind !== 'frames';
+
 /** A script, read into its steps — or what is wrong with it, said by its step. */
 export const parseSteps = (script: string, every: number): ShotStep[] | { problem: string } => {
   const lines = stepLines(script)
@@ -296,6 +315,38 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
         }
 
         steps.push({ kind: 'state', key, value: parsed });
+        break;
+      }
+      case 'action': {
+        const [action, ...value] = rest;
+        const written = value.join(' ').replace(/^'([\s\S]*)'$/, '$1');
+        let input: unknown = {};
+        try {
+          input = written === '' ? {} : JSON.parse(written);
+        } catch {
+          input = undefined;
+        }
+
+        if (!action || !isRecord(input)) {
+          return {
+            problem: `${at}: action needs the action's id and, when it takes one, its input as a JSON object — action dm-send '{"to":"juno","text":"hi"}'`
+          };
+        }
+
+        steps.push({ kind: 'action', action, input });
+        break;
+      }
+      case 'as': {
+        const [account, ...played] = rest;
+        const step = account ? parseSteps(played.join(' '), every) : [];
+        const [one] = Array.isArray(step) ? step : [];
+        if (!account || !Array.isArray(step) || step.length !== 1 || !isPageStep(one)) {
+          return {
+            problem: `${at}: as needs an account and one step it plays — as mika click dm-send (no picture, no other "as": the pictures are this page's)${!Array.isArray(step) ? ` — ${step.problem}` : ''}`
+          };
+        }
+
+        steps.push({ kind: 'as', account, step: one });
         break;
       }
       case 'clock': {

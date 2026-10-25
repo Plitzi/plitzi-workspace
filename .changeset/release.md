@@ -501,7 +501,11 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`plitzi server reset` in a run's copy stops the copy's own server first**, and says so.
 - **`page play --read` keeps an element's text whole** in `--json` (the line a person reads clips it at 80), and a play
   over several widths whose steps act says each width starts from what the first changed on the server. Its `wait`
-  takes a unit: `wait 3s`.
+  takes a unit: `wait 3s`. An element read again as it was says `as before`.
+- **Two new steps, in `page play`, `page shot --steps` and `task look --steps`:** `action <id> [json]` runs one of the
+  space's actions as the page's visitor — the server's data put in the state a step needs — and `as <account> <step>`
+  plays a step as another account, signed in on a page of its own (`as mika type dm-input hi; as mika press Enter`):
+  what another person does, seen on this page. Both reach the project's own server, never `--compare`'s site.
 - **A save to the space that did not author is said by every page command:** the page is the space as it last
   authored, and the line says why — a run measured an element the refused save added and was told it was not drawn.
 - **`page check`** says a provider that failed though everything that reads it is hidden at that width (a run's passed
@@ -509,10 +513,13 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   as its children counts them as its rows; `label-wraps` leaves a link alone across its column (a title) to wrap, and
   a dash is no word.
 - **`page measure`** reads `text-decoration` and `text-underline-offset` (a hover that only underlines), `align-items`,
-  and where a `::before`/`::after` sits on its line or in its row (`display`, `vertical-align`, `align-self`); `--same`
-  without `--compare` names `--only`.
+  and where a `::before`/`::after` is drawn — its `x` and `y`, off Chromium's own layout — and why it sits there
+  (`display`, `vertical-align`, `align-self`); `--same` without `--compare` names `--only`. A reading is shorter: four
+  borders or sides alike are one line (`border`, `inset`), and a layer drawn again says how many times (`×4`).
 - **`task look`** says why it has no picture — nothing to picture, or no command that said why — and a comparison that
-  answered nothing readable.
+  answered nothing readable. Its pictures are said under their folder, and a comparison names four of its sections.
+- **`task show --full`** shows as many diffs whole as one answer holds (12k characters); each file past it says its
+  size and how to read it alone (`task show <task> <file> --diff`). A run's answered 34k, read again on every turn.
 - **A refused command line** says what an option left bare takes (`--as` with an empty shell variable), where
   `task inbox` reads a task's messages, and `page shot --clip` for `task look --clip`.
 - **`element-empty`:** `page check`, `inspectPage` and a project's visual tests report an element a visitor sees with

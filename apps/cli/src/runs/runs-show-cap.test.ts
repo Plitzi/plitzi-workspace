@@ -26,7 +26,7 @@ const hundredLines = (name: string) =>
   `${Array.from({ length: 100 }, (_, index) => `export const ${name}${String(index)} = ${String(index)};`).join('\n')}\n`;
 
 describe('a task shown', () => {
-  it('shows its diffs up to a total, and says each file past it with how to read it — every one with --full', async () => {
+  it('shows its diffs up to a total, and says each file past it with how to read it — whole with --full, as many as one answer holds', async () => {
     await openRun(lead(), await bench.writePlan(benchPlan()));
     const home = await take('agent-1', 't-home');
     const files = ['a', 'b', 'c', 'd', 'e', 'f'].map(name => `src/space/pages/home/${name}.ts`);
@@ -43,8 +43,13 @@ describe('a task shown', () => {
     expect(withheld.length).toBeGreaterThan(0);
     expect(withheld.every(each => (each.withheld ?? 0) > 100)).toBe(true);
 
+    // Six files of a hundred lines are 20k characters of diff: a run's `--full` answered 34k, read again on every turn.
     const whole = await showTask(lead(), 'es-launch', 't-home', { full: true });
-    expect(whole.files.every(each => each.withheld === undefined && each.more === undefined)).toBe(true);
+    const diffs = whole.files.flatMap(each => (each.diff === undefined ? [] : [each.diff]));
+    expect(whole.files.every(each => each.more === undefined)).toBe(true);
+    expect(diffs.length).toBeGreaterThan(2);
+    expect(diffs.join('\n').length).toBeLessThanOrEqual(12_000);
+    expect(whole.files.filter(each => each.withheld !== undefined).length).toBe(files.length - diffs.length);
   });
 
   // Design-2's `task show` of another task offered `task message`, which an agent's token is refused.

@@ -1,4 +1,5 @@
 import { comparePictures } from '@plitzi/sdk-authoring';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { awaited, capture, targetOn } from './capture';
 import { dataUrl } from '../../browser';
@@ -8,6 +9,8 @@ import { answered, settle } from '../measureState';
 import type { BrowserPage } from '../../browser';
 import type { ShotStep } from '../shotSteps';
 import type { Framing, Moment, Taken } from './types';
+import type { Visitors } from './visitors';
+import type { ActionRunStatus } from '@plitzi/sdk-shared';
 
 /**
  * An interaction pictured step by step: clicks, waits, frames and shots, as `--steps` writes them.
@@ -97,8 +100,8 @@ export const interactionSteps = (
       ].join('; ')
     : undefined;
 
-/** What a step is, as its label says it. */
-const stepText = (step: ShotStep): string => {
+/** What a step is, as its label and `page play` say it. */
+export const stepText = (step: ShotStep): string => {
   switch (step.kind) {
     case 'click':
     case 'hover':
@@ -129,21 +132,86 @@ const stepText = (step: ShotStep): string => {
       return step.label ?? 'shot';
     case 'frames':
       return `frames ${String(step.count)}`;
+    case 'action':
+      return `action ${step.action}`;
+    case 'as':
+      return `as ${step.account}: ${stepText(step.step)}`;
   }
 };
 
 /** A step that acts on the page — every one but a picture: a press, a hover, a key, a wait. */
 export type ActingStep = Exclude<ShotStep, { kind: 'shot' } | { kind: 'frames' }>;
 
+/** A run that did what it was asked: a skipped or aborted one put nothing in the state a play needs. */
+const COMPLETED: ActionRunStatus = 'completed';
+
+/** Where a project's server runs its actions, as the page's own flows reach them (`createServer`'s `action.path`). */
+const ACTION_PATH = '/_action';
+
+/** The space's action run from the page, as its visitor — its cookies, its origin: what its answer said, or nothing. */
+const runAction = async (
+  page: BrowserPage,
+  action: string,
+  input: Record<string, unknown>
+): Promise<string | undefined> => {
+  const answer = await page.evaluate(
+    async ({ path, body }: { path: string; body: string }) => {
+      const response = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body });
+
+      return { status: response.status, text: await response.text() };
+    },
+    { path: ACTION_PATH, body: JSON.stringify({ actionId: action, input }) }
+  );
+  let said: unknown;
+  try {
+    said = JSON.parse(answer.text);
+  } catch {
+    said = undefined;
+  }
+
+  const status = isRecord(said) && typeof said.status === 'string' ? said.status : undefined;
+  if (answer.status < 400 && status === COMPLETED) {
+    return undefined;
+  }
+
+  const why = isRecord(said) && typeof said.error === 'string' ? said.error : answer.text.slice(0, 300);
+
+  return `action ${action} answered ${String(answer.status)}${status ? `, ${status}` : ''}: ${why}`;
+};
+
 /**
  * One step played on a page — what `--steps` does between its pictures, and `page play` on each page it plays on — or
- * what kept it from happening, said by its step.
+ * what kept it from happening, said by its step. `visitors` holds the other accounts' pages a step `as` one plays on.
  */
 export const actStep = async (
   page: BrowserPage,
   step: ActingStep,
-  index: number
+  index: number,
+  visitors?: Visitors
 ): Promise<{ problem: string } | undefined> => {
+  if (step.kind === 'as') {
+    const theirs = visitors
+      ? await visitors.pageOf(step.account, `${new URL(page.url()).pathname}${new URL(page.url()).search}`)
+      : { problem: 'another account plays only against the project’s own server' };
+    if ('problem' in theirs) {
+      return { problem: `Step ${String(index + 1)}: ${theirs.problem}` };
+    }
+
+    const problem = await actStep(theirs, step.step, index);
+    if (problem === undefined) {
+      // What it did reaches this page through the server — a message, a count: given the moment it takes.
+      await settle(page);
+    }
+
+    return problem === undefined ? undefined : { problem: `${problem.problem} (as ${step.account})` };
+  }
+
+  if (step.kind === 'action') {
+    const refused = await runAction(page, step.action, step.input);
+
+    return refused === undefined ? undefined : { problem: `Step ${String(index + 1)}: ${refused}` };
+  }
+
   // The one shown: a page drawing a control per width hides the other — a field of a phone's drawer, the first in the
   // document, timed out at 1440 where the column's own was there to type into.
   const shown = (selector: string) => page.locator(selector).filter({ visible: true }).first();
@@ -334,7 +402,8 @@ export const actStep = async (
 export const playSteps = async (
   taken: Taken,
   how: Framing,
-  steps: readonly ShotStep[]
+  steps: readonly ShotStep[],
+  visitors?: Visitors
 ): Promise<{ moments: Moment[]; changes: { label: string; changed: number }[] } | { problem: string }> => {
   const { page } = taken;
   const started = Date.now();
@@ -351,7 +420,7 @@ export const playSteps = async (
   for (const [index, step] of steps.entries()) {
     try {
       if (step.kind !== 'shot' && step.kind !== 'frames') {
-        const problem = await actStep(page, step, index);
+        const problem = await actStep(page, step, index, visitors);
         if (problem) {
           return problem;
         }

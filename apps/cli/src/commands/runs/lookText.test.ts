@@ -2,7 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { lookText, unpicturedText } from './lookText';
+import { lookText, picturesText, unpicturedText } from './lookText';
 
 type Looked = Parameters<typeof lookText>[0];
 
@@ -104,5 +104,49 @@ describe('pictures not taken for one reason', () => {
       'Not pictured (4):',
       '  siteRooms is not on the page — / at 1440 light; /rooms at 1440 light; /design at 1440 light; and 1 more — on none of them: a part a guest has not (--as <username>), or one a state opens (--click <id>)'
     ]);
+  });
+});
+
+// A look of eight pages listed sixteen whole paths and every section a comparison found: 19k characters.
+describe('a look of many pages', () => {
+  it('says each folder of its pictures once, and a few of a comparison’s sections and dress', () => {
+    const shots = '/p/tmp/plitzi-runs/r1/shots';
+    expect(
+      picturesText([
+        `${shots}/t-design-home-1440-light.png`,
+        `${shots}/t-design-home-390-dark.png`,
+        '/p/tmp/tile-1.png'
+      ])
+    ).toEqual([
+      '  in /p/tmp/plitzi-runs/r1/shots/',
+      '    t-design-home-1440-light.png',
+      '    t-design-home-390-dark.png',
+      '  in /p/tmp/',
+      '    tile-1.png'
+    ]);
+
+    const looked = {
+      task: 't-design',
+      url: 'http://127.0.0.1:50000',
+      ok: true,
+      check: '',
+      shots: [`${shots}/t-design-home-1440-light.png`],
+      timezone: 'UTC',
+      compared: [
+        {
+          route: '/',
+          width: '1440',
+          scheme: 'light',
+          changed: 12,
+          sections: ['hero', 'charts', 'legend', 'footer', 'nav', 'cards'],
+          dress: ['gradient', 'shadow']
+        }
+      ]
+    } as unknown as Looked;
+    const text = stripVTControlCharacters(lookText(looked));
+    expect(text).toContain(
+      '  / at 1440 light: 12% differs — hero, charts, legend, footer, and 2 more · its dress: gradient · shadow'
+    );
+    expect(text).toContain('    t-design-home-1440-light.png');
   });
 });

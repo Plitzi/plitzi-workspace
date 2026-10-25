@@ -31,6 +31,7 @@ import { framesOf } from './frames';
 import { shotFile, tilesOf } from './output';
 import { clickThrough, interactionSteps, playSteps } from './steps';
 import { MOVING_PERCENT } from './types';
+import { visitorsOn } from './visitors';
 
 import type { Moment, ShotOptions, ShotReport, Taken, View } from './types';
 import type { Scheme } from '../../browser';
@@ -537,7 +538,16 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     const every = options.every ?? 500;
     let moments: Moment[] = [];
     if (steps) {
-      const played = await playSteps(taken, how, steps);
+      // Another account's steps (`as mika …`) reach the project's own server alone: a site of another's has none of them.
+      const visitors =
+        where.origin === undefined
+          ? undefined
+          : visitorsOn(project.root, browser, where.origin, {
+              width: view.width,
+              ...(view.scheme ? { scheme: view.scheme } : {}),
+              ...(view.timezone ? { timezone: view.timezone } : {})
+            });
+      const played = await playSteps(taken, how, steps, visitors).finally(() => visitors?.close());
       if ('problem' in played) {
         fail(played.problem);
 

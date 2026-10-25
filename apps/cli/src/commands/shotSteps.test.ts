@@ -72,7 +72,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   it('says which step is wrong, and what the steps are', () => {
     expect(parseSteps('click a; tap b', 500)).toEqual({
       problem:
-        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, store, state, clock, tick, shot, frames'
+        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, store, state, clock, tick, action, as, shot, frames'
     });
     expect(parseSteps('wait soon', 500)).toEqual({
       problem:
@@ -93,7 +93,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     });
     expect(parseSteps('# only a note', 500)).toEqual({
       problem:
-        '--steps has no step: click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, store, state, clock, tick, shot, frames, separated by ";"'
+        '--steps has no step: click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, store, state, clock, tick, action, as, shot, frames, separated by ";"'
     });
   });
 
@@ -155,5 +155,33 @@ describe('the steps that set what a page remembers and what time it is', () => {
     expect('problem' in problem ? problem.problem : '').toContain('got show-1: a text in double quotes');
     const nowhere = parseSteps('goto rooms', 500);
     expect('problem' in nowhere ? nowhere.problem : '').toContain('goto needs a path of the site');
+  });
+});
+
+// A run's designer could not show a count another person's message moves, nor a room the demo data never puts in a state.
+describe('the steps another account and the server play', () => {
+  it('reads an action with its input, and a step another account plays', () => {
+    expect(
+      parseSteps(`action crate-hide '{"crate":"c1"}'; action rooms-reset; as mika type dm-input hi there`, 500)
+    ).toEqual([
+      { kind: 'action', action: 'crate-hide', input: { crate: 'c1' } },
+      { kind: 'action', action: 'rooms-reset', input: {} },
+      { kind: 'as', account: 'mika', step: { kind: 'type', target: 'dm-input', text: 'hi there' } }
+    ]);
+  });
+
+  it('refuses an input that is no object, and an account with no step, a picture or another "as" to play', () => {
+    expect(parseSteps('action crate-hide [1]', 500)).toEqual({
+      problem: `step 1 ("action crate-hide [1]"): action needs the action's id and, when it takes one, its input as a JSON object — action dm-send '{"to":"juno","text":"hi"}'`
+    });
+    const problemOf = (script: string): string => {
+      const parsed = parseSteps(script, 500);
+
+      return 'problem' in parsed ? parsed.problem : '';
+    };
+    for (const script of ['as mika', 'as mika shot', 'as mika as juno click send']) {
+      expect(problemOf(script)).toContain('as needs an account and one step it plays');
+    }
+    expect(problemOf('as mika tap send')).toContain('"tap" is not a step');
   });
 });

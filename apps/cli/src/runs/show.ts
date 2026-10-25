@@ -1,5 +1,6 @@
 import { proposalsOf } from './agreements';
 import { fingerprint, readOptional } from './files';
+import { LARGE_OUTPUT } from './findings/cost';
 import { isCoLead, isPrincipal } from './leads';
 import { LEAD, markRead, messagesOf } from './messages';
 import { under } from './paths';
@@ -184,6 +185,7 @@ export const showTask = async (
   const { view, changed, submitted, from, versions } = await versionsOf(loaded, ctx.root, task);
   const files: ShownFile[] = [];
   let left = DIFF_TOTAL;
+  let fullLeft = LARGE_OUTPUT;
   for (const file of changed) {
     const { before, after } = await versions(file);
     const change: ShownFile['change'] =
@@ -196,10 +198,15 @@ export const showTask = async (
     }
 
     const lines = unifiedDiff(file, a, b).split('\n');
-    if (!full && left <= 0) {
+    // Whole, every file — as long as the answer stays one an agent reads again cheaply: a run's `--full` answered 34k
+    // characters, read again on every turn after. A file past it says its size and how to read it alone.
+    const size = lines.join('\n').length;
+    if (full ? fullLeft < size && files.some(each => each.diff !== undefined) : left <= 0) {
       files.push({ file, change, withheld: lines.length });
       continue;
     }
+
+    fullLeft -= size;
 
     const shown = full ? lines.length : Math.min(DIFF_LINES, left);
     left -= shown;

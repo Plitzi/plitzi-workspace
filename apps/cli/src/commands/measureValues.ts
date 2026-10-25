@@ -83,8 +83,11 @@ export const PSEUDO_MEASURED = [
   'right',
   'bottom',
   'left',
-  // Where one that is not positioned sits on its line or in its row — the browser gives no box of a pseudo-element to
-  // read its x and y from (a run's hairline, on the baseline or centred, was told from a picture).
+  // Where it is drawn, as an element's x and y: read off the browser's own layout, as the page gives no box of a
+  // pseudo-element (a run's hairline, on the baseline or centred beside two lines, was told from a picture).
+  'x',
+  'y',
+  // Why it sits there, when it is not positioned: on its line, or in its row.
   'display',
   'vertical-align',
   'align-self',

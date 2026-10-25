@@ -120,7 +120,7 @@ const taskShowSummary = (named: string | undefined, options: RunCommandOptions &
             ? [`  ${each.file}: not text — not shown`]
             : each.withheld !== undefined
               ? [
-                  `  ${each.file}: ${String(each.withheld)} lines of diff, not shown — plitzi task show ${shown.task.id} ${each.file} --diff (or --full for every file)`
+                  `  ${each.file}: ${String(each.withheld)} lines of diff, not shown — plitzi task show ${shown.task.id} ${each.file} --diff${options.full === true ? '' : ' (or --full for every file that fits one answer)'}`
                 ]
               : [each.diff ?? '', ...(each.more ? [`  … ${String(each.more)} more lines (--full shows them)`] : [])]
         ),

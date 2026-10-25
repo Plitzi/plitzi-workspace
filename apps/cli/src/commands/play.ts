@@ -11,7 +11,8 @@ import { keptSession } from '../browser/keptBrowser';
 import { conditionsOf } from './register/options';
 import { originHere } from '../runs/copyServer';
 import { pageAnswered } from './shot/remote';
-import { actStep } from './shot/steps';
+import { actStep, stepText } from './shot/steps';
+import { visitorsOn } from './shot/visitors';
 import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
 
 import type { BrowserPage, Scheme } from '../browser';
@@ -19,6 +20,7 @@ import type { Pair } from './measure';
 import type { ElementState } from './playState';
 import type { ConditionOptions } from './register/options';
 import type { ActingStep } from './shot/steps';
+import type { Visitors } from './shot/visitors';
 import type { ShotStep } from './shotSteps';
 
 /** How much of an element's text a line of `--read` shows; `--json` has it whole. */
@@ -97,29 +99,6 @@ const alike = (a: number, b: number): boolean => Math.abs(a - b) <= Math.max(2, 
 const sideOf = (step: ActingStep, side: keyof Pair): ActingStep =>
   'target' in step ? { ...step, target: pairOf(step.target)[side] } : step;
 
-const stepText = (step: ActingStep): string => {
-  switch (step.kind) {
-    case 'press':
-      return `press ${step.key}`;
-    case 'wait':
-    case 'tick':
-      return `${step.kind} ${String(step.ms)} ms`;
-    case 'drag':
-      return `drag ${step.target} ${String(step.dx)} ${String(step.dy)}`;
-    case 'reload':
-      return 'reload';
-    case 'goto':
-      return `goto ${step.path}`;
-    case 'store':
-    case 'state':
-      return `${step.kind} ${step.key}`;
-    case 'clock':
-      return `clock ${new Date(step.time).toISOString()}`;
-    default:
-      return `${step.kind} ${step.target}`;
-  }
-};
-
 /** The steps, each played on each page, every element read after it — or what kept a step from happening. */
 /**
  * One page a play is played on: a page of this command's, or the other site's held warm in the kept browser
@@ -132,15 +111,15 @@ export interface PlaySide {
   read: (targets: readonly string[]) => Promise<(ElementState | { problem: string })[] | { problem: string }>;
 }
 
-/** A page of this command's as a side of a play. */
-export const pageSide = (page: BrowserPage): PlaySide => ({
+/** A page of this command's as a side of a play — `visitors`, the other accounts its `as` steps play as. */
+export const pageSide = (page: BrowserPage, visitors?: Visitors): PlaySide => ({
   address: () => {
     const url = new URL(page.url());
 
     return `${url.pathname}${url.search}`;
   },
   act: async (step, index) => {
-    const problem = await actStep(page, step, index);
+    const problem = await actStep(page, step, index, visitors);
     // What the step started, over: its animations ended and the page's layout still — a slide, a drawer, a scroll.
     if (!problem) {
       await settle(page);
@@ -371,6 +350,30 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
       );
     });
 
+  /** An element as read at a step, its line whole: what it shows, how it moved, a colour the step changed. */
+  const readLine = (at: number, index: number): string => {
+    const read = played[at]?.reads.at(index);
+    if (!read) {
+      return '';
+    }
+
+    const said = moves(index) && read.moved !== undefined;
+    // Its colour said when a step changed it — what a tone picked, a state lit — never on every line.
+    const before = at === 0 ? undefined : played[at - 1]?.reads.at(index)?.here?.colour;
+    const colour =
+      read.here && before && (before.text !== read.here.colour.text || before.ground !== read.here.colour.ground)
+        ? ` · colour now ${read.here.colour.text} on ${read.here.colour.ground} (was ${before.text} on ${before.ground})`
+        : '';
+    const here = `${said && read.moved ? `moved ${moveText(read.moved.here)}, ` : ''}${read.here ? stateText(read.here) : ''}${colour}`;
+    const there = read.there
+      ? chalk.dim(
+          ` | there ${said && read.moved?.there ? `moved ${moveText(read.moved.there)}, ` : ''}${stateText(read.there)}`
+        )
+      : '';
+
+    return `  ${read.element}: ${here}${there}`;
+  };
+
   return played.flatMap((entry, at) => [
     chalk.bold(entry.step),
     ...(entry.reached
@@ -394,21 +397,11 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
             : [`  ${read.element}: ${chalk.red(read.problem)} ${chalk.dim('(at every step)')}`];
       }
 
-      const said = moves(index) && read.moved !== undefined;
-      // Its colour said when a step changed it — what a tone picked, a state lit — never on every line.
-      const before = at === 0 ? undefined : played[at - 1]?.reads.at(index)?.here?.colour;
-      const colour =
-        read.here && before && (before.text !== read.here.colour.text || before.ground !== read.here.colour.ground)
-          ? ` · colour now ${read.here.colour.text} on ${read.here.colour.ground} (was ${before.text} on ${before.ground})`
-          : '';
-      const here = `${said && read.moved ? `moved ${moveText(read.moved.here)}, ` : ''}${read.here ? stateText(read.here) : ''}${colour}`;
-      const there = read.there
-        ? chalk.dim(
-            ` | there ${said && read.moved?.there ? `moved ${moveText(read.moved.there)}, ` : ''}${stateText(read.there)}`
-          )
-        : '';
+      const line = readLine(at, index);
+      // Read again as it was: said so — a run's nine steps repeated two elements whole at each, 21k characters.
+      const previous = at > 0 && played[at - 1]?.reads.at(index)?.problem === undefined ? readLine(at - 1, index) : '';
 
-      return [`  ${read.element}: ${here}${there}`];
+      return [line === previous ? `  ${read.element}: ${chalk.dim('as before')}` : line];
     })
   ]);
 };
@@ -474,6 +467,16 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
   const same = (options.same ?? []).filter((each): each is PlaySame => (PLAY_SAME as readonly string[]).includes(each));
   if (options.same && same.length !== options.same.length) {
     fail(`--same takes ${PLAY_SAME.join(', ')}: what moved, what is shown, what takes a press.`);
+
+    return;
+  }
+
+  // Another account's step and an action reach this project's server: the other site has neither of them.
+  const ours = steps.find(step => step.kind === 'as' || step.kind === 'action');
+  if (ours && options.compare) {
+    fail(
+      `${stepText(ours)}: a step another account plays, or an action, reaches this project's own server — play it without --compare`
+    );
 
     return;
   }
@@ -549,9 +552,19 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
       }
 
       const there = held ? { act: held.act, read: held.read } : theirs ? pageSide(theirs.page) : undefined;
-      const outcome = await playOn({ here: pageSide(ours.page), ...(there ? { there } : {}) }, steps, reads).finally(
-        () => held?.close()
-      );
+      const visitors = visitorsOn(project.root, browser, where.origin, {
+        width,
+        ...(options.scheme ? { scheme: options.scheme } : {}),
+        ...(options.timezone ? { timezone: options.timezone } : {})
+      });
+      const outcome = await playOn(
+        { here: pageSide(ours.page, visitors), ...(there ? { there } : {}) },
+        steps,
+        reads
+      ).finally(async () => {
+        await visitors.close();
+        await held?.close();
+      });
       await ours.page.close();
       await theirs?.page.close();
       if ('problem' in outcome) {

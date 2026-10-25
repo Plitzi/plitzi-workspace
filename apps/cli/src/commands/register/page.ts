@@ -204,7 +204,7 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .option(
       '--steps <script>',
-      'The steps — left out with --read, the page as it rests — as page shot --steps writes them — click, hover, scroll, type (or fill: what the field held replaced), drag, press, wait, wait-for, reload, goto <path>, store, state, clock, tick — a ";" inside quotes is the text’s — each element "ours => theirs" with --compare'
+      'The steps — left out with --read, the page as it rests — as page shot --steps writes them — click, hover, scroll, type (or fill: what the field held replaced), drag, press, wait, wait-for, reload, goto <path>, store, state, clock, tick, action <id> [json] (one of the space’s actions run as the page’s visitor), as <account> <step> (played by another account on a page of its own) — a ";" inside quotes is the text’s — each element "ours => theirs" with --compare'
     )
     .option(
       '--read <element...>',
@@ -355,7 +355,7 @@ export const registerPage = (pageGroup: Command): void => {
     .option('--sheet', 'Every picture taken — before, after each click, each frame — on one contact sheet')
     .option(
       '--steps <script>',
-      'An interaction, step by step: "click <el>; hover <el>; type <el> <text>; press <key>; wait <ms|3s>; wait-for <el>; shot [label]; frames <n> [ms]" — or @file with one per line'
+      'An interaction, step by step: "click <el>; hover <el>; type <el> <text>; press <key>; wait <ms|3s>; wait-for <el>; action <id> [json]; as <account> <step>; shot [label]; frames <n> [ms]" — or @file with one per line'
     )
     .option('--reduced-motion', 'As a visitor who asked for less motion')
     .option(

@@ -470,7 +470,10 @@ export const registerTaskGroup = (program: Command): Command => {
       '[file]',
       'One file it changed, whole — as the diff reads it: as it went to review, its copy, or approved'
     )
-    .option('--full', 'Every line of each diff — cut at 80 a file otherwise')
+    .option(
+      '--full',
+      'Every line of each diff, as many files whole as one answer holds (12k characters) — each one past it said with how to read it alone; 80 lines a file otherwise'
+    )
     .option(
       '--diff',
       'With a file: its whole diff from where the task started — the task’s own change, never another’s approved since'
