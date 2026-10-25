@@ -96,6 +96,12 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   that task makes, refused its complete as "another task's at work" while it could not start before it.
 - **`run monitor`'s spend says what the run costs in the harness:** a TOTAL column — in, out and cached summed, each
   agent's and the run's whole — and the one-line spend starts with it.
+- **A finish never crashes on an agent still ending a command:** its usage line is not written into a run being removed,
+  the removal is retried, and the project is let go whatever happens — a finish failed with `ENOTEMPTY` after writing
+  the work, leaving the project claimed by a run that was gone.
+- **A run that stands still is said to the lead:** nothing worked or in review for 5 minutes while tasks are left wakes
+  `run watch --until lead` with what holds each one — a ready task offered to nobody and the lock that keeps it, a
+  blocked task's reason, the way out. A run once stood still past ten minutes with its watch saying "nothing new".
 - **Agents run the project's `typecheck` and `lint` before `task check`:** their prompt and `runs.md` say it — of
   a run's 34 checks, 17 failed on what those scripts say in seconds.
 - **The lead notes every problem of Plitzi as it happens** — the CLI, the platform, a skill or doc, a workaround a limit

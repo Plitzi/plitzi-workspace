@@ -114,8 +114,14 @@ export const removeRun = async (ctx: RunContext, paths: RunPaths, runId: string)
   const servers = stopListenersUnder(paths.dir).map(
     server => `:${String(server.port)} (${path.relative(paths.dir, server.cwd) || '.'})`
   );
-  await fs.rm(paths.dir, { recursive: true, force: true });
-  await releaseProject(ctx.root, runId);
+  // Retried: an agent's command still ending writes its usage line as the folder goes (ENOTEMPTY). The project is let go
+  // whatever happens, so a removal that fails never leaves the next run refused as "another run".
+  try {
+    await fs.rm(paths.dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+  } finally {
+    await releaseProject(ctx.root, runId);
+  }
+
   // The runs' folder with the last of them: the project's tmp/ as the run found it. Another run in it, it stays.
   await fs.rmdir(path.dirname(paths.dir)).catch(() => undefined);
 

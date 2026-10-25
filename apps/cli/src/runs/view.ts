@@ -16,6 +16,7 @@ import { under } from './paths';
 import { previewPort } from './previewRecord';
 import { loadRun, pinDifference, pinnedNow, readApproved, readBase, readRunLog, runIds } from './run';
 import { agentsNow } from './running';
+import { lockHolder, stalled } from './stalled';
 import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
@@ -117,6 +118,7 @@ export interface Attention {
     | 'refused-again'
     | 'finding'
     | 'spikes'
+    | 'stalled'
     | 'message';
   task?: string;
   /** The file it is about, when it is about one: what keeps it the same notice while its words change. */
@@ -320,6 +322,9 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       await stackableBacklog(ctx.root, loaded.tasks)
     )
   );
+  // A run that stands still is said with what holds each task, read as `task next` reads it: the lock on a file it needs.
+  const locks = await allLocks(ctx);
+  attention.push(...stalled(views, lockHolder(locks, record.runId), running, now));
   // Agents on demand: told to the lead when work waits for one and none running is free.
   const identified = await identifiedAgents(loaded.paths);
   attention.push(
@@ -492,7 +497,6 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     each => !each.integrated && each.integratedBy === undefined && approvedTasks.has(each.task)
   );
   // What a request waits for: the task holding its file by turns — merged once that one lets go — or nothing yet.
-  const locks = await allLocks(ctx);
   pending.forEach(each => {
     const holder = (locks.get(each.request.file) ?? []).find(
       held => held.live && held.run === runId && held.task !== each.task

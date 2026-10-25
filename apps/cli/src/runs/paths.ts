@@ -103,6 +103,9 @@ export interface RunPaths {
 
 export const runsDir = (root: string): string => path.join(root, RUNS_DIR);
 
+/** A run's record, in its folder: there while the run is, and the first thing gone as it is removed. */
+export const RECORD_FILE = 'run.json';
+
 /** An agent's own folder in the run, for what it writes beside its work: never the project's `tmp/`, which is the person's. */
 export const agentScratch = (paths: RunPaths, agent: string): string => path.join(paths.scratch, agent);
 
@@ -136,7 +139,7 @@ export const runPaths = (root: string, runId: string): RunPaths => {
     root,
     dir,
     plan: path.join(dir, 'plan.json'),
-    record: path.join(dir, 'run.json'),
+    record: path.join(dir, RECORD_FILE),
     mergeLock: path.join(dir, 'merge.lock'),
     takeLock: path.join(dir, 'take.lock'),
     claimLock: path.join(dir, 'claim.lock'),

@@ -87,7 +87,7 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    it touches and prints **your own CLI** (`scratch/lead/plitzi`, with your token): run every command after through it.
 5. Start each agent: `plitzi run agent <name> --launch` (alone: its prompt, for a subagent), and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
-   file a task takes past 400 lines (ask for the split) — each said once. **Talk:** answer a question with `plitzi
+   file a task takes past 400 lines (ask for the split), the run standing still (what holds each task) — each said once. **Talk:** answer a question with `plitzi
 task message t-home "…" --reply-to m3`; `all` or `@dev-1` in place of the task: every task in hand, or
    one agent. **The scope changes while it runs** — yours to see, or the person's to ask: edit
    the plan in the run's `inputs/` (`run open` says which; the run's own `plan.json` is what amend compares it to,

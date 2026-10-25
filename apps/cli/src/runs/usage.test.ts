@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { errorLine, failureLines, unreadByName } from './usage';
+import { errorLine, failureLines, runStillThere, unreadByName } from './usage';
 
 let runDir: string;
 
@@ -83,5 +83,19 @@ describe('what a failed command said, as its usage keeps it', () => {
       '  ✖ counts the night to the millisecond (2ms)',
       '    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:'
     ]);
+  });
+});
+
+// A finish removing a run while an agent's command was still ending: that command wrote its usage line into the
+// half-removed folder, and the removal failed on it (ENOTEMPTY), leaving the project claimed.
+describe('a run being removed', () => {
+  it('is no run to write a usage line into once its record is gone, its folder still there', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-usage-'));
+    await fs.writeFile(path.join(dir, 'run.json'), '{}');
+    expect(runStillThere(dir)).toBe(true);
+
+    await fs.rm(path.join(dir, 'run.json'));
+    expect(runStillThere(dir)).toBe(false);
+    await fs.rm(dir, { recursive: true, force: true });
   });
 });

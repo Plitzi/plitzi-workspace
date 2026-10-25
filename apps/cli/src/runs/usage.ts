@@ -5,7 +5,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { AGENT_TOKEN } from './identity';
-import { activeRunFile, COPY_TASK_FILE, copyOf, runPaths } from './paths';
+import { activeRunFile, COPY_TASK_FILE, copyOf, RECORD_FILE, runPaths } from './paths';
 import { sessionOfProcess } from './session';
 
 import type { Command } from 'commander';
@@ -199,6 +199,9 @@ export const unreadByName = (runDir: string, agent: string): number => {
  * Counts what this process prints from now, and, as it exits, says it in its run's usage — when it ran in one: a
  * command outside a run is nobody's cost to count. Never fails the command: a usage line not written is only not kept.
  */
+/** Whether a run's folder still holds its run: its record there — not a folder a finish is removing. */
+export const runStillThere = (runDir: string): boolean => existsSync(path.join(runDir, RECORD_FILE));
+
 export const startUsage = (args: readonly string[], cwd: string, now: () => number = Date.now): void => {
   // A command another command of the CLI runs (`task look`'s page checks and shots) is read by that one, not an agent;
   // one at a terminal by a person — `run monitor` redrawn for an hour was 2.6M "tokens" no agent read.
@@ -237,8 +240,9 @@ export const startUsage = (args: readonly string[], cwd: string, now: () => numb
       caller.runDir && caller.by
         ? { runDir: caller.runDir, by: caller.by }
         : (tokenCaller(cwd, args) ?? runOfFolder(cwd));
-    // A run gone — finished, aborted — is never made again by its last command's line.
-    if (!where || !existsSync(where.runDir)) {
+    // A run gone — finished, aborted — is never made again by its last command's line, nor one being removed: a command
+    // of an agent still running wrote its line into a finish's half-removed folder, and the removal failed on it.
+    if (!where || !runStillThere(where.runDir)) {
       return;
     }
 

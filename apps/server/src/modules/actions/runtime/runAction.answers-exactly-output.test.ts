@@ -507,7 +507,7 @@ describe('runAction', () => {
       }
     });
 
-    await expect(runAction(request(entry, { input: { minutes: 300, title: 'Acme' } }))).rejects.toMatchObject({
+    await expect(runAction(request(entry, { input: { minutes: 300, title: 'Market' } }))).rejects.toMatchObject({
       reason: 'invalid_input',
       message: 'Invalid input: minutes (number, at most 240), title (text, longer than 4 characters)'
     });
