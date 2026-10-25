@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { keepOnce, openKeeperLog } from './keeper';
+import { keepOnce, leadStartText, openKeeperLog } from './keeper';
 import { abortRun } from './merge';
 import { STARTING_MS } from './onDemand';
 import { runPaths } from './paths';
@@ -86,6 +86,15 @@ describe("the run's keeper", () => {
     };
     expect(await keepOnce(lead(), 'es-launch', start)).toEqual({ started: ['dev-1', 'design-1'], failed: [] });
     expect((await viewRun(lead(), 'es-launch')).attention.map(item => item.text).join('\n')).not.toContain('--harness');
+  });
+
+  // A run's opener started its lead with `npx plitzi run agent lead --launch`, refused as nobody: the lead's own CLI
+  // starts it, and `run open` says so.
+  it('says who leads: the opener through the lead’s CLI, or an agent that CLI starts', () => {
+    expect(leadStartText('/p/scratch/lead/plitzi', 'claude')).toBe(
+      'You lead it through that CLI — or an agent does, started by it: /p/scratch/lead/plitzi run agent lead --launch (in claude, as the team says)'
+    );
+    expect(leadStartText('/p/scratch/lead/plitzi', undefined)).toMatch(/run agent lead --launch --harness <yours>$/);
   });
 
   it('starts nothing when the team names no harness to start it in', async () => {

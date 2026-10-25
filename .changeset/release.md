@@ -367,6 +367,11 @@ report`, …).
   each agent its tokens in, out and read again from the cache.
 - **`task check` says warnings apart as `task complete` does:** those on files the task changed are its own; the rest,
   in a line, were there before it — a run's developer read a check's warnings in files it never touched as its own.
+- **A lead's prompt tells of a scope only when the run has one** (`s-scope`, opened by `run start`): a run opened on a
+  plan made before it says its tasks are on the board — its lead, told of a scope, asked for one and was refused.
+- **`run open` says who leads:** the opener, through the lead's own CLI — or an agent that CLI starts
+  (`…/scratch/lead/plitzi run agent lead --launch`, in the team's harness): a run's opener started its lead with
+  `npx plitzi run agent lead --launch` and was refused as nobody.
 - **The skills say what a run's agents got wrong:** the team starts by itself (`options.launch`), never by the lead's
   hand (the CLI skill's own overview still said `run agent` starts each); `--expect <id>~<text>`, never a sentence; a
   part a few px tall pictured with `--scale 4`; a task's files include the tests that read what it changes; a list's

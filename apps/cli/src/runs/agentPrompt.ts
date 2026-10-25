@@ -36,6 +36,11 @@ export interface PromptFor {
    * nothing — a translation, a feature — was told of an "original" it does not have.
    */
   reference?: string;
+  /**
+   * Whether the run opened on its scope, the lead's spike (`s-scope`), or on a plan made before it: a run's lead told
+   * of a scope it did not have asked for it, refused.
+   */
+  scoping?: boolean;
 }
 
 const skill = (root: string, file: string): string => path.join(root, SKILLS_ROOT, 'plitzi-cli', 'reference', file);
@@ -53,7 +58,16 @@ const rules = (cli: string): string[] => [
 ];
 
 /** An agent's prompt: the lead's, a lead's that reviews, or one of the team's by its roles. */
-export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference }: PromptFor): string => {
+export const agentPrompt = ({
+  agent,
+  started,
+  runId,
+  root,
+  cli,
+  goal,
+  reference,
+  scoping = false
+}: PromptFor): string => {
   // What a page is held to: the site it copies, beside it — or, with none, what the task asks.
   const beside = reference === undefined ? '' : ` --compare ${reference}`;
   // A control used, step by step, read as numbers — beside the copied site's when there is one.
@@ -68,7 +82,9 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
       `Read first, whole: ${skill(root, 'runs-plan.md')}, ${skill(root, 'runs-lead.md')}, ${skill(root, 'runs-review.md')} and ${skill(root, 'runs.md')}.`,
       '',
       `- The CLI is ${cli} — your own: it says who you are on every command, so pass no --token nor --agent.`,
-      `- The run opens on its scope, your spike: find out what the ask takes (${reference === undefined ? '`task show`, `page check`, `page shot`' : `\`page measure …${beside}\`, \`page outline …${beside}\`, \`page shot …${beside}\``}), then end it with the tasks, each with what you found: \`task spike s-scope --done "…" --tasks <stage.json>\` (a stage is its \`tasks\`).`,
+      scoping
+        ? `- The run opens on its scope, your spike: find out what the ask takes (${reference === undefined ? '`task show`, `page check`, `page shot`' : `\`page measure …${beside}\`, \`page outline …${beside}\`, \`page shot …${beside}\``}), then end it with the tasks, each with what you found: \`task spike s-scope --done "…" --tasks <stage.json>\` (a stage is its \`tasks\`).`
+        : '- The run opened on a plan made before it: its tasks are on the board (`run status`), no scope to find out first — review them as they come, and stack what is missing (`run extend`).',
       `- The team starts by itself when \`.plitzi/team.json\` says how (\`options.launch\`): the run's base as it opens, the rest when work waits — start none of them yourself. With no launch, \`${cli} run agent <name> --launch --harness <yours>\` starts each agent \`run plan\` names. \`run watch\` wakes you for each review, question and block.`,
       '- Review each task: `task show` for its code, one `task look` for its pages, then `task review --approve | --changes "…"`. Then the report (`run report --summary`) and the dry finish (`run finish`): the person applies it.',
       // Told `run notice` of "the CLI" alone, the lead noted three of six problems — a skill naming a command the

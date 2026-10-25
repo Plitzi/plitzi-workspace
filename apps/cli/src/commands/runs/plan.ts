@@ -10,7 +10,7 @@ import { hasDesignReview } from '../../runs/design';
 import { extendRun } from '../../runs/extend';
 import { writeJson } from '../../runs/files';
 import { issueToken } from '../../runs/identity';
-import { ensureKeeper, keeperText } from '../../runs/keeper';
+import { ensureKeeper, keeperText, leadStartText } from '../../runs/keeper';
 import { LEAD } from '../../runs/messages';
 import { atPace } from '../../runs/plan';
 import { RunRefusal } from '../../runs/refusal';
@@ -372,7 +372,8 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
         backlog: await backlogOfPlan(ctx.root, opened.checked.tasks),
         leadToken: lead.token,
         leadTokenFile: lead.file,
-        leadCli: lead.cli
+        leadCli: lead.cli,
+        launch: team?.options?.launch
       };
     },
     opened =>
@@ -382,6 +383,7 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
         chalk.bold(
           `The lead's own CLI: ${opened.leadCli} — every command of the run as the lead goes through it, which passes the lead's token (${opened.leadToken}, kept in ${opened.leadTokenFile}); a command as lead without it is refused`
         ),
+        leadStartText(opened.leadCli, opened.launch),
         ...(opened.leftOut.length > 0 ? [`Left out of it, as the plan says: ${opened.leftOut.join('; ')}`] : []),
         ...(opened.inputs.length > 0
           ? [

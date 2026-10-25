@@ -66,7 +66,7 @@ describe('an agent’s prompt', () => {
   });
 
   it('gives the lead the ask, its scope, and how to start its team', () => {
-    const prompt = agentPrompt({ ...base, agent: 'lead' });
+    const prompt = agentPrompt({ ...base, agent: 'lead', scoping: true });
 
     expect(prompt).toContain('You are the lead of a Plitzi multi-agent run');
     expect(prompt).toContain('The person asked: The shell as the original');
@@ -74,6 +74,13 @@ describe('an agent’s prompt', () => {
     expect(prompt).toContain('run agent <name> --launch');
     // Plitzi's problems go to the run's feedback, never the project's backlog (plain `run notice`).
     expect(prompt).toContain('run notice --plitzi');
+  });
+  // A run opened on a plan made before it has no scope: its lead, told of one, asked for s-scope and was refused.
+  it('tells a lead of a run opened on a plan made before it of no scope', () => {
+    const prompt = agentPrompt({ ...base, agent: 'lead' });
+
+    expect(prompt).not.toContain('s-scope');
+    expect(prompt).toContain('opened on a plan made before it');
   });
 });
 

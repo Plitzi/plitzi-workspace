@@ -12,6 +12,7 @@ import { agentScratch, runPaths } from './paths';
 import { RunRefusal } from './refusal';
 import { loadRun, logRun, readRunLog } from './run';
 import { SESSION_ENV } from './session';
+import { SCOPE_SPIKE } from './spike';
 import { withLock } from './store';
 import { viewTask } from './taskStore';
 import { leadStart, readTeam, startedAgents } from './team';
@@ -158,7 +159,8 @@ const prepare = async (ctx: RunContext, runId: string, agent: string) => {
     root: ctx.root,
     cli,
     goal: loaded.plan.goal,
-    ...(loaded.plan.reference === undefined ? {} : { reference: loaded.plan.reference })
+    ...(loaded.plan.reference === undefined ? {} : { reference: loaded.plan.reference }),
+    scoping: loaded.plan.tasks.some(task => task.id === SCOPE_SPIKE)
   });
   const promptFile = path.join(scratch, 'prompt.md');
   await fs.writeFile(promptFile, `${prompt}\n`);

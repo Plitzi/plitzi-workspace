@@ -195,6 +195,13 @@ export const ensureKeeper = async (
   return { pid: child.pid, started: true };
 };
 
+/**
+ * Who leads, as `run open` says it: the one who opened it, through the lead's own CLI — or an agent started on it, by that
+ * same CLI. A run's opener started its lead with `npx plitzi run agent lead --launch` and was refused as nobody.
+ */
+export const leadStartText = (leadCli: string, harness: string | undefined): string =>
+  `You lead it through that CLI — or an agent does, started by it: ${leadCli} run agent lead --launch${harness === undefined ? ' --harness <yours>' : ` (in ${harness}, as the team says)`}`;
+
 /** The keeper as the command that started it says it — never silent about agents it will or cannot start. */
 export const keeperText = (kept: Awaited<ReturnType<typeof ensureKeeper>>, base: readonly string[] = []): string =>
   'none' in kept
