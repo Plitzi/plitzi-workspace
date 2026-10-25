@@ -11,6 +11,7 @@ export {
   assertStatus,
   loadRun,
   logRun,
+  pinDifference,
   pinnedChanges,
   pinnedNow,
   readApproved,

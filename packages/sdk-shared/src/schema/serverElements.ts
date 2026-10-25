@@ -195,3 +195,14 @@ export const pageStructuredData = (value: unknown, context: Record<string, unkno
 
 /** JSON in a script tag, so no value of it closes the tag: `<` is written as its escape, which JSON reads the same. */
 export const jsonForScript = (value: unknown): string => JSON.stringify(value).replace(/</g, '\\u003c');
+
+/**
+ * A server element that failed, as the page server says it while developing (`devMode`): why, where the page reads it.
+ * Without it the provider said only "could not be reached" — encore-3's session action with no `render` trigger, whose
+ * `forbidden` was in a log no agent read. A deployment says nothing of it to a visitor: the element is left out.
+ */
+export const RSC_FAILURE = '$failed';
+
+/** Why a server element failed, when the page server said it — or nothing. */
+export const rscFailureOf = (data: unknown): string | undefined =>
+  isRecord(data) && typeof data[RSC_FAILURE] === 'string' ? data[RSC_FAILURE] : undefined;

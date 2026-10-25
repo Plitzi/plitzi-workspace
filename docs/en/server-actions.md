@@ -105,7 +105,8 @@ export const updatePost = taskAction(tasks.updatePost, {
 runServerAction({ actionId: updatePost.id, input: { slug: '{{ post.slug }}' } });
 ```
 
-Its input is the task's params, field for field — label, default, `required` — its id `<namespace>-<action>` in kebab
+Its input is the task's params, field for field — label, default, `required`, `maxLength`, `min` and `max`, so a caller
+reads the limits off the action and a value outside them is refused before the task runs — its id `<namespace>-<action>` in kebab
 case (`blog-update-post`), its name and description the task's, and its output the task's whole result. Each can be
 given instead; anything more — a second step, an output that leaves fields out, an input that is not the params — is a
 `defineAction`.

@@ -12,7 +12,14 @@ import {
   STYLE_STATES as SHARED_STYLE_STATES
 } from '@plitzi/sdk-shared/style';
 
-import { cssNumberValue, cssPropertyName, isCssProperty, isCustomProperty, suggestCssProperty } from './properties';
+import {
+  cssNumberValue,
+  cssPropertyName,
+  isCssProperty,
+  isCustomProperty,
+  replacedCssProperty,
+  suggestCssProperty
+} from './properties';
 import { ambiguousShorthands, expandShorthandTraced, fontUnread } from './shorthand';
 import { overlaid, recordShorthands } from './shorthandOrigins';
 import { AuthoringError } from '../schema/codes';
@@ -141,7 +148,11 @@ export const css = (input: CssProps): StyleRules => {
       'css-property-unknown',
       `Unknown CSS ${unknown.length === 1 ? 'property' : 'properties'}: ${unknown
         .map(key => {
+          const replaced = replacedCssProperty(key);
           const suggestion = suggestCssProperty(key);
+          if (replaced) {
+            return `"${key}" (${replaced})`;
+          }
 
           return suggestion ? `"${key}" (did you mean "${suggestion}"?)` : `"${key}"`;
         })

@@ -11,6 +11,11 @@
  *   press <key>              a key, as Playwright names it: Enter, Escape, ArrowDown…
  *   wait <ms>                time passing
  *   wait-for <element>       until it is on the page and shown (10 s at most)
+ *   reload                   the page loaded again, as a visitor's reload: what it kept read back
+ *   store <key> <value>      a value put in the page's localStorage, as an earlier visit left it — then `reload`
+ *   state <key> <json>       one key of the space's state written, as a setState step would (development pages)
+ *   clock <instant>          the page's clock set to an ISO instant (needs `--clock`): 2026-10-25T20:00:00Z
+ *   tick <duration>          the page's clock moved on, its timers run (needs `--clock`): 90s, 5m, 2h, 1500
  *   shot [label]             a picture now
  *   frames <n> [ms]          n pictures, `--every` (or `ms`) apart
  *
@@ -28,6 +33,11 @@ export type ShotStep =
   | { kind: 'press'; key: string }
   | { kind: 'wait'; ms: number }
   | { kind: 'wait-for'; target: string }
+  | { kind: 'reload' }
+  | { kind: 'store'; key: string; value: string }
+  | { kind: 'state'; key: string; value: unknown }
+  | { kind: 'clock'; time: number }
+  | { kind: 'tick'; ms: number }
   | { kind: 'shot'; label?: string }
   | { kind: 'frames'; count: number; every: number };
 
@@ -42,12 +52,45 @@ const STEP_NAMES = [
   'press',
   'wait',
   'wait-for',
+  'reload',
+  'store',
+  'state',
+  'clock',
+  'tick',
   'shot',
   'frames'
 ] as const;
 
 /** The longest a script may wait in one step: a page that needs more is waiting for something else. */
 const MAX_WAIT_MS = 30_000;
+
+/** The longest a clock is moved on in one step: a week. */
+const MAX_TICK_MS = 7 * 24 * 60 * 60 * 1000;
+
+const UNITS: Readonly<Record<string, number>> = { ms: 1, s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 };
+
+/** A duration as a step writes it — `90s`, `5m`, `2h`, `1d`, or milliseconds — in milliseconds. */
+export const durationMs = (text: string | undefined): number | undefined => {
+  const match = /^(\d+(?:\.\d+)?)(ms|s|m|h|d)?$/.exec(text ?? '');
+  if (!match) {
+    return undefined;
+  }
+
+  const ms = Math.round(Number(match[1]) * UNITS[match[2] ?? 'ms']);
+
+  return ms > 0 ? ms : undefined;
+};
+
+/** An instant as written: ISO 8601 with its zone (`2026-10-25T20:00:00Z`), in epoch milliseconds. */
+export const instantMs = (text: string | undefined): number | undefined => {
+  if (!text || !/^\d{4}-\d{2}-\d{2}T[\d:.]+(Z|[+-]\d{2}:?\d{2})$/.test(text)) {
+    return undefined;
+  }
+
+  const ms = Date.parse(text);
+
+  return Number.isNaN(ms) ? undefined : ms;
+};
 
 const unquoted = (text: string): string => text.replace(/^(["'])(.*)\1$/s, '$2');
 
@@ -141,10 +184,14 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
         break;
       case 'type':
       case 'fill': {
-        const { target, rest: text } = leadingTarget(rest.join(' '));
+        // `fill email=ana@x.com` as `--fill` writes it, beside `fill email ana@x.com`: encore-3's agents wrote the flag's
+        // spelling in a step and were refused.
+        const said = rest.join(' ');
+        const flagged = /^([A-Za-z][\w-]*)=([\s\S]*)$/.exec(said);
+        const { target, rest: text } = flagged ? { target: flagged[1], rest: flagged[2] } : leadingTarget(said);
         if (!target || text === '') {
           return {
-            problem: `${at}: ${name} needs an element and the text — ${name} <element> <text>, ${name} ".panel textarea" hi`
+            problem: `${at}: ${name} needs an element and the text — ${name} <element> <text> or ${name} <element>=<text>, ${name} ".panel textarea" hi`
           };
         }
 
@@ -179,6 +226,55 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
         }
 
         steps.push({ kind: 'wait', ms });
+        break;
+      }
+      case 'reload':
+        steps.push({ kind: 'reload' });
+        break;
+      case 'store': {
+        const [key, ...value] = rest;
+        if (!key || value.length === 0) {
+          return { problem: `${at}: store needs a key and its value — store listen-choice on` };
+        }
+
+        steps.push({ kind: 'store', key, value: unquoted(value.join(' ')) });
+        break;
+      }
+      case 'state': {
+        const [key, ...value] = rest;
+        const written = value.join(' ');
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(written);
+        } catch {
+          return {
+            problem: `${at}: state needs a key and its value as JSON — state roomOpen true, state show '{"title":"Late set"}'`
+          };
+        }
+
+        if (!key) {
+          return { problem: `${at}: state needs a key and its value as JSON — state roomOpen true` };
+        }
+
+        steps.push({ kind: 'state', key, value: parsed });
+        break;
+      }
+      case 'clock': {
+        const time = instantMs(rest[0]);
+        if (time === undefined) {
+          return { problem: `${at}: clock needs an instant, ISO with its zone — clock 2026-10-25T20:00:00Z` };
+        }
+
+        steps.push({ kind: 'clock', time });
+        break;
+      }
+      case 'tick': {
+        const ms = durationMs(rest[0]);
+        if (ms === undefined || ms > MAX_TICK_MS) {
+          return { problem: `${at}: tick needs how long, up to a week — tick 90s, tick 5m, tick 2h, tick 1500` };
+        }
+
+        steps.push({ kind: 'tick', ms });
         break;
       }
       case 'shot':

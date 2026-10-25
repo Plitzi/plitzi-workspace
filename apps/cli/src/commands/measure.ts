@@ -12,19 +12,23 @@ import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
 import { accountAsked, signInAs } from './check';
 import { projectHere } from './existingProject';
-import { putIn, stateText } from './measureState';
+import { putIn, rowsOf, stateText } from './measureState';
 import { comparedText, keptText, readingText } from './measureText';
-import { differences, INHERITED, MEASURED, PSEUDO_MEASURED, PSEUDOS, SIDE_LONGHANDS } from './measureValues';
+import { differences, INHERITED, MEASURED, onlyOf, PSEUDO_MEASURED, PSEUDOS, SIDE_LONGHANDS } from './measureValues';
+import { applyConditions } from '../browser/conditions';
 import { keptMeasure } from '../browser/keptBrowser';
+import { conditionsOf } from './register/options';
 import { originHere } from '../runs/copyServer';
 import { targetOn } from './shot/capture';
 import { pageAnswered } from './shot/remote';
 import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
 
 import type { Account } from './check';
+import type { ConditionOptions } from './register/options';
 import type { StateAsked } from './measureState';
 import type { Difference, Measured } from './measureValues';
 import type { Browser, BrowserPage, Scheme } from '../browser';
+import type { BrowserConditions } from '../browser/conditions';
 
 /**
  * `plitzi page measure`: an element's computed styles — what a designer sizes a copy by — and, with `--compare`, the
@@ -45,7 +49,7 @@ import type { Browser, BrowserPage, Scheme } from '../browser';
  */
 const READING = 3;
 
-export interface MeasureOptions {
+export interface MeasureOptions extends ConditionOptions {
   url?: string;
   /** Signed in first as this account: the password from `PLITZI_CHECK_PASSWORD`. */
   as?: string;
@@ -74,6 +78,10 @@ export interface MeasureOptions {
    * state, a drawer and a panel in it (lx-controls' designer measured the original's filter drawer by a script of its own).
    */
   click?: string[];
+  /** Each row a list draws of every element asked, measured apart — never with --compare, whose rows are another's. */
+  rows?: boolean;
+  /** Only these properties of each element, printed: `box`, `font`, `border`, `size` or any measured. */
+  only?: string[];
   json?: boolean;
 }
 
@@ -289,7 +297,9 @@ export const measureOn = async (page: BrowserPage, target: string): Promise<Meas
 const GROUPS: Record<string, readonly string[]> = {
   border: ['border-top', 'border-right', 'border-bottom', 'border-left'],
   font: ['font-family', 'font-size', 'font-weight', 'line-height', 'letter-spacing', 'text-transform'],
-  size: ['width', 'height']
+  size: ['width', 'height'],
+  // Where it is and how big, its spacing with it: what a fit is checked by — encore-3's agents grepped it out of 30.
+  box: ['x', 'y', 'width', 'height', 'padding', 'margin']
 };
 
 const PSEUDO_PROPERTY = new RegExp(`^(${PSEUDOS.join('|')}):(${PSEUDO_MEASURED.join('|')})$`);
@@ -298,26 +308,34 @@ const PSEUDO_PROPERTY = new RegExp(`^(${PSEUDOS.join('|')}):(${PSEUDO_MEASURED.j
  * `--same`'s list, each a property measured, a pseudo-element's (`before:background-image`) or a shorthand of them —
  * refused, naming the rest, when one is none of these.
  */
-export const sameProperties = (value: string): string[] => {
-  const asked = value
-    .split(',')
-    .map(each => each.trim())
-    .filter(Boolean);
-  const unknown = asked.filter(
-    each =>
-      !Object.hasOwn(GROUPS, each) &&
-      !Object.hasOwn(SIDE_LONGHANDS, each) &&
-      !MEASURED.some(property => property === each) &&
-      !PSEUDO_PROPERTY.test(each)
-  );
-  if (unknown.length > 0 || asked.length === 0) {
-    throw new InvalidArgumentError(
-      `--same takes what is measured — ${MEASURED.join(', ')}, a side of margin or padding (margin-bottom) — a pseudo-element's (before:${PSEUDO_MEASURED.join(', before:')}; after: the same), or ${Object.keys(GROUPS).join(', ')}${unknown.length > 0 ? `: not ${unknown.join(', ')}` : ''}`
+const measuredProperties =
+  (flag: string) =>
+  (value: string): string[] => {
+    const asked = value
+      .split(',')
+      .map(each => each.trim())
+      .filter(Boolean);
+    const unknown = asked.filter(
+      each =>
+        !Object.hasOwn(GROUPS, each) &&
+        !Object.hasOwn(SIDE_LONGHANDS, each) &&
+        !MEASURED.some(property => property === each) &&
+        !PSEUDO_PROPERTY.test(each)
     );
-  }
+    if (unknown.length > 0 || asked.length === 0) {
+      throw new InvalidArgumentError(
+        `${flag} takes what is measured — ${MEASURED.join(', ')}, a side of margin or padding (margin-bottom) — a pseudo-element's (before:${PSEUDO_MEASURED.join(', before:')}; after: the same), or ${Object.keys(GROUPS).join(', ')}${unknown.length > 0 ? `: not ${unknown.join(', ')}` : ''}`
+      );
+    }
 
-  return [...new Set(asked.flatMap(each => GROUPS[each] ?? [each]))];
-};
+    return [...new Set(asked.flatMap(each => GROUPS[each] ?? [each]))];
+  };
+
+/** `--same`'s list: what must be as the other page's. */
+export const sameProperties = measuredProperties('--same');
+
+/** `--only`'s list: what is printed of each element — a fit asks for its box, not thirty properties. */
+export const onlyProperties = measuredProperties('--only');
 
 /** How long a reading of another site is kept: a reference does not change within a run. */
 const KEPT_MS = 6 * 60 * 60_000;
@@ -397,6 +415,10 @@ export const ourPage = async (
     ...(view.scheme ? { scheme: view.scheme } : {}),
     ...(view.timezone ? { timezone: view.timezone } : {})
   });
+  if (view.conditions) {
+    await applyConditions(page, view.conditions);
+  }
+
   // Signed in first when asked (`--as`): a page for signed-in visitors read as one of them — encore's designers could
   // not look at a vote, a host's controls or a settings form, only `page check|shot` signing in.
   const refused = view.account && (await signInAs(page, origin, view.account));
@@ -430,6 +452,8 @@ export interface ViewAsked {
   scheme?: Scheme;
   timezone?: string;
   state?: StateAsked;
+  /** The browser it is read in, where not a visitor's ordinary one (`--clock`, `--block`, `--autoplay`, `--storage`). */
+  conditions?: BrowserConditions;
 }
 
 /** The other page's elements read on a page of their own, opened for them and closed: the way with no kept browser. */
@@ -468,7 +492,7 @@ const readAt = async (
   where: { origin: string; route: string; target?: string },
   pairs: readonly Pair[],
   view: ViewAsked,
-  options: Pick<MeasureOptions, 'same' | 'fresh'>,
+  options: Pick<MeasureOptions, 'same' | 'fresh' | 'rows'>,
   now: number
 ): Promise<Reading[]> => {
   const { page, answered, problem } = await ourPage(browser, where.origin, where.route, view);
@@ -482,11 +506,13 @@ const readAt = async (
     : view.state
       ? await putIn(page, view.state, 'here')
       : undefined;
-  const ours = notPut ? pairs.map(() => notPut) : await Promise.all(pairs.map(pair => measureOn(page, pair.here)));
+  // Each row a list draws of an element, with --rows: the first alone hid that three plates' readouts differed (encore-3).
+  const asked = options.rows && !notPut ? (await Promise.all(pairs.map(pair => rowsOf(page, pair)))).flat() : pairs;
+  const ours = notPut ? asked.map(() => notPut) : await Promise.all(asked.map(pair => measureOn(page, pair.here)));
   await page.close();
 
   const { target } = where;
-  const keys = pairs.map(pair =>
+  const keys = asked.map(pair =>
     keptFile(root, {
       url: target,
       width: view.width,
@@ -504,7 +530,7 @@ const readAt = async (
     })
   );
   const kept = target && !options.fresh ? await Promise.all(keys.map(file => readKept(file, now))) : [];
-  const theirs: (Measured | { problem: string } | undefined)[] = pairs.map((_pair, index) => kept[index]?.measured);
+  const theirs: (Measured | { problem: string } | undefined)[] = asked.map((_pair, index) => kept[index]?.measured);
   const missing = target === undefined ? [] : pairs.flatMap((_pair, index) => (theirs[index] ? [] : [index]));
   if (target !== undefined && missing.length > 0) {
     // Read in the kept browser, its pages loaded between calls — one in a state on a page no other reader shares, loaded
@@ -516,7 +542,7 @@ const readAt = async (
             width: view.width,
             height: 900,
             ...(view.scheme ? { scheme: view.scheme } : {}),
-            targets: missing.map(index => pairs[index].there),
+            targets: missing.map(index => asked[index].there),
             ...(options.fresh ? { fresh: true } : {}),
             ...(view.state && {
               state: {
@@ -536,10 +562,10 @@ const readAt = async (
             browser,
             target,
             view,
-            missing.map(index => pairs[index].there)
+            missing.map(index => asked[index].there)
           );
     for (const [at, index] of missing.entries()) {
-      const each = read[at] ?? { problem: `${pairs[index].there} was not read` };
+      const each = read[at] ?? { problem: `${asked[index].there} was not read` };
       theirs[index] = each;
       if (!('problem' in each)) {
         await fs.mkdir(path.dirname(keys[index]), { recursive: true });
@@ -548,7 +574,7 @@ const readAt = async (
     }
   }
 
-  return pairs.map((pair, index) => {
+  return asked.map((pair, index) => {
     const here = ours[index];
     const there = theirs[index];
     const asked =
@@ -616,6 +642,14 @@ export const measure = async (route: string, elements: string[], options: Measur
       ? new URL(route, options.compare).href
       : options.compare
     : undefined;
+  if (options.rows && target) {
+    fail(
+      '--rows measures this page’s rows of a list: the other page’s are another list — measure them without --compare'
+    );
+
+    return;
+  }
+
   if (options.same && !target) {
     fail('--same holds properties to another page: give it --compare <that page>');
 
@@ -660,7 +694,8 @@ export const measure = async (route: string, elements: string[], options: Measur
             ...(account ? { account } : {}),
             ...(options.scheme ? { scheme: options.scheme } : {}),
             ...(options.timezone ? { timezone: options.timezone } : {}),
-            ...(state ? { state } : {})
+            ...(state ? { state } : {}),
+            conditions: conditionsOf(options)
           },
           options,
           now
@@ -668,6 +703,12 @@ export const measure = async (route: string, elements: string[], options: Measur
       );
     }
 
+    // Only what was asked of each, with --only: its box for a fit, never thirty properties to grep.
+    const shownReadings = readings.map(reading => ({
+      ...reading,
+      here: onlyOf(reading.here, options.only),
+      ...(reading.there ? { there: onlyOf(reading.there, options.only) } : {})
+    }));
     const failed = readings.some(
       reading => 'problem' in reading.here || (reading.there && 'problem' in reading.there) || reading.unlike.length > 0
     );
@@ -685,7 +726,7 @@ export const measure = async (route: string, elements: string[], options: Measur
                   }
                 }
               : {}),
-            readings: readings.map(reading => ({
+            readings: shownReadings.map(reading => ({
               ...reading,
               ...(reading.there && !('problem' in reading.there) && !('problem' in reading.here)
                 ? differences(reading.here, reading.there)
@@ -705,7 +746,7 @@ export const measure = async (route: string, elements: string[], options: Measur
             ...(kept ? [kept] : []),
             ...widths.flatMap(width => [
               ...(widths.length > 1 ? [chalk.bold.underline(`At ${String(width)} px`)] : []),
-              ...readings
+              ...shownReadings
                 .filter(reading => reading.width === width)
                 .map(reading => readingText(reading, options.same, now, kept !== undefined))
             ])

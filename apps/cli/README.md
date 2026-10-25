@@ -357,6 +357,14 @@ row => .slides -200 0`), and `--same` fails (exit 1) where a step leaves them ot
 element read that is not on the page — a control's acceptance line, with no script of one's own. `page shot --steps`
 that ends on an action pictures what it leaves.
 
+What the demo data never has is set by the steps: `reload` (what the page kept, read back), `store <key> <value>` (its
+`localStorage`, as an earlier visit left it), `state <key> <json>` (the space's state, through the dev tools' `window.__plitzi`
+on a development page), and, with `--clock <instant>` holding the page's clock from its first script, `clock <instant>`
+and `tick <duration>` (`90s`, `5m`, `2h`) — a countdown read at every moment. `page play` and `page measure` also read a
+page in a browser that refuses: `--block <text>` fails each request whose address holds it (a player, a font),
+`--autoplay refused` refuses media with sound until a press, `--storage refused` throws on `localStorage` and
+`sessionStorage`.
+
 `page same [paths…] --url <origin> --than <origin>` says whether pages draw the same on two servers of the project —
 every element on screen, its box, the style a reader sees and what its `::before`/`::after` draw, read, not pictured —
 and, where not, the first element that differs; exit 1 then. A look at a task reads with it the pages only a shared
@@ -841,17 +849,20 @@ A certificate names the addresses it was made for: when the router hands the mac
 boot, and `cert` makes one again — or open the `.local` name, which stays. A space read from Plitzi by a browser project
 answers the address the phone opens once it is among the space's allowed domains.
 
-## `server list` and `server stop`
+## `server list`, `server stop` and `server reset`
 
 ```bash
 npx plitzi server list                 # what this project's folder has listening, and whether each is its server
 npx plitzi server stop --port 4793     # that one, and what it started; none named: every one of this project
+npx plitzi server reset                # state/ (its kv, its jobs) removed: the next start is a cold start
 ```
 
 A server is the project's when it listens from the project's folder (`tmp/` left out: a run's copies each answer for
 their own) and its `/health` says it serves that folder. Only those are stopped — with the processes they started —
 never by name: one of another folder, or no Plitzi server at all, is named and left, and `--port` with nothing of the
-project on it fails. What agents run stops servers this way; `pkill` and `killall` reach every process on the machine.
+project on it fails — saying whether anything listens there at all. What agents run stops servers this way; `pkill` and
+`killall` reach every process on the machine. `server reset` is refused while a server of the folder runs (it holds
+`state/` open and would write it back); `--dry-run` says what it would remove.
 
 ## `feedback`
 

@@ -18,6 +18,12 @@ export type ActionField = {
   defaultValue?: string | number | boolean;
   /** Shown in the builder, and read by the MCP agent when it wires a call. */
   label?: string;
+  /** A `text` field's longest value: a longer one is refused before the action runs. */
+  maxLength?: number;
+  /** A `number` field's least value: a smaller one is refused before the action runs. */
+  min?: number;
+  /** A `number` field's greatest value: a larger one is refused before the action runs. */
+  max?: number;
 };
 
 /** What a caller sends for a field of a type: text for `text`, `date` and `file`, anything parseable for `json`. */

@@ -143,6 +143,9 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 - **What two tasks share is the base task's, declared once**: a page's section styles and the space between sections,
   a format (a date), the whole palette — tasks adding tokens at once name one colour three ways.
 - **What must hold at `complete` is an acceptance line** (`run amend`), never a message: a message has no hold on it.
+- **A line reads what a cold start holds**: the copy's seeded data, a state set by its own steps (`page play --steps
+  "state …"`, `--clock`) — never what moves while it runs (the busiest room's track): `run finish` runs a failed line
+  once more, and live data fails it twice. `plitzi server reset` puts a copy back to its cold start.
 - **What a task builds on is in its `dependsOn`**, not only in its words: a finding naming another task's component is a
   dependency `run plan` cannot see.
 - **A stage reads `run view`, not memory**: a task that merges a file one not done holds waits for it (`dependsOn`).

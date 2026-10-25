@@ -108,6 +108,24 @@ export const listenersUnder = (dir: string): { pid: number; port: number; cwd: s
   });
 };
 
+/** Whatever listens on `port`, and the folder it was started in — any folder's — or nothing when none does. */
+export const listenerOn = (port: number): { pid: number; cwd: string | undefined } | undefined => {
+  if (process.platform === 'win32') {
+    return undefined;
+  }
+
+  const [found] = lsofFields(['-nP', `-iTCP:${String(port)}`, '-sTCP:LISTEN', '-Fp']);
+  if (found === undefined) {
+    return undefined;
+  }
+
+  const cwd = lsofFields(['-a', '-p', String(found.pid), '-d', 'cwd', '-Fn'])
+    .at(0)
+    ?.names.at(0);
+
+  return { pid: found.pid, cwd };
+};
+
 /** Stops one listening process and what it started — never by its name, which another process may carry. */
 export const stopListener = (pid: number): void => {
   descendantsOf(pid).forEach(quietly);

@@ -19,7 +19,7 @@ import {
   writingTasks
 } from './run';
 import { messageTasks } from './talk';
-import { canWrite, checkTask, completeTask, nextTask, reportProgress, reviewTask, takeTask } from './tasks';
+import { canWrite, checkTask, completeTask, nextTask, reportProgress, reviewTask, takeNext, takeTask } from './tasks';
 import { brakeFailuresFor, DEFAULTS } from './taskStore';
 import { viewRun } from './view';
 import { benchPlan, makeBench, readInCopy, writeInCopy } from '../tests/runProject';
@@ -308,6 +308,17 @@ describe('versions, machines and caches', () => {
     expect(await completeTask({ ...home.ctx, cli: '0.0.1-bench' }, 'es-launch', 't-home')).toMatchObject({
       changed: ['src/space/pages/home/index.ts']
     });
+  });
+
+  // encore-3: `task next --follow --take` refused at once with version-mismatch, though its own words say it waits.
+  it('waits through a version change while following, taking nothing, and says why', async () => {
+    await open();
+    const upgraded = bench.agent('agent-2', { cli: '0.0.1-bench' });
+
+    const { next, taken } = await takeNext(upgraded, 'es-launch', undefined, { timeoutMs: 300, everyMs: 50 });
+
+    expect(taken).toBeUndefined();
+    expect(next.paused).toContain('The Plitzi version changed');
   });
 
   it('is active on one machine: another attaches once it is released, or a person takes it over', async () => {

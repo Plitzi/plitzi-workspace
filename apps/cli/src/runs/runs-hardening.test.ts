@@ -274,7 +274,9 @@ describe('a UI review, by the team’s designers', () => {
       reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'lead' })
     );
     expect(refused.message).toContain('--skip-design is a lead');
-    expect(refused.message).toContain("--token <the lead's>");
+    expect(refused.message).toContain('--approve --skip-design lead');
+    // encore-3: a hint that says --token contradicts the agent's own CLI, which says who it is: none says it.
+    expect(refused.message).not.toContain('--token');
 
     // encore-2: the lead approved a UI it never looked at; its review of the UI is a look, said before the approval.
     expect(

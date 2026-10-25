@@ -2,7 +2,8 @@ import { comparePictures } from '@plitzi/sdk-authoring';
 
 import { awaited, capture, targetOn } from './capture';
 import { dataUrl } from '../../browser';
-import { settle } from '../measureState';
+import { clockHeld } from '../../browser/conditions';
+import { answered, settle } from '../measureState';
 
 import type { BrowserPage } from '../../browser';
 import type { ShotStep } from '../shotSteps';
@@ -112,6 +113,16 @@ const stepText = (step: ShotStep): string => {
       return `press ${step.key}`;
     case 'wait':
       return `wait ${String(step.ms)} ms`;
+    case 'reload':
+      return 'reload';
+    case 'store':
+      return `store ${step.key}`;
+    case 'state':
+      return `state ${step.key}`;
+    case 'clock':
+      return `clock ${new Date(step.time).toISOString()}`;
+    case 'tick':
+      return `tick ${String(step.ms)} ms`;
     case 'shot':
       return step.label ?? 'shot';
     case 'frames':
@@ -214,7 +225,10 @@ export const actStep = async (
       return undefined;
     }
 
-    await shown(read.selector).click({ timeout: 3000 });
+    // A click's answer from the server landed before what follows reads the page: a key lit by a vote's answer.
+    await (step.kind === 'click'
+      ? answered(page, () => shown(read.selector).click({ timeout: 3000 }))
+      : shown(read.selector).click({ timeout: 3000 }));
     // Typed into what has the focus: a click that left it on no field sent the text to the page's own shortcuts.
     if (step.kind === 'type') {
       const editable = await page.evaluate(() => {
@@ -239,6 +253,56 @@ export const actStep = async (
     await page.keyboard.press(step.key);
   } else if (step.kind === 'wait') {
     await page.waitForTimeout(step.ms);
+  } else if (step.kind === 'reload') {
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
+  } else if (step.kind === 'store') {
+    const stored = await page.evaluate(
+      ({ key, value }: { key: string; value: string }) => {
+        try {
+          localStorage.setItem(key, value);
+
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { key: step.key, value: step.value }
+    );
+    if (!stored) {
+      return {
+        problem: `Step ${String(index + 1)}: the page's localStorage refused the value — its storage is blocked`
+      };
+    }
+  } else if (step.kind === 'state') {
+    const written = await page.evaluate(
+      ({ key, value }: { key: string; value: unknown }) => {
+        const inspector: unknown = Reflect.get(window, '__plitzi');
+        const setState: unknown =
+          typeof inspector === 'object' && inspector !== null ? Reflect.get(inspector, 'setState') : undefined;
+        if (typeof setState !== 'function') {
+          return false;
+        }
+
+        Reflect.apply(setState, inspector, [key, value]);
+
+        return true;
+      },
+      { key: step.key, value: step.value }
+    );
+    if (!written) {
+      return {
+        problem: `Step ${String(index + 1)}: the page has no window.__plitzi to write its state with — the SDK's dev tools put it there on a development page (npm run start:dev, debug mode)`
+      };
+    }
+  } else if (step.kind === 'clock' || step.kind === 'tick') {
+    if (!clockHeld(page)) {
+      return {
+        problem: `Step ${String(index + 1)}: ${step.kind} moves the page's clock, and nothing holds it — give the command --clock <instant> (2026-10-25T20:00:00Z), the clock the page starts with`
+      };
+    }
+
+    await (step.kind === 'clock' ? page.clock.setSystemTime(step.time) : page.clock.runFor(step.ms));
   } else {
     await page.waitForSelector(awaited(step.target), { timeout: 10_000 });
   }

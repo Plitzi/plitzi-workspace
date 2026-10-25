@@ -350,7 +350,33 @@ const holderTaskOf = async (
 };
 
 /** Refuses the wait of `taskId` on `holder` that would close a cycle — a file or an answer, all the same — naming it. */
+/** The tasks that run only after `taskId`: those whose `dependsOn` names it, or names one of them. */
+const runsAfter = (loaded: LoadedRun, taskId: string): Set<string> => {
+  const after = new Set<string>();
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const each of loaded.plan.tasks) {
+      if (!after.has(each.id) && each.dependsOn.some(id => id === taskId || after.has(id))) {
+        after.add(each.id);
+        grew = true;
+      }
+    }
+  }
+
+  return after;
+};
+
 export const assertNoWaitCycle = async (loaded: LoadedRun, taskId: string, holder: string): Promise<void> => {
+  // A task that runs only after this one hands nothing on before this one is approved: the wait would never end, and the
+  // agent's harness gave up on it first (encore-3's dev-1, at t-moderation-demo).
+  if (runsAfter(loaded, taskId).has(holder)) {
+    throw new RunRefusal(
+      'invalid',
+      `${holder} runs after ${taskId} (its dependsOn leads to it): what it hands on comes only once ${taskId} is approved, so this wait would never end. Go on without it, or tell the lead (plitzi task tell "…")`,
+      { task: holder }
+    );
+  }
+
   const views = new Map(
     await Promise.all(loaded.tasks.map(async each => [each.id, await viewTask(loaded.paths, each)] as const))
   );

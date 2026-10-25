@@ -53,7 +53,15 @@ export interface TaskContext {
   /** Each of the task's files — from its copy while it holds one, else the run's — as text when it is text and small. */
   /** `toCreate`: a file of the task's that does not exist yet — it is the task's to write. */
   files: { file: string; from: 'copy' | 'run'; text?: string; bytes?: number; toCreate?: boolean }[];
+  /**
+   * Another task's files beside its own, by name — `shows.test.ts` of `shows.ts`, a tester's: encore-3's developers wrote
+   * tests into a tests card's file and learnt it at `task check`, the writing lost.
+   */
+  neighbours: { file: string; task: string; role: string }[];
 }
+
+/** A file's name with no extension nor `.test`/`.spec`: what a module and its tests share. */
+const stemOf = (file: string): string => file.replace(/\.[cm]?[jt]sx?$/, '').replace(/\.(test|spec)$/, '');
 
 const MAX_CONTEXT_FILE = 64 * 1024;
 
@@ -202,6 +210,13 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
     ...(primer !== undefined ? { primer } : {}),
     reading: await readingFor(ctx.root, [...task.files, ...(task.touches ?? [])]),
     runNotes: (await runNotesOf(loaded)).map(note => note.text),
-    files
+    files,
+    neighbours: loaded.tasks.flatMap(other =>
+      other.id === task.id
+        ? []
+        : other.files
+            .filter(file => !task.files.includes(file) && task.files.some(own => stemOf(own) === stemOf(file)))
+            .map(file => ({ file, task: other.id, role: other.role ?? 'developer' }))
+    )
   };
 };

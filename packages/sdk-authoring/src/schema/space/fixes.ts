@@ -4,6 +4,7 @@ import { fixSpace, lintSpace } from '../lint';
 import { writtenAt, writtenAtPosition } from '../writtenAt';
 import { SpaceAuthor } from './author';
 
+import type { Suggestion } from '../advice';
 import type { FixChange } from '../lint';
 import type { AuthorSpaceOptions, ElementSpec, SpaceSpec } from '../types';
 import type { WrittenPosition } from '../writtenAt';
@@ -66,6 +67,8 @@ export interface PlanProblem {
 export interface FixPlan {
   /** Every problem the linter reports — errors and warnings alike, whether or not the space would be refused. */
   problems: PlanProblem[];
+  /** What authoring suggests, as `authorSpace` says it — those with one way to be written are among `fixes` too. */
+  suggestions: Suggestion[];
   fixes: PlannedFix[];
 }
 
@@ -101,7 +104,11 @@ export const planFixes = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): Fi
     };
   });
 
-  return { problems, fixes: [...fixes, ...contentFixes(author, documents)] };
+  return {
+    problems,
+    suggestions: author.suggestionsOf(documents.schema, documents.style),
+    fixes: [...fixes, ...contentFixes(author, documents)]
+  };
 };
 
 /**

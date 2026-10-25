@@ -126,6 +126,7 @@ The space is not written until these are fixed.
 | `prop-unknown` | a prop the component does not declare, handed in or read | the prop it suggests, or declare it: `props: { name: { type: 'text' } }` |
 | `prop-value` | a prop handed in with a value its declaration does not take | a value of the declared type, or one of its options |
 | `props-outside-component` | `props.x` read outside a component | read the source it would have come from |
+| `provider-when-not-rules` | a provider's `when` that is no rule group — a string, a single rule — never read, so it never waits | `when: { combinator: 'and', rules: [{ field, operator, value }] }`, each field a source by its name |
 | `quiet-unknown` | an element's `quiet` naming something that is not a suggestion's code — a problem is never quieted | the code of the suggestion it was offered: `quiet: ['repeated-shape']` |
 | `redirect-target-unknown` | a page that sends visitors it is not for to a page the space does not have | a page's id or slug (`''` is the home page), or a full URL |
 | `robots-txt-line` | a line of the space's `settings.robotsTxt` that no crawler reads, or one with no `User-agent` | `User-agent: *` then `Allow: /`, `Disallow: /overlay` — each line `Field: value`, or a comment |

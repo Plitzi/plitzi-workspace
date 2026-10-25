@@ -335,6 +335,9 @@ describe('createActionResolver', () => {
       }
     };
 
-    await expect(resolve({ action: 'post-page' }, callOnly)).rejects.toThrow(/refused this render/);
+    // Said for what it lacks: encore-3's refusal read `forbidden` in a log, the page only "could not be reached".
+    await expect(resolve({ action: 'post-page' }, callOnly)).rejects.toThrow(
+      'Action "post-page" has no "render" trigger: a server provider reads an action through one'
+    );
   });
 });

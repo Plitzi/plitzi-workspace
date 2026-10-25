@@ -2,8 +2,9 @@ import { act, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 
 import { createStore } from '@plitzi/nexus';
-import { StoreProvider } from '@plitzi/nexus/react';
+import { StoreProvider, createStoreHook } from '@plitzi/nexus/react';
 import { invalidateAfterWrite, invalidateQueries } from '@plitzi/sdk-shared/queries';
+import { RSC_FAILURE } from '@plitzi/sdk-shared/schema';
 
 import { ApiContainer } from './ApiContainer';
 import ElementContext from '../../../Element/ElementContext';
@@ -119,6 +120,25 @@ describe('ApiContainer — a server provider refreshed by a write', () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('ids=orders');
     expect(init.cache).toBe('no-cache');
+    view.unmount();
+  });
+
+  // encore-3: a provider whose action had no render trigger said only "could not be reached"; the page server, while
+  // developing, says why where the provider reads it.
+  it('says why the page server could not resolve it, when it said', () => {
+    const { useStore } = createStoreHook<{ runtime?: { sources?: Record<string, { errorMessage?: string }> } }>();
+    const Said = () => {
+      const [message] = useStore('runtime.sources.apiContainer_orders.errorMessage');
+
+      return <span>{message ?? ''}</span>;
+    };
+    const { store, view } = renderProvider(true, 0, <Said />);
+
+    act(() => {
+      store.set('rsc.data', { orders: { [RSC_FAILURE]: 'Action "orders" has no "render" trigger' } });
+    });
+
+    expect(view.queryByText('Action "orders" has no "render" trigger')).not.toBeNull();
     view.unmount();
   });
 

@@ -14,7 +14,7 @@ import { LEAD, messagesOf, unreadFor } from './messages';
 import { agentsNeeded } from './onDemand';
 import { under } from './paths';
 import { previewPort } from './previewRecord';
-import { loadRun, pinnedChanges, pinnedNow, readApproved, readBase, readRunLog, runIds, samePinned } from './run';
+import { loadRun, pinDifference, pinnedNow, readApproved, readBase, readRunLog, runIds } from './run';
 import { agentsNow } from './running';
 import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
@@ -294,11 +294,17 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   }
 
   // Read with any version, so the lead sees it: until a person re-pins the run, every agent's command is refused.
-  const pinned = await pinnedNow(ctx.root, ctx.cli);
-  if (!samePinned(record.pinned, pinned)) {
+  const { stops, carried } = await pinDifference(ctx.root, record.pinned, await pinnedNow(ctx.root, ctx.cli));
+  if (stops.length > 0) {
     attention.push({
       kind: 'version',
-      text: `The Plitzi version changed under the run (${pinnedChanges(record.pinned, pinned).join(', ')}): the agents wait, their work kept in their copies — a person re-pins it in their terminal: plitzi run attach ${record.runId}`,
+      text: `The Plitzi version changed under the run (${[...stops, ...carried].join(', ')}): the agents wait, their work kept in their copies — a person re-pins it in their terminal: plitzi run attach ${record.runId}`,
+      who: 'person'
+    });
+  } else if (carried.length > 0) {
+    attention.push({
+      kind: 'version',
+      text: `A package the SDK brings moved under the run (${carried.join(', ')}): the agents go on, and the finish checks the result on it — a person re-pins it when they like: plitzi run attach ${record.runId}`,
       who: 'person'
     });
   }

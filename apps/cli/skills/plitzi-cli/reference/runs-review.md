@@ -12,7 +12,8 @@ designer's look at the UI first is [runs-designer.md](runs-designer.md); the res
   [runs-designer.md](runs-designer.md)) — once: after the designer's, unchanged, it repeats it. A lead's read of a task in
   review takes its review, so no two leads decide one.
 - **What the data does not show, you test:** a case the acceptance asks for that no page reaches — a module's function,
-  its edge cases, `node -e` in the copy — or send it back for the test it needs. A finding is read from its page,
+  its edge cases, `node -e` in the copy; a probe (two calls at once) is a `node --test` file in your scratch importing
+  the copy's code by its absolute path, never a file in the copy — or send it back for the test it needs. A finding is read from its page,
   measured — never from another page or memory. A fix for light is looked at in light, one for the phone at 390
   (`task look --scheme light --width 390`).
 - **The verdict:** `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. A round

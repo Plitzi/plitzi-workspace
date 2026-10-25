@@ -7,6 +7,7 @@ import { ourPage, pairOf } from './measure';
 import { settle } from './measureState';
 import { parseSteps } from './shotSteps';
 import { keptSession } from '../browser/keptBrowser';
+import { conditionsOf } from './register/options';
 import { originHere } from '../runs/copyServer';
 import { targetOn } from './shot/capture';
 import { pageAnswered } from './shot/remote';
@@ -15,6 +16,7 @@ import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
 
 import type { BrowserPage, Scheme } from '../browser';
 import type { Pair } from './measure';
+import type { ConditionOptions } from './register/options';
 import type { ActingStep } from './shot/steps';
 import type { ShotStep } from './shotSteps';
 
@@ -29,8 +31,9 @@ import type { ShotStep } from './shotSteps';
  * scrolls its box and one that slides its track by a transform, whichever way each site builds it.
  */
 
-export interface PlayOptions {
+export interface PlayOptions extends ConditionOptions {
   steps: string;
+  timezone?: string;
   /** The elements read after each step, `"ours => theirs"` with `--compare`. */
   read?: string[];
   compare?: string;
@@ -225,14 +228,26 @@ export const readState = async (page: BrowserPage, target: string): Promise<Elem
 const sideOf = (step: ActingStep, side: keyof Pair): ActingStep =>
   'target' in step ? { ...step, target: pairOf(step.target)[side] } : step;
 
-const stepText = (step: ActingStep): string =>
-  step.kind === 'press'
-    ? `press ${step.key}`
-    : step.kind === 'wait'
-      ? `wait ${String(step.ms)} ms`
-      : step.kind === 'drag'
-        ? `drag ${step.target} ${String(step.dx)} ${String(step.dy)}`
-        : `${step.kind} ${step.target}`;
+const stepText = (step: ActingStep): string => {
+  switch (step.kind) {
+    case 'press':
+      return `press ${step.key}`;
+    case 'wait':
+    case 'tick':
+      return `${step.kind} ${String(step.ms)} ms`;
+    case 'drag':
+      return `drag ${step.target} ${String(step.dx)} ${String(step.dy)}`;
+    case 'reload':
+      return 'reload';
+    case 'store':
+    case 'state':
+      return `${step.kind} ${step.key}`;
+    case 'clock':
+      return `clock ${new Date(step.time).toISOString()}`;
+    default:
+      return `${step.kind} ${step.target}`;
+  }
+};
 
 /** The steps, each played on each page, every element read after it — or what kept a step from happening. */
 /**
@@ -441,13 +456,18 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
     chalk.bold(entry.step),
     ...(entry.idle?.here ? [chalk.yellow(`  here: ${entry.idle.here}`)] : []),
     ...(entry.idle?.there ? [chalk.yellow(`  there: ${entry.idle.there}`)] : []),
-    ...entry.reads.map((read, index) => {
+    ...entry.reads.flatMap((read, index) => {
       if (read.problem) {
         const appears = played.some(later => later !== entry && later.reads.at(index)?.problem === undefined);
+        // Never there: said once, at the first step — the same line at every step and width buried the steps that
+        // were read (encore-3's `--read a,b`).
+        const before = played.slice(0, played.indexOf(entry)).some(earlier => earlier.reads.at(index)?.problem);
 
         return appears
-          ? `  ${read.element}: ${chalk.dim('not on the page yet')}`
-          : `  ${read.element}: ${chalk.red(read.problem)}`;
+          ? [`  ${read.element}: ${chalk.dim('not on the page yet')}`]
+          : before
+            ? []
+            : [`  ${read.element}: ${chalk.red(read.problem)} ${chalk.dim('(at every step)')}`];
       }
 
       const said = moves(index) && read.moved !== undefined;
@@ -458,7 +478,7 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
           )
         : '';
 
-      return `  ${read.element}: ${here}${there}`;
+      return [`  ${read.element}: ${here}${there}`];
     })
   ]);
 };
@@ -548,6 +568,8 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
     for (const width of options.width ?? [1440]) {
       const ours = await ourPage(browser, where.origin, route, {
         width,
+        conditions: conditionsOf(options),
+        ...(options.timezone ? { timezone: options.timezone } : {}),
         ...(account ? { account } : {}),
         ...(options.scheme ? { scheme: options.scheme } : {})
       });

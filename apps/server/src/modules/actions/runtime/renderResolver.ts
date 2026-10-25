@@ -88,6 +88,12 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
     const values = { ...routeParams, ...queryParams, ...input, ...req.ctx.rscParams };
     // How long an answer may be reused is read off the trigger STEP, like everything else about a way in.
     const trigger = findTriggerNode(entry.document.nodes, 'render');
+    if (!trigger) {
+      throw new Error(
+        `Action "${actionId}" has no "render" trigger: a server provider reads an action through one — give it a render trigger (its access says who may read it), as a "call" trigger is a page's to run`
+      );
+    }
+
     const ttlMs = trigger ? triggerCacheMs(triggerParams(trigger)) : 0;
     const key = shareKey([spaceId, at.environment, at.revision, entry.id, user?.id ?? null, values]);
 

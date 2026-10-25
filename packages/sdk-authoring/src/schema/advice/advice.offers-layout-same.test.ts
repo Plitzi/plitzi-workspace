@@ -166,6 +166,20 @@ describe('suggestions', () => {
 
     expect(codesOf(alike)).toContain('repeated-shape');
   });
+  /** encore-3: a helper called three times tripped it, and the agent guessed a smaller shape to get under it. */
+  it('says what counts as a copy, and how copies alike on purpose are kept', () => {
+    const { suggestions } = authorSpace(
+      dashboard(
+        figure('views', '{{ source|number }} views'),
+        figure('edits', '{{ source|number }} edits'),
+        figure('pages', '{{ source|number }} pages')
+      )
+    );
+    const shape = suggestions.find(suggestion => suggestion.code === 'repeated-shape');
+
+    expect(shape?.message).toContain('Counted from 3 copies of 4 elements or more (2 of 8 or more)');
+    expect(shape?.message).toContain("`quiet: ['repeated-shape']`");
+  });
   it('does not take figures that read their data in different forms for one component', () => {
     const unlike = dashboard(
       figure('views', '{{ source|number }} views'),

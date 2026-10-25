@@ -510,4 +510,59 @@ describe('page folders', () => {
       )
     ).toThrow(/inside itself/);
   });
+
+  // encore-3: two tasks reused room-request, room-request-message and roomRequests — three runs of the checks to find.
+  it('says every name taken under a refused element at once, not one a run', () => {
+    const box = (id: string, children: ElementSpec[]): ElementSpec => ({
+      type: 'container',
+      id,
+      attributes: { subType: 'div' },
+      children
+    });
+    const words = (id: string): ElementSpec => ({ type: 'text', id, attributes: { content: id } });
+    const request = (): ElementSpec =>
+      box('room-request', [words('room-request-title'), box('room-request-form', [words('room-request-message')])]);
+    const refused = (() => {
+      try {
+        authorSpace(minimal({ pages: [{ name: 'Home', slug: '', body: [request(), request()] }] }));
+      } catch (error) {
+        return error instanceof Error ? error.message : String(error);
+      }
+
+      return '';
+    })();
+
+    for (const id of ['room-request', 'room-request-title', 'room-request-form', 'room-request-message']) {
+      expect(refused).toContain(`"${id}"`);
+    }
+
+    expect(refused).toContain('4 problems');
+  });
+
+  // encore-3: a when on `roomData.role` never held and said nothing; a string where the rule group goes, no rule at all.
+  it('resolves a provider’s when as a binding’s source, refusing a name nothing answers to and a when that is no group', () => {
+    const provider = (when: unknown): ElementSpec => ({
+      type: 'apiContainer',
+      id: 'roomData',
+      attributes: { query: '/data/room.json', when }
+    });
+    const space = (when: unknown) => minimal({ pages: [{ name: 'Home', slug: '', body: [provider(when)] }] });
+    const rules = (field: string) => ({ combinator: 'and', rules: [{ field, operator: '=', value: true }] });
+    const told = { sourceTypes: { apiContainer: 'apiContainer' } };
+    const refusedFor = (when: unknown): string => {
+      try {
+        authorSpace(space(when), told);
+      } catch (error) {
+        return error instanceof Error ? error.message : String(error);
+      }
+
+      return '';
+    };
+
+    expect(refusedFor('auth.isAuthenticated')).toContain('[provider-when-not-rules]');
+    expect(refusedFor(rules('rooomData.role'))).toContain('[binding-source-unknown]');
+    // Its own name, short, is written whole: what the runtime reads.
+    const { schema } = authorSpace(space(rules('roomData.ready')), told);
+    expect(schema.flat.roomData.attributes.when).toEqual(rules('apiContainer_roomData.ready'));
+  });
 });

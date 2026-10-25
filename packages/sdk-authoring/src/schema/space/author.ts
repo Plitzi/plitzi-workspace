@@ -199,23 +199,7 @@ export class SpaceAuthor {
       this.options.allow
     );
 
-    // Where each suggestion's first element was written, as a refusal says it: the line to go and change.
-    const suggestions = [
-      ...suggestSpace(
-        { schema, style },
-        {
-          stylesheets: this.options.stylesheets ?? [],
-          families: this.families,
-          pluginTypes: this.options.pluginTypes ?? []
-        }
-      ),
-      ...withoutQuieted(schema, classOverrides(this, schema, style.mode ?? 'desktop-first'))
-    ].map(suggestion => {
-      const first = suggestion.elementIds.at(0);
-      const at = first === undefined ? undefined : writtenAt(this.specOf(first));
-
-      return at === undefined ? suggestion : { ...suggestion, at };
-    });
+    const suggestions = this.suggestionsOf(schema, style);
 
     markConditionalByChildren(this, schema);
 
@@ -243,6 +227,26 @@ export class SpaceAuthor {
    * on, since the problems a fix settles are exactly the ones that gate reports. Throws only what kept them from being
    * written at all.
    */
+  /** What the written documents could say shorter, each where its first element was written: the line to change. */
+  suggestionsOf(schema: Schema, style: Style): Suggestion[] {
+    return [
+      ...suggestSpace(
+        { schema, style },
+        {
+          stylesheets: this.options.stylesheets ?? [],
+          families: this.families,
+          pluginTypes: this.options.pluginTypes ?? []
+        }
+      ),
+      ...withoutQuieted(schema, classOverrides(this, schema, style.mode ?? 'desktop-first'))
+    ].map(suggestion => {
+      const first = suggestion.elementIds.at(0);
+      const at = first === undefined ? undefined : writtenAt(this.specOf(first));
+
+      return at === undefined ? suggestion : { ...suggestion, at };
+    });
+  }
+
   write(): { schema: Schema; style: Style } {
     assertSpaceShape(this);
     for (const [type, elementSpec] of Object.entries(this.spec.elements ?? {})) {

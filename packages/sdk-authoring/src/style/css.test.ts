@@ -113,6 +113,10 @@ describe('css', () => {
 
   it('reports every unknown property at once', () => {
     expect(() => css({ nope: '1px', alsoNope: '2px' })).toThrow(/Unknown CSS properties: "nope", "also-nope"/);
+    // encore-3: the classic sr-only line's `clip` was refused with no word of what replaced it.
+    expect(() => css({ clip: 'rect(0, 0, 0, 0)' })).toThrow(
+      /"clip" \(deprecated: write 'clip-path': 'inset\(50%\)', or the `sr-only` utility/
+    );
   });
 
   it('allows custom properties', () => {
@@ -315,6 +319,10 @@ describe('a background whose part is a bare var()', () => {
     );
     expect(() => css({ background: 'url(a.png) no-repeat, var(--x)' })).toThrow(/\[shorthand-ambiguous\]/);
     expect(() => css({ background: 'center / cover var(--x)' })).toThrow(/\[shorthand-ambiguous\]/);
+    // encore-3: every side of the ON AIR plate got the whole `var(--pad, 4px 10px)`, no length at all unset.
+    expect(() => css({ padding: 'var(--on-air-pad, 4px 10px)' })).toThrow(/'padding-top': 'var\(--padding-top, …\)'/);
+    expect(css({ padding: 'var(--pad, 4px)' })['padding-top']).toBe('var(--pad, 4px)');
+    expect(css({ padding: 'var(--y, 4px) var(--x, 10px)' })['padding-left']).toBe('var(--x, 10px)');
     expect(css({ background: 'linear-gradient(90deg, transparent, var(--accent))' })).toMatchObject({
       'background-image': 'linear-gradient(90deg, transparent, var(--accent))'
     });

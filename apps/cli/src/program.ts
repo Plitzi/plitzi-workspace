@@ -29,7 +29,7 @@ import {
   setRuntimeVariable,
   unsetRuntimeVariable
 } from './commands/runtime';
-import { serverList, serverStop } from './commands/server';
+import { serverList, serverReset, serverStop } from './commands/server';
 import { upgrade, UPGRADE_PARTS } from './commands/upgrade';
 import uploadPluginCommand from './commands/uploadPlugin';
 import { verify } from './commands/verify';
@@ -58,7 +58,7 @@ import type { PackSourceOptions } from './commands/packSource';
 import type { PullOptions } from './commands/pull';
 import type { PushOptions } from './commands/push';
 import type { RuntimeOptions, RuntimeStatusOptions } from './commands/runtime';
-import type { ServerStopOptions } from './commands/server';
+import type { ServerResetOptions, ServerStopOptions } from './commands/server';
 import type { UpgradeOptions } from './commands/upgrade';
 import type { UploadPluginOptions } from './commands/uploadPlugin';
 import type { VerifyOptions } from './commands/verify';
@@ -220,6 +220,15 @@ export const buildProgram = (): Command => {
     .addOption(new Option('--port <port>', 'The one on this port alone').argParser(positiveInteger))
     .option('--json', 'One object, for a tool or an agent')
     .action((options: ServerStopOptions) => serverStop(options));
+
+  serverGroup
+    .command('reset')
+    .description(
+      'What this folder’s server keeps (state/: its kv, its jobs) back to a cold start — refused while one of its servers runs'
+    )
+    .option(...DRY_RUN_OPTION)
+    .option('--json', 'One object, for a tool or an agent')
+    .action((options: ServerResetOptions) => serverReset(options));
 
   spaceGroup
     .command('pull')

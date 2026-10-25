@@ -518,7 +518,7 @@ const taskResolved = async (ctx: RunContext, runId: string, named?: string): Pro
     throw new RunRefusal(
       'invalid',
       held.length === 0 && reviewing !== undefined
-        ? `${ctx.agent} reviews ${reviewing}, and holds no task at work: a review says itself — its look (plitzi task look ${reviewing}) and its verdict (plitzi task review ${reviewing} …); task progress notes you are at it, the rest are a writer's`
+        ? `${ctx.agent} reviews ${reviewing}, and holds no task at work: a review says itself — its look (plitzi task look ${reviewing}) and its verdict (plitzi task review ${reviewing} …); task context and task show read it, task progress notes you are at it, the rest are a writer's`
         : held.length === 0
           ? `${ctx.agent} holds no task at work: name it, or run this in its copy (cd <its work folder>)`
           : `${ctx.agent} holds ${held.map(view => view.task.id).join(', ')}: name the task, or run this in its copy`
@@ -561,5 +561,7 @@ export const either = async (
 ): Promise<{ runId: string; taskId: string }> => {
   const runId = await runOf(ctx, options);
 
-  return { runId, taskId: await taskResolved(ctx, runId, named) };
+  // A reviewer reads the brief of what it reviews: encore-3's tester and designers were refused it four times, judging
+  // without the plan's findings.
+  return { runId, taskId: named === undefined ? await ownTask(ctx, runId) : await taskResolved(ctx, runId, named) };
 };

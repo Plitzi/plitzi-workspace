@@ -185,6 +185,11 @@ export const ELEMENT_CODES = {
       "a `{{ }}` inside an attribute that is an object or a list — a provider's `input`, a list's `items`, a plugin's settings: only an attribute that is text is evaluated",
     fix: "a binding on the attribute (`bindTemplate(name, source, template, { returns: 'value' })`); for a provider's `input`, nothing for a route or query param — the action is already handed them as `input.<name>`"
   },
+  'provider-when-not-rules': {
+    kind: 'refused',
+    means: "a provider's `when` that is no rule group — a string, a single rule — never read, so it never waits",
+    fix: "`when: { combinator: 'and', rules: [{ field, operator, value }] }`, each field a source by its name"
+  },
   'server-source-in-browser': {
     kind: 'refused',
     means:

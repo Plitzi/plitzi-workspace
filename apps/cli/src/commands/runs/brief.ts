@@ -164,6 +164,11 @@ export const briefOf = (context: TaskContext): string => {
     chalk.bold(`${task.id} — ${task.title}`),
     `  ${task.role ?? 'developer'} · ${state.status}${state.round > 0 ? `, round ${String(state.round)}` : ''}${context.holder ? ` · ${context.holder}` : ''}`,
     `Its files: ${files.join(', ')}${task.touches && task.touches.length > 0 ? ` · it will touch: ${task.touches.join(', ')}` : ''}`,
+    ...(context.neighbours.length > 0
+      ? [
+          `  Beside them, another task's — write nothing there: ${context.neighbours.map(each => `${each.file} (${each.task}, a ${each.role}'s)`).join(', ')}`
+        ]
+      : []),
     // What the work needs beyond them is not refused: it is said how it goes in.
     '  A file beyond these the work needs: change it in your copy — it goes in by turns at complete when nobody holds it (plitzi task claim <file> holds it while you work; one another task holds becomes a request)',
     // What it is to find out, before anything is built — and what was found already: by it, and by what it waits for.
@@ -211,7 +216,10 @@ export const briefOf = (context: TaskContext): string => {
     ...context.requests.map(each => `  ↗ request on ${each.file} from ${each.task}: ${each.summary}`),
     // What the review asked is said above: its note is not said twice.
     ...(notesShown.length > 0
-      ? ['Its notes', ...notesShown.slice(-5).map(note => `  ${note.by}: ${clipped(note.text, NOTE_SHOWN, 'whole: --json')}`)]
+      ? [
+          'Its notes',
+          ...notesShown.slice(-5).map(note => `  ${note.by}: ${clipped(note.text, NOTE_SHOWN, 'whole: --json')}`)
+        ]
       : []),
     ...(context.related.length > 0
       ? [`Related: ${context.related.map(each => `${each.task} (${each.status})`).join(', ')}`]

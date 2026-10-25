@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { defineFunctions } from '../../functions/contract';
 import { tasksOf } from '../../functions/tests/tasksOf';
 import { createActionsModule } from '../index';
+import { ActionRefusal } from './errors';
 import { buildEntry, callTrigger, disabledEntry, lookups, node, request } from './tests/runAction';
 
 import type { ActionRunError } from './errors';
@@ -152,6 +153,23 @@ describe('runAction', () => {
 
     expect((await runAction(request(entry))).status).toBe('completed');
     expect((await runAction(request(entry))).error).toBe('Wait a minute');
+  });
+
+  // encore-3: a spec could tell a refusal only by its words; its code reaches the page with them.
+  it('answers a refusal’s code beside its words', async () => {
+    const task: FunctionTask<Record<string, never>> = {
+      namespace: 'test',
+      action: 'banned',
+      title: 'Banned',
+      params: {},
+      run: () => Promise.reject(new ActionRefusal('You are banned from this room.', { code: 'banned' }))
+    };
+    const { runAction } = createActionsModule({ lookups, functions: tasksOf(task) });
+    const entry = buildEntry({
+      nodes: { start: callTrigger({}, 'banned'), banned: node('banned', { action: 'test.banned', params: {} }) }
+    });
+
+    expect(await runAction(request(entry))).toMatchObject({ error: 'You are banned from this room.', code: 'banned' });
   });
   describe('when a step fails after the flow already did something', () => {
     /** Records what each step was asked to do, in order: the property under test is WHICH steps ran. */
@@ -476,6 +494,22 @@ describe('runAction', () => {
     await expect(runAction(request(entry, { input: { windows: ['a', 'b'] } }))).rejects.toMatchObject({
       reason: 'invalid_input',
       message: 'Invalid input: windows (text, got a list; declare the field `json` to take it)'
+    });
+  });
+  it('refuses a value outside the limits its field declares, naming the limit', async () => {
+    const { runAction } = createActionsModule({ lookups });
+    const entry = buildEntry({
+      nodes: {
+        ...buildEntry().document.nodes,
+        start: callTrigger({
+          input: '{"minutes":{"type":"number","min":15,"max":240},"title":{"type":"text","maxLength":4}}'
+        })
+      }
+    });
+
+    await expect(runAction(request(entry, { input: { minutes: 300, title: 'Encore' } }))).rejects.toMatchObject({
+      reason: 'invalid_input',
+      message: 'Invalid input: minutes (number, at most 240), title (text, longer than 4 characters)'
     });
   });
   /**

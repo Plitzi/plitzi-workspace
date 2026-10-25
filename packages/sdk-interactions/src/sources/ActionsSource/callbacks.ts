@@ -60,7 +60,7 @@ export const actionsCallbacks: Record<string, BuiltinGlobalCallback> = {
     },
     // `reason` and `error` only when the run did not complete: the server's refusal (`duplicate`, `forbidden`…) and,
     // when there is one, the reason it or a step wrote for the caller.
-    preview: { runId: '', status: '', output: {}, reason: '', error: '' }
+    preview: { runId: '', status: '', output: {}, reason: '', error: '', code: '' }
   },
   cancelServerAction: {
     source: 'actions',

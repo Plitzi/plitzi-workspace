@@ -118,7 +118,7 @@ export const assertDesigner = (view: TaskView, agent: string): void => {
   if (workedBy(view, agent)) {
     throw new RunRefusal(
       'invalid',
-      `${agent} worked ${taskId}: its UI is reviewed by another designer, or the lead approves it without that review, as itself (plitzi task review ${taskId} --approve --skip-design lead --token <the lead's>)`,
+      `${agent} worked ${taskId}: its UI is reviewed by another designer, or the lead approves it without that review, as itself (plitzi task review ${taskId} --approve --skip-design lead)`,
       { task: taskId }
     );
   }

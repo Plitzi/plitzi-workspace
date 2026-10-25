@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { ownTask, reviewingOnly } from './shell';
+import { either, ownTask, reviewingOnly } from './shell';
 import { openRun } from '../../runs/run';
 import { completeTask, takeNext } from '../../runs/tasks';
 import { setTeamAgent } from '../../runs/team';
@@ -51,5 +51,10 @@ describe('a sign of life said at a review', () => {
 
     expect(await ownTask(bench.agent('design-1'), 'es-launch')).toBe('t-menu');
     expect(await ownTask(home.ctx, 'es-launch')).toBe('t-home');
+    // encore-3: a reviewer's `task context` was refused four times; it reads the brief of what it reviews.
+    expect(await either(bench.agent('design-1'), { run: 'es-launch' })).toEqual({
+      runId: 'es-launch',
+      taskId: 't-menu'
+    });
   });
 });

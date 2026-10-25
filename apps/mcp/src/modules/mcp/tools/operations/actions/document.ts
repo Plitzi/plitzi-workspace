@@ -50,7 +50,10 @@ export const actionField = z
     type: z.enum(['text', 'number', 'boolean', 'date', 'json', 'file']),
     required: z.boolean().optional(),
     defaultValue: z.union([z.string(), z.number(), z.boolean()]).optional(),
-    label: z.string().optional()
+    label: z.string().optional(),
+    maxLength: z.number().optional().describe('text: a longer value is refused before the run'),
+    min: z.number().optional().describe('number: a smaller value is refused before the run'),
+    max: z.number().optional().describe('number: a larger value is refused before the run')
   })
   .describe('One typed value');
 

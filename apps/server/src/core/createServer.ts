@@ -91,6 +91,7 @@ const withConnectorRsc = <
     rsc?: SSRRscConfig;
     publicDir?: string;
     dataDir?: string;
+    devMode?: boolean;
   }
 >(
   config: T
@@ -116,7 +117,8 @@ const withConnectorRsc = <
     publicDir: config.publicDir,
     // A server with no actions has no lookup to put the folder in; it reads it the same way all the same.
     data: actions?.lookups.getData ?? (config.dataDir ? dataDirLookup(config.dataDir) : undefined),
-    elementTimeoutMs: config.rsc?.elementTimeoutMs
+    elementTimeoutMs: config.rsc?.elementTimeoutMs,
+    sayFailures: config.devMode === true
   });
 
   return resolved;

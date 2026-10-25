@@ -3,7 +3,7 @@ import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers';
 import { resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { createEmailSender } from './email';
-import { ActionRefusal, ActionRunError, isActionRefusal } from './errors';
+import { ActionRefusal, ActionRunError, isActionRefusal, refusalCodeOf } from './errors';
 import { flagsForRun } from './flags';
 import { runCancelKey } from './guards';
 import { createKvStore } from './kvStore';
@@ -682,6 +682,7 @@ export const createActionRunner = (
     let fatal: ActionRunError | undefined;
     /** Set when a step refused with a reason written for the caller — the one failure a result may say the why of. */
     let refusal: string | undefined;
+    let refusalCode: string | undefined;
 
     try {
       await Promise.race([runFlow(), deadline.promise]);
@@ -712,6 +713,7 @@ export const createActionRunner = (
         failure = error instanceof Error ? error.message : String(error);
         if (isActionRefusal(error)) {
           refusal = redact(error.message);
+          refusalCode = refusalCodeOf(error);
         }
 
         trace.push({
@@ -799,7 +801,8 @@ export const createActionRunner = (
       output: redact(output),
       trace: [...trace],
       steps: [...steps],
-      ...(refusal === undefined ? {} : { error: refusal })
+      ...(refusal === undefined ? {} : { error: refusal }),
+      ...(refusalCode === undefined ? {} : { code: refusalCode })
     };
   };
 

@@ -1,9 +1,17 @@
 import { rendersNoTag, RESERVED_PROP_NAMES, parentChain } from '@plitzi/sdk-schema';
 import { invalidParams } from '@plitzi/sdk-shared/authoring';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { anchorOf } from '@plitzi/sdk-shared/schema';
 
-import { groupBindings, hasVisibilityBinding, bindTemplate, toBindingSpecs, withVisibility } from '../bindings';
+import {
+  groupBindings,
+  hasVisibilityBinding,
+  bindTemplate,
+  resolveSource,
+  toBindingSpecs,
+  withVisibility
+} from '../bindings';
 import { AuthoringError } from '../codes';
 import { flagGateOf } from '../flags';
 import { authorFlows } from '../flows';
@@ -259,6 +267,40 @@ const recordHandle = (author: SpaceAuthor, handle: ElementHandle): void => {
 };
 
 /**
+ * A provider's `when`: a rule group whose every field is a source resolved as a binding's is — a name nothing answers to
+ * is refused, a short one written whole. A wrong one never held and said nothing (encore-3: `roomData.role` for
+ * `apiContainer_roomData.role`), and a string where the group goes was read as no rule at all.
+ */
+const providerWhen = (
+  when: unknown,
+  sources: Parameters<typeof resolveSource>[1] | undefined,
+  where: string,
+  globals: readonly string[]
+): unknown => {
+  const group = (value: unknown): unknown => {
+    if (!isRecord(value) || !Array.isArray(value.rules)) {
+      throw new AuthoringError(
+        'provider-when-not-rules',
+        `${where} says \`when\` as ${JSON.stringify(value)}, which is never read: it is a rule group — \`{ combinator: 'and', rules: [{ field: 'auth.isAuthenticated', operator: '=', value: true }] }\` — a group of rules in place of a rule nests.`
+      );
+    }
+
+    return {
+      ...value,
+      rules: value.rules.map((rule: unknown) =>
+        isRecord(rule) && Array.isArray(rule.rules)
+          ? group(rule)
+          : isRecord(rule) && typeof rule.field === 'string' && sources
+            ? { ...rule, field: resolveSource(rule.field, sources, `${where}'s \`when\``, globals) }
+            : rule
+      )
+    };
+  };
+
+  return group(when);
+};
+
+/**
  * An element and everything under it, into `tree` — or, when it cannot be written, the reason kept for the end, so a
  * run reports every element that is wrong rather than the first. Its subtree is skipped; its siblings are not.
  */
@@ -277,8 +319,30 @@ export const addElement = (
   } catch (error) {
     author.skipped += 1;
     author.refusals.push({ place, at: writtenAt(spec), ...refusalOf(error) });
+    // Its subtree is skipped: a name under it taken too is said now, not in the next run — encore-3's two tasks reusing
+    // room-request, room-request-message and roomRequests took three runs of the checks to find.
+    if (error instanceof AuthoringError && error.code === 'id-taken') {
+      takenUnder(author, spec.children ?? [], place);
+    }
 
     return typeof spec.id === 'string' ? spec.id : '';
+  }
+};
+
+/** Each name under a refused element already taken elsewhere in the space, said as its own refusal. */
+const takenUnder = (author: SpaceAuthor, children: readonly ElementSpec[], place: string): void => {
+  for (const child of children) {
+    const earlier = typeof child.id === 'string' ? author.authoredAt.get(child.id) : undefined;
+    if (earlier !== undefined) {
+      author.refusals.push({
+        place: `${place} › ${String(child.id)}`,
+        at: writtenAt(child),
+        code: 'id-taken',
+        message: `Element "${String(child.id)}", under the element refused above, uses a name already taken at ${earlier} as well: the same \`scope()\` around them both gives each its own.`
+      });
+    }
+
+    takenUnder(author, child.children ?? [], place);
   }
 };
 
@@ -397,7 +461,10 @@ const writeElement = (
 
   const element: Element = {
     id,
-    attributes: spec.attributes ?? {},
+    attributes:
+      spec.type === 'apiContainer' && spec.attributes?.when !== undefined
+        ? { ...spec.attributes, when: providerWhen(spec.attributes.when, sourceIndex, where, tree.globals) }
+        : (spec.attributes ?? {}),
     definition: {
       label: spec.meta?.label ?? spec.type,
       type: spec.type,

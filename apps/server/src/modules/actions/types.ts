@@ -537,4 +537,9 @@ export type ActionRunResult = {
   steps: ActionRunStep[];
   /** Why the run failed, when a step said so for the caller (`ActionRefusal`). Absent for every other failure. */
   error?: string;
+  /**
+   * The refusal's code, when its step gave one (`refuse('banned', …)`): what a page tells refusals apart by — encore-3's
+   * specs could only read their words.
+   */
+  code?: string;
 };

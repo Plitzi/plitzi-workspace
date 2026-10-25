@@ -28,8 +28,9 @@ export interface TextGround {
 
 /**
  * Run in the page: each element with words of its own a reader sees — not one hidden for screen readers alone (a box of
- * a pixel), nor one transparent — its colour, and the nearest element, it or one above it, painting a background.
- * Self-contained: sent to the browser as it is.
+ * a pixel, or one that it or a box above it clips to nothing: `overflow: hidden` on a pixel, `clip-path: inset(50%)`,
+ * `clip: rect(0 0 0 0)`), nor one transparent — its colour, and the nearest element, it or one above it, painting a
+ * background. Self-contained: sent to the browser as it is.
  */
 export const textGrounds = (): TextGround[] => {
   const named = (node: Element): string => node.getAttribute('data-plitzi-el') ?? node.tagName.toLowerCase();
@@ -45,13 +46,35 @@ export const textGrounds = (): TextGround[] => {
       .flatMap(node => (node ? [getComputedStyle(node).backgroundColor] : []))
       .find(colour => colour !== 'transparent' && !/rgba\([^)]*,\s*0\)$/.test(colour)) ?? 'rgb(255, 255, 255)';
 
+  // An sr-only line's words overflow a pixel-wide box, so their own box can be large: only the box clipping them says
+  // nobody sees them (encore-3's ON AIR lamp). A clipping box of any size is left be — a scrolled panel shows its words.
+  const tiny = (box: DOMRect): boolean => box.width < 2 || box.height < 2;
+  const seen = (node: Element): boolean => {
+    if (tiny(node.getBoundingClientRect())) {
+      return false;
+    }
+
+    for (let at: Element | null = node; at; at = at.parentElement) {
+      const style = getComputedStyle(at);
+      const clipsAll =
+        /inset\(\s*50%/.test(style.clipPath) || /^rect\(0(px)?,?\s*0(px)?,?\s*0(px)?,?\s*0(px)?\)$/.test(style.clip);
+      const clipsToAPixel =
+        /hidden|clip|auto|scroll/.test(`${style.overflow} ${style.overflowX} ${style.overflowY}`) &&
+        tiny(at.getBoundingClientRect());
+      if (clipsAll || clipsToAPixel) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   return Array.from(document.querySelectorAll('[data-plitzi-el]')).flatMap(node => {
     const words = Array.from(node.childNodes).some(
       child => child.nodeType === 3 && (child.textContent ?? '').trim() !== ''
     );
-    const box = node.getBoundingClientRect();
     const style = getComputedStyle(node);
-    if (!words || box.width < 2 || box.height < 2 || style.visibility === 'hidden' || Number(style.opacity) === 0) {
+    if (!words || !seen(node) || style.visibility === 'hidden' || Number(style.opacity) === 0) {
       return [];
     }
 

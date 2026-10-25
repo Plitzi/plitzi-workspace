@@ -75,7 +75,22 @@ export const outlineIn = (input: {
   limit: number;
   words: number;
 }): { elements: OutlinedElement[]; more: number } | { problem: string } => {
-  const root = input.within === undefined ? document.body : document.querySelector(input.within);
+  const matches = (selector: string): Element[] => {
+    try {
+      return [...document.querySelectorAll(selector)];
+    } catch {
+      return [];
+    }
+  };
+  // The part a visitor sees: a page that draws one per width hides the other, and its first was a hidden copy with no
+  // rows to list (encore-3's requests list, outlined empty).
+  const visibleBox = (node: Element): boolean => {
+    const box = node.getBoundingClientRect();
+
+    return box.width > 0 && box.height > 0;
+  };
+  const found = input.within === undefined ? [] : matches(input.within);
+  const root = input.within === undefined ? document.body : (found.find(visibleBox) ?? found.at(0) ?? null);
   if (root === null) {
     return { problem: `nothing on the page answers ${String(input.within)}` };
   }
@@ -141,6 +156,18 @@ export const outlineIn = (input: {
 
       // Shown before the click: not what it opened — what it opened may be inside it.
       if (input.opened !== undefined && child.hasAttribute(input.opened)) {
+        walk(child, depth);
+        continue;
+      }
+
+      // A bare wrapper — a div or span that names nothing, says nothing and holds one thing — is walked through: a page's
+      // first levels were five such divs and "480 more under these", none of its parts named (encore-3).
+      const shownChildren = [...child.children].filter(each => !skipped.has(each.tagName) && shown(each));
+      const ownWords = [...child.childNodes].some(
+        each => each.nodeType === Node.TEXT_NODE && (each.textContent ?? '').trim() !== ''
+      );
+      const bare = ['DIV', 'SPAN'].includes(child.tagName) && !child.hasAttribute('data-plitzi-el') && child.id === '';
+      if (bare && !ownWords && shownChildren.length === 1) {
         walk(child, depth);
         continue;
       }

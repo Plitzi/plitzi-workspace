@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { projectMark } from '@plitzi/sdk-shared/project';
 
-import { projectServers, serverStop } from './server';
+import { projectServers, serverReset, serverStop } from './server';
 
 import type { ChildProcess } from 'node:child_process';
 
@@ -122,4 +122,36 @@ describe.skipIf(process.platform === 'win32')('plitzi server stop', () => {
 
     expect(process.exitCode).toBe(1);
   });
+
+  // encore-3: `server stop --port` said "nothing of this project listens" for a server that had already exited.
+  it('says a port nothing listens on is free, not held by another folder', async () => {
+    await serverStop({ port: 1 });
+
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Nothing listens on port 1'));
+  });
+
+  // encore-3: a reviewer's page play used the demo's data up, and emptying the copy's sqlite by hand was the way back.
+  it('resets what the server keeps to a cold start, and refuses while a server of the folder runs', async () => {
+    await fs.mkdir(path.join(root, 'state'));
+    await fs.writeFile(path.join(root, 'state', 'kv.json'), '{}');
+    const mine = await listening(serve(root, projectMark(root)));
+
+    await serverReset({});
+
+    expect(process.exitCode).toBe(1);
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining(`running on :${String(mine.port)}`));
+    expect(await fs.readdir(path.join(root, 'state'))).toEqual(['kv.json']);
+
+    await serverStop({});
+    expect(await until(() => !alive(mine.pid))).toBe(true);
+    process.exitCode = undefined;
+    await serverReset({ dryRun: true });
+    expect(await fs.readdir(path.join(root, 'state'))).toEqual(['kv.json']);
+
+    await serverReset({});
+
+    expect(process.exitCode).toBeUndefined();
+    await expect(fs.access(path.join(root, 'state'))).rejects.toThrow();
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Removed state/ (kv.json)'));
+  }, 20_000);
 });

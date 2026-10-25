@@ -50,6 +50,49 @@ export const pinnedNow = async (root: string, cli: string): Promise<Pinned> => {
 
 export const samePinned = (a: Pinned, b: Pinned): boolean => JSON.stringify(a) === JSON.stringify(b);
 
+/** The `@plitzi` packages the project's `package.json` names — chosen by it; the rest come with them — or none read. */
+const declaredPlitzi = async (root: string): Promise<Set<string> | undefined> => {
+  const bytes = await readOptional(path.join(root, 'package.json'));
+  let manifest: unknown;
+  try {
+    manifest = bytes === undefined ? undefined : JSON.parse(bytes.toString('utf-8'));
+  } catch {
+    return undefined;
+  }
+
+  if (!isRecord(manifest)) {
+    return undefined;
+  }
+
+  const names = [manifest.dependencies, manifest.devDependencies].flatMap(deps =>
+    isRecord(deps) ? Object.keys(deps).filter(name => name.startsWith('@plitzi/')) : []
+  );
+
+  return new Set(names);
+};
+
+/**
+ * How a run's pin and the one installed now differ: what stops its agents — the CLI, or a package the project names
+ * itself — and what only moved under them, a package that comes with those (`@plitzi/plitzi-ui`, under the SDK) within
+ * their ranges, as a fresh install gets it: said, never a stop. encore-3: a plitzi-ui patch held every agent 13 minutes
+ * until a person attached again. A `package.json` that cannot be read stops on any change, as before.
+ */
+export const pinDifference = async (
+  root: string,
+  was: Pinned,
+  now: Pinned
+): Promise<{ stops: string[]; carried: string[] }> => {
+  const declared = await declaredPlitzi(root);
+  const changes = pinnedChanges(was, now);
+  const isStop = (change: string): boolean => {
+    const name = /^(@plitzi\/[^ ]+) /.exec(change)?.[1];
+
+    return declared === undefined || name === undefined || name === '@plitzi/cli' || declared.has(name);
+  };
+
+  return { stops: changes.filter(isStop), carried: changes.filter(change => !isStop(change)) };
+};
+
 /** What changed between two pins, a line each: `@plitzi/cli 0.38.1 → 0.38.2`. */
 export const pinnedChanges = (was: Pinned, now: Pinned): string[] => {
   const changes = was.cli === now.cli ? [] : [`@plitzi/cli ${was.cli} → ${now.cli}`];
@@ -110,11 +153,11 @@ export const loadRun = async (ctx: RunContext, runId: string, options: LoadOptio
   }
 
   if (!options.anyVersion) {
-    const pinned = await pinnedNow(ctx.root, ctx.cli);
-    if (!samePinned(record.pinned, pinned)) {
+    const { stops } = await pinDifference(ctx.root, record.pinned, await pinnedNow(ctx.root, ctx.cli));
+    if (stops.length > 0) {
       throw new RunRefusal(
         'version-mismatch',
-        `The Plitzi version changed while run "${runId}" is open: ${pinnedChanges(record.pinned, pinned).join(', ')}. A person attaches to it again (plitzi run attach ${runId}), which re-pins it and starts the tasks in hand again from their reviewed versions.`,
+        `The Plitzi version changed while run "${runId}" is open: ${stops.join(', ')}. A person attaches to it again (plitzi run attach ${runId}), which re-pins it and starts the tasks in hand again from their reviewed versions.`,
         { run: runId }
       );
     }

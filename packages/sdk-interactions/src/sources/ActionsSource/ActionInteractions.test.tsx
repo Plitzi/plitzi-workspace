@@ -296,6 +296,27 @@ describe('ActionInteractions', () => {
     expect(interactionTrigger).not.toHaveBeenCalledWith('button1', 'onFlowEnd', expect.anything());
   });
 
+  // encore-3: a spec told a refusal only by its words; its code reaches the flow, and the step's answer.
+  it('hands a refusal’s code to the flow beside its words', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          jsonResponse(200, { status: 'failed', runId: 'run-4', error: 'You are banned', code: 'banned' })
+        )
+      )
+    );
+
+    const answered = await mount().run({ actionId: 'vote', input: '{}', mode: 'await' }, { hostElementId: 'button1' });
+
+    expect(answered).toMatchObject({ status: 'failed', error: 'You are banned', code: 'banned' });
+    expect(interactionTrigger).toHaveBeenCalledWith(
+      'button1',
+      'onFlowError',
+      expect.objectContaining({ code: 'banned' })
+    );
+  });
+
   it('cancels a run by id, and reads the server’s answer', async () => {
     const fetchMock = vi.fn(() =>
       Promise.resolve({ ok: true, status: 204, json: () => Promise.resolve({}) } as Response)

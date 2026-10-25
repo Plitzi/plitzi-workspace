@@ -56,7 +56,7 @@ export const BINDING_CODES = {
     kind: 'refused',
     means:
       'two bindings (`variantFrom`, `activeOn`, `activeWhen`) setting the variant of one class on one element — the second always wins',
-    fix: "one `variantFrom` whose template answers every case: `{{ wide ? 'roomy' : current ? 'active' : 'idle' }}`"
+    fix: "one `variantFrom` whose template answers every case: `{{ wide ? 'roomy' : current ? 'active' : 'idle' }}`; two things that change apart (a size, a lit state) are two classes, each with its own `variantFrom`"
   },
   'visibility-as-attribute': {
     kind: 'refused',

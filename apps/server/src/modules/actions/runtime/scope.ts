@@ -66,6 +66,23 @@ const misfit = (key: string, type: ActionFieldType, value: unknown): string => {
   return `${key} (${type}, got ${given}${hint})`;
 };
 
+/** Why a value of its type is outside its field's limits — `maxLength`, `min`, `max` — or nothing. */
+const outOfLimits = (key: string, field: ActionField, value: unknown): string | undefined => {
+  if (typeof value === 'string' && field.maxLength !== undefined && value.length > field.maxLength) {
+    return `${key} (text, longer than ${String(field.maxLength)} characters)`;
+  }
+
+  if (typeof value === 'number' && field.min !== undefined && value < field.min) {
+    return `${key} (number, at least ${String(field.min)})`;
+  }
+
+  if (typeof value === 'number' && field.max !== undefined && value > field.max) {
+    return `${key} (number, at most ${String(field.max)})`;
+  }
+
+  return undefined;
+};
+
 /**
  * Coerces a value bag against declared fields.
  *
@@ -91,6 +108,13 @@ export const applyFields = (fields: Record<string, ActionField>, raw: Record<str
     const coerced = coerce(field.type, provided);
     if (coerced === undefined) {
       invalid.push(misfit(key, field.type, provided));
+
+      return;
+    }
+
+    const outside = outOfLimits(key, field, coerced);
+    if (outside !== undefined) {
+      invalid.push(outside);
 
       return;
     }

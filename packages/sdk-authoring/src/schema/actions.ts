@@ -349,7 +349,16 @@ export interface ActionTask {
   description?: string;
   params: Record<
     string,
-    { type: unknown; label?: string; defaultValue?: unknown; required?: boolean; options?: unknown }
+    {
+      type: unknown;
+      label?: string;
+      defaultValue?: unknown;
+      required?: boolean;
+      options?: unknown;
+      maxLength?: number;
+      min?: number;
+      max?: number;
+    }
   >;
 }
 
@@ -382,7 +391,10 @@ const fieldTypeOf = (type: unknown): ActionField['type'] => {
   return type === 'codemirror-json' || type === 'elements' || type === 'list' ? 'json' : 'text';
 };
 
-/** A task's params as the input of an action that runs it: each param a field, with its label, default and need. */
+/**
+ * A task's params as the input of an action that runs it: each param a field, with its label, default, need and limits —
+ * so a caller reads `min`/`max`/`maxLength` off the action, and a value outside them is refused before the task runs.
+ */
 const inputOf = (params: ActionTask['params']): Record<string, ActionField> =>
   Object.fromEntries(
     Object.entries(params).map(([key, param]) => {
@@ -393,7 +405,10 @@ const inputOf = (params: ActionTask['params']): Record<string, ActionField> =>
         ...(typeof defaultValue === 'string' || typeof defaultValue === 'number' || typeof defaultValue === 'boolean'
           ? { defaultValue }
           : {}),
-        ...(param.required ? { required: true } : {})
+        ...(param.required ? { required: true } : {}),
+        ...(param.maxLength !== undefined ? { maxLength: param.maxLength } : {}),
+        ...(param.min !== undefined ? { min: param.min } : {}),
+        ...(param.max !== undefined ? { max: param.max } : {})
       };
 
       return [key, field];

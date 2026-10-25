@@ -378,6 +378,11 @@ export const suggestRepeats = (
     }
 
     const type = flat[fresh[0]].definition.type;
+    // Said with both: what counts as a copy, so an author never guesses a shape under it, and the way to keep them.
+    const counted =
+      ` Counted from ${String(MIN_SHAPE_COPIES)} copies of ${String(MIN_SHAPE)} elements or more (2 of ` +
+      `${String(MIN_PAIR)} or more); a helper called once a copy still writes each into the document. Alike on ` +
+      "purpose: `quiet: ['repeated-shape']` on them, with a comment saying why.";
     suggestions.push({
       code: 'repeated-shape',
       elementIds: fresh,
@@ -387,12 +392,13 @@ export const suggestRepeats = (
           'item written again for each row of data. One `list` over the rows draws them: its item template is ' +
           'written once and reads each row (`{{ <list>.item.<field> }}`). Worth it when they are data — an array ' +
           'they were written from, rows that come and go; a few cards a person edits word by word on the canvas can ' +
-          'stay as they are.'
+          `stay as they are.${counted}`
         : `${String(fresh.length)} ${type}s of ${String(size)} elements share one structure (${named(fresh)}) and ` +
           'differ only in what they say. Make it a component — `components: [{ id, props, root }]` — and place it ' +
           'with `component(id, { props })`: one tree to read and edit, and every copy changes with it. What a copy ' +
           "says or does differently is a prop: an attribute reads `{{ props.title }}`, and so does a flow's step; " +
-          'what it reads from the page is a prop the instance binds (`component(id, { bind: [{ to: prop, source }] })`).'
+          'what it reads from the page is a prop the instance binds (`component(id, { bind: [{ to: prop, source }] })`).' +
+          counted
     });
     fresh.forEach(cover);
   }

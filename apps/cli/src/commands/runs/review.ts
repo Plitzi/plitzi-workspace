@@ -243,6 +243,16 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
         // at once, a few at a time: each is a page or two in a browser of its own, and one after another they were
         // most of a look (the sanity run: 25 s, 22 of them waiting in turn).
         const partsBeside = before !== undefined && clips.length > 0;
+        // Why a picture was not taken, kept to be said: "No picture could be taken" alone left encore-3's reviewers to
+        // page through it themselves — a page for the signed-in, a part new since the run before.
+        const unpictured: string[] = [];
+        const notTaken = (what: string, output: string): void => {
+          const why = output
+            .split('\n')
+            .map(line => line.trim())
+            .find(line => line !== '' && !line.startsWith('{'));
+          unpictured.push(`${what}: ${why ?? 'the picture failed, saying nothing'}`);
+        };
         const named = (route: string, clip: string | undefined, width: string, scheme: string, after = false) =>
           path.join(
             runPaths(ctx.root, runId).shots,
@@ -292,6 +302,10 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
                     ])
                   : undefined;
 
+              if (shot.code !== 0) {
+                notTaken(`${route}${clip ? ` ${clip}` : ''} at ${width} ${scheme}`, shot.output);
+              }
+
               return [
                 ...(shot.code === 0 ? [out] : []),
                 ...(hovered && hovered.code === 0 ? picturesOf(hovered.output) : [])
@@ -327,9 +341,43 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
               out
             ]);
 
+            if (shot.code !== 0) {
+              // Set beside nothing — a part new since the run before, absent there — it is pictured alone, said so.
+              const alone = await runSelf(preview.dir, [
+                'page',
+                'shot',
+                route,
+                '--url',
+                preview.url,
+                ...zone,
+                ...signedIn,
+                ...(clip ? ['--clip', clip] : []),
+                '--width',
+                width,
+                '--scheme',
+                scheme,
+                '-o',
+                out
+              ]);
+              notTaken(
+                `${route}${clip ? ` ${clip}` : ''} at ${width} ${scheme}, beside the run before${alone.code === 0 ? ' (pictured alone instead)' : ''}`,
+                shot.output
+              );
+
+              // Pictured, compared with nothing: no section of it set beside anything.
+              return alone.code === 0
+                ? [
+                    {
+                      compared: { route, width, scheme, sections: [], dress: [], problem: 'new since the run before' },
+                      shot: out
+                    }
+                  ]
+                : [];
+            }
+
             return partsComparedOf(shot.output).map(each => ({
               compared: { route, width, scheme, ...each.compared },
-              ...(each.shot && shot.code === 0 ? { shot: each.shot } : clip && shot.code === 0 ? { shot: out } : {})
+              ...(each.shot ? { shot: each.shot } : clip ? { shot: out } : {})
             }));
           })
         );
@@ -399,6 +447,7 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
           ...(many ? { wholeFor: parts.tops } : {}),
           ...(unreached.length > 0 ? { unreached } : {}),
           shots,
+          ...(unpictured.length > 0 ? { unpictured } : {}),
           ...(unchanged.size > 0 ? { unchanged: [...unchanged] } : {}),
           ...(movedElsewhere.length > 0 ? { movedElsewhere } : {}),
           timezone: options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -421,7 +470,7 @@ const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[],
 type Looked = Awaited<ReturnType<typeof lookAt>>;
 
 /** What a look says. */
-const lookText = (looked: Looked): string =>
+export const lookText = (looked: Looked): string =>
   [
     chalk.bold(
       looked.borrowed === undefined
@@ -481,6 +530,13 @@ const lookText = (looked: Looked): string =>
           ...looked.shots.map(each => `  ${each}`)
         ]
       : ['No picture could be taken.']),
+    ...(looked.unpictured
+      ? [
+          chalk.yellow(`Not pictured (${String(looked.unpictured.length)}):`),
+          ...looked.unpictured.slice(0, 6).map(each => chalk.yellow(`  ${each}`)),
+          ...(looked.unpictured.length > 6 ? [chalk.yellow(`  … ${String(looked.unpictured.length - 6)} more`)] : [])
+        ]
+      : []),
     ...(looked.compared
       ? [
           "Beside the run before it (its approved work, without this task) — motion reduced and another site's pictures stood in for on both sides, so only what the project changed differs; each side by side (after | before) in its -after-compare.png:",

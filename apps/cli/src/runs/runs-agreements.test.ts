@@ -3,8 +3,10 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { proposalsOf } from './agreements';
 import { continueRun, finishRun, resolveFile } from './merge';
 import { answerProposal, proposeChange } from './proposals';
+import { loadRun } from './run';
 import { completeTask, reviewTask, taskContext } from './tasks';
 import { viewRun } from './view';
 import { makeBench, writeInCopy } from '../tests/runProject';
@@ -59,6 +61,17 @@ describe('tasks agreeing with each other', () => {
     await completeTask(menu.ctx, 'es-launch', 't-menu');
     const context = await taskContext(menu.ctx, 'es-launch', 't-menu');
     expect(context.proposals.agreements.map(each => each.id)).toEqual(['t-menu-p1']);
+  });
+
+  // encore-3: dev-1 waited on a task that ran only after its own, past its harness's timeout, with nothing said.
+  it('refuses a wait on a task that runs after this one, leaving no proposal behind', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+
+    expect(
+      (await refusal(proposeChange(home.ctx, 'es-launch', 't-home', 't-book', { change: 'x', wait: true }))).message
+    ).toContain('t-book runs after t-home');
+    expect(await proposalsOf(await loadRun(lead(), 'es-launch'))).toEqual([]);
   });
 
   it('refuses a wait for an answer that would close a cycle, and a proposal to a task that is done', async () => {

@@ -93,7 +93,10 @@ describe('page play', () => {
     ]).map(line => stripVTControlCharacters(line));
 
     expect(lines).toContain('  picker: not on the page yet');
-    expect(lines).toContain('  ghost: ghost is not on http://x/');
+    // encore-3's `--read a,b`: said once, at the first step, not again at every step.
+    expect(lines.filter(line => line.startsWith('  ghost:'))).toEqual([
+      '  ghost: ghost is not on http://x/ (at every step)'
+    ]);
   });
 
   it('says what a control says of itself: its words, its value, its ARIA states, its focus', () => {

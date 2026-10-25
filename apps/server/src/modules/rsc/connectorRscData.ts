@@ -30,7 +30,8 @@ export const connectorRscData = ({
   actions,
   publicDir,
   data,
-  elementTimeoutMs
+  elementTimeoutMs,
+  sayFailures = false
 }: {
   connectors?: ConnectorLookups;
   actions?: { lookups: ActionLookups; module: ActionsModule };
@@ -43,6 +44,8 @@ export const connectorRscData = ({
   data?: ProjectDataLookup;
   /** The deployment's per-element ceiling, when it set one. `resolveRscData` decides the default. */
   elementTimeoutMs?: number;
+  /** While developing: a failed element says why where the page reads it. */
+  sayFailures?: boolean;
 }): NonNullable<SSRAdapters['getRscData']> => {
   const resolveConnector = connectors ? createConnectorResolver(connectors) : undefined;
   const resolveAction = actions ? createActionResolver(actions.lookups, actions.module) : undefined;
@@ -91,7 +94,8 @@ export const connectorRscData = ({
       resolveElement,
       ...(flagOverrides ? { flagOverrides } : {}),
       ...(signal ? { signal } : {}),
-      ...(elementTimeoutMs === undefined ? {} : { timeoutMs: elementTimeoutMs })
+      ...(elementTimeoutMs === undefined ? {} : { timeoutMs: elementTimeoutMs }),
+      sayFailures
     });
   };
 };

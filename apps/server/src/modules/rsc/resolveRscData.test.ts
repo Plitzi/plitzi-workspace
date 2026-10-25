@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { RSC_FAILURE } from '@plitzi/sdk-shared/schema';
+
 import { resolveRscData } from './resolveRscData';
 
 import type { RscElementResolver } from './resolveRscData';
@@ -149,6 +151,23 @@ describe('resolveRscData', () => {
     });
 
     expect(Object.keys(result.serverData ?? {}).sort()).toEqual(['postApi', 'postNested']);
+  });
+
+  // encore-3: a session action with no render trigger failed 'forbidden' in a log, the page saying "could not be reached".
+  it('says a failed element’s reason in its data while developing, and leaves it out otherwise', async () => {
+    const resolveElement = vi
+      .fn<RscElementResolver>()
+      .mockImplementation(({ element }) =>
+        element.id === 'postApi'
+          ? Promise.reject(new Error('Action "post" has no "render" trigger'))
+          : Promise.resolve({ ok: 1 })
+      );
+    const asked = { ...base, schema: buildSchema(), req: request('/blog/hello'), resolveElement };
+
+    expect((await resolveRscData({ ...asked, sayFailures: true })).serverData?.postApi).toEqual({
+      [RSC_FAILURE]: 'Action "post" has no "render" trigger'
+    });
+    expect(Object.keys((await resolveRscData(asked)).serverData ?? {})).toEqual(['postNested']);
   });
 
   it('reaches server elements nested under non-server containers', async () => {

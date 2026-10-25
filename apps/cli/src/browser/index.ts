@@ -83,6 +83,8 @@ export interface PageRoute {
     body: string | Uint8Array;
   }): Promise<void>;
   continue(): Promise<void>;
+  /** Answered with a failure, as a request the network could not make: `--block`'s. */
+  abort(): Promise<void>;
   /** On to the handler registered before this one — or the network, past the first. */
   fallback(): Promise<void>;
   /** The request made now, as the page would make it: its answer, to answer the page with. */
@@ -122,6 +124,14 @@ export interface BrowserPage {
   route(matcher: (url: URL) => boolean, handler: (route: PageRoute) => Promise<void>): Promise<void>;
   /** Closed once pictured: a run of many pages holds one at a time. */
   close(): Promise<void>;
+  /** Loaded again, as a visitor's reload: what the page kept (its storage, a cookie) read back. */
+  reload(options: { waitUntil: 'load' }): Promise<unknown>;
+  /** The page's clock — `Date` and its timers — held from an instant and moved on by hand (`--clock`, `tick`). */
+  clock: {
+    install(options: { time: number }): Promise<void>;
+    runFor(milliseconds: number): Promise<void>;
+    setSystemTime(time: number): Promise<void>;
+  };
   /** The viewport changed in place: a page of a shared context sized as its reader asks. */
   setViewportSize(size: { width: number; height: number }): Promise<void>;
   /** The media a page answers to, set on the page alone: its colour scheme and motion in a shared context. */

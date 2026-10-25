@@ -70,6 +70,11 @@ describe('acceptance, checks and what is left behind', () => {
 
     await completeTask({ ...menu.ctx, checks: warning('src/space/pages/about.ts') }, runId, 't-menu');
     expect((await viewRun(lead(), runId)).tasks.find(task => task.id === 't-menu')?.status).toBe('in-review');
+    // Its review reads the one on another's file as a count, never as its own (encore-3's integrate task).
+    const shown = await showTask(lead(), runId, 't-menu');
+    expect(shown.warnings).toEqual([
+      "1 more in files it did not change — another task's, or the project's: npx plitzi space lint lists them"
+    ]);
   });
 
   it('refuses a page check whose text the shell would split into a page', async () => {

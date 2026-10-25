@@ -110,7 +110,7 @@ const assertTeamDesigner = async (ctx: RunContext, taskId: string): Promise<void
       'invalid',
       `${ctx.agent} is no designer of the team (${TEAM_FILE}): ${
         designers.length > 0 ? designers.map(each => each.agent).join(', ') : 'none of its agents'
-      } or the lead review ${taskId}'s UI — the lead, as itself: plitzi task review ${taskId} --approve --token <the lead's>`,
+      } or the lead review ${taskId}'s UI — the lead, as itself: plitzi task review ${taskId} --approve`,
       { task: taskId, designers: designers.map(each => each.agent) }
     );
   }
@@ -230,9 +230,9 @@ const decide = async (
         ? `Task "${taskId}" is past its review rounds: the lead approves it as it is, or answers it (plitzi task unblock ${taskId} --answer "…")`
         : view.state.status === 'changes-requested' && !isPrincipal(ctx.agent)
           ? // velada-shell's design-1 measured round 2, and its approval was refused with the status alone.
-            `Task "${taskId}" was sent back meanwhile (round ${String(view.state.round)}): there is no review to say now — what you measured, tell the lead (plitzi task tell --about ${taskId} "…" --token <yours>); its next round comes to review again`
+            `Task "${taskId}" was sent back meanwhile (round ${String(view.state.round)}): there is no review to say now — what you measured, tell the lead (plitzi task tell --about ${taskId} "…"); its next round comes to review again`
           : view.state.status === 'done'
-            ? `Task "${taskId}" is approved already: there is no review to say — what you found, tell the lead (plitzi task tell --about ${taskId} "…" --token <yours>)`
+            ? `Task "${taskId}" is approved already: there is no review to say — what you found, tell the lead (plitzi task tell --about ${taskId} "…")`
             : `Task "${taskId}" is ${view.state.status}, not in review`,
       { task: taskId }
     );
@@ -278,7 +278,7 @@ const decide = async (
     if (skipDesign) {
       throw new RunRefusal(
         'invalid',
-        `--skip-design is a lead's: ${ctx.agent} is not one. A lead approves without the UI review as itself — plitzi task review ${taskId} --approve --skip-design lead --token <the lead's>`,
+        `--skip-design is a lead's: ${ctx.agent} is not one. A lead approves without the UI review as itself — plitzi task review ${taskId} --approve --skip-design lead`,
         { task: taskId }
       );
     }
@@ -323,7 +323,18 @@ const decide = async (
     await sendMessage(ctx, loaded, {
       from: LEAD,
       to: agentAddress(cut),
-      text: `${ctx.agent} sent ${taskId} back while you reviewed its UI: your review of this round ends — what you found still matters, tell the lead with plitzi task tell --about ${taskId} "…" --token <yours>`
+      text: `${ctx.agent} sent ${taskId} back while you reviewed its UI: your review of this round ends — what you found still matters, tell the lead with plitzi task tell --about ${taskId} "…"`
+    });
+  }
+
+  // A reviewer that took this round's review and is still at it is told its review ends — encore-3's tester read on as
+  // the lead approved, the task's copy gone under it, and its own verdict refused "approved already".
+  const holder = view.state.reviewer;
+  if (holder && holder.by !== ctx.agent && holder.round === view.state.round && !byDesigner) {
+    await sendMessage(ctx, loaded, {
+      from: LEAD,
+      to: agentAddress(holder.by),
+      text: `${ctx.agent} decided ${taskId} (${verdict === 'approve' ? 'approved' : 'sent back'}) while you reviewed it: your review of this round ends — what you found still matters, tell the lead with plitzi task tell --about ${taskId} "…"; then plitzi task next`
     });
   }
 
@@ -595,7 +606,7 @@ const decide = async (
     await sendMessage(ctx, refreshed, {
       from: LEAD,
       to: agentAddress(designer),
-      text: `${taskId} is approved without its UI review (the lead went first): drop that review — what you found still matters, tell the lead with plitzi task tell --about ${taskId} "…" --token <yours>`
+      text: `${taskId} is approved without its UI review (the lead went first): drop that review — what you found still matters, tell the lead with plitzi task tell --about ${taskId} "…"`
     });
   }
 

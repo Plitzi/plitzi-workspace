@@ -241,6 +241,20 @@ describe('activeWhen', () => {
       withVisibility({ bind: [activeWhen(dot, 'state.wide'), activeWhen(dot, 'state.open', { slot: 'icon' })] })
     ).not.toThrow();
   });
+
+  /** encore-3: a size and a lit state on one lamp — the refusal names two classes, the way two axes are written. */
+  it('takes two classes of one element, each with its variant bound, and names them in the refusal', () => {
+    const size = styles('dotSize', { css: { width: '8px' }, variants: { large: { width: '16px' } } });
+
+    expect(() => withVisibility({ bind: [activeWhen(dot, 'state.wide'), activeWhen(dot, 'state.open')] })).toThrow(
+      /two classes on the element[^]*`class: \[dot, dotSize\]`/
+    );
+    expect(() =>
+      withVisibility({
+        bind: [activeWhen(dot, 'state.lit'), variantFrom(size, 'props', { template: '{{ props.size }}' })]
+      })
+    ).not.toThrow();
+  });
 });
 
 describe('a source named outside the scope that prefixes its element', () => {

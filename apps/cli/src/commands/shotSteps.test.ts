@@ -41,6 +41,14 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     ]);
   });
 
+  // encore-3: `fill email=ana@x.com`, as `--fill` writes it, was refused in a step.
+  it('reads a field filled as --fill writes it, an element named before its =', () => {
+    expect(parseSteps('fill room-request-message=Para ti, Sam; type q=lofi', 500)).toEqual([
+      { kind: 'type', target: 'room-request-message', text: 'Para ti, Sam' },
+      { kind: 'type', target: 'q', text: 'lofi' }
+    ]);
+  });
+
   // lx-controls: `type [aria-label="Precio hasta"] 650` was cut at its first space into a selector that is none.
   it('reads a selector with a space inside its brackets or quotes whole, unquoted', () => {
     expect(parseSteps('type [aria-label="Precio hasta"] 650; click button:has-text("Ver más")', 500)).toEqual([
@@ -64,18 +72,18 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   it('says which step is wrong, and what the steps are', () => {
     expect(parseSteps('click a; tap b', 500)).toEqual({
       problem:
-        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, shot, frames'
+        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, store, state, clock, tick, shot, frames'
     });
     expect(parseSteps('wait soon', 500)).toEqual({
       problem: 'step 1 ("wait soon"): "soon" is not a whole number from 1 to 30000'
     });
     expect(parseSteps('type title', 500)).toEqual({
       problem:
-        'step 1 ("type title"): type needs an element and the text — type <element> <text>, type ".panel textarea" hi'
+        'step 1 ("type title"): type needs an element and the text — type <element> <text> or type <element>=<text>, type ".panel textarea" hi'
     });
     expect(parseSteps('# only a note', 500)).toEqual({
       problem:
-        '--steps has no step: click, hover, scroll, type, fill, drag, press, wait, wait-for, shot, frames, separated by ";"'
+        '--steps has no step: click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, store, state, clock, tick, shot, frames, separated by ";"'
     });
   });
 
@@ -85,5 +93,34 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
       { kind: 'drag', target: 'product-slides => .js-media-list', dx: -200, dy: 0 },
       { kind: 'type', target: 'q => .search input', text: 'hola' }
     ]);
+  });
+});
+
+// encore-3: a choice kept across a reload, a countdown and a state the demo data never has were each a Playwright file.
+describe('the steps that set what a page remembers and what time it is', () => {
+  it('reads a reload, a stored value, a state written, the clock set and moved on', () => {
+    expect(
+      parseSteps(
+        'store listen-choice on; reload; state roomOpen true; state show {"title":"Late set"}; clock 2026-10-25T20:00:00Z; tick 5m; tick 1500',
+        500
+      )
+    ).toEqual([
+      { kind: 'store', key: 'listen-choice', value: 'on' },
+      { kind: 'reload' },
+      { kind: 'state', key: 'roomOpen', value: true },
+      { kind: 'state', key: 'show', value: { title: 'Late set' } },
+      { kind: 'clock', time: Date.parse('2026-10-25T20:00:00Z') },
+      { kind: 'tick', ms: 300_000 },
+      { kind: 'tick', ms: 1500 }
+    ]);
+  });
+
+  it('refuses each written wrong, saying how it is written', () => {
+    expect(parseSteps('state roomOpen', 500)).toEqual({ problem: expect.stringContaining('its value as JSON') });
+    expect(parseSteps('clock tomorrow', 500)).toEqual({
+      problem: expect.stringContaining('clock 2026-10-25T20:00:00Z')
+    });
+    expect(parseSteps('tick 8d', 500)).toEqual({ problem: expect.stringContaining('up to a week') });
+    expect(parseSteps('store only-a-key', 500)).toEqual({ problem: expect.stringContaining('a key and its value') });
   });
 });

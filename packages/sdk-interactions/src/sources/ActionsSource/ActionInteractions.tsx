@@ -46,6 +46,8 @@ type ActionResponse = {
   status?: string;
   output?: Record<string, unknown>;
   error?: string;
+  /** The refusal's code, when its step gave one (`refuse('banned', …)`): what a flow branches on, never the words. */
+  code?: string;
   reason?: string;
   /** What the flow did, step by step. Sent to any page whose debugging the deployment authorizes. */
   steps?: ActionRunStep[];
@@ -193,7 +195,8 @@ const flowErrorOf = (actionId: string, payload: ActionResponse) => ({
   actionId,
   runId: payload.runId ?? '',
   error: payload.error ?? '',
-  reason: payload.reason ?? 'failed'
+  reason: payload.reason ?? 'failed',
+  ...(payload.code ? { code: payload.code } : {})
 });
 
 /**
@@ -602,7 +605,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         status: endedStatusOf(payload.status),
         runId: payload.runId ?? '',
         output: payload.output ?? {},
-        ...(payload.error ? { error: payload.error } : {})
+        ...(payload.error ? { error: payload.error } : {}),
+        ...(payload.code ? { code: payload.code } : {})
       };
     },
     [endpoint, reportFlow]

@@ -244,15 +244,15 @@ const saveDraft = {
   title: 'Save draft',
   description: 'Keeps the draft as it is typed.',
   params: {
-    title: { type: 'text', canBind: true, defaultValue: '', label: 'Title', required: true },
-    words: { type: 'number', canBind: true, label: 'Words' },
+    title: { type: 'text', canBind: true, defaultValue: '', label: 'Title', required: true, maxLength: 80 },
+    words: { type: 'number', canBind: true, label: 'Words', min: 1, max: 5000 },
     blocks: { type: 'codemirror-json', canBind: true, label: 'Blocks' },
     pick: { type: (): string => 'text', label: 'Computed' }
   }
 };
 
 describe('taskAction', () => {
-  it('is the action that runs the task and answers its result, written from the task', () => {
+  it('is the action that runs the task and answers its result, written from the task — limits and all', () => {
     const derived = taskAction(saveDraft, { trigger: { type: 'call', access: 'public' } });
     const written = defineAction({
       id: 'inkwell-save-draft',
@@ -262,8 +262,8 @@ describe('taskAction', () => {
         type: 'call',
         access: 'public',
         input: {
-          title: { type: 'text', label: 'Title', defaultValue: '', required: true },
-          words: { type: 'number', label: 'Words' },
+          title: { type: 'text', label: 'Title', defaultValue: '', required: true, maxLength: 80 },
+          words: { type: 'number', label: 'Words', min: 1, max: 5000 },
           blocks: { type: 'json', label: 'Blocks' },
           pick: { type: 'text', label: 'Computed' }
         }

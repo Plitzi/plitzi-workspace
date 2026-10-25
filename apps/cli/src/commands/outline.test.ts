@@ -72,4 +72,24 @@ describe('page outline, in the page', () => {
       more: 0
     });
   });
+
+  // encore-3: a page's first levels were five bare divs and "480 more under these", none of its parts named; and a part
+  // asked by --within was its hidden copy, outlined empty.
+  it('walks through bare wrappers to the parts, and outlines the copy of a part a visitor sees', () => {
+    laidOut();
+    document.body.innerHTML = `
+      <div><div><div><section data-plitzi-el="home-hero"><h1>Encore</h1></section></div></div></div>
+      <ul data-plitzi-el="requests" hidden><li>hidden copy</li></ul>
+      <ul data-plitzi-el="requests"><li>Sam's request</li></ul>`;
+
+    expect(outlineIn({ depth: 0, limit: 50, words: 20 })).toMatchObject({
+      elements: [
+        expect.objectContaining({ element: 'home-hero', depth: 0 }),
+        expect.objectContaining({ element: 'requests' })
+      ]
+    });
+    expect(outlineIn({ within: '[data-plitzi-el="requests"]', depth: 2, limit: 50, words: 20 })).toMatchObject({
+      elements: [expect.objectContaining({ text: "Sam's request" })]
+    });
+  });
 });

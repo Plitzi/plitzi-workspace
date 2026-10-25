@@ -142,10 +142,26 @@ export interface CompletedTask {
   report: { round: number; experience?: true };
 }
 
-
 /** What a check that passed still warned of, each as `<check>: <warning>`. */
-const warningsOf = (checks: CheckResult): string[] =>
-  checks.steps.flatMap(step => (step.warnings ?? []).map(warning => `${step.name}: ${warning}`));
+/**
+ * The checks' warnings a review reads: those on a file the task changed, each — and the rest counted in a line, theirs
+ * whose file it is. encore-3: an integrate task's review listed an unused-file warning on a file it never touched.
+ */
+const warningsOf = (checks: CheckResult, changed: readonly string[]): string[] => {
+  const all = checks.steps.flatMap(step => (step.warnings ?? []).map(warning => ({ step: step.name, warning })));
+  const ours = ({ warning }: { warning: string }) =>
+    changed.some(file => warning.startsWith(`${file}:`) || warning.startsWith(`${file} `));
+  const others = all.filter(each => !ours(each)).length;
+
+  return [
+    ...all.filter(ours).map(({ step, warning }) => `${step}: ${warning}`),
+    ...(others > 0
+      ? [
+          `${String(others)} more in files it did not change — another task's, or the project's: npx plitzi space lint lists them`
+        ]
+      : [])
+  ];
+};
 
 export interface CompleteOptions {
   /** Go to review although the checks fail — for a reason that weighs, with the task that fixes it. */
@@ -512,7 +528,7 @@ export const completeTask = async (
       // A designer looks at its UI before the lead, each round its UI changed: what it changed is what is looked at.
       design: designed.design,
       ...(accepted.length > 0 ? { accepted } : { accepted: undefined }),
-      warnings: warningsOf(checks).length > 0 ? warningsOf(checks) : undefined,
+      warnings: warningsOf(checks, changed).length > 0 ? warningsOf(checks, changed) : undefined,
       knownFailure: preexisting
         ? {
             why: `the run's work fails ${failing.map(step => step.name).join(', ')} the same way without this task: ${failing.flatMap(step => step.said ?? []).find(line => line.trim() !== '' && !isNotice(line)) ?? 'see the checks'}`,

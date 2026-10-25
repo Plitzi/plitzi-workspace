@@ -1,15 +1,16 @@
 import { realpathSync } from 'node:fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import chalk from 'chalk';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
-import { PROJECT_TMP, projectMark } from '@plitzi/sdk-shared/project';
+import { PROJECT_STATE, PROJECT_TMP, projectMark } from '@plitzi/sdk-shared/project';
 
 import { readHealth } from '../browser';
 import { projectHere } from './existingProject';
 import { fail } from './terminal';
-import { listenersUnder, stopListener } from '../runs/processes';
+import { listenerOn, listenersUnder, stopListener } from '../runs/processes';
 
 /**
  * `plitzi server list` and `plitzi server stop`: this project's own servers — what `npm start` left listening from this
@@ -98,10 +99,13 @@ export const serverStop = async (options: ServerStopOptions): Promise<void> => {
     const copy = listenersUnder(realpathSync(project.root)).find(
       each => each.port === options.port && inside(each.cwd, path.join(realpathSync(project.root), PROJECT_TMP))
     );
+    const there = copy ? undefined : listenerOn(options.port);
     fail(
       copy
         ? `Port ${String(options.port)} is served from ${copy.cwd} — a run's copy, its agent's: stopped from there (cd ${copy.cwd} && plitzi server stop --port ${String(options.port)}), never from the project. A preview of a task stops by itself once the task is done.`
-        : `Nothing of this project listens on port ${String(options.port)} (${project.root}): what does listen there is no server started from this folder, and is left alone. plitzi server list says what is this project's.`
+        : there
+          ? `Port ${String(options.port)} is held by pid ${String(there.pid)}, started ${there.cwd ? `in ${there.cwd}` : 'in a folder lsof does not say'} — not this project (${project.root}), so it is left alone. plitzi server list says what is this project's.`
+          : `Nothing listens on port ${String(options.port)}: a server started there has already stopped — nothing to stop (${project.root}).`
     );
 
     return;
@@ -132,4 +136,54 @@ export const serverStop = async (options: ServerStopOptions): Promise<void> => {
   if (options.port !== undefined && mine.length === 0) {
     process.exitCode = 1;
   }
+};
+
+export interface ServerResetOptions {
+  dryRun?: boolean;
+  json?: boolean;
+}
+
+/**
+ * Puts what this folder's server keeps (`state/` — its kv, its jobs) back to a cold start: the next start is a fresh
+ * clone's. encore-3: a reviewer's `page play` used the demo's data up, and emptying the copy's sqlite by hand was the only
+ * way back. Refused while a server of this folder runs: it holds the files open and writes them back.
+ */
+export const serverReset = async (options: ServerResetOptions): Promise<void> => {
+  const project = await projectHere('whose server state to reset');
+  if (!project) {
+    return;
+  }
+
+  const running = listenersUnder(realpathSync(project.root)).filter(
+    each => !inside(each.cwd, path.join(realpathSync(project.root), PROJECT_TMP))
+  );
+  if (running.length > 0) {
+    fail(
+      `A server of this folder is running on ${running.map(each => `:${String(each.port)}`).join(', ')} and holds ${PROJECT_STATE}/ open — it would write it back. Stop it first (plitzi server stop), then reset.`
+    );
+
+    return;
+  }
+
+  const dir = path.join(project.root, PROJECT_STATE);
+  const kept = await fs.readdir(dir).catch(() => []);
+  if (!options.dryRun && kept.length > 0) {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+
+  if (options.json) {
+    console.log(JSON.stringify({ removed: options.dryRun ? [] : kept, wouldRemove: options.dryRun ? kept : [] }));
+
+    return;
+  }
+
+  console.log(
+    kept.length === 0
+      ? `Already cold: no ${PROJECT_STATE}/ in ${project.root} — the next start is a fresh one.`
+      : options.dryRun
+        ? `Would remove ${PROJECT_STATE}/ (${kept.join(', ')}) — what the server kept. Without --dry-run, it does.`
+        : chalk.green(
+            `Removed ${PROJECT_STATE}/ (${kept.join(', ')}): the next start is a cold start, as on a fresh clone.`
+          )
+  );
 };

@@ -62,6 +62,7 @@ const harness = async (own?: string) => {
         return Promise.resolve();
       },
       continue: () => Promise.resolve(),
+      abort: () => Promise.resolve(),
       fallback: () => Promise.resolve(),
       fetch: () => {
         fetched += 1;

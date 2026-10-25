@@ -271,3 +271,19 @@ export const differences = (
     same: properties.filter(alike)
   };
 };
+
+/** What `--only` asked of a reading: its styles narrowed to those properties, a side of a box read off its shorthand. */
+export const onlyOf = (
+  read: Measured | { problem: string },
+  only: readonly string[] | undefined
+): Measured | { problem: string } => {
+  if (!only || 'problem' in read) {
+    return read;
+  }
+
+  const shown = new Set<string>(
+    only.map(each => (Object.hasOwn(SIDE_LONGHANDS, each) ? SIDE_LONGHANDS[each].shorthand : each))
+  );
+
+  return { ...read, styles: Object.fromEntries(Object.entries(read.styles).filter(([key]) => shown.has(key))) };
+};

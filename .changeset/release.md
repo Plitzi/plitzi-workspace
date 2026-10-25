@@ -366,6 +366,21 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A failed step says nothing of a copy's missing `.env`.**
 - **`run upgrade` sets right a run whose Plitzi already changed:** a stop loads the run whatever is installed — encore-3's
   upgrade was refused `version-mismatch`, the very thing it re-pins.
+- **A package that comes with the SDK stops no run:** a run pins the CLI and the `@plitzi` packages the project names;
+  one they bring (`@plitzi/plitzi-ui`) moving within their ranges is said to the lead, and the agents go on. encore-3's
+  plitzi-ui patch held every agent 13 minutes. `run notice` is taken while a version changed, and `task next --follow`
+  waits through it to its end, never refused there.
+- **A reviewer reads the task's brief:** `task context` in a review copy is the reviewed task's. A review the lead
+  decides while another holds it tells that reviewer so, and nobody reviews their own.
+- **A brief says the neighbours another task holds:** a file beside the task's own (`room.test.ts` beside `room.ts`) and
+  whose it is — encore-3's developers found them at `task check`, after writing them.
+- **A wait that would never end is refused:** `task wait` and `task propose --wait` on a task that runs after this one
+  (its `dependsOn` leads to it) say so at once, and leave no proposal behind; encore-3's dev-1 waited past its harness's
+  timeout.
+- **A review reads its own warnings:** the checks' warnings a task leaves are those on files it changed; the rest are
+  counted in a line, theirs whose file it is.
+- **`task look` says what it did not picture,** each page and why, and pictures a part new since the run before alone.
+- **A command no longer tells an agent to pass its token** — the shell carries it.
 
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
 
@@ -424,6 +439,24 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`explain --search ctx.later`** answers the member first, as the installed types declare it.
 - **`plitzi functions later [key] --now`**: what the served project holds to run later (`ctx.later`), by key and when it
   is due — and one started now, through the server's own queue: a spec of a show waited five real minutes a pass.
+- **`page play` and `page shot --steps` set what the demo data never has:** `reload`, `store <key> <value>`
+  (`localStorage`), `state <key> <json>` (the space's state, on a development page), and with `--clock <instant>` the
+  steps `clock <instant>` and `tick 5m` — a countdown read at each moment. `fill email=ana@x.com` is taken as `--fill`
+  writes it.
+- **`page play` and `page measure` read a page in a browser that refuses:** `--block <text>` fails each request whose
+  address holds it, `--autoplay refused` refuses media with sound until a press, `--storage refused` throws on
+  `localStorage`. `page play` takes `--timezone`.
+- **`page measure --only <properties>`** prints those alone (`--only box`: place, size, padding, margin), and **`--rows`**
+  measures every row of a list, not its first. A click's answer from the server lands before what follows reads the
+  page.
+- **`page outline --within`** takes the first part shown and names what is inside it, through the wrappers.
+- **`page play` says a read never there once**, not at every step and width.
+- **`plitzi server reset`** puts what a folder's server keeps (`state/`) back to a cold start, refused while one of its
+  servers runs; `server stop --port` says whether anything listens there at all.
+- **`page check` judges no words a reader never sees for contrast:** a line clipped to nothing for screen readers
+  (`overflow: hidden` on a pixel, `clip-path: inset(50%)`, `clip: rect(0 0 0 0)`).
+- **`plitzi space fix` says what is left** when nothing has one fix to write — each warning and suggestion where it was
+  written, and how one written so on purpose is quieted — never "Nothing to fix" beside them.
 
 ## Authoring (`@plitzi/sdk-authoring`)
 
@@ -469,6 +502,15 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   - `heavy-animation` can be quieted on the elements that run it, and `repeated-shape` tells forms apart by their fields.
 - **`unknown-variant`:** an `activeWhen` that sets a class's variant the class does not declare is warned, naming the
   variants it has.
+- **`provider-when-not-rules`** refuses a provider's `when` that is no rule group (a string, a single rule) — it never
+  waited — and a rule's field is read as a source by its name.
+- **`id-taken` lists every clash at once**, the ids under a refused element too: encore-3's took three check rounds.
+- **`padding: 'var(--pad, 4px 10px)'` is refused, naming the longhands:** each side got the whole fallback — no length.
+- **`clip` names its successor** in the refusal: `clip-path: inset(50%)`, or the `sr-only` utility.
+- **`repeated-shape` says what counts as a copy** (three of four elements or more, two of eight) and how copies alike on
+  purpose are kept (`quiet`); `variant-bound-twice` says two things that change apart are two classes.
+- **`taskAction` keeps a param's limits:** `maxLength`, `min` and `max` are the action's input fields' too — read off the
+  action, and refused before the task runs (`Invalid input: minutes (number, at most 240)`).
 - **The testing helpers** used by the page tools are exported: `openPage`, `inspectPage`, `pageTexts`, `compareTexts`,
   `pageDecorations`, `compareDecorations`. Every export carries a doc.
 
@@ -511,6 +553,12 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   - `replace({…})` takes Twig's map form.
 - **A `number` field takes `min`, `max` and `step`** (`formControl`), each bound said by its `minMessage`/`maxMessage`
   when broken, compared as numbers; the builder's panel shows them for a number field.
+- **A server provider that failed says why while developing:** its element shows the error its action or connector
+  answered (`rscFailureOf`), not "could not be reached"; in production it stays the visitor's message.
+- **A flow reads a refusal's `code`:** `/_action` answers it beside the message, so a page tells "too-many" from
+  "not-allowed" without matching words.
+- **An element rendered outside a space says where a plugin is tested**: what it works out in a `.ts` module, what it
+  draws in the browser.
 - **A filter written as JavaScript names it** is refused with the one the templates have: `concat` — write
   `first|merge(second)`.
 - The authoring skill says `|ago` for "3 minutes ago", not a transformer.
@@ -553,6 +601,9 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   server never reads.
 - **`createFileJobQueue`** is exported from `@plitzi/sdk-server/actions`, as its docs said: a self-hosted server keeps
   its jobs in a JSON file through a restart. A project's server answers `plitzi functions later` while developing.
+- **An action's input field takes `maxLength`, `min` and `max`**, refused before the run with the limit named.
+- **A `render` read of an action with no `render` trigger** says so — the trigger to add — and a refusal's `code` reaches
+  the page (`ActionRefusal`).
 
 ## The builder (`@plitzi/plitzi-builder`, `@plitzi/sdk-elements`, `@plitzi/sdk-schema`)
 

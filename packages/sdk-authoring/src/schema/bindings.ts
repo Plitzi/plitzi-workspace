@@ -276,7 +276,7 @@ const assertOneVariantBinding = (bindings: readonly BindingSpec[]): void => {
       const [cls, slot] = key.split('.');
       throw new AuthoringError(
         'variant-bound-twice',
-        `Two bindings set the variant of \`${cls}\`${slot === 'base' ? '' : ` on its \`${slot}\` slot`} on one element: each answers for the class, so the second's answer always wins and the first's variant never shows. Bind it once, answering every case — \`variantFrom(${cls}, source, { template: "{{ wide ? 'roomy' : current ? 'active' : 'idle' }}" })\`.`
+        `Two bindings set the variant of \`${cls}\`${slot === 'base' ? '' : ` on its \`${slot}\` slot`} on one element: each answers for the class, so the second's answer always wins and the first's variant never shows. Bind it once, answering every case — \`variantFrom(${cls}, source, { template: "{{ wide ? 'roomy' : current ? 'active' : 'idle' }}" })\`. Two things that change apart — a size and a lit state — are two classes on the element, each with its own variants and its own \`variantFrom\`: \`class: [${cls}, ${cls}Size]\`.`
       );
     }
 

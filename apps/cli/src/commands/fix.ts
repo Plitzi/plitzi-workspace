@@ -17,9 +17,9 @@ import { projectPlan, verdict } from '../fix/plan';
 import { applyChanges, pruneImports, sourceEdit } from '../fix/sourceEdits';
 import { loadTypeScript } from '../projectTypeScript';
 
-import type { ProjectPlan } from '../fix/plan';
+import type { PlanAfter } from '../fix/plan';
 import type { TextChange } from '../fix/sourceEdits';
-import type { PlannedFix } from '@plitzi/sdk-authoring';
+import type { FixPlan, PlannedFix } from '@plitzi/sdk-authoring';
 
 /**
  * `plitzi space fix`: what authoring the space would fix, as edits to the project's own source — shown as a diff, and with
@@ -119,7 +119,7 @@ const editSources = async (root: string, fixes: readonly PlannedFix[]): Promise<
 };
 
 /** A plan as `plitzi space fix --json` prints it. */
-const planFromJson = (stdout: string): ProjectPlan => {
+const planFromJson = (stdout: string): PlanAfter => {
   const parsed: unknown = JSON.parse(stdout);
   if (!isRecord(parsed)) {
     return { problem: 'the space did not answer as a plan' };
@@ -148,7 +148,7 @@ const planFromJson = (stdout: string): ProjectPlan => {
 };
 
 /** The plan, made in a process of its own: the edited files are imported fresh, never from this one's module cache. */
-const planAfresh = async (): Promise<ProjectPlan> => {
+const planAfresh = async (): Promise<PlanAfter> => {
   try {
     const { stdout } = await run(process.execPath, [process.argv[1], 'space', 'fix', '--json'], {
       cwd: process.cwd(),
@@ -165,6 +165,32 @@ const planAfresh = async (): Promise<ProjectPlan> => {
 
     return { problem: error instanceof Error ? error.message.split('\n').slice(0, 3).join(' ') : String(error) };
   }
+};
+
+/**
+ * No fix to write — and what is left all the same: a warning or a suggestion with no one way to be written is the
+ * author's, and saying only "nothing to fix" read as if `author` had found nothing.
+ */
+export const nothingToWrite = ({ problems, suggestions }: FixPlan): string => {
+  if (problems.length === 0 && suggestions.length === 0) {
+    return chalk.green('Nothing to fix.');
+  }
+
+  const left = [
+    ...problems.map(({ code, message }) => `  - [${code}] ${message}`),
+    ...suggestions.map(({ code, message, at }) => `  - ${at ? `${at} ` : ''}[${code}] ${message}`)
+  ];
+  const quiet = suggestions[0]
+    ? [
+        `A suggestion about something written so on purpose is quieted on its element — \`quiet: ['${suggestions[0].code}']\`, with a comment saying why.`
+      ]
+    : [];
+
+  return [
+    chalk.yellow(`No fix here has one way to be written: ${String(left.length)} left for you:`),
+    ...left,
+    ...quiet
+  ].join('\n');
 };
 
 const leftText = (left: Edited['left']): string[] =>
@@ -209,7 +235,7 @@ export const fix = async (options: FixOptions): Promise<void> => {
   }
 
   if (plan.fixes.length === 0) {
-    console.log(chalk.green('Nothing to fix.'));
+    console.log(nothingToWrite(plan));
 
     return;
   }

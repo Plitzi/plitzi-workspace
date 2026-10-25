@@ -33,7 +33,8 @@ export const noticeRun = async (
   text: string,
   { task, on, plitzi = false }: { task?: string; on?: string; plitzi?: boolean } = {}
 ): Promise<Notice> => {
-  const loaded = await loadRun(ctx, runId);
+  // Any version: what is wrong is said while it is — a Plitzi changed under the run among it (encore-3: refused 13).
+  const loaded = await loadRun(ctx, runId, { anyVersion: true });
   assertStatus(loaded, ['open', 'stopping', 'reconciliation'], 'notice something');
   if (text.trim() === '') {
     throw new RunRefusal('invalid', 'Say what is wrong and where: plitzi run notice "…" --on <page, element or file>');

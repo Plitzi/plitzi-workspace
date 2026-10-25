@@ -247,7 +247,7 @@ export const startUsage = (args: readonly string[], cwd: string, now: () => numb
     const unread = isInboxless(args) ? unreadByName(where.runDir, where.by) : 0;
     if (unread > 0) {
       process.stderr.write(
-        `· ${String(unread)} message${unread === 1 ? '' : 's'} for you not read yet — plitzi task inbox --token <yours>\n`
+        `· ${String(unread)} message${unread === 1 ? '' : 's'} for you not read yet — plitzi task inbox\n`
       );
     }
 

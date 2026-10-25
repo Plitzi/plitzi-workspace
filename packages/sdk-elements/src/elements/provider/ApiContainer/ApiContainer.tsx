@@ -10,6 +10,7 @@ import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
 import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useServerQuery } from '@plitzi/sdk-shared/queries';
+import { rscFailureOf } from '@plitzi/sdk-shared/schema';
 import { currentRscLocation } from '@plitzi/sdk-shared/server';
 import { useCommonStore, useSdkStore } from '@plitzi/sdk-shared/store';
 
@@ -168,7 +169,7 @@ const ApiContainer = ({
     loaded: rscResolved,
     stale: rscStale,
     location: rscLocation,
-    elementData,
+    elementData: rscElementData,
     isServerElement: rscAnswered,
     refreshing: rscRefreshing,
     refresh,
@@ -259,6 +260,9 @@ const ApiContainer = ({
   // down, misconfigured or timed out. Falling back to mock data there would dress a production outage up as
   // content, so the two cases are kept apart: no payload at all means the builder, and that one does mock. A
   // payload for somewhere else is neither: nobody has answered for this element yet.
+  // Why the page server could not resolve it, said while developing: the provider shows it, not "could not be reached".
+  const rscFailure = rscFailureOf(rscElementData);
+  const elementData = rscFailure === undefined ? rscElementData : null;
   const hasError = serverMode && rscResolved && !rscPending && elementData === null;
 
   // A server provider that only has a `query` is answered as a browser request is: `{ status, data }` (`serverMock`).
@@ -429,7 +433,7 @@ const ApiContainer = ({
       isLoading: isLoading || isLoadingMore,
       isEmpty: isEmptyAnswer(slice, records, singleRecord),
       hasError,
-      errorMessage: hasError ? 'The data provider could not be reached' : '',
+      errorMessage: hasError ? (rscFailure ?? 'The data provider could not be reached') : '',
       // A refresh that could not reach the server leaves what is on screen standing, which is the right thing to
       // do and a lie if nobody can say it: this is how a page tells its visitor the numbers are from before.
       isStale: serverMode && rscStale

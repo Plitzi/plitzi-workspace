@@ -2,6 +2,7 @@ import { targetOn } from './shot/capture';
 
 import type { Pair } from './measure';
 import type { BrowserPage, PageElement } from '../browser';
+import type { SettlingRequest } from '@plitzi/sdk-authoring';
 
 /**
  * The state `page measure` reads both pages in — an element hovered or focused, or several clicked in turn — put on a
@@ -21,6 +22,40 @@ export interface StateAsked {
 }
 
 const DONE: Record<StateAsked['kind'], string> = { hover: 'hovered', focus: 'focused', click: 'clicked' };
+
+/** The longest what a step asked the server is waited for: a server action, a provider read again. */
+const ANSWER_MS = 5000;
+
+/**
+ * A step run with what it asks the server answered before the page is read: encore-3's down key, lit by the vote's
+ * answer, measured unlit — `--click` read the page before the action landed. A stream (an event source, a socket) never
+ * finishes, and is not waited for.
+ */
+export const answered = async (page: BrowserPage, step: () => Promise<void>): Promise<void> => {
+  const pending = new Set<SettlingRequest>();
+  const asked = (request: SettlingRequest): void => {
+    const { accept = '' } = request.headers();
+    if (['fetch', 'xhr'].includes(request.resourceType()) && !accept.includes('text/event-stream')) {
+      pending.add(request);
+    }
+  };
+  const done = (request: SettlingRequest): void => {
+    pending.delete(request);
+  };
+  page.on('request', asked);
+  page.on('requestfinished', done);
+  page.on('requestfailed', done);
+  try {
+    await step();
+    for (const until = Date.now() + ANSWER_MS; pending.size > 0 && Date.now() < until;) {
+      await page.waitForTimeout(50);
+    }
+  } finally {
+    page.off('request', asked);
+    page.off('requestfinished', done);
+    page.off('requestfailed', done);
+  }
+};
 
 /** The state in words: `menu-toggle clicked, then submenu-row`. */
 export const stateText = (state: StateAsked, side: keyof Pair): string =>
@@ -116,7 +151,9 @@ export const putIn = async (
     }
 
     try {
-      await act(page, page.locator(found.selector).filter({ visible: true }).first(), kind);
+      const element = page.locator(found.selector).filter({ visible: true }).first();
+      // A click may ask the server: what it lit is read once that lands. A hover or a focus asks nothing.
+      await (kind === 'click' ? answered(page, () => act(page, element, kind)) : act(page, element, kind));
     } catch (error) {
       return {
         problem: `${target} could not be ${DONE[kind]} on ${page.url()}: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`
@@ -127,4 +164,27 @@ export const putIn = async (
   }
 
   return undefined;
+};
+
+/** How many rows of a list `--rows` measures of one element, at most. */
+const ROWS_MOST = 20;
+
+/** Every row a list draws of an element, as its own selector — the element alone when it is drawn once. */
+export const rowsOf = async (page: BrowserPage, pair: Pair): Promise<Pair[]> => {
+  const found = await targetOn(page, pair.here);
+  if ('problem' in found || !found.found) {
+    return [pair];
+  }
+
+  const rows: Pair[] = [];
+  for (let index = 0; index < ROWS_MOST; index += 1) {
+    const nth = `${found.selector} >> nth=${String(index)}`;
+    if ((await page.locator(nth).first().count()) === 0) {
+      break;
+    }
+
+    rows.push({ here: nth, there: pair.there });
+  }
+
+  return rows.length > 1 ? rows : [pair];
 };

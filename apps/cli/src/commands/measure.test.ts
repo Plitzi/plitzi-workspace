@@ -2,8 +2,8 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { measureOn, pairOf, readingKey, sameProperties } from './measure';
-import { putIn, stateText } from './measureState';
+import { measureOn, onlyProperties, pairOf, readingKey, sameProperties } from './measure';
+import { putIn, rowsOf, stateText } from './measureState';
 import { comparedText, measuredText, readingText } from './measureText';
 import { differences, MEASURED, PSEUDO_MEASURED } from './measureValues';
 
@@ -90,7 +90,10 @@ describe('page measure', () => {
         locator: () => ({ first: () => element, filter: () => ({ first: () => element }) }),
         evaluate: () => Promise.resolve(acts.push('settled')),
         keyboard: { press: (key: string) => Promise.resolve(acts.push(`press ${key}`)) },
-        waitForTimeout: () => Promise.resolve()
+        waitForTimeout: () => Promise.resolve(),
+        // What a click asks the server is followed by its requests: none here.
+        on: () => undefined,
+        off: () => undefined
       } as unknown as Parameters<typeof putIn>[0];
     };
     const state = { kind: 'hover' as const, pairs: [pairOf('fight-card => .fight-card')] };
@@ -251,6 +254,37 @@ describe('page measure', () => {
     ]);
     expect(sameProperties('font')).toContain('letter-spacing');
     expect(() => sameProperties('font-size,glow')).toThrow('not glow');
+  });
+
+  // encore-3: a fit asked for an element's box, and its 30 properties were grepped for it.
+  it('prints only what is asked, its box a word — and refuses what is not measured, naming the flag', () => {
+    expect(onlyProperties('box')).toEqual(['x', 'y', 'width', 'height', 'padding', 'margin']);
+    expect(onlyProperties('box,font-size')).toContain('font-size');
+    expect(() => onlyProperties('glow')).toThrow('--only takes what is measured');
+  });
+
+  // encore-3: a list's three plates were measured by their first alone, and their readouts differed (235/303/241 px).
+  it('measures each row a list draws of an element, and one drawn once as itself', async () => {
+    const drawn = (rows: number) =>
+      ({
+        locator: (selector: string) => ({
+          first: () => ({
+            count: () => {
+              const nth = /nth=(\d+)$/.exec(selector);
+
+              return Promise.resolve(nth ? Number(Number(nth[1]) < rows) : rows > 0 ? 1 : 0);
+            }
+          })
+        })
+      }) as unknown as Parameters<typeof rowsOf>[0];
+    const pair = { here: '.show-plate', there: '.show-plate' };
+
+    expect((await rowsOf(drawn(3), pair)).map(each => each.here)).toEqual([
+      '.show-plate >> nth=0',
+      '.show-plate >> nth=1',
+      '.show-plate >> nth=2'
+    ]);
+    expect(await rowsOf(drawn(1), pair)).toEqual([pair]);
   });
 
   // velada's first measures: Cinzel with another fallback, borders of no width, one gold in two notations — noise.

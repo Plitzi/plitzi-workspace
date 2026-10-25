@@ -41,6 +41,10 @@ Each is a folder (`src/plugins/SeatPicker/` in a project `create` wrote):
 - A name that is a built-in type (`button`, `form`) is refused: a space could not tell the two apart.
 - **A server half** (`--server`): `functions/index.ts` in its folder — routes under `/fn/plugins/<type>/`
   (`usePluginRoute`), steps `<type>.<action>`, its own `kv`, none of the space's credentials.
+- **Tested in two halves**: what it works out (a format, a clock, a rule) in a `.ts` module beside it, under
+  `node --test` (Node strips a `.ts` file's types, never a `.tsx`'s); what it draws in the browser, where the space
+  renders it — `page play`/`page check`, or a Playwright spec with `page.clock` for time. `RootElement` reads the element
+  the space hands it, so a component rendered alone throws.
 
 ## Plugin packages (`create --plugin`)
 

@@ -1,5 +1,5 @@
 import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
-import { collectServerElements, pageAccessOf, pageAccessRefusal } from '@plitzi/sdk-shared/schema';
+import { collectServerElements, pageAccessOf, pageAccessRefusal, RSC_FAILURE } from '@plitzi/sdk-shared/schema';
 
 import { matchRscPage } from './matchRscPage';
 import { onAbort } from '../../helpers/onAbort';
@@ -52,6 +52,8 @@ export type ResolveRscDataOptions = {
   timeoutMs?: number;
   /** Whoever asked stopped waiting: every element still resolving is cancelled, as when its budget runs out. */
   signal?: AbortSignal;
+  /** While developing: a failed element says why in its data (`RSC_FAILURE`), where its provider shows it. */
+  sayFailures?: boolean;
 };
 
 const DEFAULT_ELEMENT_TIMEOUT_MS = 5000;
@@ -114,7 +116,8 @@ export const resolveRscData = async ({
   resolveElement,
   flagOverrides,
   timeoutMs = DEFAULT_ELEMENT_TIMEOUT_MS,
-  signal
+  signal,
+  sayFailures = false
 }: ResolveRscDataOptions): Promise<SSRRscData> => {
   if (schema.rsc?.enabled === false) {
     return {};
@@ -173,6 +176,11 @@ export const resolveRscData = async ({
       // Nobody is waiting for it any more: not a failure of the element.
       if (!signal?.aborted) {
         serverLog.error('RSC', `element ${targets[index].id} failed to resolve`, result.reason);
+        // While developing, said where the page reads it: the provider shows why, not "could not be reached".
+        if (sayFailures) {
+          const reason: unknown = result.reason;
+          acum[targets[index].id] = { [RSC_FAILURE]: reason instanceof Error ? reason.message : String(reason) };
+        }
       }
 
       return acum;

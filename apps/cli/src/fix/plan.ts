@@ -6,6 +6,9 @@ import type { ProjectSpaceSource } from '@plitzi/sdk-authoring/node';
 /** The plan for the project's space as it is on disk — or why there is none: it did not get as far as its documents. */
 export type ProjectPlan = FixPlan | { problem: string };
 
+/** A plan as read back after a write, to judge it: what is still to fix and what is wrong — its suggestions aside. */
+export type PlanAfter = Pick<FixPlan, 'problems' | 'fixes'> | { problem: string };
+
 /** A fix by what it is, to tell whether it is still to be made after the source was edited. */
 export const fixKey = (fix: Pick<PlannedFix, 'code' | 'elementId' | 'message'>): string =>
   `${fix.code} ${fix.elementId ?? ''} ${fix.message}`;
@@ -29,7 +32,7 @@ export const projectPlan = ({ space, authoring }: ProjectSpaceSource): ProjectPl
 export const verdict = (
   before: FixPlan,
   written: readonly PlannedFix[],
-  after: ProjectPlan
+  after: PlanAfter
 ): { reasons: string[]; elements: Set<string | null> } => {
   if ('problem' in after) {
     return { reasons: [`the space no longer authors: ${after.problem}`], elements: new Set([null]) };

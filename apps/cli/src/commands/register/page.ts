@@ -3,13 +3,21 @@ import { Option } from 'commander';
 import { expectation, fill, positiveInteger, statusCode, timeZone, width, widths } from '../../options';
 import { check } from '../check';
 import { importPage } from '../importPage';
-import { measure, sameProperties } from '../measure';
+import { measure, onlyProperties, sameProperties } from '../measure';
 import { keepBrowser } from '../measureKeeper';
 import { outline } from '../outline';
 import { play } from '../play';
 import { pageSame } from '../same';
 import { shotEach, SHOT_MOMENTS } from '../shot';
-import { API_OPTION, DRY_RUN_OPTION, schemeOption, schemesOption, URL_OPTION, widthsOption } from './options';
+import {
+  API_OPTION,
+  DRY_RUN_OPTION,
+  schemeOption,
+  schemesOption,
+  URL_OPTION,
+  widthsOption,
+  withConditionOptions
+} from './options';
 
 import type { CheckOptions } from '../check';
 import type { ImportOptions } from '../importPage';
@@ -118,7 +126,7 @@ export const registerPage = (pageGroup: Command): void => {
     .option(...DRY_RUN_OPTION)
     .action((url: string, options: ImportOptions) => importPage(url, options));
 
-  pageGroup
+  const measureCommand = pageGroup
     .command('measure')
     .argument('<path>', 'The page: /pricing')
     .argument(
@@ -145,6 +153,16 @@ export const registerPage = (pageGroup: Command): void => {
         'Fail unless these are as the other page’s — font-size,border,before:background-image (shorthands: border, font, size): an acceptance’s line, measured'
       ).argParser(sameProperties)
     )
+    .addOption(
+      new Option(
+        '--only <properties>',
+        'Only these of each element, printed — box (x, y, width, height, padding, margin), font, border, size, or any measured: a fit asks for its box'
+      ).argParser(onlyProperties)
+    )
+    .option(
+      '--rows',
+      'Each row a list draws of every element asked, measured apart — the first alone hides how they differ'
+    )
     .addOption(widthsOption('The viewport widths, separated by commas: every element measured at each', [1440]))
     .addOption(schemeOption())
     .addOption(
@@ -159,8 +177,10 @@ export const registerPage = (pageGroup: Command): void => {
     .option(
       '--as <username>',
       'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env (a task’s copy reads its project’s)'
-    )
-    .action((route: string, elements: string[], options: MeasureOptions) => measure(route, elements, options));
+    );
+  withConditionOptions(measureCommand).action((route: string, elements: string[], options: MeasureOptions) =>
+    measure(route, elements, options)
+  );
 
   // The browser `page measure` keeps the other site's pages open in, between commands: started by it, never by hand.
   pageGroup
@@ -168,7 +188,7 @@ export const registerPage = (pageGroup: Command): void => {
     .requiredOption('--root <dir>', 'The project whose cache holds its record')
     .action((options: { root: string }) => keepBrowser(options.root));
 
-  pageGroup
+  const playCommand = pageGroup
     .command('play')
     .argument('<path>', 'The page: /pricing')
     .description(
@@ -176,7 +196,7 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .requiredOption(
       '--steps <script>',
-      'The steps, as page shot --steps writes them — click, hover, scroll, type (or fill: what the field held replaced), drag, press, wait, wait-for — each element "ours => theirs" with --compare'
+      'The steps, as page shot --steps writes them — click, hover, scroll, type (or fill: what the field held replaced), drag, press, wait, wait-for, reload, store, state, clock, tick — each element "ours => theirs" with --compare'
     )
     .option('--read <element...>', 'The elements read after each step — "row => .slides" with --compare')
     .option('--compare <url>', 'Another page — the site a copy is made after — played beside it, step for step')
@@ -194,7 +214,13 @@ export const registerPage = (pageGroup: Command): void => {
       '--as <username>',
       'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env (a task’s copy reads its project’s)'
     )
-    .action((route: string, options: PlayOptions) => play(route, options));
+    .addOption(
+      new Option(
+        '--timezone <zone>',
+        'The visitor’s time zone (IANA: America/Mexico_City): the machine’s when left out'
+      ).argParser(timeZone)
+    );
+  withConditionOptions(playCommand).action((route: string, options: PlayOptions) => play(route, options));
 
   pageGroup
     .command('outline')

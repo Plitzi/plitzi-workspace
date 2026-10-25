@@ -206,6 +206,30 @@ describe('a tester, reviewing the code', () => {
   });
 });
 
+describe('a review the lead decides while another holds it', () => {
+  // encore-3: the lead approved what test-1 was reviewing; the copy went under it, and its verdict was refused.
+  it('tells the reviewer its review ends', async () => {
+    const plan = { ...benchPlan(), designReview: false };
+    const file = await bench.writePlan(plan);
+    await bench.writeTeam({
+      version: 1,
+      agents: [
+        { name: 'agent', roles: ['developer'], count: 2 },
+        { name: 'test', roles: ['tester'] }
+      ]
+    });
+    const { runId } = (await openRun(lead(), file)).checked;
+    const menu = await take('agent-1', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Menú" };\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+    expect((await takeNext(bench.agent('test-1'), runId, 'tester')).next.leadReview?.task.id).toBe('t-menu');
+
+    await reviewTask(lead(), runId, 't-menu', 'approve', []);
+    const told = (await messagesOf(await loadRun(lead(), runId))).filter(message => message.to === '@test-1');
+    expect(told.map(message => message.text).join(' ')).toContain('decided t-menu (approved) while you reviewed it');
+  });
+});
+
 describe('a task the lead wrote', () => {
   // encore-3: the lead took a ready task while the tester ran a spec, wrote it and approved it — nobody else read it.
   it('is reviewed by another: the lead is refused its own, a tester approves it', async () => {

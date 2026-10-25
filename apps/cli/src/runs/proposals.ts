@@ -83,6 +83,11 @@ export const proposeChange = async (
     );
   }
 
+  // Before the proposal is written: a wait refused leaves nothing half made.
+  if (ask.wait) {
+    await assertNoWaitCycle(loaded, from.id, to.id);
+  }
+
   const proposal = await writeProposal(loaded, {
     from: from.id,
     to: to.id,
@@ -92,7 +97,6 @@ export const proposeChange = async (
     at: at(ctx)
   });
   if (ask.wait) {
-    await assertNoWaitCycle(loaded, from.id, to.id);
     await updateState(
       view.paths,
       state => ({

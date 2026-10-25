@@ -638,7 +638,8 @@ export const followNext = async (
       // Not while a task of its own may come back to it: one in review, or blocked — nor, a designer, while more UI
       // reviews are coming than the other designers running (velada-dress: design-2 stopped at 20:18 with four on
       // their way, and was started again for them).
-      const loaded = await loadRun(ctx, runId);
+      // Read only, so a wait through a version change is told it ended, not refused (encore-3).
+      const loaded = await loadRun(ctx, runId, { anyVersion: true });
       const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
       const own = views.filter(view => view.owner?.agent === ctx.agent && view.state.status !== 'done');
       const coming = designerHere ? await uiReviewsComing(ctx, loaded, views) : 0;
@@ -653,7 +654,7 @@ export const followNext = async (
     if (Date.now() - started >= timeoutMs) {
       // Its own task in review comes back to it if it is sent back: an agent told only "nothing came" took the wait's
       // end for the run's, and stopped — and velada-now's t-case and t-boxer came back to nobody.
-      const loaded = await loadRun(ctx, runId);
+      const loaded = await loadRun(ctx, runId, { anyVersion: true });
       const inReview = (await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task))))
         .filter(view => view.owner?.agent === ctx.agent && view.state.status === 'in-review')
         .map(view => view.task.id);

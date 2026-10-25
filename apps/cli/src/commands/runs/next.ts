@@ -93,7 +93,7 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>): string
           )
         ]
       : []),
-    `  Then say it: plitzi task review ${review.task.id} --approve [--note "what you saw"] | --changes "what, where, and why" [--on <element>] --token <your token>`
+    `  Then say it: plitzi task review ${review.task.id} --approve [--note "what you saw"] | --changes "what, where, and why" [--on <element>]`
   ].join('\n');
 
 /** A spike, as `task next --role lead` hands it to a lead: what to find out, for whom, and how to say it. */
@@ -104,7 +104,7 @@ const spikeText = (spike: NonNullable<NextTask['spike']>): string =>
       ? [`  ${String(spike.findings)} finding(s) of it already: plitzi task context ${spike.task.id}`]
       : []),
     '  Compare with the original (page shot <path> --compare <original> --clip <section> --dress), read its computed styles, measure — write nothing of the task’s',
-    `  Then say it — the layers, their values, which file gets each — and its result, the tasks it makes, each with its "findings": plitzi task spike ${spike.task.id} --done "…" --tasks <stage.json> --token <your token>`
+    `  Then say it — the layers, their values, which file gets each — and its result, the tasks it makes, each with its "findings": plitzi task spike ${spike.task.id} --done "…" --tasks <stage.json>`
   ].join('\n');
 
 /** A lead's review, as `task next --role lead` hands it: the whole review `lead` would make, by this lead. */
@@ -130,7 +130,7 @@ const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: stri
           )
         ]
       : []),
-    `  Then say it: plitzi task review ${review.task.id} --approve [--note "…"] | --changes "what, where, and why" --token <your token>`,
+    `  Then say it: plitzi task review ${review.task.id} --approve [--note "…"] | --changes "what, where, and why"`,
     ...(isPrincipal(agent)
       ? []
       : ['  The plan, the person and the finish are lead’s: what you find beyond the task, tell lead'])
@@ -143,7 +143,7 @@ const questionText = (question: NonNullable<NextTask['question']>): string =>
       `Question ${question.id} from ${question.task}${question.agent ? ` (${question.agent})` : ''}: ${question.text}`
     ),
     `  ${question.agent ?? 'its agent'} waits for it. Answer what the code, the plan, the brief or the original answers — read them first (plitzi task show ${question.task})`,
-    `  Then: plitzi task message ${question.task} "…" --reply-to ${question.id} --token <your token>`,
+    `  Then: plitzi task message ${question.task} "…" --reply-to ${question.id}`,
     '  A choice for the person, or a change of plan, is lead’s: leave it — lead is woken for it if it is not answered in 2 min'
   ].join('\n');
 
