@@ -268,3 +268,16 @@ export const createCanvas = (width: number, height: number, theme: Theme): Canva
       })
   };
 };
+
+/**
+ * What a terminal is sent to show `next` over `previous`: only the rows that changed, each written where it is — the
+ * whole frame when there is none before it or the screen's size changed. Every frame was written whole, eight a second
+ * while an agent works, and a terminal that draws as it reads (no synchronized output) flickered with each.
+ */
+export const frameUpdate = (previous: readonly string[] | undefined, next: readonly string[]): string => {
+  if (previous?.length !== next.length) {
+    return `\x1b[H${next.join('\r\n')}`;
+  }
+
+  return next.map((line, row) => (line === previous[row] ? '' : `\x1b[${String(row + 1)};1H${line}`)).join('');
+};

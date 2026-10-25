@@ -1,11 +1,13 @@
 import { spawn } from 'node:child_process';
 import { watch } from 'node:fs';
 import { emitKeypressEvents } from 'node:readline';
+import { PassThrough } from 'node:stream';
 
 import chalk from 'chalk';
 
 import { listedTasks } from './monitorBoard';
-import { onKey, onMouse } from './monitorInput';
+import { frameUpdate } from './monitorCanvas';
+import { onKey, onMouse, splitInput } from './monitorInput';
 import { initialUi, LIVE_VERB } from './monitorModel';
 import { PREVIEW_LINES, previewControl } from './monitorPreview';
 import { monitorScreen, paletteFor, waitingScreen } from './monitorScreen';
@@ -31,10 +33,6 @@ import type { RunContext } from '../../runs/run';
  * never notice it; the preview it serves is the person's, and stops with it. A shell with no terminal (an agent's) is
  * refused: theirs is `run watch`.
  */
-
-/** A mouse report in SGR form: the button, the column, the row, and M pressed or m released. */
-// eslint-disable-next-line no-control-regex -- a terminal's mouse report starts with ESC: it is what is matched
-const MOUSE = /\x1b\[<(\d+);(\d+);(\d+)([Mm])/g;
 
 /** How often an animated frame is drawn — the spinner of an agent at work — and the clock's when nothing moves. */
 const FRAME_MS = 120;
@@ -117,7 +115,10 @@ export const runMonitor = async (
 
   const ctx = await contextFor(options);
   const depth: ColorDepth = chalk.level;
-  emitKeypressEvents(process.stdin);
+  // The keys are read from what is left once the mouse's reports and the terminal's answers are taken out
+  // (`splitInput`): read from the terminal whole, a click's digits were keys.
+  const keys = new PassThrough();
+  emitKeypressEvents(keys);
   process.stdin.setRawMode(true);
   process.stdin.resume();
   let themeName: ThemeName =
@@ -140,6 +141,8 @@ export const runMonitor = async (
   // The run's preview, served from here on `p`: it lives with the panel.
   const preview = previewControl(ctx, drawSoon);
 
+  // What the terminal shows now: the next frame writes only the rows that differ from it.
+  let drawn: string[] | undefined;
   const draw = (): void => {
     const width = process.stdout.columns;
     const height = process.stdout.rows;
@@ -165,9 +168,13 @@ export const runMonitor = async (
       }).ansi(depth);
     }
 
-    // Written over from the top inside the terminal's synchronized output, drawn as one frame — never the screen wiped
-    // first, which flickered.
-    process.stdout.write(`\x1b[?2026h\x1b[H${lines.join('\r\n')}\x1b[?2026l`);
+    // The rows that changed, written over inside the terminal's synchronized output as one frame — never the screen
+    // wiped first, which flickered.
+    const update = frameUpdate(drawn, lines);
+    drawn = lines;
+    if (update !== '') {
+      process.stdout.write(`\x1b[?2026h${update}\x1b[?2026l`);
+    }
   };
 
   /** The panel as a key or the mouse left it: a word it says now is said for a moment, then cleared. */
@@ -351,13 +358,14 @@ export const runMonitor = async (
     };
 
     process.stdin.on('data', (data: Buffer) => {
+      const input = splitInput(data.toString('utf-8'));
       let changed = false;
-      for (const [, button, column, row, kind] of data.toString('utf-8').matchAll(MOUSE)) {
-        if (kind !== 'M') {
+      for (const { button, column, row, pressed } of input.mice) {
+        if (!pressed) {
           continue;
         }
 
-        const next = onMouse(ui, { button: Number(button), row: Number(row) - 1, col: Number(column) - 1 }, shown());
+        const next = onMouse(ui, { button, row: row - 1, col: column - 1 }, shown());
         if (next) {
           become(next);
           changed = true;
@@ -367,9 +375,13 @@ export const runMonitor = async (
       if (changed) {
         drawSoon();
       }
+
+      if (input.keys !== '') {
+        keys.write(input.keys);
+      }
     });
 
-    process.stdin.on('keypress', (text: string | undefined, key: Key | undefined) => {
+    keys.on('keypress', (text: string | undefined, key: Key | undefined) => {
       const step = onKey(ui, text, key, shown());
       if (!step) {
         return;
@@ -387,7 +399,11 @@ export const runMonitor = async (
 
       draw();
     });
-    process.stdout.on('resize', draw);
+    // A terminal resized reflows what it showed: the next frame is written whole.
+    process.stdout.on('resize', () => {
+      drawn = undefined;
+      draw();
+    });
     void look();
   });
 };

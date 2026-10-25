@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { clip, createCanvas, textWidth } from './monitorCanvas';
+import { clip, createCanvas, frameUpdate, textWidth } from './monitorCanvas';
 import { THEMES } from './monitorTheme';
 
 describe("the monitor's canvas", () => {
@@ -66,5 +66,15 @@ describe("the monitor's canvas", () => {
     const after = canvas.ansi(3);
     expect(after[0]).not.toBe(before[0]);
     expect(after[1]).toContain('237;237;243');
+  });
+});
+
+describe('a frame written over the last', () => {
+  // Written whole eight times a second, a terminal that draws as it reads flickered.
+  it('writes only the rows that changed, each where it is — the whole frame when there is none or its size changed', () => {
+    expect(frameUpdate(undefined, ['a', 'b'])).toBe('\x1b[Ha\r\nb');
+    expect(frameUpdate(['a', 'b', 'c'], ['a', 'B', 'c'])).toBe('\x1b[2;1HB');
+    expect(frameUpdate(['a', 'b'], ['a', 'b'])).toBe('');
+    expect(frameUpdate(['a', 'b'], ['a', 'b', 'c'])).toBe('\x1b[Ha\r\nb\r\nc');
   });
 });

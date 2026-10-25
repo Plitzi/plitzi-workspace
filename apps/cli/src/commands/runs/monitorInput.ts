@@ -45,6 +45,37 @@ export interface Shown {
   preview: PreviewState['kind'];
 }
 
+/** A mouse press or release, at the cell the terminal reports — counted from 1. */
+export interface MouseReport {
+  button: number;
+  column: number;
+  row: number;
+  pressed: boolean;
+}
+
+/** A mouse report in SGR form: the button, the column, the row, and M pressed or m released. */
+// eslint-disable-next-line no-control-regex -- a terminal's mouse report starts with ESC: it is what is matched
+const MOUSE = /\x1b\[<(\d+);(\d+);(\d+)([Mm])/g;
+
+/** An answer of the terminal's (OSC … BEL or ST) — its background, asked when the panel opens. */
+// eslint-disable-next-line no-control-regex -- an answer starts with ESC ] and ends with BEL or ESC \: it is what is matched
+const ANSWER = /\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g;
+
+/**
+ * What the terminal sent, apart: the mouse's reports, and the keys — never a report's digits read as keys. A click's
+ * `ESC[<0;12;5M`, given to the keys whole, was read as `1`, `2`, `5`: views switched, the panel turned advanced, and
+ * every one redrawn — a click flickered.
+ */
+export const splitInput = (text: string): { mice: MouseReport[]; keys: string } => ({
+  mice: [...text.matchAll(MOUSE)].map(([, button, column, row, kind]) => ({
+    button: Number(button),
+    column: Number(column),
+    row: Number(row),
+    pressed: kind === 'M'
+  })),
+  keys: text.replace(MOUSE, '').replace(ANSWER, '')
+});
+
 /** What the first `q` says while the panel serves the preview: a second, while it is said, quits. */
 export const QUIT_WARNING = 'q again to quit — the preview stops with the monitor';
 

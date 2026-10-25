@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { listedTasks } from './monitorBoard';
-import { onKey, onMouse, QUIT_WARNING } from './monitorInput';
+import { onKey, onMouse, QUIT_WARNING, splitInput } from './monitorInput';
 import { initialUi } from './monitorModel';
 import { monitorScreen } from './monitorScreen';
 import { THEMES } from './monitorTheme';
@@ -252,6 +252,25 @@ describe("the monitor's keys and mouse", () => {
       expect(onMouse({ ...ui, dialog: { kind: 'help' } }, { button: 64, row: activity.top, col: 1 }, shown)).toBe(
         undefined
       );
+    });
+  });
+});
+
+describe('what the terminal sends', () => {
+  // A click's report given to the keys whole was read as 1, 2, 5: views switched and the panel turned advanced.
+  it('takes a click’s report and the terminal’s answer out of the keys', () => {
+    expect(splitInput('\x1b[<0;12;5M\x1b[<0;12;5m')).toEqual({
+      mice: [
+        { button: 0, column: 12, row: 5, pressed: true },
+        { button: 0, column: 12, row: 5, pressed: false }
+      ],
+      keys: ''
+    });
+    expect(splitInput('\x1b]11;rgb:1111/1111/1111\x1b\\q').keys).toBe('q');
+    expect(splitInput('\x1b]11;rgb:ffff/ffff/ffff\x07').keys).toBe('');
+    expect(splitInput('m\x1b[<64;3;4M2')).toEqual({
+      mice: [{ button: 64, column: 3, row: 4, pressed: true }],
+      keys: 'm2'
     });
   });
 });
