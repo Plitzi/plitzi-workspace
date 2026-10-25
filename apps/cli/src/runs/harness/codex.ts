@@ -127,6 +127,7 @@ export const readCodex = async (
         input: Math.max(0, numberOf(usage.input_tokens) - cached - written),
         cacheRead: cached,
         cacheWrite: written,
+        cacheWriteLong: 0,
         output: numberOf(usage.output_tokens)
       });
     } else if (

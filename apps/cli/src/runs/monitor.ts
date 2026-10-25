@@ -7,7 +7,7 @@ import { stoppedAgents } from './onDemand';
 import { runPaths } from './paths';
 import { presentAt, PRESENCE_STALE_MS } from './presence';
 import { loadRun, readRunLog, runIds } from './run';
-import { spentOf } from './spent';
+import { spentOf, spentPerMinute, SPEND_MINUTES } from './spent';
 import { choiceText, FRESH_CONTEXT_AT, readTeam, startedAgents } from './team';
 import { readUsage } from './usage';
 import { viewRun } from './view';
@@ -144,6 +144,8 @@ export interface Monitored {
   stories: Partial<Record<string, TaskStory>>;
   /** What each agent's harness spent so far, the most read first (`spent.ts`). */
   spend: Spent[];
+  /** The run's tokens in each of its last `SPEND_MINUTES` minutes, the oldest first: the spend's chart. */
+  perMinute: number[];
   /** The agents started again only once their context passes a size (`"session": "context"`), each with that size. */
   freshAt: ReadonlyMap<string, number>;
   /** Every run of the project, this one among them: which is shown, and that there are others. */
@@ -611,6 +613,7 @@ export const monitorRun = async (ctx: RunContext, runId: string, feedLength = 40
     feed,
     stories,
     spend: spentOf(log, usage),
+    perMinute: spentPerMinute(log, ctx.now(), SPEND_MINUTES),
     freshAt: new Map(
       (team ? startedAgents(team) : [])
         .filter(each => each.session === 'context')

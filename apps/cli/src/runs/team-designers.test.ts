@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { openRun } from './run';
 import { completeTask, nextTask, reviewTask, takeNext, takeTask } from './tasks';
 import { setTeamAgent } from './team';
+import { takeOnRead } from '../commands/runs/takeOnRead';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 import { teamSteps } from '../tests/teamSteps';
 
@@ -99,5 +100,24 @@ describe('a designer that develops too', () => {
     expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer,developer')).designReview?.task.id).toBe(
       't-menu'
     );
+  });
+});
+
+// A run's lead looked at a task's UI as its watch said to, while design-1 took the same review — and the lead's approval
+// was refused for design-1's.
+describe('a UI review the lead reads first', () => {
+  it('is the lead’s once read: no designer is offered it, and the lead decides it', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.filter(task => task.id === 't-menu');
+    await openRun(lead(), await bench.writePlan(plan));
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+
+    await takeOnRead(lead(), 'es-launch', 't-menu');
+    expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer')).designReview).toBeUndefined();
+    await expect(
+      reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'no-ui' })
+    ).resolves.toMatchObject({ merged: ['src/space/pages/menu.ts'] });
   });
 });

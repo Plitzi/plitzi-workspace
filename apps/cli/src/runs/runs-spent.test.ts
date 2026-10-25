@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { openRun, readRunLog, loadRun } from './run';
-import { spentOf } from './spent';
+import { spentOf, spentPerMinute } from './spent';
 import { completeTask, reviewTask, takeTask } from './tasks';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 
@@ -26,10 +26,11 @@ afterEach(async () => {
 
 /**
  * A harness that read `read` tokens in `turns` turns — a tenth of them new context, a hundredth its answers, the rest its
- * context read again — its context `context`, and the windows it was asked for.
+ * context read again — in the window's last minute, its context `context`, a dollar a million tokens unless `unpriced`,
+ * and the windows it was asked for.
  */
 const harness =
-  (read: number, turns: number, context: number, asked: { from: string; to: string }[]) =>
+  (read: number, turns: number, context: number, asked: { from: string; to: string }[], unpriced = false) =>
   (window: { from: string; to: string }): Promise<HarnessUsage | undefined> => {
     asked.push({ from: window.from, to: window.to });
 
@@ -43,6 +44,8 @@ const harness =
       output: read * 0.01,
       processed: read,
       contextAtEnd: context,
+      ...(unpriced ? {} : { cost: read / 1_000_000 }),
+      minutes: [{ at: window.to.slice(0, 16), tokens: read }],
       heaviest: [],
       plitziRead: []
     });
@@ -56,7 +59,7 @@ describe('what each agent spent', () => {
     const devWindows: { from: string; to: string }[] = [];
     const dev = (token?: string): RunContext =>
       bench.agent('agent-1', { spent: harness(400_000, 12, 70_000, devWindows), ...(token ? { token } : {}) });
-    const lead = bench.agent('lead', { spent: harness(900_000, 20, 150_000, []) });
+    const lead = bench.agent('lead', { spent: harness(900_000, 20, 150_000, [], true) });
 
     const home = await takeTask(dev(), 'es-launch', 't-home');
     await writeInCopy(home.work, 'src/space/pages/home/index.ts', 'export const page = {};\n');
@@ -99,9 +102,14 @@ describe('what each agent spent', () => {
         output: 8_000,
         cached: 712_000,
         context: 70_000,
+        cost: 0.8,
         model: 'claude-sonnet-5-5'
       }
     ]);
+    // The lead's review on a model with no price: no cost of its, and none of the run's.
+    expect(spentOf(log)[0]).not.toHaveProperty('cost', expect.any(Number));
+    // A minute apart: the first task's and the review's, then the second round's — the chart's last three minutes.
+    expect(spentPerMinute(log, bench.now(), 3)).toEqual([0, 1_300_000, 400_000]);
   });
 
   it('is not kept where the harness is not read', async () => {

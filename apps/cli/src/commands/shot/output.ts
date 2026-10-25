@@ -47,3 +47,19 @@ const slug = (text: string): string => text.replace(/[^a-z0-9]+/gi, '-').replace
  */
 export const shotFile = (pathname: string, clip: string | undefined, width: number, scheme: string): string =>
   `${pathname === '/' ? 'home' : slug(pathname)}${clip === undefined ? '' : `-${slug(clip)}`}-${String(width)}-${scheme}.png`;
+
+/** A picture shorter than a few lines of text, said by its size: `350×26 px`. */
+export const smallPicture = (png: Uint8Array): string | undefined => {
+  if (png.length < 24) {
+    return undefined;
+  }
+
+  const view = new DataView(png.buffer, png.byteOffset);
+  const [width, height] = [view.getUint32(16), view.getUint32(20)];
+
+  return height < 64 ? `${String(width)}×${String(height)} px` : undefined;
+};
+
+/** Whether a region of a comparison is the section asked: its name, its element's id, or its element. */
+export const matchesSection = (region: { name: string; element?: string }, section: string): boolean =>
+  region.name === section || region.name.endsWith(`#${section}`) || region.element === section;

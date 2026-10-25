@@ -84,6 +84,7 @@ export const readOpenCode = async (
         input: numberOf(message.tokens.input),
         cacheRead: numberOf(cache.read),
         cacheWrite: numberOf(cache.write),
+        cacheWriteLong: 0,
         output: numberOf(message.tokens.output) + numberOf(message.tokens.reasoning)
       });
       read.model = typeof message.modelID === 'string' ? message.modelID : read.model;

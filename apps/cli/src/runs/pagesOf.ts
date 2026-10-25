@@ -1,4 +1,5 @@
 import { authoredHandles } from './expectations';
+import { acceptanceText } from './model';
 import { readOwnership } from './ownership';
 import { shellCommands } from './shell';
 
@@ -225,6 +226,24 @@ export const acceptancePages = (acceptance: readonly Acceptance[]): string[] =>
       )
     )
   ].slice(0, MAX_PAGES);
+
+/**
+ * The addresses its acceptance names, said or checked — `/messages/nobodyhere as dax shows …`: what a route with a
+ * parameter (`/messages/:username`) is opened at. A run's look was handed the pattern, found no link to it, and
+ * looked at nothing the task changed.
+ */
+export const acceptanceAddresses = (acceptance: readonly Acceptance[]): string[] => [
+  ...new Set([
+    ...acceptancePages(acceptance),
+    ...acceptance.flatMap(line =>
+      [...acceptanceText(line).matchAll(/(?<![\w./:])\/[a-z0-9][\w-]*(?:\/[\w-]+)*/gi)].map(match => match[0])
+    )
+  ])
+];
+
+/** A route's pattern made an address the acceptance names, when one fits it: `/messages/:username` → `/messages/nova`. */
+export const filledPattern = (route: string, named: readonly string[]): string =>
+  route.includes('/:') ? (named.find(address => pageFits(route, address)) ?? route) : route;
 
 /**
  * The account its acceptance checks the pages signed in as (`page check … --as mika`), when one: a look at them signs

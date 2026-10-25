@@ -2,7 +2,15 @@ import http from 'node:http';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { acceptanceAccount, acceptancePages, acceptanceStatuses, examplePaths, pagesToLook } from './pagesOf';
+import {
+  acceptanceAccount,
+  acceptanceAddresses,
+  acceptancePages,
+  acceptanceStatuses,
+  examplePaths,
+  filledPattern,
+  pagesToLook
+} from './pagesOf';
 
 import type { AddressInfo } from 'node:net';
 
@@ -141,5 +149,23 @@ describe('the account a look reads as', () => {
         { said: 'Home', check: 'npx plitzi page check / --status 200' }
       ])
     ).toEqual([{ page: '/no-such-page', status: 404 }]);
+  });
+});
+
+// A run's designer was handed `task look t-dm-words /messages/:username`: no link reached the pattern, and the look
+// checked the home page instead — the address was in the acceptance, said in words.
+describe('the addresses an acceptance names', () => {
+  it('reads them from what is said as from what is checked, and fills a route’s pattern with one that fits', () => {
+    const named = acceptanceAddresses([
+      '/messages/nobodyhere as dax shows "Nobody here goes by that name." at 1440 and 390',
+      "A legend on /design's panels keeps its gap",
+      { said: 'The room', check: 'npx plitzi page check /r/night-drive --as dax' },
+      'src/space/pages/messages-thread.ts changes'
+    ]);
+
+    expect(named).toEqual(['/r/night-drive', '/messages/nobodyhere', '/design']);
+    expect(filledPattern('/messages/:username', named)).toBe('/messages/nobodyhere');
+    expect(filledPattern('/u/:username', named)).toBe('/u/:username');
+    expect(filledPattern('/design', named)).toBe('/design');
   });
 });

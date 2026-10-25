@@ -1,10 +1,11 @@
 import { listedTasks, timeOf, withText, withTone } from './monitorBoard';
 import { clip, textWidth } from './monitorCanvas';
 import { AGENT_LOOK, since, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
-import { sortSpend, spentInAll, tokensShort } from './monitorSpend';
+import { BARS, cachedShare, costInAll, costShort, sparkline, spentInAll, tokensShort } from './monitorSpend';
 
 import type { MonitorUi, Paint, PreviewShown } from './monitorModel';
 import type { AgentLine, Monitored } from '../../runs/monitor';
+import type { Spent } from '../../runs/spent';
 
 /**
  * The Overview's sidebar, a surface of its own: the tasks (↑↓ choose, ⏎ opens one), the agents and where each stands,
@@ -58,7 +59,9 @@ export const drawSide = (p: Paint, data: Monitored, ui: MonitorUi, preview: Prev
   const output = preview.state.kind === 'stopped' ? preview.state.said : preview.output;
   const runRows = 4 + Math.min(3, output.length);
   const agentRows = 3 + agents.length;
-  const spendRows = 4 + Math.min(4, Math.max(1, spend.length));
+  // Two lines an agent: its bar, and what the bar is — in, out and its context read again (Carlos asked where 1.7M came from).
+  // Above them the run's: its last half hour a chart, and its tokens with how much of them was read again.
+  const spendRows = 4 + (spend.length === 0 ? 0 : 3) + 2 * Math.min(4, Math.max(1, spend.length));
   // What the tasks may take once the rest has its rows: the spend given up first, the tasks never fewer than three.
   const fixed = runRows + agentRows;
   const withSpend = rect.height - fixed - spendRows >= 3 + 3 + (folded ? 1 : 0);
@@ -140,23 +143,50 @@ export const drawSide = (p: Paint, data: Monitored, ui: MonitorUi, preview: Prev
   if (withSpend) {
     row += 1;
     const total = spentInAll(spend);
-    title(p, row, rect, 'Spend', total > 0 ? `${tokensShort(total)} tokens` : '');
+    const cost = costInAll(spend);
+    title(p, row, rect, 'Spend', cost === undefined ? '' : costShort(cost));
     row += 2;
     if (spend.length === 0) {
       canvas.put(row, rect.left + 2, 'nothing ended yet', { fg: theme.subtle });
       row += 1;
     } else {
-      const heaviest = sortSpend(spend, 'spent').slice(0, 4);
-      const most = Math.max(1, ...heaviest.map(each => each.input + each.output + each.cached));
+      const span = `last ${String(data.perMinute.length)} min`;
+      sparkline(data.perMinute, end - rect.left - 4 - textWidth(span)).forEach((level, column) => {
+        canvas.put(row, rect.left + 2 + column, level === 0 ? BARS[0] : (BARS[level - 1] ?? BARS[0]), {
+          fg: level === 0 ? theme.border : theme.primary
+        });
+      });
+      canvas.right(row, end, span, { fg: theme.subtle });
+      row += 1;
+      canvas.put(row, rect.left + 2, `${tokensShort(total)} tokens`, { fg: theme.muted });
+      canvas.right(row, end, `${String(cachedShare(spend))}% cached`, { fg: theme.subtle });
+      row += 2;
+      // A bar, its order and its figure say the same: what it cost when the whole run has a price, its tokens if not.
+      const figure = (each: Spent): number =>
+        cost === undefined ? each.input + each.output + each.cached : (each.cost ?? 0);
+      const heaviest = [...spend].sort((a, b) => figure(b) - figure(a) || a.agent.localeCompare(b.agent)).slice(0, 4);
+      const most = Math.max(Number.MIN_VALUE, ...heaviest.map(figure));
       const barWidth = Math.max(4, rect.width - 26);
       for (const each of heaviest) {
         const tokens = each.input + each.output + each.cached;
-        const filled = Math.max(1, Math.round((tokens / most) * barWidth));
+        const filled = Math.max(1, Math.round((figure(each) / most) * barWidth));
         const hue = p.hues.get(each.agent) ?? theme.primary;
         canvas.put(row, rect.left + 2, clip(each.agent, 10), { fg: hue, bold: true });
         canvas.put(row, rect.left + 13, '█'.repeat(filled), { fg: hue });
         canvas.put(row, rect.left + 13 + filled, '░'.repeat(barWidth - filled), { fg: theme.border });
-        canvas.right(row, end, tokensShort(tokens), { fg: theme.muted });
+        canvas.right(row, end, cost === undefined ? tokensShort(tokens) : costShort(figure(each)), {
+          fg: theme.muted
+        });
+        row += 1;
+        canvas.put(
+          row,
+          rect.left + 13,
+          clip(
+            `in ${tokensShort(each.input)} · out ${tokensShort(each.output)} · cache ${tokensShort(each.cached)}`,
+            Math.max(0, end - rect.left - 13)
+          ),
+          { fg: theme.subtle }
+        );
         row += 1;
       }
     }

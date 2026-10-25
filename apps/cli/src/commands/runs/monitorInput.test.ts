@@ -242,9 +242,12 @@ describe("the monitor's keys and mouse", () => {
         throw new Error('the overview has an activity to scroll');
       }
 
-      const older = onMouse(ui, { button: 64, row: activity.top, col: activity.left }, shown);
+      // The newest at the top: the wheel down scrolls to older events, up back to newer.
+      const older = onMouse(ui, { button: 65, row: activity.top, col: activity.left }, shown);
       expect(older?.feedBack).toBe(1);
-      expect(onMouse(ui, { button: 65, row: activity.top, col: activity.left }, shown)?.feedBack).toBe(0);
+      expect(
+        onMouse({ ...ui, feedBack: 1 }, { button: 64, row: activity.top, col: activity.left }, shown)?.feedBack
+      ).toBe(0);
       // A click on no hit, and a wheel over nothing that scrolls, change nothing.
       expect(onMouse(ui, { button: 0, row: 47, col: 0 }, shown)).toBeUndefined();
       expect(onMouse(ui, { button: 64, row: 0, col: 0 }, shown)).toBeUndefined();

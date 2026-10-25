@@ -2,7 +2,7 @@
 
 What the lead does; the agents' half, refusals and exit codes: [runs.md](runs.md) — read both. **Before anything
 starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, their decisions, the summary before it opens. **Start**, when the person asked for a team:
-`plitzi run start "<the ask>"`; then `plitzi run agent <name> --launch` each agent.
+`plitzi run start "<the ask>"`; the team starts by itself (below).
 
 ## The lead
 
@@ -85,7 +85,8 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
 4. **The summary first** ([runs-plan.md](runs-plan.md) § 5), who applies it among it — the person, or you if they open it
    `--lead-finishes` (or `plitzi run finish --lead-finishes` later); never you. `plitzi run open plan.json` backs up every file
    it touches and prints **your own CLI** (`scratch/lead/plitzi`, with your token): run every command after through it.
-5. Start each agent: `plitzi run agent <name> --launch` (alone: its prompt, for a subagent), and follow:
+5. **The team starts by itself** (`options.launch`): start none yourself. With no launch: `plitzi run agent <name>
+   --launch --harness <yours>` each. Follow:
    `plitzi run watch` in the background ends when something needs you — a review, a question, a block, a
    file a task takes past 400 lines (ask for the split), the run standing still (what holds each task), a ready task held by another's claim (`held-ahead`: review that one
    first) — each said once. **Talk:** answer a question with `plitzi

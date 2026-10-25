@@ -69,6 +69,7 @@ export const readClaude = async (session: string, from: string, to: string): Pro
         input: numberOf(usage.input_tokens),
         cacheRead: numberOf(usage.cache_read_input_tokens),
         cacheWrite: numberOf(usage.cache_creation_input_tokens),
+        cacheWriteLong: isRecord(usage.cache_creation) ? numberOf(usage.cache_creation.ephemeral_1h_input_tokens) : 0,
         output: numberOf(usage.output_tokens)
       });
       read.model = text(entry.requestedModel) ?? text(message.model) ?? read.model;

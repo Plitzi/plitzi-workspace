@@ -10,7 +10,7 @@ import type { FeedLine, Monitored } from '../../runs/monitor';
 
 /**
  * The Overview's main column, told as Claude Code tells its work: the run's activity as a transcript — a dot and who did
- * what, the newest last, what opens under a line under `⎿` — the flow in brief at its foot, and what is live now on the
+ * what, the newest first, what opens under a line under `⎿` — the flow in brief at its foot, and what is live now on the
  * prompt: each agent at work with a spinner, its verb shimmering, how long it has been at it.
  */
 
@@ -69,8 +69,8 @@ const drawEvent = (p: Paint, row: number, line: FeedLine, rect: Rect, opened: bo
 };
 
 /**
- * The activity, the newest last, scrolled `feedBack` events back: each event and what is opened under it, as many as
- * the rows hold — counted from the bottom up, as a transcript is.
+ * The activity, the newest first — as the simple panel's Latest, one order everywhere (Carlos read the two as opposite)
+ * — scrolled `feedBack` events back: each event and what is opened under it, as many as the rows hold.
  */
 const drawActivity = (p: Paint, feed: readonly FeedLine[], ui: MonitorUi, rect: Rect): void => {
   const { canvas, theme } = p;
@@ -80,7 +80,7 @@ const drawActivity = (p: Paint, feed: readonly FeedLine[], ui: MonitorUi, rect: 
   type Shown = { line: FeedLine; under: { at?: string; text: string }[] };
   const shown: Shown[] = [];
   let used = 0;
-  // The feed is the newest first: the newest shown is `feedBack` into it, and each older one goes above.
+  // The feed is the newest first: the newest shown is `feedBack` into it, and each older one goes below.
   let index = Math.min(ui.feedBack, Math.max(0, feed.length - 1));
   for (; index < feed.length; index += 1) {
     const line = feed[index];
@@ -89,7 +89,7 @@ const drawActivity = (p: Paint, feed: readonly FeedLine[], ui: MonitorUi, rect: 
       break;
     }
 
-    shown.unshift({ line, under });
+    shown.push({ line, under });
     used += 1 + under.length;
   }
 

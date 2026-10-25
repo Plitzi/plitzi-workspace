@@ -2,8 +2,9 @@ import type { Spent } from '../../runs/spent';
 
 /**
  * The monitor's spend: what each agent's harness spent so far, kept as each piece of its work ended (`spent.ts`).
- * Tokens taken in and written apart from those read again from the cache every turn — a tenth of the price, and most
- * of what is read: one figure of them all said 1.1M for one spec of a run's tester, ~240k its price.
+ * Tokens taken in and written apart from those read again from the cache every turn — a tenth of the price or less, and
+ * most of what is read: one figure of them all said 1.1M for one spec of a run's tester, ~240k its price. Beside them,
+ * what they cost at the API's prices, when every model that spent them has one (`runs/harness/prices.ts`).
  */
 
 /** Tokens in a few characters: 950, 72k, 4.8M. */
@@ -13,6 +14,16 @@ export const tokensShort = (tokens: number): string =>
     : tokens >= 1000
       ? `${String(Math.round(tokens / 1000))}k`
       : String(tokens);
+
+/** Dollars in a few characters: $0.42, $12.4, $130 — under a cent, said as such. */
+export const costShort = (usd: number): string =>
+  usd < 0.01
+    ? '<$0.01'
+    : usd < 10
+      ? `$${usd.toFixed(2)}`
+      : usd < 100
+        ? `$${usd.toFixed(1)}`
+        : `$${String(Math.round(usd))}`;
 
 /**
  * What the spend's rows are ordered by — `s` turns to the next: what costs (in and out), that a session and a task, what
@@ -79,6 +90,7 @@ export interface SpendRow {
   perSession: number;
   perTask: number;
   context: number;
+  cost?: number;
   /** Past its `freshContextAt`: started fresh after its piece. */
   pastFresh: boolean;
 }
@@ -109,8 +121,10 @@ export const spendTable = (
     perSession: Math.round(perSession(each)),
     perTask: Math.round(perTask(each)),
     context: each.context,
+    ...(each.cost === undefined ? {} : { cost: each.cost }),
     pastFresh: each.context > (freshAt.get(each.agent) ?? Number.POSITIVE_INFINITY)
   });
+  const cost = costInAll(spend);
   const tasks = new Set(spend.flatMap(each => each.tasks)).size;
   const sessions = sum(spend, each => each.sessions);
   const costs = sum(spend, each => each.input + each.output);
@@ -130,6 +144,7 @@ export const spendTable = (
       perSession: sessions === 0 ? 0 : Math.round(costs / sessions),
       perTask: Math.round(costs / Math.max(1, tasks)),
       context: 0,
+      ...(cost === undefined ? {} : { cost }),
       pastFresh: false
     }
   };
@@ -137,3 +152,33 @@ export const spendTable = (
 
 /** What the run's agents spent in all — every token their harnesses counted. */
 export const spentInAll = (spend: readonly Spent[]): number => sum(spend, totalOf);
+
+/** What the run's agents cost in all at the API's prices — none when one of them spent on a model with no price. */
+export const costInAll = (spend: readonly Spent[]): number | undefined =>
+  spend.length === 0 || spend.some(each => each.cost === undefined) ? undefined : sum(spend, each => each.cost ?? 0);
+
+/** How much of every token counted was the context read again from the cache, in whole percent. */
+export const cachedShare = (spend: readonly Spent[]): number => {
+  const total = spentInAll(spend);
+
+  return total === 0 ? 0 : Math.round((sum(spend, each => each.cached) / total) * 100);
+};
+
+/**
+ * The spend's chart: each column a bar's height, 0 for none to 8 for the busiest — the minutes put together when there
+ * are more than columns, each column the same number of them but for the rounding.
+ */
+export const sparkline = (minutes: readonly number[], width: number): number[] => {
+  const columns = Math.max(0, Math.min(width, minutes.length));
+  const sums = Array.from({ length: columns }, (_, column) =>
+    minutes
+      .slice(Math.floor((column * minutes.length) / columns), Math.floor(((column + 1) * minutes.length) / columns))
+      .reduce((total, each) => total + each, 0)
+  );
+  const most = Math.max(0, ...sums);
+
+  return sums.map(each => (each === 0 || most === 0 ? 0 : Math.max(1, Math.round((each / most) * 8))));
+};
+
+/** A chart's bar of each height, 1 to 8. */
+export const BARS = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'] as const;

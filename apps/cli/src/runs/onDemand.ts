@@ -73,8 +73,23 @@ export const agentsNeeded = (
   views: readonly TaskView[],
   started: readonly StartedAgent[],
   running: ReadonlySet<string>,
-  run: { identified: readonly string[]; scratch: string; openFor: number; open: boolean }
+  run: {
+    identified: readonly string[];
+    scratch: string;
+    openFor: number;
+    open: boolean;
+    /**
+     * The team says how to start its agents (`options.launch`): the run's keeper starts them, at once — a base agent is
+     * given no time to be started by hand (a run's keeper waited two minutes while its lead was told to start dev-1).
+     */
+    launches?: boolean;
+  }
 ): Attention[] => {
+  // Given to the lead, who starts the base by hand: with the team's launch, the keeper starts it the moment the run opens.
+  const startingFor = run.launches === true ? 0 : STARTING_MS;
+  // How to start one: in the team's own harness, or the one the lead names.
+  const launch = (agent: string): string =>
+    `plitzi run agent ${agent} --launch${run.launches === true ? '' : ' --harness <yours>'}`;
   const busy = new Set(
     views.flatMap(view => [
       ...(view.owner && isWorked(view.state.status) ? [view.owner.agent] : []),
@@ -104,7 +119,7 @@ export const agentsNeeded = (
     return {
       kind: 'agents-needed' as const,
       agent,
-      text: `${tasks.join(', ')} ${tasks.length === 1 ? 'was' : 'were'} sent back to ${agent}, which is not running: start it again — plitzi run agent ${agent} --launch --harness <yours> (its prompt alone: plitzi run agent ${agent}) — it takes ${tasks.length === 1 ? 'it' : 'them'} first`,
+      text: `${tasks.join(', ')} ${tasks.length === 1 ? 'was' : 'were'} sent back to ${agent}, which is not running: start it again — ${launch(agent)} (its prompt alone: plitzi run agent ${agent}) — it takes ${tasks.length === 1 ? 'it' : 'them'} first`,
       who: 'lead' as const
     };
   });
@@ -153,7 +168,7 @@ export const agentsNeeded = (
       );
       // One that starts with the run is being started as the run opens: asked for only once it had time to join —
       // A run's watch said "start dev-1" the moment the lead had started it.
-      if (waiting.length === 0 || !next || (!next.onDemand && run.openFor < STARTING_MS)) {
+      if (waiting.length === 0 || !next || (!next.onDemand && run.openFor < startingFor)) {
         return [];
       }
 
@@ -195,7 +210,7 @@ export const agentsNeeded = (
         {
           kind: 'agents-needed' as const,
           agent: next.agent,
-          text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — plitzi run agent ${next.agent} --launch --harness <yours> (its prompt alone: plitzi run agent ${next.agent}; by hand: ${commandAs(run.scratch, next.agent, run.identified, `task next${next.quality ? ` --quality ${next.quality}` : ''}`)})${next.onDemand ? ` — it stops by itself once nothing is left for it; its start costs about a small task, worth it for ${String(TASKS_PER_AGENT)} or more waiting` : ''}`,
+          text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — ${launch(next.agent)} (its prompt alone: plitzi run agent ${next.agent}; by hand: ${commandAs(run.scratch, next.agent, run.identified, `task next${next.quality ? ` --quality ${next.quality}` : ''}`)})${next.onDemand ? ` — it stops by itself once nothing is left for it; its start costs about a small task, worth it for ${String(TASKS_PER_AGENT)} or more waiting` : ''}`,
           who: 'lead' as const
         }
       ];
@@ -209,11 +224,11 @@ export const agentsNeeded = (
     run.open && views.some(view => view.task.spike === undefined)
       ? started
           .filter(each => each.onDemand !== true && !running.has(each.agent) && !asked.has(each.agent))
-          .filter(() => run.openFor >= STARTING_MS)
+          .filter(() => run.openFor >= startingFor)
           .map((each): Attention => ({
             kind: 'agents-needed' as const,
             agent: each.agent,
-            text: `${each.agent}, of the team's base, is not running: start it again — plitzi run agent ${each.agent} --launch --harness <yours> — it waits for work while the run is open`,
+            text: `${each.agent}, of the team's base, is not running: start it again — ${launch(each.agent)} — it waits for work while the run is open`,
             who: 'lead' as const
           }))
       : [];

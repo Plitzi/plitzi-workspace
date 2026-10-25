@@ -35,6 +35,7 @@ import {
   heldRoles,
   ensureTeam,
   leadModelText,
+  readTeam,
   startText,
   reviewsDesign,
   startedAgents,
@@ -161,11 +162,15 @@ const startLines = (tasks: readonly RunTask[], team: Team, designReview: boolean
         ...(reviewing.length > 0 ? [`the UI of ${reviewing.join(', ')}`] : [])
       ];
 
+      // The team that says how its agents start is started by the run: the lead never starts its base by hand.
+      const byHand = `plitzi task next${each.quality ? ` --quality ${each.quality}` : ''} --agent ${each.agent}`;
+      const launch = team.options?.launch;
+
       return work.length === 0
         ? `  ${each.agent} — nothing for its ${each.roles.join(', ')} in this plan: leave it out`
         : each.onDemand
-          ? `  ${each.agent} — ${each.roles.join(', ')} — on demand: not at the start — when run watch says work waits for it: plitzi task next${each.quality ? ` --quality ${each.quality}` : ''} --agent ${each.agent} (it stops by itself once nothing is left for it)`
-          : `  ${each.agent} — ${each.roles.join(', ')}${each.quality ? ` at ${each.quality}` : ''} — ${startText(each)} (${work.join('; ')}): plitzi task next${each.quality ? ` --quality ${each.quality}` : ''} --agent ${each.agent}`;
+          ? `  ${each.agent} — ${each.roles.join(', ')} — on demand: not at the start — ${launch ? `the run starts it in ${launch} when work waits for it` : `when run watch says work waits for it: ${byHand}`} (it stops by itself once nothing is left for it)`
+          : `  ${each.agent} — ${each.roles.join(', ')}${each.quality ? ` at ${each.quality}` : ''} — ${startText(each)} (${work.join('; ')}): ${launch ? `the run starts it in ${launch} as it opens` : byHand}`;
     })
   ];
 };
@@ -350,8 +355,12 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
         throw new Error(`Run "${opened.checked.runId}" opened with a lead's token already made: a bug of the CLI`);
       }
 
+      const team = await readTeam(ctx.root).catch(() => undefined);
+
       return {
         keeper: await ensureKeeper(ctx, opened.checked.runId, lead.token),
+        // Who the keeper starts at once: the team's base, said by name so nobody starts it again by hand.
+        base: team ? startedAgents(team).flatMap(each => (each.onDemand === true ? [] : [each.agent])) : [],
         runId: opened.checked.runId,
         folder: opened.paths.dir,
         tasks: opened.checked.tasks.map(task => task.id),
@@ -369,7 +378,7 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
     opened =>
       [
         `Run "${opened.runId}" is open: ${String(opened.tasks.length)} task${opened.tasks.length === 1 ? '' : 's'}, ${String(opened.backedUp)} files backed up in ${opened.folder}.`,
-        keeperText(opened.keeper),
+        keeperText(opened.keeper, opened.base),
         chalk.bold(
           `The lead's own CLI: ${opened.leadCli} — every command of the run as the lead goes through it, which passes the lead's token (${opened.leadToken}, kept in ${opened.leadTokenFile}); a command as lead without it is refused`
         ),

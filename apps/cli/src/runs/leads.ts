@@ -241,11 +241,37 @@ export const takeOnLook = async (ctx: RunContext, loaded: LoadedRun, view: TaskV
     coLeadsOf(loaded.record).includes(ctx.agent) ||
     (testers.includes(ctx.agent) && testerReviews(view.task));
   const taken = view.state.reviewer?.by === ctx.agent && view.state.reviewer.round === view.state.round;
-  if (!reviews || taken || view.state.status !== 'in-review' || view.state.design?.status === 'due') {
+  if (!reviews || taken || view.state.status !== 'in-review') {
     return false;
   }
 
+  // A UI review nobody took is the lead's once it reads it: a run's lead looked at a task as the watch said to, and
+  // its designer took the review meanwhile — the lead's approval was refused. A tester reviews code, never the UI.
+  if (view.state.design?.status === 'due') {
+    const lead = ctx.agent === LEAD || coLeadsOf(loaded.record).includes(ctx.agent);
+
+    return lead && view.state.design.by === undefined ? takeUiReview(ctx, view) : false;
+  }
+
   return takeLeadReview(ctx, view);
+};
+
+/**
+ * A UI review due that no designer took, taken by a lead — as a designer takes one (`takeDesignReview`), written here:
+ * `design.ts` reaches this module through the run's own, and importing it closes a cycle.
+ */
+const takeUiReview = async (ctx: RunContext, view: TaskView): Promise<boolean> => {
+  const at = ctx.now().toISOString();
+  const after = await updateState(
+    view.paths,
+    state =>
+      state.status === 'in-review' && state.design?.status === 'due' && state.design.by === undefined
+        ? { ...state, design: { ...state.design, by: ctx.agent, at } }
+        : state,
+    ctx.now
+  );
+
+  return after.design?.by === ctx.agent;
 };
 
 export const takeLeadReview = async (ctx: RunContext, view: TaskView): Promise<boolean> => {

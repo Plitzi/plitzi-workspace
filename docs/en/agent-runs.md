@@ -158,7 +158,7 @@ are more than the width holds. At the foot a status bar (the run, what it spent,
 it what needs someone, one notice at a time in a frame — "Needs you" when one is the person's, else "For the lead" —
 its command copied by `c`, `n` the next, `d` every one whole, `esc` put off until it says something else.
 
-The Overview is the activity as a transcript, the newest at the bottom: each event a line (time, who in its hue, task,
+The Overview is the activity, the newest first (as the simple panel's Latest): each event a line (time, who in its hue, task,
 what) — 72 characters at most (`SHORT`, `feedLine.ts`), in its own words where the whole would be cut: "checks fail:
 lint, 2 acceptance lines + 1 file of other tasks", "stops for a fresh context" — its whole kept as its `detail` and
 opened under it with a click (▸), an event repeated in a row one line (×N, opened the same way); one run's lines ran to
@@ -180,14 +180,21 @@ pending task's card says what it waits for (`after t-boxer, t-lint`), and a stag
 scrolled by the wheel over it (`↑ 5 · +7 more`). **Tasks** and **Agents** are the same as tables. **Spend**
 (`monitorSpend.ts`) is what each agent's harness spent so far — the lead's and the reviewers' too — its pieces of work,
 turns, tokens **in** (fresh input and context written to the cache), **out** and **cached** (its context read again
-each turn: a tenth of the price, and most of what is read — one figure of all three said 1.1M for one spec of a run's
-tester, ~240k its price), and its context now, marked past `freshContextAt` for an agent of `"session": "context"`
+each turn: a tenth of the price or less, and most of what is read — one figure of all three said 1.1M for one spec of a
+run's tester, ~240k its price), and its context now, marked past `freshContextAt` for an agent of `"session": "context"`
 alone; its tasks — its own and those it reviewed, each once — and its sessions — the sessions its commands ran in — and
 what one of each costs on average (`PER SESS`, `PER TASK`): agents start fresh in different ways, a task each or past a
 size, so a session is not a task. The run's `PER TASK` counts a task once whoever worked on it: every agent's spend over
-them, what a task cost the run. Sorted by in+out, `s` turning it to per session, per task, cached, context, name. It is
-kept in the run's log as each piece of work ends (`spent`, `spent.ts`): a task completed, a review decided, each from
-the agent's last, read from its sessions as the round's report reads them (`harness/spentIn`).
+them, what a task cost the run. Sorted by in+out, `s` turning it to per session, per task, cached, context, name. Its
+`COST` is what the tokens cost at the Claude API's list prices (`harness/prices.ts`), each turn on its model and its
+cache writes at the rate of how long they were kept (Claude Code keeps them an hour, twice the input's price) — a run on
+a subscription pays none of it; it weighs one run against another. A model with no price there says `—`, and the run
+then says no cost at all: a sum of some agents is no cost of the run. Above the table, and in the sidebar, the run's
+last 30 minutes as a chart, a column a minute, with its tokens and how much of them was cached; the sidebar's bars, their
+order and their figure say the same — the cost when the run has one, the tokens if not — and the status bar says both.
+It is kept in the run's log as each piece of work ends (`spent`, `spent.ts`): a task completed, a review decided, each
+from the agent's last, read from its sessions as the round's report reads them (`harness/spentIn`) — with each minute's
+tokens, so the chart has a piece's minutes when the piece ends, not while it is at work.
 
 `ctrl+p` is a palette: a task, an agent (its line copies `plitzi task message @agent "…"`), a view or an action, found
 by the letters typed in order; `?` lists the keys of the mode it is in. `p` starts the run's preview on 8300
@@ -439,14 +446,19 @@ it comes back for work (`stoppedAgents`: a notice sent on its way out is no sign
 signal" for half an hour after one). The monitor shows one not running as on demand, or stopped, never as idle.
 
 **The keeper** (`keeper.ts`, `plitzi run keep`): with the team's `options.launch`, the run starts the agents it asks for
-— the base not running, one on demand for waiting work, one a task was sent back to — by itself, every few seconds,
-whatever the lead is doing; `run open`, `run resume`, `run attach` and the lead's `run watch` start it,
+— the base the moment the run opens (no `STARTING_MS` for the lead to start it by hand: a run's keeper waited while its
+open said it started them), one on demand for waiting work, one a task was sent back to — by itself, every few seconds,
+whatever the lead is doing; `run open` names the base it starts, and `run agent <name> --launch` takes the team's
+harness unless `--harness` names another; `run open`, `run resume`, `run attach` and the lead's `run watch` start it,
 one a run (`cache/keeper.json`, its log `cache/keeper.log`), and it ends with the run. Only the lead's watch started
 agents before, so while the lead reviewed or wrote a stage, ready tasks waited with no developer running.
 
 **A model one harness does not run** (`harnessRuns`): the team names a model once, for every harness — Claude Code
 runs a Claude one (`claude-…`, `sonnet`), Codex any other, opencode `provider/model`. One the harness does not run is
-not passed: the agent starts on the harness's own default, and `run agent --launch` says so.
+not passed: the agent starts on the harness's own default, and `run agent --launch` says so. **What an agent starts
+with:** Claude Code is started with only the tools an agent uses (`--tools Bash,Read,Edit,Write,Glob,Grep`) and none of
+the person's MCP servers (`--strict-mcp-config`): every tool's definition is read again on every turn — a run's agent
+started at 46.7k tokens of context with them, 16k without.
 
 **A fresh context** (`freshStart`, `nextRules.ts`; a team agent's `"session"`, `options.freshContextAt`): the CLI cannot
 empty a harness's context, so the agent ends its session instead — always between two pieces of work, a task completed

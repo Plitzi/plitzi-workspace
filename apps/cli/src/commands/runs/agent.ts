@@ -2,7 +2,8 @@ import chalk from 'chalk';
 
 import { act, runOf } from './shell';
 import { HARNESSES } from '../../runs/agentPrompt';
-import { harnessOf, launchAgent, promptAgent } from '../../runs/launchAgent';
+import { harnessOf, launchAgent, launchHarness, promptAgent } from '../../runs/launchAgent';
+import { readTeam } from '../../runs/team';
 
 import type { RunCommandOptions } from './shell';
 import type { NoResume } from '../../runs/launch';
@@ -39,9 +40,10 @@ export const runAgent = (agent: string, options: AgentOptions): Promise<void> =>
     async ctx => {
       const runId = await runOf(ctx, options);
 
-      return options.launch
-        ? launchAgent(ctx, runId, agent, await harnessOf(options.harness))
-        : promptAgent(ctx, runId, agent);
+      // The team's own harness unless another is named: a run's lead was refused "Which harness" for one team.json named.
+      const harness = launchHarness(options.harness, await readTeam(ctx.root).catch(() => undefined));
+
+      return options.launch ? launchAgent(ctx, runId, agent, await harnessOf(harness)) : promptAgent(ctx, runId, agent);
     },
     answer =>
       'running' in answer

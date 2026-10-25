@@ -76,8 +76,9 @@ export const pseudoBoxes = async (
 
     const { model } = await session.send('DOM.getBoxModel', { backendNodeId: pseudo.backendNodeId });
     const [left = 0, top = 0] = model.border;
-    placed[`${pseudo.pseudoType}:x`] = `${String(Math.round(left))}px`;
-    placed[`${pseudo.pseudoType}:y`] = `${String(Math.round(top + scrolled))}px`;
+    // To the hundredth, as a width is said: a 1px hairline's place was matched against three values, each rounded alike.
+    placed[`${pseudo.pseudoType}:x`] = `${String(Number(left.toFixed(2)))}px`;
+    placed[`${pseudo.pseudoType}:y`] = `${String(Number((top + scrolled).toFixed(2)))}px`;
   }
 
   return placed;

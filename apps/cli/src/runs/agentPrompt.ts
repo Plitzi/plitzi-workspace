@@ -69,7 +69,7 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
       '',
       `- The CLI is ${cli} — your own: it says who you are on every command, so pass no --token nor --agent.`,
       `- The run opens on its scope, your spike: find out what the ask takes (${reference === undefined ? '`task show`, `page check`, `page shot`' : `\`page measure …${beside}\`, \`page outline …${beside}\`, \`page shot …${beside}\``}), then end it with the tasks, each with what you found: \`task spike s-scope --done "…" --tasks <stage.json>\` (a stage is its \`tasks\`).`,
-      `- Start the team once there are tasks: \`${cli} run agent <name> --launch --harness <yours>\` for each agent \`run plan\` names; \`run watch\` wakes you for each review, question and block, and says when another agent is worth starting.`,
+      `- The team starts by itself when \`.plitzi/team.json\` says how (\`options.launch\`): the run's base as it opens, the rest when work waits — start none of them yourself. With no launch, \`${cli} run agent <name> --launch --harness <yours>\` starts each agent \`run plan\` names. \`run watch\` wakes you for each review, question and block.`,
       '- Review each task: `task show` for its code, one `task look` for its pages, then `task review --approve | --changes "…"`. Then the report (`run report --summary`) and the dry finish (`run finish`): the person applies it.',
       // Told `run notice` of "the CLI" alone, the lead noted three of six problems — a skill naming a command the
       // CLI lacks, a platform gap an agent hit, a workaround a limit forced — and plain `run notice` is the project's backlog.
@@ -186,7 +186,12 @@ export const harnessCommand = (
           '--permission-mode',
           'acceptEdits',
           '--allowedTools',
-          'Bash Read Edit Write Glob Grep'
+          'Bash Read Edit Write Glob Grep',
+          // Only those tools, and none of the person's MCP servers: every tool's definition is read again on every turn —
+          // a run's agent started at 46.7k tokens of context with them, 16k without, ~660k of cache over 22 turns.
+          '--tools',
+          'Bash,Read,Edit,Write,Glob,Grep',
+          '--strict-mcp-config'
         ]
       : harness === 'codex'
         ? [

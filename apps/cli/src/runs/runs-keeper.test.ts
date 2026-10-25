@@ -12,6 +12,7 @@ import { RunRefusal } from './refusal';
 import { openRun, stopRun } from './run';
 import { completeTask, nextTask, takeTask } from './tasks';
 import { setTeamAgent } from './team';
+import { viewRun } from './view';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
@@ -68,6 +69,24 @@ describe("the run's keeper", () => {
     expect(await keepOnce(lead(), 'es-launch', start)).toEqual({ gone: true });
     // A whole flow of the run, step by step: seconds alone, past the default 5 s beside the suite under load.
   }, 30_000);
+
+  // A run's keeper waited two minutes for its lead to start dev-1 and design-1 while `run open` said it starts them; the
+  // lead's start was refused for a harness team.json named.
+  it('starts the base the moment the run opens, when the team says how — nobody is left to start it by hand', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 1 });
+    await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
+    await launching();
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+
+    const started: string[] = [];
+    const start: StartAgent = agent => {
+      started.push(agent);
+
+      return Promise.resolve('started');
+    };
+    expect(await keepOnce(lead(), 'es-launch', start)).toEqual({ started: ['dev-1', 'design-1'], failed: [] });
+    expect((await viewRun(lead(), 'es-launch')).attention.map(item => item.text).join('\n')).not.toContain('--harness');
+  });
 
   it('starts nothing when the team names no harness to start it in', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });

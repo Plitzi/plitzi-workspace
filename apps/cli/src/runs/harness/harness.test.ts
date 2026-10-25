@@ -33,7 +33,7 @@ const window = { root: ROOT, from: T(1), to: T(10) };
 const lines = (entries: unknown[]): string => `${entries.map(each => JSON.stringify(each)).join('\n')}\n`;
 
 describe('what a Claude Code session spent in a round', () => {
-  const answer = (minute: number, id: string, usage: Record<string, number>, content: unknown[] = []) => ({
+  const answer = (minute: number, id: string, usage: Record<string, unknown>, content: unknown[] = []) => ({
     type: 'assistant',
     timestamp: T(minute),
     requestedModel: 'claude-sonnet-5-5',
@@ -82,7 +82,12 @@ describe('what a Claude Code session spent in a round', () => {
           }
         },
         answer(3, 'm2', usage),
-        answer(4, 'm3', { ...usage, cache_read_input_tokens: 5000 }),
+        // Its cache kept an hour, as Claude Code writes it: twice the input's price, where five minutes is 1.25×.
+        answer(4, 'm3', {
+          ...usage,
+          cache_read_input_tokens: 5000,
+          cache_creation: { ephemeral_1h_input_tokens: 100 }
+        }),
         answer(20, 'after', usage)
       ])
     );
@@ -99,6 +104,13 @@ describe('what a Claude Code session spent in a round', () => {
       output: 150,
       processed: 7480,
       contextAtEnd: 5110,
+      // Sonnet 5.5 at $2 in, $10 out, $0.20 read: 970 + 970 + 1920 millionths of a dollar.
+      cost: expect.closeTo(0.00386, 10) as number,
+      minutes: [
+        { at: '2026-10-24T10:01', tokens: 1160 },
+        { at: '2026-10-24T10:03', tokens: 1160 },
+        { at: '2026-10-24T10:04', tokens: 5160 }
+      ],
       heaviest: [
         { tool: 'Bash', what: 'plitzi page measure', results: 1, chars: 4000, reread: 2000 },
         { tool: 'Read', what: '.md', results: 1, chars: 400, reread: 200 }
@@ -210,9 +222,8 @@ describe('what an OpenCode session spent, found by its process', () => {
     );
     database.close();
 
-    expect(
-      await harnessUsage({ sessions: [], processes: [`opencode:7:${String(started / 1000)}`], ...window })
-    ).toMatchObject({
+    const read = await harnessUsage({ sessions: [], processes: [`opencode:7:${String(started / 1000)}`], ...window });
+    expect(read).toMatchObject({
       harness: 'opencode',
       model: 'qwen3.6',
       version: '1.4.0',
@@ -222,6 +233,8 @@ describe('what an OpenCode session spent, found by its process', () => {
       output: 50,
       plitziRead: [{ file: '@plitzi/sdk-authoring/dist/index.d.ts', times: 1 }]
     });
+    // A model with no price is said in tokens alone: never a price guessed.
+    expect(read).not.toHaveProperty('cost');
   });
 });
 

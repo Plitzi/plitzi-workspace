@@ -3,7 +3,16 @@ import { clip, textWidth } from './monitorCanvas';
 import { flowStages, nameOf } from './monitorFlow';
 import { AGENT_LOOK, since, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
 import { agentAt, shortModel } from './monitorSide';
-import { SORT_WORDS, spendTable, tokensShort } from './monitorSpend';
+import {
+  BARS,
+  cachedShare,
+  costInAll,
+  costShort,
+  SORT_WORDS,
+  sparkline,
+  spendTable,
+  tokensShort
+} from './monitorSpend';
 
 import type { MonitorUi, Paint } from './monitorModel';
 import type { Rect } from './monitorSide';
@@ -246,6 +255,28 @@ export const drawSpendView = (p: Paint, data: Monitored, ui: MonitorUi, rect: Re
   }
 
   const { rows, all } = spendTable(data.spend, data.freshAt, ui.spendSort);
+  // The run's last half hour first, a column a minute, and what its whole was.
+  sparkline(data.perMinute, data.perMinute.length).forEach((level, column) => {
+    canvas.put(rect.top + 1, rect.left + 2 + column, level === 0 ? BARS[0] : (BARS[level - 1] ?? BARS[0]), {
+      fg: level === 0 ? theme.border : theme.primary
+    });
+  });
+  const cost = costInAll(data.spend);
+  canvas.put(
+    rect.top + 1,
+    rect.left + 4 + data.perMinute.length,
+    clip(
+      [
+        `last ${String(data.perMinute.length)} min`,
+        `${tokensShort(all.total)} tokens`,
+        `${String(cachedShare(data.spend))}% cached`,
+        ...(cost === undefined ? [] : [costShort(cost)])
+      ].join(' · '),
+      Math.max(0, rect.width - data.perMinute.length - 6)
+    ),
+    { fg: theme.muted }
+  );
+  const top = rect.top + 3;
   const columns = [
     'WHO',
     'DONE',
@@ -258,7 +289,8 @@ export const drawSpendView = (p: Paint, data: Monitored, ui: MonitorUi, rect: Re
     'TOTAL',
     'PER SESS',
     'PER TASK',
-    'CONTEXT'
+    'CONTEXT',
+    'COST'
   ] as const;
   const cells = (each: typeof all): string[] => [
     each.agent,
@@ -272,19 +304,20 @@ export const drawSpendView = (p: Paint, data: Monitored, ui: MonitorUi, rect: Re
     tokensShort(each.total),
     tokensShort(each.perSession),
     tokensShort(each.perTask),
-    each.agent === 'all' ? '' : `${tokensShort(each.context)}${each.pastFresh ? '!' : ''}`
+    each.agent === 'all' ? '' : `${tokensShort(each.context)}${each.pastFresh ? '!' : ''}`,
+    each.cost === undefined ? '—' : costShort(each.cost)
   ];
   const table = [...rows.map(cells), cells(all)];
   const widths = columns.map((name, index) => Math.max(name.length, ...table.map(row => (row[index] ?? '').length)));
   const at = (index: number): number =>
     rect.left + 2 + widths.slice(0, index).reduce((sum, width) => sum + width + 3, 0);
-  canvas.right(rect.top + 1, rect.left + rect.width - 2, `by ${SORT_WORDS[ui.spendSort]} · s sorts`, {
+  canvas.right(top, rect.left + rect.width - 2, `by ${SORT_WORDS[ui.spendSort]} · s sorts`, {
     fg: theme.subtle
   });
   columns.forEach((name, index) =>
     index === 0
-      ? canvas.put(rect.top + 1, at(index), name, { fg: theme.subtle, bold: true })
-      : canvas.right(rect.top + 1, at(index) + (widths[index] ?? 0), name, { fg: theme.subtle, bold: true })
+      ? canvas.put(top, at(index), name, { fg: theme.subtle, bold: true })
+      : canvas.right(top, at(index) + (widths[index] ?? 0), name, { fg: theme.subtle, bold: true })
   );
   const line = (row: number, values: readonly string[], style: { bold?: boolean; fg?: string }, hue?: string): void =>
     values.forEach((value, index) =>
@@ -296,29 +329,33 @@ export const drawSpendView = (p: Paint, data: Monitored, ui: MonitorUi, rect: Re
           })
     );
   rows
-    .slice(0, rect.height - 8)
+    .slice(0, rect.height - 12)
     .forEach((each, index) =>
-      line(
-        rect.top + 3 + index,
-        cells(each),
-        { fg: each.pastFresh ? theme.warning : theme.muted },
-        p.hues.get(each.agent)
-      )
+      line(top + 2 + index, cells(each), { fg: each.pastFresh ? theme.warning : theme.muted }, p.hues.get(each.agent))
     );
-  const foot = rect.top + 3 + Math.min(rows.length, rect.height - 8);
+  const foot = top + 2 + Math.min(rows.length, rect.height - 12);
   canvas.put(foot, rect.left + 2, '─'.repeat(Math.max(0, at(columns.length) - rect.left - 5)), { fg: theme.border });
   line(foot + 1, cells(all), { fg: theme.text, bold: true });
   canvas.put(
     foot + 3,
     rect.left + 2,
-    'TOTAL: in + out + cached, every token its harness counted · cached: read again, a tenth of the price',
+    'TOTAL: in + out + cached, every token its harness counted · cached: read again, a tenth of the price or less',
     { fg: theme.subtle }
   );
   canvas.put(foot + 4, rect.left + 2, 'PER SESS · PER TASK: in + out over its sessions · its tasks', {
     fg: theme.subtle
   });
+  canvas.put(
+    foot + 5,
+    rect.left + 2,
+    clip(
+      'COST: at the API’s prices, each turn on its model — none on a subscription · — a model with no price',
+      rect.width - 4
+    ),
+    { fg: theme.subtle }
+  );
   if (rows.some(each => each.pastFresh)) {
-    canvas.put(foot + 5, rect.left + 2, '! past its freshContextAt: started fresh after its piece', {
+    canvas.put(foot + 6, rect.left + 2, '! past its freshContextAt: started fresh after its piece', {
       fg: theme.warning
     });
   }

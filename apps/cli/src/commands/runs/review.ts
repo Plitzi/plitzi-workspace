@@ -33,6 +33,7 @@ import { inTurns } from '../../runs/inTurns';
 import { readOwnership } from '../../runs/ownership';
 import {
   acceptanceAccount,
+  acceptanceAddresses,
   acceptancePages,
   acceptanceStatuses,
   examplePaths,
@@ -73,6 +74,8 @@ const viewTaskOf = async (
   changed: string[];
   designing: boolean;
   acceptanceAt: string[];
+  /** Every address its acceptance names, said or checked: what a route's pattern is opened at. */
+  named: string[];
   acceptanceAs?: string;
   byStatus: { page: string; status: number }[];
 }> => {
@@ -85,6 +88,7 @@ const viewTaskOf = async (
     changed: state.changed ?? [],
     designing: state.design?.status === 'due' && state.design.by === ctx.agent,
     acceptanceAt: acceptancePages(task.acceptance),
+    named: acceptanceAddresses(task.acceptance),
     byStatus: acceptanceStatuses(task.acceptance),
     ...(acceptanceAccount(task.acceptance) === undefined ? {} : { acceptanceAs: acceptanceAccount(task.acceptance) })
   };
@@ -168,6 +172,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
           changed,
           designing,
           acceptanceAt: checked,
+          named: addressed,
           acceptanceAs,
           byStatus
         } = await viewTaskOf(ctx, runId, taskId);
@@ -206,9 +211,21 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         const { paths: routes, unreached } = await examplePaths(
           preview.url,
           toLook,
-          acceptanceAt,
+          [...new Set([...acceptanceAt, ...addressed])],
           typeof cookie === 'string' ? cookie : undefined
         );
+        // Nothing of what was asked can be opened: said, never another page looked at in its place (a run's look at a
+        // route's pattern checked the home page, which the task never changed).
+        if (routes.length === 0) {
+          throw new RunRefusal(
+            'invalid',
+            `No page to look at: no link of the site reaches ${unreached.join(', ')}, and the acceptance names no address that fits it`,
+            {
+              task: taskId,
+              next: `name an address: plitzi task look ${taskId} ${unreached[0]?.replace(/:[A-Za-z_]\w*/g, '<value>') ?? '<page>'}`
+            }
+          );
+        }
         // Every page read in one visitor's zone: the machine's, unless said — and said under the pictures either way.
         const zone = options.timezone ? ['--timezone', options.timezone] : [];
         const signedIn = as ? ['--as', as] : [];

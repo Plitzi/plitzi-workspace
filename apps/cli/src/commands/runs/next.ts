@@ -8,7 +8,7 @@ import { FOLLOW_MS } from '../../options';
 import { DESIGN_LOOK } from '../../runs/design';
 import { isPrincipal } from '../../runs/leads';
 import { acceptanceText } from '../../runs/model';
-import { acceptanceAccount, acceptanceStatuses } from '../../runs/pagesOf';
+import { acceptanceAccount, acceptanceAddresses, acceptanceStatuses, filledPattern } from '../../runs/pagesOf';
 import { copyOf } from '../../runs/paths';
 import { DESIGN_READING } from '../../runs/reading';
 import { nextTask, takeNext, takeTask } from '../../runs/tasks';
@@ -63,7 +63,10 @@ const earlierText = (review: { earlier: number; task: { id: string } }): string[
  * The look a review starts from, as `task next` offers it: its pages signed in as its acceptance checks them, and a
  * page its acceptance checks with a status of its own looked at with it — a run's offer left out t-retro-pass's 404.
  */
-const lookCommand = (task: RunTask, pages: readonly string[], also: string): string[] => {
+const lookCommand = (task: RunTask, drawnAt: readonly string[], also: string): string[] => {
+  // A route's pattern offered as an address its acceptance names: a run's designer was handed `/messages/:username`.
+  const named = acceptanceAddresses(task.acceptance);
+  const pages = drawnAt.map(page => filledPattern(page, named));
   const as = acceptanceAccount(task.acceptance);
   const signedIn = as === undefined ? '' : ` --as ${as}`;
   const byStatus = new Map<number, string[]>();

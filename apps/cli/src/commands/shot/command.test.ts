@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { framesOf } from './frames';
-import { shotFile } from './output';
+import { shotFile, smallPicture } from './output';
 
 describe('a picture’s file', () => {
   // Two clips of one page wrote home-1440-light.png each, the second over the first before it was read.
@@ -42,5 +42,23 @@ describe('what moved over the frames', () => {
       slight: [{ name: 'hero', changed: 0.3 }],
       still: ['hero', 'footer']
     });
+  });
+});
+
+// A run's designer clipped an 11px legend and got 350×26, its 1px hairline unseen: the picture's size and --scale said.
+describe('a clip pictured small', () => {
+  const pngOf = (width: number, height: number): Uint8Array => {
+    const png = new Uint8Array(24);
+    const view = new DataView(png.buffer);
+    view.setUint32(16, width);
+    view.setUint32(20, height);
+
+    return png;
+  };
+
+  it('is said by its size under a few lines of text, and not past them', () => {
+    expect(smallPicture(pngOf(350, 26))).toBe('350×26 px');
+    expect(smallPicture(pngOf(350, 64))).toBeUndefined();
+    expect(smallPicture(new Uint8Array(8))).toBeUndefined();
   });
 });

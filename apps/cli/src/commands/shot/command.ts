@@ -28,7 +28,7 @@ import {
   regionsText
 } from './compare';
 import { framesOf } from './frames';
-import { shotFile, tilesOf } from './output';
+import { matchesSection, shotFile, smallPicture, tilesOf } from './output';
 import { clickThrough, interactionSteps, playSteps } from './steps';
 import { MOVING_PERCENT } from './types';
 import { visitorsOn } from './visitors';
@@ -119,9 +119,6 @@ export const shotEach = async (route: string | undefined, options: ShotEachOptio
 
 /** The exit a shot set, read anew: assigned before it, TypeScript would take it for the value it was given. */
 const exitCode = (): typeof process.exitCode => process.exitCode;
-
-const matchesSection = (region: { name: string; element?: string }, section: string): boolean =>
-  region.name === section || region.name.endsWith(`#${section}`) || region.element === section;
 
 /**
  * The element `--clip` names, as a region of the page — none when it is one of the page's sections already, a problem
@@ -646,6 +643,12 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     }
 
     console.log(out);
+    // A part a few lines tall is pictured at its own size — a run's 11px legend came out 350×26: said, with --scale.
+    const small = clip !== undefined && options.scale === undefined ? smallPicture(taken.png) : undefined;
+    if (small) {
+      console.log(chalk.dim(`${small}: a part this small is read up close with --scale 4`));
+    }
+
     if (report.sentTo) {
       console.log(
         chalk.yellow(

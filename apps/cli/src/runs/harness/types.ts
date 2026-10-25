@@ -2,6 +2,8 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { priceOf, turnCost } from './prices';
+
 /** The harnesses whose sessions a run reads what they spent from. */
 export type HarnessName = 'claude' | 'codex' | 'opencode';
 
@@ -23,6 +25,10 @@ export interface HarnessUsage {
   processed: number;
   /** Its context at the window's last turn. */
   contextAtEnd: number;
+  /** What the window cost at the API's prices (`prices.ts`); none when a session's model has no price. */
+  cost?: number;
+  /** The tokens of each minute it answered in (`2026-10-25T17:02`): when the spend happened, for the monitor's chart. */
+  minutes: { at: string; tokens: number }[];
   /** The results that weighed most: how many, their size, and the tokens they were read again for in later turns. */
   heaviest: { tool: string; what: string; results: number; chars: number; reread: number }[];
   /**
@@ -38,7 +44,16 @@ export interface SessionRead {
   model?: string;
   effort?: string;
   version?: string;
-  turns: { id: string; at: string; input: number; cacheRead: number; cacheWrite: number; output: number }[];
+  /** Each answer's tokens; `cacheWriteLong` the part of `cacheWrite` kept an hour, which costs more (0 when unsaid). */
+  turns: {
+    id: string;
+    at: string;
+    input: number;
+    cacheRead: number;
+    cacheWrite: number;
+    cacheWriteLong: number;
+    output: number;
+  }[];
   /** Each tool call by its id: the tool, what it was asked in a few words, and what it was given whole. */
   calls: Map<string, { tool: string; what: string; input: string }>;
   results: { at: string; key: string; chars: number }[];
@@ -154,6 +169,13 @@ export const usageOf = (reads: readonly SessionRead[]): HarnessUsage | undefined
 
   const sum = (pick: (turn: (typeof answered)[number]) => number): number =>
     answered.reduce((total, turn) => total + pick(turn), 0);
+  const prices = reads.map(each => ({ read: each, price: priceOf(each.model) }));
+  const priced = prices.every(each => each.price !== undefined || each.read.turns.length === 0);
+  const minutes = new Map<string, number>();
+  for (const turn of answered) {
+    const minute = turn.at.slice(0, 16);
+    minutes.set(minute, (minutes.get(minute) ?? 0) + turn.input + turn.cacheRead + turn.cacheWrite + turn.output);
+  }
 
   return {
     harness: main.harness,
@@ -167,6 +189,16 @@ export const usageOf = (reads: readonly SessionRead[]): HarnessUsage | undefined
     output: sum(turn => turn.output),
     processed: sum(turn => turn.input + turn.cacheRead + turn.cacheWrite + turn.output),
     contextAtEnd: last.input + last.cacheRead + last.cacheWrite,
+    ...(priced
+      ? {
+          cost: prices.reduce(
+            (total, { read, price }) =>
+              total + (price ? read.turns.reduce((each, turn) => each + turnCost(price, turn), 0) : 0),
+            0
+          )
+        }
+      : {}),
+    minutes: [...minutes].map(([at, tokens]) => ({ at, tokens })),
     heaviest: [...heaviest.values()].sort((a, b) => b.reread - a.reread).slice(0, KEPT),
     plitziRead: [...read]
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))

@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { launchAgent } from './launchAgent';
+import { launchAgent, launchHarness } from './launchAgent';
 import { openRun } from './run';
 import { setTeamAgent } from './team';
 import { benchPlan, makeBench } from '../tests/runProject';
@@ -57,5 +57,15 @@ describe('starting an agent', () => {
 
     expect(both.filter(each => 'launched' in each)).toHaveLength(1);
     expect(both.find(each => 'running' in each)).toMatchObject({ agent: 'dev-1', running: { harness: 'claude' } });
+  });
+});
+
+// A run's lead was refused "Which harness: --harness claude | opencode" for one its team.json named.
+describe('the harness an agent starts in', () => {
+  it('is the one named, else the team’s own launch, else none — the machine’s one alone, or asked', () => {
+    expect(launchHarness('opencode', { options: { launch: 'claude' } })).toBe('opencode');
+    expect(launchHarness(undefined, { options: { launch: 'claude' } })).toBe('claude');
+    expect(launchHarness(undefined, { options: {} })).toBeUndefined();
+    expect(launchHarness(undefined, undefined)).toBeUndefined();
   });
 });

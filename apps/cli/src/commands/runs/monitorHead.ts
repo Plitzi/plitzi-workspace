@@ -1,6 +1,6 @@
 import { clip, textWidth } from './monitorCanvas';
 import { hhmm, minutesText, TASK_LOOK, toneOf, VIEWS } from './monitorModel';
-import { spentInAll, tokensShort } from './monitorSpend';
+import { costInAll, costShort, spentInAll, tokensShort } from './monitorSpend';
 
 import type { MonitorMode, MonitorUi, Paint, PreviewShown } from './monitorModel';
 import type { Monitored } from '../../runs/monitor';
@@ -218,6 +218,11 @@ export const drawStatus = (
   col = canvas.put(row, col + 1, `● ${view.status}`, { fg: toneOf(theme, STATUS_TONE[view.status] ?? 'subtle') });
   col = canvas.put(row, col + 3, `${String(view.done)}/${String(view.total)}`, { fg: theme.text });
   const spent = spentInAll(data.spend);
+  const cost = costInAll(data.spend);
+  if (cost !== undefined) {
+    col = canvas.put(row, col + 3, costShort(cost), { fg: theme.text });
+  }
+
   if (spent > 0) {
     col = canvas.put(row, col + 3, `${tokensShort(spent)} tok`, { fg: theme.muted });
   }

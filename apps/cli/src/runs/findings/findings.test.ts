@@ -283,6 +283,7 @@ describe('what the run spent that it did not have to', () => {
     output: 0,
     processed,
     contextAtEnd,
+    minutes: [],
     heaviest: [{ tool: 'Bash', what: 'plitzi page measure', results: 3, chars: 60_000, reread: 1_200_000 }],
     plitziRead: []
   });

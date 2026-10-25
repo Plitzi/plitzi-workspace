@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { sortSpend, spendTable, spentInAll, tokensShort } from './monitorSpend';
+import {
+  cachedShare,
+  costInAll,
+  costShort,
+  sortSpend,
+  sparkline,
+  spendTable,
+  spentInAll,
+  tokensShort
+} from './monitorSpend';
 
 import type { Spent } from '../../runs/spent';
 
@@ -55,5 +64,25 @@ describe("the monitor's spend", () => {
 
   it('says tokens in a few characters', () => {
     expect([950, 72_400, 4_800_000, 12_000_000].map(tokensShort)).toEqual(['950', '72k', '4.8M', '12M']);
+  });
+
+  // The mockup's spend said what the run cost and how much of it was cached; a model with no price says none.
+  it('says the cost in all only when every agent has one, and the share read again', () => {
+    expect(
+      costInAll([
+        { ...tester, cost: 0.3 },
+        { ...developer, cost: 0.12 }
+      ])
+    ).toBeCloseTo(0.42);
+    expect(costInAll([{ ...tester, cost: 0.3 }, developer])).toBeUndefined();
+    expect(costInAll([])).toBeUndefined();
+    expect(cachedShare([tester, developer])).toBe(93);
+    expect([0.004, 0.42, 12.44, 130.2].map(costShort)).toEqual(['<$0.01', '$0.42', '$12.4', '$130']);
+  });
+
+  it('charts the minutes a column each, put together when there are fewer columns, none drawn as nothing', () => {
+    expect(sparkline([0, 1000, 4000, 8000], 4)).toEqual([0, 1, 4, 8]);
+    expect(sparkline([0, 1000, 3000, 8000], 2)).toEqual([1, 8]);
+    expect(sparkline([0, 0], 5)).toEqual([0, 0]);
   });
 });

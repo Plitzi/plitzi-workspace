@@ -205,7 +205,8 @@ describe('plitzi run monitor', () => {
     ).toEqual(['t-last', 't-first']);
   });
 
-  it('scrolls the activity back, the newest last, and says how far', async () => {
+  // Carlos read the advanced Activity and the simple Latest in opposite orders: the newest first in both.
+  it('scrolls the activity back, the newest first, and says how far', async () => {
     const runId = await open();
     for (const text of Array.from({ length: 40 }, (_, index) => String(index + 1))) {
       await noteRun(lead(), runId, `Note ${text}`);
@@ -217,11 +218,11 @@ describe('plitzi run monitor', () => {
     const head = latest.find(line => line.includes('Activity')) ?? '';
     expect(head).toMatch(/\d+ events · ← \d+ older/);
     const notes = latest.filter(line => line.includes('“Note'));
-    expect(notes.at(-1)).toContain('“Note 40”');
+    expect(notes[0]).toContain('“Note 40”');
 
     const back = shown(data, { feedBack: 10 }, { height: 40 }).text;
     expect(back.find(line => line.includes('Activity'))).toContain('→ 10 newer');
-    expect(back.filter(line => line.includes('“Note')).at(-1)).toContain('“Note 30”');
+    expect(back.filter(line => line.includes('“Note'))[0]).toContain('“Note 30”');
   });
 
   it('says a task held on a question to the lead, on its row, in the flow and as what needs the lead — until it is answered', async () => {

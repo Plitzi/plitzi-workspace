@@ -584,8 +584,8 @@ describe('where a pseudo-element is drawn', () => {
     expect(
       await pseudoBoxes(session as unknown as LayoutSession, '[data-plitzi-measured="m1"]', ['after'], 50)
     ).toEqual({
-      'after:x': '132px',
-      'after:y': '108px'
+      'after:x': '131.9px',
+      'after:y': '107.5px'
     });
     expect(asked).toContain('DOM.querySelector {"nodeId":1,"selector":"[data-plitzi-measured=\\"m1\\"]"}');
     expect(asked.filter(each => each.startsWith('DOM.getBoxModel'))).toEqual(['DOM.getBoxModel {"backendNodeId":72}']);

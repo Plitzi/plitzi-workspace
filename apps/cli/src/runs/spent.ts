@@ -1,3 +1,5 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+
 import { logRun, readRunLog } from './run';
 import { readUsage } from './usage';
 
@@ -39,6 +41,8 @@ export interface Spent {
   cached: number;
   /** Its context when it last ended a piece. */
   context: number;
+  /** What it cost at the API's prices; none when a piece's model has no price (`harness/prices.ts`). */
+  cost?: number;
   model?: string;
 }
 
@@ -77,6 +81,8 @@ export const logSpent = async (ctx: RunContext, loaded: LoadedRun, task: string,
     output: spent.output,
     cached: spent.cacheRead,
     context: spent.contextAtEnd,
+    ...(spent.cost === undefined ? {} : { cost: spent.cost }),
+    minutes: spent.minutes,
     ...(spent.model ? { model: spent.model } : {})
   });
 };
@@ -103,7 +109,8 @@ export const spentOf = (log: readonly Record<string, unknown>[], usage: readonly
       input: 0,
       output: 0,
       cached: 0,
-      context: 0
+      context: 0,
+      cost: 0
     };
     kept.pieces += 1;
     if (typeof entry.task === 'string' && !kept.tasks.includes(entry.task)) {
@@ -114,6 +121,11 @@ export const spentOf = (log: readonly Record<string, unknown>[], usage: readonly
     kept.output += count(entry.output);
     kept.cached += count(entry.cached);
     kept.context = count(entry.context);
+    // One piece with no price leaves the agent with none: a sum of some pieces is no cost of its work.
+    kept.cost =
+      kept.cost === undefined || typeof entry.cost !== 'number' || !Number.isFinite(entry.cost)
+        ? undefined
+        : kept.cost + entry.cost;
     if (typeof entry.model === 'string') {
       kept.model = entry.model;
     }
@@ -124,4 +136,34 @@ export const spentOf = (log: readonly Record<string, unknown>[], usage: readonly
   return [...by.values()].sort(
     (a, b) => b.input + b.output - (a.input + a.output) || b.cached - a.cached || a.agent.localeCompare(b.agent)
   );
+};
+
+/** How far back the monitor's spend chart reaches, in minutes. */
+export const SPEND_MINUTES = 30;
+
+/**
+ * The run's tokens in each of the last `span` minutes up to `now`, the oldest first — each piece's minutes as its
+ * harness answered in them, kept as the piece ended: the minutes of a piece still at work come when it ends.
+ */
+export const spentPerMinute = (log: readonly Record<string, unknown>[], now: Date, span: number): number[] => {
+  const minutes = new Array<number>(span).fill(0);
+  const last = Math.floor(now.getTime() / 60_000);
+  for (const entry of log) {
+    if (entry.action !== 'spent' || !Array.isArray(entry.minutes)) {
+      continue;
+    }
+
+    for (const minute of entry.minutes) {
+      if (!isRecord(minute) || typeof minute.at !== 'string') {
+        continue;
+      }
+
+      const index = span - 1 - (last - Math.floor(Date.parse(`${minute.at}Z`) / 60_000));
+      if (index >= 0 && index < span) {
+        minutes[index] = (minutes[index] ?? 0) + count(minute.tokens);
+      }
+    }
+  }
+
+  return minutes;
 };

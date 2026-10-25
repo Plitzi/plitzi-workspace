@@ -359,7 +359,8 @@ export const onMouse = (
   if (over?.area.kind === 'activity') {
     const most = Math.max(0, (shown.data?.feed.length ?? 1) - 1);
 
-    return { ...ui, feedBack: Math.max(0, Math.min(most, ui.feedBack + (up ? 1 : -1))) };
+    // The newest at the top: the wheel down goes to older events, up back to newer ones.
+    return { ...ui, feedBack: Math.max(0, Math.min(most, ui.feedBack + (up ? -1 : 1))) };
   }
 
   if (over?.area.kind === 'tasks' && count > 0) {

@@ -20,6 +20,7 @@ import type { Harness } from './agentPrompt';
 import type { NoResume } from './launch';
 import type { RunPaths } from './paths';
 import type { RunContext } from './run';
+import type { Team } from './team';
 import type { StartedAgent } from './team';
 
 /**
@@ -46,6 +47,10 @@ export const onPath = async (command: string): Promise<boolean> => {
 };
 
 /** The harness asked — or the one installed, when exactly one is: refused, naming them, otherwise. */
+/** The harness an agent is started in: the one named, else the team's own (`options.launch`). */
+export const launchHarness = (asked: string | undefined, team: Pick<Team, 'options'> | undefined): string | undefined =>
+  asked ?? team?.options?.launch;
+
 export const harnessOf = async (asked: string | undefined): Promise<Harness> => {
   if (asked !== undefined) {
     if (!isHarness(asked)) {

@@ -83,7 +83,7 @@ describe('the command that starts an agent headless', () => {
     const claude = harnessCommand('claude', prompt, { model: 'claude-sonnet-5-5' });
 
     expect(claude.line).toBe(
-      `claude -p "$(cat /p/scratch/dev-1/prompt.md)" --model claude-sonnet-5-5 --permission-mode acceptEdits --allowedTools 'Bash Read Edit Write Glob Grep'`
+      `claude -p "$(cat /p/scratch/dev-1/prompt.md)" --model claude-sonnet-5-5 --permission-mode acceptEdits --allowedTools 'Bash Read Edit Write Glob Grep' --tools 'Bash,Read,Edit,Write,Glob,Grep' --strict-mcp-config`
     );
     expect(claude.command).toBe('claude');
     expect(claude.args.slice(0, 2)).toEqual(['-p', 'You are dev-1']);

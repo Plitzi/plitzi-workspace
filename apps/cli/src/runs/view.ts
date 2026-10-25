@@ -334,7 +334,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       identified,
       scratch: loaded.paths.scratch,
       openFor: now.getTime() - Date.parse(record.openedAt),
-      open: record.status === 'open'
+      open: record.status === 'open',
+      launches: team?.options?.launch !== undefined
     })
   );
   // What the run's records show going wrong now, said while the lead can still act (`findings/live.ts`).

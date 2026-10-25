@@ -350,6 +350,26 @@ report`, …).
   approving it frees the file. A run's ready task sat 22 minutes with three developers free.
 - **A proposal to a task in review is refused**, naming what works instead (the lead asks it in the review, or the file
   is changed after its approval): one waited ten minutes for an answer that could not come.
+- **The team starts by itself:** with `team.json`'s `options.launch`, the run's keeper starts the base the moment the
+  run opens — it waited two minutes for the lead while `run open` said it started them — and `run open` names whom it
+  starts. `run agent <name> --launch` takes the team's harness unless `--harness` names another (a lead was refused
+  "Which harness" for one the team named).
+- **An agent starts lighter:** Claude Code is started with only the tools an agent uses and none of the person's MCP
+  servers (`--tools …`, `--strict-mcp-config`) — its first context 16k tokens rather than 46.7k, read again on every
+  turn: ~660k of cache over a 22-turn task.
+- **A UI review nobody took is the lead's once it reads it** (`task look`, `task show`): no designer is offered it — a
+  lead looked at a task as its watch said to while its designer took the same review, and the lead's approval was
+  refused.
+- **`task look` opens a route's pattern at an address its acceptance names**, said or checked (`/messages/:username` at
+  `/messages/nobodyhere`), and `task next` offers the look so; a look with nothing it can open says so, never the home
+  page in its place.
+- **`run monitor`:** the Activity is the newest first, as the simple panel's Latest; the sidebar's spend says under
+  each agent its tokens in, out and read again from the cache.
+- **`run monitor`'s spend says what the run cost and when:** the run's last 30 minutes as a chart, its tokens and the
+  share read again from the cache (sidebar and Spend), and its cost at the Claude API's prices — each turn on its model,
+  cache writes by how long they were kept — in the sidebar, a `COST` column and the status bar. A model with no price
+  says none rather than a guess. The run's log keeps each piece's cost and minutes (`spent`); runs logged before keep
+  their tokens and show no cost.
 - **A developer's "code review alone" stands when no page draws what it changed** — a setting with no element, a type:
   designers were sent such tasks, and their looks had no page to open.
 - **`run plan` says a primer over 6k** and what it costs: every task's first brief carries it whole, and a run's 9.7 KB
@@ -524,6 +544,8 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   at 1440 with its lists empty); `--state` says what each key of a source holds, not its keys alone; a list written out
   as its children counts them as its rows; `label-wraps` leaves a link alone across its column (a title) to wrap, and
   a dash is no word.
+- **`page shot --clip`** of a part a few lines tall says its size and `--scale 4` to read it up close; `page measure`
+  says a pseudo-element's x and y to the hundredth, as a width.
 - **`page measure`** reads `text-decoration` and `text-underline-offset` (a hover that only underlines), `align-items`,
   and where a `::before`/`::after` is drawn — its `x` and `y`, off Chromium's own layout — and why it sits there
   (`display`, `vertical-align`, `align-self`); `--same` without `--compare` names `--only`. A reading is shorter: four

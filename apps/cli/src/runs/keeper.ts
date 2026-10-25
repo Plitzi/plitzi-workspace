@@ -196,9 +196,9 @@ export const ensureKeeper = async (
 };
 
 /** The keeper as the command that started it says it — never silent about agents it will or cannot start. */
-export const keeperText = (kept: Awaited<ReturnType<typeof ensureKeeper>>): string =>
+export const keeperText = (kept: Awaited<ReturnType<typeof ensureKeeper>>, base: readonly string[] = []): string =>
   'none' in kept
-    ? `No keeper: ${kept.none} — start the agents yourself (plitzi run agent <name> --launch)`
+    ? `No keeper: ${kept.none} — start the agents yourself (plitzi run agent <name> --launch --harness <yours>)`
     : kept.started
-      ? `The run's keeper starts its agents as the run asks (pid ${String(kept.pid)}, log in the run's cache/keeper.log)`
+      ? `The run's keeper starts ${base.length > 0 ? `the team's base now — ${base.join(', ')} — and the rest` : 'its agents'} as the run asks (pid ${String(kept.pid)}, log in the run's cache/keeper.log): start none of them yourself`
       : `The run's keeper is at it (pid ${String(kept.pid)})`;

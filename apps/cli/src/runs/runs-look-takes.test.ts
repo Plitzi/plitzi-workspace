@@ -58,12 +58,14 @@ describe('a look at a task in review', () => {
     expect(await takeOnLook(lead(), taken.loaded, taken.view)).toBe(false);
   });
 
-  it('takes nothing for one who does not review, nor while the designer’s UI review is due', async () => {
+  // A run's lead looked at a task's UI while its designer took the same review: the lead's approval was refused.
+  it('takes a UI review nobody took for the lead who reads it, and nothing for one who does not review', async () => {
     const runId = await inReview(true);
 
     const { loaded, view } = await viewOf(runId);
     expect(view.state.design?.status).toBe('due');
-    expect(await takeOnLook(lead(), loaded, view)).toBe(false);
     expect(await takeOnLook(bench.agent('dev-1'), loaded, view)).toBe(false);
+    expect(await takeOnLook(lead(), loaded, view)).toBe(true);
+    expect((await viewOf(runId)).view.state.design).toMatchObject({ status: 'due', by: 'lead' });
   });
 });
