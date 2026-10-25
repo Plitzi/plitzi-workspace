@@ -167,9 +167,8 @@ export const taskCheck = (
           step =>
             `  ${step.ok ? '✓' : chalk.yellow('✗')} ${step.name}${step.ok ? '' : `\n${(step.said ?? []).map(line => `      ${line}`).join('\n')}`}`
         ),
-        ...checked.checks.steps.flatMap(step =>
-          (step.warnings ?? []).map(warning => chalk.yellow(`  ⚠ ${step.name} warns: ${warning}`))
-        ),
+        // A run's dev-1 read check's warnings in files it never touched as its own; complete said them apart already.
+        ...warningLines(checked.checks.steps, checked.changed),
         // What the project's linter and formatter fix by themselves is no round of thought: said, with how.
         ...(!checked.fixed &&
         checked.checks.steps.some(step => !step.ok && (step.name === 'lint' || step.name === 'format'))

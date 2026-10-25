@@ -33,6 +33,8 @@ const WHY_LINES = 8;
 export interface CheckedTask {
   ok: boolean;
   checks: CheckResult;
+  /** The files its copy changed: a warning on one of them is its own, the rest were there before (`warningLines`). */
+  changed: string[];
   /** Its acceptance's checks — none run while the project's checks fail. */
   accepted: AcceptanceResult[];
   /** Files past what is read whole: `complete` refuses them. */
@@ -198,6 +200,7 @@ export const checkTask = async (
   return {
     ok,
     checks,
+    changed: mine,
     accepted,
     tooLong,
     ...(backups.length > 0 ? { backups } : {}),

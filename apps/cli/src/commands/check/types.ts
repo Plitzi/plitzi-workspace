@@ -124,6 +124,11 @@ export interface CheckReport {
   fromEmbeds?: string[];
   /** With `--ssr`: the elements the page has once hydrated that the server's HTML did not — none of them in a server provider. */
   browserOnly?: string[];
+  /**
+   * The providers that failed and the page shows it — an element on screen reads the failure: `<provider> — <failure>
+   * — shown by <element>`. A page whose purpose is a refusal handles it; said, not a problem (`dataIssues`).
+   */
+  shownFailures?: string[];
   state?: unknown;
   sources?: Record<string, unknown>;
   /**

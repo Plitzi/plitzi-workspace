@@ -43,7 +43,7 @@ describe('dataIssues', () => {
       answered({ hero: { title: 'Hi' }, plans: [{ name: 'A' }, { name: 'B' }] })
     );
 
-    expect(report).toEqual({ issues: [], lists: { 'plan-list': 2 } });
+    expect(report).toEqual({ issues: [], lists: { 'plan-list': 2 }, shownFailures: [] });
   });
 
   it('names the binding, the path and the keys there are when the answer has no such branch', () => {
@@ -84,7 +84,8 @@ describe('dataIssues', () => {
     ]);
     expect(dataIssues(schema, 'home', { apiContainer_landing: { isLoading: true } })).toEqual({
       issues: [],
-      lists: {}
+      lists: {},
+      shownFailures: []
     });
   });
 
@@ -119,6 +120,42 @@ describe('dataIssues', () => {
         elementId: 'crate'
       }
     ]);
+  });
+
+  // A run's page whose purpose is a refusal — "Nobody here goes by that name", the provider's own words — was failed by
+  // the check at every width: a failure the page shows is handled, said apart.
+  it('says a failure the page shows apart, and fails one it hides as before', () => {
+    const room = authorSpace({
+      name: 'Room',
+      permanentUrl: 'room',
+      pages: [
+        {
+          id: 'room',
+          name: 'Room',
+          slug: 'room',
+          body: [
+            apiContainer({
+              id: 'crate',
+              query: '/data/crate.json',
+              children: [
+                heading({ id: 'crate-title', from: 'crate.data.name' }),
+                heading({ id: 'crate-refused', from: 'crate.errorMessage' })
+              ]
+            })
+          ]
+        }
+      ]
+    }).schema;
+    const refused = { apiContainer_crate: { isLoading: false, hasError: true, errorMessage: 'Nobody here' } };
+
+    expect(dataIssues(room, 'room', refused)).toMatchObject({
+      issues: [],
+      shownFailures: [{ provider: 'apiContainer_crate', failure: 'Nobody here', by: 'crate-refused' }]
+    });
+    expect(dataIssues(room, 'room', refused, { hidden: new Set(['crate-refused']) })).toMatchObject({
+      issues: [{ code: 'provider-failed', elementId: 'crate' }],
+      shownFailures: []
+    });
   });
 
   describe('an element the page is not showing', () => {
@@ -161,7 +198,8 @@ describe('dataIssues', () => {
     it('reads what is inside it as unmounted — nothing there is said, and no list of it is counted', () => {
       expect(dataIssues(post, 'post', missing, { hidden: new Set(['article-body']) })).toEqual({
         issues: [],
-        lists: {}
+        lists: {},
+        shownFailures: []
       });
     });
 

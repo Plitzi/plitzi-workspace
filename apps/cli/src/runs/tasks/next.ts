@@ -55,7 +55,7 @@ import type { TakenTask } from './take';
 
 /**
  * `plitzi task next`: what an agent between tasks is handed — its own task back, a designer's review, the next ready
- * task — and waiting for one (`--follow`), taking it in the same breath (`--take`).
+ * task — and waiting for one, taking it in the same breath (`task next` does both unless told).
  */
 
 export interface NextTask {
@@ -124,7 +124,7 @@ export interface NextTask {
   full?: true;
   /** The run is stopping or stopped: nothing starts until it is resumed. */
   paused?: string;
-  /** `--follow` gave up after its timeout, with nothing for the caller. */
+  /** Waiting gave up after its timeout, with nothing for the caller. */
   timedOut?: true;
 }
 
@@ -293,7 +293,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
 
     return holder ? [{ waiting: task.id, file: holder.file, holder: holder.task }] : [];
   });
-  // A task the limit would not let this agent take is not offered: it is said, and `--follow` waits for a place.
+  // A task the limit would not let this agent take is not offered: it is said, and waiting waits for a place.
   const atWork = new Set(
     views.filter(view => view.owner && isWorked(view.state.status)).map(view => view.owner?.agent)
   );
@@ -330,7 +330,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
 
   if (ready.length > 0 && reviewsComing.length > 0) {
     return {
-      why: `UI reviews are coming — ${reviewsComing.map(view => `${view.task.id} (${view.owner?.agent ?? ''})`).join(', ')} at work: a designer waits for them rather than taking a task of its own (--follow), and takes one once none is coming`,
+      why: `UI reviews are coming — ${reviewsComing.map(view => `${view.task.id} (${view.owner?.agent ?? ''})`).join(', ')} at work: a designer waits for them rather than taking a task of its own (plitzi task next waits), and takes one once none is coming`,
       ready: ready.map(task => task.id),
       messages
     };
@@ -340,7 +340,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   const base = ready.length > 0 ? await baseFirst(ctx, loaded, views, roles) : [];
   if (ready.length > 0 && base.length >= ready.length) {
     return {
-      why: `${ready.map(task => task.id).join(', ')} ready, for ${base.join(', ')}, free and of the team's base: you are on demand — you take what they cannot (--follow)`,
+      why: `${ready.map(task => task.id).join(', ')} ready, for ${base.join(', ')}, free and of the team's base: you are on demand — you take what they cannot (plitzi task next waits for it)`,
       ready: ready.map(task => task.id),
       messages
     };
@@ -352,7 +352,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
 
   if (ready.length === 0 && waitingForFile.length > 0) {
     return {
-      why: `ready, but a file of each is another task's until that one is approved: ${waitingForFile.map(each => `${each.waiting} (${each.file}, held by ${each.holder})`).join(', ')} — wait for it (--follow)`,
+      why: `ready, but a file of each is another task's until that one is approved: ${waitingForFile.map(each => `${each.waiting} (${each.file}, held by ${each.holder})`).join(', ')} — plitzi task next waits for it`,
       ready: [],
       messages
     };
@@ -380,7 +380,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     : [];
   const why =
     roles !== undefined && coming.length === 0 && toReview.length > 0
-      ? `no task is left for a ${String(role)} to work: the UI of ${toReview.map(view => `${view.task.id} (${view.state.status})`).join(', ')} is yours to review once it is in review — wait for it (--follow)`
+      ? `no task is left for a ${String(role)} to work: the UI of ${toReview.map(view => `${view.task.id} (${view.state.status})`).join(', ')} is yours to review once it is in review — plitzi task next waits for it`
       : others.length > 0
         ? `nothing ready for a ${String(role)}: ready for others — ${others.map(task => `${task.id} (${roleOf(task)})`).join(', ')}`
         : roles !== undefined && coming.length === 0
@@ -432,9 +432,9 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     why:
       // Every task approved: what is left is the finish — a run's design-1 waited 4.5 h told only to wait.
       ofBase && open.length === 0 && !ownInReview
-        ? "every task of the run is approved: it waits for its finish — the lead's summary, then a person's apply — and nothing comes to you unless the lead stacks a stage — you are of the team's base: wait for it (--follow)"
+        ? "every task of the run is approved: it waits for its finish — the lead's summary, then a person's apply — and nothing comes to you unless the lead stacks a stage — you are of the team's base: plitzi task next waits for it"
         : ofBase && nothingLeft && !ownInReview
-          ? `${why} — you are of the team's base: wait for what comes (--follow) — a stage the lead stacks, a task sent back — until the run finishes`
+          ? `${why} — you are of the team's base: plitzi task next waits for what comes — a stage the lead stacks, a task sent back — until the run finishes`
           : finished && roles !== undefined && open.length > 0
             ? `${loaded.tasks.some(forRole) ? `no task is left for a ${roles.join(' or ')}: every one is done` : `no task in this run is a ${roles.join(' or ')}'s`} — what is left is for others (${others.map(task => task.id).join(', ') || 'in their hands'}). You can stop`
             : finished && roles !== undefined

@@ -45,7 +45,9 @@ print what the page holds. `window.__plitzi.element()`, the panel's **Runtime** 
 The sources it reads are also held to the page: `dataIssues` (`@plitzi/sdk-authoring`) walks every binding of
 the page against the answer its provider gave, so a path that answer lacks is said with the keys it has, and a provider
 that failed is said once rather than as every element it left empty — and said though everything that reads it is
-hidden at that width (a run's check passed a page at 1440 with its lists empty). What is inside an element the page is not showing
+hidden at that width (a run's check passed a page at 1440 with its lists empty). A failure the page shows — an element
+on screen reads the provider's `errorMessage`, `hasError` or `status` — is handled, not a problem: `shownFailures`, said
+apart (a page whose purpose is a refusal was failed at every width). What is inside an element the page is not showing
 — a `visible` of its own that says no — is not mounted, so `page check` hands those to `dataIssues` (`hidden`) and only their
 own condition is read. A list's rows are counted twice: what its source holds (`dataIssues`, before the binding's
 transformers) and the copies of its row the page draws, so a filtered list reads `4 of 8 rows`. `sources()` cuts only a

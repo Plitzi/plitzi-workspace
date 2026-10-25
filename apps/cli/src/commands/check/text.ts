@@ -133,6 +133,7 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
     ...(report.apart ?? []).map(each => chalk.dim(`  · another task's, not this one's: ${each}`)),
     ...(report.asTheOriginal ?? []).map(each => chalk.dim(`  · as the original: ${each}`)),
     ...(report.expected ?? []).map(each => chalk.dim(`  · expected ${each} ✓`)),
+    ...(report.shownFailures ?? []).map(each => chalk.dim(`  · failed, and the page shows it: ${each}`)),
     ...browserOnlyText(report),
     ...(report.throttled && report.throttled.length > 0
       ? [

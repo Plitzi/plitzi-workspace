@@ -470,6 +470,11 @@ const inspectHere = async (
     ...(fromEmbeds.length > 0 ? { fromEmbeds } : {}),
     ...(met.length > 0 ? { expected: met } : {}),
     ...(late ? { browserOnly: late.browserOnly } : {}),
+    ...(data && data.shownFailures.length > 0
+      ? {
+          shownFailures: data.shownFailures.map(each => `${each.provider} — ${each.failure} — shown by ${each.by}`)
+        }
+      : {}),
     ...(!asked.state || shown.state === undefined ? {} : { state: shown.state }),
     ...(!asked.state || shown.sources === undefined ? {} : { sources: shown.sources }),
     ...(asked.elements.length > 0 ? { elements } : {}),

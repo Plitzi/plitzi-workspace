@@ -761,7 +761,7 @@ at its next command, whatever it is — and that is what puts it at work again, 
 t-fights — m99 answered"); until then the board says it is answered, not asking.
 
 **Who is still there** (`presence.ts`): a wait is said once in the log, so the log alone cannot tell a live agent from
-one its harness stopped. Each `task next`, and each turn of its `--follow`, marks the agent present in its scratch; an
+one its harness stopped. Each `task next`, and each turn of its wait, marks the agent present in its scratch; an
 agent between tasks with no mark for `PRESENCE_STALE_MS` shows in the monitor as `no-signal`, with the command that
 starts it again.
 
@@ -1043,7 +1043,7 @@ the log, the messages and the run's usage — what a run's lead computed by hand
   caller read, a token four characters), how long, its exit. The CLI's own child processes (`task look`'s checks and
   shots, a check's scripts: `PLITZI_USAGE_CHILD`) count none — their output is read by the command, not an agent. The
   report sums it by agent and by command, and lists the calls one agent made three times or more within ten minutes
-  of one session — a loop, or an answer it could not use; a wait (`--follow`, `run watch`) and `task next` are
+  of one session — a loop, or an answer it could not use; a wait (`task next`, `run watch`) is
   meant to be run again, and a fresh session runs its first commands again, so neither counts. The harness's own count
   comes from each round's report (`taskReports.ts`, its `harness`): by agent, what it read in all (every turn's whole
   context), its largest context at a round's end, and what its heaviest results were read again for at the least.

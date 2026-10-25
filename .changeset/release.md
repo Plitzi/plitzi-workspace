@@ -310,9 +310,9 @@ report`, …).
 
 ### Working a task
 
-- **Getting work:** `task next --follow --take` hands an agent its own task first (sent back, unblocked, with what its
+- **Getting work:** `task next` takes and waits by itself, handing an agent its own task first (sent back, unblocked, with what its
   review asked), then the most urgent ready one. It says why a task waits, and "You can stop" only when nothing can come
-  back to it. Commands that wait stay under a harness's 10-minute limit (`--follow`: 8 minutes) and wake the moment the
+  back to it. Commands that wait stay under a harness's 10-minute limit (`task next`: 8 minutes) and wake the moment the
   run changes.
 - **The brief:** `task context` gives the plan's `primer`, the run's notes, the task's findings and acceptance, its
   files' sizes and data, and how to call what they import. `--files` adds the files themselves.
@@ -365,6 +365,10 @@ report`, …).
   page in its place.
 - **`run monitor`:** the Activity is the newest first, as the simple panel's Latest; the sidebar's spend says under
   each agent its tokens in, out and read again from the cache.
+- **`task check` says warnings apart as `task complete` does:** those on files the task changed are its own; the rest,
+  in a line, were there before it — a run's developer read a check's warnings in files it never touched as its own.
+- **`task next`'s waits name the command that waits** (`plitzi task next waits for it`), never `--follow`, which it no
+  longer takes: two agents were refused it at a run's end.
 - **`run monitor`'s spend says what the run cost and when:** the run's last 30 minutes as a chart, its tokens and the
   share read again from the cache (sidebar and Spend), and its cost at the Claude API's prices — each turn on its model,
   cache writes by how long they were kept — in the sidebar, a `COST` column and the status bar. A model with no price
@@ -478,7 +482,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   upgrade was refused `version-mismatch`, the very thing it re-pins.
 - **A package that comes with the SDK stops no run:** a run pins the CLI and the `@plitzi` packages the project names;
   one they bring (`@plitzi/plitzi-ui`) moving within their ranges is said to the lead, and the agents go on. A run's
-  plitzi-ui patch held every agent 13 minutes. `run notice` is taken while a version changed, and `task next --follow`
+  plitzi-ui patch held every agent 13 minutes. `run notice` is taken while a version changed, and `task next`
   waits through it to its end, never refused there.
 - **A reviewer reads the task's brief:** `task context` in a review copy is the reviewed task's. A review the lead
   decides while another holds it tells that reviewer so, and nobody reviews their own.
@@ -501,7 +505,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`run report` prints the run at a glance and each finding's title**; `--full` (and the finish's file) the whole of
   it. Its title is the run's goal, the stages it grew by listed under it; the lead's summary sits under its heading.
 - **What the report counts, counted right:** an agent's waits and minutes end at the last approval, not the person's
-  finish; a call is repeated within one session, never a wait (`--follow`, `run watch`) nor `task next --take`; the head,
+  finish; a call is repeated within one session, never a wait (`task next`, `run watch`); the head,
   the indicators and the bench count the same tasks; a heavy context and a costly task are one finding each, the rounds
   their evidence; `explain` is said once; what agents said is grouped by its first text; a tool's result is named
   `Read .ts`, `Bash plitzi page measure` (a command after a comment, a `cd` or a loop too).
@@ -522,6 +526,11 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`two-tasks`** no longer counts a sent-back task waiting for its agent — the rule is that it waits.
 
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
+
+- **A provider failure the page shows is handled, not a problem:** when an element on screen reads a failed provider's
+  `errorMessage`, `hasError` or `status`, `page check` says it apart (`· failed, and the page shows it: …`) and
+  `dataIssues` puts it in `shownFailures` — a run's page whose purpose is a refusal ("Nobody here goes by that name")
+  was ✗ at every width. A failure nothing on screen reads still fails the page.
 
 - **No more crashes on `setTypeOfService EINVAL`.** Node 24's undici threw it from a socket's event on macOS, ending
   `task look`, `page measure` and `page play` with a stack trace; the CLI sets a socket's type of service as best effort.

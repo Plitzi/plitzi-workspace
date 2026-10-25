@@ -382,7 +382,8 @@ the value the flow read (`expected`), and answers `written: false` when somebody
 refuse. Left empty, `expected` means *only if there is nothing yet*: "claim this username", "take the last seat".
 
 **`list.put`** keeps an ordered list — one entry per `id`, highest `score` first: the latest comments (score = when),
-a leaderboard (score = points). `keep` cuts it to the highest N on every write, and `list.put` answers the ids it
+a leaderboard (score = points). Entries that tie come out by `id`, never in the order they were written — two put in
+one millisecond, or under a test's frozen clock: when order matters past the score, put it in the score. `keep` cuts it to the highest N on every write, and `list.put` answers the ids it
 dropped (`dropped`) — delete what they named, if anything. `higherOnly` keeps an entry already there with a higher score:
 a player's best, or the latest of two writes that arrived out of order. `list.range` reads a window of it,
 `list.remove` takes an entry out. Two writers never lose an entry to each other. A list is read whole, so it is for

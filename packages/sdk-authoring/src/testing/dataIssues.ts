@@ -33,6 +33,12 @@ export interface DataReport {
    * drawn is the page's to count (`plitzi page check` does).
    */
   lists: Record<string, number | null>;
+  /**
+   * The providers that failed and the page shows it: an element on screen reads the failure — its `errorMessage`, its
+   * `hasError` or its `status`. A page whose purpose is a refusal ("Nobody here goes by that name") handles it; it is
+   * said, never an issue — a run's check failed such a page at every width, and its acceptance could only be said.
+   */
+  shownFailures: { provider: string; failure: string; by: string }[];
 }
 
 export interface DataIssuesOptions {
@@ -44,6 +50,9 @@ export interface DataIssuesOptions {
 }
 
 const PROVIDER = 'apiContainer_';
+
+/** What of a provider's answer says it failed: an element that reads one, shown, shows the failure. */
+const FAILURE_FIELDS = new Set(['errorMessage', 'hasError', 'status']);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -107,6 +116,7 @@ export const dataIssues = (
   const issues: DataIssue[] = [];
   const lists: Record<string, number | null> = {};
   const failed = new Set<string>();
+  const shownBy = new Map<string, string>();
   for (const element of pageElements(schema, pageId)) {
     if (insideHidden(schema, element, hidden)) {
       continue;
@@ -114,6 +124,17 @@ export const dataIssues = (
 
     const ownConditionOnly = hidden.has(element.id);
     for (const binding of Object.values(element.definition.bindings ?? {}).flat()) {
+      const [source, field] = pathSteps(binding.source);
+      if (
+        binding.enabled !== false &&
+        !ownConditionOnly &&
+        source.startsWith(PROVIDER) &&
+        FAILURE_FIELDS.has(field) &&
+        !shownBy.has(source)
+      ) {
+        shownBy.set(source, element.id);
+      }
+
       if (
         binding.enabled === false ||
         !binding.source.startsWith(PROVIDER) ||
@@ -175,5 +196,20 @@ export const dataIssues = (
     }
   }
 
-  return { issues, lists };
+  const shownFailures: DataReport['shownFailures'] = [];
+  const kept = issues.filter(issue => {
+    const provider = `${PROVIDER}${issue.elementId}`;
+    const by = issue.code === 'provider-failed' ? shownBy.get(provider) : undefined;
+    const answer = sources[provider];
+    const failure = by !== undefined && isRecord(answer) ? failureOf(answer) : undefined;
+    if (by === undefined || failure === undefined) {
+      return true;
+    }
+
+    shownFailures.push({ provider, failure, by });
+
+    return false;
+  });
+
+  return { issues: kept, lists, shownFailures };
 };

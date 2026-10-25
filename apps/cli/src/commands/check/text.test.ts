@@ -61,6 +61,24 @@ describe('containers with nothing in them yet', () => {
   });
 });
 
+// A run's page whose purpose is a refusal was ✗ at every width: the provider failed, and the page showed its words.
+describe('a provider failure the page shows', () => {
+  it('is said apart, failing nothing', () => {
+    const text = reportText(
+      {
+        ...report(undefined),
+        shownFailures: ['apiContainer_dmThread — Nobody here goes by that name. — shown by dm-missing-words']
+      },
+      { state: false, elements: [] }
+    );
+
+    expect(text).toContain('nothing wrong');
+    expect(text).toContain(
+      'failed, and the page shows it: apiContainer_dmThread — Nobody here goes by that name. — shown by dm-missing-words'
+    );
+  });
+});
+
 describe('the sources a page holds, with --state', () => {
   it('says what each key holds — a short value as it is, a list or an object by its size', () => {
     const text = reportText(
