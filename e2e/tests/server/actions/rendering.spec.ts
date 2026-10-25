@@ -1,3 +1,5 @@
+import { RSC_FAILURE } from '@plitzi/sdk-shared/schema';
+
 import { describeTarget, expect, test } from '../../../fixtures';
 import { ACTION_IDS, ACTION_OUTPUT, PROVIDER_ERROR } from '../../../spaces';
 
@@ -84,43 +86,45 @@ describeTarget('action-server', subject => {
   });
 
   /** The server is up; what it cannot reach is the rest of the world. The action's own `http.request` resolves
-   *  nowhere, so the run fails — and a page must not fail with it: the slice is left out, the element says it
-   *  could not be reached, and every other section renders exactly as it would have. */
+   *  nowhere, so the run fails — and a page must not fail with it: every other section renders exactly as it would
+   *  have. This is a development server (`devMode`), so the element says why, where its provider shows an error
+   *  (encore-3: a refusal read in a log, the page only "could not be reached"); a published site says nothing of
+   *  it — the `published-server` half below. */
   test('an action whose own call cannot leave the machine costs its section and nothing else', async ({
     page,
     capture
   }) => {
     await page.goto(subject.origin);
 
-    await expect(page.locator(`[data-id="${ACTION_IDS.offlineText}"]`)).toHaveText(PROVIDER_ERROR);
+    await expect(page.locator(`[data-id="${ACTION_IDS.offlineText}"]`)).toHaveText(/e2e-unreachable.*fetch failed/);
     await expect(page.locator(`[data-id="${ACTION_IDS.title}"]`)).toHaveText(ACTION_OUTPUT.title);
 
     await capture('outbound-call-failed');
   });
 
-  test('the failed slice is absent from the payload rather than empty in it', async ({ request }) => {
+  test('the failed slice carries why, and nothing else of it', async ({ request }) => {
     const response = await request.get(`${subject.origin}/_rsc?location=%2F`);
     const { serverData } = (await response.json()) as { serverData: Record<string, unknown> };
 
     expect(response.status(), 'one element failing took the whole payload down').toBe(200);
     expect(serverData).toHaveProperty(ACTION_IDS.provider);
-    expect(Object.keys(serverData), 'a failed slice was published as empty data').not.toContain(ACTION_IDS.offline);
+    expect(serverData[ACTION_IDS.offline]).toEqual({
+      [RSC_FAILURE]: expect.stringContaining('fetch failed') as unknown
+    });
   });
 
-  /** The other half of "an element names ONE producer": this one names a connector the deployment cannot read.
-   *  It must cost that element and nothing else — the page renders, and the action-fed section is untouched. */
   /**
    * The budget is the PAGE's, and it wins over the producer's own.
    *
    * This action is allowed two seconds of its own and the deployment gives a section 800ms, so the page is
    * answered without it — and, since the budget now cancels what it stops waiting for, the run ends there too
-   * rather than finishing for a page that has already been sent.
+   * rather than finishing for a page that has already been sent. A development server says it ran out of time.
    */
   test('a section slower than the page will wait for is dropped, on the page’s terms', async ({ page, capture }) => {
     const startedAt = Date.now();
     await page.goto(`${subject.origin}/slow`);
 
-    await expect(page.locator(`[data-id="${ACTION_IDS.slowText}"]`)).toHaveText(PROVIDER_ERROR);
+    await expect(page.locator(`[data-id="${ACTION_IDS.slowText}"]`)).toHaveText(/timed out after 800ms/);
     expect(Date.now() - startedAt, 'the page waited for the action instead of for its own budget').toBeLessThan(2_000);
 
     await capture('section-over-budget');
@@ -167,3 +171,35 @@ describeTarget('action-server', subject => {
 });
 
 test.describe.configure({ mode: 'parallel' });
+
+/**
+ * The same space as a PUBLISHED site (`publishedServer.ts`: no `devMode`): a failed section is the element's own error
+ * state — "could not be reached", which an author binds on purpose — and nothing of why leaves the server, not even in
+ * the payload (`debuggingAuthorization.spec.ts` holds that no step or host is named). Found by `data-plitzi-el`: a
+ * published page carries no debugging attributes (`data-id`).
+ */
+describeTarget('published-server', subject => {
+  test('an action whose own call cannot leave the machine costs its section and nothing else', async ({ page }) => {
+    await page.goto(subject.origin);
+
+    await expect(page.locator(`[data-plitzi-el="${ACTION_IDS.offlineText}"]`)).toHaveText(PROVIDER_ERROR);
+    await expect(page.locator(`[data-plitzi-el="${ACTION_IDS.title}"]`)).toHaveText(ACTION_OUTPUT.title);
+  });
+
+  test('the failed slice is absent from the payload rather than empty in it', async ({ request }) => {
+    const response = await request.get(`${subject.origin}/_rsc?location=%2F`);
+    const { serverData } = (await response.json()) as { serverData: Record<string, unknown> };
+
+    expect(response.status(), 'one element failing took the whole payload down').toBe(200);
+    expect(serverData).toHaveProperty(ACTION_IDS.provider);
+    expect(Object.keys(serverData), 'a failed slice was published as empty data').not.toContain(ACTION_IDS.offline);
+  });
+
+  test('a section slower than the page will wait for is dropped, said as unreachable', async ({ page }) => {
+    const startedAt = Date.now();
+    await page.goto(`${subject.origin}/slow`);
+
+    await expect(page.locator(`[data-plitzi-el="${ACTION_IDS.slowText}"]`)).toHaveText(PROVIDER_ERROR);
+    expect(Date.now() - startedAt, 'the page waited for the action instead of for its own budget').toBeLessThan(2_000);
+  });
+});

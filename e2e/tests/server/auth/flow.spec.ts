@@ -26,6 +26,9 @@ describeTarget('auth-server', subject => {
    *  Playwright's UI timeline and its own numbered PNG under `.artifacts/screenshots/`. A page that passes every
    *  assertion and still looks wrong is caught by looking, and nowhere else. */
   test('the whole journey: guest, sign in, member pages, bindings, sign out', async ({ page, step }) => {
+    // Turned away from the account page, where they were going goes with them, for the sign-in to send them back.
+    const turnedAway = `${subject.origin}/login?redirect=${encodeURIComponent(`${subject.origin}/account`)}`;
+
     await step('guest home', async () => {
       // Both pages live at `/` and the router picks by session — nothing conditional is written into either one.
       await page.goto(subject.origin);
@@ -37,7 +40,7 @@ describeTarget('auth-server', subject => {
     await step('member page turns a guest away', async () => {
       await page.goto(`${subject.origin}/account`);
 
-      await expect(page).toHaveURL(/\/login$/);
+      await expect(page).toHaveURL(turnedAway);
       await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
     });
 
@@ -68,7 +71,7 @@ describeTarget('auth-server', subject => {
       // redirect rule, not by anything the button knows.
       await page.getByRole('button', { name: 'Sign out' }).click();
 
-      await expect(page).toHaveURL(/\/login$/);
+      await expect(page).toHaveURL(turnedAway);
       await expect(page.getByText(editor.email)).toBeHidden();
     });
 
@@ -77,7 +80,7 @@ describeTarget('auth-server', subject => {
       await expect(page.getByRole('heading', { name: 'Welcome, guest' })).toBeVisible();
 
       await page.goto(`${subject.origin}/account`);
-      await expect(page, 'the protected page was still reachable after signing out').toHaveURL(/\/login$/);
+      await expect(page, 'the protected page was still reachable after signing out').toHaveURL(turnedAway);
     });
   });
 
@@ -131,6 +134,7 @@ describeTarget('auth-server', subject => {
     const response = await request.get(`${subject.origin}/account`, { maxRedirects: 0 });
 
     expect(response.status()).toBe(302);
-    expect(response.headers().location).toBe('/login');
+    // Where the guest was going goes with them, as in the browser.
+    expect(response.headers().location).toBe(`/login?redirect=${encodeURIComponent(`${subject.origin}/account`)}`);
   });
 });

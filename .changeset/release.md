@@ -65,7 +65,8 @@ start one. How it works: `docs/en/agent-runs.md`.
   estimates at the project's own pace and warns of what is risky: files two tasks touch, exported contracts, checks it
   could not run, values no line measures, too few designers.
 - **`run rehearse`** plays a plan out before any agent starts: the schedule, the critical path, the lead's queue and the
-  run's length for each team size.
+  run's length for each team size. A module a task makes beside a file of its own it changes is that file's to import,
+  not a registration in the space's entry: encore-5's four UI tasks were said to meet in `src/space/index.ts`.
 - **Each task works in its own copy** under `tmp/plitzi-runs/`, cloned copy-on-write, with `public/` binaries and no
   `.env`. `task complete` refuses changes to another task's files, takes free shared files by turns (or requests them),
   and runs the project's checks there.
@@ -89,7 +90,8 @@ revert` takes back an approval.
 open` refuses one already used.
 - **What a run noticed and left** becomes the project's backlog (`run notice --on`, `.plitzi/backlog.json`, `run
 backlog`), offered to the next plan. What got in the agents' way in Plitzi goes to its `feedback.md` (`run notice
---plitzi`), for the person to share.
+--plitzi`), for the person to share. `run plan` and `run open` say which items the plan takes up, by task, and list as
+  open only those no task's `closes` names — encore-5's plan closed all five and was told to take them up.
 
 ### The team (`.plitzi/team.json`)
 

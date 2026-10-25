@@ -4,7 +4,7 @@ import path from 'node:path';
 import { format } from 'prettier';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { addBacklogItem, BACKLOG_FILE, closeBacklogItem, openBacklog } from './backlog';
+import { addBacklogItem, BACKLOG_FILE, backlogOfPlan, closeBacklogItem, openBacklog } from './backlog';
 import { feedbackFile } from './feedback';
 import { abortRun, finishRun } from './merge';
 import { noticeRun, noticesOf } from './notices';
@@ -151,11 +151,17 @@ describe('the project’s backlog', () => {
 
     const plan = benchPlan();
     plan.tasks[3] = { ...plan.tasks[3], closes: ['b-1'] };
+    // encore-5's plan closed all five open items, and `run plan` still listed them as open, to take up.
+    await addBacklogItem(bench.person(true), { text: 'The footer wraps', by: 'person' });
+    expect(await backlogOfPlan(bench.root, plan.tasks)).toEqual({
+      taken: [{ item: expect.objectContaining({ id: 'b-1' }) as unknown, task: plan.tasks[3].id }],
+      untaken: [expect.objectContaining({ id: 'b-2' })]
+    });
     const runId = await open(plan);
     await doTask('agent-1', plan.tasks[3].id, plan.tasks[3].files[0], 'export const about = { total: true };\n');
     const finished = await finishRun(bench.person(true), runId, { apply: true, leavePending: true });
 
     expect(finished.closedBacklog).toEqual(['b-1']);
-    expect(await openBacklog(bench.root)).toEqual([]);
+    expect((await openBacklog(bench.root)).map(item => item.id)).toEqual(['b-2']);
   });
 });

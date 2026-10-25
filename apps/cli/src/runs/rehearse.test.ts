@@ -91,6 +91,28 @@ export const space = { tokens, pages: await pagesIn(new URL('./pages/', import.m
     expect(played.contention).toEqual([]);
   });
 
+  // encore-5: a picker queue.ts places and a band home.ts stacks were said to register in the space's entry, at once.
+  it('reads a module made beside a file the task changes as that file’s to import: it registers nowhere', async () => {
+    const plan = benchPlan();
+    plan.tasks.push(
+      ...[
+        ['picker', 'src/space/theme.ts'],
+        ['band', 'src/space/tokens.ts']
+      ].map(([name, beside]) => ({
+        id: `t-${name}`,
+        title: `A ${name}`,
+        files: [beside, `src/space/${name}.ts`],
+        dependsOn: [],
+        priority: 'medium' as const,
+        estimateMinutes: 15,
+        acceptance: [`There is a ${name}`]
+      }))
+    );
+    const played = await rehearsed(plan, { agents: 6, reviewMinutes: 5 });
+
+    expect(played.contention.filter(each => each.file === 'src/space/index.ts')).toEqual([]);
+  });
+
   it('finds the pages made at once registering in one entry, and what a role held leaves nobody to take', async () => {
     const plan = benchPlan();
     plan.tasks.push(

@@ -5,7 +5,7 @@ import chalk from 'chalk';
 import { act, opener, runOf } from './shell';
 import { list, pacedText } from './text';
 import { amendRun } from '../../runs/amend';
-import { backlogText, openBacklog } from '../../runs/backlog';
+import { backlogOfPlan, backlogText } from '../../runs/backlog';
 import { hasDesignReview } from '../../runs/design';
 import { extendRun } from '../../runs/extend';
 import { writeJson } from '../../runs/files';
@@ -46,7 +46,6 @@ import { usageCaller } from '../../runs/usage';
 import { planSkills } from '../upgrade';
 
 import type { RunCommandOptions } from './shell';
-import type { BacklogItem } from '../../runs/backlog';
 import type { RunRecord, RunTask } from '../../runs/model';
 import type { RunContext } from '../../runs/run';
 import type { Team } from '../../runs/team';
@@ -57,18 +56,24 @@ import type { Team } from '../../runs/team';
  */
 
 /**
- * What earlier runs noticed and left, said where the next is planned and opened: a run takes it up — a task of its
- * plan, closed with `run backlog done <id>` once done — or leaves it open.
+ * What earlier runs noticed and left, said where the next is planned and opened: what the plan takes up — a task's
+ * `closes`, closed as the run is applied — and what no task does, which the run takes up or leaves open.
  */
-const backlogLines = (items: readonly BacklogItem[]): string[] =>
-  items.length === 0
+const backlogLines = ({ taken, untaken }: Awaited<ReturnType<typeof backlogOfPlan>>): string[] => [
+  ...(taken.length === 0
+    ? []
+    : [
+        `Of the project's backlog, this plan takes up ${String(taken.length)} — closed as the run is applied: ${taken.map(each => `${each.item.id} (${each.task})`).join(', ')}`
+      ]),
+  ...(untaken.length === 0
     ? []
     : [
         chalk.yellow(
-          `The project's backlog has ${String(items.length)} open — what earlier runs noticed and left: take it up in this run, or leave it (plitzi run backlog):`
+          `The project's backlog has ${String(untaken.length)} open that no task of ${taken.length === 0 ? 'the plan' : 'it'} takes up — what earlier runs noticed and left: take it up in this run (a task's "closes"), or leave it (plitzi run backlog):`
         ),
-        ...items.map(item => `  · ${backlogText(item)}`)
-      ];
+        ...untaken.map(item => `  · ${backlogText(item)}`)
+      ])
+];
 
 export interface PlanOptions extends RunCommandOptions {
   /** `run open`: a person lets the lead write the run into the project itself. */
@@ -186,7 +191,11 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
         designReview: going?.record.designReview === true || reviewsDesign(team, plan),
         ...(going ? { stackedOn: going.runId } : {}),
         staleSkills,
-        backlog: await openBacklog(ctx.root)
+        // A stage's: what the run's tasks before it take up is taken too.
+        backlog: await backlogOfPlan(ctx.root, [
+          ...checked.tasks,
+          ...(going ? (await loadRun(ctx, going.runId, { anyVersion: true })).tasks : [])
+        ])
       };
     },
     checked =>
@@ -351,7 +360,7 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
         leadFinishes: options.leadFinishes ?? false,
         leftOut: opened.checked.leftOut,
         inputs: opened.inputs,
-        backlog: await openBacklog(ctx.root),
+        backlog: await backlogOfPlan(ctx.root, opened.checked.tasks),
         leadToken: lead.token,
         leadTokenFile: lead.file,
         leadCli: lead.cli

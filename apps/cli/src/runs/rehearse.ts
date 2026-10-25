@@ -270,12 +270,18 @@ const changesOf = (task: RunTask, ownership: Ownership, created: readonly string
     changes.set(file, 'touches');
   }
 
-  // A page made in a folder the project loads its pages from registers nowhere: it is a page by being there.
+  // A page made in a folder the project loads its pages from registers nowhere: it is a page by being there. Nor does a
+  // module made beside a file of the entry's the task changes, which is that file's to import (encore-5: a picker
+  // queue.ts places, a band home.ts stacks — four tasks said to register in the space's entry).
   for (const file of task.files.filter(each => created.includes(each) && !inPageFolder(ownership, each))) {
     const entry = ownership.entries
       .filter(each => file.startsWith(each.slice(0, each.lastIndexOf('/') + 1)))
       .sort((a, b) => b.length - a.length)[0];
-    if (entry && !task.files.includes(entry) && !changes.has(entry)) {
+    const importedBy = (at: string): boolean =>
+      task.files.some(
+        each => each !== at && !created.includes(each) && each.startsWith(at.slice(0, at.lastIndexOf('/') + 1))
+      );
+    if (entry && !importedBy(entry) && !task.files.includes(entry) && !changes.has(entry)) {
       changes.set(entry, 'registers');
     }
   }

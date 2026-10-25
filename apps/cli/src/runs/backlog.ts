@@ -56,15 +56,29 @@ export const readBacklog = async (root: string): Promise<BacklogItem[]> =>
 export const openBacklog = async (root: string): Promise<BacklogItem[]> =>
   (await readBacklog(root)).filter(item => item.done === undefined);
 
+/** The open items as these tasks take them up: each one a task closes, with that task, and those none does. */
+export const backlogOfPlan = async (
+  root: string,
+  tasks: readonly { id: string; closes?: readonly string[] }[]
+): Promise<{ taken: { item: BacklogItem; task: string }[]; untaken: BacklogItem[] }> => {
+  const closer = new Map(tasks.flatMap(task => (task.closes ?? []).map(id => [id, task.id] as const)));
+  const open = await openBacklog(root);
+
+  return {
+    taken: open.flatMap(item => {
+      const task = closer.get(item.id);
+
+      return task === undefined ? [] : [{ item, task }];
+    }),
+    untaken: open.filter(item => !closer.has(item.id))
+  };
+};
+
 /** The open items no task of these closes, by id: what the lead can stack as cards for an agent with nothing to take. */
 export const stackableBacklog = async (
   root: string,
-  tasks: readonly { closes?: readonly string[] }[]
-): Promise<string[]> => {
-  const closed = new Set(tasks.flatMap(task => task.closes ?? []));
-
-  return (await openBacklog(root).catch(() => [])).map(item => item.id).filter(id => !closed.has(id));
-};
+  tasks: readonly { id: string; closes?: readonly string[] }[]
+): Promise<string[]> => (await backlogOfPlan(root, tasks).catch(() => ({ untaken: [] }))).untaken.map(item => item.id);
 
 const nextId = (items: readonly BacklogItem[]): number =>
   items.length === 0 ? 1 : Math.max(...items.map(item => Number(item.id.replace(/^b-/, '')) || 0)) + 1;

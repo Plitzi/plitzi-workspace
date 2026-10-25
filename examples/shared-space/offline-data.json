@@ -116,8 +116,8 @@
       "mainHeading": {
         "id": "mainHeading",
         "attributes": {
-          "content": "Welcome To Plitzi",
-          "subType": "h1"
+          "subType": "h1",
+          "content": "Welcome To Plitzi"
         },
         "definition": {
           "label": "Heading",
@@ -296,8 +296,8 @@
       "heading-1": {
         "id": "heading-1",
         "attributes": {
-          "content": "Docs",
-          "subType": "h1"
+          "subType": "h1",
+          "content": "Docs"
         },
         "definition": {
           "label": "Heading",
@@ -415,8 +415,8 @@
       "heading-2": {
         "id": "heading-2",
         "attributes": {
-          "content": "Learn",
-          "subType": "h1"
+          "subType": "h1",
+          "content": "Learn"
         },
         "definition": {
           "label": "Heading",
@@ -534,8 +534,8 @@
       "heading-3": {
         "id": "heading-3",
         "attributes": {
-          "content": "Templates",
-          "subType": "h1"
+          "subType": "h1",
+          "content": "Templates"
         },
         "definition": {
           "label": "Heading",
@@ -653,8 +653,8 @@
       "heading-4": {
         "id": "heading-4",
         "attributes": {
-          "content": "Deploy",
-          "subType": "h1"
+          "subType": "h1",
+          "content": "Deploy"
         },
         "definition": {
           "label": "Heading",
@@ -780,8 +780,8 @@
       "not-found-title": {
         "id": "not-found-title",
         "attributes": {
-          "content": "Page not found",
-          "subType": "h1"
+          "subType": "h1",
+          "content": "Page not found"
         },
         "definition": {
           "label": "Heading",
@@ -880,8 +880,8 @@
       "heading-5": {
         "id": "heading-5",
         "attributes": {
-          "content": "Home",
-          "subType": "h1"
+          "subType": "h1",
+          "content": "Home"
         },
         "definition": {
           "label": "Heading",
@@ -2213,7 +2213,7 @@
         "link-5"
       ],
       "saves": 15,
-      "message": "5 links of 5 elements share one structure (\"link-1\", \"link-2\", \"link-3\" and 2 more) and differ only in what they say. Make it a component — `components: [{ id, props, root }]` — and place it with `component(id, { props })`: one tree to read and edit, and every copy changes with it. What a copy says or does differently is a prop: an attribute reads `{{ props.title }}`, and so does a flow's step; what it reads from the page is a prop the instance binds (`component(id, { bind: [{ to: prop, source }] })`).",
+      "message": "5 links of 5 elements share one structure (\"link-1\", \"link-2\", \"link-3\" and 2 more) and differ only in what they say. Make it a component — `components: [{ id, props, root }]` — and place it with `component(id, { props })`: one tree to read and edit, and every copy changes with it. What a copy says or does differently is a prop: an attribute reads `{{ props.title }}`, and so does a flow's step; what it reads from the page is a prop the instance binds (`component(id, { bind: [{ to: prop, source }] })`). Counted from 3 copies of 4 elements or more (2 of 8 or more); a helper called once a copy still writes each into the document. Alike on purpose: `quiet: ['repeated-shape']` on them, with a comment saying why.",
       "at": "space.ts:36"
     }
   ]

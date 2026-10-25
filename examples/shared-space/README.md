@@ -5,8 +5,10 @@ The sample space the examples render: one page with a handful of elements, plus 
 
 It is declared in [`space.ts`](./space.ts) as a `SpaceSpec` — a tree, some CSS and a palette — and
 `offline-data.json` is written from it by `yarn author`. The JSON is checked in because two ways of reading it
-cannot run TypeScript: the no-build example, and the adapters that take a path and read the file themselves.
-Everything else builds on the declaration:
+cannot run TypeScript: the no-build example, and the adapters that take a path and read the file themselves. Its test
+holds the JSON to what the declaration authors — run it after changing the space or the authoring (`yarn workspace
+@plitzi/example-space test`; `yarn author` when it fails on purpose): like every example, neither the workspace's
+`yarn test` nor CI runs it. Everything else builds on the declaration:
 
 ```ts
 import { sampleSpace } from '@plitzi/example-space/space';
