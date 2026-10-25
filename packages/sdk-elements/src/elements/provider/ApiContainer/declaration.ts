@@ -123,6 +123,10 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
         'thing; it is off unless set. A flow refreshes it with `performQuery` or the global `invalidateQueries` step, ' +
         'and `refreshSeconds` makes it ask again on its own every N seconds (either runtime; paused while the tab is ' +
         'hidden) — the way to keep a queue, feed or status board current without a plugin. ' +
+        'An `action` or a `connector` is resolved only by the page server: a provider naming one needs ' +
+        '`runtime: "server"` — in the browser it never asks; a browser flow that changes data calls the action with ' +
+        'the `runServerAction` step, then `performQuery` or `invalidateQueries` reads it again. `onApiSuccess` and ' +
+        '`onApiError` say `url`, `method`, `status` and `data` (the answer) to their flow. ' +
         'A server provider (`runtime: "server"`) whose answer means the address shows nothing — a record not found — ' +
         'says so in `notFound`, a template against its answer (`{{ source.found == false }}`): the page is sent with ' +
         'status 404, rendered as written. ' +

@@ -11,8 +11,8 @@ import type { UsageLine } from '../usage';
  */
 
 /**
- * An agent with two tasks in progress at once: replayed take by take, each time it happened said once. A task sent
- * back while its agent is at another waits for it — Carlos's rule: never handed to a free one — and is its
+ * An agent with two tasks in progress at once: replayed take by take, each time it happened said once. A task blocked
+ * frees its agent; one sent back — or unblocked — while its agent is at another waits for it — Carlos's rule: never handed to a free one — and is its
  * agent's work again once the other is complete; counted then, never while it waits (a run said dev-1 held two).
  */
 export const twoTasks = (log: readonly LogEntry[]): Finding[] => {
@@ -45,7 +45,15 @@ export const twoTasks = (log: readonly LogEntry[]): Finding[] => {
     } else if (entry.action === 'complete') {
       setOf(working, by).delete(task);
       nextOwn(by);
-    } else if (entry.action === 'review' && entry.verdict === 'changes') {
+    } else if (entry.action === 'block') {
+      // Blocked, its agent is free for another: the block is no task at work.
+      const holder = owner.get(task);
+      if (holder !== undefined) {
+        setOf(working, holder).delete(task);
+        nextOwn(holder);
+      }
+    } else if ((entry.action === 'review' && entry.verdict === 'changes') || entry.action === 'unblock') {
+      // Sent back, or unblocked, while its agent is at another: it waits for it, handed back by its next `task next`.
       const holder = owner.get(task);
       if (holder !== undefined && !setOf(working, holder).has(task)) {
         setOf(waiting, holder).add(task);

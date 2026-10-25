@@ -90,7 +90,7 @@ export const bottlenecks = (
       task: view.task.id,
       text: `${view.task.id} waits for ${held.map(other => `${other.task.id} (${String(heldIn(other))})`).join(', ')} while ${idle.join(', ')} ${idle.length === 1 ? 'is' : 'are'} free: ${
         shared.length === 0
-          ? `they share no file — if ${view.task.id} needs nothing they make, take the dependency away and it starts now (its dependsOn in the plan, then plitzi run amend)`
+          ? `they share no file — if ${view.task.id} needs nothing they make (no action, data or module it calls: a page that asks their server action needs it there), take the dependency away and it starts now (its dependsOn in the plan, then plitzi run amend)`
           : `they share ${shared.join(', ')} — review ${held.map(other => other.task.id).join(', ')} first (plitzi task next --role lead --take), or settle what is left yourself`
       }`,
       who: 'lead'

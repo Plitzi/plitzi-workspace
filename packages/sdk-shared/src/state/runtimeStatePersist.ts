@@ -106,7 +106,6 @@ const KEPT_PATH = 'runtime.state';
 const omitKeys = (from: Record<string, unknown>, keys: ReadonlySet<string>): Record<string, unknown> =>
   Object.fromEntries(Object.entries(from).filter(([key]) => !keys.has(key)));
 
-
 /** `schema` is typed required but seeded after mount, so it is read defensively. */
 const schemaSettings = (state: CommonState): CommonState['schema']['settings'] | undefined =>
   (state.schema as CommonState['schema'] | undefined)?.settings;

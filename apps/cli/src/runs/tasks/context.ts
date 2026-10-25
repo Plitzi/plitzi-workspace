@@ -39,6 +39,11 @@ export interface TaskContext {
     /** What its spikes found out: research a task builds on, said where it is built. */
     findings?: Finding[];
   }[];
+  /**
+   * Its files the run approved a version of, when, and by which task: what a finding written before then may no longer
+   * say right (a spike found 7 of 12 tones; by the time its task was taken the run had all 12).
+   */
+  approved: { file: string; task: string; at: string }[];
   contracts: { resource: string; owner: string; note: string }[];
   /** What it was proposed and proposed, and what it agreed to with other tasks — what its review checks too. */
   proposals: { incoming: ProposalView[]; outgoing: ProposalView[]; agreements: ProposalView[] };
@@ -205,6 +210,11 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
       : {}),
     requests,
     related,
+    approved: [...task.files, ...(task.touches ?? [])].flatMap(file =>
+      Object.hasOwn(approved.files, file)
+        ? [{ file, task: approved.files[file].task, at: approved.files[file].at }]
+        : []
+    ),
     contracts: loaded.plan.contracts ?? [],
     proposals: {
       incoming: proposals.filter(each => each.to === taskId),

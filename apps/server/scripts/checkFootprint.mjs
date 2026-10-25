@@ -21,7 +21,9 @@ const BUDGET = {
   // 205: the job queue's rules are one module every queue shares (`queueRules`), and the default queue is the fleet's
   // (`fleetJobQueue`); the file queue is loaded only by who uses it (`@plitzi/sdk-server/actions`, a project's server).
   '@plitzi/sdk-server': 205,
-  '@plitzi/sdk-shared': 129,
+  // 132: a provider's `when`, read by the page server as the browser reads it (`providerWhen`, `providerAnswer`, and the
+  // global sources' names it tells apart).
+  '@plitzi/sdk-shared': 132,
   '@plitzi/nexus': 31,
   '@plitzi/plitzi-ui': 19,
   '@plitzi/plitzi-sdk': 1,

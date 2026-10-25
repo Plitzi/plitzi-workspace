@@ -6,7 +6,7 @@ import { problem } from './keeperServer';
 
 import type { RouteAnswer, Route } from './keeperServer';
 import type { Measured } from './measureValues';
-import type { ElementState } from './play';
+import type { ElementState } from './playState';
 import type { ActingStep } from './shot/steps';
 import type { KeptAnswer, KeptAsk, KeptOutlineAnswer, KeptOutlineAsk, KeptView } from '../browser/keptBrowser';
 

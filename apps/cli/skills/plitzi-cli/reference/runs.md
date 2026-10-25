@@ -32,8 +32,8 @@ Inside `work`, a command knows its task and run (`tmp/plitzi-task.json`) — nev
 **Your own `plitzi` is who you are.** `run agent <name>` makes your token and, beside it, your own CLI
 (`tmp/plitzi-runs/<run>/scratch/<name>/plitzi`, the project's run with your token): your prompt names it; every command
 goes through it, by its whole path, in a task's copy too — never `--token` nor `--agent`. Started by hand, an agent names
-itself once (`--agent design-1`) and is answered both. No token, an empty one, a task's, your name alone,
-your token under another's name, a name or a role not the team's: refused (`identity`, 26).
+itself once (`--agent design-1`) and is answered both. A token, name or role not yours, or none: refused
+(`identity`, 26).
 
 - **Write only in `work`**, never in the project; run the project's scripts there (no `node_modules` nor `.env` of its
   own; its warning is expected). `plitzi page check /pets --width 1440,390` from `work` serves the copy for the CLI's
@@ -58,11 +58,12 @@ your token under another's name, a name or a role not the team's: refused (`iden
 request <file> --summary "why"`), merged when you are approved; **another task's own file**: wait for it, your change
   kept (`plitzi task wait <file> --follow`: it is yours once that task is approved), or propose the change to it. To hold it while
   you work: `plitzi task claim <file>`; answered `claimed` with `turn: "wait"` → `plitzi task wait <file>` and go on
-  meanwhile (`--follow` to stay until it is yours). A file handed on to you arrives with what the run approved since
-  your copy was made.
+  meanwhile (`--follow` to stay until it is yours) — a task nobody took yet: the claim takes its file ahead of it. A
+  file handed on arrives with what the run approved since.
 - **Agree with another task** when your work needs a change in its files: `plitzi task propose t-menu --change "the card
 takes a lang prop" --wait`; it answers `plitzi task answer t-home-p1 --accept | --reject "why" | --counter "…"`.
-  Answer what is proposed to you before you complete (`plitzi task proposals`); honour what you accepted.
+  Answer what is proposed to you before you complete (`plitzi task proposals`); honour what you accepted; `--withdraw
+  "why"` takes back your own.
 - **Stuck, or unsure?** `plitzi task ask "Spanish or Catalan?"` (`--follow` waits for the answer). **Something the lead
   should know** — a finding, a choice you made, a risk — with no answer needed: `plitzi task tell "…"` (holding no task — a reviewer — `--about <task> --token <yours>`). **Wrong, and no task's** — outside yours, there
   before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage. What the lead

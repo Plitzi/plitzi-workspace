@@ -129,6 +129,17 @@ describe('lintSpace', () => {
       expect(lintSpace({ schema, style }).errors.map(error => error.code)).not.toContain('server-source-in-browser');
     });
 
+    /** The page server holds a `when` it knows all of; one on what the browser alone holds it resolves regardless. */
+    it('server-when-unknown, for a server provider waiting on a state', () => {
+      const { schema, style } = story();
+      const when = (field: string) => ({ combinator: 'and', rules: [{ field, operator: '=', value: true }] });
+      schema.flat['post-data'].attributes.when = when('state.editing');
+      expect(lintSpace({ schema, style }).warnings.map(warning => warning.code)).toContain('server-when-unknown');
+
+      schema.flat['post-data'].attributes.when = when('auth.isAuthenticated');
+      expect(lintSpace({ schema, style }).warnings.map(warning => warning.code)).not.toContain('server-when-unknown');
+    });
+
     /** A written input is a value: its braces reach the action as text, over the route param it meant to read. */
     /** Only an attribute that is text is interpolated: braces inside an object or a list arrive as written. */
     it('template-in-value, for any attribute that is an object or a list', () => {

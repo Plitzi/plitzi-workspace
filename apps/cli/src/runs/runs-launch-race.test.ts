@@ -45,18 +45,17 @@ afterEach(async () => {
 });
 
 describe('starting an agent', () => {
-  it('starts it once when two start it at once: the other is told it runs', async () => {
+  // A lead asked again to start one that ran was refused — what it asked was so already.
+  it('starts it once when two start it at once: the other is told it runs, as an answer', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await openRun(bench.agent('lead'), await bench.writePlan(benchPlan()));
 
-    const both = await Promise.allSettled([
+    const both = await Promise.all([
       launchAgent(bench.agent('lead'), 'es-launch', 'dev-1', 'claude'),
       launchAgent(bench.agent('lead'), 'es-launch', 'dev-1', 'claude')
     ]);
 
-    expect(both.map(each => each.status).sort()).toEqual(['fulfilled', 'rejected']);
-    expect(both.find(each => each.status === 'rejected')).toMatchObject({
-      reason: { code: 'invalid', detail: { running: true } }
-    });
+    expect(both.filter(each => 'launched' in each)).toHaveLength(1);
+    expect(both.find(each => 'running' in each)).toMatchObject({ agent: 'dev-1', running: { harness: 'claude' } });
   });
 });

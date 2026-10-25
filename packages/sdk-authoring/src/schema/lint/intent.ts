@@ -1,5 +1,6 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { whenOf, whenUnknownToServer } from '@plitzi/sdk-shared/schema';
 
 import { didYouMean } from '../suggest';
 import { stringsIn } from './context';
@@ -205,6 +206,23 @@ export const checkIntent = (ctx: LintContext, element: Element, where: string): 
       `${where} is asked from the browser, which reads only its \`query\`: its \`${serverOnly}\` is answered by the page server alone, so it never asks and everything bound to it stays empty. Give it \`runtime: 'server'\`.`,
       element.id
     );
+  }
+
+  // The page server holds a server provider's `when` only when it knows all it reads — where the visit is, who is
+  // visiting, another server provider's answer. One reading what the browser alone holds is resolved whatever it says.
+  const gate = whenOf(element);
+  if (type === 'apiContainer' && element.definition.runtime === 'server' && gate) {
+    const serverIds = new Set(
+      Object.values(ctx.flat).flatMap(each => (each.definition.runtime === 'server' ? [each.id] : []))
+    );
+    const unknown = whenUnknownToServer(gate, ctx.flat, serverIds);
+    if (unknown.length > 0) {
+      ctx.warn(
+        'server-when-unknown',
+        `${where} waits on ${unknown.join(', ')}, which only the browser holds: the page server resolves it whatever its \`when\` says. Wait on what the server knows — \`navigation\`, \`auth\`, a server provider's answer — or ask it from the browser (a \`query\`).`,
+        element.id
+      );
+    }
   }
 
   // A component's tree is placed by instances, any number of them on one page, and the page server resolves what the

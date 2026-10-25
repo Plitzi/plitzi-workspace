@@ -1,4 +1,5 @@
-type ProviderSlice = { records?: unknown[]; record?: unknown; data?: unknown };
+/** A provider's answer as it holds it: a connector list's `records`, a detail's `record`, a plain `query`'s `data`. */
+export type ProviderSlice = { records?: unknown[]; record?: unknown; data?: unknown };
 
 const isEmptyValue = (value: unknown): boolean =>
   value === undefined ||
@@ -14,7 +15,8 @@ const isEmptyValue = (value: unknown): boolean =>
  * `data`. Only the first two used to be asked, so a `query` — whose slice has no `records` at all — reported empty
  * whatever it held, and an empty state bound to `isEmpty` showed over a full page.
  *
- * `records` is the list after pagination has accumulated it, which is why it is passed in rather than read here.
+ * `records` is the list after pagination has accumulated it, which is why it is passed in rather than read here. The
+ * page server reads it too, for a provider's `when` that waits on another's answer.
  */
 export const isEmptyAnswer = (slice: ProviderSlice, records: unknown[], singleRecord: boolean): boolean => {
   if (singleRecord) {

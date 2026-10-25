@@ -2,10 +2,10 @@ import { useMemo } from 'react';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { templatePaths } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { whenPaths } from '@plitzi/sdk-shared/schema';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import type { ElementBinding } from '@plitzi/sdk-shared';
-import type { RuleGroup } from '@plitzi/sdk-shared/helpers';
 
 export type UseElementDataSourceProps = {
   bindings?: Record<string, ElementBinding[]>;
@@ -31,18 +31,11 @@ const pathsOf = ({ source, transformers, when }: ElementBinding): string[] => {
   }
 
   if (when) {
-    paths.push(...rulePaths(when));
+    paths.push(...whenPaths(when));
   }
 
   return paths;
 };
-
-const rulePaths = (group: RuleGroup): string[] =>
-  group.rules.flatMap(rule =>
-    'rules' in rule
-      ? rulePaths(rule)
-      : [rule.field, ...(rule.isBinding && typeof rule.value === 'string' ? [rule.value] : [])]
-  );
 
 /**
  * The fewest paths that cover all of them: a path under one already listed is read through it. Keeping both would

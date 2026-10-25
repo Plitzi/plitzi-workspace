@@ -2,7 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { briefOf } from './brief';
+import { briefOf, primerMark, primerReadAt } from './brief';
 import { openRun } from '../../runs/run';
 import { completeTask, noteTask, reviewTask, taskContext } from '../../runs/tasks';
 import { setTeamAgent } from '../../runs/team';
@@ -90,5 +90,55 @@ describe("a task's brief", () => {
 
     const brief = stripVTControlCharacters(briefOf(await taskContext(held.ctx, runId, 't-home')));
     expect(brief).toContain('a new file is yours (no task holds it; it goes in with your complete)');
+  });
+});
+
+// A run's lead's 7k primer was printed in every brief an agent read again — 46% of 230k characters read again.
+describe('the run’s primer in a brief read again', () => {
+  it('is said in a line once the agent read it whole on the task, unchanged since', () => {
+    const mark = primerMark('Encore is a radio app.');
+    const log = [
+      { action: 'brief', by: 'dev-1', task: 't-home', primer: mark, at: '2026-10-25T15:14:00.000Z' },
+      { action: 'brief', by: 'dev-1', task: 't-home', at: '2026-10-25T15:20:00.000Z' }
+    ];
+
+    expect(primerReadAt(log, 'dev-1', 't-home', mark)).toBe('2026-10-25T15:14:00.000Z');
+    expect(primerReadAt(log, 'dev-2', 't-home', mark)).toBeUndefined();
+    expect(primerReadAt(log, 'dev-1', 't-book', mark)).toBeUndefined();
+    expect(primerReadAt(log, 'dev-1', 't-home', primerMark('Encore is a radio app, changed.'))).toBeUndefined();
+  });
+
+  it('says where it is instead of printing it again', async () => {
+    const runId = await open(benchPlan());
+    const context = { ...(await taskContext(lead(), runId, 't-home')), primer: 'Encore is a radio app.' };
+
+    expect(stripVTControlCharacters(briefOf(context))).toContain('Encore is a radio app.');
+    const again = stripVTControlCharacters(briefOf({ ...context, primerRead: '2026-10-25T15:14:00.000Z' }));
+    expect(again).not.toContain('Encore is a radio app.');
+    expect(again).toContain(
+      'The run’s primer: as you read it at 15:14 UTC, unchanged — whole again: plitzi task context --primer'
+    );
+  });
+});
+
+// A spike found 7 of 12 tones; by the time its task was taken the run had all 12, and the brief said the 7.
+describe('a finding the run changed since', () => {
+  it('says which of the task’s files the run approved after it was written', async () => {
+    const runId = await open(benchPlan());
+    const context = await taskContext(lead(), runId, 't-home');
+    const finding = { at: '2026-10-25T15:02:00.000Z', by: 'design-1', question: 'Tones', text: '7 of 12 listed' };
+    const brief = (approvedAt: string): string =>
+      stripVTControlCharacters(
+        briefOf({
+          ...context,
+          state: { ...context.state, findings: [finding] },
+          approved: [{ file: 'src/space/pages/home/index.ts', task: 't-tones', at: approvedAt }]
+        })
+      );
+
+    expect(brief('2026-10-25T15:10:00.000Z')).toContain(
+      '◇ Tones — 7 of 12 listed (design-1, 15:02 UTC) — changed since by the run: src/space/pages/home/index.ts (t-tones); read them before you build on it'
+    );
+    expect(brief('2026-10-25T14:50:00.000Z')).not.toContain('changed since');
   });
 });

@@ -480,4 +480,20 @@ describe('an element measured alone', () => {
     expect(all).toContain('box-shadow             none');
     expect(all).toContain(glow);
   });
+
+  // A designer proved a profile's own button by its widths and place — of a button hidden, with no box: never said.
+  it('says an element measured is hidden, alone and beside the other page', () => {
+    const shown: Measured = {
+      selector: '#follow',
+      tag: 'button',
+      text: 'Follow',
+      styles: { width: '96px' },
+      inherited: []
+    };
+    const hidden: Measured = { ...shown, styles: { width: '0px' }, hidden: true };
+
+    expect(stripVTControlCharacters(measuredText(hidden))).toContain('hidden: a visitor sees none of what it finds');
+    expect(stripVTControlCharacters(measuredText(hidden, shown))).toContain('hidden here: a visitor sees none');
+    expect(stripVTControlCharacters(measuredText(shown, shown))).not.toContain('hidden');
+  });
 });

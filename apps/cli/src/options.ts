@@ -3,6 +3,7 @@ import { InvalidArgumentError } from 'commander';
 import { SCHEMES } from './browser';
 
 import type { Scheme } from './browser';
+import type { Expectation } from './commands/check/types';
 import type { Command } from 'commander';
 
 /**
@@ -232,29 +233,28 @@ export const fill = (value: string, previous: readonly FieldFill[] | undefined):
  */
 /**
  * One `--expect` read: `<id>~<text>`, `<id>` alone — the element is shown, whatever it says (a swatch, a picture: a run's
- * design-2 wrote `id~`) — and `<path> …` for one page. Nothing when it is none of them. What the option and a plan's
- * acceptance lines (`expectedIds`) both read.
+ * design-2 wrote `id~`) — either after `!` for its opposite (a guest sees no band: `!home-following`), and `<path> …`
+ * for one page. Nothing when it is none of them. What the option and a plan's acceptance lines (`expectedIds`) both read.
  */
-export const readExpectation = (value: string): { element: string; text: string; path?: string } | undefined => {
+export const readExpectation = (value: string): Expectation | undefined => {
   const scoped = /^(\/\S*)\s+(.*)$/s.exec(value);
-  const rest = scoped?.[2] ?? value;
+  const said = (scoped?.[2] ?? value).trim();
+  const absent = said.startsWith('!');
+  const rest = absent ? said.slice(1) : said;
   const at = rest.indexOf('~');
   const element = (at === -1 ? rest : rest.slice(0, at)).trim();
   const text = at === -1 ? '' : rest.slice(at + 1);
 
-  return element === '' || element.startsWith('/') || /\s/.test(element) || (at !== -1 && text === '')
+  return element === '' || element.startsWith('/') || /[\s!]/.test(element) || (at !== -1 && text === '')
     ? undefined
-    : { element, text, ...(scoped?.[1] ? { path: scoped[1] } : {}) };
+    : { element, text, ...(absent ? { absent: true as const } : {}), ...(scoped?.[1] ? { path: scoped[1] } : {}) };
 };
 
-export const expectation = (
-  value: string,
-  previous: readonly { element: string; text: string; path?: string }[] | undefined
-): { element: string; text: string; path?: string }[] => {
+export const expectation = (value: string, previous: readonly Expectation[] | undefined): Expectation[] => {
   const read = readExpectation(value);
   if (!read) {
     throw new InvalidArgumentError(
-      'What an element shows is expected as <id>~<text> — or <id> alone for "it is shown" — and <path> <id~text> for one page: --expect "/walks walks-title~October".'
+      'What an element shows is expected as <id>~<text> — or <id> alone for "it is shown", either after ! for "it is not" — and <path> <id~text> for one page: --expect "/walks walks-title~October".'
     );
   }
 

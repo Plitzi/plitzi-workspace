@@ -6,16 +6,52 @@ import chalk from 'chalk';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { authoredHandles } from '../../runs/expectations';
 import { writeJson } from '../../runs/files';
 import { RunRefusal } from '../../runs/refusal';
 import { loadRun } from '../../runs/run';
 import { findTask } from '../../runs/tasks';
 import { checkKey } from '../../runs/tasks/checked';
 import { viewTask } from '../../runs/taskStore';
+import { checkAccount } from '../check/account';
+import { pageFor } from '../check/space';
 
 import type { LookOptions } from './review';
 import type { Preview } from '../../runs/preview';
 import type { RunContext } from '../../runs/run';
+
+/**
+ * The pages of a look the space declares for signed-in visitors alone, and the account the project names to read them
+ * as (`PLITZI_CHECK_USER`) — or why there is none. A run's look read `/moderation` as a guest and failed it as "sent the
+ * browser to /", the task's UI never seen.
+ */
+export const visitorsOnly = async (
+  dir: string,
+  pages: readonly string[]
+): Promise<{ pages: string[]; as?: string; problem?: string } | undefined> => {
+  const handles = await authoredHandles(dir);
+  const guarded = handles
+    ? pages.filter(each => {
+        const id = pageFor(handles, each);
+        const page = id === undefined ? undefined : handles.pages[id];
+
+        return (
+          page !== undefined && (page.accessLevel === 'authenticated' || (page.access?.permissions.length ?? 0) > 0)
+        );
+      })
+    : [];
+  if (guarded.length === 0) {
+    return undefined;
+  }
+
+  const account = await checkAccount(dir);
+
+  return account === undefined
+    ? { pages: guarded }
+    : 'problem' in account
+      ? { pages: guarded, problem: account.problem }
+      : { pages: guarded, as: account.username };
+};
 
 /** One page of a look beside the run before the task: how much differs, and in which sections. */
 export interface BeforeAfter {

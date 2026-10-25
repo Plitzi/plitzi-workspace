@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -10,7 +11,7 @@ import { namesServedCopy } from '../../runs/acceptance';
 import { acceptanceText } from '../../runs/model';
 import { importedApis } from '../../runs/moduleApis';
 import { runPaths } from '../../runs/paths';
-import { logRun } from '../../runs/run';
+import { logRun, readRunLog } from '../../runs/run';
 import { taskContext } from '../../runs/tasks';
 import { describeData } from '../data';
 
@@ -51,6 +52,8 @@ const filesOf = async (root: string, context: TaskContext): Promise<{ file: stri
 };
 
 type Brief = TaskContext & {
+  /** When this agent read the primer whole on this task, unchanged since: said in a line, not again. */
+  primerRead?: string;
   whole: boolean;
   data: Awaited<ReturnType<typeof filesOf>>;
   imports: Awaited<ReturnType<typeof importedApis>>;
@@ -81,17 +84,42 @@ const partsOf = (context: Brief): { brief: string; files: string; shapes: string
   ).join('\n')
 });
 
+/** The primer as the log marks it: read once by an agent on a task, it is not printed whole again while unchanged. */
+export const primerMark = (primer: string): string => createHash('sha256').update(primer).digest('hex').slice(0, 12);
+
+/** When `agent` last read this primer whole on `task`, by the run's log — never, when it changed since. */
+export const primerReadAt = (
+  log: readonly Record<string, unknown>[],
+  agent: string,
+  task: string,
+  mark: string
+): string | undefined => {
+  const read = log.findLast(
+    entry => entry.action === 'brief' && entry.by === agent && entry.task === task && entry.primer === mark
+  )?.at;
+
+  return typeof read === 'string' ? read : undefined;
+};
+
 export const taskContextCommand = (
   taskId: string | undefined,
-  options: RunCommandOptions & { files?: boolean }
+  options: RunCommandOptions & { files?: boolean; primer?: boolean }
 ): Promise<void> =>
   act(
     options,
     async ctx => {
       const target = await either(ctx, options, taskId);
       const context = await taskContext(ctx, target.runId, target.taskId);
+      const paths = runPaths(ctx.root, target.runId);
+      const mark = context.primer === undefined ? undefined : primerMark(context.primer);
+      // A run's briefs carried the lead's 7k primer every time one was read again — 46% of 230k characters re-read.
+      const readAt =
+        mark === undefined || options.primer === true
+          ? undefined
+          : primerReadAt(await readRunLog(paths), ctx.agent, target.taskId, mark);
       const brief: Brief = {
         ...context,
+        ...(readAt === undefined ? {} : { primerRead: readAt }),
         whole: options.files === true,
         data: await filesOf(context.sourceRoot, context),
         imports: await importedApis(context.sourceRoot, context.files)
@@ -99,10 +127,11 @@ export const taskContextCommand = (
       // What each part weighs, for the report: an agent reads its brief again on every turn after, and which part is
       // heavy was guessed (61 briefs, up to 21k characters, read again for 1.1M tokens).
       const parts = partsOf(brief);
-      const primer = context.primer?.trim().length ?? 0;
-      await logRun(ctx, runPaths(ctx.root, target.runId), {
+      const primer = brief.primerRead === undefined ? (context.primer?.trim().length ?? 0) : 0;
+      await logRun(ctx, paths, {
         action: 'brief',
         task: target.taskId,
+        ...(mark === undefined || brief.primerRead !== undefined ? {} : { primer: mark }),
         parts: {
           primer,
           brief: parts.brief.length - primer,
@@ -138,10 +167,26 @@ const NOTE_SHOWN = 300;
 const clipped = (text: string, most: number, whole: string): string =>
   text.length <= most ? text : `${text.slice(0, most).trimEnd()}… (${whole})`;
 
-const findingsText = (title: string, findings: readonly Finding[]): string[] =>
-  findings.length > 0 ? [title, ...findings.map(each => `  ◇ ${each.question} — ${each.text} (${each.by})`)] : [];
+/** A finding, with what the run approved of the task's files since it was written: what it may no longer say right. */
+const findingsText = (title: string, findings: readonly Finding[], approved: TaskContext['approved']): string[] =>
+  findings.length > 0
+    ? [
+        title,
+        ...findings.map(each => {
+          const since = approved.filter(file => file.at > each.at);
 
-export const briefOf = (context: TaskContext): string => {
+          return `  ◇ ${each.question} — ${each.text} (${each.by}, ${each.at.slice(11, 16)} UTC)${
+            since.length > 0
+              ? chalk.yellow(
+                  ` — changed since by the run: ${since.map(file => `${file.file} (${file.task})`).join(', ')}; read them before you build on it`
+                )
+              : ''
+          }`;
+        })
+      ]
+    : [];
+
+export const briefOf = (context: TaskContext & { primerRead?: string }): string => {
   const { task, state } = context;
   const files = context.files.map(
     file =>
@@ -156,11 +201,18 @@ export const briefOf = (context: TaskContext): string => {
   return [
     ...(context.primer === undefined
       ? []
-      : [
-          chalk.bold('The run’s primer — the lead’s, for every task: read it before anything else'),
-          context.primer.trim(),
-          ''
-        ]),
+      : context.primerRead !== undefined
+        ? [
+            chalk.dim(
+              `The run’s primer: as you read it at ${context.primerRead.slice(11, 16)} UTC, unchanged — whole again: plitzi task context --primer`
+            ),
+            ''
+          ]
+        : [
+            chalk.bold('The run’s primer — the lead’s, for every task: read it before anything else'),
+            context.primer.trim(),
+            ''
+          ]),
     chalk.bold(`${task.id} — ${task.title}`),
     `  ${task.role ?? 'developer'} · ${state.status}${state.round > 0 ? `, round ${String(state.round)}` : ''}${context.holder ? ` · ${context.holder}` : ''}`,
     `Its files: ${files.join(', ')}${task.touches && task.touches.length > 0 ? ` · it will touch: ${task.touches.join(', ')}` : ''}`,
@@ -179,9 +231,9 @@ export const briefOf = (context: TaskContext): string => {
           )
         ]
       : []),
-    ...findingsText(`What ${task.id}'s spikes found`, state.findings ?? []),
+    ...findingsText(`What ${task.id}'s spikes found`, state.findings ?? [], context.approved),
     ...context.related.flatMap(each =>
-      findingsText(`What ${each.task} found — read it before you build`, each.findings ?? [])
+      findingsText(`What ${each.task} found — read it before you build`, each.findings ?? [], context.approved)
     ),
     ...(task.acceptance.length > 0
       ? [

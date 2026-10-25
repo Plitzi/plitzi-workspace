@@ -283,11 +283,14 @@ export const registerTaskGroup = (program: Command): Command => {
 
   taskGroup
     .command('answer')
-    .description('Answer a proposal made to your task — or, as the lead, to any: accept, reject or counter it')
+    .description(
+      'Answer a proposal made to your task — or, as the lead, to any: accept, reject or counter it; withdraw your own'
+    )
     .argument('<proposal>', 'The proposal: t-home-p1')
     .option('--accept', 'Agree: both tasks carry it into review')
     .option('--reject <why>', 'Refuse it, saying why')
     .option('--counter <change>', 'Propose a change instead — three rounds at most, then the lead decides')
+    .option('--withdraw <why>', 'Take back a proposal your task made, no longer asked — the lead changed course')
     .option('--note <note>', 'A note with an acceptance')
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
@@ -409,6 +412,10 @@ export const registerTaskGroup = (program: Command): Command => {
       'Put the pointer over an element once each page settles: what that changes, said, and pictured at 1440'
     )
     .option(
+      '--steps <script>',
+      'Played on each page before it is pictured, as page shot --steps — "state notice {"room":"r1"}" shows what only a message or a flow makes; the check reads the page at rest'
+    )
+    .option(
       '--element <id>',
       'Read an element in the page — its attributes, box and classes — once for each',
       (id: string, before: string[] = []) => (before.includes(id) ? before : [...before, id])
@@ -504,6 +511,10 @@ export const registerTaskGroup = (program: Command): Command => {
       'With --approve, a task whose UI waits for a designer’s review, approved without it — why: lead (you looked at its UI yourself) or no-ui (it changes nothing a visitor sees). With --changes, lead: its next round’s UI review is yours, offered to no designer'
     )
     .option('--note <note>', 'With --approve, what you saw and do not ask to change — kept with the task, for the lead')
+    .option(
+      '--with <task>',
+      'With --approve, another task in review approved beside it as one change — each reads a file the other makes'
+    )
     .option(...RUN_OPTION)
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
@@ -546,10 +557,11 @@ export const registerTaskGroup = (program: Command): Command => {
       '--files',
       'Its files as they are, whole, in the same answer — for a harness with no reader of its own: one that reads a file before editing it reads each twice'
     )
+    .option('--primer', 'The run’s primer whole, though you read it on this task already — said in a line otherwise')
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string | undefined, options: RunCommandOptions & { files?: boolean }) =>
+    .action((task: string | undefined, options: RunCommandOptions & { files?: boolean; primer?: boolean }) =>
       taskContextCommand(task, options)
     );
 

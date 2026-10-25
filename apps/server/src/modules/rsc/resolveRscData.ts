@@ -1,5 +1,15 @@
 import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
-import { collectServerElements, pageAccessOf, pageAccessRefusal, RSC_FAILURE } from '@plitzi/sdk-shared/schema';
+import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers';
+import {
+  collectServerElements,
+  pageAccessOf,
+  pageAccessRefusal,
+  RSC_FAILURE,
+  serverWhenValues,
+  whenOf,
+  whenProviders,
+  whenUnknownToServer
+} from '@plitzi/sdk-shared/schema';
 
 import { matchRscPage } from './matchRscPage';
 import { onAbort } from '../../helpers/onAbort';
@@ -143,16 +153,65 @@ export const resolveRscData = async ({
       flagOverrides
     )
   );
-  const targets = collectServerElements(schema, pageId, ids, flags);
+  // Every server element of the page, though only some are asked: a `when` reads the answer of another, asked or not.
+  const all = collectServerElements(schema, pageId, undefined, flags);
+  const asked = ids ? new Set(ids) : undefined;
+  const targets = asked ? all.filter(element => asked.has(element.id)) : all;
   if (targets.length === 0) {
     return { serverData: {} };
   }
 
-  const settled = await Promise.allSettled(
-    targets.map(async element => ({
-      id: element.id,
-      data: await withBudget(
-        signal =>
+  const byId = new Map(all.map(element => [element.id, element] as const));
+  const serverIds = new Set(byId.keys());
+  const resolving = new Map<string, Promise<unknown>>();
+  const resolveOne = (element: Element, chain: readonly string[]): Promise<unknown> => {
+    const started = resolving.get(element.id);
+    if (started) {
+      return started;
+    }
+
+    const run = async (): Promise<unknown> => {
+      // A `when` read in the browser alone — a state, a variable — is not the page server's to decide: resolved, as
+      // authoring warns (`server-when-unknown`). One it knows all of waits for the providers it reads, in turn.
+      const gate = whenOf(element);
+      if (gate && whenUnknownToServer(gate, schema.flat, serverIds).length === 0) {
+        // Two that read each other are read in the order they come: the one later sees nothing of the other.
+        const before = whenProviders(gate, serverIds).filter(id => id !== element.id && !chain.includes(id));
+        const answered = await Promise.all(
+          before.map(async id => {
+            const other = byId.get(id);
+            const answer = other
+              ? await resolveOne(other, [...chain, element.id]).catch((reason: unknown) => {
+                  // An asked one's failure is said with the rest; one read only for this `when`, here.
+                  if (asked && !asked.has(id)) {
+                    serverLog.warn(
+                      'RSC',
+                      `element ${element.id}'s \`when\` reads ${id}, which failed to resolve`,
+                      reason
+                    );
+                  }
+
+                  return undefined;
+                })
+              : undefined;
+
+            return [id, { answer, singleRecord: other?.attributes.singleRecord === true }] as const;
+          })
+        );
+        const values = serverWhenValues({
+          routeParams,
+          queryParams: req.query,
+          pageId,
+          user,
+          answers: Object.fromEntries(answered)
+        });
+        if (!evaluateRuleGroup(gate, values)) {
+          return undefined;
+        }
+      }
+
+      return withBudget(
+        elementSignal =>
           resolveElement({
             element,
             flat: schema.flat,
@@ -162,13 +221,21 @@ export const resolveRscData = async ({
             spaceId,
             environment,
             user,
-            signal
+            signal: elementSignal
           }),
         timeoutMs,
         `element ${element.id}`,
         signal
-      )
-    }))
+      );
+    };
+    const promise = run();
+    resolving.set(element.id, promise);
+
+    return promise;
+  };
+
+  const settled = await Promise.allSettled(
+    targets.map(async element => ({ id: element.id, data: await resolveOne(element, []) }))
   );
 
   const serverData = settled.reduce<Record<string, unknown>>((acum, result, index) => {

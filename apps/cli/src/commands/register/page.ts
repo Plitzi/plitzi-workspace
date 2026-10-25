@@ -61,7 +61,7 @@ export const registerPage = (pageGroup: Command): void => {
     .addOption(
       new Option(
         '--expect <id~text>',
-        'The element shows this text (any case), as the page was left — or the check fails: once per element; "<path> <id~text>" for one page'
+        'The element shows this text (any case) — any copy of it, a list\'s rows — as the page was left, or the check fails: once per element; "!<id>" none shown; "<path> <id~text>" for one page'
       ).argParser(expectation)
     )
     .addOption(
@@ -202,11 +202,14 @@ export const registerPage = (pageGroup: Command): void => {
     .description(
       'An interaction played step by step — and after each step how far each element read moved, whether it is shown and takes a press; beside another site with --compare, held to it with --same'
     )
-    .requiredOption(
+    .option(
       '--steps <script>',
-      'The steps, as page shot --steps writes them — click, hover, scroll, type (or fill: what the field held replaced), drag, press, wait, wait-for, reload, goto <path>, store, state, clock, tick — a ";" inside quotes is the text’s — each element "ours => theirs" with --compare'
+      'The steps — left out with --read, the page as it rests — as page shot --steps writes them — click, hover, scroll, type (or fill: what the field held replaced), drag, press, wait, wait-for, reload, goto <path>, store, state, clock, tick — a ";" inside quotes is the text’s — each element "ours => theirs" with --compare'
     )
-    .option('--read <element...>', 'The elements read after each step — "row => .slides" with --compare')
+    .option(
+      '--read <element...>',
+      'The elements read after each step, by spaces or commas — "row => .slides" with --compare'
+    )
     .option('--compare <url>', 'Another page — the site a copy is made after — played beside it, step for step')
     .addOption(
       new Option(

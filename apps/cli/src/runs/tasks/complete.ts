@@ -32,7 +32,7 @@ import {
 import { checkedStill, checkKey } from './checked';
 import { at, changedInCopy, cleanPath, findTask, holderOf, refreshCopy } from './common';
 import { textOf } from './context';
-import { activeHolder, allLocks, sharedFiles } from './locks';
+import { activeHolder, allLocks, sharedFiles, untakenNow } from './locks';
 import { againstRunWork, tellUnanswered } from './notOwn';
 import { othersHeld } from './othersHeld';
 import { keepTaskReport } from '../taskReports';
@@ -257,13 +257,23 @@ export const completeTask = async (
 
   if (outside.length > 0) {
     await recordBrake(ctx, loaded, 'refused', taskId);
+    // A file of a task nobody took yet is taken ahead of it by a claim: said, as a refusal names its way out.
+    const ahead: string[] = [];
+    for (const each of outside) {
+      if (await untakenNow(loaded, findTask(loaded, each.holder))) {
+        ahead.push(each.file);
+      }
+    }
+
     throw new RunRefusal(
       'claimed',
       `Task "${taskId}" changed files another task at work holds: ${outside
         .map(each => `${each.file} (task "${each.holder}"'s)`)
-        .join(
-          ', '
-        )}. Put each back in your copy (plitzi task discard <file>) and propose the change to its task (plitzi task propose <task> --change …), or wait for it (plitzi task wait <file>) — or, if your work needs it there and its task said no, tell the lead (plitzi task tell "…"): it decides.`,
+        .join(', ')}.${
+        ahead.length > 0
+          ? ` Nobody has taken the task of ${ahead.join(', ')} yet: plitzi task claim ${ahead.join(' ')} takes ${ahead.length === 1 ? 'it' : 'them'} ahead of it, your change kept — then complete again.`
+          : ''
+      } Put each back in your copy (plitzi task discard <file>) and propose the change to its task (plitzi task propose <task> --change …), or wait for it (plitzi task wait <file>) — or, if your work needs it there and its task said no, tell the lead (plitzi task tell "…"): it decides.`,
       {
         task: taskId,
         files: outside.map(each => each.file),

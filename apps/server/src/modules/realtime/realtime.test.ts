@@ -549,9 +549,10 @@ describe('a channel that keeps what the server says', () => {
     await realtime.publish(SPACE, 'desk:1', 'habits', 3);
     const page = await connect(realtime.hub, 'desk:1');
 
-    expect(page.heard().map(({ type, data, retained }) => [type, data, retained])).toEqual([
-      ['lists', ['milk', 'eggs'], true],
-      ['habits', 3, true]
+    // Said again as it joins, marked so: a room opened before the page came is not answered as opened now.
+    expect(page.heard().map(({ type, data, retained, replayed }) => [type, data, retained, replayed])).toEqual([
+      ['lists', ['milk', 'eggs'], true, true],
+      ['habits', 3, true, true]
     ]);
 
     await realtime.publish(SPACE, 'desk:1', 'habits', null);
@@ -560,6 +561,7 @@ describe('a channel that keeps what the server says', () => {
     expect(later.heard().map(({ type }) => type)).toEqual(['lists']);
     // Said live too, marked kept: the page already there forgets it as well.
     expect(page.heard().at(-1)).toMatchObject({ type: 'habits', data: null, retained: true });
+    expect(page.heard().at(-1)).not.toHaveProperty('replayed');
     await page.close();
     await later.close();
   });

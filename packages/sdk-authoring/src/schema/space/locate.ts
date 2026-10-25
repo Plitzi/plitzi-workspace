@@ -2,6 +2,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { writtenAtPosition, writtenCalls } from '../writtenAt';
 import { SpaceAuthor } from './author';
+import { isBoxless } from './elements';
 
 import type { AuthorSpaceOptions, SpaceSpec } from '../types';
 import type { WrittenPosition } from '../writtenAt';
@@ -29,6 +30,8 @@ export interface WrittenElement {
   attributes: Record<string, unknown>;
   /** The elements it holds, in their order. */
   children: string[];
+  /** It has no box on a page — a provider with no tag, a plugin's that draws nothing: only its children are seen. */
+  boxless?: true;
   /** The other elements its flows act on, each with the step that does: what taking one of them away would break. */
   targets: { elementId: string; step: string }[];
   /** The attributes its bindings compute: what the page shows of them is the binding's, never the value written. */
@@ -124,6 +127,7 @@ export const locateElements = (spec: SpaceSpec, options: AuthorSpaceOptions = {}
       words: wordsOf(element, templates),
       attributes: element.attributes,
       children: element.definition.items ?? [],
+      ...(isBoxless(author, element) ? { boxless: true as const } : {}),
       targets: Object.values(element.definition.interactions ?? {}).flatMap(node =>
         node.type === 'callback' && node.elementId !== null && node.elementId !== element.id
           ? [{ elementId: node.elementId, step: node.action }]

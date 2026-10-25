@@ -106,6 +106,24 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   a run's 34 checks, 17 failed on what those scripts say in seconds.
 - **The lead notes every problem of Plitzi as it happens** — the CLI, the platform, a skill or doc, a workaround a limit
   forced — with `run notice --plitzi`: its prompt said `run notice` (the project's backlog) of the CLI alone.
+- **A blocked task lets go of what it took by turns and left unchanged**, handed on to the task waiting for it: a task
+  blocked kept a file it took to trace a bug, and the task its block waited for needed it.
+- **A file of a task nobody has taken is claimed ahead of it** (`task claim`), said so — that task is offered once the
+  claim is approved, the change in it; `complete`'s refusal of such a change names the claim. `run amend` changes what a
+  taken task `touches`. A run's one-line fix in a waiting task's file had no way in.
+- **`task wait` on a file a later task names is never a loop:** that task waits for the asker, so the file is granted.
+- **Two tasks in review that read each other's files are approved as one change:** `task review A --approve --with B`
+  merges both, checks them together and closes each — one at a time neither passed the checks, and neither could ever
+  be approved. An approval refused by the checks names the tasks in review it may need.
+- **`task look --steps`** pictures each page after the steps — `state notice …` shows a UI only a message or a flow
+  makes — and a page the space keeps for signed-in visitors is read as the project's account (`PLITZI_CHECK_USER`), or
+  said read as a guest and why.
+- **A proposer withdraws its own proposal** (`task answer <id> --withdraw "why"`): one the lead's change of course left
+  "unanswered" on the other task held its complete.
+- **`run agent --launch` on an agent that runs answers so**, nothing started — it was a refusal, run twice by a lead.
+- **`run plan` says an id two tasks expect to make on two pages:** an element's id is the space's, one element.
+- **`run watch`'s "they share no file" says what else a task may need** of the one it waits for: its actions, data or
+  modules.
 
 ### The team (`.plitzi/team.json`)
 
@@ -296,10 +314,15 @@ report`, …).
   with `pkill -f "cat"` and took the machine down.
   Telling whose a server is reads every listener's folder in one `lsof`, not one per process: `server list` and
   `server stop` took seconds on a machine with many servers listening, and a few hundred milliseconds now.
+- **A brief read again is shorter:** the run's primer, read whole once by the agent on the task, is said in a line while
+  unchanged (`task context --primer` prints it) — a run's lead's 7k primer was 46% of every brief read again. A
+  finding says when it was written, and which of the task's files the run approved since.
 - **Reviews:**
-  - `task show` shows a task as the lead reviews it: each diff, one file whole, what went to review.
+  - `task show` shows a task as the lead reviews it: each diff, one file whole, what went to review — its last ten
+    notes, each clipped (`--full`: all).
   - `task look` looks at a task in one command: served, checked, pictured light and dark, its parts beside the run
-    before it (`--before`).
+    before it (`--before`). A part with no box — a channel, a provider with no tag — is pictured by what it holds, never
+    tried on every page.
   - `task review --approve | --changes`, then `task reassign`.
   - A review taken and not decided is handed on; a task past three rounds goes back to the lead.
 
@@ -454,8 +477,8 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`plitzi verify`** says a project nothing serves as such — start it — where it asked for an account in `.env`, and
   says apart the pages nothing answered from those sent to sign in.
 - **`page check`** reads a page as a visitor's browser draws it:
-  - `--expect <id>~<text>` holds what a page says, and `--then` goes on by the page's own links.
-    `--expect <id>` alone holds that it is shown.
+  - `--expect <id>~<text>` holds what a page says — any copy of it, a list's rows — and `--then` goes on by the page's
+    own links. `--expect <id>` alone holds that it is shown; `--expect '!<id>'` that none is.
   - `--element`, `--hover`, `--click` and `--fill` say what an element shows and what an interaction changed.
   - `--status 404` checks a not-found page; `--themes` checks a fixed ground under theme-aware text.
   - It reports `heading-skipped`, `control-unnamed`, `label-wraps` and `flush-edge`.
@@ -480,6 +503,14 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   whether it is shown and whether it takes a press. It reads each element's text, value, focus and `aria-pressed`,
   `-expanded`, `-checked` and `-selected` too. With `--compare` it plays the other site beside it, and
   `--same moved,shown,enabled` turns that into an acceptance line.
+  - `--read a,b,c` reads three elements, as `--width` and `page measure` take commas; `--read` alone reads the page as
+    it rests, no step needed.
+  - A part for screen readers alone (`sr-only`: a pixel's box, clipped) reads "for screen readers only", never shown —
+    in `page outline` too; an element's text is what a visitor sees, none of its hidden children's, and a list says
+    how many rows it shows.
+  - A target out of view is scrolled to before the step, as a pointer reaches it, and what moved is measured from
+    there: a sticky part read "moved 315px down" after a click on a switch below it.
+- **`page measure` says an element it measured is hidden** — none of its matches drawn — alone and beside the other page.
 - **`page same`** says whether pages draw the same on two servers.
 - **`page check --click`, `--expect` and `--element` find a plugin's own parts** by their id, as `page play` does
   (`reactions-more` inside a plugin).
@@ -546,6 +577,17 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Authoring (`@plitzi/sdk-authoring`)
 
+- **`server-when-unknown`** warns of a server provider whose `when` reads what only the browser holds (a `state`, a
+  variable, a browser provider): the page server resolves it whatever it says.
+
+- **Every trigger has its factory:** `onChange()`, `onMouseEnter()`, `onHover()`, `onFocus()`, `onBlur()`,
+  `onThemeChange()`, `onApiSuccess()`, `onMessage()` and the rest beside `onClick()` — each trigger an element fires, by
+  its own name. `onChange()` written by analogy failed as a bare ESM error; a test holds every trigger to one.
+- **The scroll family's sides:** `overscrollBehaviorX`/`Y`, and `scrollPadding` and `scrollMargin` on every side — a
+  horizontal scroll-snap shelf was refused `overscroll-behavior-x` and `scroll-padding-left` (in the style inspector
+  too).
+- **A located element says it has no box** (`boxless`): a provider with no tag, a channel, a plugin's that draws nothing.
+
 - **`server-source-in-browser`** refuses a provider with an `action` or a `connector` and no `runtime: 'server'`: the
   browser asks a `query` alone, so it never asked and its children stayed empty, saying nothing — a run's shell notice
   of a show starting never showed (found by a run's test-1).
@@ -607,6 +649,22 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Elements and the SDK (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`, `@plitzi/sdk-shared`)
 
+- **A provider's `when` holds, in the browser and on the page server.** The browser read it against the route and query
+  params alone, where authoring writes its fields as sources (`auth.isAuthenticated`, `apiContainer_room.found`): it
+  now reads the sources it names. The page server resolved every server provider whatever its `when` said — a guest's
+  page resolved what only a signed-in visitor reads: it now holds one it knows all of (`navigation`, `auth`, the
+  answers of the server providers it names, resolved first) and leaves it out until it holds; the browser asks it once
+  it holds there (signed in), and says it waiting, never "could not be reached". `whenOf`, `whenPaths`,
+  `serverWhenValues`, `isEmptyAnswer` (`@plitzi/sdk-shared/schema`) and `ruleValuesOf` (`/helpers`) are the one
+  reading of both sides.
+- **A kept message said again to a page that joins is `replayed`**: a moment on a `retain: true` channel — a room
+  opened — is answered by a flow `when` it is not, where every replay read as said now. The Channel's `onMessage` hands
+  it on.
+
+- **`explain apiContainer` says how an action is reached:** only the page server resolves an `action` or a
+  `connector` (`runtime: "server"`); a browser flow calls one with `runServerAction`, then reads again — and what
+  `onApiSuccess` and `onApiError` hand their flow. The `ago` and `date` filters are found as relative and local time.
+
 - **No placeholder words on a page:** a text, paragraph, heading, button or field label with no value draws nothing,
   never "Text", "Heading", "Button" or "Label" — a run's room cards read "Text" where their line was bound to nothing.
   The placeholder is the builder's, set from the declaration when an element is placed. An element drawn empty — those,
@@ -666,6 +724,9 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - `inspectTemplate` answers `notes`: what reads as other than it looks.
 
 ## Server (`@plitzi/sdk-server`)
+
+- **A project's server holding its state names how to stop it:** a second `npm start` beside a server a page check kept
+  is refused with `plitzi server stop --port <port>` in the holder's name.
 
 - **The head a link preview reads is whole:** the page's Open Graph and card, with its picture made absolute (a chat
   never resolves `/og.png`), `summary_large_image` when it has one, `og:url` and `<link rel="canonical">` from the

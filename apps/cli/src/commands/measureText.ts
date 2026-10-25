@@ -64,6 +64,8 @@ const shortValue = (value: string): string =>
       `url(data:${quoted ?? bare ?? ''} … ${String(match.length)} chars)`
   );
 
+const HIDDEN = 'a visitor sees none of what it finds — its box and place are not on the page';
+
 /**
  * One element read alone: what it says of itself — a property at its initial value and one taken from its parent left
  * out, unless every one is asked (`all`). A run's measures printed ~40 properties an element, a data URI whole in
@@ -80,6 +82,7 @@ const aloneText = (here: Measured, all: boolean): string => {
   return [
     chalk.bold(named(here)),
     ...rootNote(here),
+    ...(here.hidden ? [chalk.yellow(`  hidden: ${HIDDEN}`)] : []),
     ...(here.matches === undefined
       ? []
       : [chalk.dim(`  (the first shown of ${String(here.matches)} it finds — --rows measures each)`)]),
@@ -113,6 +116,13 @@ export const measuredText = (here: Measured, there?: Measured, all = false): str
   return [
     chalk.bold(`${named(here)} here → ${named(there)} there`),
     ...rootNote(here),
+    ...(here.hidden || there.hidden
+      ? [
+          chalk.yellow(
+            `  hidden ${here.hidden && there.hidden ? 'on both pages' : here.hidden ? 'here' : 'there'}: ${HIDDEN}`
+          )
+        ]
+      : []),
     ...(differ.length === 0 ? ['  every property measured is the same'] : []),
     ...own.map(
       each =>

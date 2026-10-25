@@ -21,8 +21,10 @@ import {
   renderedRowsInPage,
   serverErrors,
   meantOnPage,
+  expectationMissed,
   wrappedLabelsInPage
 } from './check';
+import { readExpectation } from '../options';
 
 const marked = (id: string): string => `[data-plitzi-el="${id}"]`;
 
@@ -399,10 +401,44 @@ describe('an expected element that is not on the page', () => {
     const onPage = ['summary-title', 'summary-trend', 'summary-trend', 'summary-trend', 'summary-lede'];
 
     expect(meantOnPage('summary-trend-luna', onPage)).toBe(
-      ' — summary-trend is, 3 times: a list’s row has the same ids in every row, so none is named per row; --expect reads the first'
+      ' — summary-trend is, 3 times: a list’s row has the same ids in every row, so none is named per row; --expect summary-trend~<text> holds when any row shows it'
     );
     expect(meantOnPage('summary-titel', onPage)).toBe(' — did you mean summary-title?');
     expect(meantOnPage('walks-filter', onPage)).toBe('');
+  });
+});
+
+// A lead's "the list holds Juno" read the first row's Nova, and "a guest sees no band" could not be written: !id was an id.
+describe('an expectation held to every copy of its element', () => {
+  const rows = { present: 3, shown: ['Nova', 'Juno'] };
+
+  it('is met by any row that shows the text, and missed with what the rows show', () => {
+    expect(expectationMissed({ element: 'follow-list-name', text: 'juno' }, rows, [])).toBeUndefined();
+    expect(expectationMissed({ element: 'follow-list-name', text: 'Vega' }, rows, [])).toBe(
+      `--expect follow-list-name~Vega: none of follow-list-name's 2 copies shows it — "Nova", "Juno"`
+    );
+    expect(expectationMissed({ element: 'band', text: '' }, { present: 1, shown: [] }, [])).toBe(
+      '--expect band: band is on the page, hidden'
+    );
+  });
+
+  it('reads !<id> as none shown, and !<id>~<text> as none showing it', () => {
+    expect(readExpectation('/ !home-following')).toEqual({
+      element: 'home-following',
+      text: '',
+      absent: true,
+      path: '/'
+    });
+    expect(readExpectation('!a b')).toBeUndefined();
+    expect(
+      expectationMissed({ element: 'home-following', text: '', absent: true }, { present: 1, shown: [] }, [])
+    ).toBeUndefined();
+    expect(
+      expectationMissed({ element: 'home-following', text: '', absent: true }, { present: 1, shown: ['Ana'] }, [])
+    ).toBe('--expect !home-following: home-following is shown');
+    expect(expectationMissed({ element: 'follow-list-name', text: 'Juno', absent: true }, rows, [])).toBe(
+      '--expect !follow-list-name~Juno: follow-list-name shows "Juno" (1 of its 2 copies)'
+    );
   });
 });
 

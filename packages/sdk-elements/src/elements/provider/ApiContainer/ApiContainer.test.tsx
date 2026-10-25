@@ -183,6 +183,60 @@ describe('ApiContainer — a server provider refreshed by a write', () => {
     }
   });
 
+  // A guest's page left out a provider waiting on `auth.isAuthenticated`; it said "could not be reached", and once the
+  // visitor signed in nobody asked for it. Its `when` was read against the route and query params alone.
+  it('waits on its `when`, read from the sources it names, and asks once it holds', async () => {
+    const { useStore } = createStoreHook<{
+      runtime?: { sources?: { apiContainer_orders?: { hasError?: boolean } } };
+    }>();
+    const Said = () => {
+      const [hasError = false] = useStore('runtime.sources.apiContainer_orders.hasError');
+
+      return <span>{hasError ? 'failed' : 'waiting'}</span>;
+    };
+    const store = createStore<CommonState>({
+      schema: { pages: ['home'], flat: { home: element('home', ['orders']), orders: element('orders', [], 'server') } },
+      navigation: { currentPageId: 'home', routeParams: {}, queryParams: {} },
+      rsc: { enabled: true, endpoint: '/_rsc', loaded: true, location: '/', data: {} },
+      runtime: { sources: { auth: { isAuthenticated: false } } }
+    } as unknown as CommonState);
+    const view = render(
+      <StoreProvider store={store}>
+        <ElementContext
+          value={elementEntry('orders', {
+            rootId: 'home',
+            definition: {
+              rootId: 'home',
+              label: 'Orders',
+              type: 'apiContainer',
+              styleSelectors: { base: '' },
+              runtime: 'server'
+            }
+          })}
+        >
+          <ApiContainer
+            connector="cms"
+            resource="orders"
+            when={{ combinator: 'and', rules: [{ field: 'auth.isAuthenticated', operator: '=', value: true }] }}
+          >
+            <Said />
+          </ApiContainer>
+        </ElementContext>
+      </StoreProvider>
+    );
+
+    expect(view.queryByText('waiting')).not.toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    act(() => {
+      store.set('runtime.sources.auth.isAuthenticated', true);
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect((fetchMock.mock.calls[0] as [string])[0]).toContain('ids=orders');
+    view.unmount();
+  });
+
   it('is not refreshed after it unmounts', async () => {
     const { view } = renderProvider();
     view.unmount();

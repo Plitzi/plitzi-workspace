@@ -11,7 +11,7 @@ import { copyOf } from '../runs/paths';
 import type { Scheme } from './index';
 import type { Measured } from '../commands/measureValues';
 import type { Outline } from '../commands/outline';
-import type { ElementState } from '../commands/play';
+import type { ElementState } from '../commands/playState';
 import type { ActingStep } from '../commands/shot/steps';
 
 /**

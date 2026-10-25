@@ -97,7 +97,10 @@ describe('malformed / unsupported shorthands', () => {
         'grid-row-end': 'main',
         'grid-column-end': 'side'
       });
-      expect(expandShorthand({ 'grid-row': 'header' })).toEqual({ 'grid-row-start': 'header', 'grid-row-end': 'header' });
+      expect(expandShorthand({ 'grid-row': 'header' })).toEqual({
+        'grid-row-start': 'header',
+        'grid-row-end': 'header'
+      });
       expect(expandShorthand({ 'grid-column': 'span 2' })).toEqual({
         'grid-column-start': 'span 2',
         'grid-column-end': 'auto'

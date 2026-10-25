@@ -130,6 +130,13 @@ export interface AgentLaunched {
   fresh?: { not: NoResume; bytes?: number };
 }
 
+/** An agent asked to start while its last start still runs: what is asked is so already — it goes on by itself. */
+export interface AgentRunning {
+  agent: string;
+  runId: string;
+  running: { harness: Harness; pid: number; startedAt: string };
+}
+
 const prepare = async (ctx: RunContext, runId: string, agent: string) => {
   const loaded = await loadRun(ctx, runId);
   const { started, start } = await startedOf(ctx.root, agent);
@@ -202,8 +209,8 @@ export const agentEnv = async (
 };
 
 /**
- * Starts the agent now, in `harness`: refused while it still runs. One start of an agent at a time, held by a lock of its
- * own: the run's keeper and a lead's watch both found a run's design-1 not running and both started it — two sessions
+ * Starts the agent now, in `harness` — or says it runs already: what was asked is so. One start of an agent at a time,
+ * held by a lock of its own: the run's keeper and a lead's watch both found a run's design-1 not running and both started it — two sessions
  * on one copy, and a third of test-1's — the check that it runs and the start being two steps.
  */
 export const launchAgent = async (
@@ -211,25 +218,26 @@ export const launchAgent = async (
   runId: string,
   agent: string,
   harness: Harness
-): Promise<AgentLaunched> => {
+): Promise<AgentLaunched | AgentRunning> => {
   const scratch = agentScratch(runPaths(ctx.root, runId), agent);
   await fs.mkdir(scratch, { recursive: true });
 
   return withLock(path.join(scratch, 'launch.lock'), () => startHeld(ctx, runId, agent, harness), { now: ctx.now });
 };
 
-const startHeld = async (ctx: RunContext, runId: string, agent: string, harness: Harness): Promise<AgentLaunched> => {
+const startHeld = async (
+  ctx: RunContext,
+  runId: string,
+  agent: string,
+  harness: Harness
+): Promise<AgentLaunched | AgentRunning> => {
   const { loaded, started, scratch, cli, prompt, promptFile, told } = await prepare(ctx, runId, agent);
   const { model } = told;
   const last = await readLaunch(loaded.paths, agent);
   // Two sessions of one agent read one log: the new one took the old one's completion for its own and stopped
   // (dev-2 started again while its last session was still writing its stop).
   if (last && isRunning(last)) {
-    throw new RunRefusal(
-      'invalid',
-      `${agent} is running (pid ${String(last.pid)}, ${last.harness}, started ${last.startedAt}): it goes on by itself — let it finish, or stop it first (kill ${String(last.pid)}) and start it again`,
-      { running: true }
-    );
+    return { agent, runId, running: { harness: last.harness, pid: last.pid, startedAt: last.startedAt } };
   }
 
   const held = (await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)))).filter(

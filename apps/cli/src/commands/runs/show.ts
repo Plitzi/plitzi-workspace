@@ -29,6 +29,25 @@ const taskShowFile = (
           : shown.text
   );
 
+/** Notes shown on a summary: the latest, each clipped — a lead read one task's 16k four times in nine minutes. */
+const NOTES_SHOWN = 10;
+const NOTE_CHARS = 300;
+
+export const notesLines = (notes: readonly { by: string; text: string }[], full: boolean): string[] => {
+  const shown = full ? notes : notes.slice(-NOTES_SHOWN);
+  const earlier = notes.length - shown.length;
+
+  return notes.length === 0
+    ? []
+    : [
+        `Notes${earlier > 0 ? chalk.dim(` (the last ${String(shown.length)} — ${String(earlier)} earlier: --full)`) : ''}`,
+        ...shown.map(
+          note =>
+            `  ${note.by}: ${full || note.text.length <= NOTE_CHARS ? note.text : `${note.text.slice(0, NOTE_CHARS).trimEnd()}… (whole: --full)`}`
+        )
+      ];
+};
+
 const taskShowSummary = (named: string | undefined, options: RunCommandOptions & { full?: boolean }): Promise<void> =>
   act(
     options,
@@ -85,7 +104,7 @@ const taskShowSummary = (named: string | undefined, options: RunCommandOptions &
           `  ↗ request on ${each.file}${each.task === shown.task.id ? '' : ` from ${each.task}`}: ${each.summary}`,
           ...(each.diff ? each.diff.split('\n').map(line => `      ${line}`) : [])
         ]),
-        ...(shown.notes.length > 0 ? ['Notes', ...shown.notes.map(note => `  ${note.by}: ${note.text}`)] : []),
+        ...notesLines(shown.notes, options.full === true),
         ...(shown.messages.length > 0 ? ['Said', ...messageLines(shown.messages)] : []),
         `Changed (${FROM_TEXT[shown.from]}): ${shown.files.length === 0 ? '—' : shown.files.map(each => `${each.file} (${each.change})`).join(', ')}`,
         ...(shown.notReviewed

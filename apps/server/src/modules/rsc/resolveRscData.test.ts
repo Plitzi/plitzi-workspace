@@ -338,4 +338,78 @@ describe('resolveRscData', () => {
     expect(result.serverData).toEqual({});
     expect(resolveElement).not.toHaveBeenCalled();
   });
+
+  // A guest's page resolved the room's people — `when` on `roomData.found`, even on `auth.isAuthenticated` — whatever
+  // it said: the page server read no provider's `when`.
+  describe('a provider’s `when`', () => {
+    const when = (field: string, value: unknown) => ({ combinator: 'and', rules: [{ field, operator: '=', value }] });
+    const gated = (id: string, rule: ReturnType<typeof when>): Element => ({
+      ...element(id, 'apiContainer', [], 'server'),
+      attributes: { when: rule }
+    });
+    const roomSchema = (): Schema => {
+      const schema = buildSchema();
+      schema.flat.room = page('room', 'r/{{slug}}', ['roomData']);
+      schema.flat.roomData = element('roomData', 'apiContainer', ['roomPeople', 'myRequests', 'drafts'], 'server');
+      schema.flat.roomPeople = gated('roomPeople', when('apiContainer_roomData.found', true));
+      schema.flat.myRequests = gated('myRequests', when('auth.isAuthenticated', true));
+      schema.flat.drafts = gated('drafts', when('state.editing', true));
+      schema.pages = [...schema.pages, 'room'];
+
+      return schema;
+    };
+
+    it('is held by the page server: the visitor, and the answers of the providers it reads, first', async () => {
+      const order: string[] = [];
+      const resolveElement = vi.fn<RscElementResolver>().mockImplementation(({ element: { id } }) => {
+        order.push(id);
+
+        return Promise.resolve(id === 'roomData' ? { found: true } : { id });
+      });
+
+      const guest = await resolveRscData({ ...base, schema: roomSchema(), req: request('/r/night'), resolveElement });
+
+      expect(guest.serverData).toEqual({
+        roomData: { found: true },
+        roomPeople: { id: 'roomPeople' },
+        drafts: { id: 'drafts' }
+      });
+      expect(order.indexOf('roomData')).toBeLessThan(order.indexOf('roomPeople'));
+
+      const user = {
+        token: 't',
+        id: 1,
+        username: 'ana',
+        email: 'a@x.test',
+        verified: true,
+        permissions: [],
+        roles: []
+      };
+      const signedIn = await resolveRscData({
+        ...base,
+        user,
+        schema: roomSchema(),
+        req: request('/r/night'),
+        resolveElement
+      });
+      expect(signedIn.serverData).toHaveProperty('myRequests', { id: 'myRequests' });
+    });
+
+    it('leaves out one whose provider answered no, and resolves one it reads to decide, asked alone', async () => {
+      const resolveElement = vi
+        .fn<RscElementResolver>()
+        .mockImplementation(({ element: { id } }) => Promise.resolve(id === 'roomData' ? { found: false } : { id }));
+
+      const result = await resolveRscData({
+        ...base,
+        schema: roomSchema(),
+        req: request('/r/night'),
+        ids: ['roomPeople'],
+        resolveElement
+      });
+
+      expect(result.serverData).toEqual({});
+      expect(resolveElement.mock.calls.map(([context]) => context.element.id)).toEqual(['roomData']);
+    });
+  });
 });

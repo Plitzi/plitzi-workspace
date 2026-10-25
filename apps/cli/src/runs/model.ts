@@ -286,7 +286,8 @@ export interface Proposal {
 export interface ProposalAnswer {
   proposal: string;
   by: string;
-  verdict: 'accept' | 'reject' | 'counter';
+  /** `withdraw`: its proposer's, once the change is no longer asked — the lead changed course. */
+  verdict: 'accept' | 'reject' | 'counter' | 'withdraw';
   note?: string;
   /** A counter's: the proposal made back. */
   counter?: string;
@@ -413,6 +414,8 @@ export interface TaskReview {
   comments: ReviewComment[];
   by: string;
   at: string;
+  /** Approved beside this task, as one change: each read a file the other makes (`task review --with`). */
+  with?: string;
 }
 
 /** `requests/<id>.json`: a change a task wants in a shared file it does not hold; its version beside it. */
@@ -730,7 +733,8 @@ export const isTaskReview = (value: unknown): value is TaskReview =>
       optional(comment.element, isString)
   ) &&
   isString(value.by) &&
-  isString(value.at);
+  isString(value.at) &&
+  optional(value.with, isString);
 
 export const isSharedRequest = (value: unknown): value is SharedRequest =>
   isRecord(value) &&
@@ -797,7 +801,7 @@ export const isProposalAnswer = (value: unknown): value is ProposalAnswer =>
   isRecord(value) &&
   isString(value.proposal) &&
   isString(value.by) &&
-  oneOf(['accept', 'reject', 'counter'] as const)(value.verdict) &&
+  oneOf(['accept', 'reject', 'counter', 'withdraw'] as const)(value.verdict) &&
   optional(value.note, isString) &&
   optional(value.counter, isString) &&
   isString(value.at);

@@ -27,7 +27,7 @@ const declaration = elementDeclaration<ChannelAttributes>()({
       title: 'On Message',
       type: 'trigger',
       params: {},
-      preview: { type: '', data: '', from: '', user: '', at: '', echo: false }
+      preview: { type: '', data: '', from: '', user: '', at: '', echo: false, replayed: false }
     },
     onJoin: {
       action: 'onJoin',

@@ -65,6 +65,7 @@ export interface AnswerOptions extends RunCommandOptions {
   accept?: boolean;
   reject?: string;
   counter?: string;
+  withdraw?: string;
   note?: string;
 }
 
@@ -75,26 +76,36 @@ export const taskAnswer = (proposal: string, options: AnswerOptions): Promise<vo
       const verdicts = [
         options.accept ? 'accept' : '',
         options.reject ? 'reject' : '',
-        options.counter ? 'counter' : ''
+        options.counter ? 'counter' : '',
+        options.withdraw ? 'withdraw' : ''
       ].filter(Boolean);
       const [verdict] = verdicts;
-      if (verdicts.length !== 1 || (verdict !== 'accept' && verdict !== 'reject' && verdict !== 'counter')) {
+      if (
+        verdicts.length !== 1 ||
+        (verdict !== 'accept' && verdict !== 'reject' && verdict !== 'counter' && verdict !== 'withdraw')
+      ) {
         throw new RunRefusal(
           'invalid',
-          'Answer with one of --accept, --reject "why" or --counter "the change instead"'
+          'Answer with one of --accept, --reject "why" or --counter "the change instead" — or, its proposer, --withdraw "why"'
         );
       }
 
       return answerProposal(ctx, await runOf(ctx, options), proposal, {
         verdict,
-        ...(options.reject ? { note: options.reject } : options.note ? { note: options.note } : {}),
+        ...(options.reject
+          ? { note: options.reject }
+          : options.withdraw
+            ? { note: options.withdraw }
+            : options.note
+              ? { note: options.note }
+              : {}),
         ...(options.counter ? { counter: options.counter } : {})
       });
     },
     answered =>
       answered.counter
         ? `${answered.answer.proposal}: countered with ${answered.counter.id}, to ${answered.counter.to}.`
-        : `${answered.answer.proposal}: ${answered.answer.verdict === 'accept' ? 'accepted — an agreement both tasks carry into review' : 'rejected'}.`
+        : `${answered.answer.proposal}: ${answered.answer.verdict === 'accept' ? 'accepted — an agreement both tasks carry into review' : answered.answer.verdict === 'withdraw' ? 'withdrawn — the task asked no longer has it to answer' : 'rejected'}.`
   );
 
 export const taskProposals = (options: RunCommandOptions): Promise<void> =>

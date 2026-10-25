@@ -115,6 +115,33 @@ describe('tasks agreeing with each other', () => {
       note: 'tokens stay as they are'
     });
   });
+
+  // The lead changed course and the proposal stayed "unanswered" on the other task, holding its complete, until rejected.
+  it('a proposer withdraws its own proposal, saying why — the task asked can no longer answer it, and completes', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    const menu = await take('agent-2', 't-menu');
+    await proposeChange(home.ctx, 'es-launch', 't-home', 't-menu', { change: 'a lang param', wait: true });
+
+    expect(
+      (await refusal(answerProposal(menu.ctx, 'es-launch', 't-home-p1', { verdict: 'withdraw', note: 'x' }))).message
+    ).toBeDefined();
+    expect(
+      (await refusal(answerProposal(home.ctx, 'es-launch', 't-home-p1', { verdict: 'withdraw' }))).message
+    ).toContain('says why');
+    await answerProposal(home.ctx, 'es-launch', 't-home-p1', {
+      verdict: 'withdraw',
+      note: 'the lead moved it to t-about'
+    });
+
+    const homeView = (await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-home');
+    expect(homeView?.status).toBe('in-progress');
+    expect(
+      (await refusal(answerProposal(menu.ctx, 'es-launch', 't-home-p1', { verdict: 'accept' }))).message
+    ).toContain('was answered already: withdraw');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', `export const menu = { title: 'Carta' };\n`);
+    await completeTask(menu.ctx, 'es-launch', 't-menu');
+  });
 });
 
 describe('before writing: the file as the agent found it', () => {

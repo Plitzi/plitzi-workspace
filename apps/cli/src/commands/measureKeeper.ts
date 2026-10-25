@@ -7,7 +7,7 @@ import { keptPages } from './keptPages';
 import { measureOn } from './measureOn';
 import { putIn, settle } from './measureState';
 import { outlineOnPage } from './outline';
-import { readState } from './play';
+import { readState } from './playState';
 import { cliBuild, pause, readRecordFile, recordOf, writeWhole } from '../browser/keptBrowser';
 import { pageAnswered } from './shot/remote';
 import { actStep } from './shot/steps';

@@ -50,6 +50,11 @@ export interface OutlinedElement {
   text?: string;
   /** Of the project's page: the element's name, which `page measure` takes before any selector. */
   element?: string;
+  /**
+   * Hidden for screen readers alone — the `sr-only` pattern — and listed so, never as seen: a spike took a stack's
+   * "1 listening" for a second count on screen.
+   */
+  screenReaderOnly?: true;
 }
 
 export interface Outline {
@@ -163,6 +168,17 @@ export const outlineIn = (input: {
       (style.display === 'contents' && node.childElementCount > 0)
     );
   };
+  // The `sr-only` pattern: clipped all over, or a box of a pixel that clips what overflows it.
+  const forScreenReaders = (node: Element): boolean => {
+    const style = getComputedStyle(node);
+    const box = node.getBoundingClientRect();
+
+    return (
+      /inset\(\s*50%/.test(style.clipPath) ||
+      /^rect\(0(px)?,?\s*0(px)?,?\s*0(px)?,?\s*0(px)?\)$/.test(style.clip) ||
+      (box.width <= 1 && box.height <= 1 && /hidden|clip/.test(`${style.overflowX} ${style.overflowY}`))
+    );
+  };
   const elements: OutlinedElement[] = [];
   let more = 0;
   const walk = (node: Element, depth: number): void => {
@@ -202,6 +218,7 @@ export const outlineIn = (input: {
         .replace(/\s+/g, ' ')
         .trim();
       const named = child.getAttribute('data-plitzi-el');
+      const screenReaderOnly = forScreenReaders(child);
       elements.push({
         selector: selectorOf(child),
         depth,
@@ -212,10 +229,11 @@ export const outlineIn = (input: {
           height: Math.round(box.height)
         },
         ...(words === '' ? {} : { text: words.length > input.words ? `${words.slice(0, input.words)}…` : words }),
-        ...(named === null ? {} : { element: named })
+        ...(named === null ? {} : { element: named }),
+        ...(screenReaderOnly ? { screenReaderOnly: true as const } : {})
       });
-      // A drawing is one thing to measure, never its paths.
-      if (child.tagName !== 'svg') {
+      // A drawing is one thing to measure, never its paths; what is inside a part for screen readers is theirs too.
+      if (child.tagName !== 'svg' && !screenReaderOnly) {
         walk(child, depth + 1);
       }
     }
@@ -246,7 +264,7 @@ export const outlineText = (outline: Outline, within?: string, opened = false): 
   ...(opened && outline.elements.length === 0 ? [chalk.yellow('  nothing new is shown after the click')] : []),
   ...outline.elements.map(
     each =>
-      `${'  '.repeat(each.depth)}${each.element ?? each.selector}  ${chalk.dim(`${String(each.box.width)}×${String(each.box.height)} at ${String(each.box.x)},${String(each.box.y)}`)}${each.text === undefined ? '' : ` “${each.text}”`}`
+      `${'  '.repeat(each.depth)}${each.element ?? each.selector}  ${chalk.dim(`${String(each.box.width)}×${String(each.box.height)} at ${String(each.box.x)},${String(each.box.y)}`)}${each.text === undefined ? '' : ` “${each.text}”`}${each.screenReaderOnly ? chalk.yellow('  for screen readers only, not seen') : ''}`
   ),
   ...(outline.more > 0
     ? [chalk.dim(`· ${String(outline.more)} more under these, not listed — one part alone: --within <one of them>`)]

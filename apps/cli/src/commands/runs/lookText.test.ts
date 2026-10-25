@@ -39,6 +39,37 @@ describe('a look that took no picture', () => {
       'plitzi server reset in its copy (its server stopped), then look again --fresh'
     );
   });
+
+  // A notice only a channel's message shows could not be looked at in review: --steps sets the state it reads.
+  it('says the pictures were taken after the steps asked', () => {
+    const looked = {
+      task: 't-notice',
+      url: 'http://127.0.0.1:50000',
+      ok: true,
+      check: '',
+      shots: []
+    } as unknown as Looked;
+    expect(stripVTControlCharacters(lookText({ ...looked, steps: 'state notice {"room":"r1"}' }))).toContain(
+      'Pictured after "state notice {"room":"r1"}"; the check read each page at rest'
+    );
+  });
+
+  // A look read /moderation as a guest and failed it as "sent the browser to /": the task's UI never seen.
+  it('says the pages for signed-in visitors, read as the project’s account or as a guest and why', () => {
+    const looked = {
+      task: 't-mod',
+      url: 'http://127.0.0.1:50000',
+      ok: true,
+      check: '',
+      shots: []
+    } as unknown as Looked;
+    expect(
+      stripVTControlCharacters(lookText({ ...looked, forVisitors: { pages: ['/moderation'], as: 'ana' } }))
+    ).toContain('Read signed in as ana, the project’s account: /moderation is for signed-in visitors');
+    expect(stripVTControlCharacters(lookText({ ...looked, forVisitors: { pages: ['/moderation'] } }))).toContain(
+      '⚠ /moderation is for signed-in visitors, read as a guest: name the project’s account in .env (PLITZI_CHECK_USER, PLITZI_CHECK_PASSWORD) — or --as <username>'
+    );
+  });
 });
 
 // "siteRooms is not on <url>" ten times — a part a guest has not, and no line said how to see it.

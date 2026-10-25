@@ -5,6 +5,7 @@ import { format } from 'prettier';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { addBacklogItem, BACKLOG_FILE, backlogOfPlan, closeBacklogItem, openBacklog } from './backlog';
+import { extendRun } from './extend';
 import { feedbackFile } from './feedback';
 import { abortRun, finishRun } from './merge';
 import { noticeRun, noticesOf } from './notices';
@@ -158,6 +159,15 @@ describe('the project’s backlog', () => {
       untaken: [expect.objectContaining({ id: 'b-2' })]
     });
     const runId = await open(plan);
+    // A stage stacked on it offers only what no task of the run closes: b-1 is the run's, b-2 is left.
+    const stage = {
+      version: 1 as const,
+      runId: 'es-launch-2',
+      goal: 'More',
+      tasks: [{ ...benchPlan().tasks[0], id: 't-more', files: ['src/space/pages/more.ts'], dependsOn: [] }]
+    };
+    const stacked = await extendRun(lead(), runId, await bench.writePlan(stage));
+    expect((stacked.notices ?? []).join('\n')).not.toContain('b-1');
     await doTask('agent-1', plan.tasks[3].id, plan.tasks[3].files[0], 'export const about = { total: true };\n');
     const finished = await finishRun(bench.person(true), runId, { apply: true, leavePending: true });
 

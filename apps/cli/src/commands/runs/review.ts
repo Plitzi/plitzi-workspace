@@ -19,7 +19,8 @@ import {
   LOOK_AT_ONCE,
   phases,
   toDeclared,
-  viewsAsked
+  viewsAsked,
+  visitorsOnly
 } from './lookParts';
 import { lookText } from './lookText';
 import { act, runOf, runSelf } from './shell';
@@ -102,6 +103,11 @@ export interface LookOptions extends RunCommandOptions {
   hover?: string;
   /** Signed in first as this account, as `page check --as`: the password from `PLITZI_CHECK_PASSWORD`. */
   as?: string;
+  /**
+   * Played on each page before it is pictured, as `page shot --steps`: a UI only a channel's message or a flow shows —
+   * a notice set in `state` — looked at, where a look could not reach it (a run's lead, at a "room opened" notice).
+   */
+  steps?: string;
   /** Read in the page, as `page check --element`: each one's attributes, box and classes. */
   element?: string[];
   /** Each page set beside the run before the task — its approved work — and what changed, section by section. */
@@ -185,14 +191,18 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         // Read signed in when asked: a task whose UI is for signed-in visitors looked at as one (a run's designers saw
         // only the guest's page of settings, a vote or the host's controls).
         // Not told who to read it as: as its acceptance checks it — a page for signed-in visitors read signed in.
-        const as = options.as ?? acceptanceAs;
+        // Nor by its acceptance: a page the space keeps for signed-in visitors, read as the project's own account.
+        const toLook = pagesToLook(paths, owned, acceptanceAt);
+        const guarded =
+          options.as === undefined && acceptanceAs === undefined ? await visitorsOnly(preview.dir, toLook) : undefined;
+        const as = options.as ?? acceptanceAs ?? guarded?.as;
         // Its links followed as that account too: a page only it has a link to (`/u/:username`) is found.
         const account = as === undefined ? undefined : await checkAccount(preview.dir, as);
         const cookie =
           account === undefined || 'problem' in account ? undefined : await sessionCookie(preview.url, account);
         const { paths: routes, unreached } = await examplePaths(
           preview.url,
-          pagesToLook(paths, owned, acceptanceAt),
+          toLook,
           acceptanceAt,
           typeof cookie === 'string' ? cookie : undefined
         );
@@ -309,6 +319,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
                 '--scheme',
                 scheme,
                 ...(clip ? ['--clip', clip] : []),
+                ...(options.steps === undefined ? [] : ['--steps', options.steps]),
                 '--json',
                 '-o',
                 out
@@ -474,7 +485,9 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         return {
           task: taskId,
           url: preview.url,
-          ...(as !== undefined && options.as === undefined ? { signedInAs: as } : {}),
+          ...(acceptanceAs !== undefined && options.as === undefined ? { signedInAs: acceptanceAs } : {}),
+          ...(guarded ? { forVisitors: guarded } : {}),
+          ...(options.steps === undefined ? {} : { steps: options.steps }),
           ok: check.code === 0,
           check: kept?.text ?? check.output.trim(),
           ...(kept && kept.apart > 0 ? { apart: kept.apart } : {}),
@@ -517,10 +530,10 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
       const runId = await runOf(ctx, options);
       await takeOnRead(ctx, runId, taskId);
 
-      if (options.click && options.hover) {
+      if ([options.click, options.hover, options.steps].filter(each => each !== undefined).length > 1) {
         throw new RunRefusal(
           'invalid',
-          'One interaction a look: --click an element, or --hover one — two looks for both'
+          'One interaction a look: --click an element, --hover one, or --steps — a look for each'
         );
       }
 
@@ -568,6 +581,8 @@ export interface ReviewOptions extends RunCommandOptions {
   skipDesign?: string;
   /** With --approve: what the reviewer saw and does not ask to change — kept with the task, read by the lead. */
   note?: string;
+  /** With --approve: another task in review approved beside it, as one change — each reads what the other makes. */
+  with?: string;
 }
 
 export const taskReview = (taskId: string, options: ReviewOptions): Promise<void> =>
@@ -613,7 +628,10 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
               }
             ],
         options.merge ? 'merge' : options.overwrite ? 'overwrite' : 'refuse',
-        isDesignSkip(options.skipDesign) ? { skipDesign: options.skipDesign } : {}
+        {
+          ...(isDesignSkip(options.skipDesign) ? { skipDesign: options.skipDesign } : {}),
+          ...(options.with === undefined ? {} : { with: options.with })
+        }
       );
     },
     reviewed =>
@@ -622,6 +640,9 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
         : reviewed.verdict === 'approve'
           ? [
               `${taskId} approved: ${list(reviewed.merged ?? [])} in the run's work.`,
+              ...(reviewed.with
+                ? [`  ${reviewed.with.task} approved beside it, as one change: ${list(reviewed.with.merged)} in too`]
+                : []),
               ...(reviewed.design === 'skipped' ? [`  · ${designSkipText(reviewed.designSkip)}`] : []),
               // The lead went first while a designer was at it: said to the lead too, not only to the designer.
               ...(reviewed.designBy

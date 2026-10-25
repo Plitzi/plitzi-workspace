@@ -226,7 +226,10 @@ export interface ListRows {
 /** What `--expect <id>~<text>` asks: the element shows the text, as the page was left — a check an acceptance can run. */
 export interface Expectation {
   element: string;
+  /** What one of its copies shows — any row of a list; `''` for "it is shown", whatever it says. */
   text: string;
+  /** The opposite, `!<id>`: no copy of it shown — none showing the text, with one. */
+  absent?: true;
   /** The one page of those checked it is about; every one when left out. */
   path?: string;
 }

@@ -92,6 +92,24 @@ describe('page outline, in the page', () => {
       elements: [expect.objectContaining({ text: "Sam's request" })]
     });
   });
+
+  // A spike took a stack's sr-only "1 listening" for a second count on screen: outlined as any other shown span.
+  it('says a part hidden for screen readers alone is so, never as seen', () => {
+    laidOut();
+    document.body.innerHTML = `
+      <div data-plitzi-el="reactions"><span>3</span><span class="sr-only" style="clip-path: inset(50%)"><b>1</b> listening</span></div>`;
+    const read = outlineIn({ depth: 4, limit: 50, words: 20 });
+
+    expect(read).toMatchObject({
+      elements: [
+        expect.objectContaining({ element: 'reactions' }),
+        expect.objectContaining({ selector: '[data-plitzi-el="reactions"] > span:nth-of-type(1)', text: '3' }),
+        expect.objectContaining({ selector: 'span.sr-only', screenReaderOnly: true })
+      ],
+      more: 0
+    });
+    expect('elements' in read ? read.elements : []).toHaveLength(3);
+  });
 });
 
 // The sign-in wordmark's id came from a prefix built in code — found by grepping the source.

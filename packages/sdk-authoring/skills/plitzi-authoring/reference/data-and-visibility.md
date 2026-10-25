@@ -25,11 +25,10 @@ A colour from data binds a custom property — `[{ to: '--who', source, category
 completed from what the element publishes (`apiContainer_posts`, `list_postList`; a `form` publishes under
 `apiContainer`). A name nothing answers to, or a prefix that does not match, is refused.
 
-**Inside a template the name is spelled in full**: `{{ apiContainer_stats.data.total }}`, `{{ list_rows.item.id }}`.
-The binding's `source` is completed for you; its template is read as written, so the short name there is refused.
+**Inside a template the name is spelled in full** (`{{ apiContainer_stats.data.total }}`): only a `source` is
+completed, so the short name in a template is refused.
 
-An element re-renders when anything it reads changes: the first part of each binding's `source` and every source its
-templates name. The globals are `variables`, `navigation` (`routeParams`, `queryParams`, `origin`, `currentPageId`,
+An element re-renders when anything it reads changes. The globals are `variables`, `navigation` (`routeParams`, `queryParams`, `origin`, `currentPageId`,
 `pending` / `pendingLocation` while a link waits for its page's server data),
 `auth` (who is signed in, `status` while that is being found out), `state` (what flows wrote), `theme`
 (`mode`, `resolved`), `host` (the `hostData` an application embedding the space hands the SDK) and `computed` (below).
@@ -77,6 +76,9 @@ apiContainer({ id: 'board', runtime: 'server', action: 'queue-board' })         
   sent as is: a `{{ }}` in it is refused (`template-in-value`) — bind it.
 - `isLoading` is true while it is asked again, in either runtime. A newer ask drops the older one; `cancelApi('p')` is a
   STOP: what is shown stays.
+- **`when` makes it wait** (a rule group over sources: `auth.isAuthenticated`, `roomData.found`): it asks nothing
+  until it holds. The page server holds a server one's too — reading `navigation`, `auth` and the server providers it
+  names — and the browser asks it once it holds there; one on `state` is resolved regardless (`server-when-unknown`).
 - `runtime: 'server'` is resolved by the page server — server data is on unless a space says `rsc: { enabled: false }`.
   Only a page and its layouts are resolved — never inside a component: keep the provider on the page and hand the
   component its rows as a prop ([recipes/server-data.ts](../recipes/server-data.ts)).
@@ -104,19 +106,17 @@ is shown, its `access` checking who asks.
 ### Live, cached, refreshed
 
 - **Live:** `refreshSeconds: 15` asks again on its own (either runtime), paused in a hidden tab, never overlapping:
-  queues, feeds, status boards — marked live, so the reader knows it moves.
-- **Cached:** `cache: true` (and `staleTime` seconds, 30 by default) shares an answer between providers asking the
-  same, across page changes.
+  queues, feeds, status boards.
+- **Cached:** `cache: true` (`staleTime`, 30 s) shares an answer between providers asking the same.
 - **Refreshed by writes:** a `webHook` that is not a GET refreshes every request to its own site by default
   (`invalidateQueries: 'origin'`); a `runServerAction` refreshes everything (`'all'`). Narrow it with
   `'elements'` + `invalidateElements: ['orders']`, or stop it with `'none'`.
-- **Say `'none'` when a refresh would move the page on.** A page that leaves on a provider's answer ("profile complete
-  → leave") would leave in the middle of a multi-step form that saves as it goes.
+- **Say `'none'` when a refresh would move the page on** — one that leaves on an answer, mid-form.
 
 ## Visibility
 
-What the page's own data or state shows and hides. What a person switches on — a feature in beta, the old version
-kept during a rollout — is a [feature flag](feature-flags.md): gated off, an element is not rendered at all.
+What the page's own data or state shows and hides. What a person switches on (a beta, a rollout) is a
+[feature flag](feature-flags.md): gated off, an element is not rendered at all.
 
 ```ts
 container({ visible: 'posts.hasPosts', … })     // shown while true

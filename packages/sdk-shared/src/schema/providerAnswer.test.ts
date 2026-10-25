@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isEmptyAnswer } from './isEmptyAnswer';
+import { isEmptyAnswer } from './providerAnswer';
 
 describe('isEmptyAnswer', () => {
   it('reads a plain query answer by what it received', () => {

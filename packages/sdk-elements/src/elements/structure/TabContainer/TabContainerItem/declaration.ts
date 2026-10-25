@@ -13,8 +13,10 @@ export type TabContainerItemAttributes = AuthorableAttributes<
 const declaration = elementDeclaration<TabContainerItemAttributes>()({
   type: 'tabContainerItem',
   marks: {
-    'role="tab"': 'in the header, with `aria-controls` its panel; in the body it is `role="tabpanel"`, `hidden` while not on show',
-    'aria-selected': 'on the open tab — what a class’s `current` state lights (`states: { current: { … } }`); `active` is the press, never the open tab',
+    'role="tab"':
+      'in the header, with `aria-controls` its panel; in the body it is `role="tabpanel"`, `hidden` while not on show',
+    'aria-selected':
+      'on the open tab — what a class’s `current` state lights (`states: { current: { … } }`); `active` is the press, never the open tab',
     '.active': 'on the open tab too, the class the component adds',
     tabindex: 'roving: 0 on the open tab, -1 on the rest — the arrow keys move between them'
   },

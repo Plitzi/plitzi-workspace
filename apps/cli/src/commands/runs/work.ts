@@ -67,16 +67,25 @@ export const taskBlock = (
     async ctx => {
       const target = await either(ctx, options, taskId);
       const needs = options.needs ?? 'lead';
-      await blockTask(ctx, target.runId, target.taskId, options.reason, needs);
+      const { released, granted } = await blockTask(ctx, target.runId, target.taskId, options.reason, needs);
 
       return {
         ...target,
         blocked: { reason: options.reason, needs },
+        released,
+        granted,
         next: `take another ready task; once unblocked, plitzi task next hands ${target.taskId} back to you first`
       };
     },
     target =>
-      `${target.taskId} is blocked (${target.blocked.needs}): ${target.blocked.reason.replace(/[.\s]+$/, '')}. Take another ready task meanwhile; once it is unblocked, plitzi task next hands it back to you first.`
+      [
+        `${target.taskId} is blocked (${target.blocked.needs}): ${target.blocked.reason.replace(/[.\s]+$/, '')}. Take another ready task meanwhile; once it is unblocked, plitzi task next hands it back to you first.`,
+        ...(target.released.length > 0
+          ? [
+              `Let go, as your copy left them unchanged: ${target.released.join(', ')}${target.granted.length > 0 ? ` (handed on: ${target.granted.join(', ')})` : ''} — claim one again (plitzi task claim) when you need to change it.`
+            ]
+          : [])
+      ].join('\n')
   );
 
 export const taskUnblock = (taskId: string, options: RunCommandOptions & { answer?: string }): Promise<void> =>

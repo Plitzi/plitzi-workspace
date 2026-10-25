@@ -122,6 +122,11 @@ export interface Measured {
    * (a run's widest genre name could not be named, and was proven by a picture).
    */
   matches?: number;
+  /**
+   * Set when no match is shown, so the one measured is hidden: its widths and place are not what a visitor sees (a run's
+   * designer proved a profile's own button by the measures of one with no box at all).
+   */
+  hidden?: true;
 }
 
 /** A colour written as CSS Color 4 writes it — `color(srgb 0.78 0.66 0.42 / 0.5)` — as `rgb()`: one colour, one way. */

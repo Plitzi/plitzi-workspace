@@ -8,6 +8,7 @@ import { loadRun, logRun, requireNoTask } from '../run';
 import { tellLeftInTmp } from '../strays';
 import { DEFAULTS, noSignalAfter, updateState, viewTask } from '../taskStore';
 import { at, findTask, holderOf, holderOrCoordinator, refreshCopy } from './common';
+import { letGoUntouched } from './locks';
 
 import type { LongFile } from '../longFiles';
 import type { Message } from '../messages';
@@ -83,7 +84,7 @@ export const blockTask = async (
   taskId: string,
   reason: string,
   needs: Needs
-): Promise<void> => {
+): Promise<{ released: string[]; granted: string[] }> => {
   const loaded = await loadRun(ctx, runId);
   const task = findTask(loaded, taskId);
   const view = await holderOrCoordinator(ctx, loaded, task);
@@ -98,6 +99,8 @@ export const blockTask = async (
     ctx.now
   );
   await logRun(ctx, loaded.paths, { action: 'block', task: taskId, needs, reason });
+
+  return letGoUntouched(ctx, loaded, view);
 };
 
 /**

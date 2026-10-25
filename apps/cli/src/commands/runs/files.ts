@@ -42,14 +42,26 @@ export const taskClaim = (files: string[], options: RunCommandOptions): Promise<
     async ctx => {
       const { runId, taskId } = await holder(ctx, options);
       const claimed: string[] = [];
+      const ahead: string[] = [];
       for (const file of files) {
-        claimed.push((await claimFile(ctx, runId, taskId, file)).file);
+        const outcome = await claimFile(ctx, runId, taskId, file);
+        claimed.push(outcome.file);
+        if (outcome.aheadOf) {
+          ahead.push(`${outcome.file} (${outcome.aheadOf})`);
+        }
       }
 
-      return { claimed };
+      return { claimed, ...(ahead.length > 0 ? { ahead } : {}) };
     },
-    ({ claimed }) =>
-      `${claimed.join(', ')} ${claimed.length === 1 ? 'is' : 'are'} yours by turns: your copy keeps what you wrote in ${claimed.length === 1 ? 'it' : 'them'} (or takes the run's version where you had not touched it), and your change goes into the run when this task is approved.`
+    ({ claimed, ahead }) =>
+      [
+        `${claimed.join(', ')} ${claimed.length === 1 ? 'is' : 'are'} yours by turns: your copy keeps what you wrote in ${claimed.length === 1 ? 'it' : 'them'} (or takes the run's version where you had not touched it), and your change goes into the run when this task is approved.`,
+        ...(ahead
+          ? [
+              `Ahead of the task its plan gives it to, which nobody has taken: ${ahead.join(', ')} — that task is offered once this one is approved, with your change in.`
+            ]
+          : [])
+      ].join('\n')
   );
 
 export const taskRelease = (file: string, options: RunCommandOptions): Promise<void> =>

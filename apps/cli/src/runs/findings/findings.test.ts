@@ -52,6 +52,16 @@ describe('how tasks and sessions were held', () => {
         { at: T(2), by: 'dev-1', action: 'take', task: 't-settings' }
       ]).map(each => each.evidence)
     ).toEqual([['t-live + t-settings, from 10:02 UTC']]);
+    // Blocked, its agent took another; unblocked meanwhile, it waited for that one: never two at once.
+    expect(
+      twoTasks([
+        { at: T(1), by: 'dev-1', action: 'take', task: 't-specs' },
+        { at: T(2), by: 'dev-1', action: 'block', task: 't-specs' },
+        { at: T(3), by: 'dev-1', action: 'take', task: 't-room' },
+        { at: T(4), by: 'lead', action: 'unblock', task: 't-specs' },
+        { at: T(5), by: 'dev-1', action: 'complete', task: 't-room' }
+      ])
+    ).toEqual([]);
   });
 
   it('says commands a session ran after it was told to stop — not a notice, nor a session started again', () => {
@@ -297,7 +307,11 @@ describe('what the run spent that it did not have to', () => {
   it('says a long answer, a task far over the median, a heavy context and the results read again the most', () => {
     const found = costFindings(
       [use(1, 'dev-1', 'plitzi task show t-a', { chars: 64_000 })],
-      [{ by: 'dev-2', command: 'plitzi task check', times: 4, within: 6 }],
+      [
+        { by: 'dev-2', command: 'plitzi task check', times: 4, within: 6 },
+        { by: 'lead', command: 'plitzi task show t-a', times: 5, within: 7 },
+        { by: 'lead', command: 'plitzi task show t-b', times: 3, within: 2 }
+      ],
       [
         round('t-a', spent(1_000_000)),
         round('t-b', spent(1_000_000)),
@@ -310,18 +324,25 @@ describe('what the run spent that it did not have to', () => {
     expect(found.map(each => [each.kind, each.owner])).toEqual([
       ['large-output', 'plitzi'],
       ['repeated-call', 'plitzi'],
+      ['repeated-call', 'plitzi'],
       ['costly-task', 'agent'],
       ['context-heavy', 'lead'],
       ['costly-result', 'plitzi']
     ]);
-    expect(found[4].title).toBe('What Bash plitzi page measure answered was read again for 6M tokens');
+    // One a command, its bursts the evidence: a run's nine "lead ran task show" were nine findings.
+    expect(found[1].title).toBe('dev-2 ran task check 4 times in 6 min');
+    expect(found[2]).toMatchObject({
+      title: 'task show was run again and again: 2 bursts by lead, up to 5 times in 7 min',
+      times: 8
+    });
+    expect(found[5].title).toBe('What Bash plitzi page measure answered was read again for 6M tokens');
     // One finding a kind, the rounds its evidence: a run said eleven heavy contexts as eleven.
-    expect(found[3]).toMatchObject({
+    expect(found[4]).toMatchObject({
       title: '2 rounds ended with over 150k tokens of context',
       evidence: ['dev-1 at t-d (round 1): 210k, 50 turns, 9M read', 'dev-1 at t-e (round 1): 160k, 50 turns, 1M read'],
       times: 2
     });
-    expect(found[2].title).toBe('t-d read over 2.5× the run’s median task (1M)');
+    expect(found[3].title).toBe('t-d read over 2.5× the run’s median task (1M)');
   });
 });
 

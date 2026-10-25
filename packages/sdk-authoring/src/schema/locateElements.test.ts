@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  apiContainer,
   bindTemplate,
   button,
+  channel,
   component,
   container,
   link,
@@ -155,5 +157,28 @@ describe('locateElements', () => {
     expect(located.find(element => element.elementId === 'open')?.targets).toEqual([
       { elementId: 'dialog', step: 'openModal' }
     ]);
+  });
+
+  // A run's look tried to picture a task's two channels on fourteen pages: they have no box.
+  it('says an element with no box of its own — a provider with no tag, a channel', () => {
+    const located = locateElements({
+      name: 'Boxes',
+      permanentUrl: 'boxes',
+      pages: [
+        {
+          id: 'home',
+          name: 'Home',
+          slug: '',
+          body: [
+            channel({ id: 'rooms' }),
+            apiContainer({ id: 'feed', children: [text('Hi', { id: 'hi' })] }),
+            apiContainer({ id: 'boxed', subType: 'section' })
+          ]
+        }
+      ]
+    });
+    const boxless = (id: string) => located.find(element => element.elementId === id)?.boxless;
+
+    expect(['rooms', 'feed', 'boxed', 'hi'].map(boxless)).toEqual([true, true, undefined, undefined]);
   });
 });

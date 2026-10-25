@@ -120,9 +120,17 @@ export interface Answered {
   counter?: Proposal;
 }
 
+/** Each answer as the proposer is told it. */
+const ANSWERED: Record<Exclude<ProposalAnswer['verdict'], 'counter'>, string> = {
+  accept: 'accepted',
+  reject: 'rejected',
+  withdraw: 'withdrew'
+};
+
 /**
- * `plitzi task answer`: the task asked — or the lead, for it — accepts, rejects or counters a proposal, once.
- * The proposer, if it waits, takes its task back up with the answer in its notes.
+ * `plitzi task answer`: the task asked — or the lead, for it — accepts, rejects or counters a proposal, once; its
+ * proposer — or the lead — withdraws it instead, once the change is no longer asked (it stayed "unanswered" on the other
+ * task when the lead changed course). The proposer, if it waits, takes its task back up with the answer in its notes.
  */
 export const answerProposal = async (
   ctx: RunContext,
@@ -146,7 +154,7 @@ export const answerProposal = async (
     });
   }
 
-  await holderOrCoordinator(ctx, loaded, findTask(loaded, proposal.to));
+  await holderOrCoordinator(ctx, loaded, findTask(loaded, reply.verdict === 'withdraw' ? proposal.from : proposal.to));
   if (reply.verdict === 'counter') {
     if (ctx.token === undefined) {
       throw new RunRefusal('invalid', 'The lead decides: it accepts or rejects; a counter is the task’s');
@@ -167,6 +175,10 @@ export const answerProposal = async (
 
   if (reply.verdict === 'reject' && !reply.note) {
     throw new RunRefusal('invalid', 'A rejection says why: --reject "…"');
+  }
+
+  if (reply.verdict === 'withdraw' && !reply.note) {
+    throw new RunRefusal('invalid', 'A withdrawal says why: --withdraw "…"');
   }
 
   const counter =
@@ -196,7 +208,7 @@ export const answerProposal = async (
 
   const proposer = await viewTask(loaded.paths, findTask(loaded, proposal.from));
   if (proposer.state.status === 'waiting' && proposer.state.waitingFor?.proposal === proposal.id) {
-    const told = `${proposal.to} ${reply.verdict === 'counter' ? `countered with ${String(counter?.id)}` : `${reply.verdict}ed`} ${proposal.id}${reply.note ? `: ${reply.note}` : ''}`;
+    const told = `${reply.verdict === 'withdraw' ? proposal.from : proposal.to} ${reply.verdict === 'counter' ? `countered with ${String(counter?.id)}` : ANSWERED[reply.verdict]} ${proposal.id}${reply.note ? `: ${reply.note}` : ''}`;
     await updateState(
       proposer.paths,
       state => ({

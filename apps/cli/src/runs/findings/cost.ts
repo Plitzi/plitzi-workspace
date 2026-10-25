@@ -62,16 +62,33 @@ export const costFindings = (
     });
   }
 
+  // One finding a command, its bursts the evidence: a run said "lead ran task show 4 times in 8.9 min" as nine findings.
+  const bursts = new Map<string, RepeatedCall[]>();
   for (const call of repeated) {
+    const name = commandName(call.command);
+    bursts.set(name, [...(bursts.get(name) ?? []), call]);
+  }
+
+  for (const [name, calls] of bursts) {
+    const sorted = [...calls].sort((a, b) => b.times - a.times);
+    const by = [...new Set(sorted.map(call => call.by))];
     findings.push({
       kind: 'repeated-call',
       owner: 'plitzi',
       area: 'cli',
-      title: `${call.by} ran ${commandName(call.command)} ${String(call.times)} times in ${String(call.within)} min`,
-      evidence: [call.command.slice(0, 160)],
-      times: call.times,
+      title:
+        sorted.length === 1
+          ? `${sorted[0].by} ran ${name} ${String(sorted[0].times)} times in ${String(sorted[0].within)} min`
+          : `${name} was run again and again: ${String(sorted.length)} bursts by ${by.join(', ')}, up to ${String(sorted[0].times)} times in ${String(sorted[0].within)} min`,
+      evidence: evidenceOf(
+        sorted.map(
+          call =>
+            `${call.by}: ${String(call.times)} times in ${String(call.within)} min — ${call.command.slice(0, 120)}`
+        )
+      ),
+      times: sorted.reduce((sum, call) => sum + call.times, 0),
       fix: 'what it answered did not settle it: the answer says what changed, or what to do instead',
-      subject: `repeated:${call.by}:${call.command}`
+      subject: `repeated:${name}`
     });
   }
 

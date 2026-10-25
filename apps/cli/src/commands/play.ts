@@ -5,17 +5,18 @@ import { accountAsked } from './check';
 import { projectHere } from './existingProject';
 import { ourPage, pairOf } from './measure';
 import { settle } from './measureState';
+import { readState } from './playState';
 import { parseSteps } from './shotSteps';
 import { keptSession } from '../browser/keptBrowser';
 import { conditionsOf } from './register/options';
 import { originHere } from '../runs/copyServer';
-import { targetOn } from './shot/capture';
 import { pageAnswered } from './shot/remote';
 import { actStep } from './shot/steps';
 import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
 
 import type { BrowserPage, Scheme } from '../browser';
 import type { Pair } from './measure';
+import type { ElementState } from './playState';
 import type { ConditionOptions } from './register/options';
 import type { ActingStep } from './shot/steps';
 import type { ShotStep } from './shotSteps';
@@ -32,7 +33,7 @@ import type { ShotStep } from './shotSteps';
  */
 
 export interface PlayOptions extends ConditionOptions {
-  steps: string;
+  steps?: string;
   timezone?: string;
   /** The elements read after each step, `"ours => theirs"` with `--compare`. */
   read?: string[];
@@ -52,47 +53,6 @@ export const PLAY_SAME = ['moved', 'shown', 'enabled'] as const;
 
 export type PlaySame = (typeof PLAY_SAME)[number];
 
-/** The ARIA states a control says of itself — what a toggle, a disclosure or a tab is at. */
-export const ARIA_STATES = ['pressed', 'expanded', 'checked', 'selected'] as const;
-
-/**
- * An element as a step leaves it: where its content is, whether it is seen, whether it takes a press — and what a
- * control says: its words, a field's value, its ARIA states, whether it holds the focus. Four agents wrote a
- * Playwright script for what this did not read — Listen turning Mute, the focus back on the burger, a search typed.
- */
-export interface ElementState {
-  /** Its content's offset — scroll less place — in whole pixels: what a move changes, however it is made. */
-  offset: { x: number; y: number };
-  shown: boolean;
-  enabled: boolean;
-  /** Its words, as a visitor reads them: whitespace folded, the first 80 characters. */
-  text: string;
-  /** A field's value: an input, a textarea, a select. */
-  value?: string;
-  /** The ARIA states it says, each as its attribute (or a box's own `checked`) is. */
-  aria: Partial<Record<(typeof ARIA_STATES)[number], string>>;
-  /** It holds the focus, or something inside it does. */
-  focused: boolean;
-  /**
-   * Where it is against the viewport — and, in it, what covers its middle (a sticky header): a `scrollIntoView` that
-   * left a heading under the header read as fine (a run's dev-1 and design-1).
-   */
-  inView: 'whole' | 'part' | 'out';
-  coveredBy?: string;
-  /** Its transform, when it has one, as scale and translate: a bump (scale) or a float read as nothing moving. */
-  transform?: string;
-  /**
-   * Its text's colour and the ground it sits on — its own, else the first an ancestor paints: a run's tone picker
-   * was proven by ten page measures, one a tone and scheme, the play saying nothing of colour.
-   */
-  colour: { text: string; ground: string };
-  /**
-   * Its animations as they stand — `float finished` — when it has any: a run's reaction floated in and out, and a
-   * read after it said "hidden", as though the press had done nothing.
-   */
-  animations?: string[];
-}
-
 export interface PlayedStep {
   /** `start` before any step, else the step as written. */
   step: string;
@@ -103,6 +63,8 @@ export interface PlayedStep {
   idle?: Partial<Record<keyof Pair, string>>;
   /** Where the step took the page, when it went elsewhere — a link followed, a form sent: a run's filter links. */
   went?: Partial<Record<keyof Pair, string>>;
+  /** Its target was scrolled into view before it, as a pointer reaches it: what moved is measured from there. */
+  reached?: true;
   /** Each element read, by how it was asked, here and — with `--compare` — there. */
   reads: { element: string; here?: ElementState; there?: ElementState; moved?: Moved; problem?: string }[];
 }
@@ -115,148 +77,6 @@ interface Moved {
 
 /** Two moves the same, within a couple of pixels or 2% of the move — a layout rounding, never a different step. */
 const alike = (a: number, b: number): boolean => Math.abs(a - b) <= Math.max(2, Math.abs(b) * 0.02);
-
-/** Run in the page, on the element: where its content is, whether it is seen, whether it takes a press. */
-export const stateOf = (node: Element): ElementState => {
-  // Everything here runs in the page, where nothing of this module is: its helpers are its own.
-  const placeOf = (element: Element, rect: DOMRect): Pick<ElementState, 'inView' | 'coveredBy'> => {
-    const inside = (from: number, to: number, size: number) => from >= 0 && to <= size;
-    const touches = (from: number, to: number, size: number) => to > 0 && from < size;
-    const inView =
-      inside(rect.top, rect.bottom, innerHeight) && inside(rect.left, rect.right, innerWidth)
-        ? ('whole' as const)
-        : touches(rect.top, rect.bottom, innerHeight) && touches(rect.left, rect.right, innerWidth)
-          ? ('part' as const)
-          : ('out' as const);
-    if (inView === 'out' || rect.width === 0 || rect.height === 0) {
-      return { inView };
-    }
-
-    const middle = {
-      x: Math.min(Math.max(rect.left + rect.width / 2, 0), innerWidth - 1),
-      y: Math.min(Math.max(rect.top + Math.min(rect.height / 2, 12), 0), innerHeight - 1)
-    };
-    const hit = document.elementFromPoint(middle.x, middle.y);
-    if (!hit || element.contains(hit) || hit.contains(element)) {
-      return { inView };
-    }
-
-    const named = hit.closest('[data-plitzi-el]')?.getAttribute('data-plitzi-el');
-
-    return { inView, coveredBy: named ?? hit.tagName.toLowerCase() };
-  };
-  const transformOf = (value: string): string | undefined => {
-    const matrix = /^matrix\(([^)]+)\)$/.exec(value);
-    if (!matrix) {
-      return undefined;
-    }
-
-    const [a = 1, b = 0, , , e = 0, f = 0] = matrix[1].split(',').map(Number);
-    const scale = Math.round(Math.hypot(a, b) * 100) / 100;
-    const said = [
-      ...(scale === 1 ? [] : [`scale ${String(scale)}`]),
-      ...(Math.round(e) === 0 && Math.round(f) === 0
-        ? []
-        : [`translate ${String(Math.round(e))},${String(Math.round(f))}`])
-    ];
-
-    return said.length > 0 ? said.join(', ') : undefined;
-  };
-  // The ground its text sits on: its own colour, else the first an ancestor paints — white where none does.
-  const groundOf = (element: Element): string => {
-    for (let at: Element | null = element; at; at = at.parentElement) {
-      const ground = getComputedStyle(at).backgroundColor;
-      if (ground !== 'rgba(0, 0, 0, 0)' && ground !== 'transparent') {
-        return ground;
-      }
-    }
-
-    return 'rgb(255, 255, 255)';
-  };
-  const box = node.getBoundingClientRect();
-  const style = getComputedStyle(node);
-  const disabled =
-    node.matches(':disabled, [aria-disabled="true"]') ||
-    style.pointerEvents === 'none' ||
-    node.closest('[inert]') !== null;
-  // A part whose own box never scrolls but holds the row that does — a carousel named by its track, its scroller
-  // inside (a run's dev-1 read `.carousel__scroller` by its class): that row's scroll is what moved.
-  const scrolls = (each: Element): boolean => {
-    const overflow = getComputedStyle(each);
-
-    return (
-      (each.scrollWidth > each.clientWidth && /auto|scroll/.test(overflow.overflowX)) ||
-      (each.scrollHeight > each.clientHeight && /auto|scroll/.test(overflow.overflowY))
-    );
-  };
-  const inner = scrolls(node) ? [] : [...node.querySelectorAll('*')].filter(scrolls);
-  const scroller = inner.length === 1 ? inner[0] : node;
-
-  return {
-    offset: {
-      x: Math.round(scroller.scrollLeft - box.left),
-      y: Math.round(scroller.scrollTop - box.top - window.scrollY)
-    },
-    ...placeOf(node, box),
-    ...(transformOf(style.transform) ? { transform: transformOf(style.transform) } : {}),
-    shown:
-      box.width > 0 &&
-      box.height > 0 &&
-      style.visibility !== 'hidden' &&
-      style.display !== 'none' &&
-      Number(style.opacity) > 0,
-    enabled: !disabled,
-    text: node.textContent.replace(/\s+/g, ' ').trim().slice(0, 80),
-    ...(node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement || node instanceof HTMLSelectElement
-      ? { value: node.value }
-      : {}),
-    // The list inline: this runs in the page, where nothing of the module is.
-    aria: Object.fromEntries(
-      (['pressed', 'expanded', 'checked', 'selected'] as const).flatMap(state => {
-        const said = node.getAttribute(`aria-${state}`);
-        const own = state === 'checked' && node instanceof HTMLInputElement && /checkbox|radio/.test(node.type);
-
-        return said !== null ? [[state, said]] : own ? [[state, String(node.checked)]] : [];
-      })
-    ),
-    focused:
-      document.activeElement !== null && (node === document.activeElement || node.contains(document.activeElement)),
-    colour: { text: style.color, ground: groundOf(node) },
-    ...(node.getAnimations().length > 0
-      ? {
-          animations: node
-            .getAnimations()
-            .map(
-              animation =>
-                `${animation instanceof CSSAnimation ? animation.animationName : animation instanceof CSSTransition ? `${animation.transitionProperty} transition` : 'animation'} ${animation.playState}`
-            )
-        }
-      : {})
-  };
-};
-
-/**
- * One element's state on a page, by the way every page command names one — a Playwright selector too
- * (`:has-text("…")`): the first of it shown, else the first.
- */
-export const readState = async (page: BrowserPage, target: string): Promise<ElementState | { problem: string }> => {
-  const found = await targetOn(page, target);
-  if ('problem' in found) {
-    return found;
-  }
-
-  if (!found.found) {
-    // `--read a,b`: one name with a comma in it, beside a `--width 390,1440` that does take commas (a run's lead).
-    return {
-      problem: `${target} is not on ${page.url()}${/^[\w-]+(,[\w-]+)+$/.test(target) ? ` — --read takes elements separated by spaces: --read ${target.split(',').join(' ')}` : ''}`
-    };
-  }
-
-  const located = page.locator(found.selector);
-  const visible = located.filter({ visible: true }).first();
-
-  return ((await visible.count()) > 0 ? visible : located.first()).evaluate(stateOf, undefined);
-};
 
 /** A step as one side plays it: its element that side's, from `"ours => theirs"`. */
 const sideOf = (step: ActingStep, side: keyof Pair): ActingStep =>
@@ -391,26 +211,50 @@ export const playOn = async (
   for (const [index, step] of steps.entries()) {
     const idle: Partial<Record<keyof Pair, string>> = {};
     const was = { here: sides.here.address?.(), there: sides.there?.address?.() };
-    for (const name of sides.there ? (['here', 'there'] as const) : (['here'] as const)) {
+    const names = sides.there ? (['here', 'there'] as const) : (['here'] as const);
+    const acting = (name: keyof Pair): { side: PlaySide; step: ActingStep } | undefined => {
       const side = name === 'here' ? sides.here : sides.there;
-      if (!side) {
+
+      return side && idle[name] === undefined ? { side, step: sideOf(step, name) } : undefined;
+    };
+    let reached = false;
+    for (const name of names) {
+      const at = acting(name);
+      if (!at || !['click', 'drag', 'type', 'hover'].includes(at.step.kind) || !('target' in at.step)) {
         continue;
       }
 
       // A press on a control out of use — hidden, disabled, passing the pointer on — does nothing, as a visitor's does:
       // played as such, never a failure; what it left is read as after any step.
-      const acting = sideOf(step, name);
-      if (acting.kind === 'click' || acting.kind === 'drag' || acting.kind === 'type') {
-        const state = (await readSide(side, [acting.target])).at(0);
-        if (state && !('problem' in state) && (!state.shown || !state.enabled)) {
-          idle[name] =
-            `${acting.target} ${state.shown ? 'takes no press' : 'is not shown'}: the ${acting.kind} did nothing`;
-          continue;
-        }
+      const state = (await readSide(at.side, [at.step.target])).at(0);
+      if (at.step.kind !== 'hover' && state && !('problem' in state) && (!state.shown || !state.enabled)) {
+        idle[name] =
+          `${at.step.target} ${state.shown ? 'takes no press' : 'is not shown'}: the ${at.step.kind} did nothing`;
+        continue;
+      }
+
+      // Brought into view first, as the pointer would: the scroll it takes is the reach, never the step's — a run's
+      // play said a sticky preview "moved 315px down" after a click on a switch out of view.
+      if (state && !('problem' in state) && state.inView !== 'whole') {
+        // One that cannot be reached is said by the step itself, which finds it the same way.
+        await at.side.act({ kind: 'scroll', target: at.step.target }, index).catch(() => undefined);
+        reached = true;
+      }
+    }
+
+    // What it moves is read from where the reach left it.
+    if (reached) {
+      await readAll('reached');
+    }
+
+    for (const name of names) {
+      const at = acting(name);
+      if (!at) {
+        continue;
       }
 
       try {
-        const problem = await side.act(acting, index);
+        const problem = await at.side.act(at.step, index);
         if (problem) {
           return { problem: problem.problem, side: name };
         }
@@ -431,7 +275,8 @@ export const playOn = async (
     played.push({
       ...entry,
       ...(Object.keys(idle).length > 0 ? { idle } : {}),
-      ...(Object.keys(went).length > 0 ? { went } : {})
+      ...(Object.keys(went).length > 0 ? { went } : {}),
+      ...(reached ? { reached: true as const } : {})
     });
   }
 
@@ -479,7 +324,7 @@ const moveText = ({ x, y }: { x: number; y: number }): string =>
 
 const stateText = (state: ElementState): string =>
   [
-    `${state.shown ? 'shown' : 'hidden'}, ${state.enabled ? 'enabled' : 'no press'}`,
+    `${state.shown ? 'shown' : state.screenReaderOnly ? 'for screen readers only' : 'hidden'}, ${state.enabled ? 'enabled' : 'no press'}`,
     // Said when it is not plainly there: half out of the viewport, out of it, or under something drawn over it.
     ...(state.shown && state.inView !== 'whole' ? [state.inView === 'part' ? 'partly in view' : 'out of view'] : []),
     ...(state.shown && state.coveredBy ? [`under ${state.coveredBy}`] : []),
@@ -488,6 +333,7 @@ const stateText = (state: ElementState): string =>
     ...(state.focused ? ['focused'] : []),
     ...Object.entries(state.aria).map(([name, value]) => `${name} ${value}`),
     ...(state.value !== undefined ? [`value "${state.value}"`] : []),
+    ...(state.rows === undefined ? [] : [`${String(state.rows)} rows`]),
     ...(state.text ? [`"${state.text}"`] : [])
   ].join(' · ');
 
@@ -508,6 +354,9 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
 
   return played.flatMap((entry, at) => [
     chalk.bold(entry.step),
+    ...(entry.reached
+      ? [chalk.dim('  (scrolled into view first, as a pointer reaches it: moves are from there)')]
+      : []),
     ...(entry.went?.here ? [`  → ${entry.went.here}`] : []),
     ...(entry.went?.there ? [chalk.dim(`  → there ${entry.went.there}`)] : []),
     ...(entry.idle?.here ? [chalk.yellow(`  here: ${entry.idle.here}`)] : []),
@@ -563,15 +412,32 @@ export const verdictOf = (
         ? [chalk.green(`✓ --same ${same.join(',')}: every step as ${other}'s`)]
         : unlike.map(line => chalk.red(`✗ --same: ${line}`));
 
+/** `--read a,b,c` as `--width 390,1440` takes them: a list of element ids, each read — a selector's comma is kept. */
+export const readTargets = (read: readonly string[] = []): string[] =>
+  read.flatMap(each => (/^[\w-]+(,[\w-]+)+$/.test(each) ? each.split(',') : [each]));
+
+/** The steps asked — none with `--read` alone: the page as it rests, the start read and nothing played. */
+export const stepsOf = (options: Pick<PlayOptions, 'steps' | 'read'>): ShotStep[] | { problem: string } => {
+  if ((options.steps ?? '').trim() !== '') {
+    const parsed = parseSteps(options.steps ?? '', 500);
+
+    return 'problem' in parsed ? { problem: `--steps: ${parsed.problem}.` } : parsed;
+  }
+
+  return (options.read ?? []).length > 0
+    ? []
+    : { problem: 'page play needs --steps — or --read alone, to read the page as it rests.' };
+};
+
 export const play = async (route: string, options: PlayOptions): Promise<void> => {
   const project = await projectHere('whose page to play');
   if (!project) {
     return;
   }
 
-  const parsed = parseSteps(options.steps, 500);
+  const parsed = stepsOf(options);
   if ('problem' in parsed) {
-    fail(`--steps: ${parsed.problem}.`);
+    fail(parsed.problem);
 
     return;
   }
@@ -624,7 +490,7 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
     return;
   }
 
-  const reads = (options.read ?? []).map(pairOf);
+  const reads = readTargets(options.read).map(pairOf);
   const results: { width: number; played: PlayedStep[]; unlike: string[] }[] = [];
   try {
     for (const width of options.width ?? [1440]) {

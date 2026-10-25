@@ -1,21 +1,19 @@
 /* eslint-disable react-refresh/only-export-components */
 
-import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
 import clsx from 'clsx';
 import { use, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import { InteractionsContext } from '@plitzi/sdk-interactions';
 import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
-import { emptyObject } from '@plitzi/sdk-shared/helpers';
+import { emptyObject, evaluateRuleGroup, ruleValuesOf } from '@plitzi/sdk-shared/helpers';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useServerQuery } from '@plitzi/sdk-shared/queries';
-import { rscFailureOf } from '@plitzi/sdk-shared/schema';
+import { isEmptyAnswer, rscFailureOf, whenOf, whenPaths } from '@plitzi/sdk-shared/schema';
 import { currentRscLocation } from '@plitzi/sdk-shared/server';
 import { useCommonStore, useSdkStore } from '@plitzi/sdk-shared/store';
 
 import declaration from './declaration';
-import { isEmptyAnswer } from './helpers/isEmptyAnswer';
 import { childrenWhile } from './helpers/loadingSlot';
 import providerOutcome from './helpers/providerOutcome';
 import { queryInputOf } from './helpers/queryInput';
@@ -30,6 +28,7 @@ import sourceStore from '../../../dataSource/sourceStore';
 import useRegisterSource from '../../../dataSource/useRegisterSource';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
+import useElementDataSource from '../../../Element/hooks/useElementDataSource';
 import useRscData from '../../../Element/hooks/useRscData';
 import RootElement from '../../../Element/RootElement';
 
@@ -194,6 +193,17 @@ const ApiContainer = ({
     return { ...headers, Authorization: `Bearer ${accessToken}` };
   }, [headers, accessToken]);
 
+  // What it waits on, read as authoring writes it — sources by name (`auth.isAuthenticated`, `apiContainer_room.found`)
+  // beside the bare params the builder's rule editor writes: it was read against the params alone, and a `when` on a
+  // source never held. The page server reads it the same way (`serverWhenValues`).
+  const gate = useMemo(() => whenOf({ attributes: { when } }), [when]);
+  const gatePaths = useMemo(() => (gate ? whenPaths(gate) : []), [gate]);
+  const gateSources = useElementDataSource({ sources: gatePaths });
+  const whenHolds = useMemo(
+    () => !gate || evaluateRuleGroup(gate, ruleValuesOf({ ...routeParams, ...queryParams, ...gateSources })),
+    [gate, routeParams, queryParams, gateSources]
+  );
+
   const apiEnabled = useMemo(() => {
     // `visible` is the whole ancestor chain, not just this provider's own state: a provider inside a hidden tab or
     // step is still mounted, and without this it kept requesting for a branch nobody is looking at.
@@ -201,11 +211,7 @@ const ApiContainer = ({
       return false;
     }
 
-    if (
-      previewMode &&
-      query &&
-      (when === emptyObject || QueryBuilderEvaluator(when, { ...routeParams, ...queryParams }))
-    ) {
+    if (previewMode && query && whenHolds) {
       return true;
     }
 
@@ -214,7 +220,7 @@ const ApiContainer = ({
     }
 
     return false;
-  }, [serverMode, visible, previewMode, query, when, routeParams, queryParams, mockData]);
+  }, [serverMode, visible, previewMode, query, whenHolds, mockData]);
 
   // An api container is named by its id: a flow invalidating "these providers" names them the way it names anything.
   const queryTags = useMemo(() => [id], [id]);
@@ -263,7 +269,8 @@ const ApiContainer = ({
   // Why the page server could not resolve it, said while developing: the provider shows it, not "could not be reached".
   const rscFailure = rscFailureOf(rscElementData);
   const elementData = rscFailure === undefined ? rscElementData : null;
-  const hasError = serverMode && rscResolved && !rscPending && elementData === null;
+  // Left out by the page server while its `when` did not hold: waiting, not failed.
+  const hasError = serverMode && rscResolved && !rscPending && elementData === null && whenHolds;
 
   // A server provider that only has a `query` is answered as a browser request is: `{ status, data }` (`serverMock`).
   const queryShaped = serverMode && !connector && !action;
@@ -346,6 +353,19 @@ const ApiContainer = ({
     active: visible,
     refresh: refetch
   });
+
+  /**
+   * A server provider whose `when` came to hold here — the visitor signed in, another provider answered — is asked
+   * then: the page server left it out while it did not hold, and nobody asked again.
+   */
+  const heldBefore = useRef(whenHolds);
+  useEffect(() => {
+    const held = heldBefore.current;
+    heldBefore.current = whenHolds;
+    if (serverMode && whenHolds && !held && rscResolved && !rscPending && rscElementData === null) {
+      void poll();
+    }
+  }, [serverMode, whenHolds, rscResolved, rscPending, rscElementData, poll]);
 
   /** A query asked for with `input`: kept, then asked — from its first page. */
   const performQuery = useCallback(

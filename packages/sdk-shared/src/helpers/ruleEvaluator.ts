@@ -19,4 +19,11 @@ export const evaluateRuleGroup = (group: RuleGroup, values: Record<string, RuleV
   // applies, rather than inventing a different reading of a nested result on the server.
   Boolean(QueryBuilderEvaluator(group, values));
 
+const isRuleValue = (value: unknown): value is RuleValue =>
+  typeof value !== 'function' && typeof value !== 'symbol' && typeof value !== 'bigint';
+
+/** A value bag as a rule group reads it: what no rule can compare — a function, a symbol — left out. */
+export const ruleValuesOf = (values: Record<string, unknown>): Record<string, RuleValue> =>
+  Object.fromEntries(Object.entries(values).filter((entry): entry is [string, RuleValue] => isRuleValue(entry[1])));
+
 export type { Rule, RuleGroup, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';

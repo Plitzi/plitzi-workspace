@@ -10,18 +10,59 @@ import type { BrowserPage } from '../../browser';
  * `--expect`: what an element shows, held to the text asked — and a short label broken onto two lines (`label-wraps`).
  */
 
-/** What the first element `selector` names shows, as a visitor reads it — `null` when none is on the page. In the page. */
-export const shownTextInPage = (selector: string): string | null => {
-  const node = document.querySelector(selector);
+/** The copies of one element on the page: how many there are, and what each one drawn shows. */
+export interface Copies {
+  present: number;
+  /** Each copy drawn — on the page, with a box of its own — by what it shows, whitespace folded. */
+  shown: string[];
+}
 
-  return node instanceof HTMLElement ? node.innerText : node === null ? null : node.textContent;
+/** Every copy `selector` names — each row of a list — as a visitor reads it. In the page. */
+export const copiesInPage = (selector: string): Copies => {
+  const nodes = Array.from(document.querySelectorAll(selector));
+
+  return {
+    present: nodes.length,
+    shown: nodes
+      .filter(node => node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden')
+      .map(node => (node instanceof HTMLElement ? node.innerText : node.textContent).replace(/\s+/g, ' ').trim())
+  };
 };
 
-/** Whether the first element `selector` names is drawn: on the page, and with a box of its own. In the page. */
-export const isShownInPage = (selector: string): boolean => {
-  const node = document.querySelector(selector);
+const quoted = (shown: string): string => `"${shown.length > 160 ? `${shown.slice(0, 160)}…` : shown}"`;
 
-  return node !== null && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden';
+/**
+ * Why the page does not meet one `--expect`, or nothing when it does. Any copy meets it — a list's rows share their ids,
+ * and a lead's "the list holds Juno" read the first row's Nova; `!` holds when none does — a guest shown no band.
+ */
+export const expectationMissed = (
+  { element, text, absent }: Expectation,
+  copies: Copies,
+  onPage: readonly string[]
+): string | undefined => {
+  const said = `--expect ${absent ? '!' : ''}${element}${text === '' ? '' : `~${text}`}`;
+  const showing = copies.shown.filter(each => each.toLowerCase().includes(text.toLowerCase()));
+  if (absent) {
+    return showing.length === 0
+      ? undefined
+      : `${said}: ${element} ${text === '' ? 'is shown' : `shows ${quoted(showing[0] ?? '')}`}${copies.shown.length > 1 ? ` (${String(showing.length)} of its ${String(copies.shown.length)} copies)` : ''}`;
+  }
+
+  if (showing.length > 0) {
+    return undefined;
+  }
+
+  if (copies.present === 0) {
+    return `${said}: no element ${element} is on the page${meantOnPage(element, onPage)}`;
+  }
+
+  if (copies.shown.length === 0) {
+    return `${said}: ${element} is on the page, hidden${copies.present > 1 ? ` — all ${String(copies.present)} copies` : ''}`;
+  }
+
+  return copies.shown.length === 1
+    ? `${said}: ${element} shows ${quoted(copies.shown[0] ?? '')}`
+    : `${said}: none of ${element}'s ${String(copies.shown.length)} copies shows it — ${copies.shown.slice(0, 4).map(quoted).join(', ')}${copies.shown.length > 4 ? '…' : ''}`;
 };
 
 /**
@@ -118,7 +159,7 @@ export const meantOnPage = (element: string, onPage: readonly string[]): string 
   const copies = onPage.filter(id => id === meant).length;
 
   return copies > 1
-    ? ` — ${meant} is, ${String(copies)} times: a list’s row has the same ids in every row, so none is named per row; --expect reads the first`
+    ? ` — ${meant} is, ${String(copies)} times: a list’s row has the same ids in every row, so none is named per row; --expect ${meant}~<text> holds when any row shows it`
     : ` — did you mean ${meant}?`;
 };
 
@@ -137,36 +178,13 @@ export const missedExpectations = async (
       Array.from(document.querySelectorAll(selector), node => node.getAttribute('data-plitzi-el') ?? ''),
     '[data-plitzi-el]'
   );
-  for (const { element, text } of expect) {
-    if (text === '') {
-      if (await page.evaluate(isShownInPage, selectorOf(authored, element))) {
-        met.push(element);
-      } else {
-        missed.push({
-          code: 'expected-text',
-          message: `--expect ${element}: ${element} is not shown on the page${meantOnPage(element, onPage)}`,
-          elementId: element,
-          width
-        });
-      }
-
-      continue;
-    }
-
-    const found = await page.evaluate(shownTextInPage, selectorOf(authored, element));
-    const shown = found === null ? undefined : found.replace(/\s+/g, ' ').trim();
-    if (shown === undefined || !shown.toLowerCase().includes(text.toLowerCase())) {
-      missed.push({
-        code: 'expected-text',
-        message:
-          shown === undefined
-            ? `--expect ${element}~${text}: no element ${element} is on the page${meantOnPage(element, onPage)}`
-            : `--expect ${element}~${text}: ${element} shows "${shown.length > 160 ? `${shown.slice(0, 160)}…` : shown}"`,
-        elementId: element,
-        width
-      });
+  for (const expected of expect) {
+    const copies = await page.evaluate(copiesInPage, selectorOf(authored, expected.element));
+    const message = expectationMissed(expected, copies, onPage);
+    if (message === undefined) {
+      met.push(`${expected.absent ? '!' : ''}${expected.element}${expected.text === '' ? '' : `~${expected.text}`}`);
     } else {
-      met.push(`${element}~${text}`);
+      missed.push({ code: 'expected-text', message, elementId: expected.element, width });
     }
   }
 

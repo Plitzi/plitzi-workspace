@@ -52,7 +52,8 @@ const dependsOnProblems = (task: PlannedTask, inRun: readonly RunTask[], planned
 /**
  * `plitzi run amend`: the lead corrects what a plan asks while the run is open — a task's title, acceptance, priority
  * or estimate, the goal, a note more — from the plan file edited. What makes the run's shape — which tasks there are,
- * their files, what they touch — stays as the run opened it, but for a task nobody took, which may
+ * their files — stays as the run opened it (what one touches beside them is told like any ask; a file of a task nobody
+ * took is claimed ahead of it by turns), but for a task nobody took, which may
  * leave it (less to do; its pieces of the inventory then wait, or another task covers them) — a task more is a stage
  * (`run extend`). Who a task is for
  * — its role and quality — and what it waits for change until an agent takes it, and not after: it was taken as that. A task done is not
@@ -88,8 +89,9 @@ export interface Amended {
   inventory?: true;
 }
 
-const SHAPE = ['files', 'touches'] as const;
-const ASK = ['title', 'acceptance', 'priority', 'estimateMinutes', 'milestone', 'findings'] as const;
+const SHAPE = ['files'] as const;
+// `touches` is what a task says it will change outside its own files, never held by it: told like any other ask.
+const ASK = ['title', 'acceptance', 'priority', 'estimateMinutes', 'milestone', 'findings', 'touches'] as const;
 /** The finding a plan gives a task, as its state keeps it beside what its spikes found (`startingState`). */
 const isPlanFinding = (finding: Finding): boolean => finding.by === LEAD && finding.question === PLAN_FINDING;
 // What a task waits for, and who it is for, change until it is taken: a lead clears a bottleneck by letting one start
@@ -313,7 +315,14 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
 
   for (const { task, defined, done } of changes) {
     // What the plan leaves out is dropped, not kept from before: the definition is the plan's, as amended.
-    const { milestone: _milestone, role: _role, quality: _quality, findings: _findings, ...kept } = defined;
+    const {
+      milestone: _milestone,
+      role: _role,
+      quality: _quality,
+      findings: _findings,
+      touches: _touches,
+      ...kept
+    } = defined;
     const amended: RunTask = {
       ...kept,
       title: task.title,
@@ -324,7 +333,8 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
       ...(task.role === undefined ? {} : { role: task.role }),
       ...(task.quality === undefined ? {} : { quality: task.quality }),
       ...(task.milestone === undefined ? {} : { milestone: task.milestone }),
-      ...(task.findings === undefined ? {} : { findings: task.findings })
+      ...(task.findings === undefined ? {} : { findings: task.findings }),
+      ...(task.touches === undefined ? {} : { touches: task.touches })
     };
 
     await writeJson(taskPaths(loaded.paths, task.id).definition, amended);

@@ -1,27 +1,24 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { readyWhatWaited, sayIfAllDone, statesOf } from './handOn';
-import { proposalsOf } from '../agreements';
 import { approveDesign, assertDesigner, designDue, reviewTimeOf, timedOut } from '../design';
-import { exists, fingerprint, writeJson } from '../files';
+import { writeJson } from '../files';
 import { assertReviewingLead, isCoLead, isPrincipal } from '../leads';
 import { agentAddress, LEAD, messagesOf, sendMessage, unreadFor } from '../messages';
-import { taskPaths, under } from '../paths';
-import { syncPreview } from '../preview';
+import { taskPaths } from '../paths';
 import { RunRefusal } from '../refusal';
-import { assertStatus, loadRun, logRun, readApproved, readRunLog, recordBrake, requireNoTask } from '../run';
+import { assertStatus, loadRun, logRun, readRunLog, recordBrake, requireNoTask } from '../run';
 import { logSpent } from '../spent';
 import { keepFiles, withLock } from '../store';
-import { DEFAULTS, lockedFiles, readRequests, readStart, revokeOwner, updateState, viewTask } from '../taskStore';
+import { DEFAULTS, readRequests, readStart, updateState, viewTask } from '../taskStore';
 import { DESIGNER, readTeam, startedAgents, TEAM_FILE } from '../team';
 import { buildMergeIntoRun, buildRequestsMerge, changeApproved } from './approve';
-import { at, changedInCopy, findTask, refreshCopy } from './common';
-import { grantWaiters } from './locks';
-import { integrateWhenReady, settleRequests } from './requests';
+import { closeApproved } from './closeApproved';
+import { at, findTask, refreshCopy } from './common';
+import { besideHint, partnerFor, reviewedBeside, writtenSince } from './pairApproval';
 
 import type { DesignSkip } from '../designSkip';
-import type { ProjectChange, ReviewComment, TaskStart, TaskState } from '../model';
+import type { ProjectChange, ReviewComment, TaskState } from '../model';
 import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 
@@ -56,6 +53,8 @@ export interface ReviewedTask {
   designBy?: string;
   /** Written in its copy after it went to review: not part of what was reviewed, so not merged. */
   notReviewed?: string[];
+  /** Approved beside it as one change (`--with`): that task, and its files that went in. */
+  with?: { task: string; merged: string[] };
   /**
    * Sent back while its agent is at another task: the tasks that wait on this one — that agent was told it goes first,
    * since nothing else reaches it before it finishes the one in hand.
@@ -125,29 +124,6 @@ export const notReviewedIn = async (ctx: RunContext, runId: string, taskId: stri
   return start && view.state.submitted ? writtenSince(view, start, view.state.submitted) : [];
 };
 
-/** The files its copy holds otherwise than it went to review — changed again, or changed for the first time since. */
-const writtenSince = async (
-  view: TaskView,
-  start: TaskStart,
-  submitted: Readonly<Record<string, string | null>>
-): Promise<string[]> => {
-  if (!(await exists(view.paths.work))) {
-    return [];
-  }
-
-  // A file it asked another to change went with it as the request's version: it counts as submitted at that one.
-  const asked = Object.fromEntries((await readRequests(view.paths)).map(request => [request.file, request.wanted]));
-  const sent = { ...asked, ...submitted };
-  const late = new Set((await changedInCopy(view, start)).filter(file => !Object.hasOwn(sent, file)));
-  for (const [file, digest] of Object.entries(sent)) {
-    if ((await fingerprint(under(view.paths.work, file))) !== digest) {
-      late.add(file);
-    }
-  }
-
-  return [...late].sort();
-};
-
 /**
  * Whether asking for changes now blocks the task for the lead: its rounds of this kind — the designer's on its UI, the
  * lead's on the rest — at their limit with this one. Said to the reviewer before it asks (`task next`), never found out
@@ -187,15 +163,29 @@ export const reviewTask = async (
   verdict: 'approve' | 'changes',
   comments: ReviewComment[],
   onProjectChange: ProjectChange = 'refuse',
-  options: { skipDesign?: DesignSkip } = {}
+  options: { skipDesign?: DesignSkip; with?: string } = {}
 ): Promise<ReviewedTask> => {
   requireNoTask(ctx, 'review a task');
   const loaded = await loadRun(ctx, runId);
+  if (options.with !== undefined && verdict !== 'approve') {
+    throw new RunRefusal('invalid', '--with approves two tasks as one change: it goes with --approve', {
+      task: taskId
+    });
+  }
+
   // One verdict at a time on a task: two leads saying one at once, the second reads the first's — never both merged.
-  return withLock(
-    taskPaths(loaded.paths, findTask(loaded, taskId).id).reviewLock,
-    () => decide(ctx, runId, taskId, verdict, comments, onProjectChange, options),
-    { now: ctx.now, ttlMs: 15 * 60_000, waitMs: 5 * 60_000 }
+  const locked = (id: string, then: () => Promise<ReviewedTask>): Promise<ReviewedTask> =>
+    withLock(taskPaths(loaded.paths, findTask(loaded, id).id).reviewLock, then, {
+      now: ctx.now,
+      ttlMs: 15 * 60_000,
+      waitMs: 5 * 60_000
+    });
+  const partner = options.with;
+
+  return locked(taskId, () =>
+    partner === undefined
+      ? decide(ctx, runId, taskId, verdict, comments, onProjectChange, options)
+      : locked(partner, () => decide(ctx, runId, taskId, verdict, comments, onProjectChange, options))
   );
 };
 
@@ -206,7 +196,7 @@ const decide = async (
   verdict: 'approve' | 'changes',
   comments: ReviewComment[],
   onProjectChange: ProjectChange,
-  { skipDesign }: { skipDesign?: DesignSkip }
+  { skipDesign, with: withId }: { skipDesign?: DesignSkip; with?: string }
 ): Promise<ReviewedTask> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'review a task');
@@ -384,6 +374,7 @@ const decide = async (
     throw new RunRefusal('invalid', `Task "${taskId}"'s copy is gone: reassign it (plitzi task reassign ${taskId})`);
   }
 
+  const partner = withId === undefined ? undefined : await partnerFor(ctx, loaded, taskId, withId);
   const round = view.state.round + 1;
   const changed = view.state.changed ?? [];
   // What went to review is what is reviewed: written in the copy after `complete`, a change is not part of this round.
@@ -471,6 +462,14 @@ const decide = async (
   const requests = await readRequests(view.paths);
   const own = requests.filter(request => merged.includes(request.file));
   const asked = requests.filter(request => !merged.includes(request.file));
+  if (partner && asked.length > 0) {
+    throw new RunRefusal(
+      'invalid',
+      `--with ${partner.view.task.id}: ${taskId} asks changes of shared files, which go in through its own approval — approve one of them on its own first`,
+      { task: taskId }
+    );
+  }
+
   const onConflict = async (error: unknown): Promise<never> => {
     if (error instanceof RunRefusal && error.code === 'conflict') {
       await recordBrake(ctx, loaded, 'conflict', taskId);
@@ -509,8 +508,25 @@ const decide = async (
     : await changeApproved(
         ctx,
         loaded,
-        approved => buildMergeIntoRun(ctx, loaded, view, start, submitted, onProjectChange, approved),
-        { checkAlways: asked.length > 0 }
+        async approved => {
+          const files = await buildMergeIntoRun(ctx, loaded, view, start, submitted, onProjectChange, approved);
+          if (!partner) {
+            return files;
+          }
+
+          const beside = await buildMergeIntoRun(
+            ctx,
+            loaded,
+            partner.view,
+            partner.start,
+            partner.submitted,
+            onProjectChange,
+            files.next
+          );
+
+          return { next: beside.next, merged: [...files.merged, ...beside.merged] };
+        },
+        { checkAlways: asked.length > 0 || partner !== undefined }
       ).catch(onConflict);
   if (into && 'failed' in into) {
     const failing = into.failed.steps.filter(step => !step.ok);
@@ -518,7 +534,7 @@ const decide = async (
       'conflict',
       asked.length > 0
         ? `Task "${taskId}"'s files fail the project's checks (${failing.map(step => step.name).join(', ')}) without what it asked of ${asked.map(request => request.file).join(', ')}, and with it: nothing was merged — send it back (--changes) to redo it on the run's version`
-        : `Task "${taskId}"'s change, put together with the run's newer version, fails the project's checks (${failing.map(step => step.name).join(', ')}): nothing was merged — send it back (--changes) to redo it on the run's version`,
+        : `Task "${taskId}"'s change${partner ? ` beside ${partner.view.task.id}'s` : ''}, put together with the run's newer version, fails the project's checks (${failing.map(step => step.name).join(', ')}): nothing was merged — send it back (--changes) to redo it on the run's version${await besideHint(loaded, taskId, partner)}`,
       { task: taskId, steps: failing }
     );
   }
@@ -560,115 +576,26 @@ const decide = async (
         }
       : undefined;
 
-  const released = [...(await lockedFiles(view.paths)).keys()];
-  await fs.rm(view.paths.locks, { recursive: true, force: true });
-  await revokeOwner(view.paths);
-  await updateState(
-    view.paths,
-    state => ({
-      ...state,
-      round,
-      status: 'done',
-      ...(skipped
-        ? {
-            design: {
-              status: 'skipped' as const,
-              round: state.round,
-              by: ctx.agent,
-              at: at(ctx),
-              ...(why ? { why } : {})
-            }
-          }
-        : {})
-    }),
-    ctx.now
-  );
-  // Said the moment it is so: the approval is in the run's work, whatever the steps after it meet — written last, one
-  // that failed after it left an approval the log never had (t-tier-list, approved and nowhere in the log).
-  await logRun(ctx, loaded.paths, {
-    action: 'review',
-    task: taskId,
-    verdict,
+  const closed = await closeApproved(ctx, loaded, view, {
     round,
     merged,
     fulfilled,
-    // Nothing silent: a request that did not go in, and why — its integration task applies it.
     ...(unmerged ? { unmerged } : {}),
-    ...(skipped ? { design: 'skipped', ...(why ? { designSkip: why } : {}) } : {}),
-    ...(skipped && view.state.design?.by ? { designBy: view.state.design.by } : {})
+    ...(skipped ? { skipped: true as const, ...(why ? { why } : {}) } : {}),
+    notReviewed
   });
-  await logSpent(ctx, loaded, taskId, 'review');
-  await fs.rm(view.paths.cache, { recursive: true, force: true });
-
-  const refreshed = await loadRun(ctx, runId);
-  const granted = await grantWaiters(ctx, refreshed, released);
-  const settled = await settleRequests(ctx, refreshed, released);
-  const ready = await readyWhatWaited(ctx, refreshed);
-  const states = await statesOf(refreshed);
-
-  // What another task agreed with this one may wait on this one's work: it is in the run's now — said to each, so an
-  // agreement accepted before it could be applied is applied, not forgotten.
-  const agreed = (await proposalsOf(refreshed)).filter(
-    each => each.from === taskId && each.answer?.verdict === 'accept' && states.get(each.to)?.status !== 'done'
-  );
-  for (const each of agreed) {
-    await sendMessage(ctx, refreshed, {
-      from: taskId,
-      to: each.to,
-      text: `${taskId} is approved: what you agreed with it (${each.id}: ${each.change.slice(0, 160)}${each.change.length > 160 ? '…' : ''}) can be applied now — its files are in the run's work, and your copy brings them with your next complete or plitzi task discard <file>`
-    });
+  if (!partner) {
+    return closed;
   }
 
-  // What the approval let go: the files handed to the tasks waiting for them, and the tasks it made ready.
-  if (granted.length > 0 || ready.length > 0) {
-    await logRun(ctx, loaded.paths, { action: 'handed-on', task: taskId, granted, ready });
-  }
-
-  // A designer at its UI review learns it is decided, never finds out by a refusal (design-1 on t-motion).
-  const designer = skipped ? view.state.design?.by : undefined;
-  if (designer) {
-    await sendMessage(ctx, refreshed, {
-      from: LEAD,
-      to: agentAddress(designer),
-      text: `${taskId} is approved without its UI review (the lead went first): drop that review — what you found still matters, tell the lead with plitzi task tell --about ${taskId} "…"`
-    });
-  }
-
-  // What is connected shows as it is approved: a running preview of the run takes the approved work in now. A preview
-  // that cannot take it is said, never the approval undone by it.
-  const previewProblem = await syncPreview(refreshed, ctx.root).then(
-    () => undefined,
-    (error: unknown) => (error instanceof Error ? error.message : String(error))
-  );
-  if (previewProblem !== undefined) {
-    await logRun(ctx, loaded.paths, { action: 'preview-sync-failed', task: taskId, error: previewProblem });
-  }
-
-  const integrations = await withLock(refreshed.paths.mergeLock, () => integrateWhenReady(ctx, refreshed), {
-    now: ctx.now
+  // In beside it, as one change: its review said now, then closed as an approval of its own.
+  await reviewedBeside(ctx, partner, taskId, comments);
+  const besideClosed = await closeApproved(ctx, loaded, partner.view, {
+    round: partner.round,
+    merged: Object.keys(partner.submitted),
+    fulfilled: [],
+    notReviewed: partner.notReviewed
   });
 
-  // The last approval — no integration made by it either: every task of the run done.
-  await sayIfAllDone(ctx, runId);
-
-  const joined = Object.entries((await readApproved(loaded.paths)).files)
-    .filter(([, entry]) => entry.task === taskId && entry.joined !== undefined)
-    .map(([file]) => file);
-
-  return {
-    verdict,
-    round,
-    merged,
-    granted,
-    ready: [...ready, ...integrations],
-    integrations,
-    ...(previewProblem === undefined ? {} : { previewProblem }),
-    settled,
-    fulfilled,
-    ...(unmerged ? { unmerged } : {}),
-    ...(joined.length > 0 ? { joined } : {}),
-    ...(skipped ? { design: 'skipped' as const, ...(why ? { designSkip: why } : {}) } : {}),
-    ...(skipped && view.state.design?.by ? { designBy: view.state.design.by } : {}),
-    ...(notReviewed.length > 0 ? { notReviewed } : {})
-  };
+  return { ...closed, with: { task: partner.view.task.id, merged: besideClosed.merged ?? [] } };
 };

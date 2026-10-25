@@ -91,7 +91,8 @@ export const expandPlacePair = (
 
 // A grid line's omitted end mirrors its start only when the start names an area (a custom ident); otherwise it is auto.
 const GRID_IDENT_RE = /^-?[A-Za-z_][\w-]*$/;
-const pairedLine = (line: string): string => (GRID_IDENT_RE.test(line) && line !== 'auto' && line !== 'span' ? line : 'auto');
+const pairedLine = (line: string): string =>
+  GRID_IDENT_RE.test(line) && line !== 'auto' && line !== 'span' ? line : 'auto';
 
 // grid-row / grid-column: `start / end`.
 export const expandGridLine = (key: 'grid-row' | 'grid-column', value: string, out: CssProps): void => {

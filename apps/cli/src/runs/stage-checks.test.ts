@@ -3,7 +3,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
-import { expectedIds, partIdsOf } from './expectations';
+import { expectedIds, madeTwice, partIdsOf } from './expectations';
 import { extendRun } from './extend';
 import { loadRun, openRun } from './run';
 import { meantOnPage } from '../commands/check';
@@ -66,6 +66,22 @@ describe('a stage’s plan, and what its checks expect', () => {
       'one a page: pet-luna-age-label, pet-kira-age-label'
     );
     expect(meantOnPage('age-label', ['pet-luna-age-label'])).toContain('did you mean pet-luna-age-label?');
+  });
+});
+
+// A lead planned follow-list on the followers page and on the following page, each its own file: an id is one element.
+describe('an id two tasks make on two pages', () => {
+  it('is said at run plan, once — an id one task expects on two pages is a shell part, never', () => {
+    expect(
+      madeTwice([
+        { task: 't-followers', element: 'follow-list', pages: ['/u/ana/followers'] },
+        { task: 't-following', element: 'follow-list', pages: ['/u/ana/following'] },
+        { task: 't-following', element: 'follow-list', pages: ['/u/ana/following'] },
+        { task: 't-nav', element: 'nav-home', pages: ['/', '/about'] }
+      ])
+    ).toEqual([
+      "follow-list is expected by t-followers and t-following on /u/ana/followers and /u/ana/following, and the space has none now: an element's id is the space's, one element — each page names its own (or both place one component, made by one task)"
+    ]);
   });
 });
 

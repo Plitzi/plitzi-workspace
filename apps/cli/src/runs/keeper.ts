@@ -29,14 +29,16 @@ export interface LaunchFailed {
   message: string;
 }
 
-/** What starts an agent, in `harness`: `launchAgent`, or a test's stand-in. */
-export type StartAgent = (agent: string, harness: string) => Promise<void>;
+/**
+ * What starts an agent, in `harness` — `launchAgent`, or a test's stand-in: `running` when it was started meanwhile by
+ * another (the keeper, a lead's watch), what was asked being so.
+ */
+export type StartAgent = (agent: string, harness: string) => Promise<'started' | 'running'>;
 
 const startWithLaunch =
   (ctx: RunContext, runId: string): StartAgent =>
-  async (agent, harness) => {
-    await launchAgent(ctx, runId, agent, await harnessOf(harness));
-  };
+  async (agent, harness) =>
+    'running' in (await launchAgent(ctx, runId, agent, await harnessOf(harness))) ? 'running' : 'started';
 
 /** Every `agents-needed` notice of the view, its agent started in the team's `options.launch` harness. */
 export const launchAsked = async (
@@ -57,16 +59,12 @@ export const launchAsked = async (
   const failed: LaunchFailed[] = [];
   for (const agent of asked) {
     try {
-      await start(agent, harness);
-      started.push(agent);
+      if ((await start(agent, harness)) === 'started') {
+        started.push(agent);
+      }
     } catch (error) {
       if (!isRunRefusal(error)) {
         throw error;
-      }
-
-      // Started meanwhile by another — the keeper, a lead's watch: what was asked is so, and no failure to say.
-      if (error.detail.running === true) {
-        continue;
       }
 
       failed.push({ agent, message: error.message });

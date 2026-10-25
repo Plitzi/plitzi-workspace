@@ -34,9 +34,9 @@ const SHOWN_LOOK = 20;
 
 /**
  * The first match of `selector` a visitor sees, as a selector: itself when it is the first, `… >> nth=N` when an
- * earlier one is hidden, and itself again when none is shown (measured as it is, hidden or not).
+ * earlier one is hidden, and itself again when none is shown — measured as it is, and said hidden.
  */
-const firstShown = async (page: BrowserPage, selector: string): Promise<string> => {
+const firstShown = async (page: BrowserPage, selector: string): Promise<{ selector: string; hidden: boolean }> => {
   for (let index = 0; index < SHOWN_LOOK; index += 1) {
     const nth = `${selector} >> nth=${String(index)}`;
     const match = page.locator(nth).first();
@@ -45,11 +45,11 @@ const firstShown = async (page: BrowserPage, selector: string): Promise<string> 
     }
 
     if (await match.isVisible()) {
-      return index === 0 ? selector : nth;
+      return { selector: index === 0 ? selector : nth, hidden: false };
     }
   }
 
-  return selector;
+  return { selector, hidden: true };
 };
 
 /** One element of an open page, measured — or why it could not be. */
@@ -66,9 +66,7 @@ export const measureOn = async (page: BrowserPage, target: string): Promise<Meas
   // Of several matches, the first a visitor sees: the original's first `.header__heading-logo` is its hidden menu
   // drawer's, and whichever the page drew first was measured — 0 px one call, 140 px the next (a run's finish).
   const shown = await firstShown(page, found.selector);
-  if (shown !== found.selector) {
-    found.selector = shown;
-  }
+  found.selector = shown.selector;
 
   // A picture is measured drawn: read before it loads, an <img> sized by its own picture is 0 px wide, or "auto" tall
   // (the original's logo read 140 px one call and 0 px the next, and failed the finish). A lazy one is asked
@@ -94,6 +92,7 @@ export const measureOn = async (page: BrowserPage, target: string): Promise<Meas
   return {
     selector: found.selector,
     ...(matches > 1 ? { matches } : {}),
+    ...(shown.hidden ? { hidden: true as const } : {}),
     ...(await page
       .locator(found.selector)
       .first()

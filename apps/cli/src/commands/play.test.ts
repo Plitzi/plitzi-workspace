@@ -2,9 +2,10 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { playedText, unlikeIn, verdictOf } from './play';
+import { playedText, playOn, readTargets, stepsOf, unlikeIn, verdictOf } from './play';
 
-import type { ElementState, PlayedStep } from './play';
+import type { PlayedStep, PlaySide } from './play';
+import type { ElementState } from './playState';
 
 const at = (x: number, shown = true, enabled = true): ElementState => ({
   offset: { x, y: 0 },
@@ -195,5 +196,62 @@ describe('what a step left', () => {
       '  → /rooms?genre=synthwave',
       '  avatar: hidden, enabled · float finished · colour now rgb(0, 160, 160) on rgb(20, 20, 20) (was rgb(255, 176, 0) on rgb(20, 20, 20))'
     ]);
+  });
+});
+
+// Agents wrote `--read a,b,c` as `--width 390,1440` takes them, five times, and it was read as one element after every
+// step had run — the demo's data used up; and `--steps ""` to read a page at rest had no way to say it.
+describe('what page play is asked', () => {
+  it('reads a comma list of element ids as each of them, and keeps a selector whole', () => {
+    expect(readTargets(['crate-count,crate-list', 'room-key'])).toEqual(['crate-count', 'crate-list', 'room-key']);
+    expect(readTargets(['.card, .row'])).toEqual(['.card, .row']);
+  });
+
+  it('reads the page as it rests with --read alone, and needs one of the two', () => {
+    expect(stepsOf({ read: ['crate-count'] })).toEqual([]);
+    expect(stepsOf({ steps: '  ', read: ['crate-count'] })).toEqual([]);
+    expect(stepsOf({})).toEqual({
+      problem: 'page play needs --steps — or --read alone, to read the page as it rests.'
+    });
+    expect(stepsOf({ steps: 'click save-key' })).toHaveLength(1);
+  });
+});
+
+// A sticky preview read "moved 315px down" after a click on a switch out of view: the page's scroll to reach the switch.
+describe('page play, a target out of view', () => {
+  it('scrolls it into view before the step, and measures what moved from there', async () => {
+    let scrolled = false;
+    const acted: string[] = [];
+    const side: PlaySide = {
+      act: step => {
+        acted.push(step.kind);
+        scrolled ||= step.kind === 'scroll';
+
+        return Promise.resolve(undefined);
+      },
+      read: targets =>
+        Promise.resolve(
+          targets.map(target =>
+            target === 'switch'
+              ? { ...at(0), inView: scrolled ? ('whole' as const) : ('out' as const) }
+              : { ...at(0), offset: { x: 0, y: scrolled ? -315 : 0 } }
+          )
+        )
+    };
+
+    const result = await playOn(
+      { here: side },
+      [{ kind: 'click', target: 'switch' }],
+      [{ here: 'preview', there: 'preview' }]
+    );
+    if (!('played' in result)) {
+      throw new Error(result.problem);
+    }
+
+    expect(acted).toEqual(['scroll', 'click']);
+    expect(result.played[1]).toMatchObject({ reached: true, reads: [{ moved: { here: { x: 0, y: 0 } } }] });
+    expect(playedText(result.played).map(line => stripVTControlCharacters(line))).toContain(
+      '  (scrolled into view first, as a pointer reaches it: moves are from there)'
+    );
   });
 });

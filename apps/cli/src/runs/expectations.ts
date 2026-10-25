@@ -95,13 +95,35 @@ const componentPartIds = async (root: string): Promise<string[]> => {
   return 'problem' in project ? [] : partIdsOf(project.space.components ?? []);
 };
 
+/**
+ * The ids the space has none of that two tasks expect on two pages, said: an id is the space's, one element — each would
+ * make it, and the second be refused (a run's lead planned follow-list on the followers and the following pages).
+ */
+export const madeTwice = (missing: readonly { task: string; element: string; pages: readonly string[] }[]): string[] =>
+  [...new Set(missing.map(expected => expected.element))].flatMap(element => {
+    const where = missing.filter(expected => expected.element === element && expected.pages.length > 0);
+    const tasks = [...new Set(where.map(expected => expected.task))];
+    const pages = [...new Set(where.flatMap(expected => expected.pages))];
+
+    return tasks.length > 1 && pages.length > 1
+      ? [
+          `${element} is expected by ${tasks.join(' and ')} on ${pages.join(' and ')}, and the space has none now: an element's id is the space's, one element — each page names its own (or both place one component, made by one task)`
+        ]
+      : [];
+  });
+
 /** Each expected id of the plan's checks the space has no element of now, said with what it more likely meant. */
 export const expectationNotices = async (root: string, tasks: readonly PlannedTask[]): Promise<string[]> => {
   const wanted = tasks.flatMap(task =>
     task.acceptance.flatMap(each =>
       typeof each === 'string'
         ? []
-        : expectedIds(each.check).map(expected => ({ task: task.id, said: acceptanceText(each), ...expected }))
+        : expectedIds(each.check).map(expected => ({
+            task: task.id,
+            said: acceptanceText(each),
+            ...expected,
+            pages: expected.path ? [expected.path] : checkedPaths(each.check).flatMap(asked => asked.paths)
+          }))
     )
   );
   if (wanted.length === 0) {
@@ -137,11 +159,14 @@ export const expectationNotices = async (root: string, tasks: readonly PlannedTa
   const byTask = new Map<string, typeof missing>();
   missing.forEach(expected => byTask.set(expected.task, [...(byTask.get(expected.task) ?? []), expected]));
 
-  return [...byTask].map(([task, each]) =>
-    each.length === 1
-      ? `Task "${task}": the check of "${each[0].said}" expects ${each[0].element}${each[0].path ? ` on ${each[0].path}` : ''}, which the space has no element of now${meantOnPage(each[0].element, ids)} — the task makes it, or the check names the one that is there`
-      : `Task "${task}": its checks expect ${[...new Set(each.map(expected => expected.element))].join(', ')}, which the space has none of now — the task makes them, or a check names the one that is there`
-  );
+  return [
+    ...[...byTask].map(([task, each]) =>
+      each.length === 1
+        ? `Task "${task}": the check of "${each[0].said}" expects ${each[0].element}${each[0].path ? ` on ${each[0].path}` : ''}, which the space has no element of now${meantOnPage(each[0].element, ids)} — the task makes it, or the check names the one that is there`
+        : `Task "${task}": its checks expect ${[...new Set(each.map(expected => expected.element))].join(', ')}, which the space has none of now — the task makes them, or a check names the one that is there`
+    ),
+    ...madeTwice(missing)
+  ];
 };
 
 /** The addresses a check's `page check` commands ask — those before any flag — and whether they say a status. */

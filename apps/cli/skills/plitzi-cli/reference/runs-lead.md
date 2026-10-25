@@ -45,7 +45,7 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    ```
 
    **Acceptance a command can tell** is `{ said, check }`: it runs in the task's copy at `complete`, passing on exit 0 —
-   `plitzi` is this CLI, `$PLITZI_URL` the copy served. `page check --expect "<id>~<text>"` fails when that element does not show the text — check what a
+   `plitzi` is this CLI, `$PLITZI_URL` the copy served. `page check --expect "<id>~<text>"` fails when no copy of that element (any row of a list) shows the text, `"!<id>"` when one is shown — check what a
    page shows, not a file's text. Else, text — and only text holds at your review alone:
    a later task can undo it unseen (`run plan` names a task with no check). A check runs again on the whole result at
    the finish. **`notes`** hold for the whole run;
@@ -149,7 +149,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
   once more, and live data fails it twice. `plitzi server reset` puts a copy back to its cold start.
 - **What a task builds on is in its `dependsOn`**, not only in its words: a finding naming another task's component is a
   dependency `run plan` cannot see.
-- **A stage reads `run view`, not memory**: a task that merges a file one not done holds waits for it (`dependsOn`).
+- **A stage reads `run status`, not memory**: a task that merges a file one not done holds waits for it (`dependsOn`).
 - **A line nothing can answer is yours at once**: its command exits 2 (an element not there — a copied site's too —
   nothing served), you are told, and every try of the task fails on it until you amend it — never the agent's to bend.
 - **A command you hand an agent you ran**, as a line you write: one `--same` refused cost a round.

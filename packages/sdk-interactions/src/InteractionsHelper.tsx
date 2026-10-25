@@ -2,6 +2,7 @@ import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
 
 import { pConsole } from '@plitzi/sdk-shared/devTools';
+import { ruleValuesOf } from '@plitzi/sdk-shared/helpers';
 import { MAX_PARAM_PASSES, resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { coerceDeclaredParams } from './helpers/coerceDeclaredParams';
@@ -86,12 +87,6 @@ const processParams = (
 };
 
 /** What a condition can compare: the page's data, without the functions a source may also carry. */
-const isRuleValue = (value: unknown): value is RuleValue =>
-  typeof value !== 'function' && typeof value !== 'symbol' && typeof value !== 'bigint';
-
-const ruleValues = (values: Record<string, unknown>): Record<string, RuleValue> =>
-  Object.fromEntries(Object.entries(values).filter((entry): entry is [string, RuleValue] => isRuleValue(entry[1])));
-
 type NodeOutcome = {
   status: InteractionNodeStatus;
   result: unknown;
@@ -126,7 +121,7 @@ const processNode = (
     return { status: 'disabled', result: {}, postCallbacks };
   }
 
-  const whenParams = ruleValues({ ...globalParams, ...flowParams, [id]: params });
+  const whenParams = ruleValuesOf({ ...globalParams, ...flowParams, [id]: params });
   if (when && !QueryBuilderEvaluator(when, whenParams)) {
     return { status: 'skipped', result: {}, postCallbacks, whenParams };
   }
@@ -359,7 +354,11 @@ const flowTrigger = async (
 ) => {
   const startTime = pConsole.getTime().valueOf();
   const { action, enabled, when } = triggerNode;
-  if (!action || !enabled || (when && !QueryBuilderEvaluator(when, ruleValues({ ...readGlobals(), ...flowParams })))) {
+  if (
+    !action ||
+    !enabled ||
+    (when && !QueryBuilderEvaluator(when, ruleValuesOf({ ...readGlobals(), ...flowParams })))
+  ) {
     storeLog(triggerNode, startTime, {}, 'skipped', hostElementId);
 
     return;

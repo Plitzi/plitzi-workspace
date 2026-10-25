@@ -204,12 +204,13 @@ export const FILTER_DOCS: Record<string, FilterDoc> = {
   date: {
     signature: 'date(format, timeZone?)',
     summary:
-      'A date as format writes it — Y m d j n H G h g A a i s w N U l D F M; an epoch in seconds or milliseconds; with no zone named, the visitor’s own once the page hydrates (the server’s before); "now" is the render’s moment; a bare YYYY-MM-DD is read in "UTC"',
+      'A date as format writes it — Y m d j n H G h g A a i s w N U l D F M; an epoch in seconds or milliseconds; with no zone named, the visitor’s local time once the page hydrates (the server’s before); "now" is the render’s moment; a bare YYYY-MM-DD is read in "UTC"',
     example: '{{ expense.date|date("j M Y", "UTC") }} · {{ message.at|date("H:i") }} · {{ "now"|date("F Y") }}'
   },
   ago: {
     signature: 'ago(locale?)',
-    summary: 'How long ago a moment was, or how far ahead, in words — "4 minutes ago", "in 3 hours", "now"',
+    summary:
+      'Relative time: how long ago a moment was, or how far ahead, in words — "4 minutes ago", "in 3 hours", "now" — at the render’s moment, on the server and again in the browser',
     example: '{{ played.endedAt|ago }} · {{ post.at|ago("es") }}'
   },
   duration: {

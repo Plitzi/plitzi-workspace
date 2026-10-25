@@ -389,10 +389,12 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
 
   // What the actions and functions keep, in one file this process holds — a second server of the project is refused,
   // naming this one, rather than both writing over each other's changes. A worker reaches it through the primary.
+  // How to stop it is in the name: a run's agent started its own beside the one a page check kept, and stopped short.
+  const holder = `the server of "${name}", on port ${String(port)} (plitzi server stop --port ${String(port)} stops it)`;
   let keptKv: FileKv | undefined;
   const kvFile = path.resolve(root, process.env[KV_FILE_ENV] || KV_FILE);
   const kv = fleetKv(() => {
-    keptKv = createFileKv({ file: kvFile, owner: `the server of "${name}", on port ${String(port)}` });
+    keptKv = createFileKv({ file: kvFile, owner: holder });
 
     return keptKv;
   });
@@ -411,7 +413,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
             fleetJobQueue(() => {
               keptJobs = createFileJobQueue({
                 file: path.join(path.dirname(kvFile), path.basename(JOBS_FILE)),
-                owner: `the server of "${name}", on port ${String(port)}`
+                owner: holder
               });
 
               return keptJobs;

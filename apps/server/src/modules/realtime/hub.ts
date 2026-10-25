@@ -207,14 +207,17 @@ export const createRealtimeHub = (pubsub: PubSubAdapter, retained: RealtimeRetai
     /**
      * Subscribes a new connection to its topics, hands it what each `retain: true` one keeps, and tells the members of
      * each presence channel it arrived. What is kept is read AFTER joining, so nothing said in between is missed; a
-     * message heard live and then kept arrives twice, and the page keeps the newer of a type by its `at`.
+     * message heard live and then kept arrives twice, and the page keeps the newer of a type by its `at`. Each kept one
+     * is `replayed`: a page that joins tells it from what is said now.
      */
     connect: async (connection: RealtimeConnection): Promise<void> => {
       byToken.set(connection.token, connection);
       for (const [topic, declaration] of connection.topics) {
         await join(connection, topic);
         if (declaration.retain === true) {
-          (await retained.of(connection.space, topic)).forEach(message => connection.send('message', message));
+          (await retained.of(connection.space, topic)).forEach(message =>
+            connection.send('message', { ...message, replayed: true })
+          );
         }
 
         if (declaration.presence && !connection.observer) {

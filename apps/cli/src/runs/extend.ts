@@ -128,7 +128,8 @@ export const extendRun = async (
             .map(async task => (await viewTask(loaded.paths, task)).state.status)
         )
       ).filter(status => status !== 'done').length,
-      work
+      work,
+      loaded.tasks
     );
   } catch (error) {
     if (error instanceof PlanRefusal) {

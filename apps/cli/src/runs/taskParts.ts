@@ -18,9 +18,6 @@ export interface TaskParts {
   ownsRoot: boolean;
 }
 
-/** The types that draw no node of their own — a data provider — whose children are what is on the page. */
-const TAGLESS = new Set(['apiContainer']);
-
 export const taskParts = async (copy: string, files: readonly string[]): Promise<TaskParts | undefined> => {
   const located = await locatedSpace(copy);
   if ('problem' in located) {
@@ -39,11 +36,12 @@ export const taskParts = async (copy: string, files: readonly string[]): Promise
     located.flatMap(element => element.children.map(child => [child, element.elementId] as const))
   );
   const byId = new Map(located.map(element => [element.elementId, element] as const));
-  // A provider draws no node of its own: a picture is clipped to what it holds.
+  // A provider with no tag, a channel, a plugin's that draws nothing: no box of its own — a picture is clipped to what
+  // it holds, and one that holds nothing is not pictured (a run's look tried a task's two channels on 14 pages).
   const drawn = (id: string): string[] => {
     const element = byId.get(id);
 
-    return element && TAGLESS.has(element.type) ? element.children.flatMap(drawn) : [id];
+    return element?.boxless ? element.children.flatMap(drawn) : [id];
   };
   const tops = located
     .filter(element => mine.has(element.elementId) && !mine.has(parentOf.get(element.elementId) ?? ''))

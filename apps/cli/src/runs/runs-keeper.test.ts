@@ -56,7 +56,7 @@ describe("the run's keeper", () => {
     const start: StartAgent = agent => {
       started.push(agent);
 
-      return Promise.resolve();
+      return Promise.resolve('started');
     };
     expect(await keepOnce(lead(), 'es-launch', start)).toEqual({ started: ['dev-1'], failed: [] });
     expect(started).toEqual(['dev-1']);
@@ -102,8 +102,7 @@ describe('an agent started meanwhile by another', () => {
     await openRun(lead(), await bench.writePlan(benchPlan()));
     bench.advance(STARTING_MS);
 
-    const already: StartAgent = agent =>
-      Promise.reject(new RunRefusal('invalid', `${agent} is running (pid 1)`, { running: true }));
+    const already: StartAgent = () => Promise.resolve('running');
     expect(await keepOnce(lead(), 'es-launch', already)).toEqual({ started: [], failed: [] });
 
     const broken: StartAgent = () => Promise.reject(new RunRefusal('invalid', 'claude did not start: no PATH'));

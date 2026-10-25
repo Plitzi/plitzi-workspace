@@ -196,6 +196,12 @@ export const ELEMENT_CODES = {
       'a provider with an `action` or a `connector` asked from the browser — only the page server resolves those, so it never asks',
     fix: "`runtime: 'server'` on the provider"
   },
+  'server-when-unknown': {
+    kind: 'warned',
+    means:
+      "a server provider's `when` that reads what the browser alone holds — a `state`, a variable, a browser provider — so the page server resolves it whatever it says",
+    fix: 'wait on what the server knows (`navigation`, `auth`, a server provider’s answer), or ask it from the browser with a `query`'
+  },
   'not-found-in-browser': {
     kind: 'refused',
     means:

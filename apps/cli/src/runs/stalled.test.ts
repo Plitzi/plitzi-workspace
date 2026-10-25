@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { extendRun } from './extend';
 import { STALL_MS } from './stalled';
-import { blockTask, claimFile } from './tasks';
+import { allLocks, blockTask, claimFile } from './tasks';
 import { viewRun } from './view';
-import { benchPlan, makeBench } from '../tests/runProject';
+import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
 import type { Bench } from '../tests/runProject';
@@ -46,6 +46,8 @@ describe('a run that stands still', () => {
       ]
     };
     await extendRun(lead(), runId, await bench.writePlan(theme));
+    // Changed in its copy: a block lets go only what it left as it was.
+    await writeInCopy(about.work, 'src/space/theme.ts', 'export const theme = { warm: true };\n');
     await blockTask(about.ctx, runId, 't-about', 'waits for t-theme', 'lead');
 
     const stalledNow = async () => (await viewRun(lead(), runId)).attention.find(item => item.kind === 'stalled');
@@ -60,5 +62,25 @@ describe('a run that stands still', () => {
     );
     expect(said?.text).toContain('plitzi task release src/space/theme.ts');
     expect(said?.text).toContain('t-about is blocked: waits for t-theme');
+  });
+});
+
+// A blocked task kept the file it took by turns to trace a bug, unchanged — and the task its block waited for needed it.
+describe('a task blocked', () => {
+  it('lets go of what it took by turns and left unchanged, to the task waiting for it, and keeps what it changed', async () => {
+    const plan = benchPlan();
+    const runId = await open({ ...plan, tasks: plan.tasks.filter(task => task.id === 't-about') });
+    const about = await take('agent-1', 't-about');
+    await claimFile(about.ctx, runId, 't-about', 'src/space/theme.ts');
+    await claimFile(about.ctx, runId, 't-about', 'src/space/tokens.ts');
+    await writeInCopy(about.work, 'src/space/tokens.ts', 'export const tokens = {};\n');
+
+    expect(await blockTask(about.ctx, runId, 't-about', 'waits for the lead', 'lead')).toEqual({
+      released: ['src/space/theme.ts'],
+      granted: []
+    });
+    const held = (await allLocks(lead())).get('src/space/tokens.ts') ?? [];
+    expect(held.map(each => each.task)).toEqual(['t-about']);
+    expect((await allLocks(lead())).get('src/space/theme.ts') ?? []).toHaveLength(0);
   });
 });

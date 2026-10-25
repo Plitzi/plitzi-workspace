@@ -44,30 +44,32 @@ export const runAgent = (agent: string, options: AgentOptions): Promise<void> =>
         : promptAgent(ctx, runId, agent);
     },
     answer =>
-      'launched' in answer
-        ? [
-            chalk.green(
-              `${answer.agent} started in ${answer.launched.harness} (pid ${String(answer.launched.pid)})${answer.model ? ` on ${answer.model}` : ''}${answer.effort ? `, ${answer.effort} effort` : ''}: it works until task next tells it to stop.`
-            ),
-            ...(answer.modelNotRun
-              ? [
-                  chalk.yellow(
-                    `  The team names ${answer.modelNotRun}, which ${answer.launched.harness} does not run: it started on ${answer.launched.harness}'s own default (.plitzi/team.json, or --harness)`
-                  )
-                ]
-              : []),
-            ...(answer.resumed
-              ? [`  It resumes its own session (${answer.resumed}): it went down mid-task, and goes on where it was.`]
-              : answer.fresh
-                ? freshSaid(answer.fresh)
+      'running' in answer
+        ? `${answer.agent} runs already (pid ${String(answer.running.pid)}, ${answer.running.harness}, started ${answer.running.startedAt}): it goes on by itself — nothing started. To start it over: kill ${String(answer.running.pid)}, then this again.`
+        : 'launched' in answer
+          ? [
+              chalk.green(
+                `${answer.agent} started in ${answer.launched.harness} (pid ${String(answer.launched.pid)})${answer.model ? ` on ${answer.model}` : ''}${answer.effort ? `, ${answer.effort} effort` : ''}: it works until task next tells it to stop.`
+              ),
+              ...(answer.modelNotRun
+                ? [
+                    chalk.yellow(
+                      `  The team names ${answer.modelNotRun}, which ${answer.launched.harness} does not run: it started on ${answer.launched.harness}'s own default (.plitzi/team.json, or --harness)`
+                    )
+                  ]
                 : []),
-            `  Its output: ${answer.launched.log} — its prompt: ${answer.promptFile}`,
-            `  Follow the run: plitzi run monitor ${answer.runId} (a person) · plitzi run watch ${answer.runId} --until lead (the lead)`
-          ].join('\n')
-        : [
-            `${answer.agent}'s prompt for run "${answer.runId}": ${answer.promptFile}`,
-            '  Start it as a subagent of your harness with that prompt — or headless, in a terminal of its own:',
-            ...('commands' in answer ? answer.commands : []).map(each => `    ${each.line}`),
-            `  …or let the CLI start it: plitzi run agent ${answer.agent} --launch --harness <${HARNESSES.join('|')}>`
-          ].join('\n')
+              ...(answer.resumed
+                ? [`  It resumes its own session (${answer.resumed}): it went down mid-task, and goes on where it was.`]
+                : answer.fresh
+                  ? freshSaid(answer.fresh)
+                  : []),
+              `  Its output: ${answer.launched.log} — its prompt: ${answer.promptFile}`,
+              `  Follow the run: plitzi run monitor ${answer.runId} (a person) · plitzi run watch ${answer.runId} --until lead (the lead)`
+            ].join('\n')
+          : [
+              `${answer.agent}'s prompt for run "${answer.runId}": ${answer.promptFile}`,
+              '  Start it as a subagent of your harness with that prompt — or headless, in a terminal of its own:',
+              ...('commands' in answer ? answer.commands : []).map(each => `    ${each.line}`),
+              `  …or let the CLI start it: plitzi run agent ${answer.agent} --launch --harness <${HARNESSES.join('|')}>`
+            ].join('\n')
   );

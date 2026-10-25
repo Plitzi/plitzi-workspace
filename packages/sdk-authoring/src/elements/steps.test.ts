@@ -1,8 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
+import { interactionBasicTriggers } from '@plitzi/sdk-elements/elements/declarations';
+
+import { typeTriggerDefinitions } from './catalog';
+import * as steps from './steps';
 import { closeModal, onLoad, onPageLoad, openModal, scrollBy, scrollTo, setFieldValue } from './steps';
 
 describe('element trigger builders', () => {
+  // A run's agent wrote onChange() by analogy with onClick(), and author failed on a bare ESM import error.
+  it("are one per trigger the catalog knows, each by the trigger's own name", () => {
+    const names = [...Object.keys(interactionBasicTriggers), ...Object.keys(typeTriggerDefinitions)];
+    const builders = new Set(
+      Object.entries(steps).flatMap(([name, value]) => (typeof value === 'function' ? [name] : []))
+    );
+    const missing = [...new Set(names)].filter(name => !builders.has(name));
+    expect(missing).toEqual([]);
+  });
+
   it('keeps the generic load event and exposes the page-specific one without raw action strings', () => {
     expect(onLoad()).toMatchObject({ type: 'trigger', action: 'onLoad', title: 'On Load' });
     expect(onPageLoad()).toMatchObject({

@@ -111,6 +111,13 @@ describe('css', () => {
     });
   });
 
+  // A run's sideways shelf of cards could not keep the page's back-swipe nor inset its first snap: both refused.
+  it('takes the scroll family on every axis and side, as a sideways shelf needs', () => {
+    expect(
+      css({ 'overscroll-behavior-x': 'contain', 'scroll-padding-left': '16px', 'scroll-margin-right': '8px' })
+    ).toEqual({ 'overscroll-behavior-x': 'contain', 'scroll-padding-left': '16px', 'scroll-margin-right': '8px' });
+  });
+
   it('reports every unknown property at once', () => {
     expect(() => css({ nope: '1px', alsoNope: '2px' })).toThrow(/Unknown CSS properties: "nope", "also-nope"/);
     // The classic sr-only line's `clip` was refused with no word of what replaced it.

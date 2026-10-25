@@ -20,7 +20,8 @@ designer's look at the UI first is [runs-designer.md](runs-designer.md); the res
   that asks for code alone (a refactor, one source for a value) is `--changes "…" --skip-design lead`: the next round's UI
   is the lead's, never a designer's review offered, then decided past it. Past three rounds (yours or the designer's)
   it is the lead's: approve as it is, answer, or ask the person. A `--known-failure` says why and which task fixes it —
-  weigh that. The approval merges what went to review, not the copy as it is.
+  weigh that. The approval merges what went to review, not the copy as it is. Two in review that read each other's
+  files: `--approve --with <the other>` puts both in as one change.
 - **Someone changed a file while the agent worked on it** → the approval stops, naming it: `--approve --merge` when the
   changes go together line by line (the refusal says so), `--approve --overwrite` (its version wins, said, the other
   kept) or `--changes` (redo it on the project's version).

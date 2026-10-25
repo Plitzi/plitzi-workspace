@@ -131,7 +131,19 @@ export interface ClaimOutcome {
   /** Not granted: whether to wait (one task ahead at most) or to change it in the copy as a request. */
   turn?: 'wait' | 'request';
   holder?: string;
+  /** Granted though the plan gives it to this task, which nobody has taken: it waits for the claim's approval. */
+  aheadOf?: string;
 }
+
+/**
+ * A task nobody has taken — never started, nothing of it in review: a file its plan names is taken by turns ahead of it,
+ * as nobody works it yet (a run's t-model could not make a one-line fix in a file of a task still waiting to be taken).
+ */
+export const untakenNow = async (loaded: LoadedRun, task: RunTask): Promise<boolean> => {
+  const view = await viewTask(loaded.paths, task);
+
+  return ['pending', 'ready'].includes(view.state.status) && view.owner === undefined && view.state.round === 0;
+};
 
 /** Whether `task` waits, through its `dependsOn` and theirs, for the task `on`. */
 const waitsFor = (loaded: LoadedRun, task: RunTask, on: string, seen = new Set<string>()): boolean =>
@@ -185,7 +197,8 @@ export const claimFile = async (
   }
 
   const planned = await activeHolder(loaded, clean, task);
-  if (planned) {
+  const aheadOf = planned && (await untakenNow(loaded, planned)) ? planned.id : undefined;
+  if (planned && aheadOf === undefined) {
     throw new RunRefusal('claimed', `${clean} is task "${planned.id}"'s: wait for it (plitzi task wait)`, {
       file: clean,
       holder: planned.id,
@@ -233,7 +246,7 @@ export const claimFile = async (
     { now: ctx.now }
   );
   if (!created) {
-    return { file: clean, granted: true };
+    return { file: clean, granted: true, ...(aheadOf ? { aheadOf } : {}) };
   }
 
   const start = await readStart(view.paths);
@@ -244,7 +257,7 @@ export const claimFile = async (
 
   await appendLog(view.paths.log, { at: at(ctx), by: ctx.agent, action: 'claim', file: clean });
 
-  return { file: clean, granted: true };
+  return { file: clean, granted: true, ...(aheadOf ? { aheadOf } : {}) };
 };
 
 /** Hands a file let go of to the task waiting for it with the highest priority: its lock, and the run's version. */
@@ -350,22 +363,48 @@ export const releaseFile = async (ctx: RunContext, runId: string, taskId: string
   return grantWaiters(ctx, loaded, [clean]);
 };
 
+/**
+ * The files a task took by turns and left as they were, let go — to the tasks waiting for them — when it stops working:
+ * a task blocked kept one it took to trace a bug, and the task its block waited for needed it (a run stood still).
+ */
+export const letGoUntouched = async (
+  ctx: RunContext,
+  loaded: LoadedRun,
+  view: Awaited<ReturnType<typeof viewTask>>
+): Promise<{ released: string[]; granted: string[] }> => {
+  const start = await readStart(view.paths);
+  const released: string[] = [];
+  for (const [file, lock] of await lockedFiles(view.paths)) {
+    const inCopy = await fingerprint(under(view.paths.work, file));
+    if (lock.kind !== 'turn' || start === undefined || inCopy !== (start.files[file] ?? null)) {
+      continue;
+    }
+
+    await fs.rm(lockFile(view.paths, file), { force: true });
+    await appendLog(view.paths.log, { at: at(ctx), by: ctx.agent, action: 'release', file });
+    released.push(file);
+  }
+
+  return { released, granted: released.length > 0 ? await grantWaiters(ctx, loaded, released) : [] };
+};
+
 /** The task holding `file` now: its lock's, or the plan's while that task is not done. */
 const holderTaskOf = async (
   ctx: RunContext,
   loaded: LoadedRun,
   file: string,
-  except: string
+  asker: RunTask
 ): Promise<string | undefined> => {
   const lock = (await locksOn(ctx, file)).find(
-    held => held.live && held.run === loaded.record.runId && held.task !== except
+    held => held.live && held.run === loaded.record.runId && held.task !== asker.id
   );
   if (lock) {
     return lock.task;
   }
 
-  const planned = await activeHolder(loaded, file);
-  if (planned && planned.id !== except) {
+  // Never a task that waits for the asker: a run's task waited on a file it made itself, and was refused as a loop.
+  const planned = await activeHolder(loaded, file, asker);
+  if (planned && planned.id !== asker.id) {
     return planned.id;
   }
 
@@ -432,7 +471,7 @@ export const waitForFile = async (
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);
   const clean = cleanPath(ctx.root, file);
-  const holder = await holderTaskOf(ctx, loaded, clean, taskId);
+  const holder = await holderTaskOf(ctx, loaded, clean, task);
   // Let go of before the wait came — its holder approved meanwhile: nothing to wait for, it is taken by turns now.
   if (!holder) {
     await claimFile(ctx, runId, taskId, clean);

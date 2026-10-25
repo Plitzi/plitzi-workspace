@@ -228,7 +228,9 @@ export const checkPlan = async (
    * A stage's: where the space its checks name is read — the run's work, materialised. The project holds what the
    * finish has not written yet: a run's stage 5 read every room element and `/r/:slug` as missing, a deadlock each.
    */
-  spaceRoot = root
+  spaceRoot = root,
+  /** A stage's: the run's own tasks — what their `closes` take up of the backlog is taken, not offered again. */
+  runTasks: readonly { id: string; closes?: readonly string[] }[] = []
 ): Promise<CheckedPlan> => {
   const agentsAsked = teamSize(team);
   const problems: string[] = [...roleProblems(written, team), ...inventoryProblems(written, knownInventory)];
@@ -265,7 +267,7 @@ export const checkPlan = async (
       `"${task}" gets no task of tests: ${why}. Name a test file in a task of yours for it, or say "tests": false — so that none is said, not missed`
     )
   );
-  notices.push(...teamNotices(plan, team, openWork, await stackableBacklog(root, plan.tasks)));
+  notices.push(...teamNotices(plan, team, openWork, await stackableBacklog(root, [...plan.tasks, ...runTasks])));
   if (plan.reference !== undefined) {
     notices.push(
       `Its reference, ${plan.reference}, is kept once the run is open — plitzi run reference: each page of the inventory pictured and measured, which page shot --compare measures against for the whole run, not the site as it may change; the run finishing removes it`

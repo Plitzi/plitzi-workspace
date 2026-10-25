@@ -43,6 +43,16 @@ export const lookText = (looked: Looked): string =>
     ...(looked.signedInAs
       ? [`Read signed in as ${looked.signedInAs}, as its acceptance checks it (--as another to read it otherwise)`]
       : []),
+    ...('steps' in looked ? [`Pictured after "${looked.steps}"; the check read each page at rest`] : []),
+    ...(looked.forVisitors
+      ? [
+          looked.forVisitors.as === undefined
+            ? chalk.yellow(
+                `⚠ ${list(looked.forVisitors.pages)} ${looked.forVisitors.pages.length === 1 ? 'is' : 'are'} for signed-in visitors, read as a guest: ${looked.forVisitors.problem ?? 'name the project’s account in .env (PLITZI_CHECK_USER, PLITZI_CHECK_PASSWORD)'} — or --as <username>`
+              )
+            : `Read signed in as ${looked.forVisitors.as}, the project’s account: ${list(looked.forVisitors.pages)} ${looked.forVisitors.pages.length === 1 ? 'is' : 'are'} for signed-in visitors (--as another to read it otherwise)`
+        ]
+      : []),
     ...(looked.notLooked
       ? [
           chalk.yellow(

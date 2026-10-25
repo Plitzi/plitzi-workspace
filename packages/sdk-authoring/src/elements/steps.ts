@@ -140,6 +140,34 @@ export const onFlowError = (): StepSpec => on('onFlowError');
 
 export const onFlowProgress = (): StepSpec => on('onFlowProgress');
 
+/*
+ * Every other trigger the catalog knows, by its own name — `onChange()` as `onClick()` is: a trigger written by analogy
+ * with another must exist, never fail at import with a bare ESM error. What each event carries is read through the
+ * step's id (`named`), as `on(…)`'s are.
+ */
+export const onMouseEnter = (): StepSpec => on('onMouseEnter');
+export const onMouseLeave = (): StepSpec => on('onMouseLeave');
+export const onHover = (): StepSpec => on('onHover');
+export const onFocus = (): StepSpec => on('onFocus');
+export const onBlur = (): StepSpec => on('onBlur');
+/** A field's value changed — `{{ <this step's id>.value }}` — on a form control, a select, a switch. */
+export const onChange = (): StepSpec => on('onChange');
+export const onThemeChange = (): StepSpec => on('onThemeChange');
+export const onPageChange = (): StepSpec => on('onPageChange');
+export const onModalOpen = (): StepSpec => on('onModalOpen');
+export const onModalClose = (): StepSpec => on('onModalClose');
+export const onDialogOpen = (): StepSpec => on('onDialogOpen');
+export const onDialogClose = (): StepSpec => on('onDialogClose');
+export const onDialogAccept = (): StepSpec => on('onDialogAccept');
+export const onDialogReject = (): StepSpec => on('onDialogReject');
+/** A provider's answer arrived — `{{ <this step's id>.data }}` — or failed (`onApiError`). */
+export const onApiSuccess = (): StepSpec => on('onApiSuccess');
+export const onApiError = (): StepSpec => on('onApiError');
+/** A channel's message — `{{ <this step's id>.type }}`, `.data` — and who arrived or left (`onJoin`, `onLeave`). */
+export const onMessage = (): StepSpec => on('onMessage');
+export const onJoin = (): StepSpec => on('onJoin');
+export const onLeave = (): StepSpec => on('onLeave');
+
 /**
  * Changes one element's own attribute or state — the element `setState`, which is NOT the global one that writes
  * `runtime.state`. Left without a target it runs against the element the flow is declared on.

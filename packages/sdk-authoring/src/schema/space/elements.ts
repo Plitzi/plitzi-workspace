@@ -181,6 +181,10 @@ const drawsNothing = (author: SpaceAuthor, element: Element): boolean => {
   return author.options.drawsNothingTypes?.includes(pluginKeyOf(element)) ?? false;
 };
 
+/** Whether the element has no box on a page: a provider with no tag, or a plugin's that draws nothing. */
+export const isBoxless = (author: SpaceAuthor, element: Element): boolean =>
+  rendersNoTag(element) || drawsNothing(author, element);
+
 /** Whether the element's plugin declares it shows only some of its children, chosen as it runs. */
 const choosesChildren = (author: SpaceAuthor, element: Element): boolean => {
   return author.options.choosesChildrenTypes?.includes(pluginKeyOf(element)) ?? false;
@@ -527,7 +531,7 @@ const writeElement = (
     ...([...ancestors].some(ancestor => REPEATING_TYPES.has(tree.map.flat[ancestor].definition.type))
       ? { repeated: true }
       : {}),
-    ...(rendersNoTag(element) || drawsNothing(author, element) ? { boxless: true } : {})
+    ...(isBoxless(author, element) ? { boxless: true } : {})
   });
 
   const children = spec.row === undefined ? spec.children : rowChildren(author, spec, spec.row, id, where);

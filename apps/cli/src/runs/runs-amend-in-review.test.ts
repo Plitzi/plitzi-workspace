@@ -48,3 +48,24 @@ describe('a line amended while its task is in review', () => {
     ]);
   });
 });
+
+// A contract change broke a file outside a taken task's own: amend refused "touches" as the run's shape.
+describe('what a taken task touches beside its files', () => {
+  it('is amended and told like any ask; its own files stay the run’s shape', async () => {
+    const plan = benchPlan();
+    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
+    await take('agent-1', 't-menu');
+
+    plan.tasks = plan.tasks.map(task =>
+      task.id === 't-menu' ? { ...task, touches: ['src/space/pages/about.ts'] } : task
+    );
+    expect(await amendRun(lead(), runId, await bench.writePlan(plan))).toMatchObject({
+      tasks: [{ task: 't-menu', changed: ['touches'] }]
+    });
+
+    plan.tasks = plan.tasks.map(task =>
+      task.id === 't-menu' ? { ...task, files: [...task.files, 'src/space/pages/extra.ts'] } : task
+    );
+    await expect(amendRun(lead(), runId, await bench.writePlan(plan))).rejects.toThrow("the run's shape");
+  });
+});

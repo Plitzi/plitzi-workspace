@@ -68,6 +68,11 @@ export type RealtimeMessage = RealtimeSender & {
    * every page that joins. The newest of a type is the one that holds; `null` data forgets it.
    */
   retained?: true;
+  /**
+   * Said again, not now: a kept message handed to a page as it joins. A moment — a room opened, a show started — is
+   * heard once, as it is said; a flow answers it only `when` it is not `replayed`. What it keeps holds either way.
+   */
+  replayed?: true;
 };
 
 /** What a page asks of a publish beyond the message itself. */
