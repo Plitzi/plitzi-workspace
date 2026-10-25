@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { listedTasks } from './monitorBoard';
 import { flowStages, nameOf } from './monitorFlow';
 import { initialUi } from './monitorModel';
-import { monitorScreen } from './monitorScreen';
+import { monitorScreen, waitingScreen } from './monitorScreen';
 import { THEMES } from './monitorTheme';
 import { extendRun } from '../../runs/extend';
 import { groupRepeats, monitorRun } from '../../runs/monitor';
@@ -46,7 +46,7 @@ const shown = (
 ): { screen: Screen; text: string[] } => {
   const screen = monitorScreen(
     data,
-    { ...initialUi(), ...ui },
+    { ...initialUi('advanced'), ...ui },
     { width, height, now: bench.now(), theme: THEMES.dark, preview }
   );
 
@@ -65,6 +65,57 @@ const counts = (tasks: readonly TaskLine[]): Record<string, number> =>
   Object.fromEntries(flowStages(tasks).map(stage => [stage.key, stage.tasks.length]));
 
 describe('plitzi run monitor', () => {
+  it('says only what a person acts on when simple: who is at what, the tasks by stage, the preview, the latest', async () => {
+    const runId = await open();
+    const home = await take('agent-2', 't-home');
+    await tellLead(home.ctx, runId, 't-home', 'The hero image is missing alt text');
+    const data = await monitorRun(lead(), runId);
+    const advanced = shown(data).text;
+    const { text } = shown(data, { mode: 'simple' });
+    const all = text.join('\n');
+
+    expect(text[0]).toContain(runId);
+    expect(text[1]).toMatch(/━+\s+0 of \d+ approved · 0%/);
+    for (const title of ['Working now', 'Tasks', 'Preview', 'Latest']) {
+      expect(all).toContain(title);
+    }
+
+    expect(all).toMatch(/agent-2\s+Writing… t-home/);
+    expect(all).toContain('p start');
+    // No views, no spend, no model: the advanced panel's — one key away, said in the status bar.
+    expect(advanced.join('\n')).toContain('Overview');
+    expect(all).not.toContain('Overview');
+    expect(all).not.toContain('Spend');
+    expect(text.at(-1)).toMatch(/m advanced/);
+    // What is the lead's to act on is counted, not shown: the box is the person's alone.
+    expect(advanced.join('\n')).toContain('For the lead');
+    expect(all).not.toContain('For the lead');
+    expect(text.at(-1)).toMatch(/\d+ for the lead/);
+  });
+
+  it('waits for a run in a frame of its own, its head and its foot as ever, every edge the same width', () => {
+    const said =
+      'Run "es-launch" is gone: it finished, or a person aborted it. The panel shows the next one the moment it opens.';
+    const text = waitingScreen(
+      { title: 'Run ended', said, tone: 'primary' },
+      { width: 100, height: 24, now: bench.now(), theme: THEMES.dark }
+    ).text();
+    expect(text[0]).toMatch(/^ {2}◆ plitzi\s+\d\d:\d\d UTC {2}$/);
+    const top = text.findIndex(line => line.includes('╭─ Run ended '));
+    const bottom = text.findIndex(line => line.includes('╰'));
+    expect(top).toBeGreaterThan(0);
+    expect(text[top]?.trimEnd().length).toBe(text[bottom]?.trimEnd().length);
+    // Said whole, in lines that fit the frame.
+    expect(text.slice(top, bottom).join(' ').replace(/[│ ]+/g, ' ')).toContain('it finished, or a person aborted it.');
+    expect(text.at(-1)).toMatch(/^ plitzi .*q quit {2}$/);
+    // A key with nothing to do here says so, as on the board.
+    const pressed = waitingScreen(
+      { title: 'No run yet', said: 'This project has no run of agents.', tone: 'primary' },
+      { width: 100, height: 24, now: bench.now(), theme: THEMES.dark, flash: 'no run to preview yet' }
+    ).text();
+    expect(pressed.at(-1)).toContain('no run to preview yet');
+  });
+
   it('shows the run on top, its activity told as it happened, its tasks and agents beside', async () => {
     const runId = await open();
     const about = await take('agent-1', 't-about');

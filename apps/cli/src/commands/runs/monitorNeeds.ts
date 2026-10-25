@@ -12,9 +12,16 @@ import type { Monitored } from '../../runs/monitor';
  * person watching knows, the run does not wait on them.
  */
 
-/** The notices the box goes through: those not put off, the most pressing first. */
+/**
+ * The notices the box goes through: those not put off, the most pressing first — simple, only the person's own: what
+ * is the lead's to act on is counted in the status bar (`leadsOnly`), and shown advanced.
+ */
 export const shownNeeds = (data: Monitored, ui: MonitorUi): Need[] =>
-  needsOf(data.view).filter(need => !ui.dismissed.has(need.key));
+  needsOf(data.view).filter(need => !ui.dismissed.has(need.key) && (ui.mode === 'advanced' || need.person));
+
+/** How many notices the simple panel leaves to the lead: counted, not shown. */
+export const leadsOnly = (data: Monitored, ui: MonitorUi): number =>
+  ui.mode === 'simple' ? needsOf(data.view).filter(need => !ui.dismissed.has(need.key) && !need.person).length : 0;
 
 /** The rows the box takes at this height: none with nothing to say, three on a short terminal, five otherwise. */
 export const needsRows = (needs: readonly Need[], height: number): number =>

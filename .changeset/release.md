@@ -329,10 +329,13 @@ report`, …).
 ### Watching a run
 
 - **`plitzi run monitor`:** a live board in a terminal of its own, in Plitzi's colours (dark or light, as the terminal
-  is). Views as tabs: Overview, Flow (the kanban), Tasks, Agents, Spend. The Overview shows the activity, the agents at
+  is). It opens simple — who is at what, the tasks by stage and the stuck ones, the preview, the latest events, your own
+  notices — and `m` switches to advanced at any moment (`--advanced` opens it so). Advanced has views as tabs:
+  Overview, Flow (the kanban), Tasks, Agents, Spend. The Overview shows the activity, the agents at
   work and the flow in brief; from 130 columns, a sidebar with the tasks, agents, spend and preview. What needs someone
   is one notice at a time, its command copied with `c`. It also has a command palette (`ctrl+p`) and works with the
-  mouse. It fits any terminal and only reads, except for the preview it starts with `p`.
+  mouse. It fits any terminal and only reads, except for the preview: `p` starts it, `x` stops it (also one served by
+  `npm run start:preview`), and quitting stops one it started, so `q` asks twice while it serves one.
   - **Each activity line is short** — 72 characters at most, in its own words ("checks fail: lint + 3 files of other
     tasks", "stops for a fresh context") — and a click on a ▸ line opens the whole of it under it; the dev tools' Run
     tab shows the whole on hover. A run's lines ran to 499 characters.

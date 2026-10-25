@@ -15,7 +15,7 @@ import type { FeedLine, Monitored } from '../../runs/monitor';
  */
 
 /** The spinner's frames: Claude Code's own. */
-const SPINNER = ['✻', '✶', '✳', '✢', '·', '✢', '✳', '✶'];
+export const SPINNER = ['✻', '✶', '✳', '✢', '·', '✢', '✳', '✶'];
 
 /** The rows the flow in brief takes: a breath, its title, the stages, their rule, two rows of cards. */
 const BRIEF_ROWS = 6;
@@ -24,7 +24,7 @@ const BRIEF_ROWS = 6;
 const LIVE_MOST = 4;
 
 /** Who said it, and to whom for a message: the agents in their hues. */
-const drawWho = (p: Paint, row: number, col: number, line: FeedLine): number => {
+export const drawWho = (p: Paint, row: number, col: number, line: FeedLine): number => {
   const hue = (name: string) => p.hues.get(name) ?? p.theme.text;
   let at = p.canvas.put(row, col, line.by, { fg: hue(line.by), bold: true });
   if (line.to !== undefined) {
@@ -169,7 +169,7 @@ const drawBrief = (p: Paint, data: Monitored, top: number, rect: Rect): void => 
 };
 
 /** The verb, a light sweeping across it: an agent at work, seen to be. */
-const shimmer = (p: Paint, row: number, col: number, word: string, frame: number): number => {
+export const shimmer = (p: Paint, row: number, col: number, word: string, frame: number): number => {
   const sweep = frame % (word.length + 6);
   let at = col;
   let index = 0;

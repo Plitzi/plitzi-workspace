@@ -17,7 +17,7 @@ describe('the preview from the monitor', () => {
     expect(control.state(8300)).toEqual({ kind: 'elsewhere', url: 'http://127.0.0.1:8300' });
     expect(control.state(undefined)).toEqual({ kind: 'none' });
     // Served elsewhere, `p` starts nothing.
-    control.toggle('es-launch', 8300);
+    control.start('es-launch', 8300);
     expect(control.state(undefined)).toEqual({ kind: 'none' });
   });
 });

@@ -2,14 +2,14 @@ import { clip, textWidth } from './monitorCanvas';
 import { hhmm, minutesText, TASK_LOOK, toneOf, VIEWS } from './monitorModel';
 import { spentInAll, tokensShort } from './monitorSpend';
 
-import type { MonitorUi, Paint, PreviewShown } from './monitorModel';
+import type { MonitorMode, MonitorUi, Paint, PreviewShown } from './monitorModel';
 import type { Monitored } from '../../runs/monitor';
 import type { TaskLine } from '../../runs/view';
 
 /** The panel's head — the run, where it stands, the views — and its foot: the status bar and the keys. */
 
-/** The rows the head takes: the run, the views, a breath, the strip. */
-export const HEAD_ROWS = 4;
+/** The rows the head takes: the run, the views, a breath, the strip — simple, the run and its progress, a breath. */
+export const headRows = (mode: MonitorMode): number => (mode === 'simple' ? 3 : 4);
 
 /** The strip's order, left to right: what is approved first, then the work toward it, what is still to do last. */
 const STRIP_ORDER: Record<TaskLine['status'], number> = {
@@ -109,14 +109,10 @@ const strip = (p: Paint, tasks: readonly TaskLine[], row: number, width: number)
   });
 };
 
-export const drawHead = (p: Paint, data: Monitored, ui: MonitorUi, width: number): void => {
+/** The head's first row: the brand, the run, its stage and goal — on the right, its state and the clock. */
+const drawTitle = (p: Paint, data: Monitored, width: number): void => {
   const { canvas, theme, now } = p;
   const { view, stage, runs } = data;
-  for (let row = 0; row < HEAD_ROWS; row += 1) {
-    canvas.fill(row, 0, width, theme.surface);
-  }
-
-  // Right of the first row: the run's state as a pill, the clock, other runs of the project.
   const clock = `${hhmm(now.toISOString())} UTC`;
   const state = ` ● ${view.status.toUpperCase()} `;
   const tone = toneOf(theme, STATUS_TONE[view.status] ?? 'subtle');
@@ -149,9 +145,49 @@ export const drawHead = (p: Paint, data: Monitored, ui: MonitorUi, width: number
   }
 
   canvas.put(0, col + 2, clip(stage?.goal ?? view.goal, Math.max(0, right - col - 4)), { fg: theme.muted }, right - 2);
+};
+
+/** How far the run is, in words: approved of all, the share, when it is expected to end and how long that is. */
+const progressText = (data: Monitored, now: Date, width: number): string => {
+  const { view } = data;
+  const left = view.expectedEnd
+    ? Math.max(0, Math.round((Date.parse(view.expectedEnd) - now.getTime()) / 60_000))
+    : undefined;
+  const percent = view.total === 0 ? 0 : Math.round((view.done / view.total) * 100);
+
+  return [
+    `${String(view.done)} of ${String(view.total)} approved · ${String(percent)}%`,
+    ...(view.expectedEnd ? [`ETA ${hhmm(view.expectedEnd)}`] : []),
+    ...(left !== undefined && width >= 110 ? [`${minutesText(left)} left`] : [])
+  ].join(' · ');
+};
+
+/** The simple head's progress: a bar as long as the run, filled as far as it is approved, and the words beside it. */
+const drawBar = (p: Paint, data: Monitored, row: number, width: number): void => {
+  const { canvas, theme, now } = p;
+  const { view } = data;
+  const bar = Math.max(10, Math.min(48, Math.floor(width / 3)));
+  const filled = view.total === 0 ? 0 : Math.round((view.done / view.total) * bar);
+  canvas.put(row, 2, '━'.repeat(filled), { fg: theme.success });
+  canvas.put(row, 2 + filled, '━'.repeat(bar - filled), { fg: theme.border });
+  canvas.put(row, 4 + bar, clip(progressText(data, now, width), Math.max(0, width - bar - 6)), { fg: theme.text });
+};
+
+export const drawHead = (p: Paint, data: Monitored, ui: MonitorUi, width: number): void => {
+  const { canvas, theme, now } = p;
+  for (let row = 0; row < headRows(ui.mode); row += 1) {
+    canvas.fill(row, 0, width, theme.surface);
+  }
+
+  drawTitle(p, data, width);
+  if (ui.mode === 'simple') {
+    drawBar(p, data, 1, width);
+
+    return;
+  }
 
   // The views, each its key: a tab a click opens too.
-  col = 2;
+  let col = 2;
   for (const [index, { view: each, label }] of VIEWS.entries()) {
     const on = ui.view === each;
     const text = ` ${String(index + 1)} ${label} `;
@@ -161,18 +197,8 @@ export const drawHead = (p: Paint, data: Monitored, ui: MonitorUi, width: number
     col += 1;
   }
 
-  const left = view.expectedEnd
-    ? Math.max(0, Math.round((Date.parse(view.expectedEnd) - now.getTime()) / 60_000))
-    : undefined;
-  const percent = view.total === 0 ? 0 : Math.round((view.done / view.total) * 100);
-  const progress = [
-    `${String(view.done)} of ${String(view.total)} approved · ${String(percent)}%`,
-    ...(view.expectedEnd ? [`ETA ${hhmm(view.expectedEnd)}`] : []),
-    ...(left !== undefined && width >= 110 ? [`${minutesText(left)} left`] : [])
-  ].join(' · ');
-  canvas.right(1, width - 2, progress, { fg: theme.muted });
-
-  strip(p, view.tasks, 3, width);
+  canvas.right(1, width - 2, progressText(data, now, width), { fg: theme.muted });
+  strip(p, data.view.tasks, 3, width);
 };
 
 /** The status bar, the screen's last row: the run, its state, what it spent, the preview — and the keys. */
@@ -182,7 +208,8 @@ export const drawStatus = (
   ui: MonitorUi,
   preview: PreviewShown | undefined,
   width: number,
-  row: number
+  row: number,
+  forLead: number
 ): void => {
   const { canvas, theme } = p;
   const { view } = data;
@@ -201,22 +228,19 @@ export const drawStatus = (
     });
   }
 
+  if (forLead > 0) {
+    col = canvas.put(row, col + 3, `${String(forLead)} for the lead`, { fg: theme.warning });
+  }
+
   if (width >= 120) {
     col = canvas.put(row, col + 3, `plitzi ${theme.name}`, { fg: theme.subtle });
   }
 
+  const other: [string, string] = ['m', ui.mode === 'simple' ? 'advanced' : 'simple'];
   const keys: [string, string][] =
     width >= 120
-      ? [
-          ['?', 'help'],
-          ['ctrl+p', 'commands'],
-          ['p', 'preview'],
-          ['q', 'quit']
-        ]
-      : [
-          ['?', 'help'],
-          ['ctrl+p', 'commands']
-        ];
+      ? [other, ['p', 'start preview'], ['x', 'stop it'], ['?', 'help'], ['q', 'quit']]
+      : [other, ['?', 'help']];
   let end = width - 2;
   for (const [key, label] of [...keys].reverse()) {
     end -= textWidth(label);

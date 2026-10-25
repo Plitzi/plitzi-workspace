@@ -12,6 +12,12 @@ import type { TaskLine } from '../../runs/view';
 
 export type MonitorView = 'overview' | 'flow' | 'tasks' | 'agents' | 'spend';
 
+/**
+ * How much the panel says: `simple` only what a person acts on — who is at what, how far the run is, what needs them,
+ * the preview, the latest — and `advanced` everything: the views, the whole activity, the spend (`m` switches).
+ */
+export type MonitorMode = 'simple' | 'advanced';
+
 /** The views, as their tabs name them: the number on each is its key. */
 export const VIEWS: readonly { view: MonitorView; label: string }[] = [
   { view: 'overview', label: 'Overview' },
@@ -29,6 +35,7 @@ export type Dialog =
   | { kind: 'palette'; query: string; at: number };
 
 export interface MonitorUi {
+  mode: MonitorMode;
   view: MonitorView;
   /** The task selected, in the list the view shows. */
   selected: number;
@@ -52,7 +59,8 @@ export interface MonitorUi {
   flash?: string;
 }
 
-export const initialUi = (): MonitorUi => ({
+export const initialUi = (mode: MonitorMode): MonitorUi => ({
+  mode,
   view: 'overview',
   selected: 0,
   showApproved: false,

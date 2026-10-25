@@ -147,7 +147,10 @@ stops its preview before its folder goes (`stopPreviewOf`): the record first, wh
 the folder once it stopped — never a server left watching a folder removed under it. `run monitor` is the same run, live, for
 a person in a terminal of their own: it reads the run (nothing marked read, nothing the lead is woken for touched) and
 refuses a shell with no terminal, an agent's, whose is `run watch` — the one thing it starts is the run's preview (`p`,
-below). It is drawn whole on every frame as a canvas of cells (`monitorCanvas.ts`) in Plitzi's own colours
+below). It opens **simple** — only what a person acts on: who is at what now, each agent at work a row with its task's
+title; the tasks counted by stage, the blocked and failed named with why; the preview; the latest events; and only the
+notices that are the person's own, the lead's counted in the status bar (`N for the lead`) — and `m` turns it
+**advanced**, everything below, at any moment and back (`--advanced` opens it so; a view's number turns it too). It is drawn whole on every frame as a canvas of cells (`monitorCanvas.ts`) in Plitzi's own colours
 (`monitorTheme.ts`: the brand's tokens, dark or light as the terminal's background answers, `t` or `--theme` to say it;
 each agent a hue of its own, the same everywhere on the panel), at the depth the terminal draws — every colour, the 256,
 the 16, or none under `NO_COLOR`, a selection then drawn inverse. On top, the run and the stage at work (`stage 3 ·
@@ -190,10 +193,15 @@ kept in the run's log as each piece of work ends (`spent`, `spent.ts`): a task c
 the agent's last, read from its sessions as the round's report reads them (`harness/spentIn`).
 
 `ctrl+p` is a palette: a task, an agent (its line copies `plitzi task message @agent "…"`), a view or an action, found
-by the letters typed in order; `?` lists the keys. `p` starts the run's preview on 8300 (`monitorPreview.ts`, what
-`run preview` serves) and stops it, `o` opens it in the browser: its server's output is kept in the run's cache
-(`preview.log`) and its last lines shown under its address, and quitting stops a preview the monitor started — one
-another process serves is said as served there and left alone. The monitor watches the run's folder and draws again the
+by the letters typed in order; `?` lists the keys of the mode it is in. `p` starts the run's preview on 8300
+(`monitorPreview.ts`, what `run preview` serves), `x` stops it — whoever serves it: one `npm run start:preview` or another
+monitor serves is sent SIGINT, its own Ctrl-C, and waited for until its record goes (`stopServedPreview`) — and `o` opens
+it in the browser; each says so when there is nothing for it to do: its server's output is kept in the run's cache
+(`preview.log`) and its last lines shown under its address. It is served from the monitor's own process, so quitting
+stops a preview the monitor started: while it serves one, the first `q` says so and a second quits (`ctrl+c` at once) —
+one another process serves is left alone, unless `x`. Under a dialog the board is not reached: only the
+dialog's own keys, and `q`. The keys and the mouse are answered apart from the terminal (`monitorInput.ts`), each
+tested; with no run to draw, the panel says why in a frame of its own — none yet, or the one it showed is gone. The monitor watches the run's folder and draws again the
 moment the CLI writes to it, every second for its clock and faster while an agent is at work, in one synchronized frame.
 Everything that
 waits on a run — `task next --follow`, a file's wait, a question's answer, `run watch --until lead`, `task inbox

@@ -628,7 +628,7 @@ plitzi run reference                       # the plan's reference site kept as i
 plitzi run watch --json                    # how the run goes: a line per task, what needs attention
 plitzi run watch --until lead              # ends the moment something needs the lead: run it in the background
 plitzi run preview                         # the run's work as it goes, served: each approval shows; its dev tools' Run tab
-plitzi run monitor                         # the run, live, in a terminal of your own beside the harness: its activity, flow, tasks, agents and spend, fitted to the terminal — it only reads; p serves the preview
+plitzi run monitor                         # the run, live, in a terminal of your own beside the harness: simple (who is at what, what needs you) or advanced with m (its activity, flow, tasks, agents and spend) — it only reads; p starts the preview, x stops it
 plitzi task show t-home                    # a task as its lead reviews it: checks, agreements, each file's diff
 plitzi task show t-home src/space/pages/home/hero.ts   # one file whole, as it went to review (no task: the one you hold or review)
 plitzi run settle after-stop:dev-2 --note "…"   # a finding the run raised to the lead, settled by what it did — the close waits on it

@@ -406,7 +406,7 @@ export const registerRunGroup = (program: Command): Command => {
   runGroup
     .command('monitor')
     .description(
-      'A run, live, for a person — in a terminal of its own, beside the harness: its tasks, its agents, what needs someone, its preview (p); it never writes to the run'
+      'A run, live, for a person — in a terminal of its own, beside the harness: who is at what, what needs someone, its preview (p starts it, x stops it); simple, or advanced with m; it never writes to the run'
     )
     .argument('[run]', 'The run — the only open one when left out')
     .option(
@@ -415,9 +415,8 @@ export const registerRunGroup = (program: Command): Command => {
       positiveInteger
     )
     .option('--theme <theme>', 'light or dark — the terminal’s own background when left out')
-    .action((run: string | undefined, options: RunCommandOptions & { interval?: number; theme?: string }) =>
-      runMonitor(run, options)
-    );
+    .option('--advanced', 'Opens advanced — the views, the whole activity, the spend — rather than simple (m switches)')
+    .action((run: string | undefined, options: Parameters<typeof runMonitor>[1]) => runMonitor(run, options));
 
   runGroup
     .command('watch')

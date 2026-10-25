@@ -63,6 +63,22 @@ export const textWidth = (text: string): number => {
   return sum;
 };
 
+/** `text` in lines of `room` columns at most, broken between words. */
+export const wrap = (text: string, room: number): string[] => {
+  const out: string[] = [];
+  let line = '';
+  for (const word of text.split(' ')) {
+    if (line !== '' && textWidth(`${line} ${word}`) > room) {
+      out.push(line);
+      line = word;
+    } else {
+      line = line === '' ? word : `${line} ${word}`;
+    }
+  }
+
+  return [...out, ...(line === '' ? [] : [line])];
+};
+
 /** `text` cut to `room` columns, an ellipsis where it was cut: never a character split, never a line pushed down. */
 export const clip = (text: string, room: number): string => {
   if (textWidth(text) <= room) {

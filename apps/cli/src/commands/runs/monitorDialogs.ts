@@ -1,11 +1,11 @@
 import { storyLines, timeOf } from './monitorBoard';
-import { clip, textWidth } from './monitorCanvas';
+import { clip, wrap } from './monitorCanvas';
 import { EVENT_TONE, whatOf } from './monitorFeed';
 import { hhmm, TASK_LOOK, toneOf, urgencyOf, VIEWS } from './monitorModel';
 import { keyHint } from './monitorNeeds';
 
 import type { Need } from './monitorAttention';
-import type { MonitorView, Paint } from './monitorModel';
+import type { MonitorMode, MonitorView, Paint } from './monitorModel';
 import type { Monitored } from '../../runs/monitor';
 import type { TaskLine } from '../../runs/view';
 
@@ -122,21 +122,7 @@ export const drawTaskDialog = (p: Paint, data: Monitored, task: TaskLine): void 
 export const drawNeedsDialog = (p: Paint, needs: readonly Need[]): void => {
   const { canvas, theme } = p;
   const width = Math.min(110, canvas.width - 6);
-  const wrap = (text: string): string[] => {
-    const out: string[] = [];
-    let line = '';
-    for (const word of text.split(' ')) {
-      if (line !== '' && textWidth(`${line} ${word}`) > width - 10) {
-        out.push(line);
-        line = word;
-      } else {
-        line = line === '' ? word : `${line} ${word}`;
-      }
-    }
-
-    return [...out, ...(line === '' ? [] : [line])];
-  };
-  const bodies = needs.map(need => wrap(need.said));
+  const bodies = needs.map(need => wrap(need.said, width - 10));
   const height = 5 + bodies.reduce((sum, body) => sum + body.length + 2, 0);
   const frame = raise(p, width, height, `Needs · ${String(needs.length)}`);
   let row = frame.top + 3;
@@ -166,27 +152,35 @@ export const drawNeedsDialog = (p: Paint, needs: readonly Need[]): void => {
   });
 };
 
-/** The keys, all of them: what the status bar has no room for. */
-export const drawHelp = (p: Paint): void => {
+/** The keys of the mode it is in: what the status bar has no room for. A simple panel's are only its own. */
+export const drawHelp = (p: Paint, mode: MonitorMode): void => {
   const { canvas, theme } = p;
-  const keys: [string, string][] = [
-    ['1–5', 'the views: overview, flow, tasks, agents, spend'],
-    ['↑ ↓', 'a task — ⏎ opens it whole'],
-    ['← →', 'older, newer activity'],
-    ['click ▸', 'opens a line: its whole, its repeats'],
-    ['a', 'shows or hides the approved tasks'],
-    ['p', 'serves the run’s preview — or stops it'],
-    ['o', 'opens the preview in the browser'],
-    ['n', 'the next notice'],
-    ['d', 'every notice, whole'],
-    ['c', 'copies the fix the notice names'],
-    ['esc', 'puts the notice off — back once it says something else'],
-    ['y', 'copies the task’s id'],
-    ['s', 'sorts the spend (view 5)'],
-    ['t', 'light or dark'],
-    ['ctrl+p', 'commands: every task, agent, view and fix'],
-    ['q', 'quits — a preview served from here stops with it']
+  // Each key, and whether the simple panel answers it.
+  const all: [string, string, boolean][] = [
+    [
+      'm',
+      mode === 'simple' ? 'advanced: the views, the whole activity, the spend' : 'simple: only what you act on',
+      true
+    ],
+    ['1–5', 'the views: overview, flow, tasks, agents, spend', false],
+    ['↑ ↓', 'a task — ⏎ opens it whole', false],
+    ['← →', 'older, newer activity', false],
+    ['click ▸', 'opens a line: its whole, its repeats', false],
+    ['a', 'shows or hides the approved tasks', false],
+    ['p', 'starts the run’s preview', true],
+    ['x', 'stops the preview — whoever serves it', true],
+    ['o', 'opens the preview in the browser', true],
+    ['n', 'the next notice', true],
+    ['d', 'every notice, whole', true],
+    ['c', 'copies the fix the notice names', true],
+    ['esc', 'puts the notice off — back once it says something else', true],
+    ['y', 'copies the task’s id', false],
+    ['s', 'sorts the spend (view 5)', false],
+    ['t', 'light or dark', true],
+    ['ctrl+p', 'commands: every task, agent, view and fix', true],
+    ['q', 'quits — twice while a preview runs from here: it stops too', true]
   ];
+  const keys = all.filter(([, , simple]) => mode === 'advanced' || simple);
   const frame = raise(p, 74, keys.length + 5, 'Keys');
   keys.forEach(([key, what], index) => {
     canvas.put(frame.top + 3 + index, frame.left + 3, key, { fg: theme.text, bold: true });
@@ -199,8 +193,10 @@ export type PaletteAction =
   | { kind: 'view'; view: MonitorView }
   | { kind: 'task'; id: string }
   | { kind: 'copy'; text: string }
-  | { kind: 'preview' }
+  | { kind: 'start-preview' }
+  | { kind: 'stop-preview' }
   | { kind: 'open-preview' }
+  | { kind: 'mode' }
   | { kind: 'approved' }
   | { kind: 'theme' }
   | { kind: 'quit' };
@@ -244,8 +240,10 @@ export const paletteItems = (p: Paint, data: Monitored, needs: readonly Need[]):
       hint: String(index + 1),
       action: { kind: 'view' as const, view }
     })),
-    { group: 'Panel', label: 'Serve or stop the preview', hint: 'p', action: { kind: 'preview' } },
+    { group: 'Panel', label: 'Start the preview', hint: 'p', action: { kind: 'start-preview' } },
+    { group: 'Panel', label: 'Stop the preview', hint: 'x', action: { kind: 'stop-preview' } },
     { group: 'Panel', label: 'Open the preview', hint: 'o', action: { kind: 'open-preview' } },
+    { group: 'Panel', label: 'Simple or advanced', hint: 'm', action: { kind: 'mode' } },
     { group: 'Panel', label: 'Show or hide the approved tasks', hint: 'a', action: { kind: 'approved' } },
     {
       group: 'Panel',

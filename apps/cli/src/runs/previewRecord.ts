@@ -51,3 +51,26 @@ export const stopPreviewOf = async (paths: RunPaths): Promise<void> => {
     await new Promise(resolve => setTimeout(resolve, 200));
   }
 };
+
+/**
+ * The run's preview another process serves — `npm run start:preview`, another monitor — stopped as its own Ctrl-C stops
+ * it (SIGINT), and waited for until its record is gone. Which process it was, and whether it stopped in time; none
+ * serving it, undefined.
+ */
+export const stopServedPreview = async (paths: RunPaths): Promise<{ pid: number; stopped: boolean } | undefined> => {
+  const read = () => readJson(previewRecord(paths), isPreview, 'a run’s preview').catch(() => undefined);
+  const running = await read();
+  if (!running || !alive(running.pid) || running.pid === process.pid) {
+    return undefined;
+  }
+
+  process.kill(running.pid, 'SIGINT');
+  const until = Date.now() + PREVIEW_STOP_MS;
+  // A monitor that served it lives on once it stopped: its record going is the preview gone.
+  const serving = async () => alive(running.pid) && (await read())?.pid === running.pid;
+  while ((await serving()) && Date.now() < until) {
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+
+  return { pid: running.pid, stopped: !(await serving()) };
+};

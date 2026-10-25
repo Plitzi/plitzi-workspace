@@ -3,7 +3,9 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { openBrowser } from '../../account/oauth';
 import { answering, portOr } from '../../runs/acceptance';
+import { runPaths } from '../../runs/paths';
 import { startPreview } from '../../runs/preview';
+import { stopServedPreview } from '../../runs/previewRecord';
 import { isRunRefusal } from '../../runs/refusal';
 
 import type { Preview } from '../../runs/preview';
@@ -11,8 +13,8 @@ import type { RunContext } from '../../runs/run';
 
 /**
  * The run's preview from the monitor: `p` serves the approved work — `npm run start:preview` in a terminal of its own
- * no more — and stops it, `o` opens it, and its server's output shows under its address. Started here, it lives with
- * the panel: quitting stops it, said where it is shown.
+ * no more — `x` stops it, whoever serves it, `o` opens it, and its server's output shows under its address. Started
+ * here, it lives with the panel: quitting stops it, said before it does.
  */
 
 /** Where the preview is served when nothing else listens there: the address `run preview` gives too. */
@@ -27,6 +29,7 @@ export type PreviewState =
   | { kind: 'elsewhere'; url: string }
   | { kind: 'starting'; url: string }
   | { kind: 'serving'; url: string }
+  | { kind: 'stopping'; url: string }
   /** It stopped on its own, or could not start: why, and what its server said last. */
   | { kind: 'stopped'; why: string; said: string[] };
 
@@ -43,12 +46,14 @@ export interface PreviewControl {
   state: (served: number | undefined) => PreviewState;
   /** What its server said last, when this panel serves it. */
   output: (lines: number) => Promise<string[]>;
-  /** `p`: served when nothing is, stopped when this panel serves it. */
-  toggle: (runId: string, served: number | undefined) => void;
+  /** `p`: served from here — nothing done while one is served, which `state` already says. */
+  start: (runId: string, served: number | undefined) => void;
+  /** `x`: stopped, whoever serves it — this panel, or another process as its own Ctrl-C would. */
+  stop: (runId: string, served: number | undefined) => void;
   /** `o`: the preview in the person's browser, whoever serves it. */
   open: (served: number | undefined) => void;
   /** The panel quits: what it started stops with it. */
-  stop: () => void;
+  quit: () => void;
 }
 
 export const previewControl = (ctx: RunContext, changed: () => void): PreviewControl => {
@@ -94,9 +99,23 @@ export const previewControl = (ctx: RunContext, changed: () => void): PreviewCon
     }
   };
 
+  const stopElsewhere = async (runId: string, url: string): Promise<void> => {
+    set({ kind: 'stopping', url });
+    const ended = await stopServedPreview(runPaths(ctx.root, runId));
+    set(
+      ended === undefined || ended.stopped
+        ? { kind: 'none' }
+        : {
+            kind: 'stopped',
+            why: `the preview's process (${String(ended.pid)}) did not stop within 10 seconds`,
+            said: []
+          }
+    );
+  };
+
   return {
     state: served =>
-      own !== undefined
+      own !== undefined || state.kind === 'stopping'
         ? state
         : served !== undefined
           ? { kind: 'elsewhere', url: urlOf(served) }
@@ -105,12 +124,19 @@ export const previewControl = (ctx: RunContext, changed: () => void): PreviewCon
             : { kind: 'none' },
     output: async lines =>
       own?.log === undefined ? [] : outputTail(await fs.readFile(own.log, 'utf-8').catch(() => ''), lines),
-    toggle: (runId, served) => {
-      if (own !== undefined) {
-        own.stop();
-      } else if (served === undefined) {
+    start: (runId, served) => {
+      if (own === undefined && served === undefined && state.kind !== 'stopping') {
         // Nothing of it is lost unsaid: whatever the start met is the preview's state.
         void start(runId).catch((error: unknown) =>
+          set({ kind: 'stopped', why: error instanceof Error ? error.message : String(error), said: [] })
+        );
+      }
+    },
+    stop: (runId, served) => {
+      if (own !== undefined) {
+        own.stop();
+      } else if (served !== undefined && state.kind !== 'stopping') {
+        void stopElsewhere(runId, urlOf(served)).catch((error: unknown) =>
           set({ kind: 'stopped', why: error instanceof Error ? error.message : String(error), said: [] })
         );
       }
@@ -121,6 +147,6 @@ export const previewControl = (ctx: RunContext, changed: () => void): PreviewCon
         openBrowser(url);
       }
     },
-    stop: () => own?.stop()
+    quit: () => own?.stop()
   };
 };

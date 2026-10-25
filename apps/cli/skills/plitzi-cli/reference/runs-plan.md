@@ -46,7 +46,7 @@ In the person's language, short, from the plan — never a list to read in the J
 - **What you found** of Plitzi (step 2).
 - **Who applies the result** — the person (`run finish --apply`), unless they let you (`run open --lead-finishes`).
 - **How to open and follow it**: the open command — a run past 5 agents or 120 minutes is the person's to confirm in
-  their terminal — `plitzi run monitor` (130 columns for its sidebar; its `p` serves the approved work on 8300, its output in the panel).
+  their terminal — `plitzi run monitor` (130 columns for its sidebar; its `p` serves the approved work on 8300 and `x` stops it, its output in the panel; `m` switches simple and advanced).
 
 Opened by `run start`, its scope spike is this planning: no agent of the team starts while the run holds the spike
 alone, and the summary is said before `task spike s-scope --done … --tasks`, which makes the work.

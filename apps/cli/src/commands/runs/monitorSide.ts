@@ -182,12 +182,16 @@ export const drawPreviewLine = (p: Paint, row: number, col: number, end: number,
   const { canvas, theme } = p;
   const { state } = preview;
   const at = canvas.put(row, col, 'Preview', { fg: theme.muted });
-  if (state.kind === 'serving' || state.kind === 'elsewhere' || state.kind === 'starting') {
-    const after = canvas.put(row, at + 2, state.kind === 'starting' ? '◌' : '●', {
-      fg: state.kind === 'starting' ? theme.warning : theme.success
-    });
+  if (
+    state.kind === 'serving' ||
+    state.kind === 'elsewhere' ||
+    state.kind === 'starting' ||
+    state.kind === 'stopping'
+  ) {
+    const passing = state.kind === 'starting' || state.kind === 'stopping';
+    const after = canvas.put(row, at + 2, passing ? '◌' : '●', { fg: passing ? theme.warning : theme.success });
     const urlEnd = canvas.put(row, after + 1, state.url, { fg: theme.link, underline: true, link: state.url });
-    const keys = state.kind === 'serving' ? 'o open · p stop' : state.kind === 'starting' ? 'starting…' : 'o open';
+    const keys = passing ? `${state.kind}…` : 'o open · x stop';
     // Said where the row has room after the address, never over it.
     if (end - urlEnd >= textWidth(keys) + 2) {
       canvas.right(row, end, keys, { fg: theme.subtle });
@@ -198,5 +202,5 @@ export const drawPreviewLine = (p: Paint, row: number, col: number, end: number,
   canvas.put(row, at + 2, clip(state.kind === 'stopped' ? state.why : 'not served', Math.max(0, end - at - 16)), {
     fg: state.kind === 'stopped' ? theme.danger : theme.subtle
   });
-  canvas.right(row, end, 'p serve', { fg: theme.subtle });
+  canvas.right(row, end, 'p start', { fg: theme.subtle });
 };
