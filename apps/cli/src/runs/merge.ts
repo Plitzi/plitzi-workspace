@@ -126,7 +126,7 @@ const assertFinishable = async (loaded: LoadedRun, leavePending: boolean): Promi
   if (left.length > 0 && !leavePending) {
     throw new RunRefusal(
       'invalid',
-      `Tasks are not done: ${left.join(', ')}. Finish them, or finish without them (--leave-pending)`,
+      `Tasks are not done: ${left.join(', ')}. Finish them, or finish without them (plitzi run finish <run> --leave-pending)`,
       { tasks: left }
     );
   }
@@ -555,7 +555,7 @@ export const resolveFile = async (
     if (!result.ok) {
       throw new RunRefusal(
         'conflict',
-        `${file}: the project's change and the run's touch the same lines, so they cannot be put together by themselves — take project, run, or a file you wrote with both (--take <path>)`,
+        `${file}: the project's change and the run's touch the same lines, so they cannot be put together by themselves — take project, run, or a file you wrote with both (plitzi run resolve ${runId} ${file} --take <path>)`,
         { file, next: `plitzi run resolve ${runId} ${file} --take project|run|<path>` }
       );
     }

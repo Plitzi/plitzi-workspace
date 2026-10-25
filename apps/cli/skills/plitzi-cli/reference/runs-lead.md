@@ -58,7 +58,7 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    not "no signal" for `options.startGraceMinutes` (3). A tester reviews code before you (yours: none took it in 2 min), adds `<id>-tests` (`"tests": false` for none); a designer reviews
    the others' UI before you (`options.designReview`; `false` turns it off). Yours is the complete,
    strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
-   `--skip-design lead|no-ui`, `lead` after your `task look`; a developer's `--review code` stands when no page draws
+   `task review --skip-design lead|no-ui`, `lead` after your `task look`; a developer's `--review code` stands when no page draws
    what it changed). A designer at a UI review, in its time, is not gone past (`--skip-design` is refused: its copy would go from under it);
    a UI review held 8 min (15, a designer's first), or
    queued 5, is yours: decide it. Take a task back, or a ready one for yourself: `task reassign <task> --reason "…" --to <agent>|lead`. **One lead for every four agents**: `lead-2`… beside you, started when `run watch` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`),
@@ -121,10 +121,10 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 ## Where leads went wrong
 
 - **A check you write, you run once** on the run's work first: a 404 page is `page check … --status 404`, a guest
-  sent to sign in `--redirects-to /sign-in`, a `--clip` names an id the page has. One that cannot pass costs every try
+  sent to sign in `--redirects-to /sign-in`, a `page shot … --clip` names an id the page has. One that cannot pass costs every try
   of the task's: `run extend <run> <stage.json> --dry-run --lines` runs each line of a stage once and says what it is —
   what the task changes, a part it builds, or a line that cannot pass.
-- **One look, one task**; its files are where its elements are built.
+- **One look, one task**; its files are where its elements are built, and what reads what it changes (a fake's tests).
 - **A question first**: it holds an agent — answer before your own work. `run watch` in the harness's background
   (never `&`), one at a time.
 - **Say what is so, read from its source** (a copied site's CSS, `task show`, the run's approved version), never from a
@@ -138,7 +138,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
   the acceptance run once on the run's work as it is — it fails for the value, never for a selector that finds nothing
   (exit 0 already: it holds nothing, or say it guards); (4) a line for each width the ask covers.
 - **The team the work is worth**: `run plan` says when it is too big — the base runs while the run is open; one on
-  demand only when work waits. Started by `run agent`, never prompts of your own.
+  demand only when work waits — the run starts it; never prompts of your own.
 - **Your files** — a stage, a summary — in your scratch (`tmp/plitzi-runs/<run>/scratch/lead/`), never the project's
   `tmp/`, where the agents are told of strays.
 - **The page's own type is the page's**: `<page> => body` measures the body's font and background — a line on an
@@ -168,7 +168,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
   script of yours; a picture passes one that moves nothing, or otherwise than asked.
 - **The board is a kanban; keeping the team busy is yours.** A card ready beside each one in review, so an agent whose
   card waits takes another: stack the backlog (`run extend`, tasks that `closes`), split a card by what changes apart,
-  give the designer the UI reviews — `--changes` with `--skip-design lead` keeps the next look yours. `run watch` says
+  give the designer the UI reviews — `task review --changes … --skip-design lead` keeps the next look yours. `run watch` says
   an agent with nothing to take (`idle-team`) and how to feed it.
 - **The designer's own task off the critical path** while it is the only one reviewing UI: what waits on it waits on
   every review too.

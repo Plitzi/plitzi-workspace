@@ -53,7 +53,7 @@ npx plitzi server stop --port 4793                      # this folder's own, nev
 for a job big enough to split — a section of many pages, a translation, a redesign — only when the person asks for one
 or agrees when you propose it — in plain words: several agents in parallel, each in a copy, nothing in their project
 until they apply it. Then `npx plitzi run start "<the ask>"` checks the project, opens the run and says each
-step: you lead it ([runs-lead](reference/runs-lead.md)), `npx plitzi run agent <name> --launch` starts each agent, and
+step: you lead it ([runs-lead](reference/runs-lead.md)), the team starts by itself (`options.launch` in `team.json`), and
 the person applies the result. `run …` and `task …` are the team's alone — never on a job of your own. Started as an
 agent of a run (its prompt says so): [runs](reference/runs.md) — a designer's half: [runs-designer](reference/runs-designer.md).
 

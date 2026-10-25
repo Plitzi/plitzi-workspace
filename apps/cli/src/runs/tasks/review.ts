@@ -288,7 +288,7 @@ const decide = async (
     const by = view.state.design?.by;
     throw new RunRefusal(
       'invalid',
-      `Task "${taskId}"'s UI waits for ${by ?? 'a designer'}'s review${by ? '' : ' (none took it yet)'}: run watch wakes you once it is said — or approve it now without it, saying why: --skip-design lead (you looked at its UI yourself, as a designer would) or --skip-design no-ui (it changes nothing a visitor sees)`,
+      `Task "${taskId}"'s UI waits for ${by ?? 'a designer'}'s review${by ? '' : ' (none took it yet)'}: run watch wakes you once it is said — or approve it now without it, saying why: plitzi task review ${taskId} --approve --skip-design lead | --skip-design no-ui — lead when you looked at its UI yourself, as a designer would; no-ui when it changes nothing a visitor sees`,
       { task: taskId, ...(by ? { designer: by } : {}) }
     );
   }
@@ -360,13 +360,16 @@ const decide = async (
   if (verdict === 'approve' && open.length > 0) {
     throw new RunRefusal(
       'invalid',
-      `Task "${taskId}" asked ${open.map(message => `${message.id} ("${message.text.slice(0, 80)}${message.text.length > 80 ? '…' : ''}")`).join(', ')} and it is not answered: answer it first (plitzi task message ${taskId} "…" --reply-to ${open[0].id}) — if the answer changes the work, send it back (--changes) with it`,
+      `Task "${taskId}" asked ${open.map(message => `${message.id} ("${message.text.slice(0, 80)}${message.text.length > 80 ? '…' : ''}")`).join(', ')} and it is not answered: answer it first (plitzi task message ${taskId} "…" --reply-to ${open[0].id}) — if the answer changes the work, send it back with it (plitzi task review ${taskId} --changes "…")`,
       { task: taskId, questions: open.map(message => message.id) }
     );
   }
 
   if (verdict === 'changes' && comments.length === 0) {
-    throw new RunRefusal('invalid', 'Changes are asked for with what to change: --changes "…"');
+    throw new RunRefusal(
+      'invalid',
+      'Changes are asked for with what to change: plitzi task review <task> --changes "…"'
+    );
   }
 
   const start = await readStart(view.paths);
@@ -533,8 +536,8 @@ const decide = async (
     throw new RunRefusal(
       'conflict',
       asked.length > 0
-        ? `Task "${taskId}"'s files fail the project's checks (${failing.map(step => step.name).join(', ')}) without what it asked of ${asked.map(request => request.file).join(', ')}, and with it: nothing was merged — send it back (--changes) to redo it on the run's version`
-        : `Task "${taskId}"'s change${partner ? ` beside ${partner.view.task.id}'s` : ''}, put together with the run's newer version, fails the project's checks (${failing.map(step => step.name).join(', ')}): nothing was merged — send it back (--changes) to redo it on the run's version${await besideHint(loaded, taskId, partner)}`,
+        ? `Task "${taskId}"'s files fail the project's checks (${failing.map(step => step.name).join(', ')}) without what it asked of ${asked.map(request => request.file).join(', ')}, and with it: nothing was merged — send it back (plitzi task review ${taskId} --changes "…") to redo it on the run's version`
+        : `Task "${taskId}"'s change${partner ? ` beside ${partner.view.task.id}'s` : ''}, put together with the run's newer version, fails the project's checks (${failing.map(step => step.name).join(', ')}): nothing was merged — send it back (plitzi task review ${taskId} --changes "…") to redo it on the run's version${await besideHint(loaded, taskId, partner)}`,
       { task: taskId, steps: failing }
     );
   }

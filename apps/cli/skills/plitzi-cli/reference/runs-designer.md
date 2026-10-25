@@ -25,7 +25,7 @@ too.
   hairline, a fill): its box's height is a visible value. Ask for those
   values with **one** line that proves them all — the same command with `--same font-size,border,before:opacity`. `page shot --compare <url> --clip <section> --dress` says what a section wears and
   this one lacks, on which of our elements; `--clip` takes any element, to see one part beside the other's — never a
-  picture cut by hand.
+  picture cut by hand; a part a few px tall with `--scale 4`, or its hairline is too small to see.
 - **What to look for:** hierarchy and spacing, the theme's tokens rather than new values, every state (empty, long,
   error, hover, focus), light and dark — a reference with one scheme is no space with one: look at the other too, where
   a fixed colour under a theme's text shows — 390, the words; against a reference, its details — what moves (an entrance, a

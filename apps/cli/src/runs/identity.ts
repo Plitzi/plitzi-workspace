@@ -298,7 +298,7 @@ export const assertRoles = async (root: string, agent: string, roles: readonly s
   if (member && foreign.length > 0) {
     throw new RunRefusal(
       'identity',
-      `${agent} is a ${member.roles.join(', ')} of the team, not a ${foreign.join(', ')}: ask for work as what you were started as (--role ${member.roles.join(',')})`,
+      `${agent} is a ${member.roles.join(', ')} of the team, not a ${foreign.join(', ')}: ask for work as what you were started as (plitzi task next --role ${member.roles.join(',')})`,
       { agent, roles: member.roles }
     );
   }

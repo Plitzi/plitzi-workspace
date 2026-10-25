@@ -37,10 +37,9 @@ itself once (`--agent design-1`) and is answered both. A token, name or role not
 
 - **Write only in `work`**, never in the project; run the project's scripts there (no `node_modules` nor `.env` of its
   own; its warning is expected). `plitzi page check /pets --width 1440,390` from `work` serves the copy for the CLI's
-  commands (kept 3 min); a script of your own serves it itself (`PORT=<free> npm start` in `work`) and stops it with
-  `plitzi server stop --port <port>` there. Never `pkill`, `killall` nor a kill by name: they reach the whole
-  machine. A hung command is your harness's to stop; write files with your edit tools, never a shell heredoc. What
-  is yours beside the work — a script, a log, a picture — goes in the copy's `tmp/`; between tasks,
+  commands (kept 3 min) — `--expect <id>~<text>`; a script of your own serves it itself (`PORT=<free> npm start` in `work`) and stops it with
+  `plitzi server stop --port <port>` there. Never `pkill`, `killall` nor a kill by name: they reach the whole machine. A hung command is your harness's to stop; write files with your edit tools, never a shell heredoc. Your
+  scripts, logs and pictures go in the copy's `tmp/`; between tasks,
   `tmp/plitzi-runs/<run>/scratch/<your name>/`; never the project's `tmp/`.
 - **Spend the heavy commands well: a run makes hundreds.** `task check`, `task look`, `page check|shot|measure` take
   3–10 s; `task next|context|show|inbox|tell` 0.3 s. Change a batch, then check once — never after every edit;
@@ -97,7 +96,7 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
 The lead takes a task back at any time — `plitzi task reassign <task> --reason "…" [--to <agent>|lead]`: you are told
 why on your next command, and stop (`reassigned`, 12); one handed to you comes first in your `task next`. `plitzi run stop` lets the
 tasks in hand finish; `run resume`. Before the final merge, `plitzi task revert <task> --reason "…"` takes a task's work
-out (what was built on it waits again), and `plitzi run restore <run> <file>` puts a file back from the backup. A person's: `stop --force`, `finish --apply`, `abort`
+out (what was built on it waits again), and `plitzi run restore <run> <file>` puts a file back from the backup. A person's: `run stop --force`, `run finish --apply`, `run abort`
 (writes nothing, leaves the report), `purge`.
 
 ## Exit codes

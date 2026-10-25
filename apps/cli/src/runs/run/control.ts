@@ -208,7 +208,7 @@ export const attachRun = async (
   if (elsewhere && !takeOver) {
     throw new RunRefusal(
       'other-machine',
-      `Run "${runId}" is active on ${loaded.record.activeOn.machine}: release it there (plitzi run release ${runId}), or a person takes it over here (--take-over)`,
+      `Run "${runId}" is active on ${loaded.record.activeOn.machine}: release it there (plitzi run release ${runId}), or a person takes it over here (plitzi run attach ${runId} --take-over)`,
       { run: runId, holder: loaded.record.activeOn.machine }
     );
   }

@@ -70,7 +70,7 @@ export const harnessOf = async (asked: string | undefined): Promise<Harness> => 
       'invalid',
       installed.length === 0
         ? `No harness on this machine's PATH to start it in (${HARNESSES.join(', ')}): start it yourself with its prompt`
-        : `Which harness: --harness ${installed.join(' | ')}`
+        : `Which harness: plitzi run agent <name> --launch --harness ${installed.join(' | ')}`
     );
   }
 

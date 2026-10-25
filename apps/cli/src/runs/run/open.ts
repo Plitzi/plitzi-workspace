@@ -229,7 +229,7 @@ export const openRun = async (
         .map(step => step.name)
         .join(
           ', '
-        )}): every task would meet them in its copy. Fix them first — or open it despite them, saying why: --despite-checks "…"`,
+        )}): every task would meet them in its copy. Fix them first — or open it despite them, saying why: plitzi run open <plan> --despite-checks "…"`,
       { steps: before.steps.filter(step => !step.ok) }
     );
   }

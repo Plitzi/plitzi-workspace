@@ -252,6 +252,6 @@ export const notFoundNotices = async (root: string, tasks: readonly PlannedTask[
 
       return later.length > 0
         ? `Task "${task}": the check of "${said}" asks ${path}, which no page answers yet, and ${later.join(', ')} — after it — ${later.length === 1 ? 'checks' : 'check'} it too: if ${later.length === 1 ? 'that task makes' : 'one of them makes'} it, this check cannot pass before ${later.length === 1 ? 'it' : 'them'}, a deadlock — move the line there`
-        : `Task "${task}": the check of "${said}" asks ${path}, which no page of the space answers — it falls to the not-found page, sent with 404: say --status 404, or the check fails on the status (unless the task makes that page)`;
+        : `Task "${task}": the check of "${said}" asks ${path}, which no page of the space answers — it falls to the not-found page, sent with 404: say so (plitzi page check <path> --status 404), or the check fails on the status (unless the task makes that page)`;
     });
 };

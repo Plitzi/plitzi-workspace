@@ -51,6 +51,6 @@ for whoever started it and whoever the job's `watch` lets in: `channel({ id: 'tr
 binds `training.retained.job` (`{ status, progress, step, result, error }`).
 
 Two people writing the same thing at once: `kv.setIf` writes only if the value is still the one the flow read (empty
-`expected` = only if nothing is there yet — claim a seat, a username), `list.put`/`list.range` keep an ordered list
+`expected` = only if nothing is there yet — claim a seat, a username), `list.put`/`list.range` keep an ordered list (a tie by `id`, never the order written)
 (latest first, a leaderboard), and `flow.rateLimit` first in a public action that writes — each step's params:
 `npx @plitzi/cli explain flow.rateLimit`, every one `explain --list tasks`.

@@ -188,7 +188,7 @@ export const buildMergeIntoRun = async (
   if (created.length > 0) {
     throw new RunRefusal(
       'conflict',
-      `Task "${view.task.id}" made ${created.map(each => `${each.file} (task "${each.by}" made one by that name too, approved first)`).join(', ')}: nothing was merged — send it back (--changes) to take the run's version (plitzi task discard <file>) and build on it, or to give its own file another name`,
+      `Task "${view.task.id}" made ${created.map(each => `${each.file} (task "${each.by}" made one by that name too, approved first)`).join(', ')}: nothing was merged — send it back (plitzi task review ${view.task.id} --changes "…") to take the run's version (plitzi task discard <file>) and build on it, or to give its own file another name`,
       { task: view.task.id, files: created.map(each => each.file), madeBy: created.map(each => each.by) }
     );
   }
@@ -196,7 +196,7 @@ export const buildMergeIntoRun = async (
   if (conflicts.length > 0) {
     throw new RunRefusal(
       'conflict',
-      `Task "${view.task.id}" changed the same lines of ${conflicts.join(', ')} the run has changed since its copy was made: send it back (--changes) to take the run's version (plitzi task discard <file>) and redo the change on it`,
+      `Task "${view.task.id}" changed the same lines of ${conflicts.join(', ')} the run has changed since its copy was made: send it back (plitzi task review ${view.task.id} --changes "…") to take the run's version (plitzi task discard <file>) and redo the change on it`,
       { task: view.task.id, files: conflicts }
     );
   }
@@ -210,14 +210,14 @@ export const buildMergeIntoRun = async (
         mergeable
           ? onProjectChange === 'merge'
             ? ''
-            : 'the two changes go together line by line: approve with --merge (both kept, the checks run on the result), or '
+            : `the two changes go together line by line: approve with plitzi task review ${view.task.id} --approve --merge (both kept, the checks run on the result), or `
           : onProjectChange === 'merge'
             ? `they touch the same lines (${outside
                 .filter(each => !each.mergeable)
                 .map(each => each.file)
-                .join(', ')}), so --merge cannot put them together: `
+                .join(', ')}), so a merge cannot put them together: `
             : ''
-      }approve with --overwrite (the task's version is written over that change at the finish, with a notice, and the other version kept), or send it back (--changes) to take the project's version (plitzi task discard <file>) and redo the change on it`,
+      }approve with plitzi task review ${view.task.id} --approve --overwrite (the task's version is written over that change at the finish, with a notice, and the other version kept), or send it back (plitzi task review ${view.task.id} --changes "…") to take the project's version (plitzi task discard <file>) and redo the change on it`,
       {
         task: view.task.id,
         files,

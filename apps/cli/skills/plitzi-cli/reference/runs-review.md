@@ -20,7 +20,7 @@ designer's look at the UI first is [runs-designer.md](runs-designer.md); the res
 - **The verdict:** `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. A round
   that asks for code alone (a refactor, one source for a value) is `--changes "…" --skip-design lead`: the next round's UI
   is the lead's, never a designer's review offered, then decided past it. Past three rounds (yours or the designer's)
-  it is the lead's: approve as it is, answer, or ask the person. A `--known-failure` says why and which task fixes it —
+  it is the lead's: approve as it is, answer, or ask the person. A `task complete --known-failure` says why and which task fixes it —
   weigh that. The approval merges what went to review, not the copy as it is. Two in review that read each other's
   files: `--approve --with <the other>` puts both in as one change.
 - **Someone changed a file while the agent worked on it** → the approval stops, naming it: `--approve --merge` when the

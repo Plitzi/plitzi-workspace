@@ -162,7 +162,7 @@ export const messageTasks = async (
   if (open.length > 1) {
     throw new RunRefusal(
       'invalid',
-      `${to} has ${String(open.length)} questions open (${open.join(', ')}): say which this answers — --reply-to ${open.at(-1) ?? ''}`
+      `${to} has ${String(open.length)} questions open (${open.join(', ')}): say which this answers — plitzi task message ${to} "…" --reply-to ${open.at(-1) ?? ''}`
     );
   }
 

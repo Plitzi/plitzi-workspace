@@ -100,8 +100,8 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
       : [
           "- Work only in the task's copy (the `work` folder its take prints): start with `PLITZI task context` there, and read the files you change yourself.",
           reference === undefined
-            ? '- Measure, never guess — every element and width in one call: `PLITZI page measure <path> <elements…> --width 390,1440` (`--hover`, `--click` for a state; `PLITZI page outline <path> --within <part>` names them). Trying values, measure; never `task check` for it.'
-            : `- Measure, never guess — every element and width in one call: \`PLITZI page measure <path> "<ours> => <theirs>" …${beside} --width 390,1440\` (\`--hover\`, \`--click\` for a state; \`PLITZI page outline <path>${beside} --within <part>\` names theirs). Trying values, measure; never \`task check\` for it.`,
+            ? '- Measure, never guess — every element and width in one call: `PLITZI page measure <path> <elements…> --width 390,1440 [--hover <el> | --click <el>]` (a state with the bracket; `PLITZI page outline <path> --within <part>` names them). Trying values, measure; never `task check` for it.'
+            : `- Measure, never guess — every element and width in one call: \`PLITZI page measure <path> "<ours> => <theirs>" …${beside} --width 390,1440 [--hover <el> | --click <el>]\` (a state with the bracket; \`PLITZI page outline <path>${beside} --within <part>\` names theirs). Trying values, measure; never \`task check\` for it.`,
           // 17 of 34 checks failed on typecheck or lint — what the project's own scripts say in seconds.
           '- Change a batch, then run the project\'s own `typecheck` and `lint` scripts in your copy (`npm run typecheck`, `npm run lint` — cached, seconds) and fix what they say; then `PLITZI task check` once; then `PLITZI task complete --ease <1-5> --hardest "what cost you the most, and why" [--friction "what of Plitzi got in your way" …] [--helped "…"]` — what it was like, for Plitzi — and `PLITZI task next` again.',
           // T-collection completed with "Known: the phone keeps our inline panel, where the original opens a
@@ -119,7 +119,7 @@ export const agentPrompt = ({ agent, started, runId, root, cli, goal, reference 
       : []),
     ...(designer
       ? [
-          `- A review: one \`PLITZI task look <task>\` a round, then measure only what differs, and use each control it adds there and back (\`page play <path> ${playBeside}\`); send it back only for what its title and acceptance cover, with the values${reference === undefined ? '' : ' and one `--same` line that proves them'} — anything else is \`PLITZI run notice "…"\`. Say your verdict within 8 minutes.`
+          `- A review: one \`PLITZI task look <task>\` a round, then measure only what differs, and use each control it adds there and back (\`page play <path> ${playBeside}\`); send it back only for what its title and acceptance cover, with the values${reference === undefined ? '' : ' and one `PLITZI page measure … --same` line that proves them'} — anything else is \`PLITZI run notice "…"\`. Say your verdict within 8 minutes.`
         ]
       : []),
     ...rules(cli)

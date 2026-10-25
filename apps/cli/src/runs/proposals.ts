@@ -179,16 +179,19 @@ export const answerProposal = async (
     }
 
     if (!reply.counter) {
-      throw new RunRefusal('invalid', 'A counter says the change it proposes instead: --counter "…"');
+      throw new RunRefusal(
+        'invalid',
+        'A counter says the change it proposes instead: plitzi task answer <proposal> --counter "…"'
+      );
     }
   }
 
   if (reply.verdict === 'reject' && !reply.note) {
-    throw new RunRefusal('invalid', 'A rejection says why: --reject "…"');
+    throw new RunRefusal('invalid', 'A rejection says why: plitzi task answer <proposal> --reject "…"');
   }
 
   if (reply.verdict === 'withdraw' && !reply.note) {
-    throw new RunRefusal('invalid', 'A withdrawal says why: --withdraw "…"');
+    throw new RunRefusal('invalid', 'A withdrawal says why: plitzi task answer <proposal> --withdraw "…"');
   }
 
   const counter =

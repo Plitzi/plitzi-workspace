@@ -29,7 +29,10 @@ export const settleFinding = async (
   const loaded = await loadRun(ctx, runId);
   await requireLead(ctx, loaded, 'settle a finding');
   if (note.trim() === '') {
-    throw new RunRefusal('invalid', 'Say what you did about it: --note "…" — a finding is settled by what was done.');
+    throw new RunRefusal(
+      'invalid',
+      'Say what you did about it: plitzi run settle <finding> --note "…" — a finding is settled by what was done.'
+    );
   }
 
   const findings = (await viewRun(ctx, runId)).attention.filter(item => item.kind === 'finding');

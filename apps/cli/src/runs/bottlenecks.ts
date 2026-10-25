@@ -56,7 +56,7 @@ export const bottlenecks = (
   if (uiWaiting.length > 0 && designers.length > 0 && designers.every(agent => atOwn(agent) !== undefined)) {
     found.push({
       kind: 'ui-waits',
-      text: `${uiWaiting.map(view => view.task.id).join(', ')} wait for a UI review, and no designer is free (${designers.map(agent => `${agent} at ${String(atOwn(agent))}`).join(', ')}): start another designer (team.json's designers) — or review them yourself, UI included (both schemes, the phone width): plitzi task next --role lead --no-wait, then --approve --skip-design lead`,
+      text: `${uiWaiting.map(view => view.task.id).join(', ')} wait for a UI review, and no designer is free (${designers.map(agent => `${agent} at ${String(atOwn(agent))}`).join(', ')}): start another designer (team.json's designers) — or review them yourself, UI included (both schemes, the phone width): plitzi task next --role lead --no-wait, then plitzi task review <task> --approve --skip-design lead`,
       who: 'lead'
     });
   }
@@ -213,7 +213,7 @@ export const idleTeam = (
       : []),
     ...(designer && lookable.length > 0
       ? [
-          `give ${designer.agent} the UI of ${lookable.map(view => view.task.id).join(', ')} — send work back without --skip-design lead, and the next look is offered to it`
+          `give ${designer.agent} the UI of ${lookable.map(view => view.task.id).join(', ')} — approve without skipping its design review (no plitzi task review <task> --skip-design lead), and the next look is offered to it`
         ]
       : []),
     ...(worked.length > 0

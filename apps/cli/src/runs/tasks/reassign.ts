@@ -137,7 +137,7 @@ const handable = async (ctx: RunContext, agent: string, task: RunTask): Promise<
   if (!member) {
     throw new RunRefusal(
       'invalid',
-      `${agent} is no agent of the team: hand ${task.id} to one of ${members.map(each => each.agent).join(', ') || 'the team (team.json)'}, or take it yourself (--to lead)`,
+      `${agent} is no agent of the team: hand ${task.id} to one of ${members.map(each => each.agent).join(', ') || 'the team (team.json)'}, or take it yourself (plitzi task reassign ${task.id} --to lead)`,
       { task: task.id }
     );
   }
@@ -174,7 +174,7 @@ export const revertTask = async (
   if (reason === undefined || reason.trim() === '') {
     throw new RunRefusal(
       'invalid',
-      'A revert says why — kept in its notes, and said to whoever takes it again: --reason "…"',
+      'A revert says why — kept in its notes, and said to whoever takes it again: plitzi task revert <task> --reason "…"',
       {
         task: taskId
       }

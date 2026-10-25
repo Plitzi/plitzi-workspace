@@ -443,7 +443,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
           task: view.task.id,
           text:
             view.state.status === 'in-review'
-              ? `${moved.join(', ')} changed in the project while ${view.task.id} worked on it: its review decides — --approve --merge when the two go together, --approve --overwrite, or --changes`
+              ? `${moved.join(', ')} changed in the project while ${view.task.id} worked on it: its review decides — plitzi task review ${view.task.id} --approve --merge | --approve --overwrite | --changes "…" (merge when the two go together)`
               : `${moved.join(', ')} changed in the project while ${view.task.id} has it: its work is kept and its review decides (line by line when the two go together) — or it builds on the project's version: plitzi task discard <file>`,
           who: view.state.status === 'in-review' ? 'lead' : 'task'
         });

@@ -46,7 +46,7 @@ export const leadNext = async (
       leadReview: await reviewOffer(
         review,
         review.state.design?.status === 'due'
-          ? `its UI waits for a designer and none is free${designers.length > 0 ? ` (${designers.join(', ')} at a task of its own)` : ''}: review its UI too — as the original, both schemes, the phone width — and approve with --skip-design lead, which the report says as the lead's UI review`
+          ? `its UI waits for a designer and none is free${designers.length > 0 ? ` (${designers.join(', ')} at a task of its own)` : ''}: review its UI too — as the original, both schemes, the phone width — and approve with plitzi task review <task> --approve --skip-design lead, which the report says as the lead's UI review`
           : undefined
       ),
       ready: [],
@@ -103,7 +103,7 @@ export const leadNext = async (
       ...taken.map(view => `${view.task.id} is ${String(view.state.reviewer?.by)}'s`),
       ...designs.map(view => `${view.task.id} waits for its UI review`),
       `${String(open.length - taken.length - designs.length)} task(s) still being worked`
-    ].join(', ')} — wait for one: the same command without --no-wait`,
+    ].join(', ')} — wait for one: plitzi task next --role lead`,
     ready: [],
     messages
   };

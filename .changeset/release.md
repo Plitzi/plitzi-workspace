@@ -367,8 +367,15 @@ report`, …).
   each agent its tokens in, out and read again from the cache.
 - **`task check` says warnings apart as `task complete` does:** those on files the task changed are its own; the rest,
   in a line, were there before it — a run's developer read a check's warnings in files it never touched as its own.
-- **`task next`'s waits name the command that waits** (`plitzi task next waits for it`), never `--follow`, which it no
-  longer takes: two agents were refused it at a run's end.
+- **The skills say what a run's agents got wrong:** the team starts by itself (`options.launch`), never by the lead's
+  hand (the CLI skill's own overview still said `run agent` starts each); `--expect <id>~<text>`, never a sentence; a
+  part a few px tall pictured with `--scale 4`; a task's files include the tests that read what it changes; a list's
+  ties come out by `id`. Every option a skill's section names is taken by a command the section names — the projects
+  table offered a `measure` script no project has.
+- **Every option a run's message tells of comes with its command** (`plitzi task review t-home --changes "…"`, never
+  `(--changes)` alone): `task next`'s waits went on saying `--follow` after it stopped taking it, and two agents were
+  refused it at a run's end. Messages also name commands now checked whole — `task check --fix` without `plitzi`,
+  `--approve | --changes`, `--width 390,1440 --same …` past the comma.
 - **`run monitor`'s spend says what the run cost and when:** the run's last 30 minutes as a chart, its tokens and the
   share read again from the cache (sidebar and Spend), and its cost at the Claude API's prices — each turn on its model,
   cache writes by how long they were kept — in the sidebar, a `COST` column and the status bar. A model with no price

@@ -566,7 +566,10 @@ Rules:
 - **Restate in one line, with the owner's words.** Outside its owner a rule is a sentence and a pointer, using the same
   terms and the same example; never a second explanation of its edge cases.
 - **Messages are documentation.** A refusal, a warning, `explain` and a CLI line are read before any page: they say
-  the fix in the terms the docs use, and a hint applies to the field it is about.
+  the fix in the terms the docs use, and a hint applies to the field it is about. An option a message tells of is
+  written with its command (`plitzi task next --role lead`, never `(--follow)` alone): `apps/cli` `program.test.ts`
+  holds every command a text names to the CLI as it is, and fails an option in the run library's texts with no command
+  before it — a retired option once lived on in five hints no check could see.
 - **Budgets are part of the design.** Skills are held to token budgets (`apps/cli/src/scaffold/skills.test.ts`):
   `SKILL.md` 1500 (a core: what it is for, the rules that go wrong most, a table routing each task to its one file),
   `CHEATSHEET.md` 2500, a reference 3000, a recipe 1500. Over budget, cut what another surface owns

@@ -102,7 +102,7 @@ export const projectChecks: CheckRunner = async (dir, projectRoot, { final = fal
               code === 0 && suggestions.length > 0
                 ? [
                     ...suggestions,
-                    'A task completes with none: write them the short way (npx plitzi space fix shows how), or say why not (--known-failure)'
+                    'A task completes with none: write them the short way (npx plitzi space fix shows how), or say why not (plitzi task complete --known-failure "why")'
                   ]
                 : tail(output)
           })

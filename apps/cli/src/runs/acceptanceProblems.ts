@@ -72,7 +72,7 @@ export const acceptanceProblems = async (root: string, task: RunPlan['tasks'][nu
     } else if (strayPages(check).length > 0) {
       const stray = strayPages(check);
       problems.push(
-        `Task "${task.id}": the check of "${said}" hands page check ${stray.map(word => `"${word}"`).join(', ')} as a page — a text with a space split by the shell: quote it (--expect "id~Two words")`
+        `Task "${task.id}": the check of "${said}" hands page check ${stray.map(word => `"${word}"`).join(', ')} as a page — a text with a space split by the shell: quote it: plitzi page check <path> --expect "id~Two words"`
       );
     } else if (namesServedCopy(check)) {
       const scripts = await scriptsOf(root).catch(() => ({}));

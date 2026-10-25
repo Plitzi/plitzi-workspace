@@ -57,7 +57,7 @@ export const costFindings = (
         sorted.map(line => `${clock(line.at)} ${line.by}: ${String(line.chars)} chars — ${line.command.slice(0, 90)}`)
       ),
       times: lines.length,
-      fix: 'what an agent acts on first and short, the rest asked for (--full, --json, a narrower target)',
+      fix: 'what an agent acts on first and short, the rest asked for with an option of the same command, or a narrower target',
       subject: `large-output:${name}`
     });
   }

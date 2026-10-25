@@ -356,7 +356,7 @@ export const completeTask = async (
     if (unsaid.length > 0) {
       throw new RunRefusal(
         'checks-failed',
-        `${unsaid.map(step => step.name).join(', ')} ${unsaid.length === 1 ? 'fails' : 'fail'} in this copy and not in the run's work — this task's own, which the known failure does not say: fix ${unsaid.length === 1 ? 'it' : 'them'}, or name ${unsaid.length === 1 ? 'it' : 'them'} in --known-failure with why`,
+        `${unsaid.map(step => step.name).join(', ')} ${unsaid.length === 1 ? 'fails' : 'fail'} in this copy and not in the run's work — this task's own, which the known failure does not say: fix ${unsaid.length === 1 ? 'it' : 'them'}, or name ${unsaid.length === 1 ? 'it' : 'them'} in plitzi task complete --known-failure "why"`,
         { task: taskId, steps: unsaid }
       );
     }
@@ -378,7 +378,7 @@ export const completeTask = async (
             task: taskId,
             ...(brought.length > 0 ? { brought } : {}),
             steps: failing,
-            next: 'fix what fails and complete again — or, for a reason that weighs, complete --known-failure "why" [--fixed-by <task>|lead]'
+            next: 'fix what fails and complete again — or, for a reason that weighs, task complete --known-failure "why" [--fixed-by <task>|lead]'
           }
         );
       }
@@ -457,7 +457,7 @@ export const completeTask = async (
           ok: false,
           said: [line.check, ...(line.output ?? [])]
         })),
-        next: 'make it hold again — or, when your change means it (a page moved, its words rewritten), complete --known-failure "why" --fixed-by lead: the lead amends that line'
+        next: 'make it hold again — or, when your change means it (a page moved, its words rewritten), task complete --known-failure "why" --fixed-by lead: the lead amends that line'
       }
     );
   }

@@ -48,7 +48,7 @@ export const experienceFrom = (flags: ExperienceFlags, command: string): Experie
   if (missing.length > 0) {
     throw new RunRefusal(
       'invalid',
-      `${command} says what it was like to work with Plitzi: ${missing.join('; ')}${flags.ease !== undefined && missing[0]?.startsWith('--ease') ? ` (not "${flags.ease}")` : ''}. Each thing that got in your way: --friction "…" (again for each); what helped: --helped "…"`
+      `${command} says what it was like to work with Plitzi: ${missing.join('; ')}${flags.ease !== undefined && missing[0]?.startsWith('--ease') ? ` (not "${flags.ease}")` : ''}. Each thing that got in your way: ${command} --friction "…" (again for each); what helped: ${command} --helped "…"`
     );
   }
 
