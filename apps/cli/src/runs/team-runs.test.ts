@@ -325,7 +325,7 @@ describe('a task held behind one in review', () => {
     );
   });
 
-  it('tells the lead of a review taken long ago while nobody has work — and how to decide it', async () => {
+  it('tells the lead of a review past its time, never before — and how to decide it', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
     const plan = benchPlan();
@@ -336,19 +336,11 @@ describe('a task held behind one in review', () => {
     const kinds = async () => (await viewRun(lead(), 'es-launch')).attention.map(item => item.kind);
 
     expect(await kinds()).not.toContain('slow-review');
-    // Its first review holds its reading too (15 min): half of it, with the team idle, the lead hears of it.
-    bench.advance(5 * 60_000);
+    // Its first review holds its reading too (15 min): halfway, with dev-1 idle, the lead still has nothing to ask — an
+    // idle agent could not have taken it (encore-10's lead was woken at 4 min of every long review).
+    bench.advance(8 * 60_000);
     expect(await kinds()).not.toContain('slow-review');
-    bench.advance(3 * 60_000);
-    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
-      expect.objectContaining({
-        kind: 'slow-review',
-        text: expect.stringContaining(
-          "design-1 has had t-menu's UI review 8 min while dev-1 has nothing to take"
-        ) as unknown
-      })
-    );
-    // Past the review's time it is no longer the designer's: said so, idle team or not.
+    // Past the review's time it is no longer the designer's: said so.
     bench.advance(8 * 60_000);
     expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
       expect.objectContaining({

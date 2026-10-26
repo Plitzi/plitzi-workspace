@@ -148,12 +148,18 @@ const COMPLETED: ActionRunStatus = 'completed';
 /** Where a project's server runs its actions, as the page's own flows reach them (`createServer`'s `action.path`). */
 const ACTION_PATH = '/_action';
 
-/** The space's action run from the page, as its visitor — its cookies, its origin: what its answer said, or nothing. */
+/** How much of an action's answer a step says: enough to read a count or an id, never a payload whole. */
+const ANSWER_CHARS = 200;
+
+/**
+ * The space's action run from the page, as its visitor — its cookies, its origin: what it answered, or why it refused.
+ * A run's dev-1 read an action's answer with page check --state, the play's step having said nothing of it.
+ */
 const runAction = async (
   page: BrowserPage,
   action: string,
   input: Record<string, unknown>
-): Promise<string | undefined> => {
+): Promise<{ answer: string } | { refused: string }> => {
   const answer = await page.evaluate(
     async ({ path, body }: { path: string; body: string }) => {
       const response = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body });
@@ -171,12 +177,25 @@ const runAction = async (
 
   const status = isRecord(said) && typeof said.status === 'string' ? said.status : undefined;
   if (answer.status < 400 && status === COMPLETED) {
-    return undefined;
+    const output = isRecord(said) && said.output !== undefined ? JSON.stringify(said.output) : undefined;
+
+    return {
+      answer:
+        output === undefined
+          ? 'completed, with no output'
+          : output.length > ANSWER_CHARS
+            ? `${output.slice(0, ANSWER_CHARS)}…`
+            : output
+    };
   }
 
   const why = isRecord(said) && typeof said.error === 'string' ? said.error : answer.text.slice(0, 300);
+  // A public page plays signed out: a run's designer was answered 401 and not told how to play it signed in.
+  const signIn = answer.status === 401 ? ' — the page played signed out: --as <account> plays it signed in' : '';
 
-  return `action ${action} answered ${String(answer.status)}${status ? `, ${status}` : ''}: ${why}`;
+  return {
+    refused: `action ${action} answered ${String(answer.status)}${status ? `, ${status}` : ''}: ${why}${signIn}`
+  };
 };
 
 /**
@@ -188,7 +207,7 @@ export const actStep = async (
   step: ActingStep,
   index: number,
   visitors?: Visitors
-): Promise<{ problem: string } | undefined> => {
+): Promise<{ problem: string } | { answer: string } | undefined> => {
   if (step.kind === 'as') {
     const theirs = visitors
       ? await visitors.pageOf(step.account, `${new URL(page.url()).pathname}${new URL(page.url()).search}`)
@@ -197,19 +216,21 @@ export const actStep = async (
       return { problem: `Step ${String(index + 1)}: ${theirs.problem}` };
     }
 
-    const problem = await actStep(theirs, step.step, index);
-    if (problem === undefined) {
-      // What it did reaches this page through the server — a message, a count: given the moment it takes.
-      await settle(page);
+    const done = await actStep(theirs, step.step, index);
+    if (done !== undefined && 'problem' in done) {
+      return { problem: `${done.problem} (as ${step.account})` };
     }
 
-    return problem === undefined ? undefined : { problem: `${problem.problem} (as ${step.account})` };
+    // What it did reaches this page through the server — a message, a count: given the moment it takes.
+    await settle(page);
+
+    return done;
   }
 
   if (step.kind === 'action') {
-    const refused = await runAction(page, step.action, step.input);
+    const ran = await runAction(page, step.action, step.input);
 
-    return refused === undefined ? undefined : { problem: `Step ${String(index + 1)}: ${refused}` };
+    return 'refused' in ran ? { problem: `Step ${String(index + 1)}: ${ran.refused}` } : ran;
   }
 
   // The one shown: a page drawing a control per width hides the other — a field of a phone's drawer, the first in the
@@ -420,9 +441,9 @@ export const playSteps = async (
   for (const [index, step] of steps.entries()) {
     try {
       if (step.kind !== 'shot' && step.kind !== 'frames') {
-        const problem = await actStep(page, step, index, visitors);
-        if (problem) {
-          return problem;
+        const done = await actStep(page, step, index, visitors);
+        if (done && 'problem' in done) {
+          return done;
         }
       } else if (step.kind === 'shot') {
         await picture(step.label ?? `step ${String(index + 1)}`);

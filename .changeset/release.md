@@ -61,6 +61,11 @@ authoring and the elements learnt from the runs.
 - **`condition-short-source`** refuses a step's condition naming an element's source by its id alone
   (`roomStats.locked`), which never held: write `apiContainer_roomStats.locked`.
 
+- **`PLITZI_KV_FILE` is `PLITZI_STATE_DIR`**, a folder: a project's server keeps its `kv` (`kv.json`, when the project
+  names none) and its job queue (`jobs.json`) there instead of `state/`. `plitzi upgrade` rewrites `playwright.config.ts`
+  (the visual suite's server keeps `tmp/visual/state`); a project that changed it sets the variable by hand. A store the
+  project opens itself — a SQLite database in `src/config/serverOptions.ts` — should open in that folder too.
+
 ## Several agents on one project (`@plitzi/cli`)
 
 - **One lead, the manager; a tester reviews every task; a scout finds out the spikes.** The lead is the person's harness
@@ -622,6 +627,18 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   apply; a new file beside a file near the limit is said to be the task's.
 - **`two-tasks`** no longer counts a sent-back task waiting for its agent — the rule is that it waits.
 
+- **The run's time.** A piece of work takes 10 minutes (the scope 30): past it `run watch` wakes the lead to ask where
+  it stands, again at each limit more. `run plan` says a task estimated past it and a line that runs a whole Playwright
+  suite; such a line holds a machine-wide lock — one suite at a time, whoever runs it. A line past two minutes says how
+  long it took; one that failed with Playwright reusing the copy served on `PORT` says its `webServer` never started.
+  A check or a complete gives its task's sign of life every minute. Every task approved, `run watch` wakes the lead to
+  close. `complete` with the lead's word unread is refused with it.
+- **Spikes and reviews.** `task spike <s> --approve --findings-only` keeps a spike's findings without its tasks.
+  `plitzi run copy [dir]` makes the run's approved work a folder of the caller's scratch, its state its own. `task look`
+  reads a page only a signed-out visitor opens as a guest, counts an address for the route it fits and the pages an
+  earlier look of the task covered. A review is said slow only past its time; a task of tests waiting for what it tests
+  is never "held up"; `task show` names the round being reviewed as `task next` does.
+
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
 
 - **`page measure` reads how a row lays out** — `flex-direction`, `justify-content`, `flex-grow`, `min-width` (said
@@ -798,6 +815,12 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`selector-instance`** (`plitzi space lint`): a test's `data-plitzi-el` selector naming a component's instance, which
   finds nothing — `handles.element(id).selector` does.
 
+- **`page play`** runs an action once, at the first width, says what it answered under its step and, answered 401,
+  that `--as` plays the page signed in; reads a list's row by `<el>:2` or `<el>:last`; says a public page played signed
+  out. **`page measure`** says the viewport it read at, takes `top`, `right`, `bottom` and `left`, and says a provider
+  as one drawn by its children. **`page check --state <names>`** holds only those; a space that does not author is said
+  by its first lines, not a count.
+
 ## Authoring (`@plitzi/sdk-authoring`)
 
 - **`class-overrides-class` says the same property set over the class listed after it** (`gap` over `gap`, a longhand
@@ -880,6 +903,8 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`keptState`** names the only state keys kept — refused beside `transientState`, a painted key one of them.
 - The `repeated-on-pages` suggestion says where a component of one area is written and listed.
 
+- **`plitzi explain <page field>`** — `unauthorizedRedirect`, `accessLevel`… — says it is a page's and where its meaning is.
+
 ## Elements and the SDK (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`, `@plitzi/sdk-shared`)
 
 - **A hidden element with no tag draws nothing**: a `channel` or provider without a `subType` ignored its own `visible`, its
@@ -960,6 +985,15 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   styles it; `explain` and its search read them. Each style state says what it is (`STYLE_STATE_MEANINGS`).
 - `inspectTemplate` answers `notes`: what reads as other than it looks.
 
+- **`navigation.queryParams`** read as the URL standard does: a value keeps every `=` after its first
+  (`?next=/a?x=1`), `+` is a space, each decoded once.
+- **A visitor who signs in on a page for signed-out visitors** goes back to the `?redirect=` its address carries (on
+  this site), else where the page says — the moment the login succeeds; steps after the login race the page leaving.
+- **A realtime connection swapped for one more topic** keeps the old one hearing until the new one is let in: an event
+  said meanwhile — the one a page opened by navigation causes — is no longer lost, and arrives once.
+- **A refresh of server elements writes `rsc.*` at the SDK root**, not through the element's scope: two providers'
+  refreshes were ~55 "scope collision" warnings a page.
+
 ## Server (`@plitzi/sdk-server`)
 
 - **A page withheld from its visitor keeps its layout's data:** the site around the refusal is read as on every page —
@@ -1038,6 +1072,9 @@ is no room at this address.` — one line, no stack — where the log said "ende
   guest's page; a step that broke stays an error, with its own message.
 - **A `render` read of an action with no `render` trigger** says so — the trigger to add — and a refusal's `code` reaches
   the page (`ActionRefusal`).
+
+- **A project's server holds no `kv` file** when its `serverOptions.action.kv` names a store, and keeps what it does
+  hold in `PLITZI_STATE_DIR` when set (see the upgrade notes).
 
 ## The builder (`@plitzi/plitzi-builder`, `@plitzi/sdk-elements`, `@plitzi/sdk-schema`)
 

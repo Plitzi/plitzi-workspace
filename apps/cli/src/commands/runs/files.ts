@@ -180,7 +180,13 @@ export const taskRequest = (
  */
 export const taskSpike = (
   argument: string | undefined,
-  options: RunCommandOptions & { done?: string; tasks?: string; approve?: boolean; changes?: string }
+  options: RunCommandOptions & {
+    done?: string;
+    tasks?: string;
+    approve?: boolean;
+    findingsOnly?: boolean;
+    changes?: string;
+  }
 ): Promise<void> =>
   act(
     options,
@@ -202,7 +208,14 @@ export const taskSpike = (
         }
 
         if (options.approve === true) {
-          return approveSpike(ctx, runId, argument);
+          return approveSpike(ctx, runId, argument, { findingsOnly: options.findingsOnly === true });
+        }
+
+        if (options.findingsOnly === true) {
+          throw new RunRefusal(
+            'invalid',
+            '--findings-only goes with --approve: plitzi task spike <spike> --approve --findings-only'
+          );
         }
 
         if (options.changes !== undefined) {
@@ -239,7 +252,7 @@ export const taskSpike = (
           : spiked.status !== 'done'
             ? `${spiked.task} is answered: its block lifted with what was found, kept as its finding — its agent goes on with it.`
             : [
-                `${spiked.task} is done: its findings go with every task that waits for it.${spiked.added ? ` It made ${spiked.added.join(', ')}.` : ''}${spiked.ready && spiked.ready.length > 0 ? ` Ready now: ${spiked.ready.join(', ')}.` : ''}`,
+                `${spiked.task} is done: its findings go with every task that waits for it.${spiked.added ? ` It made ${spiked.added.join(', ')}.` : ''}${spiked.dropped ? ` Left out, as you said: ${spiked.dropped.join(', ')} — what they were for, put in the backlog (plitzi run notice "…").` : ''}${spiked.ready && spiked.ready.length > 0 ? ` Ready now: ${spiked.ready.join(', ')}.` : ''}`,
                 ...(spiked.notices ?? []).map(notice => `  · ${notice}`)
               ].join('\n')
   );

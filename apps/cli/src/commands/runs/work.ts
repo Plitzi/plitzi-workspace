@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 import { act, either, holder, reviewingOnly, runOf } from './shell';
-import { hhmm, list, messageLines, secondRunText } from './text';
+import { hhmm, list, messageLines, reusedServerText, secondRunText, slowLineText } from './text';
 import { experienceFrom } from '../../runs/experience';
 import { crossed, longFileText } from '../../runs/longFiles';
 import { runPaths } from '../../runs/paths';
@@ -183,7 +183,7 @@ export const taskCheck = (
           : []),
         ...checked.accepted.map(
           each =>
-            `  ${each.ok ? '✓' : chalk.yellow('✗')} acceptance — ${each.said}  ${chalk.dim(`[${each.check}]`)}${secondRunText(each)}${each.ok || !each.output ? '' : `\n${each.output.map(line => `      ${line}`).join('\n')}`}`
+            `  ${each.ok ? '✓' : chalk.yellow('✗')} acceptance — ${each.said}  ${chalk.dim(`[${each.check}]`)}${secondRunText(each)}${slowLineText(each)}${reusedServerText(each)}${each.ok || !each.output ? '' : `\n${each.output.map(line => `      ${line}`).join('\n')}`}`
         ),
         ...checked.tooLong.map(each => chalk.yellow(`  ✗ ${each}`)),
         ...(checked.backups ?? []).map(file => chalk.yellow(`  ✗ ${backupText(file)}`)),

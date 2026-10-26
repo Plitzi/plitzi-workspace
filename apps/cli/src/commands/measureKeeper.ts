@@ -106,12 +106,14 @@ export const keepBrowser = async (root: string): Promise<void> => {
       return 'problem' in read ? { problem: read.problem } : { outline: read.outline };
     },
     act: async (page, step, index) => {
-      const problem = await actStep(page, step, index);
-      if (!problem) {
-        await settle(page);
+      const done = await actStep(page, step, index);
+      if (done && 'problem' in done) {
+        return done;
       }
 
-      return problem;
+      await settle(page);
+
+      return undefined;
     },
     readState,
     close: page => page.close()

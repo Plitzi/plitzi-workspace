@@ -268,6 +268,8 @@ describe('page measure', () => {
   it('prints only what is asked, its box a word — and refuses what is not measured, naming the flag', () => {
     expect(onlyProperties('box')).toEqual(['x', 'y', 'width', 'height', 'padding', 'margin']);
     expect(onlyProperties('box,font-size')).toContain('font-size');
+    // encore-10's designer: a fixed bar's distance from the viewport's edge, --only right refused.
+    expect(onlyProperties('right,bottom,top,left')).toEqual(['right', 'bottom', 'top', 'left']);
     // A run's designer sharing a row's rules: --only refused flex-direction, min-width and flex-grow.
     expect(onlyProperties('flex-direction,min-width,flex-grow,justify-content')).toEqual([
       'flex-direction',

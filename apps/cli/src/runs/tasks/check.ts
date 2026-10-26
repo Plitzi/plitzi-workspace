@@ -12,6 +12,7 @@ import { failureLines } from '../usage';
 import { changedInCopy, findTask, holderOf, refreshCopy } from './common';
 import { whoseChanges } from './complete';
 import { fixChanged } from './fix';
+import { keepAlive } from './keepAlive';
 import { againstRunWork, stepsNotOwn, tellUnanswered } from './notOwn';
 import { readStart } from '../taskStore';
 
@@ -115,23 +116,26 @@ export const checkTask = async (
   let accepted: Awaited<ReturnType<typeof checkAcceptance>> = before?.accepted ?? [];
   let checks: CheckResult = before?.checks ?? { ok: true, steps: [] };
   let notOwnSteps: string[] = [];
-  try {
-    if (!before) {
-      checks = only === 'acceptance' ? checks : await ctx.checks(view.paths.work, ctx.root);
-      notOwnSteps = checks.ok
-        ? []
-        : stepsNotOwn(checks, await againstRunWork(ctx, loaded, view, checks)).map(step => step.name);
-      // What fails for nothing of the copy's stops nothing of it: a run's t-home went to review with its acceptance
-      // unrun, for a warning the run's work had too.
-      const ownFailing = checks.steps.filter(step => !step.ok && !notOwnSteps.includes(step.name));
-      accepted =
-        ownFailing.length === 0
-          ? await checkAcceptance(task.acceptance, { ...where, ...(serving ? { serving } : {}) })
-          : [];
+  // Its sign of life given while the checks run: the agent inside them can give none.
+  await keepAlive(view, ctx.now, async () => {
+    try {
+      if (!before) {
+        checks = only === 'acceptance' ? checks : await ctx.checks(view.paths.work, ctx.root);
+        notOwnSteps = checks.ok
+          ? []
+          : stepsNotOwn(checks, await againstRunWork(ctx, loaded, view, checks)).map(step => step.name);
+        // What fails for nothing of the copy's stops nothing of it: a run's t-home went to review with its acceptance
+        // unrun, for a warning the run's work had too.
+        const ownFailing = checks.steps.filter(step => !step.ok && !notOwnSteps.includes(step.name));
+        accepted =
+          ownFailing.length === 0
+            ? await checkAcceptance(task.acceptance, { ...where, ...(serving ? { serving } : {}) })
+            : [];
+      }
+    } finally {
+      await letGo(serving);
     }
-  } finally {
-    await letGo(serving);
-  }
+  });
 
   const tooLong = (await longFilesIn(view.paths.work, ctx.root)).filter(crossed).map(longFileText);
   const backups = backupFiles(mine);

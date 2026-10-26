@@ -119,10 +119,22 @@ const pseudoPlaces = async (
 };
 
 /** One element of an open page, measured — or why it could not be. */
-export const measureOn = async (page: BrowserPage, target: string): Promise<Measured | { problem: string }> => {
+export const measureOn = async (
+  page: BrowserPage,
+  target: string,
+  /** Whether the space authors an id as an element with no box of its own — a provider with no tag. Asked when not found. */
+  { boxless }: { boxless?: (id: string) => Promise<boolean> } = {}
+): Promise<Measured | { problem: string }> => {
   const found = await targetOn(page, target);
   if ('problem' in found) {
     return found;
+  }
+
+  // A run's designer measured an apiContainer and was told it was not drawn, with guesses why: it was, as its children.
+  if (!found.found && boxless && (await boxless(target))) {
+    return {
+      problem: `${target} draws no box of its own — a provider, drawn as what it holds: measure one of its children`
+    };
   }
 
   if (!found.found) {

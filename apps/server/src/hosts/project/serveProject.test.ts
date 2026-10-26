@@ -11,6 +11,7 @@ import { projectMark } from '@plitzi/sdk-shared/project';
 import { serveProject } from './serveProject';
 import { LIVE_PAGES_PATH } from '../../core/http/stages/livePages';
 import { unusedPort } from '../../core/unusedPort';
+import { createMemoryKv } from '../../modules/actions/runtime/memoryKv';
 import { offlineDataOf, oneEmptyPage } from '../../modules/ssr/tests/offlineData';
 
 import type { ServedProject } from './serveProject';
@@ -329,14 +330,23 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     });
   });
 
-  // The visual suite's server beside the one the CLI kept of a copy was refused — "createFileKv … is in use".
-  it('keeps its kv where PLITZI_KV_FILE says, leaving the project’s own for the server a person has open', async () => {
-    vi.stubEnv('PLITZI_KV_FILE', 'tmp/visual/kv.json');
+  // The visual suite's server beside the one the CLI kept of a copy was refused — "createFileKv … is in use" — and a
+  // run read PLITZI_KV_FILE as dead beside a sqlite kv: its suite ran the person's jobs out of state/jobs.json.
+  it('keeps its kv and its jobs where PLITZI_STATE_DIR says, leaving the project’s own state for a person’s server', async () => {
+    vi.stubEnv('PLITZI_STATE_DIR', 'tmp/visual/state');
     await serve({ space: () => titled('a') });
 
-    expect(existsSync(path.join(root, 'tmp/visual/kv.json.lock'))).toBe(true);
-    expect(existsSync(path.join(root, 'state/kv.json.lock'))).toBe(false);
+    expect(existsSync(path.join(root, 'tmp/visual/state/kv.json.lock'))).toBe(true);
+    expect(existsSync(path.join(root, 'tmp/visual/state/jobs.json.lock'))).toBe(true);
+    expect(existsSync(path.join(root, 'state'))).toBe(false);
     vi.unstubAllEnvs();
+  });
+
+  it('holds no kv file of its own when the project names its kv', async () => {
+    await serve({ space: () => titled('a'), serverOptions: { action: { kv: createMemoryKv() } } });
+
+    expect(existsSync(path.join(root, 'state/kv.json.lock'))).toBe(false);
+    expect(existsSync(path.join(root, 'state/jobs.json.lock'))).toBe(true);
   });
 
   it('authors it again on a save and serves the new documents from memory, every open page handed them', async () => {

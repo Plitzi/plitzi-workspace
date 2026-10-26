@@ -122,7 +122,15 @@ export interface NextTask {
    * (the lead's alone): a task at work blocked on a question, whose block its answer lifts (`task unblock --answer`);
    * `asked`: what the lead said when it sent the spike's tasks back.
    */
-  spike?: { task: RunTask; question: string; findings: number; blocking?: true; asked?: string };
+  spike?: {
+    task: RunTask;
+    question: string;
+    findings: number;
+    blocking?: true;
+    asked?: string;
+    /** The site the run copies, to compare with — none, and its brief says nothing of an original. */
+    reference?: string;
+  };
   /**
    * The lead's: what a scout found, to decide — with the person, the tasks it makes (`stage`) — and approve (`task spike
    * --approve`).

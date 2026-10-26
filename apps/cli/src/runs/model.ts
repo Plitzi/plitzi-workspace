@@ -90,6 +90,13 @@ export interface AcceptanceResult {
    * line of a done task — when. `ok` stays false until a run says it.
    */
   amended?: string;
+  /** How long it ran, in ms, when past `SLOW_LINE_MS`: said, a suite where the task's own specs would do. */
+  ms?: number;
+  /**
+   * A failed line whose Playwright found the copy served on this port (`PORT`) and reused it: its config's `webServer`,
+   * and the env it gives the server, never started. encore-10's dev-1 read the failure as a product bug.
+   */
+  reused?: number;
 }
 
 export interface PlannedTask {
@@ -712,7 +719,9 @@ export const isTaskState = (value: unknown): value is TaskState =>
           typeof result.ok === 'boolean' &&
           optional(result.output, isStrings) &&
           optional(result.amended, isString) &&
-          optional(result.firstFailed, isStrings)
+          optional(result.firstFailed, isStrings) &&
+          optional(result.ms, isNumber) &&
+          optional(result.reused, isNumber)
       )
   ) &&
   isString(value.updatedAt);

@@ -286,3 +286,41 @@ describe('a play over several widths', () => {
     expect(sharedServerNote(1, [{ kind: 'click' }])).toBeUndefined();
   });
 });
+
+// encore-10: a designer's play at 390,1440 created two rooms; another read an action's answer with page check --state.
+describe('an action in a play', () => {
+  const side = (ran: string[]): PlaySide => ({
+    act: step => {
+      ran.push(step.kind);
+
+      return Promise.resolve(step.kind === 'action' ? { answer: '{"slug":"empty-porch"}' } : undefined);
+    },
+    read: targets => Promise.resolve(targets.map(() => at(0)))
+  });
+  const steps = [{ kind: 'action' as const, action: 'room-create', input: { name: 'Empty Porch' } }];
+
+  it('says what it answered under its step', async () => {
+    const ran: string[] = [];
+    const result = await playOn({ here: side(ran) }, steps, []);
+    if (!('played' in result)) {
+      throw new Error(result.problem);
+    }
+
+    expect(ran).toEqual(['action']);
+    expect(playedText(result.played).map(line => stripVTControlCharacters(line))).toContain(
+      '  ← {"slug":"empty-porch"}'
+    );
+  });
+
+  it('runs at the first width alone: a later one reads what it did, said so', async () => {
+    const ran: string[] = [];
+    const result = await playOn({ here: side(ran) }, steps, [], { actions: false });
+    if (!('played' in result)) {
+      throw new Error(result.problem);
+    }
+
+    expect(ran).toEqual([]);
+    expect(result.played[1]?.idle?.here).toContain('room-create ran once, at the first width');
+    expect(sharedServerNote(2, steps)).toContain('its actions ran at the first width alone');
+  });
+});

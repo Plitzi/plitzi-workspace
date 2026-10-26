@@ -3,11 +3,12 @@ import path from 'node:path';
 
 import { act, runOf } from './shell';
 import { answering, freePort } from '../../runs/acceptance';
-import { pagesOf } from '../../runs/pagesOf';
+import { acceptanceAddresses, examplePaths, pagesOf } from '../../runs/pagesOf';
 import { previewDir, startPreview } from '../../runs/preview';
 import { previewPort } from '../../runs/previewRecord';
 import { RunRefusal } from '../../runs/refusal';
 import { assertStatus, loadRun, logRun, readApproved } from '../../runs/run';
+import { checkAccount, sessionCookie } from '../check/account';
 
 import type { RunCommandOptions } from './shell';
 
@@ -22,6 +23,8 @@ export interface RunLooked {
   runId: string;
   url: string;
   pages: string[];
+  /** Pages the run changed that no link of the site and no line of its acceptance reaches: not looked at, said. */
+  unreached: string[];
   /** What `page check` said of them, as it says it. */
   check: string;
   /** Whether every page passed its check. */
@@ -69,8 +72,19 @@ export const runLook = (runId: string | undefined, options: RunCommandOptions): 
           throw new RunRefusal('invalid', `The run's work did not answer on ${url} within a minute`);
         }
 
-        const pages = await pagesOf(dir, approved);
-        const looked = pages.length > 0 ? pages : ['/'];
+        // Every page the run changed — none cut at a task's few — each route made an address the site reaches, as the
+        // project's account sees it: encore-10's look missed four and checked two patterns as written (a 404).
+        const changed = await pagesOf(dir, approved, Number.POSITIVE_INFINITY);
+        const named = [...new Set(loaded.tasks.flatMap(task => acceptanceAddresses(task.acceptance)))];
+        const account = await checkAccount(dir);
+        const cookie = account === undefined || 'problem' in account ? undefined : await sessionCookie(url, account);
+        const { paths: reached, unreached } = await examplePaths(
+          url,
+          changed.length > 0 ? changed : ['/'],
+          named,
+          typeof cookie === 'string' ? cookie : undefined
+        );
+        const looked = reached.length > 0 ? reached : ['/'];
         const shots = path.join(loaded.paths.shots, 'run-look');
         // From the folder served, which holds the run's pages: from the project, a page the run made is not there yet.
         const check = await ownCli(dir, ['page', 'check', ...looked, '--url', url, '--width', '1440,390']);
@@ -89,7 +103,7 @@ export const runLook = (runId: string | undefined, options: RunCommandOptions): 
         ]);
         await logRun(ctx, loaded.paths, { action: 'run-look', pages: looked, passed: check.code === 0 });
 
-        return { runId: run, url, pages: looked, check: check.out, passed: check.code === 0, shots };
+        return { runId: run, url, pages: looked, unreached, check: check.out, passed: check.code === 0, shots };
       } finally {
         served?.stop();
       }
@@ -97,6 +111,11 @@ export const runLook = (runId: string | undefined, options: RunCommandOptions): 
     looked =>
       [
         `The run's whole result, as the person will be handed it (${looked.url}): ${looked.pages.join(', ')}`,
+        ...(looked.unreached.length > 0
+          ? [
+              `Not looked at — no link of the site nor line of the run reaches them: ${looked.unreached.join(', ')} (look at one yourself: plitzi page check <address> --url ${looked.url})`
+            ]
+          : []),
         looked.check,
         `Pictures — 1440 and 390, light and dark: ${looked.shots}/`,
         looked.passed

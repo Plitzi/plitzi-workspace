@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import net from 'node:net';
+import os from 'node:os';
 import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
@@ -10,6 +11,7 @@ import { projectMark } from '@plitzi/sdk-shared/project';
 import { inTurns } from './inTurns';
 import { stopKept } from './lingering';
 import { listenersUnder, stopListener, stopTree, TREE } from './processes';
+import { withLock } from './store';
 import { UNANSWERED_EXIT } from '../commands/terminal';
 import { runScript, scriptsOf, tail } from '../commands/verify';
 import { DEV_SERVER_FILE, PROJECT_TMP, SERVER_RECORD_ENV } from '../scaffold/paths';
@@ -305,6 +307,30 @@ const cliShim = async (cache: string): Promise<string> => {
 /** How many acceptance lines run at once on one served copy: each a browser, as a look's commands are. */
 const ACCEPTANCE_AT_ONCE = 2;
 
+/**
+ * One Playwright suite at a time on the machine: two agents' suites at once made each other's timeouts and every
+ * measure of them wrong (encore-10, a reviewer polling `ps` before its own). Held across runs and projects.
+ */
+export const SUITE_LOCK = path.join(os.tmpdir(), 'plitzi-playwright-suite.lock');
+
+/** A line past this runs more than a task's own checks: a whole suite where its specs would do (Carlos: minutes, not more). */
+export const SLOW_LINE_MS = 2 * 60_000;
+
+/** The project's scripts that run a Playwright suite, by name: `npm run visual` is one when its script is `playwright test`. */
+const suiteScripts = async (root: string): Promise<string[]> =>
+  Object.entries(await scriptsOf(root).catch(() => ({})))
+    .filter(([, script]) => /\bplaywright\s+test\b/.test(script))
+    .map(([name]) => name);
+
+/** Whether a line runs a Playwright suite: itself, or a script of the project that does. */
+export const runsSuite = (check: string, scripts: readonly string[]): boolean =>
+  /\bplaywright\s+test\b/.test(check) ||
+  scripts.some(name =>
+    new RegExp(`\\b(?:npm\\s+run|pnpm(?:\\s+run)?|yarn)\\s+${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(
+      check
+    )
+  );
+
 /** A line's exit that answers nothing: a page command that could not read (2), a command not found or not runnable. */
 const isUnanswered = (code: number): boolean => code === UNANSWERED_EXIT || code === 126 || code === 127;
 
@@ -352,21 +378,37 @@ export const checkAcceptance = async (
   const values: Record<string, string> = served
     ? { PLITZI_URL: served.url, PLITZI_PORT: String(served.port), PORT: String(served.port) }
     : {};
+  const scripts = await suiteScripts(root);
+  const runOnce = async (each: { check: string }) => {
+    const started = Date.now();
+    const result = await runScript(work, withServedValues(each.check, values), root, { env: values, bin: [bin] });
+
+    return { ...result, ms: Date.now() - started };
+  };
   const run = (each: { check: string }) =>
-    runScript(work, withServedValues(each.check, values), root, { env: values, bin: [bin] });
+    runsSuite(each.check, scripts)
+      ? withLock(SUITE_LOCK, () => runOnce(each), {
+          ttlMs: 30 * 60_000,
+          waitMs: 30 * 60_000,
+          doing: "another agent's Playwright suite on this machine"
+        })
+      : runOnce(each);
   try {
     // Two at a time: a run's t-body-type ran a measure, then a check of four pages, one after the other — 11 s
     // of its 18 s check, each line a browser of its own the other did not wait on.
     const results: AcceptanceResult[] = await inTurns(
       checked.map((each, index) => async () => {
         onLine?.(index, checked.length, each.said, false);
-        const { code, output } = await run(each);
+        const { code, output, ms } = await run(each);
 
         return {
           said: each.said,
           check: each.check,
           ok: code === 0,
-          ...(code === 0 ? {} : { output: tail(output) })
+          // Kept only past the time a check should take: what is said of it.
+          ...(ms > SLOW_LINE_MS ? { ms } : {}),
+          ...(code === 0 ? {} : { output: tail(output) }),
+          ...(code !== 0 && served && runsSuite(each.check, scripts) ? { reused: served.port } : {})
         };
       }),
       ACCEPTANCE_AT_ONCE

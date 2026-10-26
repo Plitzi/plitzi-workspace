@@ -97,9 +97,8 @@ task message t-home "…" --reply-to m3`; `all` or `@dev-1` in place of the task
    the plan in the run's `inputs/` (`run open` says which; the run's own `plan.json` is what amend compares it to,
    never edited) and `plitzi run amend` — acceptance, priorities, findings, notes, the inventory, what a task nobody took waits for (`dependsOn`), one
    removed; more work is a stage, `plitzi
-run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — a task past twice its estimate wakes you: ask where it
-   stands (`task message @<agent> --standing`) and decide on the answer; chase a review that drags.
-   Nothing waits for you? Wait.
+run extend <run> next.json`; say each to the person. **You manage it** (§ The run's time): no agent idle while work
+   could move; chase a review that drags. Nothing waits for you? Wait.
 6. **Decide what reaches you**, reading only that: an escalation's `task show`, a spike's proposal.
 7. **A change after approval** puts the finish into
    **reconciliation**: `plitzi run resolve <run> <file> --take …`, then `plitzi run resolve <run>` (no file) goes on.
@@ -119,6 +118,20 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
    diff, checked). `--apply` is the person's, or yours if they allowed it — every server you started on the project stopped first, with `plitzi server stop` (one
    serves the project as it was and holds its `state/kv.json`). `run state`: what awaits it.
 
+## The run's time is yours
+
+- **A piece of work takes 10 minutes** (`run plan` says a task estimated past it: split it). Past it `run watch` wakes
+  you: ask where it stands (`task message @<agent> --standing`) and decide at once — near done, on; else narrow it,
+  split what is left into a task (`run extend`), or `task reassign`. A run's 60-minute task took 148, nobody cutting it.
+- **A bug found inside a task is another task**, or `run notice`: never its scope growing round by round.
+- **Specs, a task's own**: a line runs the specs of what it changes, never a whole suite (`run plan` says one) — a suite
+  holds the machine, the CLI queues the next; the finish runs it whole, once.
+- **The scope spike is the big one** (30 min); a later spike answers one question an agent met — 10 minutes, measured with
+  the tools, never a suite. Its findings without its tasks: `task spike <s> --approve --findings-only`.
+- **A known failure you accept is the agent's flag** — `task complete --known-failure "…" --fixed-by <task>` — never a
+  message: its reviewer reads it in `task show`.
+- **Every task approved: close now** (`run watch` says so) — look, report, finish.
+
 ## Where leads went wrong
 
 - **A check you write, you run once** on the run's work first: a 404 page is `page check … --status 404`, a guest
@@ -129,14 +142,12 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 - **A question first**: it holds an agent. `run watch` in the harness's background (never `&`), one at a time.
 - **Say what is so, read from its source** (a copied site's CSS, `task show`, the run's approved version), never from a
   copy, a class name or memory; never answer one way and tell another — a file a task holds is no one else's.
-- **A value is measured, never typed**: scoping, `plitzi page measure <path> <elements…> --width 390,1440` (`--hover`,
-  `--click`: a state; `page outline <path>` names them; a copy's `"<el> => <sel>" … --compare <reference>`) each piece — whole, its box too, both widths, held by one
-  acceptance line (`--same …`); "one class holds it" once grepped. A stage may be its `tasks` alone.
-- **The scope, before it ends** — most rounds of a run are its: (1) each element measured whole — its box (height,
-  padding), its pseudo-elements, a hover — at 390 and 1440, never only the property the ask names; (2) where a value
-  is written, grepped, before a finding says "one class holds it" (a copy beside it is a round lost); (3) each line of
-  the acceptance run once on the run's work as it is — it fails for the value, never for a selector that finds nothing
-  (exit 0 already: it holds nothing, or say it guards); (4) a line for each width the ask covers.
+- **A value is measured, never typed**: `plitzi page measure <path> <elements…> --width 390,1440` (`--hover`,
+  `--click`; `page outline <path>` names them; a copy's `"<el> => <sel>" … --compare <reference>`), held by one line
+  (`--same …`). A stage may be its `tasks` alone.
+- **The scope, before it ends** — most rounds are its: each element measured whole (box, pseudo-elements, a hover)
+  at 390 and 1440; a value grepped where it is written before a finding says "one class holds it"; each line run once
+  on the run's work — failing for the value, never for a selector that finds nothing; a line per width.
 - **The team the work is worth**: `run plan` says when it is too big — the base runs while the run is open; one on
   demand only when work waits — the run starts it; never prompts of your own.
 - **Your files** — a stage, a summary — in your scratch (`tmp/plitzi-runs/<run>/scratch/lead/`), never the project's
@@ -156,20 +167,16 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 - **A line nothing can answer is yours at once**: its command exits 2 (an element not there — a copied site's too —
   nothing served), you are told, and every try of the task fails on it until you amend it — never the agent's to bend.
 - **A command you hand an agent you ran**, as a line you write: one `--same` refused cost a round.
-- **A link's line follows it**: that the link is there proves nothing — a list of links can all go to the same page. Click it
-  and say where it lands (`page check <path> --click <link>` prints the address; `page play … --steps "click <link>"`
-  says `→ <path>`), and that page answers.
-- **Your look covers every state the task names**: an approval read from the state at rest misses the one the task is
-  about (keys that wrap only once a state is on). Each state — signed in, open, reminded, empty, at the
-  phone width — is a `task look --click/--as` or a `page play` before you approve.
-- **A control is used there and back, not pictured** — an arrow, a dot, a pager, a drawer: its acceptance line is a
-  `page play <path> --steps "…" --read <el…> --width 390,1440` (a copy's beside its reference, `"ours => theirs"`,
-  `--compare <reference> --same moved,shown,enabled`; `page measure --click` for an open state's values) — never a
-  script of yours; a picture passes one that moves nothing, or otherwise than asked.
-- **The board is a kanban; keeping the team busy is yours.** A card ready beside each one in review, so an agent whose
-  card waits takes another: stack the backlog (`run extend`, tasks that `closes`), split a card by what changes apart,
-  give the designer the UI reviews — `task review --changes … --skip-design reviewer` keeps the next look yours. `run watch` says
-  an agent with nothing to take (`idle-team`) and how to feed it.
+- **A link's line follows it** — present proves nothing: `page play … --steps "click <link>"` says `→ <path>`; that
+  page answers.
+- **Your look covers every state the task names** — signed in, open, empty, at 390: a `task look --click/--as` or a
+  `page play` each before you approve; the state at rest misses the one the task is about.
+- **A control is used there and back, not pictured** (an arrow, a pager, a drawer): its line is a `page play <path>
+  --steps "…" --read <el…> --width 390,1440` (a copy's: `"ours => theirs" --compare <reference> --same
+  moved,shown,enabled`) — never a script of yours.
+- **The board is a kanban; keeping the team busy is yours**: a card ready beside each in review — stack the backlog
+  (`run extend`, tasks that `closes`), split a card by what changes apart. `run watch` says an agent with nothing to
+  take (`idle-team`).
 - **The designer's own task off the critical path** while it is the only one reviewing UI: what waits on it waits on
   every review too: a refactor with nothing to see is a developer's.
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red — a done task's too: the finish holds
@@ -179,7 +186,6 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
   limit forced: `run notice --plitzi "…"`, one each with what it cost; never fixed mid-run. The run's `feedback.md` joins
   them to the agents' reports.
 - **A round trimmed is said**: what it leaves goes to the backlog (`run notice`), not one more round.
-- **The report before the finish**; `--apply` is the person's unless they allowed you.
 
 ## When the run copies a site
 

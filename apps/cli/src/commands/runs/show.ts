@@ -48,6 +48,10 @@ export const notesLines = (notes: readonly { by: string; text: string }[], full:
       ];
 };
 
+/** The round it is in, as `task next` says it: in review, the one being reviewed — after `round` reviews. */
+export const roundText = ({ status, round }: { status: string; round: number }): string =>
+  status === 'in-review' ? `, round ${String(round + 1)}` : round > 0 ? `, round ${String(round)}` : '';
+
 const taskShowSummary = (named: string | undefined, options: RunCommandOptions & { full?: boolean }): Promise<void> =>
   act(
     options,
@@ -63,7 +67,7 @@ const taskShowSummary = (named: string | undefined, options: RunCommandOptions &
 
       return [
         chalk.bold(
-          `${shown.task.id} — ${shown.task.title} · ${shown.status}${shown.round > 0 ? `, round ${String(shown.round)}` : ''}${shown.holder ? ` · ${shown.holder}` : ''}`
+          `${shown.task.id} — ${shown.task.title} · ${shown.status}${roundText(shown)}${shown.holder ? ` · ${shown.holder}` : ''}`
         ),
         `  ${shown.task.role ?? 'developer'} · its files: ${shown.task.files.join(', ')}`,
         ...(shown.task.acceptance.length > 0

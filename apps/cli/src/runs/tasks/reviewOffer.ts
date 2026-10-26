@@ -22,8 +22,9 @@ export interface ReviewOffer {
   /** Its UI review waits for a designer and none is free: the lead's too, said how. */
   uiToo?: string;
   /**
-   * What its agent or another of the team told the lead of it (`task tell`): a finding for its review — a designer's on
-   * its code above all — read by whoever reviews it, not only by the lead, which reviews none a tester takes.
+   * What was said of it between the lead and the team: what its agent or another told the lead (`task tell`) — a
+   * designer's finding on its code above all — and what the lead said to it, its answers and decisions: read by whoever
+   * reviews it, as the lead does not (encore-10's tester sent back a task for a question the lead had answered).
    */
   told?: string[];
 }
@@ -31,14 +32,13 @@ export interface ReviewOffer {
 /** A review offered to whoever reviews next — a lead, a tester: the task as it went to review, and what was said of it. */
 export const reviewOffer = async (loaded: LoadedRun, review: TaskView, uiToo?: string): Promise<ReviewOffer> => {
   const approvedUi = review.state.design?.status === 'approved' ? review.state.design : undefined;
-  const told = (await messagesOf(loaded))
-    .filter(
-      message =>
-        message.to === LEAD &&
-        message.fyi === true &&
-        (message.from === review.task.id || message.about === review.task.id)
-    )
-    .map(message => `${message.from}: ${message.text}`);
+  const told = (await messagesOf(loaded)).flatMap(message =>
+    message.to === LEAD && message.fyi === true && (message.from === review.task.id || message.about === review.task.id)
+      ? [`${message.from} to the lead: ${message.text}`]
+      : message.from === LEAD && message.to === review.task.id
+        ? [`the lead to it: ${message.text}`]
+        : []
+  );
 
   return {
     task: review.task,

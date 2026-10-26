@@ -132,7 +132,11 @@ const spikeText = (spike: NonNullable<NextTask['spike']>, agent: string): string
     ...(spike.findings > 0
       ? [`  ${String(spike.findings)} finding(s) of it already: plitzi task context ${spike.task.id}`]
       : []),
-    '  Compare with the original (page shot <path> --compare <original> --clip <section> --dress), read its computed styles, measure — write nothing of the task’s',
+    // A copy's spike compares with the original; any other reads the project — encore-10's spike on test speed was
+    // told to compare with an original it had none of.
+    spike.reference === undefined
+      ? '  Read the code and the pages, measure, run what tells — write nothing of the task’s'
+      : `  Compare with the original (page shot <path> --compare ${spike.reference} --clip <section> --dress), read its computed styles, measure — write nothing of the task’s`,
     spike.blocking
       ? `  ${spike.task.id} is blocked on it, at work: lift its block with what you found — plitzi task unblock ${spike.task.id} --answer "…" (kept as its finding)`
       : `  Then say it — the layers, their values, which file gets each — and its result, the tasks it makes, each with its "findings": plitzi task spike ${spike.task.id} --done "…" [--tasks <stage.json>]${isPrincipal(agent) ? '' : ' — the lead approves it before anything is applied'}`
@@ -164,7 +168,7 @@ const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: stri
     ),
     ...(review.design ? [`  ✓ ${review.design}`] : []),
     ...(review.uiToo ? [chalk.yellow(`  ⚠ ${review.uiToo}`)] : []),
-    ...(review.told ?? []).map(line => `  ✉ told the lead — ${line}`),
+    ...(review.told ?? []).map(line => `  ✉ ${line}`),
     ...review.asked.map(line => `  ↺ ${line}`),
     ...earlierText(review),
     `  It changed: ${review.changed.join(', ') || 'nothing said'} — in its copy, ${review.copy}`,

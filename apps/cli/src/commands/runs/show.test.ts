@@ -2,7 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { notesLines } from './show';
+import { notesLines, roundText } from './show';
 
 // A lead read one task's show — 16k characters — four times in nine minutes, its notes whole every time.
 describe('a task’s notes, shown', () => {
@@ -19,5 +19,15 @@ describe('a task’s notes, shown', () => {
 
     expect(notesLines(notes, true)).toHaveLength(14);
     expect(notesLines([], false)).toEqual([]);
+  });
+});
+
+// encore-10's show said "in-review, round 1" of a task its tester was at the second round of, as `task next` said.
+describe('a task’s round, shown', () => {
+  it('is the one being reviewed while in review, as task next says it', () => {
+    expect(roundText({ status: 'in-review', round: 0 })).toBe(', round 1');
+    expect(roundText({ status: 'in-review', round: 1 })).toBe(', round 2');
+    expect(roundText({ status: 'in-progress', round: 1 })).toBe(', round 1');
+    expect(roundText({ status: 'ready', round: 0 })).toBe('');
   });
 });

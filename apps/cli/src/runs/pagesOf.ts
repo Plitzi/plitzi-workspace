@@ -56,7 +56,12 @@ const pageUnits = async (root: string, files: readonly string[]): Promise<Set<st
 export const drawnByAPage = async (root: string, files: readonly string[]): Promise<boolean> =>
   (await pageUnits(root, files)).size > 0;
 
-export const pagesOf = async (root: string, files: readonly string[]): Promise<string[]> => {
+export const pagesOf = async (
+  root: string,
+  files: readonly string[],
+  /** How many: a task's look the first few; a run's look every one (encore-10's missed four, cut at eight). */
+  most: number = MAX_PAGES
+): Promise<string[]> => {
   const units = await pageUnits(root, files);
   if (units.size === 0) {
     return [];
@@ -73,12 +78,19 @@ export const pagesOf = async (root: string, files: readonly string[]): Promise<s
     .filter(([id]) => names.some(name => id === name || id.startsWith(`${name}-`) || id === `${name}-page`))
     .map(([, page]) => page.path);
 
-  return [...new Set(paths)].slice(0, MAX_PAGES);
+  return [...new Set(paths)].slice(0, most);
 };
 
 /** A pattern's parameters, `:slug`, as what one segment of an address may be. */
 const patternOf = (route: string): RegExp =>
   new RegExp(`^${route.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/:[A-Za-z_]\w*/g, '[^/?#]+')}/?$`);
+
+/**
+ * Whether a page — a route, `/u/:username` — was looked at among `looked`: itself, or an address that fits it. A run's
+ * look of `/u/mika` warned that `/u/:username` was not looked at.
+ */
+export const lookedAmong = (page: string, looked: readonly string[]): boolean =>
+  looked.some(each => each === page || patternOf(page).test(each.split(/[?#]/)[0] ?? each));
 
 /**
  * Routes to open, each pattern among them (`/boxeadores/:slug`) made an address the site itself links to: the first

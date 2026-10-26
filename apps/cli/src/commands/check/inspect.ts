@@ -6,6 +6,7 @@ import {
   openPage,
   readDevTools
 } from '@plitzi/sdk-authoring';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { withheldPageOf } from '@plitzi/sdk-shared/schema';
 
 import { landingProblem, saySignedIn, signInAs, signInWhereSent } from './account';
@@ -37,6 +38,10 @@ import type { Schema } from '@plitzi/sdk-shared';
 
 /** Under it a page is a phone's or a tablet's: laid out for a finger, with no pointer to hover with. */
 const HOVER_WIDTH = 1024;
+
+/** Only the keys named of what the page holds (`--state a,b`). */
+const namedOf = (held: Record<string, unknown>, names: readonly string[]): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(held).filter(([name]) => names.includes(name)));
 /**
  * One page checked at one width: opened, followed by its own links (`--then`), inspected whole, and reported.
  */
@@ -495,8 +500,12 @@ const inspectHere = async (
           shownFailures: data.shownFailures.map(each => `${each.provider} — ${each.failure} — shown by ${each.by}`)
         }
       : {}),
-    ...(!asked.state || shown.state === undefined ? {} : { state: shown.state }),
-    ...(!asked.state || shown.sources === undefined ? {} : { sources: shown.sources }),
+    ...(!asked.state || shown.state === undefined
+      ? {}
+      : { state: asked.stateOf && isRecord(shown.state) ? namedOf(shown.state, asked.stateOf) : shown.state }),
+    ...(!asked.state || shown.sources === undefined
+      ? {}
+      : { sources: asked.stateOf ? namedOf(shown.sources, asked.stateOf) : shown.sources }),
     ...(asked.elements.length > 0 ? { elements } : {}),
     ...(clicked === undefined ? {} : { clicked }),
     ...(sentWith === 404 ? { notFound: true as const } : {})

@@ -23,8 +23,8 @@ export interface CheckOptions {
   width?: number[];
   scheme?: Scheme;
   json?: boolean;
-  /** The page's state and every source by name, as its dev tools hold them. */
-  state?: boolean;
+  /** The page's state and every source by name, as its dev tools hold them — or, named, only those (`--state a,b`). */
+  state?: boolean | string;
   /** Elements by their ids (`--element` once each): what each reads, its own state, whether it is on screen. */
   element?: string[];
   /** The HTML the server sent, held against the page once hydrated. */
@@ -252,6 +252,11 @@ export interface Expectation {
 /** What a check reads of the page beyond its issues, when asked: its state and sources, and elements by id. */
 export interface CheckAsk {
   state: boolean;
+  /**
+   * `--state siteUnread,draft`: only these — sources by name, the state's keys — of what the page holds: a run's dev-1
+   * read one source's answer out of 50k characters of every one.
+   */
+  stateOf?: readonly string[];
   elements: readonly string[];
   /** `--status 404`: the status the page is meant to be sent with — a page for an address nothing answers, checked. */
   status?: number;

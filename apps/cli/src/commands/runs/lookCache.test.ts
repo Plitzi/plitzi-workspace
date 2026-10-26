@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { keepLook, keptLook, LOOKED_FOR_MS, lookKey } from './lookParts';
+import { keepLook, keptLook, LOOKED_FOR_MS, lookKey, pagesLooked } from './lookParts';
+import { lookedAmong } from '../../runs/pagesOf';
 import { runPaths, taskPaths } from '../../runs/paths';
 import { openRun } from '../../runs/run';
 import { completeTask, takeTask } from '../../runs/tasks';
@@ -47,5 +48,25 @@ describe('a look kept for the same look asked again', () => {
 
     bench.advance(LOOKED_FOR_MS + 1);
     expect(await keptLook(cache, key, bench.now())).toBeUndefined();
+  });
+});
+
+// encore-10: a look of /u/mika warned /u/:username was not looked at, and forgot the round's earlier look of / and /rooms.
+describe('the pages a task was looked at on', () => {
+  it('count an address for the route it fits', () => {
+    expect(lookedAmong('/u/:username', ['/u/mika'])).toBe(true);
+    expect(lookedAmong('/u/:username/:which', ['/u/mika'])).toBe(false);
+    expect(lookedAmong('/rooms', ['/rooms?tab=live'])).toBe(true);
+    expect(lookedAmong('/rooms', ['/rooms/new'])).toBe(false);
+    expect(lookedAmong('/r/:slug', ['/r/night-drive?x=1'])).toBe(true);
+  });
+
+  it('are every look’s of the task as it is now, and none of another state’s', async () => {
+    const cache = bench.root;
+    await keepLook(cache, 'one', 'a look', bench.now(), { state: 'now', pages: ['/', '/rooms'] });
+    await keepLook(cache, 'two', 'b look', bench.now(), { state: 'now', pages: ['/u/mika'] });
+    await keepLook(cache, 'old', 'c look', bench.now(), { state: 'before', pages: ['/settings'] });
+
+    expect((await pagesLooked(cache, 'now', bench.now())).sort()).toEqual(['/', '/rooms', '/u/mika']);
   });
 });

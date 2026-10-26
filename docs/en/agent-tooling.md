@@ -91,8 +91,12 @@ section around it. All of it is `@plitzi/sdk-authoring`, for a suite to use as w
 its task, so a page tool says what is acted on first and the rest on asking: `page measure` an element's own values (its
 initial and inherited ones counted, a data URI by its kind and size — whole, a measure ran to tens of thousands of characters), a tall
 page's picture in parts a model reads at their size rather than one shrunk to 97 px wide, a look's reasons once each.
-`page play` says an element read again as it was `as before`; `task look` names its pictures' folder once; `task show
+`page play` says an element read again as it was `as before`, an action's answer under its step (clipped), and runs an
+action at the first width alone — a designer's two widths made two rooms; `task look` names its pictures' folder once; `task show
 --full` holds as many diffs whole as one answer does (12k characters, `LARGE_OUTPUT`), the rest a file at a time.
+`page check --state <names>` holds only the sources and state keys named (one source's answer was 50k characters of
+every one); `page measure` says the viewport it read at, takes a positioned box's `top|right|bottom|left`, and says an
+element the space authors with no box of its own (`boxless`, a provider) as one — never "not drawn here" with guesses.
 What a browser runs on the page (`page.evaluate`) is self-contained, and tried with the built CLI: tsx wraps a named
 function in `__name`, which a page has not. Node 24's undici sets a socket's type of service on every request, and on
 macOS that throws from a socket's event (`setTypeOfService EINVAL`) and ends the process: the CLI makes it best effort

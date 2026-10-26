@@ -15,6 +15,7 @@ import { NetworkContext } from '@plitzi/sdk-shared/network';
 import { refreshRsc } from '@plitzi/sdk-shared/server';
 import { useSdkStore, useSdkStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
 
+import { currentUrl, returnTo, withRedirect } from './redirects';
 import useScrollToHash from './useScrollToHash';
 import { browserHost, moveDrawn } from './viewTransition';
 
@@ -31,33 +32,6 @@ export type NavigationProviderProps = {
 const PREFETCH_TIMEOUT_MS = 1500;
 
 const wait = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
-
-/**
- * The page somebody actually asked for, absolute, so an off-origin sign-in can send them back to it.
- *
- * `href` is there in a browser and usually on the server's own location object too; the pieces are composed only
- * when it is not, because a redirect back to a URL missing its query string loses whatever the deep link carried.
- */
-const currentUrl = (location: Location): string => {
-  if (location.href) {
-    return location.href;
-  }
-
-  const protocol = location.protocol || 'https:';
-
-  return `${protocol}//${location.host || location.hostname}${location.pathname}${location.search}`;
-};
-
-/** `path` with where the visitor was going as its `redirect`, unless the space already wrote one there. */
-const withRedirect = (path: string, from: string): string => {
-  const [pathname, query = ''] = path.split('?', 2);
-  const params = new URLSearchParams(query);
-  if (!params.has('redirect')) {
-    params.set('redirect', from);
-  }
-
-  return `${pathname}?${params.toString()}`;
-};
 
 const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: NavigationProviderProps) => {
   const { server } = use(NetworkContext);
@@ -355,10 +329,12 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
     }
 
     // A sign-in of this space is told where the visitor was going too, the whole address as one elsewhere is: a run's
-    // guest sent to `/sign-in` was signed in on the home page. Not a signed-in visitor sent off a signed-out page (the
-    // website's landing): they are not coming back.
+    // guest sent to `/sign-in` was signed in on the home page. A signed-in visitor sent off a signed-out page goes
+    // back where that address says, when it says — signing in on the sign-in is what sends them off it.
     const onSite =
-      action.path && !authenticated ? withRedirect(action.path, currentUrl(location)) : (action.path ?? '');
+      action.path && !authenticated
+        ? withRedirect(action.path, currentUrl(location))
+        : ((authenticated ? returnTo(location) : undefined) ?? action.path ?? '');
     if (ssrResult) {
       ssrResult.redirect = onSite;
 

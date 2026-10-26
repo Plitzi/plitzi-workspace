@@ -206,7 +206,10 @@ room.retained; // on a `retain: true` channel: the latest data of each type, as 
 ```
 
 A page has **one connection**, whatever listens: every element and plugin share it, and topics mounted together open
-it once. A page is also **one member** of a topic — a plugin and a `channel` element on the same topic share its
+it once. A topic more — the next page after a navigation listening to its own — opens a new connection with every topic,
+and the one it replaces keeps hearing until the new one is let in (`ready`): what is said meanwhile arrives, once (a
+message both connections hear is delivered on the first; a header's unread badge missed the event its own thread page
+caused while the connection was swapped). A page is also **one member** of a topic — a plugin and a `channel` element on the same topic share its
 presence, and a listener that starts late begins with everyone already known.
 
 A plugin should check `message.from === 'server'` before trusting a message it acts on. On a channel declared

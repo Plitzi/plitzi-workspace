@@ -96,6 +96,7 @@ export const lookText = (looked: Looked): string =>
     ...(looked.signedInAs
       ? [`Read signed in as ${looked.signedInAs}, as its acceptance checks it (--as another to read it otherwise)`]
       : []),
+    ...(looked.asGuest ? [`Read as a guest: ${list(looked.asGuest)} — a page only a signed-out visitor opens`] : []),
     ...('steps' in looked ? [`Pictured after "${looked.steps}"; the check read each page at rest`] : []),
     ...(looked.forVisitors
       ? [

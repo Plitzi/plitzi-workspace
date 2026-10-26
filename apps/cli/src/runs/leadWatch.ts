@@ -57,6 +57,15 @@ const TIMED = new Set<Attention['kind']>([
  * every task in review once its designer said.
  */
 export const leadItems = (view: RunView): LeadItem[] => [
+  // Every task approved: the close is the lead's — encore-10's watch said "nothing new" and the run sat finished.
+  ...(view.total > 0 && view.done === view.total && (view.status === 'open' || view.status === 'stopping')
+    ? [
+        {
+          key: `all-approved:${String(view.total)}`,
+          text: `Every task is approved (${String(view.total)}): close the run — plitzi run look (every page it changed), plitzi run report --summary <file> --ease <1-5> --hardest "…", then plitzi run finish`
+        }
+      ]
+    : []),
   // One a designer is still to look at is not the lead's yet: it wakes the lead once the designer said.
   ...view.tasks
     .filter(

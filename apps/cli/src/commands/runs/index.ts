@@ -11,7 +11,7 @@ export { runTeam, runTeamCheck, runTeamSet, runTeamUnset } from './team';
 export { runMonitor } from './monitor';
 export { runUpgrade } from './upgrade';
 export type { UpgradeRunOptions } from './upgrade';
-export { runBench, runKeep, runPreview, runReport, runShow, runState, runStatus, runWatch } from './watch';
+export { runBench, runCopy, runKeep, runPreview, runReport, runShow, runState, runStatus, runWatch } from './watch';
 export type { WatchRunOptions } from './watch';
 export {
   runAbort,
@@ -32,7 +32,8 @@ export { taskClaim, taskClaims, taskDiscard, taskRelease, taskRequest, taskSpike
 export { taskBlock, taskCheck, taskComplete, taskNote, taskProgress, taskUnblock } from './work';
 export { taskReassign, taskRevert } from './reassign';
 export { taskEscalate } from './escalate';
-export { taskLook, taskReview } from './review';
+export { taskReview } from './review';
+export { taskLook } from './taskLook';
 export { taskShow } from './show';
 export type { LookOptions } from './lookOptions';
 export type { ReviewOptions } from './review';

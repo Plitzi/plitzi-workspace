@@ -371,24 +371,23 @@ const agentsOf = async (
     }
 
     const proposed = view.tasks.filter(task => task.proposed !== undefined);
+    // At work without a review in hand — a stage written, an answer, a look — while its commands come: working, its
+    // last one said first. A wait is no work. encore-10's monitor said the lead was "working", and not at what.
+    const working = !at && recent && last?.action !== 'waiting';
 
     return {
       ...base,
-      // At work without a review in hand — a stage written, an answer, a look — while its commands come: working, its
-      // last one said. A wait is no work.
-      status: at
-        ? ('reviewing' as const)
-        : recent && last?.action !== 'waiting'
-          ? ('working' as const)
-          : ('idle' as const),
+      status: at ? ('reviewing' as const) : working ? ('working' as const) : ('idle' as const),
       doing: at
         ? `reviews ${at}`
-        : // What waits on the lead is said on its row, not "idle" over an agent kept waiting.
+        : // What waits on the lead is said on its row first, not "idle" over an agent kept waiting.
           proposed.length > 0
           ? `${proposed.map(task => task.id).join(', ')}: tasks proposed, to decide with the person`
           : unanswered.length > 0
             ? `${String(unanswered.length)} question${unanswered.length === 1 ? '' : 's'} wait${unanswered.length === 1 ? 's' : ''} for you: ${unanswered.map(each => `${each.from}'s ${each.id}`).join(', ')}`
-            : `plans, answers, decides what is escalated${lastLine ? ` · last: ${lastLine}` : ''}`,
+            : working
+              ? `at: ${lastLine}`
+              : `plans, answers, decides what is escalated${lastLine ? ` · last: ${lastLine}` : ''}`,
       ...(at ? { task: at } : {}),
       ...(typeof last?.at === 'string' ? { signalAt: last.at } : {})
     };

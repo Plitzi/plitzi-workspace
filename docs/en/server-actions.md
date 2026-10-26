@@ -896,7 +896,11 @@ createServer({ action: { lookups, kv: createSqliteKv({ file: 'state/kv.sqlite' }
 for ONE process, which reads the file when it starts and owns it after. `createSqliteKv` is a table in a SQLite file
 over Node's own `node:sqlite` (Node 22.13+, which prints an `ExperimentalWarning` when it loads): every operation is
 one atomic statement, so replicas on one machine, or a server started with `workers`, share it safely. A project
-`plitzi create` writes starts with `createFileKv` in `state/kv.json`, and names another in `src/config/serverOptions.ts`.
+`plitzi create` writes starts with `createFileKv` in `state/kv.json`, and names another in `src/config/serverOptions.ts` —
+then the server opens no file of its own for it. What it does keep — the `kv` in `kv.json` when the project names none,
+the queue in `jobs.json` when it names no `action.jobs.queue` — is in `state/`, or in the folder `PLITZI_STATE_DIR`
+names: the visual suite's own server keeps its own there (`tmp/visual/state`), and a store the project opens itself (a
+SQLite database) follows that variable too, or the suite writes into the person's.
 
 The keys an adapter receives are the server's — prefixed per space (`kv:action:<spaceId>:…`) — and are not a
 contract: an adapter stores them as it gets them, and keeps them all.

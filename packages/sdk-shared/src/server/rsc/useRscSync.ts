@@ -2,7 +2,7 @@ import { useEffect, useId } from 'react';
 
 import { useStoreById } from '@plitzi/nexus/react';
 
-import refreshRsc, { currentRscLocation, noteRscFailures, releaseRscRequests } from './refreshRsc';
+import refreshRsc, { currentRscLocation, holdRscRoot, noteRscFailures, releaseRscRequests } from './refreshRsc';
 import { useCommonStore, useCommonStoreSync } from '../../store';
 
 import type { CommonState, ServerSSR } from '../../types';
@@ -32,6 +32,8 @@ const useRscSync = (ssr?: ServerSSR) => {
   const { rscData, rscPath: endpoint } = ssr ?? {};
   const enabled = (schemaRsc?.enabled ?? false) && !!endpoint;
 
+  // Held as it renders: an element below refreshes in its own effects, which run before this component's.
+  holdRscRoot(instance, store);
   useCommonStoreSync(['rsc.enabled', 'rsc.endpoint', 'rsc.instance'], [enabled, endpoint, instance]);
   // Mount-only: what the server handed over is the starting payload, and every later write belongs to `refreshRsc`.
   // Re-syncing it would replay the initial payload over refreshed data.

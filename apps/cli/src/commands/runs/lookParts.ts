@@ -21,6 +21,7 @@ import { pageFor } from '../check/space';
 import type { LookOptions } from './lookOptions';
 import type { Preview } from '../../runs/preview';
 import type { RunContext } from '../../runs/run';
+import type { SpaceHandles } from '@plitzi/sdk-authoring';
 
 /**
  * The pages of a look the space declares for signed-in visitors alone, and the account the project names to read them
@@ -53,6 +54,30 @@ export const visitorsOnly = async (
     : 'problem' in account
       ? { pages: guarded, problem: account.problem }
       : { pages: guarded, as: account.username };
+};
+
+/**
+ * The pages only a signed-out visitor opens — `accessLevel: 'public'`, with no signed-in twin at their address: a look
+ * signed in reads them as a guest. encore-10's looks read /sign-in signed in, were sent home, and pictured Home.
+ */
+export const signedOutOnly = async (dir: string, pages: readonly string[]): Promise<string[]> => {
+  const handles = await authoredHandles(dir);
+
+  return handles ? signedOutOnlyIn(handles, pages) : [];
+};
+
+/** `signedOutOnly`, of a space authored. */
+export const signedOutOnlyIn = (handles: SpaceHandles, pages: readonly string[]): string[] => {
+  const all = Object.values(handles.pages);
+
+  return pages.filter(each => {
+    const id = pageFor(handles, each);
+    const page = id === undefined ? undefined : handles.pages[id];
+
+    return (
+      page?.accessLevel === 'public' && !all.some(other => other.path === page.path && other.accessLevel !== 'public')
+    );
+  });
 };
 
 /** The pages a page check's answer (`--json`) says sent the browser elsewhere — to the sign-in, for a guest. */
@@ -453,7 +478,7 @@ export const lookKey = async (
 
 const lookedFile = (cache: string): string => path.join(cache, 'looked.json');
 
-type Kept = Record<string, { at: string; text: string }>;
+type Kept = Record<string, { at: string; text: string; state?: string; pages?: string[] }>;
 
 /** The looks kept, by key, the ones past `LOOKED_FOR_MS` left out. */
 const keptLooks = async (cache: string, now: Date): Promise<Kept> => {
@@ -469,7 +494,19 @@ const keptLooks = async (cache: string, now: Date): Promise<Kept> => {
           typeof look.at === 'string' &&
           typeof look.text === 'string' &&
           now.getTime() - Date.parse(look.at) < LOOKED_FOR_MS
-            ? [[key, { at: look.at, text: look.text }]]
+            ? [
+                [
+                  key,
+                  {
+                    at: look.at,
+                    text: look.text,
+                    ...(typeof look.state === 'string' ? { state: look.state } : {}),
+                    ...(Array.isArray(look.pages)
+                      ? { pages: look.pages.filter((page): page is string => typeof page === 'string') }
+                      : {})
+                  }
+                ]
+              ]
             : []
         )
       )
@@ -480,8 +517,27 @@ const keptLooks = async (cache: string, now: Date): Promise<Kept> => {
  * A look said, kept under its key — every look of the task, not only the last: a round's two looks of different pages
  * each stand ("each look forgets the pages the other covered").
  */
-export const keepLook = async (cache: string, key: string, text: string, now: Date): Promise<void> =>
-  writeJson(lookedFile(cache), { ...(await keptLooks(cache, now)), [key]: { at: now.toISOString(), text } });
+export const keepLook = async (
+  cache: string,
+  key: string,
+  text: string,
+  now: Date,
+  seen?: { state: string; pages: readonly string[] }
+): Promise<void> =>
+  writeJson(lookedFile(cache), {
+    ...(await keptLooks(cache, now)),
+    [key]: { at: now.toISOString(), text, ...(seen ? { state: seen.state, pages: [...seen.pages] } : {}) }
+  });
+
+/**
+ * The pages looked at already with the task as it is now (`state`: its `lookKey` asking nothing) — a round's second
+ * look, of another page, warned that the first one's pages were "not looked at".
+ */
+export const pagesLooked = async (cache: string, state: string, now: Date): Promise<string[]> => [
+  ...new Set(
+    Object.values(await keptLooks(cache, now)).flatMap(look => (look.state === state ? (look.pages ?? []) : []))
+  )
+];
 
 /** The look that still stands for `key`, when one does. */
 export const keptLook = async (

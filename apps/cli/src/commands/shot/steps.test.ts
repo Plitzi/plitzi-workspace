@@ -60,8 +60,11 @@ describe('a step another account plays, and an action', () => {
   };
 
   it('runs the action as the page’s visitor, and says what a refusal said', async () => {
-    const { page, asked } = pageAnswering(200, { runId: 'r1', status: 'completed', output: {} });
-    expect(await actStep(page, { kind: 'action', action: 'crate-hide', input: { crate: 'c1' } }, 0)).toBeUndefined();
+    const { page, asked } = pageAnswering(200, { runId: 'r1', status: 'completed', output: { hidden: true } });
+    // What it answered is said: a run's dev-1 read an action's answer with page check --state.
+    expect(await actStep(page, { kind: 'action', action: 'crate-hide', input: { crate: 'c1' } }, 0)).toEqual({
+      answer: '{"hidden":true}'
+    });
     expect(asked[0]).toEqual({
       path: '/_action',
       body: JSON.stringify({ actionId: 'crate-hide', input: { crate: 'c1' } })
@@ -96,7 +99,7 @@ describe('a step another account plays, and an action', () => {
       step: { kind: 'action', action: 'dm-send', input: { to: 'juno' } }
     } as const;
 
-    expect(await actStep(here.page, step, 0, visitors)).toBeUndefined();
+    expect(await actStep(here.page, step, 0, visitors)).toEqual({ answer: 'completed, with no output' });
     expect(opened).toEqual(['mika /messages/juno?tab=new']);
     expect(theirs.asked).toHaveLength(1);
     expect(here.asked.filter(arg => typeof arg === 'object' && arg !== null && 'body' in arg)).toEqual([]);

@@ -27,7 +27,7 @@ import type { ShotStep } from './shotSteps';
 const TEXT_SHOWN = 80;
 
 /** The steps that act on a page — what may write on its server: a queue's share spent, a vote cast. */
-const ACTING = new Set(['click', 'press', 'type', 'drag']);
+const ACTING = new Set(['click', 'press', 'type', 'drag', 'as', 'action']);
 
 /**
  * What a play over several widths says when its steps act: each width is played on one server, so the next starts from
@@ -35,7 +35,7 @@ const ACTING = new Set(['click', 'press', 'type', 'drag']);
  */
 export const sharedServerNote = (widths: number, steps: readonly { kind: string }[]): string | undefined =>
   widths > 1 && steps.some(step => ACTING.has(step.kind))
-    ? 'Each width played on one server: what the first width’s steps changed there (a share spent, a vote cast) is what the next starts from — play each width alone, after plitzi server reset, to read each from a cold start.'
+    ? `Each width played on one server: what the first width’s steps changed there (a share spent, a vote cast) is what the next starts from${steps.some(step => step.kind === 'action') ? ' — its actions ran at the first width alone' : ''} — play each width alone, after plitzi server reset, to read each from a cold start.`
     : undefined;
 
 /**
@@ -84,6 +84,8 @@ export interface PlayedStep {
   went?: Partial<Record<keyof Pair, string>>;
   /** Its target was scrolled into view before it, as a pointer reaches it: what moved is measured from there. */
   reached?: true;
+  /** What an action step answered — its output, clipped. */
+  answer?: string;
   /** Each element read, by how it was asked, here and — with `--compare` — there. */
   reads: { element: string; here?: ElementState; there?: ElementState; moved?: Moved; problem?: string }[];
 }
@@ -107,7 +109,8 @@ const sideOf = (step: ActingStep, side: keyof Pair): ActingStep =>
  * (`keptSession`) — a step acted and waited for until the page is still, elements read as `readState` reads them.
  */
 export interface PlaySide {
-  act: (step: ActingStep, index: number) => Promise<{ problem: string } | undefined>;
+  /** What kept the step from happening — or an action's answer, said under its step. */
+  act: (step: ActingStep, index: number) => Promise<{ problem: string } | { answer: string } | undefined>;
   /** Where its page is now, path and query: a step that takes it elsewhere is said (`PlayedStep.went`). */
   address?: () => string;
   read: (targets: readonly string[]) => Promise<(ElementState | { problem: string })[] | { problem: string }>;
@@ -121,13 +124,13 @@ export const pageSide = (page: BrowserPage, visitors?: Visitors): PlaySide => ({
     return `${url.pathname}${url.search}`;
   },
   act: async (step, index) => {
-    const problem = await actStep(page, step, index, visitors);
+    const done = await actStep(page, step, index, visitors);
     // What the step started, over: its animations ended and the page's layout still — a slide, a drawer, a scroll.
-    if (!problem) {
+    if (!done || !('problem' in done)) {
       await settle(page);
     }
 
-    return problem;
+    return done;
   },
   read: async targets => {
     const states: (ElementState | { problem: string })[] = [];
@@ -143,7 +146,8 @@ export const pageSide = (page: BrowserPage, visitors?: Visitors): PlaySide => ({
 export const playOn = async (
   sides: { here: PlaySide; there?: PlaySide },
   steps: readonly ActingStep[],
-  reads: readonly Pair[]
+  reads: readonly Pair[],
+  { actions = true }: { actions?: boolean } = {}
 ): Promise<{ played: PlayedStep[] } | { problem: string; side: keyof Pair }> => {
   const played: PlayedStep[] = [];
   let last: PlayedStep | undefined;
@@ -208,6 +212,11 @@ export const playOn = async (
     const idle: Partial<Record<keyof Pair, string>> = {};
     const was = { here: sides.here.address?.(), there: sides.there?.address?.() };
     const names = sides.there ? (['here', 'there'] as const) : (['here'] as const);
+    // A write to the server is made once: a run's designer created two rooms with one play at two widths.
+    if (step.kind === 'action' && !actions) {
+      idle.here = `${step.action} ran once, at the first width: what it did is on the server this width reads`;
+    }
+
     const acting = (name: keyof Pair): { side: PlaySide; step: ActingStep } | undefined => {
       const side = name === 'here' ? sides.here : sides.there;
 
@@ -243,6 +252,7 @@ export const playOn = async (
       await readAll('reached');
     }
 
+    let answer: string | undefined;
     for (const name of names) {
       const at = acting(name);
       if (!at) {
@@ -250,10 +260,12 @@ export const playOn = async (
       }
 
       try {
-        const problem = await at.side.act(at.step, index);
-        if (problem) {
-          return { problem: problem.problem, side: name };
+        const done = await at.side.act(at.step, index);
+        if (done && 'problem' in done) {
+          return { problem: done.problem, side: name };
         }
+
+        answer = done?.answer ?? answer;
       } catch (error) {
         return {
           problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen${name === 'there' ? ' there' : ''}: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`,
@@ -272,7 +284,8 @@ export const playOn = async (
       ...entry,
       ...(Object.keys(idle).length > 0 ? { idle } : {}),
       ...(Object.keys(went).length > 0 ? { went } : {}),
-      ...(reached ? { reached: true as const } : {})
+      ...(reached ? { reached: true as const } : {}),
+      ...(answer === undefined ? {} : { answer })
     });
   }
 
@@ -381,6 +394,7 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
     ...(entry.reached
       ? [chalk.dim('  (scrolled into view first, as a pointer reaches it: moves are from there)')]
       : []),
+    ...(entry.answer === undefined ? [] : [`  ← ${entry.answer}`]),
     ...(entry.went?.here ? [`  → ${entry.went.here}`] : []),
     ...(entry.went?.there ? [chalk.dim(`  → there ${entry.went.there}`)] : []),
     ...(entry.idle?.here ? [chalk.yellow(`  here: ${entry.idle.here}`)] : []),
@@ -534,6 +548,13 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
         return;
       }
 
+      // Who it played as, once: a run's designer read a notice bound to the visitor stay hidden, a guest unawares.
+      if (ours.signedOut && results.length === 0 && options.guest !== true) {
+        process.stderr.write(
+          `${chalk.dim(`· ${route} played signed out — a page any visitor opens: --as <account> plays it signed in`)}\n`
+        );
+      }
+
       // The other site played warm in the kept browser, its page held for this play alone: opened cold here, it was
       // 11–19 s a call (58 plays). Not kept, it is opened here as before.
       const view = {
@@ -562,11 +583,9 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
         ...(options.scheme ? { scheme: options.scheme } : {}),
         ...(options.timezone ? { timezone: options.timezone } : {})
       });
-      const outcome = await playOn(
-        { here: pageSide(ours.page, visitors), ...(there ? { there } : {}) },
-        steps,
-        reads
-      ).finally(async () => {
+      const outcome = await playOn({ here: pageSide(ours.page, visitors), ...(there ? { there } : {}) }, steps, reads, {
+        actions: results.length === 0
+      }).finally(async () => {
         await visitors.close();
         await held?.close();
       });

@@ -15,6 +15,11 @@ find is said with its evidence, never guessed. The agents' half is [runs.md](run
   goes to the lead, who decides it with the person: nothing is stacked until it approves. Sent back, `task next` hands
   it to you again with what the lead asked — propose it again with that. Findings alone, no tasks: `--done "…"`, approved
   by the lead too: **every spike is the lead's to approve**, and adding or taking out tasks the lead's alone.
-- **Size the tasks for the team:** one task a piece of work an agent finishes in one sitting, its files its own; what
+- **Spend it as the run's time:** the scope is the big one (30 minutes); a later spike answers one question an agent
+  met — 10 minutes, the tools measuring (`page measure|play|check`), never a whole Playwright suite. Past it the lead
+  asks where you stand: answer at once (`plitzi task tell --standing …`).
+- **Measure on the run's work, apart:** `plitzi run copy` makes it a folder of your scratch, its state its own — serve
+  it on a port of yours (`PORT=<free> npm start` there), never the project's own server nor its `state/`.
+- **Size the tasks for the team:** one task ten minutes of an agent's work (`run plan` says one past it), its files its own; what
   two tasks share named as shared; a task that waits for another says it (`dependsOn`). The plan's rules:
   [runs-plan.md](runs-plan.md).

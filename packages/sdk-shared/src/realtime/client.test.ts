@@ -127,6 +127,34 @@ describe('createRealtimeClient', () => {
     expect(chat).toHaveLength(0);
   });
 
+  // encore-10: a thread page opened by client navigation listened to its thread's topic; the reopen dropped the inbox
+  // event the opening caused, and the header's unread badge stayed.
+  it('hears its topics on the connection it replaces until the new one is let in — each message once', async () => {
+    const server = fakeServer();
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
+    const inbox: RealtimeMessage[] = [];
+    stops.push(client.subscribe('inbox:dax', entry => inbox.push(entry)));
+    await wait();
+    server.streams[0].push('ready', { connection: 'a', token: 'a', topics: ['inbox:dax'], refused: [] });
+    await wait(10);
+
+    stops.push(client.subscribe('dm:1', () => undefined));
+    await wait();
+    expect(server.streams).toHaveLength(2);
+    const said = message({ topic: 'inbox:dax', type: 'thread', data: { thread: 1 } });
+    server.streams[0].push('message', said);
+    await wait(10);
+    expect(inbox.map(entry => entry.type)).toEqual(['thread']);
+
+    // The same message on both, as the server sends it to each connection on the topic: heard once.
+    server.streams[1].push('ready', { connection: 'b', token: 'b', topics: ['inbox:dax', 'dm:1'], refused: [] });
+    server.streams[1].push('message', said);
+    server.streams[1].push('message', { ...said, at: said.at + 1 });
+    await wait(10);
+    expect(inbox).toHaveLength(2);
+    expect(client.me).toBe('b');
+  });
+
   it('sends the grant a private topic was given, and reopens for a new one only where it was not let in', async () => {
     const server = fakeServer();
     const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });

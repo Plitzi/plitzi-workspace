@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { MAX_LINES } from '../../lint/rules/fileTooLong';
+import { SLOW_LINE_MS } from '../../runs/acceptance';
 
 import type { CheckStep } from '../../runs/checks';
 import type { Message } from '../../runs/messages';
@@ -78,6 +79,25 @@ export const list = (items: readonly string[]): string => (items.length > 0 ? it
 /** The estimate at this project's pace, said with what it is read from. */
 export const pacedText = (paced: NonNullable<PlanEstimate['paced']>): string =>
   `At this ${paced.from === 'project' ? 'project' : 'machine'}'s pace — ${paced.from === 'project' ? 'its' : 'any project’s,'} last ${String(paced.runs)} runs' ${String(paced.tasks)} tasks took ${String(Math.round(paced.ratio * 100))}% of their estimates: about ${String(paced.wallMinutes)} min`;
+
+/**
+ * An acceptance line past `SLOW_LINE_MS`, said beside it: a line that runs a whole suite where the task's own specs
+ * would do — a check takes minutes at most (Carlos), and the finish runs the whole result once.
+ */
+export const slowLineText = (result: { ms?: number }): string =>
+  result.ms !== undefined && result.ms > SLOW_LINE_MS
+    ? chalk.yellow(
+        ` — took ${String(Math.round(result.ms / 60_000))} min: run the task's own specs, never a whole suite (the finish runs it whole, once)`
+      )
+    : '';
+
+/** A failed line whose Playwright reused the copy served, said: its config's own server never started. */
+export const reusedServerText = (result: { reused?: number }): string =>
+  result.reused === undefined
+    ? ''
+    : chalk.yellow(
+        ` — its Playwright reused the copy served on :${String(result.reused)} (PORT): the config's webServer, and the env it gives its server, never started — the specs read the copy's own state`
+      );
 
 /** An acceptance line that passed only when run again, said beside its ✓ with what failed the first time; or nothing. */
 export const secondRunText = (result: { firstFailed?: readonly string[] }): string =>

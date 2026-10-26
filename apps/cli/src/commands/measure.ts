@@ -21,6 +21,7 @@ import { applyConditions } from '../browser/conditions';
 import { keptMeasure } from '../browser/keptBrowser';
 import { conditionsOf } from './register/options';
 import { originHere } from '../runs/copyServer';
+import { authoredHandles } from '../runs/expectations';
 import { pageAnswered } from './shot/remote';
 import { actStep } from './shot/steps';
 import { parseSteps } from './shotSteps';
@@ -51,6 +52,9 @@ import type { ConditionOptions } from './register/options';
  * before them answered "none" for both, each a difference that was not there.
  */
 const READING = 3;
+
+/** The viewport's height every page is read at: said with the reading, where a fixed box's place depends on it. */
+const VIEW_HEIGHT = 900;
 
 export interface MeasureOptions extends ConditionOptions {
   url?: string;
@@ -212,7 +216,12 @@ export const spaceFailureOn = async (page: BrowserPage): Promise<string | undefi
         return undefined;
       }
 
-      const said = (document.querySelector('pre')?.textContent ?? '').trim().split('\n')[0] ?? '';
+      // What it refused, not a count of it: a run's dev-2 read "3 problems" and nothing it could fix.
+      const lines = (document.querySelector('pre')?.textContent ?? '')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line !== '');
+      const said = `${lines.slice(0, 6).join(' · ')}${lines.length > 6 ? ' …' : ''}`;
 
       return `the space does not author, so the page is the server's error page${said ? ` — ${said}` : ''}: npm run author says why`;
     }, SPACE_FAILURE_META)
@@ -223,10 +232,10 @@ export const ourPage = async (
   origin: string,
   route: string,
   view: ViewAsked
-): Promise<{ page: BrowserPage; answered: boolean; problem?: string }> => {
+): Promise<{ page: BrowserPage; answered: boolean; problem?: string; signedOut?: true }> => {
   const page = await openProjectPage(browser, origin, {
     width: view.width,
-    height: 900,
+    height: VIEW_HEIGHT,
     reducedMotion: true,
     ...(view.scheme ? { scheme: view.scheme } : {}),
     ...(view.timezone ? { timezone: view.timezone } : {})
@@ -267,7 +276,7 @@ export const ourPage = async (
   await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
   await page.evaluate(() => document.fonts.ready.then(() => undefined), undefined);
 
-  return { page, answered };
+  return { page, answered, ...(view.account || signed ? {} : { signedOut: true as const }) };
 };
 
 export interface ViewAsked {
@@ -297,7 +306,7 @@ const readOther = async (
 ): Promise<(Measured | { problem: string })[]> => {
   const other = await pageAnswered(browser, target, {
     width: view.width,
-    height: 900,
+    height: VIEW_HEIGHT,
     reducedMotion: true,
     ...(view.scheme ? { scheme: view.scheme } : {}),
     ...(view.timezone ? { timezone: view.timezone } : {})
@@ -320,9 +329,9 @@ const readOther = async (
 /** The steps played on the page, each settled — or the one that could not be, said. */
 const playedOn = async (page: BrowserPage, steps: readonly ActingStep[]): Promise<{ problem: string } | undefined> => {
   for (const [index, step] of steps.entries()) {
-    const problem = await actStep(page, step, index);
-    if (problem) {
-      return problem;
+    const done = await actStep(page, step, index);
+    if (done && 'problem' in done) {
+      return done;
     }
 
     await settle(page);
@@ -339,7 +348,9 @@ const readAt = async (
   pairs: readonly Pair[],
   view: ViewAsked,
   options: Pick<MeasureOptions, 'same' | 'fresh' | 'rows'>,
-  now: number
+  now: number,
+  /** Whether the space authors an id with no box of its own (`boxless`): a provider, drawn as its children. */
+  boxless?: (id: string) => Promise<boolean>
 ): Promise<Reading[]> => {
   const { page, answered, problem } = await ourPage(browser, where.origin, where.route, view);
   // Nothing answering is said as such — not "No element … on chrome-error://" of a server gone (a run's lead).
@@ -352,7 +363,9 @@ const readAt = async (
     : ((await playedOn(page, view.steps ?? [])) ?? (view.state ? await putIn(page, view.state, 'here') : undefined));
   // Each row a list draws of an element, with --rows: the first alone hid that three plates' readouts differed.
   const asked = options.rows && !notPut ? (await Promise.all(pairs.map(pair => rowsOf(page, pair)))).flat() : pairs;
-  const ours = notPut ? asked.map(() => notPut) : await Promise.all(asked.map(pair => measureOn(page, pair.here)));
+  const ours = notPut
+    ? asked.map(() => notPut)
+    : await Promise.all(asked.map(pair => measureOn(page, pair.here, boxless ? { boxless } : {})));
   await page.close();
 
   const { target } = where;
@@ -384,7 +397,7 @@ const readAt = async (
         ? await keptMeasure(root, {
             url: target,
             width: view.width,
-            height: 900,
+            height: VIEW_HEIGHT,
             ...(view.scheme ? { scheme: view.scheme } : {}),
             targets: missing.map(index => asked[index].there),
             ...(options.fresh ? { fresh: true } : {}),
@@ -553,6 +566,14 @@ export const measure = async (route: string, elements: string[], options: Measur
   const own = options.as === undefined && options.guest !== true ? await projectAccount(project.root) : undefined;
 
   const now = Date.now();
+  // Authored only when an element is not found: what a measure that finds everything never pays for.
+  let authored: ReturnType<typeof authoredHandles> | undefined;
+  const boxless = async (id: string): Promise<boolean> => {
+    authored ??= authoredHandles(project.root);
+    const handles = await authored;
+
+    return handles !== undefined && Object.hasOwn(handles.elements, id) && handles.elements[id].boxless === true;
+  };
   try {
     const readings: Reading[] = [];
     for (const width of options.width ?? [1440]) {
@@ -573,7 +594,8 @@ export const measure = async (route: string, elements: string[], options: Measur
             conditions: conditionsOf(options)
           },
           options,
-          now
+          now,
+          boxless
         ))
       );
     }
@@ -619,6 +641,9 @@ export const measure = async (route: string, elements: string[], options: Measur
               : []),
             ...(target ? [comparedText(target)] : []),
             ...(kept ? [kept] : []),
+            chalk.dim(
+              `Read at ${widths.map(width => `${String(width)}×${String(VIEW_HEIGHT)}`).join(', ')} — x from the viewport's left, y from the page's top`
+            ),
             ...widths.flatMap(width => [
               ...(widths.length > 1 ? [chalk.bold.underline(`At ${String(width)} px`)] : []),
               ...shownReadings

@@ -24,6 +24,7 @@ import * as elementSteps from '../elements/steps';
 import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '../interactions';
 import * as interactionSteps from '../interactions/steps';
 import { authoringCodeEntry, AUTHORING_CODES } from '../schema/codes';
+import { PAGE_SPEC_KEYS } from '../schema/guard';
 import { BUILTIN_TRANSFORMERS } from '../transformers';
 import { BUILDER_SIGNATURES, builderCall } from './builders';
 import { AUTHORING_HELPERS, MOTION_ENTRY } from './helpers';
@@ -104,7 +105,9 @@ export type Explanation =
   | { kind: 'filter'; name: string; signature: string; summary: string; example: string }
   | { kind: 'function'; name: string; signature: string; summary: string; example: string }
   | { kind: 'source'; name: string; summary: string; example: string; fields: string[] }
-  | { kind: 'state'; name: string; label: string; meaning: string };
+  | { kind: 'state'; name: string; label: string; meaning: string }
+  /** A field a page is written with: where its meaning is — its type's, never said again here. */
+  | { kind: 'pageField'; name: string; see?: string };
 
 export type ExplainKind = Explanation['kind'];
 
@@ -119,7 +122,8 @@ export const EXPLAIN_KINDS: Record<ExplainKind, string> = {
   filter: 'filters',
   function: 'functions',
   source: 'sources',
-  state: 'states'
+  state: 'states',
+  pageField: 'pageFields'
 };
 
 /** A global source by its name, as the type of the globals knows them. */
@@ -362,6 +366,8 @@ export const explain = (name: string): Explanation[] => {
   const state = STYLE_STATES.find(each => each === name);
   // Asked by the name the code calls it: what `reloadApi(…)` writes is the `performQuery` step.
   const builtStep = stepOfBuilder(name);
+  // A page's own field: a run's `explain unauthorizedRedirect` found nothing, the rule it names undocumented to it.
+  const pageField = PAGE_SPEC_KEYS.find(key => key === name);
 
   return [
     ...(code ? [{ kind: 'code' as const, name, codeKind: code.kind, means: code.means, fix: code.fix }] : []),
@@ -386,8 +392,18 @@ export const explain = (name: string): Explanation[] => {
     ...(source ? [{ kind: 'source' as const, name, ...SOURCE_DOCS[source], fields: sourceFields(source) }] : []),
     ...(state
       ? [{ kind: 'state' as const, name, label: STYLE_STATE_LABELS[state], meaning: STYLE_STATE_MEANINGS[state] }]
+      : []),
+    ...(pageField
+      ? [{ kind: 'pageField' as const, name, ...(PAGE_FIELD_SEE[pageField] ? { see: PAGE_FIELD_SEE[pageField] } : {}) }]
       : [])
   ];
+};
+
+/** Where more of a page's field is said than its type says: who may open a page, and where the others go. */
+const PAGE_FIELD_SEE: Partial<Record<(typeof PAGE_SPEC_KEYS)[number], string>> = {
+  accessLevel: 'who may open the page and where the others go: the plitzi-authoring skill, reference/auth.md',
+  access: 'who may open the page and where the others go: the plitzi-authoring skill, reference/auth.md',
+  unauthorizedRedirect: 'who may open the page and where the others go: the plitzi-authoring skill, reference/auth.md'
 };
 
 /** Every name of one kind, with a line about each — what to ask `explain` about next. */
@@ -429,6 +445,10 @@ export const explainList = (kind: ExplainKind): { name: string; summary: string 
       return sorted(GLOBAL_SOURCES.map(name => ({ name, summary: SOURCE_DOCS[name].summary })));
     case 'state':
       return sorted(STYLE_STATES.map(name => ({ name, summary: STYLE_STATE_MEANINGS[name] })));
+    case 'pageField':
+      return sorted(
+        PAGE_SPEC_KEYS.map(name => ({ name, summary: PAGE_FIELD_SEE[name] ?? 'a field of a page (PageSpec)' }))
+      );
   }
 };
 
@@ -642,6 +662,8 @@ export const explanationText = (explanation: Explanation): string => {
         ...(explanation.fields.length > 0 ? [`Fields: ${explanation.fields.join(', ')} — no other`] : []),
         `Example: ${explanation.example}`
       ].join('\n');
+    case 'pageField':
+      return `${explanation.name} — a field of a page (PageSpec): what it means is written on PageSpec in @plitzi/sdk-authoring's types${explanation.see ? `; more of it — ${explanation.see}` : ''}`;
     case 'state':
       return [
         `${explanation.name} — a state a class styles (${explanation.label}): ${explanation.meaning}.`,

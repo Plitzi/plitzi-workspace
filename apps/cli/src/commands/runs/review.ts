@@ -13,19 +13,15 @@ import {
   readablePictures,
   samePaths,
   stoppedText,
-  keepLook,
-  keptLook,
-  lookKey,
   LOOK_AT_ONCE,
   newSinceBefore,
   phases,
   toDeclared,
   readAsFor,
+  signedOutOnly,
   viewsAsked
 } from './lookParts';
-import { lookText } from './lookText';
 import { act, runOf, runSelf } from './shell';
-import { takeOnRead } from './takeOnRead';
 import { list } from './text';
 import { answering, freePort } from '../../runs/acceptance';
 import { designSkipText, isDesignSkip } from '../../runs/designSkip';
@@ -37,6 +33,7 @@ import {
   acceptancePages,
   acceptanceStatuses,
   examplePaths,
+  lookedAmong,
   pagesOf,
   pagesToLook
 } from '../../runs/pagesOf';
@@ -99,7 +96,15 @@ const viewTaskOf = async (
 const PARTS_PICTURED = 3;
 
 /** The look itself, once its task is locked: its copy served, checked, pictured and set beside the run before it. */
-export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: string[], options: LookOptions) =>
+export const lookAt = (
+  ctx: RunContext,
+  runId: string,
+  taskId: string,
+  paths: string[],
+  options: LookOptions,
+  /** The pages an earlier look of the task as it is now covered: never said to be not looked at. */
+  earlier: readonly string[] = []
+) =>
   // One look of a task at a time: two served its copy at once, and the first to finish stopped the server the
   // other was picturing — a lead's look and its designer's, on a run's t-home-details.
   withLock(
@@ -154,7 +159,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         // to find).
         const drawnAt = await pagesOf(preview.dir, changed);
         const owned = paths.length > 0 ? [] : drawnAt;
-        const notLooked = paths.length > 0 ? drawnAt.filter(page => !paths.includes(page)) : [];
+        const notLooked = paths.length > 0 ? drawnAt.filter(page => !lookedAmong(page, [...paths, ...earlier])) : [];
         // A part of a page others build too: its own elements pictured, its own findings kept — the rest is theirs.
         const parts = await taskParts(preview.dir, changed);
         // More parts than are pictured apart: the page whole, never the first three of them — a run's t-home
@@ -206,6 +211,8 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         // Every page read in one visitor's zone: the machine's, unless said — and said under the pictures either way.
         const zone = options.timezone ? ['--timezone', options.timezone] : [];
         const signedIn = as ? ['--as', as] : options.guest === true ? ['--guest'] : [];
+        const guestOnly = new Set(as === undefined ? [] : await signedOutOnly(preview.dir, routes));
+        const signedInFor = (route: string): string[] => (guestOnly.has(route) ? ['--guest'] : signedIn);
         const interaction = [
           ...(options.click ? ['--click', options.click] : []),
           ...(options.hover ? ['--hover', options.hover] : [])
@@ -260,7 +267,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
 
         mark('the run before it served, the pages its shared files reach read');
         const pictured = routes.filter(route => !unchanged.has(route));
-        const checkOf = (pages: readonly string[], also: readonly string[]) =>
+        const checkAs = (pages: readonly string[], also: readonly string[], signed: readonly string[]) =>
           runSelf(preview.dir, [
             'page',
             'check',
@@ -275,11 +282,25 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
             '--url',
             preview.url,
             ...zone,
-            ...signedIn,
+            ...signed,
             ...(options.status === undefined ? [] : ['--status', String(options.status)]),
             ...also,
             ...(options.element ?? []).flatMap(id => ['--element', id])
           ]);
+        // The pages only a guest opens checked as one, the rest as the look reads them — one answer.
+        const checkOf = async (pages: readonly string[], also: readonly string[]) => {
+          const guests = pages.filter(page => guestOnly.has(page));
+          const others = pages.filter(page => !guestOnly.has(page));
+          const checks = await Promise.all([
+            ...(others.length > 0 ? [checkAs(others, also, signedIn)] : []),
+            ...(guests.length > 0 ? [checkAs(guests, also, ['--guest'])] : [])
+          ]);
+
+          return {
+            code: checks.some(each => each.code !== 0) ? 1 : 0,
+            output: checks.map(each => each.output.trim()).join('\n')
+          };
+        };
         // Its pages checked, its pictures taken and set beside the run before it, and the rest of each page read —
         // at once, a few at a time: each is a page or two in a browser of its own, and one after another they were
         // most of a look (the sanity run: 25 s, 22 of them waiting in turn).
@@ -310,7 +331,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
                 '--url',
                 preview.url,
                 ...zone,
-                ...signedIn,
+                ...signedInFor(route),
                 '--width',
                 width,
                 '--scheme',
@@ -331,7 +352,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
                       '--url',
                       preview.url,
                       ...zone,
-                      ...signedIn,
+                      ...signedInFor(route),
                       '--width',
                       width,
                       '--scheme',
@@ -377,7 +398,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
                   '--url',
                   preview.url,
                   ...zone,
-                  ...signedIn,
+                  ...signedInFor(route),
                   '--compare',
                   before?.url ?? '',
                   ...(clip ? ['--clip', clip] : []),
@@ -399,7 +420,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
                 '--url',
                 preview.url,
                 ...zone,
-                ...signedIn,
+                ...signedInFor(route),
                 ...(clip ? ['--clip', clip] : []),
                 '--width',
                 width,
@@ -497,6 +518,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
           ...(acceptanceAs !== undefined && options.as === undefined && options.guest !== true
             ? { signedInAs: acceptanceAs }
             : {}),
+          ...(guestOnly.size > 0 ? { asGuest: [...guestOnly] } : {}),
           ...(guarded ? { forVisitors: guarded } : {}),
           ...(options.steps === undefined ? {} : { steps: options.steps }),
           ok: check.code === 0,
@@ -526,6 +548,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
           ...(preview.borrowed === undefined ? {} : { borrowed: preview.borrowed }),
           ...(stoppedUnder.length > 0 ? { stoppedUnder } : {}),
           ...(notLooked.length > 0 ? { notLooked } : {}),
+          pages: routes,
           ...(ownStatus.length > 0 ? { ownStatus } : {}),
           ...(notReviewed.length > 0 ? { notReviewed } : {})
         };
@@ -537,51 +560,6 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
       }
     },
     { waitMs: 10 * 60_000, ttlMs: 15 * 60_000, doing: `a look of ${taskId}` }
-  );
-
-export const taskLook = (taskId: string, paths: string[], options: LookOptions): Promise<void> =>
-  act(
-    options,
-    async ctx => {
-      const runId = await runOf(ctx, options);
-      await takeOnRead(ctx, runId, taskId);
-
-      if ([options.click, options.hover, options.steps].filter(each => each !== undefined).length > 1) {
-        throw new RunRefusal(
-          'invalid',
-          'One interaction a look: --click an element, --hover one, or --steps — a look for each'
-        );
-      }
-
-      // Looked at already, as asked now, and nothing changed since — the task, the run's approved work: said again, not
-      // looked at again (--fresh looks). A lead looking after the designer, an agent looking twice, paid 8 s each.
-      const { cache } = taskPaths(runPaths(ctx.root, runId), taskId);
-      const key = await lookKey(ctx, runId, taskId, {
-        paths,
-        ...options,
-        fresh: undefined,
-        json: undefined,
-        token: undefined
-      });
-      const before = options.fresh ? undefined : await keptLook(cache, key, ctx.now());
-      if (before) {
-        return { kind: 'again' as const, again: before };
-      }
-
-      const looked = await lookAt(ctx, runId, taskId, paths, options);
-      await keepLook(cache, key, lookText(looked), ctx.now());
-
-      return { kind: 'looked' as const, looked };
-    },
-    answer =>
-      answer.kind === 'again'
-        ? [
-            chalk.dim(
-              `As looked at ${answer.again.at.slice(11, 16)} UTC — the task, the run's approved work and what you asked are as they were, so this is that look again (--fresh looks anew):`
-            ),
-            answer.again.text
-          ].join('\n')
-        : lookText(answer.looked)
   );
 
 export interface ReviewOptions extends RunCommandOptions {

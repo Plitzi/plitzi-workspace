@@ -202,6 +202,10 @@ export const registerTaskGroup = (program: Command): Command => {
       'With --done: its result, the tasks it makes — a stage, as `run extend` takes, each task with its "findings"; a scout’s wait for the lead'
     )
     .option('--approve', 'The lead’s: stack the tasks the scout proposed, the spike done')
+    .option(
+      '--findings-only',
+      'With --approve: what it found approved, the tasks it proposes left out (for the backlog)'
+    )
     .option('--changes <what>', 'The lead’s: send the tasks the scout proposed back, saying what to change')
     .option(...AGENT_OPTION)
     .option(...TOKEN_OPTION)
@@ -210,7 +214,13 @@ export const registerTaskGroup = (program: Command): Command => {
     .action(
       (
         question: string | undefined,
-        options: RunCommandOptions & { done?: string; tasks?: string; approve?: boolean; changes?: string }
+        options: RunCommandOptions & {
+          done?: string;
+          tasks?: string;
+          approve?: boolean;
+          findingsOnly?: boolean;
+          changes?: string;
+        }
       ) => taskSpike(question, options)
     );
 

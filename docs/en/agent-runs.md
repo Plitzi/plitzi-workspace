@@ -351,7 +351,10 @@ this page lacks is said on the element of ours where the other page wears it (`a
 that place of the section — "lacks box-shadow … — at ours: match-result"), here and in `--dress`'s failure. `--width`,
 `--scheme` (each width in each) and `--status` (a not-found page, `--status 404`) are `page shot`'s and `page check`'s.
 A page that sends a guest away is found by one guest check (`readAsFor`, `page check --guest`) and read as the project's
-account; a page the run before answers 404 — one the task adds — is pictured alone (`newSinceBefore`); a look that took no
+account; a page only a signed-out visitor opens (`accessLevel: 'public'`, no signed-in twin: `signedOutOnly`) is read as a
+guest in a signed-in look — encore-10's looks of `/sign-in` were sent home and pictured Home; a page its changes are drawn
+at counts as looked at for an address that fits it (`lookedAmong`: `/u/mika` for `/u/:username`) and for an earlier look
+of the task as it is now (`pagesLooked`, kept with each look); a page the run before answers 404 — one the task adds — is pictured alone (`newSinceBefore`); a look that took no
 picture says why, or that nothing was to picture. A look's lock (`look.lock`) whose process on this machine is gone is
 taken at once, and one held past its wait is a refusal naming what holds it.
 A server of the look that stops under it is said, with why and its last lines (`preview-server.log`,
@@ -777,6 +780,11 @@ to answer, as every block is — a scout finds out the run's spikes alone (Carlo
 (`unblockTask`). When the answer changes the work, the lead stacks the tasks it makes. A scout with no spike left is
 told it can stop (`task next`); the keeper starts it again for a spike a stage brings, or one the lead sends back.
 
+The lead may approve a spike's findings without its tasks (`task spike <s> --approve --findings-only`, `approveSpike`):
+done, its proposed tasks dropped and said — a send-back that asked nothing had the scout propose again. A scout measures
+on `plitzi run copy [dir]` (`copyRunWork`): the run's approved work made afresh in its scratch, inside the project where
+its packages resolve, its state empty — encore-10's scout rebuilt it by hand from `approved.json` and the blobs.
+
 `run rehearse` plays research alone without a review. The monitor puts a spike someone finds out **at work**, named,
 and keeps a column (`◇ spike`) for those nobody took or whose result waits for the lead; the dev tools' Run tab a group
 (Finding out).
@@ -790,13 +798,26 @@ one its harness stopped. Each `task next`, and each turn of its wait, marks the 
 agent between tasks with no mark for `PRESENCE_STALE_MS` shows in the monitor as `no-signal`, with the command that
 starts it again.
 
-**A task that takes long** (`view.ts`, `talk.ts`): any task at work — a spike its scout finds out too — past twice its
-estimate wakes the lead (`long-task`, again at each estimate more), with its agent's last word and how to ask:
+**A task that takes long** (`view.ts`, `talk.ts`, `limits.ts`): any task at work — a spike its scout finds out too — past
+the time a piece of work takes (`WORK_LIMIT_MINUTES`, 10; the scope's `SCOPE_LIMIT_MINUTES`, 30 — Carlos: past ten
+minutes something is usually wrong) wakes the lead (`long-task`, again at each limit more), with its agent's last word and how to ask:
 `task message @<agent> --standing`. The agent answers whole — `task tell --standing --fraction <0-1> --eta <minutes>
 --done "…" --left "…" [--blocked "…"]` (`--about <task>` holding none), refused when a part is missing — as the
 answer to that asking, its fraction kept as the task's progress. The standing wakes the lead with what it may do: let
 it go on, tell it what to change, lift what holds it, narrow or split the task, or take it back (Carlos: the lead asks,
 and decides on the answer).
+
+**The run's time** (`planNotices.ts`, `acceptance.ts`, `tasks/keepAlive.ts`): encore-10 ran 246 minutes, one task 148 of its
+60, two Playwright suites at once skewing every timing. `run plan` says a task estimated past its limit (split it) and a
+line that runs a whole suite where the task's own specs would do (`sizeNotices`, `suiteNotices`). A line that runs the
+project's suite — `playwright test`, or a script that is one (`suiteScripts`) — takes a machine-wide lock
+(`SUITE_LOCK` in the OS's temp folder, `withLock`): a second waits for it, whoever runs it. A line past `SLOW_LINE_MS`
+(2 min) keeps how long it took (`AcceptanceResult.ms`), said at `task check` and `complete`; a failed one whose
+Playwright reused the copy served on `PORT` says its config's `webServer` never started (`reused`). While a check or a
+complete runs, the task gives a sign of life every minute (`keepAlive`): one long pass read "no signal — reassign it".
+Every task approved, `run watch` wakes the lead to close (`leadItems`): encore-10's sat open past its last approval. A
+`complete` with the lead's word unread is refused with it, read (`unreadForHolder`): a run's dev-1 completed 30 s after
+a send-back, its scope message unread, and the round answered none of it.
 
 ## A task's life (`tasks/`)
 

@@ -45,6 +45,8 @@ const GATHER_MS = 30;
 const BACKOFF_MS = [500, 1000, 2000, 5000, 10_000];
 /** How long a publish waits for a connection that is still opening — and, on a socket, for its answer. */
 const PUBLISH_WAIT_MS = 5000;
+/** How long what both connections of a reopen heard is remembered after the old one goes: a message arrives once. */
+const OVERLAP_MS = 2000;
 
 type Ready = { connection: string; token?: string; refused: { topic: string; reason: string }[] };
 
@@ -121,6 +123,8 @@ type Connection = {
   topics: string;
   transport: RealtimeTransport;
   me?: string;
+  /** The server let it in (`ready`): until then the connection it replaces is still the one that hears. */
+  ready?: true;
   close: () => void;
   publish: (topic: string, type: string, data: unknown, options: RealtimePublishOptions) => Promise<boolean>;
 };
@@ -146,6 +150,15 @@ export const createRealtimeClient = (
   const statusListeners = new Set<StatusListener>();
   let status: RealtimeStatus = 'idle';
   let current: Connection | undefined;
+  /**
+   * The connection `current` replaces, heard until `current` is ready: a page that listens to one more topic — the next
+   * page after a navigation — reopened with every topic, and what was said on the others meanwhile was lost (a run's
+   * unread badge missed the event its own thread page caused, every time).
+   */
+  let previous: Connection | undefined;
+  /** What was heard while two connections were open, and a moment after: the copy the other one hears is dropped. */
+  const overlapHeard = new Set<string>();
+  let overlapUntil = 0;
   let refusals = new Map<string, string>();
   let gather: ReturnType<typeof setTimeout> | undefined;
   let retry: ReturnType<typeof setTimeout> | undefined;
@@ -186,7 +199,40 @@ export const createRealtimeClient = (
     return `topics=${encodeURIComponent(topics)}${offered.length ? `&grants=${encodeURIComponent(offered.join(','))}` : ''}`;
   };
 
+  /** Lets go of the connection being replaced, keeping what both heard for a moment: its copies may still arrive. */
+  const letGoOfPrevious = (): void => {
+    if (!previous) {
+      return;
+    }
+
+    previous.close();
+    previous = undefined;
+    overlapUntil = Date.now() + OVERLAP_MS;
+  };
+
+  /** Heard already on the other connection of a reopen. Only while two are, or were a moment ago: no cost otherwise. */
+  const heardTwice = (message: RealtimeMessage): boolean => {
+    if (!previous && Date.now() > overlapUntil) {
+      overlapHeard.clear();
+
+      return false;
+    }
+
+    const key = JSON.stringify([message.topic, message.type, message.at, message.from, message.replayed, message.data]);
+    if (overlapHeard.has(key)) {
+      return true;
+    }
+
+    overlapHeard.add(key);
+
+    return false;
+  };
+
   const deliver = (message: RealtimeMessage): void => {
+    if (heardTwice(message)) {
+      return;
+    }
+
     // Let go of the topic by the server: refused from now on, so a new grant for it opens it again.
     if (message.type === REVOKED_TYPE && message.from === 'server') {
       refuse([[message.topic, 'revoked']]);
@@ -197,6 +243,8 @@ export const createRealtimeClient = (
   };
 
   const onReady = (connection: Connection, ready: Ready): void => {
+    connection.ready = true;
+    letGoOfPrevious();
     connection.me = ready.connection;
     refusals = new Map();
     refuse(ready.refused.map(entry => [entry.topic, entry.reason]));
@@ -210,6 +258,7 @@ export const createRealtimeClient = (
       return;
     }
 
+    letGoOfPrevious();
     setStatus('connecting');
     const wait = BACKOFF_MS[Math.min(attempt, BACKOFF_MS.length - 1)];
     attempt += 1;
@@ -283,6 +332,7 @@ export const createRealtimeClient = (
           // Refused — undeclared topics, no access. Asking again with the same topics would be refused again.
           refusals = new Map();
           refuse(topics.split(',').map(topic => [topic, `http_${String(response.status)}`]));
+          letGoOfPrevious();
           setStatus('closed');
 
           return;
@@ -375,10 +425,18 @@ export const createRealtimeClient = (
   };
 
   function open(): void {
-    current?.close();
+    // The one that hears is kept until its replacement is let in; one that never was goes now.
+    if (current?.ready) {
+      previous?.close();
+      previous = current;
+    } else {
+      current?.close();
+    }
+
     current = undefined;
     const topics = topicsKey();
     if (!topics) {
+      letGoOfPrevious();
       setStatus('idle');
 
       return;

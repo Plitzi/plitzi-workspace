@@ -43,9 +43,22 @@ export const projectSpace = async (root: string): Promise<Authored | { problem: 
     return authored;
   } catch (error) {
     return {
-      problem: `The space does not author — npm run author says why: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`
+      problem: `The space does not author — npm run author says why: ${error instanceof Error ? refusedText(error.message) : String(error)}`
     };
   }
+};
+
+/**
+ * What authoring refused, its first lines — never its count alone: a run's dev-2 read "1 problem" in page check, and
+ * not which.
+ */
+export const refusedText = (message: string): string => {
+  const lines = message
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line !== '');
+
+  return `${lines.slice(0, 6).join(' · ')}${lines.length > 6 ? ' …' : ''}`;
 };
 
 /**

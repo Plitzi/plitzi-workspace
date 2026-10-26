@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
 
+import { refusedText } from './check/space';
 import { spaceFailureOn } from './measure';
 
 import type { BrowserPage } from '../browser';
@@ -26,8 +27,24 @@ describe("the server's page for a space that does not author", () => {
         )
       )
     ).toBe(
-      "the space does not author, so the page is the server's error page — ReferenceError: when is not defined: npm run author says why"
+      "the space does not author, so the page is the server's error page — ReferenceError: when is not defined · at …: npm run author says why"
     );
+    // encore-10's dev-2 read a count of problems and none of them: what follows the first line is said too.
+    expect(
+      await spaceFailureOn(
+        pageOf(
+          `<head><meta name="${SPACE_FAILURE_META}" content="1"></head><body><pre>The space has 1 problem\n\n  page sign-in: step url navigation.pathname is not a source</pre></body>`
+        )
+      )
+    ).toContain('The space has 1 problem · page sign-in: step url navigation.pathname is not a source');
     expect(await spaceFailureOn(pageOf('<head></head><body><main data-hydrated>a page</main></body>'))).toBeUndefined();
+  });
+});
+
+describe('what authoring refused, in page check', () => {
+  it('is its first lines, never the count alone', () => {
+    expect(refusedText('The space has 1 problem\n\n  page sign-in: step url navigation.pathname is not a source')).toBe(
+      'The space has 1 problem · page sign-in: step url navigation.pathname is not a source'
+    );
   });
 });

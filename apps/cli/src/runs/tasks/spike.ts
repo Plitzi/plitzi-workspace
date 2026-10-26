@@ -33,6 +33,8 @@ export interface Spiked {
    * for findings alone. Nothing is applied until the lead says.
    */
   proposed?: string[];
+  /** Approved findings alone (`--approve --findings-only`): the tasks the scout proposed, left out. */
+  dropped?: string[];
   /** The tasks it left ready: those it made, and those that waited for it. */
   ready?: string[];
   /** What the check of the tasks it made says and refuses nothing for: a value no check measures, an id not there. */
@@ -207,7 +209,16 @@ const propose = async (
  * `plitzi task spike <spike> --approve`, the lead's: what a scout proposed, applied — the tasks it makes stacked and the
  * research done.
  */
-export const approveSpike = async (ctx: RunContext, runId: string, taskId: string): Promise<Spiked> => {
+export const approveSpike = async (
+  ctx: RunContext,
+  runId: string,
+  taskId: string,
+  /**
+   * `findingsOnly`: what it found approved, the tasks it proposes left out — for the backlog, a later run: encore-10's
+   * lead had to send a scout's result back and end the spike itself, and the scout read "say it again".
+   */
+  { findingsOnly = false }: { findingsOnly?: boolean } = {}
+): Promise<Spiked> => {
   requireNoTask(ctx, 'approve what a spike proposes');
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'approve what a spike proposes');
@@ -223,9 +234,17 @@ export const approveSpike = async (ctx: RunContext, runId: string, taskId: strin
     );
   }
 
-  const staged = proposed.tasks.length > 0 ? view.paths.proposedStage : undefined;
+  const staged = proposed.tasks.length > 0 && !findingsOnly ? view.paths.proposedStage : undefined;
+  const done = await finishSpike(
+    ctx,
+    runId,
+    loaded,
+    view,
+    { at: proposed.at, by: proposed.by, text: proposed.text },
+    staged
+  );
 
-  return finishSpike(ctx, runId, loaded, view, { at: proposed.at, by: proposed.by, text: proposed.text }, staged);
+  return findingsOnly && proposed.tasks.length > 0 ? { ...done, dropped: proposed.tasks } : done;
 };
 
 /**

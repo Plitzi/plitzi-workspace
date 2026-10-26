@@ -89,32 +89,19 @@ export function getKeyDecoded<T = unknown>(webKey: string, asWebId?: boolean): T
   return Number.isInteger(subject) && subject > 0 ? subject : 0;
 }
 
+/**
+ * A query string's parameters as the URL standard reads them: a value keeps every `=` after its first (`?next=/a?x=1`
+ * is `/a?x=1`), `+` is a space and each is decoded once; a name given twice or more is a list.
+ */
 export function ParamsFromURL(query?: string) {
   if (!query && typeof window !== 'undefined') {
     query = window.location.search;
   }
 
   const queryString: { [key: string]: string | string[] } = {};
-  if (!query || query.length === 0) {
-    return queryString;
-  }
-
-  const vars = query.replace('?', '').split('&');
-  for (let i = 0; i < vars.length; i++) {
-    const stringArr = vars[i].split('=');
-    const key = decodeURIComponent(stringArr[0]);
-    const value = decodeURIComponent(stringArr[1]);
-    // If first entry with this name
-    if (typeof queryString[key] === 'undefined') {
-      queryString[key] = decodeURIComponent(value);
-      // If second entry with this name
-    } else if (typeof queryString[key] === 'string') {
-      const arr = [queryString[key], decodeURIComponent(value)];
-      queryString[key] = arr;
-      // If third or later entry with this name
-    } else {
-      queryString[key].push(decodeURIComponent(value));
-    }
+  for (const [key, value] of new URLSearchParams(query ?? '')) {
+    const before: string | string[] | undefined = Object.hasOwn(queryString, key) ? queryString[key] : undefined;
+    queryString[key] = before === undefined ? value : typeof before === 'string' ? [before, value] : [...before, value];
   }
 
   return queryString;

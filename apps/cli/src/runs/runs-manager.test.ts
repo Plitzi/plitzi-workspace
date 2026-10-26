@@ -8,9 +8,19 @@ import { extendRun } from './extend';
 import { leadItems } from './leadWatch';
 import { messagesOf } from './messages';
 import { agentsNeeded } from './onDemand';
+import { copyRunWork } from './preview';
 import { checkPlanFile, loadRun, logRun, openRun, readRunLog } from './run';
-import { askLead, tellLeadAbout } from './talk';
-import { completeTask, escalateReview, nextTask, reviewTask, takeNext, unblockTask } from './tasks';
+import { askLead, messageTasks, tellLeadAbout } from './talk';
+import {
+  answerSpike,
+  approveSpike,
+  completeTask,
+  escalateReview,
+  nextTask,
+  reviewTask,
+  takeNext,
+  unblockTask
+} from './tasks';
 import { viewTask } from './taskStore';
 import { readTeam, startedAgents } from './team';
 import { viewRun } from './view';
@@ -179,12 +189,15 @@ describe('what the team told the lead of a task', () => {
   it('comes to whoever reviews it', async () => {
     const { runId } = await twoInReview();
     await tellLeadAbout(bench.agent('agent-2'), runId, 't-menu', 'Its prices are read once, at authoring');
+    // And what the lead said to it: encore-10's tester sent back a task for a question the lead had answered.
+    await messageTasks(lead(), runId, 't-menu', 'Keep the euro sign after the price');
     const offers = [
       (await takeNext(bench.agent('test-1'), runId, 'tester')).next.leadReview,
       (await takeNext(bench.agent('test-2'), runId, 'tester')).next.leadReview
     ];
     expect(offers.find(offer => offer?.task.id === 't-menu')?.told).toEqual([
-      'agent-2: On t-menu: Its prices are read once, at authoring'
+      'agent-2 to the lead: On t-menu: Its prices are read once, at authoring',
+      'the lead to it: Keep the euro sign after the price'
     ]);
   });
 });
@@ -311,7 +324,7 @@ describe('a research spike in a plan', () => {
     const plan: RunPlan = { ...benchPlan(), designReview: false };
     plan.tasks = [
       ...plan.tasks,
-      { ...plan.tasks[0], id: 's-words', title: 'The words', files: [], spike: 'which words' }
+      { ...plan.tasks[0], id: 's-words', title: 'The words', files: [], spike: 'which words', estimateMinutes: 10 }
     ];
     const { notices } = await checkPlanFile(lead(), await bench.writePlan(plan));
     expect(notices.filter(notice => notice.includes('s-words'))).toEqual([]);
@@ -390,5 +403,96 @@ describe('a scout at its spike', () => {
     // Free, in the drag's words, are those at nothing: never the scout at its spike.
     expect(said).toMatch(/nothing to take/);
     expect(said).not.toMatch(/while [^:]*scout-1[^:]*nothing to take/);
+  });
+});
+
+describe('a scout’s result the lead approves without its tasks', () => {
+  // encore-10's lead sent s-suite-failures back to end it alone, and its scout read "say it again".
+  it('is done with its findings, the tasks left out and said', async () => {
+    await bench.writeTeam(team({ ...SCOUT, min: 0 }));
+    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    plan.tasks = [
+      plan.tasks[0],
+      { ...plan.tasks[0], id: 's-words', title: 'The words', files: [], spike: 'which words', estimateMinutes: 10 }
+    ];
+    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
+    await takeNext(bench.agent('scout-1'), runId, 'scout');
+    const stage = path.join(bench.root, 'tmp', 'words.json');
+    await fs.mkdir(path.dirname(stage), { recursive: true });
+    await fs.writeFile(
+      stage,
+      JSON.stringify({
+        tasks: [
+          { ...plan.tasks[0], id: 't-words', title: 'The words', files: ['src/space/pages/about.ts'], dependsOn: [] }
+        ]
+      })
+    );
+    await answerSpike(bench.agent('scout-1'), runId, 's-words', '"Reservar"', { tasks: stage });
+
+    const done = await approveSpike(lead(), runId, 's-words', { findingsOnly: true });
+    expect(done).toMatchObject({ status: 'done', dropped: ['t-words'] });
+    expect((await loadRun(lead(), runId)).tasks.map(task => task.id)).not.toContain('t-words');
+  });
+});
+
+describe('a spike handed to its scout', () => {
+  // encore-10's spike on the suite's speed was told to compare with an original the run had none of.
+  it('names the original only when the run copies one', async () => {
+    await bench.writeTeam(team({ ...SCOUT, min: 0 }));
+    const plan: RunPlan = { ...benchPlan(), designReview: false, reference: 'https://example.com' };
+    plan.tasks = [
+      { ...plan.tasks[0], id: 's-words', title: 'The words', files: [], spike: 'which words', estimateMinutes: 10 }
+    ];
+    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
+    expect((await takeNext(bench.agent('scout-1'), runId, 'scout')).next.spike?.reference).toBe('https://example.com');
+  });
+});
+
+describe('a task of tests behind the task it tests', () => {
+  // encore-10's watch told the lead to take t-visual-own-state away from its tests' dependencies, its review going on.
+  it('is never held up: it waits for what it tests by what it is', async () => {
+    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const menu0 = plan.tasks.find(task => task.id === 't-menu') ?? plan.tasks[0];
+    plan.tasks = [
+      menu0,
+      {
+        ...menu0,
+        id: 't-menu-tests',
+        title: 'Tests for t-menu',
+        files: ['src/lib/menuChecks.ts'],
+        dependsOn: ['t-menu'],
+        testsOf: ['t-menu']
+      }
+    ];
+    const members = team({ ...TESTERS, count: 1 });
+    await bench.writeTeam(members);
+    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
+    const menu = await take('agent-1', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = {};\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+
+    const loaded = await loadRun(lead(), runId);
+    const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
+    const all = startedAgents(members);
+    expect(bottlenecks(views, all, bench.now(), [], all).map(each => each.kind)).not.toContain('held-up');
+  });
+});
+
+describe('the run’s work, copied for a spike', () => {
+  // encore-10's scout rebuilt the run's approved work by hand — approved.json, then each blob — to measure apart.
+  it('is a folder of the caller’s scratch with every approved file, and never outside the project', async () => {
+    await bench.writeTeam(team({ ...TESTERS, count: 1 }, { ...SCOUT, min: 0 }));
+    const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
+    const menu = await take('agent-1', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Carta" };\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+    await reviewTask(bench.agent('test-1'), runId, 't-menu', 'approve', []);
+
+    const copied = await copyRunWork(bench.agent('scout-1'), runId);
+    expect(copied.dir).toContain(path.join('scratch', 'scout-1', 'run-copy'));
+    expect(await fs.readFile(path.join(copied.dir, 'src/space/pages/menu.ts'), 'utf-8')).toContain('Carta');
+    expect((await refusal(copyRunWork(bench.agent('scout-1'), runId, '/tmp/elsewhere'))).message).toContain(
+      'is not inside the project'
+    );
   });
 });

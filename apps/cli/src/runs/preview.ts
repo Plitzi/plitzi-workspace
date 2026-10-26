@@ -19,7 +19,7 @@ import {
 } from './files';
 import { canLinger, keepServer, keptServer, markPreviewed, touchKept, unmarkPreviewed } from './lingering';
 import { monitorRun } from './monitor';
-import { taskPaths, under } from './paths';
+import { agentScratch, taskPaths, under } from './paths';
 import { alive, isPreview, previewPort, previewRecord } from './previewRecord';
 import { stopTree } from './processes';
 import { RunRefusal } from './refusal';
@@ -346,6 +346,31 @@ const approvedCopy = async (ctx: RunContext, loaded: LoadedRun, dir: string): Pr
     await fs.mkdir(path.dirname(under(dir, file)), { recursive: true });
     await fs.copyFile(under(ctx.root, file), under(dir, file), fs.constants.COPYFILE_FICLONE);
   }
+};
+
+/**
+ * The run's approved work as a folder of the caller's, made afresh — under its scratch unless named, inside the project
+ * where its packages resolve, its state its own. encore-10's scout, told to measure on the run's work, rebuilt it by hand
+ * from approved.json and the blobs to keep its suite off the project's state.
+ */
+export const copyRunWork = async (
+  ctx: RunContext,
+  runId: string,
+  asked?: string
+): Promise<{ dir: string; files: number }> => {
+  const loaded = await loadRun(ctx, runId, { anyMachine: true });
+  const dir = path.resolve(ctx.root, asked ?? path.join(agentScratch(loaded.paths, ctx.agent), 'run-copy'));
+  const inside = path.relative(ctx.root, dir);
+  if (inside === '' || inside.startsWith('..') || path.isAbsolute(inside)) {
+    throw new RunRefusal(
+      'invalid',
+      `${dir} is not inside the project: the copy's packages would not resolve there — leave it out (your scratch) or name a folder under ${ctx.root}`
+    );
+  }
+
+  await approvedCopy(ctx, loaded, dir);
+
+  return { dir, files: Object.keys((await readApproved(loaded.paths)).files).length };
 };
 
 /**

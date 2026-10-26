@@ -376,6 +376,10 @@ describe('a spike, a scout’s', () => {
     // Answered by its block, no question left open: its approval is not held (a message beside it was never answered).
     expect(await openQuestions(loaded)).toEqual([]);
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Reservar" };\n');
+    // Its answer unread, the task does not go to review: handed over by the refusal, read, the next complete goes on.
+    expect((await refusal(completeTask(menu.ctx, runId, 't-menu'))).message).toContain(
+      'The lead told t-menu what was not read yet'
+    );
     await completeTask(menu.ctx, runId, 't-menu');
     // The team has no tester: the lead reviews.
     expect(await reviewTask(lead(), runId, 't-menu', 'approve', [])).toMatchObject({ verdict: 'approve' });

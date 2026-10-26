@@ -53,6 +53,12 @@ export const MEASURED = [
   'animation',
   // Where a grid places it, and the width it is held to: a run's designer read them from the served HTML with curl.
   'position',
+  // Where a positioned box is held — a fixed bar's distance from the viewport's edge: a run's designer worked it out
+  // from x, its width and a viewport height it had to guess (`--only right` was refused).
+  'top',
+  'right',
+  'bottom',
+  'left',
   'max-width',
   'grid-area',
   // Where its box starts in the viewport: a column measured against another's (every agent and the lead

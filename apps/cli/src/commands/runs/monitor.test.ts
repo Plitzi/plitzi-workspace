@@ -308,7 +308,13 @@ describe('plitzi run monitor', () => {
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { es: true };\n');
     await completeTask(menu.ctx, runId, 't-menu');
 
-    const first = (await monitorRun(lead(), runId)).view.tasks;
+    const watched = await monitorRun(lead(), runId);
+    const first = watched.view.tasks;
+    // At work between reviews, the lead's row says at what first (encore-10's said "working", and not at what).
+    expect(watched.agents.find(agent => agent.agent === 'lead')).toMatchObject({
+      status: 'working',
+      doing: 'at: t-about: approved (round 1)'
+    });
     expect(counts(first)).toEqual({
       pending: 1,
       ready: 0,

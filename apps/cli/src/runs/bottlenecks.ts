@@ -97,7 +97,10 @@ export const bottlenecks = (
       ? []
       : free(role);
     const waitsOn = view.task.dependsOn.filter(id => !approvedIds.has(id));
-    if (held.length === 0 || held.length !== waitsOn.length || idle.length === 0) {
+    // The tests of what it waits for wait for it by what they are: no dependency to take away (encore-10's watch
+    // told the lead to, for a task of tests).
+    const tests = held.some(other => view.task.testsOf?.includes(other.task.id) === true);
+    if (held.length === 0 || held.length !== waitsOn.length || idle.length === 0 || tests) {
       continue;
     }
 
@@ -114,11 +117,8 @@ export const bottlenecks = (
     });
   }
 
-  // A review taken and not decided while the team has nothing to take: the run waits on one agent, and only the lead
-  // can ask it where it stands or decide it — a run's last task sat in a designer's review, five agents idle.
-  const idleAll = views.some(view => view.state.status === 'ready')
-    ? []
-    : started.filter(each => atOwn(each.agent) === undefined && !reviewing.has(each.agent)).map(each => each.agent);
+  // A review taken and not decided past its time: the run waits on one agent, and only the lead can ask it where it
+  // stands or decide it — a run's last task sat in a designer's review, five agents idle.
   for (const view of views.filter(each => each.state.status === 'in-review')) {
     const { design, reviewer } = view.state;
     const taken =
@@ -129,9 +129,9 @@ export const bottlenecks = (
           : undefined;
     const held = taken ? now.getTime() - Date.parse(taken.at) : 0;
     const time = reviewTimeOf(taken?.what === 'UI review' ? design : undefined);
-    // Past the review's time it is no longer its reviewer's, idle team or not; under it, only while others sit free.
-    const past = held >= time;
-    if (!taken || (!past && (held < time / 2 || idleAll.length === 0))) {
+    // Past the review's time, and only then: halfway, with others free, woke encore-10's lead at 4 min of every long
+    // review — free agents that could not have taken it, nothing else to give them.
+    if (!taken || held < time) {
       continue;
     }
 
@@ -141,10 +141,8 @@ export const bottlenecks = (
       task: view.task.id,
       // The lead manages: with testers, it asks — the review stays a tester's, escalated to it if it cannot decide.
       text: testers
-        ? `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min${past ? `, past the ${String(time / 60_000)} a review takes` : ` while ${idleAll.join(', ')} ${idleAll.length === 1 ? 'has' : 'have'} nothing to take`}: ask where it stands and for its verdict — plitzi task message @${taken.by} "…" — or that it escalates what it cannot decide`
-        : past
-          ? `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min, past the ${String(time / 60_000)} a review is its reviewer's: ${taken.what === 'UI review' ? 'the next designer free takes it — or ' : ''}decide it yourself now: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design reviewer' : ''} | --changes "…"`
-          : `${taken.by} has had ${view.task.id}'s ${taken.what} ${String(minutes)} min while ${idleAll.join(', ')} ${idleAll.length === 1 ? 'has' : 'have'} nothing to take: ask where it stands and for a decision now (plitzi task message @${taken.by} "…") — or decide it yourself: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design reviewer' : ''} | --changes "…"`,
+        ? `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min, past the ${String(time / 60_000)} a review takes: ask where it stands and for its verdict — plitzi task message @${taken.by} "…" — or that it escalates what it cannot decide`
+        : `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min, past the ${String(time / 60_000)} a review is its reviewer's: ${taken.what === 'UI review' ? 'the next designer free takes it — or ' : ''}decide it yourself now: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design reviewer' : ''} | --changes "…"`,
       who: 'lead'
     });
   }

@@ -13,6 +13,7 @@ import { unmeasuredNotices } from './measuredValues';
 import { expandFiles, sharedReached } from './ownership';
 import { ownScriptNotices } from './ownScripts';
 import { ID, isSecretFile, NOT_TASK_DIRS, under } from './paths';
+import { sizeNotices, suiteNotices } from './planNotices';
 import { isResearch } from './spike';
 import { DEVELOPER, roleProblems, skillProblems, teamSize, teamTakes, TESTER } from './team';
 import { teamNotices } from './teamNotices';
@@ -615,11 +616,14 @@ export const checkPlan = async (
     );
   }
 
+  notices.push(...sizeNotices(tasks));
+
   // How much each task asks of its model, where the plan says none: what many build on is worth the strongest; a
   // one-file few minutes, the lightest — said, so the lead sets it otherwise in a line.
   const suggested: string[] = [];
   for (const task of tasks) {
-    if (task.quality !== undefined || task.kind !== 'work') {
+    // Research is the scout's, on the scout's model: no level of its own.
+    if (task.quality !== undefined || task.kind !== 'work' || isResearch(task)) {
       continue;
     }
 
@@ -653,6 +657,8 @@ export const checkPlan = async (
       ? `The inventory: ${String(pieces.length)} pieces — ${String(pieces.filter(item => item.leftOut === undefined).length)} covered by a task’s checked acceptance, ${String(pieces.filter(item => item.leftOut !== undefined).length)} left out`
       : 'No inventory: what the job asks is not listed piece by piece, so nothing checks that the tasks cover it — for a copy, a design or a brief, list it ("inventory": [{ id, piece, page }]) and cover each with { said, check, covers }'
   );
+
+  notices.push(...(await suiteNotices(root, tasks)));
 
   // A task whose acceptance no command proves holds only at its review: a later task can undo it, and nothing says so —
   // v12's print fit one sheet when approved, and two at the finish.

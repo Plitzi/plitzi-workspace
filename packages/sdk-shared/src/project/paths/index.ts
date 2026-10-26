@@ -145,8 +145,10 @@ export const DEV_SERVER_FILE = `${PROJECT_TMP}/dev-server.json`;
 export const SERVER_RECORD_ENV = 'PLITZI_SERVER_RECORD';
 
 /**
- * Where a project's server keeps its \`kv\` instead of \`KV_FILE\`: the visual suite's own server keeps its own state, as
- * it keeps its own record — one file is held by one process, and its server beside a person's open one (or the one
- * the CLI keeps of a run's copy) was refused: a run's Playwright runs crashed on "createFileKv … is in use".
+ * Where a project's server keeps what it holds instead of \`PROJECT_STATE\` — its \`kv\` and its job queue, when the
+ * project names no store of its own — and where a store the project opens itself should go too: the visual suite's own
+ * server keeps its own state, as it keeps its own record. One file is held by one process: its server beside a
+ * person's open one was refused ("createFileKv … is in use"), and a run read \`PLITZI_KV_FILE\` — the jobs' file
+ * followed it unsaid — as dead beside a sqlite \`kv\`, and its suite ran the person's queued jobs.
  */
-export const KV_FILE_ENV = 'PLITZI_KV_FILE';
+export const STATE_DIR_ENV = 'PLITZI_STATE_DIR';

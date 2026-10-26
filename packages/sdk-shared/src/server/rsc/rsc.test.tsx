@@ -5,6 +5,7 @@ import { createStore } from '@plitzi/nexus';
 import { StoreProvider } from '@plitzi/nexus/react';
 
 import refreshRsc, { cancelRsc, noteRscFailures } from './refreshRsc';
+import useRscRefresh from './useRscRefresh';
 import useRscSync from './useRscSync';
 
 import type { CommonState, Element, SchemaRsc, ServerSSR } from '../../types';
@@ -197,6 +198,48 @@ describe('useRscSync', () => {
     expect(store.get('rsc.data')).toEqual({ a: 1 });
 
     await waitFor(() => expect(fetchMock).not.toHaveBeenCalled());
+  });
+});
+
+// encore-10's browser logged ~55 "scope collision" warnings a page: two providers' refreshes, each from its own scope,
+// delegated `rsc.*` up through their shared parent — the SDK's own paths, nothing a space could act on.
+describe('two sibling providers refreshing', () => {
+  beforeEach(() => {
+    window.history.pushState({}, '', '/');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ serverData: { a: 1 } }) })
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('write the payload at the SDK root, never through their scopes', async () => {
+    const root = makeStore({ enabled: true });
+    const refreshes: ((ids?: string[]) => Promise<void>)[] = [];
+    const Provider = () => {
+      refreshes.push(useRscRefresh());
+
+      return null;
+    };
+    render(
+      <StoreProvider store={root}>
+        <Harness ssr={{ rscPath: '/_rsc', rscData: { serverData: {} } }} />
+        <StoreProvider inherit="live" name="Api:a" value={{}}>
+          <Provider />
+        </StoreProvider>
+        <StoreProvider inherit="live" name="Api:b" value={{}}>
+          <Provider />
+        </StoreProvider>
+      </StoreProvider>
+    );
+
+    // A collision throws under test: both refreshes land, and the root holds what they wrote.
+    await act(() => Promise.all([refreshes[0](['a']), refreshes[1](['b'])]));
+    expect(root.get('rsc.data')).toEqual({ a: 1 });
+    expect(root.get('rsc.refreshing')).toEqual({});
   });
 });
 

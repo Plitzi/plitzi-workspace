@@ -89,6 +89,25 @@ type RscRequests = {
 const requestsByInstance = new Map<string, RscRequests>();
 const requestsByStore = new WeakMap<StoreApi<CommonState>, RscRequests>();
 
+/**
+ * The store each SDK root seeds `rsc` in, by the same token: where a refresh writes, whichever scope asked. Delegated up
+ * from an element's own scope, two sibling providers' refreshes were "scope collisions" — ~55 warnings a page in a
+ * run's browser, about the SDK's own `rsc.*`, that hid the ones a space could act on.
+ */
+const rootsByInstance = new Map<string, StoreApi<CommonState>>();
+
+/** Held by `useRscSync` as it renders — before any element below it can refresh — and let go with its requests. */
+export const holdRscRoot = (instance: string, store: StoreApi<CommonState>): void => {
+  rootsByInstance.set(instance, store);
+};
+
+/** The root `store` reaches `rsc` through; a store with no token, or one whose root is gone, is its own. */
+const rootOf = (store: StoreApi<CommonState>): StoreApi<CommonState> => {
+  const instance = store.get('rsc.instance');
+
+  return (typeof instance === 'string' && rootsByInstance.get(instance)) || store;
+};
+
 const newRequests = (): RscRequests => ({ seq: 0, inFlight: new Set(), asked: new Map() });
 
 const requestsOf = (store: StoreApi<CommonState>): RscRequests => {
@@ -156,6 +175,7 @@ export const cancelRsc = (store: StoreApi<CommonState>, ids?: readonly string[])
 export const releaseRscRequests = (instance: string): void => {
   requestsByInstance.get(instance)?.inFlight.forEach(request => request.controller.abort());
   requestsByInstance.delete(instance);
+  rootsByInstance.delete(instance);
 };
 
 /** Each element of a payload the page server could not resolve, kept with why — its first failure, not overwritten. */
@@ -240,7 +260,7 @@ export type RscRefreshOptions = {
  *
  * Plain function over a store rather than a context method: the payload lives in `rsc.data`, so every caller already
  * has what it needs through the store it can reach, and an element buried under any number of scopes writes to the
- * root by delegation (nothing but the root owns `rsc`).
+ * root its token names (nothing but the root owns `rsc`).
  *
  * Pass `requestedIds` to refresh only those elements — the response is merged over the existing payload; of them,
  * only the ones the server resolves at that location are asked for, and none is no request. Omit them for a full
@@ -253,11 +273,12 @@ export type RscRefreshOptions = {
  * (its prefetch, then the route change), and a slow answer could land over a newer one.
  */
 export const refreshRsc = async (
-  store: StoreApi<CommonState>,
+  from: StoreApi<CommonState>,
   requestedIds?: string[],
   params?: Record<string, string>,
   { location, fresh = false }: RscRefreshOptions = {}
 ): Promise<void> => {
+  const store = rootOf(from);
   const { enabled, endpoint } = store.get('rsc') ?? {};
   if (!enabled || !endpoint || typeof window === 'undefined') {
     return;

@@ -70,6 +70,14 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
 
   const asked: CheckAsk = {
     state: Boolean(options.state),
+    ...(typeof options.state === 'string'
+      ? {
+          stateOf: options.state
+            .split(',')
+            .map(name => name.trim())
+            .filter(Boolean)
+        }
+      : {}),
     elements: options.element ?? [],
     ...(options.status === undefined ? {} : { status: options.status }),
     ...(options.redirectsTo === undefined ? {} : { redirectsTo: options.redirectsTo })

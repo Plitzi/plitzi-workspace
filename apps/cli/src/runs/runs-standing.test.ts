@@ -32,20 +32,21 @@ const { refusal, lead, take } = runSteps(() => bench);
 
 const STANDING = { fraction: 0.6, etaMinutes: 10, done: 'The hero in Spanish', left: 'The footer links' };
 
-describe('a task past its estimate', () => {
-  it('wakes the lead to ask — again at each estimate more — and the answer, whole, is its to decide on', async () => {
+describe('a task past the work limit', () => {
+  it('wakes the lead to ask — again at each limit more — and the answer, whole, is its to decide on', async () => {
     await bench.writeTeam(team(TESTERS));
     const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
     const home = await take('agent-1', 't-home');
     await reportProgress(home.ctx, runId, 't-home', { step: 'the hero' });
 
-    bench.advance(41 * 60_000);
+    // Past the 10 min a piece of work takes before something is usually wrong (Carlos), whatever it was estimated.
+    bench.advance(11 * 60_000);
     const woken = async () => leadItems(await viewRun(lead(), runId)).filter(item => item.key.startsWith('long-task:'));
-    expect((await woken()).map(item => item.key)).toEqual(['long-task:t-home:x2']);
+    expect((await woken()).map(item => item.key)).toEqual(['long-task:t-home:x1']);
     expect((await woken())[0]?.text).toContain('agent-1 last said: "the hero"');
     expect((await woken())[0]?.text).toContain('plitzi task message @agent-1 --standing');
-    bench.advance(20 * 60_000);
-    expect((await woken()).map(item => item.key)).toEqual(['long-task:t-home:x3']);
+    bench.advance(10 * 60_000);
+    expect((await woken()).map(item => item.key)).toEqual(['long-task:t-home:x2']);
 
     const [asked] = await messageTasks(lead(), runId, '@agent-1', '', undefined, true);
     expect(asked).toMatchObject({

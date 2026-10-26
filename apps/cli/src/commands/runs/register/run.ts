@@ -10,6 +10,7 @@ import {
   runPlan,
   runRehearse,
   runLook,
+  runCopy,
   runPreview,
   runBench,
   runReport,
@@ -514,6 +515,16 @@ export const registerRunGroup = (program: Command): Command => {
     .action((run: string | undefined, options: RunCommandOptions & { port?: number; task?: string }) =>
       runPreview(run, options)
     );
+
+  runGroup
+    .command('copy')
+    .description(
+      'The run’s approved work as a folder of yours — your scratch unless named: a spike measures on it, apart'
+    )
+    .argument('[dir]', 'Where, inside the project (your scratch’s run-copy when left out)')
+    .option(...TOKEN_OPTION)
+    .option(...JSON_OPTION)
+    .action((dir: string | undefined, options: RunCommandOptions) => runCopy(dir, options));
 
   runGroup
     .command('report')

@@ -272,3 +272,17 @@ describe('explain, of a state a class styles and what an element marks its node 
     expect(explainText('dropdown')).toContain('openDropdown');
   });
 });
+
+// encore-10: `plitzi explain unauthorizedRedirect` found nothing, and the rule a page's field names went unread.
+describe('a page’s field, explained', () => {
+  it('says it is a page’s, where its meaning is written, and where more of it is', () => {
+    const [field] = explain('unauthorizedRedirect');
+    expect(field).toEqual({
+      kind: 'pageField',
+      name: 'unauthorizedRedirect',
+      see: expect.stringContaining('reference/auth.md') as unknown
+    });
+    expect(explanationText(field)).toContain('a field of a page (PageSpec)');
+    expect(explain('seoTitle')).toEqual([{ kind: 'pageField', name: 'seoTitle' }]);
+  });
+});

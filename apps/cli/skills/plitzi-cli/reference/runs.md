@@ -67,11 +67,14 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
   before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage. What the lead
   says to you arrives with your next heartbeat, progress or completion — read it (`task inbox --all`: all again).
 - **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"` (at a review too), every 2 minutes in a
-  long think. **The lead asks where you stand** (a task past its estimate): answer at once: `plitzi task tell --standing
+  long think. **The lead asks where you stand** (past the 10 minutes a piece of work takes): answer at once: `plitzi task tell --standing
   --fraction 0.6 --eta 15 --done "…" --left "…" [--blocked "…"]`.
 - **A spike** is a scout's (the lead's with none), its result the lead's to approve: what is built is decided by what
   it finds — your brief has what was found for your task. Your work needs something found out first: `plitzi task spike
   "what"` — blocked on the lead, its files yours; its answer comes back with the task (`task next`); take another meanwhile.
+- **Your specs, never the suite**: a check of yours runs the specs of what you change (`npx playwright test
+  visual/rooms.spec.ts`), never a whole suite — one holds the machine, and the CLI queues the next behind it; the finish
+  runs it whole. **A bug you meet outside your task** is the lead's to make a task of (`task tell`), never yours to grow.
 - **Blocked by something outside the plan** (a key, a decision): `plitzi task block --reason "…"` (the lead's:
   only it talks to the person), then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks
@@ -101,20 +104,20 @@ out (what was built on it waits again), and `plitzi run restore <run> <file>` pu
 
 ## Exit codes
 
-| Code         | Refused                                   | Do                                                                                      |
-| ------------ | ----------------------------------------- | --------------------------------------------------------------------------------------- |
-| 10           | `claimed` — another task's file           | wait, request it, or take another task                                                  |
-| 11           | `waiting` — queued for a file             | go on with what does not need it                                                        |
-| 12           | `reassigned` — no longer yours            | stop working on it                                                                      |
-| 13           | `version-mismatch`                        | Plitzi upgraded: keep your work, `task next` waits for a person's `run attach` |
-| 14 / 15      | `stopping` / `forced-stop`                | finish the task in hand / stop writing; `task next` waits                      |
-| 16           | `reconciliation`                          | the lead resolves it                                                                    |
-| 17           | `person-only`                             | ask the person to run it in their terminal                                              |
-| 18           | `conflict`                                | the lead decides; or `task discard` and redo on the run's version                       |
-| 19           | `checks-failed`                           | fix what it names, complete again                                                       |
-| 23 / 24      | `another-run` / `agent-limit`             | one run at a time / hand back to the lead                                               |
-| 20 / 21 / 22 | `invalid` / `not-found` / `other-machine` | read the message                                                                        |
-| 25           | `lead-only`                               | it is `lead`'s: tell it, and go on with your part                                       |
-| 26           | `identity`                                | run your own `plitzi`, never another's token                                            |
+| Code | Refused | Do |
+| --- | --- | --- |
+| 10 | `claimed` — another task's file | wait, request it, or take another task |
+| 11 | `waiting` — queued for a file | go on with what does not need it |
+| 12 | `reassigned` — no longer yours | stop working on it |
+| 13 | `version-mismatch` | Plitzi upgraded: keep your work, `task next` waits for a person's `run attach` |
+| 14 / 15 | `stopping` / `forced-stop` | finish the task in hand / stop writing; `task next` waits |
+| 16 | `reconciliation` | the lead resolves it |
+| 17 | `person-only` | ask the person to run it in their terminal |
+| 18 | `conflict` | the lead decides; or `task discard` and redo on the run's version |
+| 19 | `checks-failed` | fix what it names, complete again |
+| 23 / 24 | `another-run` / `agent-limit` | one run at a time / hand back to the lead |
+| 20 / 21 / 22 | `invalid` / `not-found` / `other-machine` | read the message |
+| 25 | `lead-only` | it is `lead`'s: tell it, and go on with your part |
+| 26 | `identity` | run your own `plitzi`, never another's token |
 
 Any hook or editor can ask before writing: `plitzi run can-write <file>` (exit 10 with the holder).

@@ -11,7 +11,7 @@ import { createExclusive, exists, fingerprint, readOptional, writeAtomic, writeJ
 import { handOver } from '../handOver';
 import { crossed, longFilesIn, longFileText } from '../longFiles';
 import { mergeLines } from '../merge3';
-import { LEAD } from '../messages';
+import { LEAD, unreadForHolder } from '../messages';
 import { entryOf } from '../model';
 import { lockFile, NOT_TASK_DIRS, taskPaths, under } from '../paths';
 import { RunRefusal } from '../refusal';
@@ -32,6 +32,7 @@ import {
 import { checkedStill, checkKey } from './checked';
 import { at, changedInCopy, cleanPath, findTask, holderOf, refreshCopy } from './common';
 import { textOf } from './context';
+import { keepAlive } from './keepAlive';
 import { activeHolder, allLocks, sharedFiles, untakenNow } from './locks';
 import { againstRunWork, tellUnanswered } from './notOwn';
 import { othersHeld } from './othersHeld';
@@ -219,6 +220,18 @@ export const completeTask = async (
     );
   }
 
+  // What the lead said to it, unread, comes before a review: a run's dev-1 completed 30 s after a send-back, the lead's
+  // word on its scope unread, and the round answered none of it. Handed over here, read: the next complete goes on.
+  const fromLead = (await unreadForHolder(loaded, taskId, ctx.agent, false)).filter(message => message.from === LEAD);
+  if (fromLead.length > 0) {
+    await unreadForHolder(loaded, taskId, ctx.agent, true);
+    throw new RunRefusal(
+      'invalid',
+      `The lead told ${taskId} what was not read yet — do what it asks, then complete again: ${fromLead.map(message => `${message.id}: ${message.text}`).join(' · ')}`,
+      { task: taskId, messages: fromLead.map(message => message.id), next: `plitzi task complete ${taskId}` }
+    );
+  }
+
   // Checked against the run as it is now: what was approved since the copy was made, and the task left alone, comes in.
   const brought = await refreshCopy(ctx, loaded, view);
   const started = await readStart(view.paths);
@@ -340,7 +353,8 @@ export const completeTask = async (
   // The copy served for the acceptance while the project's checks run; let go whatever ends them (a refusal too).
   const where = { work: view.paths.work, root: ctx.root, cache: view.paths.cache };
   const serving = kept ? undefined : serveForAcceptance(task.acceptance, where);
-  const { checks, failing, preexisting, accepted, others } = await (async () => {
+  // Its sign of life given while the checks run: the agent inside `complete` can give none.
+  const { checks, failing, preexisting, accepted, others } = await keepAlive(view, ctx.now, async () => {
     const checks = kept?.checks ?? (await ctx.checks(view.paths.work, ctx.root));
     const failing = checks.steps.filter(step => !step.ok);
     // What fails in the copy may not be the task's: a person's edit in the project, or another task's approved work, that
@@ -416,7 +430,7 @@ export const completeTask = async (
         : [];
 
     return { checks, failing, preexisting, accepted, others };
-  })().finally(() => letGo(serving));
+  }).finally(() => letGo(serving));
   const unmet = accepted.filter(result => !result.ok);
   // A line nothing could answer is the lead's, told: the brake is for the work, and the agent is told it is not its.
   const unread = await tellUnanswered(ctx, loaded, taskId, unmet);

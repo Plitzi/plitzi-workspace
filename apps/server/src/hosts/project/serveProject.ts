@@ -14,12 +14,13 @@ import {
   FUNCTIONS_DIR,
   JOBS_FILE,
   KV_FILE,
-  KV_FILE_ENV,
+  PROJECT_STATE,
   PROJECT_TMP,
   PUBLIC_DIR,
   RUNTIME_BUNDLE,
   RUNTIME_ENTRY,
   SERVER_RECORD_ENV,
+  STATE_DIR_ENV,
   projectMark,
   projectModule,
   projectRoot
@@ -391,15 +392,19 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
   // naming this one, rather than both writing over each other's changes. A worker reaches it through the primary.
   // How to stop it is in the name: a run's agent started its own beside the one a page check kept, and stopped short.
   const holder = `the server of "${name}", on port ${String(port)} (plitzi server stop --port ${String(port)} stops it)`;
+  // Only what the project names no store for: a project with a sqlite `kv` still held `state/kv.json`, and a second
+  // server in its folder was refused for a file neither used.
   let keptKv: FileKv | undefined;
-  const kvFile = path.resolve(root, process.env[KV_FILE_ENV] || KV_FILE);
-  const kv = fleetKv(() => {
-    keptKv = createFileKv({ file: kvFile, owner: holder });
+  const stateDir = path.resolve(root, process.env[STATE_DIR_ENV] || PROJECT_STATE);
+  const kv =
+    serverOptions.action?.kv ??
+    fleetKv(() => {
+      keptKv = createFileKv({ file: path.join(stateDir, path.basename(KV_FILE)), owner: holder });
 
-    return keptKv;
-  });
+      return keptKv;
+    });
   // What `ctx.later`, the schedules and the functions' jobs wait in, beside the `kv` and held the same way: a job due
-  // while the server was down runs once it is back (`state/jobs.json`; with the visual suite's own `kv`, beside it). A
+  // while the server was down runs once it is back (`state/jobs.json`; the visual suite's in its own state). A
   // deployment that keeps it elsewhere says so (`action.jobs.queue`: `createSqliteJobQueue`, a database's).
   let keptJobs: FileJobQueue | undefined;
   const jobsConfig = serverOptions.action?.jobs;
@@ -412,7 +417,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
             jobsConfig?.queue ??
             fleetJobQueue(() => {
               keptJobs = createFileJobQueue({
-                file: path.join(path.dirname(kvFile), path.basename(JOBS_FILE)),
+                file: path.join(stateDir, path.basename(JOBS_FILE)),
                 owner: holder
               });
 

@@ -8,7 +8,7 @@ import { ensureKeeper, keepAgents } from '../../runs/keeper';
 import { waitForLead } from '../../runs/leadWatch';
 import { showVersion } from '../../runs/merge';
 import { LEAD } from '../../runs/messages';
-import { startPreview, startTaskPreview } from '../../runs/preview';
+import { copyRunWork, startPreview, startTaskPreview } from '../../runs/preview';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { buildReport, readSummary, reportBrief, reportText, writeSummary } from '../../runs/report';
 import { activeRuns, loadRun, pruneRuns } from '../../runs/run';
@@ -250,3 +250,12 @@ export const runKeep = async (runId: string | undefined, options: RunCommandOpti
   const ctx = await contextFor(options);
   await keepAgents(ctx, await runOf(ctx, options, runId));
 };
+
+/** `plitzi run copy [dir]`: the run's approved work as a folder — a spike's measurements made on it, apart from the project. */
+export const runCopy = (dir: string | undefined, options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => copyRunWork(ctx, await runOf(ctx, options), dir),
+    copied =>
+      `The run's approved work (${String(copied.files)} file(s) of it) is at ${copied.dir}, made afresh — its state its own, empty. Serve it there on a port of its own: cd ${copied.dir} && PORT=<port> npm start — or run its specs there.`
+  );

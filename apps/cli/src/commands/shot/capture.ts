@@ -27,6 +27,8 @@ export const byNameOrId = (name: string): string => [namedBy(name), ...idOf(name
 
 /** A section as a comparison's report names it: its tag, and its id or its element's name. */
 const REGION = /^([a-z][a-z0-9]*)#([\w-]+)(?::(\d+))?$/;
+/** `room-card-name:last`, `room-card-name:2`: one row's element of a list, where a bare name is the first row's. */
+const ROW = /^([A-Za-z_][\w-]*):(last|\d+)$/;
 
 /**
  * A reading of the page, once more when the page navigated under it: a project served with its watch reloads the page
@@ -104,6 +106,15 @@ export const targetOn = async (
       return (await found(asWritten))
         ? { selector: asWritten, found: true }
         : { selector: named, found: await found(named) };
+    }
+
+    // A run's designer could not read the card its step added to a list: only the first row's was read.
+    const row = ROW.exec(target);
+    if (row) {
+      const [, name, place] = row;
+      const selector = `${namedBy(name)} >> nth=${place === 'last' ? '-1' : String(Number(place) - 1)}`;
+
+      return { selector, found: await found(selector) };
     }
 
     if (!BARE.test(target)) {

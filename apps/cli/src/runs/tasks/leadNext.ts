@@ -72,7 +72,8 @@ export const spikeFor = (
     question: next.state.blockedBy?.spike ?? next.task.spike ?? 'what it needs',
     findings: next.state.findings?.length ?? 0,
     ...(next.state.status === 'blocked' ? { blocking: true as const } : {}),
-    ...(asked !== undefined && next.state.spikedBy?.by === agent ? { asked } : {})
+    ...(asked !== undefined && next.state.spikedBy?.by === agent ? { asked } : {}),
+    ...(loaded.plan.reference === undefined ? {} : { reference: loaded.plan.reference })
   };
 };
 

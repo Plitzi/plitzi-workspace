@@ -27,7 +27,8 @@ What a project gives you, so you use it rather than rebuild it:
 | `typecheck`, `lint`, `test`, `format` | before calling a change done — `test`: the modules' own `*.test.ts` (`node --test`) |
 
 `npx plitzi page play /path --steps "…" --read <el>`: `shot`'s steps, and after each how far each element moved, what
-it shows, whether it takes a press. `check` and `shot` take `--timezone <IANA>` (`America/Mexico_City`): the page as a visitor there sees its hours.
+it shows, whether it takes a press — where a step took the page (`→ <path>`), what an action answered (`←`), a list's
+row by `<el>:2` or `<el>:last`. An action runs once, at the first `--width`; a public page plays signed out (`--as`). `check` and `shot` take `--timezone <IANA>` (`America/Mexico_City`): the page as a visitor there sees its hours.
 
 **Which port.** `start` takes 8080, or the next free one — printed, and written to `tmp/dev-server.json` for `check`,
 `shot` and `verify`, with the scheme it answers on (`https` once it serves a certificate; the local one is accepted on

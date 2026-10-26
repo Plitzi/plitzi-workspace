@@ -46,7 +46,10 @@ export const registerPage = (pageGroup: Command): void => {
       '--themes',
       'Also each page in light and in dark: a ground the same in both under a text whose colour follows the theme — one scheme reads it on the wrong ground'
     )
-    .option('--state', 'Also what the page holds: its state, and every source by name')
+    .option(
+      '--state [names]',
+      'Also what the page holds: its state, and every source by name — or only those named (--state siteUnread,draft)'
+    )
     .option(
       '--element <id>',
       'Also an element: what it reads, what it shows, its own state, whether it is on screen — once for each element',
@@ -216,7 +219,7 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .option(
       '--read <element...>',
-      'The elements read after each step, by spaces or commas — "row => .slides" with --compare'
+      'The elements read after each step, by spaces or commas — "row => .slides" with --compare; a list\'s row by :2 or :last (card-name:last)'
     )
     .option('--compare <url>', 'Another page — the site a copy is made after — played beside it, step for step')
     .addOption(

@@ -8,6 +8,7 @@ import { liveAttention } from './findings/live';
 import { readHistory } from './history';
 import { identifiedAgents } from './identity';
 import { leadReviews, spareReviewers } from './leads';
+import { workLimitOf } from './limits';
 import { LEAD, messagesOf, standingText, unreadFor } from './messages';
 import { agentsNeeded } from './onDemand';
 import { under } from './paths';
@@ -435,8 +436,9 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       });
     }
 
-    // Any task at work — a spike being found out too — past twice its estimate wakes the lead to ask where it stands,
-    // and again at each estimate more: it decides on the answer (Carlos). Its agent's last word, said with it.
+    // Any piece at work — a task, a spike — past its limit (`workLimitOf`: 10 min, the scope 30) wakes the lead to ask
+    // where it stands, and again at each limit more: past it something is usually wrong, and the lead decides on the
+    // answer (Carlos). Its agent's last word, said with it.
     const finding =
       view.state.status === 'spike' && view.state.spikedBy && view.state.spikedBy.by !== LEAD && !view.state.proposed
         ? view.state.spikedBy
@@ -444,14 +446,15 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     // Its agent at it: one in review, blocked or waiting is not being worked — it holds no one to ask.
     const atIt = finding?.by ?? (isWorked(view.state.status) ? view.owner?.agent : undefined);
     const spent = finding ? minutesBetween(finding.at, now) : line?.spentMinutes;
-    const estimates = spent === undefined ? 0 : Math.floor(spent / Math.max(1, view.task.estimateMinutes));
-    if (atIt !== undefined && spent !== undefined && estimates >= 2) {
+    const limit = workLimitOf(view.task.id);
+    const limits = spent === undefined ? 0 : Math.floor(spent / limit);
+    if (atIt !== undefined && spent !== undefined && limits >= 1) {
       const step = view.progress?.step;
       attention.push({
         kind: 'long-task',
         task: view.task.id,
-        subject: `x${String(estimates)}`,
-        text: `${view.task.id} has taken ${String(spent)} min of an estimated ${String(view.task.estimateMinutes)}${step ? ` — ${atIt} last said: "${glimpse(step)}"` : ''}: ask ${atIt} where it stands — plitzi task message @${atIt} --standing — and decide on its answer`,
+        subject: `x${String(limits)}`,
+        text: `${view.task.id} has taken ${String(spent)} min — past the ${String(limit)} a piece of work takes before something is usually wrong (estimated ${String(view.task.estimateMinutes)})${step ? `; ${atIt} last said: "${glimpse(step)}"` : ''}: ask ${atIt} where it stands — plitzi task message @${atIt} --standing — and decide on its answer: let it go on, narrow it, split it, or take it back`,
         who: 'lead'
       });
     }
