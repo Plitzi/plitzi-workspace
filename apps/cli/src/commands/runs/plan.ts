@@ -42,6 +42,7 @@ import {
   startedAgents,
   TEAM_FILE,
   teamSize,
+  SCOUT,
   teamTakes,
   TESTER
 } from '../../runs/team';
@@ -140,7 +141,7 @@ export const runAllowFinish = (
  * Who to start, from the project's `.plitzi/team.json`: the lead's model, then each agent — its roles, its model, the
  * plan's tasks it takes and the command it takes them with — so a model chosen for designers works only their tasks.
  */
-const startLines = (tasks: readonly RunTask[], team: Team, designReview: boolean): string[] => {
+export const startLines = (tasks: readonly RunTask[], team: Team, designReview: boolean): string[] => {
   const reviews = designReview ? tasks.filter(task => hasDesignReview(task, task.files)) : [];
 
   return [
@@ -156,9 +157,15 @@ const startLines = (tasks: readonly RunTask[], team: Team, designReview: boolean
         )
         .map(task => task.id);
       const reviewing = each.roles.includes(DESIGNER) ? reviews.map(task => task.id) : [];
+      // A tester reviews every task, a scout finds out the spikes: work no task names as its role's.
+      const spikes = tasks.filter(task => task.spike !== undefined && task.files.length === 0).map(task => task.id);
       const work = [
         ...(theirs.length > 0 ? [theirs.join(', ')] : []),
-        ...(reviewing.length > 0 ? [`the UI of ${reviewing.join(', ')}`] : [])
+        ...(reviewing.length > 0 ? [`the UI of ${reviewing.join(', ')}`] : []),
+        ...(each.roles.includes(TESTER) ? ['every task’s review'] : []),
+        ...(each.roles.includes(SCOUT)
+          ? [spikes.length > 0 ? `the spikes ${spikes.join(', ')}` : 'the questions the agents block on']
+          : [])
       ];
 
       // The team that says how its agents start is started by the run: the lead never starts its base by hand.
@@ -308,11 +315,14 @@ export const runRehearse = (file: string, options: PlanOptions & { review?: numb
       // An agent of the team that takes one role is held to it; one of several takes any of them, as a free one.
       const roles = heldRoles(team);
       const reviewMinutes = Math.max(0, Math.round((options.review ?? 5 * 60_000) / 60_000));
+      // The testers review, one task each at a time; with none, the lead alone.
+      const testers = startedAgents(team).filter(each => each.roles.includes(TESTER)).length;
+      const reviewers = testers > 0 ? { by: 'testers' as const, count: testers } : { by: 'lead' as const, count: 1 };
       const { paced } = checked.estimate;
       const atThisPace = paced
         ? rehearse(
             atPace(checked.tasks, paced.ratio),
-            { agents, roles, reviewMinutes },
+            { agents, roles, reviewMinutes, reviewers },
             { ownership, created: checked.created }
           )
         : undefined;
@@ -320,7 +330,11 @@ export const runRehearse = (file: string, options: PlanOptions & { review?: numb
       return {
         runId: checked.runId,
         reviewMinutes,
-        ...rehearse(checked.tasks, { agents, roles, reviewMinutes }, { ownership, created: checked.created }),
+        ...rehearse(
+          checked.tasks,
+          { agents, roles, reviewMinutes, reviewers },
+          { ownership, created: checked.created }
+        ),
         ...(paced && atThisPace ? { paced: { ...paced, wallMinutes: atThisPace.wallMinutes } } : {})
       };
     },

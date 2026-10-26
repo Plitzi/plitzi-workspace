@@ -1,5 +1,6 @@
 import { commandAs } from './identity';
 import { testerReviews } from './leads';
+import { isResearch } from './spike';
 import { DESIGNER, SCOUT, TESTER } from './team';
 import { TASKS_PER_AGENT } from './teamNotices';
 import { isWorked } from './worked';
@@ -77,19 +78,27 @@ const busyIn = (view: TaskView): string[] => [
   ...(view.state.status === 'in-review' && view.state.reviewer?.round === view.state.round
     ? [view.state.reviewer.by]
     : []),
-  ...(view.state.status === 'spike' && view.state.spikedBy ? [view.state.spikedBy.by] : [])
+  ...(toFind(view) && view.state.spikedBy ? [view.state.spikedBy.by] : [])
 ];
 
-/** A review a tester takes that nobody took this round: its UI said, and not escalated to the lead. */
-const untakenReview = (view: TaskView): boolean =>
+/**
+ * A spike still to find out: a research task, or a task at work blocked on a question — a scout's. One whose result
+ * waits for the lead's approval is the lead's now: its scout holds nothing.
+ */
+const toFind = (view: TaskView): boolean =>
+  view.state.proposed === undefined &&
+  ((view.state.status === 'spike' && isResearch(view.task)) ||
+    (view.state.status === 'blocked' && view.state.blockedBy?.spike !== undefined));
+
+/**
+ * A review a tester takes that nobody took this round, not escalated to the lead: its UI said — or waiting for a designer
+ * none is free for, which the tester reviews too.
+ */
+const untakenReview = (view: TaskView, noDesignerFree: boolean): boolean =>
   view.state.status === 'in-review' &&
-  view.state.design?.status !== 'due' &&
+  (view.state.design?.status !== 'due' || (noDesignerFree && view.state.design.by === undefined)) &&
   testerReviews(view.task) &&
   (view.state.reviewer === undefined || view.state.reviewer.round !== view.state.round);
-
-/** A spike nobody is finding out yet: a scout's — and one whose proposal waits for the lead is not. */
-const untakenSpike = (view: TaskView): boolean =>
-  view.state.status === 'spike' && view.state.spikedBy === undefined && view.state.proposed === undefined;
 
 /**
  * What waits for each role with no running agent of it free to take it — and, of the agents on demand not running, the
@@ -118,6 +127,9 @@ export const agentsNeeded = (
     `plitzi run agent ${agent} --launch${run.launches === true ? '' : ' --harness <yours>'}`;
   const busy = new Set(views.flatMap(busyIn));
   const roles = [...new Set(started.flatMap(each => each.roles))];
+  // Every designer at work, or none in the team: a UI review waits for nobody — the tester takes it, as `task next`
+  // offers it (`noDesignerFreeIn`). A designer not running is started for it instead.
+  const noDesignerFree = started.filter(each => each.roles.includes(DESIGNER)).every(each => busy.has(each.agent));
   const asked = new Set<string>();
   // A task sent back waits for its own agent alone, and nobody else takes it: one not running is asked for by name — an
   // agent stops between two pieces of work for a fresh context (`SessionMode`), before its review says.
@@ -133,6 +145,27 @@ export const agentsNeeded = (
       sentBack.set(owner, [...(sentBack.get(owner) ?? []), view.task.id]);
     }
   }
+
+  // A spike its scout holds — sent back by the lead — waits for that scout, as a task for its agent: one not running is
+  // asked for by name.
+  const heldSpikes = new Map<string, string[]>();
+  for (const view of views) {
+    const holder = view.state.spikedBy?.by;
+    if (holder && toFind(view) && !running.has(holder) && started.some(each => each.agent === holder)) {
+      heldSpikes.set(holder, [...(heldSpikes.get(holder) ?? []), view.task.id]);
+    }
+  }
+
+  const backToScout = [...heldSpikes].map(([agent, spikes]): Attention => {
+    asked.add(agent);
+
+    return {
+      kind: 'agents-needed' as const,
+      agent,
+      text: `${spikes.join(', ')} ${spikes.length === 1 ? 'waits' : 'wait'} for ${agent}, which holds ${spikes.length === 1 ? 'it' : 'them'} and is not running: start it again — ${launch(agent)} (its prompt alone: plitzi run agent ${agent}) — it takes ${spikes.length === 1 ? 'it' : 'them'} first`,
+      who: 'lead' as const
+    };
+  });
 
   const backTo = [...sentBack].map(([agent, tasks]): Attention => {
     asked.add(agent);
@@ -174,10 +207,12 @@ export const agentsNeeded = (
               .map(view => `the UI of ${view.task.id}`)
           : role === TESTER
             ? views
-                .filter(view => untakenReview(view) && freeOf(view.owner?.agent).length === 0)
+                .filter(view => untakenReview(view, noDesignerFree) && freeOf(view.owner?.agent).length === 0)
                 .map(view => `the review of ${view.task.id}`)
             : role === SCOUT && freeOf().length === 0
-              ? views.filter(untakenSpike).map(view => `the spike ${view.task.id}`)
+              ? views
+                  .filter(view => toFind(view) && view.state.spikedBy === undefined)
+                  .map(view => `the spike ${view.task.id}`)
               : [];
       const waiting = [...(freeOf().length === 0 ? ready : []), ...reviews];
       // The team's order: one that starts with the run first, then those on demand — never dev-2 while dev-1 is not running.
@@ -260,7 +295,7 @@ export const agentsNeeded = (
           }))
       : [];
 
-  return [...backTo, ...byRole, ...base];
+  return [...backTo, ...backToScout, ...byRole, ...base];
 };
 
 /**

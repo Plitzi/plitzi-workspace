@@ -32,8 +32,11 @@ export const markJoined = async (ctx: RunContext, loaded: LoadedRun): Promise<vo
   });
 };
 
-/** What ends a piece of an agent's work, in the run's log: a task completed, a review decided. */
-const PIECE_ENDS = new Set(['complete', 'review', 'design-review']);
+/**
+ * What ends a piece of an agent's work, in the run's log: a task completed, a review decided or escalated, what a spike
+ * found handed to the lead.
+ */
+const PIECE_ENDS = new Set(['complete', 'review', 'design-review', 'review-escalated', 'spike-proposed']);
 
 /**
  * Whether the caller, between two pieces of work, stops to be started again with a fresh context (`SessionMode`), and
@@ -75,6 +78,7 @@ export const freshStart = async (
   }
 
   const own = views.filter(view => view.owner?.agent === ctx.agent && isWorked(view.state.status));
+  // A spike the lead sent back to its scout is a piece again (`inAPiece`), its research in that context.
   if (
     ended.action === 'complete' &&
     own.some(view => view.task.id === task && view.state.status === 'changes-requested')
@@ -85,7 +89,11 @@ export const freshStart = async (
   const piece =
     ended.action === 'complete'
       ? `${task ?? 'your task'} is complete`
-      : `your review of ${task ?? 'a task'} is decided`;
+      : ended.action === 'spike-proposed'
+        ? `what you found on ${task ?? 'a spike'} is with the lead`
+        : ended.action === 'review-escalated'
+          ? `your review of ${task ?? 'a task'} is with the lead`
+          : `your review of ${task ?? 'a task'} is decided`;
   const next =
     own.length > 0
       ? `${own.map(view => view.task.id).join(', ')}, which you hold, and what comes next`
@@ -129,7 +137,11 @@ export const inAPiece = (agent: string, views: readonly TaskView[]): boolean =>
 
     return (
       (state.status === 'in-review' && state.reviewer?.by === agent && state.reviewer.round === state.round) ||
-      (state.design?.status === 'due' && state.design.by === agent)
+      (state.design?.status === 'due' && state.design.by === agent) ||
+      // A spike it is finding out, its result not handed to the lead yet.
+      (state.spikedBy?.by === agent &&
+        state.proposed === undefined &&
+        (state.status === 'spike' || (state.status === 'blocked' && state.blockedBy?.spike !== undefined)))
     );
   });
 

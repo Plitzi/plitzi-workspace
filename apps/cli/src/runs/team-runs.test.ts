@@ -320,7 +320,7 @@ describe('a task held behind one in review', () => {
         task: 't-book',
         // dev-2 never joined: a member of the team nobody started is not free ("design-2 is free", unstarted).
         text: expect.stringMatching(
-          /t-book waits for t-menu \(.* review\) while dev-1 is free: they share no file/
+          /t-book waits for t-menu \((.* )?review\) while dev-1 is free: they share no file/
         ) as unknown
       })
     );

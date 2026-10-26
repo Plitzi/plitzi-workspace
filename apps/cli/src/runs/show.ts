@@ -149,7 +149,7 @@ const nextFor = (task: RunTask, status: TaskStatus, design?: DesignReview): stri
       return [
         ...(design?.status === 'due'
           ? [
-              `# its UI waits for ${design.by ?? 'a designer'}'s review: the lead approves after it, or now with plitzi task review ${task.id} --approve --skip-design reviewer`
+              `# its UI waits for ${design.by ?? 'a designer'}'s review: its reviewer approves after it, or now with plitzi task review ${task.id} --approve --skip-design reviewer`
             ]
           : []),
         `plitzi task look ${task.id}   # its pages as it went to review: checked at 1440 and 390, pictured light and dark`,

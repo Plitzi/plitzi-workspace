@@ -84,9 +84,6 @@ export const FIRST_REVIEW_READING_MS = 7 * 60_000;
 export const reviewTimeOf = (design: Pick<DesignReview, 'first'> | undefined): number =>
   REVIEW_TIMEOUT_MS + (design?.first === true ? FIRST_REVIEW_READING_MS : 0);
 
-/** How long a UI review due waits untaken before the lead is told to review it itself. */
-export const REVIEW_QUEUE_MS = 5 * 60_000;
-
 /** The minutes a taken review is past its time, if it is: none while it is in time, or untaken. */
 export const timedOut = (design: DesignReview | undefined, now: number): number | undefined => {
   if (design?.status !== 'due' || design.by === undefined || design.at === undefined) {
@@ -129,7 +126,7 @@ export const assertDesigner = (view: TaskView, agent: string): void => {
   if (workedBy(view, agent)) {
     throw new RunRefusal(
       'invalid',
-      `${agent} worked ${taskId}: its UI is reviewed by another designer, or the lead approves it without that review, as itself (plitzi task review ${taskId} --approve --skip-design reviewer)`,
+      `${agent} worked ${taskId}: its UI is reviewed by another designer, or its reviewer approves it without that review, as itself (plitzi task review ${taskId} --approve --skip-design reviewer)`,
       { task: taskId }
     );
   }

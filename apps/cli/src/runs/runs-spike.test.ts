@@ -206,7 +206,9 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     expect((await refusal(unblockTask(lead(), 'es-launch', 't-home'))).message).toContain(
       'lift it with what you found'
     );
-    expect((await refusal(answerSpike(lead(), 'es-launch', 't-home', 'x'))).message).toContain('not a spike');
+    expect((await refusal(answerSpike(lead(), 'es-launch', 't-home', 'x'))).message).toContain(
+      'plitzi task unblock t-home --answer'
+    );
 
     expect(await unblockTask(lead(), 'es-launch', 't-home', '"¡Bienvenidos!", in the hero')).toMatchObject({
       status: 'in-progress'
@@ -240,9 +242,10 @@ describe('a spike: finding out, in the run, a lead’s', () => {
       status: 'working',
       task: 's-survey'
     });
-    // Findings alone, no tasks: done at once, the lead told.
+    // Findings alone, no tasks: proposed to the lead too, who approves every spike.
     expect(await answerSpike(bench.agent('scout-1'), 'es-launch', 's-survey', 'A team grid')).toMatchObject({
-      status: 'done'
+      status: 'spike',
+      proposed: []
     });
   });
 

@@ -6,14 +6,14 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
 
 ## The lead
 
-**You manage; the agents read.** Never started again, you read again every turn whatever you read once — a run's lead
-spent 68% of it. The spikes are a scout's, the reviews a tester's, in fresh contexts: you decide what they bring.
+**You manage; the agents read.** Never started again, you read again every turn whatever you read once (a lead spent
+68% of a run). The spikes are a scout's, the reviews a tester's, in fresh contexts: you decide what they bring.
 
 0. **Inventory what the job asks, before a line of the plan.** Built after something — a site, a design, a brief —
    list every page, section and piece a visitor would miss (a logo, what moves, a control, a size) as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
 "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
-   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `page shot --compare`, naming sections no piece covers. **Research is a spike** (no files), a scout's. **The run opens on its scope** (`run start`): the scout finds out and proposes the tasks, each with what it found (`"findings"`); `task next --role lead` hands them to you — decide them with the person, then `task spike s-scope --approve | --changes "…"` (`run extend <stage> --dry-run` reads them as they would stack). An agent's `task spike` the scout answers. With no scout, the spikes are yours: `task spike s-scope --done "…" --tasks <stage.json>`, `task unblock --answer`. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
+   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `page shot --compare`, naming sections no piece covers. **Research is a spike** (no files), a scout's; **you approve every spike's result**, and only you add or take out tasks. **The run opens on its scope** (`run start`): the scout proposes the tasks, each with its `"findings"`; `task next --role lead` hands them to you — decide them with the person: `task spike s-scope --approve | --changes "…"` (`run extend <stage> --dry-run` reads them). An agent's `task spike` the scout answers; your approval lifts its block. With no scout, the spikes are yours: `task spike s-scope --done "…" --tasks <stage.json>`, `task unblock --answer`. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview [unit]` — who owns which file. A page owns the modules only it imports;
    what two pages import (tokens, classes, a layout, a component) is **shared**, as is every entry. `space impact
@@ -99,8 +99,8 @@ task message t-home "…" --reply-to m3`; `all` or `@dev-1` in place of the task
    removed; more work is a stage, `plitzi
 run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — chase
    or decide a review that drags, settle a last cosmetic round yourself, amend away a dependency it does not need.
-   **Nothing waits for you?** Wait (`run watch`): writing a task yourself fills the context every later turn reads.
-6. **Decide what reaches you**, reading only that: `task show <task>` for an escalation, the proposed stage for a spike.
+   **Nothing waits for you?** Wait (`run watch`): a task you write fills every later turn.
+6. **Decide what reaches you**, reading only that: an escalation's `task show`, a spike's proposal.
 7. **A change after approval** puts the finish into
    **reconciliation**: `plitzi run resolve <run> <file> --take …`, then `plitzi run resolve <run>` (no file) goes on.
    **The brake** stops a run whose completions keep failing; `run resume`. **Plitzi upgraded mid-run**

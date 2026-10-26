@@ -1,6 +1,7 @@
-import { REVIEW_QUEUE_MS, reviewTimeOf } from './design';
+import { reviewTimeOf } from './design';
 import { LEAD } from './messages';
-import { DESIGNER, DEVELOPER } from './team';
+import { REVIEW_QUEUE_MS } from './reviewQueue';
+import { DESIGNER, DEVELOPER, SCOUT, TESTER } from './team';
 import { isWorked } from './worked';
 
 import type { TaskView } from './taskStore';
@@ -12,7 +13,7 @@ const heldIn = (view: TaskView): string | undefined =>
   view.state.status === 'in-review'
     ? view.state.design?.status === 'due'
       ? 'UI review'
-      : 'lead review'
+      : 'review'
     : view.state.status === 'changes-requested'
       ? `sent back, round ${String(view.state.round)}`
       : view.state.status === 'blocked'
@@ -31,6 +32,9 @@ export const bottlenecks = (
   backlog: readonly string[] = []
 ): Attention[] => {
   const found: Attention[] = [];
+  // Who reviews and who finds out: the team's testers and scouts — the lead, manager, only when it has none.
+  const testers = started.some(each => each.roles.includes(TESTER));
+  const scouts = started.some(each => each.roles.includes(SCOUT));
   const byId = new Map(views.map(view => [view.task.id, view] as const));
   const approvedIds = new Set(views.filter(view => view.state.status === 'done').map(view => view.task.id));
   // UI reviews nobody takes: every designer is at a task of its own — the lead's, or they wait for nobody.
@@ -45,7 +49,8 @@ export const bottlenecks = (
   const queued = uiWaiting.filter(
     view => now.getTime() - Date.parse(view.state.design?.since ?? view.state.updatedAt) >= REVIEW_QUEUE_MS
   );
-  if (queued.length > 0) {
+  // With testers, a UI review queued past its time is a tester's to take with the task (`uiQueued`): nothing for the lead.
+  if (queued.length > 0 && !testers) {
     found.push({
       kind: 'ui-queued',
       text: `${queued.map(view => `${view.task.id} (${String(Math.round((now.getTime() - Date.parse(view.state.design?.since ?? view.state.updatedAt)) / 60_000))} min)`).join(', ')} ${queued.length === 1 ? 'has' : 'have'} waited past ${String(REVIEW_QUEUE_MS / 60_000)} min for a UI review nobody took: review ${queued.length === 1 ? 'it' : 'them'} yourself now, UI included (both schemes, the phone width) — plitzi task look ${queued[0].task.id}, then plitzi task review ${queued[0].task.id} --approve --skip-design reviewer | --changes "…"`,
@@ -53,7 +58,12 @@ export const bottlenecks = (
     });
   }
 
-  if (uiWaiting.length > 0 && designers.length > 0 && designers.every(agent => atOwn(agent) !== undefined)) {
+  if (
+    uiWaiting.length > 0 &&
+    !testers &&
+    designers.length > 0 &&
+    designers.every(agent => atOwn(agent) !== undefined)
+  ) {
     found.push({
       kind: 'ui-waits',
       text: `${uiWaiting.map(view => view.task.id).join(', ')} wait for a UI review, and no designer is free (${designers.map(agent => `${agent} at ${String(atOwn(agent))}`).join(', ')}): start another designer (team.json's designers) — or review them yourself, UI included (both schemes, the phone width): plitzi task next --role lead --no-wait, then plitzi task review <task> --approve --skip-design reviewer`,
@@ -122,21 +132,24 @@ export const bottlenecks = (
     found.push({
       kind: 'slow-review',
       task: view.task.id,
-      text: past
-        ? `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min, past the ${String(time / 60_000)} a review is its reviewer's: ${taken.what === 'UI review' ? 'the next designer free takes it — or ' : ''}decide it yourself now: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design reviewer' : ''} | --changes "…"`
-        : `${taken.by} has had ${view.task.id}'s ${taken.what} ${String(minutes)} min while ${idleAll.join(', ')} ${idleAll.length === 1 ? 'has' : 'have'} nothing to take: ask where it stands and for a decision now (plitzi task message @${taken.by} "…") — or decide it yourself: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design reviewer' : ''} | --changes "…"`,
+      // The lead manages: with testers, it asks — the review stays a tester's, escalated to it if it cannot decide.
+      text: testers
+        ? `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min${past ? `, past the ${String(time / 60_000)} a review takes` : ` while ${idleAll.join(', ')} ${idleAll.length === 1 ? 'has' : 'have'} nothing to take`}: ask where it stands and for its verdict — plitzi task message @${taken.by} "…" — or that it escalates what it cannot decide`
+        : past
+          ? `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min, past the ${String(time / 60_000)} a review is its reviewer's: ${taken.what === 'UI review' ? 'the next designer free takes it — or ' : ''}decide it yourself now: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design reviewer' : ''} | --changes "…"`
+          : `${taken.by} has had ${view.task.id}'s ${taken.what} ${String(minutes)} min while ${idleAll.join(', ')} ${idleAll.length === 1 ? 'has' : 'have'} nothing to take: ask where it stands and for a decision now (plitzi task message @${taken.by} "…") — or decide it yourself: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design reviewer' : ''} | --changes "…"`,
       who: 'lead'
     });
   }
 
   found.push(...idleTeam(views, started, backlog));
 
-  // A spike is a lead's: each one waiting is said, with how to answer it — and, past a few, to start a lead for them.
-  const spikes = views.filter(view => view.state.status === 'spike');
-  if (spikes.length > 0) {
+  // A spike is a scout's, its result the lead's to approve (a proposal, said apart); with no scout the lead finds it out.
+  const spikes = views.filter(view => view.state.status === 'spike' && view.state.proposed === undefined);
+  if (spikes.length > 0 && !scouts) {
     found.push({
       kind: 'spikes',
-      text: `${spikes.map(view => `${view.task.id} (${view.task.spike ?? 'what it needs'})`).join('; ')} ${spikes.length === 1 ? 'is' : 'are'} in spike, a lead's to find out — look, check, measure (beside the site it copies, when it copies one) — then plitzi task spike <spike> --done "what was found" --tasks <stage.json>${spikes.length > 2 ? ' — several: a lead that reviews takes them too (plitzi task next --role lead --agent lead-2)' : ''}`,
+      text: `${spikes.map(view => `${view.task.id} (${view.task.spike ?? 'what it needs'})`).join('; ')} ${spikes.length === 1 ? 'is' : 'are'} in spike, yours to find out (the team has no scout) — look, check, measure (beside the site it copies, when it copies one) — then plitzi task spike <spike> --done "what was found" [--tasks <stage.json>]`,
       who: 'lead'
     });
   }

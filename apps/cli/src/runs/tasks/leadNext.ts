@@ -1,5 +1,6 @@
 import { isPrincipal, leadReviewFor, scoutsOf, testersOf } from '../leads';
 import { RunRefusal } from '../refusal';
+import { uiQueued } from '../reviewQueue';
 import { DESIGNER, readTeam, startedAgents } from '../team';
 import { byUrgency } from '../urgency';
 import { isWorked } from '../worked';
@@ -49,7 +50,11 @@ export const spikeFor = (
     view => view.state.status === 'spike' && view.state.proposed === undefined && free(view)
   );
   const blocking = views.filter(
-    view => view.state.status === 'blocked' && view.state.blockedBy?.spike !== undefined && free(view)
+    view =>
+      view.state.status === 'blocked' &&
+      view.state.blockedBy?.spike !== undefined &&
+      view.state.proposed === undefined &&
+      free(view)
   );
   const mine = (view: TaskView): number => (view.state.spikedBy?.by === agent ? 0 : 1);
   const next = [...research, ...blocking]
@@ -100,7 +105,14 @@ export const leadNext = async (
     const { by, text, tasks } = proposed.state.proposed;
 
     return {
-      proposal: { task: proposed.task, by, text, tasks, stage: proposed.paths.proposedStage },
+      proposal: {
+        task: proposed.task,
+        by,
+        text,
+        tasks,
+        stage: proposed.paths.proposedStage,
+        ...(proposed.state.status === 'blocked' ? { blocking: true as const } : {})
+      },
       ready: [],
       messages
     };
@@ -108,7 +120,7 @@ export const leadNext = async (
 
   if ((await testersOf(ctx.root)).length === 0) {
     const noDesignerFree = await noDesignerFreeIn(ctx, views);
-    const review = leadReviewFor(views, ctx.agent, noDesignerFree);
+    const review = leadReviewFor(views, ctx.agent, view => noDesignerFree || uiQueued(view, ctx.now().getTime()));
     if (review) {
       return {
         leadReview: await reviewOffer(

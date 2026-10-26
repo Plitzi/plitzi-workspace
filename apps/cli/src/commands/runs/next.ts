@@ -134,22 +134,30 @@ const spikeText = (spike: NonNullable<NextTask['spike']>, agent: string): string
       : []),
     '  Compare with the original (page shot <path> --compare <original> --clip <section> --dress), read its computed styles, measure — write nothing of the task’s',
     spike.blocking
-      ? `  ${spike.task.id} is blocked on it, at work: lift its block with what you found — plitzi task unblock ${spike.task.id} --answer "…" (kept as its finding); a change to the work beyond it, tell the lead (plitzi task tell --about ${spike.task.id} "…")`
-      : `  Then say it — the layers, their values, which file gets each — and its result, the tasks it makes, each with its "findings": plitzi task spike ${spike.task.id} --done "…" --tasks <stage.json>${isPrincipal(agent) ? '' : ' — the lead approves them before any is stacked'}`
+      ? isPrincipal(agent)
+        ? `  ${spike.task.id} is blocked on it, at work: lift its block with what you found — plitzi task unblock ${spike.task.id} --answer "…" (kept as its finding)`
+        : `  ${spike.task.id} is blocked on it, at work: say what you found — plitzi task spike ${spike.task.id} --done "…" — the lead approves it, lifting the block; a change to the work beyond it, tell the lead (plitzi task tell --about ${spike.task.id} "…")`
+      : `  Then say it — the layers, their values, which file gets each — and its result, the tasks it makes, each with its "findings": plitzi task spike ${spike.task.id} --done "…" [--tasks <stage.json>]${isPrincipal(agent) ? '' : ' — the lead approves it before anything is applied'}`
   ].join('\n');
 
-/** The tasks a scout proposes, as `task next --role lead` hands them to the lead: decided with the person. */
+/** What a scout found, as `task next --role lead` hands it to the lead: decided — the tasks with the person — and approved. */
 const proposalText = (proposal: NonNullable<NextTask['proposal']>): string =>
   [
     chalk.blue(
       chalk.bold(
-        `${proposal.task.id} — ${proposal.by} proposes ${String(proposal.tasks.length)} task(s): ${proposal.tasks.join(', ')}`
+        proposal.blocking
+          ? `${proposal.task.id} — ${proposal.by} answers the question its agent blocked on`
+          : `${proposal.task.id} — ${proposal.by} found it out${proposal.tasks.length > 0 ? `, and proposes ${String(proposal.tasks.length)} task(s): ${proposal.tasks.join(', ')}` : ''}`
       )
     ),
     `  Found: ${proposal.text}`,
-    `  Read them as they would stack: plitzi run extend ${proposal.stage} --dry-run`,
-    '  Decide them with the person — the scope, what waits, what is left out — then:',
-    `  plitzi task spike ${proposal.task.id} --approve | --changes "what to change" (back to ${proposal.by})`
+    ...(proposal.tasks.length > 0
+      ? [
+          `  Read them as they would stack: plitzi run extend ${proposal.stage} --dry-run`,
+          '  Decide them with the person — the scope, what waits, what is left out — then:'
+        ]
+      : []),
+    `  plitzi task spike ${proposal.task.id} --approve${proposal.blocking ? ' (its block lifted with it)' : ''} | --changes "what to change" (back to ${proposal.by})`
   ].join('\n');
 
 /** A lead's review, as `task next --role lead` hands it: the whole review `lead` would make, by this lead. */
@@ -217,7 +225,7 @@ export const nextText = (next: NextTask, agent: string): string =>
                   String(next.why),
                   ...(next.worked ?? []).map(
                     each =>
-                      `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'with the lead, in review' : each.status}${each.finishedBy ? ` — as ${each.finishedBy} last did it, not your version` : ''}`
+                      `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'in review' : each.status}${each.finishedBy ? ` — as ${each.finishedBy} last did it, not your version` : ''}`
                   ),
                   // A run's dev-1 met four of Plitzi's frictions and said them only in its last words, which the
                   // run's feedback never reads.

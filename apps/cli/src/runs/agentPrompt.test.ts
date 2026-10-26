@@ -61,7 +61,8 @@ describe('an agent’s prompt', () => {
     const scout = agentPrompt({ ...base, agent: 'scout-1', started: { roles: ['scout'] } });
     expect(scout).toContain('runs-scout.md');
     expect(scout).toContain('task spike <spike> --done');
-    expect(scout).toContain('task unblock <task> --answer');
+    expect(scout).toContain('the lead approves it');
+    expect(scout).not.toContain('task unblock');
 
     expect(agentPrompt({ ...base, agent: 'dev-2', started: { roles: ['developer'], quality: 'high' } })).toContain(
       '--quality high'

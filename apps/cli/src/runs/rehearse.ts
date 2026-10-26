@@ -8,7 +8,8 @@ import type { Ownership } from './ownership';
 
 /**
  * `plitzi run rehearse`: a plan played out before any agent starts — every agent taking the best task it may
- * as `task next` would, each task worked for its estimate, the lead reviewing one at a time, what depends on a task ready
+ * as `task next` would, each task worked for its estimate, each reviewer — a tester, or the lead with none — reviewing
+ * one at a time, what depends on a task ready
  * once it is approved. No run is opened and nothing is written: what it answers is the schedule the plan implies — how
  * long, who waits for what, which files several tasks change at once, and how many agents are worth starting.
  */
@@ -17,8 +18,16 @@ export interface RehearsalOptions {
   agents: number;
   /** Agents held to a role, by role: the rest take any task. */
   roles?: Readonly<Record<string, number>>;
-  /** How long the lead takes over one review. */
+  /** How long a review takes. */
   reviewMinutes: number;
+  /** Who reviews: the team's testers, each one review at a time — or, with none, the lead alone. */
+  reviewers?: Reviewers;
+}
+
+/** Who reviews the tasks, and how many at once. */
+export interface Reviewers {
+  by: 'testers' | 'lead';
+  count: number;
 }
 
 export interface RehearsedTask {
@@ -31,7 +40,7 @@ export interface RehearsedTask {
   approved: number;
   /** Ready before it was taken, for want of a free agent of its role. */
   waitedForAgent: number;
-  /** In review before the lead got to it, the lead busy with another. */
+  /** In review before a reviewer got to it, every one busy with another. */
   waitedForReview: number;
 }
 
@@ -69,7 +78,8 @@ export interface Rehearsal {
   unstaffed: string[];
   /** Tasks never reached because what they wait for is never done. */
   stranded: string[];
-  lead: { reviews: number; busyMinutes: number; longestWait: number };
+  /** The reviews: who made them, how many, the minutes they took, and the longest a task waited for one. */
+  reviews: Reviewers & { reviews: number; busyMinutes: number; longestWait: number };
   contention: Contention[];
   /**
    * The whole run's length for each number of agents, from as many as the roles hold to the most worth trying: `null`
@@ -99,7 +109,7 @@ interface Played {
   team: Agent[];
   unstaffed: string[];
   stranded: string[];
-  lead: Rehearsal['lead'];
+  reviews: Rehearsal['reviews'];
   wallMinutes: number;
 }
 
@@ -122,13 +132,14 @@ const play = (tasks: readonly RunTask[], options: RehearsalOptions): Played => {
   const readyAt = new Map<string, number>();
   const taken = new Set<string>();
   const scheduled: RehearsedTask[] = [];
-  // What came in for review, in the order it came, and the one the lead is on.
+  // What came in for review, in the order it came, and those the reviewers are on — one each.
+  const reviewers = options.reviewers ?? { by: 'lead', count: 1 };
   const queue: RehearsedTask[] = [];
-  let reviewing: RehearsedTask | undefined;
+  let reviewing: RehearsedTask[] = [];
   const researching: RehearsedTask[] = [];
   const staffed = (task: RunTask): boolean => team.some(agent => agent.role === ANY || agent.role === roleOf(task));
   const unstaffed = tasks.filter(task => !staffed(task)).map(task => task.id);
-  let leadBusy = 0;
+  let reviewBusy = 0;
   let longestWait = 0;
   let now = 0;
 
@@ -144,12 +155,13 @@ const play = (tasks: readonly RunTask[], options: RehearsalOptions): Played => {
   const settle = (): void => {
     for (let changed = true; changed;) {
       changed = false;
-      if (reviewing && reviewing.approved <= now) {
-        approvedAt.set(reviewing.task, reviewing.approved);
-        reviewing = undefined;
+      for (const done of reviewing.filter(each => each.approved <= now)) {
+        approvedAt.set(done.task, done.approved);
         markReady();
         changed = true;
       }
+
+      reviewing = reviewing.filter(each => each.approved > now);
 
       // Research alone is done by its findings, no review: what waits for it is ready once they are said.
       for (const done of researching.filter(each => each.complete <= now && !approvedAt.has(each.task))) {
@@ -159,14 +171,14 @@ const play = (tasks: readonly RunTask[], options: RehearsalOptions): Played => {
       }
 
       const due = queue.findIndex(task => task.complete <= now);
-      if (!reviewing && due !== -1) {
+      if (reviewing.length < reviewers.count && due !== -1) {
         const next = queue.splice(due, 1).at(0);
         if (next) {
           next.waitedForReview = now - next.complete;
           next.approved = now + options.reviewMinutes;
           longestWait = Math.max(longestWait, next.waitedForReview);
-          leadBusy += options.reviewMinutes;
-          reviewing = next;
+          reviewBusy += options.reviewMinutes;
+          reviewing.push(next);
           changed = true;
         }
       }
@@ -212,7 +224,8 @@ const play = (tasks: readonly RunTask[], options: RehearsalOptions): Played => {
   for (;;) {
     settle();
     const upcoming = [
-      ...(reviewing ? [reviewing.approved] : queue.map(task => task.complete)),
+      ...reviewing.map(task => task.approved),
+      ...queue.map(task => task.complete),
       ...team.map(agent => agent.freeAt)
     ].filter(at => at > now);
     if (upcoming.length === 0) {
@@ -233,7 +246,7 @@ const play = (tasks: readonly RunTask[], options: RehearsalOptions): Played => {
     team,
     unstaffed: unstaffed.sort(),
     stranded,
-    lead: { reviews: scheduled.length, busyMinutes: leadBusy, longestWait },
+    reviews: { ...reviewers, reviews: scheduled.length, busyMinutes: reviewBusy, longestWait },
     wallMinutes
   };
 };
@@ -389,9 +402,9 @@ export const rehearse = (
     );
   }
 
-  if (played.lead.longestWait >= options.reviewMinutes * 2) {
+  if (played.reviews.longestWait >= options.reviewMinutes * 2) {
     advice.push(
-      `Reviews queue up — one waited ${String(played.lead.longestWait)} min for the lead: lighter reviews (executable acceptance), or tasks that finish less at once`
+      `Reviews queue up — one waited ${String(played.reviews.longestWait)} min for ${played.reviews.by === 'lead' ? 'the lead — a tester reviews beside it (plitzi run team set test --roles tester)' : 'a tester — another (plitzi run team set test --count …)'}, lighter reviews (executable acceptance), or tasks that finish less at once`
     );
   }
 
@@ -427,7 +440,7 @@ export const rehearse = (
     team,
     unstaffed: played.unstaffed,
     stranded: played.stranded,
-    lead: played.lead,
+    reviews: played.reviews,
     contention,
     scale,
     advice
@@ -463,7 +476,7 @@ export const rehearsalText = (runId: string, rehearsal: Rehearsal, reviewMinutes
         } — idle ${String(agent.idleMinutes)} min`
     ),
     `Critical path: ${rehearsal.criticalPath.tasks.join(' → ')} (${String(rehearsal.criticalPath.minutes)} min of work)`,
-    `The lead: ${String(rehearsal.lead.reviews)} reviews, ${String(rehearsal.lead.busyMinutes)} min${rehearsal.lead.longestWait > 0 ? `; the longest a task waited for one: ${String(rehearsal.lead.longestWait)} min` : ''}`,
+    `${rehearsal.reviews.by === 'lead' ? 'The lead (no tester in the team)' : `${String(rehearsal.reviews.count)} tester${rehearsal.reviews.count === 1 ? '' : 's'}`}: ${String(rehearsal.reviews.reviews)} reviews, ${String(rehearsal.reviews.busyMinutes)} min${rehearsal.reviews.longestWait > 0 ? `; the longest a task waited for one: ${String(rehearsal.reviews.longestWait)} min` : ''}`,
     ...rehearsal.scheduled
       .filter(task => task.waitedForAgent > 0)
       .map(

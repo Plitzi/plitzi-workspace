@@ -1,8 +1,10 @@
 import { LEAD } from './messages';
 import { RunRefusal } from './refusal';
-import { updateState } from './taskStore';
-import { readTeam, SCOUT, startedAgents, TESTER } from './team';
+import { uiQueued } from './reviewQueue';
+import { updateState, viewTask } from './taskStore';
+import { DESIGNER, readTeam, SCOUT, startedAgents, TESTER } from './team';
 import { byUrgency } from './urgency';
+import { isWorked } from './worked';
 
 import type { RunTask } from './model';
 import type { LoadedRun, RunContext } from './run/context';
@@ -150,8 +152,11 @@ export const testerReviews = (task: RunTask): boolean => task.spike === undefine
 export const leadReviewFor = (
   views: readonly TaskView[],
   agent: string,
-  /** No designer is free: a UI review no designer took is the lead's too, rather than one that waits for nobody. */
-  uiToo = false
+  /**
+   * Whether a UI review no designer took is this reviewer's too, rather than one that waits for nobody: every one — no
+   * designer free — or those it says (queued past their time).
+   */
+  uiToo: boolean | ((view: TaskView) => boolean) = false
 ): TaskView | undefined => {
   const urgency = byUrgency(views.map(view => view.task));
 
@@ -159,7 +164,8 @@ export const leadReviewFor = (
     .filter(
       view =>
         view.state.status === 'in-review' &&
-        (view.state.design?.status !== 'due' || (uiToo && view.state.design.by === undefined)) &&
+        (view.state.design?.status !== 'due' ||
+          ((uiToo === true || (typeof uiToo === 'function' && uiToo(view))) && view.state.design.by === undefined)) &&
         !workedBy(view, agent) &&
         freeFor(view, agent)
     )
@@ -191,10 +197,23 @@ export const takeOnLook = async (ctx: RunContext, loaded: LoadedRun, view: TaskV
   // A UI review nobody took is the reviewer's once it reads it: a run's lead looked at a task as the watch said to, and
   // its designer took the review meanwhile — the lead's approval was refused.
   if (view.state.design?.status === 'due') {
-    return view.state.design.by === undefined ? takeUiReview(ctx, view) : false;
+    // A tester's look takes it only where it is its: no designer free for it, or queued past its time — a designer free
+    // reviews it as a designer would.
+    const its = ctx.agent === LEAD || uiQueued(view, ctx.now().getTime()) || (await noDesignerFreeAt(ctx, loaded));
+
+    return view.state.design.by === undefined && its ? takeUiReview(ctx, view) : false;
   }
 
   return takeLeadReview(ctx, view);
+};
+
+/** Whether every designer of the team is at a task of its own — or the team has none: a UI review waits for nobody. */
+const noDesignerFreeAt = async (ctx: RunContext, loaded: LoadedRun): Promise<boolean> => {
+  const team = await readTeam(ctx.root).catch(() => undefined);
+  const designers = (team ? startedAgents(team) : []).filter(each => each.roles.includes(DESIGNER));
+  const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
+
+  return designers.every(each => views.some(view => view.owner?.agent === each.agent && isWorked(view.state.status)));
 };
 
 /**

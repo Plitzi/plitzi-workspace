@@ -12,6 +12,7 @@ import { agentScratch, runPaths } from '../paths';
 import { readyTasks } from '../plan';
 import { markPresent } from '../presence';
 import { isRunRefusal } from '../refusal';
+import { uiQueued } from '../reviewQueue';
 import { assertStatus, loadRun, logRun, readRunLog } from '../run';
 import { runChanged } from '../runChanged';
 import { tellLeftInTmp } from '../strays';
@@ -102,8 +103,11 @@ export interface NextTask {
    * it sent the spike's tasks back.
    */
   spike?: { task: RunTask; question: string; findings: number; blocking?: true; asked?: string };
-  /** The lead's: the tasks a scout proposes as a spike's result, to decide with the person (`task spike --approve`). */
-  proposal?: { task: RunTask; by: string; text: string; tasks: string[]; stage: string };
+  /**
+   * The lead's: what a scout found, to decide — with the person, the tasks it makes (`stage`) — and approve (`task spike
+   * --approve`). `blocking`: the answer a task at work waits for, its block lifted once approved.
+   */
+  proposal?: { task: RunTask; by: string; text: string; tasks: string[]; stage: string; blocking?: true };
   /** Why nothing is ready, when nothing is. */
   why?: string;
   ready: string[];
@@ -240,7 +244,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     const review = leadReviewFor(
       views.filter(view => testerReviews(view.task)),
       ctx.agent,
-      noDesignerFree
+      view => noDesignerFree || uiQueued(view, ctx.now().getTime())
     );
     if (review) {
       return {

@@ -741,7 +741,9 @@ an unnamed blob, never a named half-written file.
 
 Research — what the lead reads to know what the work is — is work of the run, seen by the monitor and counted by the
 report: a **spike**. A scout finds it out (`SCOUT`, on the strongest model: every task after it is made of what it
-finds), and the lead decides what it proposes, with the person; with no scout in the team the lead finds it out. A spike is research alone: a task with `"spike": "what to find out"` and no files
+finds). **Every spike's result is the lead's to approve**, because what is found mostly becomes the work the lead
+manages, and adding or taking out tasks (`run extend`, `run amend`) is the lead's alone. With no scout in the team, the
+lead finds it out. A spike is research alone: a task with `"spike": "what to find out"` and no files
 (`run plan` refuses one with files), whose acceptance is in words — a command would run at a `complete` it never reaches.
 
 **A run starts with one: its scope.** As any project does: the lead scopes the person's ask, and the work flows from
@@ -750,8 +752,9 @@ there. `plitzi run open --spike "<the ask>" --run <name>` opens the run on it al
 `page shot --compare <original> --dress`, the original's computed styles, the project — and ends it with its result,
 the tasks: `plitzi task spike s-scope --done "what was found" --tasks <stage.json>`. A scout's stage is proposed: checked as
 `run extend --dry-run` checks it, kept beside the spike (`proposed-stage.json`, `TaskState.proposed`) and handed to the
-lead (`task next --role lead`), who decides it with the person and runs `task spike s-scope --approve`, which stacks it,
-or `--changes "…"`, which sends it back to the scout. The lead's own stage is stacked at once. A stage is stacked as
+lead (`task next --role lead`, and `run watch` as a `proposal`), who decides it with the person and runs
+`task spike s-scope --approve`, which stacks it, or `--changes "…"`, which sends it back to the scout. A primer the stage
+names is kept beside it. Findings alone go to the lead the same way. The lead's own stage is stacked at once. A stage is stacked as
 `run extend` stacks one (refused, it leaves the spike open), and each task carries what was found for it (`"findings"`,
 kept as the run's `TaskState.findings` from its first state, `startingState`): whoever builds it reads it in its brief,
 rather than a spike per task — found out by one, built by another, each read twice.
@@ -764,9 +767,11 @@ scout in the team, `task next --role lead` hands it to the lead. Its findings go
 it (`readyWhatWaited`), no review.
 
 **An agent whose task needs something found out** says so — `task spike "what"`, from its copy — and the task is
-blocked on it (`blockedBy.spike`), its files and token its own; the agent takes other work meanwhile. A scout, handed it
-by `task next`, finds out and lifts the block with the answer, kept as the task's finding (`task unblock <task> --answer
-"…"`; without one it is refused). When the answer changes the work, it tells the lead, who stacks the tasks it makes.
+blocked on it (`blockedBy.spike`), its files and token its own; the agent takes other work meanwhile, and the lead is
+not woken for it. A scout, handed it by `task next` (and started by the keeper for it), proposes the answer with
+`task spike <task> --done "…"`. The lead's `task spike <task> --approve` lifts the block with it, kept as the task's
+finding by the scout (`unblockTask`). A block is the lead's alone to lift. When the answer changes the work, the scout
+tells the lead, who stacks the tasks it makes.
 
 `run rehearse` plays research alone without a review. The monitor gives spikes a column of their own (`◇ spike`) once
 the run has one, with the lead at it, and the dev tools' Run tab a group (Finding out).

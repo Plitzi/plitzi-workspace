@@ -13,9 +13,11 @@ find is said with its evidence, never guessed. The agents' half is [runs.md](run
   --tasks <stage.json>` — a stage as `run extend` takes it (its `tasks`), each task with what you found for it in
   `"findings"` (the values, the files, the reference's sections), its acceptance checkable. It is checked whole and
   goes to the lead, who decides it with the person: nothing is stacked until it approves. Sent back, `task next` hands
-  it to you again with what the lead asked — propose it again with that. Findings alone, no tasks: `--done "…"`.
-- **A question an agent blocked on:** answer it with what you found — `plitzi task unblock <task> --answer "…"` (kept
-  as its finding, its agent going on with it). What changes the work beyond it, tell the lead (`task tell --about`).
+  it to you again with what the lead asked — propose it again with that. Findings alone, no tasks: `--done "…"`, approved
+  by the lead too: **every spike is the lead's to approve**, and adding or taking out tasks the lead's alone.
+- **A question an agent blocked on:** say what you found — `plitzi task spike <task> --done "…"` — and the lead
+  approves it, lifting the block (kept as its finding). What changes the work beyond it, tell the lead (`task tell
+  --about`).
 - **Size the tasks for the team:** one task a piece of work an agent finishes in one sitting, its files its own; what
   two tasks share named as shared; a task that waits for another says it (`dependsOn`). The plan's rules:
   [runs-plan.md](runs-plan.md).

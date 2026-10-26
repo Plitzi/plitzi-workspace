@@ -1,4 +1,7 @@
 import fs from 'node:fs/promises';
+import path from 'node:path';
+
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { extendRun } from '../extend';
 import { requireLead, scoutsOf } from '../leads';
@@ -11,6 +14,7 @@ import { updateState, viewTask } from '../taskStore';
 import { isWorked } from '../worked';
 import { at, findTask, holderOf } from './common';
 import { readyWhatWaited, sayIfAllDone } from './handOn';
+import { unblockTask } from './signals';
 
 import type { TaskStatus } from '../model';
 import type { LoadedRun, RunContext } from '../run';
@@ -25,7 +29,10 @@ export interface Spiked {
   finding?: Finding;
   /** The tasks it made — its result, stacked on the run — by id. */
   added?: string[];
-  /** The tasks it proposes, by id: waiting for the lead's approval (`task spike --approve`), nothing stacked yet. */
+  /**
+   * What a scout proposes, waiting for the lead's approval (`task spike --approve`): the tasks it makes, by id — none
+   * for findings alone, or the answer to an agent's block. Nothing is applied until the lead says.
+   */
   proposed?: string[];
   /** The tasks it left ready: those it made, and those that waited for it. */
   ready?: string[];
@@ -33,11 +40,13 @@ export interface Spiked {
   notices?: string[];
 }
 
+/** The name the primer a proposed stage names is kept under, beside it: the stage reads it from there. */
+const PROPOSED_PRIMER = 'proposed-primer.md';
+
 /**
- * `plitzi task spike "…"`, by the agent at work: its task needs something found out before it goes on — and finding out
- * is a scout's (or, with none in the team, the lead's). The task is blocked on it, saying what, its files and agent its
- * own; whoever finds it out lifts the block with the answer — a finding of the task's — and, when it changes the work,
- * the lead stacks the tasks it makes (`run extend`).
+ * `plitzi task spike "…"`, by the agent at work: its task needs something found out before it goes on — a scout's to find
+ * (or, with none in the team, the lead's), the lead's to approve. The task is blocked on it, saying what, its files and
+ * agent its own; the answer the lead approves lifts the block, a finding of the task's.
  */
 export const startSpike = async (ctx: RunContext, runId: string, taskId: string, question: string): Promise<Spiked> => {
   const loaded = await loadRun(ctx, runId);
@@ -60,48 +69,33 @@ export const startSpike = async (ctx: RunContext, runId: string, taskId: string,
     }),
     ctx.now
   );
-  const scouts = await scoutsOf(ctx.root);
-  await sendMessage(ctx, loaded, {
-    from: taskId,
-    to: LEAD,
-    text:
-      scouts.length > 0
-        ? `${taskId} needs a spike before it goes on: ${question} — a scout (${scouts.join(', ')}) finds it out and lifts its block; you hear what it found`
-        : `${taskId} needs a spike before it goes on: ${question} — find it out and lift its block with what you found: plitzi task unblock ${taskId} --answer "…" (kept as its finding); if it changes the work, stack the tasks it makes: plitzi run extend <stage.json>`,
-    ...(scouts.length > 0 ? { fyi: true } : {})
-  });
+  // With a scout, the question is its own — the lead hears the answer it proposes, never the question first.
+  if ((await scoutsOf(ctx.root)).length === 0) {
+    await sendMessage(ctx, loaded, {
+      from: taskId,
+      to: LEAD,
+      text: `${taskId} needs a spike before it goes on: ${question} — find it out and lift its block with what you found: plitzi task unblock ${taskId} --answer "…" (kept as its finding); if it changes the work, stack the tasks it makes: plitzi run extend <stage.json>`
+    });
+  }
   await logRun(ctx, loaded.paths, { action: 'spike', task: taskId, question });
 
   return { task: taskId, status: 'blocked', question };
 };
 
-/**
- * Who finds a spike out: the scout that took it, or the lead — refused to anyone else, and to a scout another holds.
- */
-const assertFindsOut = async (ctx: RunContext, view: TaskView): Promise<'scout' | 'lead'> => {
-  if ((await scoutsOf(ctx.root)).includes(ctx.agent)) {
-    const holder = view.state.spikedBy?.by;
-    if (holder !== undefined && holder !== ctx.agent) {
-      throw new RunRefusal('claimed', `${holder} finds out ${view.task.id}: it is theirs to say`, {
-        task: view.task.id,
-        holder
-      });
-    }
+/** A spike to find out: a research task, or a task at work blocked on what it asked. */
+const isOpenSpike = (view: TaskView): boolean =>
+  (view.state.status === 'spike' && isResearch(view.task)) ||
+  (view.state.status === 'blocked' && view.state.blockedBy?.spike !== undefined);
 
-    return 'scout';
-  }
-
-  await requireLead(ctx, 'say what a spike found — a spike is a scout’s, or the lead’s');
-
-  return 'lead';
-};
+/** What a spike asks: the research's question, or the one its agent blocked on. */
+const questionOf = (view: TaskView): string => view.state.blockedBy?.spike ?? view.task.spike ?? 'what it needed';
 
 /**
- * `plitzi task spike <task> --done "…" [--tasks <stage.json>]`: what a spike found out — research alone, its findings in
- * the brief of every task that waits for it — and its result, the tasks it makes. A scout's tasks are proposed: checked
- * as `run extend --dry-run` checks them, kept beside the spike, and stacked once the lead approves them — the lead
- * decides the work with the person (Carlos). The lead's own are stacked at once. The run's scope spike ends this way,
- * and the work flows from it.
+ * `plitzi task spike <spike> --done "…" [--tasks <stage.json>]`: what a spike found — and, for research, the tasks it
+ * makes. A scout's is proposed: every spike is the lead's to approve, what is found mostly becoming the work it manages,
+ * and adding tasks the lead's alone (Carlos). The stage is checked whole as `run extend --dry-run` checks it and kept
+ * beside the spike, its primer with it; for a task blocked on a spike, what was found is the answer the lead approves.
+ * The lead's own research is done at once (an agent's block it lifts with `task unblock --answer`).
  */
 export const answerSpike = async (
   ctx: RunContext,
@@ -113,13 +107,23 @@ export const answerSpike = async (
   requireNoTask(ctx, 'say what a spike found');
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'say what a spike found');
-  const task = findTask(loaded, taskId);
-  const view = await viewTask(loaded.paths, task);
-  const who = await assertFindsOut(ctx, view);
-  if (view.state.status !== 'spike' || !isResearch(task)) {
+  const view = await viewTask(loaded.paths, findTask(loaded, taskId));
+  const scout = (await scoutsOf(ctx.root)).includes(ctx.agent);
+  if (!scout) {
+    await requireLead(ctx, 'say what a spike found — a spike is a scout’s, approved by the lead');
+  }
+
+  const holder = view.state.spikedBy?.by;
+  if (scout && holder !== undefined && holder !== ctx.agent) {
+    throw new RunRefusal('claimed', `${holder} finds out ${taskId}: it is theirs to say`, { task: taskId, holder });
+  }
+
+  if (!isOpenSpike(view) || (!scout && view.state.status === 'blocked')) {
     throw new RunRefusal(
       'invalid',
-      `Task "${taskId}" is ${view.state.status}, not a spike: an agent's task that needs one is blocked on it — lift it with what you found (plitzi task unblock ${taskId} --answer "…")`,
+      view.state.status === 'blocked'
+        ? `Task "${taskId}" is blocked on a spike: lift it with what you found — plitzi task unblock ${taskId} --answer "…"`
+        : `Task "${taskId}" is ${view.state.status}, not a spike`,
       { task: taskId }
     );
   }
@@ -127,68 +131,93 @@ export const answerSpike = async (
   if (view.state.proposed !== undefined) {
     throw new RunRefusal(
       'invalid',
-      `${taskId}'s tasks wait for the lead's approval already (proposed by ${view.state.proposed.by}): ${who === 'lead' ? `approve them — plitzi task spike ${taskId} --approve — or send them back: plitzi task spike ${taskId} --changes "…"` : 'the lead approves them or sends them back with what it asks'}`,
+      `${taskId}'s ${view.state.proposed.tasks.length > 0 ? 'tasks wait' : 'finding waits'} for the lead's approval already (proposed by ${view.state.proposed.by}): ${scout ? 'the lead approves it or sends it back with what it asks' : `approve it — plitzi task spike ${taskId} --approve — or send it back: plitzi task spike ${taskId} --changes "…"`}`,
       { task: taskId }
     );
   }
 
-  if (who === 'scout' && tasks !== undefined) {
-    return proposeStage(ctx, loaded, view, text, tasks);
+  if (view.state.status === 'blocked' && tasks !== undefined) {
+    throw new RunRefusal(
+      'invalid',
+      `${taskId} is a task at work blocked on a question: its spike's result is the answer: plitzi task spike ${taskId} --done "…", no tasks; work it changes, tell the lead (plitzi task tell --about ${taskId} "…")`,
+      { task: taskId }
+    );
   }
 
-  return finishSpike(ctx, runId, loaded, view, { at: at(ctx), by: ctx.agent, text }, tasks);
+  return scout
+    ? propose(ctx, loaded, view, text, tasks)
+    : finishSpike(ctx, runId, loaded, view, { at: at(ctx), by: ctx.agent, text }, tasks);
 };
 
-/** A scout's stage, proposed: checked whole now, so the lead approves what will stack — nothing stacked until it does. */
-const proposeStage = async (
+/**
+ * The stage a scout proposes, kept beside the spike with the primer it names: the stage reads its primer beside it, so a
+ * primer left where the scout wrote it would be lost once the stage moved.
+ */
+const keepStage = async (view: TaskView, file: string): Promise<void> => {
+  const stage: unknown = JSON.parse(await fs.readFile(file, 'utf-8'));
+  if (isRecord(stage) && typeof stage.primer === 'string') {
+    await fs.copyFile(path.resolve(path.dirname(file), stage.primer), path.join(view.paths.dir, PROPOSED_PRIMER));
+    await fs.writeFile(view.paths.proposedStage, `${JSON.stringify({ ...stage, primer: PROPOSED_PRIMER }, null, 2)}\n`);
+
+    return;
+  }
+
+  await fs.copyFile(file, view.paths.proposedStage);
+};
+
+const dropStage = async (view: TaskView): Promise<void> => {
+  await fs.rm(view.paths.proposedStage, { force: true });
+  await fs.rm(path.join(view.paths.dir, PROPOSED_PRIMER), { force: true });
+};
+
+/** A scout's result, proposed to the lead: checked whole now, so the lead approves what will apply — nothing applied yet. */
+const propose = async (
   ctx: RunContext,
   loaded: LoadedRun,
   view: TaskView,
   text: string,
-  file: string
+  file: string | undefined
 ): Promise<Spiked> => {
-  const checked = await extendRun(ctx, loaded.record.runId, file, { dryRun: true });
-  await fs.copyFile(file, view.paths.proposedStage);
-  const question = view.task.spike ?? 'what it needed';
+  const checked = file === undefined ? undefined : await extendRun(ctx, loaded.record.runId, file, { dryRun: true });
+  if (file !== undefined) {
+    await keepStage(view, file);
+  }
+
+  const added = checked?.added ?? [];
+  const question = questionOf(view);
   await updateState(
     view.paths,
     state => ({
       ...state,
-      proposed: { by: ctx.agent, at: at(ctx), text, tasks: checked.added },
+      proposed: { by: ctx.agent, at: at(ctx), text, tasks: added },
       notes: [
         ...state.notes,
-        { at: at(ctx), by: ctx.agent, text: `Found: ${text} — proposes ${checked.added.join(', ')}` }
+        {
+          at: at(ctx),
+          by: ctx.agent,
+          text: `Found: ${text}${added.length > 0 ? ` — proposes ${added.join(', ')}` : ''}`
+        }
       ]
     }),
     ctx.now
   );
-  await sendMessage(ctx, loaded, {
-    from: ctx.agent,
-    to: LEAD,
-    text: `${view.task.id} (${question}): ${text} — proposes ${String(checked.added.length)} task(s): ${checked.added.join(', ')}. Decide with the person, then approve them — plitzi task spike ${view.task.id} --approve — or send them back with what to change: plitzi task spike ${view.task.id} --changes "…" (plitzi task show ${view.task.id} reads them)`,
-    about: view.task.id
-  });
-  await logRun(ctx, loaded.paths, {
-    action: 'spike-proposed',
-    task: view.task.id,
-    question,
-    proposed: checked.added
-  });
+  // No message: the proposal itself wakes the lead (run watch's `proposal`), and `task next --role lead` hands it.
+  await logRun(ctx, loaded.paths, { action: 'spike-proposed', task: view.task.id, question, proposed: added });
   // What finding it out cost, kept as the scout hands it over: the lead's approval is another piece.
   await logSpent(ctx, loaded, view.task.id, 'spike');
 
   return {
     task: view.task.id,
-    status: 'spike',
+    status: view.state.status,
     question,
-    proposed: checked.added,
-    ...(checked.checked?.notices.length ? { notices: checked.checked.notices } : {})
+    proposed: added,
+    ...(checked?.checked?.notices.length ? { notices: checked.checked.notices } : {})
   };
 };
 
 /**
- * `plitzi task spike <task> --approve`, the lead's: the tasks a scout proposed, stacked on the run as a stage — the
- * spike done with what the scout found.
+ * `plitzi task spike <spike> --approve`, the lead's: what a scout proposed, applied — the tasks it makes stacked and the
+ * research done, or the answer an agent's block waited for given, its block lifted.
  */
 export const approveSpike = async (ctx: RunContext, runId: string, taskId: string): Promise<Spiked> => {
   requireNoTask(ctx, 'approve what a spike proposes');
@@ -200,24 +229,32 @@ export const approveSpike = async (ctx: RunContext, runId: string, taskId: strin
   if (proposed === undefined) {
     throw new RunRefusal(
       'invalid',
-      `${taskId} proposes nothing to approve: it is ${view.state.status}${view.state.status === 'spike' ? ', still being found out' : ''}`,
+      `${taskId} proposes nothing to approve: it is ${view.state.status}${isOpenSpike(view) ? ', still being found out' : ''}`,
       { task: taskId }
     );
   }
 
-  return finishSpike(
-    ctx,
-    runId,
-    loaded,
-    view,
-    { at: proposed.at, by: proposed.by, text: proposed.text },
-    view.paths.proposedStage
-  );
+  if (view.state.status === 'blocked') {
+    const question = questionOf(view);
+    const after = await unblockTask(ctx, runId, taskId, proposed.text, proposed.by);
+    await logRun(ctx, loaded.paths, { action: 'spike-done', task: taskId, question, status: 'answered' });
+
+    return {
+      task: taskId,
+      status: after.status,
+      question,
+      finding: { at: proposed.at, by: proposed.by, question, text: proposed.text }
+    };
+  }
+
+  const staged = proposed.tasks.length > 0 ? view.paths.proposedStage : undefined;
+
+  return finishSpike(ctx, runId, loaded, view, { at: proposed.at, by: proposed.by, text: proposed.text }, staged);
 };
 
 /**
- * `plitzi task spike <task> --changes "…"`, the lead's: the tasks a scout proposed, sent back with what to change —
- * the spike its scout's again, nothing stacked.
+ * `plitzi task spike <spike> --changes "…"`, the lead's: what a scout proposed, sent back with what to change — the spike
+ * its scout's again, nothing applied.
  */
 export const reworkSpike = async (ctx: RunContext, runId: string, taskId: string, asked: string): Promise<Spiked> => {
   requireNoTask(ctx, 'send a spike back');
@@ -241,19 +278,19 @@ export const reworkSpike = async (ctx: RunContext, runId: string, taskId: string
     }),
     ctx.now
   );
-  await fs.rm(view.paths.proposedStage, { force: true });
+  await dropStage(view);
   await sendMessage(ctx, loaded, {
     from: LEAD,
     to: agentAddress(proposed.by),
-    text: `${taskId}: the lead sends your tasks back — ${asked}. Propose them again with it: plitzi task spike ${taskId} --done "…" --tasks <stage.json>`,
+    text: `${taskId}: the lead sends what you found back — ${asked}. Say it again with that: plitzi task spike ${taskId} --done "…"${proposed.tasks.length > 0 ? ' --tasks <stage.json>' : ''}`,
     about: taskId
   });
   await logRun(ctx, loaded.paths, { action: 'spike-sent-back', task: taskId, to: proposed.by });
 
-  return { task: taskId, status: 'spike', question: view.task.spike ?? 'what it needed' };
+  return { task: taskId, status: view.state.status, question: questionOf(view) };
 };
 
-/** A spike done: its tasks stacked (`file`), its finding kept, what waited for it made ready. */
+/** Research done: its tasks stacked (`file`), its finding kept, what waited for it made ready. */
 const finishSpike = async (
   ctx: RunContext,
   runId: string,
@@ -265,7 +302,7 @@ const finishSpike = async (
   const taskId = view.task.id;
   // Its result first: a stage refused leaves the spike open, nothing said done that made nothing.
   const stacked = file === undefined ? undefined : await extendRun(ctx, runId, file);
-  const question = view.task.spike ?? 'what it needed';
+  const question = questionOf(view);
   const found: Finding = { ...finding, question };
   await updateState(
     view.paths,
@@ -278,7 +315,7 @@ const finishSpike = async (
     }),
     ctx.now
   );
-  await fs.rm(view.paths.proposedStage, { force: true });
+  await dropStage(view);
   await logRun(ctx, loaded.paths, {
     action: 'spike-done',
     task: taskId,
@@ -290,17 +327,6 @@ const finishSpike = async (
   // review after it, $3.77 of a review that took five minutes. A scout's was kept when it proposed.
   if (finding.by === ctx.agent) {
     await logSpent(ctx, loaded, taskId, 'spike');
-  }
-
-  // Said by a scout, not by the lead: the lead hears what was found.
-  if (ctx.agent !== LEAD) {
-    await sendMessage(ctx, loaded, {
-      from: ctx.agent,
-      to: LEAD,
-      text: `On ${taskId} (${question}): ${found.text}`,
-      fyi: true,
-      about: taskId
-    });
   }
 
   const waited = await readyWhatWaited(ctx, await loadRun(ctx, runId));

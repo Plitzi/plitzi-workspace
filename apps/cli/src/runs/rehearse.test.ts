@@ -27,6 +27,18 @@ const rehearsed = async (plan: RunPlan, options: RehearsalOptions): Promise<Retu
 };
 
 describe('a plan rehearsed before any agent starts', () => {
+  // The testers review, each one at a time: two of them review t-home and t-menu at once, nothing waits.
+  it('plays the reviews by the team’s testers, each one at a time', async () => {
+    const played = await rehearsed(benchPlan(), {
+      agents: 2,
+      reviewMinutes: 5,
+      reviewers: { by: 'testers', count: 2 }
+    });
+
+    expect(played.scheduled.find(task => task.task === 't-menu')).toMatchObject({ approved: 25, waitedForReview: 0 });
+    expect(played.reviews).toMatchObject({ by: 'testers', count: 2, longestWait: 0 });
+  });
+
   it('plays it as task next would hand it out, the lead reviewing one at a time, what waits ready once approved', async () => {
     const played = await rehearsed(benchPlan(), { agents: 2, reviewMinutes: 5 });
 
@@ -37,7 +49,7 @@ describe('a plan rehearsed before any agent starts', () => {
       ['t-book', 'agent-1', 30, 50, 55]
     ]);
     expect(played.wallMinutes).toBe(55);
-    expect(played.lead).toEqual({ reviews: 4, busyMinutes: 20, longestWait: 5 });
+    expect(played.reviews).toEqual({ by: 'lead', count: 1, reviews: 4, busyMinutes: 20, longestWait: 5 });
     expect(played.criticalPath).toEqual({ tasks: ['t-home', 't-book'], minutes: 40 });
     expect(played.team.find(agent => agent.agent === 'agent-2')).toMatchObject({ tasks: ['t-menu'], idleMinutes: 35 });
     expect(played.scale).toEqual([

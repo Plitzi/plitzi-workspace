@@ -234,7 +234,7 @@ export interface RunRecord {
   leadFinishes?: string;
   /**
    * A designer in the team, or the plan asked for it: the UI of the others' tasks — what they change under `src/space/` or a
-   * plugin — is reviewed by a designer before the lead approves it (`TaskState.design`).
+   * plugin — is reviewed by a designer before its reviewer approves it (`TaskState.design`).
    */
   designReview?: true;
   stopRequestedAt?: string;

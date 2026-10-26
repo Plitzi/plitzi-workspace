@@ -67,9 +67,17 @@ authoring and the elements learnt from the runs.
   and never starts again, so whatever it reads it reads again every turn: a run's lead, scoping and reviewing, spent 68%
   of the run. Now:
   - **Scout** (new role, Opus): `task next` hands it the spikes — the run's scope, a research spike, a question an
-    agent blocked on. Its `task spike <spike> --done "…" --tasks <stage.json>` is checked as `run extend --dry-run` and
-    proposed to the lead, who decides it with the person: `task spike <spike> --approve | --changes "…"`. It lifts an
-    agent's block with `task unblock --answer`.
+    agent blocked on. Its `task spike <spike> --done "…" [--tasks <stage.json>]` is a proposal — the stage checked as
+    `run extend --dry-run`, its primer kept beside it — that the lead decides, the tasks with the person: `task spike
+    <spike> --approve | --changes "…"`. **Every spike is the lead's to approve**, an agent's block lifted by its approval,
+    and adding or taking out tasks the lead's alone.
+  - **The keeper** starts a scout for a question an agent blocked on and the scout a spike was sent back to, and a
+    tester for a UI no designer is free for; a scout whose result waits for the lead counts as free. A scout starts
+    fresh once what it found is with the lead, a tester once its review is escalated.
+  - **The lead is told only what is its:** a scout's proposal (`proposal` in `run watch`), an escalation (its block) —
+    never a spike or a queued UI review the scouts and testers take, a question an agent blocked on, or a message
+    beside them to answer. `run plan` names a scout's and a tester's work; `run rehearse` plays the team's testers as
+    its reviewers.
   - **Tester** (QA, Opus): reviews every task in review, a designer's included — what it was asked, its checks, how it
     behaves, its code — and its approval is the task's; the UI too when no designer is free (`--skip-design reviewer`).
     What it cannot decide: `task review <task> --escalate "…"`, blocked on the lead.

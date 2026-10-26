@@ -229,15 +229,17 @@ export const taskSpike = (
     spiked =>
       spiked.proposed !== undefined
         ? [
-            `${spiked.task}'s tasks go to the lead, who decides them with the person: ${spiked.proposed.join(', ')} — nothing is stacked until it approves them; what it asks comes with your next command.`,
+            `What you found on ${spiked.task} goes to the lead, who decides it${spiked.proposed.length > 0 ? ` with the person: ${spiked.proposed.join(', ')}` : ''} — nothing is applied until it approves; what it asks comes with your next command.`,
             ...(spiked.notices ?? []).map(notice => `  · ${notice}`)
           ].join('\n')
         : spiked.finding === undefined
           ? spiked.status === 'blocked'
             ? `${spiked.task} is blocked on its spike — ${spiked.question} — found out by a scout, or the lead. Its files stay yours; the answer comes with your next command (plitzi task next hands the task back) — meanwhile take another task, or go on with what does not need it.`
-            : `${spiked.task}'s tasks went back to the scout, with what you asked.`
-          : [
-              `${spiked.task} is done: its findings go with every task that waits for it.${spiked.added ? ` It made ${spiked.added.join(', ')}.` : ''}${spiked.ready && spiked.ready.length > 0 ? ` Ready now: ${spiked.ready.join(', ')}.` : ''}`,
-              ...(spiked.notices ?? []).map(notice => `  · ${notice}`)
-            ].join('\n')
+            : `${spiked.task}: what was found went back to its scout, with what you asked.`
+          : spiked.status !== 'done'
+            ? `${spiked.task} is answered: its block lifted with what was found, kept as its finding — its agent goes on with it.`
+            : [
+                `${spiked.task} is done: its findings go with every task that waits for it.${spiked.added ? ` It made ${spiked.added.join(', ')}.` : ''}${spiked.ready && spiked.ready.length > 0 ? ` Ready now: ${spiked.ready.join(', ')}.` : ''}`,
+                ...(spiked.notices ?? []).map(notice => `  · ${notice}`)
+              ].join('\n')
   );

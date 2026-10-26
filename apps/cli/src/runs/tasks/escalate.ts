@@ -1,5 +1,4 @@
 import { assertReviewingLead, isPrincipal } from '../leads';
-import { LEAD, sendMessage } from '../messages';
 import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, requireNoTask } from '../run';
 import { logSpent } from '../spent';
@@ -62,12 +61,7 @@ export const escalateReview = async (
     }),
     ctx.now
   );
-  await sendMessage(ctx, loaded, {
-    from: ctx.agent,
-    to: LEAD,
-    text: `${taskId}: ${ctx.agent} escalates its review — ${why}. Decide it: plitzi task review ${taskId} --approve, or plitzi task unblock ${taskId} --answer "…" (sent back with it)`,
-    about: taskId
-  });
+  // No message: the block, saying why and how to decide it, is what wakes the lead.
   await logRun(ctx, loaded.paths, { action: 'review-escalated', task: taskId, why });
   await logSpent(ctx, loaded, taskId, 'review');
 

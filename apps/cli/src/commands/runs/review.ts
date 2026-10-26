@@ -654,7 +654,7 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
     },
     reviewed =>
       reviewed.design === 'approved'
-        ? `${taskId}'s UI approved: the lead reviews it now and gives the final word. Next: plitzi task next`
+        ? `${taskId}'s UI approved: its reviewer — a tester, or the lead with none — reviews the rest now. Next: plitzi task next`
         : reviewed.verdict === 'approve'
           ? [
               `${taskId} approved: ${list(reviewed.merged ?? [])} in the run's work.`,
