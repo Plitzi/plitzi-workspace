@@ -589,7 +589,7 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
   const openRuns = write && pinned.length > 0 ? await activeRuns(root) : [];
   if (openRuns.length > 0 && !options.withOpenRuns) {
     fail(
-      `Runs of agents are open in this project (${openRuns.join(', ')}), pinned to the Plitzi installed now: its ${pinned.join(', ')} would change under them. Finish, abort or purge them first (plitzi run state) — or upgrade anyway with --with-open-runs, and a person attaches to each after (plitzi run attach <run>), which re-pins it and starts its tasks in hand again from their reviewed versions. The skills alone are upgraded under an open run: plitzi upgrade skills --write.`
+      `Runs of agents are open in this project (${openRuns.join(', ')}), pinned to the Plitzi installed now: its ${pinned.join(', ')} would change under them. Finish, abort or purge them first (plitzi run status --all) — or upgrade anyway with --with-open-runs, and a person attaches to each after (plitzi run attach <run>), which re-pins it and starts its tasks in hand again from their reviewed versions. The skills alone are upgraded under an open run: plitzi upgrade skills --write.`
     );
 
     return;

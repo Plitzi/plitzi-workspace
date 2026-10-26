@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { actStep, endsActing, interactionSteps, stepText } from './steps';
+import { actingSteps, actStep, endsActing, interactionSteps, stepText } from './steps';
 import { parseSteps } from '../shotSteps';
 
 import type { Visitors } from './visitors';
@@ -110,5 +110,28 @@ describe('a step another account plays, and an action', () => {
     expect(await actStep(here.page, step, 0)).toEqual({
       problem: 'Step 1: another account plays only against the project’s own server'
     });
+  });
+});
+
+// One vocabulary of steps for every command that reads a page: what each refuses is said, never played as nothing.
+describe('the steps a page is read after', () => {
+  it('are a visitor’s own, played as page play plays them', () => {
+    expect(actingSteps('click open-panel; type chat-input hi; press Enter', 'page check')).toEqual(
+      steps('click open-panel; type chat-input hi; press Enter')
+    );
+    expect(actingSteps(undefined, 'page check')).toEqual([]);
+  });
+
+  it('refuse a picture, which is page shot’s', () => {
+    expect(actingSteps('click menu; shot open', 'page check')).toEqual({
+      problem: expect.stringContaining('"shot" is page shot --steps') as unknown
+    });
+  });
+
+  it('refuse another account’s where the command has no other visitors’ pages', () => {
+    expect(actingSteps('as mika click send', 'page check', { others: false })).toEqual({
+      problem: expect.stringContaining('"as mika …" is another account\'s') as unknown
+    });
+    expect(actingSteps('as mika click send', 'page measure')).not.toHaveProperty('problem');
   });
 });

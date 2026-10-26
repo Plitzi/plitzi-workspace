@@ -5,7 +5,7 @@ import { scriptsOf } from '../commands/verify';
 
 import type { RunPlan } from './model';
 
-/** What would make a task's acceptance unworkable, said by `run plan` and `run amend` before any agent meets it. */
+/** What would make a task's acceptance unworkable, said by `run open --dry-run` and `run amend` before any agent meets it. */
 
 /**
  * The words a `plitzi page check` (or `page shot`) in `check` reads as pages that are no path — `week` out of

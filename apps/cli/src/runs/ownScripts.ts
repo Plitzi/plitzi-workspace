@@ -7,7 +7,7 @@ import type { RunPlan } from './model';
 /**
  * The scripts of a lead's own an acceptance line runs — `node checks/moves.mjs`, `python3 probe.py` — where a Plitzi
  * command would say the same to any agent and be rerun by it: what Plitzi could not check yet, or what the lead did
- * not know it could. Said at `run plan` and counted in the run's feedback, so each round names the gaps it worked
+ * not know it could. Said at `run open --dry-run` and counted in the run's feedback, so each round names the gaps it worked
  * around (the lead's two scripts checked a carousel and the article pages, unseen by the run).
  */
 
@@ -60,7 +60,7 @@ export const ownScriptLines = (
     })
   );
 
-/** What `run plan` says of them: the Plitzi commands a check is best written with, and how to say what none can. */
+/** What `run open --dry-run` says of them: the Plitzi commands a check is best written with, and how to say what none can. */
 export const ownScriptNotices = (tasks: RunPlan['tasks']): string[] =>
   ownScriptLines(tasks).map(
     ({ task, line, scripts }) =>

@@ -160,7 +160,7 @@ const handable = async (
     );
   }
 
-  // The tests of what it worked are another's, as `task take` holds.
+  // The tests of what it worked are another's, as taking it holds.
   if (!writesTests(task, agent, views)) {
     throw new RunRefusal(
       'invalid',

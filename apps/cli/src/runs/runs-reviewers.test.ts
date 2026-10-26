@@ -17,6 +17,7 @@ import { scopePlan, SCOPE_SPIKE } from './spike';
 import { noteRun } from './talk';
 import {
   answerSpike,
+  blockTask,
   approveSpike,
   completeTask,
   escalateReview,
@@ -24,7 +25,6 @@ import {
   reassignTask,
   reviewTask,
   reworkSpike,
-  startSpike,
   takeNext,
   unblockTask
 } from './tasks';
@@ -351,7 +351,7 @@ describe('a spike, a scout’s', () => {
     await bench.writeTeam(team({ ...SCOUT, min: 0 }));
     const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
     const menu = await take('agent-1', 't-menu');
-    await startSpike(menu.ctx, runId, 't-menu', 'which word the original uses for a booking');
+    await blockTask(menu.ctx, runId, 't-menu', 'which word the original uses for a booking', 'lead');
     expect((await viewRun(lead(), runId)).attention.find(item => item.task === 't-menu')).toMatchObject({
       kind: 'blocked',
       who: 'lead'
@@ -515,7 +515,7 @@ describe('the keeper, for scouts and testers', () => {
     plan.tasks = [...plan.tasks, research];
     const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
     const menu = await take('agent-1', 't-menu');
-    await startSpike(menu.ctx, runId, 't-menu', 'which colour for the prices');
+    await blockTask(menu.ctx, runId, 't-menu', 'which colour for the prices', 'lead');
     const asked = (await askedFor(runId, ['agent-1'])).find(each => each.agent === 'scout-1')?.text ?? '';
     expect(asked).toContain('the spike s-words');
     expect(asked).not.toContain('t-menu');

@@ -1,7 +1,6 @@
 import { act } from './shell';
 import { RunRefusal } from '../../runs/refusal';
 import {
-  checkTeamFile,
   EFFORTS,
   isEffort,
   parseModelChoice,
@@ -100,19 +99,6 @@ export const runTeamSet = (name: string, options: TeamSetOptions): Promise<void>
       changed.unchanged
         ? `${changed.name} is already ${memberText(changed.after)}: nothing to change (${changed.file})`
         : `${changed.name}: ${memberText(changed.before)} → ${memberText(changed.after)} (${changed.file})`
-  );
-
-export const runTeamCheck = (options: RunCommandOptions): Promise<void> =>
-  act(
-    options,
-    async ctx => ({ file: TEAM_FILE, problems: (await checkTeamFile(ctx.root)) ?? null }),
-    checked =>
-      checked.problems === null
-        ? `No team (${checked.file}): a project's first run writes the one its plan needs.`
-        : checked.problems.length === 0
-          ? `${checked.file} is a team the runs read as written.`
-          : [`${checked.file} would be refused:`, ...checked.problems.map(problem => `  - ${problem}`)].join('\n'),
-    checked => (checked.problems !== null && checked.problems.length > 0 ? 20 : 0)
   );
 
 export const runTeamUnset = (name: string, options: RunCommandOptions): Promise<void> =>

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
 
 import { refusedText } from './check/space';
-import { spaceFailureOn } from './measure';
+import { spaceFailureOn } from './visit';
 
 import type { BrowserPage } from '../browser';
 

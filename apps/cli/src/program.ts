@@ -50,7 +50,6 @@ import type { CertOptions } from './commands/cert';
 import type { CreateOptions } from './commands/create';
 import type { CreatePluginOptions } from './commands/createPlugin';
 import type { DataDescribeOptions } from './commands/data';
-import type { DryRunOptions } from './commands/dryRun';
 import type { ExplainOptions } from './commands/explain';
 import type { FixOptions } from './commands/fix';
 import type { PackPluginOptions } from './commands/packPlugin';
@@ -471,16 +470,6 @@ export const buildProgram = (): Command => {
     .option('--json', 'One page as one object — with --follow, one a line as it arrives — for a tool or an agent')
     .option(...API_OPTION)
     .action((options: ActivityOptions) => activity(options));
-
-  const skills = program.command('skills').description('The Plitzi skills an agent reads in .claude/skills/');
-
-  skills
-    .command('update')
-    .description(
-      'Bring them up to the Plitzi packages this project has installed, each replaced whole (`upgrade skills --write`)'
-    )
-    .option(...DRY_RUN_OPTION)
-    .action((options: DryRunOptions) => upgrade(['skills'], { write: !options.dryRun }));
 
   const data = program
     .command('data')

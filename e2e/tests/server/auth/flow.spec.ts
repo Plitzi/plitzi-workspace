@@ -44,14 +44,18 @@ describeTarget('auth-server', subject => {
       await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
     });
 
-    await step('sign in', async () => {
-      // The page they are standing on is guests-only, so the session itself is what moves them off it.
+    await step('sign in, back where they were going', async () => {
+      // The page they are standing on is guests-only, so the session itself is what moves them off it — to the
+      // `redirect` its address carries, not the page's own target: a run's sign-in sent everybody home.
       await signIn(page, editor);
 
-      await expect(page).toHaveURL(new RegExp(`^${subject.origin}/?$`));
+      await expect(page).toHaveURL(`${subject.origin}/account`);
+      await expect(page.getByText(editor.email)).toBeVisible();
     });
 
     await step('member home, heading bound to the session', async () => {
+      await page.goto(subject.origin);
+
       await expect(page.getByRole('heading', { name: editor.username })).toBeVisible();
       await expect(page.getByRole('heading', { name: 'Welcome, guest' })).toBeHidden();
     });
@@ -126,6 +130,15 @@ describeTarget('auth-server', subject => {
 
       await expect(page.getByRole('heading', { name: 'Welcome, guest' })).toBeVisible();
     });
+  });
+
+  // Back where the address says only on this site: anything else is the page's own target.
+  test('a sign-in sent elsewhere by its address stays on this site', async ({ page }) => {
+    await page.goto(`${subject.origin}/login?redirect=${encodeURIComponent('https://example.com/steal')}`);
+    await signIn(page, viewer);
+
+    await expect(page).toHaveURL(new RegExp(`^${subject.origin}/?$`));
+    await expect(page.getByRole('heading', { name: viewer.username })).toBeVisible();
   });
 
   /** The redirect has to happen on the SERVER too. A guard that only runs in the browser is a guard that ships the

@@ -49,7 +49,7 @@ export interface TaskContext {
   proposals: { incoming: ProposalView[]; outgoing: ProposalView[]; agreements: ProposalView[] };
   /** The project's own notes (`NOTES.md`): how something is built here, what must not be undone. */
   projectNotes?: string;
-  /** The run's notes to every task (`run note`, the plan's `notes`): what holds for the whole run. */
+  /** The run's notes to every task (`task message all`, the plan's `notes`): what holds for the whole run. */
   runNotes: string[];
   /** The lead's primer for every task, when the plan has one: what the project is, read once instead of its skills. */
   primer?: string;

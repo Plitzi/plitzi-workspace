@@ -22,6 +22,18 @@ const OWNER_TITLES: Record<Finding['owner'], string> = {
   machine: 'The machine'
 };
 
+/** New, or met again and where: a repeat is what a fix did not stop. */
+export const historyText = (finding: Pick<Finding, 'seenIn'>): string =>
+  finding.seenIn === undefined || finding.seenIn.length === 0
+    ? 'new'
+    : `met before — ${finding.seenIn.join(', ')} (${ordinal(finding.seenIn.length + 1)} run)`;
+
+const ordinal = (n: number): string => `${String(n)}${n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`;
+
+/** What was met before first, the most often met first: what fixing has not stopped leads. */
+const metFirst = (findings: readonly Finding[]): Finding[] =>
+  [...findings].sort((a, b) => (b.seenIn?.length ?? 0) - (a.seenIn?.length ?? 0));
+
 /** Plitzi's parts, in the order its team reads them. */
 const AREA_TITLES: readonly (readonly [PlitziArea, string])[] = [
   ['cli', 'The run and the CLI'],
@@ -59,11 +71,11 @@ export const findingsText = (
           '',
           ...groups.flatMap(group => [
             ...(group.title === undefined ? [] : [`#### ${group.title} (${String(group.items.length)})`, '']),
-            ...group.items.flatMap(finding => {
+            ...metFirst(group.items).flatMap(finding => {
               number += 1;
 
               return [
-                `${String(number)}. **${finding.title}**${finding.times > 1 ? ` ×${String(finding.times)}` : ''}${finding.live ? ' · said live' : ''}`,
+                `${String(number)}. **${finding.title}**${finding.times > 1 ? ` ×${String(finding.times)}` : ''}${finding.live ? ' · said live' : ''} · ${historyText(finding)}`,
                 ...finding.evidence.map(line => `   - ${line}`),
                 ...(finding.fix ? [`   - → ${finding.fix}`] : [])
               ];
@@ -190,7 +202,7 @@ export const glanceText = (report: RunReport): string[] => {
   return [
     `- Tasks: ${String(done)} of ${String(team.length)} done${spikes > 0 ? ` (and the lead's ${spikes === 1 ? 'spike' : `${String(spikes)} spikes`})` : ''}; reviews ${String(report.tasks.reduce((sum, task) => sum + task.rounds, 0))}`,
     `- Task checks: ${String(metrics.checks.run)} run, ${String(metrics.checks.failed)} failed on the work, ${String(metrics.checks.notOwn)} on nothing of it${indicators.notOwnPct === undefined ? '' : ` (${String(indicators.notOwnPct)}% of the failures)`}`,
-    `- Findings: ${FINDING_OWNERS.map(owner => `${owner} ${String(indicators.findings[owner])}`).join(', ')}`,
+    `- Findings: ${FINDING_OWNERS.map(owner => `${owner} ${String(indicators.findings[owner])}`).join(', ')} — ${String(report.findings.filter(finding => (finding.seenIn?.length ?? 0) > 0).length)} met in a run before, the rest new`,
     ...(indicators.harnessTokens === undefined
       ? []
       : [

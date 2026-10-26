@@ -360,6 +360,7 @@ describe('the findings, together', () => {
     expect(liveFindings({ log, usage, said: [] }).map(each => each.kind)).toEqual(['two-tasks']);
     expect(indicatorsOf(findings, { checks: { run: 4, failed: 2, notOwn: 2, byStep: {} } }, [], 2)).toEqual({
       findings: { plitzi: 2, lead: 0, agent: 0, machine: 0 },
+      metBefore: 0,
       notOwnPct: 50,
       flakyChecks: 0,
       linesFailing: 0,

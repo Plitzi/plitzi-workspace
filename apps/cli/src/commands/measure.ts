@@ -5,36 +5,29 @@ import path from 'node:path';
 import chalk from 'chalk';
 import { InvalidArgumentError } from 'commander';
 
-import { openPage } from '@plitzi/sdk-authoring';
-import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
-import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
-import { accountAsked, projectAccount, saySignedIn, signInAs, signInWhereSent } from './check';
+import { launchBrowser } from '../browser';
 import { projectHere } from './existingProject';
 import { measureOn } from './measureOn';
-import { putIn, rowsOf, settle, stateText } from './measureState';
+import { putIn, rowsOf, stateText } from './measureState';
 import { comparedText, keptText, readingText } from './measureText';
 import { differences, MEASURED, onlyOf, PSEUDO_MEASURED, PSEUDOS, SIDE_LONGHANDS } from './measureValues';
 import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
-import { applyConditions } from '../browser/conditions';
+import { openVisit, VIEW_HEIGHT, visitorAsked, visitViewOf } from './visit';
 import { keptMeasure } from '../browser/keptBrowser';
-import { conditionsOf } from './register/options';
 import { originHere } from '../runs/copyServer';
 import { authoredHandles } from '../runs/expectations';
 import { pageAnswered } from './shot/remote';
-import { actStep } from './shot/steps';
+import { actingSteps, playedOn } from './shot/steps';
 import { visitorsOn } from './shot/visitors';
-import { parseSteps } from './shotSteps';
 
-import type { Account } from './check';
 import type { StateAsked } from './measureState';
 import type { Difference, Measured } from './measureValues';
-import type { Browser, BrowserPage, Scheme } from '../browser';
+import type { Browser, Scheme } from '../browser';
+import type { VisitorOptions } from './register/options';
 import type { ActingStep } from './shot/steps';
-import type { Visitors } from './shot/visitors';
-import type { BrowserConditions } from '../browser/conditions';
-import type { ConditionOptions } from './register/options';
+import type { Visitor, VisitView } from './visit';
 
 /**
  * `plitzi page measure`: an element's computed styles — what a designer sizes a copy by — and, with `--compare`, the
@@ -55,16 +48,9 @@ import type { ConditionOptions } from './register/options';
  */
 const READING = 3;
 
-/** The viewport's height every page is read at: said with the reading, where a fixed box's place depends on it. */
-const VIEW_HEIGHT = 900;
-
-export interface MeasureOptions extends ConditionOptions {
-  url?: string;
-  /** Signed in first as this account: the password from `PLITZI_CHECK_PASSWORD`. */
-  as?: string;
+export interface MeasureOptions extends VisitorOptions {
   width?: number[];
   scheme?: Scheme;
-  timezone?: string;
   /** Another page — another site's, a reference — whose element is measured beside this one. */
   compare?: string;
   /** That page's element, by any selector: the element's own name when left out. One element asked only. */
@@ -95,8 +81,6 @@ export interface MeasureOptions extends ConditionOptions {
   steps?: string;
   /** Only these properties of each element, printed: `box`, `font`, `border`, `size` or any measured. */
   only?: string[];
-  /** Read as a guest, though a page sends one away: the project's account is not signed in by itself. */
-  guest?: boolean;
   json?: boolean;
 }
 
@@ -209,155 +193,17 @@ export interface Reading {
   inherited?: Difference[];
 }
 
-/** Our page at a width: open, its fonts in and the space hydrated — what a visitor's browser reads it as. */
-/** Why the page is the server's own rather than the space's — the space does not author — or nothing. */
-export const spaceFailureOn = async (page: BrowserPage): Promise<string | undefined> =>
-  page
-    .evaluate(meta => {
-      if (!document.querySelector(`meta[name="${meta}"]`)) {
-        return undefined;
-      }
+/** The visitor of a view, without what is put on the page after it opens. */
+const visitOf = ({ state: _state, steps: _steps, ...visit }: ViewAsked): VisitView & Visitor => visit;
 
-      // What it refused, not a count of it: a run's dev-2 read "3 problems" and nothing it could fix.
-      const lines = (document.querySelector('pre')?.textContent ?? '')
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line !== '');
-      const said = `${lines.slice(0, 6).join(' · ')}${lines.length > 6 ? ' …' : ''}`;
-
-      return `the space does not author, so the page is the server's error page${said ? ` — ${said}` : ''}: npm run author says why`;
-    }, SPACE_FAILURE_META)
-    .catch(() => undefined);
-
-export const ourPage = async (
-  browser: Browser,
-  origin: string,
-  route: string,
-  view: ViewAsked
-): Promise<{
-  page: BrowserPage;
-  answered: boolean;
-  problem?: string;
-  signedOut?: true;
-  /** The addresses it showed as it opened, each for how long, when the page sent the browser on by itself. */
-  passed?: { path: string; ms: number }[];
-}> => {
-  const page = await openProjectPage(browser, origin, {
-    width: view.width,
-    height: VIEW_HEIGHT,
-    reducedMotion: true,
-    ...(view.scheme ? { scheme: view.scheme } : {}),
-    ...(view.timezone ? { timezone: view.timezone } : {})
-  });
-  if (view.conditions) {
-    await applyConditions(page, view.conditions);
-  }
-
-  // Signed in first when asked (`--as`): a page for signed-in visitors read as one of them — a run's designers could
-  // not look at a vote, a host's controls or a settings form, only `page check|shot` signing in.
-  const refused = view.account && (await signInAs(page, origin, view.account));
-  if (refused) {
-    return { page, answered: false, problem: `--as ${refused}` };
-  }
-
-  // Where the page went as it opened, by itself — a flow's navigate on load: encore-10's designer played a page that
-  // sends a signed-in visitor on, and its start was read on where it landed, the flash of its own form unseen.
-  const openedAt = Date.now();
-  await page.addInitScript(key => {
-    const log = (): void => {
-      const list = JSON.parse(sessionStorage.getItem(key) ?? '[]') as unknown[];
-      list.push({ path: `${location.pathname}${location.search}`, at: Date.now() });
-      sessionStorage.setItem(key, JSON.stringify(list));
-    };
-    log();
-    for (const name of ['pushState', 'replaceState'] as const) {
-      const original = history[name].bind(history);
-      history[name] = (...args: Parameters<History['pushState']>) => {
-        original(...args);
-        log();
-      };
-    }
-  }, PASSED_KEY);
-  const answered = (await openPage(page, `${origin}${route}`, { quietMs: PROJECT_QUIET_MS })) !== null;
-  if (!answered) {
-    return { page, answered };
-  }
-
-  const passed = passedOf(
-    await page.evaluate(key => sessionStorage.getItem(key) ?? '[]', PASSED_KEY).catch(() => '[]'),
-    openedAt
-  );
-
-  const signed = view.account ? undefined : await signInWhereSent(page, origin, route, view.projectAccount);
-  if (signed && 'problem' in signed) {
-    return { page, answered: false, problem: signed.problem };
-  }
-
-  if (signed) {
-    saySignedIn(route, signed);
-  }
-
-  // The server's own page while the space does not author: said, never "No element …" of every element asked.
-  const failed = await spaceFailureOn(page);
-  if (failed !== undefined) {
-    return { page, answered: false, problem: failed };
-  }
-
-  // A text the browser rewrites after hydration (a visitor's time, read in its zone) read before it was the server's:
-  // A run's hero read "19:00H CEST" once, "11:00H GMT-6" after. A page with no space root has no wait.
-  await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
-  await page.evaluate(() => document.fonts.ready.then(() => undefined), undefined);
-
-  return {
-    page,
-    answered,
-    ...(view.account || signed ? {} : { signedOut: true as const }),
-    ...(passed.length > 1 ? { passed } : {})
-  };
-};
-
-const PASSED_KEY = '__plitzi_passed';
-
-/** The addresses a page showed as it opened, each for how long — read off what the page logged, since `since`. */
-export const passedOf = (logged: string, since: number): { path: string; ms: number }[] => {
-  let read: unknown;
-  try {
-    read = JSON.parse(logged);
-  } catch {
-    read = [];
-  }
-
-  const shown = (Array.isArray(read) ? read : [])
-    .flatMap(entry =>
-      typeof entry === 'object' &&
-      entry !== null &&
-      typeof Reflect.get(entry, 'path') === 'string' &&
-      typeof Reflect.get(entry, 'at') === 'number'
-        ? [{ path: String(Reflect.get(entry, 'path')), at: Number(Reflect.get(entry, 'at')) }]
-        : []
-    )
-    .filter(entry => entry.at >= since)
-    .filter((entry, index, all) => index === 0 || all[index - 1]?.path !== entry.path);
-
-  return shown.map((entry, index) => ({ path: entry.path, ms: (shown[index + 1]?.at ?? entry.at) - entry.at }));
-};
-
-export interface ViewAsked {
-  width: number;
-  /** The account the page is read signed in as (`--as`). */
-  account?: Account;
-  /** The project's, signed in as when the page sends a guest away and no account was asked. */
-  projectAccount?: Account;
-  scheme?: Scheme;
-  timezone?: string;
+/** A page of ours as `page measure` reads it: the visitor (`visit.ts`), and what is put on it before it is read. */
+export interface ViewAsked extends VisitView, Visitor {
   state?: StateAsked;
   /**
    * Played on this page before it is measured — `--steps`, as `page play` takes them: data only a visitor's steps make
    * (a run's chat line, which no demo data holds) measured where it is drawn.
    */
   steps?: readonly ActingStep[];
-  /** The browser it is read in, where not a visitor's ordinary one (`--clock`, `--block`, `--autoplay`, `--storage`). */
-  conditions?: BrowserConditions;
 }
 
 /** The other page's elements read on a page of their own, opened for them and closed: the way with no kept browser. */
@@ -372,7 +218,8 @@ const readOther = async (
     height: VIEW_HEIGHT,
     reducedMotion: true,
     ...(view.scheme ? { scheme: view.scheme } : {}),
-    ...(view.timezone ? { timezone: view.timezone } : {})
+    ...(view.timezone ? { timezone: view.timezone } : {}),
+    ...(view.conditions ? { conditions: view.conditions } : {})
   });
   if ('problem' in other) {
     return targets.map(() => other);
@@ -389,24 +236,6 @@ const readOther = async (
   return read;
 };
 
-/** The steps played on the page, each settled — or the one that could not be, said. */
-const playedOn = async (
-  page: BrowserPage,
-  steps: readonly ActingStep[],
-  visitors?: Visitors
-): Promise<{ problem: string } | undefined> => {
-  for (const [index, step] of steps.entries()) {
-    const done = await actStep(page, step, index, visitors);
-    if (done && 'problem' in done) {
-      return done;
-    }
-
-    await settle(page);
-  }
-
-  return undefined;
-};
-
 /** Every pair, at one width: ours on one page, the others' kept or read on one page of the other site. */
 const readAt = async (
   browser: Browser,
@@ -419,7 +248,7 @@ const readAt = async (
   /** Whether the space authors an id with no box of its own (`boxless`): a provider, drawn as its children. */
   boxless?: (id: string) => Promise<boolean>
 ): Promise<Reading[]> => {
-  const { page, answered, problem } = await ourPage(browser, where.origin, where.route, view);
+  const { page, answered, problem } = await openVisit(browser, where.origin, where.route, visitOf(view));
   // Another account's steps (`as dax: action room-create {…}`) set up a state the cold copy lacks before it is measured:
   // a run's tester could not measure an empty room some other visitor made.
   const visitors = visitorsOn(root, browser, where.origin, {
@@ -590,30 +419,21 @@ export const measure = async (route: string, elements: string[], options: Measur
     return;
   }
 
-  const parsed = options.steps === undefined ? [] : parseSteps(options.steps, 500);
-  if ('problem' in parsed) {
-    fail(`--steps: ${parsed.problem}.`);
+  const steps = actingSteps(options.steps, 'page measure');
+  if ('problem' in steps) {
+    fail(`${steps.problem}.`);
 
     return;
   }
 
   // What this page's visitor does before it is measured: the other page is another site, with no such data to make.
-  if (parsed.length > 0 && target) {
+  if (steps.length > 0 && target) {
     fail(
       '--steps makes data on this page before it is measured: leave out --compare, or put the other page in its state with --click'
     );
 
     return;
   }
-
-  const pictured = parsed.find(step => step.kind === 'shot' || step.kind === 'frames');
-  if (pictured) {
-    fail(`page measure reads what the steps leave, with no picture: "${pictured.kind}" is page shot --steps'.`);
-
-    return;
-  }
-
-  const steps = parsed.filter((step): step is ActingStep => step.kind !== 'shot' && step.kind !== 'frames');
 
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
   // In a task's copy nobody serves, the copy served — as `page shot` serves it — never a second server beside one.
@@ -631,14 +451,12 @@ export const measure = async (route: string, elements: string[], options: Measur
     return;
   }
 
-  const account = await accountAsked(project.root, options.as);
-  if (account === null) {
+  const visitor = await visitorAsked(project.root, options);
+  if (visitor === null) {
     await browser.close();
 
     return;
   }
-
-  const own = options.as === undefined && options.guest !== true ? await projectAccount(project.root) : undefined;
 
   const now = Date.now();
   // Authored only when an element is not found: what a measure that finds everything never pays for.
@@ -660,13 +478,11 @@ export const measure = async (route: string, elements: string[], options: Measur
           pairs,
           {
             width,
-            ...(account ? { account } : {}),
-            ...(own ? { projectAccount: own } : {}),
+            ...visitViewOf(options),
+            ...visitor,
             ...(options.scheme ? { scheme: options.scheme } : {}),
-            ...(options.timezone ? { timezone: options.timezone } : {}),
             ...(state ? { state } : {}),
-            ...(steps.length > 0 ? { steps } : {}),
-            conditions: conditionsOf(options)
+            ...(steps.length > 0 ? { steps } : {})
           },
           options,
           now,

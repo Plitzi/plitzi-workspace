@@ -26,7 +26,7 @@ import type { RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 
 /**
- * `plitzi task take`: a task taken — its owner created exclusively, its files locked, its copy of the project made.
+ * `plitzi task next <task>`: a task taken — its owner created exclusively, its files locked, its copy of the project made.
  */
 
 export interface TakenTask {
@@ -44,7 +44,7 @@ export interface TakenTask {
 }
 
 /**
- * `plitzi task take`: the task's owner made exclusively — of two at once, the first wins and the other is told to take
+ * Taking a task: its owner made exclusively — of two at once, the first wins and the other is told to take
  * the next — its files locked, and its copy made: the project, the run's approved work over it, and the task's last
  * reviewed version if it was cut. Who takes it is the caller's own token; the copy it is run from, a task done, says nothing
  * here — a run's dev-1, completing t-body-type and asking for the next from its copy, was refused "without a

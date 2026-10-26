@@ -9,10 +9,11 @@ import { readExpectation } from '../options';
 
 import type { PlannedTask } from './model';
 import type { SpaceHandles } from '@plitzi/sdk-authoring';
+import type { Schema } from '@plitzi/sdk-shared';
 
 /**
  * What a plan's `page check --expect` names, held to the space as it is: an id it has no element of is said
- * at `run plan` — the task may make it, so it is a notice, not a refusal — with the id it more likely meant: a page
+ * at `run open --dry-run` — the task may make it, so it is a notice, not a refusal — with the id it more likely meant: a page
  * family's (`pet-luna-age-label` for `age-label`), or the nearest. A check that expects what is not there costs an
  * agent a round, and the lead the blocked task that asks why.
  */
@@ -49,19 +50,28 @@ export const expectedIds = (check: string): Expected[] =>
     });
   });
 
-/** The project's space as it is, authored: its pages and elements — none when it does not author, which its checks say. */
-export const authoredHandles = async (root: string): Promise<SpaceHandles | undefined> => {
+/**
+ * The project's space as it is, authored: its schema — what the router reads — and its pages' and elements' handles;
+ * none when it does not author, which its checks say.
+ */
+export const authoredSpace = async (root: string): Promise<{ schema: Schema; handles: SpaceHandles } | undefined> => {
   const project = await loadProjectSpace(root);
   if ('problem' in project) {
     return undefined;
   }
 
   try {
-    return authorSpace(project.space, project.authoring).handles;
+    const { schema, handles } = authorSpace(project.space, project.authoring);
+
+    return { schema, handles };
   } catch {
     return undefined;
   }
 };
+
+/** The project's pages and elements, authored: `authoredSpace`'s handles. */
+export const authoredHandles = async (root: string): Promise<SpaceHandles | undefined> =>
+  (await authoredSpace(root))?.handles;
 
 /** Every element id of components — their parts at any depth: what a page placing one draws. */
 export const partIdsOf = (components: unknown): string[] => {
@@ -189,10 +199,12 @@ export const checkedPaths = (check: string): { paths: string[]; status: boolean 
   });
 
 /** Whether no page of the space answers `path` but its not-found page: sent with 404. */
-export const fallsToNotFound = (handles: SpaceHandles, path: string): boolean => {
-  const page = pageFor(handles, path);
+export const fallsToNotFound = (authored: { schema: Schema; handles: SpaceHandles }, path: string): boolean => {
+  const page = pageFor(authored, path);
 
-  return page === undefined || (Object.hasOwn(handles.pages, page) && isNotFoundPage(handles.pages[page]));
+  return (
+    page === undefined || (Object.hasOwn(authored.handles.pages, page) && isNotFoundPage(authored.handles.pages[page]))
+  );
 };
 
 /**
@@ -240,13 +252,13 @@ export const notFoundNotices = async (root: string, tasks: readonly PlannedTask[
     return [];
   }
 
-  const handles = await authoredHandles(root);
-  if (!handles) {
+  const authored = await authoredSpace(root);
+  if (!authored) {
     return [];
   }
 
   return asked
-    .filter(({ path }) => fallsToNotFound(handles, path))
+    .filter(({ path }) => fallsToNotFound(authored, path))
     .map(({ task, said, path }) => {
       const later = checkedAfter(tasks, asked, task, path);
 

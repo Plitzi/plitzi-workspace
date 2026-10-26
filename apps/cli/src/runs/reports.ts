@@ -12,7 +12,7 @@ import { RUN_REPORTS_DIR } from '../scaffold/paths';
  * person's machine's, and everything a fix of Plitzi needs is in it, the run long gone.
  *
  * - `feedback.md` — what of the run is Plitzi's, to read first (`feedback.ts`).
- * - `report.md` — the run's report, whole; `report.json` the same as data (`version`ed): what `run bench` and the
+ * - `report.md` — the run's report, whole; `report.json` the same as data (`version`ed): what `run report --bench` and the
  *   estimates of the next plans read.
  * - `records/` — the run's own records, as it kept them: its plan, log, usage, messages, each task's definition, state,
  *   rounds and reviews — what the report is computed from, to compute it again. Never the project's files.

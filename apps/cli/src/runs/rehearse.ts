@@ -8,7 +8,7 @@ import type { RunTask } from './model';
 import type { Ownership } from './ownership';
 
 /**
- * `plitzi run rehearse`: a plan played out before any agent starts — every agent taking the best task it may
+ * `plitzi run open --dry-run --rehearse`: a plan played out before any agent starts — every agent taking the best task it may
  * as `task next` would, each task worked for its estimate, each reviewer — a tester, or the lead with none — reviewing
  * one at a time, what depends on a task ready
  * once it is approved. No run is opened and nothing is written: what it answers is the schedule the plan implies — how

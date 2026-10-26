@@ -211,7 +211,7 @@ export const extendRun = async (
 
   const states = new Map(views.map(view => [view.task.id, view.state.status]));
   const isReady = (task: RunTask): boolean => task.dependsOn.every(dependency => states.get(dependency) === 'done');
-  // A stage is seen before it is stacked: `run plan` with a run open says it so — every check above, nothing written.
+  // A stage is seen before it is stacked: `run open --dry-run` with a run open says it so — every check above, nothing written.
   if (dryRun) {
     return {
       runId,

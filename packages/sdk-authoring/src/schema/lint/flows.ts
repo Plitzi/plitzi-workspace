@@ -660,6 +660,43 @@ const warnOverlaysNeverOpened = (ctx: LintContext): void => {
 };
 
 /** Every flow of every element, page and layout. */
+/**
+ * A flow that goes on after `auth.login` on a page only a signed-out visitor sees (`accessLevel: 'public'`, sending the
+ * others on): the page leaves as the login succeeds — to `?redirect=`, else its `unauthorizedRedirect` — and what the
+ * flow does next races it. encore-10's sign-in read `navigation.queryParams.next` after the login, from the page it
+ * had left, and sent everybody home.
+ */
+const warnStepsAfterLogin = (
+  ctx: LintContext,
+  flow: readonly ElementInteraction[],
+  where: string,
+  hostId: string
+): void => {
+  const host = ctx.element(hostId);
+  const page = host ? ctx.element(host.definition.rootId) : undefined;
+  if (page?.attributes.accessLevel !== 'public' || page.attributes.unauthorizedBehaviour !== 'redirect') {
+    return;
+  }
+
+  const login = flow.findIndex(
+    node => node.type === 'globalCallback' && node.elementId === 'auth' && node.action === 'login'
+  );
+  if (login === -1 || login === flow.length - 1) {
+    return;
+  }
+
+  ctx.warn(
+    'login-then-leaves',
+    `${where}: its flow goes on after \`auth.login\` (${flow
+      .slice(login + 1)
+      .map(node => `"${node.action}"`)
+      .join(
+        ', '
+      )}) on ${ctx.describe(page.id)}, a page for signed-out visitors — it sends whoever signs in on as the login succeeds, to \`?redirect=\` or its \`unauthorizedRedirect\`, and those steps race it. End the flow at the login.`,
+    hostId
+  );
+};
+
 export const lintFlows = (ctx: LintContext): void => {
   for (const host of Object.values(ctx.flat)) {
     const where = ctx.describe(host.id);
@@ -674,6 +711,7 @@ export const lintFlows = (ctx: LintContext): void => {
       }
 
       warnToggleInBranches(ctx, flow, where, host.id);
+      warnStepsAfterLogin(ctx, flow, where, host.id);
       const stepIds = new Set(flow.map(node => node.id));
       const steps = new Map(flow.map(node => [node.id, node]));
       for (const node of flow) {

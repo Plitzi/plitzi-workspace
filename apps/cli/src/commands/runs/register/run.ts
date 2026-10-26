@@ -20,7 +20,6 @@ import {
   runRestore,
   runResume,
   runShow,
-  runState,
   runStatus,
   runStop,
   runMonitor,
@@ -31,10 +30,8 @@ import {
   runAmend,
   runExtend,
   runTeam,
-  runTeamCheck,
   runTeamSet,
   runTeamUnset,
-  runNote,
   runSettle,
   runBacklog,
   runFeedback,
@@ -156,16 +153,6 @@ export const registerRunGroup = (program: Command): Command => {
     .action((name: string, options: AgentOptions) => runAgent(name, options));
 
   runGroup
-    .command('plan')
-    .description('Hold a plan the lead wrote to the rules — disjoint files, no cycles — expand it and estimate it')
-    .argument(
-      '<file>',
-      'The plan, JSON: { version: 1, runId, goal, tasks: [{ id, title, files, dependsOn, priority, estimateMinutes, acceptance }] }'
-    )
-    .option(...JSON_OPTION)
-    .action((file: string, options: PlanOptions) => runPlan(file, options));
-
-  runGroup
     .command('extend')
     .description(
       'Stack the next plan on an open run: its tasks begin from the run’s work, and one finish writes both into the project'
@@ -233,40 +220,27 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...JSON_OPTION)
     .action((name: string, options: RunCommandOptions) => runTeamUnset(name, options));
 
-  team
-    .command('check')
-    .description('Whether .plitzi/team.json is a team the runs read as written — every wrong or unknown field said')
-    .option(...JSON_OPTION)
-    .action((options: RunCommandOptions) => runTeamCheck(options));
-
-  runGroup
-    .command('rehearse')
-    .description(
-      'Play a plan out before any agent starts: who works what when, the critical path, the lead’s reviews, the files several tasks change at once, and how many agents are worth it — nothing opened'
-    )
-    .argument('<file>', 'The plan, as plitzi run plan takes it')
-    .option('--review <duration>', 'How long the lead takes over one review (90s, 8m)', duration, 5 * 60_000)
-    .option(...JSON_OPTION)
-    .action((file: string, options: PlanOptions & { review?: number }) => runRehearse(file, options));
-
   runGroup
     .command('open')
     .description(
-      'Open a run from a plan: its folder, every file it touches backed up — a person confirms above the threshold. Or on the ask alone (--spike): one spike, the scope, whose result is the tasks'
+      'Open a run from a plan the lead wrote: its folder, every file it touches backed up — a person confirms above the threshold. --dry-run holds it to the rules and opens nothing (on the ask alone: plitzi run start)'
     )
-    .argument('[file]', 'The plan — left out with --spike')
+    .argument(
+      '<file>',
+      'The plan, JSON: { version: 1, runId, goal, tasks: [{ id, title, files, dependsOn, priority, estimateMinutes, acceptance }] }'
+    )
     .option(
-      '--spike <ask>',
-      'The person’s ask, with no plan: the run opens on its scope, a lead’s spike that ends with the tasks (plitzi task spike s-scope --done "…" --tasks <stage.json>)'
+      '--dry-run',
+      'Hold the plan to the rules — disjoint files, no cycles — expand it and estimate it, and open nothing'
     )
-    .option('--run <name>', 'With --spike: the run’s name')
+    .option(
+      '--rehearse',
+      'With --dry-run: play it out — who works what when, the critical path, the reviews, the files several tasks change at once, and how many agents are worth it'
+    )
+    .option('--review <duration>', 'With --rehearse: how long one review takes (90s, 8m)', duration, 5 * 60_000)
     .option(
       '--despite-checks <why>',
       'Open it though the project fails its own checks — why, told to every task (it is refused otherwise)'
-    )
-    .option(
-      '--reference <site>',
-      'With --spike: the site the run copies — https://www.example.com — kept by run reference'
     )
     .option(
       '--lead-finishes',
@@ -274,32 +248,23 @@ export const registerRunGroup = (program: Command): Command => {
     )
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
-    .action((file: string | undefined, options: PlanOptions) => runOpen(file, options));
-
-  runGroup
-    .command('state')
-    .description(
-      'Every run of the project not yet written into it, and where it stands — ready ones first, each with the command that applies it'
-    )
-    .option(...JSON_OPTION)
-    .action((options: RunCommandOptions) => runState(options));
+    .action((file: string, options: PlanOptions & { dryRun?: boolean; rehearse?: boolean; review?: number }) =>
+      options.rehearse === true
+        ? runRehearse(file, options)
+        : options.dryRun === true
+          ? runPlan(file, options)
+          : runOpen(file, options)
+    );
 
   runGroup
     .command('status')
-    .description('A run at a glance: a line per task, then what needs attention')
-    .argument('[run]', 'The run — the only open one when left out')
-    .option(...JSON_OPTION)
-    .action((run: string | undefined, options: RunCommandOptions) => runStatus(run, options));
-
-  runGroup
-    .command('note')
     .description(
-      'Tell every task what holds for the whole run — a known issue, a decision: the ones in hand and those taken later'
+      'A run at a glance: a line per task, then what needs attention — with none open (or --all), every run not yet written into the project, ready ones first, each with the command that applies it'
     )
-    .argument('<text>', 'The note — or - to read it from stdin')
-    .option(...RUN_OPTION)
+    .argument('[run]', 'The run — the only open one when left out')
+    .option('--all', 'Every run not yet written into the project, not one')
     .option(...JSON_OPTION)
-    .action((text: string, options: RunCommandOptions) => runNote(text, options));
+    .action((run: string | undefined, options: RunCommandOptions & { all?: boolean }) => runStatus(run, options));
 
   runGroup
     .command('settle')
@@ -417,7 +382,7 @@ export const registerRunGroup = (program: Command): Command => {
     .action((run: string | undefined, options: WatchRunOptions) => runWatch(run, options));
 
   runGroup
-    .command('keep')
+    .command('keep', { hidden: true })
     .description(
       "The run's keeper: starts the agents the run asks for — its base when not running, one on demand for waiting work — in the team's options.launch harness, until the run is gone. The run starts it"
     )
@@ -540,6 +505,10 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...HELPED_OPTION)
     .option('--full', 'The whole report — each finding with its evidence and fix, the flow, the cost, the bench')
     .option(
+      '--bench',
+      'Every run of the project measured the same way, oldest first: minutes a task, rounds, checks failed, waits, cost'
+    )
+    .option(
       '--plitzi',
       'What the run says of Plitzi itself, now (.plitzi/plitzi-reports/runs/<run>/feedback.md) — written by the finish too: its agents’ notices of Plitzi, the refusals, the crashes, the checks no one’s work failed — for Plitzi’s team'
     )
@@ -549,17 +518,19 @@ export const registerRunGroup = (program: Command): Command => {
     .action(
       (
         run: string | undefined,
-        options: RunCommandOptions & { summary?: string; full?: boolean; plitzi?: boolean } & ExperienceFlags
-      ) => (options.plitzi === true ? runFeedback(run, options) : runReport(run, options))
+        options: RunCommandOptions & {
+          summary?: string;
+          full?: boolean;
+          plitzi?: boolean;
+          bench?: boolean;
+        } & ExperienceFlags
+      ) =>
+        options.bench === true
+          ? runBench(options)
+          : options.plitzi === true
+            ? runFeedback(run, options)
+            : runReport(run, options)
     );
-
-  runGroup
-    .command('bench')
-    .description(
-      'Every run of the project measured the same way, oldest first: minutes a task, rounds, checks failed, waits, cost'
-    )
-    .option(...JSON_OPTION)
-    .action((options: RunCommandOptions) => runBench(options));
 
   runGroup
     .command('resolve')

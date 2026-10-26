@@ -23,24 +23,33 @@ import type { ExperienceFlags } from '../../runs/experience';
  * one run's record, its report and its preview.
  */
 
-export const runState = (options: RunCommandOptions): Promise<void> =>
+/** Every run not yet written into the project, ready ones first: what `run status` says with none open, or `--all`. */
+const runsText = (runs: Awaited<ReturnType<typeof runsState>>): string =>
+  runs.length === 0
+    ? 'No run of this project is waiting to be written into it.'
+    : runs
+        .map(run =>
+          run.ready
+            ? `${chalk.green('ready')} ${run.runId} — ${run.goal} (${String(run.done)} of ${String(run.total)} done)\n  ${run.leadFinishes ? 'the lead may apply it, as you allowed — or you: ' : 'apply it, in your terminal: '}${run.apply}`
+            : `${chalk.yellow(run.status)} ${run.runId} — ${run.goal} (${String(run.done)} of ${String(run.total)} done${run.activeOn ? `, on ${run.activeOn}` : ', released'}${run.attention > 0 ? `, ${String(run.attention)} needing attention` : ''}): plitzi run status ${run.runId}`
+        )
+        .join('\n');
+
+/**
+ * `plitzi run status`: a run at a glance — or, with none open, several, or `--all`, every run not yet written into the
+ * project (what `run status --all` was, beside it).
+ */
+export const runStatus = (runId: string | undefined, options: RunCommandOptions & { all?: boolean }): Promise<void> =>
   act(
     options,
-    ctx => runsState(ctx),
-    runs =>
-      runs.length === 0
-        ? 'No run of this project is waiting to be written into it.'
-        : runs
-            .map(run =>
-              run.ready
-                ? `${chalk.green('ready')} ${run.runId} — ${run.goal} (${String(run.done)} of ${String(run.total)} done)\n  ${run.leadFinishes ? 'the lead may apply it, as you allowed — or you: ' : 'apply it, in your terminal: '}${run.apply}`
-                : `${chalk.yellow(run.status)} ${run.runId} — ${run.goal} (${String(run.done)} of ${String(run.total)} done${run.activeOn ? `, on ${run.activeOn}` : ', released'}${run.attention > 0 ? `, ${String(run.attention)} needing attention` : ''}): plitzi run status ${run.runId}`
-            )
-            .join('\n')
+    async ctx =>
+      runId === undefined &&
+      options.run === undefined &&
+      (options.all === true || (await activeRuns(ctx.root)).length !== 1)
+        ? { kind: 'runs' as const, runs: await runsState(ctx) }
+        : { kind: 'run' as const, run: await viewRun(ctx, await runOf(ctx, options, runId, { anyone: true })) },
+    shown => (shown.kind === 'runs' ? runsText(shown.runs) : runText(shown.run))
   );
-
-export const runStatus = (runId: string | undefined, options: RunCommandOptions): Promise<void> =>
-  act(options, async ctx => viewRun(ctx, await runOf(ctx, options, runId, { anyone: true })), runText);
 
 export interface WatchRunOptions extends RunCommandOptions {
   interval?: number;
@@ -237,7 +246,7 @@ export const runPreview = async (
   }
 };
 
-/** `plitzi run bench`: every run of the project measured the same way, oldest first — whether the team gets better. */
+/** `plitzi run report --bench`: every run of the project measured the same way, oldest first — whether the team gets better. */
 export const runBench = (options: RunCommandOptions): Promise<void> =>
   act(
     options,

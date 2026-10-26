@@ -1,25 +1,21 @@
 import type { RunCommandOptions } from './shell';
+import type { VisitorOptions } from '../register/options';
 
-/** What `task look` is asked: how it reads, pictures and compares a task's pages. */
-export interface LookOptions extends RunCommandOptions {
+/**
+ * What `task look` is asked: how it reads, pictures and compares a task's pages — as the visitor the page commands
+ * take (`withVisitorOptions`): `--as` a page for signed-in visitors as one of them, `--guest` a guest's though its
+ * acceptance reads it signed in (a run's lead looked at a guest's conversation through page check, by hand).
+ */
+export interface LookOptions extends RunCommandOptions, Omit<VisitorOptions, 'url'> {
   /** Looked at anew, though it was looked at already as asked and nothing changed since. */
   fresh?: boolean;
   /** Clicked once each page settles, as `page check --click`: an open state looked at, not only the page at rest. */
   click?: string;
-  /** The visitor's time zone (IANA) every page is read in: the machine's when left out. */
-  timezone?: string;
   /**
    * The pointer put over it once each page settles, as `page check --hover`: what that changes said, and the page
    * pictured with it there — at 1440 alone, as a phone has no pointer to hover with.
    */
   hover?: string;
-  /** Signed in first as this account, as `page check --as`: the password from `PLITZI_CHECK_PASSWORD`. */
-  as?: string;
-  /**
-   * Read as a guest, though a page sends one away or its acceptance reads it signed in, as `page check --guest`: a task
-   * about what a guest sees (a run's lead looked at a guest's conversation through page check, by hand).
-   */
-  guest?: boolean;
   /**
    * Played on each page before it is pictured, as `page shot --steps`: a UI only a channel's message or a flow shows —
    * a notice set in `state` — looked at, where a look could not reach it (a run's lead, at a "room opened" notice).

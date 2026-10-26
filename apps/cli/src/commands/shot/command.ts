@@ -9,11 +9,12 @@ import { dataUrl, launchBrowser, projectOrigin } from '../../browser';
 import { copyOf, runPaths } from '../../runs/paths';
 import { keptPage } from '../../runs/reference';
 import { PROJECT_TMP } from '../../scaffold/paths';
-import { checkAccount, CHECK_PASSWORD_ENV, projectAccount } from '../check';
+import { CHECK_PASSWORD_ENV } from '../check';
 import { projectHere } from '../existingProject';
 import { pairOf } from '../measure';
 import { parseSteps } from '../shotSteps';
 import { fail } from '../terminal';
+import { visitorAsked, visitViewOf } from '../visit';
 import { capture, pictureOf, readPage } from './capture';
 import {
   compareAfterClicks,
@@ -111,16 +112,10 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
-  // Signed in when asked — or, by the project's account, where a page sends a guest away (unless --guest).
-  const account = options.as === undefined ? undefined : await checkAccount(project.root, options.as);
-  if (account && 'problem' in account) {
-    fail(`--as ${account.problem}.`);
-
+  const visitor = await visitorAsked(project.root, options, { own: !external });
+  if (visitor === null) {
     return;
   }
-
-  const own =
-    options.as === undefined && options.guest !== true && !external ? await projectAccount(project.root) : undefined;
 
   const browser = await launchBrowser(project.root);
   if ('problem' in browser) {
@@ -276,10 +271,8 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       ...(clip ? { clip, ...(clicks.length > 0 || steps !== undefined ? { clipLater: true } : {}) } : {}),
       ...(options.scrollTo ? { scrollTo: options.scrollTo } : {}),
       ...(options.viewport ? { viewport: true } : {}),
-      ...(options.presence ? { presence: true } : {}),
-      ...(options.timezone ? { timezone: options.timezone } : {}),
-      ...(account ? { account } : {}),
-      ...(own ? { projectAccount: own } : {}),
+      ...visitViewOf(options),
+      ...visitor,
       ...(fromLoad ? { fromLoad } : {}),
       // One picture shows every arrival as it ends — a part clipped or scrolled to too, whose arrivals were taken as they
       // began, blank (a run's schedule rows, sent back for it). Frames, clicks and steps are about what moves, so
@@ -468,7 +461,8 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
           : visitorsOn(project.root, browser, where.origin, {
               width: view.width,
               ...(view.scheme ? { scheme: view.scheme } : {}),
-              ...(view.timezone ? { timezone: view.timezone } : {})
+              ...(view.timezone ? { timezone: view.timezone } : {}),
+              ...(view.conditions ? { conditions: view.conditions } : {})
             });
       const played = await playSteps(taken, how, steps, visitors).finally(() => visitors?.close());
       if ('problem' in played) {
@@ -574,8 +568,8 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     if (report.sentTo) {
       console.log(
         chalk.yellow(
-          account
-            ? `${pathname} sent the browser to ${report.sentTo}, signed in as ${account.username}: the picture is of ${report.sentTo} — that account may not see ${pathname}`
+          visitor.account
+            ? `${pathname} sent the browser to ${report.sentTo}, signed in as ${visitor.account.username}: the picture is of ${report.sentTo} — that account may not see ${pathname}`
             : `${pathname} sent the browser to ${report.sentTo}: the picture is of ${report.sentTo}. A page for signed-in visitors? \`--as <username>\` signs in first, the password in ${CHECK_PASSWORD_ENV} in .env`
         )
       );

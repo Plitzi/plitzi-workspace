@@ -102,7 +102,7 @@ export interface AcceptanceResult {
 export interface PlannedTask {
   id: string;
   title: string;
-  /** What it writes, by project path; a root's own modules are added by `plitzi run plan`. Disjoint across tasks. */
+  /** What it writes, by project path; a root's own modules are added by `plitzi run open --dry-run`. Disjoint across tasks. */
   files: string[];
   dependsOn: string[];
   priority: Priority;
@@ -112,18 +112,18 @@ export interface PlannedTask {
   /** Who in the team does it: developer (when left out), designer, reviewer, tester, writer… — `task next --role` picks by it. */
   role?: string;
   /**
-   * Files outside its own it means to change — a shared one, a done task's: not held by it, but said by `run plan`, so
+   * Files outside its own it means to change — a shared one, a done task's: not held by it, but said by `run open --dry-run`, so
    * the lead sees two tasks on one file before they meet at `complete`.
    */
   touches?: string[];
   /**
-   * The project's backlog items it does (`b-62`): open ones, checked at `run plan`, and closed once the run is applied —
+   * The project's backlog items it does (`b-62`): open ones, checked at `run open --dry-run`, and closed once the run is applied —
    * said by the task that did them, never closed by hand one by one.
    */
   closes?: string[];
   /**
    * How much it asks of the model that works it (`light`, `standard`, `high`): an agent started at a level takes it
-   * at that level or above. Left out, `run plan` sets one and says why — what many tasks build on is `high`.
+   * at that level or above. Left out, `run open --dry-run` sets one and says why — what many tasks build on is `high`.
    */
   quality?: Quality;
   /**
@@ -176,7 +176,7 @@ export interface RunPlan {
   leftOut?: string[];
   /**
    * What the job asks, piece by piece: each covered by a task's checked acceptance (`covers`) or left out with its
-   * reason — `run plan` refuses a piece that is neither (`inventory.ts`).
+   * reason — `run open --dry-run` refuses a piece that is neither (`inventory.ts`).
    */
   inventory?: InventoryItem[];
   /**
@@ -234,7 +234,7 @@ export interface RunRecord {
   openedAt: string;
   activeOn: { machine: string; since: string };
   pinned: Pinned;
-  /** How many tasks may be worked at once — one an agent: `task take` refuses past it. */
+  /** How many tasks may be worked at once — one an agent: taking one is refused past it. */
   agents: number;
   /** What it was estimated at when it opened: what its report compares against. */
   estimate: { tasks: number; agents: number; wallMinutes: number; totalMinutes: number };
@@ -324,7 +324,7 @@ export interface TaskState {
   waitingFor?: Waiting;
   /** `review`: past the round limit, for the lead to decide — approve it as it is, or answer it (`task unblock`). */
   /** `spike`: what its agent asked found out first — the lead's answer, lifting it, is the task's finding. */
-  blockedBy?: { reason: string; needs: Needs; review?: boolean; spike?: string };
+  blockedBy?: { reason: string; needs: Needs; review?: boolean };
   cutAt?: { step: string; reason: string; at: string };
   notes: TaskNote[];
   /** What it changed, as of its last `complete`: by project path. */
@@ -725,6 +725,13 @@ export const isTaskState = (value: unknown): value is TaskState =>
       )
   ) &&
   isString(value.updatedAt);
+
+/**
+ * A task blocked on a question only the lead answers (`task block`, the lead's by default) — never a review escalated past
+ * its rounds, which is a review: the lead lifts it with the answer, kept as the task's finding.
+ */
+export const asksLead = (state: Pick<TaskState, 'blockedBy'>): boolean =>
+  state.blockedBy?.needs === 'lead' && state.blockedBy.review !== true;
 
 export const isTaskOwner = (value: unknown): value is TaskOwner =>
   isRecord(value) &&

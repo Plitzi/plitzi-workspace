@@ -5,13 +5,13 @@
  */
 
 export type { RunCommandOptions } from './shell';
-export { runAllowFinish, runAmend, runExtend, runNote, runOpen, runPlan, runRehearse, runSettle } from './plan';
+export { runAllowFinish, runAmend, runExtend, runOpen, runPlan, runRehearse, runSettle } from './plan';
 export type { PlanOptions } from './plan';
-export { runTeam, runTeamCheck, runTeamSet, runTeamUnset } from './team';
+export { runTeam, runTeamSet, runTeamUnset } from './team';
 export { runMonitor } from './monitor';
 export { runUpgrade } from './upgrade';
 export type { UpgradeRunOptions } from './upgrade';
-export { runBench, runCopy, runKeep, runPreview, runReport, runShow, runState, runStatus, runWatch } from './watch';
+export { runBench, runCopy, runKeep, runPreview, runReport, runShow, runStatus, runWatch } from './watch';
 export type { WatchRunOptions } from './watch';
 export {
   runAbort,
@@ -28,7 +28,8 @@ export {
 } from './lifecycle';
 export type { FinishOptions } from './lifecycle';
 export { taskNext, taskTake } from './next';
-export { taskClaim, taskClaims, taskDiscard, taskRelease, taskRequest, taskSpike, taskWait } from './files';
+export { claimCommand, taskClaim, taskClaims, taskDiscard, taskRequest, taskSpike } from './files';
+export type { ClaimOptions } from './files';
 export { taskBlock, taskCheck, taskComplete, taskNote, taskProgress, taskUnblock } from './work';
 export { taskReassign, taskRevert } from './reassign';
 export { taskEscalate } from './escalate';

@@ -1,14 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
+import { authorSpace, container } from '@plitzi/sdk-authoring';
+
 import { checkedPaths, fallsToNotFound } from './expectations';
 
-import type { SpaceHandles } from '@plitzi/sdk-authoring';
-
-const page = (id: string, path: string, slug = path.slice(1)) => ({ id, path, slug, elements: {} });
-// A stand-in of the handles the space authors: only the pages are read.
-const handles = {
-  pages: { home: page('home', '/'), fight: page('fight', '/combate/:slug'), lost: page('lost', '/*', '*') }
-} as unknown as SpaceHandles;
+const authored = authorSpace({
+  name: 'Fights',
+  permanentUrl: 'fights',
+  pages: [
+    { name: 'Home', slug: '', isDefault: true, body: [container({ id: 'home-box' })] },
+    { name: 'Fight', slug: 'combate/{{slug}}', body: [container({ id: 'fight-box' })] },
+    { name: 'Lost', slug: '*', body: [container({ id: 'lost-box' })] }
+  ]
+});
 
 // The lead's acceptance `page check /no-existe` had no --status 404, and could never pass.
 describe('a plan’s check of an address no page answers', () => {
@@ -23,8 +27,8 @@ describe('a plan’s check of an address no page answers', () => {
   });
 
   it('falls to the not-found page where no page of the space answers', () => {
-    expect(fallsToNotFound(handles, '/no-existe')).toBe(true);
-    expect(fallsToNotFound(handles, '/combate/la-parce')).toBe(false);
-    expect(fallsToNotFound(handles, '/')).toBe(false);
+    expect(fallsToNotFound(authored, '/no-existe')).toBe(true);
+    expect(fallsToNotFound(authored, '/combate/la-parce')).toBe(false);
+    expect(fallsToNotFound(authored, '/')).toBe(false);
   });
 });

@@ -28,7 +28,7 @@ import type { Team } from '../team';
 import type { RunContext } from './context';
 
 /**
- * `plitzi run plan` and `run open`: a plan read and held to the rules, with its primer and the team that works it — and
+ * `plitzi run open` — and its `--dry-run`: a plan read and held to the rules, with its primer and the team that works it — and
  * opened, every file it touches backed up first.
  */
 
@@ -107,7 +107,7 @@ export const readPlanFile = async (
   return parsed;
 };
 
-/** `plitzi run plan`: the plan held to the rules, expanded and estimated — nothing written. */
+/** `plitzi run open --dry-run`: the plan held to the rules, expanded and estimated — nothing written. */
 export const checkPlanFile = async (ctx: RunContext, file: string): Promise<CheckedPlan> => {
   await assertNoOtherRun(ctx);
 

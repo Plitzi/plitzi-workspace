@@ -55,11 +55,11 @@ const TOKEN = /^([a-z0-9][a-z0-9_-]*)\.([a-z0-9][a-z0-9_-]*)\.([0-9a-f]{48})$/;
 interface Where {
   /** The project the runs are of — the project itself, also when the command runs in a task's copy. */
   root: string;
-  /** Who the copy the command runs in is, as `task take` wrote it there: none outside a copy. */
+  /** Who the copy the command runs in is, as taking it wrote it there: none outside a copy. */
   copy?: { token: string; agent: string };
 }
 
-/** Who a task's copy is, as `task take` wrote it: what a command run inside it needs no flag for. */
+/** Who a task's copy is, as taking it wrote it: what a command run inside it needs no flag for. */
 const copyTask = async (work: string): Promise<Where['copy']> => {
   const read: unknown = await fs
     .readFile(path.join(work, COPY_TASK_FILE), 'utf-8')

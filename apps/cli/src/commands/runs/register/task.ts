@@ -1,13 +1,12 @@
 import { Option } from 'commander';
 
 import {
+  claimCommand,
   taskAnswer,
   taskAsk,
   taskBlock,
   taskSpike,
-  taskClaim,
   taskCheck,
-  taskClaims,
   taskComplete,
   taskContextCommand,
   taskShow,
@@ -22,14 +21,12 @@ import {
   taskPropose,
   taskProposals,
   taskReassign,
-  taskRelease,
   taskRequest,
   taskEscalate,
   taskReview,
   taskRevert,
   taskTake,
-  taskUnblock,
-  taskWait
+  taskUnblock
 } from '..';
 import {
   AGENT_OPTION,
@@ -42,10 +39,11 @@ import {
   TOKEN_OPTION
 } from './options';
 import { groupHelp } from './run';
-import { count, duration, FOLLOW_MS, fraction, timeZone } from '../../../options';
+import { count, duration, FOLLOW_MS, fraction } from '../../../options';
 import { BLOCK_NEEDS } from '../../../runs/model';
+import { withVisitorOptions } from '../../register/options';
 
-import type { AnswerOptions, LookOptions, ProposeOptions, ReviewOptions, RunCommandOptions } from '..';
+import type { AnswerOptions, ClaimOptions, LookOptions, ProposeOptions, ReviewOptions, RunCommandOptions } from '..';
 import type { ExperienceFlags } from '../../../runs/experience';
 import type { TellOptions } from '../talk';
 import type { Command } from 'commander';
@@ -93,8 +91,9 @@ export const registerTaskGroup = (program: Command): Command => {
   taskGroup
     .command('next')
     .description(
-      'The next task, taken — waiting until one is ready: the most urgent — its priority or the highest of what waits on it — then the longest chain still to do'
+      'The next task, taken — waiting until one is ready: the most urgent — its priority or the highest of what waits on it — then the longest chain still to do. Named, that one, taken now'
     )
+    .argument('[task]', 'A task to take by name, now: its files locked, its copy made, its token answered')
     .option(
       '--role <roles>',
       'Only a task for these roles, separated by commas: developer, designer, reviewer, tester, writer…'
@@ -113,46 +112,25 @@ export const registerTaskGroup = (program: Command): Command => {
     )
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((options: RunCommandOptions & { role?: string; wait: boolean; peek?: boolean; timeout?: number }) =>
-      taskNext(options)
+    .action(
+      (
+        task: string | undefined,
+        options: RunCommandOptions & { role?: string; wait: boolean; peek?: boolean; timeout?: number }
+      ) => (task === undefined ? taskNext(options) : taskTake(task, options))
     );
-
-  taskGroup
-    .command('take')
-    .description('Take a task: its files locked, its copy made, and its token answered')
-    .argument('<task>', 'The task')
-    .option('--role <role>', 'The role taking it: refused for another role’s task')
-    .option(...RUN_OPTION)
-    .option(...AGENT_OPTION)
-    .option(...JSON_OPTION)
-    .action((task: string, options: RunCommandOptions & { role?: string }) => taskTake(task, options));
 
   taskGroup
     .command('claim')
-    .description('Take shared files by turns — with none named, which files each task locks, why and since when')
-    .argument('[files...]', 'The project files')
-    .option(...TOKEN_OPTION)
-    .option(...RUN_OPTION)
-    .option(...JSON_OPTION)
-    .action((files: string[], options: RunCommandOptions) =>
-      files.length === 0 ? taskClaims(options) : taskClaim(files, options)
-    );
-
-  taskGroup
-    .command('release')
-    .description('Let a file held by turns go to the next task waiting for it')
-    .argument('<file>', 'The project file')
-    .option(...TOKEN_OPTION)
-    .option(...JSON_OPTION)
-    .action((file: string, options: RunCommandOptions) => taskRelease(file, options));
-
-  taskGroup
-    .command('wait')
     .description(
-      'Wait for a file another task holds; it comes with the approved version. Exits 11, or with --follow stays until it is yours'
+      'Take shared files by turns, --wait for one another task holds, or --release one to the next task waiting — with none named, which files each task locks, why and since when'
     )
-    .argument('<file>', 'The project file')
-    .option('--follow', 'Stay until the file is yours, giving the task’s sign of life meanwhile')
+    .argument('[files...]', 'The project files')
+    .option(
+      '--wait',
+      'Wait for a file another task holds: it comes with the approved version. Exits 11, or with --follow stays until it is yours'
+    )
+    .option('--release', 'Let a file held by turns go to the next task waiting for it')
+    .option('--follow', 'With --wait: stay until the file is yours, giving the task’s sign of life meanwhile')
     .option(
       '--timeout <duration>',
       'With --follow: give up after this long, said, exit 11 (90s, 8m, 1h)',
@@ -160,10 +138,9 @@ export const registerTaskGroup = (program: Command): Command => {
       FOLLOW_MS
     )
     .option(...TOKEN_OPTION)
+    .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((file: string, options: RunCommandOptions & { follow?: boolean; timeout?: number }) =>
-      taskWait(file, options)
-    );
+    .action((files: string[], options: ClaimOptions) => claimCommand(files, options));
 
   taskGroup
     .command('discard')
@@ -187,12 +164,9 @@ export const registerTaskGroup = (program: Command): Command => {
   taskGroup
     .command('spike')
     .description(
-      'A spike — finding out before building: the task in hand blocked on it, saying what; <spike> --done with what was found and --tasks with the tasks it makes — a scout’s proposed to the lead; the lead’s --approve or --changes on them'
+      'A spike — research of the run’s, finding out before building: <spike> --done with what was found and --tasks with the tasks it makes — a scout’s proposed to the lead; the lead’s --approve or --changes on them. A question your task needs answered is a block (task block)'
     )
-    .argument(
-      '[question|task]',
-      'What needs finding out ("which layers make the original’s warm light") — or, with --done, --approve or --changes, the spike'
-    )
+    .argument('[spike]', 'The spike')
     .option(
       '--done <findings>',
       'A scout’s or the lead’s: what was found — kept with the spike, read by every task that waits for it'
@@ -419,60 +393,51 @@ export const registerTaskGroup = (program: Command): Command => {
         taskMessage(task, text ?? '', options)
     );
 
-  taskGroup
-    .command('look')
-    .description(
-      'Look at a task in review in one go: its copy served, page check from it at 1440 and 390, a picture light and dark of each page — then stopped'
-    )
-    .argument('<task>', 'The task in review')
-    .argument('[paths...]', 'Its pages: those its files are drawn at when left out')
-    .option(
-      '--fresh',
-      'Look anew, though it was looked at as asked and nothing changed since (it says that look again)'
-    )
-    .option('--click <id>', 'Click an element once each page settles: the state it opens, looked at too')
-    .option(
-      '--hover <id>',
-      'Put the pointer over an element once each page settles: what that changes, said, and pictured at 1440'
-    )
-    .option(
-      '--steps <script>',
-      'Played on each page before it is pictured, as page shot --steps — "state notice {"room":"r1"}" shows what only a message or a flow makes; the check reads the page at rest'
-    )
-    .option(
-      '--element <id>',
-      'Read an element in the page — its attributes, box and classes — once for each',
-      (id: string, before: string[] = []) => (before.includes(id) ? before : [...before, id])
-    )
-    .option(
-      '--before',
-      'Each page beside the run before the task — its approved work — and what changed, section by section: what it moved, and that nothing else did (a designer’s look of the UI it reviews does it unless --no-before)'
-    )
-    .option('--no-before', 'Not beside the run before it: the designer’s look of the UI it reviews, as it is alone')
-    .option(
-      '--as <username>',
-      'Look signed in as this account — a page for signed-in visitors as one of them; the password from PLITZI_CHECK_PASSWORD in the project’s .env'
-    )
-    .option('--guest', 'Look as a guest, though a page sends one away or its acceptance reads it signed in')
-    .option(
-      '--status <code>',
-      'The status its pages are sent with — 404 for a not-found page — as page check --status',
-      Number
-    )
-    .option('--width <px>', 'The widths looked at, comma-separated (1440,390 when left out)')
-    .addOption(
-      new Option(
-        '--timezone <zone>',
-        'The visitor’s time zone (IANA) its pages are read in: the machine’s when left out'
-      ).argParser(timeZone)
-    )
-    .option(
-      '--scheme <schemes>',
-      'light, dark, or light,dark: each width in each (light at 1440, dark at 390 when left out)'
-    )
-    .option(...RUN_OPTION)
-    .option(...JSON_OPTION)
-    .action((task: string, paths: string[], options: LookOptions) => taskLook(task, paths, options));
+  withVisitorOptions(
+    taskGroup
+      .command('look')
+      .description(
+        'Look at a task in review in one go: its copy served, page check from it at 1440 and 390, a picture light and dark of each page — then stopped'
+      )
+      .argument('<task>', 'The task in review')
+      .argument('[paths...]', 'Its pages: those its files are drawn at when left out')
+      .option(
+        '--fresh',
+        'Look anew, though it was looked at as asked and nothing changed since (it says that look again)'
+      )
+      .option('--click <id>', 'Click an element once each page settles: the state it opens, looked at too')
+      .option(
+        '--hover <id>',
+        'Put the pointer over an element once each page settles: what that changes, said, and pictured at 1440'
+      )
+      .option(
+        '--steps <script>',
+        'Played on each page before it is checked and pictured, as page play writes them — "state notice {"room":"r1"}" shows what only a message or a flow makes; another account’s (as <account> …) only in the pictures'
+      )
+      .option(
+        '--element <id>',
+        'Read an element in the page — its attributes, box and classes — once for each',
+        (id: string, before: string[] = []) => (before.includes(id) ? before : [...before, id])
+      )
+      .option(
+        '--before',
+        'Each page beside the run before the task — its approved work — and what changed, section by section: what it moved, and that nothing else did (a designer’s look of the UI it reviews does it unless --no-before)'
+      )
+      .option('--no-before', 'Not beside the run before it: the designer’s look of the UI it reviews, as it is alone')
+      .option(
+        '--status <code>',
+        'The status its pages are sent with — 404 for a not-found page — as page check --status',
+        Number
+      )
+      .option('--width <px>', 'The widths looked at, comma-separated (1440,390 when left out)')
+      .option(
+        '--scheme <schemes>',
+        'light, dark, or light,dark: each width in each (light at 1440, dark at 390 when left out)'
+      )
+      .option(...RUN_OPTION)
+      .option(...JSON_OPTION),
+    { url: false }
+  ).action((task: string, paths: string[], options: LookOptions) => taskLook(task, paths, options));
 
   taskGroup
     .command('inbox')

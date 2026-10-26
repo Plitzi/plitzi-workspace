@@ -41,7 +41,7 @@ export const requestShared = async (
   if (planned && planned.id !== taskId && !(await sharedFiles(loaded)).has(clean)) {
     throw new RunRefusal(
       'claimed',
-      `${clean} is task "${planned.id}"'s own, not shared: a request is for a shared file. Ask ${planned.id} for the change (plitzi task propose ${planned.id} --change "…"), and put your copy's back (plitzi task discard ${clean}) — or wait for the file (plitzi task wait ${clean})`,
+      `${clean} is task "${planned.id}"'s own, not shared: a request is for a shared file. Ask ${planned.id} for the change (plitzi task propose ${planned.id} --change "…"), and put your copy's back (plitzi task discard ${clean}) — or wait for the file (plitzi task claim ${clean} --wait)`,
       { file: clean, holder: planned.id, next: `plitzi task propose ${planned.id} --change "…"` }
     );
   }

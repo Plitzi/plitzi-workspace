@@ -2,16 +2,7 @@ import { createServer } from 'node:http';
 
 import { describe, expect, it } from 'vitest';
 
-import { authorSpace, container } from '@plitzi/sdk-authoring';
-
-import {
-  comparedOf,
-  newSinceBefore,
-  partsComparedOf,
-  readablePictures,
-  redirectedPaths,
-  signedOutOnlyIn
-} from './lookParts';
+import { comparedOf, newSinceBefore, partsComparedOf, readablePictures, redirectedPaths } from './lookParts';
 
 // A look at a section the task added — the run before has none — took no picture at all.
 describe('the parts a look set beside the run before it', () => {
@@ -124,35 +115,5 @@ describe('the pages a task adds', () => {
     } finally {
       before.close();
     }
-  });
-});
-
-// encore-10's looks read /sign-in and /sign-up signed in as the project's account, were sent home and pictured Home.
-describe('the pages a look reads as a guest', () => {
-  it('are those only a signed-out visitor opens — never one with a signed-in twin', () => {
-    const { handles } = authorSpace({
-      name: 'Guests',
-      permanentUrl: 'guests',
-      pages: [
-        { name: 'Home', slug: '', isDefault: true, body: [container({ id: 'home-box' })] },
-        { name: 'Sign in', slug: 'sign-in', accessLevel: 'public', body: [container({ id: 'sign-in-box' })] },
-        {
-          name: 'Welcome',
-          id: 'welcome-out',
-          slug: 'welcome',
-          accessLevel: 'public',
-          body: [container({ id: 'out-box' })]
-        },
-        {
-          name: 'Welcome back',
-          id: 'welcome-in',
-          slug: 'welcome',
-          accessLevel: 'authenticated',
-          body: [container({ id: 'in-box' })]
-        }
-      ]
-    });
-
-    expect(signedOutOnlyIn(handles, ['/', '/sign-in', '/welcome'])).toEqual(['/sign-in']);
   });
 });

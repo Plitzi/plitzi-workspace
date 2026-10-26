@@ -1,8 +1,9 @@
 import { loadImages, openPage, unrollPage } from '@plitzi/sdk-authoring';
 import { MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema';
 
-import { openOtherPage, openProjectPage, paintedScheme, PROJECT_QUIET_MS } from '../../browser';
-import { saySignedIn, sentElsewhere, signInAs, signInWhereSent } from '../check';
+import { openOtherPage, paintedScheme, PROJECT_QUIET_MS } from '../../browser';
+import { saySignedIn, sentElsewhere, signInWhereSent } from '../check';
+import { prepareVisit } from '../visit';
 import { BARE, IMAGES_BUDGET_MS, REMOTE_IMAGES_BUDGET_MS, WAITING_FOR_SCROLL } from './types';
 
 import type { Framing, Taken, View } from './types';
@@ -308,48 +309,42 @@ const endAnimations = (): void => {
   }
 };
 
-/** One colour a picture's address always gets: the same picture the same on both sides, another one another. */
-export const standIn = (url: string): string => {
-  let hue = 7;
-  for (let index = 0; index < url.length; index += 1) {
-    hue = (hue * 31 + url.charCodeAt(index)) % 360;
-  }
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="hsl(${String(hue)} 35% 55%)"/></svg>`;
-};
-
-/** Every picture from another site than `origin`, answered by its stand-in (`View.standIns`). */
-export const standInPictures = (page: BrowserPage, origin: string): Promise<void> =>
-  page.route(
-    url => url.origin !== origin,
-    async route =>
-      route.request().resourceType() === 'image'
-        ? route.fulfill({ status: 200, contentType: 'image/svg+xml', body: standIn(route.request().url()) })
-        : route.fallback()
-  );
-
 export const pictureOf = async (
   browser: Browser,
   url: string,
   view: View,
   origin?: string
 ): Promise<Taken | { problem: string }> => {
-  const page = origin
-    ? await openProjectPage(browser, origin, view)
-    : await openOtherPage(browser, {
-        viewport: { width: view.width, height: view.height },
-        colorScheme: view.scheme ?? 'light',
-        reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference',
-        ...(view.timezone ? { timezoneId: view.timezone } : {}),
-        ...(view.scale ? { deviceScaleFactor: view.scale } : {})
-      });
-  if (view.standIns && origin) {
-    await standInPictures(page, origin);
-  }
-
-  const notSignedIn = origin && view.account && (await signInAs(page, origin, view.account));
-  if (notSignedIn) {
-    return { problem: `--as ${notSignedIn}.` };
+  // The project's page made ready as a visitor's (`visit.ts`); another site's opened as it is, its own browser.
+  const visit = origin
+    ? await prepareVisit(
+        browser,
+        origin,
+        {
+          width: view.width,
+          height: view.height,
+          reducedMotion: view.reducedMotion,
+          ...(view.scheme ? { scheme: view.scheme } : {}),
+          ...(view.scale ? { scale: view.scale } : {}),
+          ...(view.presence ? { presence: true } : {}),
+          ...(view.timezone ? { timezone: view.timezone } : {}),
+          ...(view.conditions ? { conditions: view.conditions } : {}),
+          ...(view.standIns ? { standIns: true } : {})
+        },
+        view.account
+      )
+    : {
+        page: await openOtherPage(browser, {
+          viewport: { width: view.width, height: view.height },
+          colorScheme: view.scheme ?? 'light',
+          reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference',
+          ...(view.timezone ? { timezoneId: view.timezone } : {}),
+          ...(view.scale ? { deviceScaleFactor: view.scale } : {})
+        })
+      };
+  const { page } = visit;
+  if ('problem' in visit && visit.problem !== undefined) {
+    return { problem: `${visit.problem}.` };
   }
 
   // Settled, not `networkidle`: a page with a live channel keeps its stream open, and never idles. From the load, the

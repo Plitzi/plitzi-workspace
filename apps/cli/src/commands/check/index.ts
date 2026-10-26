@@ -29,7 +29,6 @@ export type {
   PageMoment
 } from './types';
 export {
-  accountAsked,
   CHECK_PASSWORD_ENV,
   CHECK_USER_ENV,
   checkAccount,

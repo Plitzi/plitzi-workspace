@@ -33,8 +33,11 @@ export const factFindings = (
     ),
     ...each(
       'blocked',
+      // One still blocked as the run ends: an escalation the lead answered was a step of the flow (the rehearsal's).
       tasks.flatMap(task =>
-        task.blocked ? [{ subject: task.id, title: `${task.id} was blocked`, evidence: [task.blocked] }] : []
+        task.blocked && task.status !== 'done'
+          ? [{ subject: task.id, title: `${task.id} was blocked`, evidence: [task.blocked] }]
+          : []
       )
     ),
     ...each(

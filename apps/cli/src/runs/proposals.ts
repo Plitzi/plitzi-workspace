@@ -88,7 +88,7 @@ export const proposeChange = async (
   if (target.state.status === 'in-review') {
     throw new RunRefusal(
       'invalid',
-      `Task "${to.id}" is in review: nobody answers a proposal while it is — ask the lead to ask it in the review (plitzi task tell --about ${to.id} "…"), or wait for its approval (plitzi task wait ${to.id}) and change the file yourself`,
+      `Task "${to.id}" is in review: nobody answers a proposal while it is — ask the lead to ask it in the review (plitzi task tell --about ${to.id} "…"), or wait for its approval (plitzi task claim ${ask.about ?? '<file>'} --wait) and change the file yourself`,
       { task: to.id }
     );
   }

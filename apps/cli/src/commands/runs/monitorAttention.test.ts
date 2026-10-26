@@ -47,8 +47,8 @@ describe('what needs someone, as the panel asks it', () => {
         'agent-4, of the team’s base, is not running: start it again — plitzi run agent agent-4 --launch — it waits'
       )
     ).toBe('plitzi run agent agent-4 --launch');
-    expect(fixOf('the block holds its file (plitzi task release src/space/theme.ts), then block again')).toBe(
-      'plitzi task release src/space/theme.ts'
+    expect(fixOf('the block holds its file (plitzi task claim src/space/theme.ts --release), then block again')).toBe(
+      'plitzi task claim src/space/theme.ts --release'
     );
     expect(fixOf('agent-1 and agent-3 have nothing to take')).toBeUndefined();
   });

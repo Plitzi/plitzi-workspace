@@ -16,7 +16,7 @@ export const teamTasks = <T extends { role: string }>(tasks: readonly T[]): T[] 
 /**
  * Each run measured the same way, kept in its report's data (`report.json`), so runs are compared — the bench a team
  * is improved by: its minutes a task, its rounds, the share of its checks that failed, how long reviews and reworks
- * waited, what it cost. `plitzi run bench` lists them; every report ends with the runs before it.
+ * waited, what it cost. `plitzi run report --bench` lists them; every report ends with the runs before it.
  */
 
 export interface BenchLine {
@@ -148,14 +148,14 @@ export const benchText = (lines: readonly BenchLine[]): string[] =>
         ),
         '',
         // The patterns the findings count, a run a row: a fix holds when its column falls (runs before them say —).
-        '| Run | Ease (1–5) | Findings (Plitzi · lead · agents · machine) | Failures not theirs | Flaky checks | Lines failing | Session breaks | explain missed | Done beside the CLI | Said by 2+ | Refused as written | Harness read / task |',
-        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+        '| Run | Ease (1–5) | Findings (Plitzi · lead · agents · machine) | Met before | Failures not theirs | Flaky checks | Lines failing | Session breaks | explain missed | Done beside the CLI | Said by 2+ | Refused as written | Harness read / task |',
+        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
         ...lines.map(line => {
           const of = line.indicators;
 
           return of === undefined
-            ? `| ${line.runId} | — | — | — | — | — | — | — | — | — | — | — |`
-            : `| ${line.runId} | ${cell(of.easeMedian)} | ${String(of.findings.plitzi)} · ${String(of.findings.lead)} · ${String(of.findings.agent)} · ${String(of.findings.machine)} | ${cell(of.notOwnPct, '%')} | ${String(of.flakyChecks)} | ${String(of.linesFailing)} | ${String(of.sessionBreaks)} | ${String(of.explainMissed)} | ${String(of.workarounds)} | ${String(of.saidByMany)} | ${String(of.refusedAsWritten)} | ${tokens(of.harnessTokensPerTask)} |`;
+            ? `| ${line.runId} | — | — | — | — | — | — | — | — | — | — | — | — |`
+            : `| ${line.runId} | ${cell(of.easeMedian)} | ${String(of.findings.plitzi)} · ${String(of.findings.lead)} · ${String(of.findings.agent)} · ${String(of.findings.machine)} | ${cell(of.metBefore)} | ${cell(of.notOwnPct, '%')} | ${String(of.flakyChecks)} | ${String(of.linesFailing)} | ${String(of.sessionBreaks)} | ${String(of.explainMissed)} | ${String(of.workarounds)} | ${String(of.saidByMany)} | ${String(of.refusedAsWritten)} | ${tokens(of.harnessTokensPerTask)} |`;
         }),
         '',
         // What a task cost every harness together, the lead's included — runs before it kept none (—).

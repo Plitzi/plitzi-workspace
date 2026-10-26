@@ -5,6 +5,7 @@ import { awaited, capture, targetOn } from './capture';
 import { dataUrl } from '../../browser';
 import { clockHeld } from '../../browser/conditions';
 import { answered, settle } from '../measureState';
+import { parseSteps } from '../shotSteps';
 
 import type { BrowserPage } from '../../browser';
 import type { ShotStep } from '../shotSteps';
@@ -478,4 +479,55 @@ export const endsActing = (steps: readonly ShotStep[]): boolean => {
   const last = steps.at(-1);
 
   return last !== undefined && last.kind !== 'shot' && last.kind !== 'frames';
+};
+
+/**
+ * The steps a command that reads a page plays before it reads it (`--steps` of `page check`, `measure`, `outline`): a
+ * visitor's own, played as `page play` plays them — never a picture, which is `page shot`'s; never another account's
+ * where the command has no other visitors' pages (`others: false`).
+ */
+export const actingSteps = (
+  script: string | undefined,
+  command: string,
+  { others = true }: { others?: boolean } = {}
+): ActingStep[] | { problem: string } => {
+  const parsed = script === undefined ? [] : parseSteps(script, 500);
+  if ('problem' in parsed) {
+    return { problem: `--steps: ${parsed.problem}` };
+  }
+
+  const pictured = parsed.find(step => step.kind === 'shot' || step.kind === 'frames');
+  if (pictured) {
+    return {
+      problem: `${command} reads what the steps leave, with no picture: "${pictured.kind}" is page shot --steps`
+    };
+  }
+
+  const acting = parsed.filter((step): step is ActingStep => step.kind !== 'shot' && step.kind !== 'frames');
+  const another = others ? undefined : acting.find(step => step.kind === 'as');
+  if (another?.kind === 'as') {
+    return {
+      problem: `${command} plays its visitor's own steps: "as ${another.account} …" is another account's — page play or page measure plays it`
+    };
+  }
+
+  return acting;
+};
+
+/** The steps played on the page, each settled — or the one that could not be, said. */
+export const playedOn = async (
+  page: BrowserPage,
+  steps: readonly ActingStep[],
+  visitors?: Visitors
+): Promise<{ problem: string } | undefined> => {
+  for (const [index, step] of steps.entries()) {
+    const done = await actStep(page, step, index, visitors);
+    if (done && 'problem' in done) {
+      return done;
+    }
+
+    await settle(page);
+  }
+
+  return undefined;
 };

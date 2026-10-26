@@ -162,7 +162,7 @@ describe('a copy, as an agent can leave it', () => {
     const refused = await refusal(completeTask(held.ctx, runId, 't-menu'));
     expect(refused.code).toBe('invalid');
     expect(refused.message).toContain('copy is gone');
-    expect(refused.message).toContain('plitzi task take t-menu');
+    expect(refused.message).toContain('plitzi task next t-menu');
   });
 
   it('refuses a file of the task turned into a link — what it points at would go to review as the file', async () => {

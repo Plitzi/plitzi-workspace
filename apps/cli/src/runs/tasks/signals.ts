@@ -9,6 +9,7 @@ import { tellLeftInTmp } from '../strays';
 import { DEFAULTS, noSignalAfter, updateState, viewTask } from '../taskStore';
 import { at, findTask, holderOf, holderOrCoordinator, refreshCopy } from './common';
 import { letGoUntouched } from './locks';
+import { asksLead } from '../model';
 
 import type { LongFile } from '../longFiles';
 import type { Message } from '../messages';
@@ -124,11 +125,12 @@ export const unblockTask = async (
     throw new RunRefusal('invalid', `Task "${taskId}" is not blocked, it is ${view.state.status}`, { task: taskId });
   }
 
-  const spike = view.state.blockedBy?.spike;
-  if (spike !== undefined && answer === undefined) {
+  // A question its agent asked the lead: lifted with the answer, kept as the task's finding.
+  const question = asksLead(view.state) ? view.state.blockedBy?.reason : undefined;
+  if (question !== undefined && answer === undefined) {
     throw new RunRefusal(
       'invalid',
-      `${taskId} needs a spike — ${spike}: lift it with what you found — plitzi task unblock ${taskId} --answer "…" — kept as its finding`,
+      `${taskId} waits on the lead — ${question}: lift it with the answer — plitzi task unblock ${taskId} --answer "…" — kept as its finding`,
       { task: taskId }
     );
   }
@@ -152,9 +154,9 @@ export const unblockTask = async (
       status: view.owner ? (state.round > 0 ? 'changes-requested' : 'in-progress') : 'ready',
       blockedBy: undefined,
       spikedBy: undefined,
-      ...(spike !== undefined && answer !== undefined
+      ...(question !== undefined && answer !== undefined
         ? {
-            findings: [...(state.findings ?? []), { at: at(ctx), by: ctx.agent, question: spike, text: answer }]
+            findings: [...(state.findings ?? []), { at: at(ctx), by: ctx.agent, question, text: answer }]
           }
         : {}),
       notes: [

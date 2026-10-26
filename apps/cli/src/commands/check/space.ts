@@ -1,4 +1,4 @@
-import { authorSpace, closest } from '@plitzi/sdk-authoring';
+import { authorSpace, closest, pageAt } from '@plitzi/sdk-authoring';
 import { authorIsolated } from '@plitzi/sdk-authoring/node';
 
 import { authoredKey, keepAuthored, keptAuthored } from './authoredCache';
@@ -103,41 +103,24 @@ export const meantPage = (handles: SpaceHandles, pathname: string): string => {
  */
 export const isNotFoundPage = (page: { slug: string }): boolean => page.slug === '*';
 
-/** A path whose last segment is `*`: it answers every address under it. */
-const isSplat = (path: string): boolean => path.endsWith('/*');
-
 /** Where `verify` looks at a page for an address nothing answers: an address under its folder no page has. */
 export const NOT_FOUND_PROBE = 'plitzi-check-not-found';
 
 /**
- * The page an address is answered by — as the router picks: every page with a path of its own first, then the "not
- * found" pages, the deepest folder's before the space's. By its path alone: a query (`/?v=2`) or a hash names no page.
+ * The page an address is answered by: the router's own answer (`pageAt`, sdk-authoring) — a guest's, else a signed-in
+ * visitor's, a not-found page when nothing else answers. A copy of the router's rules here once drifted from it.
  */
-export const pageFor = (handles: SpaceHandles, pathname: string): string | undefined => {
-  const wanted = (pathname.split(/[?#]/)[0] ?? '').replace(/\/$/, '').split('/');
-  const answers = (path: string): boolean => {
-    const splat = isSplat(path);
-    const segments = (splat ? path.slice(0, -2) : path.replace(/\/$/, '')).split('/');
+export const pageFor = (
+  authored: { schema: Pick<Schema, 'flat' | 'pages' | 'pageFolders'> },
+  pathname: string
+): string | undefined => {
+  const answered = (signedIn: boolean): string | undefined => {
+    const at = pageAt(authored.schema, pathname, { signedIn });
 
-    return (
-      (splat ? wanted.length > segments.length : segments.length === wanted.length) &&
-      segments.every(
-        (segment, index) => segment.startsWith(':') || /^\{\{.*\}\}$/.test(segment) || segment === wanted[index]
-      )
-    );
+    return at.action === 'normal' || at.action === 'notFound' ? at.pageId : undefined;
   };
-  const pages = Object.values(handles.pages);
-  const ordered = [
-    ...pages.filter(page => !isNotFoundPage(page)),
-    ...pages.filter(isNotFoundPage).sort((a, b) => b.path.length - a.path.length)
-  ];
 
-  // Every page answers at its own id too (`/add-expense` for the page whose route is `expenses/new`), as the router's
-  // raw paths do — before an address nothing else answers falls to a not-found page.
-  const own = pages.filter(page => !isNotFoundPage(page));
-  const raw = wanted.length === 2 ? own.find(page => page.id === wanted[1]) : undefined;
-
-  return own.find(page => answers(page.path))?.id ?? raw?.id ?? ordered.find(page => answers(page.path))?.id;
+  return answered(false) ?? answered(true);
 };
 
 /** The elements a piece of HTML carries, by the id each is marked with. */

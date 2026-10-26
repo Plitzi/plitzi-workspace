@@ -1,7 +1,7 @@
 import { openPage } from '@plitzi/sdk-authoring';
 
 import { openProjectPage, PROJECT_QUIET_MS } from '../../browser';
-import { standInPictures } from '../shot/capture';
+import { standInPictures } from '../visit';
 
 import type { CheckIssue } from './types';
 import type { Browser } from '../../browser';

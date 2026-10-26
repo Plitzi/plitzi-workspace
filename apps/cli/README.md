@@ -41,7 +41,7 @@ plitzi run finish --apply                      # yours: the team's work into the
   several separated by commas), `--api` for the platform, `--json` for a tool or an agent.
 - **`--dry-run` says what it would do, and does none of it** — on every command that writes or sends: `create`,
   `plugin add`, `runtime add`, `space pull`, `space push`, `plugin pack`, `source pack`, `page import`, `plugin upload`, `functions pull`/
-  `functions push`/`functions add`, `runtime push`/`start`/`stop`/`size`/`vars`, `skills update`, `doctor --fix`. Each file it would write (`+` new, `~` replaced, `-`
+  `functions push`/`functions add`, `runtime push`/`start`/`stop`/`size`/`vars`, `doctor --fix`. Each file it would write (`+` new, `~` replaced, `-`
   removed), what it would install or run, what it would send and where. It still reads what it needs to say so — the
   project, the files it would send, the space it would pull, signing in for that. `upgrade` and `space fix` only show until
   `--write`.
@@ -302,9 +302,16 @@ readable at its size. A `--clip` is pictured without what is pinned over it (a s
 `--clip`, the screen with `--scroll-to` or `--viewport`) shows its arrivals as they end too; `--frames`, `--click` and
 `--steps` take the page as it plays, and each picture after the first is written beside it (`<name>-1.png`, …).
 
-Both load a page as one that watches its realtime channels: it hears them — a topic the server refuses is still
-reported — and says nothing on them, so nobody on the page sees it arrive, join their members or send. `--presence`
-makes it take part as a visitor does. `--click` in `page shot` takes an element's name, a tag no element is named by
+Every page command — `check`, `measure`, `play`, `outline`, `same`, `shot` — and `task look` reads a page as one
+visitor, from the same flags. A page that sends a guest away is read as the project's account (`PLITZI_CHECK_USER`),
+said; `--as <user>` signs in as another first (the password in `PLITZI_CHECK_PASSWORD`), `--guest` keeps the guest's
+view. `--timezone <IANA>` opens it as a visitor in that zone: its clock and `Intl` read there. It watches the page's
+realtime channels: it hears them — a topic the server refuses is still reported — and says nothing on them, so nobody on
+the page sees it arrive, join their members or send; `--presence` makes it take part as a visitor does. The browser can
+refuse what a visitor's might: `--clock <instant>` holds the page's clock from its first script, `--block <text>` fails
+each request whose address holds it (a player, a font), `--autoplay refused` refuses media with sound until a press,
+`--storage refused` throws on `localStorage` and `sessionStorage`. `--url` reads the project where it is served, when
+not by `npm start` here. `--click` in `page shot` takes an element's name, a tag no element is named by
 (`textarea`) or any selector, CSS or Playwright's own (`button:has-text("Orbit")`). In `--steps`, an element is read up to a
 space outside its quotes and brackets (`[aria-label="Search the site"]` is one), or quoted whole — `type ".panel textarea" hola`;
 `type` replaces what the field held, and fails when the click leaves no field focused. `hover <element>` puts the
@@ -322,7 +329,6 @@ report names it (`section#home-pricing`); a section that lined up with a part of
 more differs, or farther than a screen) is said, never read as its figure. Beside a page of this machine — the run
 before a task — both sides are held to what the project changed: motion reduced, and another site's pictures stood in
 for by a colour their address gives them.
-`--timezone <IANA>` (both) opens the page as a visitor in that zone: its clock and `Intl` read there.
 
 `page same … --except <elements>` leaves those out — a task's own parts — and reads positions from each element's parent,
 so a part that grew does not move what follows it: what is read is that nothing else moved.
@@ -385,12 +391,11 @@ and `tick <duration>` (`90s`, `5m`, `2h`) — a countdown read at every moment; 
 server's data is put in its state by `action <id> [json]` — one of the space's actions run as the page's visitor, through
 its `/_action` — and what another person does by `as <account> <step>`, played on a page of that account's own, signed
 in (the password in `PLITZI_CHECK_PASSWORD`), opened where this one is: `as mika goto /messages/dax; as mika type
-dm-input hi`. Both reach the project's own server, never `--compare`'s site. `page play` and `page measure` also read a
-page in a browser that refuses: `--block <text>` fails each request whose address holds it (a player, a font),
-`--autoplay refused` refuses media with sound until a press, `--storage refused` throws on `localStorage` and
-`sessionStorage`.
+dm-input hi`. Both reach the project's own server, never `--compare`'s site. The steps are one vocabulary: `page play`
+plays them step by step, `page shot` pictures them, and `page check`, `page measure` and `page outline` play them before
+they read the page (a visitor's own steps; another account's are `play`'s and `measure`'s, which keep its page).
 
-`page same [paths…] --url <origin> --than <origin>` says whether pages draw the same on two servers of the project —
+`page same [paths…] --url <origin> --compare <origin>` says whether pages draw the same on two servers of the project —
 every element on screen, its box, the style a reader sees and what its `::before`/`::after` draw, read, not pictured —
 and, where not, the first element that differs; exit 1 then. A look at a task reads with it the pages only a shared
 file of the task reaches, against the run before it, and pictures only those that differ; a local address reads alike
@@ -423,8 +428,8 @@ in it — and measures the open state they leave. A line height and a tracking a
 (`22.13px (1.5em)`: the rule to write, not the size's result); a difference both inherit from their parent is left out
 of `--same`, said beside it; the transform compared is the one that applies (`rotate`, `scale`, `translate` and
 `transform`, as CSS composes them); a component's instance is found by its name; an address nobody answers on is
-said as such. `--scheme`,
-`--timezone`, `--url`, `--json`, as `page shot`; the page is read once the space has hydrated.
+said as such. `--scheme`, the visitor's flags and `--json`, as `page shot`; the page is read once the space has
+hydrated.
 `--frames` compares pictures taken one after another and names what moved — a part clipped moves when any of it
 changed (a few cells of pixel art turning), and a page's region changed by 0.5% or less is said apart, as barely
 (a caret, or a small part that moves). A project `create` writes has them as
@@ -622,11 +627,11 @@ runs them — you, the lead, every agent.
 ```bash
 plitzi space overview                      # who owns which file, read off the imports; what is shared
 plitzi run team                            # who works the runs: .plitzi/team.json, the agents, their roles and models
-plitzi run plan plan.json                  # a plan the lead wrote, held to the rules and estimated
+plitzi run open plan.json --dry-run                  # a plan the lead wrote, held to the rules and estimated
 plitzi run open plan.json                  # its folder, every file it touches backed up — and the lead's own CLI, printed
 plitzi run agent design-1 --launch         # its token, its own CLI (scratch/design-1/plitzi) and its prompt — started
 plitzi task next --role designer --agent design-1   # one started by hand names itself once, and is answered both
-plitzi task take t-home --token <yours> --json      # its files locked, its copy (which says the task, to you alone)
+plitzi task next t-home --token <yours> --json      # its files locked, its copy (which says the task, to you alone)
 plitzi task propose t-menu --change "…"    # ask another task to agree to a change; task answer accepts or counters
 plitzi task check --token …                # what complete holds the copy to, run now: nothing changes (--fix: lint and format your files first)
 plitzi task complete --token …             # its copy compared by fingerprint, the project's checks run in it
@@ -643,7 +648,7 @@ plitzi task show t-home src/space/pages/home/hero.ts   # one file whole, as it w
 plitzi task show t-home --full             # as many diffs whole as one answer holds (12k characters), the rest a file at a time
 plitzi run settle after-stop:dev-2 --note "…"   # a finding the run raised to the lead, settled by what it did — the close waits on it
 plitzi run report --summary summary.md     # the lead closes the run with its report (--full: the whole of it)
-plitzi run bench                           # every run measured the same way: minutes a task, rounds, checks failed, cost
+plitzi run report --bench                           # every run measured the same way: minutes a task, rounds, checks failed, cost
 plitzi run finish                          # the whole diff and the checks on the result — then --apply, a person's
 ```
 
@@ -654,10 +659,11 @@ progress. Nothing reaches Plitzi: a space on Plitzi is pulled first and pushed o
 and one run at a time** in a project: a second is refused, naming the first.
 
 - **One agent per file**, the owners read off the imports: a page owns the modules only it imports; what several import
-  (tokens, classes, a layout, a component) and every entry are shared — taken by turns (`task claim`, `task wait`) or,
+  (tokens, classes, a layout, a component) and every entry are shared — taken by turns (`task claim`, `--wait` for one) or,
   when several tasks want one at once, changed in each copy as a **request** that one integration task, made by the CLI,
   applies together. A plugin's folder is its own whole. A task holds its plan's files until it is done; a file handed on
-  by turns arrives with what the run approved since the copy was made, and `task wait --follow` stays until it does.
+  by turns arrives with what the run approved since the copy was made, and `task claim <file> --wait --follow` stays
+  until it does.
 - **A team:** the lead — team lead and software architect — plans, reviews, answers and closes; past four agents, leads
   that review beside it (`lead-2`…, up to one for every four, `run team set lead --count` another number) — started only
   when the reviews queue up, and stopping once the queue is empty — take each review from one queue (`task next --role
@@ -678,7 +684,7 @@ inbox`. A block lifted carries its answer (`task unblock --answer`), and `task n
   the lead: `--known-failure "why" --fixed-by <task>`; the final merge still needs every check green.
 - **As many agents as the team has** (`.plitzi/team.json`: every new project starts with two developers — one with the
   run, the other on demand — and a designer on Sonnet, few agents at once — and what each role does is in it, and in `run team`; one made before it gets the team its
-  first plan needs; above 5 a person confirms): past it, `task take` waits for one to finish. After each piece of work —
+  first plan needs; above 5 a person confirms): past it, taking one waits for one to finish. After each piece of work —
   a task completed, a review decided, never in one — an agent is started again with a fresh context, every turn
   reading the whole context again; `"session": "context"` starts it again only once its context passes
   `options.freshContextAt` (250k tokens), `"keep"` never (`run team set dev --session context`). The lead that plans
@@ -715,7 +721,7 @@ restore`, `run finish --lead-finishes`, `run stop --force`, `run attach --take-o
 - **When it ends, the run goes** — backups included, so none is left to clean up — and its reports stay, committed with
   the project, in one folder: `.plitzi/plitzi-reports/runs/<run>/`. `feedback.md` is what of the run is Plitzi's, to
   read first; `report.md` the lead's summary, the problems, every task (agents, time against its estimate, reviews,
-  cuts) and what was written; `report.json` the same as data (`version`ed — what `run bench` and the next plans'
+  cuts) and what was written; `report.json` the same as data (`version`ed — what `run report --bench` and the next plans'
   estimates read); `records/` what the run kept — its plan, log, usage, messages, each task's definition, state, rounds
   and reviews, never the project's files — and `scratch/` the scripts its agents wrote for themselves. No path of the
   machine and no token in any of them: send the folder to Plitzi's team, and Plitzi gets better from it. A run's id is
@@ -953,8 +959,8 @@ said and left, unless `--take` names it (`.plitzi/scaffold.json` records the fil
 manager the files were written for — what a project not installed yet has no lockfile to say). In a project made from
 a space, a file the space gave over one of the CLI's would be the space's, and `upgrade` would leave it to `plitzi space pull` —
 none does: `serveProject` runs whatever the space brought, from where it lands. `update` is the same
-command, and `plitzi skills update` is `upgrade skills --write`. `npm run author` says when the authoring skill is
-older than the `@plitzi/sdk-authoring` installed. With a run of agents open (`plitzi run state`), `--write` waits: the run
+command. `npm run author` says when the authoring skill is
+older than the `@plitzi/sdk-authoring` installed. With a run of agents open (`plitzi run status --all`), `--write` waits: the run
 pinned the Plitzi its copies were made with. `--with-open-runs` upgrades anyway, and each run then refuses its commands
 until a person attaches to it (`plitzi run attach`), which re-pins it: the tasks in hand keep their copies and their
 agents, who wait meanwhile and are told to go on. A run's files read by a CLI newer than the one that wrote them are

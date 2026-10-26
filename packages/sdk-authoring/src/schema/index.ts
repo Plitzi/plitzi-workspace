@@ -20,6 +20,8 @@ export type { NavEntry } from './nav';
 export * from './notifications';
 export * from './pageFamily';
 export * from './refusals';
+export { audienceAt, pageAt } from './route';
+export type { Audience, PageAtAddress } from './route';
 export * from './space';
 export * from './advice';
 export * from './snippet';

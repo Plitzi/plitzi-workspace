@@ -6,6 +6,7 @@ import { DESIGNER, readTeam, startedAgents } from '../team';
 import { byUrgency } from '../urgency';
 import { isWorked } from '../worked';
 import { reviewOffer } from './reviewOffer';
+import { asksLead } from '../model';
 
 import type { Message } from '../messages';
 import type { LoadedRun, RunContext } from '../run';
@@ -53,7 +54,7 @@ export const spikeFor = (
     ? views.filter(view => view.state.status === 'spike' && view.state.proposed === undefined && free(view))
     : [];
   const blocking = kinds.blocked
-    ? views.filter(view => view.state.status === 'blocked' && view.state.blockedBy?.spike !== undefined && free(view))
+    ? views.filter(view => view.state.status === 'blocked' && asksLead(view.state) && free(view))
     : [];
   const mine = (view: TaskView): number => (view.state.spikedBy?.by === agent ? 0 : 1);
   const next = [...research, ...blocking]
@@ -69,7 +70,10 @@ export const spikeFor = (
 
   return {
     task: next.task,
-    question: next.state.blockedBy?.spike ?? next.task.spike ?? 'what it needs',
+    question:
+      next.state.status === 'blocked'
+        ? (next.state.blockedBy?.reason ?? 'what it needs')
+        : (next.task.spike ?? 'what it needs'),
     findings: next.state.findings?.length ?? 0,
     ...(next.state.status === 'blocked' ? { blocking: true as const } : {}),
     ...(asked !== undefined && next.state.spikedBy?.by === agent ? { asked } : {}),

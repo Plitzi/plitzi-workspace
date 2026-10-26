@@ -17,8 +17,10 @@ import {
   indicatorsOf,
   orderFindings,
   overrunFindings,
+  pastFindingsOf,
   runFindings,
-  scratchOf
+  scratchOf,
+  withHistory
 } from './findings';
 import { harnessUsage } from './harness';
 import { coverage } from './inventory';
@@ -30,6 +32,7 @@ import { RunRefusal } from './refusal';
 import { applyFacts, applyText } from './reportApply';
 import { flowText } from './reportFlow';
 import { consumptionText, findingsText, glanceText, reviewsText, uiReviewsText } from './reportHead';
+import { readRunReports } from './reports';
 import { completionsOf, inputOf, loadRun, logRun, readApproved, readRunLog, requireNoTask, updateRecord } from './run';
 import { harnessOf, runMetrics } from './runMetrics';
 import { cachedShare, costInAll, costliestPieces, spentOf } from './spent';
@@ -325,25 +328,29 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
   const leadExperience = await readLeadExperience(loaded);
   const experience = combineExperience(taskReports, leadExperience);
   const facts = { tasks, events, overwrites, joined, stops, proposals, minutes, estimate: record.estimate };
-  const findings = orderFindings([
-    ...runFindings({
-      log: runLog,
-      usage,
-      tasks: loaded.tasks,
-      said: saidOfPlitzi(
-        notices.plitzi,
+  // Held against the runs before: new, or met again.
+  const findings = withHistory(
+    orderFindings([
+      ...runFindings({
+        log: runLog,
+        usage,
+        tasks: loaded.tasks,
+        said: saidOfPlitzi(
+          notices.plitzi,
+          taskReports,
+          leadExperience ? { experience: leadExperience, at: now } : undefined
+        ),
+        scratch: await scratchOf(loaded.paths.scratch),
         taskReports,
-        leadExperience ? { experience: leadExperience, at: now } : undefined
-      ),
-      scratch: await scratchOf(loaded.paths.scratch),
-      taskReports,
-      repeated: metrics.cost.repeated
-    }),
-    ...(await auditRun(loaded)),
-    ...factFindings(facts),
-    ...overrunFindings(facts.tasks, runLog),
-    ...closeFindings(runLog)
-  ]);
+        repeated: metrics.cost.repeated
+      }),
+      ...(await auditRun(loaded)),
+      ...factFindings(facts),
+      ...overrunFindings(facts.tasks, runLog),
+      ...closeFindings(runLog, now)
+    ]),
+    pastFindingsOf(await readRunReports(ctx.root), record.runId, now)
+  );
 
   return {
     version: REPORT_VERSION,

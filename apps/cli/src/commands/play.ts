@@ -1,24 +1,23 @@
 import chalk from 'chalk';
 
 import { launchBrowser } from '../browser';
-import { accountAsked, projectAccount } from './check';
 import { projectHere } from './existingProject';
-import { ourPage, pairOf } from './measure';
+import { pairOf } from './measure';
 import { settle } from './measureState';
 import { readState } from './playState';
 import { parseSteps } from './shotSteps';
 import { keptSession } from '../browser/keptBrowser';
-import { conditionsOf } from './register/options';
 import { originHere } from '../runs/copyServer';
 import { pageAnswered } from './shot/remote';
 import { actStep, stepText } from './shot/steps';
 import { visitorsOn } from './shot/visitors';
 import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
+import { openVisit, visitorAsked, visitViewOf } from './visit';
 
 import type { BrowserPage, Scheme } from '../browser';
 import type { Pair } from './measure';
 import type { ElementState } from './playState';
-import type { ConditionOptions } from './register/options';
+import type { VisitorOptions } from './register/options';
 import type { ActingStep } from './shot/steps';
 import type { Visitors } from './shot/visitors';
 import type { ShotStep } from './shotSteps';
@@ -49,9 +48,8 @@ export const sharedServerNote = (widths: number, steps: readonly { kind: string 
  * scrolls its box and one that slides its track by a transform, whichever way each site builds it.
  */
 
-export interface PlayOptions extends ConditionOptions {
+export interface PlayOptions extends VisitorOptions {
   steps?: string;
-  timezone?: string;
   /** The elements read after each step, `"ours => theirs"` with `--compare`. */
   read?: string[];
   compare?: string;
@@ -59,11 +57,6 @@ export interface PlayOptions extends ConditionOptions {
   same?: string[];
   width?: number[];
   scheme?: Scheme;
-  url?: string;
-  /** Signed in first as this account: the password from `PLITZI_CHECK_PASSWORD`. */
-  as?: string;
-  /** Read as a guest, though a page sends one away: the project's account is not signed in by itself. */
-  guest?: boolean;
   json?: boolean;
 }
 
@@ -522,12 +515,10 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
     return;
   }
 
-  const account = await accountAsked(project.root, options.as);
-  if (account === null) {
+  const visitor = await visitorAsked(project.root, options);
+  if (visitor === null) {
     return;
   }
-
-  const own = options.as === undefined && options.guest !== true ? await projectAccount(project.root) : undefined;
 
   const browser = await launchBrowser(project.root);
   if ('problem' in browser) {
@@ -540,12 +531,10 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
   const results: { width: number; played: PlayedStep[]; unlike: string[] }[] = [];
   try {
     for (const width of options.width ?? [1440]) {
-      const ours = await ourPage(browser, where.origin, route, {
+      const ours = await openVisit(browser, where.origin, route, {
         width,
-        conditions: conditionsOf(options),
-        ...(options.timezone ? { timezone: options.timezone } : {}),
-        ...(account ? { account } : {}),
-        ...(own ? { projectAccount: own } : {}),
+        ...visitViewOf(options),
+        ...visitor,
         ...(options.scheme ? { scheme: options.scheme } : {})
       });
       if (!ours.answered) {
@@ -589,10 +578,12 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
       }
 
       const there = held ? { act: held.act, read: held.read } : theirs ? pageSide(theirs.page) : undefined;
+      const { timezone, conditions } = visitViewOf(options);
       const visitors = visitorsOn(project.root, browser, where.origin, {
         width,
         ...(options.scheme ? { scheme: options.scheme } : {}),
-        ...(options.timezone ? { timezone: options.timezone } : {})
+        ...(timezone ? { timezone } : {}),
+        ...(conditions ? { conditions } : {})
       });
       const outcome = await playOn({ here: pageSide(ours.page, visitors), ...(there ? { there } : {}) }, steps, reads, {
         actions: results.length === 0

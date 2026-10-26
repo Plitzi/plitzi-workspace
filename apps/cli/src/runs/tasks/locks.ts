@@ -199,11 +199,15 @@ export const claimFile = async (
   const planned = await activeHolder(loaded, clean, task);
   const aheadOf = planned && (await untakenNow(loaded, planned)) ? planned.id : undefined;
   if (planned && aheadOf === undefined) {
-    throw new RunRefusal('claimed', `${clean} is task "${planned.id}"'s: wait for it (plitzi task wait)`, {
-      file: clean,
-      holder: planned.id,
-      turn: 'wait'
-    });
+    throw new RunRefusal(
+      'claimed',
+      `${clean} is task "${planned.id}"'s: wait for it (plitzi task claim ${clean} --wait)`,
+      {
+        file: clean,
+        holder: planned.id,
+        turn: 'wait'
+      }
+    );
   }
 
   /** Who holds it otherwise, said with the turn: wait for it, or request the change through an integration. */
@@ -215,9 +219,9 @@ export const claimFile = async (
     throw new RunRefusal(
       'claimed',
       mine
-        ? `${clean} is held by "${holder.task}", your own other task: it is yours to change there — finish that one and its turn passes here (plitzi task wait ${clean})`
+        ? `${clean} is held by "${holder.task}", your own other task: it is yours to change there — finish that one and its turn passes here (plitzi task claim ${clean} --wait)`
         : turn === 'wait'
-          ? `${clean} is held by task "${holder.task}" by turns (turn: wait): wait for it (plitzi task wait ${clean}) and go on with the rest of your task meanwhile`
+          ? `${clean} is held by task "${holder.task}" by turns (turn: wait): wait for it (plitzi task claim ${clean} --wait) and go on with the rest of your task meanwhile`
           : `${clean} is held by task "${holder.task}", and ${String(queued)} more wait for it (turn: request): change it in your copy and say why (plitzi task request ${clean} --summary …) — your change goes in through one integration task that applies every request together`,
       { file: clean, holder: holder.task, turn, ...(holder.until ? { until: holder.until } : {}) }
     );
@@ -340,7 +344,7 @@ export const grantWaiters = async (ctx: RunContext, loaded: LoadedRun, files: re
   return granted;
 };
 
-/** `plitzi task release`: a file held by turns let go, to the next task waiting for it. */
+/** `plitzi task claim --release`: a file held by turns let go, to the next task waiting for it. */
 export const releaseFile = async (ctx: RunContext, runId: string, taskId: string, file: string): Promise<string[]> => {
   const loaded = await loadRun(ctx, runId);
   const task = findTask(loaded, taskId);
@@ -457,7 +461,7 @@ export const assertNoWaitCycle = async (loaded: LoadedRun, taskId: string, holde
 };
 
 /**
- * `plitzi task wait`: the task waits for a file another holds, instead of being replanned. The wait that would close a
+ * `plitzi task claim --wait`: the task waits for a file another holds, instead of being replanned. The wait that would close a
  * cycle (A waits for B, B for A) is refused, naming it.
  */
 export const waitForFile = async (

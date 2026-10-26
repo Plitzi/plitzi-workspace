@@ -28,13 +28,13 @@ an agent starts or a token is spent. The lead's half after it: [runs-lead.md](ru
 
 ## 4. The primer and the plan
 
-- **Primer** (≤ 16 KB; every task's first brief carries it, so keep it under 6k — `run plan` says the cost past it):
+- **Primer** (≤ 16 KB; every task's first brief carries it, so keep it under 6k — `run open --dry-run` says the cost past it):
   what is true of the project, the decisions, the constraints found (time, what survives a restart), and the demo data
   that shows each state; the rest named where it is (a file, a skill).
 - **Plan**: one contract task first when several share a model; each task's `findings` from what you read; the ids its
   checks expect named in a note, so no agent names them otherwise; `leftOut` as lines.
-- `plitzi run plan <plan>` until nothing it flags is left to fix (a file read by one no task holds, a check on an id
-  nothing makes); `plitzi run rehearse <plan>` — the critical path, the reviews, how many agents are worth it.
+- `plitzi run open <plan> --dry-run` until nothing it flags is left to fix (a file read by one no task holds, a check on an id
+  nothing makes); `plitzi run open <plan> --dry-run --rehearse` — the critical path, the reviews, how many agents are worth it.
 
 ## 5. The summary, said before opening
 
@@ -42,7 +42,7 @@ In the person's language, short, from the plan — never a list to read in the J
 
 - **What is built**, by feature: its tasks in a line each, the tests and specs that prove it.
 - **What they decided**, and **what is left out**.
-- **How long**: the critical path, and at the project's pace (`run plan` says it); the reviews; the team — who starts
+- **How long**: the critical path, and at the project's pace (`run open --dry-run` says it); the reviews; the team — who starts
   with the run, who on demand.
 - **What you found** of Plitzi (step 2).
 - **Who applies the result** — the person (`run finish --apply`), unless they let you (`run open --lead-finishes`).

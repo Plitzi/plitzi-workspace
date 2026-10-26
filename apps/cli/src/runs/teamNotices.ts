@@ -4,7 +4,7 @@ import { reviewedAsUi } from './uiFiles';
 import type { RunPlan } from './model';
 import type { Team } from './team';
 
-/** What `run plan` says of the team beside the work: too big for it, or too few designers for the UI it changes. */
+/** What `run open --dry-run` says of the team beside the work: too big for it, or too few designers for the UI it changes. */
 
 /** The developers a designer keeps up with: past it, UI reviews queue, and their reviewer looks at them itself or they wait. */
 export const DEVELOPERS_PER_DESIGNER = 3;

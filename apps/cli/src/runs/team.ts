@@ -16,7 +16,7 @@ import type { Quality, RunPlan } from './model';
  * Who works this project's runs: the project's own choice, in `.plitzi/team.json` — committed, so the team
  * shares it — that a person edits, or asks an agent to change with `plitzi run team set`. The lead, and the agents it
  * starts: each with the roles it takes, how many of it, and the model to start it with. How many agents a run has is
- * the team's size; a task whose role nobody in the team takes is refused at `run plan`; a designer reviews the UI of the
+ * the team's size; a task whose role nobody in the team takes is refused at `run open --dry-run`; a designer reviews the UI of the
  * others' tasks; a tester reviews every task — its QA, the task's approval — and with one in the team each developer task
  * gets a task of its tests, a developer's that did not write it (`tests.ts`); a scout finds out what the spikes ask.
  *
@@ -24,7 +24,7 @@ import type { Quality, RunPlan } from './model';
  * to it and finishes — it reviews no task while the team has a tester. It is the person's harness, and never started
  * again: what it reads stays read on every turn after, so the work that reads much is the agents'.
  *
- * The CLI starts no agent: the lead's harness does, and reads here what to start each with — `run plan` says it agent by
+ * The CLI starts no agent: the lead's harness does, and reads here what to start each with — `run open --dry-run` says it agent by
  * agent. A model is the harness's own name for it (`claude-sonnet-5-5`, `openrouter/…`): nothing is checked but that one
  * is named.
  *
@@ -388,7 +388,7 @@ const unknownKeys = (value: object, known: readonly string[], where: string): st
     });
 
 /**
- * Everything wrong with a team file, at once — what `run plan` refuses it for, and `plitzi doctor` and `run team check`
+ * Everything wrong with a team file, at once — what `run open --dry-run` refuses it for, and `plitzi doctor`
  * say: a person edits it by hand, and a key misspelt would be read as nothing.
  */
 export const teamProblems = (parsed: unknown): string[] => {
@@ -459,7 +459,7 @@ export const teamProblems = (parsed: unknown): string[] => {
 };
 
 /**
- * What is wrong with the project's team file, as `plitzi doctor` and `run team check` say it — `undefined` when there is
+ * What is wrong with the project's team file, as `plitzi doctor` say it — `undefined` when there is
  * no file (a project's first run writes one). Read as it is on disk: nothing is written.
  */
 export const checkTeamFile = async (root: string): Promise<string[] | undefined> => {

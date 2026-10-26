@@ -68,7 +68,7 @@ export const holderOf = async (ctx: RunContext, loaded: LoadedRun, task: RunTask
     if (!(await revokedTokens(view.paths)).includes(tokenPrint(ctx.token))) {
       throw new RunRefusal(
         'invalid',
-        `That token is not one task "${task.id}" was taken with: plitzi task take answers its token`,
+        `That token is not one task "${task.id}" was taken with: plitzi task next <task> answers its token`,
         {
           task: task.id
         }

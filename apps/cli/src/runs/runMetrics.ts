@@ -112,7 +112,6 @@ export interface RunMetrics {
  */
 export const CLI_BUDGET_S: Record<string, number> = {
   'task next': 2,
-  'task take': 15,
   'task context': 3,
   'task show': 3,
   'task tell': 2,
@@ -127,14 +126,13 @@ export const CLI_BUDGET_S: Record<string, number> = {
   'page measure': 8,
   'page check': 20,
   'page shot': 20,
-  'run state': 2,
   'run status': 3,
   'run notice': 2
 };
 
 /** A call that waits by design — for work, an answer, the lead's next item — is no time the CLI took. */
 const waitsByDesign = (command: string): boolean =>
-  /\s--follow\b|^plitzi run (watch|monitor)\b|^plitzi task wait\b|^plitzi task next\b(?!.*\s--(no-wait|peek)\b)/.test(
+  /\s--follow\b|^plitzi run (watch|monitor)\b|^plitzi task claim\b.*\s--wait\b|^plitzi task next\b(?!.*\s--(no-wait|peek)\b)/.test(
     command
   );
 

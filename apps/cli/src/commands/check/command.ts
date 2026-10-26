@@ -12,17 +12,17 @@ import { runPaths, runsDir, taskPaths } from '../../runs/paths';
 import { previewDir } from '../../runs/preview';
 import { projectHere } from '../existingProject';
 import { fail, unanswered, UNANSWERED_EXIT } from '../terminal';
-import { checkAccount, projectAccount } from './account';
 import { keptToReference, keptToTask } from './apart';
 import { checkAt } from './inspect';
 import { moduleSpace, projectSpace } from './space';
+import { actingSteps } from '../shot/steps';
+import { visitorAsked, visitViewOf } from '../visit';
 import { reportText } from './text';
 import { serverErrors } from './types';
 
-import type { Scheme } from '../../browser';
 import type { ExistingProject } from '../existingProject';
-import type { Account } from './account';
 import type { CheckAsk, CheckOptions, CheckReport, ClickAsk, Expectation } from './types';
+import type { Visitor, VisitView } from '../visit';
 
 /**
  * `plitzi page check`: every path at every width, in one browser — and the routes of a whole-project check.
@@ -34,15 +34,10 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     return;
   }
 
-  // Signed in when asked — or, by the project's account, where a page sends a guest away (unless --guest).
-  const account = options.as === undefined ? undefined : await checkAccount(project.root, options.as);
-  if (account && 'problem' in account) {
-    fail(`--as ${account.problem}.`);
-
+  const visitor = await visitorAsked(project.root, options);
+  if (visitor === null) {
     return;
   }
-
-  const own = options.as === undefined && options.guest !== true ? await projectAccount(project.root) : undefined;
 
   // A path is a page's address: one that reads as a flag is a flag cut off from its command (`npx … check -- /x --width`).
   const flags = routes.filter(route => route.startsWith('-'));
@@ -68,6 +63,13 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     return;
   }
 
+  const steps = actingSteps(options.steps, 'page check', { others: false });
+  if ('problem' in steps) {
+    fail(`${steps.problem}.`);
+
+    return;
+  }
+
   const asked: CheckAsk = {
     state: Boolean(options.state),
     ...(typeof options.state === 'string'
@@ -80,17 +82,16 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
       : {}),
     elements: options.element ?? [],
     ...(options.status === undefined ? {} : { status: options.status }),
-    ...(options.redirectsTo === undefined ? {} : { redirectsTo: options.redirectsTo })
+    ...(options.redirectsTo === undefined ? {} : { redirectsTo: options.redirectsTo }),
+    ...(steps.length > 0 ? { steps } : {})
   };
   const reports = await checkRoutes(project, routes.length > 0 ? routes : ['/'], {
     widths: options.width ?? [1440, 390],
     asked,
     ssr: Boolean(options.ssr),
     ...(options.scheme ? { scheme: options.scheme } : {}),
-    presence: options.presence === true,
-    ...(options.timezone ? { timezone: options.timezone } : {}),
-    ...(account ? { account } : {}),
-    ...(own ? { projectAccount: own } : {}),
+    ...visitViewOf(options),
+    ...visitor,
     ...(options.click || options.hover || options.fill
       ? {
           click: {
@@ -179,13 +180,6 @@ export const checkRoutes = async (
     widths: readonly number[];
     asked: CheckAsk;
     ssr: boolean;
-    scheme?: Scheme;
-    /** Taking part in the page's channels, as a visitor does — otherwise it only watches them. */
-    presence?: boolean;
-    timezone?: string;
-    account?: Account;
-    /** The project's, signed in as when a page sends a guest away and no account was asked. */
-    projectAccount?: Account;
     click?: ClickAsk;
     expect?: Expectation[];
     then?: string[];
@@ -195,9 +189,8 @@ export const checkRoutes = async (
     space?: string;
     /** Each page read in light and in dark too: a ground that does not follow the theme under a text that does. */
     themes?: boolean;
-    /** Another site's pictures stood in for: a look's check is about what a task changed, not a third party's CDN. */
-    standIns?: boolean;
-  }
+  } & Pick<VisitView, 'scheme' | 'presence' | 'timezone' | 'conditions' | 'standIns'> &
+    Visitor
 ): Promise<CheckReport[] | { problem: string }> => {
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
   const where = await originHere(project.root, plitzi, options.url);
@@ -239,8 +232,9 @@ export const checkRoutes = async (
             width,
             {
               ...(options.scheme ? { scheme: options.scheme } : {}),
-              presence: options.presence === true,
+              ...(options.presence ? { presence: true } : {}),
               ...(options.timezone ? { timezone: options.timezone } : {}),
+              ...(options.conditions ? { conditions: options.conditions } : {}),
               ...(options.standIns ? { standIns: true } : {})
             },
             authored,

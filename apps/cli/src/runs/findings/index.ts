@@ -12,6 +12,7 @@ import type { TaskRoundReport } from '../taskReports';
 
 export { factFindings } from './facts';
 export { closeFindings, overrunFindings } from './overrun';
+export { pastFindingsOf, withHistory } from './history';
 export { keepScratch, scratchOf } from './scratch';
 export { FINDING_OWNERS } from './types';
 export type { Finding, FindingInput, FindingKind, FindingOwner, PlitziArea, SaidOfPlitzi } from './types';
@@ -60,6 +61,8 @@ export const runFindings = (input: FindingInput & { repeated: readonly RepeatedC
 export interface RunIndicators {
   /** How many findings are whose. */
   findings: Record<FindingOwner, number>;
+  /** How many were met in a run before (`history.ts`): what fixing did not stop. A run reported before it was counted has none. */
+  metBefore?: number;
   /** Of the task checks that failed, the share that failed for nothing of the copy's own work. */
   notOwnPct?: number;
   flakyChecks: number;
@@ -95,6 +98,7 @@ export const indicatorsOf = (
 
   return {
     findings: { plitzi: whose('plitzi'), lead: whose('lead'), agent: whose('agent'), machine: whose('machine') },
+    metBefore: findings.filter(finding => (finding.seenIn?.length ?? 0) > 0).length,
     ...(failed > 0 ? { notOwnPct: Math.round((metrics.checks.notOwn / failed) * 100) } : {}),
     flakyChecks: times('flaky-check'),
     linesFailing: findings.filter(finding => finding.kind === 'line-failing').length,

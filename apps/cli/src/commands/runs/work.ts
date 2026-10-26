@@ -189,7 +189,7 @@ export const taskCheck = (
         ...(checked.backups ?? []).map(file => chalk.yellow(`  ✗ ${backupText(file)}`)),
         ...(checked.othersFiles ?? []).map(each =>
           chalk.yellow(
-            `  ✗ ${each.file} is ${each.holder}'s, at work — complete refuses it: put it back (plitzi task discard ${each.file}) and propose the change to ${each.holder} (plitzi task propose ${each.holder} --change "…"), or wait for it (plitzi task wait ${each.file})`
+            `  ✗ ${each.file} is ${each.holder}'s, at work — complete refuses it: put it back (plitzi task discard ${each.file}) and propose the change to ${each.holder} (plitzi task propose ${each.holder} --change "…"), or wait for it (plitzi task claim ${each.file} --wait)`
           )
         ),
         ...(checked.notOwn

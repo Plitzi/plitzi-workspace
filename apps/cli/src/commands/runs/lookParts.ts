@@ -4,10 +4,11 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
+import { audienceAt } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { runSelf } from './shell';
-import { authoredHandles } from '../../runs/expectations';
+import { authoredSpace } from '../../runs/expectations';
 import { writeJson } from '../../runs/files';
 import { examplePaths } from '../../runs/pagesOf';
 import { RunRefusal } from '../../runs/refusal';
@@ -21,7 +22,6 @@ import { pageFor } from '../check/space';
 import type { LookOptions } from './lookOptions';
 import type { Preview } from '../../runs/preview';
 import type { RunContext } from '../../runs/run';
-import type { SpaceHandles } from '@plitzi/sdk-authoring';
 
 /**
  * The pages of a look the space declares for signed-in visitors alone, and the account the project names to read them
@@ -32,15 +32,14 @@ export const visitorsOnly = async (
   dir: string,
   pages: readonly string[]
 ): Promise<{ pages: string[]; as?: string; problem?: string } | undefined> => {
-  const handles = await authoredHandles(dir);
-  const guarded = handles
+  const authored = await authoredSpace(dir);
+  // Members only by the router, or kept for some permissions (the server withholds those): read as one of them.
+  const guarded = authored
     ? pages.filter(each => {
-        const id = pageFor(handles, each);
-        const page = id === undefined ? undefined : handles.pages[id];
+        const id = pageFor(authored, each);
+        const page = id === undefined ? undefined : authored.handles.pages[id];
 
-        return (
-          page !== undefined && (page.accessLevel === 'authenticated' || (page.access?.permissions.length ?? 0) > 0)
-        );
+        return audienceAt(authored.schema, each) === 'members' || (page?.access?.permissions.length ?? 0) > 0;
       })
     : [];
   if (guarded.length === 0) {
@@ -57,27 +56,13 @@ export const visitorsOnly = async (
 };
 
 /**
- * The pages only a signed-out visitor opens — `accessLevel: 'public'`, with no signed-in twin at their address: a look
- * signed in reads them as a guest. encore-10's looks read /sign-in signed in, were sent home, and pictured Home.
+ * The pages only a signed-out visitor opens — the router asked as both (`audienceAt`): a look signed in reads them as a
+ * guest. encore-10's looks read /sign-in signed in, were sent home, and pictured Home.
  */
 export const signedOutOnly = async (dir: string, pages: readonly string[]): Promise<string[]> => {
-  const handles = await authoredHandles(dir);
+  const authored = await authoredSpace(dir);
 
-  return handles ? signedOutOnlyIn(handles, pages) : [];
-};
-
-/** `signedOutOnly`, of a space authored. */
-export const signedOutOnlyIn = (handles: SpaceHandles, pages: readonly string[]): string[] => {
-  const all = Object.values(handles.pages);
-
-  return pages.filter(each => {
-    const id = pageFor(handles, each);
-    const page = id === undefined ? undefined : handles.pages[id];
-
-    return (
-      page?.accessLevel === 'public' && !all.some(other => other.path === page.path && other.accessLevel !== 'public')
-    );
-  });
+  return authored ? pages.filter(each => audienceAt(authored.schema, each) === 'guests') : [];
 };
 
 /** The pages a page check's answer (`--json`) says sent the browser elsewhere — to the sign-in, for a guest. */

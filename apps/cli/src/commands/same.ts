@@ -1,12 +1,13 @@
 import chalk from 'chalk';
 
-import { openPage } from '@plitzi/sdk-authoring';
-
-import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
+import { launchBrowser } from '../browser';
 import { projectHere } from './existingProject';
 import { unanswered, UNANSWERED_EXIT } from './terminal';
+import { openVisit, visitorAsked, visitViewOf } from './visit';
 
 import type { Browser, Scheme } from '../browser';
+import type { VisitorOptions } from './register/options';
+import type { Visitor, VisitView } from './visit';
 
 /**
  * `plitzi page same`: whether pages draw the same on two servers of the project — the run before a task and the task's
@@ -15,11 +16,11 @@ import type { Browser, Scheme } from '../browser';
  * two tokens no other page reads. What draws the same is not pictured; what differs, or cannot be told, is.
  */
 
-export interface SameOptions {
+export interface SameOptions extends VisitorOptions {
   /** The server the pages are read on: the task's copy. */
   url: string;
   /** …and the one they are held to: the run before it. */
-  than: string;
+  compare: string;
   width?: number;
   scheme?: Scheme;
   /** Elements left out — a task's own parts, which it changed: that nothing else moved is what is read. */
@@ -102,24 +103,20 @@ export const drawing = (except: readonly string[] = []): string[] => {
     });
 };
 
+/** A page visited on one server as the same visitor on both (`visit.ts`), and drawn line by line. */
 const readOn = async (
   browser: Browser,
   origin: string,
   path: string,
-  view: { width: number; scheme?: Scheme; except: readonly string[] }
+  { except, ...view }: VisitView & Visitor & { except: readonly string[] }
 ): Promise<string[]> => {
-  const page = await openProjectPage(browser, origin, {
-    width: view.width,
-    height: 900,
-    reducedMotion: true,
-    ...(view.scheme ? { scheme: view.scheme } : {})
-  });
+  const { page, answered, problem } = await openVisit(browser, origin, path, view);
   try {
-    await openPage(page, `${origin}${path}`, { quietMs: PROJECT_QUIET_MS });
-    await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
-    await page.evaluate(() => document.fonts.ready.then(() => undefined), undefined);
+    if (!answered) {
+      throw new Error(problem ?? `nothing answers at ${origin}${path}`);
+    }
 
-    return await page.evaluate(drawing, view.except);
+    return await page.evaluate(drawing, except);
   } finally {
     await page.close();
   }
@@ -144,9 +141,11 @@ export const firstDifference = (
 export const samePages = async (
   browser: Browser,
   paths: readonly string[],
-  options: Pick<SameOptions, 'url' | 'than' | 'width' | 'scheme' | 'except'>
+  options: Pick<SameOptions, 'url' | 'compare' | 'width' | 'scheme' | 'except'>,
+  visit: Pick<VisitView, 'timezone' | 'presence' | 'conditions'> & Visitor = {}
 ): Promise<Sameness[]> => {
   const view = {
+    ...visit,
     width: options.width ?? 1440,
     except: options.except ?? [],
     ...(options.scheme ? { scheme: options.scheme } : {})
@@ -156,7 +155,7 @@ export const samePages = async (
     try {
       const [here, there] = await Promise.all([
         readOn(browser, new URL(options.url).origin, path, view),
-        readOn(browser, new URL(options.than).origin, path, view)
+        readOn(browser, new URL(options.compare).origin, path, view)
       ]);
       const first = firstDifference(here, there);
       read.push({ path, same: first === undefined, ...(first ? { first } : {}) });
@@ -178,6 +177,11 @@ export const pageSame = async (paths: string[], options: SameOptions): Promise<v
     return;
   }
 
+  const visitor = await visitorAsked(project.root, options);
+  if (visitor === null) {
+    return;
+  }
+
   const browser = await launchBrowser(project.root);
   if ('problem' in browser) {
     unanswered(browser.problem);
@@ -186,7 +190,10 @@ export const pageSame = async (paths: string[], options: SameOptions): Promise<v
   }
 
   try {
-    const read = await samePages(browser, paths.length > 0 ? paths : ['/'], options);
+    const read = await samePages(browser, paths.length > 0 ? paths : ['/'], options, {
+      ...visitViewOf(options),
+      ...visitor
+    });
     console.log(
       options.json
         ? JSON.stringify({ pages: read })

@@ -7,6 +7,7 @@ import { act, runOf } from './shell';
 import { takeOnRead } from './takeOnRead';
 import { runPaths, taskPaths } from '../../runs/paths';
 import { RunRefusal } from '../../runs/refusal';
+import { actingSteps } from '../shot/steps';
 
 import type { LookOptions } from './lookOptions';
 
@@ -23,6 +24,12 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
           'invalid',
           'One interaction a look: --click an element, --hover one, or --steps — a look for each'
         );
+      }
+
+      // A visitor's steps, read and pictured after: a picture among them is page shot's, the look takes its own.
+      const steps = actingSteps(options.steps, 'task look');
+      if ('problem' in steps) {
+        throw new RunRefusal('invalid', steps.problem);
       }
 
       // Looked at already, as asked now, and nothing changed since — the task, the run's approved work: said again, not

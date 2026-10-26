@@ -26,6 +26,11 @@ describe('what a refused command line meant', () => {
     expect(commandHint("error: unknown command 'agents'", ['run', 'agents', 'shop-3'])).toContain('run status');
     expect(commandHint("error: unknown command 'list'", ['task', 'list'])).toContain('run status');
     expect(commandHint("error: unknown command 'pages'", ['space', 'pages'])).toContain('plitzi space overview');
+    // Folded into another after encore-10: the old name says where it went.
+    expect(commandHint("error: unknown command 'take'", ['task', 'take', 't-home'])).toContain(
+      'plitzi task next <task>'
+    );
+    expect(commandHint("error: unknown command 'rehearse'", ['run', 'rehearse', 'plan.json'])).toContain('--rehearse');
     expect(commandHint("error: unknown command 'nope'", ['run', 'nope'])).toBeUndefined();
   });
 
@@ -54,6 +59,25 @@ describe('what a refused command line meant', () => {
     expect(commandHint("error: unknown option '--until'", ['run', 'watch', '--until', 'lead'])).toContain('lead');
     expect(commandHint("error: unknown option '--search'", ['explain', '--search', 'carousel end'])).toContain(
       'plitzi explain "carousel end"'
+    );
+    // Missed before the unknown one is: `--than` given, `--compare` missing.
+    expect(
+      commandHint("error: required option '--compare <origin>' not specified", [
+        'page',
+        'same',
+        '/',
+        '--url',
+        'http://127.0.0.1:8080',
+        '--than',
+        'http://127.0.0.1:8081'
+      ])
+    ).toContain('--compare <origin>');
+    expect(commandHint("error: required option '--compare <origin>' not specified", ['page', 'same', '/'])).toBe(
+      undefined
+    );
+    expect(commandHint('', ['task', 'wait', 'x'])).toBeUndefined();
+    expect(commandHint("error: unknown command 'wait'", ['task', 'wait', 'src/a.ts'])).toContain(
+      'plitzi task claim <file> --wait'
     );
   });
 

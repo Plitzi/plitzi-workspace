@@ -11,8 +11,7 @@ import { assertStatus, loadRun, logRun, requireNoTask } from '../run';
 import { logSpent } from '../spent';
 import { isResearch } from '../spike';
 import { updateState, viewTask } from '../taskStore';
-import { isWorked } from '../worked';
-import { at, findTask, holderOf } from './common';
+import { at, findTask } from './common';
 import { readyWhatWaited, sayIfAllDone } from './handOn';
 
 import type { TaskStatus } from '../model';
@@ -43,44 +42,6 @@ export interface Spiked {
 
 /** The name the primer a proposed stage names is kept under, beside it: the stage reads it from there. */
 const PROPOSED_PRIMER = 'proposed-primer.md';
-
-/**
- * `plitzi task spike "…"`, by the agent at work: its task needs something found out before it goes on — the lead's to
- * answer, as every block is (a scout finds out the run's spikes alone, and stops once none is left: Carlos). The task is
- * blocked on it, saying what, its files and agent its own; the lead's answer (`task unblock --answer`) lifts the block,
- * kept as a finding of the task's.
- */
-export const startSpike = async (ctx: RunContext, runId: string, taskId: string, question: string): Promise<Spiked> => {
-  const loaded = await loadRun(ctx, runId);
-  assertStatus(loaded, ['open', 'stopping'], 'ask for a spike');
-  const task = findTask(loaded, taskId);
-  const view = await holderOf(ctx, loaded, task);
-  if (!isWorked(view.state.status)) {
-    throw new RunRefusal('invalid', `Task "${taskId}" is ${view.state.status}: a task at work asks for a spike`, {
-      task: taskId
-    });
-  }
-
-  await updateState(
-    view.paths,
-    state => ({
-      ...state,
-      status: 'blocked',
-      blockedBy: {
-        reason: `needs a spike: ${question} — the lead finds it out and lifts the block with it: plitzi task unblock ${taskId} --answer "…" (kept as its finding); work it changes, a stage: plitzi run extend <stage.json>`,
-        needs: 'lead',
-        spike: question
-      },
-      notes: [...state.notes, { at: at(ctx), by: ctx.agent, text: `Needs a spike: ${question}` }]
-    }),
-    ctx.now
-  );
-  // No message: the block, saying what and how to answer it, wakes the lead — a message beside it was a question
-  // `task unblock --answer` never answered, and held the task's approval.
-  await logRun(ctx, loaded.paths, { action: 'spike', task: taskId, question });
-
-  return { task: taskId, status: 'blocked', question };
-};
 
 /** A spike to find out: a research task of the run's — an agent's question is a block, the lead's to answer. */
 const isOpenSpike = (view: TaskView): boolean => view.state.status === 'spike' && isResearch(view.task);
@@ -117,7 +78,7 @@ export const answerSpike = async (
   if (!isOpenSpike(view)) {
     throw new RunRefusal(
       'invalid',
-      view.state.status === 'blocked' && view.state.blockedBy?.spike !== undefined
+      view.state.status === 'blocked' && view.state.blockedBy?.needs === 'lead'
         ? scout
           ? `Task "${taskId}" is an agent's question, blocked on the lead: the lead answers it — you find out the run's spikes alone`
           : `Task "${taskId}" is blocked on a question: lift it with what you found — plitzi task unblock ${taskId} --answer "…"`

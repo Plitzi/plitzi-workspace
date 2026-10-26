@@ -1,17 +1,19 @@
 import chalk from 'chalk';
 
 import { launchBrowser } from '../browser';
-import { accountAsked, projectAccount } from './check';
 import { projectHere } from './existingProject';
-import { ourPage, pairOf } from './measure';
+import { pairOf } from './measure';
 import { putIn } from './measureState';
+import { openVisit, visitorAsked, visitViewOf } from './visit';
 import { keptOutline } from '../browser/keptBrowser';
 import { originHere } from '../runs/copyServer';
 import { targetOn } from './shot/capture';
 import { pageAnswered } from './shot/remote';
+import { actingSteps, playedOn } from './shot/steps';
 import { fail, unanswered } from './terminal';
 
 import type { BrowserPage, Scheme } from '../browser';
+import type { VisitorOptions } from './register/options';
 
 /**
  * `plitzi page outline`: what a page is made of, as the elements a visitor sees — each by a selector `page measure`
@@ -19,7 +21,7 @@ import type { BrowserPage, Scheme } from '../browser';
  * one call where agents fetched its HTML and searched it for classes (a run's designer).
  */
 
-export interface OutlineOptions {
+export interface OutlineOptions extends VisitorOptions {
   /** The other site, outlined instead of the project's page. */
   compare?: string;
   /** One part of the page — its element's name or any selector — outlined alone. */
@@ -30,12 +32,9 @@ export interface OutlineOptions {
   depth?: number;
   /** Elements clicked first, in order — an open drawer outlined: `"ours => theirs"`, each page its own side. */
   click?: string[];
+  /** Played on the project's page before it is outlined, as `page play` writes them: what only a visitor's steps open. */
+  steps?: string;
   scheme?: Scheme;
-  url?: string;
-  /** Signed in first as this account: the password from `PLITZI_CHECK_PASSWORD`. */
-  as?: string;
-  /** Read as a guest, though a page sends one away: the project's account is not signed in by itself. */
-  guest?: boolean;
   /**
    * The elements whose name, selector or words hold this — the whole page searched, at any depth: a run's designer
    * found the sign-in wordmark's id, built from a prefix in code, by grepping the source.
@@ -335,6 +334,20 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
     return;
   }
 
+  const steps = actingSteps(options.steps, 'page outline', { others: false });
+  if ('problem' in steps) {
+    fail(`${steps.problem}.`);
+
+    return;
+  }
+
+  // A visitor's steps make what they make on the project's page: the other site has no such data to make.
+  if (steps.length > 0 && target !== undefined) {
+    fail('--steps plays on the project’s page: leave out --compare, or open the other site’s with --click.');
+
+    return;
+  }
+
   // Each width its own outline, as `check` and `measure` take a list: a run's agents asked for 390,1440 four times.
   const widths = options.width ?? [1440];
   const outlines: Outline[] = [];
@@ -398,12 +411,10 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
       }
     }
 
-    const account = await accountAsked(project.root, options.as);
-    if (account === null) {
+    const visitor = await visitorAsked(project.root, options);
+    if (visitor === null) {
       return;
     }
-
-    const own = options.as === undefined && options.guest !== true ? await projectAccount(project.root) : undefined;
 
     const browser = await launchBrowser(project.root);
     if ('problem' in browser) {
@@ -421,14 +432,21 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
               reducedMotion: true,
               ...(options.scheme ? { scheme: options.scheme } : {})
             })
-          : await ourPage(browser, where?.origin ?? '', route, {
+          : await openVisit(browser, where?.origin ?? '', route, {
               width,
-              ...(account ? { account } : {}),
-              ...(own ? { projectAccount: own } : {}),
+              ...visitViewOf(options),
+              ...visitor,
               ...(options.scheme ? { scheme: options.scheme } : {})
             }).then(read => (read.answered ? read : { problem: read.problem ?? `nothing answers at ${url}` }));
       if ('problem' in opened) {
         unanswered(opened.problem);
+
+        return;
+      }
+
+      const notPlayed = await playedOn(opened.page, steps);
+      if (notPlayed) {
+        fail(`--steps: ${notPlayed.problem}.`);
 
         return;
       }

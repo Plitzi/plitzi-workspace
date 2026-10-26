@@ -57,7 +57,7 @@ export const heldAhead = (views: readonly TaskView[], heldBy: (view: TaskView) =
         kind: 'held-ahead' as const,
         task: view.task.id,
         subject: `${view.task.id}:${held.task}:${held.file}`,
-        text: `${view.task.id} is ready, and none can take it: ${held.task} holds ${held.file}, claimed ahead of it — it is free once ${held.task} is approved (${holder.state.status} now): review ${held.task} first, or ${held.task} lets the file go (plitzi task release ${held.file})`,
+        text: `${view.task.id} is ready, and none can take it: ${held.task} holds ${held.file}, claimed ahead of it — it is free once ${held.task} is approved (${holder.state.status} now): review ${held.task} first, or ${held.task} lets the file go (plitzi task claim ${held.file} --release)`,
         who: 'lead' as const
       }
     ];
@@ -113,7 +113,7 @@ export const stalled = (
     return [
       `${view.task.id} is ready, offered to nobody: ${held.file} is held by ${held.task}${
         holder?.state.status === 'blocked'
-          ? ` — itself blocked (${holder.state.blockedBy?.reason ?? 'no reason said'}): the block holds the file its own wait needs. Unblock ${held.task} asking it to let the file go (plitzi task release ${held.file}), then block again`
+          ? ` — itself blocked (${holder.state.blockedBy?.reason ?? 'no reason said'}): the block holds the file its own wait needs. Unblock ${held.task} asking it to let the file go (plitzi task claim ${held.file} --release), then block again`
           : ` (${holder?.state.status ?? 'another run'})`
       }`
     ];

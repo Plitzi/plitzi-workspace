@@ -81,16 +81,16 @@ export const overrunFindings = (tasks: readonly TaskReport[], log: readonly LogE
 const CLOSE_MINUTES = 15;
 
 /** Every task approved and the run left open: the team waits on the lead's close (encore-10's sat past its approval). */
-export const closeFindings = (log: readonly LogEntry[]): Finding[] => {
+export const closeFindings = (log: readonly LogEntry[], now: string): Finding[] => {
   const approved = log.findLast(entry => entry.action === 'all-approved');
   if (!approved) {
     return [];
   }
 
+  // Not ready yet, it is measured to now: the report is written before the finish's dry run — a close on its way.
   const ready = log.find(entry => entry.action === 'ready' && text(entry.at) >= text(approved.at));
-  const until = ready ? text(ready.at) : undefined;
-  const minutes = until === undefined ? undefined : (Date.parse(until) - Date.parse(text(approved.at))) / 60_000;
-  if (minutes !== undefined && minutes <= CLOSE_MINUTES) {
+  const minutes = (Date.parse(ready ? text(ready.at) : now) - Date.parse(text(approved.at))) / 60_000;
+  if (minutes <= CLOSE_MINUTES) {
     return [];
   }
 
@@ -99,8 +99,8 @@ export const closeFindings = (log: readonly LogEntry[]): Finding[] => {
       kind: 'slow-close',
       owner: 'lead',
       title:
-        minutes === undefined
-          ? `Every task was approved at ${clock(approved.at)} UTC, and the finish's dry run never passed`
+        ready === undefined
+          ? `Every task was approved at ${clock(approved.at)} UTC, and ${String(Math.round(minutes))} min later the finish's dry run had not passed`
           : `Every task was approved at ${clock(approved.at)} UTC; the run was ready to apply ${String(Math.round(minutes))} min later`,
       evidence: ['the base agents waited for the close meanwhile, each wait a turn of theirs'],
       times: 1,

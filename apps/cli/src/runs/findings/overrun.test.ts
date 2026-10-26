@@ -78,10 +78,16 @@ describe('a task that ran long, in the report', () => {
 
 describe('the close', () => {
   it('is said only when the lead left the run open long past the last approval', () => {
-    expect(closeFindings(log)).toEqual([]);
+    expect(closeFindings(log, '2026-10-26T22:00:00.000Z')).toEqual([]);
     const late = [...log.slice(0, -1), { ...log[log.length - 1], at: '2026-10-26T21:10:00.000Z' }];
-    expect(closeFindings(late)[0]?.title).toBe(
+    expect(closeFindings(late, '2026-10-26T22:00:00.000Z')[0]?.title).toBe(
       'Every task was approved at 20:32 UTC; the run was ready to apply 38 min later'
+    );
+    // Before the finish, measured to now: on its way at first, past its time later.
+    const open = log.slice(0, -1);
+    expect(closeFindings(open, '2026-10-26T20:40:00.000Z')).toEqual([]);
+    expect(closeFindings(open, '2026-10-26T21:00:00.000Z')[0]?.title).toBe(
+      "Every task was approved at 20:32 UTC, and 28 min later the finish's dry run had not passed"
     );
   });
 });

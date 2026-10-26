@@ -10,6 +10,7 @@ import { identifiedAgents } from './identity';
 import { leadReviews, spareReviewers } from './leads';
 import { workLimitOf } from './limits';
 import { LEAD, messagesOf, standingText, unreadFor } from './messages';
+import { asksLead } from './model';
 import { agentsNeeded } from './onDemand';
 import { under } from './paths';
 import { previewPort } from './previewRecord';
@@ -220,7 +221,7 @@ const lineOf = (view: TaskView, now: Date, owesSignal: boolean, unblocks: string
   ...(view.state.status === 'spike' ? { spike: view.task.spike ?? 'what it needs' } : {}),
   ...(view.state.findings && view.state.findings.length > 0 ? { found: view.state.findings.length } : {}),
   // Whoever finds it out — research, or what its agent blocked on — until what it found is with the lead.
-  ...((view.state.status === 'spike' || view.state.blockedBy?.spike !== undefined) &&
+  ...((view.state.status === 'spike' || asksLead(view.state)) &&
   view.state.spikedBy &&
   view.state.proposed === undefined
     ? { spikedBy: view.state.spikedBy.by }
@@ -411,7 +412,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       attention.push({
         kind: view.state.blockedBy.needs === 'person' ? 'person' : 'blocked',
         task: view.task.id,
-        text: `${view.task.id} blocked: ${view.state.blockedBy.reason}`,
+        text: `${view.task.id} blocked: ${view.state.blockedBy.reason}${asksLead(view.state) ? ` — answer it: plitzi task unblock ${view.task.id} --answer "…" (kept as its finding)` : ''}`,
         who: view.state.blockedBy.needs
       });
     }
@@ -643,7 +644,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   };
 };
 
-/** A run of the project as `plitzi run state` lists it: where it stands, and what writes it into the project. */
+/** A run of the project as `plitzi run status --all` lists it: where it stands, and what writes it into the project. */
 export interface ProjectRun {
   runId: string;
   goal: string;
@@ -663,7 +664,7 @@ export interface ProjectRun {
 }
 
 /**
- * `plitzi run state`: every run of this project not yet written into it — the ones ready to apply first, each with the
+ * `plitzi run status --all`: every run of this project not yet written into it — the ones ready to apply first, each with the
  * command that applies it, so nobody keeps the list in their head.
  */
 export const runsState = async (ctx: RunContext): Promise<ProjectRun[]> => {

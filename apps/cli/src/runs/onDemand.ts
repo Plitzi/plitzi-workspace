@@ -281,7 +281,7 @@ export const agentsNeeded = (
       }
 
       // One on demand beside those running is worth its start when the work waiting and in hand, shared with it, is
-      // TASKS_PER_AGENT each or more — as `run plan` counts it: fewer, those running take it next. A run's watch asked
+      // TASKS_PER_AGENT each or more — as `run open --dry-run` counts it: fewer, those running take it next. A run's watch asked
       // for dev-2 for two tasks the plan had said were too few for three agents.
       const runningOfRole = started.filter(each => ofRole(each) && running.has(each.agent));
       const inHand = runningOfRole.filter(each => busy.has(each.agent)).length;

@@ -190,7 +190,7 @@ export const completeTask = async (
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);
   // A task waiting for a file completes too, leaving its queue: what it waited for it does without — and a change to that
-  // file still in its copy is refused below, naming it (dev-1's `task wait` ran out, t-heading stayed
+  // file still in its copy is refused below, naming it (dev-1's wait for a file ran out, t-heading stayed
   // waiting, and nothing let it complete).
   if (!['in-progress', 'changes-requested', 'waiting'].includes(view.state.status)) {
     throw new RunRefusal('invalid', `Task "${taskId}" is ${view.state.status}: only a task in progress completes`, {
@@ -199,15 +199,15 @@ export const completeTask = async (
   }
 
   if (!(await readStart(view.paths))) {
-    throw new RunRefusal('invalid', `Task "${taskId}" has no copy: take it again (plitzi task take ${taskId})`);
+    throw new RunRefusal('invalid', `Task "${taskId}" has no copy: take it again (plitzi task next ${taskId})`);
   }
 
   // Gone, every file of it would read as removed — and be refused as another task's: said as what it is.
   if (!(await exists(view.paths.work))) {
     throw new RunRefusal(
       'invalid',
-      `Task "${taskId}"'s copy is gone (${view.paths.work}): what was written in it is lost. Take the task again (plitzi task take ${taskId}) — it starts from its last reviewed version, or from the run's work`,
-      { task: taskId, work: view.paths.work, next: `plitzi task take ${taskId}` }
+      `Task "${taskId}"'s copy is gone (${view.paths.work}): what was written in it is lost. Take the task again (plitzi task next ${taskId}) — it starts from its last reviewed version, or from the run's work`,
+      { task: taskId, work: view.paths.work, next: `plitzi task next ${taskId}` }
     );
   }
 
@@ -236,7 +236,7 @@ export const completeTask = async (
   const brought = await refreshCopy(ctx, loaded, view);
   const started = await readStart(view.paths);
   if (!started) {
-    throw new RunRefusal('invalid', `Task "${taskId}" has no copy: take it again (plitzi task take ${taskId})`);
+    throw new RunRefusal('invalid', `Task "${taskId}" has no copy: take it again (plitzi task next ${taskId})`);
   }
 
   const changed = await changedInCopy(view, started);
@@ -286,11 +286,11 @@ export const completeTask = async (
         ahead.length > 0
           ? ` Nobody has taken the task of ${ahead.join(', ')} yet: plitzi task claim ${ahead.join(' ')} takes ${ahead.length === 1 ? 'it' : 'them'} ahead of it, your change kept — then complete again.`
           : ''
-      } Put each back in your copy (plitzi task discard <file>) and propose the change to its task (plitzi task propose <task> --change …), or wait for it (plitzi task wait <file>) — or, if your work needs it there and its task said no, tell the lead (plitzi task tell "…"): it decides.`,
+      } Put each back in your copy (plitzi task discard <file>) and propose the change to its task (plitzi task propose <task> --change …), or wait for it (plitzi task claim <file> --wait) — or, if your work needs it there and its task said no, tell the lead (plitzi task tell "…"): it decides.`,
       {
         task: taskId,
         files: outside.map(each => each.file),
-        next: 'put each back (plitzi task discard <file>) and propose the change to its task, or wait for the file (plitzi task wait <file>) and complete again'
+        next: 'put each back (plitzi task discard <file>) and propose the change to its task, or wait for the file (plitzi task claim <file> --wait) and complete again'
       }
     );
   }

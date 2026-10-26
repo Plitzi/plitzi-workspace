@@ -11,7 +11,6 @@ import {
   releaseFile,
   requestShared,
   reworkSpike,
-  startSpike,
   followWait,
   waitForFile
 } from '../../runs/tasks';
@@ -66,7 +65,7 @@ export const taskClaim = (files: string[], options: RunCommandOptions): Promise<
       ].join('\n')
   );
 
-export const taskRelease = (file: string, options: RunCommandOptions): Promise<void> =>
+const taskRelease = (file: string, options: RunCommandOptions): Promise<void> =>
   act(
     options,
     async ctx => {
@@ -78,10 +77,7 @@ export const taskRelease = (file: string, options: RunCommandOptions): Promise<v
       `Let go of ${released}.${granted.length > 0 ? ` Now: ${granted.join(', ')}` : ' Nobody was waiting for it.'}`
   );
 
-export const taskWait = (
-  file: string,
-  options: RunCommandOptions & { follow?: boolean; timeout?: number }
-): Promise<void> =>
+const taskWait = (file: string, options: RunCommandOptions & { follow?: boolean; timeout?: number }): Promise<void> =>
   act(
     options,
     async ctx => {
@@ -110,10 +106,61 @@ export const taskWait = (
         ? `Nobody held ${waited.file} any more: it is yours now, by turns.${waited.nowhere ? ` It is in neither the project nor the run's work yet: if a task at work or in review is making it, wait for that task (plitzi run status says who works what), not the file.` : ''}`
         : waited.followed
           ? `${waited.file} is yours now. ${waited.followed.note ?? ''}`
-          : `Waiting for ${waited.holder} on ${waited.file}: it comes to this task when ${waited.holder} is approved, with the run's version. Go on with what of your task does not need it; \`plitzi task wait ${waited.file} --follow\` waits until it is yours.`,
+          : `Waiting for ${waited.holder} on ${waited.file}: it comes to this task when ${waited.holder} is approved, with the run's version. Go on with what of your task does not need it; \`plitzi task claim ${waited.file} --wait --follow\` waits until it is yours.`,
     // Waiting, without --follow: exit 11 says so to a script. Given at once, or followed until given: 0.
     waited => (waited.granted || options.follow ? 0 : 11)
   );
+
+/** What `task claim` is asked: to take the files, wait for one, or let them go. */
+export interface ClaimOptions extends RunCommandOptions {
+  wait?: boolean;
+  release?: boolean;
+  follow?: boolean;
+  timeout?: number;
+}
+
+/** Why `task claim` cannot do what it was asked as it was asked, or nothing. */
+const claimRefusal = (files: readonly string[], options: ClaimOptions): string | undefined =>
+  options.wait && options.release
+    ? 'A file is waited for or let go, not both: --wait or --release'
+    : (options.wait || options.release) && files.length === 0
+      ? `Name the file: plitzi task claim <file> ${options.wait ? '--wait' : '--release'}`
+      : options.wait && files.length > 1
+        ? `One file a wait: plitzi task claim ${files[0] ?? '<file>'} --wait — then the next`
+        : options.follow && !options.wait
+          ? '--follow stays until a file waited for is yours: plitzi task claim <file> --wait --follow'
+          : undefined;
+
+/**
+ * `plitzi task claim`: a task's shared files by turns — taken, waited for (`--wait`), let go (`--release`) — or, none
+ * named, who holds which. One command for the file's turn, where `task wait` and `task release` were two more.
+ */
+export const claimCommand = async (files: string[], options: ClaimOptions): Promise<void> => {
+  const refused = claimRefusal(files, options);
+  if (refused !== undefined) {
+    return act(
+      options,
+      () => Promise.reject(new RunRefusal('invalid', refused)),
+      () => ''
+    );
+  }
+
+  // One file named with --wait, as `claimRefusal` holds.
+  const [file] = files;
+  if (options.wait) {
+    return taskWait(file, options);
+  }
+
+  if (options.release) {
+    for (const each of files) {
+      await taskRelease(each, options);
+    }
+
+    return;
+  }
+
+  return files.length === 0 ? taskClaims(options) : taskClaim(files, options);
+};
 
 /** `plitzi task discard <files...>`: each put back in turn — dev-1 discarded one at a time, a command each. */
 export const taskDiscard = (files: string[], options: RunCommandOptions): Promise<void> =>
@@ -173,8 +220,7 @@ export const taskRequest = (
   );
 
 /**
- * `plitzi task spike "…"`, by the agent at work: its task needs something found out — the lead's to answer, the task
- * blocked on it. `plitzi task spike <task> --done "…" [--tasks <stage.json>]`, by a scout or the lead:
+ * `plitzi task spike <task> --done "…" [--tasks <stage.json>]`, by a scout or the lead:
  * what a spike found, and the tasks it makes — a scout's proposed to the lead. `--approve` / `--changes "…"`, the
  * lead's: those tasks stacked, or sent back.
  */
@@ -229,15 +275,11 @@ export const taskSpike = (
         throw new RunRefusal('invalid', '--tasks goes with --done: the tasks the spike it answers makes');
       }
 
-      const { runId, taskId } = await holder(ctx, options);
-      if (argument === undefined || argument.trim() === '') {
-        throw new RunRefusal(
-          'invalid',
-          'Say what needs finding out — plitzi task spike "which layers make the original\'s light": a scout finds it'
-        );
-      }
-
-      return startSpike(ctx, runId, taskId, argument);
+      // A question of a task at work is a block the lead answers: one way to say it (`task block`).
+      throw new RunRefusal(
+        'invalid',
+        `A question your task needs answered is a block the lead lifts with the answer: plitzi task block --reason "${argument ?? 'what needs finding out'}" — a spike is research of the run's, a scout's`
+      );
     },
     spiked =>
       spiked.proposed !== undefined

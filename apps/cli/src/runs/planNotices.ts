@@ -4,7 +4,7 @@ import { scriptsOf } from '../commands/verify';
 
 import type { RunTask } from './model';
 
-/** What `run plan` says of a plan's size and checks, against the time a piece of work and a check should take. */
+/** What `run open --dry-run` says of a plan's size and checks, against the time a piece of work and a check should take. */
 
 /**
  * Past the limit a piece of work takes before something is usually wrong (`workLimitOf`): a task that size is several,

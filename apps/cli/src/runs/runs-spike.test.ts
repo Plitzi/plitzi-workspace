@@ -8,7 +8,7 @@ import { readOwnership } from './ownership';
 import { checkPlan } from './plan';
 import { loadRun, openRun } from './run';
 import { scopePlan, SCOPE_SPIKE } from './spike';
-import { answerSpike, nextTask, startSpike, takeNext, taskContext, unblockTask } from './tasks';
+import { answerSpike, blockTask, nextTask, takeNext, taskContext, unblockTask } from './tasks';
 import { viewRun } from './view';
 import { flowStages } from '../commands/runs/monitorFlow';
 import { benchPlan, makeBench, teamFor } from '../tests/runProject';
@@ -189,23 +189,19 @@ describe('a spike: finding out, in the run, a lead’s', () => {
   it('blocks a task whose agent needs something found out on the lead, whose answer is its finding', async () => {
     await open();
     const home = await take('agent-1', 't-home');
-    expect(await startSpike(home.ctx, 'es-launch', 't-home', 'how the original greets a visitor')).toMatchObject({
-      status: 'blocked'
-    });
+    await blockTask(home.ctx, 'es-launch', 't-home', 'how the original greets a visitor', 'lead');
     expect(await statusOf('t-home')).toBe('blocked');
     // The block says what and how to answer it, and wakes the lead alone: no message beside it to answer.
     const blocked = (await viewRun(lead(), 'es-launch')).attention.find(item => item.task === 't-home');
     expect(blocked).toMatchObject({ kind: 'blocked', who: 'lead' });
-    expect(blocked?.text).toContain('needs a spike: how the original greets a visitor');
+    expect(blocked?.text).toContain('blocked: how the original greets a visitor');
     expect(blocked?.text).toContain('plitzi task unblock t-home --answer');
     expect((await messagesOf(await loadRun(lead(), 'es-launch'))).filter(message => message.from === 't-home')).toEqual(
       []
     );
 
     // A spike answered by nothing is no answer; a task's is not a spike the lead says done.
-    expect((await refusal(unblockTask(lead(), 'es-launch', 't-home'))).message).toContain(
-      'lift it with what you found'
-    );
+    expect((await refusal(unblockTask(lead(), 'es-launch', 't-home'))).message).toContain('lift it with the answer');
     expect((await refusal(answerSpike(lead(), 'es-launch', 't-home', 'x'))).message).toContain(
       'plitzi task unblock t-home --answer'
     );

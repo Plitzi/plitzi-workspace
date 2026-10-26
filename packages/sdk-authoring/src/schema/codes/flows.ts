@@ -91,6 +91,12 @@ export const FLOW_CODES = {
       "a channel's `onMessage` flow with no `whileRunning`: a message that arrives while it runs is dropped (`skip`, the default)",
     fix: "`[whileRunning('queue', onMessage()), …]` to hear each one, `'latest'` for the last; `whileRunning('skip', …)` when dropping is meant"
   },
+  'login-then-leaves': {
+    kind: 'warned',
+    means:
+      'steps after `auth.login` on a page for signed-out visitors: the page sends whoever signs in on, to `?redirect=` or its `unauthorizedRedirect`, as the login succeeds — the steps race it',
+    fix: 'end the flow at the login: the page sends the visitor where `?redirect=` says; a page for everybody (no `accessLevel`) navigates itself'
+  },
   'unknown-global-callback': {
     kind: 'warned',
     means: 'a global callback no built-in source declares — it runs only if something registers it',

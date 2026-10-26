@@ -49,6 +49,8 @@ import { viewTask } from '../../runs/taskStore';
 import { readTeam } from '../../runs/team';
 import { checkAccount, sessionCookie } from '../check/account';
 import { projectSpace } from '../check/space';
+import { visitorArgs } from '../register/options';
+import { actingSteps } from '../shot/steps';
 
 import type { LookOptions } from './lookOptions';
 import type { BeforeAfter } from './lookParts';
@@ -213,8 +215,13 @@ export const lookAt = (
             }
           );
         }
-        // Every page read in one visitor's zone: the machine's, unless said — and said under the pictures either way.
-        const zone = options.timezone ? ['--timezone', options.timezone] : [];
+        // Every page read as one visitor — its zone (the machine's unless said, and said under the pictures either way),
+        // its channels, its browser: the page commands' own flags, handed on.
+        const visiting = visitorArgs(options);
+        // The visitor's own steps checked too, what they make read where it is drawn; another account's (`as …`) only
+        // pictured — the check has no other visitors' pages to play them on.
+        const stepsChecked =
+          options.steps !== undefined && !('problem' in actingSteps(options.steps, 'page check', { others: false }));
         const signedIn = as ? ['--as', as] : options.guest === true ? ['--guest'] : [];
         const guestOnly = new Set(as === undefined ? [] : await signedOutOnly(preview.dir, routes));
         const signedInFor = (route: string): string[] => (guestOnly.has(route) ? ['--guest'] : signedIn);
@@ -262,8 +269,9 @@ export const lookAt = (
               ...reachedOnly,
               '--url',
               preview.url,
-              '--than',
+              '--compare',
               before.url,
+              ...visiting,
               '--json'
             ]);
             samePaths(same.output).forEach(page => unchanged.add(page));
@@ -286,8 +294,9 @@ export const lookAt = (
             '--stand-ins',
             '--url',
             preview.url,
-            ...zone,
+            ...visiting,
             ...signed,
+            ...(stepsChecked && options.steps !== undefined ? ['--steps', options.steps] : []),
             ...(options.status === undefined ? [] : ['--status', String(options.status)]),
             ...also,
             ...(options.element ?? []).flatMap(id => ['--element', id])
@@ -335,7 +344,7 @@ export const lookAt = (
                 route,
                 '--url',
                 preview.url,
-                ...zone,
+                ...visiting,
                 ...signedInFor(route),
                 '--width',
                 width,
@@ -356,7 +365,7 @@ export const lookAt = (
                       route,
                       '--url',
                       preview.url,
-                      ...zone,
+                      ...visiting,
                       ...signedInFor(route),
                       '--width',
                       width,
@@ -402,7 +411,7 @@ export const lookAt = (
                   route,
                   '--url',
                   preview.url,
-                  ...zone,
+                  ...visiting,
                   ...signedInFor(route),
                   '--compare',
                   before?.url ?? '',
@@ -424,7 +433,7 @@ export const lookAt = (
                 route,
                 '--url',
                 preview.url,
-                ...zone,
+                ...visiting,
                 ...signedInFor(route),
                 ...(clip ? ['--clip', clip] : []),
                 '--width',
@@ -471,10 +480,11 @@ export const lookAt = (
                 route,
                 '--url',
                 preview.url,
-                '--than',
+                '--compare',
                 before.url,
                 '--except',
                 clips.join(','),
+                ...visiting,
                 '--json'
               ]);
               const differs = elsewhereOf(read.output);
@@ -525,7 +535,7 @@ export const lookAt = (
             : {}),
           ...(guestOnly.size > 0 ? { asGuest: [...guestOnly] } : {}),
           ...(guarded ? { forVisitors: guarded } : {}),
-          ...(options.steps === undefined ? {} : { steps: options.steps }),
+          ...(options.steps === undefined ? {} : { steps: options.steps, stepsChecked }),
           ok: check.code === 0,
           check: kept?.text ?? check.output.trim(),
           ...(kept && kept.apart > 0 ? { apart: kept.apart } : {}),

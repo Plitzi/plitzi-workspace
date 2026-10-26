@@ -102,3 +102,6 @@ export const groupAlike = <T>(items: readonly T[], said: (item: T) => string): T
 
   return groups.map(group => group.items);
 };
+
+/** Whether two texts say one thing: what a finding of this run and one of a run before are told apart by. */
+export const saysAlike = (a: string, b: string): boolean => isAlike(wordsOf(a), wordsOf(b));

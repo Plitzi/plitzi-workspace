@@ -4,9 +4,11 @@ import type { TaskLine } from './view';
 /** What an agent holding `task` is, and does, in its row's words: the board's and the dev tools' one reading. */
 
 /** What each command is about, in a person's words — its path or task where it names one. */
-const DOING: Record<string, (target: string | undefined, compare: boolean) => string> = {
-  'page measure': (target, compare) => `measuring ${target ?? 'a page'}${compare ? ' against the original' : ''}`,
-  'page shot': (target, compare) => `picturing ${target ?? 'a page'}${compare ? ' beside the original' : ''}`,
+const DOING: Record<string, (target: string | undefined, flags: ReadonlySet<string>) => string> = {
+  'page measure': (target, flags) =>
+    `measuring ${target ?? 'a page'}${flags.has('--compare') ? ' against the original' : ''}`,
+  'page shot': (target, flags) =>
+    `picturing ${target ?? 'a page'}${flags.has('--compare') ? ' beside the original' : ''}`,
   'page check': target => `checking ${target ?? 'a page'} in a browser`,
   'page same': target => `comparing ${target ?? 'a page'} with the run before`,
   'task check': () => 'running its checks',
@@ -17,8 +19,14 @@ const DOING: Record<string, (target: string | undefined, compare: boolean) => st
   'task review': target => `saying its verdict on ${target ?? 'a task'}`,
   'task next': () => 'asking for work',
   'task request': () => 'asking for a shared file',
-  'task wait': () => 'waiting for a shared file',
-  'task claim': target => (target === undefined ? 'reading who holds which file' : 'taking a shared file'),
+  'task claim': (target, flags) =>
+    target === undefined
+      ? 'reading who holds which file'
+      : flags.has('--wait')
+        ? 'waiting for a shared file'
+        : flags.has('--release')
+          ? 'letting a shared file go'
+          : 'taking a shared file',
   'task message': () => 'writing to the run',
   'task tell': () => 'telling the lead',
   'task ask': () => 'asking the lead'
@@ -37,7 +45,7 @@ export const commandDoing = (command: string): string => {
   const target = words.filter(word => !word.startsWith('-')).at(2);
   const said = Object.hasOwn(DOING, name) ? DOING[name] : undefined;
 
-  return said ? said(target, words.includes('--compare')) : `running ${name || 'a command'}`;
+  return said ? said(target, new Set(words.filter(word => word.startsWith('--')))) : `running ${name || 'a command'}`;
 };
 
 export const statusOf = (task: TaskLine): AgentStatus =>

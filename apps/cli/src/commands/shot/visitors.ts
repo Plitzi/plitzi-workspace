@@ -1,9 +1,11 @@
 import { openPage } from '@plitzi/sdk-authoring';
 
-import { openProjectPage, PROJECT_QUIET_MS } from '../../browser';
-import { checkAccount, signInAs } from '../check';
+import { PROJECT_QUIET_MS } from '../../browser';
+import { checkAccount } from '../check';
+import { prepareVisit } from '../visit';
 
-import type { Browser, BrowserPage, Scheme } from '../../browser';
+import type { Browser, BrowserPage } from '../../browser';
+import type { VisitView } from '../visit';
 
 /**
  * The other people of a play (`as <account> <step>`): each account signed in on a page of its own, beside the one
@@ -16,11 +18,8 @@ export interface Visitors {
   close: () => Promise<void>;
 }
 
-export interface VisitorsView {
-  width: number;
-  scheme?: Scheme;
-  timezone?: string;
-}
+/** The others' view: the one pictured or read, but each takes part in the channels. */
+export type VisitorsView = Pick<VisitView, 'width' | 'scheme' | 'timezone' | 'conditions'>;
 
 export const visitorsOn = (root: string, browser: Browser, origin: string, view: VisitorsView): Visitors => {
   const pages = new Map<string, BrowserPage>();
@@ -38,12 +37,11 @@ export const visitorsOn = (root: string, browser: Browser, origin: string, view:
       }
 
       // A person taking part: announced on the page's channels, where the page pictured only watches them.
-      const page = await openProjectPage(browser, origin, { height: 900, presence: true, ...view });
-      const refused = await signInAs(page, origin, account);
-      if (refused !== undefined) {
+      const { page, problem } = await prepareVisit(browser, origin, { presence: true, ...view }, account);
+      if (problem !== undefined) {
         await page.close();
 
-        return { problem: `as ${username}: ${refused}` };
+        return { problem: `as ${username}: ${problem.replace(/^--as /, '')}` };
       }
 
       if ((await openPage(page, `${origin}${at}`, { quietMs: PROJECT_QUIET_MS })) === null) {

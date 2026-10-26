@@ -9,6 +9,14 @@ const ELSEWHERE: Readonly<Partial<Record<string, string>>> = {
   'run agents': 'plitzi run status lists the agents and what each is at',
   'run view': 'plitzi run status — or plitzi run monitor, a live board',
   'task list': 'plitzi run status lists the tasks and where each stands',
+  // Folded into another, the surface cut down after encore-10: what each was is said where it went.
+  'task take': 'plitzi task next <task> takes that task by name, now',
+  'run rehearse': 'plitzi run open <plan> --dry-run --rehearse plays the plan out',
+  'run plan': 'plitzi run open <plan> --dry-run holds a plan to the rules and opens nothing',
+  'run state': 'plitzi run status --all lists every run not yet written into the project',
+  'run note': 'plitzi task message all "…" tells every task — the ones taken later too',
+  'run bench': 'plitzi run report --bench measures every run of the project the same way',
+  'skills update': 'plitzi upgrade skills --write brings the skills up to the installed packages',
   // encore-10's scout reached for the pages of the space by name.
   'space pages': 'plitzi space overview lists the pages, each with its files — space overview <page> one of them',
   'page text':
@@ -17,11 +25,13 @@ const ELSEWHERE: Readonly<Partial<Record<string, string>>> = {
   'task heartbeat': 'plitzi task progress is the sign of life — alone, or with --step',
   'task claims': 'plitzi task claim, with no file named, says who holds which file',
   'task proposals': 'plitzi task propose, with no task named, lists the proposals and their answers',
-  'run pending': 'plitzi run state lists the runs not yet written into the project, ready ones first',
+  'run pending': 'plitzi run status --all lists the runs not yet written into the project, ready ones first',
   'run feedback': 'plitzi run report --plitzi says what the run says of Plitzi',
   'run allow-finish': 'plitzi run finish --lead-finishes, a person’s (--no-lead-finishes takes it back)',
   'run continue': 'plitzi run resolve <run>, no file named, lets the run go on once every file is settled',
-  'run prune': 'nothing to run: every run open, and run watch while it follows, prune the caches'
+  'run prune': 'nothing to run: every run open, and run watch while it follows, prune the caches',
+  'task wait': 'plitzi task claim <file> --wait waits for a file another task holds — --follow until it is yours',
+  'task release': 'plitzi task claim <file> --release lets a file go to the next task waiting for it'
 };
 
 /** An option another page command has, and what this one calls the same thing. */
@@ -42,6 +52,7 @@ const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<stri
     '--take': 'task next takes the task by itself — --peek only looks',
     '--follow': 'task next waits by itself — --no-wait answers now'
   },
+  'page same': { '--than': '--compare <origin> is the server the pages are held to — every page command’s other side' },
   'run watch': { '--until': 'run watch, run by the lead, ends on what needs the lead — no --until' },
   explain: { '--search': 'explain takes the words themselves, quoted: plitzi explain "carousel end"' }
 };
@@ -70,6 +81,14 @@ export const commandHint = (error: string, argv: readonly string[]): string | un
     return COUNTERPARTS[commandOf(argv)]?.[unknownOption];
   }
 
+  // A required flag is missed before an unknown one is: given by its old name (`page same --than`), the name is said.
+  if (/required option '[^']+' not specified/.test(error)) {
+    const counterparts = COUNTERPARTS[commandOf(argv)];
+    const given = argv.find(arg => counterparts?.[arg] !== undefined);
+
+    return given === undefined ? undefined : counterparts?.[given];
+  }
+
   // `--as $WHO` with $WHO empty leaves the flag bare, the next flag read as its value would be.
   const bareOption = /option '(--[\w-]+) <[^>]+>' argument missing/.exec(error)?.[1];
   if (bareOption !== undefined) {
@@ -82,7 +101,20 @@ export const commandHint = (error: string, argv: readonly string[]): string | un
 
   const unknownCommand = /unknown command '([^']+)'/.exec(error)?.[1];
   if (unknownCommand !== undefined) {
-    return ELSEWHERE[`${argv[0] ?? ''} ${unknownCommand}`];
+    // Under a group (`run team check`) or a group of its own gone (`skills update`, refused as 'skills').
+    const at = argv.indexOf(unknownCommand);
+    const said = [
+      `${argv[0] ?? ''} ${unknownCommand}`,
+      argv.slice(Math.max(0, at - 1), at + 1).join(' '),
+      argv.slice(at, at + 2).join(' ')
+    ];
+
+    return (
+      said.map(each => ELSEWHERE[each]).find(each => each !== undefined) ??
+      (unknownCommand === 'check' && argv[1] === 'team'
+        ? 'plitzi doctor says whether .plitzi/team.json is a team the runs read as written'
+        : undefined)
+    );
   }
 
   return undefined;

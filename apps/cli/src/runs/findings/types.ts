@@ -86,6 +86,11 @@ export interface Finding {
   task?: string;
   /** Said to the lead while the run goes (`run watch`), not only at its end. */
   live?: true;
+  /**
+   * The runs before that found it too, oldest first (`history.ts`): none, it is new. What says whether fixing works —
+   * a run's 49 problems read the same, new or met for the third time.
+   */
+  seenIn?: string[];
 }
 
 /** Something said of Plitzi by whoever worked: a notice as it happened, or a friction said with a round or the report. */

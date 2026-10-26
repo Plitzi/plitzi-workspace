@@ -10,9 +10,11 @@ import { projectMark } from '@plitzi/sdk-shared/project';
 import { OBSERVER_COOKIE_NAME } from '@plitzi/sdk-shared/realtime';
 import { THEME_COOKIE_NAME } from '@plitzi/sdk-shared/theme';
 
+import { applyConditions } from './conditions';
 import { keepStatic, staticCacheDir } from './staticCache';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
 
+import type { BrowserConditions } from './conditions';
 import type { PlitziProject } from '../commands/existingProject';
 import type { SettlingEvent, SettlingRequest } from '@plitzi/sdk-authoring';
 
@@ -418,6 +420,11 @@ export interface ProjectView {
   timezone?: string;
   /** Device pixels a CSS pixel (`page shot --scale`): the picture that many times as large, the layout the same. */
   scale?: number;
+  /**
+   * The browser where it is not a visitor's ordinary one — its clock held, a request failing, autoplay or storage refused
+   * — applied here, as the page opens, for every command that reads a page alike.
+   */
+  conditions?: BrowserConditions;
 }
 
 /** What `page` asks other sites than `own` for, kept on disk for the project's next browsers (`staticCache.ts`). */
@@ -485,6 +492,9 @@ export const openProjectPage = async (browser: Browser, origin: string, view: Pr
       ...(view.scheme ? [{ name: THEME_COOKIE_NAME, value: view.scheme, url: origin }] : []),
       ...(view.presence ? [] : [{ name: OBSERVER_COOKIE_NAME, value: '1', url: origin }])
     ]);
+  if (view.conditions) {
+    await applyConditions(page, view.conditions);
+  }
 
   return page;
 };

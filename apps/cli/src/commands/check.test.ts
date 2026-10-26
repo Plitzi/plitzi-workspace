@@ -5,6 +5,8 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { authorSpace, container } from '@plitzi/sdk-authoring';
+
 import {
   checkAccount,
   clickedText,
@@ -311,18 +313,21 @@ describe('the account a check signs in as', () => {
 });
 
 describe('the page an address is answered by', () => {
-  const page = (id: string, path: string, slug = path.slice(1)) => ({ id, path, slug, elements: {} });
-  const handles = {
-    pages: {
-      home: page('home', '/'),
-      post: page('post', '/p/:slug'),
-      lost: page('lost', '/*', '*'),
-      docsLost: page('docsLost', '/docs/*', '*'),
-      docs: page('docs', '/docs/intro', 'intro'),
+  // The router's own answer (`pageAt`): the space authored, never handles made up beside it.
+  const handles = authorSpace({
+    name: 'Routes',
+    permanentUrl: 'routes',
+    pageFolders: [{ id: 'docs' }],
+    pages: [
+      { name: 'Home', id: 'home', slug: '', isDefault: true, body: [container({ id: 'home-box' })] },
+      { name: 'Post', id: 'post', slug: 'p/{{slug}}', body: [container({ id: 'post-box' })] },
+      { name: 'Lost', id: 'lost', slug: '*', body: [container({ id: 'lost-box' })] },
+      { name: 'Docs lost', id: 'docsLost', slug: '*', folder: 'docs', body: [container({ id: 'docs-lost-box' })] },
+      { name: 'Docs', id: 'docs', slug: 'intro', folder: 'docs', body: [container({ id: 'docs-box' })] },
       // A page of its own that answers a whole subtree: not a "not found" page.
-      editor: page('editor', '/spaces/:spaceId/update/*')
-    }
-  } as unknown as Parameters<typeof pageFor>[0];
+      { name: 'Editor', id: 'editor', slug: 'spaces/{{spaceId}}/update/*', body: [container({ id: 'editor-box' })] }
+    ]
+  });
 
   it('is a page with a path of its own before any "not found" page — `/*` would answer `/` too', () => {
     expect(pageFor(handles, '/')).toBe('home');

@@ -12,7 +12,7 @@ escalated, closes (`lead-only`, 25). A **scout** finds out the spikes ([runs-sco
 The team is `.plitzi/team.json`: each agent's name, roles, count, model. Tasks name a role (`"role":
 "designer"`; `developer` when left out); `plitzi task next --agent design-1` waits
 (8 min, `--timeout`) for the next one and takes it — first a task you hold that can go on, or another's sent back
-while its agent is at a task (3 min on, with its review's asks); again until it says you can stop. Started at a level, say it (`--quality high`, as `run plan` gave your command): you are handed tasks of it or below.
+while its agent is at a task (3 min on, with its review's asks); again until it says you can stop. Started at a level, say it (`--quality high`, as `run open --dry-run` gave your command): you are handed tasks of it or below.
 **A designer** reviews UI/UX before the tester: [runs-designer.md](runs-designer.md). **A tester** reviews every task — its QA ([runs-review.md](runs-review.md)). With one, each developer task gets `<task>-tests`,
 a developer's that did not write it (the tester's when none may): tests of what its acceptance asked, both sides of each
 condition (a page's in `visual/<page>.spec.ts`, a module's beside it). A test the work fails is told to the lead (`task
@@ -54,8 +54,8 @@ itself once (`--agent design-1`) and is answered both. A token, name or role not
   `complete`, if nobody holds it, it is yours by turns and goes into the run with you; if the run changed it meanwhile,
   the two changes are put together line by line. Shared and held by another, your change becomes a request (`plitzi task
 request <file> --summary "why"`), merged when you are approved; **another task's own file**: wait for it, your change
-  kept (`plitzi task wait <file> --follow`: it is yours once that task is approved), or propose the change to it. To hold it while
-  you work: `plitzi task claim <file>`; answered `claimed` with `turn: "wait"` → `plitzi task wait <file>` and go on
+  kept (`plitzi task claim <file> --wait --follow`: it is yours once that task is approved), or propose the change to it. To hold it while
+  you work: `plitzi task claim <file>`; answered `claimed` with `turn: "wait"` → `plitzi task claim <file> --wait` and go on
   meanwhile (`--follow` to stay until it is yours) — a task nobody took yet: the claim takes its file ahead of it. A
   file handed on arrives with what the run approved since.
 - **Agree with another task** when your work needs a change in its files: `plitzi task propose t-menu --change "the card
@@ -70,13 +70,12 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
   long think. **The lead asks where you stand** (past the 10 minutes a piece of work takes): answer at once: `plitzi task tell --standing
   --fraction 0.6 --eta 15 --done "…" --left "…" [--blocked "…"]`.
 - **A spike** is a scout's (the lead's with none), its result the lead's to approve: what is built is decided by what
-  it finds — your brief has what was found for your task. Your work needs something found out first: `plitzi task spike
-  "what"` — blocked on the lead, its files yours; its answer comes back with the task (`task next`); take another meanwhile.
+  it finds — your brief has what was found for your task.
 - **Your specs, never the suite**: a check of yours runs the specs of what you change (`npx playwright test
   visual/rooms.spec.ts`), never a whole suite — one holds the machine, and the CLI queues the next behind it; the finish
   runs it whole. **A bug you meet outside your task** is the lead's to make a task of (`task tell`), never yours to grow.
-- **Blocked by something outside the plan** (a key, a decision): `plitzi task block --reason "…"` (the lead's:
-  only it talks to the person), then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
+- **Blocked** — something to find out first, a key, a decision: `plitzi task block --reason "…"` (the lead's: it
+  answers, or asks the person), its files yours, then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks
   for changes.
 - **Before done:** `npm run typecheck` and `lint` (seconds), then `plitzi task check` (`--fix`: eslint and prettier fix first) runs what `complete` holds

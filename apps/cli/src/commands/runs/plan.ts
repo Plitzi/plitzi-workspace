@@ -29,7 +29,6 @@ import {
 } from '../../runs/run';
 import { settleFinding } from '../../runs/settle';
 import { SCOPE_SPIKE, scopePlan } from '../../runs/spike';
-import { noteRun } from '../../runs/talk';
 import { roleOf } from '../../runs/tasks';
 import {
   DESIGNER,
@@ -56,7 +55,7 @@ import type { RunContext } from '../../runs/run';
 import type { Team } from '../../runs/team';
 
 /**
- * A run's plan: checked (`run plan`, as its next stage when a run is open), rehearsed, opened, stacked, amended and
+ * A run's plan: checked (`run open --dry-run`, as its next stage when a run is open), rehearsed, opened, stacked, amended and
  * noted — and the lead allowed to apply it.
  */
 
@@ -85,7 +84,7 @@ export interface PlanOptions extends RunCommandOptions {
   leadFinishes?: boolean;
   /** `run open`: the person's ask, with no plan — the run opens on one spike, its scope, the lead's. */
   spike?: string;
-  /** `run open --spike`: the site the run copies, as a plan's `reference` says it. */
+  /** `run start`: the site the run copies, as a plan's `reference` says it. */
   reference?: string;
   /** `run open`: why the run opens though the project fails its own checks — told to every task. */
   despiteChecks?: string;
@@ -100,7 +99,7 @@ const planToOpen = async (ctx: RunContext, file: string | undefined, options: Pl
     if (file === undefined) {
       throw new RunRefusal(
         'invalid',
-        'Name the plan — plitzi run open <plan.json> — or open the run on the ask alone: plitzi run open --spike "…" --run <name>'
+        'Name the plan — plitzi run open <plan.json> — or open the run on the ask alone: plitzi run start "…" --run <name>'
       );
     }
 
@@ -115,7 +114,7 @@ const planToOpen = async (ctx: RunContext, file: string | undefined, options: Pl
   }
 
   if (options.run === undefined || options.spike.trim() === '') {
-    throw new RunRefusal('invalid', 'Say the ask and name the run: plitzi run open --spike "…" --run es-launch');
+    throw new RunRefusal('invalid', 'Say the ask and name the run: plitzi run start "…" --run es-launch');
   }
 
   const written = path.join(ctx.root, 'tmp', `${options.run}.plan.json`);
@@ -408,7 +407,7 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
           ? []
           : [
               chalk.yellow(
-                'Scoped before the run: what was found out to write this plan is in no record of it — not in the monitor, the report or the bench. A run scoped inside it opens on the ask: plitzi run open --spike "…" --run <name>'
+                'Scoped before the run: what was found out to write this plan is in no record of it — not in the monitor, the report or the bench. A run scoped inside it opens on the ask: plitzi run start "…" --run <name>'
               )
             ]),
         opened.tasks.length === 1 && opened.tasks[0] === SCOPE_SPIKE
@@ -419,13 +418,6 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
         'Watch it in a browser as the tasks are approved: p in plitzi run monitor, or npm run start:preview (on 8300) — the project itself is untouched until the finish',
         ...backlogLines(opened.backlog)
       ].join('\n')
-  );
-
-export const runNote = (text: string, options: RunCommandOptions): Promise<void> =>
-  act(
-    options,
-    async ctx => noteRun(ctx, await runOf(ctx, options), text),
-    note => `Noted for every task (${note.id}) — the ones in hand with their next command, the rest with their take.`
   );
 
 export const runSettle = (subject: string, options: RunCommandOptions & { note: string }): Promise<void> =>

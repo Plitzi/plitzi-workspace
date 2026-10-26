@@ -13,6 +13,6 @@ export const checkTeam: Check = async ({ root }) =>
   ((await checkTeamFile(root)) ?? []).map(problem =>
     say.error('team-invalid', `${TEAM_FILE}: ${problem}`, {
       file: TEAM_FILE,
-      fix: 'edit it as said — plitzi run team check says it again, plitzi run team set changes one agent for you'
+      fix: 'edit it as said — plitzi doctor says it again, plitzi run team set changes one agent for you'
     })
   );

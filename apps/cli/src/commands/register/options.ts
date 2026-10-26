@@ -2,7 +2,7 @@ import { InvalidArgumentError, Option } from 'commander';
 
 import { SCHEMES } from '../../browser';
 import { AUTOPLAY_CONDITIONS, STORAGE_CONDITIONS } from '../../browser/conditions';
-import { schemes, widths } from '../../options';
+import { schemes, timeZone, widths } from '../../options';
 import { instantMs } from '../shotSteps';
 
 import type { BrowserConditions } from '../../browser/conditions';
@@ -97,3 +97,59 @@ export const conditionsOf = (options: ConditionOptions): BrowserConditions => ({
   ...(options.autoplay ? { autoplay: options.autoplay } : {}),
   ...(options.storage ? { storage: options.storage } : {})
 });
+
+/**
+ * The visitor's view, written back as the flags it was asked by — its zone, its channels, its browser — for a command
+ * that runs the page commands for it (`task look`). Who it reads as is the caller's: a look decides it page by page.
+ */
+export const visitorArgs = (options: Omit<VisitorOptions, 'as' | 'guest' | 'url'>): string[] => [
+  ...(options.timezone ? ['--timezone', options.timezone] : []),
+  ...(options.presence ? ['--presence'] : []),
+  ...(options.clock === undefined ? [] : ['--clock', new Date(options.clock).toISOString()]),
+  ...(options.block ?? []).flatMap(text => ['--block', text]),
+  ...(options.autoplay ? ['--autoplay', options.autoplay] : []),
+  ...(options.storage ? ['--storage', options.storage] : [])
+];
+
+/** What the visitor flags leave on a page command's options: who reads it, from where, in what browser. */
+export interface VisitorOptions extends ConditionOptions {
+  /** Signed in first as this account: the password from `PLITZI_CHECK_PASSWORD`. */
+  as?: string;
+  /** Read as a guest, though a page sends one away: the project's account is not signed in by itself. */
+  guest?: boolean;
+  timezone?: string;
+  presence?: boolean;
+  url?: string;
+}
+
+/**
+ * The visitor a page command reads its page as — the account, the time zone, the realtime presence, the browser's
+ * conditions and where the project is served — one group, the same on every command that opens a page: `page check`
+ * once took no --clock, `page outline` no --timezone, `page same` no --as.
+ */
+export const withVisitorOptions = (command: Command, { url = true }: { url?: boolean } = {}): Command => {
+  command
+    .option(
+      '--as <username>',
+      'Sign in first as this account — another than the project’s, which a page that sends a guest away is read as by itself — through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env (a task’s copy reads its project’s)'
+    )
+    .option(
+      '--guest',
+      'Read as a guest, though a page sends one away — left out, the project’s account (PLITZI_CHECK_USER) is signed in there by itself, and said'
+    )
+    .addOption(
+      new Option(
+        '--timezone <zone>',
+        'The visitor’s time zone (IANA: America/Mexico_City): the page as someone there sees its hours — the machine’s when left out'
+      ).argParser(timeZone)
+    )
+    .option(
+      '--presence',
+      'Take part in the page’s realtime channels as a visitor does — arrive, announce, send. Otherwise it only watches them'
+    );
+  if (url) {
+    command.option('--url <origin>', URL_OPTION);
+  }
+
+  return withConditionOptions(command);
+};

@@ -40,7 +40,7 @@ authoring and the elements learnt from the runs.
   and `.plitzi/feedback/<run>.*` — are one folder, `runs/<run>/`; `plitzi feedback`'s page, once in `tmp/feedback/`, is
   `agents/<date>/report.html`. `plitzi upgrade` brings the ignores that keep the folder out of the typecheck, the lint
   and the format (`tsconfig.base.json`, `eslint.config.mjs`, `.prettierignore`): run it before the next run ends. The
-  old files are read no more — `run bench` and the estimates start again from the runs that end now; delete them, or
+  old files are read no more — `run report --bench` and the estimates start again from the runs that end now; delete them, or
   keep them by hand. The feedback's JSON is gone: its data is the report's (`report.json`).
 - **The CLI does what it was always told, and its surface is smaller.** `task next` takes the next task and waits for
   one: `--follow --take` are gone — `--no-wait` answers now (the lead's queue of reviews: `task next --role lead
@@ -49,11 +49,31 @@ authoring and the elements learnt from the runs.
   sends a guest away signed in as the project's account (`PLITZI_CHECK_USER`) by themselves, and say so — `--as`
   names another, `--guest` reads it as a guest. Folded into another: `task heartbeat` → `task progress` (alone, a sign
   of life); `task claims` → `task claim` with no file; `task proposals` → `task propose` with no task; `run pending` →
-  `run state`, which lists the runs not written in yet, ready ones first; `run feedback` → `run report --plitzi`;
+  `run status --all`, which lists the runs not written in yet, ready ones first; `run feedback` → `run report --plitzi`;
   `run allow-finish [--revoke]` → `run finish --lead-finishes | --no-lead-finishes`; `run continue` → `run resolve
 <run>` with no file; `run prune` is gone — every `run open`, and `run watch` while it follows, prune; `explain
 --search "…"` → `explain "…"` (several words are a search). A command or flag written the old way is refused naming
   the new one. Agents' prompts and the skills say the new ones: `plitzi upgrade skills --write`.
+- **One command for each thing, read off the CLI itself.** A plan is opened, tried and rehearsed by one command:
+  `run plan <file>` → `run open <file> --dry-run`, `run rehearse` → `run open <file> --dry-run --rehearse`, and
+  `run open --spike` is gone (a run opens on its scope by itself). `run state` → `run status --all`; `run bench` →
+  `run report --bench`; `run note` → `task message all "…"` (every task, the ones taken later too); `run team check`
+  → `plitzi doctor`; the `skills` group → `plitzi upgrade skills --write`. `task take <task>` → `task next <task>`.
+  `task spike` is the run's research alone: a question a task needs answered is a block (`task block`), which the lead
+  lifts with its answer (`task unblock <task> --answer "…"`, kept in the report). A file's turn is one command:
+  `task wait <file>` → `task claim <file> --wait` (`--follow`, `--timeout` as before), `task release <file>` →
+  `task claim <file> --release`. `page same --than <origin>` → `--compare <origin>`, as every page command names the
+  other side. Each old name is refused naming the new one.
+- **Every page command reads a page as one visitor, from the same flags.** `page check`, `measure`, `play`,
+  `outline`, `same`, `shot` and `task look` take `--as`, `--guest`, `--timezone`, `--presence`, `--clock`, `--block`,
+  `--autoplay` and `--storage` alike — `page check` took no `--clock`, `page outline` no `--timezone`, `page same` no
+  `--as` — and open the page one way (`visit.ts`), so what one reads another reads the same. `--steps` is one
+  vocabulary: `page check` and `page outline` play a visitor's steps before they read the page, as `page measure` did,
+  and `task look --steps` checks what they leave too, where its check read the page at rest. A step another account
+  plays (`as <account> …`) is refused by `page check` and `page outline`, which keep no other visitor's page, naming
+  `page play` and `page measure`; a picture among the steps of a command that reads is refused naming `page shot`.
+  The browser's own line for a request `--block` failed is not read as the page's console error (what the page says
+  about it still is), and a required flag missed because it was given by its old name says the new one.
 - **`run report --tokens` is gone.** The harness's count comes from each round's report: the agent table says what
   each harness read, its largest context and what it read again; the bench's "Context / task" column is gone.
 - **`grid-area` and `grid-row`/`grid-column` expand as CSS does:** an omitted part is `auto`, a named area's mirrors it.
@@ -82,7 +102,7 @@ authoring and the elements learnt from the runs.
     fresh once what it found is with the lead, a tester once its review is escalated.
   - **The lead is told only what is its:** a scout's proposal (`proposal` in `run watch`), an escalation (its block) —
     never a spike or a queued UI review the scouts and testers take, or a message beside them to answer — and an
-    agent's question, its block. `run plan` names a scout's and a tester's work; `run rehearse` plays the team's testers as
+    agent's question, its block. `run open --dry-run` names a scout's and a tester's work; `run open --dry-run --rehearse` plays the team's testers as
     its reviewers.
   - **Tester** (QA, Opus): reviews every task in review, a designer's included — what it was asked, its checks, how it
     behaves, its code — and its approval is the task's; the UI too when no designer is free (`--skip-design reviewer`).
@@ -106,8 +126,8 @@ authoring and the elements learnt from the runs.
     read yellow above and blue in its "At work" card.
   - **The tests are a developer's, the tester only reviews.** With a tester in the team each developer task still gets
     `<id>-tests`, now a developer's task (`testsOf: [<id>]`, a new plan field): written by a developer that did not
-    write what it tests — `task next` offers it to no other, `task take` and `task reassign --to` refuse its author,
-    the keeper starts one that may, `run rehearse` plays it so — and the tester's only when no developer may (a team of
+    write what it tests — `task next` offers it to no other, `task next <task>` and `task reassign --to` refuse its author,
+    the keeper starts one that may, `run open --dry-run --rehearse` plays it so — and the tester's only when no developer may (a team of
     one). The tester's Opus goes to its QA; the tests are developer work on Sonnet.
     A tester never approves past a question the task asked the lead: it escalates it. Every task approved, the lead's
     `task next` says its close in order (look, report, finish) and the lead never "stops".
@@ -124,7 +144,7 @@ authoring and the elements learnt from the runs.
     demand), the keeper starting each when work of its role waits — a review for a tester, a spike for a scout.
   - **A role of your own says what it does:** an agent's `"skill"` in `team.json` — a markdown file of the project,
     `run team set a11y --roles accessibility --skill .claude/skills/a11y/SKILL.md` — is read first by its agents;
-    `run plan` refuses one the project does not have.
+    `run open --dry-run` refuses one the project does not have.
   - **To redo:** a `team.json` with `"lead": { "count" }` drops it; add `{ "name": "test", "roles": ["tester"], "min": 0,
     "model": "claude-opus-5-5" }` and `{ "name": "scout", "roles": ["scout"], "min": 0, "model": "claude-opus-5-5" }` to
     get the new roles.
@@ -137,13 +157,13 @@ start one. How it works: `docs/en/agent-runs.md`.
 
 - `plitzi run start "<the ask>"` checks what a run needs (a space in code, Chromium, the harness) and opens it on its
   scope: a **spike** the lead ends with the tasks it found (`task spike s-scope --done "…" --tasks <stage.json>`). A plan
-  also opens directly (`run plan`, `run open`). Either way every file a task touches is backed up first.
+  also opens directly (`run open --dry-run`, then `run open`). Either way every file a task touches is backed up first.
 - **A plan is held to rules:** no file in two tasks, no cycle, ownership read off the imports, and a module only a page
   imports belongs to the task that names it. Its `inventory` lists the job piece by piece. Each piece is covered by an
-  acceptance line a command proves (`{ said, check, covers }`) or left out with a reason (`leftOut`). `run plan`
+  acceptance line a command proves (`{ said, check, covers }`) or left out with a reason (`leftOut`). `run open --dry-run`
   estimates at the project's own pace and warns of what is risky: files two tasks touch, exported contracts, checks it
   could not run, values no line measures, too few designers.
-- **`run rehearse`** plays a plan out before any agent starts: the schedule, the critical path, the lead's queue and the
+- **`run open --dry-run --rehearse`** plays a plan out before any agent starts: the schedule, the critical path, the lead's queue and the
   run's length for each team size. A module a task makes beside a file of its own it changes is that file's to import,
   not a registration in the space's entry: a run's four UI tasks were said to meet in `src/space/index.ts`.
 - **Each task works in its own copy** under `tmp/plitzi-runs/`, cloned copy-on-write, with `public/` binaries and no
@@ -169,7 +189,7 @@ revert` takes back an approval.
 open` refuses one already used.
 - **What a run noticed and left** becomes the project's backlog (`run notice --on`, `.plitzi/backlog.json`, `run
 backlog`), offered to the next plan. What got in the agents' way in Plitzi goes to its `feedback.md` (`run notice
---plitzi`), for the person to share. `run plan` and `run open` say which items the plan takes up, by task, and list as
+--plitzi`), for the person to share. `run open --dry-run` and `run open` say which items the plan takes up, by task, and list as
   open only those no task's `closes` names — a run's plan closed all five and was told to take them up.
 - **A task that waits for another never holds its files against it:** a stage stacked after a task, naming the file
   that task makes, refused its complete as "another task's at work" while it could not start before it.
@@ -190,7 +210,7 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 - **A file of a task nobody has taken is claimed ahead of it** (`task claim`), said so — that task is offered once the
   claim is approved, the change in it; `complete`'s refusal of such a change names the claim. `run amend` changes what a
   taken task `touches`. A run's one-line fix in a waiting task's file had no way in.
-- **`task wait` on a file a later task names is never a loop:** that task waits for the asker, so the file is granted.
+- **`task claim --wait` on a file a later task names is never a loop:** that task waits for the asker, so the file is granted.
 - **Two tasks in review that read each other's files are approved as one change:** `task review A --approve --with B`
   merges both, checks them together and closes each — one at a time neither passed the checks, and neither could ever
   be approved. An approval refused by the checks names the tasks in review it may need.
@@ -200,10 +220,10 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 - **A proposer withdraws its own proposal** (`task answer <id> --withdraw "why"`): one the lead's change of course left
   "unanswered" on the other task held its complete.
 - **`run agent --launch` on an agent that runs answers so**, nothing started — it was a refusal, run twice by a lead.
-- **`run plan` says an id two tasks expect to make on two pages:** an element's id is the space's, one element.
-- **`run plan`'s notices take what the plan already says:** a file other tasks import is no longer said of a task that
+- **`run open --dry-run` says an id two tasks expect to make on two pages:** an element's id is the space's, one element.
+- **`run open --dry-run`'s notices take what the plan already says:** a file other tasks import is no longer said of a task that
   waits for it — the follower the notice asks for — and a reader a task names in `touches` is no longer read by files
-  no task holds. `run rehearse` reads the parts a task makes with a page as that page's to import, never as
+  no task holds. `run open --dry-run --rehearse` reads the parts a task makes with a page as that page's to import, never as
   registered in the space's entry. Its advice to hold an agent to a role names the command that does it:
   `run team set <name> --roles …`.
 - **`run watch`'s "they share no file" says what else a task may need** of the one it waits for: its actions, data or
@@ -478,7 +498,7 @@ report`, …).
   their tokens and show no cost.
 - **A developer's "code review alone" stands when no page draws what it changed** — a setting with no element, a type:
   designers were sent such tasks, and their looks had no page to open.
-- **`run plan` says a primer over 6k** and what it costs: every task's first brief carries it whole, and a run's 9.7 KB
+- **`run open --dry-run` says a primer over 6k** and what it costs: every task's first brief carries it whole, and a run's 9.7 KB
   one put all 19 of its briefs over 12k characters.
 - **`plitzi run monitor`:** a live board in a terminal of its own, in Plitzi's colours (dark or light, as the terminal
   is). It opens simple — who is at what, the tasks by stage and the stuck ones, the preview, the latest events, your own
@@ -502,7 +522,7 @@ report`, …).
 - **The run's preview** serves its approved work as it grows: `p` in `run monitor`, its server's output under its
   address, or `npm run start:preview`; `run preview --task` serves one task's copy.
   The page's dev tools show the run in a **Run** tab.
-- **The report and the bench** (`run report --summary --tokens`, `run bench`):
+- **The report and the bench** (`run report --summary --tokens`, `run report --bench`):
   - The flow: minutes, rounds, waits, checks and refusals by task and agent.
   - The cost: each command's output, time and median against its budget.
   - The harness's tokens, beside a lower bound of what was read again.
@@ -590,7 +610,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   decides while another holds it tells that reviewer so, and nobody reviews their own.
 - **A brief says the neighbours another task holds:** a file beside the task's own (`room.test.ts` beside `room.ts`) and
   whose it is — a run's developers found them at `task check`, after writing them.
-- **A wait that would never end is refused:** `task wait` and `task propose --wait` on a task that runs after this one
+- **A wait that would never end is refused:** `task claim --wait` and `task propose --wait` on a task that runs after this one
   (its `dependsOn` leads to it) say so at once, and leave no proposal behind; a run's dev-1 waited past its harness's
   timeout.
 - **A review reads its own warnings:** the checks' warnings a task leaves are those on files it changed; the rest are
@@ -628,7 +648,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`two-tasks`** no longer counts a sent-back task waiting for its agent — the rule is that it waits.
 
 - **The run's time.** A piece of work takes 10 minutes (the scope 30): past it `run watch` wakes the lead to ask where
-  it stands, again at each limit more. `run plan` says a task estimated past it and a line that runs a whole Playwright
+  it stands, again at each limit more. `run open --dry-run` says a task estimated past it and a line that runs a whole Playwright
   suite; such a line holds a machine-wide lock — one suite at a time, whoever runs it. A line past two minutes says how
   long it took; one that failed with Playwright reusing the copy served on `PORT` says its `webServer` never started.
   A check or a complete gives its task's sign of life every minute. Every task approved, `run watch` wakes the lead to
@@ -649,6 +669,10 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   lead's problems — its head says the work, the lead's close and the person's wait apart, a task that ran long says
   why (its acceptance rewritten, escalations, sends-back, what was stacked beside it, that nobody cut it), a slow close
   is the lead's, and Plitzi's problems are grouped by part: the run and the CLI, the platform, the docs.
+- **New, or met before.** Each finding of a run's report is held against the runs before it the project keeps: one met
+  again says where, comes first, and is counted (the bench's "Met before") — what a fix did not stop, apart from what
+  the run explored.
+- **Signing in from `/login?redirect=…`** goes back to that page (it went home): the e2e auth journey says so.
 - **`page play`** says where a page went by itself as it opened, and how long each address was shown (a sign-in that
   sends a signed-in visitor on). **`page measure --steps`** plays another account's steps (`as dax: action …`): a review
   sets up a state the cold copy lacks, and `plitzi server reset` puts it back.
@@ -920,6 +944,11 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - The `repeated-on-pages` suggestion says where a component of one area is written and listed.
 
 - **`plitzi explain <page field>`** — `unauthorizedRedirect`, `accessLevel`… — says it is a page's and where its meaning is.
+
+- **`pageAt` and `audienceAt`**: which page of an authored space answers an address, for a guest or a signed-in
+  visitor, and whom it is for — the router's own decision. The CLI reads them instead of a copy of the router.
+- **`login-then-leaves`** warns of steps after `auth.login` on a page for signed-out visitors: the page sends whoever
+  signs in on as the login succeeds, and those steps race it.
 
 ## Elements and the SDK (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`, `@plitzi/sdk-shared`)
 

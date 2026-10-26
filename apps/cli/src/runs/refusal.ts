@@ -26,7 +26,7 @@ export type RefusalCode = keyof typeof REFUSAL_EXIT_CODES;
 
 /** What the harness does on each code: printed with the refusal, so the answer carries the next step. */
 const NEXT_STEP: Record<RefusalCode, string> = {
-  claimed: 'take another ready task (plitzi task next), or wait for the file (plitzi task wait)',
+  claimed: 'take another ready task (plitzi task next), or wait for the file (plitzi task claim <file> --wait)',
   waiting: 'take another ready task meanwhile; the file comes to this task when its holder is approved',
   reassigned: 'stop working on this task: it is no longer yours',
   'version-mismatch':
@@ -40,7 +40,7 @@ const NEXT_STEP: Record<RefusalCode, string> = {
     'the lead decides, from what the message offers; a task takes the run’s version (plitzi task discard <file>) and redoes its change on it; never write conflict markers',
   'checks-failed': 'fix each step marked ✗ below, then complete again (plitzi task check runs them without completing)',
   invalid: 'do what the refusal above says, then run the command again',
-  'not-found': 'check the name: plitzi run state lists the runs and their tasks',
+  'not-found': 'check the name: plitzi run status --all lists the runs and their tasks',
   'other-machine':
     'the run is active on another machine: release it there (plitzi run release), or a person takes it over',
   'another-run': 'one run at a time: finish or abort the open one first (plitzi run status)',

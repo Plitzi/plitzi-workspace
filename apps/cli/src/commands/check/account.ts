@@ -5,7 +5,6 @@ import { openPage } from '@plitzi/sdk-authoring';
 import { PROJECT_QUIET_MS } from '../../browser';
 import { runProjectOf } from '../../runs/paths';
 import { projectSettings } from '../projectSettings';
-import { fail } from '../terminal';
 
 import type { BrowserPage } from '../../browser';
 
@@ -57,25 +56,6 @@ export const checkAccount = async (
   }
 
   return { username: named, password };
-};
-
-/**
- * The account a page command was asked to sign in as (`--as`): none when it was not asked, and `null` — said — when
- * it cannot be (no password): the command stops there.
- */
-export const accountAsked = async (root: string, username: string | undefined): Promise<Account | undefined | null> => {
-  if (username === undefined) {
-    return undefined;
-  }
-
-  const account = await checkAccount(root, username);
-  if (account === undefined || 'problem' in account) {
-    fail(`--as ${account === undefined ? `${username}: no account to sign in as` : account.problem}.`);
-
-    return null;
-  }
-
-  return account;
 };
 
 /** Signs the page's browser in as the account, through the server's `/auth` routes: what went wrong, or nothing. */

@@ -1,12 +1,15 @@
 import type { Scheme } from '../../browser';
 import type { FieldFill } from '../../options';
+import type { VisitorOptions } from '../register/options';
+import type { ActingStep } from '../shot/steps';
 import type { DataIssueCode, PageIssue } from '@plitzi/sdk-authoring';
 
 /**
  * What a page check is asked and answers: its options, each issue, the report of a page at a width.
  */
 
-export interface CheckOptions {
+/** The visitor's flags (`withVisitorOptions`): `--url` is still checked against what the project authors. */
+export interface CheckOptions extends VisitorOptions {
   /** `--expect <id>~<text>`: each element shows its text, or the check fails — what an acceptance can be checked by. */
   expect?: Expectation[];
   /** `--themes`: each page read in light and dark too — a ground that does not follow the theme under text that does. */
@@ -38,22 +41,8 @@ export interface CheckOptions {
   hover?: string;
   /** Fields filled before the click, as a visitor types in them: what a form's flow is sent. */
   fill?: FieldFill[];
-  /**
-   * An account of the project to sign in as first, through its server's `/auth` routes (`createServer({ auth })`), with
-   * the password in `PLITZI_CHECK_PASSWORD` — what a page for signed-in visitors is checked as.
-   */
-  as?: string;
-  /** Read as a guest, though a page sends one away: the project's account is not signed in by itself. */
-  guest?: boolean;
-  /** Taking part in the page's channels — arriving, announcing itself, sending — as a visitor does. */
-  presence?: boolean;
-  /** `--timezone <IANA>`: the visitor's time zone, the browser's clock read in — the machine's when left out. */
-  timezone?: string;
-  /**
-   * Where the project is served, when not by `npm start` here: a second server of it, staging, a deploy. Its pages are
-   * still checked against what the project authors.
-   */
-  url?: string;
+  /** `--steps <script>`: played before the page is read, as `page play` writes them. */
+  steps?: string;
   /**
    * A space module to hold the pages to instead of the project's — what that other server serves, an agent's page —
    * authored in a process of its own.
@@ -72,6 +61,7 @@ export interface CheckIssue {
     | 'server-render-failed'
     | 'not-server-rendered'
     | 'not-signed-in'
+    | 'steps-failed'
     | 'redirected'
     | 'page-status'
     | 'expected-text'
@@ -265,6 +255,11 @@ export interface CheckAsk {
    * landed is checked as the page (its `--expect` too). A run's settings: a guest sent to sign in failed every check.
    */
   redirectsTo?: string;
+  /**
+   * `--steps`: played once the page settles, before it is read — what only a visitor's steps make (a message sent, a
+   * panel opened, a filter chosen) checked where it is drawn: a run's look read its check at rest, the notice unseen.
+   */
+  steps?: readonly ActingStep[];
 }
 
 export interface ClickAsk {

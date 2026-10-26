@@ -12,7 +12,7 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
 0. **Inventory what the job asks, before a line of the plan.** Built after something — a site, a design, a brief —
    list every page, section and piece a visitor would miss (a logo, what moves, a control, a size) as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
-"page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
+"page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run open --dry-run` refuses a
    piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `page shot --compare`, naming sections no piece covers. **Research is a spike** (no files), a scout's; **you approve every spike's result**, and only you add or take out tasks. **The run opens on its scope** (`run start`): the scout proposes the tasks, each with its `"findings"`; `task next --role lead` hands them to you — decide them with the person: `task spike s-scope --approve | --changes "…"` (`run extend <stage> --dry-run` reads them). An agent's `task spike` is yours to answer: `task unblock --answer`. With no scout, the spikes are yours too: `task spike s-scope --done "…" --tasks <stage.json>`. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview [unit]` — who owns which file. A page owns the modules only it imports;
@@ -51,9 +51,9 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    **Acceptance a command can tell** is `{ said, check }`: it runs in the task's copy at `complete`, passing on exit 0 —
    `plitzi` is this CLI, `$PLITZI_URL` the copy served. `page check --expect "<id>~<text>"` fails when no copy of that element (any row of a list) shows the text, `"!<id>"` when one is shown — check what a
    page shows, not a file's text. Else, text — and only text holds at your review alone:
-   a later task can undo it unseen (`run plan` names a task with no check). A check runs again on the whole result at
+   a later task can undo it unseen (the dry run names a task with no check). A check runs again on the whole result at
    the finish. **`notes`** hold for the whole run;
-   `plitzi run note "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB; past 6k `run plan` says what it costs): what you
+   `plitzi task message all "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB; past 6k the dry run says what it costs): what you
    learnt reading the project — every brief starts with it, and the references its files need. **The team** is the project's,
    `.plitzi/team.json` — grow it as the job asks (`plitzi run team set dev --count 3 --min 1 --model <m>`): its
    size is how many work at once; past `min`, on demand — `run watch` says when to start one (through its own CLI,
@@ -69,21 +69,21 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    **Keep a person's actions a person's in the harness**: deny the agents `run finish --apply`, `run abort`, `run purge`,
    `run restore`, `run finish --lead-finishes`, `run stop --force`, `run attach --take-over`.
 
-   **Quality** (`"quality": "light" | "standard" | "high"`): `run plan` sets it where you say none. Ids: lowercase letters, digits, `-`, `_`; **classes and provider ids by area** (`pronosticos-card`, `topBoxers`):
+   **Quality** (`"quality": "light" | "standard" | "high"`): the dry run sets it where you say none. Ids: lowercase letters, digits, `-`, `_`; **classes and provider ids by area** (`pronosticos-card`, `topBoxers`):
    two tasks that name one class differently meet only at the approval. **Foundations go to different agents**: the
    shell and the components as two tasks two agents take at once — else one agent works them in turn while every page
    waits. **A file other tasks import is their contract**: a task that changes what
    it exports (a component's params) changes it compatibly — a new param optional — or the plan says who follows it
-   (`run plan` names each). **Read what a task changes before you write it**: asking for what is not there costs a
+   (the dry run names each). **Read what a task changes before you write it**: asking for what is not there costs a
    round. **And what its data shows**: a case the project's
    data never reaches (a dog under two, an empty list, a failed answer) is seen by nobody. The plan says how it is seen: a row in the data, or a unit test of the module that decides it — in
    whose task. What several tasks need is a task they depend on. A new page is a file that does not exist yet: loaded
    by folder (`pagesIn`) it touches nothing shared; otherwise it registers in the entry. A task that will change
    a file it does not hold says so (`"touches": ["src/space/tokens.ts"]`).
 
-3. `plitzi run plan plan.json` — refused, every reason at once; otherwise expanded, shared files and overlaps
-   listed, estimated — and skills older than the CLI said (`plitzi upgrade skills --write`). `plitzi run rehearse plan.json` plays it out:
-   who works what when, the critical path, your review queue.
+3. `plitzi run open plan.json --dry-run` — refused, every reason at once; otherwise expanded, shared files and overlaps
+   listed, estimated, old skills said (`plitzi upgrade skills --write`); `--rehearse` plays it out: who works what
+   when, the critical path, your review queue.
 4. **The summary first** ([runs-plan.md](runs-plan.md) § 5), who applies it among it — the person, or you if they open it
    `--lead-finishes` (or `plitzi run finish --lead-finishes` later); never you. `plitzi run open plan.json` backs up every file
    it touches and prints **your own CLI** (`scratch/lead/plitzi`, with your token): run every command after through it.
@@ -107,7 +107,7 @@ run extend <run> next.json`; say each to the person. **You manage it** (§ The r
    then ask — never put a CLI in `node_modules` yourself.
 8. **Before you close, look at the whole once:** `plitzi run look` checks and pictures every page the run changed (1440
    and 390, light and dark); `run finish` asks for it after the last approval. What is missing is a stage (`run extend`), or the next run's: `run notice "…"
---on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run plan` and `run open` list (`run
+--on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run open` (and its `--dry-run`) list (`run
 backlog add "…"` keeps one with no run open); a task of your plan that does one says so — `"closes": ["b-3"]` — and the
    applied run closes it; else `run backlog done <id> --note "…"`; `run report --plitzi` is what the run says of
    Plitzi so far. **Close it:** `plitzi run report` lists the problems
@@ -116,15 +116,15 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
    (it combines the agents'; refused while anything waits for you: settle each — a finding by what you did,
    `run settle <finding> --note "…"`); then `plitzi run finish` (the
    diff, checked). `--apply` is the person's, or yours if they allowed it — every server you started on the project stopped first, with `plitzi server stop` (one
-   serves the project as it was and holds its `state/kv.json`). `run state`: what awaits it.
+   serves the project as it was and holds its `state/kv.json`). `run status --all`: what awaits it.
 
 ## The run's time is yours
 
-- **A piece of work takes 10 minutes** (`run plan` says a task estimated past it: split it). Past it `run watch` wakes
+- **A piece of work takes 10 minutes** (the dry run says a task estimated past it: split it). Past it `run watch` wakes
   you: ask where it stands (`task message @<agent> --standing`) and decide at once — near done, on; else narrow it,
   split what is left into a task (`run extend`), or `task reassign`. A run's 60-minute task took 148, nobody cutting it.
 - **A bug found inside a task is another task**, or `run notice`: never its scope growing round by round.
-- **Specs, a task's own**: a line runs the specs of what it changes, never a whole suite (`run plan` says one) — a suite
+- **Specs, a task's own**: a line runs the specs of what it changes, never a whole suite (the dry run says one) — a suite
   holds the machine, the CLI queues the next; the finish runs it whole, once.
 - **The scope spike is the big one** (30 min); a later spike answers one question an agent met — 10 minutes, measured with
   the tools, never a suite. Its findings without its tasks: `task spike <s> --approve --findings-only`.
@@ -148,7 +148,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 - **The scope, before it ends** — most rounds are its: each element measured whole (box, pseudo-elements, a hover)
   at 390 and 1440; a value grepped where it is written before a finding says "one class holds it"; each line run once
   on the run's work — failing for the value, never for a selector that finds nothing; a line per width.
-- **The team the work is worth**: `run plan` says when it is too big — the base runs while the run is open; one on
+- **The team the work is worth**: the dry run says when it is too big — the base runs while the run is open; one on
   demand only when work waits — the run starts it; never prompts of your own.
 - **Your files** — a stage, a summary — in your scratch (`tmp/plitzi-runs/<run>/scratch/lead/`), never the project's
   `tmp/`, where the agents are told of strays.
@@ -162,7 +162,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 "state …"`, `--clock`) — never what moves while it runs (the busiest room's track): `run finish` runs a failed line
   once more, and live data fails it twice. `plitzi server reset` puts a copy back to its cold start.
 - **What a task builds on is in its `dependsOn`**, not only in its words: a finding naming another task's component is a
-  dependency `run plan` cannot see.
+  dependency the dry run cannot see.
 - **A stage reads `run status`, not memory**: a task that merges a file one not done holds waits for it (`dependsOn`).
 - **A line nothing can answer is yours at once**: its command exits 2 (an element not there — a copied site's too —
   nothing served), you are told, and every try of the task fails on it until you amend it — never the agent's to bend.
@@ -185,7 +185,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 - **Every problem of Plitzi, noted as it happens** — the CLI, the platform, a skill or doc that misled, a workaround a
   limit forced: `run notice --plitzi "…"`, one each with what it cost; never fixed mid-run. The run's `feedback.md` joins
   them to the agents' reports.
-- **A round trimmed is said**: what it leaves goes to the backlog (`run notice`), not one more round.
+- **A round trimmed is said**: what it leaves is a `run notice`, not one more round.
 
 ## When the run copies a site
 

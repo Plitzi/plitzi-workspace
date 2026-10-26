@@ -1,7 +1,9 @@
+import type { PartCompared } from './compare';
 import type { BrowserPage, Scheme } from '../../browser';
+import type { BrowserConditions } from '../../browser/conditions';
 import type { FieldFill } from '../../options';
 import type { Account } from '../check';
-import type { PartCompared } from './compare';
+import type { VisitorOptions } from '../register/options';
 import type { SectionDecorations, TextComparison } from '@plitzi/sdk-authoring';
 
 /**
@@ -13,7 +15,7 @@ export const SHOT_MOMENTS = ['settled', 'load'] as const;
 
 export type ShotMoment = (typeof SHOT_MOMENTS)[number];
 
-export interface ShotOptions {
+export interface ShotOptions extends VisitorOptions {
   /** `--json` at several widths: each width's report handed here, for one object of them all, not printed one by one. */
   collect?: (report: ShotReport) => void;
   /** The numbers and the scheme are validated where the flags are declared (options.ts). */
@@ -27,8 +29,6 @@ export interface ShotOptions {
   /** The space's theme. Left out, the space's own default — and the file is named by the one painted. */
   scheme?: Scheme;
   out?: string;
-  /** Where the project is served, when not by `npm start` here: a second server of it, staging, a deploy. */
-  url?: string;
   compare?: string;
   /** With `compare`: the site as it is now, even where the run kept it (`plitzi run reference`). */
   live?: boolean;
@@ -56,14 +56,6 @@ export interface ShotOptions {
   hover?: string;
   /** Every picture taken — before, after each click, or each of `frames` — on one contact sheet. */
   sheet?: boolean;
-  /** Signed in first as this account, the password from `PLITZI_CHECK_PASSWORD` — as `page check --as` does. */
-  as?: string;
-  /** Read as a guest, though a page sends one away: the project's account is not signed in by itself. */
-  guest?: boolean;
-  /** Taking part in the page's channels — arriving, announcing itself — as a visitor does, so the others see it. */
-  presence?: boolean;
-  /** `--timezone <IANA>`: the visitor's time zone, the browser's clock read in — the machine's when left out. */
-  timezone?: string;
   /** When the first picture is taken: once the page settles (the default), or as soon as its HTML is in. */
   from?: ShotMoment;
   /** A script of steps played on the page (`shotSteps.ts`), or `@file` holding one. */
@@ -197,6 +189,8 @@ export interface View {
   standIns?: boolean;
   /** The visitor's time zone (IANA): the page as one there sees its hours — the machine's when left out. */
   timezone?: string;
+  /** The browser it is pictured in, where not a visitor's ordinary one (`--clock`, `--block`, `--autoplay`, `--storage`). */
+  conditions?: BrowserConditions;
   /** Clicks or steps follow: a clip not on the page yet is one they open, found as each picture is taken. */
   clipLater?: boolean;
 }

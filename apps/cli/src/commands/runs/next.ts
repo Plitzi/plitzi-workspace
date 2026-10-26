@@ -18,7 +18,7 @@ import type { RunTask } from '../../runs/model';
 import type { NextTask, TakenTask } from '../../runs/tasks';
 
 /**
- * `plitzi task next` and `task take`: what an agent is handed, said.
+ * `plitzi task next`, and `task next <task>`: what an agent is handed, said.
  */
 
 /**
@@ -215,7 +215,7 @@ export const nextText = (next: NextTask, agent: string): string =>
                     ...(next.asked ?? []).map(line => `  ↺ ${line}`)
                   ].join('\n')
                 : [
-                    `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task take ${next.task.id}`,
+                    `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task next ${next.task.id}`,
                     ...(next.handedBy
                       ? [
                           `  Handed to you by ${next.handedBy.by}, taken back from another${next.handedBy.reason ? `: ${next.handedBy.reason}` : ''} — no other agent takes it`

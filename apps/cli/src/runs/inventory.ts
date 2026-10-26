@@ -16,7 +16,7 @@ export interface InventoryItem {
   piece: string;
   /** Where it is: a page's path. */
   page?: string;
-  /** Not in this run, and why: said to the person at `run plan` and `run open`, and in the report. */
+  /** Not in this run, and why: said to the person at `run open` (and its `--dry-run`), and in the report. */
   leftOut?: string;
 }
 

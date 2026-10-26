@@ -65,7 +65,7 @@ export const askLead = async (
 };
 
 /**
- * `plitzi run note`: the lead tells every task — in hand, and taken from now on — what holds for the whole run: a known
+ * `plitzi task message all`: the lead tells every task — in hand, and taken from now on — what holds for the whole run: a known
  * issue, a decision, how something is done here. The run's memory; each task reads it once, with its take or its next
  * sign of life.
  */
@@ -240,6 +240,12 @@ export const messageTasks = async (
       'invalid',
       `${to} has ${String(open.length)} questions open (${open.join(', ')}): say which this answers — plitzi task message ${to} "…" --reply-to ${open.at(-1) ?? ''}`
     );
+  }
+
+  // Said to every task, and no standing asked: one note for the whole run — the tasks in hand read it with their next
+  // command, the ones taken later with their take (what `task message all` was, beside this).
+  if (to === 'all' && !standing && text.trim() !== '') {
+    return [await noteRun(ctx, runId, text)];
   }
 
   if (!standing && text.trim() === '') {

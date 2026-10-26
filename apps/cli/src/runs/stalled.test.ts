@@ -60,7 +60,7 @@ describe('a run that stands still', () => {
     expect(said?.text).toContain(
       't-theme is ready, offered to nobody: src/space/theme.ts is held by t-about — itself blocked (waits for t-theme)'
     );
-    expect(said?.text).toContain('plitzi task release src/space/theme.ts');
+    expect(said?.text).toContain('plitzi task claim src/space/theme.ts --release');
     expect(said?.text).toContain('t-about is blocked: waits for t-theme');
   });
 });

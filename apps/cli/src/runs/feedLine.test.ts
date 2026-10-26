@@ -102,5 +102,7 @@ describe('the activity, in words', () => {
     expect(commandDoing('/x/node_modules/.bin/plitzi task check --fix --token …')).toBe('running its checks');
     expect(commandDoing('plitzi task look t-home --token …')).toBe('looking at t-home');
     expect(commandDoing('plitzi data describe src/data/site.json')).toBe('running data describe');
+    expect(commandDoing('plitzi task claim src/space/theme.ts --wait --follow')).toBe('waiting for a shared file');
+    expect(commandDoing('plitzi task claim src/space/theme.ts --release')).toBe('letting a shared file go');
   });
 });

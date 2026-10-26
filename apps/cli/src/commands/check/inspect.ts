@@ -9,7 +9,7 @@ import {
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { withheldPageOf } from '@plitzi/sdk-shared/schema';
 
-import { landingProblem, saySignedIn, signInAs, signInWhereSent } from './account';
+import { landingProblem, saySignedIn, signInWhereSent } from './account';
 import { clickEffects } from './click';
 import { flushEdgesInPage, missedExpectations, wrappedLabelsInPage } from './expect';
 import { listRows } from './lists';
@@ -26,14 +26,16 @@ import {
   serverProviderOf
 } from './space';
 import { elementStyles } from './styles';
-import { openProjectPage, PROJECT_QUIET_MS } from '../../browser';
-import { standInPictures } from '../shot/capture';
+import { PROJECT_QUIET_MS } from '../../browser';
+import { playedOn } from '../shot/steps';
+import { prepareVisit } from '../visit';
 
 import type { Account } from './account';
+import type { VisitView } from '../visit';
 import type { ConsoleLine } from './refusals';
 import type { Authored } from './space';
 import type { CheckAsk, CheckIssue, CheckReport, ClickAsk, Expectation } from './types';
-import type { Browser, BrowserPage, ProjectView } from '../../browser';
+import type { Browser, BrowserPage } from '../../browser';
 import type { Schema } from '@plitzi/sdk-shared';
 
 /** Under it a page is a phone's or a tablet's: laid out for a finger, with no pointer to hover with. */
@@ -283,7 +285,7 @@ const inspectHere = async (
   }
 ): Promise<CheckReport> => {
   const handles = authored?.handles;
-  const pageId = handles ? pageFor(handles, pathname) : undefined;
+  const pageId = authored ? pageFor(authored, pathname) : undefined;
   // A page withheld from this visitor was sent without its own elements: only its layout's are owed, and the page the
   // space draws in its place — a 403 read as eleven elements "not on the page".
   const instead = authored ? withheldPageOf(authored.schema) : undefined;
@@ -517,8 +519,8 @@ export const checkAt = async (
   origin: string,
   pathname: string,
   width: number,
-  /** `standIns`: another site's pictures stood in for — a look's check, about what the task changed, not their CDN. */
-  view: Pick<ProjectView, 'scheme' | 'presence' | 'timezone'> & { standIns?: boolean },
+  /** The visitor (`visit.ts`): its theme, zone, presence, browser — and others' pictures stood in for, a look's. */
+  view: Pick<VisitView, 'scheme' | 'presence' | 'timezone' | 'conditions' | 'standIns'>,
   authored: Authored | undefined,
   asked: CheckAsk,
   ssr: boolean,
@@ -529,12 +531,8 @@ export const checkAt = async (
   expect: readonly Expectation[] = [],
   then: readonly string[] = []
 ): Promise<CheckReport[]> => {
-  const handles = authored?.handles;
-  const { standIns, ...asView } = view;
-  const page = await openProjectPage(browser, origin, { width, height: 900, ...asView });
-  if (standIns) {
-    await standInPictures(page, origin);
-  }
+  // Made ready as a visitor's — signed in first as `account` — and opened below, once the page is listened to.
+  const { page, problem: notSignedIn } = await prepareVisit(browser, origin, { width, ...view }, account);
 
   /** A report of a page that could not be looked at — nothing answered, no sign-in, sent elsewhere. */
   const unchecked = (issue: CheckIssue): CheckReport => ({
@@ -552,9 +550,8 @@ export const checkAt = async (
     devTools: false,
     lists: {}
   });
-  const notSignedIn = account && (await signInAs(page, origin, account));
-  if (notSignedIn) {
-    return [unchecked({ code: 'not-signed-in', message: notSignedIn, width })];
+  if (notSignedIn !== undefined) {
+    return [unchecked({ code: 'not-signed-in', message: notSignedIn.replace(/^--as /, ''), width })];
   }
 
   const said: { text: string; from?: string }[] = [];
@@ -594,12 +591,18 @@ export const checkAt = async (
       said.push({ text: message.text(), from: message.location().url });
     }
   });
-  // The browser's line for a resource its host held back is that host's limit, said with the images it held.
+  // The browser's line for a resource its host held back is that host's limit, said with the images it held; for one
+  // `--block` failed, what was asked — the page's own answer to it (an error it throws, a line it logs) is still said.
+  const blocked = (url: string): boolean => view.conditions?.block?.some(text => url.includes(text)) === true;
   const consoleErrors = (from = 0): ConsoleLine[] => {
     const held = heldBack();
 
-    return said.slice(from).filter(each => each.from === undefined || !held.has(each.from));
+    return said.slice(from).filter(each => each.from === undefined || (!held.has(each.from) && !blocked(each.from)));
   };
+  // Not looked at, with what the page said and asked for up to then.
+  const uncheckedHere = (issue: CheckIssue): CheckReport[] => [
+    { ...unchecked(issue), consoleErrors: consoleErrors().map(each => each.text), failedRequests }
+  ];
   let sentWith: number | undefined;
   page.on('response', response => {
     pending.delete(response.url());
@@ -631,26 +634,14 @@ export const checkAt = async (
 
   // A path no page of the space answers is said as that, before the browser opens it: whatever the server does with
   // it — a redirect home, a not-found — would otherwise be read as something the page did.
-  if (handles && !pageFor(handles, pathname)) {
-    return [
-      {
-        ...unchecked({ code: 'no-page', message: noPageMessage(handles, pathname), width }),
-        consoleErrors: consoleErrors().map(each => each.text),
-        failedRequests
-      }
-    ];
+  if (authored && !pageFor(authored, pathname)) {
+    return uncheckedHere({ code: 'no-page', message: noPageMessage(authored.handles, pathname), width });
   }
 
   // Settled, not `networkidle`: a page with a live channel keeps its stream open, and never idles.
   const answered = await openPage(page, `${origin}${pathname}`, { quietMs: PROJECT_QUIET_MS });
   if (!answered) {
-    return [
-      {
-        ...unchecked({ code: 'no-answer', message: `nothing answers at ${origin}${pathname}`, width }),
-        consoleErrors: consoleErrors().map(each => each.text),
-        failedRequests
-      }
-    ];
+    return uncheckedHere({ code: 'no-answer', message: `nothing answers at ${origin}${pathname}`, width });
   }
 
   // A page that sent the browser elsewhere — a page for signed-in visitors, to the sign-in — is not the page asked for:
@@ -659,13 +650,7 @@ export const checkAt = async (
   const signed =
     account || meant !== undefined ? undefined : await signInWhereSent(page, origin, pathname, projectAccount);
   if (signed && 'problem' in signed) {
-    return [
-      {
-        ...unchecked({ code: 'not-signed-in', message: signed.problem, width }),
-        consoleErrors: consoleErrors().map(each => each.text),
-        failedRequests
-      }
-    ];
+    return uncheckedHere({ code: 'not-signed-in', message: signed.problem, width });
   }
 
   if (signed) {
@@ -675,13 +660,13 @@ export const checkAt = async (
   const readAs = account ?? (signed ? projectAccount : undefined);
   const landing = landingProblem(page.url(), pathname, meant, readAs);
   if (landing !== undefined) {
-    return [
-      {
-        ...unchecked({ code: 'redirected', message: landing, width }),
-        consoleErrors: consoleErrors().map(each => each.text),
-        failedRequests
-      }
-    ];
+    return uncheckedHere({ code: 'redirected', message: landing, width });
+  }
+
+  // The visitor's own steps, before the page is read: what they make is what is checked.
+  const notPlayed = asked.steps ? await playedOn(page, asked.steps) : undefined;
+  if (notPlayed) {
+    return uncheckedHere({ code: 'steps-failed', message: `--steps: ${notPlayed.problem}`, width });
   }
 
   const reports = [

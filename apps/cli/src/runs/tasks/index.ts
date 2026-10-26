@@ -22,7 +22,7 @@ export type { NextTask } from './next';
 export { takeTask } from './take';
 export type { TakenTask } from './take';
 export { blockTask, noteTask, reportProgress, unblockTask } from './signals';
-export { answerSpike, approveSpike, reworkSpike, startSpike } from './spike';
+export { answerSpike, approveSpike, reworkSpike } from './spike';
 export type { Spiked } from './spike';
 export type { Signal } from './signals';
 export { checkTask } from './check';

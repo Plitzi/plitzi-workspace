@@ -8,7 +8,7 @@ import { configDir } from '../account/connection';
 
 /**
  * How this project's runs went against their estimates, read off the reports they left (`reports.ts`): each
- * done task's minutes over its estimate. What `run plan` and `run rehearse` scale a new plan's estimates by — a lead's
+ * done task's minutes over its estimate. What `run open --dry-run` and its `--rehearse` scale a new plan's estimates by — a lead's
  * guess at minutes is the same guess every time, and the project's own runs say by how much it is off.
  */
 

@@ -9,7 +9,7 @@ import type { PlannedTask } from './model';
 /**
  * Where the elements a task's checks read are written, held to the task's files: a run's t-result-card was
  * given `match/styles.ts` alone, its acceptance measured the judges' block — written in `pages/combate.ts` and
- * `match/parts.ts`, another task's — and its second round waited for that task's approval. Said at `run plan`.
+ * `match/parts.ts`, another task's — and its second round waited for that task's approval. Said at `run open --dry-run`.
  */
 
 /** An element's own name, as an id is written: what a source file names it by (`id: 'match-judges'`). */

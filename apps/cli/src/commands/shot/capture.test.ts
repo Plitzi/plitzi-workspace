@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { awaited, readPage, standIn, targetOn } from './capture';
+import { awaited, readPage, targetOn } from './capture';
+import { standIn } from '../visit';
 
 import type { BrowserPage } from '../../browser';
 
