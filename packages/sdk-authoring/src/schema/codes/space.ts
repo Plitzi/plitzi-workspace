@@ -7,6 +7,11 @@ export const SPACE_CODES = {
     means: 'a space with no pages',
     fix: "`pages: [{ id: 'home', name: 'Home', slug: '', body: [] }]`"
   },
+  'withheld-page-invalid': {
+    kind: 'refused',
+    means: '`settings.withheldPage` naming no page of the space, or one with an `access` of its own',
+    fix: "the id or slug of a page every visitor may see: `withheldPage: 'no-access'`"
+  },
   'setting-misplaced': {
     kind: 'refused',
     means: '`settings.computed` or `settings.channels` written inside `settings`',

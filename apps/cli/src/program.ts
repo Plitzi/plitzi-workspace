@@ -380,7 +380,7 @@ export const buildProgram = (): Command => {
     )
     .option(
       '--list <kind>',
-      'Every name of a kind: elements, steps, triggers, codes, transformers, helpers, filters, functions, sources'
+      'Every name of a kind: elements, steps, triggers, codes, transformers, helpers, filters, functions, sources, tasks, types'
     )
     .option('--json', 'One object, for a tool or an agent')
     .action((name: string | undefined, options: ExplainOptions) => explainCommand(name, options, program.commands));

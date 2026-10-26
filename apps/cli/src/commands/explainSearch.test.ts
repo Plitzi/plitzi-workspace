@@ -45,7 +45,7 @@ const ASKED: [string, RegExp][] = [
   ['last-child', /^last$/]
 ];
 
-describe('explain --search, on what agents asked', () => {
+describe('explain "<words>", on what agents asked', () => {
   it('answers each in its first three hits', () => {
     const ranks = ASKED.map(([words, wanted]) => {
       const hits = searchAll(words, [], 10, passages);
@@ -60,7 +60,7 @@ describe('explain --search, on what agents asked', () => {
 });
 
 // "ctx.later" was searched for five times; every passage that said "later" came back, never the member.
-describe('explain --search, on a member named', () => {
+describe('explain "<words>", on a member named', () => {
   it('answers the member first, as the installed types declare it', () => {
     const later = {
       kind: 'api' as const,
@@ -76,3 +76,22 @@ describe('explain --search, on a member named', () => {
     expect(hits.length).toBeLessThanOrEqual(10);
   });
 });
+
+// A run's developer needed `BindingSpec` and `VisibleInput` for a helper of its own, could not name them, and grepped
+// the published types.
+describe('the authoring package’s types, by the words of their names and docs', () => {
+  it('are found by what they are called and what their doc says', () => {
+    const exported = [
+      { name: 'BindingSpec', of: 'type' as const, summary: 'One binding of an element, in its long form.' },
+      {
+        name: 'VisibleInput',
+        of: 'type' as const,
+        summary: 'A visibility condition whose source may be a typed source path.'
+      }
+    ];
+
+    expect(searchAll('binding spec', [], 3, [], () => [], exported)[0]?.name).toBe('BindingSpec');
+    expect(searchAll('visible input', [], 3, [], () => [], exported)[0]?.name).toBe('VisibleInput');
+  });
+});
+

@@ -9,7 +9,7 @@ import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
 import { emptyObject, evaluateRuleGroup, ruleValuesOf } from '@plitzi/sdk-shared/helpers';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useServerQuery } from '@plitzi/sdk-shared/queries';
-import { isEmptyAnswer, rscFailureOf, serverInputOf, whenOf, whenPaths } from '@plitzi/sdk-shared/schema';
+import { browserServerInput, isEmptyAnswer, rscFailureOf, whenOf, whenPaths } from '@plitzi/sdk-shared/schema';
 import { currentRscLocation } from '@plitzi/sdk-shared/server';
 import { useCommonStore, useSdkStore } from '@plitzi/sdk-shared/store';
 
@@ -391,11 +391,12 @@ const ApiContainer = ({
     apiCancel();
   }, [serverMode, cancelRsc, apiCancel]);
 
-  // The input the page server resolved it with: what it was saved with, and what of its binding reads the address.
-  const [saved] = useCommonStore(`schema.flat.${id}`, { mode: 'mount' });
+  // The input the page server resolved it with: what it was saved with, and its bound input the server reads — the
+  // address, and the answers of the server providers it reads, published as the server read them.
+  const [[saved, flat, payload]] = useCommonStore([`schema.flat.${id}`, 'schema.flat', 'rsc.data'], { mode: 'mount' });
   const serverInput = useMemo(
-    () => serverInputOf(saved, { routeParams, queryParams }),
-    [saved, routeParams, queryParams]
+    () => browserServerInput(saved, flat, payload, { routeParams, queryParams }),
+    [saved, flat, payload, routeParams, queryParams]
   );
   useInputRefresh({ enabled: serverMode && rscResolved, input, savedInput: serverInput, performQuery });
 
@@ -464,7 +465,7 @@ const ApiContainer = ({
       isStale: serverMode && rscStale
     }),
     // `slice` is `data`, read as a provider's answer: the same object, so it changes when the answer does.
-    [data, slice, records, isLoading, isLoadingMore, singleRecord, hasError, serverMode, rscStale]
+    [data, slice, records, isLoading, isLoadingMore, singleRecord, hasError, rscFailure, serverMode, rscStale]
   );
 
   const sourceFields = useCallback(() => pathFields(publishedData), [publishedData]);

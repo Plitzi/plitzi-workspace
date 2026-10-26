@@ -69,8 +69,10 @@ they asked for as `?redirect=`, and the sign-in sends them back after `authLogin
 A page for some permissions says so: `access: { permissions: ['postPublish'] }` — every one held, by a signed-in visitor
 (the permissions of their visitor roles; on Plitzi's own spaces, their account's). The server keeps it: anybody else is
 answered 401 or 403 and the page's refusal, and its content is never sent to them — not in the page, not in the space
-the browser fetches. Signed out, they go to `unauthorizedRedirect` when the page names one. Hiding a part of a page on
-`auth.details.permissions` is not this: the part was still sent.
+the browser fetches. Signed out, they go to `unauthorizedRedirect` when the page names one. The refusal is a few words
+of Plitzi's unless `settings.withheldPage` names a page of the space (id or slug, with no `access`): it is drawn
+instead, in the same layout, with the same status — `auth.isAuthenticated` tells "sign in" from "not yours". Hiding a
+part of a page on `auth.details.permissions` is not this: the part was still sent.
 
 ## What a visitor may do
 

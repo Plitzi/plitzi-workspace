@@ -14,6 +14,7 @@ import type { Schema, SSRRequest, SSRServer, SSRUser } from '@plitzi/sdk-shared'
 
 const PORT = await unusedPort();
 const base = `http://127.0.0.1:${String(PORT)}`;
+const PORT_INSTEAD = await unusedPort();
 const SECRET = 'The release checklist, step by step';
 
 const schema: Schema = {
@@ -126,5 +127,76 @@ describe('a page for some permissions', () => {
 
     expect(await (await fetch(`${base}${path}`)).text()).not.toContain(SECRET);
     expect(await (await fetch(`${base}${path}`, as('spaceView'))).text()).not.toContain(SECRET);
+  });
+});
+
+// A space spoke of a page withheld in the platform's few words, and could say nothing of its own: where to ask, how
+// to join. The page it names is drawn instead, inside the same layout, with the same status.
+describe('a page withheld, where the space names one to draw instead', () => {
+  const OWN_WORDS = 'Members only: ask the front desk for a pass';
+  const instead = `http://127.0.0.1:${String(PORT_INSTEAD)}`;
+  let withPage: SSRServer;
+
+  beforeAll(async () => {
+    withPage = createServer({
+      port: PORT_INSTEAD,
+      devMode: true,
+      adapters: {
+        ...createJsonAdapters({
+          offlineData: offlineDataOf({
+            ...schema,
+            settings: { ...schema.settings, withheldPage: 'noAccess' },
+            pages: [...schema.pages, 'noAccess'],
+            flat: {
+              ...schema.flat,
+              noAccess: {
+                id: 'noAccess',
+                attributes: { slug: 'no-access', folder: '', default: false },
+                definition: {
+                  type: 'page',
+                  label: 'noAccess',
+                  rootId: 'noAccess',
+                  items: ['ownWords'],
+                  styleSelectors: { base: '' }
+                }
+              },
+              ownWords: {
+                id: 'ownWords',
+                attributes: { content: OWN_WORDS },
+                definition: {
+                  type: 'text',
+                  label: 'ownWords',
+                  rootId: 'noAccess',
+                  parentId: 'noAccess',
+                  items: [],
+                  styleSelectors: { base: '' }
+                }
+              }
+            }
+          })
+        }),
+        getUser: req => Promise.resolve(userOf(req))
+      }
+    });
+    await withPage.listen(PORT_INSTEAD, '127.0.0.1');
+
+    await vi.waitFor(async () => {
+      expect((await fetch(`${instead}/`)).status).toBe(200);
+    });
+  });
+
+  afterAll(async () => {
+    await withPage.close();
+  });
+
+  it('draws it with the refusal’s status, and nothing of the page withheld', async () => {
+    const forbidden = await fetch(`${instead}/staff`, as('spaceView'));
+    const html = await forbidden.text();
+
+    expect(forbidden.status).toBe(403);
+    expect(html).toContain(OWN_WORDS);
+    expect(html).not.toContain('data-withheld');
+    expect(html).not.toContain(SECRET);
+    expect((await fetch(`${instead}/staff`)).status).toBe(401);
   });
 });

@@ -155,7 +155,9 @@ describe('createActionResolver', () => {
       signal: new AbortController().signal
     }).catch((error: unknown) => error);
 
-    expect((failure as Error).message).toBe('Action "post-page" refused this render: invalid_input — Invalid input: slug');
+    expect((failure as Error).message).toBe(
+      'Action "post-page" refused this render: invalid_input — Invalid input: slug'
+    );
   });
 
   it('takes the page route params as input', async () => {

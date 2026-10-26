@@ -218,4 +218,3 @@ describe('compareDecorations, of one layer on both sides', () => {
     expect(compareDecorations({ layers: [glow], regions: here }, { layers: [glow], regions: there })).toEqual([]);
   });
 });
-

@@ -1,3 +1,10 @@
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
+import { withheldPageOf } from '@plitzi/sdk-shared/schema';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
+
+import useInternalItems from '../../../Element/hooks/useInternalItems';
+
+import type { Element } from '@plitzi/sdk-shared';
 import type { PageWithheld as Reason } from '@plitzi/sdk-shared/schema';
 import type { CSSProperties } from 'react';
 
@@ -30,15 +37,33 @@ const TITLE: CSSProperties = { margin: 0, fontSize: '24px', lineHeight: 1.25 };
 
 const TEXT: CSSProperties = { margin: 0, color: 'var(--muted, inherit)', fontSize: '16px', lineHeight: 1.55 };
 
+type DrawnInsteadProps = { page: Element; previewMode?: boolean };
+
+/** The elements of the page the space draws instead, rendered the way any page's items are. */
+const DrawnInstead = ({ page, previewMode }: DrawnInsteadProps) =>
+  useInternalItems({ id: page.id, definition: page.definition, children: undefined, previewMode });
+
 /**
- * What a page the server withheld from this visitor shows instead of its content — which was never sent: why, in a
- * sentence, inside the page's own layout so the site around it still works. The server answers it with 401 or 403.
+ * What a page the server withheld from this visitor shows instead of its content — which was never sent — inside the
+ * page's own layout so the site around it still works; the server answers it with 401 or 403. The page the space names
+ * for it (`settings.withheldPage`), or else why, in a sentence.
  */
-const PageWithheld = ({ reason }: PageWithheldProps) => (
-  <section className="plitzi-component__page-withheld" style={BOX} data-withheld={reason}>
-    <h1 style={TITLE}>{WORDS[reason].title}</h1>
-    <p style={TEXT}>{WORDS[reason].text}</p>
-  </section>
-);
+const PageWithheld = ({ reason }: PageWithheldProps) => {
+  const [[flat, pages, settings]] = useCommonStore(['schema.flat', 'schema.pages', 'schema.settings']);
+  const {
+    settings: { previewMode }
+  } = usePlitzi();
+  const instead = withheldPageOf({ flat, pages, settings });
+  if (instead !== undefined) {
+    return <DrawnInstead page={flat[instead]} previewMode={previewMode} />;
+  }
+
+  return (
+    <section className="plitzi-component__page-withheld" style={BOX} data-withheld={reason}>
+      <h1 style={TITLE}>{WORDS[reason].title}</h1>
+      <p style={TEXT}>{WORDS[reason].text}</p>
+    </section>
+  );
+};
 
 export default PageWithheld;

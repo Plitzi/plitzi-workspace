@@ -179,6 +179,33 @@ describe('MCP settings (space-level customCss + auth config)', () => {
     expect(res.errors?.[0]?.message).toContain('neither a file of the site nor an address');
   });
 
+  it('names the page drawn in place of one withheld, refuses one the space has not, and takes it out with ""', async () => {
+    const cap = capturing(buildSpace());
+    const named = await apply(
+      { operations: [{ type: 'patchSettings', withheldPage: 'home' }] },
+      buildSpace(),
+      cap.persisters
+    );
+    expect(named.applied).toBe(true);
+    expect(readResource(cap.saved(), 'main', 'plitzi://settings/main')?.data).toMatchObject({ withheldPage: 'home' });
+
+    const unknown = await apply(
+      { operations: [{ type: 'patchSettings', withheldPage: 'nowhere' }] },
+      buildSpace(),
+      cap.persisters
+    );
+    expect(unknown.applied).toBe(false);
+    expect(unknown.errors?.[0]?.message).toContain('is no page of the space');
+
+    const cleared = await apply(
+      { operations: [{ type: 'patchSettings', withheldPage: '' }] },
+      cap.saved(),
+      cap.persisters
+    );
+    expect(cleared.applied).toBe(true);
+    expect(readResource(cap.saved(), 'main', 'plitzi://settings/main')?.data).not.toHaveProperty('withheldPage');
+  });
+
   it('exposes settings in the cold-start primer', async () => {
     const cap = capturing(buildSpace());
     await apply({ operations: [{ type: 'patchSettings', customCss: '.z{}' }] }, buildSpace(), cap.persisters);

@@ -1,4 +1,5 @@
 import { resolveLayoutChain } from './layoutChain';
+import { pageWithheldOf, withheldPageOf } from './pageAccess';
 import getSourceName from '../dataSource/helpers/getSourceName';
 import { passesFlagGate } from '../flags/resolveFlags';
 import { isRecord } from '../helpers/isRecord';
@@ -22,13 +23,16 @@ import type { Element, Schema } from '../types';
  * — so a server element that lives in one is on this page as far as the visitor can tell. Walked from the page alone,
  * a provider in the dashboard's sidebar was never resolved: the payload came back empty, the element rendered with
  * nothing, and no layer reported it.
+ *
+ * A page withheld from its visitor holds nothing of its own; the page the space draws in its place
+ * (`settings.withheldPage`) is walked instead, as its body.
  */
 /**
  * Given the flags as they resolved, an element gated off by one is skipped with its whole subtree — it will not be
  * rendered, so nothing in it wants data, and resolving it would put a feature that is off into the payload anyway.
  */
 export const collectServerElements = (
-  schema: Pick<Schema, 'flat'>,
+  schema: Pick<Schema, 'flat'> & Partial<Pick<Schema, 'pages' | 'settings'>>,
   pageId: string | undefined,
   ids?: string[],
   flags?: Record<string, boolean>
@@ -49,7 +53,8 @@ export const collectServerElements = (
         text(page.attributes.layoutContainer)
       ).map(link => link.layout)
     : [];
-  const pending = [pageId, ...shells];
+  const instead = pageWithheldOf(page?.attributes) ? withheldPageOf(schema) : undefined;
+  const pending = [pageId, ...shells, ...(instead === undefined ? [] : [instead])];
   while (pending.length > 0) {
     const id = pending.pop();
     if (id === undefined || seen.has(id)) {

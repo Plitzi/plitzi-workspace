@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
@@ -390,4 +390,82 @@ export const memberDeclarations = (root: string, name: string): ApiExplanation[]
       return [];
     })
   );
+};
+
+/** One export of the authoring package in the index a search reads: its name, a type's or a function's, what it is. */
+export interface ApiIndexEntry {
+  name: string;
+  /** `type` for an interface or a type, `value` for a function or a constant. */
+  of: 'type' | 'value';
+  summary: string;
+}
+
+/**
+ * Every export of `@plitzi/sdk-authoring` as the project installed it, with what its doc says first — what a search
+ * of words reads beside the catalogues: a run's developer needed `BindingSpec` and `VisibleInput` for a helper of its
+ * own, could not name them, and grepped the `.d.ts`. Read once a version, kept in the project's cache.
+ */
+export const apiIndex = (root: string): ApiIndexEntry[] => {
+  const ts = loadTypeScript(root);
+  const scope = scopeDir(root);
+  const entries = scope ? entriesOf(path.join(scope, FIRST), `${SCOPE}/${FIRST}`) : [];
+  const main = entries.find(entry => entry.from === `${SCOPE}/${FIRST}`);
+  if (!ts || !scope || !main) {
+    return [];
+  }
+
+  const manifest: unknown = JSON.parse(readFileSync(path.join(scope, FIRST, 'package.json'), 'utf-8'));
+  const version = isRecord(manifest) && typeof manifest.version === 'string' ? manifest.version : 'unknown';
+  // The declarations' own stamp beside the version: a package installed again under the same version — a portal, a
+  // build packed for a try — answered from the index of the one before it.
+  const stamp = Math.trunc(statSync(main.file).mtimeMs).toString(36);
+  const cache = path.join(root, 'tmp', 'plitzi-cache');
+  const kept = path.join(cache, `api-index-${version}-${stamp}.json`);
+  if (existsSync(kept)) {
+    const read: unknown = JSON.parse(readFileSync(kept, 'utf-8'));
+    if (Array.isArray(read)) {
+      return read.filter(
+        (each): each is ApiIndexEntry =>
+          isRecord(each) &&
+          typeof each.name === 'string' &&
+          typeof each.summary === 'string' &&
+          (each.of === 'type' || each.of === 'value')
+      );
+    }
+  }
+
+  const program = ts.createProgram([main.file], {
+    noEmit: true,
+    skipLibCheck: true,
+    types: [],
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler
+  });
+  const checker = program.getTypeChecker();
+  const source = program.getSourceFile(main.file);
+  const module = source ? checker.getSymbolAtLocation(source) : undefined;
+  const index = (module ? checker.getExportsOfModule(module) : []).flatMap(symbol => {
+    const found = lookUp(ts, checker, source, symbol.name);
+    if (!found) {
+      return [];
+    }
+
+    const isType = (found.declared.flags & (ts.SymbolFlags.Interface | ts.SymbolFlags.TypeAlias)) !== 0;
+
+    return [
+      {
+        name: symbol.name,
+        of: isType ? ('type' as const) : ('value' as const),
+        summary: summaryOf(found.sourceFile, found.statements[0])
+      }
+    ];
+  });
+  mkdirSync(cache, { recursive: true });
+  for (const stale of readdirSync(cache).filter(name => name.startsWith('api-index-'))) {
+    rmSync(path.join(cache, stale), { force: true });
+  }
+
+  writeFileSync(kept, JSON.stringify(index));
+
+  return index;
 };

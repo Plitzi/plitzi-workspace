@@ -84,7 +84,7 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
   // One per server, so every render of every page shares the same in-flight map and the same reuse window.
   const share = createRenderShare();
 
-  return async ({ element, routeParams, queryParams, spaceId, environment, user, req, signal }) => {
+  return async ({ element, input: resolved, routeParams, queryParams, spaceId, environment, user, req, signal }) => {
     /**
      * Which version of the space is being rendered — environment AND revision from the same record.
      *
@@ -94,8 +94,9 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
     const deployment = req.ctx.spaceDeployment;
     const at = { environment: deployment?.environment ?? environment, revision: deployment?.revision ?? 0 };
     const { action: actionId } = element.attributes as ActionElementAttributes;
-    // What it was saved with, and what of its bound input reads the address alone: the browser asks with the same.
-    const bound = serverInputOf(element, { routeParams, queryParams });
+    // What it was saved with, and its bound input the page server reads — the address, the providers before it
+    // (`resolveRscData` resolves them first); the browser asks with the same.
+    const bound = resolved ?? serverInputOf(element, { routeParams, queryParams });
     const input = isRecord(bound) ? bound : {};
     if (!actionId) {
       return undefined;

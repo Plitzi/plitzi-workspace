@@ -192,6 +192,7 @@ The space is not written until these are fixed.
 | `visibility-as-attribute` | `visibility` bound as an attribute, which no element reads | `visible: { source, template }` |
 | `visitor-roles` | `settings.visitorRoles` written in a shape the runtime does not read | the shape the message gives |
 | `while-running` | `whileRunning` on a step that is not the trigger, or a mode other than `skip`, `parallel`, `queue`, `latest` | `[whileRunning('queue', onClick()), …]` |
+| `withheld-page-invalid` | `settings.withheldPage` naming no page of the space, or one with an `access` of its own | the id or slug of a page every visitor may see: `withheldPage: 'no-access'` |
 
 ## Warned
 

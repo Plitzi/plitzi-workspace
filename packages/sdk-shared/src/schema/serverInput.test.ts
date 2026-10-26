@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { serverInputOf } from './serverInput';
+import { browserServerInput, inputProviders, serverInputOf } from './serverInput';
 
 import type { Element, ElementBinding } from '../types';
 
@@ -64,5 +64,31 @@ describe('the input a server provider is resolved with on the page server', () =
         address
       )
     ).toBe(saved);
+  });
+});
+
+// A room's crate bound its person to the room's answer: resolved on the page server with none, refused on every load.
+describe('a server provider’s input bound to another server provider', () => {
+  const crate = provider({}, [
+    { to: 'input', source: 'apiContainer_room.data.host', transformers: template('{{ { username: source } }}') }
+  ]);
+
+  it('waits on the providers whose answers it reads, and on nothing the server cannot know', () => {
+    expect(inputProviders(crate, new Set(['room']))).toEqual(['room']);
+    expect(inputProviders(crate, new Set())).toEqual([]);
+    expect(inputProviders(provider({}, [{ to: 'input', source: 'state.who' }]), new Set(['room']))).toEqual([]);
+  });
+
+  it('is worked out by the browser from the payload it was sent, the same — and nothing from no payload', () => {
+    expect(browserServerInput(crate, {}, { room: { data: { host: 'dax' } } }, address)).toEqual({ username: 'dax' });
+    expect(browserServerInput(crate, undefined, undefined, address)).toEqual({});
+    expect(browserServerInput(undefined, {}, {}, address)).toBeUndefined();
+  });
+
+  it('is resolved with their answers, as the browser publishes them', () => {
+    expect(serverInputOf(crate, address, { apiContainer_room: { data: { host: 'dax' } } })).toEqual({
+      username: 'dax'
+    });
+    expect(serverInputOf(crate, address)).toEqual({});
   });
 });

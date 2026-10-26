@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { mayReceive, pageAccessOf, pageAccessRefusal, pageWithheldOf, withholdPages } from './pageAccess';
+import {
+  mayReceive,
+  pageAccessOf,
+  pageAccessRefusal,
+  pageWithheldOf,
+  withheldPageOf,
+  withholdPages
+} from './pageAccess';
+import { collectServerElements } from './serverElements';
 
 import type { Element, Schema } from '../types';
 
@@ -72,5 +80,39 @@ describe('the space a visitor is sent', () => {
     expect(mayReceive(kept, { permissions: ['adminManage'] })).toBe(true);
     expect(mayReceive(kept, { permissions: [] })).toBe(false);
     expect(mayReceive(kept, undefined)).toBe(false);
+  });
+});
+
+describe('the page a space draws in place of one withheld', () => {
+  const withSubstitute = (withheldPage: string): Schema => {
+    const space = schema();
+
+    return {
+      ...space,
+      pages: [...space.pages, 'noAccess'],
+      settings: { withheldPage },
+      flat: {
+        ...space.flat,
+        noAccess: element('noAccess', 'noAccess', { slug: 'no-access' }, ['whoApi']),
+        whoApi: {
+          ...element('whoApi', 'noAccess'),
+          definition: { ...element('whoApi', 'noAccess').definition, runtime: 'server' }
+        }
+      }
+    } as unknown as Schema;
+  };
+
+  it('is a page of the space that every visitor may see — or none', () => {
+    expect(withheldPageOf(withSubstitute('noAccess'))).toBe('noAccess');
+    expect(withheldPageOf(withSubstitute('staff'))).toBeUndefined();
+    expect(withheldPageOf(withSubstitute('welcome'))).toBeUndefined();
+    expect(withheldPageOf({ flat: withSubstitute('noAccess').flat })).toBeUndefined();
+  });
+
+  it("is walked for the server's providers as the withheld page's body", () => {
+    const sent = withholdPages(withSubstitute('noAccess'), undefined).schema;
+
+    expect(collectServerElements(sent, 'staff').map(each => each.id)).toEqual(['whoApi']);
+    expect(collectServerElements(withSubstitute('noAccess'), 'staff')).toEqual([]);
   });
 });

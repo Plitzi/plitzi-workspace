@@ -34,6 +34,7 @@ import {
   assertLayoutRef,
   buildPageFolders,
   homeIndexOf,
+  withheldPageId,
   writeRedirect
 } from './pages';
 import {
@@ -385,6 +386,7 @@ export class SpaceAuthor {
     const serverResolved = [this.flatMap.flat, ...declared.map(component => component.flat)].some(flat =>
       Object.values(flat).some(element => element.definition.runtime === 'server')
     );
+    const withheldPage = withheldPageId(this);
     const rsc = this.spec.rsc ?? (serverResolved ? { enabled: true } : undefined);
     const schema: Schema = {
       definition: { name: this.spec.name, permanentUrl: this.spec.permanentUrl },
@@ -399,7 +401,8 @@ export class SpaceAuthor {
           this.spec.keyframes
         ),
         ...(this.spec.computed ? { computed: this.spec.computed } : {}),
-        ...(this.spec.channels ? { channels: this.spec.channels } : {})
+        ...(this.spec.channels ? { channels: this.spec.channels } : {}),
+        ...(withheldPage === undefined ? {} : { withheldPage })
       },
       ...(rsc ? { rsc } : {}),
       pages,

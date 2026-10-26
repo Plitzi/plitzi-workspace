@@ -19,6 +19,7 @@ export const SCHEMA_SETTINGS = [
   'shareImage',
   'themeColor',
   'customCss',
+  'withheldPage',
   'visitorRoles',
   'userProvider',
   'tokenStorage',

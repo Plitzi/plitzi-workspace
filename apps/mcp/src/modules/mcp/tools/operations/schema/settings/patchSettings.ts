@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { NOTIFICATIONS_FIELDS, splitNotificationsCss, withNotificationsCss } from '@plitzi/sdk-authoring';
 import { channelProblems } from '@plitzi/sdk-shared/realtime';
-import { spaceIdentity, spaceIdentityProblems } from '@plitzi/sdk-shared/schema';
+import { spaceIdentity, spaceIdentityProblems, withheldPageOf } from '@plitzi/sdk-shared/schema';
 
 import { empty, fail } from '../../../../helpers';
 import { settingsUri } from '../write';
@@ -80,17 +80,23 @@ export const patchSettingsOp = z
     siteName: z.string().optional().describe('Shown beside each title in a link card'),
     language: z.string().optional().describe('"en", "es-MX"'),
     favicon: z.string().optional().describe('"/favicon.svg" or https://…'),
-    shareImage: z.string().optional().describe("A link card's picture when its page has none: \"/og.png\""),
-    themeColor: z.union([z.string(), z.object({ light: z.string().optional(), dark: z.string().optional() })]).optional(),
+    shareImage: z.string().optional().describe('A link card\'s picture when its page has none: "/og.png"'),
+    themeColor: z
+      .union([z.string(), z.object({ light: z.string().optional(), dark: z.string().optional() })])
+      .optional(),
     robotsTxt: z.string().optional(),
     viewTransitions: z.boolean().optional(),
+    withheldPage: z
+      .string()
+      .optional()
+      .describe('Page id drawn for a withheld page (its 401/403); "" = Plitzi\'s words'),
     channels: z
       .record(z.string(), channel.nullable())
       .optional()
       .describe('Realtime channels by topic pattern (`board:{id}`); null removes one. See the guide')
   })
   .describe(
-    'Merge space-level settings — global CSS, notifications, kept state, auth, realtime channels, the site\'s identity ' +
+    "Merge space-level settings — global CSS, notifications, kept state, auth, realtime channels, the site's identity " +
       'and robots.txt. Only the fields ' +
       'sent change. ' +
       'customCss is for site-wide CSS, never to style one element (attach a definition for that).'
@@ -175,6 +181,16 @@ export const patchSettings = (space: Space, env: Env, op: PatchSettings): OpResu
         'Write one CSS value per field — a colour, a length or a token like var(--card)'
       );
     }
+  }
+
+  if (next.withheldPage === '') {
+    delete next.withheldPage;
+  } else if (next.withheldPage !== undefined && withheldPageOf({ ...space.schema, settings: next }) === undefined) {
+    return fail(
+      'withheldPage',
+      `withheldPage "${next.withheldPage}" is no page of the space, or one with an access of its own — withheld from the visitor it is drawn for.`,
+      'Name the id of a page every visitor may see, or "" for the platform\'s words'
+    );
   }
 
   space.schema.settings = next;

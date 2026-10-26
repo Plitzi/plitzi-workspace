@@ -69,6 +69,10 @@ export interface StepSpec {
   whileRunning?: ElementInteraction['whileRunning'];
 }
 
+/**
+ * One binding of an element, in its long form: where a value comes from (`source`), what receives it (`to`), and how it
+ * is turned on the way (`template`, `transformers`) — what `bind: [...]` and `bindTemplate` write.
+ */
 export interface BindingSpec {
   /** Attribute, style property or state key that receives the value. */
   to: string;

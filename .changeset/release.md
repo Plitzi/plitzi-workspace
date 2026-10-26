@@ -672,11 +672,13 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`plitzi explain`** answers "does Plitzi have a way to…". It covers elements and the fields their source publishes,
   steps, triggers, style states, global sources, template filters and functions, a server action's steps
   (`--list tasks`), codes, CLI commands and an export's fields.
-  - `explain --search "<words>"` also reads the skills' references and recipes, so it answers with the page that
+  - The types `@plitzi/sdk-authoring` exports are found by their words too — `explain "binding spec"` names
+    `BindingSpec` — and `explain --list types` lists them, each with its doc's first line.
+  - `explain "<words>"` also reads the skills' references and recipes, so it answers with the page that
     teaches it.
 - **`page outline --width 390,1440`** outlines each width, and **`page shot --scheme light,dark`** pictures each scheme,
   as `check`, `measure` and `play` take a list.
-- **`explain --search ctx.later`** answers the member first, as the installed types declare it.
+- **`explain ctx.later`** answers the member first, as the installed types declare it.
 - **`plitzi functions later [key] --now`**: what the served project holds to run later (`ctx.later`), by key and when it
   is due — and one started now, through the server's own queue: a spec of a show waited five real minutes a pass.
 - **`page play` and `page shot --steps` set what the demo data never has:** `reload`, `store <key> <value>`
@@ -889,6 +891,16 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   (`serverInputOf`, `@plitzi/sdk-shared/schema`), and the browser compares against it. A run's conversation page bound
   `{ with: routeParams.username }`: the server resolved it with no `with`, refused it on every load and logged a stack,
   while the browser asked again to draw it. A render's refusal logs its words too (`invalid_input — Invalid input: slug`).
+
+- **…and bound to another server provider's answer too:** `input` bound to `apiContainer_room.data.owner` is resolved
+  after that provider, on the server, as the browser does (`inputProviders`, `browserServerInput`). A run's crate list
+  bound its person to the room's answer: the server asked with none, refused on every load, and the list came empty.
+
+- **A space can give a withheld page its own look:** `settings.withheldPage` names a page of the space — by id or slug
+  in authoring, a page with no `access` (`withheld-page-invalid` otherwise) — drawn in place of the platform's few
+  words, inside the same layout, with the same 401 or 403; its server providers are resolved with it
+  (`withheldPageOf`, `@plitzi/sdk-shared/schema`). `auth.isAuthenticated` tells "sign in" from "not yours" there. The
+  MCP's `patchSettings` takes it by id, with the same refusal; `""` gives the platform's words back.
 
 - **A project's server keeps the last space that authored when a save does not, and `/health` says why**
   (`spaceStale`), until a save authors; a space that never authored shows the latest refusal, not the first.

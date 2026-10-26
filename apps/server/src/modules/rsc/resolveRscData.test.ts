@@ -423,41 +423,43 @@ describe('resolveRscData', () => {
     });
   });
 
+  const withheldModeration = (): Schema => ({
+    ...buildSchema(),
+    flat: {
+      moderation: {
+        ...page('moderation', 'moderation', ['reportsApi']),
+        attributes: {
+          slug: 'moderation',
+          folder: '',
+          default: false,
+          layout: 'shell',
+          layoutContainer: 'shellBody',
+          access: { permissions: ['moderate'] }
+        }
+      },
+      reportsApi: element('reportsApi', 'apiContainer', [], 'server'),
+      shell: {
+        id: 'shell',
+        attributes: {},
+        definition: {
+          type: 'layoutContainer',
+          label: 'shell',
+          rootId: 'shell',
+          items: ['header', 'shellBody'],
+          styleSelectors: { base: '' }
+        }
+      },
+      header: element('header', 'container', ['unreadApi']),
+      unreadApi: element('unreadApi', 'apiContainer', [], 'server'),
+      shellBody: element('shellBody', 'container')
+    },
+    pages: ['moderation']
+  });
+
   // A run's page withheld from a signed-in visitor drew the site's header with a blank avatar and no inbox: every
   // layout source "could not be reached" — the page's refusal kept the layout's data back with its own.
   it('reads the layout around a page withheld from this visitor, and nothing of the page', async () => {
-    const withLayout = {
-      ...buildSchema(),
-      flat: {
-        moderation: {
-          ...page('moderation', 'moderation', ['reportsApi']),
-          attributes: {
-            slug: 'moderation',
-            folder: '',
-            default: false,
-            layout: 'shell',
-            layoutContainer: 'shellBody',
-            access: { permissions: ['moderate'] }
-          }
-        },
-        reportsApi: element('reportsApi', 'apiContainer', [], 'server'),
-        shell: {
-          id: 'shell',
-          attributes: {},
-          definition: {
-            type: 'layoutContainer',
-            label: 'shell',
-            rootId: 'shell',
-            items: ['header', 'shellBody'],
-            styleSelectors: { base: '' }
-          }
-        },
-        header: element('header', 'container', ['unreadApi']),
-        unreadApi: element('unreadApi', 'apiContainer', [], 'server'),
-        shellBody: element('shellBody', 'container')
-      },
-      pages: ['moderation']
-    } as Schema;
+    const withLayout = withheldModeration();
     const asked: string[] = [];
     const resolveElement = vi.fn<RscElementResolver>().mockImplementation(({ element: each }) => {
       asked.push(each.id);
@@ -477,5 +479,69 @@ describe('resolveRscData', () => {
     expect(asked).toEqual(['unreadApi']);
     expect(result.serverData).toEqual({ unreadApi: { unread: 2 } });
   });
-});
 
+  it('reads the page the space draws in place of one withheld, as the browser is sent it', async () => {
+    const withheld = withheldModeration();
+    const schema = {
+      ...withheld,
+      settings: { ...withheld.settings, withheldPage: 'noAccess' },
+      flat: {
+        ...withheld.flat,
+        noAccess: page('noAccess', 'no-access', ['whoApi']),
+        whoApi: element('whoApi', 'apiContainer', [], 'server')
+      },
+      pages: ['moderation', 'noAccess']
+    } as Schema;
+    const asked: string[] = [];
+    const resolveElement = vi.fn<RscElementResolver>().mockImplementation(({ element: each }) => {
+      asked.push(each.id);
+
+      return Promise.resolve({ ok: true });
+    });
+
+    await resolveRscData({
+      ...base,
+      user: { id: 7, username: 'mika', permissions: [], roles: [] } as unknown as SSRUser,
+      schema,
+      req: request('/moderation'),
+      resolveElement
+    });
+
+    expect(asked.sort()).toEqual(['unreadApi', 'whoApi']);
+  });
+
+  // A room's crate bound its person to the room's answer: the page server asked with none, refused on every load.
+  it('resolves an input bound to another server provider after it, as the browser would', async () => {
+    const schema = buildSchema();
+    schema.flat.home = page('home', '', ['roomApi', 'crateApi']);
+    schema.flat.roomApi = element('roomApi', 'apiContainer', [], 'server');
+    schema.flat.crateApi = {
+      ...element('crateApi', 'apiContainer', [], 'server'),
+      definition: {
+        ...element('crateApi', 'apiContainer', [], 'server').definition,
+        bindings: {
+          attributes: [
+            {
+              id: 'b1',
+              to: 'input',
+              source: 'apiContainer_roomApi.data.host',
+              transformers: [
+                { action: 'twigTemplate', params: { template: '{{ { username: source } }}', returnMode: 'value' } }
+              ]
+            }
+          ]
+        }
+      }
+    };
+    const inputs: Record<string, unknown> = {};
+    const resolveElement = vi.fn<RscElementResolver>().mockImplementation(({ element: each, input }) => {
+      inputs[each.id] = input;
+
+      return Promise.resolve(each.id === 'roomApi' ? { data: { host: 'dax' } } : { data: [] });
+    });
+
+    await resolveRscData({ ...base, schema, req: request('/'), resolveElement });
+
+    expect(inputs.crateApi).toEqual({ username: 'dax' });
+  });
+});

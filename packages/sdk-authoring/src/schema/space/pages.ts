@@ -1,4 +1,5 @@
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
+import { pageAccessOf } from '@plitzi/sdk-shared/schema';
 
 import { groupBindings, withVisibility } from '../bindings';
 import { AuthoringError } from '../codes';
@@ -14,6 +15,7 @@ import { baseSelectorFor } from './styles';
 import { componentWhere, layoutAttributes, placeOf, undeclaredFolder } from './values';
 
 import type { SpaceAuthor } from './author';
+import type { PageHandle } from '../handles';
 import type { ComponentSpec, LayoutRef, LayoutSpec, PageSpec } from '../types';
 import type { Element, PageFolder, SpaceComponent } from '@plitzi/sdk-shared';
 
@@ -97,22 +99,59 @@ export const writeRedirect = (author: SpaceAuthor, page: PageSpec, id: string): 
   });
 };
 
+/** The page a redirect or a setting names — by its id, or its slug (`''` is the home page) — and every name it could have. */
+const pageNamed = (author: SpaceAuthor, target: string): { page: PageHandle | undefined; names: string[] } => {
+  const pages = Object.values(author.handles);
+  const path = pathForSlug(target.replace(/^\/+|\/+$/gu, ''));
+
+  return {
+    page: pages.find(candidate => candidate.id === target) ?? pages.find(candidate => candidate.path === path),
+    names: pages.flatMap(candidate => [candidate.id, candidate.path])
+  };
+};
+
 const redirectTarget = (author: SpaceAuthor, target: string, where: string): string => {
   // Somewhere else — a whole URL, or one a template fills at run time (`{{authUrl}}/`) — is kept as written.
   if (/^[a-z][a-z0-9+.-]*:\/\//iu.test(target) || target.includes('{{')) {
     return target;
   }
 
-  const pages = Object.values(author.handles);
-  const path = pathForSlug(target.replace(/^\/+|\/+$/gu, ''));
-  const page = pages.find(candidate => candidate.id === target) ?? pages.find(candidate => candidate.path === path);
+  const { page, names } = pageNamed(author, target);
   if (!page) {
-    const names = pages.flatMap(candidate => [candidate.id, candidate.path]);
     throw new AuthoringError(
       'redirect-target-unknown',
       `${where} sends a visitor it is not for to "${target}", which is no page of this space${didYouMean(target, names)}. Write a page's id or slug (\`''\` is the home page), or a full URL for somewhere else.${
         target.includes('?') ? ' The address the visitor asked for travels on its own, as `?redirect=`.' : ''
       }`
+    );
+  }
+
+  return page.id;
+};
+
+/**
+ * The page a page withheld from its visitor draws instead of the platform's refusal (`settings.withheldPage`), by its
+ * id — written by its id or its slug. Refused when it names no page, or one with an `access` of its own: it would be
+ * withheld from the very visitor it is drawn for. Read once every page is written.
+ */
+export const withheldPageId = (author: SpaceAuthor): string | undefined => {
+  const target = author.spec.settings?.withheldPage;
+  if (target === undefined) {
+    return undefined;
+  }
+
+  const { page, names } = pageNamed(author, target);
+  if (!page) {
+    throw new AuthoringError(
+      'withheld-page-invalid',
+      `settings.withheldPage is "${target}", which is no page of this space${didYouMean(target, names)}. Write a page's id or slug.`
+    );
+  }
+
+  if (pageAccessOf(author.flatMap.flat[page.id].attributes)) {
+    throw new AuthoringError(
+      'withheld-page-invalid',
+      `settings.withheldPage is "${target}", a page with an access of its own: it would be withheld from the visitor it is drawn for. Name a page every visitor may see.`
     );
   }
 

@@ -521,7 +521,8 @@ export const compareDecorations = (
     const ourLayers = new Set(a.map(sameAs));
     const absentLooks = [...theirLooks.keys()].filter(
       look =>
-        !ourLooks.has(look) && !b.filter(layer => lookOf(layer, box) === look).every(layer => ourLayers.has(sameAs(layer)))
+        !ourLooks.has(look) &&
+        !b.filter(layer => lookOf(layer, box) === look).every(layer => ourLayers.has(sameAs(layer)))
     );
     const absent = absentLooks.map(look => `${look} (${theirLooks.get(look) ?? ''})`);
     const absentLayers = b.filter(layer => absentLooks.includes(lookOf(layer, box))).slice(0, ABSENT_LAYERS);

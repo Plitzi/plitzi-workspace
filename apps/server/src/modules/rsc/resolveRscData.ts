@@ -1,14 +1,19 @@
+import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
 import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
 import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers';
 import {
   collectServerElements,
+  inputProviders,
   pageAccessOf,
   pageAccessRefusal,
   RSC_FAILURE,
+  serverInputOf,
+  serverProviderSource,
   serverWhenValues,
   whenOf,
   whenProviders,
-  whenUnknownToServer
+  whenUnknownToServer,
+  withholdPages
 } from '@plitzi/sdk-shared/schema';
 
 import { matchRscPage } from './matchRscPage';
@@ -21,6 +26,11 @@ import type { FlagOverrides } from '@plitzi/sdk-shared/flags';
 /** Everything an element resolver needs to turn one `runtime: 'server'` element into its data slice. */
 export type RscResolveContext = {
   element: Element;
+  /**
+   * What its input resolves to on the page server: what it was saved with, and its bound input the server reads — the
+   * address, the answers of the server providers before it (`serverInputOf`).
+   */
+  input?: unknown;
   /** The whole element map, so a resolver can inspect the subtree that consumes its data. */
   flat: Record<string, Element>;
   routeParams: Record<string, string | undefined>;
@@ -116,23 +126,6 @@ const withBudget = async <T>(
  * and the route params are what the browser will see. Each `runtime: 'server'` element resolves independently:
  * a provider that fails or hangs costs its own slice and nothing else.
  */
-/** The elements a page holds itself — under it, not its layout's: what a page withheld from a visitor keeps back. */
-const pageTree = (flat: Schema['flat'], pageId: string): Set<string> => {
-  const found = new Set<string>();
-  const pending = [pageId];
-  while (pending.length > 0) {
-    const id = pending.pop();
-    if (id === undefined || found.has(id)) {
-      continue;
-    }
-
-    found.add(id);
-    pending.push(...((Object.hasOwn(flat, id) ? flat[id].definition.items : undefined) ?? []));
-  }
-
-  return found;
-};
-
 export const resolveRscData = async ({
   schema,
   req,
@@ -160,6 +153,8 @@ export const resolveRscData = async ({
   // refusal is the site's, drawn for them as on every page: its providers are read (a run's withheld page drew its
   // header with a blank avatar and no inbox, every layout source "could not be reached").
   const withheld = pageAccessRefusal(pageAccessOf(schema.flat[pageId].attributes), user) !== undefined;
+  // As the browser is sent it: the withheld page's own elements out, and the page the space draws in its place in.
+  const drawn = withheld ? withholdPages(schema, user).schema : schema;
 
   // Against the page just matched, as the browser resolves them for it: an element a flag switched off is not drawn,
   // and its data must not travel in the payload regardless.
@@ -171,8 +166,7 @@ export const resolveRscData = async ({
     )
   );
   // Every server element of the page, though only some are asked: a `when` reads the answer of another, asked or not.
-  const ofPage = withheld ? pageTree(schema.flat, pageId) : new Set<string>();
-  const all = collectServerElements(schema, pageId, undefined, flags).filter(element => !ofPage.has(element.id));
+  const all = collectServerElements(drawn, pageId, undefined, flags);
   const asked = ids ? new Set(ids) : undefined;
   const targets = asked ? all.filter(element => asked.has(element.id)) : all;
   if (targets.length === 0) {
@@ -189,49 +183,69 @@ export const resolveRscData = async ({
     }
 
     const run = async (): Promise<unknown> => {
+      // The answers of the server providers it reads, each resolved first — the one it is waiting in the chain of
+      // left out: two that read each other are read in the order they come, the later seeing nothing of the other.
+      const answersOf = async (ids: readonly string[], what: string) =>
+        Object.fromEntries(
+          await Promise.all(
+            ids
+              .filter(id => id !== element.id && !chain.includes(id))
+              .map(async id => {
+                const other = byId.get(id);
+                const answer = other
+                  ? await resolveOne(other, [...chain, element.id]).catch((reason: unknown) => {
+                      // An asked one's failure is said with the rest; one read only for this element, here.
+                      if (asked && !asked.has(id)) {
+                        serverLog.warn(
+                          'RSC',
+                          `element ${element.id}'s ${what} reads ${id}, which failed to resolve`,
+                          reason
+                        );
+                      }
+
+                      return undefined;
+                    })
+                  : undefined;
+
+                return [id, { answer, singleRecord: other?.attributes.singleRecord === true }] as const;
+              })
+          )
+        );
+
       // A `when` read in the browser alone — a state, a variable — is not the page server's to decide: resolved, as
       // authoring warns (`server-when-unknown`). One it knows all of waits for the providers it reads, in turn.
       const gate = whenOf(element);
       if (gate && whenUnknownToServer(gate, schema.flat, serverIds).length === 0) {
-        // Two that read each other are read in the order they come: the one later sees nothing of the other.
-        const before = whenProviders(gate, serverIds).filter(id => id !== element.id && !chain.includes(id));
-        const answered = await Promise.all(
-          before.map(async id => {
-            const other = byId.get(id);
-            const answer = other
-              ? await resolveOne(other, [...chain, element.id]).catch((reason: unknown) => {
-                  // An asked one's failure is said with the rest; one read only for this `when`, here.
-                  if (asked && !asked.has(id)) {
-                    serverLog.warn(
-                      'RSC',
-                      `element ${element.id}'s \`when\` reads ${id}, which failed to resolve`,
-                      reason
-                    );
-                  }
-
-                  return undefined;
-                })
-              : undefined;
-
-            return [id, { answer, singleRecord: other?.attributes.singleRecord === true }] as const;
-          })
-        );
         const values = serverWhenValues({
           routeParams,
           queryParams: req.query,
           pageId,
           user,
-          answers: Object.fromEntries(answered)
+          answers: await answersOf(whenProviders(gate, serverIds), '`when`')
         });
         if (!evaluateRuleGroup(gate, values)) {
           return undefined;
         }
       }
 
+      // Its bound input, as the browser resolves it: the address, and the answers of the server providers it reads.
+      const reads = await answersOf(inputProviders(element, serverIds), 'input');
+      const input = serverInputOf(
+        element,
+        { routeParams, queryParams: req.query },
+        Object.fromEntries(
+          Object.entries(reads).map(([id, { answer, singleRecord }]) => [
+            getSourceName('apiContainer', id),
+            serverProviderSource(answer, singleRecord)
+          ])
+        )
+      );
+
       return withBudget(
         elementSignal =>
           resolveElement({
             element,
+            input,
             flat: schema.flat,
             routeParams,
             queryParams: req.query,

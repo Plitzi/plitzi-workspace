@@ -275,6 +275,12 @@ export type Schema = {
      * (`og:site_name`).
      */
     siteName?: string;
+    /**
+     * The page of the space a page withheld from its visitor shows instead of the platform's refusal — by its id: drawn
+     * inside the withheld page's own layout and sent with the same 401 or 403; `auth.isAuthenticated` tells "sign in" from "not
+     * yours" there, as on any page. Left out, the platform's few words. A page with an `access` of its own cannot be it.
+     */
+    withheldPage?: string;
     /** The language its pages are written in, as a language tag (`en`, `es-MX`): `<html lang>` and `og:locale`. */
     language?: string;
     /** The tab's icon: a file of the site (`/favicon.svg`) or an address (`https://…`). Left out, Plitzi's. */

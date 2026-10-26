@@ -53,6 +53,24 @@ export const pageWithheldOf = (attributes: Record<string, unknown> | undefined):
   return withheld === 'unauthenticated' || withheld === 'forbidden' ? withheld : undefined;
 };
 
+/**
+ * The page a page withheld from its visitor draws instead of the platform's refusal (`settings.withheldPage`): one of
+ * the space's pages that declares no `access` — or nothing, and the platform's few words. A schema holding only `flat`
+ * (a linter's, a page head's) has none.
+ */
+export const withheldPageOf = (
+  schema: Pick<Schema, 'flat'> & Partial<Pick<Schema, 'pages' | 'settings'>>
+): string | undefined => {
+  const named = schema.settings?.withheldPage;
+  if (named === undefined || !schema.pages?.includes(named)) {
+    return undefined;
+  }
+
+  const page = schema.flat[named] as Element | undefined;
+
+  return page && !pageAccessOf(page.attributes) ? named : undefined;
+};
+
 /** The space as one visitor may be sent it, and the accesses of the protected pages it still holds whole. */
 export type WithheldSchema = { schema: Schema; withheld: string[]; kept: PageAccess[] };
 

@@ -13,7 +13,7 @@ import {
 import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project';
 import { SCHEMA_SETTINGS } from '@plitzi/sdk-shared/schema';
 
-import { apiDeclarations, apiText, memberDeclarations } from './apiDeclarations';
+import { apiDeclarations, apiIndex, apiText, memberDeclarations } from './apiDeclarations';
 import { findProject } from './existingProject';
 import { pluginText, projectPlugins } from './projectPlugins';
 import { serverTasks, serverTaskText } from './serverTasks';
@@ -21,7 +21,7 @@ import { skillPassages, skillsMentions } from './skillsMentions';
 import { fail } from './terminal';
 import { LINT_RULES } from '../lint/catalog';
 
-import type { ApiExplanation } from './apiDeclarations';
+import type { ApiExplanation, ApiIndexEntry } from './apiDeclarations';
 import type { SkillPassage } from './skillsMentions';
 import type { Explanation, SearchHit } from '@plitzi/sdk-authoring';
 import type { Command } from 'commander';
@@ -68,7 +68,9 @@ export const searchAll = (
   /** The skills' passages, a project's: what its references teach, answered beside the catalogues. */
   passages: readonly SkillPassage[] = [],
   /** A member of what the project's code is handed, by its name — `ctx.later` — as the installed types declare it. */
-  memberOf: (name: string) => readonly ApiExplanation[] = () => []
+  memberOf: (name: string) => readonly ApiExplanation[] = () => [],
+  /** The authoring package's exports, types among them (`BindingSpec`), found by their names' words and their docs. */
+  exported: readonly ApiIndexEntry[] = []
 ): (Omit<SearchHit, 'score'> | { kind: 'command' | 'code' | 'skill' | 'api'; name: string; summary: string })[] => {
   // A member named in the words is answered first: a run's "ctx.later" was searched for five times and found every
   // passage that said "later", never the member.
@@ -79,6 +81,14 @@ export const searchAll = (
   const own = [
     ...commandsOf(commands).map(each => ({ kind: 'command' as const, ...each })),
     ...[...CHECK_CODES.values()].map(code => ({ kind: 'code' as const, name: code.name, summary: code.means })),
+    // A type found by the words of its name (`binding spec`) and its doc: its name split as it is read.
+    ...exported.map(each => ({
+      kind: 'api' as const,
+      name: each.name,
+      summary: `${each.of === 'type' ? 'a type' : 'an export'} of @plitzi/sdk-authoring — ${each.summary}`,
+      title: each.name.replace(/([a-z0-9])([A-Z])/g, '$1 $2'),
+      scored: each.summary
+    })),
     // A passage is found by what it says, never by where it is: its file's name would match every word of a path.
     ...passages.map(each => ({
       kind: each.kind,
@@ -184,7 +194,14 @@ export const explainCommand = async (
   if (words !== undefined) {
     const project = await findProject(process.cwd());
     const root = project?.root ?? process.cwd();
-    const hits = searchAll(words, commands, 10, skillPassages(root), each => memberDeclarations(root, each));
+    const hits = searchAll(
+      words,
+      commands,
+      10,
+      skillPassages(root),
+      each => memberDeclarations(root, each),
+      apiIndex(root)
+    );
     if (hits.length === 0) {
       fail(
         `Nothing Plitzi has is described by "${words}" — other words, or what there is: --list ${kinds}, tasks. Something Plitzi should have: say it (plitzi run notice --plitzi "…", in a run).`
@@ -224,10 +241,25 @@ export const explainCommand = async (
     return;
   }
 
+  // The authoring package's types, by name, as the project installed it: what a helper of the project's own is typed by.
+  if (options.list === 'types') {
+    const project = await findProject(process.cwd());
+    const types = apiIndex(project?.root ?? process.cwd()).filter(each => each.of === 'type');
+    console.log(
+      options.json
+        ? JSON.stringify(types.map(({ name, summary }) => ({ name, summary })))
+        : types.map(each => `${each.name.padEnd(32)} ${chalk.dim(each.summary)}`).join('\n')
+    );
+
+    return;
+  }
+
   if (options.list !== undefined) {
     const kind = explainKindOf(options.list);
     if (!kind) {
-      fail(`--list takes ${kinds}, tasks (a server action's steps), not "${options.list}".`);
+      fail(
+        `--list takes ${kinds}, tasks (a server action's steps), types (the authoring package's), not "${options.list}".`
+      );
 
       return;
     }
@@ -323,8 +355,13 @@ export const explainCommand = async (
 
     // No name: what its words describe, as several words are answered — a run's `explain active`, `explain keepState`,
     // `explain icon` each failed, nine times, where a search found the passage that teaches it.
-    const described = searchAll(wordsOfName(name), commands, 5, skillPassages(project?.root ?? process.cwd()), each =>
-      memberDeclarations(project?.root ?? process.cwd(), each)
+    const described = searchAll(
+      wordsOfName(name),
+      commands,
+      5,
+      skillPassages(project?.root ?? process.cwd()),
+      each => memberDeclarations(project?.root ?? process.cwd(), each),
+      apiIndex(project?.root ?? process.cwd())
     );
     if (described.length > 0) {
       console.log(
