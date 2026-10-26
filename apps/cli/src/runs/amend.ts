@@ -24,8 +24,6 @@ import {
 import { PLAN_FINDING } from './spike';
 import { withLock } from './store';
 import { updateState, viewTask } from './taskStore';
-import { TESTER } from './team';
-import { TESTS_SUFFIX } from './tests';
 
 import type { PlannedTask, RunPlan, RunTask } from './model';
 import type { LoadedRun, RunContext } from './run';
@@ -128,14 +126,13 @@ const originsOf = async (loaded: LoadedRun): Promise<(id: string) => number> => 
 /** The run's tasks as a stage's plan amends them: each it holds as it says, those it left out gone. */
 /**
  * A task the run made from the plan rather than one the plan wrote — the tests of its developer tasks (`withTestTasks`):
- * it stays while every task it was made after does. A run's amend of a stage dropped three of them, as "nobody had
- * taken them", with the proposals sent to them.
+ * it stays while every task it tests does. A run's amend of a stage dropped three of them, as "nobody had taken them",
+ * with the proposals sent to them.
  */
 const derivedFrom = (task: RunTask, next: RunPlan): boolean =>
-  task.role === TESTER &&
-  new RegExp(`${TESTS_SUFFIX}(-\\d+)?$`).test(task.id) &&
-  task.dependsOn.length > 0 &&
-  task.dependsOn.every(id => next.tasks.some(each => each.id === id));
+  task.testsOf !== undefined &&
+  task.testsOf.length > 0 &&
+  task.testsOf.every(id => next.tasks.some(each => each.id === id));
 
 const amendedTasks = (plan: RunPlan, next: RunPlan, removed: readonly RunTask[]): PlannedTask[] =>
   plan.tasks

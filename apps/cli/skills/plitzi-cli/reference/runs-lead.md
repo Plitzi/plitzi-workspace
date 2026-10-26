@@ -60,8 +60,8 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    after its first start). Agents start fresh after each task or review, never in one
    (`--session context|keep`); `--resume-session`: one that died mid-task resumes; one just started is
    not "no signal" for `options.startGraceMinutes` (3). A designer reviews the others' UI (`options.designReview`;
-   `false` turns it off); a tester reviews every task — its QA, the approval — and adds `<id>-tests` (`"tests": false`:
-   none); more testers when reviews queue (`run team set test --count 2`). **Yours is what a tester escalates, past
+   `false` turns it off); a tester reviews every task — its QA, the approval — and brings `<id>-tests`, a developer's (`"tests":
+   false`: none); more testers when reviews queue (`run team set test --count 2`). **Yours is what a tester escalates, past
    its review rounds** (blocked on you), or nobody else may take: `task review <task> --approve`, or `task unblock <task> --answer "…"`, which
    sends it back with your word. With no tester every review is yours ([runs-review.md](runs-review.md)). Take a task
    back: `task reassign <task> --reason "…" --to <agent>`.

@@ -1,18 +1,14 @@
-import { testersOf } from '../leads';
-import { readRunLog } from '../run';
 import { DEVELOPER, readTeam, startedAgents, TESTER } from '../team';
-import { TESTS_SUFFIX } from '../tests';
-import { isWorked } from '../worked';
-import { roleOf } from './common';
+import { testWriters, writesTests } from '../tests';
 
 import type { RunTask } from '../model';
 import type { LoadedRun } from '../run';
 import type { TaskView } from '../taskStore';
 
 /**
- * A tests card (`<task>-tests`) a developer may take while every tester of the team is at a task of its own: a run's
- * one tester was at work 104 of its 152 minutes, the last 45 its cards alone, three developers waiting. Never one who
- * worked a task it tests — tests are written from what was asked, by someone who did not write the work.
+ * A task of tests a tester writes: one no developer of the team may — each worked what it tests (a team of one
+ * developer). The tests are a developer's work, the tester's Opus its reviews (Carlos); written by whoever wrote the work,
+ * they would test its code, not what was asked.
  */
 export const spareTests = async (
   loaded: LoadedRun,
@@ -20,21 +16,15 @@ export const spareTests = async (
   agent: string
 ): Promise<(task: RunTask) => boolean> => {
   const team = await readTeam(loaded.paths.root).catch(() => undefined);
-  const developer = (team ? startedAgents(team) : []).some(
-    each => each.agent === agent && each.roles.includes(DEVELOPER)
-  );
-  const testers = await testersOf(loaded.paths.root);
-  const atWork = (who: string): boolean => views.some(view => view.owner?.agent === who && isWorked(view.state.status));
-  if (!developer || testers.length === 0 || !testers.every(atWork)) {
+  const started = team ? startedAgents(team) : [];
+  if (!started.some(each => each.agent === agent && each.roles.includes(TESTER))) {
     return () => false;
   }
 
-  const worked = new Set(
-    (await readRunLog(loaded.paths)).flatMap(entry =>
-      entry.action === 'take' && entry.by === agent && typeof entry.task === 'string' ? [entry.task] : []
-    )
-  );
+  const developers = started
+    .filter(each => each.roles.includes(DEVELOPER) && !each.roles.includes(TESTER))
+    .map(each => each.agent);
 
   return task =>
-    roleOf(task) === TESTER && task.id.includes(TESTS_SUFFIX) && !task.dependsOn.some(each => worked.has(each));
+    task.testsOf !== undefined && writesTests(task, agent, views) && testWriters(task, views, developers).length === 0;
 };

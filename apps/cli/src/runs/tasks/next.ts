@@ -54,6 +54,7 @@ import {
 import { changesBlock } from './review';
 import { reviewOffer } from './reviewOffer';
 import { spareTests } from './spareTests';
+import { writesTests } from '../tests';
 import { takeTask } from './take';
 
 import type { Message } from '../messages';
@@ -173,7 +174,9 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   const roles = await askedRoles(ctx, role);
   await assertRoles(ctx.root, ctx.agent, roles ?? []);
   const spare = await spareTests(loaded, views, ctx.agent);
-  const forRole = (task: RunTask): boolean => roles === undefined || roles.includes(roleOf(task)) || spare(task);
+  // Of its roles — and never the tests of a task it worked: another writes them, from what was asked.
+  const forRole = (task: RunTask): boolean =>
+    writesTests(task, ctx.agent, views) && (roles === undefined || roles.includes(roleOf(task)) || spare(task));
   // What the lead said to this agent by name — between tasks, there is nowhere else for it to arrive.
   const messages = await unreadFor(loaded, agentAddress(ctx.agent), true);
   const mine = views.filter(view => view.owner?.agent === ctx.agent && isWorked(view.state.status));
@@ -432,13 +435,15 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
           hasDesignReview(view.task, [...view.task.files, ...(view.state.changed ?? [])])
       )
     : [];
+  // The roles it asked as — the team's for it when it named none: a run's design-1 read "nothing ready for a undefined".
+  const asRole = roles?.join(' or ') ?? 'role';
   const why =
     roles !== undefined && coming.length === 0 && toReview.length > 0
-      ? `no task is left for a ${String(role)} to work: the UI of ${toReview.map(view => `${view.task.id} (${view.state.status})`).join(', ')} is yours to review once it is in review — plitzi task next waits for it`
+      ? `no task is left for a ${asRole} to work: the UI of ${toReview.map(view => `${view.task.id} (${view.state.status})`).join(', ')} is yours to review once it is in review — plitzi task next waits for it`
       : others.length > 0
-        ? `nothing ready for a ${String(role)}: ready for others — ${others.map(task => `${task.id} (${roleOf(task)})`).join(', ')}`
+        ? `nothing ready for a ${asRole}: ready for others — ${others.map(task => `${task.id} (${writesTests(task, ctx.agent, views) ? roleOf(task) : 'the tests of what you worked: another writes them'})`).join(', ')}`
         : roles !== undefined && coming.length === 0
-          ? `no task is left for a ${String(role)}: every one is done`
+          ? `no task is left for a ${asRole}: every one is done`
           : open.length === 0
             ? 'every task is done: the run is ready to finish (plitzi run finish)'
             : `nothing is ready: ${open

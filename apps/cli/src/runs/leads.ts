@@ -4,7 +4,7 @@ import { uiQueued } from './reviewQueue';
 import { updateState, viewTask } from './taskStore';
 import { DESIGNER, DEVELOPER, readTeam, SCOUT, startedAgents, TESTER } from './team';
 import { byUrgency } from './urgency';
-import { isWorked } from './worked';
+import { isWorked, workedBy } from './worked';
 
 import type { RunTask } from './model';
 import type { LoadedRun, RunContext } from './run/context';
@@ -21,7 +21,7 @@ import type { TaskView } from './taskStore';
 /** The `--role` the lead asks for its own with: `task next --role lead` — what is escalated to it, and what waits for it. */
 export const LEAD_ROLE = 'lead';
 
-/** The team's testers: they review every task in review — its QA — before the tests they write. */
+/** The team's testers: they review every task in review — its QA. */
 export const testersOf = async (root: string): Promise<string[]> => {
   const team = await readTeam(root).catch(() => undefined);
 
@@ -83,10 +83,6 @@ export const requireALead = (ctx: RunContext, action: string): void => {
   );
 };
 
-/** Who took a task's work, by the notes its takes leave. */
-const workedBy = (view: TaskView, agent: string): boolean =>
-  view.state.notes.some(note => note.by === agent && note.text.startsWith('Taken'));
-
 /** Who of the team reviews: its testers, and its developers — those a review no tester may take goes to. */
 export interface ReviewTeam {
   testers: string[];
@@ -118,7 +114,7 @@ export const spareReviewers = (view: TaskView, views: readonly TaskView[], team:
     return [];
   }
 
-  const tested = view.task.role === TESTER ? views.filter(each => view.task.dependsOn.includes(each.task.id)) : [];
+  const tested = views.filter(each => view.task.testsOf?.includes(each.task.id) === true);
 
   return team.developers.filter(
     developer => !workedBy(view, developer) && !tested.some(each => workedBy(each, developer))

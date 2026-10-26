@@ -103,7 +103,8 @@ describe('a review no tester may take', () => {
         title: 'Tests of the home',
         role: 'tester',
         files: ['src/lib/homeChecks.ts'],
-        dependsOn: ['t-home']
+        dependsOn: ['t-home'],
+        testsOf: ['t-home']
       }
     ];
     const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
@@ -275,5 +276,49 @@ describe('the keeper, for a review a developer gives', () => {
     const run = { identified: [], scratch: loaded.paths.scratch, openFor: 0, open: true, launches: true };
     const asked = agentsNeeded(views, startedAgents(members), new Set(['test-1', 'agent-1']), run);
     expect(asked.find(each => each.agent === 'agent-2')?.text).toContain('the review of t-menu');
+  });
+});
+
+describe('an agent asking with no role', () => {
+  // A run's design-1 read "nothing ready for a undefined": the roles are the team's for it.
+  it('is told what is ready for others by the roles the team gives it', async () => {
+    await bench.writeTeam(team(TESTERS));
+    const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
+    const next = await nextTask(bench.agent('test-1'), runId);
+    expect(next.why).toContain('nothing ready for a tester: ready for others');
+  });
+});
+
+describe('the keeper, for a task of tests', () => {
+  // dev-1, free, wrote what t-about-tests tests: counted free for it, nobody was started.
+  it('starts a developer that may write it, its author free or not', async () => {
+    const members = {
+      version: 1 as const,
+      agents: [
+        { name: 'dev', roles: ['developer'], count: 2, min: 1 },
+        { ...TESTERS, count: 1 }
+      ]
+    };
+    await bench.writeTeam(members);
+    await bench.write(
+      'package.json',
+      JSON.stringify({
+        name: 'bench',
+        type: 'module',
+        private: true,
+        devDependencies: { '@playwright/test': '^1.56.1' }
+      })
+    );
+    const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
+    const about = await take('dev-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', 'export const page = { es: true };\n');
+    await completeTask(about.ctx, runId, 't-about');
+    await reviewTask(bench.agent('test-1'), runId, 't-about', 'approve', []);
+
+    const loaded = await loadRun(lead(), runId);
+    const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
+    const run = { identified: [], scratch: loaded.paths.scratch, openFor: 0, open: true, launches: true };
+    const asked = agentsNeeded(views, startedAgents(members), new Set(['dev-1', 'test-1']), run);
+    expect(asked.find(each => each.agent === 'dev-2')?.text).toContain('t-about-tests');
   });
 });

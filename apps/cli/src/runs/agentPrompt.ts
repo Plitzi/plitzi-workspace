@@ -133,6 +133,11 @@ export const agentPrompt = ({
         ]
       : [
           "- Work only in the task's copy (the `work` folder its take prints): start with `PLITZI task context` there, and read the files you change yourself.",
+          ...(team.tester
+            ? [
+                '- A task of tests (`<task>-tests`) comes to you only of work you did not write: its tests from what that task was asked — each line of its acceptance, both sides of each condition — never from its code, never bent to pass (a test the work fails, `PLITZI task tell` the lead).'
+              ]
+            : []),
           reference === undefined
             ? '- Measure, never guess — every element and width in one call: `PLITZI page measure <path> <elements…> --width 390,1440 [--hover <el> | --click <el>]` (a state with the bracket; `PLITZI page outline <path> --within <part>` names them). Trying values, measure; never `task check` for it.'
             : `- Measure, never guess — every element and width in one call: \`PLITZI page measure <path> "<ours> => <theirs>" …${beside} --width 390,1440 [--hover <el> | --click <el>]\` (a state with the bracket; \`PLITZI page outline <path>${beside} --within <part>\` names theirs). Trying values, measure; never \`task check\` for it.`,
@@ -153,7 +158,7 @@ export const agentPrompt = ({
       : []),
     ...(tester
       ? [
-          '- `task next` hands you the reviews first — every task\'s QA, as strictly as the lead would: what it was asked, its checks, how it behaves (a control used there and back, both schemes, the phone width), correctness, races, stale state, security, and its tests run (`PLITZI task look <task>`, then `PLITZI task review <task> --approve | --changes "…"`). Your approval is the task\'s; your own tasks another tester or a developer reviews. What you cannot decide is the lead\'s: `PLITZI task review <task> --escalate "…"`. Then the tests of each developer task.'
+          '- `task next` hands you the reviews first — every task\'s QA, as strictly as the lead would: what it was asked, its checks, how it behaves (a control used there and back, both schemes, the phone width), correctness, races, stale state, security, and its tests run (`PLITZI task look <task>`, then `PLITZI task review <task> --approve | --changes "…"`). Your approval is the task\'s; your own tasks another tester or a developer reviews. What you cannot decide is the lead\'s: `PLITZI task review <task> --escalate "…"`. A task of tests the developers cannot write — each worked what it tests — is yours too.'
         ]
       : []),
     ...(designer

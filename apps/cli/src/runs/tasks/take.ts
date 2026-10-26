@@ -17,6 +17,7 @@ import { isWorked } from '../worked';
 import { at, findTask, roleOf } from './common';
 import { allLocks, sharedFiles } from './locks';
 import { spareTests } from './spareTests';
+import { writesTests } from '../tests';
 
 import type { ProposalView } from '../agreements';
 import type { Message } from '../messages';
@@ -54,7 +55,16 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
   assertStatus(loaded, ['open'], 'start a task');
   const task = findTask(loaded, taskId);
   const views = await Promise.all(loaded.tasks.map(each => viewTask(loaded.paths, each)));
-  // A tests card a developer may take while every tester is at work: taken as the developer it is.
+  // Tests are written from what was asked, by one that did not write the work: never by its author.
+  if (!writesTests(task, ctx.agent, views)) {
+    throw new RunRefusal(
+      'invalid',
+      `${ctx.agent} worked what ${taskId} tests (${(task.testsOf ?? []).join(', ')}): its tests are written by one that did not write the work — take another (plitzi task next)`,
+      { task: taskId }
+    );
+  }
+
+  // A task of tests no developer may write, a tester takes as the tester it is.
   const spare = (await spareTests(loaded, views, ctx.agent))(task);
   if (role !== undefined && roleOf(task) !== role && !spare) {
     throw new RunRefusal(

@@ -55,7 +55,7 @@ describe("a task's brief", () => {
   });
 
   // Developers wrote tests into a tests card's file and learnt it at task check, the writing lost.
-  it('says another task’s file beside the task’s own — its tests, a tester’s', async () => {
+  it('says another task’s file beside the task’s own — its tests, another’s', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await setTeamAgent(bench.root, 'test', { roles: ['tester'] });
     const plan = benchPlan();
@@ -65,7 +65,7 @@ describe("a task's brief", () => {
 
     const brief = stripVTControlCharacters(briefOf(await taskContext(lead(), runId, 't-home')));
     expect(brief).toContain(
-      "Beside them, another task's — write nothing there: src/functions/book.test.ts (t-home-tests, a tester's)"
+      "Beside them, another task's — write nothing there: src/functions/book.test.ts (t-home-tests, a developer's)"
     );
   });
 

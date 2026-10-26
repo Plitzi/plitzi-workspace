@@ -10,6 +10,7 @@ import { updateState } from './taskStore';
 import { DESIGNER, readTeam, startedAgents } from './team';
 import { isUiFile, reviewedAsUi } from './uiFiles';
 import { byUrgency } from './urgency';
+import { workedBy } from './worked';
 
 import type { DesignReview, Quality, RunTask, TaskState } from './model';
 import type { LoadedRun, RunContext } from './run';
@@ -107,10 +108,6 @@ export const DESIGN_LOOK: Record<Quality, string> = {
     'how it reads at 1440 and 390, in light and dark: hierarchy and spacing, the theme’s tokens rather than new values, every state (empty, long, loading, error, hover, focus), labels and words a person understands, and that it looks like the rest of the space. Against a reference, its sections (page shot --compare --clip <section>): its dress first — every gradient, glow and ornament the comparison says the reference has and this page lacks is one a visitor sees — then what moves, the sizes it measures, how each control behaves, the phone’s own layout. A state the data never shows, you cannot look at: say it (plitzi task review <task> --note "…"), the lead decides how it is seen',
   high: 'everything standard asks, on every page that reads its files — not only its own — against the reference and against the run before it (that nothing else moved), every state and control, in both schemes and widths. A state the data never shows, you cannot look at: say it (plitzi task review <task> --note "…"), the lead decides how it is seen'
 };
-
-/** Who took a task's work, by the notes its takes leave: a designer does not review its own. */
-const workedBy = (view: TaskView, agent: string): boolean =>
-  view.state.notes.some(note => note.by === agent && note.text.startsWith('Taken'));
 
 /** A designer's verdict on `view` is one it may give: the task's UI waits for it, not another's, and not its own work. */
 export const assertDesigner = (view: TaskView, agent: string): void => {

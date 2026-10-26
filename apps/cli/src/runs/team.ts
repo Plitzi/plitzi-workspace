@@ -17,8 +17,8 @@ import type { Quality, RunPlan } from './model';
  * shares it — that a person edits, or asks an agent to change with `plitzi run team set`. The lead, and the agents it
  * starts: each with the roles it takes, how many of it, and the model to start it with. How many agents a run has is
  * the team's size; a task whose role nobody in the team takes is refused at `run plan`; a designer reviews the UI of the
- * others' tasks; a tester reviews every task — its QA, the task's approval — and writes the tests of each developer task
- * (`tests.ts`); a scout finds out what the spikes ask.
+ * others' tasks; a tester reviews every task — its QA, the task's approval — and with one in the team each developer task
+ * gets a task of its tests, a developer's that did not write it (`tests.ts`); a scout finds out what the spikes ask.
  *
  * One lead, the manager: it plans with the person, approves the tasks a spike proposes, answers, decides what is escalated
  * to it and finishes — it reviews no task while the team has a tester. It is the person's harness, and never started
@@ -53,8 +53,8 @@ const STRONGEST = 'claude-opus-5-5';
 
 /**
  * The model a role starts on when the team names none: the designer's eye Sonnet lacked (a run's UI came back
- * mediocre); the tester's — its review is the task's approval, and with its tests what stops a bug or a regression
- * getting through; the scout's — what a spike finds is what every task after it is made of (Carlos). Any other role,
+ * mediocre); the tester's — its review is the task's approval, what stops a bug or a regression getting through (the
+ * tests themselves are a developer's work, on Sonnet); the scout's — what a spike finds is what every task after it is made of (Carlos). Any other role,
  * the harness's own; the file's model, when it says one, always wins.
  */
 export const ROLE_MODELS: Readonly<Partial<Record<string, string>>> = {
@@ -270,7 +270,7 @@ export const ROLES = {
     'Designs (tasks of its own), and reviews the UI/UX of the tasks of other roles before the tester, as a designer.',
   reviewer: 'Reviews as a task of its own: an accessibility pass, a code audit — and fixes what it finds.',
   tester:
-    'QA: reviews every task in review — what it was asked, its checks, how it behaves, its code; its approval is the task’s — and escalates to the lead what it cannot decide. Reviews come first; then it writes the tests of each developer task: <task>-tests, from what the task was asked, never bent to pass. With no tester, the lead reviews every task.',
+    'QA: reviews every task in review — what it was asked, its checks, how it behaves, its code, its tests; its approval is the task’s — and escalates to the lead what it cannot decide. With one in the team, each developer task gets a task of its tests (<task>-tests), written by a developer that did not write it — the tester only when no developer may. With no tester, the lead reviews every task.',
   scout:
     'Finds out: the run’s scope and every spike — reads, measures, compares — and hands the lead what it found and the tasks it makes, which the lead approves. A question an agent blocks on is its to answer too.',
   writer: 'Writes the words: the copy of a page, the docs, the help.'
@@ -516,7 +516,7 @@ export const TEAM_ABOUT: Record<string, unknown> = {
   roles: { ...ROLES, '<any other>': 'A role of your own: a task names it, an agent takes it.' },
   options:
     '"designReview": how closely a designer reviews another task\'s UI — "light" (its pages at 1440 and 390, the default scheme, nothing it does not touch), "standard" (both schemes and widths, its sections against the reference; the default), "high" (every page that reads its files, against the run before it too). A review costs what it looks at. "startGraceMinutes": how long an agent just started may say nothing before the tasks it holds read \'no signal\' — 3 when not said. "launch": the harness (claude, codex, opencode) the CLI starts the agents in by itself when the run asks for one — left out, the lead starts them. "freshContextAt": the context, in tokens, past which an agent of "session": "context" is started again fresh — 250000 when not said.',
-  more: 'It starts small — every agent spends tokens, and only one developer starts with the run: a second developer, a designer who reviews the UI of every other task, a tester who reviews every task and writes the tests, and a scout who finds out what the spikes ask — each started when work waits for it. The developers on Sonnet, the others and the lead on Opus. Grow it when a job asks — you decide: more developers (plitzi run team set dev --count 3 --min 2), a second tester when reviews queue (plitzi run team set test --count 2), a writer.'
+  more: 'It starts small — every agent spends tokens, and only one developer starts with the run: a second developer, a designer who reviews the UI of every other task, a tester who reviews every task (its tests written by a developer that did not write it), and a scout who finds out what the spikes ask — each started when work waits for it. The developers on Sonnet, the others and the lead on Opus. Grow it when a job asks — you decide: more developers (plitzi run team set dev --count 3 --min 2), a second tester when reviews queue (plitzi run team set test --count 2), a writer.'
 };
 
 /**
@@ -583,7 +583,7 @@ export const ensureTeam = async (
 
   return {
     team,
-    created: `This project had no team: ${TEAM_FILE} written with what the plan needs — ${team.agents.map(teamAgentText).join('; ')} — each on the model it names, the harness's own where none, and what each field and role means. Change it with plitzi run team set <name> --roles … --count … --model … (a lead model, a designer who reviews the UI, a tester who writes the tests)`
+    created: `This project had no team: ${TEAM_FILE} written with what the plan needs — ${team.agents.map(teamAgentText).join('; ')} — each on the model it names, the harness's own where none, and what each field and role means. Change it with plitzi run team set <name> --roles … --count … --model … (a lead model, a designer who reviews the UI, a tester who reviews every task)`
   };
 };
 

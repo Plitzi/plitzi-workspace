@@ -13,10 +13,10 @@ The team is `.plitzi/team.json`: each agent's name, roles, count, model. Tasks n
 "designer"`; `developer` when left out); `plitzi task next --agent design-1` waits
 (8 min, `--timeout`) for the next one and takes it — first a task you hold that can go on, or another's sent back
 while its agent is at a task (3 min on, with its review's asks); again until it says you can stop. Started at a level, say it (`--quality high`, as `run plan` gave your command): you are handed tasks of it or below.
-**A designer** reviews UI/UX before the tester: [runs-designer.md](runs-designer.md). **A tester** reviews every task — its QA ([runs-review.md](runs-review.md)) — first; then `<task>-tests` after each developer task: tests of
-what its acceptance asked, both sides of each condition (a page's in `visual/<page>.spec.ts`, a module's beside it,
-`node --test`). A test the work fails is told to the lead (`task tell`), never bent. While every tester is at work, a
-developer is handed `-tests` cards, and their review when no tester may: never of a task it worked.
+**A designer** reviews UI/UX before the tester: [runs-designer.md](runs-designer.md). **A tester** reviews every task — its QA ([runs-review.md](runs-review.md)). With one, each developer task gets `<task>-tests`,
+a developer's that did not write it (the tester's when none may): tests of what its acceptance asked, both sides of each
+condition (a page's in `visual/<page>.spec.ts`, a module's beside it). A test the work fails is told to the lead (`task
+tell`), never bent. A review no tester may take is a developer's that worked neither it nor what it tests.
 
 The lead's half — plan, open, close, stack — is [runs-lead.md](runs-lead.md).
 

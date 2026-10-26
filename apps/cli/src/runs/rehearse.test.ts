@@ -55,6 +55,26 @@ describe('a plan rehearsed before any agent starts', () => {
     expect(rehearsalText('es-launch', played, 5)).toContain('1 of them by a developer');
   });
 
+  // Never by its author: one developer that wrote what they test leaves them to the tester.
+  it('plays a task of tests by one that did not write what it tests — the tester when no developer may', async () => {
+    const plan = benchPlan();
+    const home = plan.tasks.find(task => task.id === 't-home') ?? plan.tasks[0];
+    plan.tasks = [
+      home,
+      { ...home, id: 't-home-tests', files: ['src/lib/homeChecks.ts'], dependsOn: ['t-home'], testsOf: ['t-home'] }
+    ];
+    const played = await rehearsed(plan, {
+      agents: 2,
+      roles: { developer: 1, tester: 1 },
+      reviewMinutes: 5,
+      reviewers: { by: 'testers', count: 1 }
+    });
+
+    const by = new Map(played.scheduled.map(task => [task.task, task.agent]));
+    expect(by.get('t-home')).not.toBe(by.get('t-home-tests'));
+    expect(by.get('t-home-tests')).toMatch(/^tester-/);
+  });
+
   it('plays it as task next would hand it out, the lead reviewing one at a time, what waits ready once approved', async () => {
     const played = await rehearsed(benchPlan(), { agents: 2, reviewMinutes: 5 });
 

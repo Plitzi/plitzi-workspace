@@ -4,18 +4,37 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { DEVELOPER, TESTER } from './team';
+import { workedBy } from './worked';
 
-import type { Acceptance, PlannedTask, RunPlan } from './model';
+import type { Acceptance, PlannedTask, RunPlan, RunTask } from './model';
+import type { TaskView } from './taskStore';
 
 /**
- * A tester in the team: every developer task gets a task of its tests, after it — `<id>-tests`, a tester's —
- * so what a developer wrote is held by tests somebody else wrote from its acceptance, not from its code. Its files are
+ * A tester in the team: every developer task gets a task of its tests, after it — `<id>-tests`, a developer's that
+ * worked none of what it tests (`testsOf`), a tester's when no developer may — so what a developer wrote is held by tests
+ * somebody else wrote from its acceptance, not from its code; the tester reviews them, its QA (Carlos: the tester's Opus
+ * is for judgment, the tests are a developer's work). Its files are
  * where this project's tests are: a page's in `visual/<page>.spec.ts` (Playwright, against the copy served), a module's
  * beside it (`<file>.test.ts`, `node --test`). A task that says `tests: false`, writes nothing a test is written for, or
  * that a tester's task of the plan already waits for, gets none; two whose tests are one file share one task of them.
  */
 
 export const TESTS_SUFFIX = '-tests';
+
+/**
+ * Whether `agent` may write a task: one of tests, only if it worked none of the tasks it tests — written from what was
+ * asked, by one that did not write the work. Any other, anyone of its role.
+ */
+export const writesTests = (task: Pick<RunTask, 'testsOf'>, agent: string, views: readonly TaskView[]): boolean =>
+  task.testsOf === undefined ||
+  !views.some(view => task.testsOf?.includes(view.task.id) === true && workedBy(view, agent));
+
+/** The developers that may write a task of tests: none, and it is a tester's (`spareTests`). */
+export const testWriters = (
+  task: Pick<RunTask, 'testsOf'>,
+  views: readonly TaskView[],
+  developers: readonly string[]
+): string[] => developers.filter(developer => writesTests(task, developer, views));
 
 /** What the project's tests run with: Playwright for its pages' — when it has it — against the copy its start serves. */
 export interface TestSetup {
@@ -122,14 +141,20 @@ export const withTestTasks = (
   const untested: { task: string; why: string }[] = [];
 
   const held = new Set(plan.tasks.flatMap(task => task.files));
+  // What a task of the plan already tests: its `testsOf`, or what a tester's task of it waits for.
   const tested = new Set(
-    plan.tasks.filter(task => (task.role ?? DEVELOPER) === TESTER).flatMap(task => task.dependsOn)
+    plan.tasks.flatMap(task => task.testsOf ?? ((task.role ?? DEVELOPER) === TESTER ? task.dependsOn : []))
   );
   const ids = new Set(plan.tasks.map(task => task.id));
   // By test file, the developer tasks whose tests it holds: one task of tests a group of them.
   const groups: { of: PlannedTask[]; files: string[] }[] = [];
   for (const task of plan.tasks) {
-    if ((task.role ?? DEVELOPER) !== DEVELOPER || task.tests === false || tested.has(task.id)) {
+    if (
+      (task.role ?? DEVELOPER) !== DEVELOPER ||
+      task.testsOf !== undefined ||
+      task.tests === false ||
+      tested.has(task.id)
+    ) {
       continue;
     }
 
@@ -162,9 +187,10 @@ export const withTestTasks = (
     return {
       id,
       title: `Tests for ${named}: what ${of.length > 1 ? 'they do' : 'it does'}, held by tests`,
-      role: TESTER,
+      role: DEVELOPER,
       files,
       dependsOn: of.map(each => each.id),
+      testsOf: of.map(each => each.id),
       priority: first.priority,
       estimateMinutes: Math.max(10, Math.round(of.reduce((sum, each) => sum + each.estimateMinutes, 0) / 2)),
       ...(first.milestone ? { milestone: first.milestone } : {}),

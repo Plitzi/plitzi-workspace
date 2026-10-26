@@ -121,9 +121,15 @@ export interface PlannedTask {
   quality?: Quality;
   /**
    * `false`: no tests of its own, with a tester in the team — the CLI gives every developer task one that writes its
-   * tests (`<id>-tests`, after it) unless it says this, or the plan has a tester's task that waits for it already.
+   * tests (`<id>-tests`, after it) unless it says this, or the plan has a task of its tests already (`testsOf`).
    */
   tests?: false;
+  /**
+   * A task of tests: the tasks whose tests it writes, from what they were asked — each in its `dependsOn`. Never written
+   * by an agent that worked one of them: a developer that did not (`writesTests`), else a tester. The CLI writes it on
+   * the tests it adds (`<id>-tests`).
+   */
+  testsOf?: string[];
   /** A spike's (no files): what to find out — a lead's research, whose result is the run's next tasks (`spike.ts`). */
   spike?: string;
   /** A task to build: what the spike that made it found for it — in its brief from the start. */
@@ -532,6 +538,7 @@ export const isPlannedTask = (value: unknown): value is PlannedTask =>
   optional(value.touches, isStrings) &&
   optional(value.closes, isStrings) &&
   optional(value.tests, flag => flag === false) &&
+  optional(value.testsOf, isStrings) &&
   optional(value.spike, isString) &&
   optional(value.findings, isString);
 

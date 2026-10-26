@@ -250,7 +250,8 @@ export const checkPlan = async (
     );
   }
   const notices: string[] = [];
-  // With a tester in the team, each developer task's tests are a task of their own, after it: checked as the lead's.
+  // With a tester in the team, each developer task's tests are a task of their own, after it: a developer's that did not
+  // write it, reviewed by the tester.
   const { plan, added, untested } = withTestTasks(
     written,
     teamTakes(team, TESTER)
@@ -262,7 +263,7 @@ export const checkPlan = async (
   );
   if (added.length > 0) {
     notices.push(
-      `A tester writes the tests of the developer tasks: ${added.join(', ')} added, each after the task it tests (a task that says "tests": false gets none)`
+      `The tests of the developer tasks, each a developer's that did not write it (the tester's when none may), reviewed by the tester: ${added.join(', ')} added, each after the task it tests (a task that says "tests": false gets none)`
     );
   }
 
@@ -348,6 +349,14 @@ export const checkPlan = async (
       } else if (!ids.has(dependency)) {
         problems.push(`Task "${task.id}" depends on "${dependency}", which is not in the plan`);
       }
+    }
+
+    // Its tests are written of what is done: each task it tests is one it waits for.
+    const untracked = (task.testsOf ?? []).filter(id => !task.dependsOn.includes(id));
+    if (untracked.length > 0) {
+      problems.push(
+        `Task "${task.id}" writes the tests of ${untracked.join(', ')}, which it does not wait for: add ${untracked.length === 1 ? 'it' : 'them'} to its dependsOn`
+      );
     }
   }
 

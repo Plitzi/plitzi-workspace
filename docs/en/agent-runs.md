@@ -508,7 +508,7 @@ said). For that long after its launch, and until it stops, the tasks it holds do
 running. Its harness is loading and its skills are being read. Without it, every agent started again after a run's
 crash read "no signal" and "not running" at once, its last word from before, and `run watch` woke the lead for nothing.
 
-## The tester's tasks (`tests.ts`)
+## The tester's reviews, and the tasks of tests (`tests.ts`)
 
 A tester reviews first. `task next` hands it every task in review that waits for no designer (`leadReviewFor`,
 `testerReviews`), a designer's task included. That review is the task's QA: what it was asked, its checks, how it
@@ -519,22 +519,26 @@ life (`review-progress` in the log), not refused. What a tester cannot decide it
 woken for no other review. When reviews queue, the keeper starts another tester (`agentsNeeded`). A team with no tester
 leaves every review to the lead.
 
-A tester in the team gives every developer task a task of its tests, `<id>-tests`, a tester's, after it: tests written
-from the task's acceptance, not its code, by an agent that did not write it. Its files are where the project's tests are
+A tester in the team gives every developer task a task of its tests, `<id>-tests`, after it: tests written from the
+task's acceptance, not its code, by an agent that did not write it. It is a developer's (`role: developer`,
+`testsOf: [<id>]`): the tester's Opus goes to its reviews, the tests are developer work on Sonnet (Carlos). Never
+written by an agent that worked what it tests (`writesTests`: `task next` offers it to none of them, `task take` and
+`task reassign --to` refuse it); with no developer that may — a team of one — it is the tester's (`spareTests`). The
+keeper starts a developer for one only among those that may write it (`agentsNeeded`), and `run rehearse` plays it the
+same. Its files are where the project's tests are
 — a page's spec in `visual/<page>.spec.ts` when the project has Playwright, a module's test beside it (`<file>.test.ts`,
 `node --test`) — and its acceptance runs them against the copy served. A check that names `$PLITZI_URL` or `$PLITZI_PORT`, or runs
 `playwright test`, is run with the copy served: the two written into the check (any shell, `cmd.exe` included) and
 `PORT` set, which the project's Playwright config reads. The `plitzi` a check calls is this CLI (a `.cmd` too, on
 Windows), and the server is stopped as a tree there (`taskkill /T`), a process group elsewhere — a preview's too (`processes.ts`). Two developer tasks whose tests are one file share one task of them; one that says `"tests":
-false`, writes nothing a test is written for, or that a tester's task of the plan already waits for, gets none. A test
+false`, writes nothing a test is written for, or that a task of the plan already tests (`testsOf`), gets none. A test
 the work fails is told to the lead, not bent: `complete` with `--known-failure` says why and which task fixes it. A
 module's tests are checked by every test of its folder (`node --test '<dir>/**/*.test.ts'`): a run's test-1 held a
 task's acceptance in a third file of the folder, which a check naming the task's own files never ran.
 
-**Tests cards as a spare** (`tasks/spareTests.ts`): while every tester of the team is at a task of its own, a developer
-is offered and may take a `-tests` card — after its own role's cards — never one of a task it took: tests are written by
-someone who did not write the work. A run's one tester was at work 104 of the run's 152 minutes, its cards alone the
-last 45, three developers waiting.
+A task of tests is reviewed by the tester, as any developer task. A review no tester may take — a tester's own, when it
+wrote tests no developer could — is a developer's that worked neither it nor what it tests (`spareReviewers`); the
+lead's only when nobody else may, as it would hold the run (`leadReviews`).
 
 ## What the data never shows
 
@@ -542,7 +546,7 @@ A case the project's data never reaches — an age no dog in it has, an empty li
 nobody: the designer's look, the tester's page specs and the lead's `task look` all show the data as it is. Finding it
 is the lead's, when it writes the tasks (the reason the lead is the strongest model): the plan says how such a case
 is seen — a row in the data when the demo should show it, or a unit test of the module that decides it, in whose task.
-The designer says one it could not look at (`--approve --note`); the tester's derived task holds one with a unit test
+The designer says one it could not look at (`--approve --note`); the derived task of tests holds one with a unit test
 and tells the lead; and the lead, reviewing, tests the module's edges itself or sends the task back for the test.
 
 ## The designer's review (`design.ts`)

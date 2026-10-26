@@ -1,8 +1,8 @@
 # Reviewing a task of a run
 
 How a task in review is judged — by a tester, its QA and its approval the task's; by the lead only when the team has
-no tester, what is escalated to it, or what nobody else may take. One no tester may take (a tester's own tests) is a
-developer's that worked neither it nor what it tests. A designer's look at the UI first is [runs-designer.md](runs-designer.md); the
+no tester, what is escalated to it, or what nobody else may take. One no tester may take (a tester's own) is a developer's
+that worked neither it nor what it tests. A task of tests is reviewed as tests: of what was asked, both sides. A designer's look at the UI first is [runs-designer.md](runs-designer.md); the
 lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
 
 - **Against the inventory, not only the picture:** every section and piece the task's acceptance names is there, as the

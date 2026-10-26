@@ -13,11 +13,14 @@ import { readTeam, startedAgents } from '../team';
 import { at, findTask, roleOf } from './common';
 import { grantWaiters } from './locks';
 import { integrateWhenReady, settleRequests } from './requests';
+import { spareTests } from './spareTests';
 import { takeTask } from './take';
+import { writesTests } from '../tests';
 
 import type { TakenTask } from './take';
 import type { ApprovedFile, RunTask } from '../model';
-import type { RunContext } from '../run';
+import type { LoadedRun, RunContext } from '../run';
+import type { TaskView } from '../taskStore';
 
 /**
  * A task taken back: reassigned — cut, for another to take — or reverted, its work taken out of the run.
@@ -61,7 +64,16 @@ export const reassignTask = async (
 
   // Whom it goes to is checked before anything is cut: a refusal leaves the task with its agent.
   const lead = asked.to === LEAD || asked.to === ctx.agent ? ctx.agent : undefined;
-  const to = asked.to !== undefined && lead === undefined ? await handable(ctx, asked.to, task) : undefined;
+  const to =
+    asked.to !== undefined && lead === undefined
+      ? await handable(
+          ctx,
+          loaded,
+          asked.to,
+          task,
+          await Promise.all(loaded.tasks.map(each => viewTask(loaded.paths, each)))
+        )
+      : undefined;
 
   // What it held by turns is let go with it — handed to whoever waits, its requests merged — not left until its locks
   // run out half an hour after its agent went quiet.
@@ -139,7 +151,13 @@ export const reassignTask = async (
 };
 
 /** The agent a task may be handed to: one of the team, of the task's role — refused, naming who may, otherwise. */
-const handable = async (ctx: RunContext, agent: string, task: RunTask): Promise<string> => {
+const handable = async (
+  ctx: RunContext,
+  loaded: LoadedRun,
+  agent: string,
+  task: RunTask,
+  views: readonly TaskView[]
+): Promise<string> => {
   const team = await readTeam(ctx.root).catch(() => undefined);
   const members = team ? startedAgents(team) : [];
   const member = members.find(each => each.agent === agent);
@@ -152,7 +170,16 @@ const handable = async (ctx: RunContext, agent: string, task: RunTask): Promise<
     );
   }
 
-  if (!member.roles.includes(role)) {
+  // The tests of what it worked are another's, as `task take` holds.
+  if (!writesTests(task, agent, views)) {
+    throw new RunRefusal(
+      'invalid',
+      `${agent} worked what ${task.id} tests (${(task.testsOf ?? []).join(', ')}): hand it to one that did not write the work`,
+      { task: task.id }
+    );
+  }
+
+  if (!member.roles.includes(role) && !(await spareTests(loaded, views, agent))(task)) {
     throw new RunRefusal(
       'invalid',
       `${agent} is a ${member.roles.join(', ')}, and ${task.id} a ${role}'s: hand it to ${

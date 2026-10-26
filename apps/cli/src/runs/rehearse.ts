@@ -1,7 +1,7 @@
 import { inPageFolder } from './ownership';
 import { isResearch } from './spike';
 import { roleOf } from './tasks';
-import { TESTER } from './team';
+import { DEVELOPER, TESTER } from './team';
 import { byUrgency, chainMinutes } from './urgency';
 
 import type { RunTask } from './model';
@@ -144,6 +144,13 @@ const play = (tasks: readonly RunTask[], options: RehearsalOptions): Played => {
   const queue: RehearsedTask[] = [];
   let reviewing: RehearsedTask[] = [];
   const researching: RehearsedTask[] = [];
+  // A task of tests: never by an agent that worked what it tests; a tester's when no developer may (`spareTests`).
+  const writes = (agent: (typeof team)[number], task: RunTask): boolean =>
+    !(task.testsOf ?? []).some(id => agent.tasks.includes(id));
+  const testerWrites = (agent: (typeof team)[number], task: RunTask): boolean =>
+    agent.role === TESTER &&
+    task.testsOf !== undefined &&
+    !team.some(each => (each.role === ANY || each.role === DEVELOPER) && writes(each, task));
   const staffed = (task: RunTask): boolean => team.some(agent => agent.role === ANY || agent.role === roleOf(task));
   const unstaffed = tasks.filter(task => !staffed(task)).map(task => task.id);
   let reviewBusy = 0;
@@ -215,7 +222,10 @@ const play = (tasks: readonly RunTask[], options: RehearsalOptions): Played => {
       for (const agent of team.filter(each => each.freeAt <= now)) {
         const next = tasks
           .filter(task => !taken.has(task.id) && (readyAt.get(task.id) ?? Infinity) <= now)
-          .filter(task => agent.role === ANY || agent.role === roleOf(task))
+          .filter(
+            task =>
+              (agent.role === ANY || agent.role === roleOf(task) || testerWrites(agent, task)) && writes(agent, task)
+          )
           .sort(order)
           .at(0);
         if (!next) {

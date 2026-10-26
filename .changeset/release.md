@@ -85,6 +85,11 @@ authoring and the elements learnt from the runs.
     take — every task when the team has no tester — and `run watch` wakes it for nothing else. A review no tester may take
     (a lone tester's own `-tests`) is a developer's that worked neither it nor what it tests, handed by `task next`
     before a task of its own (the keeper starts one for it); the lead's only when none may, as it would hold the run.
+  - **The tests are a developer's, the tester only reviews.** With a tester in the team each developer task still gets
+    `<id>-tests`, now a developer's task (`testsOf: [<id>]`, a new plan field): written by a developer that did not
+    write what it tests — `task next` offers it to no other, `task take` and `task reassign --to` refuse its author,
+    the keeper starts one that may, `run rehearse` plays it so — and the tester's only when no developer may (a team of
+    one). The tester's Opus goes to its QA; the tests are developer work on Sonnet.
     A tester never approves past a question the task asked the lead: it escalates it. Every task approved, the lead's
     `task next` says its close in order (look, report, finish) and the lead never "stops".
     Whoever reviews a task is handed what the team told the lead of it (`task tell`, `✉`). A UI review taken is let go

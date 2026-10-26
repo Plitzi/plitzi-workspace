@@ -3,8 +3,10 @@ import { noTesterFor, spareReviewers, testerReviews } from './leads';
 import { isResearch } from './spike';
 import { DESIGNER, DEVELOPER, SCOUT, TESTER } from './team';
 import { TASKS_PER_AGENT } from './teamNotices';
+import { testWriters, writesTests } from './tests';
 import { isWorked } from './worked';
 
+import type { RunTask } from './model';
 import type { TaskView } from './taskStore';
 import type { StartedAgent } from './team';
 import type { Attention } from './view';
@@ -141,6 +143,11 @@ export const agentsNeeded = (
   };
   // A review no tester may take, untaken, and none of the developers that may review it running and free: one of them is
   // started for it — the lead reviews it only when nobody else may (`leadReviews`).
+  // A task of tests is a developer's that worked none of what it tests; a tester's when no developer may.
+  const roleFor = (task: RunTask): string =>
+    task.testsOf !== undefined && testWriters(task, views, reviewTeam.developers).length === 0
+      ? TESTER
+      : (task.role ?? DEVELOPER);
   const spareWaiting = views.flatMap(view => {
     const spare =
       view.state.status === 'in-review' &&
@@ -216,10 +223,13 @@ export const agentsNeeded = (
             !busy.has(each.agent) &&
             each.agent !== except
         );
-      const ready = views
+      // Ready for the role — a task of tests a tester's when no developer may write it (`spareTests`) — and taken by
+      // none running and free: one that worked what a task of tests tests is no agent for it.
+      const readyOf = views
         .filter(view => !view.owner && view.state.status === 'ready')
-        .filter(view => (view.task.role ?? 'developer') === role)
-        .map(view => view.task.id);
+        .filter(view => roleFor(view.task) === role)
+        .filter(view => !freeOf().some(each => writesTests(view.task, each.agent, views)));
+      const ready = readyOf.map(view => view.task.id);
       const reviews =
         role === DESIGNER
           ? views
@@ -242,8 +252,8 @@ export const agentsNeeded = (
                 : [];
       // For those reviews alone, only a developer that may give them: one that worked the task is refused it.
       const mayReview = new Set(spareWaiting.flatMap(each => each.spare));
-      const forReviewsAlone = role === DEVELOPER && reviews.length > 0 && !(freeOf().length === 0 && ready.length > 0);
-      const waiting = [...(freeOf().length === 0 ? ready : []), ...reviews];
+      const forReviewsAlone = role === DEVELOPER && reviews.length > 0 && ready.length === 0;
+      const waiting = [...ready, ...reviews];
       // The team's order: one that starts with the run first, then those on demand — never dev-2 while dev-1 is not running.
       // With one of the role running, only an agent on demand is asked for: the rest are the lead's to start at the open.
       const ofRole = (each: StartedAgent) =>
@@ -260,9 +270,12 @@ export const agentsNeeded = (
         );
       // For those reviews, any that may give them — one that designs too, which `ofRole` leaves to the designers.
       const reviewer = (each: StartedAgent): boolean => mayReview.has(each.agent);
+      // For the tasks waiting, one that may take one of them: a task of tests, never its author.
+      const takesOne = (each: StartedAgent): boolean =>
+        ofRole(each) && (readyOf.length === 0 || readyOf.some(view => writesTests(view.task, each.agent, views)));
       const next = forReviewsAlone
         ? startable(reviewer)
-        : (startable(ofRole) ?? (role === DEVELOPER && reviews.length > 0 ? startable(reviewer) : undefined));
+        : (startable(takesOne) ?? (role === DEVELOPER && reviews.length > 0 ? startable(reviewer) : undefined));
       // One that starts with the run is being started as the run opens: asked for only once it had time to join —
       // A run's watch said "start dev-1" the moment the lead had started it.
       if (waiting.length === 0 || !next || (!next.onDemand && run.openFor < startingFor)) {
@@ -292,10 +305,13 @@ export const agentsNeeded = (
           })
       ).length;
       // A UI review no designer running may make — its own author's — waits for another whatever the count.
+      // …unless no agent running may take what waits: the tests of its own work are never its.
+      const runningMay = readyOf.some(view => runningOfRole.some(each => writesTests(view.task, each.agent, views)));
       if (
         next.onDemand &&
         anyRunning &&
         reviews.length === 0 &&
+        runningMay &&
         (waiting.length + inHand + coming) / (runningOfRole.length + 1) < TASKS_PER_AGENT
       ) {
         return [];
