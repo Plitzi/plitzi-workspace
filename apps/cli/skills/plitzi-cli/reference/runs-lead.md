@@ -97,9 +97,9 @@ task message t-home "…" --reply-to m3`; `all` or `@dev-1` in place of the task
    the plan in the run's `inputs/` (`run open` says which; the run's own `plan.json` is what amend compares it to,
    never edited) and `plitzi run amend` — acceptance, priorities, findings, notes, the inventory, what a task nobody took waits for (`dependsOn`), one
    removed; more work is a stage, `plitzi
-run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — chase
-   or decide a review that drags, settle a last cosmetic round yourself, amend away a dependency it does not need.
-   **Nothing waits for you?** Wait (`run watch`).
+run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — a task past twice its estimate wakes you: ask where it
+   stands (`task message @<agent> --standing`) and decide on the answer; chase a review that drags.
+   Nothing waits for you? Wait.
 6. **Decide what reaches you**, reading only that: an escalation's `task show`, a spike's proposal.
 7. **A change after approval** puts the finish into
    **reconciliation**: `plitzi run resolve <run> <file> --take …`, then `plitzi run resolve <run>` (no file) goes on.
@@ -126,8 +126,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
   of the task's: `run extend <run> <stage.json> --dry-run --lines` runs each line of a stage once and says what it is —
   what the task changes, a part it builds, or a line that cannot pass.
 - **One look, one task**; its files are where its elements are built, and what reads what it changes (a fake's tests).
-- **A question first**: it holds an agent — answer before your own work. `run watch` in the harness's background
-  (never `&`), one at a time.
+- **A question first**: it holds an agent. `run watch` in the harness's background (never `&`), one at a time.
 - **Say what is so, read from its source** (a copied site's CSS, `task show`, the run's approved version), never from a
   copy, a class name or memory; never answer one way and tell another — a file a task holds is no one else's.
 - **A value is measured, never typed**: scoping, `plitzi page measure <path> <elements…> --width 390,1440` (`--hover`,

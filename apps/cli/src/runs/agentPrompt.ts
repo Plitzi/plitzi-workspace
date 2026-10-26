@@ -54,6 +54,8 @@ const rules = (cli: string): string[] => [
   // A heredoc that never closed hung on stdin, and `pkill -f "cat"` to free it took the machine down.
   `- Stop a server with \`${cli} server stop --port <port>\` in the folder that started it — it stops that folder's alone; a command that hangs is your harness's to stop. Never \`pkill\`, \`killall\` nor a kill by name or pattern: they reach every process on the machine. Write files with your edit tools, never a heredoc through the shell.`,
   '- A wait that ends is not your end: run `task next` again until it says "You can stop".',
+  // Carlos: a task that takes long wakes the lead, which asks; it decides on the answer — go on, change course, be helped.
+  '- When the lead asks where you stand (its message says so), answer at once, whole: `PLITZI task tell --standing --fraction <0-1> --eta <minutes left> --done "…" --left "…" [--blocked "what holds you"] [--about <task>, holding none]` — then go on; what it decides comes with your next command.',
   // Two agents read the bundle's types, every command's help and a site's HTML to learn what Plitzi had.
   '- Whether Plitzi has a way — a field, a step, a state, a command: `PLITZI explain "<words>"`, then `PLITZI explain <name>`; never the packages\' types nor a site\'s HTML fetched and searched. Nothing found that should be: `run notice --plitzi`.',
   '- Plitzi itself in your way — a refusal you think wrong, a command that cannot do what you need, a doc that misled you: say it as it happens, `PLITZI run notice --plitzi "…"` (the run\'s feedback to Plitzi carries it), and go on.',

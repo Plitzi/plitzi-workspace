@@ -222,19 +222,24 @@ export const launchAgent = async (
   ctx: RunContext,
   runId: string,
   agent: string,
-  harness: Harness
+  harness: Harness,
+  /** Started because the run asked for it — by its keeper, or a lead's watch — not by a command of the lead's. */
+  asked = false
 ): Promise<AgentLaunched | AgentRunning> => {
   const scratch = agentScratch(runPaths(ctx.root, runId), agent);
   await fs.mkdir(scratch, { recursive: true });
 
-  return withLock(path.join(scratch, 'launch.lock'), () => startHeld(ctx, runId, agent, harness), { now: ctx.now });
+  return withLock(path.join(scratch, 'launch.lock'), () => startHeld(ctx, runId, agent, harness, asked), {
+    now: ctx.now
+  });
 };
 
 const startHeld = async (
   ctx: RunContext,
   runId: string,
   agent: string,
-  harness: Harness
+  harness: Harness,
+  asked: boolean
 ): Promise<AgentLaunched | AgentRunning> => {
   const { loaded, started, scratch, cli, prompt, promptFile, told } = await prepare(ctx, runId, agent);
   const { model } = told;
@@ -288,12 +293,14 @@ const startHeld = async (
     log,
     ...(harness === 'claude' ? { session: session.id } : {})
   });
-  // The lead's work as much as a review: the board says who started whom, and the lead is seen at it.
+  // The board says who started whom. Started by the lead's own command, the lead is seen at it; asked by the run — its
+  // keeper's start — it is no work of the lead's (a run's lead read "working" with nobody leading it).
   await logRun(ctx, loaded.paths, {
     action: 'launch',
     agent,
     harness,
-    ...(session.resume ? { resumed: true } : {})
+    ...(session.resume ? { resumed: true } : {}),
+    ...(asked ? { asked: true } : {})
   });
 
   return {

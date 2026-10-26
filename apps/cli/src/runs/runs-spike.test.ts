@@ -234,9 +234,9 @@ describe('a spike: finding out, in the run, a lead’s', () => {
       question: 'what the original about page has that ours lacks'
     });
     expect((await takeNext(bench.agent('scout-2'), 'es-launch', 'scout')).next.spike?.task.id).toBe('s-words');
-    // In the flow and the board's task row, with its scout at it — never "free": no developer takes a spike.
-    const spikes = flowStages((await viewRun(lead(), 'es-launch')).tasks).find(stage => stage.key === 'spike');
-    expect(spikes?.tasks.map(task => `${task.id} ${spikes.who(task)}`)).toContain('s-survey scout-1');
+    // In the flow at work with its scout at it, as a task being written is — never "free": no developer takes a spike.
+    const work = flowStages((await viewRun(lead(), 'es-launch')).tasks).find(stage => stage.key === 'work');
+    expect(work?.tasks.map(task => `${task.id} ${work.who(task)}`)).toContain('s-survey scout-1');
     // On the board at its spike, never idle.
     expect((await monitorRun(lead(), 'es-launch')).agents.find(agent => agent.agent === 'scout-1')).toMatchObject({
       status: 'working',

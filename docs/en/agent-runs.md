@@ -777,8 +777,9 @@ to answer, as every block is — a scout finds out the run's spikes alone (Carlo
 (`unblockTask`). When the answer changes the work, the lead stacks the tasks it makes. A scout with no spike left is
 told it can stop (`task next`); the keeper starts it again for a spike a stage brings, or one the lead sends back.
 
-`run rehearse` plays research alone without a review. The monitor gives spikes a column of their own (`◇ spike`) once
-the run has one, with the lead at it, and the dev tools' Run tab a group (Finding out).
+`run rehearse` plays research alone without a review. The monitor puts a spike someone finds out **at work**, named,
+and keeps a column (`◇ spike`) for those nobody took or whose result waits for the lead; the dev tools' Run tab a group
+(Finding out).
 
 **An answer is taken up** (`handOver.ts`): a question the lead answered holds its task until its agent has the answer —
 at its next command, whatever it is — and that is what puts it at work again, said in the activity ("goes on with
@@ -788,6 +789,14 @@ t-fights — m99 answered"); until then the board says it is answered, not askin
 one its harness stopped. Each `task next`, and each turn of its wait, marks the agent present in its scratch; an
 agent between tasks with no mark for `PRESENCE_STALE_MS` shows in the monitor as `no-signal`, with the command that
 starts it again.
+
+**A task that takes long** (`view.ts`, `talk.ts`): any task at work — a spike its scout finds out too — past twice its
+estimate wakes the lead (`long-task`, again at each estimate more), with its agent's last word and how to ask:
+`task message @<agent> --standing`. The agent answers whole — `task tell --standing --fraction <0-1> --eta <minutes>
+--done "…" --left "…" [--blocked "…"]` (`--about <task>` holding none), refused when a part is missing — as the
+answer to that asking, its fraction kept as the task's progress. The standing wakes the lead with what it may do: let
+it go on, tell it what to change, lift what holds it, narrow or split the task, or take it back (Carlos: the lead asks,
+and decides on the answer).
 
 ## A task's life (`tasks/`)
 

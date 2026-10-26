@@ -22,7 +22,7 @@ import { followWait } from '../../runs/tasks';
 
 import type { RunCommandOptions } from './shell';
 import type { BacklogItem } from '../../runs/backlog';
-import type { Message } from '../../runs/messages';
+import type { Message, Standing } from '../../runs/messages';
 
 /**
  * Tasks and the lead talking: proposals and their answers, questions, tells, messages and the inbox.
@@ -158,18 +158,50 @@ export const taskAsk = (
           : `Asked (${asked.question.id}): the answer comes with your next heartbeat, progress or completion — or stay for it with --follow.`
   );
 
-export const taskTell = (text: string, options: RunCommandOptions & { about?: string }): Promise<void> =>
+export interface TellOptions extends RunCommandOptions {
+  about?: string;
+  standing?: boolean;
+  fraction?: number;
+  eta?: number;
+  done?: string;
+  left?: string;
+  blocked?: string;
+}
+
+/** The standing said with `task tell --standing`: what is missing of it is the run's to refuse, named whole. */
+const standingOf = (options: TellOptions): Standing | undefined =>
+  options.standing === true
+    ? {
+        fraction: options.fraction ?? Number.NaN,
+        etaMinutes: options.eta ?? Number.NaN,
+        done: options.done ?? '',
+        left: options.left ?? '',
+        ...(options.blocked ? { blocked: options.blocked } : {})
+      }
+    : undefined;
+
+export const taskTell = (text: string, options: TellOptions): Promise<void> =>
   act(
     options,
     async ctx => {
       const runId = await runOf(ctx, options);
+      const standing = standingOf(options);
+      if (standing === undefined && text.trim() === '') {
+        throw new RunRefusal(
+          'invalid',
+          'Say what to tell the lead: plitzi task tell "…" — or where your task stands: plitzi task tell --standing …'
+        );
+      }
 
       // With no task in hand, about one: a reviewer's finding, said by its name.
       return ctx.token === undefined && options.about !== undefined
-        ? tellLeadAbout(ctx, runId, options.about, text)
-        : tellLead(ctx, runId, taskOf(ctx, options.about), text);
+        ? tellLeadAbout(ctx, runId, options.about, text, standing)
+        : tellLead(ctx, runId, taskOf(ctx, options.about), text, standing);
     },
-    told => `Told the lead (${told.id}): no answer is waited for — task ask when you need one.`
+    told =>
+      told.standing
+        ? `Your standing is with the lead (${told.id}${told.replyTo ? `, answering ${told.replyTo}` : ''}): it decides on it — what it says comes with your next command. Go on meanwhile.`
+        : `Told the lead (${told.id}): no answer is waited for — task ask when you need one.`
   );
 
 /** `plitzi run notice`: something wrong that no task owns, kept for the finish and the next stage. */
@@ -267,11 +299,11 @@ export const runBacklog = (
 export const taskMessage = (
   to: string,
   text: string,
-  options: RunCommandOptions & { replyTo?: string }
+  options: RunCommandOptions & { replyTo?: string; standing?: boolean }
 ): Promise<void> =>
   act(
     options,
-    async ctx => messageTasks(ctx, await runOf(ctx, options), to, text, options.replyTo),
+    async ctx => messageTasks(ctx, await runOf(ctx, options), to, text, options.replyTo, options.standing === true),
     sent =>
       sent.length === 0
         ? 'No task is in hand to tell.'

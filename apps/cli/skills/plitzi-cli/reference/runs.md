@@ -35,9 +35,9 @@ itself once (`--agent design-1`) and is answered both. A token, name or role not
 (`identity`, 26).
 
 - **Write only in `work`**, never in the project; run the project's scripts there (no `node_modules` nor `.env` of its
-  own; its warning is expected). `plitzi page check /pets --width 1440,390` from `work` serves the copy for the CLI's
-  commands (kept 3 min) — `--expect <id>~<text>`; a script of your own serves it itself (`PORT=<free> npm start` in `work`) and stops it with
-  `plitzi server stop --port <port>` there. Never `pkill`, `killall` nor a kill by name: they reach the whole machine. A hung command is your harness's to stop; write files with your edit tools, never a shell heredoc. Your
+  own). `plitzi page check /pets --width 1440,390` from `work` serves the copy for the CLI's
+  commands (kept 3 min) — `--expect <id>~<text>`; a script of your own serves it itself (`PORT=<free> npm start`) and stops it with
+  `plitzi server stop --port <port>` there (never `pkill` nor a kill by name). Your
   scripts, logs and pictures go in the copy's `tmp/`; between tasks,
   `tmp/plitzi-runs/<run>/scratch/<your name>/`; never the project's `tmp/`.
 - **Spend the heavy commands well: a run makes hundreds.** `task check`, `task look`, `page check|shot|measure` take
@@ -66,8 +66,9 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
   should know** — a finding, a choice you made, a risk — with no answer needed: `plitzi task tell "…"` (holding no task — a reviewer — `--about <task> --token <yours>`). **Wrong, and no task's** — outside yours, there
   before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage. What the lead
   says to you arrives with your next heartbeat, progress or completion — read it (`task inbox --all`: all again).
-- **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"` (at a review too); in a long think or test,
-  every 2 minutes.
+- **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"` (at a review too), every 2 minutes in a
+  long think. **The lead asks where you stand** (a task past its estimate): answer at once: `plitzi task tell --standing
+  --fraction 0.6 --eta 15 --done "…" --left "…" [--blocked "…"]`.
 - **A spike** is a scout's (the lead's with none), its result the lead's to approve: what is built is decided by what
   it finds — your brief has what was found for your task. Your work needs something found out first: `plitzi task spike
   "what"` — blocked on the lead, its files yours; its answer comes back with the task (`task next`); take another meanwhile.

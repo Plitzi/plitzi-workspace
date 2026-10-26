@@ -237,7 +237,8 @@ const agentsOf = async (
 
   const lastBy = new Map<string, Record<string, unknown>>();
   for (const entry of log) {
-    if (typeof entry.by === 'string' && lastDone(entry) !== undefined) {
+    // An agent the run asked for and its keeper started is no act of the lead's, whose token the keeper uses.
+    if (typeof entry.by === 'string' && lastDone(entry) !== undefined && entry.asked !== true) {
       lastBy.set(entry.by, entry);
     }
   }

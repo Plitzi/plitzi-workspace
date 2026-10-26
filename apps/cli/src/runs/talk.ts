@@ -1,7 +1,7 @@
 import { writeJson } from './files';
 import { handOver } from './handOver';
 import { isPrincipal, requireALead, requireLead } from './leads';
-import { agentAddress, EVERYONE, LEAD, messagesOf, replyTo, sendMessage, unreadFor } from './messages';
+import { agentAddress, EVERYONE, LEAD, messagesOf, replyTo, sendMessage, standingText, unreadFor } from './messages';
 import { RunRefusal } from './refusal';
 import { assertStatus, loadRun, logRun, requireNoTask } from './run';
 import { runChanged } from './runChanged';
@@ -9,7 +9,7 @@ import { findTask, holderOf } from './tasks';
 import { viewTask } from './taskStore';
 import { readTeam, startedAgents } from './team';
 
-import type { Message } from './messages';
+import type { Message, Standing } from './messages';
 import type { RunContext } from './run';
 
 /**
@@ -80,15 +80,78 @@ export const noteRun = async (ctx: RunContext, runId: string, text: string): Pro
 };
 
 /**
+ * What the lead asked of `addresses` — a task, an agent by name — and nobody answered: the standing it waits for.
+ */
+const standingAsked = (messages: readonly Message[], addresses: readonly string[]): Message | undefined => {
+  const answered = new Set(messages.flatMap(message => (message.replyTo ? [message.replyTo] : [])));
+
+  return messages.findLast(
+    message =>
+      message.from === LEAD &&
+      message.asksStanding === true &&
+      addresses.includes(message.to) &&
+      !answered.has(message.id)
+  );
+};
+
+/** A standing as its agent says it: checked whole — a lead decides on it, a half one decides nothing. */
+const checkedStanding = (standing: Standing): Standing => {
+  const problems = [
+    ...(standing.fraction >= 0 && standing.fraction <= 1
+      ? []
+      : ['--fraction is how much is done, 0 to 1 (0.6 is 60 %)']),
+    ...(Number.isInteger(standing.etaMinutes) && standing.etaMinutes >= 0
+      ? []
+      : ['--eta is the minutes it still takes']),
+    ...(standing.done.trim() === '' ? ['--done says what is done'] : []),
+    ...(standing.left.trim() === '' ? ['--left says what is left'] : [])
+  ];
+  if (problems.length > 0) {
+    throw new RunRefusal(
+      'invalid',
+      `A standing is said whole: ${problems.join('; ')} — plitzi task tell --standing --fraction <0-1> --eta <minutes> --done "…" --left "…" [--blocked "…"]`
+    );
+  }
+
+  return standing;
+};
+
+/**
  * `plitzi task tell`: the holder of a task tells the lead something it should know — a finding, a choice it made, a
  * risk — without asking: nothing waits for an answer. It is on top of `run status` until the lead reads its inbox.
+ * With `standing`, where the task stands — the answer to the lead's asking (`task message --standing`), its progress
+ * kept as the task's.
  */
-export const tellLead = async (ctx: RunContext, runId: string, taskId: string, text: string): Promise<Message> => {
+export const tellLead = async (
+  ctx: RunContext,
+  runId: string,
+  taskId: string,
+  text: string,
+  standing?: Standing
+): Promise<Message> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping', 'reconciliation'], 'tell the lead');
-  await holderOf(ctx, loaded, findTask(loaded, taskId));
-  const told = await sendMessage(ctx, loaded, { from: taskId, to: LEAD, text, fyi: true });
-  await logRun(ctx, loaded.paths, { action: 'tell', task: taskId, message: told.id });
+  const view = await holderOf(ctx, loaded, findTask(loaded, taskId));
+  const said = standing === undefined ? undefined : checkedStanding(standing);
+  const asked = said ? standingAsked(await messagesOf(loaded), [taskId, agentAddress(ctx.agent)]) : undefined;
+  const told = await sendMessage(ctx, loaded, {
+    from: taskId,
+    to: LEAD,
+    text: said ? `${text === '' ? '' : `${text} — `}${standingText(said)}` : text,
+    fyi: true,
+    ...(said ? { standing: said } : {}),
+    ...(asked ? { replyTo: asked.id } : {})
+  });
+  if (said) {
+    await writeJson(view.paths.progress, {
+      ...(view.progress ?? {}),
+      fraction: said.fraction,
+      step: said.left,
+      heartbeatAt: ctx.now().toISOString()
+    });
+  }
+
+  await logRun(ctx, loaded.paths, { action: said ? 'standing' : 'tell', task: taskId, message: told.id });
 
   return told;
 };
@@ -98,7 +161,13 @@ export const tellLead = async (ctx: RunContext, runId: string, taskId: string, t
  * reviews — tells the lead what it found on a task, said by its own name. A review the lead decided first had nowhere to
  * go (design-1's finding on t-motion, refused twice).
  */
-export const tellLeadAbout = async (ctx: RunContext, runId: string, about: string, text: string): Promise<Message> => {
+export const tellLeadAbout = async (
+  ctx: RunContext,
+  runId: string,
+  about: string,
+  text: string,
+  standing?: Standing
+): Promise<Message> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping', 'reconciliation'], 'tell the lead');
   const task = findTask(loaded, about);
@@ -111,14 +180,19 @@ export const tellLeadAbout = async (ctx: RunContext, runId: string, about: strin
     );
   }
 
+  // A scout at a spike holds no task: its standing, asked of it by name, is said the same way.
+  const said = standing === undefined ? undefined : checkedStanding(standing);
+  const asked = said ? standingAsked(await messagesOf(loaded), [task.id, agentAddress(ctx.agent)]) : undefined;
   const told = await sendMessage(ctx, loaded, {
     from: ctx.agent,
     to: LEAD,
-    text: `On ${task.id}: ${text}`,
+    text: `On ${task.id}: ${said ? `${text === '' ? '' : `${text} — `}${standingText(said)}` : text}`,
     fyi: true,
-    about: task.id
+    about: task.id,
+    ...(said ? { standing: said } : {}),
+    ...(asked ? { replyTo: asked.id } : {})
   });
-  await logRun(ctx, loaded.paths, { action: 'tell', task: task.id, message: told.id });
+  await logRun(ctx, loaded.paths, { action: said ? 'standing' : 'tell', task: task.id, message: told.id });
 
   return told;
 };
@@ -133,7 +207,9 @@ export const messageTasks = async (
   runId: string,
   to: string,
   text: string,
-  reply?: string
+  reply?: string,
+  /** Asks where it stands — a task that takes long: its agent answers with `task tell --standing`, which wakes the lead. */
+  standing = false
 ): Promise<Message[]> => {
   requireNoTask(ctx, 'message a task');
   const loaded = await loadRun(ctx, runId);
@@ -166,11 +242,28 @@ export const messageTasks = async (
     );
   }
 
+  if (!standing && text.trim() === '') {
+    throw new RunRefusal(
+      'invalid',
+      'Say what to tell it: plitzi task message <task> "…" — or ask where it stands: plitzi task message <task> --standing'
+    );
+  }
+
+  // Asked where it stands, it answers whole: how far, how long still, what is done and left, what holds it.
+  const said = standing
+    ? `${text.trim() === '' ? '' : `${text.trim()} — `}Where do you stand? Answer now: plitzi task tell --standing --fraction <0-1> --eta <minutes left> --done "what is done" --left "what is left" [--blocked "what holds you"]`
+    : text;
   const sent: Message[] = [];
   for (const target of targets) {
-    const answers = reply ?? open[0];
+    const answers = standing ? undefined : (reply ?? open[0]);
     sent.push(
-      await sendMessage(ctx, loaded, { from: LEAD, to: target, text, ...(answers ? { replyTo: answers } : {}) })
+      await sendMessage(ctx, loaded, {
+        from: LEAD,
+        to: target,
+        text: said,
+        ...(answers ? { replyTo: answers } : {}),
+        ...(standing ? { asksStanding: true as const } : {})
+      })
     );
   }
 

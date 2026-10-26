@@ -422,6 +422,32 @@ describe('plitzi run monitor', () => {
     expect((await row())?.status).toBe('idle');
   });
 
+  // encore-10's lead read "working · last: started scout-1" while nobody led it: the keeper's start is no act of its.
+  it('keeps the lead idle for an agent the run asked for and its keeper started', async () => {
+    const runId = await open();
+    bench.advance(3 * 60_000 + 1);
+    await logRun(lead(), runPaths(bench.root, runId), { action: 'launch', agent: 'agent-1', asked: true });
+    const row = (await monitorRun(lead(), runId)).agents.find(agent => agent.agent === 'lead');
+    expect(row).toMatchObject({ status: 'idle', doing: expect.not.stringContaining('started agent-1') as unknown });
+  });
+
+  // encore-10's scope sat in its own column while its scout worked it, and "At work" read empty.
+  it('puts a spike someone finds out at work, and one nobody took — or with the lead — in the spike column', async () => {
+    const runId = await open();
+    const { tasks } = (await monitorRun(lead(), runId)).view;
+    const base = tasks[0];
+    const spike = { ...base, status: 'spike' as const, agent: undefined };
+    const proposed = { by: 'scout-1', tasks: ['t-x'] };
+    const spikes: TaskLine[] = [
+      { ...spike, id: 's-taken', spikedBy: 'scout-1' },
+      { ...spike, id: 's-free' },
+      { ...spike, id: 's-proposed', proposed }
+    ];
+
+    expect(cards(spikes, 'work')).toEqual(['s-taken scout-1']);
+    expect(cards(spikes, 'spike')).toEqual(['s-free not taken yet', "s-proposed scout-1's, with the lead to decide"]);
+  });
+
   it('says an agent joined though its scratch was there first, and a wait by its reason alone', async () => {
     const runId = await open();
     await fs.mkdir(path.join(runPaths(bench.root, runId).dir, 'scratch', 'agent-4'), { recursive: true });

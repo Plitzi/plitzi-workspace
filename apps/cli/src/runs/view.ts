@@ -8,7 +8,7 @@ import { liveAttention } from './findings/live';
 import { readHistory } from './history';
 import { identifiedAgents } from './identity';
 import { leadReviews, spareReviewers } from './leads';
-import { LEAD, messagesOf, unreadFor } from './messages';
+import { LEAD, messagesOf, standingText, unreadFor } from './messages';
 import { agentsNeeded } from './onDemand';
 import { under } from './paths';
 import { previewPort } from './previewRecord';
@@ -431,11 +431,23 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       });
     }
 
-    if (line?.spentMinutes !== undefined && line.spentMinutes > view.task.estimateMinutes * 2) {
+    // Any task at work — a spike being found out too — past twice its estimate wakes the lead to ask where it stands,
+    // and again at each estimate more: it decides on the answer (Carlos). Its agent's last word, said with it.
+    const finding =
+      view.state.status === 'spike' && view.state.spikedBy && view.state.spikedBy.by !== LEAD && !view.state.proposed
+        ? view.state.spikedBy
+        : undefined;
+    // Its agent at it: one in review, blocked or waiting is not being worked — it holds no one to ask.
+    const atIt = finding?.by ?? (isWorked(view.state.status) ? view.owner?.agent : undefined);
+    const spent = finding ? minutesBetween(finding.at, now) : line?.spentMinutes;
+    const estimates = spent === undefined ? 0 : Math.floor(spent / Math.max(1, view.task.estimateMinutes));
+    if (atIt !== undefined && spent !== undefined && estimates >= 2) {
+      const step = view.progress?.step;
       attention.push({
         kind: 'long-task',
         task: view.task.id,
-        text: `${view.task.id} has taken ${String(line.spentMinutes)} min of an estimated ${String(view.task.estimateMinutes)}`,
+        subject: `x${String(estimates)}`,
+        text: `${view.task.id} has taken ${String(spent)} min of an estimated ${String(view.task.estimateMinutes)}${step ? ` — ${atIt} last said: "${glimpse(step)}"` : ''}: ask ${atIt} where it stands — plitzi task message @${atIt} --standing — and decide on its answer`,
         who: 'lead'
       });
     }
@@ -510,9 +522,11 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
         message: message.id,
         ...(message.fyi === true ? { fyi: true as const } : {}),
         // A glimpse here; whole in `run watch`, where showing it reads it — and it is gone from here.
-        text: message.fyi
-          ? `${message.from} says (${message.id}), for you to know: ${glimpse(message.text)} — read: plitzi task inbox`
-          : `${message.from} asks (${message.id}): ${glimpse(message.text)} — answer: plitzi task message ${message.from} "…" --reply-to ${message.id}`,
+        text: message.standing
+          ? `${message.from} stands at ${standingText(message.standing)}${message.replyTo ? ` (answering ${message.replyTo})` : ''} — decide: let it go on; tell it what to change (plitzi task message ${message.about === undefined ? message.from : `@${message.from}`} "…"); lift what holds it (plitzi task unblock); narrow it (plitzi run amend) or split it (plitzi run extend); or take it back (plitzi task reassign)`
+          : message.fyi
+            ? `${message.from} says (${message.id}), for you to know: ${glimpse(message.text)} — read: plitzi task inbox`
+            : `${message.from} asks (${message.id}): ${glimpse(message.text)} — answer: plitzi task message ${message.from} "…" --reply-to ${message.id}`,
         who: 'lead'
       })
     );

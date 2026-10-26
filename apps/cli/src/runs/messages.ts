@@ -42,7 +42,35 @@ export interface Message {
   fyi?: boolean;
   /** The task it is about, said by an agent that holds none — a designer between reviews (`task tell --about`). */
   about?: string;
+  /** The lead asks where its task stands (`task message --standing`): answered with `task tell --standing`. */
+  asksStanding?: true;
+  /** Where a task stands, as its agent answers the lead (`task tell --standing`): what the lead decides on. */
+  standing?: Standing;
 }
+
+/** A task's standing, as its agent says it when the lead asks: how far, how long still, what is done, left, holding it. */
+export interface Standing {
+  /** How much of it is done, 0 to 1. */
+  fraction: number;
+  /** The minutes it still takes, as its agent reckons them. */
+  etaMinutes: number;
+  done: string;
+  left: string;
+  /** What holds it, when something does. */
+  blocked?: string;
+}
+
+const isStanding = (value: unknown): value is Standing =>
+  isRecord(value) &&
+  typeof value.fraction === 'number' &&
+  typeof value.etaMinutes === 'number' &&
+  typeof value.done === 'string' &&
+  typeof value.left === 'string' &&
+  (value.blocked === undefined || typeof value.blocked === 'string');
+
+/** A standing, in a line: what the lead reads it as. */
+export const standingText = (standing: Standing): string =>
+  `${String(Math.round(standing.fraction * 100))} % · ~${String(standing.etaMinutes)} min left — done: ${standing.done}; left: ${standing.left}${standing.blocked ? `; held by: ${standing.blocked}` : ''}`;
 
 const isMessage = (value: unknown): value is Message =>
   isRecord(value) &&
@@ -53,7 +81,9 @@ const isMessage = (value: unknown): value is Message =>
   typeof value.at === 'string' &&
   (value.replyTo === undefined || typeof value.replyTo === 'string') &&
   (value.fyi === undefined || typeof value.fyi === 'boolean') &&
-  (value.about === undefined || typeof value.about === 'string');
+  (value.about === undefined || typeof value.about === 'string') &&
+  (value.asksStanding === undefined || value.asksStanding === true) &&
+  (value.standing === undefined || isStanding(value.standing));
 
 const isRead = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(each => typeof each === 'string');

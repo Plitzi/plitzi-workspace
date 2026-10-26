@@ -42,11 +42,12 @@ import {
   TOKEN_OPTION
 } from './options';
 import { groupHelp } from './run';
-import { duration, FOLLOW_MS, fraction, timeZone } from '../../../options';
+import { count, duration, FOLLOW_MS, fraction, timeZone } from '../../../options';
 import { BLOCK_NEEDS } from '../../../runs/model';
 
 import type { AnswerOptions, LookOptions, ProposeOptions, ReviewOptions, RunCommandOptions } from '..';
 import type { ExperienceFlags } from '../../../runs/experience';
+import type { TellOptions } from '../talk';
 import type { Command } from 'commander';
 
 /** Each command of `plitzi task`, by who runs it: an agent at its task, or the lead reviewing them. */
@@ -358,13 +359,24 @@ export const registerTaskGroup = (program: Command): Command => {
 
   taskGroup
     .command('tell')
-    .description('Tell the lead what it should know — a finding, a choice you made, a risk — when no answer is needed')
-    .argument('<text>', 'What to tell')
-    .option('--about <task>', 'The task it is about — with no task in hand (a reviewer), said by your --agent name')
+    .description(
+      'Tell the lead what it should know — a finding, a choice you made, a risk — when no answer is needed; --standing: where your task stands, when the lead asks'
+    )
+    .argument('[text]', 'What to tell — with --standing, what you add to it')
+    .option(
+      '--about <task>',
+      'The task it is about — with no task in hand (a reviewer, a scout), said by your --agent name'
+    )
+    .option('--standing', 'Where your task stands, as the lead asked: --fraction, --eta, --done, --left and --blocked')
+    .option('--fraction <n>', 'With --standing: how much is done, between 0 and 1', fraction)
+    .option('--eta <minutes>', 'With --standing: the minutes it still takes', count)
+    .option('--done <text>', 'With --standing: what is done')
+    .option('--left <text>', 'With --standing: what is left')
+    .option('--blocked <text>', 'With --standing: what holds you, if something does')
     .option(...RUN_OPTION)
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((text: string, options: RunCommandOptions & { about?: string }) => taskTell(text, options));
+    .action((text: string | undefined, options: TellOptions) => taskTell(text ?? '', options));
 
   taskGroup
     .command('ask')
@@ -380,14 +392,21 @@ export const registerTaskGroup = (program: Command): Command => {
 
   taskGroup
     .command('message')
-    .description('The lead tells a task — or every task in hand, or an agent by name — what it needs to know')
+    .description(
+      'The lead tells a task — or every task in hand, or an agent by name — what it needs to know; --standing asks where it stands'
+    )
     .argument('<task>', 'The task, all, or an agent as @name: it reaches it between tasks too (task next)')
-    .argument('<text>', 'What to say')
+    .argument('[text]', 'What to say — with --standing, what you add to the asking')
     .option('--reply-to <message>', 'The question it answers: m3')
+    .option(
+      '--standing',
+      'Ask where it stands — a task that takes long: its agent answers with task tell --standing, and you decide on it'
+    )
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string, text: string, options: RunCommandOptions & { replyTo?: string }) =>
-      taskMessage(task, text, options)
+    .action(
+      (task: string, text: string | undefined, options: RunCommandOptions & { replyTo?: string; standing?: boolean }) =>
+        taskMessage(task, text ?? '', options)
     );
 
   taskGroup

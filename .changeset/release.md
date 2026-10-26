@@ -86,6 +86,17 @@ authoring and the elements learnt from the runs.
     take — every task when the team has no tester — and `run watch` wakes it for nothing else. A review no tester may take
     (a lone tester's own `-tests`) is a developer's that worked neither it nor what it tests, handed by `task next`
     before a task of its own (the keeper starts one for it); the lead's only when none may, as it would hold the run.
+  - **A task that takes long wakes the lead to ask where it stands**, any task at work and a spike a scout finds out:
+    past twice its estimate, and again at each estimate more, with its agent's last word. `task message <task|@agent>
+    --standing` asks; the agent answers whole with `task tell --standing --fraction --eta --done --left [--blocked]`
+    (refused when a part is missing), its fraction kept as the task's progress, and the standing wakes the lead with
+    what it may do — let it go on, change its course, unblock, narrow or split it, or take it back.
+  - **Seen in encore-10:** `run start` names the run from the ask's first words when `--run` is left out (its help
+    said so; it was refused) and says nothing of what happens next when it was refused; `run open` says the scope is the
+    scout's when the team has one (it told the lead to find it out). The monitor puts a spike someone finds out **at
+    work** (its scout named), one nobody took — or proposed, with the lead — in the spike column; `run status` names
+    who finds a spike out. An agent the run asked for and its keeper started (`launch` logged `asked`) no longer shows
+    the lead "working".
   - **The tests are a developer's, the tester only reviews.** With a tester in the team each developer task still gets
     `<id>-tests`, now a developer's task (`testsOf: [<id>]`, a new plan field): written by a developer that did not
     write what it tests — `task next` offers it to no other, `task take` and `task reassign --to` refuse its author,

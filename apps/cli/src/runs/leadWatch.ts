@@ -42,7 +42,6 @@ export interface LeadNews {
 const TIMED = new Set<Attention['kind']>([
   'no-signal',
   'long-wait',
-  'long-task',
   'stopping',
   'slow-review',
   'ui-queued',

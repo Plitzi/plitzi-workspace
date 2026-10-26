@@ -85,8 +85,9 @@ export const flowStages = (tasks: readonly TaskLine[]): FlowStage[] => {
         return left.length > 0 ? `after ${left.join(', ')}` : '';
       }
     },
-    // Finding something out before it is built: whoever is on it — research waits for nothing. A run that researched
-    // nothing has no column for it.
+    // Finding something out before it is built, nobody on it yet — or what was found, with the lead to decide. One a
+    // scout is at is at work, beside the tasks being written (a run's scope read idle while its scout worked). A run
+    // that researched nothing has no column for it.
     ...(tasks.some(task => task.status === 'spike' || task.found !== undefined)
       ? [
           {
@@ -94,9 +95,10 @@ export const flowStages = (tasks: readonly TaskLine[]): FlowStage[] => {
             title: 'Spike',
             glyph: '◇',
             tone: 'info' as const,
-            tasks: of('spike'),
-            // Never "free": no developer takes a spike — a scout at it (the lead with none), or one is waited for.
-            who: (task: TaskLine) => task.spikedBy ?? 'not taken yet'
+            tasks: of('spike').filter(task => task.spikedBy === undefined),
+            // Never "free": no developer takes a spike — a scout takes it, or the lead with none.
+            who: (task: TaskLine) =>
+              task.proposed ? `${task.proposed.by}'s, with the lead to decide` : 'not taken yet'
           }
         ]
       : []),
@@ -109,8 +111,11 @@ export const flowStages = (tasks: readonly TaskLine[]): FlowStage[] => {
       title: 'At work',
       glyph: '◐',
       tone: 'info' as const,
-      tasks: [...of('in-progress'), ...of('changes-requested')].filter(task => !task.asking && !task.parkedFor),
-      who: (task: TaskLine) => task.agent ?? ''
+      tasks: [
+        ...of('spike').filter(task => task.spikedBy !== undefined),
+        ...[...of('in-progress'), ...of('changes-requested')].filter(task => !task.asking && !task.parkedFor)
+      ],
+      who: (task: TaskLine) => (task.status === 'spike' ? (task.spikedBy ?? '') : (task.agent ?? ''))
     },
     // What holds an agent back: a block, a file another task has, a question to the lead, its agent at another task,
     // a failure.

@@ -44,15 +44,21 @@ export const boardLines = (view: Pick<RunView, 'tasks' | 'reviewers'>): string[]
         ? ` · waits for ${task.waitingFor.task} ${waitingText(task.waitingFor)}`
         : task.waitsOn
           ? ` · after ${task.waitsOn.join(', ')}`
-          : task.status === 'blocked' && task.blockedBy
-            ? ` · ${task.blockedBy.reason}`
-            : task.status === 'changes-requested'
-              ? ` · changes requested (round ${String(task.round)})`
-              : task.status === 'in-review' && task.design?.status === 'due'
-                ? ` · ${designText(task.design)}`
-                : task.status === 'in-review'
-                  ? `${task.design ? ` · ${designText(task.design)}` : ''}${task.reviewer ? ` · ${task.reviewer} reviews it` : task.spareReviewers ? ` · ${task.spareReviewers.join(' or ')} reviews it (each tester worked it)` : task.leadReviews ? ' · the lead’s to review (nobody else may: each worked it, or what it tests)' : view.reviewers.length > 0 ? ' · no tester took it yet' : ''}`
-                  : '';
+          : task.status === 'spike'
+            ? task.spikedBy
+              ? ` · ${task.spikedBy} finds it out`
+              : task.proposed
+                ? ` · ${task.proposed.by} found it out: the lead decides`
+                : ' · not taken yet'
+            : task.status === 'blocked' && task.blockedBy
+              ? ` · ${task.blockedBy.reason}`
+              : task.status === 'changes-requested'
+                ? ` · changes requested (round ${String(task.round)})`
+                : task.status === 'in-review' && task.design?.status === 'due'
+                  ? ` · ${designText(task.design)}`
+                  : task.status === 'in-review'
+                    ? `${task.design ? ` · ${designText(task.design)}` : ''}${task.reviewer ? ` · ${task.reviewer} reviews it` : task.spareReviewers ? ` · ${task.spareReviewers.join(' or ')} reviews it (each tester worked it)` : task.leadReviews ? ' · the lead’s to review (nobody else may: each worked it, or what it tests)' : view.reviewers.length > 0 ? ' · no tester took it yet' : ''}`
+                    : '';
     lines.push(
       `  ${ICON[task.status]} ${task.id.padEnd(18)} ${task.role === 'developer' ? '' : `[${task.role}] `}${agent}${task.title}${step}${progress}${extra}${task.noSignal ? ' · no signal' : ''}`
     );

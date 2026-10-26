@@ -4,6 +4,7 @@ import { runOpen } from './plan';
 import { launchBrowser } from '../../browser';
 import { HARNESSES, isHarness } from '../../runs/agentPrompt';
 import { onPath } from '../../runs/launchAgent';
+import { ID } from '../../runs/paths';
 import { readTeam, SCOUT, startedAgents } from '../../runs/team';
 import { projectHere } from '../existingProject';
 import { fail } from '../terminal';
@@ -56,6 +57,30 @@ const notReady = async (harness: string | undefined): Promise<string[] | undefin
   return problems;
 };
 
+/**
+ * The run's name when it is not said: the ask's first words, as an id takes them — what `--run` says it defaults to (a
+ * run's start without it was refused, the help promising otherwise). None when the ask has no word an id keeps.
+ */
+export const runNameOf = (ask: string): string | undefined => {
+  const words = ask
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+  let name = '';
+  for (const word of words.slice(0, 4)) {
+    const next = name === '' ? word : `${name}-${word}`;
+    if (next.length > 40) {
+      break;
+    }
+
+    name = next;
+  }
+
+  return ID.test(name) ? name : undefined;
+};
+
 export const runStart = async (ask: string, options: StartOptions): Promise<void> => {
   const problems = await notReady(options.harness);
   if (problems === undefined) {
@@ -68,8 +93,16 @@ export const runStart = async (ask: string, options: StartOptions): Promise<void
     return;
   }
 
-  await runOpen(undefined, { ...options, spike: ask });
-  if (process.exitCode === 1 || options.json === true) {
+  const run = options.run ?? runNameOf(ask);
+  if (run === undefined) {
+    fail(`Name the run: the ask has no word a name is made of — plitzi run start "${ask}" --run <name>`);
+
+    return;
+  }
+
+  await runOpen(undefined, { ...options, spike: ask, run });
+  // Refused — any exit code a refusal sets — nothing opened: what happens next is no one's.
+  if ((process.exitCode !== undefined && process.exitCode !== 0) || options.json === true) {
     return;
   }
 

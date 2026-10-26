@@ -38,7 +38,7 @@ export type StartAgent = (agent: string, harness: string) => Promise<'started' |
 const startWithLaunch =
   (ctx: RunContext, runId: string): StartAgent =>
   async (agent, harness) =>
-    'running' in (await launchAgent(ctx, runId, agent, await harnessOf(harness))) ? 'running' : 'started';
+    'running' in (await launchAgent(ctx, runId, agent, await harnessOf(harness), true)) ? 'running' : 'started';
 
 /** Every `agents-needed` notice of the view, its agent started in the team's `options.launch` harness. */
 export const launchAsked = async (
