@@ -81,10 +81,17 @@ authoring and the elements learnt from the runs.
   - **Tester** (QA, Opus): reviews every task in review, a designer's included — what it was asked, its checks, how it
     behaves, its code — and its approval is the task's; the UI too when no designer is free (`--skip-design reviewer`).
     What it cannot decide: `task review <task> --escalate "…"`, blocked on the lead.
-  - **The lead** reviews only what is escalated or past its review rounds, and what no tester may take (each worked it:
-    a lone tester's own `-tests`) — every task when the team has no tester — and `run watch` wakes it for nothing else.
+  - **The lead** reviews nothing by default: what is escalated or past its review rounds, and a review nobody else may
+    take — every task when the team has no tester — and `run watch` wakes it for nothing else. A review no tester may take
+    (a lone tester's own `-tests`) is a developer's that worked neither it nor what it tests, handed by `task next`
+    before a task of its own (the keeper starts one for it); the lead's only when none may, as it would hold the run.
     A tester never approves past a question the task asked the lead: it escalates it. Every task approved, the lead's
-    `task next` says its close in order (look, report, finish) and the lead never "stops". Before finishing it looks once at the whole result: **`plitzi run look`**
+    `task next` says its close in order (look, report, finish) and the lead never "stops".
+    Whoever reviews a task is handed what the team told the lead of it (`task tell`, `✉`). A UI review taken is let go
+    when its task leaves review — sent back, escalated, taken back — its designer told, never left busy. A round whose
+    UI its reviewer kept is approved only after a `task look`. A review escalated and answered (`task unblock
+    --answer`) asks for its stopped agent again; a task taken back drops its block, its spike and a scout's answer
+    (never approved into "research done"). Before finishing it looks once at the whole result: **`plitzi run look`**
     checks and pictures every page the run changed (1440 and 390, light and dark); `run finish` asks for it after the
     last approval.
   - **Co-leads are gone:** `lead-2`…, `"lead": { "count" }` (refused, saying to add testers), `task next --role lead`

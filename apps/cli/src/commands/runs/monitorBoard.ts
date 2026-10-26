@@ -73,7 +73,7 @@ export const withText = (task: TaskLine, tasks: readonly TaskLine[], story: Task
     case 'ready':
       return 'free to take';
     case 'spike':
-      return task.spikedBy ? `${task.spikedBy} finds out` : 'for a lead';
+      return task.spikedBy ? `${task.spikedBy} finds out` : 'not taken yet';
     case 'in-progress':
       return task.asking
         ? task.asking.answered

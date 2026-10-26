@@ -67,7 +67,7 @@ export const partnerFor = async (
   }
 
   const view = await viewTask(loaded.paths, task);
-  await assertReviewingLead(ctx, view);
+  await assertReviewingLead(ctx, loaded, view);
   const alone = `approve ${withId} on its own, or send it back (plitzi task review ${withId} --changes "…")`;
   if (view.state.status !== 'in-review') {
     throw new RunRefusal('invalid', `--with ${withId}: it is ${view.state.status}, not in review`, { task: withId });

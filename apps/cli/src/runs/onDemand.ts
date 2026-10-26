@@ -1,7 +1,7 @@
 import { commandAs } from './identity';
-import { leadReviews, testerReviews } from './leads';
+import { noTesterFor, spareReviewers, testerReviews } from './leads';
 import { isResearch } from './spike';
-import { DESIGNER, SCOUT, TESTER } from './team';
+import { DESIGNER, DEVELOPER, SCOUT, TESTER } from './team';
 import { TASKS_PER_AGENT } from './teamNotices';
 import { isWorked } from './worked';
 
@@ -96,8 +96,8 @@ const toFind = (view: TaskView): boolean =>
  */
 const untakenReview = (view: TaskView, noDesignerFree: boolean, testers: readonly string[]): boolean =>
   view.state.status === 'in-review' &&
-  // One every tester worked is the lead's (`leadReviews`): starting a tester for it starts one it refuses.
-  !leadReviews(view, testers) &&
+  // One every tester worked is another's (`spareReviewers`, `leadReviews`): a tester started for it would refuse it.
+  !noTesterFor(view, testers) &&
   (view.state.design?.status !== 'due' || (noDesignerFree && view.state.design.by === undefined)) &&
   testerReviews(view.task) &&
   (view.state.reviewer === undefined || view.state.reviewer.round !== view.state.round);
@@ -133,18 +133,39 @@ export const agentsNeeded = (
   // offers it (`noDesignerFreeIn`). A designer not running is started for it instead.
   const noDesignerFree = started.filter(each => each.roles.includes(DESIGNER)).every(each => busy.has(each.agent));
   const testers = started.filter(each => each.roles.includes(TESTER)).map(each => each.agent);
+  const reviewTeam = {
+    testers,
+    developers: started
+      .filter(each => each.roles.includes(DEVELOPER) && !each.roles.includes(TESTER))
+      .map(each => each.agent)
+  };
+  // A review no tester may take, untaken, and none of the developers that may review it running and free: one of them is
+  // started for it — the lead reviews it only when nobody else may (`leadReviews`).
+  const spareWaiting = views.flatMap(view => {
+    const spare =
+      view.state.status === 'in-review' &&
+      view.state.design?.status !== 'due' &&
+      (view.state.reviewer === undefined || view.state.reviewer.round !== view.state.round)
+        ? spareReviewers(view, views, reviewTeam)
+        : [];
+
+    return spare.length > 0 && !spare.some(agent => running.has(agent) && !busy.has(agent))
+      ? [{ task: view.task.id, spare }]
+      : [];
+  });
   const asked = new Set<string>();
   // A task sent back waits for its own agent alone, and nobody else takes it: one not running is asked for by name — an
-  // agent stops between two pieces of work for a fresh context (`SessionMode`), before its review says.
+  // agent stops between two pieces of work for a fresh context (`SessionMode`), before its review says. So does one
+  // whose escalated review the lead answered (`task unblock --answer`): back in progress, its agent stopped at complete.
   const sentBack = new Map<string, string[]>();
+  const unblocked = new Set<string>();
   for (const view of views) {
     const owner = view.owner?.agent;
-    if (
-      owner &&
-      view.state.status === 'changes-requested' &&
-      !running.has(owner) &&
-      started.some(each => each.agent === owner)
-    ) {
+    if (view.state.status === 'in-progress') {
+      unblocked.add(view.task.id);
+    }
+
+    if (owner && isWorked(view.state.status) && !running.has(owner) && started.some(each => each.agent === owner)) {
       sentBack.set(owner, [...(sentBack.get(owner) ?? []), view.task.id]);
     }
   }
@@ -176,7 +197,7 @@ export const agentsNeeded = (
     return {
       kind: 'agents-needed' as const,
       agent,
-      text: `${tasks.join(', ')} ${tasks.length === 1 ? 'was' : 'were'} sent back to ${agent}, which is not running: start it again — ${launch(agent)} (its prompt alone: plitzi run agent ${agent}) — it takes ${tasks.length === 1 ? 'it' : 'them'} first`,
+      text: `${tasks.join(', ')} ${tasks.length === 1 ? 'was' : 'were'} ${tasks.some(task => unblocked.has(task)) ? 'handed back (unblocked, or sent back)' : 'sent back'} to ${agent}, which is not running: start it again — ${launch(agent)} (its prompt alone: plitzi run agent ${agent}) — it takes ${tasks.length === 1 ? 'it' : 'them'} first`,
       who: 'lead' as const
     };
   });
@@ -216,21 +237,32 @@ export const agentsNeeded = (
               ? views
                   .filter(view => toFind(view) && view.state.spikedBy === undefined)
                   .map(view => `the spike ${view.task.id}`)
-              : [];
+              : role === DEVELOPER
+                ? spareWaiting.map(each => `the review of ${each.task} (each tester worked it)`)
+                : [];
+      // For those reviews alone, only a developer that may give them: one that worked the task is refused it.
+      const mayReview = new Set(spareWaiting.flatMap(each => each.spare));
+      const forReviewsAlone = role === DEVELOPER && reviews.length > 0 && !(freeOf().length === 0 && ready.length > 0);
       const waiting = [...(freeOf().length === 0 ? ready : []), ...reviews];
       // The team's order: one that starts with the run first, then those on demand — never dev-2 while dev-1 is not running.
       // With one of the role running, only an agent on demand is asked for: the rest are the lead's to start at the open.
       const ofRole = (each: StartedAgent) =>
         each.roles.includes(role) && (role === 'designer' || !each.roles.includes('designer'));
       const anyRunning = started.some(each => ofRole(each) && running.has(each.agent));
-      const next = started.find(
-        each =>
-          ofRole(each) &&
-          !running.has(each.agent) &&
-          !asked.has(each.agent) &&
-          // One of the base not running is asked for below, whatever waits (`base`).
-          (each.onDemand === true || !anyRunning)
-      );
+      const startable = (fits: (each: StartedAgent) => boolean): StartedAgent | undefined =>
+        started.find(
+          each =>
+            fits(each) &&
+            !running.has(each.agent) &&
+            !asked.has(each.agent) &&
+            // One of the base not running is asked for below, whatever waits (`base`).
+            (each.onDemand === true || !anyRunning)
+        );
+      // For those reviews, any that may give them — one that designs too, which `ofRole` leaves to the designers.
+      const reviewer = (each: StartedAgent): boolean => mayReview.has(each.agent);
+      const next = forReviewsAlone
+        ? startable(reviewer)
+        : (startable(ofRole) ?? (role === DEVELOPER && reviews.length > 0 ? startable(reviewer) : undefined));
       // One that starts with the run is being started as the run opens: asked for only once it had time to join —
       // A run's watch said "start dev-1" the moment the lead had started it.
       if (waiting.length === 0 || !next || (!next.onDemand && run.openFor < startingFor)) {

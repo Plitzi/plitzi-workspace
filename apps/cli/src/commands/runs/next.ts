@@ -86,7 +86,7 @@ const lookCommand = (task: RunTask, drawnAt: readonly string[], also: string): s
 const designReviewText = (review: NonNullable<NextTask['designReview']>): string =>
   [
     chalk.bold(
-      `Review ${review.task.id}'s UI — ${review.task.title}: a designer's look, before the lead's${review.round > 0 ? ` (round ${String(review.round)}: sent back since)` : ''}`
+      `Review ${review.task.id}'s UI — ${review.task.title}: a designer's look, before its reviewer's${review.round > 0 ? ` (round ${String(review.round)}: sent back since)` : ''}`
     ),
     // Said first, on its own, on the first review alone: in the middle of a line, every time, a run's design-1
     // read it after its first verdict.
@@ -168,6 +168,7 @@ const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: stri
     ),
     ...(review.design ? [`  ✓ ${review.design}`] : []),
     ...(review.uiToo ? [chalk.yellow(`  ⚠ ${review.uiToo}`)] : []),
+    ...(review.told ?? []).map(line => `  ✉ told the lead — ${line}`),
     ...review.asked.map(line => `  ↺ ${line}`),
     ...earlierText(review),
     `  It changed: ${review.changed.join(', ') || 'nothing said'} — in its copy, ${review.copy}`,

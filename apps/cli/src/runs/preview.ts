@@ -65,7 +65,7 @@ const whyOf = (task: TaskLine): { why?: string } =>
             ? { why: `${task.agent ?? 'its agent'} is at ${task.parkedFor} first — one task at a time` }
             : task.status === 'spike'
               ? {
-                  why: `${task.spikedBy ? `${task.spikedBy} finds out` : 'for a lead to find out'}: ${task.spike ?? 'what it needs'}`
+                  why: `${task.spikedBy ? `${task.spikedBy} finds out` : 'not taken yet'}: ${task.spike ?? 'what it needs'}`
                 }
               : task.status === 'ready'
                 ? { why: 'free to take: the next agent at work takes it' }
@@ -73,8 +73,8 @@ const whyOf = (task: TaskLine): { why?: string } =>
                   ? {
                       why:
                         task.design?.status === 'due'
-                          ? `its UI review — ${task.design.by ?? 'no designer has taken it yet'}; then the lead's`
-                          : `the lead's review — ${task.reviewer ?? 'no lead has taken it yet'}`
+                          ? `its UI review — ${task.design.by ?? 'no designer has taken it yet'}; then its review`
+                          : `its review — ${task.reviewer ?? 'not taken yet'}`
                     }
                   : {};
 

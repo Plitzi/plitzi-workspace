@@ -7,7 +7,7 @@ import { fingerprint } from './files';
 import { liveAttention } from './findings/live';
 import { readHistory } from './history';
 import { identifiedAgents } from './identity';
-import { leadReviews } from './leads';
+import { leadReviews, spareReviewers } from './leads';
 import { LEAD, messagesOf, unreadFor } from './messages';
 import { agentsNeeded } from './onDemand';
 import { under } from './paths';
@@ -18,7 +18,7 @@ import { heldAhead, lockHolder, stalled } from './stalled';
 import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
-import { readTeam, SCOUT, startedAgents, TESTER } from './team';
+import { DEVELOPER, readTeam, SCOUT, startedAgents, TESTER } from './team';
 import { chainMinutes, urgencies } from './urgency';
 import { isWorked } from './worked';
 
@@ -72,7 +72,9 @@ export interface TaskLine {
   design?: DesignReview;
   /** In review: the tester — or the lead — that took this round's review, once one did. */
   reviewer?: string;
-  /** In review with testers in the team, and none may take it — each worked it: the lead's (`leadReviews`). */
+  /** In review with testers in the team, none of which may take it: its developers' that may (`spareReviewers`)… */
+  spareReviewers?: string[];
+  /** …or, with none, the lead's (`leadReviews`): nobody else may, and it would hold the run. */
   leadReviews?: true;
   /** When its holder was last heard from — a command, a heartbeat, a write in its copy. */
   signalAt?: string;
@@ -213,7 +215,12 @@ const lineOf = (view: TaskView, now: Date, owesSignal: boolean, unblocks: string
   ...(view.task.milestone ? { milestone: view.task.milestone } : {}),
   ...(view.state.status === 'spike' ? { spike: view.task.spike ?? 'what it needs' } : {}),
   ...(view.state.findings && view.state.findings.length > 0 ? { found: view.state.findings.length } : {}),
-  ...(view.state.status === 'spike' && view.state.spikedBy ? { spikedBy: view.state.spikedBy.by } : {}),
+  // Whoever finds it out — research, or what its agent blocked on — until what it found is with the lead.
+  ...((view.state.status === 'spike' || view.state.blockedBy?.spike !== undefined) &&
+  view.state.spikedBy &&
+  view.state.proposed === undefined
+    ? { spikedBy: view.state.spikedBy.by }
+    : {}),
   ...(view.state.proposed ? { proposed: { by: view.state.proposed.by, tasks: view.state.proposed.tasks } } : {})
 });
 
@@ -259,14 +266,20 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   const team = await readTeam(ctx.root).catch(() => undefined);
   const started = team ? startedAgents(team) : [];
   const testers = started.filter(each => each.roles.includes(TESTER)).map(each => each.agent);
+  const reviewTeam = {
+    testers,
+    developers: started
+      .filter(each => each.roles.includes(DEVELOPER) && !each.roles.includes(TESTER))
+      .map(each => each.agent)
+  };
   const log = await readRunLog(loaded.paths);
   const { gone, starting, running } = await agentsNow(loaded.paths, views, team, log, now);
-  // A task sent back to an agent not running waits for it to be started, and the lead is told that (`agentsNeeded`):
-  // "no signal — reassign it" beside it contradicted it (t-room-read's dev-2).
+  // A task sent back — or unblocked — to an agent not running waits for it to be started, and the lead is told that
+  // (`agentsNeeded`): "no signal — reassign it" beside it contradicted it (t-room-read's dev-2).
   const owesSignal = (view: TaskView): boolean =>
     view.owner !== undefined &&
     !starting.has(view.owner.agent) &&
-    !(view.state.status === 'changes-requested' && !running.has(view.owner.agent));
+    (running.has(view.owner.agent) || !started.some(each => each.agent === view.owner?.agent));
   const lines = views.map(view => {
     const line = lineOf(
       view,
@@ -276,12 +289,14 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       urgency.get(view.task.id) ?? view.task.priority
     );
     const waitsOn = view.task.dependsOn.filter(id => !approvedIds.has(id));
-    const lead = view.state.status === 'in-review' && testers.length > 0 && leadReviews(view, testers);
+    const inReview = view.state.status === 'in-review' && reviewTeam.testers.length > 0;
+    const spare = inReview ? spareReviewers(view, views, reviewTeam) : [];
 
     return {
       ...line,
       ...(view.state.status === 'pending' && waitsOn.length > 0 ? { waitsOn } : {}),
-      ...(lead ? { leadReviews: true as const } : {})
+      ...(spare.length > 0 ? { spareReviewers: spare } : {}),
+      ...(inReview && leadReviews(view, views, reviewTeam) ? { leadReviews: true as const } : {})
     };
   });
   // A task sent back to an agent at another one waits for it, as the run means it to: its silence is no "no signal —

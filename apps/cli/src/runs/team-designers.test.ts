@@ -26,7 +26,8 @@ const { lead, completed } = teamSteps(() => bench);
 describe('a designer, once it sent a task back', () => {
   it('keeps a designer waiting for a task it sent back whose files are data, but whose changes reached a page', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
-    await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
+    // Its own session kept: the wait is what is tested, not the fresh start after its review (tested on its own).
+    await setTeamAgent(bench.root, 'design', { roles: ['designer'], session: 'keep' });
     const plan = benchPlan('data-run');
     plan.tasks = [{ ...plan.tasks[3], id: 't-data', files: ['src/data/menu.json'] }];
     await openRun(lead(), await bench.writePlan(plan));

@@ -101,6 +101,16 @@ export const reassignTask = async (
     });
   }
 
+  // A scout finding out what it blocked on hears that it ends: the question went with the task's agent.
+  const scout = view.state.spikedBy?.by;
+  if (scout !== undefined && scout !== from && scout !== ctx.agent) {
+    await sendMessage(ctx, refreshed, {
+      from: LEAD,
+      to: agentAddress(scout),
+      text: `${taskId} was taken back by ${ctx.agent}: the spike it blocked on ends — drop what you found for it (what still matters, tell the lead: plitzi task tell --about ${taskId} "…"), then plitzi task next`
+    });
+  }
+
   await logRun(ctx, loaded.paths, {
     action: 'reassign',
     task: taskId,

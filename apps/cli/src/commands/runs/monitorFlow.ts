@@ -23,7 +23,7 @@ export const nameOf = (task: TaskLine): string =>
   task.status === 'changes-requested' ? `${task.id} ↺${String(task.round)}` : task.id;
 
 /**
- * Who a card is with: its agent, the lead at its spike, the designer or lead at its review — what puts it at the top
+ * Who a card is with: its agent, a scout at its spike, the designer or tester at its review — what puts it at the top
  * of its stage, the ones nobody is on below (a stage's cards under its scroll were the ones being worked).
  */
 const withSomeone = (task: TaskLine): boolean =>
@@ -37,7 +37,7 @@ const standingOf = (task: TaskLine): string =>
   task.status === 'in-review'
     ? task.design?.status === 'due'
       ? 'UI review'
-      : 'lead review'
+      : 'review'
     : task.status === 'in-progress'
       ? 'at work'
       : task.status === 'changes-requested'
@@ -46,7 +46,7 @@ const standingOf = (task: TaskLine): string =>
 
 /**
  * What a pending task waits for: each task it follows that is not approved yet, and where that one stands — "after
- * t-boxer (UI review), t-lint (lead review)". Its tasks at review were a pending task's whole reason, and nothing on
+ * t-boxer (UI review), t-lint (review)". Its tasks at review were a pending task's whole reason, and nothing on
  * the screen said so (t-motion pending while the three it followed waited for one designer).
  */
 export const waitsText = (task: TaskLine, tasks: readonly TaskLine[]): string => {
@@ -95,8 +95,8 @@ export const flowStages = (tasks: readonly TaskLine[]): FlowStage[] => {
             glyph: '◇',
             tone: 'info' as const,
             tasks: of('spike'),
-            // Never "free": no agent takes a spike — the lead at it, or one is waited for.
-            who: (task: TaskLine) => task.spikedBy ?? 'for a lead'
+            // Never "free": no developer takes a spike — a scout at it (the lead with none), or one is waited for.
+            who: (task: TaskLine) => task.spikedBy ?? 'not taken yet'
           }
         ]
       : []),

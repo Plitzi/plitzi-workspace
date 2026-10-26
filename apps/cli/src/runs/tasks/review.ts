@@ -3,10 +3,11 @@ import path from 'node:path';
 
 import { approveDesign, assertDesigner, designDue, reviewTimeOf, timedOut } from '../design';
 import { writeJson } from '../files';
-import { assertReviewingLead, isPrincipal, testersOf } from '../leads';
+import { assertReviewingLead, isPrincipal, reviewTeamOf, spareReviewers } from '../leads';
 import { agentAddress, LEAD, messagesOf, sendMessage, unreadFor } from '../messages';
 import { taskPaths } from '../paths';
 import { RunRefusal } from '../refusal';
+import { letGoUi } from '../reviewQueue';
 import { assertStatus, loadRun, logRun, readRunLog, recordBrake, requireNoTask } from '../run';
 import { logSpent } from '../spent';
 import { keepFiles, withLock } from '../store';
@@ -110,7 +111,7 @@ const assertTeamDesigner = async (ctx: RunContext, taskId: string): Promise<void
       'invalid',
       `${ctx.agent} is no designer of the team (${TEAM_FILE}): ${
         designers.length > 0 ? designers.map(each => each.agent).join(', ') : 'none of its agents'
-      } or the lead review ${taskId}'s UI — the lead, as itself: plitzi task review ${taskId} --approve`,
+      } review ${taskId}'s UI — or whoever reviews the task, a tester or the lead, looks at it itself: plitzi task review ${taskId} --approve --skip-design reviewer`,
       { task: taskId, designers: designers.map(each => each.agent) }
     );
   }
@@ -242,7 +243,14 @@ const decide = async (
   // what the lead said meanwhile is no reason to say the verdict again.
   // Who reviews the task — a tester, the lead — gives its verdict as itself, its UI too when it says it looked
   // (`--skip-design reviewer`); any other, while the UI waits, is the designer's.
-  const reviewer = isPrincipal(ctx.agent) || (await testersOf(ctx.root)).includes(ctx.agent);
+  const team = await reviewTeamOf(ctx.root);
+  const reviewer =
+    isPrincipal(ctx.agent) ||
+    team.testers.includes(ctx.agent) ||
+    (team.developers.includes(ctx.agent) &&
+      spareReviewers(view, await Promise.all(loaded.tasks.map(each => viewTask(loaded.paths, each))), team).includes(
+        ctx.agent
+      ));
   if (designDue(view.state) && !reviewer) {
     assertDesigner(view, ctx.agent);
   }
@@ -285,7 +293,7 @@ const decide = async (
       return { verdict, round: view.state.round, design: 'approved' };
     }
   } else {
-    await assertReviewingLead(ctx, view);
+    await assertReviewingLead(ctx, loaded, view);
   }
 
   if (!byDesigner && verdict === 'approve' && designDue(view.state) && !skipDesign) {
@@ -324,8 +332,16 @@ const decide = async (
     );
   }
   // The reviewer's UI review is a look at it, said: a run's lead approved t-reactions-quiet `--skip-design reviewer` without
-  // one, and the emoji sat at the top of every key — the person saw it, no check could.
-  if (why === 'reviewer' && !(await lookedSince(loaded, ctx.agent, taskId))) {
+  // one, and the emoji sat at the top of every key — the person saw it, no check could. A round whose UI its reviewer
+  // kept sending it back (`--changes … --skip-design reviewer`) is the same: no designer looks at it.
+  const kept =
+    view.state.design?.status === 'skipped' &&
+    view.state.design.why === 'reviewer' &&
+    view.state.design.round === view.state.round;
+  if (
+    (why === 'reviewer' || (verdict === 'approve' && kept && !byDesigner)) &&
+    !(await lookedSince(loaded, ctx.agent, taskId))
+  ) {
     throw new RunRefusal(
       'invalid',
       `--skip-design reviewer says you reviewed ${taskId}'s UI yourself, and you have not looked at it since it was completed: plitzi task look ${taskId} (both schemes, the phone width), then approve`,
@@ -414,8 +430,14 @@ const decide = async (
         ...state,
         round,
         ...(designRounds > 0 ? { designRounds } : {}),
-        ...(reserving
-          ? { design: { ...(state.design ?? { status: 'skipped' as const, round: state.round }), reserved: ctx.agent } }
+        // Its UI review, taken, is let go: the task left review.
+        ...(state.design !== undefined || reserving
+          ? {
+              design: {
+                ...letGoUi(state.design ?? { status: 'skipped' as const, round: state.round }),
+                ...(reserving ? { reserved: ctx.agent } : {})
+              }
+            }
           : {}),
         status: toLead ? 'blocked' : 'changes-requested',
         ...(toLead

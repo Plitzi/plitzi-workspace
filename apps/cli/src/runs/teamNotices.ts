@@ -6,7 +6,7 @@ import type { Team } from './team';
 
 /** What `run plan` says of the team beside the work: too big for it, or too few designers for the UI it changes. */
 
-/** The developers a designer keeps up with: past it, UI reviews queue, and the lead reviews them itself or they wait. */
+/** The developers a designer keeps up with: past it, UI reviews queue, and their reviewer looks at them itself or they wait. */
 export const DEVELOPERS_PER_DESIGNER = 3;
 
 /**
@@ -63,7 +63,7 @@ const designersNotice = (plan: Pick<RunPlan, 'tasks' | 'designReview' | 'referen
   }
 
   return [
-    `${String(looked)} tasks change what a visitor sees, and ${String(designers)} designer${designers === 1 ? '' : 's'} review${designers === 1 ? 's' : ''} the UI of ${String(developers)} developers: one for every ${String(perDesigner)}${plan.reference === undefined ? '' : ' in a copy of a site, each review measuring it against the original,'} keeps the reviews from queueing — ${String(needed)} (plitzi run team set <designer entry> --roles designer --count ${String(needed)}). Fewer, and the lead reviews the rest itself (plitzi task review <task> --approve --skip-design reviewer) — a task that changes nothing a visitor sees goes as code (task complete --review code)`
+    `${String(looked)} tasks change what a visitor sees, and ${String(designers)} designer${designers === 1 ? '' : 's'} review${designers === 1 ? 's' : ''} the UI of ${String(developers)} developers: one for every ${String(perDesigner)}${plan.reference === undefined ? '' : ' in a copy of a site, each review measuring it against the original,'} keeps the reviews from queueing — ${String(needed)} (plitzi run team set <designer entry> --roles designer --count ${String(needed)}). Fewer, and whoever reviews the task — a tester, the lead with none — looks at the rest itself (plitzi task review <task> --approve --skip-design reviewer) — a task that changes nothing a visitor sees goes as code (task complete --review code)`
   ];
 };
 

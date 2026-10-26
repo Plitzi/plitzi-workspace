@@ -15,6 +15,7 @@ import {
   isTaskState
 } from './model';
 import { taskPaths, tasksDir } from './paths';
+import { letGoUi } from './reviewQueue';
 import { withLock } from './store';
 
 import type {
@@ -274,6 +275,12 @@ export const cutTask = async (view: TaskView, reason: string, now: () => Date): 
       ...state,
       status: 'ready',
       cutAt: { step, reason, at: now().toISOString() },
+      // What held it out of work goes with its agent: a block, a spike asked — and a scout's answer to it, which
+      // approved would have closed the task as research done — and a UI review taken.
+      blockedBy: undefined,
+      spikedBy: undefined,
+      proposed: undefined,
+      ...(state.design ? { design: letGoUi(state.design) } : {}),
       notes: [
         ...state.notes,
         {

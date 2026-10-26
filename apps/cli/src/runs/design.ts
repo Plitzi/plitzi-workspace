@@ -17,10 +17,11 @@ import type { TaskView } from './taskStore';
 
 /**
  * The designer's review: in a run with a designer — one in the team, or a designer's task in the plan — the
- * UI another role's task changes is looked at by a designer before the lead: how it reads, not only whether it works.
+ * UI another role's task changes is looked at by a designer before its reviewer: how it reads, not only whether it works.
  * At `complete` such a task is `due` (`TaskState.design`); a designer is offered it by `task next`, looks at it as it
- * went to review (`task look`), and says: changes go back to the task as the lead's would, approval hands it to the lead.
- * The lead approves after — or before, saying so (`--skip-design`), and the report shows which.
+ * went to review (`task look`), and says: changes go back to the task as a review's would, approval hands it to its
+ * reviewer — a tester, the lead with none — who approves after, or before, saying so (`--skip-design`): the report shows
+ * which.
  */
 
 /** Whether a designer reviews this task's UI: another role's work that changes what a person sees. */
@@ -68,7 +69,7 @@ export const designReviewFor = (views: readonly TaskView[], agent: string, now: 
 export const SAME_DESIGNER_MS = 3 * 60_000;
 
 /**
- * How long a UI review is its designer's once taken: past it, another designer takes it, or the lead decides it — the
+ * How long a UI review is its designer's once taken: past it, another designer takes it, or its reviewer decides it — the
  * designer told. A run's design-1 held one 16 min, and a task waited 18 min queued behind it: the run's time
  * went to one agent's review while the developers sat free.
  */
@@ -171,8 +172,8 @@ export const takeDesignReview = async (
 };
 
 /**
- * A designer approves a task's UI: the task stays in review, and is the lead's now — with what the designer saw and
- * did not ask to change, when it says it (`--note`): the lead reads it with the task.
+ * A designer approves a task's UI: the task stays in review, and is its reviewer's now — a tester, the lead with none —
+ * with what the designer saw and did not ask to change, when it says it (`--note`): the reviewer reads it with the task.
  */
 export const approveDesign = async (
   ctx: RunContext,
@@ -189,7 +190,7 @@ export const approveDesign = async (
       design: { status: 'approved', round: state.round, by: ctx.agent, at },
       notes: [
         ...state.notes,
-        { at, by: ctx.agent, text: `Its UI approved by ${ctx.agent}: the lead’s now${note ? ` — ${note}` : ''}` }
+        { at, by: ctx.agent, text: `Its UI approved by ${ctx.agent}: its reviewer’s now${note ? ` — ${note}` : ''}` }
       ]
     }),
     ctx.now
@@ -200,13 +201,13 @@ export const approveDesign = async (
 
 /**
  * Its design review as it goes to review again: none in a run without one, or for a task that changes no UI; `due` —
- * unless a designer approved it before and its UI is byte for byte what the lead's last review saw, a round of the lead's
+ * unless a designer approved it before and its UI is byte for byte what the last review saw, a round of its reviewer's
  * changes that did not touch it (a fix in a module): then the approval stands, and is said in its notes.
  */
 /**
- * What review a task asks for as it is sent: `code` — the lead's, of the code and the acceptance, nothing visible to
- * look at — or `ui` too, its UI looked at by a designer (the lead's too when no designer is free) before the lead's of
- * the code. Left unsaid, the run decides: a run with designers reviews the UI of what changed a page.
+ * What review a task asks for as it is sent: `code` — its reviewer's, of the code and the acceptance, nothing visible to
+ * look at — or `ui` too, its UI looked at by a designer (the reviewer's too when no designer is free) before the
+ * reviewer's of the code. Left unsaid, the run decides: a run with designers reviews the UI of what changed a page.
  */
 export type ReviewAsked = 'code' | 'ui';
 
@@ -251,7 +252,7 @@ export const designAtComplete = async (
   if (reserved !== undefined) {
     return {
       design: { status: 'skipped', round: view.state.round, why: 'reviewer', by: reserved },
-      carried: `Its UI review this round is ${reserved}'s, as ${reserved} said sending it back: it comes to ${reserved} alone`
+      carried: `Its UI review this round is its reviewer's, as ${reserved} said sending it back: no designer is offered it, and whoever approves it looks at its UI first (task look)`
     };
   }
 
@@ -263,7 +264,7 @@ export const designAtComplete = async (
     : undefined;
   if (others?.length === 0) {
     return {
-      carried: `No designer of the team but ${holder ?? 'its own'} worked it: its UI is the lead's to review, with the rest`
+      carried: `No designer of the team but ${holder ?? 'its own'} worked it: its UI is its reviewer's to look at, with the rest`
     };
   }
 
@@ -288,7 +289,7 @@ export const designAtComplete = async (
     design: {
       status: 'due',
       round: view.state.round,
-      ...(design?.by === undefined ? {} : { before: design.by }),
+      ...((design?.by ?? design?.before) === undefined ? {} : { before: design?.by ?? design?.before }),
       since: new Date(now).toISOString()
     },
     ...(overruled ? { carried: `Its UI is reviewed${overruled}` } : {})

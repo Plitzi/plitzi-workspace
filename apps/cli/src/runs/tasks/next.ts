@@ -4,7 +4,17 @@ import { durationText, FOLLOW_MS } from '../../options';
 import { designReviewFor, hasDesignReview, takeOfferedReview } from '../design';
 import { handOver } from '../handOver';
 import { assertRoles } from '../identity';
-import { isPrincipal, LEAD_ROLE, leadReviewFor, scoutsOf, takeLeadReview, testerReviews, testersOf } from '../leads';
+import {
+  isPrincipal,
+  LEAD_ROLE,
+  leadReviewFor,
+  reviewTeamOf,
+  scoutsOf,
+  spareReviewers,
+  takeLeadReview,
+  testerReviews,
+  testersOf
+} from '../leads';
 import { agentAddress, unreadFor } from '../messages';
 import { ON_DEMAND_IDLE_MS } from '../onDemand';
 import { reviewPages } from '../pagesOf';
@@ -17,7 +27,16 @@ import { assertStatus, loadRun, logRun, readRunLog } from '../run';
 import { runChanged } from '../runChanged';
 import { tellLeftInTmp } from '../strays';
 import { isDisconnected, updateState, viewTask } from '../taskStore';
-import { DEFAULT_DESIGN_REVIEW, DESIGNER, qualityRank, readTeam, SCOUT, startedAgents, TESTER } from '../team';
+import {
+  DEFAULT_DESIGN_REVIEW,
+  DESIGNER,
+  DEVELOPER,
+  qualityRank,
+  readTeam,
+  SCOUT,
+  startedAgents,
+  TESTER
+} from '../team';
 import { isWorked } from '../worked';
 import { at, findTask, roleOf } from './common';
 import { designersIn, leadNext, noDesignerFreeIn, spikeFor, uiTooText } from './leadNext';
@@ -93,8 +112,8 @@ export interface NextTask {
     first?: true;
   };
   /**
-   * A tester's — or the lead's, one no tester may take (`leadReviews`): a task in review nobody else took — what it
-   * changed, where it is drawn, and what its earlier reviews asked.
+   * A tester's — a developer's, one no tester may take (`spareReviewers`), or the lead's when nobody else may
+   * (`leadReviews`): a task in review nobody else took — what it changed, where it is drawn, what its reviews asked.
    */
   leadReview?: ReviewOffer;
   /**
@@ -250,6 +269,27 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     if (review) {
       return {
         leadReview: await reviewOffer(
+          loaded,
+          review,
+          review.state.design?.status === 'due' ? uiTooText(ctx.agent, await designersIn(ctx)) : undefined
+        ),
+        ready: [],
+        messages
+      };
+    }
+  }
+
+  // A review no tester may take — a lone tester's own tests — is a developer's that worked neither it nor what it tests,
+  // before a task of its own: the lead reviews it only when nobody else may (Carlos).
+  if (roles?.includes(DEVELOPER) === true) {
+    const team = await reviewTeamOf(ctx.root);
+    const spare = views.filter(view => spareReviewers(view, views, team).includes(ctx.agent));
+    const noDesignerFree = spare.length > 0 && (await noDesignerFreeIn(ctx, views));
+    const review = leadReviewFor(spare, ctx.agent, view => noDesignerFree || uiQueued(view, ctx.now().getTime()));
+    if (review) {
+      return {
+        leadReview: await reviewOffer(
+          loaded,
           review,
           review.state.design?.status === 'due' ? uiTooText(ctx.agent, await designersIn(ctx)) : undefined
         ),

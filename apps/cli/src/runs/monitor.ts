@@ -348,7 +348,7 @@ const agentsOf = async (
     const lastLine = last ? lastDone(last) : undefined;
     const recent = lastAt !== undefined && now - lastAt < ACTIVE_MS && lastLine !== undefined;
     // Finding out a spike it took, with no scout in the team: working, on that task — never idle.
-    const spiking = at ? undefined : view.tasks.find(task => task.status === 'spike' && task.spikedBy === LEAD);
+    const spiking = at ? undefined : view.tasks.find(task => task.spikedBy === LEAD);
     if (spiking) {
       return {
         ...base,
@@ -424,7 +424,8 @@ const agentsOf = async (
 
     // A scout at a spike, a tester at a review: at work on that task — never idle (the lead at t-shell's spike was
     // nowhere on the board).
-    const spiking = task ? undefined : view.tasks.find(each => each.status === 'spike' && each.spikedBy === agent);
+    // At an agent's block too: `spikedBy` is said only while it is found out (`view.ts`).
+    const spiking = task ? undefined : view.tasks.find(each => each.spikedBy === agent);
     const reviews = task || spiking ? undefined : reviewing.get(agent);
     if (spiking || reviews) {
       return {
@@ -433,7 +434,7 @@ const agentsOf = async (
         status: spiking ? ('working' as const) : ('reviewing' as const),
         ...about,
         doing: spiking
-          ? `finds out for ${spiking.id}: ${spiking.spike ?? 'what it needs'}${tail}`
+          ? `finds out for ${spiking.id}: ${spiking.spike ?? spiking.blockedBy?.reason ?? 'what it needs'}${tail}`
           : `reviews ${String(reviews)}${tail}`,
         task: spiking?.id ?? String(reviews),
         ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})

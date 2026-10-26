@@ -535,7 +535,7 @@ describe('plitzi run monitor', () => {
 
     expect(
       shown(data, { view: 'tasks' }).text.some(
-        line => line.includes(waiting.id) && line.includes('after t-home (lead review)')
+        line => line.includes(waiting.id) && line.includes('after t-home (review)')
       )
     ).toBe(true);
     expect(cards(data.view.tasks, 'pending').some(card => card.startsWith(`${waiting.id} after t-home`))).toBe(true);

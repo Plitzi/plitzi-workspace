@@ -1,6 +1,7 @@
 import { inPageFolder } from './ownership';
 import { isResearch } from './spike';
 import { roleOf } from './tasks';
+import { TESTER } from './team';
 import { byUrgency, chainMinutes } from './urgency';
 
 import type { RunTask } from './model';
@@ -79,7 +80,13 @@ export interface Rehearsal {
   /** Tasks never reached because what they wait for is never done. */
   stranded: string[];
   /** The reviews: who made them, how many, the minutes they took, and the longest a task waited for one. */
-  reviews: Reviewers & { reviews: number; busyMinutes: number; longestWait: number };
+  reviews: Reviewers & {
+    reviews: number;
+    busyMinutes: number;
+    longestWait: number;
+    /** A lone tester's own tasks, reviewed by a developer that did not work them — its time taken from its work. */
+    byDevelopers: number;
+  };
   contention: Contention[];
   /**
    * The whole run's length for each number of agents, from as many as the roles hold to the most worth trying: `null`
@@ -141,6 +148,10 @@ const play = (tasks: readonly RunTask[], options: RehearsalOptions): Played => {
   const unstaffed = tasks.filter(task => !staffed(task)).map(task => task.id);
   let reviewBusy = 0;
   let longestWait = 0;
+  let byDevelopers = 0;
+  // A lone tester's own tasks: no tester may review them, a developer does (`spareReviewers`).
+  const spare = (played: RehearsedTask): boolean =>
+    reviewers.by === 'testers' && reviewers.count === 1 && played.role === TESTER;
   let now = 0;
 
   const markReady = (): void => {
@@ -170,7 +181,25 @@ const play = (tasks: readonly RunTask[], options: RehearsalOptions): Played => {
         changed = true;
       }
 
-      const due = queue.findIndex(task => task.complete <= now);
+      for (const waiting of queue.filter(task => task.complete <= now && spare(task))) {
+        const developer = team.find(
+          agent =>
+            agent.freeAt <= now && (agent.role === ANY || agent.role === 'developer') && agent.name !== waiting.agent
+        );
+        if (developer) {
+          queue.splice(queue.indexOf(waiting), 1);
+          waiting.waitedForReview = now - waiting.complete;
+          waiting.approved = now + options.reviewMinutes;
+          longestWait = Math.max(longestWait, waiting.waitedForReview);
+          developer.freeAt = waiting.approved;
+          developer.busy += options.reviewMinutes;
+          byDevelopers += 1;
+          reviewing.push(waiting);
+          changed = true;
+        }
+      }
+
+      const due = queue.findIndex(task => task.complete <= now && !spare(task));
       if (reviewing.length < reviewers.count && due !== -1) {
         const next = queue.splice(due, 1).at(0);
         if (next) {
@@ -246,7 +275,14 @@ const play = (tasks: readonly RunTask[], options: RehearsalOptions): Played => {
     team,
     unstaffed: unstaffed.sort(),
     stranded,
-    reviews: { ...reviewers, reviews: scheduled.length, busyMinutes: reviewBusy, longestWait },
+    reviews: {
+      ...reviewers,
+      // Research is done by its findings: no review.
+      reviews: scheduled.filter(each => !researching.includes(each)).length,
+      busyMinutes: reviewBusy,
+      longestWait,
+      byDevelopers
+    },
     wallMinutes
   };
 };
@@ -476,7 +512,7 @@ export const rehearsalText = (runId: string, rehearsal: Rehearsal, reviewMinutes
         } — idle ${String(agent.idleMinutes)} min`
     ),
     `Critical path: ${rehearsal.criticalPath.tasks.join(' → ')} (${String(rehearsal.criticalPath.minutes)} min of work)`,
-    `${rehearsal.reviews.by === 'lead' ? 'The lead (no tester in the team)' : `${String(rehearsal.reviews.count)} tester${rehearsal.reviews.count === 1 ? '' : 's'}`}: ${String(rehearsal.reviews.reviews)} reviews, ${String(rehearsal.reviews.busyMinutes)} min${rehearsal.reviews.longestWait > 0 ? `; the longest a task waited for one: ${String(rehearsal.reviews.longestWait)} min` : ''}`,
+    `${rehearsal.reviews.by === 'lead' ? 'The lead (no tester in the team)' : `${String(rehearsal.reviews.count)} tester${rehearsal.reviews.count === 1 ? '' : 's'}`}: ${String(rehearsal.reviews.reviews)} reviews, ${String(rehearsal.reviews.busyMinutes)} min${rehearsal.reviews.byDevelopers > 0 ? ` — ${String(rehearsal.reviews.byDevelopers)} of them by a developer, the tester's own tasks` : ''}${rehearsal.reviews.longestWait > 0 ? `; the longest a task waited for one: ${String(rehearsal.reviews.longestWait)} min` : ''}`,
     ...rehearsal.scheduled
       .filter(task => task.waitedForAgent > 0)
       .map(

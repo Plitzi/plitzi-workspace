@@ -1,4 +1,4 @@
-import { isPrincipal, leadReviewFor, leadReviews, scoutsOf, testersOf } from '../leads';
+import { isPrincipal, leadReviewFor, leadReviews, reviewTeamOf, scoutsOf } from '../leads';
 import { notLookedAtYet } from '../lookedAt';
 import { RunRefusal } from '../refusal';
 import { uiQueued } from '../reviewQueue';
@@ -80,7 +80,7 @@ export const spikeFor = (
 
 /**
  * `task next --role lead`: what waits for the lead, the manager — the tasks a scout proposes, to decide with the person;
- * a review escalated to it is blocked on it and comes through `run watch`; the reviews no tester may take — every one,
+ * a review escalated to it is blocked on it and comes through `run watch`; a review nobody else may take — every one,
  * with no tester in the team (`leadReviews`); the spikes when it has no scout. The lead reviews nothing a tester takes: every review it reads stays in its context,
  * the person's harness never started again.
  */
@@ -119,14 +119,15 @@ export const leadNext = async (
     };
   }
 
-  const testers = await testersOf(ctx.root);
-  const theirs = views.filter(view => leadReviews(view, testers));
+  const team = await reviewTeamOf(ctx.root);
+  const theirs = views.filter(view => leadReviews(view, views, team));
   if (theirs.length > 0) {
     const noDesignerFree = await noDesignerFreeIn(ctx, views);
     const review = leadReviewFor(theirs, ctx.agent, view => noDesignerFree || uiQueued(view, ctx.now().getTime()));
     if (review) {
       return {
         leadReview: await reviewOffer(
+          loaded,
           review,
           review.state.design?.status === 'due' ? uiTooText(ctx.agent, await designersIn(ctx)) : undefined
         ),

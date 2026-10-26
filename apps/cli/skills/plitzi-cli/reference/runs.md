@@ -16,7 +16,7 @@ while its agent is at a task (3 min on, with its review's asks); again until it 
 **A designer** reviews UI/UX before the tester: [runs-designer.md](runs-designer.md). **A tester** reviews every task — its QA ([runs-review.md](runs-review.md)) — first; then `<task>-tests` after each developer task: tests of
 what its acceptance asked, both sides of each condition (a page's in `visual/<page>.spec.ts`, a module's beside it,
 `node --test`). A test the work fails is told to the lead (`task tell`), never bent. While every tester is at work, a
-developer is handed `-tests` cards too, never of a task it worked.
+developer is handed `-tests` cards, and their review when no tester may: never of a task it worked.
 
 The lead's half — plan, open, close, stack — is [runs-lead.md](runs-lead.md).
 
@@ -67,10 +67,10 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
   before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage. What the lead
   says to you arrives with your next heartbeat, progress or completion — read it (`task inbox --all`: all again).
 - **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"` (at a review too); in a long think or test
-  run, `plitzi task progress` every 2 minutes.
-- **A spike** is a lead's: what is built is decided by what it finds — your brief has what was found for your task.
-  Your work needs something found out first: `plitzi task spike "what"` — blocked on the lead, its files yours; the
-  answer comes back with the task (`task next`), take another meanwhile.
+  run, every 2 minutes.
+- **A spike** is a scout's (the lead's with none), its result the lead's to approve: what is built is decided by what
+  it finds — your brief has what was found for your task. Your work needs something found out first: `plitzi task spike
+  "what"` — blocked, its files yours; the answer comes back with the task (`task next`), take another meanwhile.
 - **Blocked by something outside the plan** (a key, a decision): `plitzi task block --reason "…"` (the lead's:
   only it talks to the person), then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks
@@ -80,7 +80,7 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
   changed: iterate on it, not on `complete`, whose failures count toward the run's brake. It hands you the lead's news. What you declare for later tasks, unread yet, is a warning.
 - **Done:** `plitzi task complete --ease <1-5> --hardest "…" [--friction "…"] [--note "…"] [--review code|ui]` — what
   it was like to Plitzi, the note to the lead;
-  `code` when nothing a visitor sees changed (the lead's alone, unless a page draws it), `ui` for its UI looked at first. A control you add you use first, there and back (`page play`). **A task never ends
+  `code` when nothing a visitor sees changed (no designer's look, unless a page draws it), `ui` for its UI looked at first. A control you add you use first, there and back (`page play`). **A task never ends
   with failing checks** — lint, types, tests: fix them — nor with a file it took past 400 non-blank lines (your
   heartbeat says so first): split it. Only for a weighty reason: `plitzi task complete
 --known-failure "why" [--fixed-by <task>|lead]`, its why naming each failing step. A check that fails the same way without your change (a person's,

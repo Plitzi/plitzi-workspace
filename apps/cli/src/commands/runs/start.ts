@@ -4,7 +4,7 @@ import { runOpen } from './plan';
 import { launchBrowser } from '../../browser';
 import { HARNESSES, isHarness } from '../../runs/agentPrompt';
 import { onPath } from '../../runs/launchAgent';
-import { readTeam, startedAgents } from '../../runs/team';
+import { readTeam, SCOUT, startedAgents } from '../../runs/team';
 import { projectHere } from '../existingProject';
 import { fail } from '../terminal';
 
@@ -77,18 +77,21 @@ export const runStart = async (ask: string, options: StartOptions): Promise<void
   const team = project ? await readTeam(project.root) : undefined;
   const base = team ? startedAgents(team).filter(each => each.onDemand !== true) : [];
   const harness = options.harness ?? '<claude|codex|opencode>';
+  const scouts = team ? startedAgents(team).filter(each => each.roles.includes(SCOUT)) : [];
   console.log(
     [
       '',
       chalk.bold('What happens now — a team of agents, you the person who applies its work:'),
-      "  1. The scope is the lead's: it finds out what the ask takes and ends it with the tasks — the agent you asked, or one started on the lead's own CLI, as said above.",
+      scouts.length > 0
+        ? `  1. The scope is a scout's (${scouts.map(each => each.agent).join(', ')}): it finds out what the ask takes and proposes the tasks; the lead decides them with you and approves them — the agent you asked, or one started on the lead's own CLI, as said above.`
+        : "  1. The scope is the lead's (the team has no scout): it finds out what the ask takes and ends it with the tasks — the agent you asked, or one started on the lead's own CLI, as said above.",
       // A team that says how to start its agents is started by the run's keeper: told to start it by hand, an opener
       // would start it twice.
       team?.options?.launch === undefined
         ? `  2. The team, once there are tasks: ${base.map(each => `plitzi run agent ${each.agent} --launch --harness ${harness}`).join(' · ') || 'plitzi run agent <name> --launch'} — the lead starts more on demand when run watch says so.`
         : `  2. The team starts by itself once there are tasks (team.json's options.launch, ${team.options.launch}): ${base.map(each => each.agent).join(', ') || 'its base'}, and more when work waits — start none of them.`,
       '  3. Follow it: plitzi run monitor in a terminal of yours — its p serves the approved work as it goes.',
-      '  4. The end: the lead writes the report and the dry finish; you read it and apply it — plitzi run finish --apply. Nothing touches the project before it; plitzi run abort leaves no trace.'
+      '  4. The end: the lead looks at the whole result (run look), writes the report and the dry finish; you read it and apply it — plitzi run finish --apply. Nothing touches the project before it; plitzi run abort leaves no trace.'
     ].join('\n')
   );
 };

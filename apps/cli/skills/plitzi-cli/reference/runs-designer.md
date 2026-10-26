@@ -1,7 +1,7 @@
 # Reviewing a run's UI: the designer's half of `plitzi run`
 
-What a designer of a run does — it looks at the UI the others' tasks change, as a designer, before the lead's complete
-review. The run's protocol — your token, the refusals and their exit codes — is [runs.md](runs.md), which you read
+What a designer of a run does — it looks at the UI the others' tasks change, as a designer, before its reviewer's
+complete review (a tester's, the lead's with none). The run's protocol — your token, the refusals and their exit codes — is [runs.md](runs.md), which you read
 too.
 
 - **Wait for reviews:** `plitzi task next --agent design-1` (your first command; then
@@ -33,7 +33,7 @@ too.
 - **Say it:** `plitzi task review <task> --approve [--note "what you saw"] | --changes "what, where, why — the values
 measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it** (15 for your first, which holds the reading
   it asks first): past them it goes to another designer or
-  the lead, and your verdict is refused. One round asks everything you want of it. A difference a visitor sees is sent back, never approved with a note —
+  its reviewer, and your verdict is refused. One round asks everything you want of it. A difference a visitor sees is sent back, never approved with a note —
   "approximate" is one. A control the task adds — an arrow, a dot, a pager, a drawer — you use there and back:
   `page play <path> --steps "click <el>; …" --read <el…>` says how far each step moved what, what it shows and takes a
   press, a colour a step changed, its animations, and where a step took the page (`goto <path>` opens another — what
@@ -47,7 +47,7 @@ measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it** (
   cover that is broken or measures off. Another element, a page-wide value (the body's font), a refinement the task
   never asked: `plitzi run notice "…"`, never a round: asks beyond a task turn minutes of work into an hour of rounds.
 - **A round another designer said before:** check that what it asked is done, and ask anew only what is broken.
-- **Beyond the task:** wrong, and no task's — `plitzi run notice "…" --on <page|element|file>`; what the lead should
+- **Beyond the task:** wrong, and no task's — `plitzi run notice "…" --on <page|element|file>`; what its reviewer should
   know of a task — a finding for its code review (data frozen at authoring, a second source of truth) above all — `plitzi
   task tell --about <task> "…" --token <yours>`, never buried in an approval's note. Never write in a task's copy: your pictures
   and scripts go in `tmp/plitzi-runs/<run>/scratch/<you>/`.

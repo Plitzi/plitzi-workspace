@@ -51,7 +51,7 @@ export const boardLines = (view: Pick<RunView, 'tasks' | 'reviewers'>): string[]
               : task.status === 'in-review' && task.design?.status === 'due'
                 ? ` · ${designText(task.design)}`
                 : task.status === 'in-review'
-                  ? `${task.design ? ` · ${designText(task.design)}` : ''}${task.reviewer ? ` · ${task.reviewer} reviews it` : task.leadReviews ? ' · the lead’s to review (each tester worked it)' : view.reviewers.length > 0 ? ' · no tester took it yet' : ''}`
+                  ? `${task.design ? ` · ${designText(task.design)}` : ''}${task.reviewer ? ` · ${task.reviewer} reviews it` : task.spareReviewers ? ` · ${task.spareReviewers.join(' or ')} reviews it (each tester worked it)` : task.leadReviews ? ' · the lead’s to review (nobody else may: each worked it, or what it tests)' : view.reviewers.length > 0 ? ' · no tester took it yet' : ''}`
                   : '';
     lines.push(
       `  ${ICON[task.status]} ${task.id.padEnd(18)} ${task.role === 'developer' ? '' : `[${task.role}] `}${agent}${task.title}${step}${progress}${extra}${task.noSignal ? ' · no signal' : ''}`

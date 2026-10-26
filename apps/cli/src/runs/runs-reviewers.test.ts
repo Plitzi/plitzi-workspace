@@ -12,9 +12,9 @@ import { leadItems } from './leadWatch';
 import { notLookedAtYet } from './lookedAt';
 import { messagesOf } from './messages';
 import { agentsNeeded } from './onDemand';
-import { loadRun, logRun, openRun, readRunLog } from './run';
+import { loadRun, logRun, openRun } from './run';
 import { scopePlan, SCOPE_SPIKE } from './spike';
-import { askLead, noteRun } from './talk';
+import { noteRun } from './talk';
 import {
   answerSpike,
   approveSpike,
@@ -32,11 +32,11 @@ import { viewTask } from './taskStore';
 import { readTeam, setTeamAgent, skillProblems, STARTER_TEAM, startedAgents, teamProblems } from './team';
 import { viewRun } from './view';
 import { startLines } from '../commands/runs/plan';
+import { reviewerSteps, SCOUT, scripted, team, TESTERS } from '../tests/reviewerSteps';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 import { lookedAt, runSteps } from '../tests/runSteps';
 
 import type { RunPlan } from './model';
-import type { Team, TeamAgent } from './team';
 import type { Bench } from '../tests/runProject';
 
 /**
@@ -57,32 +57,7 @@ afterEach(async () => {
 
 const { refusal, lead, take } = runSteps(() => bench);
 
-/** Scripted agents, each one session the test drives: a fresh start between pieces has tests of its own. */
-const scripted = (agent: TeamAgent): TeamAgent => ({ ...agent, session: 'keep' });
-
-const team = (...more: TeamAgent[]): Team => ({
-  version: 1,
-  agents: [scripted({ name: 'agent', roles: ['developer', 'designer'], count: 2 }), ...more.map(scripted)]
-});
-
-const TESTERS = { name: 'test', roles: ['tester'], count: 2 };
-const SCOUT = { name: 'scout', roles: ['scout'] };
-
-/** A run of the bench's plan — no UI review — with t-menu, then t-home, sent to review. */
-const twoInReview = async (members: Team = team(TESTERS)): Promise<{ runId: string }> => {
-  const plan: RunPlan = { ...benchPlan(), designReview: false };
-  const file = await bench.writePlan(plan);
-  await bench.writeTeam(members);
-  const { runId } = (await openRun(lead(), file)).checked;
-  const menu = await take('agent-1', 't-menu');
-  await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Menú" };\n');
-  await completeTask(menu.ctx, runId, 't-menu');
-  const home = await take('agent-2', 't-home');
-  await writeInCopy(home.work, 'src/space/pages/home/index.ts', 'export const page = { title: "Inicio" };\n');
-  await completeTask(home.ctx, runId, 't-home');
-
-  return { runId };
-};
+const { twoInReview } = reviewerSteps(() => bench);
 
 const statusOf = async (runId: string, taskId: string): Promise<string | undefined> =>
   (await viewRun(lead(), runId)).tasks.find(task => task.id === taskId)?.status;
@@ -619,63 +594,5 @@ describe('what the lead is told, as manager', () => {
     expect(lines).toContain('every task’s review');
     expect(lines).toContain('scout-1 — scout');
     expect(lines).not.toContain('nothing for its scout');
-  });
-});
-
-describe('a review no tester may take', () => {
-  // The one tester writes every `-tests` card: its own were offered to nobody, and the lead was never woken for them.
-  it('is the lead’s — offered in its queue, woken for, and no tester started for it', async () => {
-    const members = team({ ...TESTERS, count: 1 });
-    await bench.writeTeam(members);
-    const plan: RunPlan = { ...benchPlan(), designReview: false };
-    plan.tasks = plan.tasks.map(task => (task.id === 't-menu' ? { ...task, role: 'tester' } : task));
-    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
-    const taken = await take('test-1', 't-menu');
-    await writeInCopy(taken.work, 'src/space/pages/menu.ts', 'export const page = {};\n');
-    await completeTask(taken.ctx, runId, 't-menu');
-
-    expect((await nextTask(bench.agent('test-1'), runId, 'tester')).leadReview).toBeUndefined();
-    const woken = leadItems(await viewRun(lead(), runId)).filter(item => item.key.startsWith('review:t-menu:'));
-    expect(woken.map(item => item.text)).toEqual([expect.stringContaining('yours to review (test-1 worked it)')]);
-    expect((await nextTask(lead(), runId, 'lead')).leadReview?.task.id).toBe('t-menu');
-
-    const loaded = await loadRun(lead(), runId);
-    const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
-    const run = { identified: [], scratch: loaded.paths.scratch, openFor: 0, open: true, launches: true };
-    const asked = agentsNeeded(views, startedAgents(members), new Set(['agent-1']), run);
-    expect(asked.map(each => each.text).join(' ')).not.toContain('the review of t-menu');
-  });
-});
-
-describe('a question the task asked, open at its review', () => {
-  it('has a tester hand the review to the lead, whose answer it is', async () => {
-    await bench.writeTeam(team(TESTERS));
-    const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
-    const menu = await take('agent-1', 't-menu');
-    await askLead(menu.ctx, runId, 't-menu', 'Prices with the euro sign?');
-    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Menú" };\n');
-    await completeTask(menu.ctx, runId, 't-menu');
-
-    const refused = await refusal(reviewTask(bench.agent('test-1'), runId, 't-menu', 'approve', []));
-    expect(refused.message).toContain('plitzi task review t-menu --escalate');
-    expect(refused.message).not.toContain('task message');
-  });
-});
-
-describe('the lead, every task approved', () => {
-  it('is told to look, report and finish — and never stops', async () => {
-    const plan: RunPlan = { ...benchPlan(), designReview: false };
-    plan.tasks = plan.tasks.filter(task => task.id === 't-menu');
-    await bench.writeTeam(team(TESTERS));
-    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
-    const menu = await take('agent-1', 't-menu');
-    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Menú" };\n');
-    await completeTask(menu.ctx, runId, 't-menu');
-    await reviewTask(bench.agent('test-1'), runId, 't-menu', 'approve', []);
-
-    const next = await nextTask(lead(), runId, 'lead');
-    expect(next.why).toContain('look at the result whole — plitzi run look — then the report');
-    const log = await readRunLog((await loadRun(lead(), runId)).paths);
-    expect(log.filter(entry => entry.action === 'stops' && entry.by === 'lead')).toEqual([]);
   });
 });

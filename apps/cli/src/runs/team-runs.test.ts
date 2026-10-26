@@ -655,6 +655,11 @@ describe('a designer’s review of the others’ UI', () => {
     await completeTask(dev, 'es-launch', 't-menu');
     expect(await designOf('t-menu')).toMatchObject({ status: 'skipped', why: 'reviewer', by: 'lead' });
     expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer')).designReview).toBeUndefined();
+    // Its UI is the lead's this round: approved once looked at, as `--skip-design reviewer` is.
+    expect(await refusalOf(reviewTask(lead(), 'es-launch', 't-menu', 'approve', []))).toContain(
+      'plitzi task look t-menu'
+    );
+    await lookedAt(lead(), 'es-launch', 't-menu');
     expect(await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [])).toMatchObject({ verdict: 'approve' });
   });
 
@@ -666,7 +671,7 @@ describe('a designer’s review of the others’ UI', () => {
     ]);
     expect(
       (await readState(taskPaths((await loadRun(lead(), 'es-launch')).paths, 't-menu'))).notes.at(-1)?.text
-    ).toContain('the lead’s now — A puppy under a month would read 0');
+    ).toContain('its reviewer’s now — A puppy under a month would read 0');
 
     await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'Days and weeks under a month' }]);
     const back = await nextTask(bench.agent('dev-1'), 'es-launch', 'developer');

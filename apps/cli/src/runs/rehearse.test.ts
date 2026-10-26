@@ -39,6 +39,22 @@ describe('a plan rehearsed before any agent starts', () => {
     expect(played.reviews).toMatchObject({ by: 'testers', count: 2, longestWait: 0 });
   });
 
+  // A lone tester's own tasks were played into its own queue: no tester may review them — a developer does, its time
+  // taken from its work.
+  it('plays a lone tester’s own tasks reviewed by a developer', async () => {
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.map(task => (task.id === 't-menu' ? { ...task, role: 'tester' } : task));
+    const played = await rehearsed(plan, {
+      agents: 2,
+      roles: { tester: 1 },
+      reviewMinutes: 5,
+      reviewers: { by: 'testers', count: 1 }
+    });
+
+    expect(played.reviews).toMatchObject({ by: 'testers', count: 1, byDevelopers: 1 });
+    expect(rehearsalText('es-launch', played, 5)).toContain('1 of them by a developer');
+  });
+
   it('plays it as task next would hand it out, the lead reviewing one at a time, what waits ready once approved', async () => {
     const played = await rehearsed(benchPlan(), { agents: 2, reviewMinutes: 5 });
 
@@ -49,7 +65,14 @@ describe('a plan rehearsed before any agent starts', () => {
       ['t-book', 'agent-1', 30, 50, 55]
     ]);
     expect(played.wallMinutes).toBe(55);
-    expect(played.reviews).toEqual({ by: 'lead', count: 1, reviews: 4, busyMinutes: 20, longestWait: 5 });
+    expect(played.reviews).toEqual({
+      by: 'lead',
+      count: 1,
+      reviews: 4,
+      busyMinutes: 20,
+      longestWait: 5,
+      byDevelopers: 0
+    });
     expect(played.criticalPath).toEqual({ tasks: ['t-home', 't-book'], minutes: 40 });
     expect(played.team.find(agent => agent.agent === 'agent-2')).toMatchObject({ tasks: ['t-menu'], idleMinutes: 35 });
     expect(played.scale).toEqual([

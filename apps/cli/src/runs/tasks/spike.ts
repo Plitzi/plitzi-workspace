@@ -226,7 +226,8 @@ export const approveSpike = async (ctx: RunContext, runId: string, taskId: strin
   await requireLead(ctx, 'approve what a spike proposes');
   const view = await viewTask(loaded.paths, findTask(loaded, taskId));
   const { proposed } = view.state;
-  if (proposed === undefined) {
+  // Only a spike's proposal: approved on a task no longer one, it would close the task as research done.
+  if (proposed === undefined || !isOpenSpike(view)) {
     throw new RunRefusal(
       'invalid',
       `${taskId} proposes nothing to approve: it is ${view.state.status}${isOpenSpike(view) ? ', still being found out' : ''}`,

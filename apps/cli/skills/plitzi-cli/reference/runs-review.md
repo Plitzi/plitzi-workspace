@@ -1,7 +1,8 @@
 # Reviewing a task of a run
 
 How a task in review is judged — by a tester, its QA and its approval the task's; by the lead only when the team has
-no tester, or what is escalated to it. A designer's look at the UI first is [runs-designer.md](runs-designer.md); the
+no tester, what is escalated to it, or what nobody else may take. One no tester may take (a tester's own tests) is a
+developer's that worked neither it nor what it tests. A designer's look at the UI first is [runs-designer.md](runs-designer.md); the
 lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
 
 - **Against the inventory, not only the picture:** every section and piece the task's acceptance names is there, as the
@@ -27,4 +28,5 @@ lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
 - **Someone changed a file while the agent worked on it** → the approval stops, naming it: `--approve --merge` when the
   changes go together line by line (the refusal says so), `--approve --overwrite` (its version wins, said, the other
   kept) or `--changes` (redo it on the project's version).
-- **Never your own:** a task you wrote is reviewed by another — the lead's by a tester.
+- **Never your own:** a task you wrote is reviewed by another — a tester's by another tester or a developer. What the team
+  told the lead of a task comes with its review (`✉`): a designer's finding on its code is yours to weigh.

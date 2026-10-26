@@ -53,7 +53,7 @@ const TIMED = new Set<Attention['kind']>([
 
 /**
  * What needs the lead in `view`, each by a key that stays while it is the same thing — a review by its round. The lead
- * is the manager: with testers in the team it is woken only for a review none of them may take (each worked it) — what a
+ * is the manager: with testers in the team it is woken only for a review nobody else may take (`leadReviews`) — what a
  * tester escalates, or a task past its review rounds, comes blocked on it among the run's attention — and with none, for
  * every task in review once its designer said.
  */
@@ -67,7 +67,10 @@ export const leadItems = (view: RunView): LeadItem[] => [
         (view.reviewers.length === 0 || task.leadReviews === true)
     )
     .map(task => {
-      const why = view.reviewers.length === 0 ? 'the team has no tester' : `${view.reviewers.join(', ')} worked it`;
+      const why =
+        view.reviewers.length === 0
+          ? 'the team has no tester'
+          : 'nobody else may: each tester and developer worked it, or what it tests — it would hold the run';
 
       return {
         key: `review:${task.id}:${String(task.round)}:${task.takenAt ?? ''}:${task.design?.status ?? ''}`,
