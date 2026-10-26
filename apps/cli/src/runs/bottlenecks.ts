@@ -48,7 +48,7 @@ export const bottlenecks = (
   if (queued.length > 0) {
     found.push({
       kind: 'ui-queued',
-      text: `${queued.map(view => `${view.task.id} (${String(Math.round((now.getTime() - Date.parse(view.state.design?.since ?? view.state.updatedAt)) / 60_000))} min)`).join(', ')} ${queued.length === 1 ? 'has' : 'have'} waited past ${String(REVIEW_QUEUE_MS / 60_000)} min for a UI review nobody took: review ${queued.length === 1 ? 'it' : 'them'} yourself now, UI included (both schemes, the phone width) — plitzi task look ${queued[0].task.id}, then plitzi task review ${queued[0].task.id} --approve --skip-design lead | --changes "…"`,
+      text: `${queued.map(view => `${view.task.id} (${String(Math.round((now.getTime() - Date.parse(view.state.design?.since ?? view.state.updatedAt)) / 60_000))} min)`).join(', ')} ${queued.length === 1 ? 'has' : 'have'} waited past ${String(REVIEW_QUEUE_MS / 60_000)} min for a UI review nobody took: review ${queued.length === 1 ? 'it' : 'them'} yourself now, UI included (both schemes, the phone width) — plitzi task look ${queued[0].task.id}, then plitzi task review ${queued[0].task.id} --approve --skip-design reviewer | --changes "…"`,
       who: 'lead'
     });
   }
@@ -56,7 +56,7 @@ export const bottlenecks = (
   if (uiWaiting.length > 0 && designers.length > 0 && designers.every(agent => atOwn(agent) !== undefined)) {
     found.push({
       kind: 'ui-waits',
-      text: `${uiWaiting.map(view => view.task.id).join(', ')} wait for a UI review, and no designer is free (${designers.map(agent => `${agent} at ${String(atOwn(agent))}`).join(', ')}): start another designer (team.json's designers) — or review them yourself, UI included (both schemes, the phone width): plitzi task next --role lead --no-wait, then plitzi task review <task> --approve --skip-design lead`,
+      text: `${uiWaiting.map(view => view.task.id).join(', ')} wait for a UI review, and no designer is free (${designers.map(agent => `${agent} at ${String(atOwn(agent))}`).join(', ')}): start another designer (team.json's designers) — or review them yourself, UI included (both schemes, the phone width): plitzi task next --role lead --no-wait, then plitzi task review <task> --approve --skip-design reviewer`,
       who: 'lead'
     });
   }
@@ -123,8 +123,8 @@ export const bottlenecks = (
       kind: 'slow-review',
       task: view.task.id,
       text: past
-        ? `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min, past the ${String(time / 60_000)} a review is its reviewer's: ${taken.what === 'UI review' ? 'the next designer free takes it — or ' : ''}decide it yourself now: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design lead' : ''} | --changes "…"`
-        : `${taken.by} has had ${view.task.id}'s ${taken.what} ${String(minutes)} min while ${idleAll.join(', ')} ${idleAll.length === 1 ? 'has' : 'have'} nothing to take: ask where it stands and for a decision now (plitzi task message @${taken.by} "…") — or decide it yourself: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design lead' : ''} | --changes "…"`,
+        ? `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min, past the ${String(time / 60_000)} a review is its reviewer's: ${taken.what === 'UI review' ? 'the next designer free takes it — or ' : ''}decide it yourself now: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design reviewer' : ''} | --changes "…"`
+        : `${taken.by} has had ${view.task.id}'s ${taken.what} ${String(minutes)} min while ${idleAll.join(', ')} ${idleAll.length === 1 ? 'has' : 'have'} nothing to take: ask where it stands and for a decision now (plitzi task message @${taken.by} "…") — or decide it yourself: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design reviewer' : ''} | --changes "…"`,
       who: 'lead'
     });
   }
@@ -213,7 +213,7 @@ export const idleTeam = (
       : []),
     ...(designer && lookable.length > 0
       ? [
-          `give ${designer.agent} the UI of ${lookable.map(view => view.task.id).join(', ')} — approve without skipping its design review (no plitzi task review <task> --skip-design lead), and the next look is offered to it`
+          `give ${designer.agent} the UI of ${lookable.map(view => view.task.id).join(', ')} — approve without skipping its design review (no plitzi task review <task> --skip-design reviewer), and the next look is offered to it`
         ]
       : []),
     ...(worked.length > 0

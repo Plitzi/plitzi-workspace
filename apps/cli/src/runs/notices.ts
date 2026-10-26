@@ -1,4 +1,4 @@
-import { isCoLead, isPrincipal } from './leads';
+import { isPrincipal } from './leads';
 import { RunRefusal } from './refusal';
 import { assertStatus, loadRun, logRun, readRunLog } from './run';
 import { findTask, holderOf } from './tasks';
@@ -42,7 +42,7 @@ export const noticeRun = async (
 
   if (task !== undefined) {
     await holderOf(ctx, loaded, findTask(loaded, task));
-  } else if (!isPrincipal(ctx.agent) && !isCoLead(loaded.record, ctx.agent)) {
+  } else if (!isPrincipal(ctx.agent)) {
     const team = await readTeam(ctx.root).catch(() => undefined);
     if (!(team ? startedAgents(team) : []).some(member => member.agent === ctx.agent)) {
       throw new RunRefusal(

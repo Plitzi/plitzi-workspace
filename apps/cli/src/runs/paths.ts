@@ -87,8 +87,6 @@ export interface RunPaths {
   leadRead: string;
   /** What `run watch` already woke the lead for. */
   leadSeen: string;
-  /** When each lead that reviews last asked for a review (`task next --role lead`): which of them are running. */
-  leadsAsking: string;
   /** The pictures its reviews take (`task look`, a `page shot` in a copy): the run's, gone with it. */
   shots: string;
   /** The plan's `reference` site as it was kept (`plitzi run reference`): what `--compare` measures against — gone with the run. */
@@ -155,7 +153,6 @@ export const runPaths = (root: string, runId: string): RunPaths => {
     messages: path.join(dir, 'messages'),
     leadRead: path.join(dir, 'lead-read.json'),
     leadSeen: path.join(dir, 'lead-seen.json'),
-    leadsAsking: path.join(dir, 'leads-asking.json'),
     shots: path.join(dir, 'shots'),
     reference: path.join(dir, 'reference'),
     scratch: path.join(dir, 'scratch'),
@@ -185,6 +182,8 @@ export interface TaskPaths {
   /** Held while a `task look` serves the task's copy: two at once stopped each other's server. */
   lookLock: string;
   reviewed: string;
+  /** The stage a scout proposes as a spike's result, until the lead approves it (`TaskState.proposed`). */
+  proposedStage: string;
   cache: string;
   work: string;
   start: string;
@@ -214,6 +213,7 @@ export const taskPaths = (run: RunPaths, taskId: string): TaskPaths => {
     reviewLock: path.join(dir, 'review.lock'),
     lookLock: path.join(dir, 'look.lock'),
     reviewed: path.join(dir, 'reviewed.json'),
+    proposedStage: path.join(dir, 'proposed-stage.json'),
     cache,
     work: path.join(cache, 'work'),
     start: path.join(cache, 'start.json'),

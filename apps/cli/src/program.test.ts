@@ -171,7 +171,7 @@ const EVERY_RUN_COMMANDS = (() => {
  * A string that is one option alone (`'--width'`, `'--expect='`) is code reading arguments, not a text.
  */
 const bareOptionsIn = (text: string): string[] => {
-  // Put onto a command in the code (`--skip-design lead`, `--approve --merge`): the command that says it is checked.
+  // Put onto a command in the code (`--skip-design reviewer`, `--approve --merge`): the command that says it is checked.
   if (/^\s*--[a-z]/.test(text)) {
     return [];
   }

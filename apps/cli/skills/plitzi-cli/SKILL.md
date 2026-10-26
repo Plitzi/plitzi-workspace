@@ -55,7 +55,7 @@ or agrees when you propose it — in plain words: several agents in parallel, ea
 until they apply it. Then `npx plitzi run start "<the ask>"` checks the project, opens the run and says each
 step: you lead it ([runs-lead](reference/runs-lead.md)), the team starts by itself (`options.launch` in `team.json`), and
 the person applies the result. `run …` and `task …` are the team's alone — never on a job of your own. Started as an
-agent of a run (its prompt says so): [runs](reference/runs.md) — a designer's half: [runs-designer](reference/runs-designer.md).
+agent of a run (its prompt says so): [runs](reference/runs.md), and the half its prompt names.
 
 ## Running it as an agent
 

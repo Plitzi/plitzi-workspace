@@ -266,6 +266,8 @@ describe('a project’s first run', () => {
       agents: [
         { name: 'dev', roles: ['developer'] },
         { name: 'design', roles: ['designer'] },
+        { name: 'test', roles: ['tester'] },
+        { name: 'scout', roles: ['scout'] },
         { name: 'writer', roles: ['writer'] }
       ]
     });
@@ -408,7 +410,7 @@ describe('a designer’s review of the others’ UI', () => {
 
     // The lead does not approve before it — unless it says so — and is not woken for it.
     expect(await refusalOf(reviewTask(lead(), 'es-launch', 't-menu', 'approve', []))).toContain('--skip-design');
-    expect(leadItems(await viewRun(lead(), 'es-launch'), bench.now()).map(item => item.key)).not.toContainEqual(
+    expect(leadItems(await viewRun(lead(), 'es-launch')).map(item => item.key)).not.toContainEqual(
       expect.stringContaining('review:t-menu')
     );
 
@@ -426,7 +428,7 @@ describe('a designer’s review of the others’ UI', () => {
       round: 0,
       design: 'approved'
     });
-    expect(leadItems(await viewRun(lead(), 'es-launch'), bench.now())).toContainEqual(
+    expect(leadItems(await viewRun(lead(), 'es-launch'))).toContainEqual(
       expect.objectContaining({ text: expect.stringContaining('its UI approved by design-1') as unknown })
     );
     expect((await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [])).merged).toEqual([
@@ -459,7 +461,7 @@ describe('a designer’s review of the others’ UI', () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
     await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'one source for the padding' }], 'refuse', {
-      skipDesign: 'lead'
+      skipDesign: 'reviewer'
     });
     expect(await refusalOf(reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', []))).toContain(
       'was sent back meanwhile (round 1)'
@@ -470,12 +472,12 @@ describe('a designer’s review of the others’ UI', () => {
     await lookedAt(lead(), 'es-launch', 't-about');
     // In its time the review is the designer's: approving past it took a run's design-1's copy from under it.
     expect(
-      await refusalOf(reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'lead' }))
+      await refusalOf(reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'reviewer' }))
     ).toContain("design-1 is reviewing t-about's UI — its own for 8 min more");
     bench.advance(REVIEW_TIMEOUT_MS + 60_000);
     await lookedAt(lead(), 'es-launch', 't-about');
     expect(
-      await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'lead' })
+      await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'reviewer' })
     ).toMatchObject({ design: 'skipped', designBy: 'design-1' });
   });
 
@@ -491,15 +493,15 @@ describe('a designer’s review of the others’ UI', () => {
     // Past its time — a first review's, which holds its reading — it is the lead's to decide.
     bench.advance(REVIEW_TIMEOUT_MS + FIRST_REVIEW_READING_MS + 60_000);
     await lookedAt(lead(), 'es-launch', 't-about');
-    await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'lead' });
+    await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'reviewer' });
     expect((await log()).find(entry => entry.action === 'review' && entry.task === 't-about')).toMatchObject({
       design: 'skipped',
-      designSkip: 'lead',
+      designSkip: 'reviewer',
       designBy: 'design-2'
     });
     // Said as the lead's UI review, never as one nobody made.
     expect(await auditRun(await loadRun(lead(), 'es-launch'))).toContainEqual(
-      expect.objectContaining({ title: 'Their UI reviewed by the lead, not a designer', evidence: ['t-about'] })
+      expect.objectContaining({ title: 'Their UI reviewed by their reviewer, not a designer', evidence: ['t-about'] })
     );
     const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(message => message.to === '@design-2');
     expect(told?.text).toContain('t-about is approved without its UI review');
@@ -644,14 +646,14 @@ describe('a designer’s review of the others’ UI', () => {
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
 
     await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'Light rows' }], 'refuse', {
-      skipDesign: 'lead'
+      skipDesign: 'reviewer'
     });
     const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(message => message.to === '@design-1');
     expect(told?.text).toContain('lead sent t-menu back while you reviewed its UI');
 
     await writeInCopy(taken.work, 'src/space/pages/menu.ts', "export const menu = { title: 'Menú' };\n");
     await completeTask(dev, 'es-launch', 't-menu');
-    expect(await designOf('t-menu')).toMatchObject({ status: 'skipped', why: 'lead', by: 'lead' });
+    expect(await designOf('t-menu')).toMatchObject({ status: 'skipped', why: 'reviewer', by: 'lead' });
     expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer')).designReview).toBeUndefined();
     expect(await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [])).toMatchObject({ verdict: 'approve' });
   });

@@ -1,20 +1,10 @@
 import fs from 'node:fs/promises';
 
 import { durationText, FOLLOW_MS } from '../../options';
-import { takeQuestion } from '../answering';
 import { designReviewFor, hasDesignReview, takeOfferedReview } from '../design';
 import { handOver } from '../handOver';
 import { assertRoles } from '../identity';
-import {
-  IDLE_LEAD_MS,
-  isPrincipal,
-  LEAD_ROLE,
-  leadReviewFor,
-  testerReviews,
-  markAsking,
-  takeLeadReview,
-  testersOf
-} from '../leads';
+import { isPrincipal, LEAD_ROLE, leadReviewFor, scoutsOf, takeLeadReview, testerReviews, testersOf } from '../leads';
 import { agentAddress, unreadFor } from '../messages';
 import { ON_DEMAND_IDLE_MS } from '../onDemand';
 import { reviewPages } from '../pagesOf';
@@ -26,10 +16,10 @@ import { assertStatus, loadRun, logRun, readRunLog } from '../run';
 import { runChanged } from '../runChanged';
 import { tellLeftInTmp } from '../strays';
 import { isDisconnected, updateState, viewTask } from '../taskStore';
-import { DEFAULT_DESIGN_REVIEW, DESIGNER, qualityRank, readTeam, startedAgents, TESTER } from '../team';
+import { DEFAULT_DESIGN_REVIEW, DESIGNER, qualityRank, readTeam, SCOUT, startedAgents, TESTER } from '../team';
 import { isWorked } from '../worked';
 import { at, findTask, roleOf } from './common';
-import { leadNext } from './leadNext';
+import { designersIn, leadNext, noDesignerFreeIn, spikeFor, uiTooText } from './leadNext';
 import { allLocks } from './locks';
 import {
   askedOf,
@@ -39,7 +29,6 @@ import {
   lastAsked,
   reasonOf,
   markJoined,
-  spareNow,
   uiReviewsComing
 } from './nextRules';
 import { changesBlock } from './review';
@@ -103,14 +92,18 @@ export interface NextTask {
     first?: true;
   };
   /**
-   * A lead's that reviews (`--role lead`), or a tester's: a task in review no other reviewer took — what it changed,
-   * where it is drawn, and what its earlier reviews asked.
+   * A tester's — or the lead's, with no tester in the team or a review escalated to it: a task in review nobody else
+   * took — what it changed, where it is drawn, and what its earlier reviews asked.
    */
   leadReview?: ReviewOffer;
-  /** A lead that reviews, with no review for it: a question to the lead to answer — the oldest no other lead took. */
-  question?: { id: string; task: string; text: string; agent?: string };
-  /** A lead's, with no review for it: a spike to find out — the most urgent no other lead took. */
-  spike?: { task: RunTask; question: string; findings: number };
+  /**
+   * A scout's — or the lead's, with no scout in the team: a spike to find out, the most urgent nobody took. `blocking`: a
+   * task at work blocked on it, whose block the answer lifts (`task unblock --answer`); `asked`: what the lead said when
+   * it sent the spike's tasks back.
+   */
+  spike?: { task: RunTask; question: string; findings: number; blocking?: true; asked?: string };
+  /** The lead's: the tasks a scout proposes as a spike's result, to decide with the person (`task spike --approve`). */
+  proposal?: { task: RunTask; by: string; text: string; tasks: string[]; stage: string };
   /** Why nothing is ready, when nothing is. */
   why?: string;
   ready: string[];
@@ -197,9 +190,17 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     }
   }
 
-  // A lead that reviews is offered reviews, and nothing else: the queue of tasks in review no other lead took.
+  // The lead's queue: what is escalated to it, what a scout proposes, the reviews and spikes the team has nobody for.
   if (roles?.includes(LEAD_ROLE) === true) {
     return leadNext(ctx, loaded, views, messages);
+  }
+
+  // A scout finds out what the spikes ask before anything else: the run's work waits on what it finds.
+  if (roles?.includes(SCOUT) === true && (await scoutsOf(ctx.root)).includes(ctx.agent)) {
+    const spike = spikeFor(loaded, views, ctx.agent);
+    if (spike) {
+      return { spike, ready: [], messages };
+    }
   }
 
   // A review holds back a task already done, and the lead: a designer's comes before anything new.
@@ -231,17 +232,25 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     };
   }
 
-  // A tester reviews the code of what is in review, as a lead that reviews does — before the tests it writes: a review
-  // holds a task already done. The lead is left what no tester took within `UNTAKEN_REVIEW_MS` (`leadWatch`); a UI
-  // still waiting for a designer is not offered, and its own tests are another's to review.
+  // A tester reviews what is in review — its QA, the task's approval — before the tests it writes: a review holds a task
+  // already done. A UI still waiting for a designer is not offered, unless no designer is free for it; its own tests
+  // are another's to review.
   if (roles?.includes(TESTER) === true && (await testersOf(ctx.root)).includes(ctx.agent)) {
-    await markAsking(ctx, loaded);
-    const codeReview = leadReviewFor(
+    const noDesignerFree = await noDesignerFreeIn(ctx, views);
+    const review = leadReviewFor(
       views.filter(view => testerReviews(view.task)),
-      ctx.agent
+      ctx.agent,
+      noDesignerFree
     );
-    if (codeReview) {
-      return { leadReview: await reviewOffer(codeReview), ready: [], messages };
+    if (review) {
+      return {
+        leadReview: await reviewOffer(
+          review,
+          review.state.design?.status === 'due' ? uiTooText(ctx.agent, await designersIn(ctx)) : undefined
+        ),
+        ready: [],
+        messages
+      };
     }
   }
 
@@ -491,20 +500,7 @@ export const takeNext = async (
       continue;
     }
 
-    // A question handed to a lead is its own to answer from now: another lead is not offered it.
-    if (next.question) {
-      const loaded = await loadRun(ctx, runId);
-      await takeQuestion(ctx, loaded, next.question.id);
-      await logRun(ctx, loaded.paths, {
-        action: 'question-taken',
-        task: next.question.task,
-        message: next.question.id
-      });
-
-      return { next };
-    }
-
-    // A spike handed to a lead is its own from now: another lead is not offered it.
+    // A spike handed to a scout — or the lead — is its own from now: another is not offered it.
     if (next.spike) {
       const loaded = await loadRun(ctx, runId);
       const view = await viewTask(loaded.paths, findTask(loaded, next.spike.task.id));
@@ -527,7 +523,7 @@ export const takeNext = async (
         await logRun(ctx, loaded.paths, {
           action: 'review-taken',
           task: offered,
-          review: next.leadReview.uiToo ? 'lead, UI too' : 'lead'
+          review: next.leadReview.uiToo ? 'QA, UI too' : 'QA'
         });
 
         return { next };
@@ -559,15 +555,10 @@ export const followNext = async (
   ctx: RunContext,
   runId: string,
   role: string | undefined,
-  { timeoutMs = FOLLOW_MS, everyMs = 10_000, idleMs = IDLE_LEAD_MS, onDemandIdleMs = ON_DEMAND_IDLE_MS } = {}
+  { timeoutMs = FOLLOW_MS, everyMs = 10_000, onDemandIdleMs = ON_DEMAND_IDLE_MS } = {}
 ): Promise<NextTask> => {
   const started = Date.now();
   let saidWaiting: string | undefined;
-  const idleLead =
-    role
-      ?.split(',')
-      .map(each => each.trim())
-      .includes(LEAD_ROLE) === true && !isPrincipal(ctx.agent);
   // An agent on demand (past its group's `min`) stops once nothing is left for it: the lead starts it again.
   const team = await readTeam(ctx.root).catch(() => undefined);
   const onDemand = team ? startedAgents(team).some(each => each.agent === ctx.agent && each.onDemand) : false;
@@ -603,8 +594,8 @@ export const followNext = async (
       next.task ||
       next.designReview ||
       next.leadReview ||
-      next.question ||
       next.spike ||
+      next.proposal ||
       next.finished ||
       next.messages.length > 0
     ) {
@@ -624,16 +615,6 @@ export const followNext = async (
       if (last?.action !== 'waiting' || reasonOf(String(last.why)) !== reason) {
         await logRun(ctx, paths, { action: 'waiting', why });
       }
-    }
-
-    // A lead that reviews handed nothing for a while, or spare — what is left the other leads review: waiting on costs
-    // tokens, and `lead` starts it again when the reviews queue up.
-    const spare = idleLead ? await spareNow(ctx, runId) : undefined;
-    if (idleLead && (spare !== undefined || Date.now() - started >= idleMs)) {
-      const why = spare ?? `no review came for ${durationText(idleMs)}: lead starts it again when the reviews queue up`;
-      await logRun(ctx, runPaths(ctx.root, runId), { action: 'stops', why });
-
-      return { ...next, finished: true, why: `${why}. You can stop` };
     }
 
     // Its wait's end is no state of its own: it is told to wait again, and stays waiting until it takes work or stops.

@@ -24,6 +24,7 @@ import {
   taskReassign,
   taskRelease,
   taskRequest,
+  taskEscalate,
   taskReview,
   taskRevert,
   taskTake,
@@ -185,23 +186,31 @@ export const registerTaskGroup = (program: Command): Command => {
   taskGroup
     .command('spike')
     .description(
-      'A spike — finding out before building, a lead’s: the task in hand blocked on the lead, saying what; or, as a lead, <spike> --done with what was found, and --tasks with the tasks it makes'
+      'A spike — finding out before building: the task in hand blocked on it, saying what; <spike> --done with what was found and --tasks with the tasks it makes — a scout’s proposed to the lead; the lead’s --approve or --changes on them'
     )
     .argument(
       '[question|task]',
-      'What needs finding out ("which layers make the original’s warm light") — or, with --done, the spike'
+      'What needs finding out ("which layers make the original’s warm light") — or, with --done, --approve or --changes, the spike'
     )
-    .option('--done <findings>', 'A lead’s: what was found — kept with the spike, read by every task that waits for it')
+    .option(
+      '--done <findings>',
+      'A scout’s or the lead’s: what was found — kept with the spike, read by every task that waits for it'
+    )
     .option(
       '--tasks <stage.json>',
-      'With --done: its result, the tasks it makes — a stage, as `run extend` takes, each task with its "findings"'
+      'With --done: its result, the tasks it makes — a stage, as `run extend` takes, each task with its "findings"; a scout’s wait for the lead'
     )
+    .option('--approve', 'The lead’s: stack the tasks the scout proposed, the spike done')
+    .option('--changes <what>', 'The lead’s: send the tasks the scout proposed back, saying what to change')
     .option(...AGENT_OPTION)
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((question: string | undefined, options: RunCommandOptions & { done?: string; tasks?: string }) =>
-      taskSpike(question, options)
+    .action(
+      (
+        question: string | undefined,
+        options: RunCommandOptions & { done?: string; tasks?: string; approve?: boolean; changes?: string }
+      ) => taskSpike(question, options)
     );
 
   taskGroup
@@ -502,13 +511,21 @@ export const registerTaskGroup = (program: Command): Command => {
     )
     .option('--note <note>', 'With --approve, what you saw and do not ask to change — kept with the task, for the lead')
     .option(
+      '--escalate <why>',
+      'A tester’s, instead of a verdict: what it cannot decide — what was asked reads two ways, a change past the task, a disagreement — handed to the lead'
+    )
+    .option(
       '--with <task>',
       'With --approve, another task in review approved beside it as one change — each reads a file the other makes'
     )
     .option(...RUN_OPTION)
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string, options: ReviewOptions) => taskReview(task, options));
+    .action((task: string, options: ReviewOptions) =>
+      options.escalate === undefined
+        ? taskReview(task, options)
+        : taskEscalate(task, { ...options, escalate: options.escalate })
+    );
 
   taskGroup
     .command('reassign')

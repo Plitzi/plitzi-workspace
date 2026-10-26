@@ -115,12 +115,12 @@ export const auditRun = async (loaded: LoadedRun): Promise<Finding[]> => {
     }
   }
 
-  // Said by why, each apart: a UI the lead looked at is not one nobody did, nor a task with no UI at all.
+  // Said by why, each apart: a UI its reviewer looked at is not one nobody did, nor a task with no UI at all.
   const skipped = by('review').filter(entry => entry.design === 'skipped');
   const skippedAs = (why: string | undefined) =>
     skipped.filter(entry => (typeof entry.designSkip === 'string' ? entry.designSkip : undefined) === why);
   for (const [why, said] of [
-    ['lead', 'Their UI reviewed by the lead, not a designer'],
+    ['reviewer', 'Their UI reviewed by their reviewer, not a designer'],
     ['no-ui', 'No UI to review, approved on their code (task complete --review code says it from the start)'],
     [undefined, 'Approved without their designer’s UI review, the reason unsaid']
   ] as const) {

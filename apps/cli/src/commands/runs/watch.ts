@@ -5,7 +5,6 @@ import { durationText, FOLLOW_MS } from '../../options';
 import { benchText, readBench } from '../../runs/bench';
 import { experienceFrom } from '../../runs/experience';
 import { ensureKeeper, keepAgents } from '../../runs/keeper';
-import { isCoLead } from '../../runs/leads';
 import { waitForLead } from '../../runs/leadWatch';
 import { showVersion } from '../../runs/merge';
 import { LEAD } from '../../runs/messages';
@@ -90,7 +89,9 @@ const watchedByLead = async (runId: string | undefined, options: WatchRunOptions
     const ctx = await contextFor(options);
     const id = await runOf(ctx, options, runId, { anyone: true });
 
-    return ctx.agent === LEAD || isCoLead((await loadRun(ctx, id)).record, ctx.agent);
+    await loadRun(ctx, id);
+
+    return ctx.agent === LEAD;
   } catch (error) {
     // Said by the watch itself, which reads the run the same way.
     if (isRunRefusal(error)) {

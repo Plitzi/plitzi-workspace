@@ -1,8 +1,7 @@
 import { commandDoing, doingOf, statusOf } from './agentDoing';
-import { answering, openQuestions } from './answering';
 import { isDesignSkip } from './designSkip';
 import { feedOf, glimpse, SHORT, textOf } from './feedLine';
-import { LEAD, messagesOf } from './messages';
+import { LEAD, messagesOf, openQuestions } from './messages';
 import { stoppedAgents } from './onDemand';
 import { runPaths } from './paths';
 import { presentAt, PRESENCE_STALE_MS } from './presence';
@@ -43,7 +42,7 @@ export type AgentStatus =
 
 export interface AgentLine {
   agent: string;
-  kind: 'lead' | 'co-lead' | 'agent';
+  kind: 'lead' | 'agent';
   status: AgentStatus;
   /** The model it is started with, as the team names it — the harness's own when the team says none. */
   model?: string;
@@ -329,94 +328,61 @@ const agentsOf = async (
       ? 'the run is ready — the person applies it: plitzi run finish --apply'
       : 'every task approved — next: plitzi run finish, whose dry run checks the whole result';
   const loadedRun = await loadRun(ctx, view.runId, { anyMachine: true, anyVersion: true });
-  const taken = await answering(loadedRun);
-  const questions = await openQuestions(loadedRun);
-  const unanswered = questions.filter(each => !Object.hasOwn(taken, each.id));
-  const leads: AgentLine[] = [LEAD, ...view.leads].map(lead => {
+  const unanswered = await openQuestions(loadedRun);
+  const leadLine = (): AgentLine => {
+    const base = {
+      agent: LEAD,
+      kind: 'lead' as const,
+      approved: 0,
+      ...(leadModel ? { model: leadModel } : {}),
+      roles: ['plans, decides, finishes']
+    };
     if (finished) {
-      return {
-        agent: lead,
-        kind: lead === LEAD ? ('lead' as const) : ('co-lead' as const),
-        ...(lead === LEAD ? {} : { onDemand: true as const }),
-        approved: 0,
-        status: lead === LEAD ? ('done' as const) : ('stopped' as const),
-        ...(leadModel ? { model: leadModel } : {}),
-        roles: [lead === LEAD ? 'plans, reviews, finishes' : 'reviews'],
-        doing: lead === LEAD ? nextStep : 'nothing is left to review'
-      };
+      return { ...base, status: 'done' as const, doing: nextStep };
     }
 
-    const at = reviewing.get(lead);
-    const asking = view.askingLeads.includes(lead);
-    // Its last action: a lead reviews, amends and answers by commands, and is at it while they come.
-    const last = lastBy.get(lead);
+    const at = reviewing.get(LEAD);
+    // Its last action: the lead decides, amends and answers by commands, and is at it while they come.
+    const last = lastBy.get(LEAD);
     const lastAt = typeof last?.at === 'string' ? Date.parse(last.at) : undefined;
     const lastLine = last ? lastDone(last) : undefined;
     const recent = lastAt !== undefined && now - lastAt < ACTIVE_MS && lastLine !== undefined;
-    // Finding out a spike it took: working, on that task — what it is at, never idle (the lead at
-    // t-shell's spike was nowhere on the board).
-    const spiking = at ? undefined : view.tasks.find(task => task.status === 'spike' && task.spikedBy === lead);
-    // Answering a question it took: working, on the task that asked — the board names it there too, held on it.
-    const question =
-      at || spiking ? undefined : questions.find(each => Object.hasOwn(taken, each.id) && taken[each.id].by === lead);
-    if (question) {
-      return {
-        agent: lead,
-        kind: lead === LEAD ? ('lead' as const) : ('co-lead' as const),
-        ...(lead === LEAD ? {} : { onDemand: true as const }),
-        approved: 0,
-        status: 'working' as const,
-        ...(leadModel ? { model: leadModel } : {}),
-        roles: [lead === LEAD ? 'plans, reviews, finishes' : 'reviews'],
-        doing: `answers ${question.from}'s ${question.id}: ${glimpse(question.text, 80)}`,
-        task: question.from,
-        ...(typeof last?.at === 'string' ? { signalAt: last.at } : {})
-      };
-    }
-
+    // Finding out a spike it took, with no scout in the team: working, on that task — never idle.
+    const spiking = at ? undefined : view.tasks.find(task => task.status === 'spike' && task.spikedBy === LEAD);
     if (spiking) {
       return {
-        agent: lead,
-        kind: lead === LEAD ? ('lead' as const) : ('co-lead' as const),
-        ...(lead === LEAD ? {} : { onDemand: true as const }),
-        approved: 0,
+        ...base,
         status: 'working' as const,
-        ...(leadModel ? { model: leadModel } : {}),
-        roles: [lead === LEAD ? 'plans, reviews, finishes' : 'reviews'],
         doing: `finds out for ${spiking.id}: ${spiking.spike ?? 'what it needs'}`,
         task: spiking.id,
         ...(typeof last?.at === 'string' ? { signalAt: last.at } : {})
       };
     }
 
+    const proposed = view.tasks.filter(task => task.proposed !== undefined);
+
     return {
-      agent: lead,
-      kind: lead === LEAD ? ('lead' as const) : ('co-lead' as const),
-      ...(lead === LEAD ? {} : { onDemand: true as const }),
-      approved: 0,
-      // Reviewing only at a review it holds: what it did lately with nothing in hand (a look, an answer, an amend) is
-      // its last, never "working" — the board showed a lead at work that no task or card named.
-      // At work without a review in hand — a stage written, agents started, an answer, a look — while its commands
-      // come: working, its last one said (the lead read idle while it planned and launched). A wait is no work.
+      ...base,
+      // At work without a review in hand — a stage written, an answer, a look — while its commands come: working, its
+      // last one said. A wait is no work.
       status: at
         ? ('reviewing' as const)
         : recent && last?.action !== 'waiting'
           ? ('working' as const)
-          : lead === LEAD || asking || recent
-            ? ('idle' as const)
-            : ('not-started' as const),
-      ...(leadModel ? { model: leadModel } : {}),
-      roles: [lead === LEAD ? 'plans, reviews, finishes' : 'reviews'],
+          : ('idle' as const),
       doing: at
         ? `reviews ${at}`
-        : // A question no lead took waits on the lead: said on its row, not "idle" over an agent kept waiting.
-          lead === LEAD && unanswered.length > 0
-          ? `${String(unanswered.length)} question${unanswered.length === 1 ? '' : 's'} wait${unanswered.length === 1 ? 's' : ''} for you: ${unanswered.map(each => `${each.from}'s ${each.id}`).join(', ')}`
-          : `${lead === LEAD ? 'plans, answers, reviews what no lead took' : asking ? 'waits for a review' : 'reviews when they queue up'}${lastLine ? ` · last: ${lastLine}` : ''}`,
+        : // What waits on the lead is said on its row, not "idle" over an agent kept waiting.
+          proposed.length > 0
+          ? `${proposed.map(task => task.id).join(', ')}: tasks proposed, to decide with the person`
+          : unanswered.length > 0
+            ? `${String(unanswered.length)} question${unanswered.length === 1 ? '' : 's'} wait${unanswered.length === 1 ? 's' : ''} for you: ${unanswered.map(each => `${each.from}'s ${each.id}`).join(', ')}`
+            : `plans, answers, decides what is escalated${lastLine ? ` · last: ${lastLine}` : ''}`,
       ...(at ? { task: at } : {}),
       ...(typeof last?.at === 'string' ? { signalAt: last.at } : {})
     };
-  });
+  };
+  const leads: AgentLine[] = [leadLine()];
   const started = new Map((team ? startedAgents(team) : []).map(each => [each.agent, each] as const));
   const names = [...new Set([...started.keys(), ...held.keys()])];
   const paths = runPaths(ctx.root, view.runId);
@@ -455,6 +421,24 @@ const agentsOf = async (
       ...(member?.model ? { model: `${member.model.model}${member.quality ? ` (${member.quality})` : ''}` } : {}),
       roles: member?.roles ?? (task ? [task.role] : [])
     };
+
+    // A scout at a spike, a tester at a review: at work on that task — never idle (the lead at t-shell's spike was
+    // nowhere on the board).
+    const spiking = task ? undefined : view.tasks.find(each => each.status === 'spike' && each.spikedBy === agent);
+    const reviews = task || spiking ? undefined : reviewing.get(agent);
+    if (spiking || reviews) {
+      return {
+        agent,
+        kind: 'agent' as const,
+        status: spiking ? ('working' as const) : ('reviewing' as const),
+        ...about,
+        doing: spiking
+          ? `finds out for ${spiking.id}: ${spiking.spike ?? 'what it needs'}${tail}`
+          : `reviews ${String(reviews)}${tail}`,
+        task: spiking?.id ?? String(reviews),
+        ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
+      };
+    }
 
     return task
       ? {

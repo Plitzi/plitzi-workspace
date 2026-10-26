@@ -223,11 +223,6 @@ export interface RunRecord {
   pinned: Pinned;
   /** How many tasks may be worked at once — one an agent: `task take` refuses past it. */
   agents: number;
-  /**
-   * The leads besides `lead` (`lead-2`…), as the team had them when it opened or was extended: they review, from one
-   * queue (`TaskState.reviewer`); planning, answering and finishing stay `lead`'s.
-   */
-  leads?: string[];
   /** What it was estimated at when it opened: what its report compares against. */
   estimate: { tasks: number; agents: number; wallMinutes: number; totalMinutes: number };
   /** Above the threshold, who confirmed the estimate: a person, by typing the run's name. */
@@ -341,8 +336,17 @@ export interface TaskState {
   reviewer?: { by: string; round: number; at: string };
   /** What its spikes found out, oldest first: in its brief, and in the brief of every task that waits for it. */
   findings?: Finding[];
-  /** The lead finding it out, once one took it (`task next --role lead --no-wait`): another is not offered it. */
+  /**
+   * Who finds it out — a scout, or the lead with none in the team — once it took it (`task next`): another is not offered
+   * it. On a task blocked on a spike, the scout answering it.
+   */
   spikedBy?: { by: string; at: string };
+  /**
+   * A spike's result a scout proposes, waiting for the lead: what it found, and the tasks it makes — the stage kept beside
+   * the task (`TaskPaths.proposedStage`), stacked once the lead approves it (`task spike --approve`), sent back with what
+   * it asks (`--changes`).
+   */
+  proposed?: { by: string; at: string; text: string; tasks: string[] };
   /**
    * The agent the lead handed it to when it took it back (`task reassign --to <agent>`): offered to that one first, and
    * taken by no other — until it takes it.
@@ -368,7 +372,7 @@ export interface DesignReview {
    */
   before?: string;
   /**
-   * The lead that sent it back saying it reviews the next round's UI itself (`--changes … --skip-design lead`): that
+   * The lead that sent it back saying it reviews the next round's UI itself (`--changes … --skip-design reviewer`): that
    * round comes to the lead, never to a designer (a run's t-result-card went to design-1 after the lead said
    * it was its own, and the lead took it from under it).
    */
@@ -586,7 +590,6 @@ export const isRunRecord = (value: unknown): value is RunRecord =>
   isRecord(value.pinned.packages) &&
   Object.values(value.pinned.packages).every(isString) &&
   isNumber(value.agents) &&
-  optional(value.leads, isStrings) &&
   isRecord(value.estimate) &&
   isNumber(value.estimate.tasks) &&
   isNumber(value.estimate.agents) &&
@@ -646,6 +649,15 @@ export const isTaskState = (value: unknown): value is TaskState =>
   value.notes.every(isNote) &&
   optional(value.findings, (findings: unknown) => Array.isArray(findings) && findings.every(isFinding)) &&
   optional(value.spikedBy, (by: unknown) => isRecord(by) && isString(by.by) && isString(by.at)) &&
+  optional(
+    value.proposed,
+    (proposed: unknown) =>
+      isRecord(proposed) &&
+      isString(proposed.by) &&
+      isString(proposed.at) &&
+      isString(proposed.text) &&
+      isStrings(proposed.tasks)
+  ) &&
   optional(
     value.handTo,
     (to: unknown) =>

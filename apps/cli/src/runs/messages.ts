@@ -71,6 +71,16 @@ export const messagesOf = async (loaded: LoadedRun): Promise<Message[]> => {
   return all.sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id));
 };
 
+/** The questions to the lead nobody answered yet, oldest first. */
+export const openQuestions = async (loaded: LoadedRun): Promise<Message[]> => {
+  const messages = await messagesOf(loaded);
+  const answered = new Set(messages.flatMap(message => (message.replyTo ? [message.replyTo] : [])));
+
+  return messages
+    .filter(message => message.to === LEAD && message.fyi !== true && !answered.has(message.id))
+    .sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id));
+};
+
 const readFile = (loaded: LoadedRun, reader: string): string =>
   reader === LEAD
     ? loaded.paths.leadRead

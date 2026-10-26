@@ -4,11 +4,13 @@ import { durationText, FOLLOW_MS } from '../../options';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import {
   answerSpike,
+  approveSpike,
   claimFile,
   claims,
   discardFile,
   releaseFile,
   requestShared,
+  reworkSpike,
   startSpike,
   followWait,
   waitForFile
@@ -171,45 +173,71 @@ export const taskRequest = (
   );
 
 /**
- * `plitzi task spike "…"`, by the agent at work: its task needs something found out — a lead's to find, the task
- * blocked on it. `plitzi task spike <task> --done "…" [--tasks <stage.json>]`, by a lead: what a spike found, and the
- * tasks it makes.
+ * `plitzi task spike "…"`, by the agent at work: its task needs something found out — a scout's to find (the lead's with
+ * none), the task blocked on it. `plitzi task spike <task> --done "…" [--tasks <stage.json>]`, by a scout or the lead:
+ * what a spike found, and the tasks it makes — a scout's proposed to the lead. `--approve` / `--changes "…"`, the
+ * lead's: those tasks stacked, or sent back.
  */
 export const taskSpike = (
   argument: string | undefined,
-  options: RunCommandOptions & { done?: string; tasks?: string }
+  options: RunCommandOptions & { done?: string; tasks?: string; approve?: boolean; changes?: string }
 ): Promise<void> =>
   act(
     options,
     async ctx => {
-      if (options.done !== undefined) {
+      const decided = [options.done !== undefined, options.approve === true, options.changes !== undefined].filter(
+        Boolean
+      ).length;
+      if (decided > 1) {
+        throw new RunRefusal('invalid', 'One of --done, --approve or --changes at a time');
+      }
+
+      if (decided === 1) {
         const runId = await runOf(ctx, options);
         if (argument === undefined) {
-          throw new RunRefusal('invalid', 'Name the spike you answer: plitzi task spike s-scope --done "…"');
+          throw new RunRefusal(
+            'invalid',
+            'Name the spike: plitzi task spike s-scope --done "…" | --approve | --changes "…"'
+          );
         }
 
-        return answerSpike(ctx, runId, argument, options.done, options.tasks ? { tasks: options.tasks } : {});
+        if (options.approve === true) {
+          return approveSpike(ctx, runId, argument);
+        }
+
+        if (options.changes !== undefined) {
+          return reworkSpike(ctx, runId, argument, options.changes);
+        }
+
+        return answerSpike(ctx, runId, argument, options.done ?? '', options.tasks ? { tasks: options.tasks } : {});
       }
 
       if (options.tasks !== undefined) {
-        throw new RunRefusal('invalid', '--tasks is a lead’s, with --done: the tasks the spike it answers makes');
+        throw new RunRefusal('invalid', '--tasks goes with --done: the tasks the spike it answers makes');
       }
 
       const { runId, taskId } = await holder(ctx, options);
       if (argument === undefined || argument.trim() === '') {
         throw new RunRefusal(
           'invalid',
-          'Say what needs finding out — plitzi task spike "which layers make the original\'s light": a lead finds it'
+          'Say what needs finding out — plitzi task spike "which layers make the original\'s light": a scout finds it'
         );
       }
 
       return startSpike(ctx, runId, taskId, argument);
     },
     spiked =>
-      spiked.finding === undefined
-        ? `${spiked.task} is blocked on the lead, who finds out ${spiked.question}. Its files stay yours; the answer comes with your next command (plitzi task next hands the task back) — meanwhile take another task, or go on with what does not need it.`
-        : [
-            `${spiked.task} is done: its findings go with every task that waits for it.${spiked.added ? ` It made ${spiked.added.join(', ')}.` : ''}${spiked.ready && spiked.ready.length > 0 ? ` Ready now: ${spiked.ready.join(', ')}.` : ''}`,
+      spiked.proposed !== undefined
+        ? [
+            `${spiked.task}'s tasks go to the lead, who decides them with the person: ${spiked.proposed.join(', ')} — nothing is stacked until it approves them; what it asks comes with your next command.`,
             ...(spiked.notices ?? []).map(notice => `  · ${notice}`)
           ].join('\n')
+        : spiked.finding === undefined
+          ? spiked.status === 'blocked'
+            ? `${spiked.task} is blocked on its spike — ${spiked.question} — found out by a scout, or the lead. Its files stay yours; the answer comes with your next command (plitzi task next hands the task back) — meanwhile take another task, or go on with what does not need it.`
+            : `${spiked.task}'s tasks went back to the scout, with what you asked.`
+          : [
+              `${spiked.task} is done: its findings go with every task that waits for it.${spiked.added ? ` It made ${spiked.added.join(', ')}.` : ''}${spiked.ready && spiked.ready.length > 0 ? ` Ready now: ${spiked.ready.join(', ')}.` : ''}`,
+              ...(spiked.notices ?? []).map(notice => `  · ${notice}`)
+            ].join('\n')
   );

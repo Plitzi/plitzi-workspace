@@ -1,6 +1,6 @@
 import { writeJson } from '../files';
 import { handOver } from '../handOver';
-import { requireLead } from '../leads';
+import { requireLead, scoutsOf } from '../leads';
 import { longFilesIn } from '../longFiles';
 import { LEAD, sendMessage } from '../messages';
 import { RunRefusal } from '../refusal';
@@ -115,9 +115,14 @@ export const unblockTask = async (
 ): Promise<TaskState> => {
   requireNoTask(ctx, 'unblock a task');
   const loaded = await loadRun(ctx, runId);
-  await requireLead(ctx, loaded, 'unblock a task');
   const task = findTask(loaded, taskId);
   const view = await viewTask(loaded.paths, task);
+  // A block on a spike is a scout's to lift, with what it found; any other is the lead's.
+  const scoutAnswers = view.state.blockedBy?.spike !== undefined && (await scoutsOf(ctx.root)).includes(ctx.agent);
+  if (!scoutAnswers) {
+    await requireLead(ctx, 'unblock a task');
+  }
+
   if (view.state.status !== 'blocked') {
     throw new RunRefusal('invalid', `Task "${taskId}" is not blocked, it is ${view.state.status}`, { task: taskId });
   }
@@ -132,7 +137,9 @@ export const unblockTask = async (
   }
 
   const said =
-    answer === undefined ? undefined : await sendMessage(ctx, loaded, { from: LEAD, to: taskId, text: answer });
+    answer === undefined
+      ? undefined
+      : await sendMessage(ctx, loaded, { from: scoutAnswers ? ctx.agent : LEAD, to: taskId, text: answer });
   await logRun(ctx, loaded.paths, {
     action: 'unblock',
     task: taskId,
@@ -149,6 +156,7 @@ export const unblockTask = async (
       ...state,
       status: view.owner ? (state.round > 0 ? 'changes-requested' : 'in-progress') : 'ready',
       blockedBy: undefined,
+      spikedBy: undefined,
       ...(spike !== undefined && answer !== undefined
         ? {
             findings: [...(state.findings ?? []), { at: at(ctx), by: ctx.agent, question: spike, text: answer }]

@@ -1,6 +1,7 @@
 import path from 'node:path';
 
-import { isPrincipal, LEAD_ROLE } from './leads';
+import { isPrincipal } from './leads';
+import { SCOUT, TESTER } from './team';
 import { SKILLS_ROOT } from '../scaffold/skills';
 
 import type { Effort, StartedAgent } from './team';
@@ -23,7 +24,7 @@ export interface PromptFor {
   /** The agent, as the team names it — or `lead`. */
   agent: string;
   /** Its roles and level, from the team; none for the lead. */
-  started?: Pick<StartedAgent, 'roles' | 'quality' | 'session'>;
+  started?: Pick<StartedAgent, 'roles' | 'quality' | 'session' | 'skill'>;
   runId: string;
   /** The project's folder. */
   root: string;
@@ -37,10 +38,12 @@ export interface PromptFor {
    */
   reference?: string;
   /**
-   * Whether the run opened on its scope, the lead's spike (`s-scope`), or on a plan made before it: a run's lead told
-   * of a scope it did not have asked for it, refused.
+   * Whether the run opened on its scope (`s-scope`), or on a plan made before it: a run's lead told of a scope it did
+   * not have asked for it, refused.
    */
   scoping?: boolean;
+  /** Who the team has beside the developers: a scout finds out the spikes, a tester reviews — else the lead does. */
+  team?: { scout: boolean; tester: boolean };
 }
 
 const skill = (root: string, file: string): string => path.join(root, SKILLS_ROOT, 'plitzi-cli', 'reference', file);
@@ -57,7 +60,7 @@ const rules = (cli: string): string[] => [
   '- When it says you can stop, answer with a short report: what you did, what is uncertain, and every friction with the CLI — the command and what it said. Between two tasks or reviews it may say so for a fresh context: the run starts you again with one, for what you hold and what comes.'
 ];
 
-/** An agent's prompt: the lead's, a lead's that reviews, or one of the team's by its roles. */
+/** An agent's prompt: the lead's, or one of the team's by its roles. */
 export const agentPrompt = ({
   agent,
   started,
@@ -66,7 +69,8 @@ export const agentPrompt = ({
   cli,
   goal,
   reference,
-  scoping = false
+  scoping = false,
+  team = { scout: false, tester: false }
 }: PromptFor): string => {
   // What a page is held to: the site it copies, beside it — or, with none, what the task asks.
   const beside = reference === undefined ? '' : ` --compare ${reference}`;
@@ -79,14 +83,21 @@ export const agentPrompt = ({
     return [
       `You are the lead of a Plitzi multi-agent run on the project ${root} (run "${runId}"). The person asked: ${goal}`,
       '',
-      `Read first, whole: ${skill(root, 'runs-plan.md')}, ${skill(root, 'runs-lead.md')}, ${skill(root, 'runs-review.md')} and ${skill(root, 'runs.md')}.`,
+      `Read first, whole: ${skill(root, 'runs-plan.md')}, ${skill(root, 'runs-lead.md')}${team.tester ? '' : `, ${skill(root, 'runs-review.md')}`} and ${skill(root, 'runs.md')}.`,
       '',
       `- The CLI is ${cli} — your own: it says who you are on every command, so pass no --token nor --agent.`,
+      // The lead is the person's harness, never started again: what it reads stays read every turn after (Carlos).
+      "- You are the manager: you plan with the person, approve what a spike proposes, answer, decide what is escalated to you and finish. What reads much — finding out, reviewing — is the agents', in fresh contexts: everything you read stays in yours for the rest of the run.",
       scoping
-        ? `- The run opens on its scope, your spike: find out what the ask takes (${reference === undefined ? '`task show`, `page check`, `page shot`' : `\`page measure …${beside}\`, \`page outline …${beside}\`, \`page shot …${beside}\``}), then end it with the tasks, each with what you found: \`task spike s-scope --done "…" --tasks <stage.json>\` (a stage is its \`tasks\`).`
-        : '- The run opened on a plan made before it: its tasks are on the board (`run status`), no scope to find out first — review them as they come, and stack what is missing (`run extend`).',
-      `- The team starts by itself when \`.plitzi/team.json\` says how (\`options.launch\`): the run's base as it opens, the rest when work waits — start none of them yourself. With no launch, \`${cli} run agent <name> --launch --harness <yours>\` starts each agent \`run plan\` names. \`run watch\` wakes you for each review, question and block.`,
-      '- Review each task: `task show` for its code, one `task look` for its pages, then `task review --approve | --changes "…"`. Then the report (`run report --summary`) and the dry finish (`run finish`): the person applies it.',
+        ? team.scout
+          ? '- The run opens on its scope: a scout finds out what the ask takes and proposes the tasks. `task next --role lead` hands them to you — decide them with the person, then `task spike s-scope --approve | --changes "…"`.'
+          : `- The run opens on its scope, your spike (the team has no scout): find out what the ask takes (${reference === undefined ? '`task show`, `page check`, `page shot`' : `\`page measure …${beside}\`, \`page outline …${beside}\`, \`page shot …${beside}\``}), then end it with the tasks, each with what you found: \`task spike s-scope --done "…" --tasks <stage.json>\` (a stage is its \`tasks\`).`
+        : '- The run opened on a plan made before it: its tasks are on the board (`run status`), no scope to find out first — stack what is missing (`run extend`).',
+      `- The team starts by itself when \`.plitzi/team.json\` says how (\`options.launch\`): the run's base as it opens, the rest when work waits — start none of them yourself. With no launch, \`${cli} run agent <name> --launch --harness <yours>\` starts each agent \`run plan\` names. \`run watch\` wakes you for what is yours: a proposal, a question, a block, what a tester escalates.`,
+      team.tester
+        ? '- A tester reviews every task, its approval the task\'s: read no review yourself. One it escalates, or past its review rounds, comes blocked on you — `task show` it, then `task review <task> --approve`, or `task unblock <task> --answer "…"` to send it back with your word.'
+        : '- Review each task (the team has no tester): `task show` for its code, one `task look` for its pages, then `task review --approve | --changes "…"`.',
+      '- Before you finish, look at the whole result once — `run look`, every page the run changed — then the report (`run report --summary`) and the dry finish (`run finish`): the person applies it.',
       // Told `run notice` of "the CLI" alone, the lead noted three of six problems — a skill naming a command the
       // CLI lacks, a platform gap an agent hit, a workaround a limit forced — and plain `run notice` is the project's backlog.
       '- Everything of Plitzi in your way — the CLI, the platform, a skill or doc that misled you, a workaround a limit forced on you — note it as it happens, one each with what it cost: `run notice --plitzi "…"` (the run\'s feedback to Plitzi carries it). Fixed after the run, never during it.'
@@ -95,14 +106,17 @@ export const agentPrompt = ({
 
   const roles = started?.roles.join(',') ?? 'developer';
   const designer = started?.roles.includes('designer') === true;
-  const coLead = started?.roles.includes(LEAD_ROLE) === true;
-  const tester = started?.roles.includes('tester') === true;
+  const tester = started?.roles.includes(TESTER) === true;
+  const scout = started?.roles.includes(SCOUT) === true;
   const reading = [
     skill(root, 'runs.md'),
     ...(designer ? [skill(root, 'runs-designer.md')] : []),
-    // A reviewer's half, not the lead's whole: a tester and a co-lead start fresh after each piece, and a run's read
-    // the lead's 18k characters again each time to use the review it holds.
-    ...(coLead || tester ? [skill(root, 'runs-review.md')] : [])
+    // A reviewer's half, not the lead's whole: a tester starts fresh after each piece, and a run's read the lead's 18k
+    // characters again each time to use the review it holds.
+    ...(tester ? [skill(root, 'runs-review.md')] : []),
+    ...(scout ? [skill(root, 'runs-scout.md')] : []),
+    // A role of the project's own says what it does in the skill its team names: the CLI cannot.
+    ...(started?.skill === undefined ? [] : [path.join(root, started.skill)])
   ];
 
   return [
@@ -111,8 +125,10 @@ export const agentPrompt = ({
     `Read first, whole: ${reading.join(' and ')}${designer ? ' — and, before your first review, what it names to read' : ''}.`,
     '',
     `- The CLI is ${cli} (PLITZI below) — your own: it says who you are on every command, inside a task's copy too, so pass no --token nor --agent. Start with \`cd ${root} && PLITZI task next${started?.quality ? ` --quality ${started.quality}` : ''}\` — it takes your next task, waiting until one is ready, for your roles as the team says them.`,
-    ...(coLead
-      ? ['- You review what you are handed as strictly as the lead, and answer the questions handed to you.']
+    ...(scout
+      ? [
+          `- \`PLITZI task next\` hands you the spikes first — the run's scope, a question an agent blocked on. Find out (${reference === undefined ? '`page check`, `page shot`, `page measure`, the code' : `\`page measure …${beside}\`, \`page outline …${beside}\`, \`page shot …${beside} --dress\``}), write nothing of a task's; end a research spike with what you found and the tasks it makes — \`PLITZI task spike <spike> --done "…" --tasks <stage.json>\`, which the lead decides with the person — and lift an agent's block with your answer: \`PLITZI task unblock <task> --answer "…"\`.`
+        ]
       : [
           "- Work only in the task's copy (the `work` folder its take prints): start with `PLITZI task context` there, and read the files you change yourself.",
           reference === undefined
@@ -130,7 +146,7 @@ export const agentPrompt = ({
         ]),
     ...(tester
       ? [
-          '- `task next` hands you the code reviews first — the lead\'s, as strictly: correctness, races, stale state, security, the acceptance met, and its tests run (`PLITZI task look <task>`, then `PLITZI task review <task> --approve | --changes "…"`). Your approval is the task\'s: the lead reviews only what no tester takes in time. Then the tests of each developer task.'
+          '- `task next` hands you the reviews first — every task\'s QA, as strictly as the lead would: what it was asked, its checks, how it behaves (a control used there and back, both schemes, the phone width), correctness, races, stale state, security, and its tests run (`PLITZI task look <task>`, then `PLITZI task review <task> --approve | --changes "…"`). Your approval is the task\'s: the lead reviews none. What you cannot decide is the lead\'s: `PLITZI task review <task> --escalate "…"`. Then the tests of each developer task.'
         ]
       : []),
     ...(designer

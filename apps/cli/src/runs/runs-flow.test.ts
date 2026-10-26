@@ -82,11 +82,10 @@ const as = (name: string, token?: string): RunContext =>
 const THEME = 'src/space/theme.ts';
 
 describe('a run played whole, as a run went', () => {
-  it('holds every rule it broke: base first, requests merged at approval, a lead that reviews answering, the finish whole', async () => {
+  it('holds every rule it broke: base first, requests merged at approval, the lead answering, the finish whole', async () => {
     const plan = { ...benchPlan(), designReview: false };
     await bench.writeTeam({
       version: 1,
-      lead: { count: 2 },
       agents: [{ name: 'dev', roles: ['developer'], count: 2, min: 1 }]
     });
     await openRun(as('lead'), await bench.writePlan(plan));
@@ -140,10 +139,9 @@ describe('a run played whole, as a run went', () => {
     await completeTask(as('dev-2', about.token), runId, 't-about');
     await reviewTask(as('lead'), runId, 't-about', 'approve', []);
 
-    // dev-1 asks; lead-2, with no review waiting, is handed the question and answers it — the lead told.
+    // dev-1 asks; the lead answers it.
     const asked = await askLead(as('dev-1', home.token), runId, 't-home', 'Bienvenidos or Bienvenida?');
-    expect((await takeNext(as('lead-2'), runId, 'lead')).next.question?.id).toBe(asked.question.id);
-    await messageTasks(as('lead-2'), runId, 't-home', 'Bienvenidos', asked.question.id);
+    await messageTasks(as('lead'), runId, 't-home', 'Bienvenidos', asked.question.id);
     // A message goes out in the lead's voice: dev-2, proved, is no lead — refused, never sent as the lead.
     await expect(messageTasks(as('dev-2'), runId, 't-home', 'Bienvenida')).rejects.toMatchObject({ code: 'lead-only' });
     expect((await viewRun(as('lead'), runId)).tasks.find(task => task.id === 't-home')?.asking).toMatchObject({
@@ -166,11 +164,11 @@ describe('a run played whole, as a run went', () => {
       )
     ).toBe(true);
 
-    // The rest, done: lead-2 reviews what queues, the lead the last of it.
+    // The rest, done: the lead reviews what queues — the team has no tester.
     await completeTask(as('dev-1', home.token), runId, 't-home');
-    const reviewed = await takeNext(as('lead-2'), runId, 'lead');
+    const reviewed = await takeNext(as('lead'), runId, 'lead');
     expect(reviewed.next.leadReview?.task.id).toBe('t-home');
-    await reviewTask(as('lead-2'), runId, 't-home', 'approve', []);
+    await reviewTask(as('lead'), runId, 't-home', 'approve', []);
     for (const [agent, taskId, file] of [['dev-2', 't-book', 'src/space/pages/book.ts']] as const) {
       const taken = await takeTask(as(agent), runId, taskId);
       await writeInCopy(taken.work, file, `export const page = { title: '${taskId}' };\n`);

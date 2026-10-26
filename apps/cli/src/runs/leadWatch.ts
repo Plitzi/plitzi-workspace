@@ -1,8 +1,6 @@
 import { readJson, writeJson } from './files';
 import { FOLLOW_MS } from '../options';
-import { commandAs } from './identity';
 import { launchAsked } from './keeper';
-import { REVIEW_BACKLOG_MS, UNTAKEN_REVIEW_MS } from './leads';
 import { LEAD, markRead, messagesOf } from './messages';
 import { runPaths } from './paths';
 import { isRunRefusal } from './refusal';
@@ -53,75 +51,39 @@ const TIMED = new Set<Attention['kind']>([
   'held-ahead'
 ]);
 
-/** A review no lead took this round, by how long it has waited. */
-const untaken = (view: RunView, now: Date): { task: RunView['tasks'][number]; waited: number }[] =>
-  view.tasks
-    .filter(task => task.status === 'in-review' && task.design?.status !== 'due' && task.reviewer === undefined)
-    .map(task => ({ task, waited: now.getTime() - Date.parse(task.since ?? view.openedAt) }))
-    .sort((a, b) => b.waited - a.waited);
-
-const minutes = (ms: number): string => String(Math.round(ms / 60_000));
-
 /**
- * What needs the lead in `view`, each by a key that stays while it is the same thing — a review by its round. `lead`
- * reviews every task while no lead that reviews runs, and is told to start one once two wait and the oldest waited
- * `REVIEW_BACKLOG_MS`; while one runs, it is woken for a review only once none took it within `UNTAKEN_REVIEW_MS`.
+ * What needs the lead in `view`, each by a key that stays while it is the same thing — a review by its round. The lead
+ * is the manager: with testers in the team it is woken for no review — what a tester escalates, or a task past its
+ * review rounds, comes blocked on it among the run's attention — and with none, for every task in review once its
+ * designer said.
  */
-export const leadItems = (view: RunView, now: Date): LeadItem[] => {
-  const waiting = untaken(view, now);
-  // A lead that reviews — or a tester — is running while it asks for reviews, and while it reviews one it took.
-  const reviewing = view.tasks.flatMap(task =>
-    task.status === 'in-review' && task.reviewer !== undefined && view.reviewers.includes(task.reviewer)
-      ? [task.reviewer]
-      : []
-  );
-  const running = [...new Set([...view.askingLeads, ...reviewing])];
-  const helped = running.length > 0;
-  const idle = view.leads.filter(lead => !running.includes(lead));
-  const backlog = !helped && idle.length > 0 && waiting.length >= 2 && (waiting[0]?.waited ?? 0) >= REVIEW_BACKLOG_MS;
-
-  return [
-    ...(backlog
-      ? [
-          {
-            key: `leads-needed:${waiting[0].task.id}:${String(waiting[0].task.round)}`,
-            text: `${String(waiting.length)} reviews wait, the oldest (${waiting[0].task.id}) ${minutes(waiting[0].waited)} min: start a lead that reviews beside you — ${commandAs(view.scratch, idle[0], view.identified, 'task next --role lead')} — it stops by itself once the queue is empty`
-          }
-        ]
-      : []),
-    // One a designer is still to look at is not the lead's yet: it wakes the lead once the designer said.
-    ...view.tasks
-      .filter(task => task.status === 'in-review' && task.design?.status !== 'due')
-      // One another lead or a tester took is theirs: the lead is not woken for it.
-      .filter(task => task.reviewer === undefined || !view.reviewers.includes(task.reviewer))
-      .filter(
-        task =>
-          !helped ||
-          (task.reviewer === undefined && now.getTime() - Date.parse(task.since ?? view.openedAt) >= UNTAKEN_REVIEW_MS)
-      )
-      .map(task => ({
-        key: `review:${task.id}:${String(task.round)}:${task.takenAt ?? ''}:${task.design?.status ?? ''}`,
-        text: helped
-          ? `${task.id} has waited in review ${minutes(now.getTime() - Date.parse(task.since ?? view.openedAt))} min and no one took it (${running.join(', ')} at a review): review it yourself — plitzi task look ${task.id}, then plitzi task review ${task.id} --approve | --changes "…"`
-          : task.design?.status === 'approved'
-            ? `${task.id} is in review, its UI approved by ${task.design.by ?? 'a designer'} — yours is the final review: plitzi task look ${task.id}, then plitzi task review ${task.id} --approve | --changes "…"`
-            : `${task.id} is in review: plitzi task review ${task.id} --approve | --changes "…"`
-      })),
-    ...view.attention
-      .filter(item => item.who !== 'task')
-      .map(item => ({
-        key: TIMED.has(item.kind)
-          ? `${item.kind}:${item.task ?? ''}`
-          : item.file !== undefined
-            ? `${item.kind}:${item.task ?? ''}:${item.file}`
-            : item.subject !== undefined
-              ? `${item.kind}:${item.task ?? ''}:${item.subject}`
-              : `${item.kind}:${item.task ?? ''}:${item.text}`,
-        text: item.text,
-        ...(item.fyi && item.message ? { message: item.message } : {})
-      }))
-  ];
-};
+export const leadItems = (view: RunView): LeadItem[] => [
+  // One a designer is still to look at is not the lead's yet: it wakes the lead once the designer said.
+  ...(view.reviewers.length > 0
+    ? []
+    : view.tasks
+        .filter(task => task.status === 'in-review' && task.design?.status !== 'due')
+        .map(task => ({
+          key: `review:${task.id}:${String(task.round)}:${task.takenAt ?? ''}:${task.design?.status ?? ''}`,
+          text:
+            task.design?.status === 'approved'
+              ? `${task.id} is in review, its UI approved by ${task.design.by ?? 'a designer'} — yours is the final review (the team has no tester): plitzi task look ${task.id}, then plitzi task review ${task.id} --approve | --changes "…"`
+              : `${task.id} is in review (the team has no tester): plitzi task review ${task.id} --approve | --changes "…"`
+        }))),
+  ...view.attention
+    .filter(item => item.who !== 'task')
+    .map(item => ({
+      key: TIMED.has(item.kind)
+        ? `${item.kind}:${item.task ?? ''}`
+        : item.file !== undefined
+          ? `${item.kind}:${item.task ?? ''}:${item.file}`
+          : item.subject !== undefined
+            ? `${item.kind}:${item.task ?? ''}:${item.subject}`
+            : `${item.kind}:${item.task ?? ''}:${item.text}`,
+      text: item.text,
+      ...(item.fyi && item.message ? { message: item.message } : {})
+    }))
+];
 
 const isKeys = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(each => typeof each === 'string');
@@ -185,9 +147,7 @@ export const waitForLead = async (
 
       return !launch && agent !== undefined && now - (needSince.get(agent) ?? now) < KEEPER_GRACE_MS;
     };
-    const fresh = [...failedLaunches, ...leadItems(view, ctx.now())].filter(
-      item => !seen.has(item.key) && !keeperHasIt(item)
-    );
+    const fresh = [...failedLaunches, ...leadItems(view)].filter(item => !seen.has(item.key) && !keeperHasIt(item));
     if (fresh.length > 0) {
       await writeJson(seenFile, [...seen, ...fresh.map(item => item.key)]);
       // What is only to know, shown whole here, is read: it leaves what needs the lead (Carlos: what was looked at

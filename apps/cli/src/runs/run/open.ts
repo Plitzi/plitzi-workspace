@@ -15,7 +15,7 @@ import { RunRefusal } from '../refusal';
 import { runReportDir } from '../reports';
 import { SCOPE_SPIKE, startingState } from '../spike';
 import { keepFiles } from '../store';
-import { coLeadNames, ensureTeam, reviewsDesign, teamSize } from '../team';
+import { ensureTeam, reviewsDesign, SCOUT, teamSize, teamTakes } from '../team';
 import { assertNoOtherRun, claimProject, handedInputs, releaseProject, takeInputs } from './claim';
 import { requireNoTask, requirePerson } from './context';
 import { assertStatus, loadRun, logRun, pinnedNow, readRecord, updateRecord } from './record';
@@ -286,10 +286,13 @@ export const openRun = async (
   for (const task of checked.tasks) {
     const taskFiles = taskPaths(paths, task.id);
     await writeJson(taskFiles.definition, task);
-    // The scope is the lead's from the open — no lead takes it from a queue: unowned, the monitor showed the lead idle
-    // while it scoped the run.
+    // The scope is a scout's, taken from its queue — or, with none in the team, the lead's from the open: unowned, the
+    // monitor showed the lead idle while it scoped the run.
     const state = startingState(task, task.dependsOn.length === 0, at);
-    await writeJson(taskFiles.state, task.id === SCOPE_SPIKE ? { ...state, spikedBy: { by: LEAD, at } } : state);
+    await writeJson(
+      taskFiles.state,
+      task.id === SCOPE_SPIKE && !teamTakes(team, SCOUT) ? { ...state, spikedBy: { by: LEAD, at } } : state
+    );
   }
 
   const record: RunRecord = {
@@ -300,7 +303,6 @@ export const openRun = async (
     activeOn: { machine: ctx.machine, since: at },
     pinned: await pinnedNow(ctx.root, ctx.cli),
     agents,
-    ...(coLeadNames(team).length > 0 ? { leads: coLeadNames(team) } : {}),
     estimate: {
       tasks: checked.estimate.tasks,
       agents: checked.estimate.agents,

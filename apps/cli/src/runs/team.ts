@@ -16,12 +16,13 @@ import type { Quality, RunPlan } from './model';
  * Who works this project's runs: the project's own choice, in `.plitzi/team.json` — committed, so the team
  * shares it — that a person edits, or asks an agent to change with `plitzi run team set`. The lead, and the agents it
  * starts: each with the roles it takes, how many of it, and the model to start it with. How many agents a run has is
- * the team's size; a task whose role nobody in the team takes is refused at `run plan`; a tester in the team gives every
- * developer task its tests (`tests.ts`); a designer in the team reviews the UI of the others' tasks before the lead.
+ * the team's size; a task whose role nobody in the team takes is refused at `run plan`; a designer reviews the UI of the
+ * others' tasks; a tester reviews every task — its QA, the task's approval — and writes the tests of each developer task
+ * (`tests.ts`); a scout finds out what the spikes ask.
  *
- * The leads are one for every four agents (`AGENTS_PER_LEAD`), or as many as `"lead": { "count" }` says: the first, `lead`,
- * plans, answers, decides and finishes; the others (`lead-2`, `lead-3`…) review tasks as it does, taking each from one
- * queue — two levels, and no lead with agents of its own.
+ * One lead, the manager: it plans with the person, approves the tasks a spike proposes, answers, decides what is escalated
+ * to it and finishes — it reviews no task while the team has a tester. It is the person's harness, and never started
+ * again: what it reads stays read on every turn after, so the work that reads much is the agents'.
  *
  * The CLI starts no agent: the lead's harness does, and reads here what to start each with — `run plan` says it agent by
  * agent. A model is the harness's own name for it (`claude-sonnet-5-5`, `openrouter/…`): nothing is checked but that one
@@ -30,8 +31,9 @@ import type { Quality, RunPlan } from './model';
  * ```json
  * { "version": 1, "lead": { "model": "claude-opus-5-5", "effort": "high" },
  *   "agents": [{ "name": "dev", "roles": ["developer"], "count": 2, "model": "claude-sonnet-5-5" },
- *              { "name": "design", "roles": ["designer", "reviewer"], "model": "claude-opus-5-5" },
- *              { "name": "test", "roles": ["tester"], "model": "claude-sonnet-5-5" }] }
+ *              { "name": "design", "roles": ["designer"], "model": "claude-opus-5-5" },
+ *              { "name": "test", "roles": ["tester"], "model": "claude-opus-5-5" },
+ *              { "name": "scout", "roles": ["scout"], "model": "claude-opus-5-5" }] }
  * ```
  */
 
@@ -44,16 +46,22 @@ export const TEAM_SCHEMA = '../node_modules/@plitzi/cli/schemas/team.schema.json
 export const DEVELOPER = 'developer';
 export const DESIGNER = 'designer';
 export const TESTER = 'tester';
+export const SCOUT = 'scout';
 
 /** The strongest model a team is started with, where a role's work asks for it. */
 const STRONGEST = 'claude-opus-5-5';
 
 /**
  * The model a role starts on when the team names none: the designer's eye Sonnet lacked (a run's UI came back
- * mediocre), and the tester's — its tests and its review are what stop a bug or a regression getting through (Carlos).
- * Any other role, the harness's own; the file's model, when it says one, always wins.
+ * mediocre); the tester's — its review is the task's approval, and with its tests what stops a bug or a regression
+ * getting through; the scout's — what a spike finds is what every task after it is made of (Carlos). Any other role,
+ * the harness's own; the file's model, when it says one, always wins.
  */
-export const ROLE_MODELS: Readonly<Partial<Record<string, string>>> = { [DESIGNER]: STRONGEST, [TESTER]: STRONGEST };
+export const ROLE_MODELS: Readonly<Partial<Record<string, string>>> = {
+  [DESIGNER]: STRONGEST,
+  [TESTER]: STRONGEST,
+  [SCOUT]: STRONGEST
+};
 
 /** The model an agent of these roles starts on when its entry names none. */
 const roleModel = (roles: readonly string[]): string | undefined =>
@@ -143,6 +151,11 @@ export interface TeamAgent {
    * `DEFAULTS.resumeMaxBytes` — reading it again would cost more than starting over — nor a harness that keeps none.
    */
   resumeSession?: boolean;
+  /**
+   * The skill its agents read first, a file of the project — `.claude/skills/accessibility/SKILL.md`: what a role of the
+   * project's own does, which the CLI cannot say. Read beside the CLI's half of a role it knows.
+   */
+  skill?: string;
 }
 
 /**
@@ -175,11 +188,10 @@ export const FRESH_CONTEXT_AT = 250_000;
  */
 const MIN_FRESH_CONTEXT_AT = 60_000;
 
-/** The leads' entry: their model, and how many — one for every `AGENTS_PER_LEAD` agents when not said. */
+/** The lead's entry: its model and effort. One lead: the testers review. */
 export interface Lead {
   model?: ModelChoice;
   effort?: Effort;
-  count?: number;
 }
 
 export interface Team {
@@ -255,10 +267,12 @@ export const DEFAULT_DESIGN_REVIEW: Quality = 'standard';
 export const ROLES = {
   developer: 'Writes the code of a task: the role of a task that names none.',
   designer:
-    'Designs (tasks of its own), and reviews the UI/UX of the tasks of other roles before the lead, as a designer.',
+    'Designs (tasks of its own), and reviews the UI/UX of the tasks of other roles before the tester, as a designer.',
   reviewer: 'Reviews as a task of its own: an accessibility pass, a code audit — and fixes what it finds.',
   tester:
-    'Reviews the code of the tasks in review — the lead’s review, its approval the task’s: the lead reviews only what no tester takes in time — and writes the tests of each developer task, after it: <task>-tests, from what the task was asked, never bent to pass. With no tester, the lead reviews every task.',
+    'QA: reviews every task in review — what it was asked, its checks, how it behaves, its code; its approval is the task’s — and escalates to the lead what it cannot decide. Reviews come first; then it writes the tests of each developer task: <task>-tests, from what the task was asked, never bent to pass. With no tester, the lead reviews every task.',
+  scout:
+    'Finds out: the run’s scope and every spike — reads, measures, compares — and hands the lead what it found and the tasks it makes, which the lead approves. A question an agent blocks on is its to answer too.',
   writer: 'Writes the words: the copy of a page, the docs, the help.'
 } as const;
 
@@ -279,18 +293,13 @@ export interface StartedAgent {
   session?: Exclude<SessionMode, typeof DEFAULT_SESSION>;
   /** Resumes its own session when started again after it died with a task in hand (`TeamAgent.resumeSession`). */
   resumeSession?: true;
+  /** The skill it reads first (`TeamAgent.skill`), relative to the project. */
+  skill?: string;
 }
 
 /** A role's or an agent's name, as a plan writes one. */
 const NAME = /^[a-z][a-z0-9_-]{0,63}$/;
 const MAX_COUNT = 16;
-const MAX_LEADS = 8;
-
-/**
- * How many agents a lead reviews for: past it the reviews queue up behind one lead (v12: five agents, one lead, tasks
- * waiting for it) — and below it a second lead costs more than it saves.
- */
-export const AGENTS_PER_LEAD = 4;
 
 const isStrings = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(each => typeof each === 'string');
@@ -298,9 +307,11 @@ const isStrings = (value: unknown): value is string[] =>
 const isLeadEntry = (value: unknown): value is Lead =>
   isRecord(value) &&
   (value.model === undefined || isModelChoice(value.model)) &&
-  (value.effort === undefined || isEffort(value.effort)) &&
-  (value.count === undefined ||
-    (typeof value.count === 'number' && Number.isInteger(value.count) && value.count >= 1 && value.count <= MAX_LEADS));
+  (value.effort === undefined || isEffort(value.effort));
+
+/** A skill's path: a markdown file inside the project, said from its folder. */
+const isSkillPath = (value: unknown): value is string =>
+  typeof value === 'string' && value.endsWith('.md') && !path.isAbsolute(value) && !value.split(/[\\/]/).includes('..');
 
 /** What is wrong with one agent of the file, said — none when it is one. */
 const agentProblem = (value: unknown): string | undefined => {
@@ -327,9 +338,9 @@ const agentProblem = (value: unknown): string | undefined => {
   const count = typeof value.count === 'number' ? value.count : 1;
   if (
     value.min !== undefined &&
-    (typeof value.min !== 'number' || !Number.isInteger(value.min) || value.min < 1 || value.min > count)
+    (typeof value.min !== 'number' || !Number.isInteger(value.min) || value.min < 0 || value.min > count)
   ) {
-    return `"${name}": its min — how many start with the run — is a whole number from 1 to its count (${String(count)})`;
+    return `"${name}": its min — how many start with the run — is a whole number from 0 (every one on demand) to its count (${String(count)})`;
   }
 
   if (value.model !== undefined && !isModelChoice(value.model)) {
@@ -348,6 +359,10 @@ const agentProblem = (value: unknown): string | undefined => {
     return `"${name}": its session is ${SESSION_MODES.join(', ')} — when it is started again with a fresh context: after each task or review (the default), past options.freshContextAt, or never`;
   }
 
+  if (value.skill !== undefined && !isSkillPath(value.skill)) {
+    return `"${name}": its skill is a markdown file of the project, by its path from it — ".claude/skills/accessibility/SKILL.md"`;
+  }
+
   if (value.resumeSession !== undefined && typeof value.resumeSession !== 'boolean') {
     return `"${name}": its resumeSession is true — its own session resumed after it died with a task in hand — or false`;
   }
@@ -359,8 +374,8 @@ const isTeamAgent = (value: unknown): value is TeamAgent => agentProblem(value) 
 
 const TEAM_KEYS = ['$schema', 'version', 'lead', 'agents', 'options', 'about'];
 const OPTION_KEYS = ['designReview', 'startGraceMinutes', 'launch', 'freshContextAt'];
-const LEAD_KEYS = ['model', 'effort', 'count'];
-const AGENT_KEYS = ['name', 'roles', 'count', 'min', 'model', 'effort', 'session', 'resumeSession'];
+const LEAD_KEYS = ['model', 'effort'];
+const AGENT_KEYS = ['name', 'roles', 'count', 'min', 'model', 'effort', 'session', 'resumeSession', 'skill'];
 
 /** A key the file does not know — a typo, most often — said with the one it likely meant: it would be read as nothing. */
 const unknownKeys = (value: object, known: readonly string[], where: string): string[] =>
@@ -384,9 +399,7 @@ export const teamProblems = (parsed: unknown): string[] => {
   const problems = unknownKeys(parsed, TEAM_KEYS, '');
   if (parsed.lead !== undefined) {
     if (!isLeadEntry(parsed.lead)) {
-      problems.push(
-        `"lead" is { "model"?: "…", "effort"?: ${EFFORTS.join(' | ')}, "count"?: 1 to ${String(MAX_LEADS)} }`
-      );
+      problems.push(`"lead" is { "model"?: "…", "effort"?: ${EFFORTS.join(' | ')} }`);
     } else {
       problems.push(...unknownKeys(parsed.lead, LEAD_KEYS, '"lead": '));
     }
@@ -497,30 +510,34 @@ export const readTeam = async (root: string): Promise<Team | undefined> => {
  */
 export const TEAM_ABOUT: Record<string, unknown> = {
   file: 'Who works the runs of several agents on this project (plitzi run). Edit it, or: plitzi run team set <name> --roles … --count … --model …',
-  lead: 'The lead plans, reviews every task — the complete, strict review, and the final word — answers and closes: the one you talk to. Give it your strongest model: "lead": { "model": "…", "effort": "high" } (plitzi run team set lead --model …). One lead for every 4 agents: lead plans and finishes, lead-2, lead-3… only review, as strictly — "count" says another number (plitzi run team set lead --count 1).',
+  lead: 'The lead is the manager, the one you talk to: it plans with you, approves the tasks a spike proposes, answers, decides what a tester escalates and closes — looking at the whole result once before it does. It reviews no task while the team has a tester (with none, every one). Give it your strongest model: "lead": { "model": "…", "effort": "high" } (plitzi run team set lead --model …).',
   agents:
-    'Each agent: a name (dev is dev-1, dev-2…), the roles it takes, how many of it (count), and the model to start it with, as the harness names it (claude-sonnet-5-5 in Claude Code; any model opencode or another harness takes); left out, the default of the harness. "effort": how hard it thinks — low, medium, high, xhigh, max — left out, the harness’s own (Claude Code’s effort, Codex’s reasoning effort). Or a model a quality level — "model": { "standard": "claude-sonnet-5-5", "high": "claude-opus-5-5" } (light, standard, high): each level is started apart (design-1-high) for the tasks of it, so the strongest model works only what many build on. How many agents work at once is the sum of the counts; "min" (from 1 to its count) starts only that many with the run, the rest on demand — the lead starts one when work waits for it (run watch says which), and it stops once none is left. "session": when its agents are started again with a fresh context, always between two pieces of work (a task completed, a review decided), never in one — "task" (the default) after each one, "context" once its context passes options.freshContextAt, "keep" never: every turn reads the whole context again, so a context that grew costs on every turn after (plitzi run team set dev --session context). The lead that plans keeps its session. "resumeSession": true resumes an agent\'s own session when it is started again after it died with a task in hand — what it knew and had not written yet kept; Claude Code alone, and not a session past a size that would cost more to read again than to start over (plitzi run team set dev --resume-session).',
+    'Each agent: a name (dev is dev-1, dev-2…), the roles it takes, how many of it (count), and the model to start it with, as the harness names it (claude-sonnet-5-5 in Claude Code; any model opencode or another harness takes); left out, the default of the harness. "effort": how hard it thinks — low, medium, high, xhigh, max — left out, the harness’s own (Claude Code’s effort, Codex’s reasoning effort). Or a model a quality level — "model": { "standard": "claude-sonnet-5-5", "high": "claude-opus-5-5" } (light, standard, high): each level is started apart (design-1-high) for the tasks of it, so the strongest model works only what many build on. How many agents work at once is the sum of the counts; "min" (from 0 to its count) starts only that many with the run, the rest on demand — started when work waits for it (run watch says which), and it stops once none is left; 0, every one on demand. "session": when its agents are started again with a fresh context, always between two pieces of work (a task completed, a review decided), never in one — "task" (the default) after each one, "context" once its context passes options.freshContextAt, "keep" never: every turn reads the whole context again, so a context that grew costs on every turn after (plitzi run team set dev --session context). The lead keeps its session: it is the one you talk to. "resumeSession": true resumes an agent\'s own session when it is started again after it died with a task in hand — what it knew and had not written yet kept; Claude Code alone, and not a session past a size that would cost more to read again than to start over (plitzi run team set dev --resume-session). "skill": a markdown file of the project its agents read first — what a role of your own does (plitzi run team set a11y --roles accessibility --skill .claude/skills/accessibility/SKILL.md).',
   roles: { ...ROLES, '<any other>': 'A role of your own: a task names it, an agent takes it.' },
   options:
     '"designReview": how closely a designer reviews another task\'s UI — "light" (its pages at 1440 and 390, the default scheme, nothing it does not touch), "standard" (both schemes and widths, its sections against the reference; the default), "high" (every page that reads its files, against the run before it too). A review costs what it looks at. "startGraceMinutes": how long an agent just started may say nothing before the tasks it holds read \'no signal\' — 3 when not said. "launch": the harness (claude, codex, opencode) the CLI starts the agents in by itself when the run asks for one — left out, the lead starts them. "freshContextAt": the context, in tokens, past which an agent of "session": "context" is started again fresh — 250000 when not said.',
-  more: 'It starts small — every agent spends tokens: two developers, one started with the run and the other on demand, and a designer who reviews the UI of every other task — the developers on Sonnet, the designer and the lead on Opus. Grow it when a job asks — you decide: more developers (plitzi run team set dev --count 3 --min 2), a tester who reviews the code and writes the tests of each developer task — on Opus too, unless you say a model: what it misses gets through (plitzi run team set test --roles tester), a writer.'
+  more: 'It starts small — every agent spends tokens, and only one developer starts with the run: a second developer, a designer who reviews the UI of every other task, a tester who reviews every task and writes the tests, and a scout who finds out what the spikes ask — each started when work waits for it. The developers on Sonnet, the others and the lead on Opus. Grow it when a job asks — you decide: more developers (plitzi run team set dev --count 3 --min 2), a second tester when reviews queue (plitzi run team set test --count 2), a writer.'
 };
 
 /**
- * The team a project starts with: two developers on Sonnet — one with the run, the other started on demand, when work
- * waits for it — and a designer: few agents at once from the start, the person growing it when a job asks.
+ * The team a project starts with — one to two developers, and none to one tester, scout and designer (Carlos): only one
+ * developer with the run, every other started when work waits for it — few agents at once, the person growing it when
+ * a job asks.
  */
 export const STARTER_TEAM: Team = {
   $schema: TEAM_SCHEMA,
   version: 1,
   about: TEAM_ABOUT,
-  // The models are the file's, never the CLI's: the lead — who plans, reviews every task and has the final word — on the
-  // strongest, thinking hard; the designer too, whose eye Sonnet lacked (a run's UI came back mediocre); developers on
-  // Sonnet, which works a task as well for less. One the file leaves out is the harness's own.
+  // The models are the file's, never the CLI's: the lead — who plans and decides — on the strongest, thinking hard; the
+  // designer too, whose eye Sonnet lacked (a run's UI came back mediocre); the tester, whose approval is the task's, and
+  // the scout, whose findings every task is made of — on it too (Carlos); developers on Sonnet, which works a task as
+  // well for less. One the file leaves out is the harness's own.
   lead: { model: STRONGEST, effort: 'high' },
   agents: [
     { name: 'dev', roles: [DEVELOPER], count: 2, min: 1, model: 'claude-sonnet-5-5', resumeSession: true },
-    { name: 'design', roles: [DESIGNER], model: STRONGEST, resumeSession: true }
+    { name: 'design', roles: [DESIGNER], min: 0, model: STRONGEST, resumeSession: true },
+    { name: 'test', roles: [TESTER], min: 0, model: STRONGEST, resumeSession: true },
+    { name: 'scout', roles: [SCOUT], min: 0, model: STRONGEST, resumeSession: true }
   ]
 };
 
@@ -579,7 +596,8 @@ export const startedAgents = (team: Team): StartedAgent[] =>
       const demand = {
         ...(each.min !== undefined && index >= each.min ? { onDemand: true as const } : {}),
         ...(each.session === 'context' || each.session === 'keep' ? { session: each.session } : {}),
-        ...(each.resumeSession === true ? { resumeSession: true as const } : {})
+        ...(each.resumeSession === true ? { resumeSession: true as const } : {}),
+        ...(each.skill === undefined ? {} : { skill: each.skill })
       };
       if (each.model === undefined || typeof each.model === 'string') {
         return [
@@ -605,14 +623,6 @@ export const startedAgents = (team: Team): StartedAgent[] =>
     }).flat()
   );
 
-/** How many leads the team has: as `"lead": { "count" }` says, or one for every `AGENTS_PER_LEAD` agents. */
-export const leadCount = (team: Team): number =>
-  team.lead?.count ?? Math.max(1, Math.ceil(teamSize(team) / AGENTS_PER_LEAD));
-
-/** The leads besides `lead`, by the names they are started with: `lead-2`, `lead-3`… — they review, nothing else. */
-export const coLeadNames = (team: Team): string[] =>
-  Array.from({ length: leadCount(team) - 1 }, (_, index) => `lead-${String(index + 2)}`);
-
 /** How many agents the team has: how many may work a run at once. */
 export const teamSize = (team: Team): number => team.agents.reduce((sum, each) => sum + (each.count ?? 1), 0);
 
@@ -634,6 +644,24 @@ export const teamTakes = (team: Team, role: string): boolean => team.agents.some
 export const reviewsDesign = (team: Team | undefined, plan: Pick<RunPlan, 'designReview'>): boolean =>
   plan.designReview ?? (team ? teamTakes(team, DESIGNER) : false);
 
+/** The skills the team names that the project does not have, each said with its agent: one read first, and missing. */
+export const skillProblems = async (root: string, team: Team): Promise<string[]> =>
+  (
+    await Promise.all(
+      team.agents.map(async each =>
+        each.skill === undefined ||
+        (await fs.stat(path.join(root, each.skill)).then(
+          found => found.isFile(),
+          () => false
+        ))
+          ? []
+          : [
+              `"${each.name}" reads ${each.skill} first (${TEAM_FILE}), and the project has no such file: write it, or point "skill" at the one there is`
+            ]
+      )
+    )
+  ).flat();
+
 /** The tasks of the plan whose role nobody in the team takes, said with the fix. */
 export const roleProblems = (plan: Pick<RunPlan, 'tasks'>, team: Team): string[] =>
   plan.tasks
@@ -647,27 +675,23 @@ export const roleProblems = (plan: Pick<RunPlan, 'tasks'>, team: Team): string[]
 export const startText = (started: Pick<StartedAgent, 'model' | 'effort'>): string =>
   `${started.model?.model ?? 'the harness’s own model'}${started.effort ? ` (${started.effort} effort)` : ''}`;
 
-/** The model the leads are started with, said. */
+/** The model the lead is started with, said. */
 export const leadModelText = (lead: Lead | undefined): string =>
   `${lead?.model ? choiceText(lead.model) : 'the harness’s own model'}${lead?.effort ? ` (${lead.effort} effort)` : ''}`;
 
-/**
- * What a lead is started on — `lead` itself, and one that reviews (`lead-2`): the team's model for its leads, the
- * strongest it names, and its effort.
- */
+/** What the lead is started on: the team's model for it, the strongest it names, and its effort. */
 export const leadStart = (lead: Lead | undefined): Pick<StartedAgent, 'model' | 'effort'> => {
   const named = lead?.model === undefined ? undefined : modelFor(lead.model, 'high');
 
   return { ...(named ? { model: { model: named } } : {}), ...(lead?.effort ? { effort: lead.effort } : {}) };
 };
 
-/** The leads' entry, as `run team` says it: the model, and how many when it is said. */
-export const leadText = (lead: Lead | undefined): string =>
-  `${leadModelText(lead)}${lead?.count !== undefined ? ` × ${String(lead.count)}` : ''}`;
+/** The lead's entry, as `run team` says it. */
+export const leadText = (lead: Lead | undefined): string => leadModelText(lead);
 
 /** One agent of the team, as `run team` says it. */
 export const teamAgentText = (each: TeamAgent): string =>
-  `${each.name}${(each.count ?? 1) > 1 ? ` × ${String(each.count)}` : ''}${each.min !== undefined && each.min < (each.count ?? 1) ? ` (${String(each.min)} at the start, the rest on demand)` : ''} — ${each.roles.join(', ')}${each.model ? ` — ${choiceText(each.model)}` : ''}${each.effort ? ` (${each.effort} effort)` : ''}${each.session === 'context' ? ' — a fresh session past options.freshContextAt' : each.session === 'keep' ? ' — one session while it runs' : ''}${each.resumeSession === true ? ' — resumes its session after a crash' : ''}`;
+  `${each.name}${(each.count ?? 1) > 1 ? ` × ${String(each.count)}` : ''}${each.min !== undefined && each.min < (each.count ?? 1) ? ` (${String(each.min)} at the start, the rest on demand)` : ''} — ${each.roles.join(', ')}${each.model ? ` — ${choiceText(each.model)}` : ''}${each.effort ? ` (${each.effort} effort)` : ''}${each.session === 'context' ? ' — a fresh session past options.freshContextAt' : each.session === 'keep' ? ' — one session while it runs' : ''}${each.resumeSession === true ? ' — resumes its session after a crash' : ''}${each.skill === undefined ? '' : ` — reads ${each.skill}`}`;
 
 export interface TeamChange {
   name: string;
@@ -687,6 +711,7 @@ export interface TeamAgentChange {
   effort?: Effort;
   session?: SessionMode;
   resumeSession?: boolean;
+  skill?: string;
 }
 
 const writeTeam = async (root: string, team: Team): Promise<void> => {
@@ -720,30 +745,26 @@ export const refreshTeamAbout = async (root: string, write: boolean): Promise<bo
 export const setTeamAgent = async (root: string, name: string, change: TeamAgentChange): Promise<TeamChange> => {
   const team = (await readTeam(root)) ?? { version: 1, agents: [] };
   if (name === 'lead') {
-    if (change.roles !== undefined) {
+    if (change.roles !== undefined || change.count !== undefined) {
       throw new RunRefusal(
         'invalid',
-        'The leads take no roles — they plan and review: give them a model, an effort or how many — plitzi run team set lead --model <model> --effort <effort> | --count <n>'
+        'The lead takes no roles and is one — it plans and decides; the testers review: give it a model or an effort — plitzi run team set lead --model <model> --effort <effort>; more reviewers are more testers — plitzi run team set test --count 2'
       );
     }
 
-    if (change.model === undefined && change.count === undefined && change.effort === undefined) {
-      throw new RunRefusal(
-        'invalid',
-        'Say what of the leads changes: plitzi run team set lead --model claude-opus-5-5 | --count 2'
-      );
+    if (change.model === undefined && change.effort === undefined) {
+      throw new RunRefusal('invalid', 'Say what of the lead changes: plitzi run team set lead --model claude-opus-5-5');
     }
 
     const lead: Lead = {
       ...team.lead,
       ...(change.model !== undefined ? { model: change.model } : {}),
-      ...(change.effort !== undefined ? { effort: change.effort } : {}),
-      ...(change.count !== undefined ? { count: change.count } : {})
+      ...(change.effort !== undefined ? { effort: change.effort } : {})
     };
     if (!isLeadEntry(lead)) {
       throw new RunRefusal(
         'invalid',
-        `The leads are 1 to ${String(MAX_LEADS)}, their model a name and their effort one of ${EFFORTS.join(', ')}: plitzi run team set lead --count 2`
+        `The lead's model is a name and its effort one of ${EFFORTS.join(', ')}: plitzi run team set lead --model claude-opus-5-5`
       );
     }
 
@@ -778,7 +799,8 @@ export const setTeamAgent = async (root: string, name: string, change: TeamAgent
     ...((change.session ?? before?.session) !== undefined && (change.session ?? before?.session) !== DEFAULT_SESSION
       ? { session: change.session ?? before?.session }
       : {}),
-    ...((change.resumeSession ?? before?.resumeSession) === true ? { resumeSession: true } : {})
+    ...((change.resumeSession ?? before?.resumeSession) === true ? { resumeSession: true } : {}),
+    ...((change.skill ?? before?.skill) !== undefined ? { skill: change.skill ?? before?.skill } : {})
   };
   const problem = agentProblem(after);
   if (problem !== undefined) {
@@ -798,12 +820,12 @@ export const setTeamAgent = async (root: string, name: string, change: TeamAgent
   return { name, ...(before ? { before } : {}), after, file: TEAM_FILE };
 };
 
-/** `plitzi run team unset <name>`: one agent out of the team — or, for `lead`, the leads' model and count. */
+/** `plitzi run team unset <name>`: one agent out of the team — or, for `lead`, the lead's model and effort. */
 export const unsetTeamAgent = async (root: string, name: string): Promise<TeamChange> => {
   const team = await readTeam(root);
   if (name === 'lead') {
     if (!team?.lead) {
-      throw new RunRefusal('invalid', `The leads have nothing of their own to take out (${TEAM_FILE})`);
+      throw new RunRefusal('invalid', `The lead has nothing of its own to take out (${TEAM_FILE})`);
     }
 
     const { lead, ...rest } = team;

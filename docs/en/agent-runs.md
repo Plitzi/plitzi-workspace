@@ -103,23 +103,28 @@ person's home are said as `<project>` and `~`. A run's log goes with the run: a 
 work nowhere the next run reads, and a run's empty stats cell was seen in two runs and noted "predates this task"
 in a review each time.
 
-**More leads for a larger team** (`leads.ts`). One lead reviews for four agents (`AGENTS_PER_LEAD`): past that, tasks
-waited for its review in v12. A team of five or more has `lead-2`, `lead-3`… beside `lead` — `"lead": { "count" }` in
-`team.json` says another number — recorded in `run.json` (`leads`) when the run opens or a stage raises them. Two levels
-and one queue, no lead with agents of its own — **started only when the reviews queue up**, since one waiting for
-reviews it is never handed spends tokens on nothing: `lead` reviews every task, taking each from the queue (`task next --role lead --no-wait`), until two wait and the oldest waited five minutes (`REVIEW_BACKLOG_MS`) — then `run watch` names the one to start; one handed nothing for four minutes (`IDLE_LEAD_MS`) is told it can stop — at once when no review waits and the tasks left are no more than the other leads, who review one each (`spareLead`), and a lead that
-asked within the last minute (`leads-asking.json`) is running. A lead that reviews answers questions too (`answering.ts`):
-with no review for it, `task next --role lead` hands it the oldest question to the lead no other lead took
-(`answering.json`) — what the code, the plan or the original answers; a choice for the person or a change of plan it
-leaves — and `lead` hears what it said (an fyi), woken for the question only once it waited `UNTAKEN_REVIEW_MS`
-unanswered. A message to a task answers its one open question; with two open it is refused until `--reply-to` says
-which, and one to `all` answers none (a note to every task marked a question answered). A lead that reviews waits with `task next --role lead`,
-which offers it a task in review no other lead took (`TaskState.reviewer`, for the round) — one it sent back first, then
-the one that waited longest — and reviews it as `lead` would, as strictly; a review another lead took is refused to it
-(`claimed`). Everything else — planning, amending, stacking a stage, answering, notes to every task, unblocking,
-reassigning, reverting, reconciling, the summary and the finish — is `lead`'s, refused to a lead that reviews and to an
-agent of the team (`lead-only`), so two never do it twice. With nothing waiting for it, `lead` helps: `task reassign
-<ready task> --to lead` makes the task its own, worked in its copy and completed as an agent's is. `lead` may review any task; while one of them runs, `run watch` wakes it for a review only after it waited two minutes with no lead taking it (`UNTAKEN_REVIEW_MS`). Two verdicts on one task are given one at a time (`review.lock`): the second reads it said.
+**One lead, the manager** (`leads.ts`). The lead is the person's harness and is never started again, so every file,
+diff and picture it reads stays in its context and is read again on every turn after. A run's lead read 130 turns of
+~110k tokens each while it scoped the run and reviewed every task: 68% of what the run spent. So the work that reads a
+lot belongs to the agents, each in a fresh context. A **scout** finds out the spikes. A **tester** reviews every task,
+and its approval is the task's. The lead plans with the person, approves the tasks a spike proposes, answers, decides
+what is escalated to it and finishes.
+
+The lead reviews only three kinds of task:
+- one a tester escalates (`task review --escalate "…"`, `tasks/escalate.ts`);
+- one past its review rounds — both of these are blocked on the lead (`blockedBy.review`), and it decides with
+  `task review --approve` or `task unblock --answer` (sent back with its word);
+- every task, when the team has no tester (`testersReview`).
+
+`run watch` wakes it for nothing else (`leadItems`). Before it finishes, the lead looks once at the whole result:
+`run look` (`commands/runs/runLook.ts`) serves the approved work as `run preview` does, checks every page the run
+changed, and pictures each at 1440 and 390, in light and dark. `run finish` asks for that look after the last approval
+(`notLookedAtYet`).
+
+Planning, amending, stacking a stage, answering, notes to every task, reassigning, reverting, reconciling, the summary
+and the finish are the lead's. They are refused to an agent of the team (`lead-only`). `"lead": { "count" }` in
+`team.json` is refused, saying to add testers instead: more reviewers are more testers. Two verdicts on one task are
+given one at a time (`review.lock`): the second reads it said.
 
 **Connected as it goes.** A shared file a task changed — or any file no task at work holds: a done task's, one in no
 task — is taken by turns at `complete` when nobody else holds it, so it merges with the task instead of waiting for an
@@ -389,14 +394,15 @@ agent its scratch, made. Never removed by the run.
 ## Who works the runs (`team.ts`)
 
 Who works a project's runs is its own choice, in `.plitzi/team.json` (committed: it holds no secret, so it needs no
-`.example` as `.env` does). `plitzi create` writes the starter (`STARTER_TEAM`): two developers — one started with the
-run, the other on demand — and a designer, since each agent spends tokens; the person grows it when a job asks. It
-names every model — the lead (at `"effort": "high"`) and the designer on `claude-opus-5-5`, the developers on
-`claude-sonnet-5-5` — because the models are the file's,
-never the CLI's (one deprecated is changed there, in sight): one it leaves out is the harness's own, and a lead that
-reviews (`lead-2`) starts on the lead's. And an `about` that
-says what each field and each role the CLI knows means (`ROLES`: developer, designer, reviewer, tester, writer; any
-other name is a role of the project's own), since JSON has no comments; `about` is the CLI's — never read, written as this CLI says it whenever it
+`.example` as `.env` does). `plitzi create` writes the starter (`STARTER_TEAM`), since each agent spends tokens: one to two
+developers, and none to one tester, scout and designer. Only one developer starts with the run; the others start when
+work waits for them (`"min": 0`, every one on demand). The person grows it when a job asks. It names every model: the
+lead (at `"effort": "high"`), the designer, the tester and the scout on `claude-opus-5-5`, and the developers on
+`claude-sonnet-5-5`. The models are the file's, never the CLI's (one deprecated is changed there, in sight); one it
+leaves out is the harness's own. And an `about` that
+says what each field and each role the CLI knows means (`ROLES`: developer, designer, reviewer, tester, scout, writer; any
+other name is a role of the project's own, whose agents read the skill the team names for them first — `"skill":
+".claude/skills/a11y/SKILL.md"`, a markdown file of the project, refused at `run plan` when it is not there), since JSON has no comments; `about` is the CLI's — never read, written as this CLI says it whenever it
 writes the file, and brought up by `plitzi upgrade` with the files, the agents left as they are. The file is formatted as the project's Prettier leaves it (`formattedJson`). `run team` lists the roles too. The file
 holds the leads' model, effort and count, and each agent — its `effort` too, how hard it thinks (`low` to `max`:
 Claude Code's `--effort`, Codex's reasoning effort, `max` its `xhigh`; opencode takes none from the command line), the
@@ -476,7 +482,7 @@ harness's context — its last turn's, read from the session (`harness/contextNo
 harness's is never read, and its agents are not stopped for it) — passes `freshContextAt` (250k tokens, from 60k);
 `"keep"` never. The piece it just completed, sent back already, comes first instead: its context is what that round
 needs. The lead that plans never stops for it — the person talks to it — nor an agent outside the team: only the
-team's agents and the leads that review are started again by the run. The keeper starts the agent again — of the base, whatever
+team's agents are started again by the run. The keeper starts the agent again — of the base, whatever
 waits; on demand, when work of its role does — and any task sent back to an agent not running asks for it by name,
 which it takes first. Every turn reads the whole context again: a run's developers, a session a task, read ~12k
 tokens' worth a turn and ended each at 58–113k; its designer and tester, never started again, grew to 400k and read
@@ -504,12 +510,14 @@ crash read "no signal" and "not running" at once, its last word from before, and
 
 ## The tester's tasks (`tests.ts`)
 
-A tester reviews the code first: `task next` hands it the tasks in review that wait for no designer, as it hands a lead
-that reviews (`leadReviewFor`), its verdict is a lead's — its approval approves the task — and it never reviews what it
-worked — nor does anyone review a task they worked, the lead included (`review.ts`: its own is a co-lead's or a tester's).
-A reviewer's `task progress` is its review's sign of life (`review-progress` in the log), not refused. While a tester
-runs, `run watch` wakes the lead only for a review none took in `UNTAKEN_REVIEW_MS`: the testers
-the bottleneck. A team with no tester leaves every review to the leads.
+A tester reviews first. `task next` hands it every task in review that waits for no designer (`leadReviewFor`,
+`testerReviews`), a designer's task included. That review is the task's QA: what it was asked, its checks, how it
+behaves, its code. When no designer is free, the tester reviews the task's UI too (`--skip-design reviewer`, after its
+`task look`). Its approval approves the task. It never reviews what it worked, and nobody reviews a task they worked,
+the lead included (`review.ts`: the lead's own goes to a tester). A reviewer's `task progress` is its review's sign of
+life (`review-progress` in the log), not refused. What a tester cannot decide it escalates to the lead, and the lead is
+woken for no other review. When reviews queue, the keeper starts another tester (`agentsNeeded`). A team with no tester
+leaves every review to the lead.
 
 A tester in the team gives every developer task a task of its tests, `<id>-tests`, a tester's, after it: tests written
 from the task's acceptance, not its code, by an agent that did not write it. Its files are where the project's tests are
@@ -540,7 +548,7 @@ and tells the lead; and the lead, reviewing, tests the module's edges itself or 
 ## The designer's review (`design.ts`)
 
 When every designer is at a task of its own, a UI review waits for nobody: the lead's queue offers it too (`uiToo`:
-review its UI as well, approve with `--skip-design lead`), and the run's view says it (`ui-waits`: start another
+review its UI as well, approve with `--skip-design reviewer`), and the run's view says it (`ui-waits`: start another
 designer, or review it), which wakes the lead.
 A ready task whose file another task holds is not offered (its take would be refused, `claimed`): `task next` says whose
 it waits for, and `--follow` waits. With a designer in the team — or a plan that says `"designReview": true`; `false` turns it off; a stage stacked on
@@ -598,7 +606,7 @@ another designer — the first told on its next command (`review-timed-out` in t
 `claimed`, saying to keep what it found for the next run (`run notice`) — and `run watch` tells the lead, idle team or
 not, to decide it (`slow-review`; under the limit, only while others sit free, from half of it). One due nobody takes
 for `REVIEW_QUEUE_MS` (5 min) is the lead's to review now (`ui-queued`). A lead that sends a task back with `--changes
-… --skip-design lead` keeps its next round's UI review (`design.reserved`): that round comes due to the lead alone,
+… --skip-design reviewer` keeps its next round's UI review (`design.reserved`): that round comes due to the lead alone,
 `skipped` by `lead` — never offered to a designer (a run's t-result-card went to design-1 after the lead said
 it was its own); a designer reviewing the round it sent back is told its review ended.
 
@@ -659,7 +667,7 @@ agents of its role have nothing to take; whether they share a file decides what 
 review a designer or another lead took ten minutes ago and has not decided while the team has nothing to take — and
 `idle-team`, the run as a kanban: an agent running with no card worked, no review in hand and none of its roles ready,
 said with the way to feed it — the backlog's items no task closes, the UI of a card in review a free designer could take
-(a send-back with `--skip-design lead` keeps the next look the lead's), a large card to split — or that nothing is left;
+(a send-back with `--skip-design reviewer` keeps the next look the lead's), a large card to split — or that nothing is left;
 never a designer while others' work is under way, which waits for its UI reviews, never an agent none of whose role's
 cards is left (it has done its part), and a card to split only of the idle agents' roles; said once for the same agents
 and the same board (`subject`: which agents, how many cards done), whatever its advice's words — a run's lead was
@@ -729,33 +737,36 @@ exclusively (`wx`). Every write is a temp file renamed over the target, retried 
 version is a blob named by its fingerprint and a manifest names it, so the manifest is the one commit point: a cut leaves
 an unnamed blob, never a named half-written file.
 
-## A spike: research in the run, a lead's (`spike.ts`, `tasks/spike.ts`)
+## A spike: research in the run, a scout's (`spike.ts`, `tasks/spike.ts`)
 
 Research — what the lead reads to know what the work is — is work of the run, seen by the monitor and counted by the
-report: a **spike**. It decides what is built, so it is a lead's: the lead, or a lead that reviews, never an agent of the
-team (whose model is not a lead's). A spike is research alone: a task with `"spike": "what to find out"` and no files
+report: a **spike**. A scout finds it out (`SCOUT`, on the strongest model: every task after it is made of what it
+finds), and the lead decides what it proposes, with the person; with no scout in the team the lead finds it out. A spike is research alone: a task with `"spike": "what to find out"` and no files
 (`run plan` refuses one with files), whose acceptance is in words — a command would run at a `complete` it never reaches.
 
 **A run starts with one: its scope.** As any project does: the lead scopes the person's ask, and the work flows from
 there. `plitzi run open --spike "<the ask>" --run <name>` opens the run on it alone (`scopePlan`: one critical spike,
-`s-scope`, the plan written in the project's `tmp/` and moved into the run as any plan is). The lead finds out —
+`s-scope`, the plan written in the project's `tmp/` and moved into the run as any plan is). The scout finds out —
 `page shot --compare <original> --dress`, the original's computed styles, the project — and ends it with its result,
-the tasks: `plitzi task spike s-scope --done "what was found" --tasks <stage.json>`. The stage is stacked as
+the tasks: `plitzi task spike s-scope --done "what was found" --tasks <stage.json>`. A scout's stage is proposed: checked as
+`run extend --dry-run` checks it, kept beside the spike (`proposed-stage.json`, `TaskState.proposed`) and handed to the
+lead (`task next --role lead`), who decides it with the person and runs `task spike s-scope --approve`, which stacks it,
+or `--changes "…"`, which sends it back to the scout. The lead's own stage is stacked at once. A stage is stacked as
 `run extend` stacks one (refused, it leaves the spike open), and each task carries what was found for it (`"findings"`,
 kept as the run's `TaskState.findings` from its first state, `startingState`): whoever builds it reads it in its brief,
 rather than a spike per task — found out by one, built by another, each read twice.
 
 **Later spikes are the lead's to open**, when the work asks for one: a research task stacked with `run extend`, ended the
 same way. It starts in `spike`, ahead of `ready` (ready is ready to build), whether or not what it waits for is done —
-finding out is reading. No agent is offered it or takes it (`take` refuses one); `run watch` says each spike
-waiting (`spikes`), and `task next --role lead` hands a lead that reviews the most urgent one no other lead took
-(`spikedBy`) when no review waits for it. Its findings go into the brief of every task that waits for it, made ready by
+finding out is reading. No developer takes it (`take` refuses one); `run watch` says each spike waiting
+(`spikes`), and `task next` hands a scout the most urgent one no other scout took (`spikedBy`, `spikeFor`). With no
+scout in the team, `task next --role lead` hands it to the lead. Its findings go into the brief of every task that waits for it, made ready by
 it (`readyWhatWaited`), no review.
 
 **An agent whose task needs something found out** says so — `task spike "what"`, from its copy — and the task is
-blocked on the lead (`blockedBy.spike`), its files and token its own; the agent takes other work meanwhile. The lead
-finds out and lifts the block with the answer, kept as the task's finding (`task unblock <task> --answer "…"`; without
-one it is refused), or, when it changes the work, stacks the tasks it makes.
+blocked on it (`blockedBy.spike`), its files and token its own; the agent takes other work meanwhile. A scout, handed it
+by `task next`, finds out and lifts the block with the answer, kept as the task's finding (`task unblock <task> --answer
+"…"`; without one it is refused). When the answer changes the work, it tells the lead, who stacks the tasks it makes.
 
 `run rehearse` plays research alone without a review. The monitor gives spikes a column of their own (`◇ spike`) once
 the run has one, with the lead at it, and the dev tools' Run tab a group (Finding out).
@@ -1077,7 +1088,7 @@ A run's design-2 ran `task look` with no `--agent` and the run's log has the lea
   holder's token alone, or a person at its terminal — never who calls, and a task's own token (`<run>.<task>.<secret>`)
   says no one. Refused (`identity`, 26): no token, an empty one, a task's, one that is no agent's, a name that has a
   token said without it, a token under another's name or of another run, a name not of the project's team (`team.json`:
-  its agents, `lead`, its co-leads), `person` from a shell (a person is a terminal) — except the readings anyone may ask
+  its agents and `lead`), `person` from a shell (a person is a terminal) — except the readings anyone may ask
   (`run status`, `run report`, `task claim`, `task propose`, `run can-write`: a hook or a script, `unnamed`). The CLI
   makes up no name: a run's `--token "$(cat …)"`, read from the wrong folder, came in empty and ran as
   "agent" — it took a task, and the rework sent back to "agent" sat with no one. A holder's step is held to the task's
@@ -1087,7 +1098,7 @@ A run's design-2 ran `task look` with no `--agent` and the run's log has the lea
   its whole path — the same from a task's copy as from the project: `<project>/tmp/plitzi-runs/<run>/scratch/<agent>/plitzi task next …`.
 
 With who calls proved, the lead's guards hold by name: `requireLead`, `requirePrincipal` and a verdict's guard let in
-`lead` and a person (and, for a verdict, a lead that reviews), and refuse every other — an agent of no team included,
+`lead` and a person (and, for a verdict, a tester), and refuse every other — an agent of no team included,
 which a name alone once let through. `task message` goes out in the lead's voice, so it is a lead's too.
 
 ## Who may do what (`run/`)
@@ -1096,8 +1107,8 @@ A person's actions — the final merge, restore, a forced stop, abort, purge, ta
 one above the estimate's threshold — are refused with a task's token and in a shell with no terminal; a person confirms
 by typing the run's name. The lead's — opening, stopping, reviewing (and overwriting), reassigning, reverting,
 resolving a reconciliation and continuing, answering any proposal, the summary, a message to a task — are refused with
-a task's token and to any caller but the lead (`lead-only`); a verdict is a lead's (`lead`, a lead that reviews, a
-person) or a designer's on a UI that waits for one. This
+a task's token and to any caller but the lead (`lead-only`); a verdict is a tester's, the lead's or a person's — or a
+designer's on a UI that waits for one. This
 is a guard rail, not security: an agent with a shell can give itself a terminal (a pseudo-terminal) and type the run's
 name, read another agent's token from its scratch folder (the run's files are the person's user's, as the agents are),
 and edit the run's records — `run.json` or a task's `state.json` broken by hand are refused by name, never read
@@ -1157,7 +1168,7 @@ detail (`--json`).
 ## Tested
 
 The bench is `apps/cli/src/runs/runs-*.test.ts` (each a part of the run: plan, tasks, shared files, merge, stops,
-agreements, the team, the lead, the leads that review beside it, acceptance, the first real runs, the primitives, what
+agreements, the team, the lead, its testers and scouts (`runs-reviewers`), acceptance, the first real runs, the primitives, what
 an agent can do around the rules — a write after its review, a link, a token not its own, two completes at once on one
 shared file — and a run each released CLI wrote, read and finished by this one, `runs-compat`) with its steps
 in `src/tests/runSteps.ts`: a seeded project (`src/tests/runProject.ts`), scripted agents over one clock the test moves,
@@ -1166,7 +1177,7 @@ a person who confirms or not, checks that fail on `BROKEN` — no model and no n
 person's action from a shell with no terminal, and a command run from inside a task's copy.
 
 **A run played whole** (`runs-flow.test.ts`): one story, agent by agent, as a real run went — the base agent and one
-on demand, a shared file held while another task's request on it is approved, a question a lead that reviews answers
+on demand, a shared file held while another task's request on it is approved, a question the lead answers
 and its agent takes up, the reviews, the finish — with a simulated `author` (a page reading a token its theme does not
 declare fails), so the rules meet where no test of one of them looks. A run's failures were each rule right
 alone and wrong together. **A change to how a run behaves adds its step to the story** — beside its own unit test — and

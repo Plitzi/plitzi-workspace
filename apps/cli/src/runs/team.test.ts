@@ -149,7 +149,7 @@ describe('the team of a project’s runs', () => {
     expect(await refusalOf(setTeamAgent(root, 'writer', {}))).toContain('is not in the team yet');
     await setTeamAgent(root, 'dev', { roles: ['developer'] });
     expect(await setTeamAgent(root, 'dev', { roles: ['developer'] })).toMatchObject({ unchanged: true });
-    expect(await refusalOf(setTeamAgent(root, 'lead', { roles: ['developer'] }))).toContain('The leads take no roles');
+    expect(await refusalOf(setTeamAgent(root, 'lead', { roles: ['developer'] }))).toContain('The lead takes no roles');
     expect(await refusalOf(unsetTeamAgent(root, 'nobody'))).toContain('it has dev');
   });
 
@@ -172,8 +172,8 @@ describe('the team of a project’s runs', () => {
 
     // Any write of the file says it as this CLI does.
     await fs.writeFile(file, JSON.stringify({ version: 1, agents, about: { lead: 'The lead is one' } }));
-    await setTeamAgent(root, 'lead', { count: 2 });
-    expect(JSON.parse(await fs.readFile(file, 'utf-8'))).toMatchObject({ lead: { count: 2 }, about: TEAM_ABOUT });
+    await setTeamAgent(root, 'lead', { effort: 'high' });
+    expect(JSON.parse(await fs.readFile(file, 'utf-8'))).toMatchObject({ lead: { effort: 'high' }, about: TEAM_ABOUT });
   });
 
   it('says every wrong or unknown field at once, the one meant beside a typo', () => {
@@ -189,8 +189,8 @@ describe('the team of a project’s runs', () => {
       })
     ).toEqual([
       '"extra" is no field of it (it takes version, lead, agents, options, about)',
-      '"lead": "modle" is no field of it — did you mean "model"? (it takes model, effort, count)',
-      '"dev": "cuont" is no field of it — did you mean "count"? (it takes name, roles, count, min, model, effort, session, resumeSession)',
+      '"lead": "modle" is no field of it — did you mean "model"? (it takes model, effort)',
+      '"dev": "cuont" is no field of it — did you mean "count"? (it takes name, roles, count, min, model, effort, session, resumeSession, skill)',
       '"lead" is the lead’s: give the lead its model under "lead", and the agent another name'
     ]);
     expect(teamProblems({ $schema: TEAM_SCHEMA, version: 1, agents: [{ name: 'dev', roles: ['developer'] }] })).toEqual(
@@ -280,7 +280,7 @@ describe('the team of a project’s runs', () => {
       'launch',
       'startGraceMinutes'
     ]);
-    expect(props(schema, 'properties', 'lead', 'properties')).toEqual(['count', 'effort', 'model']);
+    expect(props(schema, 'properties', 'lead', 'properties')).toEqual(['effort', 'model']);
     expect(props(schema, 'properties', 'agents', 'items', 'properties')).toEqual([
       'count',
       'effort',
@@ -289,7 +289,8 @@ describe('the team of a project’s runs', () => {
       'name',
       'resumeSession',
       'roles',
-      'session'
+      'session',
+      'skill'
     ]);
   });
 

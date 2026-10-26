@@ -422,7 +422,7 @@ describe('the lead’s plan as the run goes', () => {
     await completeTask(again.ctx, 'es-launch', 't-about');
     expect(
       (await waitForLead(lead(), 'es-launch', { timeoutMs: 20, everyMs: 10 })).fresh.map(item => item.text)
-    ).toContain('t-about is in review: plitzi task review t-about --approve | --changes "…"');
+    ).toContain('t-about is in review (the team has no tester): plitzi task review t-about --approve | --changes "…"');
   });
 
   it('takes the next task in the same breath, and tells an agent done with the run how its own work ended', async () => {

@@ -1,5 +1,4 @@
-import { questionFor } from '../answering';
-import { isCoLead, isPrincipal, leadReviewFor, markAsking } from '../leads';
+import { isPrincipal, leadReviewFor, scoutsOf, testersOf } from '../leads';
 import { RunRefusal } from '../refusal';
 import { DESIGNER, readTeam, startedAgents } from '../team';
 import { byUrgency } from '../urgency';
@@ -11,99 +10,145 @@ import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 import type { NextTask } from './next';
 
-/** `task next --role lead`: the review a lead takes next, why there is none, or that the run has none left for it. */
+/** The team's designers, by name. */
+export const designersIn = async (ctx: RunContext): Promise<string[]> => {
+  const team = await readTeam(ctx.root).catch(() => undefined);
+
+  return (team ? startedAgents(team) : []).filter(each => each.roles.includes(DESIGNER)).map(each => each.agent);
+};
+
+/**
+ * Whether no designer is free for a UI review: each at a task of its own, or none in the team. A UI review then waits for
+ * nobody, and every review behind it with it (seven tasks in review, the one designer redoing its own): whoever reviews
+ * the task reviews its UI too.
+ */
+export const noDesignerFreeIn = async (ctx: RunContext, views: readonly TaskView[]): Promise<boolean> => {
+  const busy = (agent: string): boolean =>
+    views.some(view => view.owner?.agent === agent && isWorked(view.state.status));
+
+  return (await designersIn(ctx)).every(busy);
+};
+
+/** What a reviewer offered a UI review no designer is free for is told to do. */
+export const uiTooText = (agent: string, designers: readonly string[]): string =>
+  `its UI waits for a designer and none is free${designers.length > 0 ? ` (${designers.join(', ')} at a task of its own)` : ''}: review its UI too — as the original, both schemes, the phone width — and approve with plitzi task review <task> --approve --skip-design ${agent}, which the report says as your UI review`;
+
+/**
+ * The spike `agent` finds out next — a scout's, or the lead's with no scout: the one it holds first, then the most urgent
+ * nobody took. A research spike whose tasks wait for the lead is not offered; one the lead sent back is, to the scout
+ * that proposed it, with what the lead asked. A task at work blocked on a spike is one too: the answer lifts its block.
+ */
+export const spikeFor = (
+  loaded: LoadedRun,
+  views: readonly TaskView[],
+  agent: string
+): NonNullable<NextTask['spike']> | undefined => {
+  const urgency = byUrgency(loaded.tasks);
+  const free = (view: TaskView): boolean => (view.state.spikedBy?.by ?? agent) === agent;
+  const research = views.filter(
+    view => view.state.status === 'spike' && view.state.proposed === undefined && free(view)
+  );
+  const blocking = views.filter(
+    view => view.state.status === 'blocked' && view.state.blockedBy?.spike !== undefined && free(view)
+  );
+  const mine = (view: TaskView): number => (view.state.spikedBy?.by === agent ? 0 : 1);
+  const next = [...research, ...blocking]
+    .sort((a, b) => mine(a) - mine(b) || urgency(a.task, b.task) || a.task.id.localeCompare(b.task.id))
+    .at(0);
+  if (next === undefined) {
+    return undefined;
+  }
+
+  const asked = next.state.notes
+    .findLast(note => note.text.startsWith('Sent back: '))
+    ?.text.slice('Sent back: '.length);
+
+  return {
+    task: next.task,
+    question: next.state.blockedBy?.spike ?? next.task.spike ?? 'what it needs',
+    findings: next.state.findings?.length ?? 0,
+    ...(next.state.status === 'blocked' ? { blocking: true as const } : {}),
+    ...(asked !== undefined && next.state.spikedBy?.by === agent ? { asked } : {})
+  };
+};
+
+/**
+ * `task next --role lead`: what waits for the lead, the manager — the tasks a scout proposes, to decide with the person;
+ * a review escalated to it is blocked on it and comes through `run watch`; the reviews when the team has no tester; the
+ * spikes when it has no scout. The lead reviews nothing a tester takes: every review it reads stays in its context,
+ * the person's harness never started again.
+ */
 export const leadNext = async (
   ctx: RunContext,
   loaded: LoadedRun,
   views: readonly TaskView[],
   messages: Message[]
 ): Promise<Omit<NextTask, 'scratch'>> => {
-  const { record } = loaded;
-  if (!isCoLead(record, ctx.agent) && !isPrincipal(ctx.agent)) {
+  if (!isPrincipal(ctx.agent)) {
     throw new RunRefusal(
       'invalid',
-      `${ctx.agent} is no lead of this run: its leads are lead${(record.leads ?? []).map(each => `, ${each}`).join('')} — a lead that reviews waits with plitzi task next --role lead --agent <its name> — its first command; its token after`
+      `${ctx.agent} is not the lead: the lead is one — a tester reviews (plitzi task next, as the team names it), a scout finds out the spikes`
     );
   }
 
-  // Asking is running: while it is, `lead` leaves the reviews to it.
-  if (isCoLead(record, ctx.agent)) {
-    await markAsking(ctx, loaded);
-  }
-
-  // A UI review waits for a designer; with none free — each at a task of its own, or none in the team — it waits for
-  // nobody, and every review behind it with it (seven tasks in review, the one designer redoing its own).
-  const team = await readTeam(ctx.root).catch(() => undefined);
-  const designers = (team ? startedAgents(team) : [])
-    .filter(each => each.roles.includes(DESIGNER))
-    .map(each => each.agent);
-  const busy = (agent: string): boolean =>
-    views.some(view => view.owner?.agent === agent && isWorked(view.state.status));
-  const noDesignerFree = designers.every(busy);
-  const review = leadReviewFor(views, ctx.agent, noDesignerFree);
-  if (review) {
-    return {
-      leadReview: await reviewOffer(
-        review,
-        review.state.design?.status === 'due'
-          ? `its UI waits for a designer and none is free${designers.length > 0 ? ` (${designers.join(', ')} at a task of its own)` : ''}: review its UI too — as the original, both schemes, the phone width — and approve with plitzi task review <task> --approve --skip-design lead, which the report says as the lead's UI review`
-          : undefined
-      ),
-      ready: [],
-      messages
-    };
-  }
-
-  // No review for it: a question to the lead, which holds an agent — the oldest no other lead took. The lead's own
-  // is the lead's to answer: it does not ask itself.
-  const question = isPrincipal(ctx.agent) ? undefined : await questionFor(ctx, loaded);
-  if (question) {
-    const asker = views.find(view => view.task.id === question.from)?.owner?.agent;
-
-    return {
-      question: { id: question.id, task: question.from, text: question.text, ...(asker ? { agent: asker } : {}) },
-      ready: [],
-      messages
-    };
-  }
-
-  // No question either: a spike, as every spike is a lead's — the most urgent no other lead is finding out.
   const urgency = byUrgency(loaded.tasks);
-  const spike = views
-    .filter(view => view.state.status === 'spike' && (view.state.spikedBy?.by ?? ctx.agent) === ctx.agent)
+  const proposed = views
+    .filter(view => view.state.proposed !== undefined)
     .sort((a, b) => urgency(a.task, b.task) || a.task.id.localeCompare(b.task.id))
     .at(0);
-  if (spike) {
+  if (proposed?.state.proposed) {
+    const { by, text, tasks } = proposed.state.proposed;
+
     return {
-      spike: {
-        task: spike.task,
-        question: spike.task.spike ?? 'what it needs',
-        findings: spike.state.findings?.length ?? 0
-      },
+      proposal: { task: proposed.task, by, text, tasks, stage: proposed.paths.proposedStage },
       ready: [],
       messages
     };
+  }
+
+  if ((await testersOf(ctx.root)).length === 0) {
+    const noDesignerFree = await noDesignerFreeIn(ctx, views);
+    const review = leadReviewFor(views, ctx.agent, noDesignerFree);
+    if (review) {
+      return {
+        leadReview: await reviewOffer(
+          review,
+          review.state.design?.status === 'due' ? uiTooText(ctx.agent, await designersIn(ctx)) : undefined
+        ),
+        ready: [],
+        messages
+      };
+    }
+  }
+
+  if ((await scoutsOf(ctx.root)).length === 0) {
+    const spike = spikeFor(loaded, views, ctx.agent);
+    if (spike) {
+      return { spike, ready: [], messages };
+    }
   }
 
   const open = views.filter(view => view.state.status !== 'done');
   if (open.length === 0) {
-    return { why: 'every task is done: no review is left. You can stop', ready: [], messages, finished: true };
+    return { why: 'every task is done: nothing waits for you', ready: [], messages, finished: true };
   }
 
-  const taken = views.filter(
+  const reviewing = views.filter(
     view =>
       view.state.status === 'in-review' &&
       view.state.reviewer?.round === view.state.round &&
       view.state.reviewer.by !== ctx.agent
   );
-  const designs = views.filter(view => view.state.status === 'in-review' && view.state.design?.status === 'due');
+  const finding = views.filter(view => view.state.status === 'spike');
 
   return {
-    why: `no review waits for you: ${[
-      ...taken.map(view => `${view.task.id} is ${String(view.state.reviewer?.by)}'s`),
-      ...designs.map(view => `${view.task.id} waits for its UI review`),
-      `${String(open.length - taken.length - designs.length)} task(s) still being worked`
-    ].join(', ')} — wait for one: plitzi task next --role lead`,
+    why: `nothing waits for you: ${[
+      ...reviewing.map(view => `${view.task.id} is ${String(view.state.reviewer?.by)}'s to review`),
+      ...finding.map(
+        view => `${view.task.id} is being found out${view.state.spikedBy ? ` by ${view.state.spikedBy.by}` : ''}`
+      ),
+      `${String(open.length - reviewing.length - finding.length)} task(s) still being worked`
+    ].join(', ')} — what is escalated to you comes through run watch`,
     ready: [],
     messages
   };

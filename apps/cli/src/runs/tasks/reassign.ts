@@ -52,7 +52,7 @@ export const reassignTask = async (
 }> => {
   requireNoTask(ctx, 'reassign a task');
   const loaded = await loadRun(ctx, runId);
-  await requireLead(ctx, loaded, 'reassign a task');
+  await requireLead(ctx, 'reassign a task');
   const task = findTask(loaded, taskId);
   const view = await viewTask(loaded.paths, task);
   if (view.state.status === 'done') {
@@ -170,7 +170,7 @@ export const revertTask = async (
 ): Promise<{ reverted: string[]; kept: string[]; dependants: string[]; waiting: string[] }> => {
   requireNoTask(ctx, 'revert a task');
   const loaded = await loadRun(ctx, runId);
-  await requireLead(ctx, loaded, 'revert a task');
+  await requireLead(ctx, 'revert a task');
   if (reason === undefined || reason.trim() === '') {
     throw new RunRefusal(
       'invalid',

@@ -14,7 +14,7 @@ import { expandFiles, sharedReached } from './ownership';
 import { ownScriptNotices } from './ownScripts';
 import { ID, isSecretFile, NOT_TASK_DIRS, under } from './paths';
 import { isResearch } from './spike';
-import { DEVELOPER, roleProblems, teamSize, teamTakes, TESTER } from './team';
+import { DEVELOPER, roleProblems, skillProblems, teamSize, teamTakes, TESTER } from './team';
 import { teamNotices } from './teamNotices';
 import { testSetupOf, withTestTasks } from './tests';
 import { byUrgency, chainMinutes } from './urgency';
@@ -233,7 +233,11 @@ export const checkPlan = async (
   runTasks: readonly { id: string; closes?: readonly string[] }[] = []
 ): Promise<CheckedPlan> => {
   const agentsAsked = teamSize(team);
-  const problems: string[] = [...roleProblems(written, team), ...inventoryProblems(written, knownInventory)];
+  const problems: string[] = [
+    ...roleProblems(written, team),
+    ...(await skillProblems(root, team)),
+    ...inventoryProblems(written, knownInventory)
+  ];
   // What a task says it closes is open in the backlog: an id mistyped would close nothing at the finish, unsaid.
   const unknownClosed = await notOpen(
     root,

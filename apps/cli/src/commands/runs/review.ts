@@ -599,6 +599,8 @@ export interface ReviewOptions extends RunCommandOptions {
   note?: string;
   /** With --approve: another task in review approved beside it, as one change — each reads what the other makes. */
   with?: string;
+  /** A tester's: what it cannot decide — the review handed to the lead. */
+  escalate?: string;
 }
 
 export const taskReview = (taskId: string, options: ReviewOptions): Promise<void> =>
@@ -616,7 +618,7 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
       if (options.skipDesign !== undefined && !isDesignSkip(options.skipDesign)) {
         throw new RunRefusal(
           'invalid',
-          `--skip-design says why the lead approves without the designer's review: --skip-design lead (you looked at its UI yourself, as a designer would — both schemes, the phone width) or --skip-design no-ui (it changes nothing a visitor sees), not "${options.skipDesign}"`
+          `--skip-design says why the lead approves without the designer's review: --skip-design reviewer (you looked at its UI yourself, as a designer would — both schemes, the phone width) or --skip-design no-ui (it changes nothing a visitor sees), not "${options.skipDesign}"`
         );
       }
 

@@ -6,11 +6,14 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
 
 ## The lead
 
+**You manage; the agents read.** Never started again, you read again every turn whatever you read once — a run's lead
+spent 68% of it. The spikes are a scout's, the reviews a tester's, in fresh contexts: you decide what they bring.
+
 0. **Inventory what the job asks, before a line of the plan.** Built after something — a site, a design, a brief —
    list every page, section and piece a visitor would miss (a logo, what moves, a control, a size) as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
 "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
-   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`, naming sections no piece covers. **Research is a spike, yours** (no files). **Start with the scope** (`run start` opens on it); find out (`page shot --compare <original> --dress`, `page measure`) and end it with the tasks, each with what you found (`"findings"`): `task spike s-scope --done "…" --tasks <stage.json>`. Later: stack one (`run extend`); an agent's `task spike` is a block you lift with the answer (`task unblock --answer`). **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
+   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `page shot --compare`, naming sections no piece covers. **Research is a spike** (no files), a scout's. **The run opens on its scope** (`run start`): the scout finds out and proposes the tasks, each with what it found (`"findings"`); `task next --role lead` hands them to you — decide them with the person, then `task spike s-scope --approve | --changes "…"` (`run extend <stage> --dry-run` reads them as they would stack). An agent's `task spike` the scout answers. With no scout, the spikes are yours: `task spike s-scope --done "…" --tasks <stage.json>`, `task unblock --answer`. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview [unit]` — who owns which file. A page owns the modules only it imports;
    what two pages import (tokens, classes, a layout, a component) is **shared**, as is every entry. `space impact
@@ -56,14 +59,12 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    size is how many work at once; past `min`, on demand — `run watch` says when to start one (through its own CLI,
    after its first start). Agents start fresh after each task or review, never in one
    (`--session context|keep`); `--resume-session`: one that died mid-task resumes; one just started is
-   not "no signal" for `options.startGraceMinutes` (3). A tester reviews code before you (yours if none took it in 2 min), adds `<id>-tests` (`"tests": false`: none); a designer reviews
-   the others' UI before you (`options.designReview`; `false` turns it off). Yours is the complete,
-   strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
-   `task review --skip-design lead|no-ui`, `lead` after your `task look`; a developer's `--review code` stands when no page draws
-   what it changed). A designer's UI review, in its time, is not gone past (`--skip-design` is refused);
-   a UI review held 8 min (15, a designer's first), or
-   queued 5, is yours: decide it. Take a task back, or a ready one: `task reassign <task> --reason "…" --to <agent>|lead`. **One lead for every four agents**: `lead-2`… beside you, started when `run watch` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`),
-   answers the questions handed to it, and stops when none is left.
+   not "no signal" for `options.startGraceMinutes` (3). A designer reviews the others' UI (`options.designReview`;
+   `false` turns it off); a tester reviews every task — its QA, the approval — and adds `<id>-tests` (`"tests": false`:
+   none); more testers when reviews queue (`run team set test --count 2`). **Yours is what a tester escalates, or past
+   its review rounds** (blocked on you): `task review <task> --approve`, or `task unblock <task> --answer "…"`, which
+   sends it back with your word. With no tester every review is yours ([runs-review.md](runs-review.md)). Take a task
+   back: `task reassign <task> --reason "…" --to <agent>`.
 
    **Keep a person's actions a person's in the harness**: deny the agents `run finish --apply`, `run abort`, `run purge`,
    `run restore`, `run finish --lead-finishes`, `run stop --force`, `run attach --take-over`.
@@ -88,7 +89,7 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    it touches and prints **your own CLI** (`scratch/lead/plitzi`, with your token): run every command after through it.
 5. **The team starts by itself** (`options.launch`): start none yourself. With no launch: `plitzi run agent <name>
    --launch --harness <yours>` each. Follow:
-   `plitzi run watch` in the background ends when something needs you — a review, a question, a block, a
+   `plitzi run watch` in the background ends when something needs you — a proposal, a question, a block, an escalation, a
    file a task takes past 400 lines (ask for the split), the run standing still (what holds each task), a ready task held by another's claim (`held-ahead`: review that one
    first) — each said once. **Talk:** answer a question with `plitzi
 task message t-home "…" --reply-to m3`; `all` or `@dev-1` in place of the task: every task in hand, or
@@ -98,16 +99,15 @@ task message t-home "…" --reply-to m3`; `all` or `@dev-1` in place of the task
    removed; more work is a stage, `plitzi
 run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — chase
    or decide a review that drags, settle a last cosmetic round yourself, amend away a dependency it does not need.
-   **Nothing waits for you?** Help: `task reassign <ready task> --to lead`, then `task complete`.
-6. **Review each task** as [runs-review.md](runs-review.md) says — read it whole: the review is the same for you, a
-   co-lead and a tester.
+   **Nothing waits for you?** Wait (`run watch`): writing a task yourself fills the context every later turn reads.
+6. **Decide what reaches you**, reading only that: `task show <task>` for an escalation, the proposed stage for a spike.
 7. **A change after approval** puts the finish into
    **reconciliation**: `plitzi run resolve <run> <file> --take …`, then `plitzi run resolve <run>` (no file) goes on.
    **The brake** stops a run whose completions keep failing; `run resume`. **Plitzi upgraded mid-run**
    (`version-mismatch`): the person runs `plitzi run attach <run>`. Upgrading on purpose is the person's (`plitzi run upgrade`): rebuild,
    then ask — never put a CLI in `node_modules` yourself.
-8. **Before you close, look at the coverage:** the finish runs each covering check on the result; look at what a
-   check cannot see (`plitzi run preview`) — what is missing is a stage (`run extend`), or the next run's: `run notice "…"
+8. **Before you close, look at the whole once:** `plitzi run look` checks and pictures every page the run changed (1440
+   and 390, light and dark); `run finish` asks for it after the last approval. What is missing is a stage (`run extend`), or the next run's: `run notice "…"
 --on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run plan` and `run open` list (`run
 backlog add "…"` keeps one with no run open); a task of your plan that does one says so — `"closes": ["b-3"]` — and the
    applied run closes it; else `run backlog done <id> --note "…"`; `run report --plitzi` is what the run says of
@@ -169,7 +169,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
   script of yours; a picture passes one that moves nothing, or otherwise than asked.
 - **The board is a kanban; keeping the team busy is yours.** A card ready beside each one in review, so an agent whose
   card waits takes another: stack the backlog (`run extend`, tasks that `closes`), split a card by what changes apart,
-  give the designer the UI reviews — `task review --changes … --skip-design lead` keeps the next look yours. `run watch` says
+  give the designer the UI reviews — `task review --changes … --skip-design reviewer` keeps the next look yours. `run watch` says
   an agent with nothing to take (`idle-team`) and how to feed it.
 - **The designer's own task off the critical path** while it is the only one reviewing UI: what waits on it waits on
   every review too: a refactor with nothing to see is a developer's.

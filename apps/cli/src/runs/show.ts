@@ -1,7 +1,7 @@
 import { proposalsOf } from './agreements';
 import { fingerprint, readOptional } from './files';
 import { LARGE_OUTPUT } from './findings/cost';
-import { isCoLead, isPrincipal } from './leads';
+import { isPrincipal } from './leads';
 import { LEAD, markRead, messagesOf } from './messages';
 import { under } from './paths';
 import { RunRefusal } from './refusal';
@@ -149,7 +149,7 @@ const nextFor = (task: RunTask, status: TaskStatus, design?: DesignReview): stri
       return [
         ...(design?.status === 'due'
           ? [
-              `# its UI waits for ${design.by ?? 'a designer'}'s review: the lead approves after it, or now with plitzi task review ${task.id} --approve --skip-design lead`
+              `# its UI waits for ${design.by ?? 'a designer'}'s review: the lead approves after it, or now with plitzi task review ${task.id} --approve --skip-design reviewer`
             ]
           : []),
         `plitzi task look ${task.id}   # its pages as it went to review: checked at 1440 and 390, pictured light and dark`,
@@ -257,10 +257,7 @@ export const showTask = async (
       ...(each.diff ? { diff: each.diff } : {})
     })),
     messages: said.slice(-6),
-    next:
-      isPrincipal(ctx.agent) || isCoLead(loaded.record, ctx.agent)
-        ? nextFor(task, view.state.status, view.state.design)
-        : agentNext(task)
+    next: isPrincipal(ctx.agent) ? nextFor(task, view.state.status, view.state.design) : agentNext(task)
   };
 };
 

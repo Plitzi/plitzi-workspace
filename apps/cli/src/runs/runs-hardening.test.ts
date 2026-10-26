@@ -268,14 +268,14 @@ describe('a UI review, by the team’s designers', () => {
     ).toMatchObject({ design: 'approved' });
   });
 
-  it('keeps --skip-design the lead’s, and says how the lead runs it', async () => {
+  it('keeps --skip-design the reviewer’s, and says how it is run', async () => {
     await inReview();
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
     const refused = await refusal(
-      reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'lead' })
+      reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'reviewer' })
     );
-    expect(refused.message).toContain('--skip-design is a lead');
-    expect(refused.message).toContain('--approve --skip-design lead');
+    expect(refused.message).toContain("--skip-design is the reviewer's");
+    expect(refused.message).toContain('--approve --skip-design reviewer');
     // A hint that says --token contradicts the agent's own CLI, which says who it is: none says it.
     expect(refused.message).not.toContain('--token');
 
@@ -283,13 +283,13 @@ describe('a UI review, by the team’s designers', () => {
     bench.advance(REVIEW_TIMEOUT_MS + FIRST_REVIEW_READING_MS + 60_000);
     // The lead approved a UI it never looked at; its review of the UI is a look, said before the approval.
     expect(
-      (await refusal(reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'lead' })))
+      (await refusal(reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'reviewer' })))
         .message
     ).toContain('plitzi task look t-menu');
     await looked('t-menu');
     expect(
-      await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'lead' })
-    ).toMatchObject({ verdict: 'approve', design: 'skipped', designSkip: 'lead' });
+      await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'reviewer' })
+    ).toMatchObject({ verdict: 'approve', design: 'skipped', designSkip: 'reviewer' });
   });
 });
 

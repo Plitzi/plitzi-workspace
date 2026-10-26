@@ -3,13 +3,11 @@ import path from 'node:path';
 
 import { hasDesignReview } from '../design';
 import { createExclusive } from '../files';
-import { coLeadsOf, isPrincipal, spareLead } from '../leads';
-import { LEAD } from '../messages';
+import { isPrincipal } from '../leads';
 import { freeBaseAgents, runningAgents } from '../onDemand';
 import { agentScratch } from '../paths';
 import { PRESENCE_STALE_MS, presentAt } from '../presence';
-import { loadRun, logRun, readRunLog } from '../run';
-import { viewTask } from '../taskStore';
+import { logRun, readRunLog } from '../run';
 import { DEFAULT_SESSION, DESIGNER, FRESH_CONTEXT_AT, readTeam, startedAgents } from '../team';
 import { isWorked } from '../worked';
 
@@ -55,13 +53,8 @@ export const freshStart = async (
 
   const team = await readTeam(ctx.root).catch(() => undefined);
   const member = (team ? startedAgents(team) : []).find(each => each.agent === ctx.agent);
-  // Only one the run starts again stops for it: an agent of the team, or a lead that reviews — another, with nobody to
-  // start it, keeps its session.
-  const mode = member
-    ? (member.session ?? DEFAULT_SESSION)
-    : coLeadsOf(loaded.record).includes(ctx.agent)
-      ? DEFAULT_SESSION
-      : 'keep';
+  // Only one the run starts again stops for it: an agent of the team — another, with nobody to start it, keeps its session.
+  const mode = member ? (member.session ?? DEFAULT_SESSION) : 'keep';
   if (mode === 'keep') {
     return undefined;
   }
@@ -205,19 +198,6 @@ export const uiReviewsComing = async (
 
 /** A wait's reason, without what it names: `nothing is ready` of `nothing is ready: t-home in-progress (dev-1), …`. */
 export const reasonOf = (why: string): string => why.split(/[:—]/)[0]?.trim() ?? why;
-
-/** Why a lead that reviews is spare now, if it is: what is left — none of it in review — is for the other leads. */
-export const spareNow = async (ctx: RunContext, runId: string): Promise<string | undefined> => {
-  const loaded = await loadRun(ctx, runId);
-  const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
-  const open = views.filter(view => view.state.status !== 'done');
-  const others = [LEAD, ...coLeadsOf(loaded.record)].filter(lead => lead !== ctx.agent).length;
-  if (open.some(view => view.state.status === 'in-review') || !spareLead(open.length, others)) {
-    return undefined;
-  }
-
-  return `${String(open.length)} task${open.length === 1 ? '' : 's'} left (${open.map(view => view.task.id).join(', ') || 'none'}) for ${String(others)} other lead${others === 1 ? '' : 's'}: no review is yours to wait for`;
-};
 
 /** What a sent-back task's last review asked, by whom: handed with it, to its agent or to the one taking it over. */
 export const lastAsked = (view: TaskView): string[] =>

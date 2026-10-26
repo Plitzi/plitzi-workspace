@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { approveDesign, assertDesigner, designDue, reviewTimeOf, timedOut } from '../design';
 import { writeJson } from '../files';
-import { assertReviewingLead, isCoLead, isPrincipal } from '../leads';
+import { assertReviewingLead, isPrincipal, testersOf } from '../leads';
 import { agentAddress, LEAD, messagesOf, sendMessage, unreadFor } from '../messages';
 import { taskPaths } from '../paths';
 import { RunRefusal } from '../refusal';
@@ -239,7 +239,10 @@ const decide = async (
 
   // A UI review another designer holds now — its own timed out, or the lead's — is refused as that first, naming why:
   // what the lead said meanwhile is no reason to say the verdict again.
-  if (designDue(view.state) && !isPrincipal(ctx.agent) && !isCoLead(loaded.record, ctx.agent)) {
+  // Who reviews the task — a tester, the lead — gives its verdict as itself, its UI too when it says it looked
+  // (`--skip-design reviewer`); any other, while the UI waits, is the designer's.
+  const reviewer = isPrincipal(ctx.agent) || (await testersOf(ctx.root)).includes(ctx.agent);
+  if (designDue(view.state) && !reviewer) {
     assertDesigner(view, ctx.agent);
   }
 
@@ -261,14 +264,14 @@ const decide = async (
     }
   }
 
-  // Its UI waits for a designer: an agent's verdict is the designer's; the lead's approval waits for it, or says it skips.
-  const asLead = isPrincipal(ctx.agent) || isCoLead(loaded.record, ctx.agent);
-  const byDesigner = designDue(view.state) && !asLead;
+  // Its UI waits for a designer: an agent's verdict is the designer's; the reviewer's approval waits for it, or says it
+  // skips.
+  const byDesigner = designDue(view.state) && !reviewer;
   if (byDesigner) {
     if (skipDesign) {
       throw new RunRefusal(
         'invalid',
-        `--skip-design is a lead's: ${ctx.agent} is not one. A lead approves without the UI review as itself — plitzi task review ${taskId} --approve --skip-design lead`,
+        `--skip-design is the reviewer's — a tester, or the lead: ${ctx.agent} is neither. One approves without the UI review as itself — plitzi task review ${taskId} --approve --skip-design reviewer`,
         { task: taskId }
       );
     }
@@ -281,14 +284,14 @@ const decide = async (
       return { verdict, round: view.state.round, design: 'approved' };
     }
   } else {
-    await assertReviewingLead(ctx, loaded, view);
+    await assertReviewingLead(ctx, view);
   }
 
   if (!byDesigner && verdict === 'approve' && designDue(view.state) && !skipDesign) {
     const by = view.state.design?.by;
     throw new RunRefusal(
       'invalid',
-      `Task "${taskId}"'s UI waits for ${by ?? 'a designer'}'s review${by ? '' : ' (none took it yet)'}: run watch wakes you once it is said — or approve it now without it, saying why: plitzi task review ${taskId} --approve --skip-design lead | --skip-design no-ui — lead when you looked at its UI yourself, as a designer would; no-ui when it changes nothing a visitor sees`,
+      `Task "${taskId}"'s UI waits for ${by ?? 'a designer'}'s review${by ? '' : ' (none took it yet)'}: run watch wakes you once it is said — or approve it now without it, saying why: plitzi task review ${taskId} --approve --skip-design reviewer | --skip-design no-ui — reviewer when you looked at its UI yourself, as a designer would; no-ui when it changes nothing a visitor sees`,
       { task: taskId, ...(by ? { designer: by } : {}) }
     );
   }
@@ -319,12 +322,12 @@ const decide = async (
       { task: taskId, designer: reviewing }
     );
   }
-  // The lead's UI review is a look at it, said: a run's lead approved t-reactions-quiet `--skip-design lead` without
+  // The reviewer's UI review is a look at it, said: a run's lead approved t-reactions-quiet `--skip-design reviewer` without
   // one, and the emoji sat at the top of every key — the person saw it, no check could.
-  if (why === 'lead' && !(await lookedSince(loaded, ctx.agent, taskId))) {
+  if (why === 'reviewer' && !(await lookedSince(loaded, ctx.agent, taskId))) {
     throw new RunRefusal(
       'invalid',
-      `--skip-design lead says you reviewed ${taskId}'s UI yourself, and you have not looked at it since it was completed: plitzi task look ${taskId} (both schemes, the phone width), then approve`,
+      `--skip-design reviewer says you reviewed ${taskId}'s UI yourself, and you have not looked at it since it was completed: plitzi task look ${taskId} (both schemes, the phone width), then approve`,
       { task: taskId }
     );
   }
@@ -397,7 +400,7 @@ const decide = async (
     // It redoes its work on the run as it is now: what was approved while it was in review comes into its copy.
     const brought = toLead ? [] : await refreshCopy(ctx, loaded, view);
     // The lead says the next round's UI review is its own: it comes to it, never offered to a designer.
-    const reserving = !byDesigner && skipDesign === 'lead';
+    const reserving = !byDesigner && skipDesign === 'reviewer';
     await updateState(
       view.paths,
       state => ({

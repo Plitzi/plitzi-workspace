@@ -124,22 +124,39 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>): string
     `  Then say it: plitzi task review ${review.task.id} --approve [--note "what you saw"] | --changes "what, where, and why" [--on <element>]`
   ].join('\n');
 
-/** A spike, as `task next --role lead` hands it to a lead: what to find out, for whom, and how to say it. */
-const spikeText = (spike: NonNullable<NextTask['spike']>): string =>
+/** A spike, as `task next` hands it to a scout — or to the lead with none: what to find out, for whom, and how to say it. */
+const spikeText = (spike: NonNullable<NextTask['spike']>, agent: string): string =>
   [
     chalk.blue(chalk.bold(`Spike ${spike.task.id} — ${spike.task.title}: find out ${spike.question}`)),
+    ...(spike.asked ? [chalk.yellow(`  ↺ The lead sent its tasks back: ${spike.asked}`)] : []),
     ...(spike.findings > 0
       ? [`  ${String(spike.findings)} finding(s) of it already: plitzi task context ${spike.task.id}`]
       : []),
     '  Compare with the original (page shot <path> --compare <original> --clip <section> --dress), read its computed styles, measure — write nothing of the task’s',
-    `  Then say it — the layers, their values, which file gets each — and its result, the tasks it makes, each with its "findings": plitzi task spike ${spike.task.id} --done "…" --tasks <stage.json>`
+    spike.blocking
+      ? `  ${spike.task.id} is blocked on it, at work: lift its block with what you found — plitzi task unblock ${spike.task.id} --answer "…" (kept as its finding); a change to the work beyond it, tell the lead (plitzi task tell --about ${spike.task.id} "…")`
+      : `  Then say it — the layers, their values, which file gets each — and its result, the tasks it makes, each with its "findings": plitzi task spike ${spike.task.id} --done "…" --tasks <stage.json>${isPrincipal(agent) ? '' : ' — the lead approves them before any is stacked'}`
+  ].join('\n');
+
+/** The tasks a scout proposes, as `task next --role lead` hands them to the lead: decided with the person. */
+const proposalText = (proposal: NonNullable<NextTask['proposal']>): string =>
+  [
+    chalk.blue(
+      chalk.bold(
+        `${proposal.task.id} — ${proposal.by} proposes ${String(proposal.tasks.length)} task(s): ${proposal.tasks.join(', ')}`
+      )
+    ),
+    `  Found: ${proposal.text}`,
+    `  Read them as they would stack: plitzi run extend ${proposal.stage} --dry-run`,
+    '  Decide them with the person — the scope, what waits, what is left out — then:',
+    `  plitzi task spike ${proposal.task.id} --approve | --changes "what to change" (back to ${proposal.by})`
   ].join('\n');
 
 /** A lead's review, as `task next --role lead` hands it: the whole review `lead` would make, by this lead. */
 const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: string): string =>
   [
     chalk.bold(
-      `Review ${review.task.id} — ${review.task.title}${review.round > 0 ? ` (round ${String(review.round + 1)}: sent back before)` : ''}: yours, no other lead takes it`
+      `Review ${review.task.id} — ${review.task.title}${review.round > 0 ? ` (round ${String(review.round + 1)}: sent back before)` : ''}: yours, nobody else takes it`
     ),
     ...(review.design ? [`  ✓ ${review.design}`] : []),
     ...(review.uiToo ? [chalk.yellow(`  ⚠ ${review.uiToo}`)] : []),
@@ -150,7 +167,7 @@ const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: stri
     // Its UI said by a designer, the lead's is the code: the look is for what the code changes on a page, if anything.
     ...(review.design
       ? [
-          `  Its UI is reviewed: yours is the code, the acceptance and the edge cases — look (plitzi task look ${review.task.id}) only where the code changes what a page does`
+          `  Its UI is reviewed: yours is its QA — what it was asked, its checks, how it behaves (a control used there and back, a state the data opens), the code and the edge cases — look (plitzi task look ${review.task.id}) where the code changes what a page does`
         ]
       : lookCommand(review.task, review.pages, '').map(
           (command, index) => `  ${index === 0 ? 'Look at it as it went to review' : 'And'}: ${command}`
@@ -165,27 +182,18 @@ const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: stri
     `  Then say it: plitzi task review ${review.task.id} --approve [--note "…"] | --changes "what, where, and why"`,
     ...(isPrincipal(agent)
       ? []
-      : ['  The plan, the person and the finish are lead’s: what you find beyond the task, tell lead'])
-  ].join('\n');
-
-/** A question to the lead, as `task next --role lead` hands it to a lead that reviews: what to answer, and how. */
-const questionText = (question: NonNullable<NextTask['question']>): string =>
-  [
-    chalk.bold(
-      `Question ${question.id} from ${question.task}${question.agent ? ` (${question.agent})` : ''}: ${question.text}`
-    ),
-    `  ${question.agent ?? 'its agent'} waits for it. Answer what the code, the plan, the brief or the original answers — read them first (plitzi task show ${question.task})`,
-    `  Then: plitzi task message ${question.task} "…" --reply-to ${question.id}`,
-    '  A choice for the person, or a change of plan, is lead’s: leave it — lead is woken for it if it is not answered in 2 min'
+      : [
+          `  What you cannot decide — what was asked reads two ways, a change past the task, a disagreement with its developer — is the lead's: plitzi task review ${review.task.id} --escalate "…"; what you find beyond the task, tell the lead (plitzi task tell --about ${review.task.id} "…")`
+        ])
   ].join('\n');
 
 export const nextText = (next: NextTask, agent: string): string =>
   [
     ...messageLines(next.messages),
-    next.question
-      ? questionText(next.question)
+    next.proposal
+      ? proposalText(next.proposal)
       : next.spike
-        ? spikeText(next.spike)
+        ? spikeText(next.spike, agent)
         : next.leadReview
           ? leadReviewText(next.leadReview, agent)
           : next.designReview

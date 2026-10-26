@@ -7,7 +7,7 @@ import path from 'node:path';
 import { agentPrompt, harnessCommand, HARNESSES, isHarness } from './agentPrompt';
 import { issueToken, tokenFile, writeCli } from './identity';
 import { isRunning, readLaunch, resumable, writeLaunch } from './launch';
-import { isPrincipal, LEAD_ROLE } from './leads';
+import { isPrincipal, scoutsOf, testersReview } from './leads';
 import { agentScratch, runPaths } from './paths';
 import { RunRefusal } from './refusal';
 import { loadRun, logRun, readRunLog } from './run';
@@ -79,8 +79,8 @@ export const harnessOf = async (asked: string | undefined): Promise<Harness> => 
 };
 
 /**
- * The team's agent of that name — a lead that reviews (`lead-2`) by its role — or, for the lead, what the team starts
- * it on alone: the lead is no agent of the team, but its model and effort are the team's to say.
+ * The team's agent of that name — or, for the lead, what the team starts it on alone: the lead is no agent of the team,
+ * but its model and effort are the team's to say.
  */
 const startedOf = async (
   root: string,
@@ -89,12 +89,6 @@ const startedOf = async (
   const team = await readTeam(root);
   if (isPrincipal(agent)) {
     return { start: leadStart(team?.lead) };
-  }
-
-  if (/^lead-\d+$/.test(agent)) {
-    const start = leadStart(team?.lead);
-
-    return { started: { agent, roles: [LEAD_ROLE], ...start }, start };
   }
 
   const started = team ? startedAgents(team) : [];
@@ -160,7 +154,11 @@ const prepare = async (ctx: RunContext, runId: string, agent: string) => {
     cli,
     goal: loaded.plan.goal,
     ...(loaded.plan.reference === undefined ? {} : { reference: loaded.plan.reference }),
-    scoping: loaded.plan.tasks.some(task => task.id === SCOPE_SPIKE)
+    scoping: loaded.plan.tasks.some(task => task.id === SCOPE_SPIKE),
+    team: {
+      scout: (await scoutsOf(ctx.root)).length > 0,
+      tester: await testersReview(ctx.root)
+    }
   });
   const promptFile = path.join(scratch, 'prompt.md');
   await fs.writeFile(promptFile, `${prompt}\n`);

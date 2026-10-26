@@ -32,7 +32,6 @@ import { SCOPE_SPIKE, scopePlan } from '../../runs/spike';
 import { noteRun } from '../../runs/talk';
 import { roleOf } from '../../runs/tasks';
 import {
-  coLeadNames,
   DESIGNER,
   heldRoles,
   ensureTeam,
@@ -42,7 +41,9 @@ import {
   reviewsDesign,
   startedAgents,
   TEAM_FILE,
-  teamSize
+  teamSize,
+  teamTakes,
+  TESTER
 } from '../../runs/team';
 import { triedText } from '../../runs/tryLines';
 import { usageCaller } from '../../runs/usage';
@@ -144,11 +145,7 @@ const startLines = (tasks: readonly RunTask[], team: Team, designReview: boolean
 
   return [
     `Start the team (${TEAM_FILE}):`,
-    `  lead — ${leadModelText(team.lead)} — you: plan, answer, decide, finish and review — take each review from the queue (plitzi task next --role lead --no-wait)${coLeadNames(team).length > 0 ? ', so a lead started beside you does not take it too' : ''}`,
-    ...coLeadNames(team).map(
-      name =>
-        `  ${name} — a lead that reviews, as strictly as you, from one queue — ${leadModelText(team.lead)}: not at the start — when run watch says the reviews queue up: plitzi task next --role lead --agent ${name} (it stops by itself once the queue is empty)`
-    ),
+    `  lead — ${leadModelText(team.lead)} — you: plan, approve what a spike proposes, answer, decide what is escalated and finish — what waits for you comes in the queue (plitzi task next --role lead --no-wait)${teamTakes(team, TESTER) ? '' : '; with no tester in the team, every review is yours too'}`,
     ...startedAgents(team).map(each => {
       // Started at a level, it works that level's tasks: the ones below go to the agent of theirs, when the team has one.
       const theirs = tasks
@@ -233,7 +230,7 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
         ...startLines(checked.tasks, checked.team, checked.designReview),
         ...(checked.designReview
           ? [
-              'A designer reviews the UI of the others’ tasks before you: you approve each after it — or now, saying why: --skip-design lead (you looked at its UI yourself) or no-ui (it changes nothing a visitor sees)'
+              'A designer reviews the UI of the others’ tasks before you: you approve each after it — or now, saying why: --skip-design reviewer (you looked at its UI yourself) or no-ui (it changes nothing a visitor sees)'
             ]
           : []),
         ...(checked.stackedOn
@@ -293,11 +290,6 @@ export const runExtend = (
         ...(extended.agents
           ? [
               `  ${String(extended.agents.after)} agents may work at once now (${String(extended.agents.before)} before)`
-            ]
-          : []),
-        ...(extended.newLeads
-          ? [
-              `  ${extended.newLeads.join(', ')} review beside you now: start each — plitzi task next --role lead --agent <name>`
             ]
           : []),
         ...(extended.notices ?? extended.checked?.notices ?? []).map(notice => `  · ${notice}`),

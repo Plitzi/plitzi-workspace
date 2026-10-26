@@ -14,7 +14,7 @@
       "const": 1
     },
     "lead": {
-      "description": "The leads: lead plans, answers, decides and finishes; one more reviews for every 4 agents, started when the reviews queue up.",
+      "description": "The lead, the manager: it plans with you, approves what a spike proposes, answers, decides what a tester escalates and finishes. One: the testers review.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -49,12 +49,6 @@
         "effort": {
           "enum": ["low", "medium", "high", "xhigh", "max"],
           "description": "How hard they think \u2014 Claude Code's --effort, Codex's reasoning effort; left out, the harness's own"
-        },
-        "count": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 8,
-          "description": "How many leads; one for every 4 agents when left out"
         }
       }
     },
@@ -80,7 +74,7 @@
               "type": "string",
               "pattern": "^[a-z][a-z0-9_-]{0,63}$"
             },
-            "description": "developer, designer, reviewer, tester, writer \u2014 or a role of your own"
+            "description": "developer, designer, reviewer, tester, scout, writer \u2014 or a role of your own"
           },
           "count": {
             "type": "integer",
@@ -90,9 +84,9 @@
           },
           "min": {
             "type": "integer",
-            "minimum": 1,
+            "minimum": 0,
             "maximum": 16,
-            "description": "How many start with the run, up to its count: the rest are on demand \u2014 started when work waits for them, stopped once none is left"
+            "description": "How many start with the run, from 0 to its count: the rest are on demand \u2014 started when work waits for them, stopped once none is left"
           },
           "model": {
             "oneOf": [
@@ -133,6 +127,11 @@
           "resumeSession": {
             "type": "boolean",
             "description": "Started again after it died with a task in hand, an agent resumes its own session (Claude Code's --resume) \u2014 what it knew and had not written yet kept \u2014 unless the session is too large to read again for less than starting over"
+          },
+          "skill": {
+            "type": "string",
+            "pattern": "\\.md$",
+            "description": "A markdown file of the project its agents read first \u2014 what a role of your own does: .claude/skills/accessibility/SKILL.md"
           }
         }
       }

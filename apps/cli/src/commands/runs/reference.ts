@@ -53,7 +53,7 @@ export const runReference = (options: ReferenceOptions): Promise<void> =>
     options,
     async (ctx): Promise<Kept> => {
       const loaded = await loadRun(ctx, await runOf(ctx, options));
-      await requireLead(ctx, loaded, 'keep the reference');
+      await requireLead(ctx, 'keep the reference');
       const { reference } = loaded.plan;
       if (reference === undefined) {
         throw new RunRefusal(

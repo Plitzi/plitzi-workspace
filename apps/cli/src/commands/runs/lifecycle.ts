@@ -197,43 +197,47 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
               )
             ]
           : []),
-        finished.dryRun && finished.noReport
+        finished.dryRun && finished.notLooked
           ? chalk.yellow(
-              'Next, the lead: the run’s report — what it did, what went wrong, what is left (plitzi run report --summary <file>) — --apply refuses until then'
+              'Next, the lead: one look at the whole result since its last approval — plitzi run look — --apply refuses until then'
             )
-          : finished.dryRun && finished.summaryBehind
-            ? 'Next, the lead: the summary again, saying all of the run (plitzi run report --summary <file>) — --apply refuses until then'
-            : finished.dryRun
-              ? finished.plan.conflicts.length > 0
-                ? 'With --apply the run enters reconciliation: a person resolves each conflict.'
-                : finished.leadFinishes
-                  ? 'A person let the lead write it: plitzi run finish --apply (--keep-backup keeps the files it overwrites)'
-                  : 'A person writes it: plitzi run finish --apply (--keep-backup keeps the files it overwrites) — or lets the lead, once: plitzi run finish --lead-finishes'
-              : [
-                  finished.backup
-                    ? `The files as they were before it: ${finished.backup} (copy one back to undo it)`
-                    : 'No backup was kept: --keep-backup keeps one next time.',
-                  `Written by ${String(finished.writtenBy)}.`,
-                  ...(finished.report ? reportLines(finished.report) : []),
-                  ...(finished.running === undefined
-                    ? []
-                    : [
-                        chalk.yellow(
-                          `A server of the project is still running on :${String(finished.running)}: it serves the project as it was and holds its state (${KV_FILE}) — stop it before npm start: plitzi server stop --port ${String(finished.running)}`
-                        )
-                      ]),
-                  ...(finished.backlog
-                    ? [
-                        `What it noticed and left, kept for the next run in ${BACKLOG_FILE}: ${finished.backlog.join(', ')} (plitzi run backlog)`
-                      ]
-                    : []),
-                  ...(finished.closedBacklog
-                    ? [
-                        `Of the backlog, what its tasks did, closed: ${finished.closedBacklog.join(', ')} (plitzi run backlog --all)`
-                      ]
-                    : []),
-                  ...inputLines(finished.inputs)
-                ].join('\n')
+          : finished.dryRun && finished.noReport
+            ? chalk.yellow(
+                'Next, the lead: the run’s report — what it did, what went wrong, what is left (plitzi run report --summary <file>) — --apply refuses until then'
+              )
+            : finished.dryRun && finished.summaryBehind
+              ? 'Next, the lead: the summary again, saying all of the run (plitzi run report --summary <file>) — --apply refuses until then'
+              : finished.dryRun
+                ? finished.plan.conflicts.length > 0
+                  ? 'With --apply the run enters reconciliation: a person resolves each conflict.'
+                  : finished.leadFinishes
+                    ? 'A person let the lead write it: plitzi run finish --apply (--keep-backup keeps the files it overwrites)'
+                    : 'A person writes it: plitzi run finish --apply (--keep-backup keeps the files it overwrites) — or lets the lead, once: plitzi run finish --lead-finishes'
+                : [
+                    finished.backup
+                      ? `The files as they were before it: ${finished.backup} (copy one back to undo it)`
+                      : 'No backup was kept: --keep-backup keeps one next time.',
+                    `Written by ${String(finished.writtenBy)}.`,
+                    ...(finished.report ? reportLines(finished.report) : []),
+                    ...(finished.running === undefined
+                      ? []
+                      : [
+                          chalk.yellow(
+                            `A server of the project is still running on :${String(finished.running)}: it serves the project as it was and holds its state (${KV_FILE}) — stop it before npm start: plitzi server stop --port ${String(finished.running)}`
+                          )
+                        ]),
+                    ...(finished.backlog
+                      ? [
+                          `What it noticed and left, kept for the next run in ${BACKLOG_FILE}: ${finished.backlog.join(', ')} (plitzi run backlog)`
+                        ]
+                      : []),
+                    ...(finished.closedBacklog
+                      ? [
+                          `Of the backlog, what its tasks did, closed: ${finished.closedBacklog.join(', ')} (plitzi run backlog --all)`
+                        ]
+                      : []),
+                    ...inputLines(finished.inputs)
+                  ].join('\n')
       ].join('\n')
   );
 

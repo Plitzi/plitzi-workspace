@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { readOptional, writeJson } from './files';
-import { coLeadsOf, isPrincipal } from './leads';
+import { isPrincipal } from './leads';
 import { agentAddress, sendMessage } from './messages';
 import { TOOL_TMP } from './paths';
 import { readTeam, startedAgents } from './team';
@@ -63,11 +63,7 @@ export const tellLeftInTmp = async (ctx: RunContext, loaded: LoadedRun): Promise
   // Each agent by name: a message to every task reaches only the tasks, and an agent between tasks — where a scratch
   // file is most often written — holds none. The principal lead sees it among what needs it.
   const team = await readTeam(ctx.root);
-  const agents = new Set([
-    ...(team ? startedAgents(team).map(each => each.agent) : []),
-    ...coLeadsOf(loaded.record),
-    ctx.agent
-  ]);
+  const agents = new Set([...(team ? startedAgents(team).map(each => each.agent) : []), ctx.agent]);
   const text = `Left in the project's tmp/, by none of the CLI's tools: ${fresh.join(', ')}. The project's tmp/ is the person's — what is yours beside the work goes in your copy's tmp/, or between tasks in your scratch (plitzi task next names it), both gone with the run. If it is yours, move it there`;
   for (const agent of [...agents].filter(name => !isPrincipal(name)).sort()) {
     // The CLI's own word, not the lead's: nobody asked it, the run saw it.

@@ -31,6 +31,7 @@ export { taskNext, taskTake } from './next';
 export { taskClaim, taskClaims, taskDiscard, taskRelease, taskRequest, taskSpike, taskWait } from './files';
 export { taskBlock, taskCheck, taskComplete, taskNote, taskProgress, taskUnblock } from './work';
 export { taskReassign, taskRevert } from './reassign';
+export { taskEscalate } from './escalate';
 export { taskLook, taskReview } from './review';
 export { taskShow } from './show';
 export type { LookOptions } from './lookOptions';
@@ -52,3 +53,4 @@ export {
 export type { AnswerOptions, ProposeOptions } from './talk';
 export { runReference } from './reference';
 export type { ReferenceOptions } from './reference';
+export { runLook } from './runLook';

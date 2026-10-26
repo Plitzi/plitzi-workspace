@@ -45,17 +45,23 @@ describe('an agent’s prompt', () => {
     expect(lead).not.toContain('--compare');
   });
 
-  it('gives a designer its half and its reviews, a lead that reviews the lead’s, at the level it is started at', () => {
+  it('gives a designer its half and its reviews, a tester its QA, a scout its spikes, at the level it is started at', () => {
     const designer = agentPrompt({ ...base, agent: 'design-1', started: { roles: ['designer', 'developer'] } });
     expect(designer).toContain('runs-designer.md');
     expect(designer).toContain('one `PLITZI task look <task>` a round');
     expect(designer).toContain('a designer,developer agent');
     expect(designer).not.toContain('--role');
 
-    const coLead = agentPrompt({ ...base, agent: 'lead-2', started: { roles: ['lead'] } });
-    expect(coLead).toContain('runs-review.md');
-    expect(coLead).not.toContain('runs-lead.md');
-    expect(coLead).toContain('as strictly as the lead');
+    const tester = agentPrompt({ ...base, agent: 'test-1', started: { roles: ['tester'] } });
+    expect(tester).toContain('runs-review.md');
+    expect(tester).not.toContain('runs-lead.md');
+    expect(tester).toContain("every task's QA");
+    expect(tester).toContain('--escalate');
+
+    const scout = agentPrompt({ ...base, agent: 'scout-1', started: { roles: ['scout'] } });
+    expect(scout).toContain('runs-scout.md');
+    expect(scout).toContain('task spike <spike> --done');
+    expect(scout).toContain('task unblock <task> --answer');
 
     expect(agentPrompt({ ...base, agent: 'dev-2', started: { roles: ['developer'], quality: 'high' } })).toContain(
       '--quality high'
@@ -63,6 +69,18 @@ describe('an agent’s prompt', () => {
     expect(agentPrompt({ ...base, agent: 'dev-1', started: { roles: ['developer'] } })).toContain(
       'Between two tasks or reviews it may say so for a fresh context'
     );
+  });
+
+  // The lead is the person's harness, never started again: what reads much — the scope, the reviews — is the agents'.
+  it('leaves the scope to a scout and the reviews to the testers when the team has them: the lead manages', () => {
+    const prompt = agentPrompt({ ...base, agent: 'lead', scoping: true, team: { scout: true, tester: true } });
+
+    expect(prompt).toContain('You are the manager');
+    expect(prompt).toContain('a scout finds out what the ask takes');
+    expect(prompt).toContain('task spike s-scope --approve');
+    expect(prompt).toContain('read no review yourself');
+    expect(prompt).not.toContain('runs-review.md');
+    expect(prompt).toContain('run look');
   });
 
   it('gives the lead the ask, its scope, and how to start its team', () => {

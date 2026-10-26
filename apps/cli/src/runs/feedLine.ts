@@ -144,7 +144,7 @@ const lineOf = (entry: Record<string, unknown>): FeedLine | undefined => {
       return entry.verdict === 'approve'
         ? line(
             'approved',
-            `approved${round}${entry.design === 'skipped' ? (entry.designSkip === 'no-ui' ? ' — no UI' : ' — its UI by the lead') : ''}`,
+            `approved${round}${entry.design === 'skipped' ? (entry.designSkip === 'no-ui' ? ' — no UI' : ' — its UI by its reviewer') : ''}`,
             `approved${round}${entry.design === 'skipped' ? ` — ${designSkipText(isDesignSkip(entry.designSkip) ? entry.designSkip : undefined)}${typeof entry.designBy === 'string' ? ` (${entry.designBy} had it)` : ''}` : ''}`
           )
         : line('sent-back', `sent back${round}`);

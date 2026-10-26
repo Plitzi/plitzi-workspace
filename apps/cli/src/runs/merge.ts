@@ -5,6 +5,7 @@ import { closeDoneByRun, keepNotices } from './backlog';
 import { fingerprint, readJson, readOptional, writeJson } from './files';
 import { requireLead } from './leads';
 import { leaveReport } from './leaveReport';
+import { notLookedAtYet, notLookedRefusal } from './lookedAt';
 import { acceptanceOnResult, checkVersions } from './materialise';
 import { mergeLines } from './merge3';
 import { entryOf, isMergeManifest } from './model';
@@ -256,6 +257,8 @@ export interface Finished {
   leadFinishes?: boolean;
   /** Dry run: the lead has not written the run's report — the step before the person's. */
   noReport?: true;
+  /** Dry run: the lead has not looked at the whole result since its last approval (`run look`) — a step before. */
+  notLooked?: true;
   /** Written: what the run noticed and left, kept in the project's backlog (`.plitzi/backlog.json`) by id. */
   backlog?: string[];
   /** Written: the backlog's items its tasks said they do (`closes`), closed. */
@@ -323,7 +326,7 @@ export const finishRun = async (
 
   const loaded = await loadRun(ctx, runId);
   if (apply) {
-    await requireLead(ctx, loaded, 'write the run into the project');
+    await requireLead(ctx, 'write the run into the project');
   }
 
   assertStatus(loaded, ['open', 'stopping', 'stopped'], 'finish');
@@ -351,6 +354,12 @@ export const finishRun = async (
   // before the person is asked and the checks run, not after them (refused at the end of a long finish).
   // A dry run says it, and is not "ready" without it: its dry run said the person's step was next, and it was not.
   const reported = (await readSummary(loaded)) !== undefined;
+  // The lead's one review, with testers reviewing every task: the whole result, looked at after its last approval.
+  const unlooked = await notLookedAtYet(ctx, loaded);
+  if (apply && unlooked) {
+    throw notLookedRefusal(runId);
+  }
+
   if (apply && !reported) {
     throw new RunRefusal(
       'invalid',
@@ -425,7 +434,7 @@ export const finishRun = async (
   if (!apply) {
     // Whole and checked: the activity's last word is that the run is ready, and whose step is next — once its report
     // says all of it.
-    if (left.length === 0 && plan.conflicts.length === 0 && behind.length === 0 && reported) {
+    if (left.length === 0 && plan.conflicts.length === 0 && behind.length === 0 && reported && !unlooked) {
       await logRun(ctx, loaded.paths, {
         action: 'ready',
         files: plan.apply.length,
@@ -441,7 +450,8 @@ export const finishRun = async (
       leadFinishes: loaded.record.leadFinishes !== undefined,
       ...leftThere,
       ...(behind.length > 0 ? { summaryBehind: behind } : {}),
-      ...(reported ? {} : { noReport: true as const })
+      ...(reported ? {} : { noReport: true as const }),
+      ...(unlooked ? { notLooked: true as const } : {})
     };
   }
 
@@ -539,7 +549,7 @@ export const resolveFile = async (
 
   // The lead decides, as a person may: whichever way, what is written over is kept and said.
   requireNoTask(ctx, 'resolve a reconciliation');
-  await requireLead(ctx, loaded, 'resolve a reconciliation');
+  await requireLead(ctx, 'resolve a reconciliation');
   const resolved: ReconciledFile['resolved'] =
     take === 'project' ? 'project' : take === 'run' ? 'run' : take === 'merge' ? 'merged' : 'file';
   let chosen: Buffer | undefined;
@@ -627,7 +637,7 @@ export const continueRun = async (ctx: RunContext, runId: string): Promise<void>
   }
 
   requireNoTask(ctx, 'continue a run');
-  await requireLead(ctx, loaded, 'continue a run');
+  await requireLead(ctx, 'continue a run');
   await updateRecord(ctx, loaded.paths, record => ({ ...record, status: 'open', reconciliation: undefined }));
   await logRun(ctx, loaded.paths, { action: 'continue' });
 };

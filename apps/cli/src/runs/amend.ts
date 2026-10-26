@@ -145,7 +145,7 @@ const amendedTasks = (plan: RunPlan, next: RunPlan, removed: readonly RunTask[])
 export const amendRun = async (ctx: RunContext, runId: string, file: string): Promise<Amended> => {
   requireNoTask(ctx, 'amend the plan');
   const loaded = await loadRun(ctx, runId);
-  await requireLead(ctx, loaded, 'amend the plan');
+  await requireLead(ctx, 'amend the plan');
   assertStatus(loaded, ['open', 'stopping'], 'amend the plan');
   const next: RunPlan = await readPlanFile(file);
   const before = new Map(loaded.plan.tasks.map(task => [task.id, task]));

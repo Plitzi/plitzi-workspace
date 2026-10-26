@@ -1,4 +1,6 @@
 import { commandAs } from './identity';
+import { testerReviews } from './leads';
+import { DESIGNER, SCOUT, TESTER } from './team';
 import { TASKS_PER_AGENT } from './teamNotices';
 import { isWorked } from './worked';
 
@@ -66,6 +68,30 @@ export const runningAgents = (log: readonly Record<string, unknown>[]): Set<stri
 };
 
 /**
+ * What holds an agent now: the task it works, the UI review it took, the review it took this round (a tester's), the
+ * spike it finds out (a scout's).
+ */
+const busyIn = (view: TaskView): string[] => [
+  ...(view.owner && isWorked(view.state.status) ? [view.owner.agent] : []),
+  ...(view.state.design?.status === 'due' && view.state.design.by ? [view.state.design.by] : []),
+  ...(view.state.status === 'in-review' && view.state.reviewer?.round === view.state.round
+    ? [view.state.reviewer.by]
+    : []),
+  ...(view.state.status === 'spike' && view.state.spikedBy ? [view.state.spikedBy.by] : [])
+];
+
+/** A review a tester takes that nobody took this round: its UI said, and not escalated to the lead. */
+const untakenReview = (view: TaskView): boolean =>
+  view.state.status === 'in-review' &&
+  view.state.design?.status !== 'due' &&
+  testerReviews(view.task) &&
+  (view.state.reviewer === undefined || view.state.reviewer.round !== view.state.round);
+
+/** A spike nobody is finding out yet: a scout's — and one whose proposal waits for the lead is not. */
+const untakenSpike = (view: TaskView): boolean =>
+  view.state.status === 'spike' && view.state.spikedBy === undefined && view.state.proposed === undefined;
+
+/**
  * What waits for each role with no running agent of it free to take it — and, of the agents on demand not running, the
  * one to start for it, with its command: for the lead to start, as `run watch` says.
  */
@@ -90,12 +116,7 @@ export const agentsNeeded = (
   // How to start one: in the team's own harness, or the one the lead names.
   const launch = (agent: string): string =>
     `plitzi run agent ${agent} --launch${run.launches === true ? '' : ' --harness <yours>'}`;
-  const busy = new Set(
-    views.flatMap(view => [
-      ...(view.owner && isWorked(view.state.status) ? [view.owner.agent] : []),
-      ...(view.state.design?.status === 'due' && view.state.design.by ? [view.state.design.by] : [])
-    ])
-  );
+  const busy = new Set(views.flatMap(busyIn));
   const roles = [...new Set(started.flatMap(each => each.roles))];
   const asked = new Set<string>();
   // A task sent back waits for its own agent alone, and nobody else takes it: one not running is asked for by name — an
@@ -143,7 +164,7 @@ export const agentsNeeded = (
         .filter(view => (view.task.role ?? 'developer') === role)
         .map(view => view.task.id);
       const reviews =
-        role === 'designer'
+        role === DESIGNER
           ? views
               .filter(
                 view =>
@@ -151,7 +172,13 @@ export const agentsNeeded = (
               )
               .filter(view => freeOf(view.owner?.agent).length === 0)
               .map(view => `the UI of ${view.task.id}`)
-          : [];
+          : role === TESTER
+            ? views
+                .filter(view => untakenReview(view) && freeOf(view.owner?.agent).length === 0)
+                .map(view => `the review of ${view.task.id}`)
+            : role === SCOUT && freeOf().length === 0
+              ? views.filter(untakenSpike).map(view => `the spike ${view.task.id}`)
+              : [];
       const waiting = [...(freeOf().length === 0 ? ready : []), ...reviews];
       // The team's order: one that starts with the run first, then those on demand — never dev-2 while dev-1 is not running.
       // With one of the role running, only an agent on demand is asked for: the rest are the lead's to start at the open.
@@ -249,12 +276,7 @@ export const freeBaseAgents = (
   agent: string,
   roles: readonly string[]
 ): string[] => {
-  const busy = new Set(
-    views.flatMap(view => [
-      ...(view.owner && isWorked(view.state.status) ? [view.owner.agent] : []),
-      ...(view.state.design?.status === 'due' && view.state.design.by ? [view.state.design.by] : [])
-    ])
-  );
+  const busy = new Set(views.flatMap(busyIn));
   const designer = roles.includes('designer');
 
   return started

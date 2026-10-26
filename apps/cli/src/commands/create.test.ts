@@ -89,11 +89,20 @@ describe('the scaffold', () => {
 
       expect(team).toMatchObject({
         version: 1,
+        // Carlos: one to two developers, and none to one tester, scout and designer — each on demand.
         agents: [
-          { name: 'dev', roles: ['developer'] },
-          { name: 'design', roles: ['designer'] }
+          { name: 'dev', roles: ['developer'], count: 2, min: 1 },
+          { name: 'design', roles: ['designer'], min: 0 },
+          { name: 'test', roles: ['tester'], min: 0 },
+          { name: 'scout', roles: ['scout'], min: 0 }
         ],
-        about: { roles: { designer: expect.any(String) as unknown, tester: expect.any(String) as unknown } }
+        about: {
+          roles: {
+            designer: expect.any(String) as unknown,
+            tester: expect.any(String) as unknown,
+            scout: expect.any(String) as unknown
+          }
+        }
       });
       // The models are the file's: the lead on the strongest, every agent on the one it names.
       expect(team).toHaveProperty('lead', { model: 'claude-opus-5-5', effort: 'high' });

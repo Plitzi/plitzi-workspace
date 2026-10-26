@@ -216,28 +216,32 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     ]);
   });
 
-  it('hands a lead that reviews a spike when no review waits — once, the other lead not offered it', async () => {
+  it('hands each scout a spike — once, the other scout not offered it', async () => {
     const plan = { ...surveyed(), designReview: false };
     plan.tasks.push({ ...plan.tasks[4], id: 's-words', spike: 'which words the original uses for a booking' });
     const file = await bench.writePlan(plan);
-    await bench.writeTeam({ ...teamFor(plan, 4), lead: { count: 3 } });
+    const base = teamFor(plan, 2);
+    await bench.writeTeam({
+      ...base,
+      agents: [...base.agents, { name: 'scout', roles: ['scout'], count: 2, session: 'keep' }]
+    });
     await openRun(lead(), file);
-    const offered = await takeNext(bench.agent('lead-2'), 'es-launch', 'lead');
+    const offered = await takeNext(bench.agent('scout-1'), 'es-launch', 'scout');
     expect(offered.next.spike).toMatchObject({
       task: { id: 's-survey' },
       question: 'what the original about page has that ours lacks'
     });
-    expect((await takeNext(bench.agent('lead-3'), 'es-launch', 'lead')).next.spike?.task.id).toBe('s-words');
-    // In the flow and the board's task row, with the lead at it — never "free": no agent takes a spike.
+    expect((await takeNext(bench.agent('scout-2'), 'es-launch', 'scout')).next.spike?.task.id).toBe('s-words');
+    // In the flow and the board's task row, with its scout at it — never "free": no developer takes a spike.
     const spikes = flowStages((await viewRun(lead(), 'es-launch')).tasks).find(stage => stage.key === 'spike');
-    expect(spikes?.tasks.map(task => `${task.id} ${spikes.who(task)}`)).toContain('s-survey lead-2');
+    expect(spikes?.tasks.map(task => `${task.id} ${spikes.who(task)}`)).toContain('s-survey scout-1');
     // On the board at its spike, never idle.
-    expect((await monitorRun(lead(), 'es-launch')).agents.find(agent => agent.agent === 'lead-2')).toMatchObject({
+    expect((await monitorRun(lead(), 'es-launch')).agents.find(agent => agent.agent === 'scout-1')).toMatchObject({
       status: 'working',
-      doing: 'finds out for s-survey: what the original about page has that ours lacks',
       task: 's-survey'
     });
-    expect(await answerSpike(bench.agent('lead-2'), 'es-launch', 's-survey', 'A team grid')).toMatchObject({
+    // Findings alone, no tasks: done at once, the lead told.
+    expect(await answerSpike(bench.agent('scout-1'), 'es-launch', 's-survey', 'A team grid')).toMatchObject({
       status: 'done'
     });
   });

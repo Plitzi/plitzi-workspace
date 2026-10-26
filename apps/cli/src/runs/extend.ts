@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { readJson, writeAtomic, writeJson } from './files';
 import { coversOf } from './inventory';
-import { coLeadsOf, requireLead } from './leads';
+import { requireLead, scoutsOf } from './leads';
 import { materialise } from './materialise';
 import { unmeasuredNotices } from './measuredValues';
 import { EVERYONE, LEAD, sendMessage } from './messages';
@@ -29,7 +29,7 @@ import {
 import { isResearch, startingState } from './spike';
 import { keepFiles } from './store';
 import { viewTask } from './taskStore';
-import { coLeadNames, ensureTeam, teamSize } from './team';
+import { ensureTeam, teamSize } from './team';
 import { tryLines } from './tryLines';
 
 import type { RunPlan, RunTask } from './model';
@@ -53,8 +53,6 @@ export interface Extended {
   primer: boolean;
   /** The agents the run allows at once, when the stage raised them: what was asked, or the team's size. */
   agents?: { before: number; after: number };
-  /** The leads that review the stage adds, by name: start each (`plitzi run plan` says how). */
-  newLeads?: string[];
   /** The stage's plan and primer, moved into the run's folder from the project: where the lead edits them now. */
   inputs?: string[];
   /** The run's pieces it had left out that the stage covers: no longer waiting, by id. */
@@ -75,7 +73,11 @@ export const extendRun = async (
 ): Promise<Extended> => {
   requireNoTask(ctx, 'extend a run');
   const loaded = await loadRun(ctx, runId);
-  await requireLead(ctx, loaded, 'stack a stage on the run');
+  // Seen before it is stacked by the scout that proposes it too: stacking it is the lead's.
+  if (!(dryRun && (await scoutsOf(ctx.root)).includes(ctx.agent))) {
+    await requireLead(ctx, 'stack a stage on the run');
+  }
+
   assertStatus(loaded, ['open'], 'extend');
   // A stage names itself and says its goal, or takes the run's: what is new in it is its tasks. One that says the run's
   // own name is given a stage's — a run's three stages all said the run's own name, and were stacked under the run's name.
@@ -85,7 +87,6 @@ export const extendRun = async (
   const { team } = await ensureTeam(ctx.root, next);
   // A stage worked by a larger team lets them work: never fewer than the run had.
   const allowed = Math.max(loaded.record.agents, teamSize(team));
-  const leads = [...new Set([...coLeadsOf(loaded.record), ...coLeadNames(team)])];
   const known = new Set(loaded.tasks.map(task => task.id));
   const problems: string[] = [];
   const repeated = next.tasks.filter(task => known.has(task.id)).map(task => task.id);
@@ -286,7 +287,6 @@ export const extendRun = async (
   await updateRecord(ctx, loaded.paths, record => ({
     ...record,
     agents: allowed,
-    ...(leads.length > 0 ? { leads } : {}),
     // The stage's plan and its primer are the run's now: removed with it, as the plan it opened with.
     inputs: withInputs(
       record.inputs,
@@ -322,9 +322,6 @@ export const extendRun = async (
     notes: next.notes?.length ?? 0,
     primer: primer !== undefined,
     ...(allowed > loaded.record.agents ? { agents: { before: loaded.record.agents, after: allowed } } : {}),
-    ...(leads.length > coLeadsOf(loaded.record).length
-      ? { newLeads: leads.filter(each => !coLeadsOf(loaded.record).includes(each)) }
-      : {}),
     ...(inputs.length > 0 ? { inputs } : {}),
     ...(takenUp.length > 0 ? { takenUp } : {}),
     ...(checked.notices.length > 0 ? { notices: checked.notices } : {})

@@ -207,7 +207,7 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
         : view.state.design?.status === 'skipped'
           ? {
               design:
-                view.state.design.why === 'lead'
+                view.state.design.why === 'reviewer'
                   ? 'UI by the lead'
                   : view.state.design.why === 'no-ui'
                     ? 'no UI'
@@ -575,7 +575,7 @@ export const writeSummary = async (
 ): Promise<void> => {
   requireNoTask(ctx, 'write the run’s summary');
   const loaded = await loadRun(ctx, runId);
-  await requireLead(ctx, loaded, 'write the run’s summary');
+  await requireLead(ctx, 'write the run’s summary');
   // The lead closes what it was told first: a run that ended with notices standing read as one whose lead ignored them
   // (ten), and a lead that said "done" before them stacked a stage after. Starting agents is the keeper's.
   const view = await viewRun(ctx, runId);

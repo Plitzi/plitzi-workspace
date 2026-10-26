@@ -483,7 +483,7 @@ describe('agents on demand', () => {
 
   it('refuses a min past its count', async () => {
     expect(await refusalOf(setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 3 }))).toContain(
-      'its min — how many start with the run — is a whole number from 1 to its count (2)'
+      'its min — how many start with the run — is a whole number from 0 (every one on demand) to its count (2)'
     );
   });
 });

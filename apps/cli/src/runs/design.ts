@@ -129,7 +129,7 @@ export const assertDesigner = (view: TaskView, agent: string): void => {
   if (workedBy(view, agent)) {
     throw new RunRefusal(
       'invalid',
-      `${agent} worked ${taskId}: its UI is reviewed by another designer, or the lead approves it without that review, as itself (plitzi task review ${taskId} --approve --skip-design lead)`,
+      `${agent} worked ${taskId}: its UI is reviewed by another designer, or the lead approves it without that review, as itself (plitzi task review ${taskId} --approve --skip-design reviewer)`,
       { task: taskId }
     );
   }
@@ -249,11 +249,11 @@ export const designAtComplete = async (
   const overruled =
     asked === 'code' ? ' — its developer asked for the code review alone, but what it changed draws UI' : '';
 
-  // The lead sent it back saying its next look is the lead's own: no designer is offered it.
+  // Its reviewer sent it back saying its next look is its own: no designer is offered it.
   const reserved = view.state.design?.reserved;
   if (reserved !== undefined) {
     return {
-      design: { status: 'skipped', round: view.state.round, why: 'lead', by: reserved },
+      design: { status: 'skipped', round: view.state.round, why: 'reviewer', by: reserved },
       carried: `Its UI review this round is ${reserved}'s, as ${reserved} said sending it back: it comes to ${reserved} alone`
     };
   }

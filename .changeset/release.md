@@ -63,6 +63,32 @@ authoring and the elements learnt from the runs.
 
 ## Several agents on one project (`@plitzi/cli`)
 
+- **One lead, the manager; a tester reviews every task; a scout finds out the spikes.** The lead is the person's harness
+  and never starts again, so whatever it reads it reads again every turn: a run's lead, scoping and reviewing, spent 68%
+  of the run. Now:
+  - **Scout** (new role, Opus): `task next` hands it the spikes — the run's scope, a research spike, a question an
+    agent blocked on. Its `task spike <spike> --done "…" --tasks <stage.json>` is checked as `run extend --dry-run` and
+    proposed to the lead, who decides it with the person: `task spike <spike> --approve | --changes "…"`. It lifts an
+    agent's block with `task unblock --answer`.
+  - **Tester** (QA, Opus): reviews every task in review, a designer's included — what it was asked, its checks, how it
+    behaves, its code — and its approval is the task's; the UI too when no designer is free (`--skip-design reviewer`).
+    What it cannot decide: `task review <task> --escalate "…"`, blocked on the lead.
+  - **The lead** reviews only what is escalated or past its review rounds — every task when the team has no tester —
+    and `run watch` wakes it for nothing else. Before finishing it looks once at the whole result: **`plitzi run look`**
+    checks and pictures every page the run changed (1440 and 390, light and dark); `run finish` asks for it after the
+    last approval.
+  - **Co-leads are gone:** `lead-2`…, `"lead": { "count" }` (refused, saying to add testers), `task next --role lead`
+    for anyone but the lead, the questions a co-lead took (`answering.json`).
+  - **`--skip-design lead` is `--skip-design reviewer`**: the one who approves — a tester or the lead — looked at the UI.
+  - **The starter team** is one to two developers and none to one designer, tester and scout (`"min": 0`, every one on
+    demand), the keeper starting each when work of its role waits — a review for a tester, a spike for a scout.
+  - **A role of your own says what it does:** an agent's `"skill"` in `team.json` — a markdown file of the project,
+    `run team set a11y --roles accessibility --skill .claude/skills/a11y/SKILL.md` — is read first by its agents;
+    `run plan` refuses one the project does not have.
+  - **To redo:** a `team.json` with `"lead": { "count" }` drops it; add `{ "name": "test", "roles": ["tester"], "min": 0,
+    "model": "claude-opus-5-5" }` and `{ "name": "scout", "roles": ["scout"], "min": 0, "model": "claude-opus-5-5" }` to
+    get the new roles.
+
 An agent works a project alone by default. A team is a mode the person asks for — "several agents", "in parallel",
 "subagents", in any language — and the skills, the project's `AGENTS.md`, `plitzi --help` and `run --help` say how to
 start one. How it works: `docs/en/agent-runs.md`.

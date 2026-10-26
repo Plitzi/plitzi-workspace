@@ -5,7 +5,6 @@ import {
   EFFORTS,
   isEffort,
   parseModelChoice,
-  coLeadNames,
   leadText,
   ROLES,
   readTeam,
@@ -14,6 +13,7 @@ import {
   TEAM_FILE,
   teamAgentText,
   teamSize,
+  TESTER,
   unsetTeamAgent
 } from '../../runs/team';
 
@@ -35,8 +35,8 @@ export const runTeam = (options: RunCommandOptions): Promise<void> =>
             ...rolesText()
           ].join('\n')
         : [
-            `This project's team (${shown.file}), ${String(teamSize(shown.team))} agents and ${String(coLeadNames(shown.team).length + 1)} lead(s):`,
-            `  lead — ${leadText(shown.team.lead)}: plans, answers, decides, finishes${coLeadNames(shown.team).length > 0 ? ` — and ${coLeadNames(shown.team).join(', ')} review beside it` : ''}`,
+            `This project's team (${shown.file}), ${String(teamSize(shown.team))} agents and its lead:`,
+            `  lead — ${leadText(shown.team.lead)}: plans with you, approves what a spike proposes, answers, decides what is escalated, finishes${shown.team.agents.some(each => each.roles.includes(TESTER)) ? '' : ' — and, with no tester, reviews every task'}`,
             ...shown.team.agents.map(each => `  ${teamAgentText(each)}`),
             ...rolesText()
           ].join('\n')
@@ -60,6 +60,7 @@ export interface TeamSetOptions extends RunCommandOptions {
   effort?: string;
   session?: string;
   resumeSession?: boolean;
+  skill?: string;
 }
 
 /** `--session`, refused naming the modes when it is none of them. */
@@ -92,7 +93,8 @@ export const runTeamSet = (name: string, options: TeamSetOptions): Promise<void>
         ...(options.model ? { model: parseModelChoice(options.model) } : {}),
         ...(options.effort ? { effort: effortOf(options.effort) } : {}),
         ...(options.session !== undefined ? { session: sessionOf(options.session) } : {}),
-        ...(options.resumeSession !== undefined ? { resumeSession: options.resumeSession } : {})
+        ...(options.resumeSession !== undefined ? { resumeSession: options.resumeSession } : {}),
+        ...(options.skill !== undefined ? { skill: options.skill } : {})
       }),
     changed =>
       changed.unchanged

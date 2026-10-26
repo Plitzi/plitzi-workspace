@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 import { proposalsOf } from './agreements';
-import { answering } from './answering';
 import { stackableBacklog } from './backlog';
 import { bottlenecks } from './bottlenecks';
 import { designSkipText } from './designSkip';
@@ -9,7 +8,7 @@ import { fingerprint } from './files';
 import { liveAttention } from './findings/live';
 import { readHistory } from './history';
 import { identifiedAgents } from './identity';
-import { askingLeads, reviewersOf, UNTAKEN_REVIEW_MS } from './leads';
+import { testersOf } from './leads';
 import { LEAD, messagesOf, unreadFor } from './messages';
 import { agentsNeeded } from './onDemand';
 import { under } from './paths';
@@ -84,6 +83,8 @@ export interface TaskLine {
   found?: number;
   /** In spike: the lead finding it out, once one took it. */
   spikedBy?: string;
+  /** A spike's tasks a scout proposes, waiting for the lead: by whom, and the tasks. */
+  proposed?: { by: string; tasks: string[] };
   /**
    * At work, while its agent is at another of the tasks it holds — one at a time: that one. A task sent back while its
    * agent wrote the next one was on the board twice, its agent "ready" and "at work" at once.
@@ -156,12 +157,8 @@ export interface RunView {
   attention: Attention[];
   merges: { id: string; kind: string; at: string; files: number }[];
   approvedFiles: number;
-  /** The leads besides `lead` that review (`lead-2`…): who may take the reviews, when the run has some. */
-  leads: string[];
-  /** Who takes reviews beside `lead`: the leads that review, and the team's testers. */
+  /** Who reviews the tasks: the team's testers — none, and the lead reviews every task. */
   reviewers: string[];
-  /** Those of them running now — each asked for a review within the last minute. */
-  askingLeads: string[];
   /** The agents the CLI launched whose process has ended: not running, whatever the log's last word of them. */
   gone: string[];
   /** Where the run's approved work is served while a preview serves it (`run preview`, `npm run start:preview`). */
@@ -214,7 +211,8 @@ const lineOf = (view: TaskView, now: Date, owesSignal: boolean, unblocks: string
   ...(view.task.milestone ? { milestone: view.task.milestone } : {}),
   ...(view.state.status === 'spike' ? { spike: view.task.spike ?? 'what it needs' } : {}),
   ...(view.state.findings && view.state.findings.length > 0 ? { found: view.state.findings.length } : {}),
-  ...(view.state.status === 'spike' && view.state.spikedBy ? { spikedBy: view.state.spikedBy.by } : {})
+  ...(view.state.status === 'spike' && view.state.spikedBy ? { spikedBy: view.state.spikedBy.by } : {}),
+  ...(view.state.proposed ? { proposed: { by: view.state.proposed.by, tasks: view.state.proposed.tasks } } : {})
 });
 
 /**
@@ -468,14 +466,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   const answered = new Set((await messagesOf(loaded)).flatMap(message => (message.replyTo ? [message.replyTo] : [])));
   const all = await messagesOf(loaded);
   const asked = all.filter(message => message.to === LEAD && message.fyi !== true);
-  // A question a lead that reviews took is its to answer: the lead is told of it only once it waited unanswered.
-  const taken = await answering(loaded);
-  const answeringNow = (message: { id: string; fyi?: boolean }): boolean =>
-    message.fyi !== true &&
-    Object.hasOwn(taken, message.id) &&
-    now.getTime() - Date.parse(taken[message.id].at) < UNTAKEN_REVIEW_MS;
   (await unreadFor(loaded, LEAD, false))
-    .filter(message => !answered.has(message.id) && !answeringNow(message))
+    .filter(message => !answered.has(message.id))
     // Said for the lead to know of a task approved since — by it, or by a designer about it: its history now, in the
     // inbox — nothing to act on, and it held a run's finish.
     .filter(message => !(message.fyi === true && byId.get(message.about ?? message.from)?.state.status === 'done'))
@@ -488,7 +480,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
         // A glimpse here; whole in `run watch`, where showing it reads it — and it is gone from here.
         text: message.fyi
           ? `${message.from} says (${message.id}), for you to know: ${glimpse(message.text)} — read: plitzi task inbox`
-          : `${message.from} asks (${message.id}): ${glimpse(message.text)}${Object.hasOwn(taken, message.id) ? ` — ${taken[message.id].by} took it and has not answered` : ''} — answer: plitzi task message ${message.from} "…" --reply-to ${message.id}`,
+          : `${message.from} asks (${message.id}): ${glimpse(message.text)} — answer: plitzi task message ${message.from} "…" --reply-to ${message.id}`,
         who: 'lead'
       })
     );
@@ -589,9 +581,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       files: Object.keys(merge.files).length
     })),
     approvedFiles: Object.keys(approved.files).length,
-    leads: record.leads ?? [],
-    reviewers: await reviewersOf(loaded),
-    askingLeads: await askingLeads(loaded, now),
+    reviewers: await testersOf(ctx.root),
     gone: [...gone],
     ...(port === undefined ? {} : { previewPort: port }),
     identified,
@@ -627,7 +617,7 @@ const designText = (design: DesignReview): string =>
  * The board, a line per task: where each stands and who has it — what a run's status says of its tasks, and what a
  * lead's watch says with what woke it (a run's lead ran `run status` after each of its watches, 8 times in 10 minutes).
  */
-export const boardLines = (view: Pick<RunView, 'tasks' | 'leads'>): string[] => {
+export const boardLines = (view: Pick<RunView, 'tasks' | 'reviewers'>): string[] => {
   const lines: string[] = [];
   for (const task of view.tasks) {
     const progress = task.fraction === undefined ? '' : ` · ${String(Math.round(task.fraction * 100))} %`;
@@ -645,7 +635,7 @@ export const boardLines = (view: Pick<RunView, 'tasks' | 'leads'>): string[] => 
               : task.status === 'in-review' && task.design?.status === 'due'
                 ? ` · ${designText(task.design)}`
                 : task.status === 'in-review'
-                  ? `${task.design ? ` · ${designText(task.design)}` : ''}${task.reviewer ? ` · ${task.reviewer} reviews it` : view.leads.length > 0 ? ' · no lead took it yet' : ''}`
+                  ? `${task.design ? ` · ${designText(task.design)}` : ''}${task.reviewer ? ` · ${task.reviewer} reviews it` : view.reviewers.length > 0 ? ' · no tester took it yet' : ''}`
                   : '';
     lines.push(
       `  ${ICON[task.status]} ${task.id.padEnd(18)} ${task.role === 'developer' ? '' : `[${task.role}] `}${agent}${task.title}${step}${progress}${extra}${task.noSignal ? ' · no signal' : ''}`

@@ -7,7 +7,6 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { createExclusive, readJson, writeAtomic } from './files';
 import { LEAD } from './messages';
 import { RunRefusal } from './refusal';
-import { readRecord } from './run/record';
 import { readTeam, startedAgents } from './team';
 
 import type { RunPaths } from './paths';
@@ -143,16 +142,14 @@ const notYours = (paths: RunPaths, agent: string): RunRefusal =>
     { agent }
   );
 
-/** The names a run's agents go by: its team's, `lead` and its co-leads — none when the project has no team. */
-const namesOf = async (root: string, paths: RunPaths): Promise<string[] | undefined> => {
+/** The names a run's agents go by: its team's and `lead` — none when the project has no team. */
+const namesOf = async (root: string): Promise<string[] | undefined> => {
   const team = await readTeam(root).catch(() => undefined);
   if (!team) {
     return undefined;
   }
 
-  const record = await readRecord(paths).catch(() => undefined);
-
-  return [LEAD, ...(record?.leads ?? []), ...startedAgents(team).map(each => each.agent)];
+  return [LEAD, ...startedAgents(team).map(each => each.agent)];
 };
 
 const proveToken = async (paths: RunPaths, runId: string, token: string): Promise<string> => {
@@ -251,7 +248,7 @@ export const identify = async (
     throw notYours(paths, name);
   }
 
-  const names = await namesOf(root, paths);
+  const names = await namesOf(root);
   if (names && !names.includes(name)) {
     throw new RunRefusal(
       'identity',

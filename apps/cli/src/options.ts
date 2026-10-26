@@ -75,6 +75,17 @@ export const positiveInteger = (value: string): number => {
   return parsed;
 };
 
+/** A whole number from 0: how many of something start, when none may. */
+export const wholeNumber = (value: string): number => {
+  refuseOption(value);
+  const parsed = Number(value.trim());
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new InvalidArgumentError('It takes a whole number from 0.');
+  }
+
+  return parsed;
+};
+
 const MAX_SCALE = 4;
 
 /** A picture's zoom: device pixels a CSS pixel, 1 to 4. */

@@ -148,7 +148,7 @@ export const flowStages = (tasks: readonly TaskLine[]): FlowStage[] => {
       who: (task: TaskLine) => task.design?.by ?? 'waiting'
     },
     {
-      // A lead that took a review whose UI waits for a designer reviews it whole (--skip-design lead): it is with the
+      // A lead that took a review whose UI waits for a designer reviews it whole (--skip-design reviewer): it is with the
       // lead, named — never "nobody yet" in the UI's column while the lead says it is reviewing it.
       key: 'lead-review',
       title: 'Lead review',

@@ -42,7 +42,7 @@ export const refusal = async (work: Promise<unknown>): Promise<Refused> => {
   throw new Error('It was not refused');
 };
 
-/** A look at a task, as `task look` logs it — what a lead's UI review with `--skip-design lead` is. */
+/** A look at a task, as `task look` logs it — what a lead's UI review with `--skip-design reviewer` is. */
 export const lookedAt = async (ctx: RunContext, runId: string, taskId: string): Promise<void> =>
   logRun(ctx, (await loadRun(ctx, runId)).paths, { action: 'look', task: taskId });
 

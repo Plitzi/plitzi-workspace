@@ -9,6 +9,7 @@ import {
   runOpen,
   runPlan,
   runRehearse,
+  runLook,
   runPreview,
   runBench,
   runReport,
@@ -51,7 +52,7 @@ import {
   RUN_OPTION,
   TOKEN_OPTION
 } from './options';
-import { duration, FOLLOW_MS, names, pagePaths, positiveInteger } from '../../../options';
+import { duration, FOLLOW_MS, names, pagePaths, positiveInteger, wholeNumber } from '../../../options';
 
 import type {
   FinishOptions,
@@ -200,8 +201,8 @@ export const registerRunGroup = (program: Command): Command => {
     .option('--count <n>', 'How many agents of it', positiveInteger)
     .option(
       '--min <n>',
-      'How many of them start with the run: the rest are on demand — started when work waits, stopped when none is left',
-      positiveInteger
+      'How many of them start with the run — 0 for every one on demand: the rest are started when work waits, stopped when none is left',
+      wholeNumber
     )
     .option('--model <model>', 'The harness’s own name for it: claude-sonnet-5-5')
     .option(
@@ -217,6 +218,10 @@ export const registerRunGroup = (program: Command): Command => {
       'Started again after it died mid-task, an agent resumes its own session (Claude Code) — what it knew kept'
     )
     .option('--no-resume-session', 'Started again after it died mid-task, an agent starts a fresh session')
+    .option(
+      '--skill <file>',
+      'A markdown file of the project its agents read first — what a role of your own does: .claude/skills/accessibility/SKILL.md'
+    )
     .option(...JSON_OPTION)
     .action((name: string, options: TeamSetOptions) => runTeamSet(name, options));
 
@@ -489,6 +494,16 @@ export const registerRunGroup = (program: Command): Command => {
         ? runFinish(run, options)
         : runAllowFinish(run, { ...options, revoke: !options.leadFinishes })
     );
+
+  runGroup
+    .command('look')
+    .description(
+      'The run’s whole result, once before it is finished: its approved work served, every page it changed checked and pictured at 1440 and 390, light and dark — the lead’s one review'
+    )
+    .argument('[run]', 'The run')
+    .option(...TOKEN_OPTION)
+    .option(...JSON_OPTION)
+    .action((run: string | undefined, options: RunCommandOptions) => runLook(run, options));
 
   runGroup
     .command('preview')

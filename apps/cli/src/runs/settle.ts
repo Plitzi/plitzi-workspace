@@ -27,7 +27,7 @@ export const settleFinding = async (
 ): Promise<{ subject: string; text: string }> => {
   requireNoTask(ctx, 'settle a finding');
   const loaded = await loadRun(ctx, runId);
-  await requireLead(ctx, loaded, 'settle a finding');
+  await requireLead(ctx, 'settle a finding');
   if (note.trim() === '') {
     throw new RunRefusal(
       'invalid',
