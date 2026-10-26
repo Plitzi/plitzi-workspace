@@ -84,13 +84,11 @@ const busyIn = (view: TaskView): string[] => [
 ];
 
 /**
- * A spike still to find out: a research task, or a task at work blocked on a question — a scout's. One whose result
+ * A spike still to find out — a research task, a scout's: an agent's question is a block, the lead's. One whose result
  * waits for the lead's approval is the lead's now: its scout holds nothing.
  */
 const toFind = (view: TaskView): boolean =>
-  view.state.proposed === undefined &&
-  ((view.state.status === 'spike' && isResearch(view.task)) ||
-    (view.state.status === 'blocked' && view.state.blockedBy?.spike !== undefined));
+  view.state.proposed === undefined && view.state.status === 'spike' && isResearch(view.task);
 
 /**
  * A review a tester takes that nobody took this round, not escalated to the lead: its UI said — or waiting for a designer

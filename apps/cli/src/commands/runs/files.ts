@@ -173,8 +173,8 @@ export const taskRequest = (
   );
 
 /**
- * `plitzi task spike "…"`, by the agent at work: its task needs something found out — a scout's to find (the lead's with
- * none), the task blocked on it. `plitzi task spike <task> --done "…" [--tasks <stage.json>]`, by a scout or the lead:
+ * `plitzi task spike "…"`, by the agent at work: its task needs something found out — the lead's to answer, the task
+ * blocked on it. `plitzi task spike <task> --done "…" [--tasks <stage.json>]`, by a scout or the lead:
  * what a spike found, and the tasks it makes — a scout's proposed to the lead. `--approve` / `--changes "…"`, the
  * lead's: those tasks stacked, or sent back.
  */
@@ -234,7 +234,7 @@ export const taskSpike = (
           ].join('\n')
         : spiked.finding === undefined
           ? spiked.status === 'blocked'
-            ? `${spiked.task} is blocked on its spike — ${spiked.question} — found out by a scout, or the lead. Its files stay yours; the answer comes with your next command (plitzi task next hands the task back) — meanwhile take another task, or go on with what does not need it.`
+            ? `${spiked.task} is blocked on its spike — ${spiked.question} — answered by the lead. Its files stay yours; the answer comes with your next command (plitzi task next hands the task back) — meanwhile take another task, or go on with what does not need it.`
             : `${spiked.task}: what was found went back to its scout, with what you asked.`
           : spiked.status !== 'done'
             ? `${spiked.task} is answered: its block lifted with what was found, kept as its finding — its agent goes on with it.`

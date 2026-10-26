@@ -164,7 +164,7 @@ export const startLines = (tasks: readonly RunTask[], team: Team, designReview: 
         ...(reviewing.length > 0 ? [`the UI of ${reviewing.join(', ')}`] : []),
         ...(each.roles.includes(TESTER) ? ['every task’s review'] : []),
         ...(each.roles.includes(SCOUT)
-          ? [spikes.length > 0 ? `the spikes ${spikes.join(', ')}` : 'the questions the agents block on']
+          ? [spikes.length > 0 ? `the spikes ${spikes.join(', ')}` : 'the spikes a stage brings']
           : [])
       ];
 

@@ -18,7 +18,7 @@ import { heldAhead, lockHolder, stalled } from './stalled';
 import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
-import { DEVELOPER, readTeam, SCOUT, startedAgents, TESTER } from './team';
+import { DEVELOPER, readTeam, startedAgents, TESTER } from './team';
 import { chainMinutes, urgencies } from './urgency';
 import { isWorked } from './worked';
 
@@ -391,7 +391,6 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   }
 
   const base = await readBase(loaded.paths);
-  const scouts = started.some(each => each.roles.includes(SCOUT));
   for (const view of views) {
     const line = tasks.find(each => each.id === view.task.id);
     const { proposed } = view.state;
@@ -400,18 +399,10 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       attention.push({
         kind: 'spike-proposed',
         task: view.task.id,
-        text:
-          view.state.status === 'blocked'
-            ? `${view.task.id}: ${proposed.by} answers the question its agent blocked on — ${proposed.text} — approve it (its block lifted): plitzi task spike ${view.task.id} --approve | --changes "…"`
-            : `${view.task.id}: ${proposed.by} found it out — ${proposed.text}${proposed.tasks.length > 0 ? ` — and proposes ${proposed.tasks.join(', ')}: decide them with the person (plitzi task next --role lead reads them)` : ''} — plitzi task spike ${view.task.id} --approve | --changes "…"`,
+        text: `${view.task.id}: ${proposed.by} found it out — ${proposed.text}${proposed.tasks.length > 0 ? ` — and proposes ${proposed.tasks.join(', ')}: decide them with the person (plitzi task next --role lead reads them)` : ''} — plitzi task spike ${view.task.id} --approve | --changes "…"`,
         who: 'lead'
       });
-    } else if (
-      view.state.status === 'blocked' &&
-      view.state.blockedBy &&
-      // A block on a question a scout finds out is the scout's until it proposes the answer.
-      !(scouts && view.state.blockedBy.spike !== undefined)
-    ) {
+    } else if (view.state.status === 'blocked' && view.state.blockedBy) {
       attention.push({
         kind: view.state.blockedBy.needs === 'person' ? 'person' : 'blocked',
         task: view.task.id,

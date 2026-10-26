@@ -66,11 +66,11 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
   should know** — a finding, a choice you made, a risk — with no answer needed: `plitzi task tell "…"` (holding no task — a reviewer — `--about <task> --token <yours>`). **Wrong, and no task's** — outside yours, there
   before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage. What the lead
   says to you arrives with your next heartbeat, progress or completion — read it (`task inbox --all`: all again).
-- **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"` (at a review too); in a long think or test
-  run, every 2 minutes.
+- **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"` (at a review too); in a long think or test,
+  every 2 minutes.
 - **A spike** is a scout's (the lead's with none), its result the lead's to approve: what is built is decided by what
   it finds — your brief has what was found for your task. Your work needs something found out first: `plitzi task spike
-  "what"` — blocked, its files yours; the answer comes back with the task (`task next`), take another meanwhile.
+  "what"` — blocked on the lead, its files yours; its answer comes back with the task (`task next`); take another meanwhile.
 - **Blocked by something outside the plan** (a key, a decision): `plitzi task block --reason "…"` (the lead's:
   only it talks to the person), then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks

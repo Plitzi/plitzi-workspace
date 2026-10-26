@@ -344,7 +344,7 @@ export interface TaskState {
   findings?: Finding[];
   /**
    * Who finds it out — a scout, or the lead with none in the team — once it took it (`task next`): another is not offered
-   * it. On a task blocked on a spike, the scout answering it.
+   * it. On a task blocked on an agent's question, the lead answering it.
    */
   spikedBy?: { by: string; at: string };
   /**

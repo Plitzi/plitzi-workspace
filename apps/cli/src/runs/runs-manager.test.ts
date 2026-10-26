@@ -5,22 +5,11 @@ import { messagesOf } from './messages';
 import { agentsNeeded } from './onDemand';
 import { loadRun, logRun, openRun, readRunLog } from './run';
 import { askLead, tellLeadAbout } from './talk';
-import {
-  answerSpike,
-  approveSpike,
-  completeTask,
-  escalateReview,
-  nextTask,
-  reassignTask,
-  reviewTask,
-  startSpike,
-  takeNext,
-  unblockTask
-} from './tasks';
+import { completeTask, escalateReview, nextTask, reviewTask, takeNext, unblockTask } from './tasks';
 import { viewTask } from './taskStore';
 import { readTeam, startedAgents } from './team';
 import { viewRun } from './view';
-import { reviewerSteps, SCOUT, team, TESTERS } from '../tests/reviewerSteps';
+import { reviewerSteps, team, TESTERS } from '../tests/reviewerSteps';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
@@ -214,41 +203,6 @@ describe('a UI review taken, its task escalated', () => {
     expect(told.map(message => message.text).join(' ')).toContain(
       'escalated t-menu to the lead while you reviewed its UI'
     );
-  });
-});
-
-describe('a task taken back while a scout’s answer to its block waits', () => {
-  // Approved after the cut, the answer took the task for research done: done, with no work in it.
-  it('drops the answer, tells the scout, and never closes the task', async () => {
-    await bench.writeTeam(team(SCOUT));
-    const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
-    const menu = await take('agent-1', 't-menu');
-    await startSpike(menu.ctx, runId, 't-menu', 'which word the original uses for a booking');
-    await takeNext(bench.agent('scout-1'), runId, 'scout');
-    await answerSpike(bench.agent('scout-1'), runId, 't-menu', '"Reservar"');
-
-    await reassignTask(lead(), runId, 't-menu', { reason: 'Another way in' });
-    expect((await nextTask(lead(), runId, 'lead')).proposal).toBeUndefined();
-    expect((await refusal(approveSpike(lead(), runId, 't-menu'))).message).toContain('proposes nothing to approve');
-    expect((await viewRun(lead(), runId)).tasks.find(task => task.id === 't-menu')?.status).toBe('ready');
-    const told = (await messagesOf(await loadRun(lead(), runId))).filter(message => message.to === '@scout-1');
-    expect(told.map(message => message.text).join(' ')).toContain('the spike it blocked on ends');
-  });
-});
-
-describe('a scout at what an agent blocked on', () => {
-  // Said only for research, a scout answering a block read as idle on the board and the monitor.
-  it('is said to find it out until its answer is with the lead', async () => {
-    await bench.writeTeam(team(SCOUT));
-    const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
-    const menu = await take('agent-1', 't-menu');
-    await startSpike(menu.ctx, runId, 't-menu', 'which word the original uses for a booking');
-    await takeNext(bench.agent('scout-1'), runId, 'scout');
-    const line = async () => (await viewRun(lead(), runId)).tasks.find(task => task.id === 't-menu');
-    expect((await line())?.spikedBy).toBe('scout-1');
-
-    await answerSpike(bench.agent('scout-1'), runId, 't-menu', '"Reservar"');
-    expect((await line())?.spikedBy).toBeUndefined();
   });
 });
 

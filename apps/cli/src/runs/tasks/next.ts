@@ -118,16 +118,16 @@ export interface NextTask {
    */
   leadReview?: ReviewOffer;
   /**
-   * A scout's — or the lead's, with no scout in the team: a spike to find out, the most urgent nobody took. `blocking`: a
-   * task at work blocked on it, whose block the answer lifts (`task unblock --answer`); `asked`: what the lead said when
-   * it sent the spike's tasks back.
+   * A scout's — or the lead's, with no scout in the team: a spike to find out, the most urgent nobody took. `blocking`
+   * (the lead's alone): a task at work blocked on a question, whose block its answer lifts (`task unblock --answer`);
+   * `asked`: what the lead said when it sent the spike's tasks back.
    */
   spike?: { task: RunTask; question: string; findings: number; blocking?: true; asked?: string };
   /**
    * The lead's: what a scout found, to decide — with the person, the tasks it makes (`stage`) — and approve (`task spike
-   * --approve`). `blocking`: the answer a task at work waits for, its block lifted once approved.
+   * --approve`).
    */
-  proposal?: { task: RunTask; by: string; text: string; tasks: string[]; stage: string; blocking?: true };
+  proposal?: { task: RunTask; by: string; text: string; tasks: string[]; stage: string };
   /** Why nothing is ready, when nothing is. */
   why?: string;
   ready: string[];
@@ -222,11 +222,31 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     return leadNext(ctx, loaded, views, messages);
   }
 
-  // A scout finds out what the spikes ask before anything else: the run's work waits on what it finds.
+  // A scout finds out what the spikes ask before anything else: the run's work waits on what it finds. An agent's
+  // question is the lead's: with no spike left, a scout's part ends — started again for one a stage brings, or one the
+  // lead sends back (Carlos).
   if (roles?.includes(SCOUT) === true && (await scoutsOf(ctx.root)).includes(ctx.agent)) {
-    const spike = spikeFor(loaded, views, ctx.agent);
+    const spike = spikeFor(loaded, views, ctx.agent, { research: true, blocked: false });
     if (spike) {
       return { spike, ready: [], messages };
+    }
+
+    if (roles.every(role => role === SCOUT)) {
+      const team = await readTeam(ctx.root).catch(() => undefined);
+      const ofBase = (team ? startedAgents(team) : []).some(each => each.agent === ctx.agent && each.onDemand !== true);
+
+      return ofBase
+        ? {
+            why: "no spike is left to find out — you are of the team's base: plitzi task next waits for one a stage brings",
+            ready: [],
+            messages
+          }
+        : {
+            why: 'no spike is left to find out: your part ends here — you are started again for one a stage brings, or one the lead sends back. You can stop',
+            ready: [],
+            messages,
+            finished: true
+          };
     }
   }
 

@@ -771,11 +771,11 @@ scout in the team, `task next --role lead` hands it to the lead. Its findings go
 it (`readyWhatWaited`), no review.
 
 **An agent whose task needs something found out** says so — `task spike "what"`, from its copy — and the task is
-blocked on it (`blockedBy.spike`), its files and token its own; the agent takes other work meanwhile, and the lead is
-not woken for it. A scout, handed it by `task next` (and started by the keeper for it), proposes the answer with
-`task spike <task> --done "…"`. The lead's `task spike <task> --approve` lifts the block with it, kept as the task's
-finding by the scout (`unblockTask`). A block is the lead's alone to lift. When the answer changes the work, the scout
-tells the lead, who stacks the tasks it makes.
+blocked on it (`blockedBy.spike`), its files and token its own; the agent takes other work meanwhile. It is the lead's
+to answer, as every block is — a scout finds out the run's spikes alone (Carlos): `run watch` wakes the lead for it,
+`task next --role lead` hands it, and `task unblock <task> --answer "…"` lifts the block, kept as the task's finding
+(`unblockTask`). When the answer changes the work, the lead stacks the tasks it makes. A scout with no spike left is
+told it can stop (`task next`); the keeper starts it again for a spike a stage brings, or one the lead sends back.
 
 `run rehearse` plays research alone without a review. The monitor gives spikes a column of their own (`◇ spike`) once
 the run has one, with the lead at it, and the dev tools' Run tab a group (Finding out).

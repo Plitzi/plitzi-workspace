@@ -345,38 +345,33 @@ describe('a spike, a scout’s', () => {
   });
 
   // Every spike is the lead's to approve: what is found mostly becomes the work it manages (Carlos).
-  it('answers a question an agent blocked on — the lead approving it lifts the block', async () => {
-    await bench.writeTeam(team(SCOUT));
+  // Carlos: the scout finds out the run's spikes alone — an agent's question is the lead's, and with no spike left the
+  // scout's part ends.
+  it('leaves an agent’s question to the lead, and stops once no spike is left', async () => {
+    await bench.writeTeam(team({ ...SCOUT, min: 0 }));
     const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
     const menu = await take('agent-1', 't-menu');
     await startSpike(menu.ctx, runId, 't-menu', 'which word the original uses for a booking');
-    // The scout's question, not the lead's: run watch does not wake the lead for it.
-    expect((await viewRun(lead(), runId)).attention.filter(item => item.task === 't-menu')).toEqual([]);
-
-    expect((await takeNext(bench.agent('scout-1'), runId, 'scout')).next.spike).toMatchObject({
-      task: { id: 't-menu' },
-      blocking: true,
-      question: 'which word the original uses for a booking'
-    });
-    // A block is the lead's to lift: the scout proposes the answer.
-    expect((await refusal(unblockTask(bench.agent('scout-1'), runId, 't-menu', 'Reservar'))).code).toBe('lead-only');
-    expect(await answerSpike(bench.agent('scout-1'), runId, 't-menu', '"Reservar", never "Reserva"')).toMatchObject({
-      status: 'blocked',
-      proposed: []
-    });
-    expect(await statusOf(runId, 't-menu')).toBe('blocked');
     expect((await viewRun(lead(), runId)).attention.find(item => item.task === 't-menu')).toMatchObject({
-      kind: 'spike-proposed',
+      kind: 'blocked',
       who: 'lead'
     });
-    expect((await nextTask(lead(), runId, 'lead')).proposal).toMatchObject({ task: { id: 't-menu' }, blocking: true });
 
-    await approveSpike(lead(), runId, 't-menu');
+    const scouting = await nextTask(bench.agent('scout-1'), runId, 'scout');
+    expect(scouting.spike).toBeUndefined();
+    expect(scouting.finished).toBe(true);
+    expect(scouting.why).toContain('no spike is left to find out: your part ends here');
+    expect((await refusal(answerSpike(bench.agent('scout-1'), runId, 't-menu', 'Reservar'))).message).toContain(
+      'the lead answers it'
+    );
+
+    expect((await nextTask(lead(), runId, 'lead')).spike).toMatchObject({ task: { id: 't-menu' }, blocking: true });
+    await unblockTask(lead(), runId, 't-menu', '"Reservar", never "Reserva"');
     expect(await statusOf(runId, 't-menu')).toBe('in-progress');
     const loaded = await loadRun(lead(), runId);
     const state = (await viewTask(loaded.paths, loaded.tasks.find(task => task.id === 't-menu') ?? loaded.tasks[0]))
       .state;
-    expect(state.findings).toEqual([expect.objectContaining({ by: 'scout-1', text: '"Reservar", never "Reserva"' })]);
+    expect(state.findings).toEqual([expect.objectContaining({ by: 'lead', text: '"Reservar", never "Reserva"' })]);
   });
 
   it('proposes findings alone too: nothing is done until the lead approves it', async () => {
@@ -495,21 +490,30 @@ describe('the keeper, for scouts and testers', () => {
     return agentsNeeded(views, started, new Set(running), runOf(loaded));
   };
 
-  it('starts a scout for an agent blocked on a question, and the scout a spike was sent back to', async () => {
+  it('starts a scout for a spike of the plan — never for an agent’s question — and the scout a spike was sent back to', async () => {
     await bench.writeTeam(team({ ...SCOUT, min: 0 }));
-    const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
+    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const research = {
+      ...plan.tasks[0],
+      id: 's-words',
+      title: 'The words',
+      files: [],
+      spike: 'which word for a booking'
+    };
+    plan.tasks = [...plan.tasks, research];
+    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
     const menu = await take('agent-1', 't-menu');
-    await startSpike(menu.ctx, runId, 't-menu', 'which word for a booking');
-    expect((await askedFor(runId, ['agent-1'])).find(each => each.agent === 'scout-1')?.text).toContain(
-      'the spike t-menu'
-    );
+    await startSpike(menu.ctx, runId, 't-menu', 'which colour for the prices');
+    const asked = (await askedFor(runId, ['agent-1'])).find(each => each.agent === 'scout-1')?.text ?? '';
+    expect(asked).toContain('the spike s-words');
+    expect(asked).not.toContain('t-menu');
 
     await takeNext(bench.agent('scout-1'), runId, 'scout');
-    await answerSpike(bench.agent('scout-1'), runId, 't-menu', 'Reservar');
-    await reworkSpike(lead(), runId, 't-menu', 'Say where the original says it');
+    await answerSpike(bench.agent('scout-1'), runId, 's-words', 'Reservar');
+    await reworkSpike(lead(), runId, 's-words', 'Say where the original says it');
     // scout-1 stopped meanwhile: the spike waits for it, by name.
     expect((await askedFor(runId, ['agent-1'])).find(each => each.agent === 'scout-1')?.text).toContain(
-      't-menu waits for scout-1, which holds it'
+      's-words waits for scout-1, which holds it'
     );
   });
 

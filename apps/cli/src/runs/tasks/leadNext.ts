@@ -36,27 +36,25 @@ export const uiTooText = (agent: string, designers: readonly string[]): string =
   `its UI waits for a designer and none is free${designers.length > 0 ? ` (${designers.join(', ')} at a task of its own)` : ''}: review its UI too — as the original, both schemes, the phone width — and approve with plitzi task review <task> --approve --skip-design ${agent}, which the report says as your UI review`;
 
 /**
- * The spike `agent` finds out next — a scout's, or the lead's with no scout: the one it holds first, then the most urgent
- * nobody took. A research spike whose tasks wait for the lead is not offered; one the lead sent back is, to the scout
- * that proposed it, with what the lead asked. A task at work blocked on a spike is one too: the answer lifts its block.
+ * The spike `agent` finds out next: the one it holds first, then the most urgent nobody took. A research spike — a
+ * scout's, or the lead's with no scout — whose tasks wait for the lead is not offered; one the lead sent back is, to the
+ * scout that proposed it, with what the lead asked. An agent's question (`blocked`) is the lead's alone: its answer lifts
+ * the block (Carlos: the scout answers no block).
  */
 export const spikeFor = (
   loaded: LoadedRun,
   views: readonly TaskView[],
-  agent: string
+  agent: string,
+  kinds: { research: boolean; blocked: boolean }
 ): NonNullable<NextTask['spike']> | undefined => {
   const urgency = byUrgency(loaded.tasks);
   const free = (view: TaskView): boolean => (view.state.spikedBy?.by ?? agent) === agent;
-  const research = views.filter(
-    view => view.state.status === 'spike' && view.state.proposed === undefined && free(view)
-  );
-  const blocking = views.filter(
-    view =>
-      view.state.status === 'blocked' &&
-      view.state.blockedBy?.spike !== undefined &&
-      view.state.proposed === undefined &&
-      free(view)
-  );
+  const research = kinds.research
+    ? views.filter(view => view.state.status === 'spike' && view.state.proposed === undefined && free(view))
+    : [];
+  const blocking = kinds.blocked
+    ? views.filter(view => view.state.status === 'blocked' && view.state.blockedBy?.spike !== undefined && free(view))
+    : [];
   const mine = (view: TaskView): number => (view.state.spikedBy?.by === agent ? 0 : 1);
   const next = [...research, ...blocking]
     .sort((a, b) => mine(a) - mine(b) || urgency(a.task, b.task) || a.task.id.localeCompare(b.task.id))
@@ -111,8 +109,7 @@ export const leadNext = async (
         by,
         text,
         tasks,
-        stage: proposed.paths.proposedStage,
-        ...(proposed.state.status === 'blocked' ? { blocking: true as const } : {})
+        stage: proposed.paths.proposedStage
       },
       ready: [],
       messages
@@ -137,11 +134,13 @@ export const leadNext = async (
     }
   }
 
-  if ((await scoutsOf(ctx.root)).length === 0) {
-    const spike = spikeFor(loaded, views, ctx.agent);
-    if (spike) {
-      return { spike, ready: [], messages };
-    }
+  // An agent's question always; research only with no scout in the team.
+  const spike = spikeFor(loaded, views, ctx.agent, {
+    research: (await scoutsOf(ctx.root)).length === 0,
+    blocked: true
+  });
+  if (spike) {
+    return { spike, ready: [], messages };
   }
 
   const open = views.filter(view => view.state.status !== 'done');

@@ -134,9 +134,7 @@ const spikeText = (spike: NonNullable<NextTask['spike']>, agent: string): string
       : []),
     '  Compare with the original (page shot <path> --compare <original> --clip <section> --dress), read its computed styles, measure — write nothing of the task’s',
     spike.blocking
-      ? isPrincipal(agent)
-        ? `  ${spike.task.id} is blocked on it, at work: lift its block with what you found — plitzi task unblock ${spike.task.id} --answer "…" (kept as its finding)`
-        : `  ${spike.task.id} is blocked on it, at work: say what you found — plitzi task spike ${spike.task.id} --done "…" — the lead approves it, lifting the block; a change to the work beyond it, tell the lead (plitzi task tell --about ${spike.task.id} "…")`
+      ? `  ${spike.task.id} is blocked on it, at work: lift its block with what you found — plitzi task unblock ${spike.task.id} --answer "…" (kept as its finding)`
       : `  Then say it — the layers, their values, which file gets each — and its result, the tasks it makes, each with its "findings": plitzi task spike ${spike.task.id} --done "…" [--tasks <stage.json>]${isPrincipal(agent) ? '' : ' — the lead approves it before anything is applied'}`
   ].join('\n');
 
@@ -145,9 +143,7 @@ const proposalText = (proposal: NonNullable<NextTask['proposal']>): string =>
   [
     chalk.blue(
       chalk.bold(
-        proposal.blocking
-          ? `${proposal.task.id} — ${proposal.by} answers the question its agent blocked on`
-          : `${proposal.task.id} — ${proposal.by} found it out${proposal.tasks.length > 0 ? `, and proposes ${String(proposal.tasks.length)} task(s): ${proposal.tasks.join(', ')}` : ''}`
+        `${proposal.task.id} — ${proposal.by} found it out${proposal.tasks.length > 0 ? `, and proposes ${String(proposal.tasks.length)} task(s): ${proposal.tasks.join(', ')}` : ''}`
       )
     ),
     `  Found: ${proposal.text}`,
@@ -157,7 +153,7 @@ const proposalText = (proposal: NonNullable<NextTask['proposal']>): string =>
           '  Decide them with the person — the scope, what waits, what is left out — then:'
         ]
       : []),
-    `  plitzi task spike ${proposal.task.id} --approve${proposal.blocking ? ' (its block lifted with it)' : ''} | --changes "what to change" (back to ${proposal.by})`
+    `  plitzi task spike ${proposal.task.id} --approve | --changes "what to change" (back to ${proposal.by})`
   ].join('\n');
 
 /** A lead's review, as `task next --role lead` hands it: the whole review `lead` would make, by this lead. */

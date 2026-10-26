@@ -66,17 +66,18 @@ authoring and the elements learnt from the runs.
 - **One lead, the manager; a tester reviews every task; a scout finds out the spikes.** The lead is the person's harness
   and never starts again, so whatever it reads it reads again every turn: a run's lead, scoping and reviewing, spent 68%
   of the run. Now:
-  - **Scout** (new role, Opus): `task next` hands it the spikes — the run's scope, a research spike, a question an
-    agent blocked on. Its `task spike <spike> --done "…" [--tasks <stage.json>]` is a proposal — the stage checked as
+  - **Scout** (new role, Opus): `task next` hands it the run's spikes — its scope, a research spike of a stage. An
+    agent's question (`task spike "…"`) is the lead's to answer (`task unblock --answer`), never the scout's, and a
+    scout with no spike left is told it can stop. Its `task spike <spike> --done "…" [--tasks <stage.json>]` is a proposal — the stage checked as
     `run extend --dry-run`, its primer kept beside it — that the lead decides, the tasks with the person: `task spike
-    <spike> --approve | --changes "…"`. **Every spike is the lead's to approve**, an agent's block lifted by its approval,
-    and adding or taking out tasks the lead's alone.
-  - **The keeper** starts a scout for a question an agent blocked on and the scout a spike was sent back to, and a
+    <spike> --approve | --changes "…"`. **Every spike is the lead's to approve**, and adding or taking out tasks the lead's
+    alone.
+  - **The keeper** starts a scout for a spike nobody took and the scout a spike was sent back to, and a
     tester for a UI no designer is free for; a scout whose result waits for the lead counts as free. A scout starts
     fresh once what it found is with the lead, a tester once its review is escalated.
   - **The lead is told only what is its:** a scout's proposal (`proposal` in `run watch`), an escalation (its block) —
-    never a spike or a queued UI review the scouts and testers take, a question an agent blocked on, or a message
-    beside them to answer. `run plan` names a scout's and a tester's work; `run rehearse` plays the team's testers as
+    never a spike or a queued UI review the scouts and testers take, or a message beside them to answer — and an
+    agent's question, its block. `run plan` names a scout's and a tester's work; `run rehearse` plays the team's testers as
     its reviewers.
   - **Tester** (QA, Opus): reviews every task in review, a designer's included — what it was asked, its checks, how it
     behaves, its code — and its approval is the task's; the UI too when no designer is free (`--skip-design reviewer`).
@@ -95,8 +96,7 @@ authoring and the elements learnt from the runs.
     Whoever reviews a task is handed what the team told the lead of it (`task tell`, `✉`). A UI review taken is let go
     when its task leaves review — sent back, escalated, taken back — its designer told, never left busy. A round whose
     UI its reviewer kept is approved only after a `task look`. A review escalated and answered (`task unblock
-    --answer`) asks for its stopped agent again; a task taken back drops its block, its spike and a scout's answer
-    (never approved into "research done"). Before finishing it looks once at the whole result: **`plitzi run look`**
+    --answer`) asks for its stopped agent again; a task taken back drops its block and what was asked. Before finishing it looks once at the whole result: **`plitzi run look`**
     checks and pictures every page the run changed (1440 and 390, light and dark); `run finish` asks for it after the
     last approval.
   - **Co-leads are gone:** `lead-2`…, `"lead": { "count" }` (refused, saying to add testers), `task next --role lead`

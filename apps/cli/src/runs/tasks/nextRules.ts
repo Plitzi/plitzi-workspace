@@ -139,9 +139,7 @@ export const inAPiece = (agent: string, views: readonly TaskView[]): boolean =>
       (state.status === 'in-review' && state.reviewer?.by === agent && state.reviewer.round === state.round) ||
       (state.design?.status === 'due' && state.design.by === agent) ||
       // A spike it is finding out, its result not handed to the lead yet.
-      (state.spikedBy?.by === agent &&
-        state.proposed === undefined &&
-        (state.status === 'spike' || (state.status === 'blocked' && state.blockedBy?.spike !== undefined)))
+      (state.spikedBy?.by === agent && state.proposed === undefined && state.status === 'spike')
     );
   });
 

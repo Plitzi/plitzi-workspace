@@ -272,7 +272,7 @@ export const ROLES = {
   tester:
     'QA: reviews every task in review — what it was asked, its checks, how it behaves, its code, its tests; its approval is the task’s — and escalates to the lead what it cannot decide. With one in the team, each developer task gets a task of its tests (<task>-tests), written by a developer that did not write it — the tester only when no developer may. With no tester, the lead reviews every task.',
   scout:
-    'Finds out: the run’s scope and every spike — reads, measures, compares — and hands the lead what it found and the tasks it makes, which the lead approves. A question an agent blocks on is its to answer too.',
+    'Finds out: the run’s scope and every spike — reads, measures, compares — and hands the lead what it found and the tasks it makes, which the lead approves. It answers no agent’s question (the lead does), and stops once no spike is left.',
   writer: 'Writes the words: the copy of a page, the docs, the help.'
 } as const;
 

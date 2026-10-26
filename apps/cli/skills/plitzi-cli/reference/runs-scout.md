@@ -1,8 +1,8 @@
 # Finding out: a scout's spikes
 
 A **spike** is research in the run: a question, no files of its own. You are handed them by `plitzi task next`: the
-run's scope (`s-scope`) as it opens, a research spike of the plan, and a question an agent blocked on
-(`task spike "…"`). The lead decides what you propose with the person; the agents build what you found — so what you
+run's scope (`s-scope`) as it opens, and a research spike of the plan or of a stage. An agent's question (`task spike
+"…"`) is the lead's to answer, not yours; with no spike left, `task next` says you can stop. The lead decides what you propose with the person; the agents build what you found — so what you
 find is said with its evidence, never guessed. The agents' half is [runs.md](runs.md).
 
 - **Find out, write nothing of a task's:** read the code, the data and the pages — `page check`, `page outline`,
@@ -15,9 +15,6 @@ find is said with its evidence, never guessed. The agents' half is [runs.md](run
   goes to the lead, who decides it with the person: nothing is stacked until it approves. Sent back, `task next` hands
   it to you again with what the lead asked — propose it again with that. Findings alone, no tasks: `--done "…"`, approved
   by the lead too: **every spike is the lead's to approve**, and adding or taking out tasks the lead's alone.
-- **A question an agent blocked on:** say what you found — `plitzi task spike <task> --done "…"` — and the lead
-  approves it, lifting the block (kept as its finding). What changes the work beyond it, tell the lead (`task tell
-  --about`).
 - **Size the tasks for the team:** one task a piece of work an agent finishes in one sitting, its files its own; what
   two tasks share named as shared; a task that waits for another says it (`dependsOn`). The plan's rules:
   [runs-plan.md](runs-plan.md).

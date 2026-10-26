@@ -111,13 +111,11 @@ export const unblockTask = async (
   ctx: RunContext,
   runId: string,
   taskId: string,
-  answer?: string,
-  /** Who found the answer, when it is a scout's the lead approved (`task spike --approve`): the finding's. */
-  foundBy?: string
+  answer?: string
 ): Promise<TaskState> => {
   requireNoTask(ctx, 'unblock a task');
   const loaded = await loadRun(ctx, runId);
-  // Every block is the lead's to lift — a spike's answer a scout found too: the lead approves it (Carlos).
+  // Every block is the lead's to lift, an agent's question too: a scout finds out the run's spikes alone (Carlos).
   await requireLead(ctx, 'unblock a task');
   const task = findTask(loaded, taskId);
   const view = await viewTask(loaded.paths, task);
@@ -154,13 +152,9 @@ export const unblockTask = async (
       status: view.owner ? (state.round > 0 ? 'changes-requested' : 'in-progress') : 'ready',
       blockedBy: undefined,
       spikedBy: undefined,
-      proposed: undefined,
       ...(spike !== undefined && answer !== undefined
         ? {
-            findings: [
-              ...(state.findings ?? []),
-              { at: at(ctx), by: foundBy ?? ctx.agent, question: spike, text: answer }
-            ]
+            findings: [...(state.findings ?? []), { at: at(ctx), by: ctx.agent, question: spike, text: answer }]
           }
         : {}),
       notes: [
