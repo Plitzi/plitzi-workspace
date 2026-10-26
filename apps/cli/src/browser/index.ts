@@ -47,6 +47,8 @@ export interface PageResponse {
   status(): number;
   url(): string;
   headers(): Record<string, string>;
+  /** The request it answers: what kind it was — the page's own `fetch` or `xhr`, a document, a picture. */
+  request(): { resourceType(): string };
 }
 
 /** One element of a page, as `shot --clip` and `--scroll-to` reach it, and `check --click` and `--fill` use it. */

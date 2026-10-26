@@ -135,9 +135,13 @@ export const checkTask = async (
 
   const tooLong = (await longFilesIn(view.paths.work, ctx.root)).filter(crossed).map(longFileText);
   const backups = backupFiles(mine);
+  // What fails the same way in the run's work is not the copy's: `complete` takes it as the run's, so the check reads
+  // as passing — a run's agents, told "does not pass yet" for the backlog's own suggestions, completed with a known
+  // failure they did not need.
+  const ownChecksOk = checks.steps.every(step => step.ok || notOwnSteps.includes(step.name));
   const ok =
     backups.length === 0 &&
-    checks.ok &&
+    ownChecksOk &&
     accepted.every(each => each.ok) &&
     tooLong.length === 0 &&
     outside.length === 0;
@@ -168,7 +172,8 @@ export const checkTask = async (
         )
       : undefined;
   // Passed whole: kept for the complete that follows, which does not run it all again while nothing changes.
-  if (ok && only === undefined && key !== undefined) {
+  // Kept for `complete` to take only when every step passed: one the run's work fails too is for `complete` to weigh again.
+  if (ok && checks.ok && only === undefined && key !== undefined) {
     await keepChecked(view.paths, key, { checks, accepted }, ctx.now());
   }
   // What failed, by name: a run's activity says why a check did not pass, not only that it did not.
@@ -177,7 +182,8 @@ export const checkTask = async (
     task: taskId,
     ok,
     ...(key === undefined || before ? {} : { input: key.slice(0, 16), ...(only ? { only } : {}) }),
-    ...(ok
+    // Said whenever something failed: a check that passes for the task with the run's own failures keeps them too.
+    ...(failed.length === 0 && notOwn.length === 0
       ? {}
       : {
           failed,

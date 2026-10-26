@@ -17,6 +17,9 @@ describe('what a refused command line meant', () => {
     );
     expect(commandHint("error: unknown option '--element'", ['page', 'check', '/'])).toBeUndefined();
     expect(commandHint("error: unknown option '--full'", ['page', 'shot', '/', '--full'])).toContain('--viewport');
+    expect(commandHint("error: unknown option '--fresh'", ['page', 'outline', '/', '--fresh'])).toContain(
+      'reads the page anew on every call'
+    );
   });
 
   it('names the command that answers one another group has', () => {

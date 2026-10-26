@@ -9,9 +9,7 @@
     }
   ],
   "updatedAt": "2026-10-20T19:47:33.843Z",
-  "changed": [
-    "src/space/pages/home/index.ts"
-  ],
+  "changed": ["src/space/pages/home/index.ts"],
   "submitted": {
     "src/space/pages/home/index.ts": "8452c7d0f12064d0ce497d7925c609bb364e81fffe3e76721b99ce2ef83b3a04"
   }

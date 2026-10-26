@@ -1,1 +1,1 @@
-{"version":1,"agents":[{"name":"agent","roles":["developer"],"count":4}]}
+{ "version": 1, "agents": [{ "name": "agent", "roles": ["developer"], "count": 4 }] }

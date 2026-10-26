@@ -55,6 +55,35 @@ const fewOf = (items: readonly string[], joiner: string): string =>
 
 export type Looked = Awaited<ReturnType<typeof lookAt>>;
 
+/** Whether a comparison found something: a section that changed, or a dress added or taken away. */
+const differs = (each: NonNullable<Looked['compared']>[number]): boolean =>
+  each.problem === undefined && ((each.changed !== 0 && each.sections.length > 0) || each.dress.length > 0);
+
+/**
+ * Beside the run before it, in one line, said before the pictures: what differs, or that nothing does. A look of its
+ * parts set beside the run before printed a line a part, a width and a scheme among 39 pictures' paths, and a run's lead
+ * read it — twice, two runs — as silence on the one thing it was looking for.
+ */
+const besideSummary = (looked: Looked): string[] => {
+  const compared = looked.compared ?? [];
+  const moved = looked.movedElsewhere ?? [];
+  if (looked.notBeside === true || (compared.length === 0 && moved.length === 0 && looked.besideNothing !== true)) {
+    return [];
+  }
+
+  const found = compared.filter(differs);
+  const unread = compared.filter(each => each.problem !== undefined).length;
+  const views = `${String(compared.length)} view${compared.length === 1 ? '' : 's'} compared`;
+
+  return [
+    chalk.bold(
+      found.length === 0 && moved.length === 0
+        ? `Beside the run before it: nothing differs${compared.length > 0 ? ` — ${views}` : ''}${unread > 0 ? `, ${String(unread)} of them not (below)` : ''}, and nothing else of its pages moved`
+        : `Beside the run before it: ${String(found.length)} of ${views} differ${found.length > 0 ? ` (${[...new Set(found.map(each => each.route))].join(', ')})` : ''}${moved.length > 0 ? `; moved outside its parts: ${moved.map(each => each.route).join(', ')}` : ''} — below`
+    )
+  ];
+};
+
 /** What a look says. */
 export const lookText = (looked: Looked): string =>
   [
@@ -110,6 +139,7 @@ export const lookText = (looked: Looked): string =>
         ]
       : []),
     looked.check,
+    ...besideSummary(looked),
     ...(looked.apart ? [chalk.dim(`  · ${String(looked.apart)} finding(s) on other tasks' parts left out`)] : []),
     ...(looked.movedElsewhere
       ? looked.movedElsewhere.map(each =>
@@ -157,11 +187,6 @@ export const lookText = (looked: Looked): string =>
       : []),
     ...(looked.notBeside
       ? [chalk.dim(`Not set beside the run before it — that nothing else moved is read with it: --before`)]
-      : []),
-    ...(looked.besideNothing
-      ? [
-          'Beside the run before it: nothing else of its pages moved — every element, box and style outside its parts reads the same on both'
-        ]
       : []),
     `Then: plitzi task review ${looked.task} --approve | --changes "…"`
   ].join('\n');

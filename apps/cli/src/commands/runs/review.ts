@@ -358,7 +358,9 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         );
         // Beside the run before it: its parts alone when it has some, else the page. Its parts, all of them, in one
         // comparison a page and a view — each side loaded once (a part a comparison loaded the home 24 times a look).
-        const added = before ? await newSinceBefore(before.url, pictured) : new Set<string>();
+        // A look at a 404 asked for (`--status 404`) is of the run before's 404 too: set beside it, never "new" — a run's
+        // designer could not see its 404 unchanged beside the run before.
+        const added = before && options.status !== 404 ? await newSinceBefore(before.url, pictured) : new Set<string>();
         const beside = (before ? pictured : []).flatMap(route =>
           views.map(([width, scheme]) => async () => {
             const clip = partsBeside ? clips.join(',') : undefined;

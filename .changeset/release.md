@@ -380,6 +380,15 @@ report`, …).
   costliest pieces (`spend` in `report.json`; `feedback.md` and `report.md` alike) — a run's $6.75, a third of it one
   designer task, was read off its log by hand. It says the UI reviews the lead gave without a designer, and when no
   designer reviewed any; the bench keeps tokens, cost and the share read again a task done.
+- **A spike's spend is its own:** what finding it out cost is kept as it ends (`spent`, piece `spike`) — a run's scope,
+  every page swept, was counted in its lead's first review after it, $3.77 of a five-minute review.
+- **A look beside the run before says, first, what differs or that nothing does** — one line above the pictures: a
+  look of its parts printed a line a part, width and scheme among 39 pictures' paths, and two runs' leads read it as
+  silence. `task look --status 404` sets the 404 beside the run before's, never "new". **`task check` reads green when
+  only the run's own failures remain** — what fails the same way in the run's work, which `complete` takes as the
+  run's: agents completed with a known failure they did not need. **A plan's task may leave `dependsOn` out** (none).
+  **`page check` says a refusal its flow read apart** (`· refused, and its flow went on: 401 /auth/login`): a page's own
+  request answered 4xx while no flow failed — a wrong password the sign-in says — never the page's failure.
 - **What opening a run says is what it does:** a run opened on its scope says its base starts once the scope has its
   tasks (it said "now", and the keeper rightly waited); `run start` says a team with `options.launch` starts by itself,
   never to start it by hand; refused for the project's checks, the opener is told `run start … --despite-checks` too, and
@@ -870,6 +879,10 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - `inspectTemplate` answers `notes`: what reads as other than it looks.
 
 ## Server (`@plitzi/sdk-server`)
+
+- **A page withheld from its visitor keeps its layout's data:** the site around the refusal is read as on every page —
+  its header, its inbox — and only the page's own providers are kept back. A run's withheld page drew a blank avatar
+  and no inbox, every layout source "could not be reached".
 
 - **A server provider's input bound to the address is read on the first paint:** a binding of `input` on
   `navigation.routeParams` / `queryParams` alone is resolved by the page server as the browser resolves it

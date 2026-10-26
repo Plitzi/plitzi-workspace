@@ -448,7 +448,9 @@ export const runMetrics = (input: {
     checks: {
       run: log.filter(entry => entry.action === 'check').length,
       failed: log.filter(failedOwn).length,
-      notOwn: log.filter(entry => entry.action === 'check' && entry.ok === false && !failedOwn(entry)).length,
+      // What failed for nothing of the copy's — a check that then reads as passing for the task keeps it too.
+      notOwn: log.filter(entry => entry.action === 'check' && texts(entry.notOwn).length > 0 && !failedOwn(entry))
+        .length,
       byStep
     },
     refusals: { total: log.filter(entry => entry.action === 'refused').length, byCode },

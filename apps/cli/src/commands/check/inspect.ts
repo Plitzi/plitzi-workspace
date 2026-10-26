@@ -11,6 +11,7 @@ import { landingProblem, saySignedIn, signInAs, signInWhereSent } from './accoun
 import { clickEffects } from './click';
 import { flushEdgesInPage, missedExpectations, wrappedLabelsInPage } from './expect';
 import { listRows } from './lists';
+import { splitRefusals } from './refusals';
 import { serverFailedIssues } from './serverFailures';
 import {
   NOT_FOUND_PROBE,
@@ -27,6 +28,7 @@ import { openProjectPage, PROJECT_QUIET_MS } from '../../browser';
 import { standInPictures } from '../shot/capture';
 
 import type { Account } from './account';
+import type { ConsoleLine } from './refusals';
 import type { Authored } from './space';
 import type { CheckAsk, CheckIssue, CheckReport, ClickAsk, Expectation } from './types';
 import type { Browser, BrowserPage, ProjectView } from '../../browser';
@@ -139,10 +141,6 @@ export const HOST_TROUBLE =
   /ERR_(TIMED_OUT|CONNECTION_(RESET|CLOSED|TIMED_OUT)|EMPTY_RESPONSE|HTTP2_\w+|QUIC_\w+|NETWORK_CHANGED)/;
 
 /** A console error, with the document it came from when the browser says. */
-interface ConsoleLine {
-  text: string;
-  from?: string;
-}
 
 /**
  * The address an image issue names, when it is one the browser was told to ask again later (429) — or, for the images
@@ -245,7 +243,8 @@ const inspectHere = async (
     expect,
     sentWith,
     consoleErrors,
-    failedRequests,
+    failedRequests: requested,
+    refusedFetches,
     answered,
     throttled,
     signedInAs
@@ -265,6 +264,8 @@ const inspectHere = async (
     /** The page's console errors so far — read once the page is looked at, so what came while it was is in them. */
     consoleErrors: () => ConsoleLine[];
     failedRequests: string[];
+    /** Of them, the page's own requests (`fetch`, `xhr`) answered 4xx: a refusal its flow may read and say. */
+    refusedFetches: ReadonlySet<string>;
     /** The images the browser was answered with, by address: one of them that draws no size is loaded, not failed. */
     answered: ReadonlySet<string>;
     /**
@@ -436,7 +437,13 @@ const inspectHere = async (
       return undefined;
     }
   };
-  const lines = consoleErrors();
+  const { failedRequests, handled, lines } = splitRefusals({
+    requested,
+    refusedFetches,
+    flowFailed: failedFlows.length > 0 || (clicked?.failed.length ?? 0) > 0,
+    lines: consoleErrors(),
+    origin
+  });
   const embedded = (line: ConsoleLine): boolean => {
     const from = originOf(line.from);
 
@@ -467,6 +474,7 @@ const inspectHere = async (
     outOfUse: report.outOfUse,
     consoleErrors: errors,
     failedRequests,
+    ...(handled.length > 0 ? { handledRefusals: handled } : {}),
     devTools: devTools.available,
     lists,
     ...(limited.length > 0 ? { throttled: limited } : {}),
@@ -533,6 +541,7 @@ export const checkAt = async (
 
   const said: { text: string; from?: string }[] = [];
   const failedRequests: string[] = [];
+  const refusedFetches = new Set<string>();
   const imagesAnswered = new Set<string>();
   const throttled = new Set<string>();
   // An image a host dropped (no answer at all) while it answered the page's other requests is that host holding back,
@@ -594,7 +603,11 @@ export const checkAt = async (
     }
 
     if (response.status() >= 400 && response.url().startsWith(origin)) {
-      failedRequests.push(`${String(response.status())} ${response.url().slice(origin.length)}`);
+      const said = `${String(response.status())} ${response.url().slice(origin.length)}`;
+      failedRequests.push(said);
+      if (response.status() < 500 && ['fetch', 'xhr'].includes(response.request().resourceType())) {
+        refusedFetches.add(said);
+      }
     }
   });
 
@@ -667,6 +680,7 @@ export const checkAt = async (
       sentWith,
       consoleErrors: () => consoleErrors(),
       failedRequests,
+      refusedFetches,
       answered: imagesAnswered,
       throttled: heldBack,
       ...(readAs ? { signedInAs: readAs.username } : {})
@@ -692,6 +706,7 @@ export const checkAt = async (
             sentWith: undefined,
             consoleErrors: () => consoleErrors(errorsBefore),
             failedRequests: failedRequests.slice(failedBefore),
+            refusedFetches,
             answered: imagesAnswered,
             throttled: heldBack,
             ...(readAs ? { signedInAs: readAs.username } : {})

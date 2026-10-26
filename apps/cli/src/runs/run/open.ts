@@ -69,6 +69,17 @@ export const readPlanFile = async (
     };
   }
 
+  // A task that waits for none may leave `dependsOn` out: two plans in a row were refused for it, a lead's and a
+  // person's, each task's "[] for none".
+  if (isRecord(parsed) && Array.isArray(parsed.tasks)) {
+    parsed = {
+      ...parsed,
+      tasks: parsed.tasks.map((task: unknown) =>
+        isRecord(task) && task.dependsOn === undefined ? { ...task, dependsOn: [] } : task
+      )
+    };
+  }
+
   // A task's findings written as a list, one finding a line, are its findings: said as words, each its own line
   // (the scope's stage refused for ten lists — "in words, not […]").
   if (isRecord(parsed) && Array.isArray(parsed.tasks)) {

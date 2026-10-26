@@ -17,7 +17,5 @@
     "src/space/tokens.ts": "7412b804354b2c8ca81c85decca5c1739286e90540fd626b59dad10fd0f197b1",
     "summary.md": "1942e1f796447800f6927063f31d9c2987c10ce3531459e1ea2358585037411e"
   },
-  "overlaid": [
-    "src/space/pages/about.ts"
-  ]
+  "overlaid": ["src/space/pages/about.ts"]
 }

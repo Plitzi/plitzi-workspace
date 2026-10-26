@@ -36,8 +36,26 @@ describe('a look that took no picture', () => {
     );
     // A run's designer looked at its parts beside the run before it and read nothing — "nothing else moved" from silence.
     expect(stripVTControlCharacters(lookText({ ...looked, besideNothing: true }))).toContain(
-      'Beside the run before it: nothing else of its pages moved'
+      'Beside the run before it: nothing differs, and nothing else of its pages moved'
     );
+    // Its parts at 3 pages, 2 widths and 2 schemes: a line each among the pictures, read as silence by a run's lead.
+    const view = (route: string, changed: number, sections: string[]) => ({
+      route,
+      width: '1440',
+      scheme: 'light',
+      changed,
+      sections,
+      dress: []
+    });
+    const twelve = Array.from({ length: 12 }, (_, index) => view(`/p${String(index % 3)}`, 0, []));
+    const said = stripVTControlCharacters(lookText({ ...looked, compared: twelve }));
+    expect(said).toContain(
+      'Beside the run before it: nothing differs — 12 views compared, and nothing else of its pages moved'
+    );
+    expect(said.indexOf('nothing differs')).toBeLessThan(said.indexOf('No picture could be taken'));
+    expect(
+      stripVTControlCharacters(lookText({ ...looked, compared: [...twelve, view('/menu', 3, ['nav 3%'])] }))
+    ).toContain('Beside the run before it: 1 of 13 views compared differ (/menu) — below');
     // The song playing differed on the two sides — the copy's queue played by its agent.
     expect(stripVTControlCharacters(lookText({ ...looked, warmCopy: true }))).toContain(
       'plitzi server reset in its copy (its server stopped), then look again --fresh'

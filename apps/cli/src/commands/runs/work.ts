@@ -163,9 +163,12 @@ export const taskCheck = (
               )
             ]
           : []),
-        ...checked.checks.steps.map(
-          step =>
-            `  ${step.ok ? '✓' : chalk.yellow('✗')} ${step.name}${step.ok ? '' : `\n${(step.said ?? []).map(line => `      ${line}`).join('\n')}`}`
+        ...checked.checks.steps.map(step =>
+          step.ok
+            ? `  ✓ ${step.name}`
+            : checked.notOwn?.includes(step.name) === true
+              ? chalk.dim(`  · ${step.name} — fails in the run's work too: the run's, not yours`)
+              : `  ${chalk.yellow('✗')} ${step.name}\n${(step.said ?? []).map(line => `      ${line}`).join('\n')}`
         ),
         // A run's dev-1 read check's warnings in files it never touched as its own; complete said them apart already.
         ...warningLines(checked.checks.steps, checked.changed),
@@ -192,7 +195,7 @@ export const taskCheck = (
         ...(checked.notOwn
           ? [
               chalk.dim(
-                `  Not your work, and not counted against you: ${checked.notOwn.join('; ')} — the run's work fails it too, or nothing could answer the line (the lead is told). Go on with the rest`
+                `  Not your work, and not counted against you: ${checked.notOwn.join('; ')} — the run's work fails it too, or nothing could answer the line (the lead is told). Complete takes it as the run's: no --known-failure for it`
               )
             ]
           : [])

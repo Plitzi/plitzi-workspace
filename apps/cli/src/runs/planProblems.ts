@@ -54,7 +54,7 @@ export const runPlanProblems = (value: unknown): string[] => {
     check(isString(each.id), 'id', 'its name');
     check(isString(each.title), 'title', 'a line');
     check(isStrings(each.files), 'files', 'the paths it writes');
-    check(isStrings(each.dependsOn), 'dependsOn', 'the ids it waits for ([] for none)');
+    check(optional(each.dependsOn, isStrings), 'dependsOn', 'the ids it waits for — left out for none');
     check(isPriority(each.priority), 'priority', PRIORITIES.join(', '));
     check(isNumber(each.estimateMinutes), 'estimateMinutes', 'minutes, a number');
     check(

@@ -191,7 +191,7 @@ export const spendText = (spend: RunReport['spend']): string[] => {
     .join(' · ');
   const pieces = spend.costliest.map(
     each =>
-      `${each.piece === 'review' ? `${each.agent}'s review of ${each.task}` : `${each.agent} at ${each.task}`} ${costShort(each.cost)} (${String(each.turns)} turns)`
+      `${each.piece === 'review' ? `${each.agent}'s review of ${each.task}` : each.piece === 'spike' ? `${each.agent} finding out ${each.task}` : `${each.agent} at ${each.task}`} ${costShort(each.cost)} (${String(each.turns)} turns)`
   );
 
   return [

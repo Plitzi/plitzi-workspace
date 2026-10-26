@@ -31,6 +31,8 @@ const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<stri
   },
   'page measure': { '--element': 'the elements are its arguments: plitzi page measure <path> <element…>' },
   'page play': { '--element': '--read <element…> says what elements show after the steps' },
+  // A run's designer, after an edit, could not tell whether an outline was read anew: it always is.
+  'page outline': { '--fresh': 'page outline reads the page anew on every call — nothing of it is kept to read again' },
   'task look': {
     '--clip': 'task look pictures whole pages — page shot <path> --clip <element> pictures one element of the copy'
   },

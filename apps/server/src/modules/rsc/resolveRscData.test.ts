@@ -5,7 +5,7 @@ import { RSC_FAILURE } from '@plitzi/sdk-shared/schema';
 import { resolveRscData } from './resolveRscData';
 
 import type { RscElementResolver } from './resolveRscData';
-import type { Element, Schema, SSRRequest } from '@plitzi/sdk-shared';
+import type { Element, Schema, SSRRequest, SSRUser } from '@plitzi/sdk-shared';
 
 const element = (
   id: string,
@@ -422,4 +422,60 @@ describe('resolveRscData', () => {
       expect(resolveElement.mock.calls.map(([context]) => context.element.id)).toEqual(['roomData']);
     });
   });
+
+  // A run's page withheld from a signed-in visitor drew the site's header with a blank avatar and no inbox: every
+  // layout source "could not be reached" — the page's refusal kept the layout's data back with its own.
+  it('reads the layout around a page withheld from this visitor, and nothing of the page', async () => {
+    const withLayout = {
+      ...buildSchema(),
+      flat: {
+        moderation: {
+          ...page('moderation', 'moderation', ['reportsApi']),
+          attributes: {
+            slug: 'moderation',
+            folder: '',
+            default: false,
+            layout: 'shell',
+            layoutContainer: 'shellBody',
+            access: { permissions: ['moderate'] }
+          }
+        },
+        reportsApi: element('reportsApi', 'apiContainer', [], 'server'),
+        shell: {
+          id: 'shell',
+          attributes: {},
+          definition: {
+            type: 'layoutContainer',
+            label: 'shell',
+            rootId: 'shell',
+            items: ['header', 'shellBody'],
+            styleSelectors: { base: '' }
+          }
+        },
+        header: element('header', 'container', ['unreadApi']),
+        unreadApi: element('unreadApi', 'apiContainer', [], 'server'),
+        shellBody: element('shellBody', 'container')
+      },
+      pages: ['moderation']
+    } as Schema;
+    const asked: string[] = [];
+    const resolveElement = vi.fn<RscElementResolver>().mockImplementation(({ element: each }) => {
+      asked.push(each.id);
+
+      return Promise.resolve({ unread: 2 });
+    });
+    const signedIn = { id: 7, username: 'mika', permissions: [], roles: [] } as unknown as SSRUser;
+
+    const result = await resolveRscData({
+      ...base,
+      user: signedIn,
+      schema: withLayout,
+      req: request('/moderation'),
+      resolveElement
+    });
+
+    expect(asked).toEqual(['unreadApi']);
+    expect(result.serverData).toEqual({ unreadApi: { unread: 2 } });
+  });
 });
+

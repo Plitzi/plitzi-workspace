@@ -2,10 +2,7 @@
   "id": "src-space-index-ts",
   "file": "src/space/index.ts",
   "summary": "Changed by task \"t-home\" (Translate home)",
-  "usedIn": [
-    "src/space/pages/home/hero.ts",
-    "src/space/pages/home/index.ts"
-  ],
+  "usedIn": ["src/space/pages/home/hero.ts", "src/space/pages/home/index.ts"],
   "blocking": false,
   "at": "2026-10-20T19:47:33.843Z",
   "base": "5e17aaff90b6caf9be21d631d9038824dbab46d40b3bffb4bd1104b4808cf77e",

@@ -1,17 +1,10 @@
 {
   "id": "t-book",
   "title": "Translate book",
-  "files": [
-    "src/space/pages/book.ts"
-  ],
-  "dependsOn": [
-    "t-home",
-    "t-menu"
-  ],
+  "files": ["src/space/pages/book.ts"],
+  "dependsOn": ["t-home", "t-menu"],
   "priority": "medium",
   "estimateMinutes": 20,
-  "acceptance": [
-    "Book reads in Spanish"
-  ],
+  "acceptance": ["Book reads in Spanish"],
   "kind": "work"
 }

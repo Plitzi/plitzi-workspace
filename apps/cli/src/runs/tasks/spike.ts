@@ -3,6 +3,7 @@ import { isCoLead, requireLead } from '../leads';
 import { LEAD, sendMessage } from '../messages';
 import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, requireNoTask } from '../run';
+import { logSpent } from '../spent';
 import { isResearch } from '../spike';
 import { updateState, viewTask } from '../taskStore';
 import { isWorked } from '../worked';
@@ -115,6 +116,9 @@ export const answerSpike = async (
     status: 'done',
     ...(stacked ? { added: stacked.added } : {})
   });
+  // What finding it out cost, kept as the spike ends: a run's scope — every page swept — was counted in its lead's first
+  // review after it, $3.77 of a review that took five minutes.
+  await logSpent(ctx, loaded, taskId, 'spike');
 
   // Said by a lead that reviews, not by the lead: the lead hears what was found.
   if (ctx.agent !== LEAD) {

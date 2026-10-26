@@ -1,15 +1,10 @@
 {
   "id": "t-home",
   "title": "Translate home",
-  "files": [
-    "src/space/pages/home/hero.ts",
-    "src/space/pages/home/index.ts"
-  ],
+  "files": ["src/space/pages/home/hero.ts", "src/space/pages/home/index.ts"],
   "dependsOn": [],
   "priority": "high",
   "estimateMinutes": 20,
-  "acceptance": [
-    "Home reads in Spanish"
-  ],
+  "acceptance": ["Home reads in Spanish"],
   "kind": "work"
 }

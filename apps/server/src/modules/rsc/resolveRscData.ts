@@ -116,6 +116,23 @@ const withBudget = async <T>(
  * and the route params are what the browser will see. Each `runtime: 'server'` element resolves independently:
  * a provider that fails or hangs costs its own slice and nothing else.
  */
+/** The elements a page holds itself — under it, not its layout's: what a page withheld from a visitor keeps back. */
+const pageTree = (flat: Schema['flat'], pageId: string): Set<string> => {
+  const found = new Set<string>();
+  const pending = [pageId];
+  while (pending.length > 0) {
+    const id = pending.pop();
+    if (id === undefined || found.has(id)) {
+      continue;
+    }
+
+    found.add(id);
+    pending.push(...((Object.hasOwn(flat, id) ? flat[id].definition.items : undefined) ?? []));
+  }
+
+  return found;
+};
+
 export const resolveRscData = async ({
   schema,
   req,
@@ -139,10 +156,10 @@ export const resolveRscData = async ({
   }
 
   const { pageId, routeParams } = match;
-  // The data of a page this visitor may not see is theirs no more than its content is.
-  if (pageAccessRefusal(pageAccessOf(schema.flat[pageId].attributes), user) !== undefined) {
-    return { serverData: {} };
-  }
+  // The data of a page this visitor may not see is theirs no more than its content is — but the layout around its
+  // refusal is the site's, drawn for them as on every page: its providers are read (a run's withheld page drew its
+  // header with a blank avatar and no inbox, every layout source "could not be reached").
+  const withheld = pageAccessRefusal(pageAccessOf(schema.flat[pageId].attributes), user) !== undefined;
 
   // Against the page just matched, as the browser resolves them for it: an element a flag switched off is not drawn,
   // and its data must not travel in the payload regardless.
@@ -154,7 +171,8 @@ export const resolveRscData = async ({
     )
   );
   // Every server element of the page, though only some are asked: a `when` reads the answer of another, asked or not.
-  const all = collectServerElements(schema, pageId, undefined, flags);
+  const ofPage = withheld ? pageTree(schema.flat, pageId) : new Set<string>();
+  const all = collectServerElements(schema, pageId, undefined, flags).filter(element => !ofPage.has(element.id));
   const asked = ids ? new Set(ids) : undefined;
   const targets = asked ? all.filter(element => asked.has(element.id)) : all;
   if (targets.length === 0) {

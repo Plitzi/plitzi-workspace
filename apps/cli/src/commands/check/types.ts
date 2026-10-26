@@ -110,6 +110,11 @@ export interface CheckReport {
   asTheOriginal?: string[];
   consoleErrors: string[];
   failedRequests: string[];
+  /**
+   * The page's own requests answered 4xx while no flow of it failed — a wrong password the sign-in says: a refusal its
+   * flow read, said apart and failing nothing.
+   */
+  handledRefusals?: string[];
   /** Whether the page had its dev tools on, which is what flows, state and elements are read from. */
   devTools: boolean;
   /** Every list, by id — fed by a provider, or its rows written out and on the page: how many it draws, how many it has. */

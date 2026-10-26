@@ -6,57 +6,38 @@
     {
       "id": "t-home",
       "title": "Translate home",
-      "files": [
-        "src/space/pages/home/index.ts"
-      ],
+      "files": ["src/space/pages/home/index.ts"],
       "dependsOn": [],
       "priority": "high",
       "estimateMinutes": 20,
-      "acceptance": [
-        "Home reads in Spanish"
-      ]
+      "acceptance": ["Home reads in Spanish"]
     },
     {
       "id": "t-menu",
       "title": "Translate menu",
-      "files": [
-        "src/space/pages/menu.ts"
-      ],
+      "files": ["src/space/pages/menu.ts"],
       "dependsOn": [],
       "priority": "medium",
       "estimateMinutes": 20,
-      "acceptance": [
-        "Menu reads in Spanish"
-      ]
+      "acceptance": ["Menu reads in Spanish"]
     },
     {
       "id": "t-book",
       "title": "Translate book",
-      "files": [
-        "src/space/pages/book.ts"
-      ],
-      "dependsOn": [
-        "t-home",
-        "t-menu"
-      ],
+      "files": ["src/space/pages/book.ts"],
+      "dependsOn": ["t-home", "t-menu"],
       "priority": "medium",
       "estimateMinutes": 20,
-      "acceptance": [
-        "Book reads in Spanish"
-      ]
+      "acceptance": ["Book reads in Spanish"]
     },
     {
       "id": "t-about",
       "title": "Translate about",
-      "files": [
-        "src/space/pages/about.ts"
-      ],
+      "files": ["src/space/pages/about.ts"],
       "dependsOn": [],
       "priority": "low",
       "estimateMinutes": 10,
-      "acceptance": [
-        "About reads in Spanish"
-      ]
+      "acceptance": ["About reads in Spanish"]
     }
   ],
   "designReview": false

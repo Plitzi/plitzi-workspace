@@ -14,8 +14,8 @@ import type { UsageLine } from './usage';
  * round's report held.
  */
 
-/** What a piece of work is: a task's round, or a review's verdict. */
-export type Piece = 'task' | 'review';
+/** What a piece of work is: a task's round, a review's verdict, or what a spike found out. */
+export type Piece = 'task' | 'review' | 'spike';
 
 export interface Spent {
   agent: string;
@@ -210,14 +210,19 @@ export const costliestPieces = (log: readonly Record<string, unknown>[], limit: 
       entry.action === 'spent' &&
       typeof entry.by === 'string' &&
       typeof entry.task === 'string' &&
-      (entry.piece === 'task' || entry.piece === 'review') &&
+      (entry.piece === 'task' || entry.piece === 'review' || entry.piece === 'spike') &&
       typeof entry.cost === 'number' &&
       Number.isFinite(entry.cost)
         ? [
             {
               agent: entry.by,
               task: entry.task,
-              piece: entry.piece === 'task' ? ('task' as const) : ('review' as const),
+              piece:
+                entry.piece === 'task'
+                  ? ('task' as const)
+                  : entry.piece === 'spike'
+                    ? ('spike' as const)
+                    : ('review' as const),
               turns: count(entry.turns),
               cost: entry.cost
             }
