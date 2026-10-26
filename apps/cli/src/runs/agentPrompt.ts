@@ -184,7 +184,15 @@ export const harnessCommand = (
   prompt: { file: string; text: string },
   start: HarnessStart = {},
   session?: HarnessSession
-): { command: string; args: string[]; line: string; model?: string; effort?: string } => {
+): {
+  command: string;
+  args: string[];
+  /** What the harness is started with beside the person's environment: what it would load that a run's agent never needs. */
+  env: Record<string, string>;
+  line: string;
+  model?: string;
+  effort?: string;
+} => {
   const PROMPT = '\0prompt';
   // The team's model where this harness runs it; else the harness's own default, said by the caller.
   const { model } = start;
@@ -218,9 +226,16 @@ export const harnessCommand = (
             ...(effort ? ['-c', `model_reasoning_effort=${effort}`] : []),
             PROMPT
           ]
-        : ['opencode', 'run', ...(runs ? ['--model', runs] : []), PROMPT];
-  const line = parts.map(part => (part === PROMPT ? `"$(cat ${prompt.file})"` : quoted(part))).join(' ');
+        : // No plugin of the person's opencode: the agent's tools are the project's.
+          ['opencode', 'run', '--pure', ...(runs ? ['--model', runs] : []), PROMPT];
+  // Claude Code's memory of the project, kept outside it: read into every turn (~700 tokens) and written across runs,
+  // so one run's agent would carry into the next what nobody reviewed. A run's agent reads the run, not a memory.
+  const env: Record<string, string> = harness === 'claude' ? { CLAUDE_CODE_DISABLE_AUTO_MEMORY: '1' } : {};
+  const line = [
+    ...Object.entries(env).map(([name, value]) => `${name}=${value}`),
+    ...parts.map(part => (part === PROMPT ? `"$(cat ${prompt.file})"` : quoted(part)))
+  ].join(' ');
   const [command = harness, ...args] = parts.map(part => (part === PROMPT ? prompt.text : part));
 
-  return { command, args, line, ...(runs ? { model: runs } : {}), ...(effort ? { effort } : {}) };
+  return { command, args, env, line, ...(runs ? { model: runs } : {}), ...(effort ? { effort } : {}) };
 };

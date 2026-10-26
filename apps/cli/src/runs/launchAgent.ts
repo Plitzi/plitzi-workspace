@@ -263,6 +263,7 @@ const startHeld = async (
   const {
     command,
     args,
+    env,
     line,
     model: ran,
     effort
@@ -274,7 +275,7 @@ const startHeld = async (
     cwd: ctx.root,
     detached: true,
     stdio: ['ignore', out, out],
-    env: await agentEnv(loaded.paths, agent, session.id)
+    env: { ...(await agentEnv(loaded.paths, agent, session.id)), ...env }
   });
   closeSync(out);
   child.unref();

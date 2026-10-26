@@ -678,6 +678,9 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
     teaches it.
 - **`page outline --width 390,1440`** outlines each width, and **`page shot --scheme light,dark`** pictures each scheme,
   as `check`, `measure` and `play` take a list.
+- **A run's agent starts with nothing of the person's beside the project:** Claude Code without its memory of the
+  project (`CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`, ~700 tokens a turn, and carried across runs), opencode `--pure` (no
+  plugins) — as Claude Code was already started without the person's MCP servers.
 - **`space overview`** says each unit in a line — what it owns and how many shared files it reaches — and
   `space overview <unit>` one whole: a run's lead read 12k characters of it, every shared file said again per unit.
 - **The builder's settings name the page shown instead of one withheld** (Pages a visitor may not see): every page a

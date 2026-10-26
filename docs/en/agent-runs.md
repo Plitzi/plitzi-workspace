@@ -458,7 +458,11 @@ runs a Claude one (`claude-…`, `sonnet`), Codex any other, opencode `provider/
 not passed: the agent starts on the harness's own default, and `run agent --launch` says so. **What an agent starts
 with:** Claude Code is started with only the tools an agent uses (`--tools Bash,Read,Edit,Write,Glob,Grep`) and none of
 the person's MCP servers (`--strict-mcp-config`): every tool's definition is read again on every turn — a run's agent
-started at 46.7k tokens of context with them, 16k without.
+started at 46.7k tokens of context with them, 16k without. Nor with Claude Code's memory of the project
+(`CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`): ~700 tokens a turn, and kept outside the project, so one run's agent would carry
+into the next what nobody reviewed. What it still loads is the harness's own prompt (~8.5k) and the project's
+instructions (`CLAUDE.md` and what it imports); the skills are not listed, with no `Skill` tool to call them. opencode
+is started `--pure`, without the person's plugins. Codex takes the person's `~/.codex/config.toml`, MCP servers included.
 
 **A fresh context** (`freshStart`, `nextRules.ts`; a team agent's `"session"`, `options.freshContextAt`): the CLI cannot
 empty a harness's context, so the agent ends its session instead — always between two pieces of work, a task completed

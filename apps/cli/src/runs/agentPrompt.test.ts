@@ -90,9 +90,12 @@ describe('the command that starts an agent headless', () => {
     const claude = harnessCommand('claude', prompt, { model: 'claude-sonnet-5-5' });
 
     expect(claude.line).toBe(
-      `claude -p "$(cat /p/scratch/dev-1/prompt.md)" --model claude-sonnet-5-5 --permission-mode acceptEdits --allowedTools 'Bash Read Edit Write Glob Grep' --tools 'Bash,Read,Edit,Write,Glob,Grep' --strict-mcp-config`
+      `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 claude -p "$(cat /p/scratch/dev-1/prompt.md)" --model claude-sonnet-5-5 --permission-mode acceptEdits --allowedTools 'Bash Read Edit Write Glob Grep' --tools 'Bash,Read,Edit,Write,Glob,Grep' --strict-mcp-config`
     );
     expect(claude.command).toBe('claude');
+    // Nothing of the person's beside the project: no MCP server (above), no memory of the project kept outside it.
+    expect(claude.env).toEqual({ CLAUDE_CODE_DISABLE_AUTO_MEMORY: '1' });
+    expect(harnessCommand('opencode', prompt, {}).args.slice(0, 2)).toEqual(['run', '--pure']);
     expect(claude.args.slice(0, 2)).toEqual(['-p', 'You are dev-1']);
 
     expect(harnessCommand('codex', prompt, { model: 'gpt-x' }).line).toBe(
@@ -117,7 +120,7 @@ describe('the command that starts an agent headless', () => {
     ]);
     // opencode names a model provider/model: one written otherwise is left to its default.
     expect(harnessCommand('opencode', prompt, { model: 'claude-sonnet-5-5' }).line).toBe(
-      'opencode run "$(cat /p/scratch/dev-1/prompt.md)"'
+      'opencode run --pure "$(cat /p/scratch/dev-1/prompt.md)"'
     );
     expect(harnessCommand('opencode', prompt, { model: 'anthropic/claude-sonnet-5-5' }).line).toContain(
       '--model anthropic/claude-sonnet-5-5'
