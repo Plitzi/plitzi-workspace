@@ -35,6 +35,12 @@ export const MEASURED = [
   'display',
   // Where a row's parts sit across it: a legend's hairline, its ::after, centred beside two lines or on the baseline.
   'align-items',
+  // How a row lays its parts out, and how much one of them grows or holds: the rules a shared class carries — a run's
+  // designer, sharing five, read them through display, gap and width, `--only` refusing them.
+  'flex-direction',
+  'justify-content',
+  'flex-grow',
+  'min-width',
   // A list's marker — its type, inside or outside, a picture: a run's bullets on a line of their own were
   // `list-style-position: inside`, unseen, rebuilt with a zero-width ::before at tuned heights.
   'list-style',
@@ -337,6 +343,10 @@ const INITIAL: Readonly<Record<string, RegExp>> = {
   'text-decoration': /^none\b/,
   'text-underline-offset': /^auto$/,
   'align-items': /^normal$/,
+  'flex-direction': /^row$/,
+  'justify-content': /^normal$/,
+  'flex-grow': /^0$/,
+  'min-width': /^(auto|0px)$/,
   'vertical-align': /^baseline$/,
   'align-self': /^auto$/,
   // No style, or no width, is no outline — whatever colour it is said with (`rgb(…) none 3px`).

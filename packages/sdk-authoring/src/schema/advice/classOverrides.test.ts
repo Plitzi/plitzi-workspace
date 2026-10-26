@@ -39,6 +39,27 @@ describe('class-overrides-class', () => {
     );
   });
 
+  // A run made a shared class of a key's look, `gap: 10px` in it: `btn`, met first in the stylesheet's order, wrote its
+  // `8px` later — two buttons lost two pixels, and author, lint and the check all passed.
+  it('says a longhand another class sets over the same longhand, when the class listed after it loses', () => {
+    const keyLed = styles('key-led', { gap: '10px' });
+    const btn = styles('btn', { display: 'inline-flex', gap: '8px' });
+    const found = overrides(
+      space([
+        // The header's key is met first: the stylesheet writes `btn` after `key-led`.
+        container({ id: 'lamp', class: keyLed }),
+        container({ id: 'cta', class: btn }),
+        container({ id: 'follow', class: [btn, keyLed] })
+      ])
+    );
+
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatchObject({ elementIds: ['follow'], subjects: ['btn', 'key-led'] });
+    expect(found[0].message).toContain(
+      `"btn" (styles('btn')) wins over what "key-led" (styles('key-led')) writes on "follow", listed after it: gap: 8px over 10px at desktop, tablet, mobile`
+    );
+  });
+
   it('says a breakpoint’s shorthand erasing a longhand written for every width', () => {
     const card = styles('card', { padding: { desktop: '24px', mobile: '16px' } });
     const tight = styles('tight', { paddingTop: '0px' });

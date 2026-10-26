@@ -52,6 +52,7 @@ import { readTeam } from '../../runs/team';
 import { checkAccount, sessionCookie } from '../check/account';
 import { projectSpace } from '../check/space';
 
+import type { LookOptions } from './lookOptions';
 import type { BeforeAfter } from './lookParts';
 import type { RunCommandOptions } from './shell';
 import type { RunContext } from '../../runs/run';
@@ -93,37 +94,6 @@ const viewTaskOf = async (
     ...(acceptanceAccount(task.acceptance) === undefined ? {} : { acceptanceAs: acceptanceAccount(task.acceptance) })
   };
 };
-
-export interface LookOptions extends RunCommandOptions {
-  /** Looked at anew, though it was looked at already as asked and nothing changed since. */
-  fresh?: boolean;
-  /** Clicked once each page settles, as `page check --click`: an open state looked at, not only the page at rest. */
-  click?: string;
-  /** The visitor's time zone (IANA) every page is read in: the machine's when left out. */
-  timezone?: string;
-  /**
-   * The pointer put over it once each page settles, as `page check --hover`: what that changes said, and the page
-   * pictured with it there — at 1440 alone, as a phone has no pointer to hover with.
-   */
-  hover?: string;
-  /** Signed in first as this account, as `page check --as`: the password from `PLITZI_CHECK_PASSWORD`. */
-  as?: string;
-  /**
-   * Played on each page before it is pictured, as `page shot --steps`: a UI only a channel's message or a flow shows —
-   * a notice set in `state` — looked at, where a look could not reach it (a run's lead, at a "room opened" notice).
-   */
-  steps?: string;
-  /** Read in the page, as `page check --element`: each one's attributes, box and classes. */
-  element?: string[];
-  /** Each page set beside the run before the task — its approved work — and what changed, section by section. */
-  before?: boolean;
-  /** The status its pages are meant to be sent with, as `page check --status`: a 404 page looked at as one. */
-  status?: number;
-  /** The widths looked at and pictured, in place of 1440 and 390 — `page shot`'s, so the two are said the same. */
-  width?: string;
-  /** The schemes pictured at each width, in place of light at 1440 and dark at 390. */
-  scheme?: string;
-}
 
 /** How many of a task's parts of a page are pictured: a look is read by a model, and each picture costs it. */
 const PARTS_PICTURED = 3;
@@ -199,11 +169,18 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         // Not told who to read it as: as its acceptance checks it — a page for signed-in visitors read signed in.
         // Nor by its acceptance: a page the space keeps for signed-in visitors, read as the project's own account.
         const toLook = pagesToLook(paths, owned, acceptanceAt);
+        if (options.guest === true && options.as !== undefined) {
+          throw new RunRefusal(
+            'invalid',
+            'A look reads its pages as a guest (--guest) or as one account (--as), not both'
+          );
+        }
+
         const guarded =
-          options.as === undefined && acceptanceAs === undefined
+          options.as === undefined && acceptanceAs === undefined && options.guest !== true
             ? await readAsFor(preview.dir, preview.url, toLook, acceptanceAt)
             : undefined;
-        const as = options.as ?? acceptanceAs ?? guarded?.as;
+        const as = options.guest === true ? undefined : (options.as ?? acceptanceAs ?? guarded?.as);
         // Its links followed as that account too: a page only it has a link to (`/u/:username`) is found.
         const account = as === undefined ? undefined : await checkAccount(preview.dir, as);
         const cookie =
@@ -228,7 +205,7 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         }
         // Every page read in one visitor's zone: the machine's, unless said — and said under the pictures either way.
         const zone = options.timezone ? ['--timezone', options.timezone] : [];
-        const signedIn = as ? ['--as', as] : [];
+        const signedIn = as ? ['--as', as] : options.guest === true ? ['--guest'] : [];
         const interaction = [
           ...(options.click ? ['--click', options.click] : []),
           ...(options.hover ? ['--hover', options.hover] : [])
@@ -515,7 +492,9 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
         return {
           task: taskId,
           url: preview.url,
-          ...(acceptanceAs !== undefined && options.as === undefined ? { signedInAs: acceptanceAs } : {}),
+          ...(acceptanceAs !== undefined && options.as === undefined && options.guest !== true
+            ? { signedInAs: acceptanceAs }
+            : {}),
           ...(guarded ? { forVisitors: guarded } : {}),
           ...(options.steps === undefined ? {} : { steps: options.steps }),
           ok: check.code === 0,
@@ -537,6 +516,11 @@ export const lookAt = (ctx: RunContext, runId: string, taskId: string, paths: st
             ? { warmCopy: true }
             : {}),
           ...(before === undefined ? { notBeside: true } : {}),
+          // Set beside the run before it, and nothing of it said: that nothing moved is said, never read from silence
+          // (a run's designer, at a look of its parts alone).
+          ...(before !== undefined && compared.length === 0 && movedElsewhere.length === 0 && unchanged.size === 0
+            ? { besideNothing: true as const }
+            : {}),
           ...(preview.borrowed === undefined ? {} : { borrowed: preview.borrowed }),
           ...(stoppedUnder.length > 0 ? { stoppedUnder } : {}),
           ...(notLooked.length > 0 ? { notLooked } : {}),

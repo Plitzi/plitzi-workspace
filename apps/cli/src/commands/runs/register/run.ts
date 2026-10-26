@@ -361,15 +361,22 @@ export const registerRunGroup = (program: Command): Command => {
     .description(
       'Correct what the open run asks — a task’s title, acceptance, priority or estimate, the goal, a note more — from its plan file edited; each task changed is told'
     )
-    .argument('<run-or-file>', 'The open run — or, alone, the plan: the run is then the one open')
+    .argument(
+      '[run-or-file]',
+      'The open run — or, alone, the plan: the run is then the one open. Left out: the plan the run keeps, edited there'
+    )
     .argument(
       '[file]',
       'The plan, edited — the run’s, or a stage’s as it was stacked: the same tasks, files and dependencies'
     )
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((first: string, file: string | undefined, options: RunCommandOptions) =>
-      file === undefined ? runAmend(undefined, first, options) : runAmend(first, file, options)
+    .action((first: string | undefined, file: string | undefined, options: RunCommandOptions) =>
+      file !== undefined
+        ? runAmend(first, file, options)
+        : first !== undefined && (first.endsWith('.json') || first.includes('/'))
+          ? runAmend(undefined, first, options)
+          : runAmend(first, undefined, options)
     );
 
   runGroup

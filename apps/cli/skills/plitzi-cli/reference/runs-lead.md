@@ -55,13 +55,13 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    size is how many work at once; past `min`, on demand — `run watch` says when to start one (through its own CLI,
    after its first start). Agents start fresh after each task or review, never in one
    (`--session context|keep`); `--resume-session`: one that died mid-task resumes; one just started is
-   not "no signal" for `options.startGraceMinutes` (3). A tester reviews code before you (yours: none took it in 2 min), adds `<id>-tests` (`"tests": false` for none); a designer reviews
+   not "no signal" for `options.startGraceMinutes` (3). A tester reviews code before you (yours if none took it in 2 min), adds `<id>-tests` (`"tests": false`: none); a designer reviews
    the others' UI before you (`options.designReview`; `false` turns it off). Yours is the complete,
    strict review — code, acceptance, edge cases, the page — and the final word (before the designer only saying why:
    `task review --skip-design lead|no-ui`, `lead` after your `task look`; a developer's `--review code` stands when no page draws
-   what it changed). A designer at a UI review, in its time, is not gone past (`--skip-design` is refused: its copy would go from under it);
+   what it changed). A designer's UI review, in its time, is not gone past (`--skip-design` is refused);
    a UI review held 8 min (15, a designer's first), or
-   queued 5, is yours: decide it. Take a task back, or a ready one for yourself: `task reassign <task> --reason "…" --to <agent>|lead`. **One lead for every four agents**: `lead-2`… beside you, started when `run watch` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`),
+   queued 5, is yours: decide it. Take a task back, or a ready one: `task reassign <task> --reason "…" --to <agent>|lead`. **One lead for every four agents**: `lead-2`… beside you, started when `run watch` says the reviews queue up; each reviews from the queue as you would (tell it how strict, `@lead-2`),
    answers the questions handed to it, and stops when none is left.
 
    **Keep a person's actions a person's in the harness**: deny the agents `run finish --apply`, `run abort`, `run purge`,
@@ -171,7 +171,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
   give the designer the UI reviews — `task review --changes … --skip-design lead` keeps the next look yours. `run watch` says
   an agent with nothing to take (`idle-team`) and how to feed it.
 - **The designer's own task off the critical path** while it is the only one reviewing UI: what waits on it waits on
-  every review too.
+  every review too: a refactor with nothing to see is a developer's.
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red — a done task's too: the finish holds
   it to the amended line. The plan you amend is any of the run's — the one it opened with, a stage's, or several joined:
   each changes only the tasks of the plans it holds.

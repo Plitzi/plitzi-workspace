@@ -34,6 +34,10 @@ describe('a look that took no picture', () => {
     expect(stripVTControlCharacters(lookText({ ...looked, notBeside: true }))).toContain(
       'Not set beside the run before it — that nothing else moved is read with it: --before'
     );
+    // A run's designer looked at its parts beside the run before it and read nothing — "nothing else moved" from silence.
+    expect(stripVTControlCharacters(lookText({ ...looked, besideNothing: true }))).toContain(
+      'Beside the run before it: nothing else of its pages moved'
+    );
     // The song playing differed on the two sides — the copy's queue played by its agent.
     expect(stripVTControlCharacters(lookText({ ...looked, warmCopy: true }))).toContain(
       'plitzi server reset in its copy (its server stopped), then look again --fresh'

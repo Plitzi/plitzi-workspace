@@ -88,7 +88,7 @@ export const SUGGESTION_CODES = {
   'class-overrides-class': {
     kind: 'suggested',
     means:
-      "one class's shorthand erasing the longhand another class on the same element writes out — `padding` over `padding-top` — because the stylesheet writes it later: classes in the order they are first met, a breakpoint's rules after the base, never the order of a class list",
-    fix: "the longhands the shorthand means instead of it (`padding-left`, `padding-right`), so it leaves the other class's alone — or `quiet: ['class-overrides-class']` when the shorthand is meant to win"
+      "one class's shorthand erasing the longhand another class on the same element writes out — `padding` over `padding-top` — or the same property set over the class listed after it — `gap` over `gap` — because the stylesheet writes it later: classes in the order they are first met, a breakpoint's rules after the base, never the order of a class list",
+    fix: "the longhands the shorthand means instead of it (`padding-left`, `padding-right`), so it leaves the other class's alone; the same property, left to one of the two or written on the element itself — or `quiet: ['class-overrides-class']` when the winner is meant to win"
   }
 } as const satisfies Record<string, AuthoringCodeEntry>;

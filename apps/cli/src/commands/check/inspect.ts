@@ -11,6 +11,7 @@ import { landingProblem, saySignedIn, signInAs, signInWhereSent } from './accoun
 import { clickEffects } from './click';
 import { flushEdgesInPage, missedExpectations, wrappedLabelsInPage } from './expect';
 import { listRows } from './lists';
+import { serverFailedIssues } from './serverFailures';
 import {
   NOT_FOUND_PROBE,
   isNotFoundPage,
@@ -353,6 +354,7 @@ const inspectHere = async (
       ...(flow.on === undefined ? {} : { elementId: flow.on }),
       width
     }));
+  const serverFailed = serverFailedIssues(devTools.serverFailures, devTools.sources, width);
   const notFoundPage = handles && pageId ? isNotFoundPage(handles.pages[pageId]) : false;
   // Asked for a status (`--status 404`): the page sent with it is what was meant — its 404 page, on purpose — and one sent
   // with another is the finding. A run's designer saw its intended 404 page marked ✗, with no way to say it.
@@ -405,6 +407,7 @@ const inspectHere = async (
     ...(data?.issues ?? []).map((issue): CheckIssue => ({ ...issue, width })),
     ...(late?.issues ?? []),
     ...failedFlows,
+    ...serverFailed,
     ...missed,
     ...wrapped,
     ...flush

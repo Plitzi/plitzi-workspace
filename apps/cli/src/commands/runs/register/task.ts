@@ -415,6 +415,7 @@ export const registerTaskGroup = (program: Command): Command => {
       '--as <username>',
       'Look signed in as this account — a page for signed-in visitors as one of them; the password from PLITZI_CHECK_PASSWORD in the project’s .env'
     )
+    .option('--guest', 'Look as a guest, though a page sends one away or its acceptance reads it signed in')
     .option(
       '--status <code>',
       'The status its pages are sent with — 404 for a not-found page — as page check --status',

@@ -358,7 +358,9 @@ export const pictureOf = async (
   }
 
   const signed =
-    origin && !view.account ? await signInWhereSent(page, origin, new URL(url).pathname, view.projectAccount) : undefined;
+    origin && !view.account
+      ? await signInWhereSent(page, origin, new URL(url).pathname, view.projectAccount)
+      : undefined;
   if (signed && 'problem' in signed) {
     return signed;
   }

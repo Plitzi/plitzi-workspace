@@ -1,3 +1,4 @@
+import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import chalk from 'chalk';
@@ -12,6 +13,7 @@ import { writeJson } from '../../runs/files';
 import { issueToken } from '../../runs/identity';
 import { ensureKeeper, keeperText, leadStartText } from '../../runs/keeper';
 import { LEAD } from '../../runs/messages';
+import { runPaths } from '../../runs/paths';
 import { atPace } from '../../runs/plan';
 import { RunRefusal } from '../../runs/refusal';
 import { rehearsalText, rehearse } from '../../runs/rehearse';
@@ -387,7 +389,7 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
         ...(opened.leftOut.length > 0 ? [`Left out of it, as the plan says: ${opened.leftOut.join('; ')}`] : []),
         ...(opened.inputs.length > 0
           ? [
-              `The plan is the run's now, in its folder: ${opened.inputs.join(', ')} — edit it there and amend (plitzi run amend ${opened.runId} ${opened.inputs[0]}); it goes with the run`
+              `The plan is the run's now, in its folder: ${opened.inputs.join(', ')} — edit it there and amend (plitzi run amend ${opened.runId}); it goes with the run`
             ]
           : []),
         opened.leadFinishes
@@ -424,10 +426,37 @@ export const runSettle = (subject: string, options: RunCommandOptions & { note: 
       `Settled ${settled.subject}, your note kept beside it for the report: ${settled.text.split(' — ')[0] ?? ''}`
   );
 
-export const runAmend = (runId: string | undefined, file: string, options: RunCommandOptions): Promise<void> =>
+/**
+ * The plan the run keeps, as `run open` moved it into its `inputs/`: what `run amend` reads when given no file — a run's
+ * lead ran `run amend` alone after editing it there, and was refused for a missing argument.
+ */
+export const keptPlan = async (ctx: Pick<RunContext, 'root'>, runId: string): Promise<string> => {
+  const inputs = path.join(runPaths(ctx.root, runId).dir, 'inputs');
+  const plans = (await fs.readdir(inputs).catch(() => [])).filter(name => name.endsWith('.json'));
+  if (plans.length !== 1) {
+    throw new RunRefusal(
+      'invalid',
+      plans.length === 0
+        ? `Run "${runId}" keeps no plan in its inputs: name the plan, edited — plitzi run amend ${runId} <plan.json>`
+        : `Run "${runId}" keeps ${String(plans.length)} plans in its inputs (${plans.join(', ')}): name the one edited — plitzi run amend ${runId} <plan.json>`
+    );
+  }
+
+  return path.join(inputs, plans[0] ?? '');
+};
+
+export const runAmend = (
+  runId: string | undefined,
+  file: string | undefined,
+  options: RunCommandOptions
+): Promise<void> =>
   act(
     options,
-    async ctx => amendRun(ctx, await runOf(ctx, options, runId), path.resolve(file)),
+    async ctx => {
+      const id = await runOf(ctx, options, runId);
+
+      return amendRun(ctx, id, file === undefined ? await keptPlan(ctx, id) : path.resolve(file));
+    },
     amended =>
       [
         `Run "${amended.runId}" amended:`,

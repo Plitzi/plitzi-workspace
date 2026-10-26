@@ -4,7 +4,7 @@ import path from 'node:path';
 import { experienceText } from './experience';
 import { kindOf } from './harness';
 import { buildReport, readSummary } from './report';
-import { findingsText, ranOn } from './reportHead';
+import { findingsText, ranOn, spendText, uiReviewsText } from './reportHead';
 import { REPORT_FILES, runReportDir, withoutMachine } from './reports';
 import { commandName, tokensText } from './runMetrics';
 
@@ -13,6 +13,7 @@ import type { Briefs } from './briefs';
 import type { CombinedExperience } from './experience';
 import type { Finding, RunIndicators } from './findings';
 import type { HarnessUsage } from './harness';
+import type { RunReport } from './report';
 import type { LoadedRun, RunContext } from './run';
 
 /**
@@ -71,6 +72,10 @@ export interface RunFeedback {
    */
   /** What the agents' briefs weighed, part by part: which part of `task context` an agent reads again the most. */
   briefs?: Briefs;
+  /** What the run cost, by agent and by piece (`RunReport['spend']`). */
+  spend?: RunReport['spend'];
+  /** Each task's UI review, as the report says it: by a designer, or by the lead without one. */
+  designs: { id: string; design?: string }[];
   lives: {
     agent: string;
     launches: number;
@@ -188,6 +193,8 @@ export const feedbackOf = async (ctx: RunContext, loaded: LoadedRun): Promise<Ru
       .map(([file, times]) => ({ file, times })),
     reviewsAsked: report.tasks.flatMap(task => task.reviews.map(review => ({ task: task.id, ...review }))),
     ...(report.briefs ? { briefs: report.briefs } : {}),
+    ...(report.spend ? { spend: report.spend } : {}),
+    designs: report.tasks.flatMap(task => (task.design === undefined ? [] : [{ id: task.id, design: task.design }])),
     lives: report.agents.map(life => ({
       agent: life.agent,
       launches: life.launches,
@@ -221,6 +228,8 @@ export const feedbackText = (data: RunFeedback): string =>
     ...section('The lead’s report', data.lead.report ? [data.lead.report] : []),
     // A list, not a table: what Prettier leaves as it is, so the file never fails the project's format check.
     ...section('What it spent', [
+      ...spendText(data.spend),
+      ...(data.spend ? [''] : []),
       ...data.spent.map(
         each =>
           `- ${each.agent}${each.ranOn.length > 0 ? ` (${each.ranOn.join('; ')})` : ''}: ${String(each.rounds)} round(s), ${String(each.commands)} commands, the CLI printed ${String(each.cliChars)} characters${each.harnessTokens > 0 ? `; its harness read ${tokensText(each.harnessTokens)} tokens in ${String(each.harnessTurns)} turns` : ''}`
@@ -258,6 +267,7 @@ export const feedbackText = (data: RunFeedback): string =>
       data.refusals.map(each => `- ${each.code} ×${String(each.times)}${each.command ? ` — e.g. ${each.command}` : ''}`)
     ),
     ...section('Checks', [
+      ...uiReviewsText(data.designs),
       `- ${String(data.checks.run)} task checks: ${String(data.checks.failed)} failed for the work, ${String(data.checks.notOwn)} for nothing of it`,
       ...Object.entries(data.checks.byStep)
         .sort(([, a], [, b]) => b - a)

@@ -369,6 +369,17 @@ report`, …).
   in a line, were there before it — a run's developer read a check's warnings in files it never touched as its own.
 - **A lead's prompt tells of a scope only when the run has one** (`s-scope`, opened by `run start`): a run opened on a
   plan made before it says its tasks are on the board — its lead, told of a scope, asked for one and was refused.
+- **A run's checks build the functions** as the runner does (`functions`, by the project's installed sdk-server): a
+  copy importing `node:crypto` into `src/functions/` passed its tests under `node --test`, and only its server, failing
+  to start, said so. A copy whose server stops on an error is said at once — not after a minute — as the copy's own:
+  its lines fail with the work, never "cannot be answered — amend the line" (a run's lead nearly amended a valid line).
+- **A lead's watch says the board with what woke it** — every task, where it stands and who has it: a run's lead ran
+  `run status` after each of its watches, 8 times in 10 minutes. **`run amend` alone** amends the plan the run keeps
+  (`inputs/`), edited there — a lead ran it so and was refused for a missing argument.
+- **A run's report says what it cost:** at the API's prices, with how much was the context read again, by agent and its
+  costliest pieces (`spend` in `report.json`; `feedback.md` and `report.md` alike) — a run's $6.75, a third of it one
+  designer task, was read off its log by hand. It says the UI reviews the lead gave without a designer, and when no
+  designer reviewed any; the bench keeps tokens, cost and the share read again a task done.
 - **`run open` says who leads:** the opener, through the lead's own CLI — or an agent that CLI starts
   (`…/scratch/lead/plitzi run agent lead --launch`, in the team's harness): a run's opener started its lead with
   `npx plitzi run agent lead --launch` and was refused as nobody.
@@ -539,6 +550,21 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
 
+- **`page measure` reads how a row lays out** — `flex-direction`, `justify-content`, `flex-grow`, `min-width` (said
+  only when not their initial value), and `--only`/`--same` take them: a run's designer sharing five rules read them
+  through display, gap and width.
+
+- **`task look --guest`** reads its pages as a guest, though a page sends one away or the acceptance reads it signed in
+  — a run's lead looked at a guest's conversation through `page check` by hand. **`--before` says nothing gone that is
+  there:** a layer on both sides, its section a little wider on one, is no look taken away (a run's look said the
+  header's gradient removed on every page of two tasks that never touched it); and a look of parts says when nothing
+  else of its pages moved, never leaving it to silence.
+
+- **`page check` says a server provider that failed on the page server** and was answered in the browser after
+  (`server-render-failed`): the first paint and a crawler lacked it, and the server logged it on every load while every
+  check said "nothing wrong". The SDK keeps why each failed since the page loaded (`rsc.failures`), the dev tools say
+  it (`window.__plitzi.serverFailures()`), `readDevTools` reads it.
+
 - **A provider failure the page shows is handled, not a problem:** when an element on screen reads a failed provider's
   `errorMessage`, `hasError` or `status`, `page check` says it apart (`· failed, and the page shows it: …`) and
   `dataIssues` puts it in `shownFailures` — a run's page whose purpose is a refusal ("Nobody here goes by that name")
@@ -682,6 +708,11 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   finds nothing — `handles.element(id).selector` does.
 
 ## Authoring (`@plitzi/sdk-authoring`)
+
+- **`class-overrides-class` says the same property set over the class listed after it** (`gap` over `gap`, a longhand
+  over a longhand, at one breakpoint), not only a shorthand erasing a longhand: a run's shared class, made of five
+  `repeated-css` warnings, lost its `gap: 10px` to `btn`'s `8px` on two buttons — `btn` written later — while author,
+  lint and every check passed.
 
 - **`focus('field-id')`**: a step that gives an element — or the first field inside it — the keyboard's focus.
 - **`server-when-unknown`** warns of a server provider whose `when` reads what only the browser holds (a `state`, a
@@ -835,6 +866,12 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - `inspectTemplate` answers `notes`: what reads as other than it looks.
 
 ## Server (`@plitzi/sdk-server`)
+
+- **A server provider's input bound to the address is read on the first paint:** a binding of `input` on
+  `navigation.routeParams` / `queryParams` alone is resolved by the page server as the browser resolves it
+  (`serverInputOf`, `@plitzi/sdk-shared/schema`), and the browser compares against it. A run's conversation page bound
+  `{ with: routeParams.username }`: the server resolved it with no `with`, refused it on every load and logged a stack,
+  while the browser asked again to draw it. A render's refusal logs its words too (`invalid_input — Invalid input: slug`).
 
 - **A project's server keeps the last space that authored when a save does not, and `/health` says why**
   (`spaceStale`), until a save authors; a space that never authored shows the latest refusal, not the first.

@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createStore } from '@plitzi/nexus';
 import { StoreProvider } from '@plitzi/nexus/react';
 
-import refreshRsc, { cancelRsc } from './refreshRsc';
+import refreshRsc, { cancelRsc, noteRscFailures } from './refreshRsc';
 import useRscSync from './useRscSync';
 
 import type { CommonState, Element, SchemaRsc, ServerSSR } from '../../types';
@@ -503,5 +503,17 @@ describe('refreshRsc', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(store.get('rsc.data')).toEqual({ a: 1, b: 2, blogApi: 9 });
+  });
+});
+
+// A conversation's provider failed on the page server on every load, and the refresh the browser asked answered it:
+// what the first paint lacked is kept, for a check to say.
+describe('a server element the page server could not resolve', () => {
+  it('is kept with why, its first failure, though later answers come', () => {
+    const store = createStore<CommonState>(() => ({}));
+    noteRscFailures(store, { dmThread: { $failed: 'invalid_input — Invalid input: with' }, rooms: { list: [] } });
+    noteRscFailures(store, { dmThread: { $failed: 'another' }, rooms: { $failed: 'down' } });
+
+    expect(store.get('rsc.failures')).toEqual({ dmThread: 'invalid_input — Invalid input: with', rooms: 'down' });
   });
 });

@@ -30,6 +30,39 @@ const projectBuild = async (root: string): Promise<Build | undefined> => {
   return typeof build === 'function' ? (build as Build) : undefined;
 };
 
+/** Where a build problem is, as `functions/<file>:<line>` names it — the folder when it names none. */
+const whereOf = (problem: Problem): string =>
+  problem.file ? `${FUNCTIONS_DIR}/${problem.file}${problem.line ? `:${String(problem.line)}` : ''}` : FUNCTIONS_DIR;
+
+/**
+ * Why the functions of `root` do not build, by the rules of the sdk-server `modulesRoot` installed — each problem with
+ * where it is; none when they build, `undefined` when there are none or no build to run them with. What a run's checks
+ * hold a task to: a copy importing `node:crypto` passed its tests under `node --test`, and only its server, failing to
+ * start, said so.
+ */
+export const functionsBuildProblems = async (
+  root: string,
+  modulesRoot: string = root
+): Promise<{ where: string; message: string }[] | undefined> => {
+  const files = await readFunctionsFiles(root).catch(() => ({}));
+  const build = Object.keys(files).length === 0 ? undefined : await projectBuild(modulesRoot);
+  if (!build) {
+    return undefined;
+  }
+
+  try {
+    await build(files);
+
+    return [];
+  } catch (error) {
+    const problems = isRecord(error) && Array.isArray(error.problems) ? error.problems.filter(isProblem) : [];
+
+    return problems.length === 0
+      ? [{ where: FUNCTIONS_DIR, message: error instanceof Error ? error.message : String(error) }]
+      : problems.map(problem => ({ where: whereOf(problem), message: problem.message }));
+  }
+};
+
 export const checkFunctions: Check = async ({ root, answers }) => {
   const files = await readFunctionsFiles(root).catch(() => ({}));
   if (Object.keys(files).length === 0) {
@@ -49,8 +82,8 @@ export const checkFunctions: Check = async ({ root, answers }) => {
     ];
   }
 
-  const build = await projectBuild(root);
-  if (!build) {
+  const problems = await functionsBuildProblems(root);
+  if (problems === undefined) {
     return [
       say.warning(
         'functions-not-checked',
@@ -60,26 +93,5 @@ export const checkFunctions: Check = async ({ root, answers }) => {
     ];
   }
 
-  try {
-    await build(files);
-
-    return [];
-  } catch (error) {
-    const problems = isRecord(error) && Array.isArray(error.problems) ? error.problems.filter(isProblem) : [];
-    if (problems.length === 0) {
-      return [
-        say.error('functions-do-not-build', error instanceof Error ? error.message : String(error), {
-          file: FUNCTIONS_DIR
-        })
-      ];
-    }
-
-    return problems.map(problem =>
-      say.error('functions-do-not-build', problem.message, {
-        file: problem.file
-          ? `${FUNCTIONS_DIR}/${problem.file}${problem.line ? `:${String(problem.line)}` : ''}`
-          : FUNCTIONS_DIR
-      })
-    );
-  }
+  return problems.map(problem => say.error('functions-do-not-build', problem.message, { file: problem.where }));
 };

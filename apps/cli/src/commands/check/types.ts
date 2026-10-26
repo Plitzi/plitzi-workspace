@@ -69,6 +69,7 @@ export interface CheckIssue {
     | 'no-answer'
     | 'no-page'
     | 'flow-failed'
+    | 'server-render-failed'
     | 'not-server-rendered'
     | 'not-signed-in'
     | 'redirected'

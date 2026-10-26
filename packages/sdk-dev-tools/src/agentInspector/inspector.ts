@@ -14,6 +14,8 @@ export type AgentInspector = {
   sources: (name?: string) => unknown;
   element: (id: string) => ElementReport | undefined;
   flows: (limit?: number) => FlowRun[];
+  /** Why each server element failed on the page server since the page loaded, by id — answered later or not. */
+  serverFailures: () => Record<string, unknown>;
   watch: (on?: boolean) => string;
 };
 
@@ -38,6 +40,7 @@ const HELP = `window.__plitzi — this page, in text (debug mode only):
   element(id)          an element by its id, in a page or a component: type, attributes, what it reads, its own state,
                        the component it places, copies, on screen, box
   flows(limit = 20)    the last flows that ran: trigger, element, status, every step with its time and error
+  serverFailures()     why each server element failed on the page server since the page loaded, by id
   watch(on = true)     one console line per flow as it ends`;
 
 /** Whether a store's own value of a source is laid over one inherited from above: the merged value has keys it lacks. */
@@ -83,6 +86,7 @@ export const createAgentInspector = ({
   },
   element: id => elementReport(root.getState(), id, document),
   flows: (limit = 20) => runs().slice(-limit),
+  serverFailures: () => recordAt(root.getState(), 'rsc', 'failures'),
   watch: (on = true) => {
     setWatching(on);
 

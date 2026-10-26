@@ -129,7 +129,9 @@ export const CLI_BUDGET_S: Record<string, number> = {
 
 /** A call that waits by design — for work, an answer, the lead's next item — is no time the CLI took. */
 const waitsByDesign = (command: string): boolean =>
-  /\s--follow\b|^plitzi run (watch|monitor)\b|^plitzi task wait\b|^plitzi task next\b(?!.*\s--(no-wait|peek)\b)/.test(command);
+  /\s--follow\b|^plitzi run (watch|monitor)\b|^plitzi task wait\b|^plitzi task next\b(?!.*\s--(no-wait|peek)\b)/.test(
+    command
+  );
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '');
 const texts = (value: unknown): string[] =>

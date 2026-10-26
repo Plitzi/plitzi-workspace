@@ -65,7 +65,8 @@ And a few the suggestions do not count, because they cost styles rather than ele
   space's `elements` defaults (`elements: { heading: { color: 'var(--fg)' } }`), not a class on each.
 - **A shorthand in a class says every side.** On an element wearing two classes, one's `padding` erases the
   `padding-top` the other writes out wherever the stylesheet writes it later; write the longhands it means
-  (`class-overrides-class` — a suggestion, quieted like the rest).
+  (`class-overrides-class` — a suggestion, quieted like the rest). A shared class made of repeated CSS meets the same:
+  its `gap` loses to `btn`'s when `btn` is written later.
 - **Inner parts are slots.** A form control's input, a modal's backdrop, a theme toggle's icons: style them with
   `slots: { input: inputClass }` on the element, or the type's `slots` in `elements` — never a `customCss` rule reaching
   into the element.

@@ -37,7 +37,7 @@ const isStyleValue = (value: unknown): boolean =>
 
 const getBindingsDetails = (
   dataSource: Record<string, RuleValue>,
-  element: Element,
+  element: Pick<Element, 'attributes' | 'definition'>,
   style: Record<string, string> = {}
 ) => {
   const { attributes, definition } = element;

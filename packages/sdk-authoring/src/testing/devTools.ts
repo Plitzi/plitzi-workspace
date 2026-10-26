@@ -31,6 +31,11 @@ export interface DevToolsReport {
   /** Every source by its full name, with the shape of what it holds now. */
   sources?: Record<string, unknown>;
   element?: unknown;
+  /**
+   * Why each server element failed on the page server since the page loaded, by id — though the browser asked again
+   * and was answered: what the first paint and a crawler lacked (`window.__plitzi.serverFailures()`).
+   */
+  serverFailures: Record<string, string>;
 }
 
 export interface DevToolsInput {
@@ -53,7 +58,7 @@ export const readDevToolsInPage = ({ state, element }: DevToolsInput): DevToolsR
     return typeof method === 'function' ? Reflect.apply(method, inspector, args) : undefined;
   };
   if (typeof inspector !== 'object' || inspector === null) {
-    return { available: false, flows: [] };
+    return { available: false, flows: [], serverFailures: {} };
   }
 
   // Inside the serialised function: nothing outside it reaches the page.
@@ -65,10 +70,17 @@ export const readDevToolsInPage = ({ state, element }: DevToolsInput): DevToolsR
     Array.isArray(Reflect.get(value, 'steps'));
   const flows = call('flows', 50);
   const sources = state ? call('sources') : undefined;
+  const failures = call('serverFailures');
 
   return {
     available: true,
     flows: Array.isArray(flows) ? flows.filter(isFlow) : [],
+    serverFailures:
+      typeof failures === 'object' && failures !== null
+        ? Object.fromEntries(
+            Object.entries(failures).flatMap(([id, why]) => (typeof why === 'string' ? [[id, why] as const] : []))
+          )
+        : {},
     ...(state ? { state: call('state') } : {}),
     ...(state && typeof sources === 'object' && sources !== null
       ? { sources: Object.fromEntries(Object.keys(sources).map(name => [name, Reflect.get(sources, name)])) }

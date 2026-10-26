@@ -243,7 +243,9 @@ modes**, chosen in Settings with **Data Source** (`definition.runtime`):
    takes an `input` — `reloadApi(id, { q: '{{ state.search }}' })` in authoring — handed to what resolves it beside
    the page's route and query params (a search, a filter, how many to show), and kept for every page `loadMore` or
    `goToPage` asks for after it and every refresh, until the next query with an input — and over the `input` the
-   element was saved with. A bound `input` asks again whenever it changes (`useInputRefresh`). `cancelQuery` drops the
+   element was saved with. A bound `input` asks again whenever it changes (`useInputRefresh`); one that reads the
+   address alone (`navigation.routeParams` / `queryParams`, no state, no `when`) the page server resolves on the first
+   paint too, and the browser compares against that (`serverInputOf`). `cancelQuery` drops the
    request in flight (`cancelRsc` / `queryCache.cancel`), and `isLoading` is true while one is.
 6. **Render** — `<RootElement tag={subType}>` wraps a `<StoreProvider>` with the children.
 

@@ -40,10 +40,13 @@ interface Candidate {
   shorthand?: string;
 }
 
-/** One longhand a class wrote out and another's shorthand erased, at one width and state. */
+/**
+ * One longhand a class wrote out and another set over it, at one width and state: by its shorthand, or by the same
+ * longhand when the stylesheet writes it later (`shorthand` absent).
+ */
 interface Erased {
   longhand: string;
-  shorthand: string;
+  shorthand?: string;
   won: StyleValue;
   lost: StyleValue;
   width: DisplayMode;
@@ -88,9 +91,10 @@ const candidatesAt = (
 
 /**
  * What one node's classes erase of each other: a longhand a class wrote out, lost to a value another class's shorthand
- * set. Only when the class that wrote it out is listed AFTER the one whose shorthand wins — what a class list reads as
- * "this one on top" — so a modifier whose shorthand resets its base's longhands, and a base whose longhand a modifier
- * writes out on top, both stay quiet.
+ * set — or to the same longhand, when the stylesheet writes the other class later at the same breakpoint. Only when the
+ * class that wrote it out is listed AFTER the one that wins — what a class list reads as "this one on top" — so a
+ * modifier whose shorthand resets its base's longhands, and a base whose longhand a modifier writes out on top, both
+ * stay quiet. A run's shared class lost its `gap: 10px` to `btn`'s `8px` on two buttons, `btn` written later.
  */
 const erasedOn = (
   classes: WornClass[],
@@ -102,16 +106,16 @@ const erasedOn = (
     for (const state of [undefined, ...STYLE_STATES]) {
       for (const [longhand, candidates] of candidatesAt(classes, layers, state)) {
         const winner = candidates[candidates.length - 1];
-        if (winner.shorthand === undefined) {
-          continue;
-        }
-
         for (const lost of candidates) {
+          // The same property written by both — a longhand each, or one shorthand (`gap`) each: set over by order alone.
+          const same = winner.shorthand === lost.shorthand;
           if (
             lost.worn === winner.worn ||
-            lost.shorthand !== undefined ||
+            (lost.shorthand !== undefined && !same) ||
             lost.listed < winner.listed ||
-            String(lost.value) === String(winner.value)
+            String(lost.value) === String(winner.value) ||
+            // Set over by the stylesheet's order alone at one breakpoint: a narrower breakpoint's is meant to win.
+            (same && winner.breakpoint !== lost.breakpoint)
           ) {
             continue;
           }
@@ -119,8 +123,8 @@ const erasedOn = (
           const key = `${winner.worn.name} ${lost.worn.name}`;
           const pair = found.get(key) ?? { winner: winner.worn, loser: lost.worn, erased: [] };
           pair.erased.push({
-            longhand,
-            shorthand: winner.shorthand,
+            longhand: same ? (lost.shorthand ?? longhand) : longhand,
+            ...(same || winner.shorthand === undefined ? {} : { shorthand: winner.shorthand }),
             won: winner.value,
             lost: lost.value,
             width,
@@ -151,7 +155,7 @@ const erasedText = (erased: Erased[]): string => {
 };
 
 const message = (winner: WornClass, loser: WornClass, erased: Erased[], elementIds: string[]): string => {
-  const shorthands = [...new Set(erased.map(each => each.shorthand))];
+  const shorthands = [...new Set(erased.flatMap(each => (each.shorthand === undefined ? [] : [each.shorthand])))];
   const longhands = new Set(erased.map(each => each.longhand));
   const meant = shorthands
     .flatMap(shorthand => shorthandLonghands(shorthand) ?? [])
@@ -164,6 +168,10 @@ const message = (winner: WornClass, loser: WornClass, erased: Erased[], elementI
     meant.length > 0
       ? `the longhands "${winner.name}" means instead of ${shorthands.map(each => `\`${each}\``).join(', ')} (${meant.slice(0, 4).join(', ')}${meant.length > 4 ? ', …' : ''})`
       : `the longhands "${winner.name}" means instead of ${shorthands.map(each => `\`${each}\``).join(', ')}`;
+
+  if (shorthands.length === 0) {
+    return `"${winner.name}" (${winner.written()}) wins over what "${loser.name}" (${loser.written()}) writes on "${elementIds[0]}"${others}, listed after it: ${erasedText(erased)} — ${why}. Leave ${[...longhands].join(', ')} to one of the two, or write it on the element itself; or, when "${winner.name}" is meant to win, \`quiet: ['class-overrides-class']\` on the element.`;
+  }
 
   return `"${winner.name}" (${winner.written()}) erases what "${loser.name}" (${loser.written()}) writes out on "${elementIds[0]}"${others}: its ${shorthands.map(each => `\`${each}\``).join(', ')} sets ${erasedText(erased)} — ${why}. Write ${instead}, so it leaves ${[...longhands].join(', ')} to "${loser.name}"; or, when "${winner.name}" is meant to win, \`quiet: ['class-overrides-class']\` on the element.`;
 };

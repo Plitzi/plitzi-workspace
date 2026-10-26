@@ -9,7 +9,7 @@ import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
 import { emptyObject, evaluateRuleGroup, ruleValuesOf } from '@plitzi/sdk-shared/helpers';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useServerQuery } from '@plitzi/sdk-shared/queries';
-import { isEmptyAnswer, rscFailureOf, whenOf, whenPaths } from '@plitzi/sdk-shared/schema';
+import { isEmptyAnswer, rscFailureOf, serverInputOf, whenOf, whenPaths } from '@plitzi/sdk-shared/schema';
 import { currentRscLocation } from '@plitzi/sdk-shared/server';
 import { useCommonStore, useSdkStore } from '@plitzi/sdk-shared/store';
 
@@ -391,8 +391,13 @@ const ApiContainer = ({
     apiCancel();
   }, [serverMode, cancelRsc, apiCancel]);
 
-  const [savedInput] = useCommonStore(`schema.flat.${id}.attributes.input`, { mode: 'mount' });
-  useInputRefresh({ enabled: serverMode && rscResolved, input, savedInput, performQuery });
+  // The input the page server resolved it with: what it was saved with, and what of its binding reads the address.
+  const [saved] = useCommonStore(`schema.flat.${id}`, { mode: 'mount' });
+  const serverInput = useMemo(
+    () => serverInputOf(saved, { routeParams, queryParams }),
+    [saved, routeParams, queryParams]
+  );
+  useInputRefresh({ enabled: serverMode && rscResolved, input, savedInput: serverInput, performQuery });
 
   /**
    * Only a provider that can already fetch: a server one once a live payload has answered for this page (the

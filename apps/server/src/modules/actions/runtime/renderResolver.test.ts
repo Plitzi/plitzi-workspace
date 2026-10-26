@@ -48,7 +48,7 @@ const entry: ActionEntry = {
   }
 };
 
-const element = (attributes: Record<string, unknown>): Element =>
+const element = (attributes: Record<string, unknown>, bindings?: Element['definition']['bindings']): Element =>
   ({
     id: 'provider1',
     attributes,
@@ -58,7 +58,8 @@ const element = (attributes: Record<string, unknown>): Element =>
       rootId: 'root',
       items: [],
       styleSelectors: { base: '' },
-      runtime: 'server'
+      runtime: 'server',
+      ...(bindings ? { bindings } : {})
     }
   }) as unknown as Element;
 
@@ -88,10 +89,11 @@ const render = (
   resolver: RscElementResolver,
   attributes: Record<string, unknown>,
   signal = new AbortController().signal,
-  req: SSRRequest = buildReq()
+  req: SSRRequest = buildReq(),
+  bindings?: Element['definition']['bindings']
 ) =>
   resolver({
-    element: element(attributes),
+    element: element(attributes, bindings),
     flat: {},
     routeParams: { slug: 'hello-world' },
     queryParams: {},
@@ -118,6 +120,42 @@ describe('createActionResolver', () => {
     const slice = await resolve({ action: 'post-page' });
 
     expect(JSON.stringify(slice)).not.toContain('internal only');
+  });
+
+  // A conversation's provider bound `{ with: routeParams.username }` was rendered with no `with` — refused on every
+  // load, logged with a stack — and the browser asked again to draw it: what reads the address is the server's to read.
+  it('resolves an input bound to the address, as the browser does', async () => {
+    const slice = (await render(resolverFor(), { action: 'post-page' }, new AbortController().signal, buildReq(), {
+      attributes: [
+        {
+          id: 'b1',
+          to: 'input.slug',
+          source: 'navigation.routeParams.slug',
+          transformers: [
+            { action: 'twigTemplate', params: { template: "{{ source ~ '-bound' }}", returnMode: 'value' } }
+          ]
+        }
+      ]
+    })) as { slug: string };
+
+    expect(slice.slug).toBe('hello-world-bound');
+  });
+
+  // A run read only `invalid_input` in the server's log, and read the server's code to learn which field.
+  it('says which field a refused input lacks, in the refusal it logs', async () => {
+    const failure: unknown = await resolverFor()({
+      element: element({ action: 'post-page' }),
+      flat: {},
+      routeParams: {},
+      queryParams: {},
+      req: buildReq(),
+      spaceId: 1,
+      environment: 'main',
+      user: undefined,
+      signal: new AbortController().signal
+    }).catch((error: unknown) => error);
+
+    expect((failure as Error).message).toBe('Action "post-page" refused this render: invalid_input — Invalid input: slug');
   });
 
   it('takes the page route params as input', async () => {

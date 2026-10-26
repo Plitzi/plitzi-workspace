@@ -49,6 +49,14 @@ export interface BenchLine {
   overBudget?: number;
   /** The run's findings as numbers, a pattern each (`findings/`): what a fix is seen to hold by, run after run. */
   indicators?: RunIndicators;
+  /**
+   * What a task done cost every agent's harness together — the lead's and the reviewers' too (`spent`): its tokens, and
+   * its dollars at the API's prices when every model has one. Runs were compared by the CLI's answers alone.
+   */
+  tokensPerTask?: number;
+  costPerTask?: number;
+  /** How much of every token was the context read again, in whole percent. */
+  cachedPct?: number;
 }
 
 const median = (values: readonly number[]): number | undefined => {
@@ -97,7 +105,16 @@ export const benchOf = (report: RunReport, cli: string): BenchLine => {
     repeated: metrics.cost.repeated.length,
     cliMinutes: metrics.cost.cliMinutes,
     overBudget: metrics.cost.byCommand.filter(each => each.overBudget !== undefined).length,
-    indicators: report.indicators
+    indicators: report.indicators,
+    ...(report.spend && done > 0
+      ? {
+          tokensPerTask: Math.round(report.spend.byAgent.reduce((all, each) => all + each.tokens, 0) / done),
+          cachedPct: report.spend.cachedShare,
+          ...(report.spend.cost === undefined
+            ? {}
+            : { costPerTask: Math.round((report.spend.cost / done) * 100) / 100 })
+        }
+      : {})
   };
 };
 
@@ -139,5 +156,13 @@ export const benchText = (lines: readonly BenchLine[]): string[] =>
           return of === undefined
             ? `| ${line.runId} | — | — | — | — | — | — | — | — | — | — | — |`
             : `| ${line.runId} | ${cell(of.easeMedian)} | ${String(of.findings.plitzi)} · ${String(of.findings.lead)} · ${String(of.findings.agent)} · ${String(of.findings.machine)} | ${cell(of.notOwnPct, '%')} | ${String(of.flakyChecks)} | ${String(of.linesFailing)} | ${String(of.sessionBreaks)} | ${String(of.explainMissed)} | ${String(of.workarounds)} | ${String(of.saidByMany)} | ${String(of.refusedAsWritten)} | ${tokens(of.harnessTokensPerTask)} |`;
-        })
+        }),
+        '',
+        // What a task cost every harness together, the lead's included — runs before it kept none (—).
+        '| Run | Tokens / task (all agents) | Cost / task (API prices) | Read again |',
+        '| --- | --- | --- | --- |',
+        ...lines.map(
+          line =>
+            `| ${line.runId} | ${tokens(line.tokensPerTask)} | ${line.costPerTask === undefined ? '—' : `$${line.costPerTask.toFixed(2)}`} | ${cell(line.cachedPct, '%')} |`
+        )
       ];

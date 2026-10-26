@@ -1,6 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto';
 
 import { triggerCacheMs } from '@plitzi/sdk-shared/actions';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { serverInputOf } from '@plitzi/sdk-shared/schema';
 
 import { ActionRunError } from './errors';
 import { createRenderShare } from './renderShare';
@@ -91,7 +93,10 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
      */
     const deployment = req.ctx.spaceDeployment;
     const at = { environment: deployment?.environment ?? environment, revision: deployment?.revision ?? 0 };
-    const { action: actionId, input = {} } = element.attributes as ActionElementAttributes;
+    const { action: actionId } = element.attributes as ActionElementAttributes;
+    // What it was saved with, and what of its bound input reads the address alone: the browser asks with the same.
+    const bound = serverInputOf(element, { routeParams, queryParams });
+    const input = isRecord(bound) ? bound : {};
     if (!actionId) {
       return undefined;
     }
@@ -207,7 +212,7 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
         if (error instanceof ActionRunError) {
           const status = error.reason === 'aborted' ? 'aborted' : 'failed';
           throw new RenderRunFailure(
-            `Action "${actionId}" refused this render: ${error.reason}`,
+            `Action "${actionId}" refused this render: ${error.reason}${error.message && error.message !== error.reason ? ` — ${error.message}` : ''}`,
             summaryOf({ status, steps: error.steps ?? [], error: error.message }),
             { cause: error }
           );

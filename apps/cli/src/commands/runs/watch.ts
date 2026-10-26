@@ -13,7 +13,7 @@ import { startPreview, startTaskPreview } from '../../runs/preview';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { buildReport, readSummary, reportBrief, reportText, writeSummary } from '../../runs/report';
 import { activeRuns, loadRun, pruneRuns } from '../../runs/run';
-import { runsState, runText, viewRun } from '../../runs/view';
+import { boardLines, runsState, runText, viewRun } from '../../runs/view';
 
 import type { RunCommandOptions } from './shell';
 import type { ExperienceFlags } from '../../runs/experience';
@@ -62,7 +62,10 @@ const watchForLead = (runId: string | undefined, options: WatchRunOptions): Prom
       });
       const { view, ...rest } = news;
 
-      return { ...rest, ...(view ? { status: view.status, done: view.done, total: view.total } : {}) };
+      return {
+        ...rest,
+        ...(view ? { status: view.status, done: view.done, total: view.total, board: boardLines(view) } : {})
+      };
     },
     news =>
       news.gone
@@ -71,7 +74,9 @@ const watchForLead = (runId: string | undefined, options: WatchRunOptions): Prom
           ? `Nothing new for the lead in ${durationText(options.timeout ?? FOLLOW_MS)} (${String(news.done)} of ${String(news.total)} done): watch again.`
           : [
               chalk.bold(`For the lead (${String(news.done)} of ${String(news.total)} done):`),
-              ...news.fresh.map(item => `  ⚠ ${item.text}`)
+              ...news.fresh.map(item => `  ⚠ ${item.text}`),
+              // The board with it: what woke the lead, and where every task stands — no `run status` after each watch.
+              ...(news.board && news.board.length > 0 ? [chalk.dim('The board:'), ...news.board] : [])
             ].join('\n')
   );
 

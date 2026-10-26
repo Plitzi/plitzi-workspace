@@ -255,6 +255,12 @@ export type RscState = {
    */
   refreshing?: Record<string, boolean>;
   /**
+   * Why each server element failed on the page server since the page loaded, by id — said while developing (`$failed`)
+   * and kept though the browser asked again and was answered: a provider the first paint and a crawler never get, which
+   * `plitzi page check` says (`window.__plitzi.serverFailures()`).
+   */
+  failures?: Record<string, string>;
+  /**
    * Names this SDK root, so the refreshes asked through any store under it — each element writes through a scoped store
    * of its own — are known to each other: one request per question, the newest question winning.
    */

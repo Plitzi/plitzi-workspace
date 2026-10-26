@@ -3,16 +3,8 @@ import { clip, textWidth } from './monitorCanvas';
 import { flowStages, nameOf } from './monitorFlow';
 import { AGENT_LOOK, since, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
 import { agentAt, shortModel } from './monitorSide';
-import {
-  BARS,
-  cachedShare,
-  costInAll,
-  costShort,
-  SORT_WORDS,
-  sparkline,
-  spendTable,
-  tokensShort
-} from './monitorSpend';
+import { BARS, SORT_WORDS, sparkline, spendTable, tokensShort } from './monitorSpend';
+import { cachedShare, costInAll, costShort } from '../../runs/spent';
 
 import type { MonitorUi, Paint } from './monitorModel';
 import type { Rect } from './monitorSide';

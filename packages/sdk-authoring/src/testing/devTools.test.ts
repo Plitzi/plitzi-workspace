@@ -31,7 +31,8 @@ describe('the dev tools, read from the page', () => {
         flows: () => [failed, { nonsense: true }],
         state: () => ({ category: 'paper' }),
         sources: () => ({ apiContainer_site: { data: {} } }),
-        element: (id: string) => ({ id, visible: true })
+        element: (id: string) => ({ id, visible: true }),
+        serverFailures: () => ({ dmThread: 'invalid_input — Invalid input: with', odd: 3 })
       }
     });
 
@@ -40,13 +41,14 @@ describe('the dev tools, read from the page', () => {
       flows: [failed],
       state: { category: 'paper' },
       sources: { apiContainer_site: { data: {} } },
-      element: { id: 'count', visible: true }
+      element: { id: 'count', visible: true },
+      serverFailures: { dmThread: 'invalid_input — Invalid input: with' }
     });
   });
 
   it('says there is nothing to read on a page without its dev tools', () => {
     vi.stubGlobal('window', {});
 
-    expect(readDevToolsInPage({ state: true })).toEqual({ available: false, flows: [] });
+    expect(readDevToolsInPage({ state: true })).toEqual({ available: false, flows: [], serverFailures: {} });
   });
 });

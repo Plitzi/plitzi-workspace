@@ -89,8 +89,14 @@ export const withServedValues = (check: string, values: Readonly<Record<string, 
  * Where the copy's server answers, within `ms`: the port it says it took, in the record it writes once it listens — or the
  * port asked, once that answers (a server that writes no record). None when neither does.
  */
-const answeringWhere = async (record: string, asked: number, ms: number): Promise<number | undefined> => {
-  for (const until = Date.now() + ms; Date.now() < until;) {
+const answeringWhere = async (
+  record: string,
+  asked: number,
+  ms: number,
+  /** Whether the server has already ended: one that stopped on an error answers nothing, and is not waited on. */
+  ended: () => boolean = () => false
+): Promise<number | undefined> => {
+  for (const until = Date.now() + ms; Date.now() < until && !ended();) {
     const value: unknown = await fs
       .readFile(record, 'utf-8')
       .then(text => JSON.parse(text) as unknown)
@@ -159,7 +165,11 @@ export const serveCopy = async (
   cache: string,
   /** What the agent does once it has put right what kept the copy from being served: `complete` by default. */
   { again = 'complete again' }: { again?: string } = {}
-): Promise<{ url: string; port: number; stop: () => void; keep: () => number | undefined } | { problem: string }> => {
+): Promise<
+  | { url: string; port: number; stop: () => void; keep: () => number | undefined }
+  /** `ofTheCopy`: the copy's server itself did not come up — its code, or a server of the agent's — the work's to put right. */
+  | { problem: string; ofTheCopy?: true }
+> => {
   // Kept from a picture before: stopped — the copy is served here for this command, one server at a time on it.
   await stopKept(cache);
   // One of the agent's own in the copy (npm start) holds its state too: stopped here, said — a run's agents stopped
@@ -219,19 +229,30 @@ export const serveCopy = async (
   const stop = (): void => {
     stopTree(child, { group: true });
   };
-  const where = await answeringWhere(path.join(work, record), asked, 60_000);
+  // A server that stopped on an error waited out the whole minute before saying so.
+  const server = { ended: false };
+  child.once('exit', () => {
+    server.ended = true;
+  });
+  const where = await answeringWhere(path.join(work, record), asked, 60_000, () => server.ended);
   const port = where ?? asked;
   const url = `http://127.0.0.1:${String(port)}`;
   await log.close();
   if (where === undefined) {
     stop();
     const said = tail((await fs.readFile(logFile, 'utf-8').catch(() => '')).trim());
+    // A run's copy imported `node:crypto` into its functions: the server stopped on the build's error, and the lines
+    // were said unanswerable — "amend the line" — when the copy's own code was what failed.
+    const failedOnError = said.some(line => /\b\w*Error\b|\berror\b|cannot be imported|Cannot find/.test(line));
 
     return {
       problem: [
-        `the copy's server did not answer on ${url} within a minute — a server of your own still running in the copy (npm start) is the usual cause: stop it and ${again}. What it said (${logFile}):`,
+        failedOnError
+          ? `the copy's server stopped on an error before it answered on ${url} — the copy's own code, as it says: put it right and ${again}. What it said (${logFile}):`
+          : `the copy's server did not answer on ${url}${server.ended ? ', and ended' : ' within a minute'} — a server of your own still running in the copy (npm start) is the usual cause: stop it and ${again}. What it said (${logFile}):`,
         ...said
-      ].join('\n')
+      ].join('\n'),
+      ofTheCopy: true
     };
   }
 
@@ -316,13 +337,14 @@ export const checkAcceptance = async (
   // A copy lent by the caller is the caller's to stop (`letGo`): stopped here, the approved tasks' lines `task complete`
   // runs next on it read "nothing answers" — a run's t-room-side was refused three times as breaking five of them.
   const own = serving === undefined;
+  // A copy that could not be served answers no line: the line's, unless the copy's own server is what failed.
   if (served && 'problem' in served) {
     return checked.map(each => ({
       said: each.said,
       check: each.check,
       ok: false,
       output: [served.problem],
-      unanswered: true
+      ...(served.ofTheCopy === true ? {} : { unanswered: true as const })
     }));
   }
 

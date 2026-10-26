@@ -158,5 +158,10 @@ export const lookText = (looked: Looked): string =>
     ...(looked.notBeside
       ? [chalk.dim(`Not set beside the run before it — that nothing else moved is read with it: --before`)]
       : []),
+    ...(looked.besideNothing
+      ? [
+          'Beside the run before it: nothing else of its pages moved — every element, box and style outside its parts reads the same on both'
+        ]
+      : []),
     `Then: plitzi task review ${looked.task} --approve | --changes "…"`
   ].join('\n');

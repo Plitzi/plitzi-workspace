@@ -115,3 +115,37 @@ describe('what the space’s lint passed with but warned of', () => {
     expect(lintWarnings('Clean — 0 errors, 0 warnings.')).toEqual([]);
   });
 });
+
+// A copy importing `node:crypto` into its functions passed its tests under `node --test`; only its server, failing to
+// start, said so. The checks build them as the runner does, by the project's installed sdk-server.
+describe('a run’s checks of the functions', () => {
+  it('build them by the project’s sdk-server, a problem where it is — the copy’s files, the project’s modules', async () => {
+    const root = await projectWith('console.log("ok · 1 pages · 0 warnings · 0 suggestions");\n');
+    const copy = await projectWith('console.log("ok · 1 pages · 0 warnings · 0 suggestions");\n');
+    const server = path.join(root, 'node_modules', '@plitzi', 'sdk-server');
+    await fs.mkdir(server, { recursive: true });
+    await fs.writeFile(
+      path.join(server, 'package.json'),
+      JSON.stringify({ name: '@plitzi/sdk-server', type: 'module', exports: { './functions-runner': './runner.js' } })
+    );
+    await fs.writeFile(
+      path.join(server, 'runner.js'),
+      'export const buildFunctions = async source => {\n' +
+        "  const at = Object.keys(source).find(file => source[file].includes('node:'));\n" +
+        "  if (at) { throw Object.assign(new Error('refused'), { problems: [{ file: at, line: 1, message: '\"node:crypto\" cannot be imported' }] }); }\n" +
+        "  return { code: '', bytes: 0 };\n};\n"
+    );
+    await fs.mkdir(path.join(copy, 'src', 'functions'), { recursive: true });
+    await fs.writeFile(path.join(copy, 'src', 'functions', 'index.ts'), "import { createHash } from 'node:crypto';\n");
+
+    const checked = await projectChecks(copy, root);
+    expect(checked.ok).toBe(false);
+    expect(checked.steps.find(step => step.name === 'functions')).toEqual({
+      name: 'functions',
+      ok: false,
+      said: ['src/functions/index.ts:1: "node:crypto" cannot be imported']
+    });
+    await fs.rm(root, { recursive: true, force: true });
+    await fs.rm(copy, { recursive: true, force: true });
+  });
+});

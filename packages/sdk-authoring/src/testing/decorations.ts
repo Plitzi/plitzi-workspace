@@ -512,9 +512,18 @@ export const compareDecorations = (
 
     const ourLooks = looksOf(a, here.regions, section);
     const theirLooks = looksOf(b, there.regions, section);
-    const absentLooks = [...theirLooks.keys()].filter(look => !ourLooks.has(look));
-    const absent = absentLooks.map(look => `${look} (${theirLooks.get(look) ?? ''})`);
     const box = there.regions.find(region => region.name === section);
+    // A look whose every layer this page has too, the same — its section a little wider or narrower here, so it is
+    // "across the section" on one side alone — is no look gone: a run's look said the header's gradient taken away on
+    // every page of two tasks that never touched the header.
+    // The same layer: its detail, and over or under a picture — a light behind a photo is not the one over it.
+    const sameAs = (layer: PageDecoration): string => `${layer.detail}|${layer.stack ?? ''}`;
+    const ourLayers = new Set(a.map(sameAs));
+    const absentLooks = [...theirLooks.keys()].filter(
+      look =>
+        !ourLooks.has(look) && !b.filter(layer => lookOf(layer, box) === look).every(layer => ourLayers.has(sameAs(layer)))
+    );
+    const absent = absentLooks.map(look => `${look} (${theirLooks.get(look) ?? ''})`);
     const absentLayers = b.filter(layer => absentLooks.includes(lookOf(layer, box))).slice(0, ABSENT_LAYERS);
 
     return missing.length > 0 || extra.length > 0 || absent.length > 0

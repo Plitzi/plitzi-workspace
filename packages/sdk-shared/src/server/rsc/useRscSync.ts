@@ -2,7 +2,7 @@ import { useEffect, useId } from 'react';
 
 import { useStoreById } from '@plitzi/nexus/react';
 
-import refreshRsc, { currentRscLocation, releaseRscRequests } from './refreshRsc';
+import refreshRsc, { currentRscLocation, noteRscFailures, releaseRscRequests } from './refreshRsc';
 import { useCommonStore, useCommonStoreSync } from '../../store';
 
 import type { CommonState, ServerSSR } from '../../types';
@@ -42,6 +42,14 @@ const useRscSync = (ssr?: ServerSSR) => {
   );
 
   useEffect(() => () => releaseRscRequests(instance), [instance]);
+
+  // What the page server could not resolve for the first paint, kept though a refresh answers it later.
+  const initial = rscData?.serverData;
+  useEffect(() => {
+    if (initial) {
+      noteRscFailures(store, initial);
+    }
+  }, [store, initial]);
 
   useEffect(() => {
     if (!enabled) {

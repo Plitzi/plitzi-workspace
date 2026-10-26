@@ -206,3 +206,16 @@ describe('compareDecorations', () => {
     ).toEqual(['radial-gradient under a picture (radial-gradient rgba(199, 168, 107, 0.52))']);
   });
 });
+
+// A run's look said the header's gradient taken away on every page of two tasks that never touched the header: its
+// section a little narrower before, the same gradient was "across the section" on one side alone.
+describe('compareDecorations, of one layer on both sides', () => {
+  it('says nothing gone when the same layer spans its section on one side alone', () => {
+    const glow = { ...layer('gradient', 'linear-gradient rgba(10, 10, 10, 0.4)', 10), x: 0, width: 900 };
+    const here = [{ name: 'header#site-header', x: 0, y: 0, width: 1600, height: 80 }];
+    const there = [{ name: 'header#site-header', x: 0, y: 0, width: 1400, height: 80 }];
+
+    expect(compareDecorations({ layers: [glow], regions: here }, { layers: [glow], regions: there })).toEqual([]);
+  });
+});
+

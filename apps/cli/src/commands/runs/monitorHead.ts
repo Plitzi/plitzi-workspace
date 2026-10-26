@@ -1,6 +1,7 @@
 import { clip, textWidth } from './monitorCanvas';
 import { hhmm, minutesText, TASK_LOOK, toneOf, VIEWS } from './monitorModel';
-import { costInAll, costShort, spentInAll, tokensShort } from './monitorSpend';
+import { spentInAll, tokensShort } from './monitorSpend';
+import { costInAll, costShort } from '../../runs/spent';
 
 import type { MonitorMode, MonitorUi, Paint, PreviewShown } from './monitorModel';
 import type { Monitored } from '../../runs/monitor';

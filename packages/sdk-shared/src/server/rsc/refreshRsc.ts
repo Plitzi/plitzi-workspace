@@ -1,6 +1,6 @@
 import { authFailureFromResponse, reportAuthFailure } from '../../auth';
 import { getPaths, matchRoutePath } from '../../navigation';
-import { collectServerElements, hasServerElements } from '../../schema/serverElements';
+import { collectServerElements, hasServerElements, rscFailureOf } from '../../schema/serverElements';
 // The recorder itself rather than the barrel, which also exports a React hook this module has no business loading.
 import { recordRenderActionRuns } from '../../store/actionRuns/actionRunsRecorder';
 
@@ -158,6 +158,21 @@ export const releaseRscRequests = (instance: string): void => {
   requestsByInstance.delete(instance);
 };
 
+/** Each element of a payload the page server could not resolve, kept with why — its first failure, not overwritten. */
+export const noteRscFailures = (store: StoreApi<CommonState>, serverData: Record<string, unknown>): void => {
+  const failed = Object.entries(serverData).flatMap(([id, value]) => {
+    const why = rscFailureOf(value);
+
+    return why === undefined ? [] : [[id, why] as const];
+  });
+  if (failed.length === 0) {
+    return;
+  }
+
+  const kept = store.get('rsc.failures') ?? {};
+  store.set('rsc.failures', { ...Object.fromEntries(failed), ...kept });
+};
+
 /**
  * The answer written, unless a later request asked for the same thing.
  *
@@ -175,6 +190,7 @@ const writeAnswer = (
 ) => {
   const { ids, seq } = request;
   store.batch(() => {
+    noteRscFailures(store, serverData);
     if (ids?.length) {
       Object.entries(serverData).forEach(([id, value]) => {
         if ((requests.asked.get(id) ?? 0) <= seq && (requests.asked.get(WHOLE) ?? 0) <= seq) {

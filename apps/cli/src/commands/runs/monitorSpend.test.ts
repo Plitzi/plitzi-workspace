@@ -1,15 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  cachedShare,
-  costInAll,
-  costShort,
-  sortSpend,
-  sparkline,
-  spendTable,
-  spentInAll,
-  tokensShort
-} from './monitorSpend';
+import { sortSpend, sparkline, spendTable, spentInAll, tokensShort } from './monitorSpend';
+import { cachedShare, costInAll, costShort } from '../../runs/spent';
 
 import type { Spent } from '../../runs/spent';
 

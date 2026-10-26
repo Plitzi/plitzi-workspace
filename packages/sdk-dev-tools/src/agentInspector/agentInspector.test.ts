@@ -96,7 +96,8 @@ describe('window.__plitzi', () => {
         }
       }
     },
-    runtime: { state: { count: 2 }, sources: { state: { count: 2 } }, elements: { cart: { open: true } } }
+    runtime: { state: { count: 2 }, sources: { state: { count: 2 } }, elements: { cart: { open: true } } },
+    rsc: { failures: { dmThread: 'Action "dm-thread" refused this render: invalid_input — Invalid input: with' } }
   }));
   const provider = createStore<Record<string, unknown>>(() => ({
     runtime: { sources: { apiContainer_site: { data: { total: 3 }, isLoading: false, refetch: () => undefined } } }
@@ -229,6 +230,14 @@ describe('window.__plitzi', () => {
       attributes: { title: 'Lamp' }
     });
     expect(reader.element('card-title')).toMatchObject({ type: 'heading', inComponent: 'card' });
+  });
+
+  // A conversation's provider failed on the page server on every load and the browser answered it after: no check saw it.
+  it('says why each server element failed on the page server, though the browser answered it since', () => {
+    expect(inspector.serverFailures()).toEqual({
+      dmThread: 'Action "dm-thread" refused this render: invalid_input — Invalid input: with'
+    });
+    expect(inspector.help()).toContain('serverFailures()');
   });
 
   it('keeps the last flows, and says them in the console on request', () => {

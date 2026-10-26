@@ -3,6 +3,7 @@ import { briefsText } from './briefs';
 import { FINDING_OWNERS } from './findings';
 import { kindOf } from './harness';
 import { tokensText } from './runMetrics';
+import { costShort } from './spent';
 
 import type { Finding } from './findings';
 import type { HarnessUsage } from './harness';
@@ -99,6 +100,8 @@ export const consumptionText = (report: RunReport): string[] => {
     : [
         '## What it spent',
         '',
+        ...spendText(report.spend),
+        ...(report.spend ? [''] : []),
         '| Agent | Ran on | Rounds | Commands | CLI printed (chars) | Harness turns | Harness read (tokens) |',
         '| --- | --- | --- | --- | --- | --- | --- |',
         ...[...byAgent].map(
@@ -167,5 +170,52 @@ export const glanceText = (report: RunReport): string[] => {
       : [
           `- The agents’ harnesses read ${tokensText(indicators.harnessTokens)} tokens${indicators.harnessTokensPerTask === undefined ? '' : `, ${tokensText(indicators.harnessTokensPerTask)} a task done`}${report.lead ? `; the lead ${tokensText(report.lead.processed)}` : ''}`
         ])
+  ];
+};
+
+/**
+ * What the run cost, in a few lines: at the API's prices when every model has one — with how much of every token was
+ * the context read again — by agent, and the pieces that cost the most. Said alike in the report and the feedback.
+ */
+export const spendText = (spend: RunReport['spend']): string[] => {
+  if (!spend) {
+    return [];
+  }
+
+  const tokens = spend.byAgent.reduce((all, each) => all + each.tokens, 0);
+  const byAgent = [...spend.byAgent]
+    .sort((a, b) => (b.cost ?? b.tokens) - (a.cost ?? a.tokens))
+    .map(
+      each => `${each.agent} ${each.cost === undefined ? `${tokensText(each.tokens)} tokens` : costShort(each.cost)}`
+    )
+    .join(' · ');
+  const pieces = spend.costliest.map(
+    each =>
+      `${each.piece === 'review' ? `${each.agent}'s review of ${each.task}` : `${each.agent} at ${each.task}`} ${costShort(each.cost)} (${String(each.turns)} turns)`
+  );
+
+  return [
+    spend.cost === undefined
+      ? `- No cost: a model it ran on has no price here — ${tokensText(tokens)} tokens, ${String(spend.cachedShare)}% of them its context read again; ${byAgent}`
+      : `- At the API's prices: ${costShort(spend.cost)} — ${tokensText(tokens)} tokens, ${String(spend.cachedShare)}% of them its context read again; ${byAgent}`,
+    ...(pieces.length > 0 ? [`- The costliest pieces: ${pieces.join(' · ')}`] : [])
+  ];
+};
+
+/**
+ * Who reviewed the UI of the tasks that change it: a designer, or the lead without one — a run's three were all the
+ * lead's, its designer at a task of its own, and no line of the report said so.
+ */
+export const uiReviewsText = (tasks: readonly Pick<RunReport['tasks'][number], 'id' | 'design'>[]): string[] => {
+  const byLead = tasks.filter(task => task.design === 'UI by the lead').map(task => task.id);
+  const byDesigner = tasks.filter(
+    task => task.design?.startsWith('UI by ') === true && task.design !== 'UI by the lead'
+  );
+  if (byLead.length === 0) {
+    return [];
+  }
+
+  return [
+    `- UI reviews: ${String(byDesigner.length)} by a designer, ${String(byLead.length)} by the lead without one (${byLead.join(', ')})${byDesigner.length === 0 ? ' — no designer reviewed any: one at a task of its own reviews nothing meanwhile; a refactor with nothing to see is a developer’s' : ''}`
   ];
 };

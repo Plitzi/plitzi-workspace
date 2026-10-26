@@ -1,3 +1,5 @@
+import { costInAll } from '../../runs/spent';
+
 import type { Spent } from '../../runs/spent';
 
 /**
@@ -14,16 +16,6 @@ export const tokensShort = (tokens: number): string =>
     : tokens >= 1000
       ? `${String(Math.round(tokens / 1000))}k`
       : String(tokens);
-
-/** Dollars in a few characters: $0.42, $12.4, $130 — under a cent, said as such. */
-export const costShort = (usd: number): string =>
-  usd < 0.01
-    ? '<$0.01'
-    : usd < 10
-      ? `$${usd.toFixed(2)}`
-      : usd < 100
-        ? `$${usd.toFixed(1)}`
-        : `$${String(Math.round(usd))}`;
 
 /**
  * What the spend's rows are ordered by — `s` turns to the next: what costs (in and out), that a session and a task, what
@@ -152,17 +144,6 @@ export const spendTable = (
 
 /** What the run's agents spent in all — every token their harnesses counted. */
 export const spentInAll = (spend: readonly Spent[]): number => sum(spend, totalOf);
-
-/** What the run's agents cost in all at the API's prices — none when one of them spent on a model with no price. */
-export const costInAll = (spend: readonly Spent[]): number | undefined =>
-  spend.length === 0 || spend.some(each => each.cost === undefined) ? undefined : sum(spend, each => each.cost ?? 0);
-
-/** How much of every token counted was the context read again from the cache, in whole percent. */
-export const cachedShare = (spend: readonly Spent[]): number => {
-  const total = spentInAll(spend);
-
-  return total === 0 ? 0 : Math.round((sum(spend, each => each.cached) / total) * 100);
-};
 
 /**
  * The spend's chart: each column a bar's height, 0 for none to 8 for the busiest — the minutes put together when there

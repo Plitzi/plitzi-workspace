@@ -18,7 +18,7 @@ import { viewTask } from '../../runs/taskStore';
 import { checkAccount } from '../check/account';
 import { pageFor } from '../check/space';
 
-import type { LookOptions } from './review';
+import type { LookOptions } from './lookOptions';
 import type { Preview } from '../../runs/preview';
 import type { RunContext } from '../../runs/run';
 
@@ -102,7 +102,8 @@ export const readAsFor = async (
     routes.length === 0
       ? []
       : redirectedPaths(
-          (await runSelf(dir, ['page', 'check', ...routes, '--width', '1440', '--url', url, '--guest', '--json'])).output
+          (await runSelf(dir, ['page', 'check', ...routes, '--width', '1440', '--url', url, '--guest', '--json']))
+            .output
         );
   if (sent.length === 0) {
     return declared;

@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { serveCopy } from './acceptance';
+import { checkAcceptance, serveCopy } from './acceptance';
 
 /**
  * The acceptance's server was asked for :61515, found it taken — agents checking at once — and took :62189, as
@@ -64,5 +64,35 @@ describe("the copy's server for an acceptance", () => {
         served.stop();
       }
     }
+  }, 30_000);
+});
+
+// A run's copy imported `node:crypto` into its functions: its server stopped on the build's error, the check waited out
+// a minute, and every line was said unanswerable — "amend the line" — when the copy's own code had failed.
+describe('a copy whose server stops on an error', () => {
+  it('is said at once, as the copy’s own — its lines failed by the work, never unanswerable', async () => {
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-broken-copy-'));
+    folders.push(work);
+    await fs.writeFile(
+      path.join(work, 'server.mjs'),
+      'throw new Error(\'rooms.ts:1 "node:crypto" cannot be imported: functions import their own files\');\n'
+    );
+    await fs.writeFile(path.join(work, 'package.json'), JSON.stringify({ scripts: { start: 'node server.mjs' } }));
+    await fs.mkdir(path.join(work, 'cache'));
+
+    const started = Date.now();
+    const results = await checkAcceptance(
+      [{ said: 'The page reads', check: 'plitzi page check / --url $PLITZI_URL' }],
+      {
+        work,
+        root: work,
+        cache: path.join(work, 'cache')
+      }
+    );
+
+    expect(Date.now() - started).toBeLessThan(20_000);
+    expect(results[0]).toMatchObject({ ok: false });
+    expect(results[0]).not.toHaveProperty('unanswered');
+    expect(results[0]?.output?.[0]).toMatch(/stopped on an error before it answered .* the copy's own code/);
   }, 30_000);
 });

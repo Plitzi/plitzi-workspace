@@ -1,7 +1,8 @@
 import { listedTasks, timeOf, withText, withTone } from './monitorBoard';
 import { clip, textWidth } from './monitorCanvas';
 import { AGENT_LOOK, since, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
-import { BARS, cachedShare, costInAll, costShort, sparkline, spentInAll, tokensShort } from './monitorSpend';
+import { BARS, sparkline, spentInAll, tokensShort } from './monitorSpend';
+import { cachedShare, costInAll, costShort } from '../../runs/spent';
 
 import type { MonitorUi, Paint, PreviewShown } from './monitorModel';
 import type { AgentLine, Monitored } from '../../runs/monitor';

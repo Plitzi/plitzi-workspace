@@ -33,7 +33,8 @@ export { taskBlock, taskCheck, taskComplete, taskNote, taskProgress, taskUnblock
 export { taskReassign, taskRevert } from './reassign';
 export { taskLook, taskReview } from './review';
 export { taskShow } from './show';
-export type { LookOptions, ReviewOptions } from './review';
+export type { LookOptions } from './lookOptions';
+export type { ReviewOptions } from './review';
 export { taskContextCommand } from './brief';
 export { spaceImpact, spaceOverview } from './space';
 export {

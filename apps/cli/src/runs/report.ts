@@ -19,9 +19,10 @@ import { noticesByOwner, noticeText } from './notices';
 import { taskPaths } from './paths';
 import { RunRefusal } from './refusal';
 import { flowText } from './reportFlow';
-import { consumptionText, findingsText, glanceText, reviewsText } from './reportHead';
+import { consumptionText, findingsText, glanceText, reviewsText, uiReviewsText } from './reportHead';
 import { completionsOf, inputOf, loadRun, logRun, readApproved, readRunLog, requireNoTask, updateRecord } from './run';
 import { harnessOf, runMetrics } from './runMetrics';
+import { cachedShare, costInAll, costliestPieces, spentOf } from './spent';
 import { readTaskReports } from './taskReports';
 import { requestsOf } from './tasks';
 import { readReviewed, viewTask } from './taskStore';
@@ -36,6 +37,7 @@ import type { Finding, RunIndicators } from './findings';
 import type { HarnessUsage } from './harness';
 import type { LoadedRun, RunContext } from './run';
 import type { RunMetrics } from './runMetrics';
+import type { PieceCost } from './spent';
 import type { TaskRoundReport } from './taskReports';
 
 /**
@@ -118,6 +120,17 @@ export interface RunReport {
   agents: AgentTimeline[];
   /** What the agents' briefs weighed, part by part (`briefs.ts`): none when none was read. */
   briefs?: Briefs;
+  /**
+   * What every agent's harness spent — the lead's and the reviewers' too — as each piece of work ended (`spent`): what
+   * it cost at the API's prices when every model has one, how much was its context read again, and the costliest pieces.
+   * A run's report said tokens alone, and its $6.75 — a third of it one designer task — was read off its log by hand.
+   */
+  spend?: {
+    cost?: number;
+    cachedShare: number;
+    byAgent: { agent: string; tokens: number; cost?: number }[];
+    costliest: PieceCost[];
+  };
 }
 
 interface LogLine {
@@ -286,6 +299,8 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     openedAt: record.openedAt,
     now
   });
+  const spent = spentOf(runLog, usage);
+  const runCost = costInAll(spent);
   const leads = usage.filter(line => line.by.startsWith('lead'));
   const lead = await harnessUsage({
     sessions: [...new Set(leads.flatMap(line => (line.session ? [line.session] : [])))],
@@ -336,6 +351,20 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     joined,
     requests,
     proposals,
+    ...(spent.length > 0
+      ? {
+          spend: {
+            ...(runCost === undefined ? {} : { cost: runCost }),
+            cachedShare: cachedShare(spent),
+            byAgent: spent.map(each => ({
+              agent: each.agent,
+              tokens: each.input + each.output + each.cached,
+              ...(each.cost === undefined ? {} : { cost: each.cost })
+            })),
+            costliest: costliestPieces(runLog, 5)
+          }
+        }
+      : {}),
     ...(record.reconciliation
       ? {
           reconciliation: {
@@ -490,6 +519,7 @@ export const reportText = (
         `| ${task.id}${task.kind === 'integration' ? ' (integration)' : ''} | ${task.role} | ${task.status} | ${task.agents.join(', ') || '—'} | ${task.minutes === undefined ? '—' : String(task.minutes)} / ${String(task.estimateMinutes)} | ${String(task.rounds)}${task.design ? ` · ${task.design}` : ''} | ${String(task.cuts)} | ${task.files.join(', ') || '—'} |`
     ),
     '',
+    ...(uiReviewsText(report.tasks).length > 0 ? [...uiReviewsText(report.tasks), ''] : []),
     ...reviewsText(report),
     ...timelinesText(report.agents),
     ...consumptionText(report),

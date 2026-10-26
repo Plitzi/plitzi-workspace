@@ -1,9 +1,10 @@
 import { runScript, scriptsOf, stepsOf, tail } from '../commands/verify';
+import { functionsBuildProblems } from '../doctor/functions';
 
 /**
  * The project's checks over a copy of it — a task's, or the run's whole before the final merge: what `plitzi verify`
  * runs (author with no warning, the space's lint, types, lint, tests, format), each the project's own script, in the
- * copy, with the project's installed binaries. The pages are not among them: they need the server, and are looked at
+ * copy, with the project's installed binaries — and its functions, built as the runner builds them (`functions`). The pages are not among them: they need the server, and are looked at
  * by whoever reviews.
  */
 
@@ -69,6 +70,9 @@ export const projectChecks: CheckRunner = async (dir, projectRoot, { final = fal
     return { ok: true, steps: [], none: 'the project has no author, lint, typecheck, test or format script to run' };
   }
 
+  // Its functions built as the runner builds them, beside the rest: a copy importing `node:crypto` passed its tests under
+  // `node --test`, and only its server, failing to start, said so — the checks said nothing.
+  const functions = functionsBuildProblems(dir, projectRoot);
   // Whether the space authored, whatever author suggested: what the steps after it read is there.
   const space = { authors: false };
   const run = async (step: (typeof steps)[number]): Promise<CheckStep> => {
@@ -120,6 +124,8 @@ export const projectChecks: CheckRunner = async (dir, projectRoot, { final = fal
     // A space that does not author stops here; one that authors with suggestions to write the short way does not —
     // the steps after it still say what they find, or a failing typecheck goes to review unseen behind them.
     if (!authored.ok && !space.authors) {
+      await functions;
+
       return { ok: false, steps: results };
     }
   }
@@ -136,6 +142,14 @@ export const projectChecks: CheckRunner = async (dir, projectRoot, { final = fal
     })
   );
   results.push(...later);
+  const built = await functions;
+  if (built !== undefined) {
+    results.push({
+      name: 'functions',
+      ok: built.length === 0,
+      ...(built.length === 0 ? {} : { said: built.map(problem => `${problem.where}: ${problem.message}`) })
+    });
+  }
 
   return { ok: results.every(result => result.ok), steps: results };
 };

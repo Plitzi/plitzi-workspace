@@ -50,6 +50,17 @@ describe('the bench of a project’s runs', () => {
     expect(text[2]).toContain('| 182k | 7.2M | 2 |');
   });
 
+  // Runs were compared by the CLI's answers alone: what a task cost every harness, the lead's included, was in no row.
+  it('says what a task cost all the agents, at the API’s prices, and what was read again — — for a run that kept none', () => {
+    const text = benchText([
+      line('shop-polish'),
+      line('shop-next', { tokensPerTask: 4_300_000, costPerTask: 2.25, cachedPct: 96 })
+    ]);
+
+    expect(text).toContain('| shop-next | 4.3M | $2.25 | 96% |');
+    expect(text).toContain('| shop-polish | — | — | — |');
+  });
+
   it('says there is nothing to compare yet, rather than an empty table', () => {
     expect(benchText([])).toEqual([
       'No run of this project was measured yet: each report keeps its run’s measures beside it.'

@@ -167,3 +167,62 @@ export const spentPerMinute = (log: readonly Record<string, unknown>[], now: Dat
 
   return minutes;
 };
+
+/** Dollars in a few characters: $0.42, $12.4, $130 — under a cent, said as such. */
+export const costShort = (usd: number): string =>
+  usd < 0.01
+    ? '<$0.01'
+    : usd < 10
+      ? `$${usd.toFixed(2)}`
+      : usd < 100
+        ? `$${usd.toFixed(1)}`
+        : `$${String(Math.round(usd))}`;
+
+/** What the run's agents cost in all at the API's prices — none when one of them spent on a model with no price. */
+export const costInAll = (spend: readonly Spent[]): number | undefined =>
+  spend.length === 0 || spend.some(each => each.cost === undefined)
+    ? undefined
+    : spend.reduce((total, each) => total + (each.cost ?? 0), 0);
+
+/** How much of every token counted was the context read again from the cache, in whole percent. */
+export const cachedShare = (spend: readonly Spent[]): number => {
+  const total = spend.reduce((all, each) => all + each.input + each.output + each.cached, 0);
+
+  return total === 0 ? 0 : Math.round((spend.reduce((all, each) => all + each.cached, 0) / total) * 100);
+};
+
+/** One piece of an agent's work and what it cost: a task's round, or a review's verdict. */
+export interface PieceCost {
+  agent: string;
+  task: string;
+  piece: Piece;
+  turns: number;
+  cost: number;
+}
+
+/**
+ * The pieces that cost the most, the costliest first — what a total by agent hides: a run's one designer task was $2.72
+ * of $6.75, and the lead's first review of one task $1.06.
+ */
+export const costliestPieces = (log: readonly Record<string, unknown>[], limit: number): PieceCost[] =>
+  log
+    .flatMap(entry =>
+      entry.action === 'spent' &&
+      typeof entry.by === 'string' &&
+      typeof entry.task === 'string' &&
+      (entry.piece === 'task' || entry.piece === 'review') &&
+      typeof entry.cost === 'number' &&
+      Number.isFinite(entry.cost)
+        ? [
+            {
+              agent: entry.by,
+              task: entry.task,
+              piece: entry.piece === 'task' ? ('task' as const) : ('review' as const),
+              turns: count(entry.turns),
+              cost: entry.cost
+            }
+          ]
+        : []
+    )
+    .sort((a, b) => b.cost - a.cost)
+    .slice(0, limit);

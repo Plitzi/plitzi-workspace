@@ -868,7 +868,7 @@ const { suggestions } = authorSpace(space);
 | `heavy-animation` | Keyframes animating a size, a position, a blur, a shadow, or a colour in a loop | `opacity` and `transform`; decoration held until `[data-hydrated]` — see [Motion](./motion.md) |
 | `unused-class`, `unused-token`, `unused-component` | A class, token or component nothing wears, reads or places | Removed — or used where it was meant to go |
 | `literal-colour` | A class painted from the palette typing out a token's light value | `var(--token)` to follow the scheme; a token of one value when it must stay the same in both |
-| `class-overrides-class` | One class's shorthand (`padding`) erasing a longhand another class on the element writes out, because the stylesheet writes it later — first met, or a breakpoint's — whatever the class list says | The longhands it means. Read while authoring only: the document keeps longhands, so the builder and the MCP cannot tell |
+| `class-overrides-class` | One class's shorthand (`padding`) erasing a longhand another class on the element writes out — or the same property (`gap`) set over the class listed after it — because the stylesheet writes it later — first met, or a breakpoint's — whatever the class list says | The longhands it means. Read while authoring only: the document keeps longhands, so the builder and the MCP cannot tell |
 
 A suggestion never blocks: it is advice, not the publish gate, and copies about to diverge are a reason to leave it.
 Left on purpose, it is quieted where it is written — `quiet: ['repeated-shape']` on an element it is about, a
