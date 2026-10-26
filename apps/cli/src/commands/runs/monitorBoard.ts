@@ -87,9 +87,11 @@ export const withText = (task: TaskLine, tasks: readonly TaskLine[], story: Task
         ? `${task.agent ?? ''} at ${task.parkedFor} first · round ${String(task.round)}`
         : `${task.agent ?? ''} · round ${String(task.round)}`;
     case 'in-review':
-      return task.design?.status === 'due' && task.reviewer === undefined
-        ? `UI review · ${task.design.by ?? 'no designer yet'}`
-        : `review · ${task.reviewer ?? 'no lead yet'}`;
+      return task.proposed
+        ? `the lead decides · ${task.proposed.by}'s`
+        : task.design?.status === 'due' && task.reviewer === undefined
+          ? `UI review · ${task.design.by ?? 'no designer yet'}`
+          : `review · ${task.reviewer ?? 'no lead yet'}`;
     case 'waiting':
       return `waits ${task.waitingFor?.task ?? 'a file'}`;
     case 'blocked':

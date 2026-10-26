@@ -62,6 +62,8 @@ export const leadItems = (view: RunView): LeadItem[] => [
     .filter(
       task =>
         task.status === 'in-review' &&
+        // A scout's proposal wakes the lead as itself (`spike-proposed`), never as a review to say.
+        task.proposed === undefined &&
         task.design?.status !== 'due' &&
         (view.reviewers.length === 0 || task.leadReviews === true)
     )

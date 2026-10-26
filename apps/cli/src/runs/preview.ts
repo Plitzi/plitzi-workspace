@@ -71,8 +71,9 @@ const whyOf = (task: TaskLine): { why?: string } =>
                 ? { why: 'free to take: the next agent at work takes it' }
                 : task.status === 'in-review'
                   ? {
-                      why:
-                        task.design?.status === 'due'
+                      why: task.proposed
+                        ? `${task.proposed.by} found it out: the lead decides`
+                        : task.design?.status === 'due'
                           ? `its UI review — ${task.design.by ?? 'no designer has taken it yet'}; then its review`
                           : `its review — ${task.reviewer ?? 'not taken yet'}`
                     }

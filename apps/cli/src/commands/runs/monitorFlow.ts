@@ -96,9 +96,9 @@ export const flowStages = (tasks: readonly TaskLine[]): FlowStage[] => {
             glyph: '◇',
             tone: 'info' as const,
             tasks: of('spike').filter(task => task.spikedBy === undefined),
-            // Never "free": no developer takes a spike — a scout takes it, or the lead with none.
-            who: (task: TaskLine) =>
-              task.proposed ? `${task.proposed.by}'s, with the lead to decide` : 'not taken yet'
+            // Never "free": no developer takes a spike — a scout takes it, or the lead with none. What one found is in
+            // review, the lead's to decide.
+            who: () => 'not taken yet'
           }
         ]
       : []),
@@ -160,7 +160,7 @@ export const flowStages = (tasks: readonly TaskLine[]): FlowStage[] => {
       glyph: '◎',
       tone: 'link' as const,
       tasks: of('in-review').filter(task => task.design?.status !== 'due' || task.reviewer !== undefined),
-      who: (task: TaskLine) => task.reviewer ?? 'waiting'
+      who: (task: TaskLine) => (task.proposed ? `lead decides ${task.proposed.by}'s` : (task.reviewer ?? 'waiting'))
     },
     // The latest approval first: what just landed is what a person following the run looks for.
     {

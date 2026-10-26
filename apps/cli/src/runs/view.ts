@@ -189,7 +189,10 @@ const lineOf = (view: TaskView, now: Date, owesSignal: boolean, unblocks: string
   title: view.task.title,
   kind: view.task.kind,
   role: view.task.role ?? 'developer',
-  status: view.state.status,
+  // What a scout found waits for the lead's decision: shown in review, the lead its reviewer — never a spike still
+  // being found out (encore-10's scope read "spike" twenty minutes while it waited for the lead). Its state stays a
+  // spike: no tester or reviewer's queue reads this.
+  status: view.state.status === 'spike' && view.state.proposed !== undefined ? 'in-review' : view.state.status,
   priority: view.task.priority,
   urgency,
   ...(view.owner ? { agent: view.owner.agent } : {}),
