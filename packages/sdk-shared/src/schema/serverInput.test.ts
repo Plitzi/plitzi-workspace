@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { browserServerInput, inputProviders, serverInputOf } from './serverInput';
+import { browserServerInput, inputProviders, inputReadings, serverInputOf } from './serverInput';
 
 import type { Element, ElementBinding } from '../types';
 
@@ -90,5 +90,24 @@ describe('a server provider’s input bound to another server provider', () => {
       username: 'dax'
     });
     expect(serverInputOf(crate, address)).toEqual({});
+  });
+});
+
+// A provider refused `invalid_input` on every load; only the server's stack said the field it was bound to came empty.
+describe("what the page server read of a provider's bound input", () => {
+  it('says each binding: the value it read, or why it read none', () => {
+    const crate = provider({}, [
+      { to: 'input.page', source: 'navigation.queryParams.page' },
+      { to: 'input.with', source: 'apiContainer_room', transformers: template('{{ source.owner }}') },
+      { to: 'input.who', source: 'apiContainer_people.data.first' },
+      { to: 'input.draft', source: 'state.draft' }
+    ]);
+
+    expect(inputReadings(crate, address, { apiContainer_room: { owner: '' } })).toEqual([
+      'input.page ← navigation.queryParams.page: "2"',
+      'input.with ← apiContainer_room: empty',
+      'input.who ← apiContainer_people.data.first: not read on the server — apiContainer_people gave it no answer (not a server provider, or it failed)',
+      "input.draft ← state.draft: not read on the server (the visitor's state), the input as saved"
+    ]);
   });
 });

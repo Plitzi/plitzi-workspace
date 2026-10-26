@@ -1,3 +1,5 @@
+import type { DrawnRegion } from './drawn';
+
 /**
  * What the browser half of `inspectPage` is asked, and what it answers.
  *
@@ -13,6 +15,8 @@ export interface ProbeInput {
   images: boolean;
   overflow: boolean;
   legibility: boolean;
+  /** The page's own region, for `drawnInPage`: none when the space is not in hand (`inspectDocument`). */
+  region?: DrawnRegion;
 }
 
 export interface ProbeFindings {

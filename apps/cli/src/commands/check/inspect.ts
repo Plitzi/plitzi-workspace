@@ -6,6 +6,7 @@ import {
   openPage,
   readDevTools
 } from '@plitzi/sdk-authoring';
+import { withheldPageOf } from '@plitzi/sdk-shared/schema';
 
 import { landingProblem, saySignedIn, signInAs, signInWhereSent } from './account';
 import { clickEffects } from './click';
@@ -278,7 +279,15 @@ const inspectHere = async (
 ): Promise<CheckReport> => {
   const handles = authored?.handles;
   const pageId = handles ? pageFor(handles, pathname) : undefined;
-  const report = handles && pageId ? await inspectPage(page, handles, { page: pageId }) : await inspectDocument(page);
+  // A page withheld from this visitor was sent without its own elements: only its layout's are owed, and the page the
+  // space draws in its place — a 403 read as eleven elements "not on the page".
+  const instead = authored ? withheldPageOf(authored.schema) : undefined;
+  const withheld =
+    handles && pageId && handles.page(pageId).access !== undefined && (sentWith === 401 || sentWith === 403)
+      ? { withheld: instead === undefined ? {} : { instead } }
+      : {};
+  const report =
+    handles && pageId ? await inspectPage(page, handles, { page: pageId, ...withheld }) : await inspectDocument(page);
   // The sources always: what the bindings read is held against them. Printed only when asked.
   const devTools = await readDevTools(page, { state: true });
   // A phone has no pointer: a hover is looked at where one is, never failed where the element is laid out for a finger.

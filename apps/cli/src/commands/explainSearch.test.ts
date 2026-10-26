@@ -94,4 +94,3 @@ describe('the authoring package’s types, by the words of their names and docs'
     expect(searchAll('visible input', [], 3, [], () => [], exported)[0]?.name).toBe('VisibleInput');
   });
 });
-

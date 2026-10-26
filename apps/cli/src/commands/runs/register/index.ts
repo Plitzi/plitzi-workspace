@@ -18,8 +18,9 @@ export const registerRuns = (program: Command, spaceGroup: Command): void => {
     .description(
       'Who owns which file, read off the imports: each page, layout, component and plugin, and what they share'
     )
+    .argument('[unit]', 'One unit whole — every file it owns and shares: src/space/pages/room.ts, src/plugins/Chat/')
     .option(...JSON_OPTION)
-    .action((options: RunCommandOptions) => spaceOverview(options));
+    .action((unit: string | undefined, options: RunCommandOptions) => spaceOverview(unit, options));
 
   spaceGroup
     .command('impact')

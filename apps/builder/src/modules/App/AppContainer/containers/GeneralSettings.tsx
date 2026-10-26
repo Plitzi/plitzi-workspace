@@ -5,6 +5,7 @@ import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, use, useState } from 'react';
 
 import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
+import { pageAccessOf } from '@plitzi/sdk-shared/schema';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import ViewPage from '../../components/ViewPage';
@@ -42,7 +43,12 @@ const parseStateKeys = (text: string): string[] =>
     .filter(Boolean);
 
 const GeneralSettings = () => {
-  const [[settingsProp, styleMode]] = useBuilderStore(['schema.settings', 'style.mode']);
+  const [[settingsProp, styleMode, flat, pageIds]] = useBuilderStore([
+    'schema.settings',
+    'style.mode',
+    'schema.flat',
+    'schema.pages'
+  ]);
   const { eventBridge } = use(EventBridgeContext);
 
   const [settings, setSettings] = useState(settingsProp);
@@ -137,6 +143,19 @@ const GeneralSettings = () => {
       const next = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
       setSettings(state => ({ ...state, [name]: next }));
       void eventBridge.emit('main', 'schemaUpdateSettings', next, name);
+    },
+    [eventBridge]
+  );
+
+  // A page with an access of its own would be withheld from the very visitor it is drawn for: never offered.
+  const openPages = pageIds.filter(id => Object.hasOwn(flat, id) && pageAccessOf(flat[id].attributes) === undefined);
+  const withheldPage = settings.withheldPage ?? '';
+
+  const handleChangeWithheldPage = useCallback(
+    (value: string) => {
+      const next = value === '' ? undefined : value;
+      setSettings(state => ({ ...state, withheldPage: next }));
+      void eventBridge.emit('main', 'schemaUpdateSettings', next, 'withheldPage');
     },
     [eventBridge]
   );
@@ -294,6 +313,22 @@ const GeneralSettings = () => {
             />
           </>
         )}
+      </ViewSection>
+      <ViewSection title="Pages a visitor may not see">
+        <Select
+          size="sm"
+          name="withheldPage"
+          value={withheldPage}
+          onChange={handleChangeWithheldPage}
+          label="Shown instead - with the same 401 or 403, inside the page's layout"
+        >
+          <option value="">Plitzi's words: sign in, or not available to you</option>
+          {openPages.map(id => (
+            <option key={id} value={id}>
+              {flat[id].definition.label}
+            </option>
+          ))}
+        </Select>
       </ViewSection>
       <ViewSection title="Style">
         <Alert intent="info" size="xs" solid={false}>

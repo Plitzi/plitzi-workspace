@@ -242,10 +242,14 @@ export class SpaceAuthor {
       ),
       ...withoutQuieted(schema, classOverrides(this, schema, style.mode ?? 'desktop-first'))
     ].map(suggestion => {
-      const first = suggestion.elementIds.at(0);
-      const at = first === undefined ? undefined : writtenAt(this.specOf(first));
+      const [at, ...rest] = suggestion.elementIds.map(id => writtenAt(this.specOf(id)));
+      const elsewhere = [...new Set(rest.filter((place): place is string => place !== undefined && place !== at))];
 
-      return at === undefined ? suggestion : { ...suggestion, at };
+      return {
+        ...suggestion,
+        ...(at === undefined ? {} : { at }),
+        ...(elsewhere.length > 0 ? { elsewhere } : {})
+      };
     });
   }
 

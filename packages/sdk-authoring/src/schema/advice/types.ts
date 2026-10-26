@@ -14,6 +14,8 @@ export interface Suggestion {
   saves: number;
   /** Where the first of them was written: `src/space/pages/home.ts:42`. Absent when no factory wrote it. */
   at?: string;
+  /** Where the others were written, each place once and none of them `at`: lint names them beside it. */
+  elsewhere?: string[];
   /**
    * The declarations a suggestion about the stylesheet or the components is about — the classes, tokens or components
    * it names — so whoever reports only what is new (the MCP, after a batch) can tell a new one from those said before.

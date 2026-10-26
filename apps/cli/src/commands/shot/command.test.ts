@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { framesOf } from './frames';
-import { shotFile, smallPicture } from './output';
+import { eachOut, shotFile, smallPicture } from './output';
 
 describe('a picture’s file', () => {
   // Two clips of one page wrote home-1440-light.png each, the second over the first before it was read.
@@ -11,6 +11,19 @@ describe('a picture’s file', () => {
     expect(shotFile('/r/night-drive', '.room-desk-tabs', 390, 'dark')).toBe(
       'r-night-drive-room-desk-tabs-390-dark.png'
     );
+  });
+});
+
+// A lead pictured three pages in one command and was refused: each picture's --out names what tells it apart.
+describe('the file --out names for each of several pictures', () => {
+  it('adds the page when there are several, the width and the scheme when there are several of them', () => {
+    const asked = { pages: 2, widths: 2, schemes: 1 };
+
+    expect(eachOut('tmp/look.png', { route: '/', width: 1440 }, asked)).toBe('tmp/look-home-1440.png');
+    expect(eachOut('tmp/look', { route: '/r/nope', width: 390 }, asked)).toBe('tmp/look-r-nope-390.png');
+    expect(
+      eachOut('look.png', { route: '/u/dax', width: 390, scheme: 'dark' }, { pages: 2, widths: 1, schemes: 2 })
+    ).toBe('look-u-dax-dark.png');
   });
 });
 

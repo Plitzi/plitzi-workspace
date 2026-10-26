@@ -678,6 +678,18 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
     teaches it.
 - **`page outline --width 390,1440`** outlines each width, and **`page shot --scheme light,dark`** pictures each scheme,
   as `check`, `measure` and `play` take a list.
+- **`space overview`** says each unit in a line — what it owns and how many shared files it reaches — and
+  `space overview <unit>` one whole: a run's lead read 12k characters of it, every shared file said again per unit.
+- **The builder's settings name the page shown instead of one withheld** (Pages a visitor may not see): every page a
+  visitor may see, or Plitzi's words.
+- **`page check` says a page that draws nothing of its own** (`page-empty`, from `inspectPage`): only its layout — a
+  record not found with nothing said, data that never came, every part hidden. A run's lead found a blank 404 only by
+  reading pictures one by one, every check having passed.
+- **`page check` of a page withheld from its visitor** (its `access`, answered 401 or 403) owes only its layout's
+  elements and those of the page drawn in its place (`onScreen`'s `withheld`): a 403 read as every element of the page
+  "not on the page", which the server never sent.
+- **`page shot / /r/nope /u/dax`** pictures each page, at each width and scheme asked: a lead wrote three pages and
+  was refused. `--out` names each picture by what tells it from the others (`look-r-nope-390.png`).
 - **`explain ctx.later`** answers the member first, as the installed types declare it.
 - **`plitzi functions later [key] --now`**: what the served project holds to run later (`ctx.later`), by key and when it
   is due — and one started now, through the server's own queue: a spec of a show waited five real minutes a pass.
@@ -728,6 +740,10 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   over a longhand, at one breakpoint), not only a shorthand erasing a longhand: a run's shared class, made of five
   `repeated-css` warnings, lost its `gap: 10px` to `btn`'s `8px` on two buttons — `btn` written later — while author,
   lint and every check passed.
+
+- **A suggestion about several elements names them all**, not "and 3 more", and `space lint` says where each other one
+  was written (`Also written at …`, the suggestion's `elsewhere`): a run's agent fixed the one named, ran lint again
+  and met the next, four times in half a minute.
 
 - **`focus('field-id')`**: a step that gives an element — or the first field inside it — the keyboard's focus.
 - **`server-when-unknown`** warns of a server provider whose `when` reads what only the browser holds (a `state`, a
@@ -895,6 +911,10 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **…and bound to another server provider's answer too:** `input` bound to `apiContainer_room.data.owner` is resolved
   after that provider, on the server, as the browser does (`inputProviders`, `browserServerInput`). A run's crate list
   bound its person to the room's answer: the server asked with none, refused on every load, and the list came empty.
+
+- **A server provider that fails says how it read its bound input**, in the server's log and in what `page check`
+  reads (`server-render-failed`): `input.with ← apiContainer_room.data.owner: empty`, or why a binding was not read
+  there — the visitor's state, a `when`, a provider with no answer (`inputReadings`, `@plitzi/sdk-shared/schema`).
 
 - **A space can give a withheld page its own look:** `settings.withheldPage` names a page of the space — by id or slug
   in authoring, a page with no `access` (`withheld-page-invalid` otherwise) — drawn in place of the platform's few

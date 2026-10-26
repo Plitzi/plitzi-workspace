@@ -350,4 +350,27 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect(usage.every(line => line.chars > 0)).toBe(true);
     expect(usage.map(line => line.command).join(' ')).not.toContain(lead.split('.').at(-1) ?? '');
   }, 120_000);
+
+  // A run's lead read 12k characters of the overview: every unit spelled out each shared file it reaches.
+  it('says each unit in a line, counted, and one unit whole when it is named', async () => {
+    const whole = await plitzi(bench.root, ['space', 'overview']);
+    const units = whole.json.units as { unit: string; owns: string[] }[];
+    const first = units.at(0);
+    expect(whole.code).toBe(0);
+    if (!first) {
+      throw new Error('The project has no unit to name');
+    }
+
+    const one = await plitzi(bench.root, ['space', 'overview', first.unit]);
+    expect(one.code).toBe(0);
+    expect(one.json).toMatchObject({ unit: first.unit, owns: first.owns });
+
+    const text = await plitzi(bench.root, ['space', 'overview'], {}, { json: false });
+    expect(String(text.json.stdout)).toContain(`${first.unit}: owns ${String(first.owns.length)}`);
+    expect(String(text.json.stdout)).not.toMatch(/shares src\//);
+
+    const unknown = await plitzi(bench.root, ['space', 'overview', 'src/nowhere.ts']);
+    expect(unknown.code).toBe(REFUSAL_EXIT_CODES.invalid);
+    expect(String(unknown.json.message)).toContain('is no unit of the project');
+  }, 120_000);
 });

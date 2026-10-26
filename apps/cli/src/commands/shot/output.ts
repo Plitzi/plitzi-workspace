@@ -48,6 +48,24 @@ const slug = (text: string): string => text.replace(/[^a-z0-9]+/gi, '-').replace
 export const shotFile = (pathname: string, clip: string | undefined, width: number, scheme: string): string =>
   `${pathname === '/' ? 'home' : slug(pathname)}${clip === undefined ? '' : `-${slug(clip)}`}-${String(width)}-${scheme}.png`;
 
+/**
+ * The file `--out` names for one of several pictures: the name given, with what tells this one from the others — its
+ * page when there are several, its width, its scheme — so one never writes over another.
+ */
+export const eachOut = (
+  out: string,
+  each: { route: string | undefined; width: number; scheme?: string },
+  asked: { pages: number; widths: number; schemes: number }
+): string => {
+  const named = [
+    ...(asked.pages > 1 ? [each.route === undefined || each.route === '/' ? 'home' : slug(each.route)] : []),
+    ...(asked.widths > 1 ? [String(each.width)] : []),
+    ...(each.scheme !== undefined && asked.schemes > 1 ? [each.scheme] : [])
+  ].join('-');
+
+  return out.replace(/(\.png)?$/, `-${named}.png`);
+};
+
 /** A picture shorter than a few lines of text, said by its size: `350×26 px`. */
 export const smallPicture = (png: Uint8Array): string | undefined => {
   if (png.length < 24) {

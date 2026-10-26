@@ -48,12 +48,17 @@ const placeOf = async (root: string, at: string | undefined): Promise<{ file: st
  */
 const fromSuggestion = async (root: string, suggestion: Suggestion): Promise<LintFinding> => {
   const place = await placeOf(root, suggestion.at);
+  // The other elements it is about, where each was written: a run's agent met them one lint at a time otherwise.
+  const elsewhere = (await Promise.all((suggestion.elsewhere ?? []).map(at => placeOf(root, at)))).flatMap(each =>
+    each ? [`${each.file}:${String(each.line)}`] : []
+  );
 
   return {
     code: suggestion.code,
     severity: 'warning',
     origin: 'authoring',
-    message: suggestion.message,
+    message:
+      elsewhere.length > 0 ? `${suggestion.message} Also written at ${elsewhere.join(', ')}.` : suggestion.message,
     ...(place ? { file: place.file, line: place.line, column: 1 } : {}),
     docs: `npx plitzi explain ${suggestion.code}`
   };

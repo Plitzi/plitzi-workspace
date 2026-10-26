@@ -170,6 +170,40 @@ describe('resolveRscData', () => {
     expect(Object.keys((await resolveRscData(asked)).serverData ?? {})).toEqual(['postNested']);
   });
 
+  // A provider refused `invalid_input` on every load: only the server's stack said the field it was bound to came empty.
+  it('says beside a failure how the element read its bound input', async () => {
+    const schema = buildSchema();
+    schema.flat.postApi = {
+      ...schema.flat.postApi,
+      definition: {
+        ...schema.flat.postApi.definition,
+        bindings: { attributes: [{ id: 'b0', to: 'input.slug', source: 'navigation.routeParams.title' }] }
+      }
+    };
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const resolveElement = vi
+      .fn<RscElementResolver>()
+      .mockImplementation(({ element }) =>
+        element.id === 'postApi'
+          ? Promise.reject(new Error('Action "post" refused this render: invalid_input — Invalid input: slug'))
+          : Promise.resolve({ ok: 1 })
+      );
+
+    const { serverData } = await resolveRscData({
+      ...base,
+      schema,
+      req: request('/blog/hello'),
+      resolveElement,
+      sayFailures: true
+    });
+
+    expect(serverData?.postApi).toEqual({
+      [RSC_FAILURE]:
+        'Action "post" refused this render: invalid_input — Invalid input: slug — its input: input.slug ← navigation.routeParams.title: empty'
+    });
+    errors.mockRestore();
+  });
+
   // A guest's every room page logged an error with its stack for data the action rightly refused them.
   it('says an element an action refused this visitor as a warning line, and anything else as an error', async () => {
     const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);

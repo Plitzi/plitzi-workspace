@@ -11,12 +11,22 @@ export interface OnScreenOptions {
    * Every one must exist: a typo here would silently widen what the check lets through.
    */
   ignore?: string[];
+  /**
+   * The page was withheld from this visitor (its `access`, answered 401 or 403): its own elements were never sent, so
+   * only its layouts' are owed — and those of the page drawn in its place, by id (`settings.withheldPage`), if any.
+   */
+  withheld?: { instead?: string };
 }
 
 /** The handles of a page and of every layout it renders inside, outermost shell first. */
-const rootsOf = (handles: SpaceHandles, page: string): ElementHandle[] => {
+const rootsOf = (handles: SpaceHandles, page: string, withheld?: OnScreenOptions['withheld']): ElementHandle[] => {
   const pageHandle = handles.page(page);
-  const roots: Record<string, ElementHandle>[] = [pageHandle.elements];
+  const own = withheld
+    ? withheld.instead === undefined
+      ? {}
+      : handles.page(withheld.instead).elements
+    : pageHandle.elements;
+  const roots: Record<string, ElementHandle>[] = [own];
   const seen = new Set<string>();
   for (let layoutId = pageHandle.layout; layoutId !== undefined && !seen.has(layoutId);) {
     // `hasOwn` rather than a truthy lookup: the record is typed as total, so a missing shell would read as present.
@@ -38,7 +48,7 @@ const owable = (handles: SpaceHandles, page: string, options: OnScreenOptions): 
   const ignored = new Set((options.ignore ?? []).map(id => handles.element(id).id));
   const all = options.elements === 'all';
 
-  return rootsOf(handles, page).filter(
+  return rootsOf(handles, page, options.withheld).filter(
     handle => (all || handle.named) && !handle.repeated && !handle.boxless && !ignored.has(handle.id)
   );
 };

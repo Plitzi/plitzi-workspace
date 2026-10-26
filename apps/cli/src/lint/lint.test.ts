@@ -203,6 +203,31 @@ describe('plitzi space lint', () => {
     expect(relayed.every(each => each.docs === `npx plitzi explain ${each.code}`)).toBe(true);
   }, 30_000);
 
+  // A run's agent fixed the element a suggestion was placed at, ran lint again, and met the next — four times.
+  it('says where the other elements a suggestion is about were written', async () => {
+    await write('src/space/index.ts', SPACE_INDEX);
+    await write(
+      'src/space/pages/home.ts',
+      page(
+        [
+          "    container({ id: 'intro', class: tight }),",
+          "    container({ id: 'hero', class: [card, tight] }),",
+          "    container({ id: 'promo', class: [card, tight] })"
+        ].join('\n'),
+        [
+          "import { container, styles } from '@plitzi/sdk-authoring';",
+          "const tight = styles('tight', { paddingTop: '0px' });",
+          "const card = styles('card', { padding: '24px' });"
+        ].join('\n')
+      )
+    );
+
+    const [found] = only(await run(), 'class-overrides-class');
+
+    expect(found.file).toBe('src/space/pages/home.ts');
+    expect(found.message).toContain(`Also written at src/space/pages/home.ts:${String((found.line ?? 0) + 1)}.`);
+  }, 30_000);
+
   it('says a plugin of the project placed by name is placed from its declaration, at the line that wrote it', async () => {
     await write(
       'src/plugins/SeatPicker/declaration.ts',

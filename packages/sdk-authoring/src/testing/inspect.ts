@@ -1,8 +1,10 @@
 import { accessibilityInPage } from './accessibility';
+import { drawnInPage } from './drawn';
 import { onScreen, onScreenIfChosen } from './onScreen';
 import { probePage } from './probe';
 
 import type { AccessibilityFindings } from './accessibility';
+import type { DrawnRegion } from './drawn';
 import type { OnScreenOptions } from './onScreen';
 import type { ProbeFindings, ProbeInput } from './probe';
 import type { ElementHandle, SpaceHandles } from '../schema';
@@ -41,7 +43,8 @@ export type PageIssueCode =
   | 'cut-off'
   | 'illegible-text'
   | 'heading-skipped'
-  | 'control-unnamed';
+  | 'control-unnamed'
+  | 'page-empty';
 
 export interface PageIssue {
   code: PageIssueCode;
@@ -280,11 +283,19 @@ export type DocumentChecks = Pick<InspectOptions, 'skip' | 'timeout'>;
 /** An element owed, as the probe is asked about it. */
 type Expected = { handle: ElementHandle; shownWith?: string };
 
+/** What a page that draws nothing of its own is told. */
+const EMPTY_PAGE: PageIssue = {
+  code: 'page-empty',
+  message:
+    'the page draws nothing of its own — no words, no picture, no control: only its layout. A record not found with nothing said, data that never came, every part hidden on a condition: give it what to say then — a not-found message, an empty state'
+};
+
 const inspect = async (
   driver: PageEvaluator,
   page: string,
   owed: Expected[],
-  options: DocumentChecks
+  options: DocumentChecks,
+  region?: DrawnRegion
 ): Promise<PageReport> => {
   const skip = new Set(options.skip ?? []);
   const expected = owed.map(({ handle }) => handle);
@@ -298,7 +309,8 @@ const inspect = async (
     })),
     images: !skip.has('images'),
     overflow: !skip.has('overflow'),
-    legibility: !skip.has('legibility')
+    legibility: !skip.has('legibility'),
+    ...(region ? { region } : {})
   };
   const deadline = Date.now() + (options.timeout ?? 5000);
   const imagesDeadline = Date.now() + Math.max(IMAGE_WAIT_MS, options.timeout ?? 5000);
@@ -306,7 +318,8 @@ const inspect = async (
     const findings = await driver.evaluate(probePage, input);
     const issues = [
       ...issuesOf(expected, findings),
-      ...(skip.has('accessibility') ? [] : accessibilityIssues(await driver.evaluate(accessibilityInPage, input)))
+      ...(skip.has('accessibility') ? [] : accessibilityIssues(await driver.evaluate(accessibilityInPage, input))),
+      ...(findings.marked && !(await driver.evaluate(drawnInPage, input)) ? [EMPTY_PAGE] : [])
     ];
     const onlyLoading =
       issues.length > 0 && issues.length === findings.brokenImages.filter(image => image.loading).length;
@@ -352,7 +365,24 @@ export const inspectPage = async (
     )
   ];
 
-  return inspect(driver, page, owed, options);
+  return inspect(driver, page, owed, options, regionOf(handles, page));
+};
+
+/**
+ * The page's own region: its element, and every id that is not its own — each layout it renders inside.
+ */
+const regionOf = (handles: SpaceHandles, pageId: string): DrawnRegion => {
+  const page = handles.page(pageId);
+  const notOwn: string[] = [];
+  const seen = new Set<string>();
+  for (let id = page.layout; id !== undefined && !seen.has(id) && Object.hasOwn(handles.layouts, id);) {
+    seen.add(id);
+    const layout = handles.layouts[id];
+    notOwn.push(layout.id, ...Object.keys(layout.elements));
+    id = layout.layout;
+  }
+
+  return { page: page.selector, notOwn };
 };
 
 /**

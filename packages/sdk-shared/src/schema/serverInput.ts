@@ -1,3 +1,5 @@
+import { get } from '@plitzi/plitzi-ui/helpers/lodash';
+
 import { serverProviderSource } from './providerWhen';
 import getBindingsDetails from '../dataSource/getBindingsDetails';
 import getSourceName from '../dataSource/helpers/getSourceName';
@@ -95,6 +97,55 @@ export const serverInputOf = (
   );
 
   return resolved.attributes.input;
+};
+
+/** A value as a line of a log says it: short, and "empty" for nothing at all. */
+const said = (value: unknown): string => {
+  if (value === undefined || value === null || value === '') {
+    return 'empty';
+  }
+
+  const text = JSON.stringify(value);
+
+  return text.length > 60 ? `${text.slice(0, 57)}…` : text;
+};
+
+/**
+ * Each binding of a provider's `input` as the page server read it — `input.with ← apiContainer_room.data.owner:
+ * "dax"` — or why it did not: the visitor's state, a `when`, a provider with no answer. What a refusal of the input
+ * is told beside it: a run's provider was refused `invalid_input` on every load, and only the server's stack said the
+ * field it was bound to came empty.
+ */
+export const inputReadings = (
+  element: Pick<Element, 'attributes' | 'definition'>,
+  address: ProviderAddress,
+  providers: Readonly<Record<string, unknown>> = {}
+): string[] => {
+  const readable = new Set(readableInputs(element, source => Object.hasOwn(providers, source)));
+
+  return (element.definition.bindings?.attributes ?? [])
+    .filter(binding => binding.enabled !== false && isInput(binding))
+    .map(binding => {
+      const from = `${binding.to} ← ${binding.source}`;
+      if (readable.has(binding)) {
+        const resolved = getBindingsDetails(
+          { ...providers, navigation: address },
+          { attributes: element.attributes, definition: { ...element.definition, bindings: { attributes: [binding] } } }
+        );
+
+        return `${from}: ${said(get(resolved.attributes, binding.to))}`;
+      }
+
+      const unanswered = pathsOf(binding)
+        .map(rootOf)
+        .find(root => root.startsWith(`${PROVIDER}_`) && !Object.hasOwn(providers, root));
+
+      return binding.when !== undefined
+        ? `${from}: not read on the server (it has a \`when\`), the input as saved`
+        : unanswered !== undefined
+          ? `${from}: not read on the server — ${unanswered} gave it no answer (not a server provider, or it failed)`
+          : `${from}: not read on the server (the visitor's state), the input as saved`;
+    });
 };
 
 /**

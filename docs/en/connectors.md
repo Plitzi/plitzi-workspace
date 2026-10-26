@@ -247,8 +247,9 @@ modes**, chosen in Settings with **Data Source** (`definition.runtime`):
    what the page server knows — the address (`navigation.routeParams` / `queryParams`) and the answers of other server
    providers (`apiContainer_room.data.host`), no state, no `when` — the page server resolves on the first paint too,
    each provider it reads resolved first as for a `when` (`inputProviders`), and the browser compares against that
-   (`serverInputOf`, `browserServerInput`). `cancelQuery` drops the
-   request in flight (`cancelRsc` / `queryCache.cancel`), and `isLoading` is true while one is.
+   (`serverInputOf`, `browserServerInput`); a provider that fails there says how it read each binding of its input
+   (`inputReadings`). `cancelQuery` drops the request in flight (`cancelRsc` / `queryCache.cancel`), and `isLoading`
+   is true while one is.
 6. **Render** — `<RootElement tag={subType}>` wraps a `<StoreProvider>` with the children.
 
 ### How it knows to wait for the RSC

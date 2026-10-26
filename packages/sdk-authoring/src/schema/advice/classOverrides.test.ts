@@ -39,6 +39,20 @@ describe('class-overrides-class', () => {
     );
   });
 
+  // A run's agent fixed the element named, ran lint again and met the next one — four times: every one is named.
+  it('names every element wearing both, not a count of the others', () => {
+    const tight = styles('tight', { paddingTop: '0px' });
+    const card = styles('card', { padding: '24px' });
+    const wearing = Array.from({ length: 9 }, (_, index) => `card${String(index + 1)}`);
+    const [found] = overrides(
+      space([container({ id: 'intro', class: tight }), ...wearing.map(id => container({ id, class: [card, tight] }))])
+    );
+
+    expect(found.message).toContain(
+      'on "card1" (and "card2", "card3", "card4", "card5", "card6", "card7" and 2 more, wearing both)'
+    );
+  });
+
   // A run made a shared class of a key's look, `gap: 10px` in it: `btn`, met first in the stylesheet's order, wrote its
   // `8px` later — two buttons lost two pixels, and author, lint and the check all passed.
   it('says a longhand another class sets over the same longhand, when the class listed after it loses', () => {

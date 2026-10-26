@@ -6,7 +6,6 @@ import chalk from 'chalk';
 import { comparePictures, pageRegions } from '@plitzi/sdk-authoring';
 
 import { dataUrl, launchBrowser, projectOrigin } from '../../browser';
-import { originHere } from '../../runs/copyServer';
 import { copyOf, runPaths } from '../../runs/paths';
 import { keptPage } from '../../runs/reference';
 import { PROJECT_TMP } from '../../scaffold/paths';
@@ -14,7 +13,7 @@ import { checkAccount, CHECK_PASSWORD_ENV, projectAccount } from '../check';
 import { projectHere } from '../existingProject';
 import { pairOf } from '../measure';
 import { parseSteps } from '../shotSteps';
-import { fail, UNANSWERED_EXIT } from '../terminal';
+import { fail } from '../terminal';
 import { capture, pictureOf, readPage } from './capture';
 import {
   compareAfterClicks,
@@ -34,91 +33,14 @@ import { MOVING_PERCENT } from './types';
 import { visitorsOn } from './visitors';
 
 import type { Moment, ShotOptions, ShotReport, Taken, View } from './types';
-import type { Scheme } from '../../browser';
 import type { PictureDiff, PictureRegion } from '@plitzi/sdk-authoring';
 
 /**
  * `plitzi page shot`: a picture of each path at each width.
  */
 
-/**
- * `plitzi page shot --width 1440,390`: a picture at each width, one after another — each named by its width, `--out`
- * too (`home.png` becomes `home-1440.png`, `home-390.png`) so one never writes over another.
- */
 /** How much of a clipped section differs before it is said to be lined up with something else: a section redone stays under. */
 const MISALIGNED_PERCENT = 90;
-
-/** What `plitzi page shot` is handed: a list of widths, and of schemes. */
-export type ShotEachOptions = Omit<ShotOptions, 'width' | 'scheme'> & { width: number[]; scheme?: Scheme[] };
-
-export const shotEach = async (route: string | undefined, options: ShotEachOptions): Promise<void> => {
-  const { width: widthsAsked, scheme: schemesAsked, ...rest } = options;
-  // Each width in each scheme asked: `--scheme light,dark` as `--width 1440,390` (a run's design-2 asked for both).
-  const all = widthsAsked.flatMap(width =>
-    (schemesAsked ?? [undefined]).map(scheme => ({ width, ...(scheme ? { scheme } : {}) }))
-  );
-  // In a task's copy nobody serves, the copy is served once for every width, and stopped after the last.
-  const external = route !== undefined && /^https?:\/\//.test(route);
-  const project = !external && rest.url === undefined ? await projectHere('whose page to picture') : undefined;
-  const served =
-    project && copyOf(project.root)
-      ? await originHere(project.root, project.plitzi?.kind === 'project' ? project.plitzi : undefined)
-      : undefined;
-  if (served && 'problem' in served) {
-    fail(served.problem);
-
-    return;
-  }
-
-  // `--json` at several widths is one object, `{ widths: [...] }`, as the flag says — two lines of JSON are no object.
-  const reports: ShotReport[] = [];
-  const collect = rest.json && all.length > 1 ? (report: ShotReport) => reports.push(report) : undefined;
-  try {
-    // A folder named stays the folder — each picture in it by its own name, the width in it (the folder
-    // became `<folder>-1440.png`); a file is named for each width.
-    const folder =
-      rest.out !== undefined &&
-      (rest.out.endsWith('/') ||
-        (await stat(path.resolve(project?.root ?? process.cwd(), rest.out)).then(
-          found => found.isDirectory(),
-          () => false
-        )));
-    let failed = false;
-    for (const each of all) {
-      const named = `${String(each.width)}${each.scheme && (schemesAsked?.length ?? 0) > 1 ? `-${each.scheme}` : ''}`;
-      const out = rest.out && all.length > 1 && !folder ? rest.out.replace(/(\.png)?$/, `-${named}.png`) : rest.out;
-      process.exitCode = undefined;
-      await shot(route, {
-        ...rest,
-        width: each.width,
-        ...(each.scheme ? { scheme: each.scheme } : {}),
-        ...(out ? { out } : {}),
-        ...(served ? { url: served.origin } : {}),
-        ...(collect ? { collect } : {})
-      });
-      // A picture that differs at one width says nothing of the next: every width is taken, and the command fails at the
-      // end (a --dress failing at 1440 left 390 untaken, and the lead ran it again). One that cannot be taken
-      // at all stops it.
-      const exit = exitCode();
-      if (exit === UNANSWERED_EXIT) {
-        return;
-      }
-
-      failed ||= exit !== undefined && exit !== 0;
-    }
-
-    process.exitCode = failed ? 1 : undefined;
-  } finally {
-    served?.stop?.();
-  }
-
-  if (collect) {
-    console.log(JSON.stringify({ widths: reports }));
-  }
-};
-
-/** The exit a shot set, read anew: assigned before it, TypeScript would take it for the value it was given. */
-const exitCode = (): typeof process.exitCode => process.exitCode;
 
 /**
  * The element `--clip` names, as a region of the page — none when it is one of the page's sections already, a problem

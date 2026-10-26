@@ -154,13 +154,21 @@ const erasedText = (erased: Erased[]): string => {
   return [...lines].map(([line, widths]) => `${line} at ${widths.join(', ')}`).join('; ');
 };
 
+/** The most elements wearing both a suggestion names besides the first. */
+const MOST_NAMED = 6;
+
 const message = (winner: WornClass, loser: WornClass, erased: Erased[], elementIds: string[]): string => {
   const shorthands = [...new Set(erased.flatMap(each => (each.shorthand === undefined ? [] : [each.shorthand])))];
   const longhands = new Set(erased.map(each => each.longhand));
   const meant = shorthands
     .flatMap(shorthand => shorthandLonghands(shorthand) ?? [])
     .filter(longhand => !longhands.has(longhand));
-  const others = elementIds.length > 1 ? ` (and ${String(elementIds.length - 1)} more wearing both)` : '';
+  // Every element named, not counted: a run's agent fixed the one named, ran lint again, and met the next — four times.
+  const rest = elementIds.slice(1, 1 + MOST_NAMED);
+  const others =
+    elementIds.length > 1
+      ? ` (and ${rest.map(id => `"${id}"`).join(', ')}${elementIds.length > 1 + MOST_NAMED ? ` and ${String(elementIds.length - 1 - MOST_NAMED)} more` : ''}, wearing both)`
+      : '';
   const why = erased.some(each => each.byBreakpoint)
     ? `a breakpoint's rules come after the base ones, so "${winner.name}"'s win there whatever the order`
     : `the stylesheet writes "${winner.name}" after "${loser.name}" — classes in the order they are first met, not the order of a class list`;

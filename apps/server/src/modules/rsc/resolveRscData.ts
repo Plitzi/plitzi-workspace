@@ -4,6 +4,7 @@ import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers';
 import {
   collectServerElements,
   inputProviders,
+  inputReadings,
   pageAccessOf,
   pageAccessRefusal,
   RSC_FAILURE,
@@ -176,6 +177,8 @@ export const resolveRscData = async ({
   const byId = new Map(all.map(element => [element.id, element] as const));
   const serverIds = new Set(byId.keys());
   const resolving = new Map<string, Promise<unknown>>();
+  // How each element's bound input was read, said beside its failure: a refused input named its field, not its source.
+  const readingsOf = new Map<string, string[]>();
   const resolveOne = (element: Element, chain: readonly string[]): Promise<unknown> => {
     const started = resolving.get(element.id);
     if (started) {
@@ -230,16 +233,15 @@ export const resolveRscData = async ({
 
       // Its bound input, as the browser resolves it: the address, and the answers of the server providers it reads.
       const reads = await answersOf(inputProviders(element, serverIds), 'input');
-      const input = serverInputOf(
-        element,
-        { routeParams, queryParams: req.query },
-        Object.fromEntries(
-          Object.entries(reads).map(([id, { answer, singleRecord }]) => [
-            getSourceName('apiContainer', id),
-            serverProviderSource(answer, singleRecord)
-          ])
-        )
+      const address = { routeParams, queryParams: req.query };
+      const providers = Object.fromEntries(
+        Object.entries(reads).map(([id, { answer, singleRecord }]) => [
+          getSourceName('apiContainer', id),
+          serverProviderSource(answer, singleRecord)
+        ])
       );
+      const input = serverInputOf(element, address, providers);
+      readingsOf.set(element.id, inputReadings(element, address, providers));
 
       return withBudget(
         elementSignal =>
@@ -275,11 +277,13 @@ export const resolveRscData = async ({
       // Nobody is waiting for it any more: not a failure of the element.
       if (!signal?.aborted) {
         const reason: unknown = result.reason;
+        const readings = readingsOf.get(targets[index].id) ?? [];
+        const itsInput = readings.length > 0 ? ` — its input: ${readings.join('; ')}` : '';
         // An action that refused this visitor did its job: one line of why, no stack; anything else is an error.
         if (reason instanceof Error && 'refused' in reason && reason.refused === true) {
-          serverLog.warn('RSC', `element ${targets[index].id}: ${reason.message}`);
+          serverLog.warn('RSC', `element ${targets[index].id}: ${reason.message}${itsInput}`);
         } else {
-          serverLog.error('RSC', `element ${targets[index].id} failed to resolve`, reason);
+          serverLog.error('RSC', `element ${targets[index].id} failed to resolve${itsInput}`, reason);
         }
 
         // A refusal's words are the visitor's, as `/_action` answers them: said where the page reads them, everywhere.
@@ -289,7 +293,9 @@ export const resolveRscData = async ({
         if (said !== undefined) {
           acum[targets[index].id] = { [RSC_FAILURE]: said };
         } else if (sayFailures) {
-          acum[targets[index].id] = { [RSC_FAILURE]: reason instanceof Error ? reason.message : String(reason) };
+          acum[targets[index].id] = {
+            [RSC_FAILURE]: `${reason instanceof Error ? reason.message : String(reason)}${itsInput}`
+          };
         }
       }
 

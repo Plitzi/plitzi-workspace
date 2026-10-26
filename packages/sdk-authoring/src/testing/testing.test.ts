@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { container, heading, list, text } from '../elements';
 import { authorSpace } from '../index';
 import { accessibilityInPage } from './accessibility';
+import { drawnInPage } from './drawn';
 import { describeFindings, inspectDocument, inspectPage, issuesOf } from './inspect';
 import { onScreen } from './onScreen';
 import { singlePageSpace, withElement } from './variants';
@@ -71,6 +72,19 @@ describe('testing/onScreen', () => {
       'title',
       'rows'
     ]);
+  });
+
+  // A 403 was read as every element of its page "not on the page": the server never sent them.
+  it('owes of a page withheld from its visitor only its shells, and the page drawn in its place', () => {
+    expect(onScreen(handles, 'home', { withheld: {} }).map(handle => handle.id)).toEqual([
+      'outer-bar',
+      'outer-slot',
+      'inner-nav',
+      'inner-slot'
+    ]);
+    expect(onScreen(handles, 'home', { withheld: { instead: 'about' } }).map(handle => handle.id)).toContain(
+      'about-title'
+    );
   });
 
   /** A condition, a list row and the derived ids are what a bare visit cannot promise. */
@@ -186,13 +200,18 @@ describe('testing/describeFindings', () => {
 });
 
 describe('testing/inspectPage', () => {
-  const driver = (answers: ProbeFindings[]): PageEvaluator & { calls: number } => {
+  const driver = (answers: ProbeFindings[], drawn = true): PageEvaluator & { calls: number } => {
     const fake = {
       calls: 0,
       evaluate: <R>(fn: (input: ProbeInput) => R): Promise<R> => {
         // The accessibility half answers clean here: what it finds is its own test's (accessibility.test.ts).
         if (fn === (accessibilityInPage as unknown)) {
           return Promise.resolve({ skippedHeadings: [], unnamed: [] } as R);
+        }
+
+        // Whether the page draws anything of its own: as the test says (drawn.test.ts reads a page for it).
+        if (fn === (drawnInPage as unknown)) {
+          return Promise.resolve(drawn as R);
         }
 
         const answer = answers[Math.min(fake.calls, answers.length - 1)];
@@ -236,6 +255,14 @@ describe('testing/inspectPage', () => {
     const report = await inspectPage(driver([{ ...clean, notDrawn: ['title'] }]), handles);
 
     expect(report.checked).toBe(5);
+  });
+
+  // A run's 404 drew its layout and nothing else, and every check passed: nothing owed was missing.
+  it('says a page that draws nothing of its own', async () => {
+    const report = await inspectPage(driver([clean], false), handles, { timeout: 0 });
+
+    expect(report.issues.map(issue => issue.code)).toEqual(['page-empty']);
+    expect(report.problems[0]).toContain('the page draws nothing of its own');
   });
 
   it('reports what is still wrong when the time is up', async () => {

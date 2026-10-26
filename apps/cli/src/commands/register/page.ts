@@ -300,8 +300,10 @@ export const registerPage = (pageGroup: Command): void => {
 
   pageGroup
     .command('shot')
-    .argument('[path]', 'The page: /about. The home page when left out')
-    .description('A picture of one page of the running project — and, asked, how it differs from another or what moves')
+    .argument('[paths...]', 'The pages: /about /pricing. The home page when left out')
+    .description(
+      'A picture of a page of the running project — or several — and, asked, how it differs from another or what moves'
+    )
     .addOption(
       new Option('--width <px,px>', 'The viewport width — or several, separated by commas: a picture each')
         .argParser(widths)
@@ -393,6 +395,6 @@ export const registerPage = (pageGroup: Command): void => {
       'Take part in the page’s realtime channels as a visitor does — arrive, announce, send. Otherwise it only watches them'
     )
     .option('--url <origin>', URL_OPTION)
-    .option('--json', 'One object, for a tool or an agent — { widths: [...] }, one each, at several widths')
-    .action((path: string | undefined, options: ShotEachOptions) => shotEach(path, options));
+    .option('--json', 'One object, for a tool or an agent — { widths: [...] }, one each, for several pages or widths')
+    .action((paths: string[], options: ShotEachOptions) => shotEach(paths, options));
 };

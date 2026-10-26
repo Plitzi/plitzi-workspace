@@ -12,8 +12,9 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
 "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
    piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `--compare`, naming sections no piece covers. **Research is a spike, yours** (no files). **Start with the scope** (`run start` opens on it); find out (`page shot --compare <original> --dress`, `page measure`) and end it with the tasks, each with what you found (`"findings"`): `task spike s-scope --done "…" --tasks <stage.json>`. Later: stack one (`run extend`); an agent's `task spike` is a block you lift with the answer (`task unblock --answer`). **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
-1. **Map the space:** `plitzi space overview` — who owns which file. A page owns the modules only it imports; what two
-   pages import (tokens, classes, a layout, a component) is **shared**, and so is every entry. `plitzi space impact <file>` — what depends on a file.
+1. **Map the space:** `plitzi space overview [unit]` — who owns which file. A page owns the modules only it imports;
+   what two pages import (tokens, classes, a layout, a component) is **shared**, as is every entry. `space impact
+   <file>`: what depends on it.
 2. **Write the plan** (JSON, best in the project's `tmp/`: the run removes it and its inputs, unless changed since):
 
    ```json
