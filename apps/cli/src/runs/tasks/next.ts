@@ -93,8 +93,8 @@ export interface NextTask {
     first?: true;
   };
   /**
-   * A tester's — or the lead's, with no tester in the team or a review escalated to it: a task in review nobody else
-   * took — what it changed, where it is drawn, and what its earlier reviews asked.
+   * A tester's — or the lead's, one no tester may take (`leadReviews`): a task in review nobody else took — what it
+   * changed, where it is drawn, and what its earlier reviews asked.
    */
   leadReview?: ReviewOffer;
   /**
@@ -138,8 +138,9 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
   await markPresent(loaded.paths, ctx.agent, ctx.now());
 
   const next = await nextOf(ctx, loaded, role);
-  // Nothing left for it, ever: the activity says the agent stops, and why — never a silence read as a hang.
-  if (next.finished) {
+  // Nothing left for it, ever: the activity says the agent stops, and why — never a silence read as a hang. The lead
+  // goes on to close the run: it never stops.
+  if (next.finished && !isPrincipal(ctx.agent)) {
     await logRun(ctx, loaded.paths, { action: 'stops', why: next.why ?? 'nothing is left for it' });
   }
 

@@ -52,11 +52,9 @@ const stopText = (why: string): string =>
     ? 'stops for a fresh context — started again for what comes'
     : /on demand/.test(why)
       ? 'stops — on demand, nothing came for it'
-      : /no review came|other leads review/.test(why)
-        ? 'stops — no reviews for it now'
-        : /every one is done|nothing is left|no task is left/.test(why)
-          ? 'stops — nothing is left for it'
-          : 'stops';
+      : /every one is done|nothing is left|no task is left/.test(why)
+        ? 'stops — nothing is left for it'
+        : 'stops';
 
 /** A refusal's or an error's first sentence, as a line says it: what went wrong, its details left to the command. */
 const firstSentence = (text: string): string => glimpse(text.replace(/\s+/g, ' ').split(/(?<=[.!?])\s/)[0] ?? '');

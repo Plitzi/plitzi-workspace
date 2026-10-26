@@ -332,7 +332,7 @@ export interface TaskState {
    * who took it to review, once one did (`task next`) — and `approved` once it did: then it is the lead's.
    */
   design?: DesignReview;
-  /** The lead that took this round's review from the queue (`task next --role lead`): another lead is not offered it. */
+  /** The tester — or the lead — that took this round's review from the queue (`task next`): another is not offered it. */
   reviewer?: { by: string; round: number; at: string };
   /** What its spikes found out, oldest first: in its brief, and in the brief of every task that waits for it. */
   findings?: Finding[];

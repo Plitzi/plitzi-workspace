@@ -5,10 +5,11 @@ import { isString } from './guards';
 import type { TaskState } from './model';
 
 /**
- * A spike: research in the run, a lead's — what the lead read before writing a plan, done where the monitor sees it.
+ * A spike: research in the run, a scout's — the lead's with none — what is read before a plan is written, done where the
+ * monitor sees it, its result the lead's to approve.
  * A task with no files and a question (`"spike"`); its result is the run's next tasks, each with what was found for it
  * (`findings`). A run opens on one — the person's ask, its scope (`scopePlan`) — and every task flows from it; a spike
- * later is the lead's to open, when the work asks for one.
+ * later is the lead's to plan, when the work asks for one.
  */
 
 /** What an agent found out, said by `task spike --done`. */
@@ -52,8 +53,8 @@ export const startingState = (
 export const SCOPE_SPIKE = 's-scope';
 
 /**
- * A run on the person's ask alone: its plan one spike — the scope, the lead's — whose result is the tasks (`plitzi run
- * open --spike "…"`). As any project starts: the lead scopes it, and the work flows from there.
+ * A run on the person's ask alone: its plan one spike — the scope, a scout's, the lead's with none — whose result is the
+ * tasks (`plitzi run open --spike "…"`). As any project starts: it is scoped, and the work flows from there.
  */
 export const scopePlan = (runId: string, ask: string, reference?: string) => ({
   version: 1 as const,

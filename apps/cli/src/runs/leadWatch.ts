@@ -53,23 +53,30 @@ const TIMED = new Set<Attention['kind']>([
 
 /**
  * What needs the lead in `view`, each by a key that stays while it is the same thing — a review by its round. The lead
- * is the manager: with testers in the team it is woken for no review — what a tester escalates, or a task past its
- * review rounds, comes blocked on it among the run's attention — and with none, for every task in review once its
- * designer said.
+ * is the manager: with testers in the team it is woken only for a review none of them may take (each worked it) — what a
+ * tester escalates, or a task past its review rounds, comes blocked on it among the run's attention — and with none, for
+ * every task in review once its designer said.
  */
 export const leadItems = (view: RunView): LeadItem[] => [
   // One a designer is still to look at is not the lead's yet: it wakes the lead once the designer said.
-  ...(view.reviewers.length > 0
-    ? []
-    : view.tasks
-        .filter(task => task.status === 'in-review' && task.design?.status !== 'due')
-        .map(task => ({
-          key: `review:${task.id}:${String(task.round)}:${task.takenAt ?? ''}:${task.design?.status ?? ''}`,
-          text:
-            task.design?.status === 'approved'
-              ? `${task.id} is in review, its UI approved by ${task.design.by ?? 'a designer'} — yours is the final review (the team has no tester): plitzi task look ${task.id}, then plitzi task review ${task.id} --approve | --changes "…"`
-              : `${task.id} is in review (the team has no tester): plitzi task review ${task.id} --approve | --changes "…"`
-        }))),
+  ...view.tasks
+    .filter(
+      task =>
+        task.status === 'in-review' &&
+        task.design?.status !== 'due' &&
+        (view.reviewers.length === 0 || task.leadReviews === true)
+    )
+    .map(task => {
+      const why = view.reviewers.length === 0 ? 'the team has no tester' : `${view.reviewers.join(', ')} worked it`;
+
+      return {
+        key: `review:${task.id}:${String(task.round)}:${task.takenAt ?? ''}:${task.design?.status ?? ''}`,
+        text:
+          task.design?.status === 'approved'
+            ? `${task.id} is in review, its UI approved by ${task.design.by ?? 'a designer'} — yours is the final review (${why}): plitzi task look ${task.id}, then plitzi task review ${task.id} --approve | --changes "…"`
+            : `${task.id} is in review, yours to review (${why}): plitzi task review ${task.id} --approve | --changes "…"`
+      };
+    }),
   ...view.attention
     .filter(item => item.who !== 'task')
     .map(item => ({

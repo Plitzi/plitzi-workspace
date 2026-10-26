@@ -1,5 +1,5 @@
 import { commandAs } from './identity';
-import { testerReviews } from './leads';
+import { leadReviews, testerReviews } from './leads';
 import { isResearch } from './spike';
 import { DESIGNER, SCOUT, TESTER } from './team';
 import { TASKS_PER_AGENT } from './teamNotices';
@@ -94,8 +94,10 @@ const toFind = (view: TaskView): boolean =>
  * A review a tester takes that nobody took this round, not escalated to the lead: its UI said — or waiting for a designer
  * none is free for, which the tester reviews too.
  */
-const untakenReview = (view: TaskView, noDesignerFree: boolean): boolean =>
+const untakenReview = (view: TaskView, noDesignerFree: boolean, testers: readonly string[]): boolean =>
   view.state.status === 'in-review' &&
+  // One every tester worked is the lead's (`leadReviews`): starting a tester for it starts one it refuses.
+  !leadReviews(view, testers) &&
   (view.state.design?.status !== 'due' || (noDesignerFree && view.state.design.by === undefined)) &&
   testerReviews(view.task) &&
   (view.state.reviewer === undefined || view.state.reviewer.round !== view.state.round);
@@ -130,6 +132,7 @@ export const agentsNeeded = (
   // Every designer at work, or none in the team: a UI review waits for nobody — the tester takes it, as `task next`
   // offers it (`noDesignerFreeIn`). A designer not running is started for it instead.
   const noDesignerFree = started.filter(each => each.roles.includes(DESIGNER)).every(each => busy.has(each.agent));
+  const testers = started.filter(each => each.roles.includes(TESTER)).map(each => each.agent);
   const asked = new Set<string>();
   // A task sent back waits for its own agent alone, and nobody else takes it: one not running is asked for by name — an
   // agent stops between two pieces of work for a fresh context (`SessionMode`), before its review says.
@@ -207,7 +210,7 @@ export const agentsNeeded = (
               .map(view => `the UI of ${view.task.id}`)
           : role === TESTER
             ? views
-                .filter(view => untakenReview(view, noDesignerFree) && freeOf(view.owner?.agent).length === 0)
+                .filter(view => untakenReview(view, noDesignerFree, testers) && freeOf(view.owner?.agent).length === 0)
                 .map(view => `the review of ${view.task.id}`)
             : role === SCOUT && freeOf().length === 0
               ? views

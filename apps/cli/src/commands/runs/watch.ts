@@ -12,7 +12,8 @@ import { startPreview, startTaskPreview } from '../../runs/preview';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { buildReport, readSummary, reportBrief, reportText, writeSummary } from '../../runs/report';
 import { activeRuns, loadRun, pruneRuns } from '../../runs/run';
-import { boardLines, runsState, runText, viewRun } from '../../runs/view';
+import { runsState, viewRun } from '../../runs/view';
+import { boardLines, runText } from '../../runs/viewText';
 
 import type { RunCommandOptions } from './shell';
 import type { ExperienceFlags } from '../../runs/experience';

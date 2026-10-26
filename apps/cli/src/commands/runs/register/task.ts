@@ -76,7 +76,7 @@ const TASK_HELP: readonly { heading: string; commands: readonly string[] }[] = [
     ]
   },
   {
-    heading: "Reviewing — the lead's and its co-leads', and a designer's look:",
+    heading: "Reviewing — a tester's, the lead's, and a designer's look:",
     commands: ['look', 'show', 'review', 'reassign', 'revert', 'unblock', 'message']
   }
 ];

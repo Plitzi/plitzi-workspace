@@ -420,9 +420,10 @@ describe('the lead’s plan as the run goes', () => {
     const again = await take('agent-2', 't-about');
     await writeInCopy(again.work, 'src/space/pages/about.ts', 'export const about = { formal: true };\n');
     await completeTask(again.ctx, 'es-launch', 't-about');
-    expect(
-      (await waitForLead(lead(), 'es-launch', { timeoutMs: 20, everyMs: 10 })).fresh.map(item => item.text)
-    ).toContain('t-about is in review (the team has no tester): plitzi task review t-about --approve | --changes "…"');
+    const woken = (await waitForLead(lead(), 'es-launch', { timeoutMs: 20, everyMs: 10 })).fresh.map(item => item.text);
+    expect(woken).toContain(
+      't-about is in review, yours to review (the team has no tester): plitzi task review t-about --approve | --changes "…"'
+    );
   });
 
   it('takes the next task in the same breath, and tells an agent done with the run how its own work ended', async () => {

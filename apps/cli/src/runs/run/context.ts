@@ -85,7 +85,7 @@ export const requireNoTask = (ctx: RunContext, action: string): void => {
 
 /**
  * `lead`'s, or a person's, by who calls — proved (`identity.ts`), so a name is no way in: an agent of the run holding
- * no task, a designer or a co-lead, is refused as a task's token is.
+ * no task, a designer or a tester, is refused as a task's token is.
  */
 export const requirePrincipal = (ctx: RunContext, action: string): void => {
   requireNoTask(ctx, action);

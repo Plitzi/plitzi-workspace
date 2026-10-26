@@ -146,7 +146,7 @@ export const registerRunGroup = (program: Command): Command => {
     .description(
       'An agent of the team started: its prompt, and the command that starts it headless — --launch starts it now'
     )
-    .argument('<name>', 'The agent, as the team names it (dev-1, design-1, lead-2) — or lead')
+    .argument('<name>', 'The agent, as the team names it (dev-1, design-1, test-1) — or lead')
     .option('--launch', 'Start it now, in the background: its output kept beside its prompt, in the run’s scratch')
     .option('--harness <harness>', 'With --launch: claude, codex or opencode (the one installed, when only one is)')
     .option(...TOKEN_OPTION)

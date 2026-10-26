@@ -13,8 +13,8 @@ import type { TaskView } from './taskStore';
 /**
  * A run's one lead — the manager: it plans with the person, approves what a spike proposes, answers, decides what is
  * escalated to it and finishes. The testers review every task (`testerReviews`), their approval the task's; the lead
- * reviews only what a tester escalates or past the review rounds' limit (blocked on it), and every task when the team
- * has no tester. It is the person's harness, never started again: every review it read stayed in its context — a run's
+ * reviews only what a tester escalates or past the review rounds' limit (blocked on it), what no tester may take (each
+ * worked it), and every task when the team has no tester (`leadReviews`). It is the person's harness, never started again: every review it read stayed in its context — a run's
  * lead read 130 turns of ~110k each, 68% of what the run spent (Carlos).
  */
 
@@ -88,6 +88,13 @@ const workedBy = (view: TaskView, agent: string): boolean =>
   view.state.notes.some(note => note.by === agent && note.text.startsWith('Taken'));
 
 /**
+ * Whether a task's review is the lead's: no tester of the team may take it — none in the team, or every one worked it.
+ * A tester's own tests are another's to review, and with one tester in the team nobody was offered them.
+ */
+export const leadReviews = (view: TaskView, testers: readonly string[]): boolean =>
+  testers.every(tester => workedBy(view, tester));
+
+/**
  * A verdict on a task — a tester's, the lead's, a person's: any other is refused, a designer included once the task's UI
  * is said (its verdict is on the UI, and only while it waits for one). A tester does not review what it worked — its
  * own tests are another's to review.
@@ -148,7 +155,6 @@ export const testerReviews = (task: RunTask): boolean => task.spike === undefine
  * — the one this reviewer reviewed before first (it knows what it asked), then the most urgent (`byUrgency`), then the
  * one that waited longest.
  */
-
 export const leadReviewFor = (
   views: readonly TaskView[],
   agent: string,
@@ -178,17 +184,17 @@ export const leadReviewFor = (
     .at(0);
 };
 
-/** Takes the review offered: false when another lead took it first. */
 /**
- * A look by a tester — or by the lead, with no tester — at a task whose review is its to take now takes it — said in the
+ * A look by a tester — or by the lead, at a review no tester may take — at a task whose review is its to take now takes it — said in the
  * activity as `task next` says it: a run's lead looked and approved, and the person following the run saw
  * nobody take its reviews. A look while the designer's UI review is due takes nothing: that review is the designer's.
  */
 export const takeOnLook = async (ctx: RunContext, loaded: LoadedRun, view: TaskView): Promise<boolean> => {
   const testers = await testersOf(loaded.paths.root);
-  // The lead's look takes a review only where it is the reviewer: no tester in the team. With one, it is a look.
+  // The lead's look takes a review only where it is the reviewer: no tester may take it. Otherwise it is a look.
   const reviews =
-    (ctx.agent === LEAD && testers.length === 0) || (testers.includes(ctx.agent) && testerReviews(view.task));
+    (ctx.agent === LEAD && leadReviews(view, testers)) ||
+    (testers.includes(ctx.agent) && testerReviews(view.task) && !workedBy(view, ctx.agent));
   const taken = view.state.reviewer?.by === ctx.agent && view.state.reviewer.round === view.state.round;
   if (!reviews || taken || view.state.status !== 'in-review') {
     return false;

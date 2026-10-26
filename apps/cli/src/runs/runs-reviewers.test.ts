@@ -12,9 +12,9 @@ import { leadItems } from './leadWatch';
 import { notLookedAtYet } from './lookedAt';
 import { messagesOf } from './messages';
 import { agentsNeeded } from './onDemand';
-import { loadRun, logRun, openRun } from './run';
+import { loadRun, logRun, openRun, readRunLog } from './run';
 import { scopePlan, SCOPE_SPIKE } from './spike';
-import { noteRun } from './talk';
+import { askLead, noteRun } from './talk';
 import {
   answerSpike,
   approveSpike,
@@ -619,5 +619,63 @@ describe('what the lead is told, as manager', () => {
     expect(lines).toContain('every task’s review');
     expect(lines).toContain('scout-1 — scout');
     expect(lines).not.toContain('nothing for its scout');
+  });
+});
+
+describe('a review no tester may take', () => {
+  // The one tester writes every `-tests` card: its own were offered to nobody, and the lead was never woken for them.
+  it('is the lead’s — offered in its queue, woken for, and no tester started for it', async () => {
+    const members = team({ ...TESTERS, count: 1 });
+    await bench.writeTeam(members);
+    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    plan.tasks = plan.tasks.map(task => (task.id === 't-menu' ? { ...task, role: 'tester' } : task));
+    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
+    const taken = await take('test-1', 't-menu');
+    await writeInCopy(taken.work, 'src/space/pages/menu.ts', 'export const page = {};\n');
+    await completeTask(taken.ctx, runId, 't-menu');
+
+    expect((await nextTask(bench.agent('test-1'), runId, 'tester')).leadReview).toBeUndefined();
+    const woken = leadItems(await viewRun(lead(), runId)).filter(item => item.key.startsWith('review:t-menu:'));
+    expect(woken.map(item => item.text)).toEqual([expect.stringContaining('yours to review (test-1 worked it)')]);
+    expect((await nextTask(lead(), runId, 'lead')).leadReview?.task.id).toBe('t-menu');
+
+    const loaded = await loadRun(lead(), runId);
+    const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
+    const run = { identified: [], scratch: loaded.paths.scratch, openFor: 0, open: true, launches: true };
+    const asked = agentsNeeded(views, startedAgents(members), new Set(['agent-1']), run);
+    expect(asked.map(each => each.text).join(' ')).not.toContain('the review of t-menu');
+  });
+});
+
+describe('a question the task asked, open at its review', () => {
+  it('has a tester hand the review to the lead, whose answer it is', async () => {
+    await bench.writeTeam(team(TESTERS));
+    const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
+    const menu = await take('agent-1', 't-menu');
+    await askLead(menu.ctx, runId, 't-menu', 'Prices with the euro sign?');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Menú" };\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+
+    const refused = await refusal(reviewTask(bench.agent('test-1'), runId, 't-menu', 'approve', []));
+    expect(refused.message).toContain('plitzi task review t-menu --escalate');
+    expect(refused.message).not.toContain('task message');
+  });
+});
+
+describe('the lead, every task approved', () => {
+  it('is told to look, report and finish — and never stops', async () => {
+    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    plan.tasks = plan.tasks.filter(task => task.id === 't-menu');
+    await bench.writeTeam(team(TESTERS));
+    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
+    const menu = await take('agent-1', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Menú" };\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+    await reviewTask(bench.agent('test-1'), runId, 't-menu', 'approve', []);
+
+    const next = await nextTask(lead(), runId, 'lead');
+    expect(next.why).toContain('look at the result whole — plitzi run look — then the report');
+    const log = await readRunLog((await loadRun(lead(), runId)).paths);
+    expect(log.filter(entry => entry.action === 'stops' && entry.by === 'lead')).toEqual([]);
   });
 });

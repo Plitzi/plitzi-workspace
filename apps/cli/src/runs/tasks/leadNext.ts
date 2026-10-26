@@ -1,4 +1,5 @@
-import { isPrincipal, leadReviewFor, scoutsOf, testersOf } from '../leads';
+import { isPrincipal, leadReviewFor, leadReviews, scoutsOf, testersOf } from '../leads';
+import { notLookedAtYet } from '../lookedAt';
 import { RunRefusal } from '../refusal';
 import { uiQueued } from '../reviewQueue';
 import { DESIGNER, readTeam, startedAgents } from '../team';
@@ -79,8 +80,8 @@ export const spikeFor = (
 
 /**
  * `task next --role lead`: what waits for the lead, the manager — the tasks a scout proposes, to decide with the person;
- * a review escalated to it is blocked on it and comes through `run watch`; the reviews when the team has no tester; the
- * spikes when it has no scout. The lead reviews nothing a tester takes: every review it reads stays in its context,
+ * a review escalated to it is blocked on it and comes through `run watch`; the reviews no tester may take — every one,
+ * with no tester in the team (`leadReviews`); the spikes when it has no scout. The lead reviews nothing a tester takes: every review it reads stays in its context,
  * the person's harness never started again.
  */
 export const leadNext = async (
@@ -118,9 +119,11 @@ export const leadNext = async (
     };
   }
 
-  if ((await testersOf(ctx.root)).length === 0) {
+  const testers = await testersOf(ctx.root);
+  const theirs = views.filter(view => leadReviews(view, testers));
+  if (theirs.length > 0) {
     const noDesignerFree = await noDesignerFreeIn(ctx, views);
-    const review = leadReviewFor(views, ctx.agent, view => noDesignerFree || uiQueued(view, ctx.now().getTime()));
+    const review = leadReviewFor(theirs, ctx.agent, view => noDesignerFree || uiQueued(view, ctx.now().getTime()));
     if (review) {
       return {
         leadReview: await reviewOffer(
@@ -142,7 +145,13 @@ export const leadNext = async (
 
   const open = views.filter(view => view.state.status !== 'done');
   if (open.length === 0) {
-    return { why: 'every task is done: nothing waits for you', ready: [], messages, finished: true };
+    // What is left is the lead's close, said in its order: the look `run finish` asks for, the report, the finish.
+    return {
+      why: `every task is approved: ${(await notLookedAtYet(ctx, loaded)) ? 'look at the result whole — plitzi run look — then ' : ''}the report (plitzi run report --summary …), then plitzi run finish`,
+      ready: [],
+      messages,
+      finished: true
+    };
   }
 
   const reviewing = views.filter(

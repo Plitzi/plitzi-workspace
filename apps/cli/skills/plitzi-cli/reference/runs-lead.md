@@ -61,8 +61,8 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    (`--session context|keep`); `--resume-session`: one that died mid-task resumes; one just started is
    not "no signal" for `options.startGraceMinutes` (3). A designer reviews the others' UI (`options.designReview`;
    `false` turns it off); a tester reviews every task — its QA, the approval — and adds `<id>-tests` (`"tests": false`:
-   none); more testers when reviews queue (`run team set test --count 2`). **Yours is what a tester escalates, or past
-   its review rounds** (blocked on you): `task review <task> --approve`, or `task unblock <task> --answer "…"`, which
+   none); more testers when reviews queue (`run team set test --count 2`). **Yours is what a tester escalates, past
+   its review rounds** (blocked on you), or no tester may take (each worked it): `task review <task> --approve`, or `task unblock <task> --answer "…"`, which
    sends it back with your word. With no tester every review is yours ([runs-review.md](runs-review.md)). Take a task
    back: `task reassign <task> --reason "…" --to <agent>`.
 
@@ -99,7 +99,7 @@ task message t-home "…" --reply-to m3`; `all` or `@dev-1` in place of the task
    removed; more work is a stage, `plitzi
 run extend <run> next.json`; say each to the person. **You manage it:** no agent idle while work could move — chase
    or decide a review that drags, settle a last cosmetic round yourself, amend away a dependency it does not need.
-   **Nothing waits for you?** Wait (`run watch`): a task you write fills every later turn.
+   **Nothing waits for you?** Wait (`run watch`).
 6. **Decide what reaches you**, reading only that: an escalation's `task show`, a spike's proposal.
 7. **A change after approval** puts the finish into
    **reconciliation**: `plitzi run resolve <run> <file> --take …`, then `plitzi run resolve <run>` (no file) goes on.

@@ -23,7 +23,8 @@ import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 
 /**
- * `plitzi task review`: the lead's verdict — or a designer's on a task's UI — on a task in review.
+ * `plitzi task review`: a tester's verdict — the lead's, on what reaches it — or a designer's on a task's UI, on a task
+ * in review.
  */
 
 export interface ReviewedTask {
@@ -232,7 +233,7 @@ const decide = async (
   if (view.owner?.agent === ctx.agent) {
     throw new RunRefusal(
       'invalid',
-      `Task "${taskId}" is yours: another reviews it — a tester or a lead that reviews takes it from the queue (plitzi run agent lead-2 --launch starts one)`,
+      `Task "${taskId}" is yours: another reviews it — a tester that did not work it, or the lead`,
       { task: taskId }
     );
   }
@@ -361,9 +362,15 @@ const decide = async (
     message => message.from === taskId && message.to === LEAD && !message.fyi && !answered.has(message.id)
   );
   if (verdict === 'approve' && open.length > 0) {
+    const asked = open.map(
+      message => `${message.id} ("${message.text.slice(0, 80)}${message.text.length > 80 ? '…' : ''}")`
+    );
     throw new RunRefusal(
       'invalid',
-      `Task "${taskId}" asked ${open.map(message => `${message.id} ("${message.text.slice(0, 80)}${message.text.length > 80 ? '…' : ''}")`).join(', ')} and it is not answered: answer it first (plitzi task message ${taskId} "…" --reply-to ${open[0].id}) — if the answer changes the work, send it back with it (plitzi task review ${taskId} --changes "…")`,
+      // The answer is the lead's (`task message` speaks as it): a tester hands the review over with the question.
+      isPrincipal(ctx.agent)
+        ? `Task "${taskId}" asked ${asked.join(', ')} and it is not answered: answer it first (plitzi task message ${taskId} "…" --reply-to ${open[0].id}) — if the answer changes the work, send it back with it (plitzi task review ${taskId} --changes "…")`
+        : `Task "${taskId}" asked the lead ${asked.join(', ')} and it is not answered: the answer may change the work, and it is the lead's — hand it the review: plitzi task review ${taskId} --escalate "approve once ${open[0].id} is answered"`,
       { task: taskId, questions: open.map(message => message.id) }
     );
   }
@@ -414,7 +421,7 @@ const decide = async (
         ...(toLead
           ? {
               blockedBy: {
-                reason: `${String(ofKind)} rounds of ${byDesigner ? 'its UI review' : 'the lead’s'} changes: the lead decides — approves it as it is (plitzi task review ${taskId} --approve), settles what is left with an answer (plitzi task unblock ${taskId} --answer "…"), or asks the person`,
+                reason: `${String(ofKind)} rounds of ${byDesigner ? 'its UI review' : 'its review’s'} changes: the lead decides — approves it as it is (plitzi task review ${taskId} --approve), settles what is left with an answer (plitzi task unblock ${taskId} --answer "…"), or asks the person`,
                 needs: 'lead' as const,
                 review: true
               }

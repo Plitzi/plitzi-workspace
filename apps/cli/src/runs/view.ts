@@ -3,12 +3,11 @@ import path from 'node:path';
 import { proposalsOf } from './agreements';
 import { stackableBacklog } from './backlog';
 import { bottlenecks } from './bottlenecks';
-import { designSkipText } from './designSkip';
 import { fingerprint } from './files';
 import { liveAttention } from './findings/live';
 import { readHistory } from './history';
 import { identifiedAgents } from './identity';
-import { testersOf } from './leads';
+import { leadReviews } from './leads';
 import { LEAD, messagesOf, unreadFor } from './messages';
 import { agentsNeeded } from './onDemand';
 import { under } from './paths';
@@ -19,7 +18,7 @@ import { heldAhead, lockHolder, stalled } from './stalled';
 import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
-import { readTeam, SCOUT, startedAgents } from './team';
+import { readTeam, SCOUT, startedAgents, TESTER } from './team';
 import { chainMinutes, urgencies } from './urgency';
 import { isWorked } from './worked';
 
@@ -71,8 +70,10 @@ export interface TaskLine {
   milestone?: string;
   /** Its UI's review by a designer, in a run that has one. */
   design?: DesignReview;
-  /** In review: the lead that took this round's review, once one did. */
+  /** In review: the tester — or the lead — that took this round's review, once one did. */
   reviewer?: string;
+  /** In review with testers in the team, and none may take it — each worked it: the lead's (`leadReviews`). */
+  leadReviews?: true;
   /** When its holder was last heard from — a command, a heartbeat, a write in its copy. */
   signalAt?: string;
   /** In review: since when it is as it is — sent, or its UI said — what a review no lead takes has waited from. */
@@ -173,7 +174,7 @@ export interface RunView {
 }
 
 /** What a wait is on: a file, or an answer to a proposal. */
-const waitingText = (waiting: Waiting): string =>
+export const waitingText = (waiting: Waiting): string =>
   waiting.proposal ? `to answer ${waiting.proposal}` : `on ${waiting.file ?? 'a file'}`;
 
 const minutesBetween = (from: string, to: Date): number => Math.round((to.getTime() - Date.parse(from)) / 60_000);
@@ -257,6 +258,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   const urgency = urgencies(loaded.tasks);
   const team = await readTeam(ctx.root).catch(() => undefined);
   const started = team ? startedAgents(team) : [];
+  const testers = started.filter(each => each.roles.includes(TESTER)).map(each => each.agent);
   const log = await readRunLog(loaded.paths);
   const { gone, starting, running } = await agentsNow(loaded.paths, views, team, log, now);
   // A task sent back to an agent not running waits for it to be started, and the lead is told that (`agentsNeeded`):
@@ -274,8 +276,13 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       urgency.get(view.task.id) ?? view.task.priority
     );
     const waitsOn = view.task.dependsOn.filter(id => !approvedIds.has(id));
+    const lead = view.state.status === 'in-review' && testers.length > 0 && leadReviews(view, testers);
 
-    return view.state.status === 'pending' && waitsOn.length > 0 ? { ...line, waitsOn } : line;
+    return {
+      ...line,
+      ...(view.state.status === 'pending' && waitsOn.length > 0 ? { waitsOn } : {}),
+      ...(lead ? { leadReviews: true as const } : {})
+    };
   });
   // A task sent back to an agent at another one waits for it, as the run means it to: its silence is no "no signal —
   // reassign it" while its agent works the one it is at.
@@ -600,99 +607,13 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       files: Object.keys(merge.files).length
     })),
     approvedFiles: Object.keys(approved.files).length,
-    reviewers: await testersOf(ctx.root),
+    reviewers: testers,
     gone: [...gone],
     ...(port === undefined ? {} : { previewPort: port }),
     identified,
     scratch: loaded.paths.scratch,
     ...(log.some(entry => entry.action === 'open' && entry.scoped === 'before') ? { scopedBefore: true as const } : {})
   };
-};
-
-const ICON: Record<TaskStatus, string> = {
-  pending: '·',
-  spike: '◇',
-  ready: '○',
-  'in-progress': '▶',
-  waiting: '…',
-  'in-review': '◎',
-  'changes-requested': '↺',
-  done: '✓',
-  blocked: '■',
-  failed: '✗'
-};
-
-const hhmm = (iso: string): string => `${iso.slice(11, 16)} UTC`;
-
-/** Where a task's UI review is, in a line. */
-const designText = (design: DesignReview): string =>
-  design.status === 'due'
-    ? `its UI with ${design.by ?? 'a designer, not taken yet'}`
-    : design.status === 'approved'
-      ? `UI approved by ${design.by ?? 'a designer'}`
-      : designSkipText(design.why);
-
-/**
- * The board, a line per task: where each stands and who has it — what a run's status says of its tasks, and what a
- * lead's watch says with what woke it (a run's lead ran `run status` after each of its watches, 8 times in 10 minutes).
- */
-export const boardLines = (view: Pick<RunView, 'tasks' | 'reviewers'>): string[] => {
-  const lines: string[] = [];
-  for (const task of view.tasks) {
-    const progress = task.fraction === undefined ? '' : ` · ${String(Math.round(task.fraction * 100))} %`;
-    const step = task.step ? ` · ${task.step}` : '';
-    const agent = task.agent ? `${task.agent}: ` : '';
-    const extra =
-      task.status === 'waiting' && task.waitingFor
-        ? ` · waits for ${task.waitingFor.task} ${waitingText(task.waitingFor)}`
-        : task.waitsOn
-          ? ` · after ${task.waitsOn.join(', ')}`
-          : task.status === 'blocked' && task.blockedBy
-            ? ` · ${task.blockedBy.reason}`
-            : task.status === 'changes-requested'
-              ? ` · changes requested (round ${String(task.round)})`
-              : task.status === 'in-review' && task.design?.status === 'due'
-                ? ` · ${designText(task.design)}`
-                : task.status === 'in-review'
-                  ? `${task.design ? ` · ${designText(task.design)}` : ''}${task.reviewer ? ` · ${task.reviewer} reviews it` : view.reviewers.length > 0 ? ' · no tester took it yet' : ''}`
-                  : '';
-    lines.push(
-      `  ${ICON[task.status]} ${task.id.padEnd(18)} ${task.role === 'developer' ? '' : `[${task.role}] `}${agent}${task.title}${step}${progress}${extra}${task.noSignal ? ' · no signal' : ''}`
-    );
-  }
-
-  return lines;
-};
-
-/** A run as `plitzi run watch` prints it: the run, a line per task, then what needs attention. */
-export const runText = (view: RunView): string => {
-  const head = `${view.goal} · ${view.status} · ${String(view.done)} of ${String(view.total)} tasks${view.expectedEnd ? ` · expected end ${hhmm(view.expectedEnd)}${view.pace ? ` (at this ${view.pace.from}'s pace, ${String(Math.round(view.pace.ratio * 100))}% of the estimates)` : ''}` : ''}`;
-  const lines = [head];
-  view.milestones.forEach(milestone =>
-    lines.push(`  ${milestone.name}: ${String(milestone.done)} of ${String(milestone.total)}`)
-  );
-  lines.push(...boardLines(view));
-
-  if (view.attention.length > 0) {
-    lines.push('Needs attention');
-    view.attention.forEach(item => lines.push(`  ${item.who === 'person' ? '■' : '⚠'} ${item.text}`));
-  }
-
-  if (view.status === 'open' || view.status === 'stopping') {
-    lines.push(
-      view.previewPort === undefined
-        ? 'In a browser, as the tasks are approved: p in plitzi run monitor, or npm run start:preview — the project itself is untouched until the finish'
-        : `In a browser, as the tasks are approved: http://127.0.0.1:${String(view.previewPort)} (the run's preview)`
-    );
-  }
-
-  if (view.merges.length > 0) {
-    lines.push(
-      `Written into the project: ${view.merges.map(merge => `${merge.id} ${merge.kind} (${String(merge.files)} files)`).join(', ')}`
-    );
-  }
-
-  return lines.join('\n');
 };
 
 /** A run of the project as `plitzi run state` lists it: where it stands, and what writes it into the project. */
