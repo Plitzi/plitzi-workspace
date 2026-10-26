@@ -11,6 +11,7 @@ import type { RepeatedCall, RunMetrics } from '../runMetrics';
 import type { TaskRoundReport } from '../taskReports';
 
 export { factFindings } from './facts';
+export { closeFindings, overrunFindings } from './overrun';
 export { keepScratch, scratchOf } from './scratch';
 export { FINDING_OWNERS } from './types';
 export type { Finding, FindingInput, FindingKind, FindingOwner, PlitziArea, SaidOfPlitzi } from './types';

@@ -10,7 +10,16 @@ import { benchText, teamTasks } from './bench';
 import { briefsOf } from './briefs';
 import { combineExperience, experienceText, isExperience, saidOfPlitzi } from './experience';
 import { readOptional, writeAtomic } from './files';
-import { FINDING_OWNERS, factFindings, indicatorsOf, orderFindings, runFindings, scratchOf } from './findings';
+import {
+  FINDING_OWNERS,
+  closeFindings,
+  factFindings,
+  indicatorsOf,
+  orderFindings,
+  overrunFindings,
+  runFindings,
+  scratchOf
+} from './findings';
 import { harnessUsage } from './harness';
 import { coverage } from './inventory';
 import { requireLead } from './leads';
@@ -18,6 +27,7 @@ import { messagesOf } from './messages';
 import { noticesByOwner, noticeText } from './notices';
 import { taskPaths } from './paths';
 import { RunRefusal } from './refusal';
+import { applyFacts, applyText } from './reportApply';
 import { flowText } from './reportFlow';
 import { consumptionText, findingsText, glanceText, reviewsText, uiReviewsText } from './reportHead';
 import { completionsOf, inputOf, loadRun, logRun, readApproved, readRunLog, requireNoTask, updateRecord } from './run';
@@ -35,6 +45,7 @@ import type { Briefs } from './briefs';
 import type { CombinedExperience, Experience } from './experience';
 import type { Finding, RunIndicators } from './findings';
 import type { HarnessUsage } from './harness';
+import type { ApplyFacts } from './reportApply';
 import type { LoadedRun, RunContext } from './run';
 import type { RunMetrics } from './runMetrics';
 import type { PieceCost } from './spent';
@@ -125,6 +136,8 @@ export interface RunReport {
    * it cost at the API's prices when every model has one, how much was its context read again, and the costliest pieces.
    * A run's report said tokens alone, and its $6.75 — a third of it one designer task — was read off its log by hand.
    */
+  /** What the finish's dry run said, and the lines rewritten once their tasks were done: read before applying. */
+  apply?: ApplyFacts;
   spend?: {
     cost?: number;
     cachedShare: number;
@@ -327,7 +340,9 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
       repeated: metrics.cost.repeated
     }),
     ...(await auditRun(loaded)),
-    ...factFindings(facts)
+    ...factFindings(facts),
+    ...overrunFindings(facts.tasks, runLog),
+    ...closeFindings(runLog)
   ]);
 
   return {
@@ -346,6 +361,7 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     },
     tasks,
     events,
+    apply: applyFacts(runLog),
     stops,
     overwrites,
     joined,
@@ -455,10 +471,26 @@ export const reportBrief = (report: RunReport): string => {
     ...goalText(report.runId, report.goal).slice(0, 1),
     '',
     ...glanceText(report),
+    '',
+    // What a person decides applying it on, before the problems: encore-10's asked the lead for it by hand.
+    ...applyText(report, false),
     ...titles,
     '',
     'Each with its evidence and fix, and the flow, the cost and the bench: plitzi run report --full'
   ].join('\n');
+};
+
+/** The run's time: its work, the lead's close, and the person's wait to apply — each apart. */
+export const timeText = (metrics: RunReport['metrics'], total: number): string => {
+  if (metrics.workMinutes === undefined) {
+    return `${String(total)} min`;
+  }
+
+  const after = metrics.afterMinutes ?? 0;
+
+  return metrics.closeMinutes === undefined
+    ? `worked ${String(metrics.workMinutes)} min, then ${String(after)} to this report`
+    : `worked ${String(metrics.workMinutes)} min, ready to apply ${String(metrics.closeMinutes)} min after the last approval (the lead's close), then ${String(Math.round((after - metrics.closeMinutes) * 10) / 10)} to this report (the person's)`;
 };
 
 export const reportText = (
@@ -471,10 +503,11 @@ export const reportText = (
   [
     ...goalText(report.runId, report.goal),
     '',
-    `${closing ? (closing.outcome === 'finished' ? 'Finished' : 'Aborted') : 'Going'} ${report.at} · opened ${report.openedAt} · ${report.metrics.workMinutes === undefined ? `${String(report.minutes)} min` : `worked ${String(report.metrics.workMinutes)} min, then ${String(report.metrics.afterMinutes ?? 0)} to this report`}, estimated ${String(report.estimate.wallMinutes)} with ${String(report.estimate.agents)} agents (${String(report.estimate.totalMinutes)} min of work)`,
+    `${closing ? (closing.outcome === 'finished' ? 'Finished' : 'Aborted') : 'Going'} ${report.at} · opened ${report.openedAt} · ${timeText(report.metrics, report.minutes)}, estimated ${String(report.estimate.wallMinutes)} with ${String(report.estimate.agents)} agents (${String(report.estimate.totalMinutes)} min of work)`,
     '',
     ...glanceText(report),
     '',
+    ...applyText(report, closing?.outcome === 'finished'),
     '## Problems — whose, and what would stop them',
     '',
     ...findingsText(report.findings),

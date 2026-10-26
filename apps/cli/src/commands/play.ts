@@ -350,6 +350,12 @@ const stateText = (state: ElementState): string =>
       : [])
   ].join(' · ');
 
+/** Where a page went by itself as it opened, each address but the last with how long it was shown. */
+export const passedText = (route: string, passed: readonly { path: string; ms: number }[]): string =>
+  `· ${route} went on by itself as it opened: ${passed
+    .map((each, index) => (index === passed.length - 1 ? each.path : `${each.path} (shown ${String(each.ms)} ms)`))
+    .join(' → ')} — the start is read there`;
+
 /**
  * A played interaction in lines: each step, and each element as it left it — here, and there beside it. How far it
  * moved is said of an element some step moves; of one none does (a button), it would be noise on every line.
@@ -546,6 +552,11 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
         unanswered(ours.problem ?? `nothing answers at ${where.origin}${route}`);
 
         return;
+      }
+
+      // Where it went by itself as it opened: the start is read where it landed.
+      if (ours.passed && results.length === 0) {
+        process.stderr.write(`${chalk.dim(passedText(route, ours.passed))}\n`);
       }
 
       // Who it played as, once: a run's designer read a notice bound to the visitor stay hidden, a guest unawares.

@@ -2,7 +2,7 @@ import { ownScriptLines } from '../ownScripts';
 import { evidenceOf } from './types';
 import { groupAlike } from './words';
 
-import type { Finding, SaidOfPlitzi } from './types';
+import type { Finding, PlitziArea, SaidOfPlitzi } from './types';
 import type { RunTask } from '../model';
 
 /**
@@ -14,7 +14,7 @@ import type { RunTask } from '../model';
 
 export const workaroundFindings = (
   tasks: readonly RunTask[],
-  scratch: readonly { agent: string; scripts: string[]; packages: string[] }[]
+  scratch: readonly { agent: string; scripts: string[]; packages: string[]; copies?: string[] }[]
 ): Finding[] => {
   const findings: Finding[] = [];
   const own = ownScriptLines(tasks);
@@ -45,6 +45,21 @@ export const workaroundFindings = (
     });
   }
 
+  // The project copied by hand into a scratch — to measure apart from the project's state: what `run copy` makes.
+  const copies = scratch.filter(each => (each.copies ?? []).length > 0);
+  if (copies.length > 0) {
+    findings.push({
+      kind: 'scratch-copy',
+      owner: 'plitzi',
+      area: 'cli',
+      title: `Copies of the project made by hand: ${String(copies.reduce((sum, each) => sum + (each.copies ?? []).length, 0))}`,
+      evidence: evidenceOf(copies.map(each => `${each.agent}: ${(each.copies ?? []).join(', ')}`)),
+      times: copies.reduce((sum, each) => sum + (each.copies ?? []).length, 0),
+      fix: 'plitzi run copy makes the run’s work a folder of the agent’s scratch — say it where the agent looked for one',
+      subject: 'scratch-copy'
+    });
+  }
+
   const packages = scratch.filter(each => each.packages.length > 0);
   if (packages.length > 0) {
     findings.push({
@@ -62,6 +77,24 @@ export const workaroundFindings = (
   return findings;
 };
 
+/** What each part of Plitzi is named by, in what is said of it: the words that place a notice. */
+const AREA_WORDS: Readonly<Record<PlitziArea, RegExp>> = {
+  cli: /\b(?:plitzi|(?:task|page|run|space|server|functions) [a-z-]+|monitor|CLI|scout|lead|reviewer|acceptance|spike)\b/gi,
+  platform:
+    /\b(?:sdk-server|serveProject|platform|SDK|navigation\.\w+|queryParams|realtime|nexus|hydration|SSR|access rule|accessLevel|authLogin|apiContainer|provider|binding|flow step|kv|jobs\.json|render)\b/gi,
+  docs: /\b(?:docs?|skills?|explain|documented|[\w-]+\.md)\b/gi
+};
+
+/**
+ * Which part of Plitzi a notice is of, by the words it names most — the CLI where it is a tie: encore-10's lead sorted
+ * 49 problems into the flow, the tools and the platform by hand before the person could read them.
+ */
+export const areaOfSaid = (text: string): PlitziArea =>
+  // The CLI first: the first of the most named wins, so a tie is the CLI's.
+  (['cli', 'platform', 'docs'] as const)
+    .map(area => ({ area, times: text.match(AREA_WORDS[area])?.length ?? 0 }))
+    .reduce((best, each) => (each.times > best.times ? each : best)).area;
+
 /**
  * What was said of Plitzi — notices and frictions together — one finding a thing said, live when two or more said it:
  * the same complaint from three agents is one thing to fix.
@@ -74,6 +107,7 @@ export const saidFindings = (said: readonly SaidOfPlitzi[]): Finding[] =>
     return {
       kind: 'said' as const,
       owner: 'plitzi' as const,
+      area: areaOfSaid(group.map(notice => notice.text).join(' ')),
       title: first.text.length > 220 ? `${first.text.slice(0, 220)}…` : first.text,
       evidence: evidenceOf(
         group.map(

@@ -43,16 +43,6 @@ export const factFindings = (
         .filter(task => task.cuts > 0)
         .map(task => ({ subject: task.id, title: `${task.id} was cut ${String(task.cuts)} time(s) and started again` }))
     ),
-    ...each(
-      'over-estimate',
-      tasks
-        .filter(task => task.minutes !== undefined && task.minutes > task.estimateMinutes * 2)
-        .map(task => ({
-          subject: task.id,
-          title: `${task.id} took ${String(task.minutes)} min of an estimated ${String(task.estimateMinutes)}`
-        })),
-      'estimates read off the project’s past runs (run bench)'
-    ),
     ...(report.minutes > report.estimate.wallMinutes * 1.5
       ? each('over-estimate', [
           {

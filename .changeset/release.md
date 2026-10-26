@@ -639,6 +639,22 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   earlier look of the task covered. A review is said slow only past its time; a task of tests waiting for what it tests
   is never "held up"; `task show` names the round being reviewed as `task next` does.
 
+- **The run's report reads straighter.** A copy of the project an agent made by hand in its scratch is said as one
+  (`Copies of the project made by hand`, fixed by `run copy`), and only the files it wrote there count as its scripts —
+  encore-10's "1250 scripts" were four copies and ten probes. A refusal that hands over the lead's word (a verdict, a
+  complete) is a step of the flow, never "refused N times over". `task look` with more pages than it pictures says the
+  rest as not looked at, with the look that pictures them.
+- **A run's report needs nothing before its apply.** It starts with **Before you apply** — the finish's dry run, tasks
+  approved over a known failure or by the lead's UI review, lines rewritten after approval, notices to the backlog, the
+  lead's problems — its head says the work, the lead's close and the person's wait apart, a task that ran long says
+  why (its acceptance rewritten, escalations, sends-back, what was stacked beside it, that nobody cut it), a slow close
+  is the lead's, and Plitzi's problems are grouped by part: the run and the CLI, the platform, the docs.
+- **`page play`** says where a page went by itself as it opened, and how long each address was shown (a sign-in that
+  sends a signed-in visitor on). **`page measure --steps`** plays another account's steps (`as dax: action …`): a review
+  sets up a state the cold copy lacks, and `plitzi server reset` puts it back.
+- `plitzi space pages` answers with `space overview`; the functions skill says a function reads no environment variable
+  (a credential, `src/data/` or the input), which `explain` finds.
+
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
 
 - **`page measure` reads how a row lays out** — `flex-direction`, `justify-content`, `flex-grow`, `min-width` (said

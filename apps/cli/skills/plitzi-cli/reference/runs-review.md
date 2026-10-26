@@ -18,6 +18,9 @@ lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
   the copy's code by its absolute path, never a file in the copy — or send it back for the test it needs. A finding is read from its page,
   measured — never from another page or memory. A fix for light is looked at in light, one for the phone at 390
   (`task look --scheme light --width 390`).
+- **A state the cold copy lacks** (an empty room someone made) is set up by the measure's own steps — `page measure
+  /rooms room-card --steps "as dax: action room-create {…}"` (`--as` reads it as another) — and `plitzi server reset`
+  in the copy puts it back after; never a script of yours.
 - **The verdict:** `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. A round
   that asks for code alone (a refactor, one source for a value) is `--changes "…" --skip-design reviewer`: the next round's UI
   is yours, never a designer's review offered, then decided past it. Past three rounds (yours or the designer's)

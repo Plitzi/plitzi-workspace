@@ -17,7 +17,8 @@ import type { TaskView } from './taskStore';
  */
 
 const PAGES = 'src/space/pages/';
-const MAX_PAGES = 8;
+/** How many pages a task's look pictures by itself: the rest are said, with the look that pictures them. */
+export const MAX_PAGES = 8;
 
 /** `walkFilter` → `walk-filter`: a file's name as a page's id is usually written. */
 const kebab = (name: string): string => name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();

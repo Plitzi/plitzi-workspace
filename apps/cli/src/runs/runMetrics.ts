@@ -70,6 +70,11 @@ export interface RunMetrics {
   workMinutes?: number;
   /** Every task approved to now — the finish, a person's — when it was. */
   afterMinutes?: number;
+  /**
+   * Every task approved to the finish's dry run passing (`ready`): the lead's close — look, report, finish — apart from
+   * the person's wait to apply it. encore-10's head said "then 73.7 to this report", the lead's five minutes in it.
+   */
+  closeMinutes?: number;
   tasks: TaskFlow[];
   agents: AgentFlow[];
   /**
@@ -333,6 +338,9 @@ export const runMetrics = (input: {
     ])
   ].filter(name => name !== 'plitzi' && name !== 'unnamed');
   const allApproved = log.findLast(entry => entry.action === 'all-approved');
+  const readyAfter = allApproved
+    ? log.find(entry => entry.action === 'ready' && Date.parse(at(entry)) >= Date.parse(at(allApproved)))
+    : undefined;
   // The run's work ends with its last approval: what an agent waited past it was for the person's finish, not for work
   // (A run counted 1692 min of waits, 9 h of them for an apply).
   const workEnd = allApproved ? at(allApproved) : input.now;
@@ -441,7 +449,11 @@ export const runMetrics = (input: {
 
   return {
     ...(allApproved
-      ? { workMinutes: minutes(input.openedAt, at(allApproved)), afterMinutes: minutes(at(allApproved), input.now) }
+      ? {
+          workMinutes: minutes(input.openedAt, at(allApproved)),
+          afterMinutes: minutes(at(allApproved), input.now),
+          ...(readyAfter ? { closeMinutes: minutes(at(allApproved), at(readyAfter)) } : {})
+        }
       : {}),
     tasks,
     agents,

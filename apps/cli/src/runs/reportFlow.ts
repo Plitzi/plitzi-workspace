@@ -24,7 +24,7 @@ export const flowText = (metrics: RunMetrics): string[] => {
     ...(metrics.workMinutes === undefined
       ? []
       : [
-          `Worked ${String(metrics.workMinutes)} min, from the open to every task approved; then ${num(metrics.afterMinutes)} min to this report (the finish is a person's).`,
+          `Worked ${String(metrics.workMinutes)} min, from the open to every task approved; then ${metrics.closeMinutes === undefined ? '' : `${num(metrics.closeMinutes)} min to the finish's dry run passing (the lead's close), and `}${num(metrics.afterMinutes === undefined ? undefined : Math.round((metrics.afterMinutes - (metrics.closeMinutes ?? 0)) * 10) / 10)} min to this report (the finish is a person's).`,
           ''
         ]),
     'Minutes. Waits for a review count from when it was sent; for the lead, from the UI approved (or sent, with none); a rework, from the changes asked to an agent at it again.',

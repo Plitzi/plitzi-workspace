@@ -33,6 +33,7 @@ export type FindingKind =
   | 'own-script'
   | 'scratch-script'
   | 'scratch-package'
+  | 'scratch-copy'
   | 'said'
   // Commands that failed, by why.
   | 'refused-as-written'
@@ -59,6 +60,7 @@ export type FindingKind =
   | 'blocked'
   | 'cut'
   | 'over-estimate'
+  | 'slow-close'
   | 'conflict'
   | 'overwrite'
   | 'joined'
@@ -107,7 +109,7 @@ export interface FindingInput {
   /** What was said of Plitzi: the notices as they came, and what got in the way of each round and of the lead. */
   said: readonly SaidOfPlitzi[];
   /** What each agent wrote in its scratch beside the CLI: its scripts and the packages it installed. */
-  scratch: readonly { agent: string; scripts: string[]; packages: string[] }[];
+  scratch: readonly { agent: string; scripts: string[]; packages: string[]; copies?: string[] }[];
   /** Each round of each task as its agent completed it (`taskReports.ts`). */
   taskReports: readonly TaskRoundReport[];
 }

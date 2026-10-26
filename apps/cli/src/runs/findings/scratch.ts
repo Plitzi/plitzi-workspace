@@ -14,16 +14,35 @@ const OWN = new Set(['plitzi', 'prompt.md', 'agent.log']);
 /** How deep a scratch is read: an agent's folders of scripts, never a whole tree it copied. */
 const DEPTH = 4;
 
+/** What an agent left in its scratch: its scripts, the packages it installed, the project copies it made by hand. */
+interface Found {
+  scripts: string[];
+  packages: string[];
+  copies: string[];
+}
+
+/** A folder that is the project again: its `package.json` and its space — copied whole, never the agent's scripts. */
+const isProjectCopy = async (dir: string): Promise<boolean> =>
+  (
+    await Promise.all(['package.json', 'src/space'].map(each => fs.stat(path.join(dir, each)).catch(() => undefined)))
+  ).every(Boolean);
+
 const walk = async (
   dir: string,
   depth: number,
-  found: { scripts: string[]; packages: string[] },
-  under: string
+  found: Found,
+  under: string,
+  /** The project's root, inside a copy of it: what is the project's own there is the copy's, not the agent's. */
+  copyOf?: { root: string; at: string }
 ): Promise<void> => {
   const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
   for (const entry of entries) {
     const at = path.join(under, entry.name);
-    if (entry.isDirectory()) {
+    if (entry.isDirectory() && copyOf === undefined && (await isProjectCopy(path.join(dir, entry.name)))) {
+      // encore-10's "1250 scripts" were four copies of the project a scout and a tester made by hand.
+      found.copies.push(at);
+      await walk(path.join(dir, entry.name), depth + 1, found, at, { root: projectOf(dir), at });
+    } else if (entry.isDirectory()) {
       if (entry.name === 'node_modules') {
         const names = await fs.readdir(path.join(dir, entry.name)).catch((): string[] => []);
         for (const name of names.filter(each => !each.startsWith('.'))) {
@@ -36,28 +55,49 @@ const walk = async (
               : [name])
           );
         }
-      } else if (depth < DEPTH) {
-        await walk(path.join(dir, entry.name), depth + 1, found, at);
+      } else if (depth < DEPTH || copyOf !== undefined) {
+        await walk(path.join(dir, entry.name), depth + 1, found, at, copyOf);
       }
     } else if (SCRIPT.test(entry.name) && !OWN.has(entry.name)) {
-      found.scripts.push(at);
+      const inProject =
+        copyOf !== undefined &&
+        (await fs
+          .stat(path.join(copyOf.root, path.relative(copyOf.at, at)))
+          .then(() => true)
+          .catch(() => false));
+      if (!inProject && !(copyOf !== undefined && /(^|\/)tmp\/\.sdk-plugins\//.test(at))) {
+        found.scripts.push(at);
+      }
     }
   }
 };
 
+/** The project a run's scratch sits in: `<root>/tmp/plitzi-runs/<run>/scratch/<agent>/…`. */
+const projectOf = (dir: string): string => {
+  const parts = dir.split(path.sep);
+  const runs = parts.lastIndexOf('plitzi-runs');
+
+  return runs > 1 ? parts.slice(0, runs - 1).join(path.sep) : dir;
+};
+
 export const scratchOf = async (
   scratch: string
-): Promise<{ agent: string; scripts: string[]; packages: string[] }[]> => {
+): Promise<{ agent: string; scripts: string[]; packages: string[]; copies: string[] }[]> => {
   const agents = await fs.readdir(scratch, { withFileTypes: true }).catch(() => []);
 
   return Promise.all(
     agents
       .filter(entry => entry.isDirectory())
       .map(async entry => {
-        const found: { scripts: string[]; packages: string[] } = { scripts: [], packages: [] };
+        const found: Found = { scripts: [], packages: [], copies: [] };
         await walk(path.join(scratch, entry.name), 0, found, '');
 
-        return { agent: entry.name, scripts: found.scripts.sort(), packages: [...new Set(found.packages)].sort() };
+        return {
+          agent: entry.name,
+          scripts: found.scripts.sort(),
+          packages: [...new Set(found.packages)].sort(),
+          copies: found.copies.sort()
+        };
       })
   );
 };

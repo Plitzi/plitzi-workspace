@@ -2,7 +2,8 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { playedText, playOn, readTargets, sharedServerNote, stepsOf, unlikeIn, verdictOf } from './play';
+import { passedOf } from './measure';
+import { passedText, playedText, playOn, readTargets, sharedServerNote, stepsOf, unlikeIn, verdictOf } from './play';
 
 import type { PlayedStep, PlaySide } from './play';
 import type { ElementState } from './playState';
@@ -322,5 +323,28 @@ describe('an action in a play', () => {
     expect(ran).toEqual([]);
     expect(result.played[1]?.idle?.here).toContain('room-create ran once, at the first width');
     expect(sharedServerNote(2, steps)).toContain('its actions ran at the first width alone');
+  });
+});
+
+// encore-10's designer played /sign-in as mika: the page sent a signed-in visitor home on load, and the play started
+// on Home, the flash of the form it was there to measure unseen.
+describe('a page that goes on by itself as it opens', () => {
+  it('says each address it showed, and for how long, before the start', () => {
+    const logged = JSON.stringify([
+      { path: '/rooms', at: 900 },
+      { path: '/sign-in', at: 1000 },
+      { path: '/sign-in', at: 1050 },
+      { path: '/', at: 1180 }
+    ]);
+    const passed = passedOf(logged, 1000);
+
+    expect(passed).toEqual([
+      { path: '/sign-in', ms: 180 },
+      { path: '/', ms: 0 }
+    ]);
+    expect(passedText('/sign-in', passed)).toBe(
+      '· /sign-in went on by itself as it opened: /sign-in (shown 180 ms) → / — the start is read there'
+    );
+    expect(passedOf('not json', 0)).toEqual([]);
   });
 });

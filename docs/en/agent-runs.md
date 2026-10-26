@@ -949,7 +949,16 @@ left and the run removed. Undoing the final merge is git's, or `--keep-backup`'s
 ## The report (`report.ts`, `taskReports.ts`, `findings/`)
 
 The run reports itself, so the lead keeps no list of problems by hand: a run's lead kept 65 in a journal, each found
-by reading the log.
+by reading the log. **Nothing is asked of the lead before a person applies it** (Carlos, after encore-10, whose person
+asked the lead for an analysis first): the report starts with **Before you apply** (`reportApply.ts`) — the finish's dry
+run (`ready`: files, acceptance lines held), tasks approved over a known failure or with their UI approved by the lead,
+lines rewritten after approval, the notices going to the backlog, the lead's own problems — and once applied, the same
+as **Applied**. Its head says the run's time apart: the work, the lead's close and the person's wait (`timeText`). A
+task past twice its estimate or three pieces of work says why from the log (`overrun.ts`: its acceptance rewritten,
+escalations, sends-back, what was stacked beside it, its breadth, that nobody cut it), and a close left open past
+fifteen minutes is the lead's (`slow-close`). Plitzi's problems are by its part — the run and the CLI, the platform, the
+docs (`areaOfSaid`, the part a notice names most). What the lead's summary adds is what no record says: how it felt,
+and where the next run starts.
 
 **Each round, as its agent completed it** (`taskReports.ts`). `task complete` keeps the round at
 `tasks/<task>/reports/<round>.json` (round 1 is the first sent, as its review counts). It holds:

@@ -405,7 +405,8 @@ export const act = async <T>(
     await logFailure(context, options, {
       action: 'refused',
       code: caught.code,
-      message: caught.message.slice(0, 600)
+      message: caught.message.slice(0, 600),
+      ...(caught.detail.messages && caught.detail.messages.length > 0 ? { handed: true } : {})
     });
 
     // A run's file another CLI wrote, not read by this one: said as that, with the CLI to go on with.

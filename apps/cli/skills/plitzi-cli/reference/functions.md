@@ -18,6 +18,10 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
   the project's own `@plitzi/sdk-server` — `npm install -D @plitzi/sdk-server isolated-vm core-js` first — and sends
   nothing to the space. Credentials are `PLITZI_CREDENTIALS={"stripe":{"apiKey":"…"}}` in `.env` — what `dev` and the
   project's own server hand `ctx.fetch({ credential })`; in the cloud, the space's Credentials.
+- **A setting, not an environment variable:** a function runs in a sandbox (an isolate: no `process`, no `process.env`,
+  no file), the same on this machine and in the cloud. A secret is a credential (`ctx.fetch({ credential })`), a setting
+  the space keeps is `src/data/` (`ctx.data('settings.json')`) or the action's input, and `ctx.environment` says where
+  it runs. Code that must read the server's environment is a runtime's (`runtime vars set NAME`).
 - **An action that only runs one task** is `taskAction(tasks.make, { trigger: { type: 'call', access: 'public' } })`
   (`@plitzi/sdk-authoring`): its input is the task's params, its id `<namespace>-<action>` — and a plugin runs it typed by
   both, `useServerAction<typeof make>(make.id)`: one operation is one task, never a `case` in one route. A param says what it

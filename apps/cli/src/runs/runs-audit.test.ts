@@ -38,10 +38,21 @@ describe('a run’s audit', () => {
     expect(await auditRun(await loadRun(lead(), 'es-launch'))).toEqual([]);
 
     const refused = { by: 'dev-1', action: 'refused', code: 'claimed', command: 'plitzi task next --take' };
+    // A verdict held until the lead's word is read hands it over: a step of the flow, never a loop (encore-10's tester).
+    const handed = {
+      by: 'test-1',
+      action: 'refused',
+      code: 'invalid',
+      command: 'plitzi task review t-x',
+      handed: true
+    };
     await logged([
       refused,
       refused,
       refused,
+      handed,
+      handed,
+      handed,
       { by: 'lead', action: 'crashed', command: 'plitzi task review t-menu --approve', error: 'Error: EISDIR' },
       { by: 'dev-2', action: 'brake', reason: '10 failed checks or conflicts within 30 minutes' }
     ]);

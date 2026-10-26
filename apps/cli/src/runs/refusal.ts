@@ -59,6 +59,11 @@ export interface RefusalDetail {
   problems?: string[];
   /** What to do next, when this refusal knows better than its code's general advice. */
   next?: string;
+  /**
+   * The messages it hands over, read now: a verdict or a complete held until the lead's word is read. A step of the flow,
+   * never a loop — encore-10's report counted a tester's three as "refused 3 times over".
+   */
+  messages?: string[];
   [key: string]: unknown;
 }
 

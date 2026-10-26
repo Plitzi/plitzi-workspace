@@ -25,6 +25,7 @@ describe('what a refused command line meant', () => {
   it('names the command that answers one another group has', () => {
     expect(commandHint("error: unknown command 'agents'", ['run', 'agents', 'shop-3'])).toContain('run status');
     expect(commandHint("error: unknown command 'list'", ['task', 'list'])).toContain('run status');
+    expect(commandHint("error: unknown command 'pages'", ['space', 'pages'])).toContain('plitzi space overview');
     expect(commandHint("error: unknown command 'nope'", ['run', 'nope'])).toBeUndefined();
   });
 

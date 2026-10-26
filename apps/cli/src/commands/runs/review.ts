@@ -34,6 +34,7 @@ import {
   acceptanceStatuses,
   examplePaths,
   lookedAmong,
+  MAX_PAGES,
   pagesOf,
   pagesToLook
 } from '../../runs/pagesOf';
@@ -157,9 +158,13 @@ export const lookAt = (
         // Every page its changes are drawn at — a shared file's too: named pages are looked at, and the others
         // said (design-2 looked at /combates twice, and the home its card change broke was the lead's
         // to find).
-        const drawnAt = await pagesOf(preview.dir, changed);
-        const owned = paths.length > 0 ? [] : drawnAt;
-        const notLooked = paths.length > 0 ? drawnAt.filter(page => !lookedAmong(page, [...paths, ...earlier])) : [];
+        // Every one, the first few looked at and the rest said: encore-10's look of t-visual-specs cut at eight, silent,
+        // and /r/:slug, which only its skip.ts change draws, went unseen.
+        const drawnAt = await pagesOf(preview.dir, changed, Infinity);
+        const owned = paths.length > 0 ? [] : drawnAt.slice(0, MAX_PAGES);
+        const notLooked = (paths.length > 0 ? drawnAt : drawnAt.slice(MAX_PAGES)).filter(
+          page => !lookedAmong(page, [...paths, ...earlier])
+        );
         // A part of a page others build too: its own elements pictured, its own findings kept — the rest is theirs.
         const parts = await taskParts(preview.dir, changed);
         // More parts than are pictured apart: the page whole, never the first three of them — a run's t-home

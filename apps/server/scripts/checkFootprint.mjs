@@ -21,15 +21,19 @@ const BUDGET = {
   // 205: the job queue's rules are one module every queue shares (`queueRules`), and the default queue is the fleet's
   // (`fleetJobQueue`); the file queue is loaded only by who uses it (`@plitzi/sdk-server/actions`, a project's server).
   '@plitzi/sdk-server': 205,
-  // 132: a provider's `when`, read by the page server as the browser reads it (`providerWhen`, `providerAnswer`, and the
-  // global sources' names it tells apart).
-  '@plitzi/sdk-shared': 132,
+  // 147: a provider's `when`, read by the page server as the browser reads it (`providerWhen`, `providerAnswer`, and the
+  // global sources' names it tells apart) — and its `input`, resolved with the browser's own bindings and transformers
+  // (`serverInputOf`, `getBindingsDetails`, `dataSource/utility`): a date formatted in an input is the same on both.
+  '@plitzi/sdk-shared': 147,
   '@plitzi/nexus': 31,
   '@plitzi/plitzi-ui': 19,
   '@plitzi/plitzi-sdk': 1,
   'react-dom': 7,
   react: 6,
-  'date-fns': 5,
+  // 63: `dateConverter`, a transformer a provider's input may be bound through (`format`, `parse`, three locales).
+  'date-fns': 63,
+  // `getBindingsDetails` writes what it resolves on a draft of the element, as in the browser.
+  immer: 1,
   ejs: 2,
   scheduler: 2,
   esbuild: 1

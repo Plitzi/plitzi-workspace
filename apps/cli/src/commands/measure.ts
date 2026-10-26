@@ -24,6 +24,7 @@ import { originHere } from '../runs/copyServer';
 import { authoredHandles } from '../runs/expectations';
 import { pageAnswered } from './shot/remote';
 import { actStep } from './shot/steps';
+import { visitorsOn } from './shot/visitors';
 import { parseSteps } from './shotSteps';
 
 import type { Account } from './check';
@@ -31,6 +32,7 @@ import type { StateAsked } from './measureState';
 import type { Difference, Measured } from './measureValues';
 import type { Browser, BrowserPage, Scheme } from '../browser';
 import type { ActingStep } from './shot/steps';
+import type { Visitors } from './shot/visitors';
 import type { BrowserConditions } from '../browser/conditions';
 import type { ConditionOptions } from './register/options';
 
@@ -232,7 +234,14 @@ export const ourPage = async (
   origin: string,
   route: string,
   view: ViewAsked
-): Promise<{ page: BrowserPage; answered: boolean; problem?: string; signedOut?: true }> => {
+): Promise<{
+  page: BrowserPage;
+  answered: boolean;
+  problem?: string;
+  signedOut?: true;
+  /** The addresses it showed as it opened, each for how long, when the page sent the browser on by itself. */
+  passed?: { path: string; ms: number }[];
+}> => {
   const page = await openProjectPage(browser, origin, {
     width: view.width,
     height: VIEW_HEIGHT,
@@ -251,10 +260,33 @@ export const ourPage = async (
     return { page, answered: false, problem: `--as ${refused}` };
   }
 
+  // Where the page went as it opened, by itself — a flow's navigate on load: encore-10's designer played a page that
+  // sends a signed-in visitor on, and its start was read on where it landed, the flash of its own form unseen.
+  const openedAt = Date.now();
+  await page.addInitScript(key => {
+    const log = (): void => {
+      const list = JSON.parse(sessionStorage.getItem(key) ?? '[]') as unknown[];
+      list.push({ path: `${location.pathname}${location.search}`, at: Date.now() });
+      sessionStorage.setItem(key, JSON.stringify(list));
+    };
+    log();
+    for (const name of ['pushState', 'replaceState'] as const) {
+      const original = history[name].bind(history);
+      history[name] = (...args: Parameters<History['pushState']>) => {
+        original(...args);
+        log();
+      };
+    }
+  }, PASSED_KEY);
   const answered = (await openPage(page, `${origin}${route}`, { quietMs: PROJECT_QUIET_MS })) !== null;
   if (!answered) {
     return { page, answered };
   }
+
+  const passed = passedOf(
+    await page.evaluate(key => sessionStorage.getItem(key) ?? '[]', PASSED_KEY).catch(() => '[]'),
+    openedAt
+  );
 
   const signed = view.account ? undefined : await signInWhereSent(page, origin, route, view.projectAccount);
   if (signed && 'problem' in signed) {
@@ -276,7 +308,38 @@ export const ourPage = async (
   await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
   await page.evaluate(() => document.fonts.ready.then(() => undefined), undefined);
 
-  return { page, answered, ...(view.account || signed ? {} : { signedOut: true as const }) };
+  return {
+    page,
+    answered,
+    ...(view.account || signed ? {} : { signedOut: true as const }),
+    ...(passed.length > 1 ? { passed } : {})
+  };
+};
+
+const PASSED_KEY = '__plitzi_passed';
+
+/** The addresses a page showed as it opened, each for how long — read off what the page logged, since `since`. */
+export const passedOf = (logged: string, since: number): { path: string; ms: number }[] => {
+  let read: unknown;
+  try {
+    read = JSON.parse(logged);
+  } catch {
+    read = [];
+  }
+
+  const shown = (Array.isArray(read) ? read : [])
+    .flatMap(entry =>
+      typeof entry === 'object' &&
+      entry !== null &&
+      typeof Reflect.get(entry, 'path') === 'string' &&
+      typeof Reflect.get(entry, 'at') === 'number'
+        ? [{ path: String(Reflect.get(entry, 'path')), at: Number(Reflect.get(entry, 'at')) }]
+        : []
+    )
+    .filter(entry => entry.at >= since)
+    .filter((entry, index, all) => index === 0 || all[index - 1]?.path !== entry.path);
+
+  return shown.map((entry, index) => ({ path: entry.path, ms: (shown[index + 1]?.at ?? entry.at) - entry.at }));
 };
 
 export interface ViewAsked {
@@ -327,9 +390,13 @@ const readOther = async (
 };
 
 /** The steps played on the page, each settled — or the one that could not be, said. */
-const playedOn = async (page: BrowserPage, steps: readonly ActingStep[]): Promise<{ problem: string } | undefined> => {
+const playedOn = async (
+  page: BrowserPage,
+  steps: readonly ActingStep[],
+  visitors?: Visitors
+): Promise<{ problem: string } | undefined> => {
   for (const [index, step] of steps.entries()) {
-    const done = await actStep(page, step, index);
+    const done = await actStep(page, step, index, visitors);
     if (done && 'problem' in done) {
       return done;
     }
@@ -353,6 +420,13 @@ const readAt = async (
   boxless?: (id: string) => Promise<boolean>
 ): Promise<Reading[]> => {
   const { page, answered, problem } = await ourPage(browser, where.origin, where.route, view);
+  // Another account's steps (`as dax: action room-create {…}`) set up a state the cold copy lacks before it is measured:
+  // a run's tester could not measure an empty room some other visitor made.
+  const visitors = visitorsOn(root, browser, where.origin, {
+    width: view.width,
+    ...(view.scheme ? { scheme: view.scheme } : {}),
+    ...(view.timezone ? { timezone: view.timezone } : {})
+  });
   // Nothing answering is said as such — not "No element … on chrome-error://" of a server gone (a run's lead).
   const notPut = !answered
     ? {
@@ -360,7 +434,8 @@ const readAt = async (
           problem ??
           `nothing answers at ${where.origin}${where.route} — the server measured is not running (start it, or say where with --url)`
       }
-    : ((await playedOn(page, view.steps ?? [])) ?? (view.state ? await putIn(page, view.state, 'here') : undefined));
+    : ((await playedOn(page, view.steps ?? [], visitors).finally(() => visitors.close())) ??
+      (view.state ? await putIn(page, view.state, 'here') : undefined));
   // Each row a list draws of an element, with --rows: the first alone hid that three plates' readouts differed.
   const asked = options.rows && !notPut ? (await Promise.all(pairs.map(pair => rowsOf(page, pair)))).flat() : pairs;
   const ours = notPut

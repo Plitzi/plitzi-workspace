@@ -194,7 +194,7 @@ export const auditRun = async (loaded: LoadedRun): Promise<Finding[]> => {
 
   // The same refusal, met again and again by one agent: a loop, the CLI's or the agent's.
   const refusals = new Map<string, number>();
-  for (const refused of by('refused')) {
+  for (const refused of by('refused').filter(entry => entry.handed !== true)) {
     const command = text(refused.command).split(' ').slice(0, 3).join(' ');
     const key = `${text(refused.by)} · ${text(refused.code)} · ${command}`;
     refusals.set(key, (refusals.get(key) ?? 0) + 1);

@@ -112,7 +112,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
    applied run closes it; else `run backlog done <id> --note "…"`; `run report --plitzi` is what the run says of
    Plitzi so far. **Close it:** `plitzi run report` lists the problems
    by whose from the agents' round reports and the records (`--full`: each with its evidence and fix) — keep no list by hand; your summary adds what
-   no record says, and what it was like for you: `plitzi run report --summary summary.md --ease <1-5> --hardest "…"`
+   no record says, how it felt, where next starts: `plitzi run report --summary summary.md --ease <1-5> --hardest "…"`
    (it combines the agents'; refused while anything waits for you: settle each — a finding by what you did,
    `run settle <finding> --note "…"`); then `plitzi run finish` (the
    diff, checked). `--apply` is the person's, or yours if they allowed it — every server you started on the project stopped first, with `plitzi server stop` (one

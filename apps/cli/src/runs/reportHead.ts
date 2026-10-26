@@ -6,6 +6,7 @@ import { tokensText } from './runMetrics';
 import { costShort } from './spent';
 
 import type { Finding } from './findings';
+import type { PlitziArea } from './findings/types';
 import type { HarnessUsage } from './harness';
 import type { RunReport } from './report';
 
@@ -21,6 +22,13 @@ const OWNER_TITLES: Record<Finding['owner'], string> = {
   machine: 'The machine'
 };
 
+/** Plitzi's parts, in the order its team reads them. */
+const AREA_TITLES: readonly (readonly [PlitziArea, string])[] = [
+  ['cli', 'The run and the CLI'],
+  ['platform', 'The platform — the SDK, the server'],
+  ['docs', 'The docs and the skills']
+];
+
 /** The findings as a person reads them: by whose they are, each numbered, with its evidence and its fix. */
 export const findingsText = (
   findings: readonly Finding[],
@@ -34,15 +42,33 @@ export const findingsText = (
   return owners.flatMap(owner => {
     const theirs = shown.filter(finding => finding.owner === owner);
 
+    // Plitzi's by its part — the flow and the CLI, the platform, the docs — as its team takes them up.
+    const groups =
+      owner === 'plitzi'
+        ? AREA_TITLES.map(([area, title]) => ({
+            title,
+            items: theirs.filter(finding => (finding.area ?? 'cli') === area)
+          })).filter(group => group.items.length > 0)
+        : [{ title: undefined, items: theirs }];
+    let number = 0;
+
     return theirs.length === 0
       ? []
       : [
           `### ${OWNER_TITLES[owner]} (${String(theirs.length)})`,
           '',
-          ...theirs.flatMap((finding, index) => [
-            `${String(index + 1)}. **${finding.title}**${finding.times > 1 ? ` ×${String(finding.times)}` : ''}${finding.area ? ` · ${finding.area}` : ''}${finding.live ? ' · said live' : ''}`,
-            ...finding.evidence.map(line => `   - ${line}`),
-            ...(finding.fix ? [`   - → ${finding.fix}`] : [])
+          ...groups.flatMap(group => [
+            ...(group.title === undefined ? [] : [`#### ${group.title} (${String(group.items.length)})`, '']),
+            ...group.items.flatMap(finding => {
+              number += 1;
+
+              return [
+                `${String(number)}. **${finding.title}**${finding.times > 1 ? ` ×${String(finding.times)}` : ''}${finding.live ? ' · said live' : ''}`,
+                ...finding.evidence.map(line => `   - ${line}`),
+                ...(finding.fix ? [`   - → ${finding.fix}`] : [])
+              ];
+            }),
+            ...(group.title === undefined ? [] : [''])
           ]),
           ''
         ];

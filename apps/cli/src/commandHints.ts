@@ -9,6 +9,8 @@ const ELSEWHERE: Readonly<Partial<Record<string, string>>> = {
   'run agents': 'plitzi run status lists the agents and what each is at',
   'run view': 'plitzi run status — or plitzi run monitor, a live board',
   'task list': 'plitzi run status lists the tasks and where each stands',
+  // encore-10's scout reached for the pages of the space by name.
+  'space pages': 'plitzi space overview lists the pages, each with its files — space overview <page> one of them',
   'page text':
     'plitzi page outline <path> --within <element> says a part’s words; page check --element <id> what one holds',
   // Folded into another, the CLI's surface cut down: what each was is said where it went.
