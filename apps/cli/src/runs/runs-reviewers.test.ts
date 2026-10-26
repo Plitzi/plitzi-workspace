@@ -10,7 +10,7 @@ import { extendRun } from './extend';
 import { takeOnLook } from './leads';
 import { leadItems } from './leadWatch';
 import { notLookedAtYet } from './lookedAt';
-import { messagesOf } from './messages';
+import { messagesOf, openQuestions } from './messages';
 import { agentsNeeded } from './onDemand';
 import { loadRun, logRun, openRun } from './run';
 import { scopePlan, SCOPE_SPIKE } from './spike';
@@ -372,6 +372,13 @@ describe('a spike, a scout’s', () => {
     const state = (await viewTask(loaded.paths, loaded.tasks.find(task => task.id === 't-menu') ?? loaded.tasks[0]))
       .state;
     expect(state.findings).toEqual([expect.objectContaining({ by: 'lead', text: '"Reservar", never "Reserva"' })]);
+
+    // Answered by its block, no question left open: its approval is not held (a message beside it was never answered).
+    expect(await openQuestions(loaded)).toEqual([]);
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Reservar" };\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+    // The team has no tester: the lead reviews.
+    expect(await reviewTask(lead(), runId, 't-menu', 'approve', [])).toMatchObject({ verdict: 'approve' });
   });
 
   it('proposes findings alone too: nothing is done until the lead approves it', async () => {

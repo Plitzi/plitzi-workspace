@@ -91,7 +91,7 @@ const lineOf = (entry: Record<string, unknown>): FeedLine | undefined => {
     case 'take':
       return line('take', 'took it');
     case 'spike':
-      return line('agent', `went back to finding out: ${textOf(entry.question)}`);
+      return line('agent', `blocked on a question, the lead's to answer: ${textOf(entry.question)}`);
     case 'spike-done': {
       const outcome =
         entry.status === 'done'

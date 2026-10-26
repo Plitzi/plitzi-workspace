@@ -64,16 +64,17 @@ export const startSpike = async (ctx: RunContext, runId: string, taskId: string,
     state => ({
       ...state,
       status: 'blocked',
-      blockedBy: { reason: `needs a spike: ${question}`, needs: 'lead', spike: question },
+      blockedBy: {
+        reason: `needs a spike: ${question} — the lead finds it out and lifts the block with it: plitzi task unblock ${taskId} --answer "…" (kept as its finding); work it changes, a stage: plitzi run extend <stage.json>`,
+        needs: 'lead',
+        spike: question
+      },
       notes: [...state.notes, { at: at(ctx), by: ctx.agent, text: `Needs a spike: ${question}` }]
     }),
     ctx.now
   );
-  await sendMessage(ctx, loaded, {
-    from: taskId,
-    to: LEAD,
-    text: `${taskId} needs a spike before it goes on: ${question} — find it out and lift its block with what you found: plitzi task unblock ${taskId} --answer "…" (kept as its finding); if it changes the work, stack the tasks it makes: plitzi run extend <stage.json>`
-  });
+  // No message: the block, saying what and how to answer it, wakes the lead — a message beside it was a question
+  // `task unblock --answer` never answered, and held the task's approval.
   await logRun(ctx, loaded.paths, { action: 'spike', task: taskId, question });
 
   return { task: taskId, status: 'blocked', question };

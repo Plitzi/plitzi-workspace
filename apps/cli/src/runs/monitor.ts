@@ -347,7 +347,7 @@ const agentsOf = async (
     const lastAt = typeof last?.at === 'string' ? Date.parse(last.at) : undefined;
     const lastLine = last ? lastDone(last) : undefined;
     const recent = lastAt !== undefined && now - lastAt < ACTIVE_MS && lastLine !== undefined;
-    // Finding out a spike it took, with no scout in the team: working, on that task — never idle.
+    // Finding out a spike it took — research with no scout in the team, or an agent's question: working, never idle.
     const spiking = at ? undefined : view.tasks.find(task => task.spikedBy === LEAD);
     if (spiking) {
       return {

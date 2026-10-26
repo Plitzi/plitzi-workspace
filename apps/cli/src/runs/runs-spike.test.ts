@@ -193,14 +193,14 @@ describe('a spike: finding out, in the run, a lead’s', () => {
       status: 'blocked'
     });
     expect(await statusOf('t-home')).toBe('blocked');
-    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
-      expect.objectContaining({
-        kind: 'blocked',
-        text: 't-home blocked: needs a spike: how the original greets a visitor'
-      })
+    // The block says what and how to answer it, and wakes the lead alone: no message beside it to answer.
+    const blocked = (await viewRun(lead(), 'es-launch')).attention.find(item => item.task === 't-home');
+    expect(blocked).toMatchObject({ kind: 'blocked', who: 'lead' });
+    expect(blocked?.text).toContain('needs a spike: how the original greets a visitor');
+    expect(blocked?.text).toContain('plitzi task unblock t-home --answer');
+    expect((await messagesOf(await loadRun(lead(), 'es-launch'))).filter(message => message.from === 't-home')).toEqual(
+      []
     );
-    const asked = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(message => message.from === 't-home');
-    expect(asked?.text).toContain('plitzi task unblock t-home --answer');
 
     // A spike answered by nothing is no answer; a task's is not a spike the lead says done.
     expect((await refusal(unblockTask(lead(), 'es-launch', 't-home'))).message).toContain(
