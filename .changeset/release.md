@@ -380,6 +380,10 @@ report`, …).
   costliest pieces (`spend` in `report.json`; `feedback.md` and `report.md` alike) — a run's $6.75, a third of it one
   designer task, was read off its log by hand. It says the UI reviews the lead gave without a designer, and when no
   designer reviewed any; the bench keeps tokens, cost and the share read again a task done.
+- **What opening a run says is what it does:** a run opened on its scope says its base starts once the scope has its
+  tasks (it said "now", and the keeper rightly waited); `run start` says a team with `options.launch` starts by itself,
+  never to start it by hand; refused for the project's checks, the opener is told `run start … --despite-checks` too, and
+  no task's "complete again".
 - **`run open` says who leads:** the opener, through the lead's own CLI — or an agent that CLI starts
   (`…/scratch/lead/plitzi run agent lead --launch`, in the team's harness): a run's opener started its lead with
   `npx plitzi run agent lead --launch` and was refused as nobody.

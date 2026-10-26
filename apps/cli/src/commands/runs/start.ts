@@ -81,8 +81,12 @@ export const runStart = async (ask: string, options: StartOptions): Promise<void
     [
       '',
       chalk.bold('What happens now — a team of agents, you the person who applies its work:'),
-      "  1. The scope is the lead's: it finds out what the ask takes and ends it with the tasks (the lead is the agent you asked — or give one its prompt: plitzi run agent lead).",
-      `  2. The team, once there are tasks: ${base.map(each => `plitzi run agent ${each.agent} --launch --harness ${harness}`).join(' · ') || 'plitzi run agent <name> --launch'} — the lead starts more on demand when run watch says so.`,
+      "  1. The scope is the lead's: it finds out what the ask takes and ends it with the tasks — the agent you asked, or one started on the lead's own CLI, as said above.",
+      // A team that says how to start its agents is started by the run's keeper: told to start it by hand, an opener
+      // would start it twice.
+      team?.options?.launch === undefined
+        ? `  2. The team, once there are tasks: ${base.map(each => `plitzi run agent ${each.agent} --launch --harness ${harness}`).join(' · ') || 'plitzi run agent <name> --launch'} — the lead starts more on demand when run watch says so.`
+        : `  2. The team starts by itself once there are tasks (team.json's options.launch, ${team.options.launch}): ${base.map(each => each.agent).join(', ') || 'its base'}, and more when work waits — start none of them.`,
       '  3. Follow it: plitzi run monitor in a terminal of yours — its p serves the approved work as it goes.',
       '  4. The end: the lead writes the report and the dry finish; you read it and apply it — plitzi run finish --apply. Nothing touches the project before it; plitzi run abort leaves no trace.'
     ].join('\n')

@@ -229,8 +229,12 @@ export const openRun = async (
         .map(step => step.name)
         .join(
           ', '
-        )}): every task would meet them in its copy. Fix them first — or open it despite them, saying why: plitzi run open <plan> --despite-checks "…"`,
-      { steps: before.steps.filter(step => !step.ok) }
+        )}): every task would meet them in its copy. Fix them first — or open it despite them, saying why: plitzi run open <plan> --despite-checks "…", or plitzi run start "<ask>" --despite-checks "…"`,
+      {
+        steps: before.steps.filter(step => !step.ok),
+        // The project's, not a task's: what was said of a task's check ("complete again") is no step of an opener's.
+        next: 'fix each step marked ✗ below in the project, then open the run again — or open it despite them, saying why'
+      }
     );
   }
 

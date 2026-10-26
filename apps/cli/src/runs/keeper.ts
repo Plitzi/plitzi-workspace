@@ -203,9 +203,14 @@ export const leadStartText = (leadCli: string, harness: string | undefined): str
   `You lead it through that CLI — or an agent does, started by it: ${leadCli} run agent lead --launch${harness === undefined ? ' --harness <yours>' : ` (in ${harness}, as the team says)`}`;
 
 /** The keeper as the command that started it says it — never silent about agents it will or cannot start. */
-export const keeperText = (kept: Awaited<ReturnType<typeof ensureKeeper>>, base: readonly string[] = []): string =>
+export const keeperText = (
+  kept: Awaited<ReturnType<typeof ensureKeeper>>,
+  base: readonly string[] = [],
+  /** Opened on its scope, the lead's spike alone: the base waits for its tasks (a run's open said "now", and was not). */
+  scoping = false
+): string =>
   'none' in kept
     ? `No keeper: ${kept.none} — start the agents yourself (plitzi run agent <name> --launch --harness <yours>)`
     : kept.started
-      ? `The run's keeper starts ${base.length > 0 ? `the team's base now — ${base.join(', ')} — and the rest` : 'its agents'} as the run asks (pid ${String(kept.pid)}, log in the run's cache/keeper.log): start none of them yourself`
+      ? `The run's keeper starts ${base.length > 0 ? `the team's base ${scoping ? 'once the scope has its tasks' : 'now'} — ${base.join(', ')} — and the rest` : 'its agents'} as the run asks (pid ${String(kept.pid)}, log in the run's cache/keeper.log): start none of them yourself`
       : `The run's keeper is at it (pid ${String(kept.pid)})`;

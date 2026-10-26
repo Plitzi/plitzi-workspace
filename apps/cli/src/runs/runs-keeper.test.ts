@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { keepOnce, leadStartText, openKeeperLog } from './keeper';
+import { keepOnce, keeperText, leadStartText, openKeeperLog } from './keeper';
 import { abortRun } from './merge';
 import { STARTING_MS } from './onDemand';
 import { runPaths } from './paths';
@@ -86,6 +86,15 @@ describe("the run's keeper", () => {
     };
     expect(await keepOnce(lead(), 'es-launch', start)).toEqual({ started: ['dev-1', 'design-1'], failed: [] });
     expect((await viewRun(lead(), 'es-launch')).attention.map(item => item.text).join('\n')).not.toContain('--harness');
+  });
+
+  // A run opened on its scope said "the keeper starts the team's base now", and the keeper waited for the scope's tasks.
+  it('says the base starts once the scope has its tasks, on a run opened on its scope', () => {
+    const kept = { pid: 7, started: true } as const;
+    expect(keeperText(kept, ['dev-1', 'design-1'], true)).toContain(
+      "starts the team's base once the scope has its tasks — dev-1, design-1"
+    );
+    expect(keeperText(kept, ['dev-1'])).toContain("starts the team's base now — dev-1");
   });
 
   // A run's opener started its lead with `npx plitzi run agent lead --launch`, refused as nobody: the lead's own CLI
