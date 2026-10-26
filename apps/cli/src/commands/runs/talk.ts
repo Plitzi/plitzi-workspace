@@ -23,6 +23,7 @@ import { followWait } from '../../runs/tasks';
 import type { RunCommandOptions } from './shell';
 import type { BacklogItem } from '../../runs/backlog';
 import type { Message, Standing } from '../../runs/messages';
+import type { RunContext } from '../../runs/run';
 
 /**
  * Tasks and the lead talking: proposals and their answers, questions, tells, messages and the inbox.
@@ -180,6 +181,13 @@ const standingOf = (options: TellOptions): Standing | undefined =>
       }
     : undefined;
 
+/**
+ * Whether `task tell --about` speaks of a task not the caller's own — a reviewer's finding, an agent's word on another's
+ * task — said by its name: one holding a task was refused telling the lead of a spike (encore-10's dev-1).
+ */
+export const tellsAbout = (ctx: Pick<RunContext, 'token'>, about: string | undefined): about is string =>
+  about !== undefined && about !== (ctx.token === undefined ? undefined : taskOf(ctx));
+
 export const taskTell = (text: string, options: TellOptions): Promise<void> =>
   act(
     options,
@@ -193,8 +201,7 @@ export const taskTell = (text: string, options: TellOptions): Promise<void> =>
         );
       }
 
-      // With no task in hand, about one: a reviewer's finding, said by its name.
-      return ctx.token === undefined && options.about !== undefined
+      return tellsAbout(ctx, options.about)
         ? tellLeadAbout(ctx, runId, options.about, text, standing)
         : tellLead(ctx, runId, taskOf(ctx, options.about), text, standing);
     },

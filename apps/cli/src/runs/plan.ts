@@ -660,6 +660,8 @@ export const checkPlan = async (
     task =>
       task.kind === 'work' &&
       (task.role ?? DEVELOPER) !== TESTER &&
+      // Research ends by what it found, which the lead approves: no command proves a finding.
+      !isResearch(task) &&
       task.acceptance.length > 0 &&
       task.acceptance.every(each => typeof each === 'string')
   );

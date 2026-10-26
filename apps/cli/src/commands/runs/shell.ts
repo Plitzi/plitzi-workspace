@@ -323,7 +323,7 @@ const runNamed = async (ctx: RunContext, options: RunCommandOptions, named?: str
 };
 
 /** The task a command is about: its copy's, which a named one must match. */
-export const taskOf = (ctx: RunContext, named?: string): string => {
+export const taskOf = (ctx: Pick<RunContext, 'token'>, named?: string): string => {
   const fromToken = ctx.token ? TOKEN.exec(ctx.token)?.[2] : undefined;
   if (named && fromToken && named !== fromToken) {
     throw new RunRefusal('invalid', `This copy is task "${fromToken}"'s, not "${named}"'s`);

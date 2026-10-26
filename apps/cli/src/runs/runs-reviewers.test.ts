@@ -400,7 +400,8 @@ describe('a spike, a scout’s', () => {
       status: 'spike',
       proposed: []
     });
-    expect(await statusOf(runId, 's-words')).toBe('spike');
+    // Shown in review — the lead's to decide — its state a spike still: encore-10's scope read "spike" while it waited.
+    expect(await statusOf(runId, 's-words')).toBe('in-review');
     expect(await approveSpike(lead(), runId, 's-words')).toMatchObject({ status: 'done' });
   });
 });

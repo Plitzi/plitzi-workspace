@@ -96,7 +96,9 @@ authoring and the elements learnt from the runs.
     scout's when the team has one (it told the lead to find it out). The monitor puts a spike someone finds out **at
     work** (its scout named), one nobody took — or proposed, with the lead — in the spike column; `run status` names
     who finds a spike out. An agent the run asked for and its keeper started (`launch` logged `asked`) no longer shows
-    the lead "working".
+    the lead "working". What a scout found and the lead is to decide shows **in review** ("lead decides scout-1's"),
+    never a spike still being found out. A flow card is drawn in its task's colour, as the strip is — a task sent back
+    read yellow above and blue in its "At work" card.
   - **The tests are a developer's, the tester only reviews.** With a tester in the team each developer task still gets
     `<id>-tests`, now a developer's task (`testsOf: [<id>]`, a new plan field): written by a developer that did not
     write what it tests — `task next` offers it to no other, `task take` and `task reassign --to` refuse its author,

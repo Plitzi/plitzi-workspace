@@ -344,7 +344,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       started.filter(each => running.has(each.agent)),
       now,
       // What the backlog still holds that no card of the run does: what the lead can stack for an agent with nothing.
-      await stackableBacklog(ctx.root, loaded.tasks)
+      await stackableBacklog(ctx.root, loaded.tasks),
+      started
     )
   );
   // A run that stands still is said with what holds each task, read as `task next` reads it: the lock on a file it needs.

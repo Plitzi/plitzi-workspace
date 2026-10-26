@@ -1,5 +1,6 @@
 import { reviewTimeOf } from './design';
 import { LEAD } from './messages';
+import { busyIn } from './onDemand';
 import { REVIEW_QUEUE_MS } from './reviewQueue';
 import { DESIGNER, DEVELOPER, SCOUT, TESTER } from './team';
 import { isWorked } from './worked';
@@ -29,12 +30,17 @@ export const bottlenecks = (
   started: readonly StartedAgent[],
   now: Date,
   /** The project's backlog items still open that no task of the run does: work the lead can stack. */
-  backlog: readonly string[] = []
+  backlog: readonly string[] = [],
+  /**
+   * The whole team, running or not: whether it has testers and scouts — `started` holds only those running, and a scout
+   * stopped between two pieces read as none (encore-10's spike told the lead "the team has no scout").
+   */
+  team: readonly StartedAgent[] = started
 ): Attention[] => {
   const found: Attention[] = [];
   // Who reviews and who finds out: the team's testers and scouts — the lead, manager, only when it has none.
-  const testers = started.some(each => each.roles.includes(TESTER));
-  const scouts = started.some(each => each.roles.includes(SCOUT));
+  const testers = team.some(each => each.roles.includes(TESTER));
+  const scouts = team.some(each => each.roles.includes(SCOUT));
   const byId = new Map(views.map(view => [view.task.id, view] as const));
   const approvedIds = new Set(views.filter(view => view.state.status === 'done').map(view => view.task.id));
   // UI reviews nobody takes: every designer is at a task of its own — the lead's, or they wait for nobody.
@@ -73,7 +79,8 @@ export const bottlenecks = (
 
   // A task that could start, held behind one going round its reviews while agents of its role sit free: the lead's to
   // unblock — a run's t-motion waited three rounds of t-boxer's UI review it needed nothing from, two developers idle.
-  const reviewing = new Set(views.flatMap(view => (view.state.design?.by ? [view.state.design.by] : [])));
+  // At a review of its own or a spike — never free (encore-10's scout read "nothing to take" at its spike).
+  const reviewing = new Set(views.flatMap(busyIn));
   const free = (role: string): string[] =>
     started
       .filter(each => each.roles.includes(role) && atOwn(each.agent) === undefined && !reviewing.has(each.agent))
@@ -174,12 +181,7 @@ export const idleTeam = (
     return [];
   }
 
-  const busy = new Set([
-    ...views.flatMap(view => (view.owner && isWorked(view.state.status) ? [view.owner.agent] : [])),
-    ...views.flatMap(view =>
-      view.state.design?.by && view.state.design.status === 'due' ? [view.state.design.by] : []
-    )
-  ]);
+  const busy = new Set(views.flatMap(busyIn));
   const readyFor = (roles: readonly string[]): boolean =>
     views.some(view => view.state.status === 'ready' && roles.includes(view.task.role ?? DEVELOPER));
   // A designer while others' work is under way waits for its UI reviews, which is what it is for — and waiting costs

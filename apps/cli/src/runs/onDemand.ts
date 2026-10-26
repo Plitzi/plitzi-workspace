@@ -74,7 +74,7 @@ export const runningAgents = (log: readonly Record<string, unknown>[]): Set<stri
  * What holds an agent now: the task it works, the UI review it took, the review it took this round (a tester's), the
  * spike it finds out (a scout's).
  */
-const busyIn = (view: TaskView): string[] => [
+export const busyIn = (view: TaskView): string[] => [
   ...(view.owner && isWorked(view.state.status) ? [view.owner.agent] : []),
   ...(view.state.design?.status === 'due' && view.state.design.by ? [view.state.design.by] : []),
   ...(view.state.status === 'in-review' && view.state.reviewer?.round === view.state.round

@@ -50,9 +50,12 @@ export const drawFlowView = (p: Paint, data: Monitored, ui: MonitorUi, rect: Rec
     stage.tasks.slice(offset, offset + room).forEach((task, at) => {
       const top = rect.top + 4 + at * (CARD_ROWS + 1);
       const story = data.stories[task.id];
+      // The card's edge in its task's own colour, as the strip and the list draw it: a task sent back read yellow above
+      // and blue in its "At work" card (encore-10).
+      const edge = toneOf(theme, TASK_LOOK[task.status].tone);
       for (let row = top; row < top + CARD_ROWS; row += 1) {
         canvas.fill(row, left + 1, width - 2, theme.elevated);
-        canvas.put(row, left + 1, '▎', { fg: tone, bg: theme.elevated });
+        canvas.put(row, left + 1, '▎', { fg: edge, bg: theme.elevated });
       }
 
       const mark = urgencyOf(task);

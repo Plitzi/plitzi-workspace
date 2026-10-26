@@ -304,10 +304,20 @@ const agentsOf = async (
       entry => entry.action === 'launch' && entry.agent === agent && String(entry.at) >= String(last.at)
     );
 
-    return launched
-      ? 'started again with a fresh context — reading in before it takes what comes'
-      : 'restarting with a fresh context — the run starts it again for what comes';
+    if (launched) {
+      return 'started again with a fresh context — reading in before it takes what comes';
+    }
+
+    // Only one the run starts again is restarting: of the team's base, or one on demand the run asks for now. One on
+    // demand with nothing for it rests — encore-10's dev-2 read "restarting" two hours, nothing left for it.
+    const asked = view.attention.some(item => item.kind === 'agents-needed' && item.agent === agent);
+    if (teamMember(agent)?.onDemand === true && !asked) {
+      return undefined;
+    }
+
+    return 'restarting with a fresh context — the run starts it again for what comes';
   };
+  const teamMember = (agent: string) => (team ? startedAgents(team) : []).find(each => each.agent === agent);
   const uiWaiting = view.tasks.filter(
     task => task.status === 'in-review' && task.design?.status === 'due' && task.design.by === undefined
   );

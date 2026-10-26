@@ -1,15 +1,20 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { bottlenecks } from './bottlenecks';
+import { extendRun } from './extend';
 import { leadItems } from './leadWatch';
 import { messagesOf } from './messages';
 import { agentsNeeded } from './onDemand';
-import { loadRun, logRun, openRun, readRunLog } from './run';
+import { checkPlanFile, loadRun, logRun, openRun, readRunLog } from './run';
 import { askLead, tellLeadAbout } from './talk';
 import { completeTask, escalateReview, nextTask, reviewTask, takeNext, unblockTask } from './tasks';
 import { viewTask } from './taskStore';
 import { readTeam, startedAgents } from './team';
 import { viewRun } from './view';
-import { reviewerSteps, team, TESTERS } from '../tests/reviewerSteps';
+import { reviewerSteps, SCOUT, team, TESTERS } from '../tests/reviewerSteps';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
@@ -274,5 +279,116 @@ describe('the keeper, for a task of tests', () => {
     const run = { identified: [], scratch: loaded.paths.scratch, openFor: 0, open: true, launches: true };
     const asked = agentsNeeded(views, startedAgents(members), new Set(['dev-1', 'test-1']), run);
     expect(asked.find(each => each.agent === 'dev-2')?.text).toContain('t-about-tests');
+  });
+});
+
+describe('a spike while its scout is between pieces', () => {
+  // encore-10's lead was told "yours to find out (the team has no scout)" while scout-1 stood stopped for a fresh context.
+  it('is never the lead’s for want of a scout running: the team has one', async () => {
+    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    plan.tasks = [
+      ...plan.tasks,
+      { ...plan.tasks[0], id: 's-words', title: 'The words', files: [], spike: 'which words' }
+    ];
+    const members = team({ ...SCOUT, min: 0 });
+    await bench.writeTeam(members);
+    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
+    const loaded = await loadRun(lead(), runId);
+    const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
+    const all = startedAgents(members);
+    const running = all.filter(each => !each.roles.includes('scout'));
+
+    expect(bottlenecks(views, running, bench.now(), [], all).map(each => each.kind)).not.toContain('spikes');
+    expect(bottlenecks(views, running, bench.now(), [], running).map(each => each.kind)).toContain('spikes');
+  });
+});
+
+describe('a research spike in a plan', () => {
+  // encore-10's stage of one spike was told it "gets no task of tests" and that "no line has a check": research writes
+  // nothing and ends by its findings.
+  it('is told nothing of tests nor checks', async () => {
+    await bench.writeTeam(team(TESTERS));
+    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    plan.tasks = [
+      ...plan.tasks,
+      { ...plan.tasks[0], id: 's-words', title: 'The words', files: [], spike: 'which words' }
+    ];
+    const { notices } = await checkPlanFile(lead(), await bench.writePlan(plan));
+    expect(notices.filter(notice => notice.includes('s-words'))).toEqual([]);
+  });
+});
+
+describe('a task that holds its own test file', () => {
+  // encore-10's t-visual-show-soon held shows.test.ts and was told "its test files are another task's".
+  it('is told it writes its tests itself', async () => {
+    await bench.writeTeam(team(TESTERS));
+    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    plan.tasks = [
+      { ...plan.tasks[0], id: 't-shows', files: ['src/functions/shows.ts', 'src/functions/shows.test.ts'] }
+    ];
+    const { notices } = await checkPlanFile(lead(), await bench.writePlan(plan));
+    const said = notices.find(notice => notice.includes('"t-shows"')) ?? '';
+    expect(said).toContain('it writes its tests itself (src/functions/shows.test.ts)');
+    expect(said).not.toContain("another task's");
+  });
+});
+
+describe('a research spike that depends on a task', () => {
+  // encore-10's s-suite-failures was handed to its scout while t-visual-specs, its dependency, was still in review.
+  it('waits pending until that task is approved, then is a spike to find out', async () => {
+    const { runId } = await twoInReview();
+    const stage = path.join(bench.root, 'tmp', 'stage.json');
+    await fs.writeFile(
+      stage,
+      JSON.stringify({
+        tasks: [
+          {
+            id: 's-after-menu',
+            title: 'What the menu left',
+            files: [],
+            dependsOn: ['t-menu'],
+            priority: 'high',
+            estimateMinutes: 20,
+            acceptance: ['What remains, found'],
+            spike: 'what the menu left'
+          }
+        ]
+      })
+    );
+    await extendRun(lead(), runId, stage);
+    const status = async () => (await viewRun(lead(), runId)).tasks.find(task => task.id === 's-after-menu')?.status;
+    expect(await status()).toBe('pending');
+
+    await reviewTask(bench.agent('test-1'), runId, 't-menu', 'approve', []);
+    expect(await status()).toBe('spike');
+  });
+});
+
+describe('a scout at its spike', () => {
+  // encore-10's watch said test-1 held a review "while scout-1 has nothing to take", scout-1 at s-suite-failures.
+  it('is never told free beside a review that drags: it is at work', async () => {
+    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const menu0 = plan.tasks.find(task => task.id === 't-menu') ?? plan.tasks[0];
+    // Nothing else ready: the drag is what holds the run.
+    plan.tasks = [menu0, { ...menu0, id: 's-words', title: 'The words', files: [], spike: 'which words' }];
+    const members = team({ ...TESTERS, count: 1 }, { ...SCOUT, min: 0 });
+    await bench.writeTeam(members);
+    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
+    const menu = await take('agent-1', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = {};\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+    await takeNext(bench.agent('test-1'), runId, 'tester');
+    await takeNext(bench.agent('scout-1'), runId, 'scout');
+    bench.advance(5 * 60_000);
+
+    const loaded = await loadRun(lead(), runId);
+    const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
+    const all = startedAgents(members).filter(each => each.agent !== 'agent-2');
+    const said = bottlenecks(views, all, bench.now(), [], all)
+      .map(each => each.text)
+      .join(' ');
+    // Free, in the drag's words, are those at nothing: never the scout at its spike.
+    expect(said).toMatch(/nothing to take/);
+    expect(said).not.toMatch(/while [^:]*scout-1[^:]*nothing to take/);
   });
 });

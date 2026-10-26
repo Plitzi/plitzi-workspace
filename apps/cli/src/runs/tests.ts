@@ -140,7 +140,7 @@ export const withTestTasks = (
 
   const untested: { task: string; why: string }[] = [];
 
-  const held = new Set(plan.tasks.flatMap(task => task.files));
+  const holderOf = new Map(plan.tasks.flatMap(task => task.files.map(file => [file, task.id] as const)));
   // What a task of the plan already tests: its `testsOf`, or what a tester's task of it waits for.
   const tested = new Set(
     plan.tasks.flatMap(task => task.testsOf ?? ((task.role ?? DEVELOPER) === TESTER ? task.dependsOn : []))
@@ -151,6 +151,8 @@ export const withTestTasks = (
   for (const task of plan.tasks) {
     if (
       (task.role ?? DEVELOPER) !== DEVELOPER ||
+      // Research writes no file: nothing of it is tested, and nothing is said missing.
+      (task.spike !== undefined && task.files.length === 0) ||
       task.testsOf !== undefined ||
       task.tests === false ||
       tested.has(task.id)
@@ -159,14 +161,19 @@ export const withTestTasks = (
     }
 
     const named = testFilesFor(task.files, setup);
-    const files = named.filter(file => !held.has(file));
+    const files = named.filter(file => !holderOf.has(file));
     if (files.length === 0) {
+      // Its own test files are its own tests, written with it — said so, never "another task's" (encore-10).
+      const own = named.filter(file => holderOf.get(file) === task.id);
+      const others = named.filter(file => holderOf.get(file) !== task.id);
       untested.push({
         task: task.id,
         why:
           named.length === 0
             ? 'none of its files has a test file named for it — a component or a module no page owns'
-            : `its test files are another task's (${named.join(', ')})`
+            : others.length === 0
+              ? `it writes its tests itself (${own.join(', ')}): none written by another`
+              : `its test files are another task's (${others.join(', ')})`
       });
       continue;
     }
