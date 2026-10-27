@@ -159,14 +159,16 @@ const NODE_CRASH = /^Node\.js v\d+/;
 const THROWN = /^\s*(?:\[\w+\]: )?\w*Error(?: \[[\w-]+\])?: /;
 
 /**
- * Why an output failed, in one line: its last — but under a process Node ended on an uncaught error, the error, never
- * the version banner it ends with (encore-12's lines read "the first failed: Node.js v24.22.1").
+ * Why an output failed, in one line: its last that says a failure, else its last — and under a process Node ended on an
+ * uncaught error, the error, never the version banner it ends with (encore-12's lines read "the first failed: Node.js
+ * v24.22.1").
  */
 export const failedWhy = (lines: readonly string[] | undefined): string | undefined => {
   const said = (lines ?? []).filter(line => line.trim() !== '');
   const last = said.at(-1);
   if (last === undefined || !NODE_CRASH.test(last.trim())) {
-    return last;
+    // The last that says what failed — a test runner ends on its count ("3 passed (9.1m)", encore-13's), not on it.
+    return said.findLast(line => FAILING.test(line))?.trim() ?? last;
   }
 
   return said.find(line => THROWN.test(line))?.trim() ?? said.filter(line => !NODE_CRASH.test(line.trim())).at(-1);

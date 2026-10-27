@@ -7,7 +7,7 @@ describe('who of the team is stopped', () => {
   it('counts an agent launched again as running, before its first command', () => {
     const log = [
       { by: 'design-1', action: 'take', task: 't-home' },
-      { by: 'design-1', action: 'stops', why: 'a fresh context' },
+      { by: 'design-1', action: 'stops', why: 'a fresh context', fresh: true },
       { by: 'lead', action: 'launch', agent: 'design-1', harness: 'claude' }
     ];
 

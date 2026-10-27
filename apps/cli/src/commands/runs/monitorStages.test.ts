@@ -87,8 +87,8 @@ describe('the monitor, as encore-10 read it', () => {
     const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
     const paths = runPaths(bench.root, runId);
     const why = 'a piece ended: you are started again with a fresh context after each task or review — You can stop';
-    await logRun(bench.agent('dev-1'), paths, { action: 'stops', why });
-    await logRun(bench.agent('dev-2'), paths, { action: 'stops', why });
+    await logRun(bench.agent('dev-1'), paths, { action: 'stops', why, fresh: true });
+    await logRun(bench.agent('dev-2'), paths, { action: 'stops', why, fresh: true });
     const rows = (await monitorRun(lead(), runId)).agents;
 
     expect(rows.find(row => row.agent === 'dev-1')).toMatchObject({ status: 'restarting' });

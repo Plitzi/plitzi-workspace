@@ -290,7 +290,8 @@ const agentsOf = async (
   const restartingOf = (agent: string): string | undefined => {
     // Its own last word, whatever it was: any command of it after the stop says it is back.
     const last = log.findLast(entry => entry.by === agent);
-    if (last?.action !== 'stops' || typeof last.why !== 'string' || !/fresh context|freshContextAt/.test(last.why)) {
+    // Stopped for a fresh context, as its stop says — never read off the stop's words.
+    if (last?.action !== 'stops' || last.fresh !== true) {
       return undefined;
     }
 
@@ -430,15 +431,31 @@ const agentsOf = async (
       roles: member?.roles ?? (task ? [task.role] : [])
     };
 
+    // What it holds is said with whether anything is at it: a card held by an agent whose process ended, or that is
+    // being started again, is no work going on — it read "working" until its signal ran out (Carlos: a person reads
+    // the status for what is happening).
+    const holding = task?.id ?? reviewing.get(agent);
+    const away =
+      holding === undefined
+        ? undefined
+        : restartingOf(agent) !== undefined
+          ? { status: 'restarting' as const, doing: `${String(restartingOf(agent))} — then ${holding}` }
+          : view.gone.includes(agent)
+            ? {
+                status: 'stopped' as const,
+                doing: `holds ${holding} — its process ended: it is started again when the run asks (run watch)`
+              }
+            : undefined;
+
     // A tester at a review: at work on that card — never idle.
     const reviews = task ? undefined : reviewing.get(agent);
     if (reviews) {
       return {
         agent,
         kind: 'agent' as const,
-        status: 'reviewing' as const,
+        status: away?.status ?? ('reviewing' as const),
         ...about,
-        doing: `reviews ${reviews}${tail}`,
+        doing: `${away?.doing ?? `reviews ${reviews}`}${tail}`,
         task: reviews,
         ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
       };
@@ -448,12 +465,12 @@ const agentsOf = async (
       ? {
           agent,
           kind: 'agent' as const,
-          status: statusOf(task),
+          status: away?.status ?? statusOf(task),
           ...about,
-          doing: `${doingOf(task)}${task.step ? '' : lately(agent)}${tail}`,
+          doing: `${away?.doing ?? `${doingOf(task)}${task.step ? '' : lately(agent)}`}${tail}`,
           task: task.id,
           ...(task.signalAt ? { signalAt: task.signalAt } : {}),
-          ...(task.noSignal ? { noSignal: true } : {})
+          ...(task.noSignal && away === undefined ? { noSignal: true } : {})
         }
       : finished
         ? // Every task approved: nothing is left for any agent, whatever it said last — a run's dev-2 showed

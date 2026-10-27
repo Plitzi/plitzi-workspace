@@ -16,8 +16,6 @@ import { runPaths } from '../../runs/paths';
 import { logRun, stopRun } from '../../runs/run';
 import { askLead, messageTasks, noteRun, tellLead } from '../../runs/talk';
 import { completeTask, followNext, reportProgress, reviewTask } from '../../runs/tasks';
-import { USAGE_FILE } from '../../runs/usage';
-import { ranAs } from '../../tests/ranAs';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 
@@ -412,23 +410,6 @@ describe('plitzi run monitor', () => {
     expect(await row()).toMatchObject({
       status: 'no-signal',
       doing: expect.stringContaining('no sign of it for 3 min') as unknown
-    });
-  });
-
-  // encore-13: "working" for three minutes after the lead opened the run, its scout at the scope.
-  it('shows the lead by what it holds, as every agent — what it did lately said, never taken for work', async () => {
-    const runId = await open();
-    const paths = runPaths(bench.root, runId);
-    await logRun(lead(), paths, { action: 'launch', agent: 'agent-1', harness: 'claude' });
-    const row = async () => (await monitorRun(lead(), runId)).agents.find(agent => agent.agent === 'lead');
-    await fs.appendFile(
-      path.join(paths.dir, USAGE_FILE),
-      `${JSON.stringify({ at: bench.now().toISOString(), by: 'lead', command: 'plitzi task look t-home', ...ranAs('plitzi task look t-home'), chars: 10, ms: 10, code: 0 })}\n`
-    );
-
-    expect(await row()).toMatchObject({
-      status: 'idle',
-      doing: expect.stringMatching(/last: started agent-1 in claude — .*t-home/) as unknown
     });
   });
 

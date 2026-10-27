@@ -5,8 +5,23 @@ import type { RunReport } from '../report';
  * What the run came to that needs a look — a task not finished, a file written over, an estimate far off — read off
  * the report's own facts, each said once with what it is about.
  */
+/**
+ * How long the run took of what is the run's: from its open to ready to apply — its work and the lead's close — or to
+ * now while it is not ready; never the person's wait after.
+ */
+const ranMinutes = (report: Pick<RunReport, 'minutes' | 'metrics'>): number => {
+  const { workMinutes, closeMinutes } = report.metrics;
+
+  return workMinutes !== undefined && closeMinutes !== undefined
+    ? Math.round((workMinutes + closeMinutes) * 10) / 10
+    : report.minutes;
+};
+
 export const factFindings = (
-  report: Pick<RunReport, 'tasks' | 'events' | 'overwrites' | 'joined' | 'stops' | 'proposals' | 'minutes' | 'estimate'>
+  report: Pick<
+    RunReport,
+    'tasks' | 'events' | 'overwrites' | 'joined' | 'stops' | 'proposals' | 'minutes' | 'estimate' | 'metrics'
+  >
 ): Finding[] => {
   const each = (
     kind: Finding['kind'],
@@ -46,11 +61,13 @@ export const factFindings = (
         .filter(task => task.cuts > 0)
         .map(task => ({ subject: task.id, title: `${task.id} was cut ${String(task.cuts)} time(s) and started again` }))
     ),
-    ...(report.minutes > report.estimate.wallMinutes * 1.5
+    // To ready to apply: what waits on the person after is never the run's (encore-13's read 96 min of 51, 48 of them
+    // the person's wait — the work took 36).
+    ...(ranMinutes(report) > report.estimate.wallMinutes * 1.5
       ? each('over-estimate', [
           {
             subject: 'run',
-            title: `The run took ${String(report.minutes)} min of an estimated ${String(report.estimate.wallMinutes)}`
+            title: `The run took ${String(ranMinutes(report))} min to ready of an estimated ${String(report.estimate.wallMinutes)}`
           }
         ])
       : []),

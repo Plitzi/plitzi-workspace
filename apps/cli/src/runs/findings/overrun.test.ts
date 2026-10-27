@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import { factFindings } from './facts';
 import { closeFindings, overrunFindings } from './overrun';
 import { areaOfSaid } from './workarounds';
-import { applyFacts, applyText } from '../reportApply';
+import { applyFacts, applyText, weighedLines } from '../reportApply';
 
 import type { RunReport, TaskReport } from '../report';
 
@@ -61,7 +62,15 @@ const log = [
     tasks: [{ task: 't-visual-specs', changed: ['acceptance'] }]
   },
   { at: '2026-10-26T20:32:19.000Z', by: 'test-1', action: 'all-approved', tasks: 10 },
-  { at: '2026-10-26T20:37:01.000Z', by: 'lead', action: 'ready', files: 36, acceptance: 8 }
+  {
+    at: '2026-10-26T20:37:01.000Z',
+    by: 'lead',
+    action: 'ready',
+    files: 36,
+    acceptance: 8,
+    again: [{ task: 't-a11y', said: 'The keyboard test passes', why: '1) a11y.spec.ts:85 › the room by keyboard' }],
+    slow: [{ task: 't-a11y', said: 'The keyboard test passes', ms: 546_000 }]
+  }
 ];
 
 describe('a task that ran long, in the report', () => {
@@ -118,9 +127,70 @@ describe('the report, before a person applies it', () => {
     expect(text).toContain('t-visual-specs was approved over a known failure: two gated tests');
     expect(text).toContain('rewritten after approval — the finish held them to the new lines: t-visual-specs');
     expect(text).toContain('`plitzi run finish encore-10 --apply`');
+    // encore-13's finish took ten minutes on one line that failed once: said where the apply is decided.
+    expect(text).toContain(
+      '**Held only when run again**: t-a11y: "The keyboard test passes" — the first run said: 1) a11y.spec.ts:85'
+    );
+    expect(text).toContain('**Slow**: t-a11y: "The keyboard test passes" took 9.1 min in the dry run');
+    // As the finish keeps them with ready, off its lines' results.
+    expect(
+      weighedLines([
+        {
+          task: 't-a11y',
+          said: 'The keyboard test passes',
+          firstFailed: ['    Error: not visible', '  3 passed (9.1m)'],
+          ms: 546_000
+        },
+        { task: 't-home', said: 'Home reads' }
+      ])
+    ).toEqual({
+      again: [{ task: 't-a11y', said: 'The keyboard test passes', why: 'Error: not visible' }],
+      slow: [{ task: 't-a11y', said: 'The keyboard test passes', ms: 546_000 }]
+    });
     expect(applyText({ ...report, apply: { amendedDone: [] } }, false).join('\n')).toContain(
       'The finish has not passed its dry run'
     );
+  });
+});
+
+// encore-13's "The run took 96 min of an estimated 51": 48 of them the person's wait to apply; its work took 36.
+describe('a run past its estimate', () => {
+  const report = (metrics: Partial<RunReport['metrics']>, minutes: number) =>
+    ({
+      tasks: [],
+      events: { completed: 0, refused: 0, checksFailed: 0, conflicts: 0 },
+      overwrites: [],
+      joined: [],
+      stops: [],
+      proposals: [],
+      minutes,
+      estimate: { wallMinutes: 51, totalMinutes: 135, agents: 5 },
+      metrics
+    }) as unknown as RunReport; // The parts of a report the facts read; the rest is none of theirs.
+
+  it('is measured to ready to apply — never the person’s wait after', () => {
+    expect(factFindings(report({ workMinutes: 36.2, closeMinutes: 11.4 }, 96))).toEqual([]);
+    expect(factFindings(report({ workMinutes: 70, closeMinutes: 15 }, 120))[0]?.title).toBe(
+      'The run took 85 min to ready of an estimated 51'
+    );
+    // Not ready yet: measured to now.
+    expect(factFindings(report({ workMinutes: 70 }, 90))[0]?.title).toBe(
+      'The run took 90 min to ready of an estimated 51'
+    );
+  });
+
+  it('points at Plitzi’s problems where they are read before the apply, and at feedback.md after it', () => {
+    const before = applyText(
+      { runId: 'r', tasks: [], noticed: [], findings: [{ owner: 'plitzi' }] } as unknown as RunReport, // As above.
+      false
+    ).join('\n');
+    expect(before).toContain('plitzi run report --plitzi');
+    expect(
+      applyText(
+        { runId: 'r', tasks: [], noticed: [], findings: [{ owner: 'plitzi' }] } as unknown as RunReport,
+        true
+      ).join('\n')
+    ).toContain('`feedback.md` beside this report');
   });
 });
 

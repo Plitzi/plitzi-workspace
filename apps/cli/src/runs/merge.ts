@@ -13,6 +13,7 @@ import { noticesByOwner, noticeText } from './notices';
 import { BACKUPS_DIR, under } from './paths';
 import { RunRefusal } from './refusal';
 import { buildReport, readSummary, summaryBehind } from './report';
+import { weighedLines } from './reportApply';
 import {
   assertStatus,
   loadRun,
@@ -439,6 +440,7 @@ export const finishRun = async (
         action: 'ready',
         files: plan.apply.length,
         acceptance: plan.acceptance.results.length,
+        ...weighedLines(plan.acceptance.results),
         next: `plitzi run finish ${loaded.record.runId} --apply — a person's${loaded.record.leadFinishes ? ', or the lead’s, allowed' : ''}`
       });
     }

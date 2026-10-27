@@ -130,6 +130,15 @@ describe('why an output failed', () => {
       ])
     ).toBe('Error: createFileJobQueue: state/jobs.json is in use by process 57261');
     expect(failedWhy(['something went wrong', 'Node.js v24.22.1'])).toBe('something went wrong');
+    // A test runner ends on its count: what failed is above it (encore-13 kept "3 passed (9.1m)").
+    expect(
+      failedWhy([
+        '  1) [rest] › a11y.spec.ts:85:1 › the room by keyboard',
+        '    Error: expect(locator).toBeVisible() failed',
+        '  1 flaky',
+        '  3 passed (9.1m)'
+      ])
+    ).toBe('Error: expect(locator).toBeVisible() failed');
     expect(failedWhy(undefined)).toBeUndefined();
   });
 });

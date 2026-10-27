@@ -349,7 +349,7 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
         repeated: metrics.cost.repeated
       }),
       ...(await auditRun(loaded)),
-      ...factFindings(facts),
+      ...factFindings({ ...facts, metrics }),
       ...overrunFindings(facts.tasks, runLog),
       ...closeFindings(runLog, now)
     ]),

@@ -78,6 +78,8 @@ export interface NextTask {
   ready: string[];
   /** Nothing is ready, and nothing ever will be for this role: every task of it is done — the agent can stop. */
   finished?: boolean;
+  /** Finished for a fresh context between two pieces of work: started again by the run, its work not over. */
+  fresh?: true;
   /** Finished: the tasks the caller worked, and where each ended — approved, or still with the lead. */
   worked?: { task: string; status: TaskStatus; finishedBy?: string }[];
   /** What the lead said to the caller by name and it had not read. */
@@ -106,7 +108,11 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
   // Nothing left for it, ever: the activity says the agent stops, and why — never a silence read as a hang. The lead
   // goes on to close the run: it never stops.
   if (next.finished && !isPrincipal(ctx.agent)) {
-    await logRun(ctx, loaded.paths, { action: 'stops', why: next.why ?? 'nothing is left for it' });
+    await logRun(ctx, loaded.paths, {
+      action: 'stops',
+      why: next.why ?? 'nothing is left for it',
+      ...(next.fresh ? { fresh: true } : {})
+    });
   }
 
   return { ...next, scratch };
@@ -128,7 +134,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   // Between two pieces of work, before its own is handed back: the next session takes it up, with a fresh context.
   const fresh = await freshStart(ctx, loaded, views);
   if (fresh !== undefined) {
-    return { why: fresh.why, ready: [], messages, finished: true };
+    return { why: fresh.why, ready: [], messages, finished: true, fresh: true };
   }
 
   // What the caller holds and can go on with comes before anything new: an agent between tasks waits with `next`, and

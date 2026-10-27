@@ -141,9 +141,19 @@ authoring and the elements learnt from the runs.
   ran (`commandPath`) — beside the line as typed: the report, the findings, the bench and the monitor read those, where
   each took the line apart its own way (`--list` matched in the text, the waits told by a regex). A refusal in the
   report says the command's name, no longer the whole line it was given.
-- **The monitor shows the lead by what it holds**, as every agent: reviewing a step it took, at work on research it
-  finds out with no scout, idle otherwise — its last act and its last command said on its row, never taken for work. It
-  read "working" for three minutes after any act of its: after it opened a run, its scout at the scope.
+- **The report before an apply says what weighs on it.** A line of the finish's dry run that held only when run again
+  is said with what its first run said, and one that took minutes with its time ("Held only when run again", "Slow"):
+  encore-13's finish took ten minutes on one line that failed once, and its report said only that it passed. A run past
+  its estimate is measured to ready to apply — the person's wait after is not the lead's (it read 96 min of 51, 48 of
+  them the wait). Plitzi's problems are pointed at `run report --plitzi` before the apply, `feedback.md` after it, the
+  file it names written only then. Why a line failed is the last line saying a failure — a test runner's run ends on its
+  count ("3 passed (9.1m)").
+- **The monitor says each agent's status as it is.** The lead by what it holds, as every agent: reviewing a step it
+  took, at work on research it finds out with no scout, idle otherwise — its last act and command said on its row, never
+  taken for work (it read "working" for three minutes after any act: after it opened a run, its scout at the scope). An
+  agent holding a card or a review whose process ended reads stopped, holding it; one started again with a fresh context
+  reads restarting, then the card — both read "working" until their signal ran out. A stop for a fresh context says so
+  as data (`fresh`), where the monitor matched the stop's words.
 - **No copy server outlives what started it.** The copy's server a command starts is stopped once that command is
   gone — a harness's timeout, a Ctrl-C, a crash — unless it is kept for the next command; keeping one stops the one kept
   before, and a kept server whose record names another is stopped by its watchdog, where it left it running: six

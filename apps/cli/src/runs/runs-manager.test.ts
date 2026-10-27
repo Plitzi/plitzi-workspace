@@ -168,7 +168,7 @@ describe('an escalated review the lead answers', () => {
     await escalateReview(bench.agent('test-1'), runId, offered, 'Prices with the euro sign, or without?');
     const owner = offered === 't-menu' ? 'agent-1' : 'agent-2';
     const loaded = await loadRun(lead(), runId);
-    await logRun(bench.agent(owner), loaded.paths, { action: 'stops', why: 'a fresh context' });
+    await logRun(bench.agent(owner), loaded.paths, { action: 'stops', why: 'a fresh context', fresh: true });
     await unblockTask(lead(), runId, offered, 'With the euro sign');
 
     const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
