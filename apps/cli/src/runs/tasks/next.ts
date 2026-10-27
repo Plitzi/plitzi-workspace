@@ -146,7 +146,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
       const back =
         status === 'changes-requested'
           ? undefined
-          : view.state.notes.at(-1)?.text.startsWith('Unblocked') === true
+          : view.state.notes.at(-1)?.kind === 'unblocked'
             ? ('unblocked' as const)
             : ('held' as const);
 
@@ -340,10 +340,10 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   const finished = !ownInReview && !ofBase && nothingLeft;
   // An agent done with the run hears how its own work ended: its copies are gone, and the run may end before it asks.
   const worked = views
-    .filter(view => view.state.notes.some(note => note.by === ctx.agent && note.text.startsWith('Taken')))
+    .filter(view => view.state.notes.some(note => note.by === ctx.agent && note.kind === 'taken'))
     .map(view => {
       // Reverted and redone, or cut and taken over: whose work it ends as is the last taker's, said so.
-      const last = view.state.notes.filter(note => note.text.startsWith('Taken')).at(-1)?.by;
+      const last = view.state.notes.filter(note => note.kind === 'taken').at(-1)?.by;
 
       return {
         task: view.task.id,

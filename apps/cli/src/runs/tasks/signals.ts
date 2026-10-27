@@ -160,7 +160,12 @@ export const unblockTask = async (
         : {}),
       notes: [
         ...state.notes,
-        { at: at(ctx), by: ctx.agent, text: answer === undefined ? 'Unblocked' : `Unblocked: ${answer}` },
+        {
+          at: at(ctx),
+          by: ctx.agent,
+          kind: 'unblocked',
+          text: answer === undefined ? 'Unblocked' : `Unblocked: ${answer}`
+        },
         ...(brought.length > 0
           ? [
               {

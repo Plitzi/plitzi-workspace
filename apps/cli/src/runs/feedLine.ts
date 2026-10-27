@@ -1,6 +1,5 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { commandName } from './runMetrics';
 import { reasonOf } from './tasks/nextRules';
 
 import type { FeedLine } from './monitor';
@@ -200,16 +199,16 @@ const lineOf = (entry: Record<string, unknown>): FeedLine | undefined => {
       return {
         ...line(
           'problem',
-          `${commandName(textOf(entry.command)) || 'a command'} refused — ${textOf(entry.code).replace(/-/g, ' ')}`,
-          `${commandName(textOf(entry.command)) || 'a command'} was refused (${textOf(entry.code)}): ${firstSentence(textOf(entry.message))}`
+          `${textOf(entry.name) || 'a command'} refused — ${textOf(entry.code).replace(/-/g, ' ')}`,
+          `${textOf(entry.name) || 'a command'} was refused (${textOf(entry.code)}): ${firstSentence(textOf(entry.message))}`
         ),
-        group: `refused:${textOf(entry.code)}:${commandName(textOf(entry.command))}`
+        group: `refused:${textOf(entry.code)}:${textOf(entry.name)}`
       };
     case 'crashed':
       return line(
         'problem',
-        `${commandName(textOf(entry.command)) || 'a command'} crashed`,
-        `${commandName(textOf(entry.command)) || 'a command'} crashed: ${firstSentence(textOf(entry.error))}`
+        `${textOf(entry.name) || 'a command'} crashed`,
+        `${textOf(entry.name) || 'a command'} crashed: ${firstSentence(textOf(entry.error))}`
       );
     case 'preview-sync-failed':
       return line('problem', `the preview did not take it in: ${textOf(entry.error).slice(0, 120)}`);

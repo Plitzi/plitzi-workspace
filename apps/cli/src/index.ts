@@ -1,8 +1,10 @@
+import { commandPath } from './commandPath';
 import { bestEffortTypeOfService } from './http';
 import { buildProgram } from './program';
 import { startUsage } from './runs/usage';
 
 bestEffortTypeOfService();
 const program = buildProgram();
-startUsage(process.argv.slice(2), process.cwd());
+const args = process.argv.slice(2);
+startUsage(args, process.cwd(), commandPath(program, args));
 await program.parseAsync(process.argv);

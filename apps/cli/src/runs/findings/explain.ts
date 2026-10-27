@@ -1,4 +1,3 @@
-import { commandName } from '../runMetrics';
 import { evidenceOf } from './types';
 import { wordsOf } from './words';
 
@@ -14,10 +13,10 @@ import type { UsageLine } from '../usage';
 /** One agent asking about a topic in this many different ways did not find it the first time. */
 const WAYS = 3;
 
-const askedOf = (line: UsageLine): string => line.command.replace(/^plitzi explain\s*/, '').replace(/\s--json\b/, '');
+const askedOf = (line: UsageLine): string => line.args.join(' ');
 
 export const explainFindings = (usage: readonly UsageLine[]): Finding[] => {
-  const asked = usage.filter(line => commandName(line.command).startsWith('explain') && !/--list\b/.test(line.command));
+  const asked = usage.filter(line => line.name === 'explain' && !line.options.includes('--list'));
   const missed = asked.filter(line => line.code !== 0);
   const findings: Finding[] = [];
   if (missed.length > 0) {

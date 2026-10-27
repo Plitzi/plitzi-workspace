@@ -249,7 +249,12 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
         handTo: undefined,
         notes: [
           ...state.notes,
-          { at: at(ctx), by: ctx.agent, text: replaced ? `Taken over from ${replaced}, who had no signal` : 'Taken' }
+          {
+            at: at(ctx),
+            by: ctx.agent,
+            kind: 'taken',
+            text: replaced ? `Taken over from ${replaced}, who had no signal` : 'Taken'
+          }
         ]
       }),
       ctx.now

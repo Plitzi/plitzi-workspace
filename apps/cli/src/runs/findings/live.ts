@@ -3,6 +3,7 @@ import { noticesByOwner } from '../notices';
 import { refusedAgain } from '../refusedAgain';
 import { settledFindings } from '../settle';
 import { readTaskReports } from '../taskReports';
+import { unansweredLines } from '../unansweredLines';
 import { readUsage } from '../usage';
 import { liveFindings } from './index';
 
@@ -37,6 +38,7 @@ export const liveAttention = async (
 
   return [
     ...refusedAgain(log, now).filter(item => !past(item.task)),
+    ...unansweredLines(log),
     ...liveFindings({
       log,
       usage: readUsage(loaded.paths.dir),

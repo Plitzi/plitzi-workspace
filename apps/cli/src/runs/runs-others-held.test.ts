@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { messagesOf } from './messages';
-import { loadRun, openRun } from './run';
+import { openRun } from './run';
 import { completeTask, reviewTask } from './tasks';
+import { viewRun } from './view';
 import { benchPlan, makeBench, teamFor, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
@@ -112,11 +112,10 @@ describe('the lines of approved tasks, on a page a task changes', () => {
     await writeInCopy(prices.work, 'src/space/pages/menu.ts', 'export const page = { title: "Carta" };\n');
     await completeTask(prices.ctx, runId, 't-about');
 
-    const told = (await messagesOf(await loadRun(lead(), runId))).filter(each => each.from === 'plitzi');
+    const told = (await viewRun(lead(), runId)).attention.filter(item => item.kind === 'line-unanswered');
     expect(told).toContainEqual(
       expect.objectContaining({
-        to: 'lead',
-        about: 't-menu',
+        task: 't-menu',
         text: expect.stringContaining('"The menu reads in Spanish" cannot be answered') as unknown
       })
     );

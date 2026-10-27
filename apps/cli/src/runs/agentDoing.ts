@@ -1,3 +1,4 @@
+import type { CommandPath } from '../commandPath';
 import type { AgentStatus } from './monitor';
 import type { TaskLine } from './view';
 
@@ -36,16 +37,10 @@ const DOING: Record<string, (target: string | undefined, flags: ReadonlySet<stri
  * What an agent's last command was about, in words — `plitzi page measure /cart … --compare <site>` is "measuring /cart
  * against the original": what it is at between the CLI's own marks of its task, where its row said "writes t-x" alone.
  */
-export const commandDoing = (command: string): string => {
-  const words = command.split(' ').filter(word => word !== '' && word !== 'plitzi' && !word.endsWith('/plitzi'));
-  const name = words
-    .filter(word => !word.startsWith('-'))
-    .slice(0, 2)
-    .join(' ');
-  const target = words.filter(word => !word.startsWith('-')).at(2);
+export const commandDoing = ({ name, options, args }: CommandPath): string => {
   const said = Object.hasOwn(DOING, name) ? DOING[name] : undefined;
 
-  return said ? said(target, new Set(words.filter(word => word.startsWith('--')))) : `running ${name || 'a command'}`;
+  return said ? said(args.at(0), new Set(options)) : `running ${name || 'a command'}`;
 };
 
 export const statusOf = (task: TaskLine): AgentStatus =>

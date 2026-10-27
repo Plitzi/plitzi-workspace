@@ -128,6 +128,19 @@ authoring and the elements learnt from the runs.
   --status 403" "/withheld --as juno"` — one look a visitor, each told what the others covered. `page shot --clip <part>
   --showing <elements>` pictures the copy of a part drawn more than once that shows the most of them, and a look
   pictures a component where the task's elements show (a playing room card stood for an idle one's change).
+- **A scout sees its stage from its own card: `task check --tasks <stage.json>`** — checked as the lead stacks it, each
+  line run once on the run's work. `run extend` is the lead's alone, its dry run too: encore-11's and encore-13's scouts
+  reached for it, the skill pointing there; one with a task's token is refused naming `task check --tasks`. The scout's
+  prompt, brief and take say it.
+- **What the run reads it reads as data, never off words.** An acceptance line nothing can answer is the lead's
+  attention (`line-unanswered`), waking it until that task's acceptance is amended — it was a note the lead was no
+  longer woken for. A task refused again and again is counted by the task the refusal was about (its own, or the
+  token's), not by a `Task "…"` read in its message. A task's notes say what they record (`kind`: taken, unblocked,
+  cut, a review's round) where readers matched their first words; a run opened before reads its notes so marked.
+- **A run keeps each command it ran by what it is** — its name, its options, its arguments, read off the program as it
+  ran (`commandPath`) — beside the line as typed: the report, the findings, the bench and the monitor read those, where
+  each took the line apart its own way (`--list` matched in the text, the waits told by a regex). A refusal in the
+  report says the command's name, no longer the whole line it was given.
 - **The monitor shows the lead by what it holds**, as every agent: reviewing a step it took, at work on research it
   finds out with no scout, idle otherwise — its last act and its last command said on its row, never taken for work. It
   read "working" for three minutes after any act of its: after it opened a run, its scout at the scope.

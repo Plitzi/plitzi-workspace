@@ -6,6 +6,7 @@ import {
   taskAsk,
   taskBlock,
   taskCheck,
+  taskSeeStage,
   taskComplete,
   taskFound,
   taskContextCommand,
@@ -261,9 +262,15 @@ export const registerTaskGroup = (program: Command): Command => {
       '--fresh',
       'Run it all, though it passed already and nothing changed since — lint too, its kept answers dropped'
     )
+    .option(
+      '--tasks <stage.json>',
+      'At a research card: the stage you would propose, seen as the lead would stack it — each line run once on the run’s work'
+    )
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((options: RunCommandOptions & { acceptance?: boolean; fresh?: boolean }) => taskCheck(options));
+    .action((options: RunCommandOptions & { acceptance?: boolean; fresh?: boolean; tasks?: string }) =>
+      options.tasks === undefined ? taskCheck(options) : taskSeeStage({ ...options, tasks: options.tasks })
+    );
 
   taskGroup
     .command('complete')

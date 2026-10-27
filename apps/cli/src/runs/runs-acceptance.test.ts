@@ -4,7 +4,6 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { finishRun } from './merge';
-import { messagesOf } from './messages';
 import { readOwnership } from './ownership';
 import { checkPlan } from './plan';
 import { syncPreview } from './preview';
@@ -183,9 +182,10 @@ describe('acceptance, checks and what is left behind', () => {
     await bench.write('src/space/pages/about.ts', 'export const about = {};\n');
     expect((await checkTask(home.ctx, 'es-launch', 't-home')).notOwn).toEqual(['acceptance — The logo']);
     await checkTask(home.ctx, 'es-launch', 't-home', { fresh: true });
-    const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).filter(each => each.from === 'plitzi');
+    // The lead's to amend, woken for it once — never a note it is not woken for (encore-12's dev-1 waited on two).
+    const told = (await viewRun(lead(), 'es-launch')).attention.filter(item => item.kind === 'line-unanswered');
     expect(told).toHaveLength(1);
-    expect(told[0]).toMatchObject({ to: 'lead', about: 't-home' });
+    expect(told[0]).toMatchObject({ task: 't-home', who: 'lead' });
     expect(told[0].text).toContain('"The logo" cannot be answered');
     expect((await refusal(completeTask(home.ctx, 'es-launch', 't-home'))).message).toContain(
       'nothing could answer it: the lead is told — not your work'

@@ -8,6 +8,7 @@ import { AGENT_TOKEN } from './identity';
 import { activeRunFile, COPY_TASK_FILE, copyOf, RECORD_FILE, runPaths } from './paths';
 import { sessionOfProcess } from './session';
 
+import type { CommandPath } from '../commandPath';
 import type { Command } from 'commander';
 
 /**
@@ -22,10 +23,10 @@ export const USAGE_FILE = 'usage.jsonl';
 /** Set for the CLI's own child processes: what they print is read by the command that ran them, never counted twice. */
 export const USAGE_OFF = 'PLITZI_USAGE_CHILD';
 
-export interface UsageLine {
+export interface UsageLine extends CommandPath {
   at: string;
   by: string;
-  /** The command as it was run, its tokens' secrets kept out, cut. */
+  /** The command as it was run, its tokens' secrets kept out, cut: what a person reads — never taken apart. */
   command: string;
   /** What it printed, stdout and stderr: what its caller read. */
   chars: number;
@@ -202,7 +203,24 @@ export const unreadByName = (runDir: string, agent: string): number => {
 /** Whether a run's folder still holds its run: its record there — not a folder a finish is removing. */
 export const runStillThere = (runDir: string): boolean => existsSync(path.join(runDir, RECORD_FILE));
 
-export const startUsage = (args: readonly string[], cwd: string, now: () => number = Date.now): void => {
+/** The command this process runs, as the program reads it: kept for its usage line and its run's log. */
+let ran: CommandPath = { name: '', options: [], args: [] };
+
+export const ranCommand = (): CommandPath => ran;
+
+/** Its arguments as a run keeps them: secrets out, each no longer than a line. */
+const keptPath = (command: CommandPath): CommandPath => ({
+  ...command,
+  args: command.args.map(arg => withoutSecrets(arg).slice(0, 120))
+});
+
+export const startUsage = (
+  args: readonly string[],
+  cwd: string,
+  command: CommandPath,
+  now: () => number = Date.now
+): void => {
+  ran = keptPath(command);
   // A command another command of the CLI runs (`task look`'s page checks and shots) is read by that one, not an agent;
   // one at a terminal by a person — `run monitor` redrawn for an hour was 2.6M "tokens" no agent read.
   if (process.env[USAGE_OFF] === '1' || process.stdout.isTTY) {
@@ -262,6 +280,7 @@ export const startUsage = (args: readonly string[], cwd: string, now: () => numb
       at: new Date(started).toISOString(),
       by: where.by,
       command: keptCommand(args),
+      ...ran,
       chars,
       ms: now() - started,
       code,
@@ -278,11 +297,17 @@ export const startUsage = (args: readonly string[], cwd: string, now: () => numb
   });
 };
 
+const isStrings = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every(each => typeof each === 'string');
+
 const isUsageLine = (value: unknown): value is UsageLine =>
   isRecord(value) &&
   typeof value.at === 'string' &&
   typeof value.by === 'string' &&
   typeof value.command === 'string' &&
+  typeof value.name === 'string' &&
+  isStrings(value.options) &&
+  isStrings(value.args) &&
   typeof value.chars === 'number' &&
   typeof value.ms === 'number' &&
   typeof value.code === 'number' &&

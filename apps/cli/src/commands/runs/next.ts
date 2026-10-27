@@ -262,7 +262,7 @@ const takenText = (taken: TakenTask): string =>
     `  Run its commands in its copy — cd ${taken.work} — with your token, and they know the task: start with plitzi task context`,
     ...binLine(taken.work),
     isResearch(taken.task)
-      ? '  Done: plitzi task complete --found "…" [--tasks <stage.json>], in the copy — the lead approves it'
+      ? '  See your stage first — each line run once: plitzi task check --tasks <stage.json>; done: plitzi task complete --found "…" [--tasks <stage.json>], in the copy — the lead approves it'
       : '  Done: plitzi task complete, in the copy'
   ].join('\n');
 

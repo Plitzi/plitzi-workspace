@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { commandName, harnessOf, runMetrics } from './runMetrics';
+import { harnessOf, runMetrics } from './runMetrics';
+import { ranAs } from '../tests/ranAs';
 
 import type { UsageLine } from './usage';
 
@@ -40,8 +41,22 @@ const log: Record<string, unknown>[] = [
   { at: T(37), by: 'lead', action: 'all-approved' },
   // Past the last approval: what it waits for now is the person's finish, not work.
   { at: T(40), by: 'test-1', action: 'waiting', why: 'every task is done' },
-  { at: T(20), by: 'dev-2', action: 'refused', code: 'lead-only', command: 'plitzi task show t-bars' },
-  { at: T(25), by: 'design-2', action: 'refused', code: 'identity', command: 'plitzi task look t-bars' }
+  {
+    at: T(20),
+    by: 'dev-2',
+    action: 'refused',
+    code: 'lead-only',
+    command: 'plitzi task show t-bars',
+    name: 'task show'
+  },
+  {
+    at: T(25),
+    by: 'design-2',
+    action: 'refused',
+    code: 'identity',
+    command: 'plitzi task look t-bars',
+    name: 'task look'
+  }
 ].sort((a, b) => a.at.localeCompare(b.at));
 
 const usage: UsageLine[] = [
@@ -49,11 +64,20 @@ const usage: UsageLine[] = [
     at: T(minute),
     by: 'dev-1',
     command: 'plitzi task check',
+    ...ranAs('plitzi task check'),
     chars: 4000,
     ms: 9000,
     code: 1
   })),
-  { at: T(18), by: 'design-2', command: 'plitzi task look t-bars --before', chars: 12_000, ms: 90_000, code: 0 }
+  {
+    at: T(18),
+    by: 'design-2',
+    command: 'plitzi task look t-bars --before',
+    ...ranAs('plitzi task look t-bars --before'),
+    chars: 12_000,
+    ms: 90_000,
+    code: 0
+  }
 ];
 
 describe('a run measured from its records', () => {
@@ -109,11 +133,13 @@ describe('a run measured from its records', () => {
       byStep: { typecheck: 1, lint: 1, acceptance: 1 }
     });
     expect(metrics.refusals.byCode).toMatchObject({
-      'lead-only': { times: 1, by: ['dev-2'], command: 'plitzi task show t-bars' },
+      'lead-only': { times: 1, by: ['dev-2'], name: 'task show' },
       identity: { times: 1, by: ['design-2'] }
     });
     expect(metrics.questions).toEqual({ asked: 1, answered: 1, waits: [0.5] });
-    expect(metrics.cost.repeated).toEqual([{ by: 'dev-1', command: 'plitzi task check', times: 3, within: 0.4 }]);
+    expect(metrics.cost.repeated).toEqual([
+      { by: 'dev-1', name: 'task check', command: 'plitzi task check', times: 3, within: 0.4 }
+    ]);
     expect(metrics.cost).toMatchObject({
       calls: 4,
       readTokens: 6000,
@@ -133,11 +159,6 @@ describe('a run measured from its records', () => {
     expect(metrics.cost.byCommand[0]).toMatchObject({ command: 'task look', seconds: 90, overBudget: 60 });
     expect(metrics.cost.cliMinutes).toBe(2);
   });
-
-  it('names a command by what it is, not what it is about', () => {
-    expect(commandName('plitzi task look t-bars --before')).toBe('task look');
-    expect(commandName('plitzi page shot / --width 390')).toBe('page shot');
-  });
 });
 
 describe('a call made again', () => {
@@ -148,6 +169,7 @@ describe('a call made again', () => {
     at: T(minute),
     by: 'test-1',
     command,
+    ...ranAs(command),
     chars: 400,
     ms: 500,
     code: 0,
@@ -169,7 +191,7 @@ describe('a call made again', () => {
   it('counts in one session, not across fresh ones', () => {
     expect(measured([1, 2, 3].map(minute => line(minute, 'plitzi task context', `s${String(minute)}`)))).toEqual([]);
     expect(measured([1, 2, 3].map(minute => line(minute, 'plitzi task context', 's1')))).toEqual([
-      { by: 'test-1', command: 'plitzi task context', times: 3, within: 2 }
+      { by: 'test-1', name: 'task context', command: 'plitzi task context', times: 3, within: 2 }
     ]);
   });
 });

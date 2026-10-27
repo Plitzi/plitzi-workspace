@@ -21,7 +21,7 @@ import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { activeRuns, loadRun } from '../../runs/run';
 import { viewTask } from '../../runs/taskStore';
 import { isQuality } from '../../runs/team';
-import { USAGE_OFF, usageCaller } from '../../runs/usage';
+import { ranCommand, USAGE_OFF, usageCaller } from '../../runs/usage';
 import { CLI_VERSION } from '../../scaffold/project';
 import { findProject } from '../existingProject';
 
@@ -366,7 +366,7 @@ const logFailure = async (ctx: RunContext | undefined, options: RunCommandOption
   await fs
     .appendFile(
       runPaths(ctx.root, runId).log,
-      `${JSON.stringify({ at: ctx.now().toISOString(), by: saidBy(ctx), command: commandLine(), ...entry })}\n`
+      `${JSON.stringify({ at: ctx.now().toISOString(), by: saidBy(ctx), command: commandLine(), ...ranCommand(), ...entry })}\n`
     )
     .catch(() => undefined);
 };
@@ -403,9 +403,12 @@ export const act = async <T>(
       throw caught;
     }
 
+    // The task it was about, as data: what a task refused again and again is counted by — once read off its words.
+    const task = typeof caught.detail.task === 'string' ? caught.detail.task : TOKEN.exec(context?.token ?? '')?.[2];
     await logFailure(context, options, {
       action: 'refused',
       code: caught.code,
+      ...(task === undefined ? {} : { task }),
       message: caught.message.slice(0, 600),
       ...(caught.detail.messages && caught.detail.messages.length > 0 ? { handed: true } : {})
     });

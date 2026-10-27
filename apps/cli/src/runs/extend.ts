@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { readJson, writeAtomic, writeJson } from './files';
 import { coversOf } from './inventory';
-import { requireLead, scoutsOf } from './leads';
+import { requireLead } from './leads';
 import { materialise } from './materialise';
 import { unmeasuredNotices } from './measuredValues';
 import { EVERYONE, LEAD, sendMessage } from './messages';
@@ -34,7 +34,7 @@ import { tryLines } from './tryLines';
 
 import type { RunPlan, RunTask } from './model';
 import type { CheckedPlan } from './plan';
-import type { RunContext } from './run';
+import type { LoadedRun, RunContext } from './run';
 import type { TriedLine } from './tryLines';
 
 /**
@@ -65,19 +65,20 @@ export interface Extended {
   tried?: TriedLine[];
 }
 
-export const extendRun = async (
-  ctx: RunContext,
-  runId: string,
-  file: string,
-  { dryRun = false, lines = false }: { dryRun?: boolean; lines?: boolean } = {}
-): Promise<Extended> => {
-  requireNoTask(ctx, 'extend a run');
-  const loaded = await loadRun(ctx, runId);
-  // Seen before it is stacked by the scout that proposes it too: stacking it is the lead's.
-  if (!(dryRun && (await scoutsOf(ctx.root)).includes(ctx.agent))) {
-    await requireLead(ctx, 'stack a stage on the run');
-  }
+/** A stage as it would stack: checked whole against the run, nothing written. */
+interface SeenStage {
+  loaded: LoadedRun;
+  next: RunPlan;
+  checked: CheckedPlan;
+  tasks: RunTask[];
+  primer: string | undefined;
+  allowed: number;
+  isReady: (task: RunTask) => boolean;
+}
 
+/** The stage at `file` checked against the run as `run extend` would stack it — refused, every reason at once. */
+const seenStage = async (ctx: RunContext, runId: string, file: string): Promise<SeenStage> => {
+  const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open'], 'extend');
   // A stage names itself and says its goal, or takes the run's: what is new in it is its tasks. One that says the run's
   // own name is given a stage's — a run's three stages all said the run's own name, and were stacked under the run's name.
@@ -205,18 +206,56 @@ export const extendRun = async (
 
   const states = new Map(views.map(view => [view.task.id, view.state.status]));
   const isReady = (task: RunTask): boolean => task.dependsOn.every(dependency => states.get(dependency) === 'done');
-  // A stage is seen before it is stacked: `run open --dry-run` with a run open says it so — every check above, nothing written.
-  if (dryRun) {
-    return {
-      runId,
-      added: tasks.map(task => task.id),
-      ready: tasks.filter(isReady).map(task => task.id),
-      notes: next.notes?.length ?? 0,
-      primer: primer !== undefined,
-      checked: { ...checked, tasks },
-      ...(lines ? { tried: await tryLines(ctx, loaded, tasks) } : {})
-    };
+
+  return { loaded, next, checked, tasks, primer, allowed, isReady };
+};
+
+/**
+ * A stage seen before it is stacked — every check `run extend` makes, nothing written, each line run once with `lines`.
+ * Whoever writes one sees it: the lead (`run extend --dry-run`, `run open --dry-run` with a run open) and a scout at
+ * its research card (`task check --tasks`, and its `complete`), which never stacks one — encore-11's and encore-13's
+ * scouts reached for `run extend`, the lead's, to see their own stage.
+ */
+export const seeStage = async (
+  ctx: RunContext,
+  runId: string,
+  file: string,
+  { lines = false }: { lines?: boolean } = {}
+): Promise<Extended> => {
+  const { loaded, next, checked, tasks, primer, isReady } = await seenStage(ctx, runId, file);
+
+  return {
+    runId,
+    added: tasks.map(task => task.id),
+    ready: tasks.filter(isReady).map(task => task.id),
+    notes: next.notes?.length ?? 0,
+    primer: primer !== undefined,
+    checked: { ...checked, tasks },
+    ...(lines ? { tried: await tryLines(ctx, loaded, tasks) } : {})
+  };
+};
+
+export const extendRun = async (
+  ctx: RunContext,
+  runId: string,
+  file: string,
+  { dryRun = false, lines = false }: { dryRun?: boolean; lines?: boolean } = {}
+): Promise<Extended> => {
+  // Seeing a stage from a card is the card's own check: the scout writing one reached for this, the lead's, twice.
+  if (dryRun && ctx.token !== undefined) {
+    throw new RunRefusal(
+      'lead-only',
+      'run extend is the lead’s: the stage your research card proposes is seen with plitzi task check --tasks <stage.json> — each line run once on the run’s work — and proposed with plitzi task complete --found "…" --tasks <stage.json>'
+    );
   }
+
+  requireNoTask(ctx, 'extend a run');
+  await requireLead(ctx, 'stack a stage on the run');
+  if (dryRun) {
+    return seeStage(ctx, runId, file, { lines });
+  }
+
+  const { loaded, next, checked, tasks, primer, allowed, isReady } = await seenStage(ctx, runId, file);
 
   // Their files as the project holds them now, kept beside the run's backup: what the finish restores from.
   const base = await readJson(loaded.paths.base, isBaseManifest, 'the run’s backup (base.json)');

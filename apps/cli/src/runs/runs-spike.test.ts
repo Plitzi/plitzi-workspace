@@ -13,6 +13,7 @@ import { checkPlan } from './plan';
 import { loadRun, openRun } from './run';
 import { scopePlan, SCOPE_SPIKE } from './spike';
 import { blockTask, completeResearch, nextTask, takeNext, taskContext, unblockTask } from './tasks';
+import { readState } from './taskStore';
 import { viewRun } from './view';
 import { flowStages } from '../commands/runs/monitorFlow';
 import { researchSteps } from '../tests/research';
@@ -349,6 +350,36 @@ describe('research: a card like any, finding out in the run', () => {
       by: 'scout-1',
       text: 'A team grid'
     });
+  });
+
+  // Notes said what they recorded by their first words, read so — a reworded one parted its readers unseen.
+  it('reads the notes an earlier CLI wrote by what they record: who took it, a block lifted, a cut, a review', async () => {
+    await open(surveyed());
+    const loaded = await loadRun(lead(), 'es-launch');
+    const paths = taskPaths(loaded.paths, 't-home');
+    const earlier = JSON.parse(await fs.readFile(paths.state, 'utf-8')) as Record<string, unknown>;
+    const at = String(earlier.updatedAt);
+    await fs.writeFile(
+      paths.state,
+      JSON.stringify({
+        ...earlier,
+        notes: [
+          { at, by: 'dev-1', text: 'Taken' },
+          { at, by: 'lead', text: 'Unblocked: Spanish' },
+          { at, by: 'plitzi', text: 'Cut at "review": no signal.' },
+          { at, by: 'test-1', text: 'Review 2: the hero wraps' },
+          { at, by: 'dev-1', text: 'Said in passing' }
+        ]
+      })
+    );
+
+    expect((await readState(paths)).notes.map(note => [note.kind, note.round])).toEqual([
+      ['taken', undefined],
+      ['unblocked', undefined],
+      ['cut', undefined],
+      ['review', 2],
+      [undefined, undefined]
+    ]);
   });
 
   it('refuses a spike that writes files, research with a command, and a task that writes nothing and finds out nothing', async () => {

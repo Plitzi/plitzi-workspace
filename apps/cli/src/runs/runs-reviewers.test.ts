@@ -20,9 +20,11 @@ import {
   completeResearch,
   completeTask,
   escalateReview,
+  findTask,
   nextTask,
   reassignTask,
   reviewTask,
+  seeProposal,
   takeNext,
   unblockTask
 } from './tasks';
@@ -468,9 +470,30 @@ describe('the run’s tasks, the lead’s alone', () => {
       tasks: [{ ...benchPlan().tasks[0], id: 't-more', files: ['src/space/pages/extra.ts'], dependsOn: [] }]
     });
     expect((await refusal(extendRun(bench.agent('scout-1'), runId, stage))).code).toBe('lead-only');
-    expect(await extendRun(bench.agent('scout-1'), runId, stage, { dryRun: true })).toMatchObject({
-      added: ['t-more']
+    expect((await refusal(extendRun(bench.agent('scout-1'), runId, stage, { dryRun: true }))).code).toBe('lead-only');
+  });
+
+  // encore-11's and encore-13's scouts reached for run extend, the lead's, to see their own stage.
+  it('lets a scout see its stage from its research card — task check --tasks — never through run extend', async () => {
+    await bench.writeTeam(team(SCOUT));
+    const { runId } = (await openRun(lead(), await bench.writePlan(scopePlan('es-launch', 'Translate the site'))))
+      .checked;
+    await takeNext(bench.agent('scout-1'), runId, 'scout');
+    const loaded = await loadRun(lead(), runId);
+    const { owner } = await viewTask(loaded.paths, findTask(loaded, SCOPE_SPIKE));
+    const scout = bench.agent('scout-1', { token: owner?.token });
+    const stage = await bench.writePlan({
+      ...benchPlan(),
+      runId: 'more',
+      tasks: [{ ...benchPlan().tasks[0], id: 't-more', files: ['src/space/pages/extra.ts'], dependsOn: [] }]
     });
+
+    expect(await seeProposal(scout, runId, SCOPE_SPIKE, stage)).toMatchObject({ added: ['t-more'], tried: [] });
+    const extending = await refusal(extendRun(scout, runId, stage, { dryRun: true }));
+    expect([extending.code, extending.message]).toEqual(['lead-only', expect.stringContaining('task check --tasks')]);
+    expect((await refusal(extendRun(scout, runId, stage))).code).toBe('lead-only');
+    // Another's card is no stage of its to see.
+    expect((await refusal(seeProposal(bench.agent('dev-1'), runId, SCOPE_SPIKE, stage))).code).not.toBe(undefined);
   });
 
   it('keeps the primer a proposed stage names, so the lead’s approval stacks it whole', async () => {

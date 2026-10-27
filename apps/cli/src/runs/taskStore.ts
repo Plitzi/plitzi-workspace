@@ -104,13 +104,38 @@ export const readTasks = async (run: RunPaths): Promise<RunTask[]> => {
  * (`spikedBy`) — it is a card like any, ready to take or in review with what it found.
  */
 const stateFromEarlierCli = (value: unknown): unknown => {
-  if (!isRecord(value) || value.status !== 'spike') {
+  if (!isRecord(value)) {
     return value;
+  }
+
+  // Its notes said what they recorded by their first words only: marked as a note of now marks it.
+  const notes = Array.isArray(value.notes) ? value.notes.map(noteFromEarlierCli) : value.notes;
+  if (value.status !== 'spike') {
+    return { ...value, notes };
   }
 
   const { spikedBy: _held, ...card } = value;
 
-  return { ...card, status: card.proposed === undefined ? 'ready' : 'in-review' };
+  return { ...card, notes, status: card.proposed === undefined ? 'ready' : 'in-review' };
+};
+
+/** A note an earlier CLI wrote, marked by what its words began with: who took the task, a block lifted, a cut, a review. */
+const noteFromEarlierCli = (note: unknown): unknown => {
+  if (!isRecord(note) || note.kind !== undefined || typeof note.text !== 'string') {
+    return note;
+  }
+
+  const review = /^Review (\d+): /.exec(note.text);
+
+  return note.text.startsWith('Taken')
+    ? { ...note, kind: 'taken' }
+    : note.text.startsWith('Unblocked')
+      ? { ...note, kind: 'unblocked' }
+      : note.text.startsWith('Cut at')
+        ? { ...note, kind: 'cut' }
+        : review
+          ? { ...note, kind: 'review', round: Number(review[1]) }
+          : note;
 };
 
 export const readState = async (task: TaskPaths): Promise<TaskState> => {
@@ -302,6 +327,7 @@ export const cutTask = async (view: TaskView, reason: string, now: () => Date): 
         {
           at: now().toISOString(),
           by: 'plitzi',
+          kind: 'cut' as const,
           text: `Cut at "${step}": ${reason}. ${view.reviewed ? `It starts again from the version its review ${String(view.reviewed.round)} saw` : 'It was never reviewed: it starts from scratch'}.`
         }
       ],

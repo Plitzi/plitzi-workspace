@@ -278,9 +278,9 @@ export const revertTask = async (
   }
 
   // …and the agents who did it hear it by name: their work is out of the run, whoever redoes it.
-  const workedBy = [
-    ...new Set(view.state.notes.filter(note => note.text.startsWith('Taken')).map(note => note.by))
-  ].filter(agent => AGENT.test(agentAddress(agent)));
+  const workedBy = [...new Set(view.state.notes.filter(note => note.kind === 'taken').map(note => note.by))].filter(
+    agent => AGENT.test(agentAddress(agent))
+  );
   for (const agent of workedBy) {
     await sendMessage(ctx, loaded, {
       from: LEAD,

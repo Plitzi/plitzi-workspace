@@ -209,7 +209,7 @@ export const reasonOf = (why: string): string => why.split(/[:—]/)[0]?.trim() 
 /** What a sent-back task's last review asked, by whom: handed with it, to its agent or to the one taking it over. */
 export const lastAsked = (view: TaskView): string[] =>
   view.state.notes
-    .filter(note => note.text.startsWith(`Review ${String(view.state.round)}: `))
+    .filter(note => note.kind === 'review' && note.round === view.state.round)
     .map(note => `${note.by}: ${note.text.slice(`Review ${String(view.state.round)}: `.length)}`);
 
 /**

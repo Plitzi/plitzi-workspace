@@ -9,13 +9,14 @@ export const REFUSED_AGAIN = 3;
 /**
  * A task refused again and again, said to the lead while it happens — not in the report after: a run's dev-1 was
  * refused four times in twenty minutes on t-heading (a file another task held, a wait run out, a complete from a wait)
- * and nobody knew until the run was over. Counted by the task the refused command names, its code and what it said.
+ * and nobody knew until the run was over. Counted by the task the refusal was about — as the refusal says it, or the
+ * token that ran it holds — its code and what it said.
  */
 export const refusedAgain = (log: readonly Record<string, unknown>[], now: Date): Attention[] => {
   const since = now.getTime() - REFUSED_WINDOW_MS;
   const byTask = new Map<string, { by: string; codes: string[]; last: string }>();
   for (const entry of log) {
-    const task = typeof entry.message === 'string' ? /Task "([^"]+)"/.exec(entry.message)?.[1] : undefined;
+    const task = typeof entry.task === 'string' ? entry.task : undefined;
     if (
       entry.action !== 'refused' ||
       typeof entry.at !== 'string' ||

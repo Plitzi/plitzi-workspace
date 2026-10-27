@@ -17,6 +17,7 @@ import { logRun, stopRun } from '../../runs/run';
 import { askLead, messageTasks, noteRun, tellLead } from '../../runs/talk';
 import { completeTask, followNext, reportProgress, reviewTask } from '../../runs/tasks';
 import { USAGE_FILE } from '../../runs/usage';
+import { ranAs } from '../../tests/ranAs';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 
@@ -422,7 +423,7 @@ describe('plitzi run monitor', () => {
     const row = async () => (await monitorRun(lead(), runId)).agents.find(agent => agent.agent === 'lead');
     await fs.appendFile(
       path.join(paths.dir, USAGE_FILE),
-      `${JSON.stringify({ at: bench.now().toISOString(), by: 'lead', command: 'plitzi task look t-home', chars: 10, ms: 10, code: 0 })}\n`
+      `${JSON.stringify({ at: bench.now().toISOString(), by: 'lead', command: 'plitzi task look t-home', ...ranAs('plitzi task look t-home'), chars: 10, ms: 10, code: 0 })}\n`
     );
 
     expect(await row()).toMatchObject({

@@ -246,7 +246,7 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
             .map(([file]) => file)
         ])
       ].sort(),
-      cuts: view.state.notes.filter(note => note.text.startsWith('Cut at')).length,
+      cuts: view.state.notes.filter(note => note.kind === 'cut').length,
       reviews: view.state.notes.flatMap(note => {
         const [, round, asked] = /^Review (\d+): ([\s\S]*)$/.exec(note.text) ?? [];
 

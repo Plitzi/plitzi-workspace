@@ -247,7 +247,7 @@ const agentsOf = async (
     const line = lastRun.get(agent);
     const at = line ? Date.parse(line.at) : Number.NaN;
 
-    return line && now - at < LATELY_MS ? ` — ${commandDoing(line.command)}` : '';
+    return line && now - at < LATELY_MS ? ` — ${commandDoing(line)}` : '';
   };
   const team = await readTeam(ctx.root).catch(() => undefined);
   // A task is whoever is at it: its writer while it is written or sent back, its reviewer at the step of its review.

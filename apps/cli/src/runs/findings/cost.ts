@@ -1,4 +1,4 @@
-import { commandName, tokensText } from '../runMetrics';
+import { tokensText } from '../runMetrics';
 import { clock, evidenceOf } from './types';
 import { kindOf } from '../harness';
 
@@ -42,7 +42,7 @@ export const costFindings = (
   const findings: Finding[] = [];
   const large = new Map<string, UsageLine[]>();
   for (const line of usage.filter(each => each.chars >= LARGE_OUTPUT)) {
-    const name = commandName(line.command);
+    const { name } = line;
     large.set(name, [...(large.get(name) ?? []), line]);
   }
 
@@ -65,7 +65,7 @@ export const costFindings = (
   // One finding a command, its bursts the evidence: a run said "lead ran task show 4 times in 8.9 min" as nine findings.
   const bursts = new Map<string, RepeatedCall[]>();
   for (const call of repeated) {
-    const name = commandName(call.command);
+    const { name } = call;
     bursts.set(name, [...(bursts.get(name) ?? []), call]);
   }
 

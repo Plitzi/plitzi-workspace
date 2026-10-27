@@ -72,7 +72,7 @@ export const flowText = (metrics: RunMetrics): string[] => {
         ? ` — ${Object.entries(refusals.byCode)
             .map(
               ([code, each]) =>
-                `${code} ${String(each.times)} (${each.by.join(', ')}${each.command ? `; ${each.command}` : ''})`
+                `${code} ${String(each.times)} (${each.by.join(', ')}${each.name ? `; ${each.name}` : ''})`
             )
             .join(' · ')}`
         : ''

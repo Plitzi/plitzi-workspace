@@ -130,6 +130,7 @@ export interface Attention {
     | 'idle-team'
     | 'agents-needed'
     | 'refused-again'
+    | 'line-unanswered'
     | 'finding'
     | 'spikes'
     | 'spike-proposed'

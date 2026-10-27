@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { commandDoing } from './agentDoing';
 import { feedOf, SHORT } from './feedLine';
+import { ranAs } from '../tests/ranAs';
 
 // A person following a run read "refused (invalid): plitzi task complete --known-failure … --token …" and an agent's row
 // saying "writes t-home" alone: what an agent is at, and what went wrong, are said in words.
@@ -13,6 +14,7 @@ describe('the activity, in words', () => {
       action: 'refused',
       code: 'invalid',
       command: 'plitzi task complete --known-failure acceptance: the line --fixed-by lead --token …',
+      ...ranAs('plitzi task complete --known-failure acceptance: the line --fixed-by lead --token …'),
       message: 'Run "lx" has no task "lead". Name the task that fixes it.'
     });
 
@@ -96,13 +98,15 @@ describe('the activity, in words', () => {
   it('says what an agent’s last command was about', () => {
     expect(
       commandDoing(
-        'plitzi page measure /cart "cart-box => .cart" --compare https://www.example.com --width 390 --token …'
+        ranAs('plitzi page measure /cart "cart-box => .cart" --compare https://www.example.com --width 390 --token …')
       )
     ).toBe('measuring /cart against the original');
-    expect(commandDoing('/x/node_modules/.bin/plitzi task check --fix --token …')).toBe('running its checks');
-    expect(commandDoing('plitzi task look t-home --token …')).toBe('looking at t-home');
-    expect(commandDoing('plitzi data describe src/data/site.json')).toBe('running data describe');
-    expect(commandDoing('plitzi task claim src/space/theme.ts --wait --follow')).toBe('waiting for a shared file');
-    expect(commandDoing('plitzi task claim src/space/theme.ts --release')).toBe('letting a shared file go');
+    expect(commandDoing(ranAs('/x/node_modules/.bin/plitzi task check --fix --token …'))).toBe('running its checks');
+    expect(commandDoing(ranAs('plitzi task look t-home --token …'))).toBe('looking at t-home');
+    expect(commandDoing(ranAs('plitzi data describe src/data/site.json'))).toBe('running data describe');
+    expect(commandDoing(ranAs('plitzi task claim src/space/theme.ts --wait --follow'))).toBe(
+      'waiting for a shared file'
+    );
+    expect(commandDoing(ranAs('plitzi task claim src/space/theme.ts --release'))).toBe('letting a shared file go');
   });
 });

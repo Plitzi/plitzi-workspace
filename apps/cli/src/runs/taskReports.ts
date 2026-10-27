@@ -8,9 +8,9 @@ import { writeJson } from './files';
 import { harnessUsage } from './harness';
 import { tasksDir } from './paths';
 import { readRunLog } from './run';
-import { commandName } from './runMetrics';
 import { readUsage } from './usage';
 
+import type { CommandPath } from '../commandPath';
 import type { Experience } from './experience';
 import type { HarnessUsage } from './harness';
 import type { TaskPaths } from './paths';
@@ -73,10 +73,8 @@ const strings = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((each): each is string => typeof each === 'string') : [];
 
 /** A command whose failing is what it says of the work — a check that did not pass — not a failure of its own. */
-export const isVerdict = (command: string): boolean =>
-  ['task check', 'task complete', 'page check', 'page play', 'page measure', 'page same', 'task look'].includes(
-    commandName(command)
-  );
+export const isVerdict = ({ name }: Pick<CommandPath, 'name'>): boolean =>
+  ['task check', 'task complete', 'page check', 'page play', 'page measure', 'page same', 'task look'].includes(name);
 
 const reportsDir = (paths: Pick<TaskPaths, 'dir'>): string => path.join(paths.dir, 'reports');
 
@@ -122,7 +120,7 @@ export const keepTaskReport = async (
   const usage = readUsage(loaded.paths.dir).filter(line => line.by === agent && within(line.at));
   const byName: TaskRoundReport['commands']['byName'] = {};
   for (const line of usage) {
-    const name = commandName(line.command);
+    const { name } = line;
     const kept = byName[name] ?? { times: 0, failed: 0, chars: 0, seconds: 0 };
     kept.times += 1;
     kept.failed += line.code === 0 ? 0 : 1;
@@ -131,7 +129,7 @@ export const keepTaskReport = async (
     byName[name] = kept;
   }
 
-  const explained = usage.filter(line => commandName(line.command).startsWith('explain'));
+  const explained = usage.filter(line => line.name === 'explain');
   const sessions = [...new Set(usage.flatMap(line => (line.session ? [line.session] : [])))];
   const processes = [...new Set(usage.flatMap(line => (line.process ? [line.process] : [])))];
   const harness = await harnessUsage({ sessions, processes, root: loaded.paths.root, from, to });
@@ -169,7 +167,7 @@ export const keepTaskReport = async (
               command: line.command,
               ...(line.error ? { error: line.error } : {}),
               ...(line.output ? { output: line.output } : {}),
-              ...(isVerdict(line.command) ? { verdict: true as const } : {})
+              ...(isVerdict(line) ? { verdict: true as const } : {})
             }
           ]
     ),

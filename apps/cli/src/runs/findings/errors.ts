@@ -1,4 +1,3 @@
-import { commandName } from '../runMetrics';
 import { isVerdict } from '../taskReports';
 import { clock, evidenceOf } from './types';
 
@@ -52,11 +51,7 @@ export const errorFindings = (usage: readonly UsageLine[]): Finding[] => {
   const machine = failed.filter(line => MACHINE.test(line.error ?? '') && !asWritten.includes(line));
   // An `explain` with no answer is said by its own finding (`explain.ts`), with the question: a run said each twice.
   const rest = failed.filter(
-    line =>
-      !asWritten.includes(line) &&
-      !machine.includes(line) &&
-      !isVerdict(line.command) &&
-      !commandName(line.command).startsWith('explain')
+    line => !asWritten.includes(line) && !machine.includes(line) && !isVerdict(line) && line.name !== 'explain'
   );
 
   return [
@@ -85,7 +80,7 @@ export const errorFindings = (usage: readonly UsageLine[]): Finding[] => {
         kind: 'command-errors' as const,
         owner: 'plitzi' as const,
         area: 'cli' as const,
-        title: `${commandName(lines[0].command)} failed ×${String(lines.length)}: ${lines[0].error ?? ''}`,
+        title: `${lines[0].name} failed ×${String(lines.length)}: ${lines[0].error ?? ''}`,
         evidence: evidenceOf(lines.map(said)),
         times: lines.length,
         fix: 'said once, it should not need saying again: the error names its way out, or the command does it',

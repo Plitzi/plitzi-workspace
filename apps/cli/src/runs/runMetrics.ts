@@ -1,5 +1,6 @@
 import { isApproval } from './run';
 
+import type { CommandPath } from '../commandPath';
 import type { UsageLine } from './usage';
 
 /**
@@ -67,6 +68,8 @@ export interface AgentHarness {
 
 export interface RepeatedCall {
   by: string;
+  /** The command, by its name: what a burst of them is grouped by. */
+  name: string;
   command: string;
   times: number;
   /** Over how many minutes. */
@@ -90,7 +93,7 @@ export interface RunMetrics {
    * the run's work fails the same way, a line nothing could answer (`tasks/notOwn.ts`). `byStep`: the own ones' steps.
    */
   checks: { run: number; failed: number; notOwn: number; byStep: Record<string, number> };
-  refusals: { total: number; byCode: Record<string, { times: number; by: string[]; command?: string }> };
+  refusals: { total: number; byCode: Record<string, { times: number; by: string[]; name?: string }> };
   questions: { asked: number; answered: number; waits: number[] };
   cost: {
     calls: number;
@@ -139,10 +142,12 @@ export const CLI_BUDGET_S: Record<string, number> = {
 };
 
 /** A call that waits by design — for work, an answer, the lead's next item — is no time the CLI took. */
-const waitsByDesign = (command: string): boolean =>
-  /\s--follow\b|^plitzi run (watch|monitor)\b|^plitzi task claim\b.*\s--wait\b|^plitzi task next\b(?!.*\s--(no-wait|peek)\b)/.test(
-    command
-  );
+const waitsByDesign = ({ name, options }: CommandPath): boolean =>
+  options.includes('--follow') ||
+  name === 'run watch' ||
+  name === 'run monitor' ||
+  (name === 'task claim' && options.includes('--wait')) ||
+  (name === 'task next' && !options.includes('--no-wait') && !options.includes('--peek'));
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '');
 const texts = (value: unknown): string[] =>
@@ -163,15 +168,6 @@ const failedOwn = (entry: Entry): boolean => {
 
 const minutes = (from: string, to: string): number => Math.round((Date.parse(to) - Date.parse(from)) / 6_000) / 10;
 
-/** The command's name, without what it is about: `task check`, `page shot`. */
-export const commandName = (command: string): string =>
-  command
-    .split(' ')
-    .slice(1)
-    .filter(word => !word.startsWith('-'))
-    .slice(0, 2)
-    .join(' ');
-
 const median = (values: readonly number[]): number | undefined => {
   const sorted = [...values].sort((a, b) => a - b);
 
@@ -190,13 +186,15 @@ const REPEAT_WINDOW_MIN = 10;
  * A call meant to be made again: a wait, a take — and a dry run, tried after each edit of what it checks (encore-11's
  * scout dry-ran its stage three times as it fixed it, said "ran run extend 3 times").
  */
-const calledAgainByDesign = (command: string): boolean =>
-  waitsByDesign(command) || /^plitzi task next\b(?!.*\s--peek\b)/.test(command) || /\s--dry-run\b/.test(command);
+const calledAgainByDesign = (line: CommandPath): boolean =>
+  waitsByDesign(line) ||
+  (line.name === 'task next' && !line.options.includes('--peek')) ||
+  line.options.includes('--dry-run');
 
 const repeatedCalls = (usage: readonly UsageLine[]): RepeatedCall[] => {
   const groups = new Map<string, UsageLine[]>();
   // In one session: a fresh session runs its first commands again, as it should.
-  for (const line of usage.filter(each => !calledAgainByDesign(each.command))) {
+  for (const line of usage.filter(each => !calledAgainByDesign(each))) {
     const key = `${line.by}\u0000${line.session ?? ''}\u0000${line.command}`;
     groups.set(key, [...(groups.get(key) ?? []), line]);
   }
@@ -216,7 +214,9 @@ const repeatedCalls = (usage: readonly UsageLine[]): RepeatedCall[] => {
         }
       }
 
-      return best.times >= REPEATED ? [{ by: lines[0].by, command: lines[0].command, ...best }] : [];
+      return best.times >= REPEATED
+        ? [{ by: lines[0].by, name: lines[0].name, command: lines[0].command, ...best }]
+        : [];
     })
     .sort((a, b) => b.times - a.times);
 };
@@ -437,11 +437,7 @@ export const runMetrics = (input: {
     byCode[code] = {
       times: was.times + 1,
       by: [...new Set([...was.by, text(entry.by)])],
-      ...(was.command !== undefined
-        ? { command: was.command }
-        : typeof entry.command === 'string'
-          ? { command: entry.command }
-          : {})
+      ...(was.name !== undefined ? { name: was.name } : typeof entry.name === 'string' ? { name: entry.name } : {})
     };
   }
 
@@ -453,12 +449,12 @@ export const runMetrics = (input: {
   });
   const byCommand = new Map<string, { calls: number; chars: number; ms: number[] }>();
   for (const line of usage) {
-    const name = commandName(line.command);
+    const { name } = line;
     const was = byCommand.get(name) ?? { calls: 0, chars: 0, ms: [] };
     byCommand.set(name, {
       calls: was.calls + 1,
       chars: was.chars + line.chars,
-      ms: waitsByDesign(line.command) ? was.ms : [...was.ms, line.ms]
+      ms: waitsByDesign(line) ? was.ms : [...was.ms, line.ms]
     });
   }
 
@@ -512,8 +508,7 @@ export const runMetrics = (input: {
         .sort((a, b) => b.seconds - a.seconds || b.readTokens - a.readTokens),
       repeated: repeatedCalls(usage),
       cliMinutes:
-        Math.round(usage.filter(line => !waitsByDesign(line.command)).reduce((sum, line) => sum + line.ms, 0) / 6000) /
-        10
+        Math.round(usage.filter(line => !waitsByDesign(line)).reduce((sum, line) => sum + line.ms, 0) / 6000) / 10
     }
   };
 };

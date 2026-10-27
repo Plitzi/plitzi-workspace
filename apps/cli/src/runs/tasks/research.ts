@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { extendRun } from '../extend';
+import { extendRun, seeStage } from '../extend';
 import { isPrincipal, requireLead } from '../leads';
 import { uncheckedOf } from '../plan';
 import { RunRefusal } from '../refusal';
@@ -16,6 +16,7 @@ import { closeApproved } from './closeApproved';
 import { at, findTask, holderOf } from './common';
 import { readyWhatWaited, sayIfAllDone } from './handOn';
 
+import type { Extended } from '../extend';
 import type { TaskStatus } from '../model';
 import type { LoadedRun, RunContext } from '../run';
 import type { Finding } from '../spike';
@@ -145,10 +146,8 @@ export const completeResearch = async (
     }
   }
 
-  // Seen by the scout before the lead stacks it: checked as the lead's dry run checks it, by the scout's name — a task's
-  // token stacks nothing.
-  const checked =
-    tasks === undefined ? undefined : await extendRun({ ...ctx, token: undefined }, runId, tasks, { dryRun: true });
+  // Seen before the lead stacks it, as the lead's dry run sees it: stacking it is the lead's.
+  const checked = tasks === undefined ? undefined : await seeStage(ctx, runId, tasks);
   if (tasks !== undefined) {
     await keepStage(view, tasks);
   }
@@ -220,6 +219,27 @@ const findOutAsLead = async (
   const ready = [...(done.ready ?? []), ...waited];
 
   return { ...done, ...(ready.length > 0 ? { ready } : {}) };
+};
+
+/**
+ * `task check --tasks <stage.json>` at a research card: the stage it would propose seen as the lead would stack it —
+ * every check, each line run once on the run's work — nothing proposed, nothing stacked. A scout's way to see its stage:
+ * encore-11's and encore-13's reached for `run extend`, the lead's.
+ */
+export const seeProposal = async (ctx: RunContext, runId: string, taskId: string, file: string): Promise<Extended> => {
+  const loaded = await loadRun(ctx, runId);
+  const task = findTask(loaded, taskId);
+  if (!isResearch(task)) {
+    throw new RunRefusal(
+      'invalid',
+      `Task "${taskId}" is no research card: plitzi task check --tasks sees the stage a research card proposes — plitzi task check alone checks this one`,
+      { task: taskId }
+    );
+  }
+
+  await holderOf(ctx, loaded, task);
+
+  return seeStage(ctx, runId, file, { lines: true });
 };
 
 /**

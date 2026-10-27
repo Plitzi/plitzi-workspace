@@ -8,6 +8,7 @@ import { indicatorsOf, liveFindings, runFindings } from './index';
 import { afterStop, twoSessions, twoTasks } from './sessions';
 import { groupAlike } from './words';
 import { saidFindings, workaroundFindings } from './workarounds';
+import { ranAs } from '../../tests/ranAs';
 
 import type { LogEntry } from './types';
 import type { RunTask } from '../model';
@@ -22,6 +23,7 @@ const use = (minute: number, by: string, command: string, more: Partial<UsageLin
   at: T(minute),
   by,
   command,
+  ...ranAs(command),
   chars: 100,
   ms: 1000,
   code: 0,
@@ -309,9 +311,9 @@ describe('what the run spent that it did not have to', () => {
     const found = costFindings(
       [use(1, 'dev-1', 'plitzi task show t-a', { chars: 64_000 })],
       [
-        { by: 'dev-2', command: 'plitzi task check', times: 4, within: 6 },
-        { by: 'lead', command: 'plitzi task show t-a', times: 5, within: 7 },
-        { by: 'lead', command: 'plitzi task show t-b', times: 3, within: 2 }
+        { by: 'dev-2', name: 'task check', command: 'plitzi task check', times: 4, within: 6 },
+        { by: 'lead', name: 'task show', command: 'plitzi task show t-a', times: 5, within: 7 },
+        { by: 'lead', name: 'task show', command: 'plitzi task show t-b', times: 3, within: 2 }
       ],
       [
         round('t-a', spent(1_000_000)),

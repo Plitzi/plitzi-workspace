@@ -6,7 +6,7 @@ import { kindOf } from './harness';
 import { buildReport, readSummary } from './report';
 import { findingsText, ranOn, spendText, stepsSaidText } from './reportHead';
 import { REPORT_FILES, runReportDir, withoutMachine } from './reports';
-import { commandName, tokensText } from './runMetrics';
+import { tokensText } from './runMetrics';
 
 import type { AgentTimeline } from './agentTimeline';
 import type { Briefs } from './briefs';
@@ -179,7 +179,7 @@ export const feedbackOf = async (ctx: RunContext, loaded: LoadedRun): Promise<Ru
       .map(([code, refused]) => ({
         code,
         times: refused.times,
-        ...(refused.command ? { command: commandName(refused.command) } : {})
+        ...(refused.name ? { command: refused.name } : {})
       }))
       .sort((a, b) => b.times - a.times),
     spent: [...spent.values()],

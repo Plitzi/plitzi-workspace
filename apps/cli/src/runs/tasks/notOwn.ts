@@ -3,8 +3,8 @@ import path from 'node:path';
 import { failedWhy } from '../../commands/verify';
 import { ownFailing } from '../checks';
 import { checkVersions } from '../materialise';
-import { LEAD, messagesOf, sendMessage } from '../messages';
-import { readApproved } from '../run';
+import { logRun, readApproved, readRunLog } from '../run';
+import { openUnanswered } from '../unansweredLines';
 import { digestsOf, escapeRegExp } from './approve';
 
 import type { CheckResult, CheckStep } from '../checks';
@@ -65,18 +65,15 @@ export const tellUnanswered = async (
     return [];
   }
 
-  const said = (await messagesOf(loaded)).filter(message => message.from === 'plitzi' && message.about === taskId);
-  for (const line of unanswered) {
-    if (said.some(message => message.text.includes(line.check))) {
-      continue;
-    }
-
-    await sendMessage(ctx, loaded, {
-      from: 'plitzi',
-      to: LEAD,
-      text: `${taskId}'s acceptance line "${line.said}" cannot be answered — ${line.check} — ${failedWhy(line.output) ?? 'it read nothing'}. Not the work's: amend the line (plitzi run amend), or say why it waits`,
-      fyi: true,
-      about: taskId
+  // Logged once a line, until its task's acceptance is amended: the lead is woken for it (`unansweredLines`).
+  const open = openUnanswered(await readRunLog(loaded.paths));
+  for (const line of unanswered.filter(each => !open.has(`${taskId}\u0000${each.check}`))) {
+    await logRun(ctx, loaded.paths, {
+      action: 'line-unanswered',
+      task: taskId,
+      said: line.said,
+      check: line.check,
+      why: failedWhy(line.output) ?? 'it read nothing'
     });
   }
 

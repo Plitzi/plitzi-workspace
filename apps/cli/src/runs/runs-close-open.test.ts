@@ -7,6 +7,7 @@ import { runPaths } from './paths';
 import { writeSummary } from './report';
 import { openRun } from './run';
 import { settleFinding } from './settle';
+import { ranAs } from '../tests/ranAs';
 import { benchPlan, makeBench } from '../tests/runProject';
 import { LEAD_SAID, runSteps } from '../tests/runSteps';
 
@@ -62,7 +63,7 @@ describe("the lead's close", () => {
     await bench.write('summary.md', '# Done\n');
     const { dir } = runPaths(bench.root, 'es-launch');
     const usage = (at: string, command: string) =>
-      `${JSON.stringify({ at, by: 'agent-9', command, chars: 10, ms: 5, code: 0, session: 's-9' })}\n`;
+      `${JSON.stringify({ at, by: 'agent-9', command, ...ranAs(command), chars: 10, ms: 5, code: 0, session: 's-9' })}\n`;
     await fs.appendFile(path.join(dir, 'usage.jsonl'), usage('2026-10-24T10:00:00.000Z', 'plitzi task next'));
     await fs.appendFile(
       path.join(dir, 'log.jsonl'),

@@ -38,7 +38,7 @@ const inReview = (task: RunTask, review: Partial<ReviewState> = {}, worked: stri
   const state: TaskState = {
     status: 'in-review',
     round: 0,
-    notes: worked.map(agent => ({ at: at(0), by: agent, text: `Taken by ${agent}` })),
+    notes: worked.map(agent => ({ at: at(0), by: agent, kind: 'taken' as const, text: 'Taken' })),
     updatedAt: at(0),
     review: { round: 0, step: 0, since: at(0), ...review }
   };

@@ -13,4 +13,4 @@ export const isWorked = (status: TaskStatus): status is WorkedStatus => WORKED.s
 
 /** Whether `agent` took a task's work, by the notes its takes leave: nobody reviews its own, nor writes its tests. */
 export const workedBy = (view: TaskView, agent: string): boolean =>
-  view.state.notes.some(note => note.by === agent && note.text.startsWith('Taken'));
+  view.state.notes.some(note => note.by === agent && note.kind === 'taken');

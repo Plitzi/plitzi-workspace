@@ -95,7 +95,7 @@ export const twoTasks = (log: readonly LogEntry[]): Finding[] => {
 };
 
 /** What an agent may still run once told it can stop: what its prompt asks of a stopping agent. */
-const STOPPING = ['plitzi run notice', 'plitzi task next', 'plitzi task inbox'];
+const STOPPING = ['run notice', 'task next', 'task inbox'];
 
 /** Commands an agent ran in the same session after the run told it to stop (`stops`). */
 export const afterStop = (log: readonly LogEntry[], usage: readonly UsageLine[]): Finding[] => {
@@ -118,7 +118,7 @@ export const afterStop = (log: readonly LogEntry[], usage: readonly UsageLine[])
           line.session === session &&
           (next === undefined || line.at < next.at) &&
           (resumed === '' || line.at < resumed) &&
-          !STOPPING.some(command => line.command.startsWith(command))
+          !STOPPING.includes(line.name)
       );
       if (session !== undefined && after.length > 0) {
         went.push(

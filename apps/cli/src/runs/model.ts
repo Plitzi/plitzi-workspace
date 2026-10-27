@@ -255,10 +255,22 @@ export interface RunRecord {
   inputs: { file: string; digest: string }[];
 }
 
+/**
+ * What a note records, for the readers that act on it — who took a task, a block lifted, a cut, a review's comment —
+ * where each read its words' start ("Taken", "Unblocked", "Cut at", "Review 2: "): a note reworded would have parted
+ * them unseen. A note with none is said, never read for a fact.
+ */
+export const NOTE_KINDS = ['taken', 'unblocked', 'cut', 'review'] as const;
+
+export type NoteKind = (typeof NOTE_KINDS)[number];
+
 export interface TaskNote {
   at: string;
   by: string;
   text: string;
+  kind?: NoteKind;
+  /** A review comment's round. */
+  round?: number;
 }
 
 export interface Waiting {
@@ -595,8 +607,15 @@ const isReviewState = (value: unknown): value is ReviewState =>
   optional(value.before, isStrings) &&
   optional(value.first, (flag: unknown) => flag === true);
 
+const isNoteKind = (value: unknown): value is NoteKind => NOTE_KINDS.some(kind => kind === value);
+
 const isNote = (value: unknown): value is TaskNote =>
-  isRecord(value) && isString(value.at) && isString(value.by) && isString(value.text);
+  isRecord(value) &&
+  isString(value.at) &&
+  isString(value.by) &&
+  isString(value.text) &&
+  optional(value.kind, isNoteKind) &&
+  optional(value.round, isNumber);
 
 export const isTaskState = (value: unknown): value is TaskState =>
   isRecord(value) &&

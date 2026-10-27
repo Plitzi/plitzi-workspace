@@ -195,7 +195,7 @@ export const briefOf = (context: TaskContext & { primerRead?: string }): string 
   );
   const comments = context.review?.verdict === 'changes' ? context.review.comments : [];
   const notesShown = state.notes.filter(
-    note => !(comments.length > 0 && note.text.startsWith(`Review ${String(context.review?.round ?? 0)}: `))
+    note => !(comments.length > 0 && note.kind === 'review' && note.round === (context.review?.round ?? 0))
   );
   const unanswered = context.proposals.incoming.filter(each => each.answer === undefined);
 
@@ -233,7 +233,7 @@ export const briefOf = (context: TaskContext & { primerRead?: string }): string 
     ...(isResearch(task) && state.status !== 'done'
       ? [
           chalk.blue(
-            `◇ Research — find out: ${task.spike ?? 'what it needs'}. Read, compare, measure; write nothing; then say what you found and its result, the tasks it makes, each with its "findings": plitzi task complete --found "…" --tasks <stage.json>`
+            `◇ Research — find out: ${task.spike ?? 'what it needs'}. Read, compare, measure; write nothing; then say what you found and its result, the tasks it makes, each with its "findings" and a line a command proves — seen first with plitzi task check --tasks <stage.json> — plitzi task complete --found "…" --tasks <stage.json>`
           )
         ]
       : []),

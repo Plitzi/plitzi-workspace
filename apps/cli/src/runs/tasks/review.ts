@@ -362,6 +362,8 @@ const decide = async (
           ...comments.map(comment => ({
             at: at(ctx),
             by: ctx.agent,
+            kind: 'review' as const,
+            round,
             text: `Review ${String(round)}: ${comment.note}`
           })),
           ...(brought.length > 0
