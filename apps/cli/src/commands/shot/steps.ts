@@ -101,6 +101,47 @@ export const interactionSteps = (
       ].join('; ')
     : undefined;
 
+/**
+ * How a field named by `selector` takes a value — run in the page, so it reads nothing of this module: a select is
+ * chosen from, and a date, a time, a colour or a range set whole — keys land in one segment of a date and set nothing (a
+ * run's scout typed `2026-10-29` and `10292026` into one and its onChange never ran). The element itself, or the one such
+ * field inside it (a `formControl` wraps it); nothing, it is typed into.
+ */
+export const givenValueIn = (selector: string): { selector: string; how: 'select' | 'value' } | undefined => {
+  const node = document.querySelector(selector);
+  if (node === null) {
+    return undefined;
+  }
+
+  const kinds = [
+    { how: 'select', matches: 'select' },
+    {
+      how: 'value',
+      matches: ['date', 'time', 'datetime-local', 'month', 'week', 'color', 'range']
+        .map(type => `input[type="${type}"]`)
+        .join(', ')
+    }
+  ] as const;
+  for (const kind of kinds) {
+    if (node.matches(kind.matches)) {
+      return { selector, how: kind.how };
+    }
+
+    const inside = node.querySelectorAll(kind.matches);
+    const only = inside.length === 1 ? inside[0] : undefined;
+    if (only) {
+      const type = only.getAttribute('type');
+
+      return {
+        selector: `${selector} ${type === null ? only.localName : `${only.localName}[type="${type}"]`}`,
+        how: kind.how
+      };
+    }
+  }
+
+  return undefined;
+};
+
 /** What a step is, as its label and `page play` say it. */
 export const stepText = (step: ShotStep): string => {
   switch (step.kind) {
@@ -259,21 +300,16 @@ export const actStep = async (
       };
     }
 
-    // A select is chosen, not typed into — the element named, or the one select inside it (a `formControl` wraps it).
+    // A select is chosen and a date set, not typed into: the element named, or the one inside it a `formControl` wraps.
     if (step.kind === 'type') {
-      const select = await page.evaluate((selector: string) => {
-        const node = document.querySelector(selector);
+      const given = await page.evaluate(givenValueIn, read.selector);
+      if (given?.how === 'select') {
+        await page.locator(given.selector).first().selectOption(step.text, { timeout: 3000 });
+        return undefined;
+      }
 
-        return node === null
-          ? undefined
-          : node.matches('select')
-            ? selector
-            : node.querySelectorAll('select').length === 1
-              ? `${selector} select`
-              : undefined;
-      }, read.selector);
-      if (select !== undefined) {
-        await page.locator(select).first().selectOption(step.text, { timeout: 3000 });
+      if (given?.how === 'value') {
+        await page.locator(given.selector).first().fill(step.text, { timeout: 3000 });
         return undefined;
       }
     }

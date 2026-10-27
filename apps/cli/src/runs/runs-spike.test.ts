@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -281,10 +282,23 @@ describe('research: a card like any, finding out in the run', () => {
     expect((await refusal(approveFound(runId, 's-survey', ['t-grid']))).message).toContain('t-bios waits for t-grid');
     expect((await refusal(approveFound(runId, 's-survey', ['t-nope']))).message).toContain('proposes no t-nope');
 
-    expect((await approveFound(runId, 's-survey', ['t-grid-tests'])).found).toMatchObject({
+    const approved = await approveFound(runId, 's-survey', ['t-grid-tests']);
+    expect(approved.found).toMatchObject({
       added: ['t-grid', 't-bios', 't-bios-tests'],
       left: ['t-grid-tests']
     });
+
+    // Kept in the run's inputs as stacked — what it left out, out — and its tasks amended from it: encore-12's lead
+    // rebuilt the scope's stage from the tasks, and was refused.
+    const kept = approved.found?.stage ?? '';
+    expect(path.relative((await loadRun(lead(), runId)).paths.dir, kept)).toBe(
+      path.join('inputs', 's-survey', 'stage.json')
+    );
+    const stacked = JSON.parse(await fs.readFile(kept, 'utf-8')) as RunPlan;
+    expect(stacked.tasks.map(task => task.id)).not.toContain('t-grid-tests');
+    stacked.tasks[0].acceptance = ['The grid holds every member'];
+    await fs.writeFile(kept, JSON.stringify(stacked));
+    expect((await amendRun(lead(), runId, kept)).tasks).toEqual([{ task: 't-grid', changed: ['acceptance'] }]);
     expect((await loadRun(lead(), runId)).tasks.find(task => task.id === 't-grid')?.tests).toBe(false);
     expect(await statusOf('s-survey')).toBe('done');
     expect(await statusOf('t-about')).toBe('ready');

@@ -1,5 +1,5 @@
 import { loadRun } from '../runs/run';
-import { completeResearch, findTask, reviewTask } from '../runs/tasks';
+import { completeResearch, findTask, reportProgress, reviewTask } from '../runs/tasks';
 import { viewTask } from '../runs/taskStore';
 
 import type { Bench } from './runProject';
@@ -8,7 +8,7 @@ import type { Researched, ReviewedTask } from '../runs/tasks';
 
 /**
  * A research card's steps, as its scout and the lead take them: what it found, said by whoever holds it — its token, as
- * its copy carries it — and the lead's verdict on it.
+ * its copy carries it — how far it got, and the lead's verdict on it.
  */
 export const researchSteps = (bench: () => Bench) => {
   const lead = (): RunContext => bench().agent('lead');
@@ -24,6 +24,9 @@ export const researchSteps = (bench: () => Bench) => {
   };
 
   return {
+    progress: async (runId: string, card: string, progress: { fraction?: number; step?: string }): Promise<void> => {
+      await reportProgress(await holding(runId, card), runId, card, progress);
+    },
     found: async (runId: string, card: string, text: string, options: { tasks?: string } = {}): Promise<Researched> =>
       completeResearch(await holding(runId, card), runId, card, text, options),
     approveFound: (runId: string, card: string, leave?: readonly string[] | 'all'): Promise<ReviewedTask> =>

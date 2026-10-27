@@ -64,7 +64,7 @@ const declaration = elementDeclaration<FormAttributes>()({
     definition: {
       label: 'Form',
       description:
-        'A <form> that groups form controls and handles submission; wire its submit through an interaction flow.',
+        "A <form> that groups form controls and handles submission; wire its submit through an interaction flow. Left as it is, the browser answers first for a blank required field and a malformed address, in a bubble no style reaches and in the browser's language; `noValidate: true` turns its checks off, and every rule answers under its control in the words of its `…Message` (`requiredMessage`).",
       items: []
     },
     market: {

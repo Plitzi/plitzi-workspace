@@ -42,7 +42,7 @@ itself once (`--agent design-1`) and is answered both. A token, name or role not
   `tmp/plitzi-runs/<run>/scratch/<your name>/`; never the project's `tmp/`.
 - **Spend the heavy commands well: a run makes hundreds.** `task check`, `task look`, `page check|shot|measure` take
   3–10 s; `task next|context|show|inbox|tell` 0.3 s. Change a batch, then check once — never after every edit;
-  one acceptance line: `task check --acceptance`. Asked again with nothing changed, a check or a look says its last
+  one acceptance line: `task check --acceptance`. Asked again with nothing changed, `task check|look` say their last
   answer (`--fresh`: anew), and `complete` right after a passing check takes it. Every element and width in one
   `page measure` call (`--hover <el>`, `--click <el…>` for a state, `--steps` for what a visitor makes) —
   trying values, measure, never `task check`; a picture for what a check cannot tell.

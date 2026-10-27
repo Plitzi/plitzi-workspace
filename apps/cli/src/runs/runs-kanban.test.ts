@@ -3,9 +3,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { addBacklogItem } from './backlog';
 import { openRun } from './run';
 import { settleFinding } from './settle';
+import { scopePlan, SCOPE_SPIKE } from './spike';
 import { completeTask, reviewTask, takeNext, takeTask } from './tasks';
 import { setTeamAgent } from './team';
 import { viewRun } from './view';
+import { researchSteps } from '../tests/research';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 
 import type { RunContext } from './run';
@@ -22,6 +24,7 @@ afterEach(async () => {
 });
 
 const lead = (): RunContext => bench.agent('lead');
+const { found, progress, sendBack } = researchSteps(() => bench);
 
 /** A developer takes a task, writes it and completes it: in review, as its agent leaves it. */
 const completed = async (name: string, taskId: string, file: string): Promise<void> => {
@@ -66,9 +69,26 @@ describe('an agent with nothing to take', () => {
     expect(await idle()).toBe(false);
     await addBacklogItem(lead(), { text: 'The header wraps at 390', by: 'lead' });
     expect(await idle()).toBe(false);
-    await expect(settleFinding(lead(), 'es-launch', 'idle-team', 'again')).rejects.toThrow(
-      /Nothing waits for the lead to settle|Nothing to settle/
+    await expect(settleFinding(lead(), 'es-launch', 'idle-team', 'again')).rejects.toThrow('settled already');
+  });
+
+  // encore-12's lead settled idle-team the moment its developer was started again between two cards — refused, "no
+  // advice of that kind is given now" — and was woken for it again at once.
+  it('is settled by its kind though not given this moment', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.filter(task => task.id === 't-menu');
+    await openRun(lead(), await bench.writePlan(plan));
+    const idle = async () => (await viewRun(lead(), 'es-launch')).attention.some(item => item.kind === 'idle-team');
+    expect(await idle()).toBe(false);
+
+    expect((await settleFinding(lead(), 'es-launch', 'idle-team', 'The backlog left is past this run')).text).toContain(
+      'said no more in this run'
     );
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+    await addBacklogItem(lead(), { text: 'The footer wraps at 390', by: 'lead' });
+    expect(await idle()).toBe(false);
+    await expect(settleFinding(lead(), 'es-launch', 'nope', 'x')).rejects.toThrow(/Nothing waits|Nothing to settle/);
   });
 
   // The run's only UI reviewer was said idle — split a developer's card for it — eleven times, once each
@@ -95,6 +115,19 @@ describe('an agent with nothing to take', () => {
     expect(after?.subject).toBe(before?.subject);
   });
 
+  // encore-12's watch said scout-1, its scope in the lead's review, had nothing to take — stack the backlog for it.
+  it('is not said of a scout whose research waits for the lead: the lead decides it, and no backlog feeds a scout', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'scout', { roles: ['scout'] });
+    await openRun(lead(), await bench.writePlan(scopePlan('es-launch', 'Translate the site into Spanish')));
+    await takeNext(bench.agent('scout-1'), 'es-launch', 'scout', { timeoutMs: 30, everyMs: 10 });
+    await addBacklogItem(lead(), { text: 'The footer wraps at 390', by: 'lead' });
+    await found('es-launch', SCOPE_SPIKE, 'Four pages', { tasks: await bench.writePlan(benchPlan()) });
+
+    const idle = (await viewRun(lead(), 'es-launch')).attention.find(item => item.kind === 'idle-team');
+    expect(idle?.text ?? '').not.toContain('scout-1');
+  });
+
   // Woken eight times at the end for developers with nothing of theirs left, told to split the tester's spec.
   it('is not said of an agent none of whose role’s cards is left, nor told to split another role’s card', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
@@ -114,5 +147,24 @@ describe('an agent with nothing to take', () => {
 
     const idle = (await viewRun(lead(), 'es-launch')).attention.find(item => item.kind === 'idle-team');
     expect(idle?.text ?? '').not.toContain('dev-1');
+  });
+});
+
+// encore-12's scope, sent back, read "measuring the show schedule's time zone; then writing the stage · 75 %" on the
+// board — its last round's progress.
+describe('a card sent back', () => {
+  it('starts its round with no progress of the last one', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'scout', { roles: ['scout'] });
+    await openRun(lead(), await bench.writePlan(scopePlan('es-launch', 'Translate the site into Spanish')));
+    await takeNext(bench.agent('scout-1'), 'es-launch', 'scout', { timeoutMs: 30, everyMs: 10 });
+    await progress('es-launch', SCOPE_SPIKE, { fraction: 0.75, step: 'writing the stage' });
+    await found('es-launch', SCOPE_SPIKE, 'Four pages', { tasks: await bench.writePlan(benchPlan()) });
+    await sendBack('es-launch', SCOPE_SPIKE, 'Give each task a checked line');
+
+    const card = (await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === SCOPE_SPIKE);
+    expect(card?.status).toBe('changes-requested');
+    expect(card?.fraction).toBeUndefined();
+    expect(card?.step).not.toBe('writing the stage');
   });
 });

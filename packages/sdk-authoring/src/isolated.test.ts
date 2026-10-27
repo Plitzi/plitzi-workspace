@@ -70,6 +70,16 @@ describe('authorIsolated, a space reading beside its folder', () => {
       space("const said = readFileSync(new URL('../../.env', import.meta.url), 'utf-8');")
     );
     expect(root.ok).toBe(false);
+
+    // A variant kept in the project's tmp/, reading the space it varies: src/ is the project's, wherever the module is.
+    mkdirSync(path.join(dir, 'tmp/scope'), { recursive: true });
+    const variant = path.join(dir, 'tmp/scope/variant.ts');
+    writeFileSync(
+      variant,
+      "import { readdirSync } from 'node:fs';\nconst said = readdirSync(new URL('../../src/space/pages/', import.meta.url)).join(',');\nexport const space = { name: 'Shop', permanentUrl: 'shop', pages: [{ name: 'Home', slug: '', body: [{ type: 'heading', id: 'title', attributes: { content: said } }] }] };\n"
+    );
+    const kept = await authorIsolated(variant);
+    expect(kept.ok ? 'ok' : kept.message).toBe('ok');
   });
 });
 

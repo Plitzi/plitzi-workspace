@@ -4,6 +4,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { MAX_LINES } from '../../lint/rules/fileTooLong';
 import { SLOW_LINE_MS } from '../../runs/acceptance';
+import { failedWhy } from '../verify';
 
 import type { CheckStep } from '../../runs/checks';
 import type { Message } from '../../runs/messages';
@@ -103,6 +104,6 @@ export const reusedServerText = (result: { reused?: number }): string =>
 export const secondRunText = (result: { firstFailed?: readonly string[] }): string =>
   result.firstFailed
     ? chalk.yellow(
-        ` — passed on its second run; the first failed${result.firstFailed.length > 0 ? `: ${result.firstFailed.at(-1) ?? ''}` : ''}`
+        ` — passed on its second run; the first failed${result.firstFailed.length > 0 ? `: ${failedWhy(result.firstFailed) ?? ''}` : ''}`
       )
     : '';

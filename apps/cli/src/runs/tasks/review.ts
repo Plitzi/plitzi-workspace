@@ -51,7 +51,7 @@ export interface ReviewedTask {
   /** Written in its copy after it went to review: not part of what was reviewed, so not merged. */
   notReviewed?: string[];
   /** A research card approved: the tasks it stacked, those the lead left out (`--leave`), and what their check said. */
-  found?: { added: string[]; left: string[]; notices?: string[] };
+  found?: { added: string[]; left: string[]; notices?: string[]; stage?: string };
   /** Approved beside it as one change (`--with`): that task, and its files that went in. */
   with?: { task: string; merged: string[] };
   /**
@@ -330,6 +330,11 @@ const decide = async (
     // What a research card proposed goes with it: its next round proposes again.
     if (isResearch(task)) {
       await dropProposal(ctx, view);
+    }
+
+    // Its next round says its own progress: encore-12's scope, sent back, read "writing the stage · 75 %" from the last.
+    if (view.progress) {
+      await writeJson(view.paths.progress, { heartbeatAt: view.progress.heartbeatAt });
     }
 
     const toLead = changesBlock(view.state);

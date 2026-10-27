@@ -5,7 +5,7 @@ import chalk from 'chalk';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { ownServer, serveCopy } from './acceptance';
+import { ownServer, serveCopy, serverLogOf } from './acceptance';
 import { canLinger, keepServer, keptPort, keptServer, LINGER_MS, newestWrite, previewedServer } from './lingering';
 import { copyOf, runPaths, taskPaths } from './paths';
 import { projectOrigin, readHealth } from '../browser';
@@ -62,6 +62,12 @@ const servedHere = async (
     return projectOrigin(root, project, url);
   }
 
+  // A line of the task's acceptance: the copy is served for every line, and a second server on it dies on its state.
+  const checked = process.env.PLITZI_URL;
+  if (checked !== undefined && checked !== '') {
+    return { origin: checked };
+  }
+
   const cache = taskPaths(runPaths(copy.root, copy.run), copy.task).cache;
   // In a copy, only its own server is it — named by the mark of the folder its /health answers with: a port guessed
   // may be another copy's, or another project's of the person's. The server the CLI kept writes the same record as
@@ -97,7 +103,11 @@ const servedHere = async (
 
   const kept = await keptServer(root, cache);
   if (kept !== undefined) {
-    process.stderr.write(chalk.dim(`· served by the CLI's server of the copy, kept from a command before: ${kept}\n`));
+    process.stderr.write(
+      chalk.dim(
+        `· served by the CLI's server of the copy, kept from a command before: ${kept} — its log: ${serverLogOf(cache)}\n`
+      )
+    );
 
     return { origin: kept };
   }
@@ -118,7 +128,7 @@ const servedHere = async (
     chalk.dim(
       pid === undefined
         ? `· the copy served on :${String(served.port)} for this command, stopped after it (none was running)\n`
-        : `· the copy served on :${String(served.port)}, kept ${String(LINGER_MS / 60_000)} min for the next command (none was running)\n`
+        : `· the copy served on :${String(served.port)}, kept ${String(LINGER_MS / 60_000)} min for the next command (none was running) — its log: ${serverLogOf(cache)}\n`
     )
   );
 

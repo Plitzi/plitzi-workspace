@@ -1,6 +1,7 @@
+// @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
 
-import { actingSteps, actStep, endsActing, interactionSteps, stepText } from './steps';
+import { actingSteps, actStep, endsActing, givenValueIn, interactionSteps, stepText } from './steps';
 import { parseSteps } from '../shotSteps';
 
 import type { Visitors } from './visitors';
@@ -133,5 +134,31 @@ describe('the steps a page is read after', () => {
       problem: expect.stringContaining('"as mika …" is another account\'s') as unknown
     });
     expect(actingSteps('as mika click send', 'page measure')).not.toHaveProperty('problem');
+  });
+});
+
+// A run's scout typed `2026-10-29` and `10292026` into a date field and its onChange never ran: keys land in a segment.
+describe('a field given a value whole', () => {
+  it('is a select chosen from, or a date, time, colour or range set — the one named or the one inside it', () => {
+    document.body.innerHTML = [
+      '<div data-plitzi-el="when"><label>Date</label><input type="date"></div>',
+      '<input data-plitzi-el="at" type="time">',
+      '<div data-plitzi-el="genre"><select><option>a</option></select></div>',
+      '<div data-plitzi-el="title"><input type="text"></div>',
+      '<div data-plitzi-el="both"><input type="date"><input type="time"></div>'
+    ].join('');
+
+    expect(givenValueIn('[data-plitzi-el="when"]')).toEqual({
+      selector: '[data-plitzi-el="when"] input[type="date"]',
+      how: 'value'
+    });
+    expect(givenValueIn('[data-plitzi-el="at"]')).toEqual({ selector: '[data-plitzi-el="at"]', how: 'value' });
+    expect(givenValueIn('[data-plitzi-el="genre"]')).toEqual({
+      selector: '[data-plitzi-el="genre"] select',
+      how: 'select'
+    });
+    expect(givenValueIn('[data-plitzi-el="title"]')).toBeUndefined();
+    // Two fields inside: which one is the step's to name.
+    expect(givenValueIn('[data-plitzi-el="both"]')).toBeUndefined();
   });
 });

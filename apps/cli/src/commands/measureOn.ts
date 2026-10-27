@@ -22,8 +22,19 @@ const otherSpelling = async (page: BrowserPage, target: string): Promise<string>
     }
   }
 
+  // A component's instance is marked by its own name, never as an element: encore-12's scout wrote
+  // [data-plitzi-el="room-card-quiet-demo"] for one, and found data-plitzi-instance only by reading the page's HTML.
+  // Each name in turn: the rest of the selector may name the instance's parts, which are elements.
+  for (const written of target.matchAll(/\[data-plitzi-el="([^"]+)"\]/g)) {
+    const asInstance = `${target.slice(0, written.index)}[data-plitzi-instance="${written[1]}"]${target.slice(written.index + written[0].length)}`;
+    const other = await targetOn(page, asInstance);
+    if (!('problem' in other) && other.found) {
+      return `${written[1]} is a component’s instance, marked data-plitzi-instance, not data-plitzi-el: write ${asInstance}`;
+    }
+  }
+
   // Not drawn here at all: a run's dev-1 measured a host's desk as a guest, on /r/ with no room — told only "No element".
-  return `not drawn here: a page for signed-in visitors (--as <username>), a part a click opens or a visitor’s steps make (--click, --steps), a route with a parameter written as one of its addresses (/r/night-drive, not /r/:slug) — or name it by its element's id (pricing-card), #its-id, or any selector (.plan-card, [data-plitzi-el="…"] > span)`;
+  return `not drawn here: a page for signed-in visitors (--as <username>), a part a click opens or a visitor’s steps make (--click, --steps), a route with a parameter written as one of its addresses (/r/night-drive, not /r/:slug) — or name it by its element's id (pricing-card), #its-id, or any selector (.plan-card, [data-plitzi-el="…"] > span; a part of one component's instance: [data-plitzi-instance="<instance>"] [data-plitzi-el="<part>"])`;
 };
 
 /** How long a picture measured is waited for before it is read as it is: a picture that never loads holds nothing. */

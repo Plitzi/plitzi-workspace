@@ -2,7 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { stepsOf, tail, unservedProblem, verifyText } from './verify';
+import { failedWhy, stepsOf, tail, unservedProblem, verifyText } from './verify';
 
 import type { CheckReport } from './check';
 
@@ -113,5 +113,23 @@ describe('what a failed step says', () => {
     expect(tail('.env not found. Continuing without it.\nSpace "acme" was not written')).toEqual([
       'Space "acme" was not written'
     ]);
+  });
+});
+
+// encore-12: a line whose server died read "the first failed: Node.js v24.22.1" — the banner under the stack.
+describe('why an output failed', () => {
+  it('is its last line — or, under a crash, the error Node was ended by', () => {
+    expect(failedWhy(['✗ /rooms at 390', '- rooms-list is empty'])).toBe('- rooms-list is empty');
+    expect(
+      failedWhy([
+        'Error: createFileJobQueue: state/jobs.json is in use by process 57261',
+        '    at holdFile (file:///x/fileStore.js:58:44)',
+        "  [cause]: Error: EEXIST: file already exists, open 'state/jobs.json.lock'",
+        '}',
+        'Node.js v24.22.1'
+      ])
+    ).toBe('Error: createFileJobQueue: state/jobs.json is in use by process 57261');
+    expect(failedWhy(['something went wrong', 'Node.js v24.22.1'])).toBe('something went wrong');
+    expect(failedWhy(undefined)).toBeUndefined();
   });
 });

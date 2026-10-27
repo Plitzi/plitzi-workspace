@@ -133,7 +133,7 @@ describe('a check as any shell runs it', () => {
   });
 
   it('has the copy served written in, and knows a Playwright spec needs it served', async () => {
-    const { namesServedCopy, withServedValues } = await import('./acceptance');
+    const { namesServedCopy, servesCopy, withServedValues } = await import('./acceptance');
     const values = { PLITZI_URL: 'http://127.0.0.1:8211', PLITZI_PORT: '8211' };
 
     expect(withServedValues('plitzi page check / --url $PLITZI_URL && echo ${PLITZI_PORT} $HOME', values)).toBe(
@@ -141,5 +141,11 @@ describe('a check as any shell runs it', () => {
     );
     expect(namesServedCopy('npx playwright test visual/walks.spec.ts')).toBe(true);
     expect(namesServedCopy('node --test src/space/lib/age.test.ts')).toBe(false);
+    // A page command run in the copy reads its server: served once for every line, never by each line at once.
+    expect(servesCopy('plitzi page check / /rooms --width 1440,390')).toBe(true);
+    expect(servesCopy('plitzi page measure /design hero --width 390')).toBe(true);
+    expect(servesCopy('node --test src/space/lib/age.test.ts')).toBe(false);
+    expect(servesCopy("grep -q 'Menú' src/space/pages/menu.ts # plitzi page check /menu")).toBe(false);
+    expect(servesCopy('plitzi page measure / #hero --width 390')).toBe(true);
   });
 });

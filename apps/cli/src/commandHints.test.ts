@@ -20,6 +20,10 @@ describe('what a refused command line meant', () => {
     expect(commandHint("error: unknown option '--fresh'", ['page', 'outline', '/', '--fresh'])).toContain(
       'reads the page anew on every call'
     );
+    // encore-12's scout, refused five times: --fresh is task check's and task look's.
+    expect(commandHint("error: unknown option '--fresh'", ['page', 'check', '/', '--fresh'])).toContain(
+      'task check’s and task look’s'
+    );
   });
 
   it('names the command that answers one another group has', () => {

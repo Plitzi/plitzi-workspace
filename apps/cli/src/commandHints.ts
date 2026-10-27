@@ -47,7 +47,14 @@ const ELSEWHERE: Readonly<Partial<Record<string, string>>> = {
 
 /** An option another page command has, and what this one calls the same thing. */
 const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<string, string>>>>>> = {
+  // encore-12's scout read "a check or a look says its last answer (--fresh: anew)" as page check's, five times refused.
+  'page check': {
+    '--fresh':
+      'page check reads the page anew on every call — --fresh is task check’s and task look’s, which keep their last answer'
+  },
   'page shot': {
+    '--fresh':
+      'page shot pictures the page anew on every call — --fresh is task check’s and task look’s, which keep their last answer',
     '--element': '--clip <element> pictures one element',
     // A run's design-1, twice: a page shot is the whole page unless told otherwise.
     '--full': 'a page shot is the whole page already — --viewport pictures the first screen alone'

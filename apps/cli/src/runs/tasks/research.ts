@@ -42,6 +42,8 @@ export interface Researched {
   ready?: string[];
   /** What the check of the tasks it makes says and refuses nothing for: a value no check measures, an id not there. */
   notices?: string[];
+  /** The stage it stacked, kept in the run's inputs: the plan its tasks are amended from (`plitzi run amend`). */
+  stage?: string;
 }
 
 /** The name the primer a proposed stage names is kept under, beside it: the stage reads it from there. */
@@ -63,6 +65,27 @@ const keepStage = async (view: TaskView, file: string): Promise<void> => {
   }
 
   await fs.copyFile(file, view.paths.proposedStage);
+};
+
+/**
+ * The stage a scout proposed, stacked: kept with its primer in the run's inputs, under the card — the plan its tasks are
+ * amended from. Dropped with the proposal, encore-12's lead rebuilt it from the tasks and was refused, their files and
+ * quality the run's.
+ */
+const keepStacked = async (loaded: LoadedRun, view: TaskView): Promise<string> => {
+  const into = path.join(loaded.paths.dir, 'inputs', view.task.id);
+  await fs.mkdir(into, { recursive: true });
+  const kept = path.join(into, 'stage.json');
+  await fs.copyFile(view.paths.proposedStage, kept);
+  await fs
+    .copyFile(path.join(view.paths.dir, PROPOSED_PRIMER), path.join(into, PROPOSED_PRIMER))
+    .catch((error: unknown) => {
+      if (!(isRecord(error) && error.code === 'ENOENT')) {
+        throw error;
+      }
+    });
+
+  return kept;
 };
 
 /** What a research card proposed, dropped: sent back, or stacked. */
@@ -222,7 +245,8 @@ export const approveResearch = async (
     found: {
       added: found.added ?? [],
       left: leave === 'all' ? proposed.tasks : leave.filter(id => proposed.tasks.includes(id)),
-      ...(found.notices ? { notices: found.notices } : {})
+      ...(found.notices ? { notices: found.notices } : {}),
+      ...(found.stage === undefined ? {} : { stage: found.stage })
     }
   };
 };
@@ -285,6 +309,14 @@ const stackFound = async (
   const taskId = view.task.id;
   // Its result first: a stage refused leaves the card as it was, nothing said done that made nothing.
   const stacked = file === undefined ? undefined : await extendRun(ctx, loaded.record.runId, file);
+  // Where the plan of its tasks is now: a proposal kept apart, moved into the inputs by the stack, or where the lead
+  // wrote it.
+  const stage =
+    stacked === undefined || file === undefined
+      ? undefined
+      : file === view.paths.proposedStage
+        ? await keepStacked(loaded, view)
+        : (stacked.inputs?.find(each => path.basename(each) === path.basename(file)) ?? file);
   const question = questionOf(view);
   const found: Finding = { ...finding, question };
   await updateState(
@@ -313,6 +345,7 @@ const stackFound = async (
     finding: found,
     ...(stacked ? { added: stacked.added } : {}),
     ...(stacked && stacked.ready.length > 0 ? { ready: stacked.ready } : {}),
-    ...(stacked?.notices ? { notices: stacked.notices } : {})
+    ...(stacked?.notices ? { notices: stacked.notices } : {}),
+    ...(stage === undefined ? {} : { stage })
   };
 };

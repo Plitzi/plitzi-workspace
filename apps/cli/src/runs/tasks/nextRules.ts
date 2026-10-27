@@ -92,8 +92,8 @@ export const freshStart = async (
         ? `what you found on ${task ?? 'a research card'} is with the lead`
         : `${task ?? 'your task'} is complete`
       : ended.action === 'review-escalated'
-          ? `your review of ${task ?? 'a task'} is with the lead`
-          : `your review of ${task ?? 'a task'} is decided`;
+        ? `your review of ${task ?? 'a task'} is with the lead`
+        : `your review of ${task ?? 'a task'} is decided`;
   const next =
     own.length > 0
       ? `${own.map(view => view.task.id).join(', ')}, which you hold, and what comes next`

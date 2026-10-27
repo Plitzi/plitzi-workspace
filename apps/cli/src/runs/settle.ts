@@ -1,7 +1,7 @@
 import { ADVICE_KINDS } from './bottlenecks';
 import { requireLead } from './leads';
 import { RunRefusal } from './refusal';
-import { loadRun, logRun, requireNoTask } from './run';
+import { loadRun, logRun, readRunLog, requireNoTask } from './run';
 import { viewRun } from './view';
 
 import type { RunContext } from './run';
@@ -45,6 +45,19 @@ export const settleFinding = async (
   const finding =
     findings.find(item => item.subject === subject) ??
     advice.find(item => item.kind === subject && item.who === 'lead');
+  // Advice comes and goes with the agents running — one started again between two cards is not idle for a moment —
+  // so a kind is settled whether given this instant or not: encore-12's lead settled idle-team in such a moment, was
+  // refused, and was woken for it again at once.
+  if (!finding && isAdvice(subject)) {
+    if (settledFindings(await readRunLog(loaded.paths)).has(subject)) {
+      throw new RunRefusal('invalid', `"${subject}" is settled already: it is said no more in this run.`);
+    }
+
+    await logRun(ctx, loaded.paths, { action: SETTLED, subject, note: note.trim() });
+
+    return { subject, text: `${subject}: not given at this moment — said no more in this run` };
+  }
+
   if (!finding) {
     const settleable = [...findings.map(item => item.subject ?? ''), ...new Set(advice.map(item => item.kind))];
     throw new RunRefusal(

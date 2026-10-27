@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { drawnOtherwise } from './inspect';
+import { drawnOtherwise, serverHtml } from './inspect';
 
 // "Hydration failed" for the hero's time, found by reading the diff — React names no element in a build.
 describe('a hydration error, named', () => {
@@ -15,5 +15,29 @@ describe('a hydration error, named', () => {
     ]);
     document.body.innerHTML = served;
     expect(drawnOtherwise(served)).toEqual([]);
+  });
+});
+
+// A run's scout read six providers "not in the HTML the server sent" as mika: the HTML was asked as a guest.
+describe('the HTML the server sent', () => {
+  it('is asked as the page is, with its cookies — never as a guest', async () => {
+    const guest = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('<main data-plitzi-el="sign-in"></main>'));
+    const page = {
+      request: {
+        get: (url: string) =>
+          Promise.resolve({
+            ok: () => true,
+            status: () => 200,
+            text: () => Promise.resolve(`<main data-plitzi-el="profile-reminders" data-url="${url}"></main>`)
+          }),
+        post: () => Promise.reject(new Error('not asked'))
+      }
+    };
+
+    expect(await serverHtml(page, 'http://localhost:4000/u/mika')).toContain('profile-reminders');
+    expect(guest).not.toHaveBeenCalled();
+    guest.mockRestore();
   });
 });

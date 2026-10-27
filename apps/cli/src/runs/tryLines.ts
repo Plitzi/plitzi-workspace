@@ -1,5 +1,6 @@
 import { acceptanceOnResult } from './materialise';
 import { readApproved } from './run';
+import { failedWhy } from '../commands/verify';
 
 import type { AcceptanceResult, RunTask } from './model';
 import type { LoadedRun, RunContext } from './run';
@@ -71,7 +72,7 @@ export const tryLines = async (ctx: RunContext, loaded: LoadedRun, tasks: readon
 
   return results.map(result => {
     const verdict = verdictOf(result, loaded.plan.reference);
-    const why = result.output?.filter(Boolean).at(-1);
+    const why = failedWhy(result.output);
 
     return {
       task: result.task,

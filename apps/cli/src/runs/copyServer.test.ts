@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
@@ -5,11 +6,11 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { freePort } from './acceptance';
+import { answering, freePort } from './acceptance';
 import { originHere, sayStale } from './copyServer';
-import { markPreviewed, stopKept } from './lingering';
+import { keepServer, keptServer, markPreviewed, stopKept } from './lingering';
 import { runPaths, taskPaths } from './paths';
-import { startTaskPreview } from './preview';
+import { notServed, startTaskPreview } from './preview';
 import { descendantsOf } from './processes';
 import { makeBench, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
@@ -66,10 +67,20 @@ describe('originHere', () => {
       return where.origin;
     };
 
+    const said: string[] = [];
+    const write = vi.spyOn(process.stderr, 'write').mockImplementation(chunk => {
+      said.push(String(chunk));
+
+      return true;
+    });
     const first = await origin();
     expect(await (await fetch(first, { signal: AbortSignal.timeout(5000) })).text()).toBe('the copy');
     // Kept: the next command reads it as it is.
     expect(await origin()).toBe(first);
+    write.mockRestore();
+    // Where what its pages made the server say is read: encore-12's scout, asked for the logs, found none.
+    const log = path.join(cache, 'acceptance-server.log');
+    expect(said.filter(line => line.includes(`its log: ${log}`))).toHaveLength(2);
 
     // Written since: it served what was — stopped, and the copy served anew.
     await new Promise(resolve => setTimeout(resolve, 20));
@@ -136,6 +147,20 @@ describe('originHere', () => {
     await stopKept(cache);
   }, 60_000);
 
+  // encore-12: a line's `page check / /rooms`, run in the copy beside the server task check started for the lines,
+  // served the copy again — the second server died on state/jobs.json, and the line read "nothing could answer it".
+  it('reads a copy through the server its acceptance lines are run on, starting none', async () => {
+    await servedBench();
+    await open();
+    const home = await take('agent-1', 't-home');
+    vi.stubEnv('PLITZI_URL', 'http://127.0.0.1:61234');
+    try {
+      expect(await originHere(home.work, undefined)).toEqual({ origin: 'http://127.0.0.1:61234' });
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it('asks nothing of a folder that is no task’s copy', async () => {
     expect(await originHere(bench.root, undefined)).not.toHaveProperty('stop');
     expect(descendantsOf(process.pid).length).toBeGreaterThanOrEqual(0);
@@ -179,6 +204,45 @@ describe('originHere', () => {
     expect(preview.stopped()).toEqual({ why: 'the server stopped (3)', said: ['cannot start: port taken'] });
     await new Promise(resolve => setTimeout(resolve, 50));
     await expect(fs.access(path.join(cache, 'previewed.json'))).rejects.toThrow();
+  }, 60_000);
+
+  // encore-12: a kept server slow to answer was forgotten, not stopped — and still held the copy's state, so the next
+  // server on the copy died on it.
+  it('stops a kept server that does not answer as the copy’s, never only forgets it', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    const cache = taskPaths(runPaths(bench.root, 'es-launch'), 't-home').cache;
+    const port = await freePort();
+    const child = spawn(
+      process.execPath,
+      ['-e', `require('node:http').createServer((q, r) => r.end('{"Instance":"another"}')).listen(${String(port)})`],
+      { detached: true, stdio: 'ignore' }
+    );
+    child.unref();
+    await answering(`http://127.0.0.1:${String(port)}`, 10_000);
+    await keepServer(home.work, cache, child.pid ?? 0, port);
+
+    expect(await keptServer(home.work, cache)).toBeUndefined();
+    await expect(
+      fetch(`http://127.0.0.1:${String(port)}/health`, { signal: AbortSignal.timeout(2000) })
+    ).rejects.toThrow();
+  }, 30_000);
+
+  // encore-12: a look waited a minute twice and said "did not answer", its server dead in a second on the copy's state.
+  it('says at once that a look’s server stopped before it answered, the error it stopped on and its log', async () => {
+    await servedBench(
+      "node -e \"console.error('Error: createFileJobQueue: state/jobs.json is in use by process 57261'); console.error('Node.js v24.22.1'); process.exit(1)\""
+    );
+    await open();
+    await take('agent-1', 't-home');
+    const preview = await startTaskPreview(lead(), 'es-launch', 't-home', await freePort(), { quiet: true });
+    const started = Date.now();
+
+    const why = await notServed(preview);
+    expect(Date.now() - started).toBeLessThan(15_000);
+    expect(why).toContain('its server stopped before it answered');
+    expect(why).toContain('Error: createFileJobQueue: state/jobs.json is in use by process 57261');
+    expect(why).toContain(`its log: ${preview.log ?? ''}`);
   }, 60_000);
 
   it('pictures a copy a preview serves through it, never a second server beside it', async () => {

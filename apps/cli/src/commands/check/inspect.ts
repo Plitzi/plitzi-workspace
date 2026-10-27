@@ -204,6 +204,13 @@ export const drawnOtherwise = (served: string): string[] => {
 };
 
 /**
+ * The HTML the server sends for `address`, asked as the page is — its cookies: a signed-in page's read as a guest's
+ * missed every provider only an account sees (a run's scout read six of them "not in the HTML the server sent").
+ */
+export const serverHtml = async (page: Pick<BrowserPage, 'request'>, address: string): Promise<string> =>
+  (await page.request.get(address)).text();
+
+/**
  * A hydration error, said with the elements whose text the server and the browser drew differently — React names none
  * in a build ("Hydration failed" for the hero's time, found by reading the diff). The server's HTML is
  * asked again as the page is (its cookies), and each named element's text set beside the page's now.
@@ -213,10 +220,7 @@ const namedHydration = async (page: BrowserPage, address: string, errors: readon
     return [...errors];
   }
 
-  const html = await page.request
-    .get(address)
-    .then(answer => answer.text())
-    .catch(() => undefined);
+  const html = await serverHtml(page, address).catch(() => undefined);
   const differ = html === undefined ? [] : await page.evaluate(drawnOtherwise, html).catch(() => []);
 
   return errors.map(error =>
@@ -348,7 +352,7 @@ const inspectHere = async (
       ? dataIssues(authored.schema, pageId, devTools.sources, { hidden: await notShown(page, authored) })
       : undefined;
   const lists = authored && data ? await listRows(page, authored, data.lists) : {};
-  const served = ssr ? markedIn(await (await fetch(`${origin}${pathname}`)).text()) : undefined;
+  const served = ssr ? markedIn(await serverHtml(page, `${origin}${pathname}`)) : undefined;
   const late = served
     ? lateElements(
         authored?.schema,

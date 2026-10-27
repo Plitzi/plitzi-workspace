@@ -38,7 +38,7 @@ import {
   pagesToLook
 } from '../../runs/pagesOf';
 import { runPaths, taskPaths } from '../../runs/paths';
-import { startBeforePreview, startTaskPreview } from '../../runs/preview';
+import { notServed, startBeforePreview, startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
 import { reviewSteps, reviewTeamOf } from '../../runs/reviews';
 import { loadRun, logRun } from '../../runs/run';
@@ -122,10 +122,9 @@ export const lookAt = (
       // The run before it, once started: stopped with the copy's server whatever ends the look.
       const stops: (() => void)[] = [];
       try {
-        if (!(await answering(preview.url, 60_000))) {
-          throw new RunRefusal('invalid', `${taskId}'s copy did not answer on ${preview.url} within a minute`, {
-            task: taskId
-          });
+        const unserved = await notServed(preview);
+        if (unserved !== undefined) {
+          throw new RunRefusal('invalid', `${taskId}'s copy ${unserved}`, { task: taskId });
         }
 
         mark('its copy served');
@@ -657,7 +656,7 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
         ? `${taskId}'s ${reviewed.passed.role} review approved: its ${reviewed.passed.next}'s review is next. Next: plitzi task next`
         : reviewed.found
           ? [
-              `${taskId} approved: its findings go with every task that waits for it.${reviewed.found.added.length > 0 ? ` It made ${reviewed.found.added.join(', ')}.` : ''}${reviewed.found.left.length > 0 ? ` Left out, as you said: ${reviewed.found.left.join(', ')} — what they were for, put in the backlog (plitzi run notice "…").` : ''}${reviewed.ready && reviewed.ready.length > 0 ? ` Ready now: ${reviewed.ready.join(', ')}.` : ''}`,
+              `${taskId} approved: its findings go with every task that waits for it.${reviewed.found.added.length > 0 ? ` It made ${reviewed.found.added.join(', ')}${reviewed.found.stage === undefined ? '' : ` — their plan, to amend them from: ${reviewed.found.stage}`}.` : ''}${reviewed.found.left.length > 0 ? ` Left out, as you said: ${reviewed.found.left.join(', ')} — what they were for, put in the backlog (plitzi run notice "…").` : ''}${reviewed.ready && reviewed.ready.length > 0 ? ` Ready now: ${reviewed.ready.join(', ')}.` : ''}`,
               ...(reviewed.found.notices ?? []).map(notice => `  · ${notice}`)
             ].join('\n')
           : reviewed.verdict === 'approve'

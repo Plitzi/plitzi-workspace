@@ -81,6 +81,28 @@ describe('page measure', () => {
     });
   });
 
+  // encore-12's scout wrote [data-plitzi-el="room-card-quiet-demo"] for a component's instance, and read data-plitzi-instance
+  // only in the page's HTML.
+  it('says how to name a component instance written as an element', async () => {
+    const page = {
+      url: () => 'http://127.0.0.1:8080/design/components',
+      locator: (selector: string) => ({
+        first: () => ({
+          count: () =>
+            Promise.resolve(
+              selector === '[data-plitzi-instance="room-card-quiet-demo"] [data-plitzi-el="room-card-idle"]' ? 1 : 0
+            )
+        })
+      })
+    } as unknown as Parameters<typeof measureOn>[0];
+
+    expect(await measureOn(page, '[data-plitzi-el="room-card-quiet-demo"] [data-plitzi-el="room-card-idle"]')).toEqual({
+      problem: expect.stringContaining(
+        'room-card-quiet-demo is a component’s instance, marked data-plitzi-instance, not data-plitzi-el: write [data-plitzi-instance="room-card-quiet-demo"] [data-plitzi-el="room-card-idle"]'
+      ) as unknown
+    });
+  });
+
   // The medal's fill fades in on its card's hover — measured by hand, with a script of design-1's own.
   it('puts a page in the state asked before measuring — hovered or focused, its transitions waited for — or says why not', async () => {
     const acts: string[] = [];

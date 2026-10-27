@@ -1,5 +1,6 @@
 import path from 'node:path';
 
+import { failedWhy } from '../../commands/verify';
 import { ownFailing } from '../checks';
 import { checkVersions } from '../materialise';
 import { LEAD, messagesOf, sendMessage } from '../messages';
@@ -73,7 +74,7 @@ export const tellUnanswered = async (
     await sendMessage(ctx, loaded, {
       from: 'plitzi',
       to: LEAD,
-      text: `${taskId}'s acceptance line "${line.said}" cannot be answered — ${line.check} — ${line.output?.at(-1) ?? 'it read nothing'}. Not the work's: amend the line (plitzi run amend), or say why it waits`,
+      text: `${taskId}'s acceptance line "${line.said}" cannot be answered — ${line.check} — ${failedWhy(line.output) ?? 'it read nothing'}. Not the work's: amend the line (plitzi run amend), or say why it waits`,
       fyi: true,
       about: taskId
     });

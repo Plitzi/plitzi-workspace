@@ -72,15 +72,16 @@ const readable = (dir: string, modules: string): string[] => {
   const linked = readdirSync(path.join(modules, '@plitzi')).map(name =>
     realpathSync(path.join(modules, '@plitzi', name))
   );
-  // The project's src/ whole, when the module is in it: a space reads beside its folder — its pages by folder
-  // (`pagesIn`), its data (`../data/*.json`) — and was refused at its first read (a run's `page check --space`). Never
-  // the project's root, where its .env is.
+  // The project's src/ whole, for a module anywhere in the project: a space reads beside its folder — its pages by
+  // folder (`pagesIn`), its data (`../data/*.json`) — and a variant of it kept in tmp/ imports src/space (a run's scout
+  // was refused trying a form's one attribute). Never the project's root, where its .env is.
   const root = realpathSync(path.dirname(modules));
-  const source = path.join(root, 'src');
-  const inSource = dir === source || dir.startsWith(`${source}${path.sep}`);
+  const inProject = dir === root || dir.startsWith(`${root}${path.sep}`);
   // …its package.json alone, which Node reads to know a module's type, and its node_modules by the real path Node walks
   // up to from the module (the path `modules` names may be a link to it).
-  const project = inSource ? [source, path.join(root, 'package.json'), path.join(root, 'node_modules')] : [];
+  const project = inProject
+    ? [path.join(root, 'src'), path.join(root, 'package.json'), path.join(root, 'node_modules')]
+    : [];
 
   return [...new Set([dir, ...project, modules, realpathSync(modules), ...linked])];
 };

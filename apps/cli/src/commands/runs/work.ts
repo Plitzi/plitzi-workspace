@@ -379,7 +379,7 @@ export const taskFound = (
             ...(found.notices ?? []).map(notice => `  · ${notice}`)
           ].join('\n')
         : [
-            `${found.task} is done: its findings go with every task that waits for it.${found.added ? ` It made ${found.added.join(', ')}.` : ''}${found.ready && found.ready.length > 0 ? ` Ready now: ${found.ready.join(', ')}.` : ''}`,
+            `${found.task} is done: its findings go with every task that waits for it.${found.added ? ` It made ${found.added.join(', ')}${found.stage === undefined ? '' : ` — their plan, to amend them from: ${found.stage}`}.` : ''}${found.ready && found.ready.length > 0 ? ` Ready now: ${found.ready.join(', ')}.` : ''}`,
             ...(found.notices ?? []).map(notice => `  · ${notice}`)
           ].join('\n')
   );

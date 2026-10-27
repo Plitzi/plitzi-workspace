@@ -103,6 +103,25 @@ authoring and the elements learnt from the runs.
   likely what the two servers' data says (a time, a count) than the task: a look warned the page "moved" for a show's
   start a minute apart. `run report --summary` refused a summary written on the command line as "not there": it says
   the option names a file.
+- **One server on a copy, and its failures said.** A task's acceptance lines are run with the copy served once for
+  all of them whenever a line is a page command (`plitzi page check / /rooms`), and a page command in a copy reads the
+  server its check gave it (`$PLITZI_URL`): a line with no `--url` served the copy a second time, which died on the
+  copy's `state/jobs.json` and read "nothing could answer it". A kept server that does not answer as the copy's is
+  stopped, not only forgotten; a look whose server stops says so at once, with the error it stopped on and its log,
+  where it waited a minute to say "did not answer"; the copy served for a command names its log. A line that failed on
+  a crash keeps the error, not Node's version banner; a command run from a folder that was removed (a task's copy, once
+  approved) is refused saying so, where Node printed a stack.
+- **Research's stage is kept, and the lead's advice settled for good.** An approved research card's stage is kept in
+  the run's `inputs/<card>/`, said at the approval — the plan its tasks are amended from; it was dropped. `run settle
+  <advice>` settles a kind of advice though it is not given that moment (it comes and goes with the agents running), and
+  a scout whose research waits for the lead is not "idle" to be fed the backlog. A card sent back starts its round with
+  no progress of the last.
+- **Page tools, from encore-12:** `page check --ssr --as <user>` holds the HTML the server sent that visitor, not a
+  guest's (six providers read "not in the HTML"); a `type` or `fill` step sets a date, time, colour or range field whole
+  (keys set nothing in a date's segments); `page measure` names `data-plitzi-instance` when a selector wrote an instance
+  as an element; `page check --fresh` and `page shot --fresh` say the option is `task check`'s and `task look`'s.
+  `page check --space` takes a module anywhere in the project — a variant kept in `tmp/` reads `src/` — never its root.
+  `explain form` says what `noValidate` does to a field's `requiredMessage`.
 - **Every page command reads a page as one visitor, from the same flags.** `page check`, `measure`, `play`,
   `outline`, `same`, `shot` and `task look` take `--as`, `--guest`, `--timezone`, `--presence`, `--clock`, `--block`,
   `--autoplay` and `--storage` alike — `page check` took no `--clock`, `page outline` no `--timezone`, `page same` no

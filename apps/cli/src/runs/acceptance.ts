@@ -79,6 +79,16 @@ export const namesServedCopy = (check: string): boolean =>
   /PLITZI_(?:URL|PORT)\b/.test(check) || /\bplaywright\s+test\b/.test(check);
 
 /**
+ * Whether a check is run with the copy served: one that names it, or a page command — which, run in the copy, reads the
+ * copy's server. Served once for every line: two lines at once, each serving the copy itself, started two servers on one
+ * copy and the second died on its `state/jobs.json` (encore-12's t-room-card-idle-height, "nothing could answer it").
+ */
+export const servesCopy = (check: string): boolean =>
+  namesServedCopy(check) ||
+  // What a shell comment says runs nothing: a line names its page there (`# plitzi page check /menu`).
+  /\bplitzi\s+page\s+(?:check|shot|measure|play|outline)\b/.test(check.replace(/(^|\s)#.*$/gm, ''));
+
+/**
  * The check as any shell runs it: `$PLITZI_URL` and `$PLITZI_PORT` (or `${…}`) written in as their values — a POSIX
  * shell would expand them, Windows' `cmd.exe` would not.
  */
@@ -160,6 +170,12 @@ const stoppedAnswering = async (port: number): Promise<void> => {
   }
 };
 
+/**
+ * What the copy's server the CLI starts says, as it says it: a check's pages logged a failure there that no answer
+ * shows (encore-12's scout, asked for "the logs that hide real failures", could not find it).
+ */
+export const serverLogOf = (cache: string): string => path.join(cache, 'acceptance-server.log');
+
 /** The copy served by its own start script on a free port, quietly: what `$PLITZI_URL` names. */
 export const serveCopy = async (
   work: string,
@@ -207,7 +223,7 @@ export const serveCopy = async (
   await fs.rm(path.join(work, record), { force: true });
   const env = (await fs.readFile(path.join(root, '.env'), 'utf-8').catch(() => undefined)) ?? '';
   // What the server says goes to a log in the task's cache: when it does not answer, its last lines say why.
-  const logFile = path.join(cache, 'acceptance-server.log');
+  const logFile = serverLogOf(cache);
   const log = await fs.open(logFile, 'w');
   const child = spawn(script, {
     cwd: work,
@@ -273,13 +289,13 @@ export type Serving = ReturnType<typeof serveCopy>;
 
 /**
  * The copy served for `acceptance` from now, while the project's checks run — its start was a few seconds after them
- * on every check and complete; none when no line names the served copy.
+ * on every check and complete; none when no line reads it.
  */
 export const serveForAcceptance = (
   acceptance: readonly Acceptance[],
   { work, root, cache }: { work: string; root: string; cache: string }
 ): Serving | undefined =>
-  acceptance.filter(isChecked).some(each => namesServedCopy(each.check)) ? serveCopy(work, root, cache) : undefined;
+  acceptance.filter(isChecked).some(each => servesCopy(each.check)) ? serveCopy(work, root, cache) : undefined;
 
 /** A copy served early and not used — the checks failed first, or a refusal came: stopped. */
 export const letGo = async (serving: Serving | undefined): Promise<void> => {
@@ -357,7 +373,7 @@ export const checkAcceptance = async (
     return [];
   }
 
-  const served = checked.some(each => namesServedCopy(each.check))
+  const served = checked.some(each => servesCopy(each.check))
     ? await (serving ?? serveCopy(work, root, cache))
     : undefined;
   // A copy lent by the caller is the caller's to stop (`letGo`): stopped here, the approved tasks' lines `task complete`

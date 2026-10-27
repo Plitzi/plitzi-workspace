@@ -154,6 +154,24 @@ export const tail = (output: string): string[] => {
   return [...kept].sort((a, b) => a - b).map(index => lines[index]);
 };
 
+/** The banner Node prints under the stack of an error nothing caught, as its last line: what failed is above it. */
+const NODE_CRASH = /^Node\.js v\d+/;
+const THROWN = /^\s*(?:\[\w+\]: )?\w*Error(?: \[[\w-]+\])?: /;
+
+/**
+ * Why an output failed, in one line: its last — but under a process Node ended on an uncaught error, the error, never
+ * the version banner it ends with (encore-12's lines read "the first failed: Node.js v24.22.1").
+ */
+export const failedWhy = (lines: readonly string[] | undefined): string | undefined => {
+  const said = (lines ?? []).filter(line => line.trim() !== '');
+  const last = said.at(-1);
+  if (last === undefined || !NODE_CRASH.test(last.trim())) {
+    return last;
+  }
+
+  return said.find(line => THROWN.test(line))?.trim() ?? said.filter(line => !NODE_CRASH.test(line.trim())).at(-1);
+};
+
 export const scriptsOf = async (root: string): Promise<Record<string, string>> => {
   const parsed: unknown = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf-8'));
   const scripts = isRecord(parsed) && isRecord(parsed.scripts) ? parsed.scripts : {};

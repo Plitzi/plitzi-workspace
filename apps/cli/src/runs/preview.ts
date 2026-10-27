@@ -27,7 +27,7 @@ import { loadRun, readApproved, readBase, readRecord, requireNoTask } from './ru
 import { placeVersion } from './store';
 import { digestsOf } from './tasks/approve';
 import { viewTask } from './taskStore';
-import { scriptsOf, tail } from '../commands/verify';
+import { failedWhy, scriptsOf, tail } from '../commands/verify';
 
 import type { Monitored } from './monitor';
 import type { LoadedRun, RunContext } from './run';
@@ -255,7 +255,13 @@ const serve = async (
     });
   });
 
-  return { url: `http://127.0.0.1:${String(port)}`, done, stop, stopped: () => exited };
+  return {
+    url: `http://127.0.0.1:${String(port)}`,
+    done,
+    stop,
+    stopped: () => exited,
+    ...(logged && log !== undefined ? { log } : {})
+  };
 };
 
 /**
@@ -428,6 +434,25 @@ export const startBeforePreview = async (
 
 /** Where a task's copy is worth serving: being worked — its agent looking at its own pages — or in review. */
 const SERVED_STATUSES: readonly string[] = ['in-progress', 'changes-requested', 'in-review'];
+
+/**
+ * Why a copy served for a look does not answer — none once it does: its server stopped, with the error it stopped on
+ * and where it logs, as soon as it stops. encore-12's look waited a minute twice and said only "did not answer", its
+ * server dead in a second on the copy's state another held.
+ */
+export const notServed = async (preview: Preview): Promise<string | undefined> => {
+  const up = await Promise.race([answering(preview.url, 60_000), preview.done.then(() => false)]);
+  if (up) {
+    return undefined;
+  }
+
+  const ended = preview.stopped();
+  const log = preview.log === undefined ? '' : ` — its log: ${preview.log}`;
+
+  return ended
+    ? `was not served: its server stopped before it answered on ${preview.url} — ${failedWhy(ended.said) ?? ended.why}${log}`
+    : `did not answer on ${preview.url} within a minute${log}`;
+};
 
 /**
  * `plitzi run preview --task`: a task's copy served on `port` — in review, as it went there, what the lead looks at

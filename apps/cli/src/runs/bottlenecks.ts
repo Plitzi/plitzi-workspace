@@ -201,9 +201,15 @@ export const idleTeam = (
     );
   };
   // An agent none of whose role's cards is left has done its part: a run's lead was woken eight times at the end, for
-  // developers with nothing of theirs left and a tester's spec it could not split for them.
+  // developers with nothing of theirs left and a tester's spec it could not split for them. Research in review is the
+  // lead's to decide, no card of its scout's: encore-12's scout was said idle beside its scope, the backlog to stack for it.
   const leftFor = (roles: readonly string[]): boolean =>
-    views.some(view => view.state.status !== 'done' && roles.includes(roleOf(view.task)));
+    views.some(
+      view =>
+        view.state.status !== 'done' &&
+        !(isResearch(view.task) && view.state.status === 'in-review') &&
+        roles.includes(roleOf(view.task))
+    );
   const starved = running.filter(
     each => !busy.has(each.agent) && !readyFor(each.roles) && leftFor(each.roles) && !reviewsComing(each.agent)
   );
