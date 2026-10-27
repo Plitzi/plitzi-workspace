@@ -53,7 +53,8 @@ to every task in hand, or to an agent by name (`@dev-1`), which `task next` hand
 with the task's next heartbeat, progress or completion, marked read as it is; a question with a reply leaves `run
 status`. `run watch` (`leadWatch.ts`) is what a lead waits with in the background: it ends with what is new
 for it — a review by its round, a question, a block, a notice — each once, what it woke the lead for kept in the run's
-`lead-seen.json`. A block the lead lifts carries what the task waited for (`task unblock --answer`), and `task next`
+`lead-seen.json`. A note only to know (`task tell`) wakes it for nothing: it comes with what does, or as the watch
+ends. A block the lead lifts carries what the task waited for (`task unblock --answer`), and `task next`
 hands an agent the task it holds and can go on with — unblocked, or sent back with changes — before anything new
 (`yours`), so an agent waiting for work hears it. A task sent back that others wait on, while its agent is at another,
 tells that agent it goes first (`goesFirst`, to `@<agent>`): nothing else reaches it before the task in hand is done. **The run's notes** — the plan's `notes`, and each `task message all` — are
@@ -350,6 +351,10 @@ by detail: what there are fewer of, by how many — a kind counted whole listed 
 this page lacks is said on the element of ours where the other page wears it (`absentOn`: the named element drawn at
 that place of the section — "lacks box-shadow … — at ours: match-result"), here and in `--dress`'s failure. `--width`,
 `--scheme` (each width in each) and `--status` (a not-found page, `--status 404`) are `page shot`'s and `page check`'s.
+A path may say its own visitor and status — `"/moderation --as juno --status 403" "/withheld --as juno"` (`lookPaths.ts`):
+one look a visitor, each told what the others covered. A part drawn more than once — a component's instances — is
+pictured where the most of the task's elements show (`page shot --clip <part> --showing <elements>`, `clipArgs`): a look
+pictured a playing room card for a task that changed the idle one.
 A page that sends a guest away is found by one guest check (`readAsFor`, `page check --guest`) and read as the project's
 account; a page only a signed-out visitor opens (`accessLevel: 'public'`, no signed-in twin: `signedOutOnly`) is read as a
 guest in a signed-in look — encore-10's looks of `/sign-in` were sent home and pictured Home; a page its changes are drawn
@@ -749,13 +754,15 @@ in words.
 there. `plitzi run start "<the ask>" --run <name>` opens the run on it alone (`scopePlan`: one critical card,
 `s-scope`, the plan written in the project's `tmp/` and moved into the run as any plan is). The scout finds out —
 `page shot --compare <original> --dress`, the original's computed styles, the project — and completes it with its
-result, the tasks: `plitzi task complete --found "what was found" --tasks <stage.json>` (`completeResearch`). The stage
+result, the tasks: `plitzi task complete --found "what was found" --tasks <stage.json>` (`completeResearch`). A task of
+it with no acceptance line a command proves is refused, named (`uncheckedOf`). The stage
 is checked as `run extend --dry-run` checks it, kept beside the card (`proposed-stage.json`, `TaskState.proposed`), and
 the card goes to review — the lead's step (`task next --role lead` hands it with what was found; `run watch` says it as a
 `spike-proposed`) — decided with the person: `task review s-scope --approve` stacks it (`approveResearch`),
 `--leave t-a,t-b` leaving some out (`all`: its findings alone; a left `<id>-tests` is its card with `"tests": false`, and
 a kept task waiting for a left one is refused, naming both), and `--changes "…"` sends it back to its scout as any card,
-what it proposed dropped. A primer the stage names is kept beside it. The lead's own research is done at once
+what it proposed dropped. A primer the stage names is kept beside it, and an approved stage in the run's
+`inputs/<card>/` — the plan its tasks are amended from. The lead's own research is done at once
 (`task complete s-scope --found … --tasks …`, named — nobody reviews the lead's word). A stage is stacked as `run extend`
 stacks one (refused, the card stays as it was), and each task carries what was found for it (`"findings"`, kept as the
 run's `TaskState.findings` from its first state, `startingState`): whoever builds it reads it in its brief.

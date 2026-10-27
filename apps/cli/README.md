@@ -271,11 +271,14 @@ picture.
 `--click <id>` clicks one element once the page has settled, as a visitor does — brought into view first, which is
 not the click's doing — and says what changed: the flows it ran and how each step ended, where the page went, what
 scrolled, what is shown now and what no longer is, what the page said (a toast, an alert: `said: "Link copied"`), the
-state. A form the browser held back is said with the field and the browser's reason (`the browser held the form back:
-email — Please fill out this field.`), not as a click that ran nothing. A click that changed nothing says so in those
+state. A form the browser held back fails the check, with the field and the browser's reason (`form-held-back`: `the
+browser held the form back: email — Please fill out this field.` — `noValidate: true` lets the field say its own
+`requiredMessage`), not as a click that ran nothing. A click that changed nothing says so in those
 words, and a flow that ran and succeeded with nothing on the page changed is said as that too: a button whose flow
 does nothing looks like one that works until it is clicked. A click that could not be made, or a flow that failed,
-fails the check (`--json`: `clicked: { element, filled?, changes, failed, problem? }`).
+fails the check (`--json`: `clicked: { element, filled?, changes, failed, heldBack?, problem? }`). Where the server is
+the CLI's — a task's copy, a look's — what it logged as failed while the pages were opened fails the check too
+(`server-logged`, naming its log): a provider that fails on every render was a line nobody read.
 
 `--hover <id>` puts the pointer over one element instead, and says the same of it, with what a hover changes most: how
 the element, each element inside it and up to three marked elements around it look — colours, shadow, transform,
