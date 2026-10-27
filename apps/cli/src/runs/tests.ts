@@ -45,6 +45,12 @@ export interface TestSetup {
    * `walkFilter.ts` only it imports) — none for a module several pages share. A file it does not know is its own.
    */
   unitOf?: (file: string) => string | undefined;
+  /**
+   * The test files the project has already: what a task's change may break — given to it as well (`touches`), so it
+   * fixes what it breaks there; encore-14's t-shows-coming went to review failing a test that enumerates every action,
+   * its file its tests card's.
+   */
+  existing?: ReadonlySet<string>;
 }
 
 export const testSetupOf = async (root: string): Promise<TestSetup> => {
@@ -99,6 +105,25 @@ export const testFilesFor = (
   return [...new Set(tests)];
 };
 
+/** Of the test files the tasks' files are named for, those the project has already. */
+export const existingTests = async (
+  root: string,
+  tasks: readonly Pick<PlannedTask, 'files'>[],
+  setup: Pick<TestSetup, 'playwright' | 'unitOf'>
+): Promise<Set<string>> => {
+  const named = [...new Set(tasks.flatMap(task => testFilesFor(task.files, setup)))];
+  const found = await Promise.all(
+    named.map(file =>
+      fs
+        .access(path.join(root, file))
+        .then(() => file)
+        .catch(() => undefined)
+    )
+  );
+
+  return new Set(found.filter(file => file !== undefined));
+};
+
 /**
  * The commands that run them, against the copy served: what the task of them is accepted by — said as a line to check by
  * hand when the project has no start script to serve the copy with.
@@ -146,6 +171,8 @@ export const withTestTasks = (
     plan.tasks.flatMap(task => task.testsOf ?? ((task.role ?? DEVELOPER) === TESTER ? task.dependsOn : []))
   );
   const ids = new Set(plan.tasks.map(task => task.id));
+  // By developer task, the test files of the project its tests card takes: its own to fix as well, before that card.
+  const touched = new Map<string, string[]>();
   // By test file, the developer tasks whose tests it holds: one task of tests a group of them.
   const groups: { of: PlannedTask[]; files: string[] }[] = [];
   for (const task of plan.tasks) {
@@ -162,6 +189,11 @@ export const withTestTasks = (
 
     const named = testFilesFor(task.files, setup);
     const files = named.filter(file => !holderOf.has(file));
+    const breaks = files.filter(file => setup.existing?.has(file) === true);
+    if (breaks.length > 0) {
+      touched.set(task.id, breaks);
+    }
+
     if (files.length === 0) {
       // Its own test files are its own tests, written with it — said so, never "another task's" (encore-10).
       const own = named.filter(file => holderOf.get(file) === task.id);
@@ -210,5 +242,11 @@ export const withTestTasks = (
     };
   });
 
-  return { plan: { ...plan, tasks: [...plan.tasks, ...added] }, added: added.map(task => task.id), untested };
+  const tasks = plan.tasks.map(task => {
+    const breaks = touched.get(task.id);
+
+    return breaks === undefined ? task : { ...task, touches: [...new Set([...(task.touches ?? []), ...breaks])] };
+  });
+
+  return { plan: { ...plan, tasks: [...tasks, ...added] }, added: added.map(task => task.id), untested };
 };

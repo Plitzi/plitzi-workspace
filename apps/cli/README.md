@@ -652,6 +652,8 @@ plitzi task next t-home --token <yours> --json      # its files locked, its copy
 plitzi task propose t-menu --change "…"    # ask another task to agree to a change; task answer accepts or counters
 plitzi task check --token …                # what complete holds the copy to, run now: nothing changes (--fix: lint and format your files first)
 plitzi task check t-home --before          # its acceptance on the run before it and on its copy: which line proves the change, which proves nothing
+plitzi task check t-home-tests --mutate src/functions/shows.ts --from "slice(0, 6)" --to "slice(0, 7)"   # its acceptance on a mutant of the copy: which line catches the change
+plitzi task run "npx playwright test visual/room.spec.ts"   # a command of your own: a suite in its turn on the machine, its output in a file, what failed said
 plitzi task complete --token …             # its copy compared by fingerprint, the project's checks run in it
 plitzi task review t-home --approve --token <yours>    # your step of its review; its last step's approval puts it into the run's work
 plitzi run notice "…" --on /pets            # something wrong no task owns: kept, said by the finish — the next stage's

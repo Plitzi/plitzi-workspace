@@ -25,6 +25,7 @@ import {
   taskEscalate,
   taskReview,
   taskRevert,
+  taskRun,
   taskTake,
   taskUnblock
 } from '..';
@@ -65,6 +66,7 @@ const TASK_HELP: readonly { heading: string; commands: readonly string[] }[] = [
       'take',
       'context',
       'check',
+      'run',
       'complete',
       'progress',
       'ask',
@@ -277,10 +279,27 @@ export const registerTaskGroup = (program: Command): Command => {
       '--before',
       'Its acceptance run on the run before it too — the approved work without it — line by line: a line that fails there and passes with it proves the change; one passing on both proves nothing (a test’s or a bug’s fix, reviewed)'
     )
-    .argument('[task]', 'With --before: the task to set beside the run before it — a review’s — your own when left out')
+    .option(
+      '--mutate <file>',
+      'Its acceptance run on its copy and on a mutant of it — the copy with one change to the code, --from "…" --to "…": a line that fails on the mutant holds that behaviour; one passing on both lets it break unseen (a task of tests, reviewed)'
+    )
+    .option('--from <text>', 'With --mutate: the code to change, quoted as the file writes it — found once')
+    .option('--to <text>', 'With --mutate: what it says instead')
+    .argument('[task]', 'With --before or --mutate: the task to check — a review’s — your own when left out')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
     .action((named: string | undefined, options: CheckCommandOptions) => taskCheckCommand(named, options));
+
+  taskGroup
+    .command('run')
+    .description(
+      'A command of your own — a spec, a probe, a test file — run as the run’s checks are: a Playwright suite in its turn on the machine, what it printed kept in a file and what failed said, what the lead told you meanwhile with it'
+    )
+    .argument('<command>', 'The command, quoted whole: "npx playwright test visual/room.spec.ts --repeat-each 3"')
+    .option(...TOKEN_OPTION)
+    .option(...RUN_OPTION)
+    .option(...JSON_OPTION)
+    .action((command: string, options: RunCommandOptions) => taskRun(command, options));
 
   taskGroup
     .command('complete')
@@ -557,11 +576,14 @@ export const registerTaskGroup = (program: Command): Command => {
       '--files',
       'Its files as they are, whole, in the same answer — for a harness with no reader of its own: one that reads a file before editing it reads each twice'
     )
-    .option('--primer', 'The run’s primer whole, though you read it on this task already — said in a line otherwise')
+    .option(
+      '--again',
+      'The brief whole — the run’s primer too — though you read it in this context already: said in a line otherwise'
+    )
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string | undefined, options: RunCommandOptions & { files?: boolean; primer?: boolean }) =>
+    .action((task: string | undefined, options: RunCommandOptions & { files?: boolean; again?: boolean }) =>
       taskContextCommand(task, options)
     );
 

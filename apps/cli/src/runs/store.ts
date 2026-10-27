@@ -155,9 +155,18 @@ export const withLock = async <T>(
     ttlMs = 5 * 60_000,
     waitMs = 30_000,
     now = (): Date => new Date(),
-    doing = 'another command of the run'
-  }: { ttlMs?: number; waitMs?: number; now?: () => Date; doing?: string } = {}
+    doing = 'another command of the run',
+    onWait
+  }: {
+    ttlMs?: number;
+    waitMs?: number;
+    now?: () => Date;
+    doing?: string;
+    /** Said once, when it is found held: whoever waits hears why, and since when. */
+    onWait?: (since: string | undefined) => void;
+  } = {}
 ): Promise<T> => {
+  let told = false;
   const mine: HeldLock = { pid: process.pid, machine: os.hostname(), at: now().toISOString() };
   const started = Date.now();
   for (;;) {
@@ -187,6 +196,11 @@ export const withLock = async <T>(
 
     if (Date.now() - started > waitMs) {
       throw new LockTimeout(file, held, doing);
+    }
+
+    if (!told) {
+      told = true;
+      onWait?.(held?.at);
     }
 
     await pause(40);

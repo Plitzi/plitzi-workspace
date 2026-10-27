@@ -1,11 +1,16 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { leadItems } from './leadWatch';
+import { leadItems, waitForLead } from './leadWatch';
 import { messagesOf } from './messages';
+import { runPaths } from './paths';
 import { openRun, loadRun } from './run';
-import { messageTasks, tellLead, tellLeadAbout } from './talk';
+import { messageTasks, tellLead, tellLeadAbout, unheardOf } from './talk';
 import { reportProgress, takeNext } from './tasks';
 import { viewRun } from './view';
+import { ranAs } from '../tests/ranAs';
 import { SCOUT, team, TESTERS } from '../tests/reviewerSteps';
 import { benchPlan, makeBench } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
@@ -87,5 +92,56 @@ describe('a task past the work limit', () => {
     expect((await messagesOf(await loadRun(lead(), runId))).find(each => each.id === told.id)?.text).toContain(
       'On s-words: 60 %'
     );
+  });
+
+  // encore-14: two research cards ran 39 and 26 min, their lead woken for each and asking neither.
+  it('asks the agent itself, the lead woken with its answer — or, with none in time, to decide without it', async () => {
+    await bench.writeTeam(team(TESTERS));
+    const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
+    const home = await take('agent-1', 't-home');
+    bench.advance(11 * 60_000);
+
+    const woke = await waitForLead(lead(), runId, { timeoutMs: 20, everyMs: 10, launch: false });
+    expect(woke.fresh.some(item => item.key.startsWith('long-task:'))).toBe(false);
+    const asked = (await messagesOf(await loadRun(lead(), runId))).filter(message => message.asksStanding === true);
+    expect(asked.map(message => message.to)).toEqual(['@agent-1']);
+
+    await tellLead(home.ctx, runId, 't-home', '', STANDING);
+    const answered = await waitForLead(lead(), runId, { timeoutMs: 20, everyMs: 10, launch: false });
+    expect(answered.fresh.map(item => item.text)).toContainEqual(expect.stringContaining('t-home stands at 60 %'));
+    expect(answered.fresh.some(item => item.key.startsWith('long-task:'))).toBe(false);
+
+    // The next limit: asked again, and no answer within the grace — the lead decides without it.
+    bench.advance(10 * 60_000);
+    await waitForLead(lead(), runId, { timeoutMs: 20, everyMs: 10, launch: false });
+    bench.advance(4 * 60_000);
+    const unanswered = leadItems(await viewRun(lead(), runId)).filter(item => item.key.startsWith('long-task:'));
+    expect(unanswered.map(item => item.key)).toEqual(['long-task:t-home:x2:unanswered']);
+    expect(unanswered[0]?.text).toContain('no answer in 4 min — agent-1 is at something long of its own');
+  });
+});
+
+describe('a message to an agent at something long of its own', () => {
+  it('tells the lead it is heard only when that ends', async () => {
+    await bench.writeTeam(team(TESTERS));
+    const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
+    await take('agent-1', 't-home');
+    // Its last command of the run, as the CLI keeps it.
+    const command = 'plitzi task progress';
+    const line = {
+      at: bench.now().toISOString(),
+      by: 'agent-1',
+      command,
+      ...ranAs(command),
+      chars: 10,
+      ms: 5,
+      code: 0
+    };
+    await fs.appendFile(path.join(runPaths(bench.root, runId).dir, 'usage.jsonl'), `${JSON.stringify(line)}\n`);
+    const sent = await messageTasks(lead(), runId, 't-home', 'Keep the hero');
+    expect(await unheardOf(lead(), runId, sent, bench.now())).toEqual([]);
+
+    bench.advance(5 * 60_000);
+    expect(await unheardOf(lead(), runId, sent, bench.now())).toEqual([{ to: 't-home', agent: 'agent-1', minutes: 5 }]);
   });
 });

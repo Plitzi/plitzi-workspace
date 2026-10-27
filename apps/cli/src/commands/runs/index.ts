@@ -32,6 +32,7 @@ export { claimCommand, taskClaim, taskClaims, taskDiscard, taskRequest } from '.
 export type { ClaimOptions } from './files';
 export { taskBlock, taskComplete, taskFound, taskNote, taskProgress, taskUnblock } from './work';
 export { taskCheckCommand } from './checkBefore';
+export { taskRun } from './taskRun';
 export type { CheckCommandOptions } from './checkBefore';
 export { taskReassign, taskRevert } from './reassign';
 export { taskEscalate } from './escalate';

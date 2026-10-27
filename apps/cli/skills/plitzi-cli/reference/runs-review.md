@@ -16,11 +16,14 @@ lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
   [runs-designer.md](runs-designer.md)) — once: after the designer's, unchanged, it repeats it. Your read of a task in
   review takes your step, so no two testers decide one. A fix — a test's, a bug's — is proved by its acceptance failing
   without it: `plitzi task check t-home --before` runs each line on the run before it and on its copy, and says which
-  proves the change and which passes on both (proves nothing). A task that changes no page has no look: that is its
-  review.
+  proves the change and which passes on both (proves nothing). A task of tests holds what it tests when a change to
+  that code fails it: `plitzi task check t-home-tests --mutate src/functions/shows.ts --from "slice(0, 6)" --to
+  "slice(0, 7)"` runs its acceptance on its copy and on that mutant, and says which line catches it — never a copy of
+  `src/` changed by hand. A task that changes no page has no look: that is its review.
 - **What the data does not show, you test:** a case the acceptance asks for that no page reaches — a module's function,
   its edge cases (the project's `test` script runs every `*.test.ts` at complete), `node -e` in the copy; a probe (two calls at once) is a `node --test` file in your scratch importing
-  the copy's code by its absolute path, never a file in the copy — or send it back for the test it needs. A finding is read from its page,
+  the copy's code by its absolute path, never a file in the copy, run with `plitzi task run "…"` — or send it back for
+  the test it needs. A finding is read from its page,
   measured — never from another page or memory. A fix for light is looked at in light, one for the phone at 390
   (`task look --scheme light --width 390`).
 - **A state the cold copy lacks** (an empty room someone made) is set up by the measure's own steps — `page measure

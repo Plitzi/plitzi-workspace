@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { changesNoPage } from './pagesOf';
-import { checkBefore, completeTask, provedBy, reviewTask } from './tasks';
+import { caughtBy, checkBefore, checkMutant, completeTask, provedBy, reviewTask } from './tasks';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
@@ -79,6 +79,62 @@ describe('a task’s acceptance set beside the run before it', () => {
       'has no acceptance line a command checks'
     );
     expect((await refusal(checkBefore(lead(), runId, 't-book'))).message).toContain('is pending');
+  });
+});
+
+// encore-14's tester, reviewing tasks of tests, copied the task's src/ into its scratch, changed the code under test with
+// sed and ran node --test there by hand, to see whether a test held what it was meant to.
+describe('a task’s acceptance run on a mutant of its copy', () => {
+  it('says which line catches the change made to the code, and which lets it pass', async () => {
+    const plan = benchPlan();
+    plan.tasks[3].acceptance = [
+      { said: 'The title is Spanish', check: 'grep -q "title: \'Acerca\'" src/space/pages/about.ts' },
+      { said: 'About is there', check: 'test -f src/space/pages/about.ts' },
+      { said: 'About says goodbye', check: 'grep -q Adios src/space/pages/about.ts' }
+    ];
+    const runId = await open(plan);
+    const about = await take('agent-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', "export const about = { title: 'Acerca' };\n");
+    await completeTask(about.ctx, runId, 't-about', { knownFailure: { why: 'the goodbye is the next task’s' } });
+
+    const checked = await checkMutant(bench.agent('test-1'), runId, 't-about', {
+      file: 'src/space/pages/about.ts',
+      from: "'Acerca'",
+      to: "'About'"
+    });
+
+    expect(checked.lines.map(line => [line.said, caughtBy(line)])).toEqual([
+      ['The title is Spanish', 'catches'],
+      ['About is there', 'misses'],
+      ['About says goodbye', 'fails']
+    ]);
+    // The copy itself is left as it was.
+    expect(
+      (
+        await refusal(
+          checkMutant(bench.agent('test-1'), runId, 't-about', {
+            file: 'src/space/pages/about.ts',
+            from: "'About'",
+            to: 'x'
+          })
+        )
+      ).message
+    ).toContain('has no "\'About\'"');
+  });
+
+  it('is refused for a change that names no one place, and a file the copy has not', async () => {
+    const plan = benchPlan();
+    plan.tasks[3].acceptance = [{ said: 'About is there', check: 'test -f src/space/pages/about.ts' }];
+    const runId = await open(plan);
+    const about = await take('agent-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', "export const a = 'x';\nexport const b = 'x';\n");
+    const mutant = (file: string, from: string) => checkMutant(about.ctx, runId, 't-about', { file, from, to: 'y' });
+
+    expect((await refusal(mutant('src/space/pages/about.ts', "'x'"))).message).toContain(
+      'has "\'x\'" 2 times: quote more of the line'
+    );
+    expect((await refusal(mutant('../outside.ts', 'x'))).message).toContain('is no file of t-about');
+    expect((await refusal(mutant('src/space/pages/none.ts', 'x'))).message).toContain('is no file of t-about');
   });
 });
 

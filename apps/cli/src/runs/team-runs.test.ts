@@ -103,6 +103,22 @@ describe('the tests of a developer task, with a tester in the team', () => {
       said: 'Its modules’ tests pass, and every test beside them',
       check: "node --test 'src/functions/**/*.test.ts'"
     });
+    // None of the project's yet: t-home has nothing of it to break.
+    expect(checked.tasks.find(task => task.id === 't-home')?.touches).toBeUndefined();
+  });
+
+  // encore-14: t-shows-coming added an action, and the test that enumerates every action — its tests card's file — failed.
+  it('gives a task the test file of the project its tests card takes, to fix what it breaks there first', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'test', { roles: ['tester'] });
+    await bench.write('src/functions/book.test.ts', "import test from 'node:test';\n");
+    const plan = benchPlan();
+    plan.tasks[0].files.push('src/functions/book.ts');
+
+    const checked = await checkPlanFile(lead(), await bench.writePlan(plan));
+    expect(checked.tasks.find(task => task.id === 't-home')?.touches).toEqual(['src/functions/book.test.ts']);
+    expect(checked.tasks.find(task => task.id === 't-home-tests')?.files).toEqual(['src/functions/book.test.ts']);
+    expect(checked.notices.filter(notice => notice.includes('touches src/functions/book.test.ts'))).toEqual([]);
   });
 
   // One developer, who wrote what they test: the tests are the tester's.

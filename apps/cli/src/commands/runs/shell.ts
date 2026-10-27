@@ -328,6 +328,10 @@ const runNamed = async (ctx: RunContext, options: RunCommandOptions, named?: str
 };
 
 /** The task a command is about: its copy's, which a named one must match. */
+/** The task a token holds — none for an agent's own token (a reviewer's, one between tasks). */
+export const tokenTask = (ctx: Pick<RunContext, 'token'>): string | undefined =>
+  ctx.token ? TOKEN.exec(ctx.token)?.[2] : undefined;
+
 export const taskOf = (ctx: Pick<RunContext, 'token'>, named?: string): string => {
   const fromToken = ctx.token ? TOKEN.exec(ctx.token)?.[2] : undefined;
   if (named && fromToken && named !== fromToken) {

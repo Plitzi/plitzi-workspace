@@ -17,7 +17,7 @@ import { sizeNotices, suiteNotices } from './planNotices';
 import { isResearch, roleOf } from './spike';
 import { roleProblems, skillProblems, teamSize, teamTakes, TESTER } from './team';
 import { teamNotices } from './teamNotices';
-import { testSetupOf, withTestTasks } from './tests';
+import { existingTests, testSetupOf, withTestTasks } from './tests';
 import { byUrgency, chainMinutes } from './urgency';
 
 import type { History } from './history';
@@ -272,14 +272,15 @@ export const checkPlan = async (
   const notices: string[] = [];
   // With a tester in the team, each developer task's tests are a task of their own, after it: a developer's that did not
   // write it, reviewed by the tester.
+  const setup = teamTakes(team, TESTER)
+    ? {
+        ...(await testSetupOf(root)),
+        unitOf: (file: string) => ownership.ownerOf.get(file) ?? (ownership.shared.has(file) ? undefined : file)
+      }
+    : undefined;
   const { plan, added, untested } = withTestTasks(
     written,
-    teamTakes(team, TESTER)
-      ? {
-          ...(await testSetupOf(root)),
-          unitOf: file => ownership.ownerOf.get(file) ?? (ownership.shared.has(file) ? undefined : file)
-        }
-      : undefined
+    setup && { ...setup, existing: await existingTests(root, written.tasks, setup) }
   );
   if (added.length > 0) {
     notices.push(
@@ -529,8 +530,9 @@ export const checkPlan = async (
         continue;
       }
 
-      // One that waits for the holder finds the file free, by turns, once the holder is done.
-      if (owner !== undefined && !before(owner, task.id)) {
+      // One that waits for the holder finds the file free, by turns, once the holder is done — and one the holder waits
+      // for has it before the holder starts: a task fixing what it breaks in the tests its tests card adds to.
+      if (owner !== undefined && !before(owner, task.id) && !before(task.id, owner)) {
         notices.push(
           `"${task.id}" touches ${file}, which "${owner}" holds while it works: it proposes its change to "${owner}" (task propose) or waits for it — or depends on it`
         );

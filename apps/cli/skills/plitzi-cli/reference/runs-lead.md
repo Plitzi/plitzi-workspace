@@ -120,9 +120,9 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 
 ## The run's time is yours
 
-- **A piece of work takes 10 minutes** (the dry run says a task estimated past it: split it). Past it `run watch` wakes
-  you: ask where it stands (`task message @<agent> --standing`) and decide at once — near done, on; else narrow it,
-  split what is left into a task (`run extend`), or `task reassign`.
+- **A piece of work takes 10 minutes** (the dry run says a task estimated past it: split it). Past it the run asks its
+  agent where it stands; `run watch` wakes you with the answer (none in 3 min: decide without it) — near done, on;
+  else narrow it, split the rest into a task (`run extend`), or `task reassign`.
 - **A bug found inside a task is another task**, or `run notice`: never its scope growing round by round.
 - **Specs, a task's own**: a line runs the specs of what it changes, never a whole suite (the dry run says one); the
   finish runs it whole, once.
@@ -169,7 +169,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 - **A stage reads `run status`, not memory**: a task that merges a file one not done holds waits for it (`dependsOn`).
 - **A line nothing can answer is yours at once**: its command exits 2 (an element not there — a copied site's too —
   nothing served), you are told, and every try of the task fails on it until you amend it — never the agent's to bend.
-- **A command you hand an agent you ran**, as a line you write: one `--same` refused cost a round.
+- **A command you hand an agent you ran**, as a line you write.
 - **A link's line follows it** — present proves nothing: `page play … --steps "click <link>"` says `→ <path>`; that
   page answers.
 - **Your look covers every state the task names** — signed in, open, empty, at 390: a `task look --click/--as` or a

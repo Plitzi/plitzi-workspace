@@ -8,6 +8,7 @@ import { runChanged } from './runChanged';
 import { findTask, holderOf } from './tasks';
 import { viewTask } from './taskStore';
 import { readTeam, startedAgents } from './team';
+import { readUsage } from './usage';
 
 import type { Message, Standing } from './messages';
 import type { RunContext } from './run';
@@ -323,4 +324,53 @@ export const readInbox = async (ctx: RunContext, runId: string, taskId?: string,
   }
 
   return handOver(ctx, loaded, taskId, ctx.agent);
+};
+
+/** Past this long since an agent's last command ended, what is said to it waits on what it runs now: the lead is told. */
+const QUIET_MS = 2 * 60_000;
+
+/** A message its agent hears late: it ran no command of the run for `minutes` — at something long of its own. */
+export interface Unheard {
+  to: string;
+  agent: string;
+  minutes: number;
+}
+
+/**
+ * Who of `sent` hears it late: a message reaches an agent only with its next command, and an agent at a long probe of
+ * its own — a Playwright suite, a script — runs none for minutes. encore-14's scout-1 heard "narrow it" 2.5 min late and
+ * missed two more: the lead is told then, not left to think it was heard. An agent that ran none yet is not counted.
+ */
+export const unheardOf = async (
+  ctx: RunContext,
+  runId: string,
+  sent: readonly Message[],
+  now = new Date()
+): Promise<Unheard[]> => {
+  const loaded = await loadRun(ctx, runId, { anyVersion: true });
+  const usage = readUsage(loaded.paths.dir);
+  const lastEnded = (agent: string): number | undefined =>
+    usage
+      .filter(line => line.by === agent)
+      .reduce<number | undefined>((last, line) => Math.max(last ?? 0, Date.parse(line.at) + line.ms), undefined);
+  const agentOf = async (to: string): Promise<string | undefined> => {
+    if (to.startsWith('@')) {
+      return to.slice(1);
+    }
+
+    const task = loaded.tasks.find(each => each.id === to);
+
+    return task ? (await viewTask(loaded.paths, task)).owner?.agent : undefined;
+  };
+
+  const unheard: Unheard[] = [];
+  for (const message of sent) {
+    const agent = await agentOf(message.to);
+    const ended = agent === undefined ? undefined : lastEnded(agent);
+    if (agent !== undefined && ended !== undefined && now.getTime() - ended > QUIET_MS) {
+      unheard.push({ to: message.to, agent, minutes: Math.round((now.getTime() - ended) / 60_000) });
+    }
+  }
+
+  return unheard;
 };

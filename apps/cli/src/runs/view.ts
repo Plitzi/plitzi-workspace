@@ -7,7 +7,7 @@ import { fingerprint } from './files';
 import { liveAttention } from './findings/live';
 import { readHistory } from './history';
 import { identifiedAgents } from './identity';
-import { workLimitOf } from './limits';
+import { longTaskAttention } from './longTask';
 import { LEAD, messagesOf, standingText, unreadFor } from './messages';
 import { asksLead } from './model';
 import { agentsNeeded } from './onDemand';
@@ -152,6 +152,10 @@ export interface Attention {
   who: Needs;
   /** For an agent the run asks for (`agents-needed`): which — what `options.launch` starts by itself. */
   agent?: string;
+  /** For a card past its limit (`long-task`): the agent the run asks where it stands, by itself (`askStandings`). */
+  asks?: string;
+  /** A message only to know that is still the lead's to decide on — a standing its agent answered: it wakes the lead. */
+  decide?: true;
 }
 
 export interface RunView {
@@ -403,6 +407,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   }
 
   const base = await readBase(loaded.paths);
+  const all = await messagesOf(loaded);
   for (const view of views) {
     const line = tasks.find(each => each.id === view.task.id);
     const { proposed } = view.state;
@@ -443,22 +448,24 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       });
     }
 
-    // Any card at work — research too — past its limit (`workLimitOf`: 10 min, the scope 30) wakes the lead to ask
-    // where it stands, and again at each limit more: past it something is usually wrong, and the lead decides on the
-    // answer (Carlos). Its agent's last word, said with it. One in review, blocked or waiting holds no one to ask.
-    const atIt = isWorked(view.state.status) ? view.owner?.agent : undefined;
-    const spent = line?.spentMinutes;
-    const limit = workLimitOf(view.task.id);
-    const limits = spent === undefined ? 0 : Math.floor(spent / limit);
-    if (atIt !== undefined && spent !== undefined && limits >= 1) {
-      const step = view.progress?.step;
-      attention.push({
-        kind: 'long-task',
-        task: view.task.id,
-        subject: `x${String(limits)}`,
-        text: `${view.task.id} has taken ${String(spent)} min — past the ${String(limit)} a piece of work takes before something is usually wrong (estimated ${String(view.task.estimateMinutes)})${step ? `; ${atIt} last said: "${glimpse(step)}"` : ''}: ask ${atIt} where it stands — plitzi task message @${atIt} --standing — and decide on its answer: let it go on, narrow it, split it, or take it back`,
-        who: 'lead'
-      });
+    const atIt = isWorked(view.state.status) ? view.owner : undefined;
+    const long =
+      atIt === undefined || line?.spentMinutes === undefined
+        ? undefined
+        : longTaskAttention(
+            {
+              id: view.task.id,
+              agent: atIt.agent,
+              takenAt: atIt.takenAt,
+              spentMinutes: line.spentMinutes,
+              estimateMinutes: view.task.estimateMinutes,
+              ...(view.progress?.step ? { step: view.progress.step } : {})
+            },
+            all,
+            now
+          );
+    if (long) {
+      attention.push(long);
     }
 
     const waiting = view.state.waitingFor;
@@ -516,8 +523,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     );
 
   // A question the lead answered is dealt with, whether or not the lead's inbox was read.
-  const answered = new Set((await messagesOf(loaded)).flatMap(message => (message.replyTo ? [message.replyTo] : [])));
-  const all = await messagesOf(loaded);
+  const answered = new Set(all.flatMap(message => (message.replyTo ? [message.replyTo] : [])));
   const asked = all.filter(message => message.to === LEAD && message.fyi !== true);
   (await unreadFor(loaded, LEAD, false))
     .filter(message => !answered.has(message.id))
@@ -530,6 +536,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
         task: message.from,
         message: message.id,
         ...(message.fyi === true ? { fyi: true as const } : {}),
+        ...(message.standing ? { decide: true as const } : {}),
         // A glimpse here; whole in `run watch`, where showing it reads it — and it is gone from here.
         text: message.standing
           ? `${message.from} stands at ${standingText(message.standing)}${message.replyTo ? ` (answering ${message.replyTo})` : ''} — decide: let it go on; tell it what to change (plitzi task message ${message.about === undefined ? message.from : `@${message.from}`} "…"); lift what holds it (plitzi task unblock); narrow it (plitzi run amend) or split it (plitzi run extend); or take it back (plitzi task reassign)`

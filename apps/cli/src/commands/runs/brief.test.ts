@@ -2,7 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { briefOf, primerMark, primerReadAt } from './brief';
+import { briefOf, primerMark, readInSession } from './brief';
 import { openRun } from '../../runs/run';
 import { completeTask, noteTask, reviewTask, taskContext } from '../../runs/tasks';
 import { setTeamAgent } from '../../runs/team';
@@ -121,17 +121,35 @@ describe("a task's brief", () => {
 
 // A run's lead's 7k primer was printed in every brief an agent read again — 46% of 230k characters read again.
 describe('the run’s primer in a brief read again', () => {
-  it('is said in a line once the agent read it whole on the task, unchanged since', () => {
+  it('is said in a line once the agent read it whole on the task in this context, unchanged since', () => {
     const mark = primerMark('Encore is a radio app.');
     const log = [
-      { action: 'brief', by: 'dev-1', task: 't-home', primer: mark, at: '2026-10-25T15:14:00.000Z' },
-      { action: 'brief', by: 'dev-1', task: 't-home', at: '2026-10-25T15:20:00.000Z' }
+      { action: 'brief', by: 'dev-1', task: 't-home', session: 's1', primer: mark, at: '2026-10-25T15:14:00.000Z' },
+      { action: 'brief', by: 'dev-1', task: 't-home', session: 's1', at: '2026-10-25T15:20:00.000Z' }
     ];
+    const read = (agent: string, task: string, session: string, marked = mark) =>
+      readInSession(log, { agent, task, session }, 'primer', marked)?.at;
 
-    expect(primerReadAt(log, 'dev-1', 't-home', mark)).toBe('2026-10-25T15:14:00.000Z');
-    expect(primerReadAt(log, 'dev-2', 't-home', mark)).toBeUndefined();
-    expect(primerReadAt(log, 'dev-1', 't-book', mark)).toBeUndefined();
-    expect(primerReadAt(log, 'dev-1', 't-home', primerMark('Encore is a radio app, changed.'))).toBeUndefined();
+    expect(read('dev-1', 't-home', 's1')).toBe('2026-10-25T15:14:00.000Z');
+    expect(read('dev-2', 't-home', 's1')).toBeUndefined();
+    expect(read('dev-1', 't-book', 's1')).toBeUndefined();
+    expect(read('dev-1', 't-home', 's1', primerMark('Encore is a radio app, changed.'))).toBeUndefined();
+    // Started afresh for its round 2: a context that never read it.
+    expect(read('dev-1', 't-home', 's2')).toBeUndefined();
+  });
+
+  // encore-14's dev-1 read its 13-18k brief four times in one task.
+  it('is the whole brief too: one read in this context, unchanged, is said in a line', () => {
+    const seen = primerMark('t-home — the hero…');
+    const log = [{ action: 'brief', by: 'dev-1', task: 't-home', session: 's1', seen, at: '2026-10-25T15:14:00.000Z' }];
+
+    expect(readInSession(log, { agent: 'dev-1', task: 't-home', session: 's1' }, 'seen', seen)?.at).toBe(
+      '2026-10-25T15:14:00.000Z'
+    );
+    expect(readInSession(log, { agent: 'dev-1', task: 't-home', session: 's2' }, 'seen', seen)).toBeUndefined();
+    expect(
+      readInSession(log, { agent: 'dev-1', task: 't-home', session: 's1' }, 'seen', primerMark('changed'))
+    ).toBeUndefined();
   });
 
   it('says where it is instead of printing it again', async () => {
@@ -142,7 +160,7 @@ describe('the run’s primer in a brief read again', () => {
     const again = stripVTControlCharacters(briefOf({ ...context, primerRead: '2026-10-25T15:14:00.000Z' }));
     expect(again).not.toContain('Encore is a radio app.');
     expect(again).toContain(
-      'The run’s primer: as you read it at 15:14 UTC, unchanged — whole again: plitzi task context --primer'
+      'The run’s primer: as you read it at 15:14 UTC, unchanged — whole again: plitzi task context --again'
     );
   });
 });

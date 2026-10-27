@@ -1,3 +1,4 @@
+import { askStandings } from './askStandings';
 import { readJson, writeJson } from './files';
 import { FOLLOW_MS } from '../options';
 import { launchAsked } from './keeper';
@@ -25,6 +26,8 @@ export interface LeadItem {
   text: string;
   /** A message only to know: its id — shown whole in `run watch`, and read by it. */
   message?: string;
+  /** A message only to know that the lead decides on all the same — a standing its agent answered: it wakes the lead. */
+  wakes?: true;
 }
 
 export interface LeadNews {
@@ -97,7 +100,8 @@ export const leadItems = (view: RunView): LeadItem[] => [
             ? `${item.kind}:${item.task ?? ''}:${item.subject}`
             : `${item.kind}:${item.task ?? ''}:${item.text}`,
       text: item.text,
-      ...(item.fyi && item.message ? { message: item.message } : {})
+      ...(item.fyi && item.message ? { message: item.message } : {}),
+      ...(item.decide ? { wakes: true as const } : {})
     }))
 ];
 
@@ -131,8 +135,10 @@ export const waitForLead = async (
         key: `launch-failed:${agent}:${message}`,
         text: `${agent} could not be started (options.launch): ${message} — start it yourself, plitzi run agent ${agent} --launch --harness <yours>`
       }));
-      // Those started are running from now: read again, they no longer ask for the lead.
-      if (launched.started.length > 0) {
+      // Those started are running from now, and a long card's agent asked where it stands is the lead's to hear from:
+      // read again, neither asks for the lead.
+      const asked = await askStandings(ctx, runId, view);
+      if (launched.started.length > 0 || asked.length > 0) {
         view = await viewRun(ctx, runId);
       }
     } catch (error) {
@@ -167,7 +173,9 @@ export const waitForLead = async (
     // What is only to know wakes nobody: it comes with what does, or as the watch ends — encore-12's lead was woken
     // three times for notes, each turn reading its whole context again.
     const over = Date.now() - started >= timeoutMs;
-    if (fresh.some(item => item.message === undefined) || (over && fresh.length > 0)) {
+    // A standing answered is the lead's to decide on: encore-14's came as a note and waited for the watch's end.
+    const wakes = (item: LeadItem): boolean => item.message === undefined || item.wakes === true;
+    if (fresh.some(wakes) || (over && fresh.length > 0)) {
       await writeJson(seenFile, [...seen, ...fresh.map(item => item.key)]);
       // What is only to know, shown whole here, is read: it leaves what needs the lead (Carlos: what was looked at
       // stays no longer).
@@ -179,13 +187,13 @@ export const waitForLead = async (
         const whole = new Map((await messagesOf(loaded)).map(message => [message.id, message] as const));
         for (const item of fresh) {
           const message = item.message === undefined ? undefined : whole.get(item.message);
-          if (message) {
+          if (message && item.wakes !== true) {
             item.text = `${message.from} says (${message.id}), for you to know: ${message.text}`;
           }
         }
       }
 
-      return { fresh, view, ...(fresh.every(item => item.message !== undefined) ? { timedOut: true as const } : {}) };
+      return { fresh, view, ...(fresh.some(wakes) ? {} : { timedOut: true as const }) };
     }
 
     if (over) {

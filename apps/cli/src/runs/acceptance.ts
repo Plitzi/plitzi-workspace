@@ -337,7 +337,7 @@ export const SUITE_LOCK = path.join(os.tmpdir(), 'plitzi-playwright-suite.lock')
 export const SLOW_LINE_MS = 2 * 60_000;
 
 /** The project's scripts that run a Playwright suite, by name: `npm run visual` is one when its script is `playwright test`. */
-const suiteScripts = async (root: string): Promise<string[]> =>
+export const suiteScripts = async (root: string): Promise<string[]> =>
   Object.entries(await scriptsOf(root).catch(() => ({})))
     .filter(([, script]) => /\bplaywright\s+test\b/.test(script))
     .map(([name]) => name);

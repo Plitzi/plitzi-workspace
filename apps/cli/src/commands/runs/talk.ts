@@ -17,7 +17,7 @@ import { answerProposal, proposeChange } from '../../runs/proposals';
 import { RunRefusal } from '../../runs/refusal';
 import { loadRun } from '../../runs/run';
 import { runChanged } from '../../runs/runChanged';
-import { askLead, messageTasks, readInbox, tellLead, tellLeadAbout } from '../../runs/talk';
+import { askLead, messageTasks, readInbox, tellLead, tellLeadAbout, unheardOf } from '../../runs/talk';
 import { followWait } from '../../runs/tasks';
 
 import type { RunCommandOptions } from './shell';
@@ -310,11 +310,22 @@ export const taskMessage = (
 ): Promise<void> =>
   act(
     options,
-    async ctx => messageTasks(ctx, await runOf(ctx, options), to, text, options.replyTo, options.standing === true),
-    sent =>
+    async ctx => {
+      const runId = await runOf(ctx, options);
+      const sent = await messageTasks(ctx, runId, to, text, options.replyTo, options.standing === true);
+
+      return { sent, unheard: await unheardOf(ctx, runId, sent) };
+    },
+    ({ sent, unheard }) =>
       sent.length === 0
         ? 'No task is in hand to tell.'
-        : `Said to ${sent.map(message => `${message.to}${message.replyTo ? ` (answers ${message.replyTo})` : ''}`).join(', ')}: it reaches them with their next command.`
+        : [
+            `Said to ${sent.map(message => `${message.to}${message.replyTo ? ` (answers ${message.replyTo})` : ''}`).join(', ')}: it reaches them with their next command.`,
+            ...unheard.map(
+              each =>
+                `${each.agent} has run no command for ${String(each.minutes)} min — at something long of its own: it hears this only when that ends.`
+            )
+          ].join('\n')
   );
 
 export const taskInbox = (

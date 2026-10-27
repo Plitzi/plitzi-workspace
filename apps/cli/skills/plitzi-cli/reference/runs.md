@@ -46,10 +46,12 @@ itself once (`--agent design-1`) and is answered both. A token, name or role not
   answer (`--fresh`: anew), and `complete` right after a passing check takes it. Every element and width in one
   `page measure` call (`--hover <el>`, `--click <el…>` for a state, `--steps` for what a visitor makes) —
   trying values, measure, never `task check`; a picture for what a check cannot tell.
-- **A long output goes to a file, never into your context:** whatever you read stays in it every turn after. A test
-  runner, a build, a loop of probes — `npx playwright test … --repeat-each 20 > tmp/probe.log 2>&1; tail -5
-  tmp/probe.log` — then `grep` the file for what you need (the failures, a count); never its whole output on screen
-  (a run's scout read a probe's output whole, 219k of context and 12M tokens re-read for one card).
+- **A command of your own runs through `plitzi task run "<command>"`:** a test runner, a build, a probe. What it
+  prints goes to a file, never into your context — whatever you read stays in it every turn after (a run's scout read
+  a probe's output whole, 219k of context and 12M tokens re-read for one card): you read what failed and its end, and
+  `grep` the file for the rest. A Playwright suite waits its turn on the machine, and what the lead said meanwhile
+  comes with it — keep each to a couple of minutes (one spec, a few repeats): the lead reaches you only between
+  commands.
 - **Only your files.** A file another task at work holds is refused at `complete`, naming it — `plitzi task discard
 <file>` puts it back (and brings the run's version of any file); propose the change to that task instead. **Name
   what you declare by your part** — classes and provider ids (`hero-title`, `pricingPlans`), never `title`: another

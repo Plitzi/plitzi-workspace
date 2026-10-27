@@ -155,6 +155,15 @@ authoring and the elements learnt from the runs.
   the brief, a research card's next steps, and a stage's file as changed; a task of tests is set beside the run without
   what it tests; a stage stacked mid-run hears nothing of the team's size or inventory; the finish names no culprit it
   did not find; the agents' skill keeps a long output in a file.
+- **What encore-14's activity asked of the runs.** A card past its limit is asked where it stands by the run itself
+  (the lead's watch and the keeper), the lead woken with the answer — a standing answered wakes it, where it waited as a
+  note — or, none in 3 minutes, to decide without it. `task message` says when the agent has run no command for minutes
+  and hears it only after. `task run "<command>"` runs an agent's own command: a Playwright suite in its turn on the
+  machine, its output in a file and what failed said, the lead's messages with it. `task check <task> --mutate <file>
+  --from "…" --to "…"` runs a task's acceptance on a mutant of its copy and says which line catches the change. A test
+  file of the project a tests card takes is its developer task's too (`touches`), to fix what it breaks there first.
+  `task context` asked again unchanged in one context says so in a line (`--again` replaces `--primer`: the whole brief,
+  the primer too), and an agent started afresh reads it all — the primer was withheld from one restarted for its round 2.
 - **`task check <task> --before` says what a task's acceptance proves:** each line run on the run before it — its
   approved work without the task — and on its copy: a line that fails before and passes with it proves the change, one
   passing on both proves nothing. A task that changes no page (a test's fix, a script) has no look: `task look` and its

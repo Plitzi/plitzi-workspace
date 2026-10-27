@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { askStandings } from './askStandings';
 import { readJson, writeJson } from './files';
 import { harnessOf, launchAgent } from './launchAgent';
 import { runPaths } from './paths';
@@ -89,7 +90,11 @@ export const keepOnce = async (
       return { started: [], failed: [] };
     }
 
-    return await launchAsked(ctx, runId, await viewRun(ctx, runId), start);
+    const view = await viewRun(ctx, runId);
+    // The lead's, as the keeper is: a long card's agent asked where it stands while the lead reviews or writes a stage.
+    await askStandings(ctx, runId, view);
+
+    return await launchAsked(ctx, runId, view, start);
   } catch (error) {
     if (isRunRefusal(error) && error.code === 'not-found') {
       return { gone: true };
