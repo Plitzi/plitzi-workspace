@@ -1,10 +1,10 @@
 import { openPage } from '@plitzi/sdk-authoring';
 import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
 
-import { openProjectPage, PROJECT_QUIET_MS } from '../browser';
+import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
 import { checkAccount, projectAccount, saySignedIn, signInAs, signInWhereSent } from './check/account';
 import { conditionsOf } from './register/options';
-import { fail } from './terminal';
+import { fail, unanswered } from './terminal';
 
 import type { Browser, BrowserPage, ProjectView } from '../browser';
 import type { Account } from './check/account';
@@ -154,6 +154,30 @@ export const visitorAsked = async (
   const project = own && options.guest !== true ? await projectAccount(root) : undefined;
 
   return project ? { projectAccount: project } : {};
+};
+
+/**
+ * Who reads and the browser it reads in: what every page command makes ready before its first page — a refusal said
+ * as each says it (`--as` as the asker's, a browser that does not start as unanswered), `undefined` then.
+ */
+export const visitorBrowser = async (
+  root: string,
+  options: Pick<VisitorOptions, 'as' | 'guest'>,
+  asked: { own?: boolean } = {}
+): Promise<{ visitor: Visitor; browser: Browser } | undefined> => {
+  const visitor = await visitorAsked(root, options, asked);
+  if (visitor === null) {
+    return undefined;
+  }
+
+  const browser = await launchBrowser(root);
+  if ('problem' in browser) {
+    unanswered(browser.problem);
+
+    return undefined;
+  }
+
+  return { visitor, browser };
 };
 
 /**

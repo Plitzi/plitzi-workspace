@@ -19,7 +19,7 @@ import type { DryRunOptions } from './dryRun';
 
 /**
  * `plitzi runtime add`: the space's runtime — its own server code, run as a process of its own beside the space on the
- * platform (`plitzi runtime push`) — written where the project's server runs it too (`src/runtime/index.ts`), so what
+ * platform (`plitzi space push runtime`) — written where the project's server runs it too (`src/runtime/index.ts`), so what
  * is pushed is what was tried. Only in a server-mode project: a project with no server has nothing to run it in.
  */
 
@@ -150,7 +150,7 @@ const addRuntime = async (options: AddRuntimeOptions): Promise<void> => {
 
   console.log(chalk.green(`\n${RUNTIME_ENTRY} — the space's runtime`));
   console.log(
-    '\nThe server runs it — `/hello` answers on this project — and `plitzi runtime push` sends it to the space: ' +
+    '\nThe server runs it — `/hello` answers on this project — and `plitzi space push runtime` sends it to the space: ' +
       'the same module, tried here before it goes.'
   );
   for (const { name, command } of watching.yours) {

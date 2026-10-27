@@ -782,7 +782,7 @@ told it can stop (`task next`); the keeper starts it again for a spike a stage b
 
 The lead may approve a spike's findings without its tasks (`task spike <s> --approve --findings-only`, `approveSpike`):
 done, its proposed tasks dropped and said — a send-back that asked nothing had the scout propose again. A scout measures
-on `plitzi run copy [dir]` (`copyRunWork`): the run's approved work made afresh in its scratch, inside the project where
+on `plitzi run preview --copy [dir]` (`copyRunWork`): the run's approved work made afresh in its scratch, inside the project where
 its packages resolve, its state empty — encore-10's scout rebuilt it by hand from `approved.json` and the blobs.
 
 `run open --dry-run --rehearse` plays research alone without a review. The monitor puts a spike someone finds out **at work**, named,
@@ -944,7 +944,7 @@ first, a backup of each file it overwrites, then each file; a failure puts back 
 `complete: false` by a cut is undone from its own backups before the next merge or restore goes in. Then the report is
 left and the run removed. Undoing the final merge is git's, or `--keep-backup`'s files: the run is gone.
 
-`run restore` puts one project file back, while the run goes, from `base.json` or from before a restore.
+`run show <run> <file> --restore` puts one project file back, while the run goes, from `base.json` or from before a restore.
 
 ## The report (`report.ts`, `taskReports.ts`, `findings/`)
 
@@ -1174,7 +1174,7 @@ name, read another agent's token from its scratch folder (the run's files are th
 and edit the run's records — `run.json` or a task's `state.json` broken by hand are refused by name, never read
 on a guess, but one rewritten whole is the agent's word. What holds is that whatever is written outside the flow is
 caught by fingerprint before anything is merged; **what keeps a person's actions a person's is the harness**: deny the
-agents `plitzi run finish --apply`, `run abort`, `run purge`, `run restore`, `run finish --lead-finishes`, `run stop --force` and
+agents `plitzi run finish --apply`, `run abort`, `run purge`, `run show --restore`, `run finish --lead-finishes`, `run stop --force` and
 `run attach --take-over` (in Claude Code, `permissions.deny` in the project's `.claude/settings.json`), and let them
 run the rest. A token is told apart: one a task was cut from is `reassigned`, one it was never taken with `invalid`
 (`revoked.json` keeps the fingerprints of those it lost).

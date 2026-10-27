@@ -50,7 +50,7 @@ const skill = (root: string, file: string): string => path.join(root, SKILLS_ROO
 
 /** The rules every agent of a run holds to, whatever its role: said once, the skills saying why. */
 const rules = (cli: string): string[] => [
-  `- Never run \`${cli} run finish\`, \`run abort\`, \`run purge\`, \`run restore\` or \`run stop --force\` — a person's. Never \`git stash\`, \`checkout\` or \`reset\`.`,
+  `- Never run \`${cli} run finish\`, \`run abort\`, \`run purge\`, \`run show --restore\` or \`run stop --force\` — a person's. Never \`git stash\`, \`checkout\` or \`reset\`.`,
   // A heredoc that never closed hung on stdin, and `pkill -f "cat"` to free it took the machine down.
   `- Stop a server with \`${cli} server stop --port <port>\` in the folder that started it — it stops that folder's alone; a command that hangs is your harness's to stop. Never \`pkill\`, \`killall\` nor a kill by name or pattern: they reach every process on the machine. Write files with your edit tools, never a heredoc through the shell.`,
   '- A wait that ends is not your end: run `task next` again until it says "You can stop".',

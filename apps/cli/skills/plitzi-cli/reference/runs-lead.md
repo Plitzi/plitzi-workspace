@@ -67,7 +67,7 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    back: `task reassign <task> --reason "…" --to <agent>`.
 
    **Keep a person's actions a person's in the harness**: deny the agents `run finish --apply`, `run abort`, `run purge`,
-   `run restore`, `run finish --lead-finishes`, `run stop --force`, `run attach --take-over`.
+   `run show --restore`, `run finish --lead-finishes`, `run stop --force`, `run attach --take-over`.
 
    **Quality** (`"quality": "light" | "standard" | "high"`): the dry run sets it where you say none. Ids: lowercase letters, digits, `-`, `_`; **classes and provider ids by area** (`pronosticos-card`, `topBoxers`):
    two tasks that name one class differently meet only at the approval. **Foundations go to different agents**: the

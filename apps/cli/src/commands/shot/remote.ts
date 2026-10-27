@@ -81,6 +81,16 @@ export const pictureAnswered = (
   whenAnswered(() => pictureOf(browser, url, view), 'the picture was not taken');
 
 /**
+ * The other side's address for one of ours: a site named by its root (`--compare https://example.com`) answers each of
+ * our paths at the same path; an address with a path of its own is that page, whatever ours is.
+ */
+export const otherPageAt = (pathname: string, compare: string): string => {
+  const other = new URL(compare);
+
+  return other.pathname === '/' ? new URL(pathname, other).href : other.href;
+};
+
+/**
  * A page of another site open to be read, once its site answers it — no picture taken: what `page measure` reads is
  * styles, and a whole-page picture (its pictures loaded, the page unrolled) was most of its 18 s a call.
  */

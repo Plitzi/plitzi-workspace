@@ -187,7 +187,7 @@ export const addFunctionsPackage = async (name: string, options: DryRunOptions):
 
   console.log(
     `Added ${name}@${version} (${String(Math.round(bytes / 1024))} KB) as ${FUNCTIONS_DIR}/${VENDOR_DIR}/${file}: ` +
-      `import it from a file of ${FUNCTIONS_DIR}/ with '${relative}' — \`functions push\` saves it with the rest.`
+      `import it from a file of ${FUNCTIONS_DIR}/ with '${relative}' — \`space push functions\` saves it with the rest.`
   );
   if (NODE_GLOBALS.test(built.code)) {
     console.warn(

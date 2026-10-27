@@ -45,7 +45,7 @@ export const workaroundFindings = (
     });
   }
 
-  // The project copied by hand into a scratch — to measure apart from the project's state: what `run copy` makes.
+  // The project copied by hand into a scratch — to measure apart from the project's state: what `run preview --copy` makes.
   const copies = scratch.filter(each => (each.copies ?? []).length > 0);
   if (copies.length > 0) {
     findings.push({
@@ -55,7 +55,7 @@ export const workaroundFindings = (
       title: `Copies of the project made by hand: ${String(copies.reduce((sum, each) => sum + (each.copies ?? []).length, 0))}`,
       evidence: evidenceOf(copies.map(each => `${each.agent}: ${(each.copies ?? []).join(', ')}`)),
       times: copies.reduce((sum, each) => sum + (each.copies ?? []).length, 0),
-      fix: 'plitzi run copy makes the run’s work a folder of the agent’s scratch — say it where the agent looked for one',
+      fix: 'plitzi run preview --copy makes the run’s work a folder of the agent’s scratch — say it where the agent looked for one',
       subject: 'scratch-copy'
     });
   }

@@ -20,7 +20,7 @@ export interface PackSourceOptions extends DryRunOptions {
 }
 
 /**
- * `plitzi source pack`: the snapshot `plitzi plugin upload` and `plitzi runtime push` keep beside what they send (RFC
+ * `plitzi source pack`: the snapshot `plitzi plugin upload` and `plitzi space push runtime` keep beside what they send (RFC
  * 0020), written to a file — to see what of a project would be kept, or for a tool that keeps it itself (the seeder).
  */
 const packSourceCommand = async (entries: string[], options: PackSourceOptions): Promise<void> => {

@@ -190,8 +190,8 @@ are listed under **Functions** and the server halves of its plugins under **Plug
 **In a project**, with the CLI:
 
 ```bash
-plitzi functions pull        # the space's files into src/functions/ — refused if it would overwrite what is not pushed
-plitzi functions push        # src/functions/ as the space's draft — refused if the space moved on since the pull
+plitzi space pull functions        # the space's files into src/functions/ — refused if it would overwrite what is not pushed
+plitzi space push functions        # src/functions/ as the space's draft — refused if the space moved on since the pull
 plitzi functions try seismic.feed --params '{"minMagnitude":"4"}'
 plitzi functions dev seismic.feed --params '{}' --watch   # on this machine, as the platform runs it
 ```
@@ -456,7 +456,7 @@ const functions = await loadFunctions(path.join(PROJECT_ROOT, 'src/functions'));
 createServer({ /* … */ functions: { native: functions } });
 ```
 
-A server project made by `plitzi create` already does this, so the files `plitzi functions pull` brings run there as
+A server project made by `plitzi create` already does this, so the files `plitzi space pull functions` brings run there as
 they run on the platform. A `defineFunctions({ … })` written in the server's own code goes in `native` the same way.
 Their tasks join the catalog and their routes answer under `/fn/` on every space the server serves. This replaces
 the old `action.tasks`: a deployment's own tasks and a space's are written the same way.

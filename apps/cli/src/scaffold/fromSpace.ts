@@ -178,7 +178,7 @@ export const projectEntries = ({
 
 /** `src/runtime/index.ts` handing over the module a space's runtime source starts at, where that is somewhere else. */
 const runtimeIndex = (from: string): string => `/**
- * The space's runtime, where the server and \`plitzi runtime push\` look for it: its source, as it came, starts at
+ * The space's runtime, where the server and \`plitzi space push runtime\` look for it: its source, as it came, starts at
  * \`${from}\`.
  */
 export { default } from '${from.startsWith('.') ? from : `./${from}`}';
@@ -273,7 +273,7 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
     binaries[RUNTIME_BUNDLE] = builtOnly.runtime;
   }
 
-  // Where the server and \`plitzi runtime push\` look for it: \`src/runtime/index.ts\`, handing over the module the source
+  // Where the server and \`plitzi space push runtime\` look for it: \`src/runtime/index.ts\`, handing over the module the source
   // starts at when that is somewhere else.
   const runtimeAt = runtimeEntry ? place(runtimeEntry) : undefined;
   if (runtimeAt && runtimeAt !== RUNTIME_ENTRY) {

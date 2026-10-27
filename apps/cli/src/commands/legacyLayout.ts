@@ -84,7 +84,7 @@ export const legacyLayout = async (root: string): Promise<LegacyPlace[]> => {
       now: `${FUNCTIONS_DIR}/`,
       blocking: true,
       action: 'move',
-      fix: `git mv functions ${FUNCTIONS_DIR}: functions pull and push, and the server, read them there`
+      fix: `git mv functions ${FUNCTIONS_DIR}: space pull and push, and the server, read them there`
     });
   }
 

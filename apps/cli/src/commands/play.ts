@@ -1,18 +1,16 @@
 import chalk from 'chalk';
 
-import { launchBrowser } from '../browser';
 import { projectHere } from './existingProject';
 import { pairOf } from './measure';
 import { settle } from './measureState';
 import { readState } from './playState';
-import { parseSteps } from './shotSteps';
 import { keptSession } from '../browser/keptBrowser';
 import { originHere } from '../runs/copyServer';
-import { pageAnswered } from './shot/remote';
-import { actStep, stepText } from './shot/steps';
+import { otherPageAt, pageAnswered } from './shot/remote';
+import { actingSteps, actStep, stepText } from './shot/steps';
 import { visitorsOn } from './shot/visitors';
 import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
-import { openVisit, visitorAsked, visitViewOf } from './visit';
+import { openVisit, visitorBrowser, visitViewOf } from './visit';
 
 import type { BrowserPage, Scheme } from '../browser';
 import type { Pair } from './measure';
@@ -20,7 +18,6 @@ import type { ElementState } from './playState';
 import type { VisitorOptions } from './register/options';
 import type { ActingStep } from './shot/steps';
 import type { Visitors } from './shot/visitors';
-import type { ShotStep } from './shotSteps';
 
 /** How much of an element's text a line of `--read` shows; `--json` has it whole. */
 const TEXT_SHOWN = 80;
@@ -444,11 +441,11 @@ export const readTargets = (read: readonly string[] = []): string[] =>
   read.flatMap(each => (/^[\w-]+(,[\w-]+)+$/.test(each) ? each.split(',') : [each]));
 
 /** The steps asked — none with `--read` alone: the page as it rests, the start read and nothing played. */
-export const stepsOf = (options: Pick<PlayOptions, 'steps' | 'read'>): ShotStep[] | { problem: string } => {
+export const stepsOf = (options: Pick<PlayOptions, 'steps' | 'read'>): ActingStep[] | { problem: string } => {
   if ((options.steps ?? '').trim() !== '') {
-    const parsed = parseSteps(options.steps ?? '', 500);
+    const acting = actingSteps(options.steps, 'page play');
 
-    return 'problem' in parsed ? { problem: `--steps: ${parsed.problem}.` } : parsed;
+    return 'problem' in acting ? { problem: `${acting.problem}.` } : acting;
   }
 
   return (options.read ?? []).length > 0
@@ -462,23 +459,12 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
     return;
   }
 
-  const parsed = stepsOf(options);
-  if ('problem' in parsed) {
-    fail(parsed.problem);
+  const steps = stepsOf(options);
+  if ('problem' in steps) {
+    fail(steps.problem);
 
     return;
   }
-
-  const pictured = parsed.find(
-    (step): step is Exclude<ShotStep, ActingStep> => step.kind === 'shot' || step.kind === 'frames'
-  );
-  if (pictured) {
-    fail(`page play reads what each step leaves, with no picture: "${pictured.kind}" is page shot --steps'.`);
-
-    return;
-  }
-
-  const steps = parsed.filter((step): step is ActingStep => step.kind !== 'shot' && step.kind !== 'frames');
   const same = (options.same ?? []).filter((each): each is PlaySame => (PLAY_SAME as readonly string[]).includes(each));
   if (options.same && same.length !== options.same.length) {
     fail(`--same takes ${PLAY_SAME.join(', ')}: what moved, what is shown, what takes a press.`);
@@ -502,11 +488,7 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
     return;
   }
 
-  const target = options.compare
-    ? new URL(options.compare).pathname === '/'
-      ? new URL(route, options.compare).href
-      : options.compare
-    : undefined;
+  const target = options.compare === undefined ? undefined : otherPageAt(route, options.compare);
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
   const where = await originHere(project.root, plitzi, options.url);
   if ('problem' in where) {
@@ -515,17 +497,12 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
     return;
   }
 
-  const visitor = await visitorAsked(project.root, options);
-  if (visitor === null) {
+  const ready = await visitorBrowser(project.root, options);
+  if (!ready) {
     return;
   }
 
-  const browser = await launchBrowser(project.root);
-  if ('problem' in browser) {
-    unanswered(browser.problem);
-
-    return;
-  }
+  const { visitor, browser } = ready;
 
   const reads = readTargets(options.read).map(pairOf);
   const results: { width: number; played: PlayedStep[]; unlike: string[] }[] = [];

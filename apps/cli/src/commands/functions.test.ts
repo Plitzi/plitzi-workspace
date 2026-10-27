@@ -24,7 +24,8 @@ vi.mock('../account/oauth', async importOriginal => ({
   openBrowser: () => undefined
 }));
 
-const { devFunction, pullFunctions, pushFunctions, tryFunction } = await import('./functions');
+const { devFunction, pullFunctions, tryFunction } = await import('./functions');
+const { push } = await import('./push');
 
 const write = async (file: string, text: string) => {
   await fs.mkdir(path.dirname(path.join(project, 'src/functions', file)), { recursive: true });
@@ -75,7 +76,7 @@ describe('plitzi functions', () => {
 
     await pullFunctions({ api: platform.api });
     await write('lib/feed.ts', 'export const a = 2;');
-    await pushFunctions({ api: platform.api });
+    await push(['functions'], { api: platform.api });
 
     expect(await read('lib/feed.ts')).toBe('export const a = 2;');
     expect(platform.functions).toEqual({
@@ -96,7 +97,7 @@ describe('plitzi functions', () => {
 
     await pullFunctions({ api: platform.api });
     await write('index.ts', 'export default { mine: true };');
-    await pushFunctions({ api: platform.api, dryRun: true });
+    await push(['functions'], { api: platform.api, dryRun: true });
 
     expect(said.out).toContain('→ src/functions/index.ts');
     expect(platform.functions).toEqual({ files: { 'index.ts': 'export default {};' }, version: 'v1' });
@@ -123,7 +124,7 @@ describe('plitzi functions', () => {
     platform.functions = { files: { 'index.ts': 'export default { builder: true };' }, version: 'v2' };
     await write('index.ts', 'export default { mine: true };');
 
-    await pushFunctions({ api: platform.api });
+    await push(['functions'], { api: platform.api });
 
     expect(said.err).toContain('changed since your pull');
     expect(platform.functions.version).toBe('v2');
@@ -134,7 +135,7 @@ describe('plitzi functions', () => {
     platform.noPrivateBucket = true;
     await write('index.ts', 'export default {};');
 
-    await pushFunctions({ api: platform.api });
+    await push(['functions'], { api: platform.api });
 
     expect(said.err).toContain('This space has no private bucket');
     expect(said.err).not.toContain('changed since your pull');
@@ -144,7 +145,7 @@ describe('plitzi functions', () => {
   it('prints where the code is wrong', async () => {
     await write('index.ts', 'export default {\nBROKEN');
 
-    await pushFunctions({ api: platform.api });
+    await push(['functions'], { api: platform.api });
 
     expect(said.err).toContain('src/functions/index.ts:2 Expected ";"');
     expect(process.exitCode).toBe(1);

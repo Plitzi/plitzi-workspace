@@ -293,7 +293,7 @@ export const runRestore = (
     options,
     ctx => restoreFile(ctx, runId, file, options.from ?? 'base'),
     restored =>
-      `${restored.file} put back (${restored.merge}); undo it: plitzi run restore ${runId} ${restored.file} --from ${restored.merge}`
+      `${restored.file} put back (${restored.merge}); undo it: plitzi run show ${runId} ${restored.file} --restore ${restored.merge}`
   );
 
 export const runAttach = (runId: string, options: RunCommandOptions & { takeOver?: boolean }): Promise<void> =>
@@ -309,10 +309,17 @@ export const runAttach = (runId: string, options: RunCommandOptions & { takeOver
       `Attached to "${runId}"${attached.tookOver ? ', taken over from the other machine' : ''}${attached.repinned ? ', re-pinned to the Plitzi installed now' : ''}. Cut: ${list(attached.cut)}.${attached.kept.length > 0 ? ` Kept in their agents' hands, told to go on: ${attached.kept.join(', ')}.` : ''}\n${keeperText(attached.keeper)}\nGo on: plitzi run status ${runId}`
   );
 
-export const runRelease = (runId: string, options: RunCommandOptions): Promise<void> =>
+/** `plitzi run attach <run> --release`: the run let go from this machine — the other way of attaching to it. */
+export const runRelease = (runId: string, options: RunCommandOptions & { takeOver?: boolean }): Promise<void> =>
   act(
     options,
-    async ctx => releaseRun(ctx, await runOf(ctx, options, runId)),
+    async ctx => {
+      if (options.takeOver) {
+        throw new RunRefusal('invalid', 'A run is taken over or let go, not both: --take-over or --release');
+      }
+
+      return releaseRun(ctx, await runOf(ctx, options, runId));
+    },
     () => `Released: another machine can attach to "${runId}".`
   );
 

@@ -68,7 +68,7 @@ from — it also runs as a server of its own. From that project, signed in (`pli
 (`plitzi space use`):
 
 ```bash
-plitzi runtime push                  # packs src/runtime/index.ts (or --entry) and keeps it as the space's draft runtime
+plitzi space push runtime                  # packs src/runtime/index.ts and keeps it as the space's draft runtime
 plitzi runtime status                # how each environment's runtime is, and its variables' names
 printf %s "$URL" | plitzi runtime vars set REDIS_URL   # a value from stdin stays out of the shell history
 plitzi runtime vars unset REDIS_URL
@@ -80,7 +80,7 @@ plitzi runtime start                 # started again — one stopped by hand, or
 - **Publishing is deploying.** A push is the draft's runtime (`main`); publishing the space copies its code into the
   revision, and the published site's runtime restarts on it — the pages, their flows and the code they call ship
   together.
-- **Its source goes up with it.** `plitzi runtime push` also keeps the source it was packed from — every file of the
+- **Its source goes up with it.** `plitzi space push runtime` also keeps the source it was packed from — every file of the
   project the module reaches, followed from its entry, and the packages they import — in the same private bucket, and
   a publish freezes it with the code. That is what `plitzi create --from` brings back — the files it imports, and
   `src/runtime/index.ts` handing over the module they start at — run in the project's own process: see [A space as a project](./projects-from-spaces.md).

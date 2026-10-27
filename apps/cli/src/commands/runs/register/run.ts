@@ -55,8 +55,10 @@ import { duration, FOLLOW_MS, names, pagePaths, positiveInteger, wholeNumber } f
 import type {
   FinishOptions,
   PlanOptions,
+  PreviewOptions,
   ReferenceOptions,
   RunCommandOptions,
+  ShowOptions,
   UpgradeRunOptions,
   WatchRunOptions
 } from '..';
@@ -392,7 +394,8 @@ export const registerRunGroup = (program: Command): Command => {
     .action((run: string | undefined, options: RunCommandOptions) => runKeep(run, options));
 
   runGroup
-    .command('can-write')
+    // A hook's question, not an agent's: kept out of the help an agent reads (a run's agents never asked it).
+    .command('can-write', { hidden: true })
     .description(
       'Whether a file may be written: no — with the task and until when — if a task of any open run holds it. For any hook'
     )
@@ -473,23 +476,21 @@ export const registerRunGroup = (program: Command): Command => {
 
   runGroup
     .command('preview')
-    .description('The run’s work as it goes, served by the project’s dev server: each approval shows in it')
+    .description(
+      'The run’s work as it goes, served by the project’s dev server: each approval shows in it — or, --copy, made a folder of yours'
+    )
     .argument('[run]', 'The run')
     .option('--task <task>', 'A task in review instead: its copy as it went to review, to look at before approving it')
     .option('--port <port>', 'Where to serve it (8300; 8301 with --task)', positiveInteger)
-    .action((run: string | undefined, options: RunCommandOptions & { port?: number; task?: string }) =>
-      runPreview(run, options)
-    );
-
-  runGroup
-    .command('copy')
-    .description(
-      'The run’s approved work as a folder of yours — your scratch unless named: a spike measures on it, apart'
+    .option(
+      '--copy [dir]',
+      'The approved work as a folder instead, inside the project — your scratch’s run-copy unless named: a spike measures on it, apart'
     )
-    .argument('[dir]', 'Where, inside the project (your scratch’s run-copy when left out)')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((dir: string | undefined, options: RunCommandOptions) => runCopy(dir, options));
+    .action((run: string | undefined, options: PreviewOptions) =>
+      options.copy === undefined ? runPreview(run, options) : runCopy(run, options)
+    );
 
   runGroup
     .command('report')
@@ -535,7 +536,7 @@ export const registerRunGroup = (program: Command): Command => {
   runGroup
     .command('resolve')
     .description(
-      'Settle one file of a reconciliation — the project’s version, the run’s, both merged, or a file of yours; with no file, every one settled, the run goes on (a person’s)'
+      'Choose one file’s version when the project and the run both changed it — the project’s, the run’s, both merged, or a file of yours; with no file, every one chosen, the run goes on (a person’s)'
     )
     .argument('<run>', 'The run')
     .argument('[file]', 'The file under reconciliation')
@@ -556,44 +557,37 @@ export const registerRunGroup = (program: Command): Command => {
     .action((run: string | undefined, options: RunCommandOptions) => runAbort(run, options));
 
   runGroup
-    .command('restore')
-    .description('Put one project file back from a backup — a person’s')
-    .argument('<run>', 'The run')
-    .argument('<file>', 'The project file')
-    .option('--from <backup>', 'base (when the run opened) or a merge (before it)', 'base')
-    .option(...JSON_OPTION)
-    .action((run: string, file: string, options: RunCommandOptions & { from?: string }) =>
-      runRestore(run, file, options)
-    );
-
-  runGroup
     .command('show')
-    .description('A version of a file the run keeps: the run’s, the backup when it opened, or the project’s')
+    .description(
+      'A version of a file the run keeps: the run’s, the backup when it opened, or the project’s — or, --restore, the backup put back into the project (a person’s)'
+    )
     .argument('<run>', 'The run')
     .argument('<file>', 'The project file')
     .addOption(new Option('--version <which>', 'Which one').choices(['run', 'base', 'project']).default('run'))
+    .option(
+      '--restore [backup]',
+      'Put the project file back from a backup — base (when the run opened, when left out) or a merge (before it): a person’s'
+    )
     .option(...JSON_OPTION)
-    .action((run: string, file: string, options: RunCommandOptions & { version?: 'run' | 'base' | 'project' }) =>
-      runShow(run, file, options)
+    .action((run: string, file: string, options: ShowOptions) =>
+      options.restore === undefined
+        ? runShow(run, file, options)
+        : runRestore(run, file, { ...options, from: options.restore === true ? 'base' : options.restore })
     );
 
   runGroup
     .command('attach')
     .description(
-      'Pick a run up: after the harness died, on another machine (--take-over, a person’s), after an upgrade'
+      'Pick a run up: after the harness died, on another machine (--take-over, a person’s), after an upgrade — or, --release, let it go from this machine'
     )
     .argument('<run>', 'The run')
     .option('--take-over', 'Take it from the machine it is active on')
+    .option('--release', 'The other way: let the run go from this machine, so another can attach to it')
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
-    .action((run: string, options: RunCommandOptions & { takeOver?: boolean }) => runAttach(run, options));
-
-  runGroup
-    .command('release')
-    .description('Let a run go from this machine, so another can attach to it')
-    .argument('<run>', 'The run')
-    .option(...JSON_OPTION)
-    .action((run: string, options: RunCommandOptions) => runRelease(run, options));
+    .action((run: string, options: RunCommandOptions & { takeOver?: boolean; release?: boolean }) =>
+      options.release ? runRelease(run, options) : runAttach(run, options)
+    );
 
   runGroup
     .command('purge')

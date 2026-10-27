@@ -1,14 +1,13 @@
 import chalk from 'chalk';
 
-import { launchBrowser } from '../browser';
 import { projectHere } from './existingProject';
 import { pairOf } from './measure';
 import { putIn } from './measureState';
-import { openVisit, visitorAsked, visitViewOf } from './visit';
+import { openVisit, visitorBrowser, visitViewOf } from './visit';
 import { keptOutline } from '../browser/keptBrowser';
 import { originHere } from '../runs/copyServer';
 import { targetOn } from './shot/capture';
-import { pageAnswered } from './shot/remote';
+import { otherPageAt, pageAnswered } from './shot/remote';
 import { actingSteps, playedOn } from './shot/steps';
 import { fail, unanswered } from './terminal';
 
@@ -321,11 +320,7 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
     return;
   }
 
-  const target = options.compare
-    ? new URL(options.compare).pathname === '/'
-      ? new URL(route, options.compare).href
-      : options.compare
-    : undefined;
+  const target = options.compare === undefined ? undefined : otherPageAt(route, options.compare);
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
   const where = target === undefined ? await originHere(project.root, plitzi, options.url) : undefined;
   if (where && 'problem' in where) {
@@ -411,17 +406,12 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
       }
     }
 
-    const visitor = await visitorAsked(project.root, options);
-    if (visitor === null) {
+    const ready = await visitorBrowser(project.root, options);
+    if (!ready) {
       return;
     }
 
-    const browser = await launchBrowser(project.root);
-    if ('problem' in browser) {
-      unanswered(browser.problem);
-
-      return;
-    }
+    const { visitor, browser } = ready;
 
     try {
       const opened: { page: BrowserPage } | { problem: string } =

@@ -98,7 +98,7 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
 The lead takes a task back at any time — `plitzi task reassign <task> --reason "…" [--to <agent>|lead]`: you are told
 why on your next command, and stop (`reassigned`, 12); one handed to you comes first in your `task next`. `plitzi run stop` lets the
 tasks in hand finish; `run resume`. Before the final merge, `plitzi task revert <task> --reason "…"` takes a task's work
-out (what was built on it waits again), and `plitzi run restore <run> <file>` puts a file back from the backup. A person's: `run stop --force`, `run finish --apply`, `run abort`
+out (what was built on it waits again), and `plitzi run show <run> <file> --restore` puts a file back from the backup. A person's: `run stop --force`, `run finish --apply`, `run abort`
 (writes nothing, leaves the report), `purge`.
 
 ## Exit codes

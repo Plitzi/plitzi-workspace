@@ -67,7 +67,7 @@ later comes with the source it was made with, not whatever was uploaded since.
 
 - `plitzi plugin pack` writes the snapshot beside the zip (`<name>.source.json.gz`), and `plitzi plugin upload` keeps it
   after the plugin is installed (`PUT /spaces/:id/sources`).
-- `plitzi runtime push` packs and keeps it after the runtime is pushed.
+- `plitzi space push runtime` packs and keeps it after the runtime is pushed.
 - The seeder does both for every seed, through the same CLI, with `--source-root` set to the seed's folder.
 - `plitzi source pack <entries…> --kind --name -o <file>` writes one to a file, to see what would be kept.
 
@@ -152,7 +152,7 @@ written with `defineAction` always does.
   no secret in it — naming every variable and credential besides.
 - It installs, formats with the project's Prettier (`public/` and `vendor/` are ignored: downloads stay as they came),
   and records what the project was given in `.plitzi/space.json`, and the functions as a working copy in
-  `.plitzi/functions.json` — so `plitzi functions push` works from the project too.
+  `.plitzi/functions.json` — so `plitzi space push functions` works from the project too.
 - It prints a report of what came across differently, or not at all.
 
 **What came across built only.** A plugin or runtime uploaded before Plitzi kept sources has none: the plugin's files
@@ -212,9 +212,9 @@ went up before it is said, and recorded):
 |---|---|---|
 | `plugins` | each plugin whose source changed — grouped as the space keeps them, a new element folder a plugin of its own | `plugin pack` + `plugin upload` (`--cdn`, `--bucket`) |
 | `files` | each changed file of `public/assets/`, at the same path under the space's `assets/` — images, sounds, videos, JSON | `POST /spaces/:spaceId/cdns/:identifier/assets?path=` |
-| `functions` | `src/functions/` | `functions push` |
+| `functions` | `src/functions/` | `space push functions` |
 | `data` | `src/data/` whole, its CDN addresses put back | `PUT /spaces/:spaceId/data` |
-| `runtime` | `src/runtime/index.ts` and what it imports | `runtime push` |
+| `runtime` | `src/runtime/index.ts` and what it imports | `space push runtime` |
 | `space` | `src/space/` authored, the actions `src/actions/index.ts` serves, the manifests in `src/connectors/` | `PUT /spaces/:spaceId/import` |
 
 **Never over somebody's work unseen.** The export carries which state the draft is in (`draft`, a digest of its schema,

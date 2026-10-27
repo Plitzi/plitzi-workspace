@@ -63,7 +63,15 @@ authoring and the elements learnt from the runs.
   lifts with its answer (`task unblock <task> --answer "…"`, kept in the report). A file's turn is one command:
   `task wait <file>` → `task claim <file> --wait` (`--follow`, `--timeout` as before), `task release <file>` →
   `task claim <file> --release`. `page same --than <origin>` → `--compare <origin>`, as every page command names the
-  other side. Each old name is refused naming the new one.
+  other side. The run's work outside the run is one command: `run copy [dir]` → `run preview --copy [dir]`; a file's
+  versions one: `run restore <run> <file> --from <backup>` → `run show <run> <file> --restore [backup]` (still a
+  person's, confirmed by the run's name); a run's machine one: `run release <run>` → `run attach <run> --release`.
+  `run can-write`, a hook's question, is left out of the help. What moves between a project and its space is
+  `space pull` and `space push`, a part named: `functions pull` → `space pull functions` (into any project connected to
+  the space, as before), `functions push` → `space push functions`, `runtime push` → `space push runtime` (its module is
+  `src/runtime/index.ts`: `--entry` is gone). `space push --dry-run` lists the functions' and the runtime's files, and a
+  part asked that the project lacks says where it is looked for. `plugin upload` stays: a plugin package's way to a
+  space, which `space push` is not. Each old name is refused naming the new one.
 - **Every page command reads a page as one visitor, from the same flags.** `page check`, `measure`, `play`,
   `outline`, `same`, `shot` and `task look` take `--as`, `--guest`, `--timezone`, `--presence`, `--clock`, `--block`,
   `--autoplay` and `--storage` alike — `page check` took no `--clock`, `page outline` no `--timezone`, `page same` no

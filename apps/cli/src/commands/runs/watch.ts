@@ -159,11 +159,13 @@ export const runWatch = async (runId: string | undefined, options: WatchRunOptio
   }
 };
 
-export const runShow = async (
-  runId: string,
-  file: string,
-  options: RunCommandOptions & { version?: 'run' | 'base' | 'project' }
-): Promise<void> =>
+/** What `run show` is asked: a version to read — or, `--restore`, a backup to put back (`true`: the base). */
+export interface ShowOptions extends RunCommandOptions {
+  version?: 'run' | 'base' | 'project';
+  restore?: string | true;
+}
+
+export const runShow = async (runId: string, file: string, options: ShowOptions): Promise<void> =>
   act(
     options,
     async ctx => {
@@ -260,11 +262,31 @@ export const runKeep = async (runId: string | undefined, options: RunCommandOpti
   await keepAgents(ctx, await runOf(ctx, options, runId));
 };
 
-/** `plitzi run copy [dir]`: the run's approved work as a folder — a spike's measurements made on it, apart from the project. */
-export const runCopy = (dir: string | undefined, options: RunCommandOptions): Promise<void> =>
+/** What `run preview` is asked: the run's work served — a task's copy with `task` — or, `copy`, made a folder. */
+export interface PreviewOptions extends RunCommandOptions {
+  port?: number;
+  task?: string;
+  /** `--copy [dir]`: the folder (`true`: the scratch's run-copy). */
+  copy?: string | true;
+}
+
+/**
+ * `plitzi run preview --copy [dir]`: the run's approved work as a folder — a spike's measurements made on it, apart
+ * from the project. One command for the run's work outside the run, where `run copy` was another.
+ */
+export const runCopy = (runId: string | undefined, options: PreviewOptions): Promise<void> =>
   act(
     options,
-    async ctx => copyRunWork(ctx, await runOf(ctx, options), dir),
+    async ctx => {
+      if (options.task !== undefined || options.port !== undefined) {
+        throw new RunRefusal(
+          'invalid',
+          '--copy makes the approved work a folder, served by nobody: leave out --task and --port (a task’s copy is served by run preview --task)'
+        );
+      }
+
+      return copyRunWork(ctx, await runOf(ctx, options, runId), options.copy === true ? undefined : options.copy);
+    },
     copied =>
       `The run's approved work (${String(copied.files)} file(s) of it) is at ${copied.dir}, made afresh — its state its own, empty. Serve it there on a port of its own: cd ${copied.dir} && PORT=<port> npm start — or run its specs there.`
   );

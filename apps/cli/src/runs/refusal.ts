@@ -42,7 +42,7 @@ const NEXT_STEP: Record<RefusalCode, string> = {
   invalid: 'do what the refusal above says, then run the command again',
   'not-found': 'check the name: plitzi run status --all lists the runs and their tasks',
   'other-machine':
-    'the run is active on another machine: release it there (plitzi run release), or a person takes it over',
+    'the run is active on another machine: release it there (plitzi run attach <run> --release), or a person takes it over',
   'another-run': 'one run at a time: finish or abort the open one first (plitzi run status)',
   'agent-limit':
     'hand back to the lead: this task waits until one of the agents at work has nothing in progress (plitzi run status)',

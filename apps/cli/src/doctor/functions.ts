@@ -76,7 +76,7 @@ export const checkFunctions: Check = async ({ root, answers }) => {
         `${FUNCTIONS_DIR}/ holds code, and this project has no server to run it.`,
         {
           file: FUNCTIONS_DIR,
-          fix: 'plitzi functions push sends them to the space on Plitzi, which runs them.'
+          fix: 'plitzi space push functions sends them to the space on Plitzi, which runs them.'
         }
       )
     ];

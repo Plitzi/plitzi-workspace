@@ -1,5 +1,5 @@
 import { FUNCTIONS_DIR } from '../../scaffold/paths';
-import { devFunction, pullFunctions, pushFunctions, tryFunction } from '../functions';
+import { devFunction, tryFunction } from '../functions';
 import { addFunctionsPackage } from '../functionsAdd';
 import { functionsLater } from '../functionsLater';
 import { API_OPTION, DRY_RUN_OPTION } from './options';
@@ -13,26 +13,9 @@ import type { Command } from 'commander';
 export const registerFunctions = (program: Command): void => {
   const functions = program
     .command('functions')
-    .description(`The space’s own server code: ${FUNCTIONS_DIR}/ in this project is a working copy of it`);
-
-  functions
-    .command('pull')
     .description(
-      `Write the space’s functions into ${FUNCTIONS_DIR}/ — refused when that would overwrite what is not pushed`
-    )
-    .option('-f, --force', 'Overwrite what is not pushed, or a copy of another space')
-    .option(...API_OPTION)
-    .option(...DRY_RUN_OPTION)
-    .action((options: FunctionsOptions) => pullFunctions(options));
-
-  functions
-    .command('push')
-    .description(
-      `Save ${FUNCTIONS_DIR}/ as the space’s draft: built and checked on the platform, refused if it moved on since`
-    )
-    .option(...API_OPTION)
-    .option(...DRY_RUN_OPTION)
-    .action((options: FunctionsOptions) => pushFunctions(options));
+      `The space’s own server code: ${FUNCTIONS_DIR}/ in this project is a working copy of it — plitzi space pull functions and space push functions move it`
+    );
 
   functions
     .command('add')

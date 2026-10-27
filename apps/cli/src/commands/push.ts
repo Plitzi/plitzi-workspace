@@ -40,8 +40,8 @@ import type { SourceSnapshotKind, SpaceExport } from '@plitzi/sdk-shared/source'
  * (docs/en/projects-from-spaces.md). Whatever changed since the project last had the space, or the parts named:
  *
  * - `plugins` — each plugin whose source changed, packed and uploaded to the space's CDN, as `plitzi plugin upload`;
- * - `functions` — `src/functions/`, as `plitzi functions push`;
- * - `runtime` — the runtime module, packed, as `plitzi runtime push`;
+ * - `functions` — `src/functions/`, built and checked on the platform (`pushFunctionsOf`);
+ * - `runtime` — the runtime module, packed (`pushRuntimeOf`);
  * - `space` — the pages, styles, actions and connectors, as the space's draft.
  *
  * In that order: the pages name the plugins' elements and the actions name the functions' tasks, so what is named goes
@@ -55,6 +55,16 @@ import type { SourceSnapshotKind, SpaceExport } from '@plitzi/sdk-shared/source'
 export const PUSH_PARTS = ['space', 'functions', 'data', 'runtime', 'plugins', 'files'] as const;
 
 export type PushPart = (typeof PUSH_PARTS)[number];
+
+/** Where each part is looked for, said when one asked is not there. */
+const WHERE_PART: Readonly<Record<PushPart, string>> = {
+  space: `${SPACE_DIR}/, its pages`,
+  functions: `the files at the top of ${FUNCTIONS_DIR}/ (plitzi space pull functions brings the space's)`,
+  data: `${DATA_DIR}/`,
+  runtime: `its module at ${DEFAULT_RUNTIME_ENTRY} (plitzi runtime add writes one)`,
+  plugins: 'a plugin of its own (plitzi plugin add)',
+  files: `${PUBLIC_ASSETS_DIR}/`
+};
 
 /** What goes up first: what the rest names — the files before the data and the pages that name their addresses. */
 const ORDER: readonly PushPart[] = ['plugins', 'files', 'functions', 'data', 'runtime', 'space'];
@@ -267,9 +277,11 @@ const choose = async (found: Pushable[], asked: string[], spaceName: string): Pr
       return undefined;
     }
 
-    const missing = asked.filter(part => !found.some(item => item.part === part));
+    const missing = asked.filter(isPart).filter(part => !found.some(item => item.part === part));
     if (missing.length > 0) {
-      fail(`This project has no ${missing.join(', ')} to push.`);
+      fail(
+        `This project has no ${missing.join(', ')} to push — ${missing.map(part => `${part}: ${WHERE_PART[part]}`).join('; ')}.`
+      );
 
       return undefined;
     }
@@ -529,6 +541,14 @@ export const push = async (asked: string[], options: PushOptions): Promise<void>
         .sort((a, b) => ORDER.indexOf(a.part) - ORDER.indexOf(b.part))
         .map(item => `→ ${item.label}${force ? ' (--force: over whatever the space holds now)' : ''}`)
     );
+    // The functions and the runtime say their own files under it, and the version they would go against.
+    for (const item of chosen) {
+      if (item.part === 'functions') {
+        await pushFunctionsOf(root, connection, space, { force, dryRun: true });
+      } else if (item.part === 'runtime') {
+        await pushRuntimeOf(root, connection, space, item.entry, { dryRun: true });
+      }
+    }
 
     return;
   }

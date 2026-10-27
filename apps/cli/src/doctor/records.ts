@@ -42,7 +42,7 @@ export const checkRecords: Check = async ({ root, origin, record }) => {
 
   const functions = await readFunctionsState(root);
   if (!functions && (await there(path.join(root, FUNCTIONS_STATE_FILE)))) {
-    findings.push(unreadable(FUNCTIONS_STATE_FILE, 'functions push takes every function for one never pulled'));
+    findings.push(unreadable(FUNCTIONS_STATE_FILE, 'space push functions takes every function for one never pulled'));
   }
 
   if (functions && origin && functions.space !== origin.space.id) {
@@ -50,7 +50,7 @@ export const checkRecords: Check = async ({ root, origin, record }) => {
       say.error(
         'records-disagree',
         `${FUNCTIONS_STATE_FILE} is of the space #${String(functions.space)}, and the project is of ${origin.space.name} (#${String(origin.space.id)}): its functions would be pushed to one space as pulled from another.`,
-        { file: FUNCTIONS_STATE_FILE, fix: 'plitzi functions pull, from the project’s space.' }
+        { file: FUNCTIONS_STATE_FILE, fix: 'plitzi space pull functions, from the project’s space.' }
       )
     );
   }

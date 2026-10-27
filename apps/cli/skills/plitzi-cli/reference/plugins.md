@@ -71,7 +71,7 @@ plitzi plugin upload                            # the zip pack left, onto the sp
 declarations with integrity hashes, and the zip the builder takes under Resources. `upload` checks the manifest,
 sends the zip to one of the space's CDNs (`--cdn`) and installs it — a plugin already there moves to the new version with
 its settings kept. `--plugin-version` sets the version the manifest carries. The plugin's source — every file it
-imports, followed from its entry — is kept beside it on the space (`runtime push` does the same for a runtime), which
+imports, followed from its entry — is kept beside it on the space (`space push runtime` does the same for a runtime), which
 is what `create --from` brings back; `plitzi source pack` writes what would be kept to a file, to look at.
 
 A self-hosted page server does not need `pack`: it compiles a plugin from its source (`action: 'compile'`).

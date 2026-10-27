@@ -9,7 +9,7 @@ import { apiFor } from './account';
 import { download, fetchExport, functionsOnDisk, notFetched, versionLabel } from './createFrom';
 import { filesWouldWrite, sayDryRun } from './dryRun';
 import { findProject } from './existingProject';
-import { writeFunctionsState } from './functions';
+import { pullFunctions, writeFunctionsState } from './functions';
 import { projectFormatter } from './projectFormatter';
 import { digest, digestsOf, givenFiles, readOrigin, writeOrigin } from './spaceOrigin';
 import { fail } from './terminal';
@@ -156,6 +156,34 @@ const writeBytes = async (root: string, file: string, bytes: Buffer): Promise<vo
 const list = (files: readonly string[]): string => files.map(file => `\n  ${file}`).join('');
 
 const plural = (count: number, noun: string): string => `${String(count)} ${noun}${count === 1 ? '' : 's'}`;
+
+/** What `space pull` brings alone, named: the parts that go into any project the CLI works in, not only one made from it. */
+export const PULL_PARTS = ['functions'] as const;
+
+/**
+ * `plitzi space pull <parts…>`: only these parts of the space — its functions into `src/functions/` — the way back of
+ * `space push <parts…>`. One command for what moves between the project and its space, where `functions pull` was another.
+ */
+export const pullParts = async (parts: readonly string[], options: PullOptions): Promise<void> => {
+  const unknown = parts.filter(part => !(PULL_PARTS as readonly string[]).includes(part));
+  if (unknown.length > 0) {
+    fail(
+      `plitzi space pull brings ${PULL_PARTS.join(', ')} alone — not ${unknown.join(', ')}: leave the parts out to bring the whole space.`
+    );
+
+    return;
+  }
+
+  if (options.environment !== undefined || options.revision !== undefined) {
+    fail(
+      'The functions are pulled from the draft: leave out --environment and --revision (they choose the version the whole space follows).'
+    );
+
+    return;
+  }
+
+  await pullFunctions(options);
+};
 
 export const pull = async (options: PullOptions): Promise<void> => {
   const project = await findProject(process.cwd());

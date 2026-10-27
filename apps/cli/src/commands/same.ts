@@ -1,9 +1,8 @@
 import chalk from 'chalk';
 
-import { launchBrowser } from '../browser';
 import { projectHere } from './existingProject';
-import { unanswered, UNANSWERED_EXIT } from './terminal';
-import { openVisit, visitorAsked, visitViewOf } from './visit';
+import { UNANSWERED_EXIT } from './terminal';
+import { openVisit, visitorBrowser, visitViewOf } from './visit';
 
 import type { Browser, Scheme } from '../browser';
 import type { VisitorOptions } from './register/options';
@@ -177,17 +176,12 @@ export const pageSame = async (paths: string[], options: SameOptions): Promise<v
     return;
   }
 
-  const visitor = await visitorAsked(project.root, options);
-  if (visitor === null) {
+  const ready = await visitorBrowser(project.root, options);
+  if (!ready) {
     return;
   }
 
-  const browser = await launchBrowser(project.root);
-  if ('problem' in browser) {
-    unanswered(browser.problem);
-
-    return;
-  }
+  const { visitor, browser } = ready;
 
   try {
     const read = await samePages(browser, paths.length > 0 ? paths : ['/'], options, {

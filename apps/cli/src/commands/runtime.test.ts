@@ -24,7 +24,8 @@ vi.mock('../account/oauth', async importOriginal => ({
   openBrowser: () => undefined
 }));
 
-const { pushRuntime, runtimeStatus, setRuntimeVariable, unsetRuntimeVariable } = await import('./runtime');
+const { runtimeStatus, setRuntimeVariable, unsetRuntimeVariable } = await import('./runtime');
+const { push } = await import('./push');
 
 /** The project's own sdk-server, as an install would put it: this workspace's. */
 const installSdkServer = async () => {
@@ -83,7 +84,7 @@ describe('plitzi runtime', () => {
       'import { greet } from "./greeting";\nexport default { start: () => ({ said: greet("x") }) };\n'
     );
 
-    await pushRuntime({ api: platform.api });
+    await push(['runtime'], { api: platform.api });
 
     expect(platform.runtime.pushed).toHaveLength(1);
     expect(platform.runtime.pushed[0]).toMatchObject({ contentType: 'application/octet-stream' });
@@ -96,9 +97,9 @@ describe('plitzi runtime', () => {
   });
 
   it('says where the module should be when there is none, and sends nothing', async () => {
-    await pushRuntime({ api: platform.api });
+    await push(['runtime'], { api: platform.api });
 
-    expect(said.err).toContain('There is no src/runtime/index.ts');
+    expect(said.err).toContain('its module at src/runtime/index.ts');
     expect(platform.runtime.pushed).toEqual([]);
   });
 
@@ -133,7 +134,7 @@ describe('plitzi runtime', () => {
 
   it('refuses outside a project, before signing in or sending anything', async () => {
     vi.spyOn(process, 'cwd').mockReturnValue(path.parse(home).root);
-    await pushRuntime({ api: platform.api });
+    await push(['runtime'], { api: platform.api });
 
     expect(said.err).toContain('There is no package.json here or above');
     expect(process.exitCode).toBe(1);

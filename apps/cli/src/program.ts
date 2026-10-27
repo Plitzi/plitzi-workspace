@@ -13,7 +13,7 @@ import { explainCommand } from './commands/explain';
 import { fix } from './commands/fix';
 import packPluginCommand from './commands/packPlugin';
 import packSourceCommand from './commands/packSource';
-import { pull } from './commands/pull';
+import { pull, PULL_PARTS, pullParts } from './commands/pull';
 import { push, PUSH_PARTS } from './commands/push';
 import { registerElement } from './commands/register/element';
 import { registerFunctions } from './commands/register/functions';
@@ -23,7 +23,6 @@ import { registerRuns } from './commands/runs/register';
 import { groupHelp } from './commands/runs/register/run';
 import {
   powerRuntime,
-  pushRuntime,
   runtimeStatus,
   setRuntimeSize,
   setRuntimeVariable,
@@ -231,10 +230,17 @@ export const buildProgram = (): Command => {
 
   spaceGroup
     .command('pull')
+    .argument(
+      '[parts...]',
+      `Only these: ${PULL_PARTS.join(', ')} — into any project connected to the space. None named: the whole space`
+    )
     .description(
       'Bring a project made with create --from up to date with its space: what changed there is written, what changed here is kept'
     )
-    .option('-f, --force', 'Where a file changed both here and on the space, take the space’s copy')
+    .option(
+      '-f, --force',
+      'Where a file changed both here and on the space, take the space’s copy — with functions, overwrite what is not pushed'
+    )
     .option(
       '-e, --environment <environment>',
       'Follow another version from now on: main (the draft), or a published environment'
@@ -242,7 +248,9 @@ export const buildProgram = (): Command => {
     .option('--revision <n>', 'Pin a published revision of it, or latest to follow its newest again')
     .option(...API_OPTION)
     .option(...DRY_RUN_OPTION)
-    .action((options: PullOptions) => pull(options));
+    .action((parts: string[], options: PullOptions) =>
+      parts.length === 0 ? pull(options) : pullParts(parts, options)
+    );
 
   spaceGroup
     .command('push')
@@ -287,7 +295,7 @@ export const buildProgram = (): Command => {
   runtime
     .command('add')
     .description(
-      'Write the space’s runtime in src/runtime/: its own server code, run by this project’s server and by Plitzi (plitzi runtime push)'
+      'Write the space’s runtime in src/runtime/: its own server code, run by this project’s server and by Plitzi (plitzi space push runtime)'
     )
     .option('-f, --force', 'Write over a runtime the project already has')
     .option(...DRY_RUN_OPTION)
@@ -315,7 +323,9 @@ export const buildProgram = (): Command => {
   sourceGroup
     .command('pack')
     .argument('<entries...>', 'The files the build starts from: a runtime module, or each element’s index')
-    .description('Write the source snapshot plitzi plugin upload and plitzi runtime push keep beside what they send')
+    .description(
+      'Write the source snapshot plitzi plugin upload and plitzi space push runtime keep beside what they send'
+    )
     .addOption(
       new Option('--kind <kind>', 'What it is the source of').choices(['plugin', 'runtime']).makeOptionMandatory()
     )
@@ -493,14 +503,6 @@ export const buildProgram = (): Command => {
     .action((zip: string | undefined, options: UploadPluginOptions) => uploadPluginCommand(zip, options));
 
   registerFunctions(program);
-
-  runtime
-    .command('push')
-    .description('Pack this project’s runtime module and keep it as the space’s draft runtime')
-    .option('--entry <path>', 'The module whose default export is defineRuntime(…)', 'src/runtime/index.ts')
-    .option(...API_OPTION)
-    .option(...DRY_RUN_OPTION)
-    .action((options: RuntimeOptions) => pushRuntime(options));
 
   runtime
     .command('status')

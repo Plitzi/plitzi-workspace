@@ -10,7 +10,7 @@ import addRuntime from './addRuntime';
 import create from './create';
 
 /**
- * `plitzi runtime add`: the space's runtime written where the project's server runs it and `plitzi runtime push` finds
+ * `plitzi runtime add`: the space's runtime written where the project's server runs it and `plitzi space push runtime` finds
  * it — the same module tried here before it goes — and `start:dev` restarting on it.
  */
 

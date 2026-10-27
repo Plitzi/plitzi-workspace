@@ -9,7 +9,6 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { connectToSpace } from './account';
 import { sayDryRun } from './dryRun';
-import { projectHere } from './existingProject';
 import { keepSource } from './keepSource';
 import { fail } from './terminal';
 import { authorizedRequest } from '../account/session';
@@ -22,7 +21,7 @@ import type { PushOutcome } from './pushOutcome';
 import type { ConnectedSpace, Connection } from '../account/connection';
 
 /**
- * `plitzi runtime push | status | vars`: a space's runtime — its own server code, run as a process of its own beside
+ * `plitzi space push runtime`, `plitzi runtime status | vars`: a space's runtime — its own server code, run as a process of its own beside
  * the platform (`@plitzi/sdk-server/runtime`) — pushed from the project that holds it, and the variables it starts with.
  *
  * The code is packed with the project's own `@plitzi/sdk-server`, at the version the project runs: what the platform
@@ -33,10 +32,7 @@ export interface RuntimeStatusOptions extends AccountOptions {
   json?: boolean;
 }
 
-export interface RuntimeOptions extends AccountOptions, DryRunOptions {
-  /** The runtime module: whose default export is `defineRuntime(…)`. `src/runtime.ts` by default. */
-  entry?: string;
-}
+export type RuntimeOptions = AccountOptions & DryRunOptions;
 
 type Environment = {
   environment: string;
@@ -71,7 +67,7 @@ const projectPacker = async (root: string): Promise<Packer | undefined> => {
   }
 
   fail(
-    'plitzi runtime push packs the runtime with this project’s own @plitzi/sdk-server, and none is installed:\n  npm install @plitzi/sdk-server'
+    'plitzi space push runtime packs the runtime with this project’s own @plitzi/sdk-server, and none is installed:\n  npm install @plitzi/sdk-server'
   );
 
   return undefined;
@@ -113,7 +109,7 @@ export const pushRuntimeOf = async (
   }
 
   if (dryRun) {
-    sayDryRun(`plitzi runtime push — to ${space.name}’s draft`, [
+    sayDryRun(`plitzi space push runtime — to ${space.name}’s draft`, [
       `→ ${path.relative(root, entry)}, packed: ${(bytes.byteLength / 1024).toFixed(0)} KB, and the source it was packed from`
     ]);
 
@@ -157,18 +153,6 @@ export const pushRuntimeOf = async (
 };
 
 /** Packs the project's runtime module and keeps it as the space's draft runtime — which a publish takes live. */
-export const pushRuntime = async (options: RuntimeOptions): Promise<void> => {
-  const root = (await projectHere('whose runtime to push'))?.root;
-  const connection = root && (await connectToSpace(options, 'to push to'));
-  if (!root || !connection || !connection.space) {
-    return;
-  }
-
-  await pushRuntimeOf(root, connection, connection.space, path.resolve(root, options.entry ?? DEFAULT_RUNTIME_ENTRY), {
-    dryRun: options.dryRun
-  });
-};
-
 const readRuntime = async (
   connection: Connection,
   spaceId: number
@@ -218,7 +202,7 @@ export const runtimeStatus = async (options: RuntimeStatusOptions): Promise<void
   }
 
   if (!runtime.environments.length) {
-    console.log(`${connection.space.name} has no runtime. Push one: plitzi runtime push.`);
+    console.log(`${connection.space.name} has no runtime. Push one: plitzi space push runtime.`);
   }
 
   const spendOf = (name: string): string => {

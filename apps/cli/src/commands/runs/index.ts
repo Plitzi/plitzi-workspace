@@ -12,7 +12,7 @@ export { runMonitor } from './monitor';
 export { runUpgrade } from './upgrade';
 export type { UpgradeRunOptions } from './upgrade';
 export { runBench, runCopy, runKeep, runPreview, runReport, runShow, runStatus, runWatch } from './watch';
-export type { WatchRunOptions } from './watch';
+export type { PreviewOptions, ShowOptions, WatchRunOptions } from './watch';
 export {
   runAbort,
   runAttach,

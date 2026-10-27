@@ -662,7 +662,7 @@ export const abortRun = async (
   return { discarded, report, inputs };
 };
 
-/** `plitzi run restore`: one project file put back from a backup — the run's opening one, or before a merge. */
+/** `plitzi run show --restore`: one project file put back from a backup — the run's opening one, or before a merge. */
 export const restoreFile = async (
   ctx: RunContext,
   runId: string,

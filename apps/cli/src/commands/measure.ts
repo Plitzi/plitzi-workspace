@@ -7,18 +7,17 @@ import { InvalidArgumentError } from 'commander';
 
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
-import { launchBrowser } from '../browser';
 import { projectHere } from './existingProject';
 import { measureOn } from './measureOn';
 import { putIn, rowsOf, stateText } from './measureState';
 import { comparedText, keptText, readingText } from './measureText';
 import { differences, MEASURED, onlyOf, PSEUDO_MEASURED, PSEUDOS, SIDE_LONGHANDS } from './measureValues';
 import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
-import { openVisit, VIEW_HEIGHT, visitorAsked, visitViewOf } from './visit';
+import { openVisit, VIEW_HEIGHT, visitorBrowser, visitViewOf } from './visit';
 import { keptMeasure } from '../browser/keptBrowser';
 import { originHere } from '../runs/copyServer';
 import { authoredHandles } from '../runs/expectations';
-import { pageAnswered } from './shot/remote';
+import { otherPageAt, pageAnswered } from './shot/remote';
 import { actingSteps, playedOn } from './shot/steps';
 import { visitorsOn } from './shot/visitors';
 
@@ -398,11 +397,7 @@ export const measure = async (route: string, elements: string[], options: Measur
         ? { kind: last.kind, pairs: [last.pair] }
         : undefined;
 
-  const target = options.compare
-    ? new URL(options.compare).pathname === '/'
-      ? new URL(route, options.compare).href
-      : options.compare
-    : undefined;
+  const target = options.compare === undefined ? undefined : otherPageAt(route, options.compare);
   if (options.rows && target) {
     fail(
       '--rows measures this page’s rows of a list: the other page’s are another list — measure them without --compare'
@@ -444,19 +439,12 @@ export const measure = async (route: string, elements: string[], options: Measur
     return;
   }
 
-  const browser = await launchBrowser(project.root);
-  if ('problem' in browser) {
-    unanswered(browser.problem);
-
+  const ready = await visitorBrowser(project.root, options);
+  if (!ready) {
     return;
   }
 
-  const visitor = await visitorAsked(project.root, options);
-  if (visitor === null) {
-    await browser.close();
-
-    return;
-  }
+  const { visitor, browser } = ready;
 
   const now = Date.now();
   // Authored only when an element is not found: what a measure that finds everything never pays for.

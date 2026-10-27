@@ -23,7 +23,7 @@ import type { PushOutcome } from './pushOutcome';
 import type { ConnectedSpace, Connection } from '../account/connection';
 
 /**
- * `plitzi functions pull | push | try`: a space's functions — its own server code — edited in a project.
+ * `plitzi space pull functions`, `space push functions`, `plitzi functions try`: a space's functions — its own server code — edited in a project.
  *
  * The project's `src/functions/` is a WORKING COPY of the space's source, never a second source: pull writes the space's
  * files into it, push sends them back and is refused when the space's copy moved on since the pull, so neither the
@@ -39,7 +39,7 @@ export interface FunctionsOptions extends AccountOptions, DryRunOptions {
 export const FUNCTIONS_STATE_FILE = path.join('.plitzi', 'functions.json');
 
 type Files = Record<string, string>;
-/** What `functions pull` last wrote into `src/functions/`, and the version of the space's functions it was. */
+/** What `space pull functions` last wrote into `src/functions/`, and the version of the space's functions it was. */
 export type WorkingCopy = { space: number; version: string; files: Files };
 type Draft = { files: Files; version: string; manifest: { tasks: { namespace: string; action: string }[] } | null };
 type Problem = { file?: string; line?: number; column?: number; message: string };
@@ -58,7 +58,7 @@ export const readFunctionsFiles = (root: string): Promise<Files> =>
     read: file => fs.readFile(file, 'utf8')
   });
 
-/** What `functions pull` last recorded (`.plitzi/functions.json`), or undefined when there is none or it is not one. */
+/** What `space pull functions` last recorded (`.plitzi/functions.json`), or undefined when there is none or it is not one. */
 export const readFunctionsState = async (root: string): Promise<WorkingCopy | undefined> => {
   try {
     const value: unknown = JSON.parse(await fs.readFile(path.join(root, FUNCTIONS_STATE_FILE), 'utf8'));
@@ -157,7 +157,7 @@ export const pullFunctions = async (options: FunctionsOptions): Promise<void> =>
 
   const base = path.join(root, FUNCTIONS_DIR);
   if (options.dryRun) {
-    sayDryRun(`plitzi functions pull — ${connection.space.name}`, [
+    sayDryRun(`plitzi space pull functions — ${connection.space.name}`, [
       ...(await filesWouldWrite(base, Object.keys(draft.files))).map(line =>
         line.replace(/^(.) /, `$1 ${FUNCTIONS_DIR}/`)
       ),
@@ -186,7 +186,7 @@ export const pullFunctions = async (options: FunctionsOptions): Promise<void> =>
       ? chalk.green(
           `Pulled ${count} file${count === 1 ? '' : 's'} of ${connection.space.name}’s functions into ${FUNCTIONS_DIR}/ — ${taskList(draft)}.`
         )
-      : `${chalk.bold(connection.space.name)} has no functions yet. Write ${FUNCTIONS_DIR}/index.ts and plitzi functions push.`
+      : `${chalk.bold(connection.space.name)} has no functions yet. Write ${FUNCTIONS_DIR}/index.ts and plitzi space push functions.`
   );
 };
 
@@ -234,7 +234,7 @@ export const pushFunctionsOf = async (
     }
 
     if (Object.keys(draft.files).length && !force) {
-      fail(`${space.name} already has functions. Pull them first: plitzi functions pull.`);
+      fail(`${space.name} already has functions. Pull them first: plitzi space pull functions.`);
 
       return 'failed';
     }
@@ -243,7 +243,7 @@ export const pushFunctionsOf = async (
   }
 
   if (dryRun) {
-    sayDryRun(`plitzi functions push — to ${space.name}’s draft`, [
+    sayDryRun(`plitzi space push functions — to ${space.name}’s draft`, [
       ...Object.keys(local)
         .sort()
         .map(file => `→ ${FUNCTIONS_DIR}/${file}`),
@@ -300,21 +300,6 @@ export const pushFunctionsOf = async (
   );
 
   return 'pushed';
-};
-
-export const pushFunctions = async (options: FunctionsOptions): Promise<void> => {
-  const root = await rootOf();
-  const connection = root && (await connectToSpace(options, 'to push to'));
-  if (!root || !connection || !connection.space) {
-    return;
-  }
-
-  const outcome = await pushFunctionsOf(root, connection, connection.space, { dryRun: options.dryRun });
-  if (outcome === 'unchanged') {
-    console.log(`Nothing to push: ${FUNCTIONS_DIR}/ is what was pulled.`);
-  } else if (outcome === 'pushed') {
-    console.log(chalk.dim('The live site runs them once the space is published.'));
-  }
 };
 
 type RunReport = {

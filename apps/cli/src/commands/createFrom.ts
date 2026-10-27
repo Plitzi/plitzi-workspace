@@ -146,7 +146,7 @@ export const writeFromSpace = async (target: string, project: ProjectFromSpace):
   return missing;
 };
 
-/** The space's functions as they are on disk: what `plitzi functions push` compares the project's with. */
+/** The space's functions as they are on disk: what `plitzi space push functions` compares the project's with. */
 export const functionsOnDisk = async (root: string, project: ProjectFromSpace): Promise<Record<string, string>> =>
   Object.fromEntries(
     await Promise.all(
@@ -158,8 +158,8 @@ export const functionsOnDisk = async (root: string, project: ProjectFromSpace): 
 
 /**
  * What the project was given, recorded once it is on disk as it will stay — installed and formatted — so `plitzi space pull`
- * tells what changed here from what changed on the space; and its functions as a pulled working copy, so `plitzi
- * functions push` sends them back to the space they came from.
+ * tells what changed here from what changed on the space; and its functions as a pulled working copy, so `plitzi space
+ * push functions` sends them back to the space they came from.
  */
 export const recordOrigin = async (
   root: string,

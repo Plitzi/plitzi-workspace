@@ -79,6 +79,13 @@ describe('what a refused command line meant', () => {
     expect(commandHint("error: unknown command 'wait'", ['task', 'wait', 'src/a.ts'])).toContain(
       'plitzi task claim <file> --wait'
     );
+    expect(commandHint("error: unknown command 'copy'", ['run', 'copy'])).toContain('run preview --copy');
+    expect(commandHint("error: unknown command 'push'", ['runtime', 'push'])).toContain('plitzi space push runtime');
+    expect(commandHint("error: unknown command 'pull'", ['functions', 'pull'])).toContain('space pull functions');
+    expect(commandHint("error: unknown command 'restore'", ['run', 'restore', 'r', 'f'])).toContain('--restore');
+    expect(commandHint("error: unknown command 'release'", ['run', 'release', 'r'])).toContain(
+      'run attach <run> --release'
+    );
   });
 
   it('is said by every command, each copying the program’s output', () => {

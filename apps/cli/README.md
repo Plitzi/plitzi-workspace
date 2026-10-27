@@ -40,8 +40,8 @@ plitzi run finish --apply                      # yours: the team's work into the
   there, `-e, --environment` for which version of the space, `--width` for the widths a page is looked at (one, or
   several separated by commas), `--api` for the platform, `--json` for a tool or an agent.
 - **`--dry-run` says what it would do, and does none of it** — on every command that writes or sends: `create`,
-  `plugin add`, `runtime add`, `space pull`, `space push`, `plugin pack`, `source pack`, `page import`, `plugin upload`, `functions pull`/
-  `functions push`/`functions add`, `runtime push`/`start`/`stop`/`size`/`vars`, `doctor --fix`. Each file it would write (`+` new, `~` replaced, `-`
+  `plugin add`, `runtime add`, `space pull`, `space push`, `plugin pack`, `source pack`, `page import`, `plugin upload`,
+  `functions add`, `runtime start`/`stop`/`size`/`vars`, `doctor --fix`. Each file it would write (`+` new, `~` replaced, `-`
   removed), what it would install or run, what it would send and where. It still reads what it needs to say so — the
   project, the files it would send, the space it would pull, signing in for that. `upgrade` and `space fix` only show until
   `--write`.
@@ -1002,17 +1002,17 @@ plitzi space push space --force                      # replace the draft even th
 ```
 
 The way back of `space pull`: the project put on the space it works with, as its **draft**. With nobody at the terminal it
-sends what changed since the project last had the space. Each part goes up as its own command sends it, in the order
-that names come before what names them:
+sends what changed since the project last had the space — or only the parts named (`space push functions runtime`),
+in the order that names come before what names them:
 
 1. `plugins` — every plugin whose source changed, packed and uploaded to the space's CDN (`--cdn`/`--bucket` when it
    has several public buckets);
 2. `files` — each changed file of `public/assets/`, put at the same path under the space's `assets/` on its CDN
    (images, sounds, videos and JSON; any other type is named and stays here);
-3. `functions` — `src/functions/`, as `functions push`;
+3. `functions` — `src/functions/`, built and checked on the platform, refused when the space's moved on since;
 4. `data` — `src/data/` whole, as the space's own data: kept privately, read by its server providers, frozen with each
    publish — refused when the space's copy changed since the project last had it, unless `--force`;
-5. `runtime` — the runtime module, as `runtime push`;
+5. `runtime` — the runtime module, `src/runtime/index.ts`, packed with the project's own `@plitzi/sdk-server`;
 6. `space` — `src/space/` authored, with the actions `src/actions/index.ts` serves and the connectors in `src/connectors/`.
 
 The draft is never replaced unseen: when it was edited in the builder since the project's last pull or push, the push
@@ -1123,7 +1123,7 @@ in the code keeps it from being written — said, and never stopping the build.
 plitzi source pack src/runtime/index.ts --kind runtime --name runtime -o runtime.source.json.gz
 ```
 
-What `plugin upload` and `runtime push` keep, written to a file to look at: the closure of the entries named, gzipped.
+What `plugin upload` and `space push runtime` keep, written to a file to look at: the closure of the entries named, gzipped.
 
 ## `login`, `space use` and `plugin upload`
 
@@ -1159,7 +1159,7 @@ certificate authorities the system trusts, as the browser beside it does.
 ## `runtime`
 
 ```bash
-plitzi runtime push                                   # pack src/runtime/index.ts and keep it as the space's draft runtime
+plitzi space push runtime                                   # pack src/runtime/index.ts and keep it as the space's draft runtime
 plitzi runtime status                                 # how each environment's runtime is, and its variables' names; --json
 printf %s "$URL" | plitzi runtime vars set REDIS_URL   # a value from stdin stays out of the shell history
 plitzi runtime vars unset REDIS_URL
@@ -1173,12 +1173,12 @@ connection kept open, memory that outlives a request, Node and its packages (`do
 
 **Its code lives in a project of yours** — a folder, usually a repository — and nowhere else: the builder shows how a
 runtime runs and sets its variables, but it does not hold its code and cannot change it. The project has
-`src/runtime/index.ts` (or `--entry`), whose default export is `defineRuntime(…)`, and `@plitzi/sdk-server` installed:
+`src/runtime/index.ts`, whose default export is `defineRuntime(…)`, and `@plitzi/sdk-server` installed:
 `plitzi runtime add` writes it in a project from `plitzi create` in server mode, whose `src/main.ts` runs it too —
 `/hello` answers on `npm start` — and whose `start:dev` restarts on it; `examples/self-hosting/10-runtime` is the smallest one to start
 from, and it runs as a server of its own too.
 
-`runtime push` packs the module with the project's own `@plitzi/sdk-server` — the module and every package it imports, bar
+`space push runtime` packs the module with the project's own `@plitzi/sdk-server` — the module and every package it imports, bar
 `@plitzi/*` and React, which the platform provides — and sends it to the space `plitzi whoami` names. It becomes the
 draft's runtime, which starts on it; **publishing the space** from the builder takes it to the published site. A
 runtime is part of the plans that carry it; on another, the push is refused and says so. The source it was
@@ -1195,8 +1195,8 @@ running one would stop, and why a stopped one is.
 ## `functions`
 
 ```bash
-plitzi functions pull                                              # the space's functions into src/functions/
-plitzi functions push                                              # src/functions/ saved as the space's draft, built and checked
+plitzi space pull functions                                              # the space's functions into src/functions/
+plitzi space push functions                                              # src/functions/ saved as the space's draft, built and checked
 plitzi functions try seismic.feed --params '{"minMagnitude":"4"}'  # one task of the saved draft, in the sandbox
 plitzi functions dev seismic.feed --params '{}' --watch            # on this machine, as the platform runs it
 plitzi functions add ical.js                                       # an installed package bundled into src/functions/vendor/
@@ -1205,8 +1205,8 @@ plitzi functions later show:s1 --now                               # one of them
 ```
 
 A space's own server code — tasks its actions run as steps, routes under `/fn/` — and `src/functions/` is a working copy
-of it: `.plitzi/functions.json` keeps what was pulled, so `functions pull` refuses to overwrite what is not pushed (`--force`
-throws it away) and `functions push` refuses when the space moved on since. A problem comes back as
+of it: `.plitzi/functions.json` keeps what was pulled, so `space pull functions` refuses to overwrite what is not pushed (`--force`
+throws it away) and `space push functions` refuses when the space moved on since. A problem comes back as
 `src/functions/<file>:<line> <message>`. `dev` runs with the project's own `@plitzi/sdk-server` (`isolated-vm` and
 `core-js` beside it); credentials come from `PLITZI_CREDENTIALS` (`.env`), as they do for the project's server. See `docs/en/functions.md`.
 

@@ -43,7 +43,7 @@ export type SpaceExport = {
   actions: { identifier: string; name: string; document: unknown }[];
   connectors: { identifier: string; name: string; manifest: unknown }[];
   /**
-   * The space's functions, by path in `functions/`, and the version of them this is — what `plitzi functions push`
+   * The space's functions, by path in `functions/`, and the version of them this is — what `plitzi space push functions`
    * checks the space's copy has not moved on from.
    */
   functions: { version: string; files: Record<string, string> };

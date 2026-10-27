@@ -5,7 +5,7 @@ import chalk from 'chalk';
 
 import { comparePictures, pageRegions } from '@plitzi/sdk-authoring';
 
-import { dataUrl, launchBrowser, projectOrigin } from '../../browser';
+import { dataUrl, projectOrigin } from '../../browser';
 import { copyOf, runPaths } from '../../runs/paths';
 import { keptPage } from '../../runs/reference';
 import { PROJECT_TMP } from '../../scaffold/paths';
@@ -14,7 +14,7 @@ import { projectHere } from '../existingProject';
 import { pairOf } from '../measure';
 import { parseSteps } from '../shotSteps';
 import { fail } from '../terminal';
-import { visitorAsked, visitViewOf } from '../visit';
+import { visitorBrowser, visitViewOf } from '../visit';
 import { capture, pictureOf, readPage } from './capture';
 import {
   compareAfterClicks,
@@ -29,6 +29,7 @@ import {
 } from './compare';
 import { framesOf } from './frames';
 import { matchesSection, shotFile, smallPicture, tilesOf } from './output';
+import { otherPageAt } from './remote';
 import { clickThrough, interactionSteps, playSteps } from './steps';
 import { MOVING_PERCENT } from './types';
 import { visitorsOn } from './visitors';
@@ -112,17 +113,12 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
-  const visitor = await visitorAsked(project.root, options, { own: !external });
-  if (visitor === null) {
+  const ready = await visitorBrowser(project.root, options, { own: !external });
+  if (!ready) {
     return;
   }
 
-  const browser = await launchBrowser(project.root);
-  if ('problem' in browser) {
-    fail(browser.problem);
-
-    return;
-  }
+  const { visitor, browser } = ready;
 
   if (options.fill && options.steps !== undefined) {
     await browser.close();
@@ -282,12 +278,12 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     // The run before it, its part, pictured while ours is — its scheme said, nothing waits for ours to be painted.
     const otherPart =
       localPart && options.compare && options.scheme && parts[0]
-        ? (() => {
-            const other = new URL(options.compare);
-            const target = other.pathname === '/' ? new URL(pathname, other).href : other.href;
-
-            return pictureOf(browser, target, { ...view, clip: parts[0] }, other.origin);
-          })()
+        ? pictureOf(
+            browser,
+            otherPageAt(pathname, options.compare),
+            { ...view, clip: parts[0] },
+            new URL(options.compare).origin
+          )
         : undefined;
     const taken =
       where.origin === undefined
@@ -355,8 +351,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     };
 
     if (options.compare) {
-      const other = new URL(options.compare);
-      const target = other.pathname === '/' ? new URL(pathname, other).href : other.href;
+      const target = otherPageAt(pathname, options.compare);
       // Against the page as the run kept it, where it did: the site may have changed since the run began.
       const kept = options.live ? undefined : await keptPage(project.root, target, view.width, taken.scheme);
       const clickedBeside =

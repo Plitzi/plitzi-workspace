@@ -31,7 +31,15 @@ const ELSEWHERE: Readonly<Partial<Record<string, string>>> = {
   'run continue': 'plitzi run resolve <run>, no file named, lets the run go on once every file is settled',
   'run prune': 'nothing to run: every run open, and run watch while it follows, prune the caches',
   'task wait': 'plitzi task claim <file> --wait waits for a file another task holds — --follow until it is yours',
-  'task release': 'plitzi task claim <file> --release lets a file go to the next task waiting for it'
+  'task release': 'plitzi task claim <file> --release lets a file go to the next task waiting for it',
+  'run copy': 'plitzi run preview --copy [dir] makes the run’s approved work a folder of yours',
+  'run restore': 'plitzi run show <run> <file> --restore [backup] puts the file back from a backup (a person’s)',
+  'run release': 'plitzi run attach <run> --release lets the run go from this machine',
+  // What moves between the project and its space is one command: space pull and space push, a part named.
+  'runtime push': 'plitzi space push runtime sends the runtime module — space push alone, whatever changed',
+  'functions push':
+    'plitzi space push functions saves src/functions/ as the draft — space push alone, whatever changed',
+  'functions pull': 'plitzi space pull functions writes the space’s functions into src/functions/'
 };
 
 /** An option another page command has, and what this one calls the same thing. */

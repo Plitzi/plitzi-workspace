@@ -53,7 +53,7 @@ export interface FakePlatform {
   expiresIn: number;
   /** Space 3's functions draft: saved whole, a new version each time; a file containing `BROKEN` does not build. */
   functions: { files: Record<string, string>; version: string };
-  /** Space 3 has no private bucket: a functions push is refused for storage, as the platform does (409, `storage`). */
+  /** Space 3 has no private bucket: a push of the functions is refused for storage, as the platform does (409, `storage`). */
   noPrivateBucket: boolean;
   /** Every task tried, with its params. */
   tried: { task: string; params: unknown }[];
