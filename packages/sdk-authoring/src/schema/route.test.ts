@@ -27,6 +27,14 @@ describe('which page answers an address, and for whom', () => {
       },
       { name: 'Profile', slug: 'u/{{username}}', body: [container({ id: 'profile-box' })] },
       {
+        name: 'New room',
+        slug: 'rooms/new',
+        body: [
+          container({ id: 'new-form', visible: 'auth.isAuthenticated' }),
+          container({ id: 'new-gate', visible: '!auth.isAuthenticated' })
+        ]
+      },
+      {
         name: 'Welcome',
         id: 'welcome-out',
         slug: 'welcome',
@@ -56,5 +64,7 @@ describe('which page answers an address, and for whom', () => {
     expect(audienceAt(schema, '/account')).toBe('members');
     expect(audienceAt(schema, '/welcome')).toBe('both-apart');
     expect(audienceAt(schema, '/u/juno')).toBe('everyone');
+    // A gate in place: the router sends nobody away, the page draws each apart (encore-11's /rooms/new).
+    expect(audienceAt(schema, '/rooms/new')).toBe('gated');
   });
 });

@@ -1,31 +1,30 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { approveDesign, assertDesigner, designDue, reviewTimeOf, timedOut } from '../design';
 import { writeJson } from '../files';
-import { assertReviewingLead, isPrincipal, reviewTeamOf, spareReviewers } from '../leads';
-import { agentAddress, LEAD, messagesOf, sendMessage, unreadFor } from '../messages';
+import { isPrincipal } from '../leads';
+import { agentAddress, LEAD, markRead, messagesOf, sendMessage, unreadFor } from '../messages';
 import { taskPaths } from '../paths';
 import { RunRefusal } from '../refusal';
-import { letGoUi } from '../reviewQueue';
-import { assertStatus, loadRun, logRun, readRunLog, recordBrake, requireNoTask } from '../run';
+import { assertStepReviewer, letGoStep, nextStep, reviewSteps, reviewTeamOf } from '../reviews';
+import { assertStatus, loadRun, logRun, recordBrake, requireNoTask } from '../run';
 import { logSpent } from '../spent';
+import { isResearch } from '../spike';
 import { keepFiles, withLock } from '../store';
 import { DEFAULTS, readRequests, readStart, updateState, viewTask } from '../taskStore';
-import { DESIGNER, readTeam, startedAgents, TEAM_FILE } from '../team';
 import { buildMergeIntoRun, buildRequestsMerge, changeApproved } from './approve';
 import { closeApproved } from './closeApproved';
 import { at, findTask, refreshCopy } from './common';
 import { besideHint, partnerFor, reviewedBeside, writtenSince } from './pairApproval';
+import { approveResearch, dropProposal } from './research';
 
-import type { DesignSkip } from '../designSkip';
 import type { ProjectChange, ReviewComment, TaskState } from '../model';
 import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 
 /**
- * `plitzi task review`: a tester's verdict — the lead's, on what reaches it — or a designer's on a task's UI, on a task
- * in review.
+ * `plitzi task review`: a verdict on the step of its review a card waits for (`reviews.ts`) — its reviewer's, or the
+ * lead's on any.
  */
 
 export interface ReviewedTask {
@@ -47,14 +46,12 @@ export interface ReviewedTask {
   toLead?: boolean;
   /** Its files a person changed meanwhile, put together with its change (--merge). */
   joined?: string[];
-  /** A designer approved its UI — it is the lead's now — or the lead approved it without that review. */
-  design?: 'approved' | 'skipped';
-  /** `skipped`: why, as the lead said it. */
-  designSkip?: DesignSkip;
-  /** `skipped` while a designer was at that review: who — told to drop it, and said to the lead. */
-  designBy?: string;
+  /** A step approved, not the last: the role whose step it was, and the role whose step is next. */
+  passed?: { role: string; next: string };
   /** Written in its copy after it went to review: not part of what was reviewed, so not merged. */
   notReviewed?: string[];
+  /** A research card approved: the tasks it stacked, those the lead left out (`--leave`), and what their check said. */
+  found?: { added: string[]; left: string[]; notices?: string[] };
   /** Approved beside it as one change (`--with`): that task, and its files that went in. */
   with?: { task: string; merged: string[] };
   /**
@@ -98,25 +95,6 @@ const tellItGoesFirst = async (ctx: RunContext, loaded: LoadedRun, view: TaskVie
   return waiting;
 };
 
-/** A UI review is a designer's of the team, by the name it was started with — another agent's verdict is not one. */
-const assertTeamDesigner = async (ctx: RunContext, taskId: string): Promise<void> => {
-  const team = await readTeam(ctx.root);
-  if (!team) {
-    return;
-  }
-
-  const designers = startedAgents(team).filter(each => each.roles.includes(DESIGNER));
-  if (!designers.some(each => each.agent === ctx.agent)) {
-    throw new RunRefusal(
-      'invalid',
-      `${ctx.agent} is no designer of the team (${TEAM_FILE}): ${
-        designers.length > 0 ? designers.map(each => each.agent).join(', ') : 'none of its agents'
-      } review ${taskId}'s UI — or whoever reviews the task, a tester or the lead, looks at it itself: plitzi task review ${taskId} --approve --skip-design reviewer`,
-      { task: taskId, designers: designers.map(each => each.agent) }
-    );
-  }
-};
-
 /** What `taskId`'s copy holds that did not go to review — what `task look` would serve the lead without it being so. */
 export const notReviewedIn = async (ctx: RunContext, runId: string, taskId: string): Promise<string[]> => {
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
@@ -127,37 +105,16 @@ export const notReviewedIn = async (ctx: RunContext, runId: string, taskId: stri
 };
 
 /**
- * Whether asking for changes now blocks the task for the lead: its rounds of this kind — the designer's on its UI, the
- * lead's on the rest — at their limit with this one. Said to the reviewer before it asks (`task next`), never found out
- * after (design-2's third round on t-overlay).
+ * Whether asking for changes now blocks the task for the lead: its rounds at their limit with this one, whichever step
+ * asks. Said to the reviewer before it asks (`task next`), never found out after (design-2's third round on t-overlay).
  */
-export const changesBlock = (state: Pick<TaskState, 'round' | 'designRounds'>, byDesigner: boolean): boolean => {
-  const designRounds = state.designRounds ?? 0;
-
-  return (byDesigner ? designRounds + 1 : state.round + 1 - designRounds) >= DEFAULTS.reviewRounds;
-};
+export const changesBlock = (state: Pick<TaskState, 'round'>): boolean => state.round + 1 >= DEFAULTS.reviewRounds;
 
 /**
  * `plitzi task review`: the lead's or a reviewer's verdict on a task in review. Changes go back to the same task
  * with comments, and past the round limit blocked for the lead to decide; approval keeps its reviewed version, merges it into the run's
  * work, lets its files go to whoever waits for them, and makes ready what was waiting on it.
  */
-/** Whether `agent` looked at the task (`task look`) since its last completion: what a lead's UI review is. */
-const lookedSince = async (loaded: LoadedRun, agent: string, taskId: string): Promise<boolean> => {
-  const log = await readRunLog(loaded.paths);
-  const completed = log.findLast(entry => entry.action === 'complete' && entry.task === taskId);
-  const since = typeof completed?.at === 'string' ? Date.parse(completed.at) : 0;
-
-  return log.some(
-    entry =>
-      entry.action === 'look' &&
-      entry.task === taskId &&
-      entry.by === agent &&
-      typeof entry.at === 'string' &&
-      Date.parse(entry.at) >= since
-  );
-};
-
 export const reviewTask = async (
   ctx: RunContext,
   runId: string,
@@ -165,7 +122,7 @@ export const reviewTask = async (
   verdict: 'approve' | 'changes',
   comments: ReviewComment[],
   onProjectChange: ProjectChange = 'refuse',
-  options: { skipDesign?: DesignSkip; with?: string } = {}
+  options: { with?: string; leave?: readonly string[] | 'all' } = {}
 ): Promise<ReviewedTask> => {
   requireNoTask(ctx, 'review a task');
   const loaded = await loadRun(ctx, runId);
@@ -198,7 +155,7 @@ const decide = async (
   verdict: 'approve' | 'changes',
   comments: ReviewComment[],
   onProjectChange: ProjectChange,
-  { skipDesign, with: withId }: { skipDesign?: DesignSkip; with?: string }
+  { with: withId, leave }: { with?: string; leave?: readonly string[] | 'all' }
 ): Promise<ReviewedTask> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'review a task');
@@ -239,27 +196,28 @@ const decide = async (
     );
   }
 
-  // A UI review another designer holds now — its own timed out, or the lead's — is refused as that first, naming why:
-  // what the lead said meanwhile is no reason to say the verdict again.
-  // Who reviews the task — a tester, the lead — gives its verdict as itself, its UI too when it says it looked
-  // (`--skip-design reviewer`); any other, while the UI waits, is the designer's.
+  // A verdict on the step it waits for: that step's reviewer's, or the lead's on any.
+  await assertStepReviewer(ctx, loaded, view);
   const team = await reviewTeamOf(ctx.root);
-  const reviewer =
-    isPrincipal(ctx.agent) ||
-    team.testers.includes(ctx.agent) ||
-    (team.developers.includes(ctx.agent) &&
-      spareReviewers(view, await Promise.all(loaded.tasks.map(each => viewTask(loaded.paths, each))), team).includes(
-        ctx.agent
-      ));
-  if (designDue(view.state) && !reviewer) {
-    assertDesigner(view, ctx.agent);
-  }
+  const steps = reviewSteps(task, team);
+  const review = view.state.review ?? { round: view.state.round, step: 0, since: view.state.updatedAt };
+  const role = steps.at(review.step) ?? LEAD;
 
-  // What the lead said to a reviewer while it reviewed is read before its verdict, not after: design-1's round on
-  // t-match-bars went out before the lead's "only the bars this round" reached it. Handed over here,
-  // read; said again, the verdict goes.
+  // Only what is about this task holds it — a message naming it, or naming no task of the run; one about another task
+  // reaches the agent with its next command (encore-11's test-1 sent a verdict twice for a note on another card).
   if (!isPrincipal(ctx.agent)) {
-    const meanwhile = (await unreadFor(loaded, agentAddress(ctx.agent), true)).filter(message => message.from === LEAD);
+    const ids = new Set(loaded.tasks.map(task => task.id));
+    const named = (text: string): Set<string> => new Set(text.match(/[\w-]+/g)?.filter(word => ids.has(word)) ?? []);
+    const meanwhile = (await unreadFor(loaded, agentAddress(ctx.agent), false)).filter(message => {
+      const tasks = named(message.text);
+
+      return message.from === LEAD && (tasks.size === 0 || tasks.has(taskId));
+    });
+    await markRead(
+      loaded,
+      agentAddress(ctx.agent),
+      meanwhile.map(message => message.id)
+    );
     if (meanwhile.length > 0) {
       throw new RunRefusal(
         'invalid',
@@ -273,101 +231,54 @@ const decide = async (
     }
   }
 
-  // Its UI waits for a designer: an agent's verdict is the designer's; the reviewer's approval waits for it, or says it
-  // skips.
-  const byDesigner = designDue(view.state) && !reviewer;
-  if (byDesigner) {
-    if (skipDesign) {
-      throw new RunRefusal(
-        'invalid',
-        `--skip-design is the reviewer's — a tester, or the lead: ${ctx.agent} is neither. One approves without the UI review as itself — plitzi task review ${taskId} --approve --skip-design reviewer`,
-        { task: taskId }
-      );
-    }
-
-    await assertTeamDesigner(ctx, taskId);
-    assertDesigner(view, ctx.agent);
-    if (verdict === 'approve') {
-      await approveDesign(ctx, loaded, view, comments.map(comment => comment.note).join(' · ') || undefined);
-
-      return { verdict, round: view.state.round, design: 'approved' };
-    }
-  } else {
-    await assertReviewingLead(ctx, loaded, view);
-  }
-
-  if (!byDesigner && verdict === 'approve' && designDue(view.state) && !skipDesign) {
-    const by = view.state.design?.by;
+  if (leave !== undefined && !(isResearch(task) && verdict === 'approve')) {
     throw new RunRefusal(
       'invalid',
-      `Task "${taskId}"'s UI waits for ${by ?? 'a designer'}'s review${by ? '' : ' (none took it yet)'}: run watch wakes you once it is said — or approve it now without it, saying why: plitzi task review ${taskId} --approve --skip-design reviewer | --skip-design no-ui — reviewer when you looked at its UI yourself, as a designer would; no-ui when it changes nothing a visitor sees`,
-      { task: taskId, ...(by ? { designer: by } : {}) }
-    );
-  }
-
-  const skipped = verdict === 'approve' && designDue(view.state);
-  const why = skipped ? skipDesign : undefined;
-  // A designer at it, in its time: its review is cut from under it — its copy taken away mid-look (a run's design-1,
-  // four minutes into d-brand-logo's). Past its time it is the lead's to decide, as `slow-review` says.
-  const reviewing = view.state.design?.by;
-  if (
-    why !== undefined &&
-    reviewing !== undefined &&
-    reviewing !== ctx.agent &&
-    timedOut(view.state.design, ctx.now().getTime()) === undefined
-  ) {
-    const left = Math.max(
-      1,
-      Math.ceil(
-        (Date.parse(view.state.design?.at ?? ctx.now().toISOString()) +
-          reviewTimeOf(view.state.design) -
-          ctx.now().getTime()) /
-          60_000
-      )
-    );
-    throw new RunRefusal(
-      'claimed',
-      `${reviewing} is reviewing ${taskId}'s UI — its own for ${String(left)} min more: approving past it takes its copy from under it. Wait for its verdict (plitzi run watch wakes you), or ask it where it stands (plitzi task message @${reviewing} "…"); past its time it is yours to decide.`,
-      { task: taskId, designer: reviewing }
-    );
-  }
-  // The reviewer's UI review is a look at it, said: a run's lead approved t-reactions-quiet `--skip-design reviewer` without
-  // one, and the emoji sat at the top of every key — the person saw it, no check could. A round whose UI its reviewer
-  // kept sending it back (`--changes … --skip-design reviewer`) is the same: no designer looks at it.
-  const kept =
-    view.state.design?.status === 'skipped' &&
-    view.state.design.why === 'reviewer' &&
-    view.state.design.round === view.state.round;
-  if (
-    (why === 'reviewer' || (verdict === 'approve' && kept && !byDesigner)) &&
-    !(await lookedSince(loaded, ctx.agent, taskId))
-  ) {
-    throw new RunRefusal(
-      'invalid',
-      `--skip-design reviewer says you reviewed ${taskId}'s UI yourself, and you have not looked at it since it was completed: plitzi task look ${taskId} (both schemes, the phone width), then approve`,
+      `--leave says which tasks a research card's approval leaves out: ${taskId} ${isResearch(task) ? 'is sent back, nothing stacked' : 'is no research card'}`,
       { task: taskId }
     );
   }
 
-  // The lead sent back a task a designer was reviewing: its review ends now, and it is told — never left to say a
-  // verdict that is refused (design-1's of t-result-card was turned away, naming nothing). An approval
-  // tells it once the approval is in (below).
-  const cut = verdict === 'changes' && !byDesigner && designDue(view.state) ? view.state.design?.by : undefined;
-  if (cut !== undefined && cut !== ctx.agent) {
-    await sendMessage(ctx, loaded, {
-      from: LEAD,
-      to: agentAddress(cut),
-      text: `${ctx.agent} sent ${taskId} back while you reviewed its UI: your review of this round ends — what you found still matters, tell the lead with plitzi task tell --about ${taskId} "…"`
-    });
+  // A research card's approval stacks what it found — no file of it merged.
+  if (isResearch(task) && verdict === 'approve') {
+    return approveResearch(ctx, loaded, view, leave);
+  }
+
+  // A step approved that is not the last — by its reviewer, never the lead's last word — hands the card to the next.
+  const passed = verdict === 'approve' && !isPrincipal(ctx.agent) && review.step + 1 < steps.length;
+  if (passed) {
+    const next = nextStep(review, steps, at(ctx));
+    const nextRole = steps.at(review.step + 1) ?? LEAD;
+    const note = comments.map(comment => comment.note).join(' · ');
+    await updateState(
+      view.paths,
+      state => ({
+        ...state,
+        ...('review' in next ? { review: next.review } : {}),
+        notes: [
+          ...state.notes,
+          {
+            at: at(ctx),
+            by: ctx.agent,
+            text: `Its ${role}'s review approved by ${ctx.agent}: its ${nextRole}'s now${note ? ` — ${note}` : ''}`
+          }
+        ]
+      }),
+      ctx.now
+    );
+    await logRun(ctx, loaded.paths, { action: 'review', task: taskId, verdict, round: view.state.round, step: role });
+    await logSpent(ctx, loaded, taskId, 'review');
+
+    return { verdict, round: view.state.round, passed: { role, next: nextRole } };
   }
 
   // A reviewer that took this round's review and is still at it is told its review ends — a run's tester read on as
   // the lead approved, the task's copy gone under it, and its own verdict refused "approved already".
-  const holder = view.state.reviewer;
-  if (holder && holder.by !== ctx.agent && holder.round === view.state.round && !byDesigner) {
+  const holder = review.by;
+  if (holder !== undefined && holder !== ctx.agent) {
     await sendMessage(ctx, loaded, {
       from: LEAD,
-      to: agentAddress(holder.by),
+      to: agentAddress(holder),
       text: `${ctx.agent} decided ${taskId} (${verdict === 'approve' ? 'approved' : 'sent back'}) while you reviewed it: your review of this round ends — what you found still matters, tell the lead with plitzi task tell --about ${taskId} "…"; then plitzi task next`
     });
   }
@@ -416,34 +327,26 @@ const decide = async (
   await writeJson(view.paths.review, { round, verdict, comments, by: ctx.agent, at: at(ctx) });
 
   if (verdict === 'changes') {
-    // Counted apart: the designer's rounds on its UI, and the lead's on the rest — each kind to its own limit.
-    const designRounds = (view.state.designRounds ?? 0) + (byDesigner ? 1 : 0);
-    const ofKind = byDesigner ? designRounds : round - designRounds;
-    const toLead = changesBlock(view.state, byDesigner);
+    // What a research card proposed goes with it: its next round proposes again.
+    if (isResearch(task)) {
+      await dropProposal(ctx, view);
+    }
+
+    const toLead = changesBlock(view.state);
     // It redoes its work on the run as it is now: what was approved while it was in review comes into its copy.
     const brought = toLead ? [] : await refreshCopy(ctx, loaded, view);
-    // The lead says the next round's UI review is its own: it comes to it, never offered to a designer.
-    const reserving = !byDesigner && skipDesign === 'reviewer';
     await updateState(
       view.paths,
       state => ({
         ...state,
         round,
-        ...(designRounds > 0 ? { designRounds } : {}),
-        // Its UI review, taken, is let go: the task left review.
-        ...(state.design !== undefined || reserving
-          ? {
-              design: {
-                ...letGoUi(state.design ?? { status: 'skipped' as const, round: state.round }),
-                ...(reserving ? { reserved: ctx.agent } : {})
-              }
-            }
-          : {}),
+        // Its step, taken, is let go: the task left review — its reviewer is the one before, offered it first.
+        ...(state.review ? { review: letGoStep(state.review) } : {}),
         status: toLead ? 'blocked' : 'changes-requested',
         ...(toLead
           ? {
               blockedBy: {
-                reason: `${String(ofKind)} rounds of ${byDesigner ? 'its UI review' : 'its review’s'} changes: the lead decides — approves it as it is (plitzi task review ${taskId} --approve), settles what is left with an answer (plitzi task unblock ${taskId} --answer "…"), or asks the person`,
+                reason: `${String(round)} rounds of its review’s changes: the lead decides — approves it as it is (plitzi task review ${taskId} --approve), settles what is left with an answer (plitzi task unblock ${taskId} --answer "…"), or asks the person`,
                 needs: 'lead' as const,
                 review: true
               }
@@ -469,14 +372,7 @@ const decide = async (
       }),
       ctx.now
     );
-    // The designer's changes are its UI review's, as its approvals are: read apart from the lead's in the activity.
-    await logRun(
-      ctx,
-      loaded.paths,
-      byDesigner
-        ? { action: 'design-review', task: taskId, verdict, round }
-        : { action: 'review', task: taskId, verdict, round }
-    );
+    await logRun(ctx, loaded.paths, { action: 'review', task: taskId, verdict, round, step: role });
     await logSpent(ctx, loaded, taskId, 'review');
     const goesFirst = toLead ? [] : await tellItGoesFirst(ctx, loaded, view);
 
@@ -616,8 +512,8 @@ const decide = async (
     merged,
     fulfilled,
     ...(unmerged ? { unmerged } : {}),
-    ...(skipped ? { skipped: true as const, ...(why ? { why } : {}) } : {}),
-    notReviewed
+    notReviewed,
+    step: isPrincipal(ctx.agent) ? LEAD : role
   });
   if (!partner) {
     return closed;

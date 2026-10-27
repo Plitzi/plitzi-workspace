@@ -1,8 +1,10 @@
 # Reviewing a task of a run
 
-How a task in review is judged — by a tester, its QA and its approval the task's; by the lead only when the team has
-no tester, what is escalated to it, or what nobody else may take. One no tester may take (a tester's own) is a developer's
-that worked neither it nor what it tests. A task of tests is reviewed as tests: of what was asked, both sides. A designer's look at the UI first is [runs-designer.md](runs-designer.md); the
+How a task in review is judged — at the tester's step of the review its card names (none named: the tester's alone), its
+QA and its approval the task's; by the lead only when the team has no tester, what is escalated to it, or what nobody
+else may take. One no tester may take (a tester's own) is a developer's that worked neither it nor what it tests. A task
+of tests is reviewed as tests: of what was asked, both sides. A designer's step before yours is [runs-designer.md](runs-designer.md); what it saw
+comes to you with the review (`passed`); the
 lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
 
 - **Against the inventory, not only the picture:** every section and piece the task's acceptance names is there, as the
@@ -12,7 +14,7 @@ lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
   `<file> --diff`: one file's whole diff); `plitzi task look t-home
 --before` serves its copy, checks and pictures its pages beside the run before (its options:
   [runs-designer.md](runs-designer.md)) — once: after the designer's, unchanged, it repeats it. Your read of a task in
-  review takes its review, so no two testers decide one.
+  review takes your step, so no two testers decide one.
 - **What the data does not show, you test:** a case the acceptance asks for that no page reaches — a module's function,
   its edge cases (the project's `test` script runs every `*.test.ts` at complete), `node -e` in the copy; a probe (two calls at once) is a `node --test` file in your scratch importing
   the copy's code by its absolute path, never a file in the copy — or send it back for the test it needs. A finding is read from its page,
@@ -22,8 +24,7 @@ lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
   /rooms room-card --steps "as dax: action room-create {…}"` (`--as` reads it as another) — and `plitzi server reset`
   in the copy puts it back after; never a script of yours.
 - **The verdict:** `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. A round
-  that asks for code alone (a refactor, one source for a value) is `--changes "…" --skip-design reviewer`: the next round's UI
-  is yours, never a designer's review offered, then decided past it. Past three rounds (yours or the designer's)
+  sent back starts its review again from its first step. Past three rounds (any step's)
   it is the lead's: approve as it is, answer, or ask the person. **What you cannot decide** — what was asked reads two
   ways, a change past the task, a disagreement with its developer — is the lead's: `--escalate "…"` instead of a verdict. A `task complete --known-failure` says why and which task fixes it —
   weigh that. The approval merges what went to review, not the copy as it is. Two in review that read each other's

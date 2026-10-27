@@ -45,7 +45,7 @@ describe('an agent’s prompt', () => {
     expect(lead).not.toContain('--compare');
   });
 
-  it('gives a designer its half and its reviews, a tester its QA, a scout its spikes, at the level it is started at', () => {
+  it('gives a designer its half and its reviews, a tester its QA, a scout its research, at the level it is started at', () => {
     const designer = agentPrompt({ ...base, agent: 'design-1', started: { roles: ['designer', 'developer'] } });
     expect(designer).toContain('runs-designer.md');
     expect(designer).toContain('one `PLITZI task look <task>` a round');
@@ -60,8 +60,8 @@ describe('an agent’s prompt', () => {
 
     const scout = agentPrompt({ ...base, agent: 'scout-1', started: { roles: ['scout'] } });
     expect(scout).toContain('runs-scout.md');
-    expect(scout).toContain('task spike <spike> --done');
-    expect(scout).toContain('the lead approves it');
+    expect(scout).toContain('task complete --found');
+    expect(scout).toContain('the lead reviews it');
     expect(scout).not.toContain('task unblock');
 
     expect(agentPrompt({ ...base, agent: 'dev-2', started: { roles: ['developer'], quality: 'high' } })).toContain(
@@ -78,7 +78,7 @@ describe('an agent’s prompt', () => {
 
     expect(prompt).toContain('You are the manager');
     expect(prompt).toContain('a scout finds out what the ask takes');
-    expect(prompt).toContain('task spike s-scope --approve');
+    expect(prompt).toContain('task review s-scope --approve');
     expect(prompt).toContain('read no review yourself');
     expect(prompt).not.toContain('runs-review.md');
     expect(prompt).toContain('run look');
@@ -89,7 +89,7 @@ describe('an agent’s prompt', () => {
 
     expect(prompt).toContain('You are the lead of a Plitzi multi-agent run');
     expect(prompt).toContain('The person asked: The shell as the original');
-    expect(prompt).toContain('task spike s-scope --done');
+    expect(prompt).toContain('task complete s-scope --found');
     expect(prompt).toContain('run agent <name> --launch');
     // Plitzi's problems go to the run's feedback, never the project's backlog (plain `run notice`).
     expect(prompt).toContain('run notice --plitzi');

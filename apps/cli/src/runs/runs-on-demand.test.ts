@@ -15,7 +15,7 @@ import { loadRun, openRun, readRunLog, stopRun, writingTasks } from './run';
 import { completeTask, followNext, nextTask, reviewTask, takeTask } from './tasks';
 import { readTeam, setTeamAgent, startedAgents } from './team';
 import { viewRun } from './view';
-import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
+import { benchPlan, designed, makeBench, writeInCopy } from '../tests/runProject';
 
 import type { RunContext } from './run';
 import type { Bench } from '../tests/runProject';
@@ -130,17 +130,17 @@ describe('agents on demand', () => {
     await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'], count: 2, min: 1 });
     const plan = benchPlan();
     plan.tasks[3].role = 'designer';
-    await openRun(lead(), await bench.writePlan(plan));
-    // Its designer asks for its UI to be looked at: by another designer.
+    // Its card asks for a designer's look: another designer's than its author.
+    await openRun(lead(), await bench.writePlan(designed(plan)));
     const about = await takeTask(bench.agent('design-1'), 'es-launch', 't-about');
     await writeInCopy(about.work, 'src/space/pages/about.ts', 'export const page = { title: `t-about` };\n');
-    await completeTask(bench.agent('design-1', { token: about.token }), 'es-launch', 't-about', { review: 'ui' });
+    await completeTask(bench.agent('design-1', { token: about.token }), 'es-launch', 't-about');
 
     expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
       expect.objectContaining({
         kind: 'agents-needed',
         text: expect.stringContaining(
-          'the UI of t-about waits for a designer, and none running is free: start design-2'
+          "the designer's review of t-about waits for a designer, and none running is free: start design-2"
         ) as unknown
       })
     );
@@ -152,10 +152,10 @@ describe('agents on demand', () => {
     await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'], count: 2, min: 1 });
     const plan = benchPlan();
     plan.tasks[3].role = 'designer';
-    await openRun(lead(), await bench.writePlan(plan));
+    await openRun(lead(), await bench.writePlan(designed(plan)));
     const about = await takeTask(bench.agent('design-1'), 'es-launch', 't-about');
     await writeInCopy(about.work, 'src/space/pages/about.ts', 'export const page = { title: `t-about` };\n');
-    await completeTask(bench.agent('design-1', { token: about.token }), 'es-launch', 't-about', { review: 'ui' });
+    await completeTask(bench.agent('design-1', { token: about.token }), 'es-launch', 't-about');
     const startDesign = (texts: string[]): boolean => texts.some(text => text.includes('start design-2'));
 
     const held = await waitForLead(lead(), 'es-launch', { timeoutMs: 40, everyMs: 10, launch: false });
@@ -176,7 +176,7 @@ describe('agents on demand', () => {
   it('asks for a designer whose launched process has ended, whatever its last word in the log', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
-    await openRun(lead(), await bench.writePlan(benchPlan()));
+    await openRun(lead(), await bench.writePlan(designed(benchPlan())));
     bench.advance(STARTING_MS);
     // design-1 was there and waited for work: its last word, a wait.
     await followNext(bench.agent('design-1'), 'es-launch', 'designer', { timeoutMs: 0, everyMs: 10 });
@@ -189,7 +189,7 @@ describe('agents on demand', () => {
     });
     const home = await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
     await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: `Hola` };\n');
-    await completeTask(bench.agent('dev-1', { token: home.token }), 'es-launch', 't-home', { review: 'ui' });
+    await completeTask(bench.agent('dev-1', { token: home.token }), 'es-launch', 't-home');
 
     const view = await viewRun(lead(), 'es-launch');
     expect(view.gone).toEqual(['design-1']);
@@ -197,7 +197,7 @@ describe('agents on demand', () => {
       expect.objectContaining({
         kind: 'agents-needed',
         text: expect.stringContaining(
-          'the UI of t-home waits for a designer, and none running is free: start design-1'
+          "the designer's review of t-home waits for a designer, and none running is free: start design-1"
         ) as unknown
       })
     );
@@ -219,11 +219,11 @@ describe('agents on demand', () => {
       const before = process.env.PATH;
       process.env.PATH = `${bin}${path.delimiter}${before ?? ''}`;
       try {
-        await openRun(lead(), await bench.writePlan(benchPlan()));
+        await openRun(lead(), await bench.writePlan(designed(benchPlan())));
         bench.advance(STARTING_MS);
         const home = await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
         await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: `Hola` };\n');
-        await completeTask(bench.agent('dev-1', { token: home.token }), 'es-launch', 't-home', { review: 'ui' });
+        await completeTask(bench.agent('dev-1', { token: home.token }), 'es-launch', 't-home');
 
         const news = await waitForLead(lead(), 'es-launch', { timeoutMs: 200, everyMs: 50 });
         const { paths } = await loadRun(lead(), 'es-launch');
@@ -270,7 +270,7 @@ describe('agents on demand', () => {
   it('keeps a designer on demand while more UI reviews are coming than the other designers running', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
     await setTeamAgent(bench.root, 'design', { roles: ['designer'], count: 2, min: 1 });
-    await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: true }));
+    await openRun(lead(), await bench.writePlan(designed(benchPlan())));
     await followNext(bench.agent('design-1'), 'es-launch', 'designer', { timeoutMs: 0, everyMs: 10 });
     await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
     await takeTask(bench.agent('dev-2'), 'es-launch', 't-menu');
@@ -418,7 +418,6 @@ describe('agents on demand', () => {
   it('asks for a base agent that is not running while the run is open, whatever waits', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
     const plan = benchPlan();
-    plan.designReview = false;
     plan.tasks = plan.tasks.filter(task => task.id === 't-home');
     await openRun(lead(), await bench.writePlan(plan));
     bench.advance(STARTING_MS);

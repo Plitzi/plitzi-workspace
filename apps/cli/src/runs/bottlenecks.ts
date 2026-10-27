@@ -1,8 +1,17 @@
-import { reviewTimeOf } from './design';
 import { LEAD } from './messages';
 import { busyIn } from './onDemand';
-import { REVIEW_QUEUE_MS } from './reviewQueue';
-import { DESIGNER, DEVELOPER, SCOUT, TESTER } from './team';
+import {
+  REVIEW_QUEUE_MS,
+  reviewRolesOf,
+  reviewSteps,
+  reviewTeamOfAgents,
+  stepQueued,
+  stepReviewers,
+  stepRole,
+  stepTimeOf
+} from './reviews';
+import { isResearch, roleOf } from './spike';
+import { SCOUT, TESTER } from './team';
 import { isWorked } from './worked';
 
 import type { TaskView } from './taskStore';
@@ -12,9 +21,7 @@ import type { Attention } from './view';
 /** Where a task another waits for is held past its work — in a review, sent back, blocked — or nothing while it is worked. */
 const heldIn = (view: TaskView): string | undefined =>
   view.state.status === 'in-review'
-    ? view.state.design?.status === 'due'
-      ? 'UI review'
-      : 'review'
+    ? 'review'
     : view.state.status === 'changes-requested'
       ? `sent back, round ${String(view.state.round)}`
       : view.state.status === 'blocked'
@@ -22,8 +29,16 @@ const heldIn = (view: TaskView): string | undefined =>
         : undefined;
 
 /**
- * What holds the run's work back that only the lead can free: UI reviews no designer is free to take, and a task that
- * could start held behind others in review while agents of its role have nothing to take — each with the way out.
+ * The kinds of advice the board gives the lead — computed, never kept: the lead settles one by its kind, with what it
+ * decided (`run settle idle-team --note "…"`), and it is said no more in the run (encore-11's lead kept a run small on
+ * purpose and was woken twice to stack the backlog).
+ */
+export const ADVICE_KINDS = ['review-waits', 'held-up', 'slow-review', 'spikes', 'idle-team'] as const;
+
+/**
+ * What holds the run's work back that only the lead can free: reviews none of whose reviewers is free to take, and a
+ * task that could start held behind others in review while agents of its role have nothing to take — each with the way
+ * out.
  */
 export const bottlenecks = (
   views: readonly TaskView[],
@@ -43,36 +58,28 @@ export const bottlenecks = (
   const scouts = team.some(each => each.roles.includes(SCOUT));
   const byId = new Map(views.map(view => [view.task.id, view] as const));
   const approvedIds = new Set(views.filter(view => view.state.status === 'done').map(view => view.task.id));
-  // UI reviews nobody takes: every designer is at a task of its own — the lead's, or they wait for nobody.
-  const designers = started.filter(each => each.roles.includes(DESIGNER)).map(each => each.agent);
   const atOwn = (agent: string): string | undefined =>
     views.find(view => view.owner?.agent === agent && isWorked(view.state.status))?.task.id;
-  const uiWaiting = views.filter(
-    view =>
-      view.state.status === 'in-review' && view.state.design?.status === 'due' && view.state.design.by === undefined
-  );
-  // One waiting past the queue's time is the lead's to review now, free designer or not: the run's time is its tasks'.
-  const queued = uiWaiting.filter(
-    view => now.getTime() - Date.parse(view.state.design?.since ?? view.state.updatedAt) >= REVIEW_QUEUE_MS
-  );
-  // With testers, a UI review queued past its time is a tester's to take with the task (`uiQueued`): nothing for the lead.
-  if (queued.length > 0 && !testers) {
-    found.push({
-      kind: 'ui-queued',
-      text: `${queued.map(view => `${view.task.id} (${String(Math.round((now.getTime() - Date.parse(view.state.design?.since ?? view.state.updatedAt)) / 60_000))} min)`).join(', ')} ${queued.length === 1 ? 'has' : 'have'} waited past ${String(REVIEW_QUEUE_MS / 60_000)} min for a UI review nobody took: review ${queued.length === 1 ? 'it' : 'them'} yourself now, UI included (both schemes, the phone width) — plitzi task look ${queued[0].task.id}, then plitzi task review ${queued[0].task.id} --approve --skip-design reviewer | --changes "…"`,
-      who: 'lead'
-    });
-  }
+  // A step nobody took past its queue's time, every one of its reviewers at a task of its own: the run waits on it — the
+  // lead starts another of the role, or says it itself.
+  const reviewTeam = reviewTeamOfAgents(team);
+  const waiting = views.flatMap(view => {
+    const role = stepRole(view, reviewTeam);
+    const { review } = view.state;
+    if (role === undefined || review === undefined || !stepQueued(review, now.getTime())) {
+      return [];
+    }
 
-  if (
-    uiWaiting.length > 0 &&
-    !testers &&
-    designers.length > 0 &&
-    designers.every(agent => atOwn(agent) !== undefined)
-  ) {
+    const reviewers = stepReviewers(view, views, role, reviewTeam).filter(agent => agent !== LEAD);
+
+    return reviewers.length > 0 && reviewers.every(agent => atOwn(agent) !== undefined)
+      ? [{ view, role, reviewers }]
+      : [];
+  });
+  if (waiting.length > 0) {
     found.push({
-      kind: 'ui-waits',
-      text: `${uiWaiting.map(view => view.task.id).join(', ')} wait for a UI review, and no designer is free (${designers.map(agent => `${agent} at ${String(atOwn(agent))}`).join(', ')}): start another designer (team.json's designers) — or review them yourself, UI included (both schemes, the phone width): plitzi task next --role lead --no-wait, then plitzi task review <task> --approve --skip-design reviewer`,
+      kind: 'review-waits',
+      text: `${waiting.map(each => `${each.view.task.id} (its ${each.role}'s review)`).join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} past ${String(REVIEW_QUEUE_MS / 60_000)} min, every reviewer of ${waiting.length === 1 ? 'it' : 'them'} at a task of its own (${[...new Set(waiting.flatMap(each => each.reviewers))].map(agent => `${agent} at ${String(atOwn(agent))}`).join(', ')}): start another (team.json) — or decide ${waiting.length === 1 ? 'it' : 'them'} yourself: plitzi task look ${waiting[0]?.view.task.id ?? '<task>'}, then plitzi task review <task> --approve | --changes "…"`,
       who: 'lead'
     });
   }
@@ -91,11 +98,9 @@ export const bottlenecks = (
 
       return other && heldIn(other) !== undefined ? [other] : [];
     });
-    const role = view.task.role ?? DEVELOPER;
+    const role = roleOf(view.task);
     // Free with a ready task of their role to take, they are not held: only free with nothing to take are they.
-    const idle = views.some(each => each.state.status === 'ready' && (each.task.role ?? DEVELOPER) === role)
-      ? []
-      : free(role);
+    const idle = views.some(each => each.state.status === 'ready' && roleOf(each.task) === role) ? [] : free(role);
     const waitsOn = view.task.dependsOn.filter(id => !approvedIds.has(id));
     // The tests of what it waits for wait for it by what they are: no dependency to take away (encore-10's watch
     // told the lead to, for a task of tests).
@@ -120,15 +125,13 @@ export const bottlenecks = (
   // A review taken and not decided past its time: the run waits on one agent, and only the lead can ask it where it
   // stands or decide it — a run's last task sat in a designer's review, five agents idle.
   for (const view of views.filter(each => each.state.status === 'in-review')) {
-    const { design, reviewer } = view.state;
+    const { review } = view.state;
     const taken =
-      design?.status === 'due' && design.by !== undefined && design.at !== undefined
-        ? { by: design.by, at: design.at, what: 'UI review' }
-        : reviewer?.round === view.state.round && reviewer.by !== LEAD
-          ? { by: reviewer.by, at: reviewer.at, what: 'review' }
-          : undefined;
+      review?.by !== undefined && review.at !== undefined && review.by !== LEAD
+        ? { by: review.by, at: review.at, what: `${stepRole(view, reviewTeam) ?? 'its'} review` }
+        : undefined;
     const held = taken ? now.getTime() - Date.parse(taken.at) : 0;
-    const time = reviewTimeOf(taken?.what === 'UI review' ? design : undefined);
+    const time = stepTimeOf(review);
     // Past the review's time, and only then: halfway, with others free, woke encore-10's lead at 4 min of every long
     // review — free agents that could not have taken it, nothing else to give them.
     if (!taken || held < time) {
@@ -142,19 +145,20 @@ export const bottlenecks = (
       // The lead manages: with testers, it asks — the review stays a tester's, escalated to it if it cannot decide.
       text: testers
         ? `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min, past the ${String(time / 60_000)} a review takes: ask where it stands and for its verdict — plitzi task message @${taken.by} "…" — or that it escalates what it cannot decide`
-        : `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min, past the ${String(time / 60_000)} a review is its reviewer's: ${taken.what === 'UI review' ? 'the next designer free takes it — or ' : ''}decide it yourself now: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve${taken.what === 'UI review' ? ' --skip-design reviewer' : ''} | --changes "…"`,
+        : `${taken.by} has held ${view.task.id}'s ${taken.what} ${String(minutes)} min, past the ${String(time / 60_000)} a review is its reviewer's: another of its role takes it — or decide it yourself now: plitzi task look ${view.task.id}, then plitzi task review ${view.task.id} --approve | --changes "…"`,
       who: 'lead'
     });
   }
 
   found.push(...idleTeam(views, started, backlog));
 
-  // A spike is a scout's, its result the lead's to approve (a proposal, said apart); with no scout the lead finds it out.
-  const spikes = views.filter(view => view.state.status === 'spike' && view.state.proposed === undefined);
+  // A research card is a scout's, its result the lead's to approve (a proposal, said apart); with no scout the lead finds
+  // it out.
+  const spikes = views.filter(view => isResearch(view.task) && view.state.status === 'ready');
   if (spikes.length > 0 && !scouts) {
     found.push({
       kind: 'spikes',
-      text: `${spikes.map(view => `${view.task.id} (${view.task.spike ?? 'what it needs'})`).join('; ')} ${spikes.length === 1 ? 'is' : 'are'} in spike, yours to find out (the team has no scout) — look, check, measure (beside the site it copies, when it copies one) — then plitzi task spike <spike> --done "what was found" [--tasks <stage.json>]`,
+      text: `${spikes.map(view => `${view.task.id} (${view.task.spike ?? 'what it needs'})`).join('; ')} ${spikes.length === 1 ? 'is' : 'are'} research, yours to find out (the team has no scout) — look, check, measure (beside the site it copies, when it copies one) — then plitzi task complete <card> --found "what was found" [--tasks <stage.json>]`,
       who: 'lead'
     });
   }
@@ -165,7 +169,7 @@ export const bottlenecks = (
 /**
  * The run as a kanban: the lead keeps every agent busy. An agent running with nothing of its own being worked, no review
  * in hand and no card of its roles ready is starved — said to the lead with the way to feed it: the backlog's items no
- * task does yet, a card a designer could review the UI of, a large card to split; with nothing left, that it may go.
+ * task does yet, a large card to split; with nothing left, that it may go.
  * Three cards for two agents, each agent waited its own verdicts with nothing to take, the designer idle
  * nine minutes beside two cards in review whose UI looks the lead had kept.
  */
@@ -181,52 +185,42 @@ export const idleTeam = (
 
   const busy = new Set(views.flatMap(busyIn));
   const readyFor = (roles: readonly string[]): boolean =>
-    views.some(view => view.state.status === 'ready' && roles.includes(view.task.role ?? DEVELOPER));
-  // A designer while others' work is under way waits for its UI reviews, which is what it is for — and waiting costs
+    views.some(view => view.state.status === 'ready' && roles.includes(roleOf(view.task)));
+  // A reviewer while cards it will review are under way waits for them, which is what it is for — and waiting costs
   // nothing: a run's idle-team told the lead to split a developer's card for the run's only UI reviewer.
-  const uiComing = views.some(
-    view => view.owner && isWorked(view.state.status) && (view.task.role ?? DEVELOPER) !== DESIGNER
-  );
+  const reviewTeam = reviewTeamOfAgents(running);
+  const reviewsComing = (agent: string): boolean => {
+    const roles = reviewRolesOf(reviewTeam, agent);
+
+    return views.some(
+      view =>
+        view.owner !== undefined &&
+        view.owner.agent !== agent &&
+        isWorked(view.state.status) &&
+        reviewSteps(view.task, reviewTeam).some(role => roles.includes(role))
+    );
+  };
   // An agent none of whose role's cards is left has done its part: a run's lead was woken eight times at the end, for
   // developers with nothing of theirs left and a tester's spec it could not split for them.
   const leftFor = (roles: readonly string[]): boolean =>
-    views.some(view => view.state.status !== 'done' && roles.includes(view.task.role ?? DEVELOPER));
+    views.some(view => view.state.status !== 'done' && roles.includes(roleOf(view.task)));
   const starved = running.filter(
-    each =>
-      !busy.has(each.agent) &&
-      !readyFor(each.roles) &&
-      leftFor(each.roles) &&
-      !(uiComing && each.roles.includes(DESIGNER))
+    each => !busy.has(each.agent) && !readyFor(each.roles) && leftFor(each.roles) && !reviewsComing(each.agent)
   );
   if (starved.length === 0) {
     return [];
   }
 
   const names = starved.map(each => each.agent);
-  const designer = starved.find(each => each.roles.includes(DESIGNER));
-  // In review with no UI look offered — kept by the lead, or skipped — while a designer who did not write it is free.
-  const lookable = designer
-    ? views.filter(
-        view =>
-          view.state.status === 'in-review' &&
-          view.state.design?.status !== 'due' &&
-          view.owner?.agent !== designer.agent
-      )
-    : [];
   // A card to split is one of the idle agents' roles: a part of another role's is no work for them.
   const idleRoles = new Set(starved.flatMap(each => each.roles));
   const worked = views
-    .filter(view => view.owner && isWorked(view.state.status) && idleRoles.has(view.task.role ?? DEVELOPER))
+    .filter(view => view.owner && isWorked(view.state.status) && idleRoles.has(roleOf(view.task)))
     .map(view => view.task.id);
   const ways = [
     ...(backlog.length > 0
       ? [
           `stack the backlog's ${backlog.slice(0, 5).join(', ')}${backlog.length > 5 ? ` +${String(backlog.length - 5)}` : ''} as cards (a stage of tasks that close them: plitzi run extend <stage.json>)`
-        ]
-      : []),
-    ...(designer && lookable.length > 0
-      ? [
-          `give ${designer.agent} the UI of ${lookable.map(view => view.task.id).join(', ')} — approve without skipping its design review (no plitzi task review <task> --skip-design reviewer), and the next look is offered to it`
         ]
       : []),
     ...(worked.length > 0

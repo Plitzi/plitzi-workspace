@@ -422,7 +422,7 @@ describe('the lead’s plan as the run goes', () => {
     await completeTask(again.ctx, 'es-launch', 't-about');
     const woken = (await waitForLead(lead(), 'es-launch', { timeoutMs: 20, everyMs: 10 })).fresh.map(item => item.text);
     expect(woken).toContain(
-      't-about is in review, yours to review (the team has no tester): plitzi task review t-about --approve | --changes "…"'
+      't-about is in review, yours to review (the team has no tester): plitzi task look t-about, then plitzi task review t-about --approve | --changes "…"'
     );
   });
 

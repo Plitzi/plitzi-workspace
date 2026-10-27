@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
@@ -5,12 +7,15 @@ import { auditRun } from './audit';
 import { messagesOf } from './messages';
 import { monitorRun } from './monitor';
 import { readOwnership } from './ownership';
+import { taskPaths } from './paths';
 import { checkPlan } from './plan';
 import { loadRun, openRun } from './run';
 import { scopePlan, SCOPE_SPIKE } from './spike';
-import { answerSpike, blockTask, nextTask, takeNext, taskContext, unblockTask } from './tasks';
+import { blockTask, completeResearch, nextTask, takeNext, taskContext, unblockTask } from './tasks';
 import { viewRun } from './view';
 import { flowStages } from '../commands/runs/monitorFlow';
+import { researchSteps } from '../tests/research';
+import { SCOUT, team, TESTERS } from '../tests/reviewerSteps';
 import { benchPlan, makeBench, teamFor } from '../tests/runProject';
 import { refusal, runSteps } from '../tests/runSteps';
 
@@ -28,6 +33,7 @@ afterEach(async () => {
 });
 
 const { lead, open, take } = runSteps(() => bench);
+const { found, approveFound } = researchSteps(() => bench);
 
 const statusOf = async (taskId: string): Promise<string | undefined> =>
   (await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === taskId)?.status;
@@ -63,30 +69,33 @@ const surveyed = (): RunPlan => {
 // The lead's research before a plan was done outside the run, and a spike a task — hundreds of them, each found out by
 // one and built by another. A run opens on the ask as one spike, its scope, and its result is the tasks: as a project
 // starts — the lead scopes it, and the work flows from there.
-describe('a spike: finding out, in the run, a lead’s', () => {
+describe('research: a card like any, finding out in the run', () => {
   it('opens a run on the ask as its scope, whose result is the tasks — each with what was found for it', async () => {
     await open(scopePlan('es-launch', ASK));
-    expect(await statusOf(SCOPE_SPIKE)).toBe('spike');
+    expect(await statusOf(SCOPE_SPIKE)).toBe('ready');
     // The lead's from the open: at it on the board, never idle (the monitor said the lead was idle).
     expect((await monitorRun(lead(), 'es-launch')).agents.find(agent => agent.agent === 'lead')).toMatchObject({
       status: 'working',
       task: SCOPE_SPIKE
     });
+    // A scout's to take: never a developer's.
     expect(await refusal(take('agent-1', SCOPE_SPIKE))).toMatchObject({
-      message: expect.stringContaining('is in spike: a lead finds out first') as unknown
+      message: expect.stringContaining('not a scout') as unknown
     });
     expect((await nextTask(bench.agent('agent-1'), 'es-launch')).task).toBeUndefined();
 
-    // A stage refused leaves the spike open: nothing said done that made nothing.
+    // A stage refused leaves the card as it was: nothing said done that made nothing.
     const wrong = {
       ...scoped(),
       tasks: [{ ...scoped().tasks[0], spike: 'what', files: ['src/space/pages/home/index.ts'] }]
     };
-    await refusal(answerSpike(lead(), 'es-launch', SCOPE_SPIKE, 'four pages', { tasks: await bench.writePlan(wrong) }));
-    expect(await statusOf(SCOPE_SPIKE)).toBe('spike');
+    await refusal(
+      completeResearch(lead(), 'es-launch', SCOPE_SPIKE, 'four pages', { tasks: await bench.writePlan(wrong) })
+    );
+    expect(await statusOf(SCOPE_SPIKE)).toBe('ready');
 
     expect(
-      await answerSpike(lead(), 'es-launch', SCOPE_SPIKE, 'Four pages; the booking words differ', {
+      await completeResearch(lead(), 'es-launch', SCOPE_SPIKE, 'Four pages; the booking words differ', {
         tasks: await bench.writePlan(scoped())
       })
     ).toMatchObject({
@@ -107,7 +116,7 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     const stage = { ...scoped(), goal: ASK };
     // Written as a lead writes the file — a list where the type says words: what reading the file takes in.
     const listed = { ...stage.tasks[0], findings: ['The hero is 48px', '- The menu wraps at 390'] };
-    await answerSpike(lead(), 'es-launch', SCOPE_SPIKE, 'Four pages', {
+    await completeResearch(lead(), 'es-launch', SCOPE_SPIKE, 'Four pages', {
       tasks: await bench.writePlan({
         ...stage,
         tasks: [listed as unknown as RunPlan['tasks'][number], ...stage.tasks.slice(1)]
@@ -128,7 +137,7 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     const stage = scoped();
     stage.tasks[0].acceptance = ['The hero title is 48px'];
 
-    const done = await answerSpike(lead(), 'es-launch', SCOPE_SPIKE, 'The hero is larger there', {
+    const done = await completeResearch(lead(), 'es-launch', SCOPE_SPIKE, 'The hero is larger there', {
       tasks: await bench.writePlan(stage)
     });
     expect(done.notices?.join(' ')).toContain(`Task "${stage.tasks[0].id}" names values (48px)`);
@@ -166,12 +175,13 @@ describe('a spike: finding out, in the run, a lead’s', () => {
   it('ends research alone by its findings, what waits for it ready, reading them — and refuses an agent’s', async () => {
     await open(surveyed());
     expect(await statusOf('t-about')).toBe('pending');
-    expect(await refusal(answerSpike(bench.agent('agent-1'), 'es-launch', 's-survey', 'mine'))).toMatchObject({
-      code: 'lead-only'
+    // Not the lead's, untaken: a scout's to take — one that holds nothing says nothing of it.
+    expect(await refusal(completeResearch(bench.agent('agent-1'), 'es-launch', 's-survey', 'mine'))).toMatchObject({
+      code: 'invalid'
     });
 
     expect(
-      await answerSpike(lead(), 'es-launch', 's-survey', 'The original has a team grid; ours lacks it')
+      await completeResearch(lead(), 'es-launch', 's-survey', 'The original has a team grid; ours lacks it')
     ).toMatchObject({
       status: 'done',
       ready: ['t-about']
@@ -200,10 +210,10 @@ describe('a spike: finding out, in the run, a lead’s', () => {
       []
     );
 
-    // A spike answered by nothing is no answer; a task's is not a spike the lead says done.
+    // A block answered by nothing is no answer; a work card is no research the lead says found.
     expect((await refusal(unblockTask(lead(), 'es-launch', 't-home'))).message).toContain('lift it with the answer');
-    expect((await refusal(answerSpike(lead(), 'es-launch', 't-home', 'x'))).message).toContain(
-      'plitzi task unblock t-home --answer'
+    expect((await refusal(completeResearch(lead(), 'es-launch', 't-home', 'x'))).message).toContain(
+      'is no research card'
     );
 
     expect(await unblockTask(lead(), 'es-launch', 't-home', '"¡Bienvenidos!", in the hero')).toMatchObject({
@@ -214,8 +224,8 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     ]);
   });
 
-  it('hands each scout a spike — once, the other scout not offered it', async () => {
-    const plan = { ...surveyed(), designReview: false };
+  it('hands each scout a research card as any card — once, the other scout not offered it — to the lead’s review', async () => {
+    const plan = { ...surveyed() };
     plan.tasks.push({ ...plan.tasks[4], id: 's-words', spike: 'which words the original uses for a booking' });
     const file = await bench.writePlan(plan);
     const base = teamFor(plan, 2);
@@ -225,23 +235,79 @@ describe('a spike: finding out, in the run, a lead’s', () => {
     });
     await openRun(lead(), file);
     const offered = await takeNext(bench.agent('scout-1'), 'es-launch', 'scout');
-    expect(offered.next.spike).toMatchObject({
-      task: { id: 's-survey' },
-      question: 'what the original about page has that ours lacks'
-    });
-    expect((await takeNext(bench.agent('scout-2'), 'es-launch', 'scout')).next.spike?.task.id).toBe('s-words');
-    // In the flow at work with its scout at it, as a task being written is — never "free": no developer takes a spike.
+    expect(offered.taken?.task.id).toBe('s-survey');
+    expect((await takeNext(bench.agent('scout-2'), 'es-launch', 'scout')).taken?.task.id).toBe('s-words');
+    // In the flow at work with its scout at it, as a task being written is.
     const work = flowStages((await viewRun(lead(), 'es-launch')).tasks).find(stage => stage.key === 'work');
     expect(work?.tasks.map(task => `${task.id} ${work.who(task)}`)).toContain('s-survey scout-1');
-    // On the board at its spike, never idle.
     expect((await monitorRun(lead(), 'es-launch')).agents.find(agent => agent.agent === 'scout-1')).toMatchObject({
       status: 'working',
       task: 's-survey'
     });
-    // Findings alone, no tasks: proposed to the lead too, who approves every spike.
-    expect(await answerSpike(bench.agent('scout-1'), 'es-launch', 's-survey', 'A team grid')).toMatchObject({
-      status: 'spike',
+    // Findings alone, no tasks: in review with the lead too, who approves every research card.
+    const scout = bench.agent('scout-1', { token: offered.taken?.token });
+    expect(await completeResearch(scout, 'es-launch', 's-survey', 'A team grid')).toMatchObject({
+      status: 'in-review',
       proposed: []
+    });
+    expect((await nextTask(lead(), 'es-launch', 'lead')).review).toMatchObject({
+      task: { id: 's-survey' },
+      found: { by: 'scout-1', text: 'A team grid', tasks: [] }
+    });
+  });
+
+  // encore-11: the lead could keep a proposal whole or drop every task — and a -tests card it did not want stayed.
+  it('stacks what the lead keeps of a proposal: a -tests card left is its card with no tests; what waits for one left, refused', async () => {
+    const plan = { ...surveyed() };
+    await bench.writeTeam(team(SCOUT, TESTERS));
+    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
+    await takeNext(bench.agent('scout-1'), runId, 'scout');
+    const [first] = benchPlan().tasks;
+    const stage = await bench.writePlan({
+      ...benchPlan(),
+      runId: 'survey',
+      tasks: [
+        { ...first, id: 't-grid', title: 'The team grid', files: ['src/lib/grid.ts'], dependsOn: [] },
+        { ...first, id: 't-bios', title: 'The bios', files: ['src/lib/bios.ts'], dependsOn: ['t-grid'] }
+      ]
+    });
+    expect((await found(runId, 's-survey', 'A team grid, with bios', { tasks: stage })).proposed).toEqual([
+      't-grid',
+      't-bios',
+      't-grid-tests',
+      't-bios-tests'
+    ]);
+
+    expect((await refusal(approveFound(runId, 's-survey', ['t-grid']))).message).toContain('t-bios waits for t-grid');
+    expect((await refusal(approveFound(runId, 's-survey', ['t-nope']))).message).toContain('proposes no t-nope');
+
+    expect((await approveFound(runId, 's-survey', ['t-grid-tests'])).found).toMatchObject({
+      added: ['t-grid', 't-bios', 't-bios-tests'],
+      left: ['t-grid-tests']
+    });
+    expect((await loadRun(lead(), runId)).tasks.find(task => task.id === 't-grid')?.tests).toBe(false);
+    expect(await statusOf('s-survey')).toBe('done');
+    expect(await statusOf('t-about')).toBe('ready');
+  });
+
+  // A run opened by the CLI before research was a card keeps working: its spike reads as a card ready, or in review.
+  it('reads a research card an earlier CLI wrote in its own status as ready — or in review with what it found', async () => {
+    await open(surveyed());
+    const loaded = await loadRun(lead(), 'es-launch');
+    const { state } = taskPaths(loaded.paths, 's-survey');
+    const earlier = JSON.parse(await fs.readFile(state, 'utf-8')) as Record<string, unknown>;
+    await fs.writeFile(
+      state,
+      JSON.stringify({ ...earlier, status: 'spike', spikedBy: { by: 'scout-1', at: earlier.updatedAt } })
+    );
+    expect(await statusOf('s-survey')).toBe('ready');
+
+    const proposed = { by: 'scout-1', at: earlier.updatedAt, text: 'A team grid', tasks: [] };
+    await fs.writeFile(state, JSON.stringify({ ...earlier, status: 'spike', proposed }));
+    expect(await statusOf('s-survey')).toBe('in-review');
+    expect((await nextTask(lead(), 'es-launch', 'lead')).review?.found).toMatchObject({
+      by: 'scout-1',
+      text: 'A team grid'
     });
   });
 

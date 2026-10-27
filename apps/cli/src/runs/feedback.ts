@@ -4,7 +4,7 @@ import path from 'node:path';
 import { experienceText } from './experience';
 import { kindOf } from './harness';
 import { buildReport, readSummary } from './report';
-import { findingsText, ranOn, spendText, uiReviewsText } from './reportHead';
+import { findingsText, ranOn, spendText, stepsSaidText } from './reportHead';
 import { REPORT_FILES, runReportDir, withoutMachine } from './reports';
 import { commandName, tokensText } from './runMetrics';
 
@@ -75,7 +75,7 @@ export interface RunFeedback {
   /** What the run cost, by agent and by piece (`RunReport['spend']`). */
   spend?: RunReport['spend'];
   /** Each task's UI review, as the report says it: by a designer, or by the lead without one. */
-  designs: { id: string; design?: string }[];
+  reviews: { id: string; reviewedBy?: string[] }[];
   lives: {
     agent: string;
     launches: number;
@@ -194,7 +194,9 @@ export const feedbackOf = async (ctx: RunContext, loaded: LoadedRun): Promise<Ru
     reviewsAsked: report.tasks.flatMap(task => task.reviews.map(review => ({ task: task.id, ...review }))),
     ...(report.briefs ? { briefs: report.briefs } : {}),
     ...(report.spend ? { spend: report.spend } : {}),
-    designs: report.tasks.flatMap(task => (task.design === undefined ? [] : [{ id: task.id, design: task.design }])),
+    reviews: report.tasks.flatMap(task =>
+      task.reviewedBy === undefined ? [] : [{ id: task.id, reviewedBy: task.reviewedBy }]
+    ),
     lives: report.agents.map(life => ({
       agent: life.agent,
       launches: life.launches,
@@ -267,7 +269,7 @@ export const feedbackText = (data: RunFeedback): string =>
       data.refusals.map(each => `- ${each.code} ×${String(each.times)}${each.command ? ` — e.g. ${each.command}` : ''}`)
     ),
     ...section('Checks', [
-      ...uiReviewsText(data.designs),
+      ...stepsSaidText(data.reviews),
       `- ${String(data.checks.run)} task checks: ${String(data.checks.failed)} failed for the work, ${String(data.checks.notOwn)} for nothing of it`,
       ...Object.entries(data.checks.byStep)
         .sort(([, a], [, b]) => b - a)

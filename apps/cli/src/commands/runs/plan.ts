@@ -7,7 +7,6 @@ import { act, opener, runOf } from './shell';
 import { list, pacedText } from './text';
 import { amendRun } from '../../runs/amend';
 import { backlogOfPlan, backlogText } from '../../runs/backlog';
-import { hasDesignReview } from '../../runs/design';
 import { extendRun } from '../../runs/extend';
 import { writeJson } from '../../runs/files';
 import { issueToken } from '../../runs/identity';
@@ -17,6 +16,7 @@ import { runPaths } from '../../runs/paths';
 import { atPace } from '../../runs/plan';
 import { RunRefusal } from '../../runs/refusal';
 import { rehearsalText, rehearse } from '../../runs/rehearse';
+import { reviewRolesOf, reviewSteps, reviewTeamFrom } from '../../runs/reviews';
 import {
   activeRuns,
   allowLeadFinish,
@@ -29,15 +29,13 @@ import {
 } from '../../runs/run';
 import { settleFinding } from '../../runs/settle';
 import { SCOPE_SPIKE, scopePlan } from '../../runs/spike';
-import { roleOf } from '../../runs/tasks';
+import { roleOf } from '../../runs/spike';
 import {
-  DESIGNER,
   heldRoles,
   ensureTeam,
   leadModelText,
   readTeam,
   startText,
-  reviewsDesign,
   startedAgents,
   TEAM_FILE,
   teamSize,
@@ -140,8 +138,8 @@ export const runAllowFinish = (
  * Who to start, from the project's `.plitzi/team.json`: the lead's model, then each agent — its roles, its model, the
  * plan's tasks it takes and the command it takes them with — so a model chosen for designers works only their tasks.
  */
-export const startLines = (tasks: readonly RunTask[], team: Team, designReview: boolean): string[] => {
-  const reviews = designReview ? tasks.filter(task => hasDesignReview(task, task.files)) : [];
+export const startLines = (tasks: readonly RunTask[], team: Team): string[] => {
+  const reviewTeam = reviewTeamFrom(team);
 
   return [
     `Start the team (${TEAM_FILE}):`,
@@ -155,7 +153,11 @@ export const startLines = (tasks: readonly RunTask[], team: Team, designReview: 
             (each.quality === undefined || (task.quality ?? 'standard') === each.quality)
         )
         .map(task => task.id);
-      const reviewing = each.roles.includes(DESIGNER) ? reviews.map(task => task.id) : [];
+      // The cards whose review names a role it reviews as: a designer's looks, a tester's QA.
+      const roles = reviewRolesOf(reviewTeam, each.agent);
+      const reviewing = tasks
+        .filter(task => reviewSteps(task, reviewTeam).some(role => roles.includes(role)))
+        .map(task => task.id);
       // A tester reviews every task, a scout finds out the spikes: work no task names as its role's.
       const spikes = tasks.filter(task => task.spike !== undefined && task.files.length === 0).map(task => task.id);
       const work = [
@@ -198,7 +200,6 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
       return {
         ...checked,
         team,
-        designReview: going?.record.designReview === true || reviewsDesign(team, plan),
         ...(going ? { stackedOn: going.runId } : {}),
         staleSkills,
         // A stage's: what the run's tasks before it take up is taken too.
@@ -233,12 +234,7 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
           : []),
         `Estimate: ${String(checked.estimate.tasks)} tasks, ${String(checked.estimate.agents)} agents at once, about ${String(checked.estimate.wallMinutes)} min (critical path ${String(checked.estimate.criticalPathMinutes)}, all of it ${String(checked.estimate.totalMinutes)}), at least ${String(checked.estimate.reviewRounds)} reviews`,
         ...(checked.estimate.paced ? [pacedText(checked.estimate.paced)] : []),
-        ...startLines(checked.tasks, checked.team, checked.designReview),
-        ...(checked.designReview
-          ? [
-              'A designer reviews the UI of the others’ tasks before you: you approve each after it — or now, saying why: --skip-design reviewer (you looked at its UI yourself) or no-ui (it changes nothing a visitor sees)'
-            ]
-          : []),
+        ...startLines(checked.tasks, checked.team),
         ...(checked.stackedOn
           ? [
               `Stack it: plitzi run extend ${checked.stackedOn} ${file} — its tasks begin from the run’s work, and one finish writes both`
@@ -412,8 +408,8 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
             ]),
         opened.tasks.length === 1 && opened.tasks[0] === SCOPE_SPIKE
           ? opened.scouts.length > 0
-            ? `Next: the scope is ${opened.scouts.join(' or ')}'s — the keeper starts it to find out what the ask takes; what it proposes comes to the lead (plitzi run watch wakes it, plitzi task next --role lead hands it), to decide with the person: plitzi task spike ${SCOPE_SPIKE} --approve | --changes "…". The team starts once there are tasks to take.`
-            : `Next, yours: the scope — find out what the ask takes (plitzi run reference --run ${opened.runId} --pages "…" keeps the site it copies), then end it with its tasks: plitzi task spike ${SCOPE_SPIKE} --done "what you found" --tasks <stage.json>. The team starts once there are tasks to take.`
+            ? `Next: the scope is ${opened.scouts.join(' or ')}'s — the keeper starts it to find out what the ask takes; what it proposes comes to the lead (plitzi run watch wakes it, plitzi task next --role lead hands it), to decide with the person: plitzi task review ${SCOPE_SPIKE} --approve [--leave <tasks>] | --changes "…". The team starts once there are tasks to take.`
+            : `Next, yours: the scope — find out what the ask takes (plitzi run reference --run ${opened.runId} --pages "…" keeps the site it copies), then end it with its tasks: plitzi task complete ${SCOPE_SPIKE} --found "what you found" --tasks <stage.json>. The team starts once there are tasks to take.`
           : `Start a task: plitzi task next --run ${opened.runId}`,
         'Watch it in a browser as the tasks are approved: p in plitzi run monitor, or npm run start:preview (on 8300) — the project itself is untouched until the finish',
         ...backlogLines(opened.backlog)

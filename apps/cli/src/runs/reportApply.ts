@@ -1,3 +1,5 @@
+import { isApproval } from './run';
+
 import type { LogEntry } from './findings/types';
 import type { RunReport } from './report';
 
@@ -19,11 +21,7 @@ const text = (value: unknown): string => (typeof value === 'string' ? value : ''
 
 export const applyFacts = (log: readonly LogEntry[]): ApplyFacts => {
   const ready = log.findLast(entry => entry.action === 'ready');
-  const approvedAt = new Map(
-    log
-      .filter(entry => entry.action === 'review' && entry.verdict === 'approve')
-      .map(entry => [text(entry.task), text(entry.at)] as const)
-  );
+  const approvedAt = new Map(log.filter(isApproval).map(entry => [text(entry.task), text(entry.at)] as const));
   const amendedDone = log.flatMap(entry =>
     entry.action === 'amend' && Array.isArray(entry.tasks)
       ? entry.tasks.flatMap(each => {
@@ -53,7 +51,6 @@ export const applyFacts = (log: readonly LogEntry[]): ApplyFacts => {
 export const applyText = (report: RunReport, applied: boolean): string[] => {
   const { apply } = report;
   const knownFailures = report.tasks.filter(task => task.knownFailure !== undefined);
-  const withoutDesigner = report.tasks.filter(task => task.design === 'UI by the lead');
   const plitzi = report.findings.filter(finding => finding.owner === 'plitzi').length;
   const lead = report.findings.filter(finding => finding.owner === 'lead');
 
@@ -64,7 +61,6 @@ export const applyText = (report: RunReport, applied: boolean): string[] => {
       ? `- **The finish's dry run passed** at ${apply.ready.at.slice(11, 16)} UTC: ${String(apply.ready.files)} files to write, ${String(apply.ready.acceptance)} acceptance lines held on the whole result — the project's checks too.`
       : '- **The finish has not passed its dry run**: `plitzi run finish` says what holds it — nothing is to be applied before.',
     ...knownFailures.map(task => `- ${task.id} was approved over a known failure: ${task.knownFailure ?? ''}`),
-    ...withoutDesigner.map(task => `- ${task.id}'s UI was approved by the lead, no designer's review`),
     ...(apply && apply.amendedDone.length > 0
       ? [
           `- Acceptance rewritten after approval — the finish held them to the new lines: ${apply.amendedDone.join(', ')}`

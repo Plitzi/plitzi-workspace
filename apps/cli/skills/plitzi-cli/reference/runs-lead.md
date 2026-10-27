@@ -13,7 +13,7 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    list every page, section and piece a visitor would miss (a logo, what moves, a control, a size) as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
 "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run open --dry-run` refuses a
-   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `page shot --compare`, naming sections no piece covers. **Research is a spike** (no files), a scout's; **you approve every spike's result**, and only you add or take out tasks. **The run opens on its scope** (`run start`): the scout proposes the tasks, each with its `"findings"`; `task next --role lead` hands them to you — decide them with the person: `task spike s-scope --approve | --changes "…"` (`run extend <stage> --dry-run` reads them). An agent's `task spike` is yours to answer: `task unblock --answer`. With no scout, the spikes are yours too: `task spike s-scope --done "…" --tasks <stage.json>`. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
+   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `page shot --compare`, naming sections no piece covers. **Research is a card** (a spike, no files), a scout's; **you review every one's result**, and only you add or take out tasks. **The run opens on its scope** (`run start`): the scout proposes the tasks, each with its `"findings"`; `task next --role lead` hands them to you — decide them with the person: `task review s-scope --approve | --changes "…"` (`run extend <stage> --dry-run` reads them). An agent's question is a block, yours to answer: `task unblock --answer`. With no scout, research is yours: `task complete s-scope --found "…" --tasks <stage.json>`. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview [unit]` — who owns which file. A page owns the modules only it imports;
    what two pages import (tokens, classes, a layout, a component) is **shared**, as is every entry. `space impact
@@ -31,6 +31,7 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
          "title": "Translate home",
          "files": ["src/space/pages/home/index.ts"],
          "role": "writer",
+         "review": ["designer", "tester"],
          "dependsOn": [],
          "priority": "high",
          "estimateMinutes": 30,
@@ -59,11 +60,11 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    size is how many work at once; past `min`, on demand — `run watch` says when to start one (through its own CLI,
    after its first start). Agents start fresh after each task or review, never in one
    (`--session context|keep`); `--resume-session`: one that died mid-task resumes; one just started is
-   not "no signal" for `options.startGraceMinutes` (3). A designer reviews the others' UI (`options.designReview`;
-   `false` turns it off); a tester reviews every task — its QA, the approval — and brings `<id>-tests`, a developer's (`"tests":
+   not "no signal" for `options.startGraceMinutes` (3). A card's `review` says who reviews it, in order (none: the tester, else you —
+   [runs-review.md](runs-review.md); a designer as closely as `options.designReview` asks); a tester's step is its QA, the approval — and brings `<id>-tests`, a developer's (`"tests":
    false`: none); more testers when reviews queue (`run team set test --count 2`). **Yours is what a tester escalates, past
    its review rounds** (blocked on you), or nobody else may take: `task review <task> --approve`, or `task unblock <task> --answer "…"`, which
-   sends it back with your word. With no tester every review is yours ([runs-review.md](runs-review.md)). Take a task
+   sends it back with your word. Take a task
    back: `task reassign <task> --reason "…" --to <agent>`.
 
    **Keep a person's actions a person's in the harness**: deny the agents `run finish --apply`, `run abort`, `run purge`,
@@ -127,7 +128,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 - **Specs, a task's own**: a line runs the specs of what it changes, never a whole suite (the dry run says one) — a suite
   holds the machine, the CLI queues the next; the finish runs it whole, once.
 - **The scope spike is the big one** (30 min); a later spike answers one question an agent met — 10 minutes, measured with
-  the tools, never a suite. Its findings without its tasks: `task spike <s> --approve --findings-only`.
+  the tools, never a suite. Its tasks left out: `task review <s> --approve --leave t-a,t-b` (or `all`).
 - **A known failure you accept is the agent's flag** — `task complete --known-failure "…" --fixed-by <task>` — never a
   message: its reviewer reads it in `task show`.
 - **Every task approved: close now** (`run watch` says so) — look, report, finish.
@@ -177,8 +178,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 - **The board is a kanban; keeping the team busy is yours**: a card ready beside each in review — stack the backlog
   (`run extend`, tasks that `closes`), split a card by what changes apart. `run watch` says an agent with nothing to
   take (`idle-team`).
-- **The designer's own task off the critical path** while it is the only one reviewing UI: what waits on it waits on
-  every review too: a refactor with nothing to see is a developer's.
+- **A lone designer's own task off the critical path** — every review waits on it: a refactor with nothing to see is a developer's.
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red — a done task's too: the finish holds
   it to the amended line. The plan you amend is any of the run's — the one it opened with, a stage's, or several joined:
   each changes only the tasks of the plans it holds.

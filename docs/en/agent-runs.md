@@ -432,7 +432,7 @@ every task, spent the most).
 
 **Agents on demand** (`onDemand.ts`): a group's `min` (1 to its `count`) is how many start with the run; the rest are
 on demand (`StartedAgent.onDemand`). `run open --dry-run` says to start only the first; `run watch` tells the lead,
-role by role, when work waits — a task of its role ready, a UI review no designer is free for —
+role by role, when work waits — a task of its role ready, a step of a card's review nobody of its role is free for —
 and no running agent of it is free (`agents-needed`), naming the next one to start and its command — with a keeper
 running, said only once it stayed unstarted past `KEEPER_GRACE_MS` (90 s, the keeper's to start; a run's lead was told
 "start dev-1" in the seconds its keeper took to start it again for a fresh context) — one on demand
@@ -440,7 +440,7 @@ beside one running only when the work waiting, coming and in hand, shared with i
 more, as `run open --dry-run` counts a team's size (a run's watch asked for dev-2 for two tasks the plan had said were too
 few) — coming is a task of the role that waits only for work under way (a run's t-buybox, behind t-description in
 hand: four cards for one developer, and no dev-2 asked); a
-UI review its author alone could make asks whatever the count — and an agent on
+step of a review only it may say asks whatever the count — and an agent on
 demand that waits `ON_DEMAND_IDLE_MS` with nothing for it, and no task of its own that may come back, stops by itself,
 said in the activity — the lead starts it again when work waits. **The base goes first** (`freeBaseAgents`): a task ready is offered to an agent on demand only past what the
 team's base agents of its roles — there (marked present) and at nothing — take; with them free, it is told so and
@@ -513,14 +513,15 @@ crash read "no signal" and "not running" at once, its last word from before, and
 
 ## The tester's reviews, and the tasks of tests (`tests.ts`)
 
-A tester reviews first. `task next` hands it every task in review that waits for no designer (`leadReviewFor`,
-`testerReviews`), a designer's task included. That review is the task's QA: what it was asked, its checks, how it
-behaves, its code. When no designer is free, the tester reviews the task's UI too (`--skip-design reviewer`, after its
-`task look`). Its approval approves the task. It never reviews what it worked, and nobody reviews a task they worked,
-the lead included (`review.ts`: the lead's own goes to a tester). A reviewer's `task progress` is its review's sign of
-life (`review-progress` in the log), not refused. What a tester cannot decide it escalates to the lead, and the lead is
+A tester's step is a card's QA: what it was asked, its checks, how it behaves, its code — a card whose `review` names
+none is the tester's alone, and its approval approves the card (a card's review: below). It never says a step of what
+it worked, and nobody says one of a card they worked, the lead included. What an agent has in hand — a task's work, a
+step of a review, a spike — is one reading (`runs/held.ts`: `holdsOf`, `heldBy`), the keeper's "who is busy" and every
+command's "what you hold" alike; the kinds differ only in who may take one and who moves it on. So `task progress` at a
+review or a spike is its sign of life (`progress` in the log, with its kind), `task context` and `task show` read what
+is in hand, and a writer's command names what is held and what ends it. What a tester cannot decide it escalates to the lead, and the lead is
 woken for no other review. When reviews queue, the keeper starts another tester (`agentsNeeded`). A team with no tester
-leaves every review to the lead.
+leaves the tester's steps to the lead.
 
 A tester in the team gives every developer task a task of its tests, `<id>-tests`, after it: tests written from the
 task's acceptance, not its code, by an agent that did not write it. It is a developer's (`role: developer`,
@@ -539,9 +540,9 @@ the work fails is told to the lead, not bent: `complete` with `--known-failure` 
 module's tests are checked by every test of its folder (`node --test '<dir>/**/*.test.ts'`): a run's test-1 held a
 task's acceptance in a third file of the folder, which a check naming the task's own files never ran.
 
-A task of tests is reviewed by the tester, as any developer task. A review no tester may take — a tester's own, when it
-wrote tests no developer could — is a developer's that worked neither it nor what it tests (`spareReviewers`); the
-lead's only when nobody else may, as it would hold the run (`leadReviews`).
+A task of tests is reviewed by the tester, as any developer task. A step nobody of its role may take — a tester's own, when it
+wrote tests no developer could — is a developer's that worked neither it nor what it tests (`stepReviewers`); the
+lead's only when nobody else may, as it would hold the run.
 
 ## What the data never shows
 
@@ -552,32 +553,24 @@ is seen — a row in the data when the demo should show it, or a unit test of th
 The designer says one it could not look at (`--approve --note`); the derived task of tests holds one with a unit test
 and tells the lead; and the lead, reviewing, tests the module's edges itself or sends the task back for the test.
 
-## The designer's review (`design.ts`)
+## A card's review (`reviews.ts`)
 
-When every designer is at a task of its own, a UI review waits for nobody: the lead's queue offers it too (`uiToo`:
-review its UI as well, approve with `--skip-design reviewer`), and the run's view says it (`ui-waits`: start another
-designer, or review it), which wakes the lead.
-A ready task whose file another task holds is not offered (its take would be refused, `claimed`): `task next` says whose
-it waits for, and `--follow` waits. With a designer in the team — or a plan that says `"designReview": true`; `false` turns it off; a stage stacked on
-the run keeps the run's choice, and may only turn it on — the UI another role's
-task changes (under `src/space/`, but its data, or a plugin) is looked at by a designer before the lead: at `complete`
-its state's `design` is `due`. A designer's `task next` offers it before any task of its own (`--take` makes it theirs:
-another designer is not offered it), with what it changed, the pages it is likely drawn at and what to look for; the
-designer runs `task look`, then `task review --approve` — the task stays in review, the lead's now — whose review is the complete and strict one, and the final word, the code above all once its UI is approved; the designer's is the UI/UX, as a
-designer — and `run watch` wakes the lead for it then, not before — or `--changes`, which go back to the task as the lead's would and
-count as a round. The lead's approval while it is due is refused, naming the designer, unless `--skip-design <why>`
-says why — `lead` (the lead looked at its UI itself, both schemes and the phone width: refused without a `task look` of
-the task since its last complete, `lookedSince`) or `no-ui` (it changes nothing
-a visitor sees; `task complete --review code` says it from the start) — kept as the state's `design.why` and the log's
-`designSkip`. The report, the audit, `run watch` and the monitor say each by its reason ("UI by the lead", "no UI"),
-never one "skipped": a run's report counted 21 UI reviews the lead made as UI nobody looked at. A designer does not review its own work, and is not finished while a task whose UI it may
-review is still to be done. A task asks the review it needs as it is sent: `task complete --review code` goes to the
-lead's code review alone (nothing a visitor sees changed; kept only when no page draws a file it changed —
-`drawnByAPage` — a setting or a type), `--review ui` has its UI looked at first — by a designer,
-the lead's too when none is free — and left out, the run decides as above; the activity says which (`complete`'s
-`review`). The designer's changes are logged as its UI review (`design-review`, `changes`), apart from the lead's; a lead
-going past a UI review a designer took tells that designer, who still tells the lead what it found with `task tell
---about <task>` — the way any agent holding no task does.
+The run is a kanban: every card — work, tests, an integration — goes through the same review, and what changes is who
+says each step. A card's `review` names the roles that review it, in order (`"review": ["designer", "tester"]`: a
+designer's look at what a visitor sees, then the tester's QA); a card that names none is the tester's, the lead's with
+no tester (`reviewSteps`, `DEFAULT_REVIEW_ROLE`). A role nobody in the team takes stands as that default, said at
+`complete` ("its review goes …", `stepsLeftOut`) and before the run: with a designer in the team, `run open --dry-run`
+names the cards that change what a visitor sees with no designer in their review (`designersNotice`) — said, never
+changed: the card says who reviews it. A research card is the lead's.
+
+Each step is said by an agent of its role that worked neither the card nor what a card of tests tests; with none, a
+developer that did not; with none, the lead (`stepReviewers`) — who says any step, always, and whose approval approves
+the card whatever step it is at. `task next` hands an agent its step before any work of its own (`reviewFor`), the
+lead only the steps that are its; taken, the step is its reviewer's (`ReviewState.by`) and no other of its role is
+offered it. Its approval hands the card to the next step with what it saw (`passed`, the log's `step`), and the last
+step's approves it; changes send it back as a round, and the next round starts again from its first step. The
+designer says how closely the team asks (`options.designReview`, `DESIGN_LOOK`); a designer is not finished while a
+card whose review names it is still to be done.
 
 **What runs once is not run twice.** A passing `task check` is kept under a key — the task's changed files, the run's
 approved work, its acceptance, the CLI (`tasks/checked.ts`) — for 30 minutes: a `task check` or `task complete` with the
@@ -606,22 +599,18 @@ style and pseudo-element — and only those that differ are pictured, the rest s
 it" (nine pages pictured, 204 s, for two tokens added). A page named on the command is pictured
 whatever it reads.
 
-**A review has its time** (design-1 held one 16 min, a task queued 18 min behind it, both developers
-free). A UI review taken is its designer's for `REVIEW_TIMEOUT_MS` (8 min) — a designer's first for 7 min more
-(`FIRST_REVIEW_READING_MS`, `design.first`), which reads the references it is told to first: past it, `task next` hands it to
-another designer — the first told on its next command (`review-timed-out` in the log), and its verdict after refused as
-`claimed`, saying to keep what it found for the next run (`run notice`) — and `run watch` tells the lead, idle team or
-not, to decide it (`slow-review`; under the limit, only while others sit free, from half of it). One due nobody takes
-for `REVIEW_QUEUE_MS` (5 min) is the lead's to review now (`ui-queued`). A lead that sends a task back with `--changes
-… --skip-design reviewer` keeps its next round's UI review (`design.reserved`): that round comes due to the lead alone,
-`skipped` by `lead` — never offered to a designer (a run's t-result-card went to design-1 after the lead said
-it was its own); a designer reviewing the round it sent back is told its review ended.
+**A step has its time** (design-1 held one 16 min, a task queued 18 min behind it, both developers
+free). A step taken is its reviewer's for `REVIEW_TIMEOUT_MS` (8 min) — 7 min more on that agent's first review of the
+run (`FIRST_REVIEW_READING_MS`, `ReviewState.first`), which reads the references it is told to first: past it, `task next`
+hands it to another of its reviewers — the first told on its next command (`review-timed-out` in the log), and its
+verdict after refused as `claimed`, saying to keep what it found for the next run (`run notice`) — and `run watch` tells
+the lead, idle team or not, to decide it (`slow-review`). A step nobody takes for `REVIEW_QUEUE_MS` (5 min) may be said
+by the next step's reviewers too (`stepQueued`), and `run watch` says it (`review-waits`).
 
-**A round sent back goes to the designer who said the one before** (`design.before`, kept as the round comes due with
-its time, `since`): offered to it first, and to another designer only past `SAME_DESIGNER_MS` (3 min) — a run's
-t-match-bars had design-2's first round and design-1's second, which brought asks of its own and cost a round. Another
-designer taking it is told so in its brief: check what the round before asked, and ask anew only what is broken — the
-rest is a notice for the next run. A designer's `task look` of the UI it reviews is set beside the run before it
+**A round sent back goes first to who said each step the one before** (`ReviewState.before`) — a run's t-match-bars
+had design-2's first round and design-1's second, which brought asks of its own and cost a round. Another reviewer
+taking it is told so in its brief: check what the round before asked, and ask anew only what is broken — the rest is
+a notice for the next run. A designer's `task look` of the UI it reviews is set beside the run before it
 (`--before`) unless it says `--no-before`, and names the pages its changes are drawn at that were not looked at — a
 shared file's: a run's design-2 looked at one page twice, and the home its card change broke was the lead's to
 find. The values a review asks for are measured, not guessed: `plitzi page measure <path> "<ours> => <theirs>" …
@@ -671,11 +660,11 @@ or ready, and is refused once an agent took it, as is a `dependsOn` on a task th
 (`held-ahead`: a ready task none can take because another task holds a file it needs, claimed ahead of it — review
 that one first; `held-up`: a pending task whose every remaining dependency is past its work — in review, sent back, blocked — while
 agents of its role have nothing to take; whether they share a file decides what it suggests — and `slow-review`, a
-review a designer or another lead took ten minutes ago and has not decided while the team has nothing to take — and
+step its reviewer has held past its time — and
 `idle-team`, the run as a kanban: an agent running with no card worked, no review in hand and none of its roles ready,
-said with the way to feed it — the backlog's items no task closes, the UI of a card in review a free designer could take
-(a send-back with `--skip-design reviewer` keeps the next look the lead's), a large card to split — or that nothing is left;
-never a designer while others' work is under way, which waits for its UI reviews, never an agent none of whose role's
+said with the way to feed it — the backlog's items no task closes, a step of a card's review a free agent of its role
+could take, a large card to split — or that nothing is left; never an agent while cards whose review names its role are
+still to be done, never an agent none of whose role's
 cards is left (it has done its part), and a card to split only of the idle agents' roles; said once for the same agents
 and the same board (`subject`: which agents, how many cards done), whatever its advice's words — a run's lead was
 woken eleven times for one waiting designer;
@@ -744,50 +733,50 @@ exclusively (`wx`). Every write is a temp file renamed over the target, retried 
 version is a blob named by its fingerprint and a manifest names it, so the manifest is the one commit point: a cut leaves
 an unnamed blob, never a named half-written file.
 
-## A spike: research in the run, a scout's (`spike.ts`, `tasks/spike.ts`)
+## Research: a card like any, a scout's (`spike.ts`, `tasks/research.ts`)
 
 Research — what the lead reads to know what the work is — is work of the run, seen by the monitor and counted by the
-report: a **spike**. A scout finds it out (`SCOUT`, on the strongest model: every task after it is made of what it
-finds). **Every spike's result is the lead's to approve**, because what is found mostly becomes the work the lead
-manages, and adding or taking out tasks (`run extend`, `run amend`) is the lead's alone. With no scout in the team, the
-lead finds it out. A spike is research alone: a task with `"spike": "what to find out"` and no files
-(`run open --dry-run` refuses one with files), whose acceptance is in words — a command would run at a `complete` it never reaches.
+report: a **research card** (a spike). It is a card like any on the board — ready, taken, at work, in review, done — and
+only two rules are its own: who takes it, and who reviews it. A scout takes it (`roleOf`: research is a `scout`'s, on
+the strongest model — every task after it is made of what it finds), with its copy and token as any take; with no scout
+in the team the lead finds it out itself, untaken (`leadFindsOut` on its line). Its one review step is the lead's
+(`reviewSteps`): **every research card's result is the lead's to approve**, because what is found mostly becomes the work
+the lead manages, and adding or taking out tasks (`run extend`, `run amend`) is the lead's alone. A research card is a
+task with `"spike": "what to find out"` and no files (`run open --dry-run` refuses one with files), whose acceptance is
+in words.
 
 **A run starts with one: its scope.** As any project does: the lead scopes the person's ask, and the work flows from
-there. `plitzi run start "<the ask>" --run <name>` opens the run on it alone (`scopePlan`: one critical spike,
+there. `plitzi run start "<the ask>" --run <name>` opens the run on it alone (`scopePlan`: one critical card,
 `s-scope`, the plan written in the project's `tmp/` and moved into the run as any plan is). The scout finds out —
-`page shot --compare <original> --dress`, the original's computed styles, the project — and ends it with its result,
-the tasks: `plitzi task spike s-scope --done "what was found" --tasks <stage.json>`. A scout's stage is proposed: checked as
-`run extend --dry-run` checks it, kept beside the spike (`proposed-stage.json`, `TaskState.proposed`) and handed to the
-lead (`task next --role lead`, and `run watch` as a `proposal`), who decides it with the person and runs
-`task spike s-scope --approve`, which stacks it, or `--changes "…"`, which sends it back to the scout. A primer the stage
-names is kept beside it. Findings alone go to the lead the same way. The lead's own stage is stacked at once. A stage is stacked as
-`run extend` stacks one (refused, it leaves the spike open), and each task carries what was found for it (`"findings"`,
-kept as the run's `TaskState.findings` from its first state, `startingState`): whoever builds it reads it in its brief,
-rather than a spike per task — found out by one, built by another, each read twice.
+`page shot --compare <original> --dress`, the original's computed styles, the project — and completes it with its
+result, the tasks: `plitzi task complete --found "what was found" --tasks <stage.json>` (`completeResearch`). The stage
+is checked as `run extend --dry-run` checks it, kept beside the card (`proposed-stage.json`, `TaskState.proposed`), and
+the card goes to review — the lead's step (`task next --role lead` hands it with what was found; `run watch` says it as a
+`spike-proposed`) — decided with the person: `task review s-scope --approve` stacks it (`approveResearch`),
+`--leave t-a,t-b` leaving some out (`all`: its findings alone; a left `<id>-tests` is its card with `"tests": false`, and
+a kept task waiting for a left one is refused, naming both), and `--changes "…"` sends it back to its scout as any card,
+what it proposed dropped. A primer the stage names is kept beside it. The lead's own research is done at once
+(`task complete s-scope --found … --tasks …`, named — nobody reviews the lead's word). A stage is stacked as `run extend`
+stacks one (refused, the card stays as it was), and each task carries what was found for it (`"findings"`, kept as the
+run's `TaskState.findings` from its first state, `startingState`): whoever builds it reads it in its brief.
 
-**Later spikes are the lead's to open**, when the work asks for one: a research task stacked with `run extend`, ended the
-same way. It starts in `spike`, ahead of `ready` (ready is ready to build), whether or not what it waits for is done —
-finding out is reading. No developer takes it (`take` refuses one); `run watch` says each spike waiting
-(`spikes`), and `task next` hands a scout the most urgent one no other scout took (`spikedBy`, `spikeFor`). With no
-scout in the team, `task next --role lead` hands it to the lead. Its findings go into the brief of every task that waits for it, made ready by
-it (`readyWhatWaited`), no review.
+**Later research is the lead's to open**, when the work asks for one: a research card stacked with `run extend`, ended
+the same way. It waits for what it depends on as any card; `run watch` says the ones that are the lead's (`spikes`, no
+scout in the team). Its findings go into the brief of every task that waits for it, made ready by it
+(`readyWhatWaited`). A run opened by an earlier CLI keeps working: a card in its old `spike` status reads as ready, or in
+review with what it found (`stateFromEarlierCli`).
 
 **An agent whose task needs something found out** blocks it on the lead — `task block --reason "what"`, from its copy
 (a question to the lead is a block: one way to say it, `asksLead`) — its files and token its own; the agent takes other
-work meanwhile. It is the lead's to answer, as every block is — a scout finds out the run's spikes alone (Carlos): `run watch` wakes the lead for it,
-`task next --role lead` hands it, and `task unblock <task> --answer "…"` lifts the block, kept as the task's finding
-(`unblockTask`). When the answer changes the work, the lead stacks the tasks it makes. A scout with no spike left is
-told it can stop (`task next`); the keeper starts it again for a spike a stage brings, or one the lead sends back.
+work meanwhile. It is the lead's to answer, as every block is — a scout finds out the run's research alone (Carlos):
+`run watch` wakes the lead for it, `task next --role lead` hands it (`findOutFor`), and `task unblock <task> --answer
+"…"` lifts the block, kept as the task's finding (`unblockTask`). When the answer changes the work, the lead stacks the
+tasks it makes.
 
-The lead may approve a spike's findings without its tasks (`task spike <s> --approve --findings-only`, `approveSpike`):
-done, its proposed tasks dropped and said — a send-back that asked nothing had the scout propose again. A scout measures
-on `plitzi run preview --copy [dir]` (`copyRunWork`): the run's approved work made afresh in its scratch, inside the project where
-its packages resolve, its state empty — encore-10's scout rebuilt it by hand from `approved.json` and the blobs.
-
-`run open --dry-run --rehearse` plays research alone without a review. The monitor puts a spike someone finds out **at work**, named,
-and keeps a column (`◇ spike`) for those nobody took or whose result waits for the lead; the dev tools' Run tab a group
-(Finding out).
+A scout measures on `plitzi run preview --copy [dir]` (`copyRunWork`): the run's approved work made afresh in its
+scratch, inside the project where its packages resolve, its state empty — encore-10's scout rebuilt it by hand from
+`approved.json` and the blobs. The monitor shows research where any card is: at work with its scout (or the lead), in
+review with the lead.
 
 **An answer is taken up** (`handOver.ts`): a question the lead answered holds its task until its agent has the answer —
 at its next command, whatever it is — and that is what puts it at work again, said in the activity ("goes on with
@@ -798,7 +787,7 @@ one its harness stopped. Each `task next`, and each turn of its wait, marks the 
 agent between tasks with no mark for `PRESENCE_STALE_MS` shows in the monitor as `no-signal`, with the command that
 starts it again.
 
-**A task that takes long** (`view.ts`, `talk.ts`, `limits.ts`): any task at work — a spike its scout finds out too — past
+**A task that takes long** (`view.ts`, `talk.ts`, `limits.ts`): any card at work — research too — past
 the time a piece of work takes (`WORK_LIMIT_MINUTES`, 10; the scope's `SCOPE_LIMIT_MINUTES`, 30 — Carlos: past ten
 minutes something is usually wrong) wakes the lead (`long-task`, again at each limit more), with its agent's last word and how to ask:
 `task message @<agent> --standing`. The agent answers whole — `task tell --standing --fraction <0-1> --eta <minutes>
@@ -891,14 +880,12 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   life of a task in review is answered as one in review. `run open --dry-run` refuses a check it could not run: empty,
   reading `.env`, or naming `$PLITZI_URL` in a project with no start script — a lint of what the lead meant, not a
   sandbox: what holds is that a copy has no `.env` and a check's environment none of it.
-- **Review:** changes go back to the same task, and after three rounds block it for the lead to decide — three of the
-  lead's, or three of the designer's on its UI, counted apart: the lead approves it as it is, answers it (`task
+- **Review:** changes go back to the same task, and after three rounds — any step's — block it for the lead to decide: the lead approves it as it is, answers it (`task
   unblock --answer`), or asks the person, since nobody else in the run talks to them. An agent's own block waits for
   the lead or another task (`--needs lead|task`), never the person directly. Approval keeps the version that
   went to review and merges it into `approved.json`; what its copy holds otherwise — written after `complete` — is not
-  merged, and said (`notReviewed`, and `task look` warns that what it serves is not what an approval merges). A UI review
-  is a designer's of the team, by the name `team.json` starts it with (`design-1`); `--skip-design` is the lead's. A
-  designer's own work with no other designer in the team asks for none — the lead reviews its UI with the rest. **Before
+  merged, and said (`notReviewed`, and `task look` warns that what it serves is not what an approval merges). A step of a
+  review is an agent's of the team, by the name `team.json` starts it with (`design-1`). **Before
   anything is written, each file is checked**: the run's version moved since the copy was made (`conflict`: redo it on
   the run's), a file it made where another task made one by that name first (two files, never put together), or someone
   changed the project's file while the task worked on it. That one stops the approval, naming the file; the lead decides: `--overwrite` writes the task's
@@ -1043,7 +1030,7 @@ They are read off the log, the usage, the plan, the agents' scratch, their notic
   result read again for over a million tokens — named by the tool and what it was asked (`Read .ts`, `Bash plitzi page
   measure`: `whatOf`, `kindOf`).
 - **How the run was worked** (`audit.ts`): an approval missing from the log, a review waiting over ten minutes, a known
-  failure, a task sent back three times, a UI review skipped or gone past, a crash, a preview that could not sync, the
+  failure, a task sent back three times (by each step), a crash, a preview that could not sync, the
   brake, the same refusal three times.
 - **What it came to:** a task not done, blocked or cut; one over twice its estimate (the run over 1.5 times); conflicts;
   files written over or joined; stops; unanswered proposals.
@@ -1104,10 +1091,10 @@ copy leaves it out. `plitzi feedback`, one agent's report, is kept beside them, 
 the log, the messages and the run's usage — what a run's lead computed by hand to find the run's bottlenecks:
 
 - **Flow:** the minutes worked (the open to every task approved), apart from the wait for the person's finish — the
-  report said 136 min of a run worked in 50. Each task: from stacked to taken, at work, its rounds (the UI's and the
-  lead's), each wait for its UI review and the review's own time, each wait for the lead, each wait for an agent after
-  changes were asked, its checks failed, its reworks handed off. Each agent: joined, stopped, its tasks, completes,
-  checks failed, refusals, the minutes it waited for work, its reviews (with changes) and their median minutes. Checks
+  report said 136 min of a run worked in 50. Each task: from stacked to taken, at work, its rounds by the step that sent each back, each step of its
+  review — its wait for a reviewer (from the complete, or the step before approved) and its reviewer's time at it — and each
+  wait for an agent after changes were asked, its checks failed, its reworks handed off. Each agent: joined, stopped, its tasks, completes,
+  checks failed, refusals, the minutes it waited for work, the review steps it said by step (with changes) and their median minutes. Checks
   failed by step (lint, typecheck, author, acceptance, a long file) — the copy's own failures only: a `task check` says
   what failed for nothing of the copy's (`notOwn`, `tasks/notOwn.ts`) — a step the run's work fails the same way, an
   acceptance line nothing could answer (its command exited 2, or could not run; the lead is told once, and a
@@ -1126,7 +1113,7 @@ the log, the messages and the run's usage — what a run's lead computed by hand
   whole, ends the report against the five runs before, and `plitzi run report --bench`
   lists every run: minutes a task, rounds a task, the share of checks failed for the copy's work and how many failed
   for nothing of it ("Not theirs"), refusals (`identity` apart), the median
-  waits for a UI review, the lead and a rework, the minutes agents waited (to the last approval: past it they wait for
+  wait of a review step for its reviewer, its reviewer's time at it, the median rework wait, the minutes agents waited (to the last approval: past it they wait for
   the person's finish), reworks handed off, what was read, what was read again a task, calls repeated — whether the team gets better from one run to the next. A second table counts the findings'
   patterns (`RunIndicators`): the ease's median, findings by whose, the share of failures not the agents', flaky checks, lines failing,
   session breaks, `explain` misses, what was done beside the CLI, what two agents said, commands refused as written, and

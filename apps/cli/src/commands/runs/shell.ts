@@ -13,6 +13,7 @@ import { failedSteps } from './text';
 import { projectChecks } from '../../runs/checks';
 import { writtenByAnother } from '../../runs/compat';
 import { contextNow, spentIn } from '../../runs/harness';
+import { endsWith, HELD_WORD, heldBy } from '../../runs/held';
 import { AGENT_TOKEN, identify, issuedText, UNNAMED } from '../../runs/identity';
 import { LEAD } from '../../runs/messages';
 import { COPY_TASK_FILE, copyOf, runPaths } from '../../runs/paths';
@@ -21,10 +22,10 @@ import { activeRuns, loadRun } from '../../runs/run';
 import { viewTask } from '../../runs/taskStore';
 import { isQuality } from '../../runs/team';
 import { USAGE_OFF, usageCaller } from '../../runs/usage';
-import { isWorked } from '../../runs/worked';
 import { CLI_VERSION } from '../../scaffold/project';
 import { findProject } from '../existingProject';
 
+import type { Held } from '../../runs/held';
 import type { Claim } from '../../runs/identity';
 import type { RunContext } from '../../runs/run';
 
@@ -457,39 +458,43 @@ export const runSelf = (cwd: string, args: string[]): Promise<{ code: number; ou
   });
 };
 
-/** The task in review whose review `ctx.agent` holds — a designer's UI review, or a reviewer's — if one. */
-const reviewHeldBy = async (
-  ctx: RunContext,
-  loaded: Awaited<ReturnType<typeof loadRun>>
-): Promise<string | undefined> =>
-  (await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)))).find(
-    view =>
-      view.state.status === 'in-review' &&
-      ((view.state.design?.status === 'due' && view.state.design.by === ctx.agent) ||
-        (view.state.reviewer?.by === ctx.agent && view.state.reviewer.round === view.state.round))
-  )?.task.id;
+/** What `ctx.agent` has in hand across the run, of every kind (`held.ts`): nothing for the lead or an unnamed caller. */
+export const heldNow = async (ctx: RunContext, runId: string): Promise<Held[]> => {
+  if (ctx.agent === LEAD || ctx.agent === UNNAMED) {
+    return [];
+  }
+
+  const loaded = await loadRun(ctx, runId);
+
+  return heldBy(await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task))), ctx.agent);
+};
 
 /**
- * The review an agent is at when it holds no task: what its sign of life is about — a run's designers said their
- * progress through a review and were refused it nine times, each fresh session anew.
+ * The one thing an agent holds when it names none: the task of the copy it runs in, else the one it has in hand — its
+ * work, a review, a spike, alike. Nothing when it holds none, or several.
  */
-export const reviewingOnly = async (ctx: RunContext, runId: string): Promise<string | undefined> => {
-  if (ctx.agent === LEAD || ctx.agent === UNNAMED) {
-    return undefined;
+export const inHand = async (ctx: RunContext, runId: string): Promise<Held | undefined> => {
+  if (ctx.token !== undefined && TOKEN.exec(ctx.token)?.[2] !== undefined) {
+    return { task: taskOf(ctx), kind: 'work', agent: ctx.agent };
   }
 
-  try {
-    taskOf(ctx);
+  const held = await heldNow(ctx, runId);
+  const work = held.filter(each => each.kind === 'work');
 
-    return undefined;
-  } catch {
-    const loaded = await loadRun(ctx, runId);
-    const worked = (await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)))).some(
-      view => view.owner?.agent === ctx.agent && isWorked(view.state.status)
-    );
+  return work.length === 1 ? work[0] : held.length === 1 ? held[0] : undefined;
+};
 
-    return worked ? undefined : reviewHeldBy(ctx, loaded);
+/** What an agent holds, said where a command needs a task at work: what it is, and what ends it. */
+const heldText = (agent: string, held: readonly Held[]): string => {
+  if (held.length === 0) {
+    return `${agent} holds nothing at work: name the task, or run this in its copy (cd <its work folder>)`;
   }
+
+  const [only] = held;
+
+  return held.length === 1
+    ? `${agent} holds ${only.task} as a ${HELD_WORD[only.kind]}, no task at work: it ends with ${endsWith(only)}; task context and task show read it, task progress notes where you are — the rest are a writer's`
+    : `${agent} holds ${held.map(each => `${each.task} (${HELD_WORD[each.kind]})`).join(', ')}: name the task, or run this in its copy`;
 };
 
 /**
@@ -505,43 +510,24 @@ const taskResolved = async (ctx: RunContext, runId: string, named?: string): Pro
       throw error;
     }
 
-    const loaded = await loadRun(ctx, runId);
-    const held = (await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)))).filter(
-      view => view.owner?.agent === ctx.agent && isWorked(view.state.status)
-    );
-    if (held.length === 1) {
-      return held[0].task.id;
+    const held = await heldNow(ctx, runId);
+    const work = held.filter(each => each.kind === 'work');
+    if (work.length === 1) {
+      return work[0].task;
     }
 
-    // A reviewer in the copy it reviews holds no task: its review is said by its look and its verdict (a run's
-    // design-2 was asked for progress at a review and refused, "name it").
-    const reviewing = await reviewHeldBy(ctx, loaded);
-    throw new RunRefusal(
-      'invalid',
-      held.length === 0 && reviewing !== undefined
-        ? `${ctx.agent} reviews ${reviewing}, and holds no task at work: a review says itself — its look (plitzi task look ${reviewing}) and its verdict (plitzi task review ${reviewing} …); task context and task show read it, task progress notes you are at it, the rest are a writer's`
-        : held.length === 0
-          ? `${ctx.agent} holds no task at work: name it, or run this in its copy (cd <its work folder>)`
-          : `${ctx.agent} holds ${held.map(view => view.task.id).join(', ')}: name the task, or run this in its copy`
-    );
+    throw new RunRefusal('invalid', heldText(ctx.agent, work.length > 1 ? work : held));
   }
 };
 
 /**
- * The task an agent means when it names none: the one it holds, or the one it reviews — a run's `task show` with no
- * task was refused twice, its agent holding one.
+ * The task an agent means when it names none: the one it has in hand, of any kind — a run's `task show` with no task was
+ * refused twice, its agent holding one.
  */
 export const ownTask = async (ctx: RunContext, runId: string): Promise<string> => {
-  try {
-    return await taskResolved(ctx, runId);
-  } catch (error) {
-    const reviewing = await reviewingOnly(ctx, runId);
-    if (reviewing === undefined) {
-      throw error;
-    }
+  const held = await inHand(ctx, runId);
 
-    return reviewing;
-  }
+  return held?.task ?? taskResolved(ctx, runId);
 };
 
 /** The prelude every holder's command shares: the run and the task, from the token. */

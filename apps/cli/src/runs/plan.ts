@@ -14,8 +14,8 @@ import { expandFiles, sharedReached } from './ownership';
 import { ownScriptNotices } from './ownScripts';
 import { ID, isSecretFile, NOT_TASK_DIRS, under } from './paths';
 import { sizeNotices, suiteNotices } from './planNotices';
-import { isResearch } from './spike';
-import { DEVELOPER, roleProblems, skillProblems, teamSize, teamTakes, TESTER } from './team';
+import { isResearch, roleOf } from './spike';
+import { roleProblems, skillProblems, teamSize, teamTakes, TESTER } from './team';
 import { teamNotices } from './teamNotices';
 import { testSetupOf, withTestTasks } from './tests';
 import { byUrgency, chainMinutes } from './urgency';
@@ -665,7 +665,7 @@ export const checkPlan = async (
   const unchecked = tasks.filter(
     task =>
       task.kind === 'work' &&
-      (task.role ?? DEVELOPER) !== TESTER &&
+      roleOf(task) !== TESTER &&
       // Research ends by what it found, which the lead approves: no command proves a finding.
       !isResearch(task) &&
       task.acceptance.length > 0 &&

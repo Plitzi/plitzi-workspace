@@ -78,7 +78,7 @@ describe('the Run tab', () => {
     expect(screen.getByText('src/space/pages/combates.ts')).toBeTruthy();
   });
 
-  it('groups a task finding something out apart, saying what — and marks the urgent ones', () => {
+  it('puts research at work with the rest, saying what it finds out — and marks the urgent ones', () => {
     render(
       <RunViewer
         snapshot={{
@@ -86,14 +86,13 @@ describe('the Run tab', () => {
           tasks: [
             ...snapshot.tasks,
             {
-              id: 't-artist',
+              id: 's-artist',
               title: 'The artist page',
-              role: 'developer',
-              status: 'spike',
-              agent: 'dev-1',
+              role: 'scout',
+              status: 'ready',
               round: 0,
-              files: ['src/space/pages/artista.ts'],
-              why: 'dev-1 finds out: which layers make the original’s light',
+              files: [],
+              why: 'the lead finds it out: which layers make the original’s light',
               urgency: 'high'
             }
           ]
@@ -101,8 +100,8 @@ describe('the Run tab', () => {
       />
     );
 
-    expect(screen.getByText('Finding out')).toBeTruthy();
-    expect(screen.getByText('dev-1 finds out: which layers make the original’s light')).toBeTruthy();
+    expect(screen.queryByText('Finding out')).toBeNull();
+    expect(screen.getByText('the lead finds it out: which layers make the original’s light')).toBeTruthy();
     expect(screen.getByTitle('high: its priority, or that of a task waiting on it').textContent).toBe('!');
   });
 

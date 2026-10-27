@@ -10,6 +10,7 @@ import { loadRun, readApproved } from '../run';
 import { getBlob } from '../store';
 import { readStart, viewTask } from '../taskStore';
 import { currentVersion, findTask } from './common';
+import { roleOf } from '../spike';
 
 import type { ProposalView } from '../agreements';
 import type { ReviewComment, RunTask, TaskState } from '../model';
@@ -232,7 +233,7 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
         ? []
         : other.files
             .filter(file => !task.files.includes(file) && task.files.some(own => stemOf(own) === stemOf(file)))
-            .map(file => ({ file, task: other.id, role: other.role ?? 'developer' }))
+            .map(file => ({ file, task: other.id, role: roleOf(other) }))
     )
   };
 };

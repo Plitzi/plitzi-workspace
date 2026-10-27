@@ -14,7 +14,7 @@ import { runPlanProblems } from './planProblems';
 import { isRunRefusal } from './refusal';
 import { loadRun, openRun } from './run';
 import { completeTask, nextTask, takeTask } from './tasks';
-import { benchPlan, makeBench, teamFor, writeInCopy } from '../tests/runProject';
+import { benchPlan, designed, makeBench, teamFor, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
 import type { Bench } from '../tests/runProject';
@@ -182,7 +182,7 @@ describe('a plan held to the rules', () => {
       dependsOn: [],
       quality: task.id === 't-home' ? ('high' as const) : ('standard' as const)
     }));
-    await openWith(lead(), await bench.writePlan({ ...plan, designReview: false }), 4);
+    await openWith(lead(), await bench.writePlan(plan), 4);
     const standard = bench.agent('agent-1', { quality: 'standard' });
     const offered = new Set<string>();
     for (const id of ['t-menu', 't-book', 't-about']) {
@@ -247,7 +247,7 @@ describe('a plan held to the rules', () => {
   });
 
   // One designer beside four developers, and 21 tasks' UI went to the lead.
-  it('says before the run that too few designers review the UI, and how many keep up', async () => {
+  it('says before the run that too few designers review the cards that name one, and how many keep up', async () => {
     const teamOf = (designers: number) => ({
       version: 1 as const,
       agents: [
@@ -259,7 +259,7 @@ describe('a plan held to the rules', () => {
     const big = {
       ...benchPlan(),
       tasks: [0, 1, 2].flatMap(round =>
-        benchPlan().tasks.map(task => ({
+        designed(benchPlan()).tasks.map(task => ({
           ...task,
           id: `${task.id}-${String(round)}`,
           files: task.files.map(file => file.replace('src/space/pages/', `src/space/pages/round-${String(round)}/`)),
@@ -271,9 +271,9 @@ describe('a plan held to the rules', () => {
       (await checkPlan(bench.root, big, await readOwnership(bench.root), teamOf(designers))).notices;
 
     expect(await notices(1)).toContainEqual(
-      expect.stringContaining('12 tasks change what a visitor sees, and 1 designer reviews the UI of 4 developers')
+      expect.stringContaining('12 tasks a designer reviews, and 1 designer beside 4 developers: one for every 3')
     );
-    expect((await notices(2)).some(notice => notice.includes('change what a visitor sees'))).toBe(false);
+    expect((await notices(2)).some(notice => notice.includes('a designer reviews'))).toBe(false);
 
     // In a copy of a site each review measures every value — one designer for each developer.
     const copying = async (designers: number) =>
@@ -288,7 +288,16 @@ describe('a plan held to the rules', () => {
     expect(await copying(2)).toContainEqual(
       expect.stringContaining('one for every 1 in a copy of a site, each review measuring it against the original')
     );
-    expect((await copying(4)).some(notice => notice.includes('change what a visitor sees'))).toBe(false);
+    expect((await copying(4)).some(notice => notice.includes('a designer reviews'))).toBe(false);
+
+    // A card says who reviews it: one that changes a page with no designer in its review is said, never changed.
+    const unnamed = {
+      ...big,
+      tasks: big.tasks.map(task => (task.id === 't-menu-0' ? { ...task, review: undefined } : task))
+    };
+    expect((await checkPlan(bench.root, unnamed, await readOwnership(bench.root), teamOf(2))).notices).toContainEqual(
+      expect.stringMatching(/^t-menu-0 changes what a visitor sees with no designer in its review/)
+    );
   });
 
   // Three tasks of a few values for two developers and a designer — dev-2's 62k tokens on one task.
@@ -481,7 +490,7 @@ describe('how many agents at once', () => {
 describe('a run opened on a project that fails its own checks', () => {
   it('is refused, naming the checks — and opened despite them only said why, told to every task', async () => {
     await bench.write('src/space/pages/broken.ts', 'BROKEN\n');
-    const file = await bench.writePlan({ ...benchPlan(), designReview: false });
+    const file = await bench.writePlan(benchPlan());
     await bench.writeTeam(teamFor(benchPlan(), 2));
     const refused = await refusal(openRun(lead(), file));
     expect(refused.code).toBe('checks-failed');

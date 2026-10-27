@@ -110,7 +110,7 @@ describe('a run whose every task is approved', () => {
   it('wakes its lead to close it', async () => {
     const plan = benchPlan();
     plan.tasks = [plan.tasks[0]];
-    const { runId } = (await openRun(lead(), await bench.writePlan({ ...plan, designReview: false }))).checked;
+    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
     const taken = await take('agent-1', plan.tasks[0].id);
     await writeInCopy(taken.work, plan.tasks[0].files[0], 'export const page = { title: "Inicio" };\n');
     await completeTask(taken.ctx, runId, plan.tasks[0].id);

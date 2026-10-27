@@ -70,7 +70,7 @@ sign-in for everybody sends them back itself: `navigate({ urlType: 'external', u
 
 Which page an address draws, and for whom, is the router's decision — a tool or a test asks it, never the pages' paths:
 `pageAt(schema, '/sign-in', { signedIn: true })` (the page, or where it sends them), `audienceAt(schema, '/sign-in')`
-(`everyone`, `guests`, `members`, `both-apart`, `nobody`).
+(`everyone`, `gated` — one page drawn apart by sign-in —, `guests`, `members`, `both-apart`, `nobody`).
 
 A page for some permissions says so: `access: { permissions: ['postPublish'] }` — every one held, by a signed-in visitor
 (the permissions of their visitor roles; on Plitzi's own spaces, their account's). The server keeps it: anybody else is

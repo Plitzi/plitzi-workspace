@@ -56,6 +56,20 @@ describe('projectOrigin', () => {
     expect(await projectOrigin(await projectAt(), undefined)).toEqual(refused);
   });
 
+  // encore-11's scout checked a page in a folder of the run's work with no server in it: the default port was read as
+  // the project's, and every page said "nothing answers".
+  it('says no server answers, and how to start it, where nothing of Plitzi is on the port', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>(() => Promise.reject(new Error('ECONNREFUSED')))
+    );
+    const root = await projectAt();
+
+    expect(await projectOrigin(root, undefined)).toEqual({
+      problem: `No Plitzi server answers on port 8080 for ${root} — no npm start of this folder recorded where it serves. Start it here: npm start — wherever it serves, it writes it to tmp/dev-server.json and this finds it`
+    });
+  });
+
   it('is its own copy, answering with this folder', async () => {
     const root = await projectAt({ port: 8081, name: 'shop' });
     vi.stubGlobal('fetch', answering({ Server: 'shop', Instance: projectMark(root) }));

@@ -23,21 +23,16 @@ export const nameOf = (task: TaskLine): string =>
   task.status === 'changes-requested' ? `${task.id} ↺${String(task.round)}` : task.id;
 
 /**
- * Who a card is with: its agent, a scout at its spike, the designer or tester at its review — what puts it at the top
+ * Who a card is with: its agent, the lead at research of its own, the reviewer at the step of its review — what puts it at the top
  * of its stage, the ones nobody is on below (a stage's cards under its scroll were the ones being worked).
  */
 const withSomeone = (task: TaskLine): boolean =>
-  task.agent !== undefined ||
-  task.spikedBy !== undefined ||
-  task.reviewer !== undefined ||
-  task.design?.by !== undefined;
+  task.agent !== undefined || task.leadFindsOut === true || task.review?.by !== undefined;
 
 /** Where a task another waits for stands, in a word or two: what the one waiting for it waits on. */
 const standingOf = (task: TaskLine): string =>
   task.status === 'in-review'
-    ? task.design?.status === 'due'
-      ? 'UI review'
-      : 'review'
+    ? `${task.review?.role ?? ''} review`.trim()
     : task.status === 'in-progress'
       ? 'at work'
       : task.status === 'changes-requested'
@@ -46,7 +41,7 @@ const standingOf = (task: TaskLine): string =>
 
 /**
  * What a pending task waits for: each task it follows that is not approved yet, and where that one stands — "after
- * t-boxer (UI review), t-lint (review)". Its tasks at review were a pending task's whole reason, and nothing on
+ * t-boxer (designer review), t-lint (lead review)". Its tasks at review were a pending task's whole reason, and nothing on
  * the screen said so (t-motion pending while the three it followed waited for one designer).
  */
 export const waitsText = (task: TaskLine, tasks: readonly TaskLine[]): string => {
@@ -85,25 +80,15 @@ export const flowStages = (tasks: readonly TaskLine[]): FlowStage[] => {
         return left.length > 0 ? `after ${left.join(', ')}` : '';
       }
     },
-    // Finding something out before it is built, nobody on it yet — or what was found, with the lead to decide. One a
-    // scout is at is at work, beside the tasks being written (a run's scope read idle while its scout worked). A run
-    // that researched nothing has no column for it.
-    ...(tasks.some(task => task.status === 'spike' || task.found !== undefined)
-      ? [
-          {
-            key: 'spike',
-            title: 'Spike',
-            glyph: '◇',
-            tone: 'info' as const,
-            tasks: of('spike').filter(task => task.spikedBy === undefined),
-            // Never "free": no developer takes a spike — a scout takes it, or the lead with none. What one found is in
-            // review, the lead's to decide.
-            who: () => 'not taken yet'
-          }
-        ]
-      : []),
     // Free to take: no agent's yet — a task sent back is its writer's, at work or held.
-    { key: 'ready', title: 'Ready', glyph: '○', tone: 'muted' as const, tasks: of('ready'), who: () => '' },
+    {
+      key: 'ready',
+      title: 'Ready',
+      glyph: '○',
+      tone: 'muted' as const,
+      tasks: of('ready').filter(task => task.leadFindsOut !== true),
+      who: () => ''
+    },
     // One card an agent: the task it is at — written, or again after a review sent it back (↺). The others it holds
     // wait for it, held (dev-2 "ready" with t-home and "at work" with t-overlay at once).
     {
@@ -111,11 +96,12 @@ export const flowStages = (tasks: readonly TaskLine[]): FlowStage[] => {
       title: 'At work',
       glyph: '◐',
       tone: 'info' as const,
+      // Research the lead finds out itself, no scout in the team, is at work with it.
       tasks: [
-        ...of('spike').filter(task => task.spikedBy !== undefined),
+        ...of('ready').filter(task => task.leadFindsOut === true),
         ...[...of('in-progress'), ...of('changes-requested')].filter(task => !task.asking && !task.parkedFor)
       ],
-      who: (task: TaskLine) => (task.status === 'spike' ? (task.spikedBy ?? '') : (task.agent ?? ''))
+      who: (task: TaskLine) => (task.leadFindsOut ? 'lead' : (task.agent ?? ''))
     },
     // What holds an agent back: a block, a file another task has, a question to the lead, its agent at another task,
     // a failure.
@@ -145,22 +131,16 @@ export const flowStages = (tasks: readonly TaskLine[]): FlowStage[] => {
                 : 'failed'
     },
     {
-      key: 'ui-review',
-      title: 'UI review',
+      // One column for every review, whatever its step: who says it, and which role's it is.
+      key: 'review',
+      title: 'Review',
       glyph: '◎',
       tone: 'link' as const,
-      tasks: of('in-review').filter(task => task.design?.status === 'due' && task.reviewer === undefined),
-      who: (task: TaskLine) => task.design?.by ?? 'waiting'
-    },
-    {
-      // A lead that took a review whose UI waits for a designer reviews it whole (--skip-design reviewer): it is with the
-      // lead, named — never "nobody yet" in the UI's column while the lead says it is reviewing it.
-      key: 'lead-review',
-      title: 'Lead review',
-      glyph: '◎',
-      tone: 'link' as const,
-      tasks: of('in-review').filter(task => task.design?.status !== 'due' || task.reviewer !== undefined),
-      who: (task: TaskLine) => (task.proposed ? `lead decides ${task.proposed.by}'s` : (task.reviewer ?? 'waiting'))
+      tasks: of('in-review'),
+      who: (task: TaskLine) =>
+        task.proposed
+          ? `lead decides ${task.proposed.by}'s`
+          : `${task.review?.role ?? ''} · ${task.review?.by ?? 'waiting'}`
     },
     // The latest approval first: what just landed is what a person following the run looks for.
     {
@@ -173,24 +153,3 @@ export const flowStages = (tasks: readonly TaskLine[]): FlowStage[] => {
     }
   ];
 };
-
-/**
- * The flow in brief, as the activity's foot shows it: both reviews one column — the whole board (view 2) splits them —
- * so every stage is wide enough to read on any terminal.
- */
-export const briefStages = (tasks: readonly TaskLine[]): FlowStage[] =>
-  flowStages(tasks).reduce<FlowStage[]>((stages, stage) => {
-    const before = stages.at(-1);
-    if (stage.key === 'lead-review' && before?.key === 'ui-review') {
-      stages[stages.length - 1] = {
-        ...stage,
-        key: 'review',
-        title: 'Review',
-        tasks: [...before.tasks, ...stage.tasks]
-      };
-
-      return stages;
-    }
-
-    return [...stages, stage];
-  }, []);

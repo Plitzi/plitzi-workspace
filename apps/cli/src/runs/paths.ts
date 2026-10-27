@@ -129,6 +129,12 @@ export const TOOL_TMP: readonly string[] = [
 /** The project's one run, named: created exclusively when a run opens, gone with it — so two never open at once. */
 export const activeRunFile = (root: string): string => path.join(root, ACTIVE_RUN_FILE);
 
+/**
+ * The mark `run preview --copy` leaves in the folder it makes: a copy of the project the CLI made, which the report's
+ * look at an agent's scratch does not count as one made by hand (encore-11 said the scout's `run-copy` was).
+ */
+export const RUN_COPY_MARK = '.plitzi-run-copy';
+
 export const runPaths = (root: string, runId: string): RunPaths => {
   const dir = path.join(runsDir(root), runId);
   const cache = path.join(dir, 'cache');

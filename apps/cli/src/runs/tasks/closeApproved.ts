@@ -2,18 +2,16 @@ import fs from 'node:fs/promises';
 
 import { readyWhatWaited, sayIfAllDone, statesOf } from './handOn';
 import { proposalsOf } from '../agreements';
-import { agentAddress, LEAD, sendMessage } from '../messages';
+import { sendMessage } from '../messages';
 import { syncPreview } from '../preview';
 import { loadRun, logRun, readApproved } from '../run';
 import { logSpent } from '../spent';
 import { withLock } from '../store';
 import { lockedFiles, revokeOwner, updateState } from '../taskStore';
-import { at } from './common';
 import { grantWaiters } from './locks';
 import { integrateWhenReady, settleRequests } from './requests';
 
 import type { ReviewedTask } from './review';
-import type { DesignSkip } from '../designSkip';
 import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 
@@ -25,10 +23,9 @@ export interface Approval {
   /** The shared files its requests went into, and those that did not, and why. */
   fulfilled: string[];
   unmerged?: { files: string[]; reason: string };
-  /** Approved without its UI review — and why, as the lead said it. */
-  skipped?: true;
-  why?: DesignSkip;
   notReviewed: string[];
+  /** The role whose step approved it — its last, or the lead's word on any. */
+  step?: string;
 }
 
 /**
@@ -40,7 +37,7 @@ export const closeApproved = async (
   ctx: RunContext,
   loaded: LoadedRun,
   view: TaskView,
-  { round, merged, fulfilled, unmerged, skipped, why, notReviewed }: Approval
+  { round, merged, fulfilled, unmerged, notReviewed, step }: Approval
 ): Promise<ReviewedTask> => {
   const verdict = 'approve' as const;
   const taskId = view.task.id;
@@ -48,26 +45,7 @@ export const closeApproved = async (
   const released = [...(await lockedFiles(view.paths)).keys()];
   await fs.rm(view.paths.locks, { recursive: true, force: true });
   await revokeOwner(view.paths);
-  await updateState(
-    view.paths,
-    state => ({
-      ...state,
-      round,
-      status: 'done',
-      ...(skipped
-        ? {
-            design: {
-              status: 'skipped' as const,
-              round: state.round,
-              by: ctx.agent,
-              at: at(ctx),
-              ...(why ? { why } : {})
-            }
-          }
-        : {})
-    }),
-    ctx.now
-  );
+  await updateState(view.paths, state => ({ ...state, round, status: 'done', review: undefined }), ctx.now);
   // Said the moment it is so: the approval is in the run's work, whatever the steps after it meet — written last, one
   // that failed after it left an approval the log never had (t-tier-list, approved and nowhere in the log).
   await logRun(ctx, loaded.paths, {
@@ -79,8 +57,7 @@ export const closeApproved = async (
     fulfilled,
     // Nothing silent: a request that did not go in, and why — its integration task applies it.
     ...(unmerged ? { unmerged } : {}),
-    ...(skipped ? { design: 'skipped', ...(why ? { designSkip: why } : {}) } : {}),
-    ...(skipped && view.state.design?.by ? { designBy: view.state.design.by } : {})
+    ...(step === undefined ? {} : { step })
   });
   await logSpent(ctx, loaded, taskId, 'review');
   await fs.rm(view.paths.cache, { recursive: true, force: true });
@@ -107,16 +84,6 @@ export const closeApproved = async (
   // What the approval let go: the files handed to the tasks waiting for them, and the tasks it made ready.
   if (granted.length > 0 || ready.length > 0) {
     await logRun(ctx, loaded.paths, { action: 'handed-on', task: taskId, granted, ready });
-  }
-
-  // A designer at its UI review learns it is decided, never finds out by a refusal (design-1 on t-motion).
-  const designer = skipped ? view.state.design?.by : undefined;
-  if (designer) {
-    await sendMessage(ctx, refreshed, {
-      from: LEAD,
-      to: agentAddress(designer),
-      text: `${taskId} is approved without its UI review (the lead went first): drop that review — what you found still matters, tell the lead with plitzi task tell --about ${taskId} "…"`
-    });
   }
 
   // What is connected shows as it is approved: a running preview of the run takes the approved work in now. A preview
@@ -152,8 +119,6 @@ export const closeApproved = async (
     fulfilled,
     ...(unmerged ? { unmerged } : {}),
     ...(joined.length > 0 ? { joined } : {}),
-    ...(skipped ? { design: 'skipped' as const, ...(why ? { designSkip: why } : {}) } : {}),
-    ...(skipped && view.state.design?.by ? { designBy: view.state.design.by } : {}),
     ...(notReviewed.length > 0 ? { notReviewed } : {})
   };
 };

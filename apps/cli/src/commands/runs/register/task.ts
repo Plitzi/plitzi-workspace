@@ -5,9 +5,9 @@ import {
   taskAnswer,
   taskAsk,
   taskBlock,
-  taskSpike,
   taskCheck,
   taskComplete,
+  taskFound,
   taskContextCommand,
   taskShow,
   taskTell,
@@ -70,7 +70,6 @@ const TASK_HELP: readonly { heading: string; commands: readonly string[] }[] = [
       'propose',
       'answer',
       'block',
-      'spike',
       'note'
     ]
   },
@@ -160,43 +159,6 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
     .action((options: RunCommandOptions & { fraction?: number; step?: string }) => taskProgress(options));
-
-  taskGroup
-    .command('spike')
-    .description(
-      'A spike — research of the run’s, finding out before building: <spike> --done with what was found and --tasks with the tasks it makes — a scout’s proposed to the lead; the lead’s --approve or --changes on them. A question your task needs answered is a block (task block)'
-    )
-    .argument('[spike]', 'The spike')
-    .option(
-      '--done <findings>',
-      'A scout’s or the lead’s: what was found — kept with the spike, read by every task that waits for it'
-    )
-    .option(
-      '--tasks <stage.json>',
-      'With --done: its result, the tasks it makes — a stage, as `run extend` takes, each task with its "findings"; a scout’s wait for the lead'
-    )
-    .option('--approve', 'The lead’s: stack the tasks the scout proposed, the spike done')
-    .option(
-      '--findings-only',
-      'With --approve: what it found approved, the tasks it proposes left out (for the backlog)'
-    )
-    .option('--changes <what>', 'The lead’s: send the tasks the scout proposed back, saying what to change')
-    .option(...AGENT_OPTION)
-    .option(...TOKEN_OPTION)
-    .option(...RUN_OPTION)
-    .option(...JSON_OPTION)
-    .action(
-      (
-        question: string | undefined,
-        options: RunCommandOptions & {
-          done?: string;
-          tasks?: string;
-          approve?: boolean;
-          findingsOnly?: boolean;
-          changes?: string;
-        }
-      ) => taskSpike(question, options)
-    );
 
   taskGroup
     .command('block')
@@ -305,8 +267,21 @@ export const registerTaskGroup = (program: Command): Command => {
 
   taskGroup
     .command('complete')
-    .description('Finish the task: its copy compared by fingerprint, the project’s checks run in it, and to review')
-    .argument('[task]', 'The task your token holds — named, it must be that one')
+    .description(
+      'Finish the task: its copy compared by fingerprint, the project’s checks run in it, and to review — a research card with what it found (--found)'
+    )
+    .argument(
+      '[task]',
+      'The task your token holds — named, it must be that one (the lead names the research it found out)'
+    )
+    .option(
+      '--found <findings>',
+      'A research card’s: what was found — kept with it, read by every task that waits for it; a scout’s goes to the lead’s review'
+    )
+    .option(
+      '--tasks <stage.json>',
+      'With --found: its result, the tasks it makes — a stage, as `run extend` takes, each task with its "findings"'
+    )
     .option(
       '--known-failure <why>',
       'Go to review although the checks fail — for a reason that weighs, said to the lead'
@@ -314,10 +289,6 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(
       '--fixed-by <task>',
       'With --known-failure, optional: the task that fixes what fails — or lead, when it is the lead’s to settle (a line of its)'
-    )
-    .option(
-      '--review <kind>',
-      'The review it asks for: code (the lead’s alone — nothing a visitor sees changed) or ui (its UI by a designer, or the lead, then the code); the run decides when left out'
     )
     .option(
       '--note <text>',
@@ -336,9 +307,13 @@ export const registerTaskGroup = (program: Command): Command => {
           knownFailure?: string;
           fixedBy?: string;
           note?: string;
-          review?: string;
+          found?: string;
+          tasks?: string;
         } & ExperienceFlags
-      ) => taskComplete(task, options)
+      ) =>
+        options.found === undefined && options.tasks === undefined
+          ? taskComplete(task, options)
+          : taskFound(task, options)
     );
 
   taskGroup
@@ -499,10 +474,6 @@ export const registerTaskGroup = (program: Command): Command => {
       (id: string, before?: string) => (before === undefined ? id : `${before}, ${id}`)
     )
     .option('--file <file>', 'The file the change is about')
-    .option(
-      '--skip-design <why>',
-      'With --approve, a task whose UI waits for a designer’s review, approved without it — why: lead (you looked at its UI yourself) or no-ui (it changes nothing a visitor sees). With --changes, lead: its next round’s UI review is yours, offered to no designer'
-    )
     .option('--note <note>', 'With --approve, what you saw and do not ask to change — kept with the task, for the lead')
     .option(
       '--escalate <why>',
@@ -511,6 +482,10 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(
       '--with <task>',
       'With --approve, another task in review approved beside it as one change — each reads a file the other makes'
+    )
+    .option(
+      '--leave <tasks>',
+      'With --approve, a research card’s: the tasks it proposes left out — t-a,t-b, or all (its findings kept alone); a left <id>-tests is its card with no tests'
     )
     .option(...RUN_OPTION)
     .option(...AGENT_OPTION)

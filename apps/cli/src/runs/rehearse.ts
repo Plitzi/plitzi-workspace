@@ -1,6 +1,6 @@
 import { inPageFolder } from './ownership';
 import { isResearch } from './spike';
-import { roleOf } from './tasks';
+import { roleOf } from './spike';
 import { DEVELOPER, TESTER } from './team';
 import { byUrgency, chainMinutes } from './urgency';
 

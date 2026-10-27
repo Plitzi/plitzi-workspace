@@ -4,7 +4,7 @@ import { openRun } from './run';
 import { completeTask, nextTask, reviewTask, takeNext, takeTask } from './tasks';
 import { setTeamAgent } from './team';
 import { takeOnRead } from '../commands/runs/takeOnRead';
-import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
+import { benchPlan, designed, makeBench, writeInCopy } from '../tests/runProject';
 import { teamSteps } from '../tests/teamSteps';
 
 import type { Bench } from '../tests/runProject';
@@ -30,7 +30,7 @@ describe('a designer, once it sent a task back', () => {
     await setTeamAgent(bench.root, 'design', { roles: ['designer'], session: 'keep' });
     const plan = benchPlan('data-run');
     plan.tasks = [{ ...plan.tasks[3], id: 't-data', files: ['src/data/menu.json'] }];
-    await openRun(lead(), await bench.writePlan(plan));
+    await openRun(lead(), await bench.writePlan(designed(plan)));
     const taken = await takeTask(bench.agent('dev-1'), 'data-run', 't-data');
     await writeInCopy(taken.work, 'src/data/menu.json', '{ "items": [{ "id": "tea" }] }\n');
     // A page it reads changed too, taken by turns at complete: what a person sees changed.
@@ -60,7 +60,7 @@ describe('an agent asking with no role', () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
 
     const next = await nextTask(bench.agent('dev-2'), 'es-launch');
-    expect(next.designReview).toBeUndefined();
+    expect(next.review).toBeUndefined();
   });
 });
 
@@ -72,7 +72,7 @@ describe('a designer with a task only a designer takes', () => {
     await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'] });
     const plan = benchPlan();
     plan.tasks = plan.tasks.map(task => (task.id === 't-about' ? { ...task, role: 'designer' } : task));
-    await openRun(lead(), await bench.writePlan(plan));
+    await openRun(lead(), await bench.writePlan(designed(plan)));
     await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
 
     const next = await nextTask(bench.agent('design-1'), 'es-launch', 'designer,developer');
@@ -85,7 +85,7 @@ describe('a designer that develops too', () => {
   beforeEach(async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 1 });
     await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'] });
-    await openRun(lead(), await bench.writePlan(benchPlan()));
+    await openRun(lead(), await bench.writePlan(designed(benchPlan())));
   });
 
   it('waits for the UI reviews coming rather than taking a task of its own, and takes one once none is', async () => {
@@ -93,32 +93,34 @@ describe('a designer that develops too', () => {
     const waiting = await nextTask(bench.agent('design-1'), 'es-launch', 'designer,developer');
     expect([waiting.task?.id, waiting.why]).toEqual([
       undefined,
-      expect.stringContaining('UI reviews are coming — t-menu (dev-1) at work') as unknown
+      expect.stringContaining('reviews are coming — t-menu (dev-1) at work') as unknown
     ]);
 
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "t-menu" };\n');
     await completeTask(bench.agent('dev-1', { token: menu.token }), 'es-launch', 't-menu');
-    expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer,developer')).designReview?.task.id).toBe(
-      't-menu'
-    );
+    expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer,developer')).review).toMatchObject({
+      task: { id: 't-menu' },
+      role: 'designer'
+    });
   });
 });
 
 // A run's lead looked at a task's UI as its watch said to, while design-1 took the same review — and the lead's approval
-// was refused for design-1's.
-describe('a UI review the lead reads first', () => {
-  it('is the lead’s once read: no designer is offered it, and the lead decides it', async () => {
+// was refused for design-1's. The lead's word goes on any step, whoever reads it first.
+describe('a designer’s step the lead decides', () => {
+  it('is the lead’s word: approved whole, whatever step it was at', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
     const plan = benchPlan();
     plan.tasks = plan.tasks.filter(task => task.id === 't-menu');
-    await openRun(lead(), await bench.writePlan(plan));
+    await openRun(lead(), await bench.writePlan(designed(plan)));
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
 
+    // A look of the lead's takes no designer's step: it stays the designer's to be offered.
     await takeOnRead(lead(), 'es-launch', 't-menu');
-    expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer')).designReview).toBeUndefined();
-    await expect(
-      reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'no-ui' })
-    ).resolves.toMatchObject({ merged: ['src/space/pages/menu.ts'] });
+    expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer')).review?.role).toBe('designer');
+    await expect(reviewTask(lead(), 'es-launch', 't-menu', 'approve', [])).resolves.toMatchObject({
+      merged: ['src/space/pages/menu.ts']
+    });
   });
 });

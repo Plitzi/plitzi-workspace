@@ -4,7 +4,7 @@
  * reviewed; and, approved, merged into the run's work — never into the project, which only the final merge reaches.
  */
 
-export { cleanPath, findTask, holderOf, holderOrCoordinator, roleOf, withoutSignal } from './common';
+export { cleanPath, findTask, holderOf, holderOrCoordinator, withoutSignal } from './common';
 export {
   allLocks,
   assertNoWaitCycle,
@@ -22,8 +22,8 @@ export type { NextTask } from './next';
 export { takeTask } from './take';
 export type { TakenTask } from './take';
 export { blockTask, noteTask, reportProgress, unblockTask } from './signals';
-export { answerSpike, approveSpike, reworkSpike } from './spike';
-export type { Spiked } from './spike';
+export { completeResearch } from './research';
+export type { Researched } from './research';
 export type { Signal } from './signals';
 export { checkTask } from './check';
 export type { CheckedTask } from './check';

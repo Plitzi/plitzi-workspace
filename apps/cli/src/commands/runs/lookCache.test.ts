@@ -22,7 +22,7 @@ afterEach(async () => {
 // The sanity run: a lead looked after the designer, nothing changed between — 8 s for the same answer.
 describe('a look kept for the same look asked again', () => {
   it('stands while the task, the run and the ask are as they were — and is a new look past its time', async () => {
-    const plan = { ...benchPlan(), designReview: false };
+    const plan = benchPlan();
     await openRun(bench.agent('lead'), await bench.writePlan(plan));
     const taken = await takeTask(bench.agent('dev-1'), plan.runId, 't-home');
     await writeInCopy(taken.work, 'src/space/pages/home/index.ts', "export const home = { title: 'Hola' };\n");

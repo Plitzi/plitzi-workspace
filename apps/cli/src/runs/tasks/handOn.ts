@@ -1,7 +1,6 @@
 import { taskPaths } from '../paths';
 import { dependenciesDone } from '../plan';
 import { loadRun, logRun } from '../run';
-import { isResearch } from '../spike';
 import { updateState, viewTask } from '../taskStore';
 
 import type { TaskState } from '../model';
@@ -13,20 +12,13 @@ export const statesOf = async (loaded: LoadedRun): Promise<Map<string, TaskState
     await Promise.all(loaded.tasks.map(async each => [each.id, (await viewTask(loaded.paths, each)).state] as const))
   );
 
-/**
- * Each pending task whose dependencies are all done now, made ready — by an approval, or a research's findings; research
- * becomes a spike to find out.
- */
+/** Each pending task whose dependencies are all done now, made ready — by an approval, or a research's findings. */
 export const readyWhatWaited = async (ctx: RunContext, loaded: LoadedRun): Promise<string[]> => {
   const states = await statesOf(loaded);
   const ready: string[] = [];
   for (const each of loaded.tasks) {
     if (states.get(each.id)?.status === 'pending' && dependenciesDone(each, states)) {
-      await updateState(
-        taskPaths(loaded.paths, each.id),
-        state => ({ ...state, status: isResearch(each) ? 'spike' : 'ready' }),
-        ctx.now
-      );
+      await updateState(taskPaths(loaded.paths, each.id), state => ({ ...state, status: 'ready' }), ctx.now);
       ready.push(each.id);
     }
   }

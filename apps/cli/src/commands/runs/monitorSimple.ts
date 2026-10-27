@@ -1,6 +1,6 @@
 import { clip, textWidth } from './monitorCanvas';
 import { EVENT_TONE, whatOf } from './monitorFeed';
-import { briefStages } from './monitorFlow';
+import { flowStages } from './monitorFlow';
 import { AGENT_LOOK, hhmm, LIVE_VERB, since, TASK_LOOK, toneOf } from './monitorModel';
 import { drawWho, shimmer, SPINNER } from './monitorOverview';
 import { drawPreviewLine } from './monitorSide';
@@ -110,7 +110,7 @@ const drawTasks = (p: Paint, data: Monitored, top: number, rect: Rect): number =
   const end = rect.left + rect.width - 2;
   section(p, top, rect, 'Tasks');
   let col = rect.left + 4;
-  for (const stage of briefStages(data.view.tasks).filter(each => each.tasks.length > 0)) {
+  for (const stage of flowStages(data.view.tasks).filter(each => each.tasks.length > 0)) {
     const text = `${stage.glyph} ${String(stage.tasks.length)} ${stage.title.toLowerCase()}`;
     if (col + textWidth(text) > end) {
       break;

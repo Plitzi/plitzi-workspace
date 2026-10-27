@@ -1,4 +1,5 @@
-import { isPrincipal, takeOnLook } from '../../runs/leads';
+import { isPrincipal } from '../../runs/leads';
+import { takeOnLook } from '../../runs/reviews';
 import { loadRun, logRun } from '../../runs/run';
 import { viewTask } from '../../runs/taskStore';
 

@@ -200,7 +200,7 @@ export const glanceText = (report: RunReport): string[] => {
   const { indicators, metrics } = report;
 
   return [
-    `- Tasks: ${String(done)} of ${String(team.length)} done${spikes > 0 ? ` (and the lead's ${spikes === 1 ? 'spike' : `${String(spikes)} spikes`})` : ''}; reviews ${String(report.tasks.reduce((sum, task) => sum + task.rounds, 0))}`,
+    `- Tasks: ${String(done)} of ${String(team.length)} done${spikes > 0 ? ` (and ${String(spikes)} research card${spikes === 1 ? '' : 's'})` : ''}; reviews ${String(report.tasks.reduce((sum, task) => sum + task.rounds, 0))}`,
     `- Task checks: ${String(metrics.checks.run)} run, ${String(metrics.checks.failed)} failed on the work, ${String(metrics.checks.notOwn)} on nothing of it${indicators.notOwnPct === undefined ? '' : ` (${String(indicators.notOwnPct)}% of the failures)`}`,
     `- Findings: ${FINDING_OWNERS.map(owner => `${owner} ${String(indicators.findings[owner])}`).join(', ')} — ${String(report.findings.filter(finding => (finding.seenIn?.length ?? 0) > 0).length)} met in a run before, the rest new`,
     ...(indicators.harnessTokens === undefined
@@ -241,19 +241,17 @@ export const spendText = (spend: RunReport['spend']): string[] => {
 };
 
 /**
- * Who reviewed the UI of the tasks that change it: a designer, or the lead without one — a run's three were all the
- * lead's, its designer at a task of its own, and no line of the report said so.
+ * Who said the steps of the cards' reviews, by role — a run's three UI reviews were all the lead's, its designer at a
+ * task of its own, and no line of the report said so.
  */
-export const uiReviewsText = (tasks: readonly Pick<RunReport['tasks'][number], 'id' | 'design'>[]): string[] => {
-  const byLead = tasks.filter(task => task.design === 'UI by the lead').map(task => task.id);
-  const byDesigner = tasks.filter(
-    task => task.design?.startsWith('UI by ') === true && task.design !== 'UI by the lead'
-  );
-  if (byLead.length === 0) {
-    return [];
+export const stepsSaidText = (tasks: readonly Pick<RunReport['tasks'][number], 'id' | 'reviewedBy'>[]): string[] => {
+  const byRole = new Map<string, number>();
+  for (const said of tasks.flatMap(task => task.reviewedBy ?? [])) {
+    const role = said.split(':')[0] ?? said;
+    byRole.set(role, (byRole.get(role) ?? 0) + 1);
   }
 
-  return [
-    `- UI reviews: ${String(byDesigner.length)} by a designer, ${String(byLead.length)} by the lead without one (${byLead.join(', ')})${byDesigner.length === 0 ? ' — no designer reviewed any: one at a task of its own reviews nothing meanwhile; a refactor with nothing to see is a developer’s' : ''}`
-  ];
+  return byRole.size === 0
+    ? []
+    : [`- Reviews said: ${[...byRole].map(([role, count]) => `${String(count)} by a ${role}`).join(', ')}`];
 };

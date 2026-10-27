@@ -32,7 +32,6 @@ const after = { said: 'The menu says Carta', check: "grep -q 'Carta' src/space/p
 describe('a line amended while its task is in review', () => {
   it('takes the old line’s place in what the task was accepted on', async () => {
     const plan = benchPlan();
-    plan.designReview = false;
     plan.tasks = plan.tasks.map(task => (task.id === 't-menu' ? { ...task, acceptance: [before] } : task));
     const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
     const menu = await take('agent-1', 't-menu');

@@ -1,18 +1,19 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { isString } from './guards';
+import { DEVELOPER, SCOUT } from './team';
 
 import type { TaskState } from './model';
 
 /**
- * A spike: research in the run, a scout's — the lead's with none — what is read before a plan is written, done where the
- * monitor sees it, its result the lead's to approve.
- * A task with no files and a question (`"spike"`); its result is the run's next tasks, each with what was found for it
+ * A research card (a spike): what is read before a plan is written — a card like any on the board, taken by a scout (the
+ * lead finds it out itself with none), completed with what it found (`task complete --found`) and reviewed by the lead.
+ * A card with no files and a question (`"spike"`); its result is the run's next tasks, each with what was found for it
  * (`findings`). A run opens on one — the person's ask, its scope (`scopePlan`) — and every task flows from it; a spike
  * later is the lead's to plan, when the work asks for one.
  */
 
-/** What an agent found out, said by `task spike --done`. */
+/** What an agent found out, said by `task complete --found`, or by the lead's answer to a block. */
 export interface Finding {
   at: string;
   by: string;
@@ -28,12 +29,16 @@ export const isFinding = (value: unknown): value is Finding =>
 export const isResearch = (task: { spike?: string; files: readonly string[] }): boolean =>
   task.spike !== undefined && task.files.length === 0;
 
+/** The role a card is for: its own, a scout's for research (the lead finds it out with none), else a developer's. */
+export const roleOf = (task: { role?: string; spike?: string; files: readonly string[] }): string =>
+  task.role ?? (isResearch(task) ? SCOUT : DEVELOPER);
+
 /** The question a plan's own finding for a task answers, as its state keeps it: `run amend` replaces it by this. */
 export const PLAN_FINDING = 'its spike';
 
 /**
- * A task's state before anyone starts it, as the run opens or a stage is stacked: a spike from the start, else ready or
- * pending on what it waits for — with what the spike that made it found for it, kept as the run's findings.
+ * A task's state before anyone starts it, as the run opens or a stage is stacked: ready, or pending on what it waits for —
+ * with what the spike that made it found for it, kept as the run's findings.
  */
 export const startingState = (
   task: { spike?: string; files: readonly string[]; findings?: string },
@@ -41,7 +46,7 @@ export const startingState = (
   at: string
 ): TaskState => ({
   // Research waits for what it depends on too: handed out before, it was found out on work not there yet (encore-10).
-  status: !dependenciesDone ? 'pending' : isResearch(task) ? 'spike' : 'ready',
+  status: dependenciesDone ? 'ready' : 'pending',
   round: 0,
   notes: [],
   updatedAt: at,

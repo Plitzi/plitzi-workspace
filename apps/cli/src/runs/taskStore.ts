@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+
 import { filesUnder, newestWrite, readJson, writeJson } from './files';
 import {
   isFileLock,
@@ -15,7 +17,6 @@ import {
   isTaskState
 } from './model';
 import { taskPaths, tasksDir } from './paths';
-import { letGoUi } from './reviewQueue';
 import { withLock } from './store';
 
 import type {
@@ -98,13 +99,30 @@ export const readTasks = async (run: RunPaths): Promise<RunTask[]> => {
   return tasks;
 };
 
+/**
+ * A state an earlier CLI wrote, as it reads now: a research card was a status of its own (`spike`) and held apart
+ * (`spikedBy`) — it is a card like any, ready to take or in review with what it found.
+ */
+const stateFromEarlierCli = (value: unknown): unknown => {
+  if (!isRecord(value) || value.status !== 'spike') {
+    return value;
+  }
+
+  const { spikedBy: _held, ...card } = value;
+
+  return { ...card, status: card.proposed === undefined ? 'ready' : 'in-review' };
+};
+
 export const readState = async (task: TaskPaths): Promise<TaskState> => {
-  const state = await readJson(task.state, isTaskState, 'a task’s state');
+  const state = await readJson(task.state, isTaskState, 'a task’s state', stateFromEarlierCli);
   if (!state) {
     throw new Error(`${task.state} is missing: the run's folder was changed outside the CLI`);
   }
 
-  return state;
+  // A card in review written by a CLI before the one review of steps (`reviews.ts`): its first step due, as it went.
+  return state.status === 'in-review' && state.review === undefined
+    ? { ...state, review: { round: state.round, step: 0, since: state.updatedAt } }
+    : state;
 };
 
 /** Changes a task's state under its own lock: two commands on one task never lose each other's change. */
@@ -275,12 +293,10 @@ export const cutTask = async (view: TaskView, reason: string, now: () => Date): 
       ...state,
       status: 'ready',
       cutAt: { step, reason, at: now().toISOString() },
-      // What held it out of work goes with its agent: a block, a spike asked — and a scout's answer to it, which
-      // approved would have closed the task as research done — and a UI review taken.
+      // What held it out of work goes with its agent: a block, what a research card found, and its review.
       blockedBy: undefined,
-      spikedBy: undefined,
       proposed: undefined,
-      ...(state.design ? { design: letGoUi(state.design) } : {}),
+      review: undefined,
       notes: [
         ...state.notes,
         {

@@ -25,7 +25,7 @@ export const reviewerSteps = (bench: () => Bench) => {
 
   /** A run of the bench's plan — no UI review — with t-menu, then t-home, sent to review. */
   const twoInReview = async (members: Team = team(TESTERS)): Promise<{ runId: string }> => {
-    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const plan: RunPlan = benchPlan();
     const file = await bench().writePlan(plan);
     await bench().writeTeam(members);
     const { runId } = (await openRun(lead(), file)).checked;

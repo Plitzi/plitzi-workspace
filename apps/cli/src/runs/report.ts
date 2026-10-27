@@ -31,11 +31,22 @@ import { taskPaths } from './paths';
 import { RunRefusal } from './refusal';
 import { applyFacts, applyText } from './reportApply';
 import { flowText } from './reportFlow';
-import { consumptionText, findingsText, glanceText, reviewsText, uiReviewsText } from './reportHead';
+import { consumptionText, findingsText, glanceText, reviewsText, stepsSaidText } from './reportHead';
 import { readRunReports } from './reports';
-import { completionsOf, inputOf, loadRun, logRun, readApproved, readRunLog, requireNoTask, updateRecord } from './run';
+import {
+  completionsOf,
+  inputOf,
+  isApproval,
+  loadRun,
+  logRun,
+  readApproved,
+  readRunLog,
+  requireNoTask,
+  updateRecord
+} from './run';
 import { harnessOf, runMetrics } from './runMetrics';
 import { cachedShare, costInAll, costliestPieces, spentOf } from './spent';
+import { roleOf } from './spike';
 import { readTaskReports } from './taskReports';
 import { requestsOf } from './tasks';
 import { readReviewed, viewTask } from './taskStore';
@@ -78,8 +89,8 @@ export interface TaskReport {
   cuts: number;
   blocked?: string;
   knownFailure?: string;
-  /** Its UI's review, in a run with a designer: who approved it, or that the lead approved without it. */
-  design?: string;
+  /** Each step of its review approved, in order, and who said it: `designer: design-1`, `tester: test-1`. */
+  reviewedBy?: string[];
   /**
    * What each review asked when it sent the task back, by round and by whom: what tells the agent's mistake from what
    * Plitzi did not let it see (a run's eight sends-back were all logic: a race, a hole, a stale count).
@@ -157,6 +168,10 @@ interface LogLine {
   kind?: string;
   verdict?: string;
   reason?: string;
+  /** A review's: the role whose step it said. */
+  step?: string;
+  /** An approval's (its last step): what it put into the run's work. */
+  merged?: unknown;
 }
 
 const optionalString = (value: unknown): boolean => value === undefined || typeof value === 'string';
@@ -169,7 +184,8 @@ const isLogLine = (value: unknown): value is LogLine =>
   optionalString(value.task) &&
   optionalString(value.kind) &&
   optionalString(value.verdict) &&
-  optionalString(value.reason);
+  optionalString(value.reason) &&
+  optionalString(value.step);
 
 const readLog = async (file: string): Promise<LogLine[]> => {
   const text = (await readOptional(file))?.toString('utf-8') ?? '';
@@ -199,37 +215,25 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
   for (const task of loaded.tasks) {
     const view = await viewTask(loaded.paths, task);
     const takes = log.filter(line => line.action === 'take' && line.task === task.id);
-    const approval = log.find(line => line.action === 'review' && line.task === task.id && line.verdict === 'approve');
-    // A spike is a lead's: from its take, by the lead that found it out, to its end — said as one, not as a developer's.
-    const spike = task.spike !== undefined;
-    const first = spike ? log.find(line => line.action === 'spike-taken' && line.task === task.id) : takes.at(0);
-    const ended = spike ? log.find(line => line.action === 'spike-done' && line.task === task.id) : approval;
-    // Every designer that said a round of its UI, in order — one named alone hid the other (a run's t-match-bars).
-    const designers = [
-      ...new Set(log.filter(line => line.action === 'design-review' && line.task === task.id).map(line => line.by))
-    ];
+    const approval = log.find(line => line.task === task.id && isApproval(line));
+    // A research card as any: from its take to its approval — the lead's own, found out untaken, ends as it is said
+    // (`spike-done`).
+    const first = takes.at(0);
+    const ended = approval ?? log.find(line => line.action === 'spike-done' && line.task === task.id);
+    // Every step of its reviews approved, in order, and who said it — one named alone hid the other (a run's
+    // t-match-bars).
+    const reviewedBy = log
+      .filter(line => line.task === task.id && line.verdict === 'approve' && line.action === 'review')
+      .map(line => `${line.step ?? 'review'}: ${line.by}`);
     tasks.push({
       id: task.id,
       title: task.title,
       kind: task.kind,
-      role: spike ? 'lead (spike)' : (task.role ?? 'developer'),
+      role: roleOf(task),
       status: view.state.status,
-      agents: spike ? (view.state.spikedBy ? [view.state.spikedBy.by] : []) : [...new Set(takes.map(line => line.by))],
+      agents: [...new Set(takes.map(line => line.by))],
       rounds: view.state.round,
-      ...(view.state.design?.status === 'approved'
-        ? {
-            design: `UI by ${designers.length > 0 ? designers.join(', then ') : (view.state.design.by ?? 'a designer')}`
-          }
-        : view.state.design?.status === 'skipped'
-          ? {
-              design:
-                view.state.design.why === 'reviewer'
-                  ? 'UI by the lead'
-                  : view.state.design.why === 'no-ui'
-                    ? 'no UI'
-                    : 'UI review skipped'
-            }
-          : {}),
+      ...(reviewedBy.length > 0 ? { reviewedBy } : {}),
       estimateMinutes: task.estimateMinutes,
       ...(first ? { minutes: minutesBetween(first.at, ended?.at ?? now) } : {}),
       // What it changed: what it completed with, and what the run holds of it — a shared file it took by turns and
@@ -556,10 +560,10 @@ export const reportText = (
     '| --- | --- | --- | --- | --- | --- | --- | --- |',
     ...report.tasks.map(
       task =>
-        `| ${task.id}${task.kind === 'integration' ? ' (integration)' : ''} | ${task.role} | ${task.status} | ${task.agents.join(', ') || '—'} | ${task.minutes === undefined ? '—' : String(task.minutes)} / ${String(task.estimateMinutes)} | ${String(task.rounds)}${task.design ? ` · ${task.design}` : ''} | ${String(task.cuts)} | ${task.files.join(', ') || '—'} |`
+        `| ${task.id}${task.kind === 'integration' ? ' (integration)' : ''} | ${task.role} | ${task.status} | ${task.agents.join(', ') || '—'} | ${task.minutes === undefined ? '—' : String(task.minutes)} / ${String(task.estimateMinutes)} | ${String(task.rounds)}${task.reviewedBy ? ` · ${task.reviewedBy.join(' → ')}` : ''} | ${String(task.cuts)} | ${task.files.join(', ') || '—'} |`
     ),
     '',
-    ...(uiReviewsText(report.tasks).length > 0 ? [...uiReviewsText(report.tasks), ''] : []),
+    ...(stepsSaidText(report.tasks).length > 0 ? [...stepsSaidText(report.tasks), ''] : []),
     ...reviewsText(report),
     ...timelinesText(report.agents),
     ...consumptionText(report),

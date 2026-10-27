@@ -1,4 +1,4 @@
-import { DEVELOPER } from './team';
+import { roleOf } from './spike';
 import { isWorked } from './worked';
 
 import type { HeldFile } from './tasks';
@@ -77,7 +77,6 @@ export const stalled = (
   const moving = views.some(
     view =>
       view.state.status === 'in-review' ||
-      view.state.status === 'spike' ||
       (view.owner !== undefined && isWorked(view.state.status) && running.has(view.owner.agent))
   );
   if (left.length === 0 || moving) {
@@ -104,7 +103,7 @@ export const stalled = (
     const held = heldBy(view);
     if (!held) {
       return [
-        `${view.task.id} is ready and nobody takes it: start an agent of its role (${view.task.role ?? DEVELOPER}) — plitzi run agent <name> --launch`
+        `${view.task.id} is ready and nobody takes it: start an agent of its role (${roleOf(view.task)}) — plitzi run agent <name> --launch`
       ];
     }
 

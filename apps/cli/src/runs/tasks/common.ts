@@ -244,8 +244,6 @@ export const refreshCopy = async (
 };
 
 /** Who in the team does a task: its plan's role, a developer's when it says none. */
-export const roleOf = (task: RunTask): string => task.role ?? 'developer';
-
 /** Whether `task` holds a signal: for `plitzi run watch`'s "no signal" line. */
 export const withoutSignal = (view: TaskView, now: Date): boolean =>
   view.owner !== undefined && isDisconnected(view.task, view.signalAt, now);

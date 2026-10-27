@@ -45,4 +45,19 @@ describe('an agent’s scratch', () => {
       }
     ]);
   });
+
+  // encore-11 counted the scout's `run preview --copy` folder as a copy made by hand.
+  it('counts no copy the CLI made, and still reads what the agent wrote in it', async () => {
+    await write('package.json', '{}');
+    await write('src/space/index.ts');
+    const scout = 'tmp/plitzi-runs/r1/scratch/scout-1';
+    await write(`${scout}/run-copy/package.json`, '{}');
+    await write(`${scout}/run-copy/src/space/index.ts`);
+    await write(`${scout}/run-copy/.plitzi-run-copy`, '{}');
+    await write(`${scout}/run-copy/probe.mjs`);
+
+    expect(await scratchOf(path.join(root, 'tmp/plitzi-runs/r1/scratch'))).toEqual([
+      { agent: 'scout-1', scripts: ['run-copy/probe.mjs'], packages: [], copies: [] }
+    ]);
+  });
 });

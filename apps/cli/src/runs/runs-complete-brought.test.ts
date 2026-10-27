@@ -28,7 +28,6 @@ const { lead, take, refusal } = runSteps(() => bench);
 describe('a complete whose checks fail', () => {
   it('says first what its copy took from the run on that complete', async () => {
     const plan = benchPlan();
-    plan.designReview = false;
     plan.tasks = plan.tasks.map(task => ({ ...task, dependsOn: [] }));
     await openRun(lead(), await bench.writePlan(plan));
     const home = await take('agent-1', 't-home');

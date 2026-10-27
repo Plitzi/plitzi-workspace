@@ -106,7 +106,9 @@ export const readOptional = async (file: string): Promise<Buffer | undefined> =>
 export const readJson = async <T>(
   file: string,
   guard: (value: unknown) => value is T,
-  what: string
+  what: string,
+  /** What a file an earlier CLI wrote reads as now, before it is held to `guard`: a run opened before keeps working. */
+  upgrade: (value: unknown) => unknown = value => value
 ): Promise<T | undefined> => {
   const bytes = await readOptional(file);
   if (bytes === undefined) {
@@ -121,7 +123,7 @@ export const readJson = async <T>(
     });
   let parsed: unknown;
   try {
-    parsed = JSON.parse(bytes.toString('utf-8'));
+    parsed = upgrade(JSON.parse(bytes.toString('utf-8')));
   } catch {
     throw broken(`is not JSON — it should hold ${what}`);
   }

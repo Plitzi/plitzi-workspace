@@ -32,7 +32,6 @@ const { lead, doTask, refusal } = runSteps(() => bench);
 describe("the lead's close", () => {
   it('is refused while something waits for the lead, every task done — and taken once it is settled', async () => {
     const plan = benchPlan();
-    plan.designReview = false;
     plan.tasks = plan.tasks.filter(task => task.id === 't-home');
     await openRun(lead(), await bench.writePlan(plan));
     await doTask('agent-1', 't-home', 'src/space/pages/home/hero.ts', 'export const hero = {};\n');
@@ -53,7 +52,6 @@ describe("the lead's close", () => {
   // waited on it with nothing the lead could do. The lead says what it did about it, and only then closes.
   it('waits on a finding no task holds until the lead says what it did about it', async () => {
     const plan = benchPlan();
-    plan.designReview = false;
     plan.tasks = plan.tasks.filter(task => task.id === 't-home');
     await openRun(lead(), await bench.writePlan(plan));
     await doTask('agent-1', 't-home', 'src/space/pages/home/hero.ts', 'export const hero = {};\n');

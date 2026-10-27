@@ -1,21 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { auditRun } from './audit';
-import { FIRST_REVIEW_READING_MS, REVIEW_TIMEOUT_MS, SAME_DESIGNER_MS } from './design';
-import { extendRun } from './extend';
 import { leadItems } from './leadWatch';
 import { messagesOf } from './messages';
 import { monitorRun } from './monitor';
 import { taskPaths } from './paths';
+import { buildReport } from './report';
+import { FIRST_REVIEW_READING_MS, REVIEW_TIMEOUT_MS } from './reviews';
 import { checkPlanFile, loadRun, openRun, readRunLog } from './run';
-import { tellLeadAbout } from './talk';
 import { completeTask, nextTask, reassignTask, reviewTask, takeNext, takeTask, taskContext } from './tasks';
 import { readState } from './taskStore';
 import { readTeam, setTeamAgent, TEAM_FILE } from './team';
 import { testFilesFor } from './tests';
 import { viewRun } from './view';
-import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
-import { lookedAt } from '../tests/runSteps';
+import { benchPlan, designed, makeBench, writeInCopy } from '../tests/runProject';
 import { teamSteps } from '../tests/teamSteps';
 
 import type { Bench } from '../tests/runProject';
@@ -32,7 +29,7 @@ afterEach(async () => {
   await bench.cleanup();
 });
 
-const { lead, completed, designOf, refusalOf } = teamSteps(() => bench);
+const { lead, completed, reviewOf, refusalOf } = teamSteps(() => bench);
 
 describe('the tests of a developer task, with a tester in the team', () => {
   it('are where the project keeps them: a page’s spec, a module’s test beside it', () => {
@@ -188,65 +185,27 @@ describe('the tests of a developer task, with a tester in the team', () => {
   });
 });
 
-describe('whether a run reviews design', () => {
-  it('is the plan’s to say — on with a designer in the team, off with none, unless it says otherwise', async () => {
-    const off = { ...benchPlan('off'), designReview: false };
-    await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'] });
-    await openRun(lead(), await bench.writePlan(off));
-    expect((await loadRun(lead(), 'off')).record.designReview).toBeUndefined();
-  });
-
-  it('stays the run’s choice when a stage is stacked on it — on only when the stage says so', async () => {
-    await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'] });
-    await openRun(lead(), await bench.writePlan({ ...benchPlan('off'), designReview: false }));
-    const stage = {
-      version: 1 as const,
-      runId: 'off-2',
-      goal: 'The contact page',
-      tasks: [
-        {
-          id: 't-contact',
-          title: 'Contact',
-          files: ['src/space/pages/contact.ts'],
-          dependsOn: [],
-          priority: 'low' as const,
-          estimateMinutes: 10,
-          acceptance: ['It says how to reach us']
-        }
-      ]
-    };
-    await extendRun(lead(), 'off', await bench.writePlan(stage));
-    expect((await loadRun(lead(), 'off')).record.designReview).toBeUndefined();
-    await extendRun(
-      lead(),
-      'off',
-      await bench.writePlan({
-        ...stage,
-        runId: 'off-3',
-        designReview: true,
-        tasks: [{ ...stage.tasks[0], id: 't-legal', files: ['src/space/pages/legal.ts'] }]
-      })
-    );
-    expect((await loadRun(lead(), 'off')).record.designReview).toBe(true);
-    const off = await refusalOf(
-      extendRun(
-        lead(),
-        'off',
-        await bench.writePlan({
-          ...stage,
-          runId: 'off-4',
-          designReview: false,
-          tasks: [{ ...stage.tasks[0], id: 't-faq', files: ['src/space/pages/faq.ts'] }]
-        })
-      )
-    );
-    expect(off).toContain('a stage keeps that');
-  });
-
-  it('is on for a run whose plan asks for it, with a team of no designer', async () => {
+describe('who reviews a card', () => {
+  // Carlos: the card says which roles review it — a run's designer looked at no card it was not asked to.
+  it('is the card’s to say: with a designer in the team, a card that changes a page with none is said', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
-    await openRun(lead(), await bench.writePlan({ ...benchPlan('on'), designReview: true }));
-    expect((await loadRun(lead(), 'on')).record.designReview).toBe(true);
+    await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
+    const plan = benchPlan('said');
+    plan.tasks = plan.tasks.map(task => (task.id === 't-menu' ? { ...task, review: ['designer', 'tester'] } : task));
+    const checked = await checkPlanFile(lead(), await bench.writePlan(plan));
+    const notice = checked.notices.find(each => each.includes('with no designer in'));
+    expect(notice).toBeDefined();
+    expect(notice).not.toContain('t-menu');
+  });
+
+  it('is its card’s roles, a role nobody takes standing as the default reviewer — said at complete', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    const plan = designed(benchPlan());
+    await openRun(lead(), await bench.writePlan(plan));
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+    const state = await readState(taskPaths((await loadRun(lead(), 'es-launch')).paths, 't-menu'));
+    expect(state.review).toMatchObject({ step: 0, round: 0 });
+    expect(state.notes.at(-1)?.text).toContain('its review goes lead');
   });
 });
 
@@ -282,28 +241,6 @@ describe('a project’s first run', () => {
   });
 });
 
-describe('a UI review with no designer free', () => {
-  it('is the lead’s too — said, approved with --skip-design — rather than waiting for nobody', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
-    await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'] });
-    await openRun(lead(), await bench.writePlan(benchPlan()));
-    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
-
-    // The designer between tasks would take it: the lead is not offered it.
-    expect((await nextTask(lead(), 'es-launch', 'lead')).leadReview).toBeUndefined();
-
-    // At a task of its own, it is nobody's to take but the lead's.
-    await takeTask(bench.agent('design-1'), 'es-launch', 't-about');
-    const offered = await nextTask(lead(), 'es-launch', 'lead');
-    expect(offered.leadReview).toMatchObject({ task: { id: 't-menu' } });
-    expect(offered.leadReview?.uiToo).toContain('design-1 at a task of its own');
-    // And the lead hears it, as one waiting for nobody would never be said otherwise.
-    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
-      expect.objectContaining({ kind: 'ui-waits', text: expect.stringContaining('design-1 at t-about') as unknown })
-    );
-  });
-});
-
 describe('a task held behind one in review', () => {
   it('tells the lead while agents of its role have nothing to take — and how to free it', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
@@ -328,7 +265,7 @@ describe('a task held behind one in review', () => {
   it('tells the lead of a review past its time, never before — and how to decide it', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
-    const plan = benchPlan();
+    const plan = designed(benchPlan());
     plan.tasks = plan.tasks.filter(task => task.id === 't-menu');
     await openRun(lead(), await bench.writePlan(plan));
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
@@ -345,7 +282,7 @@ describe('a task held behind one in review', () => {
     expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
       expect.objectContaining({
         kind: 'slow-review',
-        text: expect.stringContaining("design-1 has held t-menu's UI review 16 min, past the 15") as unknown
+        text: expect.stringContaining("design-1 has held t-menu's designer review 16 min, past the 15") as unknown
       })
     );
   });
@@ -359,57 +296,53 @@ describe('a task held behind one in review', () => {
   });
 });
 
-describe('a designer’s review of the others’ UI', () => {
+describe('a designer’s step of a card’s review', () => {
   beforeEach(async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
     await setTeamAgent(bench.root, 'design', { roles: ['designer'], count: 2 });
-    await openRun(lead(), await bench.writePlan(benchPlan()));
+    await openRun(lead(), await bench.writePlan(designed(benchPlan())));
   });
 
   // Design-1 reviewed t-lint's UI, and the monitor said it was idle — the flow said otherwise.
-  it('shows a designer at the UI review it took as reviewing, in the monitor', async () => {
+  it('shows a designer at the step it took as at it, in the monitor', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
 
     const designer = (await monitorRun(lead(), 'es-launch')).agents.find(agent => agent.agent === 'design-1');
-    expect(designer).toMatchObject({ status: 'reviewing', task: 't-menu', doing: 'reviews the UI of t-menu' });
+    expect(designer).toMatchObject({ task: 't-menu' });
+    expect(designer?.status).not.toBe('idle');
   });
 
-  it('hands a designer its review with how closely the team asks, standard when it says nothing', async () => {
+  it('hands a designer its step with how closely the team asks, standard when it says nothing', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
-    expect((await takeNext(bench.agent('design-1'), 'es-launch', 'designer')).next.designReview?.precision).toBe(
-      'standard'
-    );
+    expect((await takeNext(bench.agent('design-1'), 'es-launch', 'designer')).next.review?.precision).toBe('standard');
   });
 
   // Design-1 read its reading list after its first verdict — said mid-line, on every review.
-  it('says what to read before a designer’s first review, and not again on the next', async () => {
+  it('says it is its first review on the first, and not again on the next', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
     await completed('dev-2', 't-about', 'src/space/pages/about.ts');
-    const first = (await takeNext(bench.agent('design-1'), 'es-launch', 'designer')).next.designReview;
+    const first = (await takeNext(bench.agent('design-1'), 'es-launch', 'designer')).next.review;
     expect(first?.first).toBe(true);
     await reviewTask(bench.agent('design-1'), 'es-launch', first?.task.id ?? '', 'approve', []);
 
-    const second = (await takeNext(bench.agent('design-1'), 'es-launch', 'designer')).next.designReview;
+    const second = (await takeNext(bench.agent('design-1'), 'es-launch', 'designer')).next.review;
     expect(second?.task.id).not.toBe(first?.task.id);
     expect(second?.first).toBeUndefined();
   });
 
-  it('comes before the lead’s: offered to one designer, approved by it, then the lead’s to approve', async () => {
+  it('comes first: offered to one designer, approved by it, then its next step’s — the lead not woken for it', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
-    expect(await designOf('t-menu')).toEqual({ status: 'due', round: 0, since: expect.any(String) as unknown });
-
-    // The lead does not approve before it — unless it says so — and is not woken for it.
-    expect(await refusalOf(reviewTask(lead(), 'es-launch', 't-menu', 'approve', []))).toContain('--skip-design');
+    expect(await reviewOf('t-menu')).toMatchObject({ round: 0, step: 0 });
     expect(leadItems(await viewRun(lead(), 'es-launch')).map(item => item.key)).not.toContainEqual(
       expect.stringContaining('review:t-menu')
     );
 
     // A designer is offered it before any task, and takes it; the other is not offered it.
     const { next } = await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
-    expect(next.designReview).toMatchObject({ task: { id: 't-menu' }, changed: ['src/space/pages/menu.ts'] });
-    expect(await designOf('t-menu')).toMatchObject({ status: 'due', by: 'design-1' });
-    expect((await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).designReview).toBeUndefined();
+    expect(next.review).toMatchObject({ task: { id: 't-menu' }, role: 'designer', steps: ['designer', 'lead'] });
+    expect(await reviewOf('t-menu')).toMatchObject({ step: 0, by: 'design-1' });
+    expect((await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).review).toBeUndefined();
     expect(await refusalOf(reviewTask(bench.agent('design-2'), 'es-launch', 't-menu', 'approve', []))).toContain(
       'design-1 reviews t-menu'
     );
@@ -417,261 +350,87 @@ describe('a designer’s review of the others’ UI', () => {
     expect(await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', [])).toEqual({
       verdict: 'approve',
       round: 0,
-      design: 'approved'
+      passed: { role: 'designer', next: 'lead' }
     });
+    // Its next step is the lead's — no tester in the team: the lead is woken for it now.
     expect(leadItems(await viewRun(lead(), 'es-launch'))).toContainEqual(
-      expect.objectContaining({ text: expect.stringContaining('its UI approved by design-1') as unknown })
+      expect.objectContaining({ key: expect.stringContaining('review:t-menu:0:1') as unknown })
     );
+    bench.advance(10 * 60_000);
     expect((await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [])).merged).toEqual([
       'src/space/pages/menu.ts'
     ]);
+    // The report reads the card approved by its last step, the steps before it said in order — not by the first one.
+    const reported = (await buildReport(lead(), await loadRun(lead(), 'es-launch'))).tasks.find(
+      task => task.id === 't-menu'
+    );
+    expect(reported?.reviewedBy).toEqual(['designer: design-1', 'lead: lead']);
+    expect(reported?.minutes).toBeGreaterThanOrEqual(10);
   });
 
-  it('sends changes back to the task as the lead’s would, and the lead may approve without it, said', async () => {
+  it('sends changes back as any step’s would, said in the activity as its step’s', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
     expect(
-      await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'changes', [
-        { note: 'The prices sit too close to the names at 390' }
-      ])
+      await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'changes', [{ note: 'Tighter at 390' }])
     ).toMatchObject({ verdict: 'changes', round: 1 });
-    expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-menu')?.status).toBe(
-      'changes-requested'
-    );
-
-    await completed('dev-2', 't-about', 'src/space/pages/about.ts');
-    expect(
-      await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'no-ui' })
-    ).toMatchObject({ design: 'skipped', designSkip: 'no-ui' });
-    expect(await designOf('t-about')).toMatchObject({ status: 'skipped', by: 'lead', why: 'no-ui' });
-  });
-
-  // The lead sent t-home-sections back while design-1 measured it, and its approval was refused with
-  // "changes-requested, not in review"; the lead approved another past design-1, and was not told it was at it.
-  it('tells a designer the lead decided first, and tells the lead a designer was at it', async () => {
-    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
-    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
-    await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'one source for the padding' }], 'refuse', {
-      skipDesign: 'reviewer'
-    });
-    expect(await refusalOf(reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', []))).toContain(
-      'was sent back meanwhile (round 1)'
-    );
-
-    await completed('dev-2', 't-about', 'src/space/pages/about.ts');
-    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
-    await lookedAt(lead(), 'es-launch', 't-about');
-    // In its time the review is the designer's: approving past it took a run's design-1's copy from under it.
-    expect(
-      await refusalOf(reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'reviewer' }))
-    ).toContain("design-1 is reviewing t-about's UI — its own for 8 min more");
-    bench.advance(REVIEW_TIMEOUT_MS + 60_000);
-    await lookedAt(lead(), 'es-launch', 't-about');
-    expect(
-      await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'reviewer' })
-    ).toMatchObject({ design: 'skipped', designBy: 'design-1' });
-  });
-
-  it('says the designer’s changes as its UI review’s, and tells a designer the lead went past', async () => {
-    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
-    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
-    await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'changes', [{ note: 'Tighter at 390' }]);
-    const log = async () => readRunLog((await loadRun(lead(), 'es-launch')).paths);
-    expect((await log()).at(-1)).toMatchObject({ action: 'design-review', verdict: 'changes', task: 't-menu' });
-
-    await completed('dev-2', 't-about', 'src/space/pages/about.ts');
-    await takeNext(bench.agent('design-2'), 'es-launch', 'designer');
-    // Past its time — a first review's, which holds its reading — it is the lead's to decide.
-    bench.advance(REVIEW_TIMEOUT_MS + FIRST_REVIEW_READING_MS + 60_000);
-    await lookedAt(lead(), 'es-launch', 't-about');
-    await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'refuse', { skipDesign: 'reviewer' });
-    expect((await log()).find(entry => entry.action === 'review' && entry.task === 't-about')).toMatchObject({
-      design: 'skipped',
-      designSkip: 'reviewer',
-      designBy: 'design-2'
-    });
-    // Said as the lead's UI review, never as one nobody made.
-    expect(await auditRun(await loadRun(lead(), 'es-launch'))).toContainEqual(
-      expect.objectContaining({ title: 'Their UI reviewed by their reviewer, not a designer', evidence: ['t-about'] })
-    );
-    const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(message => message.to === '@design-2');
-    expect(told?.text).toContain('t-about is approved without its UI review');
-
-    // Its finding still reaches the lead, by its name, though it holds no task.
-    const said = await tellLeadAbout(bench.agent('design-2'), 'es-launch', 't-about', 'The footer wraps at 390');
-    expect(said).toMatchObject({
-      from: 'design-2',
-      to: 'lead',
-      text: 'On t-about: The footer wraps at 390',
-      about: 't-about'
-    });
-    // About a task approved already: in the inbox, its history, but nothing that holds the run's finish.
-    expect((await viewRun(lead(), 'es-launch')).attention.map(item => item.text)).not.toContainEqual(
-      expect.stringContaining('The footer wraps at 390')
-    );
-    expect(await refusalOf(tellLeadAbout(bench.agent('nobody'), 'es-launch', 't-about', 'Hi'))).toContain(
-      'is no agent of the team'
-    );
-  });
-
-  it('asks the review its developer says: the code alone goes straight to the lead, said in the activity', async () => {
-    const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
-    await writeInCopy(taken.work, 'src/space/data/menu.json', '{ "title": "t-menu" }\n');
-    await completeTask(bench.agent('dev-1', { token: taken.token }), 'es-launch', 't-menu', { review: 'code' });
-
-    expect(await designOf('t-menu')).toBeUndefined();
-    const { merged } = await reviewTask(lead(), 'es-launch', 't-menu', 'approve', []);
-    expect(merged).toEqual(['src/space/data/menu.json']);
     const log = await readRunLog((await loadRun(lead(), 'es-launch')).paths);
-    expect(log.find(entry => entry.action === 'complete' && entry.task === 't-menu')).toMatchObject({ review: 'code' });
+    expect(log.findLast(entry => entry.action === 'review')).toMatchObject({ verdict: 'changes', step: 'designer' });
   });
 
-  // A run's designers were sent a settings change (settings.transientState) and a model: their looks had no page.
-  it('reviews the code alone, as its developer asked, of a change to the space no page draws', async () => {
-    await completed('dev-1', 't-menu', 'src/space/index.ts', 'code');
-
-    expect(await designOf('t-menu')).toBeUndefined();
-    const { notes } = await readState(taskPaths((await loadRun(lead(), 'es-launch')).paths, 't-menu'));
-    expect(notes.at(-1)?.text).toContain('no page draws what it changed (src/space/index.ts)');
-  });
-
-  it('reviews the UI of a task that changed a page though its developer asked for the code alone, said', async () => {
-    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts', 'code');
-
-    expect(await designOf('t-menu')).toMatchObject({ status: 'due' });
-    const { notes } = await readState(taskPaths((await loadRun(lead(), 'es-launch')).paths, 't-menu'));
-    expect(notes.at(-1)?.text).toContain('asked for the code review alone, but what it changed draws UI');
-  });
-
-  it('lets a designer’s approval stand for a round of changes that did not touch the UI', async () => {
-    const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
-    const dev = bench.agent('dev-1', { token: taken.token });
-    await writeInCopy(
-      taken.work,
-      'src/space/pages/menu.ts',
-      `export const menu = { title: ${JSON.stringify('Menú')} };\n`
-    );
-    await completeTask(dev, 'es-launch', 't-menu');
+  it('tells a designer the lead decided while it reviewed — the lead’s word goes on any step', async () => {
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
-    await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', []);
-    await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'Say why in the commit' }]);
-
-    // Done again with the page as the designer saw it: its approval stands, said.
-    await completeTask(dev, 'es-launch', 't-menu');
-    expect(await designOf('t-menu')).toMatchObject({ status: 'approved', by: 'design-1', round: 1 });
-    expect(
-      (await readState(taskPaths((await loadRun(lead(), 'es-launch')).paths, 't-menu'))).notes.at(-1)?.text
-    ).toContain('Its UI is as design-1 approved it');
-
-    // Changed again: a designer looks at it again.
-    await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'A shorter title' }]);
-    await writeInCopy(
-      taken.work,
-      'src/space/pages/menu.ts',
-      `export const menu = { title: ${JSON.stringify('Carta')} };\n`
-    );
-    await completeTask(dev, 'es-launch', 't-menu');
-    // Its UI changed: due again — first for the designer who said the round before.
-    expect(await designOf('t-menu')).toEqual({
-      status: 'due',
-      round: 2,
-      before: 'design-1',
-      since: expect.any(String) as unknown
-    });
+    expect(await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [])).toMatchObject({ verdict: 'approve' });
+    const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).filter(message => message.to === '@design-1');
+    expect(told.map(message => message.text).join(' ')).toContain('decided t-menu (approved) while you reviewed it');
   });
 
-  // Design-2 said t-match-bars's first round, design-1 its second — with asks of its own, a round more.
-  it('offers a round sent back to the designer who said the one before, and another only past a wait', async () => {
+  it('offers a round sent back to the designer who said the one before first', async () => {
     const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
     const dev = bench.agent('dev-1', { token: taken.token });
     await writeInCopy(taken.work, 'src/space/pages/menu.ts', "export const menu = { title: 'Menu' };\n");
     await completeTask(dev, 'es-launch', 't-menu');
-    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
-    await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'changes', [{ note: 'Tighter at 390' }]);
+    await takeNext(bench.agent('design-2'), 'es-launch', 'designer');
+    await reviewTask(bench.agent('design-2'), 'es-launch', 't-menu', 'changes', [{ note: 'Light rows' }]);
     await writeInCopy(taken.work, 'src/space/pages/menu.ts', "export const menu = { title: 'Menú' };\n");
     await completeTask(dev, 'es-launch', 't-menu');
 
-    expect((await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).designReview).toBeUndefined();
-    // Its review decided, its session ends; started again, the round is offered to it.
-    expect(await nextTask(bench.agent('design-1'), 'es-launch', 'designer')).toMatchObject({ finished: true });
-    expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer')).designReview?.task.id).toBe('t-menu');
-
-    bench.advance(SAME_DESIGNER_MS);
-    const other = (await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).designReview;
-    expect(other).toMatchObject({ task: { id: 't-menu' }, before: 'design-1' });
+    // Its session ends with its review (session: task): its fresh start asks again.
+    expect((await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).finished).toBe(true);
+    const again = (await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).review;
+    expect(again).toMatchObject({ task: { id: 't-menu' }, round: 1 });
+    expect(again?.before).toBeUndefined();
+    expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer')).review?.before).toBe('design-2');
   });
 
-  // Design-1 held t-prediction-card's review 16 min, t-result-card queued 18 min behind it.
-  it('takes a review held past its time from its designer — another takes it, the first is told and refused after', async () => {
+  it('takes a step held past its time from its designer — another takes it, the first is told and refused after', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
-    expect((await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).designReview).toBeUndefined();
+    expect((await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).review).toBeUndefined();
 
-    // Its first review: past the 8 minutes, still its own — it reads what it is told to first (a run's design-1).
-    bench.advance(REVIEW_TIMEOUT_MS + 60_000);
-    expect((await nextTask(bench.agent('design-2'), 'es-launch', 'designer')).designReview).toBeUndefined();
-    bench.advance(FIRST_REVIEW_READING_MS);
-    const { next } = await takeNext(bench.agent('design-2'), 'es-launch', 'designer');
-    expect(next.designReview?.task.id).toBe('t-menu');
-    expect(await designOf('t-menu')).toMatchObject({ status: 'due', by: 'design-2' });
-    const loaded = await loadRun(lead(), 'es-launch');
-    expect((await readRunLog(loaded.paths)).find(entry => entry.action === 'review-timed-out')).toMatchObject({
-      task: 't-menu',
-      from: 'design-1',
-      to: 'design-2',
-      minutes: 16
-    });
-    const told = (await messagesOf(loaded)).find(message => message.to === '@design-1');
-    expect(told?.text).toContain("t-menu's UI review went to design-2: you held it 16 min");
+    bench.advance(REVIEW_TIMEOUT_MS + FIRST_REVIEW_READING_MS + 60_000);
+    expect((await takeNext(bench.agent('design-2'), 'es-launch', 'designer')).next.review?.task.id).toBe('t-menu');
+    const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).filter(message => message.to === '@design-1');
+    expect(told.map(message => message.text).join(' ')).toContain("t-menu's designer review went to design-2");
     expect(await refusalOf(reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', []))).toContain(
       'design-2 reviews t-menu'
     );
   });
 
-  // The lead said t-result-card's next round was its own; the CLI handed it to design-1 all the same.
-  it('keeps a round the lead sent back as its own the lead’s: no designer is offered it, and one at it is told', async () => {
-    const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
-    const dev = bench.agent('dev-1', { token: taken.token });
-    await writeInCopy(taken.work, 'src/space/pages/menu.ts', "export const menu = { title: 'Menu' };\n");
-    await completeTask(dev, 'es-launch', 't-menu');
-    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
-
-    await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'Light rows' }], 'refuse', {
-      skipDesign: 'reviewer'
-    });
-    const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(message => message.to === '@design-1');
-    expect(told?.text).toContain('lead sent t-menu back while you reviewed its UI');
-
-    await writeInCopy(taken.work, 'src/space/pages/menu.ts', "export const menu = { title: 'Menú' };\n");
-    await completeTask(dev, 'es-launch', 't-menu');
-    expect(await designOf('t-menu')).toMatchObject({ status: 'skipped', why: 'reviewer', by: 'lead' });
-    expect((await nextTask(bench.agent('design-1'), 'es-launch', 'designer')).designReview).toBeUndefined();
-    // Its UI is the lead's this round: approved once looked at, as `--skip-design reviewer` is.
-    expect(await refusalOf(reviewTask(lead(), 'es-launch', 't-menu', 'approve', []))).toContain(
-      'plitzi task look t-menu'
-    );
-    await lookedAt(lead(), 'es-launch', 't-menu');
-    expect(await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [])).toMatchObject({ verdict: 'approve' });
-  });
-
-  it('hands the lead what the designer saw with its approval, and the agent what the lead asked with its task', async () => {
+  it('hands the next step what the designer saw with its approval', async () => {
     await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
     await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', [
       { note: 'A puppy under a month would read 0 — worth a look' }
     ]);
-    expect(
-      (await readState(taskPaths((await loadRun(lead(), 'es-launch')).paths, 't-menu'))).notes.at(-1)?.text
-    ).toContain('its reviewer’s now — A puppy under a month would read 0');
-
-    await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'Days and weeks under a month' }]);
-    const back = await nextTask(bench.agent('dev-1'), 'es-launch', 'developer');
-    expect(back).toMatchObject({ yours: 'changes-requested', asked: ['lead: Days and weeks under a month'] });
+    const offered = (await nextTask(lead(), 'es-launch', 'lead')).review;
+    expect(offered?.passed?.join(' ')).toContain('A puppy under a month would read 0');
   });
 
-  it('keeps a designer waiting while a task whose UI it may review is still to be done', async () => {
+  it('keeps a designer waiting while a card whose review names it is still to be done', async () => {
+    await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
     const waiting = await nextTask(bench.agent('design-1'), 'es-launch', 'designer');
     expect(waiting.finished).toBeUndefined();
-    expect(waiting.why).toContain('is yours to review once it is in review');
   });
 });

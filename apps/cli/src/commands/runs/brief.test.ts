@@ -61,7 +61,7 @@ describe("a task's brief", () => {
     const plan = benchPlan();
     plan.tasks[0].files.push('src/functions/book.ts');
     // The team as set, a tester in it: what makes a tests card of t-home.
-    const { runId } = (await openRun(lead(), await bench.writePlan({ ...plan, designReview: false }))).checked;
+    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
 
     const brief = stripVTControlCharacters(briefOf(await taskContext(lead(), runId, 't-home')));
     expect(brief).toContain(

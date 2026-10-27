@@ -27,14 +27,16 @@ const log: Record<string, unknown>[] = [
   },
   { at: T(15), by: 'dev-1', action: 'check', task: 't-bars', ok: true },
   { at: T(15), by: 'dev-1', action: 'ask', task: 't-bars', message: 'm1' },
-  { at: T(16), by: 'dev-1', action: 'complete', task: 't-bars', review: 'ui' },
-  { at: T(18), by: 'design-2', action: 'review-taken', task: 't-bars', review: 'ui' },
-  { at: T(21), by: 'design-2', action: 'design-review', task: 't-bars', verdict: 'changes', round: 1 },
+  // Its review: a designer's step, then the lead's.
+  { at: T(16), by: 'dev-1', action: 'complete', task: 't-bars', review: ['designer', 'lead'] },
+  { at: T(18), by: 'design-2', action: 'review-taken', task: 't-bars', review: 'designer' },
+  { at: T(21), by: 'design-2', action: 'review', task: 't-bars', verdict: 'changes', round: 1, step: 'designer' },
   { at: T(31), by: 'dev-1', action: 'check', task: 't-bars', ok: true },
-  { at: T(33), by: 'dev-1', action: 'complete', task: 't-bars', review: 'ui' },
-  { at: T(34), by: 'design-2', action: 'review-taken', task: 't-bars', review: 'ui' },
-  { at: T(36), by: 'design-2', action: 'design-review', task: 't-bars', verdict: 'approve' },
-  { at: T(37), by: 'lead', action: 'review', task: 't-bars', verdict: 'approve' },
+  { at: T(33), by: 'dev-1', action: 'complete', task: 't-bars', review: ['designer', 'lead'] },
+  { at: T(34), by: 'design-2', action: 'review-taken', task: 't-bars', review: 'designer' },
+  { at: T(36), by: 'design-2', action: 'review', task: 't-bars', verdict: 'approve', round: 1, step: 'designer' },
+  // The lead says its step untaken: its wait runs from the designer's approval to its word.
+  { at: T(37), by: 'lead', action: 'review', task: 't-bars', verdict: 'approve', merged: [], step: 'lead' },
   { at: T(37), by: 'lead', action: 'all-approved' },
   // Past the last approval: what it waits for now is the person's finish, not work.
   { at: T(40), by: 'test-1', action: 'waiting', why: 'every task is done' },
@@ -65,16 +67,18 @@ describe('a run measured from its records', () => {
     now: T(60)
   });
 
-  it('says where a task’s time went: to take, at work, waiting for each review and for its agent sent back', () => {
+  it('says where a task’s time went: to take, at work, each step of its review and its agent sent back', () => {
     expect(metrics.tasks[0]).toMatchObject({
       task: 't-bars',
       agents: ['dev-1'],
       toTake: 2,
       worked: 6,
-      rounds: { ui: 1, lead: 0 },
-      uiWaits: [2, 1],
-      uiReviews: [3, 2],
-      leadWaits: [1],
+      rounds: { designer: 1 },
+      steps: [
+        { step: 'designer', waited: 2, said: 3 },
+        { step: 'designer', waited: 1, said: 2 },
+        { step: 'lead', waited: 1 }
+      ],
       reworkWaits: [10],
       checks: { run: 5, failed: 2 }
     });
@@ -85,7 +89,7 @@ describe('a run measured from its records', () => {
     expect(metrics.agents.find(agent => agent.agent === 'design-2')).toMatchObject({
       waited: 8,
       refused: 1,
-      reviews: { ui: 2, uiChanges: 1, medianMinutes: 2 },
+      reviews: { byStep: { designer: { said: 2, changes: 1 } }, medianMinutes: 2 },
       calls: 1,
       readTokens: 3000
     });
@@ -155,7 +159,9 @@ describe('a call made again', () => {
       measured([
         ...[1, 2, 3, 4].map(minute => line(minute, 'plitzi task next --role tester --follow --take')),
         ...[5, 6, 7].map(minute => line(minute, 'plitzi task next --role lead --take')),
-        ...[8, 9, 10].map(minute => line(minute, 'plitzi run watch --until lead'))
+        ...[8, 9, 10].map(minute => line(minute, 'plitzi run watch --until lead')),
+        // A dry run, tried after each edit of what it checks: encore-11's scout and its stage.
+        ...[11, 11.1, 11.2].map(minute => line(minute, 'plitzi run extend stage.json --dry-run'))
       ])
     ).toEqual([]);
   });

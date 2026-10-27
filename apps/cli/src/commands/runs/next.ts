@@ -5,13 +5,14 @@ import chalk from 'chalk';
 import { act, runOf } from './shell';
 import { messageLines } from './text';
 import { FOLLOW_MS } from '../../options';
-import { DESIGN_LOOK } from '../../runs/design';
 import { isPrincipal } from '../../runs/leads';
 import { acceptanceText } from '../../runs/model';
 import { acceptanceAccount, acceptanceAddresses, acceptanceStatuses, filledPattern } from '../../runs/pagesOf';
 import { copyOf } from '../../runs/paths';
 import { DESIGN_READING } from '../../runs/reading';
+import { isResearch, roleOf } from '../../runs/spike';
 import { nextTask, takeNext, takeTask } from '../../runs/tasks';
+import { DESIGN_LOOK, DESIGNER } from '../../runs/team';
 
 import type { RunCommandOptions } from './shell';
 import type { RunTask } from '../../runs/model';
@@ -82,17 +83,22 @@ const lookCommand = (task: RunTask, drawnAt: readonly string[], also: string): s
   ];
 };
 
-/** A designer's review, as `task next` hands it: what to look at, what for, and how to say it. */
-const designReviewText = (review: NonNullable<NextTask['designReview']>): string =>
+/**
+ * A review, as `task next` hands it — whatever step it is, a designer's look or a tester's QA: what to look at, what for,
+ * and how to say it.
+ */
+const reviewText = (review: NonNullable<NextTask['review']>, agent: string): string =>
   [
     chalk.bold(
-      `Review ${review.task.id}'s UI — ${review.task.title}: a designer's look, before its reviewer's${review.round > 0 ? ` (round ${String(review.round)}: sent back since)` : ''}`
+      `Review ${review.task.id} — ${review.task.title}: its ${review.role}'s review${review.steps.length > 1 ? ` (step ${String(review.step + 1)} of ${String(review.steps.length)}: ${review.steps.join(' → ')})` : ''}${review.round > 0 ? ` — round ${String(review.round + 1)}, sent back before` : ''}`
     ),
     // Said first, on its own, on the first review alone: in the middle of a line, every time, a run's design-1
     // read it after its first verdict.
-    ...(review.first
+    ...(review.first && review.role === DESIGNER
       ? [chalk.yellow(`  Your first review: read these first, whole — ${DESIGN_READING.join(', ')}`)]
       : []),
+    ...(review.passed ?? []).map(line => `  ✓ ${line}`),
+    ...(review.told ?? []).map(line => `  ✉ ${line}`),
     ...review.asked.map(line => `  ↺ ${line}`),
     ...(review.before
       ? [
@@ -103,12 +109,14 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>): string
       : []),
     ...earlierText(review),
     `  It changed: ${review.changed.join(', ') || 'nothing said'} — in its copy, ${review.copy}`,
-    // Beside the run before it, measured — its dress too — and the copy served for it: what a designer rebuilt by hand.
-    ...lookCommand(review.task, review.pages, ' --before').map(
+    // A designer's look is set beside the run before it, measured — its dress too; any other looks at it as it went.
+    ...lookCommand(review.task, review.pages, review.role === DESIGNER ? ' --before' : '').map(
       (command, index) =>
-        `  ${index === 0 ? 'Look at it as it went to review, beside the run before it' : 'And'}: ${command}`
+        `  ${index === 0 ? `Look at it as it went to review${review.role === DESIGNER ? ', beside the run before it' : ''}` : 'And'}: ${command}`
     ),
-    `  Look for (${review.precision}, as the team asks — options.designReview) ${DESIGN_LOOK[review.precision]}`,
+    review.precision
+      ? `  Look for (${review.precision}, as the team asks — options.designReview) ${DESIGN_LOOK[review.precision]}`
+      : `  Its QA: what it was asked, its checks, how it behaves (a control used there and back, a state the data opens), the code and the edge cases — what went to review: plitzi task show ${review.task.id}`,
     `  Send it back only for what its title and acceptance cover — anything beyond it is plitzi run notice "…", never a round: ${review.task.acceptance.map(acceptanceText).join(' · ')}`,
     // What its own checks measured at complete: the review starts from what fails, not by measuring all of it again.
     ...review.accepted.map(
@@ -121,74 +129,7 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>): string
           )
         ]
       : []),
-    `  Then say it: plitzi task review ${review.task.id} --approve [--note "what you saw"] | --changes "what, where, and why" [--on <element>]`
-  ].join('\n');
-
-/** A spike, as `task next` hands it to a scout — or to the lead with none: what to find out, for whom, and how to say it. */
-const spikeText = (spike: NonNullable<NextTask['spike']>, agent: string): string =>
-  [
-    chalk.blue(chalk.bold(`Spike ${spike.task.id} — ${spike.task.title}: find out ${spike.question}`)),
-    ...(spike.asked ? [chalk.yellow(`  ↺ The lead sent its tasks back: ${spike.asked}`)] : []),
-    ...(spike.findings > 0
-      ? [`  ${String(spike.findings)} finding(s) of it already: plitzi task context ${spike.task.id}`]
-      : []),
-    // A copy's spike compares with the original; any other reads the project — encore-10's spike on test speed was
-    // told to compare with an original it had none of.
-    spike.reference === undefined
-      ? '  Read the code and the pages, measure, run what tells — write nothing of the task’s'
-      : `  Compare with the original (page shot <path> --compare ${spike.reference} --clip <section> --dress), read its computed styles, measure — write nothing of the task’s`,
-    spike.blocking
-      ? `  ${spike.task.id} is blocked on it, at work: lift its block with what you found — plitzi task unblock ${spike.task.id} --answer "…" (kept as its finding)`
-      : `  Then say it — the layers, their values, which file gets each — and its result, the tasks it makes, each with its "findings": plitzi task spike ${spike.task.id} --done "…" [--tasks <stage.json>]${isPrincipal(agent) ? '' : ' — the lead approves it before anything is applied'}`
-  ].join('\n');
-
-/** What a scout found, as `task next --role lead` hands it to the lead: decided — the tasks with the person — and approved. */
-const proposalText = (proposal: NonNullable<NextTask['proposal']>): string =>
-  [
-    chalk.blue(
-      chalk.bold(
-        `${proposal.task.id} — ${proposal.by} found it out${proposal.tasks.length > 0 ? `, and proposes ${String(proposal.tasks.length)} task(s): ${proposal.tasks.join(', ')}` : ''}`
-      )
-    ),
-    `  Found: ${proposal.text}`,
-    ...(proposal.tasks.length > 0
-      ? [
-          `  Read them as they would stack: plitzi run extend ${proposal.stage} --dry-run`,
-          '  Decide them with the person — the scope, what waits, what is left out — then:'
-        ]
-      : []),
-    `  plitzi task spike ${proposal.task.id} --approve | --changes "what to change" (back to ${proposal.by})`
-  ].join('\n');
-
-/** A lead's review, as `task next --role lead` hands it: the whole review `lead` would make, by this lead. */
-const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: string): string =>
-  [
-    chalk.bold(
-      `Review ${review.task.id} — ${review.task.title}${review.round > 0 ? ` (round ${String(review.round + 1)}: sent back before)` : ''}: yours, nobody else takes it`
-    ),
-    ...(review.design ? [`  ✓ ${review.design}`] : []),
-    ...(review.uiToo ? [chalk.yellow(`  ⚠ ${review.uiToo}`)] : []),
-    ...(review.told ?? []).map(line => `  ✉ ${line}`),
-    ...review.asked.map(line => `  ↺ ${line}`),
-    ...earlierText(review),
-    `  It changed: ${review.changed.join(', ') || 'nothing said'} — in its copy, ${review.copy}`,
-    `  What went to review, against its acceptance: plitzi task show ${review.task.id}`,
-    // Its UI said by a designer, the lead's is the code: the look is for what the code changes on a page, if anything.
-    ...(review.design
-      ? [
-          `  Its UI is reviewed: yours is its QA — what it was asked, its checks, how it behaves (a control used there and back, a state the data opens), the code and the edge cases — look (plitzi task look ${review.task.id}) where the code changes what a page does`
-        ]
-      : lookCommand(review.task, review.pages, '').map(
-          (command, index) => `  ${index === 0 ? 'Look at it as it went to review' : 'And'}: ${command}`
-        )),
-    ...(review.lastRound
-      ? [
-          chalk.yellow(
-            '  ⚠ Its last round: changes asked now block it for the lead to decide — ask for all that is left, or approve with a note'
-          )
-        ]
-      : []),
-    `  Then say it: plitzi task review ${review.task.id} --approve [--note "…"] | --changes "what, where, and why"`,
+    `  Then say it: plitzi task review ${review.task.id} --approve [--note "what you saw"] | --changes "what, where, and why" [--on <element>]${review.step + 1 < review.steps.length ? ` — approved, its ${review.steps.at(review.step + 1) ?? ''}'s review is next` : ''}`,
     ...(isPrincipal(agent)
       ? []
       : [
@@ -196,48 +137,84 @@ const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: stri
         ])
   ].join('\n');
 
+/** What the lead finds out itself: an agent's question it answers, or research with no scout in the team. */
+const spikeText = (spike: NonNullable<NextTask['spike']>): string =>
+  [
+    chalk.blue(chalk.bold(`${spike.task.id} — ${spike.task.title}: find out ${spike.question}`)),
+    ...(spike.findings > 0
+      ? [`  ${String(spike.findings)} finding(s) of it already: plitzi task context ${spike.task.id}`]
+      : []),
+    // A copy's research compares with the original; any other reads the project — encore-10's spike on test speed was
+    // told to compare with an original it had none of.
+    spike.reference === undefined
+      ? '  Read the code and the pages, measure, run what tells — write nothing of the task’s'
+      : `  Compare with the original (page shot <path> --compare ${spike.reference} --clip <section> --dress), read its computed styles, measure — write nothing of the task’s`,
+    spike.blocking
+      ? `  ${spike.task.id} is blocked on it, at work: lift its block with what you found — plitzi task unblock ${spike.task.id} --answer "…" (kept as its finding)`
+      : `  Then say it — the layers, their values, which file gets each — and its result, the tasks it makes, each with its "findings": plitzi task complete ${spike.task.id} --found "…" [--tasks <stage.json>]`
+  ].join('\n');
+
+/** What a research card found, as the lead's review of it: decided — the tasks with the person — and approved. */
+const foundText = (
+  review: NonNullable<NextTask['review']>,
+  found: NonNullable<NonNullable<NextTask['review']>['found']>
+): string =>
+  [
+    chalk.blue(
+      chalk.bold(
+        `${review.task.id} — ${found.by} found it out${found.tasks.length > 0 ? `, and proposes ${String(found.tasks.length)} task(s): ${found.tasks.join(', ')}` : ''}`
+      )
+    ),
+    `  Found: ${found.text}`,
+    ...(found.tasks.length > 0
+      ? [
+          `  Read them as they would stack: plitzi run extend ${found.stage} --dry-run`,
+          '  Decide them with the person — the scope, what waits, what is left out — then:'
+        ]
+      : []),
+    `  plitzi task review ${review.task.id} --approve [--leave <tasks>] | --changes "what to change" (back to ${found.by})`
+  ].join('\n');
+
 export const nextText = (next: NextTask, agent: string): string =>
   [
     ...messageLines(next.messages),
-    next.proposal
-      ? proposalText(next.proposal)
-      : next.spike
-        ? spikeText(next.spike, agent)
-        : next.leadReview
-          ? leadReviewText(next.leadReview, agent)
-          : next.designReview
-            ? designReviewText(next.designReview)
-            : next.task
-              ? next.yours
+    next.spike
+      ? spikeText(next.spike)
+      : next.review
+        ? next.review.found
+          ? foundText(next.review, next.review.found)
+          : reviewText(next.review, agent)
+        : next.task
+          ? next.yours
+            ? [
+                `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : next.back === 'unblocked' ? 'unblocked by the lead' : 'still in progress: you hold it — go on with it before anything new'}). Your token is still good: plitzi task context ${next.task.id}`,
+                ...(next.work ? [`  Its copy, the only place you write: cd ${next.work}`] : []),
+                ...(next.asked ?? []).map(line => `  ↺ ${line}`)
+              ].join('\n')
+            : [
+                `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${roleOf(next.task)}). Take it: plitzi task next ${next.task.id}`,
+                ...(next.handedBy
+                  ? [
+                      `  Handed to you by ${next.handedBy.by}, taken back from another${next.handedBy.reason ? `: ${next.handedBy.reason}` : ''} — no other agent takes it`
+                    ]
+                  : [])
+              ].join('\n')
+          : [
+              String(next.why),
+              ...(next.worked ?? []).map(
+                each =>
+                  `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'in review' : each.status}${each.finishedBy ? ` — as ${each.finishedBy} last did it, not your version` : ''}`
+              ),
+              // A run's dev-1 met four of Plitzi's frictions and said them only in its last words, which the
+              // run's feedback never reads.
+              ...(next.finished
                 ? [
-                    `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : next.back === 'unblocked' ? 'unblocked by the lead' : 'still in progress: you hold it — go on with it before anything new'}). Your token is still good: plitzi task context ${next.task.id}`,
-                    ...(next.work ? [`  Its copy, the only place you write: cd ${next.work}`] : []),
-                    ...(next.asked ?? []).map(line => `  ↺ ${line}`)
-                  ].join('\n')
-                : [
-                    `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task next ${next.task.id}`,
-                    ...(next.handedBy
-                      ? [
-                          `  Handed to you by ${next.handedBy.by}, taken back from another${next.handedBy.reason ? `: ${next.handedBy.reason}` : ''} — no other agent takes it`
-                        ]
-                      : [])
-                  ].join('\n')
-              : [
-                  String(next.why),
-                  ...(next.worked ?? []).map(
-                    each =>
-                      `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'in review' : each.status}${each.finishedBy ? ` — as ${each.finishedBy} last did it, not your version` : ''}`
-                  ),
-                  // A run's dev-1 met four of Plitzi's frictions and said them only in its last words, which the
-                  // run's feedback never reads.
-                  ...(next.finished
-                    ? [
-                        '  Before you stop: what of Plitzi itself got in your way and is not said yet — plitzi run notice --plitzi "…", one each; the run’s feedback to Plitzi carries them, your last words do not'
-                      ]
-                    : [])
-                ].join('\n'),
+                    '  Before you stop: what of Plitzi itself got in your way and is not said yet — plitzi run notice --plitzi "…", one each; the run’s feedback to Plitzi carries them, your last words do not'
+                  ]
+                : [])
+            ].join('\n'),
     // Wherever the answer leaves an agent without a copy of a task in hand — between tasks, at a review.
-    ...(next.task && !next.leadReview && !next.designReview
+    ...(next.task && !next.review
       ? []
       : [chalk.dim(`  What is yours beside the work (a script, a log): ${next.scratch} — never the project's tmp/`)])
   ].join('\n');
@@ -261,11 +238,24 @@ const takenText = (taken: TakenTask): string =>
       chalk.cyan(`  ⇄ ${each.from} proposes (${each.id}): ${each.change} — plitzi task answer ${each.id}`)
     ),
     `  Write only in its copy: ${taken.work} — what is yours beside the work (a script, a log, a picture) in its tmp/, never the project's`,
-    `  Its files: ${taken.files.join(', ')}`,
+    ...(isResearch(taken.task)
+      ? [
+          `  Research: find out ${taken.task.spike ?? 'what it asks'} — write nothing of the project's`,
+          // A copy's research compares with the original; any other reads the project — encore-10's spike on test
+          // speed was told to compare with an original it had none of.
+          ...(taken.reference === undefined
+            ? []
+            : [
+                `  Compare with the original (page shot <path> --compare ${taken.reference} --clip <section> --dress), read its computed styles, measure`
+              ])
+        ]
+      : [`  Its files: ${taken.files.join(', ')}`]),
     ...(taken.resumedFrom !== undefined ? [`  Resumed from the version review ${String(taken.resumedFrom)} saw`] : []),
     `  Run its commands in its copy — cd ${taken.work} — with your token, and they know the task: start with plitzi task context`,
     ...binLine(taken.work),
-    '  Done: plitzi task complete, in the copy'
+    isResearch(taken.task)
+      ? '  Done: plitzi task complete --found "…" [--tasks <stage.json>], in the copy — the lead approves it'
+      : '  Done: plitzi task complete, in the copy'
   ].join('\n');
 
 export const taskTake = (taskId: string, options: RunCommandOptions & { role?: string }): Promise<void> =>

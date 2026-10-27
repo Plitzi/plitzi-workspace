@@ -34,7 +34,6 @@ const failedCheck = (at: string) =>
 describe("the lead's attention", () => {
   it('says a line failing try after try while its task is worked, and not once the task is approved', async () => {
     const plan = benchPlan();
-    plan.designReview = false;
     await openRun(lead(), await bench.writePlan(plan));
     const home = await take('agent-1', 't-home');
     const { paths } = await loadRun(lead(), 'es-launch');

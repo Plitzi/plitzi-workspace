@@ -1,6 +1,5 @@
 import { waitsText } from './monitorFlow';
 import { hhmm } from './monitorModel';
-import { designSkipText } from '../../runs/designSkip';
 
 import type { Tone } from './monitorModel';
 import type { TaskStory } from '../../runs/monitor';
@@ -14,7 +13,6 @@ import type { TaskLine } from '../../runs/view';
 /** Where a task stands, the work first: at work, sent back, in review, waiting — then free, pending, and done last. */
 const ORDER: Record<TaskLine['status'], number> = {
   'in-progress': 0,
-  spike: 1,
   'changes-requested': 2,
   'in-review': 3,
   waiting: 4,
@@ -71,9 +69,7 @@ export const withText = (task: TaskLine, tasks: readonly TaskLine[], story: Task
     case 'pending':
       return waitsText(task, tasks) || 'pending';
     case 'ready':
-      return 'free to take';
-    case 'spike':
-      return task.spikedBy ? `${task.spikedBy} finds out` : 'not taken yet';
+      return task.leadFindsOut ? 'the lead finds it out' : 'free to take';
     case 'in-progress':
       return task.asking
         ? task.asking.answered
@@ -89,9 +85,7 @@ export const withText = (task: TaskLine, tasks: readonly TaskLine[], story: Task
     case 'in-review':
       return task.proposed
         ? `the lead decides · ${task.proposed.by}'s`
-        : task.design?.status === 'due' && task.reviewer === undefined
-          ? `UI review · ${task.design.by ?? 'no designer yet'}`
-          : `review · ${task.reviewer ?? 'no lead yet'}`;
+        : `${task.review?.role ?? ''} review · ${task.review?.by ?? 'not taken yet'}`;
     case 'waiting':
       return `waits ${task.waitingFor?.task ?? 'a file'}`;
     case 'blocked':
@@ -117,11 +111,10 @@ export const storyLines = (task: TaskLine, story: TaskStory | undefined): { text
         }
       ]
     : []),
-  ...(story?.design === 'skipped'
-    ? [{ text: designSkipText(story.designSkip), tone: 'muted' as const }]
-    : story?.design
-      ? [{ text: `its UI approved by ${story.design}`, tone: 'muted' as const }]
-      : []),
+  ...(story?.passed ?? []).map(step => ({
+    text: `its ${step.replace(' by ', "'s review approved by ")}`,
+    tone: 'muted' as const
+  })),
   ...(story?.approvedAt
     ? [
         {

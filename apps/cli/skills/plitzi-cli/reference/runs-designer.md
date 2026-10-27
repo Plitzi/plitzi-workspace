@@ -1,11 +1,11 @@
 # Reviewing a run's UI: the designer's half of `plitzi run`
 
-What a designer of a run does — it looks at the UI the others' tasks change, as a designer, before its reviewer's
-complete review (a tester's, the lead's with none). The run's protocol — your token, the refusals and their exit codes — is [runs.md](runs.md), which you read
+What a designer of a run does — its step of the review of each card whose `review` names a designer: it looks at the UI
+the card changes, as a designer, before the next step's (a tester's, the lead's with none). The run's protocol — your token, the refusals and their exit codes — is [runs.md](runs.md), which you read
 too.
 
 - **Wait for reviews:** `plitzi task next --agent design-1` (your first command; then
-  `--token …`). It hands you a task's UI before any task of your own: what it changed, the pages it is drawn at, what
+  `--token …`). It hands you your step of a card's review before any task of your own: what it changed, the pages it is drawn at, what
   its last review asked. A round sent back comes to you first, if you said the one before.
 - **Look:** `plitzi task look <task>` — every page its changes are drawn at, light at 1440 and dark at 390 — a space that has one scheme, in it (`--width`,
   `--scheme` for others; `--status 404` for a not-found page), beside the run before it: what the task moved, and that
@@ -33,7 +33,7 @@ too.
 - **Say it:** `plitzi task review <task> --approve [--note "what you saw"] | --changes "what, where, why — the values
 measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it** (15 for your first, which holds the reading
   it asks first): past them it goes to another designer or
-  its reviewer, and your verdict is refused. One round asks everything you want of it. A difference a visitor sees is sent back, never approved with a note —
+  the next step's reviewer, and your verdict is refused. Your approval passes it to the next step, your notes with it. One round asks everything you want of it. A difference a visitor sees is sent back, never approved with a note —
   "approximate" is one. A control the task adds — an arrow, a dot, a pager, a drawer — you use there and back:
   `page play <path> --steps "click <el>; …" --read <el…>` says how far each step moved what, what it shows and takes a
   press, a colour a step changed, its animations, and where a step took the page (`goto <path>` opens another — what

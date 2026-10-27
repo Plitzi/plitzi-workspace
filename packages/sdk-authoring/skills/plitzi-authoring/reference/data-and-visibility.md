@@ -150,9 +150,9 @@ Rules for a condition's template:
 
 - **A visibility binding written by hand in `bind` keeps the element on screen until it answers** — a flash for a
   condition on data (`condition-starts-visible` warns); `visible` starts it hidden.
-- **A hidden element stays in the DOM** (`plitzi-component--hidden`), its subtree mounted. `loadStrategy: 'visible'`
-  mounts the subtree only while it is shown, and `'lazy'` from the first time it is shown (modals do that already).
-  Use it on heavy panels that are usually hidden; leave the default on what is usually on screen.
+- **A hidden element stays in the DOM** (`plitzi-component--hidden`), its subtree mounted — a hidden channel stays
+  joined, a hidden provider still asks. `loadStrategy: 'visible'` mounts what it holds only while shown (`'lazy'`: from
+  the first time; modals do): for a heavy panel usually hidden, or a container wrapping a channel or provider to stop it.
 - **Once its source has a value, the answer is a yes or a no**: `false`, `0`, `''` and an empty list hide it,
   anything else shows it.
 - **While its source has no value, only a definite answer is written.** `!source` is `true` — shown; a template's

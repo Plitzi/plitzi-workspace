@@ -1,3 +1,4 @@
+import { ADVICE_KINDS } from './bottlenecks';
 import { requireLead } from './leads';
 import { RunRefusal } from './refusal';
 import { loadRun, logRun, requireNoTask } from './run';
@@ -19,6 +20,8 @@ export const SETTLED = 'finding-settled';
 export const settledFindings = (log: readonly Record<string, unknown>[]): Set<string> =>
   new Set(log.flatMap(entry => (entry.action === SETTLED && typeof entry.subject === 'string' ? [entry.subject] : [])));
 
+const isAdvice = (kind: string): boolean => ADVICE_KINDS.some(each => each === kind);
+
 export const settleFinding = async (
   ctx: RunContext,
   runId: string,
@@ -35,14 +38,21 @@ export const settleFinding = async (
     );
   }
 
-  const findings = (await viewRun(ctx, runId)).attention.filter(item => item.kind === 'finding');
-  const finding = findings.find(item => item.subject === subject);
+  // A finding by its subject, or the board's advice by its kind: what the lead decided about it, said once.
+  const { attention } = await viewRun(ctx, runId);
+  const findings = attention.filter(item => item.kind === 'finding');
+  const advice = attention.filter(item => isAdvice(item.kind));
+  const finding =
+    findings.find(item => item.subject === subject) ??
+    advice.find(item => item.kind === subject && item.who === 'lead');
   if (!finding) {
+    const settleable = [...findings.map(item => item.subject ?? ''), ...new Set(advice.map(item => item.kind))];
     throw new RunRefusal(
       'not-found',
-      findings.length === 0
-        ? `No finding waits for the lead: "${subject}" is none of them.`
-        : `No finding waits for the lead as "${subject}". These do: ${findings.map(item => item.subject ?? '').join(', ')}`
+      settleable.length === 0
+        ? `Nothing waits for the lead to settle: "${subject}" is no finding, and no advice of that kind is given now.`
+        : `Nothing to settle as "${subject}". These are: ${settleable.join(', ')} — a finding by its name, the board's advice by its kind`,
+      { next: 'plitzi run status says what waits for the lead, each by its name' }
     );
   }
 

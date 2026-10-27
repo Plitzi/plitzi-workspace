@@ -119,7 +119,6 @@ export const toneOf = (theme: Theme, tone: Tone): string => theme[tone];
 /** Where a task stands, as a glyph, a word and a tone: the same in the strip, the lists, the flow and its dialog. */
 export const TASK_LOOK: Record<TaskLine['status'], { glyph: string; label: string; tone: Tone }> = {
   'in-progress': { glyph: '◐', label: 'at work', tone: 'info' },
-  spike: { glyph: '◇', label: 'spike', tone: 'info' },
   'changes-requested': { glyph: '↺', label: 'sent back', tone: 'warning' },
   'in-review': { glyph: '◎', label: 'in review', tone: 'link' },
   waiting: { glyph: '…', label: 'waiting', tone: 'warning' },

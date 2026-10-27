@@ -283,24 +283,22 @@ describe('plitzi run monitor', () => {
   });
 
   // The lead took a review whose UI waited for a designer, said "reviewing", and its card read "nobody yet".
-  it('puts a review the lead took in the lead’s column, named, though its UI waits for a designer', async () => {
+  it('names a card in review by the step it is at and who says it — waiting till one takes it', async () => {
     const runId = await open();
     const menu = await take('agent-3', 't-menu');
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { es: true };\n');
     await completeTask(menu.ctx, runId, 't-menu');
     const { tasks } = (await monitorRun(lead(), runId)).view;
-    const due = (reviewer?: string) =>
+    const at = (by?: string) =>
       tasks.map(task =>
-        task.id === 't-menu' ? { ...task, design: { status: 'due' as const, round: 0 }, reviewer } : task
+        task.id === 't-menu' && task.review ? { ...task, review: { ...task.review, role: 'designer', by } } : task
       );
 
-    expect(counts(due())).toMatchObject({ 'ui-review': 1, 'lead-review': 0 });
-    expect(cards(due(), 'ui-review')).toEqual(['t-menu waiting']);
-    expect(counts(due('lead'))).toMatchObject({ 'ui-review': 0, 'lead-review': 1 });
-    expect(cards(due('lead'), 'lead-review')).toEqual(['t-menu lead']);
+    expect(cards(at(), 'review')).toEqual(['t-menu designer · waiting']);
+    expect(cards(at('lead'), 'review')).toEqual(['t-menu designer · lead']);
   });
 
-  it('draws the run as a flow, each task in its stage, the review split, and one sent back at work again', async () => {
+  it('draws the run as a flow, each task in its stage, and one sent back at work again', async () => {
     const runId = await open();
     await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
     const home = await take('agent-2', 't-home');
@@ -320,12 +318,11 @@ describe('plitzi run monitor', () => {
       ready: 0,
       work: 1,
       held: 0,
-      'ui-review': 0,
-      'lead-review': 1,
+      review: 1,
       approved: 1
     });
     expect(cards(first, 'work')).toEqual(['t-home agent-2']);
-    expect(cards(first, 'lead-review')).toEqual(['t-menu waiting']);
+    expect(cards(first, 'review')).toEqual(['t-menu lead · waiting']);
 
     // A question to the lead holds its agent: the task is held, saying why, and no longer at work.
     const asked = await askLead(home.ctx, runId, 't-home', 'Spanish or Catalan?');
@@ -339,7 +336,7 @@ describe('plitzi run monitor', () => {
     // Sent to review with the question still open, it stands in review alone: a task is in one column at a time.
     await writeInCopy(home.work, 'src/space/pages/home/index.ts', 'export const home = { es: true };\n');
     await completeTask(home.ctx, runId, 't-home');
-    expect(counts((await monitorRun(lead(), runId)).view.tasks)).toMatchObject({ held: 0, 'lead-review': 2 });
+    expect(counts((await monitorRun(lead(), runId)).view.tasks)).toMatchObject({ held: 0, review: 2 });
 
     // Sent back by the lead: at work again, its agent's — never "ready", free to take — marked with its round.
     await reviewTask(lead(), runId, 't-menu', 'changes', [{ note: 'Spanish prices' }]);
@@ -349,7 +346,7 @@ describe('plitzi run monitor', () => {
 
     // The whole board, view 2: every stage, its count and its cards.
     const board = shown(await monitorRun(lead(), runId), { view: 'flow' }).text;
-    for (const title of ['Pending', 'Ready', 'At work', 'Held', 'UI review', 'Lead review', 'Approved']) {
+    for (const title of ['Pending', 'Ready', 'At work', 'Held', 'Review', 'Approved']) {
       expect(
         board.some(line => line.includes(title)),
         title
@@ -541,7 +538,7 @@ describe('plitzi run monitor', () => {
 
     expect(
       shown(data, { view: 'tasks' }).text.some(
-        line => line.includes(waiting.id) && line.includes('after t-home (review)')
+        line => line.includes(waiting.id) && line.includes('after t-home (lead review)')
       )
     ).toBe(true);
     expect(cards(data.view.tasks, 'pending').some(card => card.startsWith(`${waiting.id} after t-home`))).toBe(true);

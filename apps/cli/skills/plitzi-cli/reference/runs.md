@@ -13,7 +13,7 @@ The team is `.plitzi/team.json`: each agent's name, roles, count, model. Tasks n
 "designer"`; `developer` when left out); `plitzi task next --agent design-1` waits
 (8 min, `--timeout`) for the next one and takes it — first a task you hold that can go on, or another's sent back
 while its agent is at a task (3 min on, with its review's asks); again until it says you can stop. Started at a level, say it (`--quality high`, as `run open --dry-run` gave your command): you are handed tasks of it or below.
-**A designer** reviews UI/UX before the tester: [runs-designer.md](runs-designer.md). **A tester** reviews every task — its QA ([runs-review.md](runs-review.md)). With one, each developer task gets `<task>-tests`,
+**Every card is reviewed alike**: by the roles its `review` names, in order (`["designer", "tester"]`), each step taken by one of that role and said by it — a card that names none, the tester's (the lead's with no tester). A designer's step: [runs-designer.md](runs-designer.md); the tester's — its QA, the approval: [runs-review.md](runs-review.md). With a tester, each developer task gets `<task>-tests`,
 a developer's that did not write it (the tester's when none may): tests of what its acceptance asked, both sides of each
 condition (a page's in `visual/<page>.spec.ts`, a module's beside it). A test the work fails is told to the lead (`task
 tell`), never bent. A review no tester may take is a developer's that worked neither it nor what it tests.
@@ -81,9 +81,8 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
 - **Before done:** `npm run typecheck` and `lint` (seconds), then `plitzi task check` (`--fix`: eslint and prettier fix first) runs what `complete` holds
   the copy to — the project's checks, the acceptance's commands, long files, no `space lint` warning in a file you
   changed: iterate on it, not on `complete`, whose failures count toward the run's brake. It hands you the lead's news. What you declare for later tasks, unread yet, is a warning.
-- **Done:** `plitzi task complete --ease <1-5> --hardest "…" [--friction "…"] [--note "…"] [--review code|ui]` — what
-  it was like to Plitzi, the note to the lead;
-  `code` when nothing a visitor sees changed (no designer's look, unless a page draws it), `ui` for its UI looked at first. A control you add you use first, there and back (`page play`). **A task never ends
+- **Done:** `plitzi task complete --ease <1-5> --hardest "…" [--friction "…"] [--note "…"]` — what
+  it was like to Plitzi, the note to the lead; its review is the one its card names. A control you add you use first, there and back (`page play`). **A task never ends
   with failing checks** — lint, types, tests: fix them — nor with a file it took past 400 non-blank lines (your
   heartbeat says so first): split it. Only for a weighty reason: `plitzi task complete
 --known-failure "why" [--fixed-by <task>|lead]`, its why naming each failing step. A check that fails the same way without your change (a person's,

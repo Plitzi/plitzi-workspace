@@ -491,19 +491,39 @@ export const actingSteps = (
   command: string,
   { others = true }: { others?: boolean } = {}
 ): ActingStep[] | { problem: string } => {
+  const read = playingSteps(script, command, { others, pictures: false });
+
+  return 'problem' in read ? read : read.filter((step): step is ActingStep => step.kind !== 'shot');
+};
+
+/** A picture taken where it stands among the steps — `shot [label]` — by a command that pictures as it plays. */
+export type PictureStep = Extract<ShotStep, { kind: 'shot' }>;
+
+/** A step `page play` plays: one acted, or a picture of the page where it stands. */
+export type PlayStep = ActingStep | PictureStep;
+
+/**
+ * The steps a command plays, `pictures` saying whether it takes a `shot` where one stands (`page play`, which agents
+ * asked five runs running for `--shot`) — `frames`, what moves, stays `page shot`'s.
+ */
+export const playingSteps = (
+  script: string | undefined,
+  command: string,
+  { others = true, pictures = true }: { others?: boolean; pictures?: boolean } = {}
+): PlayStep[] | { problem: string } => {
   const parsed = script === undefined ? [] : parseSteps(script, 500);
   if ('problem' in parsed) {
     return { problem: `--steps: ${parsed.problem}` };
   }
 
-  const pictured = parsed.find(step => step.kind === 'shot' || step.kind === 'frames');
+  const pictured = parsed.find(step => step.kind === 'frames' || (!pictures && step.kind === 'shot'));
   if (pictured) {
     return {
-      problem: `${command} reads what the steps leave, with no picture: "${pictured.kind}" is page shot --steps`
+      problem: `${command} reads what the steps leave, with no ${pictured.kind === 'frames' ? 'frames' : 'picture'}: "${pictured.kind}" is page shot --steps${pictures ? '' : ' (page play takes a shot where it stands)'}`
     };
   }
 
-  const acting = parsed.filter((step): step is ActingStep => step.kind !== 'shot' && step.kind !== 'frames');
+  const acting = parsed.filter((step): step is PlayStep => step.kind !== 'frames');
   const another = others ? undefined : acting.find(step => step.kind === 'as');
   if (another?.kind === 'as') {
     return {

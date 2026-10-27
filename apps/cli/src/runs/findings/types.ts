@@ -52,8 +52,6 @@ export type FindingKind =
   | 'slow-review'
   | 'known-failure'
   | 'sent-back'
-  | 'ui-skipped'
-  | 'ui-review-wasted'
   | 'preview-sync'
   | 'brake'
   | 'unfinished'

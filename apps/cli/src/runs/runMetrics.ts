@@ -1,9 +1,11 @@
+import { isApproval } from './run';
+
 import type { UsageLine } from './usage';
 
 /**
  * A run measured from its own records — its activity, the usage each command kept, the messages — as the lead measured
- * shop-polish by hand to find where its time went: how long each task waited to be taken, was worked, waited for its
- * UI review and the lead's, and for its agent after it was sent back; how long each agent waited for work; every check
+ * shop-polish by hand to find where its time went: how long each task waited to be taken, was worked, waited for each
+ * step of its review and that step took, and for its agent after it was sent back; how long each agent waited for work; every check
  * failed by its step; every refusal by its code; how long a question waited; and what the run cost — what each command
  * printed, which its agent read — with the calls repeated. The report says it, and keeps it as data, the bench's.
  */
@@ -17,16 +19,21 @@ export interface TaskFlow {
   toTake?: number;
   /** Minutes at work: each take, or each return to it after a review, to its next `complete`. */
   worked: number;
-  rounds: { ui: number; lead: number };
-  /** Each wait, after a `complete`, for a designer to take its UI review. */
-  uiWaits: number[];
-  /** Each UI review, from taken to said. */
-  uiReviews: number[];
-  /** Each wait for the lead's verdict, from the UI approved (or the `complete`, with none) to it. */
-  leadWaits: number[];
+  /** The rounds sent back, by the step that sent each (`designer`, `tester`, `lead`…). */
+  rounds: Record<string, number>;
+  /** Each step of its reviews said, in order: from it coming due to its reviewer taking it, and from taken to said. */
+  steps: StepFlow[];
   /** Each wait, after changes were asked, for an agent to be at it again. */
   reworkWaits: number[];
   checks: { run: number; failed: number };
+}
+
+export interface StepFlow {
+  step: string;
+  /** From its coming due — the `complete`, or the step before approved — to taken; to said, when said untaken. */
+  waited?: number;
+  /** From taken to said: none when said untaken (the lead's word on any step). */
+  said?: number;
 }
 
 export interface AgentFlow {
@@ -39,7 +46,8 @@ export interface AgentFlow {
   refused: number;
   /** Minutes it waited for work: from each `waiting` to what it did next. */
   waited: number;
-  reviews: { ui: number; uiChanges: number; lead: number; leadChanges: number; medianMinutes?: number };
+  /** The review steps it said, by step — and how many of them sent the card back — and their median minutes. */
+  reviews: { byStep: Record<string, { said: number; changes: number }>; medianMinutes?: number };
   /** What the CLI printed to it — read as tokens, a token four characters. */
   calls: number;
   readTokens: number;
@@ -178,8 +186,12 @@ const REPEAT_WINDOW_MIN = 10;
  * A call an agent is meant to make again: a wait that ends on news, and `task next`, which hands one piece of
  * work a call. A run counted test-1's 14 `task next` in 6 min as a loop — one a fresh session each.
  */
+/**
+ * A call meant to be made again: a wait, a take — and a dry run, tried after each edit of what it checks (encore-11's
+ * scout dry-ran its stage three times as it fixed it, said "ran run extend 3 times").
+ */
 const calledAgainByDesign = (command: string): boolean =>
-  waitsByDesign(command) || /^plitzi task next\b(?!.*\s--peek\b)/.test(command);
+  waitsByDesign(command) || /^plitzi task next\b(?!.*\s--peek\b)/.test(command) || /\s--dry-run\b/.test(command);
 
 const repeatedCalls = (usage: readonly UsageLine[]): RepeatedCall[] => {
   const groups = new Map<string, UsageLine[]>();
@@ -244,10 +256,8 @@ export const runMetrics = (input: {
       task: id,
       agents: [...new Set(entries.filter(entry => entry.action === 'take').map(entry => text(entry.by)))],
       worked: 0,
-      rounds: { ui: 0, lead: 0 },
-      uiWaits: [],
-      uiReviews: [],
-      leadWaits: [],
+      rounds: {},
+      steps: [],
       reworkWaits: [],
       checks: {
         run: entries.filter(entry => entry.action === 'check').length,
@@ -261,9 +271,8 @@ export const runMetrics = (input: {
     }
 
     let workingSince: string | undefined;
-    let sentAt: string | undefined;
-    let uiTakenAt: string | undefined;
-    let leadSince: string | undefined;
+    let dueAt: string | undefined;
+    let taken: { step: string; waited: number; at: string } | undefined;
     let sentBackAt: string | undefined;
     for (const entry of entries) {
       const when = at(entry);
@@ -284,42 +293,36 @@ export const runMetrics = (input: {
           }
 
           workingSince = undefined;
-          sentAt = when;
-          leadSince = entry.review === 'ui' ? undefined : when;
+          dueAt = when;
           break;
-        case 'review-taken':
-          if (entry.review === 'ui' && sentAt !== undefined) {
-            flow.uiWaits.push(minutes(sentAt, when));
-            uiTakenAt = when;
-          }
-
+        case 'review-taken': {
+          const step = text(entry.review);
+          // Taken again past its time: the wait is the first take's, the time said from the last.
+          taken =
+            taken?.step === step
+              ? { ...taken, at: when }
+              : { step, waited: dueAt === undefined ? 0 : minutes(dueAt, when), at: when };
           break;
-        case 'design-review':
-          if (uiTakenAt !== undefined) {
-            flow.uiReviews.push(minutes(uiTakenAt, when));
-          }
+        }
 
-          uiTakenAt = undefined;
-          if (entry.verdict === 'approve') {
-            leadSince = when;
-          } else {
-            flow.rounds.ui += 1;
-            sentBackAt = when;
-          }
-
-          break;
-        case 'review':
-          if (leadSince !== undefined || sentAt !== undefined) {
-            flow.leadWaits.push(minutes(leadSince ?? sentAt ?? when, when));
-          }
-
-          leadSince = undefined;
+        case 'review': {
+          const step = text(entry.step) || 'lead';
+          flow.steps.push(
+            taken?.step === step
+              ? { step, waited: taken.waited, said: minutes(taken.at, when) }
+              : { step, ...(dueAt === undefined ? {} : { waited: minutes(dueAt, when) }) }
+          );
+          taken = undefined;
+          // Approved, not the last step: the next step is due now.
+          dueAt = entry.verdict === 'approve' && !isApproval(entry) ? when : undefined;
           if (entry.verdict === 'changes') {
-            flow.rounds.lead += 1;
+            flow.rounds[step] = (flow.rounds[step] ?? 0) + 1;
             sentBackAt = when;
           }
 
           break;
+        }
+
         default:
           break;
       }
@@ -355,16 +358,15 @@ export const runMetrics = (input: {
       waited += minutes(at(entry), end);
     });
     const reviewTimes: number[] = [];
-    own
-      .filter(entry => entry.action === 'design-review' || entry.action === 'review')
-      .forEach(entry => {
-        const taken = own.findLast(
-          each => each.action === 'review-taken' && each.task === entry.task && at(each) <= at(entry)
-        );
-        if (taken) {
-          reviewTimes.push(minutes(at(taken), at(entry)));
-        }
-      });
+    const said = own.filter(entry => entry.action === 'review');
+    said.forEach(entry => {
+      const taken = own.findLast(
+        each => each.action === 'review-taken' && each.task === entry.task && at(each) <= at(entry)
+      );
+      if (taken) {
+        reviewTimes.push(minutes(at(taken), at(entry)));
+      }
+    });
     const calls = usage.filter(line => line.by === agent);
     const middle = median(reviewTimes);
 
@@ -385,10 +387,15 @@ export const runMetrics = (input: {
       refused: own.filter(entry => entry.action === 'refused').length,
       waited: Math.round(waited * 10) / 10,
       reviews: {
-        ui: own.filter(entry => entry.action === 'design-review').length,
-        uiChanges: own.filter(entry => entry.action === 'design-review' && entry.verdict === 'changes').length,
-        lead: own.filter(entry => entry.action === 'review').length,
-        leadChanges: own.filter(entry => entry.action === 'review' && entry.verdict === 'changes').length,
+        byStep: said.reduce<Record<string, { said: number; changes: number }>>((byStep, entry) => {
+          const step = text(entry.step) || 'lead';
+          const was = byStep[step] ?? { said: 0, changes: 0 };
+
+          return {
+            ...byStep,
+            [step]: { said: was.said + 1, changes: was.changes + (entry.verdict === 'changes' ? 1 : 0) }
+          };
+        }, {}),
         ...(middle === undefined ? {} : { medianMinutes: middle })
       },
       calls: calls.length,

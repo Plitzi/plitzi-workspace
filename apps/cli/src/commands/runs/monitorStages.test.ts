@@ -46,19 +46,19 @@ describe('the monitor, as encore-10 read it', () => {
   });
 
   // Its scope sat in a column of its own while its scout worked it, "At work" empty; then read "spike" while it waited.
-  it('puts a spike someone finds out at work, one nobody took in the spike column, and a proposal in review', async () => {
+  it('puts research where any card is: at work with its scout, or the lead with no scout; its result in review', async () => {
     const runId = await open();
     const base = (await monitorRun(lead(), runId)).view.tasks[0];
-    const spike = { ...base, status: 'spike' as const, agent: undefined };
-    const spikes: TaskLine[] = [
-      { ...spike, id: 's-taken', spikedBy: 'scout-1' },
-      { ...spike, id: 's-free' },
-      { ...spike, id: 's-proposed', status: 'in-review', proposed: { by: 'scout-1', tasks: ['t-x'] } }
+    const research = { ...base, spike: 'what the ask takes', agent: undefined };
+    const cardsOf: TaskLine[] = [
+      { ...research, id: 's-taken', status: 'in-progress', agent: 'scout-1' },
+      { ...research, id: 's-lead', status: 'ready', leadFindsOut: true },
+      { ...research, id: 's-proposed', status: 'in-review', proposed: { by: 'scout-1', tasks: ['t-x'] } }
     ];
 
-    expect(cards(spikes, 'work')).toEqual(['s-taken scout-1']);
-    expect(cards(spikes, 'spike')).toEqual(['s-free not taken yet']);
-    expect(cards(spikes, 'lead-review')).toEqual(["s-proposed lead decides scout-1's"]);
+    expect(cards(cardsOf, 'work')).toEqual(['s-lead lead', 's-taken scout-1']);
+    expect(cards(cardsOf, 'ready')).toEqual([]);
+    expect(cards(cardsOf, 'review')).toEqual(["s-proposed lead decides scout-1's"]);
   });
 
   // A task sent back read yellow in the strip and blue in its "At work" card: one task, two colours.
@@ -84,7 +84,7 @@ describe('the monitor, as encore-10 read it', () => {
   // dev-2, on demand, stopped for a fresh context after its card and read "restarting" two hours: nothing was left for it.
   it('says one on demand with nothing waiting at rest — one of the base restarting', async () => {
     await bench.writeTeam({ version: 1, agents: [{ name: 'dev', roles: ['developer'], count: 2, min: 1 }] });
-    const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
+    const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
     const paths = runPaths(bench.root, runId);
     const why = 'a piece ended: you are started again with a fresh context after each task or review — You can stop';
     await logRun(bench.agent('dev-1'), paths, { action: 'stops', why });

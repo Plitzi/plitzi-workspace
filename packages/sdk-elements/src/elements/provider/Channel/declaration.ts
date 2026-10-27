@@ -76,6 +76,8 @@ const declaration = elementDeclaration<ChannelAttributes>()({
       description:
         'A realtime channel: every OTHER page on the same `topic` hears what one publishes, within milliseconds — the ' +
         'page that sent it too with `echo` (its `from` is then the `me` of the channel). ' +
+        'Hidden, it stays joined and runs its flows — its `loadStrategy` defers only its children: to leave the topic ' +
+        "while hidden, put it inside a container that carries the condition and `loadStrategy: 'visible'`. " +
         'The topic must match a channel the space declares in its settings (`channels`), e.g. `board:{{ id }}` ' +
         'under `board:{id}`. A topic of a private channel (`grant: true`) opens only with `grant`, bound to the grant ' +
         'the action that let this visitor in returned (its `realtime.grant` step). ITS DESCENDANTS bind to its source `channel_<id>`: `connected`, `members` (with the ' +

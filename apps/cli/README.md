@@ -619,7 +619,7 @@ It is the platform's `GET /spaces/:spaceId/activity?after=&wait=&limit=&mine=`, 
 
 A team of agents on one project, only when one is asked for. `plitzi run start "<the ask>"` is how one starts: it checks
 what a run needs — a space in the project's code, the project's Chromium, the harness asked for — opens the run on its
-scope (the lead's spike) and says each step after it. `plitzi run agent <name>` writes an agent's prompt in the run's
+scope (a research card) and says each step after it. `plitzi run agent <name>` writes an agent's prompt in the run's
 scratch and prints the command that starts it headless in Claude Code, Codex or opencode; `--launch --harness <it>`
 starts it now, its output beside its prompt. `plitzi run --help` and `plitzi task --help` group their commands by who
 runs them — you, the lead, every agent.
@@ -636,14 +636,13 @@ plitzi task next t-home --token <yours> --json      # its files locked, its copy
 plitzi task propose t-menu --change "…"    # ask another task to agree to a change; task answer accepts or counters
 plitzi task check --token …                # what complete holds the copy to, run now: nothing changes (--fix: lint and format your files first)
 plitzi task complete --token …             # its copy compared by fingerprint, the project's checks run in it
-plitzi task review t-home --approve --token <lead's>   # the lead's: into the run's work, never into the project
-plitzi task review t-home --approve --skip-design lead --token <lead's>   # before its UI review, saying why: lead or no-ui
+plitzi task review t-home --approve --token <yours>    # your step of its review; its last step's approval puts it into the run's work
 plitzi run notice "…" --on /pets            # something wrong no task owns: kept, said by the finish — the next stage's
 plitzi run reference                       # the plan's reference site kept as it is now: page shot --compare measures against it
 plitzi run watch --json                    # how the run goes: a line per task, what needs attention
 plitzi run watch              # ends the moment something needs the lead: run it in the background
 plitzi run preview                         # the run's work as it goes, served: each approval shows; its dev tools' Run tab
-plitzi run preview --copy                  # the approved work as a folder of your scratch instead: a spike measures on it, apart
+plitzi run preview --copy                  # the approved work as a folder of your scratch instead: research measures on it, apart
 plitzi run status --all                    # every run not yet written into the project, ready ones first
 plitzi run monitor                         # the run, live, in a terminal of your own beside the harness: simple (who is at what, what needs you) or advanced with m (its activity, flow, tasks, agents and spend) — it only reads; p starts the preview, x stops it
 plitzi task show t-home                    # a task as its lead reviews it: checks, agreements, each file's diff
@@ -675,10 +674,13 @@ lead`) and do nothing else; tasks name the role that
   agents talk while they work: `task ask` (an agent's question, on top of `run status`), `task message
 <task|all|@agent>` (the lead's word, handed to the agent with its next heartbeat, progress or completion), `task
 inbox`. A block lifted carries its answer (`task unblock --answer`), and `task next` hands an agent back the task it
-  holds first — a task sent back while its agent is at another waits for that agent, never handed to a free one. A
-  round of UI sent back goes to the designer who said the one before, another only after a wait. A UI review taken is
-  its designer's for 8 minutes (15, its first, which holds its reading); in that time the lead's `--skip-design` is
-  refused, past it the lead decides.
+  holds first — a task sent back while its agent is at another waits for that agent, never handed to a free one.
+- **Every card on one board, reviewed alike:** a card's `review` names the roles that review it, in order (`["designer",
+  "tester"]`; none: the tester, the lead with no tester). Each step is taken by one agent of its role that worked neither
+  the card nor what it tests — 8 minutes its (15, its first review, which holds its reading), then another's — and its
+  approval hands the card, with its notes, to the next step; the last approves it. Changes start the round again from the
+  first step, offered first to who said each step before. A step nobody took in 5 minutes is the next step's reviewer's
+  too, and the lead says any step.
 - **Connected as it goes:** a shared file a task changed is its by turns at `complete` when nobody holds it, and merged
   line by line when the run moved meanwhile; `run preview` — the project's `npm run start:preview`, or `p` in
   `run monitor` — serves the run's work as each task is approved, and `run preview --task` a task in review, before it is. Your own `start:dev` serves

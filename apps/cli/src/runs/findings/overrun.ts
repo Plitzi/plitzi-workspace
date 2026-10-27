@@ -1,4 +1,5 @@
 import { WORK_LIMIT_MINUTES } from '../limits';
+import { isApproval } from '../run';
 
 import type { Finding, LogEntry } from './types';
 import type { TaskReport } from '../report';
@@ -21,9 +22,7 @@ const clip = (value: string, most = 140): string => (value.length > most ? `${va
 /** The log's entries of the task's own life, from its first take to its approval. */
 const lifeOf = (log: readonly LogEntry[], task: string): LogEntry[] => {
   const taken = log.findIndex(entry => entry.action === 'take' && entry.task === task);
-  const approved = log.findIndex(
-    (entry, index) => index > taken && entry.action === 'review' && entry.task === task && entry.verdict === 'approve'
-  );
+  const approved = log.findIndex((entry, index) => index > taken && entry.task === task && isApproval(entry));
 
   return taken === -1 ? [] : log.slice(taken, approved === -1 ? undefined : approved + 1);
 };

@@ -35,7 +35,6 @@ const { lead, take } = runSteps(() => bench);
 describe('task check --fix', () => {
   it('fixes the task’s own files, never one another task holds', async () => {
     const plan = benchPlan();
-    plan.designReview = false;
     const file = await bench.writePlan(plan);
     await bench.writeTeam(teamFor(plan, 2));
     const { runId } = (await openRun(lead(), file)).checked;
@@ -52,7 +51,6 @@ describe('task check --fix', () => {
   // Dev-1 checked twelve times in nine minutes — a check run again with nothing changed answers the same.
   it('says a failure is the same as the last one, on the same files', async () => {
     const plan = benchPlan();
-    plan.designReview = false;
     const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
     const home = await take('agent-1', 't-home');
     await writeInCopy(home.work, 'src/space/pages/home/index.ts', 'export const home = BROKEN;\n');
@@ -71,7 +69,6 @@ describe('task check --fix', () => {
   // `sed -i -E` on macOS left roomBrowse.test.ts-E, which went to review as a file of the task's.
   it('fails on a backup an editor left among its files, saying how to put it back', async () => {
     const plan = benchPlan();
-    plan.designReview = false;
     const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
     const home = await take('agent-1', 't-home');
     await writeInCopy(home.work, 'src/space/pages/home/index.ts', 'export const home = {};\n');

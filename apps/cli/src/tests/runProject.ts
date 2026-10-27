@@ -207,6 +207,17 @@ export const benchPlan = (runId = 'es-launch'): RunPlan => ({
 });
 
 /** Writes into a task's copy, as its agent's harness would with its own tools. */
+/**
+ * A plan whose cards — `ids`, or every one — are reviewed by a designer's look, then the tester's QA (the lead's in a
+ * team with no tester): what a run with a designer reviewing its UI writes on its cards.
+ */
+export const designed = (plan: RunPlan, ids?: readonly string[]): RunPlan => ({
+  ...plan,
+  tasks: plan.tasks.map(task =>
+    ids === undefined || ids.includes(task.id) ? { ...task, review: ['designer', 'tester'] } : task
+  )
+});
+
 export const writeInCopy = async (work: string, file: string, text: string): Promise<void> => {
   await fs.mkdir(path.dirname(path.join(work, file)), { recursive: true });
   await fs.writeFile(path.join(work, file), text);

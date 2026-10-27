@@ -94,12 +94,6 @@ export const extendRun = async (
     problems.push(`${repeated.map(id => `"${id}"`).join(', ')} the run has already: a stage's tasks are new ones`);
   }
 
-  if (next.designReview === false && loaded.record.designReview === true) {
-    problems.push(
-      'designReview: false — the run has a designer review its UI since it opened, and a stage keeps that (its tasks in review wait for theirs): leave designReview out'
-    );
-  }
-
   // Checked as a plan of its own, a dependency on the run's tasks set aside — the run has them — and put back after.
   const outside = (task: RunPlan['tasks'][number]): string[] =>
     task.dependsOn.filter(dependency => known.has(dependency));
@@ -292,8 +286,6 @@ export const extendRun = async (
       record.inputs,
       handed.filter(input => !inputs.some(moved => moved.endsWith(path.basename(input.file))))
     ),
-    // The run's choice, made when it opened: a stage turns it on when it says so, never because of who is in the team.
-    ...(record.designReview === true || next.designReview === true ? { designReview: true as const } : {}),
     estimate: {
       ...record.estimate,
       // Worked by as many as it may be now: a run opened on its scope alone was estimated for one.

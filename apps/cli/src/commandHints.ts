@@ -11,6 +11,9 @@ const ELSEWHERE: Readonly<Partial<Record<string, string>>> = {
   'task list': 'plitzi run status lists the tasks and where each stands',
   // Folded into another, the surface cut down after encore-10: what each was is said where it went.
   'task take': 'plitzi task next <task> takes that task by name, now',
+  // A research card is a card: taken with task next, said with task complete, decided with task review.
+  'task spike':
+    'plitzi task complete --found "…" [--tasks <stage.json>] says what a research card found; the lead decides it with plitzi task review <card> --approve [--leave <tasks>] | --changes "…"; a question your task needs answered is plitzi task block',
   'run rehearse': 'plitzi run open <plan> --dry-run --rehearse plays the plan out',
   'run plan': 'plitzi run open <plan> --dry-run holds a plan to the rules and opens nothing',
   'run state': 'plitzi run status --all lists every run not yet written into the project',
@@ -50,7 +53,11 @@ const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<stri
     '--full': 'a page shot is the whole page already — --viewport pictures the first screen alone'
   },
   'page measure': { '--element': 'the elements are its arguments: plitzi page measure <path> <element…>' },
-  'page play': { '--element': '--read <element…> says what elements show after the steps' },
+  'page play': {
+    '--element': '--read <element…> says what elements show after the steps',
+    // Asked five runs running: a picture is a step of its own.
+    '--shot': 'a shot step pictures the page where it stands: --steps "click open; shot opened" — in tmp/shots'
+  },
   // A run's designer, after an edit, could not tell whether an outline was read anew: it always is.
   'page outline': { '--fresh': 'page outline reads the page anew on every call — nothing of it is kept to read again' },
   'task look': {

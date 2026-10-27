@@ -34,8 +34,9 @@ export interface BenchLine {
   checksNotOwn?: number;
   refusals: number;
   identityRefusals: number;
-  uiWaitMedian?: number;
-  leadWaitMedian?: number;
+  /** A review step's wait for its reviewer, and its reviewer's time at it: the medians over every step said. */
+  reviewWaitMedian?: number;
+  reviewMedian?: number;
   reworkWaitMedian?: number;
   /** Minutes the agents waited for work, together. */
   agentsWaited: number;
@@ -72,9 +73,13 @@ export const benchOf = (report: RunReport, cli: string): BenchLine => {
   const worked = teamTasks(report.tasks);
   const done = worked.filter(task => task.status === 'done').length;
   const flows = metrics.tasks.filter(flow => worked.some(task => task.id === flow.task));
-  const rounds = flows.reduce((sum, flow) => sum + flow.rounds.ui + flow.rounds.lead + 1, 0);
-  const uiWait = median(flows.flatMap(flow => flow.uiWaits));
-  const leadWait = median(flows.flatMap(flow => flow.leadWaits));
+  const rounds = flows.reduce(
+    (sum, flow) => sum + Object.values(flow.rounds).reduce((each, times) => each + times, 0) + 1,
+    0
+  );
+  const steps = flows.flatMap(flow => flow.steps);
+  const reviewWait = median(steps.flatMap(step => (step.waited === undefined ? [] : [step.waited])));
+  const reviewSaid = median(steps.flatMap(step => (step.said === undefined ? [] : [step.said])));
   const reworkWait = median(flows.flatMap(flow => flow.reworkWaits));
 
   return {
@@ -94,8 +99,8 @@ export const benchOf = (report: RunReport, cli: string): BenchLine => {
     checksNotOwn: metrics.checks.notOwn,
     refusals: metrics.refusals.total,
     identityRefusals: Object.hasOwn(metrics.refusals.byCode, 'identity') ? metrics.refusals.byCode.identity.times : 0,
-    ...(uiWait === undefined ? {} : { uiWaitMedian: uiWait }),
-    ...(leadWait === undefined ? {} : { leadWaitMedian: leadWait }),
+    ...(reviewWait === undefined ? {} : { reviewWaitMedian: reviewWait }),
+    ...(reviewSaid === undefined ? {} : { reviewMedian: reviewSaid }),
     ...(reworkWait === undefined ? {} : { reworkWaitMedian: reworkWait }),
     agentsWaited: tenths(metrics.agents.reduce((sum, agent) => sum + agent.waited, 0)),
     readTokens: metrics.cost.readTokens,
@@ -140,11 +145,11 @@ export const benchText = (lines: readonly BenchLine[]): string[] =>
   lines.length === 0
     ? ['No run of this project was measured yet: each report keeps its run’s measures beside it.']
     : [
-        '| Run | Done | Worked (min) | Min / task | Rounds / task | Checks failed | Not theirs | Refused (identity) | UI wait | Lead wait | Rework wait | Agents waited | Read | Read again / task (≥) | Repeated | In the CLI (min) | Over budget |',
+        '| Run | Done | Worked (min) | Min / task | Rounds / task | Checks failed | Not theirs | Refused (identity) | Review wait | Review | Rework wait | Agents waited | Read | Read again / task (≥) | Repeated | In the CLI (min) | Over budget |',
         '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
         ...lines.map(
           line =>
-            `| ${line.runId} | ${String(line.done)}/${String(line.tasks)} | ${cell(line.workMinutes)} | ${cell(line.minutesPerTask)} | ${String(line.roundsPerTask)} | ${String(line.checksFailedPct)}% | ${cell(line.checksNotOwn)} | ${String(line.refusals)} (${String(line.identityRefusals)}) | ${cell(line.uiWaitMedian)} | ${cell(line.leadWaitMedian)} | ${cell(line.reworkWaitMedian)} | ${cell(line.agentsWaited)} | ${tokens(line.readTokens)} | ${tokens(line.rereadPerTask)} | ${String(line.repeated)} | ${cell(line.cliMinutes)} | ${cell(line.overBudget)} |`
+            `| ${line.runId} | ${String(line.done)}/${String(line.tasks)} | ${cell(line.workMinutes)} | ${cell(line.minutesPerTask)} | ${String(line.roundsPerTask)} | ${String(line.checksFailedPct)}% | ${cell(line.checksNotOwn)} | ${String(line.refusals)} (${String(line.identityRefusals)}) | ${cell(line.reviewWaitMedian)} | ${cell(line.reviewMedian)} | ${cell(line.reworkWaitMedian)} | ${cell(line.agentsWaited)} | ${tokens(line.readTokens)} | ${tokens(line.rereadPerTask)} | ${String(line.repeated)} | ${cell(line.cliMinutes)} | ${cell(line.overBudget)} |`
         ),
         '',
         // The patterns the findings count, a run a row: a fix holds when its column falls (runs before them say —).

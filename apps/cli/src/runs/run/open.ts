@@ -13,9 +13,9 @@ import { checkPlan, PlanRefusal } from '../plan';
 import { runPlanProblems } from '../planProblems';
 import { RunRefusal } from '../refusal';
 import { runReportDir } from '../reports';
-import { SCOPE_SPIKE, startingState } from '../spike';
+import { startingState } from '../spike';
 import { keepFiles } from '../store';
-import { ensureTeam, reviewsDesign, SCOUT, teamSize, teamTakes } from '../team';
+import { ensureTeam, teamSize } from '../team';
 import { assertNoOtherRun, claimProject, handedInputs, releaseProject, takeInputs } from './claim';
 import { requireNoTask, requirePerson } from './context';
 import { assertStatus, loadRun, logRun, pinnedNow, readRecord, updateRecord } from './record';
@@ -286,13 +286,7 @@ export const openRun = async (
   for (const task of checked.tasks) {
     const taskFiles = taskPaths(paths, task.id);
     await writeJson(taskFiles.definition, task);
-    // The scope is a scout's, taken from its queue — or, with none in the team, the lead's from the open: unowned, the
-    // monitor showed the lead idle while it scoped the run.
-    const state = startingState(task, task.dependsOn.length === 0, at);
-    await writeJson(
-      taskFiles.state,
-      task.id === SCOPE_SPIKE && !teamTakes(team, SCOUT) ? { ...state, spikedBy: { by: LEAD, at } } : state
-    );
+    await writeJson(taskFiles.state, startingState(task, task.dependsOn.length === 0, at));
   }
 
   const record: RunRecord = {
@@ -311,7 +305,6 @@ export const openRun = async (
     },
     ...(confirmed ? { confirmed } : {}),
     ...(leadFinishes ? { leadFinishes: ctx.now().toISOString() } : {}),
-    ...(reviewsDesign(team, plan) ? { designReview: true as const } : {}),
     brake: [],
     completions: { completed: 0, refused: 0, 'checks-failed': 0, conflict: 0 },
     merges: [],

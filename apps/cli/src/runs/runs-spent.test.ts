@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { openRun, readRunLog, loadRun } from './run';
 import { spentOf, spentPerMinute } from './spent';
 import { scopePlan, SCOPE_SPIKE } from './spike';
-import { answerSpike, completeTask, reviewTask, takeTask } from './tasks';
+import { completeResearch, completeTask, reviewTask, takeTask } from './tasks';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 
 import type { HarnessUsage } from './harness';
@@ -55,7 +55,6 @@ const harness =
 describe('what each agent spent', () => {
   it('is kept as a task completes and as a review is decided, each from the last it kept', async () => {
     const plan = benchPlan();
-    plan.designReview = false;
     await openRun(bench.agent('lead'), await bench.writePlan(plan));
     const devWindows: { from: string; to: string }[] = [];
     const dev = (token?: string): RunContext =>
@@ -114,10 +113,10 @@ describe('what each agent spent', () => {
   });
 
   // A run's scope — every page swept — was counted in its lead's first review after it: $3.77 of a five-minute review.
-  it('is kept as a spike ends: what finding it out cost, apart from the reviews after it', async () => {
+  it('is kept as research ends: what finding it out cost, apart from the reviews after it', async () => {
     const lead = bench.agent('lead', { spent: harness(2_000_000, 40, 120_000, []) });
     await openRun(lead, await bench.writePlan(scopePlan('es-launch', 'Translate the site into Spanish')));
-    await answerSpike(lead, 'es-launch', SCOPE_SPIKE, 'Four pages, nothing else');
+    await completeResearch(lead, 'es-launch', SCOPE_SPIKE, 'Four pages, nothing else');
 
     const log = await readRunLog((await loadRun(lead, 'es-launch')).paths);
     expect(log.filter(entry => entry.action === 'spent').map(entry => [entry.by, entry.task, entry.piece])).toEqual([

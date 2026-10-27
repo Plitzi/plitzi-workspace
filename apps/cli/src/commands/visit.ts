@@ -208,6 +208,11 @@ export const openVisit = async (
   // sends a signed-in visitor on, and its start was read on where it landed, the flash of its own form unseen.
   const openedAt = Date.now();
   await page.addInitScript(key => {
+    // The browser's own first document (about:blank) is no address the page showed: encore-11's play said "→ blank".
+    if (!location.protocol.startsWith('http')) {
+      return;
+    }
+
     const log = (): void => {
       const list = JSON.parse(sessionStorage.getItem(key) ?? '[]') as unknown[];
       list.push({ path: `${location.pathname}${location.search}`, at: Date.now() });

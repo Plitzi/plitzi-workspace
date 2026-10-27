@@ -27,7 +27,6 @@ const { lead } = runSteps(() => bench);
 describe('an amended plan and the tasks the run made from it', () => {
   it('keeps the task of tests of a developer task the plan keeps — and drops it with its task', async () => {
     const plan = benchPlan();
-    plan.designReview = false;
     plan.tasks = [{ ...plan.tasks[0], id: 't-price', files: ['src/lib/price.ts'], acceptance: ['Prices in euros'] }];
     await bench.write('src/lib/price.ts', 'export const price = (cents: number) => cents / 100;\n');
     await bench.writeTeam({

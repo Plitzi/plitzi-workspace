@@ -1,14 +1,12 @@
-import { designSkipText } from './designSkip';
 import { waitingText } from './view';
 
-import type { DesignReview, TaskStatus } from './model';
-import type { RunView } from './view';
+import type { TaskStatus } from './model';
+import type { RunView, TaskLine } from './view';
 
 /** A run in words: the board of its tasks, and the run as `plitzi run watch` and `run status` print it. */
 
 const ICON: Record<TaskStatus, string> = {
   pending: '·',
-  spike: '◇',
   ready: '○',
   'in-progress': '▶',
   waiting: '…',
@@ -21,13 +19,15 @@ const ICON: Record<TaskStatus, string> = {
 
 const hhmm = (iso: string): string => `${iso.slice(11, 16)} UTC`;
 
-/** Where a task's UI review is, in a line. */
-const designText = (design: DesignReview): string =>
-  design.status === 'due'
-    ? `its UI with ${design.by ?? 'a designer, not taken yet'}`
-    : design.status === 'approved'
-      ? `UI approved by ${design.by ?? 'a designer'}`
-      : designSkipText(design.why);
+/** Where a card's review stands, in a line: the step it is at, and who has it — or who may take it. */
+const reviewText = (review: NonNullable<TaskLine['review']>): string =>
+  `${review.steps.length > 1 ? `${review.role}'s review (${String(review.step + 1)}/${String(review.steps.length)})` : `${review.role}'s review`} · ${
+    review.by !== undefined
+      ? `${review.by} reviews it`
+      : review.lead
+        ? 'the lead’s (nobody else may)'
+        : `not taken yet — ${review.reviewers.join(' or ')}`
+  }`;
 
 /**
  * The board, a line per task: where each stands and who has it — what a run's status says of its tasks, and what a
@@ -44,21 +44,17 @@ export const boardLines = (view: Pick<RunView, 'tasks' | 'reviewers'>): string[]
         ? ` · waits for ${task.waitingFor.task} ${waitingText(task.waitingFor)}`
         : task.waitsOn
           ? ` · after ${task.waitsOn.join(', ')}`
-          : task.status === 'spike'
-            ? task.spikedBy
-              ? ` · ${task.spikedBy} finds it out`
-              : ' · not taken yet'
+          : task.leadFindsOut
+            ? ' · yours to find out (no scout in the team)'
             : task.status === 'blocked' && task.blockedBy
               ? ` · ${task.blockedBy.reason}`
               : task.status === 'changes-requested'
                 ? ` · changes requested (round ${String(task.round)})`
-                : task.status === 'in-review' && task.design?.status === 'due'
-                  ? ` · ${designText(task.design)}`
-                  : task.status === 'in-review' && task.proposed
-                    ? ` · ${task.proposed.by} found it out: the lead decides`
-                    : task.status === 'in-review'
-                      ? `${task.design ? ` · ${designText(task.design)}` : ''}${task.reviewer ? ` · ${task.reviewer} reviews it` : task.spareReviewers ? ` · ${task.spareReviewers.join(' or ')} reviews it (each tester worked it)` : task.leadReviews ? ' · the lead’s to review (nobody else may: each worked it, or what it tests)' : view.reviewers.length > 0 ? ' · no tester took it yet' : ''}`
-                      : '';
+                : task.status === 'in-review' && task.proposed
+                  ? ` · ${task.proposed.by} found it out: the lead decides`
+                  : task.status === 'in-review' && task.review
+                    ? ` · ${reviewText(task.review)}`
+                    : '';
     lines.push(
       `  ${ICON[task.status]} ${task.id.padEnd(18)} ${task.role === 'developer' ? '' : `[${task.role}] `}${agent}${task.title}${step}${progress}${extra}${task.noSignal ? ' · no signal' : ''}`
     );

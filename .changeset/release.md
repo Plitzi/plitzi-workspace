@@ -59,19 +59,42 @@ authoring and the elements learnt from the runs.
   `run open --spike` is gone (a run opens on its scope by itself). `run state` → `run status --all`; `run bench` →
   `run report --bench`; `run note` → `task message all "…"` (every task, the ones taken later too); `run team check`
   → `plitzi doctor`; the `skills` group → `plitzi upgrade skills --write`. `task take <task>` → `task next <task>`.
-  `task spike` is the run's research alone: a question a task needs answered is a block (`task block`), which the lead
-  lifts with its answer (`task unblock <task> --answer "…"`, kept in the report). A file's turn is one command:
+  A question a task needs answered is a block (`task block`), which the lead lifts with its answer (`task unblock
+  <task> --answer "…"`, kept in the report). A file's turn is one command:
   `task wait <file>` → `task claim <file> --wait` (`--follow`, `--timeout` as before), `task release <file>` →
   `task claim <file> --release`. `page same --than <origin>` → `--compare <origin>`, as every page command names the
   other side. The run's work outside the run is one command: `run copy [dir]` → `run preview --copy [dir]`; a file's
   versions one: `run restore <run> <file> --from <backup>` → `run show <run> <file> --restore [backup]` (still a
   person's, confirmed by the run's name); a run's machine one: `run release <run>` → `run attach <run> --release`.
-  `run can-write`, a hook's question, is left out of the help. What moves between a project and its space is
+  `run can-write`, a hook's question, is left out of the help. What an agent has in hand — its work, a step of a
+  review, a spike — is read one way by every command: a scout at its spike gives `task progress` (refused before), and a
+  writer's command names what is held and what ends it. What moves between a project and its space is
   `space pull` and `space push`, a part named: `functions pull` → `space pull functions` (into any project connected to
   the space, as before), `functions push` → `space push functions`, `runtime push` → `space push runtime` (its module is
   `src/runtime/index.ts`: `--entry` is gone). `space push --dry-run` lists the functions' and the runtime's files, and a
   part asked that the project lacks says where it is looked for. `plugin upload` stays: a plugin package's way to a
   space, which `space push` is not. Each old name is refused naming the new one.
+- **Research is a card: a kanban.** A research card (a spike) is taken with `task next` as any card — a scout's, with
+  its copy and token; the lead finds it out itself with no scout in the team — completed with what it found (`task
+  complete --found "…" [--tasks <stage.json>]`) and reviewed by the lead (`task review <card> --approve [--leave
+  <tasks>] | --changes "…"`): a left `<id>-tests` is its card with no tests. `task spike`, the `spike` status, its
+  own column and `--findings-only` are gone; `task spike` is refused naming the new commands. A run opened before keeps
+  working: a card in its old status reads as ready, or in review with what it found.
+- **Every card is reviewed one way: a kanban.** A card's `review` names the roles that review it, in order (`"review":
+  ["designer", "tester"]`); one that names none is the tester's, the lead's with no tester, and a role nobody in the
+  team takes stands as that default, said. Each step is taken by an agent of its role that worked neither the card nor
+  what it tests (else a developer that did not, else the lead), is its for 8 minutes (15 on its first review), and its
+  approval hands the card with its notes to the next step — the last approves it; changes start the next round from
+  the first step, offered first to who said each step before. A step nobody takes in 5 minutes is the next step's
+  reviewer's too; the lead says any step. The UI review apart from the rest is gone with what it needed:
+  `task complete --review code|ui`, `task review --skip-design`, the plan's `designReview`, the lead's reserved round
+  and the wait for the same designer. `run open --dry-run` names the cards that change what a visitor sees with no
+  designer in their review, and the monitor shows one Review column, each card at its step and who says it. A run
+  opened before keeps working: a card in review without its step starts at its first.
+  The report and the bench measure every review the same way, by step: each task's rounds by the step that sent it back,
+  each step's wait for a reviewer and its reviewer's time at it, each agent's steps said; the bench's "UI wait" and
+  "Lead wait" are "Review wait" and "Review". A card's time in the report ends at its last step's approval — it ended at
+  its first step's, a two-step card read approved before its lead said it.
 - **Every page command reads a page as one visitor, from the same flags.** `page check`, `measure`, `play`,
   `outline`, `same`, `shot` and `task look` take `--as`, `--guest`, `--timezone`, `--presence`, `--clock`, `--block`,
   `--autoplay` and `--storage` alike — `page check` took no `--clock`, `page outline` no `--timezone`, `page same` no
@@ -99,21 +122,21 @@ authoring and the elements learnt from the runs.
 - **One lead, the manager; a tester reviews every task; a scout finds out the spikes.** The lead is the person's harness
   and never starts again, so whatever it reads it reads again every turn: a run's lead, scoping and reviewing, spent 68%
   of the run. Now:
-  - **Scout** (new role, Opus): `task next` hands it the run's spikes — its scope, a research spike of a stage. An
-    agent's question (`task spike "…"`) is the lead's to answer (`task unblock --answer`), never the scout's, and a
-    scout with no spike left is told it can stop. Its `task spike <spike> --done "…" [--tasks <stage.json>]` is a proposal — the stage checked as
-    `run extend --dry-run`, its primer kept beside it — that the lead decides, the tasks with the person: `task spike
-    <spike> --approve | --changes "…"`. **Every spike is the lead's to approve**, and adding or taking out tasks the lead's
-    alone.
-  - **The keeper** starts a scout for a spike nobody took and the scout a spike was sent back to, and a
-    tester for a UI no designer is free for; a scout whose result waits for the lead counts as free. A scout starts
+  - **Scout** (new role, Opus): `task next` takes it the run's research cards — its scope, research of a stage — as
+    any card. An agent's question is a block, the lead's to answer (`task unblock --answer`), never the scout's, and a
+    scout with none left is told it can stop. Its `task complete --found "…" [--tasks <stage.json>]` sends what it found
+    to the lead's review — the stage checked as `run extend --dry-run`, its primer kept beside it — decided with the
+    person: `task review <card> --approve [--leave <tasks>] | --changes "…"`. **Every research card is the lead's
+    to approve**, and adding or taking out tasks the lead's alone.
+  - **The keeper** starts a scout for research nobody took and the scout a card was sent back to, and an
+    agent for a step of a review nobody of its role is free for; a scout whose result waits for the lead counts as free. A scout starts
     fresh once what it found is with the lead, a tester once its review is escalated.
   - **The lead is told only what is its:** a scout's proposal (`proposal` in `run watch`), an escalation (its block) —
-    never a spike or a queued UI review the scouts and testers take, or a message beside them to answer — and an
+    never a spike or a review's step the scouts and testers take, or a message beside them to answer — and an
     agent's question, its block. `run open --dry-run` names a scout's and a tester's work; `run open --dry-run --rehearse` plays the team's testers as
     its reviewers.
-  - **Tester** (QA, Opus): reviews every task in review, a designer's included — what it was asked, its checks, how it
-    behaves, its code — and its approval is the task's; the UI too when no designer is free (`--skip-design reviewer`).
+  - **Tester** (QA, Opus): its step of every card's review, a designer's card included — what it was asked, its
+    checks, how it behaves, its code — and its approval, the last step, is the card's.
     What it cannot decide: `task review <task> --escalate "…"`, blocked on the lead.
   - **The lead** reviews nothing by default: what is escalated or past its review rounds, and a review nobody else may
     take — every task when the team has no tester — and `run watch` wakes it for nothing else. A review no tester may take
@@ -139,15 +162,13 @@ authoring and the elements learnt from the runs.
     one). The tester's Opus goes to its QA; the tests are developer work on Sonnet.
     A tester never approves past a question the task asked the lead: it escalates it. Every task approved, the lead's
     `task next` says its close in order (look, report, finish) and the lead never "stops".
-    Whoever reviews a task is handed what the team told the lead of it (`task tell`, `✉`). A UI review taken is let go
-    when its task leaves review — sent back, escalated, taken back — its designer told, never left busy. A round whose
-    UI its reviewer kept is approved only after a `task look`. A review escalated and answered (`task unblock
+    Whoever reviews a task is handed what the team told the lead of it (`task tell`, `✉`). A step taken is let go
+    when its card leaves review — sent back, escalated, taken back — its reviewer told, never left busy. A review escalated and answered (`task unblock
     --answer`) asks for its stopped agent again; a task taken back drops its block and what was asked. Before finishing it looks once at the whole result: **`plitzi run look`**
     checks and pictures every page the run changed (1440 and 390, light and dark); `run finish` asks for it after the
     last approval.
   - **Co-leads are gone:** `lead-2`…, `"lead": { "count" }` (refused, saying to add testers), `task next --role lead`
     for anyone but the lead, the questions a co-lead took (`answering.json`).
-  - **`--skip-design lead` is `--skip-design reviewer`**: the one who approves — a tester or the lead — looked at the UI.
   - **The starter team** is one to two developers and none to one designer, tester and scout (`"min": 0`, every one on
     demand), the keeper starting each when work of its role waits — a review for a tester, a spike for a scout.
   - **A role of your own says what it does:** an agent's `"skill"` in `team.json` — a markdown file of the project,
@@ -164,7 +185,7 @@ start one. How it works: `docs/en/agent-runs.md`.
 ### The run
 
 - `plitzi run start "<the ask>"` checks what a run needs (a space in code, Chromium, the harness) and opens it on its
-  scope: a **spike** the lead ends with the tasks it found (`task spike s-scope --done "…" --tasks <stage.json>`). A plan
+  scope: a **research card** ended with the tasks it found (`task complete s-scope --found "…" --tasks <stage.json>`). A plan
   also opens directly (`run open --dry-run`, then `run open`). Either way every file a task touches is backed up first.
 - **A plan is held to rules:** no file in two tasks, no cycle, ownership read off the imports, and a module only a page
   imports belongs to the task that names it. Its `inventory` lists the job piece by piece. Each piece is covered by an
@@ -207,7 +228,7 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   the removal is retried, and the project is let go whatever happens — a finish failed with `ENOTEMPTY` after writing
   the work, leaving the project claimed by a run that was gone.
 - **A run that stands still is said to the lead:** nothing worked or in review for 5 minutes while tasks are left wakes
-  `run watch --until lead` with what holds each one — a ready task offered to nobody and the lock that keeps it, a
+  `run watch` with what holds each one — a ready task offered to nobody and the lock that keeps it, a
   blocked task's reason, the way out. A run once stood still past ten minutes with its watch saying "nothing new".
 - **Agents run the project's `typecheck` and `lint` before `task check`:** their prompt and `runs.md` say it — of
   a run's 34 checks, 17 failed on what those scripts say in seconds.
@@ -254,7 +275,7 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   is now told to the lead, as one of the task's own, and not held against the task.
 - **A lead's `task look` at a task whose review is its own takes the review,** said in the activity as `task next --take`
   says it: a run's lead looked and approved, and the person following the run saw nobody take its reviews. A look
-  while the designer's UI review is due takes nothing.
+  at a step that is not the lead's takes nothing.
 - **A line amended while its task waits in review is the one the finish holds it to:** `run amend` replaced the lines
   of done tasks alone, so a run's t-playback-safety, amended in review, was approved on its old line and the finish
   refused the run on it.
@@ -293,7 +314,6 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   history (`pConsole.history()`), and Clear empties that too.
 - **A `complete` whose checks fail names what it took from the run** on that complete, with how to read each — a run's
   test-1 checked green and failed on a file approved since, with no word of which had come in.
-- **`task review --skip-design lead` approves only after a `task look`** of the task since its last complete.
 - **`task look` reads signed in as its acceptance checks it** (`--as` from the acceptance), and a page check refused 401
   or 403 says who it was signed in as.
 - **A plan's element ids include its components' parts,** so an acceptance naming a part of a component is not refused
@@ -319,7 +339,7 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   - The file is checked as it is written — `run team check`, `doctor`, a JSON Schema in `@plitzi/cli/schemas`, a
     misspelt key said with the one it meant.
   - A new project starts with two developers (one on demand) and a designer.
-- **`min`:** that many start with the run; the rest are **on demand**. `run watch --until lead` names the agent to start
+- **`min`:** that many start with the run; the rest are **on demand**. `run watch` names the agent to start
   when work waits for one, and an agent with nothing left stops by itself.
 - **`session`: when an agent is started again with a fresh context,** always between two pieces of work — a task
   completed, a review decided — never in one, past any size, so nothing it knows and has not written is lost: `task`
@@ -355,7 +375,7 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   so `run watch` no longer wakes the lead for every agent it has just launched.
 - **An agent whose process ended is not running**, whatever its last word in the log. An agent launched by
   `run agent --launch` that has ended reads stopped on the board, and `run watch` asks for it again when work waits:
-  a UI review with no designer running says which designer to start, at once.
+  a review's step with nobody of its role running says which agent to start, at once.
 - **A stage's checks read the run's work,** not the project the finish has not written yet: `run extend` no longer says
   every element the run made is missing.
 - **`--as` in the finish:** any folder of a run — a task's copy, the finish's checked copy — signs in with the project's
@@ -372,18 +392,15 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
   row names it before what it last did.
 - **The lead reads working on the board** while its commands come (a stage stacked, an agent started, a message), with
   what it last did, and idle only once they stop. `run agent --launch` is in the run's feed: "started dev-2 in claude".
-- **`options.launch`** (a harness, `claude`): `run watch --until lead` starts the agents work waits for itself, rather
+- **`options.launch`** (a harness, `claude`): `run watch` starts the agents work waits for itself, rather
   than asking the lead to, and says the ones it could not start.
-- **Leads:** one for every four agents (`lead-2`, `lead-3`…, or `"lead": { "count" }`). Co-leads review and answer
-  questions from one queue and are started only when reviews queue up; planning and the finish stay with `lead`.
-- **A designer reviews the UI of other tasks before the lead.** `options.designReview` (`light`, `standard`, `high`)
-  says how closely. `task review --skip-design lead|no-ui` says why the lead skips it.
-- **A tester reviews the code, then writes `<id>-tests`** after each developer task. `task next` hands it the reviews
-  first, as a lead that reviews; its approval approves the task, and the lead is woken only for a review no tester took
-  in 2 minutes. With no tester in the team, the lead reviews every task.
+- **A designer's step in the review of the cards that name it.** `options.designReview` (`light`, `standard`, `high`)
+  says how closely.
+- **A tester reviews the code, and a developer writes `<id>-tests`** after each developer task. `task next` hands the
+  tester its steps first; its approval, the last step, approves the card. With no tester in the team, the lead says the
+  tester's steps.
 - **The starter team names its models:** the lead on `claude-opus-5-5` at `"effort": "high"`, the designer on
-  `claude-opus-5-5`, the developers on `claude-sonnet-5-5`. They are `team.json`'s, never the CLI's: one it leaves out is the harness's default. A lead that
-  reviews (`lead-2`) starts on the team's lead model. A model the team names is passed only to a harness that runs it
+  `claude-opus-5-5`, the developers on `claude-sonnet-5-5`. They are `team.json`'s, never the CLI's: one it leaves out is the harness's default. A model the team names is passed only to a harness that runs it
   (Claude Code a Claude one, Codex any other, opencode `provider/model`); otherwise the agent starts on the harness's
   default, and `run agent --launch` says so.
 - **`effort`** for the lead and each agent (`low`, `medium`, `high`, `xhigh`, `max`; `run team set --effort`) is how hard
@@ -451,7 +468,7 @@ report`, …).
 - **An agent starts lighter:** Claude Code is started with only the tools an agent uses and none of the person's MCP
   servers (`--tools …`, `--strict-mcp-config`) — its first context 16k tokens rather than 46.7k, read again on every
   turn: ~660k of cache over a 22-turn task.
-- **A UI review nobody took is the lead's once it reads it** (`task look`, `task show`): no designer is offered it — a
+- **A step that is the lead's is the lead's once it reads it** (`task look`, `task show`): nobody else is offered it — a
   lead looked at a task as its watch said to while its designer took the same review, and the lead's approval was
   refused.
 - **`task look` opens a route's pattern at an address its acceptance names**, said or checked (`/messages/:username` at
@@ -472,8 +489,7 @@ report`, …).
   (`inputs/`), edited there — a lead ran it so and was refused for a missing argument.
 - **A run's report says what it cost:** at the API's prices, with how much was the context read again, by agent and its
   costliest pieces (`spend` in `report.json`; `feedback.md` and `report.md` alike) — a run's $6.75, a third of it one
-  designer task, was read off its log by hand. It says the UI reviews the lead gave without a designer, and when no
-  designer reviewed any; the bench keeps tokens, cost and the share read again a task done.
+  designer task, was read off its log by hand. The bench keeps tokens, cost and the share read again a task done.
 - **A spike's spend is its own:** what finding it out cost is kept as it ends (`spent`, piece `spike`) — a run's scope,
   every page swept, was counted in its lead's first review after it, $3.77 of a five-minute review.
 - **A look beside the run before says, first, what differs or that nothing does** — one line above the pictures: a
@@ -525,7 +541,7 @@ report`, …).
     each costs on average (`PER SESS`, `PER TASK`, said under them; the run's counts a task once, whoever worked on it).
     Sorted by in+out, `s` changes it. Kept in the run's log as each
     task completes and each review is decided (`spent`), the lead and the reviewers included.
-- **`run watch --until lead`** wakes the lead once for each review, question, block, idle agent or agent to start.
+- **`run watch`** wakes the lead once for each review, question, block, idle agent or agent to start.
   `run status` gives the same in one answer.
 - **The run's preview** serves its approved work as it grows: `p` in `run monitor`, its server's output under its
   address, or `npm run start:preview`; `run preview --task` serves one task's copy.
@@ -625,8 +641,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   counted in a line, theirs whose file it is.
 - **`task look` says what it did not picture,** each page and why, and pictures a part new since the run before alone.
 - **A command no longer tells an agent to pass its token** — the shell carries it.
-- **`run monitor`'s flow says who has each review:** one the lead took while its UI waited for a designer
-  (`--skip-design lead`) is in the lead's column, named; a long id gives way to the name, cut in its middle, where it
+- **`run monitor`'s flow says who has each review:** one Review column, each card at its step and who says it; a long id gives way to the name, cut in its middle, where it
   took the name with it ("t-desk-selector-ai…"); a review nobody took yet reads "waiting".
 - **The monitor's approved column puts the latest approval first** — what just landed.
 - **`↻ restarting` in the monitor:** an agent stopped between two pieces of work for a fresh context reads restarting —
@@ -643,8 +658,8 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`task check`:** `--fix` touches the task's own files alone; a check failing as the last one on the same files says
   so; a backup an editor or `sed -i -E` left is refused (`plitzi task discard`); a type error keeps its cause, the deepest
   lines under it. `complete` refuses the backups too.
-- **Reviews:** a designer's first review is its own for 15 min, its reading held; `--skip-design` is refused while a
-  designer reviews in its time. `task next`'s look names the acceptance's pages too, signed in as it checks them, and a
+- **Reviews:** an agent's first review is its own for 15 min, its reading held; another's verdict is refused while it
+  reviews in its time. `task next`'s look names the acceptance's pages too, signed in as it checks them, and a
   page checked with a status of its own apart (`--status 404`).
 - **`task look`:** finds a page only a signed-in visitor has a link to (`/u/:username`); keeps every look of a round;
   says a tall page's parts; says a picture not taken once a reason, with how to see the part; a dress change once, with
@@ -661,7 +676,8 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   long it took; one that failed with Playwright reusing the copy served on `PORT` says its `webServer` never started.
   A check or a complete gives its task's sign of life every minute. Every task approved, `run watch` wakes the lead to
   close. `complete` with the lead's word unread is refused with it.
-- **Spikes and reviews.** `task spike <s> --approve --findings-only` keeps a spike's findings without its tasks.
+- **Research and reviews.** `task review <card> --approve --leave t-a,t-b|all` stacks a research card's tasks but
+  those.
   `plitzi run copy [dir]` makes the run's approved work a folder of the caller's scratch, its state its own. `task look`
   reads a page only a signed-out visitor opens as a guest, counts an address for the route it fits and the pages an
   earlier look of the task covered. A review is said slow only past its time; a task of tests waiting for what it tests
@@ -673,7 +689,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   complete) is a step of the flow, never "refused N times over". `task look` with more pages than it pictures says the
   rest as not looked at, with the look that pictures them.
 - **A run's report needs nothing before its apply.** It starts with **Before you apply** — the finish's dry run, tasks
-  approved over a known failure or by the lead's UI review, lines rewritten after approval, notices to the backlog, the
+  approved over a known failure, lines rewritten after approval, notices to the backlog, the
   lead's problems — its head says the work, the lead's close and the person's wait apart, a task that ran long says
   why (its acceptance rewritten, escalations, sends-back, what was stacked beside it, that nobody cut it), a slow close
   is the lead's, and Plitzi's problems are grouped by part: the run and the CLI, the platform, the docs.

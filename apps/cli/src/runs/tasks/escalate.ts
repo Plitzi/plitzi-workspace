@@ -1,7 +1,6 @@
-import { assertReviewingLead, isPrincipal } from '../leads';
-import { agentAddress, LEAD, sendMessage } from '../messages';
+import { isPrincipal } from '../leads';
 import { RunRefusal } from '../refusal';
-import { letGoUi } from '../reviewQueue';
+import { assertStepReviewer, letGoStep } from '../reviews';
 import { assertStatus, loadRun, logRun, requireNoTask } from '../run';
 import { logSpent } from '../spent';
 import { updateState, viewTask } from '../taskStore';
@@ -47,14 +46,14 @@ export const escalateReview = async (
     });
   }
 
-  await assertReviewingLead(ctx, loaded, view);
+  await assertStepReviewer(ctx, loaded, view);
   const after = await updateState(
     view.paths,
     state => ({
       ...state,
       status: 'blocked',
-      reviewer: undefined,
-      ...(state.design ? { design: letGoUi(state.design) } : {}),
+      // Its step let go: the review goes to the lead, who held it is the one before.
+      ...(state.review ? { review: letGoStep(state.review) } : {}),
       blockedBy: {
         reason: `escalated by ${ctx.agent}: ${why} — the lead decides: approves it as it is (plitzi task review ${taskId} --approve), or settles it with an answer that sends it back (plitzi task unblock ${taskId} --answer "…")`,
         needs: 'lead',
@@ -64,16 +63,7 @@ export const escalateReview = async (
     }),
     ctx.now
   );
-  // No message to the lead: the block, saying why and how to decide it, is what wakes it. A designer at its UI is told
-  // its review ends, as a task sent back tells it.
-  const designer = view.state.design?.status === 'due' ? view.state.design.by : undefined;
-  if (designer !== undefined && designer !== ctx.agent) {
-    await sendMessage(ctx, loaded, {
-      from: LEAD,
-      to: agentAddress(designer),
-      text: `${ctx.agent} escalated ${taskId} to the lead while you reviewed its UI: your review of this round ends — what you found still matters, tell the lead with plitzi task tell --about ${taskId} "…"`
-    });
-  }
+  // No message to the lead: the block, saying why and how to decide it, is what wakes it.
 
   await logRun(ctx, loaded.paths, { action: 'review-escalated', task: taskId, why });
   await logSpent(ctx, loaded, taskId, 'review');

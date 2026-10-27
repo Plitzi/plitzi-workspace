@@ -1,4 +1,4 @@
-import { DESIGNER, DEVELOPER, reviewsDesign, startedAgents } from './team';
+import { DESIGNER, DEVELOPER, startedAgents } from './team';
 import { reviewedAsUi } from './uiFiles';
 
 import type { RunPlan } from './model';
@@ -45,31 +45,41 @@ const teamSizeNotice = (
 
 /**
  * Too few designers for the UI to review, said before the run starts: a run's one designer beside four developers
- * left 21 tasks' UI to the lead. A designer that develops too is counted as a designer: it reviews first.
+ * left 21 tasks' UI to the lead — and, with a designer in the team, the cards that change what a visitor sees with no
+ * designer in their review (`review`): a card says who reviews it, and nobody adds a designer it did not name.
  */
-const designersNotice = (plan: Pick<RunPlan, 'tasks' | 'designReview' | 'reference'>, team: Team): string[] => {
-  if (!reviewsDesign(team, plan)) {
-    return [];
-  }
-
+const designersNotice = (plan: Pick<RunPlan, 'tasks' | 'reference'>, team: Team): string[] => {
   const agents = startedAgents(team);
   const designers = agents.filter(each => each.roles.includes(DESIGNER)).length;
-  const developers = agents.filter(each => !each.roles.includes(DESIGNER) && each.roles.includes(DEVELOPER)).length;
-  const looked = plan.tasks.filter(task => reviewedAsUi(task.role, task.files)).length;
-  const perDesigner = plan.reference === undefined ? DEVELOPERS_PER_DESIGNER : DEVELOPERS_PER_DESIGNER_COPYING;
-  const needed = Math.min(Math.ceil(developers / perDesigner), looked);
-  if (looked === 0 || designers >= needed) {
+  if (designers === 0) {
     return [];
   }
 
+  const developers = agents.filter(each => !each.roles.includes(DESIGNER) && each.roles.includes(DEVELOPER)).length;
+  const looked = plan.tasks.filter(task => task.review?.includes(DESIGNER) === true).length;
+  const unlooked = plan.tasks
+    .filter(task => task.review?.includes(DESIGNER) !== true && reviewedAsUi(task.role, task.files))
+    .map(task => task.id);
+  const perDesigner = plan.reference === undefined ? DEVELOPERS_PER_DESIGNER : DEVELOPERS_PER_DESIGNER_COPYING;
+  const needed = Math.min(Math.ceil(developers / perDesigner), looked);
+
   return [
-    `${String(looked)} tasks change what a visitor sees, and ${String(designers)} designer${designers === 1 ? '' : 's'} review${designers === 1 ? 's' : ''} the UI of ${String(developers)} developers: one for every ${String(perDesigner)}${plan.reference === undefined ? '' : ' in a copy of a site, each review measuring it against the original,'} keeps the reviews from queueing — ${String(needed)} (plitzi run team set <designer entry> --roles designer --count ${String(needed)}). Fewer, and whoever reviews the task — a tester, the lead with none — looks at the rest itself (plitzi task review <task> --approve --skip-design reviewer) — a task that changes nothing a visitor sees goes as code (task complete --review code)`
+    ...(unlooked.length > 0
+      ? [
+          `${unlooked.join(', ')} change${unlooked.length === 1 ? 's' : ''} what a visitor sees with no designer in ${unlooked.length === 1 ? 'its' : 'their'} review: "review": ["designer", "tester"] has a designer look first — left as it is, ${unlooked.length === 1 ? 'its' : 'their'} reviewer looks at the UI too`
+        ]
+      : []),
+    ...(looked > 0 && designers < needed
+      ? [
+          `${String(looked)} tasks a designer reviews, and ${String(designers)} designer${designers === 1 ? '' : 's'} beside ${String(developers)} developers: one for every ${String(perDesigner)}${plan.reference === undefined ? '' : ' in a copy of a site, each review measuring it against the original,'} keeps the reviews from queueing — ${String(needed)} (plitzi run team set <designer entry> --roles designer --count ${String(needed)}). Fewer, and a designer's step nobody takes in time is the next reviewer's too`
+        ]
+      : [])
   ];
 };
 
 /** The team's notices: one too big for the work is not told to grow — the designers it would add have less to review. */
 export const teamNotices = (
-  plan: Pick<RunPlan, 'tasks' | 'designReview' | 'reference'>,
+  plan: Pick<RunPlan, 'tasks' | 'reference'>,
   team: Team,
   openWork = 0,
   /** The backlog's open items no task of the plan closes: the cards that could keep the team busy. */

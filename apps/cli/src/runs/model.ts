@@ -1,14 +1,13 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { isBrakeEvent, isCompletions } from './brake';
-import { isDesignSkip } from './designSkip';
 import { isDigest, isNumber, isSiteAddress, isString, isStrings, oneOf, optional } from './guards';
 import { isInventoryItem } from './inventory';
 import { isFinding } from './spike';
 
 import type { BrakeEvent } from './brake';
-import type { DesignSkip } from './designSkip';
 import type { InventoryItem } from './inventory';
+import type { ReviewState } from './reviews';
 import type { Finding } from './spike';
 
 /**
@@ -25,7 +24,6 @@ export type Priority = (typeof PRIORITIES)[number];
 
 export const TASK_STATUSES = [
   'pending',
-  'spike',
   'ready',
   'in-progress',
   'waiting',
@@ -112,6 +110,11 @@ export interface PlannedTask {
   /** Who in the team does it: developer (when left out), designer, reviewer, tester, writer… — `task next --role` picks by it. */
   role?: string;
   /**
+   * Who reviews it, in order — a role each step (`["designer", "tester"]`): a step said by an agent of that role that
+   * did not work it. Left out, a tester — the lead in a team with none (`reviews.ts`).
+   */
+  review?: string[];
+  /**
    * Files outside its own it means to change — a shared one, a done task's: not held by it, but said by `run open --dry-run`, so
    * the lead sees two tasks on one file before they meet at `complete`.
    */
@@ -163,12 +166,6 @@ export interface RunPlan {
    * lead who read it all — handed to every task with its brief, so an agent does not read the same ten files to start.
    */
   primer?: string;
-  /**
-   * Whether a designer reviews the UI of the others' tasks before the lead: on with a designer in the team, off with
-   * none — said here to turn it the other way for this run. A stage's (`run extend`) keeps the run's choice: it may only
-   * turn it on.
-   */
-  designReview?: boolean;
   /**
    * What the job asks that this run does not do, a line each — a page, a section, a tool: said to the person at `run
    * plan` and `run open`, and in the report, so what a run leaves out is a choice made with them, never found after.
@@ -245,11 +242,6 @@ export interface RunRecord {
    * confirmed by typing the run's name: `finish --apply` then needs no person, and still a report and green checks.
    */
   leadFinishes?: string;
-  /**
-   * A designer in the team, or the plan asked for it: the UI of the others' tasks — what they change under `src/space/` or a
-   * plugin — is reviewed by a designer before its reviewer approves it (`TaskState.design`).
-   */
-  designReview?: true;
   stopRequestedAt?: string;
   /** Why it is stopping: who stopped it, or what the brake saw. */
   stopReason?: string;
@@ -315,11 +307,6 @@ export interface KnownFailure {
 export interface TaskState {
   status: TaskStatus;
   round: number;
-  /**
-   * Of its rounds of changes, the designer's: the limit before a person looks at it is counted apart for the designer's
-   * UI review and the lead's, so a task with a designer is not at a person after one round of the lead's.
-   */
-  designRounds?: number;
   /** What it waits for from another task: a file it holds, or its answer to a proposal. */
   waitingFor?: Waiting;
   /** `review`: past the round limit, for the lead to decide — approve it as it is, or answer it (`task unblock`). */
@@ -341,23 +328,16 @@ export interface TaskState {
   /** What its checks passed with but still warned of at its last `complete` — the space's lint: weighed at review. */
   warnings?: string[];
   /**
-   * Its UI's review by a designer, in a run that has one: `due` from its `complete` until a designer says — the agent
-   * who took it to review, once one did (`task next`) — and `approved` once it did: then it is the lead's.
+   * Its review where it stands — the step of its card's review (`reviews.ts`) it waits for, who took it: one kind of
+   * review for every card, each step a role's.
    */
-  design?: DesignReview;
-  /** The tester — or the lead — that took this round's review from the queue (`task next`): another is not offered it. */
-  reviewer?: { by: string; round: number; at: string };
+  review?: ReviewState;
   /** What its spikes found out, oldest first: in its brief, and in the brief of every task that waits for it. */
   findings?: Finding[];
   /**
-   * Who finds it out — a scout, or the lead with none in the team — once it took it (`task next`): another is not offered
-   * it. On a task blocked on an agent's question, the lead answering it.
-   */
-  spikedBy?: { by: string; at: string };
-  /**
-   * A spike's result a scout proposes, waiting for the lead: what it found, and the tasks it makes — the stage kept beside
-   * the task (`TaskPaths.proposedStage`), stacked once the lead approves it (`task spike --approve`), sent back with what
-   * it asks (`--changes`).
+   * A research card's result, in review with the lead: what its scout found, and the tasks it makes — the stage kept beside
+   * the card (`TaskPaths.proposedStage`), stacked once the lead approves it (`task review --approve`, `--leave` what it
+   * leaves out), dropped when it is sent back (`--changes`).
    */
   proposed?: { by: string; at: string; text: string; tasks: string[] };
   /**
@@ -366,32 +346,6 @@ export interface TaskState {
    */
   handTo?: { agent: string; by: string; at: string; reason?: string };
   updatedAt: string;
-}
-
-export interface DesignReview {
-  status: 'due' | 'approved' | 'skipped';
-  /** The round of the work it reviews. */
-  round: number;
-  /** The designer who took it, or said it. */
-  by?: string;
-  at?: string;
-  /** Taken as its designer's first review of the run: its time holds the reading it asks for first (`reviewTimeOf`). */
-  first?: true;
-  /** `skipped`: why the lead approved it without the designer's review. */
-  why?: DesignSkip;
-  /**
-   * The designer who said the round before: offered this one first, and the rest only past a wait — another designer
-   * brought asks of its own, and cost a round (a run's t-match-bars).
-   */
-  before?: string;
-  /**
-   * The lead that sent it back saying it reviews the next round's UI itself (`--changes … --skip-design reviewer`): that
-   * round comes to the lead, never to a designer (a run's t-result-card went to design-1 after the lead said
-   * it was its own, and the lead took it from under it).
-   */
-  reserved?: string;
-  /** When it came due: what the wait for the designer before is counted from. */
-  since?: string;
 }
 
 /** `owner.json`: who holds the task. Created exclusively — the first take wins — and removed to revoke it. */
@@ -541,6 +495,7 @@ export const isPlannedTask = (value: unknown): value is PlannedTask =>
   value.acceptance.every(isAcceptance) &&
   optional(value.milestone, isString) &&
   optional(value.role, isString) &&
+  optional(value.review, isStrings) &&
   optional(value.quality, oneOf(QUALITIES)) &&
   optional(value.touches, isStrings) &&
   optional(value.closes, isStrings) &&
@@ -562,7 +517,6 @@ export const isRunPlan = (value: unknown): value is RunPlan =>
   optional(value.contracts, contracts => Array.isArray(contracts) && contracts.every(isContract)) &&
   optional(value.notes, isStrings) &&
   optional(value.primer, isString) &&
-  optional(value.designReview, flag => typeof flag === 'boolean') &&
   optional(value.leftOut, isStrings) &&
   optional(value.inventory, items => Array.isArray(items) && items.every(isInventoryItem)) &&
   optional(value.reference, isSiteAddress);
@@ -611,7 +565,6 @@ export const isRunRecord = (value: unknown): value is RunRecord =>
   isNumber(value.estimate.totalMinutes) &&
   optional(value.confirmed, isString) &&
   optional(value.leadFinishes, isString) &&
-  optional(value.designReview, flag => flag === true) &&
   optional(value.stopRequestedAt, isString) &&
   optional(value.stopReason, isString) &&
   optional(value.forcedStopAt, isString) &&
@@ -632,6 +585,16 @@ export const isRunRecord = (value: unknown): value is RunRecord =>
   Array.isArray(value.inputs) &&
   value.inputs.every(input => isRecord(input) && isString(input.file) && isString(input.digest));
 
+const isReviewState = (value: unknown): value is ReviewState =>
+  isRecord(value) &&
+  isNumber(value.round) &&
+  isNumber(value.step) &&
+  isString(value.since) &&
+  optional(value.by, isString) &&
+  optional(value.at, isString) &&
+  optional(value.before, isStrings) &&
+  optional(value.first, (flag: unknown) => flag === true);
+
 const isNote = (value: unknown): value is TaskNote =>
   isRecord(value) && isString(value.at) && isString(value.by) && isString(value.text);
 
@@ -639,7 +602,6 @@ export const isTaskState = (value: unknown): value is TaskState =>
   isRecord(value) &&
   isTaskStatus(value.status) &&
   isNumber(value.round) &&
-  optional(value.designRounds, isNumber) &&
   optional(
     value.waitingFor,
     waiting =>
@@ -662,7 +624,6 @@ export const isTaskState = (value: unknown): value is TaskState =>
   Array.isArray(value.notes) &&
   value.notes.every(isNote) &&
   optional(value.findings, (findings: unknown) => Array.isArray(findings) && findings.every(isFinding)) &&
-  optional(value.spikedBy, (by: unknown) => isRecord(by) && isString(by.by) && isString(by.at)) &&
   optional(
     value.proposed,
     (proposed: unknown) =>
@@ -690,23 +651,7 @@ export const isTaskState = (value: unknown): value is TaskState =>
       isString(failure.at)
   ) &&
   optional(value.warnings, isStrings) &&
-  optional(
-    value.design,
-    design =>
-      isRecord(design) &&
-      oneOf(['due', 'approved', 'skipped'] as const)(design.status) &&
-      isNumber(design.round) &&
-      optional(design.by, isString) &&
-      optional(design.at, isString) &&
-      optional(design.why, isDesignSkip) &&
-      optional(design.before, isString) &&
-      optional(design.since, isString) &&
-      optional(design.reserved, isString)
-  ) &&
-  optional(
-    value.reviewer,
-    reviewer => isRecord(reviewer) && isString(reviewer.by) && isNumber(reviewer.round) && isString(reviewer.at)
-  ) &&
+  optional(value.review, isReviewState) &&
   optional(
     value.accepted,
     results =>

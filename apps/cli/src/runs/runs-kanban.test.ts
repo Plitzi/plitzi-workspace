@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { addBacklogItem } from './backlog';
 import { openRun } from './run';
+import { settleFinding } from './settle';
 import { completeTask, reviewTask, takeNext, takeTask } from './tasks';
 import { setTeamAgent } from './team';
 import { viewRun } from './view';
@@ -48,6 +49,26 @@ describe('an agent with nothing to take', () => {
     expect(await idle()).toContain("stack the backlog's b-1 as cards");
     await reviewTask(lead(), 'es-launch', 't-menu', 'approve', []);
     expect(await idle()).toBe('');
+  });
+
+  // encore-11's lead kept a run small on purpose, and was woken twice to stack the backlog with no way to say no.
+  it('is said no more once the lead settles it, whatever changes on the board', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.filter(task => task.id === 't-menu');
+    await openRun(lead(), await bench.writePlan(plan));
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+    await addBacklogItem(lead(), { text: 'The footer wraps at 390', by: 'lead' });
+    const idle = async () => (await viewRun(lead(), 'es-launch')).attention.some(item => item.kind === 'idle-team');
+    expect(await idle()).toBe(true);
+
+    await settleFinding(lead(), 'es-launch', 'idle-team', 'A quick run: the person asked for these cards alone');
+    expect(await idle()).toBe(false);
+    await addBacklogItem(lead(), { text: 'The header wraps at 390', by: 'lead' });
+    expect(await idle()).toBe(false);
+    await expect(settleFinding(lead(), 'es-launch', 'idle-team', 'again')).rejects.toThrow(
+      /Nothing waits for the lead to settle|Nothing to settle/
+    );
   });
 
   // The run's only UI reviewer was said idle — split a developer's card for it — eleven times, once each

@@ -46,8 +46,6 @@ const momentOf = (entry: Record<string, unknown>): string | undefined => {
       return `took the review of ${text(entry.task)}`;
     case 'review':
       return `reviewed ${text(entry.task)}: ${text(entry.verdict)}`;
-    case 'design-review':
-      return `reviewed the UI of ${text(entry.task)}: ${text(entry.verdict)}`;
     case 'waiting':
       return `waited: ${text(entry.why).slice(0, 120)}`;
     case 'stops':

@@ -34,7 +34,7 @@ describe('a passing check, kept for the complete after it', () => {
   };
 
   it('stands while nothing changed, and is said — the checks run again once a file did, or once it is old', async () => {
-    const plan = { ...benchPlan(), designReview: false };
+    const plan = benchPlan();
     await openRun(bench.agent('lead'), await bench.writePlan(plan));
     const { calls, checks } = counted();
     const taken = await takeTask(bench.agent('dev-1', { checks }), plan.runId, 't-home');
@@ -53,7 +53,7 @@ describe('a passing check, kept for the complete after it', () => {
   });
 
   it('is not taken when the file changed after the check', async () => {
-    const plan = { ...benchPlan(), designReview: false };
+    const plan = benchPlan();
     await openRun(bench.agent('lead'), await bench.writePlan(plan));
     const { calls, checks } = counted();
     const taken = await takeTask(bench.agent('dev-1', { checks }), plan.runId, 't-home');
@@ -67,7 +67,7 @@ describe('a passing check, kept for the complete after it', () => {
   });
 
   it('is not taken once it is older than it stands for', async () => {
-    const plan = { ...benchPlan(), designReview: false };
+    const plan = benchPlan();
     await openRun(bench.agent('lead'), await bench.writePlan(plan));
     const { calls, checks } = counted();
     const taken = await takeTask(bench.agent('dev-1', { checks }), plan.runId, 't-home');

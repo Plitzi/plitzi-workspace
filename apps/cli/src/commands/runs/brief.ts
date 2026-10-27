@@ -12,6 +12,7 @@ import { acceptanceText } from '../../runs/model';
 import { importedApis } from '../../runs/moduleApis';
 import { runPaths } from '../../runs/paths';
 import { logRun, readRunLog } from '../../runs/run';
+import { isResearch, roleOf } from '../../runs/spike';
 import { taskContext } from '../../runs/tasks';
 import { describeData } from '../data';
 
@@ -214,7 +215,7 @@ export const briefOf = (context: TaskContext & { primerRead?: string }): string 
             ''
           ]),
     chalk.bold(`${task.id} — ${task.title}`),
-    `  ${task.role ?? 'developer'} · ${state.status}${state.round > 0 ? `, round ${String(state.round)}` : ''}${context.holder ? ` · ${context.holder}` : ''}`,
+    `  ${roleOf(task)} · ${state.status}${state.round > 0 ? `, round ${String(state.round)}` : ''}${context.holder ? ` · ${context.holder}` : ''}`,
     `Its files: ${files.join(', ')}${task.touches && task.touches.length > 0 ? ` · it will touch: ${task.touches.join(', ')}` : ''}`,
     ...(context.neighbours.length > 0
       ? [
@@ -224,10 +225,10 @@ export const briefOf = (context: TaskContext & { primerRead?: string }): string 
     // What the work needs beyond them is not refused: it is said how it goes in.
     '  A file beyond these the work needs: change it in your copy — it goes in by turns at complete when nobody holds it (plitzi task claim <file> holds it while you work; one another task holds becomes a request)',
     // What it is to find out, before anything is built — and what was found already: by it, and by what it waits for.
-    ...(state.status === 'spike'
+    ...(isResearch(task) && state.status !== 'done'
       ? [
           chalk.blue(
-            `◇ A spike — find out: ${task.spike ?? 'what it needs'}. Read, compare, measure; write nothing; then say what you found and its result, the tasks it makes, each with its "findings": plitzi task spike ${task.id} --done "…" --tasks <stage.json>`
+            `◇ Research — find out: ${task.spike ?? 'what it needs'}. Read, compare, measure; write nothing; then say what you found and its result, the tasks it makes, each with its "findings": plitzi task complete --found "…" --tasks <stage.json>`
           )
         ]
       : []),

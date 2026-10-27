@@ -1,6 +1,6 @@
 import { getPaths, matchRoutePath } from '@plitzi/sdk-shared/navigation';
 
-import type { Schema } from '@plitzi/sdk-shared';
+import type { ElementBinding, Schema } from '@plitzi/sdk-shared';
 
 /**
  * Which page of an authored space answers an address, and for whom — the router's own decision (`getPaths`,
@@ -41,10 +41,40 @@ export const pageAt = (
 
 /**
  * Whom an address is for, the router asked as a guest and as a signed-in visitor: `everyone` draws the same page to
- * both, `guests` a page only to a guest (a sign-in), `members` only to a signed-in one, `both-apart` a page each
- * (two pages at one path), `nobody` no page to either.
+ * both, `gated` the same page drawn apart by sign-in (an element shown or hidden on `auth` — a gate in place, which
+ * sends nobody away), `guests` a page only to a guest (a sign-in), `members` only to a signed-in one, `both-apart` a
+ * page each (two pages at one path), `nobody` no page to either.
  */
-export type Audience = 'everyone' | 'guests' | 'members' | 'both-apart' | 'nobody';
+export type Audience = 'everyone' | 'gated' | 'guests' | 'members' | 'both-apart' | 'nobody';
+
+/** Whether an element's showing turns on sign-in: its visibility read off `auth`, or a template over it. */
+const turnsOnAuth = (bindings: readonly ElementBinding[] | undefined): boolean =>
+  (bindings ?? []).some(
+    binding =>
+      binding.to === 'visibility' &&
+      (/^auth\b/.test(binding.source) ||
+        (binding.transformers ?? []).some(transformer => /\bauth\./.test(String(transformer.params.template))))
+  );
+
+/**
+ * Whether a page draws a guest and a signed-in visitor apart in place: an element of it shown or hidden on `auth`.
+ * encore-11's look read /rooms/new's "Sign in to open a room" as the page, and said the task changed nothing there.
+ */
+const gatedBySignIn = (schema: Pick<Schema, 'flat'>, pageId: string): boolean => {
+  const seen = new Set<string>();
+  const walk = (id: string): boolean => {
+    if (seen.has(id) || !Object.hasOwn(schema.flat, id)) {
+      return false;
+    }
+
+    seen.add(id);
+    const { definition } = schema.flat[id];
+
+    return turnsOnAuth(definition.bindings?.initialState) || (definition.items ?? []).some(walk);
+  };
+
+  return walk(pageId);
+};
 
 /** Whom an address is for: the router asked as a guest and as a signed-in visitor (`Audience`). */
 export const audienceAt = (schema: Pick<Schema, 'flat' | 'pages' | 'pageFolders'>, address: string): Audience => {
@@ -55,7 +85,9 @@ export const audienceAt = (schema: Pick<Schema, 'flat' | 'pages' | 'pageFolders'
 
   return guest !== undefined && member !== undefined
     ? guest === member
-      ? 'everyone'
+      ? gatedBySignIn(schema, guest)
+        ? 'gated'
+        : 'everyone'
       : 'both-apart'
     : guest !== undefined
       ? 'guests'

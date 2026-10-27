@@ -257,7 +257,7 @@ export const menu = { id: 'menu', title: 'Carta', theme };
         throw new Error('the run has no t-home');
       }
 
-      expect(changesBlock((await viewTask(loaded.paths, task)).state, false)).toBe(round === 3);
+      expect(changesBlock((await viewTask(loaded.paths, task)).state)).toBe(round === 3);
       const reviewed = await reviewTask(lead(), 'es-launch', 't-home', 'changes', [
         { note: 'shorter', element: 'hero-title' }
       ]);

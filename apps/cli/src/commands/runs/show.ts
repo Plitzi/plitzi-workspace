@@ -5,6 +5,7 @@ import { takeOnRead } from './takeOnRead';
 import { list, messageLines, outsideLines, secondRunText } from './text';
 import { acceptanceText } from '../../runs/model';
 import { FROM_TEXT, showTask, showTaskFile } from '../../runs/show';
+import { roleOf } from '../../runs/spike';
 
 import type { RunCommandOptions } from './shell';
 
@@ -69,7 +70,7 @@ const taskShowSummary = (named: string | undefined, options: RunCommandOptions &
         chalk.bold(
           `${shown.task.id} — ${shown.task.title} · ${shown.status}${roundText(shown)}${shown.holder ? ` · ${shown.holder}` : ''}`
         ),
-        `  ${shown.task.role ?? 'developer'} · its files: ${shown.task.files.join(', ')}`,
+        `  ${roleOf(shown.task)} · its files: ${shown.task.files.join(', ')}`,
         ...(shown.task.acceptance.length > 0
           ? [
               'Acceptance',

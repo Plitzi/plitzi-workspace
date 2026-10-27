@@ -16,7 +16,7 @@ const line = (runId: string, overrides: Partial<BenchLine> = {}): BenchLine => (
   checksFailedPct: 44,
   refusals: 6,
   identityRefusals: 0,
-  uiWaitMedian: 3.6,
+  reviewWaitMedian: 3.6,
   reworkWaitMedian: 6,
   agentsWaited: 31,
   readTokens: 182_000,

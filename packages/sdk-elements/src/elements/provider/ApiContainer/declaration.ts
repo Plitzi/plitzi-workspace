@@ -123,6 +123,9 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
         'thing; it is off unless set. A flow refreshes it with `performQuery` or the global `invalidateQueries` step, ' +
         'and `refreshSeconds` makes it ask again on its own every N seconds (either runtime; paused while the tab is ' +
         'hidden) — the way to keep a queue, feed or status board current without a plugin. ' +
+        '`when` (a rule group over sources — `auth.isAuthenticated`, `roomData.room.closed != true`) makes it wait: ' +
+        'it asks nothing until the rules hold — the page server holds a server one too, so a page that has nothing ' +
+        'to ask for (a closed room, a guest) asks nothing, in either runtime. ' +
         'An `action` or a `connector` is resolved only by the page server: a provider naming one needs ' +
         '`runtime: "server"` — in the browser it never asks; a browser flow that changes data calls the action with ' +
         'the `runServerAction` step, then `performQuery` or `invalidateQueries` reads it again. `onApiSuccess` and ' +

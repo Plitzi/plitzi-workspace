@@ -194,6 +194,16 @@ export const updateRecord = async (
     { now: ctx.now }
   );
 
+/**
+ * A card's approval, as the activity keeps it: its last step's verdict, which puts it into the run's work (`merged`) — a
+ * step before it is logged as a `review` approved too, and hands the card on to the next.
+ */
+export const isApproval = (entry: {
+  readonly action?: unknown;
+  readonly verdict?: unknown;
+  readonly merged?: unknown;
+}): boolean => entry.action === 'review' && entry.verdict === 'approve' && Array.isArray(entry.merged);
+
 /** The run's activity, every line it wrote, oldest first — one a line it cannot read is passed over, never a crash. */
 export const readRunLog = async (paths: RunPaths): Promise<Record<string, unknown>[]> => {
   const text = (await readOptional(paths.log))?.toString('utf-8') ?? '';

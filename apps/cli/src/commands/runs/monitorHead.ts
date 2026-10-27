@@ -18,7 +18,6 @@ const STRIP_ORDER: Record<TaskLine['status'], number> = {
   'in-review': 1,
   'changes-requested': 2,
   'in-progress': 3,
-  spike: 4,
   waiting: 5,
   blocked: 5,
   failed: 5,

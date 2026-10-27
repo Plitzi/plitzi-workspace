@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { spendText, uiReviewsText } from './reportHead';
+import { spendText, stepsSaidText } from './reportHead';
 import { costliestPieces } from './spent';
 
 const piece = (by: string, task: string, piece: 'task' | 'review', cost: number, turns: number) => ({
@@ -50,15 +50,15 @@ describe('what a run cost, in its report', () => {
 });
 
 // A run's three UI reviews were all the lead's — its designer at a task of its own — and no line said so.
-describe('who reviewed the UI, in a run’s report', () => {
-  it('says the lead’s reviews without a designer, and when no designer reviewed any', () => {
+describe('who said the reviews, in a run’s report', () => {
+  it('says each role’s steps said', () => {
     expect(
-      uiReviewsText([
-        { id: 't-a', design: 'UI by the lead' },
-        { id: 't-b', design: 'UI by the lead' },
-        { id: 't-c', design: 'no UI' }
-      ])[0]
-    ).toMatch(/^- UI reviews: 0 by a designer, 2 by the lead without one \(t-a, t-b\) — no designer reviewed any/);
-    expect(uiReviewsText([{ id: 't-a', design: 'UI by design-1' }])).toEqual([]);
+      stepsSaidText([
+        { id: 't-a', reviewedBy: ['designer: design-1', 'tester: test-1'] },
+        { id: 't-b', reviewedBy: ['lead: lead'] },
+        { id: 't-c' }
+      ])
+    ).toEqual(['- Reviews said: 1 by a designer, 1 by a tester, 1 by a lead']);
+    expect(stepsSaidText([{ id: 't-a' }])).toEqual([]);
   });
 });

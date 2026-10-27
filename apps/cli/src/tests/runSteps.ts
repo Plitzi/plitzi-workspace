@@ -4,7 +4,7 @@ import { teamFor } from './runProject';
 import { benchPlan, writeInCopy } from './runProject';
 import { isRunRefusal } from '../runs/refusal';
 import { writeSummary } from '../runs/report';
-import { loadRun, logRun, openRun } from '../runs/run';
+import { openRun } from '../runs/run';
 import { completeTask, reviewTask, takeTask } from '../runs/tasks';
 
 import type { Bench } from './runProject';
@@ -42,10 +42,6 @@ export const refusal = async (work: Promise<unknown>): Promise<Refused> => {
   throw new Error('It was not refused');
 };
 
-/** A look at a task, as `task look` logs it — what a lead's UI review with `--skip-design reviewer` is. */
-export const lookedAt = async (ctx: RunContext, runId: string, taskId: string): Promise<void> =>
-  logRun(ctx, (await loadRun(ctx, runId)).paths, { action: 'look', task: taskId });
-
 export const runSteps = (bench: () => Bench) => {
   const lead = (): RunContext => bench().agent('lead');
 
@@ -67,7 +63,7 @@ export const runSteps = (bench: () => Bench) => {
    * for, unless a test is about that.
    */
   const open = async (plan = benchPlan(), { summary = true, agents = 4 } = {}): Promise<string> => {
-    await openWith(lead(), await bench().writePlan({ ...plan, designReview: plan.designReview ?? false }), agents);
+    await openWith(lead(), await bench().writePlan(plan), agents);
     if (summary) {
       await bench().write('summary.md', '# What the run did\n\nTranslated the pages; nothing left.\n');
       await writeSummary(lead(), plan.runId, 'summary.md', LEAD_SAID);
@@ -92,7 +88,5 @@ export const runSteps = (bench: () => Bench) => {
     return reviewTask(lead(), runId, taskId, 'approve', []);
   };
 
-  const looked = (taskId: string, runId = 'es-launch') => lookedAt(lead(), runId, taskId);
-
-  return { refusal, lead, openWith, open, take, doTask, looked };
+  return { refusal, lead, openWith, open, take, doTask };
 };

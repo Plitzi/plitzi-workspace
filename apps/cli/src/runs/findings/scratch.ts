@@ -1,6 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { RUN_COPY_MARK } from '../paths';
+
 /**
  * What each agent left in its scratch beside the CLI: the scripts it wrote and the packages it installed — read before
  * the run's scratch goes with it. What the CLI writes there itself (the agent's CLI, its prompt, its log) is left out.
@@ -22,6 +24,12 @@ interface Found {
 }
 
 /** A folder that is the project again: its `package.json` and its space — copied whole, never the agent's scripts. */
+const exists = (file: string): Promise<boolean> =>
+  fs.stat(file).then(
+    () => true,
+    () => false
+  );
+
 const isProjectCopy = async (dir: string): Promise<boolean> =>
   (
     await Promise.all(['package.json', 'src/space'].map(each => fs.stat(path.join(dir, each)).catch(() => undefined)))
@@ -39,8 +47,12 @@ const walk = async (
   for (const entry of entries) {
     const at = path.join(under, entry.name);
     if (entry.isDirectory() && copyOf === undefined && (await isProjectCopy(path.join(dir, entry.name)))) {
-      // encore-10's "1250 scripts" were four copies of the project a scout and a tester made by hand.
-      found.copies.push(at);
+      // encore-10's "1250 scripts" were four copies of the project a scout and a tester made by hand — and not one
+      // `run preview --copy` made, which it marks.
+      if (!(await exists(path.join(dir, entry.name, RUN_COPY_MARK)))) {
+        found.copies.push(at);
+      }
+
       await walk(path.join(dir, entry.name), depth + 1, found, at, { root: projectOf(dir), at });
     } else if (entry.isDirectory()) {
       if (entry.name === 'node_modules') {

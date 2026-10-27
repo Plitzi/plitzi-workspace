@@ -3,9 +3,9 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { takeLeadReview } from './leads';
 import { monitorRun } from './monitor';
 import { STARTING_MS } from './onDemand';
+import { takeStep } from './reviews';
 import { loadRun, logRun, openRun } from './run';
 import { blockTask, completeTask, nextTask, reviewTask, takeTask, unblockTask } from './tasks';
 import { viewTask } from './taskStore';
@@ -41,7 +41,6 @@ const holding = (agent: string, tokens: number, token?: string): RunContext =>
 
 const plan = () => {
   const each = benchPlan();
-  each.designReview = false;
   each.tasks = each.tasks
     .filter(task => task.id === 't-home' || task.id === 't-menu')
     .map(task => ({ ...task, dependsOn: [] }));
@@ -103,7 +102,7 @@ describe('a fresh context', () => {
       finished: true
     });
 
-    expect((await nextTask(holding('test-1', 300_000), 'es-launch', 'tester')).leadReview?.task.id).toBe('t-home');
+    expect((await nextTask(holding('test-1', 300_000), 'es-launch', 'tester')).review?.task.id).toBe('t-home');
     await reviewTask(holding('test-1', 300_000), 'es-launch', 't-home', 'approve', []);
     expect(await nextTask(holding('test-1', 300_000), 'es-launch', 'tester')).toMatchObject({
       finished: true,
@@ -150,12 +149,12 @@ describe('a fresh context', () => {
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = {};\n');
     await completeTask(holding('dev-2', 50_000, menu.token), 'es-launch', 't-menu');
 
-    expect((await nextTask(holding('test-1', 300_000), 'es-launch', 'tester')).leadReview?.task.id).toBeDefined();
+    expect((await nextTask(holding('test-1', 300_000), 'es-launch', 'tester')).review?.task.id).toBeDefined();
     await reviewTask(holding('test-1', 300_000), 'es-launch', 't-home', 'approve', []);
     // The next review taken — as its look takes it — and not decided yet: it goes on with it.
     const loaded = await loadRun(lead(), 'es-launch');
     const next = loaded.tasks.find(task => task.id === 't-menu');
-    expect(next && (await takeLeadReview(holding('test-1', 305_000), await viewTask(loaded.paths, next)))).toBe(true);
+    expect(next && (await takeStep(holding('test-1', 305_000), await viewTask(loaded.paths, next))).taken).toBe(true);
     expect(await nextTask(holding('test-1', 310_000), 'es-launch', 'tester')).not.toMatchObject({ finished: true });
 
     await reviewTask(holding('test-1', 320_000), 'es-launch', 't-menu', 'approve', []);

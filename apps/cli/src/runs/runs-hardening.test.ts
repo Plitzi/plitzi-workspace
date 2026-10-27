@@ -5,14 +5,15 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
-import { FIRST_REVIEW_READING_MS, REVIEW_TIMEOUT_MS } from './design';
 import { finishRun } from './merge';
+import { messagesOf } from './messages';
 import { readOwnership } from './ownership';
 import { runPaths } from './paths';
 import { checkPlan, PlanRefusal } from './plan';
 import { answerProposal, proposeChange } from './proposals';
 import { writeSummary } from './report';
-import { checkPlanFile, openRun } from './run';
+import { FIRST_REVIEW_READING_MS, REVIEW_TIMEOUT_MS } from './reviews';
+import { checkPlanFile, loadRun, openRun } from './run';
 import { messageTasks, tellLead } from './talk';
 import { readInbox } from './talk';
 import {
@@ -45,7 +46,7 @@ afterEach(async () => {
   await bench.cleanup();
 });
 
-const { refusal, lead, open, take, doTask, looked } = runSteps(() => bench);
+const { refusal, lead, open, take, doTask } = runSteps(() => bench);
 
 describe('what goes to review is what is approved', () => {
   it('merges the version that went to review, not what its copy holds since — and says so', async () => {
@@ -193,11 +194,13 @@ describe('a token, said as what it is', () => {
   });
 });
 
-describe('a UI review, by the team’s designers', () => {
+describe('a review’s step, a designer’s', () => {
   beforeEach(async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
     await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
-    await openRun(lead(), await bench.writePlan(benchPlan()));
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.map(task => (task.id === 't-menu' ? { ...task, review: ['designer', 'lead'] } : task));
+    await openRun(lead(), await bench.writePlan(plan));
   });
 
   const inReview = async (): Promise<void> => {
@@ -206,17 +209,16 @@ describe('a UI review, by the team’s designers', () => {
     await completeTask(held.ctx, 'es-launch', 't-menu');
   };
 
-  it('refuses an agent the team does not name as a designer', async () => {
+  it('refuses an agent that is no reviewer of the step, naming who says it', async () => {
     await inReview();
     const refused = await refusal(reviewTask(bench.agent('dev-2'), 'es-launch', 't-menu', 'approve', []));
-    expect(refused.message).toContain('dev-2 is no designer of the team');
-    expect(refused.message).toContain('design-1');
+    expect(refused.message).toContain("t-menu waits for its designer's review: design-1 says it, or the lead");
 
     const stranger = await refusal(reviewTask(bench.agent('chaos'), 'es-launch', 't-menu', 'approve', []));
-    expect(stranger.message).toContain('chaos is no designer');
+    expect(stranger.message).toContain('design-1 says it');
   });
 
-  it('counts the designer’s rounds and the lead’s apart: the lead decides after three of one kind', async () => {
+  it('counts every round alike, whatever step asks: the lead decides at the limit', async () => {
     const held = await take('dev-1', 't-menu');
     const again = async (text: string): Promise<void> => {
       await writeInCopy(held.work, 'src/space/pages/menu.ts', `export const menu = { title: "${text}" };\n`);
@@ -229,31 +231,19 @@ describe('a UI review, by the team’s designers', () => {
     };
 
     await again('Menú 1');
-    await designer();
+    expect(await designer()).toMatchObject({ toLead: false });
     await again('Menú 2');
-    await designer();
-    await again('Menú 3');
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
     await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', []);
     expect(await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'One' }])).toMatchObject({
       toLead: false
     });
-    await again('Menú 4');
-    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
-    await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', []);
-    expect(await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'Two' }])).toMatchObject({
-      toLead: false
-    });
-    await again('Menú 5');
-    await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
-    await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', []);
-    expect(await reviewTask(lead(), 'es-launch', 't-menu', 'changes', [{ note: 'Three' }])).toMatchObject({
-      toLead: true
-    });
+    await again('Menú 3');
+    expect(await designer()).toMatchObject({ toLead: true });
   });
 
   // Design-1's round went out before the lead's "only the bars this round" reached it.
-  it('hands a designer what the lead said while it reviewed, before its verdict goes', async () => {
+  it('hands a designer what the lead said while it reviewed, before its verdict goes — then the next step’s', async () => {
     await inReview();
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
     await messageTasks(lead(), 'es-launch', '@design-1', 'Only the title this round');
@@ -262,34 +252,21 @@ describe('a UI review, by the team’s designers', () => {
       reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'changes', [{ note: 'Tighter at 390' }])
     );
     expect(first.message).toContain('Only the title this round');
-    // Read now: said again, the verdict goes.
+    // Read now: said again, the verdict goes — and the card is the lead's step's.
     expect(
       await reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', [{ note: 'The title holds' }])
-    ).toMatchObject({ design: 'approved' });
+    ).toMatchObject({ passed: { role: 'designer', next: 'lead' } });
+    expect(await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [])).toMatchObject({ verdict: 'approve' });
   });
 
-  it('keeps --skip-design the reviewer’s, and says how it is run', async () => {
+  it('is its reviewer’s for its time; the lead’s word goes on any step, and tells who held it', async () => {
     await inReview();
     await takeNext(bench.agent('design-1'), 'es-launch', 'designer');
-    const refused = await refusal(
-      reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'reviewer' })
-    );
-    expect(refused.message).toContain("--skip-design is the reviewer's");
-    expect(refused.message).toContain('--approve --skip-design reviewer');
-    // A hint that says --token contradicts the agent's own CLI, which says who it is: none says it.
-    expect(refused.message).not.toContain('--token');
-
-    // design-1's review in its time is design-1's: past it — its first, which holds its reading — the lead's.
+    // Its time holds its first review's reading too: past it, another designer may take it.
     bench.advance(REVIEW_TIMEOUT_MS + FIRST_REVIEW_READING_MS + 60_000);
-    // The lead approved a UI it never looked at; its review of the UI is a look, said before the approval.
-    expect(
-      (await refusal(reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'reviewer' })))
-        .message
-    ).toContain('plitzi task look t-menu');
-    await looked('t-menu');
-    expect(
-      await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: 'reviewer' })
-    ).toMatchObject({ verdict: 'approve', design: 'skipped', designSkip: 'reviewer' });
+    expect(await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [])).toMatchObject({ verdict: 'approve' });
+    const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).filter(message => message.to === '@design-1');
+    expect(told.map(message => message.text).join(' ')).toContain('decided t-menu (approved) while you reviewed it');
   });
 });
 
@@ -392,7 +369,7 @@ describe('the checks of a result once Plitzi changed', () => {
 describe('what the lead handed the run', () => {
   // A run's 9.7 KB primer put all 19 first briefs over 12k characters, each read again on every turn after.
   it('says a primer heavy enough to outweigh a task’s own brief, with what it costs the run', async () => {
-    const plan = { ...benchPlan(), designReview: false, primer: 'primer.md' };
+    const plan = { ...benchPlan(), primer: 'primer.md' };
     await bench.write('tmp/v1/plan.json', JSON.stringify(plan));
     await bench.writeTeam(teamFor(plan, 4));
     await bench.write('tmp/v1/primer.md', `# What a task needs\n${'A rule of the project, said once.\n'.repeat(60)}`);
@@ -407,7 +384,7 @@ describe('what the lead handed the run', () => {
   });
 
   it('takes the plan and its primer into its folder, where the lead amends them — and removes what it was handed after', async () => {
-    const plan = { ...benchPlan(), designReview: false, primer: 'primer.md' };
+    const plan = { ...benchPlan(), primer: 'primer.md' };
     await bench.write('tmp/v1/primer.md', '# What a task needs\n');
     await bench.write('tmp/v1/plan.json', JSON.stringify(plan));
     await bench.writeTeam(teamFor(plan, 4));

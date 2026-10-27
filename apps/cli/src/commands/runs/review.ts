@@ -24,7 +24,6 @@ import {
 import { act, runOf, runSelf } from './shell';
 import { list } from './text';
 import { answering, freePort } from '../../runs/acceptance';
-import { designSkipText, isDesignSkip } from '../../runs/designSkip';
 import { inTurns } from '../../runs/inTurns';
 import { readOwnership } from '../../runs/ownership';
 import {
@@ -41,12 +40,13 @@ import {
 import { runPaths, taskPaths } from '../../runs/paths';
 import { startBeforePreview, startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
+import { reviewSteps, reviewTeamOf } from '../../runs/reviews';
 import { loadRun, logRun } from '../../runs/run';
 import { withLock } from '../../runs/store';
 import { findingsOf, taskParts } from '../../runs/taskParts';
 import { findTask, notReviewedIn, reviewTask } from '../../runs/tasks';
 import { viewTask } from '../../runs/taskStore';
-import { readTeam } from '../../runs/team';
+import { DESIGNER, readTeam } from '../../runs/team';
 import { checkAccount, sessionCookie } from '../check/account';
 import { projectSpace } from '../check/space';
 import { visitorArgs } from '../register/options';
@@ -87,7 +87,10 @@ const viewTaskOf = async (
   // The caller is the designer whose UI review it is: its look is set beside the run before it unless it says not.
   return {
     changed: state.changed ?? [],
-    designing: state.design?.status === 'due' && state.design.by === ctx.agent,
+    designing:
+      state.status === 'in-review' &&
+      state.review?.by === ctx.agent &&
+      reviewSteps(task, await reviewTeamOf(ctx.root)).at(state.review.step) === DESIGNER,
     acceptanceAt: acceptancePages(task.acceptance),
     named: acceptanceAddresses(task.acceptance),
     byStatus: acceptanceStatuses(task.acceptance),
@@ -586,14 +589,14 @@ export interface ReviewOptions extends RunCommandOptions {
   changes?: string;
   on?: string;
   file?: string;
-  /** Approve a task whose UI waits for a designer's review without it, saying why: kept in its state and the report. */
-  skipDesign?: string;
   /** With --approve: what the reviewer saw and does not ask to change — kept with the task, read by the lead. */
   note?: string;
   /** With --approve: another task in review approved beside it, as one change — each reads what the other makes. */
   with?: string;
   /** A tester's: what it cannot decide — the review handed to the lead. */
   escalate?: string;
+  /** With --approve, a research card's: the tasks it proposes left out — comma-separated ids, or all. */
+  leave?: string;
 }
 
 export const taskReview = (taskId: string, options: ReviewOptions): Promise<void> =>
@@ -606,13 +609,6 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
 
       if (options.note !== undefined && !options.approve) {
         throw new RunRefusal('invalid', '--note goes with --approve: with --changes, what to change is the note');
-      }
-
-      if (options.skipDesign !== undefined && !isDesignSkip(options.skipDesign)) {
-        throw new RunRefusal(
-          'invalid',
-          `--skip-design says why the lead approves without the designer's review: --skip-design reviewer (you looked at its UI yourself, as a designer would — both schemes, the phone width) or --skip-design no-ui (it changes nothing a visitor sees), not "${options.skipDesign}"`
-        );
       }
 
       if (options.overwrite && options.merge) {
@@ -640,58 +636,68 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
             ],
         options.merge ? 'merge' : options.overwrite ? 'overwrite' : 'refuse',
         {
-          ...(isDesignSkip(options.skipDesign) ? { skipDesign: options.skipDesign } : {}),
-          ...(options.with === undefined ? {} : { with: options.with })
+          ...(options.with === undefined ? {} : { with: options.with }),
+          ...(options.leave === undefined
+            ? {}
+            : {
+                leave:
+                  options.leave.trim() === 'all'
+                    ? ('all' as const)
+                    : options.leave
+                        .split(',')
+                        .map(id => id.trim())
+                        .filter(id => id !== '')
+              })
         }
       );
     },
     reviewed =>
-      reviewed.design === 'approved'
-        ? `${taskId}'s UI approved: its reviewer — a tester, or the lead with none — reviews the rest now. Next: plitzi task next`
-        : reviewed.verdict === 'approve'
+      reviewed.passed
+        ? `${taskId}'s ${reviewed.passed.role} review approved: its ${reviewed.passed.next}'s review is next. Next: plitzi task next`
+        : reviewed.found
           ? [
-              `${taskId} approved: ${list(reviewed.merged ?? [])} in the run's work.`,
-              ...(reviewed.with
-                ? [`  ${reviewed.with.task} approved beside it, as one change: ${list(reviewed.with.merged)} in too`]
-                : []),
-              ...(reviewed.design === 'skipped' ? [`  · ${designSkipText(reviewed.designSkip)}`] : []),
-              // The lead went first while a designer was at it: said to the lead too, not only to the designer.
-              ...(reviewed.designBy
-                ? [`  · ${reviewed.designBy} was at its UI review: told to drop it, and to tell you what it found`]
-                : []),
-              ...((reviewed.joined ?? []).length > 0
-                ? [`  Put together with the change made in the project meanwhile: ${list(reviewed.joined ?? [])}`]
-                : []),
-              ...((reviewed.fulfilled ?? []).length > 0
-                ? [`  Its requests went in: ${list(reviewed.fulfilled ?? [])} — a holder's copy brings them`]
-                : []),
-              ...(reviewed.unmerged
-                ? [
-                    chalk.yellow(
-                      `  ⚠ Its request on ${list(reviewed.unmerged.files)} did not go in — ${reviewed.unmerged.reason}: an integration task applies it`
-                    )
-                  ]
-                : []),
-              ...((reviewed.granted ?? []).length > 0 ? [`  Handed on: ${list(reviewed.granted ?? [])}`] : []),
-              ...((reviewed.ready ?? []).length > 0 ? [`  Ready now: ${list(reviewed.ready ?? [])}`] : []),
-              ...(reviewed.previewProblem
-                ? [
-                    chalk.yellow(
-                      `  ⚠ The run's preview did not take it in: ${reviewed.previewProblem} — restart it (p in plitzi run monitor, or npm run start:preview)`
-                    )
-                  ]
-                : []),
-              ...notReviewedText(reviewed.notReviewed, 'approve')
+              `${taskId} approved: its findings go with every task that waits for it.${reviewed.found.added.length > 0 ? ` It made ${reviewed.found.added.join(', ')}.` : ''}${reviewed.found.left.length > 0 ? ` Left out, as you said: ${reviewed.found.left.join(', ')} — what they were for, put in the backlog (plitzi run notice "…").` : ''}${reviewed.ready && reviewed.ready.length > 0 ? ` Ready now: ${reviewed.ready.join(', ')}.` : ''}`,
+              ...(reviewed.found.notices ?? []).map(notice => `  · ${notice}`)
             ].join('\n')
-          : [
-              reviewed.toLead
-                ? `${taskId}: ${String(reviewed.round)} rounds of changes — blocked for the lead to decide.`
-                : `${taskId}: changes requested (round ${String(reviewed.round)}); it goes back to the same task.`,
-              ...(reviewed.goesFirst
-                ? [`  ${list(reviewed.goesFirst)} wait on it: its agent, at another task, was told it goes first`]
-                : []),
-              ...notReviewedText(reviewed.notReviewed, 'changes')
-            ].join('\n')
+          : reviewed.verdict === 'approve'
+            ? [
+                `${taskId} approved: ${list(reviewed.merged ?? [])} in the run's work.`,
+                ...(reviewed.with
+                  ? [`  ${reviewed.with.task} approved beside it, as one change: ${list(reviewed.with.merged)} in too`]
+                  : []),
+                ...((reviewed.joined ?? []).length > 0
+                  ? [`  Put together with the change made in the project meanwhile: ${list(reviewed.joined ?? [])}`]
+                  : []),
+                ...((reviewed.fulfilled ?? []).length > 0
+                  ? [`  Its requests went in: ${list(reviewed.fulfilled ?? [])} — a holder's copy brings them`]
+                  : []),
+                ...(reviewed.unmerged
+                  ? [
+                      chalk.yellow(
+                        `  ⚠ Its request on ${list(reviewed.unmerged.files)} did not go in — ${reviewed.unmerged.reason}: an integration task applies it`
+                      )
+                    ]
+                  : []),
+                ...((reviewed.granted ?? []).length > 0 ? [`  Handed on: ${list(reviewed.granted ?? [])}`] : []),
+                ...((reviewed.ready ?? []).length > 0 ? [`  Ready now: ${list(reviewed.ready ?? [])}`] : []),
+                ...(reviewed.previewProblem
+                  ? [
+                      chalk.yellow(
+                        `  ⚠ The run's preview did not take it in: ${reviewed.previewProblem} — restart it (p in plitzi run monitor, or npm run start:preview)`
+                      )
+                    ]
+                  : []),
+                ...notReviewedText(reviewed.notReviewed, 'approve')
+              ].join('\n')
+            : [
+                reviewed.toLead
+                  ? `${taskId}: ${String(reviewed.round)} rounds of changes — blocked for the lead to decide.`
+                  : `${taskId}: changes requested (round ${String(reviewed.round)}); it goes back to the same task.`,
+                ...(reviewed.goesFirst
+                  ? [`  ${list(reviewed.goesFirst)} wait on it: its agent, at another task, was told it goes first`]
+                  : []),
+                ...notReviewedText(reviewed.notReviewed, 'changes')
+              ].join('\n')
   );
 
 /** What its copy holds that the review did not see — written after `complete`: kept out, and said. */

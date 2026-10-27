@@ -1,6 +1,6 @@
 import { clip, textWidth } from './monitorCanvas';
 import { EVENT_TONE, groupKey, openedRows, opens, whatOf } from './monitorFeed';
-import { briefStages } from './monitorFlow';
+import { flowStages } from './monitorFlow';
 import { AGENT_LOOK, hhmm, LIVE_VERB, since, toneOf, urgencyOf } from './monitorModel';
 import { drawPreviewLine, shortModel } from './monitorSide';
 
@@ -133,7 +133,7 @@ const drawBrief = (p: Paint, data: Monitored, top: number, rect: Rect): void => 
   const end = rect.left + rect.width;
   canvas.put(top, rect.left + 2, 'Flow', { fg: theme.text, bold: true });
   canvas.right(top, end, '2 the whole board', { fg: theme.subtle });
-  const stages = briefStages(data.view.tasks);
+  const stages = flowStages(data.view.tasks);
   const gap = 2;
   const colWidth = Math.floor((rect.width - 2 - gap * (stages.length - 1)) / stages.length);
   stages.forEach((stage, index) => {

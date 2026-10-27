@@ -14,7 +14,8 @@ import { unifiedDiff } from '../fix/diff';
 
 import type { ProposalView } from './agreements';
 import type { Message } from './messages';
-import type { AcceptanceResult, DesignReview, KnownFailure, RunTask, TaskStatus } from './model';
+import type { AcceptanceResult, KnownFailure, RunTask, TaskStatus } from './model';
+import type { ReviewState } from './reviews';
 import type { LoadedRun, RunContext } from './run';
 
 /**
@@ -143,13 +144,13 @@ const agentNext = (task: RunTask): string[] => [
   `plitzi task propose ${task.id} --change "…"   # a change you need it to agree to`
 ];
 
-const nextFor = (task: RunTask, status: TaskStatus, design?: DesignReview): string[] => {
+const nextFor = (task: RunTask, status: TaskStatus, review?: ReviewState): string[] => {
   switch (status) {
     case 'in-review':
       return [
-        ...(design?.status === 'due'
+        ...(review?.by !== undefined
           ? [
-              `# its UI waits for ${design.by ?? 'a designer'}'s review: its reviewer approves after it, or now with plitzi task review ${task.id} --approve --skip-design reviewer`
+              `# ${review.by} reviews it now (step ${String(review.step + 1)} of its review): its verdict moves it on — yours, the last word, approves it whole`
             ]
           : []),
         `plitzi task look ${task.id}   # its pages as it went to review: checked at 1440 and 390, pictured light and dark`,
@@ -257,7 +258,7 @@ export const showTask = async (
       ...(each.diff ? { diff: each.diff } : {})
     })),
     messages: said.slice(-6),
-    next: isPrincipal(ctx.agent) ? nextFor(task, view.state.status, view.state.design) : agentNext(task)
+    next: isPrincipal(ctx.agent) ? nextFor(task, view.state.status, view.state.review) : agentNext(task)
   };
 };
 

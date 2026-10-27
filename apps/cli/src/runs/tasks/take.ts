@@ -14,9 +14,10 @@ import { assertStatus, loadRun, logRun, readApproved } from '../run';
 import { keepFiles, placeVersion, withLock } from '../store';
 import { appendLog, cutTask, locksExpired, readOwner, revokeOwner, updateState, viewTask } from '../taskStore';
 import { isWorked } from '../worked';
-import { at, findTask, roleOf } from './common';
+import { at, findTask } from './common';
 import { allLocks, sharedFiles } from './locks';
 import { spareTests } from './spareTests';
+import { isResearch, roleOf } from '../spike';
 import { writesTests } from '../tests';
 
 import type { ProposalView } from '../agreements';
@@ -41,6 +42,8 @@ export interface TakenTask {
   proposals: ProposalView[];
   /** What the lead said to it and it had not read. */
   messages: Message[];
+  /** A research card of a run that copies a site: the original, to compare with — none, and nothing says one. */
+  reference?: string;
 }
 
 /**
@@ -91,15 +94,6 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
 
   if (view.state.status === 'in-review') {
     throw new RunRefusal('invalid', `Task "${taskId}" is in review: take another (plitzi task next)`, { task: taskId });
-  }
-
-  // A spike is a lead's: what is built is decided by what a lead finds out, never by the agent that builds it.
-  if (view.state.status === 'spike') {
-    throw new RunRefusal(
-      'invalid',
-      `Task "${taskId}" is in spike: a lead finds out first (${task.spike ?? 'what it needs'}) — take another (plitzi task next)`,
-      { task: taskId }
-    );
   }
 
   if (!dependenciesDone(task, states)) {
@@ -278,7 +272,8 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
     ...(view.reviewed ? { resumedFrom: view.reviewed.round } : {}),
     ...(replaced ? { replaced } : {}),
     proposals: unansweredTo(await proposalsOf(loaded), taskId),
-    messages: await handOver(ctx, loaded, taskId, ctx.agent)
+    messages: await handOver(ctx, loaded, taskId, ctx.agent),
+    ...(isResearch(task) && loaded.plan.reference !== undefined ? { reference: loaded.plan.reference } : {})
   };
 };
 

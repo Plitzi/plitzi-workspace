@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { takeOnLook } from './leads';
+import { takeOnLook } from './reviews';
 import { loadRun, openRun } from './run';
 import { completeTask, findTask } from './tasks';
 import { viewTask } from './taskStore';
@@ -33,7 +33,12 @@ const inReview = async (withDesigner: boolean) => {
     await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
   }
 
-  const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
+  const plan = benchPlan();
+  // With a designer, its card asks for the designer's look first.
+  plan.tasks = plan.tasks.map(task =>
+    task.id === 't-menu' && withDesigner ? { ...task, review: ['designer', 'lead'] } : task
+  );
+  const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
   const menu = await take('dev-1', 't-menu');
   await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Menú" };\n');
   await completeTask(menu.ctx, runId, 't-menu');
@@ -54,18 +59,20 @@ describe('a look at a task in review', () => {
     const first = await viewOf(runId);
     expect(await takeOnLook(lead(), first.loaded, first.view)).toBe(true);
     const taken = await viewOf(runId);
-    expect(taken.view.state.reviewer).toMatchObject({ by: 'lead', round: taken.view.state.round });
+    expect(taken.view.state.review).toMatchObject({ by: 'lead', round: taken.view.state.round });
     expect(await takeOnLook(lead(), taken.loaded, taken.view)).toBe(false);
   });
 
-  // A run's lead looked at a task's UI while its designer took the same review: the lead's approval was refused.
-  it('takes a UI review nobody took for the lead who reads it, and nothing for one who does not review', async () => {
+  // A run's lead looked at a task's UI while its designer took the same review: the lead's approval was refused. A
+  // step is taken by a look of its own reviewer only: the designer's, never the lead's, nor its author's.
+  it('takes a step for its reviewer who reads it, and nothing for one who does not say it', async () => {
     const runId = await inReview(true);
 
     const { loaded, view } = await viewOf(runId);
-    expect(view.state.design?.status).toBe('due');
+    expect(view.state.review).toMatchObject({ step: 0 });
     expect(await takeOnLook(bench.agent('dev-1'), loaded, view)).toBe(false);
-    expect(await takeOnLook(lead(), loaded, view)).toBe(true);
-    expect((await viewOf(runId)).view.state.design).toMatchObject({ status: 'due', by: 'lead' });
+    expect(await takeOnLook(lead(), loaded, view)).toBe(false);
+    expect(await takeOnLook(bench.agent('design-1'), loaded, view)).toBe(true);
+    expect((await viewOf(runId)).view.state.review).toMatchObject({ step: 0, by: 'design-1' });
   });
 });

@@ -1,65 +1,36 @@
 import fs from 'node:fs/promises';
 
 import { durationText, FOLLOW_MS } from '../../options';
-import { designReviewFor, hasDesignReview, takeOfferedReview } from '../design';
 import { handOver } from '../handOver';
 import { assertRoles } from '../identity';
-import {
-  isPrincipal,
-  LEAD_ROLE,
-  leadReviewFor,
-  reviewTeamOf,
-  scoutsOf,
-  spareReviewers,
-  takeLeadReview,
-  testerReviews,
-  testersOf
-} from '../leads';
+import { isPrincipal, LEAD_ROLE } from '../leads';
 import { agentAddress, unreadFor } from '../messages';
 import { ON_DEMAND_IDLE_MS } from '../onDemand';
-import { reviewPages } from '../pagesOf';
 import { agentScratch, runPaths } from '../paths';
 import { readyTasks } from '../plan';
 import { markPresent } from '../presence';
 import { isRunRefusal } from '../refusal';
-import { uiQueued } from '../reviewQueue';
+import { reviewFor, reviewRolesOf, reviewSteps, reviewTeamOf } from '../reviews';
 import { assertStatus, loadRun, logRun, readRunLog } from '../run';
 import { runChanged } from '../runChanged';
 import { tellLeftInTmp } from '../strays';
-import { isDisconnected, updateState, viewTask } from '../taskStore';
-import {
-  DEFAULT_DESIGN_REVIEW,
-  DESIGNER,
-  DEVELOPER,
-  qualityRank,
-  readTeam,
-  SCOUT,
-  startedAgents,
-  TESTER
-} from '../team';
+import { isDisconnected, viewTask } from '../taskStore';
+import { qualityRank, readTeam, startedAgents } from '../team';
 import { isWorked } from '../worked';
-import { at, findTask, roleOf } from './common';
-import { designersIn, leadNext, noDesignerFreeIn, spikeFor, uiTooText } from './leadNext';
+import { findTask } from './common';
+import { leadNext } from './leadNext';
 import { allLocks } from './locks';
-import {
-  askedOf,
-  askedRoles,
-  baseFirst,
-  freshStart,
-  lastAsked,
-  reasonOf,
-  markJoined,
-  uiReviewsComing
-} from './nextRules';
-import { changesBlock } from './review';
-import { reviewOffer } from './reviewOffer';
+import { askedRoles, baseFirst, freshStart, lastAsked, reasonOf, markJoined, reviewsComing } from './nextRules';
+import { reviewOffer, takeOfferedStep } from './reviewOffer';
 import { spareTests } from './spareTests';
 import { writesTests } from '../tests';
 import { takeTask } from './take';
+import { roleOf } from '../spike';
 
 import type { Message } from '../messages';
-import type { AcceptanceResult, Quality, RunTask, TaskStatus } from '../model';
+import type { RunTask, TaskStatus } from '../model';
 import type { LoadedRun, RunContext } from '../run';
+import type { TaskView } from '../taskStore';
 import type { ReviewOffer } from './reviewOffer';
 import type { TakenTask } from './take';
 
@@ -83,59 +54,25 @@ export interface NextTask {
   back?: 'unblocked' | 'held';
   /** One the caller holds: where its copy is — the only place its work is written. */
   work?: string;
-  /**
-   * A designer's, before any task: one whose UI waits for its review — looked at as it went to review (`task look`),
-   * then said (`task review --approve | --changes`). What it changed, for the look.
-   */
   /** Handed to this agent by the lead when it took it back from another (`task reassign --to`), and why. */
   handedBy?: { by: string; reason?: string };
-  designReview?: {
-    task: RunTask;
-    round: number;
-    /** Its last round of this kind: changes asked now block it for the lead to decide. */
-    lastRound?: true;
-    changed: string[];
-    /** Where its changes are drawn, to look at: the pages that own its files. */
-    pages: string[];
-    /** Sent back since a designer last looked: what the last review asked — what this round answers. */
-    asked: string[];
-    /** The notes of the reviews before the last: counted, not repeated — `task show` has them whole. */
-    earlier: number;
-    /** Another designer said the round before: this round checks what it asked, and asks anew only what is broken. */
-    before?: string;
-    /** Its copy, as it went to review: what to read its files in (`task look` serves it). */
-    copy: string;
-    /** How closely the team asks it reviewed (`options.designReview` in team.json). */
-    precision: Quality;
-    /** Its acceptance's checks at its `complete`: what is measured already — the review starts from what differs. */
-    accepted: AcceptanceResult[];
-    /** This designer's first review of the run: what to read before it is said first, on a line of its own. */
-    first?: true;
-  };
   /**
-   * A tester's — a developer's, one no tester may take (`spareReviewers`), or the lead's when nobody else may
-   * (`leadReviews`): a task in review nobody else took — what it changed, where it is drawn, what its reviews asked.
+   * A review, before any task of its own: the step of a card's review this agent says (`reviews.ts`) — a designer's, a
+   * tester's, a developer's one nobody of its role may take, the lead's — the card as it went to review.
    */
-  leadReview?: ReviewOffer;
+  review?: ReviewOffer;
   /**
-   * A scout's — or the lead's, with no scout in the team: a spike to find out, the most urgent nobody took. `blocking`
-   * (the lead's alone): a task at work blocked on a question, whose block its answer lifts (`task unblock --answer`);
-   * `asked`: what the lead said when it sent the spike's tasks back.
+   * The lead's to find out, nobody else at it: an agent's question (`blocking`) — a task at work blocked on it, whose block
+   * its answer lifts (`task unblock --answer`) — or, with no scout in the team, a research card (`task complete --found`).
    */
   spike?: {
     task: RunTask;
     question: string;
     findings: number;
     blocking?: true;
-    asked?: string;
     /** The site the run copies, to compare with — none, and its brief says nothing of an original. */
     reference?: string;
   };
-  /**
-   * The lead's: what a scout found, to decide — with the person, the tasks it makes (`stage`) — and approve (`task spike
-   * --approve`).
-   */
-  proposal?: { task: RunTask; by: string; text: string; tasks: string[]; stage: string };
   /** Why nothing is ready, when nothing is. */
   why?: string;
   ready: string[];
@@ -230,105 +167,18 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     return leadNext(ctx, loaded, views, messages);
   }
 
-  // A scout finds out what the spikes ask before anything else: the run's work waits on what it finds. An agent's
-  // question is the lead's: with no spike left, a scout's part ends — started again for one a stage brings, or one the
-  // lead sends back (Carlos).
-  if (roles?.includes(SCOUT) === true && (await scoutsOf(ctx.root)).includes(ctx.agent)) {
-    const spike = spikeFor(loaded, views, ctx.agent, { research: true, blocked: false });
-    if (spike) {
-      return { spike, ready: [], messages };
-    }
-
-    if (roles.every(role => role === SCOUT)) {
-      const team = await readTeam(ctx.root).catch(() => undefined);
-      const ofBase = (team ? startedAgents(team) : []).some(each => each.agent === ctx.agent && each.onDemand !== true);
-
-      return ofBase
-        ? {
-            why: "no spike is left to find out — you are of the team's base: plitzi task next waits for one a stage brings",
-            ready: [],
-            messages
-          }
-        : {
-            why: 'no spike is left to find out: your part ends here — you are started again for one a stage brings, or one the lead sends back. You can stop',
-            ready: [],
-            messages,
-            finished: true
-          };
-    }
-  }
-
-  // A review holds back a task already done, and the lead: a designer's comes before anything new.
-  const designer = loaded.record.designReview === true && roles?.includes(DESIGNER) === true;
-  const review = designer ? designReviewFor(views, ctx.agent, ctx.now().getTime()) : undefined;
+  // A review holds back a card already done: the step of a review this agent says comes before anything new — a
+  // designer's, a tester's, a developer's of one nobody of its role may say.
+  const reviewTeam = await reviewTeamOf(ctx.root);
+  const review = reviewFor(views, ctx.agent, reviewTeam, ctx.now().getTime());
   if (review) {
-    return {
-      designReview: {
-        task: review.task,
-        round: review.state.round,
-        changed: review.state.changed ?? [],
-        // Read off its copy: a page the task makes (a dog added to the data) is one to look at too.
-        pages: await reviewPages(review),
-        ...askedOf(review.state.notes),
-        ...(review.state.design?.before !== undefined && review.state.design.before !== ctx.agent
-          ? { before: review.state.design.before }
-          : {}),
-        ...(changesBlock(review.state, true) ? { lastRound: true } : {}),
-        copy: review.paths.work,
-        accepted: review.state.accepted ?? [],
-        ...(views.some(each => each.task.id !== review.task.id && each.state.design?.by === ctx.agent) ||
-        review.state.design?.before === ctx.agent
-          ? {}
-          : { first: true as const }),
-        precision: (await readTeam(ctx.root).catch(() => undefined))?.options?.designReview ?? DEFAULT_DESIGN_REVIEW
-      },
-      ready: [],
-      messages
-    };
+    return { review: await reviewOffer(loaded, review, reviewTeam, ctx.agent), ready: [], messages };
   }
 
-  // A tester reviews what is in review — its QA, the task's approval — before the tests it writes: a review holds a task
-  // already done. A UI still waiting for a designer is not offered, unless no designer is free for it; its own tests
-  // are another's to review.
-  if (roles?.includes(TESTER) === true && (await testersOf(ctx.root)).includes(ctx.agent)) {
-    const noDesignerFree = await noDesignerFreeIn(ctx, views);
-    const review = leadReviewFor(
-      views.filter(view => testerReviews(view.task)),
-      ctx.agent,
-      view => noDesignerFree || uiQueued(view, ctx.now().getTime())
-    );
-    if (review) {
-      return {
-        leadReview: await reviewOffer(
-          loaded,
-          review,
-          review.state.design?.status === 'due' ? uiTooText(ctx.agent, await designersIn(ctx)) : undefined
-        ),
-        ready: [],
-        messages
-      };
-    }
-  }
-
-  // A review no tester may take — a lone tester's own tests — is a developer's that worked neither it nor what it tests,
-  // before a task of its own: the lead reviews it only when nobody else may (Carlos).
-  if (roles?.includes(DEVELOPER) === true) {
-    const team = await reviewTeamOf(ctx.root);
-    const spare = views.filter(view => spareReviewers(view, views, team).includes(ctx.agent));
-    const noDesignerFree = spare.length > 0 && (await noDesignerFreeIn(ctx, views));
-    const review = leadReviewFor(spare, ctx.agent, view => noDesignerFree || uiQueued(view, ctx.now().getTime()));
-    if (review) {
-      return {
-        leadReview: await reviewOffer(
-          loaded,
-          review,
-          review.state.design?.status === 'due' ? uiTooText(ctx.agent, await designersIn(ctx)) : undefined
-        ),
-        ready: [],
-        messages
-      };
-    }
-  }
+  // The roles it reviews as — a designer, a tester: a card whose review names one is coming its way.
+  const reviewsAs = reviewRolesOf(reviewTeam, ctx.agent);
+  const comesToIt = (view: TaskView): boolean =>
+    reviewSteps(view.task, reviewTeam).some(each => reviewsAs.includes(each));
 
   // Started at a level, an agent is handed tasks of it or below: a stronger model is for the tasks that ask for one.
   const fits = (task: RunTask): boolean =>
@@ -392,22 +242,18 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     };
   }
 
-  // A designer takes no task of its own while others are at work on a UI it will review: their reviews come soon, and
-  // one at a task of its own leaves every one of them to the lead (a run's motion stage: the designer at a fight's
-  // page for twenty minutes, nine UI reviews the lead's). Nothing coming its way, it works as any developer.
-  const reviewsComing = designer
-    ? views.filter(
-        view =>
-          view.owner !== undefined &&
-          view.owner.agent !== ctx.agent &&
-          isWorked(view.state.status) &&
-          hasDesignReview(view.task, [...view.task.files, ...(view.state.changed ?? [])])
-      )
-    : [];
-  // …unless a ready task is one no developer takes — a designer's — or critical: it waits for nobody else, and while
+  // A reviewer takes no task of its own while others are at work on cards it will review: their reviews come soon, and
+  // one at a task of its own leaves every one of them waiting (a run's motion stage: the designer at a fight's page
+  // for twenty minutes, nine UI reviews the lead's). Nothing coming its way, it works as any developer.
+  const reviewsComing = views.filter(
+    view => view.owner !== undefined && view.owner.agent !== ctx.agent && isWorked(view.state.status) && comesToIt(view)
+  );
+  // …unless a ready task is one no developer takes — its own role's — or critical: it waits for nobody else, and while
   // reviews keep coming it would wait for ever (t-shell, critical and the only designer's, sat ready seven
   // minutes until the lead messaged design-1, four developers keeping a review always "coming").
-  const ownToTake = ready.filter(task => task.role === DESIGNER || task.priority === 'critical');
+  const ownToTake = ready.filter(
+    task => (task.role !== undefined && reviewsAs.includes(task.role)) || task.priority === 'critical'
+  );
   if (reviewsComing.length > 0 && ownToTake.length > 0) {
     // That one, not any task: what a developer would take still waits for the developers.
     return { task: ownToTake[0], ready: ready.map(task => task.id), messages };
@@ -415,7 +261,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
 
   if (ready.length > 0 && reviewsComing.length > 0) {
     return {
-      why: `UI reviews are coming — ${reviewsComing.map(view => `${view.task.id} (${view.owner?.agent ?? ''})`).join(', ')} at work: a designer waits for them rather than taking a task of its own (plitzi task next waits), and takes one once none is coming`,
+      why: `reviews are coming — ${reviewsComing.map(view => `${view.task.id} (${view.owner?.agent ?? ''})`).join(', ')} at work: a reviewer waits for them rather than taking a task of its own (plitzi task next waits), and takes one once none is coming`,
       ready: ready.map(task => task.id),
       messages
     };
@@ -454,20 +300,13 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   const open = views.filter(view => view.state.status !== 'done');
   const others = roles === undefined ? [] : readyTasks(loaded.tasks, states, held).filter(task => !forRole(task));
   const coming = views.filter(view => view.state.status !== 'done' && forRole(view.task));
-  // A designer is not done while a task whose UI it may review is still to be done — by what it plans to change, or
-  // what it changed already (a file of the UI taken by turns, past its own).
-  const toReview = designer
-    ? views.filter(
-        view =>
-          view.state.status !== 'done' &&
-          hasDesignReview(view.task, [...view.task.files, ...(view.state.changed ?? [])])
-      )
-    : [];
+  // A reviewer is not done while a card its review names is still to be done.
+  const toReview = views.filter(view => view.state.status !== 'done' && comesToIt(view));
   // The roles it asked as — the team's for it when it named none: a run's design-1 read "nothing ready for a undefined".
   const asRole = roles?.join(' or ') ?? 'role';
   const why =
     roles !== undefined && coming.length === 0 && toReview.length > 0
-      ? `no task is left for a ${asRole} to work: the UI of ${toReview.map(view => `${view.task.id} (${view.state.status})`).join(', ')} is yours to review once it is in review — plitzi task next waits for it`
+      ? `no task is left for a ${asRole} to work: ${toReview.map(view => `${view.task.id} (${view.state.status})`).join(', ')} ${toReview.length === 1 ? 'is' : 'are'} yours to review once in review — plitzi task next waits for it`
       : others.length > 0
         ? `nothing ready for a ${asRole}: ready for others — ${others.map(task => `${task.id} (${writesTests(task, ctx.agent, views) ? roleOf(task) : 'the tests of what you worked: another writes them'})`).join(', ')}`
         : roles !== undefined && coming.length === 0
@@ -562,48 +401,15 @@ export const takeNext = async (
           timeoutMs: Math.max(0, follow.timeoutMs - (Date.now() - started))
         })
       : await nextTask(ctx, runId, role);
-    // A review is taken as its own — another designer that took it first is no refusal: the next is offered.
-    if (next.designReview) {
-      const offered = next.designReview.task.id;
+    // A review is taken as its own — another that took it first is no refusal: the next is offered.
+    if (next.review) {
+      const offered = next.review.task.id;
       const loaded = await loadRun(ctx, runId);
       if (tried.has(offered)) {
         return { next };
       }
 
-      if (await takeOfferedReview(ctx, loaded, await viewTask(loaded.paths, findTask(loaded, offered)))) {
-        return { next };
-      }
-
-      tried.add(offered);
-      continue;
-    }
-
-    // A spike handed to a scout — or the lead — is its own from now: another is not offered it.
-    if (next.spike) {
-      const loaded = await loadRun(ctx, runId);
-      const view = await viewTask(loaded.paths, findTask(loaded, next.spike.task.id));
-      if (view.state.spikedBy === undefined) {
-        await updateState(view.paths, state => ({ ...state, spikedBy: { by: ctx.agent, at: at(ctx) } }), ctx.now);
-        await logRun(ctx, loaded.paths, { action: 'spike-taken', task: next.spike.task.id });
-      }
-
-      return { next };
-    }
-
-    if (next.leadReview) {
-      const offered = next.leadReview.task.id;
-      const loaded = await loadRun(ctx, runId);
-      if (tried.has(offered)) {
-        return { next };
-      }
-
-      if (await takeLeadReview(ctx, await viewTask(loaded.paths, findTask(loaded, offered)))) {
-        await logRun(ctx, loaded.paths, {
-          action: 'review-taken',
-          task: offered,
-          review: next.leadReview.uiToo ? 'QA, UI too' : 'QA'
-        });
-
+      if (await takeOfferedStep(ctx, loaded, await viewTask(loaded.paths, findTask(loaded, offered)), next.review)) {
         return { next };
       }
 
@@ -640,11 +446,6 @@ export const followNext = async (
   // An agent on demand (past its group's `min`) stops once nothing is left for it: the lead starts it again.
   const team = await readTeam(ctx.root).catch(() => undefined);
   const onDemand = team ? startedAgents(team).some(each => each.agent === ctx.agent && each.onDemand) : false;
-  const designerHere =
-    role
-      ?.split(',')
-      .map(each => each.trim())
-      .includes(DESIGNER) === true;
   for (;;) {
     // A run stopped — gently, by its brake, or by a person at once — goes on once resumed, and one whose Plitzi was
     // upgraded once a person re-pins it: an agent waiting for work waits through either.
@@ -668,15 +469,7 @@ export const followNext = async (
 
       throw error;
     });
-    if (
-      next.task ||
-      next.designReview ||
-      next.leadReview ||
-      next.spike ||
-      next.proposal ||
-      next.finished ||
-      next.messages.length > 0
-    ) {
+    if (next.task || next.review || next.spike || next.finished || next.messages.length > 0) {
       return next;
     }
 
@@ -697,14 +490,14 @@ export const followNext = async (
 
     // Its wait's end is no state of its own: it is told to wait again, and stays waiting until it takes work or stops.
     if (onDemand && Date.now() - started >= onDemandIdleMs) {
-      // Not while a task of its own may come back to it: one in review, or blocked — nor, a designer, while more UI
-      // reviews are coming than the other designers running (design-2 stopped at 20:18 with four on
-      // their way, and was started again for them).
+      // Not while a task of its own may come back to it: one in review, or blocked — nor, a reviewer, while more
+      // reviews of its role are coming than the others running (design-2 stopped at 20:18 with four on their way,
+      // and was started again for them).
       // Read only, so a wait through a version change is told it ended, not refused.
       const loaded = await loadRun(ctx, runId, { anyVersion: true });
       const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
       const own = views.filter(view => view.owner?.agent === ctx.agent && view.state.status !== 'done');
-      const coming = designerHere ? await uiReviewsComing(ctx, loaded, views) : 0;
+      const coming = await reviewsComing(ctx, loaded, views);
       if (own.length === 0 && coming === 0) {
         const why = `nothing came for you in ${durationText(onDemandIdleMs)}: you are on demand — the lead starts you again when work waits for you`;
         await logRun(ctx, runPaths(ctx.root, runId), { action: 'stops', why });

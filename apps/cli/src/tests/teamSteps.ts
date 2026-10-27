@@ -22,14 +22,15 @@ export const teamSteps = (bench: () => Bench) => {
   };
 
   /** A developer takes a task, writes it and completes it: in review, as its agent leaves it. */
-  const completed = async (name: string, taskId: string, file: string, review?: 'code' | 'ui'): Promise<void> => {
+  const completed = async (name: string, taskId: string, file: string): Promise<void> => {
     const taken = await takeTask(bench().agent(name), 'es-launch', taskId);
     await writeInCopy(taken.work, file, `export const page = { title: '${taskId}' };\n`);
-    await completeTask(bench().agent(name, { token: taken.token }), 'es-launch', taskId, review ? { review } : {});
+    await completeTask(bench().agent(name, { token: taken.token }), 'es-launch', taskId, {});
   };
 
-  const designOf = async (taskId: string) =>
-    (await readState(taskPaths((await loadRun(lead(), 'es-launch')).paths, taskId))).design;
+  /** Where a card's review stands: its step, who took it. */
+  const reviewOf = async (taskId: string) =>
+    (await readState(taskPaths((await loadRun(lead(), 'es-launch')).paths, taskId))).review;
 
-  return { lead, refusalOf, completed, designOf };
+  return { lead, refusalOf, completed, reviewOf };
 };

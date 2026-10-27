@@ -44,17 +44,17 @@ const TIMED = new Set<Attention['kind']>([
   'long-wait',
   'stopping',
   'slow-review',
-  'ui-queued',
+  'review-waits',
   'refused-again',
   'held-up',
   'held-ahead'
 ]);
 
 /**
- * What needs the lead in `view`, each by a key that stays while it is the same thing — a review by its round. The lead
- * is the manager: with testers in the team it is woken only for a review nobody else may take (`leadReviews`) — what a
- * tester escalates, or a task past its review rounds, comes blocked on it among the run's attention — and with none, for
- * every task in review once its designer said.
+ * What needs the lead in `view`, each by a key that stays while it is the same thing — a review by its round and step.
+ * The lead is the manager: it is woken for a step of a review that is its own — named by the card, or one nobody else
+ * may say (`reviews.ts`) — and what a reviewer escalates, or a task past its review rounds, comes blocked on it among the
+ * run's attention.
  */
 export const leadItems = (view: RunView): LeadItem[] => [
   // Every task approved: the close is the lead's — encore-10's watch said "nothing new" and the run sat finished.
@@ -66,28 +66,24 @@ export const leadItems = (view: RunView): LeadItem[] => [
         }
       ]
     : []),
-  // One a designer is still to look at is not the lead's yet: it wakes the lead once the designer said.
+  // A step that is the lead's: its card names the lead, or nobody else may say it — a step before it is not the lead's yet.
   ...view.tasks
     .filter(
       task =>
         task.status === 'in-review' &&
         // A scout's proposal wakes the lead as itself (`spike-proposed`), never as a review to say.
         task.proposed === undefined &&
-        task.design?.status !== 'due' &&
-        (view.reviewers.length === 0 || task.leadReviews === true)
+        task.review?.lead === true
     )
     .map(task => {
+      const review = task.review;
       const why =
-        view.reviewers.length === 0
-          ? 'the team has no tester'
-          : 'nobody else may: each tester and developer worked it, or what it tests — it would hold the run';
+        review?.why ??
+        `nobody else may say its ${review?.role ?? ''}'s review: each of its role and each developer worked it, or what it tests`;
 
       return {
-        key: `review:${task.id}:${String(task.round)}:${task.takenAt ?? ''}:${task.design?.status ?? ''}`,
-        text:
-          task.design?.status === 'approved'
-            ? `${task.id} is in review, its UI approved by ${task.design.by ?? 'a designer'} — yours is the final review (${why}): plitzi task look ${task.id}, then plitzi task review ${task.id} --approve | --changes "…"`
-            : `${task.id} is in review, yours to review (${why}): plitzi task review ${task.id} --approve | --changes "…"`
+        key: `review:${task.id}:${String(task.round)}:${String(review?.step ?? 0)}:${task.takenAt ?? ''}`,
+        text: `${task.id} is in review, yours to review (${why}): plitzi task look ${task.id}, then plitzi task review ${task.id} --approve | --changes "…"`
       };
     }),
   ...view.attention

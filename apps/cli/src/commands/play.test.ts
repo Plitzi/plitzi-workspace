@@ -326,6 +326,39 @@ describe('an action in a play', () => {
   });
 });
 
+// Five runs running, an agent asked page play for --shot: a picture is a step of its own, taken where it stands.
+describe('a shot among the steps', () => {
+  it('pictures the page where it stands and says the file, acting nothing and reading nothing again', async () => {
+    const ran: string[] = [];
+    const side: PlaySide = {
+      act: step => {
+        ran.push(step.kind);
+
+        return Promise.resolve(undefined);
+      },
+      read: targets => Promise.resolve(targets.map(() => at(0))),
+      picture: (index, label) => Promise.resolve(`tmp/shots/r-step-${String(index + 1)}-${label ?? ''}-390.png`)
+    };
+    const result = await playOn(
+      { here: side },
+      [
+        { kind: 'click', target: 'open' },
+        { kind: 'shot', label: 'opened' }
+      ],
+      [{ here: 'panel', there: 'panel' }]
+    );
+    if (!('played' in result)) {
+      throw new Error(result.problem);
+    }
+
+    expect(ran).toEqual(['click']);
+    expect(result.played.at(-1)).toMatchObject({ step: 'shot opened', reads: [] });
+    expect(playedText(result.played).map(line => stripVTControlCharacters(line))).toContain(
+      '  ▣ tmp/shots/r-step-2-opened-390.png'
+    );
+  });
+});
+
 // encore-10's designer played /sign-in as mika: the page sent a signed-in visitor home on load, and the play started
 // on Home, the flash of the form it was there to measure unseen.
 describe('a page that goes on by itself as it opens', () => {

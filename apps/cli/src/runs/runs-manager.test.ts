@@ -6,26 +6,17 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { bottlenecks } from './bottlenecks';
 import { extendRun } from './extend';
 import { leadItems } from './leadWatch';
-import { messagesOf } from './messages';
 import { agentsNeeded } from './onDemand';
 import { copyRunWork } from './preview';
 import { checkPlanFile, loadRun, logRun, openRun, readRunLog } from './run';
 import { askLead, messageTasks, tellLeadAbout } from './talk';
-import {
-  answerSpike,
-  approveSpike,
-  completeTask,
-  escalateReview,
-  nextTask,
-  reviewTask,
-  takeNext,
-  unblockTask
-} from './tasks';
+import { completeTask, escalateReview, nextTask, reviewTask, takeNext, unblockTask } from './tasks';
 import { viewTask } from './taskStore';
 import { readTeam, startedAgents } from './team';
 import { viewRun } from './view';
+import { researchSteps } from '../tests/research';
 import { reviewerSteps, SCOUT, team, TESTERS } from '../tests/reviewerSteps';
-import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
+import { benchPlan, designed, makeBench, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
 import type { RunPlan } from './model';
@@ -47,6 +38,7 @@ afterEach(async () => {
 });
 
 const { refusal, lead, take } = runSteps(() => bench);
+const { found, approveFound } = researchSteps(() => bench);
 const { twoInReview } = reviewerSteps(() => bench);
 
 describe('a review no tester may take', () => {
@@ -60,17 +52,17 @@ describe('a review no tester may take', () => {
       ]
     };
     await bench.writeTeam(members);
-    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const plan: RunPlan = benchPlan();
     plan.tasks = plan.tasks.map(task => (task.id === 't-menu' ? { ...task, role: 'tester' } : task));
     const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
     const taken = await take('test-1', 't-menu');
     await writeInCopy(taken.work, 'src/space/pages/menu.ts', 'export const page = {};\n');
     await completeTask(taken.ctx, runId, 't-menu');
 
-    expect((await nextTask(bench.agent('test-1'), runId, 'tester')).leadReview).toBeUndefined();
-    expect((await nextTask(lead(), runId, 'lead')).leadReview).toBeUndefined();
+    expect((await nextTask(bench.agent('test-1'), runId, 'tester')).review).toBeUndefined();
+    expect((await nextTask(lead(), runId, 'lead')).review).toBeUndefined();
     expect(leadItems(await viewRun(lead(), runId)).filter(item => item.key.startsWith('review:t-menu:'))).toEqual([]);
-    expect((await viewRun(lead(), runId)).tasks.find(task => task.id === 't-menu')?.spareReviewers).toEqual([
+    expect((await viewRun(lead(), runId)).tasks.find(task => task.id === 't-menu')?.review?.reviewers).toEqual([
       'dev-1',
       'dev-2'
     ]);
@@ -79,9 +71,11 @@ describe('a review no tester may take', () => {
     const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
     const run = { identified: [], scratch: loaded.paths.scratch, openFor: 0, open: true, launches: true };
     const asked = agentsNeeded(views, startedAgents(members), new Set(['test-1']), run);
-    expect(asked.find(each => each.agent === 'dev-1')?.text).toContain('the review of t-menu (each tester worked it)');
+    expect(asked.find(each => each.agent === 'dev-1')?.text).toContain(
+      "the tester's review of t-menu wait for a developer"
+    );
 
-    expect((await takeNext(bench.agent('dev-1'), runId, 'developer')).next.leadReview?.task.id).toBe('t-menu');
+    expect((await takeNext(bench.agent('dev-1'), runId, 'developer')).next.review?.task.id).toBe('t-menu');
     expect(await reviewTask(bench.agent('dev-1'), runId, 't-menu', 'approve', [])).toMatchObject({
       verdict: 'approve'
     });
@@ -97,7 +91,7 @@ describe('a review no tester may take', () => {
       ]
     };
     await bench.writeTeam(members);
-    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const plan: RunPlan = benchPlan();
     const home = plan.tasks.find(task => task.id === 't-home') ?? plan.tasks[0];
     plan.tasks = [
       { ...home, tests: false },
@@ -120,10 +114,10 @@ describe('a review no tester may take', () => {
     await writeInCopy(tests.work, 'src/lib/homeChecks.ts', 'export const checked = true;\n');
     await completeTask(tests.ctx, runId, 't-home-tests');
 
-    expect((await nextTask(bench.agent('dev-1'), runId, 'developer')).leadReview).toBeUndefined();
+    expect((await nextTask(bench.agent('dev-1'), runId, 'developer')).review).toBeUndefined();
     const woken = leadItems(await viewRun(lead(), runId)).filter(item => item.key.startsWith('review:t-home-tests:'));
     expect(woken.map(item => item.text)).toEqual([expect.stringContaining('nobody else may')]);
-    expect((await nextTask(lead(), runId, 'lead')).leadReview?.task.id).toBe('t-home-tests');
+    expect((await nextTask(lead(), runId, 'lead')).review?.task.id).toBe('t-home-tests');
 
     const loaded = await loadRun(lead(), runId);
     const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
@@ -136,7 +130,7 @@ describe('a review no tester may take', () => {
 describe('a question the task asked, open at its review', () => {
   it('has a tester hand the review to the lead, whose answer it is', async () => {
     await bench.writeTeam(team(TESTERS));
-    const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
+    const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
     const menu = await take('agent-1', 't-menu');
     await askLead(menu.ctx, runId, 't-menu', 'Prices with the euro sign?');
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Menú" };\n');
@@ -150,7 +144,7 @@ describe('a question the task asked, open at its review', () => {
 
 describe('the lead, every task approved', () => {
   it('is told to look, report and finish — and never stops', async () => {
-    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const plan: RunPlan = benchPlan();
     plan.tasks = plan.tasks.filter(task => task.id === 't-menu');
     await bench.writeTeam(team(TESTERS));
     const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
@@ -170,7 +164,7 @@ describe('an escalated review the lead answers', () => {
   // Escalated at its first round, answered: back in progress, its agent stopped at its complete — and nobody started it.
   it('asks for its agent again, stopped since its complete', async () => {
     const { runId } = await twoInReview();
-    const offered = (await takeNext(bench.agent('test-1'), runId, 'tester')).next.leadReview?.task.id ?? '';
+    const offered = (await takeNext(bench.agent('test-1'), runId, 'tester')).next.review?.task.id ?? '';
     await escalateReview(bench.agent('test-1'), runId, offered, 'Prices with the euro sign, or without?');
     const owner = offered === 't-menu' ? 'agent-1' : 'agent-2';
     const loaded = await loadRun(lead(), runId);
@@ -192,8 +186,8 @@ describe('what the team told the lead of a task', () => {
     // And what the lead said to it: encore-10's tester sent back a task for a question the lead had answered.
     await messageTasks(lead(), runId, 't-menu', 'Keep the euro sign after the price');
     const offers = [
-      (await takeNext(bench.agent('test-1'), runId, 'tester')).next.leadReview,
-      (await takeNext(bench.agent('test-2'), runId, 'tester')).next.leadReview
+      (await takeNext(bench.agent('test-1'), runId, 'tester')).next.review,
+      (await takeNext(bench.agent('test-2'), runId, 'tester')).next.review
     ];
     expect(offers.find(offer => offer?.task.id === 't-menu')?.told).toEqual([
       'agent-2 to the lead: On t-menu: Its prices are read once, at authoring',
@@ -202,25 +196,21 @@ describe('what the team told the lead of a task', () => {
   });
 });
 
-describe('a UI review taken, its task escalated', () => {
+describe('a step taken, its task escalated', () => {
   // Kept taken on a task out of review, its designer was counted at work, and never started fresh, until it came back.
-  it('is let go, its designer told — kept as the one before', async () => {
+  it('is let go — its reviewer kept as the one before', async () => {
     await bench.writeTeam(team(TESTERS));
-    const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
+    const { runId } = (await openRun(lead(), await bench.writePlan(designed(benchPlan())))).checked;
     const menu = await take('agent-1', 't-menu');
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Menú" };\n');
     await completeTask(menu.ctx, runId, 't-menu');
-    expect((await takeNext(bench.agent('agent-2'), runId, 'designer')).next.designReview?.task.id).toBe('t-menu');
+    expect((await takeNext(bench.agent('agent-2'), runId, 'designer')).next.review?.task.id).toBe('t-menu');
 
-    await escalateReview(bench.agent('test-1'), runId, 't-menu', 'The menu reads two ways');
+    await escalateReview(bench.agent('agent-2'), runId, 't-menu', 'The menu reads two ways');
     const loaded = await loadRun(lead(), runId);
     const { state } = await viewTask(loaded.paths, loaded.tasks.find(task => task.id === 't-menu') ?? loaded.tasks[0]);
-    expect(state.design).toMatchObject({ status: 'due', before: 'agent-2' });
-    expect(state.design?.by).toBeUndefined();
-    const told = (await messagesOf(loaded)).filter(message => message.to === '@agent-2');
-    expect(told.map(message => message.text).join(' ')).toContain(
-      'escalated t-menu to the lead while you reviewed its UI'
-    );
+    expect(state.review).toMatchObject({ step: 0, before: ['agent-2'] });
+    expect(state.review?.by).toBeUndefined();
   });
 });
 
@@ -235,7 +225,7 @@ describe('the keeper, for a review a developer gives', () => {
       ]
     };
     await bench.writeTeam(members);
-    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const plan: RunPlan = benchPlan();
     plan.tasks = plan.tasks.map(task => (task.id === 't-menu' ? { ...task, role: 'tester' } : task));
     const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
     const tests = await take('test-1', 't-menu');
@@ -247,7 +237,7 @@ describe('the keeper, for a review a developer gives', () => {
     const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
     const run = { identified: [], scratch: loaded.paths.scratch, openFor: 0, open: true, launches: true };
     const asked = agentsNeeded(views, startedAgents(members), new Set(['test-1', 'agent-1']), run);
-    expect(asked.find(each => each.agent === 'agent-2')?.text).toContain('the review of t-menu');
+    expect(asked.find(each => each.agent === 'agent-2')?.text).toContain("the tester's review of t-menu");
   });
 });
 
@@ -255,9 +245,11 @@ describe('an agent asking with no role', () => {
   // A run's design-1 read "nothing ready for a undefined": the roles are the team's for it.
   it('is told what is ready for others by the roles the team gives it', async () => {
     await bench.writeTeam(team(TESTERS));
-    const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
+    const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
     const next = await nextTask(bench.agent('test-1'), runId);
-    expect(next.why).toContain('nothing ready for a tester: ready for others');
+    // A tester's work is the reviews coming: what the developers work comes to it in review.
+    expect(next.why).toContain('no task is left for a tester to work');
+    expect(next.why).toContain('yours to review once in review');
   });
 });
 
@@ -281,7 +273,7 @@ describe('the keeper, for a task of tests', () => {
         devDependencies: { '@playwright/test': '^1.56.1' }
       })
     );
-    const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
+    const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
     const about = await take('dev-1', 't-about');
     await writeInCopy(about.work, 'src/space/pages/about.ts', 'export const page = { es: true };\n');
     await completeTask(about.ctx, runId, 't-about');
@@ -298,7 +290,7 @@ describe('the keeper, for a task of tests', () => {
 describe('a spike while its scout is between pieces', () => {
   // encore-10's lead was told "yours to find out (the team has no scout)" while scout-1 stood stopped for a fresh context.
   it('is never the lead’s for want of a scout running: the team has one', async () => {
-    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const plan: RunPlan = benchPlan();
     plan.tasks = [
       ...plan.tasks,
       { ...plan.tasks[0], id: 's-words', title: 'The words', files: [], spike: 'which words' }
@@ -321,7 +313,7 @@ describe('a research spike in a plan', () => {
   // nothing and ends by its findings.
   it('is told nothing of tests nor checks', async () => {
     await bench.writeTeam(team(TESTERS));
-    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const plan: RunPlan = benchPlan();
     plan.tasks = [
       ...plan.tasks,
       { ...plan.tasks[0], id: 's-words', title: 'The words', files: [], spike: 'which words', estimateMinutes: 10 }
@@ -335,7 +327,7 @@ describe('a task that holds its own test file', () => {
   // encore-10's t-visual-show-soon held shows.test.ts and was told "its test files are another task's".
   it('is told it writes its tests itself', async () => {
     await bench.writeTeam(team(TESTERS));
-    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const plan: RunPlan = benchPlan();
     plan.tasks = [
       { ...plan.tasks[0], id: 't-shows', files: ['src/functions/shows.ts', 'src/functions/shows.test.ts'] }
     ];
@@ -373,14 +365,14 @@ describe('a research spike that depends on a task', () => {
     expect(await status()).toBe('pending');
 
     await reviewTask(bench.agent('test-1'), runId, 't-menu', 'approve', []);
-    expect(await status()).toBe('spike');
+    expect(await status()).toBe('ready');
   });
 });
 
-describe('a scout at its spike', () => {
+describe('a scout at its research card', () => {
   // encore-10's watch said test-1 held a review "while scout-1 has nothing to take", scout-1 at s-suite-failures.
   it('is never told free beside a review that drags: it is at work', async () => {
-    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const plan: RunPlan = benchPlan();
     const menu0 = plan.tasks.find(task => task.id === 't-menu') ?? plan.tasks[0];
     // Nothing else ready: the drag is what holds the run.
     plan.tasks = [menu0, { ...menu0, id: 's-words', title: 'The words', files: [], spike: 'which words' }];
@@ -400,7 +392,7 @@ describe('a scout at its spike', () => {
     const said = bottlenecks(views, all, bench.now(), [], all)
       .map(each => each.text)
       .join(' ');
-    // Free, in the drag's words, are those at nothing: never the scout at its spike.
+    // Free, in the drag's words, are those at nothing: never the scout at its research.
     expect(said).toMatch(/nothing to take/);
     expect(said).not.toMatch(/while [^:]*scout-1[^:]*nothing to take/);
   });
@@ -410,7 +402,7 @@ describe('a scout’s result the lead approves without its tasks', () => {
   // encore-10's lead sent s-suite-failures back to end it alone, and its scout read "say it again".
   it('is done with its findings, the tasks left out and said', async () => {
     await bench.writeTeam(team({ ...SCOUT, min: 0 }));
-    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const plan: RunPlan = benchPlan();
     plan.tasks = [
       plan.tasks[0],
       { ...plan.tasks[0], id: 's-words', title: 'The words', files: [], spike: 'which words', estimateMinutes: 10 }
@@ -427,31 +419,31 @@ describe('a scout’s result the lead approves without its tasks', () => {
         ]
       })
     );
-    await answerSpike(bench.agent('scout-1'), runId, 's-words', '"Reservar"', { tasks: stage });
+    await found(runId, 's-words', '"Reservar"', { tasks: stage });
 
-    const done = await approveSpike(lead(), runId, 's-words', { findingsOnly: true });
-    expect(done).toMatchObject({ status: 'done', dropped: ['t-words'] });
+    const done = await approveFound(runId, 's-words', 'all');
+    expect(done.found).toMatchObject({ added: [], left: ['t-words'] });
     expect((await loadRun(lead(), runId)).tasks.map(task => task.id)).not.toContain('t-words');
   });
 });
 
-describe('a spike handed to its scout', () => {
+describe('research taken by its scout', () => {
   // encore-10's spike on the suite's speed was told to compare with an original the run had none of.
   it('names the original only when the run copies one', async () => {
     await bench.writeTeam(team({ ...SCOUT, min: 0 }));
-    const plan: RunPlan = { ...benchPlan(), designReview: false, reference: 'https://example.com' };
+    const plan: RunPlan = { ...benchPlan(), reference: 'https://example.com' };
     plan.tasks = [
       { ...plan.tasks[0], id: 's-words', title: 'The words', files: [], spike: 'which words', estimateMinutes: 10 }
     ];
     const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
-    expect((await takeNext(bench.agent('scout-1'), runId, 'scout')).next.spike?.reference).toBe('https://example.com');
+    expect((await takeNext(bench.agent('scout-1'), runId, 'scout')).taken?.reference).toBe('https://example.com');
   });
 });
 
 describe('a task of tests behind the task it tests', () => {
   // encore-10's watch told the lead to take t-visual-own-state away from its tests' dependencies, its review going on.
   it('is never held up: it waits for what it tests by what it is', async () => {
-    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const plan: RunPlan = benchPlan();
     const menu0 = plan.tasks.find(task => task.id === 't-menu') ?? plan.tasks[0];
     plan.tasks = [
       menu0,
@@ -482,7 +474,7 @@ describe('the run’s work, copied for a spike', () => {
   // encore-10's scout rebuilt the run's approved work by hand — approved.json, then each blob — to measure apart.
   it('is a folder of the caller’s scratch with every approved file, and never outside the project', async () => {
     await bench.writeTeam(team({ ...TESTERS, count: 1 }, { ...SCOUT, min: 0 }));
-    const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
+    const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
     const menu = await take('agent-1', 't-menu');
     await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Carta" };\n');
     await completeTask(menu.ctx, runId, 't-menu');

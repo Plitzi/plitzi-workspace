@@ -1,22 +1,27 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
 import chalk from 'chalk';
 
 import { projectHere } from './existingProject';
 import { pairOf } from './measure';
 import { settle } from './measureState';
 import { readState } from './playState';
+import { shotFile } from './shot/output';
+import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
 import { keptSession } from '../browser/keptBrowser';
 import { originHere } from '../runs/copyServer';
 import { otherPageAt, pageAnswered } from './shot/remote';
-import { actingSteps, actStep, stepText } from './shot/steps';
-import { visitorsOn } from './shot/visitors';
-import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
+import { actStep, playingSteps, stepText } from './shot/steps';
 import { openVisit, visitorBrowser, visitViewOf } from './visit';
+import { PROJECT_TMP } from '../scaffold/paths';
+import { visitorsOn } from './shot/visitors';
 
 import type { BrowserPage, Scheme } from '../browser';
 import type { Pair } from './measure';
 import type { ElementState } from './playState';
 import type { VisitorOptions } from './register/options';
-import type { ActingStep } from './shot/steps';
+import type { ActingStep, PlayStep } from './shot/steps';
 import type { Visitors } from './shot/visitors';
 
 /** How much of an element's text a line of `--read` shows; `--json` has it whole. */
@@ -76,6 +81,8 @@ export interface PlayedStep {
   reached?: true;
   /** What an action step answered — its output, clipped. */
   answer?: string;
+  /** A `shot` step's pictures, each side's file. */
+  pictured?: Partial<Record<keyof Pair, string>>;
   /** Each element read, by how it was asked, here and — with `--compare` — there. */
   reads: { element: string; here?: ElementState; there?: ElementState; moved?: Moved; problem?: string }[];
 }
@@ -104,10 +111,28 @@ export interface PlaySide {
   /** Where its page is now, path and query: a step that takes it elsewhere is said (`PlayedStep.went`). */
   address?: () => string;
   read: (targets: readonly string[]) => Promise<(ElementState | { problem: string })[] | { problem: string }>;
+  /** A picture of the page where it stands (`shot [label]`): the file it is written to. */
+  picture?: (index: number, label?: string) => Promise<string>;
 }
 
 /** A page of this command's as a side of a play — `visitors`, the other accounts its `as` steps play as. */
-export const pageSide = (page: BrowserPage, visitors?: Visitors): PlaySide => ({
+export const pageSide = (
+  page: BrowserPage,
+  visitors?: Visitors,
+  /** Where the picture of step `index` goes, for a page whose steps may picture it. */
+  pictureTo?: (index: number, label?: string) => string
+): PlaySide => ({
+  ...(pictureTo
+    ? {
+        picture: async (index: number, label?: string) => {
+          const file = pictureTo(index, label);
+          await mkdir(path.dirname(file), { recursive: true });
+          await writeFile(file, await page.screenshot({ fullPage: false }));
+
+          return file;
+        }
+      }
+    : {}),
   address: () => {
     const url = new URL(page.url());
 
@@ -135,7 +160,7 @@ export const pageSide = (page: BrowserPage, visitors?: Visitors): PlaySide => ({
 /** The steps, each played on each side, every element read after it — or what kept a step from happening. */
 export const playOn = async (
   sides: { here: PlaySide; there?: PlaySide },
-  steps: readonly ActingStep[],
+  steps: readonly PlayStep[],
   reads: readonly Pair[],
   { actions = true }: { actions?: boolean } = {}
 ): Promise<{ played: PlayedStep[] } | { problem: string; side: keyof Pair }> => {
@@ -199,6 +224,19 @@ export const playOn = async (
 
   played.push(await readAll('start'));
   for (const [index, step] of steps.entries()) {
+    // A picture where it stands: each side's, said with the step — nothing read again, nothing moved.
+    if (step.kind === 'shot') {
+      const pictured: Partial<Record<keyof Pair, string>> = {};
+      for (const [name, side] of [['here', sides.here] as const, ['there', sides.there] as const]) {
+        if (side?.picture) {
+          pictured[name] = await side.picture(index, step.label);
+        }
+      }
+
+      played.push({ step: `shot${step.label === undefined ? '' : ` ${step.label}`}`, reads: [], pictured });
+      continue;
+    }
+
     const idle: Partial<Record<keyof Pair, string>> = {};
     const was = { here: sides.here.address?.(), there: sides.there?.address?.() };
     const names = sides.there ? (['here', 'there'] as const) : (['here'] as const);
@@ -391,6 +429,8 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
       ? [chalk.dim('  (scrolled into view first, as a pointer reaches it: moves are from there)')]
       : []),
     ...(entry.answer === undefined ? [] : [`  ← ${entry.answer}`]),
+    ...(entry.pictured?.here ? [`  ▣ ${entry.pictured.here}`] : []),
+    ...(entry.pictured?.there ? [chalk.dim(`  ▣ there ${entry.pictured.there}`)] : []),
     ...(entry.went?.here ? [`  → ${entry.went.here}`] : []),
     ...(entry.went?.there ? [chalk.dim(`  → there ${entry.went.there}`)] : []),
     ...(entry.idle?.here ? [chalk.yellow(`  here: ${entry.idle.here}`)] : []),
@@ -441,9 +481,9 @@ export const readTargets = (read: readonly string[] = []): string[] =>
   read.flatMap(each => (/^[\w-]+(,[\w-]+)+$/.test(each) ? each.split(',') : [each]));
 
 /** The steps asked — none with `--read` alone: the page as it rests, the start read and nothing played. */
-export const stepsOf = (options: Pick<PlayOptions, 'steps' | 'read'>): ActingStep[] | { problem: string } => {
+export const stepsOf = (options: Pick<PlayOptions, 'steps' | 'read'>): PlayStep[] | { problem: string } => {
   if ((options.steps ?? '').trim() !== '') {
-    const acting = actingSteps(options.steps, 'page play');
+    const acting = playingSteps(options.steps, 'page play');
 
     return 'problem' in acting ? { problem: `${acting.problem}.` } : acting;
   }
@@ -554,7 +594,26 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
         return;
       }
 
-      const there = held ? { act: held.act, read: held.read } : theirs ? pageSide(theirs.page) : undefined;
+      // A `shot` step pictures each side where it stands: in tmp/shots, by the page, the step and the width.
+      const pictureTo =
+        (side: string) =>
+        (index: number, label?: string): string =>
+          path.join(
+            project.root,
+            PROJECT_TMP,
+            'shots',
+            shotFile(
+              route,
+              `${side}step-${String(index + 1)}${label ? `-${label}` : ''}`,
+              width,
+              options.scheme ?? 'default'
+            )
+          );
+      const there = held
+        ? { act: held.act, read: held.read }
+        : theirs
+          ? pageSide(theirs.page, undefined, pictureTo('compare-'))
+          : undefined;
       const { timezone, conditions } = visitViewOf(options);
       const visitors = visitorsOn(project.root, browser, where.origin, {
         width,
@@ -562,9 +621,14 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
         ...(timezone ? { timezone } : {}),
         ...(conditions ? { conditions } : {})
       });
-      const outcome = await playOn({ here: pageSide(ours.page, visitors), ...(there ? { there } : {}) }, steps, reads, {
-        actions: results.length === 0
-      }).finally(async () => {
+      const outcome = await playOn(
+        { here: pageSide(ours.page, visitors, pictureTo('')), ...(there ? { there } : {}) },
+        steps,
+        reads,
+        {
+          actions: results.length === 0
+        }
+      ).finally(async () => {
         await visitors.close();
         await held?.close();
       });

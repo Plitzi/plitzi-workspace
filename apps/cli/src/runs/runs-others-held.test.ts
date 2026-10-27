@@ -43,7 +43,6 @@ const opened = async (
   about: (typeof menuLine | string)[] = ['The prices follow']
 ) => {
   const plan = benchPlan();
-  plan.designReview = false;
   plan.tasks = plan.tasks.map(task =>
     task.id === 't-menu'
       ? { ...task, acceptance: [line] }

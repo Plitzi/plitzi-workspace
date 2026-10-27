@@ -5,7 +5,6 @@ import type { RunSnapshotTask } from '@plitzi/sdk-shared/runs';
 
 const ICON: Record<string, string> = {
   pending: 'fa-regular fa-circle',
-  spike: 'fa-solid fa-flask',
   ready: 'fa-regular fa-circle-dot',
   'in-progress': 'fa-solid fa-play',
   waiting: 'fa-solid fa-hourglass-half',
@@ -21,7 +20,6 @@ const TONE: Record<string, string> = {
   'in-review': 'text-violet-600 dark:text-violet-400',
   'in-progress': 'text-sky-600 dark:text-sky-400',
   'changes-requested': 'text-amber-600 dark:text-amber-400',
-  spike: 'text-blue-600 dark:text-blue-400',
   blocked: 'text-red-600 dark:text-red-400',
   failed: 'text-red-600 dark:text-red-400'
 };

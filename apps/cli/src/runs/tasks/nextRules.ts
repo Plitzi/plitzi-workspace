@@ -1,14 +1,14 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { hasDesignReview } from '../design';
 import { createExclusive } from '../files';
 import { isPrincipal } from '../leads';
 import { freeBaseAgents, runningAgents } from '../onDemand';
 import { agentScratch } from '../paths';
 import { PRESENCE_STALE_MS, presentAt } from '../presence';
+import { reviewRolesOf, reviewSteps, reviewTeamOf } from '../reviews';
 import { logRun, readRunLog } from '../run';
-import { DEFAULT_SESSION, DESIGNER, FRESH_CONTEXT_AT, readTeam, startedAgents } from '../team';
+import { DEFAULT_SESSION, FRESH_CONTEXT_AT, readTeam, startedAgents } from '../team';
 import { isWorked } from '../worked';
 
 import type { LoadedRun, RunContext } from '../run';
@@ -36,7 +36,7 @@ export const markJoined = async (ctx: RunContext, loaded: LoadedRun): Promise<vo
  * What ends a piece of an agent's work, in the run's log: a task completed, a review decided or escalated, what a spike
  * found handed to the lead.
  */
-const PIECE_ENDS = new Set(['complete', 'review', 'design-review', 'review-escalated', 'spike-proposed']);
+const PIECE_ENDS = new Set(['complete', 'review', 'review-escalated', 'spike-proposed']);
 
 /**
  * Whether the caller, between two pieces of work, stops to be started again with a fresh context (`SessionMode`), and
@@ -135,12 +135,7 @@ export const inAPiece = (agent: string, views: readonly TaskView[]): boolean =>
       }
     }
 
-    return (
-      (state.status === 'in-review' && state.reviewer?.by === agent && state.reviewer.round === state.round) ||
-      (state.design?.status === 'due' && state.design.by === agent) ||
-      // A spike it is finding out, its result not handed to the lead yet.
-      (state.spikedBy?.by === agent && state.proposed === undefined && state.status === 'spike')
-    );
+    return state.status === 'in-review' && state.review?.by === agent;
   });
 
 const thousands = (tokens: number): string => `${String(Math.round(tokens / 1000))}k`;
@@ -179,28 +174,30 @@ export const baseFirst = async (
 };
 
 /**
- * How many UI reviews are on their way past what the other designers running take: tasks at work whose UI a designer
- * will look at, beyond one each for the rest. What keeps a designer on demand from stopping only to be started again.
+ * How many reviews of the roles `ctx.agent` reviews as are on their way past what the others of those roles running
+ * take: cards at work whose review names one of them, beyond one each for the rest. What keeps a reviewer on demand
+ * from stopping only to be started again (design-2 stopped with four UI reviews on their way, and was started again).
  */
-export const uiReviewsComing = async (
+export const reviewsComing = async (
   ctx: RunContext,
   loaded: LoadedRun,
   views: readonly TaskView[]
 ): Promise<number> => {
-  if (loaded.record.designReview !== true) {
+  const team = await reviewTeamOf(ctx.root);
+  const roles = reviewRolesOf(team, ctx.agent);
+  if (roles.length === 0) {
     return 0;
   }
 
-  const team = await readTeam(ctx.root).catch(() => undefined);
   const running = runningAgents(await readRunLog(loaded.paths));
-  const others = (team ? startedAgents(team) : []).filter(
-    each => each.agent !== ctx.agent && each.roles.includes(DESIGNER) && running.has(each.agent)
-  ).length;
+  const others = new Set(
+    roles.flatMap(role => (team.byRole[role] ?? []).filter(agent => agent !== ctx.agent && running.has(agent)))
+  ).size;
   const coming = views.filter(
     view =>
       view.owner !== undefined &&
       isWorked(view.state.status) &&
-      hasDesignReview(view.task, [...view.task.files, ...(view.state.changed ?? [])])
+      reviewSteps(view.task, team).some(role => roles.includes(role))
   ).length;
 
   return Math.max(0, coming - others);

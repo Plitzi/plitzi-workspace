@@ -261,6 +261,18 @@ const optionsOf = (options: Record<string, unknown>): TeamOptions => {
 export const DEFAULT_DESIGN_REVIEW: Quality = 'standard';
 
 /**
+ * What a designer looks at, by how closely the team asks (`options.designReview`) — the run's skill (`runs.md`) says it
+ * whole. What every level holds: the hierarchy and spacing, the theme's tokens, words a person understands.
+ */
+export const DESIGN_LOOK: Record<Quality, string> = {
+  light:
+    'its pages at 1440 and 390, in the space’s default scheme: hierarchy and spacing, the theme’s tokens rather than new values, labels and words a person understands. Only what the task changed — not the pages it does not touch, not a pixel comparison',
+  standard:
+    'how it reads at 1440 and 390, in light and dark: hierarchy and spacing, the theme’s tokens rather than new values, every state (empty, long, loading, error, hover, focus), labels and words a person understands, and that it looks like the rest of the space. Against a reference, its sections (page shot --compare --clip <section>): its dress first — every gradient, glow and ornament the comparison says the reference has and this page lacks is one a visitor sees — then what moves, the sizes it measures, how each control behaves, the phone’s own layout. A state the data never shows, you cannot look at: say it (plitzi task review <task> --note "…"), the lead decides how it is seen',
+  high: 'everything standard asks, on every page that reads its files — not only its own — against the reference and against the run before it (that nothing else moved), every state and control, in both schemes and widths. A state the data never shows, you cannot look at: say it (plitzi task review <task> --note "…"), the lead decides how it is seen'
+};
+
+/**
  * The roles the CLI knows, and what each does in a run: a task names one (`"role"`), an agent takes some. Any other
  * name is a role of the project's own — a task names it and an agent of the team takes it, with nothing more to it.
  */
@@ -543,7 +555,7 @@ export const STARTER_TEAM: Team = {
 
 /** The team a plan needs at least: the starter's, and one agent for each other role it names. */
 const teamFor = (plan: Pick<RunPlan, 'tasks'>): Team => {
-  const roles = [...new Set(plan.tasks.map(task => task.role ?? DEVELOPER))];
+  const roles = [...new Set(plan.tasks.filter(task => !leadFindsOut(task)).map(task => task.role ?? DEVELOPER))];
 
   return {
     ...STARTER_TEAM,
@@ -640,10 +652,6 @@ export const heldRoles = (team: Team): Record<string, number> => {
 /** Whether someone in the team takes the role. */
 export const teamTakes = (team: Team, role: string): boolean => team.agents.some(each => each.roles.includes(role));
 
-/** Whether the run reviews design: as the plan says — or, when it does not, whether the team has a designer. */
-export const reviewsDesign = (team: Team | undefined, plan: Pick<RunPlan, 'designReview'>): boolean =>
-  plan.designReview ?? (team ? teamTakes(team, DESIGNER) : false);
-
 /** The skills the team names that the project does not have, each said with its agent: one read first, and missing. */
 export const skillProblems = async (root: string, team: Team): Promise<string[]> =>
   (
@@ -662,10 +670,14 @@ export const skillProblems = async (root: string, team: Team): Promise<string[]>
     )
   ).flat();
 
+/** A research card whose plan names no role: a scout's, the lead's with none in the team — never a role missing. */
+const leadFindsOut = (task: RunPlan['tasks'][number]): boolean =>
+  task.role === undefined && task.spike !== undefined && task.files.length === 0;
+
 /** The tasks of the plan whose role nobody in the team takes, said with the fix. */
 export const roleProblems = (plan: Pick<RunPlan, 'tasks'>, team: Team): string[] =>
   plan.tasks
-    .filter(task => !teamTakes(team, task.role ?? DEVELOPER))
+    .filter(task => !leadFindsOut(task) && !teamTakes(team, task.role ?? DEVELOPER))
     .map(
       task =>
         `Task "${task.id}" is a ${task.role ?? DEVELOPER}'s, and nobody in the team (${TEAM_FILE}) takes ${task.role ?? DEVELOPER}: give it a role the team has, or add one (plitzi run team set <name> --roles ${task.role ?? DEVELOPER})`

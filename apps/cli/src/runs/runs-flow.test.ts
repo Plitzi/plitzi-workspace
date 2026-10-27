@@ -83,7 +83,7 @@ const THEME = 'src/space/theme.ts';
 
 describe('a run played whole, as a run went', () => {
   it('holds every rule it broke: base first, requests merged at approval, the lead answering, the finish whole', async () => {
-    const plan = { ...benchPlan(), designReview: false };
+    const plan = benchPlan();
     await bench.writeTeam({
       version: 1,
       agents: [{ name: 'dev', roles: ['developer'], count: 2, min: 1 }]
@@ -167,7 +167,7 @@ describe('a run played whole, as a run went', () => {
     // The rest, done: the lead reviews what queues — the team has no tester.
     await completeTask(as('dev-1', home.token), runId, 't-home');
     const reviewed = await takeNext(as('lead'), runId, 'lead');
-    expect(reviewed.next.leadReview?.task.id).toBe('t-home');
+    expect(reviewed.next.review?.task.id).toBe('t-home');
     await reviewTask(as('lead'), runId, 't-home', 'approve', []);
     for (const [agent, taskId, file] of [['dev-2', 't-book', 'src/space/pages/book.ts']] as const) {
       const taken = await takeTask(as(agent), runId, taskId);
@@ -214,7 +214,7 @@ describe('a run played whole, as a run went', () => {
 // holder's: another agent holding its copy's token acts on nothing of it, and the holder acts on it as itself.
 describe('a task held by its holder alone', () => {
   it('refuses another agent the task, its copy’s token in hand, and keeps the work and the log the holder’s', async () => {
-    const plan = { ...benchPlan(), designReview: false };
+    const plan = benchPlan();
     await bench.writeTeam({ version: 1, agents: [{ name: 'dev', roles: ['developer'], count: 2 }] });
     await openRun(as('lead'), await bench.writePlan(plan));
     const home = await takeTask(as('dev-1'), plan.runId, 't-home');
@@ -234,7 +234,7 @@ describe('a task held by its holder alone', () => {
     expect(log.some(entry => entry.by === 'agent')).toBe(false);
   });
   it('takes the next task from the copy of the one it completed: the copy says its task, never who takes', async () => {
-    const plan = { ...benchPlan(), designReview: false };
+    const plan = benchPlan();
     // One session, the test's: what it takes next in it is the point (a fresh start has tests of its own).
     await bench.writeTeam({ version: 1, agents: [{ name: 'dev', roles: ['developer'], count: 2, session: 'keep' }] });
     await openRun(as('lead'), await bench.writePlan(plan));
@@ -252,7 +252,7 @@ describe('a task held by its holder alone', () => {
 // The lead takes a task back from an agent at any time, says why, and decides where it goes (Carlos).
 describe('a task the lead takes back', () => {
   it('goes to the agent it is handed to — no other — or to the lead itself; its agent is told why', async () => {
-    const plan = { ...benchPlan(), designReview: false };
+    const plan = benchPlan();
     await bench.writeTeam({ version: 1, agents: [{ name: 'dev', roles: ['developer'], count: 3 }] });
     await openRun(as('lead'), await bench.writePlan(plan));
     const menu = await takeTask(as('dev-1'), plan.runId, 't-menu');
@@ -299,7 +299,7 @@ describe('a task the lead takes back', () => {
 // "unblocked" — never blocked: it was held all along.
 describe('a task handed back to its own agent', () => {
   it('says it is held all along, or unblocked by the lead, as it is', async () => {
-    const plan = { ...benchPlan(), designReview: false };
+    const plan = benchPlan();
     await openRun(as('lead'), await bench.writePlan(plan));
     const home = await takeTask(as('dev-1'), plan.runId, 't-home');
     expect(await nextTask(as('dev-1'), plan.runId, 'developer')).toMatchObject({

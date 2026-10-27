@@ -33,13 +33,16 @@ export const visitorsOnly = async (
   pages: readonly string[]
 ): Promise<{ pages: string[]; as?: string; problem?: string } | undefined> => {
   const authored = await authoredSpace(dir);
-  // Members only by the router, or kept for some permissions (the server withholds those): read as one of them.
+  // Members only by the router, a gate in place that shows a guest another page (`gated`: encore-11's /rooms/new), or
+  // kept for some permissions (the server withholds those): read as one of them — `--guest` reads a guest's.
   const guarded = authored
     ? pages.filter(each => {
         const id = pageFor(authored, each);
         const page = id === undefined ? undefined : authored.handles.pages[id];
 
-        return audienceAt(authored.schema, each) === 'members' || (page?.access?.permissions.length ?? 0) > 0;
+        const audience = audienceAt(authored.schema, each);
+
+        return audience === 'members' || audience === 'gated' || (page?.access?.permissions.length ?? 0) > 0;
       })
     : [];
   if (guarded.length === 0) {

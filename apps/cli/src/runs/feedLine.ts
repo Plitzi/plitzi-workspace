@@ -1,6 +1,5 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { designSkipText, isDesignSkip } from './designSkip';
 import { commandName } from './runMetrics';
 import { reasonOf } from './tasks/nextRules';
 
@@ -90,8 +89,6 @@ const lineOf = (entry: Record<string, unknown>): FeedLine | undefined => {
   switch (entry.action) {
     case 'take':
       return line('take', 'took it');
-    case 'spike':
-      return line('agent', `blocked on a question, the lead's to answer: ${textOf(entry.question)}`);
     case 'spike-done': {
       const outcome =
         entry.status === 'done'
@@ -142,8 +139,8 @@ const lineOf = (entry: Record<string, unknown>): FeedLine | undefined => {
       return entry.verdict === 'approve'
         ? line(
             'approved',
-            `approved${round}${entry.design === 'skipped' ? (entry.designSkip === 'no-ui' ? ' — no UI' : ' — its UI by its reviewer') : ''}`,
-            `approved${round}${entry.design === 'skipped' ? ` — ${designSkipText(isDesignSkip(entry.designSkip) ? entry.designSkip : undefined)}${typeof entry.designBy === 'string' ? ` (${entry.designBy} had it)` : ''}` : ''}`
+            `approved${typeof entry.step === 'string' && entry.merged === undefined ? ` its ${entry.step}'s review` : ''}${round}`,
+            `approved${typeof entry.step === 'string' && entry.merged === undefined ? ` its ${entry.step}'s review — the next step's now` : ''}${round}`
           )
         : line('sent-back', `sent back${round}`);
     case 'handed-on':
@@ -156,10 +153,6 @@ const lineOf = (entry: Record<string, unknown>): FeedLine | undefined => {
           ...(Array.isArray(entry.ready) && entry.ready.length > 0 ? [`ready now: ${listOf(entry.ready)}`] : [])
         ].join(' · ')
       );
-    case 'design-review':
-      return entry.verdict === 'approve'
-        ? line('approved', 'approved its UI')
-        : line('sent-back', `sent its UI back${round}`);
     // Its reason alone — what it waits for is said to the agent at length, and filled a row of the activity.
     case 'waiting':
       return line('agent', `waits for work — ${reasonOf(textOf(entry.why))}`);

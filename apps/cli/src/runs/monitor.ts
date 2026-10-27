@@ -1,18 +1,16 @@
 import { commandDoing, doingOf, statusOf } from './agentDoing';
-import { isDesignSkip } from './designSkip';
 import { feedOf, glimpse, SHORT, textOf } from './feedLine';
 import { LEAD, messagesOf, openQuestions } from './messages';
 import { stoppedAgents } from './onDemand';
 import { runPaths } from './paths';
 import { presentAt, PRESENCE_STALE_MS } from './presence';
-import { loadRun, readRunLog, runIds } from './run';
+import { isApproval, loadRun, readRunLog, runIds } from './run';
 import { spentOf, spentPerMinute, SPEND_MINUTES } from './spent';
 import { choiceText, FRESH_CONTEXT_AT, readTeam, startedAgents } from './team';
 import { readUsage } from './usage';
 import { viewRun } from './view';
 import { isWorked } from './worked';
 
-import type { DesignSkip } from './designSkip';
 import type { RunContext } from './run';
 import type { Spent } from './spent';
 import type { UsageLine } from './usage';
@@ -124,9 +122,8 @@ export interface TaskStory {
   writers: string[];
   /** Its first take: the start of its work. */
   takenAt?: string;
-  /** The designer that approved its UI, or `skipped` when the lead went first — and why it did. */
-  design?: string;
-  designSkip?: DesignSkip;
+  /** The steps of its review approved before its last, each with who said it: `designer by design-1`. */
+  passed?: string[];
   approvedBy?: string;
   approvedAt?: string;
   /** Rounds sent back: by a lead or a designer. */
@@ -171,18 +168,19 @@ export const storiesOf = (log: readonly Record<string, unknown>[]): Partial<Reco
       if (story.writers.at(-1) !== by) {
         story.writers.push(by);
       }
-    } else if (entry.action === 'design-review' && entry.verdict === 'approve' && by !== undefined) {
-      story.design = by;
-    } else if (entry.action === 'review' && entry.verdict === 'approve') {
+    } else if (
+      entry.verdict === 'approve' &&
+      by !== undefined &&
+      // A step before its last: its review goes on.
+      entry.action === 'review' &&
+      !isApproval(entry)
+    ) {
+      const role = typeof entry.step === 'string' ? entry.step : 'review';
+      story.passed = [...(story.passed ?? []), `${role} by ${by}`];
+    } else if (isApproval(entry)) {
       story.approvedAt = entry.at;
       story.approvedBy = by ?? LEAD;
-      if (entry.design === 'skipped') {
-        story.design ??= 'skipped';
-        if (isDesignSkip(entry.designSkip)) {
-          story.designSkip = entry.designSkip;
-        }
-      }
-    } else if (entry.action === 'review' || (entry.action === 'design-review' && entry.verdict !== 'approve')) {
+    } else if (entry.action === 'review') {
       story.sentBack += 1;
     } else if (entry.action === 'check' && entry.ok === false) {
       story.failedChecks += 1;
@@ -255,10 +253,9 @@ const agentsOf = async (
     return line && now - at < LATELY_MS ? ` — ${commandDoing(line.command)}` : '';
   };
   const team = await readTeam(ctx.root).catch(() => undefined);
-  // A task is whoever is at it: its writer while it is written or sent back, its designer while it waits on that one's
-  // UI review — and, at the lead's review, the lead's (its row says so). Its writer is free once it went to review.
-  const assignee = (task: TaskLine): string | undefined =>
-    task.status === 'in-review' ? (task.design?.status === 'due' ? task.design.by : undefined) : task.agent;
+  // A task is whoever is at it: its writer while it is written or sent back, its reviewer at the step of its review.
+  // Its writer is free once it went to review.
+  const assignee = (task: TaskLine): string | undefined => (task.status === 'in-review' ? task.review?.by : task.agent);
   const held = new Map<string, TaskLine>();
   const holds = new Map<string, TaskLine[]>();
   for (const task of view.tasks) {
@@ -318,11 +315,14 @@ const agentsOf = async (
     return 'restarting with a fresh context — the run starts it again for what comes';
   };
   const teamMember = (agent: string) => (team ? startedAgents(team) : []).find(each => each.agent === agent);
-  const uiWaiting = view.tasks.filter(
-    task => task.status === 'in-review' && task.design?.status === 'due' && task.design.by === undefined
+  // Steps nobody took yet, by role: said on each agent of that role, which may be at a task of its own.
+  const untaken = view.tasks.flatMap(task =>
+    task.status === 'in-review' && task.review !== undefined && task.review.by === undefined ? [task.review.role] : []
   );
 
-  const reviewing = new Map(view.tasks.flatMap(task => (task.reviewer ? [[task.reviewer, task.id] as const] : [])));
+  const reviewing = new Map(
+    view.tasks.flatMap(task => (task.review?.by !== undefined ? [[task.review.by, task.id] as const] : []))
+  );
   const leadModel = team?.lead?.model === undefined ? undefined : choiceText(team.lead.model);
   // Every task approved: the leads' part is over, whatever they did last — the board says what is next, and whose.
   const finished = view.total > 0 && view.done === view.total;
@@ -358,8 +358,8 @@ const agentsOf = async (
     const lastAt = typeof last?.at === 'string' ? Date.parse(last.at) : undefined;
     const lastLine = last ? lastDone(last) : undefined;
     const recent = lastAt !== undefined && now - lastAt < ACTIVE_MS && lastLine !== undefined;
-    // Finding out a spike it took — research with no scout in the team, or an agent's question: working, never idle.
-    const spiking = at ? undefined : view.tasks.find(task => task.spikedBy === LEAD);
+    // Finding out research with no scout in the team: working, never idle.
+    const spiking = at ? undefined : view.tasks.find(task => task.leadFindsOut === true);
     if (spiking) {
       return {
         ...base,
@@ -420,9 +420,13 @@ const agentsOf = async (
             `also holds ${also.map(each => `${each.id} (${each.status === 'changes-requested' ? `sent back, round ${String(each.round)}` : each.status})`).join(', ')}`
           ]
         : []),
-      ...(member?.roles.includes('designer') && uiWaiting.length > 0
-        ? [`${String(uiWaiting.length)} UI review${uiWaiting.length === 1 ? '' : 's'} wait for a designer`]
-        : [])
+      ...(member?.roles
+        .filter(role => role !== 'developer')
+        .flatMap(role => {
+          const waiting = untaken.filter(each => each === role).length;
+
+          return waiting > 0 ? [`${String(waiting)} ${role}'s review${waiting === 1 ? '' : 's'} wait`] : [];
+        }) ?? [])
     ];
     const tail = more.length > 0 ? ` · ${more.join(' · ')}` : '';
     const about = {
@@ -432,21 +436,16 @@ const agentsOf = async (
       roles: member?.roles ?? (task ? [task.role] : [])
     };
 
-    // A scout at a spike, a tester at a review: at work on that task — never idle (the lead at t-shell's spike was
-    // nowhere on the board).
-    // At an agent's block too: `spikedBy` is said only while it is found out (`view.ts`).
-    const spiking = task ? undefined : view.tasks.find(each => each.spikedBy === agent);
-    const reviews = task || spiking ? undefined : reviewing.get(agent);
-    if (spiking || reviews) {
+    // A tester at a review: at work on that card — never idle.
+    const reviews = task ? undefined : reviewing.get(agent);
+    if (reviews) {
       return {
         agent,
         kind: 'agent' as const,
-        status: spiking ? ('working' as const) : ('reviewing' as const),
+        status: 'reviewing' as const,
         ...about,
-        doing: spiking
-          ? `finds out for ${spiking.id}: ${spiking.spike ?? spiking.blockedBy?.reason ?? 'what it needs'}${tail}`
-          : `reviews ${String(reviews)}${tail}`,
-        task: spiking?.id ?? String(reviews),
+        doing: `reviews ${reviews}${tail}`,
+        task: reviews,
         ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
       };
     }

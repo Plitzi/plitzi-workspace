@@ -8,9 +8,10 @@ import { monitorRun } from './monitor';
 import { buildReport, reportText, writeSummary } from './report';
 import { loadRun, openRun } from './run';
 import { scopePlan } from './spike';
-import { answerSpike, approveSpike, completeTask, escalateReview, nextTask, reviewTask, takeNext } from './tasks';
+import { completeResearch, completeTask, escalateReview, nextTask, reviewTask, takeNext } from './tasks';
 import { viewRun } from './view';
 import { flowStages } from '../commands/runs/monitorFlow';
+import { heldNow } from '../commands/runs/shell';
 import { scripted } from '../tests/reviewerSteps';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 import { LEAD_SAID, runSteps } from '../tests/runSteps';
@@ -82,12 +83,18 @@ const holds = async (step: string): Promise<void> => {
 describe('a run, rehearsed whole', () => {
   it('goes from the scope to the report with every step as it should be', async () => {
     await bench.writeTeam(TEAM);
-    await openRun(lead(), await bench.writePlan({ ...scopePlan(RUN, 'A Spanish version'), designReview: true }));
+    await openRun(lead(), await bench.writePlan(scopePlan(RUN, 'A Spanish version')));
     await holds('opened on its scope');
 
     // The scout finds the scope out and proposes the tasks; the lead approves them.
     const scouting = await takeNext(bench.agent('scout-1'), RUN, 'scout');
-    expect(scouting.next.spike?.task.id).toBe('s-scope');
+    expect(scouting.taken?.task.id).toBe('s-scope');
+    // Held by the scout as any card at work, so its sign of life lands on it: encore-11's scout was refused
+    // `task progress` here.
+    expect(await heldNow(bench.agent('scout-1'), RUN)).toEqual([
+      { task: 's-scope', kind: 'work', agent: 'scout-1', research: true }
+    ]);
+    expect(await heldNow(bench.agent('dev-1'), RUN)).toEqual([]);
     await holds('the scope at work');
     const [menu, home] = benchPlan().tasks.filter(task => task.id === 't-menu' || task.id === 't-home');
     // In its scratch, as a scout writes beside its work: the project's tmp/ is the person's.
@@ -96,15 +103,17 @@ describe('a run, rehearsed whole', () => {
       stage,
       JSON.stringify({
         tasks: [
-          { ...menu, dependsOn: [] },
-          { ...home, dependsOn: [] }
+          // Each card says who reviews it: a designer's look, then the tester's QA.
+          { ...menu, dependsOn: [], review: ['designer', 'tester'] },
+          { ...home, dependsOn: [], review: ['designer', 'tester'] }
         ]
       })
     );
-    await answerSpike(bench.agent('scout-1'), RUN, 's-scope', 'Two pages: the menu and the home', { tasks: stage });
+    const scout = bench.agent('scout-1', { token: scouting.taken?.token });
+    await completeResearch(scout, RUN, 's-scope', 'Two pages: the menu and the home', { tasks: stage });
     await holds('the scope proposed');
-    expect((await nextTask(lead(), RUN, 'lead')).proposal?.task.id).toBe('s-scope');
-    await approveSpike(lead(), RUN, 's-scope');
+    expect((await nextTask(lead(), RUN, 'lead')).review?.found?.tasks.toSorted()).toEqual(['t-home', 't-menu']);
+    await reviewTask(lead(), RUN, 's-scope', 'approve', []);
     await holds('the scope approved');
 
     // Two developers at once.
@@ -135,10 +144,10 @@ describe('a run, rehearsed whole', () => {
 
     // The designer's look, then the tester's QA, which sends it back.
     const look = await takeNext(bench.agent('design-1'), RUN, 'designer');
-    expect(look.next.designReview?.task.id).toBe(one.id);
+    expect(look.next.review).toMatchObject({ task: { id: one.id }, role: 'designer' });
     await reviewTask(bench.agent('design-1'), RUN, one.id, 'approve', []);
     const qa = await takeNext(bench.agent('test-1'), RUN, 'tester');
-    expect(qa.next.leadReview?.task.id).toBe(one.id);
+    expect(qa.next.review?.task.id).toBe(one.id);
     await reviewTask(bench.agent('test-1'), RUN, one.id, 'changes', [{ note: 'Say "Carta del día"' }]);
     await holds('one sent back');
 

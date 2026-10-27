@@ -50,5 +50,5 @@ In the person's language, short, from the plan — never a list to read in the J
   their terminal — `plitzi run monitor` (130 columns for its sidebar; its `p` serves the approved work on 8300 and `x` stops it, its output in the panel; `m` switches simple and advanced).
 
 Opened by `run start`, its scope spike is this planning: only a scout starts while the run holds the spike alone, and
-the summary is said before the lead's `task spike s-scope --approve` (with no scout, `--done … --tasks`), which makes the
-work.
+the summary is said before the lead's `task review s-scope --approve` (with no scout, `task complete s-scope --found …
+--tasks`), which makes the work.

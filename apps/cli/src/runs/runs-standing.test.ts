@@ -35,7 +35,7 @@ const STANDING = { fraction: 0.6, etaMinutes: 10, done: 'The hero in Spanish', l
 describe('a task past the work limit', () => {
   it('wakes the lead to ask — again at each limit more — and the answer, whole, is its to decide on', async () => {
     await bench.writeTeam(team(TESTERS));
-    const { runId } = (await openRun(lead(), await bench.writePlan({ ...benchPlan(), designReview: false }))).checked;
+    const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
     const home = await take('agent-1', 't-home');
     await reportProgress(home.ctx, runId, 't-home', { step: 'the hero' });
 
@@ -69,7 +69,7 @@ describe('a task past the work limit', () => {
 
   it('wakes the lead for a spike its scout takes long at, the scout answering by name', async () => {
     await bench.writeTeam(team(SCOUT));
-    const plan: RunPlan = { ...benchPlan(), designReview: false };
+    const plan: RunPlan = benchPlan();
     plan.tasks = [
       ...plan.tasks,
       { ...plan.tasks[0], id: 's-words', title: 'The words', files: [], spike: 'which words' }

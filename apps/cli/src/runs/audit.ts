@@ -51,10 +51,7 @@ export const auditRun = async (loaded: LoadedRun): Promise<Finding[]> => {
         entry =>
           text(entry.at) > text(sent.at) &&
           entry.task === task.id &&
-          (entry.action === 'review' ||
-            entry.action === 'design-review' ||
-            entry.action === 'review-taken' ||
-            entry.action === 'look')
+          (entry.action === 'review' || entry.action === 'review-taken' || entry.action === 'look')
       );
       // Done with nothing after it in the log is the approval the log missed — said above, not timed.
       if (!after && state.status === 'done') {
@@ -74,7 +71,7 @@ export const auditRun = async (loaded: LoadedRun): Promise<Finding[]> => {
         title: `${task.id} waited in review before anyone looked at it`,
         evidence: slow,
         times: slow.length,
-        fix: 'a designer free for UI reviews, and run watch answering the review first',
+        fix: 'a reviewer free for each step its card names, and run watch answering the review first',
         subject: `slow-review:${task.id}`
       });
     }
@@ -93,61 +90,27 @@ export const auditRun = async (loaded: LoadedRun): Promise<Finding[]> => {
       });
     }
 
-    // Sent back, by whom: its UI's review and the lead's are rounds of their own (a designer's changes were logged as
-    // a review by the designer's name before they were design reviews).
+    // Sent back, by whom: each step of its review says its own.
     const changes = log.filter(
-      entry =>
-        entry.task === task.id &&
-        entry.verdict === 'changes' &&
-        (entry.action === 'review' || entry.action === 'design-review')
+      entry => entry.task === task.id && entry.verdict === 'changes' && entry.action === 'review'
     );
-    const byUi = changes.filter(entry => entry.action === 'design-review' || !text(entry.by).startsWith('lead')).length;
     if (changes.length >= 3) {
+      const stepOf = (entry: Record<string, unknown>): string => (typeof entry.step === 'string' ? entry.step : 'lead');
+      const bySteps = new Map<string, number>();
+      for (const entry of changes) {
+        bySteps.set(stepOf(entry), (bySteps.get(stepOf(entry)) ?? 0) + 1);
+      }
+
       findings.push({
         kind: 'sent-back',
         owner: 'lead',
         title: `${task.id} was sent back ${String(changes.length)} times`,
-        evidence: [`${String(byUi)} by its UI review, ${String(changes.length - byUi)} by the lead`],
+        evidence: [[...bySteps].map(([step, times]) => `${String(times)} by its ${step}'s review`).join(', ')],
         times: changes.length,
         fix: 'what the reviews asked, in its brief or its lines from the start',
         subject: `sent-back:${task.id}`
       });
     }
-  }
-
-  // Said by why, each apart: a UI its reviewer looked at is not one nobody did, nor a task with no UI at all.
-  const skipped = by('review').filter(entry => entry.design === 'skipped');
-  const skippedAs = (why: string | undefined) =>
-    skipped.filter(entry => (typeof entry.designSkip === 'string' ? entry.designSkip : undefined) === why);
-  for (const [why, said] of [
-    ['reviewer', 'Their UI reviewed by their reviewer, not a designer'],
-    ['no-ui', 'No UI to review, approved on their code (task complete --review code says it from the start)'],
-    [undefined, 'Approved without their designer’s UI review, the reason unsaid']
-  ] as const) {
-    const these = skippedAs(why);
-    if (these.length > 0) {
-      findings.push({
-        kind: 'ui-skipped',
-        owner: 'lead',
-        title: said,
-        evidence: [these.map(entry => text(entry.task)).join(', ')],
-        times: these.length,
-        subject: `ui-skipped:${why ?? 'unsaid'}`
-      });
-    }
-  }
-
-  // A designer at a UI review the lead then went past: its review was wasted, and its finding went nowhere.
-  const wasted = skipped.filter(each => typeof each.designBy === 'string');
-  if (wasted.length > 0) {
-    findings.push({
-      kind: 'ui-review-wasted',
-      owner: 'lead',
-      title: 'UI reviews taken by a designer and gone past by the lead',
-      evidence: wasted.map(entry => `${text(entry.designBy)} had taken ${text(entry.task)}'s`),
-      times: wasted.length,
-      subject: 'ui-review-wasted'
-    });
   }
 
   const crashed = by('crashed');

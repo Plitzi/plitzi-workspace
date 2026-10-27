@@ -1,6 +1,6 @@
 import { testersReview } from './leads';
 import { RunRefusal } from './refusal';
-import { readRunLog } from './run';
+import { isApproval, readRunLog } from './run';
 
 import type { LoadedRun, RunContext } from './run';
 
@@ -14,7 +14,7 @@ export const notLookedAtYet = async (ctx: RunContext, loaded: LoadedRun): Promis
   }
 
   const log = await readRunLog(loaded.paths);
-  const lastApproval = log.findLastIndex(entry => entry.action === 'review' && entry.verdict === 'approve');
+  const lastApproval = log.findLastIndex(isApproval);
   const lastLook = log.findLastIndex(entry => entry.action === 'run-look');
 
   return lastApproval >= 0 && lastLook < lastApproval;

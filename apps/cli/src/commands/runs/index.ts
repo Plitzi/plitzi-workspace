@@ -28,9 +28,9 @@ export {
 } from './lifecycle';
 export type { FinishOptions } from './lifecycle';
 export { taskNext, taskTake } from './next';
-export { claimCommand, taskClaim, taskClaims, taskDiscard, taskRequest, taskSpike } from './files';
+export { claimCommand, taskClaim, taskClaims, taskDiscard, taskRequest } from './files';
 export type { ClaimOptions } from './files';
-export { taskBlock, taskCheck, taskComplete, taskNote, taskProgress, taskUnblock } from './work';
+export { taskBlock, taskCheck, taskComplete, taskFound, taskNote, taskProgress, taskUnblock } from './work';
 export { taskReassign, taskRevert } from './reassign';
 export { taskEscalate } from './escalate';
 export { taskReview } from './review';

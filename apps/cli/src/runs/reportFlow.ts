@@ -9,10 +9,26 @@ import type { AgentHarness, RunMetrics } from './runMetrics';
 
 const num = (value: number | undefined): string => (value === undefined ? '—' : String(value));
 const listed = (values: readonly number[]): string => (values.length === 0 ? '—' : values.join(', '));
+/** Each step said, in order: its wait for a reviewer → its reviewer's time at it (`—` said untaken). */
+const stepsText = (steps: RunMetrics['tasks'][number]['steps']): string =>
+  steps.length === 0 ? '—' : steps.map(each => `${each.step} ${num(each.waited)}→${num(each.said)}`).join(', ');
+const byStepText = (counts: Readonly<Record<string, number>>): string =>
+  Object.keys(counts).length === 0
+    ? '0'
+    : Object.entries(counts)
+        .map(([step, times]) => `${step} ${String(times)}`)
+        .join(', ');
 const harnessCells = (harness: AgentHarness | undefined): string =>
   harness === undefined
     ? '— | — | —'
     : `${tokensText(harness.processed)} | ${tokensText(harness.contextMax)} | ${tokensText(harness.reread)}`;
+
+const reviewsText = (byStep: Readonly<Record<string, { said: number; changes: number }>>): string =>
+  Object.keys(byStep).length === 0
+    ? '0'
+    : Object.entries(byStep)
+        .map(([step, each]) => `${step} ${String(each.said)} (${String(each.changes)})`)
+        .join(', ');
 
 export const flowText = (metrics: RunMetrics): string[] => {
   const { checks, refusals, questions, cost } = metrics;
@@ -27,20 +43,20 @@ export const flowText = (metrics: RunMetrics): string[] => {
           `Worked ${String(metrics.workMinutes)} min, from the open to every task approved; then ${metrics.closeMinutes === undefined ? '' : `${num(metrics.closeMinutes)} min to the finish's dry run passing (the lead's close), and `}${num(metrics.afterMinutes === undefined ? undefined : Math.round((metrics.afterMinutes - (metrics.closeMinutes ?? 0)) * 10) / 10)} min to this report (the finish is a person's).`,
           ''
         ]),
-    'Minutes. Waits for a review count from when it was sent; for the lead, from the UI approved (or sent, with none); a rework, from the changes asked to an agent at it again.',
+    'Minutes. Each review step says its wait for a reviewer — from the complete, or the step before approved — then its reviewer’s time at it; a rework, from the changes asked to an agent at it again.',
     '',
-    '| Task | Agents | To take | Worked | Rounds UI / lead | Waited for UI | UI review | Waited for lead | Rework waited | Checks failed |',
-    '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+    '| Task | Agents | To take | Worked | Rounds, by step | Review steps (wait→review) | Rework waited | Checks failed |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- |',
     ...metrics.tasks.map(
       task =>
-        `| ${task.task} | ${task.agents.join(', ') || '—'} | ${num(task.toTake)} | ${String(Math.round(task.worked * 10) / 10)} | ${String(task.rounds.ui)} / ${String(task.rounds.lead)} | ${listed(task.uiWaits)} | ${listed(task.uiReviews)} | ${listed(task.leadWaits)} | ${listed(task.reworkWaits)} | ${String(task.checks.failed)} of ${String(task.checks.run)} |`
+        `| ${task.task} | ${task.agents.join(', ') || '—'} | ${num(task.toTake)} | ${String(Math.round(task.worked * 10) / 10)} | ${byStepText(task.rounds)} | ${stepsText(task.steps)} | ${listed(task.reworkWaits)} | ${String(task.checks.failed)} of ${String(task.checks.run)} |`
     ),
     '',
-    '| Agent | Joined | Stopped | Tasks | Completes | Checks failed | Refused | Waited for work | Reviews UI (changes) / lead (changes), median | Calls | Read (≈tokens) | Harness read | Largest context | Read again (≥) |',
+    '| Agent | Joined | Stopped | Tasks | Completes | Checks failed | Refused | Waited for work | Reviews by step (changes), median | Calls | Read (≈tokens) | Harness read | Largest context | Read again (≥) |',
     '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
     ...metrics.agents.map(
       agent =>
-        `| ${agent.agent} | ${agent.joinedAt?.slice(11, 16) ?? '—'} | ${agent.stoppedAt?.slice(11, 16) ?? '—'} | ${agent.tasks.join(', ') || '—'} | ${String(agent.completes)} | ${String(agent.checks.failed)} of ${String(agent.checks.run)} | ${String(agent.refused)} | ${String(agent.waited)} | ${String(agent.reviews.ui)} (${String(agent.reviews.uiChanges)}) / ${String(agent.reviews.lead)} (${String(agent.reviews.leadChanges)}), ${num(agent.reviews.medianMinutes)} | ${String(agent.calls)} | ${tokensText(agent.readTokens)} | ${harnessCells(agent.harness)} |`
+        `| ${agent.agent} | ${agent.joinedAt?.slice(11, 16) ?? '—'} | ${agent.stoppedAt?.slice(11, 16) ?? '—'} | ${agent.tasks.join(', ') || '—'} | ${String(agent.completes)} | ${String(agent.checks.failed)} of ${String(agent.checks.run)} | ${String(agent.refused)} | ${String(agent.waited)} | ${reviewsText(agent.reviews.byStep)}, ${num(agent.reviews.medianMinutes)} | ${String(agent.calls)} | ${tokensText(agent.readTokens)} | ${harnessCells(agent.harness)} |`
     ),
     '',
     `- Checks: ${String(checks.failed)} of ${String(checks.run)} failed (${String(rate)}%)${

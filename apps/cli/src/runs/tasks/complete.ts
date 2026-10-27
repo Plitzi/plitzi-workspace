@@ -6,7 +6,6 @@ import { unifiedDiff } from '../../fix/diff';
 import { checkAcceptance, letGo, serveForAcceptance } from '../acceptance';
 import { proposalsOf, unansweredTo } from '../agreements';
 import { failsWithout, ownFailing } from '../checks';
-import { designAtComplete } from '../design';
 import { createExclusive, exists, fingerprint, readOptional, writeAtomic, writeJson } from '../files';
 import { handOver } from '../handOver';
 import { crossed, longFilesIn, longFileText } from '../longFiles';
@@ -15,6 +14,7 @@ import { LEAD, unreadForHolder } from '../messages';
 import { entryOf } from '../model';
 import { lockFile, NOT_TASK_DIRS, taskPaths, under } from '../paths';
 import { RunRefusal } from '../refusal';
+import { reviewAtComplete, reviewSteps, reviewTeamOf, stepsLeftOut } from '../reviews';
 import { assertStatus, loadRun, logRun, readApproved, readBase, recordBrake } from '../run';
 import { logSpent } from '../spent';
 import { keepFiles, putBlob, withLock } from '../store';
@@ -39,7 +39,6 @@ import { othersHeld } from './othersHeld';
 import { keepTaskReport } from '../taskReports';
 
 import type { CheckResult } from '../checks';
-import type { ReviewAsked } from '../design';
 import type { Experience } from '../experience';
 import type { Message } from '../messages';
 import type { AcceptanceResult, FileLock, SharedRequest, TaskStart } from '../model';
@@ -167,8 +166,6 @@ const warningsOf = (checks: CheckResult, changed: readonly string[]): string[] =
 export interface CompleteOptions {
   /** Go to review although the checks fail — for a reason that weighs, with the task that fixes it. */
   knownFailure?: { why: string; fixedBy?: string };
-  /** The review it asks for: the code alone, or its UI too (`ReviewAsked`); the run decides when left out. */
-  review?: ReviewAsked;
   /** What it was like to work with Plitzi this round, in the agent's words (`experience.ts`): kept in its report. */
   experience?: Experience;
 }
@@ -548,7 +545,9 @@ export const completeTask = async (
   }
 
   const toReview = changed.filter(file => !asRequests.includes(file));
-  const designed = await designAtComplete(loaded, view, toReview, options.review, ctx.now().getTime());
+  // Its review's roles nobody in the team takes are left out, and said: the next step's reviewer looks for them.
+  const reviewTeam = await reviewTeamOf(ctx.root);
+  const leftOut = stepsLeftOut(task, reviewTeam);
   // What goes to review is kept now: the copy is the agent's to go on writing, and the lead approves what it looked at.
   const submitted = await keepFiles(loaded.paths, view.paths.work, toReview);
   await updateState(
@@ -559,8 +558,8 @@ export const completeTask = async (
       waitingFor: undefined,
       changed: toReview,
       submitted,
-      // A designer looks at its UI before the lead, each round its UI changed: what it changed is what is looked at.
-      design: designed.design,
+      // Its first step due: each round goes through the card's review again, the one who said a step offered it first.
+      review: reviewAtComplete(state, at(ctx)),
       ...(accepted.length > 0 ? { accepted } : { accepted: undefined }),
       warnings: warningsOf(checks, changed).length > 0 ? warningsOf(checks, changed) : undefined,
       knownFailure: preexisting
@@ -580,7 +579,15 @@ export const completeTask = async (
           : undefined,
       notes: [
         ...state.notes,
-        ...(designed.carried ? [{ at: at(ctx), by: 'plitzi', text: designed.carried }] : []),
+        ...(leftOut.length > 0 && state.round === 0
+          ? [
+              {
+                at: at(ctx),
+                by: 'plitzi',
+                text: `Its review names ${leftOut.join(', ')}, and nobody in the team takes ${leftOut.length === 1 ? 'that role' : 'those roles'}: its review goes ${reviewSteps(task, reviewTeam).join(' → ')}`
+              }
+            ]
+          : []),
         ...(changedInProject.length > 0
           ? [
               {
@@ -601,8 +608,8 @@ export const completeTask = async (
     task: taskId,
     changed: changed.length,
     requests: asRequests,
-    // What review it went for: its UI's and the lead's, or the lead's alone.
-    review: designed.design?.status === 'due' ? 'ui' : 'code'
+    // The steps of its review, in order: who looks at it, and after whom.
+    review: reviewSteps(task, reviewTeam)
   });
   // The round as it was worked, kept beside the task: the run's report is put together from these.
   const report = await keepTaskReport(loaded, view.paths, {

@@ -46,7 +46,14 @@ const log = [
     tasks: [{ task: 't-visual-specs', changed: ['acceptance'] }]
   },
   { at: '2026-10-26T19:48:38.000Z', by: 'test-1', action: 'review', task: 't-visual-specs', verdict: 'changes' },
-  { at: '2026-10-26T19:50:12.000Z', by: 'test-1', action: 'review', task: 't-visual-specs', verdict: 'approve' },
+  {
+    at: '2026-10-26T19:50:12.000Z',
+    by: 'test-1',
+    action: 'review',
+    task: 't-visual-specs',
+    verdict: 'approve',
+    merged: []
+  },
   {
     at: '2026-10-26T19:55:00.000Z',
     by: 'lead',
@@ -96,7 +103,10 @@ describe('the report, before a person applies it', () => {
   it('says the finish’s dry run and what weighs on applying it', () => {
     const report = {
       runId: 'encore-10',
-      tasks: [task({ design: 'UI by the lead', id: 't-sign-in-next' }), task({ knownFailure: 'two gated tests' })],
+      tasks: [
+        task({ reviewedBy: ['tester: test-1'], id: 't-sign-in-next' }),
+        task({ knownFailure: 'two gated tests' })
+      ],
       noticed: ['A closed room sends its visitor home'],
       findings: [],
       apply: applyFacts(log)
@@ -106,7 +116,6 @@ describe('the report, before a person applies it', () => {
     const text = applyText(report, false).join('\n');
     expect(text).toContain("The finish's dry run passed** at 20:37 UTC: 36 files to write, 8 acceptance lines held");
     expect(text).toContain('t-visual-specs was approved over a known failure: two gated tests');
-    expect(text).toContain("t-sign-in-next's UI was approved by the lead, no designer's review");
     expect(text).toContain('rewritten after approval — the finish held them to the new lines: t-visual-specs');
     expect(text).toContain('`plitzi run finish encore-10 --apply`');
     expect(applyText({ ...report, apply: { amendedDone: [] } }, false).join('\n')).toContain(

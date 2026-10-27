@@ -95,8 +95,7 @@ const isPlanFinding = (finding: Finding): boolean => finding.by === LEAD && find
 // What a task waits for, and who it is for, change until it is taken: a lead clears a bottleneck by letting one start
 // sooner (t-motion waited for t-boxer's third round, though it shared no file with it).
 const WHO = ['role', 'quality', 'dependsOn'] as const;
-// A spike nobody holds is untaken too: a lead finds it out, and no agent has taken it as anything yet.
-const UNTAKEN: readonly string[] = ['pending', 'ready', 'spike'];
+const UNTAKEN: readonly string[] = ['pending', 'ready'];
 
 const same = (a: unknown, b: unknown): boolean => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 

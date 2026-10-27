@@ -388,6 +388,14 @@ export const projectOrigin = async (
     };
   }
 
+  // Nothing at all on the port: said before a page command reads "nothing answers" of every page — a folder made from the
+  // run's work (`run preview --copy`) has no server until one is started in it.
+  if (!isRecord(health)) {
+    return {
+      problem: `No Plitzi server answers on port ${port} for ${root}${server.port === undefined ? ' — no npm start of this folder recorded where it serves' : ` — where its last npm start served (${DEV_SERVER_FILE})`}. Start it here: npm start — wherever it serves, it writes it to ${DEV_SERVER_FILE} and this finds it`
+    };
+  }
+
   if (!server.name || answered === server.name) {
     return { origin };
   }

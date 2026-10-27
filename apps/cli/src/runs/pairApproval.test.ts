@@ -23,7 +23,7 @@ const { lead, open, refusal, take } = runSteps(() => bench);
 // the project's checks, so neither could ever be approved.
 describe('two tasks in review that read each other’s work', () => {
   it('are approved as one change with --with, after the approval alone says how', async () => {
-    const runId = await open({ ...benchPlan(), designReview: false });
+    const runId = await open(benchPlan());
     const home = await take('agent-3', 't-home');
     const menu = await take('agent-1', 't-menu');
     const about = await take('agent-2', 't-about');

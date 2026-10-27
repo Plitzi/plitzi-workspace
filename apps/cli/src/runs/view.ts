@@ -7,24 +7,26 @@ import { fingerprint } from './files';
 import { liveAttention } from './findings/live';
 import { readHistory } from './history';
 import { identifiedAgents } from './identity';
-import { leadReviews, spareReviewers } from './leads';
 import { workLimitOf } from './limits';
 import { LEAD, messagesOf, standingText, unreadFor } from './messages';
 import { asksLead } from './model';
 import { agentsNeeded } from './onDemand';
 import { under } from './paths';
 import { previewPort } from './previewRecord';
+import { leadStepWhy, reviewSteps, reviewTeamOfAgents, stepReviewers, stepRole } from './reviews';
 import { loadRun, pinDifference, pinnedNow, readApproved, readBase, readRunLog, runIds } from './run';
 import { agentsNow } from './running';
+import { settledFindings } from './settle';
+import { isResearch, roleOf } from './spike';
 import { heldAhead, lockHolder, stalled } from './stalled';
 import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
-import { DEVELOPER, readTeam, startedAgents, TESTER } from './team';
+import { readTeam, SCOUT, startedAgents, TESTER } from './team';
 import { chainMinutes, urgencies } from './urgency';
 import { isWorked } from './worked';
 
-import type { DesignReview, Needs, Priority, RunRecord, TaskStatus, Waiting } from './model';
+import type { Needs, Priority, RunRecord, TaskStatus, Waiting } from './model';
 import type { RunContext } from './run';
 import type { TaskView } from './taskStore';
 
@@ -70,24 +72,30 @@ export interface TaskLine {
   /** When it last changed: how long it has been as it is. */
   updatedAt: string;
   milestone?: string;
-  /** Its UI's review by a designer, in a run that has one. */
-  design?: DesignReview;
-  /** In review: the tester — or the lead — that took this round's review, once one did. */
-  reviewer?: string;
-  /** In review with testers in the team, none of which may take it: its developers' that may (`spareReviewers`)… */
-  spareReviewers?: string[];
-  /** …or, with none, the lead's (`leadReviews`): nobody else may, and it would hold the run. */
-  leadReviews?: true;
+  /**
+   * In review: the step of its review it is at (`reviews.ts`) — its role, the card's steps, who took it, and who may say
+   * it when nobody of its role may (developers that did not work it, or the lead alone: `lead`).
+   */
+  review?: {
+    role: string;
+    step: number;
+    steps: string[];
+    by?: string;
+    reviewers: string[];
+    lead?: true;
+    /** Why its step is the lead's, when its role is the lead's. */
+    why?: string;
+  };
   /** When its holder was last heard from — a command, a heartbeat, a write in its copy. */
   signalAt?: string;
   /** In review: since when it is as it is — sent, or its UI said — what a review no lead takes has waited from. */
   since?: string;
-  /** In spike: what it is finding out. */
+  /** A research card not done: what it finds out. */
   spike?: string;
   /** How many findings its spikes left: a task the run researched. */
   found?: number;
-  /** In spike: the lead finding it out, once one took it. */
-  spikedBy?: string;
+  /** A research card ready in a team with no scout: the lead's to find out. */
+  leadFindsOut?: true;
   /** A spike's tasks a scout proposes, waiting for the lead: by whom, and the tasks. */
   proposed?: { by: string; tasks: string[] };
   /**
@@ -115,8 +123,7 @@ export interface Attention {
     | 'known-failure'
     | 'version'
     | 'left-in-tmp'
-    | 'ui-waits'
-    | 'ui-queued'
+    | 'review-waits'
     | 'held-up'
     | 'held-ahead'
     | 'slow-review'
@@ -190,11 +197,8 @@ const lineOf = (view: TaskView, now: Date, owesSignal: boolean, unblocks: string
   id: view.task.id,
   title: view.task.title,
   kind: view.task.kind,
-  role: view.task.role ?? 'developer',
-  // What a scout found waits for the lead's decision: shown in review, the lead its reviewer — never a spike still
-  // being found out (encore-10's scope read "spike" twenty minutes while it waited for the lead). Its state stays a
-  // spike: no tester or reviewer's queue reads this.
-  status: view.state.status === 'spike' && view.state.proposed !== undefined ? 'in-review' : view.state.status,
+  role: roleOf(view.task),
+  status: view.state.status,
   priority: view.task.priority,
   urgency,
   ...(view.owner ? { agent: view.owner.agent } : {}),
@@ -210,22 +214,12 @@ const lineOf = (view: TaskView, now: Date, owesSignal: boolean, unblocks: string
   ...(view.owner ? { spentMinutes: minutesBetween(view.owner.takenAt, now) } : {}),
   noSignal: owesSignal && isWorked(view.state.status) && isDisconnected(view.task, view.signalAt, now),
   ...(view.owner ? { takenAt: view.owner.takenAt } : {}),
-  ...(view.state.design ? { design: view.state.design } : {}),
-  ...(view.state.status === 'in-review' && view.state.reviewer?.round === view.state.round
-    ? { reviewer: view.state.reviewer.by }
-    : {}),
   ...(view.state.status === 'in-review' ? { since: view.state.updatedAt } : {}),
   ...(view.owner && view.signalAt !== undefined ? { signalAt: new Date(view.signalAt).toISOString() } : {}),
   unblocks,
   ...(view.task.milestone ? { milestone: view.task.milestone } : {}),
-  ...(view.state.status === 'spike' ? { spike: view.task.spike ?? 'what it needs' } : {}),
+  ...(isResearch(view.task) && view.state.status !== 'done' ? { spike: view.task.spike ?? 'what it needs' } : {}),
   ...(view.state.findings && view.state.findings.length > 0 ? { found: view.state.findings.length } : {}),
-  // Whoever finds it out — research, or what its agent blocked on — until what it found is with the lead.
-  ...((view.state.status === 'spike' || asksLead(view.state)) &&
-  view.state.spikedBy &&
-  view.state.proposed === undefined
-    ? { spikedBy: view.state.spikedBy.by }
-    : {}),
   ...(view.state.proposed ? { proposed: { by: view.state.proposed.by, tasks: view.state.proposed.tasks } } : {})
 });
 
@@ -271,12 +265,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   const team = await readTeam(ctx.root).catch(() => undefined);
   const started = team ? startedAgents(team) : [];
   const testers = started.filter(each => each.roles.includes(TESTER)).map(each => each.agent);
-  const reviewTeam = {
-    testers,
-    developers: started
-      .filter(each => each.roles.includes(DEVELOPER) && !each.roles.includes(TESTER))
-      .map(each => each.agent)
-  };
+  const reviewTeam = reviewTeamOfAgents(started);
+  const scouting = started.some(each => each.roles.includes(SCOUT));
   const log = await readRunLog(loaded.paths);
   const { gone, starting, running } = await agentsNow(loaded.paths, views, team, log, now);
   // A task sent back — or unblocked — to an agent not running waits for it to be started, and the lead is told that
@@ -294,14 +284,26 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       urgency.get(view.task.id) ?? view.task.priority
     );
     const waitsOn = view.task.dependsOn.filter(id => !approvedIds.has(id));
-    const inReview = view.state.status === 'in-review' && reviewTeam.testers.length > 0;
-    const spare = inReview ? spareReviewers(view, views, reviewTeam) : [];
+    const role = stepRole(view, reviewTeam);
+    const reviewers = role === undefined ? [] : stepReviewers(view, views, role, reviewTeam);
+    const review =
+      role === undefined || view.state.review === undefined
+        ? undefined
+        : {
+            role,
+            step: view.state.review.step,
+            steps: reviewSteps(view.task, reviewTeam),
+            ...(view.state.review.by === undefined ? {} : { by: view.state.review.by }),
+            reviewers,
+            ...(reviewers.includes(LEAD) ? { lead: true as const } : {}),
+            ...(role === LEAD ? { why: leadStepWhy(view.task, reviewTeam) } : {})
+          };
 
     return {
       ...line,
       ...(view.state.status === 'pending' && waitsOn.length > 0 ? { waitsOn } : {}),
-      ...(spare.length > 0 ? { spareReviewers: spare } : {}),
-      ...(inReview && leadReviews(view, views, reviewTeam) ? { leadReviews: true as const } : {})
+      ...(review ? { review } : {}),
+      ...(isResearch(view.task) && view.state.status === 'ready' && !scouting ? { leadFindsOut: true as const } : {})
     };
   });
   // A task sent back to an agent at another one waits for it, as the run means it to: its silence is no "no signal —
@@ -340,6 +342,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
 
   // Free means started and idle: an agent on demand never started is none ("dev-3, design-2 are free" for two
   // agents nobody had started).
+  // Advice the lead settled is said no more: what it decided stands for the run.
+  const decided = settledFindings(log);
   attention.push(
     ...bottlenecks(
       views,
@@ -348,7 +352,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       // What the backlog still holds that no card of the run does: what the lead can stack for an agent with nothing.
       await stackableBacklog(ctx.root, loaded.tasks),
       started
-    )
+    ).filter(item => !decided.has(item.kind))
   );
   // A run that stands still is said with what holds each task, read as `task next` reads it: the lock on a file it needs.
   const locks = await allLocks(ctx);
@@ -362,7 +366,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       scratch: loaded.paths.scratch,
       openFor: now.getTime() - Date.parse(record.openedAt),
       open: record.status === 'open',
-      launches: team?.options?.launch !== undefined
+      launches: team?.options?.launch !== undefined,
+      now: now.getTime()
     })
   );
   // What the run's records show going wrong now, said while the lead can still act (`findings/live.ts`).
@@ -405,7 +410,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       attention.push({
         kind: 'spike-proposed',
         task: view.task.id,
-        text: `${view.task.id}: ${proposed.by} found it out — ${proposed.text}${proposed.tasks.length > 0 ? ` — and proposes ${proposed.tasks.join(', ')}: decide them with the person (plitzi task next --role lead reads them)` : ''} — plitzi task spike ${view.task.id} --approve | --changes "…"`,
+        text: `${view.task.id}: ${proposed.by} found it out — ${proposed.text}${proposed.tasks.length > 0 ? ` — and proposes ${proposed.tasks.join(', ')}: decide them with the person (plitzi task next --role lead reads them)` : ''} — plitzi task review ${view.task.id} --approve [--leave <tasks>] | --changes "…"`,
         who: 'lead'
       });
     } else if (view.state.status === 'blocked' && view.state.blockedBy) {
@@ -437,16 +442,11 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       });
     }
 
-    // Any piece at work — a task, a spike — past its limit (`workLimitOf`: 10 min, the scope 30) wakes the lead to ask
+    // Any card at work — research too — past its limit (`workLimitOf`: 10 min, the scope 30) wakes the lead to ask
     // where it stands, and again at each limit more: past it something is usually wrong, and the lead decides on the
-    // answer (Carlos). Its agent's last word, said with it.
-    const finding =
-      view.state.status === 'spike' && view.state.spikedBy && view.state.spikedBy.by !== LEAD && !view.state.proposed
-        ? view.state.spikedBy
-        : undefined;
-    // Its agent at it: one in review, blocked or waiting is not being worked — it holds no one to ask.
-    const atIt = finding?.by ?? (isWorked(view.state.status) ? view.owner?.agent : undefined);
-    const spent = finding ? minutesBetween(finding.at, now) : line?.spentMinutes;
+    // answer (Carlos). Its agent's last word, said with it. One in review, blocked or waiting holds no one to ask.
+    const atIt = isWorked(view.state.status) ? view.owner?.agent : undefined;
+    const spent = line?.spentMinutes;
     const limit = workLimitOf(view.task.id);
     const limits = spent === undefined ? 0 : Math.floor(spent / limit);
     if (atIt !== undefined && spent !== undefined && limits >= 1) {

@@ -1,9 +1,8 @@
-import { designDue } from '../design';
 import { exists, fingerprint, writeJson } from '../files';
-import { assertReviewingLead } from '../leads';
 import { LEAD, messagesOf } from '../messages';
 import { under } from '../paths';
 import { RunRefusal } from '../refusal';
+import { assertStepReviewer, reviewSteps, reviewTeamOf } from '../reviews';
 import { keepFiles } from '../store';
 import { readRequests, readStart, viewTask } from '../taskStore';
 import { at, changedInCopy, findTask } from './common';
@@ -67,16 +66,19 @@ export const partnerFor = async (
   }
 
   const view = await viewTask(loaded.paths, task);
-  await assertReviewingLead(ctx, loaded, view);
+  await assertStepReviewer(ctx, loaded, view);
   const alone = `approve ${withId} on its own, or send it back (plitzi task review ${withId} --changes "…")`;
   if (view.state.status !== 'in-review') {
     throw new RunRefusal('invalid', `--with ${withId}: it is ${view.state.status}, not in review`, { task: withId });
   }
 
-  if (designDue(view.state)) {
+  // Approved beside it, it must be at its last step: one a step before waits for that step's reviewer — the lead's word
+  // excepted, which approves any whole.
+  const steps = reviewSteps(view.task, await reviewTeamOf(ctx.root));
+  if (ctx.agent !== LEAD && (view.state.review?.step ?? 0) + 1 < steps.length) {
     throw new RunRefusal(
       'invalid',
-      `--with ${withId}: its UI waits for its review — have it said first (or ${alone})`,
+      `--with ${withId}: its review has steps before its last (${steps.join(' → ')}) — have them said first (or ${alone})`,
       { task: withId }
     );
   }

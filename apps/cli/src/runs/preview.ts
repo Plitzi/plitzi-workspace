@@ -19,7 +19,7 @@ import {
 } from './files';
 import { canLinger, keepServer, keptServer, markPreviewed, touchKept, unmarkPreviewed } from './lingering';
 import { monitorRun } from './monitor';
-import { agentScratch, taskPaths, under } from './paths';
+import { agentScratch, RUN_COPY_MARK, taskPaths, under } from './paths';
 import { alive, isPreview, previewPort, previewRecord } from './previewRecord';
 import { stopTree } from './processes';
 import { RunRefusal } from './refusal';
@@ -63,19 +63,15 @@ const whyOf = (task: TaskLine): { why?: string } =>
           ? { why: `blocked — ${task.blockedBy.reason} (needs ${task.blockedBy.needs})` }
           : task.parkedFor
             ? { why: `${task.agent ?? 'its agent'} is at ${task.parkedFor} first — one task at a time` }
-            : task.status === 'spike'
-              ? {
-                  why: `${task.spikedBy ? `${task.spikedBy} finds out` : 'not taken yet'}: ${task.spike ?? 'what it needs'}`
-                }
+            : task.leadFindsOut
+              ? { why: `the lead finds it out: ${task.spike ?? 'what it needs'}` }
               : task.status === 'ready'
                 ? { why: 'free to take: the next agent at work takes it' }
                 : task.status === 'in-review'
                   ? {
                       why: task.proposed
                         ? `${task.proposed.by} found it out: the lead decides`
-                        : task.design?.status === 'due'
-                          ? `its UI review — ${task.design.by ?? 'no designer has taken it yet'}; then its review`
-                          : `its review — ${task.reviewer ?? 'not taken yet'}`
+                        : `its ${task.review?.role ?? ''} review — ${task.review?.by ?? 'not taken yet'}${task.review && task.review.step + 1 < task.review.steps.length ? `; then its ${task.review.steps.slice(task.review.step + 1).join(', then ')}'s` : ''}`
                     }
                   : {};
 
@@ -93,7 +89,7 @@ export const snapshotOf = ({ view, agents, feed }: Monitored, at: Date): RunSnap
     role: task.role,
     status: task.status,
     ...(task.agent ? { agent: task.agent } : {}),
-    ...(task.reviewer ? { reviewer: task.reviewer } : {}),
+    ...(task.review?.by ? { reviewer: task.review.by } : {}),
     round: task.round,
     files: task.files,
     ...(task.step ? { step: task.step } : {}),
@@ -369,6 +365,7 @@ export const copyRunWork = async (
   }
 
   await approvedCopy(ctx, loaded, dir);
+  await fs.writeFile(path.join(dir, RUN_COPY_MARK), `${JSON.stringify({ run: runId, at: ctx.now().toISOString() })}\n`);
 
   return { dir, files: Object.keys((await readApproved(loaded.paths)).files).length };
 };

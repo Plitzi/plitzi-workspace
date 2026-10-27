@@ -1,15 +1,27 @@
+import path from 'node:path';
+
 import chalk from 'chalk';
 
-import { act, either, holder, reviewingOnly, runOf } from './shell';
+import { act, either, holder, inHand, runOf } from './shell';
 import { hhmm, list, messageLines, reusedServerText, secondRunText, slowLineText } from './text';
 import { experienceFrom } from '../../runs/experience';
+import { endsWith, HELD_WORD } from '../../runs/held';
+import { isPrincipal } from '../../runs/leads';
 import { crossed, longFileText } from '../../runs/longFiles';
 import { runPaths } from '../../runs/paths';
 import { RunRefusal } from '../../runs/refusal';
 import { logRun } from '../../runs/run';
 import { backupText } from '../../runs/strays';
 import { tellLead } from '../../runs/talk';
-import { blockTask, checkTask, completeTask, noteTask, reportProgress, unblockTask } from '../../runs/tasks';
+import {
+  blockTask,
+  checkTask,
+  completeResearch,
+  completeTask,
+  noteTask,
+  reportProgress,
+  unblockTask
+} from '../../runs/tasks';
 
 import type { RunCommandOptions } from './shell';
 import type { ExperienceFlags } from '../../runs/experience';
@@ -24,15 +36,19 @@ export const taskProgress = (options: RunCommandOptions & { fraction?: number; s
     options,
     async ctx => {
       const runId = await runOf(ctx, options);
-      const reviewing = await reviewingOnly(ctx, runId);
-      if (reviewing !== undefined) {
+      // A review or a spike in hand gives its sign of life as a task's work does: noted on it, the lead sees where it
+      // is. Only a task at work keeps its progress in its copy's record — its locks live by it.
+      const held = await inHand(ctx, runId);
+      if (held !== undefined && held.kind !== 'work') {
         await logRun(ctx, runPaths(ctx.root, runId), {
-          action: 'review-progress',
-          task: reviewing,
+          action: 'progress',
+          task: held.task,
+          kind: held.kind,
+          ...(options.fraction !== undefined ? { fraction: options.fraction } : {}),
           ...(options.step !== undefined ? { step: options.step } : {})
         });
 
-        return { review: reviewing };
+        return { held };
       }
 
       const { taskId } = await holder(ctx, options);
@@ -43,8 +59,8 @@ export const taskProgress = (options: RunCommandOptions & { fraction?: number; s
       });
     },
     signal =>
-      'review' in signal
-        ? `Noted on your review of ${signal.review}: the lead sees you are at it. Your verdict ends it: plitzi task review ${signal.review} --approve | --changes "…"`
+      'held' in signal
+        ? `Noted on your ${HELD_WORD[signal.held.kind]} of ${signal.held.task}: the lead sees where you are. It ends with ${endsWith(signal.held)}`
         : [
             ...messageLines(signal.messages),
             ...signal.longFiles.map(long =>
@@ -247,7 +263,6 @@ export const taskComplete = (
     knownFailure?: string;
     fixedBy?: string;
     note?: string;
-    review?: string;
   } & ExperienceFlags
 ): Promise<void> =>
   act(
@@ -268,12 +283,7 @@ export const taskComplete = (
         throw new RunRefusal('invalid', '--fixed-by goes with --known-failure "why": the task that fixes what fails');
       }
 
-      if (options.review !== undefined && options.review !== 'code' && options.review !== 'ui') {
-        throw new RunRefusal('invalid', `--review is code or ui, not "${options.review}"`);
-      }
-
       const completed = await completeTask(ctx, runId, taskId, {
-        ...(options.review === undefined ? {} : { review: options.review }),
         experience,
         ...(options.knownFailure
           ? { knownFailure: { why: options.knownFailure, ...(options.fixedBy ? { fixedBy: options.fixedBy } : {}) } }
@@ -328,4 +338,48 @@ export const taskComplete = (
         chalk.dim(`  Round ${String(completed.report.round)}'s report kept for the run's, with what it was like`),
         '  Nothing more on it until its review comes back: plitzi task next hands you what is next — a task you hold first.'
       ].join('\n')
+  );
+
+/**
+ * `plitzi task complete --found "…" [--tasks <stage.json>]`: what a research card found, and the tasks it makes — its
+ * scout's in its copy, to the lead's review; the lead's own, named, done at once.
+ */
+export const taskFound = (
+  named: string | undefined,
+  options: RunCommandOptions & { found?: string; tasks?: string }
+): Promise<void> =>
+  act(
+    options,
+    async ctx => {
+      if (options.found === undefined) {
+        throw new RunRefusal('invalid', '--tasks goes with --found "…": the tasks what a research card found makes');
+      }
+
+      const own = ctx.token === undefined && isPrincipal(ctx.agent);
+      const { runId, taskId } = own ? { runId: await runOf(ctx, options), taskId: named } : await holder(ctx, options);
+      if (taskId === undefined) {
+        throw new RunRefusal('invalid', 'Name the research card: plitzi task complete s-scope --found "…"');
+      }
+
+      if (named !== undefined && named !== taskId) {
+        throw new RunRefusal(
+          'invalid',
+          `You hold ${taskId}, not ${named}: complete it in its copy — plitzi task complete --found "…"`
+        );
+      }
+
+      const tasks = options.tasks === undefined ? {} : { tasks: path.resolve(options.tasks) };
+
+      return completeResearch(ctx, runId, taskId, options.found, tasks);
+    },
+    found =>
+      found.status === 'in-review'
+        ? [
+            `What you found on ${found.task} goes to the lead, who decides it${found.proposed && found.proposed.length > 0 ? ` with the person: ${found.proposed.join(', ')}` : ''} — nothing is stacked until it approves; what it asks comes with your next command.`,
+            ...(found.notices ?? []).map(notice => `  · ${notice}`)
+          ].join('\n')
+        : [
+            `${found.task} is done: its findings go with every task that waits for it.${found.added ? ` It made ${found.added.join(', ')}.` : ''}${found.ready && found.ready.length > 0 ? ` Ready now: ${found.ready.join(', ')}.` : ''}`,
+            ...(found.notices ?? []).map(notice => `  · ${notice}`)
+          ].join('\n')
   );
