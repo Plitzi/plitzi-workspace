@@ -106,7 +106,14 @@ const lineOf = (entry: Record<string, unknown>): FeedLine | undefined => {
     case 'joined':
       return line('agent', `joined the run${entry.quality ? ` at ${textOf(entry.quality)}` : ''}`);
     case 'complete':
-      return line('complete', 'sent it to review');
+      return line(
+        'complete',
+        Array.isArray(entry.proposed)
+          ? entry.proposed.length > 0
+            ? `found it out — proposes ${listOf(entry.proposed)}`
+            : 'found it out'
+          : 'sent it to review'
+      );
     case 'check': {
       if (entry.ok === true) {
         return line('other', 'checked: passes');

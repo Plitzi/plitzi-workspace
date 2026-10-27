@@ -21,7 +21,7 @@ export const testersOf = async (root: string): Promise<string[]> => {
   return team ? startedAgents(team).flatMap(each => (each.roles.includes(TESTER) ? [each.agent] : [])) : [];
 };
 
-/** The team's scouts: they find out what the spikes ask, and propose the tasks a spike makes to the lead. */
+/** The team's scouts: they take the research cards, and propose the tasks each makes to the lead. */
 export const scoutsOf = async (root: string): Promise<string[]> => {
   const team = await readTeam(root).catch(() => undefined);
 

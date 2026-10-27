@@ -151,7 +151,11 @@ export const lookText = (looked: Looked): string =>
     ...(looked.movedElsewhere
       ? looked.movedElsewhere.map(each =>
           chalk.yellow(
-            `⚠ ${each.route} moved outside its parts too — the first element that differs from the run before it: ${each.here}\n    before: ${each.there}`
+            each.wordsOnly
+              ? // Drawn the same, its words apart: a time or a count the two servers' data says — a sanity run's
+                // look warned of a show's start a minute apart.
+                `⚠ ${each.route} says other words outside its parts — the same element drawn the same, its words apart: ${each.here}\n    before: ${each.there}\n    More likely what the two servers' data says (a time, a count) than the task: read it, and look again --fresh if unsure`
+              : `⚠ ${each.route} moved outside its parts too — the first element that differs from the run before it: ${each.here}\n    before: ${each.there}`
           )
         )
       : []),

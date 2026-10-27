@@ -172,3 +172,26 @@ describe('a look of many pages', () => {
     expect(text).toContain('    t-design-home-1440-light.png');
   });
 });
+
+// The CLI's sanity run: a show's start a minute apart on the two servers read as the page having moved.
+describe('a look whose page says other words outside its parts', () => {
+  it('says it is more likely the data than the task, apart from an element that moved', () => {
+    const looked = {
+      task: 't-how-title',
+      url: 'http://127.0.0.1:50000',
+      ok: true,
+      check: '✓ / at 1440 px',
+      shots: [],
+      timezone: 'UTC',
+      movedElsewhere: [
+        { route: '/', here: 'time |  | Today 02:52 UTC', there: 'time |  | Today 02:53 UTC', wordsOnly: true },
+        { route: '/rooms', here: 'div | a |  | 0,0,10x10', there: 'div | a |  | 0,0,12x10' }
+      ]
+    } as unknown as Looked;
+    const text = stripVTControlCharacters(lookText(looked));
+
+    expect(text).toContain('/ says other words outside its parts');
+    expect(text).toContain("More likely what the two servers' data says");
+    expect(text).toContain('/rooms moved outside its parts too');
+  });
+});

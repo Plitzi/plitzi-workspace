@@ -69,7 +69,7 @@ export const doingOf = (task: TaskLine): string => {
 
   switch (task.status) {
     case 'in-review':
-      return `reviews the UI of ${task.id}`;
+      return `reviews ${task.id}${task.review ? ` — its ${task.review.role}'s step` : ''}`;
     case 'changes-requested':
       return `redoes ${task.id} (round ${String(task.round)})`;
     case 'waiting':

@@ -19,6 +19,7 @@ import { viewTask } from '../../runs/taskStore';
 import { checkAccount } from '../check/account';
 import { pageFor } from '../check/space';
 
+import type { Difference } from '../same';
 import type { LookOptions } from './lookOptions';
 import type { Preview } from '../../runs/preview';
 import type { RunContext } from '../../runs/run';
@@ -300,14 +301,14 @@ export interface Checked {
  * pages was refused whole). One browser at a time: each check opens its own.
  */
 /** What `page same --json` read differing first, for one page: none when it drew the same, or could not be told. */
-export const elsewhereOf = (output: string): { here: string; there: string } | undefined => {
+export const elsewhereOf = (output: string): Difference | undefined => {
   try {
     const read: unknown = JSON.parse(output.trim().split('\n').at(-1) ?? '');
     const page: unknown = isRecord(read) && Array.isArray(read.pages) ? (read.pages as unknown[])[0] : undefined;
     const first = isRecord(page) && page.same === false && isRecord(page.first) ? page.first : undefined;
 
     return first && typeof first.here === 'string' && typeof first.there === 'string'
-      ? { here: first.here, there: first.there }
+      ? { here: first.here, there: first.there, ...(first.wordsOnly === true ? { wordsOnly: true as const } : {}) }
       : undefined;
   } catch {
     return undefined;

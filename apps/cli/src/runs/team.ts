@@ -16,11 +16,12 @@ import type { Quality, RunPlan } from './model';
  * Who works this project's runs: the project's own choice, in `.plitzi/team.json` — committed, so the team
  * shares it — that a person edits, or asks an agent to change with `plitzi run team set`. The lead, and the agents it
  * starts: each with the roles it takes, how many of it, and the model to start it with. How many agents a run has is
- * the team's size; a task whose role nobody in the team takes is refused at `run open --dry-run`; a designer reviews the UI of the
- * others' tasks; a tester reviews every task — its QA, the task's approval — and with one in the team each developer task
- * gets a task of its tests, a developer's that did not write it (`tests.ts`); a scout finds out what the spikes ask.
+ * the team's size; a task whose role nobody in the team takes is refused at `run open --dry-run`; each card is reviewed by the
+ * roles its `review` names (`reviews.ts`) — a designer's look, a tester's QA, the tester's alone by default — and with a
+ * tester in the team each developer task gets a task of its tests, a developer's that did not write it (`tests.ts`); a
+ * scout takes the research cards.
  *
- * One lead, the manager: it plans with the person, approves the tasks a spike proposes, answers, decides what is escalated
+ * One lead, the manager: it plans with the person, approves what research finds, answers, decides what is escalated
  * to it and finishes — it reviews no task while the team has a tester. It is the person's harness, and never started
  * again: what it reads stays read on every turn after, so the work that reads much is the agents'.
  *
@@ -279,12 +280,12 @@ export const DESIGN_LOOK: Record<Quality, string> = {
 export const ROLES = {
   developer: 'Writes the code of a task: the role of a task that names none.',
   designer:
-    'Designs (tasks of its own), and reviews the UI/UX of the tasks of other roles before the tester, as a designer.',
+    'Designs (tasks of its own), and says the designer’s step of the review of every card that names one ("review": ["designer", "tester"]): its UI/UX, as a designer.',
   reviewer: 'Reviews as a task of its own: an accessibility pass, a code audit — and fixes what it finds.',
   tester:
-    'QA: reviews every task in review — what it was asked, its checks, how it behaves, its code, its tests; its approval is the task’s — and escalates to the lead what it cannot decide. With one in the team, each developer task gets a task of its tests (<task>-tests), written by a developer that did not write it — the tester only when no developer may. With no tester, the lead reviews every task.',
+    'QA: says the tester’s step of every card’s review — a card that names no review is the tester’s alone — what it was asked, its checks, how it behaves, its code, its tests; its approval, the last step, is the card’s — and escalates to the lead what it cannot decide. With one in the team, each developer task gets a task of its tests (<task>-tests), written by a developer that did not write it — the tester only when no developer may. With no tester, the lead says the tester’s steps.',
   scout:
-    'Finds out: the run’s scope and every spike — reads, measures, compares — and hands the lead what it found and the tasks it makes, which the lead approves. It answers no agent’s question (the lead does), and stops once no spike is left.',
+    'Finds out: takes the research cards — the run’s scope, and any card with a "spike" and no files — reads, measures, compares, and completes each with what it found and the tasks it makes, which the lead reviews. It answers no agent’s question (the lead does), and stops once no research is left.',
   writer: 'Writes the words: the copy of a page, the docs, the help.'
 } as const;
 
@@ -528,7 +529,7 @@ export const TEAM_ABOUT: Record<string, unknown> = {
   roles: { ...ROLES, '<any other>': 'A role of your own: a task names it, an agent takes it.' },
   options:
     '"designReview": how closely a designer reviews another task\'s UI — "light" (its pages at 1440 and 390, the default scheme, nothing it does not touch), "standard" (both schemes and widths, its sections against the reference; the default), "high" (every page that reads its files, against the run before it too). A review costs what it looks at. "startGraceMinutes": how long an agent just started may say nothing before the tasks it holds read \'no signal\' — 3 when not said. "launch": the harness (claude, codex, opencode) the CLI starts the agents in by itself when the run asks for one — left out, the lead starts them. "freshContextAt": the context, in tokens, past which an agent of "session": "context" is started again fresh — 250000 when not said.',
-  more: 'It starts small — every agent spends tokens, and only one developer starts with the run: a second developer, a designer who reviews the UI of every other task, a tester who reviews every task (its tests written by a developer that did not write it), and a scout who finds out what the spikes ask — each started when work waits for it. The developers on Sonnet, the others and the lead on Opus. Grow it when a job asks — you decide: more developers (plitzi run team set dev --count 3 --min 2), a second tester when reviews queue (plitzi run team set test --count 2), a writer.'
+  more: 'It starts small — every agent spends tokens, and only one developer starts with the run: a second developer, a designer for the cards whose review names one, a tester for every card’s QA (its tests written by a developer that did not write it), and a scout for the research cards — each started when work waits for it. The developers on Sonnet, the others and the lead on Opus. Grow it when a job asks — you decide: more developers (plitzi run team set dev --count 3 --min 2), a second tester when reviews queue (plitzi run team set test --count 2), a writer.'
 };
 
 /**

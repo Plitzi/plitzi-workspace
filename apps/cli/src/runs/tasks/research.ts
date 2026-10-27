@@ -133,7 +133,8 @@ export const completeResearch = async (
     }),
     ctx.now
   );
-  await logRun(ctx, loaded.paths, { action: 'spike-proposed', task: taskId, question: questionOf(view), proposed });
+  // A complete as any card's — what it found said with it: the run's flow, the feed and a fresh context read it as one.
+  await logRun(ctx, loaded.paths, { action: 'complete', task: taskId, question: questionOf(view), proposed });
   // What finding it out cost, kept as its scout hands it over: the lead's review is another piece.
   await logSpent(ctx, loaded, taskId, 'spike');
 

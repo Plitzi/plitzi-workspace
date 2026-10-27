@@ -54,6 +54,32 @@ describe("a task's brief", () => {
     expect(note).toContain('(whole: --json)');
   });
 
+  // The CLI's sanity run: a scout's brief said "Its files:" with none, how a file beyond them goes in, and to read the
+  // developers' half of the run.
+  it('gives research what it finds out and its scout’s half to read — never files it does not write', async () => {
+    const plan = benchPlan();
+    plan.tasks.push({
+      ...plan.tasks[0],
+      id: 's-words',
+      title: 'The words',
+      files: [],
+      spike: 'which words',
+      dependsOn: []
+    });
+    const runId = await open(plan);
+    for (const file of ['runs-scout.md', 'runs.md']) {
+      await bench.write(`.claude/skills/plitzi-cli/reference/${file}`, `# ${file}\n`);
+    }
+
+    const brief = stripVTControlCharacters(briefOf(await taskContext(lead(), runId, 's-words')));
+    expect(brief).toContain('Research — find out: which words');
+    expect(brief).not.toContain('Its files:');
+    expect(brief).not.toContain('A file beyond these');
+    expect(brief).toContain(
+      'Read first, for this work — the rest of the skills when the work asks: .claude/skills/plitzi-cli/reference/runs-scout.md, .claude/skills/plitzi-cli/reference/runs.md'
+    );
+  });
+
   // Developers wrote tests into a tests card's file and learnt it at task check, the writing lost.
   it('says another task’s file beside the task’s own — its tests, another’s', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });

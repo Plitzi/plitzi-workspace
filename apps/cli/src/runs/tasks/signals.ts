@@ -153,7 +153,6 @@ export const unblockTask = async (
       ...state,
       status: view.owner ? (state.round > 0 ? 'changes-requested' : 'in-progress') : 'ready',
       blockedBy: undefined,
-      spikedBy: undefined,
       ...(question !== undefined && answer !== undefined
         ? {
             findings: [...(state.findings ?? []), { at: at(ctx), by: ctx.agent, question, text: answer }]

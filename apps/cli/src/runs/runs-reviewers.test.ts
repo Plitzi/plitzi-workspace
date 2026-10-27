@@ -590,6 +590,23 @@ describe('a scout between spikes', () => {
     await sendBack(runId, SCOPE_SPIKE, 'Name the pages');
     expect((await nextTask(bench.agent('scout-1'), runId, 'scout')).task?.id).toBe(SCOPE_SPIKE);
   });
+
+  // The CLI's sanity run: sent back before its scout asked again, it was told "what you found is with the lead — stop".
+  it('hands research sent back to its scout in the same context, as any card sent back', async () => {
+    const members = team();
+    await bench.writeTeam({ ...members, agents: [...members.agents, { ...SCOUT, session: 'task' }] });
+    const { runId } = (await openRun(lead(), await bench.writePlan(scopePlan('es-launch', 'Translate the site'))))
+      .checked;
+    await takeNext(bench.agent('scout-1'), runId, 'scout');
+    await found(runId, SCOPE_SPIKE, 'Two pages');
+    // Sent back after its copy was last written, as a lead's review comes minutes later.
+    bench.advance(60 * 60_000);
+    await sendBack(runId, SCOPE_SPIKE, 'Name the pages');
+
+    const back = await nextTask(bench.agent('scout-1'), runId, 'scout');
+    expect(back.finished).toBeUndefined();
+    expect(back).toMatchObject({ task: { id: SCOPE_SPIKE }, yours: 'changes-requested' });
+  });
 });
 
 describe('what the lead is told, as manager', () => {
@@ -613,14 +630,29 @@ describe('what the lead is told, as manager', () => {
     expect((await nextTask(bench.agent('test-1'), runId, 'tester')).review?.task.id).toBe('t-menu');
   });
 
-  it('names in run plan the work of a scout and a tester, which no task names as its role’s', async () => {
-    const members = team(TESTERS, SCOUT);
+  // The CLI's sanity run: its on-demand scout read "on demand" and nothing of the research card waiting for it.
+  it('names in run plan each agent’s work — its cards, the steps it reviews, a scout’s research — on demand too', async () => {
+    const members = team(TESTERS, { ...SCOUT, min: 0 });
     await bench.writeTeam(members);
-    const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
+    const plan = designed(benchPlan(), ['t-menu']);
+    plan.tasks.push({
+      ...plan.tasks[0],
+      id: 's-words',
+      title: 'The words',
+      files: [],
+      spike: 'which words',
+      dependsOn: []
+    });
+    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
     const lines = startLines((await loadRun(lead(), runId)).tasks, members).join('\n');
-    expect(lines).toContain('test-1 — tester');
-    expect(lines).toContain('every task’s review');
-    expect(lines).toContain('scout-1 — scout');
-    expect(lines).not.toContain('nothing for its scout');
+    expect(lines).toMatch(/test-1 — tester[^\n]*reviews t-home, t-menu, t-book, t-about/);
+    expect(lines).toMatch(/scout-1 — scout — on demand \(s-words\)/);
+    expect(lines).not.toContain('the UI of');
+
+    const none = startLines(
+      (await loadRun(lead(), runId)).tasks.filter(task => task.id !== 's-words'),
+      members
+    );
+    expect(none.join('\n')).toContain('the research a stage brings');
   });
 });

@@ -11,6 +11,17 @@ describe('page same', () => {
     expect(firstDifference(['div | a'], ['div | a', 'p | b'])).toEqual({ here: '(nothing)', there: 'p | b' });
   });
 
+  // The CLI's sanity run: a show's start a minute apart on the two servers read as the page "moved".
+  it('says when the element differs by its words alone, drawn the same', () => {
+    const at = (time: string) => `time |  | Today ${time} UTC | 0,0,157x20 | rgb(255, 180, 60)`;
+    expect(firstDifference([at('02:52')], [at('02:53')])).toEqual({
+      here: at('02:52'),
+      there: at('02:53'),
+      wordsOnly: true
+    });
+    expect(firstDifference([at('02:52')], [at('02:53').replace('157x20', '160x20')])?.wordsOnly).toBeUndefined();
+  });
+
   it('reads each element’s name and words, and what its ::before draws', () => {
     document.body.innerHTML = '<section data-plitzi-el="fights"><span data-plitzi-el="vs">VS</span></section>';
     // jsdom lays nothing out: every element is given a box, as a browser would.

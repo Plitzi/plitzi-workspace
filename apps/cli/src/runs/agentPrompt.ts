@@ -89,7 +89,7 @@ export const agentPrompt = ({
       '',
       `- The CLI is ${cli} — your own: it says who you are on every command, so pass no --token nor --agent.`,
       // The lead is the person's harness, never started again: what it reads stays read every turn after (Carlos).
-      "- You are the manager: you plan with the person, approve what a spike proposes, answer, decide what is escalated to you and finish. What reads much — finding out, reviewing — is the agents', in fresh contexts: everything you read stays in yours for the rest of the run.",
+      "- You are the manager: you plan with the person, review what research finds, answer, decide what is escalated to you and finish. What reads much — finding out, reviewing — is the agents', in fresh contexts: everything you read stays in yours for the rest of the run.",
       scoping
         ? team.scout
           ? '- The run opens on its scope: a scout finds out what the ask takes and proposes the tasks. `task next --role lead` hands them to you — decide them with the person, then `task review s-scope --approve [--leave <tasks>] | --changes "…"`.'

@@ -50,7 +50,7 @@ export const findOutFor = (
 /**
  * `task next --role lead`: what waits for the lead, the manager — a step of a card's review that is its, what a research
  * card found among them (its tasks to decide with the person); a review escalated to it is blocked on it and comes through `run watch`; a step of a card's review that is the lead's
- * (`reviews.ts`) — every one, with no tester in the team; the spikes when it has no scout. The lead reviews nothing a tester takes: every review it reads stays in its context,
+ * (`reviews.ts`) — every one, with no tester in the team; the research cards when it has no scout. The lead reviews nothing a tester takes: every review it reads stays in its context,
  * the person's harness never started again.
  */
 export const leadNext = async (

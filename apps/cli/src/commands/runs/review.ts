@@ -52,6 +52,7 @@ import { projectSpace } from '../check/space';
 import { visitorArgs } from '../register/options';
 import { actingSteps } from '../shot/steps';
 
+import type { Difference } from '../same';
 import type { LookOptions } from './lookOptions';
 import type { BeforeAfter } from './lookParts';
 import type { RunCommandOptions } from './shell';
@@ -499,7 +500,7 @@ export const lookAt = (
         let check: { code: number; output: string };
         let shots: string[];
         let compared: BeforeAfter[];
-        let movedElsewhere: { route: string; here: string; there: string }[];
+        let movedElsewhere: (Difference & { route: string })[];
         try {
           const [checked, pictures, set, read] = await Promise.all([
             checkWithInteraction(routes, interaction, checkOf),

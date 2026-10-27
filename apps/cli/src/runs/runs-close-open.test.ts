@@ -45,6 +45,10 @@ describe("the lead's close", () => {
     expect(refused.message).toContain('tmp/notes');
 
     await fs.rm(path.join(bench.root, 'tmp/notes'), { recursive: true });
+    // A summary written on the command line, as the CLI's sanity run wrote one: said to be a file's.
+    expect(
+      (await refusal(writeSummary(lead(), 'es-launch', 'Both pages done, nothing left', LEAD_SAID))).message
+    ).toContain('--summary names a file, and Both pages done, nothing left is no file');
     await writeSummary(lead(), 'es-launch', 'summary.md', LEAD_SAID);
   });
 

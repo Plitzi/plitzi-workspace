@@ -52,10 +52,21 @@ const exists = (file: string): Promise<boolean> =>
     () => false
   );
 
-/** The skill files a task writing `files` reads first — only those the project has — then the run's protocol. */
-export const readingFor = async (root: string, files: readonly string[]): Promise<string[]> => {
+/** What a research card's scout reads first: its own half of the run. */
+export const RESEARCH_READING = `${CLI}/reference/runs-scout.md`;
+
+/**
+ * The skill files a task writing `files` reads first — a research card its scout's half — only those the project has,
+ * then the run's protocol.
+ */
+export const readingFor = async (
+  root: string,
+  files: readonly string[],
+  { research = false }: { research?: boolean } = {}
+): Promise<string[]> => {
   const wanted = [
     ...new Set([
+      ...(research ? [RESEARCH_READING] : []),
       ...READING.filter(entry => files.some(entry.matches)).flatMap(entry => entry.read),
       `${CLI}/reference/runs.md`
     ])

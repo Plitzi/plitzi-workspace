@@ -188,7 +188,13 @@ export const nextText = (next: NextTask, agent: string): string =>
           ? next.yours
             ? [
                 `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : next.back === 'unblocked' ? 'unblocked by the lead' : 'still in progress: you hold it — go on with it before anything new'}). Your token is still good: plitzi task context ${next.task.id}`,
-                ...(next.work ? [`  Its copy, the only place you write: cd ${next.work}`] : []),
+                ...(next.work
+                  ? [
+                      isResearch(next.task)
+                        ? `  Its copy, where its commands run — research writes nothing of the project's: cd ${next.work}`
+                        : `  Its copy, the only place you write: cd ${next.work}`
+                    ]
+                  : []),
                 ...(next.asked ?? []).map(line => `  ↺ ${line}`)
               ].join('\n')
             : [
@@ -237,10 +243,12 @@ const takenText = (taken: TakenTask): string =>
     ...taken.proposals.map(each =>
       chalk.cyan(`  ⇄ ${each.from} proposes (${each.id}): ${each.change} — plitzi task answer ${each.id}`)
     ),
-    `  Write only in its copy: ${taken.work} — what is yours beside the work (a script, a log, a picture) in its tmp/, never the project's`,
+    isResearch(taken.task)
+      ? `  Its copy, where its commands run: ${taken.work} — research writes nothing of the project's; your notes and the stage you propose go in its tmp/`
+      : `  Write only in its copy: ${taken.work} — what is yours beside the work (a script, a log, a picture) in its tmp/, never the project's`,
     ...(isResearch(taken.task)
       ? [
-          `  Research: find out ${taken.task.spike ?? 'what it asks'} — write nothing of the project's`,
+          `  Research: find out ${taken.task.spike ?? 'what it asks'}`,
           // A copy's research compares with the original; any other reads the project — encore-10's spike on test
           // speed was told to compare with an original it had none of.
           ...(taken.reference === undefined

@@ -143,7 +143,7 @@ export const startLines = (tasks: readonly RunTask[], team: Team): string[] => {
 
   return [
     `Start the team (${TEAM_FILE}):`,
-    `  lead — ${leadModelText(team.lead)} — you: plan, approve what a spike proposes, answer, decide what is escalated and finish — what waits for you comes in the queue (plitzi task next --role lead --no-wait)${teamTakes(team, TESTER) ? '' : '; with no tester in the team, every review is yours too'}`,
+    `  lead — ${leadModelText(team.lead)} — you: plan, review what research finds, answer, decide what is escalated and finish — what waits for you comes in the queue (plitzi task next --role lead --no-wait)${teamTakes(team, TESTER) ? '' : '; with no tester in the team, the tester’s steps of every review are yours too'}`,
     ...startedAgents(team).map(each => {
       // Started at a level, it works that level's tasks: the ones below go to the agent of theirs, when the team has one.
       const theirs = tasks
@@ -158,15 +158,11 @@ export const startLines = (tasks: readonly RunTask[], team: Team): string[] => {
       const reviewing = tasks
         .filter(task => reviewSteps(task, reviewTeam).some(role => roles.includes(role)))
         .map(task => task.id);
-      // A tester reviews every task, a scout finds out the spikes: work no task names as its role's.
-      const spikes = tasks.filter(task => task.spike !== undefined && task.files.length === 0).map(task => task.id);
       const work = [
         ...(theirs.length > 0 ? [theirs.join(', ')] : []),
-        ...(reviewing.length > 0 ? [`the UI of ${reviewing.join(', ')}`] : []),
-        ...(each.roles.includes(TESTER) ? ['every task’s review'] : []),
-        ...(each.roles.includes(SCOUT)
-          ? [spikes.length > 0 ? `the spikes ${spikes.join(', ')}` : 'the spikes a stage brings']
-          : [])
+        ...(reviewing.length > 0 ? [`reviews ${reviewing.join(', ')}`] : []),
+        // A scout with no research in the plan stays for the research a stage brings.
+        ...(each.roles.includes(SCOUT) && theirs.length === 0 ? ['the research a stage brings'] : [])
       ];
 
       // The team that says how its agents start is started by the run: the lead never starts its base by hand.
@@ -176,7 +172,7 @@ export const startLines = (tasks: readonly RunTask[], team: Team): string[] => {
       return work.length === 0
         ? `  ${each.agent} — nothing for its ${each.roles.join(', ')} in this plan: leave it out`
         : each.onDemand
-          ? `  ${each.agent} — ${each.roles.join(', ')} — on demand: not at the start — ${launch ? `the run starts it in ${launch} when work waits for it` : `when run watch says work waits for it: ${byHand}`} (it stops by itself once nothing is left for it)`
+          ? `  ${each.agent} — ${each.roles.join(', ')} — on demand (${work.join('; ')}): not at the start — ${launch ? `the run starts it in ${launch} when work waits for it` : `when run watch says work waits for it: ${byHand}`} (it stops by itself once nothing is left for it)`
           : `  ${each.agent} — ${each.roles.join(', ')}${each.quality ? ` at ${each.quality}` : ''} — ${startText(each)} (${work.join('; ')}): ${launch ? `the run starts it in ${launch} as it opens` : byHand}`;
     })
   ];

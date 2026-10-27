@@ -636,7 +636,8 @@ export const writeSummary = async (
   if (text === undefined || text.trim() === '') {
     throw new RunRefusal(
       'invalid',
-      `${file} is ${text === undefined ? 'not there' : 'empty'}: the summary is what the run did, what went wrong and what is left`
+      // A summary written on the command line read "<its words> is not there" (the CLI's sanity run): said as a file.
+      `--summary names a file, and ${file} is ${text === undefined ? 'no file' : 'empty'}: write the summary — what the run did, what went wrong and what is left — in a markdown file of your scratch, and name it: plitzi run report --summary <file>`
     );
   }
 

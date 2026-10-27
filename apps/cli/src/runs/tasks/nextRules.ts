@@ -36,7 +36,7 @@ export const markJoined = async (ctx: RunContext, loaded: LoadedRun): Promise<vo
  * What ends a piece of an agent's work, in the run's log: a task completed, a review decided or escalated, what a spike
  * found handed to the lead.
  */
-const PIECE_ENDS = new Set(['complete', 'review', 'review-escalated', 'spike-proposed']);
+const PIECE_ENDS = new Set(['complete', 'review', 'review-escalated']);
 
 /**
  * Whether the caller, between two pieces of work, stops to be started again with a fresh context (`SessionMode`), and
@@ -78,7 +78,7 @@ export const freshStart = async (
   }
 
   const own = views.filter(view => view.owner?.agent === ctx.agent && isWorked(view.state.status));
-  // A spike the lead sent back to its scout is a piece again (`inAPiece`), its research in that context.
+  // A card sent back to its agent — research to its scout too — is a piece again, worked in that context.
   if (
     ended.action === 'complete' &&
     own.some(view => view.task.id === task && view.state.status === 'changes-requested')
@@ -88,10 +88,10 @@ export const freshStart = async (
 
   const piece =
     ended.action === 'complete'
-      ? `${task ?? 'your task'} is complete`
-      : ended.action === 'spike-proposed'
-        ? `what you found on ${task ?? 'a spike'} is with the lead`
-        : ended.action === 'review-escalated'
+      ? Array.isArray(ended.proposed)
+        ? `what you found on ${task ?? 'a research card'} is with the lead`
+        : `${task ?? 'your task'} is complete`
+      : ended.action === 'review-escalated'
           ? `your review of ${task ?? 'a task'} is with the lead`
           : `your review of ${task ?? 'a task'} is decided`;
   const next =

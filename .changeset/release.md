@@ -95,6 +95,14 @@ authoring and the elements learnt from the runs.
   each step's wait for a reviewer and its reviewer's time at it, each agent's steps said; the bench's "UI wait" and
   "Lead wait" are "Review wait" and "Review". A card's time in the report ends at its last step's approval — it ended at
   its first step's, a two-step card read approved before its lead said it.
+  Research completes as any card (`complete` in the activity): its time worked is measured, a card sent back to its
+  scout is handed back in the same context (it was told to stop), and the feed says what it found. Its brief names no
+  files and points at the scout's half (`runs-scout.md`); `run open --dry-run` names each agent's work, an on-demand one's
+  too — a scout's research cards, the review steps of a designer or a tester.
+- **`page same` says an element that differs by its words alone**, drawn the same — and `task look` says it is more
+  likely what the two servers' data says (a time, a count) than the task: a look warned the page "moved" for a show's
+  start a minute apart. `run report --summary` refused a summary written on the command line as "not there": it says
+  the option names a file.
 - **Every page command reads a page as one visitor, from the same flags.** `page check`, `measure`, `play`,
   `outline`, `same`, `shot` and `task look` take `--as`, `--guest`, `--timezone`, `--presence`, `--clock`, `--block`,
   `--autoplay` and `--storage` alike — `page check` took no `--clock`, `page outline` no `--timezone`, `page same` no

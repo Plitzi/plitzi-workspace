@@ -10,7 +10,7 @@ import { loadRun, readApproved } from '../run';
 import { getBlob } from '../store';
 import { readStart, viewTask } from '../taskStore';
 import { currentVersion, findTask } from './common';
-import { roleOf } from '../spike';
+import { isResearch, roleOf } from '../spike';
 
 import type { ProposalView } from '../agreements';
 import type { ReviewComment, RunTask, TaskState } from '../model';
@@ -224,7 +224,7 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
     },
     ...(projectNotes !== undefined ? { projectNotes } : {}),
     ...(primer !== undefined ? { primer } : {}),
-    reading: await readingFor(ctx.root, [...task.files, ...(task.touches ?? [])]),
+    reading: await readingFor(ctx.root, [...task.files, ...(task.touches ?? [])], { research: isResearch(task) }),
     runNotes: (await runNotesOf(loaded)).map(note => note.text),
     files,
     sourceRoot: copy ? view.paths.work : ctx.root,

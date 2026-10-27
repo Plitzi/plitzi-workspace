@@ -216,14 +216,19 @@ export const briefOf = (context: TaskContext & { primerRead?: string }): string 
           ]),
     chalk.bold(`${task.id} — ${task.title}`),
     `  ${roleOf(task)} · ${state.status}${state.round > 0 ? `, round ${String(state.round)}` : ''}${context.holder ? ` · ${context.holder}` : ''}`,
-    `Its files: ${files.join(', ')}${task.touches && task.touches.length > 0 ? ` · it will touch: ${task.touches.join(', ')}` : ''}`,
-    ...(context.neighbours.length > 0
-      ? [
-          `  Beside them, another task's — write nothing there: ${context.neighbours.map(each => `${each.file} (${each.task}, a ${each.role}'s)`).join(', ')}`
-        ]
-      : []),
-    // What the work needs beyond them is not refused: it is said how it goes in.
-    '  A file beyond these the work needs: change it in your copy — it goes in by turns at complete when nobody holds it (plitzi task claim <file> holds it while you work; one another task holds becomes a request)',
+    // Research writes no file: what it is to find out says it all (a scout read "Its files:" and how a file goes in).
+    ...(isResearch(task)
+      ? []
+      : [
+          `Its files: ${files.join(', ')}${task.touches && task.touches.length > 0 ? ` · it will touch: ${task.touches.join(', ')}` : ''}`,
+          ...(context.neighbours.length > 0
+            ? [
+                `  Beside them, another task's — write nothing there: ${context.neighbours.map(each => `${each.file} (${each.task}, a ${each.role}'s)`).join(', ')}`
+              ]
+            : []),
+          // What the work needs beyond them is not refused: it is said how it goes in.
+          '  A file beyond these the work needs: change it in your copy — it goes in by turns at complete when nobody holds it (plitzi task claim <file> holds it while you work; one another task holds becomes a request)'
+        ]),
     // What it is to find out, before anything is built — and what was found already: by it, and by what it waits for.
     ...(isResearch(task) && state.status !== 'done'
       ? [
@@ -298,7 +303,7 @@ export const briefOf = (context: TaskContext & { primerRead?: string }): string 
       )
     ),
     ...(context.reading.length > 0
-      ? [`Read first, for these files — the rest of the skills when the work asks: ${context.reading.join(', ')}`]
+      ? [`Read first, for this work — the rest of the skills when the work asks: ${context.reading.join(', ')}`]
       : []),
     `${context.projectNotes ? 'The project’s notes: NOTES.md — read it. ' : ''}Every file's text and every related task's notes: --json.`
   ].join('\n');

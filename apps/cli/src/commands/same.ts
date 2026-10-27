@@ -31,9 +31,19 @@ export interface SameOptions extends VisitorOptions {
 export interface Sameness {
   path: string;
   same: boolean;
-  /** The first line that differs, here → there: what tells the two apart. */
-  first?: { here: string; there: string };
+  /** The first line that differs, here → there: what tells the two apart — its words alone, its box and style the same. */
+  first?: Difference;
   problem?: string;
+}
+
+/** Where a drawing's line says an element's words: its third field. */
+const WORDS_AT = 2;
+
+/** A line two drawings differ by, here → there — `wordsOnly` when nothing but its words differ. */
+export interface Difference {
+  here: string;
+  there: string;
+  wordsOnly?: true;
 }
 
 /** Every element drawn, a line each: its tag, its name, its words, its box, and what a reader sees of its style. */
@@ -122,18 +132,24 @@ const readOn = async (
 };
 
 /** The first line two drawings differ by — one longer than the other differs where the shorter ends — or none. */
-export const firstDifference = (
-  here: readonly string[],
-  there: readonly string[]
-): { here: string; there: string } | undefined => {
+export const firstDifference = (here: readonly string[], there: readonly string[]): Difference | undefined => {
   const at = here.findIndex((line, index) => line !== there[index]);
   if (at === -1 && here.length === there.length) {
     return undefined;
   }
 
   const index = at === -1 ? Math.min(here.length, there.length) : at;
+  const [mine, theirs] = [here.at(index), there.at(index)];
+  // The same element drawn the same, its words apart: what the page says — a time, a count — not how it is drawn.
+  const fields = (line: string): string[] => line.split(' | ').filter((_, field) => field !== WORDS_AT);
+  const wordsOnly =
+    mine !== undefined && theirs !== undefined && fields(mine).join(' | ') === fields(theirs).join(' | ');
 
-  return { here: here[index] ?? '(nothing)', there: there[index] ?? '(nothing)' };
+  return {
+    here: mine ?? '(nothing)',
+    there: theirs ?? '(nothing)',
+    ...(wordsOnly ? { wordsOnly: true as const } : {})
+  };
 };
 
 /** Each page read on both servers in one browser: the same, or where it differs. */
@@ -197,7 +213,7 @@ export const pageSame = async (paths: string[], options: SameOptions): Promise<v
                 ? chalk.green(`= ${each.path}: draws the same on both`)
                 : each.problem
                   ? chalk.yellow(`? ${each.path}: not told — ${each.problem}`)
-                  : `≠ ${each.path}: ${each.first?.here ?? ''}\n    there: ${each.first?.there ?? ''}`
+                  : `≠ ${each.path}: ${each.first?.here ?? ''}\n    there: ${each.first?.there ?? ''}${each.first?.wordsOnly ? '\n    its words alone differ — the same element drawn the same: what the page says (a time, a count) differs' : ''}`
             )
             .join('\n')
     );
