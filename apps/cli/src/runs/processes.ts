@@ -153,3 +153,44 @@ export const stopListenersUnder = (dir: string): { pid: number; port: number; cw
 
   return listening;
 };
+
+/** How often a guard looks whether the command that started a server is still there. */
+const GUARD_EVERY_MS = 2000;
+
+/**
+ * A guard for a server in a process group of its own (`TREE`), started for one command: it stops the group once that
+ * command's process is gone — ended by a harness's timeout, a Ctrl-C, a crash — and leaves once the server is. Six
+ * test servers outlived their runs for days, and a `task check` cut short left the copy's server holding its state.
+ * `release` once the server is kept past the command (the keeper's watchdog takes it), or stopped by the command.
+ */
+export const guardServer = (
+  pid: number | undefined,
+  /** The command it is stopped with: this one. */
+  parent: number = process.pid
+): { release: () => void } => {
+  if (pid === undefined || process.platform === 'win32') {
+    return { release: () => undefined };
+  }
+
+  const guard = spawn(
+    process.execPath,
+    [
+      '-e',
+      `const [parent, pid] = process.argv.slice(1).map(Number);
+setInterval(() => {
+  try { process.kill(pid, 0); } catch { process.exit(0); }
+  try { process.kill(parent, 0); } catch { try { process.kill(-pid, 'SIGTERM'); } catch {} process.exit(0); }
+}, ${String(GUARD_EVERY_MS)});`,
+      String(parent),
+      String(pid)
+    ],
+    { detached: true, stdio: 'ignore' }
+  );
+  guard.unref();
+
+  return {
+    release: () => {
+      guard.kill();
+    }
+  };
+};

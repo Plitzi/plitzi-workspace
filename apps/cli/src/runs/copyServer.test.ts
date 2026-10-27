@@ -233,6 +233,44 @@ describe('originHere', () => {
     ).rejects.toThrow();
   }, 30_000);
 
+  // Two commands serving one copy at once each kept their server: the second record wrote over the first, whose
+  // watchdog left without stopping it — test servers outlived their runs for days.
+  it('stops the server it kept before when it keeps another, never leaving one nobody stops', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    const cache = taskPaths(runPaths(bench.root, 'es-launch'), 't-home').cache;
+    const serve = () => {
+      const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60_000)'], {
+        detached: true,
+        stdio: 'ignore'
+      });
+      child.unref();
+
+      return child.pid ?? 0;
+    };
+    const first = serve();
+    const second = serve();
+    await keepServer(home.work, cache, first, await freePort());
+    await keepServer(home.work, cache, second, await freePort());
+
+    const gone = (pid: number): boolean => {
+      try {
+        process.kill(pid, 0);
+
+        return false;
+      } catch {
+        return true;
+      }
+    };
+    for (let tries = 0; tries < 40 && !gone(first); tries += 1) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+
+    expect(gone(first)).toBe(true);
+    expect(gone(second)).toBe(false);
+    await stopKept(cache);
+  }, 30_000);
+
   // encore-12: a look waited a minute twice and said "did not answer", its server dead in a second on the copy's state.
   it('says at once that a look’s server stopped before it answered, the error it stopped on and its log', async () => {
     await servedBench(

@@ -103,6 +103,11 @@ export const keptServer = async (work: string, cache: string): Promise<string | 
 
 /** Keeps the copy's server `pid` on `port` past this command, and starts the watchdog that stops it once unused. */
 export const keepServer = async (work: string, cache: string, pid: number, port: number): Promise<void> => {
+  // One kept a copy: another kept before it, still running, is stopped — its record written over, nothing would.
+  if ((await readKept(cache))?.pid !== pid) {
+    await stopKept(cache);
+  }
+
   await fs.writeFile(
     fileOf(cache),
     JSON.stringify({ pid, port, usedAt: new Date().toISOString(), newest: await newestWrite(work) } satisfies Kept)
@@ -116,7 +121,8 @@ setInterval(() => {
   let kept;
   // Its record gone, its run went with it (a finish removes the folder): the server stops; one read mid-write, next tick.
   try { kept = JSON.parse(fs.readFileSync(file, 'utf-8')); } catch { if (!fs.existsSync(file)) { stop(); } return; }
-  if (kept.pid !== Number(pid)) { process.exit(0); }
+  // Its record names another server: this one is kept no more, and nothing else stops it.
+  if (kept.pid !== Number(pid)) { try { process.kill(-Number(pid), 'SIGTERM'); } catch {} process.exit(0); }
   try { process.kill(Number(pid), 0); } catch { try { fs.rmSync(file, { force: true }); } catch {} process.exit(0); }
   if (!fs.existsSync(work) || Date.now() - Date.parse(kept.usedAt) > Number(linger)) { stop(); }
 }, 10000);

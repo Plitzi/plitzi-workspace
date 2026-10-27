@@ -10,7 +10,7 @@ import { projectMark } from '@plitzi/sdk-shared/project';
 
 import { inTurns } from './inTurns';
 import { stopKept } from './lingering';
-import { listenersUnder, stopListener, stopTree, TREE } from './processes';
+import { guardServer, listenersUnder, stopListener, stopTree, TREE } from './processes';
 import { withLock } from './store';
 import { UNANSWERED_EXIT } from '../commands/terminal';
 import { runScript, scriptsOf, tail } from '../commands/verify';
@@ -244,7 +244,10 @@ export const serveCopy = async (
       PATH: `${path.join(root, 'node_modules', '.bin')}${path.delimiter}${process.env.PATH ?? ''}`
     }
   });
+  // Stopped with the command that started it, should that command end before it does: kept, the keeper's.
+  const guard = guardServer(child.pid);
   const stop = (): void => {
+    guard.release();
     stopTree(child, { group: true });
   };
   // A server that stopped on an error waited out the whole minute before saying so.
@@ -276,6 +279,7 @@ export const serveCopy = async (
 
   // Kept past this command: let go of, so this process ends without it — its pid, for the watchdog that stops it.
   const keep = (): number | undefined => {
+    guard.release();
     child.unref();
 
     return child.pid;

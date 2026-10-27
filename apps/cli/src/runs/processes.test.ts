@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { descendantsOf, listenersUnder, stopListenersUnder, stopTree } from './processes';
+import { descendantsOf, guardServer, listenersUnder, stopListenersUnder, stopTree } from './processes';
 
 const alive = (pid: number): boolean => {
   try {
@@ -72,4 +72,33 @@ describe.skipIf(process.platform === 'win32')('the servers left listening in a r
       await fs.rm(dir, { recursive: true, force: true });
     }
   }, 20_000);
+});
+
+// Six test servers outlived their runs for days, each in a process group of its own, the command that started it gone.
+describe('a server guarded for one command', () => {
+  const started = () => {
+    const parent = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60_000)'], { stdio: 'ignore' });
+    const server = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60_000)'], { detached: true, stdio: 'ignore' });
+    server.unref();
+
+    return { parent, server };
+  };
+
+  it('is stopped once that command is gone', async () => {
+    const { parent, server } = started();
+    guardServer(server.pid, parent.pid);
+    parent.kill('SIGKILL');
+
+    expect(await until(() => !alive(server.pid ?? 0), 8000)).toBe(true);
+  }, 15_000);
+
+  it('is left running once released — kept past the command, the keeper’s', async () => {
+    const { parent, server } = started();
+    const guard = guardServer(server.pid, parent.pid);
+    guard.release();
+    parent.kill('SIGKILL');
+
+    expect(await until(() => !alive(server.pid ?? 0), 3000)).toBe(false);
+    process.kill(-(server.pid ?? 0), 'SIGTERM');
+  }, 15_000);
 });

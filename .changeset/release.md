@@ -128,6 +128,10 @@ authoring and the elements learnt from the runs.
   --status 403" "/withheld --as juno"` — one look a visitor, each told what the others covered. `page shot --clip <part>
   --showing <elements>` pictures the copy of a part drawn more than once that shows the most of them, and a look
   pictures a component where the task's elements show (a playing room card stood for an idle one's change).
+- **No copy server outlives what started it.** The copy's server a command starts is stopped once that command is
+  gone — a harness's timeout, a Ctrl-C, a crash — unless it is kept for the next command; keeping one stops the one kept
+  before, and a kept server whose record names another is stopped by its watchdog, where it left it running: six
+  servers of the CLI's own tests outlived their runs for days, and a `task check` cut short left the copy's state held.
 - **A project's suite serves on its folder's own port** (from 8400, 5273 for a client project): a run's copies each ran
   their specs on 8400 with `reuseExistingServer`, a copy's specs passing on another copy's code. `plitzi upgrade` writes
   it into a `playwright.config.ts` nobody changed; one the project changed takes the same line by hand (`const OWN = …`,
