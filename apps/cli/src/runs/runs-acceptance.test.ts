@@ -182,7 +182,7 @@ describe('acceptance, checks and what is left behind', () => {
     await bench.write('src/space/pages/about.ts', 'export const about = {};\n');
     expect((await checkTask(home.ctx, 'es-launch', 't-home')).notOwn).toEqual(['acceptance — The logo']);
     await checkTask(home.ctx, 'es-launch', 't-home', { fresh: true });
-    // The lead's to amend, woken for it once — never a note it is not woken for (encore-12's dev-1 waited on two).
+    // The lead's to amend, woken for it once — never a note it is not woken for (a run's dev-1 waited on two).
     const told = (await viewRun(lead(), 'es-launch')).attention.filter(item => item.kind === 'line-unanswered');
     expect(told).toHaveLength(1);
     expect(told[0]).toMatchObject({ task: 't-home', who: 'lead' });

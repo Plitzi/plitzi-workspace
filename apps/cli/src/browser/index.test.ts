@@ -56,7 +56,7 @@ describe('projectOrigin', () => {
     expect(await projectOrigin(await projectAt(), undefined)).toEqual(refused);
   });
 
-  // encore-11's scout checked a page in a folder of the run's work with no server in it: the default port was read as
+  // A run's scout checked a page in a folder of the run's work with no server in it: the default port was read as
   // the project's, and every page said "nothing answers".
   it('says no server answers, and how to start it, where nothing of Plitzi is on the port', async () => {
     vi.stubGlobal(

@@ -29,7 +29,7 @@ const { lead, open, take } = runSteps(() => bench);
 // Carlos: a person reads an agent's status for what is happening — it is what it holds and whether anything is at it,
 // never guessed from what it did lately.
 describe('each agent’s status in the monitor', () => {
-  // encore-13: "working" for three minutes after the lead opened the run, its scout at the scope.
+  // A run: "working" for three minutes after the lead opened the run, its scout at the scope.
   it('shows the lead by what it holds, as every agent — what it did lately said, never taken for work', async () => {
     const runId = await open();
     const paths = runPaths(bench.root, runId);

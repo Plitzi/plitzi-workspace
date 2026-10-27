@@ -7,8 +7,8 @@ import { SLOW_LINE_MS } from '../../runs/acceptance';
 import { failedWhy } from '../verify';
 
 import type { CheckStep } from '../../runs/checks';
+import type { PlanEstimate } from '../../runs/estimate';
 import type { Message } from '../../runs/messages';
-import type { PlanEstimate } from '../../runs/plan';
 import type { RemovedInputs } from '../../runs/run';
 import type { TaskShown } from '../../runs/show';
 import type { TaskContext } from '../../runs/tasks';
@@ -50,7 +50,7 @@ export const outsideLines = (shown: TaskShown): string[] => {
 };
 
 /**
- * What the lead said to a task, as the task's answer shows it: last, the newest thing said — on top, encore-14's scout
+ * What the lead said to a task, as the task's answer shows it: last, the newest thing said — on top, a run's scout
  * read its answers' last line alone and missed two of the lead's redirects for 20 minutes.
  */
 export const messageLines = (messages: readonly Message[]): string[] =>

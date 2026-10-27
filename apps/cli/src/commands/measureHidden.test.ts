@@ -9,7 +9,7 @@ import { onlyOf } from './measureValues';
 
 import type { Measured } from './measureValues';
 
-// encore-13's dev-1 measured a hidden "Remind me" button: a 0,0 box, and no word of why it was drawn nowhere.
+// A run's dev-1 measured a hidden "Remind me" button: a 0,0 box, and no word of why it was drawn nowhere.
 describe('an element measured that a visitor does not see', () => {
   it('says the nearest cause: its own, or the box around it that hides it', () => {
     document.body.innerHTML = `
@@ -50,7 +50,7 @@ describe('a reading of an element a visitor does not see', () => {
       hidden: 'display: none on room-show-actions, around it'
     };
 
-    // encore-13's dev-1 read a hidden button's 0,0 box as its place, and inferred its row from another.
+    // A run's dev-1 read a hidden button's 0,0 box as its place, and inferred its row from another.
     const alone = stripVTControlCharacters(measuredText(hidden));
     expect(alone).toContain(
       'hidden: a visitor sees none of what it finds — display: none on room-show-actions, around it; its place and size are not on the page, so not said'
@@ -58,7 +58,7 @@ describe('a reading of an element a visitor does not see', () => {
     expect(alone).toContain('color');
     expect(alone).not.toMatch(/^\s+(x|y|width)\s/m);
     expect(stripVTControlCharacters(measuredText(hidden, shown))).toContain('hidden here: a visitor sees none');
-    // `--only after:margin-left` of a row drawing no ::after printed nothing at all (encore-13).
+    // `--only after:margin-left` of a row drawing no ::after printed nothing at all.
     const narrowed = onlyOf(shown, ['width', 'after:margin-left']);
     if ('problem' in narrowed) {
       throw new Error(narrowed.problem);

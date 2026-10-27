@@ -138,7 +138,7 @@ describe('the run’s primer in a brief read again', () => {
     expect(read('dev-1', 't-home', 's2')).toBeUndefined();
   });
 
-  // encore-14's dev-1 read its 13-18k brief four times in one task.
+  // A run's dev-1 read its 13-18k brief four times in one task.
   it('is the whole brief too: one read in this context, unchanged, is said in a line', () => {
     const seen = primerMark('t-home — the hero…');
     const log = [{ action: 'brief', by: 'dev-1', task: 't-home', session: 's1', seen, at: '2026-10-25T15:14:00.000Z' }];

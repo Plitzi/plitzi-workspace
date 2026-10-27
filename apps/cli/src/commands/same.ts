@@ -42,7 +42,7 @@ export type DrawnElement = Record<string, string>;
 /**
  * The first element two drawings differ by — by its name (its tag when it has none) — and each field it differs in,
  * here and there; or one drawn on one side alone. Read field by field: a look said an element "moved" by printing two
- * lines of twenty fields joined by bars, the one that differed left to find (encore-13's tester).
+ * lines of twenty fields joined by bars, the one that differed left to find (a run's tester).
  */
 export interface Difference {
   element: string;

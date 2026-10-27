@@ -81,7 +81,7 @@ describe('page measure', () => {
     });
   });
 
-  // encore-12's scout wrote [data-plitzi-el="room-card-quiet-demo"] for a component's instance, and read data-plitzi-instance
+  // A run's scout wrote [data-plitzi-el="room-card-quiet-demo"] for a component's instance, and read data-plitzi-instance
   // only in the page's HTML.
   it('says how to name a component instance written as an element', async () => {
     const page = {
@@ -290,7 +290,7 @@ describe('page measure', () => {
   it('prints only what is asked, its box a word — and refuses what is not measured, naming the flag', () => {
     expect(onlyProperties('box')).toEqual(['x', 'y', 'width', 'height', 'padding', 'margin']);
     expect(onlyProperties('box,font-size')).toContain('font-size');
-    // encore-10's designer: a fixed bar's distance from the viewport's edge, --only right refused.
+    // A run's designer: a fixed bar's distance from the viewport's edge, --only right refused.
     expect(onlyProperties('right,bottom,top,left')).toEqual(['right', 'bottom', 'top', 'left']);
     // A run's designer sharing a row's rules: --only refused flex-direction, min-width and flex-grow.
     expect(onlyProperties('flex-direction,min-width,flex-grow,justify-content')).toEqual([
@@ -302,7 +302,7 @@ describe('page measure', () => {
     expect(() => onlyProperties('overflow x')).toThrow('--only takes CSS properties by name');
   });
 
-  // encore-13's designer checking a row still scrolls and snaps: --only refused all four, a list grown a run at a time.
+  // A run's designer checking a row still scrolls and snaps: --only refused all four, a list grown a run at a time.
   it('takes any CSS property by name, a pseudo-element’s too, read besides what always is', () => {
     const asked = onlyProperties('width,overflow-x,scroll-snap-type,after:margin-left,after:width,-webkit-line-clamp');
     expect(asked).toEqual([

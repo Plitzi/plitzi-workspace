@@ -73,7 +73,7 @@ export const runLook = (runId: string | undefined, options: RunCommandOptions): 
         }
 
         // Every page the run changed — none cut at a task's few — each route made an address the site reaches, as the
-        // project's account sees it: encore-10's look missed four and checked two patterns as written (a 404).
+        // project's account sees it: a run's look missed four and checked two patterns as written (a 404).
         const changed = await pagesOf(dir, approved, Number.POSITIVE_INFINITY);
         const named = [...new Set(loaded.tasks.flatMap(task => acceptanceAddresses(task.acceptance)))];
         const account = await checkAccount(dir);

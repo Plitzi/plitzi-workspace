@@ -56,7 +56,7 @@ const rules = (cli: string): string[] => [
   '- A wait that ends is not your end: run `task next` again until it says "You can stop".',
   // Carlos: a task that takes long wakes the lead, which asks; it decides on the answer — go on, change course, be helped.
   '- When the lead asks where you stand (its message says so), answer at once, whole: `PLITZI task tell --standing --fraction <0-1> --eta <minutes left> --done "…" --left "…" [--blocked "what holds you"] [--about <task>, holding none]` — then go on; what it decides comes with your next command.',
-  // encore-14's scout-1 heard "narrow it" 2.5 min late, inside a Playwright probe of its own, and missed two more.
+  // A run's scout-1 heard "narrow it" 2.5 min late, inside a Playwright probe of its own, and missed two more.
   '- A command of your own — a spec, a probe, a test file — through `PLITZI task run "<command>"`: a Playwright suite waits its turn on the machine, what it prints goes to a file and you read what failed, and what the lead said meanwhile comes with it. A couple of minutes at most (one spec, a few repeats): the lead reaches you only between commands.',
   // Two agents read the bundle's types, every command's help and a site's HTML to learn what Plitzi had.
   '- Whether Plitzi has a way — a field, a step, a state, a command: `PLITZI explain "<words>"`, then `PLITZI explain <name>`; never the packages\' types nor a site\'s HTML fetched and searched. Nothing found that should be: `run notice --plitzi`.',

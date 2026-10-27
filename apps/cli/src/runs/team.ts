@@ -639,6 +639,12 @@ export const startedAgents = (team: Team): StartedAgent[] =>
 /** How many agents the team has: how many may work a run at once. */
 export const teamSize = (team: Team): number => team.agents.reduce((sum, each) => sum + (each.count ?? 1), 0);
 
+/** How many of the team take `role`: what a plan's tasks of that role are worked at once by, at most. */
+export const takersOf =
+  (team: Team) =>
+  (role: string): number =>
+    team.agents.filter(each => each.roles.includes(role)).reduce((sum, each) => sum + (each.count ?? 1), 0);
+
 /** The agents held to a role, for a rehearsal: those that take one role alone — one of several takes any of them. */
 export const heldRoles = (team: Team): Record<string, number> => {
   const held: Record<string, number> = {};

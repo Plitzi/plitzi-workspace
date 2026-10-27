@@ -21,7 +21,7 @@ import type { Bench } from '../tests/runProject';
 /**
  * A whole run, played before any is run for real: the scope a scout finds out, the lead's approval, two developers, a
  * designer's look, a tester's QA with a send-back and an escalation, the close and the report — held at every step to
- * what must always be so. encore-10 met, one by one in a real run, a spike shown nowhere, a review said slow at four
+ * what must always be so. A run met, one by one in a real run, a spike shown nowhere, a review said slow at four
  * minutes, a task of tests "held up", a lead never woken to close: each of them a step of this.
  */
 
@@ -55,7 +55,7 @@ const TEAM = {
  */
 const holds = async (step: string): Promise<void> => {
   const { view, agents } = await monitorRun(lead(), RUN);
-  // An agent at a task is never shown idle: encore-10's board drew a task at work under one coloured as waiting.
+  // An agent at a task is never shown idle: a run's board drew a task at work under one coloured as waiting.
   const atWork = view.tasks.filter(task => task.status === 'in-progress' && task.agent !== undefined);
   expect(
     atWork.flatMap(task =>
@@ -89,7 +89,7 @@ describe('a run, rehearsed whole', () => {
     // The scout finds the scope out and proposes the tasks; the lead approves them.
     const scouting = await takeNext(bench.agent('scout-1'), RUN, 'scout');
     expect(scouting.taken?.task.id).toBe('s-scope');
-    // Held by the scout as any card at work, so its sign of life lands on it: encore-11's scout was refused
+    // Held by the scout as any card at work, so its sign of life lands on it: a run's scout was refused
     // `task progress` here.
     expect(await heldNow(bench.agent('scout-1'), RUN)).toEqual([
       { task: 's-scope', kind: 'work', agent: 'scout-1', research: true }

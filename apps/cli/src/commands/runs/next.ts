@@ -67,7 +67,11 @@ const earlierText = (review: { earlier: number; task: { id: string } }): string[
 const lookCommand = (task: RunTask, drawnAt: readonly string[], also: string): string[] => {
   // A route's pattern offered as an address its acceptance names: a run's designer was handed `/messages/:username`.
   const named = acceptanceAddresses(task.acceptance);
-  const pages = drawnAt.map(page => filledPattern(page, named));
+  // Each page once, and a route no address fills left to the look, which follows the site's links to one: offered as
+  // the pattern, a run's look could not reach it.
+  const filled = [...new Set(drawnAt.map(page => filledPattern(page, named)))];
+  const pages = filled.filter(page => !page.includes('/:'));
+  const unfilled = filled.filter(page => page.includes('/:'));
   const as = acceptanceAccount(task.acceptance);
   const signedIn = as === undefined ? '' : ` --as ${as}`;
   const byStatus = new Map<number, string[]>();
@@ -76,7 +80,7 @@ const lookCommand = (task: RunTask, drawnAt: readonly string[], also: string): s
   }
 
   return [
-    `plitzi task look ${task.id} ${pages.length > 0 ? pages.join(' ') : '<page…>'}${signedIn}${also}${pages.length > 0 ? '' : '   # no page of the space owns its files: name the ones it shows on'}`,
+    `plitzi task look ${task.id} ${pages.length > 0 ? pages.join(' ') : '<page…>'}${signedIn}${also}${pages.length > 0 ? '' : '   # no page of the space owns its files: name the ones it shows on'}${unfilled.length > 0 ? `   # and ${unfilled.join(', ')}: name an address of ${unfilled.length === 1 ? 'it' : 'each'}` : ''}`,
     ...[...byStatus].map(
       ([status, pages]) => `plitzi task look ${task.id} ${pages.join(' ')} --status ${String(status)}`
     )
@@ -148,7 +152,7 @@ const spikeText = (spike: NonNullable<NextTask['spike']>): string =>
     ...(spike.findings > 0
       ? [`  ${String(spike.findings)} finding(s) of it already: plitzi task context ${spike.task.id}`]
       : []),
-    // A copy's research compares with the original; any other reads the project — encore-10's spike on test speed was
+    // A copy's research compares with the original; any other reads the project — a run's spike on test speed was
     // told to compare with an original it had none of.
     spike.reference === undefined
       ? '  Read the code and the pages, measure, run what tells — write nothing of the task’s'
@@ -252,7 +256,7 @@ const takenText = (taken: TakenTask): string =>
     ...(isResearch(taken.task)
       ? [
           `  Research: find out ${taken.task.spike ?? 'what it asks'}`,
-          // A copy's research compares with the original; any other reads the project — encore-10's spike on test
+          // A copy's research compares with the original; any other reads the project — a run's spike on test
           // speed was told to compare with an original it had none of.
           ...(taken.reference === undefined
             ? []

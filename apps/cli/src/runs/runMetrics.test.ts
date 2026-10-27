@@ -182,7 +182,7 @@ describe('a call made again', () => {
         ...[1, 2, 3, 4].map(minute => line(minute, 'plitzi task next --role tester --follow --take')),
         ...[5, 6, 7].map(minute => line(minute, 'plitzi task next --role lead --take')),
         ...[8, 9, 10].map(minute => line(minute, 'plitzi run watch --until lead')),
-        // A dry run, tried after each edit of what it checks: encore-11's scout and its stage.
+        // A dry run, tried after each edit of what it checks: a run's scout and its stage.
         ...[11, 11.1, 11.2].map(minute => line(minute, 'plitzi run extend stage.json --dry-run'))
       ])
     ).toEqual([]);
@@ -213,7 +213,7 @@ describe('each agent’s harness over the run', () => {
   });
 });
 
-// encore-12: its scope's rework read 5.4 min waited, its scout at it again 10 s after the changes (a card handed back in
+// Its scope's rework read 5.4 min waited, its scout at it again 10 s after the changes (a card handed back in
 // the same context takes nothing); its tests cards read 10–12 min to take, each waiting for the task it tests.
 describe('a card handed back, and one that waited for another', () => {
   const handed: Record<string, unknown>[] = [

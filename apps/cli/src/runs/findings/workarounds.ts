@@ -86,7 +86,7 @@ const AREA_WORDS: Readonly<Record<PlitziArea, RegExp>> = {
 };
 
 /**
- * Which part of Plitzi a notice is of, by the words it names most — the CLI where it is a tie: encore-10's lead sorted
+ * Which part of Plitzi a notice is of, by the words it names most — the CLI where it is a tie: a run's lead sorted
  * 49 problems into the flow, the tools and the platform by hand before the person could read them.
  */
 export const areaOfSaid = (text: string): PlitziArea =>

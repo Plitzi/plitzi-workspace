@@ -43,7 +43,7 @@ export const visitViewOf = (options: VisitorOptions): Pick<VisitView, 'timezone'
 
 /**
  * Said when a page is read in a zone at UTC's own time now: a time the page prints beside UTC reads as UTC alone, its
- * short form — never the longer one a visitor elsewhere reads. encore-14's scout measured two plates a row at Lisbon in
+ * short form — never the longer one a visitor elsewhere reads. A run's scout measured two plates a row at Lisbon in
  * October, and a visitor's "Tomorrow 17:39 · 16:39 UTC" overflowed them.
  */
 export const zoneNote = (zone: string, now: Date): string | undefined => {
@@ -156,7 +156,7 @@ export interface Visitor {
    * Whether the space reads `route` as its members' — members only by its router, a gate that shows a guest another page,
    * kept for some permissions: read signed in as the project's account, as a look reads it. Every page command reads it
    * so — `page measure` read a guest's where `task look` read the account's, one element drawn in one and not the other
-   * (encore-13's designer).
+   * (a run's designer).
    */
   membersAt?: (route: string) => boolean;
 }
@@ -253,11 +253,11 @@ export const openVisit = async (
     return { page, answered: false, problem };
   }
 
-  // Where the page went as it opened, by itself — a flow's navigate on load: encore-10's designer played a page that
+  // Where the page went as it opened, by itself — a flow's navigate on load: a run's designer played a page that
   // sends a signed-in visitor on, and its start was read on where it landed, the flash of its own form unseen.
   const openedAt = Date.now();
   await page.addInitScript(key => {
-    // The browser's own first document (about:blank) is no address the page showed: encore-11's play said "→ blank".
+    // The browser's own first document (about:blank) is no address the page showed: a run's play said "→ blank".
     if (!location.protocol.startsWith('http')) {
       return;
     }
@@ -302,7 +302,7 @@ export const openVisit = async (
   }
 
   // A text the browser rewrites after hydration (a visitor's time, read in its zone) read before it was the server's:
-  // a run's hero read "19:00H CEST" once, "11:00H GMT-6" after. A page with no space root has no wait.
+  // A run's hero read "19:00H CEST" once, "11:00H GMT-6" after. A page with no space root has no wait.
   await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
   await page.evaluate(() => document.fonts.ready.then(() => undefined), undefined);
 

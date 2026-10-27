@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { flowStages, nameOf } from './monitorFlow';
@@ -14,7 +16,7 @@ import { runSteps } from '../../tests/runSteps';
 import type { TaskLine } from '../../runs/view';
 import type { Bench } from '../../tests/runProject';
 
-/** Where the monitor says a task stands, and who is at it — as encore-10 showed it wrong, and how it reads now. */
+/** Where the monitor says a task stands, and who is at it — as a run showed it wrong, and how it reads now. */
 
 let bench: Bench;
 
@@ -35,14 +37,19 @@ const cards = (tasks: readonly TaskLine[], key: string): string[] => {
   return stage ? stage.tasks.map(task => `${nameOf(task)} ${stage.who(task)}`.trim()) : [];
 };
 
-describe('the monitor, as encore-10 read it', () => {
+describe('the monitor, as a run read it', () => {
   // The lead read "working · last: started scout-1" while nobody led it: the keeper's start is no act of its.
   it('keeps the lead idle for an agent the run asked for and its keeper started', async () => {
     const runId = await open();
     bench.advance(3 * 60_000 + 1);
     await logRun(lead(), runPaths(bench.root, runId), { action: 'launch', agent: 'agent-1', asked: true });
+    await fs.writeFile(
+      runPaths(bench.root, runId).leadWatching,
+      JSON.stringify({ pid: process.pid, at: bench.now().toISOString() })
+    );
     const row = (await monitorRun(lead(), runId)).agents.find(agent => agent.agent === 'lead');
-    expect(row).toMatchObject({ status: 'idle', doing: expect.not.stringContaining('started agent-1') as unknown });
+    // Watching, its row says its last act: never the agent the keeper started with its token.
+    expect(row).toMatchObject({ status: 'waiting', doing: expect.not.stringContaining('started agent-1') as unknown });
   });
 
   // Its scope sat in a column of its own while its scout worked it, "At work" empty; then read "spike" while it waited.

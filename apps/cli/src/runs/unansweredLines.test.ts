@@ -12,7 +12,7 @@ const unanswered = (task: string, check: string) => ({
   why: 'Error: state/jobs.json is in use by process 57261'
 });
 
-// encore-12's dev-1 waited on two lines nothing could answer: the lead's to amend, told in a note it was not woken for.
+// A run's dev-1 waited on two lines nothing could answer: the lead's to amend, told in a note it was not woken for.
 describe('a line nothing can answer', () => {
   it('wakes the lead once a line — its task approved or not — until that task’s acceptance is amended', () => {
     const log = [

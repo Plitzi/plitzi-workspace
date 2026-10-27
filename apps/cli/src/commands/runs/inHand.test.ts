@@ -22,7 +22,7 @@ afterEach(async () => {
 const { lead, take } = runSteps(() => bench);
 
 // The designers said their progress through a review and were refused nine times; a scout at the run's scope, at its
-// spike (encore-11): what an agent has in hand is one reading, whatever kind it is.
+// spike : what an agent has in hand is one reading, whatever kind it is.
 describe('what an agent has in hand', () => {
   it('is its work, a review or a spike alike — the lead holds none', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });

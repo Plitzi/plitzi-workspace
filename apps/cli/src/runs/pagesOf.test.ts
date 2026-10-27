@@ -60,6 +60,16 @@ describe('examplePaths', () => {
       unreached: []
     });
   });
+
+  // A run's look pictured /r/:slug as the first room its tasks named, never the other one whose change it showed.
+  it('opens every address the tasks name for one route', async () => {
+    const origin = await site({ '/': ['/'] });
+
+    expect(await examplePaths(origin, ['/r/:slug'], ['/r/night-drive', '/r/sunday-lofi', '/rooms'])).toEqual({
+      paths: ['/r/night-drive', '/r/sunday-lofi'],
+      unreached: []
+    });
+  });
 });
 
 // The room's stats page — `/r/:slug/stats` — reached by no link, though the room's own address said its slug.
@@ -167,5 +177,9 @@ describe('the addresses an acceptance names', () => {
     expect(filledPattern('/messages/:username', named)).toBe('/messages/nobodyhere');
     expect(filledPattern('/u/:username', named)).toBe('/u/:username');
     expect(filledPattern('/design', named)).toBe('/design');
+    // A route deeper than any address named, filled from the one that names its first parts — never offered as the
+    // pattern itself, which a run's look could not reach.
+    expect(filledPattern('/r/:slug/stats', named)).toBe('/r/night-drive/stats');
+    expect(filledPattern('/rooms/:id/edit', named)).toBe('/rooms/:id/edit');
   });
 });

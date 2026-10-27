@@ -22,7 +22,7 @@ export interface RunContext {
   token?: string;
   /**
    * The caller's shell folder: a task's copy is never removed from under it — a tester approving from inside the copy
-   * it ran the checks in met getcwd errors on its next command (encore-13). Not said: none is spared.
+   * it ran the checks in met getcwd errors on its next command. Not said: none is spared.
    */
   cwd?: string;
   /** Who is calling, for the log: an agent's name, or `person`. */

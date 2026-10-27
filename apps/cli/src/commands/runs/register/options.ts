@@ -97,3 +97,15 @@ export const sharedOptions = (groups: readonly Command[]): void => {
     }
   }
 };
+
+/** `task check --mutate`: a change to the code — said again, with its own --from and --to, for each change more. */
+export const MUTATE_OPTIONS = [
+  [
+    '--mutate <file>',
+    'Its acceptance run on its copy and on a mutant of it — the copy with a change to the code, --from "…" --to "…" (again, the three, for a change more: a behaviour held in two places): a line that fails on the mutant holds that behaviour; one passing on both lets it break unseen (a task of tests, reviewed)',
+    each,
+    NONE
+  ],
+  ['--from <text>', 'With --mutate: the code to change, quoted as the file writes it — found once', each, NONE],
+  ['--to <text>', 'With --mutate: what it says instead', each, NONE]
+] as const;

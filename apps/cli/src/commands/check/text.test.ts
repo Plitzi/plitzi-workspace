@@ -115,12 +115,26 @@ describe('the sources a page holds, with --state', () => {
   });
 });
 
-// encore-13's "ROOFTOP SESSIO…" passed every check a run made: a text cut short is said, as it is not a problem itself.
+// A run's "ROOFTOP SESSIO…" passed every check a run made: a text cut short is said, as it is not a problem itself.
 describe('a text a box cuts, in a page’s report', () => {
   it('is said with the way to hold one whole — never as a problem', () => {
     const text = reportText({ ...report({}), cut: ['show-plate-room'] }, { state: false, elements: [] });
     expect(text).toContain('cut short at this width, by a box that cuts its text');
     expect(text).toContain('show-plate-room');
     expect(text).toContain('--expect "<id>~<text>" holds one whole');
+  });
+});
+
+// A guest's element read "hidden" on a members' page, read signed in by itself, and the failure did not say so.
+describe('a page read signed in', () => {
+  it('says the account on its headline, and how to read it as a guest where it fails', () => {
+    const signed = { ...report({}), signedInAs: 'mika' };
+
+    expect(reportText(signed, { state: false, elements: [] })).toContain('/combates at 1440 px, signed in as mika');
+    const failed = reportText(
+      { ...signed, ok: false, problems: ['room-claps-signin is hidden'] },
+      { state: false, elements: [] }
+    );
+    expect(failed).toContain('read signed in as mika: what a guest sees, --guest');
   });
 });

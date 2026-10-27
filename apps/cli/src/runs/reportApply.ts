@@ -6,7 +6,7 @@ import type { RunReport } from './report';
 
 /**
  * What a person reads before applying the run, first in its report: whether the finish's dry run passed, and what it
- * holds that the approvals alone do not say. encore-10's person asked the lead for an analysis of the whole run before
+ * holds that the approvals alone do not say. A run's person asked the lead for an analysis of the whole run before
  * its `--apply`: the report had every fact, none of them where the decision is made.
  */
 
@@ -97,7 +97,7 @@ export const applyText = (report: RunReport, applied: boolean): string[] => {
     apply?.ready
       ? `- **The finish's dry run passed** at ${apply.ready.at.slice(11, 16)} UTC: ${String(apply.ready.files)} files to write, ${String(apply.ready.acceptance)} acceptance lines held on the whole result — the project's checks too.`
       : '- **The finish has not passed its dry run**: `plitzi run finish` says what holds it — nothing is to be applied before.',
-    // encore-13's finish took ten minutes on one line that failed once: the report said only that it passed.
+    // A run's finish took ten minutes on one line that failed once: the report said only that it passed.
     ...(apply?.ready?.again ?? []).map(
       each =>
         `- **Held only when run again**: ${each.task}: "${each.said}" — the first run said: ${each.why || 'nothing'}. The apply runs it once more: a flaky line, or a cause to find`

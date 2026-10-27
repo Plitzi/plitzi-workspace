@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
 import { auditRun } from './audit';
+import { addBacklogItem } from './backlog';
 import { extendRun } from './extend';
 import { messagesOf } from './messages';
 import { monitorRun } from './monitor';
@@ -158,7 +159,7 @@ describe('research: a card like any, finding out in the run', () => {
     expect((await loadRun(lead(), 'es-launch')).plan.reference).toBe('https://www.example.org');
   });
 
-  // encore-14's lead narrowed the scope to one part of the ask — its other parts cards of their own — and the amend
+  // A run's lead narrowed the scope to one part of the ask — its other parts cards of their own — and the amend
   // dropped the question unsaid, said "the goal" amended, and lost the stage's goal.
   it('amends a research card’s question, told to its card, and keeps the goal the stages added', async () => {
     const opened = scopePlan('es-launch', ASK);
@@ -203,7 +204,7 @@ describe('research: a card like any, finding out in the run', () => {
     ]);
     const { state } = await taskContext(lead(), 'es-launch', id);
     expect(state.findings?.map(each => each.text)).toEqual(['Say "Reservar"']);
-    // …and its reviewer reads it in task show, beside its lines (encore-14's tester had the diff, not the rule).
+    // …and its reviewer reads it in task show, beside its lines (a run's tester had the diff, not the rule).
     expect((await showTask(lead(), 'es-launch', id)).findings?.map(each => each.text)).toEqual(['Say "Reservar"']);
     const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(each => each.to === id);
     expect(told?.text).toContain('What was found for it now says: Say "Reservar"');
@@ -293,7 +294,7 @@ describe('research: a card like any, finding out in the run', () => {
     });
   });
 
-  // encore-12's scope proposed four tasks no command proved; the dry run said so, and the lead sent it back for them.
+  // A run's scope proposed four tasks no command proved; the dry run said so, and the lead sent it back for them.
   it('refuses a proposal whose tasks no command proves, naming them', async () => {
     await bench.writeTeam(team(SCOUT, TESTERS));
     const { runId } = (await openRun(lead(), await bench.writePlan(surveyed()))).checked;
@@ -319,21 +320,25 @@ describe('research: a card like any, finding out in the run', () => {
     expect(await statusOf('s-survey')).toBe('in-progress');
   });
 
-  // encore-11: the lead could keep a proposal whole or drop every task — and a -tests card it did not want stayed.
+  // The lead could keep a proposal whole or drop every task — and a -tests card it did not want stayed.
   it('stacks what the lead keeps of a proposal: a -tests card left is its card with no tests; what waits for one left, refused', async () => {
     const plan = { ...surveyed() };
     await bench.writeTeam(team(SCOUT, TESTERS));
     const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
     await takeNext(bench.agent('scout-1'), runId, 'scout');
     const [first] = benchPlan().tasks;
-    const stage = await bench.writePlan({
-      ...benchPlan(),
-      runId: 'survey',
-      tasks: [
-        proven({ ...first, id: 't-grid', title: 'The team grid', files: ['src/lib/grid.ts'], dependsOn: [] }),
-        proven({ ...first, id: 't-bios', title: 'The bios', files: ['src/lib/bios.ts'], dependsOn: ['t-grid'] })
-      ]
-    });
+    // A stage is its tasks: the run's name and goal are the run's.
+    const stage = path.join(bench.root, 'tmp', 'survey-stage.json');
+    await fs.mkdir(path.dirname(stage), { recursive: true });
+    await fs.writeFile(
+      stage,
+      JSON.stringify({
+        tasks: [
+          proven({ ...first, id: 't-grid', title: 'The team grid', files: ['src/lib/grid.ts'], dependsOn: [] }),
+          proven({ ...first, id: 't-bios', title: 'The bios', files: ['src/lib/bios.ts'], dependsOn: ['t-grid'] })
+        ]
+      })
+    );
     expect((await found(runId, 's-survey', 'A team grid, with bios', { tasks: stage })).proposed).toEqual([
       't-grid',
       't-bios',
@@ -341,7 +346,7 @@ describe('research: a card like any, finding out in the run', () => {
       't-bios-tests'
     ]);
 
-    // Research has no page to look at: its next steps read what it found, never `task look` (encore-14's lead).
+    // Research has no page to look at: its next steps read what it found, never `task look` (a run's lead).
     const { next } = await showTask(lead(), runId, 's-survey');
     expect(next.join('\n')).not.toContain('task look');
     expect(next).toContain('plitzi task review s-survey --approve [--leave <tasks>]');
@@ -355,7 +360,7 @@ describe('research: a card like any, finding out in the run', () => {
       left: ['t-grid-tests']
     });
 
-    // Kept in the run's inputs as stacked — what it left out, out — and its tasks amended from it: encore-12's lead
+    // Kept in the run's inputs as stacked — what it left out, out — and its tasks amended from it: a run's lead
     // rebuilt the scope's stage from the tasks, and was refused.
     const kept = approved.found?.stage ?? '';
     expect(path.relative((await loadRun(lead(), runId)).paths.dir, kept)).toBe(
@@ -366,6 +371,15 @@ describe('research: a card like any, finding out in the run', () => {
     stacked.tasks[0].acceptance = ['The grid holds every member'];
     await fs.writeFile(kept, JSON.stringify(stacked));
     expect((await amendRun(lead(), runId, kept)).tasks).toEqual([{ task: 't-grid', changed: ['acceptance'] }]);
+    // What it closes, amended — never an item the backlog does not hold open.
+    stacked.tasks[1].closes = ['b-1'];
+    await fs.writeFile(kept, JSON.stringify(stacked));
+    expect((await refusal(amendRun(lead(), runId, kept))).message).toContain(
+      'Task "t-bios" closes b-1: no open item of the backlog'
+    );
+    await addBacklogItem(bench.person(true), { text: 'The bios are missing', by: 'person' });
+    expect((await amendRun(lead(), runId, kept)).tasks).toEqual([{ task: 't-bios', changed: ['closes'] }]);
+    expect((await loadRun(lead(), runId)).tasks.find(task => task.id === 't-bios')?.closes).toEqual(['b-1']);
     expect((await loadRun(lead(), runId)).tasks.find(task => task.id === 't-grid')?.tests).toBe(false);
     expect(await statusOf('s-survey')).toBe('done');
     expect(await statusOf('t-about')).toBe('ready');

@@ -12,7 +12,16 @@ find is said with its evidence, never guessed. The agents' half is [runs.md](run
   you measured, with the command that measured it.
 - **It ends with the tasks it makes:** `plitzi task complete --found "what you found" --tasks <stage.json>`, in its
   copy — a stage: a plan's `tasks`, each with what you found for it in `"findings"` (the values, the files, the
-  reference's sections), its acceptance with a line a command proves (`{ said, check }`) — refused without. **See it
+  reference's sections), its acceptance with a line a command proves (`{ said, check }`) — refused without:
+
+  ```json
+  { "tasks": [{ "id": "t-claps-add", "title": "…", "files": ["src/functions/claps.ts"], "touches": [],
+    "dependsOn": [], "priority": "medium", "estimateMinutes": 10, "findings": "…", "closes": ["b-12"],
+    "acceptance": [{ "said": "…", "check": "node --test src/functions/claps.test.ts" }] }] }
+  ```
+
+  A line that runs one named test says so: `node --test --test-isolation=none --test-name-pattern="…"` — without it a
+  pattern that matches nothing passes. **See it
   first: `plitzi task check --tasks <stage.json>`** — checked as the lead stacks it, each line run once on the run's
   work; `run extend` is the lead's, never yours. It is checked whole and goes to the lead's
   review, decided with the person: nothing is stacked until it approves. Sent back, `task next` hands it to you again

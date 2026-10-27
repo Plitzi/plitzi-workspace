@@ -93,7 +93,7 @@ const taskShowSummary = (named: string | undefined, options: RunCommandOptions &
               })
             ]
           : []),
-        // What it was asked in detail, beside its lines: a reviewer reads both (encore-14's tester had neither rule).
+        // What it was asked in detail, beside its lines: a reviewer reads both (a run's tester had neither rule).
         ...(shown.findings
           ? [
               'Its brief — what was found for it',

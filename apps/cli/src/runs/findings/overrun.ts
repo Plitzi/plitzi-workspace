@@ -5,7 +5,7 @@ import type { Finding, LogEntry } from './types';
 import type { TaskReport } from '../report';
 
 /**
- * A task that ran long, with what the run kept of why — read off its log, never left to the lead's memory: encore-10's
+ * A task that ran long, with what the run kept of why — read off its log, never left to the lead's memory: a run's
  * report said only "t-visual-specs took 148 min of an estimated 60", and why (its acceptance rewritten twice, an
  * escalation, a round crossed with the lead's word, three spikes opened beside it, nobody cutting it) was put together by
  * hand before the person could decide on applying it.
@@ -79,7 +79,7 @@ export const overrunFindings = (tasks: readonly TaskReport[], log: readonly LogE
 /** How long the lead may take from the last approval to the finish's dry run passing before it is a finding. */
 const CLOSE_MINUTES = 15;
 
-/** Every task approved and the run left open: the team waits on the lead's close (encore-10's sat past its approval). */
+/** Every task approved and the run left open: the team waits on the lead's close (one sat past its approval). */
 export const closeFindings = (log: readonly LogEntry[], now: string): Finding[] => {
   const approved = log.findLast(entry => entry.action === 'all-approved');
   if (!approved) {

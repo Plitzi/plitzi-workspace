@@ -183,7 +183,7 @@ const standingOf = (options: TellOptions): Standing | undefined =>
 
 /**
  * Whether `task tell --about` speaks of a task not the caller's own — a reviewer's finding, an agent's word on another's
- * task — said by its name: one holding a task was refused telling the lead of a spike (encore-10's dev-1).
+ * task — said by its name: one holding a task was refused telling the lead of a spike (a run's dev-1).
  */
 export const tellsAbout = (ctx: Pick<RunContext, 'token'>, about: string | undefined): about is string =>
   about !== undefined && about !== (ctx.token === undefined ? undefined : taskOf(ctx));

@@ -83,7 +83,7 @@ export interface RunMetrics {
   afterMinutes?: number;
   /**
    * Every task approved to the finish's dry run passing (`ready`): the lead's close — look, report, finish — apart from
-   * the person's wait to apply it. encore-10's head said "then 73.7 to this report", the lead's five minutes in it.
+   * the person's wait to apply it. A run's head said "then 73.7 to this report", the lead's five minutes in it.
    */
   closeMinutes?: number;
   tasks: TaskFlow[];
@@ -183,7 +183,7 @@ const REPEAT_WINDOW_MIN = 10;
  * work a call. A run counted test-1's 14 `task next` in 6 min as a loop — one a fresh session each.
  */
 /**
- * A call meant to be made again: a wait, a take — and a dry run, tried after each edit of what it checks (encore-11's
+ * A call meant to be made again: a wait, a take — and a dry run, tried after each edit of what it checks (a run's
  * scout dry-ran its stage three times as it fixed it, said "ran run extend 3 times").
  */
 const calledAgainByDesign = (line: CommandPath): boolean =>
@@ -265,7 +265,7 @@ export const runMetrics = (input: {
       }
     };
     const firstTake = entries.find(entry => entry.action === 'take');
-    // From when it could be taken: stacked, or handed on by what it waited for — encore-12's tests cards read 10–12 min
+    // From when it could be taken: stacked, or handed on by what it waited for — a run's tests cards read 10–12 min
     // "to take", every one of them waiting for the task it tests.
     const handedOn = log.find(
       entry =>
@@ -285,7 +285,7 @@ export const runMetrics = (input: {
     for (const entry of entries) {
       const when = at(entry);
       // Its brief read again by whoever worked it is it at it again: a card handed back in the same context takes nothing
-      // — encore-12's scope read 5.4 min of rework wait, its scout at it 10 s after the changes.
+      // — a run's scope read 5.4 min of rework wait, its scout at it 10 s after the changes.
       const byOwner =
         ['take', 'check', 'complete', 'resumes', 'look'].includes(text(entry.action)) ||
         (entry.action === 'brief' && flow.agents.includes(text(entry.by)));

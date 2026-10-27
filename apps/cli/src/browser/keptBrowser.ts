@@ -152,7 +152,7 @@ const takeLock = async (file: string, ageMs: number): Promise<boolean> => {
 
 /**
  * How the kept browser's process is started: apart from the command that starts it, and out of the run's usage — it
- * lives for minutes, and encore-12's report counted its 641 s as the agents' time in the CLI.
+ * lives for minutes, and a run's report counted its 641 s as the agents' time in the CLI.
  */
 export const keeperLaunch = (
   bin: string,

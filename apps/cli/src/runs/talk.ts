@@ -3,7 +3,7 @@ import { handOver } from './handOver';
 import { isPrincipal, requireALead, requireLead } from './leads';
 import { agentAddress, EVERYONE, LEAD, messagesOf, replyTo, sendMessage, standingText, unreadFor } from './messages';
 import { RunRefusal } from './refusal';
-import { assertStatus, loadRun, logRun, requireNoTask } from './run';
+import { assertStatus, loadRun, logRun, readRunLog, requireNoTask } from './run';
 import { runChanged } from './runChanged';
 import { findTask, holderOf } from './tasks';
 import { viewTask } from './taskStore';
@@ -338,7 +338,7 @@ export interface Unheard {
 
 /**
  * Who of `sent` hears it late: a message reaches an agent only with its next command, and an agent at a long probe of
- * its own — a Playwright suite, a script — runs none for minutes. encore-14's scout-1 heard "narrow it" 2.5 min late and
+ * its own — a Playwright suite, a script — runs none for minutes. A run's scout-1 heard "narrow it" 2.5 min late and
  * missed two more: the lead is told then, not left to think it was heard. An agent that ran none yet is not counted.
  */
 export const unheardOf = async (
@@ -349,10 +349,20 @@ export const unheardOf = async (
 ): Promise<Unheard[]> => {
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
   const usage = readUsage(loaded.paths.dir);
+  const log = await readRunLog(loaded.paths);
   const lastEnded = (agent: string): number | undefined =>
     usage
       .filter(line => line.by === agent)
       .reduce<number | undefined>((last, line) => Math.max(last ?? 0, Date.parse(line.at) + line.ms), undefined);
+  // Waiting inside a command of the run — an ask it follows, a `task next` that waits — it hears what is said at once:
+  // a lead told one waiting for its very answer that it would hear it late.
+  const waitsInside = (agent: string, ended: number): boolean => {
+    const last = log.findLast(entry => entry.by === agent && typeof entry.at === 'string');
+
+    return (
+      last !== undefined && (last.action === 'ask' || last.action === 'waiting') && Date.parse(String(last.at)) > ended
+    );
+  };
   const agentOf = async (to: string): Promise<string | undefined> => {
     if (to.startsWith('@')) {
       return to.slice(1);
@@ -367,7 +377,7 @@ export const unheardOf = async (
   for (const message of sent) {
     const agent = await agentOf(message.to);
     const ended = agent === undefined ? undefined : lastEnded(agent);
-    if (agent !== undefined && ended !== undefined && now.getTime() - ended > QUIET_MS) {
+    if (agent !== undefined && ended !== undefined && now.getTime() - ended > QUIET_MS && !waitsInside(agent, ended)) {
       unheard.push({ to: message.to, agent, minutes: Math.round((now.getTime() - ended) / 60_000) });
     }
   }

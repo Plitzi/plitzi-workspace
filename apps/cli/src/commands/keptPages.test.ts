@@ -211,7 +211,7 @@ describe('the pages a kept browser holds', () => {
   });
 });
 
-// encore-14: a needle read on a page held still says "animation 1e-05s" — a page kept still is no page to read it on.
+// A needle read on a page held still says "animation 1e-05s" — a page kept still is no page to read it on.
 describe('a kept page, by its motion', () => {
   it('is another page for a reading with motion than for one held still', () => {
     const still = { url: 'https://example.com/', width: 1440, scheme: 'light' as const };

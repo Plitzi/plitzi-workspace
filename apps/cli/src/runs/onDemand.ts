@@ -202,13 +202,13 @@ export const agentsNeeded = (
         ? startable(reviewer)
         : (startable(takesOne) ?? (reviews.length > 0 ? startable(reviewer) : undefined));
       // One that starts with the run is being started as the run opens: asked for only once it had time to join —
-      // A run's watch said "start dev-1" the moment the lead had started it.
+      // a run's watch said "start dev-1" the moment the lead had started it.
       if (waiting.length === 0 || !next || (!next.onDemand && run.openFor < startingFor)) {
         return [];
       }
 
       // Work waiting with none of its role free starts one on demand, up to the team's most: dividing the work is the
-      // run's speed (Carlos). A ratio held it back — encore-14's two research cards waited behind the scope, three
+      // run's speed (Carlos). A ratio held it back — a run's two research cards waited behind the scope, three
       // scouts allowed and one running.
       asked.add(next.agent);
 

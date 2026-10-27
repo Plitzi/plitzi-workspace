@@ -111,7 +111,7 @@ describe('a review, a tester’s', () => {
     expect(await reviewTask(lead(), runId, second, 'approve', [])).toMatchObject({ verdict: 'approve' });
   });
 
-  // encore-11's test-1 was refused a verdict on t-closed-room for the lead's note on another card, and sent it twice.
+  // A run's test-1 was refused a verdict on t-closed-room for the lead's note on another card, and sent it twice.
   it('holds a verdict for what the lead said about it, or about no card — never for a note on another card', async () => {
     const { runId } = await twoInReview();
     const taken = (await takeNext(bench.agent('test-1'), runId, 'tester')).next.review?.task.id ?? '';
@@ -473,7 +473,7 @@ describe('the run’s tasks, the lead’s alone', () => {
     expect((await refusal(extendRun(bench.agent('scout-1'), runId, stage, { dryRun: true }))).code).toBe('lead-only');
   });
 
-  // encore-11's and encore-13's scouts reached for run extend, the lead's, to see their own stage.
+  // A run's and a run's scouts reached for run extend, the lead's, to see their own stage.
   it('lets a scout see its stage from its research card — task check --tasks — never through run extend', async () => {
     await bench.writeTeam(team(SCOUT));
     const { runId } = (await openRun(lead(), await bench.writePlan(scopePlan('es-launch', 'Translate the site'))))

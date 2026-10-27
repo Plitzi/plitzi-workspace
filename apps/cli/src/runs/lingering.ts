@@ -90,7 +90,7 @@ export const keptServer = async (work: string, cache: string): Promise<string | 
   const ours = isRecord(health) && (typeof health.Instance !== 'string' || health.Instance === projectMark(work));
   if (!ours) {
     // Stopped, not only forgotten: one slow to answer under a run's load still held the copy's state, and the next
-    // server on the copy died on it (encore-12's look, twice, a minute each).
+    // server on the copy died on it (a run's look, twice, a minute each).
     await stopKept(cache);
 
     return undefined;

@@ -31,7 +31,7 @@ const laidOut = (widths: Record<string, number>): void => {
   });
 };
 
-// encore-13's "ROOFTOP SESSIO…": every word in the page, a box cutting what a visitor read.
+// A run's "ROOFTOP SESSIO…": every word in the page, a box cutting what a visitor read.
 describe('what each element drawn shows', () => {
   it('says the copies whose text a box cuts — itself, or one inside it when asked', () => {
     document.body.innerHTML = [
@@ -55,7 +55,7 @@ describe('what each element drawn shows', () => {
     ]);
   });
 
-  // encore-14: a title whose overflow-x: clip cuts its ::after hairline read "cut short", its 90 px of words whole.
+  // A title whose overflow-x: clip cuts its ::after hairline read "cut short", its 90 px of words whole.
   it('reads no cut where only a pseudo-element runs past the box, its words whole', () => {
     document.body.innerHTML = '<h2 data-plitzi-el="room-coming-title" style="overflow-x: clip">Later this week</h2>';
     laidOut({ 'Later this week': 90 });

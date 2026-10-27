@@ -61,7 +61,7 @@ export const factFindings = (
         .filter(task => task.cuts > 0)
         .map(task => ({ subject: task.id, title: `${task.id} was cut ${String(task.cuts)} time(s) and started again` }))
     ),
-    // To ready to apply: what waits on the person after is never the run's (encore-13's read 96 min of 51, 48 of them
+    // To ready to apply: what waits on the person after is never the run's (a run's read 96 min of 51, 48 of them
     // the person's wait — the work took 36).
     ...(ranMinutes(report) > report.estimate.wallMinutes * 1.5
       ? each('over-estimate', [

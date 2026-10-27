@@ -10,7 +10,7 @@ const empty = {
   locator: () => ({ first: () => ({ count: () => Promise.resolve(0) }) })
 };
 
-// encore-10: page measure on roomSkipRead, an apiContainer, guessed it was for signed-in visitors or behind a click.
+// Page measure on roomSkipRead, an apiContainer, guessed it was for signed-in visitors or behind a click.
 describe('a provider measured', () => {
   it('is said to draw no box of its own, never guessed absent', async () => {
     // The fake answers what finding an element calls of a page, and nothing else a page has.

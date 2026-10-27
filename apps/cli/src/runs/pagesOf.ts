@@ -62,7 +62,7 @@ export const drawnByAPage = async (root: string, files: readonly string[]): Prom
 export const pagesOf = async (
   root: string,
   files: readonly string[],
-  /** How many: a task's look the first few; a run's look every one (encore-10's missed four, cut at eight). */
+  /** How many: a task's look the first few; a run's look every one (a run's missed four, cut at eight). */
   most: number = MAX_PAGES
 ): Promise<string[]> => {
   const units = await pageUnits(root, files);
@@ -183,10 +183,13 @@ export const examplePaths = async (
       }
     }
 
-    const found = named.find(address => fits.test(address)) ?? answering;
-    if (found) {
-      paths.push(found);
-      Object.assign(params, paramsOf(route, found));
+    // Every address the tasks name for it, each its own page: a run's look pictured /r/:slug as the first room named,
+    // and never the other one whose change it showed.
+    const fitting = named.filter(address => fits.test(address));
+    const found = fitting.length > 0 ? fitting : answering === undefined ? [] : [answering];
+    if (found.length > 0) {
+      paths.push(...found);
+      Object.assign(params, paramsOf(route, found[0]));
     } else {
       unreached.push(route);
     }
@@ -256,9 +259,36 @@ export const acceptanceAddresses = (acceptance: readonly Acceptance[]): string[]
   ])
 ];
 
-/** A route's pattern made an address the acceptance names, when one fits it: `/messages/:username` → `/messages/nova`. */
-export const filledPattern = (route: string, named: readonly string[]): string =>
-  route.includes('/:') ? (named.find(address => pageFits(route, address)) ?? route) : route;
+/**
+ * A route's pattern made an address the acceptance names, when one fits it: `/messages/:username` → `/messages/nova` —
+ * or filled from one that names its first parts: `/r/:slug/stats` from `/r/sunday-lofi`, a run's offer having handed
+ * the pattern itself, which the look could not reach.
+ */
+export const filledPattern = (route: string, named: readonly string[]): string => {
+  if (!route.includes('/:')) {
+    return route;
+  }
+
+  const fits = named.find(address => pageFits(route, address));
+  if (fits !== undefined) {
+    return fits;
+  }
+
+  const parts = route.split('/');
+  for (const address of named) {
+    const got = address.split(/[?#]/)[0].split('/');
+    // Shorter than the route, every part of it the route says by name the same: its values fill the route's own.
+    const agrees =
+      got.length < parts.length &&
+      parts.every((part, index) => index >= got.length || part.startsWith(':') || part === got[index]);
+    const filled = parts.map((part, index) => (part.startsWith(':') ? (got.at(index) ?? '') : part));
+    if (agrees && filled.every((part, index) => index === 0 || part !== '')) {
+      return filled.join('/');
+    }
+  }
+
+  return route;
+};
 
 /**
  * The account its acceptance checks the pages signed in as (`page check … --as mika`), when one: a look at them signs
@@ -315,7 +345,7 @@ export const acceptanceStatuses = (acceptance: readonly Acceptance[]): { page: s
 /**
  * Whether a task changes no page: each of its files outside what the project draws from — its source and its public
  * files, `src/` and `public/` — and reached by none of the space's pages, and its acceptance checks no page. A test's
- * fix, a script, a config: encore-13's look of a spec-only task pictured the home page, 19 pictures the change could
+ * fix, a script, a config: a run's look of a spec-only task pictured the home page, 19 pictures the change could
  * not touch. A file under `src/` no page imports (data, server code) is not said so: what draws it is not read here.
  */
 export const changesNoPage = async (

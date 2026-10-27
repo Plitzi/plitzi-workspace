@@ -469,7 +469,7 @@ describe('an expectation held to every copy of its element', () => {
     );
   });
 
-  // encore-13's show plate read "ROOFTOP SESSIO…" and its line held: the words were in the page, cut by an ellipsis.
+  // A run's show plate read "ROOFTOP SESSIO…" and its line held: the words were in the page, cut by an ellipsis.
   it('is met only by a copy that shows the text whole — one its box cuts reads part of it', () => {
     const plates = { present: 2, shown: ['Rooftop Sessions', 'Night Drive'], cut: [0] };
     expect(expectationMissed({ element: 'show-plate-room', text: 'Rooftop Sessions' }, plates, [])).toBe(

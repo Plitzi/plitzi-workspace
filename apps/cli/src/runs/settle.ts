@@ -46,7 +46,7 @@ export const settleFinding = async (
     findings.find(item => item.subject === subject) ??
     advice.find(item => item.kind === subject && item.who === 'lead');
   // Advice comes and goes with the agents running — one started again between two cards is not idle for a moment —
-  // so a kind is settled whether given this instant or not: encore-12's lead settled idle-team in such a moment, was
+  // so a kind is settled whether given this instant or not: a run's lead settled idle-team in such a moment, was
   // refused, and was woken for it again at once.
   if (!finding && isAdvice(subject)) {
     if (settledFindings(await readRunLog(loaded.paths)).has(subject)) {

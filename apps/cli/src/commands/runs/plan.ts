@@ -7,13 +7,14 @@ import { act, opener, runOf } from './shell';
 import { list, pacedText } from './text';
 import { amendRun } from '../../runs/amend';
 import { backlogOfPlan, backlogText } from '../../runs/backlog';
+import { atPace } from '../../runs/estimate';
 import { extendRun } from '../../runs/extend';
+import { glimpse } from '../../runs/feedLine';
 import { writeJson } from '../../runs/files';
 import { issueToken } from '../../runs/identity';
 import { ensureKeeper, keeperText, leadStartText } from '../../runs/keeper';
 import { LEAD } from '../../runs/messages';
 import { runPaths } from '../../runs/paths';
-import { atPace } from '../../runs/plan';
 import { RunRefusal } from '../../runs/refusal';
 import { rehearsalText, rehearse } from '../../runs/rehearse';
 import { reviewRolesOf, reviewSteps, reviewTeamFrom } from '../../runs/reviews';
@@ -28,8 +29,7 @@ import {
   readPlanFile
 } from '../../runs/run';
 import { settleFinding } from '../../runs/settle';
-import { opensOnResearch, SCOPE_SPIKE, scopePlan } from '../../runs/spike';
-import { roleOf } from '../../runs/spike';
+import { isResearch, opensOnResearch, roleOf, SCOPE_SPIKE, scopePlan } from '../../runs/spike';
 import {
   heldRoles,
   ensureTeam,
@@ -61,11 +61,16 @@ import type { Team } from '../../runs/team';
  * What earlier runs noticed and left, said where the next is planned and opened: what the plan takes up — a task's
  * `closes`, closed as the run is applied — and what no task does, which the run takes up or leaves open.
  */
-const backlogLines = ({ taken, untaken }: Awaited<ReturnType<typeof backlogOfPlan>>): string[] => [
+const backlogLines = ({ taken, researched, untaken }: Awaited<ReturnType<typeof backlogOfPlan>>): string[] => [
   ...(taken.length === 0
     ? []
     : [
         `Of the project's backlog, this plan takes up ${String(taken.length)} — closed as the run is applied: ${taken.map(each => `${each.item.id} (${each.task})`).join(', ')}`
+      ]),
+  ...(researched.length === 0
+    ? []
+    : [
+        `Its research looks into ${researched.map(each => `${each.item.id} (${each.task})`).join(', ')} — the tasks it proposes close ${researched.length === 1 ? 'it' : 'them'} ("closes")`
       ]),
   ...(untaken.length === 0
     ? []
@@ -161,8 +166,15 @@ export const startLines = (tasks: readonly RunTask[], team: Team): string[] => {
       const work = [
         ...(theirs.length > 0 ? [theirs.join(', ')] : []),
         ...(reviewing.length > 0 ? [`reviews ${reviewing.join(', ')}`] : []),
-        // A scout with no research in the plan stays for the research a stage brings.
-        ...(each.roles.includes(SCOUT) && theirs.length === 0 ? ['the research a stage brings'] : [])
+        // A scout with no research in the plan stays for the research a stage brings; any other agent, for the tasks
+        // the plan's research brings — a run's base developer was told to be left out of a plan of research alone.
+        ...(theirs.length === 0 && reviewing.length === 0
+          ? each.roles.includes(SCOUT)
+            ? ['the research a stage brings']
+            : tasks.some(isResearch)
+              ? ['the tasks its research brings']
+              : []
+          : [])
       ];
 
       // The team that says how its agents start is started by the run: the lead never starts its base by hand.
@@ -212,7 +224,7 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
         ),
         ...checked.tasks.map(
           task =>
-            `  ${task.id} (${task.priority}, ${String(task.estimateMinutes)} min${task.dependsOn.length > 0 ? `, after ${task.dependsOn.join(', ')}` : ''}): ${task.files.join(', ')}`
+            `  ${task.id} (${task.priority}, ${String(task.estimateMinutes)} min${task.dependsOn.length > 0 ? `, after ${task.dependsOn.join(', ')}` : ''}): ${isResearch(task) ? `research — ${glimpse(task.spike ?? '')}` : task.files.join(', ')}`
         ),
         `Shared files these tasks reach — by turns or by request: ${list(checked.sharedReached)} (${String(checked.shared.length)} shared in the project: plitzi space overview)`,
         ...checked.notices.map(notice => `  · ${notice}`),

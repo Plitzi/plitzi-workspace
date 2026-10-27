@@ -21,7 +21,7 @@ const write = async (file: string, text = ''): Promise<void> => {
   await fs.writeFile(path.join(root, file), text);
 };
 
-// encore-10's report said "1250 scripts written beside the CLI": four copies of the project, and about ten probes.
+// A run's report said "1250 scripts written beside the CLI": four copies of the project, and about ten probes.
 describe('an agent’s scratch', () => {
   it('says a copy of the project as one, and only what the agent wrote in it as its scripts', async () => {
     await write('package.json', '{}');
@@ -46,7 +46,7 @@ describe('an agent’s scratch', () => {
     ]);
   });
 
-  // encore-11 counted the scout's `run preview --copy` folder as a copy made by hand.
+  // a run counted the scout's `run preview --copy` folder as a copy made by hand.
   it('counts no copy the CLI made, and still reads what the agent wrote in it', async () => {
     await write('package.json', '{}');
     await write('src/space/index.ts');

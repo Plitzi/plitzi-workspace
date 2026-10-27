@@ -38,7 +38,7 @@ describe('a run’s audit', () => {
     expect(await auditRun(await loadRun(lead(), 'es-launch'))).toEqual([]);
 
     const refused = { by: 'dev-1', action: 'refused', code: 'claimed', command: 'plitzi task next --take' };
-    // A verdict held until the lead's word is read hands it over: a step of the flow, never a loop (encore-10's tester).
+    // A verdict held until the lead's word is read hands it over: a step of the flow, never a loop (a run's tester).
     const handed = {
       by: 'test-1',
       action: 'refused',

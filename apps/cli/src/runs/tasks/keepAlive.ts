@@ -9,7 +9,7 @@ export const KEEP_ALIVE_MS = 60_000;
 
 /**
  * Runs `work` — a task's checks, its acceptance's commands — giving the task's sign of life while it runs: an agent
- * inside one long command can give none, and its live task read "no signal — reassign it" (encore-10's dev-1 in a whole
+ * inside one long command can give none, and its live task read "no signal — reassign it" (a run's dev-1 in a whole
  * suite pass).
  */
 export const keepAlive = async <T>(view: TaskView, now: () => Date, work: () => Promise<T>): Promise<T> => {

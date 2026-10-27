@@ -39,7 +39,7 @@ const pageNow = async (page: BrowserPage, how: Framing): Promise<PageNow | undef
 /**
  * What changed on the page since `before` while a clipped picture stayed the same — the screen, and what it shows: a
  * click opened a plugin's picker beside the part pictured, and its shot said "nothing changed — the click did nothing to
- * see" (encore-13's tester and designer). Whatever draws it — a marked element or a plugin's own — the screen says it.
+ * see" (a run's tester and designer). Whatever draws it — a marked element or a plugin's own — the screen says it.
  */
 const outsideClip = async (page: BrowserPage, before: PageNow | undefined): Promise<string[]> => {
   if (before === undefined) {
@@ -184,8 +184,9 @@ export const stepText = (step: ShotStep): string => {
   switch (step.kind) {
     case 'click':
     case 'hover':
-    case 'wait-for':
       return `${step.kind} ${step.target}`;
+    case 'wait-for':
+      return `wait-for ${step.target}${step.ms === undefined ? '' : ` ${String(step.ms)} ms`}`;
     case 'scroll':
       return step.by ? `scroll ${step.target} ${String(step.by.dx)} ${String(step.by.dy)}` : `scroll ${step.target}`;
     case 'type':
@@ -508,7 +509,7 @@ export const actStep = async (
 
     await (step.kind === 'clock' ? page.clock.setSystemTime(step.time) : page.clock.runFor(step.ms));
   } else {
-    await page.waitForSelector(awaited(step.target), { timeout: 10_000 });
+    await page.waitForSelector(awaited(step.target), { timeout: step.ms ?? 10_000 });
   }
 
   return undefined;

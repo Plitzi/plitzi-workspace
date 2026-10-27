@@ -14,7 +14,7 @@ afterEach(async () => {
   }
 });
 
-// encore-12's tester started a server of its own to read what the copy's logged as a page rendered, and its line ("no
+// A run's tester started a server of its own to read what the copy's logged as a page rendered, and its line ("no
 // '[RSC] element dmThread' line") had no command to hold it.
 describe('what the server logged as a command’s pages were opened', () => {
   it('is a finding of the page when it says something failed — only what came after the mark', async () => {

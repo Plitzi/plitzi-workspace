@@ -13,10 +13,10 @@ import type { RunContext } from './run';
 
 /**
  * `plitzi task run "<command>"`: a command of an agent's own — a spec, a probe, a test file — run as the run's own
- * checks are. A Playwright suite waits its turn on the machine (`SUITE_LOCK`: encore-14's scout-3 could not tell whether
+ * checks are. A Playwright suite waits its turn on the machine (`SUITE_LOCK`: a run's scout-3 could not tell whether
  * another agent's held it); what it prints goes to a file, and the agent reads what failed and its end (a whole
  * Playwright report read into an agent's context is read again on every later turn); and what the lead said meanwhile
- * comes with it (encore-14's scout-1, at probes of its own for minutes, heard the lead 2.5 min late).
+ * comes with it (a run's scout-1, at probes of its own for minutes, heard the lead 2.5 min late).
  */
 
 /** How long a command of an agent's own waits for another agent's suite: a harness stops a command at about ten. */

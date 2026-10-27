@@ -58,3 +58,21 @@ describe('checkAcceptance', () => {
     ]);
   });
 });
+
+// A scout's line ran `node --test --test-name-pattern` on a pattern no test matched, and it passed: it ran nothing.
+describe('a line that ran no test', () => {
+  it('fails, saying so, though it exited 0', async () => {
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'acceptance-none-'));
+    folders.push(work);
+    const none = "printf 'ℹ tests 0\\nℹ pass 0\\n'";
+
+    const [result] = await checkAcceptance([{ said: 'The named test passes', check: none }], {
+      work,
+      root: work,
+      cache: path.join(work, 'cache')
+    });
+
+    expect(result).toMatchObject({ ok: false });
+    expect(result.output?.[0]).toContain('ran no test');
+  });
+});

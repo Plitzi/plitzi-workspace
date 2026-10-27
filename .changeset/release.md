@@ -155,6 +155,23 @@ authoring and the elements learnt from the runs.
   the brief, a research card's next steps, and a stage's file as changed; a task of tests is set beside the run without
   what it tests; a stage stacked mid-run hears nothing of the team's size or inventory; the finish names no culprit it
   did not find; the agents' skill keeps a long output in a file.
+- **What encore-15's agents asked for.** `task check --before` runs a task's own tests on the code before it, and a
+  line that ran no test there proves nothing; any line that runs tests and ran none fails, and a plan's node test
+  pattern without its isolation off is refused. `--mutate` takes several changes at once. A page command hands the
+  agent what was said to it, whole. `task look` pictures what its steps bring beside the run before too, names its
+  pictures by who read them, and is offered each page once, a route filled from an address the task names; `run look`
+  opens every address the tasks name for a route. `page check` says the account it read a page as; `page play`'s
+  pictures in a task's copy go to the run's; `wait-for` takes how long it waits, up to 60 s. `task show --full` fits
+  the most files whole. A run's commands in a folder under its scratch are the run's. `page shot --element` points at
+  `--clip`. The skills show a stage's shape and how a spec finds a component's instance, and say how to hide a slot
+  left empty.
+- **What encore-15 showed of the runs.** The lead's row on the monitor says it watching the run, deciding, or away
+  from it — at the person's, its watch ended and no command since — with what waits for it. A card past its limit is
+  asked where it stands once, by the clock (it was asked every pass for half a minute), and `task message` no longer
+  says an agent waiting inside an ask hears it late. A plan of research alone is estimated by its scouts, asks for no
+  inventory, keeps the team's base for the tasks it brings, and its cards take up the backlog items they name. `run
+  amend` reads the stage a research card's approval keeps as it is, and amends what a task closes. A plugin's modules
+  that draw nothing ask for no designer; a task waiting on one whose file it touches is not told to drop the wait.
 - **What encore-14's activity asked of the runs.** A card past its limit is asked where it stands by the run itself
   (the lead's watch and the keeper), the lead woken with the answer — a standing answered wakes it, where it waited as a
   note — or, none in 3 minutes, to decide without it. `task message` says when the agent has run no command for minutes

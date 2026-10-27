@@ -92,7 +92,7 @@ export interface AcceptanceResult {
   ms?: number;
   /**
    * A failed line whose Playwright found the copy served on this port (`PORT`) and reused it: its config's `webServer`,
-   * and the env it gives the server, never started. encore-10's dev-1 read the failure as a product bug.
+   * and the env it gives the server, never started. A run's dev-1 read the failure as a product bug.
    */
   reused?: number;
 }

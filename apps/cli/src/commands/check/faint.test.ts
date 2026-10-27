@@ -13,7 +13,7 @@ const on = (text: string, color: string, ground: string, background: string): Te
   page
 });
 
-// encore-14: the later shows' time, rgb(99, 86, 69) on a readout's rgb(31, 27, 20) glass in light, "nothing wrong".
+// The later shows' time, rgb(99, 86, 69) on a readout's rgb(31, 27, 20) glass in light, "nothing wrong".
 describe('words that barely read on their ground', () => {
   it('are said on a ground of one opaque colour, or the page’s — never on a gradient, a picture or a veil', () => {
     const issues = faintTexts([

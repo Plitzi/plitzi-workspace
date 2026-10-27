@@ -116,7 +116,7 @@ describe('what a failed step says', () => {
   });
 });
 
-// encore-12: a line whose server died read "the first failed: Node.js v24.22.1" — the banner under the stack.
+// A line whose server died read "the first failed: Node.js v24.22.1" — the banner under the stack.
 describe('why an output failed', () => {
   it('is its last line — or, under a crash, the error Node was ended by', () => {
     expect(failedWhy(['✗ /rooms at 390', '- rooms-list is empty'])).toBe('- rooms-list is empty');
@@ -130,7 +130,7 @@ describe('why an output failed', () => {
       ])
     ).toBe('Error: createFileJobQueue: state/jobs.json is in use by process 57261');
     expect(failedWhy(['something went wrong', 'Node.js v24.22.1'])).toBe('something went wrong');
-    // A test runner ends on its count: what failed is above it (encore-13 kept "3 passed (9.1m)").
+    // A test runner ends on its count: what failed is above it (a run kept "3 passed (9.1m)").
     expect(
       failedWhy([
         '  1) [rest] › a11y.spec.ts:85:1 › the room by keyboard',

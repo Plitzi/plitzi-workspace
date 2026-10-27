@@ -233,7 +233,7 @@ describe('a task held by its holder alone', () => {
     expect(log.filter(entry => entry.task === 't-home').map(entry => entry.by)).not.toContain('dev-2');
     expect(log.some(entry => entry.by === 'agent')).toBe(false);
   });
-  // encore-13's test-1 approved from the copy it ran the checks in: the copy went, and its next command met getcwd.
+  // A run's test-1 approved from the copy it ran the checks in: the copy went, and its next command met getcwd.
   it('leaves a task’s copy approved from inside it, saying where to go — and removes one approved from elsewhere', async () => {
     const plan = benchPlan();
     await bench.writeTeam({ version: 1, agents: [{ name: 'dev', roles: ['developer'], count: 2 }] });

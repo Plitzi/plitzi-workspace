@@ -61,7 +61,7 @@ export const statusIssuesOf = ({
   }
 
   // Sent 404 by a page of the space — a route's provider said nothing is there — with no 404 asked: an address that is
-  // no page. encore-14's look read /r/rooftop-sessions, a room that does not exist, as "nothing wrong".
+  // no page. A run's look read /r/rooftop-sessions, a room that does not exist, as "nothing wrong".
   if (sentWith === 404 && !notFoundPage) {
     return [
       {

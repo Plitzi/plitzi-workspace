@@ -68,7 +68,7 @@ const CLASS_LINE = /^(\w+) = styles\(/;
 
 /**
  * A module's names as the brief says them: its classes in one line, by name — how a class is "called" says nothing,
- * and a room's forty classes were 3k of an 18k brief, read five times (encore-14) — and the rest, each its line.
+ * and a room's forty classes were 3k of an 18k brief, read five times — and the rest, each its line.
  */
 export const importedLines = (names: readonly string[]): string[] => {
   const classes = names.flatMap(name => CLASS_LINE.exec(name)?.[1] ?? []);
@@ -153,7 +153,7 @@ export const taskContextCommand = (
       const parts = partsOf(whole);
       const printed = Object.values(parts).join('\n');
       const seen = primerMark(printed);
-      // The same brief asked again in one context is in it already: encore-14's dev-1 read its 13-18k four times.
+      // The same brief asked again in one context is in it already: a run's dev-1 read its 13-18k four times.
       const before = options.again === true ? undefined : readInSession(log, reader, 'seen', seen)?.at;
       const brief: Brief =
         typeof before === 'string' ? { ...whole, readBefore: { at: before, chars: printed.length } } : whole;

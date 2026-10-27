@@ -1,3 +1,7 @@
+import fs from 'node:fs/promises';
+
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+
 import { askStandings } from './askStandings';
 import { readJson, writeJson } from './files';
 import { FOLLOW_MS } from '../options';
@@ -60,7 +64,7 @@ const TIMED = new Set<Attention['kind']>([
  * run's attention.
  */
 export const leadItems = (view: RunView): LeadItem[] => [
-  // Every task approved: the close is the lead's — encore-10's watch said "nothing new" and the run sat finished.
+  // Every task approved: the close is the lead's — a run's watch said "nothing new" and the run sat finished.
   ...(view.total > 0 && view.done === view.total && (view.status === 'open' || view.status === 'stopping')
     ? [
         {
@@ -119,6 +123,61 @@ export const waitForLead = async (
     launch = true
   } = {}
 ): Promise<LeadNews> => {
+  let watching: string;
+  try {
+    watching = (await loadRun(ctx, runId, { anyMachine: true, anyVersion: true })).paths.leadWatching;
+  } catch (error) {
+    if (isRunRefusal(error) && error.code === 'not-found') {
+      return { fresh: [], gone: true };
+    }
+
+    throw error;
+  }
+
+  const mine: Watching = { pid: process.pid, at: ctx.now().toISOString() };
+  await writeJson(watching, mine);
+  try {
+    return await waitWatched(ctx, runId, { timeoutMs, everyMs, launch });
+  } finally {
+    // Only its own: a second watch started meanwhile keeps the lead watching.
+    const now = await readJson(watching, isWatching, 'the lead watching');
+    if (now?.pid === mine.pid && now.at === mine.at) {
+      await fs.rm(watching, { force: true });
+    }
+  }
+};
+
+/** The lead's `run watch` while it waits, as it marks it: what the monitor reads the lead watching by. */
+export interface Watching {
+  pid: number;
+  at: string;
+}
+
+export const isWatching = (value: unknown): value is Watching =>
+  isRecord(value) && typeof value.pid === 'number' && typeof value.at === 'string';
+
+/** Whether the lead watches the run now: its watch's mark, and that process still there. */
+export const leadWatching = async (file: string): Promise<Watching | undefined> => {
+  const mark = await readJson(file, isWatching, 'the lead watching');
+  if (mark === undefined) {
+    return undefined;
+  }
+
+  try {
+    process.kill(mark.pid, 0);
+
+    return mark;
+  } catch (error) {
+    // EPERM: it runs, as another user — only ESRCH says it is gone.
+    return isRecord(error) && error.code === 'EPERM' ? mark : undefined;
+  }
+};
+
+const waitWatched = async (
+  ctx: RunContext,
+  runId: string,
+  { timeoutMs, everyMs, launch }: { timeoutMs: number; everyMs: number; launch: boolean }
+): Promise<LeadNews> => {
   const started = Date.now();
   // With a keeper, starting an agent the run asks for is its: the lead hears of one only once it stayed unstarted past
   // the keeper's look — a run's lead was told "start dev-1" in the seconds the keeper took to start it again.
@@ -170,10 +229,10 @@ export const waitForLead = async (
       return !launch && agent !== undefined && now - (needSince.get(agent) ?? now) < KEEPER_GRACE_MS;
     };
     const fresh = [...failedLaunches, ...leadItems(view)].filter(item => !seen.has(item.key) && !keeperHasIt(item));
-    // What is only to know wakes nobody: it comes with what does, or as the watch ends — encore-12's lead was woken
+    // What is only to know wakes nobody: it comes with what does, or as the watch ends — a run's lead was woken
     // three times for notes, each turn reading its whole context again.
     const over = Date.now() - started >= timeoutMs;
-    // A standing answered is the lead's to decide on: encore-14's came as a note and waited for the watch's end.
+    // A standing answered is the lead's to decide on: a run's came as a note and waited for the watch's end.
     const wakes = (item: LeadItem): boolean => item.message === undefined || item.wakes === true;
     if (fresh.some(wakes) || (over && fresh.length > 0)) {
       await writeJson(seenFile, [...seen, ...fresh.map(item => item.key)]);

@@ -5,7 +5,7 @@ import { statusIssuesOf } from './status';
 const at = { pathname: '/r/rooftop-sessions', width: 1440, notFoundPage: false, meant: '' };
 
 describe("a page's status, beside what was asked", () => {
-  // encore-14's look read /r/rooftop-sessions — no such room, its provider's notFound — as "nothing wrong".
+  // A run's look read /r/rooftop-sessions — no such room, its provider's notFound — as "nothing wrong".
   it('fails a 404 a page of the space was sent with, unasked — never one asked with --status 404', () => {
     expect(statusIssuesOf({ ...at, sentWith: 404 }).map(issue => issue.message)).toEqual([
       "/r/rooftop-sessions was sent with status 404: its page's data said nothing is there (a provider's notFound) — an address that is no page, or data the page lacks; a page meant to answer 404 is checked with --status 404"

@@ -17,10 +17,13 @@ describe('what a refused command line meant', () => {
     );
     expect(commandHint("error: unknown option '--element'", ['page', 'check', '/'])).toBeUndefined();
     expect(commandHint("error: unknown option '--full'", ['page', 'shot', '/', '--full'])).toContain('--viewport');
+    expect(
+      commandHint("error: unknown option '--element'", ['page', 'shot', '/', '--element', 'room-stage'])
+    ).toContain('plitzi page shot <path> --clip <element>');
     expect(commandHint("error: unknown option '--fresh'", ['page', 'outline', '/', '--fresh'])).toContain(
       'reads the page anew on every call'
     );
-    // encore-12's scout, refused five times: --fresh is task check's and task look's.
+    // A run's scout, refused five times: --fresh is task check's and task look's.
     expect(commandHint("error: unknown option '--fresh'", ['page', 'check', '/', '--fresh'])).toContain(
       'task check’s and task look’s'
     );
@@ -30,7 +33,7 @@ describe('what a refused command line meant', () => {
     expect(commandHint("error: unknown command 'agents'", ['run', 'agents', 'shop-3'])).toContain('run status');
     expect(commandHint("error: unknown command 'list'", ['task', 'list'])).toContain('run status');
     expect(commandHint("error: unknown command 'pages'", ['space', 'pages'])).toContain('plitzi space overview');
-    // Folded into another after encore-10: the old name says where it went.
+    // Folded into another: the old name says where it went.
     expect(commandHint("error: unknown command 'take'", ['task', 'take', 't-home'])).toContain(
       'plitzi task next <task>'
     );

@@ -274,7 +274,7 @@ export const showPinned = (attribute: string): void => {
 
 /**
  * One element's picture, nothing pinned to the screen drawn over it — the one way an element is pictured: a part set
- * beside the run before was pictured another way, a site's sticky header over it (encore-13's looks at 390).
+ * beside the run before was pictured another way, a site's sticky header over it (a run's looks at 390).
  */
 export const elementShot = async (page: BrowserPage, selector: string): Promise<Uint8Array> => {
   const element = page.locator(selector).first();

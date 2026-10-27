@@ -32,7 +32,7 @@ const DIFF_LINES = 80;
 /**
  * How many lines of diff it shows in all: past them, each file left says its size and how to read it. A run's
  * `task show` answered up to 44k characters — eighteen files of eighty lines — and the reviewers read it 77 times;
- * A run's, at 400 lines, up to 24k, 46 times over 12k: a review reads the rest a file at a time.
+ * a run's, at 400 lines, up to 24k, 46 times over 12k: a review reads the rest a file at a time.
  */
 const DIFF_TOTAL = 240;
 
@@ -70,7 +70,7 @@ export interface TaskShown {
   warnings?: string[];
   notes: { at: string; by: string; text: string }[];
   /**
-   * What its brief says was found for it — the plan's findings, its spikes' — what it was asked in detail: encore-14's
+   * What its brief says was found for it — the plan's findings, its spikes' — what it was asked in detail: a run's
    * tester read the acceptance and the diff, and not the 7-day rule its brief set.
    */
   findings?: Finding[];
@@ -117,7 +117,7 @@ const versionsOf = async (loaded: LoadedRun, root: string, task: RunTask) => {
   const base = start ? undefined : (await readBase(loaded.paths)).files;
   const versions = async (file: string): Promise<{ before?: Buffer; after?: Buffer }> => {
     // A file no plan named when the run opened — a stage's — is not in the base: it is the project's as it is, which
-    // the finish has not written yet. encore-14's review read shows.ts, there before the run, as "(added)".
+    // the finish has not written yet. A run's review read shows.ts, there before the run, as "(added)".
     const before =
       start || (base && Object.hasOwn(base, file))
         ? await versionOf(loaded, root, file, start ? start.files[file] : base?.[file])
@@ -160,7 +160,7 @@ const nextFor = (task: RunTask, status: TaskStatus, review?: ReviewState): strin
               `# ${review.by} reviews it now (step ${String(review.step + 1)} of its review): its verdict moves it on — yours, the last word, approves it whole`
             ]
           : []),
-        // Research has no page: its result is tasks, read as the lead stacks them — encore-14's lead was offered a look.
+        // Research has no page: its result is tasks, read as the lead stacks them — a run's lead was offered a look.
         ...(isResearch(task)
           ? [
               `plitzi task next --role lead   # what it found and the tasks it proposes, to decide with the person`,
@@ -192,7 +192,7 @@ export const showTask = async (
   { full = false }: { full?: boolean } = {}
 ): Promise<TaskShown> => {
   // Read only, for anyone in the run: what another task changed or asks of a shared file is what an agent builds on —
-  // A run's agents were refused another task's and diffed its blobs by hash to read a request.
+  // a run's agents were refused another task's and diffed its blobs by hash to read a request.
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = loaded.tasks.find(each => each.id === taskId);
   if (!task) {
@@ -200,9 +200,12 @@ export const showTask = async (
   }
 
   const { view, changed, submitted, from, versions } = await versionsOf(loaded, ctx.root, task);
-  const files: ShownFile[] = [];
-  let left = DIFF_TOTAL;
-  let fullLeft = LARGE_OUTPUT;
+  // Each file's diff read first: with --full, the most files fit whole when the smallest are given room first — a
+  // run's tester was told a 123-line file was not shown, a large test file before it having spent the answer.
+  const read: (
+    | { file: string; change: ShownFile['change']; binary: true }
+    | { file: string; change: ShownFile['change']; lines: string[]; size: number }
+  )[] = [];
   for (const file of changed) {
     const { before, after } = await versions(file);
     const change: ShownFile['change'] =
@@ -210,20 +213,42 @@ export const showTask = async (
     const a = textOf(before) ?? (before === undefined ? '' : undefined);
     const b = textOf(after) ?? (after === undefined ? '' : undefined);
     if (a === undefined || b === undefined) {
-      files.push({ file, change, binary: true });
+      read.push({ file, change, binary: true });
       continue;
     }
 
     const lines = unifiedDiff(file, a, b).split('\n');
-    // Whole, every file — as long as the answer stays one an agent reads again cheaply: a run's `--full` answered 34k
-    // characters, read again on every turn after. A file past it says its size and how to read it alone.
-    const size = lines.join('\n').length;
-    if (full ? fullLeft < size && files.some(each => each.diff !== undefined) : left <= 0) {
-      files.push({ file, change, withheld: lines.length });
+    read.push({ file, change, lines, size: lines.join('\n').length });
+  }
+
+  // Whole, every file — as long as the answer stays one an agent reads again cheaply: a run's `--full` answered 34k
+  // characters, read again on every turn after. A file past it says its size and how to read it alone; one is always
+  // shown.
+  const whole = new Set<string>();
+  if (full) {
+    let fullLeft = LARGE_OUTPUT;
+    const texts = read.flatMap(each => ('lines' in each ? [each] : [])).sort((a, b) => a.size - b.size);
+    for (const each of texts) {
+      if (each.size <= fullLeft || whole.size === 0) {
+        whole.add(each.file);
+        fullLeft -= each.size;
+      }
+    }
+  }
+
+  const files: ShownFile[] = [];
+  let left = DIFF_TOTAL;
+  for (const each of read) {
+    if (!('lines' in each)) {
+      files.push({ file: each.file, change: each.change, binary: true });
       continue;
     }
 
-    fullLeft -= size;
+    const { file, change, lines } = each;
+    if (full ? !whole.has(file) : left <= 0) {
+      files.push({ file, change, withheld: lines.length });
+      continue;
+    }
 
     const shown = full ? lines.length : Math.min(DIFF_LINES, left);
     left -= shown;
@@ -302,7 +327,7 @@ export const showTaskFile = async (
   file: string
 ): Promise<TaskFileShown> => {
   // Read only, for anyone in the run: what another task changed or asks of a shared file is what an agent builds on —
-  // A run's agents were refused another task's and diffed its blobs by hash to read a request.
+  // a run's agents were refused another task's and diffed its blobs by hash to read a request.
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = loaded.tasks.find(each => each.id === taskId);
   if (!task) {

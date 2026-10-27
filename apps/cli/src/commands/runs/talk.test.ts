@@ -5,10 +5,10 @@ import { tellsAbout } from './talk';
 import type { RunContext } from '../../runs/run';
 
 const ctx = (token?: string): Pick<RunContext, 'token'> => (token ? { token } : {});
-const TOKEN = `encore-10.t-menu.${'a'.repeat(48)}`;
+const TOKEN = `run-10.t-menu.${'a'.repeat(48)}`;
 
 describe('task tell --about', () => {
-  // encore-10's dev-1, holding t-visual-listen-parallel, was refused telling the lead of s-suite-failures.
+  // A run's dev-1, holding t-visual-listen-parallel, was refused telling the lead of s-suite-failures.
   it('speaks of another task by name, whether the caller holds one or not', () => {
     expect(tellsAbout(ctx(TOKEN), 's-suite-failures')).toBe(true);
     expect(tellsAbout(ctx(), 's-suite-failures')).toBe(true);

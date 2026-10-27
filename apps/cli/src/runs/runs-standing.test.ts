@@ -7,7 +7,7 @@ import { leadItems, waitForLead } from './leadWatch';
 import { messagesOf } from './messages';
 import { runPaths } from './paths';
 import { openRun, loadRun } from './run';
-import { messageTasks, tellLead, tellLeadAbout, unheardOf } from './talk';
+import { askLead, messageTasks, tellLead, tellLeadAbout, unheardOf } from './talk';
 import { reportProgress, takeNext } from './tasks';
 import { viewRun } from './view';
 import { ranAs } from '../tests/ranAs';
@@ -94,7 +94,7 @@ describe('a task past the work limit', () => {
     );
   });
 
-  // encore-14: two research cards ran 39 and 26 min, their lead woken for each and asking neither.
+  // Two research cards ran 39 and 26 min, their lead woken for each and asking neither.
   it('asks the agent itself, the lead woken with its answer — or, with none in time, to decide without it', async () => {
     await bench.writeTeam(team(TESTERS));
     const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
@@ -108,6 +108,8 @@ describe('a task past the work limit', () => {
 
     await tellLead(home.ctx, runId, 't-home', '', STANDING);
     const answered = await waitForLead(lead(), runId, { timeoutMs: 20, everyMs: 10, launch: false });
+    // It wakes the lead — never kept as a note for the watch's end.
+    expect(answered.timedOut).toBeUndefined();
     expect(answered.fresh.map(item => item.text)).toContainEqual(expect.stringContaining('t-home stands at 60 %'));
     expect(answered.fresh.some(item => item.key.startsWith('long-task:'))).toBe(false);
 
@@ -121,11 +123,38 @@ describe('a task past the work limit', () => {
   });
 });
 
+describe('the run asking where a card stands', () => {
+  // A card whose rounded minutes reached its limit half a minute before the clock did was asked 77 times: every pass of
+  // the watch and the keeper read the asking as from before the limit, and asked again.
+  it('asks once a limit, whatever passes of the watch come after', async () => {
+    await bench.writeTeam(team(TESTERS));
+    const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
+    await take('agent-1', 't-home');
+    const asks = async () =>
+      (await messagesOf(await loadRun(lead(), runId))).filter(message => message.asksStanding === true).length;
+    const passes = async (count: number) => {
+      for (let pass = 0; pass < count; pass += 1) {
+        await waitForLead(lead(), runId, { timeoutMs: 20, everyMs: 10, launch: false });
+        bench.advance(5000);
+      }
+    };
+
+    // 9.6 minutes reads 10 rounded: not past the limit yet.
+    bench.advance(9.6 * 60_000);
+    await passes(4);
+    expect(await asks()).toBe(0);
+
+    bench.advance(30_000);
+    await passes(6);
+    expect(await asks()).toBe(1);
+  });
+});
+
 describe('a message to an agent at something long of its own', () => {
   it('tells the lead it is heard only when that ends', async () => {
     await bench.writeTeam(team(TESTERS));
     const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
-    await take('agent-1', 't-home');
+    const home = await take('agent-1', 't-home');
     // Its last command of the run, as the CLI keeps it.
     const command = 'plitzi task progress';
     const line = {
@@ -143,5 +172,10 @@ describe('a message to an agent at something long of its own', () => {
 
     bench.advance(5 * 60_000);
     expect(await unheardOf(lead(), runId, sent, bench.now())).toEqual([{ to: 't-home', agent: 'agent-1', minutes: 5 }]);
+
+    // Waiting inside an ask it follows, it hears the answer at once: never said to hear it late.
+    await askLead(home.ctx, runId, 't-home', 'Formal or informal?');
+    bench.advance(3 * 60_000);
+    expect(await unheardOf(lead(), runId, sent, bench.now())).toEqual([]);
   });
 });

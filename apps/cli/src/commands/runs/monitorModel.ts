@@ -147,6 +147,7 @@ export const startsLook = (
 export const AGENT_LOOK: Record<AgentStatus, { glyph: string; label: string; tone: Tone }> = {
   working: { glyph: '●', label: 'working', tone: 'primary' },
   reviewing: { glyph: '●', label: 'reviewing', tone: 'link' },
+  away: { glyph: '◐', label: 'away', tone: 'warning' },
   blocked: { glyph: '●', label: 'blocked', tone: 'warning' },
   asking: { glyph: '?', label: 'asks the lead', tone: 'warning' },
   waiting: { glyph: '◌', label: 'waiting', tone: 'info' },

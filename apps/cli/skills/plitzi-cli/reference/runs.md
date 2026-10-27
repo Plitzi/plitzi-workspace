@@ -79,7 +79,8 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
   it finds — your brief has what was found for your task.
 - **Your specs, never the suite**: a check of yours runs the specs of what you change (`npx playwright test
   visual/rooms.spec.ts`), never a whole suite — one holds the machine, and the CLI queues the next behind it; the finish
-  runs it whole. **A bug you meet outside your task** is the lead's to make a task of (`task tell`), never yours to grow.
+  runs it whole. A spec finds an element by `data-plitzi-el`; a component's instance has no node of its own — its name
+  is on its root as `data-plitzi-instance`. **A bug you meet outside your task** is the lead's to make a task of (`task tell`), never yours to grow.
 - **Blocked** — something to find out first, a key, a decision: `plitzi task block --reason "…"` (the lead's: it
   answers, or asks the person), its files yours, then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks

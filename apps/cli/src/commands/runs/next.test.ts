@@ -21,7 +21,7 @@ describe('plitzi task next, with nothing left', () => {
   });
 });
 
-// encore-14's scout kept its answers' last line alone, and missed two of the lead's redirects for 20 minutes.
+// A run's scout kept its answers' last line alone, and missed two of the lead's redirects for 20 minutes.
 describe('what the lead said, in an answer', () => {
   it('comes last, the newest thing said', () => {
     const said = stripVTControlCharacters(

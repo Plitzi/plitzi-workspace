@@ -302,7 +302,7 @@ export const outlineOnPage = async (
 
   // The part named as every page command names an element — its name, a tag or any selector, Playwright's too — found
   // by the browser and marked for the page to read: a selector `>> nth=0` that page measure took answered "nothing on
-  // the page" here, read by the page's own querySelectorAll (encore-13's designer).
+  // the page" here, read by the page's own querySelectorAll (a run's designer).
   const part = asked.within === undefined ? undefined : await targetOn(page, asked.within);
   if (part && 'problem' in part) {
     return { ...part, phase: 'part' };

@@ -208,7 +208,7 @@ export const fixedGrounds = (
 
 /**
  * Each text that barely reads on its ground, in the scheme it was read in: under 3:1 a visitor can hardly tell its
- * words from what is under them. encore-14's later shows printed rgb(99, 86, 69) on a readout's rgb(31, 27, 20) glass in
+ * words from what is under them. A run's later shows printed rgb(99, 86, 69) on a readout's rgb(31, 27, 20) glass in
  * light — about 2.4:1 — and every check said "nothing wrong", the picture alone showing it. A ground that is a picture
  * is not judged; a ground's colours are said once, its texts together.
  */

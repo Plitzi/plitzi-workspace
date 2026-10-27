@@ -26,7 +26,7 @@ export { completeResearch, seeProposal } from './research';
 export type { Researched } from './research';
 export type { Signal } from './signals';
 export { checkTask } from './check';
-export { checkBefore, provedBy } from './checkBefore';
+export { checkBefore, noTestBefore, provedBy } from './checkBefore';
 export { caughtBy, checkMutant } from './checkMutant';
 export type { LineMutated, Mutation } from './checkMutant';
 export type { LineBeforeAfter } from './checkBefore';

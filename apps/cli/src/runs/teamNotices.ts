@@ -31,7 +31,7 @@ const teamSizeNotice = (
   backlog: readonly string[]
 ): string[] => {
   // A stage's tasks beside the run's still open: a run's stack of one was told "1 task for 3 agents".
-  // Research is the scouts' and the work the rest's: counted together, encore-14's two research cards read "2 tasks for
+  // Research is the scouts' and the work the rest's: counted together, a run's two research cards read "2 tasks for
   // 5 agents", a team too big, where its one scout was too few (`researchNotice`).
   const work = plan.tasks.filter(task => task.role !== 'lead' && !isResearch(task)).length + openWork;
   const agents = startedAgents(team).filter(each => !each.roles.includes(SCOUT)).length;
@@ -97,7 +97,7 @@ export const teamNotices = (
 
 /**
  * More research cards ready at once than scouts to find them out: they go one after another, where dividing them was
- * for their speed — encore-14's two flaky specs waited behind the scope for its one scout. The team's most is the
+ * for their speed — a run's two flaky specs waited behind the scope for its one scout. The team's most is the
  * person's: said, never raised.
  */
 const researchNotice = (plan: Pick<RunPlan, 'tasks'>, team: Team): string[] => {

@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 
 import { acceptanceProblems } from './acceptanceProblems';
+import { notOpen } from './backlog';
 import { readOptional, writeAtomic, writeJson } from './files';
 import { coversOf, inventoryProblems } from './inventory';
 import { requireLead } from './leads';
@@ -89,7 +90,7 @@ export interface Amended {
 
 const SHAPE = ['files'] as const;
 // `touches` is what a task says it will change outside its own files, never held by it: told like any other ask.
-// A research card's question too (`spike`): encore-14's lead narrowed its scope, and the amend dropped it unsaid.
+// A research card's question too (`spike`): a run's lead narrowed its scope, and the amend dropped it unsaid.
 const ASK = [
   'title',
   'spike',
@@ -98,7 +99,8 @@ const ASK = [
   'estimateMinutes',
   'milestone',
   'findings',
-  'touches'
+  'touches',
+  'closes'
 ] as const;
 /** The finding a plan gives a task, as its state keeps it beside what its spikes found (`startingState`). */
 const isPlanFinding = (finding: Finding): boolean => finding.by === LEAD && finding.question === PLAN_FINDING;
@@ -153,7 +155,8 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   const loaded = await loadRun(ctx, runId);
   await requireLead(ctx, 'amend the plan');
   assertStatus(loaded, ['open', 'stopping'], 'amend the plan');
-  const next: RunPlan = await readPlanFile(file);
+  // A stage as a research card's approval keeps it is its tasks alone: read with the run's name and goal, as stacked.
+  const next: RunPlan = await readPlanFile(file, { runId, goal: loaded.plan.goal });
   const before = new Map(loaded.plan.tasks.map(task => [task.id, task]));
   if (!next.tasks.some(task => before.has(task.id))) {
     throw new RunRefusal(
@@ -244,16 +247,25 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
       continue;
     }
 
+    // What a task closes is held at the apply: an item no longer open, or mistyped, would close nothing, unsaid.
+    const unknown = changed.includes('closes') ? await notOpen(ctx.root, task.closes ?? []) : [];
+    if (unknown.length > 0) {
+      problems.push(
+        `Task "${task.id}" closes ${unknown.join(', ')}: no open item of the backlog — what it does of it is named by its id (plitzi run backlog)`
+      );
+    }
+
     const viewed = await viewTask(loaded.paths, defined);
     const { status } = viewed.state;
     if (status === 'done') {
       // Done is held at the finish by its acceptance alone, run again on the whole result: a line of the lead's found
       // wrong there is amended — a run's page-weight bound, too tight once other tasks reached every page, held the
       // finish with no way to change it. What else it was asked was held already.
-      const held = changed.filter(field => field !== 'acceptance');
+      // What it closes is held at the apply, after it: a done task's is amended too.
+      const held = changed.filter(field => field !== 'acceptance' && field !== 'closes');
       if (held.length > 0) {
         problems.push(
-          `Task "${task.id}" is done: its ${held.join(' and ')} ${held.length === 1 ? 'was' : 'were'} held already — only its acceptance, which the finish runs again, is amended`
+          `Task "${task.id}" is done: its ${held.join(' and ')} ${held.length === 1 ? 'was' : 'were'} held already — only its acceptance, which the finish runs again, and what it closes are amended`
         );
         continue;
       }
@@ -291,7 +303,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   const knownNotes = new Set(loaded.plan.notes ?? []);
   const notes = (next.notes ?? []).filter(note => !knownNotes.has(note));
   // The run's goal is the plan it opened with's, then each stage's (`extend`): the opened plan amended speaks for its own
-  // alone — compared whole, an unchanged plan read "the goal amended" and dropped the stages' (encore-14).
+  // alone — compared whole, an unchanged plan read "the goal amended" and dropped the stages'.
   const [openedGoal = '', ...stageGoals] = loaded.plan.goal.split(' · ');
   const goal = stage || next.goal === openedGoal ? undefined : [next.goal, ...stageGoals].join(' · ');
   // A stage's plan names the run's primer beside it (`primer.md`), and the run keeps that primer in its own folder: not
@@ -331,6 +343,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
       findings: _findings,
       touches: _touches,
       spike: _spike,
+      closes: _closes,
       ...kept
     } = defined;
     const amended: RunTask = {
@@ -345,7 +358,8 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
       ...(task.milestone === undefined ? {} : { milestone: task.milestone }),
       ...(task.findings === undefined ? {} : { findings: task.findings }),
       ...(task.touches === undefined ? {} : { touches: task.touches }),
-      ...(task.spike === undefined ? {} : { spike: task.spike })
+      ...(task.spike === undefined ? {} : { spike: task.spike }),
+      ...(task.closes === undefined ? {} : { closes: task.closes })
     };
 
     await writeJson(taskPaths(loaded.paths, task.id).definition, amended);

@@ -365,7 +365,7 @@ export const approvedCopy = async (ctx: RunContext, loaded: LoadedRun, dir: stri
 
 /**
  * The run's approved work as a folder of the caller's, made afresh — under its scratch unless named, inside the project
- * where its packages resolve, its state its own. encore-10's scout, told to measure on the run's work, rebuilt it by hand
+ * where its packages resolve, its state its own. A run's scout, told to measure on the run's work, rebuilt it by hand
  * from approved.json and the blobs to keep its suite off the project's state.
  */
 export const copyRunWork = async (
@@ -450,7 +450,7 @@ export const SERVED_STATUSES: readonly string[] = ['in-progress', 'changes-reque
 
 /**
  * Why a copy served for a look does not answer — none once it does: its server stopped, with the error it stopped on
- * and where it logs, as soon as it stops. encore-12's look waited a minute twice and said only "did not answer", its
+ * and where it logs, as soon as it stops. A run's look waited a minute twice and said only "did not answer", its
  * server dead in a second on the copy's state another held.
  */
 export const notServed = async (preview: Preview): Promise<string | undefined> => {
@@ -489,7 +489,7 @@ export const startTaskPreview = async (
   /**
    * `cold`: served from a cold start, never a server already on the copy — what it keeps apart from the copy's own, so it
    * runs beside one: a look set beside the run before it compares like with like — the run before is served cold, and
-   * encore-13's looks read a task's copy, warm with its agent's state, as having "moved" where its data had.
+   * a run's looks read a task's copy, warm with its agent's state, as having "moved" where its data had.
    */
   options: { quiet?: boolean; cold?: boolean } = {}
 ): Promise<Preview> => {

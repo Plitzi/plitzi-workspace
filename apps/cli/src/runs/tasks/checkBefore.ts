@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { checkAcceptance } from '../acceptance';
+import { checkAcceptance, ranNoTest } from '../acceptance';
 import { exists } from '../files';
 import { under } from '../paths';
 import { approvedCopy, SERVED_STATUSES } from '../preview';
@@ -16,7 +16,7 @@ import type { RunContext } from '../run';
 /**
  * `plitzi task check <task> --before`: its acceptance run on its copy and on the run before it — the run's approved
  * work without it — line by line, as `task look --before` sets its pages beside the run before. A line proves the
- * change when it fails without it and passes with it; one that passes on both proves nothing of it. encore-13's tester,
+ * change when it fails without it and passes with it; one that passes on both proves nothing of it. A run's tester,
  * reviewing a test's fix, copied the spec without the new line into its scratch with a playwright config of its own to
  * see it fail there.
  */
@@ -59,7 +59,7 @@ export const checkBefore = async (
   const beforeCache = path.join(view.paths.cache, 'check-before-cache');
   await fs.mkdir(beforeCache, { recursive: true });
   // A task of tests is proved by failing on the code it tests: its "before" is the run's work without that task's
-  // change too — the project's own version of its files — or every line passes on both (encore-14's tester).
+  // change too — the project's own version of its files — or every line passes on both (a run's tester).
   const without = task.testsOf ?? [];
   try {
     await approvedCopy(ctx, loaded, beforeDir);
@@ -69,6 +69,16 @@ export const checkBefore = async (
       await fs.rm(placed, { recursive: true, force: true });
       if (await exists(original)) {
         await fs.cp(original, placed, { recursive: true });
+      }
+    }
+
+    // Its own tests run on the code before it: the run's old test file passed the old code and proved nothing, and a
+    // spec it adds was "No tests found" there — a failure that proved nothing either.
+    for (const file of [...task.files, ...(task.touches ?? [])].filter(isTestFile)) {
+      const own = under(view.paths.work, file);
+      if (await exists(own)) {
+        await fs.mkdir(path.dirname(under(beforeDir, file)), { recursive: true });
+        await fs.cp(own, under(beforeDir, file));
       }
     }
 
@@ -94,9 +104,16 @@ export const checkBefore = async (
   }
 };
 
+/** A test file, by its name: what a task's own tests are, run on the code before it. */
+const isTestFile = (file: string): boolean => /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(file);
+
+/** A line that ran no test before it answers nothing of it: what it runs did not exist there. */
+export const noTestBefore = (line: LineBeforeAfter): boolean =>
+  !line.before.ok && ranNoTest((line.before.output ?? []).join('\n'));
+
 /** What a line says of the change, from how it ran before it and with it. */
 export const provedBy = (line: LineBeforeAfter): 'proves' | 'proves-nothing' | 'fails' | 'unanswered' =>
-  line.after.unanswered === true || line.before.unanswered === true
+  line.after.unanswered === true || line.before.unanswered === true || noTestBefore(line)
     ? 'unanswered'
     : !line.after.ok
       ? 'fails'

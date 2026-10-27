@@ -311,7 +311,7 @@ describe('plitzi run monitor', () => {
 
     const watched = await monitorRun(lead(), runId);
     const first = watched.view.tasks;
-    // A verdict is done when it is said: the lead's row says it as its last, never as work (encore-13's said "working"
+    // A verdict is done when it is said: the lead's row says it as its last, never as work (a run's said "working"
     // three minutes after the open, its scout at the scope).
     expect(watched.agents.find(agent => agent.agent === 'lead')).toMatchObject({
       status: 'idle',

@@ -156,6 +156,7 @@ describe('the project’s backlog', () => {
     await addBacklogItem(bench.person(true), { text: 'The footer wraps', by: 'person' });
     expect(await backlogOfPlan(bench.root, plan.tasks)).toEqual({
       taken: [{ item: expect.objectContaining({ id: 'b-1' }) as unknown, task: plan.tasks[3].id }],
+      researched: [],
       untaken: [expect.objectContaining({ id: 'b-2' })]
     });
     const runId = await open(plan);

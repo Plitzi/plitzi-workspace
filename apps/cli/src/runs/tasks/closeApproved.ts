@@ -62,7 +62,7 @@ export const closeApproved = async (
   });
   await logSpent(ctx, loaded, taskId, 'review');
   // Its copy goes — but never from under the shell that approved it: one there was left in a folder gone, every command
-  // after it failing on getcwd (encore-13's test-1, approving where it ran the checks). Left, it goes with the run.
+  // after it failing on getcwd (a run's test-1, approving where it ran the checks). Left, it goes with the run.
   const callerInCopy = ctx.cwd !== undefined && isWithin(view.paths.cache, ctx.cwd);
   if (!callerInCopy) {
     await fs.rm(view.paths.cache, { recursive: true, force: true });

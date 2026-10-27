@@ -29,7 +29,7 @@ describe("the server's page for a space that does not author", () => {
     ).toBe(
       "the space does not author, so the page is the server's error page — ReferenceError: when is not defined · at …: npm run author says why"
     );
-    // encore-10's dev-2 read a count of problems and none of them: what follows the first line is said too.
+    // A run's dev-2 read a count of problems and none of them: what follows the first line is said too.
     expect(
       await spaceFailureOn(
         pageOf(

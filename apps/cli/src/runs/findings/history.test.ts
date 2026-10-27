@@ -22,26 +22,26 @@ const kept = (runId: string, at: string, findings: Partial<Finding>[]): KeptRepo
   data: { report: { at, findings: findings.map(finding) } }
 });
 
-// After encore-10 nobody could say whether fixing worked: 49 problems, as many as the runs before, new or not.
+// After a run nobody could say whether fixing worked: 49 problems, as many as the runs before, new or not.
 describe('a finding held against the runs before', () => {
   const reports = [
-    kept('encore-5', '2026-10-20T10:00:00Z', [
+    kept('run-5', '2026-10-20T10:00:00Z', [
       {},
       { kind: 'over-estimate', subject: 'over-estimate:t-home', title: 't-home took 40 min of an estimated 20' }
     ]),
-    kept('encore-6', '2026-10-22T10:00:00Z', [
+    kept('run-6', '2026-10-22T10:00:00Z', [
       {
         kind: 'said',
         subject: 'notice:x',
         title: "page play 'action <id>' answered 401 and did not point to --as <account>"
       }
     ]),
-    kept('encore-10', '2026-10-26T10:00:00Z', [{}])
+    kept('run-10', '2026-10-26T10:00:00Z', [{}])
   ];
 
   it('is met again by its subject — or, said by whoever worked, said alike — never by a title shaped the same', () => {
-    const past = pastFindingsOf(reports, 'encore-10', '2026-10-26T10:00:00Z');
-    expect(past.map(run => run.runId)).toEqual(['encore-5', 'encore-6']);
+    const past = pastFindingsOf(reports, 'run-10', '2026-10-26T10:00:00Z');
+    expect(past.map(run => run.runId)).toEqual(['run-5', 'run-6']);
 
     const [long, overrun, said, fresh] = withHistory(
       [
@@ -61,11 +61,11 @@ describe('a finding held against the runs before', () => {
       past
     );
 
-    expect(long.seenIn).toEqual(['encore-5']);
+    expect(long.seenIn).toEqual(['run-5']);
     expect(overrun.seenIn).toBeUndefined();
-    expect(said.seenIn).toEqual(['encore-6']);
+    expect(said.seenIn).toEqual(['run-6']);
     expect(fresh.seenIn).toBeUndefined();
-    expect(historyText(long)).toBe('met before — encore-5 (2nd run)');
+    expect(historyText(long)).toBe('met before — run-5 (2nd run)');
     expect(historyText(fresh)).toBe('new');
   });
 });

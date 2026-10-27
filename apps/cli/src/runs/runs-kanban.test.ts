@@ -54,7 +54,7 @@ describe('an agent with nothing to take', () => {
     expect(await idle()).toBe('');
   });
 
-  // encore-11's lead kept a run small on purpose, and was woken twice to stack the backlog with no way to say no.
+  // A run's lead kept a run small on purpose, and was woken twice to stack the backlog with no way to say no.
   it('is said no more once the lead settles it, whatever changes on the board', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     const plan = benchPlan();
@@ -72,7 +72,7 @@ describe('an agent with nothing to take', () => {
     await expect(settleFinding(lead(), 'es-launch', 'idle-team', 'again')).rejects.toThrow('settled already');
   });
 
-  // encore-12's lead settled idle-team the moment its developer was started again between two cards — refused, "no
+  // A run's lead settled idle-team the moment its developer was started again between two cards — refused, "no
   // advice of that kind is given now" — and was woken for it again at once.
   it('is settled by its kind though not given this moment', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
@@ -115,7 +115,7 @@ describe('an agent with nothing to take', () => {
     expect(after?.subject).toBe(before?.subject);
   });
 
-  // encore-12's watch said scout-1, its scope in the lead's review, had nothing to take — stack the backlog for it.
+  // A run's watch said scout-1, its scope in the lead's review, had nothing to take — stack the backlog for it.
   it('is not said of a scout whose research waits for the lead: the lead decides it, and no backlog feeds a scout', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await setTeamAgent(bench.root, 'scout', { roles: ['scout'] });
@@ -150,7 +150,7 @@ describe('an agent with nothing to take', () => {
   });
 });
 
-// encore-12's scope, sent back, read "measuring the show schedule's time zone; then writing the stage · 75 %" on the
+// A run's scope, sent back, read "measuring the show schedule's time zone; then writing the stage · 75 %" on the
 // board — its last round's progress.
 describe('a card sent back', () => {
   it('starts its round with no progress of the last one', async () => {

@@ -51,7 +51,7 @@ describe('a look kept for the same look asked again', () => {
   });
 });
 
-// encore-10: a look of /u/mika warned /u/:username was not looked at, and forgot the round's earlier look of / and /rooms.
+// A look of /u/mika warned /u/:username was not looked at, and forgot the round's earlier look of / and /rooms.
 describe('the pages a task was looked at on', () => {
   it('count an address for the route it fits', () => {
     expect(lookedAmong('/u/:username', ['/u/mika'])).toBe(true);

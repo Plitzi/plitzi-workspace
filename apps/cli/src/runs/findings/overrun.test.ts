@@ -23,7 +23,7 @@ const task = (over: Partial<TaskReport>): TaskReport => ({
   ...over
 });
 
-// encore-10, as its log kept it: the report said only "took 148 min of an estimated 60".
+// a run, as its log kept it: the report said only "took 148 min of an estimated 60".
 const log = [
   { at: '2026-10-26T17:00:50.000Z', by: 'dev-1', action: 'take', task: 't-visual-specs' },
   {
@@ -111,7 +111,7 @@ describe('the close', () => {
 describe('the report, before a person applies it', () => {
   it('says the finish’s dry run and what weighs on applying it', () => {
     const report = {
-      runId: 'encore-10',
+      runId: 'run-10',
       tasks: [
         task({ reviewedBy: ['tester: test-1'], id: 't-sign-in-next' }),
         task({ knownFailure: 'two gated tests' })
@@ -126,8 +126,8 @@ describe('the report, before a person applies it', () => {
     expect(text).toContain("The finish's dry run passed** at 20:37 UTC: 36 files to write, 8 acceptance lines held");
     expect(text).toContain('t-visual-specs was approved over a known failure: two gated tests');
     expect(text).toContain('rewritten after approval — the finish held them to the new lines: t-visual-specs');
-    expect(text).toContain('`plitzi run finish encore-10 --apply`');
-    // encore-13's finish took ten minutes on one line that failed once: said where the apply is decided.
+    expect(text).toContain('`plitzi run finish run-10 --apply`');
+    // A run's finish took ten minutes on one line that failed once: said where the apply is decided.
     expect(text).toContain(
       '**Held only when run again**: t-a11y: "The keyboard test passes" — the first run said: 1) a11y.spec.ts:85'
     );
@@ -153,7 +153,7 @@ describe('the report, before a person applies it', () => {
   });
 });
 
-// encore-13's "The run took 96 min of an estimated 51": 48 of them the person's wait to apply; its work took 36.
+// A run's "The run took 96 min of an estimated 51": 48 of them the person's wait to apply; its work took 36.
 describe('a run past its estimate', () => {
   const report = (metrics: Partial<RunReport['metrics']>, minutes: number) =>
     ({

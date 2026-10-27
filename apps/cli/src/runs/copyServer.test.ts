@@ -78,7 +78,7 @@ describe('originHere', () => {
     // Kept: the next command reads it as it is.
     expect(await origin()).toBe(first);
     write.mockRestore();
-    // Where what its pages made the server say is read: encore-12's scout, asked for the logs, found none.
+    // Where what its pages made the server say is read: a run's scout, asked for the logs, found none.
     const log = path.join(cache, 'acceptance-server.log');
     expect(said.filter(line => line.includes(`its log: ${log}`))).toHaveLength(2);
 
@@ -147,7 +147,7 @@ describe('originHere', () => {
     await stopKept(cache);
   }, 60_000);
 
-  // encore-12: a line's `page check / /rooms`, run in the copy beside the server task check started for the lines,
+  // A line's `page check / /rooms`, run in the copy beside the server task check started for the lines,
   // served the copy again — the second server died on state/jobs.json, and the line read "nothing could answer it".
   it('reads a copy through the server its acceptance lines are run on, starting none', async () => {
     await servedBench();
@@ -197,7 +197,7 @@ describe('originHere', () => {
     }
   }, 60_000);
 
-  // encore-13's looks read a task's copy, warm with its agent's state, as having "moved" beside the run before — served
+  // A run's looks read a task's copy, warm with its agent's state, as having "moved" beside the run before — served
   // cold. A look serves the task cold too: its own server, its own empty state, never one already on the copy.
   it('serves a cold look apart — never the server a picture kept — from a state of its own, empty', async () => {
     await bench.write(
@@ -248,7 +248,7 @@ describe('originHere', () => {
     await expect(fs.access(path.join(cache, 'previewed.json'))).rejects.toThrow();
   }, 60_000);
 
-  // encore-12: a kept server slow to answer was forgotten, not stopped — and still held the copy's state, so the next
+  // A kept server slow to answer was forgotten, not stopped — and still held the copy's state, so the next
   // server on the copy died on it.
   it('stops a kept server that does not answer as the copy’s, never only forgets it', async () => {
     await open();
@@ -308,7 +308,7 @@ describe('originHere', () => {
     await stopKept(cache);
   }, 30_000);
 
-  // encore-12: a look waited a minute twice and said "did not answer", its server dead in a second on the copy's state.
+  // A look waited a minute twice and said "did not answer", its server dead in a second on the copy's state.
   it('says at once that a look’s server stopped before it answered, the error it stopped on and its log', async () => {
     await servedBench(
       "node -e \"console.error('Error: createFileJobQueue: state/jobs.json is in use by process 57261'); console.error('Node.js v24.22.1'); process.exit(1)\""

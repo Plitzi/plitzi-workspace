@@ -58,21 +58,53 @@ export const readBacklog = async (root: string): Promise<BacklogItem[]> =>
 export const openBacklog = async (root: string): Promise<BacklogItem[]> =>
   (await readBacklog(root)).filter(item => item.done === undefined);
 
+/** A backlog item's id as words name it: `b-36`. */
+const ITEM_NAMED = /\bb-\d+\b/g;
+
 /** The open items as these tasks take them up: each one a task closes, with that task, and those none does. */
 export const backlogOfPlan = async (
   root: string,
-  tasks: readonly { id: string; closes?: readonly string[] }[]
-): Promise<{ taken: { item: BacklogItem; task: string }[]; untaken: BacklogItem[] }> => {
+  tasks: readonly {
+    id: string;
+    closes?: readonly string[];
+    title?: string;
+    spike?: string;
+    findings?: string;
+    files?: readonly string[];
+  }[]
+): Promise<{
+  taken: { item: BacklogItem; task: string }[];
+  /** Named by a research card — its spike, its findings: what it finds makes the tasks that close it. */
+  researched: { item: BacklogItem; task: string }[];
+  untaken: BacklogItem[];
+}> => {
   const closer = new Map(tasks.flatMap(task => (task.closes ?? []).map(id => [id, task.id] as const)));
+  // A research card names the items it looks into, in its question or its findings: listed as taken up by no task,
+  // they read as left behind.
+  const researcher = new Map(
+    tasks
+      .filter(task => task.spike !== undefined && (task.files ?? []).length === 0)
+      .flatMap(
+        task =>
+          [task.title, task.spike, task.findings]
+            .join(' ')
+            .match(ITEM_NAMED)
+            ?.map(id => [id, task.id] as const) ?? []
+      )
+      .reverse()
+  );
   const open = await openBacklog(root);
-
-  return {
-    taken: open.flatMap(item => {
-      const task = closer.get(item.id);
+  const by = (map: ReadonlyMap<string, string>) =>
+    open.flatMap(item => {
+      const task = map.get(item.id);
 
       return task === undefined ? [] : [{ item, task }];
-    }),
-    untaken: open.filter(item => !closer.has(item.id))
+    });
+
+  return {
+    taken: by(closer),
+    researched: by(researcher).filter(each => !closer.has(each.item.id)),
+    untaken: open.filter(item => !closer.has(item.id) && !researcher.has(item.id))
   };
 };
 
@@ -233,13 +265,10 @@ export const closeBacklogItem = async (
 export const backlogText = (item: BacklogItem): string =>
   `${item.id}${item.on ? ` (${item.on})` : ''}: ${item.text} — ${item.from}, ${item.by}`;
 
-/** A backlog item's id as words name it: `b-36`. */
-const ITEM_NAMED = /\bb-\d+\b/g;
-
 /**
  * Each task that names an open item in its words — its title, its acceptance — and does not close it: what the task
- * does of it is left open at the apply. encore-13's t-listen-untraced, titled "(b-36)", fixed it, and b-36 was listed
- * open at the next run's start.
+ * does of it is left open at the apply: a task titled with an item's id did it, and the item was listed open at the
+ * next run's start.
  */
 export const namedNotClosed = (
   tasks: readonly Pick<RunTask, 'id' | 'title' | 'acceptance' | 'closes'>[],

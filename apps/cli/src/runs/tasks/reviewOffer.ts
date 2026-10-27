@@ -43,7 +43,7 @@ export interface ReviewOffer {
   /**
    * What was said of it between the lead and the team: what its agent or another told the lead (`task tell`) — a
    * designer's finding on its code above all — and what the lead said to it, its answers and decisions: read by whoever
-   * reviews it, as the lead does not (encore-10's tester sent back a task for a question the lead had answered).
+   * reviews it, as the lead does not (a run's tester sent back a task for a question the lead had answered).
    */
   told?: string[];
   /** A research card's: what its scout found, the tasks it proposes, and the stage they are kept in to read. */

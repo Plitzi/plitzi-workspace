@@ -13,7 +13,7 @@ const text = (value: unknown): string | undefined => (typeof value === 'string' 
 /**
  * The lines nothing could answer that still stand, by task and check: logged as each is met, gone once their task's
  * acceptance is amended. A line nothing can answer is the lead's to amend — every try of the task fails on it — and
- * was a note to it, matched against what was said by its words: encore-12's dev-1 waited on two such lines.
+ * was a note to it, matched against what was said by its words: a run's dev-1 waited on two such lines.
  */
 export const openUnanswered = (log: readonly Record<string, unknown>[]): Map<string, Unanswered> => {
   const open = new Map<string, Unanswered>();

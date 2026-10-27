@@ -4,9 +4,9 @@ import path from 'node:path';
 import { acceptanceProblems } from './acceptanceProblems';
 import { namedNotClosed, notOpen, openBacklog, stackableBacklog } from './backlog';
 import { elementFileNotices } from './elementFiles';
+import { estimate, pacedEstimate } from './estimate';
 import { expectationNotices, notFoundNotices } from './expectations';
 import { exists } from './files';
-import { readHistory } from './history';
 import { inventoryLeftOut, inventoryProblems } from './inventory';
 import { sharedLookNotices } from './lookNotices';
 import { unmeasuredNotices } from './measuredValues';
@@ -15,12 +15,12 @@ import { ownScriptNotices } from './ownScripts';
 import { ID, isSecretFile, NOT_TASK_DIRS, under } from './paths';
 import { sizeNotices, suiteNotices } from './planNotices';
 import { isResearch, roleOf } from './spike';
-import { roleProblems, skillProblems, teamSize, teamTakes, TESTER } from './team';
+import { roleProblems, skillProblems, takersOf, teamSize, teamTakes, TESTER } from './team';
 import { teamNotices } from './teamNotices';
 import { existingTests, testSetupOf, withTestTasks } from './tests';
-import { byUrgency, chainMinutes } from './urgency';
+import { byUrgency } from './urgency';
 
-import type { History } from './history';
+import type { PlanEstimate } from './estimate';
 import type { Acceptance, Quality, RunPlan, RunTask, TaskState } from './model';
 import type { Ownership } from './ownership';
 import type { Team } from './team';
@@ -43,21 +43,6 @@ export interface SharedFile {
   heldBy?: string;
 }
 
-export interface PlanEstimate {
-  tasks: number;
-  agents: number;
-  totalMinutes: number;
-  criticalPathMinutes: number;
-  /** About as long as the run takes with `agents` at once: the longer of the critical path and the work shared out. */
-  wallMinutes: number;
-  /** One review each at least; more for each round of changes. */
-  reviewRounds: number;
-  needsConfirmation: boolean;
-  why?: string;
-  /** At this project's pace — its past runs' minutes over their estimates — when it has enough of them to say. */
-  paced?: { from: History['from']; wallMinutes: number; ratio: number; runs: number; tasks: number };
-}
-
 export interface CheckedPlan {
   runId: string;
   goal: string;
@@ -73,9 +58,6 @@ export interface CheckedPlan {
   /** What the plan says it leaves out: said to the person before opening. */
   leftOut: string[];
 }
-
-/** Above either, a person confirms the estimate before the run opens. */
-export const CONFIRM_ABOVE = { agents: 5, wallMinutes: 120 } as const;
 
 /** Where `file` points, when it — or a folder on its way — is a link: undefined for a file, or for none yet. */
 const linkOf = async (root: string, file: string): Promise<string | undefined> => {
@@ -146,55 +128,6 @@ export const findCycle = (tasks: readonly { id: string; dependsOn: readonly stri
   return undefined;
 };
 
-/** How many tasks can run at once at most: the widest level of the dependency graph. */
-const widthOf = (tasks: readonly RunTask[]): number => {
-  const byId = new Map(tasks.map(task => [task.id, task]));
-  const depth = new Map<string, number>();
-  const depthOf = (id: string): number => {
-    const known = depth.get(id);
-    if (known !== undefined) {
-      return known;
-    }
-
-    const value = Math.max(-1, ...(byId.get(id)?.dependsOn ?? []).map(depthOf)) + 1;
-    depth.set(id, value);
-
-    return value;
-  };
-  const levels = new Map<number, number>();
-  tasks.forEach(task => levels.set(depthOf(task.id), (levels.get(depthOf(task.id)) ?? 0) + 1));
-
-  return Math.max(1, ...levels.values());
-};
-
-export const estimate = (tasks: readonly RunTask[], agentsAsked: number): PlanEstimate => {
-  const totalMinutes = tasks.reduce((sum, task) => sum + task.estimateMinutes, 0);
-  const chains = chainMinutes(tasks);
-  const roots = tasks.filter(task => task.dependsOn.length === 0);
-  const criticalPathMinutes = Math.max(0, ...roots.map(task => chains.get(task.id) ?? 0));
-  const agents = Math.max(1, Math.min(agentsAsked, widthOf(tasks)));
-  const wallMinutes = Math.ceil(Math.max(criticalPathMinutes, totalMinutes / agents));
-  const reasons = [
-    agentsAsked > CONFIRM_ABOVE.agents
-      ? `up to ${String(agentsAsked)} agents at once (more than ${String(CONFIRM_ABOVE.agents)})`
-      : '',
-    wallMinutes > CONFIRM_ABOVE.wallMinutes
-      ? `about ${String(wallMinutes)} minutes (more than ${String(CONFIRM_ABOVE.wallMinutes)})`
-      : ''
-  ].filter(Boolean);
-
-  return {
-    tasks: tasks.length,
-    agents,
-    totalMinutes,
-    criticalPathMinutes,
-    wallMinutes,
-    reviewRounds: tasks.length,
-    needsConfirmation: reasons.length > 0,
-    ...(reasons.length > 0 ? { why: reasons.join(', ') } : {})
-  };
-};
-
 /**
  * The tasks whose acceptance no command proves — every line words: what they ask holds only at their review. A tester's
  * card is its review, and research ends by what it found, which the lead approves: no command proves either.
@@ -211,22 +144,6 @@ export const uncheckedOf = <
       task.acceptance.length > 0 &&
       task.acceptance.every(each => typeof each === 'string')
   );
-
-/** Each task's estimate scaled to how this project's runs went: a task of no less than a minute. */
-export const atPace = (tasks: readonly RunTask[], ratio: number): RunTask[] =>
-  tasks.map(task => ({ ...task, estimateMinutes: Math.max(1, Math.round(task.estimateMinutes * ratio)) }));
-
-const pacedEstimate = async (
-  root: string,
-  tasks: readonly RunTask[],
-  agentsAsked: number
-): Promise<Pick<PlanEstimate, 'paced'>> => {
-  const history = await readHistory(root);
-
-  return history
-    ? { paced: { ...history, wallMinutes: estimate(atPace(tasks, history.ratio), agentsAsked).wallMinutes } }
-    : {};
-};
 
 const isOutsideSource = (file: string): boolean =>
   NOT_TASK_DIRS.has(file.split('/')[0]) || file.split('/').includes('node_modules');
@@ -294,7 +211,7 @@ export const checkPlan = async (
     )
   );
   // A stage is stacked on a team already at work: its size was said at the open, a stage of one fix read "1 task for 7
-  // agents — a smaller team does it for less" (encore-14).
+  // agents — a smaller team does it for less".
   notices.push(
     ...teamNotices(plan, team, openWork, await stackableBacklog(root, [...plan.tasks, ...runTasks]), {
       stage: runTasks.length > 0
@@ -331,7 +248,7 @@ export const checkPlan = async (
 
     // Research alone writes nothing: a task with a spike and no files is done by its findings. One that fills what
     // another makes writes it by "touches", after it — the way out "one agent per file" names, which this refused
-    // (encore-14's scout, told both ways, merged its tasks).
+    // (a run's scout, told both ways, merged its tasks).
     if (task.files.length === 0 && (task.touches ?? []).length === 0 && task.spike === undefined) {
       problems.push(
         `Task "${task.id}" writes no file: name what it writes ("files"), what it changes of another task's ("touches", waiting for it) — or, research alone, what it finds out ("spike": "…")`
@@ -680,10 +597,11 @@ export const checkPlan = async (
     );
   }
 
-  // The run's inventory is its open's: a stage lists the pieces it adds, and says nothing of none.
+  // The run's inventory is its open's: a stage lists the pieces it adds, and says nothing of none — nor does research
+  // alone, which builds nothing yet: its tasks list them (a run's three research cards were told to).
   const pieces = plan.inventory ?? [];
   notices.push(
-    ...(runTasks.length > 0 && pieces.length === 0
+    ...((runTasks.length > 0 || tasks.every(isResearch)) && pieces.length === 0
       ? []
       : [
           pieces.length > 0
@@ -722,7 +640,10 @@ export const checkPlan = async (
       .filter(file => !holder.has(file))
       .sort(),
     created: created.sort(),
-    estimate: { ...estimate(tasks, agentsAsked), ...(await pacedEstimate(root, tasks, agentsAsked)) },
+    estimate: {
+      ...estimate(tasks, agentsAsked, takersOf(team)),
+      ...(await pacedEstimate(root, tasks, agentsAsked, takersOf(team)))
+    },
     notices
   };
 };

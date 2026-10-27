@@ -60,7 +60,7 @@ export const textsInPage = ({
     }
 
     // The words as laid out, against the box's content: its scroll widened by a pseudo-element's hairline is no word
-    // cut — encore-14's titles read "cut short", their text whole beside an ::after the box clips.
+    // cut — a run's titles read "cut short", their text whole beside an ::after the box clips.
     const range = document.createRange();
     range.setStartBefore(words[0]);
     range.setEndAfter(words[words.length - 1]);

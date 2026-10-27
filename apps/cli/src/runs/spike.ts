@@ -52,7 +52,7 @@ export const startingState = (
   dependenciesDone: boolean,
   at: string
 ): TaskState => ({
-  // Research waits for what it depends on too: handed out before, it was found out on work not there yet (encore-10).
+  // Research waits for what it depends on too: handed out before, it was found out on work not there yet.
   status: dependenciesDone ? 'ready' : 'pending',
   round: 0,
   notes: [],

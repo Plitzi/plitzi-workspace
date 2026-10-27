@@ -195,7 +195,7 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .option(
       '--steps <script>',
-      'The steps — left out with --read, the page as it rests — as page shot --steps writes them — click, hover, scroll <el> [dx] [dy] (into view — or its own content by so many pixels: scroll genres 200), type (or fill: what the field held replaced), drag, press, wait, wait-for, reload, goto <path>, store, state, clock, tick, action <id> [json] (one of the space’s actions run as the page’s visitor), as <account> <step> (played by another account on a page of its own), shot [label] (the page pictured where it stands, in tmp/shots) — a ";" inside quotes is the text’s — each element "ours => theirs" with --compare'
+      'The steps — left out with --read, the page as it rests — as page shot --steps writes them — click, hover, scroll <el> [dx] [dy] (into view — or its own content by so many pixels: scroll genres 200), type (or fill: what the field held replaced), drag, press, wait, wait-for <el> [time] (until it shows — 10 s, or the time said up to 60 s; a selector waits for a state: [data-state="stalled"]), reload, goto <path>, store, state, clock, tick, action <id> [json] (one of the space’s actions run as the page’s visitor), as <account> <step> (played by another account on a page of its own), shot [label] (the page pictured where it stands, in tmp/shots — in a task’s copy, the run’s pictures of it) — a ";" inside quotes is the text’s — each element "ours => theirs" with --compare'
     )
     .option(
       '--read <element...>',

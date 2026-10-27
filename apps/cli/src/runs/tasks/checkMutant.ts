@@ -16,7 +16,7 @@ import type { RunContext } from '../run';
 /**
  * `plitzi task check <task> --mutate <file> --from "…" --to "…"`: its acceptance run on its copy, and on a throwaway
  * copy of it with one change made to the code — a mutant. A line that passes on the copy and fails on the mutant holds
- * that behaviour; one that passes on both lets it break unseen. encore-14's tester, reviewing tasks of tests, copied the
+ * that behaviour; one that passes on both lets it break unseen. A run's tester, reviewing tasks of tests, copied the
  * task's `src/` into its scratch, changed the code under test with sed and ran `node --test` there by hand — twice.
  */
 
@@ -62,8 +62,9 @@ export const checkMutant = async (
   ctx: RunContext,
   runId: string,
   taskId: string,
-  mutation: Mutation
-): Promise<{ task: string; mutation: Mutation; lines: LineMutated[] }> => {
+  /** One change or several — a behaviour the code holds in two places breaks only with both changed. */
+  mutations: readonly Mutation[]
+): Promise<{ task: string; mutations: Mutation[]; lines: LineMutated[] }> => {
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = findTask(loaded, taskId);
   const view = await viewTask(loaded.paths, task);
@@ -83,18 +84,30 @@ export const checkMutant = async (
     );
   }
 
-  const file = path.posix.normalize(mutation.file);
-  const inside = !file.startsWith('..') && !path.isAbsolute(file);
-  const text = inside ? (await readOptional(under(view.paths.work, file)))?.toString('utf-8') : undefined;
-  if (text === undefined) {
-    throw new RunRefusal(
-      'invalid',
-      `${mutation.file} is no file of ${taskId}'s copy: name it by its project path (src/functions/shows.ts)`,
-      { task: taskId }
-    );
+  if (mutations.length === 0) {
+    throw new RunRefusal('invalid', 'A mutant is a change at least: plitzi task check <task> --mutate <file> --from "…" --to "…"');
   }
 
-  const changed = mutated(text, { ...mutation, file });
+  // Each change on the text the ones before it left: two in one file are made one after the other.
+  const texts = new Map<string, string>();
+  const made: Mutation[] = [];
+  for (const mutation of mutations) {
+    const file = path.posix.normalize(mutation.file);
+    const inside = !file.startsWith('..') && !path.isAbsolute(file);
+    const text =
+      texts.get(file) ?? (inside ? (await readOptional(under(view.paths.work, file)))?.toString('utf-8') : undefined);
+    if (text === undefined) {
+      throw new RunRefusal(
+        'invalid',
+        `${mutation.file} is no file of ${taskId}'s copy: name it by its project path (src/functions/shows.ts)`,
+        { task: taskId }
+      );
+    }
+
+    texts.set(file, mutated(text, { ...mutation, file }));
+    made.push({ ...mutation, file });
+  }
+
   // The copy as it is, in a folder of its own: what a copy never holds — the project's served binaries — from the
   // project, as the run's own copies get them.
   const dir = path.join(view.paths.cache, 'check-mutant');
@@ -110,7 +123,9 @@ export const checkMutant = async (
       dir,
       (await projectFiles(ctx.root)).filter(each => !kept.has(each) && !isCopied(each, kept))
     );
-    await fs.writeFile(under(dir, file), changed);
+    for (const [file, text] of texts) {
+      await fs.writeFile(under(dir, file), text);
+    }
 
     const copy = await checkAcceptance(task.acceptance, {
       work: view.paths.work,
@@ -121,7 +136,7 @@ export const checkMutant = async (
 
     return {
       task: taskId,
-      mutation: { ...mutation, file },
+      mutations: made,
       lines: copy.map((line, index) => ({
         said: line.said,
         check: line.check,

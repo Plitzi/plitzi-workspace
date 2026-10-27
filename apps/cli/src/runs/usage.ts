@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
-import { appendFileSync, existsSync, readdirSync, readFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
@@ -174,26 +174,49 @@ const runOfFolder = (cwd: string): { runDir: string; by: string } | undefined =>
 /** A command that hands no messages over: anything but a task's or a run's, which read the inbox themselves. */
 const isInboxless = (args: readonly string[]): boolean => !['task', 'run'].includes(args[0] ?? '');
 
-/** How many messages said to `agent` by name it has not read: none for the lead or an unnamed caller. */
-export const unreadByName = (runDir: string, agent: string): number => {
+/**
+ * What was said to `agent` by name and it has not read — none for the lead or an unnamed caller — handed over whole and
+ * marked read: a page command reads no inbox, and a count pointing at it went unread (a scout heard the lead's
+ * "where do you stand?" fifteen times over, only at its next `task next`, its page commands between pointing at it).
+ */
+export const handUnreadByName = (runDir: string, agent: string): { id: string; from: string; text: string }[] => {
   if (agent === 'lead' || agent === 'unnamed') {
-    return 0;
+    return [];
   }
 
-  const read = readJsonSync(path.join(runDir, 'agents-read', `${agent}.json`));
-  const seen = new Set(Array.isArray(read) ? read.filter((id): id is string => typeof id === 'string') : []);
+  const readFile = path.join(runDir, 'agents-read', `${agent}.json`);
+  const read = readJsonSync(readFile);
+  const seen = Array.isArray(read) ? read.filter((id): id is string => typeof id === 'string') : [];
   let names: string[];
   try {
     names = readdirSync(path.join(runDir, 'messages')).filter(name => name.endsWith('.json'));
   } catch {
-    return 0;
+    return [];
   }
 
-  return names.filter(name => {
-    const message = readJsonSync(path.join(runDir, 'messages', name));
+  const unread = names
+    .map(name => readJsonSync(path.join(runDir, 'messages', name)))
+    .flatMap(message =>
+      isRecord(message) &&
+      message.to === `@${agent}` &&
+      typeof message.id === 'string' &&
+      typeof message.from === 'string' &&
+      typeof message.text === 'string' &&
+      !seen.includes(message.id)
+        ? [{ id: message.id, from: message.from, text: message.text, at: String(message.at) }]
+        : []
+    )
+    .sort((a, b) => a.at.localeCompare(b.at));
+  if (unread.length > 0) {
+    try {
+      mkdirSync(path.dirname(readFile), { recursive: true });
+      writeFileSync(readFile, `${JSON.stringify([...seen, ...unread.map(each => each.id)])}\n`);
+    } catch {
+      // Not marked, it is handed again with the next command: said twice, never lost.
+    }
+  }
 
-    return isRecord(message) && message.to === `@${agent}` && typeof message.id === 'string' && !seen.has(message.id);
-  }).length;
+  return unread.map(({ id, from, text }) => ({ id, from, text }));
 };
 
 /**
@@ -266,16 +289,14 @@ export const startUsage = (
 
     // A page command reads no inbox: what was said to its agent meanwhile — a review withdrawn under it — is pointed
     // at here (design-2 measured a withdrawn review on and was refused three times on its verdict).
-    const unread = isInboxless(args) ? unreadByName(where.runDir, where.by) : 0;
-    if (unread > 0) {
-      process.stderr.write(
-        `· ${String(unread)} message${unread === 1 ? '' : 's'} for you not read yet — plitzi task inbox\n`
-      );
-    }
-
     const { session, process: harness } = sessionOfProcess();
     const error = code === 0 ? undefined : errorLine(stderr);
     const output = code === 0 ? [] : failureLines(`${head}\n${tail}`);
+    // Said after what failed is read: a message is never taken for the command's error.
+    for (const message of isInboxless(args) ? handUnreadByName(where.runDir, where.by) : []) {
+      process.stderr.write(`✉ ${message.from} (${message.id}): ${message.text}\n`);
+    }
+
     const line: UsageLine = {
       at: new Date(started).toISOString(),
       by: where.by,

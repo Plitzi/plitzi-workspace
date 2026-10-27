@@ -69,6 +69,12 @@ export const acceptanceProblems = async (root: string, task: RunPlan['tasks'][nu
       problems.push(`Task "${task.id}": "${said}" has an empty check — give the command, or leave the line as text`);
     } else if (/(^|[\s'"/=<])\.env(\.[\w.-]+)?($|[\s'";|&>)])/.test(check) && !check.includes('.env.example')) {
       problems.push(`Task "${task.id}": the check of "${said}" reads .env, the credentials no agent touches`);
+    } else if (/\bnode\b[^|;&]*--test-name-pattern/.test(check) && !check.includes('--test-isolation=none')) {
+      // Each file is one test of its own under node's process isolation: a pattern that matches none of its tests
+      // passed as "tests 1, pass 1" (a scout's line held nothing, said passing).
+      problems.push(
+        `Task "${task.id}": the check of "${said}" names tests by a pattern of node's without its isolation off — each file then runs as one test of its own, and a pattern that matches none passes: node --test --test-isolation=none`
+      );
     } else if (strayPages(check).length > 0) {
       const stray = strayPages(check);
       problems.push(

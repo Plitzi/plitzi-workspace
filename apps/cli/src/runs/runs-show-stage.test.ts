@@ -21,7 +21,7 @@ afterEach(async () => {
 
 const { lead, open, take } = runSteps(() => bench);
 
-// encore-14's tester read shows.ts, in the project before the run, as "(added)": a stage's task, its file in no base.
+// A run's tester read shows.ts, in the project before the run, as "(added)": a stage's task, its file in no base.
 describe('a stage’s task, shown once approved', () => {
   it('says a file the project had as changed, read against the project’s own version', async () => {
     const runId = await open();

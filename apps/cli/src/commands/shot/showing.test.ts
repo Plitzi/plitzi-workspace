@@ -7,7 +7,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// encore-12's look pictured a playing room card for a task that changed the idle one: the first instance of the part.
+// A run's look pictured a playing room card for a task that changed the idle one: the first instance of the part.
 describe('a part drawn more than once, clipped', () => {
   it('is the copy that shows the most of what was asked for — the first when none shows more', () => {
     // jsdom draws nothing: what is hidden has no box, the rest one.

@@ -13,7 +13,8 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
  *   drag <element> <dx> [dy] pressed, moved by that many pixels (negative: left, up) and let go — a slider's handle
  *   press <key>              a key, as Playwright names it: Enter, Escape, ArrowDown…
  *   wait <ms|3s>             time passing
- *   wait-for <element>       until it is on the page and shown (10 s at most)
+ *   wait-for <element> [time] until it is on the page and shown — 10 s at most, or the time said, up to 60 s: a CSS
+ *                            selector waits for a state, wait-for '[data-state="stalled"]' 40s
  *   reload                   the page loaded again, as a visitor's reload: what it kept read back
  *   goto <path>              another page of the site opened in the same tab: what holds across pages
  *   store <key> <value>      a value put in the page's localStorage, as an earlier visit left it — then `reload`
@@ -43,7 +44,8 @@ export type PageStep =
   | { kind: 'drag'; target: string; dx: number; dy: number }
   | { kind: 'press'; key: string }
   | { kind: 'wait'; ms: number }
-  | { kind: 'wait-for'; target: string }
+  /** `ms`: how long it waits at most — 10 s when not said. */
+  | { kind: 'wait-for'; target: string; ms?: number }
   | { kind: 'reload' }
   | { kind: 'goto'; path: string }
   | { kind: 'store'; key: string; value: string }
@@ -83,6 +85,9 @@ const STEP_NAMES = [
 
 /** The longest a script may wait in one step: a page that needs more is waiting for something else. */
 const MAX_WAIT_MS = 30_000;
+
+/** How long a `wait-for` may wait, said: a state a few tries bring, past a fixed wait's 30 s. */
+const MAX_WAIT_FOR_MS = 60_000;
 
 /** The longest a clock is moved on in one step: a week. */
 const MAX_TICK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -229,8 +234,21 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
         }
 
         // Numbers after the element are no part of a selector: a run's `scroll <row> 200` reached Playwright whole and
-        // came back as its parse error. A scroll takes them as how far; the others take none.
+        // came back as its parse error. A scroll takes them as how far; a wait-for, how long it waits — a state three
+        // tries of ten seconds bring took a tester chained fixed waits; the others take none.
         const { target, rest: after } = leadingTarget(rest.join(' '));
+        if (name === 'wait-for' && after !== '') {
+          const ms = durationMs(after);
+          if (ms === undefined || ms > MAX_WAIT_FOR_MS) {
+            return {
+              problem: `${at}: wait-for takes an element and how long it waits at most, up to 60 s — wait-for room-player 40s (a selector with spaces goes in quotes)`
+            };
+          }
+
+          steps.push({ kind: 'wait-for', target: unquoted(target), ms });
+          break;
+        }
+
         const amounts = after === '' ? [] : after.split(/\s+/);
         if (amounts.length > 0 && amounts.every(each => /^-?\d+$/.test(each))) {
           const [dx = 0, dy = 0] = amounts.map(Number);

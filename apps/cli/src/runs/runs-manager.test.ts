@@ -183,7 +183,7 @@ describe('what the team told the lead of a task', () => {
   it('comes to whoever reviews it', async () => {
     const { runId } = await twoInReview();
     await tellLeadAbout(bench.agent('agent-2'), runId, 't-menu', 'Its prices are read once, at authoring');
-    // And what the lead said to it: encore-10's tester sent back a task for a question the lead had answered.
+    // And what the lead said to it: a run's tester sent back a task for a question the lead had answered.
     await messageTasks(lead(), runId, 't-menu', 'Keep the euro sign after the price');
     const offers = [
       (await takeNext(bench.agent('test-1'), runId, 'tester')).next.review,
@@ -288,7 +288,7 @@ describe('the keeper, for a task of tests', () => {
 });
 
 describe('a spike while its scout is between pieces', () => {
-  // encore-10's lead was told "yours to find out (the team has no scout)" while scout-1 stood stopped for a fresh context.
+  // A run's lead was told "yours to find out (the team has no scout)" while scout-1 stood stopped for a fresh context.
   it('is never the lead’s for want of a scout running: the team has one', async () => {
     const plan: RunPlan = benchPlan();
     plan.tasks = [
@@ -309,7 +309,7 @@ describe('a spike while its scout is between pieces', () => {
 });
 
 describe('a research spike in a plan', () => {
-  // encore-10's stage of one spike was told it "gets no task of tests" and that "no line has a check": research writes
+  // A run's stage of one spike was told it "gets no task of tests" and that "no line has a check": research writes
   // nothing and ends by its findings.
   it('is told nothing of tests nor checks', async () => {
     await bench.writeTeam(team(TESTERS));
@@ -324,7 +324,7 @@ describe('a research spike in a plan', () => {
 });
 
 describe('a task that holds its own test file', () => {
-  // encore-10's t-visual-show-soon held shows.test.ts and was told "its test files are another task's".
+  // A run's t-visual-show-soon held shows.test.ts and was told "its test files are another task's".
   it('is told it writes its tests itself', async () => {
     await bench.writeTeam(team(TESTERS));
     const plan: RunPlan = benchPlan();
@@ -339,7 +339,7 @@ describe('a task that holds its own test file', () => {
 });
 
 describe('a research spike that depends on a task', () => {
-  // encore-10's s-suite-failures was handed to its scout while t-visual-specs, its dependency, was still in review.
+  // A run's s-suite-failures was handed to its scout while t-visual-specs, its dependency, was still in review.
   it('waits pending until that task is approved, then is a spike to find out', async () => {
     const { runId } = await twoInReview();
     const stage = path.join(bench.root, 'tmp', 'stage.json');
@@ -370,7 +370,7 @@ describe('a research spike that depends on a task', () => {
 });
 
 describe('a scout at its research card', () => {
-  // encore-10's watch said test-1 held a review "while scout-1 has nothing to take", scout-1 at s-suite-failures.
+  // A run's watch said test-1 held a review "while scout-1 has nothing to take", scout-1 at s-suite-failures.
   it('is never told free beside a review that drags: it is at work', async () => {
     const plan: RunPlan = benchPlan();
     const menu0 = plan.tasks.find(task => task.id === 't-menu') ?? plan.tasks[0];
@@ -399,7 +399,7 @@ describe('a scout at its research card', () => {
 });
 
 describe('a scout’s result the lead approves without its tasks', () => {
-  // encore-10's lead sent s-suite-failures back to end it alone, and its scout read "say it again".
+  // A run's lead sent s-suite-failures back to end it alone, and its scout read "say it again".
   it('is done with its findings, the tasks left out and said', async () => {
     await bench.writeTeam(team({ ...SCOUT, min: 0 }));
     const plan: RunPlan = benchPlan();
@@ -434,7 +434,7 @@ describe('a scout’s result the lead approves without its tasks', () => {
 });
 
 describe('research taken by its scout', () => {
-  // encore-10's spike on the suite's speed was told to compare with an original the run had none of.
+  // A run's spike on the suite's speed was told to compare with an original the run had none of.
   it('names the original only when the run copies one', async () => {
     await bench.writeTeam(team({ ...SCOUT, min: 0 }));
     const plan: RunPlan = { ...benchPlan(), reference: 'https://example.com' };
@@ -447,7 +447,7 @@ describe('research taken by its scout', () => {
 });
 
 describe('a task of tests behind the task it tests', () => {
-  // encore-10's watch told the lead to take t-visual-own-state away from its tests' dependencies, its review going on.
+  // A run's watch told the lead to take t-visual-own-state away from its tests' dependencies, its review going on.
   it('is never held up: it waits for what it tests by what it is', async () => {
     const plan: RunPlan = benchPlan();
     const menu0 = plan.tasks.find(task => task.id === 't-menu') ?? plan.tasks[0];
@@ -477,7 +477,7 @@ describe('a task of tests behind the task it tests', () => {
 });
 
 describe('the run’s work, copied for a spike', () => {
-  // encore-10's scout rebuilt the run's approved work by hand — approved.json, then each blob — to measure apart.
+  // A run's scout rebuilt the run's approved work by hand — approved.json, then each blob — to measure apart.
   it('is a folder of the caller’s scratch with every approved file, and never outside the project', async () => {
     await bench.writeTeam(team({ ...TESTERS, count: 1 }, { ...SCOUT, min: 0 }));
     const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;

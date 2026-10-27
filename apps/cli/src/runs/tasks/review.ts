@@ -209,7 +209,7 @@ const decide = async (
   const role = steps.at(review.step) ?? LEAD;
 
   // Only what is about this task holds it — a message naming it, or naming no task of the run; one about another task
-  // reaches the agent with its next command (encore-11's test-1 sent a verdict twice for a note on another card).
+  // reaches the agent with its next command (a run's test-1 sent a verdict twice for a note on another card).
   if (!isPrincipal(ctx.agent)) {
     const ids = new Set(loaded.tasks.map(task => task.id));
     const named = (text: string): Set<string> => new Set(text.match(/[\w-]+/g)?.filter(word => ids.has(word)) ?? []);
@@ -337,7 +337,7 @@ const decide = async (
       await dropProposal(ctx, view);
     }
 
-    // Its next round says its own progress: encore-12's scope, sent back, read "writing the stage · 75 %" from the last.
+    // Its next round says its own progress: a run's scope, sent back, read "writing the stage · 75 %" from the last.
     if (view.progress) {
       await writeJson(view.paths.progress, { heartbeatAt: view.progress.heartbeatAt });
     }

@@ -40,7 +40,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
       }
 
       // A task that changes no page — a test's fix — has nothing to picture: said, with what reviews it, never the home
-      // page pictured in its place (encore-13: 19 pictures of a page the change could not touch).
+      // page pictured in its place (a run: 19 pictures of a page the change could not touch).
       if (paths.length === 0) {
         const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
         const task = findTask(loaded, taskId);

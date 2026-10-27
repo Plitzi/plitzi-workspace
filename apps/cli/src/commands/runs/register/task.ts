@@ -36,6 +36,7 @@ import {
   HARDEST_OPTION,
   HELPED_OPTION,
   JSON_OPTION,
+  MUTATE_OPTIONS,
   RUN_OPTION,
   TOKEN_OPTION
 } from './options';
@@ -279,12 +280,9 @@ export const registerTaskGroup = (program: Command): Command => {
       '--before',
       'Its acceptance run on the run before it too — the approved work without it — line by line: a line that fails there and passes with it proves the change; one passing on both proves nothing (a test’s or a bug’s fix, reviewed)'
     )
-    .option(
-      '--mutate <file>',
-      'Its acceptance run on its copy and on a mutant of it — the copy with one change to the code, --from "…" --to "…": a line that fails on the mutant holds that behaviour; one passing on both lets it break unseen (a task of tests, reviewed)'
-    )
-    .option('--from <text>', 'With --mutate: the code to change, quoted as the file writes it — found once')
-    .option('--to <text>', 'With --mutate: what it says instead')
+    .option(...MUTATE_OPTIONS[0])
+    .option(...MUTATE_OPTIONS[1])
+    .option(...MUTATE_OPTIONS[2])
     .argument('[task]', 'With --before or --mutate: the task to check — a review’s — your own when left out')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)

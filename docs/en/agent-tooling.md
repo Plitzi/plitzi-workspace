@@ -9,7 +9,7 @@ the way it is.
 How to write a space is the `plitzi-authoring` skill (`packages/sdk-authoring/skills`); every command is in
 [`apps/cli/README.md`](../../apps/cli/README.md). This page is the reasoning behind them.
 
-**What a space is, authoring answers; the CLI asks it** (Carlos, after encore-10). The CLI is general — commands any
+**What a space is, authoring answers; the CLI asks it** (Carlos). The CLI is general — commands any
 project and any run use, never one shaped for one case — and it stays with the agent as it works: the loop below, said
 at each save. What it needs to know of a space — which page answers an address and for whom (`pageAt`,
 `audienceAt`, the router's own decision), which element draws no box (`boxless`), what a flow may not do

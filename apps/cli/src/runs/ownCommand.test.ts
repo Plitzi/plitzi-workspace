@@ -24,7 +24,7 @@ afterEach(async () => {
 
 const { lead, take } = runSteps(() => bench);
 
-// encore-14: scout-1 heard the lead 2.5 min late at probes of its own, scout-3 could not tell whose Playwright held the
+// Scout-1 heard the lead 2.5 min late at probes of its own, scout-3 could not tell whose Playwright held the
 // machine, and whole reports read into an agent's context were read again on every turn after.
 describe('a command of an agent’s own', () => {
   it('keeps what it printed in a file, says what failed and its end, and brings what the lead said', async () => {

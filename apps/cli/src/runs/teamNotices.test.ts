@@ -25,7 +25,7 @@ const team = (scouts: number): Team => ({
   ]
 });
 
-// encore-14's two flaky specs, cards of their own, waited behind the scope for its one scout.
+// A run's two flaky specs, cards of their own, waited behind the scope for its one scout.
 describe('research cards beside the scouts that find them out', () => {
   it('says when more are ready at once than scouts, and that more scouts are the person’s to allow', () => {
     const cards = [card('s-scope'), card('s-listen-gate'), card('s-shows-dismiss'), card('s-later', ['s-scope'])];
@@ -41,7 +41,7 @@ describe('research cards beside the scouts that find them out', () => {
   });
 });
 
-// encore-14's stage of one fix, stacked on a team at work, read "1 task for 7 agents — a smaller team does it for less".
+// A run's stage of one fix, stacked on a team at work, read "1 task for 7 agents — a smaller team does it for less".
 describe('a stage stacked on a run at work', () => {
   it('says nothing of the team’s size: it was said at the open', () => {
     const fix: RunTask = { ...card('t-fix'), files: ['src/fix.ts'], spike: undefined };

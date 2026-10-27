@@ -15,7 +15,7 @@ export const logMark = async (log: string | undefined): Promise<number | undefin
 
 /**
  * What the server logged as failed while a command's pages were opened, as a finding of the page: a provider that
- * failed on every render was a line in a log nobody read — encore-12's tester started a server of its own to read it,
+ * failed on every render was a line in a log nobody read — a run's tester started a server of its own to read it,
  * and its line ("no '[RSC] element dmThread' line") had no command to hold it.
  */
 export const serverLoggedIssues = async (

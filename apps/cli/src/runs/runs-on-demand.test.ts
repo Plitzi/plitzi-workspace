@@ -66,7 +66,7 @@ describe('agents on demand', () => {
     );
 
     // dev-1 at t-home; t-menu and t-about wait, none free: dev-2 on demand takes them now — dividing the work is the
-    // run's speed (encore-14's research cards waited behind the scope for a ratio).
+    // run's speed (a run's research cards waited behind the scope for a ratio).
     await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
     expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
       expect.objectContaining({

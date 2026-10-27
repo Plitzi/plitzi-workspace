@@ -90,7 +90,7 @@ describe('the kept browser', () => {
   });
 });
 
-// encore-12's report counted the kept browser's 641 s alive as the agents' time in the CLI.
+// A run's report counted the kept browser's 641 s alive as the agents' time in the CLI.
 describe('the kept browser’s process', () => {
   it('is started out of the run’s usage, apart from the command that starts it', () => {
     const { args, options } = keeperLaunch('/bin/plitzi', '/project');

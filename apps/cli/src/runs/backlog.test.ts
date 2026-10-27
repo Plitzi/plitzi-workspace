@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { namedNotClosed } from './backlog';
 
-// encore-13's t-listen-untraced, titled "(b-36)", fixed it with no "closes": b-36 was listed open at the next start.
+// A run's t-listen-untraced, titled "(b-36)", fixed it with no "closes": b-36 was listed open at the next start.
 describe('a task that names a backlog item', () => {
   it('is refused unless it closes it — an item already done, or one it closes, is no matter', () => {
     const open = new Set(['b-36', 'b-37', 'b-38']);

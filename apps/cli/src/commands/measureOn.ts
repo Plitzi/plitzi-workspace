@@ -22,7 +22,7 @@ const otherSpelling = async (page: BrowserPage, target: string): Promise<string>
     }
   }
 
-  // A component's instance is marked by its own name, never as an element: encore-12's scout wrote
+  // A component's instance is marked by its own name, never as an element: a run's scout wrote
   // [data-plitzi-el="room-card-quiet-demo"] for one, and found data-plitzi-instance only by reading the page's HTML.
   // Each name in turn: the rest of the selector may name the instance's parts, which are elements.
   for (const written of target.matchAll(/\[data-plitzi-el="([^"]+)"\]/g)) {

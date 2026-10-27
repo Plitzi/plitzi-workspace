@@ -17,6 +17,7 @@ import {
   signedOutOnly,
   viewsAsked
 } from './lookParts';
+import { pictureName } from './pictureName';
 import { approvedText, notReviewedText } from './reviewText';
 import { act, runOf, runSelf } from './shell';
 import { list } from './text';
@@ -158,7 +159,7 @@ export const lookAt = (
         // Every page its changes are drawn at — a shared file's too: named pages are looked at, and the others
         // said (design-2 looked at /combates twice, and the home its card change broke was the lead's
         // to find).
-        // Every one, the first few looked at and the rest said: encore-10's look of t-visual-specs cut at eight, silent,
+        // Every one, the first few looked at and the rest said: a run's look of t-visual-specs cut at eight, silent,
         // and /r/:slug, which only its skip.ts change draws, went unseen.
         const drawnAt = await pagesOf(preview.dir, changed, Infinity);
         const owned = paths.length > 0 ? [] : drawnAt.slice(0, MAX_PAGES);
@@ -169,7 +170,7 @@ export const lookAt = (
         const parts = await taskParts(preview.dir, changed);
         const { clips, many } = lookClips(parts, options.within);
         // A part drawn more than once — a component's instances — pictured where the most of the task's elements show:
-        // a run's look pictured a playing room card for a task that changed the idle one.
+        // A run's look pictured a playing room card for a task that changed the idle one.
         const showing = parts ? [...parts.ids].filter(id => !clips.includes(id)).slice(0, 40) : [];
         // A page with a parameter in its address (`/boxeadores/:slug`) is opened where the site's own links go.
         // Its files drawn at no page (a plugin's): the pages its acceptance checks, before the home page — a run's
@@ -330,7 +331,7 @@ export const lookAt = (
         const named = (route: string, clip: string | undefined, width: string, scheme: string, after = false) =>
           path.join(
             runPaths(ctx.root, runId).shots,
-            `${taskId}${route === '/' ? '-home' : `-${route.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`}${clip ? `-${clip}` : ''}-${width}-${scheme}${after ? '-after' : ''}.png`
+            pictureName({ task: taskId, route, as: options.as, guest: options.guest, clip, width, scheme, after })
           );
         const own = (partsBeside ? [] : pictured).flatMap(route =>
           (clips.length > 0 ? clips : [undefined]).flatMap(clip =>
@@ -414,6 +415,9 @@ export const lookAt = (
                   '--compare',
                   before?.url ?? '',
                   ...clipArgs(clip, showing),
+                  // What the look's steps bring is what it is about: a stalled player was pictured at rest beside the run
+                  // before, its check reading the stalled state.
+                  ...(options.steps === undefined ? [] : ['--steps', options.steps]),
                   '--width',
                   width,
                   '--scheme',
@@ -434,6 +438,7 @@ export const lookAt = (
                 ...visiting,
                 ...signedInFor(route),
                 ...clipArgs(clip, showing),
+                ...(options.steps === undefined ? [] : ['--steps', options.steps]),
                 '--width',
                 width,
                 '--scheme',

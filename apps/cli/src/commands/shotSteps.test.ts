@@ -50,7 +50,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   });
 
   // `type [aria-label="Precio hasta"] 650` was cut at its first space into a selector that is none.
-  // encore-13: `scroll <row> 200` reached Playwright as one selector and came back as its parse error.
+  // A run: `scroll <row> 200` reached Playwright as one selector and came back as its parse error.
   it('reads a scroll by whole pixels as the element’s own content moved, and refuses a number after any other', () => {
     expect(parseSteps('scroll explore-genres 200; scroll "[data-plitzi-el=feed] ul" 0 -80', 500)).toEqual([
       { kind: 'scroll', target: 'explore-genres', by: { dx: 200, dy: 0 } },
@@ -200,5 +200,18 @@ describe('the steps another account and the server play', () => {
       expect(problemOf(script)).toContain('as needs an account and one step it plays');
     }
     expect(problemOf('as mika tap send')).toContain('"tap" is not a step');
+  });
+});
+
+// A tester waited for a state three tries of ten seconds bring with chained fixed waits: a wait-for gave up at 10 s.
+describe('a wait-for with its time', () => {
+  it('waits for a selector’s state as long as it says, up to 60 s — and is refused past it', () => {
+    expect(parseSteps(`wait-for '[data-state="stalled"]' 40s`, 0)).toEqual([
+      { kind: 'wait-for', target: '[data-state="stalled"]', ms: 40_000 }
+    ]);
+    expect(parseSteps('wait-for room-player', 0)).toEqual([{ kind: 'wait-for', target: 'room-player' }]);
+    expect(parseSteps('wait-for room-player 90s', 0)).toEqual({
+      problem: expect.stringContaining('wait-for takes an element and how long it waits at most, up to 60 s') as unknown
+    });
   });
 });

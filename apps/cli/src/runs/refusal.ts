@@ -61,7 +61,7 @@ export interface RefusalDetail {
   next?: string;
   /**
    * The messages it hands over, read now: a verdict or a complete held until the lead's word is read. A step of the flow,
-   * never a loop — encore-10's report counted a tester's three as "refused 3 times over".
+   * never a loop — a run's report counted a tester's three as "refused 3 times over".
    */
   messages?: string[];
   [key: string]: unknown;

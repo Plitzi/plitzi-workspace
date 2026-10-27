@@ -4,7 +4,7 @@ import { authorSpace, container } from '@plitzi/sdk-authoring';
 
 import { readsAsMember } from './visit';
 
-// encore-13's designer: page measure read a guest's room where task look read the account's — one element drawn in one
+// A run's designer: page measure read a guest's room where task look read the account's — one element drawn in one
 // and not the other. Every page command reads a page by one rule: the space's.
 describe('a page every page command reads signed in', () => {
   const authored = authorSpace({

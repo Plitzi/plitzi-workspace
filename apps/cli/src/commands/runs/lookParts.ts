@@ -34,7 +34,7 @@ export const visitorsOnly = async (
   pages: readonly string[]
 ): Promise<{ pages: string[]; as?: string; problem?: string } | undefined> => {
   const authored = await authoredSpace(dir);
-  // Members only by the router, a gate in place that shows a guest another page (`gated`: encore-11's /rooms/new), or
+  // Members only by the router, a gate in place that shows a guest another page (`gated`: a run's /rooms/new), or
   // kept for some permissions (the server withholds those): read as one of them — `--guest` reads a guest's.
   const guarded = authored ? pages.filter(each => readsAsMember(authored, each)) : [];
   if (guarded.length === 0) {
@@ -52,7 +52,7 @@ export const visitorsOnly = async (
 
 /**
  * The pages only a signed-out visitor opens — the router asked as both (`audienceAt`): a look signed in reads them as a
- * guest. encore-10's looks read /sign-in signed in, were sent home, and pictured Home.
+ * guest. A run's looks read /sign-in signed in, were sent home, and pictured Home.
  */
 export const signedOutOnly = async (dir: string, pages: readonly string[]): Promise<string[]> => {
   const authored = await authoredSpace(dir);
@@ -151,7 +151,7 @@ export interface BeforeAfter {
   /**
    * The sections whose dress the task changed — a layer added, or one taken away — in a few words: a soft light is a
    * few levels a pixel, under the picture comparison's tolerance, and read "0.1% differs" where a page's light was
-   * new .
+   * new.
    */
   dress: string[];
   sideBySide?: string;
@@ -430,7 +430,7 @@ export const toDeclared = (
 
 /**
  * With `PLITZI_TIMING=1`, each phase of a look said with how long it took, on stderr: where a look spends its time —
- * A run's looks took 50 s, and nothing said which part.
+ * a run's looks took 50 s, and nothing said which part.
  */
 export const phases = (): ((what: string) => void) => {
   let last = Date.now();

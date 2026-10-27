@@ -6,7 +6,7 @@ import type { Finding } from './types';
 import type { KeptReport } from '../reports';
 
 /**
- * Each finding held against the runs before it: new, or met again — and in which. After encore-10 (49 problems of
+ * Each finding held against the runs before it: new, or met again — and in which. After a run (49 problems of
  * Plitzi's, as many as the runs before) nobody could say whether fixing worked: a repeat is what a fix did not stop,
  * a new one what the run explored. Read off the reports the project keeps (`.plitzi/plitzi-reports/runs/`).
  */

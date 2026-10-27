@@ -85,7 +85,8 @@ describe('the tests of a developer task, with a tester in the team', () => {
       check: 'npx playwright test visual/home.spec.ts --reporter=line'
     });
     expect(checked.notices).toContainEqual(expect.stringContaining("each a developer's that did not write it"));
-    expect(checked.estimate.agents).toBe(3);
+    // Two developers work its developer tasks at once: the tester takes none of them.
+    expect(checked.estimate.agents).toBe(2);
   });
 
   it('are a module’s alone, and checked by hand, in a project with no Playwright and no start script', async () => {
@@ -107,7 +108,7 @@ describe('the tests of a developer task, with a tester in the team', () => {
     expect(checked.tasks.find(task => task.id === 't-home')?.touches).toBeUndefined();
   });
 
-  // encore-14: t-shows-coming added an action, and the test that enumerates every action — its tests card's file — failed.
+  // T-shows-coming added an action, and the test that enumerates every action — its tests card's file — failed.
   it('gives a task the test file of the project its tests card takes, to fix what it breaks there first', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await setTeamAgent(bench.root, 'test', { roles: ['tester'] });
@@ -278,6 +279,19 @@ describe('a task held behind one in review', () => {
     );
   });
 
+  // A task that fills what the held one writes — by touches — needs it: never told to take the dependency away.
+  it('says what they share when the task touches a file the one it waits for writes', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.filter(task => task.id === 't-menu' || task.id === 't-book');
+    plan.tasks[1] = { ...plan.tasks[1], dependsOn: ['t-menu'], touches: ['src/space/pages/menu.ts'] };
+    await openRun(lead(), await bench.writePlan(plan));
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+
+    const held = (await viewRun(lead(), 'es-launch')).attention.find(item => item.kind === 'held-up');
+    expect(held?.text).toContain('they share src/space/pages/menu.ts');
+  });
+
   it('tells the lead of a review past its time, never before — and how to decide it', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
@@ -290,7 +304,7 @@ describe('a task held behind one in review', () => {
 
     expect(await kinds()).not.toContain('slow-review');
     // Its first review holds its reading too (15 min): halfway, with dev-1 idle, the lead still has nothing to ask — an
-    // idle agent could not have taken it (encore-10's lead was woken at 4 min of every long review).
+    // idle agent could not have taken it (a run's lead was woken at 4 min of every long review).
     bench.advance(8 * 60_000);
     expect(await kinds()).not.toContain('slow-review');
     // Past the review's time it is no longer the designer's: said so.

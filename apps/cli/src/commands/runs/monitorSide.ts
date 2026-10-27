@@ -24,7 +24,7 @@ export interface Rect {
 
 /** What an agent is at, in the sidebar's few words. */
 /**
- * The cards an agent holds besides the one it is at — one sent back to it, waiting its turn: encore-14's dev-1 was "on
+ * The cards an agent holds besides the one it is at — one sent back to it, waiting its turn: a run's dev-1 was "on
  * t-room-coming-list", and t-shows-coming-tests, sent back to it, read as nobody's.
  */
 const HELD: readonly TaskLine['status'][] = ['in-progress', 'changes-requested', 'blocked', 'waiting'];

@@ -483,7 +483,7 @@ export const reportBrief = (report: RunReport): string => {
     '',
     ...glanceText(report),
     '',
-    // What a person decides applying it on, before the problems: encore-10's asked the lead for it by hand.
+    // What a person decides applying it on, before the problems: a run's asked the lead for it by hand.
     ...applyText(report, false),
     ...titles,
     '',

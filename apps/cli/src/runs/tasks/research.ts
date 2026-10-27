@@ -71,7 +71,7 @@ const keepStage = async (view: TaskView, file: string): Promise<void> => {
 
 /**
  * The stage a scout proposed, stacked: kept with its primer in the run's inputs, under the card — the plan its tasks are
- * amended from. Dropped with the proposal, encore-12's lead rebuilt it from the tasks and was refused, their files and
+ * amended from. Dropped with the proposal, a run's lead rebuilt it from the tasks and was refused, their files and
  * quality the run's.
  */
 const keepStacked = async (loaded: LoadedRun, view: TaskView): Promise<string> => {
@@ -131,7 +131,7 @@ export const completeResearch = async (
     });
   }
 
-  // The tasks a scout proposes come with lines a command proves: encore-12's scope came without, the dry run said so,
+  // The tasks a scout proposes come with lines a command proves: a run's scope came without, the dry run said so,
   // and the lead sent it back for them — a round of the run's costliest card.
   if (tasks !== undefined) {
     const unchecked = uncheckedOf(
@@ -224,7 +224,7 @@ const findOutAsLead = async (
 /**
  * `task check --tasks <stage.json>` at a research card: the stage it would propose seen as the lead would stack it —
  * every check, each line run once on the run's work — nothing proposed, nothing stacked. A scout's way to see its stage:
- * encore-11's and encore-13's reached for `run extend`, the lead's.
+ * A run's and a run's reached for `run extend`, the lead's.
  */
 export const seeProposal = async (ctx: RunContext, runId: string, taskId: string, file: string): Promise<Extended> => {
   const loaded = await loadRun(ctx, runId);

@@ -15,7 +15,7 @@ export interface PathGroup {
 
 /**
  * `task look <task> "/moderation --as juno --status 403" "/withheld --as juno"`: a path with the visitor and the status
- * it is read with, written as the look's own flags — a page drawn for two visitors is one look, where encore-12's
+ * it is read with, written as the look's own flags — a page drawn for two visitors is one look, where a run's
  * designer took a look a path, each saying the other was not looked at. Paths that say the same are looked at together,
  * in the order first written; one that says nothing reads as the look's flags say.
  */

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { movesBounds } from './team';
 
-// encore-14's lead raised the scouts from one to three on its own: the team's size is the person's to set (Carlos).
+// A run's lead raised the scouts from one to three on its own: the team's size is the person's to set (Carlos).
 describe('a change to the team made by an agent', () => {
   it('moves its bounds when it adds an entry, raises its most, or changes how many start', () => {
     const scouts = { count: 1 };

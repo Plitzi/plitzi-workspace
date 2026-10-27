@@ -4,7 +4,7 @@ import { taskSeeStage } from './seeStage';
 import { act, either } from './shell';
 import { taskCheck } from './work';
 import { RunRefusal } from '../../runs/refusal';
-import { caughtBy, checkBefore, checkMutant, provedBy } from '../../runs/tasks';
+import { caughtBy, checkBefore, checkMutant, noTestBefore, provedBy } from '../../runs/tasks';
 
 import type { RunCommandOptions } from './shell';
 import type { LineBeforeAfter, LineMutated, Mutation } from '../../runs/tasks';
@@ -15,15 +15,15 @@ export type CheckCommandOptions = RunCommandOptions & {
   fresh?: boolean;
   tasks?: string;
   before?: boolean;
-  /** `--mutate <file>`: the file a mutant changes, `--from` what it says and `--to` what it says instead. */
-  mutate?: string;
-  from?: string;
-  to?: string;
+  /** `--mutate <file>`: the file a mutant changes, `--from` what it says and `--to` what it says instead — each said again for a change more. */
+  mutate?: string[];
+  from?: string[];
+  to?: string[];
 };
 
 /** `plitzi task check`: your copy's checks, a research card's stage (`--tasks`), or a task beside the run before it. */
 export const taskCheckCommand = (named: string | undefined, options: CheckCommandOptions): Promise<void> => {
-  if (options.mutate !== undefined || options.from !== undefined || options.to !== undefined) {
+  if ((options.mutate ?? []).length > 0 || (options.from ?? []).length > 0 || (options.to ?? []).length > 0) {
     return taskCheckMutant(named, options);
   }
 
@@ -78,7 +78,9 @@ export const checkBeforeText = (
           ? `${chalk.yellow('·')} ${line.said} — passes before ${task} too: it proves nothing of the change`
           : proved === 'fails'
             ? `${chalk.yellow('✗')} ${line.said} — fails with ${task}${line.before.ok ? ', where it passed before it' : ', as before it'}`
-            : `${chalk.yellow('?')} ${line.said} — could not be answered ${line.after.unanswered === true ? 'with' : 'before'} ${task}: the line's or the machine's, not the work's`;
+            : noTestBefore(line)
+              ? `${chalk.yellow('?')} ${line.said} — ran no test before ${task}: what it runs did not exist there, so it proves nothing either way — break the code it holds and see it fail: plitzi task check ${task} --mutate <file> --from "…" --to "…"`
+              : `${chalk.yellow('?')} ${line.said} — could not be answered ${line.after.unanswered === true ? 'with' : 'before'} ${task}: the line's or the machine's, not the work's`;
     const printed = [
       ...(!line.before.ok && proved !== 'proves' ? [['before', line.before.output ?? []] as const] : []),
       ...(!line.after.ok ? [['with it', line.after.output ?? []] as const] : []),
@@ -102,11 +104,11 @@ const taskCheckMutant = (named: string | undefined, options: CheckCommandOptions
   act(
     options,
     async ctx => {
-      const { mutate: file, from, to } = options;
-      if (file === undefined || from === undefined || to === undefined) {
+      const { mutate: files = [], from = [], to = [] } = options;
+      if (files.length === 0 || files.length !== from.length || files.length !== to.length) {
         throw new RunRefusal(
           'invalid',
-          'A mutant is one change, said whole: --mutate <file> --from "what the code says" --to "what it says instead"'
+          'A mutant is each change said whole — --mutate <file> --from "what the code says" --to "what it says instead", the three again for each change more'
         );
       }
 
@@ -124,14 +126,23 @@ const taskCheckMutant = (named: string | undefined, options: CheckCommandOptions
 
       const { runId, taskId } = await either(ctx, options, named);
 
-      return checkMutant(ctx, runId, taskId, { file, from, to });
+      return checkMutant(
+        ctx,
+        runId,
+        taskId,
+        files.map((file, index) => ({ file, from: from[index] ?? '', to: to[index] ?? '' }))
+      );
     },
-    ({ task, mutation, lines }) => checkMutantText(task, mutation, lines),
+    ({ task, mutations, lines }) => checkMutantText(task, mutations, lines),
     ({ lines }) => (lines.some(line => caughtBy(line) === 'catches') ? 0 : 1)
   );
 
 /** Its lines as a reviewer weighs a task of tests: which hold the behaviour the mutant breaks, and which let it pass. */
-export const checkMutantText = (task: string, mutation: Mutation, lines: readonly LineMutated[]): string => {
+export const checkMutantText = (
+  task: string,
+  mutations: readonly Mutation[],
+  lines: readonly LineMutated[]
+): string => {
   const said = lines.map(line => {
     const caught = caughtBy(line);
     const head =
@@ -158,7 +169,7 @@ export const checkMutantText = (task: string, mutation: Mutation, lines: readonl
   const catching = lines.filter(line => caughtBy(line) === 'catches').length;
 
   return [
-    `${task}'s acceptance, on its copy and on a mutant of it (${mutation.file}: "${mutation.from}" → "${mutation.to}") — ${String(catching)} of ${String(lines.length)} ${lines.length === 1 ? 'line catches' : 'lines catch'} it${catching === 0 ? ': nothing holds that behaviour' : ''}:`,
+    `${task}'s acceptance, on its copy and on a mutant of it (${mutations.map(each => `${each.file}: "${each.from}" → "${each.to}"`).join('; ')}) — ${String(catching)} of ${String(lines.length)} ${lines.length === 1 ? 'line catches' : 'lines catch'} it${catching === 0 ? ': none fails on it — nothing holds that behaviour, or the code holds it in another place too (a mutant that changes nothing a visitor or a caller sees): change that place as well, --mutate again' : ''}:`,
     ...said
   ].join('\n');
 };

@@ -116,7 +116,7 @@ describe('a plan held to the rules', () => {
     );
   });
 
-  // encore-14's scout followed "one agent per file — the other names it in touches and waits" and was refused for a
+  // A run's scout followed "one agent per file — the other names it in touches and waits" and was refused for a
   // task that writes no file: it merged its tasks.
   it('takes a task that fills another’s new file by "touches", after it, as the refusal of a shared file says', async () => {
     const plan = benchPlan();
@@ -410,7 +410,15 @@ describe('a plan held to the rules', () => {
       { said: 'The hero says hello', check: '' },
       { said: 'The key is set', check: 'grep PLITZI_SECRET .env' },
       { said: 'The page answers', check: 'curl -sf "$PLITZI_URL/"' },
-      { said: 'The example lists the key', check: 'grep PLITZI_SECRET .env.example' }
+      { said: 'The example lists the key', check: 'grep PLITZI_SECRET .env.example' },
+      {
+        said: 'The named test passes',
+        check: 'node --test --test-name-pattern="juno schedules" src/functions/shows.test.ts'
+      },
+      {
+        said: 'The named test passes, alone',
+        check: 'node --test --test-isolation=none --test-name-pattern="juno schedules" src/functions/shows.test.ts'
+      }
     ];
 
     const refused = await checkPlan(bench.root, plan, await readOwnership(bench.root), teamFor(plan, 4)).catch(
@@ -420,6 +428,9 @@ describe('a plan held to the rules', () => {
 
     expect(problems).toContain('a line of its acceptance says nothing');
     expect(problems).toContain('"The hero says hello" has an empty check');
+    // A pattern matching none passes under node's process isolation: each file is one test of its own.
+    expect(problems).toContain('the check of "The named test passes" names tests by a pattern of node');
+    expect(problems).not.toContain('"The named test passes, alone"');
     expect(problems).toContain('the check of "The key is set" reads .env');
     expect(problems).toContain(
       'names the copy served ($PLITZI_URL, $PLITZI_PORT), and the project has no start script'

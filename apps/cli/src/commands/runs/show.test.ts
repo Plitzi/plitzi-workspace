@@ -22,7 +22,7 @@ describe('a task’s notes, shown', () => {
   });
 });
 
-// encore-10's show said "in-review, round 1" of a task its tester was at the second round of, as `task next` said.
+// A run's show said "in-review, round 1" of a task its tester was at the second round of, as `task next` said.
 describe('a task’s round, shown', () => {
   it('is the one being reviewed while in review, as task next says it', () => {
     expect(roundText({ status: 'in-review', round: 0 })).toBe(', round 1');

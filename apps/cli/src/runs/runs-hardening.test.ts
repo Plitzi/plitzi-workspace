@@ -529,7 +529,7 @@ describe('what a task was accepted on, at the finish', () => {
     const refused = await refusal(finishRun(lead(), runId, { apply: false, leavePending: true }));
     expect(refused.code).toBe('checks-failed');
     expect(refused.message).toContain('"t-menu" was accepted on does not hold on the run');
-    // Never a culprit it did not find: each line's output says why (encore-14's finish blamed another task for a check's own reading).
+    // Never a culprit it did not find: each line's output says why (a run's finish blamed another task for a check's own reading).
     expect(refused.message).not.toContain('broken since by another task');
     expect(refused.message).toContain('No page is late');
   });

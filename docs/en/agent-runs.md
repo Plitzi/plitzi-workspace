@@ -311,7 +311,7 @@ Every agent starts cold, and most of what it would read is the same for all of t
 Markdown beside it, 16 KB at most, kept in the run as `primer.md` and rewritten by `run amend` — opens every task's
 brief (`run open --dry-run` says one past 6k, half of `LARGE_OUTPUT`, with what it costs: every first brief carries it whole). What an
 agent read in this session of its harness is not printed again (`readInSession`, by the `brief` log entry's `session`):
-the primer, read on the task, is said in a line; the whole brief, asked again unchanged, too (encore-14's dev-1 read its
+the primer, read on the task, is said in a line; the whole brief, asked again unchanged, too (a run's dev-1 read its
 13–18k four times) — `task context --again` prints it whole; an agent started afresh is a new session and reads it all; below it, `task context` names the skill files the task's own files need (`readingFor`: the cheatsheet for the
 space, the reference of a layout, a component, data, a plugin or server code, and `runs.md`), only those the project
 has. What its files import from the rest of the project — each name's signature and doc's first sentence — is read from
@@ -363,14 +363,19 @@ script — has no look: `task look` says so and names `task check <task> --befor
 look pictured the home page the change could not touch. `task check <task> --before` (`checkBefore`) runs its
 acceptance on the run before it — the approved work without it, made afresh in its cache — and on its copy, and says of
 each line whether it proves the change (fails before, passes with it), proves nothing (passes on both) or fails with
-it: encore-13's tester copied a spec without its new line into its scratch to see it fail. A task of tests is set
-beside the run without the task it tests too — the project's version of its files — or its lines pass on both. `task
+it: a run's tester copied a spec without its new line into its scratch to see it fail. A task of tests is set
+beside the run without the task it tests too — the project's version of its files — or its lines pass on both; a task's
+own test files go into its "before" from its copy, so its new tests run on the code before it — the run's old test file
+passed the old code — and a line that ran no test there (Playwright's "No tests found") answers nothing (`noTestBefore`).
+Any line that runs tests and ran none — node's `tests 0` — fails saying so (`ranNoTest`), and a plan's line that names
+tests by node's pattern without its isolation off is refused: each file passes as one test of its own. `task
 check <task> --mutate <file> --from "…" --to "…"` (`checkMutant`) runs its acceptance on its copy and on a mutant — a
-throwaway copy with that one change to the code, found once — and says of each line whether it catches it (passes on
-the copy, fails on the mutant) or lets it pass: encore-14's tester changed the code under test with sed in a copy of
+throwaway copy with the changes to the code, each found once, said again for each change more (a behaviour held in two
+places) — and says of each line whether it catches it (passes on
+the copy, fails on the mutant) or lets it pass: a run's tester changed the code under test with sed in a copy of
 `src/` to see whether a task of tests held it. A test file of the project a developer task's tests card takes is the
 developer task's too (`touches`, `existingTests`): it fixes what its change breaks there before that card starts —
-encore-14's t-shows-coming went to review failing a test that lists every action, its file its tests card's. `task
+a run's t-shows-coming went to review failing a test that lists every action, its file its tests card's. `task
 show` says a task's brief (what was found for it) under its acceptance; a file a stage's task changed is diffed against
 the project's own, not read as added. `--within <element>` pictures one part alone; a task
 of more than three parts, or one that writes the page's root, is pictured whole (`lookClips`). A part's picture leaves out
@@ -379,7 +384,7 @@ what is pinned over it (a sticky header), and what differs between the two sides
 A page the space authors for members (`readsAsMember`: its audience members or gated, or permissions of its own) is read
 as the project's account from the start, by every page command alike; one that sends a guest away is found by one guest
 check (`readAsFor`, `page check --guest`) and read as the project's account too; a page only a signed-out visitor opens (`accessLevel: 'public'`, no signed-in twin: `signedOutOnly`) is read as a
-guest in a signed-in look — encore-10's looks of `/sign-in` were sent home and pictured Home; a page its changes are drawn
+guest in a signed-in look — a run's looks of `/sign-in` were sent home and pictured Home; a page its changes are drawn
 at counts as looked at for an address that fits it (`lookedAmong`: `/u/mika` for `/u/:username`) and for an earlier look
 of the task as it is now (`pagesLooked`, kept with each look); a page the run before answers 404 — one the task adds — is pictured alone (`newSinceBefore`); a look that took no
 picture says why, or that nothing was to picture. A look's lock (`look.lock`) whose process on this machine is gone is
@@ -805,7 +810,7 @@ work meanwhile. It is the lead's to answer, as every block is — a scout finds 
 tasks it makes.
 
 A scout measures on `plitzi run preview --copy [dir]` (`copyRunWork`): the run's approved work made afresh in its
-scratch, inside the project where its packages resolve, its state empty — encore-10's scout rebuilt it by hand from
+scratch, inside the project where its packages resolve, its state empty — a run's scout rebuilt it by hand from
 `approved.json` and the blobs. The monitor shows research where any card is: at work with its scout (or the lead), in
 review with the lead.
 
@@ -816,25 +821,29 @@ t-fights — m99 answered"); until then the board says it is answered, not askin
 **Who is still there** (`presence.ts`): a wait is said once in the log, so the log alone cannot tell a live agent from
 one its harness stopped. Each `task next`, and each turn of its wait, marks the agent present in its scratch; an
 agent between tasks with no mark for `PRESENCE_STALE_MS` shows in the monitor as `no-signal`, with the command that
-starts it again.
+starts it again. The lead works for the person too, away from the run for a while: its `run watch` marks it watching
+while it waits (`lead-watching.json`, its process; `leadWatching`), and the monitor says the lead `waiting` — watching
+the run — then, with neither a watch nor a command of its own for `LEAD_AWAY_MS` (2 min), `away`, since when and how
+much of the run waits for it; between the two it decides (`idle`).
 
 **A task that takes long** (`view.ts`, `talk.ts`, `limits.ts`): any card at work — research too — past
 the time a piece of work takes (`WORK_LIMIT_MINUTES`, 10; the scope's `SCOPE_LIMIT_MINUTES`, 30 — Carlos: past ten
 minutes something is usually wrong) is asked where it stands by the run itself, again at each limit more
 (`longTask.ts`, `askStandings.ts`: the lead's `run watch` and the keeper ask in the lead's voice, `task message
-@<agent> --standing` — encore-14's lead, woken for two long research cards, asked neither). The agent answers whole —
+@<agent> --standing` — a run's lead, woken for two long research cards, asked neither). The agent answers whole —
 `task tell --standing --fraction <0-1> --eta <minutes> --done "…" --left "…" [--blocked "…"]` (`--about <task>`
 holding none), refused when a part is missing — as the answer to that asking, its fraction kept as the task's
 progress. The standing wakes the lead (`decide`: a note only to know that is still the lead's to decide on) with what
 it may do: let it go on, tell it what to change, lift what holds it, narrow or split the task, or take it back
 (Carlos: the lead decides on the answer). None within `STANDING_GRACE_MS` (3 min) wakes the lead to decide without
 it (`long-task` `x<n>:unanswered`): the agent is at something long of its own. A message reaches an agent only with
-its next command: `task message` says when its agent has run none for minutes (`unheardOf`), and an agent's own
+its next command — any of the CLI's: a page command hands what was said to the agent by name, whole, as it ends
+(`handUnreadByName`) — `task message` says when its agent has run none for minutes (`unheardOf`), and an agent's own
 commands go through `task run "<command>"` (`ownCommand.ts`) — a Playwright suite in its turn on the machine
 (`SUITE_LOCK`, as the acceptance's), what it printed kept in a file outside the project and only what failed and its
 end said (`tail`), and what the lead said meanwhile with it.
 
-**The run's time** (`planNotices.ts`, `acceptance.ts`, `tasks/keepAlive.ts`): encore-10 ran 246 minutes, one task 148 of its
+**The run's time** (`planNotices.ts`, `acceptance.ts`, `tasks/keepAlive.ts`): one run took 246 minutes, one task 148 of its
 60, two Playwright suites at once skewing every timing. `run open --dry-run` says a task estimated past its limit (split it) and a
 line that runs a whole suite where the task's own specs would do (`sizeNotices`, `suiteNotices`). A line that runs the
 project's suite — `playwright test`, or a script that is one (`suiteScripts`) — takes a machine-wide lock
@@ -842,7 +851,7 @@ project's suite — `playwright test`, or a script that is one (`suiteScripts`) 
 (2 min) keeps how long it took (`AcceptanceResult.ms`), said at `task check` and `complete`; a failed one whose
 Playwright reused the copy served on `PORT` says its config's `webServer` never started (`reused`). While a check or a
 complete runs, the task gives a sign of life every minute (`keepAlive`): one long pass read "no signal — reassign it".
-Every task approved, `run watch` wakes the lead to close (`leadItems`): encore-10's sat open past its last approval. A
+Every task approved, `run watch` wakes the lead to close (`leadItems`): one sat open past its last approval. A
 `complete` with the lead's word unread is refused with it, read (`unreadForHolder`): a run's dev-1 completed 30 s after
 a send-back, its scope message unread, and the round answered none of it.
 
@@ -976,7 +985,7 @@ left and the run removed. Undoing the final merge is git's, or `--keep-backup`'s
 ## The report (`report.ts`, `taskReports.ts`, `findings/`)
 
 The run reports itself, so the lead keeps no list of problems by hand: a run's lead kept 65 in a journal, each found
-by reading the log. **Nothing is asked of the lead before a person applies it** (Carlos, after encore-10, whose person
+by reading the log. **Nothing is asked of the lead before a person applies it** (Carlos, after a run whose person
 asked the lead for an analysis first): the report starts with **Before you apply** (`reportApply.ts`) — the finish's dry
 run (`ready`: files, acceptance lines held), tasks approved over a known failure or with their UI approved by the lead,
 lines rewritten after approval, the notices going to the backlog, the lead's own problems — and once applied, the same
@@ -990,7 +999,7 @@ and where the next run starts.
 **Each finding held against the runs before** (`findings/history.ts`): the project keeps every run's `report.json`, and
 a finding of the same kind and subject — or, said by whoever worked, said alike — met in one of them is marked with
 where (`seenIn`), listed first, and counted (`metBefore`, the bench's "Met before"). A repeat is what a fix did not
-stop; a new one, what the run explored: encore-10's 56 were 11 met before and 45 new.
+stop; a new one, what the run explored: a run's 56 were 11 met before and 45 new.
 
 **The whole flow, rehearsed** (`runs-rehearsal.test.ts`): a run played start to finish with the default team as
 scripted agents — the scope found out and approved, two developers, the designer's look, a tester's send-back and

@@ -14,6 +14,7 @@ import { originHere } from '../runs/copyServer';
 import { otherPageAt, pageAnswered } from './shot/remote';
 import { actStep, playingSteps, stepText } from './shot/steps';
 import { openVisit, visitorBrowser, visitViewOf } from './visit';
+import { copyOf, runPaths } from '../runs/paths';
 import { PROJECT_TMP } from '../scaffold/paths';
 import { visitorsOn } from './shot/visitors';
 
@@ -594,14 +595,19 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
         return;
       }
 
-      // A `shot` step pictures each side where it stands: in tmp/shots, by the page, the step and the width.
+      // A `shot` step pictures each side where it stands: in tmp/shots, by the page, the step and the width — in a
+      // task's copy, in the run's pictures of that task as `page shot` puts them: a reviewer's steps wrote into the
+      // copy of the task it reviewed.
+      const copy = copyOf(project.root);
+      const shotsDir =
+        copy === undefined
+          ? path.join(project.root, PROJECT_TMP, 'shots')
+          : path.join(runPaths(copy.root, copy.run).shots, copy.task);
       const pictureTo =
         (side: string) =>
         (index: number, label?: string): string =>
           path.join(
-            project.root,
-            PROJECT_TMP,
-            'shots',
+            shotsDir,
             shotFile(
               route,
               `${side}step-${String(index + 1)}${label ? `-${label}` : ''}`,

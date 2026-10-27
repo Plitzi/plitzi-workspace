@@ -7,7 +7,7 @@ import type { Attention } from './view';
 /**
  * A card at work past its limit (`workLimitOf`: 10 min, the scope 30), and again at each limit more: past it something
  * is usually wrong, and the lead decides on where it stands (Carlos). The run asks its agent itself (`askStandings`, from
- * the lead's watch and the keeper): encore-14's lead was woken for two long research cards and asked neither — the lead
+ * the lead's watch and the keeper): a run's lead was woken for two long research cards and asked neither — the lead
  * is woken with the answer to decide on, or, with none in time, to decide without it.
  */
 
@@ -38,7 +38,9 @@ const DECIDE =
  */
 export const longTaskAttention = (task: LongTask, messages: readonly Message[], now: Date): Attention | undefined => {
   const limit = workLimitOf(task.id);
-  const limits = Math.floor(task.spentMinutes / limit);
+  // Counted in milliseconds, as the asking is: by the rounded minutes a card was past its limit half a minute before
+  // its asking counted, and every pass of the watch and the keeper asked again — 77 times in 30 s.
+  const limits = Math.floor((now.getTime() - Date.parse(task.takenAt)) / (limit * 60_000));
   if (limits < 1) {
     return undefined;
   }

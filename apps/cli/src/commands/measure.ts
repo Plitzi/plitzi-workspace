@@ -76,7 +76,7 @@ export interface MeasureOptions extends VisitorOptions {
   each?: boolean;
   /**
    * Read as a visitor who asked for no less motion: what an animation is. Held still by default, a page's own
-   * reduced-motion rules read "animation 1e-05s" for a needle that rides the music (encore-14).
+   * reduced-motion rules read "animation 1e-05s" for a needle that rides the music.
    */
   motion?: boolean;
   /** Every property read, its initial and inherited ones too — a reading alone leaves them out (`measureText.ts`). */
@@ -273,7 +273,7 @@ const readAt = async (
   const extra = extraAsked(options);
   const { page, answered, problem } = await openVisit(browser, where.origin, where.route, visitOf(view));
   // Another account's steps (`as dax: action room-create {…}`) set up a state the cold copy lacks before it is measured:
-  // a run's tester could not measure an empty room some other visitor made.
+  // A run's tester could not measure an empty room some other visitor made.
   const visitors = visitorsOn(root, browser, where.origin, {
     width: view.width,
     ...(view.scheme ? { scheme: view.scheme } : {}),

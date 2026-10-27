@@ -47,7 +47,7 @@ export interface TestSetup {
   unitOf?: (file: string) => string | undefined;
   /**
    * The test files the project has already: what a task's change may break — given to it as well (`touches`), so it
-   * fixes what it breaks there; encore-14's t-shows-coming went to review failing a test that enumerates every action,
+   * fixes what it breaks there; a run's t-shows-coming went to review failing a test that enumerates every action,
    * its file its tests card's.
    */
   existing?: ReadonlySet<string>;
@@ -195,7 +195,7 @@ export const withTestTasks = (
     }
 
     if (files.length === 0) {
-      // Its own test files are its own tests, written with it — said so, never "another task's" (encore-10).
+      // Its own test files are its own tests, written with it — said so, never "another task's".
       const own = named.filter(file => holderOf.get(file) === task.id);
       const others = named.filter(file => holderOf.get(file) !== task.id);
       untested.push({

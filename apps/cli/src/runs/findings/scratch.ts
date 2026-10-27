@@ -47,7 +47,7 @@ const walk = async (
   for (const entry of entries) {
     const at = path.join(under, entry.name);
     if (entry.isDirectory() && copyOf === undefined && (await isProjectCopy(path.join(dir, entry.name)))) {
-      // encore-10's "1250 scripts" were four copies of the project a scout and a tester made by hand — and not one
+      // A run's "1250 scripts" were four copies of the project a scout and a tester made by hand — and not one
       // `run preview --copy` made, which it marks.
       if (!(await exists(path.join(dir, entry.name, RUN_COPY_MARK)))) {
         found.copies.push(at);

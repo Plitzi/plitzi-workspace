@@ -84,7 +84,7 @@ const effortOf = (text: string): Effort => {
 /**
  * Whether a change sets the team's bounds — an entry added, its most agents raised, its starting ones changed: the
  * person's to say, the cost of the run. Between them the run starts and stops agents as the work asks; the lead raised
- * encore-14's scouts from one to three on its own (Carlos: "debe pedir permiso al humano siempre").
+ * a run's scouts from one to three on its own (Carlos: "debe pedir permiso al humano siempre").
  */
 export const movesBounds = (entry: { count?: number; min?: number } | undefined, options: TeamSetOptions): boolean =>
   entry === undefined

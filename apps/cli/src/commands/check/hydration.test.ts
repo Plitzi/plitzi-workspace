@@ -42,7 +42,7 @@ describe('the HTML the server sent', () => {
   });
 });
 
-// encore-12: a submit the browser held back passed the check, and no line could hold that it did not.
+// A submit the browser held back passed the check, and no line could hold that it did not.
 describe('a form the browser held back', () => {
   it('is a finding of the page, on the field it stopped at, naming noValidate', () => {
     expect(heldBackIssues(['sign-in-username — Please fill out this field.'], 390)).toEqual([

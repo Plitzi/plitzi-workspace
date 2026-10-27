@@ -126,7 +126,7 @@ describe('the server a project starts', () => {
 });
 
 describe('the scripts that look at it', () => {
-  // encore-12: a run's copies each ran specs on 8400 with reuseExistingServer — a copy's specs on another's code.
+  // A run's copies each ran specs on 8400 with reuseExistingServer — a copy's specs on another's code.
   it('start on a port of their own folder’s — from 8400, or PORT when a run’s check sets it', () => {
     const config = visualFiles(answers())['playwright.config.ts'];
     expect(config).toContain('process.env.PORT ?? OWN');
@@ -140,11 +140,11 @@ describe('the scripts that look at it', () => {
     };
     const root = mkdtempSync(path.join(os.tmpdir(), 'plitzi-suite-port-'));
     try {
-      const here = portOf(path.join(root, 'encore'));
+      const here = portOf(path.join(root, 'project'));
       expect(here).toBeGreaterThanOrEqual(8400);
       expect(here).toBeLessThan(8900);
-      expect(portOf(path.join(root, 'encore'))).toBe(here);
-      expect(portOf(path.join(root, 'encore/tmp/plitzi-runs/r1/tasks/t-home/cache/work'))).not.toBe(here);
+      expect(portOf(path.join(root, 'project'))).toBe(here);
+      expect(portOf(path.join(root, 'project/tmp/plitzi-runs/r1/tasks/t-home/cache/work'))).not.toBe(here);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

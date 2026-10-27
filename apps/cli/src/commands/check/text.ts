@@ -130,7 +130,7 @@ export const clickedText = (clicked: ClickReport | undefined): string[] => {
 };
 
 export const reportText = (report: CheckReport, asked: CheckAsk): string => {
-  const head = `${report.path} at ${String(report.width)} px${report.scheme ? `, ${report.scheme}` : ''}`;
+  const head = `${report.path} at ${String(report.width)} px${report.scheme ? `, ${report.scheme}` : ''}${report.signedInAs === undefined ? '' : `, signed in as ${report.signedInAs}`}`;
   const held = [
     ...(report.notFound ? ['  · sent with status 404: the page for an address that shows nothing'] : []),
     ...(report.retriedAfter ? [`  · looked at again after the server failed: ${report.retriedAfter.join(', ')}`] : []),
@@ -188,6 +188,10 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
   return [
     chalk.red(`✗ ${head}`),
     ...report.problems.map(problem => `  - ${problem}`),
+    // What a guest sees reads hidden to an account: said where it fails, with how to read it as one.
+    ...(report.signedInAs === undefined
+      ? []
+      : [chalk.dim(`  · read signed in as ${report.signedInAs}: what a guest sees, --guest`)]),
     ...report.consoleErrors.map(error => `  - console: ${error}`),
     ...report.failedRequests.map(request => `  - request refused: ${request}`),
     ...(empty ? [empty] : []),

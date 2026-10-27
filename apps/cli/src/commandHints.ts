@@ -9,7 +9,7 @@ const ELSEWHERE: Readonly<Partial<Record<string, string>>> = {
   'run agents': 'plitzi run status lists the agents and what each is at',
   'run view': 'plitzi run status — or plitzi run monitor, a live board',
   'task list': 'plitzi run status lists the tasks and where each stands',
-  // Folded into another, the surface cut down after encore-10: what each was is said where it went.
+  // Folded into another as the surface was cut down: what each was is said where it went.
   'task take': 'plitzi task next <task> takes that task by name, now',
   // A research card is a card: taken with task next, said with task complete, decided with task review.
   'task spike':
@@ -20,7 +20,7 @@ const ELSEWHERE: Readonly<Partial<Record<string, string>>> = {
   'run note': 'plitzi task message all "…" tells every task — the ones taken later too',
   'run bench': 'plitzi run report --bench measures every run of the project the same way',
   'skills update': 'plitzi upgrade skills --write brings the skills up to the installed packages',
-  // encore-10's scout reached for the pages of the space by name.
+  // A run's scout reached for the pages of the space by name.
   'space pages': 'plitzi space overview lists the pages, each with its files — space overview <page> one of them',
   'page text':
     'plitzi page outline <path> --within <element> says a part’s words; page check --element <id> what one holds',
@@ -47,7 +47,7 @@ const ELSEWHERE: Readonly<Partial<Record<string, string>>> = {
 
 /** An option another page command has, and what this one calls the same thing. */
 const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<string, string>>>>>> = {
-  // encore-12's scout read "a check or a look says its last answer (--fresh: anew)" as page check's, five times refused.
+  // A run's scout read "a check or a look says its last answer (--fresh: anew)" as page check's, five times refused.
   'page check': {
     '--fresh':
       'page check reads the page anew on every call — --fresh is task check’s and task look’s, which keep their last answer'
@@ -55,9 +55,10 @@ const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<stri
   'page shot': {
     '--fresh':
       'page shot pictures the page anew on every call — --fresh is task check’s and task look’s, which keep their last answer',
-    '--element': '--clip <element> pictures one element',
     // A run's design-1, twice: a page shot is the whole page unless told otherwise.
-    '--full': 'a page shot is the whole page already — --viewport pictures the first screen alone'
+    '--full': 'a page shot is the whole page already — --viewport pictures the first screen alone',
+    // Nine runs reached for it: one element pictured is a clip, said whole.
+    '--element': 'one element pictured alone is a clip: plitzi page shot <path> --clip <element>'
   },
   'page measure': { '--element': 'the elements are its arguments: plitzi page measure <path> <element…>' },
   'page play': {

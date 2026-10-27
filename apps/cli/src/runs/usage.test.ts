@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { errorLine, failureLines, runStillThere, unreadByName } from './usage';
+import { errorLine, failureLines, handUnreadByName, runStillThere } from './usage';
 
 let runDir: string;
 
@@ -18,29 +18,37 @@ afterEach(async () => {
   await fs.rm(runDir, { recursive: true, force: true });
 });
 
-const say = (id: string, to: string): Promise<void> =>
-  fs.writeFile(path.join(runDir, 'messages', `${id}.json`), JSON.stringify({ id, to, from: 'lead', text: 'x' }));
+const say = (id: string, to: string, at = '2026-10-27T18:00:00.000Z'): Promise<void> =>
+  fs.writeFile(
+    path.join(runDir, 'messages', `${id}.json`),
+    JSON.stringify({ id, to, from: 'lead', text: `x ${id}`, at })
+  );
 
-// Design-2 measured on through a review the lead had withdrawn — a page command reads no inbox, and the
-// message waited for its verdict, refused three times.
-describe('the messages a page command points its agent at', () => {
-  it('counts what was said to the agent by name and not read — not another’s, not what it read', async () => {
+// Design-2 measured on through a review the lead had withdrawn — a page command reads no inbox — and a scout heard the
+// lead fifteen times over only at its next task command, its page commands between pointing at an inbox it never read.
+describe('the messages a page command hands its agent', () => {
+  it('hands what was said to the agent by name and not read, oldest first, once — not another’s, not what it read', async () => {
     await say('m1', '@design-2');
-    await say('m2', '@design-2');
+    await say('m2', '@design-2', '2026-10-27T18:02:00.000Z');
+    await say('m5', '@design-2', '2026-10-27T18:01:00.000Z');
     await say('m3', '@dev-1');
     await say('m4', 't-blog');
     await fs.writeFile(path.join(runDir, 'agents-read', 'design-2.json'), JSON.stringify(['m1']));
 
-    expect(unreadByName(runDir, 'design-2')).toBe(1);
-    expect(unreadByName(runDir, 'dev-1')).toBe(1);
-    expect(unreadByName(runDir, 'lead')).toBe(0);
-    expect(unreadByName(runDir, 'unnamed')).toBe(0);
+    expect(handUnreadByName(runDir, 'design-2')).toEqual([
+      { id: 'm5', from: 'lead', text: 'x m5' },
+      { id: 'm2', from: 'lead', text: 'x m2' }
+    ]);
+    expect(handUnreadByName(runDir, 'design-2')).toEqual([]);
+    expect(handUnreadByName(runDir, 'dev-1').map(each => each.id)).toEqual(['m3']);
+    expect(handUnreadByName(runDir, 'lead')).toEqual([]);
+    expect(handUnreadByName(runDir, 'unnamed')).toEqual([]);
   });
 
-  it('counts none for a run with no messages folder', async () => {
+  it('hands none for a run with no messages folder', async () => {
     await fs.rm(path.join(runDir, 'messages'), { recursive: true });
 
-    expect(unreadByName(runDir, 'dev-1')).toBe(0);
+    expect(handUnreadByName(runDir, 'dev-1')).toEqual([]);
   });
 });
 

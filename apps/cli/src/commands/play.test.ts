@@ -288,7 +288,7 @@ describe('a play over several widths', () => {
   });
 });
 
-// encore-10: a designer's play at 390,1440 created two rooms; another read an action's answer with page check --state.
+// A designer's play at 390,1440 created two rooms; another read an action's answer with page check --state.
 describe('an action in a play', () => {
   const side = (ran: string[]): PlaySide => ({
     act: step => {
@@ -359,7 +359,7 @@ describe('a shot among the steps', () => {
   });
 });
 
-// encore-10's designer played /sign-in as mika: the page sent a signed-in visitor home on load, and the play started
+// A run's designer played /sign-in as mika: the page sent a signed-in visitor home on load, and the play started
 // on Home, the flash of the form it was there to measure unseen.
 describe('a page that goes on by itself as it opens', () => {
   it('says each address it showed, and for how long, before the start', () => {

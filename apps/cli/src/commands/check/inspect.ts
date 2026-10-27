@@ -75,7 +75,7 @@ const lateElements = (
 
 /**
  * A submit the browser stopped, as findings of the page: the form speaks in a bubble no style reaches, in the browser's
- * language, before the space's own words — encore-12's lines could not hold "the browser holds nothing back" while a
+ * language, before the space's own words — a run's lines could not hold "the browser holds nothing back" while a
  * check passed. Each field as the page noted it, `<id> — <what the bubble said>`.
  */
 export const heldBackIssues = (fields: readonly string[], width: number): CheckIssue[] =>
@@ -373,8 +373,8 @@ const inspectHere = async (
     }));
   const serverFailed = serverFailedIssues(devTools.serverFailures, devTools.sources, width);
   const heldBackForm = heldBackIssues(clicked?.heldBack ?? [], width);
-  // What a visitor reads cut short, by the element whose own text is cut: encore-13's "ROOFTOP SESSIO…" was said by
-  // nothing a run ran.
+  // What a visitor reads cut short, by the element whose own text is cut: a title shown as "ROOFTOP SESSIO…" was said
+  // by no check the run ran.
   const cut = [
     ...new Set(
       (await page.evaluate(textsInPage, { selector: '[data-plitzi-el]', within: false })).drawn
@@ -455,6 +455,7 @@ const inspectHere = async (
 
   return {
     path: pathname,
+    ...(signedInAs === undefined ? {} : { signedInAs }),
     width,
     // A click that could not be made, or whose flow failed, is the page not doing what it is for.
     ok:

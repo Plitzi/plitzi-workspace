@@ -22,7 +22,7 @@ export const sizeNotices = (tasks: readonly RunTask[]): string[] => {
 
 /**
  * A line that runs a whole Playwright suite with no spec named: minutes of every check, the finish's work — the task's
- * own specs are what it holds (encore-10's t-visual-specs ran the whole suite twice a line, 148 min of 60).
+ * own specs are what it holds (a run's t-visual-specs ran the whole suite twice a line, 148 min of 60).
  */
 export const suiteNotices = async (root: string, tasks: readonly RunTask[]): Promise<string[]> => {
   const names = Object.entries(await scriptsOf(root).catch(() => ({})))

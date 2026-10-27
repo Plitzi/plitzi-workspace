@@ -20,7 +20,7 @@ import {
 } from './options';
 
 describe('options', () => {
-  // encore-13: `--width "390 dark"` heard only what a width is; `page measure '/explore --as dax'` opened
+  // A run: `--width "390 dark"` heard only what a width is; `page measure '/explore --as dax'` opened
   // /explore%20--as%20dax.
   it('refuses a value or a path that holds several words, saying where each goes', () => {
     expect(() => widths('390 dark')).toThrow(

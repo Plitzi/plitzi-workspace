@@ -74,7 +74,7 @@ describe('a check that runs a suite', () => {
     expect(slowLineText({ ms: 30_000 })).toBe('');
   });
 
-  // encore-10's dev-1 read a failure as a product bug: Playwright had reused the copy served, its webServer.env unset.
+  // A run's dev-1 read a failure as a product bug: Playwright had reused the copy served, its webServer.env unset.
   it('says, when it failed, that its Playwright reused the copy served', () => {
     expect(reusedServerText({ reused: 8301 })).toContain('reused the copy served on :8301 (PORT)');
     expect(reusedServerText({})).toBe('');
@@ -82,7 +82,7 @@ describe('a check that runs a suite', () => {
 });
 
 describe('a task inside a long check', () => {
-  // encore-10's dev-1 read "no signal — reassign it" inside one whole suite pass its acceptance asked for.
+  // A run's dev-1 read "no signal — reassign it" inside one whole suite pass its acceptance asked for.
   it('gives its sign of life while the check runs', async () => {
     vi.useFakeTimers();
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-alive-'));
@@ -106,7 +106,7 @@ describe('a task inside a long check', () => {
 });
 
 describe('a run whose every task is approved', () => {
-  // encore-10's watch said "Nothing new for the lead … (10 of 10 done)" and the close waited for Carlos.
+  // A run's watch said "Nothing new for the lead … (10 of 10 done)" and the close waited for Carlos.
   it('wakes its lead to close it', async () => {
     const plan = benchPlan();
     plan.tasks = [plan.tasks[0]];

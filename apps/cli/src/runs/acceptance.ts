@@ -81,7 +81,7 @@ export const namesServedCopy = (check: string): boolean =>
 /**
  * Whether a check is run with the copy served: one that names it, or a page command — which, run in the copy, reads the
  * copy's server. Served once for every line: two lines at once, each serving the copy itself, started two servers on one
- * copy and the second died on its `state/jobs.json` (encore-12's t-room-card-idle-height, "nothing could answer it").
+ * copy and the second died on its `state/jobs.json` (a run's t-room-card-idle-height, "nothing could answer it").
  */
 export const servesCopy = (check: string): boolean =>
   namesServedCopy(check) ||
@@ -172,7 +172,7 @@ const stoppedAnswering = async (port: number): Promise<void> => {
 
 /**
  * What the copy's server the CLI starts says, as it says it: a check's pages logged a failure there that no answer
- * shows (encore-12's scout, asked for "the logs that hide real failures", could not find it).
+ * shows (a run's scout, asked for "the logs that hide real failures", could not find it).
  */
 export const serverLogOf = (cache: string): string => path.join(cache, 'acceptance-server.log');
 
@@ -329,7 +329,7 @@ const ACCEPTANCE_AT_ONCE = 2;
 
 /**
  * One Playwright suite at a time on the machine: two agents' suites at once made each other's timeouts and every
- * measure of them wrong (encore-10, a reviewer polling `ps` before its own). Held across runs and projects.
+ * measure of them wrong (a reviewer polling `ps` before its own). Held across runs and projects.
  */
 export const SUITE_LOCK = path.join(os.tmpdir(), 'plitzi-playwright-suite.lock');
 
@@ -350,6 +350,16 @@ export const runsSuite = (check: string, scripts: readonly string[]): boolean =>
       check
     )
   );
+
+/**
+ * A run of tests that ran none, said as it ends — node's `tests 0`, Playwright's and vitest's "No test(s) found": a
+ * line exiting 0 on it proves nothing, a pattern or a file that matches no test.
+ */
+export const ranNoTest = (output: string): boolean =>
+  /^\s*(?:#|ℹ)\s*tests 0\s*$|No tests? found|No test files found/m.test(output);
+
+const NO_TEST =
+  'ran no test — the file or the name pattern matches none: a line that runs tests passes only on the ones it ran';
 
 /** A line's exit that answers nothing: a page command that could not read (2), a command not found or not runnable. */
 const isUnanswered = (code: number): boolean => code === UNANSWERED_EXIT || code === 126 || code === 127;
@@ -420,14 +430,15 @@ export const checkAcceptance = async (
       checked.map((each, index) => async () => {
         onLine?.(index, checked.length, each.said, false);
         const { code, output, ms } = await run(each);
+        const passed = code === 0 && !ranNoTest(output);
 
         return {
           said: each.said,
           check: each.check,
-          ok: code === 0,
+          ok: passed,
           // Kept only past the time a check should take: what is said of it.
           ...(ms > SLOW_LINE_MS ? { ms } : {}),
-          ...(code === 0 ? {} : { output: tail(output) }),
+          ...(passed ? {} : { output: code === 0 ? [NO_TEST, ...tail(output)] : tail(output) }),
           ...(code !== 0 && served && runsSuite(each.check, scripts) ? { reused: served.port } : {})
         };
       }),
@@ -444,9 +455,13 @@ export const checkAcceptance = async (
       onLine?.(at, checked.length, result.said, true);
       const { code, output } = await run(checked[at]);
       results[at] =
-        code === 0
+        code === 0 && !ranNoTest(output)
           ? { said: result.said, check: result.check, ok: true, firstFailed: result.output ?? [] }
-          : { ...result, output: tail(output), ...(isUnanswered(code) ? { unanswered: true as const } : {}) };
+          : {
+              ...result,
+              output: code === 0 ? [NO_TEST, ...tail(output)] : tail(output),
+              ...(isUnanswered(code) ? { unanswered: true as const } : {})
+            };
     }
 
     return results;

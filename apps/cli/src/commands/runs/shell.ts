@@ -16,7 +16,7 @@ import { contextNow, spentIn } from '../../runs/harness';
 import { endsWith, HELD_WORD, heldBy } from '../../runs/held';
 import { AGENT_TOKEN, identify, issuedText, UNNAMED } from '../../runs/identity';
 import { LEAD } from '../../runs/messages';
-import { COPY_TASK_FILE, copyOf, runPaths } from '../../runs/paths';
+import { COPY_TASK_FILE, copyOf, runPaths, scratchOf } from '../../runs/paths';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { activeRuns, loadRun } from '../../runs/run';
 import { viewTask } from '../../runs/taskStore';
@@ -95,7 +95,7 @@ const whereAmI = async (): Promise<Where> => {
 
   const inCopy = copyOf(project.root);
   if (!inCopy) {
-    return { root: project.root, here };
+    return { root: scratchOf(project.root)?.root ?? project.root, here };
   }
 
   const copy = await copyTask(project.root);

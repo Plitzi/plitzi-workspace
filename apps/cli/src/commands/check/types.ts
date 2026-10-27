@@ -82,6 +82,11 @@ export interface CheckIssue {
 
 export interface CheckReport {
   path: string;
+  /**
+   * The account it was read signed in as — asked, or the project's by itself on a members' page: said with it, a guest's
+   * element read hidden there and the failure said only "hidden".
+   */
+  signedInAs?: string;
   width: number;
   /** The theme it was painted in, when one was asked for. */
   scheme?: Scheme;

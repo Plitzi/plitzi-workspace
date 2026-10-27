@@ -87,6 +87,8 @@ export interface RunPaths {
   leadRead: string;
   /** What `run watch` already woke the lead for. */
   leadSeen: string;
+  /** The lead's `run watch` while it waits — its process: the monitor tells a lead watching from one away. */
+  leadWatching: string;
   /** The pictures its reviews take (`task look`, a `page shot` in a copy): the run's, gone with it. */
   shots: string;
   /** The plan's `reference` site as it was kept (`plitzi run reference`): what `--compare` measures against — gone with the run. */
@@ -131,7 +133,7 @@ export const activeRunFile = (root: string): string => path.join(root, ACTIVE_RU
 
 /**
  * The mark `run preview --copy` leaves in the folder it makes: a copy of the project the CLI made, which the report's
- * look at an agent's scratch does not count as one made by hand (encore-11 said the scout's `run-copy` was).
+ * look at an agent's scratch does not count as one made by hand (a run said the scout's `run-copy` was).
  */
 export const RUN_COPY_MARK = '.plitzi-run-copy';
 
@@ -159,6 +161,7 @@ export const runPaths = (root: string, runId: string): RunPaths => {
     messages: path.join(dir, 'messages'),
     leadRead: path.join(dir, 'lead-read.json'),
     leadSeen: path.join(dir, 'lead-seen.json'),
+    leadWatching: path.join(dir, 'lead-watching.json'),
     shots: path.join(dir, 'shots'),
     reference: path.join(dir, 'reference'),
     scratch: path.join(dir, 'scratch'),
@@ -260,6 +263,23 @@ export const runProjectOf = (dir: string): string | undefined => {
   const at = dir.indexOf(`${path.sep}${RUNS_DIR.split('/').join(path.sep)}${path.sep}`);
 
   return at === -1 ? undefined : dir.slice(0, at);
+};
+
+/**
+ * The project a folder under a run's scratch belongs to — `run preview --copy` makes the run's work one there, a
+ * project of its own to serve: an agent's commands in it are the run's, read from the project above (a scout's were
+ * refused, its token looked for in the copy).
+ */
+export const scratchOf = (dir: string): { root: string; run: string } | undefined => {
+  const marker = `${path.sep}${RUNS_DIR.split('/').join(path.sep)}${path.sep}`;
+  const at = dir.indexOf(marker);
+  if (at === -1) {
+    return undefined;
+  }
+
+  const [run, scratch] = dir.slice(at + marker.length).split(path.sep);
+
+  return run && scratch === 'scratch' ? { root: dir.slice(0, at), run } : undefined;
 };
 
 export const copyOf = (dir: string): { root: string; run: string; task: string } | undefined => {

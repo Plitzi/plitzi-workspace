@@ -91,8 +91,9 @@ const isStep = (value: unknown): value is ActingStep => {
     case 'click':
     case 'hover':
     case 'scroll':
-    case 'wait-for':
       return typeof value.target === 'string';
+    case 'wait-for':
+      return typeof value.target === 'string' && (value.ms === undefined || typeof value.ms === 'number');
     case 'type':
       return typeof value.target === 'string' && typeof value.text === 'string';
     case 'drag':

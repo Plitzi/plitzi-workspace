@@ -14,6 +14,7 @@ import { isResearch, roleOf } from './spike';
 import { SCOUT, TESTER } from './team';
 import { isWorked } from './worked';
 
+import type { RunTask } from './model';
 import type { TaskView } from './taskStore';
 import type { StartedAgent } from './team';
 import type { Attention } from './view';
@@ -30,7 +31,7 @@ const heldIn = (view: TaskView): string | undefined =>
 
 /**
  * The kinds of advice the board gives the lead — computed, never kept: the lead settles one by its kind, with what it
- * decided (`run settle idle-team --note "…"`), and it is said no more in the run (encore-11's lead kept a run small on
+ * decided (`run settle idle-team --note "…"`), and it is said no more in the run (a run's lead kept a run small on
  * purpose and was woken twice to stack the backlog).
  */
 export const ADVICE_KINDS = ['review-waits', 'held-up', 'slow-review', 'spikes', 'idle-team'] as const;
@@ -48,7 +49,7 @@ export const bottlenecks = (
   backlog: readonly string[] = [],
   /**
    * The whole team, running or not: whether it has testers and scouts — `started` holds only those running, and a scout
-   * stopped between two pieces read as none (encore-10's spike told the lead "the team has no scout").
+   * stopped between two pieces read as none (a run's spike told the lead "the team has no scout").
    */
   team: readonly StartedAgent[] = started
 ): Attention[] => {
@@ -86,7 +87,7 @@ export const bottlenecks = (
 
   // A task that could start, held behind one going round its reviews while agents of its role sit free: the lead's to
   // unblock — a run's t-motion waited three rounds of t-boxer's UI review it needed nothing from, two developers idle.
-  // At a review of its own or a spike — never free (encore-10's scout read "nothing to take" at its spike).
+  // At a review of its own or a spike — never free (a run's scout read "nothing to take" at its spike).
   const reviewing = new Set(views.flatMap(busyIn));
   const free = (role: string): string[] =>
     started
@@ -102,14 +103,18 @@ export const bottlenecks = (
     // Free with a ready task of their role to take, they are not held: only free with nothing to take are they.
     const idle = views.some(each => each.state.status === 'ready' && roleOf(each.task) === role) ? [] : free(role);
     const waitsOn = view.task.dependsOn.filter(id => !approvedIds.has(id));
-    // The tests of what it waits for wait for it by what they are: no dependency to take away (encore-10's watch
+    // The tests of what it waits for wait for it by what they are: no dependency to take away (a run's watch
     // told the lead to, for a task of tests).
     const tests = held.some(other => view.task.testsOf?.includes(other.task.id) === true);
     if (held.length === 0 || held.length !== waitsOn.length || idle.length === 0 || tests) {
       continue;
     }
 
-    const shared = view.task.files.filter(file => held.some(other => other.task.files.includes(file)));
+    // What a task touches beside its files is shared too: one that fills a module the held task makes needs it made.
+    const reaches = (task: RunTask): string[] => [...task.files, ...(task.touches ?? [])];
+    const shared = [...new Set(reaches(view.task))].filter(file =>
+      held.some(other => reaches(other.task).includes(file))
+    );
     found.push({
       kind: 'held-up',
       task: view.task.id,
@@ -132,7 +137,7 @@ export const bottlenecks = (
         : undefined;
     const held = taken ? now.getTime() - Date.parse(taken.at) : 0;
     const time = stepTimeOf(review);
-    // Past the review's time, and only then: halfway, with others free, woke encore-10's lead at 4 min of every long
+    // Past the review's time, and only then: halfway, with others free, woke a run's lead at 4 min of every long
     // review — free agents that could not have taken it, nothing else to give them.
     if (!taken || held < time) {
       continue;
@@ -202,7 +207,7 @@ export const idleTeam = (
   };
   // An agent none of whose role's cards is left has done its part: a run's lead was woken eight times at the end, for
   // developers with nothing of theirs left and a tester's spec it could not split for them. Research in review is the
-  // lead's to decide, no card of its scout's: encore-12's scout was said idle beside its scope, the backlog to stack for it.
+  // lead's to decide, no card of its scout's: a run's scout was said idle beside its scope, the backlog to stack for it.
   const leftFor = (roles: readonly string[]): boolean =>
     views.some(
       view =>

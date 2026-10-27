@@ -1,5 +1,6 @@
 import { commandDoing, doingOf, statusOf } from './agentDoing';
 import { feedOf, glimpse, SHORT, textOf } from './feedLine';
+import { leadWatching } from './leadWatch';
 import { LEAD, messagesOf, openQuestions } from './messages';
 import { stoppedAgents } from './onDemand';
 import { runPaths } from './paths';
@@ -28,6 +29,7 @@ const NOTE_WITHIN_MS = 5000;
 export type AgentStatus =
   | 'working'
   | 'reviewing'
+  | 'away'
   | 'blocked'
   | 'asking'
   | 'waiting'
@@ -211,6 +213,11 @@ const lastDone = (entry: Record<string, unknown>): string | undefined => {
   }
 };
 
+/** How long a lead neither watching the run nor running a command of it is still deciding, not away from it. */
+export const LEAD_AWAY_MS = 2 * 60_000;
+
+const clockOf = (at: string): string => at.slice(11, 16);
+
 /** How long an agent's last command says what it is at: older, it says nothing of now. */
 const LATELY_MS = 10 * 60_000;
 
@@ -304,7 +311,7 @@ const agentsOf = async (
     }
 
     // Only one the run starts again is restarting: of the team's base, or one on demand the run asks for now. One on
-    // demand with nothing for it rests — encore-10's dev-2 read "restarting" two hours, nothing left for it.
+    // demand with nothing for it rests — a run's dev-2 read "restarting" two hours, nothing left for it.
     const asked = view.attention.some(item => item.kind === 'agents-needed' && item.agent === agent);
     if (teamMember(agent)?.onDemand === true && !asked) {
       return undefined;
@@ -338,6 +345,7 @@ const agentsOf = async (
       : 'every task approved — next: plitzi run finish, whose dry run checks the whole result';
   const loadedRun = await loadRun(ctx, view.runId, { anyMachine: true, anyVersion: true });
   const unanswered = await openQuestions(loadedRun);
+  const watching = await leadWatching(loadedRun.paths.leadWatching);
   const leadLine = (): AgentLine => {
     const base = {
       agent: LEAD,
@@ -368,13 +376,30 @@ const agentsOf = async (
     }
 
     const proposed = view.tasks.filter(task => task.proposed !== undefined);
+    // Neither watching the run nor running a command of it for a while: the lead is at something else — the person's,
+    // most often — and what needs it waits; the row said "idle" over a lead nobody could reach.
+    const heard = Math.max(
+      Date.parse(loadedRun.record.openedAt),
+      ...usage.filter(line => line.by === LEAD).map(line => Date.parse(line.at) + line.ms)
+    );
+    const waitsOnLead = view.attention.filter(item => item.who === 'lead').length;
+    const away = !at && watching === undefined && now - heard > LEAD_AWAY_MS;
 
     // As every agent's, its state is what it holds on the board — a step of a review; research with no scout, above —
-    // never guessed from what it did lately: encore-13's monitor said the lead was "working" for three minutes after
+    // never guessed from what it did lately: a run's monitor said the lead was "working" for three minutes after
     // it opened the run, its scout at the scope.
+    if (away) {
+      return {
+        ...base,
+        status: 'away' as const,
+        doing: `away from the run since ${clockOf(new Date(heard).toISOString())} UTC — at something else, the person's or its own${waitsOnLead > 0 ? `: ${String(waitsOnLead)} thing${waitsOnLead === 1 ? '' : 's'} of the run wait${waitsOnLead === 1 ? 's' : ''} for it` : ''}`,
+        signalAt: new Date(heard).toISOString()
+      };
+    }
+
     return {
       ...base,
-      status: at ? ('reviewing' as const) : ('idle' as const),
+      status: at ? ('reviewing' as const) : watching ? ('waiting' as const) : ('idle' as const),
       doing: at
         ? `reviews ${at}`
         : // What waits on the lead is said on its row first, not "idle" over an agent kept waiting.
@@ -382,7 +407,9 @@ const agentsOf = async (
           ? `${proposed.map(task => task.id).join(', ')}: tasks proposed, to decide with the person`
           : unanswered.length > 0
             ? `${String(unanswered.length)} question${unanswered.length === 1 ? '' : 's'} wait${unanswered.length === 1 ? 's' : ''} for you: ${unanswered.map(each => `${each.from}'s ${each.id}`).join(', ')}`
-            : `plans, answers, decides what is escalated${lastLine ? ` · last: ${lastLine}` : ''}${lately(LEAD)}`,
+            : watching
+              ? `watches the run since ${clockOf(watching.at)} UTC — woken the moment something needs it${lastLine ? ` · last: ${lastLine}` : ''}`
+              : `plans, answers, decides what is escalated${lastLine ? ` · last: ${lastLine}` : ''}${lately(LEAD)}`,
       ...(at ? { task: at } : {}),
       ...(typeof last?.at === 'string' ? { signalAt: last.at } : {})
     };

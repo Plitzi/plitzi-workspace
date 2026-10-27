@@ -213,7 +213,7 @@ const seenStage = async (ctx: RunContext, runId: string, file: string): Promise<
 /**
  * A stage seen before it is stacked — every check `run extend` makes, nothing written, each line run once with `lines`.
  * Whoever writes one sees it: the lead (`run extend --dry-run`, `run open --dry-run` with a run open) and a scout at
- * its research card (`task check --tasks`, and its `complete`), which never stacks one — encore-11's and encore-13's
+ * its research card (`task check --tasks`, and its `complete`), which never stacks one — a run's and a run's
  * scouts reached for `run extend`, the lead's, to see their own stage.
  */
 export const seeStage = async (

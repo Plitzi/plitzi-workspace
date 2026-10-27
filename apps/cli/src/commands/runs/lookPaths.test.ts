@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { pathGroups } from './lookPaths';
 
-// encore-12's designer looked at /moderation as a non-moderator (403) and /withheld as juno in two looks, each saying
+// A run's designer looked at /moderation as a non-moderator (403) and /withheld as juno in two looks, each saying
 // the other path was not looked at.
 describe('the paths of one look', () => {
   it('each say who reads it and what it is sent with, looked at together when they say the same', () => {

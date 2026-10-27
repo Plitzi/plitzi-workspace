@@ -69,7 +69,7 @@ describe('finding what a picture is aimed at', () => {
     expect(awaited('section#home-sponsors')).toBe('section#home-sponsors, section[data-plitzi-el="home-sponsors"]');
   });
 
-  // encore-10's designer could not read the card a step added to a list: a bare name read the first row's.
+  // A run's designer could not read the card a step added to a list: a bare name read the first row's.
   it('finds a list row’s element by its place, or the last', async () => {
     expect(await targetOn(having('[data-plitzi-el="room-card-name"] >> nth=-1'), 'room-card-name:last')).toEqual({
       selector: '[data-plitzi-el="room-card-name"] >> nth=-1',

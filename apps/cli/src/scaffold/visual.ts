@@ -15,7 +15,7 @@ import type { CreateAnswers, ProjectFiles } from './types';
  * Where the ports the suite's own server takes start: none of the project's other scripts' — \`start\` (8080, Vite's
  * 5173), the run's preview (8300, a task's 8301), the inspector (9229) — so \`visual\` never reuses, nor lands on, a
  * server a person or a run is using. Each folder takes one of the \`TEST_PORTS\` after it: a run's copies, each with its
- * suite, on one port reused one another's server — a copy's specs passed on another copy's code (encore-12).
+ * suite, on one port reused one another's server — a copy's specs passed on another copy's code.
  */
 const TEST_PORT: Record<CreateAnswers['mode'], number> = { server: 8400, client: 5273 };
 const TEST_PORTS = 500;

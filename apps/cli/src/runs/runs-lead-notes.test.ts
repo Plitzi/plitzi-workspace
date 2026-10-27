@@ -30,7 +30,7 @@ describe('a note to the lead, only to know', () => {
     await tellLead(home.ctx, 'es-launch', 't-home', note);
 
     const woke = await waitForLead(lead(), 'es-launch', { timeoutMs: 20, everyMs: 10 });
-    // Brought as the watch ends, never waking the lead: encore-12's lead was woken three times for notes.
+    // Brought as the watch ends, never waking the lead: a run's lead was woken three times for notes.
     expect(woke.timedOut).toBe(true);
     expect(woke.fresh.map(item => item.text)).toContainEqual(expect.stringContaining(note.trim()));
     expect((await viewRun(lead(), 'es-launch')).attention.some(item => item.kind === 'message')).toBe(false);

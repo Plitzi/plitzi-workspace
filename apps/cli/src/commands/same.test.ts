@@ -5,7 +5,7 @@ import { differenceText, drawing, firstDifference } from './same';
 
 // A look pictured nine pages a shared file reached, for two tokens added — what draws the same is not.
 describe('page same', () => {
-  // encore-13's look said an element moved with two lines of twenty fields joined by bars, the one that differed to find.
+  // A run's look said an element moved with two lines of twenty fields joined by bars, the one that differed to find.
   it('says the first element two drawings differ by, field by field — or one drawn on one side alone, or none', () => {
     const div = { tag: 'div', name: 'home', box: '0,0,100x40' };
     const list = (height: number) => ({

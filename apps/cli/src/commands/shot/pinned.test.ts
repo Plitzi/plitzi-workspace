@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { HIDDEN_FOR_SHOT, hidePinned, pinnedScroll, showPinned } from './capture';
 
 // A part clipped under a sticky site header was pictured with the header over its first rows — and, hidden by its
-// visibility, a header whose children keep `visibility: visible` of their own still drew them (encore-13's looks at 390).
+// visibility, a header whose children keep `visibility: visible` of their own still drew them (a run's looks at 390).
 describe('what is pinned over an element pictured', () => {
   it('is hidden for the picture, all it holds too — never the element, what holds it or what it holds — and shown again as it was', () => {
     document.body.innerHTML = `
