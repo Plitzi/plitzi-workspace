@@ -50,6 +50,23 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   });
 
   // `type [aria-label="Precio hasta"] 650` was cut at its first space into a selector that is none.
+  // encore-13: `scroll <row> 200` reached Playwright as one selector and came back as its parse error.
+  it('reads a scroll by whole pixels as the element’s own content moved, and refuses a number after any other', () => {
+    expect(parseSteps('scroll explore-genres 200; scroll "[data-plitzi-el=feed] ul" 0 -80', 500)).toEqual([
+      { kind: 'scroll', target: 'explore-genres', by: { dx: 200, dy: 0 } },
+      { kind: 'scroll', target: '[data-plitzi-el=feed] ul', by: { dx: 0, dy: -80 } }
+    ]);
+    expect(parseSteps('click .panel button', 500)).toEqual([{ kind: 'click', target: '.panel button' }]);
+    expect(parseSteps('click explore-genres 200', 500)).toEqual({
+      problem:
+        'step 1 ("click explore-genres 200"): click takes an element alone — 200 is no part of one (a selector with spaces goes in quotes)'
+    });
+    expect(parseSteps('scroll explore-genres 0', 500)).toEqual({
+      problem:
+        'step 1 ("scroll explore-genres 0"): scroll takes an element and how far its content goes, in whole pixels — scroll <element> <dx> [dy]: scroll genres 200'
+    });
+  });
+
   it('reads a selector with a space inside its brackets or quotes whole, unquoted', () => {
     expect(parseSteps('type [aria-label="Precio hasta"] 650; click button:has-text("Ver más")', 500)).toEqual([
       { kind: 'type', target: '[aria-label="Precio hasta"]', text: '650' },

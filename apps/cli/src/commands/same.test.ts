@@ -1,25 +1,42 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 
-import { drawing, firstDifference } from './same';
+import { differenceText, drawing, firstDifference } from './same';
 
 // A look pictured nine pages a shared file reached, for two tokens added — what draws the same is not.
 describe('page same', () => {
-  it('says the first element two drawings differ by, or none', () => {
-    expect(firstDifference(['div | a', 'p | b'], ['div | a', 'p | b'])).toBeUndefined();
-    expect(firstDifference(['div | a', 'p | b'], ['div | a', 'p | c'])).toEqual({ here: 'p | b', there: 'p | c' });
-    expect(firstDifference(['div | a'], ['div | a', 'p | b'])).toEqual({ here: '(nothing)', there: 'p | b' });
+  // encore-13's look said an element moved with two lines of twenty fields joined by bars, the one that differed to find.
+  it('says the first element two drawings differ by, field by field — or one drawn on one side alone, or none', () => {
+    const div = { tag: 'div', name: 'home', box: '0,0,100x40' };
+    const list = (height: number) => ({
+      tag: 'li',
+      name: 'container-57',
+      box: `0,0,249x${String(height)}`,
+      color: 'red'
+    });
+    expect(firstDifference([div, list(314)], [div, list(314)])).toBeUndefined();
+
+    const moved = firstDifference([div, list(331)], [div, list(314)]);
+    expect(moved).toEqual({
+      element: 'container-57',
+      changed: [{ field: 'box', here: '0,0,249x331', there: '0,0,249x314' }]
+    });
+    expect(moved && differenceText(moved)).toBe('container-57: box 0,0,249x314 → 0,0,249x331');
+
+    const gone = firstDifference([div], [div, list(314)]);
+    expect(gone).toEqual({ element: 'container-57', changed: [], only: 'there' });
+    expect(gone && differenceText(gone)).toBe('container-57 was drawn before, and is not here');
   });
 
   // The CLI's sanity run: a show's start a minute apart on the two servers read as the page "moved".
   it('says when the element differs by its words alone, drawn the same', () => {
-    const at = (time: string) => `time |  | Today ${time} UTC | 0,0,157x20 | rgb(255, 180, 60)`;
+    const at = (time: string, box = '0,0,157x20') => ({ tag: 'time', name: '', words: `Today ${time} UTC`, box });
     expect(firstDifference([at('02:52')], [at('02:53')])).toEqual({
-      here: at('02:52'),
-      there: at('02:53'),
+      element: 'time',
+      changed: [{ field: 'words', here: 'Today 02:52 UTC', there: 'Today 02:53 UTC' }],
       wordsOnly: true
     });
-    expect(firstDifference([at('02:52')], [at('02:53').replace('157x20', '160x20')])?.wordsOnly).toBeUndefined();
+    expect(firstDifference([at('02:52')], [at('02:53', '0,0,160x20')])?.wordsOnly).toBeUndefined();
   });
 
   it('reads each element’s name and words, and what its ::before draws', () => {
@@ -29,7 +46,7 @@ describe('page same', () => {
     const lines = drawing();
 
     expect(lines).toHaveLength(2);
-    expect(lines[1]).toMatch(/^span \| vs \| VS \|/);
+    expect(lines[1]).toMatchObject({ tag: 'span', name: 'vs', words: 'VS' });
   });
 
   // shop-shell: /overlay writes the URL it was served on — another port on each server — and "moved" on every look.
@@ -56,6 +73,10 @@ describe('page same', () => {
     expect(firstDifference(drawing(['home-faq']), before)).toBeUndefined();
 
     document.body.innerHTML = page('Preguntas y respuestas', 'rgb(9, 9, 9)');
-    expect(firstDifference(drawing(['home-faq']), before)?.here).toMatch(/^footer \| site-footer \| © \|/);
+    // Its colour, and its border's, which follows it.
+    expect(firstDifference(drawing(['home-faq']), before)).toMatchObject({
+      element: 'site-footer',
+      changed: expect.arrayContaining([{ field: 'color', here: 'rgb(9, 9, 9)', there: 'rgb(1, 2, 3)' }]) as unknown
+    });
   });
 });

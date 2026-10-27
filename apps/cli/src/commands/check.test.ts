@@ -457,16 +457,27 @@ describe('an expected element that is not on the page', () => {
 
 // A lead's "the list holds Juno" read the first row's Nova, and "a guest sees no band" could not be written: !id was an id.
 describe('an expectation held to every copy of its element', () => {
-  const rows = { present: 3, shown: ['Nova', 'Juno'] };
+  const rows = { present: 3, shown: ['Nova', 'Juno'], cut: [] };
 
   it('is met by any row that shows the text, and missed with what the rows show', () => {
     expect(expectationMissed({ element: 'follow-list-name', text: 'juno' }, rows, [])).toBeUndefined();
     expect(expectationMissed({ element: 'follow-list-name', text: 'Vega' }, rows, [])).toBe(
       `--expect follow-list-name~Vega: none of follow-list-name's 2 copies shows it — "Nova", "Juno"`
     );
-    expect(expectationMissed({ element: 'band', text: '' }, { present: 1, shown: [] }, [])).toBe(
+    expect(expectationMissed({ element: 'band', text: '' }, { present: 1, shown: [], cut: [] }, [])).toBe(
       '--expect band: band is on the page, hidden'
     );
+  });
+
+  // encore-13's show plate read "ROOFTOP SESSIO…" and its line held: the words were in the page, cut by an ellipsis.
+  it('is met only by a copy that shows the text whole — one its box cuts reads part of it', () => {
+    const plates = { present: 2, shown: ['Rooftop Sessions', 'Night Drive'], cut: [0] };
+    expect(expectationMissed({ element: 'show-plate-room', text: 'Rooftop Sessions' }, plates, [])).toBe(
+      '--expect show-plate-room~Rooftop Sessions: show-plate-room holds it, and a visitor reads it cut short — its text runs past a box that cuts it (an ellipsis, a clipped overflow): give it room, or let it wrap'
+    );
+    expect(expectationMissed({ element: 'show-plate-room', text: 'Night Drive' }, plates, [])).toBeUndefined();
+    // Shown at all is shown: a cut copy is there to see.
+    expect(expectationMissed({ element: 'show-plate-room', text: '' }, plates, [])).toBeUndefined();
   });
 
   it('reads !<id> as none shown, and !<id>~<text> as none showing it', () => {
@@ -478,10 +489,14 @@ describe('an expectation held to every copy of its element', () => {
     });
     expect(readExpectation('!a b')).toBeUndefined();
     expect(
-      expectationMissed({ element: 'home-following', text: '', absent: true }, { present: 1, shown: [] }, [])
+      expectationMissed({ element: 'home-following', text: '', absent: true }, { present: 1, shown: [], cut: [] }, [])
     ).toBeUndefined();
     expect(
-      expectationMissed({ element: 'home-following', text: '', absent: true }, { present: 1, shown: ['Ana'] }, [])
+      expectationMissed(
+        { element: 'home-following', text: '', absent: true },
+        { present: 1, shown: ['Ana'], cut: [] },
+        []
+      )
     ).toBe('--expect !home-following: home-following is shown');
     expect(expectationMissed({ element: 'follow-list-name', text: 'Juno', absent: true }, rows, [])).toBe(
       '--expect !follow-list-name~Juno: follow-list-name shows "Juno" (1 of its 2 copies)'

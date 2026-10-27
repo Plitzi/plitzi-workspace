@@ -30,8 +30,7 @@ describe('an element asked for, in a page’s report', () => {
         'fight-card-corner-name': {
           read: { box: { width: 120 } },
           styles: {
-            unread:
-              "fight-card-corner-name is no element of the space as authored — a component's part is named by its instance's id"
+            unread: 'fight-card-corner-name is no element of the space as authored, nor a part of any of its components'
           }
         },
         'fight-card-name': { read: null, styles: { unread: 'fight-card-name is not on the page at this width' } }
@@ -45,6 +44,25 @@ describe('an element asked for, in a page’s report', () => {
     );
     expect(text).toContain("element fight-card-name: the page's dev tools read no element by that name");
     expect(text).not.toContain('is not on the page: its styles');
+  });
+});
+
+// `--element room-card-tags` was answered "no element"; read now, it says whose part it is and which copy was read.
+describe('a component’s part asked for', () => {
+  it('says whose part it is, and that the first of its copies was read', () => {
+    const text = reportText(
+      report({
+        'room-card-tags': {
+          read: { box: { width: 200 } },
+          styles: { contested: [], inert: [], wornBy: {}, copies: 6, partOf: 'room-card' }
+        }
+      }),
+      { state: false, elements: ['room-card-tags'] }
+    );
+
+    expect(text).toContain(
+      'element room-card-tags: a part of the component room-card, read on the first of the 6 copies the page draws'
+    );
   });
 });
 
@@ -94,5 +112,15 @@ describe('the sources a page holds, with --state', () => {
     expect(text).toContain(
       `· source channel_siteInbox: { connected: true, unread: 3, me: {1}, rows: [2], note: "${'x'.repeat(28)}… }`
     );
+  });
+});
+
+// encore-13's "ROOFTOP SESSIO…" passed every check a run made: a text cut short is said, as it is not a problem itself.
+describe('a text a box cuts, in a page’s report', () => {
+  it('is said with the way to hold one whole — never as a problem', () => {
+    const text = reportText({ ...report({}), cut: ['show-plate-room'] }, { state: false, elements: [] });
+    expect(text).toContain('cut short at this width, by a box that cuts its text');
+    expect(text).toContain('show-plate-room');
+    expect(text).toContain('--expect "<id>~<text>" holds one whole');
   });
 });

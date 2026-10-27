@@ -31,23 +31,38 @@ export interface SameOptions extends VisitorOptions {
 export interface Sameness {
   path: string;
   same: boolean;
-  /** The first line that differs, here → there: what tells the two apart — its words alone, its box and style the same. */
+  /** The first element that differs, here and there: what tells the two apart, field by field. */
   first?: Difference;
   problem?: string;
 }
 
-/** Where a drawing's line says an element's words: its third field. */
-const WORDS_AT = 2;
+/** One element as a drawing reads it: its tag, its name, its words, its box and what a reader sees of its style. */
+export type DrawnElement = Record<string, string>;
 
-/** A line two drawings differ by, here → there — `wordsOnly` when nothing but its words differ. */
+/**
+ * The first element two drawings differ by — by its name (its tag when it has none) — and each field it differs in,
+ * here and there; or one drawn on one side alone. Read field by field: a look said an element "moved" by printing two
+ * lines of twenty fields joined by bars, the one that differed left to find (encore-13's tester).
+ */
 export interface Difference {
-  here: string;
-  there: string;
+  element: string;
+  changed: { field: string; here: string; there: string }[];
+  /** Drawn on one side alone: the other has no element where it stands. */
+  only?: 'here' | 'there';
+  /** Nothing but its words differ: what the page says — a time, a count — not how it is drawn. */
   wordsOnly?: true;
 }
 
-/** Every element drawn, a line each: its tag, its name, its words, its box, and what a reader sees of its style. */
-export const drawing = (except: readonly string[] = []): string[] => {
+/** A difference in words, before → now: what a person and an agent read of it. */
+export const differenceText = ({ element, changed, only }: Difference): string =>
+  only === 'here'
+    ? `${element} is drawn here, and not before`
+    : only === 'there'
+      ? `${element} was drawn before, and is not here`
+      : `${element}: ${changed.map(each => `${each.field} ${each.there || '—'} → ${each.here || '—'}`).join('; ')}`;
+
+/** Every element drawn, a record each: its tag, its name, its words, its box, and what a reader sees of its style. */
+export const drawing = (except: readonly string[] = []): Record<string, string>[] => {
   const left = except.map(id => `[data-plitzi-el="${id}"]`);
   const inPart = (node: Element): boolean => left.some(selector => node.closest(selector) !== null);
   const holdsPart = (node: Element): boolean => left.some(selector => node.querySelector(selector) !== null);
@@ -81,34 +96,37 @@ export const drawing = (except: readonly string[] = []): string[] => {
               .slice(0, 80)
           : '';
 
-      return [
-        node.tagName.toLowerCase(),
-        node.getAttribute('data-plitzi-el') ?? '',
+      // What it draws on ::before and ::after: a fill, a mark — a run's VS medal paints on one.
+      const pseudo = (which: string): string => {
+        const drawn = getComputedStyle(node, which);
+
+        return drawn.content === 'none' || drawn.content === 'normal'
+          ? ''
+          : [drawn.content, drawn.backgroundColor, drawn.backgroundImage.slice(0, 200), drawn.opacity].join(' ');
+      };
+
+      return {
+        tag: node.tagName.toLowerCase(),
+        name: node.getAttribute('data-plitzi-el') ?? '',
         words,
         // What holds a part left out grows with it: its box is not read, its style still is.
-        holdsPart(node) ? '' : placed(node, box),
-        style.color,
-        style.backgroundColor,
-        style.backgroundImage.replace(/url\([^)]*\)/g, 'url()').slice(0, 200),
-        style.fontFamily,
-        style.fontSize,
-        style.fontWeight,
-        style.letterSpacing,
-        style.borderTopWidth,
-        style.borderTopColor,
-        style.borderRadius,
-        style.boxShadow.slice(0, 120),
-        style.opacity,
-        style.transform,
-        // What it draws on ::before and ::after: a fill, a mark — a run's VS medal paints on one.
-        ...['::before', '::after'].map(pseudo => {
-          const drawn = getComputedStyle(node, pseudo);
-
-          return drawn.content === 'none' || drawn.content === 'normal'
-            ? ''
-            : [drawn.content, drawn.backgroundColor, drawn.backgroundImage.slice(0, 200), drawn.opacity].join(' ');
-        })
-      ].join(' | ');
+        box: holdsPart(node) ? '' : placed(node, box),
+        color: style.color,
+        'background-color': style.backgroundColor,
+        'background-image': style.backgroundImage.replace(/url\([^)]*\)/g, 'url()').slice(0, 200),
+        'font-family': style.fontFamily,
+        'font-size': style.fontSize,
+        'font-weight': style.fontWeight,
+        'letter-spacing': style.letterSpacing,
+        'border-top-width': style.borderTopWidth,
+        'border-top-color': style.borderTopColor,
+        'border-radius': style.borderRadius,
+        'box-shadow': style.boxShadow.slice(0, 120),
+        opacity: style.opacity,
+        transform: style.transform,
+        '::before': pseudo('::before'),
+        '::after': pseudo('::after')
+      };
     });
 };
 
@@ -118,7 +136,7 @@ const readOn = async (
   origin: string,
   path: string,
   { except, ...view }: VisitView & Visitor & { except: readonly string[] }
-): Promise<string[]> => {
+): Promise<DrawnElement[]> => {
   const { page, answered, problem } = await openVisit(browser, origin, path, view);
   try {
     if (!answered) {
@@ -131,24 +149,35 @@ const readOn = async (
   }
 };
 
-/** The first line two drawings differ by — one longer than the other differs where the shorter ends — or none. */
-export const firstDifference = (here: readonly string[], there: readonly string[]): Difference | undefined => {
-  const at = here.findIndex((line, index) => line !== there[index]);
+/** The first element two drawings differ by — one longer than the other differs where the shorter ends — or none. */
+export const firstDifference = (
+  here: readonly DrawnElement[],
+  there: readonly DrawnElement[]
+): Difference | undefined => {
+  const same = (a: DrawnElement | undefined, b: DrawnElement | undefined): boolean =>
+    JSON.stringify(a) === JSON.stringify(b);
+  const at = here.findIndex((element, index) => !same(element, there[index]));
   if (at === -1 && here.length === there.length) {
     return undefined;
   }
 
   const index = at === -1 ? Math.min(here.length, there.length) : at;
   const [mine, theirs] = [here.at(index), there.at(index)];
-  // The same element drawn the same, its words apart: what the page says — a time, a count — not how it is drawn.
-  const fields = (line: string): string[] => line.split(' | ').filter((_, field) => field !== WORDS_AT);
-  const wordsOnly =
-    mine !== undefined && theirs !== undefined && fields(mine).join(' | ') === fields(theirs).join(' | ');
+  const nameOf = (element: DrawnElement): string => element.name || element.tag || 'an element';
+  if (mine === undefined || theirs === undefined) {
+    const drawn = mine ?? theirs;
+
+    return { element: drawn ? nameOf(drawn) : 'an element', changed: [], only: mine ? 'here' : 'there' };
+  }
+
+  const changed = [...new Set([...Object.keys(mine), ...Object.keys(theirs)])]
+    .filter(field => mine[field] !== theirs[field])
+    .map(field => ({ field, here: mine[field] ?? '', there: theirs[field] ?? '' }));
 
   return {
-    here: mine ?? '(nothing)',
-    there: theirs ?? '(nothing)',
-    ...(wordsOnly ? { wordsOnly: true as const } : {})
+    element: nameOf(mine),
+    changed,
+    ...(changed.every(each => each.field === 'words') ? { wordsOnly: true as const } : {})
   };
 };
 
@@ -213,7 +242,7 @@ export const pageSame = async (paths: string[], options: SameOptions): Promise<v
                 ? chalk.green(`= ${each.path}: draws the same on both`)
                 : each.problem
                   ? chalk.yellow(`? ${each.path}: not told — ${each.problem}`)
-                  : `≠ ${each.path}: ${each.first?.here ?? ''}\n    there: ${each.first?.there ?? ''}${each.first?.wordsOnly ? '\n    its words alone differ — the same element drawn the same: what the page says (a time, a count) differs' : ''}`
+                  : `≠ ${each.path}: ${each.first ? differenceText(each.first) : ''}${each.first?.wordsOnly ? '\n    its words alone differ — the same element drawn the same: what the page says (a time, a count) differs' : ''}`
             )
             .join('\n')
     );

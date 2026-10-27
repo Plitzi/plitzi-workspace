@@ -12,15 +12,61 @@ import type { Command } from 'commander';
  * check a page at no width at all and say nothing.
  */
 
+const isScheme = (value: string): value is Scheme => (SCHEMES as readonly string[]).includes(value);
+
+const isOption = (word: string): boolean => /^--?[a-z]/i.test(word);
+
 /**
  * A value that is another option: the one this option takes went missing — an empty shell variable, the words of a
  * loop out of order. A run's `page shot /design 390 dark pixels-brand-row --width --scheme --clip` was told only
  * that a width is a whole number, five times.
  */
 const refuseOption = (value: string): void => {
-  if (/^--?[a-z]/i.test(value.trim())) {
+  if (isOption(value.trim())) {
     throw new InvalidArgumentError(
       `${value.trim()} is the next option, not a value: each option's value goes right after it (--width 1440 --scheme dark) — a shell variable left empty drops it.`
+    );
+  }
+
+  refuseWords(value, 'value');
+};
+
+/** Where a word that came in another's value goes: a scheme, a width and an option each said by what it is. */
+const placeOf = (word: string): string => {
+  if (isOption(word)) {
+    return `${word} is an option of the command, outside the quotes`;
+  }
+
+  if (isScheme(word)) {
+    return `${word} is a scheme: --scheme ${word}`;
+  }
+
+  return /^\d+$/.test(word) ? `${word} is a width: --width ${word}` : `${word} on its own`;
+};
+
+/** The words after the first, an option kept with the value that follows it: `--as dax`, said as one. */
+const placesOf = (words: readonly string[]): string[] =>
+  words.reduce<string[]>((said, word, index) => {
+    const before = index > 0 ? words[index - 1] : undefined;
+    if (before !== undefined && isOption(before) && !isOption(word)) {
+      return said;
+    }
+
+    const next = index + 1 < words.length ? words[index + 1] : undefined;
+
+    return [...said, placeOf(isOption(word) && next !== undefined && !isOption(next) ? `${word} ${next}` : word)];
+  }, []);
+
+/**
+ * One value that holds several words — quotes, or a shell variable, joined them. A run's designer wrote `--width
+ * "390 dark"` and heard only what a width is; another quoted a page with its visitor, `'/explore --as dax'`, as `task
+ * look` takes its pages, and `page measure` opened /explore%20--as%20dax.
+ */
+const refuseWords = (value: string, what: string): void => {
+  const [first, ...rest] = value.trim().split(/\s+/);
+  if (rest.length > 0) {
+    throw new InvalidArgumentError(
+      `"${value.trim()}" is ${String(rest.length + 1)} words in one ${what} — quotes or a shell variable joined them: ${first} alone, and ${placesOf(rest).join('; ')}.`
     );
   }
 };
@@ -43,8 +89,6 @@ export const width = (value: string): number => {
 
 /** Widths separated by commas, each once, in the order given. */
 export const widths = (value: string): number[] => [...new Set(value.split(',').map(width))];
-
-const isScheme = (value: string): value is Scheme => (SCHEMES as readonly string[]).includes(value);
 
 /** Schemes separated by commas, each once: a picture of each, as `--width` takes several. */
 export const schemes = (value: string): Scheme[] => {
@@ -185,6 +229,27 @@ export const names = (value: string): string[] => {
 
   return [...new Set(each)];
 };
+
+/**
+ * A page of the space by its path, `/pricing`: one word that starts with `/` — a page command's visitor and options
+ * are its own, written outside the path (`task look` alone reads a path with its visitor in quotes).
+ */
+export const pagePath = (value: string): string => {
+  refuseWords(value, 'path');
+  const path = value.trim();
+  if (!path.startsWith('/')) {
+    throw new InvalidArgumentError(
+      isScheme(path) || /^\d+$/.test(path)
+        ? `${path} is no page: ${placeOf(path)}.`
+        : `"${path}" is no page's path: a path starts with / — /${path.replace(/^\.?\/?/, '')}.`
+    );
+  }
+
+  return path;
+};
+
+/** Paths as a command's last argument takes them, one after another: each a page's. */
+export const pagePathList = (value: string, previous: string[] = []): string[] => [...previous, pagePath(value)];
 
 /** Pages by path, comma-separated — `/,/pricing` — each starting with `/`. */
 export const pagePaths = (value: string): string[] => {

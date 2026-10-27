@@ -143,9 +143,10 @@ export interface ShotReport {
   sentTo?: string;
   /** With `click`: each element clicked, and the share of the picture that changed after it. */
   /** Each click, what it changed — or that it opened the clip, pictured alone after it (`opened`). */
-  clicked?: { target: string; changed: number; opened?: true }[];
+  /** Each click, and how much of the picture it changed — and, nothing changed in a clip, what it changed outside it. */
+  clicked?: { target: string; changed: number; opened?: true; outside?: string[] }[];
   /** With `steps`: each picture the script took, and the share of it that changed since the one before. */
-  steps?: { label: string; changed: number }[];
+  steps?: { label: string; changed: number; outside?: string[] }[];
   /** The pictures after the first, each with what it shows — or, with `sheet`, the one sheet that holds them all. */
   pictures?: { label: string; out: string }[];
   sheet?: string;
@@ -181,6 +182,8 @@ export interface View {
   account?: Account;
   /** The project's, signed in as when the page sends a guest away and no account was asked. */
   projectAccount?: Account;
+  /** Whether the space reads a route as its members': read signed in as the project's account from the start. */
+  membersAt?: (route: string) => boolean;
   /** Taking part in the project page's channels; otherwise it only watches them. */
   presence?: boolean;
   /** The first picture taken as soon as the HTML is in, not once the page settles: what plays while it loads. */

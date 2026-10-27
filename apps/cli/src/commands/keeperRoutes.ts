@@ -5,7 +5,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { problem } from './keeperServer';
 
 import type { RouteAnswer, Route } from './keeperServer';
-import type { Measured } from './measureValues';
+import type { Measured, MeasuredExtra } from './measureValues';
 import type { ElementState } from './playState';
 import type { ActingStep } from './shot/steps';
 import type { KeptAnswer, KeptAsk, KeptOutlineAnswer, KeptOutlineAsk, KeptView } from '../browser/keptBrowser';
@@ -25,7 +25,7 @@ export interface KeeperDeps<P> {
   measure: (asked: KeptAsk) => Promise<KeptAnswer>;
   /** A page of the other site opened warm, as the view asks, for one ask alone. */
   open: (view: KeptView) => Promise<{ page: P } | { problem: string }>;
-  measureOn: (page: P, target: string) => Promise<Measured | { problem: string }>;
+  measureOn: (page: P, target: string, options: { extra?: MeasuredExtra }) => Promise<Measured | { problem: string }>;
   /** Elements hovered, focused or clicked in turn, what each starts finished. */
   putIn: (page: P, state: NonNullable<KeptAsk['state']>) => Promise<{ problem: string } | undefined>;
   outline: (page: P, asked: KeptOutlineAsk) => Promise<KeptOutlineAnswer>;
@@ -60,6 +60,8 @@ const isAsk = (value: unknown): value is KeptAsk =>
   isView(value) &&
   isStrings(value.targets) &&
   (value.fresh === undefined || typeof value.fresh === 'boolean') &&
+  (value.extra === undefined ||
+    (isRecord(value.extra) && isStrings(value.extra.properties) && isStrings(value.extra.pseudo))) &&
   (value.state === undefined ||
     (isRecord(value.state) &&
       typeof value.state.kind === 'string' &&
@@ -153,7 +155,7 @@ export const keeperRoutes = <P>(deps: KeeperDeps<P>) => {
         const notPut = await deps.putIn(page, state);
         const readings: (Measured | { problem: string })[] = [];
         for (const target of asked.targets) {
-          readings.push(notPut ?? (await deps.measureOn(page, target)));
+          readings.push(notPut ?? (await deps.measureOn(page, target, asked.extra ? { extra: asked.extra } : {})));
         }
 
         return { readings };

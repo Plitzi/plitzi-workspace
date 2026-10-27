@@ -259,7 +259,7 @@ first time (`--json`: `retriedAfter`); a `4xx` is not retried — and the
 page's data: a binding that reads a path its provider's answer lacks (with the keys it has) — none inside an element
 the page is not showing, which is not mounted — a provider that failed, and each list's rows, drawn and in its source
 (`feed 4 of 8 rows`, `hits not rendered (16 in its source)`; `--json`: `lists: { id: { rendered, source } }`). A page's state in a few hundred tokens, where a screenshot costs thousands.
-`--element` (once for each element) adds, at rest, each property more than one of the element's classes sets: the value shown, the class it
+`--element` (once for each element — a component's part too, read on the first copy the page draws) adds, at rest, each property more than one of the element's classes sets: the value shown, the class it
 comes from and what the others say — `border-radius: 999px, from ent-cta-pill (button-primary says 12px)` — or that
 they all set it alike, so it stays without any one of them. That is said of the property alone: a class that shares
 one may set others. A class is said to change nothing on the element only when every property it sets stays without
@@ -306,8 +306,10 @@ readable at its size. A `--clip` is pictured without what is pinned over it (a s
 `--steps` take the page as it plays, and each picture after the first is written beside it (`<name>-1.png`, …).
 
 Every page command — `check`, `measure`, `play`, `outline`, `same`, `shot` — and `task look` reads a page as one
-visitor, from the same flags. A page that sends a guest away is read as the project's account (`PLITZI_CHECK_USER`),
-said; `--as <user>` signs in as another first (the password in `PLITZI_CHECK_PASSWORD`), `--guest` keeps the guest's
+visitor, from the same flags. A page is its path, one word from `/` — a visitor and options go outside it, and a path,
+width or scheme that came with other words in one value (`'/explore --as dax'`, `--width "390 dark"`) is refused saying
+where each goes. A page the space authors for members (its audience members or gated, or permissions of its own) or
+that sends a guest away is read as the project's account (`PLITZI_CHECK_USER`), said; `--as <user>` signs in as another first (the password in `PLITZI_CHECK_PASSWORD`), `--guest` keeps the guest's
 view. `--timezone <IANA>` opens it as a visitor in that zone: its clock and `Intl` read there. It watches the page's
 realtime channels: it hears them — a topic the server refuses is still reported — and says nothing on them, so nobody on
 the page sees it arrive, join their members or send; `--presence` makes it take part as a visitor does. The browser can
@@ -318,7 +320,9 @@ not by `npm start` here. `--click` in `page shot` takes an element's name, a tag
 (`textarea`) or any selector, CSS or Playwright's own (`button:has-text("Orbit")`). In `--steps`, an element is read up to a
 space outside its quotes and brackets (`[aria-label="Search the site"]` is one), or quoted whole — `type ".panel textarea" hola`;
 `type` replaces what the field held, and fails when the click leaves no field focused. `hover <element>` puts the
-pointer over it and leaves it there, for the next `shot`; `drag <element> <dx> [dy]` presses it — a range at its thumb —
+pointer over it and leaves it there, for the next `shot`; `scroll <element>` brings it into view, and `scroll <element>
+<dx> [dy]` scrolls its own content by so many pixels — a row across — saying when it did not move (its content fits, or
+it was at that end); a number after any other step's element is refused, never read as part of a selector; `drag <element> <dx> [dy]` presses it — a range at its thumb —
 moves it that many pixels and lets go. A step acts on the element shown: a page drawing one per width hides the other.
 With `--compare`, `--click "ours => theirs"` clicks each page in turn and sets their screens side by side once clicked —
 an open drawer, a panel in it — with no sections or words read.
@@ -379,13 +383,16 @@ the text's (`type chat-input "late; still here"`); `fill <id>=<text>` takes a cl
 element read again as it was says `as before`; `--json` has every read whole.
 
 `page measure` says each element by what it says of itself: what is at its initial value or inherited is counted, not
-printed (`--all` prints every property, `--only box,font` a few), a data URI by its kind and size, and how many elements
-its selector finds when it measured the first shown (`--rows` measures each). Four sides alike are one line (`border`, `inset`), a layer drawn again
+printed (`--all` prints every property, `--only box,font` a few — and any CSS property by its name, a pseudo-element's
+as `after:<property>`: `--only overflow-x,scroll-snap-type`, one the browser knows no property by refused before
+anything is read, a pseudo-element it does not draw said), a data URI by its kind and size, and how many elements
+its selector finds when it measured the first shown (`--each` measures every copy — a component’s instances, a list’s rows). Four sides alike are one line (`border`, `inset`), a layer drawn again
 says how many times (`×4`). It reads `animation`, `position`, `max-width`, `grid-area`, `text-decoration`,
 `align-items`, and a pseudo-element's `position`/`top`/`left`, `display`, `vertical-align` and its `x`/`y` (off
 Chromium's layout: the page has no box of one) too; `--steps` plays steps on the page first —
 what only a visitor makes, a chat line — and an element not there says the ways it may not be drawn (signed in, a click,
-a route's address).
+a route's address). One there and hidden says why — `display: none on room-show-actions, around it`, `visibility:
+hidden`, no size — and not its place and size, which a box drawn nowhere does not have.
 
 What the demo data never has is set by the steps: `reload` (what the page kept, read back), `store <key> <value>` (its
 `localStorage`, as an earlier visit left it), `state <key> <json>` (the space's state, through the dev tools' `window.__plitzi`
@@ -638,6 +645,7 @@ plitzi task next --role designer --agent design-1   # one started by hand names 
 plitzi task next t-home --token <yours> --json      # its files locked, its copy (which says the task, to you alone)
 plitzi task propose t-menu --change "…"    # ask another task to agree to a change; task answer accepts or counters
 plitzi task check --token …                # what complete holds the copy to, run now: nothing changes (--fix: lint and format your files first)
+plitzi task check t-home --before          # its acceptance on the run before it and on its copy: which line proves the change, which proves nothing
 plitzi task complete --token …             # its copy compared by fingerprint, the project's checks run in it
 plitzi task review t-home --approve --token <yours>    # your step of its review; its last step's approval puts it into the run's work
 plitzi run notice "…" --on /pets            # something wrong no task owns: kept, said by the finish — the next stage's

@@ -1,3 +1,5 @@
+import { selectorFor } from '@plitzi/sdk-authoring';
+
 import type { Authored } from './space';
 import type { ContestedStyle, ElementStyles } from './types';
 import type { BrowserPage } from '../../browser';
@@ -19,7 +21,7 @@ export const contestedStylesInPage = ({
 }: {
   selector: string;
   classes: string[];
-}): Omit<ElementStyles, 'wornBy'> | null => {
+}): Omit<ElementStyles, 'wornBy' | 'partOf'> | null => {
   const node = document.querySelector(selector);
   if (!(node instanceof HTMLElement)) {
     return null;
@@ -113,7 +115,7 @@ export const contestedStylesInPage = ({
   node.style.transition = transition;
   node.style.animation = animation;
 
-  return { contested, inert };
+  return { contested, inert, copies: document.querySelectorAll(selector).length };
 };
 
 /** Contested properties as lines, those that say the same of the same classes said once: a shorthand's longhands. */
@@ -181,9 +183,10 @@ const nearIds = (ids: readonly string[], id: string): string[] =>
     .slice(0, 5);
 
 /**
- * The contested styles of the element asked for, by its handle's selector and the classes the space gives it — or why
- * they cannot be read, as it is: one answer for three reasons said "is not on the page" of an element that was
- * (a component's part, read in the page, its styles "not on the page").
+ * The contested styles of the element asked for, by its selector and the classes the space gives it — or why they
+ * cannot be read, as it is. A component's part is an element of its component, drawn once per instance under its own
+ * name: read on the first copy the page draws, with how many there are (a run's `--element` on a card's part was
+ * answered "no element of the space", while `page measure` read it).
  */
 export const elementStyles = async (
   page: BrowserPage,
@@ -196,12 +199,15 @@ export const elementStyles = async (
 
   const classesOf = (one: SchemaElement): string[] =>
     Object.values(one.definition.styleSelectors).flatMap(names => names.split(/\s+/).filter(Boolean));
-  const handle = Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id] : undefined;
-  const element = Object.hasOwn(authored.schema.flat, id) ? authored.schema.flat[id] : undefined;
-  if (!handle || !element) {
-    // A class, found on the page by it: a run's `--element fight-card-vs` was found, then said no element —
-    // with the advice for a component's part, which it was not.
-    const wearing = Object.values(authored.schema.flat).filter(one => classesOf(one).includes(id));
+  const everyElement = [
+    ...Object.values(authored.schema.flat),
+    ...Object.values(authored.schema.components).flatMap(component => Object.values(component.flat))
+  ];
+  const partOf = Object.values(authored.schema.components).find(component => Object.hasOwn(component.flat, id));
+  const element = Object.hasOwn(authored.schema.flat, id) ? authored.schema.flat[id] : partOf?.flat[id];
+  if (!element) {
+    // A class, found on the page by it: a run's `--element fight-card-vs` was found, then said no element.
+    const wearing = everyElement.filter(one => classesOf(one).includes(id));
     if (wearing.length > 0) {
       const named = wearing.slice(0, 5).map(one => one.id);
 
@@ -210,23 +216,30 @@ export const elementStyles = async (
       };
     }
 
-    const near = nearIds(Object.keys(authored.schema.flat), id);
+    const near = nearIds(
+      everyElement.map(one => one.id),
+      id
+    );
 
     return {
-      unread: `${id} is no element of the space as authored — a component's part is named by its instance's id${near.length > 0 ? `; near it: ${near.join(', ')}` : ''}`
+      unread: `${id} is no element of the space as authored, nor a part of any of its components${near.length > 0 ? `; near it: ${near.join(', ')}` : ''}`
     };
   }
 
   const classes = classesOf(element);
-  const read = await page.evaluate(contestedStylesInPage, { selector: handle.selector, classes });
+  const read = await page.evaluate(contestedStylesInPage, { selector: selectorFor(id), classes });
   if (!read) {
-    return { unread: `${id} is not on the page at this width` };
+    return {
+      unread: partOf
+        ? `${id} is a part of the component ${partOf.id}, and no instance of it is on the page at this width`
+        : `${id} is not on the page at this width`
+    };
   }
 
-  const others = Object.values(authored.schema.flat).filter(one => one.id !== id);
+  const others = everyElement.filter(one => one.id !== id);
   const wornBy = Object.fromEntries(
     classes.map(className => [className, others.filter(one => classesOf(one).includes(className)).map(one => one.id)])
   );
 
-  return { ...read, wornBy };
+  return { ...read, wornBy, ...(partOf ? { partOf: partOf.id } : {}) };
 };

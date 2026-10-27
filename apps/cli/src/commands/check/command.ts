@@ -241,7 +241,8 @@ export const checkRoutes = async (
             authored,
             options.asked,
             options.ssr,
-            options.account,
+            // A members' page read as the project's account from the start, as every page command reads it.
+            options.account ?? (options.membersAt?.(route) === true ? options.projectAccount : undefined),
             options.projectAccount,
             options.click,
             options.expect,

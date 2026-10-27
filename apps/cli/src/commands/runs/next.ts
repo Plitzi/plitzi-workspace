@@ -110,10 +110,14 @@ const reviewText = (review: NonNullable<NextTask['review']>, agent: string): str
     ...earlierText(review),
     `  It changed: ${review.changed.join(', ') || 'nothing said'} — in its copy, ${review.copy}`,
     // A designer's look is set beside the run before it, measured — its dress too; any other looks at it as it went.
-    ...lookCommand(review.task, review.pages, review.role === DESIGNER ? ' --before' : '').map(
-      (command, index) =>
-        `  ${index === 0 ? `Look at it as it went to review${review.role === DESIGNER ? ', beside the run before it' : ''}` : 'And'}: ${command}`
-    ),
+    ...(review.noPage
+      ? [
+          `  It changes no page — nothing to picture: its acceptance, before it and with it, says what it proves: plitzi task check ${review.task.id} --before`
+        ]
+      : lookCommand(review.task, review.pages, review.role === DESIGNER ? ' --before' : '').map(
+          (command, index) =>
+            `  ${index === 0 ? `Look at it as it went to review${review.role === DESIGNER ? ', beside the run before it' : ''}` : 'And'}: ${command}`
+        )),
     review.precision
       ? `  Look for (${review.precision}, as the team asks — options.designReview) ${DESIGN_LOOK[review.precision]}`
       : `  Its QA: what it was asked, its checks, how it behaves (a control used there and back, a state the data opens), the code and the edge cases — what went to review: plitzi task show ${review.task.id}`,

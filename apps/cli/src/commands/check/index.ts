@@ -52,7 +52,7 @@ export {
   pageMomentInPage,
   refusedFieldsInPage
 } from './moments';
-export { copiesInPage, expectationMissed, meantOnPage, wrappedLabelsInPage } from './expect';
+export { copiesOf, expectationMissed, meantOnPage, textsInPage, wrappedLabelsInPage } from './expect';
 export { listText, renderedRowsInPage } from './lists';
 export { clickedText, reportText } from './text';
 export { check, checkRoutes } from './command';

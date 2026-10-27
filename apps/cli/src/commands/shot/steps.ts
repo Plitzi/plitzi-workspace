@@ -4,10 +4,12 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { awaited, capture, targetOn } from './capture';
 import { dataUrl } from '../../browser';
 import { clockHeld } from '../../browser/conditions';
+import { momentChanges, pageMomentInPage } from '../check/moments';
 import { answered, settle } from '../measureState';
 import { parseSteps } from '../shotSteps';
 
 import type { BrowserPage } from '../../browser';
+import type { PageMoment } from '../check/types';
 import type { ShotStep } from '../shotSteps';
 import type { Framing, Moment, Taken } from './types';
 import type { Visitors } from './visitors';
@@ -23,6 +25,37 @@ const sizeOf = (png: Uint8Array): string =>
     ? ''
     : `${String(new DataView(png.buffer, png.byteOffset).getUint32(16))}x${String(new DataView(png.buffer, png.byteOffset).getUint32(20))}`;
 
+/** The page as it is — its screen and what it shows — when a picture is clipped to a part of it. */
+interface PageNow {
+  moment: PageMoment;
+  png: Uint8Array;
+}
+
+const pageNow = async (page: BrowserPage, how: Framing): Promise<PageNow | undefined> =>
+  how.kind === 'element' || how.kind === 'element-later'
+    ? { moment: await page.evaluate(pageMomentInPage, undefined), png: await page.screenshot({ fullPage: false }) }
+    : undefined;
+
+/**
+ * What changed on the page since `before` while a clipped picture stayed the same — the screen, and what it shows: a
+ * click opened a plugin's picker beside the part pictured, and its shot said "nothing changed — the click did nothing to
+ * see" (encore-13's tester and designer). Whatever draws it — a marked element or a plugin's own — the screen says it.
+ */
+const outsideClip = async (page: BrowserPage, before: PageNow | undefined): Promise<string[]> => {
+  if (before === undefined) {
+    return [];
+  }
+
+  const moment = await page.evaluate(pageMomentInPage, undefined);
+  const screen = await page.screenshot({ fullPage: false });
+  const { changed } = await comparePictures(page, dataUrl(before.png), dataUrl(screen));
+
+  return [
+    ...(changed > 0 ? [`${String(changed)}% of the screen`] : []),
+    ...momentChanges(before.moment, moment, { before: undefined, after: undefined })
+  ];
+};
+
 /**
  * Each element clicked in turn, and the page pictured after it — `frames` pictures `every` ms apart, or one. What a
  * click changed is measured against the picture before it: nothing at all is said, as a click that did nothing.
@@ -33,10 +66,11 @@ export const clickThrough = async (
   clicks: readonly string[],
   { frames, every }: { frames: number; every: number }
 ): Promise<
-  { moments: Moment[]; clicked: { target: string; changed: number; opened?: true }[] } | { problem: string }
+  | { moments: Moment[]; clicked: { target: string; changed: number; opened?: true; outside?: string[] }[] }
+  | { problem: string }
 > => {
   const moments: Moment[] = [{ label: 'before', png: taken.png }];
-  const clicked: { target: string; changed: number; opened?: true }[] = [];
+  const clicked: { target: string; changed: number; opened?: true; outside?: string[] }[] = [];
   for (const target of clicks) {
     const read = await targetOn(taken.page, target);
     if ('problem' in read) {
@@ -50,6 +84,7 @@ export const clickThrough = async (
     const element = taken.page.locator(read.selector).filter({ visible: true }).first();
 
     const before = moments[moments.length - 1].png;
+    const pageBefore = await pageNow(taken.page, how);
     try {
       await element.click({ timeout: 3000 });
     } catch (error) {
@@ -65,11 +100,13 @@ export const clickThrough = async (
 
     const after = moments[moments.length - 1].png;
     // A clip the click opened is pictured alone after it, the page before it: no share of one picture to say — opened.
-    clicked.push(
-      sizeOf(before) === sizeOf(after)
-        ? { target, changed: (await comparePictures(taken.page, dataUrl(before), dataUrl(after))).changed }
-        : { target, changed: 100, opened: true }
-    );
+    if (sizeOf(before) !== sizeOf(after)) {
+      clicked.push({ target, changed: 100, opened: true });
+    } else {
+      const { changed } = await comparePictures(taken.page, dataUrl(before), dataUrl(after));
+      const outside = changed === 0 ? await outsideClip(taken.page, pageBefore) : [];
+      clicked.push({ target, changed, ...(outside.length > 0 ? { outside } : {}) });
+    }
   }
 
   return { moments, clicked };
@@ -147,9 +184,10 @@ export const stepText = (step: ShotStep): string => {
   switch (step.kind) {
     case 'click':
     case 'hover':
-    case 'scroll':
     case 'wait-for':
       return `${step.kind} ${step.target}`;
+    case 'scroll':
+      return step.by ? `scroll ${step.target} ${String(step.by.dx)} ${String(step.by.dy)}` : `scroll ${step.target}`;
     case 'type':
       return `type ${step.target}`;
     case 'drag':
@@ -320,8 +358,31 @@ export const actStep = async (
     }
 
     // Brought into view as a reader scrolling to it would: a hover was how design-1 reached the footer.
-    if (step.kind === 'scroll') {
+    if (step.kind === 'scroll' && !step.by) {
       await shown(read.selector).scrollIntoViewIfNeeded({ timeout: 3000 });
+      return undefined;
+    }
+
+    // Its own content scrolled by so much — a row across, a list within its box — and said when it did not move: a
+    // box whose content fits, or one that scrolls the other way.
+    if (step.kind === 'scroll' && step.by) {
+      await shown(read.selector).scrollIntoViewIfNeeded({ timeout: 3000 });
+      const moved = await shown(read.selector).evaluate((node, by: { dx: number; dy: number }) => {
+        const [left, top] = [node.scrollLeft, node.scrollTop];
+        node.scrollBy({ left: by.dx, top: by.dy, behavior: 'instant' });
+
+        return {
+          moved: node.scrollLeft !== left || node.scrollTop !== top,
+          across: node.scrollWidth - node.clientWidth,
+          down: node.scrollHeight - node.clientHeight
+        };
+      }, step.by);
+      if (!moved.moved) {
+        return {
+          problem: `Step ${String(index + 1)}: ${step.target} did not scroll — ${moved.across <= 0 && moved.down <= 0 ? 'its content fits its box, so nothing in it scrolls (the row that scrolls may be one inside it)' : `it scrolls ${String(Math.max(0, moved.across))} px across and ${String(Math.max(0, moved.down))} px down at most, and was at that end already`}`
+        };
+      }
+
       return undefined;
     }
 
@@ -462,17 +523,23 @@ export const playSteps = async (
   how: Framing,
   steps: readonly ShotStep[],
   visitors?: Visitors
-): Promise<{ moments: Moment[]; changes: { label: string; changed: number }[] } | { problem: string }> => {
+): Promise<
+  { moments: Moment[]; changes: { label: string; changed: number; outside?: string[] }[] } | { problem: string }
+> => {
   const { page } = taken;
   const started = Date.now();
   const moments: Moment[] = [{ label: 'before', png: taken.png }];
-  const changes: { label: string; changed: number }[] = [];
+  const changes: { label: string; changed: number; outside?: string[] }[] = [];
+  let pageBefore = await pageNow(page, how);
   const picture = async (label: string): Promise<void> => {
     const before = moments[moments.length - 1].png;
     const png = await capture(page, how);
     const at = `${label} · +${String(Date.now() - started)} ms`;
     moments.push({ label: at, png });
-    changes.push({ label: at, changed: (await comparePictures(page, dataUrl(before), dataUrl(png))).changed });
+    const { changed } = await comparePictures(page, dataUrl(before), dataUrl(png));
+    const outside = changed === 0 ? await outsideClip(page, pageBefore) : [];
+    changes.push({ label: at, changed, ...(outside.length > 0 ? { outside } : {}) });
+    pageBefore = await pageNow(page, how);
   };
 
   for (const [index, step] of steps.entries()) {

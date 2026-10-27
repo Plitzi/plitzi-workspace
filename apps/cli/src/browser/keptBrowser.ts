@@ -10,7 +10,7 @@ import { copyOf } from '../runs/paths';
 import { USAGE_OFF } from '../runs/usage';
 
 import type { Scheme } from './index';
-import type { Measured } from '../commands/measureValues';
+import type { Measured, MeasuredExtra } from '../commands/measureValues';
 import type { Outline } from '../commands/outline';
 import type { ElementState } from '../commands/playState';
 import type { ActingStep } from '../commands/shot/steps';
@@ -214,6 +214,8 @@ export interface KeptAsk extends KeptView {
   targets: string[];
   /** Loaded again, never read as it stood. */
   fresh?: boolean;
+  /** What is read besides what always is: properties asked by name (`--same overflow-x`). */
+  extra?: MeasuredExtra;
   /**
    * Read in a state — elements hovered, focused or clicked in turn first — on a page of its own, never one others read:
    * a state left on a kept page would be the next reader's.

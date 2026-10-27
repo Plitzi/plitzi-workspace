@@ -12,7 +12,7 @@ import {
   pageTexts
 } from '@plitzi/sdk-authoring';
 
-import { capture, pictureOf, readPage, targetOn } from './capture';
+import { capture, elementShot, pictureOf, readPage, targetOn } from './capture';
 import { pictureAnswered } from './remote';
 import { DRIFT_PX, TEXTS_SHOWN } from './types';
 import { dataUrl, fromDataUrl } from '../../browser';
@@ -255,7 +255,7 @@ const partPicture = async (taken: Taken, part: string): Promise<Uint8Array | { p
     return { problem: `${part} is not drawn on ${taken.page.url()}` };
   }
 
-  return taken.page.locator(read.selector).first().screenshot();
+  return elementShot(taken.page, read.selector);
 };
 
 /** A part's name as a file's: what the pictures of one part of several are told apart by. */

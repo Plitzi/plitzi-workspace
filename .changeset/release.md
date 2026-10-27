@@ -128,6 +128,25 @@ authoring and the elements learnt from the runs.
   --status 403" "/withheld --as juno"` — one look a visitor, each told what the others covered. `page shot --clip <part>
   --showing <elements>` pictures the copy of a part drawn more than once that shows the most of them, and a look
   pictures a component where the task's elements show (a playing room card stood for an idle one's change).
+- **What encore-13's agents asked for.** `task look` serves a task's copy cold, as the run before is served — a copy
+  warm with its agent's plays read "moved" where only its data had — pictures one part with `--within <element>` and a
+  task of more than three parts whole, leaves what is pinned over a part (a sticky header) out of its picture, and says
+  what differs between the sides field by field (`container-57: box 0,0,249x314 → 0,0,249x331`), not as a dump. Every
+  page command reads a page the space authors for members as the project's account, as `task look` did. `page check
+  --expect` holds a text only where a copy shows it whole, and a check names the texts a box cuts short at that width;
+  `--element` reads a component's part, on the first copy drawn. `page measure --each` measures every copy of an element
+  (a component's instances, a list's rows), why one is not drawn said once; `--only` and `--same` take any CSS property
+  by its name (`overflow-x`, `after:margin-left`), one the browser knows not refused before anything is read, a
+  pseudo-element not drawn said; an element hidden says why (`display: none on room-show-actions, around it`) and not a
+  0,0 box. `page shot --click` says when the page changed outside the clip, not "nothing changed". A page's path and
+  each typed value are one word: `'/explore --as dax'` and `--width "390 dark"` are refused saying where each word goes.
+  A step `scroll <element> <dx> [dy]` scrolls its content (a row across), saying when it did not move; a number after
+  another step's element is refused, not handed to Playwright. A task approved from a shell inside its copy leaves the
+  copy for it, going with the run, and says to go back to the project.
+- **`task check <task> --before` says what a task's acceptance proves:** each line run on the run before it — its
+  approved work without the task — and on its copy: a line that fails before and passes with it proves the change, one
+  passing on both proves nothing. A task that changes no page (a test's fix, a script) has no look: `task look` and its
+  review's offer say so and name `task check --before`, where the look pictured the home page.
 - **A scout sees its stage from its own card: `task check --tasks <stage.json>`** — checked as the lead stacks it, each
   line run once on the run's work. `run extend` is the lead's alone, its dry run too: encore-11's and encore-13's scouts
   reached for it, the skill pointing there; one with a task's token is refused naming `task check --tasks`. The scout's
@@ -870,7 +889,8 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
     how many rows it shows.
   - A target out of view is scrolled to before the step, as a pointer reaches it, and what moved is measured from
     there: a sticky part read "moved 315px down" after a click on a switch below it.
-- **`page measure` says an element it measured is hidden** — none of its matches drawn — alone and beside the other page.
+- **`page measure` says an element it measured is hidden, and why** — none of its matches drawn — alone and beside the
+  other page.
 - **`page same`** says whether pages draw the same on two servers.
 - **`page check --click`, `--expect` and `--element` find a plugin's own parts** by their id, as `page play` does
   (`reactions-more` inside a plugin).
@@ -918,8 +938,8 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`page play` and `page measure` read a page in a browser that refuses:** `--block <text>` fails each request whose
   address holds it, `--autoplay refused` refuses media with sound until a press, `--storage refused` throws on
   `localStorage`. `page play` takes `--timezone`.
-- **`page measure --only <properties>`** prints those alone (`--only box`: place, size, padding, margin), and **`--rows`**
-  measures every row of a list, not its first. A click's answer from the server lands before what follows reads the
+- **`page measure --only <properties>`** prints those alone (`--only box`: place, size, padding, margin), and **`--each`**
+  measures every copy of an element, not its first. A click's answer from the server lands before what follows reads the
   page.
 - **`page outline --within`** takes the first part shown and names what is inside it, through the wrappers.
 - **`page play` says a read never there once**, not at every step and width.

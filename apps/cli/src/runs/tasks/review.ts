@@ -30,6 +30,11 @@ import type { TaskView } from '../taskStore';
 export interface ReviewedTask {
   verdict: 'approve' | 'changes';
   round: number;
+  /**
+   * Approved from a shell inside its copy: the copy left there for it, going with the run — and the project to go back
+   * to before the next command.
+   */
+  copyLeft?: string;
   /** Approved: what it brought into the run's work, what it let go of to whom, and the tasks it made ready. */
   merged?: string[];
   granted?: string[];

@@ -1,6 +1,16 @@
 import { Option } from 'commander';
 
-import { expectation, fill, positiveInteger, scale, statusCode, width, widths } from '../../options';
+import {
+  expectation,
+  fill,
+  pagePath,
+  pagePathList,
+  positiveInteger,
+  scale,
+  statusCode,
+  width,
+  widths
+} from '../../options';
 import { check } from '../check';
 import { importPage } from '../importPage';
 import { measure, onlyProperties, sameProperties } from '../measure';
@@ -25,7 +35,7 @@ export const registerPage = (pageGroup: Command): void => {
   withVisitorOptions(
     pageGroup
       .command('check')
-      .argument('[paths...]', 'The pages: /about /writers, in one browser. The home page when left out')
+      .argument('[paths...]', 'The pages: /about /writers, in one browser. The home page when left out', pagePathList)
       .description(
         'Whether a page of the running project is whole, in text: every element on screen, no broken image, no console error, no failed flow'
       )
@@ -113,7 +123,7 @@ export const registerPage = (pageGroup: Command): void => {
 
   const measureCommand = pageGroup
     .command('measure')
-    .argument('<path>', 'The page: /pricing')
+    .argument('<path>', 'The page: /pricing', pagePath)
     .argument(
       '<elements...>',
       'Its elements, each by its id (pricing-card), #its-id or any selector — and, with --compare, the other page’s after "=>": "pricing-card => .plan-card". All measured in one call'
@@ -135,18 +145,18 @@ export const registerPage = (pageGroup: Command): void => {
     .addOption(
       new Option(
         '--same <properties>',
-        'Fail unless these are as the other page’s — font-size,border,before:background-image (shorthands: border, font, size): an acceptance’s line, measured'
+        'Fail unless these are as the other page’s — font-size,border,before:background-image, or any CSS property by name (shorthands: border, font, size): an acceptance’s line, measured'
       ).argParser(sameProperties)
     )
     .addOption(
       new Option(
         '--only <properties>',
-        'Only these of each element, printed — box (x, y, width, height, padding, margin), font, border, size, or any measured: a fit asks for its box'
+        'Only these of each element, printed — box (x, y, width, height, padding, margin), font, border, size, or any CSS property by name (overflow-x, after:margin-left): a fit asks for its box'
       ).argParser(onlyProperties)
     )
     .option(
-      '--rows',
-      'Each row a list draws of every element asked, measured apart — the first alone hides how they differ'
+      '--each',
+      'Every copy the page draws of each element asked — a component’s instances, a list’s rows — measured apart: the first alone hides how they differ'
     )
     .option(
       '--all',
@@ -175,13 +185,13 @@ export const registerPage = (pageGroup: Command): void => {
 
   const playCommand = pageGroup
     .command('play')
-    .argument('<path>', 'The page: /pricing')
+    .argument('<path>', 'The page: /pricing', pagePath)
     .description(
       'An interaction played step by step — and after each step how far each element read moved, whether it is shown and takes a press; beside another site with --compare, held to it with --same'
     )
     .option(
       '--steps <script>',
-      'The steps — left out with --read, the page as it rests — as page shot --steps writes them — click, hover, scroll, type (or fill: what the field held replaced), drag, press, wait, wait-for, reload, goto <path>, store, state, clock, tick, action <id> [json] (one of the space’s actions run as the page’s visitor), as <account> <step> (played by another account on a page of its own), shot [label] (the page pictured where it stands, in tmp/shots) — a ";" inside quotes is the text’s — each element "ours => theirs" with --compare'
+      'The steps — left out with --read, the page as it rests — as page shot --steps writes them — click, hover, scroll <el> [dx] [dy] (into view — or its own content by so many pixels: scroll genres 200), type (or fill: what the field held replaced), drag, press, wait, wait-for, reload, goto <path>, store, state, clock, tick, action <id> [json] (one of the space’s actions run as the page’s visitor), as <account> <step> (played by another account on a page of its own), shot [label] (the page pictured where it stands, in tmp/shots) — a ";" inside quotes is the text’s — each element "ours => theirs" with --compare'
     )
     .option(
       '--read <element...>',
@@ -202,7 +212,7 @@ export const registerPage = (pageGroup: Command): void => {
   withVisitorOptions(
     pageGroup
       .command('outline')
-      .argument('<path>', 'The page: /pricing')
+      .argument('<path>', 'The page: /pricing', pagePath)
       .description(
         'What a page is made of, as a visitor sees it — each element by a selector page measure takes, its box and first words; the other site’s with --compare'
       )
@@ -229,7 +239,7 @@ export const registerPage = (pageGroup: Command): void => {
   withVisitorOptions(
     pageGroup
       .command('same')
-      .argument('[paths...]', 'The pages: /about /writers. The home page when left out')
+      .argument('[paths...]', 'The pages: /about /writers. The home page when left out', pagePathList)
       .description(
         'Whether pages draw the same on two servers of the project — every element on screen, its box and its style read, not pictured: the run before a task and its copy'
       )
@@ -253,7 +263,7 @@ export const registerPage = (pageGroup: Command): void => {
   withVisitorOptions(
     pageGroup
       .command('shot')
-      .argument('[paths...]', 'The pages: /about /pricing. The home page when left out')
+      .argument('[paths...]', 'The pages: /about /pricing. The home page when left out', pagePathList)
       .description(
         'A picture of a page of the running project — or several — and, asked, how it differs from another or what moves'
       )
@@ -338,7 +348,7 @@ export const registerPage = (pageGroup: Command): void => {
       .option('--sheet', 'Every picture taken — before, after each click, each frame — on one contact sheet')
       .option(
         '--steps <script>',
-        'An interaction, step by step: "click <el>; hover <el>; type <el> <text>; press <key>; wait <ms|3s>; wait-for <el>; action <id> [json]; as <account> <step>; shot [label]; frames <n> [ms]" — or @file with one per line'
+        'An interaction, step by step: "click <el>; hover <el>; scroll <el> [dx] [dy]; type <el> <text>; press <key>; wait <ms|3s>; wait-for <el>; action <id> [json]; as <account> <step>; shot [label]; frames <n> [ms]" — or @file with one per line'
       )
       .option('--reduced-motion', 'As a visitor who asked for less motion')
       .option('--json', 'One object, for a tool or an agent — { widths: [...] }, one each, for several pages or widths')

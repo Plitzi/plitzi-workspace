@@ -1,9 +1,4 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
-
-import chalk from 'chalk';
-
-import { PROJECT_STATE } from '@plitzi/sdk-shared/project';
 
 import {
   checkWithInteraction,
@@ -22,6 +17,7 @@ import {
   signedOutOnly,
   viewsAsked
 } from './lookParts';
+import { approvedText, notReviewedText } from './reviewText';
 import { act, runOf, runSelf } from './shell';
 import { list } from './text';
 import { answering, freePort } from '../../runs/acceptance';
@@ -44,7 +40,7 @@ import { RunRefusal } from '../../runs/refusal';
 import { reviewSteps, reviewTeamOf } from '../../runs/reviews';
 import { loadRun, logRun } from '../../runs/run';
 import { withLock } from '../../runs/store';
-import { findingsOf, taskParts } from '../../runs/taskParts';
+import { findingsOf, lookClips, taskParts } from '../../runs/taskParts';
 import { findTask, notReviewedIn, reviewTask } from '../../runs/tasks';
 import { viewTask } from '../../runs/taskStore';
 import { DESIGNER, readTeam } from '../../runs/team';
@@ -100,9 +96,6 @@ const viewTaskOf = async (
   };
 };
 
-/** How many of a task's parts of a page are pictured: a look is read by a model, and each picture costs it. */
-const PARTS_PICTURED = 3;
-
 /** The look itself, once its task is locked: its copy served, checked, pictured and set beside the run before it. */
 export const lookAt = (
   ctx: RunContext,
@@ -119,7 +112,7 @@ export const lookAt = (
     taskPaths(runPaths(ctx.root, runId), taskId).lookLock,
     async () => {
       const mark = phases();
-      const preview = await startTaskPreview(ctx, runId, taskId, await freePort(), { quiet: true });
+      const preview = await startTaskPreview(ctx, runId, taskId, await freePort(), { quiet: true, cold: true });
       // The run before it, once started: stopped with the copy's server whatever ends the look.
       const stops: (() => void)[] = [];
       try {
@@ -173,10 +166,7 @@ export const lookAt = (
         );
         // A part of a page others build too: its own elements pictured, its own findings kept — the rest is theirs.
         const parts = await taskParts(preview.dir, changed);
-        // More parts than are pictured apart: the page whole, never the first three of them — a run's t-home
-        // changed six sections, and the sede, info and faq went unseen.
-        const many = parts !== undefined && !parts.ownsRoot && parts.tops.length > PARTS_PICTURED;
-        const clips = parts && !parts.ownsRoot && !many ? parts.tops : [];
+        const { clips, many } = lookClips(parts, options.within);
         // A part drawn more than once — a component's instances — pictured where the most of the task's elements show:
         // a run's look pictured a playing room card for a task that changed the idle one.
         const showing = parts ? [...parts.ids].filter(id => !clips.includes(id)).slice(0, 40) : [];
@@ -547,7 +537,7 @@ export const lookAt = (
           check: kept?.text ?? check.output.trim(),
           ...(kept && kept.apart > 0 ? { apart: kept.apart } : {}),
           ...(clips.length > 0 ? { parts: clips } : {}),
-          ...(many ? { wholeFor: parts.tops } : {}),
+          ...(many && parts ? { wholeFor: parts.tops } : {}),
           ...(unreached.length > 0 ? { unreached } : {}),
           shots,
           ...(unpictured.length > 0 ? { unpictured } : {}),
@@ -555,19 +545,12 @@ export const lookAt = (
           ...(movedElsewhere.length > 0 ? { movedElsewhere } : {}),
           timezone: options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
           ...(compared.length > 0 ? { compared } : {}),
-          // Its copy served with the state its plays left: the run before it starts cold (the song playing
-          // differed on the two sides, the copy's queue played by its agent).
-          ...(compared.length > 0 &&
-          (await fs.readdir(path.join(preview.dir, PROJECT_STATE)).catch(() => [])).length > 0
-            ? { warmCopy: true }
-            : {}),
           ...(before === undefined ? { notBeside: true } : {}),
           // Set beside the run before it, and nothing of it said: that nothing moved is said, never read from silence
           // (a run's designer, at a look of its parts alone).
           ...(before !== undefined && compared.length === 0 && movedElsewhere.length === 0 && unchanged.size === 0
             ? { besideNothing: true as const }
             : {}),
-          ...(preview.borrowed === undefined ? {} : { borrowed: preview.borrowed }),
           ...(stoppedUnder.length > 0 ? { stoppedUnder } : {}),
           ...(notLooked.length > 0 ? { notLooked } : {}),
           pages: routes,
@@ -664,35 +647,7 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
               ...(reviewed.found.notices ?? []).map(notice => `  · ${notice}`)
             ].join('\n')
           : reviewed.verdict === 'approve'
-            ? [
-                `${taskId} approved: ${list(reviewed.merged ?? [])} in the run's work.`,
-                ...(reviewed.with
-                  ? [`  ${reviewed.with.task} approved beside it, as one change: ${list(reviewed.with.merged)} in too`]
-                  : []),
-                ...((reviewed.joined ?? []).length > 0
-                  ? [`  Put together with the change made in the project meanwhile: ${list(reviewed.joined ?? [])}`]
-                  : []),
-                ...((reviewed.fulfilled ?? []).length > 0
-                  ? [`  Its requests went in: ${list(reviewed.fulfilled ?? [])} — a holder's copy brings them`]
-                  : []),
-                ...(reviewed.unmerged
-                  ? [
-                      chalk.yellow(
-                        `  ⚠ Its request on ${list(reviewed.unmerged.files)} did not go in — ${reviewed.unmerged.reason}: an integration task applies it`
-                      )
-                    ]
-                  : []),
-                ...((reviewed.granted ?? []).length > 0 ? [`  Handed on: ${list(reviewed.granted ?? [])}`] : []),
-                ...((reviewed.ready ?? []).length > 0 ? [`  Ready now: ${list(reviewed.ready ?? [])}`] : []),
-                ...(reviewed.previewProblem
-                  ? [
-                      chalk.yellow(
-                        `  ⚠ The run's preview did not take it in: ${reviewed.previewProblem} — restart it (p in plitzi run monitor, or npm run start:preview)`
-                      )
-                    ]
-                  : []),
-                ...notReviewedText(reviewed.notReviewed, 'approve')
-              ].join('\n')
+            ? approvedText(taskId, reviewed)
             : [
                 reviewed.toLead
                   ? `${taskId}: ${String(reviewed.round)} rounds of changes — blocked for the lead to decide.`
@@ -703,15 +658,3 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
                 ...notReviewedText(reviewed.notReviewed, 'changes')
               ].join('\n')
   );
-
-/** What its copy holds that the review did not see — written after `complete`: kept out, and said. */
-const notReviewedText = (files: readonly string[] | undefined, verdict: 'approve' | 'changes'): string[] =>
-  files && files.length > 0
-    ? [
-        `  ⚠ Written in its copy after it went to review, so not what you reviewed: ${list(files)} — ${
-          verdict === 'approve'
-            ? 'what went to review is what was merged; that went with its copy'
-            : 'it stays in its copy, and goes to review with its next complete'
-        }`
-      ]
-    : [];

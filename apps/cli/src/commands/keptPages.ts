@@ -1,4 +1,4 @@
-import type { Measured } from './measureValues';
+import type { Measured, MeasuredExtra } from './measureValues';
 import type { KeptAnswer, KeptAsk, KeptView } from '../browser/keptBrowser';
 
 /**
@@ -15,7 +15,7 @@ export interface KeptPagesOptions<P> {
   /** Loads a page for the ask: as a visitor at its width and scheme sees it. */
   open: (asked: KeptAsk) => Promise<{ page: P } | { problem: string }>;
   /** Reads one element of a page, as `page measure` names it. */
-  read: (page: P, target: string) => Promise<Measured | { problem: string }>;
+  read: (page: P, target: string, options: { extra?: MeasuredExtra }) => Promise<Measured | { problem: string }>;
   close: (page: P) => Promise<void>;
   /** The pages kept at most: past it, the least lately loaded of those nobody reads go. */
   max: number;
@@ -160,7 +160,7 @@ export const keptPages = <P>({ open, read, close, max }: KeptPagesOptions<P>): K
     try {
       const readings: (Measured | { problem: string })[] = [];
       for (const target of asked.targets) {
-        readings.push(await read(held.page, target));
+        readings.push(await read(held.page, target, asked.extra ? { extra: asked.extra } : {}));
       }
 
       return { readings };

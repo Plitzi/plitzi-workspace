@@ -56,6 +56,8 @@ const TOKEN = /^([a-z0-9][a-z0-9_-]*)\.([a-z0-9][a-z0-9_-]*)\.([0-9a-f]{48})$/;
 interface Where {
   /** The project the runs are of — the project itself, also when the command runs in a task's copy. */
   root: string;
+  /** The shell's own folder. */
+  here: string;
   /** Who the copy the command runs in is, as taking it wrote it there: none outside a copy. */
   copy?: { token: string; agent: string };
 }
@@ -85,19 +87,20 @@ const currentFolder = (): string => {
 };
 
 const whereAmI = async (): Promise<Where> => {
-  const project = await findProject(currentFolder());
+  const here = currentFolder();
+  const project = await findProject(here);
   if (!project) {
     throw new RunRefusal('not-found', 'There is no package.json here or above: run this in the project');
   }
 
   const inCopy = copyOf(project.root);
   if (!inCopy) {
-    return { root: project.root };
+    return { root: project.root, here };
   }
 
   const copy = await copyTask(project.root);
 
-  return { root: inCopy.root, ...(copy ? { copy } : {}) };
+  return { root: inCopy.root, here, ...(copy ? { copy } : {}) };
 };
 
 /** A person, at a terminal of their own, typing the run's name — never an agent's shell, which has none. */
@@ -153,7 +156,7 @@ const claimOf = (said: { token?: string; name?: string; blank?: boolean }): Clai
  * never a guess — a guess was the lead, then "agent".
  */
 export const contextFor = async (options: RunCommandOptions): Promise<RunContext> => {
-  const { root, copy } = await whereAmI();
+  const { root, here, copy } = await whereAmI();
   const token = saidValue(options.token) ?? saidValue(process.env.PLITZI_TOKEN);
   const name = saidValue(options.agent) ?? saidValue(process.env.PLITZI_AGENT);
   const quality = options.quality ?? process.env.PLITZI_QUALITY;
@@ -176,6 +179,7 @@ export const contextFor = async (options: RunCommandOptions): Promise<RunContext
   let agent: string | undefined;
   const ctx: RunContext = {
     root,
+    cwd: here,
     now: () => new Date(),
     machine: os.hostname(),
     cli: CLI_VERSION,

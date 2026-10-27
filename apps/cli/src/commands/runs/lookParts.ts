@@ -17,7 +17,7 @@ import { findTask } from '../../runs/tasks';
 import { checkKey } from '../../runs/tasks/checked';
 import { viewTask } from '../../runs/taskStore';
 import { checkAccount } from '../check/account';
-import { pageFor } from '../check/space';
+import { readsAsMember } from '../visit';
 
 import type { Difference } from '../same';
 import type { LookOptions } from './lookOptions';
@@ -36,16 +36,7 @@ export const visitorsOnly = async (
   const authored = await authoredSpace(dir);
   // Members only by the router, a gate in place that shows a guest another page (`gated`: encore-11's /rooms/new), or
   // kept for some permissions (the server withholds those): read as one of them — `--guest` reads a guest's.
-  const guarded = authored
-    ? pages.filter(each => {
-        const id = pageFor(authored, each);
-        const page = id === undefined ? undefined : authored.handles.pages[id];
-
-        const audience = audienceAt(authored.schema, each);
-
-        return audience === 'members' || audience === 'gated' || (page?.access?.permissions.length ?? 0) > 0;
-      })
-    : [];
+  const guarded = authored ? pages.filter(each => readsAsMember(authored, each)) : [];
   if (guarded.length === 0) {
     return undefined;
   }
@@ -300,6 +291,19 @@ export interface Checked {
  * takes it, so with several pages each is checked with it apart (`task look --hover` on a task of three
  * pages was refused whole). One browser at a time: each check opens its own.
  */
+const isDifference = (value: Record<string, unknown>): value is Record<string, unknown> & Difference =>
+  typeof value.element === 'string' &&
+  Array.isArray(value.changed) &&
+  value.changed.every(
+    each =>
+      isRecord(each) &&
+      typeof each.field === 'string' &&
+      typeof each.here === 'string' &&
+      typeof each.there === 'string'
+  ) &&
+  (value.only === undefined || value.only === 'here' || value.only === 'there') &&
+  (value.wordsOnly === undefined || value.wordsOnly === true);
+
 /** What `page same --json` read differing first, for one page: none when it drew the same, or could not be told. */
 export const elsewhereOf = (output: string): Difference | undefined => {
   try {
@@ -307,9 +311,7 @@ export const elsewhereOf = (output: string): Difference | undefined => {
     const page: unknown = isRecord(read) && Array.isArray(read.pages) ? (read.pages as unknown[])[0] : undefined;
     const first = isRecord(page) && page.same === false && isRecord(page.first) ? page.first : undefined;
 
-    return first && typeof first.here === 'string' && typeof first.there === 'string'
-      ? { here: first.here, there: first.there, ...(first.wordsOnly === true ? { wordsOnly: true as const } : {}) }
-      : undefined;
+    return first && isDifference(first) ? first : undefined;
   } catch {
     return undefined;
   }

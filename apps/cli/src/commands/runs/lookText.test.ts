@@ -56,10 +56,6 @@ describe('a look that took no picture', () => {
     expect(
       stripVTControlCharacters(lookText({ ...looked, compared: [...twelve, view('/menu', 3, ['nav 3%'])] }))
     ).toContain('Beside the run before it: 1 of 13 views compared differ (/menu) — below');
-    // The song playing differed on the two sides — the copy's queue played by its agent.
-    expect(stripVTControlCharacters(lookText({ ...looked, warmCopy: true }))).toContain(
-      'plitzi server reset in its copy (its server stopped), then look again --fresh'
-    );
   });
 
   // A run's look said "No picture could be taken" of / as a guest and signed in, with no reason given.
@@ -184,8 +180,13 @@ describe('a look whose page says other words outside its parts', () => {
       shots: [],
       timezone: 'UTC',
       movedElsewhere: [
-        { route: '/', here: 'time |  | Today 02:52 UTC', there: 'time |  | Today 02:53 UTC', wordsOnly: true },
-        { route: '/rooms', here: 'div | a |  | 0,0,10x10', there: 'div | a |  | 0,0,12x10' }
+        {
+          route: '/',
+          element: 'time',
+          changed: [{ field: 'words', here: 'Today 02:52 UTC', there: 'Today 02:53 UTC' }],
+          wordsOnly: true
+        },
+        { route: '/rooms', element: 'a', changed: [{ field: 'box', here: '0,0,10x10', there: '0,0,12x10' }] }
       ]
     } as unknown as Looked;
     const text = stripVTControlCharacters(lookText(looked));
@@ -193,5 +194,7 @@ describe('a look whose page says other words outside its parts', () => {
     expect(text).toContain('/ says other words outside its parts');
     expect(text).toContain("More likely what the two servers' data says");
     expect(text).toContain('/rooms moved outside its parts too');
+    // Said by the element and what of it differs — never two lines of twenty fields.
+    expect(text).toContain('a: box 0,0,12x10 → 0,0,10x10');
   });
 });

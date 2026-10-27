@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import { readyWhatWaited, sayIfAllDone, statesOf } from './handOn';
 import { proposalsOf } from '../agreements';
 import { sendMessage } from '../messages';
+import { isWithin } from '../paths';
 import { syncPreview } from '../preview';
 import { loadRun, logRun, readApproved } from '../run';
 import { logSpent } from '../spent';
@@ -60,7 +61,12 @@ export const closeApproved = async (
     ...(step === undefined ? {} : { step })
   });
   await logSpent(ctx, loaded, taskId, 'review');
-  await fs.rm(view.paths.cache, { recursive: true, force: true });
+  // Its copy goes — but never from under the shell that approved it: one there was left in a folder gone, every command
+  // after it failing on getcwd (encore-13's test-1, approving where it ran the checks). Left, it goes with the run.
+  const callerInCopy = ctx.cwd !== undefined && isWithin(view.paths.cache, ctx.cwd);
+  if (!callerInCopy) {
+    await fs.rm(view.paths.cache, { recursive: true, force: true });
+  }
 
   const refreshed = await loadRun(ctx, runId);
   const granted = await grantWaiters(ctx, refreshed, released);
@@ -119,6 +125,7 @@ export const closeApproved = async (
     fulfilled,
     ...(unmerged ? { unmerged } : {}),
     ...(joined.length > 0 ? { joined } : {}),
-    ...(notReviewed.length > 0 ? { notReviewed } : {})
+    ...(notReviewed.length > 0 ? { notReviewed } : {}),
+    ...(callerInCopy ? { copyLeft: ctx.root } : {})
   };
 };

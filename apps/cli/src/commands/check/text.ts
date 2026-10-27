@@ -31,6 +31,11 @@ const heldText = (report: CheckReport, asked: CheckAsk): string[] => {
       ...('unread' in styles
         ? [`  · element ${id}: its styles cannot be read — ${styles.unread}`]
         : [
+            ...(styles.partOf
+              ? [
+                  `  · element ${id}: a part of the component ${styles.partOf}${styles.copies > 1 ? `, read on the first of the ${String(styles.copies)} copies the page draws` : ''}`
+                ]
+              : []),
             ...(styles.contested.length === 0
               ? [`  · element ${id}: no property is set by more than one of its classes`]
               : contestedText(styles.contested, styles.wornBy).map(line => `  · element ${id} at rest — ${line}`)),
@@ -153,6 +158,12 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
     report.hiddenAtWidth.length > 0
       ? chalk.dim(`  · hidden at this width by a breakpoint, on purpose: ${report.hiddenAtWidth.join(', ')}`)
       : undefined;
+  const cut =
+    report.cut && report.cut.length > 0
+      ? chalk.dim(
+          `  · cut short at this width, by a box that cuts its text (an ellipsis, a clipped overflow): ${report.cut.join(', ')} — on purpose for data that varies; --expect "<id>~<text>" holds one whole`
+        )
+      : undefined;
   const empty =
     report.empty.length > 0
       ? chalk.dim(`  · empty, with nothing in them yet and no size: ${report.empty.join(', ')}`)
@@ -167,6 +178,7 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
         `✓ ${head} — ${report.checked > 0 ? `${String(report.checked)} elements on screen, ` : ''}nothing wrong`
       ),
       ...(atWidth ? [atWidth] : []),
+      ...(cut ? [cut] : []),
       ...(empty ? [empty] : []),
       ...(outOfUse ? [outOfUse] : []),
       ...held

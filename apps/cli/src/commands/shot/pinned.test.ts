@@ -3,12 +3,13 @@ import { describe, expect, it } from 'vitest';
 
 import { HIDDEN_FOR_SHOT, hidePinned, pinnedScroll, showPinned } from './capture';
 
-// A part clipped under a sticky site header was pictured with the header over its first rows.
+// A part clipped under a sticky site header was pictured with the header over its first rows — and, hidden by its
+// visibility, a header whose children keep `visibility: visible` of their own still drew them (encore-13's looks at 390).
 describe('what is pinned over an element pictured', () => {
-  it('is hidden for the picture — never the element, what holds it or what it holds — and shown again as it was', () => {
+  it('is hidden for the picture, all it holds too — never the element, what holds it or what it holds — and shown again as it was', () => {
     document.body.innerHTML = `
-      <header id="bar" style="position: sticky; top: 0"></header>
-      <div id="toast" style="position: fixed; visibility: visible"></div>
+      <header id="bar" style="position: sticky; top: 0"><nav id="nav" style="visibility: visible"></nav></header>
+      <div id="toast" style="position: fixed; opacity: 0.8"></div>
       <main id="sheet" style="position: fixed"><section id="queue"><div id="pin" style="position: sticky"></div></section></main>`;
     const queue = document.getElementById('queue');
     if (!queue) {
@@ -16,13 +17,16 @@ describe('what is pinned over an element pictured', () => {
     }
 
     expect(hidePinned(queue, HIDDEN_FOR_SHOT)).toBe(2);
-    expect(document.getElementById('bar')?.style.visibility).toBe('hidden');
-    expect(document.getElementById('sheet')?.style.visibility).toBe('');
-    expect(document.getElementById('pin')?.style.visibility).toBe('');
+    // By its opacity, which nothing it holds can undo.
+    expect(document.getElementById('bar')?.style.getPropertyValue('opacity')).toBe('0');
+    expect(document.getElementById('bar')?.style.getPropertyPriority('opacity')).toBe('important');
+    expect(document.getElementById('toast')?.style.getPropertyValue('opacity')).toBe('0');
+    expect(document.getElementById('sheet')?.style.getPropertyValue('opacity')).toBe('');
+    expect(document.getElementById('pin')?.style.getPropertyValue('opacity')).toBe('');
 
     showPinned(HIDDEN_FOR_SHOT);
-    expect(document.getElementById('bar')?.style.visibility).toBe('');
-    expect(document.getElementById('toast')?.style.visibility).toBe('visible');
+    expect(document.getElementById('bar')?.style.getPropertyValue('opacity')).toBe('');
+    expect(document.getElementById('toast')?.style.getPropertyValue('opacity')).toBe('0.8');
     expect(document.querySelectorAll(`[${HIDDEN_FOR_SHOT}]`)).toHaveLength(0);
   });
 });

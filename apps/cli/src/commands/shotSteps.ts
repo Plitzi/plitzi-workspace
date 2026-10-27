@@ -7,7 +7,8 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
  *
  *   click <element>          a press — its name (`data-plitzi-el`), a tag or a CSS selector, inside a plugin too
  *   hover <element>          the pointer put over it, and left there — what a hover shows, pictured by the next shot
- *   scroll <element>         brought into view, as a reader scrolling to it — the footer, a section below the fold
+ *   scroll <element> [dx] [dy]  brought into view, as a reader scrolling to it — the footer, a section below the fold;
+ *                            with how far, in pixels, its own content scrolled instead — a row across: scroll genres 200
  *   type <element> <text>    text typed into a field, in place of what it held: type ".panel textarea" hi
  *   drag <element> <dx> [dy] pressed, moved by that many pixels (negative: left, up) and let go — a slider's handle
  *   press <key>              a key, as Playwright names it: Enter, Escape, ArrowDown…
@@ -37,7 +38,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 export type PageStep =
   | { kind: 'click'; target: string }
   | { kind: 'hover'; target: string }
-  | { kind: 'scroll'; target: string }
+  | { kind: 'scroll'; target: string; by?: { dx: number; dy: number } }
   | { kind: 'type'; target: string; text: string }
   | { kind: 'drag'; target: string; dx: number; dy: number }
   | { kind: 'press'; key: string }
@@ -222,13 +223,33 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
       case 'click':
       case 'hover':
       case 'scroll':
-      case 'wait-for':
+      case 'wait-for': {
         if (!argument) {
           return { problem: `${at}: ${name} needs an element — its name or a CSS selector` };
         }
 
+        // Numbers after the element are no part of a selector: a run's `scroll <row> 200` reached Playwright whole and
+        // came back as its parse error. A scroll takes them as how far; the others take none.
+        const { target, rest: after } = leadingTarget(rest.join(' '));
+        const amounts = after === '' ? [] : after.split(/\s+/);
+        if (amounts.length > 0 && amounts.every(each => /^-?\d+$/.test(each))) {
+          const [dx = 0, dy = 0] = amounts.map(Number);
+          if (name !== 'scroll' || amounts.length > 2 || (dx === 0 && dy === 0)) {
+            return {
+              problem:
+                name === 'scroll'
+                  ? `${at}: scroll takes an element and how far its content goes, in whole pixels — scroll <element> <dx> [dy]: scroll genres 200`
+                  : `${at}: ${name} takes an element alone — ${after} is no part of one (a selector with spaces goes in quotes)`
+            };
+          }
+
+          steps.push({ kind: 'scroll', target: unquoted(target), by: { dx, dy } });
+          break;
+        }
+
         steps.push({ kind: name, target: argument });
         break;
+      }
       case 'type':
       case 'fill': {
         // `fill email=ana@x.com` as `--fill` writes it, beside `fill email ana@x.com`: a run's agents wrote the flag's

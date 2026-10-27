@@ -1,5 +1,5 @@
 import { agentAddress, LEAD, messagesOf, sendMessage } from '../messages';
-import { reviewPages } from '../pagesOf';
+import { changesNoPage, reviewPages } from '../pagesOf';
 import { reviewSteps, stepTimeOf, takeStep } from '../reviews';
 import { logRun, readRunLog } from '../run';
 import { DEFAULT_DESIGN_REVIEW, DESIGNER, readTeam } from '../team';
@@ -25,6 +25,8 @@ export interface ReviewOffer {
   lastRound?: true;
   changed: string[];
   pages: string[];
+  /** It changes no page (`changesNoPage`): its review is its acceptance, before it and with it — no look offered. */
+  noPage?: true;
   asked: string[];
   earlier: number;
   copy: string;
@@ -85,6 +87,9 @@ export const reviewOffer = async (
     steps,
     changed: review.state.changed ?? [],
     pages: await reviewPages(review),
+    ...((await changesNoPage(review.paths.work, review.state.changed ?? [], review.task.acceptance))
+      ? { noPage: true as const }
+      : {}),
     ...askedOf(review.state.notes),
     ...(changesBlock(review.state) ? { lastRound: true } : {}),
     copy: review.paths.work,

@@ -197,6 +197,43 @@ describe('originHere', () => {
     }
   }, 60_000);
 
+  // encore-13's looks read a task's copy, warm with its agent's state, as having "moved" beside the run before — served
+  // cold. A look serves the task cold too: its own server, its own empty state, never one already on the copy.
+  it('serves a cold look apart — never the server a picture kept — from a state of its own, empty', async () => {
+    await bench.write(
+      'serve.mjs',
+      "import http from 'node:http';\n\nhttp.createServer((q, r) => r.end(q.url === '/health' ? '{}' : String(process.env.PLITZI_STATE_DIR))).listen(process.env.PORT);\n"
+    );
+    await bench.write(
+      'package.json',
+      `${JSON.stringify({ name: 'bench', type: 'module', private: true, scripts: { start: 'node serve.mjs' } })}\n`
+    );
+    await open();
+    const home = await take('agent-1', 't-home');
+    const cache = taskPaths(runPaths(bench.root, 'es-launch'), 't-home').cache;
+    const kept = await originHere(home.work, undefined);
+    if ('problem' in kept) {
+      throw new Error(kept.problem);
+    }
+
+    await fs.mkdir(path.join(cache, 'look-state'), { recursive: true });
+    await fs.writeFile(path.join(cache, 'look-state', 'kv.json'), '{"left":"by the look before"}');
+    const preview = await startTaskPreview(lead(), 'es-launch', 't-home', await freePort(), {
+      quiet: true,
+      cold: true
+    });
+    try {
+      expect(preview.borrowed).toBeUndefined();
+      expect(preview.url).not.toBe(kept.origin);
+      expect(await answering(preview.url, 20_000)).toBe(true);
+      expect(await (await fetch(preview.url)).text()).toBe(path.join(cache, 'look-state'));
+      await expect(fs.readdir(path.join(cache, 'look-state'))).resolves.toEqual([]);
+    } finally {
+      preview.stop();
+      await stopKept(cache);
+    }
+  }, 60_000);
+
   it('says why a look’s server stopped, with what it said last — and forgets the copy was previewed', async () => {
     await servedBench('node -e "console.log(\'cannot start: port taken\'); process.exit(3)"');
     await open();

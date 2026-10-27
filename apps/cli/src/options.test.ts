@@ -7,6 +7,8 @@ import {
   durationText,
   expectation,
   fill,
+  pagePath,
+  pagePathList,
   pagePaths,
   positiveInteger,
   scale,
@@ -18,6 +20,24 @@ import {
 } from './options';
 
 describe('options', () => {
+  // encore-13: `--width "390 dark"` heard only what a width is; `page measure '/explore --as dax'` opened
+  // /explore%20--as%20dax.
+  it('refuses a value or a path that holds several words, saying where each goes', () => {
+    expect(() => widths('390 dark')).toThrow(
+      '"390 dark" is 2 words in one value — quotes or a shell variable joined them: 390 alone, and dark is a scheme: --scheme dark.'
+    );
+    expect(() => pagePath('/explore --as dax')).toThrow(
+      '"/explore --as dax" is 3 words in one path — quotes or a shell variable joined them: /explore alone, and --as dax is an option of the command, outside the quotes.'
+    );
+    expect(() => pagePath('dark')).toThrow('dark is no page: dark is a scheme: --scheme dark.');
+    expect(() => pagePath('390')).toThrow('390 is no page: 390 is a width: --width 390.');
+    expect(() => pagePath('about')).toThrow('"about" is no page\'s path: a path starts with / — /about.');
+    expect(pagePath('/r/night-drive?tab=2')).toBe('/r/night-drive?tab=2');
+    const command = new Command('shot').argument('[paths...]', 'pages', pagePathList).action(() => undefined);
+    command.parse(['/', '/about'], { from: 'user' });
+    expect(command.processedArgs).toEqual([['/', '/about']]);
+  });
+
   // `run report --summary --token <it>` read "--token" as the summary's file and the token as the run.
   it('says a flag that took the next flag as its value', () => {
     const command = new Command('report').option('--summary <file>').option('--token <token>').argument('[run]');

@@ -238,6 +238,13 @@ export const projectPath = (root: string, file: string): string =>
 /** Where a project path is under another folder that mirrors the project (a copy, a backup). */
 export const under = (folder: string, file: string): string => path.join(folder, ...file.split('/'));
 
+/** Whether `folder` is `dir` or inside it. */
+export const isWithin = (dir: string, folder: string): boolean => {
+  const relative = path.relative(dir, folder);
+
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+};
+
 /**
  * Where a task's copy keeps who it is — its run, its task, its token, its agent — so a command run inside the copy needs
  * none of them said. In the copy's `tmp/`, which never counts at `complete` and is never copied back.

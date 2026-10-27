@@ -354,9 +354,19 @@ that place of the section — "lacks box-shadow … — at ours: match-result"),
 A path may say its own visitor and status — `"/moderation --as juno --status 403" "/withheld --as juno"` (`lookPaths.ts`):
 one look a visitor, each told what the others covered. A part drawn more than once — a component's instances — is
 pictured where the most of the task's elements show (`page shot --clip <part> --showing <elements>`, `clipArgs`): a look
-pictured a playing room card for a task that changed the idle one.
-A page that sends a guest away is found by one guest check (`readAsFor`, `page check --guest`) and read as the project's
-account; a page only a signed-out visitor opens (`accessLevel: 'public'`, no signed-in twin: `signedOutOnly`) is read as a
+pictured a playing room card for a task that changed the idle one. A task that changes no page — each of its files
+outside `src/` and `public/` and reached by no page, its acceptance checking none (`changesNoPage`): a test's fix, a
+script — has no look: `task look` says so and names `task check <task> --before`, its review's offer the same, where a
+look pictured the home page the change could not touch. `task check <task> --before` (`checkBefore`) runs its
+acceptance on the run before it — the approved work without it, made afresh in its cache — and on its copy, and says of
+each line whether it proves the change (fails before, passes with it), proves nothing (passes on both) or fails with
+it: encore-13's tester copied a spec without its new line into its scratch to see it fail. `--within <element>` pictures one part alone; a task
+of more than three parts, or one that writes the page's root, is pictured whole (`lookClips`). A part's picture leaves out
+what is pinned over it (a sticky header), and what differs between the two sides is said field by field
+(`differenceText`: `container-57: box 0,0,249x314 → 0,0,249x331`), never a dump of both readings.
+A page the space authors for members (`readsAsMember`: its audience members or gated, or permissions of its own) is read
+as the project's account from the start, by every page command alike; one that sends a guest away is found by one guest
+check (`readAsFor`, `page check --guest`) and read as the project's account too; a page only a signed-out visitor opens (`accessLevel: 'public'`, no signed-in twin: `signedOutOnly`) is read as a
 guest in a signed-in look — encore-10's looks of `/sign-in` were sent home and pictured Home; a page its changes are drawn
 at counts as looked at for an address that fits it (`lookedAmong`: `/u/mika` for `/u/:username`) and for an earlier look
 of the task as it is now (`pagesLooked`, kept with each look); a page the run before answers 404 — one the task adds — is pictured alone (`newSinceBefore`); a look that took no
@@ -367,9 +377,11 @@ A server of the look that stops under it is said, with why and its last lines (`
 others build too — a section of the home — is looked at as that part (`taskParts.ts`, off the copy's own authoring:
 the elements its files write): its pictures clipped to its outermost elements (a provider's children, as it draws no
 node), and the page check's findings on other tasks' parts set apart and counted — a stub of theirs is no finding of
-its. A whole page, layout or component of its own is pictured whole, as before. A copy its agent's own server still
-serves (its `tmp/dev-server.json` answers) is looked at there and left running — a second server would not start on
-the copy's state, whose kv lock the first holds; `run preview --task` follows it the same way. So is one a `page shot`
+its. A whole page, layout or component of its own is pictured whole, as before. A look serves the copy cold, as the
+run before is served (`startTaskPreview`'s `cold`: a state of its own, `cache/look-state`, never the agent's): a copy
+warm with its agent's plays read as having "moved" where only its data had. `run preview --task` follows a copy its
+agent's own server still serves (its `tmp/dev-server.json` answers) and leaves it running — a second server would not
+start on the copy's state, whose kv lock the first holds. So is one a `page shot`
 kept (`lingering.ts`), its use marked while it is followed so its watchdog leaves it; and a copy a look serves is said
 (`previewed.json`), so a `page shot` in it pictures through that server rather than start a second beside it. `--hover <id>` is
 `page check --hover` on each page and one more picture at 1440, light, with the pointer over it (`page shot --steps
@@ -387,7 +399,7 @@ through `/auth/login`), so `/u/:username` is found as the account's own link. Wh
 three screens pictured in parts too (`readablePictures`, the shot's `tiles`) — a phone's page read whole shrank to 97 px;
 a picture not taken said once a reason, with every picture it stopped, and how to see a part on none of them (`--as`,
 `--click`: `unpicturedText`); a dress change once, with every section it is in, an item repeated in one as `×n`
-(`dressOf`); that the copy was served with the state its plays left (`state/`), the run before cold (`warmCopy`); and
+(`dressOf`); and
 `--before` when it was not set beside the run before (`notBeside`).
 
 Its pictures are the run's (`<run>/shots/`), and so is a `page shot` taken inside a task's copy (`<run>/shots/<task>/`):
@@ -891,7 +903,9 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   unblock --answer`), or asks the person, since nobody else in the run talks to them. An agent's own block waits for
   the lead or another task (`--needs lead|task`), never the person directly. Approval keeps the version that
   went to review and merges it into `approved.json`; what its copy holds otherwise — written after `complete` — is not
-  merged, and said (`notReviewed`, and `task look` warns that what it serves is not what an approval merges). A step of a
+  merged, and said (`notReviewed`, and `task look` warns that what it serves is not what an approval merges). Approved,
+  its copy goes — but never from under the shell that approved it: one approved from inside it is left there, going with
+  the run, and the answer says to go back to the project before the next command. A step of a
   review is an agent's of the team, by the name `team.json` starts it with (`design-1`). **Before
   anything is written, each file is checked**: the run's version moved since the copy was made (`conflict`: redo it on
   the run's), a file it made where another task made one by that name first (two files, never put together), or someone

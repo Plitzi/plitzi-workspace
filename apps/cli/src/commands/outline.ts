@@ -81,6 +81,9 @@ export const foundIn = (elements: readonly OutlinedElement[], word: string): Out
 };
 const WORDS = 32;
 
+/** The mark the part asked for (`--within`) carries while it is outlined: found by the browser, read by the page. */
+const OUTLINE_ROOT = 'data-plitzi-outline-root';
+
 /**
  * Run in the page: its shown elements under the part asked, depth first. A selector is the element's id when one is
  * its alone, its tag and first classes when they find it alone, or else its place under the nearest ancestor that has
@@ -297,21 +300,41 @@ export const outlineOnPage = async (
     return { ...clicked, phase: 'click' };
   }
 
-  // The part named as every page command names an element: its name, a tag or any selector.
+  // The part named as every page command names an element — its name, a tag or any selector, Playwright's too — found
+  // by the browser and marked for the page to read: a selector `>> nth=0` that page measure took answered "nothing on
+  // the page" here, read by the page's own querySelectorAll (encore-13's designer).
   const part = asked.within === undefined ? undefined : await targetOn(page, asked.within);
   if (part && 'problem' in part) {
     return { ...part, phase: 'part' };
   }
 
-  const read = await page.evaluate(outlineIn, {
-    ...(part ? { within: part.selector } : {}),
-    ...(before === undefined ? {} : { opened: before }),
-    depth: asked.depth,
-    limit: asked.limit,
-    words: asked.words
-  });
+  if (part?.found === true) {
+    await page
+      .locator(part.selector)
+      .filter({ visible: true })
+      .first()
+      .evaluate((node, mark: string) => {
+        node.setAttribute(mark, '');
+      }, OUTLINE_ROOT);
+  }
 
-  return 'problem' in read ? { ...read, phase: 'read' } : { outline: read, opened: before !== undefined };
+  try {
+    const read = await page.evaluate(outlineIn, {
+      ...(part ? { within: part.found ? `[${OUTLINE_ROOT}]` : part.selector } : {}),
+      ...(before === undefined ? {} : { opened: before }),
+      depth: asked.depth,
+      limit: asked.limit,
+      words: asked.words
+    });
+
+    return 'problem' in read
+      ? { problem: read.problem.replace(`[${OUTLINE_ROOT}]`, asked.within ?? ''), phase: 'read' }
+      : { outline: read, opened: before !== undefined };
+  } finally {
+    await page.evaluate((mark: string) => {
+      document.querySelector(`[${mark}]`)?.removeAttribute(mark);
+    }, OUTLINE_ROOT);
+  }
 };
 
 export const outline = async (route: string, options: OutlineOptions): Promise<void> => {

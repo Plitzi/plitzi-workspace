@@ -5,8 +5,7 @@ import {
   taskAnswer,
   taskAsk,
   taskBlock,
-  taskCheck,
-  taskSeeStage,
+  taskCheckCommand,
   taskComplete,
   taskFound,
   taskContextCommand,
@@ -44,7 +43,15 @@ import { count, duration, FOLLOW_MS, fraction } from '../../../options';
 import { BLOCK_NEEDS } from '../../../runs/model';
 import { withVisitorOptions } from '../../register/options';
 
-import type { AnswerOptions, ClaimOptions, LookOptions, ProposeOptions, ReviewOptions, RunCommandOptions } from '..';
+import type {
+  AnswerOptions,
+  CheckCommandOptions,
+  ClaimOptions,
+  LookOptions,
+  ProposeOptions,
+  ReviewOptions,
+  RunCommandOptions
+} from '..';
 import type { ExperienceFlags } from '../../../runs/experience';
 import type { TellOptions } from '../talk';
 import type { Command } from 'commander';
@@ -266,11 +273,14 @@ export const registerTaskGroup = (program: Command): Command => {
       '--tasks <stage.json>',
       'At a research card: the stage you would propose, seen as the lead would stack it — each line run once on the run’s work'
     )
+    .option(
+      '--before',
+      'Its acceptance run on the run before it too — the approved work without it — line by line: a line that fails there and passes with it proves the change; one passing on both proves nothing (a test’s or a bug’s fix, reviewed)'
+    )
+    .argument('[task]', 'With --before: the task to set beside the run before it — a review’s — your own when left out')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((options: RunCommandOptions & { acceptance?: boolean; fresh?: boolean; tasks?: string }) =>
-      options.tasks === undefined ? taskCheck(options) : taskSeeStage({ ...options, tasks: options.tasks })
-    );
+    .action((named: string | undefined, options: CheckCommandOptions) => taskCheckCommand(named, options));
 
   taskGroup
     .command('complete')
@@ -415,6 +425,10 @@ export const registerTaskGroup = (program: Command): Command => {
         Number
       )
       .option('--width <px>', 'The widths looked at, comma-separated (1440,390 when left out)')
+      .option(
+        '--within <element>',
+        'One part alone — its element’s name, a tag or any selector, as page outline takes it: pictured, and beside the run before'
+      )
       .option(
         '--scheme <schemes>',
         'light, dark, or light,dark: each width in each (light at 1440, dark at 390 when left out)'

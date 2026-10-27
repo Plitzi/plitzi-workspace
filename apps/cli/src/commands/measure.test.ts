@@ -5,11 +5,11 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { measure, onlyProperties, pairOf, readingKey, sameProperties } from './measure';
+import { measure, onlyProperties, pairOf, readingKey, saidOnce, sameProperties } from './measure';
 import { measureOn, pseudoBoxes } from './measureOn';
-import { putIn, rowsOf, stateText } from './measureState';
+import { putIn, copiesOf, stateText } from './measureState';
 import { comparedText, measuredText, readingText } from './measureText';
-import { differences, MEASURED, PSEUDO_MEASURED } from './measureValues';
+import { differences, extraOf, MEASURED, PSEUDO_MEASURED } from './measureValues';
 
 import type { Measured } from './measureValues';
 import type { LayoutSession } from '../browser';
@@ -283,7 +283,7 @@ describe('page measure', () => {
       'border-left'
     ]);
     expect(sameProperties('font')).toContain('letter-spacing');
-    expect(() => sameProperties('font-size,glow')).toThrow('not glow');
+    expect(() => sameProperties('font-size,glow!')).toThrow('not glow!');
   });
 
   // A fit asked for an element's box, and its 30 properties were grepped for it.
@@ -299,7 +299,32 @@ describe('page measure', () => {
       'flex-grow',
       'justify-content'
     ]);
-    expect(() => onlyProperties('glow')).toThrow('--only takes what is measured');
+    expect(() => onlyProperties('overflow x')).toThrow('--only takes CSS properties by name');
+  });
+
+  // encore-13's designer checking a row still scrolls and snaps: --only refused all four, a list grown a run at a time.
+  it('takes any CSS property by name, a pseudo-element’s too, read besides what always is', () => {
+    const asked = onlyProperties('width,overflow-x,scroll-snap-type,after:margin-left,after:width,-webkit-line-clamp');
+    expect(asked).toEqual([
+      'width',
+      'overflow-x',
+      'scroll-snap-type',
+      'after:margin-left',
+      'after:width',
+      '-webkit-line-clamp'
+    ]);
+    expect(extraOf(asked)).toEqual({
+      properties: ['overflow-x', 'scroll-snap-type', '-webkit-line-clamp'],
+      pseudo: ['margin-left']
+    });
+    // Compared as they are, beside what always is.
+    const withOverflow = (value: string): Measured => {
+      const read = measured({});
+
+      return { ...read, styles: { ...read.styles, 'overflow-x': value } };
+    };
+    const [here, there] = [withOverflow('auto'), withOverflow('hidden')];
+    expect(differences(here, there).differ).toEqual([{ property: 'overflow-x', here: 'auto', there: 'hidden' }]);
   });
 
   // A list's three plates were measured by their first alone, and their readouts differed (235/303/241 px).
@@ -315,15 +340,15 @@ describe('page measure', () => {
             }
           })
         })
-      }) as unknown as Parameters<typeof rowsOf>[0];
+      }) as unknown as Parameters<typeof copiesOf>[0];
     const pair = { here: '.show-plate', there: '.show-plate' };
 
-    expect((await rowsOf(drawn(3), pair)).map(each => each.here)).toEqual([
+    expect((await copiesOf(drawn(3), pair)).map(each => each.here)).toEqual([
       '.show-plate >> nth=0',
       '.show-plate >> nth=1',
       '.show-plate >> nth=2'
     ]);
-    expect(await rowsOf(drawn(1), pair)).toEqual([pair]);
+    expect(await copiesOf(drawn(1), pair)).toEqual([pair]);
   });
 
   // A run's first measures: Cinzel with another fallback, borders of no width, one gold in two notations — noise.
@@ -387,7 +412,7 @@ describe('page measure', () => {
       'before:background-image',
       'after:opacity'
     ]);
-    expect(() => sameProperties('before:glow')).toThrow('not before:glow');
+    expect(() => sameProperties('middle:opacity')).toThrow('not middle:opacity');
   });
 
   // Every element listed the page's font as differing, burying what the element itself does.
@@ -524,7 +549,7 @@ describe('an element measured alone', () => {
     };
 
     const text = stripVTControlCharacters(measuredText(sign));
-    expect(text).toContain('(the first shown of 6 it finds — --rows measures each)');
+    expect(text).toContain('(the first shown of 6 it finds — --each measures each)');
     expect(text).toContain('font-size              32px');
     expect(text).toContain('before:position        absolute');
     expect(text).toMatch(/background-image +url\(data:image\/svg\+xml … \d+ chars\)/);
@@ -536,22 +561,6 @@ describe('an element measured alone', () => {
     const all = stripVTControlCharacters(measuredText(sign, undefined, true));
     expect(all).toContain('box-shadow             none');
     expect(all).toContain(glow);
-  });
-
-  // A designer proved a profile's own button by its widths and place — of a button hidden, with no box: never said.
-  it('says an element measured is hidden, alone and beside the other page', () => {
-    const shown: Measured = {
-      selector: '#follow',
-      tag: 'button',
-      text: 'Follow',
-      styles: { width: '96px' },
-      inherited: []
-    };
-    const hidden: Measured = { ...shown, styles: { width: '0px' }, hidden: true };
-
-    expect(stripVTControlCharacters(measuredText(hidden))).toContain('hidden: a visitor sees none of what it finds');
-    expect(stripVTControlCharacters(measuredText(hidden, shown))).toContain('hidden here: a visitor sees none');
-    expect(stripVTControlCharacters(measuredText(shown, shown))).not.toContain('hidden');
   });
 });
 
@@ -660,5 +669,23 @@ describe('a reading said short', () => {
     expect(stripVTControlCharacters(measuredText(uneven))).toContain(
       'border-top             2px solid rgb(42, 31, 22)'
     );
+  });
+});
+
+// A run's tester measured sixteen copies of a part where eight were drawn, and read why one was not eight times.
+describe('why an element is not drawn', () => {
+  it('is said whole once a measure, and pointed back to after', () => {
+    const missing = (id: string) => ({
+      width: 1440,
+      pair: pairOf(id),
+      here: { problem: `No element ${id} on http://127.0.0.1:8080/ — not drawn here: a page for signed-in visitors` },
+      unlike: []
+    });
+    const said = saidOnce([missing('a'), missing('b')]);
+
+    expect(said.map(reading => ('problem' in reading.here ? reading.here.problem : ''))).toEqual([
+      'No element a on http://127.0.0.1:8080/ — not drawn here: a page for signed-in visitors',
+      'No element b on http://127.0.0.1:8080/ — not drawn here either (why, above)'
+    ]);
   });
 });

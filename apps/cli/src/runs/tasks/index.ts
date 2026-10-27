@@ -26,6 +26,8 @@ export { completeResearch, seeProposal } from './research';
 export type { Researched } from './research';
 export type { Signal } from './signals';
 export { checkTask } from './check';
+export { checkBefore, provedBy } from './checkBefore';
+export type { LineBeforeAfter } from './checkBefore';
 export type { CheckedTask } from './check';
 export { completeTask, discardFile } from './complete';
 export type { CompleteOptions, CompletedTask } from './complete';

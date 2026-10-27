@@ -94,6 +94,11 @@ export interface CheckReport {
   hiddenAtWidth: string[];
   /** Owed containers with nothing in them and no size: a shell another part fills — not a problem, said. */
   empty: string[];
+  /**
+   * The elements whose text a box cuts at this width — an ellipsis, a clipped overflow, a clamp: said, never a problem
+   * of itself (data that varies is cut on purpose); `--expect "<id>~<text>"` holds one whole.
+   */
+  cut?: string[];
   /** Owed controls out of use on purpose — transparent and taking no press: an arrow at its end. Said, not a problem. */
   outOfUse: string[];
   /** Checked in a task's copy: findings on elements other tasks write, said and failing nothing (`apart.ts`). */
@@ -199,6 +204,10 @@ export interface ElementStyles {
    * element's `class` — changes too.
    */
   wornBy: Record<string, string[]>;
+  /** How many copies the page draws of it — a component's part, once per instance: the first is the one read. */
+  copies: number;
+  /** The component it is a part of, when it is one. */
+  partOf?: string;
 }
 
 /** A property more than one of an element's classes sets, at rest: what each says, and which one the page shows. */

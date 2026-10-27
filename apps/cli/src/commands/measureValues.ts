@@ -116,6 +116,35 @@ export const PSEUDO_MEASURED = [
 
 export const PSEUDOS = ['before', 'after'] as const;
 
+/**
+ * Properties asked by name beyond those always read — `--only overflow-x`, `--same after:scroll-snap-align` — read
+ * the same way: a list that grew by a property each run (`list-style`, `y`, `right`) takes any the browser knows.
+ */
+export interface MeasuredExtra {
+  properties: string[];
+  /** Read of each pseudo-element drawn, as `before:<property>`. */
+  pseudo: string[];
+}
+
+const PSEUDO_ASKED = new RegExp(`^(?:${PSEUDOS.join('|')}):(.+)$`);
+
+/** Of the properties asked, those not always read: what a reading reads besides, the box's and its pseudo-elements'. */
+export const extraOf = (asked: readonly string[]): MeasuredExtra => {
+  const always = new Set<string>([...MEASURED, ...Object.keys(SIDE_LONGHANDS)]);
+  const pseudoAlways = new Set<string>(PSEUDO_MEASURED);
+  const properties = asked.filter(each => !each.includes(':') && !always.has(each));
+  const pseudo = asked.flatMap(each => {
+    const property = PSEUDO_ASKED.exec(each)?.[1];
+
+    return property === undefined || pseudoAlways.has(property) ? [] : [property];
+  });
+
+  return { properties: [...new Set(properties)], pseudo: [...new Set(pseudo)] };
+};
+
+/** Whether anything is asked beyond what is always read. */
+export const asksExtra = (extra: MeasuredExtra): boolean => extra.properties.length > 0 || extra.pseudo.length > 0;
+
 /** What an element takes from its parent unless it says its own: what differs on every element of a page alike. */
 export const INHERITED = new Set<string>([
   'font-family',
@@ -148,10 +177,16 @@ export interface Measured {
    */
   matches?: number;
   /**
-   * Set when no match is shown, so the one measured is hidden: its widths and place are not what a visitor sees (a run's
-   * designer proved a profile's own button by the measures of one with no box at all).
+   * Set when no match is shown, so the one measured is hidden: why — `display: none on room-show-actions, around it`.
+   * Its widths and place are not what a visitor sees, and are not said (a run's designer proved a profile's own button
+   * by the measures of one with no box at all; a dev read a hidden button's 0,0 box and inferred its row from another).
    */
-  hidden?: true;
+  hidden?: string;
+  /**
+   * With `--only`: the pseudo-elements asked of it that it does not draw, so nothing of theirs is read — said, where a
+   * run's `--only after:margin-left` printed nothing at all.
+   */
+  undrawn?: string[];
 }
 
 /** A colour written as CSS Color 4 writes it — `color(srgb 0.78 0.66 0.42 / 0.5)` — as `rgb()`: one colour, one way. */
@@ -242,12 +277,17 @@ export const comparable = (property: string, value: string): string => {
 const HELD_STILL = 'held still';
 
 /** The properties read on either side, in the order they are said: the box's, then its pseudo-elements'. */
-const propertiesOf = (here: Measured, there: Measured): string[] => [
-  ...MEASURED,
-  ...[...new Set([...Object.keys(here.styles), ...Object.keys(there.styles)])]
-    .filter(property => property.includes(':'))
-    .sort()
-];
+const propertiesOf = (here: Measured, there: Measured): string[] => {
+  const read = [...new Set([...Object.keys(here.styles), ...Object.keys(there.styles)])];
+  const always = new Set<string>(MEASURED);
+
+  return [
+    ...MEASURED,
+    // Asked by name beyond those always read (`--same overflow-x`): compared as they are.
+    ...read.filter(property => !property.includes(':') && !always.has(property)).sort(),
+    ...read.filter(property => property.includes(':')).sort()
+  ];
+};
 
 export interface Difference {
   property: string;
@@ -332,8 +372,15 @@ export const onlyOf = (
   const shown = new Set<string>(
     only.map(each => (Object.hasOwn(SIDE_LONGHANDS, each) ? SIDE_LONGHANDS[each].shorthand : each))
   );
+  const undrawn = PSEUDOS.filter(
+    pseudo => only.some(each => each.startsWith(`${pseudo}:`)) && !Object.hasOwn(read.styles, `${pseudo}:content`)
+  );
 
-  return { ...read, styles: Object.fromEntries(Object.entries(read.styles).filter(([key]) => shown.has(key))) };
+  return {
+    ...read,
+    styles: Object.fromEntries(Object.entries(read.styles).filter(([key]) => shown.has(key))),
+    ...(undrawn.length > 0 ? { undrawn } : {})
+  };
 };
 
 /**

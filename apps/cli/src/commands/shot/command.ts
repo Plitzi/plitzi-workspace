@@ -620,21 +620,28 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       );
     }
 
-    for (const { label, changed } of report.steps ?? []) {
+    // Nothing changed in the part pictured is said with what changed outside it, when anything did.
+    const outsideText = (outside: readonly string[] | undefined): string | undefined =>
+      outside === undefined
+        ? undefined
+        : `nothing changed in ${String(options.clip)}, and the page changed outside it — ${outside.join('; ')}: clip what it opened, or a part that holds both`;
+    for (const { label, changed, outside } of report.steps ?? []) {
       console.log(
         changed > 0
           ? `${label}: ${String(changed)}% of the picture changed`
-          : chalk.yellow(`${label}: nothing changed since the picture before`)
+          : chalk.yellow(`${label}: ${outsideText(outside) ?? 'nothing changed since the picture before'}`)
       );
     }
 
-    for (const { target, changed, opened } of report.clicked ?? []) {
+    for (const { target, changed, opened, outside } of report.clicked ?? []) {
       console.log(
         opened
           ? `clicked ${target}: it opened ${String(options.clip)}, pictured alone after it`
           : changed > 0
             ? `clicked ${target}: ${String(changed)}% of the picture changed`
-            : chalk.yellow(`clicked ${target}: nothing changed — the click did nothing to see`)
+            : chalk.yellow(
+                `clicked ${target}: ${outsideText(outside) ?? 'nothing changed — the click did nothing to see'}`
+              )
       );
     }
 

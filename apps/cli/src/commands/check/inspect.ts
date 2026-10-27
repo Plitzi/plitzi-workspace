@@ -11,7 +11,7 @@ import { withheldPageOf } from '@plitzi/sdk-shared/schema';
 
 import { landingProblem, saySignedIn, signInWhereSent } from './account';
 import { clickEffects } from './click';
-import { flushEdgesInPage, missedExpectations, wrappedLabelsInPage } from './expect';
+import { flushEdgesInPage, missedExpectations, textsInPage, wrappedLabelsInPage } from './expect';
 import { listRows } from './lists';
 import { splitRefusals } from './refusals';
 import { serverFailedIssues } from './serverFailures';
@@ -390,6 +390,15 @@ const inspectHere = async (
     }));
   const serverFailed = serverFailedIssues(devTools.serverFailures, devTools.sources, width);
   const heldBackForm = heldBackIssues(clicked?.heldBack ?? [], width);
+  // What a visitor reads cut short, by the element whose own text is cut: encore-13's "ROOFTOP SESSIO…" was said by
+  // nothing a run ran.
+  const cut = [
+    ...new Set(
+      (await page.evaluate(textsInPage, { selector: '[data-plitzi-el]', within: false })).drawn
+        .filter(each => each.cut && each.id !== '')
+        .map(each => each.id)
+    )
+  ];
   const notFoundPage = handles && pageId ? isNotFoundPage(handles.pages[pageId]) : false;
   // Asked for a status (`--status 404`): the page sent with it is what was meant — its 404 page, on purpose — and one sent
   // with another is the finding. A run's designer saw its intended 404 page marked ✗, with no way to say it.
@@ -506,6 +515,7 @@ const inspectHere = async (
     issues,
     hiddenAtWidth: report.hiddenAtWidth,
     empty: report.empty,
+    ...(cut.length > 0 ? { cut } : {}),
     outOfUse: report.outOfUse,
     consoleErrors: errors,
     failedRequests,

@@ -226,13 +226,15 @@ export const pinnedScroll = (): number => {
   return more;
 };
 
-/** The attribute a pinned element hidden for an element's picture carries: its own visibility, put back after. */
+/** The attribute a pinned element hidden for an element's picture carries: its own opacity, put back after. */
 export const HIDDEN_FOR_SHOT = 'data-plitzi-shot-hidden';
 
 /**
  * Runs in the page: every element pinned to the screen (fixed or sticky) that is neither the target, inside it nor
  * around it, hidden — what is drawn over a part scrolled to the top of the screen, a site's sticky header over the
- * first rows of a run's queue in every clipped picture. Self-contained — it is serialised.
+ * first rows of a run's queue in every clipped picture. Hidden by its opacity, which nothing in it can undo — a
+ * header's children kept `visibility: visible` of their own, and were drawn over every part a look pictured at 390 —
+ * and its box kept, so nothing moves. Self-contained — it is serialised.
  */
 export const hidePinned = (target: Element, attribute: string): number => {
   let hidden = 0;
@@ -244,8 +246,11 @@ export const hidePinned = (target: Element, attribute: string): number => {
       !target.contains(element) &&
       !element.hasAttribute(attribute)
     ) {
-      element.setAttribute(attribute, element.style.visibility);
-      element.style.visibility = 'hidden';
+      element.setAttribute(
+        attribute,
+        `${element.style.getPropertyValue('opacity')}|${element.style.getPropertyPriority('opacity')}`
+      );
+      element.style.setProperty('opacity', '0', 'important');
       hidden += 1;
     }
   }
@@ -256,13 +261,22 @@ export const hidePinned = (target: Element, attribute: string): number => {
 /** Runs in the page: what `hidePinned` hid, shown again as it was. Self-contained — it is serialised. */
 export const showPinned = (attribute: string): void => {
   for (const element of document.querySelectorAll<HTMLElement>(`[${attribute}]`)) {
-    element.style.visibility = element.getAttribute(attribute) ?? '';
+    const [value = '', priority = ''] = (element.getAttribute(attribute) ?? '').split('|');
+    if (value === '') {
+      element.style.removeProperty('opacity');
+    } else {
+      element.style.setProperty('opacity', value, priority);
+    }
+
     element.removeAttribute(attribute);
   }
 };
 
-/** One element's picture, nothing pinned to the screen drawn over it. */
-const elementShot = async (page: BrowserPage, selector: string): Promise<Uint8Array> => {
+/**
+ * One element's picture, nothing pinned to the screen drawn over it — the one way an element is pictured: a part set
+ * beside the run before was pictured another way, a site's sticky header over it (encore-13's looks at 390).
+ */
+export const elementShot = async (page: BrowserPage, selector: string): Promise<Uint8Array> => {
   const element = page.locator(selector).first();
   await element.evaluate(hidePinned, HIDDEN_FOR_SHOT);
   try {
@@ -333,6 +347,9 @@ export const pictureOf = async (
   view: View,
   origin?: string
 ): Promise<Taken | { problem: string }> => {
+  // A members' page read as the project's account from the start, as every page command reads it (`visit.ts`).
+  const account =
+    view.account ?? (origin && view.membersAt?.(new URL(url).pathname) === true ? view.projectAccount : undefined);
   // The project's page made ready as a visitor's (`visit.ts`); another site's opened as it is, its own browser.
   const visit = origin
     ? await prepareVisit(
@@ -349,7 +366,7 @@ export const pictureOf = async (
           ...(view.conditions ? { conditions: view.conditions } : {}),
           ...(view.standIns ? { standIns: true } : {})
         },
-        view.account
+        account
       )
     : {
         page: await openOtherPage(browser, {
@@ -382,9 +399,7 @@ export const pictureOf = async (
   }
 
   const signed =
-    origin && !view.account
-      ? await signInWhereSent(page, origin, new URL(url).pathname, view.projectAccount)
-      : undefined;
+    origin && !account ? await signInWhereSent(page, origin, new URL(url).pathname, view.projectAccount) : undefined;
   if (signed && 'problem' in signed) {
     return signed;
   }

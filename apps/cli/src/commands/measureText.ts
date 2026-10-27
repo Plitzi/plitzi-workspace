@@ -47,6 +47,13 @@ const pseudosOf = (here: Measured, there: Measured): string[] =>
  * the same". A pair said the other page's address and its 25 properties alike, 470 characters of 900, and
  * a reading of six pairs said them six times; an agent read each again on every turn after.
  */
+/**
+ * What a reading of one of several copies says of the rest: the first shown was measured, and how to measure each — in
+ * the text and the JSON alike (two runs' agents read `"matches": 8` in the JSON and wrote one `>> nth=` a copy).
+ */
+export const matchesNote = (matches: number): string =>
+  `the first shown of ${String(matches)} it finds — --each measures each`;
+
 export const comparedText = (url: string | undefined): string =>
   chalk.dim(
     `${url ? `Beside ${url} (there) — each` : 'Each'} compared on ${MEASURED.join(', ')}, and the ${PSEUDOS.map(pseudo => `::${pseudo}`).join('/')} either page has (${PSEUDO_MEASURED.join(', ')}): below, what differs`
@@ -131,7 +138,12 @@ const sidesJoined = (entries: [string, string][]): [string, string][] =>
     entries
   );
 
-const HIDDEN = 'a visitor sees none of what it finds — its box and place are not on the page';
+/** Why it is not drawn, and that its place and size are not said: what a hidden box reads (0, 0) is nobody's. */
+const hiddenText = (why: string): string =>
+  `a visitor sees none of what it finds — ${why}; its place and size are not on the page, so not said`;
+
+/** What a hidden element's reading does not say: where it is and how big, which a box drawn nowhere has none of. */
+const UNPLACED = new Set(['x', 'y', 'width', 'height']);
 
 /**
  * One element read alone: what it says of itself — a property at its initial value and one taken from its parent left
@@ -139,7 +151,9 @@ const HIDDEN = 'a visitor sees none of what it finds — its box and place are n
  * each: 38k characters in one answer, read again on every turn after it.
  */
 const aloneText = (here: Measured, all: boolean): string => {
-  const entries = Object.entries(here.styles);
+  const entries = Object.entries(here.styles).filter(
+    ([property]) => here.hidden === undefined || !UNPLACED.has(property)
+  );
   const shown = all
     ? entries
     : sidesJoined(
@@ -151,10 +165,9 @@ const aloneText = (here: Measured, all: boolean): string => {
   return [
     chalk.bold(named(here)),
     ...rootNote(here),
-    ...(here.hidden ? [chalk.yellow(`  hidden: ${HIDDEN}`)] : []),
-    ...(here.matches === undefined
-      ? []
-      : [chalk.dim(`  (the first shown of ${String(here.matches)} it finds — --rows measures each)`)]),
+    ...(here.hidden === undefined ? [] : [chalk.yellow(`  hidden: ${hiddenText(here.hidden)}`)]),
+    ...(here.matches === undefined ? [] : [chalk.dim(`  (${matchesNote(here.matches)})`)]),
+    ...(here.undrawn ?? []).map(pseudo => chalk.dim(`  it draws no ::${pseudo}, so nothing of it is read`)),
     ...shown.map(
       ([property, value]) =>
         `  ${property.padEnd(22)} ${all ? value : shortValue(value)}${here.inherited.includes(property) ? chalk.dim('  (inherited)') : ''}`
@@ -185,13 +198,10 @@ export const measuredText = (here: Measured, there?: Measured, all = false): str
   return [
     chalk.bold(`${named(here)} here → ${named(there)} there`),
     ...rootNote(here),
-    ...(here.hidden || there.hidden
-      ? [
-          chalk.yellow(
-            `  hidden ${here.hidden && there.hidden ? 'on both pages' : here.hidden ? 'here' : 'there'}: ${HIDDEN}`
-          )
-        ]
-      : []),
+    ...(here.hidden === undefined ? [] : [chalk.yellow(`  hidden here: ${hiddenText(here.hidden)}`)]),
+    ...(there.hidden === undefined ? [] : [chalk.yellow(`  hidden there: ${hiddenText(there.hidden)}`)]),
+    ...(here.undrawn ?? []).map(pseudo => chalk.dim(`  here it draws no ::${pseudo}, so nothing of it is read`)),
+    ...(there.undrawn ?? []).map(pseudo => chalk.dim(`  there it draws no ::${pseudo}, so nothing of it is read`)),
     ...(differ.length === 0 ? ['  every property measured is the same'] : []),
     ...own.map(
       each =>

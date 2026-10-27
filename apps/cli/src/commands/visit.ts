@@ -1,14 +1,18 @@
-import { openPage } from '@plitzi/sdk-authoring';
+import { audienceAt, openPage } from '@plitzi/sdk-authoring';
 import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
 
 import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
 import { checkAccount, projectAccount, saySignedIn, signInAs, signInWhereSent } from './check/account';
+import { pageFor } from './check/space';
 import { conditionsOf } from './register/options';
 import { fail, unanswered } from './terminal';
+import { authoredSpace } from '../runs/expectations';
 
 import type { Browser, BrowserPage, ProjectView } from '../browser';
 import type { Account } from './check/account';
 import type { VisitorOptions } from './register/options';
+import type { SpaceHandles } from '@plitzi/sdk-authoring';
+import type { Schema } from '@plitzi/sdk-shared';
 
 /**
  * A page of the project visited as a visitor would: one way for every page command — `page check`, `measure`, `play`,
@@ -125,11 +129,30 @@ export const passedOf = (logged: string, since: number): { path: string; ms: num
   return shown.map((entry, index) => ({ path: entry.path, ms: (shown[index + 1]?.at ?? entry.at) - entry.at }));
 };
 
-/** Who the visit is: an account asked (`--as`), else the project's when a page sends a guest away (`--guest`: none). */
+/**
+ * Who the visit is: an account asked (`--as`), else the project's — at a page for its members, or one that sends a guest
+ * away (`--guest`: none).
+ */
 export interface Visitor {
   account?: Account;
   projectAccount?: Account;
+  /**
+   * Whether the space reads `route` as its members' — members only by its router, a gate that shows a guest another page,
+   * kept for some permissions: read signed in as the project's account, as a look reads it. Every page command reads it
+   * so — `page measure` read a guest's where `task look` read the account's, one element drawn in one and not the other
+   * (encore-13's designer).
+   */
+  membersAt?: (route: string) => boolean;
 }
+
+/** Whether the authored space reads `route` as its members' page: what a visitor of a page command signs in for. */
+export const readsAsMember = (authored: { schema: Schema; handles: SpaceHandles }, route: string): boolean => {
+  const id = pageFor(authored, route);
+  const page = id !== undefined && Object.hasOwn(authored.handles.pages, id) ? authored.handles.pages[id] : undefined;
+  const audience = audienceAt(authored.schema, route);
+
+  return audience === 'members' || audience === 'gated' || (page?.access?.permissions.length ?? 0) > 0;
+};
 
 /**
  * Who a page command reads as, from its flags: the account asked (`--as`), else the project's where a page sends a guest
@@ -152,8 +175,16 @@ export const visitorAsked = async (
   }
 
   const project = own && options.guest !== true ? await projectAccount(root) : undefined;
+  if (!project) {
+    return {};
+  }
 
-  return project ? { projectAccount: project } : {};
+  const authored = await authoredSpace(root);
+
+  return {
+    projectAccount: project,
+    ...(authored ? { membersAt: (route: string) => readsAsMember(authored, route) } : {})
+  };
 };
 
 /**
@@ -198,7 +229,9 @@ export const openVisit = async (
   /** The addresses it showed as it opened, each for how long, when the page sent the browser on by itself. */
   passed?: { path: string; ms: number }[];
 }> => {
-  const { account, projectAccount, ...asView } = view;
+  const { account: asked, projectAccount, membersAt, ...asView } = view;
+  // A members' page read as the project's account from the start: what a guest would be shown in its place is not it.
+  const account = asked ?? (membersAt?.(route) === true ? projectAccount : undefined);
   const { page, problem } = await prepareVisit(browser, origin, { reducedMotion: true, ...asView }, account);
   if (problem !== undefined) {
     return { page, answered: false, problem };

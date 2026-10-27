@@ -6,8 +6,13 @@ import { lookText } from './lookText';
 import { lookAt } from './review';
 import { act, runOf } from './shell';
 import { takeOnRead } from './takeOnRead';
+import { list } from './text';
+import { changesNoPage } from '../../runs/pagesOf';
 import { runPaths, taskPaths } from '../../runs/paths';
 import { RunRefusal } from '../../runs/refusal';
+import { loadRun } from '../../runs/run';
+import { findTask } from '../../runs/tasks';
+import { viewTask } from '../../runs/taskStore';
 import { actingSteps } from '../shot/steps';
 
 import type { LookOptions } from './lookOptions';
@@ -32,6 +37,18 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
       const steps = actingSteps(options.steps, 'task look');
       if ('problem' in steps) {
         throw new RunRefusal('invalid', steps.problem);
+      }
+
+      // A task that changes no page — a test's fix — has nothing to picture: said, with what reviews it, never the home
+      // page pictured in its place (encore-13: 19 pictures of a page the change could not touch).
+      if (paths.length === 0) {
+        const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
+        const task = findTask(loaded, taskId);
+        const view = await viewTask(loaded.paths, task);
+        const files = view.state.changed ?? [];
+        if (await changesNoPage(view.paths.work, files, task.acceptance)) {
+          return { kind: 'no-page' as const, files };
+        }
       }
 
       // Looked at already, as asked now, and nothing changed since — the task, the run's approved work: said again, not
@@ -81,14 +98,16 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
       return { kind: 'looked' as const, text };
     },
     answer =>
-      answer.kind === 'again'
-        ? [
-            chalk.dim(
-              `As looked at ${answer.again.at.slice(11, 16)} UTC — the task, the run's approved work and what you asked are as they were, so this is that look again (--fresh looks anew):`
-            ),
-            answer.again.text
-          ].join('\n')
-        : answer.text
+      answer.kind === 'no-page'
+        ? `${taskId} changes no page: ${list(answer.files)} ${answer.files.length === 1 ? 'is' : 'are'} drawn by none, and its acceptance checks none — nothing to picture. What reviews it is its acceptance: plitzi task check ${taskId} --before runs each line before the task and with it, and says what it proves. To picture a page all the same, name it: plitzi task look ${taskId} /`
+        : answer.kind === 'again'
+          ? [
+              chalk.dim(
+                `As looked at ${answer.again.at.slice(11, 16)} UTC — the task, the run's approved work and what you asked are as they were, so this is that look again (--fresh looks anew):`
+              ),
+              answer.again.text
+            ].join('\n')
+          : answer.text
   );
 
 /** A group's paths as the look reads them: who, and what they are sent with. */

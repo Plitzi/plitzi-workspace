@@ -166,11 +166,11 @@ export const putIn = async (
   return undefined;
 };
 
-/** How many rows of a list `--rows` measures of one element, at most. */
+/** How many copies of one element `--each` measures, at most. */
 const ROWS_MOST = 20;
 
 /** Every row a list draws of an element, as its own selector — the element alone when it is drawn once. */
-export const rowsOf = async (page: BrowserPage, pair: Pair): Promise<Pair[]> => {
+export const copiesOf = async (page: BrowserPage, pair: Pair): Promise<Pair[]> => {
   const found = await targetOn(page, pair.here);
   if ('problem' in found || !found.found) {
     return [pair];

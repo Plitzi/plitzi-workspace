@@ -14,7 +14,10 @@ lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
   `<file> --diff`: one file's whole diff); `plitzi task look t-home
 --before` serves its copy, checks and pictures its pages beside the run before (its options:
   [runs-designer.md](runs-designer.md)) — once: after the designer's, unchanged, it repeats it. Your read of a task in
-  review takes your step, so no two testers decide one.
+  review takes your step, so no two testers decide one. A fix — a test's, a bug's — is proved by its acceptance failing
+  without it: `plitzi task check t-home --before` runs each line on the run before it and on its copy, and says which
+  proves the change and which passes on both (proves nothing). A task that changes no page has no look: that is its
+  review.
 - **What the data does not show, you test:** a case the acceptance asks for that no page reaches — a module's function,
   its edge cases (the project's `test` script runs every `*.test.ts` at complete), `node -e` in the copy; a probe (two calls at once) is a `node --test` file in your scratch importing
   the copy's code by its absolute path, never a file in the copy — or send it back for the test it needs. A finding is read from its page,

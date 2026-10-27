@@ -2,8 +2,7 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
-import { PROJECT_STATE } from '@plitzi/sdk-shared/project';
-
+import { differenceText } from '../same';
 import { list } from './text';
 
 import type { lookAt } from './review';
@@ -87,11 +86,7 @@ const besideSummary = (looked: Looked): string[] => {
 /** What a look says. */
 export const lookText = (looked: Looked): string =>
   [
-    chalk.bold(
-      looked.borrowed === undefined
-        ? `${looked.task}, as it went to review (served from its copy, now stopped):`
-        : `${looked.task}, as its copy is now — served by ${looked.borrowed.by === 'agent' ? "its agent's own server" : 'the server a picture of it kept'} on :${String(looked.borrowed.port)}, left running (it holds the copy's state):`
-    ),
+    chalk.bold(`${looked.task}, as it went to review (served from its copy, cold, now stopped):`),
     ...(looked.stoppedUnder ?? []).map(line => chalk.yellow(`⚠ ${line}`)),
     ...(looked.signedInAs
       ? [`Read signed in as ${looked.signedInAs}, as its acceptance checks it (--as another to read it otherwise)`]
@@ -154,8 +149,8 @@ export const lookText = (looked: Looked): string =>
             each.wordsOnly
               ? // Drawn the same, its words apart: a time or a count the two servers' data says — a sanity run's
                 // look warned of a show's start a minute apart.
-                `⚠ ${each.route} says other words outside its parts — the same element drawn the same, its words apart: ${each.here}\n    before: ${each.there}\n    More likely what the two servers' data says (a time, a count) than the task: read it, and look again --fresh if unsure`
-              : `⚠ ${each.route} moved outside its parts too — the first element that differs from the run before it: ${each.here}\n    before: ${each.there}`
+                `⚠ ${each.route} says other words outside its parts — the same element drawn the same, its words apart: ${differenceText(each)}\n    More likely what the two servers' data says (a time, a count) than the task: read it, and look again --fresh if unsure`
+              : `⚠ ${each.route} moved outside its parts too — the first element that differs from the run before it: ${differenceText(each)}`
           )
         )
       : []),
@@ -186,13 +181,6 @@ export const lookText = (looked: Looked): string =>
             each.problem
               ? chalk.yellow(`  ${each.route} at ${each.width} ${each.scheme}: ${each.problem}`)
               : `  ${each.route} at ${each.width} ${each.scheme}: ${(each.changed === 0 || each.sections.length === 0) && each.dress.length === 0 ? 'nothing changed' : `${String(each.changed ?? 0)}% differs${each.sections.length > 0 ? ` — ${fewOf(each.sections, ', ')}` : ''}${each.dress.length > 0 ? ` · its dress: ${fewOf(each.dress, ' · ')}` : ''}`}${each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
-          )
-        ]
-      : []),
-    ...(looked.warmCopy
-      ? [
-          chalk.dim(
-            `  Its copy was served with the state its plays left (${PROJECT_STATE}/), the run before it cold: what the data says — a song playing, a count — may differ for that, not the task. Cold on both sides: plitzi server reset in its copy (its server stopped), then look again --fresh`
           )
         ]
       : []),

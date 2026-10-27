@@ -77,3 +77,20 @@ export const findingsOf = (check: string, parts: TaskParts): { text: string; apa
 
   return { text: lines.join('\n'), apart };
 };
+
+/** How many of a task's parts of a page are pictured: a look is read by a model, and each picture costs it. */
+const PARTS_PICTURED = 3;
+
+/**
+ * The parts a look pictures, each apart: the one asked for (`--within`, as page outline takes it) whatever the task drew;
+ * else the task's own parts — none when it owns the page's root, or draws more of them than are pictured apart (`many`:
+ * the page whole then, never the first three — a run's t-home changed six sections, and three went unseen).
+ */
+export const lookClips = (parts: TaskParts | undefined, within?: string): { clips: string[]; many: boolean } => {
+  const many = parts !== undefined && !parts.ownsRoot && parts.tops.length > PARTS_PICTURED;
+
+  return {
+    clips: within !== undefined ? [within] : parts && !parts.ownsRoot && !many ? parts.tops : [],
+    many: within === undefined && many
+  };
+};

@@ -20,6 +20,11 @@ export interface RunContext {
   cli: string;
   /** The caller's task token: an agent working a task. A person, or the lead, has none. */
   token?: string;
+  /**
+   * The caller's shell folder: a task's copy is never removed from under it — a tester approving from inside the copy
+   * it ran the checks in met getcwd errors on its next command (encore-13). Not said: none is spared.
+   */
+  cwd?: string;
   /** Who is calling, for the log: an agent's name, or `person`. */
   agent: string;
   /** The level the caller was started at (`--quality`, `PLITZI_QUALITY`): it is handed tasks of it or below. */

@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { parseEnv } from 'node:util';
 
+import { STATE_DIR_ENV } from '@plitzi/sdk-shared/project';
 import { RUN_STATUS_ENV } from '@plitzi/sdk-shared/runs';
 
 import { answering, ownServer, serveCopy } from './acceptance';
@@ -199,12 +200,15 @@ const serve = async (
   {
     quiet = false,
     snapshot = false,
-    log
+    log,
+    stateDir
   }: {
     quiet?: boolean;
     snapshot?: boolean;
     /** Where a quiet server's output goes: what says why, when it stops under a look (silent). */
     log?: string;
+    /** What the server keeps, apart from the folder's own (`PLITZI_STATE_DIR`): a cold start, beside any other. */
+    stateDir?: string;
   } = {}
 ): Promise<Omit<Preview, 'dir'>> => {
   const scripts = await scriptsOf(dir);
@@ -225,6 +229,7 @@ const serve = async (
       ...process.env,
       ...(env ? parseEnv(env) : {}),
       PORT: String(port),
+      ...(stateDir === undefined ? {} : { [STATE_DIR_ENV]: stateDir }),
       ...(snapshot ? { [RUN_STATUS_ENV]: snapshotFile(loaded) } : {}),
       PATH: `${path.join(ctx.root, 'node_modules', '.bin')}${path.delimiter}${process.env.PATH ?? ''}`
     }
@@ -338,7 +343,7 @@ export const startPreview = async (
 };
 
 /** The project with the run's approved work in it, made at `dir` afresh: what `run preview` serves. */
-const approvedCopy = async (ctx: RunContext, loaded: LoadedRun, dir: string): Promise<void> => {
+export const approvedCopy = async (ctx: RunContext, loaded: LoadedRun, dir: string): Promise<void> => {
   await fs.rm(dir, { recursive: true, force: true });
   const approved = (await readApproved(loaded.paths)).files;
   const keep = new Set(Object.keys(approved));
@@ -441,7 +446,7 @@ export const startBeforePreview = async (
 };
 
 /** Where a task's copy is worth serving: being worked — its agent looking at its own pages — or in review. */
-const SERVED_STATUSES: readonly string[] = ['in-progress', 'changes-requested', 'in-review'];
+export const SERVED_STATUSES: readonly string[] = ['in-progress', 'changes-requested', 'in-review'];
 
 /**
  * Why a copy served for a look does not answer — none once it does: its server stopped, with the error it stopped on
@@ -462,6 +467,15 @@ export const notServed = async (preview: Preview): Promise<string | undefined> =
     : `did not answer on ${preview.url} within a minute${log}`;
 };
 
+/** A look's own state, empty: made again for each cold look, so nothing of the one before is read. */
+const coldState = async (cache: string): Promise<string> => {
+  const dir = path.join(cache, 'look-state');
+  await fs.rm(dir, { recursive: true, force: true });
+  await fs.mkdir(dir, { recursive: true });
+
+  return dir;
+};
+
 /**
  * `plitzi run preview --task`: a task's copy served on `port` — in review, as it went there, what the lead looks at
  * before approving it; being worked, as its agent writes it, what it looks at as it goes (no `npm start` of its own in
@@ -472,7 +486,12 @@ export const startTaskPreview = async (
   runId: string,
   taskId: string,
   port: number,
-  options: { quiet?: boolean } = {}
+  /**
+   * `cold`: served from a cold start, never a server already on the copy — what it keeps apart from the copy's own, so it
+   * runs beside one: a look set beside the run before it compares like with like — the run before is served cold, and
+   * encore-13's looks read a task's copy, warm with its agent's state, as having "moved" where its data had.
+   */
+  options: { quiet?: boolean; cold?: boolean } = {}
 ): Promise<Preview> => {
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
   const task = loaded.tasks.find(each => each.id === taskId);
@@ -489,9 +508,11 @@ export const startTaskPreview = async (
     );
   }
 
+  const { cache } = taskPaths(loaded.paths, taskId);
+  const { cold = false, ...serving } = options;
   // Its agent's own server, left running: it holds the copy's state (its kv lock), so a second one would not start —
-  // looked at where it is, and left as it was.
-  const running = await ownServer(view.paths.work);
+  // looked at where it is, and left as it was. A cold look starts its own, apart.
+  const running = cold ? undefined : await ownServer(view.paths.work);
   if (running !== undefined) {
     return {
       ...borrow(`http://127.0.0.1:${String(running)}`),
@@ -502,8 +523,7 @@ export const startTaskPreview = async (
 
   // One a picture of the copy kept (`lingering.ts`) serves it already: a second server beside it would fight it over
   // the copy's state, and one of them fail — a run's lead look pictured nothing. Followed, its use marked.
-  const { cache } = taskPaths(loaded.paths, taskId);
-  const kept = await keptServer(view.paths.work, cache);
+  const kept = cold ? undefined : await keptServer(view.paths.work, cache);
   if (kept !== undefined) {
     const keptPort = Number(new URL(kept).port);
 
@@ -524,7 +544,11 @@ export const startTaskPreview = async (
 
       return SERVED_STATUSES.includes(now) ? undefined : `the preview stopped: ${taskId} is ${now} now`;
     },
-    { ...options, log: previewServerLog(cache) }
+    {
+      ...serving,
+      log: previewServerLog(cache),
+      ...(cold ? { stateDir: await coldState(cache) } : {})
+    }
   );
   // Said where a picture in the copy asks for its server: it uses this one, never starts a second.
   await markPreviewed(cache, port);

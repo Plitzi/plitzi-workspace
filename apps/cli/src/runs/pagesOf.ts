@@ -1,3 +1,5 @@
+import { PUBLIC_DIR, SOURCE_DIR } from '@plitzi/sdk-shared/project';
+
 import { authoredHandles } from './expectations';
 import { acceptanceText } from './model';
 import { readOwnership } from './ownership';
@@ -308,6 +310,29 @@ export const acceptanceStatuses = (acceptance: readonly Acceptance[]): { page: s
   }
 
   return [...found].map(([page, status]) => ({ page, status }));
+};
+
+/**
+ * Whether a task changes no page: each of its files outside what the project draws from — its source and its public
+ * files, `src/` and `public/` — and reached by none of the space's pages, and its acceptance checks no page. A test's
+ * fix, a script, a config: encore-13's look of a spec-only task pictured the home page, 19 pictures the change could
+ * not touch. A file under `src/` no page imports (data, server code) is not said so: what draws it is not read here.
+ */
+export const changesNoPage = async (
+  root: string,
+  files: readonly string[],
+  acceptance: readonly Acceptance[]
+): Promise<boolean> => {
+  if (files.length === 0 || acceptancePages(acceptance).length > 0) {
+    return false;
+  }
+
+  const drawnFrom = [`${SOURCE_DIR}/`, `${PUBLIC_DIR}/`];
+  const ownership = await readOwnership(root);
+
+  return files.every(
+    file => !drawnFrom.some(dir => file.startsWith(dir)) && !ownership.ownerOf.has(file) && !ownership.shared.has(file)
+  );
 };
 
 /**

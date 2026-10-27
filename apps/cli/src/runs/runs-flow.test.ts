@@ -233,6 +233,33 @@ describe('a task held by its holder alone', () => {
     expect(log.filter(entry => entry.task === 't-home').map(entry => entry.by)).not.toContain('dev-2');
     expect(log.some(entry => entry.by === 'agent')).toBe(false);
   });
+  // encore-13's test-1 approved from the copy it ran the checks in: the copy went, and its next command met getcwd.
+  it('leaves a task’s copy approved from inside it, saying where to go — and removes one approved from elsewhere', async () => {
+    const plan = benchPlan();
+    await bench.writeTeam({ version: 1, agents: [{ name: 'dev', roles: ['developer'], count: 2 }] });
+    await openRun(as('lead'), await bench.writePlan(plan));
+    const home = await takeTask(as('dev-1'), plan.runId, 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/index.ts', "export const home = { title: 'Hola' };\n");
+    await completeTask(as('dev-1', home.token), plan.runId, 't-home');
+    const menu = await takeTask(as('dev-2'), plan.runId, 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', "export const menu = { id: 'menu', title: 'Carta' };\n");
+    await completeTask(as('dev-2', menu.token), plan.runId, 't-menu');
+
+    const fromInside = await reviewTask(
+      { ...as('lead'), cwd: path.join(home.work, 'src') },
+      plan.runId,
+      't-home',
+      'approve',
+      []
+    );
+    const fromProject = await reviewTask({ ...as('lead'), cwd: bench.root }, plan.runId, 't-menu', 'approve', []);
+
+    expect(fromInside.copyLeft).toBe(bench.root);
+    await expect(fs.stat(home.work)).resolves.toBeDefined();
+    expect(fromProject.copyLeft).toBeUndefined();
+    await expect(fs.stat(menu.work)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
   it('takes the next task from the copy of the one it completed: the copy says its task, never who takes', async () => {
     const plan = benchPlan();
     // One session, the test's: what it takes next in it is the point (a fresh start has tests of its own).

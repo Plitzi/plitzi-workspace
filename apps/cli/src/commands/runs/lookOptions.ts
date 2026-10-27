@@ -31,4 +31,6 @@ export interface LookOptions extends RunCommandOptions, Omit<VisitorOptions, 'ur
   width?: string;
   /** The schemes pictured at each width, in place of light at 1440 and dark at 390. */
   scheme?: string;
+  /** One part alone — an element's name, a tag or a selector, as `page outline --within`: pictured and set beside it. */
+  within?: string;
 }

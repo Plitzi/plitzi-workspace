@@ -15,19 +15,71 @@ export interface Copies {
   present: number;
   /** Each copy drawn — on the page, with a box of its own — by what it shows, whitespace folded. */
   shown: string[];
+  /** Of them, by their place in `shown`, those whose text runs past a box that cuts it: a visitor reads them cut short. */
+  cut: number[];
 }
 
-/** Every copy `selector` names — each row of a list — as a visitor reads it. In the page. */
-export const copiesInPage = (selector: string): Copies => {
+/** One element drawn: its id, what it shows, and whether its text runs past a box that cuts it. */
+export interface DrawnText {
+  id: string;
+  text: string;
+  cut: boolean;
+}
+
+/**
+ * The elements `selector` names, as a visitor reads them: how many are on the page, and each one drawn — its words, and
+ * whether a box cuts them (an ellipsis, a clipped overflow, a clamp of lines): its words are all in the page, and a
+ * visitor reads part of them ("ROOFTOP SESSIO…" passed every check a run made). `within`: a box inside it cutting its
+ * text cuts it too — what an element shows; without, only its own — which one is cut. In the page.
+ */
+export const textsInPage = ({
+  selector,
+  within
+}: {
+  selector: string;
+  within: boolean;
+}): {
+  present: number;
+  drawn: DrawnText[];
+} => {
   const nodes = Array.from(document.querySelectorAll(selector));
+  const cuts = (each: Element): boolean => {
+    if (!(each instanceof HTMLElement) || each.getClientRects().length === 0) {
+      return false;
+    }
+
+    const ownText = Array.from(each.childNodes).some(
+      child => child.nodeType === Node.TEXT_NODE && (child.textContent ?? '').trim() !== ''
+    );
+    const style = getComputedStyle(each);
+    const clamp = style.getPropertyValue('-webkit-line-clamp');
+    const across = style.textOverflow === 'ellipsis' || ['hidden', 'clip'].includes(style.overflowX);
+
+    return (
+      ownText &&
+      ((across && each.scrollWidth > each.clientWidth + 1) ||
+        (clamp !== '' && clamp !== 'none' && each.scrollHeight > each.clientHeight + 1))
+    );
+  };
 
   return {
     present: nodes.length,
-    shown: nodes
+    drawn: nodes
       .filter(node => node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden')
-      .map(node => (node instanceof HTMLElement ? node.innerText : node.textContent).replace(/\s+/g, ' ').trim())
+      .map(node => ({
+        id: node.getAttribute('data-plitzi-el') ?? '',
+        text: (node instanceof HTMLElement ? node.innerText : node.textContent).replace(/\s+/g, ' ').trim(),
+        cut: cuts(node) || (within && Array.from(node.querySelectorAll('*')).some(cuts))
+      }))
   };
 };
+
+/** The copies of an element, as `textsInPage` read them. */
+export const copiesOf = ({ present, drawn }: ReturnType<typeof textsInPage>): Copies => ({
+  present,
+  shown: drawn.map(each => each.text),
+  cut: drawn.flatMap((each, index) => (each.cut ? [index] : []))
+});
 
 const quoted = (shown: string): string => `"${shown.length > 160 ? `${shown.slice(0, 160)}…` : shown}"`;
 
@@ -41,15 +93,22 @@ export const expectationMissed = (
   onPage: readonly string[]
 ): string | undefined => {
   const said = `--expect ${absent ? '!' : ''}${element}${text === '' ? '' : `~${text}`}`;
-  const showing = copies.shown.filter(each => each.toLowerCase().includes(text.toLowerCase()));
+  const matching = (each: string): boolean => each.toLowerCase().includes(text.toLowerCase());
+  const showing = copies.shown.filter(matching);
   if (absent) {
     return showing.length === 0
       ? undefined
       : `${said}: ${element} ${text === '' ? 'is shown' : `shows ${quoted(showing[0] ?? '')}`}${copies.shown.length > 1 ? ` (${String(showing.length)} of its ${String(copies.shown.length)} copies)` : ''}`;
   }
 
-  if (showing.length > 0) {
+  // Shown whole by one copy at least: a copy whose box cuts its words reads part of them, whatever its text holds.
+  const whole = copies.shown.filter((each, index) => matching(each) && !copies.cut.includes(index));
+  if (whole.length > 0 || (showing.length > 0 && text === '')) {
     return undefined;
+  }
+
+  if (showing.length > 0) {
+    return `${said}: ${element} holds it, and a visitor reads it cut short — its text runs past a box that cuts it (an ellipsis, a clipped overflow): give it room, or let it wrap`;
   }
 
   if (copies.present === 0) {
@@ -207,7 +266,9 @@ export const missedExpectations = async (
     '[data-plitzi-el]'
   );
   for (const expected of expect) {
-    const copies = await page.evaluate(copiesInPage, selectorOf(authored, expected.element));
+    const copies = copiesOf(
+      await page.evaluate(textsInPage, { selector: selectorOf(authored, expected.element), within: true })
+    );
     const message = expectationMissed(expected, copies, onPage);
     if (message === undefined) {
       met.push(`${expected.absent ? '!' : ''}${expected.element}${expected.text === '' ? '' : `~${expected.text}`}`);

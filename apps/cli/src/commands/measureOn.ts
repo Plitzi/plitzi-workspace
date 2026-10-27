@@ -1,7 +1,7 @@
 import { INHERITED, MEASURED, PSEUDO_MEASURED, PSEUDOS } from './measureValues';
 import { targetOn } from './shot/capture';
 
-import type { Measured } from './measureValues';
+import type { Measured, MeasuredExtra } from './measureValues';
 import type { BrowserPage, LayoutSession } from '../browser';
 
 /** One element of an open page, read as `page measure` reads it: found by any name, its first shown, measured. */
@@ -61,6 +61,32 @@ const firstShown = async (page: BrowserPage, selector: string): Promise<{ select
   }
 
   return { selector, hidden: true };
+};
+
+/**
+ * Why an element is drawn nowhere, as a visitor's browser has it — the nearest cause, its own or around it. Runs in the
+ * page, self-contained.
+ */
+export const hiddenWhyInPage = (node: Element): string => {
+  const nameOf = (element: Element): string =>
+    element.getAttribute('data-plitzi-el') ?? element.getAttribute('data-plitzi-instance') ?? element.localName;
+  const where = (element: Element): string => (element === node ? '' : ` on ${nameOf(element)}, around it`);
+  for (let at: Element | null = node; at !== null; at = at.parentElement) {
+    if (at.hasAttribute('hidden') || getComputedStyle(at).display === 'none') {
+      return `display: none${where(at)}`;
+    }
+  }
+
+  const own = getComputedStyle(node);
+  if (own.visibility !== 'visible') {
+    return `visibility: ${own.visibility}`;
+  }
+
+  const box = node.getBoundingClientRect();
+
+  return box.width === 0 || box.height === 0
+    ? `no size: ${String(Math.round(box.width))} × ${String(Math.round(box.height))} px`
+    : 'not drawn';
 };
 
 /** What of a pseudo-element is read off its box, not its computed style. */
@@ -133,8 +159,15 @@ const pseudoPlaces = async (
 export const measureOn = async (
   page: BrowserPage,
   target: string,
-  /** Whether the space authors an id as an element with no box of its own — a provider with no tag. Asked when not found. */
-  { boxless }: { boxless?: (id: string) => Promise<boolean> } = {}
+  {
+    boxless,
+    extra
+  }: {
+    /** Whether the space authors an id as an element with no box of its own — a provider with no tag. Asked when not found. */
+    boxless?: (id: string) => Promise<boolean>;
+    /** What is read besides what always is: properties asked by name. */
+    extra?: MeasuredExtra;
+  } = {}
 ): Promise<Measured | { problem: string }> => {
   const found = await targetOn(page, target);
   if ('problem' in found) {
@@ -279,9 +312,9 @@ export const measureOn = async (
         };
       },
       {
-        properties: [...MEASURED],
+        properties: [...MEASURED, ...(extra?.properties ?? [])],
         pseudos: [...PSEUDOS],
-        pseudoProperties: PSEUDO_MEASURED.filter(property => !PLACED.has(property)),
+        pseudoProperties: [...PSEUDO_MEASURED.filter(property => !PLACED.has(property)), ...(extra?.pseudo ?? [])],
         inheritable: [...INHERITED]
       }
     );
@@ -290,7 +323,15 @@ export const measureOn = async (
   return {
     selector: found.selector,
     ...(matches > 1 ? { matches } : {}),
-    ...(shown.hidden ? { hidden: true as const } : {}),
+    ...(shown.hidden
+      ? {
+          hidden: await page
+            .locator(found.selector)
+            .first()
+            .evaluate(hiddenWhyInPage, undefined)
+            .catch(() => 'not drawn')
+        }
+      : {}),
     ...read,
     styles: {
       ...read.styles,
