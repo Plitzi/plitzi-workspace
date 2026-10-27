@@ -65,8 +65,12 @@ twin on the same slug. `unauthorizedRedirect` names where a visitor the page is 
 (`''` is the home page), or a URL; without it they are answered 403. A visitor not signed in is sent with the address
 they asked for as `?redirect=`. A `public` sign-in with `unauthorizedRedirect` sends whoever signs in on it there
 itself — back to `?redirect=` when it is on this site, else to its `unauthorizedRedirect` — the moment `authLogin`
-succeeds, so steps after the login race the page leaving: end the flow at the login. A sign-in for everybody sends them back
-itself: `navigate({ urlType: 'external', url: "{{ navigation.queryParams.redirect | default('/') }}" })`.
+succeeds, so steps after the login race the page leaving: end the flow at the login (`login-then-leaves` says so). A
+sign-in for everybody sends them back itself: `navigate({ urlType: 'external', url: "{{ navigation.queryParams.redirect | default('/') }}" })`.
+
+Which page an address draws, and for whom, is the router's decision — a tool or a test asks it, never the pages' paths:
+`pageAt(schema, '/sign-in', { signedIn: true })` (the page, or where it sends them), `audienceAt(schema, '/sign-in')`
+(`everyone`, `guests`, `members`, `both-apart`, `nobody`).
 
 A page for some permissions says so: `access: { permissions: ['postPublish'] }` — every one held, by a signed-in visitor
 (the permissions of their visitor roles; on Plitzi's own spaces, their account's). The server keeps it: anybody else is

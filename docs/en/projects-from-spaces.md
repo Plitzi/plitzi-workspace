@@ -212,9 +212,9 @@ went up before it is said, and recorded):
 |---|---|---|
 | `plugins` | each plugin whose source changed — grouped as the space keeps them, a new element folder a plugin of its own | `plugin pack` + `plugin upload` (`--cdn`, `--bucket`) |
 | `files` | each changed file of `public/assets/`, at the same path under the space's `assets/` — images, sounds, videos, JSON | `POST /spaces/:spaceId/cdns/:identifier/assets?path=` |
-| `functions` | `src/functions/` | `space push functions` |
+| `functions` | `src/functions/`, against the version pulled | `PUT /spaces/:spaceId/functions` |
 | `data` | `src/data/` whole, its CDN addresses put back | `PUT /spaces/:spaceId/data` |
-| `runtime` | `src/runtime/index.ts` and what it imports | `space push runtime` |
+| `runtime` | `src/runtime/index.ts` and what it imports, packed | `PUT /spaces/:spaceId/runtime` |
 | `space` | `src/space/` authored, the actions `src/actions/index.ts` serves, the manifests in `src/connectors/` | `PUT /spaces/:spaceId/import` |
 
 **Never over somebody's work unseen.** The export carries which state the draft is in (`draft`, a digest of its schema,

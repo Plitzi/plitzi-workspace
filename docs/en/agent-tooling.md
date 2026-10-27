@@ -109,6 +109,19 @@ function in `__name`, which a page has not. Node 24's undici sets a socket's typ
 macOS that throws from a socket's event (`setTypeOfService EINVAL`) and ends the process: the CLI makes it best effort
 (`bestEffortTypeOfService`, `apps/cli/src/http/`) before anything runs.
 
+**One visitor, one way into a page.** Every page command — `page check`, `measure`, `play`, `outline`, `same`, `shot`
+— and `task look` take the visitor's flags from one group (`withVisitorOptions`, `commands/register/options.ts`: `--as`,
+`--guest`, `--timezone`, `--presence`, `--clock`, `--block`, `--autoplay`, `--storage`, `--url`) and open the page
+through one module (`commands/visit.ts`): `visitorBrowser` resolves who reads and starts the browser, `prepareVisit`
+makes the page ready (its view, the browser's conditions, others' pictures stood in for, signed in first),
+`openVisit` opens it as a visitor's browser reads it. `task look` hands the flags on to the commands it runs
+(`visitorArgs`). A new page command takes the group and opens through the module — never an opener of its own (four
+of them took four different parts of the visitor). **One vocabulary of steps:** `--steps` is parsed and played by
+`actingSteps`/`playedOn` (`shot/steps.ts`); `page play` plays it step by step, `page shot` pictures it, `page check`,
+`measure` and `outline` play it before they read — no picture there, and another account's (`as …`) only where the
+command keeps other visitors' pages. The other side of `--compare` is one address rule (`otherPageAt`,
+`shot/remote.ts`).
+
 **A page for signed-in visitors is read as one.** A page that sends a guest away — to the sign-in — is read again
 signed in as the project's account (`PLITZI_CHECK_USER`, its password in `PLITZI_CHECK_PASSWORD`) by every page command
 (`signInWhereSent`, `check/account.ts`), said once on stderr; `--as` names another, `--guest` keeps the guest's view

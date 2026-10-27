@@ -352,7 +352,7 @@ token belongs. A look at a task checks with it. Every check fails a link or a bu
 edge where the section keeps no space below it (`flush-edge`): a "See all" link sitting against the next section, its
 section's class without a bottom padding, which nothing else says.
 
-`page outline <path> [--compare <url>] [--within <part>] [--find <word>] [--depth <n>] [--click <el…>] [--width <px,px>]` lists what a
+`page outline <path> [--compare <url>] [--within <part>] [--find <word>] [--depth <n>] [--click <el…>] [--steps <script>] [--width <px,px>]` lists what a
 page is made of as a visitor sees it — each shown element by a selector that finds it alone (its name on the project's
 page; its id, its tag and classes, or its place under an ancestor on another site), its box and its first words,
 indented by depth — the project's page, or with `--compare` the other site's: what to name after `=>` in `page measure`,
@@ -628,6 +628,7 @@ runs them — you, the lead, every agent.
 plitzi space overview                      # who owns which file, read off the imports; what is shared
 plitzi run team                            # who works the runs: .plitzi/team.json, the agents, their roles and models
 plitzi run open plan.json --dry-run                  # a plan the lead wrote, held to the rules and estimated
+plitzi run open plan.json --dry-run --rehearse       # played out first: who works what when, how many agents are worth it
 plitzi run open plan.json                  # its folder, every file it touches backed up — and the lead's own CLI, printed
 plitzi run agent design-1 --launch         # its token, its own CLI (scratch/design-1/plitzi) and its prompt — started
 plitzi task next --role designer --agent design-1   # one started by hand names itself once, and is answered both
@@ -642,6 +643,8 @@ plitzi run reference                       # the plan's reference site kept as i
 plitzi run watch --json                    # how the run goes: a line per task, what needs attention
 plitzi run watch              # ends the moment something needs the lead: run it in the background
 plitzi run preview                         # the run's work as it goes, served: each approval shows; its dev tools' Run tab
+plitzi run preview --copy                  # the approved work as a folder of your scratch instead: a spike measures on it, apart
+plitzi run status --all                    # every run not yet written into the project, ready ones first
 plitzi run monitor                         # the run, live, in a terminal of your own beside the harness: simple (who is at what, what needs you) or advanced with m (its activity, flow, tasks, agents and spend) — it only reads; p starts the preview, x stops it
 plitzi task show t-home                    # a task as its lead reviews it: checks, agreements, each file's diff
 plitzi task show t-home src/space/pages/home/hero.ts   # one file whole, as it went to review (no task: the one you hold or review)
@@ -727,7 +730,11 @@ restore`, `run finish --lead-finishes`, `run stop --force`, `run attach --take-o
   machine and no token in any of them: send the folder to Plitzi's team, and Plitzi gets better from it. A run's id is
   its folder's: a second run of the same name is refused at `run open`. `run report` prints the run at a glance and each
   problem's title (`--full`: the whole, as `report.md`); its waits and minutes count to the last approval, its tokens are
-  what each agent's harness read, from the rounds' reports. `--keep-backup` keeps the project's files as they were
+  what each agent's harness read, from the rounds' reports. `report.md` opens with **Before you apply** — what a person
+  decides on — and says each problem by part (the run and the CLI, the platform, the docs) and whether it is new or
+  was **met before** in a run the project keeps (where, counted in the bench's "Met before"): what a fix did not stop
+  comes first. `run show <run> <file>` reads a version the run keeps — `--restore [backup]` puts the backup back, a
+  person's — and `run attach <run> --release` lets the run go from this machine for another to attach. `--keep-backup` keeps the project's files as they were
   before the merge in `tmp/plitzi-backups/`; `run abort` (a person's) writes nothing, discards the agents' work and
   leaves the reports too.
 - **Cuts:** a task with no signal (15 minutes without a write, progress or heartbeat) can be reassigned; one taken again
@@ -913,7 +920,9 @@ their own) and its `/health` says it serves that folder. Only those are stopped 
 never by name: one of another folder, or no Plitzi server at all, is named and left, and `--port` with nothing of the
 project on it fails — saying whether anything listens there at all. What agents run stops servers this way; `pkill` and
 `killall` reach every process on the machine. `server reset` is refused while a server of the folder runs (it holds
-`state/` open and would write it back); `--dry-run` says what it would remove.
+`state/` open and would write it back) — in a task's copy it stops the copy's server first, and says so; `--dry-run`
+says what it would remove. `PLITZI_STATE_DIR` puts `state/` elsewhere: the project's Playwright config gives its suite
+its own (`tmp/visual/state`), so a test never writes into what your server keeps.
 
 ## `feedback`
 

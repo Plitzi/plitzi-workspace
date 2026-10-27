@@ -1188,7 +1188,9 @@ wrote it.
 The run pins this CLI and every `@plitzi/*` installed; a change refuses every command (`version-mismatch`) until a person
 attaches, which re-pins it. **An upgrade loses no work**: on this machine a task in hand keeps its copy, its agent and
 its token — its next `complete` runs the checks with what is installed now — and is told so; only a copy that is gone, or
-another machine's, starts over from its reviewed version. Meanwhile `task next` waits through it as through a
+another machine's, starts over from its reviewed version. A run is active on one machine at a time (`run.json`'s
+`activeOn`): `run attach <run> --release` lets it go there, and another attaches — or a person takes it over
+(`--take-over`). Meanwhile `task next` waits through it as through a
 stop, and `run status` says what the person runs. A run outlives the CLI that opened it, so every change to its files is
 additive (`model.ts`): `src/tests/runRecords/<version>/` keeps a run as each CLI wrote it, and `runs-compat.test.ts`
 reads, works and finishes every one; one this CLI still cannot read is said as the other CLI's, with the command that
