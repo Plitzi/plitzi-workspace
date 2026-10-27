@@ -69,12 +69,12 @@ describe('how tasks and sessions were held', () => {
     const usage = [
       use(9, 'dev-2', 'plitzi task complete', { session: 'a' }),
       use(11, 'dev-2', 'plitzi run notice --plitzi x', { session: 'a' }),
-      use(12, 'dev-2', 'plitzi task take t-skip', { session: 'a' }),
+      use(12, 'dev-2', 'plitzi task complete t-skip', { session: 'a' }),
       use(13, 'dev-2', 'plitzi task next', { session: 'b' })
     ];
 
     expect(afterStop(log, usage).map(each => each.evidence)).toEqual([
-      ['stopped at 10:10 UTC, then 1 command(s): plitzi task take t-skip…']
+      ['stopped at 10:10 UTC, then 1 command(s): plitzi task complete t-skip…']
     ]);
     expect(afterStop([...log, { at: T(11), by: 'lead', action: 'launch', agent: 'dev-2' }], usage)).toEqual([]);
   });

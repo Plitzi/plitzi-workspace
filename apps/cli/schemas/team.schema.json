@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://plitzi.com/schemas/team.schema.json",
   "title": "Plitzi team",
-  "description": "Who works this project's runs of several agents (plitzi run). Checked by the CLI too: plitzi run team check.",
+  "description": "Who works this project's runs of several agents (plitzi run). Checked by the CLI too: plitzi doctor.",
   "type": "object",
   "required": ["version", "agents"],
   "additionalProperties": false,
