@@ -6,8 +6,8 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { editManifest, keepFolder } from './repairs';
 import { sayer } from './types';
 import { compareVersions, floorOf, floorOnLine, satisfies, versionOf, versionText } from './versions';
-import { localPackages } from '../commands/localPackages';
-import { planPackages } from '../commands/upgrade';
+import { localPackages } from '../commands/project/localPackages';
+import { planPackages } from '../commands/project/upgrade';
 import { installCommand } from '../scaffold';
 import { CLI_VERSION, NODE_ENGINES, SDK_VERSION, packageJson } from '../scaffold/project';
 

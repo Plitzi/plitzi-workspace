@@ -26,7 +26,7 @@ import {
   TLS_KEY_FILE,
   TSCONFIG_BASE
 } from './paths';
-import { STARTER_TEAM, TEAM_FILE } from '../runs/team';
+import { STARTER_TEAM, TEAM_FILE } from '../runs/agents/team';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 

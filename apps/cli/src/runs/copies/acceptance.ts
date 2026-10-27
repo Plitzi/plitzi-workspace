@@ -1,0 +1,480 @@
+import { spawn } from 'node:child_process';
+import { realpathSync } from 'node:fs';
+import fs from 'node:fs/promises';
+import net from 'node:net';
+import os from 'node:os';
+import path from 'node:path';
+
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { projectMark } from '@plitzi/sdk-shared/project';
+
+import { keepNamedFiles } from './keptFiles';
+import { stopKept } from './lingering';
+import { guardServer, listenersUnder, stopListener, stopTree, TREE } from './processes';
+import { runScript, scriptsOf, tail } from '../../commands/project/verify';
+import { UNANSWERED_EXIT } from '../../commands/shared/terminal';
+import { DEV_SERVER_FILE, PROJECT_TMP, SERVER_RECORD_ENV } from '../../scaffold/paths';
+import { inTurns } from '../core/inTurns';
+import { withLock } from '../core/store';
+
+import type { Acceptance, AcceptanceResult } from '../core/model';
+
+/**
+ * A task's acceptance, checked by the commands its plan gives: each run in the task's copy as `complete` runs
+ * the project's checks, passing on exit 0 — so what is asked is held by the CLI, not only read by the lead at review.
+ * `plitzi` in a check is this CLI, the one the run is worked with; `$PLITZI_URL`, the copy served by its own start
+ * script on a free port, for as long as the checks take.
+ */
+
+/** Where a check's output names its files once it ran, under the cache it is given (`keepNamedFiles`). */
+export const KEPT_DIR = 'kept';
+
+const isChecked = (each: Acceptance): each is { said: string; check: string } => typeof each !== 'string';
+
+/** `port` when nothing listens on it, else any free one: a preview keeps the address a person knows when it can. */
+export const portOr = (port: number): Promise<number> =>
+  new Promise(resolve => {
+    const server = net.createServer();
+    server.once('error', () => resolve(freePort()));
+    server.listen(port, '127.0.0.1', () => server.close(() => resolve(port)));
+  });
+
+export const freePort = (): Promise<number> =>
+  new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address();
+      server.close(() => {
+        if (address && typeof address === 'object') {
+          resolve(address.port);
+        } else {
+          reject(new Error('no free port for the copy to be served on'));
+        }
+      });
+    });
+  });
+
+/** Until something answers on `url`, or `ms` pass — asked once at least: whether it did. */
+export const answering = async (url: string, ms: number): Promise<boolean> => {
+  const until = Date.now() + ms;
+  for (;;) {
+    const ok = await fetch(url).then(
+      () => true,
+      () => false
+    );
+    if (ok) {
+      return true;
+    }
+
+    if (Date.now() >= until) {
+      return false;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 300));
+  }
+};
+
+/**
+ * Whether a check needs the copy served: it names `$PLITZI_URL` or `$PLITZI_PORT`, or it runs the project's Playwright
+ * specs — configured by `PORT`, which a served check is given.
+ */
+export const namesServedCopy = (check: string): boolean =>
+  /PLITZI_(?:URL|PORT)\b/.test(check) || /\bplaywright\s+test\b/.test(check);
+
+/**
+ * Whether a check is run with the copy served: one that names it, or a page command — which, run in the copy, reads the
+ * copy's server. Served once for every line: two lines at once, each serving the copy itself, started two servers on one
+ * copy and the second died on its `state/jobs.json` (a run's t-room-card-idle-height, "nothing could answer it").
+ */
+export const servesCopy = (check: string): boolean =>
+  namesServedCopy(check) ||
+  // What a shell comment says runs nothing: a line names its page there (`# plitzi page check /menu`).
+  /\bplitzi\s+page\s+(?:check|shot|measure|play|outline)\b/.test(check.replace(/(^|\s)#.*$/gm, ''));
+
+/**
+ * The check as any shell runs it: `$PLITZI_URL` and `$PLITZI_PORT` (or `${…}`) written in as their values — a POSIX
+ * shell would expand them, Windows' `cmd.exe` would not.
+ */
+export const withServedValues = (check: string, values: Readonly<Record<string, string>>): string =>
+  check.replace(/\$\{?(PLITZI_(?:URL|PORT))\}?/g, (written, name: string) =>
+    Object.hasOwn(values, name) ? values[name] : written
+  );
+
+/**
+ * Where the copy's server answers, within `ms`: the port it says it took, in the record it writes once it listens — or the
+ * port asked, once that answers (a server that writes no record). None when neither does.
+ */
+const answeringWhere = async (
+  record: string,
+  asked: number,
+  ms: number,
+  /** Whether the server has already ended: one that stopped on an error answers nothing, and is not waited on. */
+  ended: () => boolean = () => false
+): Promise<number | undefined> => {
+  for (const until = Date.now() + ms; Date.now() < until && !ended();) {
+    const value: unknown = await fs
+      .readFile(record, 'utf-8')
+      .then(text => JSON.parse(text) as unknown)
+      .catch(() => undefined);
+    const said = isRecord(value) && typeof value.port === 'number' ? value.port : undefined;
+    if (said !== undefined && (await answering(`http://127.0.0.1:${String(said)}`, Math.max(0, until - Date.now())))) {
+      return said;
+    }
+
+    if (said === undefined && (await answering(`http://127.0.0.1:${String(asked)}`, 0))) {
+      return asked;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+
+  return undefined;
+};
+
+/**
+ * A server the agent started in its copy and left running: it holds the copy's state (its locks, its files) as the one
+ * `complete` starts would — said before starting that one, with its port, rather than met as a lock the two fight over.
+ */
+export const ownServer = async (work: string): Promise<number | undefined> => {
+  const value: unknown = await fs
+    .readFile(path.join(work, DEV_SERVER_FILE), 'utf-8')
+    .then(text => JSON.parse(text) as unknown)
+    .catch(() => undefined);
+  const port = isRecord(value) && typeof value.port === 'number' ? value.port : undefined;
+  if (port === undefined) {
+    return undefined;
+  }
+
+  // The copy's own, by the mark of its folder its `/health` answers with: a record left behind by a server that died
+  // names a port another copy's server may hold now, and that one is no server of this copy's.
+  const health: unknown = await fetch(`http://127.0.0.1:${String(port)}/health`, {
+    signal: AbortSignal.timeout(1_000)
+  })
+    .then(async (response): Promise<unknown> => response.json())
+    .catch(() => undefined);
+  if (!isRecord(health)) {
+    return undefined;
+  }
+
+  return typeof health.Instance !== 'string' || health.Instance === projectMark(work) ? port : undefined;
+};
+
+/** Waits, a few seconds at most, until nothing answers on `port`. */
+const stoppedAnswering = async (port: number): Promise<void> => {
+  for (let tries = 0; tries < 20; tries += 1) {
+    const answers = await fetch(`http://127.0.0.1:${String(port)}/health`, { signal: AbortSignal.timeout(500) })
+      .then(() => true)
+      .catch(() => false);
+    if (!answers) {
+      return;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
+};
+
+/**
+ * What the copy's server the CLI starts says, as it says it: a check's pages logged a failure there that no answer
+ * shows (a run's scout, asked for "the logs that hide real failures", could not find it).
+ */
+export const serverLogOf = (cache: string): string => path.join(cache, 'acceptance-server.log');
+
+/** The copy served by its own start script on a free port, quietly: what `$PLITZI_URL` names. */
+export const serveCopy = async (
+  work: string,
+  root: string,
+  cache: string,
+  /** What the agent does once it has put right what kept the copy from being served: `complete` by default. */
+  { again = 'complete again' }: { again?: string } = {}
+): Promise<
+  | { url: string; port: number; stop: () => void; keep: () => number | undefined }
+  /** `ofTheCopy`: the copy's server itself did not come up — its code, or a server of the agent's — the work's to put right. */
+  | { problem: string; ofTheCopy?: true }
+> => {
+  // Kept from a picture before: stopped — the copy is served here for this command, one server at a time on it.
+  await stopKept(cache);
+  // One of the agent's own in the copy (npm start) holds its state too: stopped here, said — a run's agents stopped
+  // theirs by hand before every check (21 times), refused until they did. It is the copy's by its folder and its
+  // /health, never stopped by a name.
+  const running = await ownServer(work);
+  if (running !== undefined) {
+    const pid = listenersUnder(realpathSync(work)).find(each => each.port === running)?.pid;
+    if (pid === undefined) {
+      return {
+        problem: `a server of your own is running in the copy, on :${String(running)}, and is not one this command can stop — stop it (plitzi server stop --port ${String(running)}), and ${again}: two servers on one copy fight over its state`
+      };
+    }
+
+    stopListener(pid);
+    await stoppedAnswering(running);
+    process.stderr.write(
+      `· stopped your own server on :${String(running)}: it held the copy's state, and the copy is served for this command — start it again after, if you want it\n`
+    );
+  }
+
+  const scripts = await scriptsOf(work);
+  const name = ['start', 'start:dev'].find(each => Object.hasOwn(scripts, each));
+  const script = name === undefined ? undefined : scripts[name];
+  if (!script) {
+    return { problem: 'the project has no start or start:dev script to serve the copy with' };
+  }
+
+  const asked = await freePort();
+  // Where the server says it took: the port asked can be taken before it binds — agents checking at once — and a server
+  // while developing takes the next free one (asked 61515, it took 62189, and the check waited on 61515).
+  const record = path.join(PROJECT_TMP, 'plitzi-cache', 'acceptance-server.json');
+  await fs.rm(path.join(work, record), { force: true });
+  const env = (await fs.readFile(path.join(root, '.env'), 'utf-8').catch(() => undefined)) ?? '';
+  // What the server says goes to a log in the task's cache: when it does not answer, its last lines say why.
+  const logFile = serverLogOf(cache);
+  const log = await fs.open(logFile, 'w');
+  const child = spawn(script, {
+    cwd: work,
+    shell: true,
+    stdio: ['ignore', log.fd, log.fd],
+    ...TREE,
+    env: {
+      ...process.env,
+      ...Object.fromEntries(
+        env
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line !== '' && !line.startsWith('#') && line.includes('='))
+          .map(line => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)])
+      ),
+      PORT: String(asked),
+      [SERVER_RECORD_ENV]: record,
+      PATH: `${path.join(root, 'node_modules', '.bin')}${path.delimiter}${process.env.PATH ?? ''}`
+    }
+  });
+  // Stopped with the command that started it, should that command end before it does: kept, the keeper's.
+  const guard = guardServer(child.pid);
+  const stop = (): void => {
+    guard.release();
+    stopTree(child, { group: true });
+  };
+  // A server that stopped on an error waited out the whole minute before saying so.
+  const server = { ended: false };
+  child.once('exit', () => {
+    server.ended = true;
+  });
+  const where = await answeringWhere(path.join(work, record), asked, 60_000, () => server.ended);
+  const port = where ?? asked;
+  const url = `http://127.0.0.1:${String(port)}`;
+  await log.close();
+  if (where === undefined) {
+    stop();
+    const said = tail((await fs.readFile(logFile, 'utf-8').catch(() => '')).trim());
+    // A run's copy imported `node:crypto` into its functions: the server stopped on the build's error, and the lines
+    // were said unanswerable — "amend the line" — when the copy's own code was what failed.
+    const failedOnError = said.some(line => /\b\w*Error\b|\berror\b|cannot be imported|Cannot find/.test(line));
+
+    return {
+      problem: [
+        failedOnError
+          ? `the copy's server stopped on an error before it answered on ${url} — the copy's own code, as it says: put it right and ${again}. What it said (${logFile}):`
+          : `the copy's server did not answer on ${url}${server.ended ? ', and ended' : ' within a minute'} — a server of your own still running in the copy (npm start) is the usual cause: stop it and ${again}. What it said (${logFile}):`,
+        ...said
+      ].join('\n'),
+      ofTheCopy: true
+    };
+  }
+
+  // Kept past this command: let go of, so this process ends without it — its pid, for the watchdog that stops it.
+  const keep = (): number | undefined => {
+    guard.release();
+    child.unref();
+
+    return child.pid;
+  };
+
+  return { url, port, stop, keep };
+};
+
+/** The copy being served for a task's acceptance — started early, beside the project's checks. */
+export type Serving = ReturnType<typeof serveCopy>;
+
+/**
+ * The copy served for `acceptance` from now, while the project's checks run — its start was a few seconds after them
+ * on every check and complete; none when no line reads it.
+ */
+export const serveForAcceptance = (
+  acceptance: readonly Acceptance[],
+  { work, root, cache }: { work: string; root: string; cache: string }
+): Serving | undefined =>
+  acceptance.filter(isChecked).some(each => servesCopy(each.check)) ? serveCopy(work, root, cache) : undefined;
+
+/** A copy served early and not used — the checks failed first, or a refusal came: stopped. */
+export const letGo = async (serving: Serving | undefined): Promise<void> => {
+  const served = await serving;
+  if (served && !('problem' in served)) {
+    served.stop();
+  }
+};
+
+/** A `plitzi` on the path that is this CLI: a check runs the version the run is worked with, not another installed. */
+const cliShim = async (cache: string): Promise<string> => {
+  const dir = path.join(cache, 'acceptance-bin');
+  await fs.mkdir(dir, { recursive: true });
+  const shim = path.join(dir, 'plitzi');
+  await fs.writeFile(shim, `#!/bin/sh\nexec "${process.execPath}" "${process.argv[1]}" "$@"\n`, { mode: 0o755 });
+  // Windows runs a `.cmd` where a POSIX shell runs the script above.
+  if (process.platform === 'win32') {
+    await fs.writeFile(`${shim}.cmd`, `@"${process.execPath}" "${process.argv[1]}" %*\r\n`);
+  }
+
+  return dir;
+};
+
+/** Every checked line of `acceptance`, run in `work`: what each answered. None checked, none run. */
+/** How many acceptance lines run at once on one served copy: each a browser, as a look's commands are. */
+const ACCEPTANCE_AT_ONCE = 2;
+
+/**
+ * One Playwright suite at a time on the machine: two agents' suites at once made each other's timeouts and every
+ * measure of them wrong (a reviewer polling `ps` before its own). Held across runs and projects.
+ */
+export const SUITE_LOCK = path.join(os.tmpdir(), 'plitzi-playwright-suite.lock');
+
+/** A line past this runs more than a task's own checks: a whole suite where its specs would do (Carlos: minutes, not more). */
+export const SLOW_LINE_MS = 2 * 60_000;
+
+/** The project's scripts that run a Playwright suite, by name: `npm run visual` is one when its script is `playwright test`. */
+export const suiteScripts = async (root: string): Promise<string[]> =>
+  Object.entries(await scriptsOf(root).catch(() => ({})))
+    .filter(([, script]) => /\bplaywright\s+test\b/.test(script))
+    .map(([name]) => name);
+
+/** Whether a line runs a Playwright suite: itself, or a script of the project that does. */
+export const runsSuite = (check: string, scripts: readonly string[]): boolean =>
+  /\bplaywright\s+test\b/.test(check) ||
+  scripts.some(name =>
+    new RegExp(`\\b(?:npm\\s+run|pnpm(?:\\s+run)?|yarn)\\s+${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(
+      check
+    )
+  );
+
+/**
+ * A run of tests that ran none, said as it ends — node's `tests 0`, Playwright's and vitest's "No test(s) found": a
+ * line exiting 0 on it proves nothing, a pattern or a file that matches no test.
+ */
+export const ranNoTest = (output: string): boolean =>
+  /^\s*(?:#|ℹ)\s*tests 0\s*$|No tests? found|No test files found/m.test(output);
+
+const NO_TEST =
+  'ran no test — the file or the name pattern matches none: a line that runs tests passes only on the ones it ran';
+
+/** A line's exit that answers nothing: a page command that could not read (2), a command not found or not runnable. */
+const isUnanswered = (code: number): boolean => code === UNANSWERED_EXIT || code === 126 || code === 127;
+
+export const checkAcceptance = async (
+  acceptance: readonly Acceptance[],
+  {
+    work,
+    root,
+    cache,
+    onLine,
+    serving
+  }: {
+    work: string;
+    root: string;
+    cache: string;
+    /** The copy already being served (`serveForAcceptance`): used, rather than started now. */
+    serving?: Serving;
+    /** Each line as it starts — and again, once more after a failure: what a long check is at. */
+    onLine?: (index: number, total: number, said: string, again: boolean) => void;
+  }
+): Promise<AcceptanceResult[]> => {
+  const checked = acceptance.filter(isChecked);
+  if (checked.length === 0) {
+    return [];
+  }
+
+  const served = checked.some(each => servesCopy(each.check))
+    ? await (serving ?? serveCopy(work, root, cache))
+    : undefined;
+  // A copy lent by the caller is the caller's to stop (`letGo`): stopped here, the approved tasks' lines `task complete`
+  // runs next on it read "nothing answers" — a run's t-room-side was refused three times as breaking five of them.
+  const own = serving === undefined;
+  // A copy that could not be served answers no line: the line's, unless the copy's own server is what failed.
+  if (served && 'problem' in served) {
+    return checked.map(each => ({
+      said: each.said,
+      check: each.check,
+      ok: false,
+      output: [served.problem],
+      ...(served.ofTheCopy === true ? {} : { unanswered: true as const })
+    }));
+  }
+
+  const bin = await cliShim(cache);
+  const values: Record<string, string> = served
+    ? { PLITZI_URL: served.url, PLITZI_PORT: String(served.port), PORT: String(served.port) }
+    : {};
+  const scripts = await suiteScripts(root);
+  // What each run's output names, kept in the cache by the line and the try: the next run of a suite empties its folder.
+  const runOnce = async (each: { check: string }, at: number, again: boolean) => {
+    const started = Date.now();
+    const result = await runScript(work, withServedValues(each.check, values), root, { env: values, bin: [bin] });
+    const kept = path.join(cache, KEPT_DIR, `line-${String(at + 1)}${again ? '-again' : ''}`);
+    await fs.rm(kept, { recursive: true, force: true });
+
+    return { ...result, output: await keepNamedFiles(result.output, work, kept), ms: Date.now() - started };
+  };
+  const run = (each: { check: string }, at: number, again = false) =>
+    runsSuite(each.check, scripts)
+      ? withLock(SUITE_LOCK, () => runOnce(each, at, again), {
+          ttlMs: 30 * 60_000,
+          waitMs: 30 * 60_000,
+          doing: "another agent's Playwright suite on this machine"
+        })
+      : runOnce(each, at, again);
+  try {
+    // Two at a time: a run's t-body-type ran a measure, then a check of four pages, one after the other — 11 s
+    // of its 18 s check, each line a browser of its own the other did not wait on.
+    const results: AcceptanceResult[] = await inTurns(
+      checked.map((each, index) => async () => {
+        onLine?.(index, checked.length, each.said, false);
+        const { code, output, ms } = await run(each, index);
+        const passed = code === 0 && !ranNoTest(output);
+
+        return {
+          said: each.said,
+          check: each.check,
+          ok: passed,
+          // Kept only past the time a check should take: what is said of it.
+          ...(ms > SLOW_LINE_MS ? { ms } : {}),
+          ...(passed ? {} : { output: code === 0 ? [NO_TEST, ...tail(output)] : tail(output) }),
+          ...(code !== 0 && served && runsSuite(each.check, scripts) ? { reused: served.port } : {})
+        };
+      }),
+      ACCEPTANCE_AT_ONCE
+    );
+
+    // Each line that failed, once more after the others and on its own: what a slow server failed passes now, and
+    // says it did only the second time; a broken line fails again, with what it printed then.
+    for (const [at, result] of results.entries()) {
+      if (result.ok) {
+        continue;
+      }
+
+      onLine?.(at, checked.length, result.said, true);
+      const { code, output } = await run(checked[at], at, true);
+      results[at] =
+        code === 0 && !ranNoTest(output)
+          ? { said: result.said, check: result.check, ok: true, firstFailed: result.output ?? [] }
+          : {
+              ...result,
+              output: code === 0 ? [NO_TEST, ...tail(output)] : tail(output),
+              ...(isUnanswered(code) ? { unanswered: true as const } : {})
+            };
+    }
+
+    return results;
+  } finally {
+    if (own) {
+      served?.stop();
+    }
+  }
+};

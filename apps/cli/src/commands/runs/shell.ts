@@ -10,23 +10,23 @@ import chalk from 'chalk';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { failedSteps } from './text';
-import { projectChecks } from '../../runs/checks';
-import { writtenByAnother } from '../../runs/compat';
+import { endsWith, HELD_WORD, heldBy } from '../../runs/agents/held';
+import { AGENT_TOKEN, identify, issuedText, UNNAMED } from '../../runs/agents/identity';
+import { isQuality } from '../../runs/agents/team';
+import { projectChecks } from '../../runs/copies/checks';
+import { writtenByAnother } from '../../runs/core/compat';
+import { COPY_TASK_FILE, copyOf, runPaths, scratchOf } from '../../runs/core/paths';
+import { isRunRefusal, RunRefusal } from '../../runs/core/refusal';
+import { viewTask } from '../../runs/core/taskStore';
+import { ranCommand, USAGE_OFF, usageCaller } from '../../runs/core/usage';
 import { contextNow, spentIn } from '../../runs/harness';
-import { endsWith, HELD_WORD, heldBy } from '../../runs/held';
-import { AGENT_TOKEN, identify, issuedText, UNNAMED } from '../../runs/identity';
-import { LEAD } from '../../runs/messages';
-import { COPY_TASK_FILE, copyOf, runPaths, scratchOf } from '../../runs/paths';
-import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { activeRuns, loadRun } from '../../runs/run';
-import { viewTask } from '../../runs/taskStore';
-import { isQuality } from '../../runs/team';
-import { ranCommand, USAGE_OFF, usageCaller } from '../../runs/usage';
+import { LEAD } from '../../runs/talk/messages';
 import { CLI_VERSION } from '../../scaffold/project';
-import { findProject } from '../existingProject';
+import { findProject } from '../project/existingProject';
 
-import type { Held } from '../../runs/held';
-import type { Claim } from '../../runs/identity';
+import type { Held } from '../../runs/agents/held';
+import type { Claim } from '../../runs/agents/identity';
 import type { RunContext } from '../../runs/run';
 
 /**

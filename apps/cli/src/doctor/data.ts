@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { sayer } from './types';
-import { filesUnder } from '../commands/filesUnder';
+import { filesUnder } from '../commands/shared/filesUnder';
 import { DATA_DIR } from '../scaffold/paths';
 
 import type { Check, Finding } from './types';

@@ -1,7 +1,7 @@
 import { commandPath } from './commandPath';
 import { bestEffortTypeOfService } from './http';
 import { buildProgram } from './program';
-import { startUsage } from './runs/usage';
+import { startUsage } from './runs/core/usage';
 
 bestEffortTypeOfService();
 const program = buildProgram();

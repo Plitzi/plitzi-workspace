@@ -10,9 +10,10 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { doctor } from '.';
 import { nodeFindings } from './packages';
-import create from '../commands/create';
-import { digestOf, readScaffoldRecord, writeScaffoldRecord } from '../commands/scaffoldRecord';
+import create from '../commands/project/create';
+import { digestOf, readScaffoldRecord, writeScaffoldRecord } from '../commands/project/scaffoldRecord';
 import { NODE_ENGINES } from '../scaffold/project';
+import { WORKSPACE_ROOT } from '../tests/roots';
 
 import type { DoctorOptions, DoctorReport } from '.';
 
@@ -73,7 +74,7 @@ const install = async (): Promise<void> => {
     if (name === '@plitzi/sdk-authoring') {
       await fs.mkdir(path.join(project, 'node_modules', '@plitzi'), { recursive: true });
       await fs.symlink(
-        path.resolve(import.meta.dirname, '../../../../packages/sdk-authoring'),
+        path.join(WORKSPACE_ROOT, 'packages/sdk-authoring'),
         path.join(project, 'node_modules', name),
         'dir'
       );

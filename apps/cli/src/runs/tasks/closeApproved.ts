@@ -1,20 +1,20 @@
 import fs from 'node:fs/promises';
 
 import { readyWhatWaited, sayIfAllDone, statesOf } from './handOn';
-import { proposalsOf } from '../agreements';
-import { sendMessage } from '../messages';
-import { isWithin } from '../paths';
-import { syncPreview } from '../preview';
-import { loadRun, logRun, readApproved } from '../run';
-import { logSpent } from '../spent';
-import { withLock } from '../store';
-import { lockedFiles, revokeOwner, updateState } from '../taskStore';
 import { grantWaiters } from './locks';
 import { integrateWhenReady, settleRequests } from './requests';
+import { syncPreview } from '../copies/preview';
+import { isWithin } from '../core/paths';
+import { withLock } from '../core/store';
+import { lockedFiles, revokeOwner, updateState } from '../core/taskStore';
+import { logSpent } from '../report/spent';
+import { loadRun, logRun, readApproved } from '../run';
+import { proposalsOf } from '../talk/agreements';
+import { sendMessage } from '../talk/messages';
 
 import type { ReviewedTask } from './review';
+import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
-import type { TaskView } from '../taskStore';
 
 /** What an approval brought into the run's work, as `closeApproved` says it. */
 export interface Approval {

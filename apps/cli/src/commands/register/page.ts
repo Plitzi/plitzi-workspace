@@ -1,5 +1,6 @@
 import { Option } from 'commander';
 
+import { API_OPTION, DRY_RUN_OPTION, schemeOption, schemesOption, widthsOption, withVisitorOptions } from './options';
 import {
   expectation,
   fill,
@@ -11,23 +12,22 @@ import {
   width,
   widths
 } from '../../options';
-import { check } from '../check';
-import { importPage } from '../importPage';
-import { measure, onlyProperties, sameProperties } from '../measure';
-import { keepBrowser } from '../measureKeeper';
-import { outline } from '../outline';
-import { play } from '../play';
-import { pageSame } from '../same';
-import { shotEach, SHOT_MOMENTS } from '../shot';
-import { API_OPTION, DRY_RUN_OPTION, schemeOption, schemesOption, widthsOption, withVisitorOptions } from './options';
+import { check } from '../page/check';
+import { importPage } from '../page/importPage';
+import { measure, onlyProperties, sameProperties } from '../page/measure';
+import { keepBrowser } from '../page/measureKeeper';
+import { outline } from '../page/outline';
+import { play } from '../page/play';
+import { pageSame } from '../page/same';
+import { shotEach, SHOT_MOMENTS } from '../page/shot';
 
-import type { CheckOptions } from '../check';
-import type { ImportOptions } from '../importPage';
-import type { MeasureOptions } from '../measure';
-import type { OutlineOptions } from '../outline';
-import type { PlayOptions } from '../play';
-import type { SameOptions } from '../same';
-import type { ShotEachOptions } from '../shot';
+import type { CheckOptions } from '../page/check';
+import type { ImportOptions } from '../page/importPage';
+import type { MeasureOptions } from '../page/measure';
+import type { OutlineOptions } from '../page/outline';
+import type { PlayOptions } from '../page/play';
+import type { SameOptions } from '../page/same';
+import type { ShotEachOptions } from '../page/shot';
 import type { Command } from 'commander';
 
 /** `plitzi page …`: a page of the running project checked, pictured, made and imported. */

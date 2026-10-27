@@ -1,9 +1,9 @@
-import { taskPaths } from '../paths';
-import { dependenciesDone } from '../plan';
+import { taskPaths } from '../core/paths';
+import { updateState, viewTask } from '../core/taskStore';
+import { dependenciesDone } from '../plan/plan';
 import { loadRun, logRun } from '../run';
-import { updateState, viewTask } from '../taskStore';
 
-import type { TaskState } from '../model';
+import type { TaskState } from '../core/model';
 import type { LoadedRun, RunContext } from '../run';
 
 /** The state of every task of the run, by id: what a hand-on reads its dependencies' off. */

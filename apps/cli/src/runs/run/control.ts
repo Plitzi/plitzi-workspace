@@ -1,15 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { sizeOf } from '../files';
-import { runPaths, taskPaths } from '../paths';
-import { RunRefusal } from '../refusal';
-import { agentsNow } from '../running';
-import { brakeFailuresFor, cutTask, DEFAULTS, readTasks, viewTask } from '../taskStore';
-import { readTeam } from '../team';
 import { removeRun } from './claim';
 import { requirePerson, requirePrincipal } from './context';
-import { LEAD, sendMessage } from '../messages';
 import {
   assertStatus,
   loadRun,
@@ -22,13 +15,20 @@ import {
   samePinned,
   updateRecord
 } from './record';
-import { isBrakeKind } from '../brake';
+import { isBrakeKind } from '../agents/brake';
+import { agentsNow } from '../agents/running';
+import { readTeam } from '../agents/team';
+import { sizeOf } from '../core/files';
+import { runPaths, taskPaths } from '../core/paths';
+import { RunRefusal } from '../core/refusal';
+import { brakeFailuresFor, cutTask, DEFAULTS, readTasks, viewTask } from '../core/taskStore';
+import { LEAD, sendMessage } from '../talk/messages';
 
-import type { BrakeEvent } from '../brake';
-import type { RunRecord } from '../model';
-import type { RunPaths } from '../paths';
 import type { RemovedInputs } from './claim';
 import type { LoadedRun, RunContext } from './context';
+import type { BrakeEvent } from '../agents/brake';
+import type { RunRecord } from '../core/model';
+import type { RunPaths } from '../core/paths';
 
 /**
  * A run once open: its brake, stopped and resumed, attached on another machine or version, released, purged, and

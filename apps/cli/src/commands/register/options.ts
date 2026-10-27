@@ -3,7 +3,7 @@ import { InvalidArgumentError, Option } from 'commander';
 import { SCHEMES } from '../../browser';
 import { AUTOPLAY_CONDITIONS, STORAGE_CONDITIONS } from '../../browser/conditions';
 import { schemes, timeZone, widths } from '../../options';
-import { instantMs } from '../shotSteps';
+import { instantMs } from '../page/shotSteps';
 
 import type { BrowserConditions } from '../../browser/conditions';
 import type { Command } from 'commander';

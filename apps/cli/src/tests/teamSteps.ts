@@ -1,9 +1,9 @@
 import { writeInCopy } from './runProject';
-import { taskPaths } from '../runs/paths';
-import { isRunRefusal } from '../runs/refusal';
+import { taskPaths } from '../runs/core/paths';
+import { isRunRefusal } from '../runs/core/refusal';
+import { readState } from '../runs/core/taskStore';
 import { loadRun } from '../runs/run';
 import { completeTask, takeTask } from '../runs/tasks';
-import { readState } from '../runs/taskStore';
 
 import type { Bench } from './runProject';
 import type { RunContext } from '../runs/run';

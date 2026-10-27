@@ -1,4 +1,4 @@
-import type { Formatter } from '../commands/projectFormatter';
+import type { Formatter } from '../commands/project/projectFormatter';
 
 /**
  * The edited text formatted as the project formats it — when the file was formatted that way before the edit. One the

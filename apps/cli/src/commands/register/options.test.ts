@@ -1,8 +1,8 @@
 import { Command } from 'commander';
 import { describe, expect, it } from 'vitest';
 
-import { visitViewOf } from '../visit';
 import { visitorArgs, withVisitorOptions } from './options';
+import { visitViewOf } from '../page/visit';
 
 import type { VisitorOptions } from './options';
 

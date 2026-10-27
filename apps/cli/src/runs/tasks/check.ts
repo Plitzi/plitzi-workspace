@@ -2,24 +2,24 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { checkedStill, checkKey, keepChecked } from './checked';
-import { LINT_CACHE_FILE } from '../../scaffold/paths';
-import { checkAcceptance, letGo, serveForAcceptance } from '../acceptance';
-import { handOver } from '../handOver';
-import { crossed, longFilesIn, longFileText } from '../longFiles';
-import { assertStatus, loadRun, logRun, readRunLog } from '../run';
-import { backupFiles, backupText, tellLeftInTmp } from '../strays';
-import { failureLines } from '../usage';
 import { changedInCopy, findTask, holderOf, refreshCopy } from './common';
 import { whoseChanges } from './complete';
 import { fixChanged } from './fix';
 import { keepAlive } from './keepAlive';
 import { againstRunWork, stepsNotOwn, tellUnanswered } from './notOwn';
-import { readStart } from '../taskStore';
+import { LINT_CACHE_FILE } from '../../scaffold/paths';
+import { checkAcceptance, letGo, serveForAcceptance } from '../copies/acceptance';
+import { backupFiles, backupText, tellLeftInTmp } from '../copies/strays';
+import { readStart } from '../core/taskStore';
+import { failureLines } from '../core/usage';
+import { crossed, longFilesIn, longFileText } from '../plan/longFiles';
+import { assertStatus, loadRun, logRun, readRunLog } from '../run';
+import { handOver } from '../talk/handOver';
 
-import type { CheckResult } from '../checks';
-import type { Message } from '../messages';
-import type { AcceptanceResult } from '../model';
+import type { CheckResult } from '../copies/checks';
+import type { AcceptanceResult } from '../core/model';
 import type { RunContext } from '../run';
+import type { Message } from '../talk/messages';
 
 /**
  * `plitzi task check`: what `complete` would hold the copy to — the project's checks, the acceptance's commands, the

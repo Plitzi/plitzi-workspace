@@ -42,7 +42,7 @@ import {
 } from './options';
 import { groupHelp } from './run';
 import { count, duration, FOLLOW_MS, fraction } from '../../../options';
-import { BLOCK_NEEDS } from '../../../runs/model';
+import { BLOCK_NEEDS } from '../../../runs/core/model';
 import { withVisitorOptions } from '../../register/options';
 
 import type {
@@ -54,8 +54,8 @@ import type {
   ReviewOptions,
   RunCommandOptions
 } from '..';
-import type { ExperienceFlags } from '../../../runs/experience';
-import type { TellOptions } from '../talk';
+import type { ExperienceFlags } from '../../../runs/report/experience';
+import type { TellOptions } from '../task/talk';
 import type { Command } from 'commander';
 
 /** Each command of `plitzi task`, by who runs it: an agent at its task, or the lead reviewing them. */

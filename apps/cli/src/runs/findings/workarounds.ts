@@ -1,9 +1,9 @@
-import { ownScriptLines } from '../ownScripts';
 import { evidenceOf } from './types';
 import { groupAlike } from './words';
+import { ownScriptLines } from '../copies/ownScripts';
 
 import type { Finding, PlitziArea, SaidOfPlitzi } from './types';
-import type { RunTask } from '../model';
+import type { RunTask } from '../core/model';
 
 /**
  * What the run did beside Plitzi — each one a command or a feature it lacked: acceptance checked by scripts of the

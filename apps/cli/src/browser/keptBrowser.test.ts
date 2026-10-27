@@ -6,9 +6,9 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { cliBuild, keeperLaunch, keptMeasure, readRecord, stopKeptBrowser } from './keptBrowser';
-import { keeperRoutes } from '../commands/keeperRoutes';
-import { keeperServer } from '../commands/keeperServer';
-import { USAGE_OFF } from '../runs/usage';
+import { keeperRoutes } from '../commands/page/keeperRoutes';
+import { keeperServer } from '../commands/page/keeperServer';
+import { USAGE_OFF } from '../runs/core/usage';
 
 const record = (root: string): string => path.join(root, 'tmp', 'plitzi-cache', 'kept-browser.json');
 

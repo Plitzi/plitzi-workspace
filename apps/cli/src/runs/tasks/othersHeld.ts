@@ -1,9 +1,9 @@
-import { checkAcceptance } from '../acceptance';
-import { acceptancePages, pageFits, pagesOf } from '../pagesOf';
-import { viewTask } from '../taskStore';
+import { checkAcceptance } from '../copies/acceptance';
+import { viewTask } from '../core/taskStore';
+import { acceptancePages, pageFits, pagesOf } from '../plan/pagesOf';
 
-import type { Serving } from '../acceptance';
-import type { AcceptanceResult } from '../model';
+import type { Serving } from '../copies/acceptance';
+import type { AcceptanceResult } from '../core/model';
 import type { LoadedRun } from '../run';
 
 /** A line of an approved task, run again on a task's copy: whose it is, what it says, and what it answered there. */

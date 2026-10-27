@@ -1,16 +1,16 @@
 import path from 'node:path';
 
-import { failedWhy } from '../../commands/verify';
-import { ownFailing } from '../checks';
-import { checkVersions } from '../materialise';
-import { logRun, readApproved, readRunLog } from '../run';
-import { openUnanswered } from '../unansweredLines';
 import { digestsOf, escapeRegExp } from './approve';
+import { failedWhy } from '../../commands/project/verify';
+import { ownFailing } from '../copies/checks';
+import { checkVersions } from '../copies/materialise';
+import { openUnanswered } from '../copies/unansweredLines';
+import { logRun, readApproved, readRunLog } from '../run';
 
-import type { CheckResult, CheckStep } from '../checks';
-import type { AcceptanceResult } from '../model';
+import type { CheckResult, CheckStep } from '../copies/checks';
+import type { AcceptanceResult } from '../core/model';
+import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
-import type { TaskView } from '../taskStore';
 
 /**
  * What fails in a copy that is not its agent's work: a step the run's work fails the same way without it (another

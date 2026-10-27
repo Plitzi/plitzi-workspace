@@ -3,15 +3,15 @@ import chalk from 'chalk';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { MAX_LINES } from '../../lint/rules/fileTooLong';
-import { SLOW_LINE_MS } from '../../runs/acceptance';
-import { failedWhy } from '../verify';
+import { SLOW_LINE_MS } from '../../runs/copies/acceptance';
+import { failedWhy } from '../project/verify';
 
-import type { CheckStep } from '../../runs/checks';
-import type { PlanEstimate } from '../../runs/estimate';
-import type { Message } from '../../runs/messages';
+import type { CheckStep } from '../../runs/copies/checks';
+import type { PlanEstimate } from '../../runs/plan/estimate';
 import type { RemovedInputs } from '../../runs/run';
-import type { TaskShown } from '../../runs/show';
+import type { Message } from '../../runs/talk/messages';
 import type { TaskContext } from '../../runs/tasks';
+import type { TaskShown } from '../../runs/view/show';
 
 /**
  * The lines the commands say things in, shared.

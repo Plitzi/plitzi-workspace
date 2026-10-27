@@ -2,7 +2,7 @@ import { format } from 'prettier';
 import { describe, expect, it } from 'vitest';
 
 import { formattedJson } from './formattedJson';
-import { STARTER_TEAM } from '../runs/team';
+import { STARTER_TEAM } from '../runs/agents/team';
 
 /** What the projects' Prettier says of a JSON file: the scaffold's `.prettierrc`, as far as JSON reads it. */
 const prettier = (text: string): Promise<string> => format(text, { parser: 'json', printWidth: 120, tabWidth: 2 });

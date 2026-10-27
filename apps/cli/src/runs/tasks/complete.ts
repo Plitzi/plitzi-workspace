@@ -1,24 +1,25 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { isNotice } from '../../commands/verify';
+import { checkedStill, checkKey } from './checked';
+import { at, changedInCopy, cleanPath, findTask, holderOf, refreshCopy } from './common';
+import { textOf } from './context';
+import { keepAlive } from './keepAlive';
+import { activeHolder, allLocks, sharedFiles, untakenNow } from './locks';
+import { againstRunWork, tellUnanswered } from './notOwn';
+import { othersHeld } from './othersHeld';
+import { reviewAtComplete, reviewSteps, reviewTeamOf, stepsLeftOut } from './reviews';
+import { isNotice } from '../../commands/project/verify';
 import { unifiedDiff } from '../../fix/diff';
-import { checkAcceptance, letGo, serveForAcceptance } from '../acceptance';
-import { proposalsOf, unansweredTo } from '../agreements';
-import { failsWithout, ownFailing } from '../checks';
-import { createExclusive, exists, fingerprint, readOptional, writeAtomic, writeJson } from '../files';
-import { handOver } from '../handOver';
-import { crossed, longFilesIn, longFileText } from '../longFiles';
-import { mergeLines } from '../merge3';
-import { LEAD, unreadForHolder } from '../messages';
-import { entryOf } from '../model';
-import { lockFile, NOT_TASK_DIRS, taskPaths, under } from '../paths';
-import { RunRefusal } from '../refusal';
-import { reviewAtComplete, reviewSteps, reviewTeamOf, stepsLeftOut } from '../reviews';
-import { assertStatus, loadRun, logRun, readApproved, readBase, recordBrake } from '../run';
-import { logSpent } from '../spent';
-import { keepFiles, putBlob, withLock } from '../store';
-import { backupFiles, backupText, tellLeftInTmp } from '../strays';
+import { checkAcceptance, letGo, serveForAcceptance } from '../copies/acceptance';
+import { failsWithout, ownFailing } from '../copies/checks';
+import { mergeLines } from '../copies/merge3';
+import { backupFiles, backupText, tellLeftInTmp } from '../copies/strays';
+import { createExclusive, exists, fingerprint, readOptional, writeAtomic, writeJson } from '../core/files';
+import { entryOf } from '../core/model';
+import { lockFile, NOT_TASK_DIRS, taskPaths, under } from '../core/paths';
+import { RunRefusal } from '../core/refusal';
+import { keepFiles, putBlob, withLock } from '../core/store';
 import {
   appendLog,
   lockedFiles,
@@ -28,22 +29,21 @@ import {
   updateState,
   viewTask,
   writeRequest
-} from '../taskStore';
-import { checkedStill, checkKey } from './checked';
-import { at, changedInCopy, cleanPath, findTask, holderOf, refreshCopy } from './common';
-import { textOf } from './context';
-import { keepAlive } from './keepAlive';
-import { activeHolder, allLocks, sharedFiles, untakenNow } from './locks';
-import { againstRunWork, tellUnanswered } from './notOwn';
-import { othersHeld } from './othersHeld';
-import { keepTaskReport } from '../taskReports';
+} from '../core/taskStore';
+import { crossed, longFilesIn, longFileText } from '../plan/longFiles';
+import { logSpent } from '../report/spent';
+import { keepTaskReport } from '../report/taskReports';
+import { assertStatus, loadRun, logRun, readApproved, readBase, recordBrake } from '../run';
+import { proposalsOf, unansweredTo } from '../talk/agreements';
+import { handOver } from '../talk/handOver';
+import { LEAD, unreadForHolder } from '../talk/messages';
 
-import type { CheckResult } from '../checks';
-import type { Experience } from '../experience';
-import type { Message } from '../messages';
-import type { AcceptanceResult, FileLock, SharedRequest, TaskStart } from '../model';
+import type { CheckResult } from '../copies/checks';
+import type { AcceptanceResult, FileLock, SharedRequest, TaskStart } from '../core/model';
+import type { TaskView } from '../core/taskStore';
+import type { Experience } from '../report/experience';
 import type { LoadedRun, RunContext } from '../run';
-import type { TaskView } from '../taskStore';
+import type { Message } from '../talk/messages';
 
 /**
  * `plitzi task complete`: the copy compared by fingerprint, the checks and the acceptance run in it, and the task in

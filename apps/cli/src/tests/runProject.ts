@@ -2,10 +2,10 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { CheckResult, CheckRunner } from '../runs/checks';
-import type { Acceptance, RunPlan } from '../runs/model';
+import type { Team } from '../runs/agents/team';
+import type { CheckResult, CheckRunner } from '../runs/copies/checks';
+import type { Acceptance, RunPlan } from '../runs/core/model';
 import type { RunContext } from '../runs/run';
-import type { Team } from '../runs/team';
 
 /**
  * The bench of the runs of several agents: a seeded project in a folder of its own, and scripted agents — contexts that call the run's

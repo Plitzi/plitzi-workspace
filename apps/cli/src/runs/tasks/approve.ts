@@ -1,18 +1,18 @@
-import { fingerprint, readOptional, writeJson } from '../files';
-import { checkVersions } from '../materialise';
-import { mergeLines } from '../merge3';
-import { entryOf } from '../model';
-import { under } from '../paths';
-import { RunRefusal } from '../refusal';
-import { readApproved } from '../run';
-import { getBlob, putBlob, withLock } from '../store';
 import { at } from './common';
 import { textOf } from './context';
+import { checkVersions } from '../copies/materialise';
+import { mergeLines } from '../copies/merge3';
+import { fingerprint, readOptional, writeJson } from '../core/files';
+import { entryOf } from '../core/model';
+import { under } from '../core/paths';
+import { RunRefusal } from '../core/refusal';
+import { getBlob, putBlob, withLock } from '../core/store';
+import { readApproved } from '../run';
 
-import type { CheckResult } from '../checks';
-import type { ApprovedManifest, ProjectChange, SharedRequest, TaskStart } from '../model';
+import type { CheckResult } from '../copies/checks';
+import type { ApprovedManifest, ProjectChange, SharedRequest, TaskStart } from '../core/model';
+import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
-import type { TaskView } from '../taskStore';
 
 /**
  * What an approval writes into the run's work: a task's files, or a request's, merged with what the run holds — under

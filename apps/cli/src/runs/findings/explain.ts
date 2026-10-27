@@ -2,7 +2,7 @@ import { evidenceOf } from './types';
 import { wordsOf } from './words';
 
 import type { Finding } from './types';
-import type { UsageLine } from '../usage';
+import type { UsageLine } from '../core/usage';
 
 /**
  * What the agents asked `explain` — and where Plitzi had no answer, or several tries found one: a run's ten misses

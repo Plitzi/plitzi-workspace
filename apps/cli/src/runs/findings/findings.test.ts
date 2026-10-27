@@ -11,9 +11,9 @@ import { saidFindings, workaroundFindings } from './workarounds';
 import { ranAs } from '../../tests/ranAs';
 
 import type { LogEntry } from './types';
-import type { RunTask } from '../model';
-import type { TaskRoundReport } from '../taskReports';
-import type { UsageLine } from '../usage';
+import type { RunTask } from '../core/model';
+import type { UsageLine } from '../core/usage';
+import type { TaskRoundReport } from '../report/taskReports';
 
 /** A run's records as two of them were, reduced to what each pattern is read from. */
 

@@ -1,13 +1,13 @@
 import { Option } from 'commander';
 
-import { move, remove } from '../arrange';
-import { edit } from '../edit';
-import { elements } from '../spaceReading';
-import { where, WHERE_READINGS } from '../where';
+import { move, remove } from '../element/arrange';
+import { edit } from '../element/edit';
+import { elements } from '../element/spaceReading';
+import { where, WHERE_READINGS } from '../element/where';
 
-import type { MoveOptions, RemoveOptions } from '../arrange';
-import type { EditOptions } from '../edit';
-import type { WhereOptions } from '../where';
+import type { MoveOptions, RemoveOptions } from '../element/arrange';
+import type { EditOptions } from '../element/edit';
+import type { WhereOptions } from '../element/where';
 import type { Command } from 'commander';
 
 /** `plitzi element …`: an element of the space added, edited, removed and moved where it is written. */

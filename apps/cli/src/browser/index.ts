@@ -15,7 +15,7 @@ import { keepStatic, staticCacheDir } from './staticCache';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
 
 import type { BrowserConditions } from './conditions';
-import type { PlitziProject } from '../commands/existingProject';
+import type { PlitziProject } from '../commands/project/existingProject';
 import type { SettlingEvent, SettlingRequest } from '@plitzi/sdk-authoring';
 
 /**

@@ -1,15 +1,15 @@
-import { exists, fingerprint, writeJson } from '../files';
-import { LEAD, messagesOf } from '../messages';
-import { under } from '../paths';
-import { RunRefusal } from '../refusal';
-import { assertStepReviewer, reviewSteps, reviewTeamOf } from '../reviews';
-import { keepFiles } from '../store';
-import { readRequests, readStart, viewTask } from '../taskStore';
 import { at, changedInCopy, findTask } from './common';
+import { assertStepReviewer, reviewSteps, reviewTeamOf } from './reviews';
+import { exists, fingerprint, writeJson } from '../core/files';
+import { under } from '../core/paths';
+import { RunRefusal } from '../core/refusal';
+import { keepFiles } from '../core/store';
+import { readRequests, readStart, viewTask } from '../core/taskStore';
+import { LEAD, messagesOf } from '../talk/messages';
 
-import type { ReviewComment, TaskStart } from '../model';
+import type { ReviewComment, TaskStart } from '../core/model';
+import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
-import type { TaskView } from '../taskStore';
 
 /**
  * Two tasks in review approved as one change (`task review A --approve --with B`): each reads a file the other makes —

@@ -1,6 +1,6 @@
 import { sayer } from './types';
 import { compareVersions, versionOf } from './versions';
-import { machineryPlan } from '../commands/upgrade';
+import { machineryPlan } from '../commands/project/upgrade';
 import { AUTHOR_FILE, MAIN_FILE, TSCONFIG_BASE } from '../scaffold/paths';
 import { CLI_VERSION } from '../scaffold/project';
 

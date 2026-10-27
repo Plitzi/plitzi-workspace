@@ -3,11 +3,13 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { CLI_ROOT } from './tests/roots';
+
 /**
  * The CLI is any project's: what it ships — its code and its tests, its skills, its README — says a situation in
  * general words, never the name of a run it was learnt from.
  */
-const ROOT = path.resolve(import.meta.dirname, '..');
+const ROOT = CLI_ROOT;
 const SHIPPED = ['src', 'skills', 'README.md'];
 const RUN_NAME = new RegExp(['enc', 'ore-\\d+'].join(''), 'i');
 

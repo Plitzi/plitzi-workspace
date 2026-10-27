@@ -8,9 +8,10 @@ import { unzipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 
 import { PackError, packPlugin } from './pack';
-import { writeFiles } from '../commands/terminal';
+import { writeFiles } from '../commands/shared/terminal';
 import { pluginFunctionsFile, pluginNames, scaffoldElement, scaffoldPlugin } from '../scaffold';
 import { linkAuthoring } from '../tests/linkAuthoring';
+import { CLI_ROOT } from '../tests/roots';
 
 /**
  * A plugin is packed for a page that is not this one: the page provides React and the SDK, imports the code from a
@@ -144,7 +145,7 @@ describe('the source a plugin is packed from', () => {
   /** Kept beside the zip, so `plitzi plugin upload` keeps it on the space with the plugin. */
   it('is written beside the zip, every file its elements reach', async () => {
     // Inside this package, so the project's TypeScript resolves to the workspace's as a real project's would.
-    const parent = path.join(import.meta.dirname, '../../node_modules/.tmp');
+    const parent = path.join(CLI_ROOT, 'node_modules/.tmp');
     await fs.mkdir(parent, { recursive: true });
     const dir = await fs.mkdtemp(path.join(parent, 'pack-'));
     try {
@@ -282,7 +283,7 @@ describe('a plugin package’s types', () => {
    */
   it('writes them with the package’s own TypeScript, for what src/ holds', async () => {
     // Inside the workspace, where a TypeScript resolves — as it does in a package with its dependencies installed.
-    const dir = await fs.mkdtemp(path.join(import.meta.dirname, '../../.pack-types-'));
+    const dir = await fs.mkdtemp(path.join(CLI_ROOT, '.pack-types-'));
     try {
       await ratingPackage(dir);
 
@@ -362,7 +363,7 @@ describe('what is refused, and why', () => {
 describe('a plugin’s server half', () => {
   it('travels as its source, named by the manifest, and in the source kept beside the zip', async () => {
     // Inside this package, so the project's TypeScript resolves to the workspace's as a real project's would.
-    const parent = path.join(import.meta.dirname, '../../node_modules/.tmp');
+    const parent = path.join(CLI_ROOT, 'node_modules/.tmp');
     await fs.mkdir(parent, { recursive: true });
     const dir = await fs.mkdtemp(path.join(parent, 'pack-functions-'));
     try {

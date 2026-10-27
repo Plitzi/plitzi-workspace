@@ -1,5 +1,5 @@
 import type { Finding } from './types';
-import type { RunReport } from '../report';
+import type { RunReport } from '../report/report';
 
 /**
  * What the run came to that needs a look — a task not finished, a file written over, an estimate far off — read off

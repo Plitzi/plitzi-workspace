@@ -112,7 +112,7 @@ macOS that throws from a socket's event (`setTypeOfService EINVAL`) and ends the
 **One visitor, one way into a page.** Every page command — `page check`, `measure`, `play`, `outline`, `same`, `shot`
 — and `task look` take the visitor's flags from one group (`withVisitorOptions`, `commands/register/options.ts`: `--as`,
 `--guest`, `--timezone`, `--presence`, `--clock`, `--block`, `--autoplay`, `--storage`, `--url`) and open the page
-through one module (`commands/visit.ts`): `visitorBrowser` resolves who reads and starts the browser, `prepareVisit`
+through one module (`commands/page/visit.ts`): `visitorBrowser` resolves who reads and starts the browser, `prepareVisit`
 makes the page ready (its view, the browser's conditions, others' pictures stood in for, signed in first),
 `openVisit` opens it as a visitor's browser reads it. `task look` hands the flags on to the commands it runs
 (`visitorArgs`). A new page command takes the group and opens through the module — never an opener of its own (four

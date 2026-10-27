@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { findProject } from '../commands/existingProject';
+import { findProject } from '../commands/project/existingProject';
 import { examine, projectContext } from '../doctor';
 import { CLI_VERSION } from '../scaffold/project';
 

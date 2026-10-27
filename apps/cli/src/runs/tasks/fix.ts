@@ -1,7 +1,7 @@
 import path from 'node:path';
 
-import { runScript, scriptsOf } from '../../commands/verify';
-import { fingerprint } from '../files';
+import { runScript, scriptsOf } from '../../commands/project/verify';
+import { fingerprint } from '../core/files';
 
 /**
  * `task check --fix`: what the project's own linter and formatter fix by themselves, fixed first — on the files the

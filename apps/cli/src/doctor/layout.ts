@@ -5,12 +5,12 @@ import { checkProjectLayout } from '@plitzi/sdk-shared/project';
 
 import { collisions, moveFiles } from './moves';
 import { sayer } from './types';
-import { legacyLayout } from '../commands/legacyLayout';
-import { digestOf, readScaffoldRecord, writeScaffoldRecord } from '../commands/scaffoldRecord';
+import { legacyLayout } from '../commands/project/legacyLayout';
+import { digestOf, readScaffoldRecord, writeScaffoldRecord } from '../commands/project/scaffoldRecord';
 
 import type { Moved, Moves } from './moves';
 import type { Check, DoctorContext, Finding, Repair } from './types';
-import type { LegacyPlace } from '../commands/legacyLayout';
+import type { LegacyPlace } from '../commands/project/legacyLayout';
 import type { LayoutAutofix, LayoutFinding } from '@plitzi/sdk-shared/project';
 
 /**

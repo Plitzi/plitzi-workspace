@@ -1,38 +1,38 @@
 import fs from 'node:fs/promises';
 
-import { durationText, FOLLOW_MS } from '../../options';
-import { handOver } from '../handOver';
-import { assertRoles } from '../identity';
-import { isPrincipal, LEAD_ROLE } from '../leads';
-import { agentAddress, unreadFor } from '../messages';
-import { ON_DEMAND_IDLE_MS } from '../onDemand';
-import { agentScratch, runPaths } from '../paths';
-import { readyTasks } from '../plan';
-import { markPresent } from '../presence';
-import { isRunRefusal } from '../refusal';
-import { reviewFor, reviewRolesOf, reviewSteps, reviewTeamOf } from '../reviews';
-import { assertStatus, loadRun, logRun, readRunLog } from '../run';
-import { runChanged } from '../runChanged';
-import { tellLeftInTmp } from '../strays';
-import { isDisconnected, viewTask } from '../taskStore';
-import { qualityRank, readTeam, startedAgents } from '../team';
-import { isWorked } from '../worked';
 import { findTask } from './common';
 import { leadNext } from './leadNext';
 import { allLocks } from './locks';
 import { askedRoles, baseFirst, freshStart, lastAsked, reasonOf, markJoined, reviewsComing } from './nextRules';
 import { reviewOffer, takeOfferedStep } from './reviewOffer';
+import { reviewFor, reviewRolesOf, reviewSteps, reviewTeamOf } from './reviews';
 import { spareTests } from './spareTests';
-import { writesTests } from '../tests';
 import { takeTask } from './take';
-import { roleOf } from '../spike';
+import { durationText, FOLLOW_MS } from '../../options';
+import { assertRoles } from '../agents/identity';
+import { isPrincipal, LEAD_ROLE } from '../agents/leads';
+import { ON_DEMAND_IDLE_MS } from '../agents/onDemand';
+import { markPresent } from '../agents/presence';
+import { qualityRank, readTeam, startedAgents } from '../agents/team';
+import { isWorked } from '../agents/worked';
+import { tellLeftInTmp } from '../copies/strays';
+import { agentScratch, runPaths } from '../core/paths';
+import { isRunRefusal } from '../core/refusal';
+import { runChanged } from '../core/runChanged';
+import { isDisconnected, viewTask } from '../core/taskStore';
+import { readyTasks } from '../plan/plan';
+import { roleOf } from '../plan/spike';
+import { writesTests } from '../plan/tests';
+import { assertStatus, loadRun, logRun, readRunLog } from '../run';
+import { handOver } from '../talk/handOver';
+import { agentAddress, unreadFor } from '../talk/messages';
 
-import type { Message } from '../messages';
-import type { RunTask, TaskStatus } from '../model';
-import type { LoadedRun, RunContext } from '../run';
-import type { TaskView } from '../taskStore';
 import type { ReviewOffer } from './reviewOffer';
 import type { TakenTask } from './take';
+import type { RunTask, TaskStatus } from '../core/model';
+import type { TaskView } from '../core/taskStore';
+import type { LoadedRun, RunContext } from '../run';
+import type { Message } from '../talk/messages';
 
 /**
  * `plitzi task next`: what an agent between tasks is handed — its own task back, a designer's review, the next ready

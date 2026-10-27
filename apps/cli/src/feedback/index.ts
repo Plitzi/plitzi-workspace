@@ -4,8 +4,8 @@ import path from 'node:path';
 import { feedbackBrief } from './brief';
 import { feedbackFacts } from './facts';
 import { reportTemplate } from './template';
-import { findProject } from '../commands/existingProject';
-import { fail } from '../commands/terminal';
+import { findProject } from '../commands/project/existingProject';
+import { fail } from '../commands/shared/terminal';
 import { AGENT_REPORTS_DIR } from '../scaffold/paths';
 
 import type { FeedbackFacts } from './facts';

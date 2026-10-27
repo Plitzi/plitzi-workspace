@@ -7,8 +7,8 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { projectModule } from './projectModules';
 import { editTsConfig, freshSecret, ignoreLines, unignore, writeFormatted } from './repairs';
 import { sayer } from './types';
-import { CHECK_PASSWORD_ENV, CHECK_USER_ENV } from '../commands/check/account';
-import { projectSettings } from '../commands/projectSettings';
+import { CHECK_PASSWORD_ENV, CHECK_USER_ENV } from '../commands/page/check/account';
+import { projectSettings } from '../commands/project/projectSettings';
 import {
   CLI_DIR,
   CLI_DIR_INCLUDE,

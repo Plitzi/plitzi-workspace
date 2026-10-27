@@ -3,16 +3,16 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { readJson, readOptional, writeJson } from '../files';
-import { isApprovedManifest, isBaseManifest, isRunPlan, isRunRecord, isSharedManifest } from '../model';
-import { ID, runPaths, runsDir } from '../paths';
-import { RunRefusal } from '../refusal';
-import { withLock } from '../store';
-import { appendLog, readTasks } from '../taskStore';
+import { readJson, readOptional, writeJson } from '../core/files';
+import { isApprovedManifest, isBaseManifest, isRunPlan, isRunRecord, isSharedManifest } from '../core/model';
+import { ID, runPaths, runsDir } from '../core/paths';
+import { RunRefusal } from '../core/refusal';
+import { withLock } from '../core/store';
+import { appendLog, readTasks } from '../core/taskStore';
 
-import type { ApprovedManifest, BaseManifest, Pinned, RunRecord, SharedManifest } from '../model';
-import type { RunPaths } from '../paths';
 import type { LoadedRun, RunContext } from './context';
+import type { ApprovedManifest, BaseManifest, Pinned, RunRecord, SharedManifest } from '../core/model';
+import type { RunPaths } from '../core/paths';
 
 /**
  * A run's record and manifests, read and written under its lock: loaded with the versions it was pinned to, its

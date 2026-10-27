@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { applyConditions, clockHeld, conditionsText, heldOn } from './conditions';
-import { actStep } from '../commands/shot/steps';
+import { actStep } from '../commands/page/shot/steps';
 
 import type { BrowserPage, PageRoute } from './index';
 

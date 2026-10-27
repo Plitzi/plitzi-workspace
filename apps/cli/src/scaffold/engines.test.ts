@@ -4,8 +4,9 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { NODE_ENGINES } from './project';
+import { WORKSPACE_ROOT } from '../tests/roots';
 
-const WORKSPACE = path.resolve(import.meta.dirname, '../../../..');
+const WORKSPACE = WORKSPACE_ROOT;
 
 /**
  * The Node a project needs is the Node the packages it runs in Node need: one floor, written into every project the

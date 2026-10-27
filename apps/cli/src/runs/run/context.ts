@@ -1,10 +1,10 @@
-import { LEAD } from '../messages';
-import { RunRefusal } from '../refusal';
+import { RunRefusal } from '../core/refusal';
+import { LEAD } from '../talk/messages';
 
-import type { CheckRunner } from '../checks';
+import type { CheckRunner } from '../copies/checks';
+import type { Quality, RunPlan, RunRecord, RunTask } from '../core/model';
+import type { RunPaths } from '../core/paths';
 import type { HarnessUsage } from '../harness';
-import type { Quality, RunPlan, RunRecord, RunTask } from '../model';
-import type { RunPaths } from '../paths';
 
 /**
  * Who acts on a run — an agent, the lead, or a person at a terminal — and what a run is, loaded: what every step reads.

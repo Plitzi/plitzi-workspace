@@ -1,20 +1,20 @@
-import { writeJson } from '../files';
-import { handOver } from '../handOver';
-import { requireLead } from '../leads';
-import { longFilesIn } from '../longFiles';
-import { LEAD, sendMessage } from '../messages';
-import { RunRefusal } from '../refusal';
-import { loadRun, logRun, requireNoTask } from '../run';
-import { tellLeftInTmp } from '../strays';
-import { DEFAULTS, noSignalAfter, updateState, viewTask } from '../taskStore';
 import { at, findTask, holderOf, holderOrCoordinator, refreshCopy } from './common';
 import { letGoUntouched } from './locks';
-import { asksLead } from '../model';
+import { requireLead } from '../agents/leads';
+import { tellLeftInTmp } from '../copies/strays';
+import { writeJson } from '../core/files';
+import { asksLead } from '../core/model';
+import { RunRefusal } from '../core/refusal';
+import { DEFAULTS, noSignalAfter, updateState, viewTask } from '../core/taskStore';
+import { longFilesIn } from '../plan/longFiles';
+import { loadRun, logRun, requireNoTask } from '../run';
+import { handOver } from '../talk/handOver';
+import { LEAD, sendMessage } from '../talk/messages';
 
-import type { LongFile } from '../longFiles';
-import type { Message } from '../messages';
-import type { Needs, TaskState } from '../model';
+import type { Needs, TaskState } from '../core/model';
+import type { LongFile } from '../plan/longFiles';
 import type { RunContext } from '../run';
+import type { Message } from '../talk/messages';
 
 /**
  * What a task at work says while it works: its progress (the heartbeat), a block and its answer, a note.

@@ -3,7 +3,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { saysAlike } from './words';
 
 import type { Finding } from './types';
-import type { KeptReport } from '../reports';
+import type { KeptReport } from '../report/reports';
 
 /**
  * Each finding held against the runs before it: new, or met again — and in which. After a run (49 problems of

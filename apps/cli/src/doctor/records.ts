@@ -2,10 +2,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { sayer } from './types';
-import { FUNCTIONS_STATE_FILE, readFunctionsState } from '../commands/functions';
-import { SCAFFOLD_RECORD_FILE } from '../commands/scaffoldRecord';
-import { ORIGIN_FILE } from '../commands/spaceOrigin';
-import { planSkills } from '../commands/upgrade';
+import { FUNCTIONS_STATE_FILE, readFunctionsState } from '../commands/functions/functions';
+import { SCAFFOLD_RECORD_FILE } from '../commands/project/scaffoldRecord';
+import { ORIGIN_FILE } from '../commands/project/spaceOrigin';
+import { planSkills } from '../commands/project/upgrade';
 
 import type { Check, Finding } from './types';
 

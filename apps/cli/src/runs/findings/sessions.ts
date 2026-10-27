@@ -1,7 +1,7 @@
 import { clock, evidenceOf, text } from './types';
 
 import type { Finding, LogEntry } from './types';
-import type { UsageLine } from '../usage';
+import type { UsageLine } from '../core/usage';
 
 /**
  * How the run's agents held their tasks and their sessions, replayed from the log and the usage — the state the CLI

@@ -3,25 +3,25 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { extendRun, seeStage } from '../extend';
-import { isPrincipal, requireLead } from '../leads';
-import { uncheckedOf } from '../plan';
-import { RunRefusal } from '../refusal';
-import { reviewAtComplete } from '../reviews';
-import { assertStatus, loadRun, logRun, readPlanFile } from '../run';
-import { logSpent } from '../spent';
-import { isResearch } from '../spike';
-import { updateState, viewTask } from '../taskStore';
 import { closeApproved } from './closeApproved';
 import { at, findTask, holderOf } from './common';
 import { readyWhatWaited, sayIfAllDone } from './handOn';
+import { reviewAtComplete } from './reviews';
+import { isPrincipal, requireLead } from '../agents/leads';
+import { RunRefusal } from '../core/refusal';
+import { updateState, viewTask } from '../core/taskStore';
+import { extendRun, seeStage } from '../plan/extend';
+import { uncheckedOf } from '../plan/plan';
+import { isResearch } from '../plan/spike';
+import { logSpent } from '../report/spent';
+import { assertStatus, loadRun, logRun, readPlanFile } from '../run';
 
-import type { Extended } from '../extend';
-import type { TaskStatus } from '../model';
-import type { LoadedRun, RunContext } from '../run';
-import type { Finding } from '../spike';
-import type { TaskView } from '../taskStore';
 import type { ReviewedTask } from './review';
+import type { TaskStatus } from '../core/model';
+import type { TaskView } from '../core/taskStore';
+import type { Extended } from '../plan/extend';
+import type { Finding } from '../plan/spike';
+import type { LoadedRun, RunContext } from '../run';
 
 /**
  * A research card's two moves of its own: its result said at `complete` (`--found`, the tasks it makes with `--tasks`),

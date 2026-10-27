@@ -16,15 +16,15 @@ import { checkRecords, checkSkills } from './records';
 import { checkSources } from './sources';
 import { checkTeam } from './team';
 import { DOCTOR_AREAS, sayer } from './types';
-import { lockfileManager, projectHere } from '../commands/existingProject';
-import { readScaffoldRecord } from '../commands/scaffoldRecord';
-import { readOrigin } from '../commands/spaceOrigin';
-import { fail } from '../commands/terminal';
-import { answersFor } from '../commands/upgrade';
+import { lockfileManager, projectHere } from '../commands/project/existingProject';
+import { readScaffoldRecord } from '../commands/project/scaffoldRecord';
+import { readOrigin } from '../commands/project/spaceOrigin';
+import { answersFor } from '../commands/project/upgrade';
+import { fail } from '../commands/shared/terminal';
 import { CLI_VERSION } from '../scaffold/project';
 
 import type { Check, DoctorArea, DoctorContext, Finding, Repair, Severity } from './types';
-import type { ExistingProject } from '../commands/existingProject';
+import type { ExistingProject } from '../commands/project/existingProject';
 
 export type { DoctorArea, Finding, Severity } from './types';
 

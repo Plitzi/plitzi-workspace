@@ -1,8 +1,8 @@
-import { WORK_LIMIT_MINUTES } from '../limits';
+import { WORK_LIMIT_MINUTES } from '../agents/limits';
 import { isApproval } from '../run';
 
 import type { Finding, LogEntry } from './types';
-import type { TaskReport } from '../report';
+import type { TaskReport } from '../report/report';
 
 /**
  * A task that ran long, with what the run kept of why — read off its log, never left to the lead's memory: a run's

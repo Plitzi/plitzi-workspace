@@ -5,7 +5,7 @@ import { authorSpace, refusalOf } from '@plitzi/sdk-authoring';
 
 import { finding } from './catalog';
 import { specSelectorFindings } from './specSelectors';
-import { loadProjectSpace } from '../commands/projectSpace';
+import { loadProjectSpace } from '../commands/project/projectSpace';
 
 import type { LintFinding } from './types';
 import type { Suggestion } from '@plitzi/sdk-authoring';

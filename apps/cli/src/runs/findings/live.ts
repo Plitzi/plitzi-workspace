@@ -1,15 +1,15 @@
-import { saidOfPlitzi } from '../experience';
-import { noticesByOwner } from '../notices';
-import { refusedAgain } from '../refusedAgain';
-import { settledFindings } from '../settle';
-import { readTaskReports } from '../taskReports';
-import { unansweredLines } from '../unansweredLines';
-import { readUsage } from '../usage';
 import { liveFindings } from './index';
+import { refusedAgain } from '../agents/refusedAgain';
+import { unansweredLines } from '../copies/unansweredLines';
+import { readUsage } from '../core/usage';
+import { saidOfPlitzi } from '../report/experience';
+import { settledFindings } from '../report/settle';
+import { readTaskReports } from '../report/taskReports';
+import { noticesByOwner } from '../talk/notices';
 
 import type { readRunLog } from '../run';
 import type { LoadedRun } from '../run';
-import type { Attention } from '../view';
+import type { Attention } from '../view/view';
 
 /**
  * What the run's records show going wrong now — a task refused again and again, a line failing try after try, a prompt

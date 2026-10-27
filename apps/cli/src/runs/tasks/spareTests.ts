@@ -1,9 +1,9 @@
-import { DEVELOPER, readTeam, startedAgents, TESTER } from '../team';
-import { testWriters, writesTests } from '../tests';
+import { DEVELOPER, readTeam, startedAgents, TESTER } from '../agents/team';
+import { testWriters, writesTests } from '../plan/tests';
 
-import type { RunTask } from '../model';
+import type { RunTask } from '../core/model';
+import type { TaskView } from '../core/taskStore';
 import type { LoadedRun } from '../run';
-import type { TaskView } from '../taskStore';
 
 /**
  * A task of tests a tester writes: one no developer of the team may — each worked what it tests (a team of one

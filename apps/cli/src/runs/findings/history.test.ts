@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { pastFindingsOf, withHistory } from './history';
-import { historyText } from '../reportHead';
+import { historyText } from '../report/reportHead';
 
 import type { Finding } from './types';
-import type { KeptReport } from '../reports';
+import type { KeptReport } from '../report/reports';
 
 const finding = (over: Partial<Finding>): Finding => ({
   kind: 'large-output',

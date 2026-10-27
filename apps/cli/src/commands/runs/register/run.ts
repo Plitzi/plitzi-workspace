@@ -38,8 +38,6 @@ import {
   runNotice,
   runReference
 } from '..';
-import { runAgent } from '../agent';
-import { runStart } from '../start';
 import {
   AGENT_OPTION,
   EASE_OPTION,
@@ -51,6 +49,8 @@ import {
   TOKEN_OPTION
 } from './options';
 import { duration, FOLLOW_MS, names, pagePaths, positiveInteger, wholeNumber } from '../../../options';
+import { runAgent } from '../run/agent';
+import { runStart } from '../run/start';
 
 import type {
   FinishOptions,
@@ -62,10 +62,10 @@ import type {
   UpgradeRunOptions,
   WatchRunOptions
 } from '..';
-import type { ExperienceFlags } from '../../../runs/experience';
-import type { AgentOptions } from '../agent';
-import type { StartOptions } from '../start';
-import type { TeamSetOptions } from '../team';
+import type { ExperienceFlags } from '../../../runs/report/experience';
+import type { AgentOptions } from '../run/agent';
+import type { StartOptions } from '../run/start';
+import type { TeamSetOptions } from '../run/team';
 import type { Command } from 'commander';
 
 /**

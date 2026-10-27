@@ -2,29 +2,29 @@ import { randomBytes } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { proposalsOf, unansweredTo } from '../agreements';
-import { cloneFiles, cloneServed, createExclusive, isCopied, projectFiles, writeJson } from '../files';
-import { handOver } from '../handOver';
-import { assertRoles } from '../identity';
-import { isPrincipal } from '../leads';
-import { COPY_TASK_FILE, isSecretFile, lockFile, under } from '../paths';
-import { dependenciesDone } from '../plan';
-import { RunRefusal } from '../refusal';
-import { assertStatus, loadRun, logRun, readApproved } from '../run';
-import { keepFiles, placeVersion, withLock } from '../store';
-import { appendLog, cutTask, locksExpired, readOwner, revokeOwner, updateState, viewTask } from '../taskStore';
-import { isWorked } from '../worked';
 import { at, findTask } from './common';
 import { allLocks, sharedFiles } from './locks';
 import { spareTests } from './spareTests';
-import { isResearch, roleOf } from '../spike';
-import { writesTests } from '../tests';
+import { assertRoles } from '../agents/identity';
+import { isPrincipal } from '../agents/leads';
+import { isWorked } from '../agents/worked';
+import { cloneFiles, cloneServed, createExclusive, isCopied, projectFiles, writeJson } from '../core/files';
+import { COPY_TASK_FILE, isSecretFile, lockFile, under } from '../core/paths';
+import { RunRefusal } from '../core/refusal';
+import { keepFiles, placeVersion, withLock } from '../core/store';
+import { appendLog, cutTask, locksExpired, readOwner, revokeOwner, updateState, viewTask } from '../core/taskStore';
+import { dependenciesDone } from '../plan/plan';
+import { isResearch, roleOf } from '../plan/spike';
+import { writesTests } from '../plan/tests';
+import { assertStatus, loadRun, logRun, readApproved } from '../run';
+import { proposalsOf, unansweredTo } from '../talk/agreements';
+import { handOver } from '../talk/handOver';
 
-import type { ProposalView } from '../agreements';
-import type { Message } from '../messages';
-import type { FileLock, RunTask, TaskStart, TaskStatus } from '../model';
+import type { FileLock, RunTask, TaskStart, TaskStatus } from '../core/model';
+import type { TaskView } from '../core/taskStore';
 import type { RunContext } from '../run';
-import type { TaskView } from '../taskStore';
+import type { ProposalView } from '../talk/agreements';
+import type { Message } from '../talk/messages';
 
 /**
  * `plitzi task next <task>`: a task taken — its owner created exclusively, its files locked, its copy of the project made.

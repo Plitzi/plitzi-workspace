@@ -1,6 +1,6 @@
+import { viewTask } from '../runs/core/taskStore';
 import { loadRun } from '../runs/run';
 import { completeResearch, findTask, reportProgress, reviewTask } from '../runs/tasks';
-import { viewTask } from '../runs/taskStore';
 
 import type { Bench } from './runProject';
 import type { RunContext } from '../runs/run';

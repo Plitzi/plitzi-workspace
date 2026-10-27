@@ -1,8 +1,8 @@
 import { readClaude } from './claude';
-import { sessionOfProcess } from '../session';
 import { readCodex } from './codex';
 import { readOpenCode } from './opencode';
 import { usageOf } from './types';
+import { sessionOfProcess } from '../agents/session';
 
 import type { HarnessUsage, SessionRead } from './types';
 

@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { RUN_COPY_MARK } from '../paths';
+import { RUN_COPY_MARK } from '../core/paths';
 
 /**
  * What each agent left in its scratch beside the CLI: the scripts it wrote and the packages it installed — read before

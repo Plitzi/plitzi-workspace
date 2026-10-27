@@ -2,7 +2,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { projectModule } from './projectModules';
 import { sayer } from './types';
-import { readFunctionsFiles } from '../commands/functions';
+import { readFunctionsFiles } from '../commands/functions/functions';
 import { FUNCTIONS_DIR } from '../scaffold/paths';
 
 import type { Check } from './types';

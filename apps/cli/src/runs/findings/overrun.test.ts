@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { factFindings } from './facts';
 import { closeFindings, overrunFindings } from './overrun';
 import { areaOfSaid } from './workarounds';
-import { applyFacts, applyText, weighedLines } from '../reportApply';
+import { applyFacts, applyText, weighedLines } from '../report/reportApply';
 
-import type { RunReport, TaskReport } from '../report';
+import type { RunReport, TaskReport } from '../report/report';
 
 const task = (over: Partial<TaskReport>): TaskReport => ({
   id: 't-visual-specs',

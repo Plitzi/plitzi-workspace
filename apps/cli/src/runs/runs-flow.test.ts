@@ -3,16 +3,15 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { openBacklog } from './backlog';
-import { readBench } from './bench';
-import { identify } from './identity';
-import { finishRun } from './merge';
-import { monitorRun } from './monitor';
-import { noticeRun } from './notices';
-import { writeSummary } from './report';
+import { identify } from './agents/identity';
+import { finishRun } from './copies/merge';
+import { getBlob } from './core/store';
+import { openBacklog } from './plan/backlog';
+import { readBench } from './report/bench';
+import { writeSummary } from './report/report';
 import { loadRun, openRun, readApproved, readRunLog } from './run';
-import { getBlob } from './store';
-import { askLead, messageTasks } from './talk';
+import { noticeRun } from './talk/notices';
+import { askLead, messageTasks } from './talk/talk';
 import {
   blockTask,
   checkTask,
@@ -28,11 +27,12 @@ import {
   unblockTask,
   waitForFile
 } from './tasks';
-import { viewRun } from './view';
+import { monitorRun } from './view/monitor';
+import { viewRun } from './view/view';
 import { benchPlan, makeBench, readInCopy, writeInCopy } from '../tests/runProject';
 import { LEAD_SAID } from '../tests/runSteps';
 
-import type { CheckResult, CheckRunner } from './checks';
+import type { CheckResult, CheckRunner } from './copies/checks';
 import type { RunContext } from './run';
 import type { Bench } from '../tests/runProject';
 

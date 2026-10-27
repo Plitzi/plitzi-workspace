@@ -3,14 +3,13 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { amendRun } from './amend';
-import { extendRun } from './extend';
-import { waitForLead } from './leadWatch';
-import { finishRun } from './merge';
-import { monitorRun } from './monitor';
-import { readOwnership } from './ownership';
-import { runPaths } from './paths';
-import { checkPlan } from './plan';
+import { waitForLead } from './agents/leadWatch';
+import { finishRun } from './copies/merge';
+import { readOwnership } from './copies/ownership';
+import { runPaths } from './core/paths';
+import { amendRun } from './plan/amend';
+import { extendRun } from './plan/extend';
+import { checkPlan } from './plan/plan';
 import { allowLeadFinish, loadRun, readRunLog } from './run';
 import {
   blockTask,
@@ -23,11 +22,12 @@ import {
   taskContext,
   unblockTask
 } from './tasks';
-import { runsState, viewRun } from './view';
+import { monitorRun } from './view/monitor';
+import { runsState, viewRun } from './view/view';
 import { benchPlan, makeBench, readInCopy, teamFor, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
-import type { RunPlan } from './model';
+import type { RunPlan } from './core/model';
 import type { Bench } from '../tests/runProject';
 
 /** The lead’s plan as the run goes: its primer, its pace, a stage stacked on it, who finishes it, files too long, amendments. */

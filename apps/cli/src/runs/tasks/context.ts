@@ -1,22 +1,22 @@
+import { currentVersion, findTask } from './common';
 import { unifiedDiff } from '../../fix/diff';
 import { PROJECT_NOTES } from '../../scaffold/paths';
-import { agreementsOf, proposalsOf } from '../agreements';
-import { readOptional } from '../files';
-import { runNotesOf } from '../messages';
-import { acceptanceText } from '../model';
-import { under } from '../paths';
-import { readingFor } from '../reading';
+import { readOptional } from '../core/files';
+import { acceptanceText } from '../core/model';
+import { under } from '../core/paths';
+import { getBlob } from '../core/store';
+import { readStart, viewTask } from '../core/taskStore';
+import { readingFor } from '../plan/reading';
+import { isResearch, roleOf } from '../plan/spike';
 import { loadRun, readApproved } from '../run';
-import { getBlob } from '../store';
-import { readStart, viewTask } from '../taskStore';
-import { currentVersion, findTask } from './common';
-import { isResearch, roleOf } from '../spike';
+import { agreementsOf, proposalsOf } from '../talk/agreements';
+import { runNotesOf } from '../talk/messages';
 
-import type { ProposalView } from '../agreements';
-import type { ReviewComment, RunTask, TaskState } from '../model';
+import type { ReviewComment, RunTask, TaskState } from '../core/model';
+import type { TaskView } from '../core/taskStore';
+import type { Finding } from '../plan/spike';
 import type { LoadedRun, RunContext } from '../run';
-import type { Finding } from '../spike';
-import type { TaskView } from '../taskStore';
+import type { ProposalView } from '../talk/agreements';
 
 /**
  * `plitzi task context`: the brief an agent starts from — what is asked, what was said and agreed, its files.

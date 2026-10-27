@@ -5,7 +5,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
-import { copyOf } from '../runs/paths';
+import { copyOf } from '../runs/core/paths';
 
 import type { BrowserPage, PageRoute } from './index';
 

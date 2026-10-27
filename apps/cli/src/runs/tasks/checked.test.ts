@@ -8,7 +8,7 @@ import { completeTask } from './complete';
 import { takeTask } from './take';
 
 import type { Bench } from '../../tests/runProject';
-import type { CheckRunner } from '../checks';
+import type { CheckRunner } from '../copies/checks';
 
 let bench: Bench;
 

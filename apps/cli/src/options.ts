@@ -3,7 +3,7 @@ import { InvalidArgumentError } from 'commander';
 import { SCHEMES } from './browser';
 
 import type { Scheme } from './browser';
-import type { Expectation } from './commands/check/types';
+import type { Expectation } from './commands/page/check/types';
 import type { Command } from 'commander';
 
 /**

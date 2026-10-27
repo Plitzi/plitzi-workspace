@@ -2,18 +2,18 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { LINT_CACHE_FILE } from '../../scaffold/paths';
-import { fingerprint, projectFiles, readOptional, writeJson } from '../files';
-import { mergeLines } from '../merge3';
-import { entryOf } from '../model';
-import { projectPath, under } from '../paths';
-import { RunRefusal } from '../refusal';
+import { mergeLines } from '../copies/merge3';
+import { fingerprint, projectFiles, readOptional, writeJson } from '../core/files';
+import { entryOf } from '../core/model';
+import { projectPath, under } from '../core/paths';
+import { RunRefusal } from '../core/refusal';
+import { getBlob, placeVersion, putBlob } from '../core/store';
+import { isDisconnected, readStart, revokedTokens, tokenPrint, viewTask } from '../core/taskStore';
 import { readApproved } from '../run';
-import { getBlob, placeVersion, putBlob } from '../store';
-import { isDisconnected, readStart, revokedTokens, tokenPrint, viewTask } from '../taskStore';
 
-import type { ApprovedManifest, RunTask, TaskStart } from '../model';
+import type { ApprovedManifest, RunTask, TaskStart } from '../core/model';
+import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
-import type { TaskView } from '../taskStore';
 
 /**
  * What every step of a task's life reads: the task, who holds it, the run's version of a file, and its copy brought

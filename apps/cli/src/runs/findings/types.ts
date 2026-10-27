@@ -1,6 +1,6 @@
-import type { RunTask } from '../model';
-import type { TaskRoundReport } from '../taskReports';
-import type { UsageLine } from '../usage';
+import type { RunTask } from '../core/model';
+import type { UsageLine } from '../core/usage';
+import type { TaskRoundReport } from '../report/taskReports';
 
 /**
  * What a run shows went wrong, one list for everyone who reads it — the lead while it goes (`run watch`), the person

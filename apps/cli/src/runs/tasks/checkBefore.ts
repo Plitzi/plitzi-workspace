@@ -1,17 +1,17 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { checkAcceptance, ranNoTest } from '../acceptance';
-import { exists } from '../files';
-import { under } from '../paths';
-import { approvedCopy, SERVED_STATUSES } from '../preview';
-import { RunRefusal } from '../refusal';
-import { loadRun } from '../run';
-import { viewTask } from '../taskStore';
 import { findTask } from './common';
-import { acceptanceText } from '../model';
+import { checkAcceptance, ranNoTest } from '../copies/acceptance';
+import { approvedCopy, SERVED_STATUSES } from '../copies/preview';
+import { exists } from '../core/files';
+import { acceptanceText } from '../core/model';
+import { under } from '../core/paths';
+import { RunRefusal } from '../core/refusal';
+import { viewTask } from '../core/taskStore';
+import { loadRun } from '../run';
 
-import type { Acceptance, AcceptanceResult } from '../model';
+import type { Acceptance, AcceptanceResult } from '../core/model';
 import type { RunContext } from '../run';
 
 /**

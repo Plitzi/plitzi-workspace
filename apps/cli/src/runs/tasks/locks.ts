@@ -1,12 +1,12 @@
 import fs from 'node:fs/promises';
 
-import { createExclusive, fingerprint, writeJson } from '../files';
-import { entryOf } from '../model';
-import { lockFile, runPaths, taskPaths, under } from '../paths';
-import { RunRefusal } from '../refusal';
-import { activeRuns, assertStatus, loadRun, readApproved, readShared, runIds } from '../run';
-import { runChanged } from '../runChanged';
-import { withLock } from '../store';
+import { at, cleanPath, findTask, holderOf, refreshCopy } from './common';
+import { createExclusive, fingerprint, writeJson } from '../core/files';
+import { entryOf } from '../core/model';
+import { lockFile, runPaths, taskPaths, under } from '../core/paths';
+import { RunRefusal } from '../core/refusal';
+import { runChanged } from '../core/runChanged';
+import { withLock } from '../core/store';
 import {
   appendLog,
   DEFAULTS,
@@ -16,11 +16,11 @@ import {
   readStart,
   updateState,
   viewTask
-} from '../taskStore';
-import { PRIORITY_RANK } from '../urgency';
-import { at, cleanPath, findTask, holderOf, refreshCopy } from './common';
+} from '../core/taskStore';
+import { PRIORITY_RANK } from '../plan/urgency';
+import { activeRuns, assertStatus, loadRun, readApproved, readShared, runIds } from '../run';
 
-import type { FileLock, RunTask, TaskState } from '../model';
+import type { FileLock, RunTask, TaskState } from '../core/model';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

@@ -3,16 +3,16 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { createExclusive, fingerprint, readOptional } from '../files';
-import { activeRunFile, runPaths } from '../paths';
-import { stopPreviewOf } from '../previewRecord';
-import { stopListenersUnder } from '../processes';
-import { RunRefusal } from '../refusal';
 import { activeRuns, readRecord } from './record';
+import { stopPreviewOf } from '../copies/previewRecord';
+import { stopListenersUnder } from '../copies/processes';
+import { createExclusive, fingerprint, readOptional } from '../core/files';
+import { activeRunFile, runPaths } from '../core/paths';
+import { RunRefusal } from '../core/refusal';
 
-import type { RunRecord } from '../model';
-import type { RunPaths } from '../paths';
 import type { RunContext } from './context';
+import type { RunRecord } from '../core/model';
+import type { RunPaths } from '../core/paths';
 
 /**
  * The project taken by one run at a time (`active.json`), and let go — the run's folder and the inputs it was handed

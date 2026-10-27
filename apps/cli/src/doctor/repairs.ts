@@ -4,8 +4,8 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { projectFormatter } from '../commands/projectFormatter';
-import { withSetting } from '../commands/projectSettings';
+import { projectFormatter } from '../commands/project/projectFormatter';
+import { withSetting } from '../commands/project/projectSettings';
 
 import type { Repair } from './types';
 

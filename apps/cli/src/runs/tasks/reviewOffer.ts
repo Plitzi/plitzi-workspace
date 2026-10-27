@@ -1,15 +1,15 @@
-import { agentAddress, LEAD, messagesOf, sendMessage } from '../messages';
-import { changesNoPage, reviewPages } from '../pagesOf';
-import { reviewSteps, stepTimeOf, takeStep } from '../reviews';
-import { logRun, readRunLog } from '../run';
-import { DEFAULT_DESIGN_REVIEW, DESIGNER, readTeam } from '../team';
 import { askedOf } from './nextRules';
 import { changesBlock } from './review';
+import { reviewSteps, stepTimeOf, takeStep } from './reviews';
+import { DEFAULT_DESIGN_REVIEW, DESIGNER, readTeam } from '../agents/team';
+import { changesNoPage, reviewPages } from '../plan/pagesOf';
+import { logRun, readRunLog } from '../run';
+import { agentAddress, LEAD, messagesOf, sendMessage } from '../talk/messages';
 
-import type { AcceptanceResult, Quality, RunTask } from '../model';
-import type { ReviewTeam } from '../reviews';
+import type { ReviewTeam } from './reviews';
+import type { AcceptanceResult, Quality, RunTask } from '../core/model';
+import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
-import type { TaskView } from '../taskStore';
 
 /**
  * A review offered by `task next` to whoever says its step next — a designer, a tester, a developer, the lead: the card as

@@ -6,14 +6,14 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
-import { copyOf } from '../runs/paths';
-import { USAGE_OFF } from '../runs/usage';
+import { copyOf } from '../runs/core/paths';
+import { USAGE_OFF } from '../runs/core/usage';
 
 import type { Scheme } from './index';
-import type { Measured, MeasuredExtra } from '../commands/measureValues';
-import type { Outline } from '../commands/outline';
-import type { ElementState } from '../commands/playState';
-import type { ActingStep } from '../commands/shot/steps';
+import type { Measured, MeasuredExtra } from '../commands/page/measureValues';
+import type { Outline } from '../commands/page/outline';
+import type { ElementState } from '../commands/page/playState';
+import type { ActingStep } from '../commands/page/shot/steps';
 
 /**
  * A browser kept open between `page measure` calls, the other site's pages loaded in it: a call that reads an element

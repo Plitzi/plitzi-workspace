@@ -4,18 +4,18 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { amendRun } from './amend';
-import { finishRun } from './merge';
-import { messagesOf } from './messages';
-import { readOwnership } from './ownership';
-import { runPaths } from './paths';
-import { checkPlan, PlanRefusal } from './plan';
-import { answerProposal, proposeChange } from './proposals';
-import { writeSummary } from './report';
-import { FIRST_REVIEW_READING_MS, REVIEW_TIMEOUT_MS } from './reviews';
+import { setTeamAgent } from './agents/team';
+import { finishRun } from './copies/merge';
+import { readOwnership } from './copies/ownership';
+import { runPaths } from './core/paths';
+import { amendRun } from './plan/amend';
+import { checkPlan, PlanRefusal } from './plan/plan';
+import { writeSummary } from './report/report';
 import { checkPlanFile, loadRun, openRun } from './run';
-import { messageTasks, tellLead } from './talk';
-import { readInbox } from './talk';
+import { messagesOf } from './talk/messages';
+import { answerProposal, proposeChange } from './talk/proposals';
+import { messageTasks, tellLead } from './talk/talk';
+import { readInbox } from './talk/talk';
 import {
   canWrite,
   checkTask,
@@ -27,8 +27,8 @@ import {
   reviewTask,
   takeNext
 } from './tasks';
-import { setTeamAgent } from './team';
-import { viewRun } from './view';
+import { FIRST_REVIEW_READING_MS, REVIEW_TIMEOUT_MS } from './tasks/reviews';
+import { viewRun } from './view/view';
 import { benchPlan, makeBench, teamFor, writeInCopy } from '../tests/runProject';
 import { LEAD_SAID, runSteps } from '../tests/runSteps';
 

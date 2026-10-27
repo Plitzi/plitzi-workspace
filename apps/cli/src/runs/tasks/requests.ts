@@ -1,23 +1,23 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { fingerprint, readOptional, writeJson } from '../files';
-import { mergeLines } from '../merge3';
-import { entryOf } from '../model';
-import { ID, taskPaths, under } from '../paths';
-import { RunRefusal } from '../refusal';
-import { assertStatus, loadRun, logRun, readApproved } from '../run';
-import { putBlob, withLock } from '../store';
-import { readRequests, readStart, requestId, updateState, viewTask, writeRequest } from '../taskStore';
 import { buildRequestsMerge, changeApproved } from './approve';
 import { at, cleanPath, findTask, holderOf } from './common';
 import { textOf } from './context';
 import { activeHolder, allLocks, sharedFiles } from './locks';
+import { mergeLines } from '../copies/merge3';
+import { fingerprint, readOptional, writeJson } from '../core/files';
+import { entryOf } from '../core/model';
+import { ID, taskPaths, under } from '../core/paths';
+import { RunRefusal } from '../core/refusal';
+import { putBlob, withLock } from '../core/store';
+import { readRequests, readStart, requestId, updateState, viewTask, writeRequest } from '../core/taskStore';
+import { assertStatus, loadRun, logRun, readApproved } from '../run';
 
-import type { RunTask, SharedRequest, TaskState } from '../model';
-import type { LoadedRun, RunContext } from '../run';
-import type { TaskView } from '../taskStore';
 import type { Asked } from './approve';
+import type { RunTask, SharedRequest, TaskState } from '../core/model';
+import type { TaskView } from '../core/taskStore';
+import type { LoadedRun, RunContext } from '../run';
 
 /**
  * A change to a file another task holds: a request, applied when its holder is approved — or by an integration task, one

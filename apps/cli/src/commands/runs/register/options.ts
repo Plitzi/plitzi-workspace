@@ -1,4 +1,4 @@
-import { EASE_SCALE } from '../../../runs/experience';
+import { EASE_SCALE } from '../../../runs/report/experience';
 
 import type { Command } from 'commander';
 

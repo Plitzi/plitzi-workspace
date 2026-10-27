@@ -1,26 +1,26 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { writeJson } from '../files';
-import { isPrincipal } from '../leads';
-import { agentAddress, LEAD, markRead, messagesOf, sendMessage, unreadFor } from '../messages';
-import { taskPaths } from '../paths';
-import { RunRefusal } from '../refusal';
-import { assertStepReviewer, letGoStep, nextStep, reviewSteps, reviewTeamOf } from '../reviews';
-import { assertStatus, loadRun, logRun, recordBrake, requireNoTask } from '../run';
-import { logSpent } from '../spent';
-import { isResearch } from '../spike';
-import { keepFiles, withLock } from '../store';
-import { DEFAULTS, readRequests, readStart, updateState, viewTask } from '../taskStore';
 import { buildMergeIntoRun, buildRequestsMerge, changeApproved } from './approve';
 import { closeApproved } from './closeApproved';
 import { at, findTask, refreshCopy } from './common';
 import { besideHint, partnerFor, reviewedBeside, writtenSince } from './pairApproval';
 import { approveResearch, dropProposal } from './research';
+import { assertStepReviewer, letGoStep, nextStep, reviewSteps, reviewTeamOf } from './reviews';
+import { isPrincipal } from '../agents/leads';
+import { writeJson } from '../core/files';
+import { taskPaths } from '../core/paths';
+import { RunRefusal } from '../core/refusal';
+import { keepFiles, withLock } from '../core/store';
+import { DEFAULTS, readRequests, readStart, updateState, viewTask } from '../core/taskStore';
+import { isResearch } from '../plan/spike';
+import { logSpent } from '../report/spent';
+import { assertStatus, loadRun, logRun, recordBrake, requireNoTask } from '../run';
+import { agentAddress, LEAD, markRead, messagesOf, sendMessage, unreadFor } from '../talk/messages';
 
-import type { ProjectChange, ReviewComment, TaskState } from '../model';
+import type { ProjectChange, ReviewComment, TaskState } from '../core/model';
+import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
-import type { TaskView } from '../taskStore';
 
 /**
  * `plitzi task review`: a verdict on the step of its review a card waits for (`reviews.ts`) — its reviewer's, or the

@@ -7,7 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { authorSpace, container, styles } from '@plitzi/sdk-authoring';
 
 import { lint } from '.';
-import create from '../commands/create';
+import create from '../commands/project/create';
+import { WORKSPACE_ROOT } from '../tests/roots';
 
 import type { LintFinding, LintOptions, LintReport } from '.';
 
@@ -28,12 +29,12 @@ const write = async (file: string, text: string): Promise<void> => {
 /** A package of this workspace, as an install leaves it: linked, so the project's own imports resolve to it. */
 const link = async (name: string, from: string): Promise<void> => {
   await fs.mkdir(path.dirname(path.join(project, 'node_modules', name)), { recursive: true });
-  await fs.symlink(path.resolve(import.meta.dirname, from), path.join(project, 'node_modules', name), 'dir');
+  await fs.symlink(path.join(WORKSPACE_ROOT, from), path.join(project, 'node_modules', name), 'dir');
 };
 
 const linkPackages = async (): Promise<void> => {
-  await link('@plitzi/sdk-authoring', '../../../../packages/sdk-authoring');
-  await link('typescript', '../../../../node_modules/typescript');
+  await link('@plitzi/sdk-authoring', 'packages/sdk-authoring');
+  await link('typescript', 'node_modules/typescript');
 };
 
 const run = async (options: Omit<LintOptions, 'json'> = {}): Promise<LintReport> => {

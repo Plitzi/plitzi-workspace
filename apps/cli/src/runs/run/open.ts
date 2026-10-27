@@ -3,29 +3,29 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { readOptional, writeAtomic, writeJson } from '../files';
-import { LARGE_OUTPUT } from '../findings/cost';
-import { EVERYONE, LEAD, sendMessage } from '../messages';
-import { isRunPlan } from '../model';
-import { readOwnership } from '../ownership';
-import { runPaths, runsDir, taskPaths } from '../paths';
-import { checkPlan, PlanRefusal } from '../plan';
-import { runPlanProblems } from '../planProblems';
-import { RunRefusal } from '../refusal';
-import { runReportDir } from '../reports';
-import { startingState } from '../spike';
-import { keepFiles } from '../store';
-import { ensureTeam, teamSize } from '../team';
 import { assertNoOtherRun, claimProject, handedInputs, releaseProject, takeInputs } from './claim';
 import { requireNoTask, requirePerson } from './context';
 import { assertStatus, loadRun, logRun, pinnedNow, readRecord, updateRecord } from './record';
+import { ensureTeam, teamSize } from '../agents/team';
+import { readOwnership } from '../copies/ownership';
+import { readOptional, writeAtomic, writeJson } from '../core/files';
+import { isRunPlan } from '../core/model';
+import { runPaths, runsDir, taskPaths } from '../core/paths';
+import { RunRefusal } from '../core/refusal';
+import { keepFiles } from '../core/store';
+import { LARGE_OUTPUT } from '../findings/cost';
+import { checkPlan, PlanRefusal } from '../plan/plan';
+import { runPlanProblems } from '../plan/planProblems';
+import { startingState } from '../plan/spike';
+import { runReportDir } from '../report/reports';
+import { EVERYONE, LEAD, sendMessage } from '../talk/messages';
 
-import type { ApprovedManifest, BaseManifest, RunPlan, RunRecord, SharedManifest } from '../model';
-import type { Ownership } from '../ownership';
-import type { RunPaths } from '../paths';
-import type { CheckedPlan } from '../plan';
-import type { Team } from '../team';
 import type { RunContext } from './context';
+import type { Team } from '../agents/team';
+import type { Ownership } from '../copies/ownership';
+import type { ApprovedManifest, BaseManifest, RunPlan, RunRecord, SharedManifest } from '../core/model';
+import type { RunPaths } from '../core/paths';
+import type { CheckedPlan } from '../plan/plan';
 
 /**
  * `plitzi run open` — and its `--dry-run`: a plan read and held to the rules, with its primer and the team that works it — and

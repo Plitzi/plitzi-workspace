@@ -5,6 +5,7 @@ import { gunzipSync } from 'node:zlib';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { packSource } from './source';
+import { CLI_ROOT } from '../tests/roots';
 
 let root = '';
 
@@ -19,7 +20,7 @@ const text = (base64: string | undefined): string => Buffer.from(base64 ?? '', '
 
 beforeEach(async () => {
   // Inside this package, so the project's TypeScript resolves to the workspace's as a real project's would to its own.
-  const parent = path.join(import.meta.dirname, '../../node_modules/.tmp');
+  const parent = path.join(CLI_ROOT, 'node_modules/.tmp');
   await fs.mkdir(parent, { recursive: true });
   root = await fs.mkdtemp(path.join(parent, 'source-'));
   await write({

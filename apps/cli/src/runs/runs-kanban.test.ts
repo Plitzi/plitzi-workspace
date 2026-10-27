@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { addBacklogItem } from './backlog';
-import { leadItems, wakesLead } from './leadWatch';
+import { leadItems, wakesLead } from './agents/leadWatch';
+import { setTeamAgent } from './agents/team';
+import { addBacklogItem } from './plan/backlog';
+import { scopePlan, SCOPE_SPIKE } from './plan/spike';
+import { settleFinding } from './report/settle';
 import { openRun } from './run';
-import { settleFinding } from './settle';
-import { scopePlan, SCOPE_SPIKE } from './spike';
 import { completeTask, reviewTask, takeNext, takeTask } from './tasks';
-import { setTeamAgent } from './team';
-import { viewRun } from './view';
+import { viewRun } from './view/view';
 import { researchSteps } from '../tests/research';
 import { benchPlan, makeBench, provenPlan, writeInCopy } from '../tests/runProject';
 

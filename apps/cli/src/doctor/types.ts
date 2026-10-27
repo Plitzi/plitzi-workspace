@@ -1,6 +1,6 @@
-import type { PlitziProject } from '../commands/existingProject';
-import type { ScaffoldRecord } from '../commands/scaffoldRecord';
-import type { SpaceOrigin } from '../commands/spaceOrigin';
+import type { PlitziProject } from '../commands/project/existingProject';
+import type { ScaffoldRecord } from '../commands/project/scaffoldRecord';
+import type { SpaceOrigin } from '../commands/project/spaceOrigin';
 import type { CreateAnswers, PackageManager } from '../scaffold';
 
 /**

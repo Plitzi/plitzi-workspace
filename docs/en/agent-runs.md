@@ -3,7 +3,12 @@
 How `plitzi run` and `plitzi task` keep several agents — the subagents of one harness, or harnesses of different kinds —
 from stepping on each other on one project, and why nothing they do can leave it broken. How to use them is the CLI's
 README and the `plitzi-cli` skill (`reference/runs.md`, every agent's; `reference/runs-lead.md`, the lead's); this page is for whoever changes them. The code is
-`apps/cli/src/runs/`, the commands `apps/cli/src/commands/runs/` (registered in `commands/runs/register/`).
+`apps/cli/src/runs/` — by concern: `plan/` (a plan, its stages, the backlog), `agents/` (the team, launching, the lead's
+watch), `tasks/` (a card's life: taken, checked, completed, reviewed), `copies/` (each task's copy: served, checked,
+merged), `talk/` (messages, proposals, notices), `view/` (what the lead and the monitor read), `report/` (what a run
+leaves), `core/` (the records: store, paths, model), `findings/`, `harness/` and `run/` — and the commands
+`apps/cli/src/commands/runs/`, by what they serve: `run/`, `task/`, `review/`, `look/`, `monitor/` (registered in
+`commands/runs/register/`).
 
 ## The line
 
@@ -29,7 +34,7 @@ how many agents work at once — its team's size, above 5 a person confirms: tak
 holding a task in progress — one holding two is one, and a take by one of them adds none — and takes one under the run's
 `take.lock`, so two takes never pass the limit together (`agent-limit`).
 
-## Starting one (`commands/runs/start.ts`, `commands/runs/agent.ts`, `runs/agentPrompt.ts`)
+## Starting one (`commands/runs/run/start.ts`, `commands/runs/run/agent.ts`, `runs/agents/agentPrompt.ts`)
 
 A team is a mode asked for, never the default: an agent asked for something works the project itself, and the CLI's
 skill, the project's `AGENTS.md` and `plitzi --help` (the `run` and `task` commands grouped apart, as multi-agent) all
@@ -118,7 +123,7 @@ The lead reviews only three kinds of task:
 - every task, when the team has no tester (`testersReview`).
 
 `run watch` wakes it for nothing else (`leadItems`). Before it finishes, the lead looks once at the whole result:
-`run look` (`commands/runs/runLook.ts`) serves the approved work as `run preview` does, checks every page the run
+`run look` (`commands/runs/look/runLook.ts`) serves the approved work as `run preview` does, checks every page the run
 changed, and pictures each at 1440 and 390, in light and dark. `run finish` asks for that look after the last approval
 (`notLookedAtYet`).
 
@@ -550,7 +555,7 @@ crash read "no signal" and "not running" at once, its last word from before, and
 A tester's step is a card's QA: what it was asked, its checks, how it behaves, its code — a card whose `review` names
 none is the tester's alone, and its approval approves the card (a card's review: below). It never says a step of what
 it worked, and nobody says one of a card they worked, the lead included. What an agent has in hand — a task's work, a
-step of a review, a spike — is one reading (`runs/held.ts`: `holdsOf`, `heldBy`), the keeper's "who is busy" and every
+step of a review, a spike — is one reading (`runs/agents/held.ts`: `holdsOf`, `heldBy`), the keeper's "who is busy" and every
 command's "what you hold" alike; the kinds differ only in who may take one and who moves it on. So `task progress` at a
 review or a spike is its sign of life (`progress` in the log, with its kind), `task context` and `task show` read what
 is in hand, and a writer's command names what is held and what ends it. What a tester cannot decide it escalates to the lead, and the lead is
@@ -624,7 +629,7 @@ command the CLI runs of itself say how long it took.
 
 **A look reads both schemes.** Its `page check` runs with `--themes`: each page read in light and dark at its first
 width, and a ground the same in both under a text that follows the theme and reads under 3:1 on it in one of them
-fails it (`fixed-ground`, `commands/check/themes.ts`) — a run's judges' rows were grey bars with a gold count
+fails it (`fixed-ground`, `commands/page/check/themes.ts`) — a run's judges' rows were grey bars with a gold count
 at 1.5:1 in light, a scheme the reference did not have and no reviewer read.
 
 **A look pictures what can differ.** The pages a task's own files are drawn at are pictured; the ones only a shared
@@ -956,7 +961,7 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
 - **A run gone stops what its agents left listening**: `finish`, `abort` and `purge` stop every server whose folder is
   in the run's (`stopListenersUnder`, read off `lsof`) and say so — a run's copies' servers listened on after
   the finish removed their folders. A kept server's watchdog stops it once its record is gone with the run.
-- **An agent stops a server through the CLI, never by name** (`plitzi server stop [--port <port>]`, `commands/server.ts`):
+- **An agent stops a server through the CLI, never by name** (`plitzi server stop [--port <port>]`, `commands/server/server.ts`):
   what listens from the folder it is run in — its own `tmp/` left out, a run's copies each their own — and says by its
   `/health` that it serves that folder (`projectMark`), stopped with what it started; anything else on the port is said
   and left. A run's agent freed a heredoc hung on stdin with `pkill -f "cat"`, which matched every process whose
@@ -1265,13 +1270,13 @@ detail (`--json`).
 
 ## Tested
 
-The bench is `apps/cli/src/runs/runs-*.test.ts` (each a part of the run: plan, tasks, shared files, merge, stops,
+The bench is `apps/cli/src/runs/**/runs-*.test.ts` (each a part of the run, beside the code it tests — a whole run's in `runs/` itself: plan, tasks, shared files, merge, stops,
 agreements, the team, the lead, its testers and scouts (`runs-reviewers`), acceptance, the first real runs, the primitives, what
 an agent can do around the rules — a write after its review, a link, a token not its own, two completes at once on one
 shared file — and a run each released CLI wrote, read and finished by this one, `runs-compat`) with its steps
 in `src/tests/runSteps.ts`: a seeded project (`src/tests/runProject.ts`), scripted agents over one clock the test moves,
 a person who confirms or not, checks that fail on `BROKEN` — no model and no network, so every run is the same run.
-`apps/cli/src/commands/runs.test.ts` runs the CLI as processes: the exit codes, the token through the environment, a
+`apps/cli/src/commands/runs/runs.test.ts` runs the CLI as processes: the exit codes, the token through the environment, a
 person's action from a shell with no terminal, and a command run from inside a task's copy.
 
 **A run played whole** (`runs-flow.test.ts`): one story, agent by agent, as a real run went — the base agent and one

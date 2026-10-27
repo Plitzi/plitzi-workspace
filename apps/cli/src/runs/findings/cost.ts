@@ -1,11 +1,11 @@
-import { tokensText } from '../runMetrics';
 import { clock, evidenceOf } from './types';
 import { kindOf } from '../harness';
+import { tokensText } from '../report/runMetrics';
 
 import type { Finding } from './types';
-import type { RepeatedCall } from '../runMetrics';
-import type { TaskRoundReport } from '../taskReports';
-import type { UsageLine } from '../usage';
+import type { UsageLine } from '../core/usage';
+import type { RepeatedCall } from '../report/runMetrics';
+import type { TaskRoundReport } from '../report/taskReports';
 
 /**
  * What the run spent that it did not have to: a command's answer too long to read (a 17k-character

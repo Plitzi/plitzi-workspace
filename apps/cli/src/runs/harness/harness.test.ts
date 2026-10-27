@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { harnessUsage, kindOf } from './index';
 import { whatOf } from './types';
-import { SESSION_ENV, sessionOfProcess } from '../session';
+import { SESSION_ENV, sessionOfProcess } from '../agents/session';
 
 /** An agent's session as each harness keeps it, reduced to what a round's cost is read from. */
 

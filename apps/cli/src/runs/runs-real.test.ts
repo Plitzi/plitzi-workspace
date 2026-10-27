@@ -3,8 +3,9 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { showVersion } from './merge';
-import { buildReport } from './report';
+import { showVersion } from './copies/merge';
+import { DEFAULTS } from './core/taskStore';
+import { buildReport } from './report/report';
 import { loadRun, resumeRun, stopRun } from './run';
 import {
   claimFile,
@@ -16,12 +17,11 @@ import {
   taskContext,
   waitForFile
 } from './tasks';
-import { DEFAULTS } from './taskStore';
-import { viewRun } from './view';
+import { viewRun } from './view/view';
 import { makeBench, readInCopy, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
-import type { RunPlan } from './model';
+import type { RunPlan } from './core/model';
 import type { Bench } from '../tests/runProject';
 
 /** What the first real runs taught, kept as tests. */

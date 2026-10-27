@@ -2,15 +2,15 @@ import fs from 'node:fs/promises';
 
 import { teamFor } from './runProject';
 import { benchPlan, writeInCopy } from './runProject';
-import { isRunRefusal } from '../runs/refusal';
-import { writeSummary } from '../runs/report';
+import { isRunRefusal } from '../runs/core/refusal';
+import { writeSummary } from '../runs/report/report';
 import { openRun } from '../runs/run';
 import { completeTask, reviewTask, takeTask } from '../runs/tasks';
 
 import type { Bench } from './runProject';
-import type { Experience } from '../runs/experience';
-import type { RunPlan } from '../runs/model';
-import type { RefusalCode } from '../runs/refusal';
+import type { RunPlan } from '../runs/core/model';
+import type { RefusalCode } from '../runs/core/refusal';
+import type { Experience } from '../runs/report/experience';
 import type { RunContext } from '../runs/run';
 
 /** What a test's lead says it was like, closing a run whose report is not what the test is about. */

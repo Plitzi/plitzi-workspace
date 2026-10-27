@@ -7,8 +7,8 @@ import { FINDING_OWNERS } from './types';
 import { saidFindings, workaroundFindings } from './workarounds';
 
 import type { Finding, FindingInput, FindingOwner } from './types';
-import type { RepeatedCall, RunMetrics } from '../runMetrics';
-import type { TaskRoundReport } from '../taskReports';
+import type { RepeatedCall, RunMetrics } from '../report/runMetrics';
+import type { TaskRoundReport } from '../report/taskReports';
 
 export { factFindings } from './facts';
 export { closeFindings, overrunFindings } from './overrun';

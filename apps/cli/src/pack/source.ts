@@ -6,7 +6,7 @@ import { gzipSync } from 'node:zlib';
 import { pageModulesIn } from '@plitzi/sdk-shared/project/pages';
 import { readSourceSnapshot, SOURCE_SNAPSHOT_FORMAT } from '@plitzi/sdk-shared/source';
 
-import { nearestPackage, readPackageJson } from '../commands/existingProject';
+import { nearestPackage, readPackageJson } from '../commands/project/existingProject';
 import { loadTypeScript } from '../projectTypeScript';
 
 import type { SourceSnapshot, SourceSnapshotKind } from '@plitzi/sdk-shared/source';

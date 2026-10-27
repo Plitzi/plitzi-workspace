@@ -1,12 +1,12 @@
-import { FUNCTIONS_DIR } from '../../scaffold/paths';
-import { devFunction, tryFunction } from '../functions';
-import { addFunctionsPackage } from '../functionsAdd';
-import { functionsLater } from '../functionsLater';
 import { API_OPTION, DRY_RUN_OPTION } from './options';
+import { FUNCTIONS_DIR } from '../../scaffold/paths';
+import { devFunction, tryFunction } from '../functions/functions';
+import { addFunctionsPackage } from '../functions/functionsAdd';
+import { functionsLater } from '../functions/functionsLater';
 
-import type { DryRunOptions } from '../dryRun';
-import type { FunctionsDevOptions, FunctionsOptions } from '../functions';
-import type { FunctionsLaterOptions } from '../functionsLater';
+import type { FunctionsDevOptions, FunctionsOptions } from '../functions/functions';
+import type { FunctionsLaterOptions } from '../functions/functionsLater';
+import type { DryRunOptions } from '../shared/dryRun';
 import type { Command } from 'commander';
 
 /** `plitzi functions …`: the space's own server code, a working copy of it in this project. */

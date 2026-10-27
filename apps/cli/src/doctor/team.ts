@@ -1,5 +1,5 @@
 import { sayer } from './types';
-import { checkTeamFile, TEAM_FILE } from '../runs/team';
+import { checkTeamFile, TEAM_FILE } from '../runs/agents/team';
 
 import type { Check } from './types';
 

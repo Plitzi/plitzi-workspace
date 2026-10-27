@@ -1,8 +1,8 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { readJson, writeJson } from '../files';
+import { readJson, writeJson } from '../core/files';
 
-import type { TaskView } from '../taskStore';
+import type { TaskView } from '../core/taskStore';
 
 /** How often a long check gives its task's sign of life: well inside what reads "no signal". */
 export const KEEP_ALIVE_MS = 60_000;

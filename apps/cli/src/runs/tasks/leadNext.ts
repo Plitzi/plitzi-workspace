@@ -1,18 +1,18 @@
-import { isPrincipal, scoutsOf } from '../leads';
-import { notLookedAtYet } from '../lookedAt';
-import { LEAD } from '../messages';
-import { RunRefusal } from '../refusal';
-import { reviewFor, reviewTeamOf } from '../reviews';
-import { isResearch } from '../spike';
-import { byUrgency } from '../urgency';
-import { isWorked } from '../worked';
 import { reviewOffer } from './reviewOffer';
-import { asksLead } from '../model';
+import { reviewFor, reviewTeamOf } from './reviews';
+import { isPrincipal, scoutsOf } from '../agents/leads';
+import { isWorked } from '../agents/worked';
+import { asksLead } from '../core/model';
+import { RunRefusal } from '../core/refusal';
+import { isResearch } from '../plan/spike';
+import { byUrgency } from '../plan/urgency';
+import { LEAD } from '../talk/messages';
+import { notLookedAtYet } from '../view/lookedAt';
 
-import type { Message } from '../messages';
+import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
-import type { TaskView } from '../taskStore';
 import type { NextTask } from './next';
+import type { Message } from '../talk/messages';
 
 /**
  * What the lead finds out next, nobody else at it: an agent's question (`blocked`) — its answer lifts the block (Carlos:
