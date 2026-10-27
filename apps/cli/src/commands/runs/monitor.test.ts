@@ -16,6 +16,7 @@ import { runPaths } from '../../runs/paths';
 import { logRun, stopRun } from '../../runs/run';
 import { askLead, messageTasks, noteRun, tellLead } from '../../runs/talk';
 import { completeTask, followNext, reportProgress, reviewTask } from '../../runs/tasks';
+import { USAGE_FILE } from '../../runs/usage';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 
@@ -308,10 +309,11 @@ describe('plitzi run monitor', () => {
 
     const watched = await monitorRun(lead(), runId);
     const first = watched.view.tasks;
-    // At work between reviews, the lead's row says at what first (encore-10's said "working", and not at what).
+    // A verdict is done when it is said: the lead's row says it as its last, never as work (encore-13's said "working"
+    // three minutes after the open, its scout at the scope).
     expect(watched.agents.find(agent => agent.agent === 'lead')).toMatchObject({
-      status: 'working',
-      doing: 'at: t-about: approved (round 1)'
+      status: 'idle',
+      doing: expect.stringContaining('last: t-about: approved (round 1)') as unknown
     });
     expect(counts(first)).toEqual({
       pending: 1,
@@ -412,17 +414,21 @@ describe('plitzi run monitor', () => {
     });
   });
 
-  it('shows the lead working while its commands come, and idle once they stop', async () => {
+  // encore-13: "working" for three minutes after the lead opened the run, its scout at the scope.
+  it('shows the lead by what it holds, as every agent — what it did lately said, never taken for work', async () => {
     const runId = await open();
-    await logRun(lead(), runPaths(bench.root, runId), { action: 'launch', agent: 'agent-1', harness: 'claude' });
+    const paths = runPaths(bench.root, runId);
+    await logRun(lead(), paths, { action: 'launch', agent: 'agent-1', harness: 'claude' });
     const row = async () => (await monitorRun(lead(), runId)).agents.find(agent => agent.agent === 'lead');
+    await fs.appendFile(
+      path.join(paths.dir, USAGE_FILE),
+      `${JSON.stringify({ at: bench.now().toISOString(), by: 'lead', command: 'plitzi task look t-home', chars: 10, ms: 10, code: 0 })}\n`
+    );
 
     expect(await row()).toMatchObject({
-      status: 'working',
-      doing: expect.stringContaining('started agent-1 in claude') as unknown
+      status: 'idle',
+      doing: expect.stringMatching(/last: started agent-1 in claude — .*t-home/) as unknown
     });
-    bench.advance(3 * 60_000 + 1);
-    expect((await row())?.status).toBe('idle');
   });
 
   it('says an agent joined though its scratch was there first, and a wait by its reason alone', async () => {

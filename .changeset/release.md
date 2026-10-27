@@ -128,6 +128,9 @@ authoring and the elements learnt from the runs.
   --status 403" "/withheld --as juno"` — one look a visitor, each told what the others covered. `page shot --clip <part>
   --showing <elements>` pictures the copy of a part drawn more than once that shows the most of them, and a look
   pictures a component where the task's elements show (a playing room card stood for an idle one's change).
+- **The monitor shows the lead by what it holds**, as every agent: reviewing a step it took, at work on research it
+  finds out with no scout, idle otherwise — its last act and its last command said on its row, never taken for work. It
+  read "working" for three minutes after any act of its: after it opened a run, its scout at the scope.
 - **No copy server outlives what started it.** The copy's server a command starts is stopped once that command is
   gone — a harness's timeout, a Ctrl-C, a crash — unless it is kept for the next command; keeping one stops the one kept
   before, and a kept server whose record names another is stopped by its watchdog, where it left it running: six

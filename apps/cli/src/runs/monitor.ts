@@ -214,9 +214,6 @@ const lastDone = (entry: Record<string, unknown>): string | undefined => {
 /** How long an agent's last command says what it is at: older, it says nothing of now. */
 const LATELY_MS = 10 * 60_000;
 
-/** How recent a lead that reviews must have done something to count as started: idle, not waiting to be started. */
-const ACTIVE_MS = 3 * 60_000;
-
 /** Every agent: the team's, the leads — what each is at, from the tasks they hold and the reviews they took. */
 const agentsOf = async (
   ctx: RunContext,
@@ -353,11 +350,10 @@ const agentsOf = async (
     }
 
     const at = reviewing.get(LEAD);
-    // Its last action: the lead decides, amends and answers by commands, and is at it while they come.
+    // Its last act — opening the run, a verdict, a stage stacked — is done once it is logged, the work handed to an
+    // agent: said as its last, never as work.
     const last = lastBy.get(LEAD);
-    const lastAt = typeof last?.at === 'string' ? Date.parse(last.at) : undefined;
     const lastLine = last ? lastDone(last) : undefined;
-    const recent = lastAt !== undefined && now - lastAt < ACTIVE_MS && lastLine !== undefined;
     // Finding out research with no scout in the team: working, never idle.
     const spiking = at ? undefined : view.tasks.find(task => task.leadFindsOut === true);
     if (spiking) {
@@ -371,13 +367,13 @@ const agentsOf = async (
     }
 
     const proposed = view.tasks.filter(task => task.proposed !== undefined);
-    // At work without a review in hand — a stage written, an answer, a look — while its commands come: working, its
-    // last one said first. A wait is no work. encore-10's monitor said the lead was "working", and not at what.
-    const working = !at && recent && last?.action !== 'waiting';
 
+    // As every agent's, its state is what it holds on the board — a step of a review; research with no scout, above —
+    // never guessed from what it did lately: encore-13's monitor said the lead was "working" for three minutes after
+    // it opened the run, its scout at the scope.
     return {
       ...base,
-      status: at ? ('reviewing' as const) : working ? ('working' as const) : ('idle' as const),
+      status: at ? ('reviewing' as const) : ('idle' as const),
       doing: at
         ? `reviews ${at}`
         : // What waits on the lead is said on its row first, not "idle" over an agent kept waiting.
@@ -385,9 +381,7 @@ const agentsOf = async (
           ? `${proposed.map(task => task.id).join(', ')}: tasks proposed, to decide with the person`
           : unanswered.length > 0
             ? `${String(unanswered.length)} question${unanswered.length === 1 ? '' : 's'} wait${unanswered.length === 1 ? 's' : ''} for you: ${unanswered.map(each => `${each.from}'s ${each.id}`).join(', ')}`
-            : working
-              ? `at: ${lastLine}`
-              : `plans, answers, decides what is escalated${lastLine ? ` · last: ${lastLine}` : ''}`,
+            : `plans, answers, decides what is escalated${lastLine ? ` · last: ${lastLine}` : ''}${lately(LEAD)}`,
       ...(at ? { task: at } : {}),
       ...(typeof last?.at === 'string' ? { signalAt: last.at } : {})
     };
