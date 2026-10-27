@@ -116,15 +116,18 @@ const ComponentInstance = ({ ref, className, componentId, previewMode }: Compone
 
         return (typeof name === 'string' ? name : slots[0]) === slot;
       });
-      bySlot[slot] = (
-        <SlotItems
-          instance={definition}
-          instanceId={id}
-          items={filling}
-          plitziElementLayout={outerLayout}
-          previewMode={previewMode}
-        />
-      );
+      // A slot the instance leaves unfilled has no body: it draws nothing on the page (`useInternalClassName`), where
+      // it was an empty box that took its parent's gap — a show plate with no key stood 12 px taller for it.
+      bySlot[slot] =
+        filling.length === 0 ? null : (
+          <SlotItems
+            instance={definition}
+            instanceId={id}
+            items={filling}
+            plitziElementLayout={outerLayout}
+            previewMode={previewMode}
+          />
+        );
     }
 
     return bySlot;

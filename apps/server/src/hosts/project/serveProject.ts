@@ -88,16 +88,18 @@ export type ProjectSpace = AuthoredDocuments & { warnings?: readonly { message: 
 /**
  * The errors whose message is the whole report — every problem, where it is and what to write instead — and whose
  * stack would only point inside the SDK: the project's root, its layout, a space module with no space, a space that does
- * not author. Told by name, since each package that throws one carries its own copy of the class.
+ * not author, a state file another server of the folder holds. Told by name, since each package that throws one carries its own copy of the class.
  */
 const REPORTS: ReadonlySet<string> = new Set([
   'ProjectRootError',
   'ProjectLayoutError',
   'ProjectSpaceError',
-  'SpaceRefusedError'
+  'SpaceRefusedError',
+  // A state file another server of the folder holds: who, and how to stop it.
+  'FileInUseError'
 ]);
 
-const isReport = (error: unknown): error is Error => error instanceof Error && REPORTS.has(error.name);
+export const isStartupReport = (error: unknown): error is Error => error instanceof Error && REPORTS.has(error.name);
 
 type ServeProjectBase = {
   /** The space's server actions (`src/actions/`), found by their id. Left out, the server runs none. */
@@ -300,7 +302,7 @@ const spaceToServe = async (
     }
 
     // A refusal is the whole report already; anything else is the project's code, and its stack is what finds it.
-    const said = isReport(error)
+    const said = isStartupReport(error)
       ? error.message
       : error instanceof Error
         ? (error.stack ?? error.message)
@@ -590,7 +592,7 @@ export const serveProject = async (options: ServeProjectOptions): Promise<Served
   try {
     return await startProject(options);
   } catch (error) {
-    if (!isReport(error)) {
+    if (!isStartupReport(error)) {
       throw error;
     }
 

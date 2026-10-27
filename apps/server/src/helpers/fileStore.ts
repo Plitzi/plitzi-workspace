@@ -39,6 +39,18 @@ const running = (pid: number): boolean => {
   }
 };
 
+/**
+ * A file another running process holds: its message is the whole report — who holds it and how to stop it — said as it
+ * is when the server starts (`serveProject`). Thrown plain, it was a stack ending on its cause's `EEXIST`, and the agent
+ * reading the end of it found no word of what to do.
+ */
+export class FileInUseError extends Error {
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = 'FileInUseError';
+  }
+}
+
 /** The files this process holds, let go of together when it exits — however it does. */
 const held = new Set<string>();
 
@@ -77,7 +89,7 @@ export const holdFile = (file: string, owner: string | undefined, store: string)
 
       const holder = holderIn(lock);
       if (holder && running(holder.pid)) {
-        throw new Error(
+        throw new FileInUseError(
           `${store}: ${file} is in use by process ${String(holder.pid)}${holder.owner ? ` — ${holder.owner}` : ''}, since ${holder.since}. Two processes on one file write over each other's changes: stop that one first, or point \`file\` elsewhere.`,
           { cause: error }
         );

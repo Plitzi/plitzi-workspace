@@ -17,6 +17,7 @@ import {
   signedOutOnly,
   viewsAsked
 } from './lookParts';
+import { lookShotArgs } from './lookShot';
 import { pictureName } from './pictureName';
 import { approvedText, notReviewedText } from './reviewText';
 import { act, runOf, runSelf } from './shell';
@@ -337,46 +338,41 @@ export const lookAt = (
           (clips.length > 0 ? clips : [undefined]).flatMap(clip =>
             views.map(([width, scheme]) => async (): Promise<string[]> => {
               const out = named(route, clip, width, scheme);
-              const shot = await runSelf(preview.dir, [
-                'page',
-                'shot',
-                route,
-                '--url',
-                preview.url,
-                ...visiting,
-                ...signedInFor(route),
-                '--width',
-                width,
-                '--scheme',
-                scheme,
-                ...clipArgs(clip, showing),
-                ...(options.steps === undefined ? [] : ['--steps', options.steps]),
-                '--json',
-                '-o',
-                out
-              ]);
+              const shot = await runSelf(
+                preview.dir,
+                lookShotArgs({
+                  route,
+                  url: preview.url,
+                  reader: [...visiting, ...signedInFor(route)],
+                  clip: clipArgs(clip, showing),
+                  steps: options.steps,
+                  width,
+                  scheme,
+                  out
+                })
+              );
               // Pictured apart: an element not on the page loses the hover's picture, not the page's at rest.
               const hovered =
                 options.hover !== undefined && scheme === 'light'
-                  ? await runSelf(preview.dir, [
-                      'page',
-                      'shot',
-                      route,
-                      '--url',
-                      preview.url,
-                      ...visiting,
-                      ...signedInFor(route),
-                      '--width',
-                      width,
-                      '--scheme',
-                      scheme,
-                      ...clipArgs(clip, showing),
-                      '--steps',
-                      `hover ${JSON.stringify(options.hover)}; wait 600; shot hovering ${options.hover}`,
-                      '--json',
-                      '-o',
-                      out.replace(/\.png$/, '-hover.png')
-                    ])
+                  ? await runSelf(
+                      preview.dir,
+                      lookShotArgs({
+                        route,
+                        url: preview.url,
+                        reader: [...visiting, ...signedInFor(route)],
+                        clip: clipArgs(clip, showing),
+                        // Its steps first: the hover is of the state they bring.
+                        steps: [
+                          options.steps,
+                          `hover ${JSON.stringify(options.hover)}; wait 600; shot hovering ${options.hover}`
+                        ]
+                          .filter(each => each !== undefined)
+                          .join('; '),
+                        width,
+                        scheme,
+                        out: out.replace(/\.png$/, '-hover.png')
+                      })
+                    )
                   : undefined;
 
               if (shot.code !== 0) {
@@ -404,48 +400,37 @@ export const lookAt = (
             // A page the task adds is set beside nothing: the run before answers it 404.
             const shot = added.has(route)
               ? { code: 1, output: `${route} is new: the run before has no page there` }
-              : await runSelf(preview.dir, [
-                  'page',
-                  'shot',
-                  route,
-                  '--url',
-                  preview.url,
-                  ...visiting,
-                  ...signedInFor(route),
-                  '--compare',
-                  before?.url ?? '',
-                  ...clipArgs(clip, showing),
-                  // What the look's steps bring is what it is about: a stalled player was pictured at rest beside the run
-                  // before, its check reading the stalled state.
-                  ...(options.steps === undefined ? [] : ['--steps', options.steps]),
-                  '--width',
-                  width,
-                  '--scheme',
-                  scheme,
-                  '--json',
-                  '-o',
-                  out
-                ]);
+              : await runSelf(
+                  preview.dir,
+                  lookShotArgs({
+                    route,
+                    url: preview.url,
+                    reader: [...visiting, ...signedInFor(route)],
+                    compare: before?.url ?? '',
+                    clip: clipArgs(clip, showing),
+                    steps: options.steps,
+                    width,
+                    scheme,
+                    out
+                  })
+                );
 
             if (shot.code !== 0) {
               // Set beside nothing — a part new since the run before, absent there — it is pictured alone, said so.
-              const alone = await runSelf(preview.dir, [
-                'page',
-                'shot',
-                route,
-                '--url',
-                preview.url,
-                ...visiting,
-                ...signedInFor(route),
-                ...clipArgs(clip, showing),
-                ...(options.steps === undefined ? [] : ['--steps', options.steps]),
-                '--width',
-                width,
-                '--scheme',
-                scheme,
-                '-o',
-                out
-              ]);
+              const alone = await runSelf(
+                preview.dir,
+                lookShotArgs({
+                  route,
+                  url: preview.url,
+                  reader: [...visiting, ...signedInFor(route)],
+                  clip: clipArgs(clip, showing),
+                  steps: options.steps,
+                  width,
+                  scheme,
+                  out,
+                  json: false
+                })
+              );
               notTaken(
                 `${route}${clip ? ` ${clip}` : ''} at ${width} ${scheme}, beside the run before${alone.code === 0 ? ' (pictured alone instead)' : ''}`,
                 shot.output

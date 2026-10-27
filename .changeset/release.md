@@ -155,6 +155,10 @@ authoring and the elements learnt from the runs.
   the brief, a research card's next steps, and a stage's file as changed; a task of tests is set beside the run without
   what it tests; a stage stacked mid-run hears nothing of the team's size or inventory; the finish names no culprit it
   did not find; the agents' skill keeps a long output in a file.
+- **A component's slot left empty draws nothing.** A slot the instance puts nothing in, holding nothing of its own, is
+  hidden on the page — no empty box, no gap of its parent's; the builder keeps it to drop into. A project's server
+  started beside another of its folder says who holds the file and how to stop it, as a report, not a stack ending on
+  `EEXIST`.
 - **What encore-15's agents asked for.** `task check --before` runs a task's own tests on the code before it, and a
   line that ran no test there proves nothing; any line that runs tests and ran none fails, and a plan's node test
   pattern without its isolation off is refused. `--mutate` takes several changes at once. A page command hands the

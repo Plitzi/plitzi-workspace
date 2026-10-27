@@ -6,6 +6,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { createFileJobQueue } from './fileQueue';
 import { describeJobQueue } from './tests/jobQueueContract';
+import { FileInUseError } from '../../../helpers/fileStore';
+import { isStartupReport } from '../../../hosts/project/serveProject';
 
 import type { FileJobQueue } from './fileQueue';
 import type { JobInput } from '@plitzi/sdk-shared';
@@ -103,6 +105,9 @@ describe('a JSON file queue, across a restart', () => {
     const file = fileIn();
     open(file);
     expect(() => createFileJobQueue({ file })).toThrow(/is in use by process/);
+    // Said as it is when the server starts — a stack ending on its cause's EEXIST told the agent nothing to do.
+    expect(() => createFileJobQueue({ file })).toThrow(FileInUseError);
+    expect(isStartupReport(new FileInUseError('in use'))).toBe(true);
 
     const other = fileIn();
     fs.mkdirSync(path.dirname(other), { recursive: true });

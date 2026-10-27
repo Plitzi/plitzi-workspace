@@ -32,6 +32,18 @@ const TEXT_SHOWN = 80;
 const ACTING = new Set(['click', 'press', 'type', 'drag', 'as', 'action']);
 
 /**
+ * Where a `shot` step's pictures go: the project's tmp/shots — in a task's copy, the run's pictures of that task, as
+ * `page shot` puts them: a reviewer's steps wrote into the copy of the task it reviewed.
+ */
+export const stepShotsDir = (root: string): string => {
+  const copy = copyOf(root);
+
+  return copy === undefined
+    ? path.join(root, PROJECT_TMP, 'shots')
+    : path.join(runPaths(copy.root, copy.run).shots, copy.task);
+};
+
+/**
  * What a play over several widths says when its steps act: each width is played on one server, so the next starts from
  * what the first changed there — a run's crate queue gave its real answer at 1440 alone, 390 meeting the share spent.
  */
@@ -595,14 +607,8 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
         return;
       }
 
-      // A `shot` step pictures each side where it stands: in tmp/shots, by the page, the step and the width — in a
-      // task's copy, in the run's pictures of that task as `page shot` puts them: a reviewer's steps wrote into the
-      // copy of the task it reviewed.
-      const copy = copyOf(project.root);
-      const shotsDir =
-        copy === undefined
-          ? path.join(project.root, PROJECT_TMP, 'shots')
-          : path.join(runPaths(copy.root, copy.run).shots, copy.task);
+      // A `shot` step pictures each side where it stands: in tmp/shots, by the page, the step and the width.
+      const shotsDir = stepShotsDir(project.root);
       const pictureTo =
         (side: string) =>
         (index: number, label?: string): string =>

@@ -162,3 +162,24 @@ describe('a field given a value whole', () => {
     expect(givenValueIn('[data-plitzi-el="both"]')).toBeUndefined();
   });
 });
+
+// A tester waited for a state three tries of ten seconds bring with chained fixed waits: a wait-for gave up at 10 s.
+describe('a wait-for step played', () => {
+  it('waits as long as it says, 10 s when it says nothing', async () => {
+    const waited: { selector: string; timeout: number | undefined }[] = [];
+    const fake = {
+      waitForSelector: (selector: string, options?: { timeout?: number }) => {
+        waited.push({ selector, timeout: options?.timeout });
+
+        return Promise.resolve();
+      }
+    };
+    // The fake answers what this step calls of a page, and nothing else a page has.
+    const page = fake as unknown as BrowserPage;
+
+    await actStep(page, { kind: 'wait-for', target: '[data-state="stalled"]', ms: 40_000 }, 0);
+    await actStep(page, { kind: 'wait-for', target: '[data-state="stalled"]' }, 1);
+
+    expect(waited.map(each => each.timeout)).toEqual([40_000, 10_000]);
+  });
+});
