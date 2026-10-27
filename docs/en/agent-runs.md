@@ -360,7 +360,10 @@ script — has no look: `task look` says so and names `task check <task> --befor
 look pictured the home page the change could not touch. `task check <task> --before` (`checkBefore`) runs its
 acceptance on the run before it — the approved work without it, made afresh in its cache — and on its copy, and says of
 each line whether it proves the change (fails before, passes with it), proves nothing (passes on both) or fails with
-it: encore-13's tester copied a spec without its new line into its scratch to see it fail. `--within <element>` pictures one part alone; a task
+it: encore-13's tester copied a spec without its new line into its scratch to see it fail. A task of tests is set
+beside the run without the task it tests too — the project's version of its files — or its lines pass on both. `task
+show` says a task's brief (what was found for it) under its acceptance; a file a stage's task changed is diffed against
+the project's own, not read as added. `--within <element>` pictures one part alone; a task
 of more than three parts, or one that writes the page's root, is pictured whole (`lookClips`). A part's picture leaves out
 what is pinned over it (a sticky header), and what differs between the two sides is said field by field
 (`differenceText`: `container-57: box 0,0,249x314 → 0,0,249x331`), never a dump of both readings.

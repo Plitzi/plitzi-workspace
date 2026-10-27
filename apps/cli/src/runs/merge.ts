@@ -412,7 +412,9 @@ export const finishRun = async (
   if (broken.length > 0) {
     throw new RunRefusal(
       'checks-failed',
-      `What ${[...new Set(broken.map(each => `"${each.task}"`))].join(', ')} ${broken.length === 1 ? 'was' : 'were'} accepted on no longer holds on the run's whole result — passed at its review, broken since by another task's work: ${broken.map(each => `${each.task}: ${each.said}`).join('; ')}. Nothing is written: a task of the run puts it right (plitzi run extend), or the lead reverts what broke it (plitzi task revert)`,
+      // Said as what is known — the line fails now — never a culprit it did not find: encore-14's finish blamed "another
+      // task's work" for a check's own false reading.
+      `What ${[...new Set(broken.map(each => `"${each.task}"`))].join(', ')} ${broken.length === 1 ? 'was' : 'were'} accepted on does not hold on the run's whole result: ${broken.map(each => `${each.task}: ${each.said}`).join('; ')} — each line's output below says why: another task's change since its review, a line amended since and run only now, or the check reading the page otherwise. Nothing is written: a task of the run puts it right (plitzi run extend), a line that is wrong is amended (plitzi run amend), or the lead reverts what broke it (plitzi task revert)`,
       {
         steps: broken.map(each => ({
           name: `acceptance — ${each.task}: ${each.said}`,

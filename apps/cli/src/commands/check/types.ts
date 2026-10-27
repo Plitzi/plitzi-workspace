@@ -67,6 +67,7 @@ export interface CheckIssue {
     | 'expected-text'
     | 'label-wraps'
     | 'fixed-ground'
+    | 'faint-text'
     | 'flush-edge'
     | 'form-held-back'
     | 'server-logged';

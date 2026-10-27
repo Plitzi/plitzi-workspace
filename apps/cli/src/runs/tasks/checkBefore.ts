@@ -2,6 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { checkAcceptance } from '../acceptance';
+import { exists } from '../files';
+import { under } from '../paths';
 import { approvedCopy, SERVED_STATUSES } from '../preview';
 import { RunRefusal } from '../refusal';
 import { loadRun } from '../run';
@@ -31,7 +33,7 @@ export const checkBefore = async (
   ctx: RunContext,
   runId: string,
   taskId: string
-): Promise<{ task: string; lines: LineBeforeAfter[] }> => {
+): Promise<{ task: string; lines: LineBeforeAfter[]; without: string[] }> => {
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = findTask(loaded, taskId);
   const view = await viewTask(loaded.paths, task);
@@ -56,8 +58,20 @@ export const checkBefore = async (
   const beforeDir = path.join(view.paths.cache, 'check-before');
   const beforeCache = path.join(view.paths.cache, 'check-before-cache');
   await fs.mkdir(beforeCache, { recursive: true });
+  // A task of tests is proved by failing on the code it tests: its "before" is the run's work without that task's
+  // change too — the project's own version of its files — or every line passes on both (encore-14's tester).
+  const without = task.testsOf ?? [];
   try {
     await approvedCopy(ctx, loaded, beforeDir);
+    for (const file of without.flatMap(id => loaded.tasks.find(each => each.id === id)?.files ?? [])) {
+      const original = under(ctx.root, file);
+      const placed = under(beforeDir, file);
+      await fs.rm(placed, { recursive: true, force: true });
+      if (await exists(original)) {
+        await fs.cp(original, placed, { recursive: true });
+      }
+    }
+
     const after = await checkAcceptance(task.acceptance, {
       work: view.paths.work,
       root: ctx.root,
@@ -67,6 +81,7 @@ export const checkBefore = async (
 
     return {
       task: taskId,
+      without,
       lines: after.map((line, index) => ({
         said: line.said,
         check: line.check,

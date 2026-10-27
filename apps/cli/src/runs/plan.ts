@@ -292,7 +292,13 @@ export const checkPlan = async (
       `"${task}" gets no task of tests: ${why}. Name a test file in a task of yours for it, or say "tests": false — so that none is said, not missed`
     )
   );
-  notices.push(...teamNotices(plan, team, openWork, await stackableBacklog(root, [...plan.tasks, ...runTasks])));
+  // A stage is stacked on a team already at work: its size was said at the open, a stage of one fix read "1 task for 7
+  // agents — a smaller team does it for less" (encore-14).
+  notices.push(
+    ...teamNotices(plan, team, openWork, await stackableBacklog(root, [...plan.tasks, ...runTasks]), {
+      stage: runTasks.length > 0
+    })
+  );
   if (plan.reference !== undefined) {
     notices.push(
       `Its reference, ${plan.reference}, is kept once the run is open — plitzi run reference: each page of the inventory pictured and measured, which page shot --compare measures against for the whole run, not the site as it may change; the run finishing removes it`
@@ -672,11 +678,16 @@ export const checkPlan = async (
     );
   }
 
+  // The run's inventory is its open's: a stage lists the pieces it adds, and says nothing of none.
   const pieces = plan.inventory ?? [];
   notices.push(
-    pieces.length > 0
-      ? `The inventory: ${String(pieces.length)} pieces — ${String(pieces.filter(item => item.leftOut === undefined).length)} covered by a task’s checked acceptance, ${String(pieces.filter(item => item.leftOut !== undefined).length)} left out`
-      : 'No inventory: what the job asks is not listed piece by piece, so nothing checks that the tasks cover it — for a copy, a design or a brief, list it ("inventory": [{ id, piece, page }]) and cover each with { said, check, covers }'
+    ...(runTasks.length > 0 && pieces.length === 0
+      ? []
+      : [
+          pieces.length > 0
+            ? `The inventory: ${String(pieces.length)} pieces — ${String(pieces.filter(item => item.leftOut === undefined).length)} covered by a task’s checked acceptance, ${String(pieces.filter(item => item.leftOut !== undefined).length)} left out`
+            : 'No inventory: what the job asks is not listed piece by piece, so nothing checks that the tasks cover it — for a copy, a design or a brief, list it ("inventory": [{ id, piece, page }]) and cover each with { said, check, covers }'
+        ])
   );
 
   notices.push(...(await suiteNotices(root, tasks)));

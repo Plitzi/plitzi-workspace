@@ -9,6 +9,9 @@ import { roleOf } from '../../runs/spike';
 
 import type { RunCommandOptions } from './shell';
 
+/** How much of a brief's finding `task show` says without --full: the rule it sets, not the whole page of it. */
+const BRIEF_CHARS = 600;
+
 /** `plitzi task show <task> <file>`: the file whole, where the diff is read from — the text alone, to read or to pipe. */
 const taskShowFile = (
   taskId: string | undefined,
@@ -88,6 +91,16 @@ const taskShowSummary = (named: string | undefined, options: RunCommandOptions &
 
                 return `  ${mark} ${acceptanceText(each)}${typeof each === 'string' ? '' : chalk.dim(`  [check: ${each.check}]`)}${result ? secondRunText(result) : ''}${result?.amended ? chalk.dim(' — amended once done: held at the finish') : ''}${result && !result.ok && !result.amended ? `\n${(result.output ?? []).map(line => `      ${line}`).join('\n')}` : ''}`;
               })
+            ]
+          : []),
+        // What it was asked in detail, beside its lines: a reviewer reads both (encore-14's tester had neither rule).
+        ...(shown.findings
+          ? [
+              'Its brief — what was found for it',
+              ...shown.findings.map(
+                each =>
+                  `  · ${options.full === true || each.text.length <= BRIEF_CHARS ? each.text : `${each.text.slice(0, BRIEF_CHARS)}… (whole: --full)`}`
+              )
             ]
           : []),
         knownFailure

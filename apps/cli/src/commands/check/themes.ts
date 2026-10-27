@@ -206,6 +206,56 @@ export const fixedGrounds = (
   return [...found.values()];
 };
 
+/**
+ * Each text that barely reads on its ground, in the scheme it was read in: under 3:1 a visitor can hardly tell its
+ * words from what is under them. encore-14's later shows printed rgb(99, 86, 69) on a readout's rgb(31, 27, 20) glass in
+ * light — about 2.4:1 — and every check said "nothing wrong", the picture alone showing it. A ground that is a picture
+ * is not judged; a ground's colours are said once, its texts together.
+ */
+export const faintTexts = (readings: readonly TextGround[]): Omit<CheckIssue, 'width'>[] => {
+  const byGround = new Map<string, { texts: string[]; ratio: number; color: string; background: string }>();
+  for (const reading of readings) {
+    // Judged on a ground of one opaque colour alone — the page's own, or a box's with no picture or gradient: a
+    // translucent one shows what is under it, and a gradient's layers (a night sky's lights) are no one colour.
+    const [own = '', ...image] = reading.background.split(/ (?=none|url|linear|radial|conic|repeating)/);
+    const solid = colourOf(own);
+    const ground =
+      reading.ground === 'the page'
+        ? colourOf(reading.page)
+        : image.join(' ').trim() === 'none' && solid !== undefined && solid[3] === 1
+          ? solid
+          : undefined;
+    const text = colourOf(reading.color);
+    if (!ground || !text) {
+      continue;
+    }
+
+    const ratio = contrast(over(text, ground), ground);
+    if (ratio >= FAINT) {
+      continue;
+    }
+
+    const key = `${reading.ground}|${reading.color}`;
+    const kept = byGround.get(key);
+    if (kept) {
+      kept.texts.push(reading.text);
+    } else {
+      byGround.set(key, {
+        texts: [reading.text],
+        ratio,
+        color: reading.color,
+        background: reading.ground === 'the page' ? reading.page : reading.background.trim()
+      });
+    }
+  }
+
+  return [...byGround].map(([key, each]) => ({
+    code: 'faint-text' as const,
+    elementId: each.texts[0],
+    message: `${each.texts.slice(0, 4).join(', ')}${each.texts.length > 4 ? ` and ${String(each.texts.length - 4)} more` : ''} ${each.texts.length === 1 ? 'reads' : 'read'} at ${each.ratio.toFixed(1)}:1 on ${key.split('|')[0]} (${each.color} on ${each.background}) — under 3:1 a visitor can hardly tell the words from their ground: a text colour, a token of the theme, that reads on it`
+  }));
+};
+
 /** One page read in light and in dark, at `width`: the grounds that do not follow the theme under text that does. */
 export const themeIssues = async (
   browser: Browser,

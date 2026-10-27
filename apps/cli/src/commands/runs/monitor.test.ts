@@ -169,8 +169,10 @@ describe('plitzi run monitor', () => {
     expect(text[0]).toContain('● OPEN');
     expect(text[1]).toMatch(/1 Overview\s+2 Flow\s+3 Tasks\s+4 Agents\s+5 Spend/);
     expect(text[1]).toContain('1 of 4 approved · 25%');
-    // The strip: every task a block, the approved first.
-    expect(text[3].indexOf('✓ t-about')).toBeLessThan(text[3].indexOf('◐ t-home'));
+    // The strip: the approved one block, then every task still to approve a block of its own.
+    expect(text[3]).toContain('✓ 1 approved');
+    expect(text[3]).not.toContain('t-about');
+    expect(text[3].indexOf('✓ 1 approved')).toBeLessThan(text[3].indexOf('◐ t-home'));
     // The transcript: who, the task, what — a message's words quoted.
     expect(text.some(line => /● lead\s+t-about\s+approved/.test(line))).toBe(true);
     expect(text.some(line => /● lead → agent-2\s+t-home\s+“Use the formal voice”/.test(line))).toBe(true);

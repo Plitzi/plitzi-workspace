@@ -159,6 +159,10 @@ export const registerPage = (pageGroup: Command): void => {
       'Every copy the page draws of each element asked — a component’s instances, a list’s rows — measured apart: the first alone hides how they differ'
     )
     .option(
+      '--motion',
+      'Read as a visitor who asked for no less motion: what an animation is — held still by default, a page’s reduced-motion rules read none'
+    )
+    .option(
       '--all',
       'Every property of each, its initial values and what it inherits too — left out otherwise, and counted'
     )

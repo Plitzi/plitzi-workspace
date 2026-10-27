@@ -12,7 +12,7 @@ import type { TaskLine } from '../../runs/view';
 /** The rows the head takes: the run, the views, a breath, the strip — simple, the run and its progress, a breath. */
 export const headRows = (mode: MonitorMode): number => (mode === 'simple' ? 3 : 4);
 
-/** The strip's order, left to right: what is approved first, then the work toward it, what is still to do last. */
+/** The strip's order, left to right after the approved: the work toward approval, what is still to do last. */
 const STRIP_ORDER: Record<TaskLine['status'], number> = {
   done: 0,
   'in-review': 1,
@@ -34,16 +34,21 @@ const STATUS_TONE: Record<string, 'success' | 'warning' | 'danger' | 'subtle'> =
 };
 
 /**
- * Every task as a block of the strip, ordered by where it stands, its id in it when it fits — the run at a glance. A run
- * with more tasks than the width holds blocks for is said by stage instead, each as wide as its share.
+ * The strip: the approved as one block, `✓ 12 approved`, then every task still to approve a block of its own, its id in
+ * it when it fits — the run at a glance. A block each for the approved left the work under way a sliver at the right
+ * once most of a run was done (Carlos: the monitor "termina siendo inútil"). More to approve than the width holds
+ * blocks for are said by stage instead, each as wide as its share.
  */
 const strip = (p: Paint, tasks: readonly TaskLine[], row: number, width: number): void => {
   const { canvas, theme } = p;
-  const ordered = [...tasks].sort((a, b) => STRIP_ORDER[a.status] - STRIP_ORDER[b.status]);
-  const span = width - 4;
-  const each = ordered.length === 0 ? 0 : Math.floor((span - (ordered.length - 1)) / ordered.length);
-  const ground = (task: TaskLine): string => {
-    const tone = TASK_LOOK[task.status].tone;
+  if (tasks.length === 0) {
+    canvas.put(row, 2, 'no tasks yet', { fg: theme.subtle });
+
+    return;
+  }
+
+  const ground = (status: TaskLine['status']): string => {
+    const tone = TASK_LOOK[status].tone;
 
     return tone === 'success'
       ? theme.successBg
@@ -57,55 +62,55 @@ const strip = (p: Paint, tasks: readonly TaskLine[], row: number, width: number)
               ? theme.dangerBg
               : theme.elevated;
   };
-  if (ordered.length === 0) {
-    canvas.put(row, 2, 'no tasks yet', { fg: theme.subtle });
+  const block = (col: number, blockWidth: number, status: TaskLine['status'], text: string): number => {
+    const look = TASK_LOOK[status];
+    canvas.fill(row, col, blockWidth, ground(status));
+    canvas.put(
+      row,
+      col + 1,
+      clip(text, blockWidth - 1),
+      { fg: toneOf(theme, look.tone), bold: true },
+      col + blockWidth
+    );
 
+    return col + blockWidth + 1;
+  };
+  const approved = tasks.filter(task => task.status === 'done').length;
+  const left = tasks
+    .filter(task => task.status !== 'done')
+    .sort((a, b) => STRIP_ORDER[a.status] - STRIP_ORDER[b.status]);
+  const end = width - 2;
+  const approvedText = `${TASK_LOOK.done.glyph} ${String(approved)} approved`;
+  let col = 2;
+  if (approved > 0) {
+    col = block(col, left.length === 0 ? end - col : textWidth(approvedText) + 2, 'done', approvedText);
+  }
+
+  if (left.length === 0) {
     return;
   }
 
+  const span = end - col;
+  const each = Math.floor((span - (left.length - 1)) / left.length);
   if (each >= 3) {
-    let col = 2;
-    ordered.forEach((task, index) => {
-      const blockWidth = index === ordered.length - 1 ? width - 2 - col : each;
-      const look = TASK_LOOK[task.status];
-      canvas.fill(row, col, blockWidth, ground(task));
-      canvas.put(
-        row,
-        col + 1,
-        clip(`${look.glyph} ${task.id}`, blockWidth - 1),
-        {
-          fg: toneOf(theme, look.tone),
-          bold: true
-        },
-        col + blockWidth
+    left.forEach((task, index) => {
+      col = block(
+        col,
+        index === left.length - 1 ? end - col : each,
+        task.status,
+        `${TASK_LOOK[task.status].glyph} ${task.id}`
       );
-      col += blockWidth + 1;
     });
 
     return;
   }
 
   // Too many to block: each stage as wide as its share, its count in it.
-  const stages = [...new Set(ordered.map(task => task.status))];
-  let col = 2;
+  const stages = [...new Set(left.map(task => task.status))];
   stages.forEach((status, index) => {
-    const count = ordered.filter(task => task.status === status).length;
-    const share =
-      index === stages.length - 1 ? width - 2 - col : Math.max(1, Math.round((count / ordered.length) * span));
-    const look = TASK_LOOK[status];
-    const sample = ordered.find(task => task.status === status);
-    canvas.fill(row, col, share, sample ? ground(sample) : theme.elevated);
-    canvas.put(
-      row,
-      col + 1,
-      clip(`${look.glyph} ${String(count)} ${look.label}`, share - 1),
-      {
-        fg: toneOf(theme, look.tone),
-        bold: true
-      },
-      col + share
-    );
-    col += share;
+    const count = left.filter(task => task.status === status).length;
+    const share = index === stages.length - 1 ? end - col : Math.max(1, Math.round((count / left.length) * span));
+    col = block(col, share, status, `${TASK_LOOK[status].glyph} ${String(count)} ${TASK_LOOK[status].label}`) - 1;
   });
 };
 

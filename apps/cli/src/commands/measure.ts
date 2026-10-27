@@ -13,7 +13,7 @@ import { putIn, copiesOf, stateText } from './measureState';
 import { comparedText, keptText, matchesNote, readingText } from './measureText';
 import { asksExtra, differences, extraOf, MEASURED, onlyOf, PSEUDO_MEASURED, PSEUDOS } from './measureValues';
 import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
-import { openVisit, VIEW_HEIGHT, visitorBrowser, visitViewOf } from './visit';
+import { openVisit, VIEW_HEIGHT, visitorBrowser, visitViewOf, zoneNote } from './visit';
 import { keptMeasure } from '../browser/keptBrowser';
 import { originHere } from '../runs/copyServer';
 import { authoredHandles } from '../runs/expectations';
@@ -74,6 +74,11 @@ export interface MeasureOptions extends VisitorOptions {
   click?: string[];
   /** Every copy the page draws of each element asked, measured apart — never with --compare, whose copies are another's. */
   each?: boolean;
+  /**
+   * Read as a visitor who asked for no less motion: what an animation is. Held still by default, a page's own
+   * reduced-motion rules read "animation 1e-05s" for a needle that rides the music (encore-14).
+   */
+  motion?: boolean;
   /** Every property read, its initial and inherited ones too — a reading alone leaves them out (`measureText.ts`). */
   all?: boolean;
   /** Played before it is measured, as `page play --steps` writes them. */
@@ -233,7 +238,7 @@ const readOther = async (
   const other = await pageAnswered(browser, target, {
     width: view.width,
     height: VIEW_HEIGHT,
-    reducedMotion: true,
+    reducedMotion: view.reducedMotion ?? true,
     ...(view.scheme ? { scheme: view.scheme } : {}),
     ...(view.timezone ? { timezone: view.timezone } : {}),
     ...(view.conditions ? { conditions: view.conditions } : {})
@@ -297,6 +302,7 @@ const readAt = async (
       width: view.width,
       scheme: view.scheme,
       timezone: view.timezone,
+      ...(view.reducedMotion === false ? { motion: true } : {}),
       there: pair.there,
       ...(asksExtra(extra) ? { extra } : {}),
       ...(view.state
@@ -321,6 +327,7 @@ const readAt = async (
             url: target,
             width: view.width,
             height: VIEW_HEIGHT,
+            ...(view.reducedMotion === false ? { reducedMotion: false } : {}),
             ...(view.scheme ? { scheme: view.scheme } : {}),
             targets: missing.map(index => asked[index].there),
             ...(options.fresh ? { fresh: true } : {}),
@@ -530,6 +537,7 @@ export const measure = async (route: string, elements: string[], options: Measur
           {
             width,
             ...visitViewOf(options),
+            ...(options.motion ? { reducedMotion: false } : {}),
             ...visitor,
             ...(options.scheme ? { scheme: options.scheme } : {}),
             ...(state ? { state } : {}),
@@ -589,6 +597,9 @@ export const measure = async (route: string, elements: string[], options: Measur
             ...(kept ? [kept] : []),
             chalk.dim(
               `Read at ${widths.map(width => `${String(width)}×${String(VIEW_HEIGHT)}`).join(', ')} — x from the viewport's left, y from the page's top`
+            ),
+            ...[zoneNote(options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone, new Date(now))].flatMap(
+              note => (note === undefined ? [] : [chalk.dim(note)])
             ),
             ...widths.flatMap(width => [
               ...(widths.length > 1 ? [chalk.bold.underline(`At ${String(width)} px`)] : []),

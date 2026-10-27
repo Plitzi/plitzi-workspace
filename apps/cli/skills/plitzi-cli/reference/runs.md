@@ -82,7 +82,7 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
   answers, or asks the person), its files yours, then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks
   for changes.
-- **Before done:** `npm run typecheck` and `lint` (seconds), then `plitzi task check` (`--fix`: eslint and prettier fix first) runs what `complete` holds
+- **Before done:** `npm run typecheck` (seconds), then `plitzi task check --fix` — eslint and prettier fix what they can first — runs what `complete` holds
   the copy to — the project's checks, the acceptance's commands, long files, no `space lint` warning in a file you
   changed: iterate on it, not on `complete`, whose failures count toward the run's brake. It hands you the lead's news. What you declare for later tasks, unread yet, is a warning.
 - **Done:** `plitzi task complete --ease <1-5> --hardest "…" [--friction "…"] [--note "…"]` — what

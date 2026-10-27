@@ -2,7 +2,7 @@ import { listedTasks, timeOf, withText } from './monitorBoard';
 import { clip, textWidth } from './monitorCanvas';
 import { flowStages, nameOf } from './monitorFlow';
 import { AGENT_LOOK, since, startsLook, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
-import { agentAt, shortModel } from './monitorSide';
+import { agentAt, heldText, shortModel } from './monitorSide';
 import { BARS, SORT_WORDS, sparkline, spendTable, tokensShort } from './monitorSpend';
 import { cachedShare, costInAll, costShort } from '../../runs/spent';
 
@@ -222,7 +222,10 @@ export const drawAgentsView = (p: Paint, data: Monitored, rect: Rect): void => {
     canvas.put(
       row,
       c.doing,
-      clip(agent.doing || agentAt(agent, now), Math.max(0, rect.left + rect.width - c.doing - 1)),
+      clip(
+        `${agent.doing || agentAt(agent, now)}${heldText(agent, data.view.tasks)}`,
+        Math.max(0, rect.left + rect.width - c.doing - 1)
+      ),
       { fg: theme.muted }
     );
   });

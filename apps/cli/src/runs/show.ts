@@ -18,6 +18,7 @@ import type { Message } from './messages';
 import type { AcceptanceResult, KnownFailure, RunTask, TaskStatus } from './model';
 import type { ReviewState } from './reviews';
 import type { LoadedRun, RunContext } from './run';
+import type { Finding } from './spike';
 
 /**
  * `plitzi task show`: one task as its lead reviews it — what it was asked, what it changed (each file's diff against
@@ -68,6 +69,11 @@ export interface TaskShown {
   /** What its checks passed with but still warned of. */
   warnings?: string[];
   notes: { at: string; by: string; text: string }[];
+  /**
+   * What its brief says was found for it — the plan's findings, its spikes' — what it was asked in detail: encore-14's
+   * tester read the acceptance and the diff, and not the 7-day rule its brief set.
+   */
+  findings?: Finding[];
   agreements: ProposalView[];
   unanswered: ProposalView[];
   /** What it asked of shared files — an integration task's, what it applies — each with what it changes. */
@@ -110,12 +116,12 @@ const versionsOf = async (loaded: LoadedRun, root: string, task: RunTask) => {
   // Without a copy, what it changed is read against what the run started from: the project as the run copied it.
   const base = start ? undefined : (await readBase(loaded.paths)).files;
   const versions = async (file: string): Promise<{ before?: Buffer; after?: Buffer }> => {
-    const before = await versionOf(
-      loaded,
-      root,
-      file,
-      start ? start.files[file] : base && Object.hasOwn(base, file) ? base[file] : undefined
-    );
+    // A file no plan named when the run opened — a stage's — is not in the base: it is the project's as it is, which
+    // the finish has not written yet. encore-14's review read shows.ts, there before the run, as "(added)".
+    const before =
+      start || (base && Object.hasOwn(base, file))
+        ? await versionOf(loaded, root, file, start ? start.files[file] : base?.[file])
+        : await readOptional(under(root, file));
     const after = submitted
       ? await versionOf(loaded, root, file, Object.hasOwn(submitted, file) ? submitted[file] : undefined)
       : from === 'copy'
@@ -259,6 +265,7 @@ export const showTask = async (
     ...(view.state.accepted ? { accepted: view.state.accepted } : {}),
     ...(view.state.warnings ? { warnings: view.state.warnings } : {}),
     notes: view.state.notes.slice(-6),
+    ...(view.state.findings && view.state.findings.length > 0 ? { findings: view.state.findings } : {}),
     agreements: mine.filter(each => each.answer?.verdict === 'accept'),
     unanswered: mine.filter(each => each.answer === undefined),
     requests: (await requestsShown(ctx, loaded, task, view)).map(each => ({

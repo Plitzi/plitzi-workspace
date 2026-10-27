@@ -40,3 +40,13 @@ describe('research cards beside the scouts that find them out', () => {
     );
   });
 });
+
+// encore-14's stage of one fix, stacked on a team at work, read "1 task for 7 agents — a smaller team does it for less".
+describe('a stage stacked on a run at work', () => {
+  it('says nothing of the team’s size: it was said at the open', () => {
+    const fix: RunTask = { ...card('t-fix'), files: ['src/fix.ts'], spike: undefined };
+
+    expect(teamNotices({ tasks: [fix] }, team(1)).some(each => each.includes('task for'))).toBe(true);
+    expect(teamNotices({ tasks: [fix] }, team(1), 0, [], { stage: true })).toEqual([]);
+  });
+});

@@ -7,6 +7,7 @@ import { cachedShare, costInAll, costShort } from '../../runs/spent';
 import type { MonitorUi, Paint, PreviewShown } from './monitorModel';
 import type { AgentLine, Monitored } from '../../runs/monitor';
 import type { Spent } from '../../runs/spent';
+import type { TaskLine } from '../../runs/view';
 
 /**
  * The Overview's sidebar, a surface of its own: the tasks (↑↓ choose, ⏎ opens one), the agents and where each stands,
@@ -22,6 +23,25 @@ export interface Rect {
 }
 
 /** What an agent is at, in the sidebar's few words. */
+/**
+ * The cards an agent holds besides the one it is at — one sent back to it, waiting its turn: encore-14's dev-1 was "on
+ * t-room-coming-list", and t-shows-coming-tests, sent back to it, read as nobody's.
+ */
+const HELD: readonly TaskLine['status'][] = ['in-progress', 'changes-requested', 'blocked', 'waiting'];
+
+const heldBesides = (agent: AgentLine, tasks: readonly TaskLine[]): string[] =>
+  tasks
+    .filter(task => task.agent === agent.agent && task.id !== agent.task && HELD.includes(task.status))
+    .map(task => `${TASK_LOOK[task.status].glyph} ${task.id}`);
+
+/** The cards an agent holds besides the one it is at, as a line says them — none, nothing. */
+export const heldText = (agent: AgentLine, tasks: readonly TaskLine[]): string => {
+  const besides = heldBesides(agent, tasks);
+
+  return besides.length === 0 ? '' : ` · holds ${besides.join(', ')}`;
+};
+
+/** Where an agent stands, in a few words. */
 export const agentAt = (agent: AgentLine, now: Date): string => {
   switch (agent.status) {
     case 'working':
@@ -59,7 +79,8 @@ export const drawSide = (p: Paint, data: Monitored, ui: MonitorUi, preview: Prev
   const folded = listed.length < view.tasks.length;
   const output = preview.state.kind === 'stopped' ? preview.state.said : preview.output;
   const runRows = 4 + Math.min(3, output.length);
-  const agentRows = 3 + agents.length;
+  // An agent a line, and one more under one that holds cards besides the one it is at.
+  const agentRows = 3 + agents.length + agents.filter(agent => heldBesides(agent, view.tasks).length > 0).length;
   // Two lines an agent: its bar, and what the bar is — in, out and its context read again (Carlos asked where 1.7M came from).
   // Above them the run's: its last half hour a chart, and its tokens with how much of them was read again.
   const spendRows = 4 + (spend.length === 0 ? 0 : 3) + 2 * Math.min(4, Math.max(1, spend.length));
@@ -138,9 +159,13 @@ export const drawSide = (p: Paint, data: Monitored, ui: MonitorUi, preview: Prev
     const starts = startsLook(agent);
     canvas.put(row, rect.left + 15, starts.glyph, { fg: toneOf(theme, starts.tone) });
     canvas.put(row, rect.left + 17, clip(shortModel(agent.model), 10), { fg: theme.subtle });
-    const at = agentAt(agent, now);
-    canvas.right(row, end, clip(at, Math.max(0, rect.width - 32)), { fg: toneOf(theme, look.tone) });
+    canvas.right(row, end, clip(agentAt(agent, now), Math.max(0, rect.width - 32)), { fg: toneOf(theme, look.tone) });
     row += 1;
+    const besides = heldBesides(agent, view.tasks);
+    if (besides.length > 0) {
+      canvas.right(row, end, clip(`holds ${besides.join(', ')}`, Math.max(0, rect.width - 6)), { fg: theme.muted });
+      row += 1;
+    }
   }
 
   // Spend.

@@ -357,7 +357,10 @@ check run again in the same copy (lint 3.7 s → 0.5 s). A project whose scripts
 colour follows the theme and, in one of them, reads under 3:1 on it (`fixed-ground`): a fixed colour where a theme
 token belongs. A look at a task checks with it. Every check fails a link or a button drawn on its section's bottom
 edge where the section keeps no space below it (`flush-edge`): a "See all" link sitting against the next section, its
-section's class without a bottom padding, which nothing else says.
+section's class without a bottom padding, which nothing else says. It fails words that read under 3:1 on their ground in
+the scheme read (`faint-text`), judged on a ground of one opaque colour — a gradient, a picture or a veil is not — and a
+page sent 404 that was not asked to be (`--status 404`): an address its data says is nothing, read as "nothing wrong"
+before.
 
 `page outline <path> [--compare <url>] [--within <part>] [--find <word>] [--depth <n>] [--click <el…>] [--steps <script>] [--width <px,px>]` lists what a
 page is made of as a visitor sees it — each shown element by a selector that finds it alone (its name on the project's
@@ -392,7 +395,10 @@ says how many times (`×4`). It reads `animation`, `position`, `max-width`, `gri
 Chromium's layout: the page has no box of one) too; `--steps` plays steps on the page first —
 what only a visitor makes, a chat line — and an element not there says the ways it may not be drawn (signed in, a click,
 a route's address). One there and hidden says why — `display: none on room-show-actions, around it`, `visibility:
-hidden`, no size — and not its place and size, which a box drawn nowhere does not have.
+hidden`, no size — and not its place and size, which a box drawn nowhere does not have. A page is read held still;
+`--motion` reads it as a visitor who asked for no less motion — what an animation is (held still, a page's own
+reduced-motion rules read `1e-05s`). Read in a zone at UTC's own time now, `page measure` and `task look` say so: a time
+printed beside UTC reads as one there — `--timezone` reads it as a visitor elsewhere.
 
 What the demo data never has is set by the steps: `reload` (what the page kept, read back), `store <key> <value>` (its
 `localStorage`, as an earlier visit left it), `state <key> <json>` (the space's state, through the dev tools' `window.__plitzi`

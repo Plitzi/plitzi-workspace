@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { keptPages } from './keptPages';
+import { keptPages, keyOf } from './keptPages';
 
 import type { KeptAsk } from '../browser/keptBrowser';
 
@@ -208,5 +208,15 @@ describe('the pages a kept browser holds', () => {
     const ids = [opened, next].map(each => ('page' in each ? each.page.id : undefined));
     expect(ids.every(id => typeof id === 'number')).toBe(true);
     expect(ids[0]).not.toBe(ids[1]);
+  });
+});
+
+// encore-14: a needle read on a page held still says "animation 1e-05s" — a page kept still is no page to read it on.
+describe('a kept page, by its motion', () => {
+  it('is another page for a reading with motion than for one held still', () => {
+    const still = { url: 'https://example.com/', width: 1440, scheme: 'light' as const };
+
+    expect(keyOf({ ...still, reducedMotion: false })).not.toBe(keyOf(still));
+    expect(keyOf({ ...still, reducedMotion: true })).toBe(keyOf(still));
   });
 });

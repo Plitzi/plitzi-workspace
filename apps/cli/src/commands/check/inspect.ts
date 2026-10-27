@@ -15,17 +15,10 @@ import { flushEdgesInPage, missedExpectations, textsInPage, wrappedLabelsInPage 
 import { listRows } from './lists';
 import { splitRefusals } from './refusals';
 import { serverFailedIssues } from './serverFailures';
-import {
-  NOT_FOUND_PROBE,
-  isNotFoundPage,
-  markedIn,
-  meantPage,
-  noPageMessage,
-  notShown,
-  pageFor,
-  serverProviderOf
-} from './space';
+import { isNotFoundPage, markedIn, meantPage, noPageMessage, notShown, pageFor, serverProviderOf } from './space';
+import { statusIssuesOf } from './status';
 import { elementStyles } from './styles';
+import { faintTexts, textGrounds } from './themes';
 import { PROJECT_QUIET_MS } from '../../browser';
 import { playedOn } from '../shot/steps';
 import { prepareVisit } from '../visit';
@@ -243,18 +236,6 @@ const namedHydration = async (page: BrowserPage, address: string, errors: readon
   );
 };
 
-/**
- * Why a page refused who read it, in words: signed in, the account is in and the page's access refuses it — a run's
- * admin read "/moderation was sent with status 403" and its developer looked for a password that was there; not signed
- * in, a page for signed-in visitors.
- */
-export const refusedWhy = (status: number, signedInAs: string | undefined): string =>
-  status !== 401 && status !== 403
-    ? ''
-    : signedInAs !== undefined
-      ? `: signed in as ${signedInAs}, and the page's access refuses it — a permission or role the account lacks (its access, beside the account's roles)`
-      : ': a page for signed-in visitors — check it signed in (--as <account>)';
-
 const inspectHere = async (
   page: BrowserPage,
   {
@@ -351,6 +332,8 @@ const inspectHere = async (
     elementId: each.id,
     width
   }));
+  // Words that barely read on their ground, in the scheme the page was read in: a picture's ground is not judged.
+  const faint: CheckIssue[] = faintTexts(await page.evaluate(textGrounds, undefined)).map(each => ({ ...each, width }));
   // Each element asked for, one read each: what it reads and holds, and how its classes meet on it.
   const elements: NonNullable<CheckReport['elements']> = {};
   for (const id of asked.elements) {
@@ -400,46 +383,15 @@ const inspectHere = async (
     )
   ];
   const notFoundPage = handles && pageId ? isNotFoundPage(handles.pages[pageId]) : false;
-  // Asked for a status (`--status 404`): the page sent with it is what was meant — its 404 page, on purpose — and one sent
-  // with another is the finding. A run's designer saw its intended 404 page marked ✗, with no way to say it.
-  const statusIssues: CheckIssue[] =
-    asked.status !== undefined
-      ? sentWith === asked.status
-        ? []
-        : [
-            {
-              code: 'page-status',
-              message: `${pathname} was sent with status ${String(sentWith ?? 'none')}, not the ${String(asked.status)} asked (--status)`,
-              width
-            }
-          ]
-      : notFoundPage && sentWith !== undefined && sentWith !== 404
-        ? [
-            {
-              code: 'page-status',
-              message: `${pathname} shows the page for an address nothing answers, sent with status ${String(sentWith)}: a crawler reads it as a page that exists — the server should send it with 404`,
-              width
-            }
-          ]
-        : sentWith !== undefined && sentWith >= 400 && sentWith !== 404
-          ? [
-              {
-                code: 'page-status',
-                message: `${pathname} was sent with status ${String(sentWith)}${refusedWhy(sentWith, signedInAs)}`,
-                width
-              }
-            ]
-          : // Asked for a page, the space's page for an address nothing answers came: no page of it is there. Only the
-            // address a whole-project check makes for it looks at that page on purpose.
-            notFoundPage && !pathname.endsWith(NOT_FOUND_PROBE)
-            ? [
-                {
-                  code: 'no-page',
-                  message: `no page of the space is at ${pathname}: its page for an address nothing answers came, with ${String(sentWith ?? 404)}${handles ? meantPage(handles, pathname) : ''}`,
-                  width
-                }
-              ]
-            : [];
+  const statusIssues: CheckIssue[] = statusIssuesOf({
+    pathname,
+    width,
+    sentWith,
+    ...(asked.status === undefined ? {} : { asked: asked.status }),
+    notFoundPage,
+    ...(signedInAs === undefined ? {} : { signedInAs }),
+    meant: handles ? meantPage(handles, pathname) : ''
+  });
   const heldBack = throttled();
   const limited = report.issues.flatMap(issue => throttledImage(issue, heldBack) ?? []);
   const issues: CheckIssue[] = [
@@ -455,7 +407,8 @@ const inspectHere = async (
     ...heldBackForm,
     ...missed,
     ...wrapped,
-    ...flush
+    ...flush,
+    ...faint
   ];
 
   // What a document embedded in the page said (a video player's frame, by the origin of an iframe there) is that

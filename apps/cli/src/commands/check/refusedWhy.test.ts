@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { refusedWhy } from './inspect';
+import { refusedWhy } from './status';
 
 // The admin read "/moderation was sent with status 403", and its developer looked for a password that was there.
 describe('a page that refused who read it', () => {

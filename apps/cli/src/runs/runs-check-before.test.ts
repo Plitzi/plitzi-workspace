@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { changesNoPage } from './pagesOf';
-import { checkBefore, completeTask, provedBy } from './tasks';
+import { checkBefore, completeTask, provedBy, reviewTask } from './tasks';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
@@ -41,6 +41,35 @@ describe('a task’s acceptance set beside the run before it', () => {
       ['About is there', 'proves-nothing'],
       ['About says goodbye', 'fails']
     ]);
+  });
+
+  // encore-14's tester was pointed at --before for a task of tests, and every line passed on both: what it tests was
+  // approved already, in the run before it.
+  it('sets a task of tests beside the run without the task it tests, where its lines fail', async () => {
+    const plan = benchPlan();
+    plan.tasks.push({
+      id: 't-about-tests',
+      title: 'Tests for t-about',
+      files: ['src/space/pages/about.test.ts'],
+      dependsOn: ['t-about'],
+      priority: 'low',
+      estimateMinutes: 10,
+      testsOf: ['t-about'],
+      acceptance: [{ said: 'About is Spanish, held', check: 'grep -q Acerca src/space/pages/about.ts' }]
+    });
+    plan.tasks[3].acceptance = [{ said: 'About is Spanish', check: 'grep -q Acerca src/space/pages/about.ts' }];
+    const runId = await open(plan);
+    const about = await take('agent-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', "export const about = { title: 'Acerca' };\n");
+    await completeTask(about.ctx, runId, 't-about');
+    await reviewTask(lead(), runId, 't-about', 'approve', []);
+    const tests = await take('agent-2', 't-about-tests');
+    await writeInCopy(tests.work, 'src/space/pages/about.test.ts', '// held\n');
+
+    const checked = await checkBefore(bench.agent('test-1'), runId, 't-about-tests');
+
+    expect(checked.without).toEqual(['t-about']);
+    expect(checked.lines.map(line => provedBy(line))).toEqual(['proves']);
   });
 
   it('is refused for a task with no line a command checks, and one with no copy', async () => {

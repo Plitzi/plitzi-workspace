@@ -39,8 +39,9 @@ export interface KeptPages<P = unknown> {
   size: () => number;
 }
 
-export const keyOf = (asked: Pick<KeptAsk, 'url' | 'width' | 'scheme'>): string =>
-  `${asked.url}|${String(asked.width)}|${asked.scheme ?? 'light'}`;
+// Its motion too: a page held still is no page an animation is read on (`page measure --motion`).
+export const keyOf = (asked: Pick<KeptAsk, 'url' | 'width' | 'scheme' | 'reducedMotion'>): string =>
+  `${asked.url}|${String(asked.width)}|${asked.scheme ?? 'light'}${asked.reducedMotion === false ? '|motion' : ''}`;
 
 export const keptPages = <P>({ open, read, close, max }: KeptPagesOptions<P>): KeptPages<P> => {
   const pages = new Map<string, Held<P>>();

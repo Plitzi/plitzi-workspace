@@ -49,13 +49,18 @@ const taskCheckBefore = (named: string | undefined, options: CheckCommandOptions
 
       return checkBefore(ctx, runId, taskId);
     },
-    ({ task, lines }) => checkBeforeText(task, lines)
+    ({ task, lines, without }) => checkBeforeText(task, lines, without)
   );
 
 const LAST_LINES = 4;
 
 /** Its lines as a reviewer weighs them: what each proves of the change, then what it printed where it failed. */
-export const checkBeforeText = (task: string, lines: readonly LineBeforeAfter[]): string => {
+export const checkBeforeText = (
+  task: string,
+  lines: readonly LineBeforeAfter[],
+  /** The tasks it tests, taken out of the run before it as well. */
+  without: readonly string[] = []
+): string => {
   const said = lines.map(line => {
     const proved = provedBy(line);
     const head =
@@ -79,7 +84,7 @@ export const checkBeforeText = (task: string, lines: readonly LineBeforeAfter[])
   const proving = lines.filter(line => provedBy(line) === 'proves').length;
 
   return [
-    `${task}'s acceptance, before it (the run's approved work) and with it (its copy) — ${String(proving)} of ${String(lines.length)} ${lines.length === 1 ? 'line proves' : 'lines prove'} the change:`,
+    `${task}'s acceptance, before it (the run's approved work${without.length > 0 ? `, without ${without.join(', ')}, which it tests` : ''}) and with it (its copy) — ${String(proving)} of ${String(lines.length)} ${lines.length === 1 ? 'line proves' : 'lines prove'} the change:`,
     ...said
   ].join('\n');
 };

@@ -48,6 +48,7 @@ import { checkAccount, sessionCookie } from '../check/account';
 import { projectSpace } from '../check/space';
 import { visitorArgs } from '../register/options';
 import { actingSteps } from '../shot/steps';
+import { zoneNote } from '../visit';
 
 import type { Difference } from '../same';
 import type { LookOptions } from './lookOptions';
@@ -524,6 +525,10 @@ export const lookAt = (
           ...(kept && kept.apart > 0 ? { apart: kept.apart } : {})
         });
 
+        // The visitor's zone the page was read in — said when it is at UTC's own time, its times read as UTC alone.
+        const zone = options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const zoneSaid = zoneNote(zone, ctx.now());
+
         return {
           task: taskId,
           url: preview.url,
@@ -543,7 +548,8 @@ export const lookAt = (
           ...(unpictured.length > 0 ? { unpictured } : {}),
           ...(unchanged.size > 0 ? { unchanged: [...unchanged] } : {}),
           ...(movedElsewhere.length > 0 ? { movedElsewhere } : {}),
-          timezone: options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+          timezone: zone,
+          ...(zoneSaid === undefined ? {} : { zoneNote: zoneSaid }),
           ...(compared.length > 0 ? { compared } : {}),
           ...(before === undefined ? { notBeside: true } : {}),
           // Set beside the run before it, and nothing of it said: that nothing moved is said, never read from silence

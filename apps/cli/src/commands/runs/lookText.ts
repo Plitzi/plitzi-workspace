@@ -164,6 +164,7 @@ export const lookText = (looked: Looked): string =>
     ...(looked.shots.length > 0
       ? [
           `Pictures — a browser in ${looked.timezone}, its language en-US (--timezone for another zone):`,
+          ...(looked.zoneNote === undefined ? [] : [chalk.dim(`  ${looked.zoneNote}`)]),
           ...picturesText(looked.shots)
         ]
       : [

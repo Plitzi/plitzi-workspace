@@ -203,6 +203,8 @@ describe('research: a card like any, finding out in the run', () => {
     ]);
     const { state } = await taskContext(lead(), 'es-launch', id);
     expect(state.findings?.map(each => each.text)).toEqual(['Say "Reservar"']);
+    // …and its reviewer reads it in task show, beside its lines (encore-14's tester had the diff, not the rule).
+    expect((await showTask(lead(), 'es-launch', id)).findings?.map(each => each.text)).toEqual(['Say "Reservar"']);
     const told = (await messagesOf(await loadRun(lead(), 'es-launch'))).find(each => each.to === id);
     expect(told?.text).toContain('What was found for it now says: Say "Reservar"');
   });

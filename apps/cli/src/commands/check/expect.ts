@@ -48,18 +48,30 @@ export const textsInPage = ({
       return false;
     }
 
-    const ownText = Array.from(each.childNodes).some(
+    const words = Array.from(each.childNodes).filter(
       child => child.nodeType === Node.TEXT_NODE && (child.textContent ?? '').trim() !== ''
     );
     const style = getComputedStyle(each);
     const clamp = style.getPropertyValue('-webkit-line-clamp');
     const across = style.textOverflow === 'ellipsis' || ['hidden', 'clip'].includes(style.overflowX);
+    const clamped = clamp !== '' && clamp !== 'none';
+    if (words.length === 0 || (!across && !clamped)) {
+      return false;
+    }
 
-    return (
-      ownText &&
-      ((across && each.scrollWidth > each.clientWidth + 1) ||
-        (clamp !== '' && clamp !== 'none' && each.scrollHeight > each.clientHeight + 1))
-    );
+    // The words as laid out, against the box's content: its scroll widened by a pseudo-element's hairline is no word
+    // cut — encore-14's titles read "cut short", their text whole beside an ::after the box clips.
+    const range = document.createRange();
+    range.setStartBefore(words[0]);
+    range.setEndAfter(words[words.length - 1]);
+    const laid = range.getBoundingClientRect();
+    const box = each.getBoundingClientRect();
+    const px = (value: string): number => Number.parseFloat(value) || 0;
+    const left = box.left + px(style.borderLeftWidth) + px(style.paddingLeft);
+    const right = box.right - px(style.borderRightWidth) - px(style.paddingRight);
+    const bottom = box.bottom - px(style.borderBottomWidth) - px(style.paddingBottom);
+
+    return (across && (laid.right > right + 1 || laid.left < left - 1)) || (clamped && laid.bottom > bottom + 1);
   };
 
   return {

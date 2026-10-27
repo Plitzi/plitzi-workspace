@@ -1,4 +1,4 @@
-import { clip, textWidth } from './monitorCanvas';
+import { clip, textWidth, wrap } from './monitorCanvas';
 import { EVENT_TONE, groupKey, openedRows, opens, whatOf } from './monitorFeed';
 import { flowStages } from './monitorFlow';
 import { AGENT_LOOK, hhmm, LIVE_VERB, since, toneOf, urgencyOf } from './monitorModel';
@@ -77,14 +77,28 @@ const drawActivity = (p: Paint, feed: readonly FeedLine[], ui: MonitorUi, rect: 
   const end = rect.left + rect.width;
   canvas.put(rect.top, rect.left + 2, 'Activity', { fg: theme.text, bold: true });
   const rows = rect.height - 2;
-  type Shown = { line: FeedLine; under: { at?: string; text: string }[] };
+  // What is opened under an event, each part wrapped to the panel's width: a long message read whole, never cut by "…"
+  // (Carlos). Its time, when it has one, on its first line, the lines after it under its text.
+  const textLeft = rect.left + 13;
+  type Line = { first: boolean; at?: string; text: string; lead: number };
+  const wrapped = (each: { at?: string; text: string }): Line[] => {
+    const lead = each.at === undefined ? 0 : textWidth(`${hhmm(each.at)}  `);
+
+    return wrap(each.text, Math.max(10, end - textLeft - lead)).map((text, index) => ({
+      first: index === 0,
+      ...(index === 0 && each.at !== undefined ? { at: each.at } : {}),
+      text,
+      lead
+    }));
+  };
+  type Shown = { line: FeedLine; under: Line[] };
   const shown: Shown[] = [];
   let used = 0;
   // The feed is the newest first: the newest shown is `feedBack` into it, and each older one goes below.
   let index = Math.min(ui.feedBack, Math.max(0, feed.length - 1));
   for (; index < feed.length; index += 1) {
     const line = feed[index];
-    const under = ui.opened.has(groupKey(line)) ? openedRows(line) : [];
+    const under = ui.opened.has(groupKey(line)) ? openedRows(line).flatMap(wrapped) : [];
     if (used + 1 + under.length > rows) {
       break;
     }
@@ -116,11 +130,15 @@ const drawActivity = (p: Paint, feed: readonly FeedLine[], ui: MonitorUi, rect: 
     drawEvent(p, row, line, rect, under.length > 0);
     row += 1;
     for (const each of under) {
-      canvas.put(row, rect.left + 10, '⎿ ', { fg: theme.subtle });
+      // The mark on a part's first line alone: a part wrapped reads as one.
+      if (each.first) {
+        canvas.put(row, rect.left + 10, '⎿ ', { fg: theme.subtle });
+      }
+
       const col =
         each.at === undefined
-          ? rect.left + 13
-          : canvas.put(row, rect.left + 13, `${hhmm(each.at)}  `, { fg: theme.subtle });
+          ? textLeft + (each.first ? 0 : each.lead)
+          : canvas.put(row, textLeft, `${hhmm(each.at)}  `, { fg: theme.subtle });
       canvas.put(row, col, clip(each.text, Math.max(0, end - col)), { fg: theme.muted });
       row += 1;
     }

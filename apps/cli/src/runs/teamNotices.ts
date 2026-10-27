@@ -86,9 +86,11 @@ export const teamNotices = (
   team: Team,
   openWork = 0,
   /** The backlog's open items no task of the plan closes: the cards that could keep the team busy. */
-  backlog: readonly string[] = []
+  backlog: readonly string[] = [],
+  /** A stage stacked on the run: its team is at work already, its size said at the open. */
+  { stage = false }: { stage?: boolean } = {}
 ): string[] => {
-  const tooBig = teamSizeNotice(plan, team, openWork, backlog);
+  const tooBig = stage ? [] : teamSizeNotice(plan, team, openWork, backlog);
 
   return [...(tooBig.length > 0 ? tooBig : designersNotice(plan, team)), ...researchNotice(plan, team)];
 };

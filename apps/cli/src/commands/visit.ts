@@ -41,6 +41,22 @@ export const visitViewOf = (options: VisitorOptions): Pick<VisitView, 'timezone'
   };
 };
 
+/**
+ * Said when a page is read in a zone at UTC's own time now: a time the page prints beside UTC reads as UTC alone, its
+ * short form — never the longer one a visitor elsewhere reads. encore-14's scout measured two plates a row at Lisbon in
+ * October, and a visitor's "Tomorrow 17:39 · 16:39 UTC" overflowed them.
+ */
+export const zoneNote = (zone: string, now: Date): string | undefined => {
+  const offset = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'shortOffset' })
+    .formatToParts(now)
+    .find(part => part.type === 'timeZoneName')?.value;
+
+  // An offset of none is "GMT" or "GMT+0", as the runtime's ICU writes it.
+  return offset === 'GMT' || offset === 'GMT+0'
+    ? `${zone} is at UTC's own time now: a time a page prints beside UTC reads as one — --timezone America/New_York reads it as a visitor elsewhere does`
+    : undefined;
+};
+
 /** One colour a picture's address always gets: the same picture the same on both sides, another one another. */
 export const standIn = (url: string): string => {
   let hue = 7;

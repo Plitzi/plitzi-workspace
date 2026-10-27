@@ -143,6 +143,18 @@ authoring and the elements learnt from the runs.
   A step `scroll <element> <dx> [dy]` scrolls its content (a row across), saying when it did not move; a number after
   another step's element is refused, not handed to Playwright. A task approved from a shell inside its copy leaves the
   copy for it, going with the run, and says to go back to the project.
+- **What encore-14 taught the runs.** Research is split by the lead into a card per part, what it knows in each card's
+  `findings`, and `run amend` changes a card's question (told to it); more research cards ready than scouts is said,
+  the team's size being the person's — `run team set` refuses a lead's token that would raise it. An agent on demand
+  starts as soon as work of its role waits with none free, up to the team's most. The lead's messages come last in an
+  answer; a plan whose task names an open backlog item without closing it is refused, and one that fills another's new
+  file by `touches` is taken. The monitor folds the approved into one block, marks base and on-demand agents, says the
+  cards an agent holds besides the one it is at, and wraps a long message opened. `page check` fails words under 3:1 on
+  a solid ground (`faint-text`) and a page sent 404 unasked; its cut-short reading measures the words, not a box a
+  pseudo-element widens. `page measure --motion` reads animations; a zone at UTC's own time is said. `task show` shows
+  the brief, a research card's next steps, and a stage's file as changed; a task of tests is set beside the run without
+  what it tests; a stage stacked mid-run hears nothing of the team's size or inventory; the finish names no culprit it
+  did not find; the agents' skill keeps a long output in a file.
 - **`task check <task> --before` says what a task's acceptance proves:** each line run on the run before it — its
   approved work without the task — and on its copy: a line that fails before and passes with it proves the change, one
   passing on both proves nothing. A task that changes no page (a test's fix, a script) has no look: `task look` and its

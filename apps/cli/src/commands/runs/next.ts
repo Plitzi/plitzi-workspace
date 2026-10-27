@@ -266,7 +266,7 @@ const takenText = (taken: TakenTask): string =>
     ...binLine(taken.work),
     isResearch(taken.task)
       ? '  See your stage first — each line run once: plitzi task check --tasks <stage.json>; done: plitzi task complete --found "…" [--tasks <stage.json>], in the copy — the lead approves it'
-      : '  Done: plitzi task complete, in the copy',
+      : '  Done: plitzi task check --fix (what lint and format fix by themselves, first), then plitzi task complete — in the copy',
     ...messageLines(taken.messages)
   ].join('\n');
 

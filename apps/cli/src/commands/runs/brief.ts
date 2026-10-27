@@ -60,6 +60,20 @@ type Brief = TaskContext & {
   imports: Awaited<ReturnType<typeof importedApis>>;
 };
 
+/** A class a module declares (`roomAmbient = styles('room-ambient', …) — …`): read by its name alone. */
+const CLASS_LINE = /^(\w+) = styles\(/;
+
+/**
+ * A module's names as the brief says them: its classes in one line, by name — how a class is "called" says nothing,
+ * and a room's forty classes were 3k of an 18k brief, read five times (encore-14) — and the rest, each its line.
+ */
+export const importedLines = (names: readonly string[]): string[] => {
+  const classes = names.flatMap(name => CLASS_LINE.exec(name)?.[1] ?? []);
+  const rest = names.filter(name => !CLASS_LINE.test(name));
+
+  return [...(classes.length > 0 ? [`  classes: ${classes.join(', ')}`] : []), ...rest.map(name => `  ${name}`)];
+};
+
 /** The brief's parts as printed: the task's own, the files themselves (`--files`), the data's shapes, what they import. */
 const partsOf = (context: Brief): { brief: string; files: string; shapes: string; imports: string } => ({
   brief: briefOf(context),
@@ -79,7 +93,7 @@ const partsOf = (context: Brief): { brief: string; files: string; shapes: string
         chalk.bold(
           '── What these files import from the rest of the project — how each is called, not its body (read the file only for what this does not say):'
         ),
-        ...context.imports.flatMap(each => [each.file, ...each.names.map(name => `  ${name}`)])
+        ...context.imports.flatMap(each => [each.file, ...importedLines(each.names)])
       ]
     : []
   ).join('\n')
