@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { acceptanceProblems } from './acceptanceProblems';
-import { notOpen, openBacklog, stackableBacklog } from './backlog';
+import { namedNotClosed, notOpen, openBacklog, stackableBacklog } from './backlog';
 import { elementFileNotices } from './elementFiles';
 import { expectationNotices, notFoundNotices } from './expectations';
 import { exists } from './files';
@@ -261,12 +261,14 @@ export const checkPlan = async (
     root,
     written.tasks.flatMap(task => task.closes ?? [])
   );
+  const open = (await openBacklog(root)).map(item => item.id);
   if (unknownClosed.length > 0) {
-    const open = (await openBacklog(root)).map(item => item.id);
     problems.push(
       `${unknownClosed.join(', ')} ${unknownClosed.length === 1 ? 'is' : 'are'} no open item of the backlog — a task's closes names what it does of it: ${open.join(', ') || 'nothing is open'} (plitzi run backlog)`
     );
   }
+
+  problems.push(...namedNotClosed(written.tasks, new Set(open)));
   const notices: string[] = [];
   // With a tester in the team, each developer task's tests are a task of their own, after it: a developer's that did not
   // write it, reviewed by the tester.
@@ -320,10 +322,12 @@ export const checkPlan = async (
       problems.push(`Task "${task.id}": its estimate is in minutes, more than 0`);
     }
 
-    // Research alone writes nothing: a task with a spike and no files is done by its findings.
-    if (task.files.length === 0 && task.spike === undefined) {
+    // Research alone writes nothing: a task with a spike and no files is done by its findings. One that fills what
+    // another makes writes it by "touches", after it — the way out "one agent per file" names, which this refused
+    // (encore-14's scout, told both ways, merged its tasks).
+    if (task.files.length === 0 && (task.touches ?? []).length === 0 && task.spike === undefined) {
       problems.push(
-        `Task "${task.id}" writes no file: name what it writes — or, research alone, what it finds out ("spike": "…")`
+        `Task "${task.id}" writes no file: name what it writes ("files"), what it changes of another task's ("touches", waiting for it) — or, research alone, what it finds out ("spike": "…")`
       );
     }
 

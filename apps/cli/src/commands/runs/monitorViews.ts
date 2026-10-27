@@ -1,7 +1,7 @@
 import { listedTasks, timeOf, withText } from './monitorBoard';
 import { clip, textWidth } from './monitorCanvas';
 import { flowStages, nameOf } from './monitorFlow';
-import { AGENT_LOOK, since, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
+import { AGENT_LOOK, since, startsLook, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
 import { agentAt, shortModel } from './monitorSide';
 import { BARS, SORT_WORDS, sparkline, spendTable, tokensShort } from './monitorSpend';
 import { cachedShare, costInAll, costShort } from '../../runs/spent';
@@ -205,9 +205,8 @@ export const drawAgentsView = (p: Paint, data: Monitored, rect: Rect): void => {
     canvas.put(row, rect.left + 2, look.glyph, { fg: toneOf(theme, look.tone) });
     canvas.put(row, c.agent, clip(agent.agent, 11), { fg: p.hues.get(agent.agent) ?? theme.text, bold: true });
     // Whether it starts with the run or only when work waits for it: base, on demand — the lead, the lead.
-    canvas.put(row, c.kind, agent.kind === 'lead' ? 'lead' : agent.onDemand ? 'on demand' : 'base', {
-      fg: theme.muted
-    });
+    const starts = startsLook(agent);
+    canvas.put(row, c.kind, `${starts.glyph} ${starts.label}`, { fg: toneOf(theme, starts.tone) });
     canvas.put(row, c.model, clip(shortModel(agent.model), 11), { fg: theme.subtle });
     canvas.put(row, c.roles, clip(agent.roles.map(role => ROLE_SHORT[role] ?? role).join('+') || '—', 11), {
       fg: theme.muted

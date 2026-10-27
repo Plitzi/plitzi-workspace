@@ -62,7 +62,6 @@ export const taskProgress = (options: RunCommandOptions & { fraction?: number; s
       'held' in signal
         ? `Noted on your ${HELD_WORD[signal.held.kind]} of ${signal.held.task}: the lead sees where you are. It ends with ${endsWith(signal.held)}`
         : [
-            ...messageLines(signal.messages),
             ...signal.longFiles.map(long =>
               chalk.yellow(
                 `  ⚠ ${longFileText(long)}: split it by what changes together — a section or a part per file${crossed(long) ? '; complete refuses it past the line' : ''}`
@@ -70,7 +69,8 @@ export const taskProgress = (options: RunCommandOptions & { fraction?: number; s
             ),
             signal.inReview
               ? `${signal.task} is in review: no sign of life is needed until it comes back to you — and what you write in its copy now is not reviewed. Take another task meanwhile: plitzi task next`
-              : `${signal.task}: a sign of life at ${hhmm(signal.at)}. Without another, the lead may reassign it after ${hhmm(signal.quietAfter)}, and another agent take it after ${hhmm(signal.takenAfter)}.`
+              : `${signal.task}: a sign of life at ${hhmm(signal.at)}. Without another, the lead may reassign it after ${hhmm(signal.quietAfter)}, and another agent take it after ${hhmm(signal.takenAfter)}.`,
+            ...messageLines(signal.messages)
           ].join('\n')
   );
 
@@ -139,7 +139,6 @@ export const taskCheck = (
     },
     checked =>
       [
-        ...messageLines(checked.messages),
         ...(checked.brought
           ? [
               `Brought into your copy first — approved by the run, or changed in the project, since it was made: ${checked.brought.join(', ')}`
@@ -214,7 +213,8 @@ export const taskCheck = (
                 `  Not your work, and not counted against you: ${checked.notOwn.join('; ')} — the run's work fails it too, or nothing could answer the line (the lead is told). Complete takes it as the run's: no --known-failure for it`
               )
             ]
-          : [])
+          : []),
+        ...messageLines(checked.messages)
       ].join('\n'),
     checked => (checked.ok ? 0 : 1)
   );
@@ -298,7 +298,6 @@ export const taskComplete = (
     },
     completed =>
       [
-        ...messageLines(completed.messages),
         `In review: ${String(completed.changed.length)} files changed (${list(completed.changed)}).`,
         ...(completed.claimed.length > 0
           ? [`  Taken by turns as it completed, free: ${completed.claimed.join(', ')} — they go into the run with it`]
@@ -336,7 +335,8 @@ export const taskComplete = (
             ]
           : []),
         chalk.dim(`  Round ${String(completed.report.round)}'s report kept for the run's, with what it was like`),
-        '  Nothing more on it until its review comes back: plitzi task next hands you what is next — a task you hold first.'
+        '  Nothing more on it until its review comes back: plitzi task next hands you what is next — a task you hold first.',
+        ...messageLines(completed.messages)
       ].join('\n')
   );
 

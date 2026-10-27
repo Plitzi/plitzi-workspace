@@ -2,7 +2,7 @@ import type { Canvas } from './monitorCanvas';
 import type { PreviewState } from './monitorPreview';
 import type { SpendSort } from './monitorSpend';
 import type { Theme } from './monitorTheme';
-import type { AgentStatus } from '../../runs/monitor';
+import type { AgentLine, AgentStatus } from '../../runs/monitor';
 import type { TaskLine } from '../../runs/view';
 
 /**
@@ -130,6 +130,20 @@ export const TASK_LOOK: Record<TaskLine['status'], { glyph: string; label: strin
 };
 
 /** Where an agent stands, as a glyph, a word and a tone — the word drawn in its tone wherever an agent is listed. */
+/**
+ * How an agent comes to the run, as the monitor marks it beside its name: the base starts with the run and keeps
+ * running, one on demand only while work waits for it — told apart at a glance (Carlos read no difference in a muted
+ * column).
+ */
+export const startsLook = (
+  agent: Pick<AgentLine, 'kind' | 'onDemand'>
+): { glyph: string; label: string; tone: Tone } =>
+  agent.kind === 'lead'
+    ? { glyph: '★', label: 'lead', tone: 'primary' }
+    : agent.onDemand === true
+      ? { glyph: '◇', label: 'on demand', tone: 'info' }
+      : { glyph: '◆', label: 'base', tone: 'success' };
+
 export const AGENT_LOOK: Record<AgentStatus, { glyph: string; label: string; tone: Tone }> = {
   working: { glyph: '●', label: 'working', tone: 'primary' },
   reviewing: { glyph: '●', label: 'reviewing', tone: 'link' },

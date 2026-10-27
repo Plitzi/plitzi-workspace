@@ -20,3 +20,22 @@ describe('plitzi task next, with nothing left', () => {
     ).not.toContain('--plitzi');
   });
 });
+
+// encore-14's scout kept its answers' last line alone, and missed two of the lead's redirects for 20 minutes.
+describe('what the lead said, in an answer', () => {
+  it('comes last, the newest thing said', () => {
+    const said = stripVTControlCharacters(
+      nextText(
+        {
+          why: 'nothing is ready',
+          ready: [],
+          messages: [{ id: 'm2', at: '2026-10-27T15:00:00.000Z', from: 'lead', to: 's-scope', text: 'Stop b-38 now' }],
+          scratch: '/s'
+        },
+        'scout-1'
+      )
+    ).split('\n');
+
+    expect(said.at(-1)).toBe('  ✉ lead (m2): Stop b-38 now');
+  });
+});

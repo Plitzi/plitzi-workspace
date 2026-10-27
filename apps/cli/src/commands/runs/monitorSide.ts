@@ -1,6 +1,6 @@
 import { listedTasks, timeOf, withText, withTone } from './monitorBoard';
 import { clip, textWidth } from './monitorCanvas';
-import { AGENT_LOOK, since, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
+import { AGENT_LOOK, since, startsLook, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
 import { BARS, sparkline, spentInAll, tokensShort } from './monitorSpend';
 import { cachedShare, costInAll, costShort } from '../../runs/spent';
 
@@ -134,9 +134,12 @@ export const drawSide = (p: Paint, data: Monitored, ui: MonitorUi, preview: Prev
     const look = AGENT_LOOK[agent.status];
     canvas.put(row, rect.left + 2, look.glyph, { fg: toneOf(theme, look.tone) });
     canvas.put(row, rect.left + 4, clip(agent.agent, 10), { fg: p.hues.get(agent.agent) ?? theme.text, bold: true });
-    canvas.put(row, rect.left + 15, clip(shortModel(agent.model), 10), { fg: theme.subtle });
+    // Base or on demand, marked beside the name: who keeps running and who only comes for work.
+    const starts = startsLook(agent);
+    canvas.put(row, rect.left + 15, starts.glyph, { fg: toneOf(theme, starts.tone) });
+    canvas.put(row, rect.left + 17, clip(shortModel(agent.model), 10), { fg: theme.subtle });
     const at = agentAt(agent, now);
-    canvas.right(row, end, clip(at, Math.max(0, rect.width - 30)), { fg: toneOf(theme, look.tone) });
+    canvas.right(row, end, clip(at, Math.max(0, rect.width - 32)), { fg: toneOf(theme, look.tone) });
     row += 1;
   }
 

@@ -28,7 +28,7 @@ import {
   readPlanFile
 } from '../../runs/run';
 import { settleFinding } from '../../runs/settle';
-import { SCOPE_SPIKE, scopePlan } from '../../runs/spike';
+import { opensOnResearch, SCOPE_SPIKE, scopePlan } from '../../runs/spike';
 import { roleOf } from '../../runs/spike';
 import {
   heldRoles,
@@ -363,6 +363,7 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
         runId: opened.checked.runId,
         folder: opened.paths.dir,
         tasks: opened.checked.tasks.map(task => task.id),
+        researching: opensOnResearch(opened.checked.tasks),
         backedUp: opened.backedUp,
         estimate: opened.checked.estimate,
         leadFinishes: options.leadFinishes ?? false,
@@ -380,7 +381,7 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
     opened =>
       [
         `Run "${opened.runId}" is open: ${String(opened.tasks.length)} task${opened.tasks.length === 1 ? '' : 's'}, ${String(opened.backedUp)} files backed up in ${opened.folder}.`,
-        keeperText(opened.keeper, opened.base, opened.tasks.length === 1 && opened.tasks[0] === SCOPE_SPIKE),
+        keeperText(opened.keeper, opened.base, opened.researching),
         chalk.bold(
           `The lead's own CLI: ${opened.leadCli} — every command of the run as the lead goes through it, which passes the lead's token (${opened.leadToken}, kept in ${opened.leadTokenFile}); a command as lead without it is refused`
         ),
@@ -395,17 +396,17 @@ export const runOpen = (file: string | undefined, options: PlanOptions): Promise
           ? 'The lead writes it into the project at the end, as you allowed — once its report is written and the checks pass on the whole result.'
           : `A person writes it into the project at the end (plitzi run finish --apply) — or lets the lead, in their terminal: plitzi run finish --lead-finishes ${opened.runId}`,
         // On its scope alone, the next step is the lead's, not an agent's: there is nothing to take until it ends.
-        ...(opened.tasks.includes(SCOPE_SPIKE)
+        ...(opened.researching
           ? []
           : [
               chalk.yellow(
                 'Scoped before the run: what was found out to write this plan is in no record of it — not in the monitor, the report or the bench. A run scoped inside it opens on the ask: plitzi run start "…" --run <name>'
               )
             ]),
-        opened.tasks.length === 1 && opened.tasks[0] === SCOPE_SPIKE
+        opened.researching
           ? opened.scouts.length > 0
-            ? `Next: the scope is ${opened.scouts.join(' or ')}'s — the keeper starts it to find out what the ask takes; what it proposes comes to the lead (plitzi run watch wakes it, plitzi task next --role lead hands it), to decide with the person: plitzi task review ${SCOPE_SPIKE} --approve [--leave <tasks>] | --changes "…". The team starts once there are tasks to take.`
-            : `Next, yours: the scope — find out what the ask takes (plitzi run reference --run ${opened.runId} --pages "…" keeps the site it copies), then end it with its tasks: plitzi task complete ${SCOPE_SPIKE} --found "what you found" --tasks <stage.json>. The team starts once there are tasks to take.`
+            ? `Next: ${opened.tasks.length === 1 ? 'the scope is' : `its ${String(opened.tasks.length)} research cards are`} ${opened.scouts.join(' or ')}'s — the keeper starts ${opened.tasks.length === 1 ? 'one' : 'them, a scout each up to the team’s most,'} to find out what the ask takes; what each proposes comes to the lead (plitzi run watch wakes it, plitzi task next --role lead hands it), to decide with the person: plitzi task review ${opened.tasks[0] ?? SCOPE_SPIKE} --approve [--leave <tasks>] | --changes "…". The team starts once there are tasks to take.`
+            : `Next, yours: ${opened.tasks.length === 1 ? 'the scope' : `its ${String(opened.tasks.length)} research cards, one after another`} — find out what the ask takes (plitzi run reference --run ${opened.runId} --pages "…" keeps the site it copies), then end each with its tasks: plitzi task complete ${opened.tasks[0] ?? SCOPE_SPIKE} --found "what you found" --tasks <stage.json>. The team starts once there are tasks to take.`
           : `Start a task: plitzi task next --run ${opened.runId}`,
         'Watch it in a browser as the tasks are approved: p in plitzi run monitor, or npm run start:preview (on 8300) — the project itself is untouched until the finish',
         ...backlogLines(opened.backlog)

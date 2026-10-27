@@ -49,7 +49,10 @@ export const outsideLines = (shown: TaskShown): string[] => {
     : [];
 };
 
-/** What the lead said to a task, as the task's answer shows it: on top, so it is not missed. */
+/**
+ * What the lead said to a task, as the task's answer shows it: last, the newest thing said — on top, encore-14's scout
+ * read its answers' last line alone and missed two of the lead's redirects for 20 minutes.
+ */
 export const messageLines = (messages: readonly Message[]): string[] =>
   messages.map(message => chalk.cyan(`  ✉ ${message.from} (${message.id}): ${message.text}`));
 

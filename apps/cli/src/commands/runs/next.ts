@@ -181,7 +181,6 @@ const foundText = (
 
 export const nextText = (next: NextTask, agent: string): string =>
   [
-    ...messageLines(next.messages),
     next.spike
       ? spikeText(next.spike)
       : next.review
@@ -226,7 +225,8 @@ export const nextText = (next: NextTask, agent: string): string =>
     // Wherever the answer leaves an agent without a copy of a task in hand — between tasks, at a review.
     ...(next.task && !next.review
       ? []
-      : [chalk.dim(`  What is yours beside the work (a script, a log): ${next.scratch} — never the project's tmp/`)])
+      : [chalk.dim(`  What is yours beside the work (a script, a log): ${next.scratch} — never the project's tmp/`)]),
+    ...messageLines(next.messages)
   ].join('\n');
 
 /** The project's own `plitzi`, by its whole path — what a command from the copy calls fastest (npx adds ~0.2 s). */
@@ -243,7 +243,6 @@ const binLine = (work: string): string[] => {
 const takenText = (taken: TakenTask): string =>
   [
     chalk.bold(`Task "${taken.task.id}" is yours: ${taken.task.title}`),
-    ...messageLines(taken.messages),
     ...taken.proposals.map(each =>
       chalk.cyan(`  ⇄ ${each.from} proposes (${each.id}): ${each.change} — plitzi task answer ${each.id}`)
     ),
@@ -267,7 +266,8 @@ const takenText = (taken: TakenTask): string =>
     ...binLine(taken.work),
     isResearch(taken.task)
       ? '  See your stage first — each line run once: plitzi task check --tasks <stage.json>; done: plitzi task complete --found "…" [--tasks <stage.json>], in the copy — the lead approves it'
-      : '  Done: plitzi task complete, in the copy'
+      : '  Done: plitzi task complete, in the copy',
+    ...messageLines(taken.messages)
   ].join('\n');
 
 export const taskTake = (taskId: string, options: RunCommandOptions & { role?: string }): Promise<void> =>

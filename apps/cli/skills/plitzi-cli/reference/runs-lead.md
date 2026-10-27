@@ -1,16 +1,15 @@
 # Leading a team of agents: the lead's half of `plitzi run`
 
 What the lead does; the agents' half, refusals and exit codes: [runs.md](runs.md) — read both. **Before anything
-starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, their decisions, the summary before it opens. **Start**, when the person asked for a team:
+starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, their decisions, the summary. **Start**, when the person asked for a team:
 `plitzi run start "<the ask>"`; the team starts by itself (below).
 
 ## The lead
 
-**You manage; the agents read.** Never started again, you read again every turn whatever you read once (a lead spent
-68% of a run). The spikes are a scout's, the reviews a tester's, in fresh contexts: you decide what they bring.
+**You manage; the agents read.** Never started again, you read again every turn whatever you read once. The spikes are a scout's, the reviews a tester's, in fresh contexts: you decide what they bring.
 
 0. **Inventory what the job asks, before a line of the plan.** Built after something — a site, a design, a brief —
-   list every page, section and piece a visitor would miss (a logo, what moves, a control, a size) as the plan's `inventory`
+   list every page, section and piece a visitor would miss as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
 "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run open --dry-run` refuses a
    piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `page shot --compare`, naming sections no piece covers. **Research is a card** (a spike, no files), a scout's; **you review every one's result**, and only you add or take out tasks. **The run opens on its scope** (`run start`): the scout proposes the tasks, each with its `"findings"`; `task next --role lead` hands them to you — decide them with the person: `task review s-scope --approve | --changes "…"` (`run extend <stage> --dry-run` reads them). An agent's question is a block, yours to answer: `task unblock --answer`. With no scout, research is yours: `task complete s-scope --found "…" --tasks <stage.json>`. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
@@ -123,12 +122,15 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 
 - **A piece of work takes 10 minutes** (the dry run says a task estimated past it: split it). Past it `run watch` wakes
   you: ask where it stands (`task message @<agent> --standing`) and decide at once — near done, on; else narrow it,
-  split what is left into a task (`run extend`), or `task reassign`. A run's 60-minute task took 148, nobody cutting it.
+  split what is left into a task (`run extend`), or `task reassign`.
 - **A bug found inside a task is another task**, or `run notice`: never its scope growing round by round.
-- **Specs, a task's own**: a line runs the specs of what it changes, never a whole suite (the dry run says one) — a suite
-  holds the machine, the CLI queues the next; the finish runs it whole, once.
-- **The scope spike is the big one** (30 min); a later spike answers one question an agent met — 10 minutes, measured with
-  the tools, never a suite. Its tasks left out: `task review <s> --approve --leave t-a,t-b` (or `all`).
+- **Specs, a task's own**: a line runs the specs of what it changes, never a whole suite (the dry run says one); the
+  finish runs it whole, once.
+- **Research small and at once — dividing is the run's speed:** an ask of independent parts is a research card each
+  (`run open` a plan of them), a scout each; what you know goes in its `"findings"` — backlog notes, earlier
+  probes. A card: one question, 10 min (the scope 30); its tasks one change each, those left out `task review <s>
+  --approve --leave t-a,t-b` (or `all`). Narrow one with `run amend` (its `spike`): a message waits for the agent's
+  next command.
 - **A known failure you accept is the agent's flag** — `task complete --known-failure "…" --fixed-by <task>` — never a
   message: its reviewer reads it in `task show`.
 - **Every task approved: close now** (`run watch` says so) — look, report, finish.
@@ -145,17 +147,17 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
   copy, a class name or memory; never answer one way and tell another — a file a task holds is no one else's.
 - **A value is measured, never typed**: `plitzi page measure <path> <elements…> --width 390,1440` (`--hover`,
   `--click`; `page outline <path>` names them; a copy's `"<el> => <sel>" … --compare <reference>`), held by one line
-  (`--same …`). A stage may be its `tasks` alone.
-- **The scope, before it ends** — most rounds are its: each element measured whole (box, pseudo-elements, a hover)
-  at 390 and 1440; a value grepped where it is written before a finding says "one class holds it"; each line run once
-  on the run's work — failing for the value, never for a selector that finds nothing; a line per width.
+  (`--same …`).
+- **The scope, before it ends**: each element measured whole (box, pseudo-elements, a hover) at 390 and 1440; a value
+  grepped where it is written before a finding says "one class holds it"; a line fails for the value, never for a
+  selector that finds nothing — one per width.
 - **The team the work is worth**: the dry run says when it is too big — the base runs while the run is open; one on
-  demand only when work waits — the run starts it; never prompts of your own.
+  demand when work waits, up to the entry's `count` — the run starts it; never prompts of your own. More, of any role,
+  is the person's yes (`run team set` refuses your token).
 - **Your files** — a stage, a summary — in your scratch (`tmp/plitzi-runs/<run>/scratch/lead/`), never the project's
   `tmp/`, where the agents are told of strays.
 - **The page's own type is the page's**: `<page> => body` measures the body's font and background — a line on an
   element of the page makes a task invent a wrapper to carry it.
-- **A piece the scope gives no number** is one the agents guess.
 - **What two tasks share is the base task's, declared once**: a page's section styles and the space between sections,
   a format (a date), the whole palette — tasks adding tokens at once name one colour three ways.
 - **What must hold at `complete` is an acceptance line** (`run amend`), never a message: a message has no hold on it.

@@ -29,6 +29,13 @@ export const isFinding = (value: unknown): value is Finding =>
 export const isResearch = (task: { spike?: string; files: readonly string[] }): boolean =>
   task.spike !== undefined && task.files.length === 0;
 
+/**
+ * Whether a run opens on research alone — its scope, or an ask's parts each a card of their own: what they find is its
+ * work, and nothing else is on the board until then. A big ask is split so its parts are found out at once.
+ */
+export const opensOnResearch = (tasks: readonly { spike?: string; files: readonly string[] }[]): boolean =>
+  tasks.length > 0 && tasks.every(isResearch);
+
 /** The role a card is for: its own, a scout's for research (the lead finds it out with none), else a developer's. */
 export const roleOf = (task: { role?: string; spike?: string; files: readonly string[] }): string =>
   task.role ?? (isResearch(task) ? SCOUT : DEVELOPER);

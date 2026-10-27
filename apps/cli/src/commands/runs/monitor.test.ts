@@ -176,9 +176,10 @@ describe('plitzi run monitor', () => {
     expect(text.some(line => /● lead → agent-2\s+t-home\s+“Use the formal voice”/.test(line))).toBe(true);
     // The sidebar: the tasks left, the approved said in a line, each agent where it stands.
     expect(text.some(line => line.includes('✓ 1 approved · a lists them'))).toBe(true);
-    expect(text.some(line => /● agent-2\s+harness\s+on t-home/.test(line))).toBe(true);
+    // …marked as the team's base or on demand beside its name (◆, ◇): Carlos read no difference in a muted column.
+    expect(text.some(line => /● agent-2\s+◆ harness\s+on t-home/.test(line))).toBe(true);
     // Of the team, never started: not idle — nothing of it has run.
-    expect(text.some(line => /· agent-3\s+harness\s+not started/.test(line))).toBe(true);
+    expect(text.some(line => /· agent-3\s+◆ harness\s+not started/.test(line))).toBe(true);
   });
 
   it('lists the work first, the approved after it — the latest approval first — and its time against its estimate', async () => {

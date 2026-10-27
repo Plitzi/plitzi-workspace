@@ -21,6 +21,10 @@ find is said with its evidence, never guessed. The agents' half is [runs.md](run
 - **Spend it as the run's time:** the scope is the big one (30 minutes); a later card answers one question an agent
   met — 10 minutes, the tools measuring (`page measure|play|check`), never a whole Playwright suite. Past it the lead
   asks where you stand: answer at once (`plitzi task tell --standing …`).
+- **Small tasks, your card alone:** each task you propose is one change, ≤10 minutes — a part that is more is several,
+  so the team works them at once. A question that is not your card's — another card's, or one you met on the way — is
+  the lead's (`task tell`), never yours to chase; when the lead narrows your card (a message, its question amended),
+  leave what is no longer asked and end with what you have.
 - **Reproduce with the CLI, not a script:** what two people do on one page — one closes a room, the other comes back —
   is `plitzi page play <path> --as <account> --steps "as <other> action room-close {…}; goto <path>; shot after"`:
   each step read, pictured where you ask, the accounts signed in for you.

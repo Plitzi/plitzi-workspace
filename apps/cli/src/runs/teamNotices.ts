@@ -1,4 +1,5 @@
-import { DESIGNER, DEVELOPER, startedAgents } from './team';
+import { isResearch } from './spike';
+import { DESIGNER, DEVELOPER, SCOUT, startedAgents } from './team';
 import { reviewedAsUi } from './uiFiles';
 
 import type { RunPlan } from './model';
@@ -30,8 +31,10 @@ const teamSizeNotice = (
   backlog: readonly string[]
 ): string[] => {
   // A stage's tasks beside the run's still open: a run's stack of one was told "1 task for 3 agents".
-  const work = plan.tasks.filter(task => task.role !== 'lead').length + openWork;
-  const agents = startedAgents(team).length;
+  // Research is the scouts' and the work the rest's: counted together, encore-14's two research cards read "2 tasks for
+  // 5 agents", a team too big, where its one scout was too few (`researchNotice`).
+  const work = plan.tasks.filter(task => task.role !== 'lead' && !isResearch(task)).length + openWork;
+  const agents = startedAgents(team).filter(each => !each.roles.includes(SCOUT)).length;
   if (work === 0 || work >= agents * TASKS_PER_AGENT) {
     return [];
   }
@@ -87,5 +90,22 @@ export const teamNotices = (
 ): string[] => {
   const tooBig = teamSizeNotice(plan, team, openWork, backlog);
 
-  return tooBig.length > 0 ? tooBig : designersNotice(plan, team);
+  return [...(tooBig.length > 0 ? tooBig : designersNotice(plan, team)), ...researchNotice(plan, team)];
+};
+
+/**
+ * More research cards ready at once than scouts to find them out: they go one after another, where dividing them was
+ * for their speed — encore-14's two flaky specs waited behind the scope for its one scout. The team's most is the
+ * person's: said, never raised.
+ */
+const researchNotice = (plan: Pick<RunPlan, 'tasks'>, team: Team): string[] => {
+  const research = plan.tasks.filter(task => isResearch(task) && task.dependsOn.length === 0).map(task => task.id);
+  const scouts = startedAgents(team).filter(each => each.roles.includes(SCOUT)).length;
+  if (research.length <= Math.max(scouts, 1)) {
+    return [];
+  }
+
+  return [
+    `${String(research.length)} research cards at once (${research.join(', ')}) and ${scouts === 0 ? 'no scout — the lead finds each out' : `${String(scouts)} scout${scouts === 1 ? '' : 's'} at most`}: they are found out one after another. More scouts are the person's to allow — ask them (plitzi run team set scout --roles scout --count ${String(research.length)}, run in their terminal)`
+  ];
 };

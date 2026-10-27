@@ -46,6 +46,10 @@ itself once (`--agent design-1`) and is answered both. A token, name or role not
   answer (`--fresh`: anew), and `complete` right after a passing check takes it. Every element and width in one
   `page measure` call (`--hover <el>`, `--click <el…>` for a state, `--steps` for what a visitor makes) —
   trying values, measure, never `task check`; a picture for what a check cannot tell.
+- **A long output goes to a file, never into your context:** whatever you read stays in it every turn after. A test
+  runner, a build, a loop of probes — `npx playwright test … --repeat-each 20 > tmp/probe.log 2>&1; tail -5
+  tmp/probe.log` — then `grep` the file for what you need (the failures, a count); never its whole output on screen
+  (a run's scout read a probe's output whole, 219k of context and 12M tokens re-read for one card).
 - **Only your files.** A file another task at work holds is refused at `complete`, naming it — `plitzi task discard
 <file>` puts it back (and brings the run's version of any file); propose the change to that task instead. **Name
   what you declare by your part** — classes and provider ids (`hero-title`, `pricingPlans`), never `title`: another

@@ -1,4 +1,4 @@
-import { act } from './shell';
+import { act, projectCaller } from './shell';
 import { RunRefusal } from '../../runs/refusal';
 import {
   EFFORTS,
@@ -81,11 +81,31 @@ const effortOf = (text: string): Effort => {
   return text;
 };
 
+/**
+ * Whether a change sets the team's bounds — an entry added, its most agents raised, its starting ones changed: the
+ * person's to say, the cost of the run. Between them the run starts and stops agents as the work asks; the lead raised
+ * encore-14's scouts from one to three on its own (Carlos: "debe pedir permiso al humano siempre").
+ */
+export const movesBounds = (entry: { count?: number; min?: number } | undefined, options: TeamSetOptions): boolean =>
+  entry === undefined
+    ? options.roles !== undefined || options.count !== undefined || options.min !== undefined
+    : (options.count !== undefined && options.count > (entry.count ?? 1)) ||
+      (options.min !== undefined && options.min !== (entry.min ?? entry.count ?? 1));
+
 export const runTeamSet = (name: string, options: TeamSetOptions): Promise<void> =>
   act(
     options,
-    async ctx =>
-      setTeamAgent(ctx.root, name, {
+    async ctx => {
+      const entry = (await readTeam(ctx.root))?.agents.find(each => each.name === name);
+      const caller = await projectCaller(ctx, options);
+      if (caller !== 'person' && movesBounds(entry, options)) {
+        throw new RunRefusal(
+          'person-only',
+          `The team's size is the person's to set: ${caller} may start and stop agents between an entry's min and its count, never move them — ask the person, saying why, and they run it in their terminal: plitzi run team set ${name}${options.count === undefined ? '' : ` --count ${String(options.count)}`}${options.min === undefined ? '' : ` --min ${String(options.min)}`}${options.roles === undefined ? '' : ` --roles ${options.roles.join(',')}`}`
+        );
+      }
+
+      return setTeamAgent(ctx.root, name, {
         ...(options.roles ? { roles: options.roles } : {}),
         ...(options.count !== undefined ? { count: options.count } : {}),
         ...(options.min !== undefined ? { min: options.min } : {}),
@@ -94,7 +114,8 @@ export const runTeamSet = (name: string, options: TeamSetOptions): Promise<void>
         ...(options.session !== undefined ? { session: sessionOf(options.session) } : {}),
         ...(options.resumeSession !== undefined ? { resumeSession: options.resumeSession } : {}),
         ...(options.skill !== undefined ? { skill: options.skill } : {})
-      }),
+      });
+    },
     changed =>
       changed.unchanged
         ? `${changed.name} is already ${memberText(changed.after)}: nothing to change (${changed.file})`

@@ -65,10 +65,15 @@ describe('agents on demand', () => {
       })
     );
 
-    // dev-1 at t-home; t-menu and t-about wait — shared with dev-2, a task and a half each: not worth its start, as
-    // `run plan` counts it (the plan said the team was too big, the watch asked for dev-2).
+    // dev-1 at t-home; t-menu and t-about wait, none free: dev-2 on demand takes them now — dividing the work is the
+    // run's speed (encore-14's research cards waited behind the scope for a ratio).
     await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
-    expect((await viewRun(lead(), 'es-launch')).attention.map(item => item.kind)).not.toContain('agents-needed');
+    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
+      expect.objectContaining({
+        kind: 'agents-needed',
+        text: expect.stringContaining('none running is free: start dev-2, on demand') as unknown
+      })
+    );
 
     // Started, and handed nothing it may take for a while — every ready task taken, t-book waiting — it stops, said.
     await takeTask(bench.agent('dev-1'), 'es-launch', 't-menu');
@@ -81,24 +86,7 @@ describe('agents on demand', () => {
     expect(stopped).toMatchObject({ finished: true, why: expect.stringContaining('you are on demand') as unknown });
   });
 
-  // T-buybox waited for t-description alone, in hand — four cards for one developer, and no dev-2 asked.
-  it('counts as coming a task that waits only for work under way', async () => {
-    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 1 });
-    const plan = benchPlan();
-    plan.tasks = plan.tasks.map(task => (task.id === 't-book' ? { ...task, dependsOn: ['t-home'] } : task));
-    await openRun(lead(), await bench.writePlan(plan));
-    bench.advance(STARTING_MS);
-    await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
-
-    expect((await viewRun(lead(), 'es-launch')).attention).toContainEqual(
-      expect.objectContaining({
-        kind: 'agents-needed',
-        text: expect.stringContaining('start dev-2, on demand') as unknown
-      })
-    );
-  });
-
-  it('asks for one on demand once the work waiting, shared with it, is worth its start', async () => {
+  it('asks for one on demand for work waiting with none of its role free', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 1 });
     // Three rounds of the bench's tasks, each its own files: work enough for two.
     const big = {

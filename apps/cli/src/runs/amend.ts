@@ -89,7 +89,17 @@ export interface Amended {
 
 const SHAPE = ['files'] as const;
 // `touches` is what a task says it will change outside its own files, never held by it: told like any other ask.
-const ASK = ['title', 'acceptance', 'priority', 'estimateMinutes', 'milestone', 'findings', 'touches'] as const;
+// A research card's question too (`spike`): encore-14's lead narrowed its scope, and the amend dropped it unsaid.
+const ASK = [
+  'title',
+  'spike',
+  'acceptance',
+  'priority',
+  'estimateMinutes',
+  'milestone',
+  'findings',
+  'touches'
+] as const;
 /** The finding a plan gives a task, as its state keeps it beside what its spikes found (`startingState`). */
 const isPlanFinding = (finding: Finding): boolean => finding.by === LEAD && finding.question === PLAN_FINDING;
 // What a task waits for, and who it is for, change until it is taken: a lead clears a bottleneck by letting one start
@@ -280,7 +290,10 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
 
   const knownNotes = new Set(loaded.plan.notes ?? []);
   const notes = (next.notes ?? []).filter(note => !knownNotes.has(note));
-  const goal = stage || next.goal === loaded.plan.goal ? undefined : next.goal;
+  // The run's goal is the plan it opened with's, then each stage's (`extend`): the opened plan amended speaks for its own
+  // alone — compared whole, an unchanged plan read "the goal amended" and dropped the stages' (encore-14).
+  const [openedGoal = '', ...stageGoals] = loaded.plan.goal.split(' · ');
+  const goal = stage || next.goal === openedGoal ? undefined : [next.goal, ...stageGoals].join(' · ');
   // A stage's plan names the run's primer beside it (`primer.md`), and the run keeps that primer in its own folder: not
   // beside the plan it moved into `inputs/<stage>/`, it is the run's as kept — unchanged — never a refusal (a run's
   // lead copied it there by hand to amend).
@@ -317,6 +330,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
       quality: _quality,
       findings: _findings,
       touches: _touches,
+      spike: _spike,
       ...kept
     } = defined;
     const amended: RunTask = {
@@ -330,7 +344,8 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
       ...(task.quality === undefined ? {} : { quality: task.quality }),
       ...(task.milestone === undefined ? {} : { milestone: task.milestone }),
       ...(task.findings === undefined ? {} : { findings: task.findings }),
-      ...(task.touches === undefined ? {} : { touches: task.touches })
+      ...(task.touches === undefined ? {} : { touches: task.touches }),
+      ...(task.spike === undefined ? {} : { spike: task.spike })
     };
 
     await writeJson(taskPaths(loaded.paths, task.id).definition, amended);
@@ -419,7 +434,11 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
           tasks: amendedTasks(loaded.plan, next, removed),
           notes: [...(loaded.plan.notes ?? []), ...notes]
         }
-      : { ...whole, ...(loaded.plan.primer && next.primer === undefined ? { primer: loaded.plan.primer } : {}) }
+      : {
+          ...whole,
+          goal: goal ?? loaded.plan.goal,
+          ...(loaded.plan.primer && next.primer === undefined ? { primer: loaded.plan.primer } : {})
+        }
   );
   // A done task has nobody at it: what it now holds is said in the amend's answer and log, and held at the finish.
   for (const { task, changed } of changes.filter(change => change.done !== true)) {
@@ -428,7 +447,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
       to: task.id,
       text: `The lead amended this task (${changed.join(', ')}). It now asks: ${task.title}${
         changed.includes('acceptance') ? ` — ${task.acceptance.map(each => acceptanceText(each)).join('; ')}` : ''
-      }${changed.includes('findings') ? `. What was found for it now says: ${task.findings ?? 'nothing'}` : ''}. Read it again: plitzi task context`
+      }${changed.includes('spike') ? `. Its question is now: ${task.spike ?? ''} — what is no longer asked, leave` : ''}${changed.includes('findings') ? `. What was found for it now says: ${task.findings ?? 'nothing'}` : ''}. Read it again: plitzi task context`
     });
   }
 

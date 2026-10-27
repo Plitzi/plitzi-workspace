@@ -116,6 +116,20 @@ describe('a plan held to the rules', () => {
     );
   });
 
+  // encore-14's scout followed "one agent per file — the other names it in touches and waits" and was refused for a
+  // task that writes no file: it merged its tasks.
+  it('takes a task that fills another’s new file by "touches", after it, as the refusal of a shared file says', async () => {
+    const plan = benchPlan();
+    plan.tasks[0].files = ['src/space/room/coming.ts'];
+    plan.tasks[1] = { ...plan.tasks[1], files: [], touches: ['src/space/room/coming.ts'], dependsOn: ['t-home'] };
+    const problems = await checkPlan(bench.root, plan, await readOwnership(bench.root), teamFor(plan, 3)).then(
+      () => [],
+      (error: unknown) => (error instanceof PlanRefusal ? error.problems : [String(error)])
+    );
+
+    expect(problems.filter(problem => problem.includes('t-menu'))).toEqual([]);
+  });
+
   // T-card measured its card on the collection page t-collection made — and t-collection waited for t-card.
   it('finds a later task checking the same missing page: the check before it cannot pass — a deadlock', () => {
     const tasks = [

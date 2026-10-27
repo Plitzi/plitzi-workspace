@@ -6,6 +6,7 @@ import { LEAD, markRead, messagesOf } from './messages';
 import { under } from './paths';
 import { RunRefusal } from './refusal';
 import { loadRun, readApproved, readBase } from './run';
+import { isResearch } from './spike';
 import { getBlob } from './store';
 import { notReviewedIn } from './tasks';
 import { requestsShown } from './tasks/context';
@@ -153,9 +154,18 @@ const nextFor = (task: RunTask, status: TaskStatus, review?: ReviewState): strin
               `# ${review.by} reviews it now (step ${String(review.step + 1)} of its review): its verdict moves it on — yours, the last word, approves it whole`
             ]
           : []),
-        `plitzi task look ${task.id}   # its pages as it went to review: checked at 1440 and 390, pictured light and dark`,
-        `plitzi task review ${task.id} --approve`,
-        `plitzi task review ${task.id} --changes "what to change" [--on <element>]`
+        // Research has no page: its result is tasks, read as the lead stacks them — encore-14's lead was offered a look.
+        ...(isResearch(task)
+          ? [
+              `plitzi task next --role lead   # what it found and the tasks it proposes, to decide with the person`,
+              `plitzi task review ${task.id} --approve [--leave <tasks>]`,
+              `plitzi task review ${task.id} --changes "what to find out more"`
+            ]
+          : [
+              `plitzi task look ${task.id}   # its pages as it went to review: checked at 1440 and 390, pictured light and dark`,
+              `plitzi task review ${task.id} --approve`,
+              `plitzi task review ${task.id} --changes "what to change" [--on <element>]`
+            ])
       ];
     case 'blocked':
       return [`plitzi task unblock ${task.id} --answer "what it waited for"`];

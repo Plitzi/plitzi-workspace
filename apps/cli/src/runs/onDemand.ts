@@ -4,7 +4,6 @@ import { LEAD } from './messages';
 import { reviewSteps, reviewTeamOfAgents, stepQueued, stepReviewers, stepRole } from './reviews';
 import { roleOf } from './spike';
 import { TESTER } from './team';
-import { TASKS_PER_AGENT } from './teamNotices';
 import { testWriters, writesTests } from './tests';
 import { isWorked } from './worked';
 
@@ -208,48 +207,16 @@ export const agentsNeeded = (
         return [];
       }
 
-      // One on demand beside those running is worth its start when the work waiting and in hand, shared with it, is
-      // TASKS_PER_AGENT each or more — as `run open --dry-run` counts it: fewer, those running take it next. A run's watch asked
-      // for dev-2 for two tasks the plan had said were too few for three agents.
-      const runningOfRole = started.filter(each => ofRole(each) && running.has(each.agent));
-      const inHand = runningOfRole.filter(each => busy.has(each.agent)).length;
-      // A task of the role that waits only for work under way is work coming: a run's t-buybox waited for
-      // t-description alone, and four cards for one developer (~145 min) never asked for the second.
-      const byId = new Map(views.map(view => [view.task.id, view]));
-      const coming = views.filter(
-        view =>
-          !view.owner &&
-          view.state.status === 'pending' &&
-          roleOf(view.task) === role &&
-          view.task.dependsOn.length > 0 &&
-          view.task.dependsOn.every(id => {
-            const dependency = byId.get(id);
-
-            return (
-              dependency !== undefined && (dependency.state.status === 'done' || isWorked(dependency.state.status))
-            );
-          })
-      ).length;
-      // A UI review no designer running may make — its own author's — waits for another whatever the count.
-      // …unless no agent running may take what waits: the tests of its own work are never its.
-      const runningMay = readyOf.some(view => runningOfRole.some(each => writesTests(view.task, each.agent, views)));
-      if (
-        next.onDemand &&
-        anyRunning &&
-        reviews.length === 0 &&
-        runningMay &&
-        (waiting.length + inHand + coming) / (runningOfRole.length + 1) < TASKS_PER_AGENT
-      ) {
-        return [];
-      }
-
+      // Work waiting with none of its role free starts one on demand, up to the team's most: dividing the work is the
+      // run's speed (Carlos). A ratio held it back — encore-14's two research cards waited behind the scope, three
+      // scouts allowed and one running.
       asked.add(next.agent);
 
       return [
         {
           kind: 'agents-needed' as const,
           agent: next.agent,
-          text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — ${launch(next.agent)} (its prompt alone: plitzi run agent ${next.agent}; by hand: ${commandAs(run.scratch, next.agent, run.identified, `task next${next.quality ? ` --quality ${next.quality}` : ''}`)})${next.onDemand ? ` — it stops by itself once nothing is left for it; its start costs about a small task, worth it for ${String(TASKS_PER_AGENT)} or more waiting` : ''}`,
+          text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — ${launch(next.agent)} (its prompt alone: plitzi run agent ${next.agent}; by hand: ${commandAs(run.scratch, next.agent, run.identified, `task next${next.quality ? ` --quality ${next.quality}` : ''}`)})${next.onDemand ? ' — it stops by itself once nothing is left for it' : ''}`,
           who: 'lead' as const
         }
       ];

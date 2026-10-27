@@ -3,10 +3,12 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { readJson, writeAtomic } from './files';
+import { acceptanceText } from './model';
 import { noticesOf } from './notices';
 import { RunRefusal } from './refusal';
 import { formattedJson } from '../scaffold/formattedJson';
 
+import type { RunTask } from './model';
 import type { LoadedRun, RunContext } from './run';
 
 /**
@@ -230,3 +232,29 @@ export const closeBacklogItem = async (
 /** An item as a line: its id, where, what. */
 export const backlogText = (item: BacklogItem): string =>
   `${item.id}${item.on ? ` (${item.on})` : ''}: ${item.text} — ${item.from}, ${item.by}`;
+
+/** A backlog item's id as words name it: `b-36`. */
+const ITEM_NAMED = /\bb-\d+\b/g;
+
+/**
+ * Each task that names an open item in its words — its title, its acceptance — and does not close it: what the task
+ * does of it is left open at the apply. encore-13's t-listen-untraced, titled "(b-36)", fixed it, and b-36 was listed
+ * open at the next run's start.
+ */
+export const namedNotClosed = (
+  tasks: readonly Pick<RunTask, 'id' | 'title' | 'acceptance' | 'closes'>[],
+  open: ReadonlySet<string>
+): string[] =>
+  tasks.flatMap(task => {
+    const words = [task.title, ...task.acceptance.map(acceptanceText)].join(' ');
+    const named = [...new Set(words.match(ITEM_NAMED) ?? [])].filter(
+      id => open.has(id) && !(task.closes ?? []).includes(id)
+    );
+    const them = named.length === 1 ? 'it' : 'them';
+
+    return named.length > 0
+      ? [
+          `${task.id} names ${named.join(', ')} and does not close ${them}: add ${them} to its "closes" — closed when the run is applied — or leave ${them} out of its words`
+        ]
+      : [];
+  });

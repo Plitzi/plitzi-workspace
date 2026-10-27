@@ -5,12 +5,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
 import { auditRun } from './audit';
+import { extendRun } from './extend';
 import { messagesOf } from './messages';
 import { monitorRun } from './monitor';
 import { readOwnership } from './ownership';
 import { taskPaths } from './paths';
 import { checkPlan } from './plan';
 import { loadRun, openRun } from './run';
+import { showTask } from './show';
 import { scopePlan, SCOPE_SPIKE } from './spike';
 import { blockTask, completeResearch, nextTask, takeNext, taskContext, unblockTask } from './tasks';
 import { readState } from './taskStore';
@@ -154,6 +156,37 @@ describe('research: a card like any, finding out in the run', () => {
       reference: 'https://www.example.org'
     });
     expect((await loadRun(lead(), 'es-launch')).plan.reference).toBe('https://www.example.org');
+  });
+
+  // encore-14's lead narrowed the scope to one part of the ask — its other parts cards of their own — and the amend
+  // dropped the question unsaid, said "the goal" amended, and lost the stage's goal.
+  it('amends a research card’s question, told to its card, and keeps the goal the stages added', async () => {
+    const opened = scopePlan('es-launch', ASK);
+    await open(opened);
+    const stage: RunPlan = {
+      version: 1,
+      runId: 'es-flakes',
+      goal: 'The flaky specs',
+      tasks: [{ ...opened.tasks[0], id: 's-flaky', title: 'Why a spec hangs', spike: 'Why the spec hangs' }]
+    };
+    await extendRun(lead(), 'es-launch', await bench.writePlan(stage));
+    const narrowed = {
+      ...opened,
+      tasks: [{ ...opened.tasks[0], spike: 'Translate the home page alone: the rest are cards of their own' }]
+    };
+
+    const amended = await amendRun(lead(), 'es-launch', await bench.writePlan(narrowed));
+
+    expect(amended.tasks).toEqual([{ task: SCOPE_SPIKE, changed: ['spike'] }]);
+    expect(amended.goal).toBeUndefined();
+    const loaded = await loadRun(lead(), 'es-launch');
+    expect(loaded.plan.goal).toBe(`${ASK} · The flaky specs`);
+    expect(loaded.tasks.find(task => task.id === SCOPE_SPIKE)?.spike).toBe(
+      'Translate the home page alone: the rest are cards of their own'
+    );
+    expect((await messagesOf(loaded)).map(message => message.text)).toContainEqual(
+      expect.stringContaining('Its question is now: Translate the home page alone') as unknown
+    );
   });
 
   // T-base's finding "write every stub" was wrong, and only a message and a run note could say so.
@@ -305,6 +338,11 @@ describe('research: a card like any, finding out in the run', () => {
       't-grid-tests',
       't-bios-tests'
     ]);
+
+    // Research has no page to look at: its next steps read what it found, never `task look` (encore-14's lead).
+    const { next } = await showTask(lead(), runId, 's-survey');
+    expect(next.join('\n')).not.toContain('task look');
+    expect(next).toContain('plitzi task review s-survey --approve [--leave <tasks>]');
 
     expect((await refusal(approveFound(runId, 's-survey', ['t-grid']))).message).toContain('t-bios waits for t-grid');
     expect((await refusal(approveFound(runId, 's-survey', ['t-nope']))).message).toContain('proposes no t-nope');
